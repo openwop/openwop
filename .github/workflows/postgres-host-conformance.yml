@@ -1,0 +1,158 @@
+name: Postgres host — conformance regression gate
+
+# The Postgres reference host advertises production-profile.md as of
+# 2026-05-11. This workflow is the regression gate that catches drift
+# against that claim: every push to the host's code or to the
+# conformance suite re-runs the suite against a freshly-booted host.
+#
+# Two distinct passes:
+#
+#   in-host-smoke — runs the host's own 9 test files via `npm test`
+#     in `examples/hosts/postgres/`. These exercise the wire-surface
+#     contract (lifecycle, audit-tamper, pause-resume, interrupts,
+#     webhooks, sse, claim, backpressure, review-fixes).
+#
+#   external-suite — boots the host via `npm run start:pglite` (the
+#     pglite-backed entry point) and runs the FULL conformance suite
+#     against it via `npx vitest run` in `conformance/`. Asserts pass-
+#     rate ≥85% — the Postgres host's empirical baseline as of
+#     2026-05-11 was 86.2% (588/682), matching the SQLite host's 87%.
+#
+# A drop below 85% means a genuine regression slipped in; the gate
+# fires and the merge is blocked.
+#
+# @see examples/hosts/postgres/conformance-full.md — the public-result
+#   evidence this workflow renews on every push.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'examples/hosts/postgres/**'
+      - 'conformance/**'
+      - 'spec/v1/production-profile.md'
+      - '.github/workflows/postgres-host-conformance.yml'
+  pull_request:
+    paths:
+      - 'examples/hosts/postgres/**'
+      - 'conformance/**'
+      - '.github/workflows/postgres-host-conformance.yml'
+
+jobs:
+  in-host-smoke:
+    name: Postgres host — 9 in-host smoke tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: examples/hosts/postgres/package-lock.json
+
+      - name: Install Postgres host
+        working-directory: examples/hosts/postgres
+        run: npm ci
+
+      - name: Run in-host smoke suite
+        working-directory: examples/hosts/postgres
+        env:
+          OPENWOP_WEBHOOK_ALLOW_PRIVATE: 'true'
+        run: npm test
+
+  external-suite:
+    name: Postgres host — full conformance suite (pass-rate ≥85%)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: |
+            examples/hosts/postgres/package-lock.json
+            conformance/package-lock.json
+
+      - name: Install Postgres host
+        working-directory: examples/hosts/postgres
+        run: npm ci
+
+      - name: Install conformance suite
+        working-directory: conformance
+        run: npm ci
+
+      - name: Boot Postgres host via pglite (background)
+        working-directory: examples/hosts/postgres
+        env:
+          OPENWOP_WEBHOOK_ALLOW_PRIVATE: 'true'
+          OPENWOP_PORT: '3839'
+        run: |
+          nohup npm run start:pglite > /tmp/postgres-host.log 2>&1 &
+          echo $! > /tmp/postgres-host.pid
+          for i in {1..30}; do
+            if curl -sf "http://127.0.0.1:3839/.well-known/openwop" > /dev/null; then
+              echo "host ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "host failed to become ready"
+          cat /tmp/postgres-host.log
+          exit 1
+
+      - name: Run full conformance suite
+        working-directory: conformance
+        env:
+          OPENWOP_BASE_URL: http://127.0.0.1:3839
+          OPENWOP_API_KEY: openwop-postgres-dev-key
+          OPENWOP_WEBHOOK_ALLOW_PRIVATE: 'true'
+        run: |
+          # Capture exit + stats; allow non-zero exit because the suite
+          # has known feature gaps (registry, stream-modes-buffer,
+          # cap-breach). Assert on pass-rate floor instead.
+          set +e
+          npx vitest run --reporter=default 2>&1 | tee /tmp/conformance.out
+          set -e
+
+          # Extract `N passed | N failed | N skipped` from the summary.
+          # The line we want looks like:
+          #   Tests  23 failed | 588 passed | 41 skipped | 30 todo (682)
+          PASSED=$(grep -oE '[0-9]+ passed' /tmp/conformance.out | tail -1 | awk '{print $1}')
+          TOTAL=$(grep -oE '\([0-9]+\)' /tmp/conformance.out | tail -1 | tr -d '()')
+          if [ -z "$PASSED" ] || [ -z "$TOTAL" ] || [ "$TOTAL" -eq 0 ]; then
+            echo "Failed to parse vitest summary" >&2
+            tail -20 /tmp/conformance.out
+            exit 1
+          fi
+
+          # Floor: 85% pass rate. Drop below = regression.
+          RATE=$((PASSED * 100 / TOTAL))
+          echo "passed=$PASSED total=$TOTAL pass-rate=${RATE}%"
+          if [ "$RATE" -lt 85 ]; then
+            echo "::error::Postgres host conformance pass-rate dropped below 85% floor: ${RATE}%"
+            exit 1
+          fi
+
+      - name: Tear down host
+        if: always()
+        run: |
+          if [ -f /tmp/postgres-host.pid ]; then
+            kill "$(cat /tmp/postgres-host.pid)" 2>/dev/null || true
+          fi
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: postgres-host-conformance.log
+          path: |
+            /tmp/postgres-host.log
+            /tmp/conformance.out
+          if-no-files-found: ignore

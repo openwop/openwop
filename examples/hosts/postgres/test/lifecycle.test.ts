@@ -17,6 +17,14 @@
  * The conformance suite itself can be pointed at the running host with
  * `OPENWOP_BASE_URL=http://127.0.0.1:3839` for broader coverage; this
  * test covers the smallest end-to-end loop.
+ *
+ * @see spec/v1/rest-endpoints.md — POST /v1/runs + GET /v1/runs/{id} +
+ *   POST /v1/runs/{id}/cancel + GET /v1/runs/{id}/events/poll
+ * @see spec/v1/idempotency.md — Idempotency-Key replay semantics
+ *   (asserted in step 5: same key returns same runId + Idempotent-
+ *   Replay: true)
+ * @see spec/v1/run-events.md — run.started / node.started /
+ *   node.completed / run.completed event ordering
  */
 
 import assert from 'node:assert/strict';

@@ -1011,7 +1011,7 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
       protocolVersion: '1.0',
       implementation: {
         name: 'openwop-host-postgres',
-        version: '0.2.0-partial',
+        version: '1.0.0',
         vendor: 'openwop-spec (reference example — run-lifecycle + audit-log integrity)',
       },
       supportedEnvelopes: [],
@@ -1076,7 +1076,7 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
 function handleOpenApi(_req: IncomingMessage, res: ServerResponse): void {
   sendJSON(res, 200, {
     openapi: '3.1',
-    info: { title: 'openwop Postgres reference host', version: '0.2.0-partial' },
+    info: { title: 'openwop Postgres reference host', version: '1.0.0' },
     paths: {
       '/.well-known/openwop': { get: { responses: { '200': { description: 'OK' } } } },
       '/v1/runs': { post: { responses: { '201': { description: 'Created' } } } },
@@ -1633,7 +1633,7 @@ async function handleDebugBundle(
     generatedAt: new Date().toISOString(),
     host: {
       name: 'openwop-host-postgres',
-      version: '0.2.0-partial',
+      version: '1.0.0',
       vendor: 'openwop-spec (reference example)',
     },
     run: {
@@ -2104,7 +2104,7 @@ export async function start(): Promise<{ close: () => Promise<void> }> {
     actor: 'system',
     action: 'host.started',
     target: PROCESS_ID,
-    details: { host: 'openwop-host-postgres', version: '0.2.0-partial' },
+    details: { host: 'openwop-host-postgres', version: '1.0.0' },
   });
   await triggerCheckpointIfDue(q, auditSigningKey(), AUDIT_OPTS);
 

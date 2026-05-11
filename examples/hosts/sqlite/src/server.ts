@@ -132,6 +132,7 @@ interface FixtureWorkflow {
     inputs: Record<string, unknown>;
   }>;
   variables?: ReadonlyArray<{ name: string; type: string; required: boolean; defaultValue?: unknown }>;
+  configurableSchema?: Record<string, unknown>;
 }
 
 interface RunEvent {
@@ -990,8 +991,7 @@ async function handleCreateRun(req: IncomingMessage, res: ServerResponse): Promi
   // Per-workflow configurableSchema validation (run-options.md §"Per-workflow
   // configurableSchema"). When the workflow declares a schema, the host MUST
   // reject mismatched `configurable` overlays with `validation_error`.
-  const wfSchema = (workflow as unknown as { configurableSchema?: Record<string, unknown> })
-    .configurableSchema;
+  const wfSchema = workflow.configurableSchema;
   if (wfSchema && parsed.configurable !== undefined) {
     const check = validateConfigurable(wfSchema, parsed.configurable);
     if (!check.valid) {
