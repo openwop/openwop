@@ -24,9 +24,10 @@
  * @see spec/v1/interrupt-profiles.md §openwop-interrupt-quorum
  */
 
+import { randomBytes } from 'node:crypto';
 import type Database from 'better-sqlite3';
 
-export type InterruptKind = 'approval' | 'clarification';
+export type InterruptKind = 'approval' | 'clarification' | 'external-event';
 
 export interface ApprovalConfig {
   readonly actions: ReadonlyArray<string>;
@@ -41,7 +42,13 @@ export interface ClarificationConfig {
   readonly questions: ReadonlyArray<{ id: string; question: string; kind?: string }>;
 }
 
-export type InterruptConfig = ApprovalConfig | ClarificationConfig;
+export interface ExternalEventConfig {
+  readonly eventType?: string;
+  readonly correlation?: Record<string, unknown>;
+  readonly timeoutMs?: number;
+}
+
+export type InterruptConfig = ApprovalConfig | ClarificationConfig | ExternalEventConfig;
 
 export interface Vote {
   readonly action: string;
@@ -58,6 +65,7 @@ export interface InterruptRow {
   readonly votes_json: string;
   readonly resolved_at: string | null;
   readonly outcome: string | null;
+  readonly callback_token: string | null;
 }
 
 export type ResolveOutcome =
@@ -78,15 +86,34 @@ export function setupInterruptSchema(db: Database.Database): void {
       votes_json TEXT NOT NULL DEFAULT '[]',
       resolved_at TEXT,
       outcome TEXT,
+      callback_token TEXT,
       PRIMARY KEY (run_id, node_id),
       FOREIGN KEY (run_id) REFERENCES runs(run_id) ON DELETE CASCADE
     );
 
     CREATE INDEX IF NOT EXISTS idx_interrupts_run ON interrupts(run_id);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_interrupts_token ON interrupts(callback_token)
+      WHERE callback_token IS NOT NULL;
   `);
+
+  // Idempotent migration: older DBs may lack `callback_token`.
+  const cols = db
+    .prepare("PRAGMA table_info('interrupts')")
+    .all() as Array<{ name: string }>;
+  if (!cols.some((c) => c.name === 'callback_token')) {
+    db.exec("ALTER TABLE interrupts ADD COLUMN callback_token TEXT");
+    db.exec(
+      "CREATE UNIQUE INDEX IF NOT EXISTS idx_interrupts_token ON interrupts(callback_token) WHERE callback_token IS NOT NULL",
+    );
+  }
 }
 
-/** Persist a new interrupt when a node suspends. */
+/** Generate a 128-bit unguessable token for signed-callback resume. */
+export function generateCallbackToken(): string {
+  return randomBytes(16).toString('base64url');
+}
+
+/** Persist a new interrupt when a node suspends. Returns the callback token for external-event kinds. */
 export function createInterrupt(
   db: Database.Database,
   runId: string,
@@ -94,11 +121,67 @@ export function createInterrupt(
   kind: InterruptKind,
   config: InterruptConfig,
   payload: Record<string, unknown>,
-): void {
+): string | null {
+  const callbackToken = kind === 'external-event' ? generateCallbackToken() : null;
   db.prepare(
-    `INSERT INTO interrupts (run_id, node_id, kind, config_json, payload_json)
-     VALUES (?, ?, ?, ?, ?)`,
-  ).run(runId, nodeId, kind, JSON.stringify(config), JSON.stringify(payload));
+    `INSERT INTO interrupts (run_id, node_id, kind, config_json, payload_json, callback_token)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+  ).run(runId, nodeId, kind, JSON.stringify(config), JSON.stringify(payload), callbackToken);
+  return callbackToken;
+}
+
+/** Look up an interrupt by its signed callback token. */
+export function getInterruptByToken(
+  db: Database.Database,
+  token: string,
+): InterruptRow | undefined {
+  return db
+    .prepare(
+      'SELECT * FROM interrupts WHERE callback_token = ? AND resolved_at IS NULL',
+    )
+    .get(token) as InterruptRow | undefined;
+}
+
+/**
+ * Apply an external-event resolve via signed callback token. The resume
+ * value MUST shallow-match every key in the fixture's `config.correlation`
+ * map; mismatches return `invalid` (caller MUST return 422).
+ */
+export function resolveExternalEvent(
+  db: Database.Database,
+  runId: string,
+  nodeId: string,
+  resumeValue: unknown,
+): ResolveOutcome {
+  const row = getInterrupt(db, runId, nodeId);
+  if (!row || row.kind !== 'external-event') return { kind: 'unknown' };
+
+  if (typeof resumeValue !== 'object' || resumeValue === null) {
+    return {
+      kind: 'invalid',
+      status: 400,
+      code: 'validation_error',
+      message: 'resumeValue MUST be an object.',
+    };
+  }
+
+  const config = JSON.parse(row.config_json) as ExternalEventConfig;
+  const correlation = config.correlation ?? {};
+  const rv = resumeValue as Record<string, unknown>;
+  for (const [key, expected] of Object.entries(correlation)) {
+    if (rv[key] !== expected) {
+      return {
+        kind: 'invalid',
+        status: 422,
+        code: 'correlation_mismatch',
+        message: `External event correlation key "${key}" expected ${JSON.stringify(expected)}, got ${JSON.stringify(rv[key])}.`,
+      };
+    }
+  }
+
+  const vote: Vote = { action: 'external-event', timestamp: new Date().toISOString() };
+  markResolved(db, runId, nodeId, 'resolved', [vote]);
+  return { kind: 'resumed', votes: [vote], finalAction: 'external-event' };
 }
 
 export function getInterrupt(

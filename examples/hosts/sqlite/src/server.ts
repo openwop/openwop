@@ -65,12 +65,15 @@ import {
   setupInterruptSchema,
   createInterrupt,
   getInterrupt,
+  getInterruptByToken,
   getActiveInterrupt,
   resolveApproval,
   resolveClarification,
+  resolveExternalEvent,
   invalidateInterrupts,
   type ApprovalConfig,
   type ClarificationConfig,
+  type ExternalEventConfig,
 } from './interrupts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -95,7 +98,8 @@ type RunStatus =
   | 'failed'
   | 'cancelled'
   | 'waiting-approval'
-  | 'waiting-input';
+  | 'waiting-input'
+  | 'waiting-external';
 
 interface FixtureWorkflow {
   id: string;
@@ -477,6 +481,37 @@ async function executeNode(
       return 'suspended';
     }
 
+    case 'core.interrupt': {
+      // Generic interrupt — currently supports kind='external-event'.
+      const config = (node.config ?? {}) as { kind?: string; data?: ExternalEventConfig; timeoutMs?: number };
+      if (config.kind === 'external-event') {
+        const extConfig: ExternalEventConfig = {
+          ...(config.data?.eventType !== undefined ? { eventType: config.data.eventType } : {}),
+          ...(config.data?.correlation !== undefined ? { correlation: config.data.correlation } : {}),
+          ...(config.timeoutMs !== undefined ? { timeoutMs: config.timeoutMs } : {}),
+        };
+        const token = createInterrupt(db, runId, node.id, 'external-event', extConfig, {
+          kind: 'external-event',
+          nodeId: node.id,
+          config: extConfig,
+        });
+        const payload = {
+          kind: 'external-event',
+          nodeId: node.id,
+          config: extConfig,
+          interruptToken: token,
+          callbackUrl: `/v1/interrupts/${token}`,
+        };
+        appendEvent(runId, 'node.suspended', { nodeId: node.id, data: payload });
+        return 'suspended';
+      }
+      appendEvent(runId, 'node.failed', {
+        nodeId: node.id,
+        data: { code: 'unsupported_interrupt_kind', kind: config.kind ?? '<missing>' },
+      });
+      return 'failed';
+    }
+
     default:
       appendEvent(runId, 'node.failed', {
         nodeId: node.id,
@@ -553,7 +588,11 @@ async function runWorkflow(runId: string): Promise<void> {
         // Release the claim so the resolve handler (potentially in a
         // different process) can re-acquire and continue.
         const suspendStatus =
-          node.typeId === 'core.clarificationGate' ? 'waiting-input' : 'waiting-approval';
+          node.typeId === 'core.clarificationGate'
+            ? 'waiting-input'
+            : node.typeId === 'core.interrupt'
+              ? 'waiting-external'
+              : 'waiting-approval';
         db.prepare("UPDATE runs SET status = ?, next_node_index = ? WHERE run_id = ?").run(
           suspendStatus,
           i,
@@ -685,7 +724,12 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
     extensions: {
       interrupts: {
         // Optional interrupt profiles (interrupt-profiles.md).
-        profiles: ['openwop-interrupt-quorum', 'openwop-interrupt-auth-required'],
+        profiles: [
+          'openwop-interrupt-quorum',
+          'openwop-interrupt-auth-required',
+          'openwop-interrupt-external-event',
+        ],
+        signedCallbackTokens: true,
       },
     },
   }, { 'Cache-Control': 'public, max-age=300' });
@@ -812,16 +856,27 @@ function handleGetRun(req: IncomingMessage, res: ServerResponse, runId: string):
   }
 
   // Suspended runs expose the active interrupt + currentNodeId so clients
-  // can resolve via POST /v1/runs/{runId}/interrupts/{nodeId}.
+  // can resolve via POST /v1/runs/{runId}/interrupts/{nodeId} (or, for
+  // external-event interrupts, via POST /v1/interrupts/{token}).
   let interrupt: Record<string, unknown> | null = null;
   let currentNodeId: string | undefined;
-  if (row.status === 'waiting-approval' || row.status === 'waiting-input') {
+  if (
+    row.status === 'waiting-approval' ||
+    row.status === 'waiting-input' ||
+    row.status === 'waiting-external'
+  ) {
     const active = getActiveInterrupt(db, runId);
     if (active) {
       interrupt = {
         kind: active.kind,
         nodeId: active.node_id,
         payload: JSON.parse(active.payload_json),
+        ...(active.callback_token
+          ? {
+              interruptToken: active.callback_token,
+              callbackUrl: `/v1/interrupts/${active.callback_token}`,
+            }
+          : {}),
       };
       currentNodeId = active.node_id;
     }
@@ -955,6 +1010,97 @@ async function handleResolveInterrupt(
     status: 'running',
     interrupt: { kind: interrupt.kind, nodeId, outcome: 'accepted', votes: outcome.votes },
   });
+}
+
+async function handleResolveInterruptByToken(
+  req: IncomingMessage,
+  res: ServerResponse,
+  token: string,
+): Promise<void> {
+  // Signed-callback resolve: the token IS the authorization, so no bearer
+  // check here. The token's unguessability is the entire access control.
+  const interrupt = getInterruptByToken(db, token);
+  if (!interrupt) {
+    sendError(res, 404, 'interrupt_not_found', 'Unknown or expired interrupt token.');
+    return;
+  }
+
+  // The auth-required profile (interrupt-profiles.md §"openwop-interrupt-auth-required")
+  // REJECTS signed-token resolve when active. Hosts that advertise that
+  // profile MUST require a bearer credential instead.
+  const config = JSON.parse(interrupt.config_json) as { profile?: string };
+  if (config.profile === 'openwop-interrupt-auth-required') {
+    sendError(
+      res,
+      403,
+      'auth_elevation_required',
+      'This interrupt requires bearer authentication; signed-token resume is disabled.',
+    );
+    return;
+  }
+
+  const bodyText = await readBody(req);
+  let parsed: { resumeValue?: unknown };
+  try {
+    parsed = bodyText ? (JSON.parse(bodyText) as { resumeValue?: unknown }) : {};
+  } catch {
+    sendError(res, 400, 'validation_error', 'Request body MUST be valid JSON.');
+    return;
+  }
+
+  const outcome =
+    interrupt.kind === 'external-event'
+      ? resolveExternalEvent(db, interrupt.run_id, interrupt.node_id, parsed.resumeValue)
+      : { kind: 'invalid' as const, status: 400 as const, code: 'unsupported_token_kind', message: 'Signed-token resolve is not supported for this interrupt kind.' };
+
+  if (outcome.kind === 'unknown') {
+    sendError(res, 404, 'interrupt_not_found', 'Interrupt resolved or missing.');
+    return;
+  }
+  if (outcome.kind === 'invalid') {
+    sendError(res, outcome.status, outcome.code, outcome.message);
+    return;
+  }
+
+  logAudit(db, {
+    actor: 'callback-token',
+    action: 'interrupt.resolve',
+    target: `${interrupt.run_id}:${interrupt.node_id}`,
+    details: { outcome: outcome.kind, via: 'signed-token' },
+  });
+  triggerCheckpointIfDue(db, auditSigningKey, AUDIT_OPTS);
+
+  // For external-event: 'resumed' is the only success outcome.
+  if (outcome.kind === 'resumed') {
+    appendEvent(interrupt.run_id, 'node.resumed', {
+      nodeId: interrupt.node_id,
+      data: { action: outcome.finalAction },
+    });
+    appendEvent(interrupt.run_id, 'node.completed', { nodeId: interrupt.node_id });
+    const row = loadRun(interrupt.run_id);
+    if (row) {
+      db.prepare("UPDATE runs SET status = 'running', next_node_index = ? WHERE run_id = ?").run(
+        (row.next_node_index ?? 0) + 1,
+        interrupt.run_id,
+      );
+      if (tryClaim(interrupt.run_id)) {
+        void runWorkflow(interrupt.run_id).catch((err: unknown) => {
+          const message = err instanceof Error ? err.message : String(err);
+          appendEvent(interrupt.run_id, 'run.failed', { data: { code: 'internal', message } });
+          setRunTerminal(interrupt.run_id, 'failed', { code: 'internal', message });
+        });
+      }
+    }
+    sendJSON(res, 200, {
+      runId: interrupt.run_id,
+      nodeId: interrupt.node_id,
+      status: 'running',
+    });
+    return;
+  }
+
+  // Unreachable for external-event resolve, but exhaustiveness keeps TS happy.
+  sendError(res, 500, 'internal', 'Unexpected resolve outcome.');
 }
 
 function handleAuditVerify(req: IncomingMessage, res: ServerResponse, url: URL): void {
@@ -1173,6 +1319,7 @@ const RUN_EVENTS_POLL_PATTERN = /^\/v1\/runs\/([^/]+)\/events\/poll$/;
 const RUN_EVENTS_SSE_PATTERN = /^\/v1\/runs\/([^/]+)\/events$/;
 const RUN_DEBUG_BUNDLE_PATTERN = /^\/v1\/runs\/([^/]+)\/debug-bundle$/;
 const RUN_INTERRUPT_PATTERN = /^\/v1\/runs\/([^/]+)\/interrupts\/([^/]+)$/;
+const INTERRUPT_TOKEN_PATTERN = /^\/v1\/interrupts\/([^/]+)$/;
 
 async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
@@ -1194,6 +1341,9 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   if (m && method === 'POST') return handleCancelRun(req, res, m[1]!);
   m = RUN_INTERRUPT_PATTERN.exec(path);
   if (m && method === 'POST') return handleResolveInterrupt(req, res, m[1]!, decodeURIComponent(m[2]!));
+  m = INTERRUPT_TOKEN_PATTERN.exec(path);
+  if (m && method === 'POST')
+    return handleResolveInterruptByToken(req, res, decodeURIComponent(m[1]!));
   m = RUN_ID_PATTERN.exec(path);
   if (m && method === 'GET') return handleGetRun(req, res, m[1]!);
 
