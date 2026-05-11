@@ -1,9 +1,9 @@
 # Conformance Result: openwop SQLite Reference Host
 
-> **Run date:** 2026-05-01 (audit-log-integrity profile added 2026-05-11)
+> **Run date:** 2026-05-01 (audit-log-integrity profile added 2026-05-11; four interrupt profiles added 2026-05-11)
 > **Host version:** `openwop-host-sqlite@1.0.0`
 > **Conformance suite:** `@openwop/openwop-conformance@1.12.0`
-> **Profile claim:** `openwop-core` + `openwop-stream-poll` + `openwop-stream-sse` + `openwop-audit-log-integrity` (since 2026-05-11) + (debug-bundle advertised)
+> **Profile claim:** `openwop-core` + `openwop-stream-poll` + `openwop-stream-sse` + `openwop-audit-log-integrity` + `openwop-interrupt-quorum` + `openwop-interrupt-auth-required` + `openwop-interrupt-external-event` + `openwop-interrupt-cascade-cancel` (since 2026-05-11) + (debug-bundle advertised)
 > **Scale claim:** `minimal` (single-process; SQLite single-writer)
 
 ## Summary
@@ -57,14 +57,20 @@ The SQLite host is the cheapest possible proof of "I can replace the storage lay
 | `highConcurrency.test.ts` | ✅ PASS | 4/4 | |
 | `debugBundle.test.ts` | ✅ PASS | 6/6 | host advertises `debugBundle.supported: true` |
 | `audit-log-integrity.test.ts` | ✅ PASS | 2/2 | passes in strict mode (`OPENWOP_REQUIRE_BEHAVIOR=true`); host emits Ed25519-signed checkpoints over a hash-chained audit log. Internal tamper test at `test/audit-tamper.test.ts` proves chainValid: false on in-place mutation. |
+| `interrupt-approval.test.ts` | ✅ PASS | 3/3 | baseline `core.approvalGate` end-to-end (suspend → resolve → terminal). |
+| `interrupt-clarification.test.ts` | ✅ PASS | 1/1 | `core.clarificationGate` with question-set resume validation. |
+| `interrupt-quorum-resolution.test.ts` | ✅ PASS | 2/2 | three-accepts-resume + majority-reject paths against `core.approvalGate` config `requiredApprovals: 3, rejectionPolicy: majority`. |
+| `interrupt-auth-required-resume.test.ts` | ✅ PASS | 2/2 | bearer-token resolve succeeds; signed-token resolve REJECTED with 403 when the interrupt config carries `profile: openwop-interrupt-auth-required`. Insufficient-scope subtest auto-skips without `OPENWOP_TEST_LOW_SCOPE_KEY`. |
+| `interrupt-external-event-correlation.test.ts` | ✅ PASS | 2/2 | `core.interrupt kind=external-event` with signed callback token at `/v1/interrupts/{token}`; matching correlation resumes, mismatched returns 422 `correlation_mismatch`. |
+| `interrupt-parent-child-cascade.test.ts` | ✅ PASS | 2/2 | `core.subWorkflow` dispatch + parent/child linkage in snapshot (`childRuns[]`); parent cancel cascades to child (both reach terminal `cancelled`); late resolve on cascaded child returns 404. |
 | `runtime-capabilities.test.ts` | ❌ 1/2 | | host advertises empty `runtimeCapabilities`; out-of-profile |
 | `version-negotiation.test.ts` | ❌ 1/4 | | event-shape `seq` vs spec's `eventId+sequence` (same gap as in-memory) |
 | `cap-breach.test.ts` | ❌ 0/2 | | host doesn't enforce `recursionLimit` — out-of-profile |
 | `channel-ttl.test.ts` | ❌ 0/1 | | channels not implemented — out-of-profile |
 | `subworkflow.test.ts` | ❌ 0/2 | | sub-workflows not implemented — out-of-profile |
 | `replay-fork.test.ts` | ❌ 1/6 | | `POST /v1/runs:fork` not implemented — out-of-profile |
-| `interrupt-approval.test.ts` | ❌ 0/3 | | host doesn't claim `openwop-interrupts` |
-| `interrupt-clarification.test.ts` | ❌ 0/1 | | same |
+~~| `interrupt-approval.test.ts` | ❌ 0/3 | | host doesn't claim `openwop-interrupts` |~~ — closed 2026-05-11 (T1.2 commit A).
+~~| `interrupt-clarification.test.ts` | ❌ 0/1 | | same |~~ — closed 2026-05-11 (T1.2 commit A).
 | `pack-registry.test.ts` | ❌ 5/8 | | host doesn't claim `openwop-node-packs` |
 | `stream-modes.test.ts` | ❌ 3/4 | | mixed-mode SSE buffering scenario fails (advanced) |
 | `stream-modes-buffer.test.ts` | ❌ 1/4 | | `bufferMs` query forwarding not implemented |
@@ -122,6 +128,7 @@ Typical wall-clock: ~5–8 seconds. The dominant cost is the 5-second `core.dela
 1. ~~**Resume-on-startup.**~~ ✅ Live as of 2026-05-01.
 2. ~~**Heartbeat renewal.**~~ ✅ Live as of 2026-05-01.
 3. ~~**Audit-log integrity profile.**~~ ✅ Live as of 2026-05-11. Hash-chained `audit_log` table + Ed25519-signed `audit_checkpoints`; `GET /v1/audit/verify` reports `chainValid` + anomalies. Wiring under `src/audit.ts`.
-4. **Postgres adapter.** Same schema, swap the DB driver, gain horizontal scale-out. Filed as a future row in `INTEROP-MATRIX.md`.
+4. ~~**HITL interrupts + four optional profiles.**~~ ✅ Live as of 2026-05-11 (T1.2 commits A–D). `core.approvalGate` / `core.clarificationGate` / `core.interrupt` / `core.subWorkflow` node types; `POST /v1/runs/{runId}/interrupts/{nodeId}` + `POST /v1/interrupts/{token}` resolve routes; `interrupts` table with hash-chain'd vote ledger; parent/child cascade via `parent_run_id` linkage. Wiring under `src/interrupts.ts`.
+5. **Postgres adapter.** Same schema, swap the DB driver, gain horizontal scale-out. Filed as a future row in `INTEROP-MATRIX.md`.
 4. **Multi-tenancy.** Add `tenant_id` to every table + composite primary keys. Currently single hardcoded tenant.
 5. **Layer-2 idempotency** for non-pure nodes. The reference example only ships pure nodes (`core.noop`, `core.delay`); a fork that adds `core.ai.callPrompt` MUST persist invocation results to dedupe on resume.

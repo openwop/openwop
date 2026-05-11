@@ -10,7 +10,7 @@ This matrix records public, reproducible compatibility evidence for openwop-comp
 | Host | Use case | Repo / Path | Compatibility profile claim | Scale claim | Production profile claim | Conformance link |
 |---|---|---|---|---|---|---|
 | **In-memory** (reference example) | Local development / fastest boot / no persistence | `examples/hosts/in-memory/` | `openwop-core` · `openwop-stream-sse` · `openwop-stream-poll` | `minimal` | Not claimed | `examples/hosts/in-memory/conformance.md` |
-| **SQLite** (reference example) | Single-machine durability / process-restart-safe walkthrough | `examples/hosts/sqlite/` | `openwop-core` · `openwop-stream-sse` · `openwop-stream-poll` · `openwop-audit-log-integrity` (since 2026-05-11) | `minimal` | Not claimed | `examples/hosts/sqlite/conformance.md` |
+| **SQLite** (reference example) | Single-machine durability / process-restart-safe walkthrough | `examples/hosts/sqlite/` | `openwop-core` · `openwop-stream-sse` · `openwop-stream-poll` · `openwop-audit-log-integrity` · `openwop-interrupt-quorum` · `openwop-interrupt-auth-required` · `openwop-interrupt-external-event` · `openwop-interrupt-cascade-cancel` (all since 2026-05-11) | `minimal` | Not claimed | `examples/hosts/sqlite/conformance.md` |
 | **Python in-memory** (reference example) | Cross-language portability proof / Python 3.11 stdlib-only port of the TypeScript in-memory host | `examples/hosts/python/` | `openwop-core` · `openwop-stream-sse` · `openwop-stream-poll` | `minimal` | Not claimed | `examples/hosts/python/conformance.md` |
 
 Third-party hosts can append rows by opening a PR with their advertised profiles, suite version, and a public conformance result.

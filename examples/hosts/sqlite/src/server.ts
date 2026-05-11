@@ -143,7 +143,9 @@ db.exec(`
     error_json TEXT,
     claim_holder_id TEXT,
     claim_expires_at INTEGER,
-    next_node_index INTEGER NOT NULL DEFAULT 0
+    next_node_index INTEGER NOT NULL DEFAULT 0,
+    parent_run_id TEXT,
+    parent_node_id TEXT
   );
 
   CREATE TABLE IF NOT EXISTS events (
@@ -169,13 +171,21 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_idem_stored_at ON idempotency(stored_at);
 `);
 
-// Idempotent migration: older DBs may lack `next_node_index` on `runs`.
+// Idempotent migration: older DBs may lack newer columns on `runs`.
 const runColumns = db
   .prepare("PRAGMA table_info('runs')")
   .all() as Array<{ name: string }>;
-if (!runColumns.some((c) => c.name === 'next_node_index')) {
+const runColNames = new Set(runColumns.map((c) => c.name));
+if (!runColNames.has('next_node_index')) {
   db.exec("ALTER TABLE runs ADD COLUMN next_node_index INTEGER NOT NULL DEFAULT 0");
 }
+if (!runColNames.has('parent_run_id')) {
+  db.exec("ALTER TABLE runs ADD COLUMN parent_run_id TEXT");
+}
+if (!runColNames.has('parent_node_id')) {
+  db.exec("ALTER TABLE runs ADD COLUMN parent_node_id TEXT");
+}
+db.exec("CREATE INDEX IF NOT EXISTS idx_runs_parent ON runs(parent_run_id)");
 
 // HITL interrupts (interrupt.md + interrupt-profiles.md).
 setupInterruptSchema(db);
@@ -285,6 +295,8 @@ interface RunRow {
   claim_holder_id: string | null;
   claim_expires_at: number | null;
   next_node_index: number;
+  parent_run_id: string | null;
+  parent_node_id: string | null;
 }
 
 interface EventRow {
@@ -334,6 +346,31 @@ function setRunTerminal(
   const endedAt = new Date().toISOString();
   stmts.updateRunStatus.run(status, endedAt, error ? JSON.stringify(error) : null, runId);
   stmts.releaseClaim.run(runId, PROCESS_ID);
+}
+
+/**
+ * Cancel a run from inside the host (cascade from parent, etc.). For a
+ * suspended run we drive directly to terminal `cancelled` (no executor
+ * running to observe a `cancelling` flip); for an executing run we set
+ * `cancelling` and abort the in-flight node.
+ */
+function cancelRunInternal(runId: string, reason: string): void {
+  const row = loadRun(runId);
+  if (!row) return;
+  if (row.status === 'completed' || row.status === 'failed' || row.status === 'cancelled') return;
+  const isSuspended =
+    row.status === 'waiting-approval' ||
+    row.status === 'waiting-input' ||
+    row.status === 'waiting-external';
+  if (isSuspended) {
+    invalidateInterrupts(db, runId, reason);
+    appendEvent(runId, 'run.cancelled', { data: { reason } });
+    setRunTerminal(runId, 'cancelled', null);
+    return;
+  }
+  stmts.setCancelRequested.run(runId);
+  appendEvent(runId, 'run.cancelling', { data: { reason } });
+  runningAborters.get(runId)?.abort();
 }
 
 // ─── Claim + execution ───────────────────────────────────────────────────────
@@ -479,6 +516,102 @@ async function executeNode(
       createInterrupt(db, runId, node.id, 'clarification', clarConfig, payload);
       appendEvent(runId, 'node.suspended', { nodeId: node.id, data: payload });
       return 'suspended';
+    }
+
+    case 'core.subWorkflow': {
+      // Dispatch a child run, mirror its status onto the parent while
+      // it waits, and resolve when the child terminates.
+      const config = (node.config ?? {}) as { workflowId?: string; propagateCancellation?: boolean };
+      const childWorkflowId = config.workflowId;
+      if (typeof childWorkflowId !== 'string' || !workflows.has(childWorkflowId)) {
+        appendEvent(runId, 'node.failed', {
+          nodeId: node.id,
+          data: { code: 'unknown_child_workflow', workflowId: childWorkflowId },
+        });
+        return 'failed';
+      }
+
+      // Idempotent: reuse an existing in-flight child (resume after parent restart).
+      const existing = db
+        .prepare('SELECT run_id FROM runs WHERE parent_run_id = ? AND parent_node_id = ?')
+        .get(runId, node.id) as { run_id: string } | undefined;
+      let childRunId = existing?.run_id;
+      if (!childRunId) {
+        childRunId = `run-${randomUUID()}`;
+        const startedAt = new Date().toISOString();
+        db.prepare(
+          `INSERT INTO runs (run_id, workflow_id, status, inputs_json, started_at, parent_run_id, parent_node_id)
+           VALUES (?, ?, 'pending', '{}', ?, ?, ?)`,
+        ).run(childRunId, childWorkflowId, startedAt, runId, node.id);
+        appendEvent(runId, 'node.dispatched', {
+          nodeId: node.id,
+          data: { childRunId, childWorkflowId },
+        });
+        if (tryClaim(childRunId)) {
+          void runWorkflow(childRunId).catch((err: unknown) => {
+            const message = err instanceof Error ? err.message : String(err);
+            appendEvent(childRunId!, 'run.failed', { data: { code: 'internal', message } });
+            setRunTerminal(childRunId!, 'failed', { code: 'internal', message });
+          });
+        }
+      }
+
+      // Mirror the child's status onto the parent. Loop with short
+      // sleeps until child reaches terminal or parent is cancelled.
+      while (true) {
+        const refreshed = loadRun(runId);
+        if (refreshed?.status === 'cancelling') {
+          // Cascade: cancel the child if it's not already terminal.
+          if (config.propagateCancellation !== false) {
+            cancelRunInternal(childRunId, 'parent-cancelled');
+          }
+          appendEvent(runId, 'node.cancelled', { nodeId: node.id });
+          return 'cancelled';
+        }
+        const child = loadRun(childRunId);
+        if (!child) {
+          appendEvent(runId, 'node.failed', {
+            nodeId: node.id,
+            data: { code: 'child_missing', childRunId },
+          });
+          return 'failed';
+        }
+        if (child.status === 'completed') {
+          appendEvent(runId, 'node.completed', {
+            nodeId: node.id,
+            data: { childRunId, childOutcome: 'completed' },
+          });
+          // Reset parent to running before next iteration.
+          db.prepare("UPDATE runs SET status = 'running' WHERE run_id = ?").run(runId);
+          return 'completed';
+        }
+        if (child.status === 'failed') {
+          appendEvent(runId, 'node.failed', {
+            nodeId: node.id,
+            data: { code: 'child_failed', childRunId },
+          });
+          return 'failed';
+        }
+        if (child.status === 'cancelled') {
+          appendEvent(runId, 'node.cancelled', { nodeId: node.id, data: { childRunId } });
+          return 'cancelled';
+        }
+        // Mirror suspend state from child onto parent.
+        const childWaiting =
+          child.status === 'waiting-approval' ||
+          child.status === 'waiting-input' ||
+          child.status === 'waiting-external';
+        if (childWaiting && refreshed?.status !== child.status) {
+          db.prepare('UPDATE runs SET status = ? WHERE run_id = ?').run(child.status, runId);
+        } else if (!childWaiting && refreshed?.status !== 'running') {
+          db.prepare("UPDATE runs SET status = 'running' WHERE run_id = ?").run(runId);
+        }
+        try {
+          await sleep(50, signal);
+        } catch {
+          // signal aborted (cancel path). Loop top will see cancelling.
+        }
+      }
     }
 
     case 'core.interrupt': {
@@ -728,6 +861,7 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
           'openwop-interrupt-quorum',
           'openwop-interrupt-auth-required',
           'openwop-interrupt-external-event',
+          'openwop-interrupt-cascade-cancel',
         ],
         signedCallbackTokens: true,
       },
@@ -882,6 +1016,16 @@ function handleGetRun(req: IncomingMessage, res: ServerResponse, runId: string):
     }
   }
 
+  // Surface child runs spawned via `core.subWorkflow` so clients can
+  // observe parent/child linkage and conformance scenarios can walk
+  // the cascade. Empty array when no children.
+  const children = db
+    .prepare(
+      'SELECT run_id, status FROM runs WHERE parent_run_id = ? ORDER BY started_at ASC',
+    )
+    .all(runId) as Array<{ run_id: string; status: string }>;
+  const childRuns = children.map((c) => ({ runId: c.run_id, status: c.status }));
+
   sendJSON(res, 200, {
     runId: row.run_id,
     workflowId: row.workflow_id,
@@ -892,6 +1036,8 @@ function handleGetRun(req: IncomingMessage, res: ServerResponse, runId: string):
     ...(row.error_json ? { error: JSON.parse(row.error_json) } : {}),
     ...(currentNodeId ? { currentNodeId } : {}),
     ...(interrupt ? { interrupt } : {}),
+    ...(row.parent_run_id ? { parentRunId: row.parent_run_id, parentNodeId: row.parent_node_id } : {}),
+    ...(childRuns.length > 0 ? { childRuns } : {}),
   });
 }
 
@@ -1135,10 +1281,26 @@ async function handleCancelRun(
     return;
   }
 
+  // Cascade cancel: invalidate any active children first. The child's
+  // parent's executor poll loop also handles cascade defensively, but
+  // doing it eagerly here means the resulting GET on children shows
+  // terminal 'cancelled' sooner.
+  const children = db
+    .prepare(
+      "SELECT run_id FROM runs WHERE parent_run_id = ? AND status NOT IN ('completed','failed','cancelled')",
+    )
+    .all(runId) as Array<{ run_id: string }>;
+  for (const c of children) {
+    cancelRunInternal(c.run_id, 'parent-cancelled');
+  }
+
   // If the run is suspended on an interrupt, there's no executor running
   // to observe a 'cancelling' flip — drive the run directly to cancelled
   // and invalidate any pending interrupts.
-  const isSuspended = row.status === 'waiting-approval' || row.status === 'waiting-input';
+  const isSuspended =
+    row.status === 'waiting-approval' ||
+    row.status === 'waiting-input' ||
+    row.status === 'waiting-external';
   if (isSuspended) {
     invalidateInterrupts(db, runId, 'cancelled');
     appendEvent(runId, 'run.cancelled');
@@ -1147,7 +1309,7 @@ async function handleCancelRun(
       actor: 'tenant:default',
       action: 'run.cancel',
       target: runId,
-      details: { priorStatus: row.status, viaSuspended: true },
+      details: { priorStatus: row.status, viaSuspended: true, cascadedChildren: children.length },
     });
     triggerCheckpointIfDue(db, auditSigningKey, AUDIT_OPTS);
     sendJSON(res, 200, { runId, status: 'cancelled' });
@@ -1159,7 +1321,7 @@ async function handleCancelRun(
     actor: 'tenant:default',
     action: 'run.cancel',
     target: runId,
-    details: { priorStatus: row.status },
+    details: { priorStatus: row.status, cascadedChildren: children.length },
   });
   triggerCheckpointIfDue(db, auditSigningKey, AUDIT_OPTS);
   // If the run is executing in THIS process, abort its in-flight node.
