@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "checks": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "sourcePath": { "type": "string" },
+          "targetPath": { "type": "string" },
+          "compare": { "type": "string", "enum": ["equal", "gte", "lte", "exists", "count-match"] }
+        },
+        "required": ["name", "sourcePath", "targetPath", "compare"],
+        "additionalProperties": false
+      }
+    },
+    "failOnMismatch": { "type": "boolean", "default": false }
+  },
+  "additionalProperties": true
+}
