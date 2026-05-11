@@ -231,6 +231,16 @@ export function loadOrCreateSigningKey(privateKeyPath: string, publicKeyPath: st
 /**
  * Append an audit entry. Hash chain is computed in-transaction so a
  * concurrent writer can't interleave between prev-hash read and insert.
+ *
+ * Single-process invariant: better-sqlite3 serializes transactions
+ * within one Node process, so two `logAudit` calls in the same process
+ * never observe the same prior tip. Multi-process operation (planned
+ * for the Phase 2 Postgres-backed host) would need an atomic sequence
+ * primitive — either a Postgres SEQUENCE or a SELECT … FOR UPDATE on
+ * a `audit_seq` row — to retain the same guarantee. The PK + UNIQUE
+ * constraints on `seq` and `entry_hash` cause a second-writer INSERT
+ * to fail loudly rather than silently corrupt the chain, but graceful
+ * retry under contention is not implemented here.
  */
 export function logAudit(
   db: Database.Database,

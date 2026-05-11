@@ -66,6 +66,7 @@ export interface InterruptRow {
   readonly resolved_at: string | null;
   readonly outcome: string | null;
   readonly callback_token: string | null;
+  readonly expires_at: string | null;
 }
 
 export type ResolveOutcome =
@@ -73,6 +74,7 @@ export type ResolveOutcome =
   | { kind: 'resumed'; votes: Vote[]; finalAction: string }
   | { kind: 'rejected'; votes: Vote[] }
   | { kind: 'invalid'; status: 400 | 422; code: string; message: string }
+  | { kind: 'expired' }
   | { kind: 'unknown' };
 
 export function setupInterruptSchema(db: Database.Database): void {
@@ -87,6 +89,7 @@ export function setupInterruptSchema(db: Database.Database): void {
       resolved_at TEXT,
       outcome TEXT,
       callback_token TEXT,
+      expires_at TEXT,
       PRIMARY KEY (run_id, node_id),
       FOREIGN KEY (run_id) REFERENCES runs(run_id) ON DELETE CASCADE
     );
@@ -96,15 +99,19 @@ export function setupInterruptSchema(db: Database.Database): void {
       WHERE callback_token IS NOT NULL;
   `);
 
-  // Idempotent migration: older DBs may lack `callback_token`.
+  // Idempotent migration: older DBs may lack `callback_token` / `expires_at`.
   const cols = db
     .prepare("PRAGMA table_info('interrupts')")
     .all() as Array<{ name: string }>;
-  if (!cols.some((c) => c.name === 'callback_token')) {
+  const have = new Set(cols.map((c) => c.name));
+  if (!have.has('callback_token')) {
     db.exec("ALTER TABLE interrupts ADD COLUMN callback_token TEXT");
     db.exec(
       "CREATE UNIQUE INDEX IF NOT EXISTS idx_interrupts_token ON interrupts(callback_token) WHERE callback_token IS NOT NULL",
     );
+  }
+  if (!have.has('expires_at')) {
+    db.exec("ALTER TABLE interrupts ADD COLUMN expires_at TEXT");
   }
 }
 
@@ -123,10 +130,28 @@ export function createInterrupt(
   payload: Record<string, unknown>,
 ): string | null {
   const callbackToken = kind === 'external-event' ? generateCallbackToken() : null;
+  // External-event interrupts honor `config.timeoutMs` from the fixture
+  // (interrupt-profiles.md §"openwop-interrupt-external-event"). Other
+  // kinds run unbounded — operators ratify approvals on their own
+  // schedule, which the spec does not constrain at the protocol level.
+  const timeoutMs =
+    kind === 'external-event' ? (config as ExternalEventConfig).timeoutMs : undefined;
+  const expiresAt =
+    typeof timeoutMs === 'number' && timeoutMs > 0
+      ? new Date(Date.now() + timeoutMs).toISOString()
+      : null;
   db.prepare(
-    `INSERT INTO interrupts (run_id, node_id, kind, config_json, payload_json, callback_token)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-  ).run(runId, nodeId, kind, JSON.stringify(config), JSON.stringify(payload), callbackToken);
+    `INSERT INTO interrupts (run_id, node_id, kind, config_json, payload_json, callback_token, expires_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+  ).run(
+    runId,
+    nodeId,
+    kind,
+    JSON.stringify(config),
+    JSON.stringify(payload),
+    callbackToken,
+    expiresAt,
+  );
   return callbackToken;
 }
 
@@ -142,6 +167,31 @@ export function getInterruptByToken(
     .get(token) as InterruptRow | undefined;
 }
 
+/** True iff the interrupt's `expires_at` is in the past. */
+export function isInterruptExpired(row: InterruptRow): boolean {
+  if (!row.expires_at) return false;
+  return new Date(row.expires_at).getTime() <= Date.now();
+}
+
+/**
+ * Mark an interrupt as expired. Idempotent — re-marking is a no-op.
+ * Returns true if a row was actually flipped (the interrupt was active
+ * up to this call); false if it was already resolved or didn't exist.
+ */
+export function markExpired(
+  db: Database.Database,
+  runId: string,
+  nodeId: string,
+): boolean {
+  const result = db
+    .prepare(
+      `UPDATE interrupts SET resolved_at = ?, outcome = 'expired'
+       WHERE run_id = ? AND node_id = ? AND resolved_at IS NULL`,
+    )
+    .run(new Date().toISOString(), runId, nodeId);
+  return result.changes > 0;
+}
+
 /**
  * Apply an external-event resolve via signed callback token. The resume
  * value MUST shallow-match every key in the fixture's `config.correlation`
@@ -155,6 +205,10 @@ export function resolveExternalEvent(
 ): ResolveOutcome {
   const row = getInterrupt(db, runId, nodeId);
   if (!row || row.kind !== 'external-event') return { kind: 'unknown' };
+  if (isInterruptExpired(row)) {
+    markExpired(db, runId, nodeId);
+    return { kind: 'expired' };
+  }
 
   if (typeof resumeValue !== 'object' || resumeValue === null) {
     return {
@@ -169,7 +223,7 @@ export function resolveExternalEvent(
   const correlation = config.correlation ?? {};
   const rv = resumeValue as Record<string, unknown>;
   for (const [key, expected] of Object.entries(correlation)) {
-    if (rv[key] !== expected) {
+    if (!deepEqual(rv[key], expected)) {
       return {
         kind: 'invalid',
         status: 422,
@@ -182,6 +236,36 @@ export function resolveExternalEvent(
   const vote: Vote = { action: 'external-event', timestamp: new Date().toISOString() };
   markResolved(db, runId, nodeId, 'resolved', [vote]);
   return { kind: 'resumed', votes: [vote], finalAction: 'external-event' };
+}
+
+/**
+ * Structural-equality check for correlation values. Handles nested
+ * objects by comparing key sets + recursive value equality (key order
+ * doesn't matter, so two objects that differ only in declaration order
+ * compare equal). Sufficient for any JSON-deserialized value —
+ * `undefined`, `Symbol`, function values etc. can't appear here.
+ */
+function deepEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (a === null || b === null) return false;
+  if (typeof a !== typeof b) return false;
+  if (typeof a !== 'object') return false;
+  if (Array.isArray(a) || Array.isArray(b)) {
+    if (!Array.isArray(a) || !Array.isArray(b)) return false;
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) if (!deepEqual(a[i], b[i])) return false;
+    return true;
+  }
+  const ao = a as Record<string, unknown>;
+  const bo = b as Record<string, unknown>;
+  const ak = Object.keys(ao);
+  const bk = Object.keys(bo);
+  if (ak.length !== bk.length) return false;
+  for (const k of ak) {
+    if (!Object.prototype.hasOwnProperty.call(bo, k)) return false;
+    if (!deepEqual(ao[k], bo[k])) return false;
+  }
+  return true;
 }
 
 export function getInterrupt(
@@ -249,6 +333,10 @@ export function resolveApproval(
 ): ResolveOutcome {
   const row = getInterrupt(db, runId, nodeId);
   if (!row || row.kind !== 'approval') return { kind: 'unknown' };
+  if (isInterruptExpired(row)) {
+    markExpired(db, runId, nodeId);
+    return { kind: 'expired' };
+  }
 
   if (typeof resumeValue !== 'object' || resumeValue === null) {
     return {
@@ -278,33 +366,39 @@ export function resolveApproval(
     ...(typeof rv.voter === 'string' ? { voter: rv.voter } : {}),
   };
 
-  // Idempotency on (voter, action): if a voter re-submits the same action,
-  // keep one entry. A voter changing their vote replaces their prior entry.
-  const dedupedVotes = newVote.voter
+  // Per-voter last-write-wins semantics (NOT classical idempotency).
+  // A second vote from the same voter REPLACES their prior vote —
+  // this supports the revote-after-discussion UX common in quorum
+  // approval gates. Anonymous votes (no voter id) always append.
+  // See interrupt-profiles.md §"openwop-interrupt-quorum" — the spec's
+  // "duplicate decisions … are idempotent and auditable" applies to
+  // strict-duplicate (same voter, same action) where the resulting
+  // vote ledger is functionally unchanged.
+  const updatedVotes = newVote.voter
     ? [...votes.filter((v) => v.voter !== newVote.voter), newVote]
     : [...votes, newVote];
 
   const required = config.requiredApprovals ?? 1;
-  const accepts = dedupedVotes.filter((v) => v.action === 'accept').length;
-  const rejects = dedupedVotes.filter((v) => v.action === 'reject').length;
+  const accepts = updatedVotes.filter((v) => v.action === 'accept').length;
+  const rejects = updatedVotes.filter((v) => v.action === 'reject').length;
   const rejectionPolicy = config.rejectionPolicy ?? 'first';
 
   // Resume condition: enough accepts.
   if (accepts >= required) {
-    markResolved(db, runId, nodeId, 'accepted', dedupedVotes);
-    return { kind: 'resumed', votes: dedupedVotes, finalAction: 'accept' };
+    markResolved(db, runId, nodeId, 'accepted', updatedVotes);
+    return { kind: 'resumed', votes: updatedVotes, finalAction: 'accept' };
   }
 
   // Reject condition: per-policy.
   const rejectThreshold = rejectionPolicy === 'majority' ? Math.floor(required / 2) + 1 : 1;
   if (rejects >= rejectThreshold) {
-    markResolved(db, runId, nodeId, 'rejected', dedupedVotes);
-    return { kind: 'rejected', votes: dedupedVotes };
+    markResolved(db, runId, nodeId, 'rejected', updatedVotes);
+    return { kind: 'rejected', votes: updatedVotes };
   }
 
   // Still waiting.
-  updateVotes(db, runId, nodeId, dedupedVotes);
-  return { kind: 'pending', votes: dedupedVotes };
+  updateVotes(db, runId, nodeId, updatedVotes);
+  return { kind: 'pending', votes: updatedVotes };
 }
 
 /**

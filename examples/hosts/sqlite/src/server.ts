@@ -537,6 +537,11 @@ async function executeNode(
       };
       createInterrupt(db, runId, node.id, 'approval', approvalConfig, payload);
       appendEvent(runId, 'node.suspended', { nodeId: node.id, data: payload });
+      // Close the OTel node span on suspend so the trace exporter ships
+      // a complete span (start + end) for the node-execution slice; on
+      // resume the executor re-enters this node and startNodeSpan will
+      // open a fresh span for the resumed slice.
+      endNodeSpan(runId, node.id, 'suspended');
       return 'suspended';
     }
 
@@ -552,6 +557,11 @@ async function executeNode(
       };
       createInterrupt(db, runId, node.id, 'clarification', clarConfig, payload);
       appendEvent(runId, 'node.suspended', { nodeId: node.id, data: payload });
+      // Close the OTel node span on suspend so the trace exporter ships
+      // a complete span (start + end) for the node-execution slice; on
+      // resume the executor re-enters this node and startNodeSpan will
+      // open a fresh span for the resumed slice.
+      endNodeSpan(runId, node.id, 'suspended');
       return 'suspended';
     }
 
@@ -1170,6 +1180,12 @@ async function handleResolveInterrupt(
     sendError(res, 404, 'interrupt_not_found', 'Interrupt resolved or missing.');
     return;
   }
+  if (outcome.kind === 'expired') {
+    // 410 Gone is the spec-preferred late-resolve code; same shape as
+    // the post-cascade resolve path in interrupt-profiles.md.
+    sendError(res, 410, 'interrupt_expired', 'Interrupt has expired.');
+    return;
+  }
   if (outcome.kind === 'invalid') {
     sendError(res, outcome.status, outcome.code, outcome.message);
     return;
@@ -1286,6 +1302,10 @@ async function handleResolveInterruptByToken(
 
   if (outcome.kind === 'unknown') {
     sendError(res, 404, 'interrupt_not_found', 'Interrupt resolved or missing.');
+    return;
+  }
+  if (outcome.kind === 'expired') {
+    sendError(res, 410, 'interrupt_expired', 'Interrupt has expired.');
     return;
   }
   if (outcome.kind === 'invalid') {
