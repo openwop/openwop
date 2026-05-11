@@ -73,6 +73,13 @@ import {
   type ClarificationConfig,
   type ExternalEventConfig,
 } from './interrupts.js';
+import {
+  setupWebhookSchema,
+  registerWebhook,
+  unregisterWebhook,
+  fanOutEvent,
+  WebhookUrlRejected,
+} from './webhooks.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const HOST = process.env.OPENWOP_HOST ?? '127.0.0.1';
@@ -316,6 +323,10 @@ async function appendEvent(
       ],
     );
     eventBus.emit(`events:${runId}`, event);
+    // Best-effort webhook delivery (webhooks.md). Fire-and-forget — we
+    // don't await delivery; the function returns once subscription rows
+    // are read + delivery handles dispatched.
+    void fanOutEvent(q, { ...event }).catch(() => undefined);
     return event;
   });
 }
@@ -906,6 +917,10 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
           supportedKinds: ['approval', 'clarification', 'external-event'],
           approvalActions: ['accept', 'reject', 'request-changes', 'escalate'],
         },
+        webhooks: {
+          supported: true,
+          signatureAlgorithms: ['v1'],
+        },
         runs: {
           pauseResume: { supported: true },
         },
@@ -943,6 +958,8 @@ function handleOpenApi(_req: IncomingMessage, res: ServerResponse): void {
       '/v1/runs/{runId}:resume': { post: { responses: { '202': { description: 'Accepted' } } } },
       '/v1/runs/{runId}/interrupts/{nodeId}': { post: { responses: { '200': { description: 'OK' } } } },
       '/v1/interrupts/{token}': { post: { responses: { '200': { description: 'OK' } } } },
+      '/v1/webhooks': { post: { responses: { '201': { description: 'Created' } } } },
+      '/v1/webhooks/{subscriptionId}': { delete: { responses: { '200': { description: 'OK' } } } },
       '/v1/audit/verify': { get: { responses: { '200': { description: 'OK' } } } },
     },
   });
@@ -1136,6 +1153,85 @@ async function handleCancelRun(
   await triggerCheckpointIfDue(q, auditSigningKey(), AUDIT_OPTS);
   runningAborters.get(runId)?.abort();
   sendJSON(res, 200, { runId, status: 'cancelling' });
+}
+
+async function handleRegisterWebhook(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  if (!checkAuth(req, res)) return;
+  const bodyText = await readBody(req);
+  let parsed: { url?: unknown; secret?: unknown; eventTypes?: unknown };
+  try {
+    parsed = bodyText ? (JSON.parse(bodyText) as typeof parsed) : {};
+  } catch {
+    sendError(res, 400, 'validation_error', 'Request body MUST be valid JSON.');
+    return;
+  }
+  if (typeof parsed.url !== 'string' || parsed.url.length === 0) {
+    sendError(res, 400, 'validation_error', 'url MUST be a non-empty string.');
+    return;
+  }
+  try {
+    new URL(parsed.url);
+  } catch {
+    sendError(res, 400, 'validation_error', 'url MUST be a parseable URL.');
+    return;
+  }
+  const eventTypes = Array.isArray(parsed.eventTypes)
+    ? (parsed.eventTypes as string[]).filter((t) => typeof t === 'string')
+    : [];
+
+  const q = await querier();
+  let sub;
+  try {
+    sub = await registerWebhook(q, {
+      url: parsed.url,
+      ...(typeof parsed.secret === 'string' ? { secret: parsed.secret } : {}),
+      eventTypes,
+    });
+  } catch (err) {
+    if (err instanceof WebhookUrlRejected) {
+      sendError(res, 400, 'webhook_url_rejected', err.reason);
+      return;
+    }
+    throw err;
+  }
+
+  await logAudit(q, {
+    actor: 'tenant:default',
+    action: 'webhook.register',
+    target: sub.subscriptionId,
+    details: { url: sub.url, eventTypes: sub.eventTypes },
+  });
+  await triggerCheckpointIfDue(q, auditSigningKey(), AUDIT_OPTS);
+
+  sendJSON(res, 201, {
+    subscriptionId: sub.subscriptionId,
+    url: sub.url,
+    secret: sub.secret, // returned once on register, never again
+    eventTypes: sub.eventTypes,
+    createdAt: sub.createdAt,
+  });
+}
+
+async function handleUnregisterWebhook(
+  req: IncomingMessage,
+  res: ServerResponse,
+  subscriptionId: string,
+): Promise<void> {
+  if (!checkAuth(req, res)) return;
+  const q = await querier();
+  const removed = await unregisterWebhook(q, subscriptionId);
+  if (!removed) {
+    sendError(res, 404, 'subscription_not_found', `Unknown subscriptionId: ${subscriptionId}`);
+    return;
+  }
+  await logAudit(q, {
+    actor: 'tenant:default',
+    action: 'webhook.unregister',
+    target: subscriptionId,
+    details: {},
+  });
+  await triggerCheckpointIfDue(q, auditSigningKey(), AUDIT_OPTS);
+  sendJSON(res, 200, { subscriptionId, unregistered: true });
 }
 
 async function handleResolveInterrupt(
@@ -1567,6 +1663,7 @@ const RUN_PAUSE_PATTERN = /^\/v1\/runs\/([^/]+):pause$/;
 const RUN_RESUME_PATTERN = /^\/v1\/runs\/([^/]+):resume$/;
 const RUN_INTERRUPT_PATTERN = /^\/v1\/runs\/([^/]+)\/interrupts\/([^/]+)$/;
 const INTERRUPT_TOKEN_PATTERN = /^\/v1\/interrupts\/([^/]+)$/;
+const WEBHOOK_ID_PATTERN = /^\/v1\/webhooks\/([^/]+)$/;
 
 async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
@@ -1576,7 +1673,12 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   if (method === 'GET' && path === '/.well-known/openwop') return handleDiscovery(req, res);
   if (method === 'GET' && path === '/v1/openapi.json') return handleOpenApi(req, res);
   if (method === 'GET' && path === '/v1/audit/verify') return handleAuditVerify(req, res, url);
+  if (method === 'POST' && path === '/v1/webhooks') return handleRegisterWebhook(req, res);
   if (method === 'POST' && path === '/v1/runs') return handleCreateRun(req, res);
+  const mwh = WEBHOOK_ID_PATTERN.exec(path);
+  if (mwh && method === 'DELETE') {
+    return handleUnregisterWebhook(req, res, decodeURIComponent(mwh[1]!));
+  }
 
   let m = RUN_EVENTS_POLL_PATTERN.exec(path);
   if (m && method === 'GET') return handleEventsPoll(req, res, m[1]!, url);
@@ -1632,6 +1734,7 @@ export async function start(): Promise<{ close: () => Promise<void> }> {
   await setupSchema(q);
   await setupAuditSchema(q);
   await setupInterruptSchema(q);
+  await setupWebhookSchema(q);
 
   // Persist the audit signing keypair under OPENWOP_AUDIT_KEY_DIR.
   // Tests can override OPENWOP_AUDIT_KEY_DIR to point at a tmpdir per

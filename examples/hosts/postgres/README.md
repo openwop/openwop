@@ -20,8 +20,9 @@ Wire surface advertised:
   GET  /v1/audit/verify              ✅
   POST /v1/runs/{runId}/interrupts/{nodeId}  ✅
   POST /v1/interrupts/{token}                ✅
+  POST /v1/webhooks                          ✅
+  DELETE /v1/webhooks/{subscriptionId}       ✅
   GET  /v1/runs/{runId}/events       ⏳  (SSE — not yet wired)
-  POST /v1/webhooks                          ⏳
 
 Node types in executor:
   core.noop                          ✅
@@ -89,7 +90,7 @@ Each item is a follow-up session. Order doesn't matter much; pick the one that u
 |---|---|---:|---|
 | ~~`sqlite/src/audit.ts`~~ | ✅ ported (2026-05-11) — `src/audit.ts` | — | ✅ `audit-log-integrity.test.ts` + `test/audit-tamper.test.ts` |
 | ~~`sqlite/src/interrupts.ts`~~ | ✅ ported (2026-05-11) — `src/interrupts.ts` (~470 LOC) | — | ✅ 6 interrupt scenarios + 4 optional profile claims (`openwop-interrupt-quorum/-auth-required/-external-event/-cascade-cancel`) |
-| `sqlite/src/webhooks.ts` | port to async pg | ~200 | webhook scenarios + SSRF guard tests |
+| ~~`sqlite/src/webhooks.ts`~~ | ✅ ported (2026-05-11) — `src/webhooks.ts` (~260 LOC) | — | ✅ webhook scenarios + SSRF guard + HMAC v1 signing + 7 in-host smoke assertions |
 | ~~`sqlite/src/observability.ts`~~ | ✅ wired (2026-05-11) — `startMetricLoop` + span helpers + traceparent | — | ✅ OTel emission + metric scenarios (active when `OTEL_EXPORTER_OTLP_ENDPOINT` set) |
 | `sqlite/src/server.ts` SSE path | add SSE event stream | ~150 | `stream-modes*.test.ts` |
 | ~~`sqlite/src/server.ts` interrupts wiring~~ | ✅ wired (2026-05-11) — `handleResolveInterrupt` + `handleResolveInterruptByToken` + 4 node-type executors + parent/child cascade | — | (above) |
