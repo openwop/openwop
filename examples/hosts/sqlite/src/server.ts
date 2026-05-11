@@ -682,6 +682,12 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
         },
       },
     },
+    extensions: {
+      interrupts: {
+        // Optional interrupt profiles (interrupt-profiles.md).
+        profiles: ['openwop-interrupt-quorum', 'openwop-interrupt-auth-required'],
+      },
+    },
   }, { 'Cache-Control': 'public, max-age=300' });
 }
 
