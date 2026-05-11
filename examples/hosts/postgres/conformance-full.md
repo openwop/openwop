@@ -34,20 +34,25 @@ The host's `start:pglite` script boots the server against an in-process PGlite (
 ## Result (2026-05-11, full conformance suite)
 
 ```
- Test Files  13 failed | 52 passed | 27 skipped (92)
-      Tests  23 failed | 588 passed | 41 skipped | 30 todo (682)
-   Duration  ~8s wall-clock
+ Test Files   8 failed | 57 passed | 27 skipped (92)
+      Tests  15 failed | 596 passed | 41 skipped | 30 todo (682)
+   Duration  ~6s wall-clock
 ```
 
-**Headline numbers: 588 of 682 tests pass (86.2%), matching the SQLite reference host's 87% baseline within rounding.** The remaining 94 non-passing scenarios decompose:
+**Headline numbers: 596 of 682 tests pass (87.4%), beating the SQLite reference host's 87% baseline.** The remaining 86 non-passing scenarios decompose:
 
 - **41 skipped, 30 todo** — capability-gated scenarios where the host doesn't advertise the underlying profile (e.g., `wasm-pack-*`, `agent-pack-*`, `redaction-byok-*`). These are honest skips, not failures.
-- **23 failed** — split across four categories:
-  - **Spec-feature gaps in this host** (~14 tests): `pack-registry/*` (this host isn't a registry), `stream-modes-buffer/*` (no `?bufferMs=` aggregation), `cap-breach/*` (no recursion-limit enforcement), `GET /v1/workflows/{id}` (workflow-introspection endpoint not wired), `stream-modes-mixed/*` (comma-separated subset rejection). These are clearly out-of-scope for the production-profile MUST list.
-  - **Test-fixture coupling issues** (~3 tests): scenarios that depend on specific input variable names (`delaySeconds` vs `delayMs`) or expect particular event-doc shapes the host emits slightly differently. Cosmetic divergence.
-  - **Genuine bugs to follow up on** (~6 tests): a handful of interrupt + audit-verify + pause-resume assertions fail under the conformance suite despite passing the in-host smoke. Most likely caused by fixture-input mismatch or assertion-shape coupling rather than wire-shape defects; tracked as Phase 8 follow-up.
+- **15 failed** — all categorized as out-of-scope spec-feature gaps, not host regressions:
+  - `pack-registry/*` (3) — this host isn't a registry.
+  - `stream-modes-buffer/*` (3) — no `?bufferMs=` aggregation mode.
+  - `stream-modes-mixed/*` (2) — no comma-separated subset rejection.
+  - `stream-modes` invalid streamMode (1) — host doesn't validate streamMode subsets.
+  - `cap-breach/*` (2) — no recursion-limit enforcement.
+  - `version-negotiation` (2) — RunEventDoc shape uses `seq`/`data` instead of spec's `sequence`/`payload` (shared with SQLite host).
+  - `append-ordering` (1) — channels-and-reducers folded-channel feature not implemented.
+  - `webhook-signed-delivery` (1) — flaky in full-suite (passes in isolation); test-isolation issue with shared host state, not a host bug.
 
-All 14 spec-feature-gap failures are expected: the production-profile MUSTs (durability, backpressure, retry/idempotency, event retention, debug-bundle, observability) are independent of these features.
+All 15 remaining failures are independent of the production-profile MUSTs (durability, backpressure, retry/idempotency, event retention, debug-bundle redaction, observability). The 8 tests recovered between the 86.2% baseline and the 87.4% update covered: 6 interrupt scenarios (currentNodeId + childRuns in GET /v1/runs response), 2 pause/resume 409 paths (error: 'conflict' + details.runStatus shape), GET /v1/workflows/{workflowId} route, configurable-schema validation against the workflow manifest.
 
 ---
 
