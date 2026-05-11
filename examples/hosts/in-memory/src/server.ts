@@ -638,6 +638,9 @@ async function handleCreateRun(req: IncomingMessage, res: ServerResponse): Promi
     status: run.status,
     workflowId: run.workflowId,
     startedAt: run.startedAt,
+    // Required by api/openapi.yaml POST /v1/runs response schema.
+    eventsUrl: `/v1/runs/${runId}/events`,
+    statusUrl: `/v1/runs/${runId}`,
   };
   const responseText = JSON.stringify(responseBody);
 

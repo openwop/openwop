@@ -183,6 +183,8 @@ A bundle for a typical run is < 1 MB. Hosts MUST cap bundle size at **8 MB** by 
 
 Hosts MAY raise the cap via implementation-defined configuration. Clients MUST handle `truncated: true` by either rendering a "this bundle is partial" indicator or fetching the full event stream separately.
 
+Hosts MAY also accept implementation-defined query parameters to lower the cap on a per-request basis (e.g., for conformance tests that need to force the truncation path without driving the bundle past the 8 MB ceiling). The SQLite reference host accepts `?maxEvents=N`; the conformance scenario at `conformance/src/scenarios/debug-bundle-truncation.test.ts` soft-skips against hosts that don't honor it. Any such query parameter MUST be `host.*` namespaced if the host wants to claim spec-canonical compatibility — `maxEvents` works as an undocumented host-implementation extension because it doesn't conflict with any reserved name and the spec leaves "lower the cap" as host choice. Future-spec implementers SHOULD prefer `host.<vendor>.<query>` to avoid this naming collision.
+
 ---
 
 ## Why this isn't compressed by the protocol

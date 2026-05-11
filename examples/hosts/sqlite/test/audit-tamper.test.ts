@@ -19,6 +19,13 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import Database from 'better-sqlite3';
+
+// Simulate admin-bypass: install the audit schema without the
+// append-only triggers so the test can `UPDATE audit_log` directly to
+// emulate a privileged attacker. Production hosts run with the triggers
+// in place; the verify endpoint is the audit's correctness check.
+process.env.OPENWOP_AUDIT_ALLOW_TAMPER = 'true';
+
 import {
   setupAuditSchema,
   loadOrCreateSigningKey,
@@ -130,6 +137,32 @@ try {
   );
 
   db.close();
+
+  // Separate phase: storage-layer trigger check. Open a fresh DB
+  // WITHOUT the bypass env so the append-only triggers install.
+  delete process.env.OPENWOP_AUDIT_ALLOW_TAMPER;
+  const dbProd = new Database(join(workdir, 'audit-prod.sqlite'));
+  dbProd.pragma('journal_mode = WAL');
+  setupAuditSchema(dbProd);
+  logAudit(dbProd, { actor: 'test', action: 'host.started', target: 'p', details: {} });
+
+  let updateRejected = false;
+  try {
+    dbProd.prepare("UPDATE audit_log SET details_json = '{}' WHERE seq = 1").run();
+  } catch (err) {
+    updateRejected = (err as Error).message.includes('append-only');
+  }
+  assert.ok(updateRejected, 'audit_log_no_update trigger MUST reject in-place UPDATEs');
+
+  let deleteRejected = false;
+  try {
+    dbProd.prepare('DELETE FROM audit_log WHERE seq = 1').run();
+  } catch (err) {
+    deleteRejected = (err as Error).message.includes('append-only');
+  }
+  assert.ok(deleteRejected, 'audit_log_no_delete trigger MUST reject DELETEs');
+
+  dbProd.close();
   console.log('audit-tamper test: PASS');
 } finally {
   rmSync(workdir, { recursive: true, force: true });

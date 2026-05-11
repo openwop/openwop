@@ -66,7 +66,9 @@ npx vitest run src/scenarios/discovery.test.ts # single file
 |---|---|
 | `OPENWOP_REQUIRE_BEHAVIOR=true` | Capability-gated scenarios (audit-log integrity, rate-limit envelope, multi-region idempotency, `configurableSchema`, webhook sig versioning, etc.) FAIL instead of skipping when the host doesn't advertise the profile. Lets a host claim "full coverage" mechanically. See [`coverage.md`](./coverage.md) §"Capability-gated scenarios". |
 | `OPENWOP_TEST_PUBLIC_REGISTRY=true` | Runs `registry-public.test.ts` against the hosted registry at `packs.openwop.dev`. Skipped by default so the suite doesn't depend on outbound connectivity. |
-| `OPENWOP_OTEL_COLLECTOR=true` | Boots the in-suite OTLP/HTTP-JSON collector for `otel-emission.test.ts` and `otel-trace-propagation.test.ts`. Skipped by default. |
+| `OPENWOP_OTEL_COLLECTOR=true` | Boots the in-suite OTLP/HTTP-JSON collector for `otel-emission.test.ts`, `otel-trace-propagation.test.ts`, and `metric-emission.test.ts`. Skipped by default. **Run OTel scenarios with `--no-file-parallelism`** — each vitest worker spawns its own collector and only one can bind the same port, so concurrent file execution causes ephemeral-port fallbacks that don't receive the host's OTLP traffic. |
+| `OPENWOP_OTEL_COLLECTOR_PORT=14318` | Bind the OTel collector on a specific port (default `4318`). The host MUST be configured with `OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:<port>`. |
+| `OPENWOP_WEBHOOK_ALLOW_PRIVATE=true` | Hosts implementing the webhook SSRF guard (rejecting loopback / RFC1918 / link-local destinations) MUST advertise this flag for the loopback test receiver in `webhook-signed-delivery.test.ts` to be accepted. The SQLite reference host honors this env var; the scenario soft-skips when the host rejects the URL. |
 | `OPENWOP_MCP_FAKE_SERVER=true` | Boots the synthetic MCP peer for `mcp-tool-roundtrip.test.ts`. |
 | `OPENWOP_A2A_FAKE_PEER=true` | Boots the synthetic A2A peer for `a2a-task-roundtrip.test.ts`. |
 | `OPENWOP_FORCE_RATE_LIMIT=true` | Signals the host (test-only key) to fabricate a 429 so `rate-limit-envelope.test.ts` can exercise envelope shape deterministically. |
@@ -77,7 +79,7 @@ Exit code is non-zero on any failed assertion.
 
 ## What's Covered
 
-The current suite has 90 scenario files under `src/scenarios/`. This includes 18 Multi-Agent Shift scenarios (Phases 1-5) added 2026-05-10, the `registry-public.test.ts` public-registry healthcheck added 2026-05-11 (opt-in via `OPENWOP_TEST_PUBLIC_REGISTRY=true`), and the `replay-llm-cache-key.test.ts` placeholder added 2026-05-11 (three `it.todo()` cases for the cross-host LLM cache-key recipe per `replay.md` §"LLM cache-key recipe"). The maintained scenario-to-spec map lives in [`coverage.md`](./coverage.md); this README keeps the operator quickstart and the historical scenario notes below.
+The current suite has 91 scenario files under `src/scenarios/`. This includes 18 Multi-Agent Shift scenarios (Phases 1-5) added 2026-05-10, the `registry-public.test.ts` public-registry healthcheck added 2026-05-11 (opt-in via `OPENWOP_TEST_PUBLIC_REGISTRY=true`), and the `replay-llm-cache-key.test.ts` placeholder added 2026-05-11 (three `it.todo()` cases for the cross-host LLM cache-key recipe per `replay.md` §"LLM cache-key recipe"). The maintained scenario-to-spec map lives in [`coverage.md`](./coverage.md); this README keeps the operator quickstart and the historical scenario notes below.
 
 High-level coverage includes:
 
@@ -156,7 +158,7 @@ Server-required (added in 1.7.0):
 |---|---|---|
 | **Redaction** | [`capabilities.md`](../spec/v1/capabilities.md) §"Secrets" + NFR-7 + §"aiProviders" | Vendor-neutral assertions that the server doesn't leak secret material. Three scenario groups: (a) discovery shape contract — `secrets` + `aiProviders` advertisements are well-formed regardless of `secrets.supported`; when `supported === true`, scopes MUST be non-empty + `resolution === 'host-managed'`; `byok ⊆ supported`. (b) bearer-token redaction — invalid Bearer canary in `Authorization` header is not echoed in the 401 response body. (c) credentialRef echo control — gated on `secrets.supported === true`; canary planted in `configurable.ai.credentialRef` MUST NOT appear in any RunEvent payload (poll-based capture; transport-agnostic). Uses runtime-built canary fixtures (`lib/canaries.ts`) that defeat static secret scanners. 6 scenarios. |
 
-Current source tree: 90 scenario files. Use [`coverage.md`](./coverage.md) for current grade/gap tracking.
+Current source tree: 91 scenario files. Use [`coverage.md`](./coverage.md) for current grade/gap tracking.
 
 ## Remaining Gaps
 

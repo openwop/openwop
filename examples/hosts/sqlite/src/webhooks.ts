@@ -186,6 +186,15 @@ export function unregisterWebhook(db: Database.Database, subscriptionId: string)
   return result.changes > 0;
 }
 
+/**
+ * Load subscriptions matching `eventType`. Reference-impl design:
+ * `event_types` is stored as a JSON-encoded array in a TEXT column, so
+ * we read every row and filter in JS rather than encoding event types
+ * as a separate join table. At reference scale (≤ tens of subscriptions)
+ * this is fine. A production host with many subscribers SHOULD denormalize
+ * to a `webhook_event_subscriptions` join table with `(event_type,
+ * subscription_id)` rows so the SQL plan can index-scan by event_type.
+ */
 function loadSubscriptionsForEvent(
   db: Database.Database,
   eventType: string,

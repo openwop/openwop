@@ -114,6 +114,28 @@ export interface AuditOptions {
 /**
  * Canonical JSON serialization with recursively-sorted keys. Minimal RFC
  * 8785 JCS approximation — enough for stable hashing inside this host.
+ *
+ * What it does:
+ *   - Sorts object keys lexicographically at every nesting level.
+ *   - Delegates value serialization to `JSON.stringify`, which handles
+ *     UTF-8, escape sequences, and the standard primitive shapes.
+ *
+ * What it doesn't (vs strict RFC 8785):
+ *   - `-0` round-trips as `0` (JSON has no negative-zero distinction).
+ *   - `NaN` / `Infinity` are not valid JSON; `JSON.stringify` would emit
+ *     `null` and the audit entry's `details` MUST NOT contain them in
+ *     the first place. Loggers SHOULD filter or substitute upstream.
+ *   - Unicode normalization is not applied — strings are hashed as-is.
+ *     Audit-log entry sources are host-controlled (no user-submitted
+ *     text in the canonical entry shape), so NFC normalization isn't
+ *     required for hash stability across replays in this host.
+ *   - Number formatting follows V8's IEEE-754 round-trip; differs from
+ *     strict JCS for some edge cases (e.g., `1e21`). Not exercised by
+ *     the reference host's audit-entry shape.
+ *
+ * Strict RFC 8785 conformance is an open follow-up for hosts that need
+ * cross-implementation hash compatibility with verifiers running in
+ * different language ecosystems.
  */
 function canonicalize(value: unknown): string {
   if (value === null || typeof value !== 'object') return JSON.stringify(value);
@@ -197,6 +219,30 @@ export function setupAuditSchema(db: Database.Database): void {
 
     CREATE INDEX IF NOT EXISTS idx_checkpoints_seq ON audit_checkpoints(at_sequence);
   `);
+
+  // Storage-layer enforcement of append-only (auth-profiles.md
+  // §"Audit-log integrity" §1). The verify endpoint catches in-place
+  // tampering after the fact; these triggers reject the mutation at
+  // the storage layer so even an admin with raw DB access has to
+  // explicitly disable the trigger first (which itself is a detectable
+  // signal). Set OPENWOP_AUDIT_ALLOW_TAMPER=true to skip the trigger
+  // installation when running host-internal tamper-detection tests
+  // that need to simulate a bypass.
+  if (process.env.OPENWOP_AUDIT_ALLOW_TAMPER !== 'true') {
+    db.exec(`
+      CREATE TRIGGER IF NOT EXISTS audit_log_no_update
+        BEFORE UPDATE ON audit_log
+      BEGIN
+        SELECT RAISE(FAIL, 'audit_log is append-only (auth-profiles.md §"Audit-log integrity")');
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS audit_log_no_delete
+        BEFORE DELETE ON audit_log
+      BEGIN
+        SELECT RAISE(FAIL, 'audit_log is append-only (auth-profiles.md §"Audit-log integrity")');
+      END;
+    `);
+  }
 }
 
 /**

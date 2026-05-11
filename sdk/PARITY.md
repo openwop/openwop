@@ -17,17 +17,17 @@ This matrix records per-protocol-surface feature parity across the three referen
 
 ## Headline
 
-The three SDKs are at **near-perfect parity on the v1.0 wire-core surface** (discovery, run lifecycle, idempotency, event poll + SSE, HITL interrupts, error envelope, scopes-aware HTTP error helpers). They are **uniformly absent** on the v1.x optional surfaces landed 2026-04 through 2026-05-11 (audit-log integrity, webhooks register/deliver, debug-bundle GET, pause/resume, registry endpoints). The uniformity is the important property here — no SDK is ahead of any other, so cross-language migration is symmetric.
+The three SDKs are at **near-perfect parity on the v1.0 wire-core surface** (discovery, run lifecycle, idempotency, event poll + SSE, HITL interrupts, error envelope, scopes-aware HTTP error helpers). They are **uniformly absent** on the v1.x optional surfaces landed 2026-04 through 2026-05-11 (audit-log integrity, webhooks register/deliver, debug-bundle GET, pause/resume, registry endpoints). The uniformity is the important property here — no SDK is ahead of any other on the wire-core surfaces, so cross-language migration of a downstream application is symmetric.
 
-Per-SDK net surface counts:
+Per-SDK net surface counts (counted from the per-surface tables below, excluding the headline-summary row):
 
 | SDK | ✅ helpers | ⚠️ raw-only | ❌ unreachable |
 |---|---:|---:|---:|
-| TypeScript (`@openwop/openwop`) | 14 | 8 | 0 |
-| Python (`openwop-client`) | 14 | 8 | 0 |
-| Go (`github.com/openwop/openwop/sdk/go`) | 13 | 9 | 0 |
+| TypeScript (`@openwop/openwop`) | 20 | 10 | 0 |
+| Python (`openwop-client`) | 17 | 13 | 0 |
+| Go (`github.com/openwop/openwop/sdk/go`) | 17 | 13 | 0 |
 
-The single Go gap (interrupt `resolveByToken` exists but `inspectByToken` was added 2026-04 — actually inspected, both exist) is below; everything else is parity-clean.
+TypeScript is the slight leader: it ships dedicated `RUN_ERROR_CODES` / `isRunErrorCode` helpers and `ACTIVE_RUN_STATUSES` / `TERMINAL_RUN_STATUSES` constants + an `isTerminalRunStatus` predicate; Python and Go consumers can compose the same checks from the exported type unions / string constants but without a one-symbol helper. Adding the matching helpers to Python and Go is a session-sized follow-up; everything else is parity-clean across the three.
 
 ---
 
