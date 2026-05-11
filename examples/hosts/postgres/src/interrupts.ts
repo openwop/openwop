@@ -35,7 +35,7 @@
  */
 
 import { randomBytes } from 'node:crypto';
-import type { Querier } from './db.js';
+import { withTransaction, type Querier } from './db.js';
 
 export type InterruptKind = 'approval' | 'clarification' | 'external-event';
 
@@ -279,13 +279,7 @@ export async function resolveApproval(
   nodeId: string,
   resumeValue: unknown,
 ): Promise<ResolveOutcome> {
-  const row = await getInterrupt(q, runId, nodeId);
-  if (!row || row.kind !== 'approval') return { kind: 'unknown' };
-  if (isInterruptExpired(row)) {
-    await markExpired(q, runId, nodeId);
-    return { kind: 'expired' };
-  }
-
+  // Validation: shape checks are pure and don't need the lock.
   if (typeof resumeValue !== 'object' || resumeValue === null) {
     return {
       kind: 'invalid',
@@ -294,48 +288,71 @@ export async function resolveApproval(
       message: 'resumeValue MUST be an object.',
     };
   }
-
   const rv = resumeValue as { action?: unknown; voter?: unknown };
   const action = rv.action;
-  const config = row.config_json as ApprovalConfig;
-  if (typeof action !== 'string' || !config.actions.includes(action)) {
+  if (typeof action !== 'string') {
     return {
       kind: 'invalid',
       status: 400,
       code: 'validation_error',
-      message: `resumeValue.action MUST be one of [${config.actions.join(', ')}]`,
+      message: 'resumeValue.action MUST be a string.',
     };
   }
 
-  const votes = (row.votes_json as Vote[]) ?? [];
-  const newVote: Vote = {
-    action,
-    timestamp: new Date().toISOString(),
-    ...(typeof rv.voter === 'string' ? { voter: rv.voter } : {}),
-  };
+  // Read + decide + write inside a transaction so two concurrent voters
+  // can't both read the same prior vote ledger and clobber each other's
+  // updates. withTransaction's in-process lock serializes overlapping
+  // resolveApproval calls. The SQLite host gets this serialization for
+  // free via better-sqlite3's sync API; the async port has to opt in.
+  // @see review C2: SELECT-then-UPDATE race in resolveApproval
+  return withTransaction(q, async () => {
+    const row = await getInterrupt(q, runId, nodeId);
+    if (!row || row.kind !== 'approval') return { kind: 'unknown' };
+    if (isInterruptExpired(row)) {
+      await markExpired(q, runId, nodeId);
+      return { kind: 'expired' };
+    }
 
-  const updatedVotes = newVote.voter
-    ? [...votes.filter((v) => v.voter !== newVote.voter), newVote]
-    : [...votes, newVote];
+    const config = row.config_json as ApprovalConfig;
+    if (!config.actions.includes(action)) {
+      return {
+        kind: 'invalid',
+        status: 400,
+        code: 'validation_error',
+        message: `resumeValue.action MUST be one of [${config.actions.join(', ')}]`,
+      };
+    }
 
-  const required = config.requiredApprovals ?? 1;
-  const accepts = updatedVotes.filter((v) => v.action === 'accept').length;
-  const rejects = updatedVotes.filter((v) => v.action === 'reject').length;
-  const rejectionPolicy = config.rejectionPolicy ?? 'first';
+    const votes = (row.votes_json as Vote[]) ?? [];
+    const newVote: Vote = {
+      action,
+      timestamp: new Date().toISOString(),
+      ...(typeof rv.voter === 'string' ? { voter: rv.voter } : {}),
+    };
 
-  if (accepts >= required) {
-    await markResolved(q, runId, nodeId, 'accepted', updatedVotes);
-    return { kind: 'resumed', votes: updatedVotes, finalAction: 'accept' };
-  }
+    const updatedVotes = newVote.voter
+      ? [...votes.filter((v) => v.voter !== newVote.voter), newVote]
+      : [...votes, newVote];
 
-  const rejectThreshold = rejectionPolicy === 'majority' ? Math.floor(required / 2) + 1 : 1;
-  if (rejects >= rejectThreshold) {
-    await markResolved(q, runId, nodeId, 'rejected', updatedVotes);
-    return { kind: 'rejected', votes: updatedVotes };
-  }
+    const required = config.requiredApprovals ?? 1;
+    const accepts = updatedVotes.filter((v) => v.action === 'accept').length;
+    const rejects = updatedVotes.filter((v) => v.action === 'reject').length;
+    const rejectionPolicy = config.rejectionPolicy ?? 'first';
 
-  await updateVotes(q, runId, nodeId, updatedVotes);
-  return { kind: 'pending', votes: updatedVotes };
+    if (accepts >= required) {
+      await markResolved(q, runId, nodeId, 'accepted', updatedVotes);
+      return { kind: 'resumed', votes: updatedVotes, finalAction: 'accept' };
+    }
+
+    const rejectThreshold = rejectionPolicy === 'majority' ? Math.floor(required / 2) + 1 : 1;
+    if (rejects >= rejectThreshold) {
+      await markResolved(q, runId, nodeId, 'rejected', updatedVotes);
+      return { kind: 'rejected', votes: updatedVotes };
+    }
+
+    await updateVotes(q, runId, nodeId, updatedVotes);
+    return { kind: 'pending', votes: updatedVotes };
+  });
 }
 
 /**

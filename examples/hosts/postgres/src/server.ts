@@ -293,7 +293,7 @@ async function appendEvent(
   // calls on the same run serialize and each get a distinct seq. This is
   // O(1) per insert (no COUNT(*) scan) and survives the pg.Pool case
   // where two clients could otherwise race a SELECT-then-INSERT pattern.
-  return withTransaction(q, async () => {
+  const event = await withTransaction(q, async () => {
     const seqRes = await q.query<{ seq: number }>(
       'UPDATE runs SET next_event_seq = next_event_seq + 1 WHERE run_id = $1 RETURNING next_event_seq - 1 AS seq',
       [runId],
@@ -302,7 +302,7 @@ async function appendEvent(
       throw new Error(`appendEvent: runId ${runId} not found`);
     }
     const seq = Number(seqRes.rows[0]!.seq);
-    const event: RunEvent = {
+    const ev: RunEvent = {
       seq,
       runId,
       type,
@@ -317,18 +317,23 @@ async function appendEvent(
         runId,
         seq,
         type,
-        event.nodeId,
-        event.data === null ? null : JSON.stringify(event.data),
-        event.timestamp,
+        ev.nodeId,
+        ev.data === null ? null : JSON.stringify(ev.data),
+        ev.timestamp,
       ],
     );
-    eventBus.emit(`events:${runId}`, event);
-    // Best-effort webhook delivery (webhooks.md). Fire-and-forget — we
-    // don't await delivery; the function returns once subscription rows
-    // are read + delivery handles dispatched.
-    void fanOutEvent(q, { ...event }).catch(() => undefined);
-    return event;
+    return ev;
   });
+
+  // Out-of-transaction notifications: the event is durably committed
+  // before we notify in-process subscribers or fan out to webhooks.
+  // This prevents a ROLLBACK from leaving webhooks observing events
+  // that aren't in the canonical log, and it avoids holding the
+  // single-connection transaction lock across the subscription SELECT
+  // inside fanOutEvent. @see review C3.
+  eventBus.emit(`events:${runId}`, event);
+  void fanOutEvent(q, { ...event }).catch(() => undefined);
+  return event;
 }
 
 async function getEventsAfter(runId: string, afterSeq: number): Promise<RunEvent[]> {
@@ -1328,12 +1333,28 @@ async function handleResolveInterrupt(
   }
 
   // 'resumed' — close out the suspended node, advance, re-enter executor.
+  // Status-guarded UPDATE: only flip to running if the run is still
+  // suspended. A concurrent cancel that arrived between getInterrupt
+  // and this UPDATE will have flipped status to 'cancelling' (or
+  // terminal), and rowCount will be 0 — we surface this as 409 so the
+  // caller knows the resume was lost to a cancel. @see review M2.
   await appendEvent(runId, 'node.resumed', { nodeId, data: { action: outcome.finalAction } });
   await appendEvent(runId, 'node.completed', { nodeId });
-  await q.query(
-    "UPDATE runs SET status = 'running', next_node_index = $1 WHERE run_id = $2",
+  const advance = await q.query(
+    `UPDATE runs SET status = 'running', next_node_index = $1
+     WHERE run_id = $2
+       AND status IN ('waiting-approval', 'waiting-input', 'waiting-external')`,
     [(row.next_node_index ?? 0) + 1, runId],
   );
+  if ((advance.rowCount ?? 0) === 0) {
+    // Cancel raced and won. The run is already terminal or cancelling.
+    sendJSON(res, 409, {
+      error: 'run_no_longer_resumable',
+      message: 'Run was cancelled before resume could complete.',
+      details: { runId, lastKnownStatus: row.status },
+    });
+    return;
+  }
   void runWorkflow(runId).catch(async (err: unknown) => {
     const message = err instanceof Error ? err.message : String(err);
     const error = { code: 'internal', message };
@@ -1421,10 +1442,23 @@ async function handleResolveInterruptByToken(
     await appendEvent(interrupt.run_id, 'node.completed', { nodeId: interrupt.node_id });
     const row = await loadRun(interrupt.run_id);
     if (row) {
-      await q.query(
-        "UPDATE runs SET status = 'running', next_node_index = $1 WHERE run_id = $2",
+      // Status-guarded UPDATE: a concurrent cancel that flipped status
+      // to 'cancelling' or terminal MUST NOT be clobbered by the
+      // signed-token resume. @see review M2.
+      const advance = await q.query(
+        `UPDATE runs SET status = 'running', next_node_index = $1
+         WHERE run_id = $2
+           AND status IN ('waiting-approval', 'waiting-input', 'waiting-external')`,
         [(row.next_node_index ?? 0) + 1, interrupt.run_id],
       );
+      if ((advance.rowCount ?? 0) === 0) {
+        sendJSON(res, 409, {
+          error: 'run_no_longer_resumable',
+          message: 'Run was cancelled before signed-token resume could complete.',
+          details: { runId: interrupt.run_id, lastKnownStatus: row.status },
+        });
+        return;
+      }
       const resumedRunId = interrupt.run_id;
       void runWorkflow(resumedRunId).catch(async (err: unknown) => {
         const message = err instanceof Error ? err.message : String(err);
@@ -1682,6 +1716,24 @@ async function handleEventsSse(
   req.on('close', () => {
     eventBus.off(`events:${runId}`, onEvent);
   });
+
+  // Post-listener terminal re-check (review M1): if the run reached
+  // terminal between the initial backlog read + status check and the
+  // `eventBus.on` listener attach, the live channel will never fire
+  // a terminal event and the connection would hang until client
+  // timeout. Re-load and replay any missed-events + close cleanly.
+  const racedRow = await loadRun(runId);
+  const racedSeq = backlog.length > 0 ? backlog[backlog.length - 1]!.seq : resumeAfterSeq;
+  if (
+    racedRow?.status === 'completed' ||
+    racedRow?.status === 'failed' ||
+    racedRow?.status === 'cancelled'
+  ) {
+    const missed = await getEventsAfter(runId, racedSeq);
+    for (const e of missed) writeEvent(e);
+    eventBus.off(`events:${runId}`, onEvent);
+    res.end();
+  }
 }
 
 async function handleEventsPoll(

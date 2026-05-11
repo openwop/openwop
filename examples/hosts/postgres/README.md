@@ -1,6 +1,6 @@
 # OpenWOP Postgres Reference Host
 
-> **Status: PARTIAL (2026-05-11).** Basic run lifecycle + audit-log integrity profile work against pglite in-process: discovery, run create, executor for `core.noop` + `core.delay`, terminal poll, cancellation, events poll, idempotency replay, `GET /v1/audit/verify` with hash-chain + signed-checkpoint verification + tamper detection. Interrupts / webhooks / observability / SSE are deferred to follow-up sessions per module. The full-feature-parity port is T2.1 in `docs/PROTOCOL-GAP-CLOSURE-PLAN.md`.
+> **Status: WIRE-SURFACE PARITY (2026-05-11).** Run lifecycle + audit-log integrity + interrupts (4 profiles) + webhooks (HMAC v1 + SSRF guard) + SSE event stream + observability + debug-bundle + pause/resume all wired and tested against pglite in-process. Claim acquisition via Postgres advisory locks + backpressure (503/Retry-After) + event-retention sweeper are the remaining gates before this host can claim the `production` scale tier. Track 7 ports complete; the FINAL-flip preconditions are tracked at the bottom of this README.
 
 ---
 

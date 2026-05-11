@@ -29,26 +29,54 @@ export interface Querier {
 }
 
 /**
- * Wrap a body in BEGIN / COMMIT (or ROLLBACK on throw). Works against
- * both pg and pglite. Note: this is single-connection — production
- * Postgres deployers using a connection POOL should grab a dedicated
- * client from the pool for the duration.
+ * In-process serialization for transactions. The reference host caches
+ * a single `pg.Client` (or PGlite) instance at module scope; concurrent
+ * `withTransaction` callers would otherwise interleave `BEGIN`/`COMMIT`
+ * statements on that single connection, causing both bodies to land
+ * inside the first caller's transaction (Postgres emits a warning, not
+ * an error, for "transaction already in progress").
+ *
+ * The lock below makes `withTransaction` calls FIFO-serialize. This is
+ * a reference-impl pragmatic fix:
+ *   - PGlite (the test harness) already serializes queries through its
+ *     own async queue; the lock is a belt-and-suspenders no-op there.
+ *   - Real production Postgres deployers SHOULD switch to a connection-
+ *     POOL design (one client per transaction, checked out from the
+ *     pool); the lock is what stops the broken in-process design from
+ *     looking like it works under load until it doesn't.
+ *
+ * @see review C1: shared-connection transaction interleaving
  */
+let txTail: Promise<void> = Promise.resolve();
+
 export async function withTransaction<T>(
   querier: Querier,
   fn: () => Promise<T>,
 ): Promise<T> {
-  await querier.query('BEGIN');
+  // Append to the lock's tail; new callers wait for prior ones.
+  let release: () => void;
+  const ticket = new Promise<void>((r) => {
+    release = r;
+  });
+  const wait = txTail;
+  txTail = ticket;
+  await wait;
+
   try {
-    const result = await fn();
-    await querier.query('COMMIT');
-    return result;
-  } catch (err) {
+    await querier.query('BEGIN');
     try {
-      await querier.query('ROLLBACK');
-    } catch {
-      // Best effort; surface original error.
+      const result = await fn();
+      await querier.query('COMMIT');
+      return result;
+    } catch (err) {
+      try {
+        await querier.query('ROLLBACK');
+      } catch {
+        // Best effort; surface original error.
+      }
+      throw err;
     }
-    throw err;
+  } finally {
+    release!();
   }
 }
