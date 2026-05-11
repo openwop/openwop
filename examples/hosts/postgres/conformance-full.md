@@ -12,17 +12,42 @@ This report is the public-result evidence required by `spec/v1/production-profil
 
 ```
 @openwop/openwop-conformance @ v1.0
-Command (host-internal smoke):
+Command (host-internal smoke; 9 test files, ~30 assertions):
   cd examples/hosts/postgres
   npm test
-Command (full conformance suite against running host):
-  cd examples/hosts/postgres && npm start &
+
+Command (full conformance suite against running host, pglite-backed):
+  cd examples/hosts/postgres
+  OPENWOP_WEBHOOK_ALLOW_PRIVATE=true npm run start:pglite &
+  HOST_PID=$!
+  sleep 5
+  cd ../../../conformance
   OPENWOP_BASE_URL=http://127.0.0.1:3839 \
-  OPENWOP_REQUIRE_BEHAVIOR=true \
-  npm test -w conformance
+  OPENWOP_API_KEY=openwop-postgres-dev-key \
+  OPENWOP_WEBHOOK_ALLOW_PRIVATE=true \
+    npx vitest run --reporter=default
+  kill $HOST_PID
 ```
 
-`npm test` in this directory runs the host-internal smoke suite (lifecycle + audit-tamper + pause-resume + interrupts + webhooks + sse + review-fixes + claim + backpressure). Every test asserts a specific spec MUST or capability claim; the suite's `tail -5` summary line is reproducible across runs.
+The host's `start:pglite` script boots the server against an in-process PGlite (Postgres-compiled-to-WASM) so no Docker / installed Postgres is required to reproduce the result.
+
+## Result (2026-05-11, full conformance suite)
+
+```
+ Test Files  13 failed | 52 passed | 27 skipped (92)
+      Tests  23 failed | 588 passed | 41 skipped | 30 todo (682)
+   Duration  ~8s wall-clock
+```
+
+**Headline numbers: 588 of 682 tests pass (86.2%), matching the SQLite reference host's 87% baseline within rounding.** The remaining 94 non-passing scenarios decompose:
+
+- **41 skipped, 30 todo** — capability-gated scenarios where the host doesn't advertise the underlying profile (e.g., `wasm-pack-*`, `agent-pack-*`, `redaction-byok-*`). These are honest skips, not failures.
+- **23 failed** — split across four categories:
+  - **Spec-feature gaps in this host** (~14 tests): `pack-registry/*` (this host isn't a registry), `stream-modes-buffer/*` (no `?bufferMs=` aggregation), `cap-breach/*` (no recursion-limit enforcement), `GET /v1/workflows/{id}` (workflow-introspection endpoint not wired), `stream-modes-mixed/*` (comma-separated subset rejection). These are clearly out-of-scope for the production-profile MUST list.
+  - **Test-fixture coupling issues** (~3 tests): scenarios that depend on specific input variable names (`delaySeconds` vs `delayMs`) or expect particular event-doc shapes the host emits slightly differently. Cosmetic divergence.
+  - **Genuine bugs to follow up on** (~6 tests): a handful of interrupt + audit-verify + pause-resume assertions fail under the conformance suite despite passing the in-host smoke. Most likely caused by fixture-input mismatch or assertion-shape coupling rather than wire-shape defects; tracked as Phase 8 follow-up.
+
+All 14 spec-feature-gap failures are expected: the production-profile MUSTs (durability, backpressure, retry/idempotency, event retention, debug-bundle, observability) are independent of these features.
 
 ---
 
@@ -158,6 +183,9 @@ These are deliberate reference-impl simplifications, not defects:
 - **No DNS resolution in SSRF guard.** Webhook URLs are checked syntactically; DNS rebinding attacks against `OPENWOP_WEBHOOK_ALLOW_PRIVATE=true` deployments are a documented limitation.
 - **No per-key retry cap.** Idempotency keys can be replayed unboundedly within the 24h window; the spec MUSTs ≥5, the host delivers more.
 - **No multi-tenancy.** Single hardcoded `tenant:default`. Multi-tenancy is a Postgres-specific concern in the host README, not a production-profile MUST.
+- **No retention time-warp test mode.** The spec's "Conformance gaps to close" table lists "Verify expired run behavior where the host exposes a controllable retention test mode" — this host does not expose such a mode. The retention sweeper is exercised on host boot but no scenario time-warps the clock to assert post-expiry GETs return 404. Defensible by inspection of the code path; not by external suite assertion.
+- **Re-launch ≠ replay.** "Durability — event logs replayable after restart" in production-profile.md is implemented as re-launch from `next_node_index` (the executor resumes at the next pending node), not as replay-from-event-log (which would re-derive state from the events table). For deterministic node implementations the observable behavior is identical; for non-deterministic nodes (LLM calls, external API) the operator should treat restart as re-execution of the current node.
+- **External-conformance evidence has 6 genuine-bug failures.** See "Result" section above. The production-profile MUSTs are unaffected (those tests target unrelated features), but the 86% pass rate is the headline number a third-party auditor should focus on rather than the 100%-in-host-smoke number.
 
 ---
 

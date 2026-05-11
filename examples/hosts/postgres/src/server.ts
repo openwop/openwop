@@ -220,6 +220,12 @@ const eventBus = new EventEmitter();
 // decremented on route exit (route's try/finally).
 let inflightCount = 0;
 let retentionTimer: NodeJS.Timeout | null = null;
+// Tracks every fire-and-forget runWorkflow promise so closeHost can
+// drain them before tearing down the querier. Without this, an
+// abort-while-executing run can leave its `finally { releaseClaim }`
+// racing against `_querier.end()`, leaving `claim_holder_id` set
+// against a dead PROCESS_ID. @see review C1.
+const inflightExecutors = new Set<Promise<void>>();
 eventBus.setMaxListeners(1000);
 const runningAborters = new Map<string, AbortController>();
 
@@ -793,10 +799,19 @@ async function runWorkflow(runId: string): Promise<void> {
   const claimed = await tryClaim(runId);
   if (!claimed) return;
 
+  // Track this executor's lifetime so closeHost can drain.
+  const promise = (async () => {
+    try {
+      await runWorkflowClaimed(runId);
+    } finally {
+      await releaseClaim(runId).catch(() => undefined);
+    }
+  })();
+  inflightExecutors.add(promise);
   try {
-    await runWorkflowClaimed(runId);
+    await promise;
   } finally {
-    await releaseClaim(runId);
+    inflightExecutors.delete(promise);
   }
 }
 
@@ -1993,6 +2008,25 @@ async function sweepRetention(): Promise<void> {
 
 async function recoverOrphans(): Promise<void> {
   const q = await querier();
+
+  // Clear stale claim_holder_id stamps from prior processes. Any non-
+  // terminal run with a claim_holder_id MUST have been stamped by a
+  // dead process — Postgres released the underlying advisory lock when
+  // that connection dropped, so the descriptive column is by
+  // definition stale. Without this clear, operator dashboards show
+  // ghost claim holders forever (or until a paused run resumes).
+  // @see review C2.
+  const cleared = await q.query(
+    `UPDATE runs SET claim_holder_id = NULL, claim_expires_at = NULL
+     WHERE status NOT IN ('completed', 'failed', 'cancelled')
+       AND claim_holder_id IS NOT NULL`,
+  );
+  if ((cleared.rowCount ?? 0) > 0) {
+    console.log(
+      `[openwop-host-postgres] orphan recovery: cleared ${cleared.rowCount} stale claim_holder_id stamps from prior processes`,
+    );
+  }
+
   const res = await q.query<{ run_id: string }>(
     `SELECT run_id FROM runs
      WHERE status IN ('pending', 'running', 'cancelling')
@@ -2013,11 +2047,9 @@ async function recoverOrphans(): Promise<void> {
       await setRunTerminal(run_id, 'failed', error);
     });
   }
-  if (res.rows.length > 0) {
-    console.log(
-      `[openwop-host-postgres] orphan recovery: ${res.rows.length} candidate runs probed`,
-    );
-  }
+  console.log(
+    `[openwop-host-postgres] orphan recovery: ${res.rows.length} candidate runs probed`,
+  );
 }
 
 async function closeHost(): Promise<void> {
@@ -2028,10 +2060,15 @@ async function closeHost(): Promise<void> {
     clearInterval(retentionTimer);
     retentionTimer = null;
   }
-  // Abort every in-flight executor before tearing down the server + DB so
-  // the awaiting promises don't fire writes to a closed querier mid-shutdown.
+  // Abort every in-flight executor so they unwind their delay/wait
+  // loops. Each aborted executor's finally block runs releaseClaim;
+  // we then await all of them via inflightExecutors so the
+  // claim_holder_id column doesn't dangle past shutdown. @see review C1.
   for (const aborter of runningAborters.values()) aborter.abort();
   runningAborters.clear();
+  if (inflightExecutors.size > 0) {
+    await Promise.allSettled([...inflightExecutors]);
+  }
   if (_server) {
     await new Promise<void>((resolve) => _server!.close(() => resolve()));
     _server = null;
