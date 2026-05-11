@@ -61,6 +61,17 @@ import {
   type SigningKey,
   type AuditOptions,
 } from './audit.js';
+import {
+  setupInterruptSchema,
+  createInterrupt,
+  getInterrupt,
+  getActiveInterrupt,
+  resolveApproval,
+  resolveClarification,
+  invalidateInterrupts,
+  type ApprovalConfig,
+  type ClarificationConfig,
+} from './interrupts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const HOST = process.env.OPENWOP_HOST ?? '127.0.0.1';
@@ -83,7 +94,8 @@ type RunStatus =
   | 'completed'
   | 'failed'
   | 'cancelled'
-  | 'waiting-approval';
+  | 'waiting-approval'
+  | 'waiting-input';
 
 interface FixtureWorkflow {
   id: string;
@@ -93,6 +105,7 @@ interface FixtureWorkflow {
     id: string;
     typeId: string;
     name: string;
+    config?: Record<string, unknown>;
     inputs: Record<string, unknown>;
   }>;
   variables?: ReadonlyArray<{ name: string; type: string; required: boolean; defaultValue?: unknown }>;
@@ -125,7 +138,8 @@ db.exec(`
     ended_at TEXT,
     error_json TEXT,
     claim_holder_id TEXT,
-    claim_expires_at INTEGER
+    claim_expires_at INTEGER,
+    next_node_index INTEGER NOT NULL DEFAULT 0
   );
 
   CREATE TABLE IF NOT EXISTS events (
@@ -150,6 +164,17 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_idem_stored_at ON idempotency(stored_at);
 `);
+
+// Idempotent migration: older DBs may lack `next_node_index` on `runs`.
+const runColumns = db
+  .prepare("PRAGMA table_info('runs')")
+  .all() as Array<{ name: string }>;
+if (!runColumns.some((c) => c.name === 'next_node_index')) {
+  db.exec("ALTER TABLE runs ADD COLUMN next_node_index INTEGER NOT NULL DEFAULT 0");
+}
+
+// HITL interrupts (interrupt.md + interrupt-profiles.md).
+setupInterruptSchema(db);
 
 // Audit-log integrity profile (openwop-audit-log-integrity).
 // See spec/v1/auth-profiles.md §"Audit-log integrity" and src/audit.ts.
@@ -255,6 +280,7 @@ interface RunRow {
   error_json: string | null;
   claim_holder_id: string | null;
   claim_expires_at: number | null;
+  next_node_index: number;
 }
 
 interface EventRow {
@@ -385,7 +411,7 @@ function resolveInputAsNumber(
   return fallback;
 }
 
-type NodeOutcome = 'completed' | 'cancelled' | 'failed';
+type NodeOutcome = 'completed' | 'cancelled' | 'failed' | 'suspended';
 
 async function executeNode(
   runId: string,
@@ -413,6 +439,42 @@ async function executeNode(
         return 'cancelled';
       }
       break;
+    }
+
+    case 'core.approvalGate': {
+      // Suspend: persist interrupt, emit node.suspended, return 'suspended'.
+      const config = (node.config ?? {}) as Partial<ApprovalConfig>;
+      const approvalConfig: ApprovalConfig = {
+        actions: Array.isArray(config.actions) ? config.actions : ['accept', 'reject'],
+        ...(config.requiredApprovals !== undefined ? { requiredApprovals: config.requiredApprovals } : {}),
+        ...(config.rejectionPolicy !== undefined ? { rejectionPolicy: config.rejectionPolicy } : {}),
+        ...(config.approversList !== undefined ? { approversList: config.approversList } : {}),
+        ...(config.title !== undefined ? { title: config.title } : {}),
+        ...(config.description !== undefined ? { description: config.description } : {}),
+      };
+      const payload = {
+        kind: 'approval',
+        nodeId: node.id,
+        config: approvalConfig,
+      };
+      createInterrupt(db, runId, node.id, 'approval', approvalConfig, payload);
+      appendEvent(runId, 'node.suspended', { nodeId: node.id, data: payload });
+      return 'suspended';
+    }
+
+    case 'core.clarificationGate': {
+      const config = (node.config ?? {}) as Partial<ClarificationConfig>;
+      const clarConfig: ClarificationConfig = {
+        questions: Array.isArray(config.questions) ? config.questions : [],
+      };
+      const payload = {
+        kind: 'clarification',
+        nodeId: node.id,
+        config: clarConfig,
+      };
+      createInterrupt(db, runId, node.id, 'clarification', clarConfig, payload);
+      appendEvent(runId, 'node.suspended', { nodeId: node.id, data: payload });
+      return 'suspended';
     }
 
     default:
@@ -458,7 +520,9 @@ async function runWorkflow(runId: string): Promise<void> {
       appendEvent(runId, 'run.resumed', { data: { resumedBy: PROCESS_ID } });
     }
 
-    for (const node of workflow.nodes) {
+    const startIndex = row.next_node_index ?? 0;
+    for (let i = startIndex; i < workflow.nodes.length; i++) {
+      const node = workflow.nodes[i]!;
       const refreshed = loadRun(runId);
       if (refreshed?.status === 'cancelling') {
         appendEvent(runId, 'run.cancelled');
@@ -481,6 +545,26 @@ async function runWorkflow(runId: string): Promise<void> {
         setRunTerminal(runId, 'cancelled', null);
         return;
       }
+      if (outcome === 'suspended') {
+        // The executor stops here; the resolve route will resume by
+        // setting status back to 'running' and re-invoking runWorkflow.
+        // next_node_index is left at i so resume re-enters the suspended
+        // node — the resolve handler bumps it past on success.
+        // Release the claim so the resolve handler (potentially in a
+        // different process) can re-acquire and continue.
+        const suspendStatus =
+          node.typeId === 'core.clarificationGate' ? 'waiting-input' : 'waiting-approval';
+        db.prepare("UPDATE runs SET status = ?, next_node_index = ? WHERE run_id = ?").run(
+          suspendStatus,
+          i,
+          runId,
+        );
+        stmts.releaseClaim.run(runId, PROCESS_ID);
+        return;
+      }
+      // Successful completion: advance the cursor durably so a process
+      // restart resumes after this node, not at it.
+      db.prepare("UPDATE runs SET next_node_index = ? WHERE run_id = ?").run(i + 1, runId);
     }
 
     const final = loadRun(runId);
@@ -561,6 +645,12 @@ function pruneIdempotency(): void {
 // ─── Route handlers ──────────────────────────────────────────────────────────
 
 function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
+  // Advertise the loaded fixture set so conformance scenarios can gate
+  // their skipIf() on isFixtureAdvertised(id). Only the workflow IDs the
+  // host actually has loaded should appear here.
+  const advertisedFixtures = Array.from(workflows.keys()).filter((id) =>
+    id.startsWith('conformance-'),
+  );
   sendJSON(res, 200, {
     protocolVersion: '1.0',
     implementation: {
@@ -578,6 +668,7 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
     },
     supportedTransports: ['rest'],
     debugBundle: { supported: true },
+    fixtures: advertisedFixtures,
     capabilities: {
       auth: {
         // openwop-audit-log-integrity profile (auth-profiles.md §"Audit-log integrity").
@@ -713,6 +804,23 @@ function handleGetRun(req: IncomingMessage, res: ServerResponse, runId: string):
     sendError(res, 404, 'run_not_found', `Unknown runId: ${runId}`);
     return;
   }
+
+  // Suspended runs expose the active interrupt + currentNodeId so clients
+  // can resolve via POST /v1/runs/{runId}/interrupts/{nodeId}.
+  let interrupt: Record<string, unknown> | null = null;
+  let currentNodeId: string | undefined;
+  if (row.status === 'waiting-approval' || row.status === 'waiting-input') {
+    const active = getActiveInterrupt(db, runId);
+    if (active) {
+      interrupt = {
+        kind: active.kind,
+        nodeId: active.node_id,
+        payload: JSON.parse(active.payload_json),
+      };
+      currentNodeId = active.node_id;
+    }
+  }
+
   sendJSON(res, 200, {
     runId: row.run_id,
     workflowId: row.workflow_id,
@@ -721,6 +829,125 @@ function handleGetRun(req: IncomingMessage, res: ServerResponse, runId: string):
     startedAt: row.started_at,
     endedAt: row.ended_at,
     ...(row.error_json ? { error: JSON.parse(row.error_json) } : {}),
+    ...(currentNodeId ? { currentNodeId } : {}),
+    ...(interrupt ? { interrupt } : {}),
+  });
+}
+
+async function handleResolveInterrupt(
+  req: IncomingMessage,
+  res: ServerResponse,
+  runId: string,
+  nodeId: string,
+): Promise<void> {
+  if (!checkAuth(req, res)) return;
+
+  const row = loadRun(runId);
+  if (!row) {
+    sendError(res, 404, 'run_not_found', `Unknown runId: ${runId}`);
+    return;
+  }
+
+  const interrupt = getInterrupt(db, runId, nodeId);
+  if (!interrupt) {
+    sendError(
+      res,
+      404,
+      'interrupt_not_found',
+      `No active interrupt at (runId=${runId}, nodeId=${nodeId}).`,
+    );
+    return;
+  }
+
+  const bodyText = await readBody(req);
+  let parsed: { resumeValue?: unknown };
+  try {
+    parsed = bodyText ? (JSON.parse(bodyText) as { resumeValue?: unknown }) : {};
+  } catch {
+    sendError(res, 400, 'validation_error', 'Request body MUST be valid JSON.');
+    return;
+  }
+
+  const resumeValue = parsed.resumeValue;
+  const outcome =
+    interrupt.kind === 'approval'
+      ? resolveApproval(db, runId, nodeId, resumeValue)
+      : resolveClarification(db, runId, nodeId, resumeValue);
+
+  if (outcome.kind === 'unknown') {
+    sendError(res, 404, 'interrupt_not_found', 'Interrupt resolved or missing.');
+    return;
+  }
+  if (outcome.kind === 'invalid') {
+    sendError(res, outcome.status, outcome.code, outcome.message);
+    return;
+  }
+
+  logAudit(db, {
+    actor: 'tenant:default',
+    action: 'interrupt.resolve',
+    target: `${runId}:${nodeId}`,
+    details: { outcome: outcome.kind, votes: outcome.kind === 'pending' ? outcome.votes.length : undefined },
+  });
+  triggerCheckpointIfDue(db, auditSigningKey, AUDIT_OPTS);
+
+  if (outcome.kind === 'pending') {
+    // Quorum not yet met. Emit a vote event so observers can see progress;
+    // run remains in waiting-approval.
+    appendEvent(runId, 'interrupt.vote', {
+      nodeId,
+      data: { votes: outcome.votes },
+    });
+    sendJSON(res, 200, {
+      runId,
+      status: 'waiting-approval',
+      interrupt: {
+        kind: interrupt.kind,
+        nodeId,
+        votes: outcome.votes,
+      },
+    });
+    return;
+  }
+
+  if (outcome.kind === 'rejected') {
+    appendEvent(runId, 'node.completed', { nodeId, data: { outcome: 'rejected' } });
+    appendEvent(runId, 'run.failed', {
+      data: { code: 'interrupt_rejected', message: 'Approval gate rejected by quorum.' },
+    });
+    setRunTerminal(runId, 'failed', {
+      code: 'interrupt_rejected',
+      message: 'Approval gate rejected by quorum.',
+    });
+    sendJSON(res, 200, {
+      runId,
+      status: 'failed',
+      interrupt: { kind: interrupt.kind, nodeId, outcome: 'rejected', votes: outcome.votes },
+    });
+    return;
+  }
+
+  // 'resumed' — close out this node and resume the executor from the next one.
+  appendEvent(runId, 'node.resumed', { nodeId, data: { action: outcome.finalAction } });
+  appendEvent(runId, 'node.completed', { nodeId });
+  // Bump the executor cursor past the resumed node so runWorkflow starts
+  // at the next node. Re-acquire claim if needed and re-enter the executor.
+  db.prepare("UPDATE runs SET status = 'running', next_node_index = ? WHERE run_id = ?").run(
+    (row.next_node_index ?? 0) + 1,
+    runId,
+  );
+  if (tryClaim(runId)) {
+    // Fire-and-forget — the executor handles its own lifecycle.
+    void runWorkflow(runId).catch((err: unknown) => {
+      const message = err instanceof Error ? err.message : String(err);
+      appendEvent(runId, 'run.failed', { data: { code: 'internal', message } });
+      setRunTerminal(runId, 'failed', { code: 'internal', message });
+    });
+  }
+  sendJSON(res, 200, {
+    runId,
+    status: 'running',
+    interrupt: { kind: interrupt.kind, nodeId, outcome: 'accepted', votes: outcome.votes },
   });
 }
 
@@ -753,6 +980,25 @@ async function handleCancelRun(
   }
   if (row.status === 'completed' || row.status === 'failed' || row.status === 'cancelled') {
     sendJSON(res, 200, { runId, status: row.status, alreadyTerminal: true });
+    return;
+  }
+
+  // If the run is suspended on an interrupt, there's no executor running
+  // to observe a 'cancelling' flip — drive the run directly to cancelled
+  // and invalidate any pending interrupts.
+  const isSuspended = row.status === 'waiting-approval' || row.status === 'waiting-input';
+  if (isSuspended) {
+    invalidateInterrupts(db, runId, 'cancelled');
+    appendEvent(runId, 'run.cancelled');
+    setRunTerminal(runId, 'cancelled', null);
+    logAudit(db, {
+      actor: 'tenant:default',
+      action: 'run.cancel',
+      target: runId,
+      details: { priorStatus: row.status, viaSuspended: true },
+    });
+    triggerCheckpointIfDue(db, auditSigningKey, AUDIT_OPTS);
+    sendJSON(res, 200, { runId, status: 'cancelled' });
     return;
   }
 
@@ -920,6 +1166,7 @@ const RUN_CANCEL_PATTERN = /^\/v1\/runs\/([^/]+)\/cancel$/;
 const RUN_EVENTS_POLL_PATTERN = /^\/v1\/runs\/([^/]+)\/events\/poll$/;
 const RUN_EVENTS_SSE_PATTERN = /^\/v1\/runs\/([^/]+)\/events$/;
 const RUN_DEBUG_BUNDLE_PATTERN = /^\/v1\/runs\/([^/]+)\/debug-bundle$/;
+const RUN_INTERRUPT_PATTERN = /^\/v1\/runs\/([^/]+)\/interrupts\/([^/]+)$/;
 
 async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
@@ -939,6 +1186,8 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   if (m && method === 'GET') return handleDebugBundle(req, res, m[1]!);
   m = RUN_CANCEL_PATTERN.exec(path);
   if (m && method === 'POST') return handleCancelRun(req, res, m[1]!);
+  m = RUN_INTERRUPT_PATTERN.exec(path);
+  if (m && method === 'POST') return handleResolveInterrupt(req, res, m[1]!, decodeURIComponent(m[2]!));
   m = RUN_ID_PATTERN.exec(path);
   if (m && method === 'GET') return handleGetRun(req, res, m[1]!);
 
