@@ -1,7 +1,7 @@
 /**
  * OpenWOP Postgres reference host — run-lifecycle slice.
  *
- * Status (2026-05-11): basic run lifecycle works.
+ * Status (2026-05-11): basic run lifecycle + audit-log integrity profile.
  *   ✅ GET /.well-known/openwop
  *   ✅ GET /v1/openapi.json
  *   ✅ POST /v1/runs (with idempotency-key + configurable validation
@@ -9,11 +9,11 @@
  *   ✅ GET /v1/runs/{runId}
  *   ✅ POST /v1/runs/{runId}/cancel
  *   ✅ GET /v1/runs/{runId}/events/poll
+ *   ✅ GET /v1/audit/verify (openwop-audit-log-integrity profile)
  *   ✅ Executor for core.noop + core.delay
  *
  * Deferred to follow-up sessions (port from SQLite host, module-by-module):
  *   ⏳ core.approvalGate / clarificationGate / interrupt / subWorkflow
- *   ⏳ Audit-log integrity profile (audit.ts port)
  *   ⏳ Webhook subscriptions + signed delivery (webhooks.ts port)
  *   ⏳ OTel span + metric emission (observability.ts port — file copied
  *      but not wired into routes yet)
@@ -31,13 +31,23 @@
 
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { randomUUID, createHash, timingSafeEqual } from 'node:crypto';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname, resolve as resolvePath } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { EventEmitter } from 'node:events';
 import { Client } from 'pg';
 import { setupSchema } from './schema.js';
 import { withTransaction, type Querier } from './db.js';
+import {
+  setupAuditSchema,
+  loadOrCreateSigningKey,
+  logAudit,
+  triggerCheckpointIfDue,
+  verifyAuditChain,
+  defaultAuditOptions,
+  type SigningKey,
+  type AuditOptions,
+} from './audit.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const HOST = process.env.OPENWOP_HOST ?? '127.0.0.1';
@@ -45,6 +55,8 @@ const PORT = Number(process.env.OPENWOP_PORT ?? 3839);
 const API_KEY = process.env.OPENWOP_API_KEY ?? 'openwop-postgres-dev-key';
 const PG_DSN = process.env.OPENWOP_PG_DSN ?? '';
 const PROCESS_ID = `host-${randomUUID().slice(0, 8)}`;
+const AUDIT_KEY_DIR =
+  process.env.OPENWOP_AUDIT_KEY_DIR ?? join(__dirname, '..', 'data');
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -102,6 +114,20 @@ interface RunEvent {
   readonly nodeId: string | null;
   readonly data: unknown;
   readonly timestamp: string;
+}
+
+// ─── Audit-log integrity state (initialized in start()) ──────────────────────
+
+let _auditSigningKey: SigningKey | null = null;
+const AUDIT_OPTS: AuditOptions = defaultAuditOptions();
+
+function auditSigningKey(): SigningKey {
+  if (!_auditSigningKey) {
+    throw new Error(
+      'audit not initialized — call start() first (signing key + schema load happen there)',
+    );
+  }
+  return _auditSigningKey;
 }
 
 // ─── Querier setup (lazy) ────────────────────────────────────────────────────
@@ -542,6 +568,7 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
         wf.nodes.every((n) => SUPPORTED_NODE_TYPES.has(n.typeId)),
     )
     .map((wf) => wf.id);
+  const key = auditSigningKey();
   sendJSON(
     res,
     200,
@@ -550,7 +577,7 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
       implementation: {
         name: 'openwop-host-postgres',
         version: '0.2.0-partial',
-        vendor: 'openwop-spec (reference example — partial: run-lifecycle only)',
+        vendor: 'openwop-spec (reference example — run-lifecycle + audit-log integrity)',
       },
       supportedEnvelopes: [],
       schemaVersions: {},
@@ -562,7 +589,19 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
       },
       supportedTransports: ['rest'],
       fixtures: advertisedFixtures,
-      capabilities: {},
+      capabilities: {
+        auth: {
+          // openwop-audit-log-integrity profile (auth-profiles.md §"Audit-log integrity").
+          profiles: ['openwop-audit-log-integrity'],
+          auditLogIntegrity: {
+            hashChain: true,
+            checkpointSignatureAlgorithm: 'ed25519',
+            checkpointPublicKey: key.publicKeyB64,
+            checkpointIntervalEntries: AUDIT_OPTS.checkpointIntervalEntries,
+            checkpointIntervalSeconds: AUDIT_OPTS.checkpointIntervalSeconds,
+          },
+        },
+      },
     },
     { 'Cache-Control': 'public, max-age=300' },
   );
@@ -578,6 +617,7 @@ function handleOpenApi(_req: IncomingMessage, res: ServerResponse): void {
       '/v1/runs/{runId}': { get: { responses: { '200': { description: 'OK' } } } },
       '/v1/runs/{runId}/cancel': { post: { responses: { '200': { description: 'OK' } } } },
       '/v1/runs/{runId}/events/poll': { get: { responses: { '200': { description: 'OK' } } } },
+      '/v1/audit/verify': { get: { responses: { '200': { description: 'OK' } } } },
     },
   });
 }
@@ -633,6 +673,15 @@ async function handleCreateRun(req: IncomingMessage, res: ServerResponse): Promi
   const inputs = parsed.inputs ?? {};
   const startedAt = new Date().toISOString();
   await insertRun(runId, parsed.workflowId, inputs, startedAt);
+
+  const q = await querier();
+  await logAudit(q, {
+    actor: 'tenant:default',
+    action: 'run.create',
+    target: runId,
+    details: { workflowId: parsed.workflowId },
+  });
+  await triggerCheckpointIfDue(q, auditSigningKey(), AUDIT_OPTS);
 
   const responseBody = {
     runId,
@@ -702,8 +751,35 @@ async function handleCancelRun(
     return;
   }
   await setCancelRequested(runId);
+  const q = await querier();
+  await logAudit(q, {
+    actor: 'tenant:default',
+    action: 'run.cancel',
+    target: runId,
+    details: { priorStatus: row.status },
+  });
+  await triggerCheckpointIfDue(q, auditSigningKey(), AUDIT_OPTS);
   runningAborters.get(runId)?.abort();
   sendJSON(res, 200, { runId, status: 'cancelling' });
+}
+
+async function handleAuditVerify(
+  req: IncomingMessage,
+  res: ServerResponse,
+  url: URL,
+): Promise<void> {
+  if (!checkAuth(req, res)) return;
+  const fromSeqRaw = url.searchParams.get('fromSeq');
+  const toSeqRaw = url.searchParams.get('toSeq');
+  const fromSeq = fromSeqRaw === null ? 0 : Number(fromSeqRaw);
+  const toSeq = toSeqRaw === null ? Number.MAX_SAFE_INTEGER : Number(toSeqRaw);
+  if (!Number.isFinite(fromSeq) || !Number.isFinite(toSeq) || fromSeq < 0 || toSeq < 0) {
+    sendError(res, 400, 'validation_error', 'fromSeq and toSeq MUST be non-negative integers.');
+    return;
+  }
+  const q = await querier();
+  const result = await verifyAuditChain(q, fromSeq, toSeq, auditSigningKey());
+  sendJSON(res, 200, result);
 }
 
 async function handleEventsPoll(
@@ -752,6 +828,7 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
 
   if (method === 'GET' && path === '/.well-known/openwop') return handleDiscovery(req, res);
   if (method === 'GET' && path === '/v1/openapi.json') return handleOpenApi(req, res);
+  if (method === 'GET' && path === '/v1/audit/verify') return handleAuditVerify(req, res, url);
   if (method === 'POST' && path === '/v1/runs') return handleCreateRun(req, res);
 
   let m = RUN_EVENTS_POLL_PATTERN.exec(path);
@@ -793,6 +870,27 @@ export async function start(): Promise<{ close: () => Promise<void> }> {
   loadFixtures();
   const q = await querier();
   await setupSchema(q);
+  await setupAuditSchema(q);
+
+  // Persist the audit signing keypair under OPENWOP_AUDIT_KEY_DIR.
+  // Tests can override OPENWOP_AUDIT_KEY_DIR to point at a tmpdir per
+  // run; production deployers point it at a host-private volume managed
+  // by the operator's KMS / HSM.
+  if (!existsSync(AUDIT_KEY_DIR)) mkdirSync(AUDIT_KEY_DIR, { recursive: true });
+  _auditSigningKey = loadOrCreateSigningKey(
+    join(AUDIT_KEY_DIR, 'audit-signing-key.pem'),
+    join(AUDIT_KEY_DIR, 'audit-signing-key.pub'),
+  );
+
+  // Seed audit entry so /v1/audit/verify returns a non-empty result even
+  // before any runs land. Mirrors the SQLite host's bootstrap convention.
+  await logAudit(q, {
+    actor: 'system',
+    action: 'host.started',
+    target: PROCESS_ID,
+    details: { host: 'openwop-host-postgres', version: '0.2.0-partial' },
+  });
+  await triggerCheckpointIfDue(q, auditSigningKey(), AUDIT_OPTS);
 
   _server = createServer((req, res) => {
     void route(req, res).catch((err: unknown) => {

@@ -2,13 +2,13 @@
   "name": "@openwop/openwop-host-postgres",
   "version": "0.2.0-partial",
   "private": true,
-  "description": "Reference Postgres-backed OpenWOP host. PARTIAL as of 2026-05-11 — basic run lifecycle works (discovery + POST /v1/runs + GET /v1/runs + cancellation + events). audit, interrupts, webhooks, observability ports are deferred to follow-up sessions per module. Uses pglite (Postgres-on-WASM) for in-process tests; production deployers point OPENWOP_PG_DSN at a real Postgres.",
+  "description": "Reference Postgres-backed OpenWOP host. PARTIAL as of 2026-05-11 — basic run lifecycle + audit-log integrity profile (openwop-audit-log-integrity). interrupts, webhooks, observability ports are deferred to follow-up sessions per module. Uses pglite (Postgres-on-WASM) for in-process tests; production deployers point OPENWOP_PG_DSN at a real Postgres.",
   "type": "module",
   "scripts": {
     "start": "tsx src/server.ts",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "tsx test/lifecycle.test.ts"
+    "test": "tsx test/lifecycle.test.ts && tsx test/audit-tamper.test.ts"
   },
   "dependencies": {
     "pg": "^8.11.0"

@@ -1,6 +1,6 @@
 # OpenWOP Postgres Reference Host
 
-> **Status: PARTIAL (2026-05-11).** Basic run lifecycle works against pglite in-process: discovery, run create, executor for `core.noop` + `core.delay`, terminal poll, cancellation, events poll, idempotency replay. Audit / interrupts / webhooks / observability / SSE are deferred to follow-up sessions per module. The full-feature-parity port is T2.1 in `docs/PROTOCOL-GAP-CLOSURE-PLAN.md`.
+> **Status: PARTIAL (2026-05-11).** Basic run lifecycle + audit-log integrity profile work against pglite in-process: discovery, run create, executor for `core.noop` + `core.delay`, terminal poll, cancellation, events poll, idempotency replay, `GET /v1/audit/verify` with hash-chain + signed-checkpoint verification + tamper detection. Interrupts / webhooks / observability / SSE are deferred to follow-up sessions per module. The full-feature-parity port is T2.1 in `docs/PROTOCOL-GAP-CLOSURE-PLAN.md`.
 
 ---
 
@@ -14,11 +14,11 @@ Wire surface advertised:
   GET  /v1/runs/{runId}              ✅
   POST /v1/runs/{runId}/cancel       ✅
   GET  /v1/runs/{runId}/events/poll  ✅
+  GET  /v1/audit/verify              ✅
   GET  /v1/runs/{runId}/events       ⏳  (SSE — not yet wired)
   POST /v1/runs/{runId}/interrupts/{nodeId}  ⏳
   POST /v1/interrupts/{token}                ⏳
   GET  /v1/runs/{runId}/debug-bundle         ⏳
-  GET  /v1/audit/verify                      ⏳
   POST /v1/webhooks                          ⏳
   POST /v1/runs/{runId}:pause                ⏳
   POST /v1/runs/{runId}:resume               ⏳
@@ -32,7 +32,7 @@ Node types in executor:
   core.subWorkflow                   ⏳
 ```
 
-Discovery deliberately advertises no capabilities — the host claims `openwop-core` (without SSE) only. Profile claims fill in as the corresponding modules port over.
+Discovery advertises `capabilities.auth.profiles: ['openwop-audit-log-integrity']` + the audit-log-integrity capability block (hashChain, Ed25519 checkpoint signature, public key, checkpoint cadence). All other profile claims fill in as the corresponding modules port over.
 
 ## Quick test (no Postgres install required)
 
@@ -42,7 +42,14 @@ npm install     # pulls pg + @electric-sql/pglite (Postgres-on-WASM)
 npm test        # spins up pglite in-process, boots the host, runs lifecycle assertions
 ```
 
-Output: `postgres-host lifecycle test: PASS`. The test exercises discovery, create, terminal poll, idempotency replay, and cancel-after-terminal. Wall-clock ~1 second.
+Output:
+
+```
+postgres-host lifecycle test: PASS
+postgres-host audit-tamper test: PASS
+```
+
+The lifecycle test exercises discovery, create, terminal poll, idempotency replay, and cancel-after-terminal. The audit-tamper test seeds five entries + a checkpoint, then mutates an entry in place and a checkpoint signature in place, and asserts the verify endpoint surfaces `hash-mismatch` / `chain-break` / `merkle-mismatch` / `signature-invalid` anomalies plus exercises the append-only triggers. Wall-clock ~2 seconds combined.
 
 ## Running against a real Postgres
 
@@ -59,13 +66,15 @@ The host's `setupSchema()` creates `runs`, `events`, and `idempotency` tables if
 
 ```
 src/
-├── server.ts        # HTTP routes + executor (~600 LOC, async throughout)
+├── server.ts        # HTTP routes + executor (~700 LOC, async throughout)
 ├── schema.ts        # CREATE TABLE IF NOT EXISTS for runs/events/idempotency
+├── audit.ts         # audit-log integrity (hash chain + Ed25519 checkpoints)
 ├── db.ts            # Querier interface (pg.Client + PGlite both satisfy)
 └── observability.ts # OTel emitter (copied from SQLite host; not yet wired)
 
 test/
-└── lifecycle.test.ts  # End-to-end assertions via PGlite in-process
+├── lifecycle.test.ts     # End-to-end wire-surface assertions via PGlite
+└── audit-tamper.test.ts  # Host-internal tamper detection (entry + checkpoint + trigger)
 ```
 
 `db.ts` defines a minimal `Querier` interface — `query(sql, params)` returning `{rows, rowCount}`. Both `pg.Client` and `PGlite` satisfy it. The host accepts an injected Querier via `setQuerier(...)` for tests; otherwise it opens `pg.Client` against `OPENWOP_PG_DSN`.
@@ -78,7 +87,7 @@ Each item is a follow-up session. Order doesn't matter much; pick the one that u
 
 | Source | Postgres equivalent | Approximate LOC | Unlocks |
 |---|---|---:|---|
-| `sqlite/src/audit.ts` | port to async pg | ~450 | `audit-log-integrity.test.ts` + audit-log tamper detection |
+| ~~`sqlite/src/audit.ts`~~ | ✅ ported (2026-05-11) — `src/audit.ts` | — | ✅ `audit-log-integrity.test.ts` + `test/audit-tamper.test.ts` |
 | `sqlite/src/interrupts.ts` | port to async pg | ~400 | 6 interrupt scenarios (approval, clarification, quorum, auth-required, external-event, parent/child cascade) |
 | `sqlite/src/webhooks.ts` | port to async pg | ~200 | webhook scenarios + SSRF guard tests |
 | `sqlite/src/observability.ts` | already copied; wire into routes | (already ported) | OTel emission + metric scenarios |
