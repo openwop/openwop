@@ -25,8 +25,24 @@ NPM_CACHE="${NPM_CONFIG_CACHE:-/tmp/openwop-npm-cache}"
 echo "=== openwop:check — validating $SPEC_ROOT/ ==="
 echo
 
-# 1. Conformance package — typecheck + server-free scenarios.
-echo "[1/8] Conformance suite (typecheck + server-free scenarios)..."
+# 1. TypeScript SDK — build first (emits dist/) so step 2's corpus-validity
+# test can assert against the dist artifacts. Order matters: the conformance
+# corpus-validity test in step 2 reads sdk/typescript/dist/*.map.
+echo "[1/8] TypeScript reference SDK (build + emit dist/)..."
+(
+  cd "$SPEC_ROOT/sdk/typescript"
+  if [[ ! -d node_modules ]]; then
+    echo "  installing SDK deps (one-time)..."
+    npm_config_cache="$NPM_CACHE" npm install --no-audit --no-fund --prefer-offline >/dev/null
+  fi
+  # `npm run build` does `rm -rf dist && tsc -p tsconfig.build.json` —
+  # produces dist/*.js + dist/*.d.ts + dist/*.map.
+  npm run build >/dev/null
+)
+echo
+
+# 2. Conformance package — typecheck + server-free scenarios.
+echo "[2/8] Conformance suite (typecheck + server-free scenarios)..."
 (
   cd "$SPEC_ROOT/conformance"
   if [[ ! -d node_modules ]]; then
@@ -37,18 +53,6 @@ echo "[1/8] Conformance suite (typecheck + server-free scenarios)..."
   npx vitest run \
     src/scenarios/fixtures-valid.test.ts \
     src/scenarios/spec-corpus-validity.test.ts
-)
-echo
-
-# 2. TypeScript SDK — typecheck.
-echo "[2/8] TypeScript reference SDK (tsc)..."
-(
-  cd "$SPEC_ROOT/sdk/typescript"
-  if [[ ! -d node_modules ]]; then
-    echo "  installing SDK deps (one-time)..."
-    npm_config_cache="$NPM_CACHE" npm install --no-audit --no-fund --prefer-offline >/dev/null
-  fi
-  npx tsc --noEmit
 )
 echo
 
