@@ -57,7 +57,7 @@ I'm happy to:
 
 The first pack is the smallest possible scope — one node, one typed envelope. Future versions can grow.
 
-Worth a 15-minute call to see if it fits?
+**If interested, reply with a 15-minute slot from `<your Calendly link>` or propose three windows. Even a "not a fit / no bandwidth" reply is useful — it sharpens who I reach out to next.**
 
 Thanks,
 David Tufts

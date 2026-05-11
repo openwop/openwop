@@ -99,6 +99,8 @@ Recruitment targets per `docs/recruitment/external-pack-author.md` (drafts ready
 
 When a target replies, fill in `Outreach sent` + `First reply`, advance `Status` through `in-discussion` → `pack-drafted` → `published`. When their pack lands on `packs.openwop.dev`, status → `live`.
 
+> **Follow-up cadence:** Day +5 / +12 / +28 nudges per `docs/recruitment/follow-up-cadence.md`. After Day +28 with no reply, the lead is cold — re-contact only on a real trigger (new release, new endorsement, new evidence) at Day +90.
+
 ### Governance migration trigger
 
 When the first non-steward maintainer is added to the "Current maintainers" table above:

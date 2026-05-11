@@ -43,6 +43,8 @@ Each file has:
 5. First-to-respond with viable quote + 60-day window: send a follow-up to schedule a 30-minute scoping call.
 6. Once a vendor is selected: reply to the other four declining with a brief note (preserves the relationship for future engagements).
 
+**Follow-up cadence (no reply within 5 days):** see `docs/recruitment/follow-up-cadence.md` for Day +5 / +12 / +28 nudge templates per audit vendor. Past Day +28 the lead is cold; revisit only on a real trigger.
+
 ## After-engagement
 
 Once a vendor accepts:
