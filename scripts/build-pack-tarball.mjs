@@ -13,6 +13,16 @@
  *   --out <dir>         Output dir (default: dist/packs).
  *   --validate-only     Validate the manifest + canonical JSON shape;
  *                       skip tarball write.
+ *   --signed            Embed a `signing` block into the manifest +
+ *                       embed the Ed25519 signature inside the tarball
+ *                       at `keys/pack.json.sig`. Required for any pack
+ *                       whose name doesn't start with `private.` —
+ *                       the registry's verifyPublishSignature() refuses
+ *                       unsigned tarballs for those.
+ *   --key-id <id>       publicKeyRef written into the signing block.
+ *                       Defaults to "openwop-team-1". The registry's
+ *                       keychain MUST have the matching public key
+ *                       pre-registered under this id.
  *
  * For each pack the script produces:
  *
@@ -59,7 +69,10 @@ const dim = (s) => console.log(`${C.dim}${s}${C.reset}`);
 // ─── arg parsing ─────────────────────────────────────────────────────
 
 function parseArgs(argv) {
-  const args = { pack: null, all: false, key: null, out: DEFAULT_OUT, validateOnly: false };
+  const args = {
+    pack: null, all: false, key: null, out: DEFAULT_OUT,
+    validateOnly: false, signed: false, keyId: 'openwop-team-1',
+  };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--pack') args.pack = argv[++i];
@@ -67,8 +80,10 @@ function parseArgs(argv) {
     else if (a === '--key') args.key = argv[++i];
     else if (a === '--out') args.out = argv[++i];
     else if (a === '--validate-only') args.validateOnly = true;
+    else if (a === '--signed') args.signed = true;
+    else if (a === '--key-id') args.keyId = argv[++i];
     else if (a === '--help' || a === '-h') {
-      console.log('Usage: build-pack-tarball.mjs [--pack <name> | --all] [--key <path>] [--out <dir>] [--validate-only]');
+      console.log('Usage: build-pack-tarball.mjs [--pack <name> | --all] [--key <path>] [--out <dir>] [--validate-only] [--signed [--key-id <id>]]');
       process.exit(0);
     } else {
       fail(`unknown flag: ${a}`);
@@ -224,7 +239,31 @@ function buildPack(packName, args) {
     return false;
   }
 
-  const canonical = canonicalJson(manifest);
+  // Signed mode: registry's verifyPublishSignature() requires the
+  // manifest to declare a signing block AND for the signature to live
+  // inside the tarball at `signing.signatureRef`. The canonical JSON
+  // we sign is computed over the AUGMENTED manifest (with the signing
+  // block) so the verifier can recompute the same canonical bytes from
+  // the in-tarball pack.json.
+  const requiresSignature = !packName.startsWith('private.');
+  if (requiresSignature && !args.signed && !args.validateOnly) {
+    warn(`  ⚠ ${packName} is non-private; registry will reject unsigned tarball. Add --signed.`);
+  }
+
+  let signedManifest = manifest;
+  if (args.signed) {
+    signedManifest = {
+      ...manifest,
+      signing: {
+        method: 'manual',
+        algorithm: 'ed25519',
+        publicKeyRef: args.keyId,
+        signatureRef: 'keys/pack.json.sig',
+      },
+    };
+  }
+
+  const canonical = canonicalJson(signedManifest);
 
   if (args.validateOnly) {
     ok(`✓ ${packName}@${manifest.version} — manifest valid (${canonical.length} canonical bytes)`);
@@ -233,24 +272,41 @@ function buildPack(packName, args) {
 
   if (!existsSync(args.out)) mkdirSync(args.out, { recursive: true });
 
-  // Build deterministic tarball.
-  const entries = walkPack(packDir);
-  const tgz = buildUstarGzip(entries);
-
-  // SHA-256 of tarball bytes.
-  const sha = createCryptoHash('sha256').update(tgz).digest('hex');
-
-  // Sign the manifest canonical JSON.
+  // Sign the manifest canonical JSON (always — used for off-tarball
+  // .sig.b64 artifact + optionally embedded inside tarball).
   const privateKey = loadOrGeneratePrivateKey(args.key);
   const sig = ed25519Sign(null, Buffer.from(canonical, 'utf8'), privateKey);
 
+  // Walk the source dir; if --signed, replace the on-disk pack.json
+  // entry with the canonical-augmented version + append the sig file
+  // at keys/pack.json.sig.
+  let entries = walkPack(packDir);
+  if (args.signed) {
+    const augmentedManifestBytes = Buffer.from(JSON.stringify(signedManifest, null, 2) + '\n', 'utf8');
+    entries = entries.map((e) =>
+      e.name === 'pack.json' ? { name: 'pack.json', content: augmentedManifestBytes } : e,
+    );
+    // The verifier needs the sig file inside the tarball. Use the
+    // raw 64-byte Ed25519 signature (not base64) — verifySignature
+    // uses crypto.verify which expects raw bytes for the
+    // node:crypto Ed25519 signature format.
+    entries.push({ name: 'keys/pack.json.sig', content: sig });
+    entries.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+  }
+
+  const tgz = buildUstarGzip(entries);
+  const sha = createCryptoHash('sha256').update(tgz).digest('hex');
+
   const base = `${packName}-${manifest.version}`;
   writeFileSync(join(args.out, `${base}.tgz`), tgz);
-  writeFileSync(join(args.out, `${base}.manifest.json`), manifestText);
+  writeFileSync(
+    join(args.out, `${base}.manifest.json`),
+    args.signed ? JSON.stringify(signedManifest, null, 2) + '\n' : manifestText,
+  );
   writeFileSync(join(args.out, `${base}.sig.b64`), sig.toString('base64'));
   writeFileSync(join(args.out, `${base}.integrity.txt`), `sha256:${sha}\n`);
 
-  ok(`✓ ${packName}@${manifest.version}`);
+  ok(`✓ ${packName}@${manifest.version}${args.signed ? ' [signed]' : ''}`);
   dim(`  entries: ${entries.length}  size: ${tgz.length}b  sha256: ${sha.slice(0, 16)}…`);
   return true;
 }
