@@ -141,7 +141,7 @@ A pack's manifest is a JSON file named `pack.json` at the pack root. Schema: `sc
 
 ### Optional fields
 
-`description`, `author`, `license`, `homepage`, `repository`, `keywords[]`, `dependencies` (other packs), `peerDependencies` (engine-supplied capabilities the pack consumes), `signing` (see §signing).
+`description`, `author`, `license`, `homepage`, `repository`, `keywords[]`, `dependencies` (other packs), `peerDependencies` (engine-supplied capabilities the pack consumes — see `host-capabilities.md` for the per-surface contracts), `signing` (see §signing).
 
 ### Per-node `requiresSecrets[]`
 

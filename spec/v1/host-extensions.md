@@ -166,8 +166,21 @@ Extension promotion is rare. Most host extensions stay host-specific forever; th
 
 ---
 
+## `host.*` capability surfaces
+
+The `host.*` namespace is reserved for **capability surfaces** that node packs consume via their manifest's `peerDependencies` (per `node-packs.md` §"Manifest format"). The per-surface normative contracts live in:
+
+- **`spec/v1/host-capabilities.md`** — canonical reference for every `host.<name>` capability: methods, signatures, required vs optional, failure modes.
+
+A host advertising `host.<name>: supported` in `/.well-known/openwop` MUST honor that contract. A pack declaring `peerDependencies: { "host.<name>": "supported" }` consumes it. The pack registry validates the relationship at workflow-register time.
+
+The 14 surfaces specified in v1: `host.aiEnvelope`, `host.promptLibrary`, `host.canvas`, `host.chat`, `host.brand`, `host.kanban`, `host.webResearch`, `host.agentRuntime`, `host.coordination`, `host.dataIntegration`, `host.launchStudio`, `host.entities`, `host.messaging`, `host.mcp`.
+
+---
+
 ## See also
 
+- `spec/v1/host-capabilities.md` — per-surface contracts for `host.*` capabilities
 - `spec/v1/capabilities.md` §"Network-handshake shape" — required and optional v1 fields are protocol-managed; fields outside that table are host extensions.
 - `spec/v1/positioning.md` — what's in the protocol vs what's in adjacent ecosystems.
 - `spec/v1/node-packs.md` §"Naming" — pack-name scope conventions.
