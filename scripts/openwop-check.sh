@@ -20,7 +20,7 @@
 set -euo pipefail
 
 SPEC_ROOT="."
-NPM_CACHE="${NPM_CONFIG_CACHE:-/private/tmp/openwop-npm-cache}"
+NPM_CACHE="${NPM_CONFIG_CACHE:-/tmp/openwop-npm-cache}"
 
 echo "=== openwop:check — validating $SPEC_ROOT/ ==="
 echo

@@ -4,8 +4,8 @@
 set -euo pipefail
 
 SPEC_ROOT="."
-NPM_CACHE="${NPM_CONFIG_CACHE:-/private/tmp/openwop-npm-cache}"
-TMP_DIR=$(mktemp -d /private/tmp/openwop-pack-contents.XXXXXX)
+NPM_CACHE="${NPM_CONFIG_CACHE:-/tmp/openwop-npm-cache}"
+TMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/openwop-pack-contents.XXXXXX")
 
 cleanup() {
   rm -rf "$TMP_DIR"
