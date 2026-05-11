@@ -1,6 +1,8 @@
 # OpenWOP Conformance Coverage Map
 
-> **Status: Living document. Updated 2026-05-10.** This map connects the current scenario files to the protocol surfaces they protect and records the remaining gaps from the protocol deep dive. Scenario names are source-of-truth file names under `conformance/src/scenarios/`.
+> **Status: Living document. Updated 2026-05-11.** This map connects the current scenario files to the protocol surfaces they protect and records the remaining gaps from the protocol deep dive. Scenario names are source-of-truth file names under `conformance/src/scenarios/`.
+
+> **Shape grade vs behavior grade.** Some optional-profile scenarios validate **capability shape** (the host's discovery advertisement is well-formed) without yet exercising **behavior** (the host actually implements the profile end-to-end). The "Current grade" column reflects shape; see §"Capability-gated scenarios: shape vs behavior" below for the dual-grade view and the `OPENWOP_REQUIRE_BEHAVIOR=true` strict-mode runner flag.
 
 ---
 
@@ -29,6 +31,34 @@
 | Webhook signature algorithms | `webhook-sig-algorithm.test.ts` | C+ | Discovery shape covered; remaining: end-to-end signed delivery exercising `X-openwop-Signature-Algorithm: v1`. |
 | Audit-log integrity profile | `audit-log-integrity.test.ts` | C+ | Profile claim + `/v1/audit/verify` shape covered; remaining: tamper-detection scenario (requires admin access to host's audit store) + multi-checkpoint chain verification. |
 | Multi-region idempotency capability | `multi-region-idempotency.test.ts` | C | Discovery enum coverage; remaining: cross-region partition simulation (requires multi-region harness). |
+| Public hosted registry (`packs.openwop.dev`) | `registry-public.test.ts` | A− | Discovery, index, and per-pack manifest assertions against the public registry. Opt-in via `OPENWOP_TEST_PUBLIC_REGISTRY=true` so default conformance runs don't depend on outbound `packs.openwop.dev` reachability. Remaining: tarball-fetch + signature-verify roundtrip. |
+
+---
+
+## Capability-gated scenarios: shape vs behavior
+
+Ten scenarios validate optional profiles where the host's discovery advertisement is well-formed (shape grade) but no reference host yet implements the profile end-to-end (behavior grade is `host-pending`). Default suite runs skip these with a warning; set `OPENWOP_REQUIRE_BEHAVIOR=true` to convert skips into hard failures.
+
+| Scenario | Profile / capability | Shape grade | Behavior grade | Behavior-unlock dependency |
+|---|---|---|---|---|
+| `audit-log-integrity.test.ts` | `openwop-audit-log-integrity` (`auth-profiles.md`) | A− (discovery + verify endpoint shape) | `host-pending` | Track 1.1 — SQLite host implements hash-chain + signed checkpoints |
+| `rate-limit-envelope.test.ts` | normative `429` envelope (`rest-endpoints.md`) | B− (observational — checks shape when 429 fires) | `host-pending` | Deterministic 429-induction harness (e.g., `OPENWOP_FORCE_RATE_LIMIT=true` on a test-only key) |
+| `multi-region-idempotency.test.ts` | `capabilities.idempotency.crossRegion` (`idempotency.md`) | C (enum shape only) | `host-pending` | Multi-region host fixture; cross-region partition simulation |
+| `configurable-schema.test.ts` | per-workflow `configurableSchema` (`run-options.md`) | C+ (negative validation) | `host-pending` | Positive accepted-overlay scenario + `GET /v1/workflows/{id}` schema surface |
+| `webhook-sig-algorithm.test.ts` | `X-openwop-Signature-Algorithm: v1` (`webhooks.md`) | C+ (discovery shape) | `host-pending` | End-to-end signed delivery against a test receiver |
+| `pause-resume.test.ts` | `pauseRun` / `resumeRun` lifecycle (`rest-endpoints.md`) | B (lifecycle + 409-on-non-paused) | partial | Pause-during-suspend race; immediate-vs-drain policy assertion |
+| `append-ordering.test.ts` | `append` reducer ordering (`channels-and-reducers.md`) | B (intra-engine) | partial | Cross-engine multi-engine fixture |
+| `otel-emission.test.ts` | `openwop.*` OTel spans (`observability.md`) | B+ (OTLP/HTTP-JSON only) | partial | OTLP/protobuf path + metric-emission scenario |
+| `otel-trace-propagation.test.ts` | W3C trace-context propagation (`observability.md`) | B (trace continuity across `runs:fork` + interrupt resolve) | partial | Cross-host propagation across `core.subWorkflow` invocation |
+| `wasm-pack-*.test.ts` (six scenarios) | `capabilities.nodePackRuntimes.wasm` (`RFCS/0008`) | A− (load + invoke + replay + memory cap + ABI version) | partial | Deliberately-misbehaving pack for memory-cap + ABI-version-rejection positive paths |
+
+Strict-mode runner usage:
+
+```bash
+OPENWOP_REQUIRE_BEHAVIOR=true npx vitest run
+```
+
+The flag is read at scenario startup via `conformance/src/lib/env.ts` → `loadEnv().requireBehavior`. Scenarios use the `behaviorGate(profileName, advertised)` helper from `conformance/src/lib/behavior-gate.ts` so the strict-mode failure message cites the relevant spec section. `audit-log-integrity.test.ts` is the worked example as of 2026-05-11; the remaining nine scenarios will adopt the helper as their host-side profiles land (tracked in `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` Phase-1 tracks T1.1 onward).
 
 ---
 

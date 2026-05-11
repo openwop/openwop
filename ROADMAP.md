@@ -1,7 +1,7 @@
 # openwop Roadmap
 
 > **Status:** Living document. Updated as milestones land.
-> **Last reviewed:** 2026-05-10 (suite at 1.0.0 package metadata; v1 corpus hygiene pass).
+> **Last reviewed:** 2026-05-11 (registry-status reconciled with `PROTOCOL-GAP-CLOSURE-PLAN.md` Track 7; `packs.openwop.dev` confirmed live with 3 published packs).
 
 This roadmap distinguishes **stable v1** (locked contract), **v1.X minor work** (additive, conformance-only), and **post-v1 ecosystem** (extension profiles, infrastructure, governance).
 
@@ -67,7 +67,7 @@ Capability profiles are clusters of optional behaviors a host can advertise via 
 
 | Item | Status | Notes |
 |---|---|---|
-| Hosted node-pack registry (`packs.openwop.dev`) | Not started | Spec is firm at `registry-operations.md`; deployment is operations work. MVP: read-only registry, one signed example pack, verification docs. |
+| Hosted node-pack registry (`packs.openwop.dev`) | Live (read-only MVP) | Discovery + index + per-pack manifest + tarball endpoints serve from `packs.openwop.dev` per `registry-operations.md`. Three packs published as of 2026-05-10: `core.openwop.examples@1.0.0`, `community.openwop-team.demo@0.1.0`, `vendor.openwop.rust-hello@1.0.0` (WASM reference). Write API and lifecycle ops (yank / deprecate / key rotation) ship via pull-request publishing on GitHub. Public healthcheck: `conformance/src/scenarios/registry-public.test.ts`. |
 | Hosted docs + conformance leaderboard site (`openwop.dev`) | Started in `site/` | Static site builds rendered spec docs, conformance page, profiles, sitemap, OG assets, and per-host badges. Remaining work: publish hosting + live leaderboard updates. |
 | Public CI for community contributions | In source tree | Workflows exist in `.github/workflows/`; remaining work is public runner validation after repository publication. |
 

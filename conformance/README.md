@@ -60,13 +60,24 @@ npx vitest run                                 # full suite
 npx vitest run src/scenarios/discovery.test.ts # single file
 ```
 
+### Optional environment flags
+
+| Variable | Effect |
+|---|---|
+| `OPENWOP_REQUIRE_BEHAVIOR=true` | Capability-gated scenarios (audit-log integrity, rate-limit envelope, multi-region idempotency, `configurableSchema`, webhook sig versioning, etc.) FAIL instead of skipping when the host doesn't advertise the profile. Lets a host claim "full coverage" mechanically. See [`coverage.md`](./coverage.md) §"Capability-gated scenarios". |
+| `OPENWOP_TEST_PUBLIC_REGISTRY=true` | Runs `registry-public.test.ts` against the hosted registry at `packs.openwop.dev`. Skipped by default so the suite doesn't depend on outbound connectivity. |
+| `OPENWOP_OTEL_COLLECTOR=true` | Boots the in-suite OTLP/HTTP-JSON collector for `otel-emission.test.ts` and `otel-trace-propagation.test.ts`. Skipped by default. |
+| `OPENWOP_MCP_FAKE_SERVER=true` | Boots the synthetic MCP peer for `mcp-tool-roundtrip.test.ts`. |
+| `OPENWOP_A2A_FAKE_PEER=true` | Boots the synthetic A2A peer for `a2a-task-roundtrip.test.ts`. |
+| `OPENWOP_FORCE_RATE_LIMIT=true` | Signals the host (test-only key) to fabricate a 429 so `rate-limit-envelope.test.ts` can exercise envelope shape deterministically. |
+
 Exit code is non-zero on any failed assertion.
 
 ---
 
 ## What's Covered
 
-The current suite has 85 scenario files under `src/scenarios/`. This includes 18 Multi-Agent Shift scenarios (Phases 1-5) added 2026-05-10. The maintained scenario-to-spec map lives in [`coverage.md`](./coverage.md); this README keeps the operator quickstart and the historical scenario notes below.
+The current suite has 86 scenario files under `src/scenarios/`. This includes 18 Multi-Agent Shift scenarios (Phases 1-5) added 2026-05-10 and the `registry-public.test.ts` public-registry healthcheck added 2026-05-11 (opt-in via `OPENWOP_TEST_PUBLIC_REGISTRY=true`). The maintained scenario-to-spec map lives in [`coverage.md`](./coverage.md); this README keeps the operator quickstart and the historical scenario notes below.
 
 High-level coverage includes:
 
@@ -145,7 +156,7 @@ Server-required (added in 1.7.0):
 |---|---|---|
 | **Redaction** | [`capabilities.md`](../spec/v1/capabilities.md) §"Secrets" + NFR-7 + §"aiProviders" | Vendor-neutral assertions that the server doesn't leak secret material. Three scenario groups: (a) discovery shape contract — `secrets` + `aiProviders` advertisements are well-formed regardless of `secrets.supported`; when `supported === true`, scopes MUST be non-empty + `resolution === 'host-managed'`; `byok ⊆ supported`. (b) bearer-token redaction — invalid Bearer canary in `Authorization` header is not echoed in the 401 response body. (c) credentialRef echo control — gated on `secrets.supported === true`; canary planted in `configurable.ai.credentialRef` MUST NOT appear in any RunEvent payload (poll-based capture; transport-agnostic). Uses runtime-built canary fixtures (`lib/canaries.ts`) that defeat static secret scanners. 6 scenarios. |
 
-Current source tree: 85 scenario files. Use [`coverage.md`](./coverage.md) for current grade/gap tracking.
+Current source tree: 86 scenario files. Use [`coverage.md`](./coverage.md) for current grade/gap tracking.
 
 ## Remaining Gaps
 

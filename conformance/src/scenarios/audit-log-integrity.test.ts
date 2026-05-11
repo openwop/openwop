@@ -17,6 +17,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { behaviorGate } from '../lib/behavior-gate.js';
 
 interface AuditIntegrityCaps {
   hashChain?: boolean;
@@ -39,9 +40,7 @@ async function isProfileAdvertised(): Promise<boolean> {
 
 describe('audit-log-integrity: profile shape', () => {
   it('host that claims the profile advertises required capability fields', async () => {
-    if (!(await isProfileAdvertised())) {
-      // eslint-disable-next-line no-console
-      console.warn('[audit-log-integrity] profile not advertised; skipping');
+    if (!behaviorGate('openwop-audit-log-integrity', await isProfileAdvertised())) {
       return;
     }
 
@@ -64,9 +63,7 @@ describe('audit-log-integrity: profile shape', () => {
 
 describe('audit-log-integrity: verify endpoint returns chainValid', () => {
   it('GET /v1/audit/verify on a recent range reports chainValid: true', async () => {
-    if (!(await isProfileAdvertised())) {
-      // eslint-disable-next-line no-console
-      console.warn('[audit-log-integrity] profile not advertised; skipping');
+    if (!behaviorGate('openwop-audit-log-integrity', await isProfileAdvertised())) {
       return;
     }
 

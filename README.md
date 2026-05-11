@@ -1,12 +1,12 @@
-# openwop — Multi-Agent Workflow Orchestration Protocol
+# OpenWOP — Multi-Agent Workflow Orchestration Protocol
 
-**openwop is an open, wire-level protocol for multi-agent workflow orchestration.** It defines how multiple AI agents, deterministic tools, sub-workflows, and human reviewers collaborate inside a single durably-suspendable, replayable run — and how independent hosts (workflow engines, SDKs, debuggers, agent runtimes) interoperate over the same contract.
+**OpenWOP is an open, wire-level protocol for multi-agent workflow orchestration.** It defines how multiple AI agents, deterministic tools, sub-workflows, and human reviewers collaborate inside a single durably-suspendable, replayable run — and how independent hosts (workflow engines, SDKs, debuggers, agent runtimes) interoperate over the same contract.
 
-If you're building agentic systems, AI workflow engines, multi-agent applications, agent orchestration platforms, or human-in-the-loop pipelines and want a protocol layer instead of vendor lock-in, openwop is the contract.
+If you're building agentic systems, AI workflow engines, multi-agent applications, agent orchestration platforms, or human-in-the-loop pipelines and want a protocol layer instead of vendor lock-in, OpenWOP is the contract.
 
 ## Multi-Agent Architecture (v1+)
 
-openwop v1 introduces first-class support for **orchestrator-driven multi-agent workflows**:
+OpenWOP v1 introduces first-class support for **orchestrator-driven multi-agent workflows**:
 
 - **Orchestrator agent** — A supervisor agent that owns the conversation context, drives workflow execution decisions, and dynamically constructs node stacks based on user intent
 - **Worker agents** — Each node defaults to its own isolated agent context with specialist capabilities, with optional shared-agent modes for tightly-coupled state
@@ -20,12 +20,12 @@ openwop v1 introduces first-class support for **orchestrator-driven multi-agent 
 
 A **workflow** is a directed graph of steps that drives state from an input to a result. **Multi-agent** means each step can be taken by a different kind of actor — an LLM, a tool, a person, or another workflow — sharing typed state across the graph. **Orchestration** means a single layer (the protocol, not any one host) owns the cross-cutting guarantees those agents need to collaborate safely: durability, suspend / resume, replay, version negotiation, and observability.
 
-In openwop, an "agent" is anything that takes a turn inside a run:
+In OpenWOP, an "agent" is anything that takes a turn inside a run:
 
 - an **LLM agent** — an AI model node that calls a foundation model (Anthropic, OpenAI, Google, local) and emits a typed envelope;
 - a **tool agent** — a deterministic node that runs a function, queries a database, transforms state, or invokes an MCP tool;
 - a **human agent** — a reviewer participating through a canonical [interrupt](./spec/v1/interrupt.md): approve / reject / clarify / refine / cancel;
-- a **sub-workflow agent** — another openwop run, possibly executed on a different host or organization, invoked over the same protocol;
+- a **sub-workflow agent** — another OpenWOP run, possibly executed on a different host or organization, invoked over the same protocol;
 - an **orchestrator agent** — a supervisor agent that drives workflow execution decisions (v1+).
 
 An OpenWOP-compliant **host** is any server that implements the REST + SSE surface defined in [`api/openapi.yaml`](./api/openapi.yaml). An OpenWOP-compliant **client** is any SDK, tool, or agent that consumes those endpoints. The [conformance suite](./conformance/) decides compliance mechanically — `npx @openwop/openwop-conformance` against `OPENWOP_BASE_URL` returns pass/fail.
@@ -50,18 +50,18 @@ An OpenWOP-compliant **host** is any server that implements the REST + SSE surfa
 | **Agent memory** | Host-adapter interface for agent memory persistence with BYOK redaction guarantees (v1+). | [`RFCS/0004`](./RFCS/0004-memory-layer.md) |
 | **Webhooks** | HMAC-signed delivery of run events to subscribers; replay-attack-resistant verification recipe; circuit-breaker semantics. | [`webhooks.md`](./spec/v1/webhooks.md) |
 
-## What openwop is not (and what it composes with)
+## What OpenWOP is not (and what it composes with)
 
-openwop intentionally does not standardize:
+OpenWOP intentionally does not standardize:
 
 - **model-call shape** — an LLM agent inside a node calls whatever it wants (OpenAI, Anthropic, Bedrock, Vertex, Ollama, local);
 - **orchestration topology** — DAGs, state machines, planner-executor loops, ReAct, supervisor-worker, hierarchical agents, all run inside a single OpenWOP node graph;
 - **tool-exposure protocol** — use [MCP](./spec/v1/mcp-integration.md). OpenWOP runs the workflow; MCP exposes tools to the LLM nodes inside it;
 - **inter-agent messaging across processes** — use [A2A](./spec/v1/a2a-integration.md). A2A handles the message exchange between agents on different hosts; OpenWOP runs the workflow inside one of them.
 
-For an honest comparison of openwop vs **Temporal, Airflow, Argo Workflows, AWS Step Functions, BPMN, LangGraph, and MCP** — when to choose openwop and when not — see [`positioning.md`](./spec/v1/positioning.md).
+For an honest comparison of OpenWOP vs **Temporal, Airflow, Argo Workflows, AWS Step Functions, BPMN, LangGraph, and MCP** — when to choose OpenWOP and when not — see [`positioning.md`](./spec/v1/positioning.md).
 
-> **Status: FINAL v1 (2026-05-08), multi-agent extensions Active (RFCs 0002–0007, landed 2026-05-10).** Protocol contract is locked; multi-agent extension RFCs are at `Active` status with schemas published and normative prose under [`RFCS/`](./RFCS/). Implementations validate against the conformance suite at their own cadence; multi-agent scenarios are gated on host capability advertisement.
+> **Status: FINAL v1 (2026-05-08), multi-agent extensions Active (RFCs 0002–0007, landed 2026-05-10; integration-seams audit closed 2026-05-11).** Protocol contract is locked; multi-agent extension RFCs are at `Active` status with schemas published, normative prose under [`RFCS/`](./RFCS/), and every per-phase integration surface verified against the canonical schemas + conformance suite (see [`docs/MULTI-AGENT-INTEGRATION-GAPS.md`](./docs/MULTI-AGENT-INTEGRATION-GAPS.md), now archived). Implementations validate against the conformance suite at their own cadence; multi-agent scenarios are gated on host capability advertisement. Strict-mode conformance is available via `OPENWOP_REQUIRE_BEHAVIOR=true` — see [`conformance/coverage.md`](./conformance/coverage.md) §"Capability-gated scenarios".
 
 > **v1.0 publish-ready artifacts.** [`@openwop/openwop`](https://www.npmjs.com/package/@openwop/openwop) (npm) · [`@openwop/openwop-conformance`](https://www.npmjs.com/package/@openwop/openwop-conformance) (npm) · [`openwop-client`](https://pypi.org/project/openwop-client/) (PyPI) · [`github.com/openwop/openwop/sdk/go`](https://pkg.go.dev/github.com/openwop/openwop/sdk/go) (Go modules). All track v1.0 of the protocol; package names are stable through any v1.x release per `PUBLISHING.md`. Future moves to a vendor-neutral org are gated on the tripwire in `ROADMAP.md`.
 
@@ -93,7 +93,7 @@ This repository is the canonical source for the protocol itself; reference imple
 | [`scale-profiles.md`](./spec/v1/scale-profiles.md) | FINAL v1 | ~900 | Three normative scale tiers (`minimal` / `production` / `high-throughput`) with floors for concurrency, latency, retry, fan-out, replay |
 | [`production-profile.md`](./spec/v1/production-profile.md) | FINAL v1 | ~900 | Public-release operational profile: durability, backpressure, retry, event retention, debug bundles, observability |
 | [`debug-bundle.md`](./spec/v1/debug-bundle.md) | FINAL v1 | ~900 | Portable JSON export of a single run's diagnostic state: `GET /v1/runs/{runId}/debug-bundle`. Profile-gated on `capabilities.debugBundle.supported: true` |
-| [`positioning.md`](./spec/v1/positioning.md) | FINAL v1 | ~1,100 | Honest comparison of openwop vs Temporal / Airflow / Argo / Step Functions / BPMN / LangGraph / MCP. When to choose openwop and when not. |
+| [`positioning.md`](./spec/v1/positioning.md) | FINAL v1 | ~1,100 | Honest comparison of OpenWOP vs Temporal / Airflow / Argo / Step Functions / BPMN / LangGraph / MCP. When to choose OpenWOP and when not. |
 | [`mcp-integration.md`](./spec/v1/mcp-integration.md) | FINAL v1 | ~700 | Worked example of OpenWOP + MCP composition. OpenWOP runs the workflow; MCP exposes tools to the LLM nodes inside that workflow. |
 | [`a2a-integration.md`](./spec/v1/a2a-integration.md) | FINAL v1 | ~1,400 | Worked example of OpenWOP + A2A composition. A2A handles inter-agent message exchange; OpenWOP runs the workflow inside one agent. Includes OpenWOP↔A2A state-projection table with documented drift points. |
 | [`host-extensions.md`](./spec/v1/host-extensions.md) | FINAL v1 | ~900 | What's in the protocol vs what's a host extension. Canonical-prefix table; `openwop.*` and other vendor namespaces are host-extensions. |
@@ -104,20 +104,20 @@ This repository is the canonical source for the protocol itself; reference imple
 
 ## Quickstart
 
-New to openwop? Two paths:
+New to OpenWOP? Two paths:
 
-- **[`QUICKSTART-10MIN.md`](./QUICKSTART-10MIN.md)** — fastest possible "what is openwop and how do I run one?" Boots the in-memory reference host on your laptop, runs a workflow via curl + SDK + SSE. No vendor SDK, no managed-service setup. Just Node 20+ and a clone of this repo.
+- **[`QUICKSTART-10MIN.md`](./QUICKSTART-10MIN.md)** — fastest possible "what is OpenWOP and how do I run one?" Boots the in-memory reference host on your laptop, runs a workflow via curl + SDK + SSE. No vendor SDK, no managed-service setup. Just Node 20+ and a clone of this repo.
 - **[`QUICKSTART.md`](./QUICKSTART.md)** — end-to-end walkthrough against any OpenWOP-compliant host: auth + create run + read snapshot, SSE + webhooks, fork + replay, node packs, conformance.
 
 ## Examples
 
 Runnable example projects under [`examples/`](./examples/):
 
-- **[`tiny-workflow/`](./examples/tiny-workflow/)** — smallest possible openwop run lifecycle (~80 lines, zero deps).
+- **[`tiny-workflow/`](./examples/tiny-workflow/)** — smallest possible OpenWOP run lifecycle (~80 lines, zero deps).
 - **[`streaming-client/`](./examples/streaming-client/)** — SSE event-stream consumer with hand-written frame parser (~110 lines, zero deps).
 - **[`idempotent-runs/`](./examples/idempotent-runs/)** — Layer-1 HTTP idempotency: retries collapse, body conflicts get 409 (~80 lines, zero deps).
-- **[`hosts/in-memory/`](./examples/hosts/in-memory/)** — single-file reference openwop server (~570 lines, Node stdlib only). The host the other examples run against.
-- **[`hosts/sqlite/`](./examples/hosts/sqlite/)** — durable reference openwop server (~700 lines, single dep `better-sqlite3`). Runs + events persist across process restart. The README doubles as the **"Build Your Own Host" walkthrough**.
+- **[`hosts/in-memory/`](./examples/hosts/in-memory/)** — single-file reference OpenWOP server (~570 lines, Node stdlib only). The host the other examples run against.
+- **[`hosts/sqlite/`](./examples/hosts/sqlite/)** — durable reference OpenWOP server (~700 lines, single dep `better-sqlite3`). Runs + events persist across process restart. The README doubles as the **"Build Your Own Host" walkthrough**.
 
 Examples run end-to-end in CI via [`.github/workflows/examples.yml`](./.github/workflows/examples.yml) so they don't go stale.
 
@@ -213,7 +213,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full guide. In short — file i
 
 ## Changelog
 
-See [CHANGELOG.md](./CHANGELOG.md) — `[1] — 2026-05-08 — openwop v1 FINAL (multi-agent extensions)` is the current top entry.
+See [CHANGELOG.md](./CHANGELOG.md) — `[1] — 2026-05-08 — OpenWOP v1 FINAL (multi-agent extensions)` is the current top entry.
 
 **v1 Multi-Agent Extensions (RFCs Active 2026-05-10):**
 - [**RFC 0002**](./RFCS/0002-agent-identity-and-reasoning-events.md) — Agent identity + reasoning events: `AgentRef` wire shape, `agent.reasoned`/`agent.toolCalled`/`agent.toolReturned`/`agent.handoff`/`agent.decided`/`runOrchestrator.decided` event types, confidence scoring, messaging reducer, replay determinism
@@ -233,7 +233,7 @@ Current state: 26 prose specs FINAL v1 · 19 JSON Schemas · OpenAPI 3.1 + Async
 
 ## Where to go next
 
-If you're new to openwop:
+If you're new to OpenWOP:
 
 - **[`QUICKSTART.md`](./QUICKSTART.md)** — five-minute hands-on tour: discovery, run creation, streaming.
 - **[`spec/v1/`](./spec/v1/)** — the 26 normative prose specs. Start with `rest-endpoints.md` and `auth.md`.
@@ -244,7 +244,7 @@ If you're implementing a host:
 - **[`api/openapi.yaml`](./api/openapi.yaml)** + **[`api/asyncapi.yaml`](./api/asyncapi.yaml)** — machine-readable contracts.
 - **[`conformance/`](./conformance/)** — `@openwop/openwop-conformance` test suite. Run against your endpoint to verify spec compliance.
 
-If you're consuming openwop from an application:
+If you're consuming OpenWOP from an application:
 
 - **[`sdk/typescript/`](./sdk/typescript/)** — `@openwop/openwop` (npm).
 - **[`sdk/python/`](./sdk/python/)** — `openwop-client` (PyPI).
@@ -263,4 +263,4 @@ Reference implementations:
 - **[`examples/hosts/sqlite/`](./examples/hosts/sqlite/)** — durable single-file reference host (~700 lines, `better-sqlite3` only). Runs persist across process restart.
 - **Third-party hosts** are listed in [`INTEROP-MATRIX.md`](./INTEROP-MATRIX.md) as they pass conformance. The reference hosts under `examples/hosts/` are non-normative — they exist to prove the protocol cross-implements.
 
-This repository's current steward is the original openwop working group (see [`MAINTAINERS.md`](./MAINTAINERS.md)). The repo is hosted at `github.com/openwop/openwop` until the vendor-neutral org migration tripwire fires (see [`ROADMAP.md`](./ROADMAP.md) § "Vendor-neutral org migration"); host name appearance in the URL is operational, not normative.
+This repository's current steward is the original OpenWOP working group (see [`MAINTAINERS.md`](./MAINTAINERS.md)). The repo is hosted at `github.com/openwop/openwop` until the vendor-neutral org migration tripwire fires (see [`ROADMAP.md`](./ROADMAP.md) § "Vendor-neutral org migration"); host name appearance in the URL is operational, not normative.

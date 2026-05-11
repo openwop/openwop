@@ -195,6 +195,7 @@ This document turns the protocol deep-dive review into implementation tracks. It
 **Acceptance:**
 - ✅ Six RFC files in `RFCS/` at `Active` status or higher (`0002-agent-identity-and-reasoning-events.md` through `0007-dispatch.md`, landed 2026-05-10).
 - ✅ `README.md` multi-agent table cross-links to each RFC by filename.
+- ✅ Integration-seams audit reconciled 2026-05-11 — `docs/MULTI-AGENT-INTEGRATION-GAPS.md` is now ARCHIVED with every Phase-1-through-6 surface marked closed with a landing path. RFCs 0002–0007 are eligible for promotion from `Active` to `Accepted`.
 - Remaining: Conformance scenarios that exercise multi-agent surfaces (`dispatchLoop.test.ts`, et al.) cite the normative spec doc, not just a schema. (Tests exist; descriptions need updating to reference RFCs.)
 - ✅ `AgentRef` positioning addendum landed at `spec/v1/agent-ref-positioning.md` (DID / A2A AgentCard / AGNTCY composition rules + translation table).
 

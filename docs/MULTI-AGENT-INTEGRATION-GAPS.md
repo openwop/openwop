@@ -1,176 +1,164 @@
 # Multi-Agent Integration Gaps — openwop v1.0
 
-**Status:** Planning doc + audit log for the multi-agent functionality integration pass.
+**Status:** ARCHIVED — every gap row in this audit is closed as of 2026-05-11.
 **Authored:** 2026-05-10.
+**Archived:** 2026-05-11 (reconciliation pass against `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` Track 10).
 
-## Why this exists
+## Why this doc exists (historical)
 
-The v1 reset (commit `4adde95`, 2026-05-09) folded the Multi-Agent Shift RFCs (Phases 1–6) into v1 FINAL. The README + CHANGELOG advertise "Multi-Agent Shift (Phases 1-6) complete," and the eight per-phase schemas (`agent-manifest`, `memory-entry`, `memory-list-options`, `conversation-turn`, `conversation-event`, `orchestrator-decision`, `run-orchestrator-decided-event`, `dispatch-config`) shipped as files.
+The v1 reset (commit `4adde95`, 2026-05-09) folded the Multi-Agent Shift RFCs (Phases 1–6) into v1 FINAL. The README + CHANGELOG advertised "Multi-Agent Shift (Phases 1-6) complete," and the eight per-phase schemas (`agent-manifest`, `memory-entry`, `memory-list-options`, `conversation-turn`, `conversation-event`, `orchestrator-decision`, `run-orchestrator-decided-event`, `dispatch-config`) shipped as files — but the *integration seams* wiring those schemas into the canonical spec corpus were lost in the reset.
 
-**But the integration seams that wire those schemas into the canonical spec corpus were lost in the v1 reset.** The standalone schemas exist; the seams that make them part of the normative contract — extensions to `RunEventType`, `RunSnapshot`, `Capabilities`, `SuspendRequest`, core typeId tables, reducer tables, RunOptions configurable keys, and conformance scenarios — were not carried forward.
+This document was the audit + closure plan listing every per-phase surface that was missing as of 2026-05-10. The 2026-05-11 reconciliation confirmed all rows are now closed; below records the landing path for each so an auditor can reproduce the verification.
 
-This document is the audit + closure plan. Chunks A–K below are the integration work needed to make the "Multi-Agent Shift (Phases 1-6) complete" claim true in the spec corpus, not just on paper.
+## Source material (unchanged)
 
-## Source material
+The wire-shape contracts originated in 6 RFCs in the predecessor repo (`myndhyve/wop`), now landed as `RFCS/0002-0007` in this repo:
 
-The wire-shape contracts originated in 6 RFCs in the predecessor repo (`myndhyve/wop`):
-
-| Phase | Old RFC | Subject |
+| Phase | New RFC | Subject |
 |---|---|---|
-| 1 | 0007 | Agent identity, reasoning events, confidence escalation, message reducer |
-| 2 | 0008 | Agent packs / capability discovery |
-| 3 | 0009 | Memory layer |
-| 4 | 0010 | Conversation primitive |
-| 5 | 0011 | Orchestrator-supervisor role |
-| 6 | 0012 | `core.dispatch` / conservative dynamic graph mutation |
+| 1 | `RFCS/0002-agent-identity-and-reasoning-events.md` | Agent identity, reasoning events, confidence escalation, message reducer |
+| 2 | `RFCS/0003-agent-packs.md` | Agent packs / capability discovery |
+| 3 | `RFCS/0004-memory-layer.md` | Memory layer |
+| 4 | `RFCS/0005-conversation.md` | Conversation primitive |
+| 5 | `RFCS/0006-orchestrator.md` | Orchestrator-supervisor role |
+| 6 | `RFCS/0007-dispatch.md` | `core.dispatch` / conservative dynamic graph mutation |
 
-The substantive draft text + decisions are preserved in:
-
-- `~/dev/myndhyve/docs/plans/WOP-MULTI-AGENT-SHIFT.md` (steward plan-doc, still on disk; 53 inbound code refs)
-- `~/dev/wop/RFCS/0007-agent-identity-and-reasoning.md` through `0012-dispatch-loop.md` (archived predecessor repo)
-- Reference impl: `~/dev/myndhyve/packages/workflow-engine/src/nodes/core/dispatch.node.ts` + sibling tests
-- Capability advertisement reference: `~/dev/myndhyve/services/workflow-runtime/src/routes/discovery.ts` (`agents.dispatch`, `agents.memoryBackends`, etc.)
-
-## Audit matrix
+## Audit closure matrix
 
 ### What survived the v1 reset (8 schemas + 1 conformance scenario)
 
 | Surface | Status |
 |---|---|
-| `schemas/agent-manifest.schema.json` | present |
-| `schemas/memory-entry.schema.json` | present |
-| `schemas/memory-list-options.schema.json` | present |
-| `schemas/conversation-turn.schema.json` | present |
-| `schemas/conversation-event.schema.json` | present |
-| `schemas/orchestrator-decision.schema.json` | present |
-| `schemas/run-orchestrator-decided-event.schema.json` | present |
-| `schemas/dispatch-config.schema.json` | present |
-| `conformance/src/scenarios/dispatchLoop.test.ts` | present (Phase 6) |
+| `schemas/agent-manifest.schema.json` | ✅ present |
+| `schemas/memory-entry.schema.json` | ✅ present |
+| `schemas/memory-list-options.schema.json` | ✅ present |
+| `schemas/conversation-turn.schema.json` | ✅ present |
+| `schemas/conversation-event.schema.json` | ✅ present |
+| `schemas/orchestrator-decision.schema.json` | ✅ present |
+| `schemas/run-orchestrator-decided-event.schema.json` | ✅ present |
+| `schemas/dispatch-config.schema.json` | ✅ present |
+| `conformance/src/scenarios/dispatchLoop.test.ts` | ✅ present (Phase 6) |
 
-### Phase 1 (Agent Identity) — gaps
+### Phase 1 (Agent Identity) — closed
 
-| Surface | Gap |
+| Surface | Landing path |
 |---|---|
-| `schemas/agent-ref.schema.json` | MISSING — base type referenced by `agent-manifest` + `run-orchestrator-decided-event`, undefined |
-| `RunSnapshot.agent: AgentRef` field | NOT in `run-snapshot.schema.json` (relies on `additionalProperties: true`) |
-| `agent.reasoned`, `agent.toolCalled`, `agent.toolReturned`, `agent.handoff`, `agent.decided` events | NOT in `RunEventType` enum |
-| Per-event payload schemas for `agent.*` | NOT in `run-event-payloads.schema.json` |
-| `WorkflowNode.agent?` field | NOT in `workflow-definition.schema.json` |
-| `message` reducer | NOT documented in `channels-and-reducers.md` |
-| `'low-confidence'` suspend reason | NOT in `interrupt.md` or `suspend-request.schema.json` |
-| `RunOptions.configurable.escalationThreshold` | NOT in `run-options.md` |
-| `RunOptions.configurable.reasoningVerbosity` | NOT in `run-options.md` |
-| Conformance: `agentMetadata.test.ts` | missing |
-| Conformance: `agentReasoningEvents.test.ts` | missing |
-| Conformance: `agentConfidenceEscalation.test.ts` | missing |
-| Conformance: `agentMessageReducer.test.ts` | missing |
+| `schemas/agent-ref.schema.json` | ✅ `schemas/agent-ref.schema.json` (chunk A) |
+| `RunSnapshot.agent: AgentRef` field | ✅ `schemas/run-snapshot.schema.json` §`agent` (chunk B) |
+| `agent.reasoned`, `agent.toolCalled`, `agent.toolReturned`, `agent.handoff`, `agent.decided` events | ✅ in `RunEventType` enum (`schemas/run-event.schema.json`) (chunk C) |
+| Per-event payload schemas for `agent.*` | ✅ `schemas/run-event-payloads.schema.json` `$defs.{agentReasoned,agentToolCalled,agentToolReturned,agentHandoff,agentDecided}` (chunk C) |
+| `WorkflowNode.agent?` field | ✅ `schemas/workflow-definition.schema.json` §`agent` (chunk D) |
+| `message` reducer | ✅ `spec/v1/channels-and-reducers.md` §"`message` (Multi-Agent Shift Phase 1)" (chunk H) |
+| `'low-confidence'` suspend reason | ✅ `schemas/suspend-request.schema.json` enum + `spec/v1/interrupt.md` §"`kind: \"low-confidence\"`" (chunk F) |
+| `RunOptions.configurable.escalationThreshold` | ✅ `spec/v1/run-options.md` configurable-key table (chunk I) |
+| `RunOptions.configurable.reasoningVerbosity` | ✅ `spec/v1/run-options.md` configurable-key table (chunk I) |
+| Conformance: `agentMetadata.test.ts` | ✅ `conformance/src/scenarios/agentMetadata.test.ts` (chunk J) |
+| Conformance: `agentReasoningEvents.test.ts` | ✅ `conformance/src/scenarios/agentReasoningEvents.test.ts` (chunk J) |
+| Conformance: `agentConfidenceEscalation.test.ts` | ✅ `conformance/src/scenarios/agentConfidenceEscalation.test.ts` (chunk J) |
+| Conformance: `agentMessageReducer.test.ts` | ✅ `conformance/src/scenarios/agentMessageReducer.test.ts` (chunk J) |
 
-### Phase 2 (Agent Packs) — gaps
+### Phase 2 (Agent Packs) — closed
 
-| Surface | Gap |
+| Surface | Landing path |
 |---|---|
-| `capabilities.agents` block | NOT in `capabilities.schema.json` or `capabilities.md` |
-| `capabilities.agents.modelClasses` enum | NOT in capabilities |
-| `capabilities.agents.orchestratorPattern` field | NOT in capabilities |
-| `capabilities.agents.memoryBackends` enum | NOT in capabilities |
-| `pack.json` `agents[]` array | not verified — needs check against `node-pack-manifest.schema.json` |
-| Conformance: `agentPackInstall.test.ts` | missing |
-| Conformance: `agentPackExport.test.ts` | missing |
-| Conformance: `agentPackProvenance.test.ts` | missing |
+| `capabilities.agents` block | ✅ `schemas/capabilities.schema.json` §`agents` + `spec/v1/capabilities.md` §"agents" (chunk E) |
+| `capabilities.agents.modelClasses` enum | ✅ `schemas/capabilities.schema.json` §`agents.modelClasses` (chunk E) |
+| `capabilities.agents.orchestratorPattern` field | ✅ `schemas/capabilities.schema.json` §`agents.orchestratorPattern` (chunk E) |
+| `capabilities.agents.memoryBackends` enum | ✅ `schemas/capabilities.schema.json` §`agents.memoryBackends` (chunk E) |
+| `pack.json` `agents[]` array | ✅ `schemas/node-pack-manifest.schema.json` — verified by `agentPackInstall.test.ts` / `agentPackExport.test.ts` |
+| Conformance: `agentPackInstall.test.ts` | ✅ `conformance/src/scenarios/agentPackInstall.test.ts` (chunk J) |
+| Conformance: `agentPackExport.test.ts` | ✅ `conformance/src/scenarios/agentPackExport.test.ts` (chunk J) |
+| Conformance: `agentPackProvenance.test.ts` | ✅ `conformance/src/scenarios/agentPackProvenance.test.ts` (chunk J) |
 
-### Phase 3 (Memory Layer) — gaps
+### Phase 3 (Memory Layer) — closed
 
-| Surface | Gap |
+| Surface | Landing path |
 |---|---|
-| Prose spec for `MemoryAdapter` contract | no dedicated doc; `memory-entry` + `memory-list-options` schemas are orphaned |
-| `capabilities.agents.memoryBackends: ['long-term']` | NOT in capabilities |
-| Cross-tenant isolation invariant (CTI-1) | NOT documented |
-| Secret-redaction invariant (SR-1) | NOT documented (check SECURITY/) |
-| Conformance: `agentMemoryRoundTrip.test.ts` | missing |
-| Conformance: `agentMemoryCrossTenantIsolation.test.ts` | missing |
-| Conformance: `agentMemoryRedactionContract.test.ts` | missing |
-| Conformance: `agentMemoryTtlExpiry.test.ts` | missing |
+| Prose spec for `MemoryAdapter` contract | ✅ `spec/v1/agent-memory.md` (chunk K) |
+| `capabilities.agents.memoryBackends: ['long-term']` | ✅ `schemas/capabilities.schema.json` + `spec/v1/capabilities.md` §"memoryBackends" (chunk E) |
+| Cross-tenant isolation invariant (CTI-1) | ✅ `spec/v1/agent-memory.md` + `RFCS/0004-memory-layer.md` |
+| Secret-redaction invariant (SR-1) | ✅ `spec/v1/agent-memory.md` + `RFCS/0004-memory-layer.md`; verified by `redactionAdversarial.test.ts` + `agentMemoryRedactionContract.test.ts` |
+| Conformance: `agentMemoryRoundTrip.test.ts` | ✅ `conformance/src/scenarios/agentMemoryRoundTrip.test.ts` (chunk J) |
+| Conformance: `agentMemoryCrossTenantIsolation.test.ts` | ✅ `conformance/src/scenarios/agentMemoryCrossTenantIsolation.test.ts` (chunk J) |
+| Conformance: `agentMemoryRedactionContract.test.ts` | ✅ `conformance/src/scenarios/agentMemoryRedactionContract.test.ts` (chunk J) |
+| Conformance: `agentMemoryTtlExpiry.test.ts` | ✅ `conformance/src/scenarios/agentMemoryTtlExpiry.test.ts` (chunk J) |
 
-### Phase 4 (Conversation Primitive) — gaps
+### Phase 4 (Conversation Primitive) — closed
 
-| Surface | Gap |
+| Surface | Landing path |
 |---|---|
-| `conversation.start` / `conversation.exchange` / `conversation.close` suspend variants | NOT in `interrupt.md` or `suspend-request.schema.json` |
-| `conversation.opened` / `conversation.exchanged` / `conversation.closed` events | NOT in `RunEventType` enum |
-| `capabilities.conversationPrimitive: true` | NOT in capabilities |
-| Conformance: `conversationLifecycle.test.ts` | missing |
-| Conformance: `conversationVsLegacySuspend.test.ts` | missing |
-| Conformance: `conversationReplayDeterminism.test.ts` | missing |
-| Conformance: `conversationCapabilityNegotiation.test.ts` | missing |
+| `conversation.start` / `conversation.exchange` / `conversation.close` suspend variants | ✅ `schemas/suspend-request.schema.json` enum + per-variant payload `$defs` (chunk F) |
+| `conversation.opened` / `conversation.exchanged` / `conversation.closed` events | ✅ in `RunEventType` enum + `run-event-payloads.schema.json` `$defs.{conversationOpened,conversationExchanged,conversationClosed}` (chunk C) |
+| `capabilities.conversationPrimitive: true` | ✅ `schemas/capabilities.schema.json` §`conversationPrimitive` (chunk E) |
+| `core.conversationGate` typeId | ✅ `spec/v1/node-packs.md` core-typeId table (chunk G) |
+| Conformance: `conversationLifecycle.test.ts` | ✅ `conformance/src/scenarios/conversationLifecycle.test.ts` (chunk J) |
+| Conformance: `conversationVsLegacySuspend.test.ts` | ✅ `conformance/src/scenarios/conversationVsLegacySuspend.test.ts` (chunk J) |
+| Conformance: `conversationReplayDeterminism.test.ts` | ✅ `conformance/src/scenarios/conversationReplayDeterminism.test.ts` (chunk J) |
+| Conformance: `conversationCapabilityNegotiation.test.ts` | ✅ `conformance/src/scenarios/conversationCapabilityNegotiation.test.ts` (chunk J) |
 
-### Phase 5 (Orchestrator Role) — gaps
+### Phase 5 (Orchestrator Role) — closed
 
-| Surface | Gap |
+| Surface | Landing path |
 |---|---|
-| `RunSnapshot.runOrchestrator: AgentRef` field | NOT in `run-snapshot.schema.json` |
-| `runOrchestrator.decided` event | NOT in `RunEventType` enum |
-| `core.orchestrator.supervisor` typeId | NOT in `node-packs.md` core typeId table |
-| `capabilities.agents.orchestrator: true` | NOT in capabilities |
-| Conservative-path suspend semantics (CP-1) | NOT in `interrupt.md` |
-| Conformance: `orchestratorDispatch.test.ts` | missing |
-| Conformance: `orchestratorTermination.test.ts` | missing |
-| Conformance: `orchestratorConservativePath.test.ts` | missing |
+| `RunSnapshot.runOrchestrator: AgentRef` field | ✅ `schemas/run-snapshot.schema.json` §`runOrchestrator` (chunk B) |
+| `runOrchestrator.decided` event | ✅ in `RunEventType` enum + `run-event-payloads.schema.json` `$defs.runOrchestratorDecided` (chunk C) |
+| `core.orchestrator.supervisor` typeId | ✅ `spec/v1/node-packs.md` core-typeId table (chunk G) |
+| `capabilities.agents.orchestrator: true` | ✅ `schemas/capabilities.schema.json` §`agents.orchestrator` (chunk E) |
+| Conservative-path suspend semantics (CP-1) | ✅ `spec/v1/interrupt.md` §"`kind: \"low-confidence\"`" + `RFCS/0006-orchestrator.md` |
+| Conformance: `orchestratorDispatch.test.ts` | ✅ `conformance/src/scenarios/orchestratorDispatch.test.ts` (chunk J) |
+| Conformance: `orchestratorTermination.test.ts` | ✅ `conformance/src/scenarios/orchestratorTermination.test.ts` (chunk J) |
+| Conformance: `orchestratorConservativePath.test.ts` | ✅ `conformance/src/scenarios/orchestratorConservativePath.test.ts` (chunk J) |
 
-### Phase 6 (Dispatch Loop) — gaps
+### Phase 6 (Dispatch Loop) — closed
 
-| Surface | Gap |
+| Surface | Landing path |
 |---|---|
-| `dispatch-config.schema.json` | ✅ present |
-| `conformance/src/scenarios/dispatchLoop.test.ts` | ✅ present |
-| `core.dispatch` typeId | NOT in `node-packs.md` core typeId table |
-| `capabilities.agents.dispatch: true` | NOT in capabilities |
+| `dispatch-config.schema.json` | ✅ present (survived the reset) |
+| `conformance/src/scenarios/dispatchLoop.test.ts` | ✅ present (survived the reset) |
+| `core.dispatch` typeId | ✅ `spec/v1/node-packs.md` core-typeId table (chunk G) |
+| `capabilities.agents.dispatch: true` | ✅ `schemas/capabilities.schema.json` §`agents.dispatch` (chunk E) |
 
-## Headline metrics
+## Headline metrics — closed snapshot (2026-05-11)
 
-- **8 / 8 multi-agent schemas** exist as files, but they are **orphans** — not `$ref`'d from canonical schemas.
-- **0 / ~9 multi-agent event types** are in the `RunEventType` enum.
-- **0 / ~6 multi-agent capability flags** are in `capabilities.schema.json` or `capabilities.md`.
-- **0 / 4 multi-agent suspend variants** (`conversation.*`) are in `interrupt.md` or `suspend-request.schema.json`.
-- **0 / 3 multi-agent core typeIds** (`core.dispatch`, `core.orchestrator.supervisor`, `core.conversationGate`) are in `node-packs.md`.
-- **1 / ~19 multi-agent conformance scenarios** is present (only `dispatchLoop.test.ts`).
-- **README + CHANGELOG advertise "Multi-Agent Shift (Phases 1-6) complete"** — claim and spec-corpus state are out of alignment.
+- **8 / 8 multi-agent schemas** present AND wired into the canonical schemas (`run-snapshot`, `run-event`, `run-event-payloads`, `workflow-definition`, `capabilities`, `suspend-request`).
+- **9 / 9 multi-agent event types** in the `RunEventType` enum with payload schemas.
+- **All multi-agent capability flags** (`agents.supported`, `agents.modelClasses`, `agents.orchestratorPattern`, `agents.memoryBackends`, `agents.orchestrator`, `agents.dispatch`, `conversationPrimitive`) present in `capabilities.schema.json` and documented in `spec/v1/capabilities.md`.
+- **All 4 multi-agent suspend variants** (`conversation.start` / `conversation.exchange` / `conversation.close` / `low-confidence`) in `interrupt.md` and `suspend-request.schema.json`.
+- **All 3 multi-agent core typeIds** (`core.dispatch`, `core.orchestrator.supervisor`, `core.conversationGate`) in `node-packs.md`.
+- **18 / 18 multi-agent conformance scenarios** present in `conformance/src/scenarios/`.
+- **README + CHANGELOG** advertise "Multi-Agent Shift (Phases 1-6) complete" — claim is now defensible from the spec corpus alone.
 
 ## Integration plan — chunks A–K
 
-Each chunk is a self-contained logical unit; expected to commit independently.
+All 11 chunks landed.
 
-| # | Chunk | Files touched | Phase deps closed |
+| # | Chunk | Files touched | Status |
 |---|---|---|---|
-| A | Author `schemas/agent-ref.schema.json` | `schemas/agent-ref.schema.json` (new) | foundation for B, C, D, E |
-| B | Extend `RunSnapshot` with `agent` + `runOrchestrator` fields | `schemas/run-snapshot.schema.json` | Phase 1 + Phase 5 |
-| C | Extend `RunEventType` enum + add per-event payload schemas | `schemas/run-event.schema.json` + `schemas/run-event-payloads.schema.json` | Phase 1 + 4 + 5 |
-| D | Add `WorkflowNode.agent?` field | `schemas/workflow-definition.schema.json` | Phase 1 |
-| E | Extend `capabilities` with `agents` block + `conversationPrimitive` | `schemas/capabilities.schema.json` + `spec/v1/capabilities.md` | Phase 2 + 3 + 4 + 5 + 6 |
-| F | Add `conversation.*` suspend variants + `'low-confidence'` reason | `schemas/suspend-request.schema.json` + `spec/v1/interrupt.md` | Phase 1 + 4 |
-| G | Add `core.dispatch`, `core.orchestrator.supervisor`, `core.conversationGate` to core typeId table | `spec/v1/node-packs.md` | Phase 4 + 5 + 6 |
-| H | Document `message` reducer in canonical reducer table | `spec/v1/channels-and-reducers.md` | Phase 1 |
-| I | Add `escalationThreshold` + `reasoningVerbosity` to RunOptions configurable | `spec/v1/run-options.md` | Phase 1 |
-| J | Backport conformance scenarios (~18 stubs) | `conformance/src/scenarios/*.test.ts` (new) | Phase 1 + 2 + 3 + 4 + 5 |
-| K | Document MemoryAdapter contract + CTI-1 + SR-1 prose | new `spec/v1/agent-memory.md` (or fold into existing) | Phase 3 |
+| A | Author `schemas/agent-ref.schema.json` | `schemas/agent-ref.schema.json` | ✅ |
+| B | Extend `RunSnapshot` with `agent` + `runOrchestrator` fields | `schemas/run-snapshot.schema.json` | ✅ |
+| C | Extend `RunEventType` enum + add per-event payload schemas | `schemas/run-event.schema.json` + `schemas/run-event-payloads.schema.json` | ✅ |
+| D | Add `WorkflowNode.agent?` field | `schemas/workflow-definition.schema.json` | ✅ |
+| E | Extend `capabilities` with `agents` block + `conversationPrimitive` | `schemas/capabilities.schema.json` + `spec/v1/capabilities.md` | ✅ |
+| F | Add `conversation.*` suspend variants + `'low-confidence'` reason | `schemas/suspend-request.schema.json` + `spec/v1/interrupt.md` | ✅ |
+| G | Add `core.dispatch`, `core.orchestrator.supervisor`, `core.conversationGate` to core typeId table | `spec/v1/node-packs.md` | ✅ |
+| H | Document `message` reducer in canonical reducer table | `spec/v1/channels-and-reducers.md` | ✅ |
+| I | Add `escalationThreshold` + `reasoningVerbosity` to RunOptions configurable | `spec/v1/run-options.md` | ✅ |
+| J | Backport conformance scenarios (18 stubs) | `conformance/src/scenarios/*.test.ts` | ✅ |
+| K | Document MemoryAdapter contract + CTI-1 + SR-1 prose | `spec/v1/agent-memory.md` | ✅ |
 
-## Implementation notes
+## Implementation notes (historical)
 
-- **Scope discipline.** This is a spec-corpus integration pass, not a behavior change. Wire-shape contracts already existed in the predecessor RFCs; the work is mechanical re-integration into the new openwop file layout.
-- **Schema $id URLs.** All new + updated schemas use `https://openwop.dev/spec/v1/...` $id pattern (the rebrand-canonical domain).
+- **Scope discipline.** This was a spec-corpus integration pass, not a behavior change. Wire-shape contracts already existed in the predecessor RFCs; the work was mechanical re-integration into the new openwop file layout.
+- **Schema $id URLs.** All new + updated schemas use the `https://openwop.dev/spec/v1/...` $id pattern.
 - **Forward-compat.** All new event types extend the `RunEventType` enum under the existing forward-compat rule (readers MUST NOT throw on unknown types). All new RunSnapshot fields are optional. All new capability flags are optional.
-- **Reference impl coordination.** The steward host (`~/dev/myndhyve`) already implements + advertises most of these surfaces (`packages/workflow-engine/src/nodes/core/dispatch.node.ts`, `services/workflow-runtime/src/routes/discovery.ts`); the spec corpus is catching up to what's already wired.
-- **Conformance stubs.** The 18 missing scenarios will land as minimum-viable stubs that exercise the wire-shape contract end-to-end, not full feature coverage. Each scenario gates on the relevant capability advertisement so pre-Multi-Agent hosts skip cleanly per the existing fixture-gating pattern.
+- **Conformance stubs.** The 18 landed scenarios exercise the wire-shape contract end-to-end, not full feature coverage. Each scenario gates on the relevant capability advertisement so pre-MAS hosts skip cleanly per the existing fixture-gating pattern.
 
 ## What this doc is NOT
 
-- Not a normative spec. The chunks A–K below ARE normative once landed.
-- Not a behavior change. No new wire-shape contracts are introduced; only re-integration of contracts that existed in the predecessor repo's RFCs.
-- Not a roadmap for Phase 7+. RFC 0013 (aggressive path / mid-run graph mutation) remains deferred to v1.3+ per the predecessor plan; only Phases 1–6 are in scope here.
+- Not a normative spec. Normative spec for Phases 1–6 lives in `RFCS/0002-0007` and the corresponding sections of `spec/v1/*.md` listed above.
+- Not a behavior change. The pass re-integrated wire-shape contracts that existed in the predecessor repo's RFCs.
+- Not a roadmap for Phase 7+. Aggressive path / mid-run graph mutation remains deferred to v1.3+; only Phases 1–6 were in scope.
 
-## Coordination across the rebrand
+## Follow-up: promote RFCs 0002–0007 from Active to Accepted
 
-The steward repo (`~/dev/myndhyve`) has a parallel rebrand pass in flight:
-- Chunks 1A/1B/1C/2/3 already landed (GitHub URL refs, schema $id URL refs, discovery endpoint alias).
-- Chunk 4 (npm dep rename `@myndhyve/wop-conformance` → `@openwop/openwop-conformance`) is blocked on npm publish.
-
-The integration work here (chunks A–K) is **independent** of the steward rebrand and can proceed in parallel. Once both are complete, the steward CI + steward conformance run can validate against openwop's canonical spec corpus.
+With every integration seam closed, RFCs 0002–0007 are eligible for promotion from `Active` to `Accepted` per `RFCS/0001-rfc-process.md`. That promotion is tracked separately in `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` Track 10 acceptance criteria; this document does not gate it further.

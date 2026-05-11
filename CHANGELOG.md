@@ -9,6 +9,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ---
 
+## [1.0 — additions] — 2026-05-11 — Phase-0 reconciliation pass
+
+Reconciliation pass against `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` Phase 0. Closes internal doc drift surfaced by the 2026-05-11 deep-dive review. All changes are additive; existing v1.0 conformance passes remain valid.
+
+- **Registry status reconciled.** `ROADMAP.md` post-v1 ecosystem table now reflects `packs.openwop.dev` as live (verified externally; 3 packs published). New public-registry healthcheck at `conformance/src/scenarios/registry-public.test.ts` (opt-in via `OPENWOP_TEST_PUBLIC_REGISTRY=true`). Suite count: 85 → 86.
+- **Multi-agent integration audit closed.** `docs/MULTI-AGENT-INTEGRATION-GAPS.md` is now ARCHIVED — every Phase-1-through-6 surface marked closed with landing-path citations. `PROTOCOL-GAP-CLOSURE-PLAN.md` Track 10 acceptance row updated to reflect that RFCs 0002–0007 are eligible for promotion from `Active` to `Accepted`.
+- **Capability-gated scenarios: strict mode.** New `OPENWOP_REQUIRE_BEHAVIOR=true` runner flag converts capability-shape-only skips into hard failures for hosts that want to claim full coverage. New helper at `conformance/src/lib/behavior-gate.ts`; `audit-log-integrity.test.ts` adopts it as the worked example. New §"Capability-gated scenarios" in `conformance/coverage.md` documents the 10 scenarios and their behavior-unlock dependencies.
+
 ## [1.0 — additions] — 2026-05-10 — Gap-closure additions to v1.0
 
 Additive landings inside v1.0 (no minor bump per `COMPATIBILITY.md` §2.1). Closes the highest-priority items from the independent deep-dive review and `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` Tracks 10 + 13. All changes are additive; existing v1.0 conformance passes remain valid. Multi-agent extension RFCs are now landed at `Active` status; previous RFC numbering (0007–0012) is replaced by the canonical 0002–0007 range. The v1.0 line stays at v1.0 — there is no v1.1.

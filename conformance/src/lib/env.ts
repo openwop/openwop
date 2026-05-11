@@ -8,6 +8,14 @@
  * Optional (cosmetic — surfaced in failure messages):
  *   OPENWOP_IMPLEMENTATION_NAME    — e.g., "acme-openwop-server"
  *   OPENWOP_IMPLEMENTATION_VERSION — e.g., "1.0"
+ *
+ * Optional (behavior-gate strictness):
+ *   OPENWOP_REQUIRE_BEHAVIOR=true — capability-gated scenarios (audit-log
+ *     integrity, rate-limit envelope, multi-region idempotency, etc.) FAIL
+ *     instead of skipping when the host doesn't advertise the profile.
+ *     Default is false — scenarios skip with a warning so default conformance
+ *     runs cover what the host has implemented. See `lib/behavior-gate.ts`
+ *     and `conformance/coverage.md` §"Capability-gated scenarios".
  */
 
 export interface ConformanceEnv {
@@ -15,6 +23,7 @@ export interface ConformanceEnv {
   readonly apiKey: string;
   readonly implementationName: string;
   readonly implementationVersion: string;
+  readonly requireBehavior: boolean;
 }
 
 let cached: ConformanceEnv | null = null;
@@ -44,6 +53,7 @@ export function loadEnv(): ConformanceEnv {
     apiKey,
     implementationName: process.env.OPENWOP_IMPLEMENTATION_NAME?.trim() ?? 'unknown',
     implementationVersion: process.env.OPENWOP_IMPLEMENTATION_VERSION?.trim() ?? 'unknown',
+    requireBehavior: process.env.OPENWOP_REQUIRE_BEHAVIOR === 'true',
   };
   return cached;
 }
