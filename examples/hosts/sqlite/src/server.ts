@@ -81,6 +81,18 @@ import {
   unregisterWebhook,
   fanOutEvent,
 } from './webhooks.js';
+import {
+  observabilityEnabled,
+  startRunSpan,
+  endRunSpan,
+  startNodeSpan,
+  endNodeSpan,
+  recordRunDuration,
+  startMetricLoop,
+  stopMetricLoop,
+  parseTraceparent,
+  recordInboundTraceContext,
+} from './observability.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const HOST = process.env.OPENWOP_HOST ?? '127.0.0.1';
@@ -355,8 +367,17 @@ function setRunTerminal(
   error: { code: string; message: string } | null,
 ): void {
   const endedAt = new Date().toISOString();
+  // Compute duration BEFORE the UPDATE so we can read started_at from
+  // the current row (the UPDATE overwrites nothing relevant).
+  const row = loadRun(runId);
   stmts.updateRunStatus.run(status, endedAt, error ? JSON.stringify(error) : null, runId);
   stmts.releaseClaim.run(runId, PROCESS_ID);
+  // OTel span close + run-duration histogram observation.
+  endRunSpan(runId, status);
+  if (row) {
+    const seconds = (new Date(endedAt).getTime() - new Date(row.started_at).getTime()) / 1000;
+    recordRunDuration(seconds);
+  }
 }
 
 /**
@@ -477,6 +498,7 @@ async function executeNode(
     return 'cancelled';
   }
   appendEvent(runId, 'node.started', { nodeId: node.id });
+  startNodeSpan(runId, node.id, node.typeId);
 
   switch (node.typeId) {
     case 'core.noop':
@@ -665,6 +687,7 @@ async function executeNode(
   }
 
   appendEvent(runId, 'node.completed', { nodeId: node.id });
+  endNodeSpan(runId, node.id, 'completed');
   return 'completed';
 }
 
@@ -695,6 +718,7 @@ async function runWorkflow(runId: string): Promise<void> {
     stmts.updateRunStatus.run('running', null, null, runId);
     if (!alreadyStarted) {
       appendEvent(runId, 'run.started');
+      startRunSpan(runId, row.workflow_id);
     } else {
       appendEvent(runId, 'run.resumed', { data: { resumedBy: PROCESS_ID } });
     }
@@ -869,6 +893,16 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
         supported: true,
         signatureAlgorithms: ['v1'],
       },
+      // observability.md §"Span attributes" — host advertises OTel
+      // emission only when OTEL_EXPORTER_OTLP_ENDPOINT is configured.
+      ...(observabilityEnabled()
+        ? {
+            observability: {
+              otel: { supported: true, protocol: 'http/json' },
+              metrics: { supported: true, names: ['openwop.run.backlog', 'openwop.queue.depth', 'openwop.run.duration'] },
+            },
+          }
+        : {}),
     },
     extensions: {
       interrupts: {
@@ -974,6 +1008,16 @@ async function handleCreateRun(req: IncomingMessage, res: ServerResponse): Promi
   const startedAt = new Date().toISOString();
 
   stmts.insertRun.run(runId, parsed.workflowId, 'pending', JSON.stringify(inputs), startedAt);
+
+  // W3C Trace Context propagation (observability.md §"Trace context propagation").
+  // Parse `traceparent` from the inbound request; if valid, store it so
+  // `startRunSpan` for this runId adopts the caller-supplied trace_id.
+  const traceparentHeader = req.headers['traceparent'];
+  const inboundTrace = parseTraceparent(
+    Array.isArray(traceparentHeader) ? traceparentHeader[0] : traceparentHeader,
+  );
+  if (inboundTrace) recordInboundTraceContext(runId, inboundTrace);
+
   logAudit(db, {
     actor: 'tenant:default',
     action: 'run.create',
@@ -1781,6 +1825,9 @@ logAudit(db, {
 // verify endpoint has at least one signed checkpoint to return.
 createCheckpoint(db, auditSigningKey);
 
+// OTel metric loop — no-op unless OTEL_EXPORTER_OTLP_ENDPOINT is set.
+startMetricLoop(db);
+
 const server = createServer((req, res) => {
   void route(req, res).catch((err: unknown) => {
     const message = err instanceof Error ? err.message : String(err);
@@ -1798,6 +1845,7 @@ server.listen(PORT, HOST, () => {
 // Graceful close on Ctrl-C — release any claims this process holds.
 const shutdown = (): void => {
   console.log(`[openwop-host-sqlite] shutting down, releasing claims`);
+  stopMetricLoop();
   for (const [, aborter] of runningAborters) aborter.abort();
   for (const [, handle] of runningHeartbeats) clearInterval(handle);
   runningHeartbeats.clear();
