@@ -29,22 +29,19 @@
  *     server at suite init. The direct probe asserts the echo tool's
  *     deterministic shape.
  *   - `OPENWOP_MCP_REAL_SERVER_URL=<base-url>` — points the direct
- *     probe at a real MCP server. **Important wire-shape constraint:**
- *     the probe POSTs JSON-RPC and reads a single-JSON response. This
- *     matches MCP's `streamable-http` transport in single-response mode
- *     (no SSE streaming). The probe does NOT support:
- *       - stdio transport (the default for `modelcontextprotocol/servers`
- *         reference servers — they speak JSON-RPC over stdin/stdout, not
- *         HTTP).
- *       - streamable-http transport in SSE-stream mode (where a single
- *         POST returns multiple JSON-RPC frames over `Content-Type:
- *         text/event-stream`).
- *     To collect real-impl interop evidence today, the operator runs a
- *     custom MCP server using a `StreamableHTTPServerTransport`-style
- *     adapter that returns a single JSON body per request. Adding
- *     SSE-frame parsing to support the streaming case is a follow-up;
- *     see `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` Track 6.
- *     Assertions relax to shape-only: tools/list returns ≥1 tool, a
+ *     probe at a real MCP server. Auto-detects the transport from the
+ *     server's `Content-Type` response header:
+ *       - `application/json` → single-JSON response, parsed as one
+ *         JSON-RPC frame.
+ *       - `text/event-stream` → streamable-http+SSE; the probe reads
+ *         SSE frames until it finds one whose `data:` payload matches
+ *         the JSON-RPC `id` we sent, then returns that frame.
+ *     The stdio transport (default for `modelcontextprotocol/servers`
+ *     reference servers) is still out of scope — those run as a child
+ *     process speaking JSON-RPC over stdin/stdout, no HTTP endpoint to
+ *     point env vars at. Operators wanting interop evidence against
+ *     stdio servers run them under a `mcp-bridge` HTTP adapter.
+ *     Assertions stay shape-only: tools/list returns ≥1 tool, a
  *     tools/call returns valid MCP content (a `result.content` array,
  *     possibly `isError: true` — both are spec-conformant).
  *
@@ -64,6 +61,53 @@ import { pollUntilTerminal } from '../lib/polling.js';
 
 const ROUNDTRIP_FIXTURE = 'conformance-mcp-tool-roundtrip';
 
+/**
+ * Read an SSE `text/event-stream` body until a frame's `data:` payload
+ * is a JSON-RPC response with `id === wantId`, then return that frame's
+ * parsed payload. Honors the MCP streamable-http transport's "single
+ * POST may return one OR many SSE frames; correlate by id" pattern.
+ */
+async function readSseUntilId(
+  res: Response,
+  wantId: number,
+  timeoutMs = 5_000,
+): Promise<Record<string, unknown>> {
+  if (!res.body) throw new Error('SSE response has no body');
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder('utf-8');
+  let buffer = '';
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    const { value, done } = await reader.read();
+    if (value) buffer += decoder.decode(value, { stream: true });
+    let sepIndex: number;
+    while ((sepIndex = buffer.indexOf('\n\n')) !== -1) {
+      const block = buffer.slice(0, sepIndex);
+      buffer = buffer.slice(sepIndex + 2);
+      let dataLines: string[] = [];
+      for (const line of block.split('\n')) {
+        // SSE permits multi-line data via repeated `data:` lines, joined by \n.
+        if (line.startsWith('data:')) dataLines.push(line.slice(5).replace(/^ /, ''));
+      }
+      if (dataLines.length === 0) continue;
+      try {
+        const parsed = JSON.parse(dataLines.join('\n')) as Record<string, unknown>;
+        if (parsed.id === wantId) {
+          // Drop the reader; the server may keep the stream open for
+          // unrelated notifications.
+          void reader.cancel().catch(() => undefined);
+          return parsed;
+        }
+      } catch {
+        // Skip malformed frames.
+      }
+    }
+    if (done) break;
+  }
+  throw new Error(`SSE stream closed before frame with id=${wantId} arrived`);
+}
+
 async function postJsonRpc(
   endpoint: string,
   method: string,
@@ -71,15 +115,26 @@ async function postJsonRpc(
   id: number,
 ): Promise<{ status: number; json: Record<string, unknown> }> {
   // POST to `endpoint` verbatim — the trailing-slash decision is the
-  // caller's. `probeEndpoint` strips trailing slashes from env-supplied
-  // URLs; the fake server accepts any POST path. A real MCP server
-  // mounted at e.g. `http://host:port/mcp` would receive a POST to
-  // `/mcp` (not `/mcp/`).
+  // caller's. The probe accepts both response shapes per MCP's
+  // streamable-http spec: a single JSON body OR an SSE stream that
+  // emits one-or-many JSON-RPC frames. Transport is auto-detected
+  // from Content-Type.
   const res = await fetch(endpoint, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      // MCP streamable-http servers SHOULD return `application/json`
+      // by default but MAY upgrade to SSE; advertise both as
+      // acceptable.
+      Accept: 'application/json, text/event-stream',
+    },
     body: JSON.stringify({ jsonrpc: '2.0', id, method, params }),
   });
+  const contentType = res.headers.get('content-type') ?? '';
+  if (contentType.includes('text/event-stream')) {
+    const json = await readSseUntilId(res, id);
+    return { status: res.status, json };
+  }
   const text = await res.text();
   return { status: res.status, json: JSON.parse(text) as Record<string, unknown> };
 }
