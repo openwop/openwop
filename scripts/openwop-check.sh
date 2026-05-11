@@ -84,7 +84,7 @@ echo "[4/8] Go reference SDK (go vet + tests)..."
   if ! command -v go >/dev/null 2>&1; then
     echo "  WARN: go binary not found; skipping Go SDK vet/tests."
   else
-    export GOCACHE="${GOCACHE:-/private/tmp/openwop-go-build-cache}"
+    export GOCACHE="${GOCACHE:-/tmp/openwop-go-build-cache}"
     go vet ./...
     go test ./...
   fi
