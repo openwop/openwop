@@ -1,0 +1,26 @@
+{
+  "id": "conformance-interrupt-parent-child-cancel",
+  "name": "Conformance: Interrupt — Parent/Child Cancel Cascade",
+  "version": "1.0",
+  "description": "Parent-side fixture for the openwop-interrupt-parent-child profile (interrupt-profiles.md). Starts a child sub-workflow (conformance-interrupt-parent-child-cancel-child) that suspends on an approval, then cancels the parent run mid-suspend. The suite verifies the cancellation cascades to the child: child run transitions to 'cancelled' with reason 'parent-cancelled', child's pending interrupt is invalidated, and any subsequent attempt to resolve the child interrupt returns 410 Gone. Conformance scenario: interrupt-parent-child-cascade.test.ts.",
+  "nodes": [
+    {
+      "id": "spawn-child",
+      "typeId": "core.subWorkflow",
+      "name": "Spawn Cancellable Child",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "workflowId": "conformance-interrupt-parent-child-cancel-child",
+        "propagateCancellation": true
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "hitl", "interrupt-profile", "parent-child-cancel"] },
+  "settings": { "timeout": 0 }
+}

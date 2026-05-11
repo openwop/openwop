@@ -1,0 +1,21 @@
+{
+  "id": "conformance-multi-node",
+  "name": "Conformance: Multi-node",
+  "version": "1.0",
+  "description": "Three-node DAG (A → B → C, all noop). Verifies edge ordering and per-node event sequencing.",
+  "nodes": [
+    { "id": "a", "typeId": "core.noop", "name": "A", "position": { "x": 0,   "y": 0 }, "config": {}, "inputs": {} },
+    { "id": "b", "typeId": "core.noop", "name": "B", "position": { "x": 200, "y": 0 }, "config": {}, "inputs": {} },
+    { "id": "c", "typeId": "core.noop", "name": "C", "position": { "x": 400, "y": 0 }, "config": {}, "inputs": {} }
+  ],
+  "edges": [
+    { "id": "ab", "sourceNodeId": "a", "targetNodeId": "b" },
+    { "id": "bc", "sourceNodeId": "b", "targetNodeId": "c" }
+  ],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance"] },
+  "settings": { "timeout": 30000 }
+}

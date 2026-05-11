@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.chat/1.0.0/updateCard.output.json",
+  "title": "ChatUpdateCardOutput",
+  "type": "object",
+  "required": ["cardId", "updatedAt"],
+  "properties": {
+    "cardId": { "type": "string" },
+    "updatedAt": { "type": "string", "format": "date-time" },
+    "found": { "type": "boolean", "description": "true if the card existed and was patched; false if no card with cardId was found (workflow authors branch to fallback). Schema permits both states without throwing." }
+  },
+  "additionalProperties": false
+}

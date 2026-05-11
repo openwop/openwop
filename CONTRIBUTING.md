@@ -1,0 +1,199 @@
+# Contributing to openwop v1
+
+Thanks for considering a contribution. The OpenWOP v1.0 spec is small, mechanical, and intentionally focused — small PRs land fastest.
+
+This guide covers:
+
+1. What's in scope.
+2. Status legend + when to bump status.
+3. Per-artifact change rules (prose specs, JSON Schemas, OpenAPI, AsyncAPI, conformance, SDK).
+4. The CI gate.
+5. Coordination with the impl plan.
+
+---
+
+## What's in scope
+
+The openwop v1 corpus describes the **wire-level contract** between independent implementations of workflow orchestration servers and the clients that talk to them. It does NOT prescribe:
+
+- Internal data structures (Zustand vs Redux vs raw classes — implementer's call).
+- Storage backends (Firestore vs Postgres vs SQLite — implementer's call).
+- How LLM prompts are constructed (implementer's call, modulo the `Capabilities` handshake).
+- UI conventions (any UI is fine — the spec only defines the wire data).
+
+When a PR proposes adding to one of those surfaces, expect pushback: it likely belongs in an implementation's docs, not the spec.
+
+---
+
+## Status legend
+
+Per `auth.md` §status legend (and reflected in every prose doc's header):
+
+| Tag | Meaning |
+|---|---|
+| **STUB** | Minimal coverage of stable surfaces only. Implementers SHOULD pin only to what's documented; gaps are expected. |
+| **DRAFT** | Comprehensive coverage of stable + in-flight surfaces, but not yet reviewed by spec committee. |
+| **OUTLINE** | Sketched but not detailed. Section headings lock; field schemas may shift. |
+| **FINAL** | Reviewed + frozen for a given v1.X release. Breaking changes require a major bump. |
+
+When to bump status:
+
+- **STUB → DRAFT**: when every stable wire-level field is documented (RFC 2119 keywords applied, examples present, edge cases called out).
+- **DRAFT → OUTLINE**: backward — only when a section needs more design work than originally thought.
+- **DRAFT → FINAL**: after committee review (none formally chartered yet — see "Process" below).
+
+---
+
+## Per-artifact change rules
+
+### Prose specs (`*.md`)
+
+- Every doc MUST include a header status block with: status tag, draft date, and a "stable surface for external review" note.
+- Use RFC 2119 keywords (MUST, SHOULD, MAY, MUST NOT, SHOULD NOT) consistently.
+- Cross-reference companion specs by relative path. From the repo root, use links like `[capabilities.md](./spec/v1/capabilities.md)`; from inside `spec/v1`, link to peer docs by filename.
+- New surface area: add a "Why this exists" paragraph + an "Open spec gaps" table at the end.
+
+### JSON Schemas (`schemas/*.schema.json`)
+
+- Every schema declares `$schema: "https://json-schema.org/draft/2020-12/schema"`.
+- Every schema has a `$id` that's a URL under `https://openwop.dev/spec/v1/<name>.schema.json`.
+- Use `additionalProperties: false` on every object — explicit field lists are mandatory for spec docs even if a runtime relaxes them.
+- New required fields: bump the schema's implicit minor version + update CHANGELOG.md. New optional fields are non-breaking.
+
+### OpenAPI / AsyncAPI
+
+- Reference JSON Schemas via cross-file `$ref` (`../schemas/<name>.schema.json`); never inline.
+- Lint must pass: `redocly lint api/openapi.yaml` and `asyncapi validate api/asyncapi.yaml` from `@asyncapi/cli`.
+- Bundle must succeed: `redocly bundle api/openapi.yaml` and `asyncapi bundle api/asyncapi.yaml`.
+- New endpoints: add a `tag`, an `operationId`, request/response schemas, and at least one error response.
+
+### Conformance suite (`conformance/`)
+
+- Each new scenario file in `conformance/src/scenarios/` follows the existing pattern:
+  - Top-of-file docstring stating the spec doc(s) being verified.
+  - `describe('category: …', …)` blocks per assertion group.
+  - `expect(…, driver.describe('spec.md §section', 'requirement'))` so failure messages cite the requirement.
+- New fixtures go in `conformance/fixtures/` AND must be added to `fixtures.md`'s catalog table + per-fixture contracts. The `spec-corpus-validity.test.ts` round-trip test will fail otherwise.
+- Server-free scenarios (those not requiring `OPENWOP_BASE_URL`) MUST run in <1s. CI gates on this.
+
+### TypeScript reference SDK (`sdk/typescript/`)
+
+- Every endpoint in `api/openapi.yaml` should map to ONE method on `OpenwopClient`. If you add an endpoint to the spec, add the corresponding SDK method in the same PR.
+- Types come from the spec — extend `src/types.ts` rather than redefining shapes inline.
+- `tsc --noEmit` must pass with `strict + exactOptionalPropertyTypes`. No `as any`, no `@ts-ignore`.
+- Zero runtime dependencies remains a goal. New deps need a stated reason in the PR description.
+
+---
+
+## The CI gate
+
+A openwop-spec PR is mergeable when:
+
+1. `redocly lint api/openapi.yaml` — clean.
+2. `asyncapi validate api/asyncapi.yaml` — clean.
+3. Every JSON Schema compiles via Ajv2020 (covered by `conformance/src/scenarios/spec-corpus-validity.test.ts`).
+4. Every fixture validates against `workflow-definition.schema.json` (covered by `conformance/src/scenarios/fixtures-valid.test.ts`).
+5. Every prose doc carries a `Status:` legend tag (covered by `spec-corpus-validity.test.ts`).
+6. The TS SDK builds clean (`cd sdk/typescript && tsc --noEmit`).
+7. The `openwop-conformance --offline` server-free subset passes.
+8. `CHANGELOG.md` updated when changing any artifact (1-line entry under `[Unreleased]` is fine).
+9. Per-SDK lint passes for any SDK directory the PR touches (per `.github/workflows/pr-checks.yml`):
+   - **TypeScript** — ESLint via the SDK's existing config.
+   - **Python** — `ruff check sdk/python/`.
+   - **Go** — `go vet ./...` and `gofmt -l .` produces no output.
+10. Every commit on the PR carries a `Signed-off-by:` trailer per the DCO (see §"Sign your commits" below).
+
+Run the full local check from the repo root:
+
+```bash
+npm run openwop:check
+```
+
+Equivalent direct script:
+
+```bash
+bash scripts/openwop-check.sh
+```
+
+---
+
+## Coordination with the impl plan
+
+When a spec PR proposes a change that interacts with a reference implementation:
+
+- **Cosmetic / additive** (new field, new event type as opt-in, new endpoint): merge spec PR independently. Impl will catch up.
+- **Breaking impl assumptions** (schema bump on existing event, new required field, removed field): coordinate via `WORKFLOW-PROTOCOL-openwop-PLAN.md` "Cross-cuts to impl plan" section. Add a `CC-N` entry. The impl plan owner approves before merge.
+
+Cross-cuts currently tracked: CC-1 (recursionLimit invariant — partial), CC-2 (typed channels — deferred), CC-3 (OTel taxonomy — done), CC-4 (maxNodeExecutions — done).
+
+---
+
+## Process
+
+The openwop spec doesn't yet have a formal committee. Until one exists:
+
+- **PRs**: opened against the implementation repo, labeled `openwop-spec`. Merge bar is "two reviewers from different organizations" once the spec leaves DRAFT.
+- **Issues**: see `README.md` §Reporting issues — include doc filename, section heading, RFC 2119 requirement that's unclear or contradictory, and implementation impact.
+- **Backwards compat**: until v1 FINAL, breaking changes are allowed but MUST come with a CHANGELOG entry + a runbook section in `version-negotiation.md` describing migration.
+
+---
+
+## Sign your commits (DCO)
+
+Every commit on a pull request MUST carry a `Signed-off-by:` trailer. This is the [Developer Certificate of Origin](https://developercertificate.org/) — the lightweight alternative to a CLA. By signing off, you assert you have the right to submit the work under the project's license (Apache-2.0 for code, CC-BY-4.0 for spec text).
+
+How to sign:
+
+```bash
+git commit -s -m "your message"             # adds Signed-off-by automatically
+git commit --amend -s --no-edit             # add to an existing commit
+git rebase --signoff -i HEAD~3              # add to the last 3 commits
+```
+
+The DCO check is wired through the [DCO bot](https://github.com/dcoapp/app); it runs on every PR and blocks merge until every commit is signed off. A failing DCO check is the only "fix-forward" the maintainer set explicitly allows: amend + force-push and we'll re-run.
+
+---
+
+## Triage SLA
+
+A maintainer will respond to your PR or issue within:
+
+- **24 hours** for security-flagged issues (per `SECURITY.md`).
+- **7 calendar days** for everything else.
+
+"Respond" means substantive: a review, a redirect, or a "I'll get to this by ~date." Silence past 7 days means the maintainer rotation isn't keeping up; ping `@davidscotttufts` directly.
+
+If your PR sits past 14 days without a substantive response, that's a maintainer-set capacity problem, not a quality problem with your contribution. We document this honestly so contributors can decide whether to wait.
+
+---
+
+## Bootstrap-phase notes (2026-05-05)
+
+Until `MAINTAINERS.md` lists at least one maintainer not affiliated with the original steward (per the `ROADMAP.md` migration tripwire), the following bootstrap-phase rules apply:
+
+- **One-approval review.** Branch-protection on `main` requires one maintainer approval. Post-bootstrap (when MAINTAINERS.md grows past one), this becomes two approvals from different organizations per `GOVERNANCE.md` §"Decision making."
+- **Conformance scenario authorship.** PRs touching `conformance/src/scenarios/` or `conformance/src/lib/` route through `CODEOWNERS` to the lead maintainer. Same elevation post-bootstrap (cross-org reviewers required).
+- **Spec corpus changes.** Same elevation logic — `CODEOWNERS` routes `/spec/v1/`, `/api/`, `/schemas/` to the lead maintainer; cross-org review post-bootstrap.
+
+The bootstrap-phase amendment is filed as RFC 0005 in the `RFCS/` directory.
+
+---
+
+## Useful one-liners
+
+```bash
+# Validate every schema compiles + fixtures + spec corpus, all server-free
+conformance/dist/cli.js --offline
+
+# Lint OpenAPI
+npx -y @redocly/cli@latest lint api/openapi.yaml
+
+# Validate AsyncAPI
+npx -y @asyncapi/cli@latest validate api/asyncapi.yaml
+
+# Build TS SDK
+(cd sdk/typescript && npm install && npm run build)
+
+# Find every prose doc that's still STUB-tier (candidates for promotion)
+grep -l "Status:.*STUB" *.md
+```

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.agent-orchestration/1.0.0/skill.config.json",
+  "title": "AgentSkillConfig",
+  "type": "object",
+  "required": ["agentInstanceId", "skillId"],
+  "properties": {
+    "agentInstanceId": { "type": "string", "minLength": 1 },
+    "skillId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Skill identifier. Must be in the agent's toolAllowlist (RFC 0008 AgentManifest). Host returns `skill_not_allowed` if not."
+    },
+    "timeoutMs": { "type": "integer", "minimum": 100, "maximum": 300000, "default": 30000 }
+  },
+  "additionalProperties": false
+}

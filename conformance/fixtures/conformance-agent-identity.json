@@ -1,0 +1,27 @@
+{
+  "id": "conformance-agent-identity",
+  "name": "Conformance: Agent Identity",
+  "version": "1.0",
+  "description": "Phase 1. Single-node run with an `agent` pin on the node. Host MUST populate `RunSnapshot.agent` (or `runOrchestrator` for supervisor-bound fixtures) with an AgentRef-shaped value. See agentMetadata.test.ts.",
+  "nodes": [
+    {
+      "id": "echo",
+      "typeId": "core.identity",
+      "name": "Identity (agent-pinned)",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {},
+      "agent": {
+        "agentId": "core.conformance.identity-agent",
+        "modelClass": "chat"
+      }
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "multi-agent", "phase-1", "identity"] },
+  "settings": { "timeout": 10000 }
+}

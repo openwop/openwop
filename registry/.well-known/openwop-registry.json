@@ -1,0 +1,31 @@
+{
+  "registryVersion": "1.0.0",
+  "protocolVersion": "1.0",
+  "name": "openwop reference registry",
+  "operator": "openwop project",
+  "url": "https://packs.openwop.dev",
+  "supportedNamespaces": ["core", "vendor", "community"],
+  "supportedSigningMethods": ["ed25519", "sigstore"],
+  "supportedTrustModes": ["trusted", "verified"],
+  "endpoints": {
+    "registryIndex": "/v1/index.json",
+    "packMetadata": "/v1/packs/{name}/index.json",
+    "versionManifest": "/v1/packs/{name}/-/{version}.json",
+    "versionTarball": "/v1/packs/{name}/-/{version}.tgz",
+    "versionSignature": "/v1/packs/{name}/-/{version}.sig",
+    "publicKey": "/keys/{keyId}.pub"
+  },
+  "endpointAliases": {
+    "_note": "Filesystem-backed registries (Firebase Hosting, S3+CDN, etc.) serve packMetadata at the file path because dot-containing path segments don't reliably trigger CDN URL rewrites. Clients SHOULD consult `endpoints` rather than hardcoding paths. Dynamic registries MAY accept `/v1/packs/{name}` and alias to `/v1/packs/{name}/index.json`."
+  },
+  "writeApi": {
+    "supported": false,
+    "publishMethod": "github-pull-request",
+    "publishUrl": "https://github.com/openwop/openwop/pulls"
+  },
+  "lifecycle": {
+    "yankSupported": true,
+    "deprecateSupported": true,
+    "keyRotationSupported": true
+  }
+}

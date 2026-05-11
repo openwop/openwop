@@ -1,0 +1,81 @@
+name: Bug report
+description: A spec, schema, SDK, or conformance suite defect
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing a bug. Please include enough detail for someone unfamiliar with your setup to reproduce the issue.
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Affected surface
+      multiple: true
+      options:
+        - Spec prose
+        - JSON Schema
+        - OpenAPI
+        - AsyncAPI
+        - SDK — TypeScript (@openwop/openwop)
+        - SDK — Python (openwop-client)
+        - SDK — Go (github.com/openwop/openwop/sdk/go)
+        - Conformance suite (@openwop/openwop-conformance)
+        - Other (describe below)
+    validations:
+      required: true
+
+  - type: input
+    id: file
+    attributes:
+      label: Specific file or section
+      description: e.g. spec/v1/auth.md §"Bearer tokens"
+    validations:
+      required: false
+
+  - type: input
+    id: spec_version
+    attributes:
+      label: Spec / suite version
+      description: Spec tag (v1.0.0) or commit SHA + suite version + SDK version, as applicable.
+      placeholder: "spec v1.0.0; @openwop/openwop-conformance 1.0.0; @openwop/openwop 1.0.0"
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What's wrong
+      description: One paragraph — what happened, what you expected, why it matters.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      description: Minimal repro. For SDK bugs include the call you made and what came back. For schema bugs include the validating instance. For spec bugs quote the relevant paragraph.
+      render: text
+    validations:
+      required: true
+
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Impact
+      options:
+        - Blocks v1 conformance for at least one host
+        - Internal inconsistency in the spec corpus
+        - SDK ergonomics / DX
+        - Documentation only
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else
+      description: Workarounds, related issues, screenshots.
+    validations:
+      required: false

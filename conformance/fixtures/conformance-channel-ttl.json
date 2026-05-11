@@ -1,0 +1,60 @@
+{
+  "id": "conformance-channel-ttl",
+  "name": "Conformance: Channel TTL",
+  "version": "1.0",
+  "description": "Writes 3 entries to channel `events` (ttlMs=200), waits 300ms, writes a 4th entry. The TTL filter at write time MUST drop all 3 priors so only the 4th entry remains. Spec: channels-and-reducers.md §append + §TTL (closes C3).",
+  "nodes": [
+    {
+      "id": "write-a",
+      "typeId": "core.channelWrite",
+      "name": "Write A",
+      "position": { "x": 0, "y": 0 },
+      "config": { "channelName": "events", "reducer": "append", "ttlMs": 200, "value": "a" },
+      "inputs": {}
+    },
+    {
+      "id": "write-b",
+      "typeId": "core.channelWrite",
+      "name": "Write B",
+      "position": { "x": 200, "y": 0 },
+      "config": { "channelName": "events", "reducer": "append", "ttlMs": 200, "value": "b" },
+      "inputs": {}
+    },
+    {
+      "id": "write-c",
+      "typeId": "core.channelWrite",
+      "name": "Write C",
+      "position": { "x": 400, "y": 0 },
+      "config": { "channelName": "events", "reducer": "append", "ttlMs": 200, "value": "c" },
+      "inputs": {}
+    },
+    {
+      "id": "ttl-wait",
+      "typeId": "core.delay",
+      "name": "Wait past TTL",
+      "position": { "x": 600, "y": 0 },
+      "config": { "ms": 300 },
+      "inputs": {}
+    },
+    {
+      "id": "write-d",
+      "typeId": "core.channelWrite",
+      "name": "Write D (after TTL)",
+      "position": { "x": 800, "y": 0 },
+      "config": { "channelName": "events", "reducer": "append", "ttlMs": 200, "value": "d" },
+      "inputs": {}
+    }
+  ],
+  "edges": [
+    { "id": "e1", "sourceNodeId": "write-a", "targetNodeId": "write-b" },
+    { "id": "e2", "sourceNodeId": "write-b", "targetNodeId": "write-c" },
+    { "id": "e3", "sourceNodeId": "write-c", "targetNodeId": "ttl-wait" },
+    { "id": "e4", "sourceNodeId": "ttl-wait", "targetNodeId": "write-d" }
+  ],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "channel-ttl"] },
+  "settings": { "timeout": 30000, "maxRetries": 0 }
+}

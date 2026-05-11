@@ -1,0 +1,26 @@
+{
+  "id": "conformance-agent-pack-install",
+  "name": "Conformance: Agent Pack Install",
+  "version": "1.0",
+  "description": "Phase 2. Installs a pack carrying `agents[]` entries; verifies the host's pack registry surfaces them as AgentManifest-shaped objects. Fixture is a no-op workflow; the actual install/list assertion happens at the registry surface (GET /v1/packs). See agentPackInstall.test.ts.",
+  "nodes": [
+    {
+      "id": "noop",
+      "typeId": "core.identity",
+      "name": "Noop (pack-install fixture)",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": {
+    "tags": ["conformance", "multi-agent", "phase-2", "pack-install"],
+    "requiresInstalledPack": "core.conformance.agent-pack"
+  },
+  "settings": { "timeout": 5000 }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "conformance-noop",
+  "name": "Conformance: Noop",
+  "version": "1.0",
+  "description": "Cheapest run-lifecycle fixture. Single core.noop node; reaches `completed` within 5s. See conformance/fixtures.md.",
+  "nodes": [
+    {
+      "id": "noop",
+      "typeId": "core.noop",
+      "name": "Noop",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance"] },
+  "settings": { "timeout": 10000 }
+}

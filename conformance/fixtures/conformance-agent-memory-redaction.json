@@ -1,0 +1,32 @@
+{
+  "id": "conformance-agent-memory-redaction",
+  "name": "Conformance: Agent Memory Redaction (SR-1)",
+  "version": "1.0",
+  "description": "Phase 3 / SR-1. Resolves a BYOK test-mode secret, writes a memory entry containing the plaintext, reads it back. The read-side `memoryReadback.content` MUST contain [REDACTED:<secretId>] in place of the plaintext. See agentMemoryRedactionContract.test.ts.",
+  "nodes": [
+    {
+      "id": "memory-redaction-probe",
+      "typeId": "core.identity",
+      "name": "Memory Redaction Probe",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "memoryAction": "redaction-probe",
+        "byokSecretId": "conformance-test-secret"
+      },
+      "inputs": {},
+      "agent": {
+        "agentId": "core.conformance.byok-agent",
+        "memoryRef": "conformance/agent-memory-redaction"
+      }
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "memoryReadback", "type": "object" }
+  ],
+  "metadata": { "tags": ["conformance", "multi-agent", "phase-3", "memory", "sr-1", "byok"] },
+  "settings": { "timeout": 15000 }
+}

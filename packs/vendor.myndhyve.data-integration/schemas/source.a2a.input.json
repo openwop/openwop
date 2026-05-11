@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.data-integration/1.0.0/source.a2a.input.json",
+  "title": "DataSourceA2AInput",
+  "type": "object",
+  "properties": {
+    "payload": { "description": "Task payload to send to the peer. Shape determined by taskType." }
+  },
+  "additionalProperties": false
+}

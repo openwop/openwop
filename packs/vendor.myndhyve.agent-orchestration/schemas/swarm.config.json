@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.agent-orchestration/1.0.0/swarm.config.json",
+  "title": "AgentSwarmConfig",
+  "type": "object",
+  "required": ["agents", "strategy"],
+  "properties": {
+    "agents": {
+      "type": "array",
+      "minItems": 2,
+      "items": { "type": "string", "minLength": 1, "description": "agentInstanceId" }
+    },
+    "strategy": {
+      "type": "string",
+      "enum": ["map", "map-reduce", "competitive"],
+      "description": "`map` = one task per agent, return all results. `map-reduce` = map + reduce step (requires `reducer`). `competitive` = first to complete wins, cancel others."
+    },
+    "reducer": { "type": "string", "description": "For map-reduce strategy: reducer skillId on a designated reducer agent (host-defined). MUST be set when strategy === 'map-reduce'." },
+    "perTaskTimeoutMs": { "type": "integer", "minimum": 100, "maximum": 600000, "default": 60000 }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": { "properties": { "strategy": { "const": "map-reduce" } } },
+      "then": { "required": ["reducer"] }
+    }
+  ]
+}

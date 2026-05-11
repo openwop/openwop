@@ -1,0 +1,70 @@
+{
+  "name": "community.openwop-team.demo",
+  "version": "0.1.0",
+  "description": "First community-namespace demo pack. Mixed pack \u2014 one trivial node (`uppercase`) plus one agent (`greeter`) \u2014 exercising both extension paths in a single tarball under the open-publish `community.*` tier. Manual Ed25519 signed (not Sigstore) to demonstrate the non-OIDC publishing path documented in registry-operations.md \u00a7Step 2. MIT-licensed for SPDX-diversity with the Apache-2.0 core packs.",
+  "author": "OpenWOP Team (community contributor)",
+  "license": "MIT",
+  "homepage": "https://openwop.dev/packs/community.openwop-team.demo",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "community",
+    "demo",
+    "first-community",
+    "mixed-pack"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "nodes": [
+    {
+      "typeId": "community.openwop-team.demo.uppercase",
+      "version": "0.1.0",
+      "label": "Uppercase",
+      "description": "Returns the input string uppercased. Smoke-only \u2014 useful as a sentinel that a community pack can be loaded + dispatched alongside core.* packs in the same workflow.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/uppercase.config.json",
+      "inputSchemaRef": "schemas/uppercase.input.json",
+      "outputSchemaRef": "schemas/uppercase.output.json"
+    }
+  ],
+  "agents": [
+    {
+      "agentId": "community.openwop-team.demo.greeter",
+      "persona": "Greeter",
+      "label": "Polyglot Greeter",
+      "description": "Greets the user in a different language each turn. Stateless \u2014 no memory of which languages it's used before; each invocation picks fresh. Mostly a demo of the agent-pack publishing path under the community.* tier.",
+      "modelClass": "general",
+      "systemPrompt": "You are Greeter. Greet the user warmly. EACH RESPONSE: pick a different natural language (rotate through ~20 commonly-known languages: English, Spanish, French, German, Italian, Portuguese, Japanese, Korean, Mandarin, Cantonese, Hindi, Arabic, Hebrew, Swahili, Turkish, Polish, Russian, Greek, Vietnamese, Indonesian). Give the greeting in that language followed by, in parentheses, the language name in English. Example output format: '\u3053\u3093\u306b\u3061\u306f! (Japanese)'. Do not explain the choice. Do not ask the user's preference. One greeting per response, no extra text. If you've forgotten which languages you've used, just pick any.",
+      "toolAllowlist": [],
+      "memoryShape": {
+        "scratchpad": false,
+        "conversation": false,
+        "longTerm": false
+      },
+      "confidence": {
+        "defaultThreshold": 0.9
+      }
+    }
+  ],
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "signing": {
+    "method": "ed25519",
+    "keyId": "openwop-registry-root",
+    "publicKeyUrl": "/keys/openwop-registry-root.pub"
+  },
+  "publishedAt": "2026-05-11T00:00:00Z",
+  "tarballUrl": "/v1/packs/community.openwop-team.demo/-/0.1.0.tgz",
+  "signatureUrl": "/v1/packs/community.openwop-team.demo/-/0.1.0.sig",
+  "integrity": "sha256-fAyKSZAE0mnjygT6wj7gApP0ZqJHeQg2cxDMOfLwcrw=",
+  "deprecated": false,
+  "yanked": false
+}

@@ -1,0 +1,955 @@
+/**
+ * OpenWOP SQLite reference host.
+ *
+ * A single-process, SQLite-backed implementation of the OpenWOP v1 wire
+ * contract. Demonstrates DURABLE execution: runs and events persist
+ * across process restarts, claim acquisition prevents double-execution
+ * across restart cycles.
+ *
+ * Built to:
+ *
+ *   1. Be the second reference host on INTEROP-MATRIX.md.
+ *   2. Anchor the "build your own host" walkthrough (README.md).
+ *   3. Show how event-log persistence + claim-based dispatch work
+ *      against a real SQL store, vs the in-memory host's process-local
+ *      state.
+ *
+ * Design choices:
+ *
+ *   - `better-sqlite3` for synchronous SQLite access. Single dep beyond
+ *     Node stdlib + types. Mature, fast, no async ceremony for our needs.
+ *   - Schema: 3 tables (runs, events, idempotency). Migrations by
+ *     statement-on-startup; production hosts would use a real migrator.
+ *   - Claim acquisition via `BEGIN IMMEDIATE` + check-and-set on the
+ *     `runs.claim_holder_id` column. Stale claims (heartbeat lapsed)
+ *     can be re-acquired by another process — demonstrates
+ *     `secret-leakage-staleClaim`-class scenarios.
+ *   - Event-log durability: every event is committed before the
+ *     executor returns. Process restart = read events from log, not
+ *     re-execute side effects (this host's nodes are pure, but the
+ *     pattern is the same).
+ *   - Profile claim: openwop-core + openwop-stream-poll + openwop-stream-sse +
+ *     debug-bundle. Same as the in-memory host.
+ *
+ * Reference-only limitations:
+ *   - Multi-tenancy (single hardcoded tenant).
+ *   - Real auth (Bearer presence only).
+ *   - BYOK / redaction harness (advertises passthrough).
+ *   - Provider policy / node packs / interrupts (out of profile).
+ *   - Horizontal scaling — SQLite is single-writer; a real production
+ *     host would use Postgres + connection pooling.
+ *
+ * The README beside this file is the "build your own host" walkthrough.
+ * Read it before diving into this code.
+ */
+
+import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
+import { randomUUID, createHash } from 'node:crypto';
+import { readFileSync, readdirSync, existsSync, mkdirSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { EventEmitter } from 'node:events';
+import Database from 'better-sqlite3';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const HOST = process.env.OPENWOP_HOST ?? '127.0.0.1';
+const PORT = Number(process.env.OPENWOP_PORT ?? 3838);
+const API_KEY = process.env.OPENWOP_API_KEY ?? 'openwop-sqlite-dev-key';
+const DB_PATH = process.env.OPENWOP_SQLITE_PATH ?? join(__dirname, '..', 'data', 'openwop-host.sqlite');
+const PROCESS_ID = `host-${randomUUID().slice(0, 8)}`;
+
+// Configurable timing — defaults match production-shaped values; tests
+// pass shorter values to keep the staleClaim scenario fast.
+const CLAIM_TTL_MS = Number(process.env.OPENWOP_CLAIM_TTL_MS ?? 30_000);
+const HEARTBEAT_INTERVAL_MS = Number(process.env.OPENWOP_HEARTBEAT_INTERVAL_MS ?? 10_000);
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+type RunStatus =
+  | 'pending'
+  | 'running'
+  | 'cancelling'
+  | 'completed'
+  | 'failed'
+  | 'cancelled'
+  | 'waiting-approval';
+
+interface FixtureWorkflow {
+  id: string;
+  name: string;
+  version: string;
+  nodes: ReadonlyArray<{
+    id: string;
+    typeId: string;
+    name: string;
+    inputs: Record<string, unknown>;
+  }>;
+  variables?: ReadonlyArray<{ name: string; type: string; required: boolean; defaultValue?: unknown }>;
+}
+
+interface RunEvent {
+  readonly seq: number;
+  readonly runId: string;
+  readonly type: string;
+  readonly nodeId: string | null;
+  readonly data: unknown;
+  readonly timestamp: string;
+}
+
+// ─── Database setup ──────────────────────────────────────────────────────────
+
+mkdirSync(dirname(DB_PATH), { recursive: true });
+const db = new Database(DB_PATH);
+db.pragma('journal_mode = WAL');
+db.pragma('synchronous = NORMAL');
+db.pragma('foreign_keys = ON');
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS runs (
+    run_id TEXT PRIMARY KEY,
+    workflow_id TEXT NOT NULL,
+    status TEXT NOT NULL,
+    inputs_json TEXT NOT NULL,
+    started_at TEXT NOT NULL,
+    ended_at TEXT,
+    error_json TEXT,
+    claim_holder_id TEXT,
+    claim_expires_at INTEGER
+  );
+
+  CREATE TABLE IF NOT EXISTS events (
+    run_id TEXT NOT NULL REFERENCES runs(run_id) ON DELETE CASCADE,
+    seq INTEGER NOT NULL,
+    type TEXT NOT NULL,
+    node_id TEXT,
+    data_json TEXT,
+    timestamp TEXT NOT NULL,
+    PRIMARY KEY (run_id, seq)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_events_run_seq ON events(run_id, seq);
+
+  CREATE TABLE IF NOT EXISTS idempotency (
+    cache_key TEXT PRIMARY KEY,
+    status INTEGER NOT NULL,
+    body TEXT NOT NULL,
+    body_hash TEXT NOT NULL,
+    stored_at INTEGER NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_idem_stored_at ON idempotency(stored_at);
+`);
+
+// Prepared statements — `better-sqlite3` performs much better when
+// statements are reused.
+const stmts = {
+  insertRun: db.prepare(
+    'INSERT INTO runs (run_id, workflow_id, status, inputs_json, started_at) VALUES (?, ?, ?, ?, ?)',
+  ),
+  getRun: db.prepare('SELECT * FROM runs WHERE run_id = ?'),
+  updateRunStatus: db.prepare(
+    'UPDATE runs SET status = ?, ended_at = ?, error_json = ? WHERE run_id = ?',
+  ),
+  setCancelRequested: db.prepare(
+    "UPDATE runs SET status = CASE WHEN status IN ('completed','failed','cancelled') THEN status ELSE 'cancelling' END WHERE run_id = ?",
+  ),
+  insertEvent: db.prepare(
+    'INSERT INTO events (run_id, seq, type, node_id, data_json, timestamp) VALUES (?, ?, ?, ?, ?, ?)',
+  ),
+  getEventsAfter: db.prepare('SELECT * FROM events WHERE run_id = ? AND seq > ? ORDER BY seq ASC'),
+  countEvents: db.prepare('SELECT COUNT(*) AS n FROM events WHERE run_id = ?'),
+  getIdempotency: db.prepare('SELECT * FROM idempotency WHERE cache_key = ?'),
+  insertIdempotency: db.prepare(
+    'INSERT INTO idempotency (cache_key, status, body, body_hash, stored_at) VALUES (?, ?, ?, ?, ?)',
+  ),
+  pruneIdempotency: db.prepare('DELETE FROM idempotency WHERE stored_at < ?'),
+  // Claim acquisition: atomically set claim_holder_id if unclaimed or
+  // claim has expired. Returns 1 row affected on success, 0 on contended.
+  acquireClaim: db.prepare(`
+    UPDATE runs SET claim_holder_id = ?, claim_expires_at = ?
+    WHERE run_id = ?
+      AND (claim_holder_id IS NULL OR claim_expires_at < ?)
+      AND status NOT IN ('completed', 'failed', 'cancelled')
+  `),
+  releaseClaim: db.prepare(
+    'UPDATE runs SET claim_holder_id = NULL, claim_expires_at = NULL WHERE run_id = ? AND claim_holder_id = ?',
+  ),
+};
+
+const IDEMPOTENCY_TTL_MS = 24 * 60 * 60 * 1000;
+
+// ─── In-memory state ─────────────────────────────────────────────────────────
+
+const workflows = new Map<string, FixtureWorkflow>();
+const eventBus = new EventEmitter();
+eventBus.setMaxListeners(1000);
+
+// In-flight aborters for claimed runs. Used so a cancel POST can stop
+// a delay node executing in this process. Cancellations against runs
+// claimed by ANOTHER process get picked up via the status flip plus
+// claim-stealing on heartbeat lapse.
+const runningAborters = new Map<string, AbortController>();
+
+// Active heartbeat handles keyed by runId. Each holds the setInterval
+// timer that renews `claim_expires_at` while this process executes the
+// run. Cleared on terminal status.
+const runningHeartbeats = new Map<string, NodeJS.Timeout>();
+
+// ─── Fixture loading ─────────────────────────────────────────────────────────
+
+function loadFixtures(): void {
+  let probe = __dirname;
+  for (let i = 0; i < 10; i++) {
+    const candidate = join(probe, 'conformance', 'fixtures');
+    try {
+      const entries = readdirSync(candidate);
+      for (const file of entries) {
+        if (!file.endsWith('.json')) continue;
+        const raw = readFileSync(join(candidate, file), 'utf8');
+        const parsed = JSON.parse(raw) as FixtureWorkflow;
+        workflows.set(parsed.id, parsed);
+      }
+      return;
+    } catch {
+      probe = dirname(probe);
+    }
+  }
+  workflows.set('conformance-noop', {
+    id: 'conformance-noop',
+    name: 'Synthetic Noop',
+    version: '1.0',
+    nodes: [{ id: 'noop', typeId: 'core.noop', name: 'Noop', inputs: {} }],
+  });
+}
+
+// ─── Run helpers ─────────────────────────────────────────────────────────────
+
+interface RunRow {
+  run_id: string;
+  workflow_id: string;
+  status: RunStatus;
+  inputs_json: string;
+  started_at: string;
+  ended_at: string | null;
+  error_json: string | null;
+  claim_holder_id: string | null;
+  claim_expires_at: number | null;
+}
+
+interface EventRow {
+  run_id: string;
+  seq: number;
+  type: string;
+  node_id: string | null;
+  data_json: string | null;
+  timestamp: string;
+}
+
+function loadRun(runId: string): RunRow | null {
+  return (stmts.getRun.get(runId) as RunRow | undefined) ?? null;
+}
+
+function appendEvent(
+  runId: string,
+  type: string,
+  opts: { nodeId?: string; data?: unknown } = {},
+): RunEvent {
+  const seq = (stmts.countEvents.get(runId) as { n: number }).n;
+  const event: RunEvent = {
+    seq,
+    runId,
+    type,
+    nodeId: opts.nodeId ?? null,
+    data: opts.data ?? null,
+    timestamp: new Date().toISOString(),
+  };
+  stmts.insertEvent.run(
+    runId,
+    seq,
+    type,
+    event.nodeId,
+    event.data === null ? null : JSON.stringify(event.data),
+    event.timestamp,
+  );
+  eventBus.emit(`events:${runId}`, event);
+  return event;
+}
+
+function setRunTerminal(
+  runId: string,
+  status: 'completed' | 'failed' | 'cancelled',
+  error: { code: string; message: string } | null,
+): void {
+  const endedAt = new Date().toISOString();
+  stmts.updateRunStatus.run(status, endedAt, error ? JSON.stringify(error) : null, runId);
+  stmts.releaseClaim.run(runId, PROCESS_ID);
+}
+
+// ─── Claim + execution ───────────────────────────────────────────────────────
+
+function tryClaim(runId: string): boolean {
+  const result = stmts.acquireClaim.run(PROCESS_ID, Date.now() + CLAIM_TTL_MS, runId, Date.now());
+  return result.changes === 1;
+}
+
+/**
+ * Start renewing this process's claim on `runId` every
+ * HEARTBEAT_INTERVAL_MS. Called when a run begins execution; cleared
+ * by `stopHeartbeat()` on terminal status.
+ *
+ * Renewal uses the same `acquireClaim` UPDATE statement; the WHERE
+ * clause `(claim_holder_id IS NULL OR claim_expires_at < now)` permits
+ * us to extend our OWN claim because it doesn't fail when the existing
+ * holder is the same process.
+ *
+ * Wait — actually the WHERE clause as written rejects same-holder
+ * renewal once expires_at is set in the future. We use a separate
+ * statement that explicitly matches the holder ID for renewal.
+ */
+const renewClaimStmt = db.prepare(
+  'UPDATE runs SET claim_expires_at = ? WHERE run_id = ? AND claim_holder_id = ?',
+);
+
+function startHeartbeat(runId: string): void {
+  // Defensive: don't double-start.
+  const existing = runningHeartbeats.get(runId);
+  if (existing) clearInterval(existing);
+  const handle = setInterval(() => {
+    renewClaimStmt.run(Date.now() + CLAIM_TTL_MS, runId, PROCESS_ID);
+  }, HEARTBEAT_INTERVAL_MS);
+  // Don't keep the event loop alive solely on the heartbeat — let the
+  // HTTP server be the keepalive.
+  if (typeof handle.unref === 'function') handle.unref();
+  runningHeartbeats.set(runId, handle);
+}
+
+function stopHeartbeat(runId: string): void {
+  const handle = runningHeartbeats.get(runId);
+  if (handle) clearInterval(handle);
+  runningHeartbeats.delete(runId);
+}
+
+function sleep(ms: number, signal: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal.aborted) return reject(new Error('aborted'));
+    const timer = setTimeout(() => {
+      signal.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    const onAbort = (): void => {
+      clearTimeout(timer);
+      reject(new Error('aborted'));
+    };
+    signal.addEventListener('abort', onAbort, { once: true });
+  });
+}
+
+function resolveInputAsNumber(
+  declared: unknown,
+  variables: Record<string, unknown>,
+  fallback: number,
+): number {
+  if (
+    declared !== null &&
+    typeof declared === 'object' &&
+    'type' in declared &&
+    (declared as { type: unknown }).type === 'variable'
+  ) {
+    const variableName = (declared as { variableName?: string }).variableName;
+    if (variableName !== undefined && typeof variables[variableName] === 'number') {
+      return variables[variableName] as number;
+    }
+  }
+  if (typeof declared === 'number') return declared;
+  return fallback;
+}
+
+type NodeOutcome = 'completed' | 'cancelled' | 'failed';
+
+async function executeNode(
+  runId: string,
+  node: FixtureWorkflow['nodes'][number],
+  inputs: Record<string, unknown>,
+  signal: AbortSignal,
+): Promise<NodeOutcome> {
+  const refreshed = loadRun(runId);
+  if (refreshed?.status === 'cancelling') {
+    appendEvent(runId, 'node.cancelled', { nodeId: node.id });
+    return 'cancelled';
+  }
+  appendEvent(runId, 'node.started', { nodeId: node.id });
+
+  switch (node.typeId) {
+    case 'core.noop':
+      break;
+
+    case 'core.delay': {
+      const delayMs = resolveInputAsNumber(node.inputs.delayMs, inputs, 100);
+      try {
+        await sleep(delayMs, signal);
+      } catch {
+        appendEvent(runId, 'node.cancelled', { nodeId: node.id });
+        return 'cancelled';
+      }
+      break;
+    }
+
+    default:
+      appendEvent(runId, 'node.failed', {
+        nodeId: node.id,
+        data: { code: 'unsupported_node_type', typeId: node.typeId },
+      });
+      return 'failed';
+  }
+
+  appendEvent(runId, 'node.completed', { nodeId: node.id });
+  return 'completed';
+}
+
+async function runWorkflow(runId: string): Promise<void> {
+  const row = loadRun(runId);
+  if (!row) return;
+
+  const workflow = workflows.get(row.workflow_id);
+  if (!workflow) {
+    const error = { code: 'workflow_not_found', message: 'Unknown workflowId.' };
+    appendEvent(runId, 'run.failed', { data: error });
+    setRunTerminal(runId, 'failed', error);
+    return;
+  }
+
+  const inputs = JSON.parse(row.inputs_json) as Record<string, unknown>;
+  const aborter = new AbortController();
+  runningAborters.set(runId, aborter);
+  startHeartbeat(runId);
+
+  try {
+    // `run.started` is emitted only on FIRST execution. If we're
+    // resuming an orphaned run, the prior process already wrote
+    // `run.started`; emit a `run.resumed` event so observers can see
+    // the handover.
+    const startEvents = stmts.getEventsAfter.all(runId, -1) as EventRow[];
+    const alreadyStarted = startEvents.some((e) => e.type === 'run.started');
+    stmts.updateRunStatus.run('running', null, null, runId);
+    if (!alreadyStarted) {
+      appendEvent(runId, 'run.started');
+    } else {
+      appendEvent(runId, 'run.resumed', { data: { resumedBy: PROCESS_ID } });
+    }
+
+    for (const node of workflow.nodes) {
+      const refreshed = loadRun(runId);
+      if (refreshed?.status === 'cancelling') {
+        appendEvent(runId, 'run.cancelled');
+        setRunTerminal(runId, 'cancelled', null);
+        return;
+      }
+
+      const outcome = await executeNode(runId, node, inputs, aborter.signal);
+      if (outcome === 'failed') {
+        const error = {
+          code: 'unsupported_node_type',
+          message: `SQLite host does not implement node type "${node.typeId}".`,
+        };
+        appendEvent(runId, 'run.failed', { data: error });
+        setRunTerminal(runId, 'failed', error);
+        return;
+      }
+      if (outcome === 'cancelled') {
+        appendEvent(runId, 'run.cancelled');
+        setRunTerminal(runId, 'cancelled', null);
+        return;
+      }
+    }
+
+    const final = loadRun(runId);
+    if (final?.status === 'cancelling') {
+      appendEvent(runId, 'run.cancelled');
+      setRunTerminal(runId, 'cancelled', null);
+    } else {
+      appendEvent(runId, 'run.completed');
+      setRunTerminal(runId, 'completed', null);
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    const error = { code: 'internal', message };
+    appendEvent(runId, 'run.failed', { data: error });
+    setRunTerminal(runId, 'failed', error);
+  } finally {
+    runningAborters.delete(runId);
+    stopHeartbeat(runId);
+  }
+}
+
+// ─── HTTP plumbing ───────────────────────────────────────────────────────────
+
+function readBody(req: IncomingMessage): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    req.on('data', (chunk: Buffer) => chunks.push(chunk));
+    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+    req.on('error', reject);
+  });
+}
+
+function sendJSON(
+  res: ServerResponse,
+  status: number,
+  body: unknown,
+  extraHeaders: Record<string, string> = {},
+): void {
+  const payload = JSON.stringify(body);
+  res.writeHead(status, {
+    'Content-Type': 'application/json',
+    'Content-Length': Buffer.byteLength(payload),
+    ...extraHeaders,
+  });
+  res.end(payload);
+}
+
+function sendError(res: ServerResponse, status: number, code: string, message: string): void {
+  sendJSON(res, status, { error: code, message });
+}
+
+function checkAuth(req: IncomingMessage, res: ServerResponse): boolean {
+  const auth = req.headers.authorization;
+  if (typeof auth !== 'string' || !auth.startsWith('Bearer ')) {
+    sendError(res, 401, 'unauthenticated', 'Missing or malformed Authorization header.');
+    return false;
+  }
+  const token = auth.slice('Bearer '.length).trim();
+  if (token !== API_KEY) {
+    sendError(res, 401, 'invalid_credential', 'Bearer token rejected.');
+    return false;
+  }
+  return true;
+}
+
+function hashBody(body: string): string {
+  return createHash('sha256').update(body).digest('hex');
+}
+
+function buildIdempotencyCacheKey(endpoint: string, key: string): string {
+  return createHash('sha256').update(`single-tenant:${endpoint}:${key}`).digest('hex');
+}
+
+function pruneIdempotency(): void {
+  stmts.pruneIdempotency.run(Date.now() - IDEMPOTENCY_TTL_MS);
+}
+
+// ─── Route handlers ──────────────────────────────────────────────────────────
+
+function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
+  sendJSON(res, 200, {
+    protocolVersion: '1.0',
+    implementation: {
+      name: 'openwop-host-sqlite',
+      version: '1.0.0',
+      vendor: 'openwop-spec (reference example)',
+    },
+    supportedEnvelopes: [],
+    schemaVersions: {},
+    limits: {
+      clarificationRounds: 0,
+      schemaRounds: 0,
+      envelopesPerTurn: 0,
+      maxNodeExecutions: 1000,
+    },
+    supportedTransports: ['rest'],
+    debugBundle: { supported: true },
+  }, { 'Cache-Control': 'public, max-age=300' });
+}
+
+function handleOpenApi(_req: IncomingMessage, res: ServerResponse): void {
+  sendJSON(res, 200, {
+    openapi: '3.1',
+    info: { title: 'openwop SQLite reference host', version: '1.0.0' },
+    paths: {
+      '/.well-known/openwop': { get: { responses: { '200': { description: 'OK' } } } },
+      '/v1/runs': { post: { responses: { '201': { description: 'Created' } } } },
+      '/v1/runs/{runId}': { get: { responses: { '200': { description: 'OK' } } } },
+      '/v1/runs/{runId}/cancel': { post: { responses: { '200': { description: 'OK' } } } },
+      '/v1/runs/{runId}/events': { get: { responses: { '200': { description: 'OK' } } } },
+      '/v1/runs/{runId}/events/poll': { get: { responses: { '200': { description: 'OK' } } } },
+      '/v1/runs/{runId}/debug-bundle': { get: { responses: { '200': { description: 'OK' } } } },
+    },
+  });
+}
+
+async function handleCreateRun(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  if (!checkAuth(req, res)) return;
+
+  const bodyText = await readBody(req);
+  let parsed: { workflowId?: string; inputs?: Record<string, unknown> };
+  try {
+    parsed = JSON.parse(bodyText) as { workflowId?: string; inputs?: Record<string, unknown> };
+  } catch {
+    sendError(res, 400, 'validation_error', 'Request body MUST be valid JSON.');
+    return;
+  }
+
+  if (typeof parsed.workflowId !== 'string') {
+    sendError(res, 400, 'validation_error', 'workflowId MUST be a string.');
+    return;
+  }
+
+  if (!workflows.has(parsed.workflowId)) {
+    sendError(res, 404, 'workflow_not_found', 'Unknown workflowId.');
+    return;
+  }
+
+  const idempotencyKey = req.headers['idempotency-key'];
+  const incomingBodyHash = hashBody(bodyText);
+  if (typeof idempotencyKey === 'string') {
+    pruneIdempotency();
+    const cacheKey = buildIdempotencyCacheKey('POST /v1/runs', idempotencyKey);
+    const cached = stmts.getIdempotency.get(cacheKey) as
+      | { status: number; body: string; body_hash: string }
+      | undefined;
+    if (cached) {
+      if (cached.body_hash !== incomingBodyHash) {
+        sendError(
+          res,
+          409,
+          'idempotency_key_conflict',
+          'Idempotency-Key reused with a different request body.',
+        );
+        return;
+      }
+      res.writeHead(cached.status, {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(cached.body),
+        'openwop-Idempotent-Replay': 'true',
+      });
+      res.end(cached.body);
+      return;
+    }
+  }
+
+  const runId = `run-${randomUUID()}`;
+  const inputs = parsed.inputs ?? {};
+  const startedAt = new Date().toISOString();
+
+  stmts.insertRun.run(runId, parsed.workflowId, 'pending', JSON.stringify(inputs), startedAt);
+
+  const responseBody = {
+    runId,
+    status: 'pending',
+    workflowId: parsed.workflowId,
+    startedAt,
+  };
+  const responseText = JSON.stringify(responseBody);
+
+  if (typeof idempotencyKey === 'string') {
+    const cacheKey = buildIdempotencyCacheKey('POST /v1/runs', idempotencyKey);
+    stmts.insertIdempotency.run(cacheKey, 201, responseText, incomingBodyHash, Date.now());
+  }
+
+  // Try to claim + execute. Single-process model: we expect to win
+  // every time we just created the run, but tryClaim is correct under
+  // multi-process startup too.
+  if (tryClaim(runId)) {
+    void runWorkflow(runId).catch((err: unknown) => {
+      const message = err instanceof Error ? err.message : String(err);
+      const error = { code: 'internal', message };
+      appendEvent(runId, 'run.failed', { data: error });
+      setRunTerminal(runId, 'failed', error);
+    });
+  }
+
+  res.writeHead(201, {
+    'Content-Type': 'application/json',
+    'Content-Length': Buffer.byteLength(responseText),
+    'openwop-Idempotent-Replay': typeof idempotencyKey === 'string' ? 'false' : '',
+  });
+  res.end(responseText);
+}
+
+function handleGetRun(req: IncomingMessage, res: ServerResponse, runId: string): void {
+  if (!checkAuth(req, res)) return;
+  const row = loadRun(runId);
+  if (!row) {
+    sendError(res, 404, 'run_not_found', `Unknown runId: ${runId}`);
+    return;
+  }
+  sendJSON(res, 200, {
+    runId: row.run_id,
+    workflowId: row.workflow_id,
+    status: row.status,
+    inputs: JSON.parse(row.inputs_json),
+    startedAt: row.started_at,
+    endedAt: row.ended_at,
+    ...(row.error_json ? { error: JSON.parse(row.error_json) } : {}),
+  });
+}
+
+async function handleCancelRun(
+  req: IncomingMessage,
+  res: ServerResponse,
+  runId: string,
+): Promise<void> {
+  if (!checkAuth(req, res)) return;
+  await readBody(req);
+
+  const row = loadRun(runId);
+  if (!row) {
+    sendError(res, 404, 'run_not_found', `Unknown runId: ${runId}`);
+    return;
+  }
+  if (row.status === 'completed' || row.status === 'failed' || row.status === 'cancelled') {
+    sendJSON(res, 200, { runId, status: row.status, alreadyTerminal: true });
+    return;
+  }
+
+  stmts.setCancelRequested.run(runId);
+  // If the run is executing in THIS process, abort its in-flight node.
+  // Otherwise the executing process will see the status flip on its
+  // next loadRun() check.
+  runningAborters.get(runId)?.abort();
+
+  sendJSON(res, 200, { runId, status: 'cancelling' });
+}
+
+function handleEventsPoll(
+  req: IncomingMessage,
+  res: ServerResponse,
+  runId: string,
+  url: URL,
+): void {
+  if (!checkAuth(req, res)) return;
+  const row = loadRun(runId);
+  if (!row) {
+    sendError(res, 404, 'run_not_found', `Unknown runId: ${runId}`);
+    return;
+  }
+
+  const sinceParam = url.searchParams.get('since');
+  const since = sinceParam !== null ? Number(sinceParam) : -1;
+  const rows = stmts.getEventsAfter.all(runId, since) as EventRow[];
+  const events = rows.map((r) => ({
+    seq: r.seq,
+    runId: r.run_id,
+    type: r.type,
+    nodeId: r.node_id,
+    data: r.data_json !== null ? JSON.parse(r.data_json) : null,
+    timestamp: r.timestamp,
+  }));
+  const lastSeq = events.length > 0 ? events[events.length - 1]!.seq : since;
+
+  sendJSON(res, 200, {
+    runId,
+    events,
+    lastEventSeq: lastSeq,
+    runStatus: row.status,
+    isTerminal:
+      row.status === 'completed' || row.status === 'failed' || row.status === 'cancelled',
+  });
+}
+
+function handleEventsSse(req: IncomingMessage, res: ServerResponse, runId: string): void {
+  if (!checkAuth(req, res)) return;
+  const row = loadRun(runId);
+  if (!row) {
+    sendError(res, 404, 'run_not_found', `Unknown runId: ${runId}`);
+    return;
+  }
+
+  // Per spec/v1/stream-modes.md §"Reconnection": Last-Event-ID signals
+  // a resumption — replay only events with seq > lastEventId.
+  const lastEventIdHeader = req.headers['last-event-id'];
+  let resumeAfterSeq = -1;
+  if (typeof lastEventIdHeader === 'string') {
+    const parsed = Number(lastEventIdHeader);
+    if (Number.isFinite(parsed)) resumeAfterSeq = parsed;
+  }
+
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    Connection: 'keep-alive',
+  });
+
+  const writeEvent = (event: RunEvent): void => {
+    res.write(`id: ${event.seq}\n`);
+    res.write(`event: ${event.type}\n`);
+    res.write(`data: ${JSON.stringify(event)}\n\n`);
+  };
+
+  const backlog = stmts.getEventsAfter.all(runId, resumeAfterSeq) as EventRow[];
+  for (const r of backlog) {
+    writeEvent({
+      seq: r.seq,
+      runId: r.run_id,
+      type: r.type,
+      nodeId: r.node_id,
+      data: r.data_json !== null ? JSON.parse(r.data_json) : null,
+      timestamp: r.timestamp,
+    });
+  }
+
+  if (row.status === 'completed' || row.status === 'failed' || row.status === 'cancelled') {
+    res.end();
+    return;
+  }
+
+  const onEvent = (event: RunEvent): void => {
+    writeEvent(event);
+    if (
+      event.type === 'run.completed' ||
+      event.type === 'run.failed' ||
+      event.type === 'run.cancelled'
+    ) {
+      eventBus.off(`events:${runId}`, onEvent);
+      res.end();
+    }
+  };
+  eventBus.on(`events:${runId}`, onEvent);
+
+  req.on('close', () => {
+    eventBus.off(`events:${runId}`, onEvent);
+  });
+}
+
+function handleDebugBundle(req: IncomingMessage, res: ServerResponse, runId: string): void {
+  if (!checkAuth(req, res)) return;
+  const row = loadRun(runId);
+  if (!row) {
+    sendError(res, 404, 'run_not_found', `Unknown runId: ${runId}`);
+    return;
+  }
+  const events = stmts.getEventsAfter.all(runId, -1) as EventRow[];
+
+  const bundle = {
+    bundleVersion: '1',
+    generatedAt: new Date().toISOString(),
+    host: { name: 'openwop-host-sqlite', version: '1.0.0', vendor: 'openwop-spec (reference example)' },
+    run: {
+      runId: row.run_id,
+      workflowId: row.workflow_id,
+      status: row.status,
+      inputs: {}, // omitted per spec/v1/debug-bundle.md §"Redaction guarantees"
+      startedAt: row.started_at,
+      endedAt: row.ended_at,
+      ...(row.error_json ? { error: JSON.parse(row.error_json) } : {}),
+      variables: {},
+    },
+    events: events.map((r) => ({
+      sequence: r.seq,
+      type: r.type,
+      timestamp: r.timestamp,
+      nodeId: r.node_id,
+      data: r.data_json !== null ? JSON.parse(r.data_json) : null,
+    })),
+    spans: [] as unknown[],
+    metrics: {
+      nodeCount: new Set(events.filter((e) => e.node_id !== null).map((e) => e.node_id)).size,
+      eventCount: events.length,
+    },
+    redactionApplied: true,
+    redactionMode: 'omit' as const,
+  };
+  sendJSON(res, 200, bundle, { 'Cache-Control': 'no-store' });
+}
+
+// ─── Router ──────────────────────────────────────────────────────────────────
+
+const RUN_ID_PATTERN = /^\/v1\/runs\/([^/]+)$/;
+const RUN_CANCEL_PATTERN = /^\/v1\/runs\/([^/]+)\/cancel$/;
+const RUN_EVENTS_POLL_PATTERN = /^\/v1\/runs\/([^/]+)\/events\/poll$/;
+const RUN_EVENTS_SSE_PATTERN = /^\/v1\/runs\/([^/]+)\/events$/;
+const RUN_DEBUG_BUNDLE_PATTERN = /^\/v1\/runs\/([^/]+)\/debug-bundle$/;
+
+async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
+  const path = url.pathname;
+  const method = req.method ?? 'GET';
+
+  if (method === 'GET' && path === '/.well-known/openwop') return handleDiscovery(req, res);
+  if (method === 'GET' && path === '/v1/openapi.json') return handleOpenApi(req, res);
+  if (method === 'POST' && path === '/v1/runs') return handleCreateRun(req, res);
+
+  let m = RUN_EVENTS_POLL_PATTERN.exec(path);
+  if (m && method === 'GET') return handleEventsPoll(req, res, m[1]!, url);
+  m = RUN_EVENTS_SSE_PATTERN.exec(path);
+  if (m && method === 'GET') return handleEventsSse(req, res, m[1]!);
+  m = RUN_DEBUG_BUNDLE_PATTERN.exec(path);
+  if (m && method === 'GET') return handleDebugBundle(req, res, m[1]!);
+  m = RUN_CANCEL_PATTERN.exec(path);
+  if (m && method === 'POST') return handleCancelRun(req, res, m[1]!);
+  m = RUN_ID_PATTERN.exec(path);
+  if (m && method === 'GET') return handleGetRun(req, res, m[1]!);
+
+  sendError(res, 404, 'not_found', `No route for ${method} ${path}`);
+}
+
+/**
+ * Scan for orphaned runs at startup. Per spec/v1/scale-profiles.md
+ * §"Replay semantics": when a process holding a claim dies
+ * without releasing it, the claim expires after CLAIM_TTL_MS. Another
+ * process restarting the host then picks up these orphans and resumes
+ * execution.
+ *
+ * Orphan = status IN ('pending', 'running') AND
+ *          (claim_holder_id IS NULL OR claim_expires_at < now).
+ */
+const findOrphansStmt = db.prepare(`
+  SELECT run_id FROM runs
+  WHERE status IN ('pending', 'running', 'cancelling')
+    AND (claim_holder_id IS NULL OR claim_expires_at < ?)
+`);
+
+function resumeOrphans(): void {
+  const now = Date.now();
+  const rows = findOrphansStmt.all(now) as Array<{ run_id: string }>;
+  if (rows.length === 0) return;
+
+  let claimed = 0;
+  for (const { run_id: runId } of rows) {
+    if (tryClaim(runId)) {
+      claimed++;
+      void runWorkflow(runId).catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : String(err);
+        const error = { code: 'internal', message };
+        appendEvent(runId, 'run.failed', { data: error });
+        setRunTerminal(runId, 'failed', error);
+      });
+    }
+  }
+  if (claimed > 0) {
+    console.log(
+      `[openwop-host-sqlite] resume-on-startup: claimed ${claimed} of ${rows.length} orphaned run(s)`,
+    );
+  }
+}
+
+// ─── Bootstrap ───────────────────────────────────────────────────────────────
+
+loadFixtures();
+resumeOrphans();
+
+const server = createServer((req, res) => {
+  void route(req, res).catch((err: unknown) => {
+    const message = err instanceof Error ? err.message : String(err);
+    if (!res.headersSent) sendError(res, 500, 'internal', message);
+    else res.end();
+  });
+});
+
+server.listen(PORT, HOST, () => {
+  console.log(
+    `[openwop-host-sqlite] listening on http://${HOST}:${PORT} (api key: ${API_KEY}, db: ${DB_PATH}, processId: ${PROCESS_ID}, ${workflows.size} fixtures)`,
+  );
+});
+
+// Graceful close on Ctrl-C — release any claims this process holds.
+const shutdown = (): void => {
+  console.log(`[openwop-host-sqlite] shutting down, releasing claims`);
+  for (const [, aborter] of runningAborters) aborter.abort();
+  for (const [, handle] of runningHeartbeats) clearInterval(handle);
+  runningHeartbeats.clear();
+  db.exec(`UPDATE runs SET claim_holder_id = NULL WHERE claim_holder_id = '${PROCESS_ID}'`);
+  db.close();
+  server.close(() => process.exit(0));
+};
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);

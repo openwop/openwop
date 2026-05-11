@@ -1,0 +1,8 @@
+extends:
+  - recommended
+
+rules:
+  # Discovery endpoints (`/.well-known/openwop`, `/v1/openapi.json`) are unauthenticated
+  # and take no input — they have no meaningful 4XX response surface. 5XX is the
+  # only honest failure mode and is documented inline.
+  operation-4xx-response: off

@@ -1,0 +1,38 @@
+{
+  "id": "conformance-dispatch-loop",
+  "name": "Conformance: Dispatch Loop",
+  "version": "1.0",
+  "description": "Tests the core.dispatch loop mechanism by looping back to an orchestrator node.",
+  "nodes": [
+    {
+      "id": "orchestrator",
+      "typeId": "core.orchestrator.supervisor",
+      "name": "Supervisor",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    },
+    {
+      "id": "dispatch",
+      "typeId": "core.dispatch",
+      "name": "Dispatch",
+      "position": { "x": 200, "y": 0 },
+      "config": {
+        "askUserRouting": "auto",
+        "workerDispatchModel": "child-run",
+        "fanOutPolicy": "sequential"
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [
+    { "id": "e1", "sourceNodeId": "orchestrator", "targetNodeId": "dispatch" },
+    { "id": "e2", "sourceNodeId": "dispatch", "targetNodeId": "orchestrator" }
+  ],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "dispatch", "loop"] },
+  "settings": { "timeout": 60000, "maxRetries": 0 }
+}

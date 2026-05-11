@@ -1,0 +1,31 @@
+{
+  "name": "vendor.openwop.rust-hello",
+  "version": "1.0.0",
+  "description": "Reference WASM node pack proving RFC 0008 ABI v1 works end-to-end across an independent toolchain (Rust → wasm32-unknown-unknown). One node type: vendor.openwop.rust-hello.greet.",
+  "author": "openwop project",
+  "license": "Apache-2.0",
+  "engines": {
+    "openwop": ">=1.1 <2.0.0"
+  },
+  "nodes": [
+    {
+      "typeId": "vendor.openwop.rust-hello.greet",
+      "version": "1.0.0",
+      "category": "examples",
+      "role": "transform",
+      "label": "Greet",
+      "description": "Returns a personalized greeting. Inputs: {name: string}. Output: {greeting: string}."
+    }
+  ],
+  "runtime": {
+    "language": "wasm",
+    "entry": "target/wasm32-unknown-unknown/release/rust_hello.wasm",
+    "format": "wasm",
+    "minRuntimeVersion": "1",
+    "wasm": {
+      "abiVersion": 1,
+      "memoryPagesInitial": 16,
+      "memoryPagesMax": 1024
+    }
+  }
+}

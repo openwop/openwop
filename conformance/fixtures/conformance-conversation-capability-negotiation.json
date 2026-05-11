@@ -1,0 +1,23 @@
+{
+  "id": "conformance-conversation-capability-negotiation",
+  "name": "Conformance: Conversation Capability Negotiation",
+  "version": "1.0",
+  "description": "Phase 4 — INVERTED gate. Declares a `core.conversationGate` node; hosts that do NOT advertise `capabilities.conversationPrimitive: true` MUST refuse this workflow at registration or run-create with `validation_error`. Hosts that DO advertise the capability would accept; this scenario runs ONLY against non-conversation hosts to verify the refusal contract. See conversationCapabilityNegotiation.test.ts.",
+  "nodes": [
+    {
+      "id": "convo",
+      "typeId": "core.conversationGate",
+      "name": "Conversation Gate (capability probe)",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "multi-agent", "phase-4", "conversation", "capability-gate", "negative-test"] },
+  "settings": { "timeout": 5000 }
+}

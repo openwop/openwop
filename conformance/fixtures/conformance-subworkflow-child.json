@@ -1,0 +1,21 @@
+{
+  "id": "conformance-subworkflow-child",
+  "name": "Conformance: Sub-workflow (child)",
+  "version": "1.0",
+  "description": "Child workflow dispatched by `conformance-subworkflow-parent`. Two-node noop chain that completes successfully and writes a known variable so the parent can assert variable propagation through `outputMapping`.",
+  "nodes": [
+    { "id": "child-n1", "typeId": "core.noop", "name": "Child N1", "position": { "x": 0,   "y": 0 }, "config": {}, "inputs": {} },
+    { "id": "child-n2", "typeId": "core.noop", "name": "Child N2", "position": { "x": 200, "y": 0 }, "config": {}, "inputs": {} }
+  ],
+  "edges": [
+    { "id": "ec12", "sourceNodeId": "child-n1", "targetNodeId": "child-n2" }
+  ],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "childResult", "type": "string", "defaultValue": "child-completed" }
+  ],
+  "metadata": { "tags": ["conformance", "subworkflow", "child"] },
+  "settings": { "timeout": 30000, "maxRetries": 0 }
+}

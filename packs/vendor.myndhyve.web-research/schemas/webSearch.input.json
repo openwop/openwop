@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.web-research/1.0.0/webSearch.input.json",
+  "title": "WebSearchInput",
+  "type": "object",
+  "required": ["query"],
+  "properties": {
+    "query": { "type": "string", "minLength": 1, "maxLength": 2048 },
+    "siteFilter": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Optional domain allow-list. When set, results from other domains are filtered out before return (host MAY translate to engine-specific `site:` operator)."
+    }
+  },
+  "additionalProperties": false
+}

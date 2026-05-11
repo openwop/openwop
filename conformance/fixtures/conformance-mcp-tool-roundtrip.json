@@ -1,0 +1,32 @@
+{
+  "id": "conformance-mcp-tool-roundtrip",
+  "name": "Conformance: MCP Tool Roundtrip",
+  "version": "1.0",
+  "description": "Track 6 fixture for `mcp-tool-roundtrip.test.ts`. Workflow invokes a single MCP tool (`echo`) on a host-configured MCP server. The conformance suite stands up a synthetic MCP server at startup; operators configure the host to use that server. The fixture's tool call MUST surface in the run's event log with the trust boundary intact per `threat-model-prompt-injection.md` §UNTRUSTED marker. Hosts that don't wire MCP-aware nodes can stub this fixture as `core.noop` — the host-mediated subtest skips when no `tools/call` invocations reach the synthetic server.",
+  "nodes": [
+    {
+      "id": "mcp-call",
+      "typeId": "core.ai.callPrompt",
+      "name": "Invoke MCP echo tool",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "mcp": {
+          "tool": "echo",
+          "arguments": {
+            "text": "roundtrip-probe"
+          }
+        }
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "text", "type": "string", "defaultValue": "roundtrip-probe" }
+  ],
+  "metadata": { "tags": ["conformance", "mcp", "roundtrip"] },
+  "settings": { "timeout": 0 }
+}

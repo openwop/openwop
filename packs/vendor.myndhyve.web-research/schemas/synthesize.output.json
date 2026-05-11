@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.web-research/1.0.0/synthesize.output.json",
+  "title": "SynthesizeOutput",
+  "type": "object",
+  "required": ["envelopeType", "payload", "sourceUrls"],
+  "properties": {
+    "envelopeType": { "type": "string" },
+    "payload": { "description": "Synthesized envelope payload (envelopeType-specific)." },
+    "envelopeId": { "type": "string" },
+    "sourceUrls": {
+      "type": "array",
+      "items": { "type": "string", "format": "uri" },
+      "description": "URLs of citations that fed the synthesis. Surface for audit / citation rendering downstream."
+    },
+    "usage": {
+      "type": "object",
+      "properties": {
+        "inputTokens": { "type": "integer", "minimum": 0 },
+        "outputTokens": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": true
+    },
+    "model": { "type": "string" }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,41 @@
+{
+  "name": "@openwop/openwop",
+  "version": "1.0.0",
+  "description": "Production-ready TypeScript reference SDK for OpenWOP v1.0 compliant servers.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/openwop/openwop.git",
+    "directory": "sdk/typescript"
+  },
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "!src/__tests__",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "prepublishOnly": "npm run build"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "@types/node": "^22.0.0",
+    "vitest": "^2.1"
+  }
+}

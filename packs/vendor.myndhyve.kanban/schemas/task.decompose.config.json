@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.kanban/1.0.0/task.decompose.config.json",
+  "title": "TaskDecomposeConfig",
+  "type": "object",
+  "properties": {
+    "maxSubtasks": { "type": "integer", "minimum": 2, "maximum": 50, "default": 8 },
+    "minSubtasks": { "type": "integer", "minimum": 1, "default": 3 },
+    "includeDependencies": { "type": "boolean", "default": true, "description": "When true, the AI emits subtask-to-subtask dependencies." },
+    "provider": { "type": "string" },
+    "model": { "type": "string" },
+    "createOnBoard": { "type": "boolean", "default": false, "description": "When true, the host also creates the subtasks on the board (returns subtaskIds). When false, just returns the decomposition plan." }
+  },
+  "additionalProperties": false
+}

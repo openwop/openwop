@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.integration/1.0.0/email-send.config.json",
+  "title": "EmailSendConfig",
+  "type": "object",
+  "required": ["from"],
+  "properties": {
+    "from": {
+      "type": "string",
+      "format": "email",
+      "description": "Sender address. Must be a verified sender for the host's email provider — provider returns `sender_not_verified` if not."
+    },
+    "provider": {
+      "type": "string",
+      "description": "Optional provider hint (`ses`, `resend`, `sendgrid`, `smtp`). When unset, host uses its default-configured provider. Provider must be in `Capabilities.email.providers`."
+    },
+    "replyTo": {
+      "type": "string",
+      "format": "email"
+    },
+    "fallbackOnFailure": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true and the primary provider returns a transient failure (5xx / network), host MAY retry via a fallback provider if configured. When false, transient failures surface as `email_send_failed`."
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.examples/1.0.0/delay-with-progress.config.json",
+  "title": "DelayWithProgressNodeConfig",
+  "description": "Config for core.openwop.examples.delay-with-progress. Sleeps for delayMs and streams a progress event every tickMs.",
+  "type": "object",
+  "required": ["delayMs"],
+  "properties": {
+    "delayMs": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 60000,
+      "description": "Total delay in milliseconds. Bounded to 60s so the node can't be used to stall a run indefinitely."
+    },
+    "tickMs": {
+      "type": "integer",
+      "minimum": 10,
+      "maximum": 5000,
+      "default": 100,
+      "description": "How frequently to emit node.progress events while delaying. Defaults to 100ms."
+    }
+  },
+  "additionalProperties": false
+}

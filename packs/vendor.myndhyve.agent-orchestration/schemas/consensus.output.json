@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.agent-orchestration/1.0.0/consensus.output.json",
+  "title": "AgentConsensusOutput",
+  "type": "object",
+  "required": ["votes", "tally", "totalVotes"],
+  "properties": {
+    "winningOption": { "type": ["string", "null"], "description": "Closed-enum winner from config.options. null when tieBreaker is 'unresolved' and votes tied." },
+    "votes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["agentInstanceId", "option"],
+        "properties": {
+          "agentInstanceId": { "type": "string" },
+          "option": { "type": "string" },
+          "rationale": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "tally": {
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 0 },
+      "description": "Count of votes per option."
+    },
+    "totalVotes": { "type": "integer", "minimum": 0 },
+    "isTie": { "type": "boolean" }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,41 @@
+{
+  "id": "conformance-orchestrator-low-confidence",
+  "name": "Conformance: Orchestrator Low-Confidence Suspend (CP-1)",
+  "version": "1.0",
+  "description": "Phase 5 / CP-1 invariant. Supervisor would emit a decision with `confidence: 0.5` against the default threshold 0.7. Host MUST hold the decision (no `runOrchestrator.decided` emitted), suspend the supervisor via `node.suspended { reason: 'low-confidence' }`, and transition run to `'waiting-approval'`. See orchestratorConservativePath.test.ts.",
+  "nodes": [
+    {
+      "id": "supervisor",
+      "typeId": "core.orchestrator.supervisor",
+      "name": "Supervisor (low confidence)",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "mockConfidence": 0.5,
+        "mockPendingDecision": { "kind": "next-worker", "nextWorkerIds": ["conformance-noop"] }
+      },
+      "inputs": {},
+      "agent": {
+        "agentId": "core.conformance.low-conf-supervisor",
+        "modelClass": "reasoning"
+      }
+    },
+    {
+      "id": "dispatch",
+      "typeId": "core.dispatch",
+      "name": "Dispatch",
+      "position": { "x": 200, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [
+    { "id": "e1", "sourceNodeId": "supervisor", "targetNodeId": "dispatch" },
+    { "id": "e2", "sourceNodeId": "dispatch", "targetNodeId": "supervisor" }
+  ],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "multi-agent", "phase-5", "orchestrator", "low-confidence", "cp-1"] },
+  "settings": { "timeout": 30000 }
+}

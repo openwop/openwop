@@ -1,0 +1,69 @@
+{
+  "name": "core.openwop.triggers",
+  "version": "1.0.0",
+  "description": "Spec-canonical workflow-trigger pack. Four universal entry-point shapes — webhook, schedule, event, envelope — that hosts can use to register workflows for external-event-driven dispatch. Trigger nodes are pass-through executors: they forward `ctx.triggerData` (set by the engine when the trigger fires) to outputs. The pack contributes the typed config + payload schemas + the runtime pass-through. Domain-specific triggers (canvas-aware, chat-aware) live in vendor packs.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.triggers",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": ["core", "triggers", "webhook", "schedule", "event", "envelope"],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "nodes": [
+    {
+      "typeId": "core.openwop.triggers.webhook",
+      "version": "1.0.0",
+      "label": "Webhook Trigger",
+      "description": "HTTP webhook entry-point. Host's webhook subsystem routes incoming requests at the configured path/secret to this workflow and exposes the body, headers, query, and method via ctx.triggerData. Replay-safe: triggerData is captured at run start and never re-fetched.",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": ["cacheable"],
+      "configSchemaRef": "schemas/webhook.config.json",
+      "inputSchemaRef": "schemas/webhook.input.json",
+      "outputSchemaRef": "schemas/webhook.output.json"
+    },
+    {
+      "typeId": "core.openwop.triggers.schedule",
+      "version": "1.0.0",
+      "label": "Schedule Trigger",
+      "description": "Cron-style scheduled entry-point. Host's scheduler fires the workflow at config.cron expressions; ctx.triggerData carries the fire timestamp, the matched cron expression, and timezone metadata. Drift / missed-fire handling is host policy.",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": ["cacheable"],
+      "configSchemaRef": "schemas/schedule.config.json",
+      "inputSchemaRef": "schemas/schedule.input.json",
+      "outputSchemaRef": "schemas/schedule.output.json"
+    },
+    {
+      "typeId": "core.openwop.triggers.event",
+      "version": "1.0.0",
+      "label": "Event Trigger",
+      "description": "Generic event-subscription entry-point. Host's event bus dispatches to the workflow when a matching event name fires; ctx.triggerData carries the event name + payload + source. For envelope-typed events with schema validation, use core.openwop.triggers.envelope.",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": ["cacheable"],
+      "configSchemaRef": "schemas/event.config.json",
+      "inputSchemaRef": "schemas/event.input.json",
+      "outputSchemaRef": "schemas/event.output.json"
+    },
+    {
+      "typeId": "core.openwop.triggers.envelope",
+      "version": "1.0.0",
+      "label": "Envelope Trigger",
+      "description": "Typed-envelope entry-point. Host dispatches when a matching envelope (e.g., from a parent workflow's emit or a typed event publisher) fires. ctx.triggerData carries the envelope's `envelopeType` discriminator + the payload. Workflow authors declare the expected envelope type in config; the host's envelope-routing layer enforces.",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": ["cacheable"],
+      "configSchemaRef": "schemas/envelope.config.json",
+      "inputSchemaRef": "schemas/envelope.input.json",
+      "outputSchemaRef": "schemas/envelope.output.json"
+    }
+  ],
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  }
+}

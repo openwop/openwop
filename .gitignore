@@ -1,0 +1,64 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+build/
+
+# Go
+*.test
+*.out
+
+# Editors
+.vscode/
+.idea/
+
+# Platform
+# .github/
+.firebase/
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Public keys distributed with community-tier packs ARE meant to be
+# tracked — they're the verifier counterpart to detached signatures.
+# Private keys MUST NOT be committed; they live in the operator's
+# secrets vault per docs/PACKS-MVP-PLAN.md §"Operational note."
+!packs/**/keys/*.pub.pem
+
+# Logs & temp files
+*.log
+*.tmp
+*.temp
+*~
+
+# OS-specific
+Thumbs.db
+
+# Build artifacts & coverage
+coverage/
+.coverage
+*.cover
+.nyc_output/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Editor backups
+*.swp
+*.swo
+*.bak

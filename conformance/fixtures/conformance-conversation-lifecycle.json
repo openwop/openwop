@@ -1,0 +1,32 @@
+{
+  "id": "conformance-conversation-lifecycle",
+  "name": "Conformance: Conversation Lifecycle",
+  "version": "1.0",
+  "description": "Phase 4. Opens a conversation, performs one exchange (host's conformance mock auto-resumes), closes. Emits conversation.opened → conversation.exchanged → conversation.closed events with matching conversationId. See conversationLifecycle.test.ts.",
+  "nodes": [
+    {
+      "id": "convo",
+      "typeId": "core.conversationGate",
+      "name": "Conversation Gate",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "lifecycle": "open-exchange-close",
+        "mockAutoResume": true
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "channels": {
+    "conversation": {
+      "schema": { "type": "array" },
+      "reducer": "message"
+    }
+  },
+  "metadata": { "tags": ["conformance", "multi-agent", "phase-4", "conversation"] },
+  "settings": { "timeout": 20000 }
+}

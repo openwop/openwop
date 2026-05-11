@@ -1,0 +1,23 @@
+{
+  "name": "vendor.openwop.rust-hello",
+  "description": "Reference WASM node pack proving RFC 0008 ABI v1 works end-to-end across an independent toolchain. One node type: vendor.openwop.rust-hello.greet.",
+  "author": "openwop project",
+  "license": "Apache-2.0",
+  "tags": [],
+  "versions": [
+    {
+      "version": "1.0.0",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/vendor.openwop.rust-hello/-/1.0.0.json",
+      "tarballUrl": "/v1/packs/vendor.openwop.rust-hello/-/1.0.0.tgz",
+      "signatureUrl": "/v1/packs/vendor.openwop.rust-hello/-/1.0.0.sig",
+      "signingMethod": "ed25519",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-oAxD58p11EJDYJ8427coH0zhULSVo/gel+MI9liC3gg=",
+      "deprecated": false,
+      "yanked": false
+    }
+  ],
+  "latest": "1.0.0",
+  "deprecated": false
+}

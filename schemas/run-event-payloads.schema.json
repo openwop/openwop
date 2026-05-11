@@ -1,0 +1,663 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/run-event-payloads.schema.json",
+  "title": "RunEventPayloads",
+  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n47 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
+  "type": "object",
+  "$defs": {
+    "_typeIndex": {
+      "description": "Lookup map: RunEventType → $defs key. Informative — consumers can derive this themselves but having it explicit aids tooling.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "run.started":               { "$ref": "#/$defs/runStarted" },
+        "run.completed":             { "$ref": "#/$defs/runCompleted" },
+        "run.failed":                { "$ref": "#/$defs/runFailed" },
+        "run.cancelled":             { "$ref": "#/$defs/runCancelled" },
+        "run.resuming":              { "$ref": "#/$defs/runResuming" },
+        "run.paused":                { "$ref": "#/$defs/runPaused" },
+        "run.resumed":               { "$ref": "#/$defs/runResumed" },
+        "run.restored-from-snapshot":{ "$ref": "#/$defs/runRestoredFromSnapshot" },
+        "node.started":              { "$ref": "#/$defs/nodeStarted" },
+        "node.completed":            { "$ref": "#/$defs/nodeCompleted" },
+        "node.failed":               { "$ref": "#/$defs/nodeFailed" },
+        "node.suspended":            { "$ref": "#/$defs/nodeSuspended" },
+        "node.suspend-failed":       { "$ref": "#/$defs/nodeSuspendFailed" },
+        "node.resumed":              { "$ref": "#/$defs/nodeResumed" },
+        "node.retried":              { "$ref": "#/$defs/nodeRetried" },
+        "node.skipped":              { "$ref": "#/$defs/nodeSkipped" },
+        "node.cancelled":            { "$ref": "#/$defs/nodeCancelled" },
+        "approval.requested":        { "$ref": "#/$defs/approvalRequested" },
+        "approval.received":         { "$ref": "#/$defs/approvalReceived" },
+        "clarification.requested":   { "$ref": "#/$defs/clarificationRequested" },
+        "clarification.resolved":    { "$ref": "#/$defs/clarificationResolved" },
+        "interrupt.requested":       { "$ref": "#/$defs/interruptRequested" },
+        "interrupt.resolved":        { "$ref": "#/$defs/interruptResolved" },
+        "channel.written":           { "$ref": "#/$defs/channelWritten" },
+        "artifact.created":          { "$ref": "#/$defs/artifactCreated" },
+        "output.chunk":              { "$ref": "#/$defs/outputChunk" },
+        "variable.changed":          { "$ref": "#/$defs/variableChanged" },
+        "log.appended":              { "$ref": "#/$defs/logAppended" },
+        "version.pinned":            { "$ref": "#/$defs/versionPinned" },
+        "workflow.restored":         { "$ref": "#/$defs/workflowRestored" },
+        "workflow.loopback-limit":   { "$ref": "#/$defs/workflowLoopbackLimit" },
+        "workflow.stalled":          { "$ref": "#/$defs/workflowStalled" },
+        "cap.breached":              { "$ref": "#/$defs/capBreached" },
+        "lease.acquired":            { "$ref": "#/$defs/leaseLifecycle" },
+        "lease.renewed":             { "$ref": "#/$defs/leaseLifecycle" },
+        "lease.lost":                { "$ref": "#/$defs/leaseLifecycle" },
+        "lease.handed-off":          { "$ref": "#/$defs/leaseHandedOff" },
+        "replay.diverged":           { "$ref": "#/$defs/replayDiverged" },
+        "agent.reasoned":            { "$ref": "#/$defs/agentReasoned" },
+        "agent.toolCalled":          { "$ref": "#/$defs/agentToolCalled" },
+        "agent.toolReturned":        { "$ref": "#/$defs/agentToolReturned" },
+        "agent.handoff":             { "$ref": "#/$defs/agentHandoff" },
+        "agent.decided":             { "$ref": "#/$defs/agentDecided" },
+        "runOrchestrator.decided":   { "$ref": "#/$defs/runOrchestratorDecided" },
+        "conversation.opened":       { "$ref": "#/$defs/conversationOpened" },
+        "conversation.exchanged":    { "$ref": "#/$defs/conversationExchanged" },
+        "conversation.closed":       { "$ref": "#/$defs/conversationClosed" }
+      }
+    },
+
+    "_errorObject": {
+      "description": "Reusable error shape used by run.failed / node.failed / workflow.stalled / etc.",
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code":    { "type": "string", "minLength": 1 },
+        "message": { "type": "string", "minLength": 1 },
+        "details": { "type": "object" },
+        "retryable": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    },
+
+    "_inputsObject": {
+      "type": "object",
+      "description": "Caller-supplied workflow inputs (from POST /v1/runs body)."
+    },
+
+    "_outputsObject": {
+      "type": "object",
+      "description": "Node output map. Keys are output port names; values are JSON."
+    },
+
+    "runStarted": {
+      "type": "object",
+      "description": "Emitted once per run when execution begins.",
+      "required": ["workflowId"],
+      "properties": {
+        "workflowId":  { "type": "string", "minLength": 1 },
+        "inputs":      { "$ref": "#/$defs/_inputsObject" },
+        "transport":   { "type": "string", "enum": ["rest", "mcp", "a2a", "ui"] },
+        "engineVersion":  { "type": "string" },
+        "tags":     { "type": "array", "items": { "type": "string" } },
+        "metadata": { "type": "object" }
+      },
+      "additionalProperties": true
+    },
+    "runCompleted": {
+      "type": "object",
+      "description": "Emitted once when the run reaches a successful terminal state. Closes the SSE stream.",
+      "properties": {
+        "outputs":  { "$ref": "#/$defs/_outputsObject" },
+        "durationMs": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": true
+    },
+    "runFailed": {
+      "type": "object",
+      "description": "Emitted once when the run reaches a failed terminal state.",
+      "required": ["error"],
+      "properties": {
+        "error":      { "$ref": "#/$defs/_errorObject" },
+        "failedNodeId": { "type": "string" },
+        "durationMs":   { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": true
+    },
+    "runCancelled": {
+      "type": "object",
+      "description": "Emitted once when the run reaches the cancelled terminal state.",
+      "properties": {
+        "reason":       { "type": "string" },
+        "cancelledBy":  { "type": "string", "description": "Caller identity (uid / API key fingerprint / `system`)." },
+        "durationMs":   { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": true
+    },
+    "runResuming": {
+      "type": "object",
+      "description": "Emitted when an explicit resume is dispatched (browser bootstrap or `:resume` callable).",
+      "properties": {
+        "fromStatus": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "runPaused": {
+      "type": "object",
+      "description": "Emitted when the run is paused (manual pause / cap.breached pause-and-checkpoint).",
+      "properties": {
+        "reason": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "runResumed": {
+      "type": "object",
+      "description": "Emitted when the run resumes from `paused`.",
+      "additionalProperties": true
+    },
+    "runRestoredFromSnapshot": {
+      "type": "object",
+      "description": "Emitted on cold-start when the engine rebuilds run state from event log.",
+      "properties": {
+        "snapshotSeq": { "type": "integer", "minimum": 0 },
+        "engineVersion": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+
+    "nodeStarted": {
+      "type": "object",
+      "description": "Emitted when a node begins execution.",
+      "required": ["nodeId", "typeId"],
+      "properties": {
+        "nodeId":  { "type": "string", "minLength": 1 },
+        "typeId":  { "type": "string", "minLength": 1 },
+        "attempt": { "type": "integer", "minimum": 0, "description": "Zero-based retry counter." }
+      },
+      "additionalProperties": true
+    },
+    "nodeCompleted": {
+      "type": "object",
+      "description": "Emitted when a node successfully completes.",
+      "required": ["nodeId"],
+      "properties": {
+        "nodeId":   { "type": "string", "minLength": 1 },
+        "outputs":  { "$ref": "#/$defs/_outputsObject" },
+        "durationMs": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": true
+    },
+    "nodeFailed": {
+      "type": "object",
+      "description": "Emitted on terminal node failure (after retries exhausted).",
+      "required": ["nodeId", "error"],
+      "properties": {
+        "nodeId":  { "type": "string", "minLength": 1 },
+        "error":   { "$ref": "#/$defs/_errorObject" },
+        "attempts": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": true
+    },
+    "nodeSuspended": {
+      "type": "object",
+      "description": "Emitted when a node calls `ctx.interrupt(...)`. Carries the InterruptPayload (suspend-request.schema.json).",
+      "required": ["nodeId", "interruptId"],
+      "properties": {
+        "nodeId":      { "type": "string", "minLength": 1 },
+        "interruptId": { "type": "string", "minLength": 1 },
+        "kind":        { "type": "string", "enum": ["approval", "clarification", "external-event", "custom"] },
+        "key":         { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": true
+    },
+    "nodeSuspendFailed": {
+      "type": "object",
+      "description": "Emitted when a suspension attempt fails (storage write error, signed-token issue).",
+      "required": ["nodeId", "error"],
+      "properties": {
+        "nodeId": { "type": "string", "minLength": 1 },
+        "error":  { "$ref": "#/$defs/_errorObject" }
+      },
+      "additionalProperties": true
+    },
+    "nodeResumed": {
+      "type": "object",
+      "description": "Emitted when a suspended node receives its resume value and continues.",
+      "required": ["nodeId"],
+      "properties": {
+        "nodeId":     { "type": "string", "minLength": 1 },
+        "interruptId": { "type": "string" },
+        "resumeValue": {}
+      },
+      "additionalProperties": true
+    },
+    "nodeRetried": {
+      "type": "object",
+      "description": "Emitted on each retry attempt within a node's retry budget.",
+      "required": ["nodeId", "attempt"],
+      "properties": {
+        "nodeId":   { "type": "string", "minLength": 1 },
+        "attempt":  { "type": "integer", "minimum": 1 },
+        "delayMs":  { "type": "integer", "minimum": 0 },
+        "lastError":{ "$ref": "#/$defs/_errorObject" }
+      },
+      "additionalProperties": true
+    },
+    "nodeSkipped": {
+      "type": "object",
+      "description": "Emitted when a node is skipped (edge condition failed, gate veto, conditional branch).",
+      "required": ["nodeId"],
+      "properties": {
+        "nodeId": { "type": "string", "minLength": 1 },
+        "reason": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "nodeCancelled": {
+      "type": "object",
+      "description": "Emitted when an in-flight node is cancelled (run-level cancel or upstream failure cascade).",
+      "required": ["nodeId"],
+      "properties": {
+        "nodeId": { "type": "string", "minLength": 1 },
+        "reason": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+
+    "approvalRequested": {
+      "type": "object",
+      "description": "Legacy kind-specific event (back-compat with pre-interrupt-primitive consumers). Modern servers SHOULD emit `interrupt.requested` with `kind: 'approval'` and MAY also emit this for back-compat per interrupt.md §migration.",
+      "required": ["nodeId", "artifactId", "artifactType", "actions"],
+      "properties": {
+        "nodeId":       { "type": "string" },
+        "interruptId":  { "type": "string" },
+        "artifactId":   { "type": "string" },
+        "artifactType": { "type": "string" },
+        "title":        { "type": "string" },
+        "actions": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["accept", "reject", "refine", "edit", "ask"] },
+          "minItems": 1
+        },
+        "approversList":     { "type": "array", "items": { "type": "string" } },
+        "requiredApprovals": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": true
+    },
+    "approvalReceived": {
+      "type": "object",
+      "description": "Emitted when an approval action is recorded (accept/reject/refine/edit-accept/timeout). The `ask` action does NOT emit this — Q&A exchanges have their own log. See `interrupt.md` §`ApprovalResume` for the action vocabulary + the host-side enforcement boundary.",
+      "required": ["nodeId", "action"],
+      "properties": {
+        "nodeId":         { "type": "string" },
+        "action":         { "type": "string", "enum": ["accept", "reject", "refine", "edit-accept", "timeout"] },
+        "decidedBy":      { "type": "string", "description": "Host-defined opaque principal identifier. Hosts MUST populate this for non-timeout actions per `interrupt.md` §`Host-side enforcement boundary`." },
+        "decidedAt":      { "type": "string", "description": "ISO 8601 timestamp at decision time." },
+        "comment":        { "type": "string" },
+        "feedback":       { "type": "string", "description": "Legacy free-text feedback. New hosts SHOULD use `refineFeedback` for structured refine-action feedback." },
+        "refineFeedback": {
+          "type": "object",
+          "description": "Structured feedback object for `action: 'refine'`. See `interrupt.md` §`RefineFeedback`.",
+          "properties": {
+            "scope":       { "type": "string", "enum": ["whole", "section", "items"] },
+            "sectionPath": { "type": "string" },
+            "itemIds":     { "type": "array", "items": { "type": "string" } },
+            "tags":        { "type": "array", "items": { "type": "string" } },
+            "text":        { "type": "string" }
+          },
+          "required": ["scope"],
+          "additionalProperties": true
+        },
+        "editedArtifactData": { "description": "User-edited artifact bytes when `action: 'edit-accept'`." }
+      },
+      "additionalProperties": true
+    },
+    "clarificationRequested": {
+      "type": "object",
+      "description": "Legacy kind-specific event for HITL clarification requests.",
+      "required": ["nodeId", "questions"],
+      "properties": {
+        "nodeId":      { "type": "string" },
+        "interruptId": { "type": "string" },
+        "questions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "question"],
+            "properties": {
+              "id": { "type": "string" },
+              "question": { "type": "string" },
+              "schema": { "type": "object" }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "clarificationResolved": {
+      "type": "object",
+      "description": "Emitted when clarification answers are received.",
+      "required": ["nodeId", "answers"],
+      "properties": {
+        "nodeId":  { "type": "string" },
+        "answers": { "type": "object" },
+        "answeredBy": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "interruptRequested": {
+      "description": "Canonical HITL primitive — discriminated union over kind. Payload mirrors `suspend-request.schema.json` (InterruptPayload) plus engine-assigned identity fields.",
+      "$ref": "https://openwop.dev/spec/v1/suspend-request.schema.json"
+    },
+    "interruptResolved": {
+      "type": "object",
+      "description": "Emitted when an interrupt is resolved (any kind).",
+      "required": ["nodeId", "interruptId"],
+      "properties": {
+        "nodeId":      { "type": "string" },
+        "interruptId": { "type": "string" },
+        "kind":        { "type": "string", "enum": ["approval", "clarification", "external-event", "custom"] },
+        "resumeValue": {}
+      },
+      "additionalProperties": true
+    },
+
+    "channelWritten": {
+      "$ref": "https://openwop.dev/spec/v1/channel-written-payload.schema.json"
+    },
+
+    "artifactCreated": {
+      "type": "object",
+      "description": "Emitted when a node produces a typed artifact (PRD, theme, plan, etc.).",
+      "required": ["artifactId", "artifactType"],
+      "properties": {
+        "artifactId":   { "type": "string", "minLength": 1 },
+        "artifactType": { "type": "string", "minLength": 1 },
+        "nodeId":       { "type": "string" },
+        "version":      { "type": "string" },
+        "summary":      { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+
+    "outputChunk": {
+      "type": "object",
+      "description": "Emitted for streaming output (e.g., LLM token chunks). Stream-mode `messages` consumers see these. Tiered metadata per stream-modes.md §messages (S2 closure): bare {nodeId, chunk} is the minimum compliant payload; `meta` adds Tier 1 typed slots and a Tier 2 provider-pass-through escape hatch.",
+      "required": ["nodeId", "chunk"],
+      "properties": {
+        "nodeId":  { "type": "string", "minLength": 1 },
+        "chunk":   { "type": "string" },
+        "isLast":  { "type": "boolean" },
+        "channel": { "type": "string", "description": "Optional sub-stream identifier when a node emits multiple parallel streams." },
+        "meta":    { "$ref": "#/$defs/_chunkMeta" }
+      },
+      "additionalProperties": true
+    },
+
+    "_chunkMeta": {
+      "type": "object",
+      "description": "Tiered metadata for ai.message.chunk / outputChunk payloads. See stream-modes.md §messages.",
+      "properties": {
+        "finishReason": {
+          "type": "string",
+          "enum": ["stop", "length", "tool_calls", "content_filter"],
+          "description": "Tier 1: normalized termination reason. Set on the final chunk of a generation. Forward-compat: future values MAY be added; consumers MUST tolerate unknown values."
+        },
+        "logprobs": {
+          "type": "array",
+          "description": "Tier 1: per-token log-probability info. Shape mirrors OpenAI / Anthropic / Gemini conventions; servers SHOULD normalize to `[{token: string, logprob: number, topLogprobs?: [{token, logprob}]}]`."
+        },
+        "toolCalls": {
+          "type": "array",
+          "description": "Tier 1: structured tool / function calls emitted in this chunk. Each item: `{id, name, arguments}` — `arguments` is a string (JSON-encoded args, may be partial when streaming)."
+        },
+        "model": {
+          "type": "string",
+          "description": "Tier 1: model identifier the chunk was produced by (e.g., `claude-opus-4-7`, `gpt-5`). Useful when a workflow node fans out across multiple models."
+        },
+        "usage": {
+          "type": "object",
+          "description": "Tier 1: token-billing metadata. Pairs with O4 cost-attribution attributes (`openwop.cost.tokens.*`).",
+          "properties": {
+            "promptTokens":     { "type": "integer", "minimum": 0 },
+            "completionTokens": { "type": "integer", "minimum": 0 },
+            "totalTokens":      { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": true
+        },
+        "provider": {
+          "type": "string",
+          "description": "Tier 2: provider name when `providerExtensions` is present. Examples: `openai`, `anthropic`, `google`, `minimax`. Consumers MUST NOT branch on this for behavior — use Tier 1 fields. Provided for observability + debugging only."
+        },
+        "providerExtensions": {
+          "type": "object",
+          "description": "Tier 2: provider pass-through for fields the spec hasn't typed yet. Consumers using this opt into per-provider knowledge; spec evolution may move fields up into Tier 1 over time (additive — typed slot wins)."
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "variableChanged": {
+      "type": "object",
+      "description": "Emitted on workflow-variable mutation (debug/values stream modes). NOT emitted for typed channels (those use channel.written).",
+      "required": ["name"],
+      "properties": {
+        "name":     { "type": "string", "minLength": 1 },
+        "previous": {},
+        "next":     {},
+        "nodeId":   { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+
+    "logAppended": {
+      "type": "object",
+      "description": "Emitted on `ctx.log.*` calls. Debug-stream-mode only.",
+      "required": ["level", "message"],
+      "properties": {
+        "level":   { "type": "string", "enum": ["debug", "info", "warn", "error"] },
+        "message": { "type": "string" },
+        "nodeId":  { "type": "string" },
+        "fields":  { "type": "object" }
+      },
+      "additionalProperties": true
+    },
+
+    "versionPinned": {
+      "type": "object",
+      "description": "Emitted via `ctx.getVersion(changeId)` per Temporal-style versioning. See version-negotiation.md.",
+      "required": ["changeId", "version"],
+      "properties": {
+        "changeId": { "type": "string", "minLength": 1 },
+        "version":  { "type": "integer", "minimum": 0 },
+        "nodeId":   { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+
+    "workflowRestored": {
+      "type": "object",
+      "description": "Emitted when an in-flight run is recovered from the event log on a fresh engine boot.",
+      "properties": {
+        "fromSnapshotSeq": { "type": "integer", "minimum": 0 },
+        "engineVersion":   { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "workflowLoopbackLimit": {
+      "type": "object",
+      "description": "Emitted when a request-changes loop hits its `maxLoopbackIterations` cap.",
+      "required": ["nodeId", "iterations"],
+      "properties": {
+        "nodeId":     { "type": "string" },
+        "iterations": { "type": "integer", "minimum": 1 },
+        "limit":      { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": true
+    },
+    "workflowStalled": {
+      "type": "object",
+      "description": "Emitted when the engine detects a stalled run (no progress for N seconds).",
+      "properties": {
+        "stalledForMs": { "type": "integer", "minimum": 0 },
+        "lastNodeId":   { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+
+    "capBreached": {
+      "type": "object",
+      "description": "Emitted when a CapabilityLimit is exceeded (clarificationRounds / schemaRounds / envelopesPerTurn / maxNodeExecutions).",
+      "required": ["kind", "limit", "observed"],
+      "properties": {
+        "kind":     { "type": "string", "enum": ["clarification", "schema", "envelopes", "node-executions"] },
+        "limit":    { "type": "integer", "minimum": 0 },
+        "observed": { "type": "integer", "minimum": 0 },
+        "nodeId":   { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+
+    "leaseLifecycle": {
+      "type": "object",
+      "description": "Shared payload for lease.acquired / lease.renewed / lease.lost.",
+      "required": ["leaseId", "host"],
+      "properties": {
+        "leaseId":      { "type": "string", "minLength": 1 },
+        "host":         { "type": "string", "enum": ["browser", "cloud"] },
+        "instanceId":   { "type": "string" },
+        "expiresAt":    { "type": "string", "format": "date-time" },
+        "previousHost": { "type": "string", "enum": ["browser", "cloud"] }
+      },
+      "additionalProperties": true
+    },
+    "leaseHandedOff": {
+      "type": "object",
+      "description": "Emitted when a run's executing lease is transferred from one host to another (e.g., browser → cloud failover).",
+      "required": ["leaseId", "fromHost", "toHost"],
+      "properties": {
+        "leaseId":  { "type": "string", "minLength": 1 },
+        "fromHost": { "type": "string", "enum": ["browser", "cloud"] },
+        "toHost":   { "type": "string", "enum": ["browser", "cloud"] },
+        "reason":   { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+
+    "replayDiverged": {
+      "type": "object",
+      "description": "Emitted by `:fork` when a replay re-execution produces a different output than the original at a given sequence. See replay.md §divergence detection.",
+      "required": ["sourceRunId", "atSequence"],
+      "properties": {
+        "sourceRunId":     { "type": "string", "minLength": 1 },
+        "atSequence":      { "type": "integer", "minimum": 0 },
+        "originalEventId": { "type": "string" },
+        "divergenceKind":  { "type": "string", "enum": ["output", "missing", "extra", "type-mismatch"] }
+      },
+      "additionalProperties": true
+    },
+
+    "agentReasoned": {
+      "type": "object",
+      "description": "Multi-Agent Shift Phase 1. Emitted when an agent produces a reasoning trace (typically pre-tool-call, pre-decision, or pre-handoff). The reasoning text MAY be a summary or full trace depending on the run's resolved `RunOptions.configurable.reasoningVerbosity`. Replay-deterministic over the event log.",
+      "required": ["agentId", "reasoning"],
+      "properties": {
+        "agentId":   { "type": "string", "minLength": 3, "maxLength": 256, "description": "AgentRef.agentId of the reasoning agent." },
+        "reasoning": { "type": "string", "description": "Reasoning text. Bounded by `capabilities.agents.reasoning.tokenLimit` when verbosity is `summary` (default 512 tokens)." },
+        "verbosity": { "type": "string", "enum": ["summary", "full", "off"], "description": "Verbosity mode this trace was produced under. Hosts MAY emit `'off'` to record the suppression decision without payload content." }
+      },
+      "additionalProperties": true
+    },
+
+    "agentToolCalled": {
+      "type": "object",
+      "description": "Multi-Agent Shift Phase 1. Emitted when an agent invokes a tool. Pairs with `agent.toolReturned` via shared `callId`.",
+      "required": ["agentId", "toolName", "callId"],
+      "properties": {
+        "agentId":   { "type": "string", "minLength": 3, "maxLength": 256 },
+        "toolName":  { "type": "string", "minLength": 1, "description": "Tool identifier (typically a node-pack typeId or function name)." },
+        "callId":    { "type": "string", "minLength": 1, "description": "Unique correlation id linking this call to the subsequent `agent.toolReturned`. Hosts SHOULD use UUIDs or content-addressable hashes." },
+        "inputs":    { "description": "Tool inputs. Shape is tool-specific; consumers MUST NOT assume an object." }
+      },
+      "additionalProperties": true
+    },
+
+    "agentToolReturned": {
+      "type": "object",
+      "description": "Multi-Agent Shift Phase 1. Emitted when a tool invocation completes (success or failure). Pairs with `agent.toolCalled` via `callId`.",
+      "required": ["agentId", "toolName", "callId"],
+      "properties": {
+        "agentId":   { "type": "string", "minLength": 3, "maxLength": 256 },
+        "toolName":  { "type": "string", "minLength": 1 },
+        "callId":    { "type": "string", "minLength": 1 },
+        "outcome":   { "description": "Tool result. Discriminated by host on success vs error; payload shape is tool-specific." },
+        "error":     { "$ref": "#/$defs/_errorObject", "description": "Set on tool-execution failure. Mutually exclusive with `outcome`." }
+      },
+      "additionalProperties": true
+    },
+
+    "agentHandoff": {
+      "type": "object",
+      "description": "Multi-Agent Shift Phase 1. Emitted when control transfers from one agent to another mid-run (e.g., orchestrator → worker, worker → worker via `core.dispatch`). Pairs with the receiving agent's subsequent `agent.decided` / `agent.toolCalled` / `node.started`.",
+      "required": ["fromAgentId", "toAgentId"],
+      "properties": {
+        "fromAgentId": { "type": "string", "minLength": 3, "maxLength": 256, "description": "Agent surrendering control." },
+        "toAgentId":   { "type": "string", "minLength": 3, "maxLength": 256, "description": "Agent receiving control." },
+        "reason":      { "type": "string", "description": "Optional handoff rationale (e.g., 'specialist routing', 'escalation', 'dispatch-loop-iteration')." }
+      },
+      "additionalProperties": true
+    },
+
+    "agentDecided": {
+      "type": "object",
+      "description": "Multi-Agent Shift Phase 1. Emitted when an agent produces a typed decision (routing, classification, judgement). Carries optional `confidence` in `[0, 1]`; when below the run's resolved `escalationThreshold` (default 0.7), hosts MUST suspend with `node.suspended { reason: 'low-confidence' }` per the confidence-escalation contract.",
+      "required": ["agentId", "decision"],
+      "properties": {
+        "agentId":    { "type": "string", "minLength": 3, "maxLength": 256 },
+        "decision":   { "description": "Typed decision payload. Shape is decision-specific; consumers MUST NOT assume an object." },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1, "description": "Optional confidence in `[0, 1]`. Below the threshold → escalate via `node.suspended { reason: 'low-confidence' }`. Absent values are treated as 'no signal' — no escalation." }
+      },
+      "additionalProperties": true
+    },
+
+    "runOrchestratorDecided": {
+      "type": "object",
+      "description": "Multi-Agent Shift Phase 5. Emitted exactly once per orchestrator decision by a `core.orchestrator.supervisor` node (or host-extension equivalent). Carries the deciding agent's identity and the typed `OrchestratorDecision` (see `orchestrator-decision.schema.json`). The envelope's top-level `nodeId` carries the supervisor node-id; the payload does NOT duplicate it.",
+      "required": ["agentId", "decision"],
+      "properties": {
+        "agentId":  { "type": "string", "minLength": 3, "maxLength": 256, "description": "AgentRef.agentId of the orchestrator. MUST equal `RunSnapshot.runOrchestrator.agentId` for the run's lifetime — orchestrator identity is set at first decision and does not change." },
+        "decision": { "$ref": "orchestrator-decision.schema.json" }
+      },
+      "additionalProperties": false
+    },
+
+    "conversationOpened": {
+      "type": "object",
+      "description": "Multi-Agent Shift Phase 4. Emitted when a `core.conversationGate` (or host-extension equivalent) opens a new multi-turn conversation context. Pairs with the closing `conversation.closed` via shared `conversationId`.",
+      "required": ["conversationId"],
+      "properties": {
+        "conversationId": { "type": "string", "minLength": 1, "maxLength": 256, "description": "Opaque conversation identifier. Tenant-unique invariant: hosts MUST ensure no two distinct conversations in the same tenant share an id. Cross-host portability not normative." },
+        "openedBy":       { "type": "string", "description": "Optional `AgentRef.agentId` of the agent that opened the conversation." }
+      },
+      "additionalProperties": true
+    },
+
+    "conversationExchanged": {
+      "type": "object",
+      "description": "Multi-Agent Shift Phase 4. Emitted when a single turn completes within an open conversation (`core.conversationGate.exchange`). Carries the validated outcome of the suspend/resume cycle.",
+      "required": ["conversationId", "turnIndex"],
+      "properties": {
+        "conversationId": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "turnIndex":      { "type": "integer", "minimum": 0, "description": "0-indexed turn within this conversation. Strictly monotonic." },
+        "outcome":        { "description": "Validated turn outcome per the per-turn schema declared in `core.conversationGate` config." }
+      },
+      "additionalProperties": true
+    },
+
+    "conversationClosed": {
+      "type": "object",
+      "description": "Multi-Agent Shift Phase 4. Emitted when a conversation context terminates (`core.conversationGate.close`). Final event in the conversation's lifecycle; no further `conversation.exchanged` events MAY follow for the same `conversationId` in this run.",
+      "required": ["conversationId"],
+      "properties": {
+        "conversationId": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "reason":         { "type": "string", "description": "Optional close reason (e.g., 'goal-reached', 'max-turns', 'user-cancelled')." },
+        "turnCount":      { "type": "integer", "minimum": 0, "description": "Total turns completed in this conversation (number of `conversation.exchanged` events emitted)." }
+      },
+      "additionalProperties": true
+    }
+  }
+}

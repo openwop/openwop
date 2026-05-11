@@ -1,0 +1,31 @@
+{
+  "id": "conformance-agent-pack-provenance",
+  "name": "Conformance: Agent Pack Provenance",
+  "version": "1.0",
+  "description": "Phase 2. Runs a node pinned to a pack-installed agent; verifies the runtime AgentRef carries `sourceManifestId` provenance back to the install source. See agentPackProvenance.test.ts.",
+  "nodes": [
+    {
+      "id": "pack-installed-node",
+      "typeId": "core.identity",
+      "name": "Pack-Installed Agent Node",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {},
+      "agent": {
+        "agentId": "core.conformance.pack-installed-agent",
+        "sourceManifestId": "core.conformance.agent-pack.installed-agent",
+        "modelClass": "chat"
+      }
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": {
+    "tags": ["conformance", "multi-agent", "phase-2", "provenance"],
+    "requiresInstalledPack": "core.conformance.agent-pack"
+  },
+  "settings": { "timeout": 10000 }
+}

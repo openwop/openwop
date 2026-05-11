@@ -1,0 +1,14 @@
+{
+  "name": "@openwop/openwop-example-tiny-workflow",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Smallest possible OpenWOP workflow execution: discovery, create run, and poll until terminal. Zero dependencies beyond Node stdlib.",
+  "type": "module",
+  "scripts": {
+    "start": "node tiny-workflow.mjs",
+    "test": "node tiny-workflow.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

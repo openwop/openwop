@@ -1,0 +1,187 @@
+# Public-CI checks — run on every external PR.
+#
+# PR CI scope:
+#   * `openwop-spec.yml` handles full spec-corpus validation.
+#   * This workflow handles changed-path SDK and conformance checks.
+#   * `openwop-publish.yml` is tag-only and never runs on PRs.
+#   * Triggered on `pull_request` (not `pull_request_target`), so secrets
+#     are not available to forked PRs by design.
+#
+# Path filters keep the matrix lean: a TS-only PR doesn't run the Python
+# or Go jobs, and vice-versa.
+
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    name: Detect changed paths
+    runs-on: ubuntu-latest
+    outputs:
+      typescript: ${{ steps.filter.outputs.typescript }}
+      python: ${{ steps.filter.outputs.python }}
+      go: ${{ steps.filter.outputs.go }}
+      conformance: ${{ steps.filter.outputs.conformance }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            typescript:
+              - 'sdk/typescript/**'
+            python:
+              - 'sdk/python/**'
+            go:
+              - 'sdk/go/**.go'
+              - 'sdk/go/go.mod'
+              - 'sdk/go/go.sum'
+            conformance:
+              - 'conformance/**'
+
+  lint-typescript:
+    name: TS lint (ESLint)
+    needs: changes
+    if: needs.changes.outputs.typescript == 'true' || needs.changes.outputs.conformance == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      # Lint the TypeScript SDK if it changed.
+      - name: Lint sdk/typescript
+        if: needs.changes.outputs.typescript == 'true'
+        run: |
+          cd sdk/typescript
+          npm ci
+          npm run lint --if-present || (echo "::warning::lint script is not configured for this package" && true)
+      # Lint the conformance suite if it changed.
+      - name: Lint conformance
+        if: needs.changes.outputs.conformance == 'true'
+        run: |
+          cd conformance
+          npm ci
+          npm run lint --if-present || (echo "::warning::lint script is not configured for this package" && true)
+
+  lint-python:
+    name: Python lint (ruff)
+    needs: changes
+    if: needs.changes.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install ruff
+      - name: ruff check
+        run: |
+          cd sdk/python
+          ruff check .
+
+  lint-go:
+    name: Go lint (vet + gofmt)
+    needs: changes
+    if: needs.changes.outputs.go == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      - name: go vet
+        run: |
+          cd sdk/go
+          go vet ./...
+      - name: gofmt -l (must produce no output)
+        run: |
+          cd sdk/go
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "::error::gofmt found unformatted files:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+  # Regression guard: the suite must keep runtime dependencies in dependencies,
+  # vitest/ajv/ajv-formats only in devDependencies, so consumers running
+  # `npx -y @openwop/openwop-conformance@<version> --base-url ... --api-key ...`
+  # got UNRESOLVED_IMPORT errors at vitest config load. The fix promoted them
+  # to runtime dependencies. This job packs the suite and installs the tarball
+  # into a clean tmp dir — i.e. simulates exactly what a downstream `npm install`
+  # of the published package does, dropping devDependencies on the floor.
+  # If a future PR moves any of vitest/ajv/ajv-formats back to devDependencies,
+  # this gate fails fast on the PR rather than silently shipping a broken release.
+  verify-conformance-install:
+    name: Verify conformance install path (npx -y guardrail)
+    needs: changes
+    if: needs.changes.outputs.conformance == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Pack the conformance suite
+        run: |
+          cd conformance
+          npm ci
+          npm run build:cli
+          npm pack
+      - name: Verify runtime deps resolve from packed tarball (consumer's-eye view)
+        run: |
+          TARBALL=$(ls "$GITHUB_WORKSPACE/conformance/openwop-openwop-conformance-"*.tgz)
+          mkdir -p /tmp/install-verify
+          cd /tmp/install-verify
+          echo '{"name":"install-verify","private":true}' > package.json
+          npm install --no-save "$TARBALL"
+          SUITE="$PWD/node_modules/@openwop/openwop-conformance"
+          # vitest is invoked by the suite's bin (dist/cli.js) via `npx vitest`;
+          # if not in deps, npx falls through to a registry download (slow + flaky)
+          # or fails entirely under restricted networks.
+          test -x node_modules/.bin/vitest \
+            || (echo "::error::vitest binary not present in installed package — likely back in devDependencies. F-2026-05-06-C regression." && exit 1)
+          # ajv + ajv-formats are imported directly by the offline-subset scenarios
+          # (fixtures-valid, spec-corpus-validity).
+          node -e "require.resolve('ajv/dist/2020.js', { paths: ['$SUITE'] })" \
+            || (echo "::error::ajv not resolvable from installed package — likely back in devDependencies. F-2026-05-06-C regression." && exit 1)
+          node -e "require.resolve('ajv-formats', { paths: ['$SUITE'] })" \
+            || (echo "::error::ajv-formats not resolvable from installed package — likely back in devDependencies. F-2026-05-06-C regression." && exit 1)
+          echo "PASS: vitest + ajv + ajv-formats all resolve from packed tarball."
+          echo "      Bare 'npx -y @openwop/openwop-conformance@<latest> --base-url ... --api-key ...' install path is intact."
+      # Path-resolution guard: the offline subset's REPO_ROOT computation
+      # has to resolve schemas/api/fixtures.md against the VENDORED layout
+      # of the published tarball, not the repo checkout's parent directory.
+      # Earlier tests walked `__dirname/../../..` and landed in
+      # `node_modules/@openwop/` — clean on a git clone, ENOENT under
+      # npx-style install. Run the offline subset against the packed
+      # tarball to catch any future drift.
+      - name: Run offline subset against packed tarball (path-resolution guardrail)
+        run: |
+          cd /tmp/install-verify
+          npx -y @openwop/openwop-conformance --offline 2>&1 | tee offline-result.txt
+          # `--offline` exits non-zero on any failed scenario; the script
+          # has `set -e` semantics by default, so the previous line
+          # already aborts on red. We additionally scan the output to
+          # guard against silent vacuous passes.
+          if grep -q "Test Files .* failed" offline-result.txt; then
+            echo "::error::Offline subset reported a failure under the npx-installed tarball. Likely regression in lib/paths.ts layout detection."
+            exit 1
+          fi
+          if ! grep -q "Test Files .* passed" offline-result.txt; then
+            echo "::error::Offline subset produced no passing test files — runtime crashed before vitest reported."
+            exit 1
+          fi
+          echo "PASS: offline subset runs cleanly under the npx-installed tarball."

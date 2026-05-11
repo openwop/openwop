@@ -1,0 +1,96 @@
+/**
+ * OpenWOPDriver — thin HTTP client wrapper used by all conformance scenarios.
+ *
+ * Why a wrapper rather than raw fetch in every test:
+ *   1. Auth header is applied once.
+ *   2. URL composition is consistent (base + path).
+ *   3. Failure messages cite the implementation name + version so log
+ *      output identifies the server under test.
+ *   4. JSON decoding errors are surfaced with the raw body for debug.
+ */
+
+import { loadEnv } from './env.js';
+
+export interface OpenWOPResponse {
+  readonly status: number;
+  readonly headers: Headers;
+  readonly text: string;
+  readonly json: unknown;
+}
+
+export interface OpenWOPRequestInit {
+  readonly headers?: Record<string, string>;
+  readonly body?: unknown;
+  readonly authenticated?: boolean;
+}
+
+class OpenWOPDriver {
+  /**
+   * Issue a request and return the decoded body. JSON decode is best-effort —
+   * `json` is `undefined` if the response wasn't JSON.
+   */
+  async request(
+    method: string,
+    path: string,
+    init: OpenWOPRequestInit = {},
+  ): Promise<OpenWOPResponse> {
+    const env = loadEnv();
+    const url = `${env.baseUrl}${path}`;
+
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+      ...(init.headers ?? {}),
+    };
+    if (init.body !== undefined && headers['Content-Type'] === undefined) {
+      headers['Content-Type'] = 'application/json';
+    }
+    if (init.authenticated !== false) {
+      headers.Authorization = `Bearer ${env.apiKey}`;
+    }
+
+    const fetchInit: RequestInit = { method, headers };
+    if (init.body !== undefined) {
+      fetchInit.body = JSON.stringify(init.body);
+    }
+    const res = await fetch(url, fetchInit);
+
+    const text = await res.text();
+    let json: unknown;
+    try {
+      json = text.length > 0 ? JSON.parse(text) : undefined;
+    } catch {
+      json = undefined;
+    }
+
+    return {
+      status: res.status,
+      headers: res.headers,
+      text,
+      json,
+    };
+  }
+
+  get(path: string, init: OpenWOPRequestInit = {}): Promise<OpenWOPResponse> {
+    return this.request('GET', path, init);
+  }
+
+  post(path: string, body: unknown, init: OpenWOPRequestInit = {}): Promise<OpenWOPResponse> {
+    return this.request('POST', path, { ...init, body });
+  }
+
+  delete(path: string, init: OpenWOPRequestInit = {}): Promise<OpenWOPResponse> {
+    return this.request('DELETE', path, init);
+  }
+
+  /**
+   * Compose a "spec failure" message that cites the implementation under
+   * test plus the spec section that requires the assertion. Use as the
+   * second argument to `expect(...).toBe(..., msg)`-style assertions.
+   */
+  describe(specSection: string, requirement: string): string {
+    const env = loadEnv();
+    return `[${env.implementationName}@${env.implementationVersion}] ${specSection}: ${requirement}`;
+  }
+}
+
+export const driver = new OpenWOPDriver();

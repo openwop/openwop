@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.data-integration/1.0.0/transform.config.json",
+  "title": "DataTransformConfig",
+  "type": "object",
+  "required": ["expression", "language"],
+  "properties": {
+    "expression": { "type": "string", "minLength": 1, "description": "Transform expression." },
+    "language": {
+      "type": "string",
+      "enum": ["jsonata", "jq", "host-extension"],
+      "description": "Expression language. `host-extension` lets the host advertise a custom evaluator."
+    }
+  },
+  "additionalProperties": false
+}

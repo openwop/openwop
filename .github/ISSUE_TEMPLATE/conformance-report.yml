@@ -1,0 +1,105 @@
+name: Conformance report
+description: Report your implementation's conformance suite result (pass or fail)
+title: "[conformance] <implementation> against suite <version>"
+labels: ["conformance"]
+body:
+  - type: input
+    id: impl_name
+    attributes:
+      label: Implementation name
+    validations:
+      required: true
+
+  - type: input
+    id: impl_version
+    attributes:
+      label: Implementation version
+    validations:
+      required: true
+
+  - type: input
+    id: impl_repo
+    attributes:
+      label: Repository or homepage
+    validations:
+      required: false
+
+  - type: input
+    id: impl_endpoint
+    attributes:
+      label: Public endpoint (optional)
+      description: If your implementation exposes a public endpoint a third party can validate against.
+    validations:
+      required: false
+
+  - type: input
+    id: suite_version
+    attributes:
+      label: "@openwop/openwop-conformance version"
+      placeholder: "1.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: spec_major
+    attributes:
+      label: Spec major
+      placeholder: "v1.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: run_command
+    attributes:
+      label: Command used
+      description: How you invoked the suite.
+      placeholder: "npx @openwop/openwop-conformance --base-url ... --api-key ..."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: result
+    attributes:
+      label: Top-line result
+      options:
+        - All required scenarios passed
+        - Required passed; some optional profiles passed
+        - One or more required scenarios failed
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: optional_profiles
+    attributes:
+      label: Optional profiles passed
+      options:
+        - label: BYOK / secret resolution
+        - label: Replay / fork
+        - label: Channel TTL
+        - label: Cost attribution
+        - label: Other (describe below)
+
+  - type: textarea
+    id: failures
+    attributes:
+      label: Failures
+      description: For each failed scenario, paste suite output and a one-line analysis. Distinguish spec ambiguity (file as a separate spec-question), implementation bug (track in your own repo), or suite bug (file as a separate bug).
+      render: text
+    validations:
+      required: false
+
+  - type: textarea
+    id: capabilities
+    attributes:
+      label: Capability advertisement
+      description: Paste the relevant slice of /.well-known/openwop your endpoint returned.
+      render: json
+    validations:
+      required: false
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes for prospective adopters
+    validations:
+      required: false

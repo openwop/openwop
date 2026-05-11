@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/memory-list-options.schema.json",
+  "title": "MemoryListOptions",
+  "description": "Options accepted by `MemoryAdapter.list` (RFC 0004). All fields optional; default is \"all entries, newest first.\" Hosts MAY further bound results per their scale-profile.",
+  "type": "object",
+  "properties": {
+    "limit": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Cap on entries returned. `0` means \"no limit\" (treated identically to omission); positive integers cap the result. Hosts MAY further bound the effective cap per their scale-profile. When omitted, the host applies its own default cap (typical: 100 entries)."
+    },
+    "tag": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "description": "Filter to entries whose `tags` array contains this string (set-membership check). Hosts MAY support more advanced filtering as a host extension under a `vendor.<host>.*` field."
+    }
+  },
+  "additionalProperties": false
+}

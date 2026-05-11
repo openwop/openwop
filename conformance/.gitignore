@@ -1,0 +1,28 @@
+# Build output — produced by `npm run build:cli`.
+dist/
+
+# Vitest scratch.
+node_modules/
+.vitest/
+
+# Stale tsc-emitted artifacts inside src/. The build target is dist/
+# (see tsconfig.build.json); any .js next to a .ts in src/ is leaked
+# output from a misconfigured tsc invocation. Keep this glob so the
+# leak doesn't return.
+src/**/*.js
+src/**/*.js.map
+src/**/*.d.ts
+src/**/*.d.ts.map
+
+# Stale tsc-emitted vitest config (from same misconfigured tsc run).
+# Source of truth is vitest.config.ts; the .js variant should never exist.
+vitest.config.js
+vitest.config.js.map
+
+# `prepack` vendors api/ and schemas/ from the repo root for the npm
+# publish tarball; `postpack` removes them. If a publish run is killed
+# mid-way and these get left behind, this glob keeps them from being
+# accidentally committed. Source of truth is REPO_ROOT/api/ and
+# REPO_ROOT/schemas/, not these copies.
+/api/
+/schemas/

@@ -1,0 +1,44 @@
+{
+  "id": "conformance-orchestrator-terminate",
+  "name": "Conformance: Orchestrator Termination (CO-3)",
+  "version": "1.0",
+  "description": "Phase 5 / CO-3 invariant. Supervisor mock emits a single `kind: 'terminate'` decision; run reaches `'completed'` (not `'failed'`); no further `runOrchestrator.decided` events follow. See orchestratorTermination.test.ts.",
+  "nodes": [
+    {
+      "id": "supervisor",
+      "typeId": "core.orchestrator.supervisor",
+      "name": "Supervisor (terminate immediately)",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "mockDecisions": [
+          { "kind": "terminate", "reason": "goal-reached" }
+        ]
+      },
+      "inputs": {},
+      "agent": {
+        "agentId": "core.conformance.terminate-supervisor",
+        "modelClass": "reasoning"
+      }
+    },
+    {
+      "id": "dispatch",
+      "typeId": "core.dispatch",
+      "name": "Dispatch",
+      "position": { "x": 200, "y": 0 },
+      "config": {
+        "fanOutPolicy": "sequential"
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [
+    { "id": "e1", "sourceNodeId": "supervisor", "targetNodeId": "dispatch" },
+    { "id": "e2", "sourceNodeId": "dispatch", "targetNodeId": "supervisor" }
+  ],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "multi-agent", "phase-5", "orchestrator", "terminate", "co-3"] },
+  "settings": { "timeout": 30000 }
+}

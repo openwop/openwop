@@ -1,0 +1,96 @@
+{
+  "name": "vendor.myndhyve.agent-orchestration",
+  "version": "1.0.0",
+  "description": "MyndHyve agent-orchestration pack. Six nodes that operate on RFC 0007 / 0008 / 0011 protocol primitives — spawn, delegate-smart, consensus-vote, message-send, skill-invoke, swarm-execute. Routes through the host's agent runtime (ctx.agentRuntime.*). Inherits RFC 0007 §F suspend mechanics for low-confidence escalation.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/agent-orchestration",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": ["vendor", "myndhyve", "agents", "orchestration", "consensus", "swarm"],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "host.agentRuntime": "supported"
+  },
+  "nodes": [
+    {
+      "typeId": "agent.spawn",
+      "version": "1.0.0",
+      "label": "Agent Spawn",
+      "description": "Instantiates an agent from an AgentManifest (RFC 0008) or AgentRef (RFC 0007). Returns an agentInstanceId other nodes in the run can reference. Side-effectful (allocates host-side agent state) + cacheable (replays return the original instanceId).",
+      "category": "coordination",
+      "role": "side-effect",
+      "capabilities": ["cacheable", "side-effectful"],
+      "configSchemaRef": "schemas/spawn.config.json",
+      "inputSchemaRef": "schemas/spawn.input.json",
+      "outputSchemaRef": "schemas/spawn.output.json"
+    },
+    {
+      "typeId": "agent.delegate.smart",
+      "version": "1.0.0",
+      "label": "Agent Delegate (Smart)",
+      "description": "Delegates a task to one of several agents based on a routing decision (typically LLM-based). Inherits RFC 0011 §F conservative-path: when the routing confidence is below `escalationThreshold` (default 0.7 per RFC 0007 §A1), suspends via ctx.suspend({ reason: 'low-confidence' }) for human approval.",
+      "category": "coordination",
+      "role": "side-effect",
+      "capabilities": ["cacheable", "side-effectful"],
+      "configSchemaRef": "schemas/delegate.config.json",
+      "inputSchemaRef": "schemas/delegate.input.json",
+      "outputSchemaRef": "schemas/delegate.output.json"
+    },
+    {
+      "typeId": "agent.consensus.vote",
+      "version": "1.0.0",
+      "label": "Agent Consensus Vote",
+      "description": "Multi-agent voting on a decision. Fans out the question to N agents in parallel, collects votes, and returns the winning option + per-agent vote breakdown. Tie-breaking strategies: `first` (deterministic by agent index), `unresolved` (returns winningOption: null on tie).",
+      "category": "coordination",
+      "role": "side-effect",
+      "capabilities": ["cacheable", "side-effectful"],
+      "configSchemaRef": "schemas/consensus.config.json",
+      "inputSchemaRef": "schemas/consensus.input.json",
+      "outputSchemaRef": "schemas/consensus.output.json"
+    },
+    {
+      "typeId": "agent.message.send",
+      "version": "1.0.0",
+      "label": "Agent Message Send",
+      "description": "Sends a message from the calling agent to a target agent. Uses RFC 0007 B2.3 messaging reducer — append-only, idempotent on messageId, replay-deterministic. The target agent reads via its conversation channel on next turn.",
+      "category": "coordination",
+      "role": "side-effect",
+      "capabilities": ["cacheable", "side-effectful"],
+      "configSchemaRef": "schemas/message.config.json",
+      "inputSchemaRef": "schemas/message.input.json",
+      "outputSchemaRef": "schemas/message.output.json"
+    },
+    {
+      "typeId": "agent.skill.invoke",
+      "version": "1.0.0",
+      "label": "Agent Skill Invoke",
+      "description": "Invokes a specific skill (tool / function) on an agent by skill ID. Returns the skill's result. The skill must be in the agent's toolAllowlist (RFC 0008 AgentManifest); host enforces.",
+      "category": "coordination",
+      "role": "side-effect",
+      "capabilities": ["cacheable", "side-effectful"],
+      "configSchemaRef": "schemas/skill.config.json",
+      "inputSchemaRef": "schemas/skill.input.json",
+      "outputSchemaRef": "schemas/skill.output.json"
+    },
+    {
+      "typeId": "agent.swarm.execute",
+      "version": "1.0.0",
+      "label": "Agent Swarm Execute",
+      "description": "Fans out a task across a swarm of agents and aggregates results. Strategies: `map` (one task per agent, collect all results), `map-reduce` (map + reduce step), `competitive` (first to complete wins).",
+      "category": "coordination",
+      "role": "side-effect",
+      "capabilities": ["cacheable", "side-effectful"],
+      "configSchemaRef": "schemas/swarm.config.json",
+      "inputSchemaRef": "schemas/swarm.input.json",
+      "outputSchemaRef": "schemas/swarm.output.json"
+    }
+  ],
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  }
+}

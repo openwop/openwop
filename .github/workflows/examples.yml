@@ -1,0 +1,94 @@
+name: Examples CI
+
+# Single matrix with per-example `host:` field — no parallel matrix
+# blocks. Adding an example: drop a new dir under examples/<name>/
+# with package.json having `npm test` defined, then add a row below.
+#
+# Host targets:
+#   - in-memory  — CI starts the in-memory reference host first.
+#   - external   — CI runs only when OPENWOP_EXTERNAL_BASE_URL and
+#                  OPENWOP_EXTERNAL_API_KEY secrets are set.
+#                  Otherwise the example exits 0 with a skip-equivalent message.
+#   - dry-run    — example needs no host; runs unconditionally.
+#
+# External-host examples MUST use Idempotency-Key in their HTTP
+# requests so CI re-runs collapse to a single run server-side
+# and MUST exit 0 with a clear skip-equivalent message when their target
+# env vars are unset.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'examples/**'
+      - '.github/workflows/examples.yml'
+      - 'conformance/fixtures/**'
+  pull_request:
+    paths:
+      - 'examples/**'
+      - '.github/workflows/examples.yml'
+      - 'conformance/fixtures/**'
+
+jobs:
+  examples:
+    name: examples (${{ matrix.example.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        example:
+          # In-memory-targeting — CI starts the reference host.
+          - { name: tiny-workflow,         host: in-memory }
+          - { name: streaming-client,      host: in-memory }
+          - { name: idempotent-runs,       host: in-memory }
+          # External-host targeting — skip-equivalent without secrets.
+          - { name: approval-workflow,     host: external }
+          - { name: branch-fork,           host: external }
+          - { name: mcp-tool,              host: external }
+          # Dry-run — no host needed.
+          - { name: node-pack-publishing,  host: dry-run }
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # In-memory host setup — only when host == in-memory
+      - name: Install in-memory host
+        if: matrix.example.host == 'in-memory'
+        working-directory: examples/hosts/in-memory
+        run: npm install
+
+      - name: Start in-memory host
+        if: matrix.example.host == 'in-memory'
+        working-directory: examples/hosts/in-memory
+        run: |
+          npm start > /tmp/openwop-host.log 2>&1 &
+          for i in {1..30}; do
+            if curl -sf http://127.0.0.1:3737/.well-known/openwop > /dev/null; then
+              echo "host ready"; exit 0
+            fi
+            sleep 1
+          done
+          echo "host failed to start" >&2
+          cat /tmp/openwop-host.log >&2
+          exit 1
+
+      # Common: install + run the example.
+      - name: Install example deps
+        working-directory: examples/${{ matrix.example.name }}
+        run: npm install --silent
+
+      - name: Run example
+        working-directory: examples/${{ matrix.example.name }}
+        env:
+          OPENWOP_BASE_URL: ${{ matrix.example.host == 'external' && secrets.OPENWOP_EXTERNAL_BASE_URL || 'http://127.0.0.1:3737' }}
+          OPENWOP_API_KEY: ${{ matrix.example.host == 'external' && secrets.OPENWOP_EXTERNAL_API_KEY || 'openwop-inmem-dev-key' }}
+        run: npm test
+        timeout-minutes: 2
+
+      - name: Show host log on failure
+        if: failure() && matrix.example.host == 'in-memory'
+        run: cat /tmp/openwop-host.log

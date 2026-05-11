@@ -1,0 +1,27 @@
+{
+  "id": "conformance-cap-breach",
+  "name": "Conformance: Cap Breach (recursion limit)",
+  "version": "1.0",
+  "description": "Six-node noop chain. Run with `RunOptions.configurable.recursionLimit: 3` to trigger the per-run nodeExecutionCount breach at node 4 — verifies `cap.breached {kind: 'node-executions'}` emission + terminal `failed` with `error.code = 'recursion_limit_exceeded'`. Spec: run-options.md §recursionLimit + observability.md §cap.breached.",
+  "nodes": [
+    { "id": "n1", "typeId": "core.noop", "name": "N1", "position": { "x": 0,   "y": 0 }, "config": {}, "inputs": {} },
+    { "id": "n2", "typeId": "core.noop", "name": "N2", "position": { "x": 200, "y": 0 }, "config": {}, "inputs": {} },
+    { "id": "n3", "typeId": "core.noop", "name": "N3", "position": { "x": 400, "y": 0 }, "config": {}, "inputs": {} },
+    { "id": "n4", "typeId": "core.noop", "name": "N4", "position": { "x": 600, "y": 0 }, "config": {}, "inputs": {} },
+    { "id": "n5", "typeId": "core.noop", "name": "N5", "position": { "x": 800, "y": 0 }, "config": {}, "inputs": {} },
+    { "id": "n6", "typeId": "core.noop", "name": "N6", "position": { "x": 1000, "y": 0 }, "config": {}, "inputs": {} }
+  ],
+  "edges": [
+    { "id": "e12", "sourceNodeId": "n1", "targetNodeId": "n2" },
+    { "id": "e23", "sourceNodeId": "n2", "targetNodeId": "n3" },
+    { "id": "e34", "sourceNodeId": "n3", "targetNodeId": "n4" },
+    { "id": "e45", "sourceNodeId": "n4", "targetNodeId": "n5" },
+    { "id": "e56", "sourceNodeId": "n5", "targetNodeId": "n6" }
+  ],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "cap-breach", "recursion-limit"] },
+  "settings": { "timeout": 30000, "maxRetries": 0 }
+}

@@ -1,0 +1,28 @@
+{
+  "id": "conformance-agent-memory-cross-tenant",
+  "name": "Conformance: Agent Memory Cross-Tenant Isolation (CTI-1)",
+  "version": "1.0",
+  "description": "Phase 3 / CTI-1. Issues a deliberately-cross-tenant memoryRef probe (a path referencing tenant B from a run owned by tenant A). Host MUST return [] / null — no leak. Probe result lands in `crossTenantProbe` variable. See agentMemoryCrossTenantIsolation.test.ts.",
+  "nodes": [
+    {
+      "id": "cross-tenant-probe",
+      "typeId": "core.identity",
+      "name": "Cross-Tenant Memory Probe",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "memoryAction": "cross-tenant-probe",
+        "probeMemoryRef": "conformance/another-tenant/agent-memory"
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "crossTenantProbe", "type": "array" }
+  ],
+  "metadata": { "tags": ["conformance", "multi-agent", "phase-3", "memory", "cti-1", "security"] },
+  "settings": { "timeout": 10000 }
+}

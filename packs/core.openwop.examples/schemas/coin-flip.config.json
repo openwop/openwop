@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.examples/1.0.0/coin-flip.config.json",
+  "title": "CoinFlipNodeConfig",
+  "description": "Config for core.openwop.examples.coin-flip. No tunables — the seed comes through the input port so the same node can be reused across workflows with different seeds.",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false
+}

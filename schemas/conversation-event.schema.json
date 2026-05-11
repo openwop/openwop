@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/conversation-event.schema.json",
+  "title": "ConversationEvent",
+  "description": "Discriminated payload for the three new run events RFC 0005 introduces: `conversation.opened`, `conversation.exchanged`, `conversation.closed`. Discriminator is the parent `RunEventDoc.type` field (see `run-event.schema.json`); this schema constrains `payload` shape. The `ConversationTurn` shape is inlined under `$defs` (rather than $ref'd to `conversation-turn.schema.json`) for self-containment under per-file Ajv compile order — keep in sync with `conversation-turn.schema.json`. See RFC 0005 §B.",
+  "oneOf": [
+    { "$ref": "#/$defs/ConversationOpenedPayload" },
+    { "$ref": "#/$defs/ConversationExchangedPayload" },
+    { "$ref": "#/$defs/ConversationClosedPayload" }
+  ],
+  "$defs": {
+    "ConversationTurn": {
+      "type": "object",
+      "description": "One turn in a multi-turn conversation. Mirror of `conversation-turn.schema.json`; kept in sync. Structural superset of `ConversationMessage` (RFC 0002 §G).",
+      "required": ["messageId", "from", "content", "ts", "role", "turnIndex"],
+      "properties": {
+        "messageId": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "from": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "to": { "type": "string", "maxLength": 256 },
+        "groupId": { "type": "string", "maxLength": 256 },
+        "content": {
+          "type": ["object", "array", "string", "number", "boolean", "null"]
+        },
+        "ts": { "type": "integer", "minimum": 0 },
+        "role": { "type": "string", "enum": ["user", "agent", "system"] },
+        "agent": {
+          "type": "object",
+          "properties": {
+            "agentId": { "type": "string", "minLength": 1 },
+            "agentSharing": {
+              "type": "string",
+              "enum": ["isolated", "shared", "shared:%shared%"]
+            },
+            "memoryRef": { "type": "string" }
+          },
+          "additionalProperties": true
+        },
+        "turnIndex": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": true
+    },
+    "ConversationOpenedPayload": {
+      "type": "object",
+      "description": "Payload for `RunEventType: 'conversation.opened'`. Emitted when a node calls `ctx.interrupt({kind: 'conversation', operation: 'start', ...})`. Causation: this event's `causationId` MUST equal the `eventId` of the accompanying `node.suspended`.",
+      "required": ["conversationId", "initialTurn"],
+      "properties": {
+        "conversationId": {
+          "type": "string",
+          "description": "Host-assigned conversation identifier. Deterministic for replay (typically `${runId}:${nodeId}:${attempt}`). Persists across all turns of this conversation.",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "agentId": {
+          "type": "string",
+          "description": "Optional. The agent driving this conversation (RFC 0002 §A1). For multi-agent conversations, identifies the conversation owner.",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "initialTurn": { "$ref": "#/$defs/ConversationTurn" },
+        "schema": {
+          "type": "object",
+          "description": "Optional JSON Schema for resume turn validation. Servers SHOULD validate subsequent `conversation.exchanged` turns against this schema."
+        },
+        "capabilities": {
+          "type": "array",
+          "description": "Informative host capability hints. Future RFCs may normate values; current namespace is open.",
+          "items": {
+            "type": "string",
+            "enum": ["multi-turn", "streaming"]
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "ConversationExchangedPayload": {
+      "type": "object",
+      "description": "Payload for `RunEventType: 'conversation.exchanged'`. Emitted on each `operation: 'exchange'` turn round-trip. The `turnIndex` MUST monotonically increase within a `conversationId`.",
+      "required": ["conversationId", "turnIndex", "turn"],
+      "properties": {
+        "conversationId": {
+          "type": "string",
+          "description": "MUST match the `conversation.opened` payload's `conversationId`.",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "turnIndex": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "1-based index within the conversation. `conversation.opened.initialTurn` is `turnIndex: 0`; the first `exchanged` is `turnIndex: 1`; etc."
+        },
+        "turn": { "$ref": "#/$defs/ConversationTurn" }
+      },
+      "additionalProperties": false
+    },
+    "ConversationClosedPayload": {
+      "type": "object",
+      "description": "Payload for `RunEventType: 'conversation.closed'`. Emitted on `operation: 'close'`. Terminates the conversation; no further events MAY carry this `conversationId`.",
+      "required": ["conversationId", "turnIndex", "finalTurn"],
+      "properties": {
+        "conversationId": {
+          "type": "string",
+          "description": "MUST match the `conversation.opened` payload's `conversationId`.",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "turnIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total turn count — equal to the closing turn's index."
+        },
+        "finalTurn": { "$ref": "#/$defs/ConversationTurn" },
+        "outcome": {
+          "description": "Opaque host-defined goal value. The conversation's resolved output. Spec does not constrain the shape; hosts MAY layer their own schemas via the `schema` field on `conversation.opened`.",
+          "type": ["object", "array", "string", "number", "boolean", "null"]
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

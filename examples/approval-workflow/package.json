@@ -1,0 +1,14 @@
+{
+  "name": "@openwop/openwop-example-approval-workflow",
+  "version": "1.0.0",
+  "private": true,
+  "description": "OpenWOP approval-gate example: start a workflow that suspends at an approval gate, resolve it via POST /v1/runs/{runId}/approvals/{nodeId}, and observe terminal completion.",
+  "type": "module",
+  "scripts": {
+    "start": "node approval-workflow.mjs",
+    "test": "node approval-workflow.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

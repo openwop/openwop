@@ -1,0 +1,23 @@
+[package]
+name = "rust-hello"
+version = "1.0.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Reference WASM node pack for openwop. Implements RFC 0008 ABI v1 with one node: vendor.openwop.rust-hello.greet."
+
+[lib]
+name = "rust_hello"
+# cdylib is required for wasm32-unknown-unknown to emit a loadable .wasm
+crate-type = ["cdylib"]
+
+[dependencies]
+# Tiny stdlib-only JSON parsing — keeps the wasm binary minimal.
+# serde + serde_json is the production choice; for this reference pack we
+# parse JSON by hand so the dependency tree stays empty.
+
+[profile.release]
+opt-level = "s"        # optimize for size
+lto = true
+codegen-units = 1
+panic = "abort"        # smaller; matches WASM panic semantics
+strip = true

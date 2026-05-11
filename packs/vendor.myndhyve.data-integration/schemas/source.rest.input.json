@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.data-integration/1.0.0/source.rest.input.json",
+  "title": "DataSourceRestInput",
+  "type": "object",
+  "properties": {
+    "params": { "type": "object", "additionalProperties": true, "description": "URL template substitutions + query params." },
+    "body": { "description": "Request body. Required for POST/PUT/PATCH." }
+  },
+  "additionalProperties": false
+}

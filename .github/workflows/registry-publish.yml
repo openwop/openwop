@@ -1,0 +1,131 @@
+name: registry-publish
+
+on:
+  pull_request:
+    paths:
+      - 'registry/**'
+  push:
+    branches: [main]
+    paths:
+      - 'registry/**'
+
+jobs:
+  validate:
+    name: Validate registry content
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate registry JSON files parse
+        run: |
+          find registry -name '*.json' -print0 | xargs -0 -I {} sh -c '
+            python3 -c "import json,sys; json.load(open(\"{}\"))" || {
+              echo "::error file={}::Invalid JSON"
+              exit 1
+            }
+          '
+
+      - name: Validate pack manifests against schema
+        run: |
+          npm install -g ajv-cli@5
+          # Future: validate each registry/v1/packs/*/-/*.json against
+          # schemas/node-pack-manifest.schema.json. Currently the registry
+          # manifest has registry-only fields (publishedAt, integrity, etc.)
+          # that aren't in the pack manifest schema; a registry-specific
+          # schema lands in v1.2.
+          echo "TODO: schema validation pending registry-manifest schema"
+
+      - name: Check index files are up to date
+        run: |
+          node registry/scripts/build-index.mjs --check
+
+      - name: Verify tarball integrity hashes
+        run: |
+          # For each .tgz in registry/, recompute sha256 and compare to
+          # the manifest's `integrity` field. Submissions that bypass
+          # build-index.mjs fail here.
+          python3 - <<'PY'
+          import hashlib, base64, json, os, sys
+          from pathlib import Path
+          root = Path('registry/v1/packs')
+          errors = []
+          if not root.exists():
+              print('no packs directory; nothing to verify')
+              sys.exit(0)
+          for pack_dir in root.iterdir():
+              versions_dir = pack_dir / '-'
+              if not versions_dir.is_dir():
+                  continue
+              for tgz in versions_dir.glob('*.tgz'):
+                  version = tgz.stem
+                  manifest_path = versions_dir / f'{version}.json'
+                  if not manifest_path.exists():
+                      errors.append(f'{tgz}: no matching manifest at {manifest_path}')
+                      continue
+                  manifest = json.load(open(manifest_path))
+                  expected = manifest.get('integrity', '')
+                  digest = hashlib.sha256(tgz.read_bytes()).digest()
+                  actual = 'sha256-' + base64.b64encode(digest).decode('ascii')
+                  if expected != actual:
+                      errors.append(
+                          f'{tgz}: integrity mismatch (manifest says {expected!r}, file is {actual!r})'
+                      )
+          if errors:
+              for e in errors:
+                  print(f'::error::{e}')
+              sys.exit(1)
+          print('all integrity hashes verified')
+          PY
+
+      - name: Verify signatures (when present)
+        run: |
+          # Each .tgz MUST have a sibling .sig. For now we only check
+          # that the .sig exists; cryptographic verification against the
+          # root public key lands once the key-ceremony output is committed
+          # to registry/keys/.
+          python3 - <<'PY'
+          import sys
+          from pathlib import Path
+          root = Path('registry/v1/packs')
+          errors = []
+          if not root.exists():
+              sys.exit(0)
+          for tgz in root.glob('*/-/*.tgz'):
+              sig = tgz.with_suffix('.sig')
+              if not sig.exists():
+                  errors.append(f'{tgz}: signature missing at {sig}')
+          if errors:
+              for e in errors:
+                  print(f'::error::{e}')
+              sys.exit(1)
+          print('all tarballs have sibling signatures')
+          PY
+
+  deploy:
+    name: Deploy to packs.openwop.dev
+    needs: validate
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment:
+      name: packs-openwop-dev
+      url: https://packs.openwop.dev
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Deploy via Firebase Hosting (packs target)
+        # The FIREBASE_SERVICE_ACCOUNT secret is the same one used by the
+        # docs site deploy. The Firebase target `packs` is wired in
+        # .firebaserc; firebase.json declares the public dir and headers.
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: openwop-dev
+          target: packs
+          channelId: live

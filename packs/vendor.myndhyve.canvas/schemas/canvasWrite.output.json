@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.canvas/1.0.0/canvasWrite.output.json",
+  "title": "CanvasWriteOutput",
+  "type": "object",
+  "required": ["canvasId", "newVersion", "writtenAt"],
+  "properties": {
+    "canvasId": { "type": "string" },
+    "newVersion": { "type": "integer", "minimum": 1, "description": "Canvas state version after this write. Strictly greater than the read version." },
+    "writtenAt": { "type": "string", "format": "date-time" },
+    "idempotencyKey": { "type": "string", "description": "Deterministic key (SHA-256 prefix over runId+nodeId+canvasId+mutation-hash). Host MAY use for dedup; surfaced for replay-determinism debugging." }
+  },
+  "additionalProperties": false
+}

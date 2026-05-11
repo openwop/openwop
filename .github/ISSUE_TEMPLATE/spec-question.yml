@@ -1,0 +1,49 @@
+name: Spec question
+description: Ask about a normative requirement, intended behavior, or interpretation
+title: "[spec-question] "
+labels: ["spec-question"]
+body:
+  - type: input
+    id: section
+    attributes:
+      label: Spec section
+      description: Doc + section heading.
+      placeholder: "rest-endpoints.md §'Idempotency'"
+    validations:
+      required: true
+
+  - type: textarea
+    id: text
+    attributes:
+      label: The text in question
+      description: Quote the paragraph that's unclear.
+      render: markdown
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: What you tried to do
+      description: The implementation choice you were about to make and why the spec text didn't settle it.
+    validations:
+      required: true
+
+  - type: textarea
+    id: readings
+    attributes:
+      label: Two or more reasonable readings
+      description: A spec question is most useful when you can describe at least two plausible interpretations, both consistent with current text.
+      placeholder: |
+        1. ...
+        2. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: interop
+    attributes:
+      label: Why it matters for interop
+      description: If two implementations chose different readings, what would break?
+    validations:
+      required: true

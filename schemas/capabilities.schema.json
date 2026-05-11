@@ -1,0 +1,287 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/capabilities.schema.json",
+  "title": "Capabilities",
+  "description": "openwop capability declaration returned from `GET /.well-known/openwop`. Required v1 fields identify the protocol version, envelope catalog, schema versions, and base limits. Optional v1 fields have stable shapes but MAY be omitted when unsupported.",
+  "type": "object",
+  "required": ["protocolVersion", "supportedEnvelopes", "schemaVersions", "limits"],
+  "properties": {
+    "protocolVersion": {
+      "type": "string",
+      "description": "openwop protocol version the server speaks (e.g., `1.0`). Independent of `engineVersion` (which gates persisted-doc compatibility per version-negotiation.md).",
+      "minLength": 1
+    },
+    "supportedEnvelopes": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Envelope `type` strings the engine recognizes (e.g., `prd.create`, `theme.create`, `tasks.create`, `clarification.request`)."
+    },
+    "schemaVersions": {
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 0 },
+      "description": "Active schema version per envelope type (e.g., `{ \"prd.create\": 2 }`)."
+    },
+    "limits": {
+      "type": "object",
+      "required": ["clarificationRounds", "schemaRounds", "envelopesPerTurn"],
+      "properties": {
+        "clarificationRounds": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum total clarification envelopes per task before the engine forces the LLM to proceed."
+        },
+        "schemaRounds": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum total schema-validation rounds per envelope before the node fails."
+        },
+        "envelopesPerTurn": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum total envelopes the LLM may emit in a single chat turn."
+        },
+        "maxNodeExecutions": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Engine-side ceiling on total node executions per run. Acts as the upper bound for `RunOptions.configurable.recursionLimit`. Optional in v1; hosts that advertise it MUST enforce it."
+        }
+      },
+      "additionalProperties": false,
+      "description": "Hard limits enforced by the engine. See capabilities.md §3."
+    },
+    "extensions": {
+      "type": "object",
+      "description": "Optional per-canvas-type or per-workflow extensions (additional envelope types, override limits)."
+    },
+    "implementation": {
+      "type": "object",
+      "description": "Optional v1 server identity (name + version + vendor).",
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string" },
+        "vendor": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "engineVersion": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Optional v1 server engineVersion (see version-negotiation.md). Independent of `protocolVersion`."
+    },
+    "eventLogSchemaVersion": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Optional v1 server eventLogSchemaVersion (per-run subcollection contract)."
+    },
+    "supportedTransports": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["rest", "mcp", "a2a", "grpc"] },
+      "description": "Optional v1 transport advertisement. REST is required whether or not this field is present."
+    },
+    "configurable": {
+      "type": "object",
+      "description": "Optional v1 per-run overlay schema — what `RunOptions.configurable` keys this server honors."
+    },
+    "observability": {
+      "type": "object",
+      "description": "Optional v1 hints about emitted spans/metrics/logs. See observability.md."
+    },
+    "minClientVersion": {
+      "type": "string",
+      "description": "Optional v1 minimum client SDK version the server interops with."
+    },
+    "secrets": {
+      "type": "object",
+      "description": "Optional v1 secret/credential resolution advertisement. Clients gate BYOK flows on this. Hosts that don't store credentials return `supported: false`.",
+      "required": ["supported"],
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "Host has any secret-resolution at all."
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["tenant", "user", "run"]
+          },
+          "uniqueItems": true,
+          "description": "Subset of scopes the host implements. Tenant-scoped secrets are workspace-shared; user-scoped are per-end-user; run-scoped are ephemeral per-run."
+        },
+        "resolution": {
+          "type": "string",
+          "enum": ["host-managed"],
+          "description": "Resolution mode. v1.x supports only `host-managed` (clients reference stored secrets via opaque ids); reserved for future modes."
+        }
+      },
+      "additionalProperties": false
+    },
+    "runtimeCapabilities": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true,
+      "description": "Optional v1 host-advertised opaque capability ids that NodeModules may declare in `NodeModule.requires`. Naming convention: dotted, domain-scoped (`chat.sendPrompt`, `canvas.write`, `secrets.byok`). Provider value shapes are documented per-capability alongside consumers, NOT in the protocol package — the protocol owns the *check*, not domain provider contracts. A client that submits a workflow whose nodes declare a `requires` entry SHOULD first verify the host advertises that capability; a host that lacks a capability MUST refuse to dispatch nodes that declare it, terminating the run with `RunSnapshot.error.code = 'capability_not_provided'`. See `capabilities.md` §\"Runtime capabilities\"."
+    },
+    "aiProviders": {
+      "type": "object",
+      "description": "Optional v1 companion to `secrets`. Advertises which AI providers the host's AI-proxy can route to and which permit BYOK.",
+      "properties": {
+        "supported": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true,
+          "description": "Provider ids the host's AI-proxy can route to. Conventional ids: `anthropic`, `openai`, `gemini`, `mistral`, `cohere`, `vertex`, `bedrock`. Hosts MAY add vendor-prefixed extensions."
+        },
+        "byok": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true,
+          "description": "Subset of `supported` for which BYOK is permitted. Empty array → all calls use platform-managed keys; non-empty → clients MAY pass `ai.credentialRef` in `RunOptions.configurable` for matching providers."
+        },
+        "policies": {
+          "type": "object",
+          "description": "Optional v1 host-side policy enforcement modes for per-provider gating. Omitted → no enforcement; clients see only `optional` semantics. When present, MUST declare `modes` — an empty `{}` is not a valid third state. See `capabilities.md` §`aiProviders.policies`.",
+          "required": ["modes"],
+          "properties": {
+            "modes": {
+              "type": "array",
+              "items": { "type": "string", "enum": ["disabled", "optional", "required", "restricted"] },
+              "uniqueItems": true,
+              "description": "Subset of policy modes this host can enforce. `disabled` = provider may not be used; `optional` = no restriction (default); `required` = BYOK required; `restricted` = model must match the policy's `allowedModels` glob list. Hosts MAY support a subset; clients MUST tolerate any subset."
+            },
+            "scopes": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 },
+              "uniqueItems": true,
+              "description": "Resolution layers the host evaluates. Conventional ids: `workspace`, `project`, `canvas-type`. Precedence is host-defined and SHOULD be documented per-deployment."
+            },
+            "errorCode": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Wire-format error code returned on denial. Defaults to `provider_policy_denied`. Reserved for hosts that need a vendor-prefixed alias."
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "testing": {
+      "type": "object",
+      "description": "Testing-mode capabilities advertised to clients (closes F1). Lets conformance suites + dev clients discover which mock providers the server supports and which API-key prefix denotes test keys (since mock providers are test-keys-only).",
+      "properties": {
+        "mockProviders": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true,
+          "description": "Mock-provider IDs this server recognizes via `RunOptions.configurable.mockProvider.id`. Servers claiming OpenWOP v1.0 conformance MUST include `stream-text`. Other canonical providers (`tool-calls`, `error`, `usage-only`) are recommended. Implementations MAY add their own (vendor-prefixed)."
+        },
+        "testKeyPrefix": {
+          "type": "string",
+          "description": "API-key prefix that marks a key as test-mode. Mock providers and other test-only surfaces gate on this prefix.",
+          "minLength": 1,
+          "maxLength": 32
+        },
+        "forceEngineVersionRange": {
+          "type": "object",
+          "description": "Range of engine versions the server can be forced into via the `X-Force-Engine-Version` request header (test-keys-only). Used by the conformance suite to verify forward-compat fold-best-effort across the version-negotiation matrix. Closes F5.",
+          "required": ["min", "max"],
+          "properties": {
+            "min": { "type": "integer", "minimum": 0, "description": "Lowest forceable engine version. Typically (current - 1) so back-compat is exercised." },
+            "max": { "type": "integer", "minimum": 0, "description": "Highest forceable engine version. Typically (current + 1) so forward-compat is exercised." }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": true
+    },
+    "fixtures": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true,
+      "description": "Optional v1 fixture workflow IDs the host has seeded. The conformance suite uses this list to decide which fixture-dependent scenarios run vs. skip. Each ID matches a stub at `node_modules/@openwop/openwop-conformance/fixtures/{id}.json`. Hosts MAY advertise vendor-prefixed IDs; clients MUST tolerate unknown IDs. Empty array or absent means the host advertises no fixtures."
+    },
+    "agents": {
+      "type": "object",
+      "description": "Multi-Agent Shift capability block (Phases 1-6). Hosts that implement any multi-agent surface declare it here; pre-MAS hosts omit the block entirely (consumers treat as 'no agent support'). Each field gates a specific conformance scenario class; conformance scenarios skip honestly when the host's advertisement doesn't claim the capability.",
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "Master switch for agent identity (Phase 1). When `true`, host accepts run-level `RunSnapshot.agent` / `runOrchestrator` fields, emits `agent.*` events, and honors the confidence-escalation contract."
+        },
+        "profile": {
+          "type": "string",
+          "description": "Optional named capability profile (e.g., `wop-agents-phase-1-skeleton` for identity-only, `wop-agents-full` for orchestrator+dispatch+memory+conversation). Clients pattern-match on profile to gate feature usage."
+        },
+        "modelClasses": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["reasoning", "tool-using", "chat", "code", "vision", "multimodal", "embedding", "classification", "retrieval"]
+          },
+          "uniqueItems": true,
+          "description": "Optional list of `AgentRef.modelClass` values this host supports for hosted agents (Phase 2). Pack manifests whose `modelClass` is not in this list MUST refuse install with `unsupported_model_class`."
+        },
+        "orchestratorPattern": {
+          "type": "string",
+          "description": "Optional orchestration pattern (Phase 2). Canonical: `single`, `delegate`, `delegate.smart`. Vendor extensions ship under `vendor.<host>.<pattern>`."
+        },
+        "memoryBackends": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["long-term"] },
+          "uniqueItems": true,
+          "description": "Optional list of memory backends (Phase 3). `long-term` means the host implements `ExecutionHost.memory` against a durable store with the SR-1 redaction invariant intact end-to-end. Hosts that don't wire `MemoryAdapter` omit this field."
+        },
+        "orchestrator": {
+          "type": "boolean",
+          "description": "Phase 5. When `true`, host advertises that it implements the `core.orchestrator.supervisor` node typeId AND honors the conservative-path suspend semantics (CP-1: low-confidence suspend via `node.suspended { reason: 'low-confidence' }`)."
+        },
+        "dispatch": {
+          "type": "boolean",
+          "description": "Phase 6. When `true`, host advertises that it implements the `core.dispatch` Core typeId AND honors the conservative-path commitment CP-2 (`core.dispatch` MUST NOT mutate the run's DAG mid-run). Implies (but does NOT require) `agents.orchestrator: true`."
+        },
+        "reasoning": {
+          "type": "object",
+          "description": "Phase 1 reasoning-event verbosity configuration.",
+          "properties": {
+            "verbosity": {
+              "type": "string",
+              "enum": ["summary", "full", "off"],
+              "description": "Default reasoning verbosity for `agent.reasoned` events when the run does not override via `RunOptions.configurable.reasoningVerbosity`."
+            },
+            "tokenLimit": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Effective cap on reasoning trace length when verbosity is `summary`. Default 512 tokens."
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": true
+    },
+    "conversationPrimitive": {
+      "type": "boolean",
+      "description": "Multi-Agent Shift Phase 4. When `true`, host advertises that it implements the `core.conversationGate` typeId AND honors the `conversation.start` / `conversation.exchange` / `conversation.close` suspend variants. Hosts that don't claim this fall back to `clarification.requested` interrupts for multi-turn user interjections."
+    },
+    "compliance": {
+      "type": "object",
+      "description": "Privacy / compliance behavior advertised to clients (closes O5). Lets consumers know what masking mode is in effect so a `\"[REDACTED]\"` value in event log payloads is recognizable as a server-side mask vs an upstream null.",
+      "properties": {
+        "defaultMode": {
+          "type": "string",
+          "enum": ["mask", "omit", "hash", "passthrough"],
+          "description": "Server's default masking mode for fields marked sensitive. `mask` (default): replace with `\"[REDACTED]\"`. `omit`: drop the field entirely. `hash`: replace with `\"sha256:<hex>\"` for audit-only equality. `passthrough`: record as-is (NOT recommended for production). Workflow authors MAY override per-workflow via `metadata.complianceConfig.maskingMode`. See observability.md §Privacy classification."
+        },
+        "supportedClasses": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["public", "pii", "phi", "pci", "regulated"] },
+          "uniqueItems": true,
+          "description": "Compliance classes this server applies special handling for. A server MAY accept all five classes but only enforce stricter retention on a subset; this field declares the operational reality so workflow authors can choose a server appropriately."
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

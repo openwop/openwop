@@ -1,0 +1,12 @@
+{
+  "name": "openwop-spec-corpus",
+  "version": "1.0.0",
+  "private": true,
+  "description": "OpenWOP v1.0 protocol specification corpus and release tooling.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "openwop:check": "bash scripts/openwop-check.sh",
+    "check": "bash scripts/openwop-check.sh",
+    "check:publish": "bash scripts/openwop-check-publish-metadata.sh && bash scripts/check-npm-pack-contents.sh && bash scripts/check-python-go-release-surface.sh"
+  }
+}

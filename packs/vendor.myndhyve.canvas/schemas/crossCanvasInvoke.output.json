@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.canvas/1.0.0/crossCanvasInvoke.output.json",
+  "title": "CrossCanvasInvokeOutput",
+  "type": "object",
+  "required": ["childRunId", "targetCanvasId"],
+  "properties": {
+    "childRunId": { "type": "string", "minLength": 1, "description": "The runId of the child run on the target canvas." },
+    "targetCanvasId": { "type": "string" },
+    "terminalStatus": {
+      "type": "string",
+      "enum": ["completed", "failed", "cancelled", "pending"],
+      "description": "Only set when config.awaitTerminal=true. `pending` indicates timeout before terminal; child run continues independently."
+    },
+    "result": { "description": "Child run's terminal output. Only present when terminalStatus === 'completed'. Shape determined by the child workflow." },
+    "error": {
+      "type": "object",
+      "description": "Only present when terminalStatus === 'failed'.",
+      "properties": {
+        "code": { "type": "string" },
+        "message": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "circuitOpen": {
+      "type": "boolean",
+      "description": "When true, the circuit breaker rejected this call without invoking the child. Workflow authors branch to fallback when this fires."
+    },
+    "idempotencyKey": { "type": "string" }
+  },
+  "additionalProperties": false
+}

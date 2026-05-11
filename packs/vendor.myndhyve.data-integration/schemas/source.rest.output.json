@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.data-integration/1.0.0/source.rest.output.json",
+  "title": "DataSourceRestOutput",
+  "type": "object",
+  "required": ["data", "status"],
+  "properties": {
+    "data": { "description": "Parsed response body (host-aware: typically JSON). When paginate=true, an aggregated array." },
+    "status": { "type": "integer", "minimum": 0, "maximum": 599 },
+    "pages": { "type": "integer", "minimum": 1, "description": "Pages fetched (only set when paginate=true)." },
+    "fetchedAt": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

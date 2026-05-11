@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /$
+Allow: /index.html
+Disallow: /v1/
+Disallow: /keys/
+Disallow: /.well-known/
+
+Sitemap: https://packs.openwop.dev/

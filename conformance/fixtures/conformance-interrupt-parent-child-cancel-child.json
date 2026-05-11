@@ -1,0 +1,27 @@
+{
+  "id": "conformance-interrupt-parent-child-cancel-child",
+  "name": "Conformance: Interrupt — Parent/Child Cancel Cascade (Child)",
+  "version": "1.0",
+  "description": "Child fixture paired with conformance-interrupt-parent-child-cancel. Suspends on an approval that the parent's cancellation must invalidate. Standalone runs of this workflow behave like a vanilla approval gate; the cascade behavior is exercised only when invoked as a child sub-workflow.",
+  "nodes": [
+    {
+      "id": "child-gate",
+      "typeId": "core.approvalGate",
+      "name": "Child Approval Gate",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "title": "Child approval (will be cascaded-cancel)",
+        "description": "Used by parent-child cancel cascade conformance scenario.",
+        "actions": ["accept", "reject"]
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "hitl", "interrupt-profile", "parent-child-cancel", "child"] },
+  "settings": { "timeout": 0 }
+}

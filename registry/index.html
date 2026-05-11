@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>openwop registry — packs.openwop.dev</title>
+<meta name="description" content="The canonical signed node-pack registry for the openwop workflow orchestration protocol. 3 pack(s), 3 version(s) published.">
+<meta name="robots" content="index, follow">
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://packs.openwop.dev/">
+<meta property="og:title" content="openwop registry">
+<meta property="og:description" content="Canonical signed node-pack registry for the openwop workflow orchestration protocol.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="openwop registry">
+<meta name="twitter:description" content="Canonical signed node-pack registry for the openwop workflow orchestration protocol.">
+
+<link rel="alternate" type="application/json" title="Discovery" href="/.well-known/openwop-registry">
+<link rel="alternate" type="application/json" title="Registry index" href="/v1/index.json">
+
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #15171b;
+    --muted: #6b7280;
+    --border: #e4e6eb;
+    --accent: #1e4dd4;
+    --accent-bg: #eef2ff;
+    --code-bg: #f5f6f8;
+    --flag-deprecated: #a16207;
+    --flag-deprecated-bg: #fef3c7;
+    --flag-yanked: #b91c1c;
+    --flag-yanked-bg: #fee2e2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e1014;
+      --fg: #e8eaed;
+      --muted: #9aa0a6;
+      --border: #2a2d34;
+      --accent: #88aaff;
+      --accent-bg: #1c2540;
+      --code-bg: #1a1c22;
+      --flag-deprecated: #facc15;
+      --flag-deprecated-bg: #3a2f06;
+      --flag-yanked: #f87171;
+      --flag-yanked-bg: #3a1414;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg); }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, "Helvetica Neue", Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 960px; margin: 0 auto; padding: 48px 24px 64px; }
+  header { margin-bottom: 40px; }
+  h1 { font-size: 32px; margin: 0 0 8px; letter-spacing: -0.02em; }
+  h2 { font-size: 22px; margin: 40px 0 12px; letter-spacing: -0.01em; }
+  h3 { font-size: 16px; margin: 24px 0 8px; }
+  .lead { color: var(--muted); font-size: 18px; margin: 0; }
+  code, pre { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+  code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; }
+  pre { background: var(--code-bg); padding: 12px 16px; border-radius: 6px; overflow-x: auto; line-height: 1.5; }
+  pre code { background: transparent; padding: 0; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .summary { display: flex; gap: 16px; flex-wrap: wrap; margin: 16px 0 24px; }
+  .summary > div { padding: 12px 16px; border: 1px solid var(--border); border-radius: 6px; min-width: 120px; }
+  .summary strong { display: block; font-size: 22px; line-height: 1.2; }
+  .summary span { color: var(--muted); font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+  td.name code { font-size: 13px; }
+  td.version { color: var(--muted); font-variant-numeric: tabular-nums; }
+  td.artifacts { font-size: 13px; }
+  td.artifacts a { white-space: nowrap; }
+  .flag { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; vertical-align: middle; }
+  .flag-deprecated { color: var(--flag-deprecated); background: var(--flag-deprecated-bg); }
+  .flag-yanked { color: var(--flag-yanked); background: var(--flag-yanked-bg); }
+  .endpoint-list { list-style: none; padding: 0; margin: 8px 0; }
+  .endpoint-list li { display: flex; gap: 12px; padding: 6px 0; align-items: baseline; flex-wrap: wrap; }
+  .endpoint-list li code { font-size: 13px; }
+  .endpoint-list li .note { color: var(--muted); font-size: 13px; }
+  footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; }
+  .empty { padding: 24px; border: 1px dashed var(--border); border-radius: 6px; color: var(--muted); text-align: center; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>openwop registry</h1>
+    <p class="lead">Canonical signed node-pack registry for the <a href="https://openwop.dev/">openwop</a> workflow orchestration protocol.</p>
+    <div class="summary">
+      <div><strong>3</strong><span>packs published</span></div>
+      <div><strong>3</strong><span>versions total</span></div>
+      <div><strong>Ed25519</strong><span>signing algorithm</span></div>
+    </div>
+  </header>
+
+  <section id="catalog">
+    <h2>Catalog</h2>
+    <table>
+      <thead>
+        <tr><th>Name</th><th>Version</th><th>Description</th><th>License</th><th>Artifacts</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="name"><code>community.openwop-team.demo</code> </td>
+          <td class="version">0.1.0</td>
+          <td class="desc">First community-namespace demo pack. Mixed pack — one trivial node (`uppercase`) plus one agent (`greeter`) — exercising both extension paths in a single tarball under the open-publish `community.*` tier. Manual Ed25519 signed (not Sigstore) to demonstrate the non-OIDC publishing path documented in registry-operations.md §Step 2. MIT-licensed for SPDX-diversity with the Apache-2.0 core packs.</td>
+          <td class="license">MIT</td>
+          <td class="artifacts">
+            <a href="/v1/packs/community.openwop-team.demo/-/0.1.0.json" title="version manifest (JSON)">manifest</a>
+            · <a href="/v1/packs/community.openwop-team.demo/-/0.1.0.tgz" title="signed tarball (tgz)">tgz</a>
+            · <a href="/v1/packs/community.openwop-team.demo/-/0.1.0.sig" title="Ed25519 signature">sig</a>
+          </td>
+        </tr>
+        <tr>
+          <td class="name"><code>core.openwop.examples</code> </td>
+          <td class="version">1.0.0</td>
+          <td class="desc">Spec-canonical examples pack — three minimal nodes (echo, coin-flip, delay-with-progress) that exercise the core node-pack contract end-to-end. Zero npm deps; runs on any Node 20+ host advertising the openwop-node-packs profile. See docs/PACKS-MVP-PLAN.md.</td>
+          <td class="license">Apache-2.0</td>
+          <td class="artifacts">
+            <a href="/v1/packs/core.openwop.examples/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
+            · <a href="/v1/packs/core.openwop.examples/-/1.0.0.tgz" title="signed tarball (tgz)">tgz</a>
+            · <a href="/v1/packs/core.openwop.examples/-/1.0.0.sig" title="Ed25519 signature">sig</a>
+          </td>
+        </tr>
+        <tr>
+          <td class="name"><code>vendor.openwop.rust-hello</code> </td>
+          <td class="version">1.0.0</td>
+          <td class="desc">Reference WASM node pack proving RFC 0008 ABI v1 works end-to-end across an independent toolchain. One node type: vendor.openwop.rust-hello.greet.</td>
+          <td class="license">Apache-2.0</td>
+          <td class="artifacts">
+            <a href="/v1/packs/vendor.openwop.rust-hello/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
+            · <a href="/v1/packs/vendor.openwop.rust-hello/-/1.0.0.tgz" title="signed tarball (tgz)">tgz</a>
+            · <a href="/v1/packs/vendor.openwop.rust-hello/-/1.0.0.sig" title="Ed25519 signature">sig</a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="trust">
+    <h2>Trust &amp; verification</h2>
+    <p>Every tarball is signed with the registry's Ed25519 root key. Hosts running in <code>verified</code> trust mode (per <a href="https://openwop.dev/spec/v1/node-packs.md">node-packs.md §Trust model</a>) MUST verify each <code>.tgz</code> against this key before unpacking.</p>
+    <ul class="endpoint-list">
+      <li><code><a href="/keys/openwop-registry-root.pub">/keys/openwop-registry-root.pub</a></code> <span class="note">root public key (PEM, Ed25519)</span></li>
+    </ul>
+    <h3>Verification recipe (Node 20+)</h3>
+    <pre><code>const { createPublicKey, verify } = require('node:crypto');
+const { readFileSync } = require('node:fs');
+const pub = createPublicKey({ key: readFileSync('root.pub'), format: 'pem' });
+const ok = verify(null, readFileSync('pack.tgz'), pub, readFileSync('pack.sig'));
+// ok === true if the tarball is signed by this registry's root key</code></pre>
+  </section>
+
+  <section id="api">
+    <h2>API</h2>
+    <p>The registry is read-only; programmatic access via the documented endpoints:</p>
+    <ul class="endpoint-list">
+      <li><code><a href="/.well-known/openwop-registry">/.well-known/openwop-registry</a></code> <span class="note">discovery — declares all endpoint templates</span></li>
+      <li><code><a href="/v1/index.json">/v1/index.json</a></code> <span class="note">full pack catalog</span></li>
+      <li><code>/v1/packs/{name}/index.json</code> <span class="note">per-pack metadata + versions list</span></li>
+      <li><code>/v1/packs/{name}/-/{version}.json</code> <span class="note">version manifest</span></li>
+      <li><code>/v1/packs/{name}/-/{version}.tgz</code> <span class="note">signed tarball</span></li>
+      <li><code>/v1/packs/{name}/-/{version}.sig</code> <span class="note">Ed25519 signature</span></li>
+    </ul>
+    <p>Pack schemas declared with a <code>$id</code> URL of the form <code>https://packs.openwop.dev/{name}/{version}/&lt;schema&gt;.json</code> resolve to the schema content extracted from the signed tarball. The tarball is canonical; the mirrored URL is a derived view — consumers wanting cryptographic integrity should verify against the tarball (see <a href="https://openwop.dev/spec/v1/node-packs.md">node-packs.md §"Schema $id resolution"</a>).</p>
+  </section>
+
+  <section id="publish">
+    <h2>Publishing a pack</h2>
+    <p>Submissions land via maintainer pull request — write API is intentionally not exposed. Build the pack, sign the tarball with your private key, commit alongside the manifest, open a PR. CI validates JSON parsing, sha256 integrity, signature presence, and (in <code>verified</code> mode) signature correctness before merge. The deploy ships on merge to <code>main</code>.</p>
+    <p>Detailed flow: <a href="https://github.com/openwop/openwop/tree/main/registry">registry/README.md</a>.</p>
+  </section>
+
+  <section id="namespaces">
+    <h2>Namespaces</h2>
+    <ul>
+      <li><code>core.*</code> — reserved for the openwop working group; spec-canonical packs only.</li>
+      <li><code>vendor.&lt;org&gt;.*</code> — under control of a specific vendor organization.</li>
+      <li><code>community.&lt;author&gt;.*</code> — open-publish; first-claim wins per name.</li>
+    </ul>
+    <p><code>private.*</code> and <code>local.*</code> namespaces MUST NOT appear in this registry; they're for host-internal and in-repo packs respectively.</p>
+  </section>
+
+  <footer>
+    Generated 2026-05-11T02:45:52.556Z · <a href="https://openwop.dev/">openwop.dev</a> · <a href="https://github.com/openwop/openwop">openwop on GitHub</a>
+  </footer>
+</main>
+</body>
+</html>

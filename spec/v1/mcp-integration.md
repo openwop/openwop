@@ -1,0 +1,140 @@
+# openwop Spec v1 — MCP Integration
+
+> **Status: FINAL v1 (2026-05-05).** Worked example of how OpenWOP and the Model Context Protocol (MCP) compose. Non-normative composition pattern; the §"Trust boundary" rules restate normative invariants from `SECURITY/threat-model-prompt-injection.md` (3 RFC 2119 keywords, all citing pre-existing invariants). Graduated DRAFT → FINAL via RFC 0006. See `auth.md` for the status legend.
+
+---
+
+## TL;DR
+
+**OpenWOP runs the workflow. MCP exposes tools to the LLM nodes inside that workflow.** The two protocols compose; they don't compete.
+
+An OpenWOP node that calls an LLM gets its tools from registered MCP servers. The LLM, when it wants to use a tool, emits a tool-call envelope; the OpenWOP host dispatches that to the MCP server; the MCP server returns a result; the host feeds the result back into the next LLM turn.
+
+```
+[OpenWOP host] ── runs ──> [Workflow]
+                         │
+                         │  per node:
+                         ▼
+                       [LLM node]
+                         │
+                         │  LLM may emit tool-call envelopes
+                         ▼
+                       [OpenWOP host's MCP client] ── calls ──> [MCP server]
+                                                              │ (e.g. file system, search,
+                                                              │  vector DB, host-vendor tools)
+                                                              ▼
+                                                            [Tool result]
+                         ◄───── result ───────────────────────┘
+                         │
+                         ▼
+                       [Next LLM turn]
+```
+
+---
+
+## Why this composition
+
+openwop standardizes the **execution semantics**: what does it mean to "run" a workflow, "interrupt" it, "stream" its events, "replay" it from the event log? openwop doesn't prescribe what tools an LLM has access to.
+
+MCP standardizes the **tool/resource access**: how does an LLM-app discover and invoke tools, read resources, fetch prompts? MCP doesn't prescribe what runs the LLM-app or what to do with multi-step state.
+
+The two layer naturally:
+
+| Layer | Owner | Concerns |
+|---|---|---|
+| Workflow execution + state | openwop | Run lifecycle, events, interrupts, replay, observability, conformance |
+| Tool/resource access | MCP | Tool catalog, schema, invocation, result shape |
+
+An OpenWOP host announces MCP-compatibility via `/.well-known/openwop` — either at the top-level `mcp` slot or under a vendor namespace like `<vendor>.mcp`. Both are host-implementation-defined; not normative openwop fields. The discovery body itself is the capabilities object (there is no `capabilities` envelope — `replay`, `secrets`, `extensions`, etc. all live at the top level). Workflow authors who depend on MCP tools select hosts that advertise the capability.
+
+---
+
+## Concrete example
+
+A workflow that searches the web and summarizes the results:
+
+```yaml
+# Conceptual workflow definition
+nodes:
+  - id: search
+    typeId: core.ai.callPrompt
+    config:
+      systemPrompt: "Search the web for the user's query and summarize."
+      mcpServers: ["web-search"]    # host-extension field
+  - id: summarize
+    typeId: core.noop
+edges:
+  - from: search
+    to: summarize
+```
+
+When this runs:
+
+1. **OpenWOP host** dispatches the `search` node.
+2. The node invokes the LLM with the system prompt + the user input from `inputs.query`.
+3. **LLM emits a tool-call envelope** asking for the `web-search.search` tool.
+4. OpenWOP host's MCP client connects to the `web-search` MCP server, invokes the `search(query)` tool.
+5. **MCP server** returns search results.
+6. OpenWOP host feeds the result back into the LLM as the next turn's input.
+7. LLM returns its summary as a workflow envelope (`summary.create` or similar).
+8. OpenWOP host stores the summary as an artifact, advances to the `summarize` node.
+
+The LLM's tool-call envelope follows MCP's tool-call shape; the `summary.create` envelope follows openwop's envelope vocabulary. Each side owns its layer.
+
+---
+
+## Trust boundary
+
+A registered MCP server is **trusted to behave per its manifest** (per `SECURITY/threat-model-node-packs.md` §"Sandbox execution" — the same trust model applies). A compromised MCP server can:
+
+- Return malicious content that prompt-injects the LLM.
+- Exfiltrate workflow inputs by returning them in the next tool result.
+- Refuse to respect tool-allowlist restrictions.
+
+openwop's response to these risks (per `SECURITY/threat-model-prompt-injection.md`):
+
+- MCP tool responses MUST be wrapped in `<UNTRUSTED tool="...">` markers in the next LLM turn (`prompt-injection-mcp-marker` invariant).
+- MCP tool responses MUST NOT advance HITL approval gates (`prompt-injection-mcp-no-approval` invariant).
+- LLM-emitted tool-call envelopes MUST be validated against the workflow's declared tool allowlist (`prompt-injection-tool-allowlist` invariant).
+
+These invariants are enforced by the OpenWOP host; the MCP protocol doesn't have to know about them.
+
+---
+
+## Conformance + interop
+
+An OpenWOP host that supports MCP advertises the capability and (per the host's choice) lists supported MCP servers. An OpenWOP client that depends on MCP looks at the discovery payload and confirms the host can execute the workflow.
+
+**Interop today:**
+
+- The **in-memory reference host** does NOT support MCP — its `core.noop` and `core.delay` nodes don't invoke LLMs at all. A workflow that requires MCP tools fails with `unsupported_node_type` against the in-memory host.
+- A **third-party host** can implement MCP-compatibility independently; the openwop wire contract is unaffected.
+
+The v1.0 conformance baseline includes `mcp-discoverability.test.ts`, which asserts the shape of any advertised MCP capability: `{supported: boolean, serverUrls: string[]}`. Hosts that don't advertise MCP skip-equivalent. The test accepts both the standard top-level `mcp` slot and vendor-namespaced slots like `<vendor>.mcp` (read from the discovery body root, since there is no `capabilities` envelope). A future conformance scenario (`mcp-tool-roundtrip.test.ts`, not yet in the suite) would extend this to verify the tool-call round-trip works against any conforming host.
+
+---
+
+## What openwop does NOT specify about MCP
+
+- **Which MCP servers to load.** Host-implementation choice. Some hosts ship a curated set; some allow operator config.
+- **MCP transport mechanics.** MCP itself is documented at `https://modelcontextprotocol.io`; openwop doesn't re-specify it.
+- **Tool-discovery format.** MCP defines tool schemas; openwop doesn't override.
+- **Result-redaction rules.** Hosts apply their redaction harness to MCP results before persisting them in event payloads (per `SECURITY/threat-model-secret-leakage.md`); the harness shape is host-defined.
+
+---
+
+## Future work
+
+- A vendor-neutral way for a host to advertise its supported MCP servers in `/.well-known/openwop`. Currently `capabilities.mcp` is host-implementation-defined; an additive field would let clients query before sending workflows.
+- A conformance scenario that drives an MCP round-trip without depending on a specific MCP server, using a synthetic MCP-server fixture.
+- A worked node-pack example showing an LLM-using-tools node that integrates MCP.
+
+---
+
+## See also
+
+- `spec/v1/positioning.md` — why MCP is complementary, not competing.
+- `spec/v1/host-extensions.md` — what's in the openwop wire contract vs what's a host extension.
+- `SECURITY/threat-model-prompt-injection.md` — invariants on MCP tool responses.
+- `SECURITY/threat-model-node-packs.md` — sandbox + trust model that MCP servers fit into.
+- Model Context Protocol: https://modelcontextprotocol.io — the canonical MCP source.

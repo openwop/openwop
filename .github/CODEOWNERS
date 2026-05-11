@@ -1,0 +1,30 @@
+# openwop CODEOWNERS
+#
+# Default review for all paths goes to the current maintainer group.
+# Per-area reviewers can be added here as the project meets the working-group
+# thresholds in GOVERNANCE.md.
+
+# Default owner — every path requires maintainer review.
+* @davidscotttufts
+
+# Conformance scenarios — protocol compliance is the highest-stakes review
+# surface.
+/conformance/src/scenarios/                       @davidscotttufts
+/conformance/src/lib/                             @davidscotttufts
+
+# Spec corpus — normative content; same review bar as conformance.
+/spec/v1/                                         @davidscotttufts
+/api/                                             @davidscotttufts
+/schemas/                                         @davidscotttufts
+
+# Governance + maintainer set — a maintainer changing these owns the
+# review trail of the change. Lead maintainer recuses if the change
+# affects their own listing.
+/MAINTAINERS.md                                   @davidscotttufts
+/GOVERNANCE.md                                    @davidscotttufts
+/ROADMAP.md                                       @davidscotttufts
+/COMPATIBILITY.md                                 @davidscotttufts
+/.github/CODEOWNERS                               @davidscotttufts
+
+# RFCs — process-defined; lead maintainer reviews until quorum exists.
+/RFCS/                                            @davidscotttufts

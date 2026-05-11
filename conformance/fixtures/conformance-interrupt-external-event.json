@@ -1,0 +1,33 @@
+{
+  "id": "conformance-interrupt-external-event",
+  "name": "Conformance: Interrupt — External Event",
+  "version": "1.0",
+  "description": "External-event interrupt fixture for the openwop-interrupt-external-event profile (interrupt-profiles.md). Suspends waiting for an external system to POST to /v1/interrupts/{token} with a correlation payload matching {orderId, status}. The suite verifies (a) the suspend persists a signed callback token, (b) a matching external POST resumes the run with the event body in the resume value, and (c) a mismatched correlation payload returns 422 without resuming. Conformance scenario: interrupt-external-event-correlation.test.ts.",
+  "nodes": [
+    {
+      "id": "wait-for-external",
+      "typeId": "core.interrupt",
+      "name": "Wait For External Event",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "kind": "external-event",
+        "data": {
+          "eventType": "conformance.external.completed",
+          "correlation": {
+            "orderId": "fixture-order-1",
+            "status": "completed"
+          }
+        },
+        "timeoutMs": 60000
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "hitl", "interrupt-profile", "external-event"] },
+  "settings": { "timeout": 0 }
+}

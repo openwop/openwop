@@ -1,0 +1,25 @@
+# Developer Certificate of Origin (DCO) — bot config.
+#
+# openwop requires every commit on a pull request to carry a `Signed-off-by:`
+# trailer matching the commit author's name + email. This is the lightweight
+# alternative to a CLA: contributors assert (per https://developercertificate.org/)
+# that they have the right to submit the work under the project's license.
+#
+# How contributors comply:
+#   git commit -s -m "your message"        # adds Signed-off-by automatically
+#   git commit --amend -s --no-edit        # add to an existing commit
+#   git rebase --signoff -i HEAD~3         # add to the last 3 commits
+#
+# The DCO check is a required status on `main` per GitHub branch protection.
+# A failing DCO check is the only "fix-forward" the maintainer set explicitly
+# allows: the contributor amends + force-pushes; the maintainer re-runs.
+#
+# Bot: https://github.com/marketplace/dco
+# Source: https://github.com/dcoapp/app
+
+require:
+  members: false   # apply DCO to maintainers + reviewers too, not just outside contributors
+
+allowRemediationCommits:
+  individual: true # allow a single fix-up commit to add Signed-off-by retroactively
+  thirdParty: false

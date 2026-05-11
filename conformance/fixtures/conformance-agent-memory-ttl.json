@@ -1,0 +1,31 @@
+{
+  "id": "conformance-agent-memory-ttl",
+  "name": "Conformance: Agent Memory TTL Expiry",
+  "version": "1.0",
+  "description": "Phase 3. Writes two memory entries — one with `expiresAt` in the past, one in the future — then lists. The result MUST contain only the future-dated entry. List result lands in `memoryList` variable. See agentMemoryTtlExpiry.test.ts.",
+  "nodes": [
+    {
+      "id": "memory-ttl-probe",
+      "typeId": "core.identity",
+      "name": "Memory TTL Probe",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "memoryAction": "ttl-probe"
+      },
+      "inputs": {},
+      "agent": {
+        "agentId": "core.conformance.ttl-agent",
+        "memoryRef": "conformance/agent-memory-ttl"
+      }
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "memoryList", "type": "array" }
+  ],
+  "metadata": { "tags": ["conformance", "multi-agent", "phase-3", "memory", "ttl"] },
+  "settings": { "timeout": 10000 }
+}

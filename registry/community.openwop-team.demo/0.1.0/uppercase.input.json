@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/community.openwop-team.demo/0.1.0/uppercase.input.json",
+  "title": "UppercaseNodeInput",
+  "description": "Input for community.openwop-team.demo.uppercase.",
+  "type": "object",
+  "required": ["text"],
+  "properties": {
+    "text": {
+      "type": "string",
+      "description": "Source string. Locale-aware uppercasing — uses the runtime's default locale (typically en-US). Multi-byte / non-ASCII characters round-trip via JavaScript's String.prototype.toUpperCase()."
+    }
+  },
+  "additionalProperties": false
+}

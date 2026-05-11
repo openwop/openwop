@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or discussion
+    url: https://github.com/openwop/openwop/discussions
+    about: Open-ended questions, design discussions, or RFC drafts.
+  - name: Security disclosure
+    url: https://github.com/openwop/openwop/blob/main/SECURITY.md
+    about: Coordinated disclosure for vulnerabilities. Do not file as a public issue.

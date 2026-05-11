@@ -1,0 +1,79 @@
+{
+  "name": "core.openwop.examples",
+  "version": "1.0.0",
+  "description": "Spec-canonical examples pack \u2014 three minimal nodes (echo, coin-flip, delay-with-progress) that exercise the core node-pack contract end-to-end. Zero npm deps; runs on any Node 20+ host advertising the openwop-node-packs profile. See docs/PACKS-MVP-PLAN.md.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.examples",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "core",
+    "examples",
+    "reference",
+    "noop"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "nodes": [
+    {
+      "typeId": "core.openwop.examples.echo",
+      "version": "1.0.0",
+      "label": "Echo",
+      "description": "Returns the input verbatim. Pure / replay-safe / no side effects. Useful as a workflow smoke node and as a sentinel in conformance fixtures.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/echo.config.json",
+      "inputSchemaRef": "schemas/echo.input.json",
+      "outputSchemaRef": "schemas/echo.output.json"
+    },
+    {
+      "typeId": "core.openwop.examples.coin-flip",
+      "version": "1.0.0",
+      "label": "Coin Flip",
+      "description": "Deterministic pseudo-random choice from a seed input. Returns 'heads' or 'tails'. Pure / replay-safe \u2014 same seed always returns same result. Demonstrates the cacheable + replay-determinism contracts.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/coin-flip.config.json",
+      "inputSchemaRef": "schemas/coin-flip.input.json",
+      "outputSchemaRef": "schemas/coin-flip.output.json"
+    },
+    {
+      "typeId": "core.openwop.examples.delay-with-progress",
+      "version": "1.0.0",
+      "label": "Delay With Progress",
+      "description": "Sleeps for `config.delayMs` milliseconds, streaming a node.progress event every `config.tickMs` (default 100). Demonstrates the streamable capability + bounded duration. Replay-safe \u2014 replays return the cached completed state without re-sleeping.",
+      "category": "control",
+      "role": "streaming-output",
+      "capabilities": [
+        "streamable"
+      ],
+      "configSchemaRef": "schemas/delay-with-progress.config.json",
+      "inputSchemaRef": "schemas/delay-with-progress.input.json",
+      "outputSchemaRef": "schemas/delay-with-progress.output.json"
+    }
+  ],
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "publishedAt": "2026-05-11T00:00:00Z",
+  "tarballUrl": "/v1/packs/core.openwop.examples/-/1.0.0.tgz",
+  "signatureUrl": "/v1/packs/core.openwop.examples/-/1.0.0.sig",
+  "signing": {
+    "method": "ed25519",
+    "keyId": "openwop-registry-root",
+    "publicKeyUrl": "/keys/openwop-registry-root.pub"
+  },
+  "integrity": "sha256-51hpp3dgCvSR72r2bB1JTIyRwKsZ54rQTBouOOhPKso=",
+  "deprecated": false,
+  "yanked": false
+}

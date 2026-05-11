@@ -1,0 +1,192 @@
+# openwop spec-corpus publishing workflow.
+#
+# Public-repo variant. Layout in this repo: SDKs at sdk/{typescript,python,go}/,
+# conformance suite at conformance/.
+#
+# Triggers — see PUBLISHING.md §"Publication policy" for the documented
+# release-type matrix this implements:
+#
+#   Tag pattern              Triggers              Use case
+#   -----------------        ----------------      -----------------------
+#   v*                       all 4 publish jobs    Corpus-aligned release
+#                                                  (spec patch/minor/major)
+#   openwop/v*                   publish-ts-client     SDK-only patch (TS)
+#   openwop-conformance/v*       publish-conformance   Scenario addition / suite
+#                                                  bug fix
+#   openwop-client/v*            publish-python        SDK-only patch (Python)
+#   sdk/go/v*                publish-go            SDK-only patch (Go) +
+#                                                  doubles as the Go subdir
+#                                                  module-discovery tag
+#                                                  required by proxy.golang.org
+#
+# Push the most specific tag for the change. Per-package tags keep
+# unrelated package versions stable (no phantom bumps).
+#
+# See PUBLISHING.md for the full pre-publish checklist, release-manager
+# process, and rollback procedure.
+
+name: openwop — Publish
+
+on:
+  push:
+    tags:
+      - 'v*'
+      - 'openwop/v*'
+      - 'openwop-conformance/v*'
+      - 'openwop-client/v*'
+      - 'sdk/go/v*'
+
+jobs:
+  # H2 from code review: validate the tag matches a known SemVer pattern
+  # before any publish job runs. Without this, `startsWith(github.ref,
+  # 'refs/tags/v')` would fire on `v-anything-here` (including malformed
+  # tags pushed by mistake or by a future collaborator), triggering all
+  # publish jobs unintentionally. This step exits non-zero if the tag
+  # doesn't conform, blocking the rest of the workflow.
+  validate-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate tag format
+        run: |
+          tag="${GITHUB_REF#refs/tags/}"
+          case "$tag" in
+            v[0-9]*.[0-9]*.[0-9]*|\
+            v[0-9]*.[0-9]*.[0-9]*-*|\
+            openwop/v[0-9]*.[0-9]*.[0-9]*|\
+            openwop/v[0-9]*.[0-9]*.[0-9]*-*|\
+            openwop-conformance/v[0-9]*.[0-9]*.[0-9]*|\
+            openwop-conformance/v[0-9]*.[0-9]*.[0-9]*-*|\
+            openwop-client/v[0-9]*.[0-9]*.[0-9]*|\
+            openwop-client/v[0-9]*.[0-9]*.[0-9]*-*|\
+            sdk/go/v[0-9]*.[0-9]*.[0-9]*|\
+            sdk/go/v[0-9]*.[0-9]*.[0-9]*-*)
+              echo "tag '$tag' matches expected SemVer pattern"
+              ;;
+            *)
+              echo "::error::tag '$tag' does not match any expected SemVer pattern"
+              echo "Expected one of:"
+              echo "  vX.Y.Z[-prerelease]                       (corpus-aligned release)"
+              echo "  openwop/vX.Y.Z[-prerelease]                   (TS SDK only)"
+              echo "  openwop-conformance/vX.Y.Z[-prerelease]       (conformance only)"
+              echo "  openwop-client/vX.Y.Z[-prerelease]            (Python SDK only)"
+              echo "  sdk/go/vX.Y.Z[-prerelease]                (Go SDK only)"
+              exit 1
+              ;;
+          esac
+
+  preflight:
+    needs: validate-tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      - name: Spec corpus consistency check
+        run: npm run openwop:check
+
+  publish-ts-client:
+    needs: preflight
+    if: |
+      startsWith(github.ref, 'refs/tags/v') ||
+      startsWith(github.ref, 'refs/tags/openwop/v')
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+      # OIDC trusted publishers require npm 11.5.1+; Node 20 ships 10.8.2.
+      - run: npm install -g npm@latest
+      - run: cd sdk/typescript && npm ci
+      - run: cd sdk/typescript && npm run build
+      # OIDC-authenticated publish — npm 11.5.1+ accepts the OIDC token from
+      # `permissions: id-token: write` automatically. No NODE_AUTH_TOKEN needed.
+      # Trusted-publisher config: npmjs.com/package/@openwop/openwop/access.
+      - run: cd sdk/typescript && npm publish --access public --provenance
+
+  publish-conformance:
+    needs: preflight
+    if: |
+      startsWith(github.ref, 'refs/tags/v') ||
+      startsWith(github.ref, 'refs/tags/openwop-conformance/v')
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+      # Upgrade npm to 11.5.1+ for OIDC trusted-publisher support. Node 20
+      # ships npm 10.8.2.
+      - run: npm install -g npm@latest
+      - run: cd conformance && npm ci
+      - run: cd conformance && npm run build:cli
+      # OIDC-authenticated publish — see publish-ts-client comment above.
+      # Trusted-publisher config: npmjs.com/package/@openwop/openwop-conformance/access.
+      - run: cd conformance && npm publish --access public --provenance
+
+  publish-python:
+    needs: preflight
+    if: |
+      startsWith(github.ref, 'refs/tags/v') ||
+      startsWith(github.ref, 'refs/tags/openwop-client/v')
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install --upgrade build
+      - run: cd sdk/python && python -m build
+      # OIDC-authenticated publish via pypa's official action. The action
+      # auto-detects the OIDC token from `permissions: id-token: write` and
+      # runs its own artifact metadata validation before upload (replaces
+      # the explicit `twine check` step). Trusted-publisher config:
+      # pypi.org/manage/project/openwop-client/settings/publishing/.
+      - name: Publish to PyPI via OIDC trusted publisher
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: sdk/python/dist
+
+  publish-go:
+    needs: preflight
+    if: |
+      startsWith(github.ref, 'refs/tags/v') ||
+      startsWith(github.ref, 'refs/tags/sdk/go/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      # Go modules are tag-based. proxy.golang.org indexes from the tag
+      # automatically; this job's only purpose is to confirm vet+test
+      # pass against the tagged source so consumers don't pull broken code.
+      - run: cd sdk/go && go vet ./...
+      - run: cd sdk/go && go test ./...
+      - name: Verify Go module discoverability
+        run: |
+          echo "Go module is tag-driven via ${GITHUB_REF}."
+          echo "Consumers can: go get github.com/openwop/openwop/sdk/go@${VERSION}"
+          echo "Cache warm-up may take ~5min for proxy.golang.org."
+        env:
+          # github.ref_name is the bare tag (e.g. 'sdk/go/v1.0.0' or 'v1.0.0').
+          # Strip any subdir prefix so `go get @<VERSION>` looks right in logs.
+          VERSION: ${{ github.ref_name }}

@@ -1,0 +1,63 @@
+name: openwop Spec
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'CODE_OF_CONDUCT.md'
+      - 'GOVERNANCE.md'
+      - 'ROADMAP.md'
+      - 'NOTICE'
+      - 'LICENSE'
+      - 'LICENSE-DOCS'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - 'CODE_OF_CONDUCT.md'
+      - 'GOVERNANCE.md'
+      - 'ROADMAP.md'
+      - 'NOTICE'
+      - 'LICENSE'
+      - 'LICENSE-DOCS'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # Validates the spec corpus is internally consistent: schemas compile,
+  # OpenAPI/AsyncAPI lint, fixtures validate, prose docs carry status tags.
+  # Server-free — runs without any deployed openwop server.
+  validate:
+    name: Validate spec corpus (server-free)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Full server-free release gate
+        run: npm run openwop:check

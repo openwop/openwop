@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.kanban/1.0.0/board.create.output.json",
+  "title": "BoardCreateOutput",
+  "type": "object",
+  "required": ["boardId", "createdAt"],
+  "properties": {
+    "boardId": { "type": "string", "minLength": 1 },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "idempotencyKey": { "type": "string" }
+  },
+  "additionalProperties": false
+}

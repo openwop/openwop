@@ -1,0 +1,33 @@
+{
+  "id": "conformance-delay",
+  "name": "Conformance: Delay",
+  "version": "1.0",
+  "description": "Sleeps for input.delayMs ms before completing. Verifies in-flight status visibility (poll + SSE).",
+  "nodes": [
+    {
+      "id": "wait",
+      "typeId": "core.delay",
+      "name": "Wait",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {
+        "delayMs": { "type": "variable", "variableName": "delayMs" }
+      }
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    {
+      "name": "delayMs",
+      "type": "number",
+      "description": "Milliseconds to sleep. Bounded 0..30000.",
+      "required": true,
+      "defaultValue": 1000
+    }
+  ],
+  "metadata": { "tags": ["conformance"] },
+  "settings": { "timeout": 60000 }
+}

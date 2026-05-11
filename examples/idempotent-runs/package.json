@@ -1,0 +1,14 @@
+{
+  "name": "@openwop/openwop-example-idempotent-runs",
+  "version": "1.0.0",
+  "private": true,
+  "description": "OpenWOP idempotent run creation example: send POST /v1/runs three times with the same Idempotency-Key and demonstrate that exactly one run is created.",
+  "type": "module",
+  "scripts": {
+    "start": "node idempotent-runs.mjs",
+    "test": "node idempotent-runs.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "conformance-version-fold",
+  "name": "Conformance: Version Fold",
+  "version": "1.0",
+  "description": "Single noop node used by the conformance suite to exercise forward-compat fold-best-effort across the engine-version interop matrix. Test driver issues the same POST /v1/runs three times with X-Force-Engine-Version set to (min, current, max) per Capabilities.testing.forceEngineVersionRange. Closes F5.",
+  "nodes": [
+    {
+      "id": "noop",
+      "typeId": "core.noop",
+      "name": "Noop",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "version-negotiation"] },
+  "settings": { "timeout": 10000 }
+}

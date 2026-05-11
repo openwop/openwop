@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/community.openwop-team.demo/0.1.0/uppercase.output.json",
+  "title": "UppercaseNodeOutput",
+  "description": "Output for community.openwop-team.demo.uppercase.",
+  "type": "object",
+  "required": ["text"],
+  "properties": {
+    "text": {
+      "type": "string",
+      "description": "Uppercased reflection of the input."
+    }
+  },
+  "additionalProperties": false
+}

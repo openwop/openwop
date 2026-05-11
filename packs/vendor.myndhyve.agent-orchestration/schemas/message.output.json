@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.agent-orchestration/1.0.0/message.output.json",
+  "title": "AgentMessageOutput",
+  "type": "object",
+  "required": ["messageId", "sentAt"],
+  "properties": {
+    "messageId": { "type": "string", "description": "Stable message id used by RFC 0007 B2.3 reducer for idempotent fold + dedup." },
+    "sentAt": { "type": "string", "format": "date-time" },
+    "deliveredTo": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Recipient agent-instance-ids. For direct messages, length 1; for groupId broadcasts, all group members."
+    }
+  },
+  "additionalProperties": false
+}

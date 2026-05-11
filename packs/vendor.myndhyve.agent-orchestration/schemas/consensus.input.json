@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.agent-orchestration/1.0.0/consensus.input.json",
+  "title": "AgentConsensusInput",
+  "type": "object",
+  "required": ["question"],
+  "properties": {
+    "question": { "type": "string", "minLength": 1 },
+    "context": { "type": "object", "additionalProperties": true }
+  },
+  "additionalProperties": false
+}

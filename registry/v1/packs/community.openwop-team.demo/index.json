@@ -1,0 +1,25 @@
+{
+  "name": "community.openwop-team.demo",
+  "description": "First community-namespace demo pack. Mixed pack — one trivial node (`uppercase`) plus one agent (`greeter`) — exercising both extension paths in a single tarball under the open-publish `community.*` tier. Manual Ed25519 signed (not Sigstore) to demonstrate the non-OIDC publishing path documented in registry-operations.md §Step 2. MIT-licensed for SPDX-diversity with the Apache-2.0 core packs.",
+  "author": "OpenWOP Team (community contributor)",
+  "license": "MIT",
+  "homepage": "https://openwop.dev/packs/community.openwop-team.demo",
+  "repository": "https://github.com/openwop/openwop",
+  "tags": [],
+  "versions": [
+    {
+      "version": "0.1.0",
+      "publishedAt": "2026-05-11T00:00:00Z",
+      "manifestUrl": "/v1/packs/community.openwop-team.demo/-/0.1.0.json",
+      "tarballUrl": "/v1/packs/community.openwop-team.demo/-/0.1.0.tgz",
+      "signatureUrl": "/v1/packs/community.openwop-team.demo/-/0.1.0.sig",
+      "signingMethod": "ed25519",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-fAyKSZAE0mnjygT6wj7gApP0ZqJHeQg2cxDMOfLwcrw=",
+      "deprecated": false,
+      "yanked": false
+    }
+  ],
+  "latest": "0.1.0",
+  "deprecated": false
+}

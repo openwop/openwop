@@ -1,0 +1,34 @@
+{
+  "registryVersion": "1.0.0",
+  "generatedAt": "2026-05-10T00:00:00Z",
+  "packCount": 3,
+  "packs": [
+    {
+      "name": "community.openwop-team.demo",
+      "latestVersion": "0.1.0",
+      "description": "First community-namespace demo pack. Mixed pack — one trivial node (`uppercase`) plus one agent (`greeter`) — exercising both extension paths in a single tarball under the open-publish `community.*` tier. Manual Ed25519 signed (not Sigstore) to demonstrate the non-OIDC publishing path documented in registry-operations.md §Step 2. MIT-licensed for SPDX-diversity with the Apache-2.0 core packs.",
+      "license": "MIT",
+      "tags": [],
+      "deprecated": false,
+      "yanked": false
+    },
+    {
+      "name": "core.openwop.examples",
+      "latestVersion": "1.0.0",
+      "description": "Spec-canonical examples pack — three minimal nodes (echo, coin-flip, delay-with-progress) that exercise the core node-pack contract end-to-end. Zero npm deps; runs on any Node 20+ host advertising the openwop-node-packs profile. See docs/PACKS-MVP-PLAN.md.",
+      "license": "Apache-2.0",
+      "tags": [],
+      "deprecated": false,
+      "yanked": false
+    },
+    {
+      "name": "vendor.openwop.rust-hello",
+      "latestVersion": "1.0.0",
+      "description": "Reference WASM node pack proving RFC 0008 ABI v1 works end-to-end across an independent toolchain. One node type: vendor.openwop.rust-hello.greet.",
+      "license": "Apache-2.0",
+      "tags": [],
+      "deprecated": false,
+      "yanked": false
+    }
+  ]
+}

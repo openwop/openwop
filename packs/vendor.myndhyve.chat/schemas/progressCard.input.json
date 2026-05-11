@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.chat/1.0.0/progressCard.input.json",
+  "title": "ChatProgressCardInput",
+  "type": "object",
+  "required": ["currentStageId"],
+  "properties": {
+    "currentStageId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Which stage from config.stages is currently active."
+    },
+    "details": { "type": "string", "description": "Optional sub-title / details for the current stage." }
+  },
+  "additionalProperties": false
+}

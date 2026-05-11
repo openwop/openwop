@@ -1,0 +1,33 @@
+{
+  "id": "conformance-cancellable",
+  "name": "Conformance: Cancellable",
+  "version": "1.0",
+  "description": "Long-running delay node. Conformance test starts a run, then issues :cancel; expects terminal `cancelled` within 5s.",
+  "nodes": [
+    {
+      "id": "wait",
+      "typeId": "core.delay",
+      "name": "Wait",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {
+        "delayMs": { "type": "variable", "variableName": "delayMs" }
+      }
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    {
+      "name": "delayMs",
+      "type": "number",
+      "description": "Sleep duration (1..60000 ms). Conformance test sets this long enough to issue cancel mid-flight.",
+      "required": true,
+      "defaultValue": 30000
+    }
+  ],
+  "metadata": { "tags": ["conformance"] },
+  "settings": { "timeout": 120000 }
+}

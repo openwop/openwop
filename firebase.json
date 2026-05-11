@@ -1,0 +1,72 @@
+{
+  "hosting": [
+    {
+      "target": "docs",
+      "public": "public",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ]
+    },
+    {
+      "target": "packs",
+      "public": "registry",
+      "cleanUrls": false,
+      "trailingSlash": false,
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**",
+        "**/*.md",
+        "scripts/**"
+      ],
+      "rewrites": [
+        {
+          "source": "/.well-known/openwop-registry",
+          "destination": "/.well-known/openwop-registry.json"
+        }
+      ],
+      "headers": [
+        {
+          "source": "**/*.json",
+          "headers": [
+            { "key": "Content-Type", "value": "application/json; charset=utf-8" },
+            { "key": "Cache-Control", "value": "public, max-age=300, must-revalidate" },
+            { "key": "Access-Control-Allow-Origin", "value": "*" }
+          ]
+        },
+        {
+          "source": "**/*.tgz",
+          "headers": [
+            { "key": "Content-Type", "value": "application/octet-stream" },
+            { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+            { "key": "Access-Control-Allow-Origin", "value": "*" }
+          ]
+        },
+        {
+          "source": "**/*.sig",
+          "headers": [
+            { "key": "Content-Type", "value": "application/octet-stream" },
+            { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+            { "key": "Access-Control-Allow-Origin", "value": "*" }
+          ]
+        },
+        {
+          "source": "**/*.pub",
+          "headers": [
+            { "key": "Content-Type", "value": "application/x-pem-file" },
+            { "key": "Cache-Control", "value": "public, max-age=86400" },
+            { "key": "Access-Control-Allow-Origin", "value": "*" }
+          ]
+        }
+      ]
+    }
+  ]
+}

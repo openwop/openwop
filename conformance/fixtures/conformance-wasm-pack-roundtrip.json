@@ -1,0 +1,25 @@
+{
+  "id": "conformance-wasm-pack-roundtrip",
+  "name": "Conformance: WASM Pack Roundtrip",
+  "version": "1.0",
+  "description": "RFC 0008 fixture. Invokes a single WASM-packaged node (`vendor.openwop.rust-hello.greet`) and asserts the round-trip output. Hosts that don't advertise `capabilities.nodePackRuntimes.wasm.supported: true` skip the wasm-* scenarios. The reference Rust pack at `examples/packs/rust-hello/` provides the node; build it with `cargo build --target wasm32-unknown-unknown --release` before running the suite end-to-end.",
+  "nodes": [
+    {
+      "id": "greet",
+      "typeId": "vendor.openwop.rust-hello.greet",
+      "name": "Greet via WASM",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "name", "type": "string", "defaultValue": "world" }
+  ],
+  "metadata": { "tags": ["conformance", "wasm", "node-pack", "rfc-0008"] },
+  "settings": { "timeout": 0 }
+}

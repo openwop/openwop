@@ -1,0 +1,237 @@
+# openwop Spec v1 — A2A Integration
+
+> **Status: FINAL v1 (2026-05-05).** Worked example of how OpenWOP and the Agent2Agent Protocol (A2A) compose. The composition pattern is non-normative; the state-projection rules in §"State projection" are normative for any host that opts into A2A composition (14 RFC 2119 keywords). Pinned to A2A v1 as published at `https://a2a-protocol.org/latest/specification/`. Graduated DRAFT → FINAL via RFC 0006. See `auth.md` for the status legend. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
+
+---
+
+## TL;DR
+
+**openwop is not in the agent-to-agent message-exchange business.** A2A is. The two protocols compose along orthogonal axes:
+
+- **A2A** standardizes how independent agents discover each other (Agent Cards), exchange Messages and Tasks, and deliver streamed/pushed updates between hosts.
+- **openwop** standardizes what happens *inside* an agent — how a multi-step workflow is declared, run, suspended at HITL gates, replayed, and observed.
+
+An OpenWOP-compliant host can expose itself as an A2A agent with each Workflow advertised as an A2A `AgentSkill`. Each OpenWOP run becomes an A2A `Task`. The two are **deliberately not** redundant: A2A's Task is intentionally an opaque box from the caller's perspective; OpenWOP gives that box internal structure for the host that runs it.
+
+```
+[A2A client] ── sends Message ──> [OpenWOP host (A2A agent)]
+                                    │  AgentSkill = openwop Workflow
+                                    │  Message creates a Task
+                                    ▼
+                                  [openwop run] ── normal lifecycle ──>
+                                    │  events → A2A status updates
+                                    │  interrupts → Task state INPUT_REQUIRED / AUTH_REQUIRED
+                                    │  artifacts → A2A Artifacts
+                                    │  terminal → Task COMPLETED/FAILED/CANCELED
+                                    ▼
+                                  [Task complete]
+                                    │
+                                  ◄───── result ────────
+```
+
+---
+
+## Why this composition
+
+A2A and openwop solve adjacent problems with no functional overlap:
+
+| Layer | Owner | Concerns |
+|---|---|---|
+| Inter-agent discovery + message exchange | A2A | AgentCard, signed identity, Skill catalog, transport binding (REST/JSON-RPC/gRPC), push delivery |
+| Workflow execution + state inside one agent | openwop | Run lifecycle, event log, interrupts, replay, observability, conformance |
+
+A2A's spec deliberately treats the agent's internal execution as opaque — that's the whole point of the abstraction. openwop fills that opacity for hosts that want their internals to be portable, conformance-tested, and replay-debuggable.
+
+You don't have to use both. A2A-only agents work fine without openwop. openwop-only hosts work fine without A2A. The composition is for hosts that want **both** inter-agent interop **and** internal-workflow portability.
+
+---
+
+## State projection: openwop run.status ↔ A2A TaskState
+
+An OpenWOP host that exposes itself via A2A projects each run's `run.status` to A2A's `TaskState`. The mapping is not 1:1 — three drift points are documented below.
+
+openwop `run.status` enum (per `schemas/run-snapshot.schema.json`):
+`pending | running | paused | waiting-approval | waiting-input | completed | failed | cancelled`
+
+A2A `TaskState` enum (per `a2a.proto` lines 187–208, 9 values incl. `UNSPECIFIED`):
+`UNSPECIFIED | SUBMITTED | WORKING | INPUT_REQUIRED | AUTH_REQUIRED | COMPLETED | FAILED | CANCELED | REJECTED`
+
+> **Spelling drift to remember:** openwop uses British `cancelled` (two `l`s). A2A uses American `CANCELED`/`canceled` (one `l`). Hosts that project both ways MUST handle both spellings; this is a wire-format reality, not a bug to fix.
+
+### openwop → A2A (forward projection)
+
+| openwop `run.status` | A2A `TaskState` | Notes |
+|---|---|---|
+| `pending` | `SUBMITTED` | Clean. Run accepted but not yet executing. |
+| `running` | `WORKING` | Clean. |
+| `paused` | `WORKING` ⚠ | **Drift point #1.** A2A has no manual-pause concept. OpenWOP hosts SHOULD project `paused` as `WORKING` and surface the pause condition via a Task message or `metadata` field. Hosts MAY use a vendor extension to carry `paused` literally. |
+| `waiting-approval` | `INPUT_REQUIRED` | Approval-gate suspension. OpenWOP hosts SHOULD set `Task.metadata` with the approval shape (5-action vocabulary per `interrupt.md`) so A2A clients can render the right UI. |
+| `waiting-input` | `INPUT_REQUIRED` | Clarification suspension. Same projection as `waiting-approval`. **Drift point #2 (lossy):** A2A clients receive the same `INPUT_REQUIRED` for both approval and clarification interrupts — the distinction MUST come from `Task.metadata` or a vendor extension. |
+| `completed` | `COMPLETED` | Clean. |
+| `failed` | `FAILED` | Clean. |
+| `cancelled` | `CANCELED` | Clean modulo spelling. |
+
+### A2A → openwop (reverse projection — when OpenWOP host *consumes* an A2A agent)
+
+An OpenWOP host that calls out to an external A2A agent inside a workflow node (`a2a.invoke` or similar host-extension node) projects A2A Task states back into openwop run state for the caller's run. This is the harder direction:
+
+| A2A `TaskState` | openwop `run.status` projection | Notes |
+|---|---|---|
+| `UNSPECIFIED` | `pending` | Best-effort. SHOULD log a warning — the called agent isn't supplying a defined state. |
+| `SUBMITTED` | `pending` | Clean. |
+| `WORKING` | `running` | Clean. |
+| `INPUT_REQUIRED` | `waiting-input` | The called A2A agent is asking the *caller* for input. OpenWOP host SHOULD lift this into the calling run as a `clarification` interrupt with payload from the A2A `Task.message`. |
+| `AUTH_REQUIRED` | — ⚠ | **Drift point #3.** openwop v1 has no `auth-required` interrupt kind. Hosts SHOULD project as `waiting-input` with `metadata.subkind: 'auth'` until a future v1.x adds a normative `auth` interrupt. Filed as candidate v1.x work. |
+| `COMPLETED` | `completed` | Clean. |
+| `FAILED` | `failed` | Clean. |
+| `CANCELED` | `cancelled` | Clean modulo spelling. |
+| `REJECTED` | `failed` ⚠ | **Drift point #4 (lossy).** A2A `REJECTED` means the agent declined to execute the request (e.g., capability mismatch, policy denial). openwop has no `rejected` terminal — projects to `failed` with `reason: 'rejected_by_remote'`. |
+
+---
+
+## Concrete example: OpenWOP host as A2A agent
+
+An OpenWOP host advertises itself via an Agent Card. Each registered Workflow becomes a Skill. Incoming A2A Messages create or extend Tasks; under the hood, each Task is backed by an OpenWOP run.
+
+### 1. AgentCard advertisement
+
+The OpenWOP host serves an Agent Card at the well-known A2A path. Each `AgentSkill` corresponds to an OpenWOP `WorkflowDefinition` that the host hosts:
+
+```jsonc
+{
+  "name": "Example openwop-backed agent",
+  "description": "A workflow orchestrator exposed as an A2A agent.",
+  "version": "1.4.2",
+  "supported_interfaces": [{
+    "url": "https://example.com/a2a/v1",
+    "protocol_binding": "JSONRPC",
+    "protocol_version": "1"
+  }],
+  "capabilities": {
+    "streaming": true,
+    "push_notifications": true
+  },
+  "default_input_modes": ["text"],
+  "default_output_modes": ["text", "json"],
+  "skills": [
+    {
+      "id": "campaign-brief",
+      "name": "Generate marketing campaign brief",
+      "description": "Multi-phase brief generation with HITL approval at phases 4 and 8.",
+      "tags": ["marketing", "approval-gated"],
+      "examples": ["Create a brief for a B2B SaaS launch targeting CFOs."]
+    }
+  ],
+  "security_schemes": { /* per A2A SecurityScheme oneof */ },
+  "signatures": [{ /* RFC 7515 JWS — signs the AgentCard */ }]
+}
+```
+
+The A2A client uses the AgentCard to discover `campaign-brief` and any other workflows the host exposes. The mapping is `AgentSkill.id` ↔ openwop `Workflow.id`. A host MAY filter which workflows it advertises (e.g., only those marked `public: true`).
+
+### 2. Skill invocation = openwop run start
+
+The A2A client sends a Message naming the skill:
+
+```jsonc
+{
+  "message_id": "msg_001",
+  "role": "USER",
+  "parts": [{ "text": "Brief for Acme launch, Q3 2026, B2B SaaS, CFO buyer." }],
+  "context_id": "ctx_abc"
+}
+```
+
+The OpenWOP host's A2A handler calls `POST /v1/runs` against its own openwop API surface (or skips the HTTP hop and invokes the engine directly — implementation detail):
+
+```jsonc
+{
+  "workflowId": "campaign-brief",
+  "inputs": { "prompt": "Brief for Acme launch, Q3 2026, B2B SaaS, CFO buyer." },
+  "tags": ["a2a:msg_001", "a2a:ctx_abc"]
+}
+```
+
+The returned `runId` becomes the A2A `Task.id`. The openwop run's lifecycle drives the A2A Task's state.
+
+### 3. Status updates flow A2A-direction
+
+As the openwop run emits events, the A2A handler projects them to A2A status updates. SSE / push delivery follows A2A's transport rules; the `TaskStatusUpdateEvent` body is composed from the openwop run snapshot:
+
+| openwop event | A2A delivery |
+|---|---|
+| `run.started` | `TaskStatusUpdateEvent { status: WORKING }` |
+| `node.completed` (artifact produced) | `TaskArtifactUpdateEvent { artifact: <projected from openwop artifact> }` |
+| `approval.requested` | `TaskStatusUpdateEvent { status: INPUT_REQUIRED, metadata: { openwop.interrupt: { kind: 'approval', ... } } }` |
+| `clarification.requested` | `TaskStatusUpdateEvent { status: INPUT_REQUIRED, metadata: { openwop.interrupt: { kind: 'clarification', ... } } }` |
+| `run.completed` | `TaskStatusUpdateEvent { status: COMPLETED }` + final artifact list |
+| `run.failed` | `TaskStatusUpdateEvent { status: FAILED, metadata: { openwop.error: { code, message } } }` |
+| `run.cancelled` | `TaskStatusUpdateEvent { status: CANCELED }` |
+
+The `metadata.openwop.*` namespace is a host extension under A2A — A2A clients that don't understand openwop's interrupt vocabulary can still render `INPUT_REQUIRED`; clients that *do* understand it get the richer payload.
+
+### 4. Resume = A2A Message reply
+
+When the run hits `waiting-approval`, the A2A Task is in `INPUT_REQUIRED`. The A2A client resumes by sending a Message back into the same Task:
+
+```jsonc
+{
+  "message_id": "msg_002",
+  "task_id": "<runId>",
+  "role": "USER",
+  "parts": [{ "data": { "approve": true, "feedback": "looks good" } }]
+}
+```
+
+The OpenWOP host translates this to the engine's resume call (per `interrupt.md` — 5-action approval vocabulary). The run continues; the next status update flows back to the A2A client.
+
+---
+
+## Trust boundary
+
+When an OpenWOP host invokes an external A2A agent inside a workflow node, the same trust posture applies as MCP tool calls (per `mcp-integration.md` §"Trust boundary"):
+
+- A2A agent responses MUST be wrapped in `<UNTRUSTED agent="...">` markers if fed back into LLM nodes (`prompt-injection-mcp-marker` invariant generalizes to A2A — same threat model).
+- A2A Task results MUST NOT directly advance HITL approval gates (`prompt-injection-mcp-no-approval` invariant generalizes — an external agent cannot vote on the calling host's approvals).
+- A2A AgentCard signatures (RFC 7515 JWS) SHOULD be verified before invoking; unsigned cards are MAY accept but SHOULD log a warning.
+
+In the reverse direction (OpenWOP host as A2A agent), the host's existing scope/auth/redaction harness applies to all incoming A2A Messages exactly as it does to incoming openwop REST requests — there is no separate A2A-specific trust posture. The A2A `SecurityScheme` advertised in the AgentCard maps to the OpenWOP host's existing API key / OAuth / mTLS configuration.
+
+---
+
+## What openwop does NOT specify about A2A
+
+- **A2A wire format details.** A2A is canonically defined at `https://a2a-protocol.org/latest/specification/` and `https://github.com/a2aproject/A2A`; openwop doesn't re-specify it.
+- **The `metadata.openwop.*` extension shape.** Host-implementation choice. A future spec annex MAY codify a recommended shape if multiple hosts converge on a pattern.
+- **Push notification HMAC details.** A2A v1 spec §4.3.3 (prose-only) defines the push delivery contract; openwop defers to it. openwop's own webhook spec (`webhooks.md`) is independent.
+- **AgentCard signing.** openwop MAY require signed cards in `a2a.invoke` node config (host-specific); it doesn't mandate the signing algorithm.
+- **Error taxonomy mapping.** A2A `VersionNotSupportedError` and similar protocol-level errors stay inside the A2A layer; they don't surface as openwop `RunEvent` errors. openwop errors stay inside the run; they project to A2A `FAILED` with `metadata.openwop.error`.
+- **AUTH_REQUIRED interrupt.** openwop v1 has no native `auth-required` interrupt kind. Hosts that consume A2A agents in `AUTH_REQUIRED` state SHOULD project to `waiting-input` with `metadata.subkind: 'auth'` until a future v1.x adds it.
+
+---
+
+## Conformance + interop
+
+An OpenWOP host that supports A2A composition advertises the capability via `/.well-known/openwop`. A2A-bridge scenarios are NOT included in the v1.0 conformance baseline — adding them is filed as a candidate v1.x work item. The current shape probe (analogous to `mcp-discoverability.test.ts`) would assert that any advertised A2A capability follows a published shape (`{supported: boolean, agentCardUrl: string}` is one candidate).
+
+A future conformance scenario (`a2a-task-roundtrip.test.ts`, not yet in the suite) would use a synthetic A2A-client fixture to drive a Task creation against an OpenWOP host, observe the projected status updates, resolve an `INPUT_REQUIRED` interrupt via Message reply, and verify terminal `COMPLETED`. The synthetic-client approach mirrors how MCP integration is being designed to test without depending on a specific MCP server.
+
+---
+
+## Future work
+
+- Codify a recommended `metadata.openwop.*` shape so A2A clients can render openwop-interrupt-rich payloads consistently across hosts.
+- Add an `a2a` capability slot to `/.well-known/openwop` discovery.
+- Specify a normative `auth-required` interrupt kind in v1.x to remove drift point #3.
+- Ship `a2a-task-roundtrip.test.ts` in a future conformance minor.
+- Worked node-pack example: `examples/a2a-bridge/` showing an OpenWOP node that invokes an external A2A agent. Filed as a candidate post-v1 example.
+
+---
+
+## See also
+
+- `spec/v1/positioning.md` — why A2A is complementary, not competing.
+- `spec/v1/mcp-integration.md` — the parallel composition doc for MCP.
+- `spec/v1/host-extensions.md` — what's in the openwop wire contract vs what's a host extension. The `metadata.openwop.*` namespace under A2A is a host extension by this taxonomy.
+- A2A spec: `https://a2a-protocol.org/latest/specification/` — canonical source.
+- A2A canonical `.proto`: `https://github.com/a2aproject/A2A/blob/main/specification/a2a.proto` — the spec calls this "the single authoritative normative definition."

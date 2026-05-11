@@ -1,0 +1,26 @@
+{
+  "id": "conformance-conversation-vs-clarification",
+  "name": "Conformance: Conversation vs Clarification Disambiguation",
+  "version": "1.0",
+  "description": "Phase 4. Drives a `core.conversationGate` exchange and asserts the event log contains `conversation.*` event types — NOT `clarification.*`. Host MUST surface conversation suspends through the conversation event family, not the legacy clarification path. See conversationVsLegacySuspend.test.ts.",
+  "nodes": [
+    {
+      "id": "convo",
+      "typeId": "core.conversationGate",
+      "name": "Conversation Gate (single exchange)",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "lifecycle": "open-exchange-close",
+        "mockAutoResume": true
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "multi-agent", "phase-4", "conversation", "disambiguation"] },
+  "settings": { "timeout": 15000 }
+}

@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/conversation-turn.schema.json",
+  "title": "ConversationTurn",
+  "description": "One turn in a multi-turn conversation. Structural superset of `ConversationMessage` (RFC 0002 §G — append-only, idempotent on `messageId`, replay-deterministic). Adds `role`, optional `agent` reference, and `turnIndex` discriminators. Folds through the existing `applyMessage` reducer unchanged. See RFC 0005 §C.",
+  "type": "object",
+  "required": ["messageId", "from", "content", "ts", "role", "turnIndex"],
+  "properties": {
+    "messageId": {
+      "type": "string",
+      "description": "Dedup key. Producers MUST construct a deterministic id so re-folding is idempotent. Recommended encoding: `${conversationId}:${turnIndex}:${role}` (e.g., `run-abc:n1:0:7:agent`).",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "from": {
+      "type": "string",
+      "description": "Sender identity. Either an agent ID (RFC 0002 §A1) or the literal `'user'` for human-originated turns.",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "to": {
+      "type": "string",
+      "description": "Optional addressee. Absent = broadcast to the conversation's group (or the run's default participants).",
+      "maxLength": 256
+    },
+    "groupId": {
+      "type": "string",
+      "description": "Optional shared-agent group ID. When set, the turn is scoped to the `shared:<groupId>` agent context per RFC 0002 §A8.",
+      "maxLength": 256
+    },
+    "content": {
+      "description": "Opaque turn content. Protocol does not standardize the shape; hosts use Zod schemas at the application layer for structured turns. Pass-through for any JSON value.",
+      "type": ["object", "array", "string", "number", "boolean", "null"]
+    },
+    "ts": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Turn timestamp (ms epoch). Caller's clock; replay carries through unchanged for determinism."
+    },
+    "role": {
+      "type": "string",
+      "enum": ["user", "agent", "system"],
+      "description": "Discriminator distinguishing human-originated turns (`'user'`), AI-agent-originated turns (`'agent'`), and host-emitted procedural turns (`'system'` — e.g., `'conversation timed out'`)."
+    },
+    "agent": {
+      "type": "object",
+      "description": "Optional agent reference (RFC 0002 §A1 `AgentRef`) for `role: 'agent'` turns. The same shape RFC 0002 reserves on `RunSnapshot.agent` and `node.started.payload.agent` — propagated through inheritance.",
+      "properties": {
+        "agentId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "agentSharing": {
+          "type": "string",
+          "enum": ["isolated", "shared", "shared:%shared%"],
+          "description": "Per RFC 0002 §A8 — `shared:<groupId>` requires a `groupId` field on the message."
+        },
+        "memoryRef": {
+          "type": "string",
+          "description": "Opaque memory reference per RFC 0002 §A + RFC 0004 §A. Resolves to `MemoryEntry[]` via host `MemoryAdapter` for cross-run conversation continuity."
+        }
+      },
+      "additionalProperties": true
+    },
+    "turnIndex": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "0-based index within the conversation. `conversation.opened.initialTurn` carries `turnIndex: 0`; subsequent `conversation.exchanged` turns increment monotonically; `conversation.closed.finalTurn` carries the highest index."
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,538 @@
+# openwop Security Invariants Index
+#
+# Each entry maps a security invariant from the threat models to one or
+# more test files that verify it. The CI gate at
+# `scripts/check-security-invariants.sh` reads this file and ensures
+# every protocol-tier invariant has at least one matching test.
+#
+# Each entry has:
+#   id:           unique invariant ID (matches the threat-model entry)
+#   tier:         "protocol" (verifiable via conformance suite, must
+#                 have a public-repo test) or "reference-impl"
+#                 (verifiable only via the reference impl's own CI)
+#   severity:     "critical" / "high" / "medium" / "low"
+#   threat_model: which threat model file documents the invariant
+#   tests:        list of file globs (relative to repo root). At least
+#                 one matching file MUST exist in the public repo for
+#                 protocol-tier invariants. For reference-impl-tier
+#                 invariants, this may be [] when the implementation-specific
+#                 tests live outside the public OpenWOP protocol repository.
+#   note:         optional human-readable annotation
+#
+# Adding an invariant:
+#   1. Add the invariant to its threat model with a unique ID.
+#   2. Add an entry here.
+#   3. If protocol-tier, ensure at least one test glob resolves.
+#   4. The CI gate verifies on every push.
+#
+# Removing an invariant requires an RFC per RFCS/0001-rfc-process.md
+# because invariants are part of the security commitment.
+---
+
+invariants:
+  # ===== Secret Leakage =====
+
+  - id: secret-leakage-eventlog-payload
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/redaction.test.ts
+    note: |
+      Persisted event payloads MUST NOT contain raw key material.
+      Conformance scenario drives canaries through every persistence
+      surface and asserts no leak.
+
+  - id: secret-leakage-eventlog-variable
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests: []
+    note: |
+      Sensitive workflow variables MUST be masked per host's advertised
+      compliance.defaultMode. Verified in reference impl; conformance
+      implementation-specific coverage is enforced by conformant hosts.
+
+  - id: secret-leakage-otel-exception
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/redaction.test.ts
+    note: |
+      Error.message and Error.stack sanitized before recordException.
+      Host implementations must apply the same redaction contract to their
+      telemetry exporters.
+
+  - id: secret-leakage-otel-attribute
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests: []
+    note: |
+      OTel allowlist enforced by host-specific telemetry tests.
+
+  - id: secret-leakage-error-envelope
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/redaction.test.ts
+      - conformance/src/scenarios/auth.test.ts
+    note: |
+      Canonical error envelope's message field MUST NOT leak material.
+
+  - id: secret-leakage-auth-middleware
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/auth.test.ts
+    note: |
+      Auth-middleware log lines must not echo Bearer header content.
+
+  - id: secret-leakage-debug-bundle
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/debugBundle.test.ts
+    note: |
+      Debug bundles inherit redaction per spec/v1/debug-bundle.md
+      §"Redaction guarantees". The v1.0 conformance baseline plants a
+      BYOK-shaped canary in workflow inputs and asserts it does not
+      appear verbatim in the bundle response.
+
+  - id: secret-leakage-debug-bundle-otel
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests: []
+    note: |
+      Debug-bundle export of OTel spans must apply allowlist.
+
+  - id: secret-leakage-artifact-content
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests: []
+    note: |
+      Resolved credential material must not enter prompt context.
+
+  - id: secret-leakage-stream-chunk
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/redaction.test.ts
+      - conformance/src/scenarios/stream-modes.test.ts
+    note: |
+      SSE chunks forwarded from a provider must pass through sanitizer.
+
+  - id: secret-leakage-stream-error
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/redaction.test.ts
+    note: |
+      SSE error chunks must pass through sanitizer.
+
+  - id: secret-leakage-author-emit
+    tier: advisory
+    severity: low
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests: []
+    note: |
+      Defense-in-depth advisory. Workflow validation SHOULD reject
+      credential-shaped strings in declared inputs. Not a hard MUST.
+
+  # ===== Prompt Injection =====
+
+  - id: prompt-injection-input-marker
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - src/core/ai/prompts/__tests__/*.test.ts
+    note: |
+      Untrusted-marker discipline enforced at prompt construction.
+      Reference-impl-tier; protocol can't observe prompt strings.
+
+  - id: prompt-injection-kb-marker
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - src/features/knowledge/__tests__/*.test.ts
+    note: |
+      KB content wrapped in untrusted markers in the reference impl.
+
+  - id: prompt-injection-artifact-marker
+    tier: reference-impl
+    severity: medium
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - src/core/ai/prompts/__tests__/*.test.ts
+    note: |
+      Prior-artifact content wrapped in untrusted markers.
+
+  - id: prompt-injection-refine-quorum
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/approval-payload.test.ts
+      - conformance/src/scenarios/interrupt-approval.test.ts
+    note: |
+      Refine resume resets quorum on the upstream gate.
+
+  - id: prompt-injection-decidedby-host-only
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/approval-payload.test.ts
+      - conformance/src/scenarios/identity-passthrough.test.ts
+    note: |
+      decidedBy must be host-derived; client-supplied value ignored.
+
+  - id: prompt-injection-mcp-marker
+    tier: reference-impl
+    severity: medium
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests: []
+    note: |
+      MCP tool responses wrapped in untrusted markers in next LLM turn.
+
+  - id: prompt-injection-mcp-no-approval
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/interrupt-approval.test.ts
+    note: |
+      MCP tool responses must not advance HITL gates.
+
+  - id: prompt-injection-envelope-typecheck
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/runtime-capabilities.test.ts
+      - conformance/src/scenarios/discovery.test.ts
+    note: |
+      Envelope types validated against capabilities.supportedEnvelopes.
+
+  - id: prompt-injection-no-llm-approval
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/interrupt-approval.test.ts
+    note: |
+      LLM-emitted approval-resolution envelopes rejected; HITL only.
+
+  - id: prompt-injection-tool-allowlist
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests: []
+    note: |
+      Tool-call envelopes validated against workflow's tools allowlist.
+
+  - id: prompt-injection-tenant-host-derived
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/identity-passthrough.test.ts
+    note: |
+      tenantId / workspaceId derived from auth principal; envelope-supplied
+      values ignored.
+
+  - id: prompt-injection-no-auto-fetch
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests: []
+    note: |
+      Hosts must not fetch URLs from envelope content directly.
+
+  - id: prompt-injection-webhook-host-only
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests: []
+    note: |
+      Webhook deliveries fire from declared workflow events only.
+
+  # ===== Node Packs =====
+
+  - id: node-pack-manifest-name-match
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests:
+      - conformance/src/scenarios/pack-registry-publish.test.ts
+    note: |
+      Registry rejects manifest_name_mismatch.
+
+  - id: node-pack-manifest-version-match
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests:
+      - conformance/src/scenarios/pack-registry-publish.test.ts
+    note: |
+      Registry rejects manifest_version_mismatch.
+
+  - id: node-pack-tarball-size-cap
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests:
+      - conformance/src/scenarios/pack-registry-publish.test.ts
+    note: |
+      Tarball size cap enforced; tarball_too_large on overrun.
+
+  - id: node-pack-manifest-size-cap
+    tier: protocol
+    severity: medium
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests:
+      - conformance/src/scenarios/pack-registry-publish.test.ts
+
+  - id: node-pack-entry-size-cap
+    tier: protocol
+    severity: medium
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests:
+      - conformance/src/scenarios/pack-registry-publish.test.ts
+
+  - id: node-pack-path-traversal
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests:
+      - conformance/src/scenarios/pack-registry-publish.test.ts
+    note: |
+      Tarballs with `..` or absolute paths rejected by registry validation.
+      maliciousManifest.test.ts will add adversarial coverage.
+
+  - id: node-pack-scope-author-match
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests:
+      - conformance/src/scenarios/pack-registry-publish.test.ts
+
+  - id: node-pack-sig-publish
+    tier: reference-impl
+    severity: critical
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests: []
+    note: |
+      Registry-side signature verification at publish.
+
+  - id: node-pack-sig-host-verify
+    tier: reference-impl
+    severity: critical
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests: []
+    note: |
+      Host-side signature verification at resolve.
+
+  - id: node-pack-sig-key-in-keychain
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests:
+      - conformance/src/scenarios/pack-registry.test.ts
+
+  - id: node-pack-sig-no-yanked
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests:
+      - conformance/src/scenarios/pack-registry.test.ts
+    note: |
+      Yanked versions return 404 signature_not_available per
+      openwop/openwop@434c8f2.
+
+  - id: node-pack-sig-revocation
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests: []
+
+  - id: node-pack-approval-required
+    tier: reference-impl
+    severity: critical
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests: []
+
+  - id: node-pack-approval-host-state
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests: []
+
+  - id: node-pack-approval-scope
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests: []
+
+  - id: node-pack-sandbox-no-process
+    tier: reference-impl
+    severity: critical
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests: []
+
+  - id: node-pack-sandbox-no-eval
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests: []
+
+  - id: node-pack-sandbox-network-gated
+    tier: reference-impl
+    severity: critical
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests: []
+
+  - id: node-pack-sandbox-fs-gated
+    tier: reference-impl
+    severity: critical
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests: []
+
+  - id: node-pack-sandbox-no-env
+    tier: reference-impl
+    severity: critical
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests: []
+
+  - id: node-pack-sandbox-timeout
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests: []
+
+  - id: node-pack-sandbox-memory-cap
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests: []
+
+  - id: node-pack-sandbox-isolated-context
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests: []
+
+  - id: node-pack-output-untrusted
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests:
+      - conformance/src/scenarios/redaction.test.ts
+    note: |
+      Pack output treated as untrusted; downstream prompt-injection
+      invariants apply (cross-references prompt-injection-* ids).
+
+  - id: node-pack-no-decidedby-emit
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests:
+      - conformance/src/scenarios/approval-payload.test.ts
+
+  # ===== Provider Policy =====
+
+  - id: provider-policy-pre-dispatch
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-provider-policy.md
+    tests:
+      - conformance/src/scenarios/policies.test.ts
+    note: |
+      All LLM provider invocations must invoke resolver.
+
+  - id: provider-policy-runtime-recheck
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-provider-policy.md
+    tests: []
+
+  - id: provider-policy-disabled-hard
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-provider-policy.md
+    tests:
+      - conformance/src/scenarios/policies.test.ts
+
+  - id: provider-policy-no-discovery-leak
+    tier: protocol
+    severity: medium
+    threat_model: SECURITY/threat-model-provider-policy.md
+    tests:
+      - conformance/src/scenarios/policies.test.ts
+
+  - id: provider-policy-required-byok-only
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-provider-policy.md
+    tests: []
+
+  - id: provider-policy-required-distinguishes-source
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-provider-policy.md
+    tests: []
+
+  - id: provider-policy-restricted-glob
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-provider-policy.md
+    tests:
+      - conformance/src/scenarios/policies.test.ts
+
+  - id: provider-policy-restricted-fail-closed
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-provider-policy.md
+    tests:
+      - conformance/src/scenarios/policies.test.ts
+
+  - id: provider-policy-restricted-canonical-name
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-provider-policy.md
+    tests: []
+
+  - id: provider-policy-resolver-outage-fail-open
+    tier: protocol
+    severity: medium
+    threat_model: SECURITY/threat-model-provider-policy.md
+    tests:
+      - conformance/src/scenarios/policies.test.ts
+
+  - id: provider-policy-partial-resolution
+    tier: reference-impl
+    severity: medium
+    threat_model: SECURITY/threat-model-provider-policy.md
+    tests: []
+
+  - id: provider-policy-audit-emit
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-provider-policy.md
+    tests: []
+
+  - id: provider-policy-audit-provenance
+    tier: reference-impl
+    severity: medium
+    threat_model: SECURITY/threat-model-provider-policy.md
+    tests: []

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ai/1.0.0/awaitEnvelope.config.json",
+  "title": "AwaitEnvelopeConfig",
+  "type": "object",
+  "required": ["envelopeType"],
+  "properties": {
+    "envelopeType": {
+      "type": "string",
+      "pattern": "^[a-z][a-zA-Z0-9._-]*\\.[a-z][a-zA-Z0-9._-]*$",
+      "description": "Envelope discriminator to await."
+    },
+    "timeoutMs": {
+      "type": "integer",
+      "minimum": 1000,
+      "maximum": 3600000,
+      "default": 300000,
+      "description": "Suspend timeout. On timeout, resolves with timedOut:true."
+    }
+  },
+  "additionalProperties": false
+}

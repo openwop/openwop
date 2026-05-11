@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.canvas/1.0.0/canvasCreate.output.json",
+  "title": "CanvasCreateOutput",
+  "type": "object",
+  "required": ["canvasId", "canvasTypeId", "createdAt"],
+  "properties": {
+    "canvasId": { "type": "string", "minLength": 1 },
+    "canvasTypeId": { "type": "string" },
+    "name": { "type": "string" },
+    "projectId": { "type": "string" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "idempotencyKey": { "type": "string", "description": "Deterministic key — replays return the originally-created canvasId via Layer-2 cache; no duplicate canvases created." }
+  },
+  "additionalProperties": false
+}

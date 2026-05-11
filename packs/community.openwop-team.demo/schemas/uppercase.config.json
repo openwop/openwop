@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/community.openwop-team.demo/0.1.0/uppercase.config.json",
+  "title": "UppercaseNodeConfig",
+  "description": "Config for community.openwop-team.demo.uppercase. No tunables — keeps the demo node minimal.",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false
+}

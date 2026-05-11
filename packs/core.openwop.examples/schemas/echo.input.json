@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.examples/1.0.0/echo.input.json",
+  "title": "EchoNodeInput",
+  "description": "Input for core.openwop.examples.echo. Single `value` port carrying anything serializable — output mirrors it verbatim.",
+  "type": "object",
+  "required": ["value"],
+  "properties": {
+    "value": {
+      "description": "Arbitrary JSON-serializable value to echo. The output `value` will be byte-identical (modulo JSON canonicalization). null is permitted.",
+      "type": ["string", "number", "boolean", "object", "array", "null"]
+    }
+  },
+  "additionalProperties": false
+}

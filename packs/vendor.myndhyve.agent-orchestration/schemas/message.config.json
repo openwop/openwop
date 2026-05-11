@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.agent-orchestration/1.0.0/message.config.json",
+  "title": "AgentMessageConfig",
+  "type": "object",
+  "required": ["toAgentInstanceId"],
+  "properties": {
+    "toAgentInstanceId": { "type": "string", "minLength": 1, "description": "Target agent instance id." },
+    "groupId": { "type": "string", "description": "Optional shared:<groupId> identifier per RFC 0007 A8 — broadcasts to all agents in the group. Mutually exclusive with toAgentInstanceId when set (host enforces)." }
+  },
+  "additionalProperties": false
+}

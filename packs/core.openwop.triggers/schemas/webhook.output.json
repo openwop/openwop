@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.triggers/1.0.0/webhook.output.json",
+  "title": "WebhookTriggerOutput",
+  "type": "object",
+  "required": ["method", "headers", "body"],
+  "properties": {
+    "method": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
+    "headers": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Request headers (lowercased keys per Fetch standard). Host MAY strip sensitive headers (authorization, x-*-secret) before exposure."
+    },
+    "query": {
+      "type": "object",
+      "additionalProperties": { "type": ["string", "array"] },
+      "description": "Parsed query string. Array values for repeated keys."
+    },
+    "body": {
+      "description": "Request body. Parsed as JSON when Content-Type is application/json; raw string otherwise; null for empty body.",
+      "type": ["object", "array", "string", "null"]
+    },
+    "remoteAddr": { "type": "string", "description": "Client IP per the host's trust-proxy config." },
+    "receivedAt": { "type": "string", "format": "date-time", "description": "ISO-8601 timestamp the host received the request." }
+  },
+  "additionalProperties": false
+}

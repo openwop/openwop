@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>${title}</title>
+  <meta name="description" content="${description}"/>
+  <link rel="canonical" href="${canonical}"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="${ogTitle}"/>
+  <meta property="og:description" content="${description}"/>
+  <meta property="og:url" content="${canonical}"/>
+  <meta property="og:image" content="${ogImage}"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="${ogTitle}"/>
+  <meta name="twitter:description" content="${description}"/>
+  <meta name="twitter:image" content="${ogImage}"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  ${jsonLd}
+  ${gscVerification}
+  ${analyticsScript}
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="${nav_index}" href="/">Overview</a>
+      <a class="${nav_spec}" href="/spec/v1/">Spec</a>
+      <a class="${nav_conformance}" href="/conformance/">Conformance</a>
+      <a class="${nav_profiles}" href="/profiles/">Profiles</a>
+      <a href="${repoUrl}">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    ${content}
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="${repoUrl}">${repoUrlDisplay}</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>${domain}</code>. Repository governance details live in <a href="${repoUrl}/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

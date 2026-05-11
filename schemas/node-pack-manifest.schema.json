@@ -1,0 +1,235 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/node-pack-manifest.schema.json",
+  "title": "NodePackManifest",
+  "description": "Manifest for a published OpenWOP node pack — `pack.json` at the pack root. Language-neutral. See node-packs.md for the canonical contract.",
+  "type": "object",
+  "required": ["name", "version", "engines", "runtime"],
+  "anyOf": [
+    { "properties": { "nodes": { "type": "array", "minItems": 1 } }, "required": ["nodes"] },
+    { "properties": { "agents": { "type": "array", "minItems": 1 } }, "required": ["agents"] }
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Reverse-DNS pack name. Reserved scopes: `core.*` (spec-canonical), `vendor.<org>.*` (vendor-published), `community.<author>.*` (individual), `private.<host>.*` (host-internal — MUST NOT appear in `packs.openwop.dev`). `local.*` is for in-repo unpublished packs and MUST NOT appear in any registry. See node-packs.md §Naming for the full reservation table.",
+      "pattern": "^(core|vendor|community|private)\\.[a-z][a-z0-9_-]*(\\.[a-z][a-zA-Z0-9_-]*)+$",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "version": {
+      "type": "string",
+      "description": "Pack version per Semantic Versioning 2.0.0.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+    },
+    "description": { "type": "string", "maxLength": 1024 },
+    "author": { "type": "string" },
+    "license": { "type": "string", "description": "SPDX license identifier (e.g., `Apache-2.0`, `MIT`)." },
+    "homepage": { "type": "string", "format": "uri" },
+    "repository": { "type": "string", "format": "uri" },
+    "keywords": {
+      "type": "array",
+      "items": { "type": "string", "maxLength": 64 },
+      "maxItems": 50
+    },
+    "engines": {
+      "type": "object",
+      "required": ["openwop"],
+      "properties": {
+        "openwop": {
+          "type": "string",
+          "description": "Semver range — which openwop protocol versions this pack works against. Example: `>=1.0 <2.0.0`."
+        }
+      },
+      "additionalProperties": true
+    },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Other node packs this pack depends on. Map of pack name → semver range. Engine resolves transitively at workflow-register time."
+    },
+    "peerDependencies": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Engine-supplied capabilities the pack consumes (e.g., a particular AI provider extension). Resolved against `Capabilities` at register time."
+    },
+    "nodes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/PackNode" },
+      "description": "Node typeIds the pack contributes. Each MUST have a unique `typeId` within the pack. A pack MAY omit `nodes` entirely if it ships only `agents[]` — the top-level `anyOf` constraint requires at least one of `nodes` or `agents` to be non-empty."
+    },
+    "agents": {
+      "type": "array",
+      "items": { "$ref": "agent-manifest.schema.json" },
+      "description": "Optional agent manifests shipped alongside this pack. Each entry is an AgentManifest (see agent-manifest.schema.json + RFC 0003 §`agents[]` extension). Pure-agent packs MUST set `runtime.language: 'remote'` — agents are interpreted by the host, not bundled as executable artifacts. Mixed packs (nodes + agents) declare the runtime that loads the node implementations; agents remain host-interpreted."
+    },
+    "runtime": { "$ref": "#/$defs/Runtime" },
+    "signing": { "$ref": "#/$defs/Signing" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "PackNode": {
+      "type": "object",
+      "required": ["typeId", "version", "category", "role"],
+      "properties": {
+        "typeId": {
+          "type": "string",
+          "description": "Canonical node type ID. MUST match the same pattern as `WorkflowNode.typeId` in workflow-definition.schema.json. The pack's `name` prefix is recommended (e.g., a pack `vendor.acme.salesforce-tools` exposing `vendor.acme.salesforce.upsert`).",
+          "pattern": "^[a-z][a-zA-Z0-9._-]*$",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "version": {
+          "type": "string",
+          "description": "Per-node semver. MAY differ from the pack's overall version — useful when a single pack ships multiple nodes that evolve independently."
+        },
+        "label": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "category": {
+          "type": "string",
+          "enum": ["chat", "control", "data", "canvas", "coordination", "integration"],
+          "description": "Engine-side classification used for scheduling and UI grouping."
+        },
+        "role": {
+          "type": "string",
+          "description": "Semantic role from the `NodeRole` taxonomy. Drives engine scheduling. Common values: `pure`, `side-effect`, `human-input`, `streaming-output`, `gate`."
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["streamable", "cacheable", "side-effectful", "mcp-exportable"]
+          },
+          "uniqueItems": true,
+          "description": "Orthogonal capability traits. The engine uses these to decide caching, MCP exposure, idempotency enforcement."
+        },
+        "configSchemaRef": {
+          "type": "string",
+          "description": "Path inside the pack tarball to the JSON Schema for the node's config. Server fetches the file when resolving the pack."
+        },
+        "inputSchemaRef": {
+          "type": "string",
+          "description": "Path to the JSON Schema for the node's input ports."
+        },
+        "outputSchemaRef": {
+          "type": "string",
+          "description": "Path to the JSON Schema for the node's output ports."
+        },
+        "outputs": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "sensitive": {
+                "type": "boolean",
+                "default": false,
+                "description": "When true, the engine masks this output port's value in `node.completed` event payloads. Use when a NodeModule ALWAYS handles sensitive data (e.g., a Salesforce upsert always touches PII). Workflows MAY override per-instance via `WorkflowNode.outputSensitivity`. See observability.md §Privacy classification (closes O5)."
+              }
+            },
+            "additionalProperties": true
+          },
+          "description": "Per-output-port metadata. Keys are output port names; values are per-port markers. Currently the only marker is `sensitive`; future additions live alongside (additionalProperties: true on each port)."
+        },
+        "envelopeContractRef": {
+          "type": "string",
+          "description": "Optional path to a JSON document declaring the LLM envelope contract for AI-backed nodes."
+        },
+        "artifact": {
+          "type": "object",
+          "properties": {
+            "typeId": { "type": "string" },
+            "syncOn": { "type": "string", "enum": ["completion", "approval", "manual"] },
+            "supportsCheckpoint": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "mcp": {
+          "type": "object",
+          "properties": {
+            "exposeAsTool": { "type": "boolean" },
+            "toolName": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "requiresSecrets": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SecretRequirement" },
+          "description": "Secrets the node needs to execute. Resolved by the host's secret-resolution adapter at dispatch time. Hosts that don't advertise `Capabilities.secrets.supported` MUST refuse to dispatch a node with non-empty `requiresSecrets` and return `credential_unavailable`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "SecretRequirement": {
+      "type": "object",
+      "required": ["id", "kind"],
+      "description": "Declared secret requirement. The engine surfaces this to the host's `SecretResolver` which returns an opaque `ResolvedSecret` reference; the executor passes the reference to provider adapters that dereference internally. Raw key material NEVER reaches the protocol surface (events, logs, traces, etc.).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable identifier the node executor uses to look up the resolved secret (e.g., `'primary-anthropic-key'`)."
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["ai-provider", "api-key", "oauth-token", "custom"],
+          "description": "Coarse classification driving host-side resolution policy. `ai-provider` triggers the BYOK / aiProviders flow; `api-key` is generic; `oauth-token` integrates with the host's OAuth refresh flow; `custom` is host-extensible."
+        },
+        "provider": {
+          "type": "string",
+          "description": "For `kind: 'ai-provider'`, the provider id (`anthropic`, `openai`, `gemini`, etc.). MUST be in `Capabilities.aiProviders.supported`. Optional for other kinds."
+        },
+        "scope": {
+          "type": "string",
+          "enum": ["tenant", "user", "run"],
+          "description": "Where the host should look up the secret. MUST match a scope in `Capabilities.secrets.scopes`. Defaults to `tenant` when omitted."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Runtime": {
+      "type": "object",
+      "required": ["language", "entry"],
+      "properties": {
+        "language": {
+          "type": "string",
+          "enum": ["javascript", "python", "go", "wasm", "remote"],
+          "description": "How the engine loads the pack. See node-packs.md §runtime formats."
+        },
+        "entry": {
+          "type": "string",
+          "description": "Path inside the tarball to the runtime artifact, OR a URL when `language: remote`."
+        },
+        "format": {
+          "type": "string",
+          "enum": ["esm", "cjs", "wheel", "binary", "shared-library", "wasm"],
+          "description": "Runtime-specific format hint. `esm`/`cjs` for JS, `wheel` for Python, `binary`/`shared-library` for Go, `wasm` for wasm."
+        },
+        "minRuntimeVersion": {
+          "type": "string",
+          "description": "Minimum host runtime version (e.g., `node>=20`, `python>=3.10`, `go>=1.22`)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Signing": {
+      "type": "object",
+      "description": "Optional signing metadata. See node-packs.md §signing.",
+      "properties": {
+        "publicKeyRef": {
+          "type": "string",
+          "description": "Path inside the tarball to the Ed25519 public key (PEM-encoded)."
+        },
+        "signatureRef": {
+          "type": "string",
+          "description": "Path to the detached signature over `pack.json`."
+        },
+        "method": {
+          "type": "string",
+          "enum": ["manual", "sigstore"],
+          "description": "Signing method. `manual` uses publicKeyRef + signatureRef; `sigstore` uses a Sigstore bundle at `pack.json.sigstore`."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

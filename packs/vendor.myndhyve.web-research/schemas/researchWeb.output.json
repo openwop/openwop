@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.web-research/1.0.0/researchWeb.output.json",
+  "title": "ResearchWebOutput",
+  "type": "object",
+  "required": ["citations", "query"],
+  "properties": {
+    "citations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["url", "title", "content"],
+        "properties": {
+          "url": { "type": "string", "format": "uri" },
+          "title": { "type": "string" },
+          "snippet": { "type": "string" },
+          "content": { "type": "string", "description": "Readability-extracted text from the page." },
+          "rank": { "type": "integer", "minimum": 1 },
+          "fetchedAt": { "type": "string", "format": "date-time" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "query": { "type": "string" },
+    "engine": { "type": "string" },
+    "totalResults": { "type": "integer", "minimum": 0 }
+  },
+  "additionalProperties": false
+}

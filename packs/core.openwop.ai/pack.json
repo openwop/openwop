@@ -1,0 +1,60 @@
+{
+  "name": "core.openwop.ai",
+  "version": "1.0.0",
+  "description": "Spec-canonical AI-call pack. Three foundational nodes (chat-completion, structured-output, embeddings) that route through the host's BYOK aiProviders surface — the pack itself makes no HTTP calls. peerDependencies on `aiProviders.supported`. Side-effectful (declared) so the engine's Layer-2 invocation log caches responses keyed on (runId, nodeId, request-hash) for replay safety.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.ai",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": ["core", "ai", "llm", "chat", "embeddings", "byok"],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "aiProviders": "supported"
+  },
+  "nodes": [
+    {
+      "typeId": "core.openwop.ai.chat-completion",
+      "version": "1.0.0",
+      "label": "Chat Completion",
+      "description": "Free-form LLM chat. Returns the model's text response + token usage. Side-effectful + cacheable — replays return the cached node.completed payload via the host's Layer-2 invocation log keyed on (runId, nodeId, request-hash).",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": ["cacheable", "side-effectful"],
+      "configSchemaRef": "schemas/chat-completion.config.json",
+      "inputSchemaRef": "schemas/chat-completion.input.json",
+      "outputSchemaRef": "schemas/chat-completion.output.json"
+    },
+    {
+      "typeId": "core.openwop.ai.structured-output",
+      "version": "1.0.0",
+      "label": "Structured Output",
+      "description": "LLM call constrained to produce JSON matching a caller-supplied JSON Schema. Implementation routes through the host's provider-specific structured-output mechanism (tool-calling for Anthropic, JSON mode for OpenAI, response_schema for Gemini). Output is the parsed JSON, validated against the schema.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": ["cacheable", "side-effectful"],
+      "configSchemaRef": "schemas/structured-output.config.json",
+      "inputSchemaRef": "schemas/structured-output.input.json",
+      "outputSchemaRef": "schemas/structured-output.output.json"
+    },
+    {
+      "typeId": "core.openwop.ai.embeddings",
+      "version": "1.0.0",
+      "label": "Embeddings",
+      "description": "Generates a vector embedding for the input text. Returns the embedding + the dimensionality + the model used. Routes through the host's embeddings provider.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": ["cacheable", "side-effectful"],
+      "configSchemaRef": "schemas/embeddings.config.json",
+      "inputSchemaRef": "schemas/embeddings.input.json",
+      "outputSchemaRef": "schemas/embeddings.output.json"
+    }
+  ],
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  }
+}

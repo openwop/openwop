@@ -1,0 +1,26 @@
+{
+  "name": "private.example-host.example-tools",
+  "version": "1.0.0",
+  "description": "Example private-scope pack manifest. Validates against node-pack-manifest.schema.json with the v1.0 reverse-DNS pattern that admits the `private.<host>.*` scope reserved for host-internal registries.",
+  "license": "Apache-2.0",
+  "engines": {
+    "openwop": ">=1.0 <2.0.0"
+  },
+  "nodes": [
+    {
+      "typeId": "private.example-host.example.echo",
+      "version": "1.0.0",
+      "label": "Echo Node",
+      "description": "Returns its input verbatim — minimal pack content for fixture purposes.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": ["cacheable"]
+    }
+  ],
+  "runtime": {
+    "language": "javascript",
+    "entry": "dist/index.js",
+    "format": "esm",
+    "minRuntimeVersion": "node>=20"
+  }
+}
