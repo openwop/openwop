@@ -50,6 +50,17 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { EventEmitter } from 'node:events';
 import Database from 'better-sqlite3';
+import {
+  setupAuditSchema,
+  loadOrCreateSigningKey,
+  logAudit,
+  triggerCheckpointIfDue,
+  createCheckpoint,
+  verifyAuditChain,
+  defaultAuditOptions,
+  type SigningKey,
+  type AuditOptions,
+} from './audit.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const HOST = process.env.OPENWOP_HOST ?? '127.0.0.1';
@@ -139,6 +150,16 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_idem_stored_at ON idempotency(stored_at);
 `);
+
+// Audit-log integrity profile (openwop-audit-log-integrity).
+// See spec/v1/auth-profiles.md §"Audit-log integrity" and src/audit.ts.
+setupAuditSchema(db);
+const AUDIT_KEY_DIR = dirname(DB_PATH);
+const auditSigningKey: SigningKey = loadOrCreateSigningKey(
+  join(AUDIT_KEY_DIR, 'audit-signing-key.pem'),
+  join(AUDIT_KEY_DIR, 'audit-signing-key.pub'),
+);
+const AUDIT_OPTS: AuditOptions = defaultAuditOptions();
 
 // Prepared statements — `better-sqlite3` performs much better when
 // statements are reused.
@@ -557,6 +578,19 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
     },
     supportedTransports: ['rest'],
     debugBundle: { supported: true },
+    capabilities: {
+      auth: {
+        // openwop-audit-log-integrity profile (auth-profiles.md §"Audit-log integrity").
+        profiles: ['openwop-audit-log-integrity'],
+        auditLogIntegrity: {
+          hashChain: true,
+          checkpointSignatureAlgorithm: 'ed25519',
+          checkpointPublicKey: auditSigningKey.publicKeyB64,
+          checkpointIntervalEntries: AUDIT_OPTS.checkpointIntervalEntries,
+          checkpointIntervalSeconds: AUDIT_OPTS.checkpointIntervalSeconds,
+        },
+      },
+    },
   }, { 'Cache-Control': 'public, max-age=300' });
 }
 
@@ -631,6 +665,13 @@ async function handleCreateRun(req: IncomingMessage, res: ServerResponse): Promi
   const startedAt = new Date().toISOString();
 
   stmts.insertRun.run(runId, parsed.workflowId, 'pending', JSON.stringify(inputs), startedAt);
+  logAudit(db, {
+    actor: 'tenant:default',
+    action: 'run.create',
+    target: runId,
+    details: { workflowId: parsed.workflowId },
+  });
+  triggerCheckpointIfDue(db, auditSigningKey, AUDIT_OPTS);
 
   const responseBody = {
     runId,
@@ -683,6 +724,20 @@ function handleGetRun(req: IncomingMessage, res: ServerResponse, runId: string):
   });
 }
 
+function handleAuditVerify(req: IncomingMessage, res: ServerResponse, url: URL): void {
+  if (!checkAuth(req, res)) return;
+  const fromSeqRaw = url.searchParams.get('fromSeq');
+  const toSeqRaw = url.searchParams.get('toSeq');
+  const fromSeq = fromSeqRaw === null ? 0 : Number(fromSeqRaw);
+  const toSeq = toSeqRaw === null ? Number.MAX_SAFE_INTEGER : Number(toSeqRaw);
+  if (!Number.isFinite(fromSeq) || !Number.isFinite(toSeq) || fromSeq < 0 || toSeq < 0) {
+    sendError(res, 400, 'validation_error', 'fromSeq and toSeq MUST be non-negative integers.');
+    return;
+  }
+  const result = verifyAuditChain(db, fromSeq, toSeq);
+  sendJSON(res, 200, result);
+}
+
 async function handleCancelRun(
   req: IncomingMessage,
   res: ServerResponse,
@@ -702,6 +757,13 @@ async function handleCancelRun(
   }
 
   stmts.setCancelRequested.run(runId);
+  logAudit(db, {
+    actor: 'tenant:default',
+    action: 'run.cancel',
+    target: runId,
+    details: { priorStatus: row.status },
+  });
+  triggerCheckpointIfDue(db, auditSigningKey, AUDIT_OPTS);
   // If the run is executing in THIS process, abort its in-flight node.
   // Otherwise the executing process will see the status flip on its
   // next loadRun() check.
@@ -866,6 +928,7 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
 
   if (method === 'GET' && path === '/.well-known/openwop') return handleDiscovery(req, res);
   if (method === 'GET' && path === '/v1/openapi.json') return handleOpenApi(req, res);
+  if (method === 'GET' && path === '/v1/audit/verify') return handleAuditVerify(req, res, url);
   if (method === 'POST' && path === '/v1/runs') return handleCreateRun(req, res);
 
   let m = RUN_EVENTS_POLL_PATTERN.exec(path);
@@ -926,6 +989,18 @@ function resumeOrphans(): void {
 
 loadFixtures();
 resumeOrphans();
+
+// Boot audit entry + initial checkpoint so a fresh host has at least one
+// signed anchor when conformance hits /v1/audit/verify with no prior runs.
+logAudit(db, {
+  actor: 'system',
+  action: 'host.started',
+  target: PROCESS_ID,
+  details: { dbPath: DB_PATH, fixtures: workflows.size },
+});
+// Force a checkpoint on boot regardless of interval thresholds so the
+// verify endpoint has at least one signed checkpoint to return.
+createCheckpoint(db, auditSigningKey);
 
 const server = createServer((req, res) => {
   void route(req, res).catch((err: unknown) => {

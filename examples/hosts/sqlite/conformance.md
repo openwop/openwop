@@ -1,9 +1,9 @@
 # Conformance Result: openwop SQLite Reference Host
 
-> **Run date:** 2026-05-01
+> **Run date:** 2026-05-01 (audit-log-integrity profile added 2026-05-11)
 > **Host version:** `openwop-host-sqlite@1.0.0`
 > **Conformance suite:** `@openwop/openwop-conformance@1.12.0`
-> **Profile claim:** `openwop-core` + `openwop-stream-poll` + `openwop-stream-sse` + (debug-bundle advertised)
+> **Profile claim:** `openwop-core` + `openwop-stream-poll` + `openwop-stream-sse` + `openwop-audit-log-integrity` (since 2026-05-11) + (debug-bundle advertised)
 > **Scale claim:** `minimal` (single-process; SQLite single-writer)
 
 ## Summary
@@ -56,6 +56,7 @@ The SQLite host is the cheapest possible proof of "I can replace the storage lay
 | `profileDerivation.test.ts` | ✅ PASS | 25/25 | server-free |
 | `highConcurrency.test.ts` | ✅ PASS | 4/4 | |
 | `debugBundle.test.ts` | ✅ PASS | 6/6 | host advertises `debugBundle.supported: true` |
+| `audit-log-integrity.test.ts` | ✅ PASS | 2/2 | passes in strict mode (`OPENWOP_REQUIRE_BEHAVIOR=true`); host emits Ed25519-signed checkpoints over a hash-chained audit log. Internal tamper test at `test/audit-tamper.test.ts` proves chainValid: false on in-place mutation. |
 | `runtime-capabilities.test.ts` | ❌ 1/2 | | host advertises empty `runtimeCapabilities`; out-of-profile |
 | `version-negotiation.test.ts` | ❌ 1/4 | | event-shape `seq` vs spec's `eventId+sequence` (same gap as in-memory) |
 | `cap-breach.test.ts` | ❌ 0/2 | | host doesn't enforce `recursionLimit` — out-of-profile |
@@ -120,6 +121,7 @@ Typical wall-clock: ~5–8 seconds. The dominant cost is the 5-second `core.dela
 
 1. ~~**Resume-on-startup.**~~ ✅ Live as of 2026-05-01.
 2. ~~**Heartbeat renewal.**~~ ✅ Live as of 2026-05-01.
-3. **Postgres adapter.** Same schema, swap the DB driver, gain horizontal scale-out. Filed as a future row in `INTEROP-MATRIX.md`.
+3. ~~**Audit-log integrity profile.**~~ ✅ Live as of 2026-05-11. Hash-chained `audit_log` table + Ed25519-signed `audit_checkpoints`; `GET /v1/audit/verify` reports `chainValid` + anomalies. Wiring under `src/audit.ts`.
+4. **Postgres adapter.** Same schema, swap the DB driver, gain horizontal scale-out. Filed as a future row in `INTEROP-MATRIX.md`.
 4. **Multi-tenancy.** Add `tenant_id` to every table + composite primary keys. Currently single hardcoded tenant.
 5. **Layer-2 idempotency** for non-pure nodes. The reference example only ships pure nodes (`core.noop`, `core.delay`); a fork that adds `core.ai.callPrompt` MUST persist invocation results to dedupe on resume.
