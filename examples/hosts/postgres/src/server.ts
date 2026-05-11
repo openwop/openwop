@@ -30,14 +30,14 @@
  */
 
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
-import { randomUUID, createHash } from 'node:crypto';
+import { randomUUID, createHash, timingSafeEqual } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { join, dirname, resolve as resolvePath } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { EventEmitter } from 'node:events';
 import { Client } from 'pg';
 import { setupSchema } from './schema.js';
-import type { Querier } from './db.js';
+import { withTransaction, type Querier } from './db.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const HOST = process.env.OPENWOP_HOST ?? '127.0.0.1';
@@ -226,33 +226,43 @@ async function appendEvent(
   opts: { nodeId?: string; data?: unknown } = {},
 ): Promise<RunEvent> {
   const q = await querier();
-  const countRes = await q.query<{ n: string }>(
-    'SELECT COUNT(*)::text AS n FROM events WHERE run_id = $1',
-    [runId],
-  );
-  const seq = Number(countRes.rows[0]?.n ?? 0);
-  const event: RunEvent = {
-    seq,
-    runId,
-    type,
-    nodeId: opts.nodeId ?? null,
-    data: opts.data ?? null,
-    timestamp: new Date().toISOString(),
-  };
-  await q.query(
-    `INSERT INTO events (run_id, seq, type, node_id, data_json, timestamp)
-     VALUES ($1, $2, $3, $4, $5, $6)`,
-    [
-      runId,
+  // Race-free seq allocation: `UPDATE runs SET next_event_seq = next_event_seq + 1 ... RETURNING`
+  // takes a row-level lock on the runs row, so two concurrent appendEvent
+  // calls on the same run serialize and each get a distinct seq. This is
+  // O(1) per insert (no COUNT(*) scan) and survives the pg.Pool case
+  // where two clients could otherwise race a SELECT-then-INSERT pattern.
+  return withTransaction(q, async () => {
+    const seqRes = await q.query<{ seq: number }>(
+      'UPDATE runs SET next_event_seq = next_event_seq + 1 WHERE run_id = $1 RETURNING next_event_seq - 1 AS seq',
+      [runId],
+    );
+    if (seqRes.rows.length === 0) {
+      throw new Error(`appendEvent: runId ${runId} not found`);
+    }
+    const seq = Number(seqRes.rows[0]!.seq);
+    const event: RunEvent = {
       seq,
+      runId,
       type,
-      event.nodeId,
-      event.data === null ? null : JSON.stringify(event.data),
-      event.timestamp,
-    ],
-  );
-  eventBus.emit(`events:${runId}`, event);
-  return event;
+      nodeId: opts.nodeId ?? null,
+      data: opts.data ?? null,
+      timestamp: new Date().toISOString(),
+    };
+    await q.query(
+      `INSERT INTO events (run_id, seq, type, node_id, data_json, timestamp)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [
+        runId,
+        seq,
+        type,
+        event.nodeId,
+        event.data === null ? null : JSON.stringify(event.data),
+        event.timestamp,
+      ],
+    );
+    eventBus.emit(`events:${runId}`, event);
+    return event;
+  });
 }
 
 async function getEventsAfter(runId: string, afterSeq: number): Promise<RunEvent[]> {
@@ -404,10 +414,8 @@ async function runWorkflow(runId: string): Promise<void> {
     return;
   }
 
-  const inputs =
-    typeof row.inputs_json === 'string'
-      ? (JSON.parse(row.inputs_json) as Record<string, unknown>)
-      : (row.inputs_json as Record<string, unknown>);
+  // pg-types unmarshals JSONB to a JS object — no string parsing needed.
+  const inputs = row.inputs_json as Record<string, unknown>;
   const aborter = new AbortController();
   runningAborters.set(runId, aborter);
 
@@ -490,13 +498,26 @@ function sendError(res: ServerResponse, status: number, code: string, message: s
   sendJSON(res, status, { error: code, message });
 }
 
+/**
+ * Constant-time bearer-token comparison. `timingSafeEqual` requires equal-
+ * length buffers, so the early length check is a non-issue — a length
+ * mismatch can't leak via timing because it short-circuits with the same
+ * code path as a content mismatch.
+ */
 function checkAuth(req: IncomingMessage, res: ServerResponse): boolean {
   const header = req.headers.authorization;
   if (typeof header !== 'string' || !header.startsWith('Bearer ')) {
     sendError(res, 401, 'unauthenticated', 'Missing or malformed Authorization header.');
     return false;
   }
-  if (header.slice('Bearer '.length) !== API_KEY) {
+  const presented = header.slice('Bearer '.length);
+  const presentedBuf = Buffer.from(presented, 'utf8');
+  const expectedBuf = Buffer.from(API_KEY, 'utf8');
+  let ok = false;
+  if (presentedBuf.length === expectedBuf.length) {
+    ok = timingSafeEqual(presentedBuf, expectedBuf);
+  }
+  if (!ok) {
     sendError(res, 401, 'invalid_credential', 'Bearer token rejected.');
     return false;
   }
@@ -505,10 +526,22 @@ function checkAuth(req: IncomingMessage, res: ServerResponse): boolean {
 
 // ─── Route handlers ──────────────────────────────────────────────────────────
 
+/** Node typeIds the Postgres host's executor implements today. */
+const SUPPORTED_NODE_TYPES = new Set(['core.noop', 'core.delay']);
+
 function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
-  const advertisedFixtures = Array.from(workflows.keys()).filter((id) =>
-    id.startsWith('conformance-'),
-  );
+  // Only advertise fixtures the executor can actually run. A scenario
+  // gating on `isFixtureAdvertised('conformance-approval')` will skip
+  // when this host advertises only its supported subset — much better
+  // than advertising everything and failing each unsupported run with
+  // `node.failed { code: 'unsupported_node_type' }`.
+  const advertisedFixtures = Array.from(workflows.values())
+    .filter(
+      (wf) =>
+        wf.id.startsWith('conformance-') &&
+        wf.nodes.every((n) => SUPPORTED_NODE_TYPES.has(n.typeId)),
+    )
+    .map((wf) => wf.id);
   sendJSON(
     res,
     200,
@@ -644,10 +677,8 @@ async function handleGetRun(req: IncomingMessage, res: ServerResponse, runId: st
     runId: row.run_id,
     workflowId: row.workflow_id,
     status: row.status,
-    inputs:
-      typeof row.inputs_json === 'string'
-        ? JSON.parse(row.inputs_json)
-        : row.inputs_json,
+    // pg-types unmarshals JSONB to a JS object — no string parsing needed.
+    inputs: row.inputs_json,
     startedAt: row.started_at,
     endedAt: row.ended_at,
     ...(row.error_json ? { error: row.error_json } : {}),
@@ -735,13 +766,35 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
 
 // ─── Bootstrap ───────────────────────────────────────────────────────────────
 
+// Module-scope handles so `close()` can abort in-flight executors and so
+// signal handlers don't accumulate across multiple `start()` calls in the
+// same process (e.g., in a test suite). The handlers below register at
+// most once via the `signalHandlersRegistered` guard.
+let _server: import('node:http').Server | null = null;
+let signalHandlersRegistered = false;
+
+async function closeHost(): Promise<void> {
+  // Abort every in-flight executor before tearing down the server + DB so
+  // the awaiting promises don't fire writes to a closed querier mid-shutdown.
+  for (const aborter of runningAborters.values()) aborter.abort();
+  runningAborters.clear();
+  if (_server) {
+    await new Promise<void>((resolve) => _server!.close(() => resolve()));
+    _server = null;
+  }
+  if (_querier && 'end' in _querier && typeof _querier.end === 'function') {
+    await (_querier.end as () => Promise<void>)();
+    _querier = null;
+  }
+}
+
 /** Boot the host. Tests call this after injecting a Querier. */
 export async function start(): Promise<{ close: () => Promise<void> }> {
   loadFixtures();
   const q = await querier();
   await setupSchema(q);
 
-  const server = createServer((req, res) => {
+  _server = createServer((req, res) => {
     void route(req, res).catch((err: unknown) => {
       const message = err instanceof Error ? err.message : String(err);
       if (!res.headersSent) sendError(res, 500, 'internal', message);
@@ -749,28 +802,33 @@ export async function start(): Promise<{ close: () => Promise<void> }> {
     });
   });
 
-  await new Promise<void>((resolve) =>
-    server.listen(PORT, HOST, () => resolve()),
-  );
+  await new Promise<void>((resolve) => _server!.listen(PORT, HOST, () => resolve()));
   console.log(
     `[openwop-host-postgres] listening on http://${HOST}:${PORT} (api key: ${API_KEY}, processId: ${PROCESS_ID}, ${workflows.size} fixtures)`,
   );
 
-  const close = async (): Promise<void> => {
-    await new Promise<void>((resolve) => server.close(() => resolve()));
-    if (_querier && 'end' in _querier && typeof _querier.end === 'function') {
-      await (_querier.end as () => Promise<void>)();
-    }
-  };
+  // Register signal handlers exactly once per process. Calling `start()`
+  // a second time (e.g., from a test that re-boots after teardown) does
+  // NOT stack additional listeners.
+  if (!signalHandlersRegistered) {
+    const shutdown = (): void => {
+      void closeHost().then(() => process.exit(0));
+    };
+    process.once('SIGINT', shutdown);
+    process.once('SIGTERM', shutdown);
+    signalHandlersRegistered = true;
+  }
 
-  process.on('SIGINT', () => void close().then(() => process.exit(0)));
-  process.on('SIGTERM', () => void close().then(() => process.exit(0)));
-
-  return { close };
+  return { close: closeHost };
 }
 
-// Auto-start when executed directly (tsx src/server.ts).
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Auto-start when executed directly (tsx src/server.ts). Use
+// `fileURLToPath` + `resolve` so the comparison works across symlinks
+// and on Windows (where the raw-string check `file://${process.argv[1]}`
+// breaks due to backslash path separators).
+const argvScript = process.argv[1] ? resolvePath(process.argv[1]) : null;
+const thisScript = fileURLToPath(import.meta.url);
+if (argvScript !== null && argvScript === thisScript) {
   void start().catch((err) => {
     console.error(err);
     process.exit(1);

@@ -59,10 +59,12 @@ async function main(): Promise<void> {
   const { close } = await start();
 
   try {
-    const baseUrl = 'http://127.0.0.1:3839';
+    const port = process.env.OPENWOP_PORT ?? '3839';
+    const apiKey = process.env.OPENWOP_API_KEY ?? 'openwop-postgres-dev-key';
+    const baseUrl = `http://127.0.0.1:${port}`;
     const headers = {
       'Content-Type': 'application/json',
-      Authorization: 'Bearer openwop-postgres-dev-key',
+      Authorization: `Bearer ${apiKey}`,
     };
 
     // 1. Discovery.
