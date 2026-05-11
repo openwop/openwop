@@ -70,20 +70,26 @@ const dim = (s) => console.log(`${C.dim}${s}${C.reset}`);
 
 function parseArgs(argv) {
   const args = {
-    pack: null, all: false, key: null, out: DEFAULT_OUT,
+    pack: null, all: false, filter: null, key: null, out: DEFAULT_OUT,
     validateOnly: false, signed: false, keyId: 'openwop-team-1',
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--pack') args.pack = argv[++i];
     else if (a === '--all') args.all = true;
+    else if (a === '--filter') args.filter = argv[++i];
     else if (a === '--key') args.key = argv[++i];
     else if (a === '--out') args.out = argv[++i];
     else if (a === '--validate-only') args.validateOnly = true;
     else if (a === '--signed') args.signed = true;
     else if (a === '--key-id') args.keyId = argv[++i];
     else if (a === '--help' || a === '-h') {
-      console.log('Usage: build-pack-tarball.mjs [--pack <name> | --all] [--key <path>] [--out <dir>] [--validate-only] [--signed [--key-id <id>]]');
+      console.log('Usage: build-pack-tarball.mjs [--pack <name> | --all [--filter <prefix>]] [--key <path>] [--out <dir>] [--validate-only] [--signed [--key-id <id>]]');
+      console.log('');
+      console.log('  --filter <prefix>  Match pack names by prefix when used with --all.');
+      console.log('                     Useful for per-publisher signing — e.g.,');
+      console.log('                     --all --filter core.openwop --key-id openwop-team-1');
+      console.log('                     --all --filter vendor.myndhyve --key-id myndhyve-internal-1');
       process.exit(0);
     } else {
       fail(`unknown flag: ${a}`);
@@ -320,12 +326,20 @@ if (!args.pack && !args.all) {
   process.exit(2);
 }
 
-const packs = args.all
+let packs = args.all
   ? readdirSync(PACKS_DIR).filter((n) => {
       const full = join(PACKS_DIR, n);
       return statSync(full).isDirectory() && existsSync(join(full, 'pack.json'));
     }).sort()
   : [args.pack];
+
+if (args.filter) {
+  packs = packs.filter((p) => p.startsWith(args.filter));
+  if (packs.length === 0) {
+    fail(`✗ no packs match --filter "${args.filter}"`);
+    process.exit(2);
+  }
+}
 
 console.log(`=== Building ${packs.length} pack tarball${packs.length === 1 ? '' : 's'} ===`);
 console.log(`out: ${args.out}`);

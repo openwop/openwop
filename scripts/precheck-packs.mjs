@@ -48,6 +48,7 @@ function parseArgs(argv) {
     noAudit: false,
     key: null,
     keyId: 'openwop-team-1',
+    filter: null,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -55,8 +56,15 @@ function parseArgs(argv) {
     else if (a === '--no-audit') args.noAudit = true;
     else if (a === '--key') args.key = argv[++i];
     else if (a === '--key-id') args.keyId = argv[++i];
+    else if (a === '--filter') args.filter = argv[++i];
     else if (a === '--help' || a === '-h') {
-      console.log('Usage: precheck-packs.mjs [--myndhyve <path> | --no-audit] [--key <pem>] [--key-id <id>]');
+      console.log('Usage: precheck-packs.mjs [--myndhyve <path> | --no-audit] [--key <pem>] [--key-id <id>] [--filter <prefix>]');
+      console.log('');
+      console.log('  --filter <prefix>  Scope step 3 (build) to packs matching the prefix.');
+      console.log('                     Useful for per-publisher signing pipelines:');
+      console.log('                       precheck-packs.mjs --filter core.openwop --key openwop.pem --key-id openwop-team-1');
+      console.log('                       precheck-packs.mjs --filter vendor.myndhyve --key myndhyve.pem --key-id myndhyve-internal-1');
+      console.log('                       precheck-packs.mjs --filter community --key community.pem --key-id community-openwop-team-demo-1');
       process.exit(0);
     } else {
       console.error(`${C.red}unknown flag: ${a}${C.reset}`);
@@ -120,8 +128,15 @@ const buildArgs = ['scripts/build-pack-tarball.mjs', '--all', '--signed', '--key
 if (args.key) {
   buildArgs.push('--key', args.key);
 }
+if (args.filter) {
+  buildArgs.push('--filter', args.filter);
+}
 
-if (!runStep('Step 3/3 — Build signed tarballs', 'node', buildArgs)) {
+const buildLabel = args.filter
+  ? `Step 3/3 — Build signed tarballs (filter: ${args.filter})`
+  : 'Step 3/3 — Build signed tarballs';
+
+if (!runStep(buildLabel, 'node', buildArgs)) {
   process.exit(1);
 }
 
