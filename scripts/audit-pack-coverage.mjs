@@ -76,14 +76,28 @@ function walkFiles(dir, out) {
   }
 }
 
-// Captures the first id field after `defineNode({`. Allow whitespace
-// + an optional newline between `defineNode({` and the id field.
+// Two patterns:
+//   (a) defineNode({ id: '...' })  — modern NodeModule SDK
+//   (b) NodeTypeDefinition objects — legacy: `export const X: NodeTypeDefinition = { id: '...' }`
 const DEFINE_NODE_RE = /defineNode\(\{[\s\n]*id:\s*['"]([^'"]+)['"]/g;
+const NODE_TYPE_DEF_RE = /NodeTypeDefinition\s*=\s*\{[\s\n]*id:\s*['"]([^'"]+)['"]/g;
+
+// Validates that an `id: '...'` literal is plausibly a typeId rather
+// than a parameter id (e.g., `{ id: 'swarmId', type: 'string' }`).
+// TypeIds in the codebase all contain at least one dot.
+function isTypeIdShape(s) {
+  return s.includes('.');
+}
 
 function extractTypeIdsFromFile(path) {
   const text = readFileSync(path, 'utf8');
   const out = [];
-  for (const m of text.matchAll(DEFINE_NODE_RE)) out.push(m[1]);
+  for (const m of text.matchAll(DEFINE_NODE_RE)) {
+    if (isTypeIdShape(m[1])) out.push(m[1]);
+  }
+  for (const m of text.matchAll(NODE_TYPE_DEF_RE)) {
+    if (isTypeIdShape(m[1])) out.push(m[1]);
+  }
   return out;
 }
 

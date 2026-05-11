@@ -6,7 +6,11 @@
  *   - host.aiEnvelope  (synthesis — reuses the same primitive as
  *                       vendor.myndhyve.ai for envelope generation)
  *
- * typeId-preserve: core.webResearch.* preserved.
+ * typeId-preserve: matches in-tree names verbatim per migration plan §4
+ *   data.source.webSearch
+ *   data.transform.fetchUrls
+ *   ai.research.web
+ *   ai.process.synthesize
  *
  * @see docs/plans/MYNDHYVE-TO-OPENWOP-PACK-MIGRATION.md
  */
@@ -171,10 +175,10 @@ export async function synthesize(ctx) {
 }
 
 export const nodes = {
-  'core.webResearch.webSearch': webSearch,
-  'core.webResearch.fetchUrls': fetchUrls,
-  'core.webResearch.researchWeb': researchWeb,
-  'core.webResearch.synthesize': synthesize,
+  'data.source.webSearch': webSearch,
+  'data.transform.fetchUrls': fetchUrls,
+  'ai.research.web': researchWeb,
+  'ai.process.synthesize': synthesize,
 };
 
 export default nodes;

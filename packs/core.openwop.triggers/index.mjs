@@ -1,38 +1,23 @@
 /**
  * core.openwop.triggers — workflow entry-point pack runtime.
  *
- * Trigger nodes don't "execute" in the normal sense — they're
- * declarative entry points the host's trigger subsystem uses to
- * register workflows for external-event dispatch (webhook arrival,
- * cron firing, event-bus match, envelope routing). When the engine
- * boots a run from a trigger, it sets `ctx.triggerData` with the
- * trigger payload. This runtime forwards that payload to outputs.
+ * Trigger nodes are declarative entry points: when the engine boots a
+ * run from a trigger, it sets `ctx.triggerData` with the trigger
+ * payload and these executors forward that payload to outputs.
  *
- * Why a pass-through runtime instead of nothing? Two reasons:
- *   1. Replay safety. `ctx.triggerData` is captured at run start
- *      and persisted; replay returns the SAME data without
- *      re-fetching from the trigger source. The pass-through
- *      cements that contract in the node graph.
- *   2. Schema validation. Hosts that want to validate trigger
- *      payloads against the declared output schemas have a
- *      well-known seam — the node's output dispatch — to do so.
+ * Why a pass-through runtime?
+ *   1. Replay safety. ctx.triggerData is captured at run start and
+ *      persisted; replay returns the SAME data without re-fetching.
+ *   2. Schema validation. Hosts that want to validate trigger payloads
+ *      have a well-known seam — the node's output dispatch.
  *
- * All trigger nodes are `pure` + `cacheable` (no side effects;
- * deterministic given triggerData). NOT `side-effectful` — the
- * external-event-trigger surface is the host's concern, not the
- * node's; the node only reflects what the host captured.
+ * All trigger nodes are `pure` + `cacheable` (deterministic given
+ * triggerData; no side effects in the node itself).
  *
- * @see spec/v1/rest-endpoints.md (webhook + trigger endpoints)
- * @see spec/v1/webhooks.md (host webhook subsystem)
- * @see docs/PACKS-MVP-PLAN.md
+ * typeIds match the in-tree MyndHyve names verbatim (core.trigger.*)
+ * per migration plan §4 rule 1 (typeId-preserve).
  */
 
-/**
- * Generic pass-through with default population. The engine populates
- * `ctx.triggerData` from the trigger event; we return it (with a few
- * defaults for shape stability). Host MAY supply only a subset of
- * fields; the schema then validates the result.
- */
 function passThrough(ctx, defaults = {}) {
   const data = ctx.triggerData ?? {};
   return {
@@ -41,13 +26,12 @@ function passThrough(ctx, defaults = {}) {
   };
 }
 
-/* ─── core.openwop.triggers.webhook ────────────────────────── */
+const asStr = (v, fallback = '') => (typeof v === 'string' ? v : fallback);
+const asObj = (v) => (v && typeof v === 'object' ? v : {});
+
+/* ─── core.trigger.webhook ──────────────────────────────────── */
 
 export async function webhookTrigger(ctx) {
-  // Defaults shape the output so downstream nodes can rely on
-  // `headers` + `query` being objects (never undefined). `body` is
-  // null when no body (matches the schema). receivedAt + remoteAddr
-  // are host-best-effort; if absent, they don't show.
   return passThrough(ctx, {
     method: 'POST',
     headers: {},
@@ -56,7 +40,7 @@ export async function webhookTrigger(ctx) {
   });
 }
 
-/* ─── core.openwop.triggers.schedule ───────────────────────── */
+/* ─── core.trigger.schedule ─────────────────────────────────── */
 
 export async function scheduleTrigger(ctx) {
   return passThrough(ctx, {
@@ -66,7 +50,7 @@ export async function scheduleTrigger(ctx) {
   });
 }
 
-/* ─── core.openwop.triggers.event ──────────────────────────── */
+/* ─── core.trigger.event ────────────────────────────────────── */
 
 export async function eventTrigger(ctx) {
   return passThrough(ctx, {
@@ -75,7 +59,7 @@ export async function eventTrigger(ctx) {
   });
 }
 
-/* ─── core.openwop.triggers.envelope ───────────────────────── */
+/* ─── core.trigger.envelope ─────────────────────────────────── */
 
 export async function envelopeTrigger(ctx) {
   return passThrough(ctx, {
@@ -84,13 +68,62 @@ export async function envelopeTrigger(ctx) {
   });
 }
 
-/* ─── Pack registry ────────────────────────────────────────── */
+/* ─── core.trigger.chatMessage ──────────────────────────────── */
+
+export async function chatMessageTrigger(ctx) {
+  const data = ctx.triggerData ?? {};
+  return {
+    status: 'success',
+    outputs: {
+      channel: asStr(data.channel),
+      messageText: asStr(data.messageText),
+      conversationId: asStr(data.conversationId),
+      peerId: asStr(data.peerId),
+      conversationKind: asStr(data.conversationKind, 'dm'),
+    },
+  };
+}
+
+/* ─── core.trigger.canvas ───────────────────────────────────── */
+
+export async function canvasTrigger(ctx) {
+  const data = ctx.triggerData ?? {};
+  return {
+    status: 'success',
+    outputs: {
+      canvasTypeId: asStr(data.canvasTypeId),
+      canvasEvent: asStr(data.canvasEvent),
+      objectId: asStr(data.objectId),
+      eventData: asObj(data.eventData),
+    },
+  };
+}
+
+/* ─── core.trigger.artifact ─────────────────────────────────── */
+
+export async function artifactTrigger(ctx) {
+  const data = ctx.triggerData ?? {};
+  return {
+    status: 'success',
+    outputs: {
+      artifactId: asStr(data.artifactId),
+      artifactTypeId: asStr(data.artifactTypeId),
+      action: asStr(data.action),
+      artifactData: asObj(data.artifactData),
+    },
+  };
+}
+
+/* ─── Pack registry ─────────────────────────────────────────── */
 
 export const nodes = {
-  'core.openwop.triggers.webhook': webhookTrigger,
-  'core.openwop.triggers.schedule': scheduleTrigger,
-  'core.openwop.triggers.event': eventTrigger,
-  'core.openwop.triggers.envelope': envelopeTrigger,
+  'core.trigger.webhook': webhookTrigger,
+  'core.trigger.schedule': scheduleTrigger,
+  'core.trigger.event': eventTrigger,
+  'core.trigger.envelope': envelopeTrigger,
+  'core.trigger.chatMessage': chatMessageTrigger,
+  'core.trigger.canvas': canvasTrigger,
+  'core.trigger.artifact': artifactTrigger,
 };
 
 export default nodes;

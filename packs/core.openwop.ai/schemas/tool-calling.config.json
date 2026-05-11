@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "provider": { "type": "string" },
+    "model": { "type": "string" },
+    "systemPrompt": { "type": "string" },
+    "temperature": { "type": "number", "minimum": 0, "maximum": 2 },
+    "maxTokens": { "type": "integer", "minimum": 1 },
+    "tools": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "inputSchema": { "type": "object", "additionalProperties": true }
+        },
+        "required": ["name", "inputSchema"],
+        "additionalProperties": true
+      }
+    },
+    "toolChoice": { "description": "auto | required | none | { name: '<tool>' }" }
+  },
+  "required": ["provider", "model", "tools"],
+  "additionalProperties": true
+}

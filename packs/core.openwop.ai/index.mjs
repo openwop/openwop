@@ -216,9 +216,58 @@ export async function embeddings(ctx) {
 
 /* ─── Pack registry ─────────────────────────────────────────── */
 
+/* ─── core.ai.toolCalling ────────────────────────────────────── */
+
+/**
+ * core.ai.toolCalling — invokes the LLM with a declared tool/function
+ * set + lets the model emit tool calls. Routes through
+ * ctx.callAIWithTools (a host extension above the base ctx.callAI;
+ * required for hosts that want to advertise this typeId).
+ *
+ * Hosts without ctx.callAIWithTools refuse to register the pack at
+ * peerDependency resolution time per spec/v1/node-packs.md. The
+ * runtime throws `host_capability_missing` defensively in case the
+ * resolver gate misfires.
+ */
+export async function toolCalling(ctx) {
+  if (typeof ctx.callAIWithTools !== 'function') {
+    throw Object.assign(
+      new Error('host does not expose ctx.callAIWithTools'),
+      { code: 'host_capability_missing', capability: 'aiProviders.toolCalling' },
+    );
+  }
+  const { provider, model, systemPrompt, temperature, maxTokens, tools, toolChoice } = ctx.config;
+  const { messages } = ctx.inputs;
+
+  const result = await ctx.callAIWithTools({
+    provider,
+    model,
+    messages,
+    tools,
+    ...(toolChoice !== undefined ? { toolChoice } : {}),
+    ...(systemPrompt !== undefined ? { systemPrompt } : {}),
+    ...(temperature !== undefined ? { temperature } : {}),
+    ...(maxTokens !== undefined ? { maxTokens } : {}),
+  });
+
+  return {
+    status: 'success',
+    outputs: {
+      content: result.content ?? '',
+      toolCalls: Array.isArray(result.toolCalls) ? result.toolCalls : [],
+      usage: result.usage ?? { inputTokens: 0, outputTokens: 0 },
+      finishReason: normalizeFinishReason(result.finishReason),
+      ...(result.model ? { model: result.model } : {}),
+    },
+  };
+}
+
+/* ─── Pack registry ─────────────────────────────────────────── */
+
 export const nodes = {
-  'core.openwop.ai.chat-completion': chatCompletion,
-  'core.openwop.ai.structured-output': structuredOutput,
+  'core.ai.chatCompletion': chatCompletion,
+  'core.ai.structuredOutput': structuredOutput,
+  'core.ai.toolCalling': toolCalling,
   'core.openwop.ai.embeddings': embeddings,
 };
 
