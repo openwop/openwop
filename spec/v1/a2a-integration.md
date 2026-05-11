@@ -214,7 +214,18 @@ In the reverse direction (OpenWOP host as A2A agent), the host's existing scope/
 
 An OpenWOP host that supports A2A composition advertises the capability via `/.well-known/openwop`. A2A-bridge scenarios are NOT included in the v1.0 conformance baseline — adding them is filed as a candidate v1.x work item. The current shape probe (analogous to `mcp-discoverability.test.ts`) would assert that any advertised A2A capability follows a published shape (`{supported: boolean, agentCardUrl: string}` is one candidate).
 
-A future conformance scenario (`a2a-task-roundtrip.test.ts`, not yet in the suite) would use a synthetic A2A-client fixture to drive a Task creation against an OpenWOP host, observe the projected status updates, resolve an `INPUT_REQUIRED` interrupt via Message reply, and verify terminal `COMPLETED`. The synthetic-client approach mirrors how MCP integration is being designed to test without depending on a specific MCP server.
+`a2a-task-roundtrip.test.ts` lands in the suite with three subtests:
+
+- **AgentCard + task lifecycle** — fetches `/agent.json`, asserts `protocolVersion` + `skills[]` shape, drives a SUBMITTED → WORKING → COMPLETED task lifecycle. Runs against either the in-process synthetic peer or a real reference peer (see env-var modes below).
+- **Drift point #3** — fake-peer-only: forces the peer to `AUTH_REQUIRED`, asserts the host projects this to `waiting-input` per §"State projection (reverse)".
+- **Drift point #4** — fake-peer-only: forces the peer to `REJECTED`, asserts the host projects this to terminal `failed` with `reason: 'rejected_by_remote'`.
+
+Two modes, controlled by env vars:
+
+- **Synthetic peer** (`OPENWOP_A2A_FAKE_PEER=true`): boots an in-process minimal A2A peer (the `a2a-fake-peer.ts` library at `conformance/src/lib/`). Exposes a state-forcing API so the drift-point subtests can deterministically reproduce AUTH_REQUIRED + REJECTED.
+- **Real reference peer** (`OPENWOP_A2A_REAL_PEER_URL=<base-url>`): points the AgentCard + task-lifecycle probe at a real A2A reference peer. Assertions stay shape-only — a real peer's task transitions on its own schedule, not on a state-forcing API. Drift-point subtests soft-skip in this mode.
+
+The real-impl path is the **Phase 3 T3.4 interop-evidence** for `docs/PROTOCOL-GAP-CLOSURE-PLAN.md`. To collect it: run a reference A2A peer (e.g., the Google reference implementation if/when published) on a local port, set `OPENWOP_A2A_REAL_PEER_URL=http://localhost:<port>`, run the scenario. The test logs the skill name + initial task state so the interop evidence is visible in the CI output.
 
 ---
 
@@ -223,7 +234,7 @@ A future conformance scenario (`a2a-task-roundtrip.test.ts`, not yet in the suit
 - Codify a recommended `metadata.openwop.*` shape so A2A clients can render openwop-interrupt-rich payloads consistently across hosts.
 - Add an `a2a` capability slot to `/.well-known/openwop` discovery.
 - Specify a normative `auth-required` interrupt kind in v1.x to remove drift point #3.
-- Ship `a2a-task-roundtrip.test.ts` in a future conformance minor.
+- ~~Ship `a2a-task-roundtrip.test.ts` in a future conformance minor.~~ ✅ Live as of 2026-05-10; real-peer interop-evidence mode added 2026-05-11 (Phase 3 T3.4).
 - Worked node-pack example: `examples/a2a-bridge/` showing an OpenWOP node that invokes an external A2A agent. Filed as a candidate post-v1 example.
 
 ---

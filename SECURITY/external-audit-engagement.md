@@ -153,7 +153,8 @@ A retest after remediation lands counts as 25% additional cost, capped at $10,00
 | Step | Status | Date |
 |---|---|---|
 | Engagement doc drafted | ✅ | 2026-05-10 |
-| Vendor outreach | — | TBD |
+| Per-vendor outreach drafts ready | ✅ | 2026-05-11 — see `SECURITY/outreach/external-audit/` (5 vendors). Per-vendor reply status tracked in `SECURITY/outreach/external-audit/STATUS.md`. |
+| Vendor outreach sent | — | TBD |
 | Quotes received | — | TBD |
 | Vendor selected | — | TBD |
 | Contract signed | — | TBD |

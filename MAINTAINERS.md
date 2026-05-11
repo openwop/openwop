@@ -68,6 +68,37 @@ A maintainer who changes affiliation updates this file in the same PR. Multiple 
 
 _None yet._
 
+## Recruitment log
+
+The vendor-neutral-org migration tripwire in `ROADMAP.md` activates when this file lists ≥1 maintainer not affiliated with OpenWOP. Recruitment is **out-of-band**: this section tracks attempts (and their outcomes) so the project's recruitment posture is auditable, but it doesn't commit to a hiring schedule.
+
+### External host implementations
+
+Recruitment targets per `docs/recruitment/external-host.md` (drafts ready 2026-05-11, outreach not yet sent).
+
+| Target | Outreach sent | First reply | Status | Notes |
+|---|---|---|---|---|
+| LangChain / LangGraph adapter | — | — | Drafted | Tier 1; cites README's six-borrowed-idioms section. See `docs/recruitment/external-host.md` §"Tier 1". |
+| Restate | — | — | Drafted | Tier 2; durable-execution-runtime fit. |
+| DBOS | — | — | Drafted | Tier 3; Postgres-native transactional workflows. |
+| Inngest | — | — | Drafted | Tier 4; TS-native event-driven runtime. |
+
+When a target replies positively + commits to a draft adapter PR within 30 days, move their row's status to `in-progress`. When their host appears on `INTEROP-MATRIX.md`, status → `live`.
+
+### External pack authors
+
+Recruitment targets per `docs/recruitment/external-pack-author.md` (drafts ready 2026-05-11, outreach not yet sent).
+
+| Target | Outreach sent | First reply | Status | Notes |
+|---|---|---|---|---|
+| (first candidate to be identified per `docs/recruitment/external-pack-author.md`) | — | — | Pending target identification | Target picking criteria documented in the recruitment doc. |
+
+### Governance migration trigger
+
+When the first non-steward maintainer is added to the "Current maintainers" table above:
+1. Add the recruitment log row that produced them.
+2. Open the vendor-neutral-org migration RFC per `RFCS/0001-rfc-process.md` (Phase 4 T4.1 in `docs/PROTOCOL-GAP-CLOSURE-PLAN.md`).
+
 ## See also
 
 - `GOVERNANCE.md` — decision rules, role definitions, path to working group.
@@ -75,3 +106,5 @@ _None yet._
 - `COMPATIBILITY.md` — what counts as additive vs. breaking; what maintainers gate.
 - `CODE_OF_CONDUCT.md` — behavioral expectations enforced under "Removal for cause."
 - `ROADMAP.md` — the vendor-neutral-org migration tripwire that depends on this file.
+- `docs/recruitment/external-host.md` — per-target host-recruitment outreach drafts.
+- `docs/recruitment/external-pack-author.md` — external pack-author recruitment.

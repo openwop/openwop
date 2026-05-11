@@ -70,7 +70,9 @@ npx vitest run src/scenarios/discovery.test.ts # single file
 | `OPENWOP_OTEL_COLLECTOR_PORT=14318` | Bind the OTel collector on a specific port (default `4318`). The host MUST be configured with `OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:<port>`. |
 | `OPENWOP_WEBHOOK_ALLOW_PRIVATE=true` | Hosts implementing the webhook SSRF guard (rejecting loopback / RFC1918 / link-local destinations) MUST advertise this flag for the loopback test receiver in `webhook-signed-delivery.test.ts` to be accepted. The SQLite reference host honors this env var; the scenario soft-skips when the host rejects the URL. |
 | `OPENWOP_MCP_FAKE_SERVER=true` | Boots the synthetic MCP peer for `mcp-tool-roundtrip.test.ts`. |
+| `OPENWOP_MCP_REAL_SERVER_URL=<base-url>` | Points the MCP wire-shape probe at a real reference MCP server (e.g., one of `modelcontextprotocol/servers`). Drift-point assertions relax to shape-only (a tools/list returns ≥1 tool, a tools/call returns valid MCP content). When both this and `OPENWOP_MCP_FAKE_SERVER` are set, the real URL wins. Phase 3 T3.4 interop-evidence path. |
 | `OPENWOP_A2A_FAKE_PEER=true` | Boots the synthetic A2A peer for `a2a-task-roundtrip.test.ts`. |
+| `OPENWOP_A2A_REAL_PEER_URL=<base-url>` | Points the A2A AgentCard + task-lifecycle probe at a real reference A2A peer. Drift-point subtests (AUTH_REQUIRED / REJECTED) stay fake-peer-only — real peers don't expose a state-forcing API. Phase 3 T3.4 interop-evidence path. |
 | `OPENWOP_FORCE_RATE_LIMIT=true` | Signals the host (test-only key) to fabricate a 429 so `rate-limit-envelope.test.ts` can exercise envelope shape deterministically. |
 
 Exit code is non-zero on any failed assertion.

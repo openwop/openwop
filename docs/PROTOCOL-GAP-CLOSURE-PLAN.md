@@ -125,13 +125,16 @@ This document turns the protocol deep-dive review into implementation tracks. It
 **Goal:** move integration docs from plausible composition to executable interop.
 
 **Work:**
-- Add `mcp-tool-roundtrip.test.ts` using a synthetic MCP server.
-- Add `a2a-task-roundtrip.test.ts` using a synthetic A2A peer.
-- Canonicalize the minimal `metadata.openwop.*` projection shape for A2A interrupts.
+- ✅ Add `mcp-tool-roundtrip.test.ts` using a synthetic MCP server.
+- ✅ Add `a2a-task-roundtrip.test.ts` using a synthetic A2A peer.
+- ✅ Real-impl interop env vars landed 2026-05-11 (Phase 3 T3.4): `OPENWOP_MCP_REAL_SERVER_URL` + `OPENWOP_A2A_REAL_PEER_URL` switch the wire-shape probes from the in-process fakes to real reference implementations (e.g., `modelcontextprotocol/servers`). Synthetic-peer drift-point subtests stay fake-only since real peers don't expose state-forcing APIs.
+- ✅ `metadata.openwop.*` projection shape canonicalized in `a2a-integration.md` §"State projection (reverse)" + the four drift-point assertions in `a2a-task-roundtrip.test.ts`.
+- Remaining: actually point the scenarios at a live reference impl + publish the result in `INTEROP-MATRIX.md` "Composition partners" subsection. This is the out-of-band step in `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` Phase 3 T3.4 (operator runs a reference server locally + invokes the suite with the env var set).
 
 **Acceptance:**
-- Hosts advertising MCP/A2A capabilities run and pass the corresponding optional scenarios.
-- `a2a-integration.md` has one canonical metadata example clients can implement.
+- ✅ Hosts advertising MCP/A2A capabilities run and pass the corresponding optional scenarios.
+- ✅ `a2a-integration.md` has one canonical metadata example clients can implement.
+- Remaining: published cross-impl evidence (operator step).
 
 ## Track 7: Node-Pack Registry MVP
 
@@ -169,14 +172,17 @@ This document turns the protocol deep-dive review into implementation tracks. It
 
 **Work:**
 - Publish the hosted docs and conformance leaderboard.
-- Recruit one non-steward host implementation to pass the public suite.
+- Recruit one non-steward host implementation to pass the public suite. ✅ Outreach drafts ready 2026-05-11 (Phase 3 T3.2) at `docs/recruitment/external-host.md`: 4-tier candidate list (LangGraph / Restate / DBOS / Inngest). Tracked in `MAINTAINERS.md` §"Recruitment log" §"External host implementations". Out-of-band step: send the four emails in parallel.
+- Recruit one external pack author. ✅ Recruitment framework + outreach template ready 2026-05-11 (Phase 3 T3.3) at `docs/recruitment/external-pack-author.md`. Out-of-band step: identify 3-5 specific Tier 1 or Tier 2 candidates + customize the template.
 - Trigger the vendor-neutral governance migration when `MAINTAINERS.md` criteria are met.
-- Commission external security review after auth and registry profiles stabilize.
+- Commission external security review after auth and registry profiles stabilize. ✅ Engagement scope finalized at `SECURITY/external-audit-engagement.md`. ✅ Per-vendor outreach drafts ready 2026-05-11 (Phase 3 T3.1) at `SECURITY/outreach/external-audit/` for Trail of Bits / NCC Group / Doyensec / Cure53 / Latacora. Status tracker at `SECURITY/outreach/external-audit/STATUS.md`. Out-of-band step: send all five in parallel.
 
 **Acceptance:**
 - Public interop matrix has at least one non-steward row.
 - Governance migration RFC is opened when the maintainer tripwire fires.
 - Security review results are linked from `SECURITY.md`.
+
+**Phase 3 status snapshot (2026-05-11):** every Phase-3 deliverable that doesn't depend on external decisions is ready (engagement doc finalized, 5 per-vendor outreach emails ready-to-send, 4-tier host-recruitment drafts, pack-author recruitment framework, MCP+A2A real-impl interop env vars wired). The four `Out-of-band step` lines above are the bottleneck — they each require the steward to send outreach + wait on reply latency that's not under the project's control.
 
 ## Track 10: Multi-Agent Spec Closure
 

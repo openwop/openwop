@@ -11,19 +11,28 @@
  *
  * Two layers:
  *
- *   - **Direct fake-peer probe** (always when peer started): walks the
- *     fake peer through SUBMITTED → WORKING → INPUT_REQUIRED → COMPLETED
- *     and asserts the AgentCard + task lifecycle wire shape.
+ *   - **Direct peer probe** (always when an A2A endpoint is configured):
+ *     walks the fake peer through SUBMITTED → WORKING → COMPLETED and
+ *     asserts the AgentCard + task lifecycle wire shape. With
+ *     `OPENWOP_A2A_REAL_PEER_URL` set, points at a real reference A2A
+ *     peer with relaxed shape-only assertions.
  *   - **Host-mediated reverse-projection** (gated on fixture
  *     advertisement): when the host advertises
  *     `conformance-a2a-task-roundtrip`, run it against the fake peer
  *     forced into AUTH_REQUIRED / REJECTED to verify the host applies
- *     the documented projections.
+ *     the documented projections. **Real-peer mode does NOT exercise
+ *     drift points** — real peers don't expose a state-forcing API,
+ *     so these subtests stay fake-only.
  *
- * Operator contract: `OPENWOP_A2A_FAKE_PEER=true` on suite side; configure
- * the host to use the printed AgentCard URL.
+ * Operator contract:
+ *   - `OPENWOP_A2A_FAKE_PEER=true` — boots the in-process synthetic
+ *     peer. Asserts the deterministic echo skill + drift-point states.
+ *   - `OPENWOP_A2A_REAL_PEER_URL=<base-url>` — points the direct probe
+ *     at a real A2A reference implementation. Drift-point subtests
+ *     soft-skip in this mode. Phase 3 T3.4 interop-evidence path.
  *
  * @see spec/v1/a2a-integration.md §"State projection"
+ * @see docs/PROTOCOL-GAP-CLOSURE-PLAN.md Phase 3 T3.4
  */
 
 import { describe, it, expect } from 'vitest';
@@ -34,37 +43,76 @@ import { pollUntilTerminal, pollUntilStatus } from '../lib/polling.js';
 
 const ROUNDTRIP_FIXTURE = 'conformance-a2a-task-roundtrip';
 
+/** Resolve the A2A endpoint to probe: real-peer env wins; otherwise the in-process fake. */
+function probePeer(): { url: string; isReal: boolean } | null {
+  const real = process.env.OPENWOP_A2A_REAL_PEER_URL;
+  if (real && real.length > 0) return { url: real.replace(/\/$/, ''), isReal: true };
+  const fake = getA2AFakePeer();
+  if (fake) return { url: fake.endpoint(), isReal: false };
+  return null;
+}
+
 describe('a2a-task-roundtrip: AgentCard + task lifecycle', () => {
-  it('AgentCard exposes protocolVersion + skills; task SUBMITTED → COMPLETED', async () => {
-    const peer = getA2AFakePeer();
-    if (!peer) {
+  it('AgentCard exposes protocolVersion + skills; task SUBMITTED → terminal state', async () => {
+    const probe = probePeer();
+    if (!probe) {
       // eslint-disable-next-line no-console
-      console.warn('[a2a-task-roundtrip] peer not started; set OPENWOP_A2A_FAKE_PEER=true');
+      console.warn(
+        '[a2a-task-roundtrip] no A2A endpoint configured; set OPENWOP_A2A_FAKE_PEER=true ' +
+          'or OPENWOP_A2A_REAL_PEER_URL=<base-url>',
+      );
       return;
     }
-    peer.reset();
+    if (!probe.isReal) getA2AFakePeer()!.reset();
 
     // AgentCard fetch.
-    const card = await fetch(`${peer.endpoint()}/agent.json`);
+    const card = await fetch(`${probe.url}/agent.json`);
     expect(card.status).toBe(200);
-    const cardJson = (await card.json()) as { protocolVersion?: string; skills?: unknown[] };
+    const cardJson = (await card.json()) as {
+      protocolVersion?: string;
+      skills?: ReadonlyArray<{ name?: string }>;
+    };
     expect(typeof cardJson.protocolVersion).toBe('string');
     expect(Array.isArray(cardJson.skills)).toBe(true);
+    expect((cardJson.skills ?? []).length).toBeGreaterThan(0);
 
-    // Create + poll a task.
-    const create = await fetch(`${peer.endpoint()}/tasks`, {
+    if (probe.isReal) {
+      // Real-peer interop evidence (Phase 3 T3.4). Skip the
+      // state-advancement assertions — a real peer's task transitions
+      // on its own schedule (or in response to peer-side events we
+      // don't control). Assertion stays shape-only: a task we create
+      // returns a taskId + a valid initial state.
+      const first = cardJson.skills?.[0];
+      const create = await fetch(`${probe.url}/tasks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ skill: first?.name, input: {} }),
+      });
+      expect(create.status).toBeGreaterThanOrEqual(200);
+      expect(create.status).toBeLessThan(300);
+      const createBody = (await create.json()) as { taskId?: string; state?: string };
+      expect(typeof createBody.taskId).toBe('string');
+      expect(typeof createBody.state).toBe('string');
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[a2a-task-roundtrip] real-peer interop OK against ${probe.url} ` +
+          `(skill=${first?.name}, taskId=${createBody.taskId}, initial=${createBody.state})`,
+      );
+      return;
+    }
+
+    // Fake-peer path: deterministic state forcing, assert verbatim.
+    const fake = getA2AFakePeer()!;
+    const create = await fetch(`${probe.url}/tasks`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ skill: 'echo', input: { text: 'hello' } }),
     });
     expect(create.status).toBe(200);
     const { taskId } = (await create.json()) as { taskId: string; state: string };
-
-    // Advance through states.
-    peer.advanceTask(taskId, 'WORKING');
-    peer.advanceTask(taskId, 'COMPLETED');
-
-    const get = await fetch(`${peer.endpoint()}/tasks/${taskId}`);
+    fake.advanceTask(taskId, 'WORKING');
+    fake.advanceTask(taskId, 'COMPLETED');
+    const get = await fetch(`${probe.url}/tasks/${taskId}`);
     const finalTask = (await get.json()) as { state: string };
     expect(finalTask.state).toBe('COMPLETED');
   });

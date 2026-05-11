@@ -110,7 +110,14 @@ An OpenWOP host that supports MCP advertises the capability and (per the host's 
 - The **in-memory reference host** does NOT support MCP — its `core.noop` and `core.delay` nodes don't invoke LLMs at all. A workflow that requires MCP tools fails with `unsupported_node_type` against the in-memory host.
 - A **third-party host** can implement MCP-compatibility independently; the openwop wire contract is unaffected.
 
-The v1.0 conformance baseline includes `mcp-discoverability.test.ts`, which asserts the shape of any advertised MCP capability: `{supported: boolean, serverUrls: string[]}`. Hosts that don't advertise MCP skip-equivalent. The test accepts both the standard top-level `mcp` slot and vendor-namespaced slots like `<vendor>.mcp` (read from the discovery body root, since there is no `capabilities` envelope). A future conformance scenario (`mcp-tool-roundtrip.test.ts`, not yet in the suite) would extend this to verify the tool-call round-trip works against any conforming host.
+The v1.0 conformance baseline includes `mcp-discoverability.test.ts`, which asserts the shape of any advertised MCP capability: `{supported: boolean, serverUrls: string[]}`. Hosts that don't advertise MCP skip-equivalent. The test accepts both the standard top-level `mcp` slot and vendor-namespaced slots like `<vendor>.mcp` (read from the discovery body root, since there is no `capabilities` envelope).
+
+`mcp-tool-roundtrip.test.ts` extends the discoverability check with an end-to-end tool-call round-trip. Two modes, controlled by env vars:
+
+- **Synthetic peer** (`OPENWOP_MCP_FAKE_SERVER=true`): boots an in-process minimal MCP server (the `mcp-fake-server.ts` library at `conformance/src/lib/`). Asserts deterministic shape — `initialize` + `tools/list` returning an `echo` tool + `tools/call` echoing the input.
+- **Real reference impl** (`OPENWOP_MCP_REAL_SERVER_URL=<base-url>`): points the same probe at a real MCP reference server (e.g., one of [`modelcontextprotocol/servers`](https://github.com/modelcontextprotocol/servers)). Assertions relax to shape-only: `tools/list` returns ≥ 1 tool, `tools/call` against the first listed tool returns a `result.content` array (valid OR error-marked — both spec-conformant).
+
+The real-impl path is the **Phase 3 T3.4 interop-evidence** for `docs/PROTOCOL-GAP-CLOSURE-PLAN.md`. To collect it: run the Anthropic reference `weather` server (or any other from the curated catalog) on a local port, set `OPENWOP_MCP_REAL_SERVER_URL=http://localhost:<port>`, run the scenario. The test logs the tool name + isError marker so the interop evidence is visible in the CI output.
 
 ---
 

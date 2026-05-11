@@ -13,21 +13,34 @@
  *
  * Two-level scenario:
  *
- *   - **Direct fake-server probe** (always runs when collector started):
- *     hits the in-process fake MCP server directly with initialize +
+ *   - **Direct probe** (always runs when an MCP endpoint is configured):
+ *     hits the configured MCP server directly with initialize +
  *     tools/list + tools/call to verify its wire shape. Catches
- *     regressions in our own test fixture.
+ *     regressions in our own test fixture; doubles as the shape check
+ *     against real reference servers when `OPENWOP_MCP_REAL_SERVER_URL`
+ *     points at one.
  *
  *   - **Host-mediated roundtrip** (runs when host advertises an MCP
  *     fixture or roundtrip capability): starts a workflow run, observes
  *     events, asserts tool-call envelope visibility. Skips otherwise.
  *
  * Operator contract:
- *   `OPENWOP_MCP_FAKE_SERVER=true` on the suite side; configure the host
- *   to use the printed fake-server URL as one of its MCP servers.
+ *   - `OPENWOP_MCP_FAKE_SERVER=true` — boots the in-process synthetic
+ *     server at suite init. The direct probe asserts the echo tool's
+ *     deterministic shape.
+ *   - `OPENWOP_MCP_REAL_SERVER_URL=<base-url>` — points the direct
+ *     probe at a real MCP reference implementation (e.g., one of
+ *     `modelcontextprotocol/servers`). The probe relaxes its assertions
+ *     to shape-only: a tools/list returns ≥1 tool, an echo-equivalent
+ *     tool can be called, the response carries valid MCP content. This
+ *     is the interop-evidence path for Phase 3 T3.4.
+ *
+ *   When both env vars are set, the real-server URL wins (it's the more
+ *   meaningful evidence). When neither is set, the scenario soft-skips.
  *
  * @see spec/v1/mcp-integration.md
  * @see SECURITY/threat-model-prompt-injection.md
+ * @see docs/PROTOCOL-GAP-CLOSURE-PLAN.md Phase 3 T3.4
  */
 
 import { describe, it, expect } from 'vitest';
@@ -53,47 +66,92 @@ async function postJsonRpc(
   return { status: res.status, json: JSON.parse(text) as Record<string, unknown> };
 }
 
-describe('mcp-tool-roundtrip: fake-server wire shape', () => {
-  it('initialize + tools/list + tools/call echo round-trip cleanly', async () => {
-    const server = getMcpFakeServer();
-    if (!server) {
+/** Resolve the MCP endpoint to probe: real-server env wins; otherwise the in-process fake. */
+function probeEndpoint(): { url: string; isReal: boolean } | null {
+  const real = process.env.OPENWOP_MCP_REAL_SERVER_URL;
+  if (real && real.length > 0) return { url: real.replace(/\/$/, ''), isReal: true };
+  const fake = getMcpFakeServer();
+  if (fake) return { url: fake.endpoint(), isReal: false };
+  return null;
+}
+
+describe('mcp-tool-roundtrip: server wire shape', () => {
+  it('initialize + tools/list + tools/call round-trip per MCP JSON-RPC contract', async () => {
+    const probe = probeEndpoint();
+    if (!probe) {
       // eslint-disable-next-line no-console
       console.warn(
-        '[mcp-tool-roundtrip] fake server not started; set OPENWOP_MCP_FAKE_SERVER=true',
+        '[mcp-tool-roundtrip] no MCP endpoint configured; set OPENWOP_MCP_FAKE_SERVER=true ' +
+          'or OPENWOP_MCP_REAL_SERVER_URL=<base-url>',
       );
       return;
     }
-    server.reset();
+    if (!probe.isReal) getMcpFakeServer()!.reset();
 
-    const init = await postJsonRpc(server.endpoint(), 'initialize', {}, 1);
+    const init = await postJsonRpc(probe.url, 'initialize', {}, 1);
     expect(init.status).toBe(200);
     const initResult = (init.json.result ?? {}) as { protocolVersion?: string };
     expect(typeof initResult.protocolVersion).toBe('string');
 
-    const list = await postJsonRpc(server.endpoint(), 'tools/list', {}, 2);
+    const list = await postJsonRpc(probe.url, 'tools/list', {}, 2);
     expect(list.status).toBe(200);
     const listResult = (list.json.result ?? {}) as {
       tools?: ReadonlyArray<{ name?: string }>;
     };
-    expect(listResult.tools?.some((t) => t.name === 'echo')).toBe(true);
+    expect(Array.isArray(listResult.tools)).toBe(true);
+    expect((listResult.tools ?? []).length).toBeGreaterThan(0);
 
-    const call = await postJsonRpc(
-      server.endpoint(),
-      'tools/call',
-      { name: 'echo', arguments: { text: 'hello-from-conformance' } },
-      3,
-    );
-    expect(call.status).toBe(200);
-    const callResult = (call.json.result ?? {}) as {
-      content?: ReadonlyArray<{ type?: string; text?: string }>;
-    };
-    expect(callResult.content?.[0]?.type).toBe('text');
-    expect(callResult.content?.[0]?.text).toBe('hello-from-conformance');
+    if (probe.isReal) {
+      // Real-server interop evidence (Phase 3 T3.4). We can't assume a
+      // deterministic echo tool exists on every reference server, so the
+      // assertions stay shape-only:
+      //   - tools/list returns ≥1 tool ✓ (above)
+      //   - the first tool has a name + an input-schema-compatible shape
+      //   - tools/call against that tool returns valid MCP content (array
+      //     of {type, ...}). A failed call (e.g., bad arguments) still
+      //     returns 200 with an `isError: true` content marker — both
+      //     paths are spec-conformant; we assert SOME response.
+      const first = listResult.tools?.[0];
+      expect(typeof first?.name).toBe('string');
+      const callRes = await postJsonRpc(
+        probe.url,
+        'tools/call',
+        { name: first!.name, arguments: {} },
+        3,
+      );
+      expect(callRes.status).toBe(200);
+      const callResult = (callRes.json.result ?? {}) as {
+        content?: ReadonlyArray<{ type?: string }>;
+        isError?: boolean;
+      };
+      // Either valid content[] OR isError-marked content[] is acceptable.
+      expect(Array.isArray(callResult.content)).toBe(true);
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[mcp-tool-roundtrip] real-server interop OK against ${probe.url} ` +
+          `(tool=${first?.name}, isError=${callResult.isError === true})`,
+      );
+    } else {
+      // Fake-server path: deterministic echo tool, assert verbatim.
+      expect(listResult.tools?.some((t) => t.name === 'echo')).toBe(true);
 
-    // Invocation log captured.
-    const invocations = server.invocations();
-    const methods = invocations.map((i) => i.method);
-    expect(methods).toEqual(['initialize', 'tools/list', 'tools/call']);
+      const call = await postJsonRpc(
+        probe.url,
+        'tools/call',
+        { name: 'echo', arguments: { text: 'hello-from-conformance' } },
+        3,
+      );
+      expect(call.status).toBe(200);
+      const callResult = (call.json.result ?? {}) as {
+        content?: ReadonlyArray<{ type?: string; text?: string }>;
+      };
+      expect(callResult.content?.[0]?.type).toBe('text');
+      expect(callResult.content?.[0]?.text).toBe('hello-from-conformance');
+
+      const fake = getMcpFakeServer()!;
+      const methods = fake.invocations().map((i) => i.method);
+      expect(methods).toEqual(['initialize', 'tools/list', 'tools/call']);
+    }
   });
 });
 
