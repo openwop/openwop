@@ -73,4 +73,52 @@ describe('configurable-schema: per-workflow schema enforced', () => {
     const body = create.json as { error?: string };
     expect(body.error).toBe('validation_error');
   });
+
+  it('configurable overlay matching configurableSchema is accepted', async () => {
+    const fixture = await pickFixture();
+    if (!fixture) return; // covered by skip warning above
+
+    const manifest = await driver.get(`/v1/workflows/${encodeURIComponent(fixture)}`);
+    const schema = (manifest.json as { configurableSchema?: Record<string, unknown> })
+      .configurableSchema;
+    if (!schema) return;
+
+    // Build a minimal valid overlay derived from the schema's first
+    // `properties.*` entry. This stays generic across fixtures: we pick
+    // the first integer property with a `minimum` (if present) and emit
+    // a value at that minimum. Falls back to {} when no usable property
+    // is declared.
+    const props = (schema.properties ?? {}) as Record<string, Record<string, unknown>>;
+    const overlay: Record<string, unknown> = {};
+    for (const [key, p] of Object.entries(props)) {
+      if (p.type === 'integer') {
+        const min = typeof p.minimum === 'number' ? p.minimum : 1;
+        overlay[key] = min;
+        break;
+      }
+      if (p.type === 'string') {
+        overlay[key] = 'conformance-test';
+        break;
+      }
+    }
+
+    const create = await driver.post('/v1/runs', {
+      workflowId: fixture,
+      configurable: overlay,
+    });
+    expect(create.status, driver.describe(
+      'run-options.md §"Per-workflow configurableSchema"',
+      'configurable matching the declared schema MUST be accepted (201)',
+    )).toBe(201);
+
+    const body = create.json as { runId?: string };
+    expect(typeof body.runId).toBe('string');
+
+    // Clean up so subsequent scenario runs don't accumulate state.
+    if (body.runId) {
+      await driver.post(`/v1/runs/${encodeURIComponent(body.runId)}/cancel`, {
+        reason: 'conformance-cleanup',
+      });
+    }
+  });
 });

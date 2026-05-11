@@ -889,9 +889,13 @@ async function handleCreateRun(req: IncomingMessage, res: ServerResponse): Promi
   if (!checkAuth(req, res)) return;
 
   const bodyText = await readBody(req);
-  let parsed: { workflowId?: string; inputs?: Record<string, unknown> };
+  let parsed: { workflowId?: string; inputs?: Record<string, unknown>; configurable?: unknown };
   try {
-    parsed = JSON.parse(bodyText) as { workflowId?: string; inputs?: Record<string, unknown> };
+    parsed = JSON.parse(bodyText) as {
+      workflowId?: string;
+      inputs?: Record<string, unknown>;
+      configurable?: unknown;
+    };
   } catch {
     sendError(res, 400, 'validation_error', 'Request body MUST be valid JSON.');
     return;
@@ -902,9 +906,23 @@ async function handleCreateRun(req: IncomingMessage, res: ServerResponse): Promi
     return;
   }
 
-  if (!workflows.has(parsed.workflowId)) {
+  const workflow = workflows.get(parsed.workflowId);
+  if (!workflow) {
     sendError(res, 404, 'workflow_not_found', 'Unknown workflowId.');
     return;
+  }
+
+  // Per-workflow configurableSchema validation (run-options.md §"Per-workflow
+  // configurableSchema"). When the workflow declares a schema, the host MUST
+  // reject mismatched `configurable` overlays with `validation_error`.
+  const wfSchema = (workflow as unknown as { configurableSchema?: Record<string, unknown> })
+    .configurableSchema;
+  if (wfSchema && parsed.configurable !== undefined) {
+    const check = validateConfigurable(wfSchema, parsed.configurable);
+    if (!check.valid) {
+      sendError(res, 400, 'validation_error', check.reason);
+      return;
+    }
   }
 
   const idempotencyKey = req.headers['idempotency-key'];
@@ -1249,6 +1267,88 @@ async function handleResolveInterruptByToken(
   sendError(res, 500, 'internal', 'Unexpected resolve outcome.');
 }
 
+function handleGetWorkflow(req: IncomingMessage, res: ServerResponse, workflowId: string): void {
+  if (!checkAuth(req, res)) return;
+  const wf = workflows.get(workflowId);
+  if (!wf) {
+    sendError(res, 404, 'workflow_not_found', `Unknown workflowId: ${workflowId}`);
+    return;
+  }
+  // Return the full workflow definition as loaded from disk so clients
+  // can pre-flight-validate against any declared configurableSchema
+  // (run-options.md §"Per-workflow configurableSchema").
+  sendJSON(res, 200, wf);
+}
+
+/**
+ * Validate a `configurable` overlay against a workflow's optional
+ * `configurableSchema` (a JSON Schema 2020-12 fragment). Minimal
+ * implementation — supports the subset of JSON Schema the reference
+ * fixtures use: `type`, `additionalProperties: false`, `properties.*`,
+ * `properties.<k>.type`, `properties.<k>.minimum`, `items.type`.
+ * A real host would use Ajv2020.
+ */
+function validateConfigurable(
+  schema: Record<string, unknown> | undefined,
+  configurable: unknown,
+): { valid: true } | { valid: false; reason: string } {
+  if (!schema) return { valid: true };
+  if (configurable === undefined || configurable === null) return { valid: true };
+  if (typeof configurable !== 'object') {
+    return { valid: false, reason: 'configurable MUST be an object' };
+  }
+  const obj = configurable as Record<string, unknown>;
+  const props = (schema.properties ?? {}) as Record<string, Record<string, unknown>>;
+  const allowAdditional = schema.additionalProperties !== false;
+
+  for (const [key, val] of Object.entries(obj)) {
+    const propSchema = props[key];
+    if (!propSchema) {
+      if (!allowAdditional) {
+        return {
+          valid: false,
+          reason: `configurable.${key} is not declared in configurableSchema (additionalProperties: false)`,
+        };
+      }
+      continue;
+    }
+    const expectedType = propSchema.type as string | undefined;
+    if (expectedType === 'integer') {
+      if (typeof val !== 'number' || !Number.isInteger(val)) {
+        return { valid: false, reason: `configurable.${key} MUST be an integer` };
+      }
+      if (typeof propSchema.minimum === 'number' && val < propSchema.minimum) {
+        return { valid: false, reason: `configurable.${key} MUST be >= ${propSchema.minimum}` };
+      }
+    } else if (expectedType === 'string') {
+      if (typeof val !== 'string') {
+        return { valid: false, reason: `configurable.${key} MUST be a string` };
+      }
+    } else if (expectedType === 'array') {
+      if (!Array.isArray(val)) {
+        return { valid: false, reason: `configurable.${key} MUST be an array` };
+      }
+      const items = propSchema.items as { type?: string } | undefined;
+      if (items?.type === 'string' && !val.every((v) => typeof v === 'string')) {
+        return { valid: false, reason: `configurable.${key} items MUST all be strings` };
+      }
+    } else if (expectedType === 'object') {
+      if (typeof val !== 'object' || val === null || Array.isArray(val)) {
+        return { valid: false, reason: `configurable.${key} MUST be an object` };
+      }
+    } else if (expectedType === 'number') {
+      if (typeof val !== 'number') {
+        return { valid: false, reason: `configurable.${key} MUST be a number` };
+      }
+    } else if (expectedType === 'boolean') {
+      if (typeof val !== 'boolean') {
+        return { valid: false, reason: `configurable.${key} MUST be a boolean` };
+      }
+    }
+  }
+  return { valid: true };
+}
+
 function handleAuditVerify(req: IncomingMessage, res: ServerResponse, url: URL): void {
   if (!checkAuth(req, res)) return;
   const fromSeqRaw = url.searchParams.get('fromSeq');
@@ -1482,6 +1582,7 @@ const RUN_EVENTS_SSE_PATTERN = /^\/v1\/runs\/([^/]+)\/events$/;
 const RUN_DEBUG_BUNDLE_PATTERN = /^\/v1\/runs\/([^/]+)\/debug-bundle$/;
 const RUN_INTERRUPT_PATTERN = /^\/v1\/runs\/([^/]+)\/interrupts\/([^/]+)$/;
 const INTERRUPT_TOKEN_PATTERN = /^\/v1\/interrupts\/([^/]+)$/;
+const WORKFLOW_ID_PATTERN = /^\/v1\/workflows\/([^/]+)$/;
 
 async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
@@ -1492,6 +1593,8 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   if (method === 'GET' && path === '/v1/openapi.json') return handleOpenApi(req, res);
   if (method === 'GET' && path === '/v1/audit/verify') return handleAuditVerify(req, res, url);
   if (method === 'POST' && path === '/v1/runs') return handleCreateRun(req, res);
+  let mw = WORKFLOW_ID_PATTERN.exec(path);
+  if (mw && method === 'GET') return handleGetWorkflow(req, res, decodeURIComponent(mw[1]!));
 
   let m = RUN_EVENTS_POLL_PATTERN.exec(path);
   if (m && method === 'GET') return handleEventsPoll(req, res, m[1]!, url);

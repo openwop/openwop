@@ -78,6 +78,7 @@ All fixtures MUST advertise:
 | MCP Tool Roundtrip | `conformance-mcp-tool-roundtrip` | Track 6 — host invokes a tool on the conformance suite's synthetic MCP server; trust-boundary visibility in the event log | `completed` | ≤ 30s |
 | A2A Task Roundtrip | `conformance-a2a-task-roundtrip` | Track 6 — host consumes the conformance suite's synthetic A2A peer; covers drift points #3 (`AUTH_REQUIRED`) and #4 (`REJECTED`) | `failed` or `waiting-input` (per `driftScenario` input) | ≤ 30s |
 | WASM Pack Roundtrip | `conformance-wasm-pack-roundtrip` | RFC 0008 — invokes `vendor.openwop.rust-hello.greet` (loaded WASM pack); exercises required exports + at least one import | `completed` | ≤ 10s |
+| Configurable Schema | `conformance-configurable-schema` | Track 13 — workflow declares `configurableSchema` (`additionalProperties: false`, `recursionLimit: integer ≥ 1`). Suite verifies `GET /v1/workflows/{id}` surfaces the schema AND `POST /v1/runs` with a mismatched `configurable` returns `validation_error`. | `completed` (with accepted overlay) | ≤ 5s |
 
 The `messages`-mode stream fixture (AI token streaming) is covered by the deterministic mock-provider surface in `spec/v1/run-options.md`. Hosts that do not advertise `Capabilities.testing.mockProviders` skip-equivalent on those scenarios.
 
