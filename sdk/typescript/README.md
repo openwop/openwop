@@ -147,3 +147,5 @@ This SDK tracks OpenWOP v1. SDK majors match the protocol major; v1.x SDK releas
 - Spec corpus: `../../README.md`
 - OpenAPI: `../../api/openapi.yaml` (the SDK mirrors this surface)
 - AsyncAPI: `../../api/asyncapi.yaml` (the SSE consumer follows these channels)
+- **[`../PARITY.md`](../PARITY.md)** — cross-SDK feature-parity matrix (TS/Python/Go).
+- **[`../smoke/`](../smoke/)** — runnable wire-smoke scripts against a reference host.

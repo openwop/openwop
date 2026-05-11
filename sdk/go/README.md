@@ -158,3 +158,5 @@ Tracks the OpenWOP protocol major. The v1 SDK line is intended to remain backwar
 - AsyncAPI: `../../api/asyncapi.yaml` (the SSE consumer follows these channels)
 - TypeScript counterpart: `../typescript/`
 - Python counterpart: `../python/`
+- **[`../PARITY.md`](../PARITY.md)** — cross-SDK feature-parity matrix (TS/Python/Go).
+- **[`../smoke/`](../smoke/)** — runnable wire-smoke scripts against a reference host.
