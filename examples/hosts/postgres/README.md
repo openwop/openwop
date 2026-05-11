@@ -22,7 +22,7 @@ Wire surface advertised:
   POST /v1/interrupts/{token}                ✅
   POST /v1/webhooks                          ✅
   DELETE /v1/webhooks/{subscriptionId}       ✅
-  GET  /v1/runs/{runId}/events       ⏳  (SSE — not yet wired)
+  GET  /v1/runs/{runId}/events       ✅  (SSE with Last-Event-ID resume)
 
 Node types in executor:
   core.noop                          ✅
@@ -92,7 +92,7 @@ Each item is a follow-up session. Order doesn't matter much; pick the one that u
 | ~~`sqlite/src/interrupts.ts`~~ | ✅ ported (2026-05-11) — `src/interrupts.ts` (~470 LOC) | — | ✅ 6 interrupt scenarios + 4 optional profile claims (`openwop-interrupt-quorum/-auth-required/-external-event/-cascade-cancel`) |
 | ~~`sqlite/src/webhooks.ts`~~ | ✅ ported (2026-05-11) — `src/webhooks.ts` (~260 LOC) | — | ✅ webhook scenarios + SSRF guard + HMAC v1 signing + 7 in-host smoke assertions |
 | ~~`sqlite/src/observability.ts`~~ | ✅ wired (2026-05-11) — `startMetricLoop` + span helpers + traceparent | — | ✅ OTel emission + metric scenarios (active when `OTEL_EXPORTER_OTLP_ENDPOINT` set) |
-| `sqlite/src/server.ts` SSE path | add SSE event stream | ~150 | `stream-modes*.test.ts` |
+| ~~`sqlite/src/server.ts` SSE path~~ | ✅ wired (2026-05-11) — `handleEventsSse` w/ backlog flush + Last-Event-ID resume + live subscription via `eventBus` | — | ✅ `stream-modes*.test.ts` + `streamReconnect.test.ts` |
 | ~~`sqlite/src/server.ts` interrupts wiring~~ | ✅ wired (2026-05-11) — `handleResolveInterrupt` + `handleResolveInterruptByToken` + 4 node-type executors + parent/child cascade | — | (above) |
 | ~~`sqlite/src/server.ts` debug bundle~~ | ✅ ported (2026-05-11) — `handleDebugBundle` with 8MB cap + maxEvents truncation | — | ✅ `debugBundle.test.ts` + `debug-bundle-truncation.test.ts` |
 | ~~`sqlite/src/server.ts` pause/resume routes~~ | ✅ ported (2026-05-11) — `handlePauseRun` / `handleResumeRun` + paused outcome | — | ✅ `pause-resume.test.ts` (in-host `test/pause-resume.test.ts` validates wire surface) |

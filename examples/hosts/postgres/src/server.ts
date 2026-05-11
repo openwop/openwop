@@ -953,6 +953,7 @@ function handleOpenApi(_req: IncomingMessage, res: ServerResponse): void {
       '/v1/runs/{runId}': { get: { responses: { '200': { description: 'OK' } } } },
       '/v1/runs/{runId}/cancel': { post: { responses: { '200': { description: 'OK' } } } },
       '/v1/runs/{runId}/events/poll': { get: { responses: { '200': { description: 'OK' } } } },
+      '/v1/runs/{runId}/events': { get: { responses: { '200': { description: 'SSE stream' } } } },
       '/v1/runs/{runId}/debug-bundle': { get: { responses: { '200': { description: 'OK' } } } },
       '/v1/runs/{runId}:pause': { post: { responses: { '202': { description: 'Accepted' } } } },
       '/v1/runs/{runId}:resume': { post: { responses: { '202': { description: 'Accepted' } } } },
@@ -1620,6 +1621,69 @@ async function handleAuditVerify(
   sendJSON(res, 200, result);
 }
 
+async function handleEventsSse(
+  req: IncomingMessage,
+  res: ServerResponse,
+  runId: string,
+): Promise<void> {
+  if (!checkAuth(req, res)) return;
+  const row = await loadRun(runId);
+  if (!row) {
+    sendError(res, 404, 'run_not_found', `Unknown runId: ${runId}`);
+    return;
+  }
+
+  // Last-Event-ID resume per stream-modes.md §"Reconnection". Replay
+  // only events with seq > lastEventId; live subscription picks up
+  // anything emitted after the backlog flush.
+  const lastEventIdHeader = req.headers['last-event-id'];
+  let resumeAfterSeq = -1;
+  if (typeof lastEventIdHeader === 'string') {
+    const parsed = Number(lastEventIdHeader);
+    if (Number.isFinite(parsed)) resumeAfterSeq = parsed;
+  }
+
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    Connection: 'keep-alive',
+  });
+
+  const writeEvent = (event: RunEvent): void => {
+    res.write(`id: ${event.seq}\n`);
+    res.write(`event: ${event.type}\n`);
+    res.write(`data: ${JSON.stringify(event)}\n\n`);
+  };
+
+  // Flush the backlog from the DB before subscribing to live events,
+  // so a slow reconnect doesn't lose events that landed between the
+  // backlog query and the subscription bind.
+  const backlog = await getEventsAfter(runId, resumeAfterSeq);
+  for (const event of backlog) writeEvent(event);
+
+  if (row.status === 'completed' || row.status === 'failed' || row.status === 'cancelled') {
+    res.end();
+    return;
+  }
+
+  const onEvent = (event: RunEvent): void => {
+    writeEvent(event);
+    if (
+      event.type === 'run.completed' ||
+      event.type === 'run.failed' ||
+      event.type === 'run.cancelled'
+    ) {
+      eventBus.off(`events:${runId}`, onEvent);
+      res.end();
+    }
+  };
+  eventBus.on(`events:${runId}`, onEvent);
+
+  req.on('close', () => {
+    eventBus.off(`events:${runId}`, onEvent);
+  });
+}
+
 async function handleEventsPoll(
   req: IncomingMessage,
   res: ServerResponse,
@@ -1658,6 +1722,7 @@ async function handleEventsPoll(
 const RUN_ID_PATTERN = /^\/v1\/runs\/([^/]+)$/;
 const RUN_CANCEL_PATTERN = /^\/v1\/runs\/([^/]+)\/cancel$/;
 const RUN_EVENTS_POLL_PATTERN = /^\/v1\/runs\/([^/]+)\/events\/poll$/;
+const RUN_EVENTS_SSE_PATTERN = /^\/v1\/runs\/([^/]+)\/events$/;
 const RUN_DEBUG_BUNDLE_PATTERN = /^\/v1\/runs\/([^/]+)\/debug-bundle$/;
 const RUN_PAUSE_PATTERN = /^\/v1\/runs\/([^/]+):pause$/;
 const RUN_RESUME_PATTERN = /^\/v1\/runs\/([^/]+):resume$/;
@@ -1682,6 +1747,8 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
 
   let m = RUN_EVENTS_POLL_PATTERN.exec(path);
   if (m && method === 'GET') return handleEventsPoll(req, res, m[1]!, url);
+  m = RUN_EVENTS_SSE_PATTERN.exec(path);
+  if (m && method === 'GET') return handleEventsSse(req, res, m[1]!);
   m = RUN_DEBUG_BUNDLE_PATTERN.exec(path);
   if (m && method === 'GET') return handleDebugBundle(req, res, m[1]!, url);
   m = RUN_PAUSE_PATTERN.exec(path);
