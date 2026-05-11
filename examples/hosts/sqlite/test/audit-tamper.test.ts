@@ -50,26 +50,32 @@ try {
   }
   createCheckpoint(db, signingKey);
 
-  // Verify clean chain.
-  const cleanResult = verifyAuditChain(db, 0, 100);
+  // Verify clean chain WITH signing key (validates checkpoint signature + merkle).
+  const cleanResult = verifyAuditChain(db, 0, 100, signingKey);
   assert.equal(cleanResult.chainValid, true, 'pre-tamper chain MUST be valid');
+  assert.equal(cleanResult.checkpointsValid, true, 'pre-tamper checkpoints MUST be valid');
   assert.equal(cleanResult.anomalies.length, 0, 'pre-tamper chain MUST have zero anomalies');
   assert.ok(cleanResult.checkpoints.length >= 1, 'pre-tamper checkpoint MUST be present');
+  assert.equal(
+    cleanResult.checkpoints[0]?.verified,
+    true,
+    'pre-tamper checkpoint MUST be marked verified',
+  );
 
-  // TAMPER: mutate entry seq=3's details in place. This simulates a privileged
+  // TAMPER 1: mutate entry seq=3's details in place. This simulates a privileged
   // attacker rewriting a single audit row without touching the chain links.
   db.prepare("UPDATE audit_log SET details_json = ? WHERE seq = 3").run(
     JSON.stringify({ ordinal: 999, tampered: true }),
   );
 
-  const tamperedResult = verifyAuditChain(db, 0, 100);
+  const tamperedResult = verifyAuditChain(db, 0, 100, signingKey);
   assert.equal(tamperedResult.chainValid, false, 'tampered chain MUST report chainValid: false');
   assert.ok(
     tamperedResult.anomalies.length >= 1,
     `tampered chain MUST report ≥1 anomaly; got ${tamperedResult.anomalies.length}`,
   );
 
-  // The mutated entry should appear as a hash-mismatch anomaly at seq=3.
+  // Entry-level: hash-mismatch at seq=3 + chain-break at seq=4 (downstream propagation).
   const hashMismatch = tamperedResult.anomalies.find(
     (a) => a.kind === 'hash-mismatch' && a.atSequence === 3,
   );
@@ -77,15 +83,50 @@ try {
     hashMismatch !== undefined,
     `expected hash-mismatch anomaly at seq=3, got: ${JSON.stringify(tamperedResult.anomalies)}`,
   );
-
-  // Entries AFTER the tampered row should also flag chain-break (because
-  // seq=3's recomputed hash no longer matches what seq=4's prev_hash points to).
   const chainBreak = tamperedResult.anomalies.find(
     (a) => a.kind === 'chain-break' && a.atSequence === 4,
   );
   assert.ok(
     chainBreak !== undefined,
     `expected chain-break anomaly at seq=4 (downstream of tamper), got: ${JSON.stringify(tamperedResult.anomalies)}`,
+  );
+  // Checkpoint-level: merkle root recomputed from tampered entries no longer
+  // matches the stored root, so the checkpoint MUST flip to invalid.
+  assert.equal(
+    tamperedResult.checkpointsValid,
+    false,
+    'tampered chain MUST flip checkpointsValid to false (merkle root changes when an entry hash changes)',
+  );
+  const merkleMismatch = tamperedResult.anomalies.find((a) => a.kind === 'merkle-mismatch');
+  assert.ok(
+    merkleMismatch !== undefined,
+    `expected merkle-mismatch anomaly, got: ${JSON.stringify(tamperedResult.anomalies)}`,
+  );
+
+  // TAMPER 2: mutate the checkpoint's signature directly. Reset entries first
+  // so the entry chain is clean; the only tamper is on audit_checkpoints.
+  db.prepare("UPDATE audit_log SET details_json = ? WHERE seq = 3").run(
+    JSON.stringify({ ordinal: 3 }),
+  );
+  db.prepare(
+    "UPDATE audit_checkpoints SET signature = 'AAAA' || substr(signature, 5)",
+  ).run();
+
+  const sigTampered = verifyAuditChain(db, 0, 100, signingKey);
+  assert.equal(
+    sigTampered.chainValid,
+    true,
+    'after entry-restore, chain MUST be valid even with bad checkpoint signature',
+  );
+  assert.equal(
+    sigTampered.checkpointsValid,
+    false,
+    'forged checkpoint signature MUST flip checkpointsValid to false',
+  );
+  const sigInvalid = sigTampered.anomalies.find((a) => a.kind === 'signature-invalid');
+  assert.ok(
+    sigInvalid !== undefined,
+    `expected signature-invalid anomaly, got: ${JSON.stringify(sigTampered.anomalies)}`,
   );
 
   db.close();

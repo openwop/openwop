@@ -29,7 +29,7 @@
  * @see conformance/src/scenarios/audit-log-integrity.test.ts
  */
 
-import { createHash, createPrivateKey, createPublicKey, generateKeyPairSync, sign, type KeyObject } from 'node:crypto';
+import { createHash, createPrivateKey, createPublicKey, generateKeyPairSync, sign, verify, type KeyObject } from 'node:crypto';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import type Database from 'better-sqlite3';
@@ -72,16 +72,26 @@ interface CheckpointRow {
 export interface VerifyResult {
   readonly fromSeq: number;
   readonly toSeq: number;
+  /** Chain-level integrity: every entry's recomputed hash matches the stored entry_hash AND prev_hash links resolve. */
   readonly chainValid: boolean;
+  /** Checkpoint integrity: every checkpoint's stored merkle_root matches a recomputation over its entry range AND its Ed25519 signature verifies. */
+  readonly checkpointsValid: boolean;
   readonly checkpoints: Array<{
     readonly checkpoint: string;
     readonly atSequence: number;
     readonly merkleRoot: string;
     readonly signature: string;
+    /** Per-checkpoint verification result — `null` when no signing key was passed to the verifier. */
+    readonly verified: boolean | null;
   }>;
   readonly anomalies: Array<{
     readonly atSequence: number;
-    readonly kind: 'hash-mismatch' | 'chain-break' | 'missing-entry';
+    readonly kind:
+      | 'hash-mismatch'
+      | 'chain-break'
+      | 'missing-entry'
+      | 'merkle-mismatch'
+      | 'signature-invalid';
     readonly detail: string;
   }>;
 }
@@ -326,11 +336,19 @@ export function triggerCheckpointIfDue(
  * range is clamped to the actual audit-log range — out-of-bounds requests
  * return what's available rather than an error, so a fresh host returns
  * an empty-but-valid chain instead of 404'ing.
+ *
+ * When `signingKey` is provided, each checkpoint's stored merkle_root is
+ * recomputed from the entry range and its Ed25519 signature is verified.
+ * Mismatches surface as `merkle-mismatch` / `signature-invalid` anomalies
+ * and flip `checkpointsValid` to false. Callers that pass `null` get
+ * chain-level verification only (and `checkpointsValid: true` vacuously
+ * when no checkpoints are present in range).
  */
 export function verifyAuditChain(
   db: Database.Database,
   fromSeq: number,
   toSeq: number,
+  signingKey: SigningKey | null = null,
 ): VerifyResult {
   const tip = db.prepare('SELECT MAX(seq) as max FROM audit_log').get() as { max: number | null };
   const tipSeq = tip.max ?? 0;
@@ -341,7 +359,14 @@ export function verifyAuditChain(
 
   if (hi < lo) {
     // Empty range — vacuously valid.
-    return { fromSeq: lo, toSeq: hi, chainValid: true, checkpoints: [], anomalies };
+    return {
+      fromSeq: lo,
+      toSeq: hi,
+      chainValid: true,
+      checkpointsValid: true,
+      checkpoints: [],
+      anomalies,
+    };
   }
 
   const rows = db
@@ -401,22 +426,102 @@ export function verifyAuditChain(
     expectedSeq = row.seq + 1;
   }
 
-  const checkpoints = db
+  // Checkpoints that anchor entries inside the requested range. Each
+  // anchors the slice (priorCheckpoint.at_sequence + 1 .. checkpoint.at_sequence).
+  const checkpointRows = db
     .prepare(
       'SELECT * FROM audit_checkpoints WHERE at_sequence BETWEEN ? AND ? ORDER BY at_sequence ASC',
     )
     .all(lo, hi) as CheckpointRow[];
 
+  let checkpointsValid = true;
+  const verifiedCheckpoints: VerifyResult['checkpoints'] = [];
+
+  for (let i = 0; i < checkpointRows.length; i++) {
+    const cp = checkpointRows[i]!;
+    const priorCheckpointSeq =
+      i > 0
+        ? checkpointRows[i - 1]!.at_sequence
+        : ((
+            db
+              .prepare(
+                'SELECT at_sequence FROM audit_checkpoints WHERE at_sequence < ? ORDER BY at_sequence DESC LIMIT 1',
+              )
+              .get(cp.at_sequence) as { at_sequence: number } | undefined
+          )?.at_sequence ?? 0);
+
+    // Recompute merkle root over the entries this checkpoint anchors. We
+    // re-hash each entry from its CURRENT content (not the stored
+    // entry_hash column), so an in-place tamper to details_json surfaces
+    // as a merkle-root mismatch even when the row's entry_hash column was
+    // not updated to match.
+    const anchoredRows = db
+      .prepare(
+        'SELECT * FROM audit_log WHERE seq BETWEEN ? AND ? ORDER BY seq ASC',
+      )
+      .all(priorCheckpointSeq + 1, cp.at_sequence) as AuditEntryRow[];
+    const anchoredHashes = anchoredRows.map((r) =>
+      entryHash({
+        seq: r.seq,
+        occurredAt: r.occurred_at,
+        actor: r.actor,
+        action: r.action,
+        target: r.target,
+        details: JSON.parse(r.details_json),
+        prevHash: r.prev_hash,
+      }),
+    );
+    const recomputedRoot = merkleRoot(anchoredHashes);
+
+    let merkleOk = true;
+    let signatureOk: boolean | null = null;
+
+    if (recomputedRoot !== cp.merkle_root) {
+      anomalies.push({
+        atSequence: cp.at_sequence,
+        kind: 'merkle-mismatch',
+        detail: `recomputed merkle root ${recomputedRoot} != stored ${cp.merkle_root}`,
+      });
+      merkleOk = false;
+      checkpointsValid = false;
+    }
+
+    if (signingKey) {
+      try {
+        signatureOk = verify(
+          null,
+          Buffer.from(cp.merkle_root, 'hex'),
+          signingKey.publicKey,
+          Buffer.from(cp.signature, 'base64'),
+        );
+      } catch {
+        signatureOk = false;
+      }
+      if (!signatureOk) {
+        anomalies.push({
+          atSequence: cp.at_sequence,
+          kind: 'signature-invalid',
+          detail: `Ed25519 signature does not verify under signing key ${signingKey.keyId}`,
+        });
+        checkpointsValid = false;
+      }
+    }
+
+    verifiedCheckpoints.push({
+      checkpoint: cp.checkpoint_id,
+      atSequence: cp.at_sequence,
+      merkleRoot: cp.merkle_root,
+      signature: cp.signature,
+      verified: signingKey === null ? null : merkleOk && signatureOk === true,
+    });
+  }
+
   return {
     fromSeq: lo,
     toSeq: hi,
     chainValid,
-    checkpoints: checkpoints.map((c) => ({
-      checkpoint: c.checkpoint_id,
-      atSequence: c.at_sequence,
-      merkleRoot: c.merkle_root,
-      signature: c.signature,
-    })),
+    checkpointsValid,
+    checkpoints: verifiedCheckpoints,
     anomalies,
   };
 }

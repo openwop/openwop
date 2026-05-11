@@ -80,6 +80,7 @@ import {
   registerWebhook,
   unregisterWebhook,
   fanOutEvent,
+  WebhookUrlRejected,
 } from './webhooks.js';
 import {
   observabilityEnabled,
@@ -400,8 +401,11 @@ function cancelRunInternal(runId: string, reason: string): void {
     setRunTerminal(runId, 'cancelled', null);
     return;
   }
+  // Note: we DON'T emit a `run.cancelling` event here — that type is not
+  // in the canonical RunEventType enum, and the executor's poll loop
+  // observes the status flip on its next loadRun() call. The terminal
+  // `run.cancelled` event lands when the executor reaches setRunTerminal.
   stmts.setCancelRequested.run(runId);
-  appendEvent(runId, 'run.cancelling', { data: { reason } });
   runningAborters.get(runId)?.abort();
 }
 
@@ -1436,11 +1440,20 @@ async function handleRegisterWebhook(req: IncomingMessage, res: ServerResponse):
   const eventTypes = Array.isArray(parsed.eventTypes)
     ? (parsed.eventTypes as string[]).filter((t) => typeof t === 'string')
     : [];
-  const sub = registerWebhook(db, {
-    url: parsed.url,
-    ...(typeof parsed.secret === 'string' ? { secret: parsed.secret } : {}),
-    eventTypes,
-  });
+  let sub;
+  try {
+    sub = registerWebhook(db, {
+      url: parsed.url,
+      ...(typeof parsed.secret === 'string' ? { secret: parsed.secret } : {}),
+      eventTypes,
+    });
+  } catch (err) {
+    if (err instanceof WebhookUrlRejected) {
+      sendError(res, 400, 'webhook_url_rejected', err.reason);
+      return;
+    }
+    throw err;
+  }
   sendJSON(res, 201, {
     subscriptionId: sub.subscriptionId,
     url: sub.url,
@@ -1474,7 +1487,7 @@ function handleAuditVerify(req: IncomingMessage, res: ServerResponse, url: URL):
     sendError(res, 400, 'validation_error', 'fromSeq and toSeq MUST be non-negative integers.');
     return;
   }
-  const result = verifyAuditChain(db, fromSeq, toSeq);
+  const result = verifyAuditChain(db, fromSeq, toSeq, auditSigningKey);
   sendJSON(res, 200, result);
 }
 

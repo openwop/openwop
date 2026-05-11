@@ -22,7 +22,103 @@
 import { createHmac, randomBytes, randomUUID } from 'node:crypto';
 import { request as httpRequest } from 'node:http';
 import { request as httpsRequest } from 'node:https';
+import { isIP } from 'node:net';
 import type Database from 'better-sqlite3';
+
+/**
+ * SSRF guard for webhook destination URLs.
+ *
+ * Rejects URLs whose hostname resolves (or syntactically points) to
+ * loopback / RFC1918 / link-local / unique-local addresses, or to the
+ * common "internal-only" hostnames operators care about (`localhost`,
+ * `*.local`, `*.internal`). An authenticated tenant can otherwise use
+ * `POST /v1/webhooks` for blind SSRF probing of the deployer's internal
+ * services (AWS metadata, internal Redis, etc.).
+ *
+ * Bypass: set `OPENWOP_WEBHOOK_ALLOW_PRIVATE=true` (for `examples/hosts/`
+ * developer scenarios where the test receiver is on localhost).
+ *
+ * @see review §"Webhook delivery — SSRF + payload leakage"
+ */
+function urlAllowed(rawUrl: string): { ok: true } | { ok: false; reason: string } {
+  if (process.env.OPENWOP_WEBHOOK_ALLOW_PRIVATE === 'true') return { ok: true };
+
+  let url: URL;
+  try {
+    url = new URL(rawUrl);
+  } catch {
+    return { ok: false, reason: 'webhook url is not a parseable URL' };
+  }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    return { ok: false, reason: `webhook url protocol "${url.protocol}" is not http(s)` };
+  }
+
+  const host = url.hostname.toLowerCase();
+  // Strip IPv6 brackets — URL.hostname returns them on `[::1]`.
+  const bare = host.startsWith('[') && host.endsWith(']') ? host.slice(1, -1) : host;
+
+  // Hostname allowlist short-circuits.
+  if (bare === 'localhost' || bare.endsWith('.localhost')) {
+    return { ok: false, reason: 'webhook url points at localhost (SSRF guard)' };
+  }
+  if (bare.endsWith('.local') || bare.endsWith('.internal') || bare.endsWith('.cluster')) {
+    return { ok: false, reason: `webhook url hostname "${bare}" looks internal (SSRF guard)` };
+  }
+
+  // IP literal: check ranges.
+  const ipVersion = isIP(bare);
+  if (ipVersion === 4) {
+    const [a, b] = bare.split('.').map(Number) as [number, number];
+    if (a === 127) return { ok: false, reason: '127.0.0.0/8 (loopback) (SSRF guard)' };
+    if (a === 10) return { ok: false, reason: '10.0.0.0/8 (RFC1918) (SSRF guard)' };
+    if (a === 172 && b >= 16 && b <= 31) {
+      return { ok: false, reason: '172.16.0.0/12 (RFC1918) (SSRF guard)' };
+    }
+    if (a === 192 && b === 168) {
+      return { ok: false, reason: '192.168.0.0/16 (RFC1918) (SSRF guard)' };
+    }
+    if (a === 169 && b === 254) {
+      return { ok: false, reason: '169.254.0.0/16 (link-local; AWS metadata) (SSRF guard)' };
+    }
+    if (a === 0) return { ok: false, reason: '0.0.0.0/8 (SSRF guard)' };
+  }
+  if (ipVersion === 6) {
+    const lower = bare;
+    if (lower === '::1' || lower === '::ffff:127.0.0.1') {
+      return { ok: false, reason: 'IPv6 loopback (SSRF guard)' };
+    }
+    if (lower.startsWith('fc') || lower.startsWith('fd')) {
+      return { ok: false, reason: 'fc00::/7 (unique local) (SSRF guard)' };
+    }
+    if (lower.startsWith('fe8') || lower.startsWith('fe9') || lower.startsWith('fea') || lower.startsWith('feb')) {
+      return { ok: false, reason: 'fe80::/10 (link-local) (SSRF guard)' };
+    }
+  }
+
+  // Note: we do NOT resolve DNS here. A real production host would
+  // resolve and re-check after resolution (and re-resolve on delivery
+  // to defend against DNS rebinding). For the reference host this is
+  // a documented limitation.
+  return { ok: true };
+}
+
+/**
+ * Strip payload-bearing fields from a run event before fan-out. The
+ * reference host's policy mirrors debug-bundle.md §"Redaction guarantees":
+ * omit fields that can carry tenant-input content. Production hosts
+ * would wire this through the same redaction pipeline used for SSE/poll
+ * (per redaction.md / capabilities.secrets.supported), substituting
+ * `[REDACTED:<secretId>]` for known BYOK references rather than dropping
+ * the whole field.
+ */
+function redactForFanOut(event: { type: string; [k: string]: unknown }): Record<string, unknown> {
+  const { data, ...rest } = event;
+  // Pass through metadata fields the receiver needs: type, runId, seq,
+  // timestamp, nodeId. Drop the open-ended `data` field; receivers
+  // wanting the payload can fetch the run snapshot or debug bundle
+  // through an authenticated channel.
+  return rest;
+}
 
 export interface WebhookSubscription {
   readonly subscriptionId: string;
@@ -58,10 +154,20 @@ export interface RegisterInput {
   readonly eventTypes?: ReadonlyArray<string>;
 }
 
+export class WebhookUrlRejected extends Error {
+  constructor(public readonly reason: string) {
+    super(reason);
+    this.name = 'WebhookUrlRejected';
+  }
+}
+
 export function registerWebhook(
   db: Database.Database,
   input: RegisterInput,
 ): WebhookSubscription {
+  const guard = urlAllowed(input.url);
+  if (!guard.ok) throw new WebhookUrlRejected(guard.reason);
+
   const subscriptionId = `wh-${randomUUID()}`;
   const secret = input.secret ?? randomBytes(32).toString('base64url');
   const eventTypes = Array.isArray(input.eventTypes) ? input.eventTypes : [];
@@ -161,8 +267,15 @@ export function fanOutEvent(
   event: { type: string; [k: string]: unknown },
 ): void {
   const subs = loadSubscriptionsForEvent(db, event.type);
+  if (subs.length === 0) return;
+  // Redact `data` from the payload — webhook receivers get the event
+  // *envelope* (type, runId, seq, timestamp, nodeId) but NOT the open-
+  // ended `data` field which may carry interrupt configs, approval
+  // payloads, or future BYOK credentialRefs. Receivers fetch the full
+  // payload via an authenticated `GET /v1/runs/{id}` or debug-bundle.
+  const safe = redactForFanOut(event);
   for (const sub of subs) {
     // Fire-and-forget — we don't await delivery (best-effort per spec).
-    void deliver(sub, event).catch(() => undefined);
+    void deliver(sub, safe).catch(() => undefined);
   }
 }

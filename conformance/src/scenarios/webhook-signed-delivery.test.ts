@@ -12,6 +12,14 @@
  * Capability-gated: skips when the host does not advertise
  * `capabilities.webhooks.supported = true`.
  *
+ * Operator contract: hosts that implement a SSRF guard on
+ * `POST /v1/webhooks` (rejecting loopback / RFC1918 / link-local
+ * destinations to protect deployer infrastructure) MUST allow the test
+ * receiver. The SQLite reference host bypasses the guard when the
+ * `OPENWOP_WEBHOOK_ALLOW_PRIVATE=true` env var is set at boot. Test-only
+ * hosts SHOULD provide an equivalent opt-in. When the host rejects with
+ * `400 webhook_url_rejected`, this scenario skips with a warning.
+ *
  * @see spec/v1/webhooks.md §"Signature scheme"
  */
 
@@ -82,6 +90,21 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
 
     // Register the webhook.
     const reg = await driver.post('/v1/webhooks', { url: receiver.url });
+
+    // SSRF guard skip: if the host rejects loopback destinations,
+    // honor the operator contract and skip rather than fail.
+    if (reg.status === 400) {
+      const body = reg.json as { error?: string };
+      if (body.error === 'webhook_url_rejected') {
+        // eslint-disable-next-line no-console
+        console.warn(
+          '[webhook-signed-delivery] host SSRF guard rejected the loopback receiver; ' +
+            'set OPENWOP_WEBHOOK_ALLOW_PRIVATE=true on the host (or equivalent) to run',
+        );
+        return;
+      }
+    }
+
     expect(reg.status, driver.describe(
       'webhooks.md §"Register"',
       'POST /v1/webhooks MUST return 201 with subscriptionId + secret on success',
