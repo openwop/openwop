@@ -1532,7 +1532,7 @@ function handleEventsSse(req: IncomingMessage, res: ServerResponse, runId: strin
   });
 }
 
-function handleDebugBundle(req: IncomingMessage, res: ServerResponse, runId: string): void {
+function handleDebugBundle(req: IncomingMessage, res: ServerResponse, runId: string, url: URL): void {
   if (!checkAuth(req, res)) return;
   const row = loadRun(runId);
   if (!row) {
@@ -1541,7 +1541,21 @@ function handleDebugBundle(req: IncomingMessage, res: ServerResponse, runId: str
   }
   const events = stmts.getEventsAfter.all(runId, -1) as EventRow[];
 
-  const bundle = {
+  // Truncation cap (debug-bundle.md §"Bundle size limits"). Default 8MB
+  // wire size; the host MAY also accept a `?maxEvents=N` host-implementation
+  // override for deterministic-truncation conformance tests.
+  const totalEvents = events.length;
+  const maxEventsParam = url.searchParams.get('maxEvents');
+  const maxEvents = maxEventsParam !== null && Number.isFinite(Number(maxEventsParam))
+    ? Math.max(0, Number(maxEventsParam))
+    : Number.POSITIVE_INFINITY;
+
+  const keepEvents = Math.min(totalEvents, maxEvents);
+  let truncated = keepEvents < totalEvents;
+  let truncatedReason: string | undefined = truncated ? 'events_truncated_to_max_events' : undefined;
+  const eventSlice = events.slice(0, keepEvents);
+
+  const baseBundle: Record<string, unknown> = {
     bundleVersion: '1',
     generatedAt: new Date().toISOString(),
     host: { name: 'openwop-host-sqlite', version: '1.0.0', vendor: 'openwop-spec (reference example)' },
@@ -1555,7 +1569,7 @@ function handleDebugBundle(req: IncomingMessage, res: ServerResponse, runId: str
       ...(row.error_json ? { error: JSON.parse(row.error_json) } : {}),
       variables: {},
     },
-    events: events.map((r) => ({
+    events: eventSlice.map((r) => ({
       sequence: r.seq,
       type: r.type,
       timestamp: r.timestamp,
@@ -1565,12 +1579,32 @@ function handleDebugBundle(req: IncomingMessage, res: ServerResponse, runId: str
     spans: [] as unknown[],
     metrics: {
       nodeCount: new Set(events.filter((e) => e.node_id !== null).map((e) => e.node_id)).size,
-      eventCount: events.length,
+      eventCount: totalEvents,
     },
     redactionApplied: true,
     redactionMode: 'omit' as const,
   };
-  sendJSON(res, 200, bundle, { 'Cache-Control': 'no-store' });
+
+  // 8MB byte cap. If the JSON-encoded bundle exceeds it, trim from the
+  // back of the event list until it fits.
+  const SIZE_CAP_BYTES = Number(process.env.OPENWOP_DEBUG_BUNDLE_BYTE_CAP ?? 8 * 1024 * 1024);
+  let serialized = JSON.stringify(baseBundle);
+  while (
+    Buffer.byteLength(serialized, 'utf8') > SIZE_CAP_BYTES &&
+    Array.isArray(baseBundle.events) &&
+    (baseBundle.events as unknown[]).length > 0
+  ) {
+    (baseBundle.events as unknown[]).pop();
+    truncated = true;
+    truncatedReason = 'events_truncated_to_size_cap';
+    serialized = JSON.stringify(baseBundle);
+  }
+
+  if (truncated) {
+    baseBundle.truncated = true;
+    baseBundle.truncatedReason = truncatedReason;
+  }
+  sendJSON(res, 200, baseBundle, { 'Cache-Control': 'no-store' });
 }
 
 // ─── Router ──────────────────────────────────────────────────────────────────
@@ -1601,7 +1635,7 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   m = RUN_EVENTS_SSE_PATTERN.exec(path);
   if (m && method === 'GET') return handleEventsSse(req, res, m[1]!);
   m = RUN_DEBUG_BUNDLE_PATTERN.exec(path);
-  if (m && method === 'GET') return handleDebugBundle(req, res, m[1]!);
+  if (m && method === 'GET') return handleDebugBundle(req, res, m[1]!, url);
   m = RUN_CANCEL_PATTERN.exec(path);
   if (m && method === 'POST') return handleCancelRun(req, res, m[1]!);
   m = RUN_INTERRUPT_PATTERN.exec(path);
