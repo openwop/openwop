@@ -18,18 +18,18 @@ Wire surface advertised:
   POST /v1/runs/{runId}:pause         ✅
   POST /v1/runs/{runId}:resume        ✅
   GET  /v1/audit/verify              ✅
+  POST /v1/runs/{runId}/interrupts/{nodeId}  ✅
+  POST /v1/interrupts/{token}                ✅
   GET  /v1/runs/{runId}/events       ⏳  (SSE — not yet wired)
-  POST /v1/runs/{runId}/interrupts/{nodeId}  ⏳
-  POST /v1/interrupts/{token}                ⏳
   POST /v1/webhooks                          ⏳
 
 Node types in executor:
   core.noop                          ✅
   core.delay                         ✅
-  core.approvalGate                  ⏳
-  core.clarificationGate             ⏳
-  core.interrupt                     ⏳
-  core.subWorkflow                   ⏳
+  core.approvalGate                  ✅
+  core.clarificationGate             ✅
+  core.interrupt                     ✅
+  core.subWorkflow                   ✅
 ```
 
 Discovery advertises `capabilities.auth.profiles: ['openwop-audit-log-integrity']` + the audit-log-integrity capability block (hashChain, Ed25519 checkpoint signature, public key, checkpoint cadence). All other profile claims fill in as the corresponding modules port over.
@@ -88,11 +88,11 @@ Each item is a follow-up session. Order doesn't matter much; pick the one that u
 | Source | Postgres equivalent | Approximate LOC | Unlocks |
 |---|---|---:|---|
 | ~~`sqlite/src/audit.ts`~~ | ✅ ported (2026-05-11) — `src/audit.ts` | — | ✅ `audit-log-integrity.test.ts` + `test/audit-tamper.test.ts` |
-| `sqlite/src/interrupts.ts` | port to async pg | ~400 | 6 interrupt scenarios (approval, clarification, quorum, auth-required, external-event, parent/child cascade) |
+| ~~`sqlite/src/interrupts.ts`~~ | ✅ ported (2026-05-11) — `src/interrupts.ts` (~470 LOC) | — | ✅ 6 interrupt scenarios + 4 optional profile claims (`openwop-interrupt-quorum/-auth-required/-external-event/-cascade-cancel`) |
 | `sqlite/src/webhooks.ts` | port to async pg | ~200 | webhook scenarios + SSRF guard tests |
 | ~~`sqlite/src/observability.ts`~~ | ✅ wired (2026-05-11) — `startMetricLoop` + span helpers + traceparent | — | ✅ OTel emission + metric scenarios (active when `OTEL_EXPORTER_OTLP_ENDPOINT` set) |
 | `sqlite/src/server.ts` SSE path | add SSE event stream | ~150 | `stream-modes*.test.ts` |
-| `sqlite/src/server.ts` interrupts wiring | wire interrupt routes through the port | ~200 | (above) |
+| ~~`sqlite/src/server.ts` interrupts wiring~~ | ✅ wired (2026-05-11) — `handleResolveInterrupt` + `handleResolveInterruptByToken` + 4 node-type executors + parent/child cascade | — | (above) |
 | ~~`sqlite/src/server.ts` debug bundle~~ | ✅ ported (2026-05-11) — `handleDebugBundle` with 8MB cap + maxEvents truncation | — | ✅ `debugBundle.test.ts` + `debug-bundle-truncation.test.ts` |
 | ~~`sqlite/src/server.ts` pause/resume routes~~ | ✅ ported (2026-05-11) — `handlePauseRun` / `handleResumeRun` + paused outcome | — | ✅ `pause-resume.test.ts` (in-host `test/pause-resume.test.ts` validates wire surface) |
 | `sqlite/src/server.ts` claim acquisition | use Postgres advisory locks instead of SQLite UPDATE pattern | ~100 | multi-process scenarios + production-profile claim |

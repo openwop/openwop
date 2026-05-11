@@ -60,6 +60,19 @@ import {
   parseTraceparent,
   recordInboundTraceContext,
 } from './observability.js';
+import {
+  setupInterruptSchema,
+  createInterrupt,
+  getInterrupt,
+  getInterruptByToken,
+  resolveApproval,
+  resolveClarification,
+  resolveExternalEvent,
+  invalidateInterrupts,
+  type ApprovalConfig,
+  type ClarificationConfig,
+  type ExternalEventConfig,
+} from './interrupts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const HOST = process.env.OPENWOP_HOST ?? '127.0.0.1';
@@ -77,6 +90,9 @@ type RunStatus =
   | 'running'
   | 'cancelling'
   | 'paused'
+  | 'waiting-approval'
+  | 'waiting-input'
+  | 'waiting-external'
   | 'completed'
   | 'failed'
   | 'cancelled';
@@ -336,6 +352,31 @@ async function setRunTerminal(
   }
 }
 
+/**
+ * Cancel a run from inside the host (cascade from parent, internal error,
+ * etc.). For a suspended run we drive directly to terminal `cancelled`
+ * (no executor running to observe a `cancelling` flip); for an executing
+ * run we set `cancelling` and abort the in-flight node.
+ */
+async function cancelRunInternal(runId: string, reason: string): Promise<void> {
+  const row = await loadRun(runId);
+  if (!row) return;
+  if (row.status === 'completed' || row.status === 'failed' || row.status === 'cancelled') return;
+  const isSuspended =
+    row.status === 'waiting-approval' ||
+    row.status === 'waiting-input' ||
+    row.status === 'waiting-external';
+  const q = await querier();
+  if (isSuspended) {
+    await invalidateInterrupts(q, runId, reason);
+    await appendEvent(runId, 'run.cancelled', { data: { reason } });
+    await setRunTerminal(runId, 'cancelled', null);
+    return;
+  }
+  await setCancelRequested(runId);
+  runningAborters.get(runId)?.abort();
+}
+
 // ─── Idempotency ────────────────────────────────────────────────────────────
 
 function hashBody(body: string): string {
@@ -379,7 +420,7 @@ async function pruneIdempotency(): Promise<void> {
 
 // ─── Executor ────────────────────────────────────────────────────────────────
 
-type NodeOutcome = 'completed' | 'cancelled' | 'failed' | 'paused';
+type NodeOutcome = 'completed' | 'cancelled' | 'failed' | 'paused' | 'suspended';
 
 function sleep(ms: number, signal: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -443,6 +484,180 @@ async function executeNode(
         return 'cancelled';
       }
       break;
+    }
+
+    case 'core.approvalGate': {
+      const config = (node.config ?? {}) as Partial<ApprovalConfig>;
+      const approvalConfig: ApprovalConfig = {
+        actions: Array.isArray(config.actions) ? config.actions : ['accept', 'reject'],
+        ...(config.requiredApprovals !== undefined ? { requiredApprovals: config.requiredApprovals } : {}),
+        ...(config.rejectionPolicy !== undefined ? { rejectionPolicy: config.rejectionPolicy } : {}),
+        ...(config.approversList !== undefined ? { approversList: config.approversList } : {}),
+        ...(config.title !== undefined ? { title: config.title } : {}),
+        ...(config.description !== undefined ? { description: config.description } : {}),
+      };
+      const payload = { kind: 'approval', nodeId: node.id, config: approvalConfig };
+      const q = await querier();
+      await createInterrupt(q, runId, node.id, 'approval', approvalConfig, payload);
+      await appendEvent(runId, 'node.suspended', { nodeId: node.id, data: payload });
+      endNodeSpan(runId, node.id, 'suspended');
+      return 'suspended';
+    }
+
+    case 'core.clarificationGate': {
+      const config = (node.config ?? {}) as Partial<ClarificationConfig>;
+      const clarConfig: ClarificationConfig = {
+        questions: Array.isArray(config.questions) ? config.questions : [],
+      };
+      const payload = { kind: 'clarification', nodeId: node.id, config: clarConfig };
+      const q = await querier();
+      await createInterrupt(q, runId, node.id, 'clarification', clarConfig, payload);
+      await appendEvent(runId, 'node.suspended', { nodeId: node.id, data: payload });
+      endNodeSpan(runId, node.id, 'suspended');
+      return 'suspended';
+    }
+
+    case 'core.interrupt': {
+      const config = (node.config ?? {}) as {
+        kind?: string;
+        data?: ExternalEventConfig;
+        timeoutMs?: number;
+      };
+      if (config.kind === 'external-event') {
+        const extConfig: ExternalEventConfig = {
+          ...(config.data?.eventType !== undefined ? { eventType: config.data.eventType } : {}),
+          ...(config.data?.correlation !== undefined ? { correlation: config.data.correlation } : {}),
+          ...(config.timeoutMs !== undefined ? { timeoutMs: config.timeoutMs } : {}),
+        };
+        const q = await querier();
+        const token = await createInterrupt(q, runId, node.id, 'external-event', extConfig, {
+          kind: 'external-event',
+          nodeId: node.id,
+          config: extConfig,
+        });
+        const payload = {
+          kind: 'external-event',
+          nodeId: node.id,
+          config: extConfig,
+          interruptToken: token,
+          callbackUrl: `/v1/interrupts/${token}`,
+        };
+        await appendEvent(runId, 'node.suspended', { nodeId: node.id, data: payload });
+        endNodeSpan(runId, node.id, 'suspended');
+        return 'suspended';
+      }
+      await appendEvent(runId, 'node.failed', {
+        nodeId: node.id,
+        data: { code: 'unsupported_interrupt_kind', kind: config.kind ?? '<missing>' },
+      });
+      endNodeSpan(runId, node.id, 'failed');
+      return 'failed';
+    }
+
+    case 'core.subWorkflow': {
+      const config = (node.config ?? {}) as {
+        workflowId?: string;
+        propagateCancellation?: boolean;
+      };
+      const childWorkflowId = config.workflowId;
+      if (typeof childWorkflowId !== 'string' || !workflows.has(childWorkflowId)) {
+        await appendEvent(runId, 'node.failed', {
+          nodeId: node.id,
+          data: { code: 'unknown_child_workflow', workflowId: childWorkflowId },
+        });
+        endNodeSpan(runId, node.id, 'failed');
+        return 'failed';
+      }
+
+      // Idempotent: reuse an existing child run for this (parent, node).
+      const q = await querier();
+      const existingRes = await q.query<{ run_id: string }>(
+        'SELECT run_id FROM runs WHERE parent_run_id = $1 AND parent_node_id = $2',
+        [runId, node.id],
+      );
+      let childRunId = existingRes.rows[0]?.run_id;
+      if (!childRunId) {
+        childRunId = `run-${randomUUID()}`;
+        const childStartedAt = new Date().toISOString();
+        await q.query(
+          `INSERT INTO runs (run_id, workflow_id, status, inputs_json, started_at, parent_run_id, parent_node_id)
+           VALUES ($1, $2, 'pending', '{}'::JSONB, $3, $4, $5)`,
+          [childRunId, childWorkflowId, childStartedAt, runId, node.id],
+        );
+        await appendEvent(runId, 'node.dispatched', {
+          nodeId: node.id,
+          data: { childRunId, childWorkflowId },
+        });
+        const innerChildRunId = childRunId;
+        void runWorkflow(innerChildRunId).catch(async (err: unknown) => {
+          const message = err instanceof Error ? err.message : String(err);
+          const error = { code: 'internal', message };
+          await appendEvent(innerChildRunId, 'run.failed', { data: error });
+          await setRunTerminal(innerChildRunId, 'failed', error);
+        });
+      }
+
+      // Mirror the child's status onto the parent until child terminates.
+      while (true) {
+        const refreshed = await loadRun(runId);
+        if (refreshed?.status === 'cancelling') {
+          if (config.propagateCancellation !== false) {
+            await cancelRunInternal(childRunId, 'parent-cancelled');
+          }
+          await appendEvent(runId, 'node.cancelled', { nodeId: node.id });
+          endNodeSpan(runId, node.id, 'cancelled');
+          return 'cancelled';
+        }
+        const child = await loadRun(childRunId);
+        if (!child) {
+          await appendEvent(runId, 'node.failed', {
+            nodeId: node.id,
+            data: { code: 'child_missing', childRunId },
+          });
+          endNodeSpan(runId, node.id, 'failed');
+          return 'failed';
+        }
+        if (child.status === 'completed') {
+          await appendEvent(runId, 'node.completed', {
+            nodeId: node.id,
+            data: { childRunId, childOutcome: 'completed' },
+          });
+          endNodeSpan(runId, node.id, 'completed');
+          await q.query("UPDATE runs SET status = 'running' WHERE run_id = $1", [runId]);
+          return 'completed';
+        }
+        if (child.status === 'failed') {
+          await appendEvent(runId, 'node.failed', {
+            nodeId: node.id,
+            data: { code: 'child_failed', childRunId },
+          });
+          endNodeSpan(runId, node.id, 'failed');
+          return 'failed';
+        }
+        if (child.status === 'cancelled') {
+          await appendEvent(runId, 'node.cancelled', {
+            nodeId: node.id,
+            data: { childRunId },
+          });
+          endNodeSpan(runId, node.id, 'cancelled');
+          return 'cancelled';
+        }
+        // Mirror suspend state onto parent.
+        const childWaiting =
+          child.status === 'waiting-approval' ||
+          child.status === 'waiting-input' ||
+          child.status === 'waiting-external';
+        if (childWaiting && refreshed?.status !== child.status) {
+          await q.query('UPDATE runs SET status = $1 WHERE run_id = $2', [child.status, runId]);
+        } else if (!childWaiting && refreshed?.status === 'running') {
+          // Stay running.
+        }
+        try {
+          await sleep(50, signal);
+        } catch {
+          // Aborted (cancel path). Loop top will see cancelling.
+        }
+      }
     }
 
     default:
@@ -528,6 +743,23 @@ async function runWorkflow(runId: string): Promise<void> {
         // stays at `i` so resume() re-enters the same node from start.
         return;
       }
+      if (outcome === 'suspended') {
+        // Interrupt created — flip status to the suspend-status matching
+        // the node kind and exit. The resolve route flips back to
+        // 'running' and re-invokes runWorkflow.
+        const suspendStatus =
+          node.typeId === 'core.clarificationGate'
+            ? 'waiting-input'
+            : node.typeId === 'core.interrupt'
+              ? 'waiting-external'
+              : 'waiting-approval';
+        const q = await querier();
+        await q.query(
+          'UPDATE runs SET status = $1, next_node_index = $2 WHERE run_id = $3',
+          [suspendStatus, i, runId],
+        );
+        return;
+      }
       await advanceNodeIndex(runId, i + 1);
     }
 
@@ -608,7 +840,14 @@ function checkAuth(req: IncomingMessage, res: ServerResponse): boolean {
 // ─── Route handlers ──────────────────────────────────────────────────────────
 
 /** Node typeIds the Postgres host's executor implements today. */
-const SUPPORTED_NODE_TYPES = new Set(['core.noop', 'core.delay']);
+const SUPPORTED_NODE_TYPES = new Set([
+  'core.noop',
+  'core.delay',
+  'core.approvalGate',
+  'core.clarificationGate',
+  'core.interrupt',
+  'core.subWorkflow',
+]);
 
 function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
   // Only advertise fixtures the executor can actually run. A scenario
@@ -647,8 +886,14 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
       debugBundle: { supported: true },
       capabilities: {
         auth: {
-          // openwop-audit-log-integrity profile (auth-profiles.md §"Audit-log integrity").
-          profiles: ['openwop-audit-log-integrity'],
+          // Profile claims: audit + 4 optional interrupt profiles.
+          profiles: [
+            'openwop-audit-log-integrity',
+            'openwop-interrupt-quorum',
+            'openwop-interrupt-auth-required',
+            'openwop-interrupt-external-event',
+            'openwop-interrupt-cascade-cancel',
+          ],
           auditLogIntegrity: {
             hashChain: true,
             checkpointSignatureAlgorithm: 'ed25519',
@@ -656,6 +901,10 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
             checkpointIntervalEntries: AUDIT_OPTS.checkpointIntervalEntries,
             checkpointIntervalSeconds: AUDIT_OPTS.checkpointIntervalSeconds,
           },
+        },
+        interrupts: {
+          supportedKinds: ['approval', 'clarification', 'external-event'],
+          approvalActions: ['accept', 'reject', 'request-changes', 'escalate'],
         },
         runs: {
           pauseResume: { supported: true },
@@ -692,6 +941,8 @@ function handleOpenApi(_req: IncomingMessage, res: ServerResponse): void {
       '/v1/runs/{runId}/debug-bundle': { get: { responses: { '200': { description: 'OK' } } } },
       '/v1/runs/{runId}:pause': { post: { responses: { '202': { description: 'Accepted' } } } },
       '/v1/runs/{runId}:resume': { post: { responses: { '202': { description: 'Accepted' } } } },
+      '/v1/runs/{runId}/interrupts/{nodeId}': { post: { responses: { '200': { description: 'OK' } } } },
+      '/v1/interrupts/{token}': { post: { responses: { '200': { description: 'OK' } } } },
       '/v1/audit/verify': { get: { responses: { '200': { description: 'OK' } } } },
     },
   });
@@ -835,17 +1086,264 @@ async function handleCancelRun(
     sendJSON(res, 200, { runId, status: row.status, alreadyTerminal: true });
     return;
   }
-  await setCancelRequested(runId);
   const q = await querier();
+
+  // Cascade: cancel any active children eagerly so their GET shows
+  // terminal 'cancelled' sooner. The child's executor also defensively
+  // observes the cancelling flip, but doing it here speeds the
+  // openwop-interrupt-cascade-cancel scenario.
+  const childrenRes = await q.query<{ run_id: string }>(
+    `SELECT run_id FROM runs
+     WHERE parent_run_id = $1 AND status NOT IN ('completed','failed','cancelled')`,
+    [runId],
+  );
+  for (const c of childrenRes.rows) {
+    await cancelRunInternal(c.run_id, 'parent-cancelled');
+  }
+
+  // If the run is suspended on an interrupt, drive directly to terminal —
+  // no executor running to observe the cancelling flip.
+  const isSuspended =
+    row.status === 'waiting-approval' ||
+    row.status === 'waiting-input' ||
+    row.status === 'waiting-external';
+  if (isSuspended) {
+    await invalidateInterrupts(q, runId, 'cancelled');
+    await appendEvent(runId, 'run.cancelled');
+    await setRunTerminal(runId, 'cancelled', null);
+    await logAudit(q, {
+      actor: 'tenant:default',
+      action: 'run.cancel',
+      target: runId,
+      details: {
+        priorStatus: row.status,
+        viaSuspended: true,
+        cascadedChildren: childrenRes.rows.length,
+      },
+    });
+    await triggerCheckpointIfDue(q, auditSigningKey(), AUDIT_OPTS);
+    sendJSON(res, 200, { runId, status: 'cancelled' });
+    return;
+  }
+
+  await setCancelRequested(runId);
   await logAudit(q, {
     actor: 'tenant:default',
     action: 'run.cancel',
     target: runId,
-    details: { priorStatus: row.status },
+    details: { priorStatus: row.status, cascadedChildren: childrenRes.rows.length },
   });
   await triggerCheckpointIfDue(q, auditSigningKey(), AUDIT_OPTS);
   runningAborters.get(runId)?.abort();
   sendJSON(res, 200, { runId, status: 'cancelling' });
+}
+
+async function handleResolveInterrupt(
+  req: IncomingMessage,
+  res: ServerResponse,
+  runId: string,
+  nodeId: string,
+): Promise<void> {
+  if (!checkAuth(req, res)) return;
+  const row = await loadRun(runId);
+  if (!row) {
+    sendError(res, 404, 'run_not_found', `Unknown runId: ${runId}`);
+    return;
+  }
+  const q = await querier();
+  const interrupt = await getInterrupt(q, runId, nodeId);
+  if (!interrupt) {
+    sendError(
+      res,
+      404,
+      'interrupt_not_found',
+      `No active interrupt at (runId=${runId}, nodeId=${nodeId}).`,
+    );
+    return;
+  }
+
+  const bodyText = await readBody(req);
+  let parsed: { resumeValue?: unknown };
+  try {
+    parsed = bodyText ? (JSON.parse(bodyText) as { resumeValue?: unknown }) : {};
+  } catch {
+    sendError(res, 400, 'validation_error', 'Request body MUST be valid JSON.');
+    return;
+  }
+
+  const outcome =
+    interrupt.kind === 'approval'
+      ? await resolveApproval(q, runId, nodeId, parsed.resumeValue)
+      : await resolveClarification(q, runId, nodeId, parsed.resumeValue);
+
+  if (outcome.kind === 'unknown') {
+    sendError(res, 404, 'interrupt_not_found', 'Interrupt resolved or missing.');
+    return;
+  }
+  if (outcome.kind === 'expired') {
+    sendError(res, 410, 'interrupt_expired', 'Interrupt has expired.');
+    return;
+  }
+  if (outcome.kind === 'invalid') {
+    sendError(res, outcome.status, outcome.code, outcome.message);
+    return;
+  }
+
+  await logAudit(q, {
+    actor: 'tenant:default',
+    action: 'interrupt.resolve',
+    target: `${runId}:${nodeId}`,
+    details: {
+      outcome: outcome.kind,
+      votes: outcome.kind === 'pending' ? outcome.votes.length : undefined,
+    },
+  });
+  await triggerCheckpointIfDue(q, auditSigningKey(), AUDIT_OPTS);
+
+  if (outcome.kind === 'pending') {
+    await appendEvent(runId, 'interrupt.vote', {
+      nodeId,
+      data: { votes: outcome.votes },
+    });
+    sendJSON(res, 200, {
+      runId,
+      status: 'waiting-approval',
+      interrupt: { kind: interrupt.kind, nodeId, votes: outcome.votes },
+    });
+    return;
+  }
+
+  if (outcome.kind === 'rejected') {
+    await appendEvent(runId, 'node.completed', { nodeId, data: { outcome: 'rejected' } });
+    await appendEvent(runId, 'run.failed', {
+      data: { code: 'interrupt_rejected', message: 'Approval gate rejected by quorum.' },
+    });
+    await setRunTerminal(runId, 'failed', {
+      code: 'interrupt_rejected',
+      message: 'Approval gate rejected by quorum.',
+    });
+    sendJSON(res, 200, {
+      runId,
+      status: 'failed',
+      interrupt: { kind: interrupt.kind, nodeId, outcome: 'rejected', votes: outcome.votes },
+    });
+    return;
+  }
+
+  // 'resumed' — close out the suspended node, advance, re-enter executor.
+  await appendEvent(runId, 'node.resumed', { nodeId, data: { action: outcome.finalAction } });
+  await appendEvent(runId, 'node.completed', { nodeId });
+  await q.query(
+    "UPDATE runs SET status = 'running', next_node_index = $1 WHERE run_id = $2",
+    [(row.next_node_index ?? 0) + 1, runId],
+  );
+  void runWorkflow(runId).catch(async (err: unknown) => {
+    const message = err instanceof Error ? err.message : String(err);
+    const error = { code: 'internal', message };
+    await appendEvent(runId, 'run.failed', { data: error });
+    await setRunTerminal(runId, 'failed', error);
+  });
+  sendJSON(res, 200, {
+    runId,
+    status: 'running',
+    interrupt: { kind: interrupt.kind, nodeId, outcome: 'accepted', votes: outcome.votes },
+  });
+}
+
+async function handleResolveInterruptByToken(
+  req: IncomingMessage,
+  res: ServerResponse,
+  token: string,
+): Promise<void> {
+  // Signed-callback resolve: the token IS the authorization. No bearer
+  // check — the token's unguessability is the access-control surface.
+  const q = await querier();
+  const interrupt = await getInterruptByToken(q, token);
+  if (!interrupt) {
+    sendError(res, 404, 'interrupt_not_found', 'Unknown or expired interrupt token.');
+    return;
+  }
+
+  // openwop-interrupt-auth-required rejects signed-token resolves.
+  const config = interrupt.config_json as { profile?: string };
+  if (config.profile === 'openwop-interrupt-auth-required') {
+    sendError(
+      res,
+      403,
+      'auth_elevation_required',
+      'This interrupt requires bearer authentication; signed-token resume is disabled.',
+    );
+    return;
+  }
+
+  const bodyText = await readBody(req);
+  let parsed: { resumeValue?: unknown };
+  try {
+    parsed = bodyText ? (JSON.parse(bodyText) as { resumeValue?: unknown }) : {};
+  } catch {
+    sendError(res, 400, 'validation_error', 'Request body MUST be valid JSON.');
+    return;
+  }
+
+  const outcome =
+    interrupt.kind === 'external-event'
+      ? await resolveExternalEvent(q, interrupt.run_id, interrupt.node_id, parsed.resumeValue)
+      : ({
+          kind: 'invalid' as const,
+          status: 400 as const,
+          code: 'unsupported_token_kind',
+          message: 'Signed-token resolve is not supported for this interrupt kind.',
+        } as const);
+
+  if (outcome.kind === 'unknown') {
+    sendError(res, 404, 'interrupt_not_found', 'Interrupt resolved or missing.');
+    return;
+  }
+  if (outcome.kind === 'expired') {
+    sendError(res, 410, 'interrupt_expired', 'Interrupt has expired.');
+    return;
+  }
+  if (outcome.kind === 'invalid') {
+    sendError(res, outcome.status, outcome.code, outcome.message);
+    return;
+  }
+
+  await logAudit(q, {
+    actor: 'callback-token',
+    action: 'interrupt.resolve',
+    target: `${interrupt.run_id}:${interrupt.node_id}`,
+    details: { outcome: outcome.kind, via: 'signed-token' },
+  });
+  await triggerCheckpointIfDue(q, auditSigningKey(), AUDIT_OPTS);
+
+  if (outcome.kind === 'resumed') {
+    await appendEvent(interrupt.run_id, 'node.resumed', {
+      nodeId: interrupt.node_id,
+      data: { action: outcome.finalAction },
+    });
+    await appendEvent(interrupt.run_id, 'node.completed', { nodeId: interrupt.node_id });
+    const row = await loadRun(interrupt.run_id);
+    if (row) {
+      await q.query(
+        "UPDATE runs SET status = 'running', next_node_index = $1 WHERE run_id = $2",
+        [(row.next_node_index ?? 0) + 1, interrupt.run_id],
+      );
+      const resumedRunId = interrupt.run_id;
+      void runWorkflow(resumedRunId).catch(async (err: unknown) => {
+        const message = err instanceof Error ? err.message : String(err);
+        const error = { code: 'internal', message };
+        await appendEvent(resumedRunId, 'run.failed', { data: error });
+        await setRunTerminal(resumedRunId, 'failed', error);
+      });
+    }
+    sendJSON(res, 200, {
+      runId: interrupt.run_id,
+      nodeId: interrupt.node_id,
+      status: 'running',
+      outcome: 'resumed',
+    });
+    return;
+  }
 }
 
 async function handleDebugBundle(
@@ -1067,6 +1565,8 @@ const RUN_EVENTS_POLL_PATTERN = /^\/v1\/runs\/([^/]+)\/events\/poll$/;
 const RUN_DEBUG_BUNDLE_PATTERN = /^\/v1\/runs\/([^/]+)\/debug-bundle$/;
 const RUN_PAUSE_PATTERN = /^\/v1\/runs\/([^/]+):pause$/;
 const RUN_RESUME_PATTERN = /^\/v1\/runs\/([^/]+):resume$/;
+const RUN_INTERRUPT_PATTERN = /^\/v1\/runs\/([^/]+)\/interrupts\/([^/]+)$/;
+const INTERRUPT_TOKEN_PATTERN = /^\/v1\/interrupts\/([^/]+)$/;
 
 async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
@@ -1086,6 +1586,10 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   if (m && method === 'POST') return handlePauseRun(req, res, m[1]!);
   m = RUN_RESUME_PATTERN.exec(path);
   if (m && method === 'POST') return handleResumeRun(req, res, m[1]!);
+  m = RUN_INTERRUPT_PATTERN.exec(path);
+  if (m && method === 'POST') return handleResolveInterrupt(req, res, m[1]!, m[2]!);
+  m = INTERRUPT_TOKEN_PATTERN.exec(path);
+  if (m && method === 'POST') return handleResolveInterruptByToken(req, res, m[1]!);
   m = RUN_CANCEL_PATTERN.exec(path);
   if (m && method === 'POST') return handleCancelRun(req, res, m[1]!);
   m = RUN_ID_PATTERN.exec(path);
@@ -1127,6 +1631,7 @@ export async function start(): Promise<{ close: () => Promise<void> }> {
   const q = await querier();
   await setupSchema(q);
   await setupAuditSchema(q);
+  await setupInterruptSchema(q);
 
   // Persist the audit signing keypair under OPENWOP_AUDIT_KEY_DIR.
   // Tests can override OPENWOP_AUDIT_KEY_DIR to point at a tmpdir per
