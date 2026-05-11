@@ -104,11 +104,13 @@ Approximate total port work: ~1700 LOC. Tractable in 4-6 focused sessions, one m
 
 These don't have direct SQLite equivalents:
 
-1. **Multi-tenancy.** Add `tenant_id TEXT NOT NULL` to every table; composite primary keys. Bearer auth resolves to tenant via a `tenants` table. Currently the host is single-tenant.
-2. **Backpressure.** Wrap inbound HTTP with a semaphore sized from `OPENWOP_MAX_INFLIGHT`; return `503 service_unavailable` + `Retry-After` when full. Required by `production-profile.md`.
-3. **Claim acquisition.** Replace the SQLite `UPDATE … WHERE claim_holder_id IS NULL OR claim_expires_at < ?` pattern with Postgres `SELECT pg_try_advisory_xact_lock(hashtext(run_id))`. Simpler and atomic.
-4. **`audit_log` SERIALIZABLE.** Wrap insert in `BEGIN ISOLATION LEVEL SERIALIZABLE` so the prev-hash read + insert can't interleave with another writer. The reference SQLite host serializes via better-sqlite3's in-process tx; Postgres needs explicit isolation.
-5. **Multi-region idempotency.** Replicate the `idempotency` table across regions; claim `crossRegion: 'best-effort'` in the discovery doc.
+1. **Multi-tenancy.** Add `tenant_id TEXT NOT NULL` to every table; composite primary keys. Bearer auth resolves to tenant via a `tenants` table. Currently the host is single-tenant. **Not a production-profile requirement** — the spec's logging MUST is satisfied with a hardcoded `tenant:default` field. Deferred follow-up.
+2. ~~**Backpressure.**~~ ✅ wired (2026-05-11) — inflight semaphore sized from `OPENWOP_MAX_INFLIGHT` (default 100); 503 + Retry-After on overflow; discovery + OpenAPI are health-probe-exempt. Required by `production-profile.md` §"Backpressure".
+3. ~~**Claim acquisition.**~~ ✅ wired (2026-05-11) — `SELECT pg_try_advisory_lock(hashtext(run_id))` session-scoped; orphan recovery on host startup; auto-release on connection drop (process crash). See Phase 5 commit.
+4. ~~**`audit_log` SERIALIZABLE.**~~ ✅ handled (2026-05-11) — withTransaction holds an in-process FIFO lock that serializes overlapping transactions, plus the `audit_seq` sentinel row's UPDATE…RETURNING gives atomic seq allocation. The explicit SERIALIZABLE isolation level isn't strictly required given the lock, but production deployers SHOULD consider it as defense-in-depth.
+5. **Multi-region idempotency.** Deferred. Only required for `crossRegion: 'best-effort'` capability claim, which is optional. Reference impl is single-region.
+
+**Event retention** ✅ wired (2026-05-11) — `OPENWOP_EVENT_RETENTION_DAYS` (default 7); terminal runs older than retention window get purged via 6-hour sweeper; FK cascade removes events. Required by `production-profile.md` §"Event retention".
 
 ### Production-profile conformance
 

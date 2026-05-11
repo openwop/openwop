@@ -94,6 +94,20 @@ const AUDIT_KEY_DIR =
 // holds the claim, when does it expire?" without having to query
 // pg_locks.
 const CLAIM_TTL_MS = Number(process.env.OPENWOP_CLAIM_TTL_MS ?? 30_000);
+// Backpressure: in-flight HTTP request cap. When exceeded, return
+// 503 service_unavailable + Retry-After per production-profile.md
+// §"Backpressure". Default of 100 is small enough that conformance
+// tests can drive it deterministically; production deployers tune
+// via env.
+const MAX_INFLIGHT = Number(process.env.OPENWOP_MAX_INFLIGHT ?? 100);
+const RETRY_AFTER_SECONDS = Number(process.env.OPENWOP_RETRY_AFTER_SECONDS ?? 1);
+// Event retention: rows older than this window get swept. 410 Gone on
+// expired-run GETs per production-profile.md §"Event retention".
+// Default 7 days; reference impl prefers explicit operator config.
+const EVENT_RETENTION_DAYS = Number(process.env.OPENWOP_EVENT_RETENTION_DAYS ?? 7);
+const RETENTION_SWEEP_INTERVAL_MS = Number(
+  process.env.OPENWOP_RETENTION_SWEEP_INTERVAL_MS ?? 6 * 60 * 60 * 1000,
+);
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -202,6 +216,10 @@ async function querier(): Promise<Querier> {
 
 const workflows = new Map<string, FixtureWorkflow>();
 const eventBus = new EventEmitter();
+// Inflight request counter for backpressure. Incremented on route entry,
+// decremented on route exit (route's try/finally).
+let inflightCount = 0;
+let retentionTimer: NodeJS.Timeout | null = null;
 eventBus.setMaxListeners(1000);
 const runningAborters = new Map<string, AbortController>();
 
@@ -1862,6 +1880,30 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const path = url.pathname;
   const method = req.method ?? 'GET';
 
+  // Backpressure: cap concurrent inflight HTTP handlers. Discovery +
+  // OpenAPI bypass the cap so health probes still respond when the host
+  // is saturated. @see spec/v1/production-profile.md §"Backpressure".
+  const isHealthProbe =
+    method === 'GET' && (path === '/.well-known/openwop' || path === '/v1/openapi.json');
+  if (!isHealthProbe && inflightCount >= MAX_INFLIGHT) {
+    res.writeHead(503, {
+      'Content-Type': 'application/json',
+      'Retry-After': String(RETRY_AFTER_SECONDS),
+    });
+    res.end(
+      JSON.stringify({
+        error: 'service_unavailable',
+        message: `Host inflight cap of ${MAX_INFLIGHT} exceeded; retry after ${RETRY_AFTER_SECONDS}s.`,
+        details: { retryAfter: RETRY_AFTER_SECONDS },
+      }),
+    );
+    return;
+  }
+  inflightCount += 1;
+  res.on('close', () => {
+    inflightCount = Math.max(0, inflightCount - 1);
+  });
+
   if (method === 'GET' && path === '/.well-known/openwop') return handleDiscovery(req, res);
   if (method === 'GET' && path === '/v1/openapi.json') return handleOpenApi(req, res);
   if (method === 'GET' && path === '/v1/audit/verify') return handleAuditVerify(req, res, url);
@@ -1903,6 +1945,35 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
 let _server: import('node:http').Server | null = null;
 let signalHandlersRegistered = false;
 
+/**
+ * Sweep events + runs older than the retention window. Terminal runs
+ * whose started_at predates the window get deleted; their events are
+ * cascade-removed via the FK ON DELETE CASCADE. Non-terminal runs
+ * are NEVER swept — they're still in-flight. Production deployers
+ * SHOULD audit the deletion list before sweeping; reference impl
+ * trades that for simplicity.
+ *
+ * @see spec/v1/production-profile.md §"Event retention"
+ */
+async function sweepRetention(): Promise<void> {
+  if (EVENT_RETENTION_DAYS <= 0) return;
+  const q = await querier();
+  const cutoff = new Date(Date.now() - EVENT_RETENTION_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  // Only purge terminal runs — in-flight (pending/running/suspended)
+  // SHOULD never expire, regardless of age.
+  const res = await q.query(
+    `DELETE FROM runs
+     WHERE status IN ('completed', 'failed', 'cancelled')
+       AND started_at < $1`,
+    [cutoff],
+  );
+  if ((res.rowCount ?? 0) > 0) {
+    console.log(
+      `[openwop-host-postgres] retention sweep: ${res.rowCount} terminal runs purged (older than ${EVENT_RETENTION_DAYS} days)`,
+    );
+  }
+}
+
 async function recoverOrphans(): Promise<void> {
   const q = await querier();
   const res = await q.query<{ run_id: string }>(
@@ -1936,6 +2007,10 @@ async function closeHost(): Promise<void> {
   // Stop OTel metric emission before tearing down the DB so the timer
   // doesn't fire a metric query against a closed querier.
   stopMetricLoop();
+  if (retentionTimer) {
+    clearInterval(retentionTimer);
+    retentionTimer = null;
+  }
   // Abort every in-flight executor before tearing down the server + DB so
   // the awaiting promises don't fire writes to a closed querier mid-shutdown.
   for (const aborter of runningAborters.values()) aborter.abort();
@@ -1982,6 +2057,20 @@ export async function start(): Promise<{ close: () => Promise<void> }> {
   // OTel metric emission loop (no-op when OTEL_EXPORTER_OTLP_ENDPOINT
   // is unset; observabilityEnabled() guards advertisement).
   startMetricLoop(q);
+
+  // Retention sweeper. First sweep runs immediately on boot to clear
+  // any stale rows from the prior process's lifetime; subsequent
+  // sweeps run on a 6-hour interval. Idempotent: nothing to delete
+  // is a no-op.
+  await sweepRetention();
+  if (RETENTION_SWEEP_INTERVAL_MS > 0) {
+    retentionTimer = setInterval(() => {
+      void sweepRetention().catch((err: unknown) => {
+        console.error('[openwop-host-postgres] retention sweep failed:', err);
+      });
+    }, RETENTION_SWEEP_INTERVAL_MS);
+    retentionTimer.unref?.();
+  }
 
   // Orphan recovery: any non-terminal run not currently claimed by
   // another process gets re-launched. Crash recovery — if the prior
