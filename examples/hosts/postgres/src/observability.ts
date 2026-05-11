@@ -1,4 +1,30 @@
 /**
+ * **STATUS (2026-05-11): NOT WIRED.** This file ports the SQLite host's
+ * OTel emission logic to the Postgres host (DB calls converted to async
+ * pg.Client + `await q.query(...)`), but `server.ts` does NOT yet import
+ * it — `startMetricLoop` / `startRunSpan` / `startNodeSpan` are not
+ * called from any route. The host doesn't advertise
+ * `capabilities.observability` and OTel scenarios soft-skip against it.
+ *
+ * Wiring this in is one of the follow-up T2.1 ports (README §"Build-out
+ * plan"). When that port lands:
+ *   1. import { startMetricLoop, startRunSpan, endRunSpan,
+ *               startNodeSpan, endNodeSpan, parseTraceparent,
+ *               recordInboundTraceContext, recordRunDuration }
+ *      from './observability.js';
+ *   2. Call startMetricLoop(client) in start() after setupSchema.
+ *   3. Wire span helpers into the executor lifecycle the same way the
+ *      SQLite host does (server.ts startRunSpan call site is the model).
+ *   4. Advertise `capabilities.observability.{otel,metrics}` when
+ *      OTEL_EXPORTER_OTLP_ENDPOINT is configured.
+ *   5. Run conformance otel-emission + metric-emission +
+ *      otel-trace-propagation scenarios against the host as the gate.
+ *
+ * Until that lands, this file is a parked port — verified to typecheck
+ * but not actually executed.
+ *
+ * Original SQLite-host docstring follows:
+ *
  * OTel observability emission for the SQLite reference host.
  *
  * Implements the `openwop.*` OpenTelemetry namespace defined in

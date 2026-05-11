@@ -11,11 +11,49 @@
  * Tables not in this slice (audit_log, audit_checkpoints, interrupts,
  * webhook_subscriptions): deferred. The full-feature-parity migration
  * adds them when the corresponding modules port over.
+ *
+ * Migration ordering: `__schema_version` tracks the highest applied
+ * migration step. Each follow-up port (audit, interrupts, webhooks)
+ * adds a new version with its `up()` and pins the new floor. Reference-
+ * impl convention only — production deployers should use a real
+ * migrator (`node-pg-migrate`, Flyway, etc.) and run setupSchema's
+ * idempotent DDL as a fallback.
  */
 
 import type { Querier } from './db.js';
 
+/**
+ * Schema version applied by this version of `setupSchema()`. Bump when
+ * adding a migration step below. New deployments fast-forward; existing
+ * deployments apply migrations from `(current + 1)` through `LATEST`.
+ */
+export const LATEST_SCHEMA_VERSION = 1;
+
+async function currentVersion(q: Querier): Promise<number> {
+  await q.query(`
+    CREATE TABLE IF NOT EXISTS __schema_version (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      version INTEGER NOT NULL,
+      applied_at TEXT NOT NULL
+    );
+  `);
+  const res = await q.query<{ version: number }>(
+    'SELECT version FROM __schema_version WHERE id = 1',
+  );
+  return res.rows[0]?.version ?? 0;
+}
+
+async function setVersion(q: Querier, version: number): Promise<void> {
+  await q.query(
+    `INSERT INTO __schema_version (id, version, applied_at) VALUES (1, $1, $2)
+     ON CONFLICT (id) DO UPDATE SET version = EXCLUDED.version, applied_at = EXCLUDED.applied_at`,
+    [version, new Date().toISOString()],
+  );
+}
+
 export async function setupSchema(q: Querier): Promise<void> {
+  const have = await currentVersion(q);
+  if (have >= LATEST_SCHEMA_VERSION) return;
   await q.query(`
     CREATE TABLE IF NOT EXISTS runs (
       run_id TEXT PRIMARY KEY,
@@ -71,4 +109,6 @@ export async function setupSchema(q: Querier): Promise<void> {
     );
   `);
   await q.query(`CREATE INDEX IF NOT EXISTS idx_idem_stored_at ON idempotency(stored_at);`);
+
+  await setVersion(q, LATEST_SCHEMA_VERSION);
 }

@@ -44,7 +44,7 @@
  */
 
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
-import { randomUUID, createHash } from 'node:crypto';
+import { randomUUID, createHash, timingSafeEqual } from 'node:crypto';
 import { readFileSync, readdirSync, existsSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -837,6 +837,11 @@ function sendError(res: ServerResponse, status: number, code: string, message: s
   sendJSON(res, status, { error: code, message });
 }
 
+/**
+ * Constant-time bearer-token comparison via `crypto.timingSafeEqual`.
+ * The length-mismatch short-circuit is safe — same code path as content
+ * mismatch, no timing oracle either way.
+ */
 function checkAuth(req: IncomingMessage, res: ServerResponse): boolean {
   const auth = req.headers.authorization;
   if (typeof auth !== 'string' || !auth.startsWith('Bearer ')) {
@@ -844,7 +849,13 @@ function checkAuth(req: IncomingMessage, res: ServerResponse): boolean {
     return false;
   }
   const token = auth.slice('Bearer '.length).trim();
-  if (token !== API_KEY) {
+  const presented = Buffer.from(token, 'utf8');
+  const expected = Buffer.from(API_KEY, 'utf8');
+  let ok = false;
+  if (presented.length === expected.length) {
+    ok = timingSafeEqual(presented, expected);
+  }
+  if (!ok) {
     sendError(res, 401, 'invalid_credential', 'Bearer token rejected.');
     return false;
   }
