@@ -120,6 +120,83 @@ The replayed run continues to completion or further divergence; the `replay.dive
 
 ---
 
+## LLM cache-key recipe
+
+Replay determinism for LLM-calling nodes depends on hosts agreeing on the *cache key* under which a provider response is deduped. Without a canonical recipe, two hosts replaying the same workflow against the same provider can compute different keys, miss the dedup, and call the provider twice.
+
+This section defines the **canonical cache key** that an OpenWOP-compliant host MUST compute for any node that calls an LLM provider through the Layer-2 idempotency surface (`idempotency.md` §"Layer 2 — Engine invocationId").
+
+### §A Domain
+
+The cache key is computed at invocation time over a closed set of fields. Hosts MUST NOT include host-specific metadata, request IDs, timestamps, or trace headers in the key.
+
+```typescript
+interface LLMCacheKeyInput {
+  provider: string;          // canonical provider id, lowercase ASCII (e.g. "anthropic", "openai", "google")
+  model: string;             // provider-stamped model id as the model expects it (no normalization)
+  messages: ReadonlyArray<{
+    role: 'system' | 'user' | 'assistant' | 'tool';
+    content: string | Array<{ type: string; [k: string]: unknown }>;
+    name?: string;
+    toolCallId?: string;
+  }>;
+  tools?: ReadonlyArray<{
+    name: string;
+    description?: string;
+    parameters: Record<string, unknown>;  // JSON Schema fragment
+  }>;
+  temperature?: number;
+  topP?: number;
+  topK?: number;
+  responseFormat?: { type: 'text' | 'json' | 'tool_call'; schema?: Record<string, unknown> };
+}
+```
+
+Fields NOT in this set MUST NOT influence the cache key — including but not limited to: `max_tokens`, `stop`, `stream`, `metadata`, `user`, `seed`, request IDs, trace context, tenant id, run id.
+
+### §B Computation
+
+Hosts MUST compute the cache key as follows:
+
+1. **Build a canonical object** with the fields above, applying these normalization rules:
+   - Omit `tools`, `temperature`, `topP`, `topK`, `responseFormat` when absent (do NOT emit `null` / default placeholders).
+   - Sort `tools[]` by `name` ascending.
+   - For each tool, sort `parameters.properties` keys ascending recursively (RFC 8785 JCS over the tool definition).
+   - Preserve `messages[]` order — order is semantically significant and MUST NOT be reordered.
+   - Preserve `messages[i].content` shape verbatim (string or array of content blocks) without coalescing.
+2. **Canonicalize to bytes** via RFC 8785 JCS (JSON Canonicalization Scheme). Hosts that don't have JCS available MUST emit JSON with: object keys sorted lexicographically (recursively); no whitespace; no trailing commas; UTF-8 NFC for all strings; numbers serialized per IEEE 754 round-trip.
+3. **Hash** the canonical bytes with SHA-256.
+4. **Encode** as lowercase hex.
+
+The resulting 64-character hex string is the **LLM cache key** for that invocation.
+
+### §C Layering with idempotency.md
+
+The LLM cache key is the *content-addressable* identity of the provider request. It composes with `idempotency.md` Layer 2 as follows:
+
+- The Layer-2 `invocationId` is `sha256(runId + nodeId + invocationIndex)` (per `idempotency.md` §"Layer 2 — Engine invocationId").
+- The LLM cache key is computed in addition, and is the dedup key inside the Layer-2 store for provider-call nodes.
+- A Layer-2 lookup that hits on `invocationId` returns the cached response unconditionally; the LLM cache key is the secondary lookup used when a fresh run computes the same provider request as a different (or no) prior run — enabling cross-run sharing of provider responses where the host opts in.
+
+Hosts MUST NOT use the LLM cache key as a security boundary — two different tenants computing the same request will compute the same key. Tenant isolation MUST be enforced at the Layer-2 store level (per-tenant namespacing of the cache).
+
+### §D Determinism property
+
+Two OpenWOP-compliant hosts replaying the same workflow against the same provider request **MUST compute the same LLM cache key**. The recipe is a normative invariant for `replay` mode — divergent cache keys are reportable via the `replay.diverged` event when the cached response differs.
+
+A future conformance scenario (`replay-llm-cache-key.test.ts`) will exercise this property cross-host once at least two reference hosts implement LLM-calling nodes. As of this writing both reference hosts (in-memory + SQLite) execute only deterministic-noop fixtures (`core.noop` / `core.delay` / `core.approvalGate`), so the scenario ships as `it.todo()`.
+
+### §E Migration
+
+Hosts that have already shipped LLM-calling nodes with a non-canonical cache key MUST either:
+
+1. Switch to the canonical recipe and accept a one-time cache invalidation; OR
+2. Continue using their existing key alongside the canonical one for at least 90 days, then retire the legacy form. During the dual-write window, Layer-2 lookups check both keys.
+
+The migration period is host-internal — no wire-shape impact.
+
+---
+
 ## Replay-from-event-log internals
 
 The engine implementation reuses the existing `recoverRunFromEventLog(runId)` machinery (per `WORKFLOW_ORCHESTRATION.md`):
