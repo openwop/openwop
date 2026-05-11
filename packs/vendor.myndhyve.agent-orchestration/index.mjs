@@ -280,6 +280,134 @@ export async function swarmExecute(ctx) {
   };
 }
 
+/* ─── host.coordination primitives ──────────────────────────── */
+
+function ensureCoordination(ctx) {
+  if (!ctx.coordination || typeof ctx.coordination !== 'object') {
+    throw Object.assign(new Error('host does not expose ctx.coordination'), {
+      code: 'host_capability_missing',
+      capability: 'host.coordination',
+    });
+  }
+}
+
+function ensureCoordinationMethod(ctx, method) {
+  ensureCoordination(ctx);
+  if (typeof ctx.coordination[method] !== 'function') {
+    throw Object.assign(
+      new Error(`host does not expose ctx.coordination.${method}`),
+      { code: 'host_capability_missing', capability: `host.coordination.${method}` },
+    );
+  }
+}
+
+export async function coordinationVote(ctx) {
+  ensureCoordinationMethod(ctx, 'vote');
+  const { defaultStrategy = 'majority', defaultQuorum = 0.5, timeout } = ctx.config ?? {};
+  const { question, options, participantIds, strategy, quorum, timeout: tInput } = ctx.inputs ?? {};
+  const result = await ctx.coordination.vote({
+    question, options, participantIds,
+    strategy: strategy ?? defaultStrategy,
+    quorum: quorum ?? defaultQuorum,
+    timeoutMs: tInput ?? timeout ?? 60000,
+  });
+  return {
+    status: 'success',
+    outputs: {
+      winningOptionId: result?.winningOptionId ?? '',
+      winningValue: result?.winningValue,
+      voteCounts: result?.voteCounts ?? {},
+      quorumMet: result?.quorumMet === true,
+      margin: typeof result?.margin === 'number' ? result.margin : 0,
+      voteCount: typeof result?.voteCount === 'number' ? result.voteCount : 0,
+      success: result?.success !== false,
+      ...(result?.error ? { error: result.error } : {}),
+    },
+  };
+}
+
+export async function coordinationConsensus(ctx) {
+  ensureCoordinationMethod(ctx, 'consensus');
+  const result = await ctx.coordination.consensus({ ...(ctx.config ?? {}), ...(ctx.inputs ?? {}) });
+  return {
+    status: 'success',
+    outputs: {
+      agreement: result?.agreement,
+      converged: result?.converged === true,
+      rounds: typeof result?.rounds === 'number' ? result.rounds : 0,
+      success: result?.success !== false,
+      ...(result?.error ? { error: result.error } : {}),
+    },
+  };
+}
+
+export async function coordinationCompete(ctx) {
+  ensureCoordinationMethod(ctx, 'compete');
+  const result = await ctx.coordination.compete({ ...(ctx.config ?? {}), ...(ctx.inputs ?? {}) });
+  return {
+    status: 'success',
+    outputs: {
+      winnerId: result?.winnerId ?? '',
+      winnerResult: result?.winnerResult,
+      durationMs: typeof result?.durationMs === 'number' ? result.durationMs : 0,
+      success: result?.success !== false,
+      ...(result?.error ? { error: result.error } : {}),
+    },
+  };
+}
+
+export async function coordinationMapReduce(ctx) {
+  ensureCoordinationMethod(ctx, 'mapReduce');
+  const result = await ctx.coordination.mapReduce({ ...(ctx.config ?? {}), ...(ctx.inputs ?? {}) });
+  return {
+    status: 'success',
+    outputs: {
+      results: Array.isArray(result?.results) ? result.results : [],
+      reduced: result?.reduced,
+      success: result?.success !== false,
+      ...(result?.error ? { error: result.error } : {}),
+    },
+  };
+}
+
+export async function coordinationDelegate(ctx) {
+  ensureCoordinationMethod(ctx, 'delegate');
+  const result = await ctx.coordination.delegate({ ...(ctx.config ?? {}), ...(ctx.inputs ?? {}) });
+  return {
+    status: 'success',
+    outputs: {
+      assigneeId: result?.assigneeId ?? '',
+      matchScore: typeof result?.matchScore === 'number' ? result.matchScore : 0,
+      success: result?.success !== false,
+      ...(result?.error ? { error: result.error } : {}),
+    },
+  };
+}
+
+export async function coordinationRoundRobin(ctx) {
+  ensureCoordinationMethod(ctx, 'roundRobin');
+  const cursorKey = `_roundRobinCursor:${ctx.nodeId}`;
+  const cursor = ctx.variables?.get?.(cursorKey) ?? 0;
+  const result = await ctx.coordination.roundRobin({
+    ...(ctx.config ?? {}),
+    ...(ctx.inputs ?? {}),
+    cursor,
+  });
+  if (ctx.variables && typeof result?.nextCursor === 'number') {
+    ctx.variables.set(cursorKey, result.nextCursor);
+  }
+  return {
+    status: 'success',
+    outputs: {
+      assigneeId: result?.assigneeId ?? '',
+      cursor: typeof result?.cursor === 'number' ? result.cursor : cursor,
+      nextCursor: typeof result?.nextCursor === 'number' ? result.nextCursor : cursor + 1,
+      success: result?.success !== false,
+      ...(result?.error ? { error: result.error } : {}),
+    },
+  };
+}
+
 export const nodes = {
   'agent.spawn': spawn,
   'agent.delegate.smart': delegate,
@@ -287,6 +415,12 @@ export const nodes = {
   'agent.message.send': messageSend,
   'agent.skill.invoke': skillInvoke,
   'agent.swarm.execute': swarmExecute,
+  'coordination.vote': coordinationVote,
+  'coordination.consensus': coordinationConsensus,
+  'coordination.compete': coordinationCompete,
+  'coordination.map-reduce': coordinationMapReduce,
+  'coordination.delegate': coordinationDelegate,
+  'coordination.round-robin': coordinationRoundRobin,
 };
 
 export default nodes;

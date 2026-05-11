@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "targetType": { "type": "string" },
+    "targetPath": { "type": "string" },
+    "value": {},
+    "transform": { "type": "string" },
+    "fallback": {},
+    "canvasId": { "type": "string" }
+  },
+  "required": ["targetType", "targetPath", "value"],
+  "additionalProperties": true
+}

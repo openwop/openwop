@@ -11,7 +11,8 @@
     "openwop": ">=1.0.0 <2.0.0"
   },
   "peerDependencies": {
-    "host.agentRuntime": "supported"
+    "host.agentRuntime": "supported",
+    "host.coordination": "supported"
   },
   "nodes": [
     {
@@ -85,6 +86,78 @@
       "configSchemaRef": "schemas/swarm.config.json",
       "inputSchemaRef": "schemas/swarm.input.json",
       "outputSchemaRef": "schemas/swarm.output.json"
+    },
+    {
+      "typeId": "coordination.vote",
+      "version": "1.0.0",
+      "label": "Coordination Vote",
+      "description": "Multi-participant voting with strategy (majority, supermajority, unanimous, plurality, ranked-choice, weighted). Routes through host.coordination.vote(...).",
+      "category": "coordination",
+      "role": "gate",
+      "capabilities": ["side-effectful"],
+      "configSchemaRef": "schemas/coordination.vote.config.json",
+      "inputSchemaRef": "schemas/coordination.vote.input.json",
+      "outputSchemaRef": "schemas/coordination.vote.output.json"
+    },
+    {
+      "typeId": "coordination.consensus",
+      "version": "1.0.0",
+      "label": "Coordination Consensus",
+      "description": "Multi-agent consensus protocol. Participants iterate proposals until consensus threshold met or max rounds reached. Routes through host.coordination.consensus(...).",
+      "category": "coordination",
+      "role": "gate",
+      "capabilities": ["side-effectful"],
+      "configSchemaRef": "schemas/coordination.consensus.config.json",
+      "inputSchemaRef": "schemas/coordination.consensus.input.json",
+      "outputSchemaRef": "schemas/coordination.consensus.output.json"
+    },
+    {
+      "typeId": "coordination.compete",
+      "version": "1.0.0",
+      "label": "Coordination Compete",
+      "description": "Race multiple agents on the same task — first to complete wins. Other in-flight tasks cancelled. Routes through host.coordination.compete(...).",
+      "category": "coordination",
+      "role": "side-effect",
+      "capabilities": ["side-effectful"],
+      "configSchemaRef": "schemas/coordination.compete.config.json",
+      "inputSchemaRef": "schemas/coordination.compete.input.json",
+      "outputSchemaRef": "schemas/coordination.compete.output.json"
+    },
+    {
+      "typeId": "coordination.map-reduce",
+      "version": "1.0.0",
+      "label": "Coordination Map-Reduce",
+      "description": "Distributes work across N participants (map), then aggregates results via a reducer. Routes through host.coordination.mapReduce(...).",
+      "category": "coordination",
+      "role": "side-effect",
+      "capabilities": ["side-effectful"],
+      "configSchemaRef": "schemas/coordination.map-reduce.config.json",
+      "inputSchemaRef": "schemas/coordination.map-reduce.input.json",
+      "outputSchemaRef": "schemas/coordination.map-reduce.output.json"
+    },
+    {
+      "typeId": "coordination.delegate",
+      "version": "1.0.0",
+      "label": "Coordination Delegate",
+      "description": "Selects the best participant for a task based on skill match + load. Routes through host.coordination.delegate(...).",
+      "category": "coordination",
+      "role": "side-effect",
+      "capabilities": ["side-effectful"],
+      "configSchemaRef": "schemas/coordination.delegate.config.json",
+      "inputSchemaRef": "schemas/coordination.delegate.input.json",
+      "outputSchemaRef": "schemas/coordination.delegate.output.json"
+    },
+    {
+      "typeId": "coordination.round-robin",
+      "version": "1.0.0",
+      "label": "Coordination Round-Robin",
+      "description": "Rotates work assignment across participants. Stateful — tracks position in `_roundRobinCursor:<nodeId>` workflow variable. Routes through host.coordination.roundRobin(...).",
+      "category": "coordination",
+      "role": "side-effect",
+      "capabilities": ["side-effectful"],
+      "configSchemaRef": "schemas/coordination.round-robin.config.json",
+      "inputSchemaRef": "schemas/coordination.round-robin.input.json",
+      "outputSchemaRef": "schemas/coordination.round-robin.output.json"
     }
   ],
   "runtime": {

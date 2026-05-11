@@ -190,6 +190,51 @@ export async function variableFetch(ctx) {
   );
 }
 
+/**
+ * data.binding.apply — write a workflow-variable value into a canvas
+ * target binding. Routes through ctx.dataIntegration.applyBinding.
+ *
+ * Returns prior value so workflow authors can roll back. updateMode
+ * 'batched' defers until the next flush; 'immediate' commits now.
+ * preserveUndo: true causes the host to enroll the apply in the
+ * canvas's undo stack.
+ */
+export async function bindingApply(ctx) {
+  if (!ctx.dataIntegration || typeof ctx.dataIntegration.applyBinding !== 'function') {
+    throw Object.assign(
+      new Error('host does not expose ctx.dataIntegration.applyBinding'),
+      { code: 'host_capability_missing', capability: 'host.dataIntegration.applyBinding' },
+    );
+  }
+  const { targetType, targetPath, value, transform, fallback, canvasId } = ctx.inputs ?? {};
+  const { updateMode = 'immediate', preserveUndo = true } = ctx.config ?? {};
+
+  if (!targetType || !targetPath) {
+    return {
+      status: 'success',
+      outputs: { applied: false },
+    };
+  }
+
+  const result = await ctx.dataIntegration.applyBinding({
+    targetType, targetPath, value,
+    ...(transform !== undefined ? { transform } : {}),
+    ...(fallback !== undefined ? { fallback } : {}),
+    ...(canvasId !== undefined ? { canvasId } : {}),
+    updateMode,
+    preserveUndo,
+  });
+
+  return {
+    status: 'success',
+    outputs: {
+      applied: result?.applied !== false,
+      ...(result?.previousValue !== undefined ? { previousValue: result.previousValue } : {}),
+      ...(result?.resolvedValue !== undefined ? { resolvedValue: result.resolvedValue } : {}),
+    },
+  };
+}
+
 export const nodes = {
   'data.source.rest': sourceRest,
   'data.source.graphql': sourceGraphql,
@@ -198,6 +243,7 @@ export const nodes = {
   'data.transform': dataTransform,
   'data.variable.compute': variableCompute,
   'data.variable.fetch': variableFetch,
+  'data.binding.apply': bindingApply,
 };
 
 export default nodes;

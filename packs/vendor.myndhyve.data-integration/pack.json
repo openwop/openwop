@@ -97,6 +97,18 @@
       "configSchemaRef": "schemas/variable.fetch.config.json",
       "inputSchemaRef": "schemas/variable.fetch.input.json",
       "outputSchemaRef": "schemas/variable.fetch.output.json"
+    },
+    {
+      "typeId": "data.binding.apply",
+      "version": "1.0.0",
+      "label": "Apply Binding",
+      "description": "Applies a variable value to a canvas target. Routes through host.dataIntegration.applyBinding({targetType, targetPath, value, transform?, fallback?, canvasId?}) with updateMode (immediate | batched) + preserveUndo config. Returns the prior value so workflow authors can roll back if needed.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": ["cacheable", "side-effectful"],
+      "configSchemaRef": "schemas/binding.apply.config.json",
+      "inputSchemaRef": "schemas/binding.apply.input.json",
+      "outputSchemaRef": "schemas/binding.apply.output.json"
     }
   ],
   "runtime": {

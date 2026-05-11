@@ -105,7 +105,11 @@ function inventoryInTree(myndhyveRoot) {
   const roots = [
     { path: join(myndhyveRoot, 'src/core/workflow/nodes'), tag: 'src/core/workflow/nodes' },
     { path: join(myndhyveRoot, 'src/core/launch-studio/nodes'), tag: 'src/core/launch-studio/nodes' },
-    { path: join(myndhyveRoot, 'src/packs/nodes'), tag: 'src/packs/nodes' },
+    // src/packs/nodes is metadata-only per migration plan §1.2 — typeIds
+    // declared there have no executor; they're editor-side scaffolding
+    // that future state CONSUMES from the pack registry. Tagged so the
+    // report can distinguish, blocker classification excludes it.
+    { path: join(myndhyveRoot, 'src/packs/nodes'), tag: 'src/packs/nodes (editor-only)' },
     { path: join(myndhyveRoot, 'packages/workflow-engine/src/nodes/core'), tag: 'engine-built-in' },
   ];
 
@@ -163,13 +167,24 @@ covered.sort();
 inTreeOnly.sort();
 packOnly.sort();
 
-// engine-built-ins are expected to stay in-tree
+// engine-built-ins are expected to stay in-tree.
 function isEngineBuiltIn(typeId) {
   return inTree.get(typeId)?.sources?.some((s) => s.tag === 'engine-built-in') ?? false;
 }
 
-const blockers = inTreeOnly.filter((t) => !isEngineBuiltIn(t));
+// Editor-only metadata typeIds (src/packs/nodes/) have no runtime
+// executor — per migration plan §1.2, the future state has that
+// directory consuming from the pack registry, not declaring typeIds.
+// So a typeId that EXISTS ONLY in src/packs/nodes/ is NOT a blocker.
+function isEditorOnly(typeId) {
+  const entry = inTree.get(typeId);
+  if (!entry) return false;
+  return entry.sources.every((s) => s.tag === 'src/packs/nodes (editor-only)');
+}
+
+const blockers = inTreeOnly.filter((t) => !isEngineBuiltIn(t) && !isEditorOnly(t));
 const engineBuiltIns = inTreeOnly.filter(isEngineBuiltIn);
+const editorOnly = inTreeOnly.filter(isEditorOnly);
 
 // ─── output ──────────────────────────────────────────────────────────
 
@@ -190,6 +205,13 @@ console.log('');
 console.log(`${C.yellow}⚠ ENGINE-BUILT-IN (${engineBuiltIns.length})${C.reset} — stays in-tree by design (per §2.1)`);
 for (const t of engineBuiltIns) {
   console.log(`  ${C.dim}engine                                  ${C.reset}  ${t}`);
+}
+console.log('');
+
+console.log(`${C.dim}ℹ EDITOR-ONLY METADATA (${editorOnly.length})${C.reset} — src/packs/nodes/ scaffolds for the workflow editor. No executor.`);
+console.log(`${C.dim}  Per migration plan §1.2 these typeIds don't need pack equivalents — the directory itself becomes a pack-registry CONSUMER in the future state.${C.reset}`);
+for (const t of editorOnly) {
+  console.log(`  ${C.dim}editor-only                             ${C.reset}  ${t}`);
 }
 console.log('');
 
