@@ -258,11 +258,14 @@ function buildPack(packName, args) {
 
   let signedManifest = manifest;
   if (args.signed) {
+    // Schema for the `signing` object (per node-pack-manifest.schema.json
+    // §Signing) only allows {publicKeyRef, signatureRef, method} —
+    // additionalProperties: false. Don't add `algorithm` or anything
+    // else; the algorithm is implied by `method: 'manual'` (Ed25519).
     signedManifest = {
       ...manifest,
       signing: {
         method: 'manual',
-        algorithm: 'ed25519',
         publicKeyRef: args.keyId,
         signatureRef: 'keys/pack.json.sig',
       },
@@ -284,14 +287,32 @@ function buildPack(packName, args) {
   const sig = ed25519Sign(null, Buffer.from(canonical, 'utf8'), privateKey);
 
   // Walk the source dir; if --signed, replace the on-disk pack.json
-  // entry with the canonical-augmented version + append the sig file
-  // at keys/pack.json.sig.
+  // entry with the CANONICAL (key-sorted, no whitespace) bytes — the
+  // same bytes we sign. workflow-runtime's verifyManifestSignature
+  // verifies signature against the raw bytes of pack.json inside the
+  // tarball, so the bytes on disk MUST equal what we signed (canonical),
+  // not the pretty-printed form a human might expect to see.
+  //
+  // Trade-off: in-tarball pack.json is no longer human-friendly to
+  // read. Mitigated by `<name>-<version>.manifest.json` in dist/
+  // (pretty-printed sidecar) for inspection. The CDN-served manifest
+  // is JSON regardless — clients parse it; pretty-printing is only
+  // useful for `gunzip | tar -xO pack.json | cat`.
   let entries = walkPack(packDir);
   if (args.signed) {
-    const augmentedManifestBytes = Buffer.from(JSON.stringify(signedManifest, null, 2) + '\n', 'utf8');
-    entries = entries.map((e) =>
-      e.name === 'pack.json' ? { name: 'pack.json', content: augmentedManifestBytes } : e,
-    );
+    const canonicalManifestBytes = Buffer.from(canonical, 'utf8');
+    // Overwrite pack.json with the canonical-augmented version, and
+    // FILTER OUT any pre-existing `keys/pack.json.sig` from the source
+    // dir before appending our freshly-signed one. The community pack
+    // (and any pre-signed pack we're re-signing) ships a stale sig that
+    // would otherwise appear in the tarball alongside ours, causing
+    // the registry's extractor to read the wrong bytes and fail with
+    // `malformed_signature`.
+    entries = entries
+      .filter((e) => e.name !== 'keys/pack.json.sig')
+      .map((e) =>
+        e.name === 'pack.json' ? { name: 'pack.json', content: canonicalManifestBytes } : e,
+      );
     // The verifier needs the sig file inside the tarball. Use the
     // raw 64-byte Ed25519 signature (not base64) — verifySignature
     // uses crypto.verify which expects raw bytes for the
