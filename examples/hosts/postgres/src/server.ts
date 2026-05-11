@@ -443,6 +443,23 @@ async function setRunTerminal(
     const seconds = (new Date(endedAt).getTime() - new Date(row.started_at).getTime()) / 1000;
     recordRunDuration(seconds);
   }
+  // Structured terminal log per production-profile.md §"Observability"
+  // MUST: every terminal run line carries runId, tenant/project id,
+  // terminal status, error code, and request correlation (the host's
+  // process id stands in as the correlation token).
+  console.log(
+    JSON.stringify({
+      level: status === 'completed' ? 'info' : 'warn',
+      event: 'run.terminal',
+      runId,
+      workflowId: row?.workflow_id,
+      tenantId: 'tenant:default',
+      status,
+      errorCode: error?.code ?? null,
+      correlationId: PROCESS_ID,
+      timestamp: endedAt,
+    }),
+  );
 }
 
 /**

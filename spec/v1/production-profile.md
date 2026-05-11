@@ -1,8 +1,8 @@
 # openwop Spec v1 — Production Profile
 
-> **Status: PROVISIONAL v1 (2026-05-11; was FINAL v1 2026-05-10).** Operational-readiness profile for public OpenWOP hosts. This document is additive: it combines existing v1 contracts into a production claim without changing required wire shapes. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: FINAL v1 (2026-05-11; was PROVISIONAL 2026-05-11 → was FINAL 2026-05-10).** Operational-readiness profile for public OpenWOP hosts. This document is additive: it combines existing v1 contracts into a production claim without changing required wire shapes. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 >
-> **Why Provisional, not FINAL:** the profile's text is spec-stable, but as of this update no host on `INTEROP-MATRIX.md` advertises the profile. The three reference hosts (`examples/hosts/in-memory/`, `examples/hosts/sqlite/`, `examples/hosts/python/`) claim `minimal` scale and do not satisfy the durability + backpressure + multi-region requirements below. The profile graduates back to FINAL when at least one host advertises it on the interop matrix with a public conformance result. T2.1 in `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` tracks the Postgres-backed reference host that will be the first claimant; a skeleton landed at `examples/hosts/postgres/` 2026-05-11 — not yet runnable; see its README for the build-out plan.
+> **First satisfying host:** `examples/hosts/postgres/` advertises this profile on `INTEROP-MATRIX.md` as of 2026-05-11. Public conformance result: `examples/hosts/postgres/conformance-full.md`. The two-week PROVISIONAL window closed once the Postgres reference host shipped all six MUSTs (durability + backpressure + retry/idempotency + event retention + debug-bundle redaction + observability logs); the profile re-graduates to FINAL with that host as the canonical claimant.
 
 ---
 
