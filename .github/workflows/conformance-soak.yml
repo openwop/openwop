@@ -1,24 +1,21 @@
 name: Conformance Soak
 
-# Nightly + manual-trigger conformance soak against the SQLite reference
-# host with the **full** suite, OPENWOP_REQUIRE_BEHAVIOR=true so all
-# capability-gated scenarios must exercise behavior (not soft-skip),
-# OPENWOP_WEBHOOK_ALLOW_PRIVATE=true so the loopback webhook receiver
-# is accepted by the host's SSRF guard, and OPENWOP_OTEL_COLLECTOR=true
-# so the OTel scenarios exercise the in-suite collector. OTel scenarios
-# require --no-file-parallelism (each vitest worker spawns its own
-# collector; only one can bind the same port).
+# Two independent jobs:
 #
-# The "soak" framing is deliberate: this workflow runs the entire suite
-# under strict mode, plus the multi-process scenarios (restart-during-
-# run, staleClaim) that the fast PR check skips, plus the replay
-# retention scenarios that would be too slow in PR CI.
+#   host-conformance — the actual regression gate. Runs the FULL
+#     conformance suite under strict mode against the SQLite reference
+#     host. Multi-process scenarios (restart-during-run + staleClaim).
+#     Three-language SDK smoke. **No external network dependencies** —
+#     if `packs.openwop.dev` is down, this job still passes or fails on
+#     host-only grounds, which is what a regression gate should do.
 #
-# Outcome:
-#   - PASS = the SQLite reference host is at the bar advertised in
-#     INTEROP-MATRIX.md.
-#   - FAIL = either a regression or a new strict-mode-required surface
-#     the host doesn't yet advertise.
+#   registry-health — separate concern: the hosted node-pack registry at
+#     `packs.openwop.dev` is reachable and serves the documented shapes.
+#     A registry outage fails THIS job in isolation; the host-conformance
+#     job remains a clean signal about the SQLite host.
+#
+# Both jobs run on the nightly cron + on push to main + on
+# workflow_dispatch. They don't depend on each other.
 
 on:
   schedule:
@@ -33,7 +30,8 @@ on:
       - '.github/workflows/conformance-soak.yml'
 
 jobs:
-  soak:
+  host-conformance:
+    name: SQLite host — full conformance + multi-process + SDK smoke
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -74,7 +72,6 @@ jobs:
           rm -rf data
           nohup npx tsx src/server.ts > /tmp/host.log 2>&1 &
           echo $! > /tmp/host.pid
-          # Wait for /.well-known/openwop to respond.
           for i in {1..30}; do
             if curl -sf "http://127.0.0.1:${OPENWOP_PORT}/.well-known/openwop" > /dev/null; then
               echo "host ready"
@@ -98,7 +95,10 @@ jobs:
           OPENWOP_REQUIRE_BEHAVIOR: 'true'
           OPENWOP_OTEL_COLLECTOR: 'true'
           OPENWOP_OTEL_COLLECTOR_PORT: ${{ env.OPENWOP_OTEL_COLLECTOR_PORT }}
-          OPENWOP_TEST_PUBLIC_REGISTRY: 'true'
+          # OPENWOP_TEST_PUBLIC_REGISTRY deliberately NOT set here — it
+          # would mix `packs.openwop.dev` reachability into the host
+          # regression signal. Registry health is the next job's
+          # responsibility.
         run: npx vitest run --no-file-parallelism
 
       - name: Multi-process scenarios (restart-during-run + staleClaim)
@@ -131,3 +131,44 @@ jobs:
           name: openwop-host.log
           path: /tmp/host.log
           if-no-files-found: ignore
+
+  registry-health:
+    name: Public registry — packs.openwop.dev reachability + shape
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Does NOT depend on host-conformance. A registry outage and a host
+    # regression are independent failure signals.
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: conformance/package-lock.json
+
+      - name: Install conformance suite
+        working-directory: conformance
+        run: npm ci
+
+      - name: Probe packs.openwop.dev discovery + index
+        run: |
+          set -euo pipefail
+          # Standalone curl smoke so the failure-mode separation between
+          # "registry unreachable" and "registry shape regressed" is
+          # immediate in the GH log.
+          curl -fsS https://packs.openwop.dev/.well-known/openwop-registry > /dev/null
+          curl -fsS https://packs.openwop.dev/v1/index.json > /dev/null
+
+      - name: Run registry-public conformance scenario
+        working-directory: conformance
+        env:
+          # The scenario doesn't actually hit the OPENWOP_BASE_URL host
+          # (it targets `packs.openwop.dev` directly via fetch). The
+          # env vars are required by the suite's driver layer even
+          # though no host is reached for this file.
+          OPENWOP_BASE_URL: https://invalid.example
+          OPENWOP_API_KEY: unused
+          OPENWOP_TEST_PUBLIC_REGISTRY: 'true'
+        run: npx vitest run src/scenarios/registry-public.test.ts
