@@ -1,11 +1,12 @@
 # Full Conformance Run — SQLite Reference Host
 
-> **Run date:** 2026-05-11 (post T1.1 + T1.2)
-> **Host version:** `openwop-host-sqlite@1.0.0` at commit `64b8802`
-> **Conformance suite:** `@openwop/openwop-conformance` (this repo, post `83929fb`)
-> **Profile claims:** `openwop-core` · `openwop-stream-poll` · `openwop-stream-sse` · `openwop-audit-log-integrity` · `openwop-interrupt-quorum` · `openwop-interrupt-auth-required` · `openwop-interrupt-external-event` · `openwop-interrupt-cascade-cancel` · (debug-bundle advertised)
+> **Run date:** 2026-05-11 (post Phase 1 + review-fix cycle)
+> **Host version:** `openwop-host-sqlite@1.0.0` at commit `9ce5400`
+> **Conformance suite:** `@openwop/openwop-conformance` (this repo, post Phase 1 + review fixes)
+> **Profile claims:** `openwop-core` · `openwop-stream-poll` · `openwop-stream-sse` · `openwop-audit-log-integrity` · `openwop-interrupt-quorum` · `openwop-interrupt-auth-required` · `openwop-interrupt-external-event` · `openwop-interrupt-cascade-cancel` · `capabilities.webhooks` (HMAC v1) · `capabilities.observability.{otel,metrics}` (when `OTEL_EXPORTER_OTLP_ENDPOINT` set) · (debug-bundle advertised)
 > **Scale claim:** `minimal`
 > **Production-profile claim:** Not claimed
+> **Reproduce:** `OPENWOP_BASE_URL=http://127.0.0.1:3838 OPENWOP_API_KEY=openwop-sqlite-dev-key OPENWOP_WEBHOOK_ALLOW_PRIVATE=true npx vitest run` (in `conformance/`, against a running SQLite host).
 
 ---
 
@@ -13,15 +14,17 @@
 
 | Metric | Count |
 |---|---:|
-| Test files | 86 |
-| Files fully passing | 52 |
-| Files with at least one failure | 15 |
-| Files fully skipped | 19 |
-| Tests passing | **550** |
-| Tests failing | 25 |
+| Test files | 91 |
+| Files fully passing | 57 |
+| Files with at least one failure | 14 |
+| Files fully skipped | 20 |
+| Tests passing | **576** |
+| Tests failing | 23 |
 | Tests skipped (out-of-profile) | 32 |
-| Tests as `it.todo()` (deferred) | 27 |
-| **Total tests** | 634 |
+| Tests as `it.todo()` (deferred) | 30 |
+| **Total tests** | 661 |
+
+**Net delta vs 2026-05-11 (pre-review):** +26 tests passing (+5 files). The review-fix cycle landed new positive paths in `audit-log-integrity` (`checkpointsValid` + per-checkpoint `verified`), `webhook-signed-delivery` (HMAC end-to-end), `webhook-negative` (4 new tests), `debug-bundle-truncation`, `metric-emission`, `otel-emission`, `otel-trace-propagation`, plus the OpenAPI-required `eventsUrl` + `statusUrl` fields on `POST /v1/runs` (in-memory and SQLite both).
 
 **Net delta vs prior published snapshot (`conformance.md`, 2026-05-01):** +384 tests passing. Most of that growth comes from suite expansion (server-free corpus checks doubled; multi-agent and capability-gated scenarios added). T1.1 and T1.2 contribute the following file-level wins that were previously skipped or had no host implementation to test against:
 

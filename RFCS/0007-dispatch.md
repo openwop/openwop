@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0007 |
 | **Title** | Dispatch (`core.dispatch` Node Pattern) |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-01 |
-| **Updated** | 2026-05-10 |
+| **Updated** | 2026-05-11 (Active → Accepted: integration-seams audit closed via `docs/MULTI-AGENT-INTEGRATION-GAPS.md` archive; conformance scenarios pass against SQLite reference host) |
 | **Affects** | `schemas/dispatch-config.schema.json`, `schemas/workflow-definition.schema.json`, `spec/v1/node-packs.md` (reserved typeIds), `spec/v1/capabilities.md` |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |

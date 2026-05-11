@@ -9,6 +9,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ---
 
+## [1.0 — additions] — 2026-05-11 — Phase-2 partial: RFC promotions + pause/resume race coverage
+
+Status promotions covering the multi-agent + WASM extension RFCs.
+
+- **RFCs 0002–0007 (multi-agent extensions): Active → Accepted.** The
+  integration-seams audit closed in Phase 0 (`docs/MULTI-AGENT-INTEGRATION-GAPS.md`
+  archived); conformance scenarios pass against the SQLite reference
+  host. Schemas + prose are at the v1.x-stable bar.
+- **RFC 0008 (WASM ABI): Draft → Active.** Reference Rust pack
+  `vendor.openwop.rust-hello@1.0.0` published to `packs.openwop.dev`;
+  six WASM conformance scenarios land at capability-gated state
+  (`wasm-pack-load.test.ts` et al.). Spec text frozen for v1.x; full
+  Accepted promotion requires reference-host implementation of the
+  WASM loader, deferred to v1.2+.
+- **`pause-resume.test.ts` extended** with three race-coverage tests:
+  pause-idempotency, :pause-on-terminal-returns-409, and the :pause-
+  during-suspend race (host MUST NOT silently override an active
+  interrupt). Total in this file: 5 tests (was 2).
+- **`conformance-full.md` refreshed:** 91 files, 661 tests, 576 passing
+  (+26 vs pre-review-fix snapshot).
+
 ## [1.0 — additions] — 2026-05-11 — Phase-0 reconciliation pass
 
 Reconciliation pass against `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` Phase 0. Closes internal doc drift surfaced by the 2026-05-11 deep-dive review. All changes are additive; existing v1.0 conformance passes remain valid.

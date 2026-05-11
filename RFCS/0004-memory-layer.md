@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0004 |
 | **Title** | Memory Layer |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-01 |
-| **Updated** | 2026-05-10 |
+| **Updated** | 2026-05-11 (Active → Accepted: integration-seams audit closed via `docs/MULTI-AGENT-INTEGRATION-GAPS.md` archive; conformance scenarios pass against SQLite reference host) |
 | **Affects** | `schemas/memory-entry.schema.json`, `schemas/memory-list-options.schema.json`, `schemas/agent-manifest.schema.json`, `spec/v1/capabilities.md`, `SECURITY/threat-model-secret-leakage.md` |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |

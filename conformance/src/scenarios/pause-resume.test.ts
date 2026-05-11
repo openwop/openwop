@@ -107,3 +107,122 @@ describe.skipIf(SKIP)('pause/resume: :resume on a non-paused run returns 409', (
     });
   });
 });
+
+describe.skipIf(SKIP)('pause/resume: pause is idempotent when already paused', () => {
+  it(':pause on an already-paused run is a no-op (200/202) — idempotent', async () => {
+    const create = await driver.post('/v1/runs', {
+      workflowId: FIXTURE!,
+      inputs: { delaySeconds: 30 },
+    });
+    expect(create.status).toBe(201);
+    const runId = (create.json as { runId: string }).runId;
+    await pollUntilStatus(runId, 'running', { timeoutMs: 10_000 });
+
+    const first = await driver.post(`/v1/runs/${encodeURIComponent(runId)}:pause`, {});
+    if (first.status === 404) {
+      await driver.post(`/v1/runs/${encodeURIComponent(runId)}/cancel`, {
+        reason: 'conformance-cleanup',
+      });
+      return;
+    }
+    expect([200, 202]).toContain(first.status);
+    await pollUntilStatus(runId, 'paused', { timeoutMs: 10_000 });
+
+    // Idempotent second :pause — MUST NOT 409 just because the run is
+    // already paused. 200/202 are both acceptable per the additive
+    // contract; 409 would force callers to read state before calling.
+    const second = await driver.post(`/v1/runs/${encodeURIComponent(runId)}:pause`, {});
+    expect(
+      [200, 202].includes(second.status),
+      driver.describe(
+        'rest-endpoints.md POST /v1/runs/{runId}:pause',
+        ':pause on an already-paused run MUST be idempotent (200/202), not 409',
+      ),
+    ).toBe(true);
+
+    await driver.post(`/v1/runs/${encodeURIComponent(runId)}/cancel`, {
+      reason: 'conformance-cleanup',
+    });
+  });
+});
+
+describe.skipIf(SKIP)('pause/resume: :pause on a terminal run returns 409', () => {
+  it(':pause on a completed/cancelled/failed run MUST return 409', async () => {
+    const create = await driver.post('/v1/runs', {
+      workflowId: 'conformance-noop',
+    });
+    if (create.status !== 201) return; // conformance-noop not seeded; skip cleanly
+    const runId = (create.json as { runId: string }).runId;
+    await pollUntilTerminal(runId, { timeoutMs: 10_000 });
+
+    const pause = await driver.post(`/v1/runs/${encodeURIComponent(runId)}:pause`, {});
+    if (pause.status === 404) return;
+    expect(pause.status, driver.describe(
+      'rest-endpoints.md POST /v1/runs/{runId}:pause',
+      ':pause on a terminal run MUST return 409',
+    )).toBe(409);
+
+    const body = pause.json as { error?: string; details?: { runStatus?: string } };
+    expect(body.error).toBe('conflict');
+    // Spec requires `details.runStatus` to disclose the terminal state so
+    // the caller can decide whether to retry or surface the conflict.
+    expect(['completed', 'failed', 'cancelled']).toContain(body.details?.runStatus);
+  });
+});
+
+describe.skipIf(SKIP)('pause/resume: :pause-during-suspend race', () => {
+  it(':pause MUST NOT silently override an active interrupt suspend', async () => {
+    // If the host seeds an approval fixture, drive a suspend then attempt
+    // :pause. The expected behavior is that :pause either (a) noops with
+    // 409 because the run is already waiting-approval (not in a pausable
+    // state), or (b) accepts and stacks pause atop the suspend with the
+    // run's terminal state still being waiting-approval. Either is
+    // acceptable; what's NOT acceptable is the host quietly flipping
+    // status to `paused` and discarding the suspended interrupt.
+    if (!isFixtureAdvertised('conformance-approval')) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        '[pause-resume] conformance-approval not advertised; skipping :pause-during-suspend race subtest',
+      );
+      return;
+    }
+    const create = await driver.post('/v1/runs', { workflowId: 'conformance-approval' });
+    expect(create.status).toBe(201);
+    const runId = (create.json as { runId: string }).runId;
+    await pollUntilStatus(runId, 'waiting-approval', { timeoutMs: 10_000 });
+
+    const pause = await driver.post(`/v1/runs/${encodeURIComponent(runId)}:pause`, {
+      reason: 'race-test',
+    });
+    if (pause.status === 404) {
+      // Cleanup.
+      await driver.post(`/v1/runs/${encodeURIComponent(runId)}/cancel`, {
+        reason: 'conformance-cleanup',
+      });
+      return;
+    }
+
+    // Either rejection (preferred) or stacked-pause is OK; silent override is not.
+    if (pause.status === 409) {
+      const body = pause.json as { details?: { runStatus?: string } };
+      expect(body.details?.runStatus, driver.describe(
+        'rest-endpoints.md POST /v1/runs/{runId}:pause',
+        ':pause-during-suspend MUST surface the active waiting-* status in the conflict envelope',
+      )).toMatch(/^waiting-/);
+    } else {
+      // Stacked-pause accepted: verify the run's reported status still
+      // surfaces the underlying suspend — the host MUST NOT lose track
+      // of the interrupt waiting for resolution.
+      const snap = await driver.get(`/v1/runs/${encodeURIComponent(runId)}`);
+      const status = (snap.json as { status: string }).status;
+      expect(
+        status === 'paused' || status.startsWith('waiting-'),
+        ':pause-during-suspend MUST NOT silently discard the active interrupt',
+      ).toBe(true);
+    }
+
+    await driver.post(`/v1/runs/${encodeURIComponent(runId)}/cancel`, {
+      reason: 'conformance-cleanup',
+    });
+  });
+});

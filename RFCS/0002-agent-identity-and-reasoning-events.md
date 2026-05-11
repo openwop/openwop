@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0002 |
 | **Title** | Agent Identity and Reasoning Events |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-01 |
-| **Updated** | 2026-05-10 |
+| **Updated** | 2026-05-11 (Active → Accepted: integration-seams audit closed via `docs/MULTI-AGENT-INTEGRATION-GAPS.md` archive; conformance scenarios pass against SQLite reference host) |
 | **Affects** | `schemas/agent-manifest.schema.json`, `schemas/run-event.schema.json`, `schemas/run-event-payloads.schema.json`, `schemas/run-snapshot.schema.json`, `spec/v1/observability.md`, `spec/v1/replay.md`, `spec/v1/capabilities.md` |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
