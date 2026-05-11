@@ -1,84 +1,117 @@
 # OpenWOP Postgres Reference Host
 
-> **Status: SKELETON (2026-05-11).** Not runnable in its current form — boots, accepts discovery, but no executor wired in yet. This directory is the design + entry point for the eventual Postgres-backed reference host that will be the first claimant of `spec/v1/production-profile.md` (currently Provisional). The full build-out is T2.1 in `docs/PROTOCOL-GAP-CLOSURE-PLAN.md`.
+> **Status: PARTIAL (2026-05-11).** Basic run lifecycle works against pglite in-process: discovery, run create, executor for `core.noop` + `core.delay`, terminal poll, cancellation, events poll, idempotency replay. Audit / interrupts / webhooks / observability / SSE are deferred to follow-up sessions per module. The full-feature-parity port is T2.1 in `docs/PROTOCOL-GAP-CLOSURE-PLAN.md`.
 
 ---
 
-## Why a Postgres host exists
-
-Three reference hosts ship today: `examples/hosts/in-memory/` (Node, no persistence), `examples/hosts/sqlite/` (Node + better-sqlite3, single-machine durability), and `examples/hosts/python/` (Python 3.11 stdlib, no persistence). All three claim the `minimal` scale tier.
-
-The `production-profile.md` profile requires:
-
-- Durability across process restart (✅ SQLite host).
-- Multi-tenant isolation at the storage layer (❌ SQLite host: hardcoded single tenant).
-- Backpressure with canonical `503 + Retry-After` envelope (❌ SQLite host: no admission control).
-- Multi-region idempotency cache (❌ SQLite host: single-region by definition).
-- Cross-process scaling with shared event log + claim-acquisition lease (✅ SQLite host via `staleClaim.test.ts`; effectively single-host in practice).
-
-A Postgres host is the natural place to satisfy these without inventing custom infrastructure: Postgres provides the durability, concurrent-writer semantics, advisory locks, and standard cloud-managed deployment story.
-
-## What's here today
+## What works today
 
 ```
-examples/hosts/postgres/
-├── README.md              # this file
-├── package.json           # @openwop/openwop-host-postgres skeleton
-├── src/
-│   └── server.ts          # boots; discovery only; no executor wired
-└── (schema not yet committed — see "Schema" below)
+Wire surface advertised:
+  GET  /.well-known/openwop          ✅
+  GET  /v1/openapi.json              ✅
+  POST /v1/runs                      ✅  (with Idempotency-Key replay)
+  GET  /v1/runs/{runId}              ✅
+  POST /v1/runs/{runId}/cancel       ✅
+  GET  /v1/runs/{runId}/events/poll  ✅
+  GET  /v1/runs/{runId}/events       ⏳  (SSE — not yet wired)
+  POST /v1/runs/{runId}/interrupts/{nodeId}  ⏳
+  POST /v1/interrupts/{token}                ⏳
+  GET  /v1/runs/{runId}/debug-bundle         ⏳
+  GET  /v1/audit/verify                      ⏳
+  POST /v1/webhooks                          ⏳
+  POST /v1/runs/{runId}:pause                ⏳
+  POST /v1/runs/{runId}:resume               ⏳
+
+Node types in executor:
+  core.noop                          ✅
+  core.delay                         ✅
+  core.approvalGate                  ⏳
+  core.clarificationGate             ⏳
+  core.interrupt                     ⏳
+  core.subWorkflow                   ⏳
 ```
 
-The skeleton boots against `OPENWOP_PG_DSN`, exposes `GET /.well-known/openwop`, and returns 501 on every other route with a structured error envelope that points at this README. It's a placeholder that proves the build target is reachable, not a working host.
+Discovery deliberately advertises no capabilities — the host claims `openwop-core` (without SSE) only. Profile claims fill in as the corresponding modules port over.
 
-## Build-out plan
+## Quick test (no Postgres install required)
 
-### Phase A: Storage adapter
-
-Refactor the SQLite host's storage layer (`runs`, `events`, `idempotency`, `interrupts`, `audit_log`, `audit_checkpoints`, `webhook_subscriptions` tables) behind a small interface:
-
-```typescript
-interface StorageAdapter {
-  insertRun(...): Promise<void>;
-  loadRun(runId: string): Promise<RunRow | null>;
-  acquireClaim(runId: string, holder: string, ttlMs: number): Promise<boolean>;
-  appendEvent(runId: string, type: string, opts: ...): Promise<RunEvent>;
-  // ...
-}
+```bash
+cd examples/hosts/postgres
+npm install     # pulls pg + @electric-sql/pglite (Postgres-on-WASM)
+npm test        # spins up pglite in-process, boots the host, runs lifecycle assertions
 ```
 
-The SQLite host implements `StorageAdapter` synchronously (better-sqlite3 is sync). The Postgres host implements it async via `pg`. The shared executor logic + route handlers live in a `host-core` package.
+Output: `postgres-host lifecycle test: PASS`. The test exercises discovery, create, terminal poll, idempotency replay, and cancel-after-terminal. Wall-clock ~1 second.
 
-This refactor is the biggest single piece of T2.1 — the SQLite host's ~1900 LOC of inline SQL needs to graduate to a shared interface. Plan to do it in one careful pass against the SQLite host first (no behavior change), then port the interface to Postgres.
+## Running against a real Postgres
 
-### Phase B: Postgres-specific concerns
+```bash
+export OPENWOP_PG_DSN=postgres://user:pass@localhost:5432/openwop
+export OPENWOP_PORT=3839
+export OPENWOP_API_KEY=...
+npm start
+```
 
-Once `StorageAdapter` is factored:
+The host's `setupSchema()` creates `runs`, `events`, and `idempotency` tables if missing. For production, run that DDL via your migrator of choice and skip `setupSchema()` — see `src/schema.ts`.
 
-1. **Schema migrations.** Use a real migrator (`node-pg-migrate` or hand-rolled `__schema_version`). SQLite host's CREATE TABLE IF NOT EXISTS pattern doesn't scale to multi-DB-environment deployments.
-2. **Multi-tenancy.** Add `tenant_id TEXT NOT NULL` to every table; composite PKs / FKs. Bearer auth resolves to tenant via a `tenants` table.
-3. **Claim acquisition via advisory locks.** Postgres `pg_try_advisory_xact_lock(hashtext(run_id))` instead of the SQLite UPDATE-with-claim-holder-id pattern. Simpler + atomic.
-4. **`audit_log` hash chain.** Use a Postgres SEQUENCE for `seq` instead of AUTOINCREMENT; wrap insert in `BEGIN ISOLATION LEVEL SERIALIZABLE` so the prev-hash read + insert can't interleave with another writer.
-5. **Backpressure.** Wrap inbound HTTP with a semaphore sized from `OPENWOP_MAX_INFLIGHT`; return `503 service_unavailable` + `Retry-After` when full. Connection-pool exhaustion in `pg` similarly surfaces as 503.
-6. **Multi-region.** The idempotency table needs cross-region replication; the spec's multi-region annex allows `crossRegion: 'best-effort' | 'strict'` capability advertisement. For the reference host, claim `best-effort` (single-region with logical replication ack) — the `strict` claim requires global consensus and is out of reference-impl scope.
+## Architecture
 
-### Phase C: Production-profile conformance
+```
+src/
+├── server.ts        # HTTP routes + executor (~600 LOC, async throughout)
+├── schema.ts        # CREATE TABLE IF NOT EXISTS for runs/events/idempotency
+├── db.ts            # Querier interface (pg.Client + PGlite both satisfy)
+└── observability.ts # OTel emitter (copied from SQLite host; not yet wired)
+
+test/
+└── lifecycle.test.ts  # End-to-end assertions via PGlite in-process
+```
+
+`db.ts` defines a minimal `Querier` interface — `query(sql, params)` returning `{rows, rowCount}`. Both `pg.Client` and `PGlite` satisfy it. The host accepts an injected Querier via `setQuerier(...)` for tests; otherwise it opens `pg.Client` against `OPENWOP_PG_DSN`.
+
+## Build-out plan (remaining)
+
+Each item is a follow-up session. Order doesn't matter much; pick the one that unblocks the most conformance scenarios per unit of work.
+
+### Per-module ports from the SQLite host
+
+| Source | Postgres equivalent | Approximate LOC | Unlocks |
+|---|---|---:|---|
+| `sqlite/src/audit.ts` | port to async pg | ~450 | `audit-log-integrity.test.ts` + audit-log tamper detection |
+| `sqlite/src/interrupts.ts` | port to async pg | ~400 | 6 interrupt scenarios (approval, clarification, quorum, auth-required, external-event, parent/child cascade) |
+| `sqlite/src/webhooks.ts` | port to async pg | ~200 | webhook scenarios + SSRF guard tests |
+| `sqlite/src/observability.ts` | already copied; wire into routes | (already ported) | OTel emission + metric scenarios |
+| `sqlite/src/server.ts` SSE path | add SSE event stream | ~150 | `stream-modes*.test.ts` |
+| `sqlite/src/server.ts` interrupts wiring | wire interrupt routes through the port | ~200 | (above) |
+| `sqlite/src/server.ts` debug bundle | port to async pg | ~80 | `debugBundle.test.ts` + truncation |
+| `sqlite/src/server.ts` pause/resume routes | port | ~50 | `pause-resume.test.ts` |
+| `sqlite/src/server.ts` claim acquisition | use Postgres advisory locks instead of SQLite UPDATE pattern | ~100 | multi-process scenarios + production-profile claim |
+
+Approximate total port work: ~1700 LOC. Tractable in 4-6 focused sessions, one module per commit.
+
+### Postgres-specific concerns to land alongside
+
+These don't have direct SQLite equivalents:
+
+1. **Multi-tenancy.** Add `tenant_id TEXT NOT NULL` to every table; composite primary keys. Bearer auth resolves to tenant via a `tenants` table. Currently the host is single-tenant.
+2. **Backpressure.** Wrap inbound HTTP with a semaphore sized from `OPENWOP_MAX_INFLIGHT`; return `503 service_unavailable` + `Retry-After` when full. Required by `production-profile.md`.
+3. **Claim acquisition.** Replace the SQLite `UPDATE … WHERE claim_holder_id IS NULL OR claim_expires_at < ?` pattern with Postgres `SELECT pg_try_advisory_xact_lock(hashtext(run_id))`. Simpler and atomic.
+4. **`audit_log` SERIALIZABLE.** Wrap insert in `BEGIN ISOLATION LEVEL SERIALIZABLE` so the prev-hash read + insert can't interleave with another writer. The reference SQLite host serializes via better-sqlite3's in-process tx; Postgres needs explicit isolation.
+5. **Multi-region idempotency.** Replicate the `idempotency` table across regions; claim `crossRegion: 'best-effort'` in the discovery doc.
+
+### Production-profile conformance
 
 When the host advertises all required surfaces:
-
-- Run `bash sdk/smoke/all.sh` against it (TS/Python/Go).
-- Run `OPENWOP_REQUIRE_BEHAVIOR=true` against the full conformance suite.
-- Run the `restart-during-run.test.ts` and `staleClaim.test.ts` scenarios.
-- Add a row to `INTEROP-MATRIX.md` advertising `production` scale.
+- `bash sdk/smoke/all.sh` (TS / Python / Go).
+- `OPENWOP_REQUIRE_BEHAVIOR=true` full conformance suite.
+- `restart-during-run.test.ts` + `staleClaim.test.ts` against the Postgres host.
+- Add `production` to the scale-claim column on the INTEROP-MATRIX row.
 - Submit a PR to flip `spec/v1/production-profile.md` from PROVISIONAL back to FINAL.
-
-## Why this isn't shipped in full today
-
-T2.1 is ~1000 LOC even with the storage-adapter refactor as a prerequisite. That's a dedicated multi-session effort. The skeleton + this README ship as the first piece so the design is concrete and the project's status on `production-profile.md` is honest (currently Provisional rather than defined-but-unmet).
 
 ## See also
 
 - `spec/v1/production-profile.md` — the spec contract this host will satisfy
 - `spec/v1/storage-adapters.md` — `RunEventLogIO` + `SuspendIO` interfaces this host will implement
-- `examples/hosts/sqlite/` — the host whose internal architecture this one factors
-- `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` §"Track 12: SDK Parity And Non-TS Reference Host" + §"Production profile" — the planning trail
+- `examples/hosts/sqlite/` — the host whose internal architecture this one mirrors
+- `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` Phase 2 T2.1 — the planning trail
