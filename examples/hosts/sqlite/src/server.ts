@@ -75,6 +75,12 @@ import {
   type ClarificationConfig,
   type ExternalEventConfig,
 } from './interrupts.js';
+import {
+  setupWebhookSchema,
+  registerWebhook,
+  unregisterWebhook,
+  fanOutEvent,
+} from './webhooks.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const HOST = process.env.OPENWOP_HOST ?? '127.0.0.1';
@@ -189,6 +195,9 @@ db.exec("CREATE INDEX IF NOT EXISTS idx_runs_parent ON runs(parent_run_id)");
 
 // HITL interrupts (interrupt.md + interrupt-profiles.md).
 setupInterruptSchema(db);
+
+// Webhook subscriptions (webhooks.md).
+setupWebhookSchema(db);
 
 // Audit-log integrity profile (openwop-audit-log-integrity).
 // See spec/v1/auth-profiles.md §"Audit-log integrity" and src/audit.ts.
@@ -335,6 +344,8 @@ function appendEvent(
     event.timestamp,
   );
   eventBus.emit(`events:${runId}`, event);
+  // Best-effort webhook delivery (webhooks.md). Fire-and-forget.
+  fanOutEvent(db, { ...event });
   return event;
 }
 
@@ -853,6 +864,11 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
           checkpointIntervalSeconds: AUDIT_OPTS.checkpointIntervalSeconds,
         },
       },
+      webhooks: {
+        // webhooks.md §"Signature algorithm versioning".
+        supported: true,
+        signatureAlgorithms: ['v1'],
+      },
     },
     extensions: {
       interrupts: {
@@ -1349,6 +1365,58 @@ function validateConfigurable(
   return { valid: true };
 }
 
+async function handleRegisterWebhook(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  if (!checkAuth(req, res)) return;
+  const bodyText = await readBody(req);
+  let parsed: { url?: unknown; secret?: unknown; eventTypes?: unknown };
+  try {
+    parsed = bodyText ? (JSON.parse(bodyText) as typeof parsed) : {};
+  } catch {
+    sendError(res, 400, 'validation_error', 'Request body MUST be valid JSON.');
+    return;
+  }
+  if (typeof parsed.url !== 'string' || parsed.url.length === 0) {
+    sendError(res, 400, 'validation_error', 'url MUST be a non-empty string.');
+    return;
+  }
+  try {
+    // Validate URL parseable.
+    new URL(parsed.url);
+  } catch {
+    sendError(res, 400, 'validation_error', 'url MUST be a parseable URL.');
+    return;
+  }
+  const eventTypes = Array.isArray(parsed.eventTypes)
+    ? (parsed.eventTypes as string[]).filter((t) => typeof t === 'string')
+    : [];
+  const sub = registerWebhook(db, {
+    url: parsed.url,
+    ...(typeof parsed.secret === 'string' ? { secret: parsed.secret } : {}),
+    eventTypes,
+  });
+  sendJSON(res, 201, {
+    subscriptionId: sub.subscriptionId,
+    url: sub.url,
+    secret: sub.secret, // returned once on register, never again
+    eventTypes: sub.eventTypes,
+    createdAt: sub.createdAt,
+  });
+}
+
+function handleUnregisterWebhook(
+  req: IncomingMessage,
+  res: ServerResponse,
+  subscriptionId: string,
+): void {
+  if (!checkAuth(req, res)) return;
+  const removed = unregisterWebhook(db, subscriptionId);
+  if (!removed) {
+    sendError(res, 404, 'subscription_not_found', `Unknown subscriptionId: ${subscriptionId}`);
+    return;
+  }
+  sendJSON(res, 200, { subscriptionId, unregistered: true });
+}
+
 function handleAuditVerify(req: IncomingMessage, res: ServerResponse, url: URL): void {
   if (!checkAuth(req, res)) return;
   const fromSeqRaw = url.searchParams.get('fromSeq');
@@ -1617,6 +1685,7 @@ const RUN_DEBUG_BUNDLE_PATTERN = /^\/v1\/runs\/([^/]+)\/debug-bundle$/;
 const RUN_INTERRUPT_PATTERN = /^\/v1\/runs\/([^/]+)\/interrupts\/([^/]+)$/;
 const INTERRUPT_TOKEN_PATTERN = /^\/v1\/interrupts\/([^/]+)$/;
 const WORKFLOW_ID_PATTERN = /^\/v1\/workflows\/([^/]+)$/;
+const WEBHOOK_ID_PATTERN = /^\/v1\/webhooks\/([^/]+)$/;
 
 async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
@@ -1627,8 +1696,11 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   if (method === 'GET' && path === '/v1/openapi.json') return handleOpenApi(req, res);
   if (method === 'GET' && path === '/v1/audit/verify') return handleAuditVerify(req, res, url);
   if (method === 'POST' && path === '/v1/runs') return handleCreateRun(req, res);
+  if (method === 'POST' && path === '/v1/webhooks') return handleRegisterWebhook(req, res);
   let mw = WORKFLOW_ID_PATTERN.exec(path);
   if (mw && method === 'GET') return handleGetWorkflow(req, res, decodeURIComponent(mw[1]!));
+  mw = WEBHOOK_ID_PATTERN.exec(path);
+  if (mw && method === 'DELETE') return handleUnregisterWebhook(req, res, decodeURIComponent(mw[1]!));
 
   let m = RUN_EVENTS_POLL_PATTERN.exec(path);
   if (m && method === 'GET') return handleEventsPoll(req, res, m[1]!, url);

@@ -77,7 +77,7 @@ Exit code is non-zero on any failed assertion.
 
 ## What's Covered
 
-The current suite has 88 scenario files under `src/scenarios/`. This includes 18 Multi-Agent Shift scenarios (Phases 1-5) added 2026-05-10, the `registry-public.test.ts` public-registry healthcheck added 2026-05-11 (opt-in via `OPENWOP_TEST_PUBLIC_REGISTRY=true`), and the `replay-llm-cache-key.test.ts` placeholder added 2026-05-11 (three `it.todo()` cases for the cross-host LLM cache-key recipe per `replay.md` §"LLM cache-key recipe"). The maintained scenario-to-spec map lives in [`coverage.md`](./coverage.md); this README keeps the operator quickstart and the historical scenario notes below.
+The current suite has 89 scenario files under `src/scenarios/`. This includes 18 Multi-Agent Shift scenarios (Phases 1-5) added 2026-05-10, the `registry-public.test.ts` public-registry healthcheck added 2026-05-11 (opt-in via `OPENWOP_TEST_PUBLIC_REGISTRY=true`), and the `replay-llm-cache-key.test.ts` placeholder added 2026-05-11 (three `it.todo()` cases for the cross-host LLM cache-key recipe per `replay.md` §"LLM cache-key recipe"). The maintained scenario-to-spec map lives in [`coverage.md`](./coverage.md); this README keeps the operator quickstart and the historical scenario notes below.
 
 High-level coverage includes:
 
@@ -156,7 +156,7 @@ Server-required (added in 1.7.0):
 |---|---|---|
 | **Redaction** | [`capabilities.md`](../spec/v1/capabilities.md) §"Secrets" + NFR-7 + §"aiProviders" | Vendor-neutral assertions that the server doesn't leak secret material. Three scenario groups: (a) discovery shape contract — `secrets` + `aiProviders` advertisements are well-formed regardless of `secrets.supported`; when `supported === true`, scopes MUST be non-empty + `resolution === 'host-managed'`; `byok ⊆ supported`. (b) bearer-token redaction — invalid Bearer canary in `Authorization` header is not echoed in the 401 response body. (c) credentialRef echo control — gated on `secrets.supported === true`; canary planted in `configurable.ai.credentialRef` MUST NOT appear in any RunEvent payload (poll-based capture; transport-agnostic). Uses runtime-built canary fixtures (`lib/canaries.ts`) that defeat static secret scanners. 6 scenarios. |
 
-Current source tree: 88 scenario files. Use [`coverage.md`](./coverage.md) for current grade/gap tracking.
+Current source tree: 89 scenario files. Use [`coverage.md`](./coverage.md) for current grade/gap tracking.
 
 ## Remaining Gaps
 
