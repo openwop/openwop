@@ -48,6 +48,18 @@ import {
   type SigningKey,
   type AuditOptions,
 } from './audit.js';
+import {
+  observabilityEnabled,
+  startMetricLoop,
+  stopMetricLoop,
+  startRunSpan,
+  endRunSpan,
+  startNodeSpan,
+  endNodeSpan,
+  recordRunDuration,
+  parseTraceparent,
+  recordInboundTraceContext,
+} from './observability.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const HOST = process.env.OPENWOP_HOST ?? '127.0.0.1';
@@ -64,6 +76,7 @@ type RunStatus =
   | 'pending'
   | 'running'
   | 'cancelling'
+  | 'paused'
   | 'completed'
   | 'failed'
   | 'cancelled';
@@ -313,7 +326,14 @@ async function setRunTerminal(
   error: { code: string; message: string } | null,
 ): Promise<void> {
   const endedAt = new Date().toISOString();
+  // Read started_at before the UPDATE so we can compute run duration.
+  const row = await loadRun(runId);
   await updateRunStatus(runId, status, endedAt, error);
+  endRunSpan(runId, status);
+  if (row) {
+    const seconds = (new Date(endedAt).getTime() - new Date(row.started_at).getTime()) / 1000;
+    recordRunDuration(seconds);
+  }
 }
 
 // ─── Idempotency ────────────────────────────────────────────────────────────
@@ -359,7 +379,7 @@ async function pruneIdempotency(): Promise<void> {
 
 // ─── Executor ────────────────────────────────────────────────────────────────
 
-type NodeOutcome = 'completed' | 'cancelled' | 'failed';
+type NodeOutcome = 'completed' | 'cancelled' | 'failed' | 'paused';
 
 function sleep(ms: number, signal: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -400,6 +420,7 @@ async function executeNode(
     return 'cancelled';
   }
   await appendEvent(runId, 'node.started', { nodeId: node.id });
+  startNodeSpan(runId, node.id, node.typeId);
 
   switch (node.typeId) {
     case 'core.noop':
@@ -410,7 +431,15 @@ async function executeNode(
       try {
         await sleep(delayMs, signal);
       } catch {
+        // Disambiguate pause-abort from cancel-abort by reading the
+        // current run status (handlePause sets 'paused' BEFORE aborting).
+        const refreshed = await loadRun(runId);
+        if (refreshed?.status === 'paused') {
+          endNodeSpan(runId, node.id, 'paused');
+          return 'paused';
+        }
         await appendEvent(runId, 'node.cancelled', { nodeId: node.id });
+        endNodeSpan(runId, node.id, 'cancelled');
         return 'cancelled';
       }
       break;
@@ -421,10 +450,12 @@ async function executeNode(
         nodeId: node.id,
         data: { code: 'unsupported_node_type', typeId: node.typeId },
       });
+      endNodeSpan(runId, node.id, 'failed');
       return 'failed';
   }
 
   await appendEvent(runId, 'node.completed', { nodeId: node.id });
+  endNodeSpan(runId, node.id, 'completed');
   return 'completed';
 }
 
@@ -446,8 +477,19 @@ async function runWorkflow(runId: string): Promise<void> {
   runningAborters.set(runId, aborter);
 
   try {
+    // First-run vs resume detection: if `run.started` is already in the
+    // log, this is a resume (from pause or, eventually, restart). Emit
+    // `run.resumed` for resume; emit `run.started` + open the OTel span
+    // for first run.
+    const startEvents = await getEventsAfter(runId, -1);
+    const alreadyStarted = startEvents.some((e) => e.type === 'run.started');
     await updateRunStatus(runId, 'running', null, null);
-    await appendEvent(runId, 'run.started');
+    if (!alreadyStarted) {
+      await appendEvent(runId, 'run.started');
+      startRunSpan(runId, row.workflow_id);
+    } else {
+      await appendEvent(runId, 'run.resumed', { data: { resumedBy: PROCESS_ID } });
+    }
 
     const startIndex = row.next_node_index ?? 0;
     for (let i = startIndex; i < workflow.nodes.length; i++) {
@@ -456,6 +498,13 @@ async function runWorkflow(runId: string): Promise<void> {
       if (refreshed?.status === 'cancelling') {
         await appendEvent(runId, 'run.cancelled');
         await setRunTerminal(runId, 'cancelled', null);
+        return;
+      }
+      if (refreshed?.status === 'paused') {
+        // Operator paused the run between node iterations. Exit the
+        // executor cleanly; resume() re-invokes runWorkflow and the
+        // alreadyStarted check above emits `run.resumed`. next_node_index
+        // stays at `i` so resume re-enters the same node.
         return;
       }
       const outcome = await executeNode(runId, node, inputs, aborter.signal);
@@ -471,6 +520,12 @@ async function runWorkflow(runId: string): Promise<void> {
       if (outcome === 'cancelled') {
         await appendEvent(runId, 'run.cancelled');
         await setRunTerminal(runId, 'cancelled', null);
+        return;
+      }
+      if (outcome === 'paused') {
+        // Pause confirmed mid-node. handlePause already set status =
+        // 'paused' + emitted run.paused; we just exit. next_node_index
+        // stays at `i` so resume() re-enters the same node from start.
         return;
       }
       await advanceNodeIndex(runId, i + 1);
@@ -589,6 +644,7 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
       },
       supportedTransports: ['rest'],
       fixtures: advertisedFixtures,
+      debugBundle: { supported: true },
       capabilities: {
         auth: {
           // openwop-audit-log-integrity profile (auth-profiles.md §"Audit-log integrity").
@@ -601,6 +657,22 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
             checkpointIntervalSeconds: AUDIT_OPTS.checkpointIntervalSeconds,
           },
         },
+        runs: {
+          pauseResume: { supported: true },
+        },
+        // observability.md §"Span attributes" — only advertised when
+        // OTEL_EXPORTER_OTLP_ENDPOINT is configured.
+        ...(observabilityEnabled()
+          ? {
+              observability: {
+                otel: { supported: true, protocol: 'http/json' },
+                metrics: {
+                  supported: true,
+                  names: ['openwop.run.backlog', 'openwop.queue.depth', 'openwop.run.duration'],
+                },
+              },
+            }
+          : {}),
       },
     },
     { 'Cache-Control': 'public, max-age=300' },
@@ -617,6 +689,9 @@ function handleOpenApi(_req: IncomingMessage, res: ServerResponse): void {
       '/v1/runs/{runId}': { get: { responses: { '200': { description: 'OK' } } } },
       '/v1/runs/{runId}/cancel': { post: { responses: { '200': { description: 'OK' } } } },
       '/v1/runs/{runId}/events/poll': { get: { responses: { '200': { description: 'OK' } } } },
+      '/v1/runs/{runId}/debug-bundle': { get: { responses: { '200': { description: 'OK' } } } },
+      '/v1/runs/{runId}:pause': { post: { responses: { '202': { description: 'Accepted' } } } },
+      '/v1/runs/{runId}:resume': { post: { responses: { '202': { description: 'Accepted' } } } },
       '/v1/audit/verify': { get: { responses: { '200': { description: 'OK' } } } },
     },
   });
@@ -673,6 +748,16 @@ async function handleCreateRun(req: IncomingMessage, res: ServerResponse): Promi
   const inputs = parsed.inputs ?? {};
   const startedAt = new Date().toISOString();
   await insertRun(runId, parsed.workflowId, inputs, startedAt);
+
+  // W3C Trace Context propagation (observability.md §"Trace context
+  // propagation"). Parse `traceparent` from the inbound request; if
+  // valid, store it so startRunSpan for this runId adopts the caller-
+  // supplied trace_id.
+  const traceparentHeader = req.headers['traceparent'];
+  const inboundTrace = parseTraceparent(
+    Array.isArray(traceparentHeader) ? traceparentHeader[0] : traceparentHeader,
+  );
+  if (inboundTrace) recordInboundTraceContext(runId, inboundTrace);
 
   const q = await querier();
   await logAudit(q, {
@@ -763,6 +848,165 @@ async function handleCancelRun(
   sendJSON(res, 200, { runId, status: 'cancelling' });
 }
 
+async function handleDebugBundle(
+  req: IncomingMessage,
+  res: ServerResponse,
+  runId: string,
+  url: URL,
+): Promise<void> {
+  if (!checkAuth(req, res)) return;
+  const row = await loadRun(runId);
+  if (!row) {
+    sendError(res, 404, 'run_not_found', `Unknown runId: ${runId}`);
+    return;
+  }
+  // Read every event for the run; truncate per debug-bundle.md.
+  const events = await getEventsAfter(runId, -1);
+  const totalEvents = events.length;
+  const maxEventsParam = url.searchParams.get('maxEvents');
+  const maxEvents =
+    maxEventsParam !== null && Number.isFinite(Number(maxEventsParam))
+      ? Math.max(0, Number(maxEventsParam))
+      : Number.POSITIVE_INFINITY;
+
+  const keepEvents = Math.min(totalEvents, maxEvents);
+  let truncated = keepEvents < totalEvents;
+  let truncatedReason: string | undefined = truncated ? 'events_truncated_to_max_events' : undefined;
+  const eventSlice = events.slice(0, keepEvents);
+
+  const baseBundle: Record<string, unknown> = {
+    bundleVersion: '1',
+    generatedAt: new Date().toISOString(),
+    host: {
+      name: 'openwop-host-postgres',
+      version: '0.2.0-partial',
+      vendor: 'openwop-spec (reference example)',
+    },
+    run: {
+      runId: row.run_id,
+      workflowId: row.workflow_id,
+      status: row.status,
+      // Inputs omitted per debug-bundle.md §"Redaction guarantees".
+      inputs: {},
+      startedAt: row.started_at,
+      endedAt: row.ended_at,
+      ...(row.error_json ? { error: row.error_json } : {}),
+      variables: {},
+    },
+    events: eventSlice.map((e) => ({
+      sequence: e.seq,
+      type: e.type,
+      timestamp: e.timestamp,
+      nodeId: e.nodeId,
+      data: e.data,
+    })),
+    spans: [] as unknown[],
+    metrics: {
+      nodeCount: new Set(events.filter((e) => e.nodeId !== null).map((e) => e.nodeId)).size,
+      eventCount: totalEvents,
+    },
+    redactionApplied: true,
+    redactionMode: 'omit' as const,
+  };
+
+  // 8MB byte cap (debug-bundle.md §"Bundle size limits"). Trim from
+  // the back of the event list until the bundle fits.
+  const SIZE_CAP_BYTES = Number(process.env.OPENWOP_DEBUG_BUNDLE_BYTE_CAP ?? 8 * 1024 * 1024);
+  let serialized = JSON.stringify(baseBundle);
+  while (
+    Buffer.byteLength(serialized, 'utf8') > SIZE_CAP_BYTES &&
+    Array.isArray(baseBundle.events) &&
+    (baseBundle.events as unknown[]).length > 0
+  ) {
+    (baseBundle.events as unknown[]).pop();
+    truncated = true;
+    truncatedReason = 'events_truncated_to_size_cap';
+    serialized = JSON.stringify(baseBundle);
+  }
+
+  if (truncated) {
+    baseBundle.truncated = true;
+    baseBundle.truncatedReason = truncatedReason;
+  }
+  sendJSON(res, 200, baseBundle, { 'Cache-Control': 'no-store' });
+}
+
+async function handlePauseRun(
+  req: IncomingMessage,
+  res: ServerResponse,
+  runId: string,
+): Promise<void> {
+  if (!checkAuth(req, res)) return;
+  await readBody(req);
+  const row = await loadRun(runId);
+  if (!row) {
+    sendError(res, 404, 'run_not_found', `Unknown runId: ${runId}`);
+    return;
+  }
+  if (row.status === 'completed' || row.status === 'failed' || row.status === 'cancelled') {
+    // 409 per rest-endpoints.md §pause/resume — terminal runs can't pause.
+    sendJSON(res, 409, {
+      error: 'invalid_run_status',
+      message: `Cannot pause a ${row.status} run.`,
+      details: { runStatus: row.status },
+    });
+    return;
+  }
+  if (row.status === 'paused') {
+    // Idempotent — pause-on-paused returns 202 with no state change.
+    sendJSON(res, 202, { runId, status: 'paused', alreadyPaused: true });
+    return;
+  }
+
+  const q = await querier();
+  await q.query('UPDATE runs SET status = $1 WHERE run_id = $2', ['paused', runId]);
+  await appendEvent(runId, 'run.paused', { data: { pausedBy: PROCESS_ID } });
+  // Abort the in-flight node so a long sleep doesn't keep the executor
+  // looping past the pause request. executeNode's catch reads run status,
+  // sees 'paused', and returns the 'paused' outcome (no node.cancelled).
+  runningAborters.get(runId)?.abort();
+  sendJSON(res, 202, { runId, status: 'paused' });
+}
+
+async function handleResumeRun(
+  req: IncomingMessage,
+  res: ServerResponse,
+  runId: string,
+): Promise<void> {
+  if (!checkAuth(req, res)) return;
+  await readBody(req);
+  const row = await loadRun(runId);
+  if (!row) {
+    sendError(res, 404, 'run_not_found', `Unknown runId: ${runId}`);
+    return;
+  }
+  if (row.status !== 'paused') {
+    sendJSON(res, 409, {
+      error: 'invalid_run_status',
+      message: `Cannot resume a ${row.status} run; only paused runs are resumable.`,
+      details: { runStatus: row.status },
+    });
+    return;
+  }
+
+  // Status flip + re-launch the executor. runWorkflow's alreadyStarted
+  // detection emits run.resumed (not run.started).
+  await q_updateStatusRunning(runId);
+  // Fire-and-forget executor.
+  void runWorkflow(runId).catch(async (err: unknown) => {
+    const message = err instanceof Error ? err.message : String(err);
+    const error = { code: 'internal', message };
+    await appendEvent(runId, 'run.failed', { data: error });
+    await setRunTerminal(runId, 'failed', error);
+  });
+  sendJSON(res, 202, { runId, status: 'running' });
+}
+
+async function q_updateStatusRunning(runId: string): Promise<void> {
+  const q = await querier();
+  await q.query('UPDATE runs SET status = $1 WHERE run_id = $2', ['running', runId]);
+}
+
 async function handleAuditVerify(
   req: IncomingMessage,
   res: ServerResponse,
@@ -820,6 +1064,9 @@ async function handleEventsPoll(
 const RUN_ID_PATTERN = /^\/v1\/runs\/([^/]+)$/;
 const RUN_CANCEL_PATTERN = /^\/v1\/runs\/([^/]+)\/cancel$/;
 const RUN_EVENTS_POLL_PATTERN = /^\/v1\/runs\/([^/]+)\/events\/poll$/;
+const RUN_DEBUG_BUNDLE_PATTERN = /^\/v1\/runs\/([^/]+)\/debug-bundle$/;
+const RUN_PAUSE_PATTERN = /^\/v1\/runs\/([^/]+):pause$/;
+const RUN_RESUME_PATTERN = /^\/v1\/runs\/([^/]+):resume$/;
 
 async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
@@ -833,6 +1080,12 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
 
   let m = RUN_EVENTS_POLL_PATTERN.exec(path);
   if (m && method === 'GET') return handleEventsPoll(req, res, m[1]!, url);
+  m = RUN_DEBUG_BUNDLE_PATTERN.exec(path);
+  if (m && method === 'GET') return handleDebugBundle(req, res, m[1]!, url);
+  m = RUN_PAUSE_PATTERN.exec(path);
+  if (m && method === 'POST') return handlePauseRun(req, res, m[1]!);
+  m = RUN_RESUME_PATTERN.exec(path);
+  if (m && method === 'POST') return handleResumeRun(req, res, m[1]!);
   m = RUN_CANCEL_PATTERN.exec(path);
   if (m && method === 'POST') return handleCancelRun(req, res, m[1]!);
   m = RUN_ID_PATTERN.exec(path);
@@ -851,6 +1104,9 @@ let _server: import('node:http').Server | null = null;
 let signalHandlersRegistered = false;
 
 async function closeHost(): Promise<void> {
+  // Stop OTel metric emission before tearing down the DB so the timer
+  // doesn't fire a metric query against a closed querier.
+  stopMetricLoop();
   // Abort every in-flight executor before tearing down the server + DB so
   // the awaiting promises don't fire writes to a closed querier mid-shutdown.
   for (const aborter of runningAborters.values()) aborter.abort();
@@ -891,6 +1147,10 @@ export async function start(): Promise<{ close: () => Promise<void> }> {
     details: { host: 'openwop-host-postgres', version: '0.2.0-partial' },
   });
   await triggerCheckpointIfDue(q, auditSigningKey(), AUDIT_OPTS);
+
+  // OTel metric emission loop (no-op when OTEL_EXPORTER_OTLP_ENDPOINT
+  // is unset; observabilityEnabled() guards advertisement).
+  startMetricLoop(q);
 
   _server = createServer((req, res) => {
     void route(req, res).catch((err: unknown) => {

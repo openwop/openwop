@@ -20,7 +20,16 @@
  */
 
 import assert from 'node:assert/strict';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
+
+// Isolate audit signing keys per test run so we don't leak artifacts
+// into examples/hosts/postgres/data/ (the production default location).
+const workdir = mkdtempSync(join(tmpdir(), 'openwop-pg-lifecycle-'));
+process.env.OPENWOP_AUDIT_KEY_DIR = workdir;
+
 import { setQuerier, start } from '../src/server.js';
 import type { Querier, QueryResult } from '../src/db.js';
 
@@ -190,8 +199,12 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((err) => {
-  console.error('postgres-host lifecycle test: FAIL');
-  console.error(err);
-  process.exit(1);
-});
+main()
+  .catch((err) => {
+    console.error('postgres-host lifecycle test: FAIL');
+    console.error(err);
+    process.exit(1);
+  })
+  .finally(() => {
+    rmSync(workdir, { recursive: true, force: true });
+  });

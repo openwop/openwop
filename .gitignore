@@ -3,6 +3,11 @@ dist/
 *.tsbuildinfo
 .DS_Store
 
+# Reference-host runtime artifacts (signing keys, SQLite DBs, audit
+# logs). Per-deployment; never committed.
+examples/hosts/postgres/data/
+examples/hosts/sqlite/data/
+
 # Python
 __pycache__/
 *.py[cod]

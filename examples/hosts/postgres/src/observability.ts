@@ -1,31 +1,6 @@
 /**
- * **STATUS (2026-05-11): NOT WIRED.** This file ports the SQLite host's
- * OTel emission logic to the Postgres host (DB calls converted to async
- * pg.Client + `await q.query(...)`), but `server.ts` does NOT yet import
- * it — `startMetricLoop` / `startRunSpan` / `startNodeSpan` are not
- * called from any route. The host doesn't advertise
- * `capabilities.observability` and OTel scenarios soft-skip against it.
- *
- * Wiring this in is one of the follow-up T2.1 ports (README §"Build-out
- * plan"). When that port lands:
- *   1. import { startMetricLoop, startRunSpan, endRunSpan,
- *               startNodeSpan, endNodeSpan, parseTraceparent,
- *               recordInboundTraceContext, recordRunDuration }
- *      from './observability.js';
- *   2. Call startMetricLoop(client) in start() after setupSchema.
- *   3. Wire span helpers into the executor lifecycle the same way the
- *      SQLite host does (server.ts startRunSpan call site is the model).
- *   4. Advertise `capabilities.observability.{otel,metrics}` when
- *      OTEL_EXPORTER_OTLP_ENDPOINT is configured.
- *   5. Run conformance otel-emission + metric-emission +
- *      otel-trace-propagation scenarios against the host as the gate.
- *
- * Until that lands, this file is a parked port — verified to typecheck
- * but not actually executed.
- *
- * Original SQLite-host docstring follows:
- *
- * OTel observability emission for the SQLite reference host.
+ * OTel observability emission for the Postgres reference host (wired
+ * into the executor + metric loop as of 2026-05-11).
  *
  * Implements the `openwop.*` OpenTelemetry namespace defined in
  * `spec/v1/observability.md`. The host emits OTLP/HTTP-JSON to
@@ -60,10 +35,10 @@
 import { randomBytes } from 'node:crypto';
 import { request as httpRequest } from 'node:http';
 import { request as httpsRequest } from 'node:https';
-import type { Client } from 'pg';
+import type { Querier } from './db.js';
 
 const OTEL_ENDPOINT = process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? '';
-const SERVICE_NAME = 'openwop-host-sqlite';
+const SERVICE_NAME = 'openwop-host-postgres';
 const METRIC_INTERVAL_MS = Number(process.env.OPENWOP_OTEL_METRIC_INTERVAL_MS ?? 1000);
 
 const enabled = OTEL_ENDPOINT.length > 0;
@@ -282,11 +257,11 @@ export function recordRunDuration(seconds: number): void {
 
 let metricTimer: NodeJS.Timeout | null = null;
 
-export function startMetricLoop(client: Client): void {
+export function startMetricLoop(q: Querier): void {
   if (!enabled || metricTimer) return;
   metricTimer = setInterval(() => {
     void (async (): Promise<void> => {
-      const res = await client.query<{ n: string }>(
+      const res = await q.query<{ n: string }>(
         "SELECT COUNT(*)::text AS n FROM runs WHERE status IN ('pending', 'running', 'waiting-approval', 'waiting-input', 'waiting-external', 'paused')",
       );
       const backlog = Number(res.rows[0]?.n ?? 0);
