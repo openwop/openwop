@@ -2,6 +2,8 @@
 
 > **Last updated: 2026-05-11.** Tracker for the outreach round defined in `README.md`. Update each row as replies come in. The authoritative engagement-state-machine lives in `SECURITY/external-audit-engagement.md` §8 — this file is the per-vendor detail that doesn't belong in the master scope doc.
 
+**Maintenance convention:** update this file in the **same git commit** that responds to or acknowledges a vendor reply. Co-located updates prevent silent staleness — 5 vendors × ~4 status transitions = ~20 edits over a 2-month window; without the commit-with-the-reply rule the file decays.
+
 ## Per-vendor status
 
 | Vendor | Outreach sent | First reply received | Quote received | Range (USD) | Window | Decision | Final status |

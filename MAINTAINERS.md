@@ -87,11 +87,17 @@ When a target replies positively + commits to a draft adapter PR within 30 days,
 
 ### External pack authors
 
-Recruitment targets per `docs/recruitment/external-pack-author.md` (drafts ready 2026-05-11, outreach not yet sent).
+Recruitment targets per `docs/recruitment/external-pack-author.md` (drafts ready 2026-05-11, outreach not yet sent). Initial Tier-1 shortlist below; the recruitment doc's criteria gate adding more.
 
 | Target | Outreach sent | First reply | Status | Notes |
 |---|---|---|---|---|
-| (first candidate to be identified per `docs/recruitment/external-pack-author.md`) | — | — | Pending target identification | Target picking criteria documented in the recruitment doc. |
+| Linear (Issues / Cycles API → `vendor.linear.workflows`) | — | — | Pending outreach | Tier 1: dev-tools vendor with workflow-shaped public API. Best fit: Linear's GraphQL `issueCreate` + `cycleCreate` mutations as openwop nodes. |
+| Sourcegraph (Code Search / Cody → `vendor.sourcegraph.code-search`) | — | — | Pending outreach | Tier 1: code-intelligence vendor; an existing MCP server can be wrapped as an openwop pack for the workflow surface. |
+| Vercel (Build / Edge Functions → `vendor.vercel.deploy`) | — | — | Pending outreach | Tier 1: deploy-on-workflow-event is a common HITL pattern. |
+| Resend (transactional email → `vendor.resend.send`) | — | — | Pending outreach | Tier 1: smallest possible pack scope (1 node, 1 envelope); good first-pack proof point. |
+| Stripe (payment workflows → `vendor.stripe.charge` / `vendor.stripe.refund`) | — | — | Pending outreach | Tier 1: payment-with-HITL-approval is the canonical openwop use case from `interrupt.md` §"approval". |
+
+When a target replies, fill in `Outreach sent` + `First reply`, advance `Status` through `in-discussion` → `pack-drafted` → `published`. When their pack lands on `packs.openwop.dev`, status → `live`.
 
 ### Governance migration trigger
 

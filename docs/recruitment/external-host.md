@@ -12,7 +12,7 @@ Ordered by narrative leverage × likely receptivity.
 
 ### Tier 1 — LangChain / LangGraph adapter
 
-**Why first:** `README.md` already cites LangGraph for six borrowed idioms (stream modes, channels-and-reducers, interrupts, `configurable`, replay/fork-from-checkpoint, the four-action approval vocabulary). `spec/v1/positioning.md` says explicitly: "LangGraph can be a client of an OpenWOP host." A LangGraph→OpenWOP adapter validates that claim publicly and gives every LangGraph user a portable wire contract.
+**Why first:** `README.md` §"Spec foundations" cites LangGraph for four of the six borrowed idioms in v1 (stream-mode taxonomy, `interrupt(payload)` HITL primitive, typed channels + reducers, replay/fork-from-checkpoint), plus LangChain for the `configurable` per-run overlay. `spec/v1/positioning.md` says explicitly: "LangGraph can be a client of an OpenWOP host." A LangGraph→OpenWOP adapter validates that claim publicly and gives every LangGraph user a portable wire contract.
 
 **Outreach target:** the LangChain team's `langgraph` repo discussions (https://github.com/langchain-ai/langgraph/discussions) or `info@langchain.com`.
 
@@ -22,7 +22,7 @@ Ordered by narrative leverage × likely receptivity.
 
 Hi team,
 
-OpenWOP (https://github.com/openwop/openwop) is an open wire-level protocol for multi-agent workflow orchestration. The README cites LangGraph for six borrowed idioms (stream modes, channels-and-reducers, interrupts, `configurable`, replay/fork-from-checkpoint, the four-action approval vocabulary). The positioning doc says explicitly: "LangGraph can be a client of an OpenWOP host."
+OpenWOP (https://github.com/openwop/openwop) is an open wire-level protocol for multi-agent workflow orchestration. Of the six borrowed idioms cited in our README's "Spec foundations" table, four come straight from LangGraph (stream-mode taxonomy, `interrupt(payload)` HITL primitive, `Annotated[T, reducer]` channels-and-reducers, `update_state(checkpoint, ...)` replay/fork) and one from LangChain (`RunnableConfig.configurable`). The positioning doc says explicitly: "LangGraph can be a client of an OpenWOP host."
 
 I'd like to make that real. An OpenWOP host backed by a LangGraph runtime would:
 
