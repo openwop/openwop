@@ -65,6 +65,7 @@ import {
   createInterrupt,
   getInterrupt,
   getInterruptByToken,
+  getActiveInterrupt,
   resolveApproval,
   resolveClarification,
   resolveExternalEvent,
@@ -1092,6 +1093,7 @@ function handleOpenApi(_req: IncomingMessage, res: ServerResponse): void {
       '/v1/webhooks': { post: { responses: { '201': { description: 'Created' } } } },
       '/v1/webhooks/{subscriptionId}': { delete: { responses: { '200': { description: 'OK' } } } },
       '/v1/audit/verify': { get: { responses: { '200': { description: 'OK' } } } },
+      '/v1/workflows/{workflowId}': { get: { responses: { '200': { description: 'OK' } } } },
     },
   });
 }
@@ -1100,9 +1102,13 @@ async function handleCreateRun(req: IncomingMessage, res: ServerResponse): Promi
   if (!checkAuth(req, res)) return;
 
   const bodyText = await readBody(req);
-  let parsed: { workflowId?: string; inputs?: Record<string, unknown> };
+  let parsed: {
+    workflowId?: string;
+    inputs?: Record<string, unknown>;
+    configurable?: Record<string, unknown>;
+  };
   try {
-    parsed = JSON.parse(bodyText) as { workflowId?: string; inputs?: Record<string, unknown> };
+    parsed = JSON.parse(bodyText) as typeof parsed;
   } catch {
     sendError(res, 400, 'validation_error', 'Request body MUST be valid JSON.');
     return;
@@ -1112,9 +1118,21 @@ async function handleCreateRun(req: IncomingMessage, res: ServerResponse): Promi
     sendError(res, 400, 'validation_error', 'workflowId MUST be a string.');
     return;
   }
-  if (!workflows.has(parsed.workflowId)) {
+  const workflow = workflows.get(parsed.workflowId);
+  if (!workflow) {
     sendError(res, 404, 'workflow_not_found', 'Unknown workflowId.');
     return;
+  }
+
+  // Per-workflow configurableSchema validation (run-options.md
+  // §"Per-workflow configurableSchema"). When the fixture declares a
+  // schema, the host MUST reject mismatched `configurable` overlays.
+  if (workflow.configurableSchema && parsed.configurable !== undefined) {
+    const check = validateConfigurable(workflow.configurableSchema, parsed.configurable);
+    if (!check.valid) {
+      sendError(res, 400, 'validation_error', check.reason);
+      return;
+    }
   }
 
   const idempotencyKey = req.headers['idempotency-key'];
@@ -1199,6 +1217,94 @@ async function handleCreateRun(req: IncomingMessage, res: ServerResponse): Promi
   res.end(responseText);
 }
 
+/**
+ * Validate a `configurable` overlay against a workflow's optional
+ * `configurableSchema` (a JSON Schema 2020-12 fragment). Minimal
+ * implementation that mirrors the SQLite host: supports `type`,
+ * `additionalProperties: false`, `properties.*`, `properties.<k>.{type,
+ * minimum}`, `items.type`. A production host would use Ajv2020.
+ *
+ * @see spec/v1/run-options.md §"Per-workflow configurableSchema"
+ * @see schemas/workflow-definition.schema.json §configurableSchema
+ */
+function validateConfigurable(
+  schema: Record<string, unknown> | undefined,
+  configurable: unknown,
+): { valid: true } | { valid: false; reason: string } {
+  if (!schema) return { valid: true };
+  if (configurable === undefined || configurable === null) return { valid: true };
+  if (typeof configurable !== 'object') {
+    return { valid: false, reason: 'configurable MUST be an object' };
+  }
+  const obj = configurable as Record<string, unknown>;
+  const props = (schema.properties ?? {}) as Record<string, Record<string, unknown>>;
+  const allowAdditional = schema.additionalProperties !== false;
+
+  for (const [key, val] of Object.entries(obj)) {
+    const propSchema = props[key];
+    if (!propSchema) {
+      if (!allowAdditional) {
+        return {
+          valid: false,
+          reason: `configurable.${key} is not declared in configurableSchema (additionalProperties: false)`,
+        };
+      }
+      continue;
+    }
+    const expectedType = propSchema.type as string | undefined;
+    if (expectedType === 'integer') {
+      if (typeof val !== 'number' || !Number.isInteger(val)) {
+        return { valid: false, reason: `configurable.${key} MUST be an integer` };
+      }
+      if (typeof propSchema.minimum === 'number' && val < propSchema.minimum) {
+        return { valid: false, reason: `configurable.${key} MUST be >= ${propSchema.minimum}` };
+      }
+    } else if (expectedType === 'string') {
+      if (typeof val !== 'string') {
+        return { valid: false, reason: `configurable.${key} MUST be a string` };
+      }
+    } else if (expectedType === 'array') {
+      if (!Array.isArray(val)) {
+        return { valid: false, reason: `configurable.${key} MUST be an array` };
+      }
+      const items = propSchema.items as { type?: string } | undefined;
+      if (items?.type === 'string' && !val.every((v) => typeof v === 'string')) {
+        return { valid: false, reason: `configurable.${key} items MUST all be strings` };
+      }
+    } else if (expectedType === 'object') {
+      if (typeof val !== 'object' || val === null || Array.isArray(val)) {
+        return { valid: false, reason: `configurable.${key} MUST be an object` };
+      }
+    } else if (expectedType === 'number') {
+      if (typeof val !== 'number') {
+        return { valid: false, reason: `configurable.${key} MUST be a number` };
+      }
+    } else if (expectedType === 'boolean') {
+      if (typeof val !== 'boolean') {
+        return { valid: false, reason: `configurable.${key} MUST be a boolean` };
+      }
+    }
+  }
+  return { valid: true };
+}
+
+function handleGetWorkflow(
+  req: IncomingMessage,
+  res: ServerResponse,
+  workflowId: string,
+): void {
+  if (!checkAuth(req, res)) return;
+  const wf = workflows.get(workflowId);
+  if (!wf) {
+    sendError(res, 404, 'workflow_not_found', `Unknown workflowId: ${workflowId}`);
+    return;
+  }
+  // Return the full fixture definition so clients can pre-flight
+  // validate against any declared configurableSchema. Mirrors the
+  // SQLite host's handleGetWorkflow shape.
+  sendJSON(res, 200, wf);
+}
+
 async function handleGetRun(req: IncomingMessage, res: ServerResponse, runId: string): Promise<void> {
   if (!checkAuth(req, res)) return;
   const row = await loadRun(runId);
@@ -1206,6 +1312,45 @@ async function handleGetRun(req: IncomingMessage, res: ServerResponse, runId: st
     sendError(res, 404, 'run_not_found', `Unknown runId: ${runId}`);
     return;
   }
+
+  // Suspended runs expose the active interrupt + currentNodeId so
+  // conformance scenarios + clients can resolve via POST /v1/runs/
+  // {runId}/interrupts/{nodeId} (or via POST /v1/interrupts/{token}
+  // for external-event interrupts). Mirrors the SQLite host's shape.
+  let interrupt: Record<string, unknown> | null = null;
+  let currentNodeId: string | undefined;
+  if (
+    row.status === 'waiting-approval' ||
+    row.status === 'waiting-input' ||
+    row.status === 'waiting-external'
+  ) {
+    const q = await querier();
+    const active = await getActiveInterrupt(q, runId);
+    if (active) {
+      interrupt = {
+        kind: active.kind,
+        nodeId: active.node_id,
+        payload: active.payload_json,
+        ...(active.callback_token
+          ? {
+              interruptToken: active.callback_token,
+              callbackUrl: `/v1/interrupts/${active.callback_token}`,
+            }
+          : {}),
+      };
+      currentNodeId = active.node_id;
+    }
+  }
+
+  // Surface child runs spawned via `core.subWorkflow` so cascade
+  // scenarios can walk parent/child linkage. Empty array when none.
+  const q = await querier();
+  const childrenRes = await q.query<{ run_id: string; status: string }>(
+    `SELECT run_id, status FROM runs WHERE parent_run_id = $1 ORDER BY started_at ASC`,
+    [runId],
+  );
+  const childRuns = childrenRes.rows.map((c) => ({ runId: c.run_id, status: c.status }));
+
   sendJSON(res, 200, {
     runId: row.run_id,
     workflowId: row.workflow_id,
@@ -1215,6 +1360,9 @@ async function handleGetRun(req: IncomingMessage, res: ServerResponse, runId: st
     startedAt: row.started_at,
     endedAt: row.ended_at,
     ...(row.error_json ? { error: row.error_json } : {}),
+    ...(currentNodeId ? { currentNodeId } : {}),
+    ...(interrupt ? { interrupt } : {}),
+    ...(childRuns.length > 0 ? { childRuns } : {}),
   });
 }
 
@@ -1700,7 +1848,7 @@ async function handlePauseRun(
   if (row.status === 'completed' || row.status === 'failed' || row.status === 'cancelled') {
     // 409 per rest-endpoints.md §pause/resume — terminal runs can't pause.
     sendJSON(res, 409, {
-      error: 'invalid_run_status',
+      error: 'conflict',
       message: `Cannot pause a ${row.status} run.`,
       details: { runStatus: row.status },
     });
@@ -1736,7 +1884,7 @@ async function handleResumeRun(
   }
   if (row.status !== 'paused') {
     sendJSON(res, 409, {
-      error: 'invalid_run_status',
+      error: 'conflict',
       message: `Cannot resume a ${row.status} run; only paused runs are resumable.`,
       details: { runStatus: row.status },
     });
@@ -1906,6 +2054,7 @@ const RUN_RESUME_PATTERN = /^\/v1\/runs\/([^/]+):resume$/;
 const RUN_INTERRUPT_PATTERN = /^\/v1\/runs\/([^/]+)\/interrupts\/([^/]+)$/;
 const INTERRUPT_TOKEN_PATTERN = /^\/v1\/interrupts\/([^/]+)$/;
 const WEBHOOK_ID_PATTERN = /^\/v1\/webhooks\/([^/]+)$/;
+const WORKFLOW_ID_PATTERN = /^\/v1\/workflows\/([^/]+)$/;
 
 async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
@@ -1962,6 +2111,8 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   if (m && method === 'POST') return handleResolveInterruptByToken(req, res, m[1]!);
   m = RUN_CANCEL_PATTERN.exec(path);
   if (m && method === 'POST') return handleCancelRun(req, res, m[1]!);
+  m = WORKFLOW_ID_PATTERN.exec(path);
+  if (m && method === 'GET') return handleGetWorkflow(req, res, decodeURIComponent(m[1]!));
   m = RUN_ID_PATTERN.exec(path);
   if (m && method === 'GET') return handleGetRun(req, res, m[1]!);
 
