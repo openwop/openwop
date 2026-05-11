@@ -1,0 +1,193 @@
+{
+  "name": "vendor.myndhyve.brand",
+  "version": "1.0.0",
+  "description": "MyndHyve brand-workflow pack. 14 nodes — 8 theme (analyze/discovery/generate/implement/publish/review/templates/validate) + 6 persona (discover/generate/keywordStrategy/publish/review/validate). Each is an AI-driven envelope-emitting node anchored on the brand canvas type. Routes through ctx.brand.* + ctx.aiEnvelope.generate.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/brand",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": ["vendor", "myndhyve", "brand", "theme", "persona", "marketing"],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "host.brand": "supported",
+    "host.aiEnvelope": "supported"
+  },
+  "nodes": [
+    {
+      "typeId": "brand.theme.analyze",
+      "version": "1.0.0",
+      "label": "Brand Theme Analyze",
+      "description": "Analyzes brand inputs (logo, colors, sample copy) to extract a candidate theme.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": ["cacheable", "side-effectful"],
+      "configSchemaRef": "schemas/theme.analyze.config.json",
+      "inputSchemaRef": "schemas/theme.analyze.input.json",
+      "outputSchemaRef": "schemas/theme.analyze.output.json"
+    },
+    {
+      "typeId": "brand.theme.discovery",
+      "version": "1.0.0",
+      "label": "Brand Theme Discovery",
+      "description": "Interview-driven theme discovery — emits a draft theme from answers to a discovery questionnaire.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": ["cacheable", "side-effectful"],
+      "configSchemaRef": "schemas/theme.discovery.config.json",
+      "inputSchemaRef": "schemas/theme.discovery.input.json",
+      "outputSchemaRef": "schemas/theme.discovery.output.json"
+    },
+    {
+      "typeId": "brand.theme.generate",
+      "version": "1.0.0",
+      "label": "Brand Theme Generate",
+      "description": "AI-generates a theme from brief inputs. Emits `theme.create` envelope.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": ["cacheable", "side-effectful"],
+      "configSchemaRef": "schemas/theme.generate.config.json",
+      "inputSchemaRef": "schemas/theme.generate.input.json",
+      "outputSchemaRef": "schemas/theme.generate.output.json"
+    },
+    {
+      "typeId": "brand.theme.implement",
+      "version": "1.0.0",
+      "label": "Brand Theme Implement",
+      "description": "Applies a theme to a target canvas (UI tokens, CSS variables). Side-effectful host mutation.",
+      "category": "coordination",
+      "role": "side-effect",
+      "capabilities": ["cacheable", "side-effectful"],
+      "configSchemaRef": "schemas/theme.implement.config.json",
+      "inputSchemaRef": "schemas/theme.implement.input.json",
+      "outputSchemaRef": "schemas/theme.implement.output.json"
+    },
+    {
+      "typeId": "brand.theme.publish",
+      "version": "1.0.0",
+      "label": "Brand Theme Publish",
+      "description": "Publishes a theme to the canonical brand store (workspaces/{ws}/brands/{brandId}/themes/{themeId}). Replay-safe via idempotency key.",
+      "category": "coordination",
+      "role": "side-effect",
+      "capabilities": ["cacheable", "side-effectful"],
+      "configSchemaRef": "schemas/theme.publish.config.json",
+      "inputSchemaRef": "schemas/theme.publish.input.json",
+      "outputSchemaRef": "schemas/theme.publish.output.json"
+    },
+    {
+      "typeId": "brand.theme.review",
+      "version": "1.0.0",
+      "label": "Brand Theme Review",
+      "description": "HITL review gate for theme. Suspends via ctx.suspend; returns approval + optional revision notes on resume.",
+      "category": "chat",
+      "role": "gate",
+      "capabilities": ["cacheable", "side-effectful"],
+      "configSchemaRef": "schemas/theme.review.config.json",
+      "inputSchemaRef": "schemas/theme.review.input.json",
+      "outputSchemaRef": "schemas/theme.review.output.json"
+    },
+    {
+      "typeId": "brand.theme.templates",
+      "version": "1.0.0",
+      "label": "Brand Theme Templates",
+      "description": "Derives reusable brand-templates (social posts, email banners, etc.) from a theme.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": ["cacheable", "side-effectful"],
+      "configSchemaRef": "schemas/theme.templates.config.json",
+      "inputSchemaRef": "schemas/theme.templates.input.json",
+      "outputSchemaRef": "schemas/theme.templates.output.json"
+    },
+    {
+      "typeId": "brand.theme.validate",
+      "version": "1.0.0",
+      "label": "Brand Theme Validate",
+      "description": "Validates a theme against brand guidelines (color contrast WCAG, font readability, logo clearance). Returns pass/fail per rule.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": ["cacheable", "side-effectful"],
+      "configSchemaRef": "schemas/theme.validate.config.json",
+      "inputSchemaRef": "schemas/theme.validate.input.json",
+      "outputSchemaRef": "schemas/theme.validate.output.json"
+    },
+    {
+      "typeId": "brand.persona.discover",
+      "version": "1.0.0",
+      "label": "Brand Persona Discover",
+      "description": "Interview-driven persona discovery — emits a draft persona from questionnaire answers.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": ["cacheable", "side-effectful"],
+      "configSchemaRef": "schemas/persona.discover.config.json",
+      "inputSchemaRef": "schemas/persona.discover.input.json",
+      "outputSchemaRef": "schemas/persona.discover.output.json"
+    },
+    {
+      "typeId": "brand.persona.generate",
+      "version": "1.0.0",
+      "label": "Brand Persona Generate",
+      "description": "AI-generates a persona from market signals + brand context. Emits `persona.create` envelope.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": ["cacheable", "side-effectful"],
+      "configSchemaRef": "schemas/persona.generate.config.json",
+      "inputSchemaRef": "schemas/persona.generate.input.json",
+      "outputSchemaRef": "schemas/persona.generate.output.json"
+    },
+    {
+      "typeId": "brand.persona.keywordStrategy",
+      "version": "1.0.0",
+      "label": "Brand Persona Keyword Strategy",
+      "description": "Derives SEO keyword strategy from a persona's pain points + search intent.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": ["cacheable", "side-effectful"],
+      "configSchemaRef": "schemas/persona.keywordStrategy.config.json",
+      "inputSchemaRef": "schemas/persona.keywordStrategy.input.json",
+      "outputSchemaRef": "schemas/persona.keywordStrategy.output.json"
+    },
+    {
+      "typeId": "brand.persona.publish",
+      "version": "1.0.0",
+      "label": "Brand Persona Publish",
+      "description": "Publishes a persona to the canonical store.",
+      "category": "coordination",
+      "role": "side-effect",
+      "capabilities": ["cacheable", "side-effectful"],
+      "configSchemaRef": "schemas/persona.publish.config.json",
+      "inputSchemaRef": "schemas/persona.publish.input.json",
+      "outputSchemaRef": "schemas/persona.publish.output.json"
+    },
+    {
+      "typeId": "brand.persona.review",
+      "version": "1.0.0",
+      "label": "Brand Persona Review",
+      "description": "HITL review gate for persona.",
+      "category": "chat",
+      "role": "gate",
+      "capabilities": ["cacheable", "side-effectful"],
+      "configSchemaRef": "schemas/persona.review.config.json",
+      "inputSchemaRef": "schemas/persona.review.input.json",
+      "outputSchemaRef": "schemas/persona.review.output.json"
+    },
+    {
+      "typeId": "brand.persona.validate",
+      "version": "1.0.0",
+      "label": "Brand Persona Validate",
+      "description": "Validates a persona against completeness rules (pain points present, demographics present, etc.).",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": ["cacheable", "side-effectful"],
+      "configSchemaRef": "schemas/persona.validate.config.json",
+      "inputSchemaRef": "schemas/persona.validate.input.json",
+      "outputSchemaRef": "schemas/persona.validate.output.json"
+    }
+  ],
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  }
+}

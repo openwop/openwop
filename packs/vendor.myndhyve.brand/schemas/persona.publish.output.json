@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.brand/1.0.0/persona.publish.output.json",
+  "title": "persona.publishOutput",
+  "type": "object",
+  "required": ["brandId", "artifactId", "appliedAt"],
+  "properties": {
+    "brandId": { "type": "string" },
+    "artifactId": { "type": "string", "minLength": 1, "description": "Resulting artifact id — themeId or personaId." },
+    "appliedAt": { "type": "string", "format": "date-time" },
+    "idempotencyKey": { "type": "string" }
+  },
+  "additionalProperties": false
+}

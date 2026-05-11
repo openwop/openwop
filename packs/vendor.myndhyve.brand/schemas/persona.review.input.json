@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.brand/1.0.0/persona.review.input.json",
+  "title": "persona.reviewInput",
+  "type": "object",
+  "required": ["artifactId"],
+  "properties": {
+    "artifactId": { "type": "string", "minLength": 1 },
+    "summary": { "type": "string", "description": "Optional summary rendered with the review card." }
+  },
+  "additionalProperties": false
+}
