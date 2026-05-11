@@ -1,0 +1,133 @@
+name: Conformance Soak
+
+# Nightly + manual-trigger conformance soak against the SQLite reference
+# host with the **full** suite, OPENWOP_REQUIRE_BEHAVIOR=true so all
+# capability-gated scenarios must exercise behavior (not soft-skip),
+# OPENWOP_WEBHOOK_ALLOW_PRIVATE=true so the loopback webhook receiver
+# is accepted by the host's SSRF guard, and OPENWOP_OTEL_COLLECTOR=true
+# so the OTel scenarios exercise the in-suite collector. OTel scenarios
+# require --no-file-parallelism (each vitest worker spawns its own
+# collector; only one can bind the same port).
+#
+# The "soak" framing is deliberate: this workflow runs the entire suite
+# under strict mode, plus the multi-process scenarios (restart-during-
+# run, staleClaim) that the fast PR check skips, plus the replay
+# retention scenarios that would be too slow in PR CI.
+#
+# Outcome:
+#   - PASS = the SQLite reference host is at the bar advertised in
+#     INTEROP-MATRIX.md.
+#   - FAIL = either a regression or a new strict-mode-required surface
+#     the host doesn't yet advertise.
+
+on:
+  schedule:
+    # 06:00 UTC nightly (off the European/US business-hours peaks).
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'examples/hosts/sqlite/**'
+      - 'conformance/**'
+      - '.github/workflows/conformance-soak.yml'
+
+jobs:
+  soak:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: |
+            examples/hosts/sqlite/package-lock.json
+            conformance/package-lock.json
+
+      - name: Install SQLite reference host
+        working-directory: examples/hosts/sqlite
+        run: npm ci
+
+      - name: Install conformance suite
+        working-directory: conformance
+        run: npm ci
+
+      - name: Pre-allocate ports for host + OTel collector
+        run: |
+          echo "OPENWOP_PORT=3838" >> $GITHUB_ENV
+          echo "OPENWOP_OTEL_COLLECTOR_PORT=14328" >> $GITHUB_ENV
+
+      - name: Boot SQLite host (background)
+        working-directory: examples/hosts/sqlite
+        env:
+          OPENWOP_PORT: ${{ env.OPENWOP_PORT }}
+          OPENWOP_WEBHOOK_ALLOW_PRIVATE: 'true'
+          OTEL_EXPORTER_OTLP_ENDPOINT: http://127.0.0.1:${{ env.OPENWOP_OTEL_COLLECTOR_PORT }}
+          OPENWOP_OTEL_METRIC_INTERVAL_MS: '500'
+          OPENWOP_CLAIM_TTL_MS: '2000'
+          OPENWOP_HEARTBEAT_INTERVAL_MS: '500'
+        run: |
+          rm -rf data
+          nohup npx tsx src/server.ts > /tmp/host.log 2>&1 &
+          echo $! > /tmp/host.pid
+          # Wait for /.well-known/openwop to respond.
+          for i in {1..30}; do
+            if curl -sf "http://127.0.0.1:${OPENWOP_PORT}/.well-known/openwop" > /dev/null; then
+              echo "host ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "host failed to become ready"
+          cat /tmp/host.log
+          exit 1
+
+      - name: Run host-internal audit-tamper test
+        working-directory: examples/hosts/sqlite
+        run: npm test
+
+      - name: Full conformance suite (strict mode, no file parallelism)
+        working-directory: conformance
+        env:
+          OPENWOP_BASE_URL: http://127.0.0.1:${{ env.OPENWOP_PORT }}
+          OPENWOP_API_KEY: openwop-sqlite-dev-key
+          OPENWOP_REQUIRE_BEHAVIOR: 'true'
+          OPENWOP_OTEL_COLLECTOR: 'true'
+          OPENWOP_OTEL_COLLECTOR_PORT: ${{ env.OPENWOP_OTEL_COLLECTOR_PORT }}
+          OPENWOP_TEST_PUBLIC_REGISTRY: 'true'
+        run: npx vitest run --no-file-parallelism
+
+      - name: Multi-process scenarios (restart-during-run + staleClaim)
+        working-directory: conformance
+        env:
+          OPENWOP_BASE_URL: http://127.0.0.1:${{ env.OPENWOP_PORT }}
+          OPENWOP_API_KEY: openwop-sqlite-dev-key
+          OPENWOP_RUN_RESTART_DURING_RUN: '1'
+          OPENWOP_RUN_STALE_CLAIM: '1'
+        run: |
+          npx vitest run src/scenarios/restart-during-run.test.ts src/scenarios/staleClaim.test.ts
+
+      - name: Three-language SDK smoke
+        env:
+          OPENWOP_BASE_URL: http://127.0.0.1:${{ env.OPENWOP_PORT }}
+          OPENWOP_API_KEY: openwop-sqlite-dev-key
+        run: bash sdk/smoke/all.sh
+
+      - name: Tear down host
+        if: always()
+        run: |
+          if [ -f /tmp/host.pid ]; then
+            kill "$(cat /tmp/host.pid)" 2>/dev/null || true
+          fi
+
+      - name: Upload host log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: openwop-host.log
+          path: /tmp/host.log
+          if-no-files-found: ignore
