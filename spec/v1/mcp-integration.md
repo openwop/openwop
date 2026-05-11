@@ -115,9 +115,12 @@ The v1.0 conformance baseline includes `mcp-discoverability.test.ts`, which asse
 `mcp-tool-roundtrip.test.ts` extends the discoverability check with an end-to-end tool-call round-trip. Two modes, controlled by env vars:
 
 - **Synthetic peer** (`OPENWOP_MCP_FAKE_SERVER=true`): boots an in-process minimal MCP server (the `mcp-fake-server.ts` library at `conformance/src/lib/`). Asserts deterministic shape — `initialize` + `tools/list` returning an `echo` tool + `tools/call` echoing the input.
-- **Real reference impl** (`OPENWOP_MCP_REAL_SERVER_URL=<base-url>`): points the same probe at a real MCP reference server (e.g., one of [`modelcontextprotocol/servers`](https://github.com/modelcontextprotocol/servers)). Assertions relax to shape-only: `tools/list` returns ≥ 1 tool, `tools/call` against the first listed tool returns a `result.content` array (valid OR error-marked — both spec-conformant).
+- **Real reference impl** (`OPENWOP_MCP_REAL_SERVER_URL=<base-url>`): points the same probe at a real MCP server. **Important wire-shape constraint:** the probe POSTs JSON-RPC and reads a single-JSON response. This matches MCP's `streamable-http` transport in single-response mode but does NOT match:
+  - stdio transport — the default for [`modelcontextprotocol/servers`](https://github.com/modelcontextprotocol/servers) reference servers. Those servers speak JSON-RPC over stdin/stdout, not HTTP, so the probe can't reach them directly.
+  - streamable-http in SSE-stream mode (where a single POST returns multiple JSON-RPC frames over `Content-Type: text/event-stream`).
+  Operators collecting real-impl evidence today run a custom `StreamableHTTPServerTransport`-style adapter that returns a single JSON body per request. Adding SSE-frame parsing to the probe is tracked in `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` Track 6. Assertions in this mode are shape-only: `tools/list` returns ≥ 1 tool, `tools/call` against the first listed tool returns a `result.content` array (valid OR `isError: true`-marked — both spec-conformant).
 
-The real-impl path is the **Phase 3 T3.4 interop-evidence** for `docs/PROTOCOL-GAP-CLOSURE-PLAN.md`. To collect it: run the Anthropic reference `weather` server (or any other from the curated catalog) on a local port, set `OPENWOP_MCP_REAL_SERVER_URL=http://localhost:<port>`, run the scenario. The test logs the tool name + isError marker so the interop evidence is visible in the CI output.
+The real-impl path is the **Phase 3 T3.4 interop-evidence** for `docs/PROTOCOL-GAP-CLOSURE-PLAN.md`. The test logs the tool name + `isError` marker so the interop evidence is visible in the CI output.
 
 ---
 

@@ -27,7 +27,7 @@ The focused-scope deliverables:
 - Threat model + spec review for `auth.md` + `auth-profiles.md` (audit-log integrity, OAuth2 client credentials, mTLS profile, OIDC user-bearer profile)
 - `webhooks.md` HMAC scheme + signature-algorithm versioning + replay-attack resistance
 - `node-packs.md` + `registry-operations.md` Ed25519 + Sigstore signing chain + supply-chain controls
-- Reference impl review at pinned commit: SQLite host (~1,900 LOC), 3 reference SDKs (~2,860 LOC), 5 spec-canonical `core.openwop.*` node packs
+- Reference impl review at pinned commit: SQLite host (~3,600 LOC), 3 reference SDKs (~2,860 LOC), 4 in-scope `core.openwop.*` node packs (BYOK / HTTP / MCP / triggers), with a 5th (`agent-examples`) deferred pending the v1.2+ remote-runtime spec
 
 **Specific questions** (engagement-doc §2.2 — the focused-scope subset): SR-1 secret-redaction, audit-log integrity soundness, webhook HMAC under replay, node-pack signing tamper + key-rotation, multi-tenant isolation across the shared idempotency cache.
 
@@ -39,9 +39,9 @@ The focused-scope deliverables:
 
 **Deliverables** (engagement-doc §3): findings + CVSS + CWE + reproducible PoC; executive summary suitable for our public site; threat-model annotations; remediation tracker JSON.
 
-Engagement preconditions confirmed: audit-log integrity conformance PASS on the reference host (2026-05-11); Phase 1 + Phase 2 partial landed.
+Engagement preconditions confirmed: audit-log integrity conformance PASS on the reference host (2026-05-11); Phase 1 done + Phase 2 substantively done. The Postgres-host module ports are deferred follow-ups that **will not land during the review window** (matches engagement-doc §5).
 
-Happy to walk the scope on a call or talk through where Latacora's engagement shape fits best.
+Happy to walk the scope on a call or talk through where Latacora's engagement shape fits best. **If interested, reply with a 30-minute slot from `<your Calendly link>` or propose three windows.**
 
 Thanks,
 David Tufts

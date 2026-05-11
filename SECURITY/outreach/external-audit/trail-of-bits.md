@@ -21,9 +21,9 @@ I'm the lead maintainer of OpenWOP (https://github.com/openwop/openwop), an open
 
 - 5 threat models (`SECURITY/threat-model-*.md`) covering auth profiles, secret leakage, prompt injection, node-pack signing, provider policy
 - 7 spec documents covering auth, webhooks (HMAC signing), node-pack registry (Ed25519 + supply chain), MCP trust boundary, multi-region idempotency, audit-log integrity (hash-chain + signed checkpoints)
-- 3 reference hosts at a pinned commit: TypeScript in-memory (~570 LOC), SQLite-backed (~1,900 LOC), Python stdlib-only (~600 LOC)
+- 3 reference hosts at a pinned commit: TypeScript in-memory (~1,250 LOC), SQLite-backed (~3,600 LOC), Python stdlib-only (~870 LOC). A 4th host (Postgres-backed) is at a run-lifecycle slice (~1,400 LOC); its audit / interrupts / webhooks ports are deferred follow-ups and **will not land during the review window**.
 - 3 reference SDKs (TypeScript, Python, Go — ~2,860 LOC total)
-- 5 spec-canonical `core.openwop.*` node packs (BYOK + HTTP + MCP + triggers)
+- 4 in-scope `core.openwop.*` node packs (BYOK / HTTP / MCP / triggers), with a 5th (`agent-examples`) deferred pending the v1.2+ remote-runtime spec
 - RFCs 0002–0008 (multi-agent extensions + WASM ABI)
 
 **Specific questions the review answers** (engagement-doc §2.2): SR-1 secret-redaction invariant, audit-log integrity hash-chain + signed-checkpoint design, webhook HMAC under documented replay scenarios, node-pack signing + key-rotation, prompt-injection containment (`<UNTRUSTED>` marker), multi-tenant isolation, WASM ABI safety (RFC 0008 §G + §K), replay safety vs deleted memory content.
@@ -38,11 +38,11 @@ I'm the lead maintainer of OpenWOP (https://github.com/openwop/openwop), an open
 
 **Preconditions we commit to** (engagement-doc §5):
 - `openwop-audit-log-integrity` conformance scenarios PASS on the reference host (✓ verified 2026-05-11)
-- All Phase-1 / Phase-2 work from `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` landed (✓ Phase 1 and Phase 2 partial as of 2026-05-11)
+- Phase 1 done; Phase 2 substantively done with the Postgres-host module ports (audit / interrupts / webhooks / observability for the 4th host) as a known follow-up that **will not land during the review window** (matches engagement-doc §5 "no in-flight normative changes during the review window")
 - Repository pinned to a specific commit for the review duration
 - A maintainer available to answer questions within 1 business day
 
-Happy to walk through the scope on a call or answer questions over email — whichever is faster for your team.
+Happy to walk through the scope on a call or answer questions over email — whichever is faster for your team. **If interested, reply with a 30-minute slot from `<your Calendly link>` or propose three windows that work.**
 
 Thanks,
 David Tufts

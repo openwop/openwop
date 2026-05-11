@@ -117,8 +117,8 @@ Runnable example projects under [`examples/`](./examples/):
 - **[`tiny-workflow/`](./examples/tiny-workflow/)** — smallest possible OpenWOP run lifecycle (~80 lines, zero deps).
 - **[`streaming-client/`](./examples/streaming-client/)** — SSE event-stream consumer with hand-written frame parser (~110 lines, zero deps).
 - **[`idempotent-runs/`](./examples/idempotent-runs/)** — Layer-1 HTTP idempotency: retries collapse, body conflicts get 409 (~80 lines, zero deps).
-- **[`hosts/in-memory/`](./examples/hosts/in-memory/)** — single-file reference OpenWOP server (~570 lines, Node stdlib only). The host the other examples run against.
-- **[`hosts/sqlite/`](./examples/hosts/sqlite/)** — durable reference OpenWOP server (~700 lines, single dep `better-sqlite3`). Runs + events persist across process restart. The README doubles as the **"Build Your Own Host" walkthrough**.
+- **[`hosts/in-memory/`](./examples/hosts/in-memory/)** — reference OpenWOP server (~1,250 LOC, Node stdlib only). The host the other examples run against. Started as a single-file ~570-LOC reference; grew as the audit / interrupts / webhooks / observability modules landed.
+- **[`hosts/sqlite/`](./examples/hosts/sqlite/)** — durable reference OpenWOP server (~3,600 LOC across `server.ts` + `audit.ts` + `interrupts.ts` + `webhooks.ts` + `observability.ts`, single runtime dep `better-sqlite3`). Runs + events persist across process restart. The README doubles as the **"Build Your Own Host" walkthrough**.
 
 Examples run end-to-end in CI via [`.github/workflows/examples.yml`](./.github/workflows/examples.yml) so they don't go stale.
 
@@ -260,8 +260,8 @@ Project meta:
 
 Reference implementations:
 
-- **[`examples/hosts/in-memory/`](./examples/hosts/in-memory/)** — single-file Node-stdlib reference host (~570 lines). Runs the conformance suite headless on your laptop.
-- **[`examples/hosts/sqlite/`](./examples/hosts/sqlite/)** — durable single-file reference host (~700 lines, `better-sqlite3` only). Runs persist across process restart.
+- **[`examples/hosts/in-memory/`](./examples/hosts/in-memory/)** — Node-stdlib reference host (~1,250 LOC). Runs the conformance suite headless on your laptop.
+- **[`examples/hosts/sqlite/`](./examples/hosts/sqlite/)** — durable reference host (~3,600 LOC, single runtime dep `better-sqlite3`). Runs persist across process restart.
 - **Third-party hosts** are listed in [`INTEROP-MATRIX.md`](./INTEROP-MATRIX.md) as they pass conformance. The reference hosts under `examples/hosts/` are non-normative — they exist to prove the protocol cross-implements.
 
 This repository's current steward is the original OpenWOP working group (see [`MAINTAINERS.md`](./MAINTAINERS.md)). The repo is hosted at `github.com/openwop/openwop` until the vendor-neutral org migration tripwire fires (see [`ROADMAP.md`](./ROADMAP.md) § "Vendor-neutral org migration"); host name appearance in the URL is operational, not normative.

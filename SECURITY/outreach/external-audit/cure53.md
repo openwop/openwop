@@ -30,7 +30,7 @@ LLM-adjacent layers:
 - **Prompt-injection containment** (`mcp-integration.md` + `threat-model-prompt-injection.md`): the `<UNTRUSTED>` marker discipline — can adversarial MCP tool responses leak into trusted state?
 - **MCP trust boundary** + **A2A composition** drift points.
 
-Plus the broader scope: 3 reference hosts at pinned commit, 3 reference SDKs (TS / Python / Go), 5 spec-canonical node packs, RFCs 0002–0008.
+Plus the broader scope: 3 reference hosts at pinned commit (TS in-memory ~1,250 LOC, SQLite ~3,600 LOC, Python ~870 LOC; 4th Postgres host ~1,400 LOC at a run-lifecycle slice with deferred module ports that **will not land during the review window**), 3 reference SDKs (TS / Python / Go, ~2,860 LOC), 4 in-scope `core.openwop.*` node packs (BYOK / HTTP / MCP / triggers), RFCs 0002–0008.
 
 **Specific questions** (engagement-doc §2.2): SR-1 secret-redaction, audit-log integrity soundness, webhook HMAC under replay, node-pack signing tamper + key-rotation, prompt-injection containment, multi-tenant isolation, WASM ABI safety, replay safety vs deleted memory.
 
@@ -42,9 +42,9 @@ Plus the broader scope: 3 reference hosts at pinned commit, 3 reference SDKs (TS
 
 **Deliverables** (engagement-doc §3): findings + CVSS + CWE + PoC; executive summary; threat-model annotations; remediation tracker JSON. Cure53's public report format aligns well with the executive-summary + findings-detail shape.
 
-Engagement preconditions: audit-log integrity conformance PASS on the reference host (2026-05-11); Phase 1 + Phase 2 partial landed.
+Engagement preconditions: audit-log integrity conformance PASS on the reference host (2026-05-11); Phase 1 done + Phase 2 substantively done. The Postgres-host module ports are deferred follow-ups that **will not land during the review window** (matches engagement-doc §5).
 
-Happy to scope on a call.
+Happy to scope on a call. **If interested, reply with a 30-minute slot from `<your Calendly link>` or propose three windows.**
 
 Thanks,
 David Tufts

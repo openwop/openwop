@@ -30,7 +30,7 @@ I'd like to make that real. An OpenWOP host backed by a LangGraph runtime would:
 2. Pass the `@openwop/openwop-conformance` suite as evidence; the SQLite reference host currently passes 576 of 661 tests (87%).
 3. Be the first non-steward host in OpenWOP's `INTEROP-MATRIX.md`, which fires our vendor-neutral-org governance migration tripwire and unlocks the path to a working-group governance model.
 
-The adapter would be ~700–1,000 LOC TypeScript modeled on `examples/hosts/sqlite/` (~1,900 LOC, single dep). The big translation chunks: LangGraph's checkpoint store → OpenWOP's `RunEventLogIO`; LangGraph's interrupt → OpenWOP's interrupt protocol (4 kinds, 5-action approval vocab); LangGraph's `Annotated[T, reducer]` → OpenWOP's channels-and-reducers (which OpenWOP borrowed from you).
+The adapter would be ~700–1,000 LOC TypeScript modeled on `examples/hosts/sqlite/` (~3,600 LOC at the level of feature coverage required for the SQLite host's full surface; a LangGraph adapter can target a smaller surface — `openwop-core` + interrupts is enough to be useful and adds maybe 1,000 LOC of bridge code over the LangGraph runtime). Single dep on `langgraph`. The big translation chunks: LangGraph's checkpoint store → OpenWOP's `RunEventLogIO`; LangGraph's interrupt → OpenWOP's interrupt protocol (4 kinds, 5-action approval vocab); LangGraph's `Annotated[T, reducer]` → OpenWOP's channels-and-reducers (which OpenWOP borrowed from you).
 
 I'm happy to:
 - Write the first cut as a draft PR against a LangGraph adapter repo of your team's choice.

@@ -29,11 +29,24 @@
  *     server at suite init. The direct probe asserts the echo tool's
  *     deterministic shape.
  *   - `OPENWOP_MCP_REAL_SERVER_URL=<base-url>` — points the direct
- *     probe at a real MCP reference implementation (e.g., one of
- *     `modelcontextprotocol/servers`). The probe relaxes its assertions
- *     to shape-only: a tools/list returns ≥1 tool, an echo-equivalent
- *     tool can be called, the response carries valid MCP content. This
- *     is the interop-evidence path for Phase 3 T3.4.
+ *     probe at a real MCP server. **Important wire-shape constraint:**
+ *     the probe POSTs JSON-RPC and reads a single-JSON response. This
+ *     matches MCP's `streamable-http` transport in single-response mode
+ *     (no SSE streaming). The probe does NOT support:
+ *       - stdio transport (the default for `modelcontextprotocol/servers`
+ *         reference servers — they speak JSON-RPC over stdin/stdout, not
+ *         HTTP).
+ *       - streamable-http transport in SSE-stream mode (where a single
+ *         POST returns multiple JSON-RPC frames over `Content-Type:
+ *         text/event-stream`).
+ *     To collect real-impl interop evidence today, the operator runs a
+ *     custom MCP server using a `StreamableHTTPServerTransport`-style
+ *     adapter that returns a single JSON body per request. Adding
+ *     SSE-frame parsing to support the streaming case is a follow-up;
+ *     see `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` Track 6.
+ *     Assertions relax to shape-only: tools/list returns ≥1 tool, a
+ *     tools/call returns valid MCP content (a `result.content` array,
+ *     possibly `isError: true` — both are spec-conformant).
  *
  *   When both env vars are set, the real-server URL wins (it's the more
  *   meaningful evidence). When neither is set, the scenario soft-skips.
@@ -57,7 +70,12 @@ async function postJsonRpc(
   params: unknown,
   id: number,
 ): Promise<{ status: number; json: Record<string, unknown> }> {
-  const res = await fetch(`${endpoint}/`, {
+  // POST to `endpoint` verbatim — the trailing-slash decision is the
+  // caller's. `probeEndpoint` strips trailing slashes from env-supplied
+  // URLs; the fake server accepts any POST path. A real MCP server
+  // mounted at e.g. `http://host:port/mcp` would receive a POST to
+  // `/mcp` (not `/mcp/`).
+  const res = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ jsonrpc: '2.0', id, method, params }),
