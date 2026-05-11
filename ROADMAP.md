@@ -1,7 +1,7 @@
 # openwop Roadmap
 
 > **Status:** Living document. Updated as milestones land.
-> **Last reviewed:** 2026-05-11 (registry-status reconciled with `PROTOCOL-GAP-CLOSURE-PLAN.md` Track 7; `packs.openwop.dev` confirmed live with 3 published packs).
+> **Last reviewed:** 2026-05-11 (Phase 2 partial: RFCs 0002–0007 promoted to Accepted; RFC 0008 promoted to Active; `production-profile.md` flipped Provisional pending the Postgres reference host; `examples/hosts/postgres/` skeleton landed).
 
 This roadmap distinguishes **stable v1** (locked contract), **v1.X minor work** (additive, conformance-only), and **post-v1 ecosystem** (extension profiles, infrastructure, governance).
 
