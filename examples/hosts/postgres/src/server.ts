@@ -89,6 +89,11 @@ const PG_DSN = process.env.OPENWOP_PG_DSN ?? '';
 const PROCESS_ID = `host-${randomUUID().slice(0, 8)}`;
 const AUDIT_KEY_DIR =
   process.env.OPENWOP_AUDIT_KEY_DIR ?? join(__dirname, '..', 'data');
+// Claim observability hint: the advisory lock is the ground-truth, but
+// these columns get stamped so operator dashboards can answer "who
+// holds the claim, when does it expire?" without having to query
+// pg_locks.
+const CLAIM_TTL_MS = Number(process.env.OPENWOP_CLAIM_TTL_MS ?? 30_000);
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -280,6 +285,60 @@ async function setCancelRequested(runId: string): Promise<void> {
 async function advanceNodeIndex(runId: string, nextIndex: number): Promise<void> {
   const q = await querier();
   await q.query('UPDATE runs SET next_node_index = $1 WHERE run_id = $2', [nextIndex, runId]);
+}
+
+/**
+ * Try to acquire the per-run claim. Uses session-level Postgres advisory
+ * locks keyed by `hashtext(runId)`. Returns true if this process now
+ * holds the lock; false if another process holds it.
+ *
+ * Why session-level locks (not txn-level) for this host:
+ *   - The executor's lifetime spans many transactions; a txn-level
+ *     lock would release at the first commit, defeating the purpose.
+ *   - On process crash, the client connection drops; Postgres
+ *     automatically releases every session-level lock the dead session
+ *     held. The next claimer wins on its next tryClaim call.
+ *   - Re-entrant per session: a single host process holding the lock
+ *     for runId X can call tryClaim(X) again and get true, with an
+ *     internal reference count. We never rely on this; each runWorkflow
+ *     invocation pairs exactly one tryClaim with one releaseClaim.
+ *
+ * Limitation: the host caches a single Querier (one connection). On
+ * pg.Pool deployments the advisory lock would be tied to whatever
+ * connection runs the tryClaim call; subsequent queries from a
+ * different pool connection wouldn't observe the lock. Multi-process
+ * production hosts SHOULD pin a connection per runWorkflow invocation.
+ */
+async function tryClaim(runId: string): Promise<boolean> {
+  const q = await querier();
+  const res = await q.query<{ got: boolean }>(
+    'SELECT pg_try_advisory_lock(hashtext($1)) AS got',
+    [runId],
+  );
+  const got = res.rows[0]?.got === true;
+  if (got) {
+    // Stamp `claim_holder_id` + `claim_expires_at` as observability
+    // hints. The advisory lock IS the claim's ground-truth; these
+    // columns are descriptive for operator dashboards.
+    await q.query(
+      `UPDATE runs SET claim_holder_id = $1, claim_expires_at = $2 WHERE run_id = $3`,
+      [PROCESS_ID, Date.now() + CLAIM_TTL_MS, runId],
+    );
+  }
+  return got;
+}
+
+/**
+ * Release the per-run claim. Idempotent: releasing an un-held lock is
+ * a no-op (Postgres returns false; we ignore the return).
+ */
+async function releaseClaim(runId: string): Promise<void> {
+  const q = await querier();
+  await q.query('SELECT pg_advisory_unlock(hashtext($1)) AS unlocked', [runId]);
+  await q.query(
+    `UPDATE runs SET claim_holder_id = NULL, claim_expires_at = NULL WHERE run_id = $1`,
+    [runId],
+  );
 }
 
 async function appendEvent(
@@ -691,6 +750,22 @@ async function executeNode(
 }
 
 async function runWorkflow(runId: string): Promise<void> {
+  // Claim acquisition: another host process may already be running
+  // this workflow (multi-process Postgres deployments). Skip silently
+  // if contended — the claim holder will drive the run to terminal,
+  // and on its release a future orphan-recovery sweep picks up any
+  // residual orphans.
+  const claimed = await tryClaim(runId);
+  if (!claimed) return;
+
+  try {
+    await runWorkflowClaimed(runId);
+  } finally {
+    await releaseClaim(runId);
+  }
+}
+
+async function runWorkflowClaimed(runId: string): Promise<void> {
   const row = await loadRun(runId);
   if (!row) return;
 
@@ -1828,6 +1903,35 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
 let _server: import('node:http').Server | null = null;
 let signalHandlersRegistered = false;
 
+async function recoverOrphans(): Promise<void> {
+  const q = await querier();
+  const res = await q.query<{ run_id: string }>(
+    `SELECT run_id FROM runs
+     WHERE status IN ('pending', 'running', 'cancelling')
+     ORDER BY started_at ASC`,
+  );
+  for (const { run_id } of res.rows) {
+    // tryClaim races against any concurrent host process: if we win
+    // the lock, the run was orphaned (lock either released on prior
+    // crash, or never held); if we lose, another live process is
+    // executing it and we let them continue.
+    // Note: we don't await runWorkflow — fire-and-forget so startup
+    // doesn't serialize on orphan execution. Each runWorkflow holds
+    // its own claim via the wrapper's tryClaim.
+    void runWorkflow(run_id).catch(async (err: unknown) => {
+      const message = err instanceof Error ? err.message : String(err);
+      const error = { code: 'internal', message };
+      await appendEvent(run_id, 'run.failed', { data: error });
+      await setRunTerminal(run_id, 'failed', error);
+    });
+  }
+  if (res.rows.length > 0) {
+    console.log(
+      `[openwop-host-postgres] orphan recovery: ${res.rows.length} candidate runs probed`,
+    );
+  }
+}
+
 async function closeHost(): Promise<void> {
   // Stop OTel metric emission before tearing down the DB so the timer
   // doesn't fire a metric query against a closed querier.
@@ -1878,6 +1982,15 @@ export async function start(): Promise<{ close: () => Promise<void> }> {
   // OTel metric emission loop (no-op when OTEL_EXPORTER_OTLP_ENDPOINT
   // is unset; observabilityEnabled() guards advertisement).
   startMetricLoop(q);
+
+  // Orphan recovery: any non-terminal run not currently claimed by
+  // another process gets re-launched. Crash recovery — if the prior
+  // host process died mid-execution, its session-level advisory lock
+  // was auto-released by Postgres when the connection dropped; this
+  // process can now re-acquire and continue. tryClaim returns false
+  // for runs another live process holds, so concurrent host instances
+  // share the workload safely.
+  await recoverOrphans();
 
   _server = createServer((req, res) => {
     void route(req, res).catch((err: unknown) => {

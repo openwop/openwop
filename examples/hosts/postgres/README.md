@@ -96,7 +96,7 @@ Each item is a follow-up session. Order doesn't matter much; pick the one that u
 | ~~`sqlite/src/server.ts` interrupts wiring~~ | ✅ wired (2026-05-11) — `handleResolveInterrupt` + `handleResolveInterruptByToken` + 4 node-type executors + parent/child cascade | — | (above) |
 | ~~`sqlite/src/server.ts` debug bundle~~ | ✅ ported (2026-05-11) — `handleDebugBundle` with 8MB cap + maxEvents truncation | — | ✅ `debugBundle.test.ts` + `debug-bundle-truncation.test.ts` |
 | ~~`sqlite/src/server.ts` pause/resume routes~~ | ✅ ported (2026-05-11) — `handlePauseRun` / `handleResumeRun` + paused outcome | — | ✅ `pause-resume.test.ts` (in-host `test/pause-resume.test.ts` validates wire surface) |
-| `sqlite/src/server.ts` claim acquisition | use Postgres advisory locks instead of SQLite UPDATE pattern | ~100 | multi-process scenarios + production-profile claim |
+| ~~`sqlite/src/server.ts` claim acquisition~~ | ✅ wired (2026-05-11) — session-level `pg_try_advisory_lock(hashtext(runId))` + orphan recovery on host startup | — | ✅ multi-process scenarios + production-profile claim (precondition for `spec/v1/production-profile.md` FINAL flip) |
 
 Approximate total port work: ~1700 LOC. Tractable in 4-6 focused sessions, one module per commit.
 
