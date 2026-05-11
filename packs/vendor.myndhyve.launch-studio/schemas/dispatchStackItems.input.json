@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "boardId": { "type": "string", "description": "Kanban board scoped to the canvas type" },
+    "canvasTypeId": { "type": "string", "description": "Canvas type whose ready items to dispatch" },
+    "projectId": { "type": "string", "description": "Optional project context" },
+    "studioId": { "type": "string", "description": "Optional Launch Studio id — when set, cross-step artifact resolution fires" }
+  },
+  "required": ["boardId", "canvasTypeId"],
+  "additionalProperties": true
+}
