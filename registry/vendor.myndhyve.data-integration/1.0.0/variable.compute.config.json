@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.data-integration/1.0.0/variable.compute.config.json",
+  "title": "VariableComputeConfig",
+  "type": "object",
+  "required": ["variableName", "expression"],
+  "properties": {
+    "variableName": { "type": "string", "minLength": 1, "description": "Name of the derived variable to set on the run." },
+    "expression": { "type": "string", "minLength": 1, "description": "Computation expression. Same languages as data.transform.config.language (JSONata / jq / host-extension)." },
+    "language": { "type": "string", "enum": ["jsonata", "jq", "host-extension"], "default": "jsonata" }
+  },
+  "additionalProperties": false
+}

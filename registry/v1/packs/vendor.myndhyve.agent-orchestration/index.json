@@ -1,0 +1,25 @@
+{
+  "name": "vendor.myndhyve.agent-orchestration",
+  "description": "MyndHyve agent-orchestration pack. Six nodes that operate on RFC 0007 / 0008 / 0011 protocol primitives — spawn, delegate-smart, consensus-vote, message-send, skill-invoke, swarm-execute. Routes through the host's agent runtime (ctx.agentRuntime.*). Inherits RFC 0007 §F suspend mechanics for low-confidence escalation.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/agent-orchestration",
+  "repository": "https://github.com/openwop/openwop",
+  "tags": [],
+  "versions": [
+    {
+      "version": "1.0.0",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/vendor.myndhyve.agent-orchestration/-/1.0.0.json",
+      "tarballUrl": "/v1/packs/vendor.myndhyve.agent-orchestration/-/1.0.0.tgz",
+      "signatureUrl": "/v1/packs/vendor.myndhyve.agent-orchestration/-/1.0.0.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-z5Mjanb4Cya26Ic/eze6jpQNFwL+FPNLlM8vf6eeNiY=",
+      "deprecated": false,
+      "yanked": false
+    }
+  ],
+  "latest": "1.0.0",
+  "deprecated": false
+}

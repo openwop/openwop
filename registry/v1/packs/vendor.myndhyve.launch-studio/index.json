@@ -1,0 +1,25 @@
+{
+  "name": "vendor.myndhyve.launch-studio",
+  "description": "MyndHyve Launch Studio pack. 2 nodes for the LS backbone: link a project to a step + propagate inherited artifact context, and dispatch ready WOP stack items (todo → doing) for a step's canvas type.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/launch-studio",
+  "repository": "https://github.com/openwop/openwop",
+  "tags": [],
+  "versions": [
+    {
+      "version": "1.0.0",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/vendor.myndhyve.launch-studio/-/1.0.0.json",
+      "tarballUrl": "/v1/packs/vendor.myndhyve.launch-studio/-/1.0.0.tgz",
+      "signatureUrl": "/v1/packs/vendor.myndhyve.launch-studio/-/1.0.0.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-qiB996JY5VHjc3m0ELTwH4SYw8y8EYLb5UCxZIBXhMU=",
+      "deprecated": false,
+      "yanked": false
+    }
+  ],
+  "latest": "1.0.0",
+  "deprecated": false
+}

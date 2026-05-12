@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "studioId": { "type": "string" },
+    "stepId": { "type": "string" },
+    "projectId": { "type": "string" },
+    "canvasTypeId": { "type": "string" },
+    "success": { "type": "boolean" },
+    "error": { "type": "string" }
+  },
+  "required": ["studioId", "stepId", "projectId", "canvasTypeId", "success"],
+  "additionalProperties": false
+}

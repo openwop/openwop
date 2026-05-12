@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "title": { "type": "string" },
+    "artifactType": { "type": "string" },
+    "maxRequestChangesIterations": { "type": "integer", "minimum": 0, "default": 0 },
+    "timeoutMs": { "type": "integer", "minimum": 0 }
+  },
+  "additionalProperties": true
+}

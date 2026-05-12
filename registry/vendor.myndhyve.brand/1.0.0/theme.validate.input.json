@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.brand/1.0.0/theme.validate.input.json",
+  "title": "theme.validateInput",
+  "type": "object",
+  "required": ["artifactId"],
+  "properties": {
+    "artifactId": { "type": "string", "minLength": 1 }
+  },
+  "additionalProperties": false
+}

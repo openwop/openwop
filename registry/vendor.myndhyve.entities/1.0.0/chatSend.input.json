@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "connectorInstanceId": { "type": "string" },
+    "channel": { "type": "string" },
+    "conversationId": { "type": "string" },
+    "threadId": { "type": "string" },
+    "text": { "type": "string" },
+    "media": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": { "type": { "type": "string" }, "url": { "type": "string" } },
+        "required": ["type", "url"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": true
+}

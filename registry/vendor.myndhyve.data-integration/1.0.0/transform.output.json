@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.data-integration/1.0.0/transform.output.json",
+  "title": "DataTransformOutput",
+  "type": "object",
+  "required": ["result"],
+  "properties": {
+    "result": { "description": "Expression result. Shape determined by the transform." }
+  },
+  "additionalProperties": false
+}

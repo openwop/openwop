@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.canvas/1.0.0/canvasWrite.config.json",
+  "title": "CanvasWriteConfig",
+  "type": "object",
+  "properties": {
+    "expectedVersion": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Optional optimistic-concurrency check. When set, the host validates the canvas's current version equals this value before applying the mutation. Mismatch returns `canvas_version_conflict`. Omit for unconditional write."
+    },
+    "merge": {
+      "type": "string",
+      "enum": ["replace", "shallow", "deep"],
+      "default": "shallow",
+      "description": "How the mutation merges with existing state. `replace` overwrites the entire state. `shallow` merges top-level keys (later wins). `deep` recursively merges objects."
+    }
+  },
+  "additionalProperties": false
+}

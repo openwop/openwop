@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.data-integration/1.0.0/source.mcp.output.json",
+  "title": "DataSourceMCPOutput",
+  "type": "object",
+  "required": ["data", "kind"],
+  "properties": {
+    "data": { "description": "Tool result OR resource content per operation.kind." },
+    "kind": { "type": "string", "enum": ["tool", "resource"] },
+    "isError": { "type": "boolean", "description": "For kind='tool': MCP-level domain error flag. Not present for resource reads." },
+    "mimeType": { "type": "string", "description": "For kind='resource': MIME type." }
+  },
+  "additionalProperties": false
+}

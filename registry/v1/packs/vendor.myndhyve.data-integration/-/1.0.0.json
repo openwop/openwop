@@ -1,0 +1,159 @@
+{
+  "name": "vendor.myndhyve.data-integration",
+  "version": "1.0.0",
+  "description": "MyndHyve data-integration pack. 7 nodes for fetching from typed data sources (REST / GraphQL / A2A / MCP), transforming results, applying bindings to UI templates, and managing run-scoped variables. Routes through ctx.dataIntegration.* host adapter.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/data-integration",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "vendor",
+    "myndhyve",
+    "data",
+    "integration",
+    "rest",
+    "graphql",
+    "a2a",
+    "mcp"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "host.dataIntegration": "supported"
+  },
+  "nodes": [
+    {
+      "typeId": "data.source.rest",
+      "version": "1.0.0",
+      "label": "Data Source: REST",
+      "description": "Fetches structured data from a configured REST source. Higher-level than core.openwop.http.fetch — knows about the source's auth, pagination, response shape. Routes through ctx.dataIntegration.fetchRest.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/source.rest.config.json",
+      "inputSchemaRef": "schemas/source.rest.input.json",
+      "outputSchemaRef": "schemas/source.rest.output.json"
+    },
+    {
+      "typeId": "data.source.graphql",
+      "version": "1.0.0",
+      "label": "Data Source: GraphQL",
+      "description": "Queries a configured GraphQL endpoint. Returns `data` + `errors` per the GraphQL response shape.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/source.graphql.config.json",
+      "inputSchemaRef": "schemas/source.graphql.input.json",
+      "outputSchemaRef": "schemas/source.graphql.output.json"
+    },
+    {
+      "typeId": "data.source.a2a",
+      "version": "1.0.0",
+      "label": "Data Source: A2A",
+      "description": "Queries a registered A2A peer agent per spec/v1/a2a-integration.md. Sends a typed task, awaits the peer's response.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/source.a2a.config.json",
+      "inputSchemaRef": "schemas/source.a2a.input.json",
+      "outputSchemaRef": "schemas/source.a2a.output.json"
+    },
+    {
+      "typeId": "data.source.mcp",
+      "version": "1.0.0",
+      "label": "Data Source: MCP",
+      "description": "Fetches from an MCP resource OR invokes an MCP tool (host-defined which). Higher-level than core.openwop.mcp.{readResource, invokeTool} — knows the source's intent (data vs action).",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/source.mcp.config.json",
+      "inputSchemaRef": "schemas/source.mcp.input.json",
+      "outputSchemaRef": "schemas/source.mcp.output.json"
+    },
+    {
+      "typeId": "data.transform",
+      "version": "1.0.0",
+      "label": "Data Transform",
+      "description": "Applies a host-defined transform expression (jq-style, JSONata, host-extension) to input data. Routes through ctx.dataIntegration.transform — host owns the expression engine. Side-effectful (host call) + cacheable (deterministic given inputs).",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/transform.config.json",
+      "inputSchemaRef": "schemas/transform.input.json",
+      "outputSchemaRef": "schemas/transform.output.json"
+    },
+    {
+      "typeId": "data.variable.compute",
+      "version": "1.0.0",
+      "label": "Data Variable Compute",
+      "description": "Computes a derived run-scoped variable from existing variables + inputs via the host's expression engine (ctx.dataIntegration.computeVariable). Side-effectful (host call) + cacheable.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/variable.compute.config.json",
+      "inputSchemaRef": "schemas/variable.compute.input.json",
+      "outputSchemaRef": "schemas/variable.compute.output.json"
+    },
+    {
+      "typeId": "data.variable.fetch",
+      "version": "1.0.0",
+      "label": "Data Variable Fetch",
+      "description": "Reads a run-scoped variable by name. Side-effectful + cacheable (variables can change mid-run).",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/variable.fetch.config.json",
+      "inputSchemaRef": "schemas/variable.fetch.input.json",
+      "outputSchemaRef": "schemas/variable.fetch.output.json"
+    },
+    {
+      "typeId": "data.binding.apply",
+      "version": "1.0.0",
+      "label": "Apply Binding",
+      "description": "Applies a variable value to a canvas target. Routes through host.dataIntegration.applyBinding({targetType, targetPath, value, transform?, fallback?, canvasId?}) with updateMode (immediate | batched) + preserveUndo config. Returns the prior value so workflow authors can roll back if needed.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/binding.apply.config.json",
+      "inputSchemaRef": "schemas/binding.apply.input.json",
+      "outputSchemaRef": "schemas/binding.apply.output.json"
+    }
+  ],
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "myndhyve-internal-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-Z/MmIHwYEn6tZYIzoOtUh3ijKsBoKHxeYnhQb7lq0dA="
+}

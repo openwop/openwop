@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.canvas/1.0.0/canvasRead.input.json",
+  "title": "CanvasReadInput",
+  "type": "object",
+  "required": ["canvasId"],
+  "properties": {
+    "canvasId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Canvas identifier to read. Resolved by the host's canvas adapter against its storage. Unknown canvasId returns `canvas_not_found`."
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.chat/1.0.0/updateCard.input.json",
+  "title": "ChatUpdateCardInput",
+  "type": "object",
+  "required": ["patch"],
+  "properties": {
+    "patch": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Card-payload patch. Shape is card-type-specific (progress card vs custom card)."
+    }
+  },
+  "additionalProperties": false
+}

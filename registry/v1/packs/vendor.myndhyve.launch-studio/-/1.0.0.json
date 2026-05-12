@@ -1,0 +1,67 @@
+{
+  "name": "vendor.myndhyve.launch-studio",
+  "version": "1.0.0",
+  "description": "MyndHyve Launch Studio pack. 2 nodes for the LS backbone: link a project to a step + propagate inherited artifact context, and dispatch ready WOP stack items (todo → doing) for a step's canvas type.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/launch-studio",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "vendor",
+    "myndhyve",
+    "launch-studio",
+    "coordination",
+    "stack",
+    "wop"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "host.launchStudio": "supported",
+    "host.kanban": "supported"
+  },
+  "nodes": [
+    {
+      "typeId": "launch-studio.linkStep",
+      "version": "1.0.0",
+      "label": "Launch Studio Link Step",
+      "description": "Links a Project to a LaunchStudio step. Sets `${stepId}_projectId` as the canonical step-state variable (M3.1 view-model derives step.projectId + step.status from it). Also propagates inherited artifact context (brandId, designSystemId, prdId) for cross-step decision gates.",
+      "category": "coordination",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/linkStep.config.json",
+      "inputSchemaRef": "schemas/linkStep.input.json",
+      "outputSchemaRef": "schemas/linkStep.output.json"
+    },
+    {
+      "typeId": "launch-studio.dispatchStackItems",
+      "version": "1.0.0",
+      "label": "Launch Studio Dispatch Stack Items",
+      "description": "Marks ready WOP stack items for a canvas type as `doing` (transition `todo → doing` via host.kanban.moveTask). Returns immediately; task execution is async via TaskExecutor. Optionally resolves cross-step linked-project artifacts (stashed on `${canvasTypeId}_resolvedArtifacts`).",
+      "category": "coordination",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/dispatchStackItems.config.json",
+      "inputSchemaRef": "schemas/dispatchStackItems.input.json",
+      "outputSchemaRef": "schemas/dispatchStackItems.output.json"
+    }
+  ],
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "myndhyve-internal-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-qiB996JY5VHjc3m0ELTwH4SYw8y8EYLb5UCxZIBXhMU="
+}

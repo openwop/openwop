@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.web-research/1.0.0/fetchUrls.output.json",
+  "title": "FetchUrlsOutput",
+  "type": "object",
+  "required": ["pages", "succeeded", "failed"],
+  "properties": {
+    "pages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["url", "status"],
+        "properties": {
+          "url": { "type": "string", "format": "uri" },
+          "status": { "type": "integer", "minimum": 0, "maximum": 599 },
+          "contentType": { "type": "string" },
+          "title": { "type": "string" },
+          "extractedText": { "type": "string", "description": "Readability-extracted main content (when config.extractReadable=true)." },
+          "rawBody": { "type": "string", "description": "Raw body bytes as UTF-8 string. Present when extractReadable=false or extraction failed. Subject to config.maxBodyBytes cap." },
+          "truncated": { "type": "boolean", "description": "true if body exceeded maxBodyBytes and was truncated." },
+          "fetchedAt": { "type": "string", "format": "date-time" },
+          "error": { "type": "string", "description": "Reason for non-2xx status (e.g., 'robots_disallowed', 'timeout', 'dns_resolution_failed'). Absent on success." }
+        },
+        "additionalProperties": true
+      }
+    },
+    "succeeded": { "type": "integer", "minimum": 0 },
+    "failed": { "type": "integer", "minimum": 0 }
+  },
+  "additionalProperties": false
+}

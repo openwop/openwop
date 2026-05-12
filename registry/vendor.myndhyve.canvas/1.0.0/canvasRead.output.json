@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.canvas/1.0.0/canvasRead.output.json",
+  "title": "CanvasReadOutput",
+  "type": "object",
+  "required": ["canvasId", "state", "readAt"],
+  "properties": {
+    "canvasId": { "type": "string" },
+    "state": { "description": "Canvas state — shape determined by canvasTypeId. Workflow authors couple to specific canvas types via downstream-node config." },
+    "canvasTypeId": { "type": "string", "description": "Canvas type identifier (e.g., `'app-builder'`, `'slides'`). Useful when reads occur in a workflow that handles multiple canvas types." },
+    "version": { "type": "integer", "minimum": 0, "description": "Canvas state version at read time (monotonic). Workflows MAY use this for optimistic-concurrency in subsequent writes." },
+    "readAt": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

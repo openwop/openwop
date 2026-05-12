@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.kanban/1.0.0/task.assign.input.json",
+  "title": "TaskAssignInput",
+  "type": "object",
+  "required": ["taskId", "assigneeId"],
+  "properties": {
+    "taskId": { "type": "string", "minLength": 1 },
+    "assigneeId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "User id or agent-instance id. Prefix with `agent:` for agent assignees (host-defined convention)."
+    },
+    "comment": { "type": "string", "description": "Optional comment attached to the assignment event." }
+  },
+  "additionalProperties": false
+}

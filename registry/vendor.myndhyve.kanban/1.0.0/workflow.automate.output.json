@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.kanban/1.0.0/workflow.automate.output.json",
+  "title": "WorkflowAutomateOutput",
+  "type": "object",
+  "required": ["boardId", "activeRules"],
+  "properties": {
+    "boardId": { "type": "string" },
+    "activeRules": { "type": "integer", "minimum": 0, "description": "Total rule count active on the board after this call." },
+    "added": { "type": "integer", "minimum": 0 },
+    "appliedAt": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

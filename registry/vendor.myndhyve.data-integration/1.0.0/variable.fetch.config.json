@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.data-integration/1.0.0/variable.fetch.config.json",
+  "title": "VariableFetchConfig",
+  "type": "object",
+  "required": ["variableName"],
+  "properties": {
+    "variableName": { "type": "string", "minLength": 1 },
+    "defaultValue": { "description": "Value returned when the variable is unset. When omitted, an unset variable raises `variable_not_found`." }
+  },
+  "additionalProperties": false
+}
