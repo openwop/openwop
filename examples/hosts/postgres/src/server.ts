@@ -95,6 +95,13 @@ import {
   REFERENCE_AI_PROVIDERS_CAPABILITY,
   type AiCallRequest,
 } from './ai-proxy.js';
+import {
+  callMcpTool,
+  summarizeForEventLog as summarizeMcpForEventLog,
+  REFERENCE_MCP_CLIENT_CAPABILITY,
+  McpClientError,
+  type McpToolCallConfig,
+} from './mcp-client.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const HOST = process.env.OPENWOP_HOST ?? '127.0.0.1';
@@ -888,6 +895,67 @@ async function executeNode(
       break;
     }
 
+    case 'core.mcp.toolCall': {
+      // host-capabilities.md §host.mcp + threat-model-prompt-injection.md
+      // §UNTRUSTED. Invokes a tool on an env-configured MCP server.
+      // Per MCP-1 invariant: tool arguments + result content NEVER
+      // appear on the node.completed event payload — only a sanitized
+      // summary (hashes + length). The full result IS persisted to
+      // variables[node.id] (authenticated surface) so the workflow
+      // can consume it, tagged contentTrust: "untrusted" so downstream
+      // LLM nodes treat it as user data rather than instructions.
+      const cfg = (node.config ?? {}) as unknown as McpToolCallConfig;
+      try {
+        const result = await callMcpTool(cfg, signal);
+        const summary = summarizeMcpForEventLog(cfg, result);
+        // MCP-1: persist the FULL result into variables; emit only the
+        // SUMMARY on node.completed via the executor's standard event
+        // append below. The summary is also attached to a host-internal
+        // `mcp.invoked` audit event so audit trails can correlate
+        // tool calls without the raw payload.
+        await appendEvent(runId, 'mcp.invoked', { nodeId: node.id, data: summary });
+        const q = await querier();
+        await withTransaction(q, async () => {
+          const res = await q.query<{ variables_json: Record<string, unknown> | null }>(
+            'SELECT variables_json FROM runs WHERE run_id = $1',
+            [runId],
+          );
+          const current = (res.rows[0]?.variables_json ?? {}) as Record<string, unknown>;
+          current[node.id] = {
+            serverId: cfg.serverId,
+            toolName: cfg.toolName,
+            content: result.content,
+            isError: result.isError,
+            contentTrust: result.contentTrust,
+            durationMs: result.durationMs,
+          };
+          await q.query('UPDATE runs SET variables_json = $1 WHERE run_id = $2', [
+            JSON.stringify(current),
+            runId,
+          ]);
+        });
+      } catch (err: unknown) {
+        if (signal.aborted) {
+          const refreshed = await loadRun(runId);
+          if (refreshed?.status === 'paused') {
+            endNodeSpan(runId, node.id, 'paused');
+            return 'paused';
+          }
+          await appendEvent(runId, 'node.cancelled', { nodeId: node.id });
+          endNodeSpan(runId, node.id, 'cancelled');
+          return 'cancelled';
+        }
+        const mcpErr = err instanceof McpClientError
+          ? { code: err.code, message: err.message, ...(err.details ? { details: err.details } : {}) }
+          : { code: 'node_execution_failed', message: err instanceof Error ? err.message : String(err) };
+        await appendEvent(runId, 'node.failed', { nodeId: node.id, data: mcpErr });
+        runFailureErrors.set(runId, { code: mcpErr.code, message: mcpErr.message });
+        endNodeSpan(runId, node.id, 'failed');
+        return 'failed';
+      }
+      break;
+    }
+
     case 'core.http.request': {
       // node-packs.md §"Built-in nodes — core.http.request": SSRF-
       // guarded HTTP call against a tenant-supplied URL. Response is
@@ -1634,6 +1702,9 @@ const SUPPORTED_NODE_TYPES = new Set([
   // contract (4-mode policy + credentialRef redaction) is preserved.
   'core.llm.chat',
   'core.llm.completion',
+  // Phase H.2 — MCP tool-call typeId per host-capabilities.md §host.mcp.
+  // HTTP/JSON-RPC transport; MCP-1 redaction enforced on event payloads.
+  'core.mcp.toolCall',
 ]);
 
 function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
@@ -1714,6 +1785,13 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
         // `OPENWOP_AI_POLICY_<PROVIDER>` env vars; resolver-outage
         // failures fail-open to `optional`.
         aiProviders: REFERENCE_AI_PROVIDERS_CAPABILITY,
+        // Phase H.2 — capabilities.md §`mcpClient` (additive). MCP
+        // tool-call surface via HTTP/JSON-RPC transport. Operators
+        // configure individual servers via OPENWOP_MCP_SERVER_<ID>
+        // env vars; the inventory itself is deployment-private.
+        // MCP-1 redaction enforced: tool args + content texts NEVER
+        // appear on event payloads.
+        mcpClient: REFERENCE_MCP_CLIENT_CAPABILITY,
         // Phase H.3 — capabilities.md §`httpClient` (additive). The host
         // implements `core.http.request` with SSRF guard + 1 MiB response
         // truncation. Bypass via OPENWOP_HTTP_ALLOW_PRIVATE=true for
