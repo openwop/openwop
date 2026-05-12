@@ -107,6 +107,13 @@ import {
   REFERENCE_MEMORY_CAPABILITY,
 } from './memory-adapter.js';
 import { REFERENCE_AGENTS_CAPABILITY } from './agent-events.js';
+import {
+  JwtValidator,
+  JwtValidationError,
+  readOAuth2ConfigFromEnv,
+  readOIDCConfigFromEnv,
+  type SupportedAlgorithm,
+} from './jwt-validator.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const HOST = process.env.OPENWOP_HOST ?? '127.0.0.1';
@@ -130,6 +137,20 @@ const TENANT2_API_KEY = process.env.OPENWOP_TENANT2_API_KEY ?? null;
 // claiming the profile MUST advertise a non-zero minGraceSeconds (24h
 // is the conventional default per the SQLite reference).
 const ROTATION_MIN_GRACE_SECONDS = 86_400;
+
+// Phase I.3 + I.4 — OAuth2-CC + OIDC user-bearer validators. Each is
+// `null` when the operator hasn't configured the env vars; the host
+// then advertises only the bearer-equality profile. When configured,
+// JWTs presented in `Authorization: Bearer ...` are validated against
+// the issuer's JWKS instead of (or in addition to) the static API key.
+// The harness env var `OPENWOP_TEST_OAUTH_ISSUER_TRUSTED=true` is the
+// conformance suite's signal that the synthetic OIDC issuer is the
+// trusted issuer; production deployers set OPENWOP_OAUTH2_ISSUER_URL
+// + OPENWOP_OAUTH2_AUDIENCE directly.
+const OAUTH2_CONFIG = readOAuth2ConfigFromEnv();
+const OIDC_CONFIG = readOIDCConfigFromEnv();
+const OAUTH2_VALIDATOR = OAUTH2_CONFIG !== null ? new JwtValidator(OAUTH2_CONFIG) : null;
+const OIDC_VALIDATOR = OIDC_CONFIG !== null ? new JwtValidator(OIDC_CONFIG) : null;
 const PG_DSN = process.env.OPENWOP_PG_DSN ?? '';
 const PROCESS_ID = `host-${randomUUID().slice(0, 8)}`;
 const AUDIT_KEY_DIR =
@@ -1754,26 +1775,65 @@ function sendError(res: ServerResponse, status: number, code: string, message: s
  * code path as a content mismatch.
  */
 /**
- * Phase I.6 — Constant-time bearer-token comparison across the
- * primary + optional secondary + optional tenant2 candidates.
+ * Phase I.3 + I.4 + I.6 — bearer-token validation across:
  *
- * Every candidate's `timingSafeEqual` completes before the OR fold,
- * so an attacker cannot use request latency to distinguish "primary
- * matched" from "secondary matched" from "tenant2 matched" from
- * "none matched". Per `auth.md` §"No credential echo", the rejected
- * token is NEVER reflected back in the error envelope.
+ *   - Static API keys (primary + optional secondary + optional tenant2),
+ *     compared in constant time via `crypto.timingSafeEqual`.
+ *   - JWT bearer tokens validated against an OAuth2-CC issuer JWKS
+ *     (when `OPENWOP_OAUTH2_ISSUER_URL` + `OPENWOP_OAUTH2_AUDIENCE`
+ *     are set).
+ *   - JWT bearer tokens validated against an OIDC user-bearer issuer
+ *     JWKS (when `OPENWOP_OIDC_ISSUER_URL` + `OPENWOP_OIDC_AUDIENCE`
+ *     are set).
+ *
+ * JWT validation is tried FIRST when validators are configured AND
+ * the presented token shape is JWT-like (three dot-separated segments).
+ * Static-API-key match is the fallback. Per `auth.md` §"No credential
+ * echo", the rejected token is NEVER reflected back in the error
+ * envelope — only the closed-set error code reaches the wire.
  */
-function checkAuth(req: IncomingMessage, res: ServerResponse): boolean {
+async function checkAuth(req: IncomingMessage, res: ServerResponse): Promise<boolean> {
   const header = req.headers.authorization;
   if (typeof header !== 'string' || !header.startsWith('Bearer ')) {
     sendError(res, 401, 'unauthenticated', 'Missing or malformed Authorization header.');
     return false;
   }
-  const presented = Buffer.from(header.slice('Bearer '.length).trim(), 'utf8');
-  // auth-profiles.md §"openwop-auth-api-key-rotation": primary +
-  // (optional) secondary BOTH authenticate during the overlap window.
-  // §"Scoped capability views" requires tenant2 also be accepted on
-  // requests (handleDiscovery uses principalFor to narrow the view).
+  const tokenStr = header.slice('Bearer '.length).trim();
+  const looksLikeJwt = tokenStr.split('.').length === 3;
+
+  // JWT path: try OAuth2 then OIDC validator when configured AND
+  // the presented token has the JWT shape (avoids spurious JWKS
+  // fetches for static-API-key tenants).
+  if (looksLikeJwt && (OAUTH2_VALIDATOR !== null || OIDC_VALIDATOR !== null)) {
+    const validators = [OAUTH2_VALIDATOR, OIDC_VALIDATOR].filter(
+      (v): v is JwtValidator => v !== null,
+    );
+    for (const validator of validators) {
+      try {
+        await validator.validate(tokenStr);
+        return true; // JWT verified against this issuer; accept.
+      } catch (err: unknown) {
+        if (err instanceof JwtValidationError) {
+          // Try the next validator (an OAuth2 token may be rejected
+          // by an OIDC validator with a different aud/iss). Only emit
+          // the canonical 401 if ALL validators reject.
+          continue;
+        }
+        // Non-validation error (e.g., JWKS network failure): rethrow
+        // so the outer error handler returns 500 — clients distinguish
+        // server outage from invalid credential.
+        throw err;
+      }
+    }
+    sendError(res, 401, 'invalid_credential', 'Bearer token rejected.');
+    return false;
+  }
+
+  // Static-API-key path. auth-profiles.md §"openwop-auth-api-key-rotation":
+  // primary + (optional) secondary BOTH authenticate during the overlap
+  // window. §"Scoped capability views" requires tenant2 also be accepted
+  // on requests (handleDiscovery uses principalFor to narrow the view).
+  const presented = Buffer.from(tokenStr, 'utf8');
   const candidates = [API_KEY];
   if (SECONDARY_API_KEY !== null) candidates.push(SECONDARY_API_KEY);
   if (TENANT2_API_KEY !== null) candidates.push(TENANT2_API_KEY);
@@ -1887,6 +1947,15 @@ function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
   if (TENANT2_API_KEY !== null) {
     profiles.push('openwop-discovery-auth-scoped');
   }
+  // Phase I.3 + I.4 — OAuth2-CC + OIDC user-bearer profile claims are
+  // conditional on their env-driven validators being configured.
+  // The host advertises only what it actually validates.
+  if (OAUTH2_VALIDATOR !== null) {
+    profiles.push('openwop-auth-oauth2-client-credentials');
+  }
+  if (OIDC_VALIDATOR !== null) {
+    profiles.push('openwop-auth-oidc-user-bearer');
+  }
   sendJSON(
     res,
     200,
@@ -1926,6 +1995,35 @@ function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
                 rotation: {
                   supported: true,
                   minGraceSeconds: ROTATION_MIN_GRACE_SECONDS,
+                },
+              }
+            : {}),
+          // Phase I.3 — auth-profiles.md §"openwop-auth-oauth2-client-
+          // credentials". Issuer/audience are operator-supplied; the
+          // host validates `iss` + `aud` + `exp` + signature against
+          // the issuer's JWKS. Honesty: only advertised when the
+          // validator is configured (host fetches JWKS lazily).
+          ...(OAUTH2_VALIDATOR !== null
+            ? {
+                oauth2: {
+                  supported: true,
+                  issuer: OAUTH2_VALIDATOR.issuer,
+                  audience: OAUTH2_VALIDATOR.audience,
+                  supportedAlgorithms: [...OAUTH2_VALIDATOR.supportedAlgorithms] as SupportedAlgorithm[],
+                },
+              }
+            : {}),
+          // Phase I.4 — auth-profiles.md §"openwop-auth-oidc-user-bearer".
+          // Same validator shape as OAuth2-CC; the spec distinction
+          // is the token's `sub` claim represents an end-user
+          // principal rather than a machine client.
+          ...(OIDC_VALIDATOR !== null
+            ? {
+                oidc: {
+                  supported: true,
+                  issuer: OIDC_VALIDATOR.issuer,
+                  audience: OIDC_VALIDATOR.audience,
+                  supportedAlgorithms: [...OIDC_VALIDATOR.supportedAlgorithms] as SupportedAlgorithm[],
                 },
               }
             : {}),
@@ -2094,7 +2192,7 @@ function handleOpenApi(_req: IncomingMessage, res: ServerResponse): void {
 }
 
 async function handleCreateRun(req: IncomingMessage, res: ServerResponse): Promise<void> {
-  if (!checkAuth(req, res)) return;
+  if (!(await checkAuth(req, res))) return;
 
   const bodyText = await readBody(req);
   let parsed: {
@@ -2310,12 +2408,12 @@ function validateConfigurable(
   return { valid: true };
 }
 
-function handleGetWorkflow(
+async function handleGetWorkflow(
   req: IncomingMessage,
   res: ServerResponse,
   workflowId: string,
-): void {
-  if (!checkAuth(req, res)) return;
+): Promise<void> {
+  if (!(await checkAuth(req, res))) return;
   const wf = workflows.get(workflowId);
   if (!wf) {
     sendError(res, 404, 'workflow_not_found', `Unknown workflowId: ${workflowId}`);
@@ -2328,7 +2426,7 @@ function handleGetWorkflow(
 }
 
 async function handleGetRun(req: IncomingMessage, res: ServerResponse, runId: string): Promise<void> {
-  if (!checkAuth(req, res)) return;
+  if (!(await checkAuth(req, res))) return;
   const row = await loadRun(runId);
   if (!row) {
     sendError(res, 404, 'run_not_found', `Unknown runId: ${runId}`);
@@ -2433,7 +2531,7 @@ async function handleCancelRun(
   res: ServerResponse,
   runId: string,
 ): Promise<void> {
-  if (!checkAuth(req, res)) return;
+  if (!(await checkAuth(req, res))) return;
   await readBody(req);
   const row = await loadRun(runId);
   if (!row) {
@@ -2566,7 +2664,7 @@ async function handleBulkCancel(req: IncomingMessage, res: ServerResponse): Prom
   // rest-endpoints.md §"POST /v1/runs:bulk-cancel" (closes R1). 200 +
   // per-id results whenever the request reaches the host; partial
   // failures surface inside the array.
-  if (!checkAuth(req, res)) return;
+  if (!(await checkAuth(req, res))) return;
   const bodyText = await readBody(req);
   let parsed: { runIds?: unknown; reason?: unknown };
   try {
@@ -2603,7 +2701,7 @@ async function handleBulkCancel(req: IncomingMessage, res: ServerResponse): Prom
 }
 
 async function handleRegisterWebhook(req: IncomingMessage, res: ServerResponse): Promise<void> {
-  if (!checkAuth(req, res)) return;
+  if (!(await checkAuth(req, res))) return;
   const bodyText = await readBody(req);
   let parsed: { url?: unknown; secret?: unknown; eventTypes?: unknown };
   try {
@@ -2664,7 +2762,7 @@ async function handleUnregisterWebhook(
   res: ServerResponse,
   subscriptionId: string,
 ): Promise<void> {
-  if (!checkAuth(req, res)) return;
+  if (!(await checkAuth(req, res))) return;
   const q = await querier();
   const removed = await unregisterWebhook(q, subscriptionId);
   if (!removed) {
@@ -2687,7 +2785,7 @@ async function handleResolveInterrupt(
   runId: string,
   nodeId: string,
 ): Promise<void> {
-  if (!checkAuth(req, res)) return;
+  if (!(await checkAuth(req, res))) return;
   const row = await loadRun(runId);
   if (!row) {
     sendError(res, 404, 'run_not_found', `Unknown runId: ${runId}`);
@@ -2924,7 +3022,7 @@ async function handleDebugBundle(
   runId: string,
   url: URL,
 ): Promise<void> {
-  if (!checkAuth(req, res)) return;
+  if (!(await checkAuth(req, res))) return;
   const row = await loadRun(runId);
   if (!row) {
     sendError(res, 404, 'run_not_found', `Unknown runId: ${runId}`);
@@ -3006,7 +3104,7 @@ async function handlePauseRun(
   res: ServerResponse,
   runId: string,
 ): Promise<void> {
-  if (!checkAuth(req, res)) return;
+  if (!(await checkAuth(req, res))) return;
   await readBody(req);
   const row = await loadRun(runId);
   if (!row) {
@@ -3043,7 +3141,7 @@ async function handleResumeRun(
   res: ServerResponse,
   runId: string,
 ): Promise<void> {
-  if (!checkAuth(req, res)) return;
+  if (!(await checkAuth(req, res))) return;
   await readBody(req);
   const row = await loadRun(runId);
   if (!row) {
@@ -3082,7 +3180,7 @@ async function handleAuditVerify(
   res: ServerResponse,
   url: URL,
 ): Promise<void> {
-  if (!checkAuth(req, res)) return;
+  if (!(await checkAuth(req, res))) return;
   const fromSeqRaw = url.searchParams.get('fromSeq');
   const toSeqRaw = url.searchParams.get('toSeq');
   const fromSeq = fromSeqRaw === null ? 0 : Number(fromSeqRaw);
@@ -3101,7 +3199,7 @@ async function handleEventsSse(
   res: ServerResponse,
   runId: string,
 ): Promise<void> {
-  if (!checkAuth(req, res)) return;
+  if (!(await checkAuth(req, res))) return;
   const row = await loadRun(runId);
   if (!row) {
     sendError(res, 404, 'run_not_found', `Unknown runId: ${runId}`);
@@ -3337,7 +3435,7 @@ async function handleEventsPoll(
   runId: string,
   url: URL,
 ): Promise<void> {
-  if (!checkAuth(req, res)) return;
+  if (!(await checkAuth(req, res))) return;
   const row = await loadRun(runId);
   if (!row) {
     sendError(res, 404, 'run_not_found', `Unknown runId: ${runId}`);
