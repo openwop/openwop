@@ -21,7 +21,7 @@ This document turns the protocol deep-dive review into implementation tracks. It
 | Run lifecycle / replay / idempotency | B+ | Replay profile hardening and multi-region idempotency guidance |
 | HITL / interrupts | B+ | Quorum, external-event, parent/child cancellation, and auth-required profile |
 | Auth / security | B | OAuth2, key rotation, optional mTLS, external review |
-| Node packs / registry | A (was A−) | ✅ WASM ABI `RFCS/0008-wasm-abi.md`; ✅ reference Rust pack at `examples/packs/rust-hello/` built + signed (28 KiB wasm32); ✅ Wasmtime-free loader at `examples/hosts/in-memory/src/wasm-loader.ts`; ✅ six conformance scenarios; ✅ registry MVP **live at `https://packs.openwop.dev`** with TLS cert provisioned; ✅ end-to-end cryptographic trust chain verified (discovery → manifest → tarball → signature → Ed25519 verify OK); ✅ 3 packs published (`vendor.openwop.rust-hello`, `core.openwop.examples`, `community.openwop-team.demo`) — selective publication by security tier; ✅ derived schema mirror at `/{name}/{version}/<schema>.json` (12 schemas live, tarball source-of-truth). Remaining: 4 high-stakes `core.openwop.{ai,http,mcp,triggers}` packs gated on external audit (added to `SECURITY/external-audit-engagement.md` §2.1 scope); `core.openwop.agent-examples` (`runtime: remote`) deferred to v1.2+; lockfile semantics; deliberately-misbehaving pack for memory-cap / ABI-mismatch positive paths. |
+| Node packs / registry | A (was A−) | ✅ WASM ABI `RFCS/0008-wasm-abi.md`; ✅ reference Rust pack at `examples/packs/rust-hello/` built + signed (28 KiB wasm32); ✅ Wasmtime-free loader at `examples/hosts/in-memory/src/wasm-loader.ts`; ✅ six conformance scenarios; ✅ registry MVP **live at `https://packs.openwop.dev`** with TLS cert provisioned; ✅ end-to-end cryptographic trust chain verified (discovery → manifest → tarball → signature → Ed25519 verify OK); ✅ 3 packs published (`vendor.openwop.rust-hello`, `core.openwop.examples`, `community.openwop-team.demo`) — selective publication by security tier; ✅ derived schema mirror at `/{name}/{version}/<schema>.json` (12 schemas live, tarball source-of-truth). Remaining: 4 high-stakes `core.openwop.{ai,http,mcp,triggers}` packs gated on external audit (added to `SECURITY/external-audit-engagement.md` §2.1 scope); `core.openwop.agent-examples` (`runtime: remote`); lockfile semantics; deliberately-misbehaving pack for memory-cap / ABI-mismatch positive paths. |
 | MCP / A2A composition | B | Roundtrip conformance fixtures |
 | Scale / production operations | C+ | Production profile for queueing, retention, retries, backpressure |
 | Governance / ecosystem | C+ | Public leaderboard and non-steward implementation evidence |
@@ -119,6 +119,7 @@ This document turns the protocol deep-dive review into implementation tracks. It
 **Acceptance:**
 - ✅ `replay.md` includes retention, privacy, and scoring sections.
 - ✅ Conformance includes arbitrary-event fork and deterministic replay scenarios (mid-fromSeq terminal + mid-fromSeq replay-mode determinism + mid-fromSeq branch-mode terminal with empty overlay).
+- ✅ LLM cache-key recipe normated at `spec/v1/replay.md` §"LLM cache-key recipe" (§A cache-relevant fields, §B RFC 8785 JCS + SHA-256 + lowercase hex construction, §C layering with `idempotency.md` Layer 2, §D cross-host determinism invariant, §E migration). Placeholder scenario `conformance/src/scenarios/replay-llm-cache-key.test.ts` landed at `it.todo()` per §D — assertions activate when the first reference host implements LLM-calling nodes (today both reference hosts execute deterministic-noop fixtures only).
 
 ## Track 6: MCP And A2A Proof
 
@@ -144,7 +145,7 @@ This document turns the protocol deep-dive review into implementation tracks. It
 - ✅ Deploy read-only `packs.openwop.dev` — scaffold landed at `registry/` (2026-05-10): multi-target Firebase Hosting config, all four endpoint shapes (`.well-known/openwop-registry`, `v1/index.json`, `v1/packs/{name}`, `v1/packs/{name}/-/{version}.{json,tgz,sig}`), local-dev server + idempotent index builder, CI publish workflow with integrity + signature validation gates. GCP hosting provisioned; first deploy lands when artifacts are populated.
 - Publish one signed example pack — `vendor.openwop.rust-hello@1.0.0` manifests committed; `.tgz` + `.sig` pending Rust toolchain + key ceremony.
 - ✅ Document client verification UX and registry failure modes — `registry/README.md` + `registry-operations.md`.
-- Specify dependency resolution and lockfile behavior — v1.2 candidate.
+- Specify dependency resolution and lockfile behavior.
 - ✅ Draft WASM ABI for `language: wasm` — landed at `RFCS/0008-wasm-abi.md` (Draft, 2026-05-10).
 
 **Acceptance:**
@@ -202,7 +203,7 @@ This document turns the protocol deep-dive review into implementation tracks. It
 - ✅ Six RFC files in `RFCS/` at `Active` status or higher (`0002-agent-identity-and-reasoning-events.md` through `0007-dispatch.md`, landed 2026-05-10).
 - ✅ `README.md` multi-agent table cross-links to each RFC by filename.
 - ✅ Integration-seams audit reconciled 2026-05-11 — `docs/MULTI-AGENT-INTEGRATION-GAPS.md` is now ARCHIVED with every Phase-1-through-6 surface marked closed with a landing path. RFCs 0002–0007 are eligible for promotion from `Active` to `Accepted`.
-- Remaining: Conformance scenarios that exercise multi-agent surfaces (`dispatchLoop.test.ts`, et al.) cite the normative spec doc, not just a schema. (Tests exist; descriptions need updating to reference RFCs.)
+- ✅ Conformance scenarios that exercise multi-agent surfaces cite the normative RFC in their top-of-file docstring. Verified 2026-05-12: `dispatchLoop.test.ts` cites RFC 0007; `conversationCapabilityNegotiation.test.ts` / `conversationLifecycle.test.ts` / `conversationReplayDeterminism.test.ts` / `conversationVsLegacySuspend.test.ts` cite `RFCS/0005-conversation.md`; `agentMemoryCrossTenantIsolation.test.ts` / `agentMemoryRedactionContract.test.ts` / `agentMemoryRoundTrip.test.ts` / `agentMemoryTtlExpiry.test.ts` cite `RFCS/0004-memory-layer.md`. Earlier note ("descriptions need updating to reference RFCs") was stale.
 - ✅ `AgentRef` positioning addendum landed at `spec/v1/agent-ref-positioning.md` (DID / A2A AgentCard / AGNTCY composition rules + translation table).
 
 ## Track 11: Observability Verification Harness — partially closed 2026-05-11, OTLP/protobuf landed 2026-05-12
@@ -215,8 +216,8 @@ This document turns the protocol deep-dive review into implementation tracks. It
 **Status update (2026-05-12):** ✅ OTLP/HTTP-protobuf path landed. `conformance/src/lib/otlp-protobuf.ts` is a hand-rolled decoder for the OTLP subset the conformance suite asserts on (ExportTraceServiceRequest + ExportMetricsServiceRequest; AnyValue oneof with string / int / double / bool / array / kvlist / bytes variants; KeyValue attributes; Span trace_id / span_id / parent_span_id / name / start + end fixed64; NumberDataPoint as_double + sfixed64 as_int). Zero new npm dependencies. The collector's `_handle` now routes on `Content-Type`: `application/x-protobuf` (or `application/protobuf`) decodes via the new module; `application/json` (or absent header) decodes via the existing JSON path; other content types return `415` with a canonical envelope. Output shape is JSON-equivalent so `_ingestTraces` / `_ingestMetrics` are unchanged. Unit tests at `conformance/src/lib/otlp-protobuf.test.ts` round-trip 18 cases through a test-only `PbWriter` helper.
 
 **Remaining for full Track 11 closure:**
-- OTLP/gRPC path — even bigger lift; deferred to a v1.2+ track.
-- Conformance docs/operator-guide for the `--no-file-parallelism` requirement on OTel scenarios.
+- ✅ Conformance operator-guide for the `--no-file-parallelism` requirement on OTel scenarios — documented at `conformance/README.md:69` inside the `OPENWOP_OTEL_COLLECTOR=true` env-var description ("**Run OTel scenarios with `--no-file-parallelism`** — each vitest worker spawns its own collector and only one can bind the same port, so concurrent file execution causes ephemeral-port fallbacks…").
+- OTLP/gRPC path — bigger lift; tracked as a follow-up.
 
 ## Track 11 (original): Observability Verification Harness
 
@@ -303,7 +304,7 @@ These items convert "very good documentation by one team" into "a protocol other
 8. **Track 12 — Python reference host** for cross-language proof.
 9. **Track 11 — OTel verification harness** so observability claims are mechanically tested.
 10. **Track 6 — MCP and A2A roundtrip conformance fixtures.**
-11. **Track 5 — LLM cache-key recipe** (still open even though replay-fork-arbitrary landed). Two hosts must compute the same cache key for the same provider request.
+11. **Track 5 — LLM cache-key recipe** ✅ Spec landed at `replay.md` §"LLM cache-key recipe" (§A–§E). Placeholder scenario `replay-llm-cache-key.test.ts` at `it.todo()` per §D — activates when the first reference host implements LLM-calling nodes.
 12. **Track 13 — `pause/resume`, `429` envelope, append-ordering, `configurableSchema`** land additively inside v1.0 (no minor bump per `COMPATIBILITY.md` §2.1).
 
 ### Phase 3 — Ecosystem (weeks 18–36)
