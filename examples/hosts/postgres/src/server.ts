@@ -80,6 +80,7 @@ import {
   fanOutEvent,
   WebhookUrlRejected,
 } from './webhooks.js';
+import { resolveCanarySecret, REFERENCE_SECRETS_CAPABILITY } from './secrets.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const HOST = process.env.OPENWOP_HOST ?? '127.0.0.1';
@@ -152,6 +153,7 @@ interface RunRow {
   parent_run_id: string | null;
   parent_node_id: string | null;
   configurable_json: Record<string, unknown> | null;
+  variables_json: Record<string, unknown> | null;
 }
 
 interface EventRow {
@@ -691,6 +693,59 @@ async function executeNode(
         await appendEvent(runId, 'node.cancelled', { nodeId: node.id });
         endNodeSpan(runId, node.id, 'cancelled');
         return 'cancelled';
+      }
+      break;
+    }
+
+    case 'conformance.secret.echo': {
+      // openwop-smoke-byok-roundtrip fixture. Resolve a host-provisioned
+      // secret by id, then emit `{secretSha256, secretLength}` into the
+      // run's variables. The raw value NEVER leaves the resolver — per
+      // observability.md §"Redaction" + threat-model-secret-leakage.md
+      // §SR-1, only the hash + length appear on any observable surface
+      // (variables, events, debug bundle, logs, webhook envelope).
+      const cfg = (node.config ?? {}) as { secretId?: string };
+      const secretId = typeof cfg.secretId === 'string' ? cfg.secretId : null;
+      if (!secretId) {
+        const err = {
+          code: 'validation_error',
+          message: `conformance.secret.echo (node "${node.id}") MUST declare config.secretId.`,
+        };
+        await appendEvent(runId, 'node.failed', { nodeId: node.id, data: err });
+        runFailureErrors.set(runId, err);
+        endNodeSpan(runId, node.id, 'failed');
+        return 'failed';
+      }
+      const resolved = resolveCanarySecret(secretId);
+      if (resolved === null) {
+        const err = {
+          code: 'credential_unavailable',
+          message: `Secret "${secretId}" is not provisioned on this host.`,
+        };
+        await appendEvent(runId, 'node.failed', { nodeId: node.id, data: err });
+        runFailureErrors.set(runId, err);
+        endNodeSpan(runId, node.id, 'failed');
+        return 'failed';
+      }
+      // SR-1: hash + length only; never the raw cleartext.
+      const secretSha256 = createHash('sha256').update(resolved, 'utf8').digest('hex');
+      const secretLength = resolved.length;
+      // Persist into variables_json so the test driver can verify the
+      // shape (the byok-roundtrip test reads `variables['resolve-secret']`).
+      {
+        const q = await querier();
+        await withTransaction(q, async () => {
+          const res = await q.query<{ variables_json: Record<string, unknown> | null }>(
+            'SELECT variables_json FROM runs WHERE run_id = $1',
+            [runId],
+          );
+          const current = (res.rows[0]?.variables_json ?? {}) as Record<string, unknown>;
+          current[node.id] = { secretSha256, secretLength };
+          await q.query('UPDATE runs SET variables_json = $1 WHERE run_id = $2', [
+            JSON.stringify(current),
+            runId,
+          ]);
+        });
       }
       break;
     }
@@ -1377,6 +1432,10 @@ const SUPPORTED_NODE_TYPES = new Set([
   'core.clarificationGate',
   'core.interrupt',
   'core.subWorkflow',
+  // Phase H.1 — BYOK / secret resolver canary node. The fixture
+  // (openwop-smoke-byok-roundtrip) emits {secretSha256, secretLength}
+  // into variables; the raw value never leaves the resolver.
+  'conformance.secret.echo',
 ]);
 
 function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
@@ -1388,7 +1447,10 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
   const advertisedFixtures = Array.from(workflows.values())
     .filter(
       (wf) =>
-        wf.id.startsWith('conformance-') &&
+        // Advertise both `conformance-*` (standard conformance fixtures)
+        // and `openwop-smoke-*` (end-to-end smoke fixtures, e.g., BYOK
+        // roundtrip). Mirrors the SQLite reference host's filter.
+        (wf.id.startsWith('conformance-') || wf.id.startsWith('openwop-smoke-')) &&
         wf.nodes.every((n) => SUPPORTED_NODE_TYPES.has(n.typeId)),
     )
     .map((wf) => wf.id);
@@ -1439,6 +1501,23 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
         webhooks: {
           supported: true,
           signatureAlgorithms: ['v1'],
+        },
+        // Phase H.1 — capabilities.md §`secrets`. Host implements
+        // `host-managed` resolution for the canary secret id;
+        // production deployers extend `resolveCanarySecret` to a real
+        // KMS/Vault. Per SR-1, only the hash + length appear on any
+        // observable surface; cleartext never leaves the resolver.
+        secrets: REFERENCE_SECRETS_CAPABILITY,
+        // Phase H.1 — capabilities.md §`aiProviders`. BYOK-ready
+        // advertisement: the host's secret resolver accepts
+        // `RunOptions.configurable.ai.credentialRef` for the listed
+        // providers. Actual provider routing + `core.llm.*` typeIds
+        // land in H.1″ — until then, callers can resolve credentials
+        // through the canary path but `core.llm.chat` is gated by
+        // capability_required.
+        aiProviders: {
+          supported: ['anthropic', 'openai', 'gemini'],
+          byok: ['anthropic', 'openai', 'gemini'],
         },
         runs: {
           pauseResume: { supported: true },
@@ -1845,6 +1924,11 @@ async function handleGetRun(req: IncomingMessage, res: ServerResponse, runId: st
     // "this run was created with {recursionLimit: 3, ...}". Omitted
     // when the run was created without an overlay.
     ...(row.configurable_json ? { configurable: row.configurable_json } : {}),
+    // Per-run variables (channel writes, identity passthrough, BYOK
+    // secret-resolver outputs like `{secretSha256, secretLength}`). The
+    // raw secret value never lands here per SR-1 — only the redacted
+    // shape the executor wrote during node execution.
+    ...(row.variables_json ? { variables: row.variables_json } : {}),
     ...(currentNodeId ? { currentNodeId } : {}),
     ...(interrupt ? { interrupt } : {}),
     ...(childRuns.length > 0 ? { childRuns } : {}),
