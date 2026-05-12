@@ -1,0 +1,31 @@
+{
+  "name": "vendor.openwop.misbehaving",
+  "version": "1.0.0",
+  "description": "Deliberately-misbehaving WASM node pack for openwop conformance — exercises RFC 0008 §K memory ceiling enforcement. Fixture-only; NOT for registry publication.",
+  "author": "openwop project",
+  "license": "Apache-2.0",
+  "engines": {
+    "openwop": ">=1.1 <2.0.0"
+  },
+  "nodes": [
+    {
+      "typeId": "vendor.openwop.misbehaving.memory-bomb",
+      "version": "1.0.0",
+      "category": "examples",
+      "role": "transform",
+      "label": "Memory bomb",
+      "description": "Allocates beyond the host's advertised wasm memoryPagesMax. Used by conformance to verify cap.breached emission per RFC 0008 §K."
+    }
+  ],
+  "runtime": {
+    "language": "wasm",
+    "entry": "target/wasm32-unknown-unknown/release/rust_misbehaving_memory.wasm",
+    "format": "wasm",
+    "minRuntimeVersion": "1",
+    "wasm": {
+      "abiVersion": 1,
+      "memoryPagesInitial": 16,
+      "memoryPagesMax": 1024
+    }
+  }
+}

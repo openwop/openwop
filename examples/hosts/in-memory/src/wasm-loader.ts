@@ -53,7 +53,13 @@ export interface WasmNodeRequest {
 export type WasmNodeResponse =
   | { readonly outcome: 'completed'; readonly output: unknown }
   | { readonly outcome: 'suspended'; readonly interrupt: unknown }
-  | { readonly outcome: 'failed'; readonly error: { code: string; message: string; details?: unknown } };
+  | { readonly outcome: 'failed'; readonly error: { code: string; message: string; details?: unknown } }
+  | {
+      readonly outcome: 'cap-breached';
+      readonly kind: 'wasm-memory' | 'wasm-fuel' | 'wasm-execution-time';
+      readonly limit: number;
+      readonly observed: number;
+    };
 
 /** Host-side run state the loader reads/writes during a node invocation. */
 export interface WasmHostBridge {
@@ -66,7 +72,14 @@ export interface WasmHostBridge {
 }
 
 interface ModuleExports {
-  memory: WebAssembly.Memory;
+  // Extend the lib WebAssembly.Memory with the methods we use that
+  // aren't in the ES2022 lib (which is our tsconfig surface). The DOM
+  // lib has these; we declare them here so the in-memory host
+  // tsconfig doesn't have to depend on DOM types.
+  memory: WebAssembly.Memory & {
+    grow(delta: number): number;
+    readonly buffer: ArrayBuffer;
+  };
   openwop_abi_version(): number;
   openwop_pack_name(): bigint | [number, number]; // packed i64 or multi-value
   openwop_node_count(): number;
@@ -251,6 +264,9 @@ export async function loadWasmPack(
       }
 
       currentBridge = bridge;
+      // Snapshot memory usage at the start so the catch block can attribute
+      // a trap to a memory-cap breach when the module exhausts its cap mid-call.
+      const memoryMaxBytes = memoryPagesMax * 65536;
       try {
         const reqJson = JSON.stringify({ abiVersion: ABI_VERSION, ...request });
         const req = writeString(reqJson);
@@ -258,13 +274,61 @@ export async function loadWasmPack(
         try {
           resPacked = exports.openwop_node_invoke(nodeIndex, req.ptr, req.len);
         } finally {
-          exports.openwop_free(req.ptr, req.len);
+          // Guard the free against a trapped instance — once the WASM memory
+          // is detached we can't free anything anyway.
+          try {
+            exports.openwop_free(req.ptr, req.len);
+          } catch {
+            // Trapped module — nothing to free.
+          }
         }
         const res = unpackPtrLen(resPacked);
         const resJson = readString(res.ptr, res.len);
         exports.openwop_free(res.ptr, res.len);
         return JSON.parse(resJson) as WasmNodeResponse;
       } catch (err) {
+        // Classify the trap. WASM allocators in `panic = "abort"` mode
+        // emit an `unreachable` instruction when memory growth is
+        // refused — that surfaces as `WebAssembly.RuntimeError` with
+        // `name === 'RuntimeError'`. Rust's wasm32 allocator (dlmalloc)
+        // refuses to grow FAST when the requested size exceeds the
+        // module's memory-section maximum, so the buffer doesn't
+        // visibly grow before the trap. We probe `memory.grow(1)`
+        // after the trap to ask the runtime "is more memory
+        // available?" — if it returns -1, the module is at its
+        // memory ceiling and the trap was a cap breach.
+        //
+        // Production hosts running under Wasmtime can detect typed
+        // trap reasons directly (`MemoryOutOfBounds`, `OutOfFuel`,
+        // etc.); this probe is the V8/Node fallback since the
+        // standard `WebAssembly` namespace doesn't expose typed trap
+        // reasons.
+        const isWasmTrap = err instanceof Error && err.name === 'RuntimeError';
+        let memoryExhausted = false;
+        let observedBytes = 0;
+        try {
+          observedBytes = exports.memory.buffer.byteLength;
+          // memory.grow returns the previous page count on success or
+          // -1 on failure. Probe with `memoryPagesMax` pages — if the
+          // module declared its memory section with maximum <=
+          // memoryPagesMax, this request MUST fail. If grow succeeds
+          // somehow, the trap wasn't a memory issue.
+          const growResult = exports.memory.grow(memoryPagesMax);
+          if (growResult === -1) memoryExhausted = true;
+        } catch {
+          // Memory access fails after detachment in some runtimes —
+          // treat as exhausted.
+          observedBytes = memoryMaxBytes;
+          memoryExhausted = true;
+        }
+        if (isWasmTrap && memoryExhausted) {
+          return {
+            outcome: 'cap-breached',
+            kind: 'wasm-memory',
+            limit: memoryMaxBytes,
+            observed: observedBytes,
+          };
+        }
         const message = err instanceof Error ? err.message : String(err);
         return {
           outcome: 'failed',

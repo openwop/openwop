@@ -1,0 +1,19 @@
+[package]
+name = "rust-misbehaving-memory"
+version = "1.0.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Deliberately-misbehaving WASM node pack for openwop conformance — exercises RFC 0008 §K memory ceiling enforcement. NOT for registry publication; fixture-only."
+
+[lib]
+name = "rust_misbehaving_memory"
+crate-type = ["cdylib"]
+
+[dependencies]
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

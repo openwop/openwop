@@ -314,6 +314,28 @@ async function executeNode(
           });
           return 'failed';
         }
+        if (result.outcome === 'cap-breached') {
+          // RFC 0008 §K — emit `cap.breached` before terminating the run so
+          // observers can attribute the failure to the resource cap, then
+          // fail the node + run with `wasm_cap_breached`.
+          appendEvent(run, 'cap.breached', {
+            data: {
+              kind: result.kind,
+              limit: result.limit,
+              observed: result.observed,
+              nodeId: node.id,
+            },
+          });
+          run.error = {
+            code: 'wasm_cap_breached',
+            message: `WASM ${result.kind} cap breached on node ${node.id}: observed ${result.observed} bytes vs limit ${result.limit} bytes.`,
+          };
+          appendEvent(run, 'node.failed', {
+            nodeId: node.id,
+            data: { code: 'wasm_cap_breached', typeId: node.typeId, kind: result.kind },
+          });
+          return 'failed';
+        }
         if (result.outcome === 'suspended') {
           // Reference host doesn't fully implement WASM-driven suspends;
           // treat as a soft failure with a recognizable code.
@@ -537,6 +559,30 @@ function handleOpenApi(_req: IncomingMessage, res: ServerResponse): void {
 function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
   // Per spec/v1/capabilities.md: protocolVersion / supportedEnvelopes /
   // schemaVersions / limits required. No auth required for /.well-known/openwop.
+
+  // Advertise the conformance + smoke fixtures the host has loaded so
+  // conformance scenarios can gate on `isFixtureAdvertised(...)`.
+  const advertisedFixtures = Array.from(workflows.keys()).filter(
+    (id) => id.startsWith('conformance-') || id.startsWith('openwop-smoke-'),
+  );
+
+  // Advertise WASM nodePackRuntime support when at least one WASM pack
+  // is loaded. RFC 0008 §H requires `abiVersions[]` and §K requires
+  // `maxMemoryBytes` (capability the host enforces — the in-memory
+  // loader emits `cap.breached` with `kind: "wasm-memory"` when a
+  // module trips its memory ceiling).
+  const wasmSupported = wasmTypeRegistry.size > 0;
+  const capabilities: Record<string, unknown> = {};
+  if (wasmSupported) {
+    capabilities.nodePackRuntimes = {
+      wasm: {
+        supported: true,
+        abiVersions: [1],
+        maxMemoryBytes: 1024 * 65536, // 1024 pages — matches pack.json default
+      },
+    };
+  }
+
   const payload = {
     protocolVersion: '1.0',
     implementation: {
@@ -556,6 +602,8 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
     debugBundle: {
       supported: true,
     },
+    fixtures: advertisedFixtures,
+    capabilities,
   };
   sendJSON(res, 200, payload, { 'Cache-Control': 'public, max-age=300' });
 }
@@ -893,7 +941,16 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   if (m && method === 'GET') return handleEventsPoll(req, res, m[1]!, url);
 
   m = RUN_EVENTS_SSE_PATTERN.exec(path);
-  if (m && method === 'GET') return handleEventsSse(req, res, m[1]!);
+  if (m && method === 'GET') {
+    // Content-negotiate: clients explicitly asking for JSON (Accept:
+    // application/json without text/event-stream) get the JSON poll
+    // response; everyone else gets the SSE stream. Conformance scenarios
+    // and JSON-only clients can read the events without parsing SSE.
+    const accept = (req.headers.accept ?? '').toLowerCase();
+    const wantsJson = accept.includes('application/json') && !accept.includes('text/event-stream');
+    if (wantsJson) return handleEventsPoll(req, res, m[1]!, url);
+    return handleEventsSse(req, res, m[1]!);
+  }
 
   m = RUN_DEBUG_BUNDLE_PATTERN.exec(path);
   if (m && method === 'GET') return handleDebugBundle(req, res, m[1]!);

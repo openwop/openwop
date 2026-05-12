@@ -1,0 +1,13 @@
+# Constrain the wasm module's memory section to 1024 pages (64 MiB) so
+# the host's advertised cap actually has bite. Without --max-memory, the
+# wasm32-unknown-unknown target emits a memory section with no upper
+# bound and the host can't trap on cap breach.
+#
+# 64 MiB (1024 pages × 64 KiB) matches the misbehaving pack's
+# pack.json memoryPagesMax. The 1 GiB allocation in
+# `openwop_node_invoke` exceeds this by 16× and traps reliably.
+
+[target.wasm32-unknown-unknown]
+rustflags = [
+  "-C", "link-arg=--max-memory=67108864",
+]

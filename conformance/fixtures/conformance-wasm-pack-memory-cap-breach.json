@@ -1,0 +1,23 @@
+{
+  "id": "conformance-wasm-pack-memory-cap-breach",
+  "name": "Conformance: WASM Pack Memory-Cap Breach (Positive Path)",
+  "version": "1.0",
+  "description": "RFC 0008 §K fixture. Invokes the deliberately-misbehaving Rust pack (`vendor.openwop.misbehaving.memory-bomb`) which attempts a 1 GiB allocation beyond the host's `memoryPagesMax` ceiling. Hosts MUST trap or terminate the instance and emit `cap.breached` with `kind: 'wasm-memory'`, then terminate the run as `failed`. The misbehaving pack lives at `examples/packs/rust-misbehaving-memory/`; build it with `cargo build --target wasm32-unknown-unknown --release` before running the scenario end-to-end. Fixture-only — the pack is NOT signed for the registry.",
+  "nodes": [
+    {
+      "id": "bomb",
+      "typeId": "vendor.openwop.misbehaving.memory-bomb",
+      "name": "Memory bomb",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "wasm", "node-pack", "rfc-0008", "cap-breach", "misbehaving"] },
+  "settings": { "timeout": 0 }
+}
