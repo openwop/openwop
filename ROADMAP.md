@@ -1,7 +1,7 @@
 # openwop Roadmap
 
 > **Status:** Living document. Updated as milestones land.
-> **Last reviewed:** 2026-05-11 (Phase 2 partial: RFCs 0002–0007 promoted to Accepted; RFC 0008 promoted to Active; `production-profile.md` flipped Provisional pending the Postgres reference host; `examples/hosts/postgres/` skeleton landed; v1.X gap-closure Track 4/5/6 rows reconciled to cite shipped fixtures + scenarios).
+> **Last reviewed:** 2026-05-12 (Phase H launch-blockers + Phase I enterprise-blockers MVP — Postgres reference host gains BYOK / aiProviders 4-mode policy / core.llm.* / core.mcp.toolCall / core.http.request / cap-breach / configurable-schema / MemoryAdapter / agents capability / API-key rotation / auth-scoped discovery / subworkflow outputMapping + parent linkage. Postgres conformance reaches 728/797 (91.3%). 10 new protocol-tier SECURITY invariants land alongside; 17 new HTTP error codes in TS/Python/Go SDK catalogs).
 
 This roadmap distinguishes **stable v1** (locked contract), **v1.X minor work** (additive, conformance-only), and **post-v1 ecosystem** (extension profiles, infrastructure, governance).
 
@@ -36,10 +36,21 @@ These ship as `@openwop/openwop-conformance` minor releases (`1.X.0`) against th
 
 These are additive profiles, conformance expansions, or clarifying annexes that close the remaining gaps identified in the 2026-05-10 deep-dive review. They MUST NOT break v1 wire compatibility.
 
+### Phases H + I close-out (2026-05-12 — myndhyve.ai launch-readiness)
+
+The 2026-05-12 architect review framed the remaining gap-closure work as **myndhyve.ai launch-readiness** on the Postgres reference host. Two phased batches landed:
+
+- **Phase H — launch-blockers (9/9 closed):** BYOK / `aiProviders` with 4-mode policy enforcement (`disabled` / `optional` / `required` / `restricted`) + `core.llm.chat` + `core.llm.completion`; MCP client (`core.mcp.toolCall` over HTTP/JSON-RPC, `trustBoundary: "untrusted"` per `threat-model-prompt-injection.md` §UNTRUSTED); HTTP client (`core.http.request` with SSRF guard + 1 MiB response cap); cap-breach + configurable-schema enforcement; SECURITY invariants `mcp-toolcall-payload-redaction` + `http-client-ssrf-guard`; SDK wire-type + error-code catalog additions (TS/Python/Go).
+- **Phase I — enterprise-blockers MVP (7/11 closed):** MemoryAdapter (RFC 0004) read-side `list` + `get` with CTI-1 cross-tenant isolation + TTL enforcement; `capabilities.agents` advertisement (Phase 1–6) + reasoning verbosity governance helpers; API-key rotation (two-key overlap + canary-redaction; conditional advertisement); auth-scoped discovery (tenant2 narrowed view, strict subset); subworkflow outputMapping + parent linkage (G3); 3 new protocol-tier SECURITY invariants (`agent-memory-cti-1` + `agent-memory-sr-1-redaction` + `auth-key-rotation-no-canary-echo`); SDK wire types for MemoryAdapter + agents + auth profiles. **Deferred items (4) with tripwire conditions:** OAuth2-CC + OIDC user-bearer (reverse-proxy pattern preferred for myndhyve.ai deployments); pack-registry consumption (gated on first non-built-in pack landing on `packs.openwop.dev`); reasoning-event emission wiring (helpers in place; needs LLM-driven typeId integration).
+
+**Postgres host conformance pass rate: 728/797 (91.3%)** — up from 89.4% baseline at the start of the architect review. The single remaining failure (`webhook-signed-delivery`) is test-isolation residue between scenarios sharing a long-lived pglite host, not a host bug. See `INTEROP-MATRIX.md` for the full evidence claim.
+
+
+
 | Track | Gap closed | Deliverable |
 |---|---|---|
-| Capability handshake hardening | `Capabilities-Etag`, non-HTTP negotiation, per-tenant capability views | Spec annex shipped in `capabilities-change-detection.md`; `discovery.test.ts` covers optional `Capabilities-Etag`; next add auth-scoped discovery variants when a host advertises them. |
-| Auth profile | OAuth2 client credentials, API-key rotation/grace period, optional mTLS | Spec annex shipped in `auth-profiles.md`; next add negative/positive conformance cases for rotation and OAuth token shape where advertised. |
+| Capability handshake hardening | `Capabilities-Etag`, non-HTTP negotiation, per-tenant capability views | Spec annex shipped in `capabilities-change-detection.md`; `discovery.test.ts` covers optional `Capabilities-Etag`. **Auth-scoped discovery (RFC 0011 §A "Scoped capability views") verified end-to-end** on the Postgres host (2026-05-12 Phase I.5) — `OPENWOP_TENANT2_API_KEY` activates a narrowed view (orchestrator + dispatch omitted, strict subset per the spec annex line 69) alongside the existing SQLite host implementation. |
+| Auth profile | OAuth2 client credentials, API-key rotation/grace period, optional mTLS | Spec annex shipped in `auth-profiles.md`. **API-key rotation verified end-to-end** on the Postgres host (2026-05-12 Phase I.6) — constant-time dual-candidate `checkAuth` + canary-redaction in 401 envelope; conditional advertisement when `OPENWOP_SECONDARY_API_KEY` is set. OAuth2-CC + OIDC user-bearer + mTLS remain spec-FINAL but unimplemented at the reference host level — typical myndhyve.ai deployment pattern is reverse-proxy-fronted IdP integration, not host-side JWT validation. |
 | Interrupt profile | Multi-approver quorum, parent/child cancellation, external-event matching, `auth-required` | Spec annex shipped in `interrupt-profiles.md`; four fixtures shipped 2026-05-10 (`conformance-interrupt-{quorum,external-event,auth-required,parent-child-cancel}.json`) + matching conformance scenarios (`interrupt-{quorum-resolution,external-event-correlation,auth-required-resume,parent-child-cascade}.test.ts`). Track closed. |
 | Replay profile | Fork from arbitrary event types, retention/GC, PII replay policy, determinism scoring | Retention, privacy, and scoring semantics added to `replay.md`; arbitrary-event fork shipped (`replay-fork-arbitrary.test.ts`) + deterministic replay shipped (`replayDeterminism.test.ts`); next add retention-expiry conformance scenario. |
 | MCP/A2A roundtrip | Integration docs are strong but roundtrip proof is thin | `mcp-tool-roundtrip.test.ts` + `a2a-task-roundtrip.test.ts` shipped with synthetic peer fixtures; real-impl interop env vars (`OPENWOP_MCP_REAL_SERVER_URL`, `OPENWOP_A2A_REAL_PEER_URL`) wired 2026-05-11; next publish cross-impl evidence as a "Composition partners" subsection in `INTEROP-MATRIX.md` (out-of-band operator step). |

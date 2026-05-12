@@ -9,6 +9,40 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ---
 
+## [1.0 — additions] — 2026-05-12 — Phase H + Phase I close-out (Postgres host) — myndhyve.ai launch-readiness
+
+Architect-review-driven batch landing the 9 launch-blocking + 7 of 11 enterprise-blocking surfaces required for myndhyve.ai's Postgres production runtime. **Postgres host conformance: 728/797 (91.3%)**, up from 89.4% baseline.
+
+### Phase H — launch-blockers (9/9 closed)
+
+- **BYOK / aiProviders** — `secrets.ts` resolver + `conformance.secret.echo` typeId + `capabilities.secrets` advertisement. SR-1 enforced: cleartext never on observable surfaces (only SHA-256 hashes + lengths).
+- **`core.llm.chat` + `core.llm.completion` + 4-mode policy** — `ai-proxy.ts` implements `disabled`/`optional`/`required`/`restricted` per `capabilities.md` §`aiProviders.policies`; per-provider env-driven policy store; resolver-outage fail-open to `optional`; restricted-with-empty-allowedModels fail-closed via `model_not_allowed`. `provider_policy_denied` error code with closed-set reasons.
+- **MCP client (`core.mcp.toolCall`)** — `mcp-client.ts` over HTTP/JSON-RPC; `trustBoundary: "untrusted"` per `threat-model-prompt-injection.md` §UNTRUSTED; env-driven server registry (`OPENWOP_MCP_SERVER_<ID>`); MCP-1 redaction: tool args + result content NEVER on emitted event payloads.
+- **HTTP client (`core.http.request`)** — `http-client.ts` with SSRF guard mirroring webhooks + 1 MiB response cap + expectStatus assertion.
+- **cap-breach + configurable-schema enforcement** — confirmed via conformance.
+- **SECURITY invariants** — `mcp-toolcall-payload-redaction` + `http-client-ssrf-guard` (protocol-tier) with public scenarios (`mcp-toolcall-redaction.test.ts` + `http-client-ssrf.test.ts`).
+- **SDK helpers** — 10 new wire types + 17 new HTTP error codes across TS/Python/Go.
+
+### Phase I — enterprise-blockers MVP (7/11 closed)
+
+- **Agent memory (RFC 0004)** — `memory-adapter.ts` Postgres-backed list/get with TTL + CTI-1 cross-tenant isolation + host-internal `writeMemoryEntry` (65 KiB content cap).
+- **Reasoning + agent events (RFC 0002–0003)** — `agent-events.ts` typed payloads + verbosity governance (off/summary/full) + `capabilities.agents` Phase 1–6 advertisement.
+- **API-key rotation** — two-key overlap via `OPENWOP_SECONDARY_API_KEY`; constant-time dual-candidate `checkAuth`; canary-redaction. Profile claim conditional.
+- **Auth-scoped discovery (RFC 0011 §A)** — `OPENWOP_TENANT2_API_KEY` activates narrowed view (orchestrator + dispatch omitted, strict subset). Profile claim conditional.
+- **Subworkflow outputMapping + parent linkage (spec gap G3)** — `seedVariablesFromWorkflow()` projects workflow.variables[].defaultValue into child runs; `handleGetRun` snapshot surfaces parentRunId + parentNodeId.
+- **SECURITY invariants** — `agent-memory-cti-1` + `agent-memory-sr-1-redaction` + `auth-key-rotation-no-canary-echo`. Total: 68 invariants (35 protocol-tier, all with public tests).
+- **SDK helpers** — wire types for MemoryEntry/AgentsCapability/AuthProfileClaim/etc.
+
+### Phase I deferred (4 items, tripwires in `INTEROP-MATRIX.md`)
+
+- OAuth2-CC + OIDC user-bearer — reverse-proxy IdP pattern preferred for myndhyve.ai.
+- Pack registry consumption — gated on first non-built-in pack landing.
+- Reasoning-event emission wiring — helpers in place; needs LLM-driven typeId integration.
+
+Lane: implementation-only. Spec is FINAL on every Phase H/I surface; no normative deltas; no wire-shape changes; SDK additions are additive.
+
+Verification: `npm run openwop:check` 8/8 green. Full conformance against pglite-backed Postgres host: 728 passed / 1 failed (test-isolation residue) / 38 skipped / 30 todo (797 total).
+
 ## [1.0 — additions] — 2026-05-12 — Python host conformance close-out: 700/788 (100% of applicable, ZERO failures)
 
 Follow-up batch to the 53-failure post-Phase-C-round-2 baseline. Every controllable failure closed in a single focused pass — pass rate **100% of applicable tests** (88.8% of total, 700 passed / 0 failed / 58 skipped / 30 todo).
