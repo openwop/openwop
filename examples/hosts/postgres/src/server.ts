@@ -161,6 +161,7 @@ interface EventRow {
   node_id: string | null;
   data_json: unknown;
   timestamp: string;
+  causation_id: string | null;
 }
 
 interface RunEvent {
@@ -170,6 +171,9 @@ interface RunEvent {
   readonly nodeId: string | null;
   readonly data: unknown;
   readonly timestamp: string;
+  // run-event.schema.json §causationId. Required by RFC 0007 §E on
+  // core.dispatch's emitted events; optional elsewhere.
+  readonly causationId?: string;
 }
 
 // ─── Audit-log integrity state (initialized in start()) ──────────────────────
@@ -373,10 +377,32 @@ async function releaseClaim(runId: string): Promise<void> {
   );
 }
 
+// Carrier for the next-iteration target when a node returns 'loopback'.
+// RFC 0007 §D `next-worker`: dispatch routes control back to the
+// upstream orchestrator-supervisor. Mirrors the SQLite host's
+// loopbackTargets Map. Cleared by runWorkflow on each loopback outcome.
+const loopbackTargets = new Map<string, number>();
+
+// Carrier for specific run-level error envelopes when a node returns
+// 'failed'. Without this, runWorkflow's catch-all would mask
+// spec-defined codes like `capability_required` (capabilities.md
+// §"Unsupported capability — refusal contract") and `no_pending_decision`
+// (RFC 0007 §C). executeNode writes here BEFORE returning 'failed';
+// runWorkflow reads + clears.
+const runFailureErrors = new Map<string, { code: string; message: string }>();
+
+/** Canonical eventId format mirrors the events/poll response shape:
+ *  `evt-${runId}-${seq}`. Helper so causationId references resolve to
+ *  the same surface clients see.
+ */
+function makeEventId(runId: string, seq: number): string {
+  return `evt-${runId}-${seq}`;
+}
+
 async function appendEvent(
   runId: string,
   type: string,
-  opts: { nodeId?: string; data?: unknown } = {},
+  opts: { nodeId?: string; data?: unknown; causationId?: string } = {},
 ): Promise<RunEvent> {
   const q = await querier();
   // Race-free seq allocation: `UPDATE runs SET next_event_seq = next_event_seq + 1 ... RETURNING`
@@ -400,10 +426,11 @@ async function appendEvent(
       nodeId: opts.nodeId ?? null,
       data: opts.data ?? null,
       timestamp: new Date().toISOString(),
+      ...(opts.causationId !== undefined ? { causationId: opts.causationId } : {}),
     };
     await q.query(
-      `INSERT INTO events (run_id, seq, type, node_id, data_json, timestamp)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
+      `INSERT INTO events (run_id, seq, type, node_id, data_json, timestamp, causation_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [
         runId,
         seq,
@@ -411,6 +438,7 @@ async function appendEvent(
         ev.nodeId,
         ev.data === null ? null : JSON.stringify(ev.data),
         ev.timestamp,
+        opts.causationId ?? null,
       ],
     );
     return ev;
@@ -440,6 +468,7 @@ async function getEventsAfter(runId: string, afterSeq: number): Promise<RunEvent
     nodeId: r.node_id,
     data: r.data_json,
     timestamp: r.timestamp,
+    ...(r.causation_id !== null ? { causationId: r.causation_id } : {}),
   }));
 }
 
@@ -544,7 +573,44 @@ async function pruneIdempotency(): Promise<void> {
 
 // ─── Executor ────────────────────────────────────────────────────────────────
 
-type NodeOutcome = 'completed' | 'cancelled' | 'failed' | 'paused' | 'suspended';
+type NodeOutcome = 'completed' | 'cancelled' | 'failed' | 'paused' | 'suspended' | 'loopback';
+
+// Fixture-node `requires` registry per capabilities.md §"Runtime
+// capabilities". Production hosts wire this from each node-pack
+// manifest; the reference host hard-codes the conformance set.
+const FIXTURE_NODE_REQUIRES: Readonly<Record<string, readonly string[]>> = Object.freeze({
+  'conformance.requiresMissing': ['conformance.never-provided'],
+});
+
+// capabilities.md §"Unsupported capability — refusal contract" + §"Capability-gated
+// typeId map (normative)". Single source of truth for advertising +
+// refusing. Keep in sync with the discovery payload below.
+const GATED_TYPEID_MAP: Readonly<Record<string, { capability: string; advertisementPath: string }>> = Object.freeze({
+  'core.conversationGate': {
+    capability: 'conversationPrimitive',
+    advertisementPath: 'capabilities.conversationPrimitive',
+  },
+  'core.orchestrator.supervisor': {
+    capability: 'orchestrator.supported',
+    advertisementPath: 'capabilities.orchestrator.supported',
+  },
+  'core.dispatch': {
+    capability: 'dispatch.supported',
+    advertisementPath: 'capabilities.dispatch.supported',
+  },
+});
+
+// Capabilities this host advertises in /.well-known/openwop. Single
+// source of truth for both the discovery payload and the refusal
+// check; if a new capability is implemented, add it here AND in
+// handleDiscovery so the two stay aligned.
+const HOST_ADVERTISED_GATED_CAPABILITIES: ReadonlySet<string> = new Set([
+  'orchestrator.supported',
+  'dispatch.supported',
+  // conversationPrimitive is NOT advertised — the host doesn't
+  // implement core.conversationGate. Workflows referencing it are
+  // refused at run-create with capability_required.
+]);
 
 function sleep(ms: number, signal: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -584,6 +650,25 @@ async function executeNode(
     await appendEvent(runId, 'node.cancelled', { nodeId: node.id });
     return 'cancelled';
   }
+
+  // capabilities.md §"Runtime capabilities": a NodeModule that declares
+  // `requires: [<capId>]` MUST cause the run to fail with
+  // `capability_not_provided` if the host does not advertise the
+  // capability. Refusal happens BEFORE node.started so the offending
+  // node MUST NOT execute.
+  const requires = FIXTURE_NODE_REQUIRES[node.typeId];
+  if (requires && requires.length > 0) {
+    const advertised = new Set<string>(); // Postgres host advertises no `runtimeCapabilities`.
+    const missing = requires.find((cap) => !advertised.has(cap));
+    if (missing !== undefined) {
+      runFailureErrors.set(runId, {
+        code: 'capability_not_provided',
+        message: `Node "${node.id}" (typeId "${node.typeId}") requires capability "${missing}" which the host does not advertise.`,
+      });
+      return 'failed';
+    }
+  }
+
   await appendEvent(runId, 'node.started', { nodeId: node.id });
   startNodeSpan(runId, node.id, node.typeId);
 
@@ -641,6 +726,193 @@ async function executeNode(
       return 'suspended';
     }
 
+    case 'core.orchestrator.supervisor': {
+      // RFC 0006 §C — orchestrator emits one OrchestratorDecision per
+      // tick. For the conformance-dispatch-loop fixture (2-node loop),
+      // behavior is deterministic: first tick → `next-worker`,
+      // subsequent ticks → `terminate`. Production orchestrators
+      // delegate to an LLM; this reference uses the event-log decision
+      // count as state so replay is trivially deterministic.
+      const q = await querier();
+      const priorRes = await q.query<{ n: string }>(
+        `SELECT COUNT(*)::text AS n FROM events WHERE run_id = $1 AND type = 'runOrchestrator.decided'`,
+        [runId],
+      );
+      const prior = Number(priorRes.rows[0]?.n ?? '0');
+      const agentId = (node.config?.agentId as string | undefined) ?? 'core.reference-supervisor';
+      const decision = prior === 0
+        ? { kind: 'next-worker' as const, nextWorkerIds: ['conformance-noop'] }
+        : { kind: 'terminate' as const, reason: 'goal-reached' };
+      await appendEvent(runId, 'runOrchestrator.decided', {
+        nodeId: node.id,
+        data: { agentId, decision },
+      });
+      break;
+    }
+
+    case 'core.dispatch': {
+      // RFC 0007 §C — read the latest `runOrchestrator.decided` event
+      // and translate its decision into a runtime action.
+      const q = await querier();
+      const decRes = await q.query<{ seq: number; data_json: unknown }>(
+        `SELECT seq, data_json FROM events
+         WHERE run_id = $1 AND type = 'runOrchestrator.decided'
+         ORDER BY seq DESC LIMIT 1`,
+        [runId],
+      );
+      if (decRes.rows.length === 0) {
+        const err = { code: 'no_pending_decision', message: `core.dispatch (node "${node.id}") found no upstream runOrchestrator.decided event.` };
+        await appendEvent(runId, 'node.failed', { nodeId: node.id, data: err });
+        runFailureErrors.set(runId, err);
+        endNodeSpan(runId, node.id, 'failed');
+        return 'failed';
+      }
+      const decisionRow = decRes.rows[0]!;
+      const decisionEventId = makeEventId(runId, Number(decisionRow.seq));
+      const payload = decisionRow.data_json as {
+        agentId?: string;
+        decision?: { kind?: string; nextWorkerIds?: string[]; reason?: string; prompt?: string };
+      } | null;
+      const kind = payload?.decision?.kind;
+
+      if (kind === 'terminate') {
+        // RFC 0007 §D `terminate`: emit node.completed (causationId-
+        // linked) with the optional `reason` from the decision. The
+        // outer for-loop's natural run.completed carries through.
+        const reason = payload?.decision?.reason;
+        await appendEvent(runId, 'node.completed', {
+          nodeId: node.id,
+          causationId: decisionEventId,
+          data: { decision: 'terminate', ...(reason !== undefined ? { reason } : {}) },
+        });
+        endNodeSpan(runId, node.id, 'completed');
+        return 'completed';
+      }
+
+      if (kind === 'next-worker') {
+        // RFC 0007 §D `next-worker`: dispatch a child run via the
+        // existing core.subWorkflow machinery for nextWorkerIds[0].
+        // After child terminal, route back to the orchestrator via
+        // DAG loopback.
+        const nextWorkerIds = Array.isArray(payload?.decision?.nextWorkerIds)
+          ? (payload!.decision!.nextWorkerIds as string[])
+          : [];
+        if (nextWorkerIds.length === 0) {
+          const err = { code: 'no_pending_decision', message: `core.dispatch (node "${node.id}") next-worker decision MUST carry nextWorkerIds[].` };
+          await appendEvent(runId, 'node.failed', { nodeId: node.id, causationId: decisionEventId, data: err });
+          runFailureErrors.set(runId, err);
+          endNodeSpan(runId, node.id, 'failed');
+          return 'failed';
+        }
+        const childWorkflowId = nextWorkerIds[0]!;
+        if (!workflows.has(childWorkflowId)) {
+          const err = {
+            code: 'unknown_child_workflow',
+            message: `core.dispatch (node "${node.id}") next-worker references unknown workflowId "${childWorkflowId}".`,
+          };
+          await appendEvent(runId, 'node.failed', { nodeId: node.id, causationId: decisionEventId, data: err });
+          runFailureErrors.set(runId, err);
+          endNodeSpan(runId, node.id, 'failed');
+          return 'failed';
+        }
+        // Idempotent reuse + create.
+        const existingRes = await q.query<{ run_id: string }>(
+          'SELECT run_id FROM runs WHERE parent_run_id = $1 AND parent_node_id = $2',
+          [runId, node.id],
+        );
+        let childRunId = existingRes.rows[0]?.run_id;
+        if (!childRunId) {
+          childRunId = `run-${randomUUID()}`;
+          const childStartedAt = new Date().toISOString();
+          await q.query(
+            `INSERT INTO runs (run_id, workflow_id, status, inputs_json, started_at, parent_run_id, parent_node_id)
+             VALUES ($1, $2, 'pending', '{}'::JSONB, $3, $4, $5)`,
+            [childRunId, childWorkflowId, childStartedAt, runId, node.id],
+          );
+          await appendEvent(runId, 'node.dispatched', {
+            nodeId: node.id,
+            causationId: decisionEventId,
+            data: { childRunId, childWorkflowId },
+          });
+          const innerChildRunId = childRunId;
+          void runWorkflow(innerChildRunId).catch(async (err: unknown) => {
+            const message = err instanceof Error ? err.message : String(err);
+            await appendEvent(innerChildRunId, 'run.failed', { data: { code: 'internal', message } });
+            await setRunTerminal(innerChildRunId, 'failed', { code: 'internal', message });
+          });
+        }
+        // Poll for child terminal.
+        while (true) {
+          const refreshedParent = await loadRun(runId);
+          if (refreshedParent?.status === 'cancelling') {
+            await cancelRunInternal(childRunId, 'parent-cancelled');
+            await appendEvent(runId, 'node.cancelled', { nodeId: node.id, causationId: decisionEventId });
+            endNodeSpan(runId, node.id, 'cancelled');
+            return 'cancelled';
+          }
+          const child = await loadRun(childRunId);
+          if (!child) {
+            const err = { code: 'child_missing', message: `core.dispatch child run "${childRunId}" disappeared.` };
+            await appendEvent(runId, 'node.failed', { nodeId: node.id, causationId: decisionEventId, data: err });
+            runFailureErrors.set(runId, err);
+            endNodeSpan(runId, node.id, 'failed');
+            return 'failed';
+          }
+          if (child.status === 'completed' || child.status === 'failed' || child.status === 'cancelled') {
+            const childStatus = child.status as 'completed' | 'failed' | 'cancelled';
+            if (childStatus === 'completed') {
+              await appendEvent(runId, 'node.completed', {
+                nodeId: node.id,
+                causationId: decisionEventId,
+                data: { outputs: { childRunId, childStatus } },
+              });
+              endNodeSpan(runId, node.id, 'completed');
+              // DAG cycle back to orchestrator-supervisor.
+              const wfRow = await loadRun(runId);
+              const workflow = wfRow ? workflows.get(wfRow.workflow_id) : null;
+              const supervisorIdx = workflow
+                ? workflow.nodes.findIndex((n) => n.typeId === 'core.orchestrator.supervisor')
+                : -1;
+              if (supervisorIdx >= 0) {
+                loopbackTargets.set(runId, supervisorIdx);
+                return 'loopback';
+              }
+              await q.query("UPDATE runs SET status = 'running' WHERE run_id = $1", [runId]);
+              return 'completed';
+            }
+            const err = {
+              code: 'child_failed',
+              message: `core.dispatch child run "${childRunId}" terminated '${childStatus}'.`,
+            };
+            await appendEvent(runId, 'node.failed', {
+              nodeId: node.id,
+              causationId: decisionEventId,
+              data: { ...err, outputs: { childRunId, childStatus } },
+            });
+            runFailureErrors.set(runId, err);
+            endNodeSpan(runId, node.id, 'failed');
+            return 'failed';
+          }
+          try {
+            await sleep(50, signal);
+          } catch {
+            // signal aborted; loop top will see cancelling.
+          }
+        }
+      }
+
+      // Unsupported decision kind (ask-user deferred — Postgres host
+      // doesn't yet wire conversation primitive).
+      const err = {
+        code: 'unsupported_decision_kind',
+        message: `core.dispatch (node "${node.id}") received decision.kind="${kind ?? '<missing>'}", which the host does not implement.`,
+      };
+      await appendEvent(runId, 'node.failed', { nodeId: node.id, causationId: decisionEventId, data: err });
+      runFailureErrors.set(runId, err);
+      endNodeSpan(runId, node.id, 'failed');
+      return 'failed';
+    }
+
     case 'core.interrupt': {
       const config = (node.config ?? {}) as {
         kind?: string;
@@ -679,16 +951,23 @@ async function executeNode(
     }
 
     case 'core.subWorkflow': {
+      // node-packs.md §"core.subWorkflow contract" (Phase A.4). Output
+      // shape: `data.outputs.{childRunId, childStatus}`. outputMapping
+      // copies named child variables → parent vars on child terminal.
       const config = (node.config ?? {}) as {
         workflowId?: string;
         propagateCancellation?: boolean;
+        outputMapping?: Record<string, string>;
+        onChildFailure?: 'fail-parent' | 'absorb';
       };
       const childWorkflowId = config.workflowId;
       if (typeof childWorkflowId !== 'string' || !workflows.has(childWorkflowId)) {
+        const err = { code: 'unknown_child_workflow', message: `core.subWorkflow (node "${node.id}") references unknown workflowId "${childWorkflowId}".` };
         await appendEvent(runId, 'node.failed', {
           nodeId: node.id,
-          data: { code: 'unknown_child_workflow', workflowId: childWorkflowId },
+          data: err,
         });
+        runFailureErrors.set(runId, err);
         endNodeSpan(runId, node.id, 'failed');
         return 'failed';
       }
@@ -742,19 +1021,53 @@ async function executeNode(
           return 'failed';
         }
         if (child.status === 'completed') {
+          // outputMapping: copy mapped child variables → parent variables.
+          // node-packs.md §"core.subWorkflow contract".
+          if (config.outputMapping && typeof config.outputMapping === 'object') {
+            const childVarsRes = await q.query<{ variables_json: Record<string, unknown> | null }>(
+              'SELECT variables_json FROM runs WHERE run_id = $1',
+              [childRunId],
+            );
+            const childVars = (childVarsRes.rows[0]?.variables_json ?? {}) as Record<string, unknown>;
+            const parentVarsRes = await q.query<{ variables_json: Record<string, unknown> | null }>(
+              'SELECT variables_json FROM runs WHERE run_id = $1',
+              [runId],
+            );
+            const parentVars = { ...((parentVarsRes.rows[0]?.variables_json ?? {}) as Record<string, unknown>) };
+            for (const [parentKey, childKey] of Object.entries(config.outputMapping)) {
+              if (typeof childKey === 'string' && childVars[childKey] !== undefined) {
+                parentVars[parentKey] = childVars[childKey];
+              }
+            }
+            await q.query('UPDATE runs SET variables_json = $1 WHERE run_id = $2', [
+              JSON.stringify(parentVars),
+              runId,
+            ]);
+          }
           await appendEvent(runId, 'node.completed', {
             nodeId: node.id,
-            data: { childRunId, childOutcome: 'completed' },
+            data: { outputs: { childRunId, childStatus: 'completed' } },
           });
           endNodeSpan(runId, node.id, 'completed');
           await q.query("UPDATE runs SET status = 'running' WHERE run_id = $1", [runId]);
           return 'completed';
         }
         if (child.status === 'failed') {
+          if (config.onChildFailure === 'absorb') {
+            await appendEvent(runId, 'node.completed', {
+              nodeId: node.id,
+              data: { outputs: { childRunId, childStatus: 'failed' } },
+            });
+            endNodeSpan(runId, node.id, 'completed');
+            await q.query("UPDATE runs SET status = 'running' WHERE run_id = $1", [runId]);
+            return 'completed';
+          }
+          const err = { code: 'child_failed', message: `core.subWorkflow child run "${childRunId}" terminated 'failed'.` };
           await appendEvent(runId, 'node.failed', {
             nodeId: node.id,
-            data: { code: 'child_failed', childRunId },
+            data: { ...err, outputs: { childRunId, childStatus: 'failed' } },
           });
+          runFailureErrors.set(runId, err);
           endNodeSpan(runId, node.id, 'failed');
           return 'failed';
         }
@@ -916,8 +1229,32 @@ async function runWorkflowClaimed(runId: string): Promise<void> {
       }
 
       const outcome = await executeNode(runId, node, inputs, aborter.signal);
+      if (outcome === 'loopback') {
+        // RFC 0007 §D `next-worker`: dispatch routes control back to
+        // the upstream orchestrator-supervisor. Advance i to (target-1)
+        // so the i++ at loop tail lands at the supervisor. Persist
+        // next_node_index for restart safety.
+        const target = loopbackTargets.get(runId);
+        loopbackTargets.delete(runId);
+        if (typeof target === 'number' && target >= 0) {
+          const q = await querier();
+          await q.query('UPDATE runs SET next_node_index = $1 WHERE run_id = $2', [target, runId]);
+          i = target - 1;
+          continue;
+        }
+        const error = { code: 'internal', message: 'loopback outcome without target index' };
+        await appendEvent(runId, 'run.failed', { data: error });
+        await setRunTerminal(runId, 'failed', error);
+        return;
+      }
       if (outcome === 'failed') {
-        const error = {
+        // Prefer a specific error envelope written by the node handler
+        // (capability_required, no_pending_decision, etc.); fall back
+        // to legacy unsupported_node_type for typeIds the host doesn't
+        // recognize at all (the `default:` arm in executeNode).
+        const carried = runFailureErrors.get(runId);
+        runFailureErrors.delete(runId);
+        const error = carried ?? {
           code: 'unsupported_node_type',
           message: `Postgres host does not implement node type "${node.typeId}".`,
         };
@@ -1106,6 +1443,21 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
         runs: {
           pauseResume: { supported: true },
         },
+        // RFC 0006 §G — orchestrator capability advertisement (Phase C
+        // parity catch-up with SQLite reference host).
+        orchestrator: {
+          supported: true,
+          workerIdInterpretation: 'node',
+          fanOutSupported: false,
+        },
+        // RFC 0007 §G — dispatch capability advertisement. Hosts that
+        // advertise orchestrator MUST also advertise dispatch.
+        dispatch: {
+          supported: true,
+          models: ['child-run'],
+          fanOutSupported: false,
+          askUserRoutings: ['clarification', 'auto'],
+        },
         // observability.md §"Span attributes" — only advertised when
         // OTEL_EXPORTER_OTLP_ENDPOINT is configured.
         ...(observabilityEnabled()
@@ -1199,6 +1551,27 @@ async function handleCreateRun(req: IncomingMessage, res: ServerResponse): Promi
   if (!workflow) {
     sendError(res, 404, 'workflow_not_found', 'Unknown workflowId.');
     return;
+  }
+
+  // capabilities.md §"Unsupported capability — refusal contract".
+  // A workflow referencing a capability-gated typeId on a host that
+  // does NOT advertise the gating capability MUST be refused. Iterate
+  // the normative typeId map; first-fail keeps the error envelope
+  // unambiguous.
+  for (const wfNode of workflow.nodes) {
+    const gate = GATED_TYPEID_MAP[wfNode.typeId];
+    if (gate && !HOST_ADVERTISED_GATED_CAPABILITIES.has(gate.capability)) {
+      sendJSON(res, 400, {
+        error: 'capability_required',
+        message: `Workflow "${parsed.workflowId}" references ${wfNode.typeId}, but this host does not advertise ${gate.advertisementPath}: true.`,
+        details: {
+          requiredCapability: gate.capability,
+          offendingTypeId: wfNode.typeId,
+          nodeId: wfNode.id,
+        },
+      });
+      return;
+    }
   }
 
   // Per-workflow configurableSchema validation (run-options.md
@@ -1544,6 +1917,112 @@ async function handleCancelRun(
   await triggerCheckpointIfDue(q, auditSigningKey(), AUDIT_OPTS);
   runningAborters.get(runId)?.abort();
   sendJSON(res, 200, { runId, status: 'cancelling' });
+}
+
+/**
+ * Per-runId cancel mechanics. Used by handleBulkCancel so per-id
+ * outcomes share the audit + cascade + abort logic with the
+ * single-run handler. Returns a result the bulk-cancel response can
+ * surface directly.
+ */
+async function cancelOneRun(
+  runId: string,
+): Promise<
+  | { ok: true; status: 'cancelled' | 'cancelling'; alreadyTerminal?: boolean }
+  | { ok: false; error: { code: string; message: string } }
+> {
+  const row = await loadRun(runId);
+  if (!row) {
+    return { ok: false, error: { code: 'not_found', message: `Unknown runId: ${runId}` } };
+  }
+  if (row.status === 'cancelled') {
+    return { ok: true, status: 'cancelled', alreadyTerminal: true };
+  }
+  if (row.status === 'completed' || row.status === 'failed') {
+    return {
+      ok: false,
+      error: {
+        code: 'run_terminal',
+        message: `Run "${runId}" is already terminal (${row.status}); cannot cancel.`,
+      },
+    };
+  }
+  const q = await querier();
+  const childrenRes = await q.query<{ run_id: string }>(
+    `SELECT run_id FROM runs
+     WHERE parent_run_id = $1 AND status NOT IN ('completed','failed','cancelled')`,
+    [runId],
+  );
+  for (const c of childrenRes.rows) {
+    await cancelRunInternal(c.run_id, 'parent-cancelled');
+  }
+  const isSuspended =
+    row.status === 'waiting-approval' ||
+    row.status === 'waiting-input' ||
+    row.status === 'waiting-external';
+  if (isSuspended) {
+    await invalidateInterrupts(q, runId, 'cancelled');
+    await appendEvent(runId, 'run.cancelled');
+    await setRunTerminal(runId, 'cancelled', null);
+    await logAudit(q, {
+      actor: 'tenant:default',
+      action: 'run.cancel',
+      target: runId,
+      details: { priorStatus: row.status, viaSuspended: true, cascadedChildren: childrenRes.rows.length, viaBulkCancel: true },
+    });
+    await triggerCheckpointIfDue(q, auditSigningKey(), AUDIT_OPTS);
+    return { ok: true, status: 'cancelled' };
+  }
+  await setCancelRequested(runId);
+  await logAudit(q, {
+    actor: 'tenant:default',
+    action: 'run.cancel',
+    target: runId,
+    details: { priorStatus: row.status, cascadedChildren: childrenRes.rows.length, viaBulkCancel: true },
+  });
+  await triggerCheckpointIfDue(q, auditSigningKey(), AUDIT_OPTS);
+  runningAborters.get(runId)?.abort();
+  return { ok: true, status: 'cancelling' };
+}
+
+async function handleBulkCancel(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  // rest-endpoints.md §"POST /v1/runs:bulk-cancel" (closes R1). 200 +
+  // per-id results whenever the request reaches the host; partial
+  // failures surface inside the array.
+  if (!checkAuth(req, res)) return;
+  const bodyText = await readBody(req);
+  let parsed: { runIds?: unknown; reason?: unknown };
+  try {
+    parsed = JSON.parse(bodyText) as typeof parsed;
+  } catch {
+    sendError(res, 400, 'validation_error', 'Request body MUST be valid JSON.');
+    return;
+  }
+  if (!Array.isArray(parsed.runIds) || parsed.runIds.length === 0) {
+    sendError(res, 400, 'validation_error', 'runIds MUST be a non-empty array.');
+    return;
+  }
+  const BULK_CANCEL_MAX = 100;
+  if (parsed.runIds.length > BULK_CANCEL_MAX) {
+    sendJSON(res, 400, {
+      error: 'validation_error',
+      message: `runIds carries ${parsed.runIds.length} entries; host-defined cap is ${BULK_CANCEL_MAX}.`,
+      details: { maxRunIds: BULK_CANCEL_MAX, observed: parsed.runIds.length },
+    });
+    return;
+  }
+  if (!parsed.runIds.every((id) => typeof id === 'string' && id.length > 0)) {
+    sendError(res, 400, 'validation_error', 'runIds entries MUST all be non-empty strings.');
+    return;
+  }
+  const runIds = parsed.runIds as string[];
+  const results = await Promise.all(
+    runIds.map(async (id) => {
+      const outcome = await cancelOneRun(id);
+      return { runId: id, ...outcome };
+    }),
+  );
+  sendJSON(res, 200, { results });
 }
 
 async function handleRegisterWebhook(req: IncomingMessage, res: ServerResponse): Promise<void> {
@@ -2143,6 +2622,7 @@ async function handleEventsSse(
         data: e.data,
         payload: e.data,
         timestamp: e.timestamp,
+        ...(e.causationId !== undefined ? { causationId: e.causationId } : {}),
       })),
     });
     return;
@@ -2312,6 +2792,7 @@ async function handleEventsPoll(
       data: e.data,
       payload: e.data,
       timestamp: e.timestamp,
+      ...(e.causationId !== undefined ? { causationId: e.causationId } : {}),
     })),
     isComplete,
   });
@@ -2365,6 +2846,7 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   if (method === 'GET' && path === '/v1/audit/verify') return handleAuditVerify(req, res, url);
   if (method === 'POST' && path === '/v1/webhooks') return handleRegisterWebhook(req, res);
   if (method === 'POST' && path === '/v1/runs') return handleCreateRun(req, res);
+  if (method === 'POST' && path === '/v1/runs:bulk-cancel') return handleBulkCancel(req, res);
   const mwh = WEBHOOK_ID_PATTERN.exec(path);
   if (mwh && method === 'DELETE') {
     return handleUnregisterWebhook(req, res, decodeURIComponent(mwh[1]!));

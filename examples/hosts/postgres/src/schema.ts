@@ -90,6 +90,14 @@ export async function setupSchema(q: Querier): Promise<void> {
       ) THEN
         ALTER TABLE runs ADD COLUMN configurable_json JSONB;
       END IF;
+      -- channels-and-reducers.md §"Channel TTL" + run-snapshot.schema.json §variables.
+      -- Per-run workflow-variable state (channel writes + identity passthrough).
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'runs' AND column_name = 'variables_json'
+      ) THEN
+        ALTER TABLE runs ADD COLUMN variables_json JSONB;
+      END IF;
     END $$;
   `);
 
@@ -101,10 +109,25 @@ export async function setupSchema(q: Querier): Promise<void> {
       node_id TEXT,
       data_json JSONB,
       timestamp TEXT NOT NULL,
+      causation_id TEXT,
       PRIMARY KEY (run_id, seq)
     );
   `);
   await q.query(`CREATE INDEX IF NOT EXISTS idx_events_run_seq ON events(run_id, seq);`);
+
+  // Idempotent migration: older deployments may lack `causation_id`.
+  // Required by RFC 0007 §E (core.dispatch emitted events MUST set
+  // causationId to the consumed decision's eventId).
+  await q.query(`
+    DO $$ BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'events' AND column_name = 'causation_id'
+      ) THEN
+        ALTER TABLE events ADD COLUMN causation_id TEXT;
+      END IF;
+    END $$;
+  `);
 
   await q.query(`
     CREATE TABLE IF NOT EXISTS idempotency (
