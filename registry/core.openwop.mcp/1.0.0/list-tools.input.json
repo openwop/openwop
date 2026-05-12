@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.mcp/1.0.0/list-tools.input.json",
+  "title": "ListToolsInput",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false,
+  "description": "No inputs — server identity comes from config.serverId."
+}

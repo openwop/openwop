@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "artifactTypeId": { "type": "string" },
+    "actions": { "type": "array", "items": { "type": "string", "enum": ["created", "updated", "deleted"] } }
+  },
+  "additionalProperties": true
+}

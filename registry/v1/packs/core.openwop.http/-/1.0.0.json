@@ -1,0 +1,49 @@
+{
+  "name": "core.openwop.http",
+  "version": "1.0.0",
+  "description": "Spec-canonical HTTP fetch node. Single typeId `core.openwop.http.fetch` with retry, exponential backoff, and deterministic Idempotency-Key derivation for replay safety. Authentication is the workflow author's concern — pass an `Authorization` header via the `headers` config field (literal token or resolved via the host's secret-injection mechanism). The pack itself declares no `requiresSecrets` so it runs on every host regardless of `secrets.supported`. Zero npm deps; uses Node 20's built-in fetch (undici).",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.http",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "core",
+    "http",
+    "fetch",
+    "integration",
+    "rest",
+    "webhook-emitter"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "nodes": [
+    {
+      "typeId": "core.openwop.http.fetch",
+      "version": "1.0.0",
+      "label": "HTTP Fetch",
+      "description": "Issues an HTTP request. Side-effectful (declared via the `side-effectful` capability) so the engine's Layer-2 invocation log caches responses keyed on (runId, nodeId, idempotencyKey) — replays return the cached response without re-issuing the request. Retries 5xx + network errors with exponential backoff; never retries 4xx (client error). Auth headers are the workflow author's concern — pass them through `config.headers` directly, or use the host's templating to inject a resolved credential.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/fetch.config.json",
+      "inputSchemaRef": "schemas/fetch.input.json",
+      "outputSchemaRef": "schemas/fetch.output.json"
+    }
+  ],
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "openwop-team-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-8+Z70OvbfHrTW1efblN8yHXsKPUBwBO+eWYX3OS278E="
+}
