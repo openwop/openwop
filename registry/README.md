@@ -126,6 +126,24 @@ curl http://127.0.0.1:4319/v1/packs/vendor.openwop.rust-hello/-/1.0.0.json
 
 Hosts loading from this local server: set `OPENWOP_REGISTRY_URL=http://127.0.0.1:4319` (when host-side configuration supports it; the reference in-memory host doesn't read from registries yet — that's v1.2 work).
 
+## Signing keys + namespace assignments
+
+The registry advertises its keychain through the `signingKeys` array in `.well-known/openwop-registry.json`. Each entry binds a `keyId` to a permitted-namespace allow-list, so the PR review gate can reject submissions where the signing key isn't authorized for the target namespace.
+
+| keyId | Operator | Permitted namespaces | Status |
+|---|---|---|---|
+| `openwop-registry-root` | openwop project | `core.openwop.*`, `community.openwop-team.*`, `vendor.openwop.*` | active (sealed; emergency only) |
+| `openwop-team-1` | openwop team | `core.openwop.*`, `community.openwop-team.*`, `vendor.openwop.*` | active (online publishing key) |
+| `myndhyve-internal-1` | MyndHyve | `vendor.myndhyve.*` | active (first external vendor) |
+
+**Adding a new publisher key** (e.g., a new vendor onboarding):
+
+1. Vendor generates an Ed25519 keypair locally (`openssl genpkey -algorithm ed25519`). Private key STAYS WITH THE VENDOR — never committed.
+2. Vendor opens a PR adding their `.pub` to `registry/keys/<keyId>.pub` + a `signingKeys` entry + a `namespaceAssignments` entry in `.well-known/openwop-registry.json`.
+3. Registry maintainer reviews + merges. Subsequent packs under the claimed namespace are signed by the vendor's key + verified against the registered `.pub` at publish-time review.
+
+Per `spec/v1/registry-operations.md` §Step 1: `vendor.<org>.*` packs MUST be refused if their signing key isn't the one registered for that namespace. The CI gate enforces presence-of-signature today; cryptographic verification against the namespace-permitted key lands when the `node-pack-manifest.schema.json` registry-side schema is finalized.
+
 ## Key ceremony
 
 The `openwop-registry-root` key is the root of trust for everything signed by this registry. Generation:
