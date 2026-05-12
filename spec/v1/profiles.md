@@ -193,6 +193,24 @@ Discovery alone can't tell whether the registry endpoints are wired. The conform
 
 A host MAY support read-only pack distribution (GET routes only — `openwop-node-packs-readonly`) or read/write (GET + PUT/POST/DELETE — `openwop-node-packs-publish`). The split sub-profiles are derivable from which scenarios pass; they don't appear in the discovery payload.
 
+### `openwop-discovery-auth-scoped`
+
+The host serves an authenticated capability view alongside the public unauthenticated payload per `capabilities-change-detection.md` §"Scoped capability views" (formalized as a capability flag by `RFCS/0011-auth-scoped-discovery.md`).
+
+**Requirements:** When `Authorization: Bearer <key>` is presented to `/.well-known/openwop` (or to a host-advertised `endpointPath`), the host MAY return a narrowed or enriched capability view scoped to the caller. The authenticated view MUST still satisfy `capabilities.schema.json` (required fields preserved) and MUST NOT expose capabilities outside the caller's authorization — the unauthorized view's capability keyset MUST be a strict subset of an authorized caller's keyset.
+
+**Predicate (discovery-payload only — runtime check separate):**
+
+```
+openwop-discovery-auth-scoped(c) :=
+    c.capabilities.discovery.authScoped.supported === true
+  ∧ c.capabilities.discovery.authScoped.mode ∈ { 'same-endpoint', 'extension-endpoint', undefined }
+  ∧ (c.capabilities.discovery.authScoped.mode === 'extension-endpoint'
+        ⇒ c.capabilities.discovery.authScoped.endpointPath matches /^\//)
+```
+
+Three subtests in `conformance/src/scenarios/discovery.test.ts` validate the runtime behavior: capability shape, authenticated view satisfies the base schema, and the authorization-oracle probe (gated on `OPENWOP_TEST_UNAUTHORIZED_API_KEY`). A host passes `openwop-discovery-auth-scoped` when discovery passes the predicate AND those scenarios pass.
+
 ---
 
 ## Derivation
@@ -201,12 +219,13 @@ The reference derivation for any conforming v1.x discovery payload `c` is:
 
 ```
 profiles(c) := {
-  'openwop-core'           if openwop-core(c),
-  'openwop-interrupts'     if openwop-interrupts(c),
-  'openwop-stream-sse'     if openwop-stream-sse(c),
-  'openwop-stream-poll'    if openwop-stream-poll(c),
-  'openwop-secrets'        if openwop-secrets(c),
-  'openwop-provider-policy' if openwop-provider-policy(c),
+  'openwop-core'                       if openwop-core(c),
+  'openwop-interrupts'                 if openwop-interrupts(c),
+  'openwop-stream-sse'                 if openwop-stream-sse(c),
+  'openwop-stream-poll'                if openwop-stream-poll(c),
+  'openwop-secrets'                    if openwop-secrets(c),
+  'openwop-provider-policy'            if openwop-provider-policy(c),
+  'openwop-discovery-auth-scoped'      if openwop-discovery-auth-scoped(c),
   'openwop-node-packs'     if openwop-node-packs-discovery(c),
   'openwop-replay-fork'    if openwop-replay-fork(c),
   'openwop-fixtures'       if openwop-fixtures(c),

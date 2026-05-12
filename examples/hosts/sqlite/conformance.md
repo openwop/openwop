@@ -1,20 +1,23 @@
 # Conformance Result: openwop SQLite Reference Host
 
-> **Run date:** 2026-05-01 (audit-log-integrity profile added 2026-05-11; four interrupt profiles added 2026-05-11)
+> **Run date:** 2026-05-12 (audit-log-integrity + four interrupt profiles added 2026-05-11; `openwop-auth-api-key-rotation` added 2026-05-12 in Phase A close-out; `openwop-discovery-auth-scoped` added 2026-05-12 in Phase D close-out under RFC 0011)
 > **Host version:** `openwop-host-sqlite@1.0.0`
-> **Conformance suite:** `@openwop/openwop-conformance@1.12.0`
-> **Profile claim:** `openwop-core` + `openwop-stream-poll` + `openwop-stream-sse` + `openwop-audit-log-integrity` + `openwop-interrupt-quorum` + `openwop-interrupt-auth-required` + `openwop-interrupt-external-event` + `openwop-interrupt-cascade-cancel` (since 2026-05-11) + (debug-bundle advertised)
+> **Conformance suite:** `@openwop/openwop-conformance@1.X.0` (post-RFC-0011 wave; 99 scenario files)
+> **Profile claim:** `openwop-core` · `openwop-stream-poll` · `openwop-stream-sse` · `openwop-audit-log-integrity` · `openwop-interrupt-quorum` · `openwop-interrupt-auth-required` · `openwop-interrupt-external-event` · `openwop-interrupt-cascade-cancel` · `openwop-auth-api-key-rotation` · `openwop-discovery-auth-scoped`. Debug-bundle advertised.
+> **Profiles explicitly NOT claimed (per honesty principle):** `openwop-production` (Postgres host is the canonical claimant — see `INTEROP-MATRIX.md`), `openwop-auth-oauth2-client-credentials`, `openwop-auth-oidc-user-bearer`, `openwop-auth-mtls`. The reference HTTP listener does not enforce backpressure/retention, parse JWTs, or terminate TLS, so advertising those profiles would be over-claiming.
 > **Scale claim:** `minimal` (single-process; SQLite single-writer)
 
 ## Summary
 
 Against the live SQLite host (`npm start` from `examples/hosts/sqlite/`):
 
-- **Test files:** 36 total — 22 fully passing, 14 with at least one failure.
-- **Tests:** 224 total — 166 passing, 28 failing, 30 todo (intentionally skipped).
-- **Profile-targeted result:** every scenario the host's claimed profile gates on passes. Failures are all in scenarios that exercise capabilities outside the claimed profile set.
+- **Test files:** 99 total (post-Phase-D suite).
+- **Tests (default-mode):** **669 passing / 0 failing / 32 skipped / 30 todo** (Phase A close-out, 2026-05-12) — 91.5% default-mode pass rate against 731 total.
+- **Tests (strict-mode, `OPENWOP_REQUIRE_BEHAVIOR=true`):** 669 passing / 10 strict-fail / 32 skipped / 30 todo. The 10 strict-fails are deliberate honesty opt-outs — scenarios for profiles the host explicitly does NOT claim (production, OAuth2-CC, OIDC, mTLS, replay-retention). `behaviorGate` correctly converts skip→fail under strict mode when a host hasn't claimed the underlying profile; that's the price of advertising only what the host implements.
+- **RFC 0011 auth-scoped discovery (verified end-to-end 2026-05-12):** With `OPENWOP_TENANT2_API_KEY` configured, the host returns three views — unauthenticated + primary (6 capability keys: `auth`, `discovery`, `dispatch`, `orchestrator`, `secrets`, `webhooks`) vs tenant2 (4 keys: `auth`, `discovery`, `secrets`, `webhooks`). Tenant2's keyset is a strict subset of primary's, satisfying the no-authorization-oracle invariant from `capabilities-change-detection.md` §"Scoped capability views" line 69. All 3 RFC 0011 subtests in `discovery.test.ts` pass under `OPENWOP_REQUIRE_BEHAVIOR=true` + `OPENWOP_TEST_UNAUTHORIZED_API_KEY=<tenant2-key>`.
+- **RFC 0010 auth-profile rotation (verified end-to-end 2026-05-12):** Two-key overlap via `OPENWOP_SECONDARY_API_KEY`; constant-time dual-candidate `checkAuth`; canary-redaction confirmed. `auth-api-key-rotation.test.ts` passes 3/3 under behavior mode.
 
-Net result vs the in-memory host (163/221): **+3 tests passing, +1 file fully green.** The +1 file is the durability surface — SQLite passes `eventOrdering` repeated-poll stability where in-memory's process-local state was equivalent but SQLite's persistence makes the proof stronger.
+Net result vs the in-memory host (which claims only `openwop-core` + stream profiles): SQLite adds the durability surface plus 7 optional profile claims, each verified end-to-end through the conformance suite or host-internal tests.
 
 ## What this host adds over in-memory
 
