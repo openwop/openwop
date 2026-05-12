@@ -14,6 +14,12 @@ from .client import OpenwopClient
 from .errors import WopError
 from .sse import stream_events
 from .types import (
+    AuditVerifyAnomaly,
+    AuditVerifyCheckpoint,
+    AuditVerifyResult,
+    BulkCancelRunResult,
+    BulkCancelRunsRequest,
+    BulkCancelRunsResponse,
     Capabilities,
     CancelRunRequest,
     CancelRunResponse,
@@ -42,6 +48,12 @@ __all__ = [
     "WopError",
     "stream_events",
     # Types
+    "AuditVerifyAnomaly",
+    "AuditVerifyCheckpoint",
+    "AuditVerifyResult",
+    "BulkCancelRunResult",
+    "BulkCancelRunsRequest",
+    "BulkCancelRunsResponse",
     "Capabilities",
     "CancelRunRequest",
     "CancelRunResponse",

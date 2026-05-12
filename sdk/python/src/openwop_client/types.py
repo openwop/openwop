@@ -151,6 +151,52 @@ class CancelRunResponse:
     status: Literal["cancelled", "cancelling"]
 
 
+# rest-endpoints.md §"POST /v1/runs:bulk-cancel" (closes R1).
+@dataclass
+class BulkCancelRunsRequest:
+    runIds: list[str]
+    reason: str | None = None
+
+
+@dataclass(frozen=True)
+class BulkCancelRunResult:
+    runId: str
+    ok: bool
+    status: Literal["cancelled", "cancelling"] | None = None
+    error: dict[str, Any] | None = None
+
+
+@dataclass(frozen=True)
+class BulkCancelRunsResponse:
+    results: list[BulkCancelRunResult]
+
+
+# auth-profiles.md §"openwop-audit-log-integrity" §4 — verify endpoint.
+@dataclass(frozen=True)
+class AuditVerifyCheckpoint:
+    checkpoint: str
+    atSequence: int
+    merkleRoot: str
+    signature: str
+
+
+@dataclass(frozen=True)
+class AuditVerifyAnomaly:
+    atSeq: int
+    expectedPrevHash: str
+    actualPrevHash: str
+
+
+@dataclass(frozen=True)
+class AuditVerifyResult:
+    fromSeq: int
+    toSeq: int
+    chainValid: bool
+    checkpoints: list[AuditVerifyCheckpoint]
+    anomalies: list[AuditVerifyAnomaly]
+    checkpointsValid: bool | None = None
+
+
 @dataclass
 class ForkRunRequest:
     fromSeq: int
@@ -250,6 +296,12 @@ HTTP_ERROR_CODES = frozenset(
         "credential_required",
         "credential_forbidden",
         "credential_unavailable",
+        # Node-pack lifecycle (registry + lockfile)
+        "pack_integrity_mismatch",
+        "pack_signature_invalid",
+        "pack_peer_dependency_missing",
+        "pack_lockfile_incomplete",
+        "pack_version_not_found",
         # HITL / interrupt callbacks
         "interrupt_not_found",
         "approval_token_invalid",

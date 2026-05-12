@@ -118,6 +118,13 @@ export const HTTP_ERROR_CODES = [
   'credential_forbidden',
   'credential_unavailable',
 
+  // Node-pack lifecycle (registry + lockfile) per node-packs.md §"Dependency resolution + lockfile"
+  'pack_integrity_mismatch',
+  'pack_signature_invalid',
+  'pack_peer_dependency_missing',
+  'pack_lockfile_incomplete',
+  'pack_version_not_found',
+
   // HITL / interrupt callbacks
   'interrupt_not_found',
   'approval_token_invalid',

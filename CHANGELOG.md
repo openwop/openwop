@@ -9,6 +9,64 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ---
 
+## [1.0 — additions] — 2026-05-12 — Phase B: spec corpus completion (R1 + R3 + R4 closed)
+
+Phase B from `/Users/david/.claude/plans/close-all-gaps-to-partitioned-boole.md` closes the v1.0 spec-corpus completion gate: every spec doc reads `Status: FINAL v1`; every previously deferred R-track in `rest-endpoints.md` §"Open spec gaps" is closed for the first time; auth + production + i18n + compliance + grpc + lockfile surfaces normated; SECURITY annexes for CNA + bug-bounty staged behind the maintainer tripwire. Landed across two commits — `feat(phase-B): spec corpus completion — 13/13 tasks closed` and `feat(phase-B-fix): close 6 senior-review findings`.
+
+### Spec corpus
+
+- New `spec/v1/i18n.md` (FINAL) — optional locale-negotiation annex: `Accept-Language` semantics, `locale` field on InterruptPayload + ErrorEnvelope, `capabilities.i18n` block, fallback rules, replay determinism.
+- New `spec/v1/compliance.md` (FINAL, non-normative) — protocol-surface ↔ SOC 2 / GDPR / HIPAA / ISO 27001 control-family mapping. Operator reference; does not prescribe certification.
+- New `spec/v1/grpc-transport.md` (FINAL) — optional alternative transport profile. REST + SSE remains REQUIRED; gRPC opt-in via `capabilities.supportedTransports: ["grpc"]`. Canonical service `openwop.v1.Engine`; canonical `.proto` at `api/grpc/openwop.proto`. Closes R3.
+- `spec/v1/host-capabilities.md` promoted DRAFT → FINAL — corpus now has zero `DRAFT`/`STUB`/`OUTLINE` tags.
+- `spec/v1/rest-endpoints.md` gains §"POST /v1/runs:bulk-cancel" (closes R1) + §"Audit-log integrity (gated on profile)" route table + `capability_required` in common-error-codes catalog.
+- `spec/v1/node-packs.md` gains §"Dependency resolution + lockfile" — pack lockfile schema; 5 new normative error codes; resolver MUSTs for integrity + signature + peer-dep verification.
+- `spec/v1/production-profile.md` §Backpressure — `retryAfterSeconds` capped at 86400s (24h) per RFC 0009 Q#2 resolution.
+- `spec/v1/auth.md` §"scope vocabulary" gains `audit:read` row — closes cross-doc gap with OpenAPI.
+
+### Schemas
+
+- New `schemas/audit-verify-result.schema.json` — response payload from `GET /v1/audit/verify`.
+- New `schemas/pack-lockfile.schema.json` — reproducible-build lockfile pinning resolved pack versions + SHA-256 integrity + Ed25519 signature.
+- `schemas/capabilities.schema.json` gains `i18n` block + `production.backpressure.retryAfterSeconds.maximum: 86400`.
+- `schemas/node-pack-manifest.schema.json` gains `language: "wasm-component"` + `format: "wasm-component"` enum values (additive Component Model variant; RFC 0008 §Alt §1 resolved).
+
+### OpenAPI
+
+- `bulkCancelRuns` + `verifyAuditLog` operations. New `audit` tag. Bearer-token scope catalog includes `audit:read`.
+
+### RFCs
+
+- RFC 0009 unresolved questions all 4 resolved: force-expire host-private; Retry-After ≤86400s; inflightCap advertise; same-commit advertisement.
+- RFC 0008 §Alt §1 (Component Model) resolved — additive enum values; WIT-interface amendment deferred until first CM host lands.
+
+### Host (SQLite reference)
+
+- `handleBulkCancel` + `cancelOneRun` helper. Route wired at `POST /v1/runs:bulk-cancel`. 100-id cap + per-id error envelopes (`not_found` / `run_terminal` / `forbidden`).
+
+### SDK (TS / Python / Go)
+
+- New first-class helpers: `bulkCancelRuns` + `verifyAuditLog` on `OpenwopClient` in all 3 SDKs.
+- 5 new pack-lockfile error codes in `HTTP_ERROR_CODES`: `pack_integrity_mismatch`, `pack_signature_invalid`, `pack_peer_dependency_missing`, `pack_lockfile_incomplete`, `pack_version_not_found`.
+- 6 new wire types exported per SDK: `BulkCancelRunsRequest/Response/Result`, `AuditVerifyResult/Checkpoint/Anomaly`.
+- PARITY.md count bumped: TS 20 → 22, Python 17 → 19, Go 17 → 19 ✅ helpers.
+
+### Conformance
+
+- New `bulk-cancel.test.ts` (4 tests).
+- `coverage.md` Endpoint Coverage Manifest gains `bulkCancelRuns` + `verifyAuditLog` rows (closes R4).
+- `spec-corpus-validity.test.ts` regex tightened with `(?<![a-z0-9-])` negative lookbehind.
+
+### Security
+
+- New `SECURITY/cna.md` — CNA-registration operational plan; tripwire-gated.
+- New `SECURITY/bug-bounty.md` — bug-bounty program structure; same tripwire.
+- `SECURITY.md` §5 cross-links both.
+
+### Wire-shape classification
+
+Purely additive. No required field made optional. No existing event-type shape changed. No existing MUST relaxed.
+
 ## [1.0 — additions] — 2026-05-12 — Phase A close-out: 9 SQLite conformance failures → 0; honesty cleanup
 
 Phase A from the `/Users/david/.claude/plans/close-all-gaps-to-partitioned-boole.md` close-every-gap plan landed across three commits (host impl, advertisement cleanup, BYOK + restart fixtures) plus this close-out pass to address the senior code-review findings.

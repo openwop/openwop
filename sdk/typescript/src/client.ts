@@ -11,6 +11,9 @@
 import { streamEvents, type EventsStreamOptions } from './sse.js';
 import {
   WopError,
+  type AuditVerifyResult,
+  type BulkCancelRunsRequest,
+  type BulkCancelRunsResponse,
   type Capabilities,
   type CancelRunRequest,
   type CancelRunResponse,
@@ -115,6 +118,26 @@ export class OpenwopClient {
         headers: this.#mutationHeaders(opts),
       }),
 
+    /**
+     * Bulk-cancel a set of in-flight runs in a single request per
+     * `rest-endpoints.md` §"POST /v1/runs:bulk-cancel" (closes R1).
+     * The top-level call returns 200 + per-id `results[]` whenever the
+     * request reaches the host; partial failures surface inside the
+     * array (each entry carries `ok: boolean` + optional `error`). Host-
+     * defined cap on `runIds[]` length (RECOMMENDED 100); over-cap
+     * returns `400 validation_error` with `details.maxRunIds`.
+     */
+    bulkCancel: (
+      body: BulkCancelRunsRequest,
+      opts: MutationOptions = {},
+    ): Promise<BulkCancelRunsResponse> =>
+      this.#request<BulkCancelRunsResponse>({
+        method: 'POST',
+        path: '/v1/runs:bulk-cancel',
+        body,
+        headers: this.#mutationHeaders(opts),
+      }),
+
     fork: (
       runId: string,
       body: ForkRunRequest,
@@ -204,6 +227,30 @@ export class OpenwopClient {
         },
         false, // unauthenticated (token IS the auth)
       ),
+  };
+
+  // ── Audit-log integrity (gated on openwop-audit-log-integrity profile) ──
+  readonly audit = {
+    /**
+     * Verify the audit-log hash chain over `[fromSeq, toSeq]` per
+     * `auth-profiles.md` §`openwop-audit-log-integrity` §4. Requires
+     * the `audit:read` scope on the API key. Returns chain-validity
+     * verdict + signed checkpoints + any detected anomalies.
+     *
+     * Hosts that do NOT advertise the profile return `404` and throw
+     * a `WopError`. Clients SHOULD pre-flight via
+     * `client.getCapabilities()` (or directly inspect
+     * `capabilities.auth.profiles[]`) before calling.
+     */
+    verify: (fromSeq: number, toSeq: number): Promise<AuditVerifyResult> => {
+      const search = new URLSearchParams();
+      search.set('fromSeq', String(fromSeq));
+      search.set('toSeq', String(toSeq));
+      return this.#request<AuditVerifyResult>({
+        method: 'GET',
+        path: `/v1/audit/verify?${search.toString()}`,
+      });
+    },
   };
 
   // ── Internals ────────────────────────────────────────────────────────

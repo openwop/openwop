@@ -103,6 +103,49 @@ export interface CancelRunResponse {
   status: 'cancelled' | 'cancelling';
 }
 
+// rest-endpoints.md §"POST /v1/runs:bulk-cancel" (closes R1).
+export interface BulkCancelRunsRequest {
+  runIds: readonly string[];
+  reason?: string;
+}
+
+export interface BulkCancelRunResult {
+  runId: string;
+  ok: boolean;
+  status?: 'cancelled' | 'cancelling';
+  error?: { error: string; message: string; details?: Record<string, unknown> };
+}
+
+export interface BulkCancelRunsResponse {
+  results: BulkCancelRunResult[];
+}
+
+// auth-profiles.md §"openwop-audit-log-integrity" §4. The response
+// shape is canonically defined by schemas/audit-verify-result.schema.json;
+// this TS view tracks the same fields with names normalized to
+// camelCase. Hosts that don't advertise the profile return 404.
+export interface AuditVerifyResult {
+  fromSeq: number;
+  toSeq: number;
+  chainValid: boolean;
+  checkpointsValid?: boolean;
+  checkpoints: AuditVerifyCheckpoint[];
+  anomalies: AuditVerifyAnomaly[];
+}
+
+export interface AuditVerifyCheckpoint {
+  checkpoint: string;
+  atSequence: number;
+  merkleRoot: string;
+  signature: string;
+}
+
+export interface AuditVerifyAnomaly {
+  atSeq: number;
+  expectedPrevHash: string;
+  actualPrevHash: string;
+}
+
 export interface ForkRunRequest {
   fromSeq: number;
   mode: 'replay' | 'branch';

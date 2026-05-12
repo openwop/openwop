@@ -57,6 +57,7 @@ An OpenWOP-compliant server MUST support the following scope vocabulary at minim
 | `packs:publish` | Publish new versions of node-packs to the registry (see `registry-operations.md`) |
 | `packs:yank` | Mark a published node-pack version yanked (advisory; existing pins keep resolving) |
 | `packs:yank-revert` | Reinstate a yanked node-pack version (super-admin) |
+| `audit:read` | Verify audit-log integrity via `GET /v1/audit/verify`. Gated on the `openwop-audit-log-integrity` profile per `auth-profiles.md`. |
 
 A server MAY define additional scopes for non-protocol surfaces (e.g., `canvas-types:list`, `projects:list` for platform-level keys). Such extensions MUST NOT shadow the names above.
 

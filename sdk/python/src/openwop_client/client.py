@@ -18,6 +18,12 @@ from urllib.request import Request, urlopen
 from .errors import WopError
 from .sse import stream_events
 from .types import (
+    AuditVerifyAnomaly,
+    AuditVerifyCheckpoint,
+    AuditVerifyResult,
+    BulkCancelRunResult,
+    BulkCancelRunsRequest,
+    BulkCancelRunsResponse,
     Capabilities,
     CapabilitiesLimits,
     CancelRunRequest,
@@ -194,6 +200,76 @@ class OpenwopClient:
             headers=headers,
         )
         return CancelRunResponse(runId=str(d["runId"]), status=d["status"])
+
+    def runs_bulk_cancel(
+        self,
+        body: BulkCancelRunsRequest,
+        *,
+        idempotency_key: str | None = None,
+    ) -> BulkCancelRunsResponse:
+        """Bulk-cancel a set of in-flight runs.
+
+        Per rest-endpoints.md §"POST /v1/runs:bulk-cancel" (closes R1).
+        Returns 200 + per-id results array whenever the request reaches
+        the host; partial failures surface inside the array (each entry
+        carries ``ok: bool`` + optional ``error``). Over-cap requests
+        (>100 runIds by spec) return 400 validation_error.
+        """
+        headers = self._mutation_headers(idempotency_key=idempotency_key)
+        d = self._request_json(
+            "POST",
+            "/v1/runs:bulk-cancel",
+            body=_to_jsonable(body),
+            headers=headers,
+        )
+        results = [
+            BulkCancelRunResult(
+                runId=str(r["runId"]),
+                ok=bool(r["ok"]),
+                status=r.get("status"),
+                error=r.get("error"),
+            )
+            for r in d.get("results", [])
+        ]
+        return BulkCancelRunsResponse(results=results)
+
+    def audit_verify(self, from_seq: int, to_seq: int) -> AuditVerifyResult:
+        """Verify the audit-log hash chain over ``[from_seq, to_seq]``.
+
+        Per auth-profiles.md §"openwop-audit-log-integrity" §4. Requires
+        the ``audit:read`` scope on the API key. Hosts that do NOT
+        advertise the profile return 404 (raised as :class:`WopError`).
+        """
+        query = urlencode({"fromSeq": from_seq, "toSeq": to_seq})
+        d = self._request_json(
+            "GET",
+            f"/v1/audit/verify?{query}",
+        )
+        checkpoints = [
+            AuditVerifyCheckpoint(
+                checkpoint=str(c["checkpoint"]),
+                atSequence=int(c["atSequence"]),
+                merkleRoot=str(c["merkleRoot"]),
+                signature=str(c["signature"]),
+            )
+            for c in d.get("checkpoints", [])
+        ]
+        anomalies = [
+            AuditVerifyAnomaly(
+                atSeq=int(a["atSeq"]),
+                expectedPrevHash=str(a["expectedPrevHash"]),
+                actualPrevHash=str(a["actualPrevHash"]),
+            )
+            for a in d.get("anomalies", [])
+        ]
+        return AuditVerifyResult(
+            fromSeq=int(d["fromSeq"]),
+            toSeq=int(d["toSeq"]),
+            chainValid=bool(d["chainValid"]),
+            checkpoints=checkpoints,
+            anomalies=anomalies,
+            checkpointsValid=d.get("checkpointsValid"),
+        )
 
     def runs_fork(
         self,

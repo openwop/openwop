@@ -1,5 +1,10 @@
 # `openwopclient` Changelog
 
+## [1.0 — additions] — 2026-05-12 — Phase B SDK helpers + pack-lockfile error codes
+
+- **New methods for Phase B endpoints.** `OpenwopClient.BulkCancelRuns(ctx, body, opts)` calls `POST /v1/runs:bulk-cancel` per `rest-endpoints.md` (closes R1); `OpenwopClient.VerifyAuditLog(ctx, fromSeq, toSeq)` calls `GET /v1/audit/verify` per `auth-profiles.md` §`openwop-audit-log-integrity`. New types: `BulkCancelRunsRequest`, `BulkCancelRunsResponse`, `BulkCancelRunResult`, `AuditVerifyResult`, `AuditVerifyCheckpoint`, `AuditVerifyAnomaly`.
+- **5 new pack-lockfile error constants** added to `HTTPErrorCodes` per `node-packs.md` §"Dependency resolution + lockfile": `HTTPErrorPackIntegrityMismatch`, `HTTPErrorPackSignatureInvalid`, `HTTPErrorPackPeerDependencyMissing`, `HTTPErrorPackLockfileIncomplete`, `HTTPErrorPackVersionNotFound`. `IsHTTPErrorCode()` returns true for all.
+
 ## [1.0 — additions] — 2026-05-12 — capability_required error code
 
 - `HTTPErrorCapabilityRequired` constant added to `HTTPErrorCodes` slice per `spec/v1/capabilities.md` §"Unsupported capability — refusal contract" (Phase A close-out). Emitted by hosts that refuse a workflow referencing a capability-gated typeId (`core.conversationGate`, `core.orchestrator.supervisor`, `core.dispatch`) without the advertised gating capability. `IsHTTPErrorCode("capability_required")` returns true.

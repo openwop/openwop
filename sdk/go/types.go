@@ -147,6 +147,52 @@ type CancelRunResponse struct {
 	Status string `json:"status"` // "cancelled" | "cancelling"
 }
 
+// BulkCancelRunsRequest mirrors POST /v1/runs:bulk-cancel body
+// per rest-endpoints.md §"POST /v1/runs:bulk-cancel" (closes R1).
+type BulkCancelRunsRequest struct {
+	RunIDs []string `json:"runIds"`
+	Reason string   `json:"reason,omitempty"`
+}
+
+// BulkCancelRunResult is the per-id outcome inside BulkCancelRunsResponse.Results.
+type BulkCancelRunResult struct {
+	RunID  string         `json:"runId"`
+	OK     bool           `json:"ok"`
+	Status string         `json:"status,omitempty"`
+	Error  *ErrorEnvelope `json:"error,omitempty"`
+}
+
+// BulkCancelRunsResponse mirrors the 200 bulk-cancel payload.
+type BulkCancelRunsResponse struct {
+	Results []BulkCancelRunResult `json:"results"`
+}
+
+// AuditVerifyCheckpoint is one entry in AuditVerifyResult.Checkpoints
+// per auth-profiles.md §"openwop-audit-log-integrity" §4.
+type AuditVerifyCheckpoint struct {
+	Checkpoint string `json:"checkpoint"`
+	AtSequence int64  `json:"atSequence"`
+	MerkleRoot string `json:"merkleRoot"`
+	Signature  string `json:"signature"`
+}
+
+// AuditVerifyAnomaly is one entry in AuditVerifyResult.Anomalies.
+type AuditVerifyAnomaly struct {
+	AtSeq            int64  `json:"atSeq"`
+	ExpectedPrevHash string `json:"expectedPrevHash"`
+	ActualPrevHash   string `json:"actualPrevHash"`
+}
+
+// AuditVerifyResult is the response shape from GET /v1/audit/verify.
+type AuditVerifyResult struct {
+	FromSeq          int64                   `json:"fromSeq"`
+	ToSeq            int64                   `json:"toSeq"`
+	ChainValid       bool                    `json:"chainValid"`
+	CheckpointsValid *bool                   `json:"checkpointsValid,omitempty"`
+	Checkpoints      []AuditVerifyCheckpoint `json:"checkpoints"`
+	Anomalies        []AuditVerifyAnomaly    `json:"anomalies"`
+}
+
 // ForkRunRequest mirrors POST /v1/runs/{id}:fork body.
 type ForkRunRequest struct {
 	FromSeq           int            `json:"fromSeq"`
@@ -219,29 +265,35 @@ type ErrorEnvelope struct {
 // v1 specs. ErrorEnvelope.Error remains string-typed for forward
 // compatibility; use IsHTTPErrorCode for common branching.
 const (
-	HTTPErrorUnauthenticated              = "unauthenticated"
-	HTTPErrorForbidden                    = "forbidden"
-	HTTPErrorKeyExpired                   = "key_expired"
-	HTTPErrorKeyRevoked                   = "key_revoked"
-	HTTPErrorValidationError              = "validation_error"
-	HTTPErrorNotFound                     = "not_found"
-	HTTPErrorRateLimited                  = "rate_limited"
-	HTTPErrorRunAlreadyActive             = "run_already_active"
-	HTTPErrorIdempotencyInFlight          = "idempotency_in_flight"
-	HTTPErrorIdempotencyKeyMismatch       = "idempotency_key_mismatch"
-	HTTPErrorUnsupportedStreamMode        = "unsupported_stream_mode"
-	HTTPErrorForceEngineVersionForbidden  = "force_engine_version_forbidden"
-	HTTPErrorMockProviderForbidden        = "mock_provider_forbidden"
-	HTTPErrorCapabilityNotProvided        = "capability_not_provided"
-	HTTPErrorCapabilityRequired           = "capability_required"
-	HTTPErrorCredentialRequired           = "credential_required"
-	HTTPErrorCredentialForbidden          = "credential_forbidden"
-	HTTPErrorCredentialUnavailable        = "credential_unavailable"
-	HTTPErrorInterruptNotFound            = "interrupt_not_found"
-	HTTPErrorApprovalTokenInvalid         = "approval_token_invalid"
-	HTTPErrorApprovalTokenExpired         = "approval_token_expired"
-	HTTPErrorApprovalTokenConsumed        = "approval_token_consumed"
-	HTTPErrorInternalError                = "internal_error"
+	HTTPErrorUnauthenticated             = "unauthenticated"
+	HTTPErrorForbidden                   = "forbidden"
+	HTTPErrorKeyExpired                  = "key_expired"
+	HTTPErrorKeyRevoked                  = "key_revoked"
+	HTTPErrorValidationError             = "validation_error"
+	HTTPErrorNotFound                    = "not_found"
+	HTTPErrorRateLimited                 = "rate_limited"
+	HTTPErrorRunAlreadyActive            = "run_already_active"
+	HTTPErrorIdempotencyInFlight         = "idempotency_in_flight"
+	HTTPErrorIdempotencyKeyMismatch      = "idempotency_key_mismatch"
+	HTTPErrorUnsupportedStreamMode       = "unsupported_stream_mode"
+	HTTPErrorForceEngineVersionForbidden = "force_engine_version_forbidden"
+	HTTPErrorMockProviderForbidden       = "mock_provider_forbidden"
+	HTTPErrorCapabilityNotProvided       = "capability_not_provided"
+	HTTPErrorCapabilityRequired          = "capability_required"
+	HTTPErrorCredentialRequired          = "credential_required"
+	HTTPErrorCredentialForbidden         = "credential_forbidden"
+	HTTPErrorCredentialUnavailable       = "credential_unavailable"
+	// Node-pack lifecycle (registry + lockfile) per node-packs.md §"Dependency resolution + lockfile".
+	HTTPErrorPackIntegrityMismatch     = "pack_integrity_mismatch"
+	HTTPErrorPackSignatureInvalid      = "pack_signature_invalid"
+	HTTPErrorPackPeerDependencyMissing = "pack_peer_dependency_missing"
+	HTTPErrorPackLockfileIncomplete    = "pack_lockfile_incomplete"
+	HTTPErrorPackVersionNotFound       = "pack_version_not_found"
+	HTTPErrorInterruptNotFound         = "interrupt_not_found"
+	HTTPErrorApprovalTokenInvalid      = "approval_token_invalid"
+	HTTPErrorApprovalTokenExpired      = "approval_token_expired"
+	HTTPErrorApprovalTokenConsumed     = "approval_token_consumed"
+	HTTPErrorInternalError             = "internal_error"
 )
 
 // HTTPErrorCodes lists canonical ErrorEnvelope.Error codes for common
@@ -265,6 +317,11 @@ var HTTPErrorCodes = []string{
 	HTTPErrorCredentialRequired,
 	HTTPErrorCredentialForbidden,
 	HTTPErrorCredentialUnavailable,
+	HTTPErrorPackIntegrityMismatch,
+	HTTPErrorPackSignatureInvalid,
+	HTTPErrorPackPeerDependencyMissing,
+	HTTPErrorPackLockfileIncomplete,
+	HTTPErrorPackVersionNotFound,
 	HTTPErrorInterruptNotFound,
 	HTTPErrorApprovalTokenInvalid,
 	HTTPErrorApprovalTokenExpired,

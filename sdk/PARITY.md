@@ -23,9 +23,11 @@ Per-SDK net surface counts (counted from the per-surface tables below, excluding
 
 | SDK | ✅ helpers | ⚠️ raw-only | ❌ unreachable |
 |---|---:|---:|---:|
-| TypeScript (`@openwop/openwop`) | 20 | 10 | 0 |
-| Python (`openwop-client`) | 17 | 13 | 0 |
-| Go (`github.com/openwop/openwop/sdk/go`) | 17 | 13 | 0 |
+| TypeScript (`@openwop/openwop`) | 22 | 10 | 0 |
+| Python (`openwop-client`) | 19 | 13 | 0 |
+| Go (`github.com/openwop/openwop/sdk/go`) | 19 | 13 | 0 |
+
+(Counts bumped 2026-05-12 — Phase B added 2 first-class helpers per SDK: `bulkCancel` for `POST /v1/runs:bulk-cancel` (closes R1) + `audit.verify` / `audit_verify` / `VerifyAuditLog` for `GET /v1/audit/verify`.)
 
 TypeScript is the slight leader: it ships dedicated `RUN_ERROR_CODES` / `isRunErrorCode` helpers and `ACTIVE_RUN_STATUSES` / `TERMINAL_RUN_STATUSES` constants + an `isTerminalRunStatus` predicate; Python and Go consumers can compose the same checks from the exported type unions / string constants but without a one-symbol helper. Adding the matching helpers to Python and Go is a session-sized follow-up; everything else is parity-clean across the three.
 
@@ -53,6 +55,7 @@ TypeScript is the slight leader: it ships dedicated `RUN_ERROR_CODES` / `isRunEr
 | `POST /v1/runs` (create) | ✅ `client.runs.create({...})` | ✅ `client.runs_create(...)` | ✅ `client.CreateRun(ctx, ...)` |
 | `GET /v1/runs/{id}` | ✅ `client.runs.get(id)` | ✅ `client.runs_get(id)` | ✅ `client.GetRun(ctx, id)` |
 | `POST /v1/runs/{id}/cancel` | ✅ `client.runs.cancel(id, ...)` | ✅ `client.runs_cancel(id, ...)` | ✅ `client.CancelRun(ctx, ...)` |
+| `POST /v1/runs:bulk-cancel` (Phase B, 2026-05-12) | ✅ `client.runs.bulkCancel({...})` | ✅ `client.runs_bulk_cancel(...)` | ✅ `client.BulkCancelRuns(ctx, ...)` |
 | `POST /v1/runs/{id}:fork` | ✅ `client.runs.fork(id, ...)` | ✅ `client.runs_fork(id, ...)` | ✅ `client.ForkRun(ctx, ...)` |
 | `POST /v1/runs/{id}:pause` (Track 13, 2026-05-10) | ⚠️ raw HTTP | ⚠️ raw HTTP | ⚠️ raw HTTP |
 | `POST /v1/runs/{id}:resume` (Track 13, 2026-05-10) | ⚠️ raw HTTP | ⚠️ raw HTTP | ⚠️ raw HTTP |
@@ -103,7 +106,7 @@ These landed during Track 1 / T1.1 / T1.2 / T1.4 / T1.7 work; no SDK has helpers
 
 | Surface | TS | Python | Go |
 |---|---|---|---|
-| Audit-log integrity: `GET /v1/audit/verify` (T1.1) | ⚠️ raw HTTP | ⚠️ raw HTTP | ⚠️ raw HTTP |
+| Audit-log integrity: `GET /v1/audit/verify` (Phase B, 2026-05-12) | ✅ `client.audit.verify(from, to)` | ✅ `client.audit_verify(from, to)` | ✅ `client.VerifyAuditLog(ctx, from, to)` |
 | Webhooks: `POST /v1/webhooks` register (T1.7) | ⚠️ raw HTTP | ⚠️ raw HTTP | ⚠️ raw HTTP |
 | Webhooks: `DELETE /v1/webhooks/{id}` unregister | ⚠️ raw HTTP | ⚠️ raw HTTP | ⚠️ raw HTTP |
 | Webhooks: HMAC verification helper | ⚠️ none — consumers re-implement HMAC-SHA256 | ⚠️ none | ⚠️ none |

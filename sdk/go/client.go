@@ -152,6 +152,52 @@ func (c *OpenwopClient) CancelRun(
 	return &out, nil
 }
 
+// BulkCancelRuns calls POST /v1/runs:bulk-cancel.
+//
+// Per rest-endpoints.md §"POST /v1/runs:bulk-cancel" (closes R1). The
+// top-level call returns 200 + per-id results whenever the request
+// reaches the host; partial failures surface inside the array (each
+// entry carries OK + optional Error). Host-defined cap on RunIDs
+// length (RECOMMENDED 100); over-cap returns 400 validation_error.
+func (c *OpenwopClient) BulkCancelRuns(
+	ctx context.Context,
+	body BulkCancelRunsRequest,
+	opts MutationOptions,
+) (*BulkCancelRunsResponse, error) {
+	var out BulkCancelRunsResponse
+	if err := c.requestJSON(
+		ctx, http.MethodPost,
+		"/v1/runs:bulk-cancel",
+		body, opts.headers(), true, &out,
+	); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// VerifyAuditLog calls GET /v1/audit/verify?fromSeq=&toSeq= per
+// auth-profiles.md §"openwop-audit-log-integrity" §4. Requires the
+// audit:read scope on the API key. Hosts that do NOT advertise the
+// profile return 404 (surfaced as a WopError).
+func (c *OpenwopClient) VerifyAuditLog(
+	ctx context.Context,
+	fromSeq int64,
+	toSeq int64,
+) (*AuditVerifyResult, error) {
+	var out AuditVerifyResult
+	q := url.Values{}
+	q.Set("fromSeq", strconv.FormatInt(fromSeq, 10))
+	q.Set("toSeq", strconv.FormatInt(toSeq, 10))
+	if err := c.requestJSON(
+		ctx, http.MethodGet,
+		"/v1/audit/verify?"+q.Encode(),
+		nil, nil, true, &out,
+	); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 // ForkRun calls POST /v1/runs/{runID}:fork.
 func (c *OpenwopClient) ForkRun(
 	ctx context.Context,

@@ -14,6 +14,12 @@ export { OpenwopClient } from './client.js';
 export type { OpenwopClientOptions, MutationOptions } from './client.js';
 export { WopError } from './types.js';
 export type {
+  AuditVerifyAnomaly,
+  AuditVerifyCheckpoint,
+  AuditVerifyResult,
+  BulkCancelRunResult,
+  BulkCancelRunsRequest,
+  BulkCancelRunsResponse,
   Capabilities,
   CancelRunRequest,
   CancelRunResponse,
