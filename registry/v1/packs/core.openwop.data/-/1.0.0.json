@@ -1,0 +1,104 @@
+{
+  "name": "core.openwop.data",
+  "version": "1.0.0",
+  "description": "Spec-canonical data-utility pack. Five pure, replay-safe nodes covering the most common workflow-author needs: string-case transformation, string splitting, array filtering, array mapping (with template substitution), and shallow object merging. Zero npm deps. Runs on any Node 20+ host advertising the openwop-node-packs profile.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.data",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "core",
+    "data",
+    "utilities",
+    "string",
+    "array",
+    "object"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "nodes": [
+    {
+      "typeId": "core.openwop.data.string-case",
+      "version": "1.0.0",
+      "label": "String Case",
+      "description": "Transforms input string to upper / lower / title case. Pure, replay-safe, locale-agnostic (uses JavaScript built-in casing — title case is naive: first letter of each whitespace-separated word).",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/string-case.config.json",
+      "inputSchemaRef": "schemas/string-case.input.json",
+      "outputSchemaRef": "schemas/string-case.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.string-split",
+      "version": "1.0.0",
+      "label": "String Split",
+      "description": "Splits input string on a separator. Pure. Returns an array. Empty separator splits into per-character array.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/string-split.config.json",
+      "inputSchemaRef": "schemas/string-split.input.json",
+      "outputSchemaRef": "schemas/string-split.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.array-filter",
+      "version": "1.0.0",
+      "label": "Array Filter",
+      "description": "Filters an array by a simple equality predicate on a path. Pure. Predicate shape: { path: 'dot.notation', equals: <value> }. For richer predicate languages, downstream packs can layer (e.g., JSONPath or JMESPath as a future v1.x extension).",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/array-filter.config.json",
+      "inputSchemaRef": "schemas/array-filter.input.json",
+      "outputSchemaRef": "schemas/array-filter.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.array-map",
+      "version": "1.0.0",
+      "label": "Array Map",
+      "description": "Maps an array via a simple template — each element's keys are substituted into a `{{key}}` template. Pure. For richer transformation languages (jq-style, JSONata), downstream packs can layer.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/array-map.config.json",
+      "inputSchemaRef": "schemas/array-map.input.json",
+      "outputSchemaRef": "schemas/array-map.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.object-merge",
+      "version": "1.0.0",
+      "label": "Object Merge",
+      "description": "Shallow-merges two objects. Later (`override`) wins on key collision. Pure. Deep-merge is intentionally out of scope; downstream packs can ship that variant.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/object-merge.config.json",
+      "inputSchemaRef": "schemas/object-merge.input.json",
+      "outputSchemaRef": "schemas/object-merge.output.json"
+    }
+  ],
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "openwop-team-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-cfqQOCvEdasokswYBWk4uHeJhxsvfbmGu/9MTXqvSw4="
+}

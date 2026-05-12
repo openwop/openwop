@@ -1,0 +1,25 @@
+{
+  "name": "core.openwop.ai",
+  "description": "Spec-canonical AI-call pack. Three foundational nodes (chat-completion, structured-output, embeddings) that route through the host's BYOK aiProviders surface — the pack itself makes no HTTP calls. peerDependencies on `aiProviders.supported`. Side-effectful (declared) so the engine's Layer-2 invocation log caches responses keyed on (runId, nodeId, request-hash) for replay safety.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.ai",
+  "repository": "https://github.com/openwop/openwop",
+  "tags": [],
+  "versions": [
+    {
+      "version": "1.0.0",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/core.openwop.ai/-/1.0.0.json",
+      "tarballUrl": "/v1/packs/core.openwop.ai/-/1.0.0.tgz",
+      "signatureUrl": "/v1/packs/core.openwop.ai/-/1.0.0.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-4vVid0p2eqjX/6zYHwFgCElbsvn7YdvDXHkENA9y//U=",
+      "deprecated": false,
+      "yanked": false
+    }
+  ],
+  "latest": "1.0.0",
+  "deprecated": false
+}

@@ -1,0 +1,25 @@
+{
+  "name": "core.openwop.http",
+  "description": "Spec-canonical HTTP fetch node. Single typeId `core.openwop.http.fetch` with retry, exponential backoff, and deterministic Idempotency-Key derivation for replay safety. Authentication is the workflow author's concern — pass an `Authorization` header via the `headers` config field (literal token or resolved via the host's secret-injection mechanism). The pack itself declares no `requiresSecrets` so it runs on every host regardless of `secrets.supported`. Zero npm deps; uses Node 20's built-in fetch (undici).",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.http",
+  "repository": "https://github.com/openwop/openwop",
+  "tags": [],
+  "versions": [
+    {
+      "version": "1.0.0",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/core.openwop.http/-/1.0.0.json",
+      "tarballUrl": "/v1/packs/core.openwop.http/-/1.0.0.tgz",
+      "signatureUrl": "/v1/packs/core.openwop.http/-/1.0.0.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-8+Z70OvbfHrTW1efblN8yHXsKPUBwBO+eWYX3OS278E=",
+      "deprecated": false,
+      "yanked": false
+    }
+  ],
+  "latest": "1.0.0",
+  "deprecated": false
+}

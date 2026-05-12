@@ -1,0 +1,96 @@
+{
+  "name": "core.openwop.mcp",
+  "version": "1.0.0",
+  "description": "Spec-canonical MCP-operation pack. Four nodes for workflow-author-direct interaction with registered MCP servers — list-tools, invoke-tool, read-resource, server-status. Complements the implicit LLM-mediated tool-call path documented in spec/v1/mcp-integration.md by exposing the same MCP operations as first-class workflow nodes. Routes through the host's MCP client (ctx.mcp.* surface); the pack itself speaks no MCP protocol.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.mcp",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "core",
+    "mcp",
+    "tools",
+    "resources",
+    "integration"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "mcp": "supported"
+  },
+  "nodes": [
+    {
+      "typeId": "core.openwop.mcp.list-tools",
+      "version": "1.0.0",
+      "label": "MCP List Tools",
+      "description": "Lists tools exposed by a registered MCP server. Useful for dynamic tool-discovery workflows and for diagnostics. Side-effectful: server-side tool catalog can change between calls. Cached via Layer-2 invocation log.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/list-tools.config.json",
+      "inputSchemaRef": "schemas/list-tools.input.json",
+      "outputSchemaRef": "schemas/list-tools.output.json"
+    },
+    {
+      "typeId": "core.openwop.mcp.invoke-tool",
+      "version": "1.0.0",
+      "label": "MCP Invoke Tool",
+      "description": "Invokes a tool on a registered MCP server with caller-supplied arguments. Unlike LLM-mediated tool calls (which happen inside an AI node implicitly per spec/v1/mcp-integration.md), this node lets workflow authors invoke tools deterministically from the DAG. Side-effectful + cacheable.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/invoke-tool.config.json",
+      "inputSchemaRef": "schemas/invoke-tool.input.json",
+      "outputSchemaRef": "schemas/invoke-tool.output.json"
+    },
+    {
+      "typeId": "core.openwop.mcp.read-resource",
+      "version": "1.0.0",
+      "label": "MCP Read Resource",
+      "description": "Reads a resource by URI from a registered MCP server. Returns the content + MIME type. Side-effectful (resource content may change between calls) + cacheable.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/read-resource.config.json",
+      "inputSchemaRef": "schemas/read-resource.input.json",
+      "outputSchemaRef": "schemas/read-resource.output.json"
+    },
+    {
+      "typeId": "core.openwop.mcp.server-status",
+      "version": "1.0.0",
+      "label": "MCP Server Status",
+      "description": "Health/availability check against a registered MCP server. Returns availability + reported name/version + measured latency. Side-effectful (real network round-trip).",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/server-status.config.json",
+      "inputSchemaRef": "schemas/server-status.input.json",
+      "outputSchemaRef": "schemas/server-status.output.json"
+    }
+  ],
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "openwop-team-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-6+BzctH9myodPgmYDE6esZCQG9fpQycdvf13J+40ze4="
+}

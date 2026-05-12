@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.triggers/1.0.0/event.output.json",
+  "title": "EventTriggerOutput",
+  "type": "object",
+  "required": ["eventName", "payload", "firedAt"],
+  "properties": {
+    "eventName": { "type": "string", "description": "The event name that fired (echo of config.eventName when match was exact; may differ when host supports wildcard subscriptions in a future revision)." },
+    "source": { "type": "string", "description": "Event source as reported by the host." },
+    "payload": { "description": "Event payload — shape is event-name-defined." },
+    "firedAt": { "type": "string", "format": "date-time" },
+    "eventId": { "type": "string", "description": "Host-assigned event identifier for trace correlation." }
+  },
+  "additionalProperties": false
+}

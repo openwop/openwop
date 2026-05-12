@@ -1,0 +1,25 @@
+{
+  "name": "core.openwop.data",
+  "description": "Spec-canonical data-utility pack. Five pure, replay-safe nodes covering the most common workflow-author needs: string-case transformation, string splitting, array filtering, array mapping (with template substitution), and shallow object merging. Zero npm deps. Runs on any Node 20+ host advertising the openwop-node-packs profile.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.data",
+  "repository": "https://github.com/openwop/openwop",
+  "tags": [],
+  "versions": [
+    {
+      "version": "1.0.0",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/core.openwop.data/-/1.0.0.json",
+      "tarballUrl": "/v1/packs/core.openwop.data/-/1.0.0.tgz",
+      "signatureUrl": "/v1/packs/core.openwop.data/-/1.0.0.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-cfqQOCvEdasokswYBWk4uHeJhxsvfbmGu/9MTXqvSw4=",
+      "deprecated": false,
+      "yanked": false
+    }
+  ],
+  "latest": "1.0.0",
+  "deprecated": false
+}

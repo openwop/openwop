@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.mcp/1.0.0/read-resource.output.json",
+  "title": "ReadResourceOutput",
+  "type": "object",
+  "required": ["content", "mimeType"],
+  "properties": {
+    "content": {
+      "description": "Resource content. Text resources arrive as strings; binary resources are base64-encoded strings; structured resources are objects (per MCP `resources/read` result shape).",
+      "type": ["string", "object", "null"]
+    },
+    "mimeType": {
+      "type": "string",
+      "description": "Content MIME type as reported by the MCP server (e.g., `'text/plain'`, `'application/json'`, `'image/png'`). Empty string if the server didn't report one."
+    },
+    "encoding": {
+      "type": "string",
+      "enum": ["utf-8", "base64"],
+      "description": "How `content` (when string) is encoded. `utf-8` for text; `base64` for binary."
+    },
+    "uri": { "type": "string", "description": "Echo of the requested URI (for replay-determinism debugging)." }
+  },
+  "additionalProperties": false
+}

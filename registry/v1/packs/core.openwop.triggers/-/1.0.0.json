@@ -1,0 +1,135 @@
+{
+  "name": "core.openwop.triggers",
+  "version": "1.0.0",
+  "description": "Workflow-trigger pack. Seven entry-point shapes — webhook, schedule, event, envelope, chatMessage, canvas, artifact — that hosts use to register workflows for external-event-driven dispatch. Trigger nodes are pass-through executors: they forward `ctx.triggerData` (set by the engine when the trigger fires) to outputs. The pack contributes the typed config + payload schemas + the runtime pass-through.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.triggers",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "core",
+    "triggers",
+    "webhook",
+    "schedule",
+    "event",
+    "envelope",
+    "chat",
+    "canvas",
+    "artifact"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "nodes": [
+    {
+      "typeId": "core.trigger.webhook",
+      "version": "1.0.0",
+      "label": "Webhook Trigger",
+      "description": "HTTP webhook entry-point. Host's webhook subsystem routes incoming requests at the configured path/secret to this workflow and exposes the body, headers, query, and method via ctx.triggerData. Replay-safe: triggerData is captured at run start and never re-fetched.",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/webhook.config.json",
+      "inputSchemaRef": "schemas/webhook.input.json",
+      "outputSchemaRef": "schemas/webhook.output.json"
+    },
+    {
+      "typeId": "core.trigger.schedule",
+      "version": "1.0.0",
+      "label": "Schedule Trigger",
+      "description": "Cron-style scheduled entry-point. Host's scheduler fires the workflow at config.cron expressions; ctx.triggerData carries the fire timestamp, the matched cron expression, and timezone metadata. Drift / missed-fire handling is host policy.",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/schedule.config.json",
+      "inputSchemaRef": "schemas/schedule.input.json",
+      "outputSchemaRef": "schemas/schedule.output.json"
+    },
+    {
+      "typeId": "core.trigger.event",
+      "version": "1.0.0",
+      "label": "Event Trigger",
+      "description": "Generic event-subscription entry-point. Host's event bus dispatches to the workflow when a matching event name fires; ctx.triggerData carries the event name + payload + source. For envelope-typed events with schema validation, use core.trigger.envelope.",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/event.config.json",
+      "inputSchemaRef": "schemas/event.input.json",
+      "outputSchemaRef": "schemas/event.output.json"
+    },
+    {
+      "typeId": "core.trigger.envelope",
+      "version": "1.0.0",
+      "label": "Envelope Trigger",
+      "description": "Typed-envelope entry-point. Host dispatches when a matching envelope (e.g., from a parent workflow's emit or a typed event publisher) fires. ctx.triggerData carries the envelope's `envelopeType` discriminator + the payload. Workflow authors declare the expected envelope type in config; the host's envelope-routing layer enforces.",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/envelope.config.json",
+      "inputSchemaRef": "schemas/envelope.input.json",
+      "outputSchemaRef": "schemas/envelope.output.json"
+    },
+    {
+      "typeId": "core.trigger.chatMessage",
+      "version": "1.0.0",
+      "label": "Chat Message Trigger",
+      "description": "Chat-message intent-match entry-point. Host's chat router dispatches to the workflow when an inbound message matches the configured intent (regex, keyword, or LLM classification). ctx.triggerData carries channel, message text, conversation id, peer id, and conversation kind (dm | group | thread).",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/chatMessage.config.json",
+      "inputSchemaRef": "schemas/chatMessage.input.json",
+      "outputSchemaRef": "schemas/chatMessage.output.json"
+    },
+    {
+      "typeId": "core.trigger.canvas",
+      "version": "1.0.0",
+      "label": "Canvas Trigger",
+      "description": "Canvas-event entry-point. Host dispatches when a canvas object is added / modified / removed. ctx.triggerData carries canvasTypeId, canvasEvent, objectId, and eventData. Vendor-namespaced canvas typeIds (MyndHyve app-builder, slides, etc.) flow through this single trigger shape.",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/canvas.config.json",
+      "inputSchemaRef": "schemas/canvas.input.json",
+      "outputSchemaRef": "schemas/canvas.output.json"
+    },
+    {
+      "typeId": "core.trigger.artifact",
+      "version": "1.0.0",
+      "label": "Artifact Trigger",
+      "description": "Artifact-event entry-point. Host dispatches when a workflow artifact (PRD, plan, theme, etc.) is created / updated / deleted. ctx.triggerData carries artifactId, artifactTypeId, action, and artifactData. Used for cross-workflow choreography that reacts to artifact lifecycle.",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/artifact.config.json",
+      "inputSchemaRef": "schemas/artifact.input.json",
+      "outputSchemaRef": "schemas/artifact.output.json"
+    }
+  ],
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "openwop-team-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-vu9qrTd7hFbwxtUYStu0Om97luRo4l8yx8j3sfdJgsI="
+}

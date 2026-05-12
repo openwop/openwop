@@ -1,0 +1,25 @@
+{
+  "name": "core.openwop.integration",
+  "description": "Spec-canonical integration pack — universal communication primitives that route through the host's provider-specific adapters. Phase 1 v1.0.0 ships email-send + slack-message (both communication; both side-effectful with engine Layer-2 cost-once caching via deterministic Idempotency-Key derivation). File-system, database-query, and GitHub-action nodes defer to future minors — each needs real connection-pool / credential abstractions in the host.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.integration",
+  "repository": "https://github.com/openwop/openwop",
+  "tags": [],
+  "versions": [
+    {
+      "version": "1.0.0",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/core.openwop.integration/-/1.0.0.json",
+      "tarballUrl": "/v1/packs/core.openwop.integration/-/1.0.0.tgz",
+      "signatureUrl": "/v1/packs/core.openwop.integration/-/1.0.0.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-ShpRjB9sZsi6wc3uIgl78Z+u7Iq0lwWOUrQVglOUdG8=",
+      "deprecated": false,
+      "yanked": false
+    }
+  ],
+  "latest": "1.0.0",
+  "deprecated": false
+}
