@@ -1,0 +1,376 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.entities@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.entities",
+      "version": "1.0.0",
+      "description": "MyndHyve entities + validation + asset-decision + messaging primitives. 5 nodes covering project creation, cross-stage validation (deterministic, no LLM), workspace asset decision gates (brand / persona / KB), and chat send/reply via the messaging connector layer.",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://myndhyve.ai/packs/entities"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/openwop/openwop"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "debd1aea18083eeac8de78a3ffb8d910c08ff2044eb8a0b94e7cc44c73a89db5"
+        }
+      ],
+      "purl": "pkg:openwop/vendor.myndhyve.entities@1.0.0"
+    },
+    "tools": [
+      {
+        "vendor": "openwop",
+        "name": "generate-sbom.mjs",
+        "version": "1"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "file",
+      "name": "LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0cea879ed215e3961316e97ab5e4d7a2b2bca999358668599bd53a1c953bc0d9"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "975"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "README.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9f1aa71bb1456d9858703dc5feb8c8bd1fbaecb2b1235ab2ee24c60ce47170d1"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "3701"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "index.mjs",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "b682e5313539c632a4d36a2ff4ab0c369e01ddc2777b3717c46ca1dbfd1fe84e"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "13338"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "keys/pack.json.sig",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "8bc2b78a5b8caff81866681e9dcad74904761837bc0afa636b3fed061be00d34"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "64"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "pack.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "7795034059abb549c6f6a2480d70a45142001837ba16a2cbf938bea3ccadee9c"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "3426"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/assetDecisionGate.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2c8d9e259c929329f55e03ae5564e99c6374580ec0da093bb5d578d51630d792"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "743"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/assetDecisionGate.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "dda92ba2a0e3cee7b8ff415eeba773766c074b079c31fa7dd12a3dd7767a3e30"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "175"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/assetDecisionGate.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d126912b9377607f8b3a1a9a2c542cd6cb44335728e71cb92ba5fc86ebc5472c"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "456"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/chatReply.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "fd44d8237d92219573b3cb5a86268b29648e7dd685005b3f06b7fe7f0a1ea5ac"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "306"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/chatReply.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c04c600034eea1b350d278eb1978415e39ef8104caaddcbefa3e3a51a35894cb"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "428"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/chatReply.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e78c43e1edc4bcbb9aa2f49975a252cbaa9b9166294345f4f03ffbaa33877fde"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "380"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/chatSend.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "fd44d8237d92219573b3cb5a86268b29648e7dd685005b3f06b7fe7f0a1ea5ac"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "306"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/chatSend.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "165450c1f72b82b01096c774ef8fb9c5a810c6333d0c947607131b0746d01415"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "596"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/chatSend.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e78c43e1edc4bcbb9aa2f49975a252cbaa9b9166294345f4f03ffbaa33877fde"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "380"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/crossStageCheck.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e02701aced019f88438a293088998b346f7c16e4050a05634a2535779f84d888"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "693"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/crossStageCheck.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "de5843a839b2246daab44356043cb06c4feb4252998bea06feecdc36377caa39"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "287"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/crossStageCheck.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "779d281ab06cd65a6d87ec2f382f19c53e3f2b0253e4e2b935e43a85886d78e3"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "443"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/projectCreate.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "bb099aff4f509e1f476ac9d68341c13187a03f59018ce7417754e8cd3970bd59"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "222"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/projectCreate.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1a2dc7b6f3a55300c903414825c53108b595623ff520f41adeb228325241627a"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "441"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/projectCreate.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "3498364ee3cee685cebf3e2c993fee5230f99c0dd879ba710e6f17de747a4968"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "349"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:openwop/vendor.myndhyve.entities@1.0.0",
+      "dependsOn": [
+        "host:host.entities",
+        "host:host.messaging"
+      ]
+    }
+  ]
+}

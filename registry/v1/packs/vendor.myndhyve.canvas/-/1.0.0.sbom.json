@@ -1,0 +1,327 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.canvas@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.canvas",
+      "version": "1.0.0",
+      "description": "First vendor-namespace pack. Ships MyndHyve canvas-coordination nodes — canvasRead / canvasWrite / canvasCreate / crossCanvasInvoke — preserving the `core.coordination.*` typeIds in the wild (typeId-preserve strategy from the migration plan §4). The pack itself is MyndHyve-internal: hosts that don't advertise `host.canvas: supported` cannot register it.",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://myndhyve.ai/packs/canvas"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/openwop/openwop"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "564f15e30447ac0c41fc01ee5b384b24bcac827c1ddf53c9ed774b3290580375"
+        }
+      ],
+      "purl": "pkg:openwop/vendor.myndhyve.canvas@1.0.0"
+    },
+    "tools": [
+      {
+        "vendor": "openwop",
+        "name": "generate-sbom.mjs",
+        "version": "1"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "file",
+      "name": "LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0cea879ed215e3961316e97ab5e4d7a2b2bca999358668599bd53a1c953bc0d9"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "975"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "README.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "5ca05661478a9eabfaf0a0ee7f52086b01c14962d324579738b9ad9a2fd808a3"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "5326"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "index.mjs",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "3b0310973c2893424ab0c2d00e269c7f480224ab0c394a8713626fd32151bf6a"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "7525"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "keys/pack.json.sig",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e88d6fa15e3cea45dc64b9a02579cddb4912c108a5c08f17e8f35d1f858d3743"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "64"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "pack.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d97f73ff50cf1705904dce6f0079bdd40f3f6b8e439db38ba120287965437e69"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "3146"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/canvasCreate.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d01e2e6a424238454de4ddb64bf525bab31929609f3d4ebadbaff04fa31595e7"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "816"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/canvasCreate.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "30084a5b198d3eb7c56b069cb00b26b1b9082eb96508aedafef3548999648ec2"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "674"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/canvasCreate.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a8675c4b663d54474eea9aff9e5c3f9bace494eac27aa2f0166446a1d94869f6"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "733"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/canvasRead.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "fa7ed4190d44939429889909ff3aa5ad2dabfdb89b45c0fbb4cbe01577470c05"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "935"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/canvasRead.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "90fc91528bba947a568db3dd3cbd09f04d6a8215800f26d0a50fdde5a25069e1"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "511"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/canvasRead.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "bc4cc1867306a60735b01839bfa35b372eb9598ec2f3f4db88894dcbcb91c9fe"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "950"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/canvasWrite.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "09636d8e91db68159fad6c9b3187241a86d5be6f2d9ca5482af1a4a467a6a0ec"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "889"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/canvasWrite.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4340857e3322a306e9dbfa3a71925f1297a6db6cf072763b52c60c4b4325add7"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "612"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/canvasWrite.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "76a11f52567503a697c92f8ce3d99a68cd89daa5906fcf739bab7d24d893ce8d"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "775"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/crossCanvasInvoke.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "49b2aa6875081c7aca5598022bcefb5c2cd8d69698559e2c6f244cfa12c3d501"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "1780"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/crossCanvasInvoke.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d1c041908cf3a051844ebd77b6b56cdd674108349950a47a0237fff632ae960d"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "472"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/crossCanvasInvoke.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "79a8156143bfc23b4fd8b01a114e33ad90f6a1a19c1d067ca9d72cc85478ad94"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "1418"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:openwop/vendor.myndhyve.canvas@1.0.0",
+      "dependsOn": [
+        "host:host.canvas"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,280 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.ai@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.ai",
+      "version": "1.0.0",
+      "description": "MyndHyve envelope-protocol AI nodes. Distinct from core.openwop.ai (which ships provider-agnostic chat-completion + structured-output + embeddings) — this pack ships MyndHyve-specific nodes that work with typed envelopes (`prd.create`, `theme.create`, etc.) emitted into the workflow's envelope stream, and prompts resolved from MyndHyve's prompt library by ID.",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://myndhyve.ai/packs/ai"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/openwop/openwop"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "6cdb855800fd5b970634cfa83d2dcb4b225e2e54de9918e13549a496c9c29f33"
+        }
+      ],
+      "purl": "pkg:openwop/vendor.myndhyve.ai@1.0.0"
+    },
+    "tools": [
+      {
+        "vendor": "openwop",
+        "name": "generate-sbom.mjs",
+        "version": "1"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "file",
+      "name": "LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0cea879ed215e3961316e97ab5e4d7a2b2bca999358668599bd53a1c953bc0d9"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "975"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "README.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "caa6ae7dfe7e2c55625cb815755700d4ff23bb6e12dd7cba69da78bf025d87de"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "1990"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "index.mjs",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "beac4a021de51f98813381169d1d291666eea642efea9b8cb8b803800c1961dc"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "6388"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "keys/pack.json.sig",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "56c69d2860d59afcdbb860aecc9767b784daa8764f4f9ba2989340419e0d97c2"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "64"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "pack.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a8010146757a5d60646dd14134c2bbaee8dba0482832ccceada8810307e4542b"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "2799"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/awaitEnvelope.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "8e41d0301b3e88fed1de60c04bb522fe124b2411feb97dde28936748aa6217ca"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "675"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/awaitEnvelope.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "51cc9f96d90d1b326f7b0cc7521529487f4f911df86103e8a695e513a413912c"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "258"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/awaitEnvelope.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "90d42dcf9166d917cb933d40a469d23ba68ffd95dbb798bab8a32fe182a8cd7c"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "584"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/callPrompt.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0c22b9b093a8c17bf9c79a1cf8d2a4932021642289a19d177bfb279026959c00"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "792"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/callPrompt.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "60e2270ed40701c4b4a350c5ba8cb66562baad56d5b6d3d88d22cecf7814f3fb"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "431"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/callPrompt.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "74ec2dd7dfc03ff02de48259dfd815d57f9c3bbb93d3ccde9fe20e946f9820e0"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "903"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/generateFromPrompt.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "940e28d29ae0167aeaaa287e03a80d117ea3c161137d32d71f2f8dc3c0e37a39"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "983"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/generateFromPrompt.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "5c95eb01a2ea0318ec51f499a11d008d0392585474dc781e508d4e3bddcfbb5a"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "842"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/generateFromPrompt.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "b6ce4a538838ab4245ad6390bbff3b908d37dc447515ffcd3995e68bfbd53041"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "903"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:openwop/vendor.myndhyve.ai@1.0.0",
+      "dependsOn": [
+        "host:host.aiEnvelope",
+        "host:host.promptLibrary"
+      ]
+    }
+  ]
+}

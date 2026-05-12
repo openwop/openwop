@@ -1,0 +1,102 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "bom-ref": "pkg:openwop/vendor.openwop.rust-hello@1.0.0",
+      "type": "library",
+      "name": "vendor.openwop.rust-hello",
+      "version": "1.0.0",
+      "description": "Reference WASM node pack proving RFC 0008 ABI v1 works end-to-end across an independent toolchain (Rust → wasm32-unknown-unknown). One node type: vendor.openwop.rust-hello.greet.",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "/v1/packs/vendor.openwop.rust-hello/-/1.0.0.tgz"
+        },
+        {
+          "type": "other",
+          "comment": "publisher signing key (Ed25519)",
+          "url": "/keys/openwop-registry-root.pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a00c43e7ca75d44243609f38dbb7281f4ce150b495a3f81e97e308f65882de08"
+        }
+      ],
+      "purl": "pkg:openwop/vendor.openwop.rust-hello@1.0.0"
+    },
+    "tools": [
+      {
+        "vendor": "openwop",
+        "name": "generate-sbom.mjs",
+        "version": "1"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "file",
+      "name": "README.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d9fc0c76d836b21a990c480d2e6a1a91bc02c7734f238665cd5e5fed1af7b357"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "4130"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "dist/rust_hello.wasm",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "df09f76a0f166f798165e5c3aefd7bd67f256ffbc31a8d4006ab1b8988bcb22a"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "28293"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "pack.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9d44f68e6aa5ebcefb3162e05225c34ba4823ff93ff71d832a065e004ef47617"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "939"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:openwop/vendor.openwop.rust-hello@1.0.0",
+      "dependsOn": []
+    }
+  ]
+}

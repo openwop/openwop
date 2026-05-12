@@ -19,11 +19,15 @@ registry/
 │           └── -/
 │               ├── <version>.json      version manifest
 │               ├── <version>.tgz       signed pack tarball
-│               └── <version>.sig       signature (ed25519 or sigstore bundle)
+│               ├── <version>.sig       signature (ed25519 or sigstore bundle)
+│               └── <version>.sbom.json CycloneDX 1.6 SBOM (files, hashes, peer deps)
 ├── keys/
 │   └── <keyId>.pub                     signing public key(s); served at /keys/<keyId>.pub
 └── scripts/                            local dev only — excluded from deploy
     ├── build-index.mjs                 regenerates index/aggregate JSON from on-disk packs
+    ├── generate-sbom.mjs               writes per-version + aggregate CycloneDX SBOMs
+    ├── verify-signatures.mjs           crypto-verifies every published Ed25519 signature
+    ├── conformance-check.mjs           structural conformance for every pack
     └── serve.mjs                       local-dev HTTP server mirroring Firebase rewrites
 ```
 
@@ -40,6 +44,8 @@ Per `spec/v1/node-packs.md` §"Registry HTTP API" + `spec/v1/registry-operations
 | `GET /v1/packs/{name}/-/{version}.tgz` | Signed pack tarball. |
 | `GET /v1/packs/{name}/-/{version}.sig` | Signature for the tarball. |
 | `GET /keys/{keyId}.pub` | Registry signing public key. |
+| `GET /v1/packs/{name}/-/{version}.sbom.json` | Per-version SBOM (CycloneDX 1.6). |
+| `GET /v1/sbom.json` | Aggregate SBOM listing every published version. |
 
 **Discovery is authoritative.** Clients SHOULD substitute `{name}` / `{version}` into the templates declared in `.well-known/openwop-registry` `endpoints` rather than hardcoding paths. Filesystem-backed registries (this one and other static-CDN deployments) serve pack metadata at `/index.json` because CDN URL-rewrite engines don't reliably match dot-containing path segments — clients reach the abstract `/v1/packs/{name}` endpoint described by `node-packs.md` via the discovery template.
 
@@ -88,22 +94,27 @@ cp rust_hello-1.0.0.tgz registry/v1/packs/vendor.openwop.rust-hello/-/1.0.0.tgz
 cp rust_hello-1.0.0.sig registry/v1/packs/vendor.openwop.rust-hello/-/1.0.0.sig
 ```
 
-### 4. Rebuild indices
+### 4. Rebuild indices + SBOM
 
 ```bash
 node registry/scripts/build-index.mjs
+node registry/scripts/generate-sbom.mjs
 ```
 
-This script recomputes the `integrity` (sha256) field on every version manifest, regenerates the per-pack `index.json`, and regenerates the registry-wide `v1/index.json`.
+`build-index.mjs` recomputes the `integrity` (sha256) field on every version manifest, regenerates the per-pack `index.json`, and regenerates the registry-wide `v1/index.json`.
+
+`generate-sbom.mjs` writes a sibling `<version>.sbom.json` (CycloneDX 1.6) for every pack version and the aggregate `v1/sbom.json`. Output is deterministic — re-runs without source changes are no-ops. CI runs `--check` mode and fails the PR if any SBOM bytes drift from the committed file.
 
 ### 5. Open a PR
 
 CI will:
 
-1. Validate every JSON file parses.
+1. Validate every JSON file parses + every version manifest matches `schemas/registry-version-manifest.schema.json`.
 2. Verify `build-index.mjs --check` is clean (no drift between manifests and tarball hashes).
 3. Verify every `.tgz` has a sibling `.sig`.
-4. (Future, v1.2) Verify each `.sig` against `keys/openwop-registry-root.pub`.
+4. Crypto-verify each `.sig` against the registered publisher key per `signingKeys[]` (namespace-scoped).
+5. Run structural conformance check on every pack (`conformance-check.mjs`).
+6. Verify SBOMs are up-to-date (`generate-sbom.mjs --check`).
 
 On merge to `main`, the `deploy` job pushes the directory to Firebase Hosting under the `packs` target. New artifacts become live at `https://packs.openwop.dev/v1/packs/...` within a minute.
 

@@ -1,0 +1,232 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.launch-studio@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.launch-studio",
+      "version": "1.0.0",
+      "description": "MyndHyve Launch Studio pack. 2 nodes for the LS backbone: link a project to a step + propagate inherited artifact context, and dispatch ready WOP stack items (todo → doing) for a step's canvas type.",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://myndhyve.ai/packs/launch-studio"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/openwop/openwop"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "aa207df7a258e551e37379b410b4f01f8498c3ccbc1182dbe540b164805784c5"
+        }
+      ],
+      "purl": "pkg:openwop/vendor.myndhyve.launch-studio@1.0.0"
+    },
+    "tools": [
+      {
+        "vendor": "openwop",
+        "name": "generate-sbom.mjs",
+        "version": "1"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "file",
+      "name": "LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0cea879ed215e3961316e97ab5e4d7a2b2bca999358668599bd53a1c953bc0d9"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "975"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "README.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "659ce9f074b0c7484ca0fedf56dea45cb43cd71b62bd989b3c77f2014995da2d"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "2572"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "index.mjs",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "6168bd4f634fedbe92e27cbc2abad04e81fdb3dab58437fbf3ecf7afe69205df"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "5515"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "keys/pack.json.sig",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0fee438ae6dea8f7a73c27fbaf7c39db1931652941f814e01255b3f07f032597"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "64"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "pack.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "36a814c2308841cb294a72890979b388174a10979522474d8e5410d37ca4c263"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "2114"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/dispatchStackItems.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "fef974bf60f425c9b5aac171ab1899026ed0a3c44dc447dd564e66d85f123cbf"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "116"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/dispatchStackItems.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ed0be4a556fdc7240695a1b0beb76e2627c336619c7f175d6cf5b2340a7042d1"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "592"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/dispatchStackItems.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "aa7af13a28ea15aacb04fd9f86787eb06f4fc4aae38a5fef76c8bb8cb7254212"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "862"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/linkStep.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "fef974bf60f425c9b5aac171ab1899026ed0a3c44dc447dd564e66d85f123cbf"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "116"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/linkStep.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "8191e6fc177017db97e9db4ac28a23810d52ba47180cb4de65091321ab6d572d"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "541"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/linkStep.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4adb5f5496283a47d281e3352f20ae0d021863464fea33174186fe7377178f4b"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "445"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:openwop/vendor.myndhyve.launch-studio@1.0.0",
+      "dependsOn": [
+        "host:host.kanban",
+        "host:host.launchStudio"
+      ]
+    }
+  ]
+}
