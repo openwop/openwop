@@ -9,6 +9,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ---
 
+## [1.0 — additions] — 2026-05-12 — Phase F real-impl interop closure (MCP + A2A 0.3)
+
+Out-of-band T3.4 operator step from `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` Track 6. Pointed the conformance suite's MCP + A2A probes at live reference implementations and closed the wire-shape gaps surfaced by the real-impl run.
+
+- **MCP** — probe run against `@modelcontextprotocol/sdk@1.29.0` in single-JSON streamable-http mode revealed two gaps the in-process fake had been hiding: `initialize` was sending empty `params` (real SDK requires `protocolVersion` + `capabilities` + `clientInfo`), and `mcp-session-id` from the initialize response wasn't being threaded through subsequent `tools/list` + `tools/call` calls. Both closed in `conformance/src/scenarios/mcp-tool-roundtrip.test.ts`; fake-mode compatibility preserved.
+- **A2A** — probe + in-process fake migrated from the v0.2-era simple-HTTP shape (`/agent.json` + REST `/tasks` + `GET /tasks/{id}`) to A2A 0.3 JSON-RPC: AgentCard at `/.well-known/agent-card.json`, `message/send` + `tasks/get` over the JSON-RPC endpoint discovered via `card.additionalInterfaces`. Internal `A2ATaskState` enum stays UPPERCASE (matches `a2a-integration.md`'s gRPC reference); wire responses translate to lowercase-hyphen (`completed`, `input-required`, `auth-required`) per the JSON-RPC enum. Probe accepts both Task and Message envelopes from `message/send` per A2A 0.3. First real-impl evidence collected against `@a2a-js/sdk@0.3.13`.
+- **INTEROP-MATRIX** — new `## Composition partners` subsection records the real-impl evidence with explicit scope limits (MCP probe currently covers streamable-http single-JSON only; A2A probe currently exercises direct probe only, drift-point subtests stay fake-only).
+- **a2a-integration.md** — refreshed to reflect the well-known AgentCard path + JSON-RPC method names, plus a new "spelling drift to remember" callout: gRPC keeps the UPPERCASE enum, JSON-RPC MUST emit + accept lowercase-hyphen on the wire.
+
+Gate: 8/8 green.
+
+---
+
 ## [1.0 — additions] — 2026-05-12 — Phase H + Phase I close-out (Postgres host) — myndhyve.ai launch-readiness
 
 Architect-review-driven batch landing the 9 launch-blocking + 7 of 11 enterprise-blocking surfaces required for myndhyve.ai's Postgres production runtime. **Postgres host conformance: 728/797 (91.3%)**, up from 89.4% baseline.
