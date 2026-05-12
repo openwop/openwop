@@ -10,6 +10,12 @@
   "engines": {
     "openwop": ">=1.0.0 <2.0.0"
   },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
   "nodes": [
     {
       "typeId": "campaign.sequence.wait",

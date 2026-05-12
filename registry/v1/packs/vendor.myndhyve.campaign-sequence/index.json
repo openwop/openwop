@@ -15,7 +15,7 @@
       "signatureUrl": "/v1/packs/vendor.myndhyve.campaign-sequence/-/1.0.0.sig",
       "signingMethod": "manual",
       "signingKeyId": "openwop-registry-root",
-      "integrity": "sha256-OHo+PFK6rD7JTLTJXJVznYoCHixYfoJIvlU9gK5I8HI=",
+      "integrity": "sha256-qwzVCLvioevzcoH+QRfOs3a/HkMkS6AHepqqmrLmgBk=",
       "deprecated": false,
       "yanked": false
     }

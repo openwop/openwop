@@ -16,6 +16,12 @@
   "engines": {
     "openwop": ">=1.0.0 <2.0.0"
   },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
   "nodes": [
     {
       "typeId": "campaign.sequence.wait",
@@ -56,5 +62,5 @@
     "publicKeyRef": "myndhyve-internal-1",
     "signatureRef": "keys/pack.json.sig"
   },
-  "integrity": "sha256-OHo+PFK6rD7JTLTJXJVznYoCHixYfoJIvlU9gK5I8HI="
+  "integrity": "sha256-qwzVCLvioevzcoH+QRfOs3a/HkMkS6AHepqqmrLmgBk="
 }

@@ -29,7 +29,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "387a3e3c52baac3ec94cb4c95c95739d8a021e2c587e8248be553d80ae48f072"
+          "content": "ab0cd508bbe2a1ebf37281fe4117ceb376bf1e43244ba0077a9aaa9ab2e68019"
         }
       ],
       "purl": "pkg:openwop/vendor.myndhyve.campaign-sequence@1.0.0"
@@ -97,7 +97,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "e54dcf71da63ccac021a7d41b350c81a3521aa4df578e59acbe3316ad1c6a132"
+          "content": "4b35ed7e0d15d3075c161ba456d485e45d440c4dd01db37b08d2345011536a96"
         }
       ],
       "properties": [
@@ -113,13 +113,13 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "5e7049c59b136c81c5d98fb797258a3b6bde816dede756005169020814cd2a24"
+          "content": "310d3bf26a89a088741ece0d9bf4b69cf9b2af6d65d7caa09fa335f0e76e74e9"
         }
       ],
       "properties": [
         {
           "name": "openwop:size",
-          "value": "2434"
+          "value": "2538"
         }
       ]
     },
