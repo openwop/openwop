@@ -233,7 +233,16 @@ This document turns the protocol deep-dive review into implementation tracks. It
 - `observability.md` adds `openwop.cost.*` and queue-depth sections.
 - Reference hosts (in-memory + SQLite) pass the new scenario.
 
-## Track 12: SDK Parity And Non-TS Reference Host
+## Track 12: SDK Parity And Non-TS Reference Host — closed 2026-05-12
+
+**Status (2026-05-12):** ✅ All three normative acceptance criteria are met. The 4th-language SDK triage is explicitly demand-gated and not blocking.
+
+| Acceptance criterion | Status | Evidence |
+|---|---|---|
+| Parity matrix in `sdk/README.md` (or each SDK's README) | ✅ Done | `sdk/PARITY.md` — 173-line per-protocol-surface matrix across TS / Python / Go. Net counts: TS 22 helpers / 10 raw-only / 0 unreachable; Python 19/13/0; Go 19/13/0. Last reviewed 2026-05-12 with the Phase B `bulkCancel` / `audit.verify` additions. |
+| Python reference host passes `@openwop/openwop-conformance` end-to-end with a public conformance result | ✅ Done | `examples/hosts/python/conformance.md` — verified 2026-05-12, 670/782 default-mode pass (85.7%). 50 failures are all capability-gated scenarios outside the claimed profile set (Python honesty-cleanup is a follow-up mirroring SQLite Phase A — does not block the cross-language proof). Pass-rate row recorded in `INTEROP-MATRIX.md` §"External conformance suite". |
+| `PUBLISHING.md` documents the cadence rule | ✅ Done | `PUBLISHING.md` lines 28-30 — patch / minor / major release rules for all 4 artifacts (TS SDK, conformance suite, Python SDK, Go SDK). |
+| 4th-language SDK triage (Rust / Java / Kotlin / .NET) | ⏸️ Deferred | Out-of-band; demand-gated per the goal statement. Not a normative acceptance criterion. |
 
 **Goal:** prove the protocol's cross-language portability beyond the TypeScript-heavy reference path. Today both reference hosts are Node, the TypeScript SDK has the deepest surface coverage, and Python + Go SDKs ship as v1.0 but have not been audited for parity.
 
