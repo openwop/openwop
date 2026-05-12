@@ -9,6 +9,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ---
 
+## [1.0 — additions] — 2026-05-12 — Phase I.3 + I.4 close-out: OAuth2-CC + OIDC user-bearer JWT validators on Postgres host
+
+Closes two architect-deferred Phase I items in one commit (`62be64b`). Both profiles share the same JWT validation mechanism; only env vars + profile claims differ. **Phase I total: 9/11 closed** (only pack-registry consumption remains, tripwire-gated on the first non-built-in pack landing).
+
+- New `examples/hosts/postgres/src/jwt-validator.ts` (~250 LOC) — class `JwtValidator` with: JWKS fetch from `${issuer}/.well-known/jwks.json`, 10-minute cache + re-fetch on `kid` miss (key-rotation grace), RS256 + ES256 signature verification via `node:crypto` (ES256 IEEE-P1363 → ASN.1 DER normalization), explicit `alg: "none"` rejection (no-alg-confusion), canonical claim validation order (`iss` → `aud` → `exp` ± 60s clock skew → `nbf` → `iat`). Closed-set error codes: `malformed_jwt` / `unsupported_algorithm` / `unknown_kid` / `invalid_signature` / `wrong_issuer` / `wrong_audience` / `expired` / `not_yet_valid` / `missing_iat` / `jwks_unavailable`.
+- `examples/hosts/postgres/src/server.ts` — `checkAuth` rewritten as `async`; JWT-shaped bearers route through configured validators first, static-API-key path is the constant-time fallback. All 14 caller sites updated to `await`; `handleGetWorkflow` promoted sync → async. Discovery `auth.profiles[]` gains `openwop-auth-oauth2-client-credentials` + `openwop-auth-oidc-user-bearer` claims (each conditional on env); `auth.oauth2` + `auth.oidc` blocks expose `{supported, issuer, audience, supportedAlgorithms}`.
+- New `examples/hosts/postgres/test/oauth2-oidc.test.ts` — stands up the conformance suite's synthetic OIDC issuer (`createSyntheticOIDCIssuer`) on a fixed port, binds its JWKS + discovery endpoints, then drives 10 paths + canary-redaction: discovery shape, static-API-key still works, positive JWT → 201, malformed → 401, wrong-iss → 401, wrong-aud → 401, expired → 401, unknown-kid → 401, `alg: "none"` → 401, rejected token never echoed in 401 envelope.
+
+Code-review compliance: zero `as any` / `as unknown as` / `@ts-ignore`. JWK structural typing in `fetchJwks()` extracts only RS256/ES256-relevant fields (kty/n/e for RSA; kty/crv/x/y for EC) instead of a wide cast.
+
+Acceptance: 10 paths + canary-redaction verified in-process. `npm run openwop:check` 8/8 green.
+
+Lane: implementation-only. Spec is FINAL on both profiles per `auth-profiles.md`; the host implements existing v1.0 contracts. Both advertisements are conditional — deployments without env vars set continue to advertise the same surface as before.
+
 ## [1.0 — additions] — 2026-05-12 — Phase F real-impl interop closure (MCP + A2A 0.3)
 
 Out-of-band T3.4 operator step from `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` Track 6. Pointed the conformance suite's MCP + A2A probes at live reference implementations and closed the wire-shape gaps surfaced by the real-impl run.
