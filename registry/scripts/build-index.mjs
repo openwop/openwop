@@ -77,7 +77,7 @@ function listVersionManifests(packName) {
   const dir = join(PACKS_DIR, packName, '-');
   if (!existsSync(dir)) return [];
   return readdirSync(dir)
-    .filter((f) => f.endsWith('.json'))
+    .filter((f) => f.endsWith('.json') && !f.endsWith('.sbom.json'))
     .map((f) => f.replace(/\.json$/, ''));
 }
 
