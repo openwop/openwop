@@ -122,7 +122,7 @@
     },
     {
       "name": "vendor.myndhyve.campaign-sequence-integration",
-      "latestVersion": "1.0.0",
+      "latestVersion": "1.0.1",
       "description": "MyndHyve campaign-sequence integration nodes — email, sms, webhook. Companion pack to vendor.myndhyve.campaign-sequence (which carries the 3 pure-control nodes). Declares `host.campaignMessaging` peerDependency for the email + sms surface (matching MyndHyve's EmailSMSAdapterService shape); webhook is self-contained via Node 20 fetch + bundled HMAC signature.",
       "license": "Apache-2.0",
       "tags": [],
