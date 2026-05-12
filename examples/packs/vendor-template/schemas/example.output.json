@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.{ORG}.{PACK}/1.0.0/example.output.json",
+  "title": "ExampleOutput",
+  "description": "Output emitted by the example node's `output` event. Downstream nodes' inputs reference this shape via workflow-DAG edges.",
+  "type": "object",
+  "properties": {
+    "message": {
+      "type": "string",
+      "description": "Replace with your real output shape."
+    },
+    "echo": {
+      "type": "object",
+      "description": "Optional: any debug echo of the inputs the node received. Useful for early-development packs; remove from v1.0.0+ unless intentional.",
+      "additionalProperties": true
+    }
+  },
+  "required": ["message"],
+  "additionalProperties": false
+}

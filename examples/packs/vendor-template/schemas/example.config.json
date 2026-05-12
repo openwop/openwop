@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.{ORG}.{PACK}/1.0.0/example.config.json",
+  "title": "ExampleConfig",
+  "description": "Workflow-author-supplied configuration for the example node. Author-time inputs (not runtime).",
+  "type": "object",
+  "properties": {
+    "exampleSetting": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Replace with a real config field your node needs at author time."
+    }
+  },
+  "required": [],
+  "additionalProperties": false
+}
