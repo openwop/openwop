@@ -1,0 +1,5 @@
+{
+  "$schema": "../../schemas/security-advisory.schema.json",
+  "_about": "Registry-owned security advisory feed. One JSON document containing all advisories; PRs append. Schema: schemas/security-advisory.schema.json. CI gate: registry/scripts/check-advisories.mjs. Runbook: docs/runbooks/INCIDENT-RESPONSE.md §Incident class 1.",
+  "advisories": []
+}

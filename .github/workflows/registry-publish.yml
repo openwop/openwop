@@ -170,6 +170,45 @@ jobs:
           # registry/v1/sbom.json's component[].externalReferences.
           node registry/scripts/generate-sbom.mjs --check
 
+      - name: Validate security advisories against schema
+        run: |
+          # Stage 4 PR 3 (2026-05-12): operational maturity per the
+          # enterprise-architecture review. The registry maintains its
+          # own security-advisory feed at registry/security/advisories.json.
+          # Schema: schemas/security-advisory.schema.json describes one
+          # advisory record; validate per-element via jq-emit + ajv-stdin
+          # to surface the offending entry on failure.
+          set -e
+          if [ -f registry/security/advisories.json ]; then
+            count=0
+            tmpdir=$(mktemp -d)
+            jq -c '.advisories[]?' registry/security/advisories.json | while IFS= read -r line; do
+              count=$((count+1))
+              advisory_file="$tmpdir/advisory-$count.json"
+              echo "$line" > "$advisory_file"
+              if ! ajv validate --spec=draft2020 \
+                              -s schemas/security-advisory.schema.json \
+                              --strict=false \
+                              -c ajv-formats \
+                              -d "$advisory_file"; then
+                echo "::error file=registry/security/advisories.json::advisory #$count fails schema"
+                exit 1
+              fi
+            done
+            echo "advisories checked"
+          else
+            echo "::warning::no registry/security/advisories.json — skipping advisory schema check"
+          fi
+
+      - name: Cross-check advisories against published versions
+        run: |
+          # Stage 4 PR 3 (2026-05-12): registry/scripts/check-advisories.mjs
+          # iterates every advisory's affected[] rows, expands SemVer
+          # ranges against published versions, and fails CI if any
+          # non-yanked version matches an active advisory. Forces the
+          # yank-with-advisory invariant the maintainer process depends on.
+          node registry/scripts/check-advisories.mjs
+
   deploy:
     name: Deploy to packs.openwop.dev
     needs: validate
