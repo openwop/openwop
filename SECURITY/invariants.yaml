@@ -536,3 +536,42 @@ invariants:
     severity: medium
     threat_model: SECURITY/threat-model-provider-policy.md
     tests: []
+
+  # ===== MCP client (Phase H.2) =====
+
+  - id: mcp-toolcall-payload-redaction
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/mcp-toolcall-redaction.test.ts
+    note: |
+      Hosts advertising `mcpClient` MUST declare `trustBoundary:
+      "untrusted"` so downstream LLM consumers treat tool content as
+      user data, not as instructions. Tool arguments + result content
+      MUST NOT appear on emitted node-event payloads — only a sanitized
+      summary (toolName, argumentsSha256, resultSha256, resultLength,
+      isError) reaches the public event stream. Full content is
+      persisted to per-run variables (authenticated surface) where the
+      workflow can consume it under the UNTRUSTED trust boundary.
+
+  # ===== HTTP client (Phase H.3) =====
+
+  - id: http-client-ssrf-guard
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/http-client-ssrf.test.ts
+    note: |
+      Hosts advertising `capabilities.httpClient` MUST declare
+      `ssrfGuard: true` AND `maxResponseBodyBytes` (a positive integer).
+      Without an SSRF guard, an authenticated tenant can submit a
+      workflow whose `core.http.request` node probes deployer-internal
+      addresses (AWS metadata service, internal Redis/Postgres, etc.).
+      Without a body-size cap, a hostile upstream can OOM the host
+      by streaming unbounded responses into per-run variables. Both
+      defenses are reference-impl-tested in
+      `examples/hosts/postgres/test/http-client.test.ts`; this
+      protocol-tier invariant asserts the advertisement contract so
+      independent implementers cannot ship a partial guard silently.
