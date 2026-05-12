@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.{ORG}.{PACK}/1.0.0/example.input.json",
+  "title": "ExampleInput",
+  "description": "Runtime inputs to the example node, computed at workflow dispatch time from upstream node outputs or workflow-level inputs.",
+  "type": "object",
+  "properties": {
+    "userMessage": {
+      "type": "string",
+      "description": "Replace with your real input. Keep field-level descriptions concrete + actionable for downstream workflow authors."
+    }
+  },
+  "required": [],
+  "additionalProperties": false
+}

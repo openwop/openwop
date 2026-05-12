@@ -1,0 +1,39 @@
+{
+  "name": "vendor.{ORG}.{PACK}",
+  "version": "1.0.0",
+  "description": "{ONE-LINE description of what this pack does. Be specific about what makes this pack distinct from core.openwop.* — host-capability dependencies, vendor-specific business logic, etc.}",
+  "author": "{ORG display name}",
+  "license": "Apache-2.0",
+  "homepage": "https://{ORG-DOMAIN}/packs/{PACK}",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": ["vendor", "{ORG}", "{PACK}"],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "runtime": {
+    "language": "javascript",
+    "entry": "index.mjs"
+  },
+  "peerDependencies": {
+    "host.aiEnvelope": "supported"
+  },
+  "signing": {
+    "method": "manual",
+    "keyId": "{ORG}-internal-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "nodes": [
+    {
+      "typeId": "vendor.{ORG}.{PACK}.example",
+      "version": "1.0.0",
+      "label": "Example Node",
+      "description": "Replace with your node's actual description. Explain what input it consumes, what side effects it has, what envelope (if any) it emits.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": ["cacheable", "side-effectful"],
+      "configSchemaRef": "schemas/example.config.json",
+      "inputSchemaRef": "schemas/example.input.json",
+      "outputSchemaRef": "schemas/example.output.json"
+    }
+  ]
+}
