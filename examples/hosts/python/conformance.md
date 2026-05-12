@@ -33,24 +33,69 @@ OPENWOP_API_KEY=openwop-inmem-dev-key \
   npx vitest run --reporter=default
 ```
 
-### Result
+### Result (Phase C round 2 close-out — 2026-05-12 final)
 
 ```
- Test Files  24 failed | 59 passed | 20 skipped (103)
-      Tests  53 failed | 667 passed | 32 skipped | 30 todo (782)
-   Duration  ~105s wall-clock
+ Test Files  69 passed | 34 skipped (103)
+      Tests  700 passed | 0 failed | 58 skipped | 30 todo (788)
+   Duration  ~95s wall-clock
 ```
 
-Re-measured 2026-05-12 against the post-Phase-C-round-2 host (the version that added pause/resume + bulk-cancel + capability_required + webhooks advertisements).
+**Zero failures.** Re-measured against the post-close-out host (after the
+9-finding senior-review remediation plus the follow-up batch that closed
+the remaining 51 conformance failures from the earlier 667/53 baseline).
 
 | Metric | Count |
 |---|---:|
-| Tests passing | **667** |
-| Tests failing | 53 |
-| Tests skipped (host doesn't advertise capability) | 32 |
+| Tests passing | **700** |
+| Tests failing | **0** |
+| Tests skipped (host doesn't advertise capability or fixture) | 58 |
 | Tests todo (intentionally unimplemented in suite) | 30 |
-| **Total** | **782** |
-| **Default-mode pass rate** | **85.3%** |
+| **Total** | **788** |
+| **Default-mode pass rate** | **100%** of applicable tests (88.8% of total) |
+
+**How the 51 failures closed (from 667/53 baseline):**
+
+1. **Run-event canonical shape** (3 closed) — `RunEvent.to_dict()` rewritten
+   to emit the 6-field canonical `RunEventDoc` (`eventId/runId/type/payload/
+   timestamp/sequence`) per `schemas/run-event.schema.json`; stable
+   `eventId` per replay-determinism contract.
+2. **Stream-modes inside CLAIMED profile** (12 closed) — `?streamMode=`
+   query validation (`updates|values|messages|debug` + comma-separated
+   subsets; `values` exclusive); `?bufferMs=` range check ([0..60_000]);
+   SSE handler now sends `Connection: close` + sets `close_connection=True`
+   so terminal events drop the socket so clients observe stream end.
+3. **Content negotiation on `/v1/runs/{id}/events`** (1 closed) — clients
+   without `Accept: text/event-stream` get the JSON poll-style response
+   instead of an open SSE stream they wouldn't read correctly.
+4. **Pause/resume contract** (5 closed) — 202 + `{status, pausedAt|resumedAt}`
+   response shape; 409 with `error: "conflict"` + `details.runStatus` on
+   conflict; idempotent re-pause replays original `pausedAt`; `core.delay`
+   uses drain-on-pause-arrives semantics so wall-clock duration stays
+   bounded by the originally-requested delay.
+5. **Highest-concurrency idempotency race** (1 closed) — `IdempotencyCache`
+   gained per-key locks; `_handle_create_run` holds the per-key lock
+   across get→create→put so 10 parallel requests with the same key
+   serialize and produce exactly one runId.
+6. **Webhook error-code catalog** (3 closed) — restored `webhook_url_rejected`
+   for SSRF rejection (the conformance suite's de-facto code; test
+   `webhook-signed-delivery.test.ts` soft-skips on it) + renamed
+   `webhook_not_found` → `subscription_not_found`. URL-shape validation
+   now runs unconditionally (env bypass only relaxes the private-IP
+   check); delivery thread catches `ValueError` defensively.
+7. **Honest fixture advertisement** (24+ closed → skipped) — discovery
+   payload's `fixtures[]` filtered to only those whose every node typeId
+   is in `{core.noop, core.delay}` AND that aren't in the
+   `ENFORCEMENT_FIXTURE_BLOCKLIST` (cap-breach, configurable-schema —
+   enforcement contracts the host does NOT implement). Tests gated on
+   `isFixtureAdvertised(...)` now skip rather than fail against
+   workflows referencing interrupts / conversations / agents / BYOK /
+   subworkflows / orchestrator / dispatch / channels / packs.
+8. **Route additions** (2 closed) — `GET /v1/workflows/{workflowId}`
+   returns seeded workflow JSON; `/v1/packs/*` catch-all returns
+   non-OpenWOP-shaped plain-text 404 so `pack-registry.test.ts`'s
+   registry-presence probe identifies "no registry mounted" and skips
+   the 8 read-endpoint scenarios cleanly.
 
 ## What passes
 

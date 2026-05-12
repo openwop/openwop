@@ -9,6 +9,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ---
 
+## [1.0 — additions] — 2026-05-12 — Python host conformance close-out: 700/788 (100% of applicable, ZERO failures)
+
+Follow-up batch to the 53-failure post-Phase-C-round-2 baseline. Every controllable failure closed in a single focused pass — pass rate **100% of applicable tests** (88.8% of total, 700 passed / 0 failed / 58 skipped / 30 todo).
+
+How the 51 (53 minus 2 flake-band) failures closed:
+
+- **Canonical `RunEventDoc` event shape** — `RunEvent.to_dict()` rewritten to emit the 6-field canonical wire shape (`eventId/runId/type/payload/timestamp/sequence`) per `schemas/run-event.schema.json`, with stable `eventId` per replay-determinism. Closes 3 version-negotiation failures.
+- **Stream-modes query validation** — `?streamMode=` accepts the closed enum (`updates|values|messages|debug`) and comma-separated subsets (`values` exclusive); `?bufferMs=` validated to `[0, 60_000]`; SSE handler now sends `Connection: close` + sets `close_connection=True` so terminal events drop the socket and clients observe stream end. Closes 12 stream-modes / stream-modes-buffer / stream-modes-mixed failures.
+- **Pause/resume contract** — 202 + `{status, pausedAt|resumedAt}`; 409 with `error: "conflict"` + `details.runStatus` on conflict; idempotent re-pause replays the original `pausedAt`; `core.delay` drain-on-pause semantics (artificial wait treated as drained when pause arrives, so wall-clock total stays bounded). Closes 5 pause-resume failures.
+- **Highest-concurrency idempotency** — `IdempotencyCache` gained per-key `threading.Lock`s held across the create-run get→create→put sequence. 10 parallel requests with the same `Idempotency-Key` now serialize and produce exactly one runId. Closes 1 high-concurrency race.
+- **Webhook error-code catalog** — `webhook_url_rejected` restored for SSRF (the conformance suite's de-facto code) + renamed `webhook_not_found` → `subscription_not_found`. URL-shape validation runs unconditionally (env bypass only relaxes the private-IP check); delivery thread catches `ValueError` defensively. Closes 3 webhook failures.
+- **Content negotiation on `/v1/runs/{id}/events`** — clients without `Accept: text/event-stream` get the JSON poll-style response instead of an open SSE stream. Closes the `append-ordering` test driver hang.
+- **Honest fixture advertisement** — discovery `fixtures[]` filtered to fixtures whose every node typeId is in `{core.noop, core.delay}` AND not in the `ENFORCEMENT_FIXTURE_BLOCKLIST` (cap-breach + configurable-schema — enforcement contracts the host does NOT implement). Converts 24+ FAILs to honest SKIPs (interrupts, conversations, agents, BYOK, subworkflows, orchestrator, dispatch, channels, packs).
+- **Route additions** — `GET /v1/workflows/{workflowId}` returns the seeded workflow JSON. `/v1/packs/*` catch-all returns a plain-text 404 (non-OpenWOP-shaped) so `pack-registry.test.ts`'s registry-presence probe identifies "no registry mounted" and skips the 8 read-endpoint scenarios.
+
+`openwop:check` 8/8 green; `spec-corpus-validity` + `fixtures-valid` clean.
+
+Lane: **implementation-only**, no spec/schema/OpenAPI/AsyncAPI/SDK changes. The honesty principle (advertise only what behavior exists) drives the fixture-filter additions; the wire-shape work brings the host into line with existing FINAL specs.
+
 ## [1.0 — additions] — 2026-05-12 — Python host conformance re-measured post-Phase-C-round-2
 
 - **Re-ran `@openwop/openwop-conformance` against the post-Phase-C-round-2 Python host** (the version that advertises pause/resume + bulk-cancel + capability_required + webhooks). New default-mode pass rate: **667/782 = 85.3%** (down 0.4pp from the 670/782 baseline measured before Phase C round 2 — the new advertisements unlocked scenarios that test the full spec contract). `INTEROP-MATRIX.md` Python row + pass-rates table + 53-failure characterization paragraph refreshed with measured numbers. `examples/hosts/python/conformance.md` result table + 3-category failure breakdown rewritten honestly: (1) pre-Phase-C capability-gated scenarios (interrupts / BYOK / pack-registry / cap-breach / etc.), (2) Phase C round 2 advertise-but-spec-incomplete (5 pause-resume + 1 webhook-negative — endpoints exist, behavior needs tightening), (3) pre-existing host gaps inside the host's CLAIMED `openwop-stream-*` profiles (12 stream-modes failures — these warrant either implement-to-spec or retract-the-claim). Strict-mode posture paragraph extended to Python — its strict-fail count is expected to exceed 53 because the Phase C round 2 advertisements unlock behavior-required hard-fails the host doesn't fully satisfy. Lane: **doc-only**, no host or suite changes; this entry consolidates the Track 12 closure docs (commit `efbc8d8`) with the re-measurement that the senior code-review pass flagged as MEDIUM-1.

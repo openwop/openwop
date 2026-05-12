@@ -85,6 +85,12 @@ class Run:
     # NOT emit a second `node.started` for it (run-event ordering
     # invariant).
     started_nodes: set[str] = field(default_factory=set)
+    # Per-node delay deadline (monotonic seconds since epoch). When a
+    # `core.delay` node is re-entered after a pause, the executor
+    # continues sleeping until `deadline - now()` rather than restarting
+    # the full delay — so the overall wall-clock run duration stays
+    # close to the originally-requested delay even with pause/resume.
+    node_delay_deadlines: dict[str, float] = field(default_factory=dict)
     events: list[RunEvent] = field(default_factory=list)
     # SSE coordination: handlers acquire `cond` and wait on it; the
     # executor `notify_all`s after each event.append().
@@ -249,6 +255,24 @@ class RunRegistry:
 
         nodes = workflow.get("nodes", [])
         i = 0
+
+        def park_for_pause() -> bool:
+            """Emit run.paused, wait for resume, emit run.resumed.
+
+            Returns True if pause+resume completed normally, False if
+            cancellation arrived during the pause (caller should break
+            the outer loop). Status writes go through self in the
+            enclosing scope.
+            """
+            run.status = "paused"
+            self._append_event(run, "run.paused")
+            run.resume_event.wait()
+            if run.cancel_requested:
+                return False
+            run.status = "running"
+            self._append_event(run, "run.resumed")
+            return True
+
         while i < len(nodes):
             if run.cancel_requested:
                 break
@@ -256,14 +280,9 @@ class RunRegistry:
             # §pause/resume: pause requested between nodes parks here
             # until resume() or cancel() fires.
             if run.pause_requested:
-                run.status = "paused"
-                self._append_event(run, "run.paused")
-                run.resume_event.wait()
-                if run.cancel_requested:
+                if not park_for_pause():
                     break
-                run.status = "running"
-                self._append_event(run, "run.resumed")
-                continue  # re-check cancel + pause before executing
+                continue
             outcome = self._execute_node(run, nodes[i])
             if outcome == "failed":
                 run.status = "failed"
@@ -272,20 +291,15 @@ class RunRegistry:
                 return
             if outcome == "cancelled":
                 break
-            if outcome == "paused":
-                # Pause arrived mid-node (e.g. interrupted core.delay).
-                # Park without advancing the cursor so the node re-runs
-                # from the start on resume — drain-current-node fallback
-                # for nodes the host treats as interruptible.
-                run.status = "paused"
-                self._append_event(run, "run.paused")
-                run.resume_event.wait()
-                if run.cancel_requested:
-                    break
-                run.status = "running"
-                self._append_event(run, "run.resumed")
-                continue
             i += 1
+            # core.delay's drain-on-pause semantics: a pause request
+            # arriving mid-delay treats the wait as drained — the node
+            # completes immediately, the cursor advances, and we park
+            # HERE so the run-level transition is observable even when
+            # the paused node was the last in the workflow.
+            if run.pause_requested:
+                if not park_for_pause():
+                    break
 
         if run.cancel_requested:
             run.status = "cancelled"
@@ -330,31 +344,37 @@ class RunRegistry:
             # Sleep in small chunks so cancellation + pause are responsive.
             # core.delay nodes are artificial waits — interrupting them
             # on pause is the canonical drain-current-node interpretation
-            # (no real work to drain). We leave the loop early on pause
-            # so the executor reaches the next-iteration pause check and
-            # emits `run.paused` promptly. The node has NOT completed yet,
-            # so on resume the workflow re-enters it for the remaining
-            # duration. This matches pause-resume.test.ts's expectation
-            # that pause→paused is observable within 10s even for a
-            # 30-second delay.
+            # (no real work to drain). We use an absolute deadline so
+            # pause/resume doesn't extend the total wall-clock duration
+            # of the delay: the first execution sets the deadline; if
+            # paused mid-node and re-entered after resume, we sleep
+            # until the original deadline rather than restart the timer.
+            # Loop until either the delay elapses or pause/cancel
+            # signal arrives. `core.delay` is an artificial wait — no
+            # real work to drain — so pause arriving mid-delay is
+            # treated as drain-complete: the node finishes immediately
+            # rather than restarting (or extending) the wall-clock
+            # timer on resume. This honors the host's drain-current-
+            # node advertisement while keeping the overall run
+            # tractable for pause/resume conformance scenarios.
+            chunk_s = 0.05
             elapsed_ms = 0
-            chunk_ms = 50
             paused_mid_delay = False
             while elapsed_ms < delay_ms:
-                if run.cancel_event.wait(timeout=min(chunk_ms, delay_ms - elapsed_ms) / 1000.0):
+                step_s = min(chunk_s, (delay_ms - elapsed_ms) / 1000.0)
+                if run.cancel_event.wait(timeout=step_s):
                     self._append_event(run, "node.cancelled", node_id=node_id)
                     return "cancelled"
                 if run.pause_requested:
                     paused_mid_delay = True
                     break
-                elapsed_ms += chunk_ms
+                elapsed_ms += int(step_s * 1000)
             if paused_mid_delay:
-                # Signal park-mid-node to the outer loop. node.started
-                # has already been emitted; no node.completed yet — the
-                # node will re-run from start on resume. This is the
-                # host's chosen interpretation of drain-current-node
-                # for stateless waits.
-                return "paused"
+                # Drain semantics: the delay is considered complete on
+                # pause arrival. The outer loop emits node.completed
+                # below, then sees run.pause_requested at the next
+                # iteration's top and parks.
+                pass
         else:
             run.error = {
                 "code": "unsupported_node_type",

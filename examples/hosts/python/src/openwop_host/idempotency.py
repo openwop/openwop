@@ -32,11 +32,21 @@ class IdempotencyEntry:
 
 
 class IdempotencyCache:
-    """Thread-safe Layer-1 cache. All mutations hold `_lock`."""
+    """Thread-safe Layer-1 cache. All mutations hold `_lock`.
+
+    Concurrency: the cache also vends per-key Lock objects through
+    `key_lock()`. Callers SHOULD hold the per-key lock across the entire
+    `get(...) → execute → put(...)` sequence so concurrent retries
+    serialize on the cache key — otherwise the time between get and put
+    is a race window that produces duplicate work for the same
+    idempotency key (see highConcurrency.test.ts §"10 parallel requests
+    with same key yield ONE runId").
+    """
 
     def __init__(self) -> None:
         self._entries: dict[str, IdempotencyEntry] = {}
         self._lock = threading.Lock()
+        self._key_locks: dict[str, threading.Lock] = {}
 
     @staticmethod
     def cache_key(endpoint: str, idempotency_key: str, tenant_id: str = "single-tenant") -> str:
@@ -46,6 +56,21 @@ class IdempotencyCache:
     @staticmethod
     def hash_body(body: str) -> str:
         return hashlib.sha256(body.encode("utf-8")).hexdigest()
+
+    def key_lock(self, key: str) -> threading.Lock:
+        """Return the lock for `key`, allocating one on first access.
+
+        Per-key locks let the create-run path serialize concurrent
+        requests carrying the same Idempotency-Key while still allowing
+        unrelated requests to run in parallel.
+        """
+        with self._lock:
+            existing = self._key_locks.get(key)
+            if existing is not None:
+                return existing
+            new_lock = threading.Lock()
+            self._key_locks[key] = new_lock
+            return new_lock
 
     def get(self, key: str) -> IdempotencyEntry | None:
         with self._lock:
