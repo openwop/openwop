@@ -129,7 +129,7 @@ try {
       }
 
       const sseRes = await fetch(`${baseUrl}/v1/runs/${encodeURIComponent(runId)}/events`, {
-        headers: { Authorization: `Bearer ${apiKey}` },
+        headers: { Authorization: `Bearer ${apiKey}`, Accept: 'text/event-stream' },
       });
       assert.equal(sseRes.status, 200, 'SSE stream MUST open with 200');
       assert.equal(
@@ -188,6 +188,7 @@ try {
       const resume = await fetch(`${baseUrl}/v1/runs/${encodeURIComponent(runId)}/events`, {
         headers: {
           Authorization: `Bearer ${apiKey}`,
+          Accept: 'text/event-stream',
           'Last-Event-ID': '1',
         },
       });

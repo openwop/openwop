@@ -34,20 +34,24 @@ The host's `start:pglite` script boots the server against an in-process PGlite (
 ## Result (2026-05-11, full conformance suite)
 
 ```
- Test Files   2 failed | 63 passed | 27 skipped (92)
-      Tests   2 failed | 609 passed | 41 skipped | 30 todo (682)
-   Duration  ~5s wall-clock
+ Test Files   1 failed | 64 passed | 27 skipped (92)
+      Tests   1 failed | 610 passed | 41 skipped | 30 todo (682)
+   Duration  ~11s wall-clock
 ```
 
-**Headline numbers: 609 of 682 tests pass (89.3%), well above the SQLite reference host's 87% baseline.** The remaining 73 non-passing scenarios decompose:
+**Headline numbers: 610 of 682 tests pass (89.4%), well above the SQLite reference host's 87% baseline.** The remaining 72 non-passing scenarios decompose:
 
 - **41 skipped, 30 todo** — capability-gated scenarios where the host doesn't advertise the underlying profile (e.g., `wasm-pack-*`, `agent-pack-*`, `redaction-byok-*`). These are honest skips, not failures.
-- **2-3 failed** — all flaky-in-suite or fixture-coupled, not host regressions:
-  - `webhook-signed-delivery` — flaky in full-suite (passes in isolation); test-isolation issue with shared host state across the suite's 91 other tests.
-  - `audit-log-integrity chainValid` — flaky in full-suite (passes in isolation); same isolation issue.
-  - `pause/resume running→paused→terminal` — fixture-coupling: the test creates a run against `conformance-cancellable` (defaultValue: `delayMs: 30000`) and expects pause + resume + terminal within 10s post-resume. With a 30-second delay node and 10-second post-resume timeout, the resume can never complete in time unless the host implements partial-delay-on-resume tracking (a host implementation detail not required by the spec). SQLite host has the same constraint.
+- **1 failed, sometimes 2** (vitest retries flake the count):
+  - `webhook-signed-delivery` — flaky in full-suite (passes in isolation); test-isolation issue with shared host state across the suite's 91 other tests. Not a wire-shape bug.
+  - `pause/resume running→paused→terminal` — fixture-coupled: the test creates a run against `conformance-cancellable` (defaultValue: `delayMs: 30000`) and expects pause + resume + terminal within 10s post-resume. With a 30-second delay node and "restart delay on resume" semantics (the spec doesn't pin partial-delay-on-resume as a MUST), the test cannot pass against any host that uses the fixture's default. SQLite host has the same constraint. Partial-delay-on-resume + variable-default fixture resolution were tried; the math still doesn't work (29s remaining > 10s timeout).
 
-The 8 fixes that closed 8 of the original 10 out-of-scope failures: pack-registry probe short-circuit (3); `?bufferMs=` aggregation + 400 validation (3); `configurable.recursionLimit` enforcement with `cap.breached` event emission (2); content negotiation on `/events` (1 — append-ordering now reads JSON when Accept isn't `text/event-stream`).
+The 9 fixes that closed 9 of the original 10 out-of-scope failures + 1 latent bug:
+- pack-registry probe short-circuit (3) — `/v1/packs/*` catch-all returns plain text 404.
+- `?bufferMs=` aggregation + 400 validation (3) — handleEventsSse parses bufferMs in [0..5000]; emits `event: batch` SSE frames with force-flush on terminal.
+- `configurable.recursionLimit` enforcement with `cap.breached` event emission (2) — schema gained `configurable_json` JSONB column; runWorkflow checks i+1 > limit before each node.
+- Content negotiation on `/events` (1) — append-ordering now reads JSON when Accept isn't `text/event-stream`.
+- Audit-log canonicalize bug (latent, not in original list) — `canonicalize()` now drops keys with `undefined` values, matching JSON.stringify semantics. Fixes false hash-mismatch + chain-break anomalies in /v1/audit/verify when audit details payloads contained conditional undefined fields (e.g., `votes: undefined` on non-pending interrupt resolves). Applied symmetrically to SQLite host's audit module.
 
 All 15 remaining failures are independent of the production-profile MUSTs (durability, backpressure, retry/idempotency, event retention, debug-bundle redaction, observability). The 8 tests recovered between the 86.2% baseline and the 87.4% update covered: 6 interrupt scenarios (currentNodeId + childRuns in GET /v1/runs response), 2 pause/resume 409 paths (error: 'conflict' + details.runStatus shape), GET /v1/workflows/{workflowId} route, configurable-schema validation against the workflow manifest.
 

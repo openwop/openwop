@@ -140,8 +140,16 @@ export interface AuditOptions {
 function canonicalize(value: unknown): string {
   if (value === null || typeof value !== 'object') return JSON.stringify(value);
   if (Array.isArray(value)) return `[${value.map(canonicalize).join(',')}]`;
-  const keys = Object.keys(value).sort();
   const obj = value as Record<string, unknown>;
+  // Match JSON.stringify object semantics: drop keys whose values are
+  // `undefined`. Without this filter, a payload like `{votes: undefined}`
+  // hashes one way at insert time (canonical form includes the key) but
+  // hashes differently at verify time after the JSON.stringify-then-parse
+  // round-trip drops undefined keys, producing a false hash-mismatch.
+  // See spec/v1/auth-profiles.md §"Audit-log integrity".
+  const keys = Object.keys(obj)
+    .filter((k) => obj[k] !== undefined)
+    .sort();
   return `{${keys.map((k) => `${JSON.stringify(k)}:${canonicalize(obj[k])}`).join(',')}}`;
 }
 
