@@ -128,8 +128,13 @@ function clampConfidence(raw) {
   return raw;
 }
 
-function parsePriority(raw) {
-  if (raw === 'critical' || raw === 'high' || raw === 'low') return raw;
+// `ctx` threaded through so unrecognized priority values are observable
+// in the host's logs rather than silently coerced.
+function parsePriority(raw, ctx) {
+  if (raw === 'critical' || raw === 'high' || raw === 'low' || raw === 'medium') return raw;
+  if (raw !== undefined && raw !== null && raw !== '' && typeof ctx?.log === 'function') {
+    ctx.log('warn', 'Refinement: unrecognized priority — coerced to medium', { raw });
+  }
   return 'medium';
 }
 
@@ -168,7 +173,7 @@ function parseExecuteAsChain(raw, confidence, rationale) {
   };
 }
 
-function parseSplit(inputs, raw, confidence, rationale) {
+function parseSplit(inputs, raw, confidence, rationale, ctx) {
   if (!Array.isArray(raw.sub_tasks)) {
     return { ok: false, error: 'split_into_stack_items decision missing sub_tasks array' };
   }
@@ -183,7 +188,7 @@ function parseSplit(inputs, raw, confidence, rationale) {
       objectiveId: inputs.objectiveId,
       title: st.title,
       description: typeof st.description === 'string' ? st.description : undefined,
-      priority: parsePriority(st.priority),
+      priority: parsePriority(st.priority, ctx),
     });
   }
   return {
@@ -217,7 +222,7 @@ function parseBlock(raw, confidence, rationale) {
   return { ok: true, decision: { kind: 'block', blockedReason: raw.blockedReason, confidence, rationale } };
 }
 
-function parseRefinementDecision(inputs, payload) {
+function parseRefinementDecision(inputs, payload, ctx) {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
     return { ok: false, error: 'feature.breakdown payload is not an object' };
   }
@@ -233,7 +238,7 @@ function parseRefinementDecision(inputs, payload) {
       case 'execute_as_chain':
         return parseExecuteAsChain(raw, confidence, rationale);
       case 'split_into_stack_items':
-        return parseSplit(inputs, raw, confidence, rationale);
+        return parseSplit(inputs, raw, confidence, rationale, ctx);
       case 'request_clarification':
         return parseClarification(raw, confidence, rationale);
       case 'block':
@@ -246,7 +251,7 @@ function parseRefinementDecision(inputs, payload) {
   // Legacy fallback — no discriminator: presence of sub_tasks means split,
   // absence means clarification.
   if (Array.isArray(raw.sub_tasks) && raw.sub_tasks.length > 0) {
-    return parseSplit(inputs, raw, confidence, rationale);
+    return parseSplit(inputs, raw, confidence, rationale, ctx);
   }
   return parseClarification(
     { ...raw, questions: raw.questions ?? [] },
@@ -287,7 +292,7 @@ function applyRefinementDecision(inputs, decision) {
           kind: 'mark-blocked',
           stackItemId: inputs.stackItemId,
           reason: 'depth-exceeded',
-          detail: `Refinement depth ${inputs.constraints.currentDepth} >= maxDepth ${inputs.constraints.maxDepth}`,
+          detail: `Refinement depth ${inputs.constraints.currentDepth} ≥ maxDepth ${inputs.constraints.maxDepth}`,
         },
       ],
       telemetry: DEPTH_TELEMETRY,
@@ -463,7 +468,7 @@ export async function featureRefine(ctx) {
     };
   }
 
-  const parsed = parseRefinementDecision(inputs, rawPayload);
+  const parsed = parseRefinementDecision(inputs, rawPayload, ctx);
   if (!parsed.ok) {
     return {
       status: 'error',

@@ -46,9 +46,11 @@ Both failures emit a `mark-blocked` mutation on the source stack item + a termin
 
 ## Authoring source
 
-- [`featureRefineNode.ts`](https://github.com/myndhyve) — engine wrapper, AI call, prompt builder, output schema
-- [`applyDecision.ts`](https://github.com/myndhyve) — constraint enforcement + mutation construction (pure function)
-- [`parseDecision.ts`](https://github.com/myndhyve) — `feature.breakdown` envelope parser with discriminator + legacy fallback
+- `featureRefineNode.ts` — engine wrapper, AI call, prompt builder, output schema
+- `applyDecision.ts` — constraint enforcement + mutation construction (pure function)
+- `parseDecision.ts` — `feature.breakdown` envelope parser with discriminator + legacy fallback
+
+(Original TypeScript lives in the MyndHyve product source at `src/core/wop/refinement/`. The MyndHyve org GitHub mirror is not public; reference the file paths above against the MyndHyve product tree.)
 
 All three are inlined here. The pack's behavior is byte-equivalent to the MyndHyve in-tree node modulo (1) Zod → JSON Schema validation and (2) `expectedEnvelope` stream → `responseSchema` single-shot.
 

@@ -66,6 +66,16 @@ function extractPackJson(tarballBytes) {
     if (!name) break; // zero block — end of archive
     const sizeStr = decompressed.subarray(off + 124, off + 136).toString('ascii').replace(/\0/g, '').trim();
     const size = parseInt(sizeStr, 8) || 0;
+    const typeflag = decompressed[off + 156];
+    // PAX extended header ('x'=0x78) or GNU LongLink ('L'=0x4c) means a
+    // following entry has a name longer than 100 bytes. The 100-byte
+    // name field on subsequent entries is then truncated; pack.json
+    // could be silently mis-identified. Fail fast.
+    if (typeflag === 0x78 || typeflag === 0x4c) {
+      throw new Error(
+        `USTAR extended header (typeflag=0x${typeflag.toString(16)}) not supported; pack tarballs MUST keep entry names <= 100 bytes`
+      );
+    }
     if (name === 'pack.json' || name === './pack.json') {
       return decompressed.subarray(off + BLOCK, off + BLOCK + size);
     }
