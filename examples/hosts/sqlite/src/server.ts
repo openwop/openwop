@@ -366,6 +366,29 @@ function saveRunVariables(runId: string, variables: Record<string, unknown>): vo
   );
 }
 
+/**
+ * Resolve a host-provisioned canary secret by id. Returns the raw
+ * secret value (caller is responsible for hashing/redacting before
+ * surfacing it on any observable channel) or `null` if the secret is
+ * not provisioned on this host. Production hosts back this with KMS
+ * / Vault / cloud secret managers; the reference host ships a tiny
+ * canary map so conformance scenarios can exercise BYOK roundtrip
+ * end-to-end without an external secret store.
+ *
+ * Operator override: `OPENWOP_CANARY_SECRET_VALUE` env populates the
+ * default canary at startup, otherwise a built-in deterministic
+ * canary is used. The canary is BYOK-grade — every observable surface
+ * (events, variables, debug bundle, logs) emits only the SHA-256 hash
+ * + length per SR-1.
+ */
+function resolveCanarySecret(secretId: string): string | null {
+  if (secretId === 'openwop-conformance-canary-secret') {
+    return process.env.OPENWOP_CANARY_SECRET_VALUE
+      ?? 'openwop-canary-secret-value-not-a-real-credential';
+  }
+  return null;
+}
+
 interface EventRow {
   run_id: string;
   seq: number;
@@ -608,6 +631,36 @@ async function executeNode(
       // are seeded from inputs at run-create, so this is a no-op at the
       // state level — the test asserts the round-trip identity.
       break;
+
+    case 'conformance.secret.echo': {
+      // openwop-smoke-byok-roundtrip fixture. Resolve a host-provisioned
+      // secret by id, then emit `{ secretSha256, secretLength }` into
+      // the run's variables. The raw value NEVER leaves the resolver —
+      // observability.md §"Redaction" + threat-model-secret-leakage.md
+      // §SR-1 require that only the hash + length appear on any
+      // observable surface (variables, events, debug bundle, logs).
+      const cfg = (node.config ?? {}) as { secretId?: string };
+      const secretId = typeof cfg.secretId === 'string' ? cfg.secretId : null;
+      if (!secretId) {
+        const err = { code: 'validation_error', message: `conformance.secret.echo (node "${node.id}") MUST declare config.secretId.` };
+        appendEvent(runId, 'node.failed', { nodeId: node.id, data: err });
+        runFailureErrors.set(runId, err);
+        return 'failed';
+      }
+      const resolved = resolveCanarySecret(secretId);
+      if (resolved === null) {
+        const err = { code: 'credential_unavailable', message: `Secret "${secretId}" is not provisioned on this host.` };
+        appendEvent(runId, 'node.failed', { nodeId: node.id, data: err });
+        runFailureErrors.set(runId, err);
+        return 'failed';
+      }
+      const hash = createHash('sha256').update(resolved, 'utf8').digest('hex');
+      const variables = loadRunVariables(runId);
+      variables['resolve-secret'] = { secretSha256: hash, secretLength: resolved.length };
+      saveRunVariables(runId, variables);
+      // Event payload carries only the hash + length, never the raw secret.
+      break;
+    }
 
     case 'core.delay': {
       // Accept either config.ms (channel-ttl fixture convention) or
@@ -1286,8 +1339,10 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
   // Advertise the loaded fixture set so conformance scenarios can gate
   // their skipIf() on isFixtureAdvertised(id). Only the workflow IDs the
   // host actually has loaded should appear here.
-  const advertisedFixtures = Array.from(workflows.keys()).filter((id) =>
-    id.startsWith('conformance-'),
+  // Advertise both `conformance-*` (standard conformance fixtures) and
+  // `openwop-smoke-*` (end-to-end smoke fixtures, e.g., BYOK roundtrip).
+  const advertisedFixtures = Array.from(workflows.keys()).filter(
+    (id) => id.startsWith('conformance-') || id.startsWith('openwop-smoke-'),
   );
   sendJSON(res, 200, {
     protocolVersion: '1.0',
@@ -1374,6 +1429,21 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
           required: process.env.OPENWOP_MTLS_REQUIRED === 'true',
           subjectMapping: 'cn',
         },
+      },
+      // capabilities.md §"Secrets" + run-options.md §"Credential
+      // references". Reference host advertises secret resolution +
+      // BYOK for canonical providers. The host's secret store is
+      // populated from a small fixture map keyed by secretId; the
+      // canary fixture `openwop-conformance-canary-secret` is wired
+      // for byok-roundtrip.test.ts.
+      secrets: {
+        supported: true,
+        scopes: ['tenant', 'user'],
+        resolution: 'host-managed',
+      },
+      aiProviders: {
+        supported: ['anthropic', 'openai'],
+        byok: ['anthropic', 'openai'],
       },
       // production-profile.md §Compatibility baseline. SQLite reference
       // host claims the profile end-to-end (durability via file-backed

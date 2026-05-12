@@ -79,6 +79,7 @@ All fixtures MUST advertise:
 | A2A Task Roundtrip | `conformance-a2a-task-roundtrip` | Track 6 — host consumes the conformance suite's synthetic A2A peer; covers drift points #3 (`AUTH_REQUIRED`) and #4 (`REJECTED`) | `failed` or `waiting-input` (per `driftScenario` input) | ≤ 30s |
 | WASM Pack Roundtrip | `conformance-wasm-pack-roundtrip` | RFC 0008 — invokes `vendor.openwop.rust-hello.greet` (loaded WASM pack); exercises required exports + at least one import | `completed` | ≤ 10s |
 | Configurable Schema | `conformance-configurable-schema` | Track 13 — workflow declares `configurableSchema` (`additionalProperties: false`, `recursionLimit: integer ≥ 1`). Suite verifies `GET /v1/workflows/{id}` surfaces the schema AND `POST /v1/runs` with a mismatched `configurable` returns `validation_error`. | `completed` (with accepted overlay) | ≤ 5s |
+| Smoke — BYOK Roundtrip | `openwop-smoke-byok-roundtrip` | End-to-end BYOK secret-resolution smoke. Single `conformance.secret.echo` node fetches the host-provisioned canary secret `openwop:canary-secret`, emits SHA-256 hex + byte length to variables — never the raw value. Spec: `run-options.md` §"Credential references" + `auth.md` §"Secret resolution" + `observability.md` §"Redaction". | `completed` | ≤ 10s |
 
 The `messages`-mode stream fixture (AI token streaming) is covered by the deterministic mock-provider surface in `spec/v1/run-options.md`. Hosts that do not advertise `Capabilities.testing.mockProviders` skip-equivalent on those scenarios.
 
@@ -319,6 +320,24 @@ This fixture is unblocked when:
 2. The conformance suite's `openwop-conformance` driver gains the matching scenario file `cap-breach.test.ts`.
 
 Both items are tracked as v1.x conformance expansion work.
+
+---
+
+## `openwop-smoke-byok-roundtrip` (BYOK end-to-end smoke fixture)
+
+> **Status: included in the v1.0 conformance baseline.** Server-side `conformance.secret.echo` support is exercised by `src/scenarios/byok-roundtrip.test.ts`.
+
+- **Purpose**: verify the BYOK secret-resolution roundtrip end-to-end. A host that advertises `capabilities.secrets.supported: true` MUST resolve the canary `openwop:canary-secret` via its `SecretResolver` and surface only the SHA-256 hex + byte length on every observable channel (variables, events, debug bundle, logs). The raw value MUST NOT leak per `observability.md` §"Redaction" + `threat-model-secret-leakage.md` §SR-1.
+- **Topology**: single node `resolve-secret` with `typeId: conformance.secret.echo`, `config.secretId: "openwop:canary-secret"`. Resolves the canary, hashes it, and writes `{secretSha256, secretLength}` to the run's `variables.resolve-secret`.
+- **Conformance test driver**:
+  1. POST `/v1/runs` with `{workflowId: "openwop-smoke-byok-roundtrip"}`.
+  2. Poll until terminal.
+  3. **Assert** terminal status is `completed`.
+  4. **Assert** `variables['resolve-secret'].secretSha256` matches `^[0-9a-f]{64}$`.
+  5. **Assert** `variables['resolve-secret'].secretLength > 0`.
+  6. **Assert** event log does NOT contain a suspicious payload echoing the raw secret (regex check across `value`/`password`/`plaintext`/`raw_secret` adjacent to `secretSha256`).
+
+Hosts that don't ship a BYOK SecretResolver MAY return `404` / `422` on the start-run call; the scenario soft-skips in that case.
 
 ---
 
