@@ -335,6 +335,90 @@ export interface HttpRequestNodeConfig {
   expectStatus?: number | readonly number[];
 }
 
+// ─── Agent memory / MemoryAdapter (Phase I.1) ───────────────────────────
+
+/** Mirror of `schemas/memory-entry.schema.json`. */
+export interface MemoryEntry {
+  id: string;
+  content: string;
+  tags: readonly string[];
+  /** ISO 8601 timestamp. */
+  createdAt: string;
+  /** Optional TTL. Entries past `expiresAt` MUST NOT surface from list/get. */
+  expiresAt?: string;
+}
+
+/** Mirror of `schemas/memory-list-options.schema.json`. */
+export interface MemoryListOptions {
+  /** Host MAY further bound. */
+  limit?: number;
+  /** Filter to entries carrying this tag. */
+  tag?: string;
+}
+
+/** Capability advertisement shape per capabilities.md §`memory`. */
+export interface MemoryCapability {
+  supported: true;
+  maxEntrySizeBytes: number;
+  ttlSupported: boolean;
+}
+
+// ─── Reasoning + agent events (Phase I.2) ───────────────────────────────
+
+/** Mirror of `schemas/agent-ref.schema.json`. */
+export interface AgentRef {
+  agentId: string;
+  modelClass?: 'reasoning' | 'tool-using' | 'chat';
+  memoryRef?: string;
+  version?: string;
+}
+
+/** Reasoning verbosity per capabilities.md §`agents.reasoning`. */
+export type ReasoningVerbosity = 'off' | 'summary' | 'full';
+
+/** Capability advertisement shape per capabilities.md §`agents` (Phase 1-6). */
+export interface AgentsCapability {
+  supported: true;
+  profile?: string;
+  modelClasses?: readonly ('reasoning' | 'tool-using' | 'chat')[];
+  orchestratorPattern?: string;
+  memoryBackends?: readonly string[];
+  orchestrator?: boolean;
+  dispatch?: boolean;
+  reasoning?: {
+    verbosity: ReasoningVerbosity;
+    tokenLimit?: number;
+  };
+}
+
+// ─── Auth profile claims (Phase I.5 + I.6) ──────────────────────────────
+
+/** Profile identifiers per auth-profiles.md. */
+export type AuthProfileClaim =
+  | 'openwop-audit-log-integrity'
+  | 'openwop-auth-api-key-rotation'
+  | 'openwop-auth-oauth2-client-credentials'
+  | 'openwop-auth-oidc-user-bearer'
+  | 'openwop-auth-mtls'
+  | 'openwop-discovery-auth-scoped'
+  | 'openwop-interrupt-quorum'
+  | 'openwop-interrupt-auth-required'
+  | 'openwop-interrupt-external-event'
+  | 'openwop-interrupt-cascade-cancel'
+  | 'openwop-production';
+
+/** Rotation advertisement shape per auth-profiles.md §"openwop-auth-api-key-rotation". */
+export interface AuthRotationCapability {
+  supported: true;
+  minGraceSeconds: number;
+}
+
+/** Auth-scoped discovery advertisement per RFC 0011 §A. */
+export interface DiscoveryAuthScopedCapability {
+  supported: true;
+  mode: 'same-endpoint';
+}
+
 /**
  * Thrown when the server returns a non-2xx response. Carries the original
  * status, parsed error envelope (if available), the raw response text,

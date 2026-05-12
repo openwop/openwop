@@ -575,3 +575,51 @@ invariants:
       `examples/hosts/postgres/test/http-client.test.ts`; this
       protocol-tier invariant asserts the advertisement contract so
       independent implementers cannot ship a partial guard silently.
+
+  # ===== Agent memory (Phase I.1) =====
+
+  - id: agent-memory-cti-1
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/agentMemoryCrossTenantIsolation.test.ts
+    note: |
+      RFC 0004 CTI-1: a host implementing `MemoryAdapter` MUST scope
+      every list/get query by authenticated principal → tenant_id.
+      Tenant A's `mem://shared-ref` entries MUST NOT surface from
+      tenant B's calls against the same `memoryRef`. Reference-impl
+      verification: `examples/hosts/postgres/test/memory-adapter.test.ts`
+      §8 (CTI-1 cross-tenant probe).
+
+  - id: agent-memory-sr-1-redaction
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/agentMemoryRedactionContract.test.ts
+    note: |
+      RFC 0004 SR-1: hosts MUST substitute `[REDACTED:<id>]` placeholders
+      for any BYOK credential material in `MemoryEntry.content` BEFORE
+      persistence. The raw cleartext MUST NEVER appear in `memory_entries`
+      rows, on `agentMemory.put` event payloads, on debug bundles, or on
+      webhook envelopes carrying memory events. Caller is responsible
+      for the placeholder substitution at write time; the host MUST
+      reject content over `maxEntrySizeBytes` to bound exposure.
+
+  # ===== Phase I auth-rotation token redaction =====
+
+  - id: auth-key-rotation-no-canary-echo
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/auth-api-key-rotation.test.ts
+    note: |
+      auth-profiles.md §"openwop-auth-api-key-rotation" §"Canary
+      redaction": when a host rejects a bearer token, the 401
+      response envelope MUST NOT echo the rejected token (or any
+      portion of it) in `message` / `details`. Reference-impl probe:
+      `examples/hosts/postgres/test/auth-rotation-scoped.test.ts` §6
+      asserts the rejected-token canary doesn't appear in the
+      response body.
