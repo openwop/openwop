@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.data-integration/1.0.0/source.graphql.config.json",
+  "title": "DataSourceGraphQLConfig",
+  "type": "object",
+  "required": ["sourceId", "operation"],
+  "properties": {
+    "sourceId": { "type": "string", "minLength": 1 },
+    "operation": { "type": "string", "minLength": 1, "description": "GraphQL operation document (query / mutation / subscription)." },
+    "operationName": { "type": "string", "description": "Required when operation document declares multiple ops." }
+  },
+  "additionalProperties": false
+}

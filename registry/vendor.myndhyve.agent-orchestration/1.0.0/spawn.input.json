@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.agent-orchestration/1.0.0/spawn.input.json",
+  "title": "AgentSpawnInput",
+  "type": "object",
+  "properties": {
+    "overrides": {
+      "type": "object",
+      "description": "Optional per-spawn overrides to the agent's manifest (e.g., systemPrompt, modelClass, toolAllowlist). Host validates against the manifest's mutable surface; protected fields like agentId can't be overridden.",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

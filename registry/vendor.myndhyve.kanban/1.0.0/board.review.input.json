@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.kanban/1.0.0/board.review.input.json",
+  "title": "BoardReviewInput",
+  "type": "object",
+  "required": ["boardId"],
+  "properties": {
+    "boardId": { "type": "string", "minLength": 1 }
+  },
+  "additionalProperties": false
+}

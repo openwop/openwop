@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ai/1.0.0/callPrompt.input.json",
+  "title": "CallPromptInput",
+  "type": "object",
+  "properties": {
+    "userMessage": { "type": "string" },
+    "variables": { "type": "object", "additionalProperties": true },
+    "context": { "type": "object", "additionalProperties": true }
+  },
+  "additionalProperties": false
+}

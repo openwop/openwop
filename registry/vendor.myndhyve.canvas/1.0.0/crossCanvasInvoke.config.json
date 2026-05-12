@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.canvas/1.0.0/crossCanvasInvoke.config.json",
+  "title": "CrossCanvasInvokeConfig",
+  "type": "object",
+  "required": ["targetCanvasId", "workflowId"],
+  "properties": {
+    "targetCanvasId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Canvas ID to invoke the workflow on. Must be in the same workspace as the caller (cross-workspace invokes require explicit cross-tenant-allowed config — host-policy)."
+    },
+    "workflowId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Workflow to invoke on the target canvas. Resolved against the target canvas's registered workflows."
+    },
+    "awaitTerminal": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, this node suspends until the child run reaches a terminal state. When false, returns immediately with the child runId."
+    },
+    "timeoutMs": {
+      "type": "integer",
+      "minimum": 100,
+      "maximum": 3600000,
+      "default": 300000,
+      "description": "Only meaningful when awaitTerminal=true. Bounded to 1 hour. On timeout, returns with `terminalStatus: 'pending'`."
+    },
+    "circuitBreaker": {
+      "type": "object",
+      "description": "Per spec/v1/rest-endpoints.md circuit-breaker semantics: host-side throttling when the same caller workflow + target combination exceeds error/latency thresholds.",
+      "properties": {
+        "failureThreshold": { "type": "integer", "minimum": 1, "maximum": 100, "default": 5 },
+        "resetMs": { "type": "integer", "minimum": 1000, "maximum": 3600000, "default": 60000 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

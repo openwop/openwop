@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "studioId": { "type": "string", "description": "Launch Studio identifier" },
+    "stepId": { "type": "string", "description": "Step within the studio" },
+    "projectId": { "type": "string", "description": "Project to link to the step" },
+    "canvasTypeId": { "type": "string", "description": "Canvas type of the step's target" }
+  },
+  "required": ["studioId", "stepId", "projectId", "canvasTypeId"],
+  "additionalProperties": true
+}

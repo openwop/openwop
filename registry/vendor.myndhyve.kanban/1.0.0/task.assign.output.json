@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.kanban/1.0.0/task.assign.output.json",
+  "title": "TaskAssignOutput",
+  "type": "object",
+  "required": ["taskId", "assigneeId", "assignedAt"],
+  "properties": {
+    "taskId": { "type": "string" },
+    "assigneeId": { "type": "string" },
+    "previousAssigneeId": { "type": "string", "description": "Absent when the task had no prior assignee." },
+    "assignedAt": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

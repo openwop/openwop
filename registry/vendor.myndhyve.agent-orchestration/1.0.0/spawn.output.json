@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.agent-orchestration/1.0.0/spawn.output.json",
+  "title": "AgentSpawnOutput",
+  "type": "object",
+  "required": ["agentInstanceId", "agentId", "spawnedAt"],
+  "properties": {
+    "agentInstanceId": { "type": "string", "minLength": 1, "description": "Run-scoped instance id. Use to reference this agent in subsequent nodes." },
+    "agentId": { "type": "string", "description": "Echo of config.agentRef.agentId." },
+    "spawnedAt": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.data-integration/1.0.0/variable.compute.input.json",
+  "title": "VariableComputeInput",
+  "type": "object",
+  "properties": {
+    "context": { "type": "object", "additionalProperties": true, "description": "Optional context exposed to the expression. Merged with the run's existing variables." }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.web-research/1.0.0/webSearch.output.json",
+  "title": "WebSearchOutput",
+  "type": "object",
+  "required": ["results", "engine", "query"],
+  "properties": {
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["url", "title"],
+        "properties": {
+          "url": { "type": "string", "format": "uri" },
+          "title": { "type": "string" },
+          "snippet": { "type": "string", "description": "Engine-provided result snippet." },
+          "rank": { "type": "integer", "minimum": 1, "description": "1-based result rank from the engine." }
+        },
+        "additionalProperties": true
+      }
+    },
+    "engine": { "type": "string", "description": "Engine that actually served (echoes config.engine; differs only when host fell back)." },
+    "query": { "type": "string", "description": "Echo of the query for debug." },
+    "totalResults": { "type": "integer", "minimum": 0, "description": "Engine-reported total matches (NOT limited to maxResults)." }
+  },
+  "additionalProperties": false
+}

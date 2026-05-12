@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.kanban/1.0.0/board.create.input.json",
+  "title": "BoardCreateInput",
+  "type": "object",
+  "required": ["name", "columns"],
+  "properties": {
+    "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "columns": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "label"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "label": { "type": "string", "minLength": 1 },
+          "wipLimit": { "type": "integer", "minimum": 1, "description": "Optional work-in-progress cap." }
+        },
+        "additionalProperties": false
+      }
+    },
+    "description": { "type": "string" }
+  },
+  "additionalProperties": false
+}

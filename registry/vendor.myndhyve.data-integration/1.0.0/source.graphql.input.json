@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.data-integration/1.0.0/source.graphql.input.json",
+  "title": "DataSourceGraphQLInput",
+  "type": "object",
+  "properties": {
+    "variables": { "type": "object", "additionalProperties": true, "description": "GraphQL variables map." }
+  },
+  "additionalProperties": false
+}

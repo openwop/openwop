@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "success": { "type": "boolean" },
+    "deliveryId": { "type": "string" },
+    "platformMessageId": { "type": "string" },
+    "durationMs": { "type": "number", "minimum": 0 },
+    "error": { "type": "string" }
+  },
+  "required": ["success"],
+  "additionalProperties": false
+}

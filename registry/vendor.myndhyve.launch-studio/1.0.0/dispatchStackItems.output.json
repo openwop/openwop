@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "executedCount": { "type": "integer", "minimum": 0 },
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "taskId": { "type": "string" },
+          "success": { "type": "boolean", "description": "Means transitioned to doing — not completed (execution is async)" },
+          "artifactIds": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["taskId", "success", "artifactIds"],
+        "additionalProperties": false
+      }
+    },
+    "canvasTypeId": { "type": "string" },
+    "projectId": { "type": "string" },
+    "error": { "type": "string" }
+  },
+  "required": ["executedCount", "results", "canvasTypeId", "projectId"],
+  "additionalProperties": false
+}

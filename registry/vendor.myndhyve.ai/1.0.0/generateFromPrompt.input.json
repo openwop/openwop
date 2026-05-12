@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ai/1.0.0/generateFromPrompt.input.json",
+  "title": "GenerateFromPromptInput",
+  "type": "object",
+  "properties": {
+    "userMessage": { "type": "string", "description": "User-facing message that triggered this generation. Drives the final turn after the system prompt." },
+    "variables": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Substitution map for `{{var}}` placeholders in systemPrompt + userMessage."
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Optional context payload (prior artifacts, retrieved knowledge, etc.) merged into the prompt. Host-defined merge strategy."
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.kanban/1.0.0/resource.monitor.config.json",
+  "title": "ResourceMonitorConfig",
+  "type": "object",
+  "properties": {
+    "maxConcurrentPerAssignee": { "type": "integer", "minimum": 1, "default": 5, "description": "Threshold above which an assignee is flagged over-allocated." },
+    "includeAgents": { "type": "boolean", "default": true }
+  },
+  "additionalProperties": false
+}

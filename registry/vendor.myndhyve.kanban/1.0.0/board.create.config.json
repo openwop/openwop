@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.kanban/1.0.0/board.create.config.json",
+  "title": "BoardCreateConfig",
+  "type": "object",
+  "properties": {
+    "projectId": { "type": "string", "description": "Optional parent project. When set, board is project-scoped." }
+  },
+  "additionalProperties": false
+}

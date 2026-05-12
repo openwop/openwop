@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.agent-orchestration/1.0.0/consensus.config.json",
+  "title": "AgentConsensusConfig",
+  "type": "object",
+  "required": ["voters", "options"],
+  "properties": {
+    "voters": {
+      "type": "array",
+      "minItems": 2,
+      "items": { "type": "string", "minLength": 1, "description": "agentInstanceId" },
+      "description": "Agents that will vote. Each receives the question + options in parallel."
+    },
+    "options": {
+      "type": "array",
+      "minItems": 2,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Closed-set options voters choose from."
+    },
+    "tieBreaker": {
+      "type": "string",
+      "enum": ["first", "unresolved"],
+      "default": "unresolved",
+      "description": "`first` = first option in `options` array wins on tie (deterministic). `unresolved` = return winningOption: null."
+    }
+  },
+  "additionalProperties": false
+}

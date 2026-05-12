@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "connectorInstanceId": { "type": "string" },
+    "channel": { "type": "string" },
+    "conversationId": { "type": "string" },
+    "threadId": { "type": "string" }
+  },
+  "additionalProperties": true
+}

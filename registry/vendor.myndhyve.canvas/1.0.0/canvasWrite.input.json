@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.canvas/1.0.0/canvasWrite.input.json",
+  "title": "CanvasWriteInput",
+  "type": "object",
+  "required": ["canvasId", "mutation"],
+  "properties": {
+    "canvasId": { "type": "string", "minLength": 1 },
+    "mutation": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "State patch applied per config.merge mode. Shape is canvas-type-specific — workflow authors couple to the canvas type via config of upstream nodes."
+    }
+  },
+  "additionalProperties": false
+}

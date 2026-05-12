@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.data-integration/1.0.0/source.graphql.output.json",
+  "title": "DataSourceGraphQLOutput",
+  "type": "object",
+  "required": ["data"],
+  "properties": {
+    "data": { "description": "GraphQL response data." },
+    "errors": {
+      "type": "array",
+      "items": { "type": "object", "additionalProperties": true, "required": ["message"], "properties": { "message": { "type": "string" } } },
+      "description": "GraphQL errors. Present even when data is partial."
+    },
+    "fetchedAt": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

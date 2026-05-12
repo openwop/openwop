@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.data-integration/1.0.0/variable.compute.output.json",
+  "title": "VariableComputeOutput",
+  "type": "object",
+  "required": ["variableName", "value"],
+  "properties": {
+    "variableName": { "type": "string" },
+    "value": { "description": "Computed value (now set on the run's variables map)." }
+  },
+  "additionalProperties": false
+}

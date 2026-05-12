@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.kanban/1.0.0/workflow.automate.config.json",
+  "title": "WorkflowAutomateConfig",
+  "type": "object",
+  "properties": {
+    "replaceExisting": { "type": "boolean", "default": false, "description": "When true, removes existing rules on the board before applying new ones. When false (default), appends." }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,82 @@
+{
+  "name": "vendor.myndhyve.ai",
+  "version": "1.0.0",
+  "description": "MyndHyve envelope-protocol AI nodes. Distinct from core.openwop.ai (which ships provider-agnostic chat-completion + structured-output + embeddings) — this pack ships MyndHyve-specific nodes that work with typed envelopes (`prd.create`, `theme.create`, etc.) emitted into the workflow's envelope stream, and prompts resolved from MyndHyve's prompt library by ID.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/ai",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "vendor",
+    "myndhyve",
+    "ai",
+    "envelope",
+    "prompt-library"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "host.aiEnvelope": "supported",
+    "host.promptLibrary": "supported"
+  },
+  "nodes": [
+    {
+      "typeId": "core.ai.generateFromPrompt",
+      "version": "1.0.0",
+      "label": "Generate From Prompt",
+      "description": "Calls an LLM with an inline prompt template, emits a typed envelope to the workflow's envelope stream, and returns the envelope payload. The envelopeType is config-declared; the host's envelope normalizer + artifact-sync registries route the result to canonical stores (PRD store, theme store, etc.).",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/generateFromPrompt.config.json",
+      "inputSchemaRef": "schemas/generateFromPrompt.input.json",
+      "outputSchemaRef": "schemas/generateFromPrompt.output.json"
+    },
+    {
+      "typeId": "core.ai.awaitEnvelope",
+      "version": "1.0.0",
+      "label": "Await Envelope",
+      "description": "Suspends the run waiting for a typed envelope of `envelopeType` to arrive on the run's envelope stream (typically emitted by another AI turn). Returns the envelope payload on resume. Pairs with core.ai.generateFromPrompt on the producer side.",
+      "category": "data",
+      "role": "gate",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/awaitEnvelope.config.json",
+      "inputSchemaRef": "schemas/awaitEnvelope.input.json",
+      "outputSchemaRef": "schemas/awaitEnvelope.output.json"
+    },
+    {
+      "typeId": "core.ai.callPrompt",
+      "version": "1.0.0",
+      "label": "Call Prompt",
+      "description": "Resolves a system prompt by `promptId` from the host's prompt library, substitutes runtime variables, calls the LLM, and emits the typed envelope. Higher-level wrapper around generateFromPrompt for workflows that reference canonical prompts (e.g., 'prd-author-v3').",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/callPrompt.config.json",
+      "inputSchemaRef": "schemas/callPrompt.input.json",
+      "outputSchemaRef": "schemas/callPrompt.output.json"
+    }
+  ],
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "myndhyve-internal-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-bNuFWAD9W5cGNM+oPS3LSyJeLlTemRjhNUmklsnCnzM="
+}

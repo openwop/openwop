@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.brand/1.0.0/theme.review.output.json",
+  "title": "theme.reviewOutput",
+  "type": "object",
+  "required": ["artifactId", "decision", "respondedAt"],
+  "properties": {
+    "artifactId": { "type": "string" },
+    "decision": { "type": "string", "enum": ["approve", "reject", "request-changes"] },
+    "notes": { "type": "string" },
+    "respondent": { "type": "string" },
+    "respondedAt": { "type": "string", "format": "date-time" },
+    "timedOut": { "type": "boolean" }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.kanban/1.0.0/timeline.plan.config.json",
+  "title": "TimelinePlanConfig",
+  "type": "object",
+  "properties": {
+    "startDate": { "type": "string", "format": "date" },
+    "workingHoursPerDay": { "type": "number", "minimum": 1, "maximum": 24, "default": 8 },
+    "workingDaysPerWeek": { "type": "integer", "minimum": 1, "maximum": 7, "default": 5 },
+    "scheduler": { "type": "string", "enum": ["greedy", "critical-path"], "default": "critical-path" }
+  },
+  "additionalProperties": false
+}

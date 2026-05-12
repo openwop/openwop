@@ -1,0 +1,108 @@
+{
+  "name": "vendor.myndhyve.entities",
+  "version": "1.0.0",
+  "description": "MyndHyve entities + validation + asset-decision + messaging primitives. 5 nodes covering project creation, cross-stage validation (deterministic, no LLM), workspace asset decision gates (brand / persona / KB), and chat send/reply via the messaging connector layer.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/entities",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "vendor",
+    "myndhyve",
+    "entities",
+    "validation",
+    "asset-decision",
+    "messaging"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "host.entities": "supported",
+    "host.messaging": "supported"
+  },
+  "nodes": [
+    {
+      "typeId": "core.entities.projectCreate",
+      "version": "1.0.0",
+      "label": "Project Create",
+      "description": "Create a Project for a given Canvas Type. Generic primitive for multi-step orchestrations; idempotency-keyed via ctx.sideEffects when present.",
+      "category": "coordination",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/projectCreate.config.json",
+      "inputSchemaRef": "schemas/projectCreate.input.json",
+      "outputSchemaRef": "schemas/projectCreate.output.json"
+    },
+    {
+      "typeId": "core.validation.crossStageCheck",
+      "version": "1.0.0",
+      "label": "Cross-Stage Validation",
+      "description": "Deterministic field comparison across two workflow-stage artifacts. No LLM. Compare modes: equal | gte | lte | exists | count-match. Optional failOnMismatch.",
+      "category": "control",
+      "role": "gate",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/crossStageCheck.config.json",
+      "inputSchemaRef": "schemas/crossStageCheck.input.json",
+      "outputSchemaRef": "schemas/crossStageCheck.output.json"
+    },
+    {
+      "typeId": "core.workflow.assetDecisionGate",
+      "version": "1.0.0",
+      "label": "Asset Decision Gate",
+      "description": "HITL gate. Lists workspace assets of a given type (brand / persona / knowledgeBase), pauses for user choice (use-existing / create-new / skip). Auto-resolves if autoResolveVariable is already set.",
+      "category": "control",
+      "role": "gate",
+      "capabilities": [
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/assetDecisionGate.config.json",
+      "inputSchemaRef": "schemas/assetDecisionGate.input.json",
+      "outputSchemaRef": "schemas/assetDecisionGate.output.json"
+    },
+    {
+      "typeId": "messaging.chatSend",
+      "version": "1.0.0",
+      "label": "Send Chat Message",
+      "description": "Send a chat message to an explicitly targeted connector + conversation. Inputs override config defaults. Requires connectorInstanceId, channel, conversationId, and text (or media).",
+      "category": "chat",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/chatSend.config.json",
+      "inputSchemaRef": "schemas/chatSend.input.json",
+      "outputSchemaRef": "schemas/chatSend.output.json"
+    },
+    {
+      "typeId": "messaging.chatReply",
+      "version": "1.0.0",
+      "label": "Chat Reply",
+      "description": "Reply to the chat message that triggered this workflow run. Reads originating ingress envelope from run variables (`_ingressEnvelope`), builds outbound envelope, dispatches via messaging connector.",
+      "category": "chat",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/chatReply.config.json",
+      "inputSchemaRef": "schemas/chatReply.input.json",
+      "outputSchemaRef": "schemas/chatReply.output.json"
+    }
+  ],
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "myndhyve-internal-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-3r0a6hgIPurI3nij/7jZEMCP8gROuKC5TnzETHOonbU="
+}

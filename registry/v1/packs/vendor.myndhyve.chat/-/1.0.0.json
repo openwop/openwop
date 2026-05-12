@@ -1,0 +1,124 @@
+{
+  "name": "vendor.myndhyve.chat",
+  "version": "1.0.0",
+  "description": "MyndHyve chat-bridge nodes — sendMessage, progressCard, updateCard, phaseInputGate, approvalGate, clarificationGate. Routes through the host's chat adapter (ctx.chat.*) + ctx.suspend for HITL gates. Preserves the core.chat.* typeIds in the wild.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/chat",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "vendor",
+    "myndhyve",
+    "chat",
+    "hitl",
+    "cards"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "host.chat": "supported"
+  },
+  "nodes": [
+    {
+      "typeId": "core.chat.sendMessage",
+      "version": "1.0.0",
+      "label": "Chat Send Message",
+      "description": "Posts a message into the workflow's chat session. Side-effectful (visible to user) + cacheable. Deterministic idempotency-key prevents duplicate posts on replay.",
+      "category": "chat",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/sendMessage.config.json",
+      "inputSchemaRef": "schemas/sendMessage.input.json",
+      "outputSchemaRef": "schemas/sendMessage.output.json"
+    },
+    {
+      "typeId": "core.chat.progressCard",
+      "version": "1.0.0",
+      "label": "Chat Progress Card",
+      "description": "Emits a progress card into the chat session showing current workflow stage. Subsequent stages update the same card (via core.chat.updateCard with matching cardId).",
+      "category": "chat",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/progressCard.config.json",
+      "inputSchemaRef": "schemas/progressCard.input.json",
+      "outputSchemaRef": "schemas/progressCard.output.json"
+    },
+    {
+      "typeId": "core.chat.updateCard",
+      "version": "1.0.0",
+      "label": "Chat Update Card",
+      "description": "Patches an existing chat card by cardId. Use to update progress cards or other rich cards as workflow state evolves. Replay-safe: cached payload returns the originally-applied patch.",
+      "category": "chat",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/updateCard.config.json",
+      "inputSchemaRef": "schemas/updateCard.input.json",
+      "outputSchemaRef": "schemas/updateCard.output.json"
+    },
+    {
+      "typeId": "core.chat.phaseInputGate",
+      "version": "1.0.0",
+      "label": "Chat Phase-Input Gate",
+      "description": "HITL gate: emits a phase-input dialog into the chat session and suspends the run until the user responds. On resume, validates the response against config.schema and returns it as outputs.answers. Built on RFC 0007 §F suspend mechanics (node.suspended + run-status waiting-approval).",
+      "category": "chat",
+      "role": "gate",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/phaseInputGate.config.json",
+      "inputSchemaRef": "schemas/phaseInputGate.input.json",
+      "outputSchemaRef": "schemas/phaseInputGate.output.json"
+    },
+    {
+      "typeId": "core.chat.approvalGate",
+      "version": "1.0.0",
+      "label": "Chat Approval Gate",
+      "description": "HITL approval gate. Suspends via ctx.suspend({reason:'approval'}) and routes the decision (accept | edit-accept | refine | ask | reject | timeout) back into the workflow. Tracks loopback counter on `_loopbackCount:<nodeId>` and refine feedback history on `_feedbackHistory:<nodeId>` for downstream re-generation context.",
+      "category": "chat",
+      "role": "gate",
+      "capabilities": [
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/approvalGate.config.json",
+      "inputSchemaRef": "schemas/approvalGate.input.json",
+      "outputSchemaRef": "schemas/approvalGate.output.json"
+    },
+    {
+      "typeId": "core.chat.clarificationGate",
+      "version": "1.0.0",
+      "label": "Chat Clarification Gate",
+      "description": "HITL clarification gate. Presents a question list (from ask.clarify envelope or upstream output) and suspends until the user answers each. Returns answers paired with their source questions. When writeToVariables is set, also writes each pair to `clarification_<i>_answer` for downstream nodes that read by variable name.",
+      "category": "chat",
+      "role": "gate",
+      "capabilities": [
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/clarificationGate.config.json",
+      "inputSchemaRef": "schemas/clarificationGate.input.json",
+      "outputSchemaRef": "schemas/clarificationGate.output.json"
+    }
+  ],
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "myndhyve-internal-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-48v24mtbDkl4GmigWJeTUZWY7LI9y3DT5HdVUB40Peg="
+}

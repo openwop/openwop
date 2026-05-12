@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "assetType": { "type": "string", "enum": ["brand", "persona", "knowledgeBase"] },
+    "label": { "type": "string" },
+    "description": { "type": "string" },
+    "filterConfig": {
+      "type": "object",
+      "properties": {
+        "brandId": { "type": "string" },
+        "workspaceId": { "type": "string" },
+        "campaignId": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "allowSkip": { "type": "boolean", "default": false },
+    "allowCreate": { "type": "boolean", "default": true },
+    "autoResolveVariable": { "type": "string" }
+  },
+  "required": ["assetType"],
+  "additionalProperties": true
+}

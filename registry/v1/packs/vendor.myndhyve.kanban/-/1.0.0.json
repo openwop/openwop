@@ -1,0 +1,142 @@
+{
+  "name": "vendor.myndhyve.kanban",
+  "version": "1.0.0",
+  "description": "MyndHyve kanban-coordination pack. 7 nodes covering board lifecycle, task management (assign + AI-powered decompose), timeline planning, automation rules, and resource monitoring. Routes through ctx.kanban.* host adapter.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/kanban",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "vendor",
+    "myndhyve",
+    "kanban",
+    "tasks",
+    "timeline",
+    "automation"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "host.kanban": "supported"
+  },
+  "nodes": [
+    {
+      "typeId": "kanban.board.create",
+      "version": "1.0.0",
+      "label": "Kanban Board Create",
+      "description": "Creates a new kanban board with columns. Side-effectful + cacheable — replays return the originally-created boardId.",
+      "category": "coordination",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/board.create.config.json",
+      "inputSchemaRef": "schemas/board.create.input.json",
+      "outputSchemaRef": "schemas/board.create.output.json"
+    },
+    {
+      "typeId": "kanban.board.review",
+      "version": "1.0.0",
+      "label": "Kanban Board Review",
+      "description": "Reads board state with per-column task counts + at-risk tasks summary. Used in review workflows + executive dashboards.",
+      "category": "coordination",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/board.review.config.json",
+      "inputSchemaRef": "schemas/board.review.input.json",
+      "outputSchemaRef": "schemas/board.review.output.json"
+    },
+    {
+      "typeId": "kanban.task.assign",
+      "version": "1.0.0",
+      "label": "Kanban Task Assign",
+      "description": "Assigns a task to an agent or user. Cancels existing assignment if present (single-assignee model).",
+      "category": "coordination",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/task.assign.config.json",
+      "inputSchemaRef": "schemas/task.assign.input.json",
+      "outputSchemaRef": "schemas/task.assign.output.json"
+    },
+    {
+      "typeId": "kanban.task.decompose",
+      "version": "1.0.0",
+      "label": "Kanban Task Decompose",
+      "description": "AI-powered task decomposition: takes a high-level task description and returns N subtasks with dependencies. Routes through host's AI envelope adapter (peer dep host.aiEnvelope required).",
+      "category": "coordination",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/task.decompose.config.json",
+      "inputSchemaRef": "schemas/task.decompose.input.json",
+      "outputSchemaRef": "schemas/task.decompose.output.json"
+    },
+    {
+      "typeId": "kanban.timeline.plan",
+      "version": "1.0.0",
+      "label": "Kanban Timeline Plan",
+      "description": "Generates a schedule for board tasks given resource constraints + dependencies. Returns per-task start/end dates + critical-path identification.",
+      "category": "coordination",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/timeline.plan.config.json",
+      "inputSchemaRef": "schemas/timeline.plan.input.json",
+      "outputSchemaRef": "schemas/timeline.plan.output.json"
+    },
+    {
+      "typeId": "kanban.workflow.automate",
+      "version": "1.0.0",
+      "label": "Kanban Workflow Automate",
+      "description": "Configures automation rules on a board (trigger on column transition, due-date, label change). Returns active rule count.",
+      "category": "coordination",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/workflow.automate.config.json",
+      "inputSchemaRef": "schemas/workflow.automate.input.json",
+      "outputSchemaRef": "schemas/workflow.automate.output.json"
+    },
+    {
+      "typeId": "kanban.resource.monitor",
+      "version": "1.0.0",
+      "label": "Kanban Resource Monitor",
+      "description": "Reports resource utilization across the board (assignee load, column WIP limits, overdue tasks). Surfaces alerts for over-allocated resources.",
+      "category": "coordination",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/resource.monitor.config.json",
+      "inputSchemaRef": "schemas/resource.monitor.input.json",
+      "outputSchemaRef": "schemas/resource.monitor.output.json"
+    }
+  ],
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "myndhyve-internal-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-oH7uCW5UsePhbBix/7BQ6CoXrVHer2PTsAzEgWiUdk8="
+}
