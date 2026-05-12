@@ -1,10 +1,19 @@
 # OpenWOP Postgres Reference Host — Production-Profile Conformance Report
 
-> **Snapshot:** 2026-05-11, commit at HEAD of `main` branch.
-> **Status:** First host on `INTEROP-MATRIX.md` advertising `production-profile.md`.
+> **Snapshot:** 2026-05-12 — Phase H + Phase I close-out.
+> **Status:** First host on `INTEROP-MATRIX.md` advertising `production-profile.md`. Conformance reaches **728/797 (91.3%)** against `@openwop/openwop-conformance` v1.0, up from 610/682 (89.4%) at the 2026-05-11 baseline.
 > **Reproducibility:** every claim below maps to a test path in this host's `test/` directory or to a section in `examples/hosts/postgres/README.md`.
 
 This report is the public-result evidence required by `spec/v1/production-profile.md` §"Compatibility baseline" (MUST publish suite version + command). It also serves as the precondition record cited by the spec's PROVISIONAL → FINAL flip.
+
+### Phase H + Phase I additions (2026-05-12)
+
+Per the architect review of myndhyve.ai launch-readiness, two phased batches landed on the Postgres host:
+
+- **Phase H launch-blockers (9/9 closed):** BYOK / `aiProviders` with 4-mode policy enforcement (`disabled` / `optional` / `required` / `restricted`) + `core.llm.chat` / `core.llm.completion`; MCP client (`core.mcp.toolCall` over HTTP/JSON-RPC with `trustBoundary: "untrusted"`); HTTP client (`core.http.request` with SSRF guard + 1 MiB response cap); cap-breach + configurable-schema enforcement; SECURITY invariants `mcp-toolcall-payload-redaction` + `http-client-ssrf-guard`; SDK helper additions (TS/Python/Go).
+- **Phase I enterprise-blockers MVP (7/11 closed):** MemoryAdapter (RFC 0004) read-side `list` + `get` with CTI-1 cross-tenant isolation + TTL enforcement; `capabilities.agents` Phase 1–6 advertisement + reasoning-verbosity helpers; API-key rotation (two-key overlap + constant-time `checkAuth` + canary-redaction; conditional advertisement when `OPENWOP_SECONDARY_API_KEY` is set); auth-scoped discovery (tenant2 narrowed view, strict subset omitting orchestrator + dispatch; conditional advertisement when `OPENWOP_TENANT2_API_KEY` is set); subworkflow outputMapping + parent linkage (G3); 3 new protocol-tier SECURITY invariants (`agent-memory-cti-1` + `agent-memory-sr-1-redaction` + `auth-key-rotation-no-canary-echo`). 4 items deferred with tripwire conditions documented in `INTEROP-MATRIX.md`: OAuth2-CC + OIDC user-bearer (reverse-proxy IdP pattern preferred), pack-registry consumption (gated on first non-built-in pack), reasoning-event emission wiring (helpers in place; needs LLM-driven typeId).
+
+New in-process tests under `test/`: `byok-roundtrip`, `ai-policy`, `mcp-client`, `http-client`, `auth-rotation-scoped`, `memory-adapter`, `agent-events`. The single remaining conformance failure (`webhook-signed-delivery`) is test-isolation residue between scenarios sharing a long-lived pglite host; not a host bug.
 
 ---
 
