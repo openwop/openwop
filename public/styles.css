@@ -345,6 +345,45 @@
     margin: 14px 0 0;
   }
 
+  /* ─── Prologue prose ───────────────────────────────────────────────── */
+  /* Mobile-first: 1 column at narrow widths. At ≥760px the `columns`
+     shorthand asks the browser for "up to 3 columns, each at least 19em
+     wide"; the browser picks 2 or 3 based on available width and pours text
+     continuously between them. Default `column-fill: balance` evens out
+     column heights. Paragraphs intentionally do NOT have break-inside: avoid
+     so they can split mid-graf for balancing; orphans/widows prevent
+     single-line stragglers. */
+  .prologue-body p {
+    font-size: 17px;
+    line-height: 1.7;
+    margin: 0 0 14px;
+  }
+  .prologue-body .prologue-close {
+    margin-top: 28px;
+    padding-top: 22px;
+    border-top: 1px solid var(--rule);
+    font-family: var(--serif);
+    font-size: clamp(20px, 1.9vw, 24px);
+    line-height: 1.35;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+    column-span: all;
+  }
+  @media (min-width: 760px) {
+    .prologue-body {
+      columns: 19em 3;
+      column-gap: clamp(28px, 3vw, 48px);
+      column-rule: 1px solid var(--rule);
+      orphans: 3;
+      widows: 3;
+    }
+    .prologue-body p {
+      font-size: 16px;
+      line-height: 1.65;
+      hyphens: auto;
+    }
+  }
+
   /* ─── Pillars (3-up) ───────────────────────────────────────────────── */
   .pillars {
     display: grid;
