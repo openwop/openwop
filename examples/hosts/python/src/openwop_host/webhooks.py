@@ -54,8 +54,10 @@ class WebhookUrlRejected(Exception):
 
 
 def _url_allowed(raw_url: str) -> tuple[bool, str]:
-    if os.environ.get("OPENWOP_WEBHOOK_ALLOW_PRIVATE") == "true":
-        return True, ""
+    # URL shape validation runs UNCONDITIONALLY — `OPENWOP_WEBHOOK_ALLOW_PRIVATE`
+    # only relaxes the private-IP / internal-hostname checks for tests
+    # against a local receiver. Malformed input is always rejected so a
+    # daemon delivery thread never sees a non-parseable URL.
     try:
         parsed = urlparse(raw_url)
     except ValueError:
@@ -65,6 +67,13 @@ def _url_allowed(raw_url: str) -> tuple[bool, str]:
     host = (parsed.hostname or "").lower()
     if not host:
         return False, "webhook url is missing a hostname"
+
+    if os.environ.get("OPENWOP_WEBHOOK_ALLOW_PRIVATE") == "true":
+        # Bypass the SSRF heuristics for local-receiver test setups
+        # (webhook-signed-delivery.test.ts boots an HTTP receiver on
+        # 127.0.0.1). URL shape is already validated above.
+        return True, ""
+
     if host == "localhost" or host.endswith(".localhost"):
         return False, "webhook url points at localhost (SSRF guard)"
     if host.endswith(".local") or host.endswith(".internal") or host.endswith(".cluster"):
@@ -168,31 +177,41 @@ def _redact_for_fan_out(event: dict[str, Any]) -> dict[str, Any]:
     full payload, receivers MUST use an authenticated GET /v1/runs/{id}
     or the debug-bundle endpoint.
     """
-    return {k: v for k, v in event.items() if k != "data"}
+    return {k: v for k, v in event.items() if k != "payload"}
 
 
 def deliver(sub: WebhookSubscription, payload: dict[str, Any], *, timeout_s: float = 5.0) -> None:
-    """Fire-and-forget HTTP POST. Errors are swallowed."""
+    """Fire-and-forget HTTP POST. All errors are swallowed.
+
+    The caller has no way to surface delivery failures to the workflow
+    or to the registering tenant — best-effort delivery per
+    `webhooks.md` §"Delivery semantics". Production hosts would queue
+    retries with backoff + a circuit breaker; the reference impl logs
+    nothing and moves on.
+    """
     body = json.dumps(payload)
     timestamp = str(int(time.time()))
     signature = sign_payload(sub.secret, timestamp, body)
-    request = urllib.request.Request(
-        sub.url,
-        data=body.encode("utf-8"),
-        method="POST",
-        headers={
-            "Content-Type": "application/json",
-            "X-openwop-Signature": signature,
-            "X-openwop-Signature-Timestamp": timestamp,
-            "X-openwop-Signature-Algorithm": "v1",
-            "X-openwop-Subscription-Id": sub.subscription_id,
-        },
-    )
     try:
+        request = urllib.request.Request(
+            sub.url,
+            data=body.encode("utf-8"),
+            method="POST",
+            headers={
+                "Content-Type": "application/json",
+                "X-openwop-Signature": signature,
+                "X-openwop-Signature-Timestamp": timestamp,
+                "X-openwop-Signature-Algorithm": "v1",
+                "X-openwop-Subscription-Id": sub.subscription_id,
+            },
+        )
         with urllib.request.urlopen(request, timeout=timeout_s) as resp:
             resp.read()  # drain
-    except (urllib.error.URLError, TimeoutError, OSError):
-        # Reference-host MVP: swallow delivery failures.
+    except (urllib.error.URLError, TimeoutError, OSError, ValueError):
+        # ValueError covers urllib's "unknown url type" raised when a
+        # subscription was somehow registered with a malformed URL
+        # (defense-in-depth — _url_allowed already rejects these on
+        # register).
         return
 
 

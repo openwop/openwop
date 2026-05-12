@@ -31,24 +31,38 @@ TERMINAL_STATES = frozenset({"completed", "failed", "cancelled"})
 
 @dataclass
 class RunEvent:
+    """Per-run event record.
+
+    Wire shape on emit (via `to_dict()`) matches `schemas/run-event.schema.json`
+    canonical `RunEventDoc` — six required fields: eventId, runId, type,
+    payload, timestamp, sequence — plus optional `nodeId` for node-scoped
+    events. Internal Python attribute names stay as `seq` / `data` for
+    minimal-invasive back-compat with existing iter_events_since / SSE
+    handlers; only the JSON output keys are remapped.
+    """
+
     seq: int
     run_id: str
     type: str
     timestamp: str
     node_id: str | None = None
     data: Any | None = None
+    # eventId stable across re-reads: assigned once at construction, not
+    # regenerated per to_dict() call (replay determinism per
+    # spec/v1/replay.md §"Event-log determinism").
+    event_id: str = field(default_factory=lambda: str(uuid.uuid4()))
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {
-            "seq": self.seq,
+            "eventId": self.event_id,
             "runId": self.run_id,
             "type": self.type,
+            "payload": self.data if self.data is not None else {},
             "timestamp": self.timestamp,
+            "sequence": self.seq,
         }
         if self.node_id is not None:
             out["nodeId"] = self.node_id
-        if self.data is not None:
-            out["data"] = self.data
         return out
 
 
@@ -63,7 +77,14 @@ class Run:
     error: dict[str, str] | None = None
     cancel_requested: bool = False
     pause_requested: bool = False
+    paused_at: str | None = None
+    resumed_at: str | None = None
     resume_event: threading.Event = field(default_factory=threading.Event)
+    # Track per-run which nodes have emitted `node.started`. On
+    # pause-mid-node + resume, the same node is re-entered; we MUST
+    # NOT emit a second `node.started` for it (run-event ordering
+    # invariant).
+    started_nodes: set[str] = field(default_factory=set)
     events: list[RunEvent] = field(default_factory=list)
     # SSE coordination: handlers acquire `cond` and wait on it; the
     # executor `notify_all`s after each event.append().
@@ -148,15 +169,18 @@ class RunRegistry:
             run.cond.notify_all()
         return run
 
-    def pause(self, run_id: str) -> tuple[Run | None, str]:
+    def pause(self, run_id: str, *, paused_at: str) -> tuple[Run | None, str]:
         """Request pause for an in-progress run.
 
         Returns (run, outcome) where outcome is one of:
           - "paused"          — pause flag set; executor will park at the
-                                next node boundary (drain-current-node policy
-                                per pause-resume.md §"DrainPolicy").
-          - "already_paused"  — run was already paused.
-          - "terminal"        — run already terminal; pause has no effect.
+                                next node boundary (drain-current-node
+                                policy per rest-endpoints.md §pause/resume).
+          - "already_paused"  — run was already paused (idempotent path;
+                                caller responds 202 with the original
+                                pausedAt — pause-resume.test.ts asserts
+                                idempotent second-pause).
+          - "terminal"        — run already terminal; caller responds 409.
           - "not_found"       — unknown runId.
         """
         run = self.get(run_id)
@@ -167,10 +191,11 @@ class RunRegistry:
         if run.status == "paused" or run.pause_requested:
             return run, "already_paused"
         run.pause_requested = True
+        run.paused_at = paused_at
         run.resume_event.clear()
         return run, "paused"
 
-    def resume(self, run_id: str) -> tuple[Run | None, str]:
+    def resume(self, run_id: str, *, resumed_at: str) -> tuple[Run | None, str]:
         """Lift a pause on a paused run.
 
         Returns (run, outcome): one of "resumed" / "not_paused" / "terminal"
@@ -184,6 +209,7 @@ class RunRegistry:
         if not run.pause_requested and run.status != "paused":
             return run, "not_paused"
         run.pause_requested = False
+        run.resumed_at = resumed_at
         run.resume_event.set()
         return run, "resumed"
 
@@ -221,13 +247,14 @@ class RunRegistry:
         run.status = "running"
         self._append_event(run, "run.started")
 
-        for node in workflow.get("nodes", []):
+        nodes = workflow.get("nodes", [])
+        i = 0
+        while i < len(nodes):
             if run.cancel_requested:
                 break
             # drain-current-node pause policy per rest-endpoints.md
-            # §pause/resume (`drainPolicy: 'drain-current-node'`): pause
-            # requested between nodes parks here until resume() or
-            # cancel() fires.
+            # §pause/resume: pause requested between nodes parks here
+            # until resume() or cancel() fires.
             if run.pause_requested:
                 run.status = "paused"
                 self._append_event(run, "run.paused")
@@ -236,7 +263,8 @@ class RunRegistry:
                     break
                 run.status = "running"
                 self._append_event(run, "run.resumed")
-            outcome = self._execute_node(run, node)
+                continue  # re-check cancel + pause before executing
+            outcome = self._execute_node(run, nodes[i])
             if outcome == "failed":
                 run.status = "failed"
                 self._append_event(run, "run.failed", data=run.error)
@@ -244,6 +272,20 @@ class RunRegistry:
                 return
             if outcome == "cancelled":
                 break
+            if outcome == "paused":
+                # Pause arrived mid-node (e.g. interrupted core.delay).
+                # Park without advancing the cursor so the node re-runs
+                # from the start on resume — drain-current-node fallback
+                # for nodes the host treats as interruptible.
+                run.status = "paused"
+                self._append_event(run, "run.paused")
+                run.resume_event.wait()
+                if run.cancel_requested:
+                    break
+                run.status = "running"
+                self._append_event(run, "run.resumed")
+                continue
+            i += 1
 
         if run.cancel_requested:
             run.status = "cancelled"
@@ -260,22 +302,59 @@ class RunRegistry:
             self._append_event(run, "node.cancelled", node_id=node_id)
             return "cancelled"
 
-        self._append_event(run, "node.started", node_id=node_id)
+        if node_id not in run.started_nodes:
+            self._append_event(run, "node.started", node_id=node_id)
+            run.started_nodes.add(node_id)
 
         if type_id == "core.noop":
             pass
         elif type_id == "core.delay":
-            delay_ms = _resolve_input_as_number(
-                node.get("inputs", {}).get("delayMs"), run.inputs, 100
+            # Resolve effective delay duration. Precedence:
+            #   1. Node spec declares delayMs (possibly via variable
+            #      reference) — the fixture catalog's canonical shape.
+            #   2. Run inputs supply `delaySeconds` directly — used by
+            #      pause-resume.test.ts (`inputs: { delaySeconds: 30 }`)
+            #      and other long-running scenarios.
+            #   3. Fallback: 100ms.
+            declared_ms = _resolve_input_as_number(
+                node.get("inputs", {}).get("delayMs"), run.inputs, -1
             )
-            # Sleep in small chunks so cancellation is responsive.
+            if declared_ms >= 0:
+                delay_ms = declared_ms
+            else:
+                supplied_seconds = run.inputs.get("delaySeconds")
+                if isinstance(supplied_seconds, (int, float)) and supplied_seconds > 0:
+                    delay_ms = int(supplied_seconds * 1000)
+                else:
+                    delay_ms = 100
+            # Sleep in small chunks so cancellation + pause are responsive.
+            # core.delay nodes are artificial waits — interrupting them
+            # on pause is the canonical drain-current-node interpretation
+            # (no real work to drain). We leave the loop early on pause
+            # so the executor reaches the next-iteration pause check and
+            # emits `run.paused` promptly. The node has NOT completed yet,
+            # so on resume the workflow re-enters it for the remaining
+            # duration. This matches pause-resume.test.ts's expectation
+            # that pause→paused is observable within 10s even for a
+            # 30-second delay.
             elapsed_ms = 0
             chunk_ms = 50
+            paused_mid_delay = False
             while elapsed_ms < delay_ms:
                 if run.cancel_event.wait(timeout=min(chunk_ms, delay_ms - elapsed_ms) / 1000.0):
                     self._append_event(run, "node.cancelled", node_id=node_id)
                     return "cancelled"
+                if run.pause_requested:
+                    paused_mid_delay = True
+                    break
                 elapsed_ms += chunk_ms
+            if paused_mid_delay:
+                # Signal park-mid-node to the outer loop. node.started
+                # has already been emitted; no node.completed yet — the
+                # node will re-run from start on resume. This is the
+                # host's chosen interpretation of drain-current-node
+                # for stateless waits.
+                return "paused"
         else:
             run.error = {
                 "code": "unsupported_node_type",

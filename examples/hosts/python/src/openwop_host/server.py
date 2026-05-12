@@ -55,6 +55,14 @@ _RUN_DEBUG_BUNDLE_RE = re.compile(r"^/v1/runs/([^/]+)/debug-bundle$")
 _BULK_CANCEL_RE = re.compile(r"^/v1/runs:bulk-cancel$")
 _WEBHOOKS_RE = re.compile(r"^/v1/webhooks$")
 _WEBHOOK_ID_RE = re.compile(r"^/v1/webhooks/([^/]+)$")
+_WORKFLOW_ID_RE = re.compile(r"^/v1/workflows/([^/]+)$")
+
+
+# stream-modes.md §"Mode selection" — closed enum of supported per-event
+# stream modes. Comma-separated subsets are also supported (e.g.
+# `updates,debug`); `values` is exclusive (cannot mix with others) per
+# stream-modes-mixed.test.ts.
+SUPPORTED_STREAM_MODES: frozenset[str] = frozenset({"updates", "values", "messages", "debug"})
 
 
 # capabilities.md §"Unsupported capability — refusal contract":
@@ -225,11 +233,15 @@ def make_handler(state: _State) -> type[BaseHTTPRequestHandler]:
                 return
             m = _RUN_EVENTS_SSE_RE.match(path)
             if m:
-                self._handle_events_sse(m.group(1))
+                self._handle_events_sse(m.group(1), parsed.query)
                 return
             m = _RUN_DEBUG_BUNDLE_RE.match(path)
             if m:
                 self._handle_debug_bundle(m.group(1))
+                return
+            m = _WORKFLOW_ID_RE.match(path)
+            if m:
+                self._handle_get_workflow(m.group(1))
                 return
             m = _RUN_ID_RE.match(path)
             if m:
@@ -464,6 +476,24 @@ def make_handler(state: _State) -> type[BaseHTTPRequestHandler]:
                 snapshot["error"] = run.error
             self._send_json(200, snapshot)
 
+        def _handle_get_workflow(self, workflow_id: str) -> None:
+            """GET /v1/workflows/{workflowId} per rest-endpoints.md +
+            route-coverage.test.ts §"GET /v1/workflows/{workflowId}".
+
+            Returns the seeded workflow definition for an advertised
+            fixture; 404 `workflow_not_found` otherwise. Read-only — the
+            reference host has no workflow-registration endpoint.
+            """
+            if not self._check_auth():
+                return
+            workflow = state.workflows.get(workflow_id)
+            if workflow is None:
+                self._send_error_envelope(
+                    404, "workflow_not_found", f"Unknown workflowId: {workflow_id}"
+                )
+                return
+            self._send_json(200, workflow)
+
         def _handle_cancel_run(self, run_id: str) -> None:
             if not self._check_auth():
                 return
@@ -520,20 +550,34 @@ def make_handler(state: _State) -> type[BaseHTTPRequestHandler]:
             if replayed:
                 return
 
-            run, outcome = state.runs.pause(run_id)
+            paused_at = _now_iso()
+            run, outcome = state.runs.pause(run_id, paused_at=paused_at)
             if outcome == "not_found":
                 self._send_error_envelope(404, "not_found", f"Unknown runId: {run_id}")
                 return
             assert run is not None
-            if outcome in ("terminal", "already_paused"):
+            if outcome == "terminal":
+                # pause-resume.test.ts: terminal pause MUST return 409 with
+                # `error: "conflict"` + `details.runStatus` per rest-endpoints.md.
                 self._send_error_envelope(
                     409,
-                    "validation_error",
-                    f"Run {run_id} cannot be paused (current status: {run.status}).",
+                    "conflict",
+                    f"Run {run_id} is terminal ({run.status}); pause not applicable.",
                     {"details": {"runStatus": run.status}},
                 )
                 return
-            paused_at = _now_iso()
+            if outcome == "already_paused":
+                # Idempotent re-pause per pause-resume.test.ts §"pause is
+                # idempotent when already paused": MUST return 200/202, NOT
+                # 409. We replay the original pausedAt so callers can match
+                # against the first response.
+                response = {
+                    "runId": run_id,
+                    "status": "paused",
+                    "pausedAt": run.paused_at or paused_at,
+                }
+                self._send_json(202, response)
+                return
             response = {"runId": run_id, "status": "paused", "pausedAt": paused_at}
             self._store_idempotent(endpoint, idem_key, body_hash, 202, response)
             self._send_json(202, response)
@@ -553,20 +597,22 @@ def make_handler(state: _State) -> type[BaseHTTPRequestHandler]:
             if replayed:
                 return
 
-            run, outcome = state.runs.resume(run_id)
+            resumed_at = _now_iso()
+            run, outcome = state.runs.resume(run_id, resumed_at=resumed_at)
             if outcome == "not_found":
                 self._send_error_envelope(404, "not_found", f"Unknown runId: {run_id}")
                 return
             assert run is not None
             if outcome in ("terminal", "not_paused"):
+                # pause-resume.test.ts §":resume on a non-paused run":
+                # 409 + `error: "conflict"` + `details.runStatus`.
                 self._send_error_envelope(
                     409,
-                    "validation_error",
+                    "conflict",
                     f"Run {run_id} is not paused (current status: {run.status}).",
                     {"details": {"runStatus": run.status}},
                 )
                 return
-            resumed_at = _now_iso()
             response = {"runId": run_id, "status": "running", "resumedAt": resumed_at}
             self._store_idempotent(endpoint, idem_key, body_hash, 202, response)
             self._send_json(202, response)
@@ -697,14 +743,16 @@ def make_handler(state: _State) -> type[BaseHTTPRequestHandler]:
             try:
                 sub = state.webhooks.register(url, secret=secret, event_types=event_types)
             except WebhookUrlRejected as e:
-                # webhooks.md §"SSRF guard" — rejections surface as a
-                # standard `validation_error` envelope with the
-                # specific reason carried in details.reason. Using a
-                # host-invented code would split the SDK's known
-                # HTTP_ERROR_CODES catalog (see run-helpers.ts).
+                # webhooks.md §"SSRF guard" — rejection error code is
+                # `webhook_url_rejected` per the conformance contract
+                # (`webhook-negative.test.ts` + `webhook-signed-delivery.
+                # test.ts`'s soft-skip clause both key on this exact
+                # string). The SDK HTTP_ERROR_CODES catalog carries it
+                # alongside `subscription_not_found` so consumers can
+                # discriminate.
                 self._send_error_envelope(
                     400,
-                    "validation_error",
+                    "webhook_url_rejected",
                     "webhook url rejected by SSRF guard",
                     {"details": {"reason": e.reason}},
                 )
@@ -717,13 +765,29 @@ def make_handler(state: _State) -> type[BaseHTTPRequestHandler]:
                 return
             removed = state.webhooks.unregister(subscription_id)
             if not removed:
+                # webhooks.md + webhook-negative.test.ts §"unregister of
+                # unknown subscription" — canonical code is
+                # `subscription_not_found` (not the generic `not_found` —
+                # callers distinguish missing-subscription from missing-
+                # run/route).
                 self._send_error_envelope(
-                    404, "webhook_not_found", f"Unknown subscriptionId: {subscription_id}"
+                    404,
+                    "subscription_not_found",
+                    f"Unknown subscriptionId: {subscription_id}",
                 )
                 return
             self._send_json(200, {"subscriptionId": subscription_id, "deleted": True})
 
         def _handle_events_poll(self, run_id: str, query: str) -> None:
+            """GET /v1/runs/{runId}/events/poll — events polling endpoint.
+
+            Per `version-negotiation.md` §"events/poll forward-compat
+            tolerance": `lastSequence` is the canonical query parameter;
+            `since` accepted for back-compat. Non-numeric / non-integer
+            input MUST return 400 validation_error. Past-end cursor
+            (lastSequence >= run's current event count) MUST yield 200 +
+            empty events + `isComplete: true`, never 4xx.
+            """
             if not self._check_auth():
                 return
             run = state.runs.get(run_id)
@@ -731,10 +795,30 @@ def make_handler(state: _State) -> type[BaseHTTPRequestHandler]:
                 self._send_error_envelope(404, "run_not_found", f"Unknown runId: {run_id}")
                 return
             params = parse_qs(query)
-            since_param = params.get("since", [None])[0]
-            since = int(since_param) if since_param is not None and since_param.isdigit() else -1
-            events = [e.to_dict() for e in iter_events_since(run, since)]
-            last_seq = events[-1]["seq"] if events else since
+            cursor_param: str | None = params.get("lastSequence", [None])[0]
+            if cursor_param is None:
+                cursor_param = params.get("since", [None])[0]
+            if cursor_param is None:
+                cursor = -1
+            else:
+                try:
+                    cursor = int(cursor_param)
+                except ValueError:
+                    self._send_error_envelope(
+                        400,
+                        "validation_error",
+                        "lastSequence MUST be an integer (or -1 for stream start)",
+                    )
+                    return
+                if cursor < -1:
+                    self._send_error_envelope(
+                        400,
+                        "validation_error",
+                        "lastSequence MUST be >= -1",
+                    )
+                    return
+            events = [e.to_dict() for e in iter_events_since(run, cursor)]
+            last_seq = events[-1]["sequence"] if events else cursor
             self._send_json(
                 200,
                 {
@@ -743,16 +827,132 @@ def make_handler(state: _State) -> type[BaseHTTPRequestHandler]:
                     "lastEventSeq": last_seq,
                     "runStatus": run.status,
                     "isTerminal": run.is_terminal(),
+                    # isComplete: stream has no more events. True iff run is
+                    # terminal AND cursor caught up (no events past it).
+                    "isComplete": run.is_terminal() and not events,
                 },
             )
 
-        def _handle_events_sse(self, run_id: str) -> None:
+        def _handle_events_sse(self, run_id: str, query: str = "") -> None:
             if not self._check_auth():
                 return
             run = state.runs.get(run_id)
             if run is None:
                 self._send_error_envelope(404, "run_not_found", f"Unknown runId: {run_id}")
                 return
+
+            # stream-modes.md §"Mode selection" — validate ?streamMode= and
+            # ?bufferMs= before promoting the response to SSE. Reject
+            # malformed combinations with a structured 400 envelope per
+            # stream-modes.test.ts + stream-modes-buffer.test.ts +
+            # stream-modes-mixed.test.ts.
+            params = parse_qs(query)
+            stream_mode_raw = params.get("streamMode", [None])[0]
+            if stream_mode_raw is not None:
+                modes = [m for m in stream_mode_raw.split(",") if m]
+                if not modes:
+                    self._send_error_envelope(
+                        400,
+                        "unsupported_stream_mode",
+                        "streamMode MUST be one or more known modes.",
+                        {"details": {"supported": sorted(SUPPORTED_STREAM_MODES)}},
+                    )
+                    return
+                unknown = [m for m in modes if m not in SUPPORTED_STREAM_MODES]
+                if unknown:
+                    self._send_error_envelope(
+                        400,
+                        "unsupported_stream_mode",
+                        f"Unknown streamMode value(s): {','.join(unknown)}.",
+                        {"details": {"supported": sorted(SUPPORTED_STREAM_MODES),
+                                     "unknown": unknown}},
+                    )
+                    return
+                # `values` mode is exclusive — cannot combine with other
+                # modes per stream-modes-mixed.test.ts §"rejects
+                # streamMode=values,updates".
+                if "values" in modes and len(modes) > 1:
+                    self._send_error_envelope(
+                        400,
+                        "unsupported_stream_mode",
+                        "streamMode=values cannot be combined with other modes.",
+                        {"details": {"supported": sorted(SUPPORTED_STREAM_MODES),
+                                     "exclusive": "values"}},
+                    )
+                    return
+            buffer_ms_raw = params.get("bufferMs", [None])[0]
+            if buffer_ms_raw is not None:
+                try:
+                    buffer_ms = int(buffer_ms_raw)
+                except ValueError:
+                    self._send_error_envelope(
+                        400,
+                        "validation_error",
+                        f"bufferMs MUST be an integer (got '{buffer_ms_raw}').",
+                    )
+                    return
+                # stream-modes.md §"Aggregation hint" — valid range is
+                # 0..5000 (5 seconds upper bound; larger values are out-of-
+                # range, NOT clamped). stream-modes-buffer.test.ts rejects
+                # bufferMs=99999 with 400.
+                if buffer_ms < 0 or buffer_ms > 5000:
+                    self._send_error_envelope(
+                        400,
+                        "validation_error",
+                        f"bufferMs MUST be in [0, 5000] (got {buffer_ms}).",
+                        {"details": {"minBufferMs": 0, "maxBufferMs": 5000}},
+                    )
+                    return
+
+            # Resolve effective modes + buffer setting per stream-modes.md.
+            # Default mode (no streamMode param) is "updates" per
+            # stream-modes.md §"Mode selection" + stream-modes.test.ts
+            # "updates (default) closes on terminal event".
+            effective_modes: set[str] = (
+                set(modes) if stream_mode_raw is not None else {"updates"}
+            )
+            effective_buffer_ms: int = (
+                buffer_ms if buffer_ms_raw is not None else 0
+            )
+
+            def event_matches_modes(event_type: str) -> bool:
+                """stream-modes.md mode → event-type filter.
+
+                `debug` is the superset (returns True for every event).
+                `updates` is everything except message-flavor events
+                (`agent.*` / `message.*`) — strictly a subset of `debug`
+                per stream-modes.test.ts §"debug ⊇ updates".
+                `values` is state-changing terminal/interrupt events.
+                `messages` is the `agent.*` / `message.*` family (host
+                doesn't emit these today; the filter is correct in
+                principle for forward-compat).
+                The function returns True iff the event matches ANY of the
+                requested modes (union semantics for comma-separated subsets).
+                """
+                for m in effective_modes:
+                    if m == "debug":
+                        return True
+                    if m == "updates":
+                        if not (
+                            event_type.startswith("agent.")
+                            or event_type.startswith("message.")
+                        ):
+                            return True
+                    elif m == "values":
+                        if event_type in {
+                            "run.completed",
+                            "run.failed",
+                            "run.cancelled",
+                            "interrupt.requested",
+                            "interrupt.resolved",
+                        }:
+                            return True
+                    elif m == "messages":
+                        if event_type.startswith("agent.") or event_type.startswith(
+                            "message."
+                        ):
+                            return True
+                return False
 
             last_event_id_header = self.headers.get("Last-Event-ID", "")
             resume_after = -1
@@ -767,7 +967,8 @@ def make_handler(state: _State) -> type[BaseHTTPRequestHandler]:
             self.send_header("Connection", "keep-alive")
             self.end_headers()
 
-            def write_event(event: Any) -> bool:
+            # Per-event emit (bufferMs == 0 or absent) — unchanged path.
+            def write_event_single(event: Any) -> bool:
                 """Return False on broken pipe (client disconnected)."""
                 try:
                     payload = (
@@ -781,6 +982,55 @@ def make_handler(state: _State) -> type[BaseHTTPRequestHandler]:
                 except (BrokenPipeError, ConnectionResetError):
                     return False
 
+            # Batch emit (bufferMs > 0) — stream-modes.md §"Aggregation
+            # hint". Events accumulate in `pending_batch`; flushed when
+            # bufferMs elapses OR a terminal event arrives. Terminal-flush
+            # is force-emit BEFORE the timer fires per stream-modes-
+            # buffer.test.ts §"forces flush on terminal".
+            pending_batch: list[dict[str, Any]] = []
+            last_flush_monotonic = time.monotonic()
+
+            def flush_batch() -> bool:
+                """Emit accumulated events as a single `event: batch` frame."""
+                nonlocal last_flush_monotonic
+                if not pending_batch:
+                    last_flush_monotonic = time.monotonic()
+                    return True
+                try:
+                    payload = (
+                        f"event: batch\n"
+                        f"data: {json.dumps(list(pending_batch))}\n\n"
+                    ).encode("utf-8")
+                    self.wfile.write(payload)
+                    self.wfile.flush()
+                    pending_batch.clear()
+                    last_flush_monotonic = time.monotonic()
+                    return True
+                except (BrokenPipeError, ConnectionResetError):
+                    return False
+
+            def write_event_batched(event: Any) -> bool:
+                """Append to pending batch + flush if bufferMs elapsed or
+                event is terminal (force-flush)."""
+                pending_batch.append(event.to_dict())
+                is_terminal = event.type in {
+                    "run.completed",
+                    "run.failed",
+                    "run.cancelled",
+                }
+                age_ms = (time.monotonic() - last_flush_monotonic) * 1000.0
+                if is_terminal or age_ms >= effective_buffer_ms:
+                    return flush_batch()
+                return True
+
+            def write_event(event: Any) -> bool:
+                """Mode-filter + dispatch to per-event or batch emit."""
+                if not event_matches_modes(event.type):
+                    return True
+                if effective_buffer_ms > 0:
+                    return write_event_batched(event)
+                return write_event_single(event)
+
             # Drain backlog past the resume point.
             highest_emitted = resume_after
             for event in list(iter_events_since(run, resume_after)):
@@ -789,20 +1039,30 @@ def make_handler(state: _State) -> type[BaseHTTPRequestHandler]:
                 highest_emitted = event.seq
 
             if run.is_terminal():
+                # Force-flush any pending buffered events before closing.
+                if effective_buffer_ms > 0:
+                    flush_batch()
                 return
 
             # Live tail.
-            while True:
-                wait_for_next_event_or_terminal(run, highest_emitted, timeout_s=25.0)
-                pending = list(iter_events_since(run, highest_emitted))
-                for event in pending:
-                    if not write_event(event):
+            try:
+                while True:
+                    wait_for_next_event_or_terminal(run, highest_emitted, timeout_s=25.0)
+                    pending = list(iter_events_since(run, highest_emitted))
+                    for event in pending:
+                        if not write_event(event):
+                            return
+                        highest_emitted = event.seq
+                        if event.type in {"run.completed", "run.failed", "run.cancelled"}:
+                            return
+                    if run.is_terminal() and not pending:
                         return
-                    highest_emitted = event.seq
-                    if event.type in {"run.completed", "run.failed", "run.cancelled"}:
-                        return
-                if run.is_terminal() and not pending:
-                    return
+            finally:
+                # Always flush any buffered events on exit (terminal, broken
+                # pipe, exception). Catches the case where the loop exited
+                # before write_event_batched got to force-flush.
+                if effective_buffer_ms > 0 and pending_batch:
+                    flush_batch()
 
         def _handle_debug_bundle(self, run_id: str) -> None:
             """GET /v1/runs/{runId}/debug-bundle — portable diagnostic export.
