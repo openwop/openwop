@@ -329,17 +329,42 @@ async function insertRun(
   configurable: Record<string, unknown> | null,
 ): Promise<void> {
   const q = await querier();
+  const seedVars = seedVariablesFromWorkflow(workflowId);
   await q.query(
-    `INSERT INTO runs (run_id, workflow_id, status, inputs_json, started_at, configurable_json)
-     VALUES ($1, $2, 'pending', $3, $4, $5)`,
+    `INSERT INTO runs (run_id, workflow_id, status, inputs_json, started_at, configurable_json, variables_json)
+     VALUES ($1, $2, 'pending', $3, $4, $5, $6)`,
     [
       runId,
       workflowId,
       JSON.stringify(inputs),
       startedAt,
       configurable === null ? null : JSON.stringify(configurable),
+      JSON.stringify(seedVars),
     ],
   );
+}
+
+/**
+ * Seed `variables_json` from `workflow.variables[].defaultValue`.
+ *
+ * Per `workflow-definition.schema.json` §variables, workflows MAY
+ * declare typed variables with default values. When the host creates
+ * a run, those defaults form the initial `variables_json` state so
+ * downstream consumers (subworkflow outputMapping, identity passthrough,
+ * channel reducers) see the declared values without needing every node
+ * to write them explicitly. Subworkflow scenarios depend on this for
+ * the child to expose `childResult` to the parent's outputMapping.
+ */
+function seedVariablesFromWorkflow(workflowId: string): Record<string, unknown> {
+  const wf = workflows.get(workflowId);
+  if (!wf || !Array.isArray(wf.variables)) return {};
+  const out: Record<string, unknown> = {};
+  for (const v of wf.variables) {
+    if (typeof v.name === 'string' && v.defaultValue !== undefined) {
+      out[v.name] = v.defaultValue;
+    }
+  }
+  return out;
 }
 
 async function updateRunStatus(
@@ -1187,9 +1212,10 @@ async function executeNode(
           childRunId = `run-${randomUUID()}`;
           const childStartedAt = new Date().toISOString();
           await q.query(
-            `INSERT INTO runs (run_id, workflow_id, status, inputs_json, started_at, parent_run_id, parent_node_id)
-             VALUES ($1, $2, 'pending', '{}'::JSONB, $3, $4, $5)`,
-            [childRunId, childWorkflowId, childStartedAt, runId, node.id],
+            `INSERT INTO runs (run_id, workflow_id, status, inputs_json, started_at, parent_run_id, parent_node_id, variables_json)
+             VALUES ($1, $2, 'pending', '{}'::JSONB, $3, $4, $5, $6)`,
+            [childRunId, childWorkflowId, childStartedAt, runId, node.id,
+              JSON.stringify(seedVariablesFromWorkflow(childWorkflowId))],
           );
           await appendEvent(runId, 'node.dispatched', {
             nodeId: node.id,
@@ -1345,9 +1371,10 @@ async function executeNode(
         childRunId = `run-${randomUUID()}`;
         const childStartedAt = new Date().toISOString();
         await q.query(
-          `INSERT INTO runs (run_id, workflow_id, status, inputs_json, started_at, parent_run_id, parent_node_id)
-           VALUES ($1, $2, 'pending', '{}'::JSONB, $3, $4, $5)`,
-          [childRunId, childWorkflowId, childStartedAt, runId, node.id],
+          `INSERT INTO runs (run_id, workflow_id, status, inputs_json, started_at, parent_run_id, parent_node_id, variables_json)
+           VALUES ($1, $2, 'pending', '{}'::JSONB, $3, $4, $5, $6)`,
+          [childRunId, childWorkflowId, childStartedAt, runId, node.id,
+            JSON.stringify(seedVariablesFromWorkflow(childWorkflowId))],
         );
         await appendEvent(runId, 'node.dispatched', {
           nodeId: node.id,
@@ -2380,6 +2407,12 @@ async function handleGetRun(req: IncomingMessage, res: ServerResponse, runId: st
     // raw secret value never lands here per SR-1 — only the redacted
     // shape the executor wrote during node execution.
     ...(row.variables_json ? { variables: row.variables_json } : {}),
+    // Parent linkage (spec gap G3 — node-packs.md §core.subWorkflow
+    // contract). Child runs dispatched by core.subWorkflow carry these
+    // back-references so consumers can walk parent → child chains
+    // (cascade scenarios, debug bundle assembly).
+    ...(row.parent_run_id ? { parentRunId: row.parent_run_id } : {}),
+    ...(row.parent_node_id ? { parentNodeId: row.parent_node_id } : {}),
     ...(currentNodeId ? { currentNodeId } : {}),
     ...(interrupt ? { interrupt } : {}),
     ...(childRuns.length > 0 ? { childRuns } : {}),
