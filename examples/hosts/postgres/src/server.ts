@@ -107,6 +107,24 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const HOST = process.env.OPENWOP_HOST ?? '127.0.0.1';
 const PORT = Number(process.env.OPENWOP_PORT ?? 3839);
 const API_KEY = process.env.OPENWOP_API_KEY ?? 'openwop-postgres-dev-key';
+// Phase I.6 — auth-profiles.md §"openwop-auth-api-key-rotation". When a
+// secondary key is configured, both keys authenticate during the overlap
+// window; canonical use is rotation: operator sets the new primary, the
+// old key moves to OPENWOP_SECONDARY_API_KEY and stays honored until
+// clients have rotated. checkAuth iterates every candidate in constant
+// time so an attacker cannot distinguish "primary matched" from
+// "secondary matched" via timing.
+const SECONDARY_API_KEY = process.env.OPENWOP_SECONDARY_API_KEY ?? null;
+// Phase I.5 — RFC 0011 §A same-endpoint auth-scoped discovery. When a
+// tenant2 key is configured the host returns a NARROWED capability view
+// (strict subset of primary's) for tenant2 requests, exercising the
+// `openwop-discovery-auth-scoped` profile per
+// `capabilities-change-detection.md` §"Scoped capability views" line 69.
+const TENANT2_API_KEY = process.env.OPENWOP_TENANT2_API_KEY ?? null;
+// Rotation grace window advertisement — auth-profiles.md says hosts
+// claiming the profile MUST advertise a non-zero minGraceSeconds (24h
+// is the conventional default per the SQLite reference).
+const ROTATION_MIN_GRACE_SECONDS = 86_400;
 const PG_DSN = process.env.OPENWOP_PG_DSN ?? '';
 const PROCESS_ID = `host-${randomUUID().slice(0, 8)}`;
 const AUDIT_KEY_DIR =
@@ -1694,24 +1712,70 @@ function sendError(res: ServerResponse, status: number, code: string, message: s
  * mismatch can't leak via timing because it short-circuits with the same
  * code path as a content mismatch.
  */
+/**
+ * Phase I.6 — Constant-time bearer-token comparison across the
+ * primary + optional secondary + optional tenant2 candidates.
+ *
+ * Every candidate's `timingSafeEqual` completes before the OR fold,
+ * so an attacker cannot use request latency to distinguish "primary
+ * matched" from "secondary matched" from "tenant2 matched" from
+ * "none matched". Per `auth.md` §"No credential echo", the rejected
+ * token is NEVER reflected back in the error envelope.
+ */
 function checkAuth(req: IncomingMessage, res: ServerResponse): boolean {
   const header = req.headers.authorization;
   if (typeof header !== 'string' || !header.startsWith('Bearer ')) {
     sendError(res, 401, 'unauthenticated', 'Missing or malformed Authorization header.');
     return false;
   }
-  const presented = header.slice('Bearer '.length);
-  const presentedBuf = Buffer.from(presented, 'utf8');
-  const expectedBuf = Buffer.from(API_KEY, 'utf8');
+  const presented = Buffer.from(header.slice('Bearer '.length).trim(), 'utf8');
+  // auth-profiles.md §"openwop-auth-api-key-rotation": primary +
+  // (optional) secondary BOTH authenticate during the overlap window.
+  // §"Scoped capability views" requires tenant2 also be accepted on
+  // requests (handleDiscovery uses principalFor to narrow the view).
+  const candidates = [API_KEY];
+  if (SECONDARY_API_KEY !== null) candidates.push(SECONDARY_API_KEY);
+  if (TENANT2_API_KEY !== null) candidates.push(TENANT2_API_KEY);
   let ok = false;
-  if (presentedBuf.length === expectedBuf.length) {
-    ok = timingSafeEqual(presentedBuf, expectedBuf);
+  for (const candidate of candidates) {
+    const expected = Buffer.from(candidate, 'utf8');
+    const lengthMatch = presented.length === expected.length;
+    const hit = lengthMatch && timingSafeEqual(presented, expected);
+    ok = ok || hit;
   }
   if (!ok) {
     sendError(res, 401, 'invalid_credential', 'Bearer token rejected.');
     return false;
   }
   return true;
+}
+
+/**
+ * Phase I.5 — RFC 0011 §A. Resolve a request's bearer to a principal
+ * classification. handleDiscovery uses this to decide whether to
+ * return the primary or narrowed view. Returns `null` for missing /
+ * malformed auth or unrecognized bearer (treat as public view).
+ *
+ * Constant-time across ALL configured candidates.
+ */
+function principalFor(req: IncomingMessage): 'primary' | 'tenant2' | null {
+  const auth = req.headers.authorization;
+  if (typeof auth !== 'string' || !auth.startsWith('Bearer ')) return null;
+  const presented = Buffer.from(auth.slice('Bearer '.length).trim(), 'utf8');
+  const tryMatch = (candidate: string | null): boolean => {
+    if (candidate === null) return false;
+    const expected = Buffer.from(candidate, 'utf8');
+    return presented.length === expected.length && timingSafeEqual(presented, expected);
+  };
+  // Order: primary + secondary fold into one principal (rotation
+  // overlap); tenant2 is the narrowed-view principal. Compute every
+  // candidate regardless of early matches.
+  const primaryHit = tryMatch(API_KEY);
+  const secondaryHit = tryMatch(SECONDARY_API_KEY);
+  const tenant2Hit = tryMatch(TENANT2_API_KEY);
+  if (primaryHit || secondaryHit) return 'primary';
+  if (tenant2Hit) return 'tenant2';
+  return null;
 }
 
 // ─── Route handlers ──────────────────────────────────────────────────────────
@@ -1742,7 +1806,7 @@ const SUPPORTED_NODE_TYPES = new Set([
   'core.mcp.toolCall',
 ]);
 
-function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
+function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
   // Only advertise fixtures the executor can actually run. A scenario
   // gating on `isFixtureAdvertised('conformance-approval')` will skip
   // when this host advertises only its supported subset — much better
@@ -1759,6 +1823,29 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
     )
     .map((wf) => wf.id);
   const key = auditSigningKey();
+  // Phase I.5 + I.6 — principal-aware capability projection. Tenant2
+  // gets a STRICT SUBSET of primary's capability keys per
+  // capabilities-change-detection.md §"Scoped capability views" line 69.
+  // This is the host's tenant-narrowing pattern; production deployers
+  // wire a real tenant model and project per-tenant policy.
+  const principal = principalFor(req);
+  const isTenant2 = principal === 'tenant2';
+  // Profile claims gain conditional entries when the matching env
+  // vars are configured. Hosts that don't operate behind a rotation
+  // window or a tenant2 principal omit those claims honestly.
+  const profiles: string[] = [
+    'openwop-audit-log-integrity',
+    'openwop-interrupt-quorum',
+    'openwop-interrupt-auth-required',
+    'openwop-interrupt-external-event',
+    'openwop-interrupt-cascade-cancel',
+  ];
+  if (SECONDARY_API_KEY !== null) {
+    profiles.push('openwop-auth-api-key-rotation');
+  }
+  if (TENANT2_API_KEY !== null) {
+    profiles.push('openwop-discovery-auth-scoped');
+  }
   sendJSON(
     res,
     200,
@@ -1782,14 +1869,7 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
       debugBundle: { supported: true },
       capabilities: {
         auth: {
-          // Profile claims: audit + 4 optional interrupt profiles.
-          profiles: [
-            'openwop-audit-log-integrity',
-            'openwop-interrupt-quorum',
-            'openwop-interrupt-auth-required',
-            'openwop-interrupt-external-event',
-            'openwop-interrupt-cascade-cancel',
-          ],
+          profiles,
           auditLogIntegrity: {
             hashChain: true,
             checkpointSignatureAlgorithm: 'ed25519',
@@ -1797,7 +1877,27 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
             checkpointIntervalEntries: AUDIT_OPTS.checkpointIntervalEntries,
             checkpointIntervalSeconds: AUDIT_OPTS.checkpointIntervalSeconds,
           },
+          // Phase I.6 — auth-profiles.md §"openwop-auth-api-key-rotation"
+          // advertisement. Only emitted when a secondary key is
+          // configured (per the honesty principle).
+          ...(SECONDARY_API_KEY !== null
+            ? {
+                rotation: {
+                  supported: true,
+                  minGraceSeconds: ROTATION_MIN_GRACE_SECONDS,
+                },
+              }
+            : {}),
         },
+        // Phase I.5 — RFC 0011 §A advertisement. Only emitted when
+        // tenant2 is configured.
+        ...(TENANT2_API_KEY !== null
+          ? {
+              discovery: {
+                authScoped: { supported: true, mode: 'same-endpoint' as const },
+              },
+            }
+          : {}),
         interrupts: {
           supportedKinds: ['approval', 'clarification', 'external-event'],
           approvalActions: ['accept', 'reject', 'request-changes', 'escalate'],
@@ -1842,21 +1942,30 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
         runs: {
           pauseResume: { supported: true },
         },
-        // RFC 0006 §G — orchestrator capability advertisement (Phase C
-        // parity catch-up with SQLite reference host).
-        orchestrator: {
-          supported: true,
-          workerIdInterpretation: 'node',
-          fanOutSupported: false,
-        },
-        // RFC 0007 §G — dispatch capability advertisement. Hosts that
-        // advertise orchestrator MUST also advertise dispatch.
-        dispatch: {
-          supported: true,
-          models: ['child-run'],
-          fanOutSupported: false,
-          askUserRoutings: ['clarification', 'auto'],
-        },
+        // RFC 0006 §G + RFC 0007 §G — orchestrator + dispatch
+        // capabilities. Phase I.5 — both blocks are OMITTED for the
+        // tenant2 principal so its discovery view is a strict subset
+        // of primary's per `capabilities-change-detection.md` §"Scoped
+        // capability views" line 69 (no authorization oracle).
+        // Production deployers narrow per real tenant policy; the
+        // reference host uses orchestrator+dispatch as the canonical
+        // "drop this for tenant2" surface that the conformance suite
+        // probes.
+        ...(isTenant2
+          ? {}
+          : {
+              orchestrator: {
+                supported: true,
+                workerIdInterpretation: 'node',
+                fanOutSupported: false,
+              },
+              dispatch: {
+                supported: true,
+                models: ['child-run'],
+                fanOutSupported: false,
+                askUserRoutings: ['clarification', 'auto'],
+              },
+            }),
         // observability.md §"Span attributes" — only advertised when
         // OTEL_EXPORTER_OTLP_ENDPOINT is configured.
         ...(observabilityEnabled()
