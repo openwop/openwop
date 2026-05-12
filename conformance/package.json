@@ -26,6 +26,7 @@
   ],
   "scripts": {
     "test": "vitest run",
+    "test:strict": "vitest run --no-file-parallelism",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "build:cli": "tsc -p tsconfig.build.json && chmod +x dist/cli.js",

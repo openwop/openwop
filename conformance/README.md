@@ -56,9 +56,18 @@ npm install
 export OPENWOP_BASE_URL="https://api.example.com"
 export OPENWOP_API_KEY="hk_test_..."
 
-npx vitest run                                 # full suite
+npx vitest run                                 # full suite (parallel files, ~95s)
 npx vitest run src/scenarios/discovery.test.ts # single file
+npm run test:strict                            # full suite, no-file-parallelism
 ```
+
+**`test:strict` vs `test`.** The default `test` script runs files in parallel (vitest default, ~3-5× faster). Most scenarios are isolation-safe at that level. Two exceptions document `--no-file-parallelism` as their canonical execution mode:
+
+- **`production-backpressure.test.ts`** — saturates the host's `inflightCap`; under parallel execution, neighbor tests posting `/v1/runs` during the saturation window see a 503 from the cap (cap-collateral). The scenario soft-skips its envelope assertions when this happens (logs a warning); `test:strict` exercises the full envelope contract.
+- **OTel scenarios** (`otel-emission.test.ts`, `otel-trace-propagation.test.ts`, `metric-emission.test.ts`) — each vitest worker spawns its own collector and only one can bind the configured OTLP port; concurrent file execution causes ephemeral-port fallbacks that don't receive the host's traffic.
+
+Run `npm run test` for normal CI cadence; `npm run test:strict` when claiming full envelope coverage for production-profile + OTel claims.
+
 
 ### Optional environment flags
 
