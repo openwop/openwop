@@ -98,6 +98,12 @@ const runs = new Map<string, Run>();
 // WASM pack registry. Map of node-typeId → (pack, typeId) so dispatch can
 // route unknown typeIds to a loaded pack. See loadWasmPacks() below.
 const wasmTypeRegistry = new Map<string, { pack: LoadedWasmPack; typeId: string }>();
+// Pack names that successfully loaded (i.e., passed ABI version check +
+// instantiation). Advertised in discovery as
+// `capabilities.nodePackRuntimes.wasm.loadedPacks[]` so conformance can
+// verify that rejected packs (e.g., ABI mismatch per RFC 0008 §H) are
+// NOT present.
+const loadedWasmPackNames = new Set<string>();
 
 // Layer-1 idempotency cache. Per spec/v1/idempotency.md §"Cache key
 // composition" — single tenant here so tenantId is constant. The composite
@@ -203,6 +209,7 @@ async function loadWasmPacks(): Promise<void> {
       for (const typeId of loaded.nodeTypeIds) {
         wasmTypeRegistry.set(typeId, { pack: loaded, typeId });
       }
+      loadedWasmPackNames.add(loaded.packName);
       console.log(
         `[openwop-host-in-memory] loaded WASM pack ${loaded.packName} (ABI v${loaded.abiVersion}) ` +
           `with ${loaded.nodeTypeIds.length} node type(s): ${loaded.nodeTypeIds.join(', ')}`,
@@ -579,6 +586,10 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
         supported: true,
         abiVersions: [1],
         maxMemoryBytes: 1024 * 65536, // 1024 pages — matches pack.json default
+        // RFC 0008 §H + Track 7 — list the pack names that passed
+        // ABI version + instantiation. Conformance asserts rejected
+        // packs (declared ABI not in `abiVersions[]`) are absent.
+        loadedPacks: Array.from(loadedWasmPackNames).sort(),
       },
     };
   }

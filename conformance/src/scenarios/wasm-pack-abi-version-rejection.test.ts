@@ -1,22 +1,34 @@
 /**
  * RFC 0008 §Conformance — scenario 6/6: ABI version mismatch.
  *
- * Verifies that a host refuses to load a WASM pack whose declared ABI
- * version is not in the host's advertised `abiVersions[]`. The host's
- * loader MUST surface a recognizable `unsupported_abi_version` error
- * (or equivalent) and MUST NOT silently dispatch to the pack's
- * `openwop_node_invoke`.
+ * Two-part scenario per RFCS/0008-wasm-abi.md §H (ABI version handshake):
  *
- * Driving this end-to-end requires a pack with a deliberately wrong
- * ABI version. That pack is filed as v1.x follow-up (an
- * `examples/packs/abi-mismatch/`). The framework here asserts the
- * shape of the host's advertisement so future scenarios can rely on it.
+ *   1. **Discovery shape (observational, always-on)** — host advertises
+ *      `capabilities.nodePackRuntimes.wasm.abiVersions[]` as a non-empty
+ *      array of positive integers including v1.
+ *   2. **Positive path (loadedPacks-gated)** — when the host advertises
+ *      `capabilities.nodePackRuntimes.wasm.loadedPacks[]` AND lists the
+ *      well-behaved reference pack (proving the loader pipeline runs),
+ *      the misbehaving-abi pack at `examples/packs/rust-misbehaving-abi/`
+ *      — which declares `openwop_abi_version() == 999` — MUST NOT
+ *      appear in `loadedPacks[]`. ABI 999 is outside any host's
+ *      `abiVersions[]`, so a conformant host MUST reject the pack at
+ *      load time per RFC 0008 §H.
  *
- * @see RFCS/0008-wasm-abi.md §H (abiVersions array)
+ * The `loadedPacks[]` discovery field is the wire-observable signal:
+ * load-time rejection happens before any node-invoke surface, so the
+ * conformance suite needs a discovery-level affordance to verify the
+ * rejection took effect. Hosts that don't advertise `loadedPacks[]`
+ * soft-skip the positive path.
+ *
+ * @see RFCS/0008-wasm-abi.md §H (ABI version handshake)
  */
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+
+const MISBEHAVING_PACK_NAME = 'vendor.openwop.misbehaving-abi';
+const WELL_BEHAVED_PACK_NAME = 'vendor.openwop.rust-hello';
 
 describe('wasm-pack-abi-version-rejection: host advertises supported ABI versions', () => {
   it('abiVersions[] contains positive integers; loader rejects unsupported versions', async () => {
@@ -43,5 +55,50 @@ describe('wasm-pack-abi-version-rejection: host advertises supported ABI version
       // v1.1 hosts MUST support ABI v1 if they support WASM at all.
       expect((wasm.abiVersions as number[]).includes(1)).toBe(true);
     }
+  });
+});
+
+describe('wasm-pack-abi-version-rejection: positive path via misbehaving pack', () => {
+  it('misbehaving-abi pack (declares ABI 999) MUST NOT appear in loadedPacks[]', async () => {
+    const disco = await driver.get('/.well-known/openwop');
+    const wasm =
+      (disco.json as {
+        capabilities?: {
+          nodePackRuntimes?: {
+            wasm?: { supported?: boolean; loadedPacks?: unknown };
+          };
+        };
+      }).capabilities?.nodePackRuntimes?.wasm;
+
+    if (!wasm?.supported) return;
+
+    if (!Array.isArray(wasm.loadedPacks)) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        '[wasm-pack-abi-version-rejection] host does not advertise capabilities.nodePackRuntimes.wasm.loadedPacks[]; skipping positive path. ' +
+          'Hosts MAY advertise loadedPacks[] to surface ABI rejection observably (RFC 0008 §H + Track 7).',
+      );
+      return;
+    }
+
+    // Soft-skip when the well-behaved reference pack isn't loaded. If
+    // loadedPacks[] doesn't include rust-hello, we can't distinguish
+    // "the loader pipeline runs but rejected misbehaving-abi" from
+    // "the loader doesn't run at all on this host."
+    if (!wasm.loadedPacks.includes(WELL_BEHAVED_PACK_NAME)) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[wasm-pack-abi-version-rejection] reference pack ${WELL_BEHAVED_PACK_NAME} not in loadedPacks[]; ` +
+          'skipping positive path (build examples/packs/rust-hello first or run against a host that ships it).',
+      );
+      return;
+    }
+
+    // Core assertion: ABI 999 pack MUST NOT be in loadedPacks[]
+    // regardless of filesystem state. The host's loader rejected it.
+    expect(wasm.loadedPacks.includes(MISBEHAVING_PACK_NAME), driver.describe(
+      'RFCS/0008-wasm-abi.md §H',
+      `host MUST reject packs whose declared ABI is not in abiVersions[]; ${MISBEHAVING_PACK_NAME} declares 999 and MUST NOT appear in loadedPacks[]`,
+    )).toBe(false);
   });
 });

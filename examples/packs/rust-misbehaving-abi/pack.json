@@ -1,0 +1,31 @@
+{
+  "name": "vendor.openwop.misbehaving-abi",
+  "version": "1.0.0",
+  "description": "Deliberately-misbehaving WASM node pack for openwop conformance — declares ABI version 999 to exercise RFC 0008 §H host-side rejection. Fixture-only; NOT for registry publication.",
+  "author": "openwop project",
+  "license": "Apache-2.0",
+  "engines": {
+    "openwop": ">=1.1 <2.0.0"
+  },
+  "nodes": [
+    {
+      "typeId": "vendor.openwop.misbehaving.abi-bomb",
+      "version": "1.0.0",
+      "category": "examples",
+      "role": "transform",
+      "label": "ABI bomb",
+      "description": "Declares ABI version 999 to force the host's loader to reject this pack at load time per RFC 0008 §H. The host MUST NOT register this typeId and MUST NOT include this pack's name in capabilities.nodePackRuntimes.wasm.loadedPacks[]."
+    }
+  ],
+  "runtime": {
+    "language": "wasm",
+    "entry": "target/wasm32-unknown-unknown/release/rust_misbehaving_abi.wasm",
+    "format": "wasm",
+    "minRuntimeVersion": "1",
+    "wasm": {
+      "abiVersion": 999,
+      "memoryPagesInitial": 16,
+      "memoryPagesMax": 1024
+    }
+  }
+}
