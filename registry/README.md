@@ -22,8 +22,13 @@ registry/
 │               └── <version>.sig       signature (ed25519 or sigstore bundle)
 ├── keys/
 │   └── <keyId>.pub                     signing public key(s); served at /keys/<keyId>.pub
+├── security/
+│   └── advisories.json                 registry-owned CVE advisory feed (see Security advisories)
 └── scripts/                            local dev only — excluded from deploy
     ├── build-index.mjs                 regenerates index/aggregate JSON from on-disk packs
+    ├── verify-signatures.mjs           crypto-verifies every published Ed25519 signature
+    ├── conformance-check.mjs           structural conformance for every pack
+    ├── check-advisories.mjs            cross-checks advisories against published versions
     └── serve.mjs                       local-dev HTTP server mirroring Firebase rewrites
 ```
 
@@ -100,10 +105,12 @@ This script recomputes the `integrity` (sha256) field on every version manifest,
 
 CI will:
 
-1. Validate every JSON file parses.
+1. Validate every JSON file parses + every version manifest matches `schemas/registry-version-manifest.schema.json`.
 2. Verify `build-index.mjs --check` is clean (no drift between manifests and tarball hashes).
 3. Verify every `.tgz` has a sibling `.sig`.
-4. (Future, v1.2) Verify each `.sig` against `keys/openwop-registry-root.pub`.
+4. Crypto-verify each `.sig` against the registered publisher key per `signingKeys[]` (namespace-scoped).
+5. Run structural conformance check on every pack (`conformance-check.mjs`).
+6. Validate each security advisory against `schemas/security-advisory.schema.json` + cross-check against published versions (`check-advisories.mjs`).
 
 On merge to `main`, the `deploy` job pushes the directory to Firebase Hosting under the `packs` target. New artifacts become live at `https://packs.openwop.dev/v1/packs/...` within a minute.
 
@@ -143,6 +150,22 @@ The registry advertises its keychain through the `signingKeys` array in `.well-k
 3. Registry maintainer reviews + merges. Subsequent packs under the claimed namespace are signed by the vendor's key + verified against the registered `.pub` at publish-time review.
 
 Per `spec/v1/registry-operations.md` §Step 1: `vendor.<org>.*` packs MUST be refused if their signing key isn't the one registered for that namespace. The CI gate enforces presence-of-signature today; cryptographic verification against the namespace-permitted key lands when the `node-pack-manifest.schema.json` registry-side schema is finalized.
+
+## Security advisories
+
+The registry maintains its own CVE feed at `registry/security/advisories.json` (schema: `schemas/security-advisory.schema.json`). One JSON document with an `advisories[]` array; entries land via maintainer PR; the CI gate `registry/scripts/check-advisories.mjs` cross-checks every advisory's `affected[]` rows against published versions and fails the PR if any non-yanked version matches an active advisory.
+
+Adding an advisory:
+
+1. Reserve a CVE ID via Mitre or your CNA if one applies.
+2. Author an entry conforming to `schemas/security-advisory.schema.json`:
+   - `id: OPENWOP-YYYY-NNNN` (sequential per year; assigned by maintainers at merge)
+   - `severity` per the rubric in `docs/runbooks/INCIDENT-RESPONSE.md`
+   - `affected[].versions` — node-semver-style range
+3. Yank every matching version in the SAME PR per `docs/runbooks/PACK-LIFECYCLE.md` §Yank — `check-advisories.mjs` will fail the gate otherwise.
+4. If a fix exists, publish the fixed version (bumped SemVer) in a follow-up PR and set `affected[].fixedIn` on the advisory.
+
+Forward-looking: `.github/workflows/cve-scan.yml` runs OSV-Scanner over the registry tree weekly + on PRs. Findings surface in the GitHub Security tab as SARIF. Informational today (no pack bundles third-party deps); will tighten to merge-blocking once vendors begin bundling.
 
 ## Key ceremony
 
