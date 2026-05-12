@@ -233,6 +233,7 @@ const (
 	HTTPErrorForceEngineVersionForbidden  = "force_engine_version_forbidden"
 	HTTPErrorMockProviderForbidden        = "mock_provider_forbidden"
 	HTTPErrorCapabilityNotProvided        = "capability_not_provided"
+	HTTPErrorCapabilityRequired           = "capability_required"
 	HTTPErrorCredentialRequired           = "credential_required"
 	HTTPErrorCredentialForbidden          = "credential_forbidden"
 	HTTPErrorCredentialUnavailable        = "credential_unavailable"
@@ -260,6 +261,7 @@ var HTTPErrorCodes = []string{
 	HTTPErrorForceEngineVersionForbidden,
 	HTTPErrorMockProviderForbidden,
 	HTTPErrorCapabilityNotProvided,
+	HTTPErrorCapabilityRequired,
 	HTTPErrorCredentialRequired,
 	HTTPErrorCredentialForbidden,
 	HTTPErrorCredentialUnavailable,

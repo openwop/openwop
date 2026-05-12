@@ -1,5 +1,9 @@
 # `@openwop/openwop` Changelog
 
+## [1.0 — additions] — 2026-05-12 — capability_required error code
+
+- `HTTP_ERROR_CODES` gains `'capability_required'` per `spec/v1/capabilities.md` §"Unsupported capability — refusal contract" (Phase A close-out). Emitted by hosts that refuse a workflow referencing a capability-gated typeId (`core.conversationGate`, `core.orchestrator.supervisor`, `core.dispatch`) without the advertised gating capability. `isHttpErrorCode('capability_required')` narrows correctly.
+
 ## [1.0] — 2026-04-27
 
 Aligned with openwop spec v1 final. Pinned to v1.0 alongside the spec corpus tag and the Python + Go reference SDKs.

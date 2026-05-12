@@ -113,6 +113,7 @@ export const HTTP_ERROR_CODES = [
 
   // Capability / credential negotiation
   'capability_not_provided',
+  'capability_required',
   'credential_required',
   'credential_forbidden',
   'credential_unavailable',

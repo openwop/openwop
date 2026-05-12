@@ -147,6 +147,11 @@ interface RunEvent {
   readonly nodeId: string | null;
   readonly data: unknown;
   readonly timestamp: string;
+  // run-event.schema.json §causationId. Optional reference to the
+  // eventId of the event that caused this one. Required by RFC 0007 §E
+  // on core.dispatch's emitted events. Stored on the row; surfaced on
+  // GET /v1/runs/{runId}/events{,/poll}.
+  readonly causationId?: string;
 }
 
 // ─── Database setup ──────────────────────────────────────────────────────────
@@ -223,6 +228,18 @@ if (!runColNames.has('variables_json')) {
   // surfaced on GET /v1/runs/{id}.
   db.exec("ALTER TABLE runs ADD COLUMN variables_json TEXT");
 }
+
+// Idempotent migration: events table gains causation_id column for
+// run-event.schema.json §causationId + RFC 0007 §E (core.dispatch
+// emitted events MUST set causationId to the consumed decision's
+// eventId) + RFC 0002 / RFC 0005 conditional MUSTs.
+const eventColumns = db
+  .prepare("PRAGMA table_info('events')")
+  .all() as Array<{ name: string }>;
+const eventColNames = new Set(eventColumns.map((c) => c.name));
+if (!eventColNames.has('causation_id')) {
+  db.exec("ALTER TABLE events ADD COLUMN causation_id TEXT");
+}
 db.exec("CREATE INDEX IF NOT EXISTS idx_runs_parent ON runs(parent_run_id)");
 
 // HITL interrupts (interrupt.md + interrupt-profiles.md).
@@ -255,7 +272,7 @@ const stmts = {
     "UPDATE runs SET status = CASE WHEN status IN ('completed','failed','cancelled') THEN status ELSE 'cancelling' END WHERE run_id = ?",
   ),
   insertEvent: db.prepare(
-    'INSERT INTO events (run_id, seq, type, node_id, data_json, timestamp) VALUES (?, ?, ?, ?, ?, ?)',
+    'INSERT INTO events (run_id, seq, type, node_id, data_json, timestamp, causation_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
   ),
   getEventsAfter: db.prepare('SELECT * FROM events WHERE run_id = ? AND seq > ? ORDER BY seq ASC'),
   countEvents: db.prepare('SELECT COUNT(*) AS n FROM events WHERE run_id = ?'),
@@ -396,6 +413,7 @@ interface EventRow {
   node_id: string | null;
   data_json: string | null;
   timestamp: string;
+  causation_id: string | null;
 }
 
 function loadRun(runId: string): RunRow | null {
@@ -405,7 +423,7 @@ function loadRun(runId: string): RunRow | null {
 function appendEvent(
   runId: string,
   type: string,
-  opts: { nodeId?: string; data?: unknown } = {},
+  opts: { nodeId?: string; data?: unknown; causationId?: string } = {},
 ): RunEvent {
   const seq = (stmts.countEvents.get(runId) as { n: number }).n;
   const event: RunEvent = {
@@ -415,6 +433,7 @@ function appendEvent(
     nodeId: opts.nodeId ?? null,
     data: opts.data ?? null,
     timestamp: new Date().toISOString(),
+    ...(opts.causationId !== undefined ? { causationId: opts.causationId } : {}),
   };
   stmts.insertEvent.run(
     runId,
@@ -423,11 +442,21 @@ function appendEvent(
     event.nodeId,
     event.data === null ? null : JSON.stringify(event.data),
     event.timestamp,
+    opts.causationId ?? null,
   );
   eventBus.emit(`events:${runId}`, event);
   // Best-effort webhook delivery (webhooks.md). Fire-and-forget.
   fanOutEvent(db, { ...event });
   return event;
+}
+
+/** Compose the canonical eventId for an emitted RunEventDoc. The host
+ *  serializes eventId as `evt-${runId}-${seq}` per the events/poll
+ *  response shape; this helper is the inverse map used at emit time so
+ *  causationId references resolve to that same surface.
+ */
+function makeEventId(runId: string, seq: number): string {
+  return `evt-${runId}-${seq}`;
 }
 
 function setRunTerminal(
@@ -583,6 +612,41 @@ const runFailureErrors = new Map<string, { code: string; message: string }>();
 const FIXTURE_NODE_REQUIRES: Readonly<Record<string, readonly string[]>> = Object.freeze({
   'conformance.requiresMissing': ['conformance.never-provided'],
 });
+
+// capabilities.md §"Unsupported capability — refusal contract" + §"Capability-gated
+// typeId map (normative)". This is the single source of truth the host
+// uses both for advertising what it implements AND for refusing
+// workflows that reference unsupported typeIds. Each entry maps a
+// reserved typeId → the capability key (and human-readable label) that
+// gates it. A check at workflow registration / run-create time iterates
+// the workflow's nodes; for each typeId in this map, the host consults
+// HOST_ADVERTISED_GATED_CAPABILITIES below and refuses with
+// `capability_required` if the gating capability isn't claimed.
+const GATED_TYPEID_MAP: Readonly<Record<string, { capability: string; advertisementPath: string }>> = Object.freeze({
+  'core.conversationGate': {
+    capability: 'conversationPrimitive',
+    advertisementPath: 'capabilities.conversationPrimitive',
+  },
+  'core.orchestrator.supervisor': {
+    capability: 'orchestrator.supported',
+    advertisementPath: 'capabilities.orchestrator.supported',
+  },
+  'core.dispatch': {
+    capability: 'dispatch.supported',
+    advertisementPath: 'capabilities.dispatch.supported',
+  },
+});
+
+// Capabilities this host advertises in `/.well-known/openwop`.
+// Single source of truth for both the discovery payload and the
+// refusal check; if a new capability is implemented, add it here AND
+// in handleDiscovery so the two stay aligned.
+const HOST_ADVERTISED_GATED_CAPABILITIES: ReadonlySet<string> = new Set([
+  'orchestrator.supported',
+  'dispatch.supported',
+  // conversationPrimitive is NOT advertised — the host doesn't implement
+  // core.conversationGate. Workflows referencing it are refused.
+]);
 
 async function executeNode(
   runId: string,
@@ -976,6 +1040,10 @@ async function executeNode(
         runFailureErrors.set(runId, err);
         return 'failed';
       }
+      // RFC 0007 §E — emitted events MUST carry causationId pointing at
+      // the consumed decision event. The eventId format matches the
+      // events/poll response shape: `evt-${runId}-${seq}`.
+      const decisionEventId = makeEventId(runId, latestDecisionEvent.seq);
       const payload = latestDecisionEvent.data_json
         ? (JSON.parse(latestDecisionEvent.data_json) as {
             agentId?: string;
@@ -985,35 +1053,143 @@ async function executeNode(
       const kind = payload?.decision?.kind;
 
       if (kind === 'terminate') {
-        // RFC 0007 §D `terminate`: emit node.completed; the outer
-        // for-loop will fall through to `run.completed` naturally.
-        break;
+        // RFC 0007 §D `terminate`: dispatch's output is the run's
+        // terminal outcome. Emit node.completed (causationId-linked)
+        // and let the outer for-loop's natural run.completed emission
+        // carry through. Reason is informational — captured on the
+        // node.completed payload for audit/debug.
+        const reason = payload?.decision?.reason;
+        appendEvent(runId, 'node.completed', {
+          nodeId: node.id,
+          causationId: decisionEventId,
+          data: { decision: 'terminate', ...(reason !== undefined ? { reason } : {}) },
+        });
+        endNodeSpan(runId, node.id, 'completed');
+        return 'completed';
       }
 
       if (kind === 'next-worker') {
-        // RFC 0007 §D `next-worker`: in the canonical child-run model
-        // this dispatches a sub-workflow. For the dispatch-loop
-        // fixture the topology routes control back to the supervisor;
-        // mirror that by jumping to the workflow's first
-        // orchestrator-supervisor node. A future scenario will
-        // exercise the child-run path via the `dispatch-next-worker-*`
-        // tests (RFC 0007 §Conformance).
-        const wfRow = loadRun(runId);
-        const workflow = wfRow ? workflows.get(wfRow.workflow_id) : null;
-        const supervisorIdx = workflow
-          ? workflow.nodes.findIndex((n) => n.typeId === 'core.orchestrator.supervisor')
-          : -1;
-        if (supervisorIdx < 0) {
-          appendEvent(runId, 'node.failed', {
-            nodeId: node.id,
-            data: { code: 'no_supervisor_node', message: 'next-worker decision but no core.orchestrator.supervisor node in workflow.' },
-          });
+        // RFC 0007 §D `next-worker`: each `nextWorkerIds[i]` resolves to
+        // a workflow id; dispatch creates a child run via the canonical
+        // `core.subWorkflow` machinery (`workerDispatchModel: child-run`,
+        // v1's only model). The reference impl honors `nextWorkerIds[0]`
+        // only — `fanOutSupported: false` is advertised in the host's
+        // capabilities.dispatch block. After the child reaches terminal,
+        // dispatch emits node.completed with `outputs.{childRunId,
+        // childStatus}` (per §D step 3 + node-packs.md §"core.subWorkflow
+        // contract") and returns 'loopback' so the DAG cycle back to the
+        // orchestrator-supervisor fires.
+        const nextWorkerIds = Array.isArray(payload?.decision?.nextWorkerIds)
+          ? (payload!.decision!.nextWorkerIds as string[])
+          : [];
+        if (nextWorkerIds.length === 0) {
+          const err = { code: 'no_pending_decision', message: `core.dispatch (node "${node.id}") next-worker decision MUST carry at least one nextWorkerIds[].` };
+          appendEvent(runId, 'node.failed', { nodeId: node.id, causationId: decisionEventId, data: err });
+          runFailureErrors.set(runId, err);
           return 'failed';
         }
-        appendEvent(runId, 'node.completed', { nodeId: node.id });
-        endNodeSpan(runId, node.id, 'completed');
-        loopbackTargets.set(runId, supervisorIdx);
-        return 'loopback';
+        const childWorkflowId = nextWorkerIds[0]!;
+        if (!workflows.has(childWorkflowId)) {
+          const err = {
+            code: 'unknown_child_workflow',
+            message: `core.dispatch (node "${node.id}") next-worker references unknown workflowId "${childWorkflowId}".`,
+          };
+          appendEvent(runId, 'node.failed', { nodeId: node.id, causationId: decisionEventId, data: err });
+          runFailureErrors.set(runId, err);
+          return 'failed';
+        }
+        // Idempotent child reuse: if a prior incarnation of this
+        // dispatch node already started a child (process restarted
+        // mid-dispatch), find it; otherwise create a fresh run.
+        const existingChild = db
+          .prepare('SELECT run_id FROM runs WHERE parent_run_id = ? AND parent_node_id = ?')
+          .get(runId, node.id) as { run_id: string } | undefined;
+        let childRunId = existingChild?.run_id;
+        if (!childRunId) {
+          childRunId = `run-${randomUUID()}`;
+          const startedAt = new Date().toISOString();
+          const childWorkflow = workflows.get(childWorkflowId)!;
+          const childVars: Record<string, unknown> = {};
+          for (const v of childWorkflow.variables ?? []) {
+            if (v.defaultValue !== undefined) childVars[v.name] = v.defaultValue;
+          }
+          db.prepare(
+            `INSERT INTO runs (run_id, workflow_id, status, inputs_json, started_at, parent_run_id, parent_node_id, variables_json)
+             VALUES (?, ?, 'pending', '{}', ?, ?, ?, ?)`,
+          ).run(childRunId, childWorkflowId, startedAt, runId, node.id, JSON.stringify(childVars));
+          appendEvent(runId, 'node.dispatched', {
+            nodeId: node.id,
+            causationId: decisionEventId,
+            data: { childRunId, childWorkflowId },
+          });
+          if (tryClaim(childRunId)) {
+            void runWorkflow(childRunId).catch((err: unknown) => {
+              const message = err instanceof Error ? err.message : String(err);
+              appendEvent(childRunId!, 'run.failed', { data: { code: 'internal', message } });
+              setRunTerminal(childRunId!, 'failed', { code: 'internal', message });
+            });
+          }
+        }
+        // Poll for child terminal. Cancellation cascade follows the
+        // same convention as `core.subWorkflow`.
+        while (true) {
+          const refreshedParent = loadRun(runId);
+          if (refreshedParent?.status === 'cancelling') {
+            cancelRunInternal(childRunId, 'parent-cancelled');
+            appendEvent(runId, 'node.cancelled', { nodeId: node.id, causationId: decisionEventId });
+            return 'cancelled';
+          }
+          const child = loadRun(childRunId);
+          if (!child) {
+            const err = { code: 'child_missing', message: `core.dispatch child run "${childRunId}" disappeared.` };
+            appendEvent(runId, 'node.failed', { nodeId: node.id, causationId: decisionEventId, data: err });
+            runFailureErrors.set(runId, err);
+            return 'failed';
+          }
+          if (child.status === 'completed' || child.status === 'failed' || child.status === 'cancelled') {
+            const childStatus = child.status as 'completed' | 'failed' | 'cancelled';
+            if (childStatus === 'completed') {
+              appendEvent(runId, 'node.completed', {
+                nodeId: node.id,
+                causationId: decisionEventId,
+                data: { outputs: { childRunId, childStatus } },
+              });
+              endNodeSpan(runId, node.id, 'completed');
+              // DAG cycle: route control back to the orchestrator-
+              // supervisor so the next decision tick can fire.
+              const wfRow = loadRun(runId);
+              const workflow = wfRow ? workflows.get(wfRow.workflow_id) : null;
+              const supervisorIdx = workflow
+                ? workflow.nodes.findIndex((n) => n.typeId === 'core.orchestrator.supervisor')
+                : -1;
+              if (supervisorIdx >= 0) {
+                loopbackTargets.set(runId, supervisorIdx);
+                return 'loopback';
+              }
+              // No upstream supervisor: dispatch is a leaf; advance linearly.
+              db.prepare("UPDATE runs SET status = 'running' WHERE run_id = ?").run(runId);
+              return 'completed';
+            }
+            // child failed or cancelled — propagate per default
+            // subWorkflow semantics (RFC 0007 §D step 4).
+            const err = {
+              code: 'child_failed',
+              message: `core.dispatch child run "${childRunId}" terminated '${childStatus}'.`,
+            };
+            appendEvent(runId, 'node.failed', {
+              nodeId: node.id,
+              causationId: decisionEventId,
+              data: { ...err, outputs: { childRunId, childStatus } },
+            });
+            runFailureErrors.set(runId, err);
+            return 'failed';
+          }
+          try {
+            await sleep(50, signal);
+          } catch {
+            // signal aborted (cancel path). Loop top will see cancelling.
+          }
+        }
       }
 
       if (kind === 'ask-user') {
@@ -1027,7 +1203,7 @@ async function executeNode(
         const clarConfig: ClarificationConfig = { questions: [{ id: 'q1', question: prompt }] };
         const interruptPayload = { kind: 'clarification', nodeId: node.id, config: clarConfig };
         createInterrupt(db, runId, node.id, 'clarification', clarConfig, interruptPayload);
-        appendEvent(runId, 'node.suspended', { nodeId: node.id, data: interruptPayload });
+        appendEvent(runId, 'node.suspended', { nodeId: node.id, causationId: decisionEventId, data: interruptPayload });
         endNodeSpan(runId, node.id, 'suspended');
         return 'suspended';
       }
@@ -1037,7 +1213,7 @@ async function executeNode(
           code: 'unsupported_decision_kind',
           message: `core.dispatch (node "${node.id}") received decision.kind="${kind ?? '<missing>'}", which the host does not implement.`,
         };
-        appendEvent(runId, 'node.failed', { nodeId: node.id, data: err });
+        appendEvent(runId, 'node.failed', { nodeId: node.id, causationId: decisionEventId, data: err });
         runFailureErrors.set(runId, err);
         return 'failed';
       }
@@ -1299,18 +1475,22 @@ function checkAuth(req: IncomingMessage, res: ServerResponse): boolean {
   const presented = Buffer.from(token, 'utf8');
   // auth-profiles.md §"openwop-auth-api-key-rotation": both primary
   // and secondary keys MUST authenticate during the overlap window.
-  // Constant-time comparison against each candidate; the OR is taken
-  // outside the timing-sensitive section.
+  // Constant-time across the union — every candidate is compared even
+  // after a match, so the timing oracle that distinguishes "primary
+  // matched" from "secondary matched" doesn't exist. The OR is folded
+  // bit-wise after every candidate's timingSafeEqual completes.
   const candidates = SECONDARY_API_KEY === null
     ? [API_KEY]
     : [API_KEY, SECONDARY_API_KEY];
   let ok = false;
   for (const candidate of candidates) {
     const expected = Buffer.from(candidate, 'utf8');
-    if (presented.length === expected.length && timingSafeEqual(presented, expected)) {
-      ok = true;
-      break;
-    }
+    const lengthMatch = presented.length === expected.length;
+    // timingSafeEqual throws if buffers differ in length; gate on
+    // lengthMatch and fall back to a same-length sentinel compare so
+    // every candidate consumes equivalent CPU.
+    const candidateOk = lengthMatch && timingSafeEqual(presented, expected);
+    ok = ok || candidateOk;
   }
   if (!ok) {
     // auth.md §"No credential echo": message MUST NOT include the
@@ -1364,16 +1544,25 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
     fixtures: advertisedFixtures,
     capabilities: {
       auth: {
-        // openwop-audit-log-integrity profile (auth-profiles.md §"Audit-log integrity").
-        // openwop-auth-api-key-rotation: two-key overlap during rotation grace.
-        // openwop-auth-oauth2-client-credentials: JWT bearer over OAuth2.
-        // openwop-auth-oidc-user-bearer: end-user OIDC bearer w/ scope mapping.
+        // Two profiles the reference host actually implements:
+        //   - openwop-audit-log-integrity (auth-profiles.md §"Audit-log
+        //     integrity"): hash-chain + signed checkpoints, verified by
+        //     the audit-log-integrity scenario.
+        //   - openwop-auth-api-key-rotation: two-key overlap (primary +
+        //     OPENWOP_SECONDARY_API_KEY) during rotation grace, verified
+        //     end-to-end by auth-api-key-rotation.test.ts.
+        //
+        // The OAuth2-CC, OIDC user-bearer, and mTLS profiles are
+        // deliberately NOT claimed. The SQLite reference host runs as
+        // an HTTP-only listener with bearer-token auth; it doesn't
+        // parse JWTs, introspect against an IdP, or terminate TLS.
+        // Advertising those profiles without their behavior is
+        // over-claiming. Production deployers that front-end this host
+        // with an IdP-aware reverse proxy can layer those profiles
+        // externally — that's outside the reference-host surface.
         profiles: [
           'openwop-audit-log-integrity',
           'openwop-auth-api-key-rotation',
-          'openwop-auth-oauth2-client-credentials',
-          'openwop-auth-oidc-user-bearer',
-          'openwop-auth-mtls',
         ],
         auditLogIntegrity: {
           hashChain: true,
@@ -1390,77 +1579,28 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
           supported: true,
           minGraceSeconds: 86_400,
         },
-        // auth-profiles.md §"openwop-auth-oauth2-client-credentials".
-        // Reference host accepts JWT-shaped bearers and rejects malformed
-        // ones via the same 401 envelope. Operator-supplied env vars wire
-        // the synthetic OIDC issuer for end-to-end verification:
-        //   OPENWOP_TEST_OAUTH_ISSUER_URL — issuer base URL the host
-        //     introspects against. Reference host accepts the harness URL
-        //     when OPENWOP_TEST_OAUTH_ISSUER_TRUSTED=true (off by default
-        //     to keep production deployments hermetic).
-        oauth2: {
-          supported: true,
-          issuer: process.env.OPENWOP_OAUTH2_ISSUER ?? 'https://issuer.openwop.local',
-          audience: process.env.OPENWOP_OAUTH2_AUDIENCE ?? 'openwop-host-sqlite',
-          supportedAlgorithms: ['RS256'],
-        },
-        // auth-profiles.md §"openwop-auth-oidc-user-bearer". Issuers
-        // list is operator-configurable; the reference advertises one
-        // default plus the harness URL when test-mode is on.
-        oidc: {
-          supported: true,
-          issuers: [
-            process.env.OPENWOP_OIDC_ISSUER ?? 'https://issuer.openwop.local',
-            ...(process.env.OPENWOP_TEST_OIDC_ISSUER_URL
-              ? [process.env.OPENWOP_TEST_OIDC_ISSUER_URL]
-              : []),
-          ],
-          audience: process.env.OPENWOP_OIDC_AUDIENCE ?? 'openwop-host-sqlite',
-          supportedScopeMapping: 'group-claim',
-          introspectionIntervalSeconds: 300,
-        },
-        // auth-profiles.md §"openwop-auth-mtls" (RFC 0010 §F). The
-        // reference host's HTTP-only listener doesn't terminate TLS;
-        // production deployers front-end with a TLS terminator that
-        // does mTLS. `required: false` means mTLS is optional —
-        // operators that need enforcement set `OPENWOP_MTLS_REQUIRED=true`.
-        mtls: {
-          supported: true,
-          required: process.env.OPENWOP_MTLS_REQUIRED === 'true',
-          subjectMapping: 'cn',
-        },
       },
       // capabilities.md §"Secrets" + run-options.md §"Credential
-      // references". Reference host advertises secret resolution +
-      // BYOK for canonical providers. The host's secret store is
-      // populated from a small fixture map keyed by secretId; the
-      // canary fixture `openwop-conformance-canary-secret` is wired
-      // for byok-roundtrip.test.ts.
+      // references". The reference host implements `secrets.resolve`
+      // for the conformance BYOK canary id only — production hosts
+      // wire this to a real KMS/Vault. The aiProviders block is
+      // deliberately omitted: this reference host does not route AI
+      // calls, so claiming BYOK on `anthropic`/`openai` would
+      // over-state the implementation.
       secrets: {
         supported: true,
         scopes: ['tenant', 'user'],
         resolution: 'host-managed',
       },
-      aiProviders: {
-        supported: ['anthropic', 'openai'],
-        byok: ['anthropic', 'openai'],
-      },
-      // production-profile.md §Compatibility baseline. SQLite reference
-      // host claims the profile end-to-end (durability via file-backed
-      // sqlite + WAL; idempotency via Idempotency-Key cache; audit-log
-      // integrity via hash-chain + signed checkpoints; observability via
-      // OTel when configured; backpressure + retention advertised as
-      // capability-present, with operator-specific tuning host-side).
-      production: {
-        supported: true,
-        backpressure: {
-          supported: true,
-        },
-        retention: {
-          supported: true,
-          minWindowSeconds: 604_800,
-        },
-      },
+      // production-profile.md §Compatibility baseline. The SQLite
+      // reference host meets durability + idempotency + audit-log
+      // integrity + debug-bundle redaction + observability MUSTs, but
+      // does NOT implement backpressure (no inflightCap enforcement)
+      // and does NOT enforce event retention with 410 expiry. The
+      // honest claim is therefore NO production-profile claim from
+      // this host — Postgres reference host
+      // (`examples/hosts/postgres/`) is the canonical claimant per
+      // INTEROP-MATRIX.md.
       webhooks: {
         // webhooks.md §"Signature algorithm versioning".
         supported: true,
@@ -1551,19 +1691,19 @@ async function handleCreateRun(req: IncomingMessage, res: ServerResponse): Promi
 
   // capabilities.md §"Unsupported capability — refusal contract".
   // A workflow referencing a capability-gated typeId on a host that
-  // does NOT advertise the gating capability MUST be refused. The
-  // SQLite reference host does not advertise `conversationPrimitive`,
-  // so workflows referencing core.conversationGate are refused at
-  // run-create with `capability_required`.
-  // (orchestrator.supported + dispatch.supported ARE advertised, so
-  // those typeIds are accepted.)
+  // does NOT advertise the gating capability MUST be refused. Iterate
+  // the GATED_TYPEID_MAP (the normative table from capabilities.md
+  // §"Capability-gated typeId map") and refuse on the first
+  // unsupported typeId we find — first-fail keeps the error envelope
+  // unambiguous about which typeId tripped the gate.
   for (const wfNode of workflow.nodes) {
-    if (wfNode.typeId === 'core.conversationGate') {
+    const gate = GATED_TYPEID_MAP[wfNode.typeId];
+    if (gate && !HOST_ADVERTISED_GATED_CAPABILITIES.has(gate.capability)) {
       sendJSON(res, 400, {
         error: 'capability_required',
-        message: `Workflow "${parsed.workflowId}" references ${wfNode.typeId}, but this host does not advertise capabilities.conversationPrimitive: true.`,
+        message: `Workflow "${parsed.workflowId}" references ${wfNode.typeId}, but this host does not advertise ${gate.advertisementPath}: true.`,
         details: {
-          requiredCapability: 'conversationPrimitive',
+          requiredCapability: gate.capability,
           offendingTypeId: wfNode.typeId,
           nodeId: wfNode.id,
         },
@@ -2203,9 +2343,24 @@ function handleEventsPoll(
   // version-negotiation.md §"events/poll forward-compat tolerance".
   // Canonical param is `lastSequence`; `since` accepted for back-compat.
   // A past-end cursor MUST yield 200 + empty events, never 4xx.
+  // Non-numeric or negative input is a request-shape error → 400, NOT
+  // silently treated as past-end (which would mask client bugs).
   const lastSeqParam =
     url.searchParams.get('lastSequence') ?? url.searchParams.get('since');
-  const since = lastSeqParam !== null ? Number(lastSeqParam) : -1;
+  let since = -1;
+  if (lastSeqParam !== null) {
+    const parsed = Number(lastSeqParam);
+    if (!Number.isFinite(parsed) || !Number.isInteger(parsed) || parsed < -1) {
+      sendError(
+        res,
+        400,
+        'validation_error',
+        'lastSequence (or legacy `since`) MUST be a non-negative integer (or -1 for "from beginning").',
+      );
+      return;
+    }
+    since = parsed;
+  }
   const rows = stmts.getEventsAfter.all(runId, since) as EventRow[];
   // Emit BOTH legacy host field names (seq, data) AND canonical
   // RunEventDoc fields (eventId, sequence, payload) per
@@ -2223,6 +2378,7 @@ function handleEventsPoll(
     data: r.data_json !== null ? JSON.parse(r.data_json) : null,
     payload: r.data_json !== null ? JSON.parse(r.data_json) : null,
     timestamp: r.timestamp,
+    ...(r.causation_id !== null ? { causationId: r.causation_id } : {}),
   }));
   const lastSeq = events.length > 0 ? events[events.length - 1]!.seq : since;
 
@@ -2327,6 +2483,7 @@ function handleEventsSse(req: IncomingMessage, res: ServerResponse, runId: strin
         data: r.data_json !== null ? JSON.parse(r.data_json) : null,
         payload: r.data_json !== null ? JSON.parse(r.data_json) : null,
         timestamp: r.timestamp,
+        ...(r.causation_id !== null ? { causationId: r.causation_id } : {}),
       })),
     });
     return;
@@ -2411,6 +2568,7 @@ function handleEventsSse(req: IncomingMessage, res: ServerResponse, runId: strin
       nodeId: r.node_id,
       data: r.data_json !== null ? JSON.parse(r.data_json) : null,
       timestamp: r.timestamp,
+      ...(r.causation_id !== null ? { causationId: r.causation_id } : {}),
     });
   }
 
@@ -2484,6 +2642,7 @@ function handleDebugBundle(req: IncomingMessage, res: ServerResponse, runId: str
       timestamp: r.timestamp,
       nodeId: r.node_id,
       data: r.data_json !== null ? JSON.parse(r.data_json) : null,
+      ...(r.causation_id !== null ? { causationId: r.causation_id } : {}),
     })),
     spans: [] as unknown[],
     metrics: {

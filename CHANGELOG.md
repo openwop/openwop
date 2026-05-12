@@ -9,6 +9,65 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ---
 
+## [1.0 — additions] — 2026-05-12 — Phase A close-out: 9 SQLite conformance failures → 0; honesty cleanup
+
+Phase A from the `/Users/david/.claude/plans/close-all-gaps-to-partitioned-boole.md` close-every-gap plan landed across three commits (host impl, advertisement cleanup, BYOK + restart fixtures) plus this close-out pass to address the senior code-review findings.
+
+### Spec normative additions
+
+- **`spec/v1/capabilities.md` §"Unsupported capability — refusal contract"** — canonical error envelope (`400` / `404` / `422` with `error: 'capability_required' | 'validation_error' | 'not_found'`, `details.{requiredCapability, offendingTypeId, nodeId}`) for hosts that refuse a workflow referencing a capability-gated reserved typeId. Normative typeId map: `core.conversationGate` ↔ `conversationPrimitive`, `core.orchestrator.supervisor` ↔ `orchestrator.supported`, `core.dispatch` ↔ `dispatch.supported`. Future RFCs adding gated typeIds MUST extend the table.
+- **`spec/v1/channels-and-reducers.md` §"Channel TTL"** — write-time pruning is now MUST (was MAY). TTL channels MUST wrap entries as `{value: T, _ts: number}` (where `_ts` is engine-write-time wall-clock in ms); hosts MUST NOT strip `_ts` between write and read; `RunSnapshot.variables` MUST reflect the pruned state once the next write has landed. `maxSize` applies AFTER TTL pruning. Replay-safe via original event timestamps.
+- **`spec/v1/node-packs.md` §"core.subWorkflow contract"** — config shape (`workflowId`, `waitForCompletion`, `onChildFailure`, `outputMapping`, `propagateCancellation`); normative output shape `data.outputs.{childRunId, childStatus}` (closed enum `"completed" | "failed" | "cancelled"`); parent linkage MUSTs (`parentRunId` + `parentNodeId` on child); variable seeding from `variables[].defaultValue` at run-create.
+- **`spec/v1/version-negotiation.md` §"events/poll forward-compat tolerance"** — `lastSequence` is canonical; `since` accepted for back-compat. Past-end cursor MUST yield `200` + empty `events`, never `4xx`. Non-numeric / negative input is `validation_error 400`.
+- **`spec/v1/rest-endpoints.md` §"Common error codes"** — gains `capability_required` entry alongside the existing `capability_not_provided` row.
+
+### Host (SQLite reference) — impl
+
+- `core.orchestrator.supervisor` + `core.dispatch` (RFC 0006 / RFC 0007) implemented end-to-end with normative output shape, real child-run dispatch via `core.subWorkflow` machinery for `next-worker`, and **`causationId` propagation per RFC 0007 §E MUST** (events table gains `causation_id` column; `appendEvent` + every event-render endpoint surface it).
+- `core.channelWrite` with TTL pruning + maxSize + `{value, _ts}` wrap + variable projection.
+- `core.identity` passthrough + variable seeding from inputs at run-create.
+- `conformance.secret.echo` for BYOK roundtrip; hashes the canary, never echoes the raw value.
+- Generalized capability-refusal in `handleCreateRun` (multi-typeId via `GATED_TYPEID_MAP` + `HOST_ADVERTISED_GATED_CAPABILITIES`).
+- `capability_not_provided` refusal via `FIXTURE_NODE_REQUIRES` registry, pre-empts `node.started`.
+- `runFailureErrors` carrier propagates specific terminal error codes (previously always overwritten to `unsupported_node_type`).
+- Constant-time dual-candidate `checkAuth` — every candidate compared regardless of match; no timing oracle.
+- Events/poll accepts canonical `lastSequence` (back-compat `since`) + validates non-numeric input.
+- `core.delay` honors `config.ms` in addition to `inputs.delayMs`.
+- `runs.variables_json` column + projection on `GET /v1/runs/{id}`.
+- `OPENWOP_FORCE_RATE_LIMIT=true` deterministic 429 induction harness.
+- `OPENWOP_SECONDARY_API_KEY` dual-candidate support for `openwop-auth-api-key-rotation`.
+- Fixture-advertisement filter extended to `openwop-smoke-*` prefix.
+
+### Host (SQLite reference) — honesty cleanup
+
+Removed dishonest advertisements per the Phase A close-out review:
+
+- **`production.supported`** removed from discovery — the host doesn't enforce backpressure (no `inflightCap`) or retention (no `410` expiry sweeper). Postgres reference host remains the canonical `openwop-production` claimant in `INTEROP-MATRIX.md`.
+- **`auth.oauth2.supported`** / **`auth.oidc.supported`** / **`auth.mtls.supported`** removed — the host runs as an HTTP-only listener with bearer-token auth; it does not parse JWTs, introspect against an IdP, or terminate TLS.
+- **`aiProviders.byok: ['anthropic', 'openai']`** removed — the host does not route AI calls.
+- `auth.profiles` slimmed to `['openwop-audit-log-integrity', 'openwop-auth-api-key-rotation']` — the two profiles the host implements end-to-end.
+- The corresponding strict-mode (`OPENWOP_REQUIRE_BEHAVIOR=true`) tests now correctly strict-fail on the SQLite host (10 failures). Per `behaviorGate`'s design that's the intended outcome — hosts that don't advertise a profile strict-fail rather than soft-skip into a false-green claim. Default-mode pass rate is 100% of applicable (669 / 731, 0 fails).
+
+### Conformance
+
+- 17 multi-agent scenarios carry explicit RFC 0002 – 0006 citations (previously schema-only).
+- `conformance-subworkflow-parent.json` typeId renamed `core.control.subWorkflow` → `core.subWorkflow` (matches host + spec canonical naming).
+- New fixture `openwop-smoke-byok-roundtrip.json` + `fixtures.md` catalog entry.
+- `spec-corpus-validity.test.ts` regex tightened with `(?<![a-z0-9-])` negative lookbehind so `conformance-canary-secret` inside `openwop-conformance-canary-secret` no longer false-matches as a fixture id.
+
+### SDK
+
+- `HTTP_ERROR_CODES` (TS, Python, Go) gains `capability_required` near the existing `capability_not_provided` entry. `isHttpErrorCode("capability_required")` / `is_http_error_code("capability_required")` / `IsHTTPErrorCode("capability_required")` all narrow correctly. SDK CHANGELOGs updated.
+
+### Schemas
+
+- `events.causation_id` column on the SQLite host events table (idempotent migration). The wire shape is unchanged — `causationId` is already supported in `schemas/run-event.schema.json`.
+
+### Wire-shape breaking deltas (per user "no backward-compat" authorization for Phase A)
+
+- `core.subWorkflow` `node.completed` payload shape: pre-Phase-A `data: {childRunId, childOutcome}` → post-Phase-A `data: {outputs: {childRunId, childStatus}}`. The new shape is now normative in `node-packs.md` §"core.subWorkflow contract". Any consumer reading the pre-Phase-A shape breaks.
+- `core.delay` config: still accepts `inputs.delayMs` (back-compat) but `config.ms` takes precedence when both are present.
+
 ## [1.0 — additions] — 2026-05-12 — RFC 0011 Active: auth-scoped discovery (Phase D)
 
 - **RFC 0011 opened + promoted Draft → Active.** [`RFCS/0011-auth-scoped-discovery.md`](./RFCS/0011-auth-scoped-discovery.md) formalizes the optional auth-scoped discovery surface from `capabilities-change-detection.md` §"Scoped capability views" into an advertisable capability flag. Bootstrap-phase steward waiver of the 7-day comment window per `CONTRIBUTING.md` §"Bootstrap-phase notes"; same precedent as RFCs 0009 and 0010. Recorded in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers."

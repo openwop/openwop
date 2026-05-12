@@ -1231,7 +1231,12 @@ describe.skipIf(FIXTURES_DOC_PATH === null)('spec-corpus: fixtures.json catalog 
       /^\|[^\n]*(PROPOSED|impl pending)[^\n]*\n/gm,
       '',
     );
-    const idRegex = /\bconformance-[a-z][a-z0-9-]*\b/g;
+    // Match `conformance-<id>` only at a real fixture-id boundary —
+    // require the preceding character to NOT be `[a-z0-9-]`, so that
+    // longer strings like `openwop-conformance-canary-secret` do NOT
+    // false-match `conformance-canary-secret` as a fixture id. The
+    // negative lookbehind keeps the regex JS-compatible.
+    const idRegex = /(?<![a-z0-9-])conformance-[a-z][a-z0-9-]*\b/g;
     const cited = new Set<string>();
     let m: RegExpExecArray | null;
     while ((m = idRegex.exec(docWithoutProposed)) !== null) {
