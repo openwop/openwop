@@ -61,7 +61,24 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     -h|--help)
-      sed -n '1,/^set -euo/p' "$0" | sed 's/^# \?//'
+      cat <<'USAGE'
+setup-uptime-check — one-shot creation of the Cloud Monitoring uptime
+check + alert policy for packs.openwop.dev.
+
+Usage:
+  setup-uptime-check.sh                              # create
+  setup-uptime-check.sh --notification-channel <id>  # create + page
+  setup-uptime-check.sh --dry-run                    # plan only
+  setup-uptime-check.sh --help
+
+Requirements:
+  - gcloud CLI authenticated as a user with at least
+    roles/monitoring.uptimeCheckConfigEditor AND
+    roles/monitoring.alertPolicyEditor on the `openwop-dev` project.
+
+Checks every 60s from 4 global regions; alerts on >= 2 consecutive
+failures of `GET https://packs.openwop.dev/v1/index.json`. Idempotent.
+USAGE
       exit 0
       ;;
     *)
@@ -168,37 +185,48 @@ echo "Creating alert policy..."
 # single failing region trips, so 2 consecutive regional-flap windows
 # don't false-positive — they would need to both be from the same
 # region, which Cloud Monitoring aggregates).
-POLICY_JSON=$(cat <<EOF
-{
-  "displayName": "$ALERT_DISPLAY",
-  "documentation": {
-    "content": "packs.openwop.dev discovery endpoint (/v1/index.json) failed >=2 consecutive uptime checks across 4 regions. Triage steps: docs/runbooks/INCIDENT-RESPONSE.md §Incident class 4.",
-    "mimeType": "text/markdown"
-  },
-  "combiner": "OR",
-  "conditions": [
-    {
-      "displayName": "Uptime check failed >= 2 minutes",
-      "conditionThreshold": {
-        "filter": "metric.type=\"monitoring.googleapis.com/uptime_check/check_passed\" AND resource.type=\"uptime_url\" AND metric.label.\"check_id\"=monitoring.regex.full_match(\".*${UPTIME_DISPLAY//-/_}.*\")",
-        "aggregations": [
-          {
-            "alignmentPeriod": "60s",
-            "perSeriesAligner": "ALIGN_NEXT_OLDER",
-            "crossSeriesReducer": "REDUCE_COUNT_FALSE",
-            "groupByFields": ["resource.label.host"]
-          }
-        ],
-        "comparison": "COMPARISON_GT",
-        "duration": "120s",
-        "trigger": { "count": 1 },
-        "thresholdValue": 1
+# Build the policy JSON via jq so user-supplied values (display names,
+# notification channel id) are properly escaped. Avoids the corner case
+# where a notification channel id containing JSON-significant characters
+# corrupts the heredoc-interpolated body.
+if ! command -v jq >/dev/null 2>&1; then
+  echo "ERROR: jq required but not on PATH" >&2
+  exit 2
+fi
+FILTER_VALUE="metric.type=\"monitoring.googleapis.com/uptime_check/check_passed\" AND resource.type=\"uptime_url\" AND metric.label.\"check_id\"=monitoring.regex.full_match(\".*${UPTIME_DISPLAY//-/_}.*\")"
+POLICY_JSON=$(jq -nc \
+  --arg displayName "$ALERT_DISPLAY" \
+  --arg filter "$FILTER_VALUE" \
+  --arg channel "$NOTIFICATION_CHANNEL" \
+  '{
+    displayName: $displayName,
+    documentation: {
+      content: "packs.openwop.dev discovery endpoint (/v1/index.json) failed >=2 consecutive uptime checks across 4 regions. Triage steps: docs/runbooks/INCIDENT-RESPONSE.md §Incident class 4.",
+      mimeType: "text/markdown"
+    },
+    combiner: "OR",
+    conditions: [
+      {
+        displayName: "Uptime check failed >= 2 minutes",
+        conditionThreshold: {
+          filter: $filter,
+          aggregations: [
+            {
+              alignmentPeriod: "60s",
+              perSeriesAligner: "ALIGN_NEXT_OLDER",
+              crossSeriesReducer: "REDUCE_COUNT_FALSE",
+              groupByFields: ["resource.label.host"]
+            }
+          ],
+          comparison: "COMPARISON_GT",
+          duration: "120s",
+          trigger: { count: 1 },
+          thresholdValue: 1
+        }
       }
-    }
-  ]$([[ -n "$NOTIFICATION_CHANNEL" ]] && printf ', "notificationChannels": ["%s"]' "$NOTIFICATION_CHANNEL" || true)
-}
-EOF
-)
+    ]
+  }
+  + (if $channel == "" then {} else { notificationChannels: [$channel] } end)')
 
 # Write to a tmp file because --policy-from-file expects a path.
 tmpfile=$(mktemp)

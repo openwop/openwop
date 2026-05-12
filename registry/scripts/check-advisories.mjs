@@ -73,6 +73,45 @@ function parseSemver(v) {
   };
 }
 
+/**
+ * Per-identifier prerelease compare per SemVer 2.0.0 §11:
+ *   - Identifiers are dot-separated alphanumerics.
+ *   - Numeric identifiers compare numerically.
+ *   - Alphanumeric identifiers compare lexically.
+ *   - Numeric identifiers ALWAYS rank lower than alphanumeric.
+ *   - A larger set of identifiers ranks HIGHER (more specific) when
+ *     all preceding identifiers are equal.
+ *
+ * Plain string comparison gets `1.0.0-alpha.10` ranked below
+ * `1.0.0-alpha.2` (`'10' < '2'` lexically). This restores numeric
+ * comparison on numeric identifiers.
+ */
+function comparePrerelease(a, b) {
+  const isNumeric = (s) => /^[0-9]+$/.test(s);
+  const ap = a.split('.');
+  const bp = b.split('.');
+  const len = Math.min(ap.length, bp.length);
+  for (let i = 0; i < len; i++) {
+    const x = ap[i];
+    const y = bp[i];
+    if (x === y) continue;
+    const xn = isNumeric(x);
+    const yn = isNumeric(y);
+    if (xn && yn) {
+      const xi = parseInt(x, 10);
+      const yi = parseInt(y, 10);
+      if (xi !== yi) return xi - yi;
+    } else if (xn) {
+      return -1; // numeric ranks below alphanumeric
+    } else if (yn) {
+      return 1;
+    } else {
+      return x < y ? -1 : 1;
+    }
+  }
+  return ap.length - bp.length;
+}
+
 function compareSemver(a, b) {
   if (a.major !== b.major) return a.major - b.major;
   if (a.minor !== b.minor) return a.minor - b.minor;
@@ -81,7 +120,7 @@ function compareSemver(a, b) {
   if (a.prerelease && !b.prerelease) return -1;
   if (!a.prerelease && b.prerelease) return 1;
   if (a.prerelease && b.prerelease) {
-    return a.prerelease < b.prerelease ? -1 : a.prerelease > b.prerelease ? 1 : 0;
+    return comparePrerelease(a.prerelease, b.prerelease);
   }
   return 0;
 }

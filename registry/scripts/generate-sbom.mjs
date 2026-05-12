@@ -84,6 +84,16 @@ function enumerateTarball(tarballBytes) {
     const typeflag = decompressed[off + 156];
     // typeflag '0' / 0x00 = regular file. '5' = directory. Skip non-regular.
     const isRegular = typeflag === 0x30 || typeflag === 0;
+    // PAX extended header ('x'=0x78) and GNU LongLink ('L'=0x4c) carry
+    // long names + extended metadata as pseudo-files preceding the real
+    // entry. The 100-byte name field in those preceding USTAR headers is
+    // truncated. Fail fast rather than silently hash files under the
+    // truncated name + produce a corrupt SBOM.
+    if (typeflag === 0x78 || typeflag === 0x4c) {
+      throw new Error(
+        `USTAR extended header (typeflag=0x${typeflag.toString(16)}) not supported; pack tarballs MUST keep entry names <= 100 bytes`
+      );
+    }
     if (isRegular && name && !name.endsWith('/')) {
       const data = decompressed.subarray(off + BLOCK, off + BLOCK + size);
       files.push({

@@ -48,7 +48,7 @@ A validation failure (`success: false` with an `error` message) is a per-output 
 
 ## Authoring source
 
-Original TypeScript at [`myndhyve/src/canvas-types/campaign-studio/sequences/sequenceStepModules.ts`](https://github.com/myndhyve) and [`conditionUtils.ts`](https://github.com/myndhyve). This pack inlines a pure-JS copy of the relevant helpers (`getNestedFieldValue`, `evaluateCondition`, `looseEquals`, `toNumber`, `isEmpty`) so the pack runs unchanged on any openwop-compliant host.
+Original TypeScript at `myndhyve/src/canvas-types/campaign-studio/sequences/sequenceStepModules.ts` and the adjacent `conditionUtils.ts`. The MyndHyve org GitHub mirror is not public — reference the paths above against the MyndHyve product tree. This pack inlines a pure-JS copy of the relevant helpers (`getNestedFieldValue`, `evaluateCondition`, `looseEquals`, `toNumber`, `isEmpty`) so it runs unchanged on any openwop-compliant host.
 
 ## License
 
