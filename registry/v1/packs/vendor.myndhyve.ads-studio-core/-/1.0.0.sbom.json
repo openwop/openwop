@@ -1,0 +1,325 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.ads-studio-core@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.ads-studio-core",
+      "version": "1.0.0",
+      "description": "MyndHyve Ads Studio core — four pure-logic executors lifted from src/canvas-types/campaign-studio/nodes/adsStudioPack/. ads.brief.build (CreativeBriefBuilder), ads.variant.plan (VariantPlanService), ads.video.qa (VideoQAService), ads.winner.synthesize (WinnerSynthesisService). All four executors are deterministic — no host capabilities required beyond the core NodeContext. Marks the Phase A pilot of the canvas-type executor migration per openwop/openwop#11.",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://myndhyve.ai/packs/ads-studio-core"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/openwop/openwop"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "576a33bbfd809513ae7d91440b4bb579572600b6c48723e9257f370bea73b160"
+        }
+      ],
+      "purl": "pkg:openwop/vendor.myndhyve.ads-studio-core@1.0.0"
+    },
+    "tools": [
+      {
+        "vendor": "openwop",
+        "name": "generate-sbom.mjs",
+        "version": "1"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "file",
+      "name": "LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0cea879ed215e3961316e97ab5e4d7a2b2bca999358668599bd53a1c953bc0d9"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "975"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "README.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "40657da205e4f9d3a856b5de359613a0d480668970bdd99301d4ab0dd9542e86"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "3344"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "index.mjs",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "48bd2e72dbac077fda7990a7cefb7ca825dc714779513dd06012cb203ff89e26"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "35183"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "keys/pack.json.sig",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "6d88393676033b7536485bce43c3de6e0c0721aa459789fb9e4991f532783a95"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "64"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "pack.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f00dd43c2e9dd460a1256b8ff50c6ce3670fb1d1bb62d1c4d6b83d2049251635"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "3171"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/brief-build.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e4493d0332b7d4ebabea9c49f3d972caf02b10fdd87820a4d1add7d68a1a4cd7"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "825"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/brief-build.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c3fe40374a40b3f13b9cb8892bc7c9b1416984fd217fb2eacf6dfbc084d53128"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "767"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/brief-build.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "dea440802b612b2139e38aeb668784c7e6804e150f55eb5d9516f6b7e1e5380d"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "946"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/variant-plan.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "5dea27b574fb45fb6197e222e6a5f47ff03070a9c01f6e35bae1c1501e53adae"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "581"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/variant-plan.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e8493a13e31776594cd0a0e92f86c35a1d8c1fd654f4e29ea7e2ebee0389fd4b"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "1875"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/variant-plan.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "05fdf0a3fda1ef923de321669da4789f355c93ed159a688eb41e3aecf1ed3031"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "1091"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/video-qa.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c55ec4ac1f689fdef1da8a64acec821119df687a194100c995c2ed9a83108a2d"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "356"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/video-qa.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "46b53735aef3b36133bf2c08e21b5fcbf0f732af2a408765409dea37ccfede07"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "2538"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/video-qa.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f881f6b4c623d966a63141197ebf2ebd595d2bc018ebb94fbf1caeb2527a3e71"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "1410"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/winner-synthesize.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c337592d24f620711d0d3019c129d008897632b7d3fe5dddcab7ab6d8159a957"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "464"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/winner-synthesize.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "afed6246eb3359a082b307ca0f93c0c5374237118653eedaf6e8ca78d9b8873d"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "1838"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/winner-synthesize.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1d1cd65d27f95da8b32ea420c0f4f471a5d899f3bc3db7dae0cfb34cbc3936b5"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "2673"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:openwop/vendor.myndhyve.ads-studio-core@1.0.0",
+      "dependsOn": []
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-studio-core/1.0.0/brief-build.input.json",
+  "title": "AdsBriefBuildInput",
+  "type": "object",
+  "properties": {
+    "baseBrief": {
+      "type": "object",
+      "description": "Required for `extraction` and `merge` modes. The existing AdBrief record to extend / overlay onto.",
+      "additionalProperties": true
+    },
+    "briefInput": {
+      "type": "object",
+      "description": "CreativeBriefInput shape — icp, offer, positioning, messageRules, assetRefs, platformTargets, primaryKpis. Plus targetAudience/sellingPoints/tone/goal/angles for `manual` mode.",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

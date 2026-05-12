@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-studio-core/1.0.0/video-qa.output.json",
+  "title": "AdsVideoQAOutput",
+  "type": "object",
+  "required": ["passed", "checks", "overallScore"],
+  "properties": {
+    "passed": { "type": "boolean", "description": "True when zero severity=error checks failed." },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "category", "passed", "severity", "message"],
+        "properties": {
+          "name": { "type": "string" },
+          "category": {
+            "type": "string",
+            "enum": ["legibility", "safe-zone", "duration", "text-density", "claims"]
+          },
+          "passed": { "type": "boolean" },
+          "severity": { "type": "string", "enum": ["error", "warning", "info"] },
+          "message": { "type": "string" },
+          "sceneIndex": { "type": "integer", "minimum": 0 },
+          "autoFixAvailable": { "type": "boolean" },
+          "suggestedFix": { "type": "object", "additionalProperties": true }
+        },
+        "additionalProperties": true
+      }
+    },
+    "overallScore": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Clamped score (passedChecks*100 − errors*20 − warnings*5) / totalChecks."
+    }
+  },
+  "additionalProperties": true
+}

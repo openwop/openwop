@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-studio-core/1.0.0/brief-build.config.json",
+  "title": "AdsBriefBuildConfig",
+  "type": "object",
+  "properties": {
+    "mode": {
+      "type": "string",
+      "enum": ["manual", "extraction", "merge"],
+      "default": "manual",
+      "description": "Which builder method to call. `manual`: build from CreativeBriefInput + targetAudience/sellingPoints. `extraction`: extend `baseBrief` with resolved fields. `merge`: overlay partial fields onto `baseBrief`."
+    },
+    "validateOutput": {
+      "type": "boolean",
+      "default": true,
+      "description": "If true, the executor runs validateBrief on the result and includes validationIssues in the output."
+    }
+  },
+  "additionalProperties": true
+}

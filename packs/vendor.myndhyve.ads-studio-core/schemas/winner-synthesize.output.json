@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-studio-core/1.0.0/winner-synthesize.output.json",
+  "title": "AdsWinnerSynthesizeOutput",
+  "type": "object",
+  "required": ["id", "variantPlanId", "createdAt", "testSummaries", "insights", "nextTests", "aggregateStats"],
+  "properties": {
+    "id": { "type": "string", "description": "UUID for this synthesis result." },
+    "variantPlanId": { "type": "string" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "testSummaries": {
+      "type": "array",
+      "items": { "type": "object", "additionalProperties": true }
+    },
+    "insights": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "severity", "message"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["winner", "no_winner", "low_data", "trend", "efficiency"]
+          },
+          "severity": { "type": "string", "enum": ["success", "warning", "info"] },
+          "message": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "nextTests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["dimension", "metric", "rationale", "priority"],
+        "properties": {
+          "dimension": { "type": "string", "enum": ["copy", "creative", "targeting", "combined"] },
+          "metric": { "type": "string", "enum": ["ctr", "conversion_rate", "roas"] },
+          "rationale": { "type": "string" },
+          "priority": { "type": "integer", "minimum": 1 },
+          "platform": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "aggregateStats": {
+      "type": "object",
+      "required": ["totalTests", "testsWithWinner", "testsWithoutWinner", "totalImpressions", "totalClicks", "totalConversions", "totalSpend", "averageImprovement"],
+      "properties": {
+        "totalTests": { "type": "integer", "minimum": 0 },
+        "testsWithWinner": { "type": "integer", "minimum": 0 },
+        "testsWithoutWinner": { "type": "integer", "minimum": 0 },
+        "totalImpressions": { "type": "number", "minimum": 0 },
+        "totalClicks": { "type": "number", "minimum": 0 },
+        "totalConversions": { "type": "number", "minimum": 0 },
+        "totalSpend": { "type": "number", "minimum": 0 },
+        "averageImprovement": { "type": "number" }
+      },
+      "additionalProperties": true
+    },
+    "report": {
+      "type": "string",
+      "description": "Markdown report; present only when config.emitMarkdown=true."
+    }
+  },
+  "additionalProperties": true
+}

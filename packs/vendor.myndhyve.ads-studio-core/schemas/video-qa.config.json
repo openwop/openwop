@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-studio-core/1.0.0/video-qa.config.json",
+  "title": "AdsVideoQAConfig",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": true,
+  "description": "No required config. All knobs come via inputs.options (VideoQAOptions)."
+}
