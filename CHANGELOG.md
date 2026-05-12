@@ -9,6 +9,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ---
 
+## [1.0 — additions] — 2026-05-11 — RFC 0009 Draft: production-profile conformance
+
+- **RFC 0009 opened (Draft).** [`RFCS/0009-production-profile-conformance.md`](./RFCS/0009-production-profile-conformance.md) proposes mechanizing `spec/v1/production-profile.md` via a top-level `capabilities.production` block, two new conformance scenarios (`production-backpressure`, `production-retention-expiry`), and `production-profile.md` co-citations on four existing scenarios (`restart-during-run`, `staleClaim`, `debug-bundle-truncation`, `idempotency` + `idempotencyRetry`). Additive — no v1 wire-shape change. 7-day comment window opens with this entry. Implementation lands after `Status: Active`.
+
 ## [1.0 — additions] — 2026-05-11 — Phase-2 partial: RFC promotions + pause/resume race coverage
 
 Status promotions covering the multi-agent + WASM extension RFCs.
@@ -37,6 +41,7 @@ Reconciliation pass against `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` Phase 0. Closes 
 - **Registry status reconciled.** `ROADMAP.md` post-v1 ecosystem table now reflects `packs.openwop.dev` as live (verified externally; 3 packs published). New public-registry healthcheck at `conformance/src/scenarios/registry-public.test.ts` (opt-in via `OPENWOP_TEST_PUBLIC_REGISTRY=true`). Suite count: 85 → 86.
 - **Multi-agent integration audit closed.** `docs/MULTI-AGENT-INTEGRATION-GAPS.md` is now ARCHIVED — every Phase-1-through-6 surface marked closed with landing-path citations. `PROTOCOL-GAP-CLOSURE-PLAN.md` Track 10 acceptance row updated to reflect that RFCs 0002–0007 are eligible for promotion from `Active` to `Accepted`.
 - **Capability-gated scenarios: strict mode.** New `OPENWOP_REQUIRE_BEHAVIOR=true` runner flag converts capability-shape-only skips into hard failures for hosts that want to claim full coverage. New helper at `conformance/src/lib/behavior-gate.ts`; `audit-log-integrity.test.ts` adopts it as the worked example. New §"Capability-gated scenarios" in `conformance/coverage.md` documents the 10 scenarios and their behavior-unlock dependencies.
+- **ROADMAP v1.X gap-closure rows reconciled.** Tracks 4 (Interrupt profile), 5 (Replay profile), and 6 (MCP/A2A roundtrip) deliverable cells updated to cite the fixtures and conformance scenarios that already shipped, replacing stale "next add X" wording. Track 4 fully closed; Track 5 remaining = retention-expiry scenario; Track 6 remaining = published cross-impl evidence (operator step). No code change; documentation accuracy only.
 
 ## [1.0 — additions] — 2026-05-10 — Gap-closure additions to v1.0
 

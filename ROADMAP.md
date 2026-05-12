@@ -1,7 +1,7 @@
 # openwop Roadmap
 
 > **Status:** Living document. Updated as milestones land.
-> **Last reviewed:** 2026-05-11 (Phase 2 partial: RFCs 0002–0007 promoted to Accepted; RFC 0008 promoted to Active; `production-profile.md` flipped Provisional pending the Postgres reference host; `examples/hosts/postgres/` skeleton landed).
+> **Last reviewed:** 2026-05-11 (Phase 2 partial: RFCs 0002–0007 promoted to Accepted; RFC 0008 promoted to Active; `production-profile.md` flipped Provisional pending the Postgres reference host; `examples/hosts/postgres/` skeleton landed; v1.X gap-closure Track 4/5/6 rows reconciled to cite shipped fixtures + scenarios).
 
 This roadmap distinguishes **stable v1** (locked contract), **v1.X minor work** (additive, conformance-only), and **post-v1 ecosystem** (extension profiles, infrastructure, governance).
 
@@ -40,9 +40,9 @@ These are additive profiles, conformance expansions, or clarifying annexes that 
 |---|---|---|
 | Capability handshake hardening | `Capabilities-Etag`, non-HTTP negotiation, per-tenant capability views | Spec annex shipped in `capabilities-change-detection.md`; `discovery.test.ts` covers optional `Capabilities-Etag`; next add auth-scoped discovery variants when a host advertises them. |
 | Auth profile | OAuth2 client credentials, API-key rotation/grace period, optional mTLS | Spec annex shipped in `auth-profiles.md`; next add negative/positive conformance cases for rotation and OAuth token shape where advertised. |
-| Interrupt profile | Multi-approver quorum, parent/child cancellation, external-event matching, `auth-required` | Spec annex shipped in `interrupt-profiles.md`; next add fixture workflows for quorum and external-event correlation. |
-| Replay profile | Fork from arbitrary event types, retention/GC, PII replay policy, determinism scoring | Retention, privacy, and scoring semantics added to `replay.md`; next add arbitrary-event and retention-expiry conformance scenarios. |
-| MCP/A2A roundtrip | Integration docs are strong but roundtrip proof is thin | Ship `mcp-tool-roundtrip.test.ts` and `a2a-task-roundtrip.test.ts` with synthetic peer fixtures. |
+| Interrupt profile | Multi-approver quorum, parent/child cancellation, external-event matching, `auth-required` | Spec annex shipped in `interrupt-profiles.md`; four fixtures shipped 2026-05-10 (`conformance-interrupt-{quorum,external-event,auth-required,parent-child-cancel}.json`) + matching conformance scenarios (`interrupt-{quorum-resolution,external-event-correlation,auth-required-resume,parent-child-cascade}.test.ts`). Track closed. |
+| Replay profile | Fork from arbitrary event types, retention/GC, PII replay policy, determinism scoring | Retention, privacy, and scoring semantics added to `replay.md`; arbitrary-event fork shipped (`replay-fork-arbitrary.test.ts`) + deterministic replay shipped (`replayDeterminism.test.ts`); next add retention-expiry conformance scenario. |
+| MCP/A2A roundtrip | Integration docs are strong but roundtrip proof is thin | `mcp-tool-roundtrip.test.ts` + `a2a-task-roundtrip.test.ts` shipped with synthetic peer fixtures; real-impl interop env vars (`OPENWOP_MCP_REAL_SERVER_URL`, `OPENWOP_A2A_REAL_PEER_URL`) wired 2026-05-11; next publish cross-impl evidence as a "Composition partners" subsection in `INTEROP-MATRIX.md` (out-of-band operator step). |
 | Endpoint coverage manifest | Ensure every OpenAPI operation has positive + negative conformance evidence | Manual map shipped in `conformance/coverage.md`; `route-coverage.test.ts` adds direct workflow/artifact/webhook probes; `spec-corpus-validity.test.ts` now verifies every OpenAPI `operationId` appears in the map. |
 | Production profile | Queueing/backpressure, retry durability, event retention, high-volume debug bundle behavior | Spec annex shipped in `production-profile.md`; `INTEROP-MATRIX.md` records production-profile claims separately; next add production-profile scenarios. |
 
