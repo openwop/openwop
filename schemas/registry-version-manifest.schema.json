@@ -125,6 +125,16 @@
       "type": "boolean",
       "description": "Hard refusal: this version was published in error. Registry MUST refuse to serve the tarball; consumers MUST refuse to dispatch nodes from yanked versions."
     },
+    "yankedReason": {
+      "type": "string",
+      "maxLength": 512,
+      "description": "Optional one-line rationale shown by clients when a yanked install is attempted. Conventionally references the advisory id (`OPENWOP-YYYY-NNNN`) when one was issued."
+    },
+    "deprecationReason": {
+      "type": "string",
+      "maxLength": 512,
+      "description": "Optional one-line rationale shown by clients when an install of a deprecated version is attempted. Typically names the replacement version + migration link."
+    },
     "advisoryUrl": {
       "type": "string",
       "format": "uri",
