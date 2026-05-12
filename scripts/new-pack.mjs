@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * Scaffold a new pack source tree from `examples/packs/vendor-template/`.
+ * Generate a new pack source tree from `examples/packs/vendor-template/`.
  *
- *   node scripts/scaffold-pack.mjs vendor.<org>.<pack>
- *   node scripts/scaffold-pack.mjs --pack vendor.<org>.<pack>
- *   node scripts/scaffold-pack.mjs --pack vendor.<org>.<pack> --out packs/
+ *   node scripts/new-pack.mjs vendor.<org>.<pack>
+ *   node scripts/new-pack.mjs --pack vendor.<org>.<pack>
+ *   node scripts/new-pack.mjs --pack vendor.<org>.<pack> --out packs/
  *
  * Copies the template, substitutes `{ORG}` and `{PACK}` placeholders
  * across pack.json + index.mjs + every schema file + the README, and
@@ -57,7 +57,7 @@ function parseArgs(argv) {
     } else if (a === '--out') {
       args.out = resolve(argv[++i]);
     } else if (a === '--help' || a === '-h') {
-      console.log('Usage: scaffold-pack.mjs [--pack] vendor.<org>.<pack> [--out <dir>]');
+      console.log('Usage: new-pack.mjs [--pack] vendor.<org>.<pack> [--out <dir>]');
       console.log('');
       console.log('Generates a new pack source tree under packs/<name>/ from');
       console.log('the examples/packs/vendor-template/ skeleton, with all');
@@ -102,7 +102,7 @@ function parsePackName(name) {
   if (scope === 'private') {
     console.warn(
       `${C.yellow}⚠${C.reset} 'private.*' packs MUST NOT be published to packs.openwop.dev — ` +
-      `they're host-internal only. This scaffold still works for local dev.`,
+      `they're host-internal only. This generate still works for local dev.`,
     );
   }
   return { scope, org, pack, fullName: name };
@@ -145,7 +145,7 @@ function copyAndSubstitute(srcDir, destDir, parsed) {
 function main() {
   const args = parseArgs(process.argv.slice(2));
   if (!args.pack) {
-    fail('pack name required. Usage: scaffold-pack.mjs vendor.<org>.<pack>');
+    fail('pack name required. Usage: new-pack.mjs vendor.<org>.<pack>');
   }
   if (!existsSync(TEMPLATE_DIR)) {
     fail(`template dir missing: ${TEMPLATE_DIR}`);
@@ -161,7 +161,7 @@ function main() {
     );
   }
 
-  info(`scaffolding ${parsed.fullName}`);
+  info(`generation ${parsed.fullName}`);
   info(`  scope:  ${parsed.scope}`);
   info(`  org:    ${parsed.org}`);
   info(`  pack:   ${parsed.pack}`);

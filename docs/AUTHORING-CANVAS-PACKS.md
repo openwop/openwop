@@ -1,6 +1,6 @@
 # Authoring Canvas Packs
 
-> **Status: v1 (2026-05-12).** Patterns, conventions, and anti-patterns for authoring + publishing OpenWOP node packs that contain canvas-bound executor logic. Targets the next 30 executors in the Phase B+C canvas-packs delivery (`vendor.myndhyve.{app-builder, ads-studio, campaign-sequence, landing-page}`). Pairs with `CANVAS-PACKS-INVENTORY.md` (the scope contract) and the Stage 3 scaffold tooling.
+> **Status: v1 (2026-05-12).** Patterns, conventions, and anti-patterns for authoring + publishing OpenWOP node packs that contain canvas-bound executor logic. Targets the next 30 executors in the Phase B+C canvas-packs delivery (`vendor.myndhyve.{app-builder, ads-studio, campaign-sequence, landing-page}`). Pairs with `CANVAS-PACKS-INVENTORY.md` (the scope contract) and the Stage 3 pack-generator tooling.
 
 ---
 
@@ -16,13 +16,13 @@ If your pack is entirely editor-preset typeIds that workflow authors drop into p
 
 ---
 
-## The 30-minute path: scaffold → fill in → publish
+## The 30-minute path: generate → fill in → publish
 
-The scaffold + Stage 2 CI gates collapse pack-publishing to deterministic stages:
+The generator + Stage 2 CI gates collapse pack-publishing to deterministic stages:
 
 ```bash
 # 1. Generate the source tree
-node scripts/scaffold-pack.mjs vendor.<org>.<pack>
+node scripts/new-pack.mjs vendor.<org>.<pack>
 
 # 2. Edit pack.json + per-node JSON schemas + index.mjs (executor logic)
 # 3. Build + sign
@@ -47,7 +47,7 @@ node registry/scripts/build-index.mjs
 
 For a small pack (1–3 typeIds, simple schemas, no business-logic refactor), this is a 30-minute path end-to-end. The Stage 2 CI gates (`registry-publish.yml`) catch the common authoring mistakes before merge.
 
-For larger canvas-bound packs (e.g., `vendor.myndhyve.app-builder` at ~1066 LOC of executor logic), the time goes into **§4 Refactoring myndhyve-coupled executors** below, not the scaffolding.
+For larger canvas-bound packs (e.g., `vendor.myndhyve.app-builder` at ~1066 LOC of executor logic), the time goes into **§4 Refactoring myndhyve-coupled executors** below, not the generation.
 
 ---
 
@@ -291,8 +291,8 @@ If the integrity hash or signing keyId is wrong, the deploy succeeded but consum
 - [`spec/v1/registry-operations.md`](../spec/v1/registry-operations.md) — namespace claims, signing-key registration, publish lifecycle
 - [`docs/CANVAS-PACKS-INVENTORY.md`](./CANVAS-PACKS-INVENTORY.md) — current scope (30 executors, 4 sub-packs)
 - [`registry/README.md`](../registry/README.md) — registry layout + signing-key + namespace assignment table
-- [`examples/packs/vendor-template/`](../examples/packs/vendor-template/) — pack source-tree skeleton (input to `scripts/scaffold-pack.mjs`)
-- [`scripts/scaffold-pack.mjs`](../scripts/scaffold-pack.mjs) — pack scaffolder
+- [`examples/packs/vendor-template/`](../examples/packs/vendor-template/) — pack source-tree skeleton (input to `scripts/new-pack.mjs`)
+- [`scripts/new-pack.mjs`](../scripts/new-pack.mjs) — pack generator
 - [`scripts/build-pack-tarball.mjs`](../scripts/build-pack-tarball.mjs) — deterministic tarball builder + signer
 - [`registry/scripts/verify-signatures.mjs`](../registry/scripts/verify-signatures.mjs) — CI sig-verification gate
 - [`registry/scripts/conformance-check.mjs`](../registry/scripts/conformance-check.mjs) — CI structural conformance gate

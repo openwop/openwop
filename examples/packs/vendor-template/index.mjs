@@ -40,7 +40,7 @@ function ensureAiEnvelope(ctx) {
 /**
  * Example node — replace with your real implementation.
  *
- * Pattern this scaffolds:
+ * Pattern this generates:
  *   1. Validate host capability availability
  *   2. Read ctx.inputs / ctx.config
  *   3. Call host capability (e.g., `ctx.aiEnvelope.generate(...)`)

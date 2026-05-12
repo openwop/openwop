@@ -15,10 +15,10 @@ Replace this `README.md` with documentation for your real pack. Recommended stru
 1. **Generate from this skeleton:**
 
    ```bash
-   node scripts/scaffold-pack.mjs vendor.<org>.<pack>
+   node scripts/new-pack.mjs vendor.<org>.<pack>
    ```
 
-   The scaffolder copies `examples/packs/vendor-template/` to `packs/<name>/`, substitutes the placeholders (`{ORG}`, `{PACK}`), and runs through a sanity-check pass.
+   The generator copies `examples/packs/vendor-template/` to `packs/<name>/`, substitutes the placeholders (`{ORG}`, `{PACK}`), and runs through a sanity-check pass.
 
 2. **Customize `pack.json`:**
    - Replace `description`, `keywords`, `homepage`.
