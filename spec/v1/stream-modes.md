@@ -36,6 +36,17 @@ If a client requests a mode the server doesn't implement, the server MUST respon
 
 Servers MAY advertise their supported modes in `/.well-known/openwop` (see `capabilities.md`).
 
+### Content negotiation (additive opt-in)
+
+Hosts MAY content-negotiate the response shape on `GET /v1/runs/{runId}/events` via the request `Accept` header:
+
+- `Accept: text/event-stream` (or no Accept) — SSE response with `Content-Type: text/event-stream` and `event:` / `data:` / `id:` framing per `eventsource` spec. This is the canonical wire shape for this endpoint and what `EventSource` clients receive by default.
+- `Accept: application/json` — JSON envelope with the same `events` array shape as `GET /v1/runs/{runId}/events/poll`. Useful when the caller is a generic HTTP client without an SSE parser (curl, conformance probes, browser fetch without EventSource).
+
+Content negotiation is OPTIONAL. Hosts that serve SSE only and ignore Accept remain spec-conformant. Hosts that implement negotiation MUST ensure validation gates (`streamMode`, `bufferMs`) run BEFORE the content-shape branch — an invalid `streamMode` MUST return `400` regardless of the requested response format.
+
+The `Postgres` reference host at `examples/hosts/postgres/` implements this negotiation; the `SQLite` reference host serves SSE only.
+
 ---
 
 ## The four modes

@@ -124,6 +124,14 @@ function canonicalize(value: unknown): string {
   // hashes differently at verify time after a JSONB round-trip (which
   // drops undefined keys per JSON spec), producing a false hash-mismatch.
   // See spec/v1/auth-profiles.md §"Audit-log integrity".
+  //
+  // Strict RFC 8785 JCS doesn't define `undefined` semantics at all —
+  // `undefined` isn't a JSON value. A strict-JCS verifier in another
+  // language wouldn't observe a difference vs ours because the
+  // persisted JSON never contains undefined values; the filter exists
+  // to harmonize the in-memory pre-storage hash with the post-storage
+  // round-trip. Callers SHOULD NOT pass `undefined`-valued fields to
+  // logAudit() — the filter is defense-in-depth, not an endorsement.
   const keys = Object.keys(obj)
     .filter((k) => obj[k] !== undefined)
     .sort();

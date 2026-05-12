@@ -65,7 +65,6 @@ import {
   createInterrupt,
   getInterrupt,
   getInterruptByToken,
-  getActiveInterrupt,
   resolveApproval,
   resolveClarification,
   resolveExternalEvent,
@@ -867,6 +866,11 @@ async function runWorkflowClaimed(runId: string): Promise<void> {
       configurable.recursionLimit > 0
         ? configurable.recursionLimit
         : null;
+    // Defensive: only emit cap.breached ONCE per run, even if the
+    // executor revisits the loop (e.g., on a hypothetical future
+    // parallel-branches fixture). The current linear-chain fixtures
+    // exit on first breach; this guard protects forward compat.
+    let breachEmitted = false;
 
     const startIndex = row.next_node_index ?? 0;
     for (let i = startIndex; i < workflow.nodes.length; i++) {
@@ -891,7 +895,8 @@ async function runWorkflowClaimed(runId: string): Promise<void> {
       // breach event to fire BEFORE the over-limit node's
       // `node.started`, so `node.started` for the breaching node MUST
       // NOT appear. Emit cap.breached + run.failed, set terminal.
-      if (recursionLimit !== null && i + 1 > recursionLimit) {
+      if (recursionLimit !== null && i + 1 > recursionLimit && !breachEmitted) {
+        breachEmitted = true;
         await appendEvent(runId, 'cap.breached', {
           nodeId: node.id,
           data: {
@@ -1368,18 +1373,49 @@ async function handleGetRun(req: IncomingMessage, res: ServerResponse, runId: st
   // Suspended runs expose the active interrupt + currentNodeId so
   // conformance scenarios + clients can resolve via POST /v1/runs/
   // {runId}/interrupts/{nodeId} (or via POST /v1/interrupts/{token}
-  // for external-event interrupts). Mirrors the SQLite host's shape.
-  let interrupt: Record<string, unknown> | null = null;
-  let currentNodeId: string | undefined;
-  if (
+  // for external-event interrupts). Child runs spawned via
+  // `core.subWorkflow` are surfaced alongside so cascade scenarios
+  // can walk parent/child linkage. Both reads merged into one CTE
+  // round-trip — the prior two-query implementation added one DB
+  // hop per snapshot read; for production hosts that observability
+  // cost compounds quickly.
+  const q = await querier();
+  const isSuspended =
     row.status === 'waiting-approval' ||
     row.status === 'waiting-input' ||
-    row.status === 'waiting-external'
-  ) {
-    const q = await querier();
-    const active = await getActiveInterrupt(q, runId);
-    if (active) {
-      interrupt = {
+    row.status === 'waiting-external';
+
+  const snapshotRes = await q.query<{
+    active_interrupt: {
+      run_id: string;
+      node_id: string;
+      kind: string;
+      payload_json: unknown;
+      callback_token: string | null;
+    } | null;
+    child_runs: Array<{ run_id: string; status: string }> | null;
+  }>(
+    `WITH active AS (
+       SELECT run_id, node_id, kind, payload_json, callback_token
+         FROM interrupts
+        WHERE run_id = $1 AND resolved_at IS NULL
+        ORDER BY ctid DESC
+        LIMIT 1
+     ),
+     children AS (
+       SELECT run_id, status FROM runs
+        WHERE parent_run_id = $1
+        ORDER BY started_at ASC
+     )
+     SELECT
+       (SELECT row_to_json(active.*) FROM active) AS active_interrupt,
+       (SELECT COALESCE(json_agg(children.*), '[]'::json) FROM children) AS child_runs`,
+    [runId],
+  );
+  const merged = snapshotRes.rows[0]!;
+  const active = isSuspended ? merged.active_interrupt : null;
+  const interrupt: Record<string, unknown> | null = active
+    ? {
         kind: active.kind,
         nodeId: active.node_id,
         payload: active.payload_json,
@@ -1389,19 +1425,13 @@ async function handleGetRun(req: IncomingMessage, res: ServerResponse, runId: st
               callbackUrl: `/v1/interrupts/${active.callback_token}`,
             }
           : {}),
-      };
-      currentNodeId = active.node_id;
-    }
-  }
-
-  // Surface child runs spawned via `core.subWorkflow` so cascade
-  // scenarios can walk parent/child linkage. Empty array when none.
-  const q = await querier();
-  const childrenRes = await q.query<{ run_id: string; status: string }>(
-    `SELECT run_id, status FROM runs WHERE parent_run_id = $1 ORDER BY started_at ASC`,
-    [runId],
-  );
-  const childRuns = childrenRes.rows.map((c) => ({ runId: c.run_id, status: c.status }));
+      }
+    : null;
+  const currentNodeId = active ? active.node_id : undefined;
+  const childRuns = (merged.child_runs ?? []).map((c) => ({
+    runId: c.run_id,
+    status: c.status,
+  }));
 
   sendJSON(res, 200, {
     runId: row.run_id,
@@ -1412,6 +1442,10 @@ async function handleGetRun(req: IncomingMessage, res: ServerResponse, runId: st
     startedAt: row.started_at,
     endedAt: row.ended_at,
     ...(row.error_json ? { error: row.error_json } : {}),
+    // Surface the `configurable` overlay so debugging UIs can show
+    // "this run was created with {recursionLimit: 3, ...}". Omitted
+    // when the run was created without an overlay.
+    ...(row.configurable_json ? { configurable: row.configurable_json } : {}),
     ...(currentNodeId ? { currentNodeId } : {}),
     ...(interrupt ? { interrupt } : {}),
     ...(childRuns.length > 0 ? { childRuns } : {}),
@@ -1992,6 +2026,22 @@ async function handleEventsSse(
     return;
   }
 
+  // Validation-gate ordering invariant:
+  //
+  //   1. streamMode validation (this block)
+  //   2. bufferMs validation
+  //   3. Content negotiation (Accept-header dispatch SSE vs JSON)
+  //   4. Last-Event-ID parsing
+  //   5. Response setup + write
+  //
+  // Gates 1-2 MUST run BEFORE the content-negotiation branch so an
+  // invalid `streamMode` or out-of-range `bufferMs` returns 400 to
+  // EVERY client — JSON callers included. Reordering would cause
+  // invalid-input requests to silently get a 200 JSON envelope, which
+  // the conformance scenarios (stream-modes / stream-modes-mixed /
+  // stream-modes-buffer) treat as a host bug. Do not move these
+  // gates without re-running the full conformance suite.
+  //
   // Validate streamMode per stream-modes.md §"Mode selection". Single
   // mode OR comma-separated subset of {values, updates, messages,
   // debug}. `values` is exclusive — can't combine with others. Unknown
