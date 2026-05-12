@@ -18,7 +18,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable
 
 
 def _now_iso() -> str:
@@ -56,29 +56,56 @@ class RunEvent:
 class Run:
     run_id: str
     workflow_id: str
-    status: str  # 'pending' | 'running' | 'completed' | 'failed' | 'cancelled' | 'waiting-approval'
+    status: str  # 'pending' | 'running' | 'paused' | 'completed' | 'failed' | 'cancelled' | 'waiting-approval'
     inputs: dict[str, Any]
     started_at: str
     ended_at: str | None = None
     error: dict[str, str] | None = None
     cancel_requested: bool = False
+    pause_requested: bool = False
+    resume_event: threading.Event = field(default_factory=threading.Event)
     events: list[RunEvent] = field(default_factory=list)
     # SSE coordination: handlers acquire `cond` and wait on it; the
     # executor `notify_all`s after each event.append().
     cond: threading.Condition = field(default_factory=threading.Condition)
     cancel_event: threading.Event = field(default_factory=threading.Event)
 
+    def __post_init__(self) -> None:
+        # Resume event is set by default — the executor only blocks on it
+        # when the run transitions into `paused`.
+        self.resume_event.set()
+
     def is_terminal(self) -> bool:
         return self.status in TERMINAL_STATES
 
 
 class RunRegistry:
-    """Thread-safe (run_id → Run) mapping + execution kickoff."""
+    """Thread-safe (run_id → Run) mapping + execution kickoff.
 
-    def __init__(self, workflows: dict[str, dict[str, Any]]) -> None:
+    `event_hook` (if provided) is invoked synchronously after every event
+    append, on the executor thread. The hook receives the same dict shape
+    served to webhook receivers (`{type, runId, seq, timestamp, nodeId,
+    data?}`).
+
+    **Contract.** Hooks MUST return promptly — blocking the executor
+    stalls the run. Hooks that perform I/O MUST dispatch the work to a
+    background thread before returning. The reference webhook fan-out
+    (`webhooks.fan_out_event`) does exactly this: per-subscriber delivery
+    runs on daemon threads so the executor never waits on a remote
+    receiver. Hooks that raise are swallowed (logged loosely below) so a
+    misbehaving subscriber cannot fail the run.
+    """
+
+    def __init__(
+        self,
+        workflows: dict[str, dict[str, Any]],
+        *,
+        event_hook: Callable[[dict[str, Any]], None] | None = None,
+    ) -> None:
         self._runs: dict[str, Run] = {}
         self._workflows = workflows
         self._lock = threading.Lock()
+        self._event_hook = event_hook
 
     def get(self, run_id: str) -> Run | None:
         with self._lock:
@@ -113,10 +140,52 @@ class RunRegistry:
             return None
         run.cancel_requested = True
         run.cancel_event.set()
+        # If paused, releasing the resume gate lets the executor reach its
+        # cancel-check and emit `run.cancelled` promptly.
+        run.resume_event.set()
         # Wake any SSE waiters so they observe the cancellation event quickly.
         with run.cond:
             run.cond.notify_all()
         return run
+
+    def pause(self, run_id: str) -> tuple[Run | None, str]:
+        """Request pause for an in-progress run.
+
+        Returns (run, outcome) where outcome is one of:
+          - "paused"          — pause flag set; executor will park at the
+                                next node boundary (drain-current-node policy
+                                per pause-resume.md §"DrainPolicy").
+          - "already_paused"  — run was already paused.
+          - "terminal"        — run already terminal; pause has no effect.
+          - "not_found"       — unknown runId.
+        """
+        run = self.get(run_id)
+        if run is None:
+            return None, "not_found"
+        if run.is_terminal():
+            return run, "terminal"
+        if run.status == "paused" or run.pause_requested:
+            return run, "already_paused"
+        run.pause_requested = True
+        run.resume_event.clear()
+        return run, "paused"
+
+    def resume(self, run_id: str) -> tuple[Run | None, str]:
+        """Lift a pause on a paused run.
+
+        Returns (run, outcome): one of "resumed" / "not_paused" / "terminal"
+        / "not_found".
+        """
+        run = self.get(run_id)
+        if run is None:
+            return None, "not_found"
+        if run.is_terminal():
+            return run, "terminal"
+        if not run.pause_requested and run.status != "paused":
+            return run, "not_paused"
+        run.pause_requested = False
+        run.resume_event.set()
+        return run, "resumed"
 
     # ─── Execution ────────────────────────────────────────────────────────
 
@@ -132,6 +201,13 @@ class RunRegistry:
         with run.cond:
             run.events.append(event)
             run.cond.notify_all()
+        if self._event_hook is not None:
+            try:
+                self._event_hook(event.to_dict())
+            except Exception:
+                # Best-effort fan-out; never propagate hook failures into
+                # the executor. Hosts MAY add structured logging here.
+                pass
 
     def _execute_workflow(self, run: Run) -> None:
         workflow = self._workflows.get(run.workflow_id)
@@ -148,6 +224,18 @@ class RunRegistry:
         for node in workflow.get("nodes", []):
             if run.cancel_requested:
                 break
+            # drain-current-node pause policy per rest-endpoints.md
+            # §pause/resume (`drainPolicy: 'drain-current-node'`): pause
+            # requested between nodes parks here until resume() or
+            # cancel() fires.
+            if run.pause_requested:
+                run.status = "paused"
+                self._append_event(run, "run.paused")
+                run.resume_event.wait()
+                if run.cancel_requested:
+                    break
+                run.status = "running"
+                self._append_event(run, "run.resumed")
             outcome = self._execute_node(run, node)
             if outcome == "failed":
                 run.status = "failed"
