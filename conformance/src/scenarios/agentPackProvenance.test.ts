@@ -1,5 +1,6 @@
 /**
  * Multi-Agent Shift Phase 2 — sourceManifestId provenance round-trip.
+ * Normative reference: RFCS/0003-agent-packs.md
  *
  * Verifies that when a workspace agent originates from a pack install,
  * the agent's runtime AgentRef AND the exported AgentManifest both

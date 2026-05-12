@@ -1,5 +1,6 @@
 /**
  * Multi-Agent Shift Phase 1 — `message` reducer idempotency invariant.
+ * Normative reference: RFCS/0002-agent-identity-and-reasoning-events.md
  *
  * Verifies the canonical `message` reducer's contract from
  * `spec/v1/channels-and-reducers.md` §`message`:

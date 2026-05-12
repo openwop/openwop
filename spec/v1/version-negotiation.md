@@ -235,6 +235,26 @@ The conformance fixture `conformance-version-fold` (see `conformance/fixtures.md
 2. `GET /v1/runs/{runId}` returns a valid `RunSnapshot` for each (forward-compat fold-best-effort tolerates the version mismatch).
 3. The event log is readable via `GET /v1/runs/{runId}/events/poll` for each run.
 
+### `events/poll` forward-compat tolerance (normative)
+
+`GET /v1/runs/{runId}/events/poll` accepts an optional cursor parameter naming the highest sequence number the caller has already observed. The canonical parameter name is `lastSequence`; hosts MAY also accept `since` for back-compat with pre-v1.0 deployments, but `lastSequence` is authoritative.
+
+A request with `lastSequence` strictly greater than the run's current highest event sequence MUST return `200 OK` with the canonical response envelope and an empty `events` array. Hosts MUST NOT return `400`, `404`, `416`, or any other status for the "past-end" case — that pattern is the forward-compat recovery path used by clients that recover from a deploy that renumbered the sequence space, and MUST be benign.
+
+The response shape for past-end requests:
+
+```json
+{
+  "runId": "<runId>",
+  "events": [],
+  "lastEventSeq": <integer>,
+  "runStatus": "<RunStatus>",
+  "isTerminal": true | false
+}
+```
+
+`lastEventSeq` echoes the caller's `lastSequence` when nothing newer exists, OR the run's highest emitted sequence when the host can determine it; either is acceptable. `isTerminal` reflects the run's current status.
+
 ---
 
 ## Deploy ordering decision matrix

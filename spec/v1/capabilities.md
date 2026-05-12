@@ -358,6 +358,8 @@ Multi-Agent Shift Phase 4 capability. When `true`, host advertises that it imple
 
 **Conformance.** `conversationLifecycle.test.ts` / `conversationVsLegacySuspend.test.ts` / `conversationReplayDeterminism.test.ts` / `conversationCapabilityNegotiation.test.ts` gate on this flag.
 
+**Refusal contract (normative).** A workflow whose `nodes[].typeId` references `core.conversationGate` and is submitted to a host whose `/.well-known/openwop` does NOT advertise `conversationPrimitive: true` MUST be refused. Hosts MAY refuse at workflow registration time OR at run-create time; the wire-shape semantics are otherwise identical (see §"Unsupported capability" below). The same refusal contract applies symmetrically to other capability-gated typeIds — see §"Unsupported capability" for the canonical envelope and the typeId → capability map.
+
 **Backward compat.** Pre-MAS hosts omit the field. v1.0 conformance baseline reads the field when present and skips conversation scenarios when absent.
 
 ### `observability`
@@ -498,6 +500,55 @@ Extension of the existing auth advertisement:
 ```
 
 Profile-string canonicalization follows `auth-profiles.md` §"Profile catalog". When `openwop-audit-log-integrity` appears in `auth.profiles`, the `auditLogIntegrity` block is REQUIRED.
+
+---
+
+## Unsupported capability — refusal contract
+
+Workflows MAY reference typeIds that are gated on optional capability advertisement (e.g., `core.conversationGate` is gated on `conversationPrimitive: true`). A host that does not advertise the gating capability MUST refuse such workflows. Refusal may occur at either of two boundaries:
+
+1. **Workflow registration** (e.g., on `POST /v1/workflows` or equivalent): the host refuses the workflow document before it can be referenced by `POST /v1/runs`.
+2. **Run creation** (`POST /v1/runs`): the host accepts the workflow document but refuses to create a run from it.
+
+The protocol does NOT prescribe which boundary to use; hosts MAY choose either. What hosts MUST NOT do is silently fall back to a substitute behavior (e.g., demote `core.conversationGate` to `core.clarificationGate`) — the refusal is observable.
+
+### Wire envelope
+
+The refusal MUST use the canonical error envelope (`error-envelope.schema.json`) with:
+
+- HTTP status code one of `400 Bad Request`, `404 Not Found`, or `422 Unprocessable Entity`. `400` is recommended when the host validates capability fitness eagerly; `422` is recommended when the host accepts the request shape but rejects on capability resolution; `404` is acceptable when the host treats the unregisterable workflow as not-found.
+- `error.code` from the closed set:
+  - `validation_error` (broadest — when capability gating is part of request validation),
+  - `capability_required` (specific — preferred when the host wants to be unambiguous),
+  - `not_found` (when registration was refused and the workflow is consequently unresolvable).
+- `details.requiredCapability` SHOULD name the capability key whose absence triggered the refusal (e.g., `"conversationPrimitive"`).
+- `details.offendingTypeId` SHOULD name the typeId in the workflow that triggered the gating (e.g., `"core.conversationGate"`).
+
+```json
+{
+  "error": "capability_required",
+  "message": "Workflow \"conformance-conversation-capability-negotiation\" references core.conversationGate, but this host does not advertise capabilities.conversationPrimitive: true.",
+  "details": {
+    "requiredCapability": "conversationPrimitive",
+    "offendingTypeId": "core.conversationGate",
+    "nodeId": "convo"
+  }
+}
+```
+
+### Capability-gated typeId map (normative)
+
+| typeId | Gating capability | Reference |
+|---|---|---|
+| `core.conversationGate` | `conversationPrimitive: true` | §`conversationPrimitive` above |
+| `core.orchestrator.supervisor` | `orchestrator.supported: true` | §`orchestrator` (RFC 0006) |
+| `core.dispatch` | `dispatch.supported: true` | §`dispatch` (RFC 0007) |
+
+Future RFCs adding capability-gated reserved typeIds MUST extend this table and follow the same refusal contract.
+
+### Conformance
+
+`conversationCapabilityNegotiation.test.ts` exercises the refusal contract for `core.conversationGate` against hosts that do not advertise `conversationPrimitive: true`. Analogous scenarios for the other gated typeIds ship as their gating capabilities migrate to general advertisement.
 
 ---
 

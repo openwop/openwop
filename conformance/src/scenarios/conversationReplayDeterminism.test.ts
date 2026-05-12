@@ -1,5 +1,6 @@
 /**
  * Multi-Agent Shift Phase 4 — replay-fork of a conversation produces identical log.
+ * Normative reference: RFCS/0005-conversation.md
  *
  * Verifies that running `:fork` on a conversation-bearing run yields
  * a child run whose conversation log (folded via the `message` reducer)

@@ -1,5 +1,6 @@
 /**
  * Multi-Agent Shift Phase 3 — SR-1 secret-redaction invariant.
+ * Normative reference: RFCS/0004-memory-layer.md
  *
  * Verifies the SR-1 normative invariant: when a memory write contains
  * a value the run's BYOK vault resolved during the run, the persisted

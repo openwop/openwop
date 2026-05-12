@@ -1,5 +1,6 @@
 /**
  * Multi-Agent Shift Phase 4 — capability-gate refusal contract.
+ * Normative reference: RFCS/0005-conversation.md
  *
  * Verifies that a host which does NOT advertise
  * `capabilities.conversationPrimitive: true` MUST refuse a workflow

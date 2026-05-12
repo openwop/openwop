@@ -1,5 +1,6 @@
 /**
  * Multi-Agent Shift Phase 2 — agent-pack install registers AgentManifest entries.
+ * Normative reference: RFCS/0003-agent-packs.md
  *
  * Verifies that a pack containing an `agents[]` array surfaces those
  * agent manifests via the host's pack registry. The wire-shape contract

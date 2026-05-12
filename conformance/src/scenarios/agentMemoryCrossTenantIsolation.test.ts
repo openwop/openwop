@@ -1,5 +1,6 @@
 /**
  * Multi-Agent Shift Phase 3 — CTI-1 cross-tenant isolation invariant.
+ * Normative reference: RFCS/0004-memory-layer.md
  *
  * Verifies the CTI-1 normative invariant: a `memoryRef` resolved by a
  * MemoryAdapter MUST return entries scoped to a single tenant. If

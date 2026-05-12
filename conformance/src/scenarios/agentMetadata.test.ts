@@ -1,5 +1,6 @@
 /**
  * Multi-Agent Shift Phase 1 — agent identity (RunSnapshot.agent / runOrchestrator).
+ * Normative reference: RFCS/0002-agent-identity-and-reasoning-events.md
  *
  * Verifies:
  *   1. Hosts advertising `capabilities.agents.supported: true` populate
