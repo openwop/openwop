@@ -422,12 +422,16 @@ paths:
           application/json:
             schema:
               type: object
-              required: [fromSeq, mode]
+              required: [mode]
               properties:
                 fromSeq:
                   type: integer
                   minimum: 0
-                  description: Inclusive — events `< fromSeq` are fixed history; `>= fromSeq` are re-executed.
+                  description: |
+                    Inclusive — events `< fromSeq` are fixed history; `>= fromSeq` are re-executed.
+                    Required for `branch` (the branch point). Optional for `replay`; when omitted,
+                    defaults to `0` (full re-execution from source-run start) per `replay.md`
+                    §"Replay-mode defaults".
                 mode:
                   type: string
                   enum: [replay, branch]

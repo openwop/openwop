@@ -66,9 +66,15 @@ Body:
 
 | Field | Type | Required for | Notes |
 |---|---|---|---|
-| `fromSeq` | `number` | both | Inclusive — events `< fromSeq` are fixed history; `>= fromSeq` are re-executed. `0` = full re-execution from start. |
+| `fromSeq` | `number` | branch only | Inclusive — events `< fromSeq` are fixed history; `>= fromSeq` are re-executed. `0` = full re-execution from start. Optional for `replay` — see "Replay-mode defaults" below. |
 | `mode` | `'replay' \| 'branch'` | both | Determines re-execution semantics (above). |
 | `runOptionsOverlay` | `RunOptions` (see `run-options.md`) | branch only | MUST be omitted or empty for `replay` (replay must be deterministic — overlays would break that). |
+
+#### Replay-mode defaults
+
+For `mode: "replay"`, `fromSeq` is optional and defaults to `0` — a minimal `{"mode": "replay"}` request body is a valid full-replay probe. The default matches the natural "re-execute everything" semantic and lets conformance probes test replay support without inspecting the source run's event log first.
+
+For `mode: "branch"`, `fromSeq` MUST be supplied — the branch point has no natural default (a branch from sequence 0 is indistinguishable from creating a fresh run, so requiring an explicit value catches caller bugs).
 
 ### Response
 
