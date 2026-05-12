@@ -216,7 +216,7 @@ An OpenWOP host that supports A2A composition advertises the capability via `/.w
 
 `a2a-task-roundtrip.test.ts` lands in the suite with three subtests:
 
-- **AgentCard + task lifecycle** — fetches `/agent.json`, asserts `protocolVersion` + `skills[]` shape, drives a SUBMITTED → WORKING → COMPLETED task lifecycle. Runs against either the in-process synthetic peer or a real reference peer (see env-var modes below).
+- **AgentCard + task lifecycle** — fetches `/.well-known/agent-card.json` (A2A 0.3 well-known path), asserts `protocolVersion` + `skills[]` shape, then sends `message/send` over JSON-RPC (endpoint discovered via `card.additionalInterfaces` or `card.url`) and polls `tasks/get` through SUBMITTED → WORKING → COMPLETED. Accepts both Task and Message envelopes from `message/send` per A2A 0.3 spec. Runs against either the in-process synthetic peer or a real reference peer (see env-var modes below).
 - **Drift point #3** — fake-peer-only: forces the peer to `AUTH_REQUIRED`, asserts the host projects this to `waiting-input` per §"State projection (reverse)".
 - **Drift point #4** — fake-peer-only: forces the peer to `REJECTED`, asserts the host projects this to terminal `failed` with `reason: 'rejected_by_remote'`.
 
@@ -225,7 +225,9 @@ Two modes, controlled by env vars:
 - **Synthetic peer** (`OPENWOP_A2A_FAKE_PEER=true`): boots an in-process minimal A2A peer (the `a2a-fake-peer.ts` library at `conformance/src/lib/`). Exposes a state-forcing API so the drift-point subtests can deterministically reproduce AUTH_REQUIRED + REJECTED.
 - **Real reference peer** (`OPENWOP_A2A_REAL_PEER_URL=<base-url>`): points the AgentCard + task-lifecycle probe at a real A2A reference peer. Assertions stay shape-only — a real peer's task transitions on its own schedule, not on a state-forcing API. Drift-point subtests soft-skip in this mode.
 
-The real-impl path is the **Phase 3 T3.4 interop-evidence** for `docs/PROTOCOL-GAP-CLOSURE-PLAN.md`. To collect it: run a reference A2A peer (e.g., the Google reference implementation if/when published) on a local port, set `OPENWOP_A2A_REAL_PEER_URL=http://localhost:<port>`, run the scenario. The test logs the skill name + initial task state so the interop evidence is visible in the CI output.
+The real-impl path is the **Phase 3 T3.4 interop-evidence** for `docs/PROTOCOL-GAP-CLOSURE-PLAN.md`. To collect it: run a reference A2A peer (e.g., a `@a2a-js/sdk` server) on a local port, set `OPENWOP_A2A_REAL_PEER_URL=http://localhost:<port>`, run the scenario. The test logs the skill name + response envelope kind (`task` or `message`) so the interop evidence is visible in the CI output. First real-impl interop evidence landed 2026-05-12 against `@a2a-js/sdk@0.3.13` — see `INTEROP-MATRIX.md` §"Composition partners".
+
+> **Wire-shape spelling drift to remember:** the openwop spec references the A2A `TaskState` enum in the UPPERCASE form from `a2a.proto` (`SUBMITTED`, `WORKING`, `INPUT_REQUIRED`, `AUTH_REQUIRED`, `COMPLETED`, `CANCELED`, `FAILED`, `REJECTED`). The A2A 0.3 JSON-RPC wire form uses the lowercase + hyphenated variants (`submitted`, `working`, `input-required`, `auth-required`, `completed`, `canceled`, `failed`, `rejected`). Hosts and probes that speak JSON-RPC MUST emit + accept the lowercase-hyphen form on the wire; documentation and gRPC transports keep the UPPERCASE form.
 
 ---
 

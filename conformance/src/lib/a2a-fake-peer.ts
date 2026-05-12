@@ -3,24 +3,29 @@
  *
  * The A2A protocol (https://a2a-protocol.org/) defines an `AgentCard` for
  * discovery plus a Task lifecycle whose `TaskState` enum drives most of
- * the conformance burden. We expose just enough of the HTTP+JSON
+ * the conformance burden. We expose just enough of A2A v0.3 JSON-RPC
  * transport to let conformance scenarios drive the host through the
  * four documented drift points from `spec/v1/a2a-integration.md`
  * §"State projection".
  *
- * Endpoints (minimal):
- *   GET  /agent.json                 — AgentCard
- *   POST /tasks                      — create a task; returns { taskId, state: 'SUBMITTED' }
- *   GET  /tasks/{taskId}             — poll task state + last message
- *   POST /tasks/{taskId}/messages    — append a message (used by host to resume an INPUT_REQUIRED task)
+ * Endpoints (A2A v0.3 wire shape):
+ *   GET  /.well-known/agent-card.json — AgentCard at the spec-mandated
+ *                                       well-known path (per
+ *                                       @a2a-js/sdk@0.3.13 `AGENT_CARD_PATH`)
+ *   POST /a2a/jsonrpc                  — JSON-RPC dispatch:
+ *                                          - method `message/send` →
+ *                                            creates a Task, returns Task obj
+ *                                          - method `tasks/get` → fetches Task
  *
  * Test fixtures set the *next* state transition via `setNextState(...)`
  * so a single scenario can walk the peer through SUBMITTED → WORKING →
  * INPUT_REQUIRED → COMPLETED (or AUTH_REQUIRED, or REJECTED) without
- * implementing a real agent.
+ * implementing a real agent. The internal API uses the UPPERCASE enum
+ * from openwop's a2a-integration.md (which references the gRPC enum);
+ * wire responses use the v0.3 JSON-RPC lowercase-hyphen form.
  *
  * @see spec/v1/a2a-integration.md §"State projection"
- * @see https://a2a-protocol.org/latest/specification/
+ * @see https://a2a-protocol.org/v0.3.0/specification
  */
 
 import { createServer, type Server } from 'node:http';
@@ -37,16 +42,32 @@ export type A2ATaskState =
   | 'CANCELED'
   | 'REJECTED';
 
+/** Translate internal UPPERCASE state to A2A v0.3 wire form (lowercase + hyphen). */
+function wireState(s: A2ATaskState): string {
+  switch (s) {
+    case 'UNSPECIFIED': return 'unknown';
+    case 'SUBMITTED': return 'submitted';
+    case 'WORKING': return 'working';
+    case 'INPUT_REQUIRED': return 'input-required';
+    case 'AUTH_REQUIRED': return 'auth-required';
+    case 'COMPLETED': return 'completed';
+    case 'FAILED': return 'failed';
+    case 'CANCELED': return 'canceled';
+    case 'REJECTED': return 'rejected';
+  }
+}
+
 interface A2ATask {
-  taskId: string;
+  id: string;
+  contextId: string;
   state: A2ATaskState;
-  messages: Array<{ role: 'user' | 'agent'; content: unknown }>;
-  metadata?: Record<string, unknown>;
+  history: Array<{ role: 'user' | 'agent'; parts: unknown[] }>;
 }
 
 export interface A2APeerInvocation {
   readonly method: string;
   readonly path: string;
+  readonly rpcMethod: string | null;
   readonly body: unknown;
   readonly timestamp: number;
 }
@@ -61,7 +82,14 @@ export class A2AFakePeer {
 
   async start(port: number = 0): Promise<void> {
     return new Promise((resolve, reject) => {
-      const server = createServer((req, res) => this._handle(req, res));
+      const server = createServer((req, res) => {
+        this._handle(req, res).catch((err) => {
+          if (!res.headersSent) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: String(err) }));
+          }
+        });
+      });
       server.on('error', reject);
       server.listen(port, '127.0.0.1', () => {
         const addr = server.address() as AddressInfo;
@@ -121,6 +149,21 @@ export class A2AFakePeer {
     return this._tasks.get(taskId);
   }
 
+  private _taskToWire(t: A2ATask): Record<string, unknown> {
+    return {
+      id: t.id,
+      kind: 'task',
+      contextId: t.contextId,
+      status: { state: wireState(t.state) },
+      history: t.history.map((m) => ({
+        kind: 'message',
+        role: m.role,
+        parts: m.parts,
+        messageId: `msg-${t.id}-${t.history.indexOf(m)}`,
+      })),
+    };
+  }
+
   private async _handle(
     req: import('node:http').IncomingMessage,
     res: import('node:http').ServerResponse,
@@ -138,28 +181,40 @@ export class A2AFakePeer {
       }
     }
 
+    const rpcMethod =
+      body && typeof body === 'object' && body !== null && 'method' in body
+        ? String((body as { method: unknown }).method)
+        : null;
+
     this._invocations.push({
       method: req.method ?? 'GET',
       path: url,
+      rpcMethod,
       body,
       timestamp: Date.now(),
     });
 
-    // GET /agent.json
-    if (req.method === 'GET' && url.startsWith('/agent.json')) {
+    // GET /.well-known/agent-card.json  — A2A v0.3 well-known path
+    if (req.method === 'GET' && url.startsWith('/.well-known/agent-card.json')) {
       const card = {
         protocolVersion: '0.3.0',
         name: 'openwop-conformance-fake-a2a',
         description: 'Synthetic A2A peer for openwop conformance suite',
-        url: this.endpoint(),
+        url: `${this.endpoint()}/a2a/jsonrpc`,
         version: '1.0.0',
-        capabilities: { streaming: false },
+        capabilities: { streaming: false, pushNotifications: false },
         skills: [
           {
             id: 'echo',
             name: 'echo',
             description: 'Returns input verbatim',
+            tags: ['echo'],
           },
+        ],
+        defaultInputModes: ['text'],
+        defaultOutputModes: ['text'],
+        additionalInterfaces: [
+          { url: `${this.endpoint()}/a2a/jsonrpc`, transport: 'JSONRPC' },
         ],
       };
       res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -167,53 +222,85 @@ export class A2AFakePeer {
       return;
     }
 
-    // POST /tasks — create task
-    if (req.method === 'POST' && url === '/tasks') {
-      const taskId = `task-${++this._taskIdCounter}`;
-      const initial: A2ATaskState = this._nextStateOverride ?? 'SUBMITTED';
-      this._nextStateOverride = null;
-      const task: A2ATask = {
-        taskId,
-        state: initial,
-        messages: body && typeof body === 'object' ? [{ role: 'user', content: body }] : [],
-      };
-      this._tasks.set(taskId, task);
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ taskId, state: task.state }));
-      return;
-    }
-
-    // GET /tasks/{taskId}
-    const getMatch = url.match(/^\/tasks\/([^/?]+)$/);
-    if (req.method === 'GET' && getMatch) {
-      const task = this._tasks.get(decodeURIComponent(getMatch[1]));
-      if (!task) {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'not_found' }));
+    // POST /a2a/jsonrpc  — A2A v0.3 JSON-RPC transport
+    if (req.method === 'POST' && url === '/a2a/jsonrpc') {
+      if (
+        !body ||
+        typeof body !== 'object' ||
+        (body as { jsonrpc?: unknown }).jsonrpc !== '2.0'
+      ) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(
+          JSON.stringify({
+            jsonrpc: '2.0',
+            id: null,
+            error: { code: -32600, message: 'Invalid JSON-RPC envelope' },
+          }),
+        );
         return;
       }
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(task));
-      return;
-    }
+      const rpc = body as { id?: string | number; method?: string; params?: unknown };
 
-    // POST /tasks/{taskId}/messages — host resumes an INPUT_REQUIRED task
-    const msgMatch = url.match(/^\/tasks\/([^/?]+)\/messages$/);
-    if (req.method === 'POST' && msgMatch) {
-      const task = this._tasks.get(decodeURIComponent(msgMatch[1]));
-      if (!task) {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'not_found' }));
+      if (rpc.method === 'message/send') {
+        const taskId = `task-${++this._taskIdCounter}`;
+        const contextId = `ctx-${taskId}`;
+        const initial: A2ATaskState = this._nextStateOverride ?? 'SUBMITTED';
+        this._nextStateOverride = null;
+        const userMessage = (rpc.params as { message?: { parts?: unknown[] } } | undefined)
+          ?.message;
+        const task: A2ATask = {
+          id: taskId,
+          contextId,
+          state: initial,
+          history: userMessage
+            ? [{ role: 'user', parts: userMessage.parts ?? [] }]
+            : [],
+        };
+        this._tasks.set(taskId, task);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(
+          JSON.stringify({
+            jsonrpc: '2.0',
+            id: rpc.id ?? null,
+            result: this._taskToWire(task),
+          }),
+        );
         return;
       }
-      task.messages.push({ role: 'user', content: body });
-      // Move from INPUT_REQUIRED back to WORKING then to COMPLETED for the
-      // simple roundtrip. Tests that need a different next-state set it
-      // via setNextState() before posting the message.
-      task.state = this._nextStateOverride ?? 'COMPLETED';
-      this._nextStateOverride = null;
+
+      if (rpc.method === 'tasks/get') {
+        const params = (rpc.params ?? {}) as { id?: string };
+        const task = params.id ? this._tasks.get(params.id) : undefined;
+        if (!task) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(
+            JSON.stringify({
+              jsonrpc: '2.0',
+              id: rpc.id ?? null,
+              error: { code: -32001, message: 'Task not found' },
+            }),
+          );
+          return;
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(
+          JSON.stringify({
+            jsonrpc: '2.0',
+            id: rpc.id ?? null,
+            result: this._taskToWire(task),
+          }),
+        );
+        return;
+      }
+
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ taskId: task.taskId, state: task.state }));
+      res.end(
+        JSON.stringify({
+          jsonrpc: '2.0',
+          id: rpc.id ?? null,
+          error: { code: -32601, message: `Method not found: ${rpc.method}` },
+        }),
+      );
       return;
     }
 

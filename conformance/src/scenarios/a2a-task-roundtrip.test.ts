@@ -52,8 +52,43 @@ function probePeer(): { url: string; isReal: boolean } | null {
   return null;
 }
 
+/**
+ * POST a JSON-RPC 2.0 envelope at `endpoint` and return the parsed
+ * response. Throws if the envelope is malformed; surfaces JSON-RPC
+ * error responses as a `{error}` field per spec so callers can assert
+ * on them.
+ */
+async function rpc(
+  endpoint: string,
+  method: string,
+  params: unknown,
+  id: number,
+): Promise<{
+  status: number;
+  result?: Record<string, unknown>;
+  error?: { code: number; message: string };
+}> {
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({ jsonrpc: '2.0', id, method, params }),
+  });
+  const body = (await res.json()) as {
+    result?: Record<string, unknown>;
+    error?: { code: number; message: string };
+  };
+  const out: {
+    status: number;
+    result?: Record<string, unknown>;
+    error?: { code: number; message: string };
+  } = { status: res.status };
+  if (body.result !== undefined) out.result = body.result;
+  if (body.error !== undefined) out.error = body.error;
+  return out;
+}
+
 describe('a2a-task-roundtrip: AgentCard + task lifecycle', () => {
-  it('AgentCard exposes protocolVersion + skills; task SUBMITTED → terminal state', async () => {
+  it('AgentCard exposes protocolVersion + skills; message/send + tasks/get round-trip per A2A v0.3 JSON-RPC', async () => {
     const probe = probePeer();
     if (!probe) {
       // eslint-disable-next-line no-console
@@ -65,56 +100,92 @@ describe('a2a-task-roundtrip: AgentCard + task lifecycle', () => {
     }
     if (!probe.isReal) getA2AFakePeer()!.reset();
 
-    // AgentCard fetch.
-    const card = await fetch(`${probe.url}/agent.json`);
+    // AgentCard at the A2A v0.3 well-known path
+    // (`AGENT_CARD_PATH` from @a2a-js/sdk: `.well-known/agent-card.json`).
+    const card = await fetch(`${probe.url}/.well-known/agent-card.json`);
     expect(card.status).toBe(200);
     const cardJson = (await card.json()) as {
       protocolVersion?: string;
-      skills?: ReadonlyArray<{ name?: string }>;
+      skills?: ReadonlyArray<{ id?: string; name?: string }>;
+      url?: string;
+      additionalInterfaces?: ReadonlyArray<{ url?: string; transport?: string }>;
     };
     expect(typeof cardJson.protocolVersion).toBe('string');
     expect(Array.isArray(cardJson.skills)).toBe(true);
     expect((cardJson.skills ?? []).length).toBeGreaterThan(0);
 
+    // Find the JSON-RPC transport endpoint. A2A v0.3 hosts MAY advertise
+    // multiple transports via `additionalInterfaces`; we pick the first
+    // JSONRPC entry, falling back to `card.url`.
+    const jsonrpcIface = (cardJson.additionalInterfaces ?? []).find(
+      (i) => i.transport === 'JSONRPC',
+    );
+    const rpcUrl = jsonrpcIface?.url ?? cardJson.url ?? `${probe.url}/a2a/jsonrpc`;
+    expect(typeof rpcUrl).toBe('string');
+
     if (probe.isReal) {
-      // Real-peer interop evidence (Phase 3 T3.4). Skip the
-      // state-advancement assertions — a real peer's task transitions
-      // on its own schedule (or in response to peer-side events we
-      // don't control). Assertion stays shape-only: a task we create
-      // returns a taskId + a valid initial state.
-      const first = cardJson.skills?.[0];
-      const create = await fetch(`${probe.url}/tasks`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ skill: first?.name, input: {} }),
-      });
-      expect(create.status).toBeGreaterThanOrEqual(200);
-      expect(create.status).toBeLessThan(300);
-      const createBody = (await create.json()) as { taskId?: string; state?: string };
-      expect(typeof createBody.taskId).toBe('string');
-      expect(typeof createBody.state).toBe('string');
+      // Real-peer interop evidence (Phase 3 T3.4). A2A v0.3 returns
+      // EITHER a Task (long-running) OR a Message (direct response)
+      // for `message/send` — both are spec-conformant; we only assert
+      // the envelope shape.
+      const firstSkill = cardJson.skills?.[0];
+      const sendRes = await rpc(
+        rpcUrl,
+        'message/send',
+        {
+          message: {
+            kind: 'message',
+            messageId: `probe-${Date.now()}`,
+            role: 'user',
+            parts: [{ kind: 'text', text: 'interop ping' }],
+          },
+        },
+        1,
+      );
+      expect(sendRes.status).toBe(200);
+      // Spec-conformant: result is either a Task or a Message envelope.
+      const sendResult = sendRes.result ?? {};
+      const kind = (sendResult.kind ?? '') as string;
+      expect(['task', 'message']).toContain(kind);
       // eslint-disable-next-line no-console
       console.warn(
         `[a2a-task-roundtrip] real-peer interop OK against ${probe.url} ` +
-          `(skill=${first?.name}, taskId=${createBody.taskId}, initial=${createBody.state})`,
+          `(skill=${firstSkill?.id ?? firstSkill?.name}, kind=${kind})`,
       );
       return;
     }
 
     // Fake-peer path: deterministic state forcing, assert verbatim.
     const fake = getA2AFakePeer()!;
-    const create = await fetch(`${probe.url}/tasks`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ skill: 'echo', input: { text: 'hello' } }),
-    });
-    expect(create.status).toBe(200);
-    const { taskId } = (await create.json()) as { taskId: string; state: string };
-    fake.advanceTask(taskId, 'WORKING');
-    fake.advanceTask(taskId, 'COMPLETED');
-    const get = await fetch(`${probe.url}/tasks/${taskId}`);
-    const finalTask = (await get.json()) as { state: string };
-    expect(finalTask.state).toBe('COMPLETED');
+    const sendRes = await rpc(
+      rpcUrl,
+      'message/send',
+      {
+        message: {
+          kind: 'message',
+          messageId: 'probe-fake-1',
+          role: 'user',
+          parts: [{ kind: 'text', text: 'hello' }],
+        },
+      },
+      1,
+    );
+    expect(sendRes.status).toBe(200);
+    expect(sendRes.error).toBeUndefined();
+    const task = sendRes.result as { id?: string; kind?: string; status?: { state?: string } };
+    expect(task.kind).toBe('task');
+    expect(typeof task.id).toBe('string');
+
+    // Advance through WORKING → COMPLETED via the fake's internal API.
+    fake.advanceTask(task.id!, 'WORKING');
+    fake.advanceTask(task.id!, 'COMPLETED');
+
+    const getRes = await rpc(rpcUrl, 'tasks/get', { id: task.id }, 2);
+    expect(getRes.status).toBe(200);
+    expect(getRes.error).toBeUndefined();
+    const finalTask = getRes.result as { status?: { state?: string } };
+    // A2A v0.3 wire form uses lowercase-hyphen state names.
+    expect(finalTask.status?.state).toBe('completed');
   });
 });
 

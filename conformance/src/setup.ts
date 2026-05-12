@@ -163,7 +163,7 @@ async function maybeStartA2AFakePeer(): Promise<void> {
   // eslint-disable-next-line no-console
   console.error(
     `[openwop-conformance setup] A2A fake peer listening at ${peer.endpoint()}. ` +
-      `AgentCard at ${peer.endpoint()}/agent.json.`,
+      `AgentCard at ${peer.endpoint()}/.well-known/agent-card.json.`,
   );
 }
 
