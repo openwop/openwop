@@ -4,10 +4,16 @@ on:
   pull_request:
     paths:
       - 'registry/**'
+      - '.github/workflows/registry-publish.yml'
   push:
     branches: [main]
     paths:
       - 'registry/**'
+      - '.github/workflows/registry-publish.yml'
+  # Manual redeploy without a content change. Useful when the deploy
+  # tooling itself was updated and you want to validate end-to-end
+  # without forcing a registry-tree commit.
+  workflow_dispatch:
 
 jobs:
   validate:
