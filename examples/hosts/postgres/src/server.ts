@@ -106,6 +106,7 @@ import {
   setupMemorySchema,
   REFERENCE_MEMORY_CAPABILITY,
 } from './memory-adapter.js';
+import { REFERENCE_AGENTS_CAPABILITY } from './agent-events.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const HOST = process.env.OPENWOP_HOST ?? '127.0.0.1';
@@ -1923,6 +1924,16 @@ function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
         // server-side; CTI-1 cross-tenant isolation upheld via
         // tenant_id filtering on every query.
         memory: REFERENCE_MEMORY_CAPABILITY,
+        // Phase I.2 — capabilities.md §`agents`. Multi-Agent Shift
+        // Phase 1-6 advertisement. Host emits the canonical event
+        // shapes (agent.reasoned/toolCalled/toolReturned/handoff/
+        // decided + runOrchestrator.decided) via the helpers in
+        // src/agent-events.ts. Reasoning verbosity default
+        // "summary" with 512-token cap; runs override via
+        // RunOptions.configurable.reasoningVerbosity. CP-1
+        // confidence-escalation contract honored via the
+        // node.suspended { reason: 'low-confidence' } path.
+        agents: REFERENCE_AGENTS_CAPABILITY,
         // Phase H.1 + H.1″ — capabilities.md §`aiProviders` +
         // §`aiProviders.policies`. The host advertises BYOK-ready
         // routing for the listed providers AND 4-mode policy
