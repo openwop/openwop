@@ -195,7 +195,36 @@ To deploy this registry for the first time:
 
 2. Custom domain `packs.openwop.dev` must be wired to the `packs-openwop-dev` site in the Firebase Console (Hosting → Add custom domain). DNS records (A/AAAA) are issued by Firebase.
 
-3. The CI deploy job uses the `FIREBASE_SERVICE_ACCOUNT` repo secret — the same secret the docs-site workflow uses. No new secret required.
+3. **CI deploy auth via Workload Identity Federation (no downloadable SA keys).** The `openwop-dev` project enforces `iam.disableServiceAccountKeyCreation` — long-lived SA JSON keys can't be issued. Instead, GitHub Actions authenticates with its OIDC token through a WIF pool. One-time setup:
+
+   ```bash
+   # 1. Create the WIF pool.
+   gcloud iam workload-identity-pools create github \
+     --location=global --project=openwop-dev \
+     --display-name="GitHub Actions"
+
+   # 2. Create the GitHub OIDC provider. The `attribute-condition`
+   #    locks the provider to repositories owned by the `openwop` org
+   #    so a compromised workflow in another org can't impersonate.
+   gcloud iam workload-identity-pools providers create-oidc github-actions \
+     --location=global --workload-identity-pool=github \
+     --project=openwop-dev \
+     --issuer-uri="https://token.actions.githubusercontent.com" \
+     --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository,attribute.repository_owner=assertion.repository_owner" \
+     --attribute-condition='assertion.repository_owner=="openwop"'
+
+   # 3. Bind the deploy SA so only the openwop/openwop repo can
+   #    impersonate it. principalSet membership is enforced by IAM —
+   #    no chance of cross-repo escalation.
+   PROJECT_NUMBER=$(gcloud projects describe openwop-dev --format='value(projectNumber)')
+   gcloud iam service-accounts add-iam-policy-binding \
+     github-action-1224821216@openwop-dev.iam.gserviceaccount.com \
+     --project=openwop-dev \
+     --role="roles/iam.workloadIdentityUser" \
+     --member="principalSet://iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/github/attribute.repository/openwop/openwop"
+   ```
+
+   The deploy SA needs `roles/firebasehosting.admin` on `openwop-dev` (already granted). The workflow at `.github/workflows/registry-publish.yml` calls `google-github-actions/auth@v2` with the pool's `workload_identity_provider` URL — no repo secret required.
 
 ## See also
 
