@@ -205,15 +205,16 @@ This document turns the protocol deep-dive review into implementation tracks. It
 - Remaining: Conformance scenarios that exercise multi-agent surfaces (`dispatchLoop.test.ts`, et al.) cite the normative spec doc, not just a schema. (Tests exist; descriptions need updating to reference RFCs.)
 - ✅ `AgentRef` positioning addendum landed at `spec/v1/agent-ref-positioning.md` (DID / A2A AgentCard / AGNTCY composition rules + translation table).
 
-## Track 11: Observability Verification Harness — partially closed 2026-05-11 (T1.3)
+## Track 11: Observability Verification Harness — partially closed 2026-05-11, OTLP/protobuf landed 2026-05-12
 
 **Status update (2026-05-11):** SQLite reference host now emits OTLP/HTTP-JSON to `OTEL_EXPORTER_OTLP_ENDPOINT` when configured. Three conformance scenarios pass against it (with `--no-file-parallelism` so the collector port doesn't race across worker threads):
 - `otel-emission.test.ts` — span shape contract for `openwop.run` + `openwop.node.<typeId>`
 - `metric-emission.test.ts` (new) — `openwop.run.backlog` + `openwop.queue.depth` + `openwop.run.duration` metrics
 - `otel-trace-propagation.test.ts` — inbound `traceparent` header threads into emitted spans
 
+**Status update (2026-05-12):** ✅ OTLP/HTTP-protobuf path landed. `conformance/src/lib/otlp-protobuf.ts` is a hand-rolled decoder for the OTLP subset the conformance suite asserts on (ExportTraceServiceRequest + ExportMetricsServiceRequest; AnyValue oneof with string / int / double / bool / array / kvlist / bytes variants; KeyValue attributes; Span trace_id / span_id / parent_span_id / name / start + end fixed64; NumberDataPoint as_double + sfixed64 as_int). Zero new npm dependencies. The collector's `_handle` now routes on `Content-Type`: `application/x-protobuf` (or `application/protobuf`) decodes via the new module; `application/json` (or absent header) decodes via the existing JSON path; other content types return `415` with a canonical envelope. Output shape is JSON-equivalent so `_ingestTraces` / `_ingestMetrics` are unchanged. Unit tests at `conformance/src/lib/otlp-protobuf.test.ts` round-trip 18 cases through a test-only `PbWriter` helper.
+
 **Remaining for full Track 11 closure:**
-- OTLP/protobuf path in `conformance/src/lib/otel-collector.ts` — currently rejects protobuf bodies with 415. Hosts emitting OTLP/protobuf-only need to be configured for `OTEL_EXPORTER_OTLP_PROTOCOL=http/json`. A minimal hand-rolled protobuf decoder for `opentelemetry-proto` (traces + metrics) would unlock protobuf-only hosts.
 - OTLP/gRPC path — even bigger lift; deferred to a v1.2+ track.
 - Conformance docs/operator-guide for the `--no-file-parallelism` requirement on OTel scenarios.
 

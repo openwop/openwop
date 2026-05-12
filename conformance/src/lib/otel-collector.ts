@@ -32,6 +32,10 @@
 
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
+import {
+  decodeExportTraceServiceRequest,
+  decodeExportMetricsServiceRequest,
+} from './otlp-protobuf.js';
 
 export interface OtelAttribute {
   readonly key: string;
@@ -171,21 +175,79 @@ export class OtelCollector {
     for await (const c of req) {
       chunks.push(c as Buffer);
     }
-    const body = Buffer.concat(chunks).toString('utf8');
+    const body = Buffer.concat(chunks);
+    const contentType = (req.headers['content-type'] ?? '').toLowerCase();
+    const isProtobuf =
+      contentType.includes('application/x-protobuf') ||
+      contentType.includes('application/protobuf');
+    const isJson = contentType.includes('application/json') || contentType === '';
+
     let payload: Record<string, unknown> = {};
-    try {
-      payload = body.length > 0 ? (JSON.parse(body) as Record<string, unknown>) : {};
-    } catch {
-      // Protobuf-encoded OTLP arrives as binary; we currently support JSON only.
-      // Hosts that emit protobuf-encoded OTLP need to be configured for
-      // `OTEL_EXPORTER_OTLP_PROTOCOL=http/json`.
-      res.writeHead(415).end('OTLP/HTTP-JSON only');
+    const isTracesRoute = req.url?.includes('/v1/traces') === true;
+    const isMetricsRoute = req.url?.includes('/v1/metrics') === true;
+
+    if (isProtobuf) {
+      // OTLP/HTTP-protobuf — added in the Track 11 follow-up. Decode the
+      // binary message via the in-suite hand-rolled decoder
+      // (`otlp-protobuf.ts`) and produce the same JSON-shaped object
+      // the existing `_ingestTraces` / `_ingestMetrics` already consume.
+      try {
+        if (isTracesRoute) {
+          payload = decodeExportTraceServiceRequest(
+            new Uint8Array(body.buffer, body.byteOffset, body.byteLength),
+          ) as unknown as Record<string, unknown>;
+        } else if (isMetricsRoute) {
+          payload = decodeExportMetricsServiceRequest(
+            new Uint8Array(body.buffer, body.byteOffset, body.byteLength),
+          ) as unknown as Record<string, unknown>;
+        } else {
+          // /v1/logs or unknown — ack and ignore so the exporter doesn't retry.
+          res.writeHead(200, { 'Content-Type': 'application/json' }).end('{}');
+          return;
+        }
+      } catch (err) {
+        res
+          .writeHead(400, { 'Content-Type': 'application/json' })
+          .end(
+            JSON.stringify({
+              error: 'invalid_protobuf',
+              message: `OTLP/HTTP-protobuf decode failed: ${(err as Error).message ?? 'unknown'}`,
+            }),
+          );
+        return;
+      }
+    } else if (isJson) {
+      try {
+        payload =
+          body.length > 0
+            ? (JSON.parse(body.toString('utf8')) as Record<string, unknown>)
+            : {};
+      } catch {
+        res
+          .writeHead(400, { 'Content-Type': 'application/json' })
+          .end(
+            JSON.stringify({
+              error: 'invalid_json',
+              message: 'OTLP/HTTP-JSON body did not parse',
+            }),
+          );
+        return;
+      }
+    } else {
+      res
+        .writeHead(415, { 'Content-Type': 'application/json' })
+        .end(
+          JSON.stringify({
+            error: 'unsupported_media_type',
+            message: `OTLP collector accepts application/json or application/x-protobuf; got "${contentType}"`,
+          }),
+        );
       return;
     }
 
-    if (req.url?.includes('/v1/traces')) {
+    if (isTracesRoute) {
       this._ingestTraces(payload);
-    } else if (req.url?.includes('/v1/metrics')) {
+    } else if (isMetricsRoute) {
       this._ingestMetrics(payload);
     } else {
       // Ignore /v1/logs and unknown paths; respond OK so the exporter doesn't retry.
