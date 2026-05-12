@@ -25,6 +25,7 @@
 | `run-options.schema.json` | `run-options.md` | Per-run input overlay (configurable + tags + metadata) on `POST /v1/runs` |
 | `run-orchestrator-decided-event.schema.json` | orchestrator RFC + `observability.md` | Event payload for orchestrator decisions |
 | `run-snapshot.schema.json` | `rest-endpoints.md` §RunSnapshot | Projected run state from `GET /v1/runs/{runId}` |
+| `security-advisory.schema.json` | `registry-operations.md` + INCIDENT-RESPONSE runbook | Registry-owned CVE advisory record at `registry/security/advisories.json`. One entry per disclosed vulnerability — id, severity, affected pack-name + SemVer range, optional fixedIn/advisoryUrl/credits. Enforced by `check-advisories.mjs` in `.github/workflows/registry-publish.yml`. |
 | `suspend-request.schema.json` | `interrupt.md` | `InterruptPayload` with 8 `kind` discriminators (approval, clarification, external-event, custom, conversation.start, conversation.exchange, conversation.close, low-confidence) |
 | `workflow-definition.schema.json` | `channels-and-reducers.md` + `node-packs.md` | DAG of nodes + edges + triggers + variables + channels |
 
