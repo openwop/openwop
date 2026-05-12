@@ -113,30 +113,44 @@ async function postJsonRpc(
   method: string,
   params: unknown,
   id: number,
-): Promise<{ status: number; json: Record<string, unknown> }> {
+  sessionId?: string,
+): Promise<{ status: number; json: Record<string, unknown>; sessionId: string | null }> {
   // POST to `endpoint` verbatim — the trailing-slash decision is the
   // caller's. The probe accepts both response shapes per MCP's
   // streamable-http spec: a single JSON body OR an SSE stream that
   // emits one-or-many JSON-RPC frames. Transport is auto-detected
   // from Content-Type.
+  //
+  // Session-id threading: real MCP servers built on the official SDK
+  // assign a session id at `initialize` and require it on every
+  // subsequent call via `mcp-session-id`. The in-process fake doesn't
+  // enforce that, but real impls do — so the probe always echoes back
+  // any session header it receives from initialize.
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    // MCP streamable-http servers SHOULD return `application/json`
+    // by default but MAY upgrade to SSE; advertise both as
+    // acceptable.
+    Accept: 'application/json, text/event-stream',
+  };
+  if (sessionId) headers['mcp-session-id'] = sessionId;
   const res = await fetch(endpoint, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      // MCP streamable-http servers SHOULD return `application/json`
-      // by default but MAY upgrade to SSE; advertise both as
-      // acceptable.
-      Accept: 'application/json, text/event-stream',
-    },
+    headers,
     body: JSON.stringify({ jsonrpc: '2.0', id, method, params }),
   });
+  const returnedSessionId = res.headers.get('mcp-session-id');
   const contentType = res.headers.get('content-type') ?? '';
   if (contentType.includes('text/event-stream')) {
     const json = await readSseUntilId(res, id);
-    return { status: res.status, json };
+    return { status: res.status, json, sessionId: returnedSessionId };
   }
   const text = await res.text();
-  return { status: res.status, json: JSON.parse(text) as Record<string, unknown> };
+  return {
+    status: res.status,
+    json: JSON.parse(text) as Record<string, unknown>,
+    sessionId: returnedSessionId,
+  };
 }
 
 /** Resolve the MCP endpoint to probe: real-server env wins; otherwise the in-process fake. */
@@ -161,12 +175,30 @@ describe('mcp-tool-roundtrip: server wire shape', () => {
     }
     if (!probe.isReal) getMcpFakeServer()!.reset();
 
-    const init = await postJsonRpc(probe.url, 'initialize', {}, 1);
+    // Per MCP `initialize` spec, params MUST carry protocolVersion +
+    // capabilities + clientInfo. The in-process fake accepts empty
+    // params; real reference servers built on @modelcontextprotocol/sdk
+    // reject them with 400. Sending the canonical shape keeps the probe
+    // valid against both.
+    const init = await postJsonRpc(
+      probe.url,
+      'initialize',
+      {
+        protocolVersion: '2024-11-05',
+        capabilities: {},
+        clientInfo: { name: 'openwop-conformance-probe', version: '1.0.0' },
+      },
+      1,
+    );
     expect(init.status).toBe(200);
     const initResult = (init.json.result ?? {}) as { protocolVersion?: string };
     expect(typeof initResult.protocolVersion).toBe('string');
+    // Capture session id from initialize so real SDK-based servers can
+    // bind subsequent calls; fakes that don't set the header pass null
+    // through and the calls still succeed.
+    const sid = init.sessionId ?? undefined;
 
-    const list = await postJsonRpc(probe.url, 'tools/list', {}, 2);
+    const list = await postJsonRpc(probe.url, 'tools/list', {}, 2, sid);
     expect(list.status).toBe(200);
     const listResult = (list.json.result ?? {}) as {
       tools?: ReadonlyArray<{ name?: string }>;
@@ -191,6 +223,7 @@ describe('mcp-tool-roundtrip: server wire shape', () => {
         'tools/call',
         { name: first!.name, arguments: {} },
         3,
+        sid,
       );
       expect(callRes.status).toBe(200);
       const callResult = (callRes.json.result ?? {}) as {

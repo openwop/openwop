@@ -35,6 +35,15 @@ Python reference's 53 baseline failures (the 2026-05-12 first-measurement agains
 
 Third-party hosts can append rows by opening a PR with their advertised profiles, suite version, and a public conformance result.
 
+### Composition partners — real-impl interop evidence (2026-05-12)
+
+Per `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` §"Track 6: MCP And A2A Proof" T3.4. The openwop conformance suite's MCP/A2A probes can be pointed at live reference implementations via `OPENWOP_MCP_REAL_SERVER_URL` / `OPENWOP_A2A_REAL_PEER_URL` to verify wire-shape interop beyond the in-process fakes.
+
+| Partner | Reference impl | Suite scenario | Result | Notes |
+|---|---|---|---|---|
+| **MCP** | `@modelcontextprotocol/sdk@1.29.0` in `enableJsonResponse: true` streamable-http mode | `mcp-tool-roundtrip.test.ts` | ✅ 2/2 pass against `http://localhost:4001/mcp` | Surfaced two probe gaps that the in-process fake had been hiding: (1) `initialize` requires `protocolVersion` + `capabilities` + `clientInfo` in `params` (official SDK returns 400 on empty params); (2) `mcp-session-id` from the initialize response MUST be threaded through `tools/list` + `tools/call`. Both closed in the probe; fake-mode compatibility preserved. Honest scope limit: probe currently exercises `streamable-http` single-JSON mode only — SSE-streamed responses + stdio transport remain follow-ups per `spec/v1/mcp-integration.md` §"Conformance + interop". |
+| **A2A** | not yet | `a2a-task-roundtrip.test.ts` | ⏸️ probe rewrite in progress | Real-impl attempt against `@a2a-js/sdk@0.3.13` (a2a-protocol v0.3) revealed the probe is built for v0.2-era conventions: `GET /agent.json`, `POST /tasks {skill, input}`, `GET /tasks/{id}`. v0.3 requires `/.well-known/agent-card.json` + JSON-RPC `tasks/send`/`tasks/get` over `/a2a/jsonrpc` (or REST equivalents). Probe update tracked; not blocking v1.0 — the protocol surface is complete, and the in-process fake still verifies the openwop ↔ peer state-projection contract from `a2a-integration.md` §"State projection". |
+
 ## Reading Rows
 
 - **Compatibility profile claim** is derived from `/.well-known/openwop` according to `spec/v1/profiles.md`.
