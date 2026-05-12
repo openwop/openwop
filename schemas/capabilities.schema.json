@@ -447,6 +447,34 @@
         }
       },
       "additionalProperties": true
+    },
+    "discovery": {
+      "type": "object",
+      "description": "Discovery advertisement (capabilities-change-detection.md). Optional in v1; absence means the host serves only the public unauthenticated payload at /.well-known/openwop. Landed by RFC 0011.",
+      "properties": {
+        "authScoped": {
+          "type": "object",
+          "description": "Auth-scoped discovery advertisement (capabilities-change-detection.md §\"Scoped capability views\"). Hosts that return a different payload when called with Authorization than when called anonymously declare it here. The authenticated view MUST still satisfy the base capabilities.schema.json shape per the spec annex.",
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "Host returns an authenticated/tenant-scoped capability view when the discovery endpoint is called with valid bearer credentials."
+            },
+            "mode": {
+              "type": "string",
+              "enum": ["same-endpoint", "extension-endpoint"],
+              "description": "How the host exposes the auth-scoped view. `same-endpoint`: the canonical /.well-known/openwop returns a narrowed/enriched view when authenticated. `extension-endpoint`: a separate host route carries the scoped view (path advertised via `endpointPath`). Hosts using the third pattern from the spec annex (documentation pointer in the public payload) MAY omit this field."
+            },
+            "endpointPath": {
+              "type": "string",
+              "pattern": "^/",
+              "description": "When `mode: \"extension-endpoint\"` is advertised, the leading-slash relative path the host serves the scoped view from. The conformance scenario hits this path with bearer credentials. Absolute URLs are rejected at the schema level."
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": true

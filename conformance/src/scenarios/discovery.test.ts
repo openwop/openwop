@@ -8,6 +8,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { behaviorGate } from '../lib/behavior-gate.js';
 
 describe('discovery: /.well-known/openwop', () => {
   it('returns 200 with required Capabilities fields per capabilities.md §2', async () => {
@@ -145,3 +146,185 @@ describe('discovery: /v1/openapi.json', () => {
     )).toMatch(/^3\.[1-9]/);
   });
 });
+
+/**
+ * RFC 0011 §B: auth-scoped discovery subtest.
+ *
+ * Per `capabilities-change-detection.md` §"Scoped capability views":
+ * hosts that return a different payload when called authenticated
+ * vs. anonymous MUST advertise that surface via
+ * `capabilities.discovery.authScoped.supported: true`. The
+ * authenticated view MUST still satisfy `capabilities.schema.json`
+ * (required fields preserved) and MUST NOT expose capabilities
+ * outside the caller's authorization.
+ *
+ * Capability shape runs unconditionally when the profile is advertised.
+ * The authorization-oracle probe (assertion 5 of §B) is gated on
+ * `OPENWOP_TEST_UNAUTHORIZED_API_KEY` because it requires an
+ * operator-supplied secondary key with strictly-fewer capabilities
+ * than the primary.
+ *
+ * @see RFCS/0011-auth-scoped-discovery.md §B
+ * @see spec/v1/capabilities-change-detection.md §"Scoped capability views"
+ */
+
+interface AuthScopedCaps {
+  supported?: boolean;
+  mode?: string;
+  endpointPath?: string;
+}
+
+interface DiscoveryCaps {
+  authScoped?: AuthScopedCaps;
+}
+
+const AUTH_SCOPED_PROFILE = 'openwop-discovery-auth-scoped';
+
+async function readDiscoveryCaps(): Promise<DiscoveryCaps | undefined> {
+  const disco = await driver.get('/.well-known/openwop', { authenticated: false });
+  return (disco.json as { capabilities?: { discovery?: DiscoveryCaps } }).capabilities
+    ?.discovery;
+}
+
+function isAuthScopedAdvertised(disc: DiscoveryCaps | undefined): boolean {
+  return disc?.authScoped?.supported === true;
+}
+
+describe('discovery: auth-scoped capability shape', () => {
+  it('host claiming auth-scoped discovery advertises required fields', async () => {
+    const disc = await readDiscoveryCaps();
+
+    if (!behaviorGate(AUTH_SCOPED_PROFILE, isAuthScopedAdvertised(disc))) {
+      return;
+    }
+
+    expect(disc?.authScoped?.supported, driver.describe(
+      'capabilities-change-detection.md §"Scoped capability views"',
+      'capabilities.discovery.authScoped.supported MUST be true when the profile is claimed',
+    )).toBe(true);
+
+    if (disc?.authScoped?.mode !== undefined) {
+      expect(
+        ['same-endpoint', 'extension-endpoint'].includes(disc.authScoped.mode),
+        driver.describe(
+          'capabilities.schema.json discovery.authScoped.mode',
+          'mode MUST be one of same-endpoint / extension-endpoint when advertised',
+        ),
+      ).toBe(true);
+    }
+
+    if (disc?.authScoped?.mode === 'extension-endpoint') {
+      expect(
+        typeof disc.authScoped.endpointPath === 'string' &&
+          disc.authScoped.endpointPath.startsWith('/'),
+        driver.describe(
+          'RFCS/0011-auth-scoped-discovery.md §A',
+          'extension-endpoint mode MUST advertise endpointPath as a leading-slash relative path',
+        ),
+      ).toBe(true);
+    }
+  });
+});
+
+describe('discovery: auth-scoped view satisfies base schema', () => {
+  it('authenticated discovery preserves required Capabilities fields', async () => {
+    const disc = await readDiscoveryCaps();
+
+    if (!behaviorGate(AUTH_SCOPED_PROFILE, isAuthScopedAdvertised(disc))) {
+      return;
+    }
+
+    const mode = disc?.authScoped?.mode ?? 'same-endpoint';
+    const path =
+      mode === 'extension-endpoint'
+        ? disc?.authScoped?.endpointPath ?? '/v1/capabilities'
+        : '/.well-known/openwop';
+
+    const res = await driver.get(path);
+
+    expect(res.status, driver.describe(
+      'capabilities-change-detection.md §"Scoped capability views"',
+      'authenticated discovery MUST return 200',
+    )).toBe(200);
+
+    const body = res.json as Record<string, unknown> | undefined;
+    expect(body, 'authenticated discovery body MUST be JSON').toBeDefined();
+
+    // Required fields per capabilities.md §3 preserved in the
+    // authenticated view (per spec annex: "MUST still satisfy the
+    // base capabilities.schema.json shape").
+    for (const required of [
+      'protocolVersion',
+      'supportedEnvelopes',
+      'schemaVersions',
+      'limits',
+    ]) {
+      expect(body?.[required], driver.describe(
+        'capabilities-change-detection.md §"Scoped capability views"',
+        `auth-scoped view MUST preserve required field "${required}" from capabilities.md §3`,
+      )).toBeDefined();
+    }
+  });
+});
+
+describe('discovery: auth-scoped is not an authorization oracle', () => {
+  it('unauthorized key MUST NOT reveal capabilities outside its authorization', async () => {
+    const disc = await readDiscoveryCaps();
+
+    if (!behaviorGate(AUTH_SCOPED_PROFILE, isAuthScopedAdvertised(disc))) {
+      return;
+    }
+
+    const unauthorizedKey = process.env.OPENWOP_TEST_UNAUTHORIZED_API_KEY;
+    if (!unauthorizedKey) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        '[discovery: auth-scoped] OPENWOP_TEST_UNAUTHORIZED_API_KEY not supplied; skipping authorization-oracle probe',
+      );
+      return;
+    }
+
+    const mode = disc?.authScoped?.mode ?? 'same-endpoint';
+    const path =
+      mode === 'extension-endpoint'
+        ? disc?.authScoped?.endpointPath ?? '/v1/capabilities'
+        : '/.well-known/openwop';
+
+    // Primary key (env-default Authorization).
+    const primary = await driver.get(path);
+
+    // Unauthorized / lower-privilege key.
+    const unauthorized = await driver.get(path, {
+      authenticated: false,
+      headers: { Authorization: `Bearer ${unauthorizedKey}` },
+    });
+
+    if (unauthorized.status === 401 || unauthorized.status === 403) {
+      // Host rejected the unauthorized key outright — that's fine.
+      // The oracle probe is moot when the host refuses the bearer.
+      return;
+    }
+    expect(unauthorized.status).toBe(200);
+
+    const primaryCaps = Object.keys(
+      (primary.json as { capabilities?: Record<string, unknown> })?.capabilities ?? {},
+    );
+    const unauthorizedCaps = Object.keys(
+      (unauthorized.json as { capabilities?: Record<string, unknown> })?.capabilities ??
+        {},
+    );
+
+    // Spec annex line 69: "Hosts MUST NOT let scoped discovery become
+    // an authorization oracle. A caller should learn only about
+    // capabilities it is allowed to use." Operationalized as: the
+    // unauthorized view's capability keys MUST be a subset of the
+    // primary view's keys (no capabilities the unauthorized caller
+    // can use that the primary cannot).
+    const extras = unauthorizedCaps.filter((c) => !primaryCaps.includes(c));
+    expect(extras.length, driver.describe(
+      'capabilities-change-detection.md §"Scoped capability views"',
+      'unauthorized view MUST NOT expose capability keys absent from the primary (authorized) view',
+    )).toBe(0);
+  });
+});
+

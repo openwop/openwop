@@ -10,7 +10,7 @@
 
 | Surface | Scenario files | Current grade | Remaining gaps |
 |---|---|---|---|
-| Discovery and capability handshake | `discovery.test.ts`, `runtime-capabilities.test.ts`, `profileDerivation.test.ts`, `mcp-discoverability.test.ts` | A | `Capabilities-Etag` optional runtime shape is covered; scoped discovery and non-HTTP handoff remain host-advertised follow-ups. |
+| Discovery and capability handshake | `discovery.test.ts` (incl. RFC 0011 auth-scoped subtests), `runtime-capabilities.test.ts`, `profileDerivation.test.ts`, `mcp-discoverability.test.ts` | A | `Capabilities-Etag` optional runtime shape covered; auth-scoped discovery covered under `openwop-discovery-auth-scoped` (RFC 0011); non-HTTP handoff remains host-advertised follow-up. |
 | Auth and errors | `auth.test.ts`, `errors.test.ts`, `policies.test.ts`, `providerPolicyEnforcement.test.ts`, `auth-api-key-rotation.test.ts`, `auth-oauth2-client-credentials.test.ts`, `auth-oidc-user-bearer.test.ts` | A− | Three auth-profile capability-shape + negative-case scenarios shipped under RFC 0010 (capability-gated). Remaining: live-IdP positive-path validation + opt-in mTLS scenario + richer scope matrix. |
 | Run lifecycle | `runs-lifecycle.test.ts`, `failure-path.test.ts`, `cancellation.test.ts`, `eventOrdering.test.ts`, `restart-during-run.test.ts` | A | Restart-during-run scenario shipped; gated under `openwop-production` profile (RFC 0009). |
 | Idempotency and retry | `idempotency.test.ts`, `idempotencyRetry.test.ts`, `highConcurrency.test.ts` | A- | Long retention proof beyond the fast CI window. |
@@ -37,7 +37,7 @@
 
 ## Capability-gated scenarios: shape vs behavior
 
-Sixteen scenarios (or scenario groups) validate optional profiles where the host's discovery advertisement is well-formed (shape grade) but no reference host yet implements the profile end-to-end (behavior grade is `host-pending`). Default suite runs skip these with a warning; set `OPENWOP_REQUIRE_BEHAVIOR=true` to convert skips into hard failures.
+Seventeen scenarios (or scenario groups) validate optional profiles where the host's discovery advertisement is well-formed (shape grade) but no reference host yet implements the profile end-to-end (behavior grade is `host-pending`). Default suite runs skip these with a warning; set `OPENWOP_REQUIRE_BEHAVIOR=true` to convert skips into hard failures.
 
 | Scenario | Profile / capability | Shape grade | Behavior grade | Behavior-unlock dependency |
 |---|---|---|---|---|
@@ -57,6 +57,7 @@ Sixteen scenarios (or scenario groups) validate optional profiles where the host
 | `auth-oidc-user-bearer.test.ts` | `openwop-auth-oidc-user-bearer` (`auth-profiles.md`, RFC 0010) | B (capability shape + six harness-driven validation cases gated on `OPENWOP_TEST_OIDC_ISSUER_URL`) | `host-pending` | Reference host advertises the profile + is pre-configured to trust `OPENWOP_TEST_OIDC_ISSUER_URL` as a trusted issuer. Synthetic OIDC issuer harness at `conformance/src/lib/oidc-issuer.ts` (RS256 + ES256 via node:crypto stdlib). |
 | `auth-mtls.test.ts` | `openwop-auth-mtls` (`auth-profiles.md`, RFC 0010) | B (capability shape always; opt-in behavior assertions via `OPENWOP_TEST_MTLS=1` + cert paths; uses node:https.request for client-cert handshake — no new npm deps) | `host-pending` | Reference host advertises the profile + listens on HTTPS with mTLS enforcement; operator supplies `OPENWOP_TEST_MTLS_CLIENT_{CERT,KEY}_PATH` and (optionally) `OPENWOP_TEST_MTLS_CA_PATH`. |
 | `replay-retention-expiry.test.ts` | `openwop-replay-fork` (`replay.md` §"Retention and garbage collection") | B (capability shape always; 410/422 envelope on expired-range fork gated on `OPENWOP_TEST_EXPIRED_REPLAY_RUN_ID`; details.{sourceRunId, fromSeq, retentionBoundary} soft-checks per spec SHOULD) | `host-pending` | Reference host advertises `replay.supported: true` + operator produces a known-expired run id (no standardized force-expire endpoint per RFC 0009 Q#1). |
+| `discovery.test.ts` — auth-scoped subtests (3 of them) | `openwop-discovery-auth-scoped` (`capabilities-change-detection.md` §"Scoped capability views", RFC 0011) | B (capability shape + mode/endpointPath typing always; required-field-preservation in authenticated view always; authorization-oracle probe gated on `OPENWOP_TEST_UNAUTHORIZED_API_KEY`) | `host-pending` | Reference host advertises `capabilities.discovery.authScoped.supported: true` + serves an authenticated capability view that satisfies the base schema + a tenant-scoped key pair for the oracle probe. |
 
 Strict-mode runner usage:
 
