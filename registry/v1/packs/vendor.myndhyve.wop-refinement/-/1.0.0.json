@@ -1,0 +1,51 @@
+{
+  "name": "vendor.myndhyve.wop-refinement",
+  "version": "1.0.0",
+  "description": "MyndHyve WOP feature-refinement node — wop.feature.refine. Driven by a `feature.breakdown` LLM envelope; decides whether a stack item is actionable as a node, executable as a chain, must be split into sub-items, needs clarification, or should be blocked. Enforces hard `maxDepth` + `maxGeneratedItems` constraints regardless of LLM proposal. Used by both runner-driven dispatch (StackAutoplayRunner) and chain-driven sub-workflows.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/wop-refinement",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "vendor",
+    "myndhyve",
+    "wop",
+    "refinement",
+    "decomposition",
+    "ai"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "aiProviders": "supported"
+  },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "nodes": [
+    {
+      "typeId": "wop.feature.refine",
+      "version": "1.0.0",
+      "label": "Feature Refinement",
+      "description": "Decide whether a stack item is actionable. Splits into sub-items, executes as a node, executes as a chain, requests clarification, or blocks — based on the AI decision under hard maxDepth + maxGeneratedItems constraints.",
+      "category": "control",
+      "role": "action",
+      "capabilities": [
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/feature-refine.config.json",
+      "inputSchemaRef": "schemas/feature-refine.input.json",
+      "outputSchemaRef": "schemas/feature-refine.output.json"
+    }
+  ],
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "myndhyve-internal-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-jztoCyJv3tb6LHYcvAVPY1V+X+qD5teAFLnuysbIRoQ="
+}

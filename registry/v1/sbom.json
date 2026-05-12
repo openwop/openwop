@@ -378,6 +378,24 @@
       ]
     },
     {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.wop-refinement@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.wop-refinement",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/vendor.myndhyve.wop-refinement/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "b6230ed05df2b3a11855d3e440d849479c5df04dd9644513ff3c13718ee432b1"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "bom-ref": "pkg:openwop/vendor.openwop.rust-hello@1.0.0",
       "type": "library",
       "name": "vendor.openwop.rust-hello",

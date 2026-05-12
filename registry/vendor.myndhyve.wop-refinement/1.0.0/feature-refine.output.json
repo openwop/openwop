@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.wop-refinement/1.0.0/feature-refine.output.json",
+  "title": "WopFeatureRefineOutput",
+  "type": "object",
+  "required": ["status", "mutations", "mutationCount", "telemetryEvent"],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["applied", "depth-exceeded", "too-many-items", "invalid-decision"],
+      "description": "Outcome of the refinement. `applied` = decision survived constraints; the others are hard-block outcomes."
+    },
+    "decisionKind": {
+      "type": "string",
+      "enum": [
+        "execute_as_node",
+        "execute_as_chain",
+        "split_into_stack_items",
+        "request_clarification",
+        "block"
+      ],
+      "description": "Present when status=applied. Indicates which decision branch was taken."
+    },
+    "mutations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["kind"],
+        "oneOf": [
+          {
+            "properties": {
+              "kind": { "const": "update-target" },
+              "stackItemId": { "type": "string" },
+              "target": {}
+            },
+            "required": ["kind", "stackItemId", "target"]
+          },
+          {
+            "properties": {
+              "kind": { "const": "create-child" },
+              "options": {}
+            },
+            "required": ["kind", "options"]
+          },
+          {
+            "properties": {
+              "kind": { "const": "mark-superseded" },
+              "stackItemId": { "type": "string" }
+            },
+            "required": ["kind", "stackItemId"]
+          },
+          {
+            "properties": {
+              "kind": { "const": "mark-blocked" },
+              "stackItemId": { "type": "string" },
+              "reason": { "type": "string" },
+              "detail": { "type": "string" }
+            },
+            "required": ["kind", "stackItemId", "reason"]
+          },
+          {
+            "properties": {
+              "kind": { "const": "request-clarification" },
+              "stackItemId": { "type": "string" },
+              "questions": { "type": "array", "items": { "type": "string" } }
+            },
+            "required": ["kind", "stackItemId", "questions"]
+          }
+        ]
+      },
+      "description": "Stack-item mutations the downstream consumer (runner OR chain) applies. Always present; may be empty."
+    },
+    "mutationCount": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Convenience count — equals `mutations.length`."
+    },
+    "telemetryEvent": {
+      "type": "string",
+      "enum": [
+        "stack.item.refinement_completed",
+        "autoplay.refinement_depth_exceeded",
+        "autoplay.terminal_failure"
+      ],
+      "description": "Telemetry event id the consumer should emit."
+    },
+    "telemetryDetail": {
+      "type": "string",
+      "description": "Optional human-readable detail accompanying the telemetry event."
+    }
+  },
+  "additionalProperties": false
+}
