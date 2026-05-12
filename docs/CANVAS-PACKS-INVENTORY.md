@@ -164,4 +164,4 @@ These get resolved during Phase B implementation, not now.
 - [`spec/v1/host-capabilities.md`](../spec/v1/host-capabilities.md) — `host.*` capability surface
 - [`spec/v1/registry-operations.md`](../spec/v1/registry-operations.md) — namespace claims, signing keys, publish lifecycle
 - [`registry/README.md`](../registry/README.md) — publish workflow against `packs.openwop.dev`
-- [`docs/PUBLISHING.md`](./PUBLISHING.md) — SDK + conformance publishing (different artifact class, same release cadence)
+- [`PUBLISHING.md`](../PUBLISHING.md) — SDK + conformance publishing (different artifact class, same release cadence)
