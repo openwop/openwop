@@ -111,29 +111,24 @@ jobs:
           print('all integrity hashes verified')
           PY
 
-      - name: Verify signatures (when present)
+      - name: Verify Ed25519 signatures cryptographically
         run: |
-          # Each .tgz MUST have a sibling .sig. For now we only check
-          # that the .sig exists; cryptographic verification against the
-          # root public key lands once the key-ceremony output is committed
-          # to registry/keys/.
-          python3 - <<'PY'
-          import sys
-          from pathlib import Path
-          root = Path('registry/v1/packs')
-          errors = []
-          if not root.exists():
-              sys.exit(0)
-          for tgz in root.glob('*/-/*.tgz'):
-              sig = tgz.with_suffix('.sig')
-              if not sig.exists():
-                  errors.append(f'{tgz}: signature missing at {sig}')
-          if errors:
-              for e in errors:
-                  print(f'::error::{e}')
-              sys.exit(1)
-          print('all tarballs have sibling signatures')
-          PY
+          # Stage 2 PR 2 (2026-05-12): replaces the prior presence-only sig
+          # check with full cryptographic verification per the enterprise-
+          # architecture review (CRITICAL finding #1).
+          #
+          # The verifier handles both signing conventions in the wild:
+          #   - `signing.method: ed25519` — sig over whole gzipped tarball
+          #     bytes (original packs per registry/README.md)
+          #   - `signing.method: manual` — sig over pack.json bytes inside
+          #     the tarball (newer packs from build-pack-tarball.mjs)
+          #
+          # Also enforces namespace authorization: the keyId on each pack
+          # MUST be authorized for that pack's namespace per the
+          # `signingKeys[].permittedNamespaces` allow-list in
+          # .well-known/openwop-registry.json. A vendor key signing a
+          # core.* pack would fail here.
+          node registry/scripts/verify-signatures.mjs
 
   deploy:
     name: Deploy to packs.openwop.dev
