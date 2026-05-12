@@ -68,7 +68,8 @@ export async function setupSchema(q: Querier): Promise<void> {
       next_node_index INTEGER NOT NULL DEFAULT 0,
       next_event_seq INTEGER NOT NULL DEFAULT 0,
       parent_run_id TEXT,
-      parent_node_id TEXT
+      parent_node_id TEXT,
+      configurable_json JSONB
     );
   `);
   await q.query(`CREATE INDEX IF NOT EXISTS idx_runs_parent ON runs(parent_run_id);`);
@@ -82,6 +83,12 @@ export async function setupSchema(q: Querier): Promise<void> {
         WHERE table_name = 'runs' AND column_name = 'next_event_seq'
       ) THEN
         ALTER TABLE runs ADD COLUMN next_event_seq INTEGER NOT NULL DEFAULT 0;
+      END IF;
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'runs' AND column_name = 'configurable_json'
+      ) THEN
+        ALTER TABLE runs ADD COLUMN configurable_json JSONB;
       END IF;
     END $$;
   `);
