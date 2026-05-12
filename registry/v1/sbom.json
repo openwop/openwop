@@ -234,6 +234,24 @@
       ]
     },
     {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.campaign-sequence@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.campaign-sequence",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/vendor.myndhyve.campaign-sequence/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "b3a2762824823384f221f366f26340e7c3a2aa3ced66ccb7066ebdd929cd56ff"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "bom-ref": "pkg:openwop/vendor.myndhyve.canvas@1.0.0",
       "type": "library",
       "name": "vendor.myndhyve.canvas",

@@ -1,7 +1,7 @@
 {
   "registryVersion": "1.0.0",
   "generatedAt": "2026-05-10T00:00:00Z",
-  "packCount": 20,
+  "packCount": 21,
   "packs": [
     {
       "name": "community.openwop-team.demo",
@@ -106,6 +106,15 @@
       "name": "vendor.myndhyve.brand",
       "latestVersion": "1.0.0",
       "description": "MyndHyve brand-workflow pack. 14 nodes — 8 theme (analyze/discovery/generate/implement/publish/review/templates/validate) + 6 persona (discover/generate/keywordStrategy/publish/review/validate). Each is an AI-driven envelope-emitting node anchored on the brand canvas type. Routes through ctx.brand.* + ctx.aiEnvelope.generate.",
+      "license": "Apache-2.0",
+      "tags": [],
+      "deprecated": false,
+      "yanked": false
+    },
+    {
+      "name": "vendor.myndhyve.campaign-sequence",
+      "latestVersion": "1.0.0",
+      "description": "MyndHyve campaign-sequence step executors — three pure-control nodes (wait, tag, condition) lifted from src/canvas-types/campaign-studio/sequences/sequenceStepModules.ts. Self-contained: only ctx.inputs + ctx.log; no host capabilities required beyond core NodeContext. The integration siblings (email, sms, webhook) ship in a follow-up pack once openwop NodeContext extensions for host.email / host.sms / host.http land.",
       "license": "Apache-2.0",
       "tags": [],
       "deprecated": false,

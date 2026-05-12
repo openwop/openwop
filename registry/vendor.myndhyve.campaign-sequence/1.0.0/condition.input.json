@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.campaign-sequence/1.0.0/condition.input.json",
+  "title": "CampaignSequenceConditionInput",
+  "type": "object",
+  "required": ["step"],
+  "properties": {
+    "step": {
+      "type": "object",
+      "properties": {
+        "conditions": {
+          "type": "array",
+          "description": "Conditions evaluated against the enrollment data. Empty/absent → unconditional branch to yesNextStepId.",
+          "items": {
+            "type": "object",
+            "required": ["field", "operator"],
+            "properties": {
+              "field": {
+                "type": "string",
+                "description": "Dotted-path into the enrollment object (e.g., 'subscriberEmail' or 'metadata.score')."
+              },
+              "operator": {
+                "type": "string",
+                "enum": [
+                  "equals",
+                  "not_equals",
+                  "contains",
+                  "not_contains",
+                  "greater_than",
+                  "greater_than_or_equals",
+                  "less_than",
+                  "less_than_or_equals",
+                  "is_empty",
+                  "is_not_empty",
+                  "is_set",
+                  "is_not_set",
+                  "starts_with",
+                  "ends_with",
+                  "in_list",
+                  "not_in_list",
+                  "matches_regex"
+                ],
+                "description": "Comparison operator. matches_regex rejects patterns longer than 200 chars."
+              },
+              "value": {
+                "description": "Right-hand side of the comparison. Unused for is_empty/is_not_empty/is_set/is_not_set."
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "conditionLogic": {
+          "type": "string",
+          "enum": ["and", "or"],
+          "default": "and",
+          "description": "How to combine multiple condition results."
+        },
+        "yesNextStepId": {
+          "type": "string",
+          "description": "Step ID to branch to when the conditions are met (or when conditions[] is empty)."
+        },
+        "noNextStepId": {
+          "type": "string",
+          "description": "Step ID to branch to when the conditions are NOT met."
+        }
+      },
+      "additionalProperties": true
+    },
+    "enrollment": {
+      "type": "object",
+      "description": "Enrollment record. The condition evaluator merges this with `{ enrollmentId: enrollment.id }` before path-resolving each condition.field.",
+      "additionalProperties": true
+    },
+    "sequence": { "type": "object", "additionalProperties": true }
+  },
+  "additionalProperties": true
+}
