@@ -16,7 +16,7 @@
 | Idempotency and retry | `idempotency.test.ts`, `idempotencyRetry.test.ts`, `highConcurrency.test.ts` | A- | Long retention proof beyond the fast CI window. |
 | Interrupts | `interrupt-approval.test.ts`, `interrupt-clarification.test.ts`, `approval-payload.test.ts`, `interruptRace.test.ts`, `interrupt-quorum-resolution.test.ts`, `interrupt-external-event-correlation.test.ts`, `interrupt-auth-required-resume.test.ts`, `interrupt-parent-child-cascade.test.ts` | A− | All four optional profile scenarios landed 2026-05-10. Remaining: positive end-to-end run against a host that advertises every profile. |
 | Streaming | `stream-modes.test.ts`, `stream-modes-buffer.test.ts`, `stream-modes-mixed.test.ts`, `streamReconnect.test.ts` | A | Browser/proxy timeout matrix and long-running stream soak. |
-| Replay and fork | `replay-fork.test.ts`, `replayDeterminism.test.ts`, `staleClaim.test.ts` | A- | Fork from arbitrary event types and retention-expiry behavior remain uncovered; retention/privacy/scoring semantics are now specified in `replay.md`. |
+| Replay and fork | `replay-fork.test.ts`, `replay-fork-arbitrary.test.ts`, `replay-retention-expiry.test.ts`, `replayDeterminism.test.ts`, `staleClaim.test.ts` | A | Arbitrary-event fork shipped (`replay-fork-arbitrary.test.ts`). Retention-expiry envelope shipped (`replay-retention-expiry.test.ts`) — gated on `OPENWOP_TEST_EXPIRED_REPLAY_RUN_ID` because hosts don't standardize a force-expire endpoint. Retention/privacy/scoring semantics specified in `replay.md`. |
 | Capabilities and limits | `cap-breach.test.ts`, `dispatchLoop.test.ts` | B+ | Clarification/schema/envelope cap-breach fixtures beyond node-execution cap. |
 | State channels and reducers | `channel-ttl.test.ts` | B+ | Cross-adapter reducer consistency and conflict cases. |
 | Sub-workflows and dispatch | `subworkflow.test.ts`, `multi-node-ordering.test.ts` | B+ | Parallel fan-out floors by scale tier, parent/child cancellation. |
@@ -37,7 +37,7 @@
 
 ## Capability-gated scenarios: shape vs behavior
 
-Fifteen scenarios (or scenario groups) validate optional profiles where the host's discovery advertisement is well-formed (shape grade) but no reference host yet implements the profile end-to-end (behavior grade is `host-pending`). Default suite runs skip these with a warning; set `OPENWOP_REQUIRE_BEHAVIOR=true` to convert skips into hard failures.
+Sixteen scenarios (or scenario groups) validate optional profiles where the host's discovery advertisement is well-formed (shape grade) but no reference host yet implements the profile end-to-end (behavior grade is `host-pending`). Default suite runs skip these with a warning; set `OPENWOP_REQUIRE_BEHAVIOR=true` to convert skips into hard failures.
 
 | Scenario | Profile / capability | Shape grade | Behavior grade | Behavior-unlock dependency |
 |---|---|---|---|---|
@@ -56,6 +56,7 @@ Fifteen scenarios (or scenario groups) validate optional profiles where the host
 | `auth-oauth2-client-credentials.test.ts` | `openwop-auth-oauth2-client-credentials` (`auth-profiles.md`, RFC 0010) | B (capability shape + malformed-JWT negative + harness-minted negatives gated on `OPENWOP_TEST_OAUTH_ISSUER_TRUSTED`) | `host-pending` | Reference host advertises the profile + trusts the conformance harness + (optional) supplies `OPENWOP_TEST_OAUTH_TOKEN` for positive-path. |
 | `auth-oidc-user-bearer.test.ts` | `openwop-auth-oidc-user-bearer` (`auth-profiles.md`, RFC 0010) | B (capability shape + six harness-driven validation cases gated on `OPENWOP_TEST_OIDC_ISSUER_URL`) | `host-pending` | Reference host advertises the profile + is pre-configured to trust `OPENWOP_TEST_OIDC_ISSUER_URL` as a trusted issuer. Synthetic OIDC issuer harness at `conformance/src/lib/oidc-issuer.ts` (RS256 + ES256 via node:crypto stdlib). |
 | `auth-mtls.test.ts` | `openwop-auth-mtls` (`auth-profiles.md`, RFC 0010) | B (capability shape always; opt-in behavior assertions via `OPENWOP_TEST_MTLS=1` + cert paths; uses node:https.request for client-cert handshake — no new npm deps) | `host-pending` | Reference host advertises the profile + listens on HTTPS with mTLS enforcement; operator supplies `OPENWOP_TEST_MTLS_CLIENT_{CERT,KEY}_PATH` and (optionally) `OPENWOP_TEST_MTLS_CA_PATH`. |
+| `replay-retention-expiry.test.ts` | `openwop-replay-fork` (`replay.md` §"Retention and garbage collection") | B (capability shape always; 410/422 envelope on expired-range fork gated on `OPENWOP_TEST_EXPIRED_REPLAY_RUN_ID`; details.{sourceRunId, fromSeq, retentionBoundary} soft-checks per spec SHOULD) | `host-pending` | Reference host advertises `replay.supported: true` + operator produces a known-expired run id (no standardized force-expire endpoint per RFC 0009 Q#1). |
 
 Strict-mode runner usage:
 
