@@ -18,6 +18,7 @@
 | `memory-list-options.schema.json` | memory-layer RFC | Query options for listing agent memory entries |
 | `node-pack-manifest.schema.json` | `node-packs.md` | Pack manifest (`pack.json`) — name, version, engines, nodes[], runtime, signing |
 | `pack-lockfile.schema.json` | `node-packs.md` §"Dependency resolution + lockfile" | Reproducible-build lockfile pinning resolved pack versions + SHA-256 integrity + Ed25519 signature for the entire workspace dependency graph |
+| `registry-version-manifest.schema.json` | `registry-operations.md` | Registry-augmented version manifest served at `GET /v1/packs/{name}/-/{version}.json`. Extends the bare pack-manifest contract with registry-side metadata (integrity hash, signing-block polymorphism, lifecycle flags). Enforced by the `Validate version manifests against registry-version-manifest schema` step in `.github/workflows/registry-publish.yml`. |
 | `orchestrator-decision.schema.json` | `node-packs.md` + orchestrator RFC | Decision output shape for orchestrator routing nodes |
 | `run-event-payloads.schema.json` | `run-event.schema.json` §RunEventType | Per-RunEventType payload contracts, indexed by `$defs.<typeId>` for opt-in strict validation |
 | `run-event.schema.json` | `version-negotiation.md` + `RunEventDoc` | Event log envelope + event type enum |

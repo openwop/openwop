@@ -52,7 +52,8 @@ jobs:
           fails=0
           for manifest in $(find registry/v1/packs -path '*/-/*.json' -not -name 'index.json' 2>/dev/null); do
             found=$((found + 1))
-            if ! ajv validate -s schemas/registry-version-manifest.schema.json \
+            if ! ajv validate --spec=draft2020 \
+                              -s schemas/registry-version-manifest.schema.json \
                               -d "$manifest" \
                               --strict=false \
                               -c ajv-formats; then
