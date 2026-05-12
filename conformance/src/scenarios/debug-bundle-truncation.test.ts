@@ -14,6 +14,9 @@
  * this scenario soft-skips the assertion.
  *
  * @see spec/v1/debug-bundle.md §"Bundle size limits"
+ * @see spec/v1/production-profile.md §"Debug bundle behavior" (RFC 0009
+ *      — this scenario satisfies the truncation-metadata predicate when
+ *      the host advertises capabilities.production.debugBundle.truncationMetadata: true)
  */
 
 import { describe, it, expect } from 'vitest';

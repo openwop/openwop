@@ -25,6 +25,9 @@
  *
  * @see lib/multiProcess.ts — spawnHost helper
  * @see examples/hosts/sqlite/src/server.ts — heartbeat + resume
+ * @see spec/v1/production-profile.md §Durability (RFC 0009 — this
+ *      scenario satisfies the durable-restart predicate when the
+ *      host advertises capabilities.production.supported: true)
  */
 
 import { describe, it, expect, afterEach } from 'vitest';

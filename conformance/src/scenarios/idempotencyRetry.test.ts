@@ -18,6 +18,9 @@
  *
  * @see spec/v1/idempotency.md
  * @see spec/v1/scale-profiles.md §"Retry semantics"
+ * @see spec/v1/production-profile.md §"Retry and idempotency" (RFC 0009
+ *      — this scenario satisfies the 24h retention + 5-retry predicate
+ *      when the host advertises capabilities.production.supported: true)
  */
 
 import { describe, it, expect } from 'vitest';

@@ -281,6 +281,74 @@
         }
       },
       "additionalProperties": true
+    },
+    "production": {
+      "type": "object",
+      "description": "Production-profile advertisement (see production-profile.md). Optional in v1; absence means the host does not claim the openwop-production profile. When `supported: true`, the host claims every MUST in production-profile.md and conformance scenarios gated on this block MUST run. Landed by RFC 0009.",
+      "required": ["supported"],
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "Host claims the openwop-production profile end-to-end (production-profile.md)."
+        },
+        "backpressure": {
+          "type": "object",
+          "description": "Backpressure envelope advertisement (production-profile.md §Backpressure).",
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "Host returns 503 + Retry-After + canonical envelope under load per production-profile.md §Backpressure."
+            },
+            "inflightCap": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Optional host-side concurrent-inflight cap the conformance suite can saturate. When advertised, the production-backpressure scenario issues `inflightCap + 1` concurrent long-lived requests to deterministically force a 503. When absent, the scenario soft-skips the saturation step (envelope assertion still runs if a 503 happens to fire)."
+            },
+            "retryAfterSeconds": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Optional advertised Retry-After value in seconds the host returns on 503. When present, MUST equal both the `Retry-After` header and the `details.retryAfter` body field per production-profile.md."
+            }
+          },
+          "additionalProperties": false
+        },
+        "retention": {
+          "type": "object",
+          "description": "Event-retention advertisement (production-profile.md §\"Event retention\").",
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "Host enforces event-log retention with a documented minimum window."
+            },
+            "minWindowSeconds": {
+              "type": "integer",
+              "minimum": 604800,
+              "description": "Documented minimum retention window in seconds. Per production-profile.md §\"Event retention\", MUST be ≥ 604800 (7 days) for public hosts; development-only hosts MAY advertise a smaller window but MUST NOT claim `supported: true` while doing so."
+            },
+            "testForceExpire": {
+              "type": "boolean",
+              "description": "Host exposes a test-only force-expire hook the conformance suite can call (URL/method supplied via `OPENWOP_TEST_FORCE_EXPIRE_URL` / `OPENWOP_TEST_FORCE_EXPIRE_METHOD` env vars). When `false`, the production-retention-expiry scenario asserts only the 410/404 envelope shape on an operator-supplied already-expired run id (via `OPENWOP_TEST_EXPIRED_RUN_ID`); otherwise it soft-skips. RFC 0009 unresolved question #1 — endpoint normation is deferred."
+            }
+          },
+          "additionalProperties": false
+        },
+        "debugBundle": {
+          "type": "object",
+          "description": "Debug-bundle truncation advertisement (production-profile.md §\"Debug bundle behavior\"). Stricter than the existing `capabilities.debugBundle.supported` advertised per debug-bundle.md — this block adds the production-profile MUSTs (truncation metadata, redaction).",
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "Host claims production-profile debug-bundle behavior end-to-end."
+            },
+            "truncationMetadata": {
+              "type": "boolean",
+              "description": "When `true`, host surfaces `truncated: true` + non-empty `truncatedReason` per debug-bundle.md §\"Bundle size limits\" when caps are reached."
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": true

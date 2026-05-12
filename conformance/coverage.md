@@ -12,7 +12,7 @@
 |---|---|---|---|
 | Discovery and capability handshake | `discovery.test.ts`, `runtime-capabilities.test.ts`, `profileDerivation.test.ts`, `mcp-discoverability.test.ts` | A | `Capabilities-Etag` optional runtime shape is covered; scoped discovery and non-HTTP handoff remain host-advertised follow-ups. |
 | Auth and errors | `auth.test.ts`, `errors.test.ts`, `policies.test.ts`, `providerPolicyEnforcement.test.ts` | B | OAuth2, API-key rotation, mTLS, richer scope matrix. |
-| Run lifecycle | `runs-lifecycle.test.ts`, `failure-path.test.ts`, `cancellation.test.ts`, `eventOrdering.test.ts` | A- | Restart-during-run production scenario. |
+| Run lifecycle | `runs-lifecycle.test.ts`, `failure-path.test.ts`, `cancellation.test.ts`, `eventOrdering.test.ts`, `restart-during-run.test.ts` | A | Restart-during-run scenario shipped; gated under `openwop-production` profile (RFC 0009). |
 | Idempotency and retry | `idempotency.test.ts`, `idempotencyRetry.test.ts`, `highConcurrency.test.ts` | A- | Long retention proof beyond the fast CI window. |
 | Interrupts | `interrupt-approval.test.ts`, `interrupt-clarification.test.ts`, `approval-payload.test.ts`, `interruptRace.test.ts`, `interrupt-quorum-resolution.test.ts`, `interrupt-external-event-correlation.test.ts`, `interrupt-auth-required-resume.test.ts`, `interrupt-parent-child-cascade.test.ts` | A− | All four optional profile scenarios landed 2026-05-10. Remaining: positive end-to-end run against a host that advertises every profile. |
 | Streaming | `stream-modes.test.ts`, `stream-modes-buffer.test.ts`, `stream-modes-mixed.test.ts`, `streamReconnect.test.ts` | A | Browser/proxy timeout matrix and long-running stream soak. |
@@ -37,7 +37,7 @@
 
 ## Capability-gated scenarios: shape vs behavior
 
-Ten scenarios validate optional profiles where the host's discovery advertisement is well-formed (shape grade) but no reference host yet implements the profile end-to-end (behavior grade is `host-pending`). Default suite runs skip these with a warning; set `OPENWOP_REQUIRE_BEHAVIOR=true` to convert skips into hard failures.
+Eleven scenarios (or scenario groups) validate optional profiles where the host's discovery advertisement is well-formed (shape grade) but no reference host yet implements the profile end-to-end (behavior grade is `host-pending`). Default suite runs skip these with a warning; set `OPENWOP_REQUIRE_BEHAVIOR=true` to convert skips into hard failures.
 
 | Scenario | Profile / capability | Shape grade | Behavior grade | Behavior-unlock dependency |
 |---|---|---|---|---|
@@ -51,6 +51,7 @@ Ten scenarios validate optional profiles where the host's discovery advertisemen
 | `otel-emission.test.ts` | `openwop.*` OTel spans (`observability.md`) | B+ (OTLP/HTTP-JSON only) | partial | OTLP/protobuf path + metric-emission scenario |
 | `otel-trace-propagation.test.ts` | W3C trace-context propagation (`observability.md`) | B (trace continuity across `runs:fork` + interrupt resolve) | partial | Cross-host propagation across `core.subWorkflow` invocation |
 | `wasm-pack-*.test.ts` (six scenarios) | `capabilities.nodePackRuntimes.wasm` (`RFCS/0008`) | A− (load + invoke + replay + memory cap + ABI version) | partial | Deliberately-misbehaving pack for memory-cap + ABI-version-rejection positive paths |
+| `production-backpressure.test.ts`, `production-retention-expiry.test.ts`, `restart-during-run.test.ts`, `staleClaim.test.ts`, `debug-bundle-truncation.test.ts`, `idempotency.test.ts`, `idempotencyRetry.test.ts` (seven scenarios) | `openwop-production` (`production-profile.md`, RFC 0009) | B (capability shape + opportunistic envelope checks; durable-restart + debug-bundle-truncation predicates exercised end-to-end) | partial | Postgres reference host advertises `capabilities.production.supported: true` and passes both new scenarios under `OPENWOP_REQUIRE_BEHAVIOR=true`. RFC 0009 unresolved questions #1 (force-expire endpoint normation) + #3 (inflightCap vs probing) gate the path to A grade. |
 
 Strict-mode runner usage:
 

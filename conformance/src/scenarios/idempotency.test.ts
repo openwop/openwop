@@ -6,6 +6,12 @@
  * Uses the `conformance-idempotent` fixture. Server MUST have seeded
  * it. The fixture's `nonce` input has no side effect — it exists so
  * the conformance suite can vary the body without affecting behavior.
+ *
+ * @see spec/v1/idempotency.md §Layer 1
+ * @see spec/v1/rest-endpoints.md
+ * @see spec/v1/production-profile.md §"Retry and idempotency" (RFC 0009
+ *      — this scenario satisfies the basic-idempotency predicate when
+ *      the host advertises capabilities.production.supported: true)
  */
 
 import { describe, it, expect } from 'vitest';
