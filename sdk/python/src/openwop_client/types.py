@@ -307,6 +307,23 @@ HTTP_ERROR_CODES = frozenset(
         "approval_token_invalid",
         "approval_token_expired",
         "approval_token_consumed",
+        # Phase H.1″ — AI provider policy enforcement.
+        "provider_policy_denied",
+        # Phase H.2 — MCP client.
+        "mcp_server_not_configured",
+        "mcp_timeout",
+        "mcp_network_error",
+        "mcp_server_error",
+        "mcp_protocol_error",
+        "mcp_tool_error",
+        # Phase H.3 — HTTP client.
+        "http_url_rejected",
+        "http_timeout",
+        "http_network_error",
+        "http_unexpected_status",
+        # Phase H webhook codes (spec-de-facto).
+        "webhook_url_rejected",
+        "subscription_not_found",
         # Generic server failure
         "internal_error",
     }

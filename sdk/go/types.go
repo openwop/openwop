@@ -293,7 +293,24 @@ const (
 	HTTPErrorApprovalTokenInvalid      = "approval_token_invalid"
 	HTTPErrorApprovalTokenExpired      = "approval_token_expired"
 	HTTPErrorApprovalTokenConsumed     = "approval_token_consumed"
-	HTTPErrorInternalError             = "internal_error"
+	// Phase H.1″ — AI provider policy enforcement per capabilities.md §"aiProviders.policies".
+	HTTPErrorProviderPolicyDenied = "provider_policy_denied"
+	// Phase H.2 — MCP client.
+	HTTPErrorMcpServerNotConfigured = "mcp_server_not_configured"
+	HTTPErrorMcpTimeout             = "mcp_timeout"
+	HTTPErrorMcpNetworkError        = "mcp_network_error"
+	HTTPErrorMcpServerError         = "mcp_server_error"
+	HTTPErrorMcpProtocolError       = "mcp_protocol_error"
+	HTTPErrorMcpToolError           = "mcp_tool_error"
+	// Phase H.3 — HTTP client.
+	HTTPErrorHttpUrlRejected      = "http_url_rejected"
+	HTTPErrorHttpTimeout          = "http_timeout"
+	HTTPErrorHttpNetworkError     = "http_network_error"
+	HTTPErrorHttpUnexpectedStatus = "http_unexpected_status"
+	// Phase H webhook codes (spec-de-facto per webhook-negative.test.ts).
+	HTTPErrorWebhookUrlRejected    = "webhook_url_rejected"
+	HTTPErrorSubscriptionNotFound  = "subscription_not_found"
+	HTTPErrorInternalError         = "internal_error"
 )
 
 // HTTPErrorCodes lists canonical ErrorEnvelope.Error codes for common
@@ -326,6 +343,19 @@ var HTTPErrorCodes = []string{
 	HTTPErrorApprovalTokenInvalid,
 	HTTPErrorApprovalTokenExpired,
 	HTTPErrorApprovalTokenConsumed,
+	HTTPErrorProviderPolicyDenied,
+	HTTPErrorMcpServerNotConfigured,
+	HTTPErrorMcpTimeout,
+	HTTPErrorMcpNetworkError,
+	HTTPErrorMcpServerError,
+	HTTPErrorMcpProtocolError,
+	HTTPErrorMcpToolError,
+	HTTPErrorHttpUrlRejected,
+	HTTPErrorHttpTimeout,
+	HTTPErrorHttpNetworkError,
+	HTTPErrorHttpUnexpectedStatus,
+	HTTPErrorWebhookUrlRejected,
+	HTTPErrorSubscriptionNotFound,
 	HTTPErrorInternalError,
 }
 

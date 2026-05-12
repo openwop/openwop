@@ -216,6 +216,125 @@ export interface ErrorEnvelope {
 
 export type StreamMode = 'values' | 'updates' | 'messages' | 'debug';
 
+// ─── BYOK / AI providers (Phase H.1 + H.1″) ─────────────────────────────
+
+/**
+ * AI policy mode advertised by the host per `capabilities.md`
+ * §`aiProviders.policies`. Hosts MAY advertise a subset; clients MUST
+ * tolerate any subset.
+ *
+ *   - `disabled`   — provider MUST NOT be used at all
+ *   - `optional`   — no restriction (default)
+ *   - `required`   — provider call MUST carry a `credentialRef`
+ *   - `restricted` — model MUST match the policy's `allowedModels`
+ */
+export type AIPolicyMode = 'disabled' | 'optional' | 'required' | 'restricted';
+
+/**
+ * Closed-set deny reason returned in `provider_policy_denied.details.reason`
+ * per spec §"Wire-format error".
+ */
+export type AIPolicyDenyReason =
+  | 'provider_disabled'
+  | 'byok_required'
+  | 'byok_required_but_unresolved'
+  | 'model_not_allowed';
+
+/**
+ * Capability advertisement payload mirroring spec §`aiProviders` +
+ * §`aiProviders.policies`. Optional sub-fields are absent on hosts
+ * that don't enforce per-provider policies.
+ */
+export interface AIProvidersCapability {
+  /** Provider ids the host's AI-proxy can route to. */
+  supported: readonly string[];
+  /** Subset of `supported` for which BYOK is permitted. */
+  byok: readonly string[];
+  /** Optional 4-mode policy enforcement advertisement. */
+  policies?: {
+    modes: readonly AIPolicyMode[];
+    scopes?: readonly string[];
+    errorCode?: string;
+  };
+}
+
+/**
+ * Opaque host-issued reference to a stored secret. Sent via
+ * `RunOptions.configurable.ai.credentialRef`; the host resolves
+ * server-side and never echoes the cleartext back to the client.
+ * Per `auth.md` §"Secret resolution" + SR-1.
+ */
+export type AICredentialRef = string;
+
+/**
+ * AI overlay slot on `RunConfigurable.ai`. Picks the provider+model
+ * and (optionally) names a credentialRef the host MUST resolve.
+ */
+export interface AIRunOverlay {
+  provider?: string;
+  model?: string;
+  credentialRef?: AICredentialRef;
+  /** Implementation extensions; passed through verbatim. */
+  [key: string]: unknown;
+}
+
+// ─── MCP client (Phase H.2) ─────────────────────────────────────────────
+
+/**
+ * Capability advertisement for hosts that operate an MCP client.
+ * Mirrors `examples/hosts/postgres/src/mcp-client.ts` reference shape.
+ * `trustBoundary: "untrusted"` is REQUIRED per
+ * threat-model-prompt-injection.md §"UNTRUSTED marker": tool output is
+ * adversarial-tolerant and downstream LLM nodes treat it as user data.
+ */
+export interface McpClientCapability {
+  supported: true;
+  transports: readonly string[];
+  defaultTimeoutMs?: number;
+  trustBoundary: 'untrusted';
+}
+
+/** Wire shape of the `core.mcp.toolCall` node config. */
+export interface McpToolCallNodeConfig {
+  serverId: string;
+  toolName: string;
+  arguments?: Record<string, unknown>;
+  timeoutMs?: number;
+}
+
+/** Sanitized summary emitted on the `mcp.invoked` event payload (MCP-1). */
+export interface McpInvokedSummary {
+  serverId: string;
+  toolName: string;
+  argumentsSha256: string;
+  resultSha256: string;
+  resultLength: number;
+  isError: boolean;
+  durationMs: number;
+}
+
+// ─── HTTP client (Phase H.3) ────────────────────────────────────────────
+
+/** Capability advertisement for hosts that implement `core.http.request`. */
+export interface HttpClientCapability {
+  supported: true;
+  methods: readonly ('GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD')[];
+  defaultTimeoutMs?: number;
+  maxResponseBodyBytes: number;
+  ssrfGuard: boolean;
+  redirectPolicy?: 'follow' | 'reject';
+}
+
+/** Wire shape of the `core.http.request` node config. */
+export interface HttpRequestNodeConfig {
+  url: string;
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD';
+  headers?: Record<string, string>;
+  body?: unknown;
+  timeoutMs?: number;
+  expectStatus?: number | readonly number[];
+}
+
 /**
  * Thrown when the server returns a non-2xx response. Carries the original
  * status, parsed error envelope (if available), the raw response text,
