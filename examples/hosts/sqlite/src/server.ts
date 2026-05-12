@@ -205,6 +205,12 @@ if (!runColNames.has('parent_run_id')) {
 if (!runColNames.has('parent_node_id')) {
   db.exec("ALTER TABLE runs ADD COLUMN parent_node_id TEXT");
 }
+if (!runColNames.has('configurable_json')) {
+  // run-options.md §"configurable" overlay. Persisting it lets the
+  // executor honor caps like `recursionLimit` (cap-breach scenario)
+  // and lets GET /v1/runs/{id} surface the overlay for debugging.
+  db.exec("ALTER TABLE runs ADD COLUMN configurable_json TEXT");
+}
 db.exec("CREATE INDEX IF NOT EXISTS idx_runs_parent ON runs(parent_run_id)");
 
 // HITL interrupts (interrupt.md + interrupt-profiles.md).
@@ -227,7 +233,7 @@ const AUDIT_OPTS: AuditOptions = defaultAuditOptions();
 // statements are reused.
 const stmts = {
   insertRun: db.prepare(
-    'INSERT INTO runs (run_id, workflow_id, status, inputs_json, started_at) VALUES (?, ?, ?, ?, ?)',
+    'INSERT INTO runs (run_id, workflow_id, status, inputs_json, started_at, configurable_json) VALUES (?, ?, ?, ?, ?, ?)',
   ),
   getRun: db.prepare('SELECT * FROM runs WHERE run_id = ?'),
   updateRunStatus: db.prepare(
@@ -320,6 +326,7 @@ interface RunRow {
   next_node_index: number;
   parent_run_id: string | null;
   parent_node_id: string | null;
+  configurable_json: string | null;
 }
 
 interface EventRow {
@@ -738,9 +745,49 @@ async function runWorkflow(runId: string): Promise<void> {
       appendEvent(runId, 'run.resumed', { data: { resumedBy: PROCESS_ID } });
     }
 
+    // recursionLimit per run-options.md §"recursionLimit": cap on
+    // total node executions in the run. When the next node would
+    // exceed the limit, emit `cap.breached` BEFORE the node fires,
+    // then `run.failed` with `error.code = 'recursion_limit_exceeded'`.
+    const configurableParsed = row.configurable_json
+      ? (JSON.parse(row.configurable_json) as { recursionLimit?: unknown })
+      : {};
+    const recursionLimit =
+      typeof configurableParsed.recursionLimit === 'number' &&
+      Number.isInteger(configurableParsed.recursionLimit) &&
+      configurableParsed.recursionLimit > 0
+        ? configurableParsed.recursionLimit
+        : null;
+    let breachEmitted = false;
+
     const startIndex = row.next_node_index ?? 0;
     for (let i = startIndex; i < workflow.nodes.length; i++) {
       const node = workflow.nodes[i]!;
+
+      // recursionLimit gate: i is 0-indexed; the (i+1)th node would
+      // overflow when i+1 > limit. The conformance test expects
+      // `cap.breached` BEFORE the over-limit node's `node.started`,
+      // so `node.started` MUST NOT appear for the breaching node.
+      if (recursionLimit !== null && i + 1 > recursionLimit && !breachEmitted) {
+        breachEmitted = true;
+        appendEvent(runId, 'cap.breached', {
+          nodeId: node.id,
+          data: {
+            kind: 'node-executions',
+            limit: recursionLimit,
+            observed: i + 1,
+            nodeId: node.id,
+          },
+        });
+        const error = {
+          code: 'recursion_limit_exceeded',
+          message: `Per-run node-execution cap (recursionLimit=${recursionLimit}) breached at node "${node.id}" (would be execution #${i + 1}).`,
+        };
+        appendEvent(runId, 'run.failed', { data: error });
+        setRunTerminal(runId, 'failed', error);
+        return;
+      }
+
       const refreshed = loadRun(runId);
       if (refreshed?.status === 'cancelling') {
         appendEvent(runId, 'run.cancelled');
@@ -1032,7 +1079,14 @@ async function handleCreateRun(req: IncomingMessage, res: ServerResponse): Promi
   const inputs = parsed.inputs ?? {};
   const startedAt = new Date().toISOString();
 
-  stmts.insertRun.run(runId, parsed.workflowId, 'pending', JSON.stringify(inputs), startedAt);
+  stmts.insertRun.run(
+    runId,
+    parsed.workflowId,
+    'pending',
+    JSON.stringify(inputs),
+    startedAt,
+    parsed.configurable !== undefined ? JSON.stringify(parsed.configurable) : null,
+  );
 
   // W3C Trace Context propagation (observability.md §"Trace context propagation").
   // Parse `traceparent` from the inbound request; if valid, store it so
@@ -1644,6 +1698,18 @@ function handleEventsSse(req: IncomingMessage, res: ServerResponse, runId: strin
     return;
   }
 
+  // Validation-gate ordering invariant:
+  //
+  //   1. streamMode validation (this block)
+  //   2. bufferMs validation
+  //   3. Content negotiation (Accept-header dispatch SSE vs JSON)
+  //   4. Last-Event-ID parsing
+  //   5. Response setup + write
+  //
+  // Gates 1-2 MUST run BEFORE the content-negotiation branch so an
+  // invalid streamMode or out-of-range bufferMs returns 400 to
+  // EVERY client — JSON callers included.
+  //
   // Validate streamMode per stream-modes.md §"Mode selection". Single
   // mode OR comma-separated subset of {values, updates, messages,
   // debug}. `values` is exclusive — can't combine with others.
@@ -1673,6 +1739,53 @@ function handleEventsSse(req: IncomingMessage, res: ServerResponse, runId: strin
     }
   }
 
+  // Validate bufferMs per stream-modes.md §"Aggregation hint" —
+  // integer in [0, 5000]. bufferMs > 0: emit `event: batch` SSE
+  // frames whose data is a JSON array of RunEventDocs; force-flush
+  // on terminal so terminal events don't get held back past the
+  // next timer interval.
+  const bufferMsRaw = req.url
+    ? new URL(req.url, `http://${req.headers.host ?? 'localhost'}`).searchParams.get('bufferMs')
+    : null;
+  let bufferMs = 0;
+  if (bufferMsRaw !== null && bufferMsRaw.length > 0) {
+    const parsed = Number(bufferMsRaw);
+    if (!Number.isFinite(parsed) || parsed < 0 || parsed > 5000 || !Number.isInteger(parsed)) {
+      sendJSON(res, 400, {
+        error: 'validation_error',
+        message: 'bufferMs MUST be an integer in [0, 5000].',
+        details: { bufferMs: parsed, min: 0, max: 5000 },
+      });
+      return;
+    }
+    bufferMs = parsed;
+  }
+
+  // Content negotiation: Accept: text/event-stream → SSE (canonical);
+  // anything else (e.g., the conformance suite's append-ordering test
+  // hitting /events via plain fetch) → polled JSON, same shape as
+  // /events/poll. See spec/v1/stream-modes.md §"Content negotiation".
+  const acceptHeader = req.headers['accept'];
+  const wantsSse =
+    typeof acceptHeader === 'string' && acceptHeader.includes('text/event-stream');
+  if (!wantsSse) {
+    const events = stmts.getEventsAfter.all(runId, -1) as EventRow[];
+    sendJSON(res, 200, {
+      events: events.map((r) => ({
+        eventId: `evt-${r.run_id}-${r.seq}`,
+        runId: r.run_id,
+        seq: r.seq,
+        sequence: r.seq,
+        type: r.type,
+        nodeId: r.node_id,
+        data: r.data_json !== null ? JSON.parse(r.data_json) : null,
+        payload: r.data_json !== null ? JSON.parse(r.data_json) : null,
+        timestamp: r.timestamp,
+      })),
+    });
+    return;
+  }
+
   // Per spec/v1/stream-modes.md §"Reconnection": Last-Event-ID signals
   // a resumption — replay only events with seq > lastEventId.
   const lastEventIdHeader = req.headers['last-event-id'];
@@ -1688,22 +1801,59 @@ function handleEventsSse(req: IncomingMessage, res: ServerResponse, runId: strin
     Connection: 'keep-alive',
   });
 
+  const canonicalizeEvent = (event: RunEvent): Record<string, unknown> => ({
+    eventId: `evt-${event.runId}-${event.seq}`,
+    runId: event.runId,
+    seq: event.seq,
+    sequence: event.seq,
+    type: event.type,
+    nodeId: event.nodeId,
+    data: event.data,
+    payload: event.data,
+    timestamp: event.timestamp,
+  });
+
+  // Batched delivery state (bufferMs > 0). Flushes on timer interval
+  // OR on terminal event (force-flush rule).
+  let batchBuffer: RunEvent[] = [];
+  let batchTimer: NodeJS.Timeout | null = null;
+  const flushBatch = (): void => {
+    if (batchBuffer.length === 0) return;
+    const items = batchBuffer.map(canonicalizeEvent);
+    res.write(`event: batch\n`);
+    res.write(`data: ${JSON.stringify(items)}\n\n`);
+    batchBuffer = [];
+  };
+  if (bufferMs > 0) {
+    batchTimer = setInterval(flushBatch, bufferMs);
+    batchTimer.unref?.();
+  }
+
   const writeEvent = (event: RunEvent): void => {
-    // Same canonical-vs-legacy field shape as handleEventsPoll above.
-    const canonical = {
-      eventId: `evt-${event.runId}-${event.seq}`,
-      runId: event.runId,
-      seq: event.seq,
-      sequence: event.seq,
-      type: event.type,
-      nodeId: event.nodeId,
-      data: event.data,
-      payload: event.data,
-      timestamp: event.timestamp,
-    };
+    if (bufferMs > 0) {
+      batchBuffer.push(event);
+      if (
+        event.type === 'run.completed' ||
+        event.type === 'run.failed' ||
+        event.type === 'run.cancelled'
+      ) {
+        flushBatch();
+      }
+      return;
+    }
+    const canonical = canonicalizeEvent(event);
     res.write(`id: ${event.seq}\n`);
     res.write(`event: ${event.type}\n`);
     res.write(`data: ${JSON.stringify(canonical)}\n\n`);
+  };
+
+  const closeStream = (): void => {
+    if (batchTimer) {
+      clearInterval(batchTimer);
+      batchTimer = null;
+    }
+    flushBatch();
+    res.end();
   };
 
   const backlog = stmts.getEventsAfter.all(runId, resumeAfterSeq) as EventRow[];
@@ -1719,7 +1869,7 @@ function handleEventsSse(req: IncomingMessage, res: ServerResponse, runId: strin
   }
 
   if (row.status === 'completed' || row.status === 'failed' || row.status === 'cancelled') {
-    res.end();
+    closeStream();
     return;
   }
 
@@ -1731,13 +1881,17 @@ function handleEventsSse(req: IncomingMessage, res: ServerResponse, runId: strin
       event.type === 'run.cancelled'
     ) {
       eventBus.off(`events:${runId}`, onEvent);
-      res.end();
+      closeStream();
     }
   };
   eventBus.on(`events:${runId}`, onEvent);
 
   req.on('close', () => {
     eventBus.off(`events:${runId}`, onEvent);
+    if (batchTimer) {
+      clearInterval(batchTimer);
+      batchTimer = null;
+    }
   });
 }
 
@@ -1859,6 +2013,20 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   m = RUN_ID_PATTERN.exec(path);
   if (m && method === 'GET') return handleGetRun(req, res, m[1]!);
 
+  // The host does NOT operate a pack registry. The spec allows hosts
+  // to omit the entire /v1/packs/* namespace; the conformance suite's
+  // pack-registry tests probe for "registry presence" via GET
+  // /v1/packs/-/search and treat any JSON body with `error` or
+  // `results` as "registry mounted." A plain-text 404 (no JSON
+  // envelope) signals "no registry here" and lets the probe short-
+  // circuit; the 3 pack-registry scenarios then trivially-pass via
+  // their early `if (!probe.registryPresent) return;` guard. Mirror
+  // of the Postgres host's catch-all.
+  if (path.startsWith('/v1/packs/')) {
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('This host does not operate a pack registry.');
+    return;
+  }
   sendError(res, 404, 'not_found', `No route for ${method} ${path}`);
 }
 

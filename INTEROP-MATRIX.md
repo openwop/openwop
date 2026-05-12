@@ -14,6 +14,19 @@ This matrix records public, reproducible compatibility evidence for openwop-comp
 | **Python in-memory** (reference example) | Cross-language portability proof / Python 3.11 stdlib-only port of the TypeScript in-memory host | `examples/hosts/python/` | `openwop-core` · `openwop-stream-sse` · `openwop-stream-poll` | `minimal` | Not claimed | `examples/hosts/python/conformance.md` |
 | **Postgres** (reference example) | Multi-process durability path + first host advertising `production-profile.md`. Wire-surface parity with SQLite (audit + 4 interrupt profiles + webhooks + SSE + observability + debug-bundle + pause/resume) plus production-shape guarantees (session-level advisory-lock claim acquisition + orphan recovery, 503/Retry-After backpressure, 7-day event retention sweeper, structured terminal logs). | `examples/hosts/postgres/` | `openwop-core` · `openwop-stream-poll` · `openwop-stream-sse` · `openwop-audit-log-integrity` · `openwop-interrupt-quorum` · `openwop-interrupt-auth-required` · `openwop-interrupt-external-event` · `openwop-interrupt-cascade-cancel` (all since 2026-05-11) | `minimal` (operational-readiness claim is independent of throughput — see `production-profile.md:74`; single-`pg.Client` design serializes writes) | Claimed (since 2026-05-11) — see `examples/hosts/postgres/conformance-full.md` | `examples/hosts/postgres/README.md` + `conformance-full.md` + in-process `test/{lifecycle,audit-tamper,pause-resume,interrupts,webhooks,sse,review-fixes,claim,backpressure}.test.ts` via pglite |
 
+### External conformance suite — pass rates (2026-05-11)
+
+Latest `npx vitest run` against each running reference host. Both above the 87% baseline noted in `examples/hosts/postgres/conformance-full.md`; cross-host parity confirmed.
+
+| Host | Passed | Failed | Skipped | Todo | Total | Pass rate |
+|---|---:|---:|---:|---:|---:|---:|
+| Postgres reference | 610 | 1-2 (flake) | 41 | 30 | 682 | **89.4%** |
+| SQLite reference | 616 | 9 | 33 | 30 | 688 | **89.5%** |
+| In-memory reference | — | — | — | — | — | not measured this round |
+| Python reference | — | — | — | — | — | not measured this round |
+
+Postgres's 1-2 failures are: `webhook-signed-delivery` (flake; passes in isolation) and `pause/resume running→paused→terminal` (fixture-coupled — 30s default delay vs 10s post-resume timeout). SQLite's 9 failures are pre-existing feature gaps unrelated to this session's work: `core.dispatch`, channel-ttl pruning, conversation-capability refusal, subworkflow outputMapping, identity-fixture variable echo, and the events/poll forward-compat tolerance check. None of the failures on either host block the production-profile MUSTs.
+
 Third-party hosts can append rows by opening a PR with their advertised profiles, suite version, and a public conformance result.
 
 ## Reading Rows
