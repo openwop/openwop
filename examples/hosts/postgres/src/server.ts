@@ -102,6 +102,10 @@ import {
   McpClientError,
   type McpToolCallConfig,
 } from './mcp-client.js';
+import {
+  setupMemorySchema,
+  REFERENCE_MEMORY_CAPABILITY,
+} from './memory-adapter.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const HOST = process.env.OPENWOP_HOST ?? '127.0.0.1';
@@ -1912,6 +1916,13 @@ function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
         // KMS/Vault. Per SR-1, only the hash + length appear on any
         // observable surface; cleartext never leaves the resolver.
         secrets: REFERENCE_SECRETS_CAPABILITY,
+        // Phase I.1 — capabilities.md §`memory` (RFC 0004). Host
+        // implements the read-side MemoryAdapter contract
+        // (list/get) backed by Postgres. Writes are host-internal
+        // (session-end triggers, feedback promotion). TTL enforced
+        // server-side; CTI-1 cross-tenant isolation upheld via
+        // tenant_id filtering on every query.
+        memory: REFERENCE_MEMORY_CAPABILITY,
         // Phase H.1 + H.1″ — capabilities.md §`aiProviders` +
         // §`aiProviders.policies`. The host advertises BYOK-ready
         // routing for the listed providers AND 4-mode policy
@@ -3522,6 +3533,7 @@ export async function start(): Promise<{ close: () => Promise<void> }> {
   await setupAuditSchema(q);
   await setupInterruptSchema(q);
   await setupWebhookSchema(q);
+  await setupMemorySchema(q);
 
   // Persist the audit signing keypair under OPENWOP_AUDIT_KEY_DIR.
   // Tests can override OPENWOP_AUDIT_KEY_DIR to point at a tmpdir per
