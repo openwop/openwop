@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-studio-core/1.0.0/variant-plan.input.json",
+  "title": "AdsVariantPlanInput",
+  "type": "object",
+  "properties": {
+    "plan": {
+      "type": "object",
+      "description": "Existing VariantPlan record. Required for `generate` and `validate` modes.",
+      "additionalProperties": true
+    },
+    "briefId": {
+      "type": "string",
+      "description": "The parent brief id. Required for `create` mode."
+    },
+    "axes": {
+      "type": "array",
+      "description": "VariantAxis[] — { dimension, values }. Required for `create` mode.",
+      "items": {
+        "type": "object",
+        "required": ["dimension", "values"],
+        "properties": {
+          "dimension": { "type": "string", "minLength": 1 },
+          "values": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": true
+      }
+    },
+    "maxVariants": { "type": "integer", "minimum": 1, "default": 20 },
+    "strategy": { "type": "string", "enum": ["balanced", "focused"], "default": "balanced" },
+    "focusAxis": { "type": "string" },
+    "namingConvention": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Partial VariantNamingConvention. Merged onto the default."
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "axes"],
+        "properties": {
+          "type": { "type": "string", "enum": ["incompatible", "requires"] },
+          "axes": { "type": "array", "items": { "type": "string" } },
+          "values": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": true
+      }
+    },
+    "targetPlacements": { "type": "array", "items": {} }
+  },
+  "additionalProperties": true
+}

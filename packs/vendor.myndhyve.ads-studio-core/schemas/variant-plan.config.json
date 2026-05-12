@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-studio-core/1.0.0/variant-plan.config.json",
+  "title": "AdsVariantPlanConfig",
+  "type": "object",
+  "properties": {
+    "mode": {
+      "type": "string",
+      "enum": ["create", "generate", "validate"],
+      "default": "create",
+      "description": "`create`: create a new VariantPlan from inputs. `generate`: emit the variant matrix from inputs.plan. `validate`: validate-only, return issues + estimated count."
+    }
+  },
+  "additionalProperties": true
+}

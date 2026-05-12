@@ -1,0 +1,65 @@
+{
+  "name": "vendor.myndhyve.ads-studio-core",
+  "version": "1.0.0",
+  "description": "MyndHyve Ads Studio core — four pure-logic executors lifted from src/canvas-types/campaign-studio/nodes/adsStudioPack/. ads.brief.build (CreativeBriefBuilder), ads.variant.plan (VariantPlanService), ads.video.qa (VideoQAService), ads.winner.synthesize (WinnerSynthesisService). All four executors are deterministic — no host capabilities required beyond the core NodeContext. Marks the Phase A pilot of the canvas-type executor migration per openwop/openwop#11.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/ads-studio-core",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": ["vendor", "myndhyve", "ads", "campaign", "creative-brief", "variant-plan", "video-qa"],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "nodes": [
+    {
+      "typeId": "ads.brief.build",
+      "version": "1.0.0",
+      "label": "Ads Brief Build",
+      "description": "Builds a CreativeBrief from manual input, AI-assisted authoring, or by extending an extracted AdBrief with structured creative fields. Three modes: manual, extraction (extend base brief), merge (partial overlay).",
+      "category": "data",
+      "role": "action",
+      "configSchemaRef": "schemas/brief-build.config.json",
+      "inputSchemaRef": "schemas/brief-build.input.json",
+      "outputSchemaRef": "schemas/brief-build.output.json"
+    },
+    {
+      "typeId": "ads.variant.plan",
+      "version": "1.0.0",
+      "label": "Ads Variant Plan",
+      "description": "Plans creative variants for an ad campaign — creates a variant plan from axes + constraints, generates the cartesian product, applies balanced/focused truncation strategies, and emits slugs per the naming convention. Pure deterministic generation.",
+      "category": "data",
+      "role": "action",
+      "configSchemaRef": "schemas/variant-plan.config.json",
+      "inputSchemaRef": "schemas/variant-plan.input.json",
+      "outputSchemaRef": "schemas/variant-plan.output.json"
+    },
+    {
+      "typeId": "ads.video.qa",
+      "version": "1.0.0",
+      "label": "Ads Video QA",
+      "description": "Quality-assurance checks on video storyboards — text legibility (reading speed + scale), safe-zone compliance, duration limits, text density, claims policy. The Platform-spec registry + compliance-bridge integrations are optional; callers inject safeZones/videoSpec/checkClaimsFn via inputs when needed.",
+      "category": "data",
+      "role": "action",
+      "configSchemaRef": "schemas/video-qa.config.json",
+      "inputSchemaRef": "schemas/video-qa.input.json",
+      "outputSchemaRef": "schemas/video-qa.output.json"
+    },
+    {
+      "typeId": "ads.winner.synthesize",
+      "version": "1.0.0",
+      "label": "Ads Winner Synthesize",
+      "description": "Synthesizes winning creative from A/B test results — generates aggregate stats, insights (winner/no_winner/low_data/trend), next-test suggestions (priority-ordered by dimension), and a markdown report. Deterministic — no AI calls.",
+      "category": "data",
+      "role": "action",
+      "configSchemaRef": "schemas/winner-synthesize.config.json",
+      "inputSchemaRef": "schemas/winner-synthesize.input.json",
+      "outputSchemaRef": "schemas/winner-synthesize.output.json"
+    }
+  ]
+}

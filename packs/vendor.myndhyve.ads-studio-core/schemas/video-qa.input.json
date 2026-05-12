@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-studio-core/1.0.0/video-qa.input.json",
+  "title": "AdsVideoQAInput",
+  "type": "object",
+  "required": ["storyboard"],
+  "properties": {
+    "storyboard": {
+      "type": "object",
+      "required": ["scenes", "totalDuration"],
+      "properties": {
+        "id": { "type": "string" },
+        "scenes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": { "type": "string" },
+              "duration": { "type": "number", "minimum": 0 },
+              "textOverlay": { "type": "string" },
+              "voiceover": { "type": "string" },
+              "visualPrompt": { "type": "string" },
+              "contentType": { "type": "string" }
+            },
+            "additionalProperties": true
+          }
+        },
+        "totalDuration": { "type": "number", "minimum": 0 }
+      },
+      "additionalProperties": true
+    },
+    "options": {
+      "type": "object",
+      "properties": {
+        "placement": {
+          "type": "string",
+          "description": "Platform placement id; informational — Platform-spec resolution is the host's responsibility."
+        },
+        "safeZones": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": true },
+          "description": "Inject safe-zone definitions directly; bypasses placement-based registry lookup."
+        },
+        "videoSpec": {
+          "type": "object",
+          "properties": {
+            "minDuration": { "type": "number", "minimum": 0 },
+            "maxDuration": { "type": "number", "minimum": 0 },
+            "recommendedDuration": { "type": "number", "minimum": 0 }
+          },
+          "additionalProperties": true,
+          "description": "Inject video spec directly; bypasses placement-based registry lookup."
+        },
+        "minTextScaleRatio": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.04 },
+        "maxCharsPerScene": { "type": "integer", "minimum": 1, "default": 120 },
+        "maxTextBlocksPerScene": { "type": "integer", "minimum": 0, "default": 2 },
+        "claimsPolicy": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Optional ClaimsPolicy. Requires `checkClaimsFn` to also be supplied OR the executor skips claims checks."
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

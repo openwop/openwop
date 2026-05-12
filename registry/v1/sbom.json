@@ -180,6 +180,24 @@
       ]
     },
     {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.ads-studio-core@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.ads-studio-core",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/vendor.myndhyve.ads-studio-core/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "c093febe075140176e33a2024f7ae4abfb0c519b2a0451f867e1fd3a63db7523"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "bom-ref": "pkg:openwop/vendor.myndhyve.agent-orchestration@1.0.0",
       "type": "library",
       "name": "vendor.myndhyve.agent-orchestration",
