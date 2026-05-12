@@ -1,5 +1,28 @@
 {
   "$schema": "../../schemas/security-advisory.schema.json",
   "_about": "Registry-owned security advisory feed. One JSON document containing all advisories; PRs append. Schema: schemas/security-advisory.schema.json. CI gate: registry/scripts/check-advisories.mjs. Runbook: docs/runbooks/INCIDENT-RESPONSE.md §Incident class 1.",
-  "advisories": []
+  "advisories": [
+    {
+      "id": "OPENWOP-2026-0001",
+      "publishedAt": "2026-05-12",
+      "severity": "high",
+      "summary": "SSRF + DNS-rebinding gaps + empty-secret HMAC in campaign.sequence.webhook (1.0.0)",
+      "details": "The webhook executor in vendor.myndhyve.campaign-sequence-integration@1.0.0 had three composable defects:\n\n1. SSRF deny list missed `172.16.0.0/12` (RFC 1918 private band) and all IPv6 private/link-local ranges (`fc00::/7`, `fe80::/10`). A workflow author could configure `webhookUrl` to hit internal services on those ranges.\n\n2. DNS-rebinding bypass: the deny check ran on the URL hostname, not on the resolved IP. A public hostname pointed at a private IP via attacker-controlled DNS bypassed the check entirely.\n\n3. Empty-secret HMAC: when `step.webhookSecret` was absent or empty, the executor still computed `hmac-sha256('', body)` and emitted the result as `X-MyndHyve-Signature`. Any third party who knows the body can forge this signature — receivers verifying the header have no actual sender-authentication guarantee.\n\nAll three are addressed in 1.0.1: deny list extended to all RFC 1918 + IPv6 private + 169.254/16 + 0.0.0.0/8, DNS-resolution check added via `dns.lookup`, empty-secret refused for non-localhost targets with explicit error.",
+      "advisoryUrl": "https://github.com/openwop/openwop/pull/24",
+      "affected": [
+        {
+          "packName": "vendor.myndhyve.campaign-sequence-integration",
+          "versions": "<1.0.1",
+          "fixedIn": "1.0.1",
+          "fixedInRef": "openwop/openwop#24"
+        }
+      ],
+      "credits": [
+        {
+          "name": "openwop code-review (Claude Opus 4.7)",
+          "role": "finder"
+        }
+      ]
+    }
+  ]
 }

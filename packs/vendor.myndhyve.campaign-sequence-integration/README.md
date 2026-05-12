@@ -38,9 +38,17 @@ ctx.campaignMessaging = {
 
 Self-contained — uses Node 20's built-in `fetch` + `node:crypto`'s `createHmac`. No host capability required.
 
-**SSRF defense**: rejects localhost, `127.0.0.1`, `::1`, `169.254.169.254` (cloud metadata), `10.0.0.0/8`, `192.168.0.0/16`. Mirrors the MyndHyve source's deny list.
+**SSRF defense** (hardened in 1.0.1):
 
-**Signature**: `X-MyndHyve-Signature: hex(hmac-sha256(step.webhookSecret, body))`. Empty secret yields an empty-key HMAC (still computed; verification on the receiver side will fail unless they expect the empty-key value).
+- Rejects loopback (`127.0.0.0/8`, `::1`, `0.0.0.0/8`)
+- Rejects IPv4 private ranges: `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`
+- Rejects link-local + cloud metadata: `169.254.0.0/16`, `169.254.169.254`
+- Rejects IPv6 ULA (`fc00::/7`) + link-local (`fe80::/10`)
+- **DNS-rebinding defense**: for hostname URLs, the executor pre-resolves via `dns.lookup` and rejects when the resolved IP is in any blocked range. Defends against an attacker-controlled DNS record pointing a public name at an internal IP.
+
+The 1.0.0 release missed `172.16.0.0/12`, IPv6 private ranges, and lacked DNS-resolution validation. Operators with sequence definitions that legitimately target `172.16.0.0/12` (uncommon for outbound webhooks) must update those addresses; otherwise upgrade is transparent.
+
+**Signature**: `X-MyndHyve-Signature: hex(hmac-sha256(step.webhookSecret, body))`. In 1.0.1, `step.webhookSecret` is REQUIRED for non-localhost targets — the executor returns `success: false, error: 'webhookSecret is required for non-localhost delivery'` if the secret is absent or empty. (An empty-key HMAC is computable by any third party and therefore unsigned in practice; surfacing the error explicitly is safer than silent forgery exposure.) Localhost targets (development) still allow empty secrets.
 
 **Body envelope**:
 ```json

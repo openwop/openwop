@@ -17,9 +17,21 @@
       "signingKeyId": "openwop-registry-root",
       "integrity": "sha256-NgupCLZ5suyT8fpCjZiC49qlUgM0/OaEjo1sDsbUtdY=",
       "deprecated": false,
+      "yanked": true
+    },
+    {
+      "version": "1.0.1",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/vendor.myndhyve.campaign-sequence-integration/-/1.0.1.json",
+      "tarballUrl": "/v1/packs/vendor.myndhyve.campaign-sequence-integration/-/1.0.1.tgz",
+      "signatureUrl": "/v1/packs/vendor.myndhyve.campaign-sequence-integration/-/1.0.1.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-9RE2dvLOHrBeY52DvVLPpqUxjbqn+t2lc0ExJub4Dss=",
+      "deprecated": false,
       "yanked": false
     }
   ],
-  "latest": "1.0.0",
+  "latest": "1.0.1",
   "deprecated": false
 }
