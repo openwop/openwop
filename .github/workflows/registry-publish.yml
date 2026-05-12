@@ -139,13 +139,23 @@ jobs:
         with:
           workload_identity_provider: 'projects/89896419173/locations/global/workloadIdentityPools/github/providers/github-actions'
           service_account: 'github-action-1224821216@openwop-dev.iam.gserviceaccount.com'
+          # `access_token` is consumable by firebase-tools via the
+          # FIREBASE_TOKEN env var (firebase-tools v12+ accepts a Google
+          # OAuth2 access token here, not just a refresh token). The
+          # generated federated-credentials file (`credentials_file_path`)
+          # is an "external account" format the firebase CLI doesn't
+          # recognize directly — using the access-token path avoids that.
+          token_format: 'access_token'
+          # Hosting deploys need https://www.googleapis.com/auth/firebase
+          # + https://www.googleapis.com/auth/cloud-platform; both are
+          # included in the default scopes for the auth action.
 
       - name: Install firebase-tools
         run: npm install -g firebase-tools@latest
 
       - name: Deploy to Firebase Hosting (packs target)
         env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
+          FIREBASE_TOKEN: ${{ steps.auth.outputs.access_token }}
         run: |
           firebase deploy \
             --only hosting:packs \
