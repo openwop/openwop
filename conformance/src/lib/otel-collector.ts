@@ -42,6 +42,22 @@ export interface OtelAttribute {
   readonly value: string | number | boolean | null | readonly unknown[];
 }
 
+/**
+ * Narrow structural type the `_ingestTraces` helper accepts. Both the
+ * JSON parser (`JSON.parse(body) → unknown`, cast to this shape) and
+ * the protobuf decoder (`decodeExportTraceServiceRequest → JsonExport-
+ * TraceServiceRequest`) flow through this interface without needing
+ * `as unknown as Record<string, unknown>` double-casts.
+ */
+export interface TracesIngest {
+  resourceSpans?: unknown;
+}
+
+/** Same idea for the metrics ingest path. */
+export interface MetricsIngest {
+  resourceMetrics?: unknown;
+}
+
 export interface CapturedSpan {
   readonly traceId: string;
   readonly spanId: string;
@@ -171,9 +187,32 @@ export class OtelCollector {
       res.writeHead(405).end();
       return;
     }
+    // Defense-in-depth: cap inbound body size before buffering. The
+    // collector runs in the conformance suite process; a runaway host
+    // (or operator misconfig) emitting a multi-GB OTLP payload would
+    // otherwise OOM the suite. 16 MiB is generous for normal OTLP
+    // traffic (a 100-span batch with 50-attribute payloads runs ~50 KiB
+    // in JSON) but bounds the worst case. Hosts hitting this limit
+    // should batch smaller; the cap is suite-side, not normative.
+    const MAX_BODY_BYTES = 16 * 1024 * 1024;
     const chunks: Buffer[] = [];
+    let received = 0;
     for await (const c of req) {
-      chunks.push(c as Buffer);
+      const buf = c as Buffer;
+      received += buf.length;
+      if (received > MAX_BODY_BYTES) {
+        res
+          .writeHead(413, { 'Content-Type': 'application/json' })
+          .end(
+            JSON.stringify({
+              error: 'payload_too_large',
+              message: `OTLP body exceeds ${MAX_BODY_BYTES} bytes; reduce batch size or split exports`,
+            }),
+          );
+        req.destroy();
+        return;
+      }
+      chunks.push(buf);
     }
     const body = Buffer.concat(chunks);
     const contentType = (req.headers['content-type'] ?? '').toLowerCase();
@@ -182,9 +221,14 @@ export class OtelCollector {
       contentType.includes('application/protobuf');
     const isJson = contentType.includes('application/json') || contentType === '';
 
-    let payload: Record<string, unknown> = {};
     const isTracesRoute = req.url?.includes('/v1/traces') === true;
     const isMetricsRoute = req.url?.includes('/v1/metrics') === true;
+
+    // Both the JSON parser and the protobuf decoder produce objects
+    // with the same structural shape. Typing `payload` as the union
+    // narrow-property interface (instead of `Record<string, unknown>`)
+    // lets both paths flow in without `as unknown as` double-casts.
+    let payload: TracesIngest & MetricsIngest = {};
 
     if (isProtobuf) {
       // OTLP/HTTP-protobuf — added in the Track 11 follow-up. Decode the
@@ -195,11 +239,11 @@ export class OtelCollector {
         if (isTracesRoute) {
           payload = decodeExportTraceServiceRequest(
             new Uint8Array(body.buffer, body.byteOffset, body.byteLength),
-          ) as unknown as Record<string, unknown>;
+          );
         } else if (isMetricsRoute) {
           payload = decodeExportMetricsServiceRequest(
             new Uint8Array(body.buffer, body.byteOffset, body.byteLength),
-          ) as unknown as Record<string, unknown>;
+          );
         } else {
           // /v1/logs or unknown — ack and ignore so the exporter doesn't retry.
           res.writeHead(200, { 'Content-Type': 'application/json' }).end('{}');
@@ -220,7 +264,7 @@ export class OtelCollector {
       try {
         payload =
           body.length > 0
-            ? (JSON.parse(body.toString('utf8')) as Record<string, unknown>)
+            ? (JSON.parse(body.toString('utf8')) as TracesIngest & MetricsIngest)
             : {};
       } catch {
         res
@@ -256,7 +300,7 @@ export class OtelCollector {
     res.writeHead(200, { 'Content-Type': 'application/json' }).end('{}');
   }
 
-  private _ingestTraces(payload: Record<string, unknown>): void {
+  private _ingestTraces(payload: TracesIngest): void {
     const rs = (payload.resourceSpans ?? []) as ReadonlyArray<Record<string, unknown>>;
     for (const r of rs) {
       const resourceAttrs = decodeAttributes(
@@ -284,7 +328,7 @@ export class OtelCollector {
     }
   }
 
-  private _ingestMetrics(payload: Record<string, unknown>): void {
+  private _ingestMetrics(payload: MetricsIngest): void {
     const rm = (payload.resourceMetrics ?? []) as ReadonlyArray<Record<string, unknown>>;
     for (const r of rm) {
       const sm = (r.scopeMetrics ?? []) as ReadonlyArray<Record<string, unknown>>;
