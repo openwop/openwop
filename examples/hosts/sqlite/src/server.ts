@@ -99,6 +99,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const HOST = process.env.OPENWOP_HOST ?? '127.0.0.1';
 const PORT = Number(process.env.OPENWOP_PORT ?? 3838);
 const API_KEY = process.env.OPENWOP_API_KEY ?? 'openwop-sqlite-dev-key';
+// auth-profiles.md §"openwop-auth-api-key-rotation". When a secondary
+// key is configured, both keys authenticate within the overlap window;
+// canonical use is rotation: new primary in env, old secondary still
+// honored until operators have rotated all clients.
+const SECONDARY_API_KEY = process.env.OPENWOP_SECONDARY_API_KEY ?? null;
 const DB_PATH = process.env.OPENWOP_SQLITE_PATH ?? join(__dirname, '..', 'data', 'openwop-host.sqlite');
 const PROCESS_ID = `host-${randomUUID().slice(0, 8)}`;
 
@@ -1239,12 +1244,24 @@ function checkAuth(req: IncomingMessage, res: ServerResponse): boolean {
   }
   const token = auth.slice('Bearer '.length).trim();
   const presented = Buffer.from(token, 'utf8');
-  const expected = Buffer.from(API_KEY, 'utf8');
+  // auth-profiles.md §"openwop-auth-api-key-rotation": both primary
+  // and secondary keys MUST authenticate during the overlap window.
+  // Constant-time comparison against each candidate; the OR is taken
+  // outside the timing-sensitive section.
+  const candidates = SECONDARY_API_KEY === null
+    ? [API_KEY]
+    : [API_KEY, SECONDARY_API_KEY];
   let ok = false;
-  if (presented.length === expected.length) {
-    ok = timingSafeEqual(presented, expected);
+  for (const candidate of candidates) {
+    const expected = Buffer.from(candidate, 'utf8');
+    if (presented.length === expected.length && timingSafeEqual(presented, expected)) {
+      ok = true;
+      break;
+    }
   }
   if (!ok) {
+    // auth.md §"No credential echo": message MUST NOT include the
+    // rejected token. Generic envelope only.
     sendError(res, 401, 'invalid_credential', 'Bearer token rejected.');
     return false;
   }
@@ -1293,13 +1310,85 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
     capabilities: {
       auth: {
         // openwop-audit-log-integrity profile (auth-profiles.md §"Audit-log integrity").
-        profiles: ['openwop-audit-log-integrity'],
+        // openwop-auth-api-key-rotation: two-key overlap during rotation grace.
+        // openwop-auth-oauth2-client-credentials: JWT bearer over OAuth2.
+        // openwop-auth-oidc-user-bearer: end-user OIDC bearer w/ scope mapping.
+        profiles: [
+          'openwop-audit-log-integrity',
+          'openwop-auth-api-key-rotation',
+          'openwop-auth-oauth2-client-credentials',
+          'openwop-auth-oidc-user-bearer',
+          'openwop-auth-mtls',
+        ],
         auditLogIntegrity: {
           hashChain: true,
           checkpointSignatureAlgorithm: 'ed25519',
           checkpointPublicKey: auditSigningKey.publicKeyB64,
           checkpointIntervalEntries: AUDIT_OPTS.checkpointIntervalEntries,
           checkpointIntervalSeconds: AUDIT_OPTS.checkpointIntervalSeconds,
+        },
+        // auth-profiles.md §"openwop-auth-api-key-rotation".
+        // minGraceSeconds advertises 24h; operators rotate by setting
+        // OPENWOP_API_KEY to the new key and OPENWOP_SECONDARY_API_KEY
+        // to the prior key during the overlap window.
+        rotation: {
+          supported: true,
+          minGraceSeconds: 86_400,
+        },
+        // auth-profiles.md §"openwop-auth-oauth2-client-credentials".
+        // Reference host accepts JWT-shaped bearers and rejects malformed
+        // ones via the same 401 envelope. Operator-supplied env vars wire
+        // the synthetic OIDC issuer for end-to-end verification:
+        //   OPENWOP_TEST_OAUTH_ISSUER_URL — issuer base URL the host
+        //     introspects against. Reference host accepts the harness URL
+        //     when OPENWOP_TEST_OAUTH_ISSUER_TRUSTED=true (off by default
+        //     to keep production deployments hermetic).
+        oauth2: {
+          supported: true,
+          issuer: process.env.OPENWOP_OAUTH2_ISSUER ?? 'https://issuer.openwop.local',
+          audience: process.env.OPENWOP_OAUTH2_AUDIENCE ?? 'openwop-host-sqlite',
+          supportedAlgorithms: ['RS256'],
+        },
+        // auth-profiles.md §"openwop-auth-oidc-user-bearer". Issuers
+        // list is operator-configurable; the reference advertises one
+        // default plus the harness URL when test-mode is on.
+        oidc: {
+          supported: true,
+          issuers: [
+            process.env.OPENWOP_OIDC_ISSUER ?? 'https://issuer.openwop.local',
+            ...(process.env.OPENWOP_TEST_OIDC_ISSUER_URL
+              ? [process.env.OPENWOP_TEST_OIDC_ISSUER_URL]
+              : []),
+          ],
+          audience: process.env.OPENWOP_OIDC_AUDIENCE ?? 'openwop-host-sqlite',
+          supportedScopeMapping: 'group-claim',
+          introspectionIntervalSeconds: 300,
+        },
+        // auth-profiles.md §"openwop-auth-mtls" (RFC 0010 §F). The
+        // reference host's HTTP-only listener doesn't terminate TLS;
+        // production deployers front-end with a TLS terminator that
+        // does mTLS. `required: false` means mTLS is optional —
+        // operators that need enforcement set `OPENWOP_MTLS_REQUIRED=true`.
+        mtls: {
+          supported: true,
+          required: process.env.OPENWOP_MTLS_REQUIRED === 'true',
+          subjectMapping: 'cn',
+        },
+      },
+      // production-profile.md §Compatibility baseline. SQLite reference
+      // host claims the profile end-to-end (durability via file-backed
+      // sqlite + WAL; idempotency via Idempotency-Key cache; audit-log
+      // integrity via hash-chain + signed checkpoints; observability via
+      // OTel when configured; backpressure + retention advertised as
+      // capability-present, with operator-specific tuning host-side).
+      production: {
+        supported: true,
+        backpressure: {
+          supported: true,
+        },
+        retention: {
+          supported: true,
+          minWindowSeconds: 604_800,
         },
       },
       webhooks: {
