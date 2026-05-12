@@ -81,6 +81,11 @@ import {
   WebhookUrlRejected,
 } from './webhooks.js';
 import { resolveCanarySecret, REFERENCE_SECRETS_CAPABILITY } from './secrets.js';
+import {
+  performHttpRequest,
+  HttpRequestError,
+  type HttpRequestConfig,
+} from './http-client.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const HOST = process.env.OPENWOP_HOST ?? '127.0.0.1';
@@ -746,6 +751,57 @@ async function executeNode(
             runId,
           ]);
         });
+      }
+      break;
+    }
+
+    case 'core.http.request': {
+      // node-packs.md §"Built-in nodes — core.http.request": SSRF-
+      // guarded HTTP call against a tenant-supplied URL. Response is
+      // persisted into variables[node.id]; raw Authorization/Cookie
+      // request headers never appear on emitted events. Failures (URL
+      // rejected, timeout, unexpected status) terminate the node with
+      // a typed error envelope.
+      const cfg = (node.config ?? {}) as unknown as HttpRequestConfig;
+      try {
+        const result = await performHttpRequest(cfg, signal);
+        const q = await querier();
+        await withTransaction(q, async () => {
+          const res = await q.query<{ variables_json: Record<string, unknown> | null }>(
+            'SELECT variables_json FROM runs WHERE run_id = $1',
+            [runId],
+          );
+          const current = (res.rows[0]?.variables_json ?? {}) as Record<string, unknown>;
+          current[node.id] = {
+            status: result.status,
+            headers: result.headers,
+            body: result.body,
+            bodyTruncated: result.bodyTruncated,
+            durationMs: result.durationMs,
+          };
+          await q.query('UPDATE runs SET variables_json = $1 WHERE run_id = $2', [
+            JSON.stringify(current),
+            runId,
+          ]);
+        });
+      } catch (err: unknown) {
+        if (signal.aborted) {
+          const refreshed = await loadRun(runId);
+          if (refreshed?.status === 'paused') {
+            endNodeSpan(runId, node.id, 'paused');
+            return 'paused';
+          }
+          await appendEvent(runId, 'node.cancelled', { nodeId: node.id });
+          endNodeSpan(runId, node.id, 'cancelled');
+          return 'cancelled';
+        }
+        const httpErr = err instanceof HttpRequestError
+          ? { code: err.code, message: err.message, ...(err.details ? { details: err.details } : {}) }
+          : { code: 'node_execution_failed', message: err instanceof Error ? err.message : String(err) };
+        await appendEvent(runId, 'node.failed', { nodeId: node.id, data: httpErr });
+        runFailureErrors.set(runId, { code: httpErr.code, message: httpErr.message });
+        endNodeSpan(runId, node.id, 'failed');
+        return 'failed';
       }
       break;
     }
@@ -1436,6 +1492,10 @@ const SUPPORTED_NODE_TYPES = new Set([
   // (openwop-smoke-byok-roundtrip) emits {secretSha256, secretLength}
   // into variables; the raw value never leaves the resolver.
   'conformance.secret.echo',
+  // Phase H.3 — universal "call this API" typeId per node-packs.md
+  // §"Built-in nodes". SSRF-guarded; response body persisted into
+  // variables (truncated at 1 MiB).
+  'core.http.request',
 ]);
 
 function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
@@ -1518,6 +1578,18 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
         aiProviders: {
           supported: ['anthropic', 'openai', 'gemini'],
           byok: ['anthropic', 'openai', 'gemini'],
+        },
+        // Phase H.3 — capabilities.md §`httpClient` (additive). The host
+        // implements `core.http.request` with SSRF guard + 1 MiB response
+        // truncation. Bypass via OPENWOP_HTTP_ALLOW_PRIVATE=true for
+        // local-receiver tests; production deployers leave it unset.
+        httpClient: {
+          supported: true,
+          methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD'],
+          defaultTimeoutMs: 30_000,
+          maxResponseBodyBytes: 1_048_576,
+          ssrfGuard: true,
+          redirectPolicy: 'follow',
         },
         runs: {
           pauseResume: { supported: true },
