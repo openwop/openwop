@@ -56,9 +56,16 @@
 
 import { createHash } from 'node:crypto';
 
+/**
+ * Public-surface config for `core.mcp.toolCall`. Every field is
+ * optional at the type level so callers can pass `node.config ?? {}`
+ * via `as Partial<McpToolCallConfig>` (the same pattern
+ * core.approvalGate / core.clarificationGate use); `callMcpTool`
+ * validates `serverId` + `toolName` at runtime before touching them.
+ */
 export interface McpToolCallConfig {
-  readonly serverId: string;
-  readonly toolName: string;
+  readonly serverId?: string;
+  readonly toolName?: string;
   readonly arguments?: Readonly<Record<string, unknown>>;
   readonly timeoutMs?: number;
 }
@@ -269,11 +276,14 @@ export function summarizeForEventLog(
   config: McpToolCallConfig,
   result: McpToolCallResult,
 ): McpSanitizedSummary {
+  // summarizeForEventLog runs AFTER callMcpTool has already validated
+  // serverId + toolName as non-empty strings; fall back to empty string
+  // to satisfy the (already-optional) type without throwing.
   const argsJson = JSON.stringify(config.arguments ?? {});
   const resultJson = JSON.stringify(result.content);
   return {
-    serverId: config.serverId,
-    toolName: config.toolName,
+    serverId: config.serverId ?? '',
+    toolName: config.toolName ?? '',
     argumentsSha256: createHash('sha256').update(argsJson, 'utf8').digest('hex'),
     resultSha256: createHash('sha256').update(resultJson, 'utf8').digest('hex'),
     resultLength: resultJson.length,

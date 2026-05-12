@@ -979,7 +979,13 @@ async function executeNode(
       // variables[node.id] (authenticated surface) so the workflow
       // can consume it, tagged contentTrust: "untrusted" so downstream
       // LLM nodes treat it as user data rather than instructions.
-      const cfg = (node.config ?? {}) as unknown as McpToolCallConfig;
+      // node.config is structurally Record<string, unknown>;
+      // McpToolCallConfig has all-optional fields (callMcpTool
+      // validates serverId + toolName at runtime), so a plain
+      // `as Partial<T>` is sufficient — matching the
+      // core.approvalGate / core.clarificationGate pattern above
+      // and avoiding the banned `as unknown as T` shape.
+      const cfg = (node.config ?? {}) as Partial<McpToolCallConfig>;
       try {
         const result = await callMcpTool(cfg, signal);
         const summary = summarizeMcpForEventLog(cfg, result);
@@ -1038,7 +1044,10 @@ async function executeNode(
       // request headers never appear on emitted events. Failures (URL
       // rejected, timeout, unexpected status) terminate the node with
       // a typed error envelope.
-      const cfg = (node.config ?? {}) as unknown as HttpRequestConfig;
+      // HttpRequestConfig has all-optional fields (performHttpRequest
+      // validates `url` + `method` at runtime); plain Partial cast
+      // matches the project-conventional pattern.
+      const cfg = (node.config ?? {}) as Partial<HttpRequestConfig>;
       try {
         const result = await performHttpRequest(cfg, signal);
         const q = await querier();

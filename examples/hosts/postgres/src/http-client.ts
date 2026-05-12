@@ -61,8 +61,16 @@ const DEFAULT_TIMEOUT_MS = 30_000;
 
 const ALLOWED_METHODS = new Set(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD']);
 
+/**
+ * Public-surface config for `core.http.request`. Every field is
+ * optional at the type level so callers can pass `node.config ?? {}`
+ * via `as Partial<HttpRequestConfig>`; `performHttpRequest` validates
+ * `url` + `method` at runtime before touching them. Matches the
+ * core.approvalGate / core.clarificationGate / core.mcp.toolCall
+ * pattern in `examples/hosts/postgres/src/server.ts`.
+ */
 export interface HttpRequestConfig {
-  readonly url: string;
+  readonly url?: string;
   readonly method?: string;
   readonly headers?: Readonly<Record<string, string>>;
   readonly body?: unknown;
