@@ -396,6 +396,24 @@
       ]
     },
     {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.landing-page@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.landing-page",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/vendor.myndhyve.landing-page/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "227df5acdec4883b39c7174327d38cfd14b6f70120413f3679d67f892f3d5ac5"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "bom-ref": "pkg:openwop/vendor.myndhyve.launch-studio@1.0.0",
       "type": "library",
       "name": "vendor.myndhyve.launch-studio",

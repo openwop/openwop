@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.landing-page/1.0.0/theme-apply.input.json",
+  "title": "LandingThemeApplyInput",
+  "type": "object",
+  "required": ["pageId", "page", "themeId"],
+  "properties": {
+    "pageId": { "type": "string", "minLength": 1 },
+    "page": { "type": "object", "required": ["sections"], "properties": { "sections": { "type": "array", "items": { "type": "object", "additionalProperties": true } } }, "additionalProperties": true },
+    "variants": { "type": "array", "items": { "type": "object", "additionalProperties": true }, "maxItems": 10 },
+    "themeId": { "type": "string", "minLength": 1 },
+    "designSystem": {
+      "type": "object",
+      "description": "OPTIONAL inline design-system data. When present the executor reads semantic + primitive tokens from this object directly. When absent OR `designSystem.id !== themeId`, hardcoded defaults apply. The workflow author typically resolves the DS via an upstream node (e.g., `host.designSystem` reader OR a canvas read) and feeds the result here.",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

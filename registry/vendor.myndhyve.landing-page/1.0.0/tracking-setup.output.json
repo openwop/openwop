@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.landing-page/1.0.0/tracking-setup.output.json",
+  "title": "LandingTrackingSetupOutput",
+  "type": "object",
+  "required": ["trackingConfig", "pixelIds", "events", "utmLinks", "trackingCode", "success"],
+  "properties": {
+    "trackingConfig": { "type": "object", "additionalProperties": true },
+    "pixelIds": { "type": "array", "items": { "type": "string" } },
+    "events": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "utmLinks": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "trackingCode": { "type": "string" },
+    "success": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}

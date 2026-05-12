@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.landing-page/1.0.0/structure-create.input.json",
+  "title": "LandingStructureCreateInput",
+  "type": "object",
+  "required": ["content"],
+  "properties": {
+    "content": {
+      "type": "object",
+      "required": ["headlines", "sections", "ctaVariants", "seoMetadata"],
+      "properties": {
+        "headlines": { "type": "array" },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["type", "content"],
+            "properties": {
+              "type": { "type": "string" },
+              "content": { "type": "object", "additionalProperties": true }
+            },
+            "additionalProperties": true
+          }
+        },
+        "ctaVariants": { "type": "array" },
+        "seoMetadata": {
+          "type": "object",
+          "required": ["title", "description", "keywords"],
+          "properties": {
+            "title": { "type": "string" },
+            "description": { "type": "string" },
+            "keywords": { "type": "array", "items": { "type": "string" } },
+            "ogImage": { "type": "string" },
+            "ogTitle": { "type": "string" },
+            "ogDescription": { "type": "string" }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "themeId": { "type": "string" },
+    "templateId": { "type": "string" },
+    "pageType": { "type": "string" }
+  },
+  "additionalProperties": true
+}
