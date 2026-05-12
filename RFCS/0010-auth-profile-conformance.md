@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0010 |
 | **Title** | Auth-Profile Conformance |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-11 |
-| **Updated** | 2026-05-11 |
+| **Updated** | 2026-05-12 (Draft → Active; bootstrap-phase steward decision per `CONTRIBUTING.md` §"Bootstrap-phase notes" — the standard 7-day additive comment window was waived because no non-steward maintainer is yet listed in `MAINTAINERS.md`. The four unresolved questions remain open and may be revisited as additive sub-RFCs without breaking v1 wire compatibility. Same precedent as RFC 0009.) |
 | **Affects** | `spec/v1/auth-profiles.md`, `schemas/capabilities.schema.json`, `conformance/src/scenarios/` (3 new + 1 opt-in), `conformance/src/lib/oidc-issuer.ts` (new harness), `conformance/coverage.md`, `INTEROP-MATRIX.md`, `SECURITY/threat-model-auth-profiles.md`, optionally `examples/hosts/sqlite/` or `postgres/` (reference implementation) |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |

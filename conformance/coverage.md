@@ -37,7 +37,7 @@
 
 ## Capability-gated scenarios: shape vs behavior
 
-Fourteen scenarios (or scenario groups) validate optional profiles where the host's discovery advertisement is well-formed (shape grade) but no reference host yet implements the profile end-to-end (behavior grade is `host-pending`). Default suite runs skip these with a warning; set `OPENWOP_REQUIRE_BEHAVIOR=true` to convert skips into hard failures.
+Fifteen scenarios (or scenario groups) validate optional profiles where the host's discovery advertisement is well-formed (shape grade) but no reference host yet implements the profile end-to-end (behavior grade is `host-pending`). Default suite runs skip these with a warning; set `OPENWOP_REQUIRE_BEHAVIOR=true` to convert skips into hard failures.
 
 | Scenario | Profile / capability | Shape grade | Behavior grade | Behavior-unlock dependency |
 |---|---|---|---|---|
@@ -55,6 +55,7 @@ Fourteen scenarios (or scenario groups) validate optional profiles where the hos
 | `auth-api-key-rotation.test.ts` | `openwop-auth-api-key-rotation` (`auth-profiles.md`, RFC 0010) | B (capability shape + secondary-key overlap when env-supplied + canary-redaction) | `host-pending` | Reference host advertises the profile + supplies `OPENWOP_TEST_SECONDARY_API_KEY` for the overlap check. |
 | `auth-oauth2-client-credentials.test.ts` | `openwop-auth-oauth2-client-credentials` (`auth-profiles.md`, RFC 0010) | B (capability shape + malformed-JWT negative + harness-minted negatives gated on `OPENWOP_TEST_OAUTH_ISSUER_TRUSTED`) | `host-pending` | Reference host advertises the profile + trusts the conformance harness + (optional) supplies `OPENWOP_TEST_OAUTH_TOKEN` for positive-path. |
 | `auth-oidc-user-bearer.test.ts` | `openwop-auth-oidc-user-bearer` (`auth-profiles.md`, RFC 0010) | B (capability shape + six harness-driven validation cases gated on `OPENWOP_TEST_OIDC_ISSUER_URL`) | `host-pending` | Reference host advertises the profile + is pre-configured to trust `OPENWOP_TEST_OIDC_ISSUER_URL` as a trusted issuer. Synthetic OIDC issuer harness at `conformance/src/lib/oidc-issuer.ts` (RS256 + ES256 via node:crypto stdlib). |
+| `auth-mtls.test.ts` | `openwop-auth-mtls` (`auth-profiles.md`, RFC 0010) | B (capability shape always; opt-in behavior assertions via `OPENWOP_TEST_MTLS=1` + cert paths; uses node:https.request for client-cert handshake — no new npm deps) | `host-pending` | Reference host advertises the profile + listens on HTTPS with mTLS enforcement; operator supplies `OPENWOP_TEST_MTLS_CLIENT_{CERT,KEY}_PATH` and (optionally) `OPENWOP_TEST_MTLS_CA_PATH`. |
 
 Strict-mode runner usage:
 

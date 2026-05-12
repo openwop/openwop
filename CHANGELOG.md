@@ -9,6 +9,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ---
 
+## [1.0 — additions] — 2026-05-12 — RFC 0010 Active + auth-profile close-out
+
+- **RFC 0010 promoted `Draft` → `Active`.** Bootstrap-phase steward decision per `CONTRIBUTING.md` §"Bootstrap-phase notes" — the standard 7-day additive comment window was waived because no non-steward maintainer is yet listed in `MAINTAINERS.md`. The four unresolved questions in `RFCS/0010-auth-profile-conformance.md` §"Unresolved questions" remain open and may be revisited as additive sub-RFCs without breaking v1 wire compatibility. Same precedent as RFC 0009.
+- **mTLS opt-in scenario landed.** `conformance/src/scenarios/auth-mtls.test.ts` covers capability-shape (always) plus three opt-in behavior assertions (gated on `OPENWOP_TEST_MTLS=1` + cert paths). Uses `undici` Agent dispatcher to thread the client cert through Node's global fetch. Same opt-in precedent as `restart-during-run.test.ts`. Scenario count: 97 → 98.
+- **`SECURITY/threat-model-auth-profiles.md` updated.** §3 Adversaries row A1, A2, A3, A4 each get a scenario-binding citation. New A7 adversary added for OIDC IdP impersonation via key spoofing (kid-not-in-JWKS), covered by `auth-oidc-user-bearer.test.ts`. New §4.4 OIDC STRIDE table parallel to §4.1–§4.3. §7 Verification rewritten from "future work" to the four landed scenarios + harness path.
+- **`spec/v1/auth-profiles.md` §Discovery guidance updated.** Promotes `capabilities.auth.*` (RFC 0010 formal schema) as the preferred discovery path; `extensions.auth.*` remains valid for legacy clients; clients MUST prefer the new path when both are present.
+
 ## [1.0 — additions] — 2026-05-11 — RFC 0010 Draft: auth-profile conformance
 
 - **RFC 0010 opened (Draft).** [`RFCS/0010-auth-profile-conformance.md`](./RFCS/0010-auth-profile-conformance.md) consolidates the four production-auth profiles in `auth-profiles.md` (rotation, OAuth2 client-credentials, OIDC user-bearer, mTLS) into one additive RFC. Proposes formalizing `capabilities.auth` as a top-level schema block with `profiles[]` + per-profile metadata sub-blocks (preserving the existing informal `auth.auditLogIntegrity` advertisement via `additionalProperties: true`). Adds three new conformance scenarios + one opt-in mTLS scenario + a synthetic OIDC issuer harness under `conformance/src/lib/oidc-issuer.ts`. Additive — no v1 wire-shape change. Four unresolved questions captured for review: rotation overlap granularity, OIDC harness key-rotation testing, mTLS subject-mapping ambiguity, OAuth2-CC/OIDC overlap semantics. Same-wave stubs + post-Active host implementation follow the RFC 0009 precedent.

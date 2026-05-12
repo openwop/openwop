@@ -36,12 +36,13 @@ Trust transitions:
 
 | ID | Adversary | Capability |
 |---|---|---|
-| A1 | Stolen old API key holder | Uses a key during or after rotation. |
-| A2 | Token substitution attacker | Presents a valid OAuth2 token for the wrong audience, issuer, or tenant. |
-| A3 | Scope-confusion attacker | Obtains a token with unrelated identity-provider scopes and attempts OpenWOP operations. |
-| A4 | mTLS downgrade attacker | Connects through a proxy path that strips client-certificate enforcement. |
+| A1 | Stolen old API key holder | Uses a key during or after rotation. Scenario coverage: `auth-api-key-rotation.test.ts` (overlap + canary-redaction). |
+| A2 | Token substitution attacker | Presents a valid OAuth2 token for the wrong audience, issuer, or tenant. Scenario coverage: `auth-oauth2-client-credentials.test.ts` (wrong-aud / harness-minted negative cases) + `auth-oidc-user-bearer.test.ts` (wrong-iss / wrong-aud). |
+| A3 | Scope-confusion attacker | Obtains a token with unrelated identity-provider scopes and attempts OpenWOP operations. Scenario coverage: `auth-oidc-user-bearer.test.ts` (scope-insufficient → 403). |
+| A4 | mTLS downgrade attacker | Connects through a proxy path that strips client-certificate enforcement. Scenario coverage: `auth-mtls.test.ts` (when `mtls.required: true`, bearer-only request MUST fail). |
 | A5 | Enumeration attacker | Uses error differences to learn whether a tenant, key id, certificate subject, or client id exists. |
 | A6 | Log reader | Reads auth failures, audit logs, or traces but cannot read the credential store directly. |
+| A7 | OIDC IdP impersonation via key spoofing | Presents a token whose JWS header references a `kid` that is not in the issuer's published JWKS, betting on the host accepting the token without resolving the kid. Scenario coverage: `auth-oidc-user-bearer.test.ts` (unknown-kid → 401). |
 
 ## 4. STRIDE per profile
 
@@ -72,6 +73,17 @@ Trust transitions:
 | Repudiation | Certificate rotations cannot be audited | Audit events include certificate fingerprint, not the certificate body or private key. |
 | Denial of service | Certificate rollover has no overlap period | mTLS profile follows the same overlap principle as API-key rotation. |
 
+### 4.4 OIDC user-bearer
+
+| Threat | Vector | Mitigation |
+|---|---|---|
+| Spoofing | Token signed with a key whose `kid` is not published in the issuer's JWKS | Hosts MUST fetch the issuer's JWKS, resolve the `kid` from the JWT header, and reject when no key matches. Verified by `auth-oidc-user-bearer.test.ts` unknown-kid case. |
+| Tampering | Token claims modified after signing | Standard JWS verification (signature over header + payload). Verified by `auth-oidc-user-bearer.test.ts` end-to-end probe. |
+| Repudiation | Operator cannot tell which IdP issued the verified principal | Audit events include the verified `iss` and `sub` claims, never the raw token. |
+| Information disclosure | Token contents are logged at the application layer | `threat-model-secret-leakage.md` redaction harness covers `Authorization` headers; bearer tokens MUST NOT appear in event logs or error responses. |
+| Elevation of privilege | Token bearer claims OpenWOP scopes the IdP did not grant | Hosts derive scopes from a documented mapping (`group-claim` / `scope-claim` / `host-acl`); token-valid-but-scope-insufficient returns 403, not 401. Verified by `auth-oidc-user-bearer.test.ts` scope-insufficient case (gated on `group-claim` hosts). |
+| Denial of service | Long-cached tokens prevent timely IdP revocation | Hosts re-introspect at most `min(exp - now, introspectionIntervalSeconds)` per `auth-profiles.md`; default 300s. |
+
 ## 5. Webhook relationship
 
 Webhook HMAC signing is not a replacement for caller authentication. It authenticates host-to-subscriber deliveries after a subscription already exists. Auth profiles govern who may register or unregister subscriptions; `webhooks.md` governs how deliveries are signed and verified.
@@ -86,10 +98,13 @@ During key rotation, existing webhook delivery secrets are unaffected unless the
 
 ## 7. Verification
 
-The current public conformance suite verifies the baseline API-key contract. Auth-profile scenarios are intentionally profile-gated future work:
+The public conformance suite verifies the baseline API-key contract plus capability-shape + negative-case coverage for each production-auth profile, shipped 2026-05-11 under RFC 0010 (`@openwop/openwop-conformance` 1.X.0):
 
-- API-key rotation overlap and revoke behavior.
-- OAuth2 issuer/audience/scope mapping with a synthetic test issuer.
-- mTLS positive and negative cases for hosts that expose test certificates.
+- **API-key rotation** — `auth-api-key-rotation.test.ts`. Capability shape; two-key overlap when `OPENWOP_TEST_SECONDARY_API_KEY` is supplied; canary-redaction on invalid-bearer rejection.
+- **OAuth2 client credentials** — `auth-oauth2-client-credentials.test.ts`. Capability shape; malformed-JWT 401; harness-minted negative cases (wrong-aud / expired / alg-spoofed) gated on `OPENWOP_TEST_OAUTH_ISSUER_TRUSTED`; operator-supplied positive token gated on `OPENWOP_TEST_OAUTH_TOKEN`.
+- **OIDC user-bearer** — `auth-oidc-user-bearer.test.ts` + synthetic OIDC issuer harness at `conformance/src/lib/oidc-issuer.ts` (RS256 + ES256 via node:crypto stdlib). Capability shape; six harness-driven validation cases (wrong-iss / wrong-aud / expired / unknown-kid / valid-token-yields-201-or-403 / scope-insufficient → 403) gated on `OPENWOP_TEST_OIDC_ISSUER_URL`.
+- **mTLS** — `auth-mtls.test.ts`. Capability shape always; behavior gated on `OPENWOP_TEST_MTLS=1` plus operator-supplied cert paths (`OPENWOP_TEST_MTLS_CLIENT_CERT_PATH`, `OPENWOP_TEST_MTLS_CLIENT_KEY_PATH`).
+
+All four scenarios use `behaviorGate(profileName, advertised)`; `OPENWOP_REQUIRE_BEHAVIOR=true` converts capability-shape-only skips into hard failures.
 
 Until those scenarios ship, a host claiming an auth profile SHOULD publish its own test evidence and operational runbook.
