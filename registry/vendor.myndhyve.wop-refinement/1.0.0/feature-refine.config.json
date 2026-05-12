@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.wop-refinement/1.0.0/feature-refine.config.json",
+  "title": "WopFeatureRefineConfig",
+  "type": "object",
+  "properties": {
+    "provider": {
+      "type": "string",
+      "description": "AI provider id (e.g., `anthropic`, `openai`, `gemini`). MUST be in `Capabilities.aiProviders.supported`. When omitted, the host's default provider is used."
+    },
+    "model": {
+      "type": "string",
+      "description": "Provider-specific model id. When omitted, the host's default model is used."
+    },
+    "systemPromptOverride": {
+      "type": "string",
+      "description": "Override the embedded fallback system prompt. Useful when the host wants a custom decision rubric."
+    },
+    "temperature": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 2,
+      "default": 0.2,
+      "description": "Sampling temperature. Default 0.2 — refinement is closer to `decide` than `create`."
+    }
+  },
+  "additionalProperties": true,
+  "description": "Optional config. All fields are overrides; the executor works with defaults when omitted."
+}

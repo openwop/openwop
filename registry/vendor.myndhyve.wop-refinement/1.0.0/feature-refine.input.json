@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.wop-refinement/1.0.0/feature-refine.input.json",
+  "title": "WopFeatureRefineInput",
+  "type": "object",
+  "required": ["workspaceId", "objectiveId", "stackItemId", "title", "constraints"],
+  "properties": {
+    "workspaceId": { "type": "string", "minLength": 1 },
+    "objectiveId": { "type": "string", "minLength": 1 },
+    "stackItemId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The stack item being refined. All mutations target this id."
+    },
+    "title": { "type": "string", "minLength": 1 },
+    "description": { "type": "string" },
+    "goal": { "type": "string" },
+    "acceptanceCriteria": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Optional user-supplied acceptance criteria; surfaced to the LLM for decision context."
+    },
+    "contextRefs": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "object",
+        "required": ["type", "id"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "prd", "theme", "screen", "workflow", "artifact", "component",
+              "schema", "prompt", "integration", "task", "design-system"
+            ]
+          },
+          "id": { "type": "string", "minLength": 1 },
+          "summary": { "type": "string" },
+          "required": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "availableNodes": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "description", "riskLevel", "requiresApproval"],
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "riskLevel": { "type": "string", "enum": ["low", "medium", "high"] },
+          "requiresApproval": { "type": "boolean" }
+        },
+        "additionalProperties": true
+      },
+      "description": "Catalog of single-node capabilities the LLM may choose from for execute_as_node decisions."
+    },
+    "availableChains": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "description", "riskLevel", "requiresApproval"],
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "riskLevel": { "type": "string", "enum": ["low", "medium", "high"] },
+          "requiresApproval": { "type": "boolean" }
+        },
+        "additionalProperties": true
+      },
+      "description": "Catalog of multi-node chains the LLM may choose for execute_as_chain decisions."
+    },
+    "constraints": {
+      "type": "object",
+      "required": ["maxGeneratedItems", "maxDepth", "requireHumanApprovalForNewChains", "currentDepth"],
+      "properties": {
+        "maxGeneratedItems": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Cap on sub-items the LLM may emit in a split decision. Exceeding fails with `status: 'too-many-items'`."
+        },
+        "maxDepth": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Hard refinement depth ceiling. Split decisions at depth >= maxDepth fail with `status: 'depth-exceeded'`."
+        },
+        "requireHumanApprovalForNewChains": {
+          "type": "boolean",
+          "description": "When true, execute_as_chain decisions route via a `human` checkpoint target instead of dispatching directly."
+        },
+        "currentDepth": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many ancestor stack items already came from refinement. Compared against maxDepth."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
