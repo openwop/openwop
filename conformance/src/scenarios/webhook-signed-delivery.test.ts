@@ -123,14 +123,29 @@ describe('webhook-signed-delivery: end-to-end HMAC v1', () => {
     // Allow a small grace period for fire-and-forget delivery to land.
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    expect(receiver.received.length, driver.describe(
+    // Test-isolation note: when this scenario runs concurrently with
+    // other webhook-bearing scenarios against a stateful host, the
+    // host's webhook registry fans out EVERY run's events to EVERY
+    // registered subscription. Receivers in this scenario MAY observe
+    // deliveries from other tests' concurrent runs. Filter to events
+    // carrying THIS test's runId so the assertion checks the
+    // signature shape on a delivery the host emitted for THIS run.
+    const ourDeliveries = receiver.received.filter((d) => {
+      try {
+        const body = JSON.parse(d.body) as { runId?: unknown };
+        return body.runId === runId;
+      } catch {
+        return false;
+      }
+    });
+    expect(ourDeliveries.length, driver.describe(
       'webhooks.md §"Delivery"',
-      'host MUST POST at least one event to a registered subscriber for a completed run',
+      'host MUST POST at least one event for THIS run to a registered subscriber after run.completed',
     )).toBeGreaterThan(0);
 
     // Validate the FIRST delivery's signature contract. Other deliveries
     // share the same signing rules; checking one is sufficient.
-    const first = receiver.received[0]!;
+    const first = ourDeliveries[0]!;
     expect(first.headers['x-openwop-signature-algorithm'], driver.describe(
       'webhooks.md §"Signature algorithm versioning"',
       'every delivery MUST set X-openwop-Signature-Algorithm: v1',
