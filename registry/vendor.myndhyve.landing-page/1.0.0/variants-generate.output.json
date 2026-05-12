@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.landing-page/1.0.0/variants-generate.output.json",
+  "title": "LandingVariantsGenerateOutput",
+  "type": "object",
+  "required": ["variants", "variantIds", "personaMapping", "success"],
+  "properties": {
+    "variants": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "variantIds": { "type": "array", "items": { "type": "string" } },
+    "personaMapping": { "type": "object", "additionalProperties": { "type": "string" } },
+    "success": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}

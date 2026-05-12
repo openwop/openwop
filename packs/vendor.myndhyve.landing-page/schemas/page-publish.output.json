@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.landing-page/1.0.0/page-publish.output.json",
+  "title": "LandingPagePublishOutput",
+  "type": "object",
+  "required": ["publishedUrl", "variantUrls", "publishedAt", "version", "cdnUrls", "success"],
+  "properties": {
+    "publishedUrl": { "type": "string" },
+    "variantUrls": { "type": "array", "items": { "type": "string" } },
+    "publishedAt": { "type": "string" },
+    "version": { "type": "string" },
+    "cdnUrls": {
+      "type": "object",
+      "required": ["css", "js", "assets"],
+      "properties": {
+        "css": { "type": "string" },
+        "js": { "type": "string" },
+        "assets": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "success": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}

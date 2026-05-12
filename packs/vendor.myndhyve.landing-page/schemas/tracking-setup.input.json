@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.landing-page/1.0.0/tracking-setup.input.json",
+  "title": "LandingTrackingSetupInput",
+  "type": "object",
+  "required": ["pageId"],
+  "properties": {
+    "pageId": { "type": "string", "minLength": 1 },
+    "campaignId": { "type": "string" },
+    "pageUrl": { "type": "string" },
+    "trackingPlan": { "type": "object", "additionalProperties": true },
+    "trackingIntegrations": {
+      "type": "array",
+      "description": "OPTIONAL connected tracking integrations. Each entry: { type: 'tracking-pixel' | 'analytics', enabled: boolean, config: { pixelId? | measurementId? } }. The workflow caller resolves these from their integrations registry; the executor extracts the pixel ids deterministically. When absent the executor logs a warning + emits an empty pixelIds array.",
+      "items": {
+        "type": "object",
+        "required": ["type", "enabled", "config"],
+        "properties": {
+          "type": { "type": "string", "enum": ["tracking-pixel", "analytics"] },
+          "enabled": { "type": "boolean" },
+          "config": { "type": "object", "additionalProperties": true }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}
