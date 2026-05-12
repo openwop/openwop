@@ -1,0 +1,279 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.campaign-sequence-integration@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.campaign-sequence-integration",
+      "version": "1.0.0",
+      "description": "MyndHyve campaign-sequence integration nodes — email, sms, webhook. Companion pack to vendor.myndhyve.campaign-sequence (which carries the 3 pure-control nodes). Declares `host.campaignMessaging` peerDependency for the email + sms surface (matching MyndHyve's EmailSMSAdapterService shape); webhook is self-contained via Node 20 fetch + bundled HMAC signature.",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://myndhyve.ai/packs/campaign-sequence-integration"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/openwop/openwop"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "360ba908b679b2ec93f1fa428d9882e3daa5520334fce6848e8d6c0ec6d4b5d6"
+        }
+      ],
+      "purl": "pkg:openwop/vendor.myndhyve.campaign-sequence-integration@1.0.0"
+    },
+    "tools": [
+      {
+        "vendor": "openwop",
+        "name": "generate-sbom.mjs",
+        "version": "1"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "file",
+      "name": "LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0cea879ed215e3961316e97ab5e4d7a2b2bca999358668599bd53a1c953bc0d9"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "975"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "README.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "bacb9617bbc721a8417fd27f13833d24659956268842aa9030dbb5195bd3e7ba"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "3503"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "index.mjs",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0ec0ba5395c1f3e861c5870b35c4a3b58cb4b4ec9979d6ac8767f091dd3854bd"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "8151"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "keys/pack.json.sig",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0b8e15cbb67e2046af115ba9d652fd1cd6d333f773462f07d72db05c90ece348"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "64"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "pack.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f17089aa233e22c3c54cbd891f305a6ef441eaf17cb1cd0747213814e2e83114"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "2705"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/email.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "299d4091cbc54f24307e095f54ed0ba6ddc2893d66b90498145735a61c5a9db4"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "431"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/email.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d5b01c989ccef7212404a0bf1fca7f0423a495b3b2670ff3c9711ae797e0145c"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "991"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/email.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "33609dd55a6bbf27e98e2b837bcb746ef3eece65722b5d433715e86320c264ea"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "542"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/sms.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9996ff17590648080f16ec01d8be01bae77c2645c7e0f24321ede2aae261e326"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "363"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/sms.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "19b754ae1b9e6a406c0d655a98daf18ffdcb944b8cc59cddeba1da12b24c4b92"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "668"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/sms.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ae3553121447031983407ea8bd82566408275498ad39d70ba78e06678b152e1c"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "463"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/webhook.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2695425cb1871532e1ca5856105d9bcd93b692aaadbede6f699874c12ba18e37"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "676"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/webhook.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "86ad2263264b02e983976b355b930ca7a89e23e319efdfa665cccdbe5c07bb0c"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "1990"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/webhook.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f1650347668d5917e0b63c364f47b59c4e0013585e969bc814adead8a0fd19bd"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "631"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:openwop/vendor.myndhyve.campaign-sequence-integration@1.0.0",
+      "dependsOn": [
+        "host:host.campaignMessaging"
+      ]
+    }
+  ]
+}

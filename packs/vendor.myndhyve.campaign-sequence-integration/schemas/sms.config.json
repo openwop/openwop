@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.campaign-sequence-integration/1.0.0/sms.config.json",
+  "title": "CampaignSequenceSmsConfig",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": true,
+  "description": "No required config. SMS body comes from inputs.step.smsBody."
+}

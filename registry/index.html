@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>openwop registry — packs.openwop.dev</title>
-<meta name="description" content="The canonical signed node-pack registry for the openwop workflow orchestration protocol. 22 pack(s), 22 version(s) published.">
+<meta name="description" content="The canonical signed node-pack registry for the openwop workflow orchestration protocol. 23 pack(s), 23 version(s) published.">
 <meta name="robots" content="index, follow">
 
 <meta property="og:type" content="website">
@@ -95,8 +95,8 @@
     <h1>openwop registry</h1>
     <p class="lead">Canonical signed node-pack registry for the <a href="https://openwop.dev/">openwop</a> workflow orchestration protocol.</p>
     <div class="summary">
-      <div><strong>22</strong><span>packs published</span></div>
-      <div><strong>22</strong><span>versions total</span></div>
+      <div><strong>23</strong><span>packs published</span></div>
+      <div><strong>23</strong><span>versions total</span></div>
       <div><strong>Ed25519</strong><span>signing algorithm</span></div>
     </div>
   </header>
@@ -252,6 +252,17 @@
           </td>
         </tr>
         <tr>
+          <td class="name"><code>vendor.myndhyve.campaign-sequence-integration</code> </td>
+          <td class="version">1.0.0</td>
+          <td class="desc">MyndHyve campaign-sequence integration nodes — email, sms, webhook. Companion pack to vendor.myndhyve.campaign-sequence (which carries the 3 pure-control nodes). Declares `host.campaignMessaging` peerDependency for the email + sms surface (matching MyndHyve&#39;s EmailSMSAdapterService shape); webhook is self-contained via Node 20 fetch + bundled HMAC signature.</td>
+          <td class="license">Apache-2.0</td>
+          <td class="artifacts">
+            <a href="/v1/packs/vendor.myndhyve.campaign-sequence-integration/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
+            · <a href="/v1/packs/vendor.myndhyve.campaign-sequence-integration/-/1.0.0.tgz" title="signed tarball (tgz)">tgz</a>
+            · <a href="/v1/packs/vendor.myndhyve.campaign-sequence-integration/-/1.0.0.sig" title="Ed25519 signature">sig</a>
+          </td>
+        </tr>
+        <tr>
           <td class="name"><code>vendor.myndhyve.canvas</code> </td>
           <td class="version">1.0.0</td>
           <td class="desc">First vendor-namespace pack. Ships MyndHyve canvas-coordination nodes — canvasRead / canvasWrite / canvasCreate / crossCanvasInvoke — preserving the `core.coordination.*` typeIds in the wild (typeId-preserve strategy from the migration plan §4). The pack itself is MyndHyve-internal: hosts that don&#39;t advertise `host.canvas: supported` cannot register it.</td>
@@ -399,7 +410,7 @@ const ok = verify(null, readFileSync('pack.tgz'), pub, readFileSync('pack.sig'))
   </section>
 
   <footer>
-    Generated 2026-05-12T20:46:16.459Z · <a href="https://openwop.dev/">openwop.dev</a> · <a href="https://github.com/openwop/openwop">openwop on GitHub</a>
+    Generated 2026-05-12T21:02:29.540Z · <a href="https://openwop.dev/">openwop.dev</a> · <a href="https://github.com/openwop/openwop">openwop on GitHub</a>
   </footer>
 </main>
 </body>

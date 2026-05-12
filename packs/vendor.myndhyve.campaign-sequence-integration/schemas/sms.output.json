@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.campaign-sequence-integration/1.0.0/sms.output.json",
+  "title": "CampaignSequenceSmsOutput",
+  "type": "object",
+  "required": ["success"],
+  "properties": {
+    "success": { "type": "boolean" },
+    "error": { "type": "string" },
+    "nextStepId": { "type": "string" },
+    "messageId": { "type": "string" }
+  },
+  "additionalProperties": true
+}
