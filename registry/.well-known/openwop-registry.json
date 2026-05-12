@@ -27,5 +27,43 @@
     "yankSupported": true,
     "deprecateSupported": true,
     "keyRotationSupported": true
-  }
+  },
+  "signingKeys": [
+    {
+      "keyId": "openwop-registry-root",
+      "algorithm": "ed25519",
+      "publicKeyUrl": "/keys/openwop-registry-root.pub",
+      "permittedNamespaces": ["core.openwop.*", "community.openwop-team.*", "vendor.openwop.*"],
+      "operator": "openwop project",
+      "status": "active",
+      "_note": "Pre-existing root key. Signed the v1.0 reference packs published during the registry MVP. Reserved for openwop-project-owned namespaces. Held offline (sealed envelope / hardware token)."
+    },
+    {
+      "keyId": "openwop-team-1",
+      "algorithm": "ed25519",
+      "publicKeyUrl": "/keys/openwop-team-1.pub",
+      "permittedNamespaces": ["core.openwop.*", "community.openwop-team.*", "vendor.openwop.*"],
+      "operator": "openwop team",
+      "status": "active",
+      "_note": "Day-to-day publisher key for the openwop team. Same authority scope as openwop-registry-root but used online; root stays sealed for emergency rotation."
+    },
+    {
+      "keyId": "myndhyve-internal-1",
+      "algorithm": "ed25519",
+      "publicKeyUrl": "/keys/myndhyve-internal-1.pub",
+      "permittedNamespaces": ["vendor.myndhyve.*"],
+      "operator": "MyndHyve (https://myndhyve.ai)",
+      "status": "active",
+      "_note": "First external vendor namespace under packs.openwop.dev. Per spec/v1/registry-operations.md §Step 1 vendor-namespace rule, vendor.myndhyve.* publishes MUST verify against this key; submissions from any other key MUST be refused at PR review."
+    }
+  ],
+  "namespaceAssignments": [
+    {
+      "namespace": "vendor.myndhyve.*",
+      "owner": "MyndHyve",
+      "signingKeyId": "myndhyve-internal-1",
+      "claimedAt": "2026-05-11",
+      "contact": "https://github.com/myndhyve"
+    }
+  ]
 }
