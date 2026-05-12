@@ -175,7 +175,7 @@ A publisher's private signing key is suspected to be in unauthorized hands. Trig
 
 `packs.openwop.dev` becomes unreachable or serves wrong content. Detected via:
 
-- Cloud Monitoring uptime check failure (once configured in Stage 4 PR 2+)
+- Cloud Monitoring uptime check failure on the `packs-openwop-dev-uptime-failure` alert policy (set up via `scripts/setup-uptime-check.sh`)
 - Maintainer-side `curl -I https://packs.openwop.dev/` failing
 - Consumer reports of install failures
 
