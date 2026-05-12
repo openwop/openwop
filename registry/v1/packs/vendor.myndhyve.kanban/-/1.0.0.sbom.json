@@ -1,0 +1,471 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.kanban@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.kanban",
+      "version": "1.0.0",
+      "description": "MyndHyve kanban-coordination pack. 7 nodes covering board lifecycle, task management (assign + AI-powered decompose), timeline planning, automation rules, and resource monitoring. Routes through ctx.kanban.* host adapter.",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://myndhyve.ai/packs/kanban"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/openwop/openwop"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a07eee096e54b1e3e16c18b1ffb050e82a17ad51deaf63d3b00cc4816894764f"
+        }
+      ],
+      "purl": "pkg:openwop/vendor.myndhyve.kanban@1.0.0"
+    },
+    "tools": [
+      {
+        "vendor": "openwop",
+        "name": "generate-sbom.mjs",
+        "version": "1"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "file",
+      "name": "LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0cea879ed215e3961316e97ab5e4d7a2b2bca999358668599bd53a1c953bc0d9"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "975"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "README.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2bb7086733b785c684e946cdbb7166334bdec3af796075a1a1fcc0512137104d"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "3014"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "index.mjs",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e906a39601ed6954349c16368aeefebe4f369b38343f89ded1ced5962943e927"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "8824"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "keys/pack.json.sig",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "6889d1e95082e64a6db1fc82fcfbb2a71bfef2d40d43c8c20602eb89a36f638d"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "64"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "pack.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "bf8be5080d64bf1b9d20dbfe81404639e755a69d939d860fdc8c35026c6dfbbc"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "4226"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/board.create.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2ff4734842d84c42f61ad1d17d6bd5f63975917074979323a67da96f463896b1"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "380"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/board.create.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "8a755a057a9fbb2a47f99b949313d815997b947ea6aa101464fecec1464d9126"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "852"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/board.create.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "8af580c80012dc2960c91594a369c72e1a8d3d37b959f2302128ee770fd01e87"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "462"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/board.review.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b426073ddfcf64cbe7df3f2aa9bb89b2dcfb91e26a961712af58b08d466cf88"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "476"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/board.review.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f1ef8eb99028446b7ae3342e62ce895faf1779694a70b8069de4a4e58f47ad27"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "341"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/board.review.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "08918bace49fe6d9c12275346b6d93e66bb44a5c89e1b56c8d6ced0673060dfb"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "1170"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/resource.monitor.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "5ad6b4e909d787665fb8538659a099387fa52f2391d871c88d67fbf45e53eb9b"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "494"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/resource.monitor.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0c9596e16b8cb7a8b6163680673b4a93f62d1b6a31edb25a11d701808845b02a"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "349"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/resource.monitor.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "5355bcea2220e75b60494ad66483518ea0cdb7f35bfc0a600ff57ea04855809e"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "1508"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/task.assign.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c8fe21266156c1fa7e8e7b5da1392f92a67261b7ecb4a5eda65090978d2660b0"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "399"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/task.assign.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1ef8582b717155c223cea9771765bcce1d51cca4dd3e1d76209b2d30c2c84bbe"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "651"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/task.assign.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "b70eebcb4a3858978793fc2aa3977ef690808d2f82ac4108ed4493a180470a26"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "564"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/task.decompose.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2377ae64ca8950507c547a50a8997fa7cf70c68ce5284d2f2516184c03a04b74"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "847"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/task.decompose.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a1106071277f17f9d83ace8f4a2715739d8aa4697471acaf2a5cedb9ba6f6ff2"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "505"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/task.decompose.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ecb3738da1b9eaa617b14b5af3c77e616cbb69270aa8125f3e10c35526b5d649"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "1477"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/timeline.plan.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "39cd87554ed7f88da9188422c7a31d815048b744e45ef92f01668e6e7894e706"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "608"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/timeline.plan.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "fe35b55278e604a9ac73eaad487b5f87ea431e8b622bcf96968ae3d53a3babc1"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "343"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/timeline.plan.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "66067facb6b6ab656312c8ed12ed47a1dbd2403945a08f309acb1c996b5a02e1"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "1031"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/workflow.automate.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "90afd277c97da80404e1026b3af66e024b2238435da6ceac4aaaa699bdd7ab0a"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "459"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/workflow.automate.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c603da364f41540049029d74b8cd20a6ad2ffe2a6c49adc0e1c021945ebf993c"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "1225"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/workflow.automate.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a8d3c5af38dd733f051cfc7754d324dd7925377150034d45ad2422a2a31a2135"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "592"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:openwop/vendor.myndhyve.kanban@1.0.0",
+      "dependsOn": [
+        "host:host.kanban"
+      ]
+    }
+  ]
+}

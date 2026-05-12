@@ -1,0 +1,181 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "bom-ref": "pkg:openwop/core.openwop.http@1.0.0",
+      "type": "library",
+      "name": "core.openwop.http",
+      "version": "1.0.0",
+      "description": "Spec-canonical HTTP fetch node. Single typeId `core.openwop.http.fetch` with retry, exponential backoff, and deterministic Idempotency-Key derivation for replay safety. Authentication is the workflow author's concern — pass an `Authorization` header via the `headers` config field (literal token or resolved via the host's secret-injection mechanism). The pack itself declares no `requiresSecrets` so it runs on every host regardless of `secrets.supported`. Zero npm deps; uses Node 20's built-in fetch (undici).",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://openwop.dev/packs/core.openwop.http"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/openwop/openwop"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f3e67bd0ebdb7c7ad35b579f6e537cc875ec28f501c013be796617dce4b6efc1"
+        }
+      ],
+      "purl": "pkg:openwop/core.openwop.http@1.0.0"
+    },
+    "tools": [
+      {
+        "vendor": "openwop",
+        "name": "generate-sbom.mjs",
+        "version": "1"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "file",
+      "name": "LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0cea879ed215e3961316e97ab5e4d7a2b2bca999358668599bd53a1c953bc0d9"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "975"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "README.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f7008e9f8204bcf1fb27beea83406eced1d365ec920cd1f9f79853a8ff892749"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "4401"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "index.mjs",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "02178d2b0d28f42f929e3b741aaf32f1f0d335383b74c738c455a3aa233fb133"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "9715"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "keys/pack.json.sig",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "140b0e52e44add4c30ae311fe97ac0b6fbefd95a89a0f112307fb9fad7d6ed84"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "64"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "pack.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a6388cf47b994310e14a4f9f514e6b77cf83641469b0dd81a9216c86dd6931ec"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "1886"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/fetch.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "3bac94901d2b4a675f5353da4cb5f60cd5a5de8bc27f6431c4d2bb09064f9af5"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "3480"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/fetch.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4916cf6818ba786a4a88b0ee0eeba4f0a0b22d44692dae72be0ccc4defaba0cf"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "1061"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/fetch.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "98690bbf4908fa4fc090e512575ec368bb4323401b0650ebe720fdefaef2da40"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "2471"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:openwop/core.openwop.http@1.0.0",
+      "dependsOn": []
+    }
+  ]
+}

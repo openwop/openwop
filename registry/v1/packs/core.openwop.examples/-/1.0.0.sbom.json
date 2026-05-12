@@ -1,0 +1,270 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "bom-ref": "pkg:openwop/core.openwop.examples@1.0.0",
+      "type": "library",
+      "name": "core.openwop.examples",
+      "version": "1.0.0",
+      "description": "Spec-canonical examples pack — three minimal nodes (echo, coin-flip, delay-with-progress) that exercise the core node-pack contract end-to-end. Zero npm deps; runs on any Node 20+ host advertising the openwop-node-packs profile. See docs/PACKS-MVP-PLAN.md.",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://openwop.dev/packs/core.openwop.examples"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/openwop/openwop"
+        },
+        {
+          "type": "distribution",
+          "url": "/v1/packs/core.openwop.examples/-/1.0.0.tgz"
+        },
+        {
+          "type": "other",
+          "comment": "publisher signing key (Ed25519)",
+          "url": "/keys/openwop-registry-root.pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e75869a777600af491ef6af66c1d494c8c91c0ab19e78ad04c1a2e38e84f2aca"
+        }
+      ],
+      "purl": "pkg:openwop/core.openwop.examples@1.0.0"
+    },
+    "tools": [
+      {
+        "vendor": "openwop",
+        "name": "generate-sbom.mjs",
+        "version": "1"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "file",
+      "name": "LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0cea879ed215e3961316e97ab5e4d7a2b2bca999358668599bd53a1c953bc0d9"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "975"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "README.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "10d7f6f731e38179f24e8e69e78a5f16142f8d2382a93b9a46122556f48af7b2"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "4677"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "index.mjs",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "60461177ec4811493acb96343c2f0a10ea99f232e1bdf1b32e06a9b65ea6e26b"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "4734"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "pack.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f0c1826d35897cf3f69db09151534ed42fe083d866947f03e11cb7962f7523fe"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "2610"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/coin-flip.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f004129ea10b0238d9b5bcadf8c112bf3c9a2b97cac8508816a1a43fa2fb862b"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "446"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/coin-flip.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f48a5564b214cf760e2b1d8ddad1075a8b93e463690a2419faab2a02dafd14ab"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "633"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/coin-flip.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "021fed0920259dabde1fd1c9a335bc14f85d0cc1b203bad2613497116f90eef7"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "517"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/delay-with-progress.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "88d6d23c43fabb89f6a8b81145a6a51cb184601ff1099437b13b2332781ff1e5"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "873"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/delay-with-progress.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "96ef74a791d59c50e1bdee054753f7e32bd52bb4c72d92cc1c85943a35c3985b"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "398"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/delay-with-progress.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "fe81b38a2ce86fe66500f6143cafa590112abe67efe9e7ba615dc3bb8e231223"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "877"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/echo.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "36d6ec9d232aaa40b3282bbaacc73aae9aaca1a44e70f6e254aa686c478b9574"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "512"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/echo.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2c79f34d6e9764e1d3f026a95620503b70639a5d91fe3086d05a65081b6900fe"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "670"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/echo.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d9d926acd715b8eac8d3ce48de932a63635b56a96433e6c7380d896a7aabeb73"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "579"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:openwop/core.openwop.examples@1.0.0",
+      "dependsOn": []
+    }
+  ]
+}

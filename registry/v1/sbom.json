@@ -1,0 +1,381 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "tools": [
+      {
+        "vendor": "openwop",
+        "name": "generate-sbom.mjs",
+        "version": "1"
+      }
+    ],
+    "component": {
+      "type": "platform",
+      "name": "openwop-registry",
+      "description": "Aggregate SBOM listing every published pack version."
+    }
+  },
+  "components": [
+    {
+      "bom-ref": "pkg:openwop/community.openwop-team.demo@0.1.0",
+      "type": "library",
+      "name": "community.openwop-team.demo",
+      "version": "0.1.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/community.openwop-team.demo/-/0.1.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "ccffe7a0a8aeba2bd9df01dc51ffe3b7f43dcd1d9d3f6595eaa9a552cd17f5b4"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/core.openwop.agent-examples@1.0.0",
+      "type": "library",
+      "name": "core.openwop.agent-examples",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.agent-examples/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "0b6a6f2925b0dc176b47187eb9ab1c6db42288a87496b82db4e659955885bcf5"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/core.openwop.ai@1.0.0",
+      "type": "library",
+      "name": "core.openwop.ai",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.ai/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "cb91a086e16a5024fbec1ee066a3dffb02e5e34d438d50ca3d7e26ef42b6b6be"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/core.openwop.data@1.0.0",
+      "type": "library",
+      "name": "core.openwop.data",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.data/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "719d93ad5b0828702371f320ea43fb3435bd361d5b82384f3d404161067d4bbd"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/core.openwop.examples@1.0.0",
+      "type": "library",
+      "name": "core.openwop.examples",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.examples/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "3dc1930ce1ee65f0450491d25ae9cd39b6becc2f9be573310b758e2f1315d21d"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/core.openwop.http@1.0.0",
+      "type": "library",
+      "name": "core.openwop.http",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.http/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "40e48ac825de0a5754976cad122a4f0c403ba28d45ce98c09b8890b2962c395e"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/core.openwop.integration@1.0.0",
+      "type": "library",
+      "name": "core.openwop.integration",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.integration/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "1c8926e8394d5b34cadebf039258f723207c9b240c35dd43994fcc85cc8c76cf"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/core.openwop.mcp@1.0.0",
+      "type": "library",
+      "name": "core.openwop.mcp",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.mcp/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "cfa3c3f0c34fa73c0d8213a808348d79f1d4270647ef8e1b4ab4f7b00db31464"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/core.openwop.triggers@1.0.0",
+      "type": "library",
+      "name": "core.openwop.triggers",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.triggers/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "f83a384b7f7e5133a973acb8972f48b3ea3315f112373dc54efecaa7ba3b7b7e"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.agent-orchestration@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.agent-orchestration",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/vendor.myndhyve.agent-orchestration/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "5f9c849dc93fc377186c58fb747169a4b3dbc8eebb89a605ce2a234a08e0d109"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.ai@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.ai",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/vendor.myndhyve.ai/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "53a2774fb9744e0b9aa6e9cbbd97cf07693b7a651cb0095ac1e2d79a67a93da9"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.brand@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.brand",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/vendor.myndhyve.brand/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "3592c8535ef202266d93a2b6056f313bbc48655a25db2baebaa343dba05c3ca6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.canvas@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.canvas",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/vendor.myndhyve.canvas/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "311b234778ad35a5469fcc2da88b228df32a3ce4337e89040b84e70a14f27c5d"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.chat@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.chat",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/vendor.myndhyve.chat/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "c875c595ee64234bae27765eb329c27b7b5de6fd257f0b1fcec5c4752fcc762f"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.data-integration@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.data-integration",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/vendor.myndhyve.data-integration/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "d0fe1b8968851f142b7a59087a09e11543f5e4d44ac6ecb48bbeb5b1914f39db"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.entities@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.entities",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/vendor.myndhyve.entities/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "7091b9f7d2b22c2d092a1c80abe3a16d23f30e6826982d92b92e2f5c48d301e2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.kanban@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.kanban",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/vendor.myndhyve.kanban/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "0deca04d7a0c389e6b8b00772426932652fd7e32b3a467ad838227f3cf4199f9"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.launch-studio@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.launch-studio",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/vendor.myndhyve.launch-studio/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "d7b19c093afbfa44475e29c73aa840d5f27f623ae0df8a4194888cc037ef2dfb"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.web-research@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.web-research",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/vendor.myndhyve.web-research/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "32bcf14726fd81edc8ccf77679ab76225e1ced0610ecb9c7546064f494bf11de"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/vendor.openwop.rust-hello@1.0.0",
+      "type": "library",
+      "name": "vendor.openwop.rust-hello",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/vendor.openwop.rust-hello/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "6e80e616fb81c06a4de9997b5a6f1b80312a54cd0e38ae5b8e3662627c35ea3a"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

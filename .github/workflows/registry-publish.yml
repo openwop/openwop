@@ -150,6 +150,26 @@ jobs:
           # is published.
           node registry/scripts/conformance-check.mjs
 
+      - name: Generate + check SBOMs (CycloneDX 1.6)
+        run: |
+          # Stage 4 PR 2 (2026-05-12): operational maturity per the
+          # enterprise-architecture review. Every published pack gets a
+          # sibling <version>.sbom.json describing its files, hashes,
+          # license, and declared host peerDependencies. The aggregate
+          # registry/v1/sbom.json lists every version.
+          #
+          # CI runs in --check mode: regenerates the SBOMs in-memory and
+          # fails if any bytes differ from what's committed. Authors
+          # MUST `node registry/scripts/generate-sbom.mjs` after touching
+          # a tarball or manifest. Output is deterministic (no
+          # timestamps, sorted keys) so re-runs without source changes
+          # are no-ops.
+          #
+          # Consumers (host-side verifier + downstream supply-chain
+          # tooling) read the per-version SBOM URL from
+          # registry/v1/sbom.json's component[].externalReferences.
+          node registry/scripts/generate-sbom.mjs --check
+
   deploy:
     name: Deploy to packs.openwop.dev
     needs: validate
