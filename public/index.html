@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" />
 
-<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="styles.css?v=design-2026-05-11d" />
 </head>
 <body>
 
@@ -19,14 +19,14 @@
 <header class="topbar">
   <div class="wrap topbar-inner">
     <a class="brand" href="/">
-      <img class="brand-mark" src="assets/OpenWOP.svg" alt="OpenWOP logo" aria-hidden="true" />
+      <img class="brand-mark" src="assets/OpenWOP.svg" alt="" aria-hidden="true" />
       <span><b>OpenWOP</b> &nbsp;/&nbsp; openwop.dev</span>
     </a>
     <nav class="topnav">
       <a class="hide-sm" href="#specification">Specification</a>
       <a class="hide-sm" href="#anatomy">Anatomy</a>
       <a class="hide-sm" href="#context">In context</a>
-      <a class="hide-sm" href="https://packs.openwop.dev/">Registry ↗</a>
+      <a class="hide-sm" href="#ecosystem">Ecosystem</a>
       <a class="pill" href="https://github.com/openwop/openwop">GitHub →</a>
     </nav>
   </div>
@@ -50,34 +50,41 @@
 
       <p class="lede">
         OpenWOP defines how clients and hosts start, stream, interrupt, resume,
-        replay, validate, and observe durable AI workflows over REST and SSE, so
-        workflow tooling can move between compliant hosts without a proprietary runtime lock-in.
+        replay, validate, and observe durable AI workflows over REST, SSE, and
+        signed webhooks, so workflow tooling can move between compliant hosts
+        without a proprietary runtime lock-in.
       </p>
 
       <div class="actions">
         <a class="btn btn-primary" href="#start">
-          Read the spec <span class="arrow">→</span>
+          Run the quickstart <span class="arrow">→</span>
         </a>
-        <a class="btn btn-ghost" href="https://github.com/openwop/openwop">
-          GitHub <span class="arrow">↗</span>
+        <a class="btn btn-ghost" href="https://github.com/openwop/openwop/tree/main/spec/v1">
+          View the spec <span class="arrow">↗</span>
         </a>
       </div>
 
       <div class="meta-row">
         <span><b>Apache 2.0</b> licensed</span>
         <span><b>REST + SSE</b> wire contract</span>
-        <span><b>Conformance</b> tested</span>
+        <span><a class="meta-link" href="https://github.com/openwop/openwop/tree/main/conformance"><b>Conformance</b> tested</a></span>
+        <span><b>npm · PyPI · Go</b> SDKs</span>
       </div>
     </div>
 
-    <!-- Hero diagram -->
-    <div class="diagram-card" role="img" aria-label="Diagram of an OpenWOP run moving through client request, host orchestration, node execution, interrupt, and event stream">
-      <span class="corner tl">§ FIG. 01</span>
-      <span class="corner tr">openwop run lifecycle</span>
-      <span class="corner bl">create · dispatch · interrupt · stream</span>
-      <span class="corner br">trace context · idempotency</span>
+    <!-- Mobile-only summary (shown when the diagram-card is hidden under ~760px) -->
+    <ol class="diagram-mobile-summary" aria-label="OpenWOP run lifecycle, summarized">
+      <li><strong>CLIENT</strong> opens REST + SSE to the host.</li>
+      <li><strong>ORCHESTRATOR</strong> (supervisor agent) decides one of: <code>next-worker</code>, <code>ask-user</code>, or <code>terminate</code>.</li>
+      <li>Decision dispatches to a <strong>WORKER</strong> (calls tools), a <strong>CONVERSATION</strong> (multi-turn with a human), or <strong>TERMINATE</strong> (emits <code>run.completed</code>).</li>
+      <li>Every event flows into the <strong>EVENT LOG</strong> and streams to subscribers: <strong>WEBHOOKS</strong> (signed with <abbr title="Hash-based Message Authentication Code">HMAC</abbr>) and <strong>OTel</strong> (<abbr title="OpenTelemetry">OTel</abbr> — trace + cost).</li>
+    </ol>
 
-      <svg viewBox="0 0 600 600" preserveAspectRatio="xMidYMid meet">
+    <!-- Hero diagram -->
+    <div class="diagram-card" role="img" aria-label="Diagram of an OpenWOP run: a client opens a bidirectional REST + SSE connection to the host; a supervisor orchestrator decides and dispatches to one of three branches — WORKER (calls tools), CONVERSATION (multi-turn with a human), or TERMINATE (emits run.completed); every event flows into an event log that streams out to webhook and OpenTelemetry subscribers.">
+      <span class="corner tl">§ FIG. 01</span>
+
+      <svg viewBox="0 0 600 750" preserveAspectRatio="xMidYMid meet">
         <defs>
           <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
             <path d="M0,0 L10,5 L0,10 z" fill="var(--ink)" opacity="0.55"/>
@@ -88,182 +95,211 @@
           <marker id="arrD" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
             <path d="M0,0 L10,5 L0,10 z" fill="oklch(58% 0.13 40)" opacity="0.7"/>
           </marker>
+          <clipPath id="person-clip">
+            <circle cx="300" cy="71" r="22"/>
+          </clipPath>
         </defs>
 
-        <!-- ambient rings -->
-        <g stroke="var(--rule-2)" stroke-width="0.4" opacity="0.35" fill="none">
-          <circle cx="300" cy="300" r="80"/>
-          <circle cx="300" cy="300" r="160"/>
-          <circle cx="300" cy="300" r="240"/>
+        <!-- ambient backdrop rings (subtle anchor only, centered on the diagram's vertical midpoint) -->
+        <g stroke="var(--rule-2)" stroke-width="0.4" opacity="0.25" fill="none">
+          <circle cx="300" cy="375" r="170"/>
+          <circle cx="300" cy="375" r="310"/>
         </g>
 
-        <!-- ─── Connection paths ─────────────────────────── -->
-        <!-- 1. Request → Orchestrator (entry) -->
-        <path id="p_req" class="flow-path accent"
-          d="M 90,80 C 90,170 220,240 282,278" marker-end="url(#arrA)"/>
+        <!-- ─── Connection paths ─────────────────────────────────────── -->
 
-        <!-- 2. State ↔ host (read in, write back dashed) -->
-        <path id="p_mem_read" class="flow-path"
-          d="M 510,80 C 510,170 380,240 318,278" marker-end="url(#arr)"/>
-        <path id="p_mem_write" fill="none" stroke="var(--ink)" stroke-width="0.7"
-          opacity="0.45" stroke-dasharray="3 4"
-          d="M 318,278 C 380,240 510,170 510,80"/>
+        <!-- Conversation ↔ human (multi-turn exchanges, conversation below human;
+             DOWN arrow solid, UP arrow dashed. Spacing tightened to 12px. -->
+        <path id="p_conv_out" fill="none" stroke="oklch(58% 0.13 40)" stroke-width="1.2"
+          opacity="0.7" stroke-dasharray="3 4"
+          d="M 306,161 L 306,118" marker-end="url(#arrA)"/>
+        <path id="p_conv_in" class="flow-path accent"
+          d="M 294,118 L 294,161" marker-end="url(#arrA)"/>
 
-        <!-- 3. Orchestrator → Agent α / β (parallel dispatch) -->
-        <path id="p_disp_a" class="flow-path"
-          d="M 264,308 C 230,310 180,310 152,310" marker-end="url(#arr)"/>
-        <path id="p_disp_b" class="flow-path"
-          d="M 336,308 C 370,310 420,310 448,310" marker-end="url(#arr)"/>
+        <!-- Orchestrator → conversation (one-way dispatch; conversation outcomes return via the event log) -->
+        <path id="p_to_conv" class="flow-path"
+          d="M 300,260 L 300,215" marker-end="url(#arr)"/>
 
-        <!-- 4. Agent ↔ Tool (round-trip, drawn once each direction) -->
-        <path id="p_tool_a_call" class="flow-path thin"
-          d="M 116,295 C 80,275 50,250 78,234"/>
-        <path id="p_tool_a_back" class="flow-path thin"
-          d="M 82,234 C 60,260 90,295 124,318"/>
-        <path id="p_tool_b_call" class="flow-path thin"
-          d="M 484,295 C 520,275 550,250 522,234"/>
-        <path id="p_tool_b_back" class="flow-path thin"
-          d="M 518,234 C 540,260 510,295 476,318"/>
+        <!-- Orchestrator → worker (left side branch; targets the front of the stack) -->
+        <path id="p_to_worker" class="flow-path"
+          d="M 218,378 L 174,378" marker-end="url(#arr)"/>
 
-        <!-- 5. Agents → interrupt/gate (converge for review) -->
-        <path id="p_crit_a" class="flow-path"
-          d="M 148,326 C 180,400 220,440 248,456" marker-end="url(#arr)"/>
-        <path id="p_crit_b" class="flow-path"
-          d="M 452,326 C 420,400 380,440 352,456" marker-end="url(#arr)"/>
+        <!-- Orchestrator → terminate (right side branch, enters TERMINATE from the TOP) -->
+        <path id="p_to_term" class="flow-path"
+          d="M 380,410 C 410,425 445,440 445,466" marker-end="url(#arr)"/>
 
-        <!-- 6. Interrupt/gate → orchestrator (resume/retry, dashed) -->
-        <path id="p_loop" fill="none" stroke="oklch(58% 0.13 40)" stroke-width="0.9"
-          opacity="0.65" stroke-dasharray="3 4"
-          d="M 252,452 C 200,420 200,360 270,328" marker-end="url(#arrD)"/>
+        <!-- Worker ↔ tool catalog (tool catalog above the stack, front worker sends UP) -->
+        <path id="p_worker_tool" class="flow-path thin"
+          d="M 135,344 L 135,300" marker-end="url(#arr)"/>
+        <path id="p_tool_worker" class="flow-path thin"
+          d="M 148,300 C 158,312 152,330 145,344"/>
 
-        <!-- 7. Terminal event emitted -->
-        <path id="p_result" class="flow-path accent"
-          d="M 300,478 L 300,536" marker-end="url(#arrA)"/>
+        <!-- Bidirectional CLIENT ↔ HOST (request up, SSE down) — client below orchestrator;
+             DOWN arrow (SSE) solid, UP arrow (request) dashed -->
+        <path id="p_req" fill="none" stroke="oklch(58% 0.13 40)" stroke-width="1.2"
+          opacity="0.7" stroke-dasharray="3 4"
+          d="M 314,469 L 314,424" marker-end="url(#arrA)"/>
+        <path id="p_sse" class="flow-path accent"
+          d="M 286,424 L 286,469" marker-end="url(#arrA)"/>
 
-        <!-- ─── Pulses (timed to narrate one run) ────────── -->
-        <!-- t=0.0  request arrives -->
+        <!-- Feeder lines — events from each branch into EVENT LOG -->
+        <path id="p_evt_worker" class="flow-path thin"
+          d="M 165,408 C 195,470 215,540 220,562"/>
+        <path id="p_evt_term" class="flow-path thin"
+          d="M 445,520 C 430,540 410,555 400,562"/>
+
+        <!-- Stream paths from EVENT LOG to external subscribers -->
+        <path id="p_stream_hook" class="flow-path"
+          d="M 220,610 C 175,632 130,652 100,657" marker-end="url(#arr)"/>
+        <path id="p_stream_otel" class="flow-path"
+          d="M 380,610 C 425,632 470,652 500,657" marker-end="url(#arr)"/>
+
+        <!-- ─── Pulses (ambient, all continuous, out-of-phase) ─────── -->
+
         <circle r="3.5" class="pulse">
-          <animateMotion dur="1.4s" begin="0s" repeatCount="indefinite"><mpath href="#p_req"/></animateMotion>
+          <animateMotion dur="2.4s" begin="0s" repeatCount="indefinite"><mpath href="#p_req"/></animateMotion>
         </circle>
-        <!-- t=1.2  orchestrator reads memory -->
-        <circle r="3" style="fill:var(--ink); opacity:.7">
-          <animateMotion dur="1.4s" begin="1.2s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1"><mpath href="#p_mem_read"/></animateMotion>
+
+        <circle r="3" class="pulse">
+          <animateMotion dur="2.8s" begin="1.4s" repeatCount="indefinite"><mpath href="#p_sse"/></animateMotion>
         </circle>
-        <!-- t=2.4  parallel dispatch -->
+
         <circle r="3" style="fill:var(--ink); opacity:.75">
-          <animateMotion dur="1.0s" begin="2.4s" repeatCount="indefinite"><mpath href="#p_disp_a"/></animateMotion>
+          <animateMotion dur="2.0s" begin="0.4s" repeatCount="indefinite"><mpath href="#p_to_worker"/></animateMotion>
         </circle>
+
         <circle r="3" style="fill:var(--ink); opacity:.75">
-          <animateMotion dur="1.0s" begin="2.5s" repeatCount="indefinite"><mpath href="#p_disp_b"/></animateMotion>
+          <animateMotion dur="2.2s" begin="2.6s" repeatCount="indefinite"><mpath href="#p_to_conv"/></animateMotion>
         </circle>
-        <!-- t=3.4  agents call tools -->
-        <circle r="2.5" style="fill:var(--ink); opacity:.55">
-          <animateMotion dur="0.9s" begin="3.4s" repeatCount="indefinite"><mpath href="#p_tool_a_call"/></animateMotion>
-        </circle>
-        <circle r="2.5" style="fill:var(--ink); opacity:.55">
-          <animateMotion dur="0.9s" begin="3.5s" repeatCount="indefinite"><mpath href="#p_tool_b_call"/></animateMotion>
-        </circle>
-        <!-- t=4.4  tools return -->
-        <circle r="2.5" style="fill:var(--ink); opacity:.55">
-          <animateMotion dur="0.9s" begin="4.4s" repeatCount="indefinite"><mpath href="#p_tool_a_back"/></animateMotion>
-        </circle>
-        <circle r="2.5" style="fill:var(--ink); opacity:.55">
-          <animateMotion dur="0.9s" begin="4.5s" repeatCount="indefinite"><mpath href="#p_tool_b_back"/></animateMotion>
-        </circle>
-        <!-- t=5.5  results converge to interrupt/gate -->
-        <circle r="3" style="fill:var(--ink); opacity:.75">
-          <animateMotion dur="1.2s" begin="5.5s" repeatCount="indefinite"><mpath href="#p_crit_a"/></animateMotion>
-        </circle>
-        <circle r="3" style="fill:var(--ink); opacity:.75">
-          <animateMotion dur="1.2s" begin="5.6s" repeatCount="indefinite"><mpath href="#p_crit_b"/></animateMotion>
-        </circle>
-        <!-- t=6.9  resume/retry loop fires occasionally -->
-        <circle r="2.5" style="fill:oklch(58% 0.13 40); opacity:.7">
-          <animateMotion dur="1.4s" begin="6.9s" repeatCount="indefinite"><mpath href="#p_loop"/></animateMotion>
-        </circle>
-        <!-- t=7.1  host persists run state -->
-        <circle r="2.5" style="fill:var(--ink); opacity:.6">
-          <animateMotion dur="1.4s" begin="7.1s" repeatCount="indefinite"><mpath href="#p_mem_write"/></animateMotion>
-        </circle>
-        <!-- t=7.7  emit -->
+
         <circle r="3.5" class="pulse">
-          <animateMotion dur="0.8s" begin="7.7s" repeatCount="indefinite"><mpath href="#p_result"/></animateMotion>
+          <animateMotion dur="2.0s" begin="4.8s" repeatCount="indefinite"><mpath href="#p_to_term"/></animateMotion>
         </circle>
 
-        <!-- ─── Nodes ───────────────────────────────────── -->
+        <circle r="2.5" style="fill:var(--ink); opacity:.55">
+          <animateMotion dur="1.4s" begin="2.4s" repeatCount="indefinite"><mpath href="#p_worker_tool"/></animateMotion>
+        </circle>
+        <circle r="2.5" style="fill:var(--ink); opacity:.55">
+          <animateMotion dur="1.4s" begin="3.8s" repeatCount="indefinite"><mpath href="#p_tool_worker"/></animateMotion>
+        </circle>
 
-        <!-- REQUEST -->
+        <circle r="3.5" class="pulse">
+          <animateMotion dur="2.4s" begin="0.6s" repeatCount="indefinite"><mpath href="#p_conv_out"/></animateMotion>
+        </circle>
+        <circle r="3" class="pulse">
+          <animateMotion dur="2.8s" begin="2.0s" repeatCount="indefinite"><mpath href="#p_conv_in"/></animateMotion>
+        </circle>
+
+        <circle r="2.5" style="fill:var(--ink); opacity:.55">
+          <animateMotion dur="3.0s" begin="1.6s" repeatCount="indefinite"><mpath href="#p_stream_hook"/></animateMotion>
+        </circle>
+        <circle r="2.5" style="fill:var(--ink); opacity:.55">
+          <animateMotion dur="3.0s" begin="3.0s" repeatCount="indefinite"><mpath href="#p_stream_otel"/></animateMotion>
+        </circle>
+
+        <!-- ─── Nodes ──────────────────────────────────────────────── -->
+
+        <!-- HUMAN (top, centered, iOS person.circle style) -->
+        <g fill="none" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round">
+          <circle cx="300" cy="71" r="22" fill="var(--paper)"/>
+          <g clip-path="url(#person-clip)">
+            <circle cx="300" cy="63" r="7.5"/>
+            <circle cx="300" cy="91" r="16"/>
+          </g>
+        </g>
+        <text x="300" y="108" class="node-label" style="font-size:8.5px;" text-anchor="middle">human</text>
+
+        <!-- CONVERSATION (below human) -->
         <g>
-          <rect x="40" y="44" width="100" height="36" rx="2" class="node-c"/>
-          <text x="90" y="60" class="node-label" text-anchor="middle">REQUEST</text>
-          <line x1="50" y1="66" x2="130" y2="66" stroke="var(--rule-2)"/>
-          <text x="90" y="76" class="node-label" style="font-size:8.5px; fill:var(--ink-3)" text-anchor="middle">user · client</text>
+          <rect x="250" y="163" width="100" height="50" rx="3" class="node-c"/>
+          <text x="300" y="184" class="node-label" text-anchor="middle" style="font-size:10px;">CONVERSATION</text>
+          <line x1="262" y1="191" x2="338" y2="191" stroke="var(--rule-2)"/>
+          <text x="300" y="205" class="node-label" style="font-size:8px; fill:var(--ink-3);" text-anchor="middle">multi-turn</text>
         </g>
 
-        <!-- STATE -->
+        <!-- ORCHESTRATOR (rounded square with robot head from logo + labels) -->
         <g>
-          <rect x="460" y="44" width="100" height="36" rx="2" class="node-c"/>
-          <text x="510" y="60" class="node-label" text-anchor="middle">STATE</text>
-          <line x1="470" y1="66" x2="550" y2="66" stroke="var(--rule-2)"/>
-          <text x="510" y="76" class="node-label" style="font-size:8.5px; fill:var(--ink-3)" text-anchor="middle">snapshot · event</text>
+          <rect x="220" y="262" width="160" height="160" rx="12" class="node-c accent"/>
+          <!-- Robot head (extracted from /assets/OpenWOP.svg, scaled 0.16, centered at top of square) -->
+          <g transform="translate(267.6, 263.8) scale(0.16)">
+            <!-- Face outline -->
+            <path d="M 64.94 358 c 0 -48.13 39.02 -87.15 87.15 -87.15 l 101.67 0 c 23.11 0 45.28 9.18 61.62 25.53 c 16.34 16.34 25.53 38.51 25.53 61.62 l 0 56.03 c 0 48.13 -39.02 87.15 -87.15 87.15 l -101.67 0 c -48.13 0 -87.15 -39.02 -87.15 -87.15 z"
+              fill="var(--paper)" stroke="var(--ink)" stroke-width="22" stroke-linejoin="round"/>
+            <!-- Eyes -->
+            <circle cx="145.87" cy="370.53" r="36" fill="var(--ink)"/>
+            <circle cx="259.98" cy="370.53" r="36" fill="var(--ink)"/>
+            <!-- Antenna -->
+            <line x1="202.92" y1="165" x2="202.92" y2="271" stroke="var(--ink)" stroke-width="22" stroke-linecap="round"/>
+            <circle cx="202.92" cy="175.16" r="36" fill="var(--ink)"/>
+            <!-- Left ear -->
+            <path d="M 64.94 433.15 l -25.42 0 c -14.04 0 -25.42 -21.10 -25.42 -47.13 c 0 -26.03 11.38 -47.13 25.42 -47.13 l 25.42 0 z"
+              fill="var(--paper)" stroke="var(--ink)" stroke-width="22" stroke-linejoin="round"/>
+            <!-- Right ear -->
+            <path d="M 340.91 338.19 l 25.42 0 c 14.04 0 25.42 21.10 25.42 47.13 c 0 26.03 -11.38 47.13 -25.42 47.13 l -25.42 0 z"
+              fill="var(--paper)" stroke="var(--ink)" stroke-width="22" stroke-linejoin="round"/>
+            <!-- Mouth -->
+            <path d="M 236.86 429.42 c -9.00 9.00 -21.21 14.06 -33.94 14.06 c -12.73 0 -24.94 -5.06 -33.94 -14.06"
+              fill="none" stroke="var(--ink)" stroke-width="22" stroke-linecap="round"/>
+          </g>
+          <text x="300" y="371" class="node-label" text-anchor="middle" style="font-size:11px; fill:var(--ink); letter-spacing:0.04em;">ORCHESTRATOR</text>
+          <line x1="244" y1="379" x2="356" y2="379" stroke="var(--rule-2)"/>
+          <text x="300" y="395" class="node-label" style="font-size:9px; fill:var(--ink-3);" text-anchor="middle">decide · dispatch · loop</text>
         </g>
 
-        <!-- ORCHESTRATOR -->
+        <!-- MCP TOOLS (above the workers stack — tool exposure is delegated to MCP, not OpenWOP) -->
         <g>
-          <circle cx="300" cy="300" r="38" class="node-c accent"/>
-          <circle cx="300" cy="300" r="6" class="node-fill accent"/>
-          <text x="300" y="356" class="node-label" text-anchor="middle">HOST</text>
-          <text x="300" y="368" class="node-label" style="font-size:8.5px; fill:var(--ink-3)" text-anchor="middle">route · persist · emit</text>
+          <rect x="80" y="270" width="120" height="28" rx="2" class="node-c"/>
+          <text x="140" y="288" class="node-label" text-anchor="middle" style="font-size:9.5px;">MCP TOOLS</text>
         </g>
 
-        <!-- AGENT α -->
+        <!-- WORKERS (pool — stacked disks at 45° offset, back-to-front draw order;
+             back & middle circles fill with paper so the front one cleanly overlaps them) -->
         <g>
-          <circle cx="130" cy="310" r="22" class="node-c"/>
-          <circle cx="130" cy="310" r="3" class="node-fill"/>
-          <text x="130" y="354" class="node-label" text-anchor="middle">AGENT · α</text>
-          <text x="130" y="366" class="node-label" style="font-size:8.5px; fill:var(--ink-3)" text-anchor="middle">research</text>
+          <circle cx="128" cy="390" r="32" class="node-c" fill="var(--paper)"/>
+          <circle cx="134" cy="384" r="32" class="node-c" fill="var(--paper)"/>
+          <circle cx="140" cy="378" r="32" class="node-c" fill="var(--paper)"/>
+          <text x="140" y="382" class="node-label" text-anchor="middle" style="font-size:10px; fill:var(--ink);">WORKERS</text>
         </g>
 
-        <!-- AGENT β -->
+        <!-- TERMINATE (right side branch, lowered to sit halfway between orch and event log) -->
         <g>
-          <circle cx="470" cy="310" r="22" class="node-c"/>
-          <circle cx="470" cy="310" r="3" class="node-fill"/>
-          <text x="470" y="354" class="node-label" text-anchor="middle">AGENT · β</text>
-          <text x="470" y="366" class="node-label" style="font-size:8.5px; fill:var(--ink-3)" text-anchor="middle">execute</text>
+          <rect x="395" y="468" width="100" height="50" rx="3" class="node-c accent"/>
+          <text x="445" y="489" class="node-label" text-anchor="middle" style="font-size:10px; fill:oklch(58% 0.13 40);">TERMINATE</text>
+          <line x1="407" y1="496" x2="483" y2="496" stroke="var(--rule-2)"/>
+          <text x="445" y="510" class="node-label" style="font-size:8px; fill:oklch(58% 0.13 40);" text-anchor="middle">run.completed</text>
         </g>
 
-        <!-- TOOL α -->
+        <!-- CLIENT (below orchestrator, centered) -->
         <g>
-          <rect x="30" y="200" width="100" height="32" rx="2" class="node-c"/>
-          <text x="80" y="220" class="node-label" text-anchor="middle">DOC · SEARCH</text>
+          <rect x="240" y="471" width="120" height="44" rx="2" class="node-c"/>
+          <text x="300" y="491" class="node-label" text-anchor="middle" style="font-size:10px;">CLIENT</text>
+          <line x1="252" y1="497" x2="348" y2="497" stroke="var(--rule-2)"/>
+          <text x="300" y="509" class="node-label" style="font-size:8px; fill:var(--ink-3);" text-anchor="middle">request · stream</text>
         </g>
 
-        <!-- TOOL β -->
+        <!-- EVENT LOG (taller h=44 so text doesn't clip; feeder lines above show what feeds it) -->
         <g>
-          <rect x="470" y="200" width="100" height="32" rx="2" class="node-c"/>
-          <text x="520" y="220" class="node-label" text-anchor="middle">CODE · EXEC</text>
+          <rect x="200" y="564" width="200" height="44" rx="3" class="node-c"/>
+          <text x="300" y="584" class="node-label" text-anchor="middle" style="font-size:10.5px;">EVENT LOG</text>
+          <line x1="225" y1="591" x2="375" y2="591" stroke="var(--rule-2)"/>
+          <text x="300" y="603" class="node-label" style="font-size:8px; fill:var(--ink-3);" text-anchor="middle">run-events stream</text>
         </g>
 
-        <!-- INTERRUPT -->
+        <!-- WEBHOOKS subscriber -->
         <g>
-          <rect x="240" y="442" width="120" height="36" rx="2" class="node-c"/>
-          <text x="300" y="458" class="node-label" text-anchor="middle">INTERRUPT</text>
-          <line x1="252" y1="464" x2="348" y2="464" stroke="var(--rule-2)"/>
-          <text x="300" y="474" class="node-label" style="font-size:8.5px; fill:var(--ink-3)" text-anchor="middle">approval · clarify</text>
+          <rect x="30" y="657" width="140" height="44" rx="2" class="node-c"/>
+          <text x="100" y="677" class="node-label" text-anchor="middle" style="font-size:9.5px;">WEBHOOKS</text>
+          <line x1="42" y1="683" x2="158" y2="683" stroke="var(--rule-2)"/>
+          <text x="100" y="694" class="node-label" style="font-size:8px; fill:var(--ink-3);" text-anchor="middle">signed · HMAC</text>
         </g>
 
-        <!-- RESULT -->
+        <!-- OTel subscriber -->
         <g>
-          <rect x="244" y="528" width="112" height="22" rx="11" class="node-c accent"/>
-          <text x="300" y="543" class="node-label" text-anchor="middle" style="fill: oklch(58% 0.13 40);">run.completed</text>
+          <rect x="430" y="657" width="140" height="44" rx="2" class="node-c"/>
+          <text x="500" y="677" class="node-label" text-anchor="middle" style="font-size:9.5px;">OTel · W3C</text>
+          <line x1="442" y1="683" x2="558" y2="683" stroke="var(--rule-2)"/>
+          <text x="500" y="694" class="node-label" style="font-size:8px; fill:var(--ink-3);" text-anchor="middle">trace · cost</text>
         </g>
-
-        <!-- inline edge labels -->
-        <text x="208" y="304" class="node-label" style="font-size:8.5px;" text-anchor="middle">dispatch</text>
-        <text x="392" y="304" class="node-label" style="font-size:8.5px;" text-anchor="middle">dispatch</text>
-        <text x="200" y="380" class="node-label" style="font-size:8.5px; fill:oklch(58% 0.13 40);">resume ↺</text>
-        <text x="60" y="280" class="node-label" style="font-size:8.5px;">tool · α</text>
-        <text x="540" y="280" class="node-label" style="font-size:8.5px;" text-anchor="end">tool · β</text>
       </svg>
     </div>
   </div>
@@ -297,8 +333,8 @@
           <path d="M22 6L36 12V22C36 30 30 35 22 38C14 35 8 30 8 22V12L22 6Z" stroke="currentColor" stroke-width="1.2"/>
           <path d="M16 22l4 4 8-9" stroke="oklch(58% 0.13 40)" stroke-width="1.4"/>
         </svg>
-        <h3>Provider policy &amp; <span style="font-style:italic; font-family:var(--serif); color:var(--clay)">BYOK</span></h3>
-        <p>API scopes, per-run provider routing, BYOK secret resolution, and redaction rules are part of the host contract rather than hidden client convention.</p>
+        <h3>Provider policy &amp; <span class="accent-term">BYOK</span></h3>
+        <p>API scopes, per-run provider routing, <abbr title="Bring Your Own Key — clients supply their own provider credentials, scoped per run">BYOK</abbr> secret resolution, and redaction rules are part of the host contract rather than hidden client convention.</p>
       </div>
 
       <div class="pillar">
@@ -325,142 +361,703 @@
       <h2>What lives <em>inside</em> an OpenWOP run.</h2>
     </div>
 
-    <div class="anatomy">
-      <ul class="ana-list">
-        <li>
-          <span class="k">A</span>
-          <div>
-            <h4>Workflow definition</h4>
-            <p>A declarative graph of nodes, edges, typed channels, reducers, and per-run policy inputs.</p>
-          </div>
-        </li>
-        <li>
-          <span class="k">B</span>
-          <div>
-            <h4>Run state machine</h4>
-            <p>Pending → running → waiting → completed / failed / cancelled, with snapshots and ordered events clients can consume.</p>
-          </div>
-        </li>
-        <li>
-          <span class="k">C</span>
-          <div>
-            <h4>Agent &amp; memory surfaces</h4>
-            <p>Agent identity, reasoning-event envelopes, conversation interrupts, and memory adapter hooks for hosts that implement the multi-agent extensions.</p>
-          </div>
-        </li>
-        <li>
-          <span class="k">D</span>
-          <div>
-            <h4>Human checkpoints</h4>
-            <p>A canonical interrupt shape pauses execution for approval, clarification, refinement, or cancellation, then resumes through the same API contract.</p>
-          </div>
-        </li>
-        <li>
-          <span class="k">E</span>
-          <div>
-            <h4>Streaming surface</h4>
-            <p>Run events and message-style updates delivered over Server-Sent Events, with stream modes for dashboards, chat UIs, and debuggers.</p>
-          </div>
-        </li>
-        <li>
-          <span class="k">F</span>
-          <div>
-            <h4>Node Packs</h4>
-            <p>Signed bundles of reusable node implementations, with registry operations and host-private marketplaces defined by the v1 spec. The canonical signed registry is live at <a href="https://packs.openwop.dev/">packs.openwop.dev</a>.</p>
-          </div>
-        </li>
-      </ul>
-
-      <div class="ana-art" aria-hidden="true">
-        <svg viewBox="0 0 400 500" preserveAspectRatio="xMidYMid meet" style="width:100%; height:100%;">
-          <!-- vertical guide -->
-          <line x1="200" y1="20" x2="200" y2="480" stroke="var(--rule)" stroke-dasharray="2 4"/>
-
-          <!-- A: definition -->
-          <rect x="100" y="20" width="200" height="56" rx="3" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.2"/>
-          <text x="116" y="44" class="node-label" style="fill:var(--ink); font-size:10.5px;">A · WORKFLOW DEF</text>
-          <line x1="116" y1="58" x2="284" y2="58" stroke="var(--rule-2)"/>
-          <text x="116" y="70" class="node-label">nodes · edges · channels</text>
-
-          <!-- connector -->
-          <path d="M200,76 v18" stroke="var(--ink)" stroke-width="1"/>
-
-          <!-- B: state -->
-          <g>
-            <rect x="60" y="100" width="280" height="80" rx="3" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.2"/>
-            <text x="76" y="124" class="node-label" style="fill:var(--ink); font-size:10.5px;">B · RUN-STATE</text>
-            <g font-family="var(--mono)" font-size="9" fill="var(--ink-3)">
-              <rect x="76" y="138" width="50" height="20" rx="2" stroke="var(--ink-3)" stroke-width=".7" fill="none"/>
-              <text x="101" y="152" text-anchor="middle">PEND</text>
-              <rect x="138" y="138" width="50" height="20" rx="2" stroke="var(--clay)" stroke-width="1" fill="oklch(58% 0.13 40 / 0.06)"/>
-              <text x="163" y="152" text-anchor="middle" fill="oklch(58% 0.13 40)">RUN</text>
-              <rect x="200" y="138" width="50" height="20" rx="2" stroke="var(--ink-3)" stroke-width=".7" fill="none"/>
-              <text x="225" y="152" text-anchor="middle">WAIT</text>
-              <rect x="262" y="138" width="62" height="20" rx="2" stroke="var(--ink-3)" stroke-width=".7" fill="none"/>
-              <text x="293" y="152" text-anchor="middle">COMP</text>
-              <line x1="126" y1="148" x2="138" y2="148" stroke="var(--ink-3)" stroke-width=".7"/>
-              <line x1="188" y1="148" x2="200" y2="148" stroke="var(--ink-3)" stroke-width=".7"/>
-              <line x1="250" y1="148" x2="262" y2="148" stroke="var(--ink-3)" stroke-width=".7"/>
-            </g>
-          </g>
-
-          <path d="M200,180 v18" stroke="var(--ink)" stroke-width="1"/>
-
-          <!-- C: agent events + memory -->
-          <g>
-            <rect x="60" y="204" width="280" height="78" rx="3" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.2"/>
-            <text x="76" y="228" class="node-label" style="fill:var(--ink); font-size:10.5px;">C · AGENT EVENTS</text>
-            <!-- waveform -->
-            <path d="M76 256 q10 -12 20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0"
-              stroke="var(--ink)" fill="none" stroke-width="1" opacity=".7"/>
-            <line x1="76" y1="270" x2="324" y2="270" stroke="var(--rule-2)"/>
-            <text x="76" y="278" class="node-label">reasoned · toolCalled · handoff</text>
-          </g>
-
-          <path d="M200,282 v18" stroke="var(--ink)" stroke-width="1"/>
-
-          <!-- D: HITL -->
-          <g>
-            <rect x="60" y="306" width="280" height="64" rx="3" fill="var(--paper)" stroke="oklch(58% 0.13 40)" stroke-width="1.2"/>
-            <text x="76" y="330" class="node-label" style="fill:oklch(58% 0.13 40); font-size:10.5px;">D · HITL · AWAIT APPROVAL</text>
-            <circle cx="80" cy="350" r="3" fill="oklch(58% 0.13 40)">
-              <animate attributeName="opacity" values="0.3;1;0.3" dur="1.6s" repeatCount="indefinite"/>
-            </circle>
-            <text x="92" y="354" class="node-label">paused · 00:42</text>
-          </g>
-
-          <path d="M200,370 v18" stroke="var(--ink)" stroke-width="1"/>
-
-          <!-- E: streaming -->
-          <g>
-            <rect x="60" y="394" width="280" height="56" rx="3" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.2"/>
-            <text x="76" y="418" class="node-label" style="fill:var(--ink); font-size:10.5px;">E · STREAM (SSE)</text>
-            <g>
-              <rect x="76" y="430" width="14" height="6" fill="var(--clay)" opacity=".7">
-                <animate attributeName="opacity" values=".2;1;.2" dur="1.2s" begin="0s" repeatCount="indefinite"/>
-              </rect>
-              <rect x="94" y="430" width="14" height="6" fill="var(--clay)" opacity=".7">
-                <animate attributeName="opacity" values=".2;1;.2" dur="1.2s" begin=".15s" repeatCount="indefinite"/>
-              </rect>
-              <rect x="112" y="430" width="14" height="6" fill="var(--clay)" opacity=".7">
-                <animate attributeName="opacity" values=".2;1;.2" dur="1.2s" begin=".3s" repeatCount="indefinite"/>
-              </rect>
-              <rect x="130" y="430" width="14" height="6" fill="var(--clay)" opacity=".7">
-                <animate attributeName="opacity" values=".2;1;.2" dur="1.2s" begin=".45s" repeatCount="indefinite"/>
-              </rect>
-              <rect x="148" y="430" width="14" height="6" fill="var(--clay)" opacity=".7">
-                <animate attributeName="opacity" values=".2;1;.2" dur="1.2s" begin=".6s" repeatCount="indefinite"/>
-              </rect>
-              <text x="170" y="436" class="node-label">events · updates · debug</text>
-            </g>
-          </g>
-        </svg>
-        <div class="legend">
-          <span>FIG. 02 — RUN ANATOMY</span>
-          <span>HITL · STREAM · STATE</span>
+    <!-- ───────────── A · Workflow definition ───────────── -->
+    <article class="ana-block">
+      <header class="ana-block-head">
+        <span class="ana-block-key">A</span>
+        <h3 class="ana-block-title">Workflow definition</h3>
+        <span class="ana-block-tag">workflow-definition.schema.json</span>
+      </header>
+      <div class="ana-block-body">
+        <div class="ana-block-prose">
+          <p>An OpenWOP workflow is a declarative graph. <em>Nodes</em> are units of work; <em>edges</em> wire them together; <em>typed channels</em> carry shared state between them; <em>reducers</em> resolve concurrent writes at fan-in points; and <em>per-run policy inputs</em> parameterize each invocation without leaking into the definition itself.</p>
+          <p>The definition is content-addressable JSON — the same input always builds the same graph, so two hosts loading the same definition produce the same engine surface. Hosts validate definitions on registration and again at run-create time, so a malformed graph never reaches the engine.</p>
+          <p>Per-run inputs (provider routing, BYOK secrets, idempotency keys, run options, workflow version pin) flow into the engine alongside the definition. They never mutate the graph — they parameterize how the engine executes it.</p>
         </div>
+        <figure class="ana-block-fig">
+          <svg viewBox="0 0 720 300" preserveAspectRatio="xMidYMid meet" role="img" aria-label="A workflow definition diagram showing a directed graph: intake feeds parallel draft and scan nodes, which fan in to a merge node with a reducer, then flow to a publish node. A per-run policy badge (providers, secrets, idempotency, runOptions, workflowVersion) sits separately and is resolved by the engine at run-create time.">
+            <defs>
+              <marker id="awf-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)" opacity="0.6"/></marker>
+              <marker id="awf-arrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--clay)"/></marker>
+            </defs>
+            <!-- Per-run policy (top banner) -->
+            <g>
+              <rect x="30" y="30" width="660" height="56" rx="3" class="node-c accent"/>
+              <text x="48" y="50" class="node-label" style="font-size:9.5px; fill:var(--clay); letter-spacing:0.08em;">PER-RUN POLICY · resolved at run-create time</text>
+              <line x1="48" y1="58" x2="672" y2="58" stroke="var(--clay-rule)"/>
+              <text x="48" y="75" class="node-label" style="font-size:8px; fill:var(--ink-3);">providers · secrets · idempotency · runOptions · workflowVersion · BYOK refs</text>
+              <text x="672" y="75" text-anchor="end" class="node-label" style="font-size:8px; fill:var(--clay);">applied by engine ↓</text>
+            </g>
+
+            <!-- Dashed leader from policy banner into DAG entry (intake) -->
+            <path d="M76,86 L76,168" stroke="var(--clay)" stroke-width="0.9" stroke-dasharray="3 3" fill="none" opacity="0.6" marker-end="url(#awf-arrA)"/>
+            <text x="84" y="132" class="node-label" style="font-size:7px; fill:var(--clay);">applied at</text>
+            <text x="84" y="143" class="node-label" style="font-size:7px; fill:var(--clay);">run-create</text>
+
+            <!-- DAG: intake → [draft, scan] → merge → publish -->
+            <g>
+              <rect x="30" y="170" width="92" height="40" rx="3" class="node-c"/>
+              <text x="76" y="194" class="node-label" text-anchor="middle" style="font-size:9.5px; fill:var(--ink);">intake</text>
+            </g>
+
+            <path d="M122,182 L196,142" class="flow-path" marker-end="url(#awf-arr)"/>
+            <text x="156" y="135" class="node-label" text-anchor="middle" style="font-size:7.5px; fill:var(--clay);">T: Brief</text>
+            <path d="M122,198 L196,228" class="flow-path" marker-end="url(#awf-arr)"/>
+
+            <g>
+              <rect x="196" y="124" width="90" height="36" rx="3" class="node-c"/>
+              <text x="241" y="146" class="node-label" text-anchor="middle" style="font-size:9px; fill:var(--ink);">draft</text>
+            </g>
+            <g>
+              <rect x="196" y="210" width="90" height="36" rx="3" class="node-c"/>
+              <text x="241" y="232" class="node-label" text-anchor="middle" style="font-size:9px; fill:var(--ink);">scan</text>
+            </g>
+
+            <g>
+              <rect x="318" y="168" width="116" height="62" rx="3" class="node-c"/>
+              <text x="376" y="192" class="node-label" text-anchor="middle" style="font-size:9.5px; fill:var(--ink);">merge</text>
+              <line x1="332" y1="199" x2="420" y2="199" stroke="var(--rule-2)"/>
+              <text x="376" y="217" class="node-label" text-anchor="middle" style="font-size:7px; fill:var(--clay);">reducer: appendUnique</text>
+            </g>
+            <path d="M286,142 L318,180" class="flow-path" marker-end="url(#awf-arr)"/>
+            <path d="M286,228 L318,216" class="flow-path" marker-end="url(#awf-arr)"/>
+
+            <path d="M434,198 L484,198" class="flow-path" marker-end="url(#awf-arr)"/>
+            <text x="459" y="190" class="node-label" text-anchor="middle" style="font-size:7.5px; fill:var(--clay);">T: Report</text>
+
+            <g>
+              <rect x="484" y="178" width="92" height="40" rx="3" class="node-c"/>
+              <text x="530" y="202" class="node-label" text-anchor="middle" style="font-size:9.5px; fill:var(--ink);">publish</text>
+            </g>
+
+            <!-- Pulse along chain -->
+            <path id="awf-flow" d="M76,190 L241,142 L376,198 L530,198" fill="none" stroke="none"/>
+            <circle r="2.5" style="fill:var(--clay); opacity:0.85"><animateMotion dur="5s" repeatCount="indefinite"><mpath href="#awf-flow"/></animateMotion></circle>
+
+            <line x1="20" y1="266" x2="700" y2="266" stroke="var(--rule-2)" stroke-width=".7"/>
+            <text x="20" y="284" class="node-label" style="font-size:8px; fill:var(--ink-3);">graph + types + reducers = the engine's view of the workflow</text>
+            <text x="700" y="284" text-anchor="end" class="node-label" style="font-size:8px; fill:var(--clay);">channels-and-reducers.md</text>
+          </svg>
+          <figcaption><span>FIG. 02A · WORKFLOW DEFINITION</span><span>DAG · CHANNELS · REDUCERS</span></figcaption>
+        </figure>
       </div>
-    </div>
+    </article>
+
+    <!-- ───────────── B · Run state machine ───────────── -->
+    <article class="ana-block reverse">
+      <header class="ana-block-head">
+        <span class="ana-block-key">B</span>
+        <h3 class="ana-block-title">Run state machine</h3>
+        <span class="ana-block-tag">run-snapshot.schema.json</span>
+      </header>
+      <div class="ana-block-body">
+        <div class="ana-block-prose">
+          <p>Every run moves through a typed state machine: <code>pending</code> → <code>running</code> ⇄ <code>waiting</code> → one of three terminal states (<code>completed</code>, <code>failed</code>, <code>cancelled</code>). Transitions are spec-pinned, so clients on any compliant host see the same lifecycle.</p>
+          <p>At any non-terminal state the host can serve a <em>snapshot</em> — the engine's reduced view of the run — and an <em>ordered event log</em> that drove it there. Replay from event log + snapshot is deterministic by construction.</p>
+          <p>Resume from <code>waiting</code> is the same wire shape regardless of whether the pause was a human approval, a clarification round, an external event, or a sub-workflow handoff.</p>
+        </div>
+        <figure class="ana-block-fig">
+          <svg viewBox="0 0 720 280" preserveAspectRatio="xMidYMid meet" role="img" aria-label="A run state machine: pending transitions to running, which loops back-and-forth with waiting; from running, the run terminates in one of three states: completed, failed, or cancelled. Below the state diagram, an ordered event log shows tick marks representing emitted events.">
+            <defs><marker id="rsm-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)" opacity="0.6"/></marker></defs>
+            <!-- pending -->
+            <g>
+              <rect x="30" y="80" width="98" height="44" rx="3" class="node-c"/>
+              <text x="79" y="100" class="node-label" text-anchor="middle" style="font-size:9.5px; fill:var(--ink);">PENDING</text>
+              <text x="79" y="114" class="node-label" text-anchor="middle" style="font-size:7px; fill:var(--ink-3);">id reserved</text>
+            </g>
+            <path d="M128,102 L156,102" class="flow-path" marker-end="url(#rsm-arr)"/>
+
+            <!-- running -->
+            <g>
+              <rect x="156" y="80" width="98" height="44" rx="3" class="node-c accent"/>
+              <text x="205" y="100" class="node-label" text-anchor="middle" style="font-size:9.5px; fill:var(--clay);">RUNNING</text>
+              <text x="205" y="114" class="node-label" text-anchor="middle" style="font-size:7px; fill:var(--ink-3);">nodes execute</text>
+            </g>
+
+            <!-- running ⇄ waiting -->
+            <path d="M254,92 L290,92" class="flow-path" marker-end="url(#rsm-arr)"/>
+            <text x="272" y="84" class="node-label" text-anchor="middle" style="font-size:7px; fill:var(--ink-3);">suspend</text>
+            <path d="M290,112 L254,112" class="flow-path" marker-end="url(#rsm-arr)"/>
+            <text x="272" y="125" class="node-label" text-anchor="middle" style="font-size:7px; fill:var(--ink-3);">resume</text>
+
+            <!-- waiting -->
+            <g>
+              <rect x="290" y="80" width="98" height="44" rx="3" class="node-c"/>
+              <text x="339" y="100" class="node-label" text-anchor="middle" style="font-size:9.5px; fill:var(--ink);">WAITING</text>
+              <text x="339" y="114" class="node-label" text-anchor="middle" style="font-size:7px; fill:var(--ink-3);">interrupt held</text>
+            </g>
+
+            <!-- terminal branches — short stem from WAITING, then fan -->
+            <path d="M388,102 L406,102" class="flow-path"/>
+            <path d="M406,102 C 440,52 470,52 510,52" class="flow-path" marker-end="url(#rsm-arr)"/>
+            <path d="M406,102 L510,102" class="flow-path" marker-end="url(#rsm-arr)"/>
+            <path d="M406,102 C 440,152 470,152 510,152" class="flow-path" marker-end="url(#rsm-arr)"/>
+            <circle cx="406" cy="102" r="2" fill="var(--ink)" opacity="0.55"/>
+
+            <g>
+              <rect x="510" y="32" width="180" height="42" rx="3" class="node-c"/>
+              <text x="600" y="51" class="node-label" text-anchor="middle" style="font-size:9.5px; fill:var(--ink);">COMPLETED</text>
+              <text x="600" y="64" class="node-label" text-anchor="middle" style="font-size:7px; fill:var(--ink-3);">run.completed emitted</text>
+            </g>
+            <g>
+              <rect x="510" y="82" width="180" height="42" rx="3" class="node-c"/>
+              <text x="600" y="101" class="node-label" text-anchor="middle" style="font-size:9.5px; fill:var(--ink);">FAILED</text>
+              <text x="600" y="114" class="node-label" text-anchor="middle" style="font-size:7px; fill:var(--ink-3);">error in run.error</text>
+            </g>
+            <g>
+              <rect x="510" y="132" width="180" height="42" rx="3" class="node-c"/>
+              <text x="600" y="151" class="node-label" text-anchor="middle" style="font-size:9.5px; fill:var(--ink);">CANCELLED</text>
+              <text x="600" y="164" class="node-label" text-anchor="middle" style="font-size:7px; fill:var(--ink-3);">cooperative stop</text>
+            </g>
+
+            <!-- Event log strip -->
+            <text x="20" y="208" class="node-label" style="font-size:8px; fill:var(--ink-3);">ordered event log</text>
+            <line x1="20" y1="220" x2="700" y2="220" stroke="var(--rule-2)" stroke-width=".7"/>
+            <g fill="var(--clay)">
+              <circle cx="40" cy="220" r="2.4"/>
+              <circle cx="78" cy="220" r="2.4"/>
+              <circle cx="124" cy="220" r="2.4"/>
+              <circle cx="172" cy="220" r="2.4"/>
+              <circle cx="226" cy="220" r="2.4"/>
+              <circle cx="288" cy="220" r="2.4"/>
+              <circle cx="352" cy="220" r="2.4"/>
+              <circle cx="408" cy="220" r="2.4"/>
+              <circle cx="468" cy="220" r="2.4"/>
+              <circle cx="534" cy="220" r="2.4"/>
+              <circle cx="592" cy="220" r="2.4"/>
+              <circle cx="652" cy="220" r="2.4"/>
+            </g>
+            <text x="40" y="240" class="node-label" style="font-size:7px; fill:var(--ink-3);">run.created</text>
+            <text x="226" y="240" class="node-label" style="font-size:7px; fill:var(--ink-3);">node.started</text>
+            <text x="408" y="240" class="node-label" style="font-size:7px; fill:var(--ink-3);">approval.requested</text>
+            <text x="592" y="240" class="node-label" style="font-size:7px; fill:var(--ink-3);">run.completed</text>
+
+            <text x="20" y="265" class="node-label" style="font-size:8px; fill:var(--ink-3);">snapshot = engine reduction over the event log · replay is deterministic by construction</text>
+          </svg>
+          <figcaption><span>FIG. 02B · RUN STATE MACHINE</span><span>SNAPSHOT · EVENT LOG · REPLAY</span></figcaption>
+        </figure>
+      </div>
+    </article>
+
+    <!-- ───────────── C · Agent & memory surfaces ───────────── -->
+    <article class="ana-block">
+      <header class="ana-block-head">
+        <span class="ana-block-key">C</span>
+        <h3 class="ana-block-title">Agent &amp; memory surfaces</h3>
+        <span class="ana-block-tag">agent-manifest.schema.json</span>
+      </header>
+      <div class="ana-block-body">
+        <div class="ana-block-prose">
+          <p>Multi-agent workflows need a wire shape for <em>who took which turn</em>. The protocol defines <code>AgentRef</code> — agent identity that travels with every reasoning event — and a closed set of five reasoning events: <code>agent.reasoned</code>, <code>agent.toolCalled</code>, <code>agent.toolReturned</code>, <code>agent.handoff</code>, <code>agent.decided</code>.</p>
+          <p>Conversations are first-class. A <code>conversation</code> interrupt opens a multi-turn exchange that emits <code>conversation.opened</code> / <code>exchanged</code> / <code>closed</code> events without re-entering the workflow on every turn.</p>
+          <p>Cross-run memory lives behind a host-side <em>memory adapter</em> with four operations (<code>list</code>, <code>get</code>, <code>put</code>, <code>delete</code>) and a redaction invariant that composes with BYOK secret handling. The protocol pins the read-path semantics; the storage backend is a host choice.</p>
+        </div>
+        <figure class="ana-block-fig">
+          <svg viewBox="0 0 720 360" preserveAspectRatio="xMidYMid meet" role="img" aria-label="An agent in the center exposes five reasoning event types as a vertical list on the right (agent.reasoned, agent.toolCalled, agent.toolReturned, agent.handoff, agent.decided). A multi-turn conversation surface is shown to the upper-left, with bidirectional arrows for exchanged messages. Below the agent, a memory adapter exposes four operations: list, get, put, delete.">
+            <defs><marker id="ag-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)" opacity="0.6"/></marker>
+            <marker id="ag-arrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--clay)"/></marker></defs>
+            <!-- Conversation surface (top-left) -->
+            <g>
+              <rect x="30" y="40" width="186" height="64" rx="3" class="node-c"/>
+              <text x="123" y="60" class="node-label" text-anchor="middle" style="font-size:9.5px; fill:var(--ink);">CONVERSATION</text>
+              <line x1="42" y1="67" x2="204" y2="67" stroke="var(--rule-2)"/>
+              <text x="123" y="82" class="node-label" text-anchor="middle" style="font-size:7.5px; fill:var(--ink-3);">multi-turn · opened</text>
+              <text x="123" y="94" class="node-label" text-anchor="middle" style="font-size:7.5px; fill:var(--ink-3);">exchanged · closed</text>
+            </g>
+
+            <!-- bidirectional convo ↔ agent (single double-headed connector) -->
+            <path d="M218,98 L290,138" stroke="var(--clay)" stroke-width="1" opacity="0.7" fill="none" marker-start="url(#ag-arrA)" marker-end="url(#ag-arrA)"/>
+            <text x="240" y="118" class="node-label" style="font-size:7px; fill:var(--clay);">multi-turn</text>
+
+            <!-- Agent (center) -->
+            <g>
+              <rect x="280" y="130" width="180" height="86" rx="6" class="node-c accent"/>
+              <text x="370" y="152" class="node-label" text-anchor="middle" style="font-size:10.5px; fill:var(--clay); letter-spacing:0.06em;">AGENT</text>
+              <line x1="294" y1="160" x2="446" y2="160" stroke="var(--clay-rule)"/>
+              <text x="370" y="176" class="node-label" text-anchor="middle" style="font-size:7.5px; fill:var(--ink-3);">AgentRef { agentId, sharing,</text>
+              <text x="370" y="188" class="node-label" text-anchor="middle" style="font-size:7.5px; fill:var(--ink-3);">memoryRef, modelClass }</text>
+              <text x="370" y="206" class="node-label" text-anchor="middle" style="font-size:7px; fill:var(--clay);">identity travels with every event</text>
+            </g>
+
+            <!-- Reasoning events list (right) -->
+            <text x="500" y="48" class="node-label" style="font-size:8.5px; fill:var(--ink); letter-spacing:0.06em;">REASONING EVENTS</text>
+            <line x1="500" y1="56" x2="700" y2="56" stroke="var(--rule-2)"/>
+
+            <g font-family="var(--mono)" font-size="9.5" fill="var(--ink-2)">
+              <rect x="500" y="66" width="200" height="22" rx="2" fill="var(--paper)" stroke="var(--ink-3)" stroke-width=".7"/>
+              <text x="510" y="81">agent.reasoned</text>
+              <rect x="500" y="92" width="200" height="22" rx="2" fill="var(--paper)" stroke="var(--ink-3)" stroke-width=".7"/>
+              <text x="510" y="107">agent.toolCalled</text>
+              <rect x="500" y="118" width="200" height="22" rx="2" fill="var(--paper)" stroke="var(--ink-3)" stroke-width=".7"/>
+              <text x="510" y="133">agent.toolReturned</text>
+              <rect x="500" y="144" width="200" height="22" rx="2" fill="var(--paper)" stroke="var(--ink-3)" stroke-width=".7"/>
+              <text x="510" y="159">agent.handoff</text>
+              <rect x="500" y="170" width="200" height="22" rx="2" fill="var(--paper)" stroke="var(--ink-3)" stroke-width=".7"/>
+              <text x="510" y="185">agent.decided</text>
+            </g>
+
+            <!-- arrows agent → 5 events (full fan-out) -->
+            <path d="M460,170 C 480,170 484,77 500,77" stroke="var(--clay)" stroke-width=".8" stroke-dasharray="2 3" fill="none" opacity="0.55"/>
+            <path d="M460,170 C 480,170 484,103 500,103" stroke="var(--clay)" stroke-width=".8" stroke-dasharray="2 3" fill="none" opacity="0.55"/>
+            <path d="M460,170 L500,129" stroke="var(--clay)" stroke-width=".8" stroke-dasharray="2 3" fill="none" opacity="0.55"/>
+            <path d="M460,170 L500,155" stroke="var(--clay)" stroke-width=".8" stroke-dasharray="2 3" fill="none" opacity="0.55"/>
+            <path d="M460,170 C 480,170 484,181 500,181" stroke="var(--clay)" stroke-width=".8" stroke-dasharray="2 3" fill="none" opacity="0.55"/>
+
+            <!-- Memory adapter (below) -->
+            <g>
+              <rect x="240" y="246" width="260" height="76" rx="3" class="node-c"/>
+              <text x="370" y="266" class="node-label" text-anchor="middle" style="font-size:9.5px; fill:var(--ink);">MEMORY ADAPTER</text>
+              <line x1="252" y1="273" x2="488" y2="273" stroke="var(--rule-2)"/>
+              <g font-family="var(--mono)" font-size="8.5" fill="var(--ink-3)">
+                <text x="278" y="291">list ·</text>
+                <text x="318" y="291">get ·</text>
+                <text x="354" y="291">put ·</text>
+                <text x="390" y="291">delete</text>
+              </g>
+              <text x="370" y="312" class="node-label" text-anchor="middle" style="font-size:7px; fill:var(--clay);">redaction invariant · BYOK-safe · storage = host choice</text>
+            </g>
+
+            <!-- agent → memory -->
+            <path d="M370,216 L370,246" stroke="var(--ink)" stroke-width="1" opacity="0.55" fill="none" marker-end="url(#ag-arr)"/>
+            <text x="378" y="234" class="node-label" style="font-size:7px; fill:var(--ink-3);">memoryRef</text>
+
+            <text x="370" y="346" text-anchor="middle" class="node-label" style="font-size:7.5px; fill:var(--ink-3);">protocol pins the wire shape · runtime, model, and storage are host choices</text>
+          </svg>
+          <figcaption><span>FIG. 02C · AGENT &amp; MEMORY</span><span>AgentRef · EVENTS · MEMORY</span></figcaption>
+        </figure>
+      </div>
+    </article>
+
+    <!-- ───────────── D · Human checkpoints ───────────── -->
+    <article class="ana-block reverse">
+      <header class="ana-block-head">
+        <span class="ana-block-key">D</span>
+        <h3 class="ana-block-title">Human checkpoints</h3>
+        <span class="ana-block-tag">interrupt.md · clarification.request</span>
+      </header>
+      <div class="ana-block-body">
+        <div class="ana-block-prose">
+          <p>A run reaches a human checkpoint via one canonical <em>interrupt</em> shape that pauses execution and emits a typed payload. Four interrupt kinds cover the field: <code>approval</code>, <code>clarification</code>, <code>refinement</code>, and <code>cancellation</code>.</p>
+          <p>Resume goes back through the same API contract — the host knows nothing about which UI handled the prompt, which broker delivered the notification, or whether the response came from a human, an A2A peer, or a queue. The payload schema is what's normative.</p>
+          <p>Cancellation cascades across parent and child runs spawned via sub-workflow dispatch, so cooperative stop is deterministic at the boundary.</p>
+        </div>
+        <figure class="ana-block-fig">
+          <svg viewBox="0 0 720 280" preserveAspectRatio="xMidYMid meet" role="img" aria-label="A run timeline shows RUNNING, then PAUSED at an interrupt point, then RUNNING again, then DONE. At the pause point, four interrupt kinds branch out: approval, clarification, refinement, cancellation. A human icon decides which kind to dispatch; the same API contract resumes the run.">
+            <defs>
+              <marker id="hc-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)" opacity="0.6"/></marker>
+              <marker id="hc-arrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--clay)"/></marker>
+              <clipPath id="hc-person-clip"><circle cx="620" cy="130" r="14"/></clipPath>
+            </defs>
+            <!-- Run ribbon -->
+            <g>
+              <rect x="30" y="46" width="120" height="36" rx="3" class="node-c"/>
+              <text x="90" y="68" class="node-label" text-anchor="middle" style="font-size:9px; fill:var(--ink);">RUNNING</text>
+            </g>
+            <path d="M150,64 L196,64" class="flow-path" marker-end="url(#hc-arr)"/>
+
+            <!-- Paused (interrupt) -->
+            <g>
+              <rect x="196" y="46" width="160" height="36" rx="3" class="node-c accent"/>
+              <text x="276" y="66" class="node-label" text-anchor="middle" style="font-size:9px; fill:var(--clay);">PAUSED · interrupt</text>
+              <circle cx="208" cy="64" r="3" fill="var(--clay)"><animate attributeName="opacity" values="0.3;1;0.3" dur="1.6s" repeatCount="indefinite"/></circle>
+            </g>
+
+            <path d="M356,64 L420,64" class="flow-path" marker-end="url(#hc-arr)"/>
+            <text x="388" y="56" class="node-label" text-anchor="middle" style="font-size:7px; fill:var(--ink-3);">resume</text>
+
+            <g>
+              <rect x="420" y="46" width="120" height="36" rx="3" class="node-c"/>
+              <text x="480" y="68" class="node-label" text-anchor="middle" style="font-size:9px; fill:var(--ink);">RUNNING</text>
+            </g>
+            <path d="M540,64 L580,64" class="flow-path" marker-end="url(#hc-arr)"/>
+
+            <g>
+              <rect x="580" y="46" width="120" height="36" rx="3" class="node-c"/>
+              <text x="640" y="68" class="node-label" text-anchor="middle" style="font-size:9px; fill:var(--ink);">DONE</text>
+            </g>
+
+            <!-- Single connector PAUSED → kinds row -->
+            <path d="M276,82 L276,108" class="flow-path accent" marker-end="url(#hc-arrA)"/>
+
+            <!-- Section header above kinds row -->
+            <text x="276" y="100" class="node-label" text-anchor="middle" style="font-size:8.5px; fill:var(--ink-3); letter-spacing:0.08em;">FOUR INTERRUPT KINDS</text>
+
+            <!-- Four interrupt kind boxes -->
+            <g font-family="var(--mono)" font-size="8.5">
+              <rect x="30" y="120" width="120" height="32" rx="3" class="node-c"/>
+              <text x="90" y="140" text-anchor="middle" style="fill:var(--ink);">approval</text>
+              <rect x="160" y="120" width="120" height="32" rx="3" class="node-c"/>
+              <text x="220" y="140" text-anchor="middle" style="fill:var(--ink);">clarification</text>
+              <rect x="290" y="120" width="120" height="32" rx="3" class="node-c"/>
+              <text x="350" y="140" text-anchor="middle" style="fill:var(--ink);">refinement</text>
+              <rect x="420" y="120" width="120" height="32" rx="3" class="node-c"/>
+              <text x="480" y="140" text-anchor="middle" style="fill:var(--ink);">cancellation</text>
+            </g>
+
+            <!-- Human icon — iOS person.circle style (matches FIG. 01) -->
+            <path d="M606,136 L548,136" stroke="var(--clay)" stroke-width="0.9" stroke-dasharray="3 3" fill="none" opacity="0.7" marker-end="url(#hc-arrA)"/>
+            <text x="577" y="130" text-anchor="middle" class="node-label" style="font-size:7px; fill:var(--clay);">decides</text>
+            <g fill="none" stroke="var(--ink)" stroke-width="1.4" stroke-linejoin="round">
+              <circle cx="620" cy="130" r="14" fill="var(--paper)"/>
+              <g clip-path="url(#hc-person-clip)">
+                <circle cx="620" cy="124" r="5"/>
+                <circle cx="620" cy="143" r="10"/>
+              </g>
+            </g>
+            <text x="620" y="160" text-anchor="middle" class="node-label" style="font-size:8px; fill:var(--ink-3);">human</text>
+            <text x="620" y="172" text-anchor="middle" class="node-label" style="font-size:7px; fill:var(--ink-3);">(or A2A peer)</text>
+
+            <!-- Resume contract callout -->
+            <line x1="20" y1="200" x2="700" y2="200" stroke="var(--rule-2)" stroke-width=".7"/>
+            <text x="20" y="220" class="node-label" style="font-size:8px; fill:var(--ink-3);">same API contract: <tspan fill="var(--ink)" font-weight="500">POST /v1/runs/&#123;runId&#125;:resume</tspan> regardless of which kind paused the run</text>
+            <text x="20" y="236" class="node-label" style="font-size:8px; fill:var(--ink-3);">cancellation cascades to child sub-workflow runs · cooperative stop is boundary-deterministic</text>
+            <text x="20" y="258" class="node-label" style="font-size:7.5px; fill:var(--clay);">spec/v1/interrupt.md · spec/v1/interrupt-profiles.md</text>
+          </svg>
+          <figcaption><span>FIG. 02D · HUMAN CHECKPOINTS</span><span>4 INTERRUPT KINDS · SAME RESUME CONTRACT</span></figcaption>
+        </figure>
+      </div>
+    </article>
+
+    <!-- ───────────── E · Streaming & webhooks ───────────── -->
+    <article class="ana-block">
+      <header class="ana-block-head">
+        <span class="ana-block-key">E</span>
+        <h3 class="ana-block-title">Streaming &amp; webhooks</h3>
+        <span class="ana-block-tag">stream-modes.md · webhooks.md</span>
+      </header>
+      <div class="ana-block-body">
+        <div class="ana-block-prose">
+          <p>One canonical event log feeds two delivery shapes. <em>Server-Sent Events</em> (SSE) on <code>/v1/runs/{runId}/events</code> serves browsers and CLIs; <em>HMAC-signed webhooks</em> serve back-end subscribers that need durable server-to-server delivery.</p>
+          <p>The SSE endpoint accepts a <code>?mode=</code> query parameter with four canonical taps — <code>values</code> for dashboards, <code>updates</code> for chat UIs, <code>messages</code> for token-style streaming, and <code>debug</code> for full event fidelity. Hosts may also batch via <code>?bufferMs=N</code> for high-volume runs.</p>
+          <p>Webhooks are signed with HMAC-SHA256 over the canonical payload + nonce; the verification recipe is replay-attack-resistant and the host honors circuit-breaker semantics on a misbehaving subscriber.</p>
+        </div>
+        <figure class="ana-block-fig">
+          <svg viewBox="0 0 720 320" preserveAspectRatio="xMidYMid meet" role="img" aria-label="An event log on the left feeds two delivery paths: at the top, an SSE channel with four mode taps (values, updates, messages, debug) flows to dashboard, chat UI, token stream, and debugger consumers; at the bottom, an HMAC-signed webhook flows to an external server subscriber with replay protection.">
+            <defs><marker id="st-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)" opacity="0.6"/></marker>
+            <marker id="st-arrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--clay)"/></marker></defs>
+            <!-- Event log (left, vertical) — lighter weight -->
+            <g>
+              <rect x="30" y="60" width="120" height="190" rx="3" fill="var(--paper)" stroke="var(--ink-3)" stroke-width="1"/>
+              <text x="90" y="80" class="node-label" text-anchor="middle" style="font-size:9.5px; fill:var(--ink);">EVENT LOG</text>
+              <line x1="42" y1="88" x2="138" y2="88" stroke="var(--rule-2)"/>
+              <g fill="var(--clay)" opacity="0.5">
+                <rect x="46" y="100" width="88" height="5" rx="1"/>
+                <rect x="46" y="114" width="68" height="5" rx="1"/>
+                <rect x="46" y="128" width="80" height="5" rx="1"/>
+                <rect x="46" y="142" width="60" height="5" rx="1"/>
+                <rect x="46" y="156" width="84" height="5" rx="1"/>
+                <rect x="46" y="170" width="72" height="5" rx="1"/>
+                <rect x="46" y="184" width="78" height="5" rx="1"/>
+                <rect x="46" y="198" width="64" height="5" rx="1"/>
+                <rect x="46" y="212" width="86" height="5" rx="1"/>
+              </g>
+              <text x="90" y="238" class="node-label" text-anchor="middle" style="font-size:7px; fill:var(--ink-3);">ordered · durable</text>
+            </g>
+
+            <!-- SSE branch (top) -->
+            <path d="M150,100 L200,100" class="flow-path accent" marker-end="url(#st-arrA)"/>
+            <g>
+              <rect x="200" y="70" width="140" height="62" rx="3" class="node-c accent"/>
+              <text x="270" y="90" class="node-label" text-anchor="middle" style="font-size:9.5px; fill:var(--clay);">SSE · /events</text>
+              <line x1="214" y1="97" x2="326" y2="97" stroke="var(--clay-rule)"/>
+              <text x="270" y="113" class="node-label" text-anchor="middle" style="font-size:7.5px; fill:var(--ink-3);">?mode= · ?bufferMs=</text>
+              <text x="270" y="125" class="node-label" text-anchor="middle" style="font-size:7px; fill:var(--clay);">text/event-stream</text>
+            </g>
+
+            <!-- 4 mode taps -->
+            <path d="M340,100 L376,100" class="flow-path" marker-end="url(#st-arr)"/>
+            <g font-family="var(--mono)" font-size="8">
+              <rect x="376" y="58" width="84" height="22" rx="2" class="node-c"/>
+              <text x="418" y="73" text-anchor="middle" style="fill:var(--ink);">values</text>
+              <rect x="376" y="86" width="84" height="22" rx="2" class="node-c"/>
+              <text x="418" y="101" text-anchor="middle" style="fill:var(--ink);">updates</text>
+              <rect x="376" y="114" width="84" height="22" rx="2" class="node-c"/>
+              <text x="418" y="129" text-anchor="middle" style="fill:var(--ink);">messages</text>
+              <rect x="376" y="142" width="84" height="22" rx="2" class="node-c"/>
+              <text x="418" y="157" text-anchor="middle" style="fill:var(--ink);">debug</text>
+            </g>
+
+            <!-- tap → consumer arrows -->
+            <path d="M460,69 L506,69" class="flow-path thin" marker-end="url(#st-arr)"/>
+            <path d="M460,97 L506,97" class="flow-path thin" marker-end="url(#st-arr)"/>
+            <path d="M460,125 L506,125" class="flow-path thin" marker-end="url(#st-arr)"/>
+            <path d="M460,153 L506,153" class="flow-path thin" marker-end="url(#st-arr)"/>
+
+            <!-- consumer labels -->
+            <g font-family="var(--mono)" font-size="7.5" fill="var(--ink-3)">
+              <text x="514" y="72">dashboards</text>
+              <text x="514" y="100">chat UIs</text>
+              <text x="514" y="128">token stream</text>
+              <text x="514" y="156">debuggers</text>
+            </g>
+
+            <!-- Webhook branch (bottom) -->
+            <path d="M150,220 L200,220" class="flow-path" marker-end="url(#st-arr)"/>
+            <g>
+              <rect x="200" y="190" width="170" height="62" rx="3" class="node-c"/>
+              <text x="285" y="210" class="node-label" text-anchor="middle" style="font-size:9.5px; fill:var(--ink);">WEBHOOK SIGNER</text>
+              <line x1="214" y1="217" x2="356" y2="217" stroke="var(--rule-2)"/>
+              <text x="285" y="233" class="node-label" text-anchor="middle" style="font-size:7.5px; fill:var(--clay);">HMAC-SHA256 + nonce</text>
+              <text x="285" y="245" class="node-label" text-anchor="middle" style="font-size:7px; fill:var(--ink-3);">replay-attack-resistant</text>
+            </g>
+
+            <path d="M370,220 L420,220" class="flow-path" marker-end="url(#st-arr)"/>
+
+            <g>
+              <rect x="420" y="190" width="160" height="62" rx="3" class="node-c"/>
+              <text x="500" y="212" class="node-label" text-anchor="middle" style="font-size:9.5px; fill:var(--ink);">EXTERNAL SERVER</text>
+              <line x1="434" y1="219" x2="566" y2="219" stroke="var(--rule-2)"/>
+              <text x="500" y="234" class="node-label" text-anchor="middle" style="font-size:7px; fill:var(--ink-3);">verifies signature · acks</text>
+              <text x="500" y="245" class="node-label" text-anchor="middle" style="font-size:7px; fill:var(--ink-3);">circuit-breaker on flap</text>
+            </g>
+
+            <!-- pulses -->
+            <path id="st-sse" d="M90,160 L200,100 L376,100 L460,100" fill="none" stroke="none"/>
+            <circle r="2.4" style="fill:var(--clay); opacity:0.85"><animateMotion dur="3.4s" repeatCount="indefinite"><mpath href="#st-sse"/></animateMotion></circle>
+            <path id="st-hook" d="M90,160 L200,220 L420,220 L500,220" fill="none" stroke="none"/>
+            <circle r="2.4" style="fill:var(--clay); opacity:0.7"><animateMotion dur="4.2s" repeatCount="indefinite"><mpath href="#st-hook"/></animateMotion></circle>
+
+            <line x1="20" y1="282" x2="700" y2="282" stroke="var(--rule-2)" stroke-width=".7"/>
+            <text x="20" y="300" class="node-label" style="font-size:8px; fill:var(--ink-3);">one source of truth · two delivery shapes · same event vocabulary</text>
+          </svg>
+          <figcaption><span>FIG. 02E · STREAMING &amp; WEBHOOKS</span><span>SSE · 4 MODES · HMAC SIGNED</span></figcaption>
+        </figure>
+      </div>
+    </article>
+
+    <!-- ───────────── F · Node Packs ───────────── -->
+    <article class="ana-block reverse">
+      <header class="ana-block-head">
+        <span class="ana-block-key">F</span>
+        <h3 class="ana-block-title">Node Packs</h3>
+        <span class="ana-block-tag">node-pack-manifest.schema.json</span>
+      </header>
+      <div class="ana-block-body">
+        <div class="ana-block-prose">
+          <p>Node Packs are signed bundles of reusable node implementations — the agent equivalent of language packages. A pack carries a manifest (<code>pack.json</code>), one or more node implementations, optional agent manifests, and a detached signature.</p>
+          <p>Packs may be authored in <em>TypeScript</em>, <em>Python</em>, <em>Go</em>, or pre-compiled <em>WASM</em>. The WASM path gives cross-language portability: any host with a WASM runtime loads the same artifact identically, so a Rust-authored pack runs unchanged on a JavaScript reference host.</p>
+          <p>The canonical signed registry is live at <a href="https://packs.openwop.dev/">packs.openwop.dev</a> — read-only MVP today, write API and lifecycle ops via PR-based publishing. Host-private registries are first-class for tenanted deployments; namespace tiers (<code>core.*</code>, <code>vendor.*</code>, <code>community.*</code>, <code>private.*</code>) keep the public/private boundary explicit.</p>
+        </div>
+        <figure class="ana-block-fig">
+          <svg viewBox="0 0 720 280" preserveAspectRatio="xMidYMid meet" role="img" aria-label="A node pack (signed bundle with version and Ed25519 signature) shows four language badges (TypeScript, Python, Go, WASM). An arrow connects the pack to the canonical registry packs.openwop.dev, which in turn feeds OpenWOP-compliant host consumers. A namespace legend shows the four tier prefixes: core, vendor, community, private.">
+            <defs><marker id="np-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)" opacity="0.6"/></marker></defs>
+            <!-- Pack bundle (left) — language badges integrated -->
+            <g>
+              <rect x="30" y="40" width="186" height="200" rx="4" class="node-c"/>
+              <text x="123" y="60" class="node-label" text-anchor="middle" style="font-size:9.5px; fill:var(--ink);">PACK</text>
+              <text x="123" y="74" class="node-label" text-anchor="middle" style="font-size:7.5px; fill:var(--ink-3);">vendor.acme.tools@1.4.2</text>
+              <line x1="44" y1="82" x2="202" y2="82" stroke="var(--rule-2)"/>
+              <text x="44" y="98" class="node-label" style="font-size:7.5px; fill:var(--ink-3);">pack.json · nodes/ · agents/</text>
+              <text x="44" y="110" class="node-label" style="font-size:7.5px; fill:var(--ink-3);">schemas/ · README · LICENSE</text>
+              <line x1="44" y1="120" x2="202" y2="120" stroke="var(--rule-2)"/>
+              <text x="123" y="136" class="node-label" text-anchor="middle" style="font-size:7.5px; fill:var(--ink-3); letter-spacing:0.06em;">LANGUAGES</text>
+              <g font-family="var(--mono)" font-size="7.5">
+                <rect x="44" y="144" width="36" height="20" rx="2" fill="var(--paper)" stroke="var(--ink-3)" stroke-width=".7"/>
+                <text x="62" y="158" text-anchor="middle" style="fill:var(--ink-2);">TS</text>
+                <rect x="84" y="144" width="36" height="20" rx="2" fill="var(--paper)" stroke="var(--ink-3)" stroke-width=".7"/>
+                <text x="102" y="158" text-anchor="middle" style="fill:var(--ink-2);">PY</text>
+                <rect x="124" y="144" width="36" height="20" rx="2" fill="var(--paper)" stroke="var(--ink-3)" stroke-width=".7"/>
+                <text x="142" y="158" text-anchor="middle" style="fill:var(--ink-2);">GO</text>
+                <rect x="164" y="144" width="38" height="20" rx="2" fill="var(--clay-bg-hi)" stroke="var(--clay)" stroke-width="1"/>
+                <text x="183" y="158" text-anchor="middle" style="fill:var(--clay);">WASM</text>
+              </g>
+              <line x1="44" y1="176" x2="202" y2="176" stroke="var(--rule-2)"/>
+              <text x="123" y="194" class="node-label" text-anchor="middle" style="font-size:7.5px; fill:var(--clay);">◆ ed25519 signature</text>
+              <text x="123" y="208" class="node-label" text-anchor="middle" style="font-size:7px; fill:var(--ink-3);">tarball · detached .sig</text>
+              <text x="123" y="222" class="node-label" text-anchor="middle" style="font-size:7px; fill:var(--ink-3);">SemVer + content hash</text>
+            </g>
+
+            <!-- Arrow → registry -->
+            <path d="M216,140 L268,140" class="flow-path" marker-end="url(#np-arr)"/>
+            <text x="242" y="132" class="node-label" text-anchor="middle" style="font-size:8px; fill:var(--ink-2); letter-spacing:0.04em;">publish</text>
+
+            <!-- Registry -->
+            <g>
+              <rect x="268" y="90" width="200" height="100" rx="3" class="node-c accent"/>
+              <text x="368" y="110" class="node-label" text-anchor="middle" style="font-size:9.5px; fill:var(--clay);">REGISTRY</text>
+              <text x="368" y="124" class="node-label" text-anchor="middle" style="font-size:8px; fill:var(--ink-2);">packs.openwop.dev</text>
+              <line x1="282" y1="132" x2="454" y2="132" stroke="var(--clay-rule)"/>
+              <text x="368" y="148" class="node-label" text-anchor="middle" style="font-size:7.5px; fill:var(--ink-3);">discovery · index · manifest</text>
+              <text x="368" y="161" class="node-label" text-anchor="middle" style="font-size:7.5px; fill:var(--ink-3);">tarball · signature · pubkey</text>
+              <text x="368" y="180" class="node-label" text-anchor="middle" style="font-size:7px; fill:var(--clay);">live · read-only MVP</text>
+            </g>
+
+            <!-- Arrow → host -->
+            <path d="M468,140 L536,140" class="flow-path" marker-end="url(#np-arr)"/>
+            <text x="502" y="132" class="node-label" text-anchor="middle" style="font-size:8px; fill:var(--ink-2); letter-spacing:0.04em;">fetch</text>
+
+            <!-- Host -->
+            <g>
+              <rect x="536" y="90" width="160" height="100" rx="3" class="node-c"/>
+              <text x="616" y="110" class="node-label" text-anchor="middle" style="font-size:9.5px; fill:var(--ink);">HOST</text>
+              <text x="616" y="124" class="node-label" text-anchor="middle" style="font-size:7.5px; fill:var(--ink-3);">openwop-compliant</text>
+              <line x1="548" y1="132" x2="684" y2="132" stroke="var(--rule-2)"/>
+              <text x="616" y="148" class="node-label" text-anchor="middle" style="font-size:7.5px; fill:var(--ink-3);">verify signature</text>
+              <text x="616" y="161" class="node-label" text-anchor="middle" style="font-size:7.5px; fill:var(--ink-3);">load nodes/agents</text>
+              <text x="616" y="180" class="node-label" text-anchor="middle" style="font-size:7px; fill:var(--clay);">run inside workflows</text>
+            </g>
+
+            <!-- Namespace legend -->
+            <line x1="20" y1="256" x2="700" y2="256" stroke="var(--rule-2)" stroke-width=".7"/>
+            <text x="20" y="272" class="node-label" style="font-size:7.5px; fill:var(--ink-3);">namespaces — <tspan fill="var(--ink)">core.*</tspan> (spec-canonical) · <tspan fill="var(--ink)">vendor.*</tspan> (org-owned) · <tspan fill="var(--ink)">community.*</tspan> (open) · <tspan fill="var(--ink)">private.*</tspan> (host-internal only)</text>
+          </svg>
+          <figcaption><span>FIG. 02F · NODE PACKS</span><span>SIGNED · MULTI-LANG · REGISTRY-DELIVERED</span></figcaption>
+        </figure>
+      </div>
+    </article>
+
+    <!-- ───────────── G · Composition — stacking & chaining ───────────── -->
+    <article class="ana-block wide">
+      <header class="ana-block-head">
+        <span class="ana-block-key">G</span>
+        <h3 class="ana-block-title">Composition — stacking &amp; chaining</h3>
+        <span class="ana-block-tag">core.subWorkflow · core.dispatch</span>
+      </header>
+      <div class="ana-block-body">
+        <div class="ana-block-prose" style="max-width:72ch;">
+          <p>Two strata. <em>Stacking</em> is the to-do list itself: each column is a stack of cards waiting to be picked up, with the column structure pinned at workflow-definition time. <em>Chaining</em> is what happens once a card goes in-flight — the orchestrator dispatches a sequence of nodes that the LLM executes in order. A simple to-do may be a single node; a complex one expands into a multi-node chain (classify → enrich → summarize → ask-user) via <code>core.dispatch</code>, with each <code>runOrchestrator.decided</code> picking the next link.</p>
+          <p>The two-strata model was designed for surfaces like agent-driven kanban boards: column structure is fixed (each column is a stack of to-dos), but each card materializes its own runtime chain of nodes on the fly. <code>core.subWorkflow</code> extends per-card chains across parent→child runs with cascading cancellation and nested OTel spans. The static/dynamic boundary is the conservative-path commitment that keeps replay deterministic: dispatch never mutates the DAG mid-run.</p>
+        </div>
+        <figure class="ana-block-fig" style="margin-top:8px;">
+          <svg viewBox="0 0 960 480" preserveAspectRatio="xMidYMid meet" role="img" aria-label="A kanban board with four columns (Intake, Work, Review, Done) where each column is a stack of to-do cards. An active card in the Work column is connected with a dashed line to a runtime chain on the right, where an orchestrator dispatches classify, enrich, summarize, and ask-user nodes in sequence for that single card.">
+            <defs>
+              <marker id="kb-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)" opacity="0.6"/></marker>
+              <marker id="kb-arrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--clay)"/></marker>
+            </defs>
+            <text x="30" y="32" class="node-label" style="font-size:10px; fill:var(--ink); letter-spacing:0.08em;">STACKS — TO-DO COLUMNS</text>
+            <text x="798" y="32" text-anchor="middle" class="node-label" style="font-size:10px; fill:var(--clay); letter-spacing:0.08em;">CHAIN — PER-CARD NODES</text>
+
+            <!-- Column 1: INTAKE -->
+            <g>
+              <rect x="30" y="68" width="130" height="320" rx="3" class="node-c"/>
+              <text x="95" y="90" class="node-label" text-anchor="middle" style="font-size:11px; fill:var(--ink);">INTAKE</text>
+              <line x1="42" y1="98" x2="148" y2="98" stroke="var(--rule-2)"/>
+              <rect x="42" y="108" width="106" height="30" rx="2" fill="var(--paper)" stroke="var(--ink-3)" stroke-width=".7"/>
+              <rect x="44" y="108" width="102" height="2" fill="var(--clay)" opacity="0.6"/>
+              <text x="95" y="120" class="node-label" text-anchor="middle" style="font-size:8.5px;">#44 · bug</text>
+              <text x="95" y="131" class="node-label" text-anchor="middle" style="font-size:7px; fill:var(--ink-3);">received 2m</text>
+              <rect x="42" y="144" width="106" height="30" rx="2" fill="var(--paper)" stroke="var(--ink-3)" stroke-width=".7"/>
+              <text x="95" y="156" class="node-label" text-anchor="middle" style="font-size:8.5px;">#43 · spec</text>
+              <text x="95" y="167" class="node-label" text-anchor="middle" style="font-size:7px; fill:var(--ink-3);">received 6m</text>
+              <rect x="42" y="180" width="106" height="30" rx="2" fill="var(--paper)" stroke="var(--ink-3)" stroke-width=".7"/>
+              <text x="95" y="192" class="node-label" text-anchor="middle" style="font-size:8.5px;">#42 · doc</text>
+              <text x="95" y="203" class="node-label" text-anchor="middle" style="font-size:7px; fill:var(--ink-3);">received 14m</text>
+            </g>
+
+            <path d="M162,224 L184,224" class="flow-path" marker-end="url(#kb-arr)"/>
+
+            <!-- Column 2: WORK -->
+            <g>
+              <rect x="186" y="68" width="130" height="320" rx="3" class="node-c"/>
+              <text x="251" y="90" class="node-label" text-anchor="middle" style="font-size:11px; fill:var(--ink);">WORK</text>
+              <line x1="198" y1="98" x2="304" y2="98" stroke="var(--rule-2)"/>
+              <!-- in-flight card #41 (top of WORK stack, currently executing on the right-side chain) -->
+              <rect x="198" y="108" width="106" height="36" rx="2" fill="var(--clay-bg-hi)" stroke="var(--clay)" stroke-width="1.3"/>
+              <text x="251" y="121" class="node-label" text-anchor="middle" style="font-size:8.5px; fill:var(--clay);">#41 · pricing ◆</text>
+              <text x="251" y="133" class="node-label" text-anchor="middle" style="font-size:7px; fill:var(--clay);">in-flight · pricing-v3</text>
+              <rect x="198" y="150" width="106" height="30" rx="2" fill="var(--paper)" stroke="var(--ink-3)" stroke-width=".7"/>
+              <text x="251" y="162" class="node-label" text-anchor="middle" style="font-size:8.5px;">#40 · ui</text>
+              <text x="251" y="173" class="node-label" text-anchor="middle" style="font-size:7px; fill:var(--ink-3);">stalled 1h</text>
+            </g>
+
+            <path d="M318,224 L340,224" class="flow-path" marker-end="url(#kb-arr)"/>
+
+            <!-- Column 3: REVIEW -->
+            <g>
+              <rect x="342" y="68" width="130" height="320" rx="3" class="node-c"/>
+              <text x="407" y="90" class="node-label" text-anchor="middle" style="font-size:11px; fill:var(--ink);">REVIEW</text>
+              <line x1="354" y1="98" x2="460" y2="98" stroke="var(--rule-2)"/>
+              <rect x="354" y="108" width="106" height="30" rx="2" fill="var(--paper)" stroke="var(--ink-3)" stroke-width=".7"/>
+              <rect x="356" y="108" width="102" height="2" fill="var(--clay)" opacity="0.6"/>
+              <text x="407" y="120" class="node-label" text-anchor="middle" style="font-size:8.5px;">#39 · api</text>
+              <text x="407" y="131" class="node-label" text-anchor="middle" style="font-size:7px; fill:var(--ink-3);">awaiting approve</text>
+            </g>
+
+            <path d="M474,224 L496,224" class="flow-path" marker-end="url(#kb-arr)"/>
+
+            <!-- Column 4: DONE -->
+            <g>
+              <rect x="498" y="68" width="130" height="320" rx="3" class="node-c"/>
+              <text x="563" y="90" class="node-label" text-anchor="middle" style="font-size:11px; fill:var(--ink);">DONE</text>
+              <line x1="510" y1="98" x2="616" y2="98" stroke="var(--rule-2)"/>
+              <rect x="510" y="108" width="106" height="30" rx="2" fill="var(--paper)" stroke="var(--ink-3)" stroke-width=".7"/>
+              <text x="563" y="120" class="node-label" text-anchor="middle" style="font-size:8.5px;">#38</text>
+              <text x="563" y="131" class="node-label" text-anchor="middle" style="font-size:7px; fill:var(--ink-3);">shipped</text>
+              <rect x="510" y="144" width="106" height="30" rx="2" fill="var(--paper)" stroke="var(--ink-3)" stroke-width=".7"/>
+              <text x="563" y="156" class="node-label" text-anchor="middle" style="font-size:8.5px;">#37</text>
+              <text x="563" y="167" class="node-label" text-anchor="middle" style="font-size:7px; fill:var(--ink-3);">shipped</text>
+              <rect x="510" y="180" width="106" height="30" rx="2" fill="var(--paper)" stroke="var(--ink-3)" stroke-width=".7"/>
+              <text x="563" y="192" class="node-label" text-anchor="middle" style="font-size:8.5px;">#36</text>
+              <text x="563" y="203" class="node-label" text-anchor="middle" style="font-size:7px; fill:var(--ink-3);">shipped</text>
+            </g>
+
+            <!-- card-flow pulses — each animates only on its own inter-stack arrow -->
+            <path id="kb-flow-1" d="M162,224 L184,224" fill="none" stroke="none"/>
+            <circle r="2.5" style="fill:var(--clay); opacity:0.85"><animateMotion dur="1.6s" begin="0s" repeatCount="indefinite"><mpath href="#kb-flow-1"/></animateMotion></circle>
+            <path id="kb-flow-2" d="M318,224 L340,224" fill="none" stroke="none"/>
+            <circle r="2.5" style="fill:var(--clay); opacity:0.85"><animateMotion dur="1.6s" begin="0.5s" repeatCount="indefinite"><mpath href="#kb-flow-2"/></animateMotion></circle>
+            <path id="kb-flow-3" d="M474,224 L496,224" fill="none" stroke="none"/>
+            <circle r="2.5" style="fill:var(--clay); opacity:0.85"><animateMotion dur="1.6s" begin="1.0s" repeatCount="indefinite"><mpath href="#kb-flow-3"/></animateMotion></circle>
+
+            <!-- Dashed connector: active card #41 → orchestrator (routed over the top of the columns) -->
+            <path d="M251,108 C 251,52 798,52 798,98" fill="none" stroke="var(--clay)" stroke-width="1.1" stroke-dasharray="3 3" opacity="0.75" marker-end="url(#kb-arrA)"/>
+            <text x="525" y="46" class="node-label" text-anchor="middle" style="font-size:9px; fill:var(--clay);">card #41 → orchestrator</text>
+
+            <!-- Right panel: ORCHESTRATOR -->
+            <g>
+              <rect x="668" y="98" width="260" height="56" rx="3" class="node-c accent"/>
+              <text x="798" y="120" class="node-label" text-anchor="middle" style="font-size:11px; fill:var(--clay); letter-spacing:0.06em;">ORCHESTRATOR</text>
+              <line x1="680" y1="128" x2="916" y2="128" stroke="var(--clay-rule)"/>
+              <text x="798" y="144" class="node-label" text-anchor="middle" style="font-size:8.5px; fill:var(--ink-3);">decide · dispatch · loop</text>
+            </g>
+
+            <path d="M798,154 L798,166" class="flow-path accent" marker-end="url(#kb-arrA)"/>
+
+            <!-- Stack: worker 1 (completed) -->
+            <g>
+              <rect x="688" y="168" width="220" height="30" rx="2" fill="var(--paper)" stroke="var(--ink-3)" stroke-width=".8"/>
+              <text x="798" y="186" class="node-label" text-anchor="middle" style="font-size:9px; fill:var(--ink-3);">1 · classify ✓</text>
+            </g>
+            <path d="M798,198 L798,206" stroke="var(--ink-3)" stroke-width=".8" fill="none" marker-end="url(#kb-arr)"/>
+
+            <!-- Stack: worker 2 (completed) -->
+            <g>
+              <rect x="688" y="208" width="220" height="30" rx="2" fill="var(--paper)" stroke="var(--ink-3)" stroke-width=".8"/>
+              <text x="798" y="226" class="node-label" text-anchor="middle" style="font-size:9px; fill:var(--ink-3);">2 · enrich ✓</text>
+            </g>
+            <path d="M798,238 L798,246" stroke="var(--ink)" stroke-width=".8" fill="none" marker-end="url(#kb-arr)"/>
+
+            <!-- Stack: worker 3 (active) -->
+            <g>
+              <rect x="688" y="248" width="220" height="30" rx="2" fill="var(--clay-bg-hi)" stroke="var(--clay)" stroke-width="1.3"/>
+              <text x="798" y="266" class="node-label" text-anchor="middle" style="font-size:9px; fill:var(--clay);">3 · summarize ◀ now</text>
+            </g>
+            <path d="M798,278 L798,286" stroke="var(--ink-3)" stroke-width=".8" stroke-dasharray="2 2" fill="none" marker-end="url(#kb-arr)"/>
+
+            <!-- Stack: worker 4 (pending) -->
+            <g>
+              <rect x="688" y="288" width="220" height="30" rx="2" fill="var(--paper)" stroke="var(--ink-3)" stroke-width=".8" stroke-dasharray="3 3"/>
+              <text x="798" y="306" class="node-label" text-anchor="middle" style="font-size:9px; fill:var(--ink-3);">4 · ask-user ?</text>
+            </g>
+
+            <!-- stack pulse -->
+            <path id="kb-stack" d="M798,154 V198 V238 V278" fill="none" stroke="none"/>
+            <circle r="2.6" style="fill:var(--clay); opacity:0.7"><animateMotion dur="3.4s" repeatCount="indefinite"><mpath href="#kb-stack"/></animateMotion></circle>
+
+            <text x="798" y="346" text-anchor="middle" class="node-label" style="font-size:9px; fill:var(--ink-3);">runOrchestrator.decided → core.dispatch</text>
+            <text x="798" y="360" text-anchor="middle" class="node-label" style="font-size:8px; fill:var(--ink-3);">next-worker · ask-user · terminate</text>
+
+            <!-- Legend rail -->
+            <line x1="30" y1="408" x2="930" y2="408" stroke="var(--rule-2)" stroke-width=".7"/>
+            <text x="30" y="428" class="node-label" style="font-size:9px; fill:var(--ink-3);">columns = stacks of to-dos · structure pinned at workflow definition time</text>
+            <text x="30" y="444" class="node-label" style="font-size:9px; fill:var(--ink-3);">cards = work items · each waits in a stack until picked up</text>
+            <text x="930" y="428" text-anchor="end" class="node-label" style="font-size:9px; fill:var(--clay);">chain = nodes the LLM runs per card · built at runtime</text>
+            <text x="930" y="444" text-anchor="end" class="node-label" style="font-size:9px; fill:var(--clay);">orchestrator picks the next node in the chain</text>
+          </svg>
+          <figcaption><span>FIG. 02G · KANBAN COMPOSITION</span><span>TO-DO STACKS · PER-CARD CHAINS</span></figcaption>
+        </figure>
+      </div>
+    </article>
   </div>
 </section>
 
@@ -468,14 +1065,15 @@
 <section class="block">
   <div class="wrap">
     <div class="block-head">
-      <div class="label"><span class="marker"><span class="dot"></span>§ 03 / Specification</span></div>
+      <div class="label"><span class="marker"><span class="dot"></span>§ 03 / Stability</span></div>
       <h2>Stable, versioned, <em>readable</em> in an afternoon.</h2>
+      <p class="block-lede">Below is the contract — every row points at a stable surface (transport, schema, license, versioning) that compliant hosts can be measured against.</p>
     </div>
 
     <div class="spec">
       <div class="row">
         <div class="key">Version</div>
-        <div class="val">1.0 (Core)<small>FINAL v1 · May 2026 · Stable REST, SSE, schema, and conformance surfaces.</small></div>
+        <div class="val">1.0 (Core)<small>FINAL v1 · 2026-05-08 · Stable REST, SSE, schema, and conformance surfaces. Multi-agent extensions — agent identity, reasoning events, agent packs, memory adapter, multi-turn conversation, orchestrator, and dispatch — accepted into the v1 line on 2026-05-11.</small></div>
       </div>
       <div class="row">
         <div class="key">Transport</div>
@@ -483,7 +1081,7 @@
       </div>
       <div class="row">
         <div class="key">Discovery</div>
-        <div class="val">/.well-known/openwop<small>Hosts advertise protocol version, capabilities, limits, profiles, and implementation metadata.</small></div>
+        <div class="val">/.well-known/openwop<small>Hosts advertise protocol version, the nine v1.x capability profiles (<code>openwop-core</code> plus <code>-interrupts</code>, <code>-stream-sse</code>, <code>-stream-poll</code>, <code>-secrets</code>, <code>-provider-policy</code>, <code>-replay-fork</code>, <code>-fixtures</code>, <code>-node-packs</code>), limits, and implementation metadata so clients negotiate features instead of guessing.</small></div>
       </div>
       <div class="row">
         <div class="key">Tracing</div>
@@ -494,8 +1092,21 @@
         <div class="val">JSON Schema 2020-12<small>Machine-readable workflow, run, event, capability, pack, and debug-bundle shapes.</small></div>
       </div>
       <div class="row">
+        <div class="key">SDKs</div>
+        <div class="val">npm · PyPI · Go<small>
+          <a href="https://www.npmjs.com/package/@openwop/openwop">@openwop/openwop</a> ·
+          <a href="https://www.npmjs.com/package/@openwop/openwop-conformance">@openwop/openwop-conformance</a> ·
+          <a href="https://pypi.org/project/openwop-client/">openwop-client</a> ·
+          <a href="https://pkg.go.dev/github.com/openwop/openwop/sdk/go">openwop/sdk/go</a>
+        </small></div>
+      </div>
+      <div class="row">
         <div class="key">License</div>
         <div class="val">Apache 2.0<small>Trademark-clean, patent-granting, no field-of-use restrictions.</small></div>
+      </div>
+      <div class="row">
+        <div class="key">Compatibility</div>
+        <div class="val">v1.x stable<small>Wire shapes and package names stable through any v1.x release. Four versioning axes — engine, event-log, per-event schema, and per-(run, changeId) pinning — keep in-flight runs safe across deploys. See <code>PUBLISHING.md</code> and <code>ROADMAP.md</code>.</small></div>
       </div>
     </div>
   </div>
@@ -545,7 +1156,10 @@
         <p>
           Clone the repo, start the in-memory reference host, create a run over
           HTTP, and inspect the same run through the v1 API. No cloud account,
-          vendor SDK, or managed service required.
+          vendor SDK, or managed service required. Three further reference
+          hosts — SQLite, Python (stdlib-only), and Postgres — exercise
+          durability, cross-language portability, and multi-process paths
+          against the same conformance suite.
         </p>
         <div class="actions">
           <a class="btn btn-primary" href="https://github.com/openwop/openwop/blob/main/QUICKSTART-10MIN.md">Run the quickstart <span class="arrow">→</span></a>
@@ -589,13 +1203,54 @@
   </div>
 </section>
 
+<!-- ─────────────────────── ECOSYSTEM ─────────────────────── -->
+<section class="block" id="ecosystem">
+  <div class="wrap">
+    <div class="block-head">
+      <div class="label"><span class="marker"><span class="dot"></span>§ 06 / Ecosystem</span></div>
+      <h2>Build <em>against</em> the protocol.</h2>
+    </div>
+
+    <div class="packs">
+      <div class="pack">
+        <div class="tag"><span>01 · npm</span><a class="view" href="https://www.npmjs.com/package/@openwop/openwop">view ↗</a></div>
+        <div class="name">@openwop/openwop</div>
+        <p>TypeScript reference SDK. Typed run client, SSE consumer, error mapping, idempotency helpers. Zero runtime deps.</p>
+        <div class="install"><span class="p">$</span>npm i @openwop/openwop</div>
+      </div>
+
+      <div class="pack">
+        <div class="tag"><span>02 · npm</span><a class="view" href="https://www.npmjs.com/package/@openwop/openwop-conformance">view ↗</a></div>
+        <div class="name">@openwop/openwop-conformance</div>
+        <p>Black-box conformance harness. Point it at any host to verify v1 compliance against the full scenario corpus.</p>
+        <div class="install"><span class="p">$</span>npx @openwop/openwop-conformance</div>
+      </div>
+
+      <div class="pack">
+        <div class="tag"><span>03 · PyPI</span><a class="view" href="https://pypi.org/project/openwop-client/">view ↗</a></div>
+        <div class="name">openwop-client</div>
+        <p>Python reference SDK. Stdlib-only, zero dependencies. Hand-rolled SSE parser; mirrors the TypeScript surface.</p>
+        <div class="install"><span class="p">$</span>pip install openwop-client</div>
+      </div>
+
+      <div class="pack">
+        <div class="tag"><span>04 · pkg.go.dev</span><a class="view" href="https://pkg.go.dev/github.com/openwop/openwop/sdk/go">view ↗</a></div>
+        <div class="name">openwop/sdk/go</div>
+        <p>Go reference SDK. Single module, no external deps. Run client, SSE consumer, typed errors. Pinned at <code>v1.0.0</code>.</p>
+        <div class="install"><span class="p">$</span>go get github.com/openwop/openwop/sdk/go</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
 <!-- ─────────────────────── FOOTER ─────────────────────── -->
 <footer class="foot">
   <div class="wrap">
     <div class="foot-grid">
       <div>
         <div class="foot-mark">
-          <img src="assets/OpenWOP.svg" alt="OpenWOP logo" style="width: 49px; height: 49px; display: inline-block; vertical-align: middle; margin-right: 4px;" />
+          <img src="assets/OpenWOP.svg" alt="" aria-hidden="true" />
           Open<em>WOP</em>
         </div>
         <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
@@ -618,8 +1273,8 @@
           <li><a href="https://packs.openwop.dev/">Pack registry ↗</a></li>
           <li><a href="https://github.com/openwop/openwop/blob/main/spec/v1/node-packs.md">Node Packs spec</a></li>
           <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts</a></li>
-          <li><a href="https://github.com/openwop/openwop/tree/main/sdk">SDKs</a></li>
           <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite</a></li>
         </ul>
       </div>
       <div>
@@ -634,7 +1289,7 @@
     </div>
 
     <div class="foot-meta">
-      <span>© 2026 OpenWOP Working Group</span>
+      <span>© 2026 OpenWOP contributors</span>
       <span>Apache 2.0 · openwop.dev</span>
       <span>Built with care.</span>
     </div>
