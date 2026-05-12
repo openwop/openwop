@@ -34,15 +34,39 @@ jobs:
             }
           '
 
-      - name: Validate pack manifests against schema
+      - name: Validate version manifests against registry-version-manifest schema
         run: |
-          npm install -g ajv-cli@5
-          # Future: validate each registry/v1/packs/*/-/*.json against
-          # schemas/node-pack-manifest.schema.json. Currently the registry
-          # manifest has registry-only fields (publishedAt, integrity, etc.)
-          # that aren't in the pack manifest schema; a registry-specific
-          # schema lands in v1.2.
-          echo "TODO: schema validation pending registry-manifest schema"
+          # Stage 2 PR 1 (2026-05-12): replaces the v1.2-pending TODO.
+          # Every registry/v1/packs/<name>/-/<version>.json MUST conform to
+          # schemas/registry-version-manifest.schema.json. The new schema
+          # extends the bare pack-manifest schema with the registry-side
+          # augmentations (integrity, publishedAt, tarballUrl, signatureUrl,
+          # deprecated, yanked) that build-index.mjs writes.
+          #
+          # Catches: missing required fields, wrong types, bad SemVer,
+          # invalid integrity-hash format, registry-relative URL drift,
+          # malformed signing block.
+          npm install -g ajv-cli@5 ajv-formats@3
+          set -e
+          found=0
+          fails=0
+          for manifest in $(find registry/v1/packs -path '*/-/*.json' -not -name 'index.json' 2>/dev/null); do
+            found=$((found + 1))
+            if ! ajv validate -s schemas/registry-version-manifest.schema.json \
+                              -d "$manifest" \
+                              --strict=false \
+                              -c ajv-formats; then
+              echo "::error file=$manifest::version manifest fails schema validation"
+              fails=$((fails + 1))
+            fi
+          done
+          echo "checked $found manifest(s), $fails failed"
+          if [ "$fails" -gt 0 ]; then
+            exit 1
+          fi
+          if [ "$found" -eq 0 ]; then
+            echo "::warning::no version manifests found under registry/v1/packs"
+          fi
 
       - name: Check index files are up to date
         run: |
