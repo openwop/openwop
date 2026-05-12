@@ -1940,6 +1940,34 @@ async function handleEventsSse(
     return;
   }
 
+  // Validate streamMode per stream-modes.md §"Mode selection". Single
+  // mode OR comma-separated subset of {values, updates, messages,
+  // debug}. `values` is exclusive — can't combine with others. Unknown
+  // mode → 400 unsupported_stream_mode + details.supported list. This
+  // host doesn't yet *filter* by mode — it returns the full event
+  // stream regardless — but the validation gate is required by the
+  // conformance suite.
+  const SUPPORTED_STREAM_MODES = ['values', 'updates', 'messages', 'debug'];
+  const streamModeRaw = req.url
+    ? new URL(req.url, `http://${req.headers.host ?? 'localhost'}`).searchParams.get('streamMode')
+    : null;
+  if (streamModeRaw !== null && streamModeRaw.length > 0) {
+    const requested = streamModeRaw.split(',').map((s) => s.trim());
+    const unknown = requested.filter((m) => !SUPPORTED_STREAM_MODES.includes(m));
+    const valuesExclusiveViolation = requested.includes('values') && requested.length > 1;
+    if (unknown.length > 0 || valuesExclusiveViolation) {
+      sendJSON(res, 400, {
+        error: 'unsupported_stream_mode',
+        message:
+          unknown.length > 0
+            ? `Unsupported streamMode value(s): ${unknown.join(', ')}`
+            : "'values' streamMode MUST NOT be combined with another mode (state.snapshot semantics need exclusive ownership of the stream).",
+        details: { supported: SUPPORTED_STREAM_MODES, requested },
+      });
+      return;
+    }
+  }
+
   // Last-Event-ID resume per stream-modes.md §"Reconnection". Replay
   // only events with seq > lastEventId; live subscription picks up
   // anything emitted after the backlog flush.
