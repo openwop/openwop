@@ -22,7 +22,7 @@ Latest `npx vitest run` against each running reference host.
 
 | Host | Passed | Failed | Skipped | Todo | Total | Pass rate (default) |
 |---|---:|---:|---:|---:|---:|---:|
-| Postgres reference | **728** | 1 (test-isolation residue) | 38 | 30 | 797 | **91.3%** (measured 2026-05-12 post-Phase-I + subworkflow close-out) |
+| Postgres reference | **730** | 1 (parallel-mode cap-saturation residue — see `production-backpressure.test.ts` `--no-file-parallelism` directive; rotates between cap-collateral neighbors depending on run order, not a real host bug) | 38 | 30 | 799 | **91.4%** (measured 2026-05-12 post-Phase-I + subworkflow close-out + production-backpressure cap-collateral cleanup) |
 | SQLite reference | 669 | **0** | 32 | 30 | 731 | **91.5%** (Phase A close-out, 2026-05-12) |
 | In-memory reference | — | — | — | — | — | not measured this round |
 | Python reference | **700** | **0** | 58 | 30 | 788 | **100%** of applicable (88.8% total) — post-Phase-C-round-2 close-out, 2026-05-12 |
