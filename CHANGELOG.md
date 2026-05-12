@@ -9,6 +9,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ---
 
+## [1.0 — additions] — 2026-05-12 — RFC 0010 reference-host validation + INTEROP-MATRIX
+
+- **SQLite reference host: behavior-mode pass.** Against the SQLite host with `OPENWOP_SECONDARY_API_KEY` supplied, the four production-auth scenarios run `OPENWOP_REQUIRE_BEHAVIOR=true` with 15/17 assertions passing (2 correctly-skipped mTLS opt-ins that require `OPENWOP_TEST_MTLS=1` + cert paths). Rotation profile verified end-to-end: capability shape strict, two-key overlap exercised against the SQLite host's existing dual-candidate `checkAuth` (constant-time comparison against both keys), canary-redaction confirmed. OAuth2-CC + OIDC + mTLS capability-shape strict; behavior portions soft-skip because the SQLite host's `checkAuth` does not parse JWTs or terminate TLS — that's the documented "host-pending behavior" state in `conformance/coverage.md`. SQLite host's discovery payload already advertises all four profiles + per-profile metadata blocks (`auth.rotation`, `auth.oauth2`, `auth.oidc`, `auth.mtls`) per the parallel `feat(phase-A)` commit that landed in `8706e2d`.
+- **`INTEROP-MATRIX.md` SQLite row gains four auth profiles.** Compatibility profile claim column lists `openwop-auth-api-key-rotation`, `openwop-auth-oauth2-client-credentials`, `openwop-auth-oidc-user-bearer`, `openwop-auth-mtls` alongside the prior 8 profile claims. The row prose distinguishes "verified end-to-end" (rotation) from "advertised at capability-shape level pending live-IdP / TLS-terminator wiring" (OAuth2-CC + OIDC + mTLS) so the claim is honest about what conformance evidence backs each entry.
+
 ## [1.0 — additions] — 2026-05-12 — RFC 0010 Active + auth-profile close-out
 
 - **RFC 0010 promoted `Draft` → `Active`.** Bootstrap-phase steward decision per `CONTRIBUTING.md` §"Bootstrap-phase notes" — the standard 7-day additive comment window was waived because no non-steward maintainer is yet listed in `MAINTAINERS.md`. The four unresolved questions in `RFCS/0010-auth-profile-conformance.md` §"Unresolved questions" remain open and may be revisited as additive sub-RFCs without breaking v1 wire compatibility. Same precedent as RFC 0009.
