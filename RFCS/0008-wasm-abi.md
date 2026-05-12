@@ -298,7 +298,7 @@ All gated on `capabilities.nodePackRuntimes.wasm.supported: true`.
 
 ## Alternatives considered
 
-1. **WASI Preview 2 / Component Model from day one.** Cleaner WIT-based interface; runtime support is uneven in 2026-05 and the spec is still being polished. Deferred to a future additive RFC.
+1. **WASI Preview 2 / Component Model from day one.** Cleaner WIT-based interface; runtime support is uneven in 2026-05 and the spec is still being polished. **Resolved 2026-05-12 (Phase B):** Promoted to an additive enum value `language: "wasm-component"` + `format: "wasm-component"` on `node-pack-manifest.schema.json` per `node-packs.md` §"Runtime formats". The core-module `language: "wasm"` path remains the v1 baseline (no host MUST support Component Model yet); hosts opt in via `capabilities.nodePackRuntimes.wasmComponent.supported: true`. The ABI envelope (`openwop_node_invoke` semantics + JSON-over-linear-memory) is shared between the two variants; the Component Model variant simply replaces the hand-rolled imports/exports with WIT-defined interfaces. Specifics of the WIT interface definitions ship as an additive amendment to this RFC when the first Component-Model host lands.
 2. **Embed Lua / JS interpreters per language.** Rejected: defeats the "consensus sandbox" goal. WASM is the lowest common denominator.
 3. **Native dynamic libraries** (`.so`, `.dylib`, `.dll`). Rejected: no sandbox, ABI varies per OS, security model is the host's reputation.
 4. **Treat all non-JS packs as `language: remote`.** Status quo. Works but pays HTTP latency on every node invocation and creates a deployment dependency.

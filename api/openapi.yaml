@@ -57,6 +57,8 @@ tags:
     description: Run-produced artifacts.
   - name: webhooks
     description: Subscribe to run events via outbound HTTP.
+  - name: audit
+    description: Audit-log integrity verification (gated on the `openwop-audit-log-integrity` profile).
 
 # ─────────────────────────────────────────────────────────────────────────────
 # PATHS
@@ -349,6 +351,62 @@ paths:
         '401': { $ref: '#/components/responses/Unauthenticated' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+
+  /v1/runs:bulk-cancel:
+    post:
+      tags: [runs]
+      summary: Cancel a set of in-flight runs in a single request.
+      description: |
+        Per `spec/v1/rest-endpoints.md` §"POST /v1/runs:bulk-cancel". Accepts
+        a non-empty array of runIds and processes each cancellation
+        independently. Returns `200` with a per-id results array even when
+        some individual cancellations fail; the top-level operation succeeds
+        when the request reached the host, regardless of per-id outcomes.
+        Hosts enforce a host-defined cap on the array length (RECOMMENDED
+        100); over-cap requests return `400 validation_error`.
+      operationId: bulkCancelRuns
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [runIds]
+              properties:
+                runIds:
+                  type: array
+                  minItems: 1
+                  maxItems: 100
+                  items: { type: string, minLength: 1, maxLength: 128 }
+                reason: { type: string, maxLength: 512 }
+              additionalProperties: false
+      responses:
+        '200':
+          description: Per-id cancel results.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [results]
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      required: [runId, ok]
+                      properties:
+                        runId: { type: string, minLength: 1 }
+                        ok: { type: boolean }
+                        status: { type: string, enum: [cancelled, cancelling] }
+                        error:
+                          $ref: '../schemas/error-envelope.schema.json'
+                      additionalProperties: false
+                additionalProperties: false
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
 
   /v1/runs/{runId}:fork:
     post:
@@ -684,6 +742,50 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
 
+  # ── Audit-log integrity verification (gated on profile) ────────────────
+  /v1/audit/verify:
+    get:
+      tags: [audit]
+      summary: Verify the audit-log hash chain over [fromSeq, toSeq].
+      description: |
+        Per `spec/v1/auth-profiles.md` §`openwop-audit-log-integrity` §4. The
+        verifier re-walks audit-log entries in the requested range,
+        re-computes each entry's `prevHash` from the canonical RFC 8785 JCS
+        serialization of the prior entry, verifies signed checkpoints
+        against the host's advertised `auditLogIntegrity.checkpointPublicKey`,
+        and returns `chainValid` + an enumeration of any anomalies.
+        Hosts MUST require the `audit:read` scope. Hosts that do NOT
+        advertise the `openwop-audit-log-integrity` profile MAY omit this
+        endpoint entirely (clients SHOULD pre-flight via `/.well-known/openwop`).
+      operationId: verifyAuditLog
+      parameters:
+        - in: query
+          name: fromSeq
+          required: true
+          schema: { type: integer, minimum: 0 }
+          description: First audit-log sequence to include (inclusive).
+        - in: query
+          name: toSeq
+          required: true
+          schema: { type: integer, minimum: 0 }
+          description: Last audit-log sequence to include (inclusive). MUST be >= fromSeq.
+      responses:
+        '200':
+          description: Verification result.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/audit-verify-result.schema.json'
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: Host does not advertise the audit-log-integrity profile.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+
 # ─────────────────────────────────────────────────────────────────────────────
 # COMPONENTS
 # ─────────────────────────────────────────────────────────────────────────────
@@ -698,7 +800,7 @@ components:
         openwop API key. Format implementation-defined; reference impl uses `hk_`/`hk_test_` prefixes.
         Each key carries one or more scopes from the canonical vocabulary
         (`manifest:read`, `runs:create`, `runs:read`, `runs:cancel`,
-        `artifacts:read`, `webhooks:manage`, `approvals:respond`).
+        `artifacts:read`, `webhooks:manage`, `approvals:respond`, `audit:read`).
         See `auth.md`.
 
   parameters:

@@ -49,6 +49,8 @@ A production-profile host MUST return `503 Service Unavailable` with `Retry-Afte
 
 The `details.retryAfter` value, when present, MUST equal the `Retry-After` header in seconds.
 
+**Upper bound (resolved 2026-05-12 — RFC 0009 unresolved Q#2).** When the host advertises `capabilities.production.backpressure.retryAfterSeconds`, the value MUST be in `[0, 86400]`. Values beyond 24 hours are operationally indistinguishable from "permanently denied" and clients treat them as failures rather than retry hints. Hosts that legitimately need longer holds SHOULD return `503` with NO `Retry-After` header — the absence signals "unknown, retry per client policy."
+
 ### Retry and idempotency
 
 A production-profile host MUST retain idempotency records for at least 24 hours and MUST tolerate at least five retries with the same `Idempotency-Key` inside that window.

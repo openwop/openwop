@@ -40,6 +40,7 @@ Every OpenWOP-compliant server MUST expose:
 | `GET` | `/v1/runs/{runId}/events` | API key | `runs:read` | SSE event stream (resumable via `Last-Event-ID`) |
 | `GET` | `/v1/runs/{runId}/events/poll` | API key | `runs:read` | Long-poll fallback for non-SSE clients |
 | `POST` | `/v1/runs/{runId}/cancel` | API key | `runs:cancel` | Cancel an in-flight run |
+| `POST` | `/v1/runs:bulk-cancel` | API key | `runs:cancel` | Bulk cancel a set of in-flight runs |
 | `POST` | `/v1/runs/{runId}:fork` | API key | `runs:create` + `runs:read` | Fork or replay a run from recorded state |
 | `POST` | `/v1/runs/{runId}:pause` | API key | `runs:cancel` | Administratively pause an in-flight run |
 | `POST` | `/v1/runs/{runId}:resume` | API key | `runs:cancel` | Resume a paused run |
@@ -81,6 +82,42 @@ Status codes:
 - `401/403` — auth failures (see `auth.md`)
 - `409 Conflict` — `X-Dedup` collision; body `{ error: "run_already_active", message, details: { activeRunId, activeHost, retryAfter } }`; header `Retry-After: <seconds>`
 - `429 Too Many Requests` — rate-limit; header `Retry-After: <seconds>`
+
+#### `POST /v1/runs:bulk-cancel` request
+
+```json
+{
+  "runIds": ["run-...", "run-..."],
+  "reason": "string (optional, free-form rationale)"
+}
+```
+
+`runIds` MUST be a non-empty array (1..100 entries) of run identifiers the caller can `runs:cancel`. The cap on array length is host-defined (REQUIRED upper bound for any one request — RECOMMENDED 100); requests exceeding the cap MUST return `400 validation_error` with `details.maxRunIds` indicating the configured ceiling. Hosts MUST process each cancellation independently; partial failure MUST NOT block successful cancellations of sibling ids.
+
+Response:
+
+```json
+{
+  "results": [
+    { "runId": "run-aaa", "status": "cancelling", "ok": true },
+    { "runId": "run-bbb", "ok": false, "error": { "code": "not_found", "message": "..." } }
+  ]
+}
+```
+
+- `results[i].runId` echoes the corresponding request entry verbatim. Order MUST match the request's `runIds` array.
+- `results[i].ok: true` indicates the host accepted the cancel intent; the run will transition to `cancelling` (per `runs/{runId}/cancel` single-cancel semantics) and emit `run.cancelled` when the cascade completes. `results[i].status` carries the post-acceptance state.
+- `results[i].ok: false` carries a canonical `ErrorEnvelope`-shaped object under `error`. Common codes: `not_found`, `forbidden`, `run_terminal` (already-completed/failed/cancelled), `validation_error`.
+
+Status codes:
+
+- `200 OK` — the request reached at least one runId; per-id outcomes are in `results`. The host MUST return `200` even when every runId failed individually — the top-level operation succeeded.
+- `400 Bad Request` — `runIds` array malformed (empty, oversized, non-string entries, or missing).
+- `401 / 403` — auth failures on the request itself.
+
+**Idempotency.** Bulk-cancel is naturally idempotent — re-issuing the same bulk request returns the same per-id outcomes (already-cancelled runs return `ok: true, status: 'cancelled'`). `Idempotency-Key` is RECOMMENDED to collapse retries.
+
+**Auth scope.** Single `runs:cancel`; the same scope that gates `/v1/runs/{runId}/cancel`. Per-runId authorization MUST still be enforced — a caller without visibility on a runId gets `forbidden` in that result entry (not a top-level `403`).
 
 #### `POST /v1/runs/{runId}:pause` request
 
@@ -159,6 +196,14 @@ The signed-token surface (`/v1/interrupts/{token}`) is for asynchronous HITL whe
 |---|---|---|---|---|
 | `POST` | `/v1/webhooks` | API key | `webhooks:manage` | Register a subscription |
 | `DELETE` | `/v1/webhooks/{webhookId}` | API key | `webhooks:manage` | Unregister |
+
+### Audit-log integrity (gated on profile)
+
+Hosts that advertise the `openwop-audit-log-integrity` profile per `auth-profiles.md` MUST expose:
+
+| Method | Path | Auth | Scope | Purpose |
+|---|---|---|---|---|
+| `GET` | `/v1/audit/verify` | API key | `audit:read` | Re-walk the audit-log hash chain over `[fromSeq, toSeq]` and return chain-validity verdict + signed checkpoints + anomalies. See `auth-profiles.md` §`openwop-audit-log-integrity` §4 and `schemas/audit-verify-result.schema.json`. |
 
 ## Optional endpoints (transports)
 
@@ -289,10 +334,10 @@ These canvas-typed routes MAY be served as aliases that map internally to the sp
 
 | # | Gap | Owner |
 |---|---|---|
-| R1 | Bulk-cancel endpoint for operational cleanups (`POST /v1/runs:bulk-cancel`) | v1.x candidate |
+| R1 | ✅ Bulk-cancel endpoint landed in v1.0 (this doc, 2026-05-12). | closed |
 | R2 | ✅ Explicit administrative pause/resume endpoints — landed in v1.0 (this doc, 2026-05-10). | closed |
-| R3 | Optional gRPC transport profile. REST remains the required v1 wire surface. | v2 candidate |
-| R4 | Endpoint coverage manifest mapping each OpenAPI operation to positive + negative conformance scenarios. | conformance minor |
+| R3 | ✅ Optional gRPC transport profile landed at `spec/v1/grpc-transport.md` (Phase B, 2026-05-12). REST + SSE remains the REQUIRED wire surface; gRPC is an additional opt-in surface advertised via `capabilities.supportedTransports: ["grpc"]`. Canonical service definition at `api/grpc/openwop.proto`. | closed |
+| R4 | ✅ Endpoint coverage manifest landed at `conformance/coverage.md` §"Endpoint Coverage Manifest". Every OpenAPI `operationId` MUST appear there (enforced by `spec-corpus-validity.test.ts`). Auto-generation tooling is a future polish; the manual manifest + the gate already close the gap. | closed |
 
 ## References
 

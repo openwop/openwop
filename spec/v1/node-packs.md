@@ -114,6 +114,58 @@ Pack versions follow [Semantic Versioning 2.0.0](https://semver.org/) (`MAJOR.MI
 
 A registry MUST return the highest version satisfying the requested range. Prerelease versions are ONLY returned when the range is explicit (`^1.2.3-beta` matches `1.2.3-beta.1` but `^1.2.3` does NOT match prerelease versions per semver's "prerelease versions have lower precedence" rule).
 
+### Dependency resolution + lockfile
+
+Workspace operators MAY commit a `pack-lock.json` lockfile alongside their workflow definitions. The lockfile pins resolved versions of every pack a workspace depends on so that re-installation produces byte-identical artifacts.
+
+**Why lockfiles.** Semver ranges are flexible by design — `^1.2.3` matches `1.2.3` today and `1.5.0` tomorrow. For audit-grade reproducibility (regulated deployments, supply-chain forensics, debug-bundle replay), workspaces need a way to pin the exact resolved version + tarball hash. Lockfiles encode that pin.
+
+**Lockfile shape.** Defined in `schemas/pack-lockfile.schema.json`:
+
+```json
+{
+  "lockfileVersion": 1,
+  "generatedAt": "2026-05-12T18:00:00Z",
+  "registry": "https://packs.openwop.dev",
+  "packs": [
+    {
+      "name": "vendor.openwop.rust-hello",
+      "version": "1.0.0",
+      "resolved": "https://packs.openwop.dev/v1/packs/vendor.openwop.rust-hello/-/1.0.0.tgz",
+      "integrity": "sha256-q3PFh1Yj+r...=",
+      "signature": {
+        "algorithm": "ed25519",
+        "publicKey": "MCowBQYDK2VwAyEA...",
+        "value": "wkjLZ8N1g...=="
+      },
+      "dependencies": {},
+      "peerDependencies": { "host.aiEnvelope": "supported" }
+    }
+  ]
+}
+```
+
+**Resolution rules (normative).** When a lockfile is present:
+
+1. **Resolvers MUST honor the lockfile's exact versions.** A workspace with `pack-lock.json` ignores the manifest's range and installs the exact `version` from the lockfile entry. This is the "frozen-lockfile" mode in npm-family tooling.
+2. **Resolvers MUST verify integrity.** The fetched tarball's SHA-256 MUST match `packs[].integrity`. Mismatch fails the install with `pack_integrity_mismatch`.
+3. **Resolvers MUST verify signature when present.** When `packs[].signature` is recorded, the Ed25519 signature over the tarball MUST verify against `packs[].signature.publicKey`. Mismatch fails with `pack_signature_invalid`.
+4. **Resolvers MUST verify host peerDependencies.** For each lockfile entry, the resolver consults the host's `/.well-known/openwop` (per `host-capabilities.md` §"Capability negotiation") and confirms every `peerDependencies` key is satisfied. Missing host capability fails with `pack_peer_dependency_missing` per existing rules.
+5. **Resolvers MUST refuse partial lockfiles.** If a workspace references a pack not listed in the lockfile, the install fails with `pack_lockfile_incomplete`. Either regenerate the lockfile or remove the unreferenced pack.
+6. **Mode without a lockfile.** When no `pack-lock.json` is present, the resolver runs normal semver resolution against the manifest ranges. This is the "free" mode; suitable for development.
+
+**Lockfile regeneration.** Workspace tooling (a CLI installer, not part of the protocol) writes the lockfile after a successful resolution. The protocol does not specify CLI ergonomics — only the on-disk shape + the verification rules a resolver MUST follow when the file is present.
+
+**Mixed-namespace lockfiles.** A workspace MAY depend on packs from multiple registries. Each `packs[]` entry's `resolved` URL identifies its registry. The top-level `registry` field is the default for entries that omit `resolved`. Resolvers MUST verify integrity per-entry regardless of registry — there's no cross-registry trust transfer.
+
+**Failure modes (normative codes).** Error envelopes returned by the resolver MUST use these codes:
+
+- `pack_integrity_mismatch` — fetched tarball SHA-256 ≠ lockfile `integrity`.
+- `pack_signature_invalid` — Ed25519 signature verification failed.
+- `pack_peer_dependency_missing` — host doesn't advertise a required peer capability.
+- `pack_lockfile_incomplete` — workspace references a pack not in the lockfile.
+- `pack_version_not_found` — lockfile pins a version the registry no longer serves (post-yank scenario). Operators recover by regenerating the lockfile or pinning to an alternative version.
+
 ---
 
 ## Manifest format

@@ -192,8 +192,8 @@
       "properties": {
         "language": {
           "type": "string",
-          "enum": ["javascript", "python", "go", "wasm", "remote"],
-          "description": "How the engine loads the pack. See node-packs.md §runtime formats."
+          "enum": ["javascript", "python", "go", "wasm", "wasm-component", "remote"],
+          "description": "How the engine loads the pack. See node-packs.md §runtime formats. `wasm` is the core-module WASM ABI (RFC 0008). `wasm-component` is the WASM Component Model variant (WIT-defined interfaces); hosts that advertise `capabilities.nodePackRuntimes.wasmComponent.supported: true` load it via wasmtime / wasmer Component Model runtimes. Both share the openwop ABI envelope; the wasm-component variant uses WIT interfaces instead of hand-rolled imports/exports."
         },
         "entry": {
           "type": "string",
@@ -201,8 +201,8 @@
         },
         "format": {
           "type": "string",
-          "enum": ["esm", "cjs", "wheel", "binary", "shared-library", "wasm"],
-          "description": "Runtime-specific format hint. `esm`/`cjs` for JS, `wheel` for Python, `binary`/`shared-library` for Go, `wasm` for wasm."
+          "enum": ["esm", "cjs", "wheel", "binary", "shared-library", "wasm", "wasm-component"],
+          "description": "Runtime-specific format hint. `esm`/`cjs` for JS, `wheel` for Python, `binary`/`shared-library` for Go, `wasm` for core-module WASM (RFC 0008), `wasm-component` for WASM Component Model preview 3+ (WIT-defined interfaces, additive RFC 0008.1)."
         },
         "minRuntimeVersion": {
           "type": "string",

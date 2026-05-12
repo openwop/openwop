@@ -6,6 +6,7 @@
 |---|---|---|
 | `agent-manifest.schema.json` | `node-packs.md` + agent-pack RFCs | Agent manifest entries distributed alongside node-pack manifests |
 | `agent-ref.schema.json` | `agent-memory.md` + agent-identity RFC | Multi-Agent Shift Phase 1 — slim runtime AgentRef projection carried on `RunSnapshot.agent` / `runOrchestrator`, `WorkflowNode.agent?`, and `agent.*` event payloads |
+| `audit-verify-result.schema.json` | `auth-profiles.md` §`openwop-audit-log-integrity` | Response payload from `GET /v1/audit/verify` — chain-validity verdict + checkpoints + anomalies |
 | `capabilities.schema.json` | `capabilities.md` | `/.well-known/openwop` response — protocolVersion + supportedEnvelopes + schemaVersions + limits + optional v1 discovery surface |
 | `channel-written-payload.schema.json` | `channels-and-reducers.md` §Channel write event | Payload of the `channel.written` RunEvent — write input + reducer name |
 | `conversation-event.schema.json` | `channels-and-reducers.md` + conversation RFC | Multi-turn conversation event shape for orchestrator-driven HITL flows |
@@ -16,6 +17,7 @@
 | `memory-entry.schema.json` | memory-layer RFC | Persisted agent memory entry shape |
 | `memory-list-options.schema.json` | memory-layer RFC | Query options for listing agent memory entries |
 | `node-pack-manifest.schema.json` | `node-packs.md` | Pack manifest (`pack.json`) — name, version, engines, nodes[], runtime, signing |
+| `pack-lockfile.schema.json` | `node-packs.md` §"Dependency resolution + lockfile" | Reproducible-build lockfile pinning resolved pack versions + SHA-256 integrity + Ed25519 signature for the entire workspace dependency graph |
 | `orchestrator-decision.schema.json` | `node-packs.md` + orchestrator RFC | Decision output shape for orchestrator routing nodes |
 | `run-event-payloads.schema.json` | `run-event.schema.json` §RunEventType | Per-RunEventType payload contracts, indexed by `$defs.<typeId>` for opt-in strict validation |
 | `run-event.schema.json` | `version-negotiation.md` + `RunEventDoc` | Event log envelope + event type enum |

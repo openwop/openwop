@@ -307,7 +307,8 @@
             "retryAfterSeconds": {
               "type": "integer",
               "minimum": 0,
-              "description": "Optional advertised Retry-After value in seconds the host returns on 503. When present, MUST equal both the `Retry-After` header and the `details.retryAfter` body field per production-profile.md."
+              "maximum": 86400,
+              "description": "Optional advertised Retry-After value in seconds the host returns on 503. When present, MUST equal both the `Retry-After` header and the `details.retryAfter` body field per production-profile.md. Upper bound 86400 (24h) — values beyond that are operationally indistinguishable from 'permanently denied'. Hosts needing longer holds SHOULD omit `Retry-After` entirely (RFC 0009 Q#2)."
             }
           },
           "additionalProperties": false
@@ -472,6 +473,32 @@
             }
           },
           "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "i18n": {
+      "type": "object",
+      "description": "Locale-negotiation advertisement per spec/v1/i18n.md. Optional in v1; absence means the host serves a single locale always (typically `en`). When `supported: true`, the host honors `Accept-Language` on every protected route and emits `Content-Language` on responses carrying localized text.",
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "Host honors `Accept-Language` and returns localized human-facing text when negotiable."
+        },
+        "defaultLocale": {
+          "type": "string",
+          "pattern": "^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{2,8}){0,3}$",
+          "description": "BCP 47 language tag the host falls back to when no `Accept-Language` matches `supportedLocales`. Default: `\"en\"` when omitted."
+        },
+        "supportedLocales": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{2,8}){0,3}$"
+          },
+          "description": "BCP 47 tags of locales the host has validated end-to-end for human-facing text. MUST contain `defaultLocale` when both are present."
         }
       },
       "additionalProperties": false

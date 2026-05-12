@@ -2322,6 +2322,105 @@ function handleAuditVerify(req: IncomingMessage, res: ServerResponse, url: URL):
   sendJSON(res, 200, result);
 }
 
+/**
+ * Per-runId cancel mechanics extracted from handleCancelRun so the
+ * bulk-cancel handler can call it once per id without duplicating the
+ * audit-log + cascade + abort logic. Returns the per-id result the
+ * bulk-cancel response surfaces; the single-run handler maps onto
+ * either `{ runId, status, alreadyTerminal? }` (200) or
+ * `{ runId, status: 'cancelled' }` (200).
+ */
+function cancelOneRun(runId: string): { ok: true; status: 'cancelled' | 'cancelling'; alreadyTerminal?: boolean } | { ok: false; error: { code: string; message: string } } {
+  const row = loadRun(runId);
+  if (!row) {
+    return { ok: false, error: { code: 'not_found', message: `Unknown runId: ${runId}` } };
+  }
+  if (row.status === 'cancelled') {
+    // Idempotent re-cancel: already cancelled is a clean ok.
+    return { ok: true, status: 'cancelled', alreadyTerminal: true };
+  }
+  if (row.status === 'completed' || row.status === 'failed') {
+    // Terminal but NOT cancelled — caller can't transition this run.
+    return { ok: false, error: { code: 'run_terminal', message: `Run "${runId}" is already terminal (${row.status}); cannot cancel.` } };
+  }
+  const children = db
+    .prepare(
+      "SELECT run_id FROM runs WHERE parent_run_id = ? AND status NOT IN ('completed','failed','cancelled')",
+    )
+    .all(runId) as Array<{ run_id: string }>;
+  for (const c of children) {
+    cancelRunInternal(c.run_id, 'parent-cancelled');
+  }
+  const isSuspended =
+    row.status === 'waiting-approval' ||
+    row.status === 'waiting-input' ||
+    row.status === 'waiting-external';
+  if (isSuspended) {
+    invalidateInterrupts(db, runId, 'cancelled');
+    appendEvent(runId, 'run.cancelled');
+    setRunTerminal(runId, 'cancelled', null);
+    logAudit(db, {
+      actor: 'tenant:default',
+      action: 'run.cancel',
+      target: runId,
+      details: { priorStatus: row.status, viaSuspended: true, cascadedChildren: children.length },
+    });
+    triggerCheckpointIfDue(db, auditSigningKey, AUDIT_OPTS);
+    return { ok: true, status: 'cancelled' };
+  }
+  stmts.setCancelRequested.run(runId);
+  logAudit(db, {
+    actor: 'tenant:default',
+    action: 'run.cancel',
+    target: runId,
+    details: { priorStatus: row.status, cascadedChildren: children.length },
+  });
+  triggerCheckpointIfDue(db, auditSigningKey, AUDIT_OPTS);
+  runningAborters.get(runId)?.abort();
+  return { ok: true, status: 'cancelling' };
+}
+
+async function handleBulkCancel(
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<void> {
+  // rest-endpoints.md §"POST /v1/runs:bulk-cancel". Bulk-cancel is a
+  // top-level operation that succeeds (200) as long as the request
+  // reached the host; per-id outcomes are in the `results` array.
+  if (!checkAuth(req, res)) return;
+  const bodyText = await readBody(req);
+  let parsed: { runIds?: unknown; reason?: unknown };
+  try {
+    parsed = JSON.parse(bodyText) as { runIds?: unknown; reason?: unknown };
+  } catch {
+    sendError(res, 400, 'validation_error', 'Request body MUST be valid JSON.');
+    return;
+  }
+  if (!Array.isArray(parsed.runIds) || parsed.runIds.length === 0) {
+    sendError(res, 400, 'validation_error', 'runIds MUST be a non-empty array.');
+    return;
+  }
+  const BULK_CANCEL_MAX = 100;
+  if (parsed.runIds.length > BULK_CANCEL_MAX) {
+    sendJSON(res, 400, {
+      error: 'validation_error',
+      message: `runIds carries ${parsed.runIds.length} entries; host-defined cap is ${BULK_CANCEL_MAX}.`,
+      details: { maxRunIds: BULK_CANCEL_MAX, observed: parsed.runIds.length },
+    });
+    return;
+  }
+  if (!parsed.runIds.every((id) => typeof id === 'string' && id.length > 0)) {
+    sendError(res, 400, 'validation_error', 'runIds entries MUST all be non-empty strings.');
+    return;
+  }
+  const runIds = parsed.runIds as string[];
+  const results = runIds.map((id) => {
+    const outcome = cancelOneRun(id);
+    return { runId: id, ...outcome };
+  });
+  sendJSON(res, 200, { results });
+}
+
 async function handleCancelRun(
   req: IncomingMessage,
   res: ServerResponse,
@@ -2798,6 +2897,7 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   if (method === 'GET' && path === '/v1/openapi.json') return handleOpenApi(req, res);
   if (method === 'GET' && path === '/v1/audit/verify') return handleAuditVerify(req, res, url);
   if (method === 'POST' && path === '/v1/runs') return handleCreateRun(req, res);
+  if (method === 'POST' && path === '/v1/runs:bulk-cancel') return handleBulkCancel(req, res);
   if (method === 'POST' && path === '/v1/webhooks') return handleRegisterWebhook(req, res);
   let mw = WORKFLOW_ID_PATTERN.exec(path);
   if (mw && method === 'GET') return handleGetWorkflow(req, res, decodeURIComponent(mw[1]!));
