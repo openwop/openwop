@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.campaign-sequence-integration/1.0.0/webhook.input.json",
+  "title": "CampaignSequenceWebhookInput",
+  "type": "object",
+  "required": ["step", "enrollment", "sequence"],
+  "properties": {
+    "step": {
+      "type": "object",
+      "required": ["webhookUrl"],
+      "properties": {
+        "id": { "type": "string" },
+        "webhookUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "Target URL. MUST be HTTP or HTTPS. Private/reserved IPv4 ranges (localhost, 127/8, 10/8, 192.168/16, link-local 169.254.169.254) are rejected (SSRF defense)."
+        },
+        "webhookMethod": {
+          "type": "string",
+          "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"],
+          "default": "POST"
+        },
+        "webhookSecret": {
+          "type": "string",
+          "description": "HMAC-SHA256 key. The signature header is `X-MyndHyve-Signature: hex(hmac-sha256(secret, body))`. Empty secret yields an empty-key signature (still computed)."
+        },
+        "webhookHeaders": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Extra request headers. Merged AFTER the executor's defaults so callers can override Content-Type if needed."
+        },
+        "webhookBody": {
+          "description": "Custom payload data. Merged into the envelope at `stepData` when present."
+        }
+      },
+      "additionalProperties": true
+    },
+    "enrollment": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string" },
+        "leadId": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "sequence": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

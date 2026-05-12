@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.campaign-sequence-integration/1.0.0/email.config.json",
+  "title": "CampaignSequenceEmailConfig",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": true,
+  "description": "No required config. The executor reads sender/template/etc. from inputs.step.{subject, body, templateId, fromName, replyTo}."
+}
