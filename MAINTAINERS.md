@@ -74,7 +74,7 @@ The vendor-neutral-org migration tripwire in `ROADMAP.md` activates when this fi
 
 ### External host implementations
 
-Recruitment targets per `docs/recruitment/external-host.md` (drafts ready 2026-05-11, outreach not yet sent).
+Recruitment targets per `docs/recruitment/external-host.md` (drafts ready 2026-05-11; freshness re-confirmed 2026-05-12 — no content drift; outreach not yet sent).
 
 | Target | Outreach sent | First reply | Status | Notes |
 |---|---|---|---|---|
@@ -87,7 +87,7 @@ When a target replies positively + commits to a draft adapter PR within 30 days,
 
 ### External pack authors
 
-Recruitment targets per `docs/recruitment/external-pack-author.md` (drafts ready 2026-05-11, outreach not yet sent). Initial Tier-1 shortlist below; the recruitment doc's criteria gate adding more.
+Recruitment targets per `docs/recruitment/external-pack-author.md` (drafts ready 2026-05-11; freshness re-confirmed 2026-05-12 — no content drift; outreach not yet sent). Initial Tier-1 shortlist below; the recruitment doc's criteria gate adding more.
 
 | Target | Outreach sent | First reply | Status | Notes |
 |---|---|---|---|---|

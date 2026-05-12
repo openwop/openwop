@@ -1,6 +1,6 @@
 # External Pack Author Recruitment
 
-> **Status: framework + outreach template ready (2026-05-11), specific targets to be picked.** Distinct from the host-recruitment work in `external-host.md` — packs are smaller, easier-to-commit-to surfaces than a full host.
+> **Status: framework + outreach template ready (2026-05-11; freshness re-confirmed 2026-05-12), specific targets to be picked.** Distinct from the host-recruitment work in `external-host.md` — packs are smaller, easier-to-commit-to surfaces than a full host. 2026-05-12 re-read: template and ideal-author profile still match the registry's current state (`packs.openwop.dev` live with 3 published packs; Track 7 misbehaving fixtures now in place); no content drift. The blocker remains identifying 3–5 specific Tier 1 / Tier 2 candidates and customizing the template per recipient.
 
 ## Why this matters
 
