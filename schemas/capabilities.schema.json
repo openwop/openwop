@@ -349,6 +349,104 @@
         }
       },
       "additionalProperties": false
+    },
+    "auth": {
+      "type": "object",
+      "description": "Auth-profile advertisement (auth-profiles.md). Optional in v1; absence preserves the baseline bearer-token contract from auth.md. RFC 0010 formalized this block; `additionalProperties: true` permits existing informal usages (`auth.auditLogIntegrity` from the audit-log-integrity profile) to continue alongside the formal sub-blocks defined here.",
+      "properties": {
+        "profiles": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true,
+          "description": "Auth profiles the host claims. Canonical ids: `openwop-audit-log-integrity` (auth-profiles.md §Audit-log integrity), `openwop-auth-api-key-rotation`, `openwop-auth-oauth2-client-credentials`, `openwop-auth-oidc-user-bearer`, `openwop-auth-mtls`. Clients SHOULD tolerate unknown profile ids."
+        },
+        "rotation": {
+          "type": "object",
+          "description": "API-key rotation advertisement (auth-profiles.md §`openwop-auth-api-key-rotation`).",
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "Host claims the openwop-auth-api-key-rotation profile (old+new key overlap during a documented grace window)."
+            },
+            "minGraceSeconds": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Minimum rotation grace window in seconds. auth-profiles.md SHOULDs production-profile hosts to ≥ 86400 (24h). The conformance scenario tolerates any non-negative value but warns in behavior mode when < 86400."
+            }
+          },
+          "additionalProperties": false
+        },
+        "oauth2": {
+          "type": "object",
+          "description": "OAuth2 client-credentials advertisement (auth-profiles.md §`openwop-auth-oauth2-client-credentials`).",
+          "properties": {
+            "supported": { "type": "boolean" },
+            "issuer": {
+              "type": "string",
+              "format": "uri",
+              "description": "Token issuer URL the host trusts. Tokens MUST carry a matching `iss` claim."
+            },
+            "audience": {
+              "type": "string",
+              "description": "Audience the host requires. Tokens MUST carry a matching `aud` claim."
+            },
+            "supportedAlgorithms": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 },
+              "uniqueItems": true,
+              "description": "JWS signing algorithms the host accepts (canonical: RS256, ES256). Hosts MUST reject tokens signed with algorithms outside this list."
+            }
+          },
+          "additionalProperties": false
+        },
+        "oidc": {
+          "type": "object",
+          "description": "OIDC user-bearer advertisement (auth-profiles.md §`openwop-auth-oidc-user-bearer`).",
+          "properties": {
+            "supported": { "type": "boolean" },
+            "issuers": {
+              "type": "array",
+              "items": { "type": "string", "format": "uri" },
+              "minItems": 1,
+              "uniqueItems": true,
+              "description": "Trusted OIDC issuer URLs. The host accepts tokens whose `iss` claim matches any entry."
+            },
+            "audience": {
+              "type": "string",
+              "description": "Audience identifier the host requires in OIDC tokens."
+            },
+            "supportedScopeMapping": {
+              "type": "string",
+              "enum": ["group-claim", "scope-claim", "host-acl"],
+              "description": "How the host derives openwop scopes from the OIDC token. `group-claim`: from `groups` claim via host config. `scope-claim`: from `scope` claim directly. `host-acl`: from a host-side mapping table (sub → scope)."
+            },
+            "introspectionIntervalSeconds": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Maximum interval at which the host SHOULD re-introspect a cached token to detect IdP revocation. auth-profiles.md recommends `min(exp - now, 300)`."
+            }
+          },
+          "additionalProperties": false
+        },
+        "mtls": {
+          "type": "object",
+          "description": "mTLS advertisement (auth-profiles.md §`openwop-auth-mtls`).",
+          "properties": {
+            "supported": { "type": "boolean" },
+            "required": {
+              "type": "boolean",
+              "description": "When `true`, the host rejects bearer-only requests (mTLS required for all authenticated calls). When `false`, mTLS is optional and complements bearer auth."
+            },
+            "subjectMapping": {
+              "type": "string",
+              "enum": ["cn", "san-dns", "san-uri"],
+              "description": "How the host derives the transport principal from the client certificate. `cn`: subject CN. `san-dns`: subjectAltName DNS entry. `san-uri`: subjectAltName URI entry."
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": true
     }
   },
   "additionalProperties": true
