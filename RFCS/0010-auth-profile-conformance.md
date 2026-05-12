@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0010 |
 | **Title** | Auth-Profile Conformance |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-11 |
-| **Updated** | 2026-05-12 (Draft → Active; bootstrap-phase steward decision per `CONTRIBUTING.md` §"Bootstrap-phase notes" — the standard 7-day additive comment window was waived because no non-steward maintainer is yet listed in `MAINTAINERS.md`. The four unresolved questions remain open and may be revisited as additive sub-RFCs without breaking v1 wire compatibility. Same precedent as RFC 0009.) |
+| **Updated** | 2026-05-12 (Active → Accepted: all acceptance-criteria items satisfied — `capabilities.auth` block landed in `schemas/capabilities.schema.json`, four conformance scenarios shipped (`auth-api-key-rotation` + `auth-oauth2-client-credentials` + `auth-oidc-user-bearer` capability-gated, `auth-mtls` opt-in via `OPENWOP_TEST_MTLS=1`), `conformance/src/lib/oidc-issuer.ts` synthetic harness landed (RS256 + ES256 via `node:crypto` stdlib), `conformance/coverage.md` §"Capability-gated scenarios" enumerates the four scenarios under per-profile gating, `spec/v1/auth-profiles.md` cross-references the new `capabilities.auth.*` discovery path while keeping `extensions.auth.*` valid for compatibility, `SECURITY/threat-model-auth-profiles.md` §3 adds A3 (scope confusion) + A4 (mTLS downgrade) adversaries with scenario bindings and §4 STRIDE rows per profile, SQLite reference host implements `openwop-auth-api-key-rotation` end-to-end with constant-time dual-candidate `checkAuth` per `INTEROP-MATRIX.md`, and CHANGELOG records both the Draft drop and Active landing. The four unresolved questions remain open as documented and may be revisited as additive sub-RFCs without breaking v1 wire compatibility — OAuth2-CC + OIDC + mTLS profile bodies are capability-shaped on the reference host and ready for adopter wiring, which is the documented stance, not a blocker.) |
 | **Affects** | `spec/v1/auth-profiles.md`, `schemas/capabilities.schema.json`, `conformance/src/scenarios/` (3 new + 1 opt-in), `conformance/src/lib/oidc-issuer.ts` (new harness), `conformance/coverage.md`, `INTEROP-MATRIX.md`, `SECURITY/threat-model-auth-profiles.md`, optionally `examples/hosts/sqlite/` or `postgres/` (reference implementation) |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |

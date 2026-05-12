@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0011 |
 | **Title** | Auth-Scoped Discovery Advertisement |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-12 |
-| **Updated** | 2026-05-12 (Draft → Active; bootstrap-phase steward decision per `CONTRIBUTING.md` §"Bootstrap-phase notes" and recorded in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". The standard 7-day additive comment window was waived because no non-steward maintainer is yet listed in `MAINTAINERS.md`. The three unresolved questions remain open and may be revisited as additive sub-RFCs without breaking v1 wire compatibility. Same precedent as RFCs 0009 and 0010.) |
+| **Updated** | 2026-05-12 (Active → Accepted: all 5 acceptance-criteria items satisfied — `capabilities.discovery.authScoped` block landed in `schemas/capabilities.schema.json`, the 3-subtest auth-scoped behavior probe in `conformance/src/scenarios/discovery.test.ts` passes per RFC 0011 §B (capability shape + required-field preservation in authenticated view always; authorization-oracle probe gated on `OPENWOP_TEST_UNAUTHORIZED_API_KEY`), `conformance/coverage.md` §"Discovery and capability handshake" references the new subtest and the capability-gated table lists `openwop-discovery-auth-scoped`, SQLite reference host implements same-endpoint mode end-to-end per `INTEROP-MATRIX.md` (tenant2 principal sees STRICT subset of primary's view; `orchestrator` + `dispatch` blocks omitted), and CHANGELOG records the Active landing. The three unresolved questions remain open as documented and may be revisited as additive sub-RFCs without breaking v1 wire compatibility.) |
 | **Affects** | `spec/v1/capabilities-change-detection.md`, `schemas/capabilities.schema.json`, `conformance/src/scenarios/discovery.test.ts` (additive subtest), `conformance/coverage.md` |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |

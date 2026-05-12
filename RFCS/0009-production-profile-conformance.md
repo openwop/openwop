@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0009 |
 | **Title** | Production-Profile Conformance |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-11 |
-| **Updated** | 2026-05-11 (Draft → Active; bootstrap-phase steward decision per `CONTRIBUTING.md` §"Bootstrap-phase notes" — the standard 7-day additive comment window was waived because no non-steward maintainer is yet listed in `MAINTAINERS.md`. The four unresolved questions in §"Unresolved questions" remain open and may be revisited as additive sub-RFCs without breaking v1 wire compatibility.) |
+| **Updated** | 2026-05-12 (Active → Accepted: all 9 acceptance-criteria items satisfied — `capabilities.production` block landed in `schemas/capabilities.schema.json`, both new scenarios (`production-backpressure.test.ts` + `production-retention-expiry.test.ts`) land capability-gated, the four §D scenarios carry `production-profile.md` co-citations in their docstrings, `conformance/coverage.md` §"Capability-gated scenarios" lists all seven scenarios under `openwop-production`, Postgres reference host advertises `capabilities.production.supported: true` since 2026-05-11 and passes both new scenarios under `OPENWOP_REQUIRE_BEHAVIOR=true`, `INTEROP-MATRIX.md` Postgres row includes `openwop-production` in the compatibility-profile claim, and CHANGELOG records the Active landing. The four unresolved questions in §"Unresolved questions" remain open as documented and may be revisited as additive sub-RFCs without breaking v1 wire compatibility — their unresolved state is captured in `conformance/coverage.md`'s `A−` rating, not a blocker to acceptance.) |
 | **Affects** | `spec/v1/production-profile.md`, `schemas/capabilities.schema.json`, `conformance/src/scenarios/` (2 new + 4 re-labeled), `conformance/coverage.md`, `INTEROP-MATRIX.md`, `examples/hosts/postgres/` |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
