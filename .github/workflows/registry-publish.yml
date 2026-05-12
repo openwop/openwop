@@ -130,6 +130,26 @@ jobs:
           # core.* pack would fail here.
           node registry/scripts/verify-signatures.mjs
 
+      - name: Run structural conformance check on every pack
+        run: |
+          # Stage 2 PR 3 (2026-05-12): closes CRITICAL finding #3 from
+          # the enterprise-architecture review. Authoring-level conformance
+          # gate that catches the most common pack-publishing mistakes
+          # before merge:
+          #   - tarball vs. version-manifest identity drift
+          #     (different name/version inside vs. outside the tarball)
+          #   - schema refs pointing at missing files in the tarball
+          #   - schema refs with path traversal (`..`)
+          #   - schema files that aren't valid JSON
+          #   - duplicate typeIds within a single pack
+          #   - peerDependencies with non-string values
+          #
+          # Pure Node 20 stdlib; no npm install required. Runtime
+          # conformance (the pack actually dispatches on a reference host)
+          # ships as a per-pack scenario in Stage 5 when each canvas pack
+          # is published.
+          node registry/scripts/conformance-check.mjs
+
   deploy:
     name: Deploy to packs.openwop.dev
     needs: validate
