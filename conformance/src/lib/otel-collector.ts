@@ -31,7 +31,9 @@
  */
 
 import { createServer, type Server } from 'node:http';
+import { createServer as createHttp2Server, type Http2Server, type ServerHttp2Stream, type IncomingHttpHeaders } from 'node:http2';
 import type { AddressInfo } from 'node:net';
+import { frameMessage, unframeMessages } from './grpc-framing.js';
 import {
   decodeExportTraceServiceRequest,
   decodeExportMetricsServiceRequest,
@@ -117,6 +119,12 @@ export class OtelCollector {
   private readonly _metrics: CapturedMetric[] = [];
   private _server: Server | null = null;
   private _boundPort: number = 0;
+  // OTLP/gRPC parallel server (Track 11). Boots when `startGrpc()` is
+  // called. Shares `_spans` + `_metrics` with the HTTP collector so
+  // scenarios can assert on captured data regardless of which transport
+  // the host used to emit.
+  private _grpcServer: Http2Server | null = null;
+  private _grpcBoundPort: number = 0;
 
   /**
    * Start the collector. If `port` is `0` (or unset), an ephemeral port
@@ -144,12 +152,68 @@ export class OtelCollector {
     });
   }
 
+  /**
+   * Start the OTLP/gRPC server alongside the HTTP one. Uses Node's
+   * stdlib `http2` (h2c — cleartext HTTP/2). Same `_spans` + `_metrics`
+   * store; spans captured here are visible to `spans()` /
+   * `spansByName()` / etc. exactly like HTTP-emitted ones.
+   *
+   * @param port  Bind port; `0` (default) picks an ephemeral port.
+   */
+  async startGrpc(port: number = 0): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const server = createHttp2Server();
+      server.on('error', reject);
+      server.on('stream', (stream, headers) => {
+        this._handleGrpcStream(stream, headers).catch((err) => {
+          // eslint-disable-next-line no-console
+          console.error('[otel-collector-grpc] stream error:', err);
+          if (!stream.closed) {
+            stream.respond(
+              {
+                ':status': 200,
+                'content-type': 'application/grpc+proto',
+                'grpc-status': '13', // INTERNAL
+                'grpc-message': String((err as Error).message ?? err),
+              },
+              { endStream: true },
+            );
+          }
+        });
+      });
+      server.listen(port, '127.0.0.1', () => {
+        const addr = server.address() as AddressInfo;
+        this._grpcServer = server;
+        this._grpcBoundPort = addr.port;
+        resolve();
+      });
+    });
+  }
+
+  async stopGrpc(): Promise<void> {
+    if (!this._grpcServer) return;
+    const server = this._grpcServer;
+    this._grpcServer = null;
+    return new Promise((resolve, reject) => {
+      server.close((err) => (err ? reject(err) : resolve()));
+    });
+  }
+
   boundPort(): number {
     return this._boundPort;
   }
 
   endpoint(): string {
     return `http://127.0.0.1:${this._boundPort}`;
+  }
+
+  grpcBoundPort(): number {
+    return this._grpcBoundPort;
+  }
+
+  /** h2c base URL (no scheme distinction — gRPC clients use `:authority` form). */
+  grpcEndpoint(): string {
+    return `http://127.0.0.1:${this._grpcBoundPort}`;
   }
 
   reset(): void {
@@ -298,6 +362,140 @@ export class OtelCollector {
     }
 
     res.writeHead(200, { 'Content-Type': 'application/json' }).end('{}');
+  }
+
+  /**
+   * Handle a single OTLP/gRPC HTTP/2 stream. gRPC unary Export calls
+   * deliver one length-prefixed protobuf message in the request body
+   * and expect a length-prefixed Empty response message plus a
+   * `grpc-status: 0` trailer.
+   *
+   * Routing per the OTLP service definitions:
+   *   POST /opentelemetry.proto.collector.trace.v1.TraceService/Export    → traces
+   *   POST /opentelemetry.proto.collector.metrics.v1.MetricsService/Export → metrics
+   *
+   * @see https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
+   * @see https://opentelemetry.io/docs/specs/otlp/#otlpgrpc
+   */
+  private async _handleGrpcStream(
+    stream: ServerHttp2Stream,
+    headers: IncomingHttpHeaders,
+  ): Promise<void> {
+    const path = String(headers[':path'] ?? '');
+    const method = String(headers[':method'] ?? '');
+    const contentType = String(headers['content-type'] ?? '').toLowerCase();
+
+    if (method !== 'POST' || !contentType.startsWith('application/grpc')) {
+      // gRPC servers respond on HTTP/2 with :status 200 and signal the
+      // error via grpc-status + grpc-message trailers. Non-gRPC clients
+      // can't easily reach this endpoint so the error mode is mostly
+      // defensive against operator misconfiguration.
+      stream.respond(
+        {
+          ':status': 200,
+          'content-type': 'application/grpc+proto',
+          'grpc-status': '3', // INVALID_ARGUMENT
+          'grpc-message': `expected POST with content-type application/grpc+proto, got ${method} ${contentType}`,
+        },
+        { endStream: true },
+      );
+      return;
+    }
+
+    // Read the request body. gRPC unary requests have a single
+    // length-prefixed frame; defensively bound the total size so a
+    // runaway peer can't OOM the suite.
+    const MAX_BODY_BYTES = 16 * 1024 * 1024;
+    const chunks: Buffer[] = [];
+    let received = 0;
+    for await (const c of stream) {
+      const buf = c as Buffer;
+      received += buf.length;
+      if (received > MAX_BODY_BYTES) {
+        stream.respond(
+          {
+            ':status': 200,
+            'content-type': 'application/grpc+proto',
+            'grpc-status': '8', // RESOURCE_EXHAUSTED
+            'grpc-message': `OTLP body exceeds ${MAX_BODY_BYTES} bytes`,
+          },
+          { endStream: true },
+        );
+        return;
+      }
+      chunks.push(buf);
+    }
+    const body = Buffer.concat(chunks);
+
+    let frames: Uint8Array[];
+    try {
+      frames = unframeMessages(new Uint8Array(body.buffer, body.byteOffset, body.byteLength));
+    } catch (err) {
+      stream.respond(
+        {
+          ':status': 200,
+          'content-type': 'application/grpc+proto',
+          'grpc-status': '3', // INVALID_ARGUMENT
+          'grpc-message': `gRPC frame parse failed: ${(err as Error).message ?? 'unknown'}`,
+        },
+        { endStream: true },
+      );
+      return;
+    }
+
+    // gRPC URLs are `/<package>.<Service>/<Method>`. The Service is
+    // package-qualified so the character before "TraceService" /
+    // "MetricsService" is `.` (part of the package), not `/`. Match on
+    // the Service.Method suffix.
+    const isTracesRoute = path.endsWith('TraceService/Export');
+    const isMetricsRoute = path.endsWith('MetricsService/Export');
+
+    if (isTracesRoute || isMetricsRoute) {
+      try {
+        for (const frame of frames) {
+          if (isTracesRoute) {
+            const payload = decodeExportTraceServiceRequest(frame);
+            this._ingestTraces(payload as TracesIngest);
+          } else if (isMetricsRoute) {
+            const payload = decodeExportMetricsServiceRequest(frame);
+            this._ingestMetrics(payload as MetricsIngest);
+          }
+        }
+      } catch (err) {
+        stream.respond(
+          {
+            ':status': 200,
+            'content-type': 'application/grpc+proto',
+            'grpc-status': '3', // INVALID_ARGUMENT
+            'grpc-message': `OTLP protobuf decode failed: ${(err as Error).message ?? 'unknown'}`,
+          },
+          { endStream: true },
+        );
+        return;
+      }
+    }
+    // Unknown service/method paths fall through to a success response
+    // so the exporter doesn't retry on /v1/logs or similar surfaces we
+    // don't capture; spans/metrics stay un-ingested.
+
+    // Per OTLP spec, the Export response is an empty ExportTraceServiceResponse
+    // (or ExportMetricsServiceResponse) — zero-byte protobuf. gRPC over
+    // HTTP/2 sends headers + body + trailers; in Node's API we set
+    // `waitForTrailers` on respond() so the stream emits a
+    // `wantTrailers` event after the body, at which point we call
+    // sendTrailers() and the stream closes cleanly.
+    const responseBody = frameMessage(new Uint8Array(0));
+    stream.on('wantTrailers', () => {
+      stream.sendTrailers({ 'grpc-status': '0' });
+    });
+    stream.respond(
+      {
+        ':status': 200,
+        'content-type': 'application/grpc+proto',
+      },
+      { waitForTrailers: true },
+    );
+    stream.end(responseBody);
   }
 
   private _ingestTraces(payload: TracesIngest): void {

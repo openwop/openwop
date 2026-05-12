@@ -84,7 +84,26 @@
     },
     "observability": {
       "type": "object",
-      "description": "Optional v1 hints about emitted spans/metrics/logs. See observability.md."
+      "description": "Optional v1 hints about emitted spans/metrics/logs. See observability.md.",
+      "properties": {
+        "otel": {
+          "type": "object",
+          "description": "OTel-specific advertisement. Hosts that emit OTLP traces/metrics MAY advertise the transport protocols they support so collectors can configure exporters accordingly. Track 11 follow-up.",
+          "properties": {
+            "exportProtocols": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["http/json", "http/protobuf", "grpc"]
+              },
+              "uniqueItems": true,
+              "description": "OTLP export protocols the host supports emitting. `http/json` and `http/protobuf` are mandatory for hosts advertising OTel emission; `grpc` is opt-in per Track 11."
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
     },
     "minClientVersion": {
       "type": "string",

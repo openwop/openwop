@@ -117,6 +117,30 @@ async function maybeStartOtelCollector(): Promise<void> {
       `Configure the host with OTEL_EXPORTER_OTLP_ENDPOINT=${collector.endpoint()} ` +
       `and OTEL_EXPORTER_OTLP_PROTOCOL=http/json.`,
   );
+
+  // Track 11 — opt into the parallel OTLP/gRPC collector when
+  // `OPENWOP_OTEL_COLLECTOR_GRPC=true`. Same span/metric store; hosts
+  // emitting via either transport surface in `getCollector().spans()`.
+  if (process.env.OPENWOP_OTEL_COLLECTOR_GRPC === 'true') {
+    const grpcPortEnv = process.env.OPENWOP_OTEL_COLLECTOR_GRPC_PORT;
+    const grpcRequestedPort = grpcPortEnv ? Number(grpcPortEnv) : 4317;
+    try {
+      await collector.startGrpc(grpcRequestedPort);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[openwop-conformance setup] OTLP/gRPC collector failed to bind on port ${grpcRequestedPort} ` +
+          `(${(err as Error).message ?? 'unknown'}); falling back to ephemeral port.`,
+      );
+      await collector.startGrpc(0);
+    }
+    // eslint-disable-next-line no-console
+    console.error(
+      `[openwop-conformance setup] OTLP/gRPC collector listening at ${collector.grpcEndpoint()}. ` +
+        `Configure the host with OTEL_EXPORTER_OTLP_ENDPOINT=${collector.grpcEndpoint()} ` +
+        `and OTEL_EXPORTER_OTLP_PROTOCOL=grpc.`,
+    );
+  }
 }
 
 /**

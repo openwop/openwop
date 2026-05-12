@@ -34,6 +34,20 @@ Clients SHOULD include `traceparent` on outbound requests so server-side spans n
 
 ---
 
+## Export protocols
+
+Hosts that emit OTLP telemetry MUST support at least `http/json` and `http/protobuf` and MAY additionally support `grpc`. Hosts MAY advertise the supported transports under `capabilities.observability.otel.exportProtocols` (an array drawn from `{"http/json", "http/protobuf", "grpc"}`). Collectors MAY use this to pick a compatible exporter without probing.
+
+| Transport | Wire | Content-Type | Notes |
+|---|---|---|---|
+| `http/json` | HTTP/1.1 POST | `application/json` | Default. Required of all OTel-emitting hosts. |
+| `http/protobuf` | HTTP/1.1 POST | `application/x-protobuf` | Required of all OTel-emitting hosts. Compact binary; same shape as `http/json` decoded. |
+| `grpc` | HTTP/2 unary RPC (h2c or TLS) | `application/grpc+proto` | Optional. Service paths: `/opentelemetry.proto.collector.trace.v1.TraceService/Export` and `/opentelemetry.proto.collector.metrics.v1.MetricsService/Export`. Messages are length-prefixed protobuf per the [gRPC HTTP/2 protocol](https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md). |
+
+The openwop conformance suite ships a collector for all three transports under `conformance/src/lib/otel-collector.ts` (hand-rolled, zero npm-dep). See `conformance/README.md` §"Optional environment flags" for the relevant `OPENWOP_OTEL_COLLECTOR*` env vars.
+
+---
+
 ## Span attributes
 
 An OpenWOP-compliant server emitting OTel spans for engine activity MUST use the following canonical attributes. Implementations MAY add their own attributes outside the `openwop.*` namespace; the spec only constrains what's inside it.
