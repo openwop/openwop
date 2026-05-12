@@ -23,6 +23,14 @@
  * alternative of probing via Little's Law is rejected by default;
  * inflightCap advertisement is the chosen forcing mechanism.
  *
+ * **Run with `--no-file-parallelism`** — saturating the host's
+ * inflight cap leaves no headroom for other scenarios that issue
+ * concurrent POSTs (e.g., `idempotencyRetry.test.ts`'s 5-retry burst).
+ * Conformance runs that include this scenario MUST pass `--no-file-
+ * parallelism` to vitest or scope each file to its own worker. The
+ * otel-emission scenario has the same constraint (`conformance/README.md`
+ * line ~69).
+ *
  * @see RFCS/0009-production-profile-conformance.md §B
  * @see spec/v1/production-profile.md §Backpressure
  */
@@ -130,9 +138,16 @@ describe('production-backpressure: 503 envelope under saturation', () => {
     // Create `cap` long-running runs and open SSE streams against each
     // to hold the slots open. Raw fetch is used for SSE because the
     // driver doesn't expose abort signals; abort is required to release
-    // the inflight slots in the finally block.
+    // the inflight slots in the finally block. The Accept header is
+    // required so hosts with /events content negotiation (e.g., the
+    // Postgres reference host) actually keep the connection open as a
+    // long-lived SSE stream; without it they return a one-shot JSON
+    // snapshot and the inflight slot drops immediately.
     const env = loadEnv();
-    const authHeaders = { Authorization: `Bearer ${env.apiKey}` };
+    const authHeaders = {
+      Authorization: `Bearer ${env.apiKey}`,
+      Accept: 'text/event-stream',
+    };
 
     const slotHolders: AbortController[] = [];
     const slotPromises: Promise<unknown>[] = [];

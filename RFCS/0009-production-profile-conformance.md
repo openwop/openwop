@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0009 |
 | **Title** | Production-Profile Conformance |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-11 |
-| **Updated** | 2026-05-11 |
+| **Updated** | 2026-05-11 (Draft → Active; bootstrap-phase steward decision per `CONTRIBUTING.md` §"Bootstrap-phase notes" — the standard 7-day additive comment window was waived because no non-steward maintainer is yet listed in `MAINTAINERS.md`. The four unresolved questions in §"Unresolved questions" remain open and may be revisited as additive sub-RFCs without breaking v1 wire compatibility.) |
 | **Affects** | `spec/v1/production-profile.md`, `schemas/capabilities.schema.json`, `conformance/src/scenarios/` (2 new + 4 re-labeled), `conformance/coverage.md`, `INTEROP-MATRIX.md`, `examples/hosts/postgres/` |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |

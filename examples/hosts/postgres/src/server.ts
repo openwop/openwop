@@ -1119,6 +1119,32 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
               },
             }
           : {}),
+        // production-profile.md (RFC 0009). Postgres host claims the
+        // profile end-to-end: durable Postgres-backed event log,
+        // backpressure with 503 + Retry-After, ≥7-day event retention
+        // sweeper, debug-bundle truncation with explicit metadata.
+        // Sub-block values mirror the env-driven host configuration so
+        // the conformance suite saturates inflight against the actual
+        // cap. testForceExpire: false — no host-private expire hook
+        // exposed (RFC 0009 §"Unresolved questions" #1 — endpoint
+        // normation deferred to a future additive RFC).
+        production: {
+          supported: true,
+          backpressure: {
+            supported: true,
+            inflightCap: MAX_INFLIGHT,
+            retryAfterSeconds: RETRY_AFTER_SECONDS,
+          },
+          retention: {
+            supported: true,
+            minWindowSeconds: EVENT_RETENTION_DAYS * 86400,
+            testForceExpire: false,
+          },
+          debugBundle: {
+            supported: true,
+            truncationMetadata: true,
+          },
+        },
       },
     },
     { 'Cache-Control': 'public, max-age=300' },
