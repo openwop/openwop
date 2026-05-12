@@ -86,6 +86,15 @@ import {
   HttpRequestError,
   type HttpRequestConfig,
 } from './http-client.js';
+import {
+  callAiProvider,
+  enforcePolicy,
+  resolveProviderPolicy,
+  AiPolicyDenied,
+  AiProviderUnknown,
+  REFERENCE_AI_PROVIDERS_CAPABILITY,
+  type AiCallRequest,
+} from './ai-proxy.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const HOST = process.env.OPENWOP_HOST ?? '127.0.0.1';
@@ -752,6 +761,130 @@ async function executeNode(
           ]);
         });
       }
+      break;
+    }
+
+    case 'core.llm.chat':
+    case 'core.llm.completion': {
+      // Phase H.1″ — capabilities.md §`aiProviders.policies` 4-mode
+      // enforcement. The node config supplies (provider, model,
+      // credentialRef?, input); the host resolves the per-provider
+      // policy, enforces it, calls the provider (stubbed in reference
+      // impl), then emits the result minus any cleartext credential
+      // material into variables[node.id].
+      const cfg = (node.config ?? {}) as {
+        provider?: string;
+        model?: string;
+        credentialRef?: string;
+        input?: unknown;
+      };
+      if (typeof cfg.provider !== 'string' || typeof cfg.model !== 'string') {
+        const err = {
+          code: 'validation_error',
+          message: `${node.typeId} (node "${node.id}") MUST declare config.provider AND config.model as strings`,
+        };
+        await appendEvent(runId, 'node.failed', { nodeId: node.id, data: err });
+        runFailureErrors.set(runId, err);
+        endNodeSpan(runId, node.id, 'failed');
+        return 'failed';
+      }
+      const aiRequest: AiCallRequest = {
+        provider: cfg.provider,
+        model: cfg.model,
+        ...(cfg.credentialRef !== undefined ? { credentialRef: cfg.credentialRef } : {}),
+        input: cfg.input ?? null,
+      };
+      const policy = resolveProviderPolicy(aiRequest.provider);
+      let credentialCleartext: string | null;
+      try {
+        ({ credentialCleartext } = enforcePolicy(policy, aiRequest));
+      } catch (err: unknown) {
+        if (err instanceof AiPolicyDenied) {
+          const denial = {
+            code: 'provider_policy_denied',
+            message: err.message,
+            details: { reason: err.reason, ...err.details },
+          };
+          // Audit: emit `policy.decision` per spec §"Audit emission".
+          // Host-internal taxonomy; clients learn outcome from the
+          // node.failed envelope.
+          await appendEvent(runId, 'policy.decision', {
+            nodeId: node.id,
+            data: {
+              provider: aiRequest.provider,
+              mode: policy.mode,
+              decision: 'deny',
+              reason: err.reason,
+            },
+          });
+          await appendEvent(runId, 'node.failed', { nodeId: node.id, data: denial });
+          runFailureErrors.set(runId, { code: denial.code, message: denial.message });
+          endNodeSpan(runId, node.id, 'failed');
+          return 'failed';
+        }
+        if (err instanceof AiProviderUnknown) {
+          const denial = {
+            code: 'validation_error',
+            message: err.message,
+            details: { provider: err.provider },
+          };
+          await appendEvent(runId, 'node.failed', { nodeId: node.id, data: denial });
+          runFailureErrors.set(runId, { code: denial.code, message: denial.message });
+          endNodeSpan(runId, node.id, 'failed');
+          return 'failed';
+        }
+        throw err;
+      }
+      // Policy permitted the call. Audit-emit the permit decision.
+      await appendEvent(runId, 'policy.decision', {
+        nodeId: node.id,
+        data: {
+          provider: aiRequest.provider,
+          mode: policy.mode,
+          decision: 'permit',
+        },
+      });
+      let result;
+      try {
+        result = await callAiProvider(aiRequest, credentialCleartext);
+      } catch (err: unknown) {
+        const failure = {
+          code: 'external_call_failed',
+          message: err instanceof Error ? err.message : String(err),
+        };
+        await appendEvent(runId, 'node.failed', { nodeId: node.id, data: failure });
+        runFailureErrors.set(runId, failure);
+        endNodeSpan(runId, node.id, 'failed');
+        return 'failed';
+      } finally {
+        // Defense-in-depth: drop the local reference so the cleartext
+        // can't accidentally land on a later closure.
+        credentialCleartext = null;
+      }
+      // Persist redaction-safe result. SR-1: no cleartext credential
+      // material; only the hash (credentialRefHashed) for audit
+      // correlation.
+      const q = await querier();
+      await withTransaction(q, async () => {
+        const res = await q.query<{ variables_json: Record<string, unknown> | null }>(
+          'SELECT variables_json FROM runs WHERE run_id = $1',
+          [runId],
+        );
+        const current = (res.rows[0]?.variables_json ?? {}) as Record<string, unknown>;
+        current[node.id] = {
+          provider: result.provider,
+          model: result.model,
+          outputText: result.outputText,
+          inputTokens: result.inputTokens,
+          outputTokens: result.outputTokens,
+          durationMs: result.durationMs,
+          credentialRefHashed: result.credentialRefHashed,
+        };
+        await q.query('UPDATE runs SET variables_json = $1 WHERE run_id = $2', [
+          JSON.stringify(current),
+          runId,
+        ]);
+      });
       break;
     }
 
@@ -1496,6 +1629,11 @@ const SUPPORTED_NODE_TYPES = new Set([
   // §"Built-in nodes". SSRF-guarded; response body persisted into
   // variables (truncated at 1 MiB).
   'core.http.request',
+  // Phase H.1″ — AI provider call typeIds per node-packs.md §"Built-in
+  // nodes". Reference host stubs the actual provider call; the wire
+  // contract (4-mode policy + credentialRef redaction) is preserved.
+  'core.llm.chat',
+  'core.llm.completion',
 ]);
 
 function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
@@ -1568,17 +1706,14 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
         // KMS/Vault. Per SR-1, only the hash + length appear on any
         // observable surface; cleartext never leaves the resolver.
         secrets: REFERENCE_SECRETS_CAPABILITY,
-        // Phase H.1 — capabilities.md §`aiProviders`. BYOK-ready
-        // advertisement: the host's secret resolver accepts
-        // `RunOptions.configurable.ai.credentialRef` for the listed
-        // providers. Actual provider routing + `core.llm.*` typeIds
-        // land in H.1″ — until then, callers can resolve credentials
-        // through the canary path but `core.llm.chat` is gated by
-        // capability_required.
-        aiProviders: {
-          supported: ['anthropic', 'openai', 'gemini'],
-          byok: ['anthropic', 'openai', 'gemini'],
-        },
+        // Phase H.1 + H.1″ — capabilities.md §`aiProviders` +
+        // §`aiProviders.policies`. The host advertises BYOK-ready
+        // routing for the listed providers AND 4-mode policy
+        // enforcement (`disabled` / `optional` / `required` /
+        // `restricted`). Per-provider policies are sourced from
+        // `OPENWOP_AI_POLICY_<PROVIDER>` env vars; resolver-outage
+        // failures fail-open to `optional`.
+        aiProviders: REFERENCE_AI_PROVIDERS_CAPABILITY,
         // Phase H.3 — capabilities.md §`httpClient` (additive). The host
         // implements `core.http.request` with SSRF guard + 1 MiB response
         // truncation. Bypass via OPENWOP_HTTP_ALLOW_PRIVATE=true for
