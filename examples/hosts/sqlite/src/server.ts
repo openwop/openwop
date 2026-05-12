@@ -104,6 +104,14 @@ const API_KEY = process.env.OPENWOP_API_KEY ?? 'openwop-sqlite-dev-key';
 // canonical use is rotation: new primary in env, old secondary still
 // honored until operators have rotated all clients.
 const SECONDARY_API_KEY = process.env.OPENWOP_SECONDARY_API_KEY ?? null;
+// RFC 0011 §A — same-endpoint auth-scoped discovery. When advertised
+// AND a tenant2 key is configured, requests authenticated as tenant2
+// receive a narrowed capability view (strict subset of primary's view
+// per spec annex §"Scoped capability views" line 69 — no authorization
+// oracle). Operators wire a real tenant model in production hosts; the
+// reference host's tenant2 is just a second valid bearer for testing
+// the §"Scoped capability views" conformance scenarios.
+const TENANT2_API_KEY = process.env.OPENWOP_TENANT2_API_KEY ?? null;
 const DB_PATH = process.env.OPENWOP_SQLITE_PATH ?? join(__dirname, '..', 'data', 'openwop-host.sqlite');
 const PROCESS_ID = `host-${randomUUID().slice(0, 8)}`;
 
@@ -1501,6 +1509,35 @@ function checkAuth(req: IncomingMessage, res: ServerResponse): boolean {
   return true;
 }
 
+/**
+ * Resolve a request's bearer to a principal classification.
+ * RFC 0011 §A — same-endpoint auth-scoped discovery: handleDiscovery
+ * uses this to decide whether to return the primary or narrowed view.
+ * Returns `null` for missing/malformed auth or unrecognized bearer
+ * (handleDiscovery treats null as the public/unauthenticated view).
+ *
+ * Constant-time across ALL configured candidates: every candidate's
+ * timingSafeEqual completes before the OR fold, so an attacker cannot
+ * distinguish "primary matched" from "tenant2 matched" by request
+ * latency.
+ */
+function principalFor(req: IncomingMessage): 'primary' | 'tenant2' | null {
+  const auth = req.headers.authorization;
+  if (typeof auth !== 'string' || !auth.startsWith('Bearer ')) return null;
+  const presented = Buffer.from(auth.slice('Bearer '.length).trim(), 'utf8');
+  const tryMatch = (candidate: string | null): boolean => {
+    if (candidate === null) return false;
+    const expected = Buffer.from(candidate, 'utf8');
+    return presented.length === expected.length && timingSafeEqual(presented, expected);
+  };
+  const primaryHit = tryMatch(API_KEY);
+  const secondaryHit = tryMatch(SECONDARY_API_KEY);
+  const tenant2Hit = tryMatch(TENANT2_API_KEY);
+  if (primaryHit || secondaryHit) return 'primary';
+  if (tenant2Hit) return 'tenant2';
+  return null;
+}
+
 function hashBody(body: string): string {
   return createHash('sha256').update(body).digest('hex');
 }
@@ -1515,7 +1552,7 @@ function pruneIdempotency(): void {
 
 // ─── Route handlers ──────────────────────────────────────────────────────────
 
-function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
+function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
   // Advertise the loaded fixture set so conformance scenarios can gate
   // their skipIf() on isFixtureAdvertised(id). Only the workflow IDs the
   // host actually has loaded should appear here.
@@ -1524,6 +1561,16 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
   const advertisedFixtures = Array.from(workflows.keys()).filter(
     (id) => id.startsWith('conformance-') || id.startsWith('openwop-smoke-'),
   );
+
+  // RFC 0011 §A — same-endpoint auth-scoped discovery. Determine the
+  // caller's principal (primary | tenant2 | null) and narrow the
+  // capability view for tenant2 per spec annex §"Scoped capability
+  // views" line 69 (no authorization oracle: tenant2 sees a STRICT
+  // SUBSET of primary's capability keys). Public + unrecognized-auth
+  // callers get the full unauthenticated view.
+  const principal = principalFor(req);
+  const isTenant2 = principal === 'tenant2';
+
   sendJSON(res, 200, {
     protocolVersion: '1.0',
     implementation: {
@@ -1543,6 +1590,13 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
     debugBundle: { supported: true },
     fixtures: advertisedFixtures,
     capabilities: {
+      // RFC 0011 §A — capability advertisement for the same-endpoint
+      // auth-scoped pattern. Advertised on every view (public +
+      // primary + tenant2) so clients can negotiate against the
+      // public payload before authenticating.
+      discovery: {
+        authScoped: { supported: true, mode: 'same-endpoint' },
+      },
       auth: {
         // Two profiles the reference host actually implements:
         //   - openwop-audit-log-integrity (auth-profiles.md §"Audit-log
@@ -1606,20 +1660,30 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
         supported: true,
         signatureAlgorithms: ['v1'],
       },
-      // RFC 0006 §G — orchestrator capability advertisement.
-      orchestrator: {
-        supported: true,
-        workerIdInterpretation: 'node',
-        fanOutSupported: false,
-      },
-      // RFC 0007 §G — dispatch capability advertisement. Hosts that
-      // advertise orchestrator MUST also advertise dispatch (§G).
-      dispatch: {
-        supported: true,
-        models: ['child-run'],
-        fanOutSupported: false,
-        askUserRoutings: ['clarification', 'auto'],
-      },
+      // RFC 0006 §G + RFC 0007 §G — orchestrator + dispatch capability
+      // advertisements. Hosts that advertise orchestrator MUST also
+      // advertise dispatch. For RFC 0011 same-endpoint auth-scoped
+      // discovery: tenant2's view OMITS these optional surfaces. The
+      // resulting capability key set is a strict subset of primary's
+      // view, satisfying the no-authorization-oracle invariant from
+      // capabilities-change-detection.md §"Scoped capability views"
+      // line 69. Operators that need richer per-tenant gating wire a
+      // real tenant model — this is the reference-host minimum.
+      ...(isTenant2
+        ? {}
+        : {
+            orchestrator: {
+              supported: true,
+              workerIdInterpretation: 'node',
+              fanOutSupported: false,
+            },
+            dispatch: {
+              supported: true,
+              models: ['child-run'],
+              fanOutSupported: false,
+              askUserRoutings: ['clarification', 'auto'],
+            },
+          }),
       // observability.md §"Span attributes" — host advertises OTel
       // emission only when OTEL_EXPORTER_OTLP_ENDPOINT is configured.
       ...(observabilityEnabled()
