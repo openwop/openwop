@@ -9,6 +9,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ---
 
+## [1.0 — additions] — 2026-05-11 — RFC 0010 Draft: auth-profile conformance
+
+- **RFC 0010 opened (Draft).** [`RFCS/0010-auth-profile-conformance.md`](./RFCS/0010-auth-profile-conformance.md) consolidates the four production-auth profiles in `auth-profiles.md` (rotation, OAuth2 client-credentials, OIDC user-bearer, mTLS) into one additive RFC. Proposes formalizing `capabilities.auth` as a top-level schema block with `profiles[]` + per-profile metadata sub-blocks (preserving the existing informal `auth.auditLogIntegrity` advertisement via `additionalProperties: true`). Adds three new conformance scenarios + one opt-in mTLS scenario + a synthetic OIDC issuer harness under `conformance/src/lib/oidc-issuer.ts`. Additive — no v1 wire-shape change. Four unresolved questions captured for review: rotation overlap granularity, OIDC harness key-rotation testing, mTLS subject-mapping ambiguity, OAuth2-CC/OIDC overlap semantics. Same-wave stubs + post-Active host implementation follow the RFC 0009 precedent.
+
 ## [1.0 — additions] — 2026-05-11 — RFC 0009 Active + production-profile pass
 
 - **RFC 0009 promoted `Draft` → `Active`.** Bootstrap-phase steward decision per `CONTRIBUTING.md` §"Bootstrap-phase notes" — the standard 7-day additive comment window was waived because no non-steward maintainer is yet listed in `MAINTAINERS.md`. The four unresolved questions remain open and may be revisited as additive sub-RFCs without breaking v1 wire compatibility.
