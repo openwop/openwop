@@ -107,10 +107,11 @@ function generateKeyMaterial(algorithm: JwsAlgorithm, keyId: string): KeyMateria
       ? generateKeyPairSync('rsa', { modulusLength: 2048 })
       : generateKeyPairSync('ec', { namedCurve: 'P-256' });
 
-  // node:crypto can export public keys directly to JWK form. Mix in
-  // OIDC-flavored fields (`kid`, `alg`, `use`) so hosts that use the
-  // JWK as-is have everything they need.
-  const baseJwk = publicKey.export({ format: 'jwk' }) as Record<string, unknown>;
+  // node:crypto exports public keys directly to JWK form (Node ≥ 16).
+  // The return type is `JsonWebKey` from the global DOM lib; we widen
+  // to a structural record so we can spread + mix in OIDC-flavored
+  // fields (`kid`, `alg`, `use`) without further assertions.
+  const baseJwk: Record<string, unknown> = publicKey.export({ format: 'jwk' });
   const publicJwk: Record<string, unknown> = {
     ...baseJwk,
     alg: algorithm,

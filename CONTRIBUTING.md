@@ -152,6 +152,8 @@ git rebase --signoff -i HEAD~3              # add to the last 3 commits
 
 The DCO check is wired through the [DCO bot](https://github.com/dcoapp/app); it runs on every PR and blocks merge until every commit is signed off. A failing DCO check is the only "fix-forward" the maintainer set explicitly allows: amend + force-push and we'll re-run.
 
+**Bootstrap-phase reality (until `MAINTAINERS.md` lists a non-steward maintainer):** the steward currently lands commits directly on `main` without a PR gate, so the DCO bot does not run on those commits in practice. Commits authored in bootstrap phase have shipped with `Co-Authored-By:` trailers (for AI-assistant attribution) but without `Signed-off-by:`. This is a documented drift between the stated rule and current practice. The MUST above becomes operationally enforceable once the PR-based workflow re-engages — i.e., as soon as a non-steward maintainer joins per the `ROADMAP.md` migration tripwire. Until then, contributors submitting PRs SHOULD sign their commits; the steward's direct-to-`main` commits are exempt by practice but the exemption is recorded here for transparency.
+
 ---
 
 ## Triage SLA
@@ -174,6 +176,9 @@ Until `MAINTAINERS.md` lists at least one maintainer not affiliated with the ori
 - **One-approval review.** Branch-protection on `main` requires one maintainer approval. Post-bootstrap (when MAINTAINERS.md grows past one), this becomes two approvals from different organizations per `GOVERNANCE.md` §"Decision making."
 - **Conformance scenario authorship.** PRs touching `conformance/src/scenarios/` or `conformance/src/lib/` route through `CODEOWNERS` to the lead maintainer. Same elevation post-bootstrap (cross-org reviewers required).
 - **Spec corpus changes.** Same elevation logic — `CODEOWNERS` routes `/spec/v1/`, `/api/`, `/schemas/` to the lead maintainer; cross-org review post-bootstrap.
+- **DCO `Signed-off-by:` exemption.** The steward's direct-to-`main` commits ship without `Signed-off-by:` trailers in practice (see §"Sign your commits (DCO)" above). External contributors submitting PRs MUST still sign every commit. The exemption ends when the PR-based workflow re-engages with the first non-steward maintainer.
+- **`bash scripts/openwop-check.sh` before push.** The 8-step gate is fast (~30s warm cache) and surfaces fixture-catalog drift, schema discipline breaks, and conformance-validity issues before they hit `origin/main`. Run it before every push to avoid red gates on `main` that block other contributors.
+- **RFC comment-window waivers.** Additive RFCs (7-day window) MAY be promoted Draft → Active by steward decision when the comment window would only serve as a delay against zero external reviewers. Each waived RFC MUST record the waiver in its `Updated` field. RFCs 0009 and 0010 are the worked examples — see `MAINTAINERS.md` §"Bootstrap-phase RFC waivers" for the running list.
 
 The bootstrap-phase amendment is filed as RFC 0005 in the `RFCS/` directory.
 

@@ -299,6 +299,8 @@ All four scenarios use `behaviorGate(profileName, advertised)`; `OPENWOP_REQUIRE
 
 4. **OAuth2-CC vs OIDC overlap.** A host accepting OIDC user-bearer tokens with the `client_credentials` grant flow is technically conformant to both profiles. Should `auth.profiles[]` allow simultaneous advertisement, and should §C + §D handle overlap explicitly? Current draft permits both advertisements; scenarios run independently. Worth a sentence in `auth-profiles.md` clarification but not blocking.
 
+5. **Tighten `capabilities.auth.additionalProperties` to `false`.** The schema landed in §A intentionally uses `additionalProperties: true` on the `auth` block so the existing informal `auth.auditLogIntegrity` advertisement (from the audit-log-integrity profile, predating RFC 0010) continues to validate alongside the four formal sub-blocks defined here. A follow-up additive RFC SHOULD formalize `auditLogIntegrity` as a fifth sub-block schema (with `additionalProperties: false`) and tighten the parent `auth` block to `additionalProperties: false` at the same time. Until that lands, hosts MAY add arbitrary keys under `capabilities.auth.*` — that's a documentation surface for unenumerated future-profile metadata, not an extension point clients should depend on.
+
 ## Implementation notes (non-normative)
 
 - Suite version bump: `@openwop/openwop-conformance` `1.X.0` (next available minor after the RFC 0009 wave). Per `ROADMAP.md` line 24, conformance minors don't modify the wire contract.

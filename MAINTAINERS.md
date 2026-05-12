@@ -107,6 +107,17 @@ When the first non-steward maintainer is added to the "Current maintainers" tabl
 1. Add the recruitment log row that produced them.
 2. Open the vendor-neutral-org migration RFC per `RFCS/0001-rfc-process.md` (Phase 4 T4.1 in `docs/PROTOCOL-GAP-CLOSURE-PLAN.md`).
 
+## Bootstrap-phase RFC waivers
+
+Per `CONTRIBUTING.md` §"Bootstrap-phase notes," additive RFCs MAY be promoted Draft → Active by steward decision when the comment window would only serve as a delay against zero external reviewers. This section tracks every RFC that has used the waiver so future maintainers can audit the velocity of bootstrap-phase decisions. The waiver is retired automatically when the first non-steward maintainer joins.
+
+| RFC | Title | Draft date | Active date | Comment-window duration | Waiver rationale |
+|---|---|---|---|---|---|
+| 0009 | Production-Profile Conformance | 2026-05-11 | 2026-05-11 | < 1 day | Additive; INTEROP-MATRIX Postgres row already claimed `production-profile.md` without mechanical evidence — closing the gap was higher-value than the 7-day delay |
+| 0010 | Auth-Profile Conformance | 2026-05-11 | 2026-05-12 | < 1 day | Additive; consolidates four production-auth profile claims from `auth-profiles.md` (FINAL v1) into mechanical conformance — same posture as RFC 0009 |
+
+When the count gets uncomfortable (e.g., > 5 waivers within a 30-day window, or > 15 total before the first non-steward maintainer joins), that's a signal to slow down and stage at least one RFC through a real 7-day window even without external reviewers — exercising the process is itself a credibility surface.
+
 ## See also
 
 - `GOVERNANCE.md` — decision rules, role definitions, path to working group.
