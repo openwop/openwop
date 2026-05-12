@@ -31,8 +31,10 @@ export interface SyntheticOIDCIssuerOptions {
   readonly issuer: string;
   /** Default audience used by `mint()` when claims don't supply one. */
   readonly audience: string;
-  /** JWS algorithm. Default RS256 (widest interop). */
-  readonly algorithm?: JwsAlgorithm;
+  /** JWS algorithm. Default RS256 (widest interop). Accepts `string` so
+   * conformance tests can exercise the runtime rejection path for
+   * unsupported algorithms; the constructor validates at runtime. */
+  readonly algorithm?: JwsAlgorithm | (string & {});
   /** Initial key id published in JWKS. Default `openwop-conformance-key-1`. */
   readonly keyId?: string;
 }
@@ -101,6 +103,10 @@ function base64UrlEncode(input: Buffer | string): string {
     .replace(/=+$/, '');
 }
 
+function isJwsAlgorithm(x: string): x is JwsAlgorithm {
+  return x === 'RS256' || x === 'ES256';
+}
+
 function generateKeyMaterial(algorithm: JwsAlgorithm, keyId: string): KeyMaterial {
   const { publicKey, privateKey } =
     algorithm === 'RS256'
@@ -148,12 +154,13 @@ function signCompact(
 export function createSyntheticOIDCIssuer(
   opts: SyntheticOIDCIssuerOptions,
 ): SyntheticOIDCIssuer {
-  const algorithm: JwsAlgorithm = opts.algorithm ?? 'RS256';
-  if (algorithm !== 'RS256' && algorithm !== 'ES256') {
+  const requested = opts.algorithm ?? 'RS256';
+  if (!isJwsAlgorithm(requested)) {
     throw new Error(
-      `[oidc-issuer] unsupported algorithm: ${String(algorithm)} (only RS256 and ES256 are supported)`,
+      `[oidc-issuer] unsupported algorithm: ${String(requested)} (only RS256 and ES256 are supported)`,
     );
   }
+  const algorithm: JwsAlgorithm = requested;
 
   if (!opts.issuer || !opts.audience) {
     throw new Error('[oidc-issuer] issuer and audience are required');

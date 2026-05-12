@@ -94,9 +94,7 @@ describe('oidc-issuer: harness construction', () => {
       createSyntheticOIDCIssuer({
         issuer: 'https://x',
         audience: 'y',
-        // Force-cast through unknown — runtime check is what we're testing,
-        // not the type system.
-        algorithm: 'HS256' as unknown as 'RS256',
+        algorithm: 'HS256',
       }),
     ).toThrow(/unsupported algorithm/);
   });
