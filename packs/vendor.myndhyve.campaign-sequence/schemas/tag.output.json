@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.campaign-sequence/1.0.0/tag.output.json",
+  "title": "CampaignSequenceTagOutput",
+  "type": "object",
+  "required": ["success"],
+  "properties": {
+    "success": {
+      "type": "boolean",
+      "description": "True if step.tagAction and step.tagName were both present; false otherwise."
+    },
+    "error": {
+      "type": "string",
+      "description": "Non-retryable validation error message when success=false."
+    }
+  },
+  "additionalProperties": true
+}

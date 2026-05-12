@@ -1,0 +1,277 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.campaign-sequence@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.campaign-sequence",
+      "version": "1.0.0",
+      "description": "MyndHyve campaign-sequence step executors — three pure-control nodes (wait, tag, condition) lifted from src/canvas-types/campaign-studio/sequences/sequenceStepModules.ts. Self-contained: only ctx.inputs + ctx.log; no host capabilities required beyond core NodeContext. The integration siblings (email, sms, webhook) ship in a follow-up pack once openwop NodeContext extensions for host.email / host.sms / host.http land.",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://myndhyve.ai/packs/campaign-sequence"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/openwop/openwop"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ab0cd508bbe2a1ebf37281fe4117ceb376bf1e43244ba0077a9aaa9ab2e68019"
+        }
+      ],
+      "purl": "pkg:openwop/vendor.myndhyve.campaign-sequence@1.0.0"
+    },
+    "tools": [
+      {
+        "vendor": "openwop",
+        "name": "generate-sbom.mjs",
+        "version": "1"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "file",
+      "name": "LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0cea879ed215e3961316e97ab5e4d7a2b2bca999358668599bd53a1c953bc0d9"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "975"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "README.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4765c438b9466aa359bcda579848a3a5416e4e52e720563ea9de230c2605142b"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "3263"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "index.mjs",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "655f56d47be1042453e4b67f193e569fec1915e97f57443435e91eb2bb4b0ca1"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "7589"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "keys/pack.json.sig",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b35ed7e0d15d3075c161ba456d485e45d440c4dd01db37b08d2345011536a96"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "64"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "pack.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "310d3bf26a89a088741ece0d9bf4b69cf9b2af6d65d7caa09fa335f0e76e74e9"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "2538"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/condition.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "eb441ca676e95e3742484210b32d84f5d6f252391c118cac1e2c9d5668d4dd0f"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "387"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/condition.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "404000e92fbb909622bf1de200363b1ff6aa6ff72d004065a23069c0095af790"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "2787"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/condition.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b196d970f94f2c83dc3167e2ec89a9e99fc7ac9dc42648f3656ec128d9b4cf2"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "720"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/tag.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c7b917c6484c497d649d5ca3b979f577465359957880dd7688f120dc43712076"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "388"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/tag.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "02c895d4d5d39c899317071acdb18fe805e0d6436e18248edbe77690890a6dc5"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "872"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/tag.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "918e28f3b93498288c539f8589eedac2c00e8727a68b40d79fcda7c413aaacd2"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "575"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/wait.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "807e17ca8f42abf187cbfe58eff0e5cde0e907abc7dd91d0f9e09a44a28f79d5"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "414"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/wait.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1958ec194d77d0d1cac814de29053a7ea8b268ddffc01dd680b4e162c213230a"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "827"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/wait.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ccd988017b221f0448ab65f52327dd7d25bf680aeaed10be589fe582b1626b57"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "434"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:openwop/vendor.myndhyve.campaign-sequence@1.0.0",
+      "dependsOn": []
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.campaign-sequence/1.0.0/wait.config.json",
+  "title": "CampaignSequenceWaitConfig",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": true,
+  "description": "No required config. The host's enrollment scheduler decides WHEN to fire this node; the executor just signals completion."
+}

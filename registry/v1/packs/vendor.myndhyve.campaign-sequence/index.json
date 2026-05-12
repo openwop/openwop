@@ -1,0 +1,25 @@
+{
+  "name": "vendor.myndhyve.campaign-sequence",
+  "description": "MyndHyve campaign-sequence step executors — three pure-control nodes (wait, tag, condition) lifted from src/canvas-types/campaign-studio/sequences/sequenceStepModules.ts. Self-contained: only ctx.inputs + ctx.log; no host capabilities required beyond core NodeContext. The integration siblings (email, sms, webhook) ship in a follow-up pack once openwop NodeContext extensions for host.email / host.sms / host.http land.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/campaign-sequence",
+  "repository": "https://github.com/openwop/openwop",
+  "tags": [],
+  "versions": [
+    {
+      "version": "1.0.0",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/vendor.myndhyve.campaign-sequence/-/1.0.0.json",
+      "tarballUrl": "/v1/packs/vendor.myndhyve.campaign-sequence/-/1.0.0.tgz",
+      "signatureUrl": "/v1/packs/vendor.myndhyve.campaign-sequence/-/1.0.0.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-qwzVCLvioevzcoH+QRfOs3a/HkMkS6AHepqqmrLmgBk=",
+      "deprecated": false,
+      "yanked": false
+    }
+  ],
+  "latest": "1.0.0",
+  "deprecated": false
+}

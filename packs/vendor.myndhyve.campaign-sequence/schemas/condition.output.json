@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.campaign-sequence/1.0.0/condition.output.json",
+  "title": "CampaignSequenceConditionOutput",
+  "type": "object",
+  "required": ["success"],
+  "properties": {
+    "success": {
+      "type": "boolean",
+      "description": "Always true — condition evaluation never fails; an unparseable operator yields false and routes to noNextStepId."
+    },
+    "nextStepId": {
+      "type": "string",
+      "description": "The step.yesNextStepId or step.noNextStepId chosen based on condition result. May be omitted if neither branch was set on the step (terminal step)."
+    }
+  },
+  "additionalProperties": true
+}
