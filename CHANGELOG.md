@@ -9,6 +9,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ---
 
+## [1.0 — additions] — 2026-05-12 — Python host conformance re-measured post-Phase-C-round-2
+
+- **Re-ran `@openwop/openwop-conformance` against the post-Phase-C-round-2 Python host** (the version that advertises pause/resume + bulk-cancel + capability_required + webhooks). New default-mode pass rate: **667/782 = 85.3%** (down 0.4pp from the 670/782 baseline measured before Phase C round 2 — the new advertisements unlocked scenarios that test the full spec contract). `INTEROP-MATRIX.md` Python row + pass-rates table + 53-failure characterization paragraph refreshed with measured numbers. `examples/hosts/python/conformance.md` result table + 3-category failure breakdown rewritten honestly: (1) pre-Phase-C capability-gated scenarios (interrupts / BYOK / pack-registry / cap-breach / etc.), (2) Phase C round 2 advertise-but-spec-incomplete (5 pause-resume + 1 webhook-negative — endpoints exist, behavior needs tightening), (3) pre-existing host gaps inside the host's CLAIMED `openwop-stream-*` profiles (12 stream-modes failures — these warrant either implement-to-spec or retract-the-claim). Strict-mode posture paragraph extended to Python — its strict-fail count is expected to exceed 53 because the Phase C round 2 advertisements unlock behavior-required hard-fails the host doesn't fully satisfy. Lane: **doc-only**, no host or suite changes; this entry consolidates the Track 12 closure docs (commit `efbc8d8`) with the re-measurement that the senior code-review pass flagged as MEDIUM-1.
+
+## [1.0 — additions] — 2026-05-12 — Phase C round 2: Python reference host expansion
+
+Stdlib-only Python in-memory host gains parity with SQLite/Postgres on four additive surfaces, all spec-compliant per `rest-endpoints.md`, `capabilities.md`, `webhooks.md`, and `idempotency.md`:
+
+- **Pause/resume** — `POST /v1/runs/{runId}:pause` and `:resume` per `rest-endpoints.md` §pause/resume. 202 + `{status: "paused"|"running", pausedAt|resumedAt}`. 409 + `details.runStatus` on conflict. `drainPolicy: "immediate"` refused with 422 + `details.unsupportedDrainPolicy`. Executor parks at node boundary (drain-current-node).
+- **Bulk-cancel** — `POST /v1/runs:bulk-cancel`. `results[{runId, ok, status?, error?}]` shape; order matches request. `runIds` cap = 100 (`details.maxRunIds` on overflow). Re-issuing returns `ok: true, status: "cancelled"` for already-cancelled runs per spec idempotency note.
+- **`capability_required` refusal** — pre-flight scan of `GATED_TYPEID_MAP` in `_handle_create_run`. 422 with canonical envelope: `details.{requiredCapability, offendingTypeId, nodeId}`. Refuses 9 gated typeIds: `core.{llm.chat, llm.completion, subWorkflow, orchestrator.supervisor, dispatch, channelWrite, identity, http.request, mcp.toolCall}`.
+- **Webhooks** — `POST /v1/webhooks` (register) + `DELETE /v1/webhooks/{id}` (unregister). HMAC-SHA256(`{timestamp}.{rawBody}`) signing with `X-openwop-Signature{,-Timestamp,-Algorithm,-Subscription-Id}` headers. SSRF guard rejects loopback / RFC1918 / link-local / unique-local / `*.local|*.internal|*.cluster|localhost`; rejection surfaces as `validation_error` + `details.reason` (not a host-invented code — matches `HTTP_ERROR_CODES` catalog). Fan-out runs on daemon threads so the executor never blocks. `data` field stripped from webhook envelope per `debug-bundle.md` redaction policy.
+- **Idempotency-Key** honored on all three new write endpoints via the existing `IdempotencyCache` (Layer-1, 24h TTL, body-hash conflict check) per `idempotency.md`.
+- **Discovery payload** advertises `capabilities.runs.pauseResume.drainPolicies: ["drain-current-node"]`, `bulkCancel.maxRunIds: 100`, `webhooks.signatureAlgorithms: ["v1"]`, and `refusedCapabilities[]` (the 8 capability keys whose typeIds this host pre-empts).
+- **Debug-bundle** corrected: `bundleVersion: "1.0"` (was `"1"` — failed schema pattern), `data` field stripped from rendered events (potential BYOK/interrupt-payload leak fix), 1000-event head+tail truncation cap with `truncated: true` + `truncatedReason: "events_truncated_to_size_cap"` + `truncatedOriginalCount` when triggered.
+
+**Honesty preserved:** `audit-log-integrity` profile remains unclaimed (Python stdlib lacks Ed25519). `production` profile remains unclaimed (no durability/backpressure/retention).
+
+Lane: **implementation-only**, no spec/schema/OpenAPI/AsyncAPI/SDK changes. Aligns reference host to existing FINAL specs; no normative deltas.
+
 ## [1.0 — additions] — 2026-05-12 — Track 11 OTLP/HTTP-protobuf path + collector remediation
 
 - **OTLP/HTTP-protobuf receiver landed.** `conformance/src/lib/otlp-protobuf.ts` (529 LOC, zero new npm deps) — hand-rolled `PbReader` + decoders for `ExportTraceServiceRequest` / `ExportMetricsServiceRequest`. Supports KeyValue + AnyValue oneof (string / int / double / bool / array / kvlist / bytes) per the OTLP wire spec. Output shape is JSON-equivalent so the existing `_ingestTraces` / `_ingestMetrics` consumers are unchanged. Forward-compat via "unknown field → skip" pattern. 18 server-free unit tests round-trip every wire-format variant via an in-test `PbWriter` helper.
