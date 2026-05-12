@@ -1,5 +1,6 @@
 /**
  * Multi-Agent Shift Phase 2 — agent-pack export round-trips workspace agents → AgentManifest.
+ * Normative reference: RFCS/0003-agent-packs.md
  *
  * Verifies that a host's workspace-scoped agent registry can project
  * agents into the canonical AgentManifest shape for export/distribution.

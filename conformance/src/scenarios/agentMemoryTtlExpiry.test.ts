@@ -1,5 +1,6 @@
 /**
  * Multi-Agent Shift Phase 3 — TTL expiry semantics for MemoryEntry.
+ * Normative reference: RFCS/0004-memory-layer.md
  *
  * Verifies that memory entries carrying `expiresAt` in the past are
  * NOT surfaced by `MemoryAdapter.list()` / `get()`. The fixture writes

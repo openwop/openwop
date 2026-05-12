@@ -1,5 +1,6 @@
 /**
  * Multi-Agent Shift Phase 5 — orchestrator → dispatch → next-worker round-trip.
+ * Normative reference: RFCS/0006-orchestrator.md
  *
  * Verifies that a workflow with `core.orchestrator.supervisor` →
  * `core.dispatch` topology emits the canonical event sequence:

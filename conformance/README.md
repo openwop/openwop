@@ -81,7 +81,7 @@ Exit code is non-zero on any failed assertion.
 
 ## What's Covered
 
-The current suite has 94 scenario files under `src/scenarios/`. This includes 18 Multi-Agent Shift scenarios (Phases 1-5) added 2026-05-10, the `registry-public.test.ts` public-registry healthcheck added 2026-05-11 (opt-in via `OPENWOP_TEST_PUBLIC_REGISTRY=true`), the `replay-llm-cache-key.test.ts` placeholder added 2026-05-11 (three `it.todo()` cases for the cross-host LLM cache-key recipe per `replay.md` §"LLM cache-key recipe"), and the two `production-*.test.ts` scenarios added 2026-05-11 for the `openwop-production` profile per RFC 0009 (`production-backpressure.test.ts`, `production-retention-expiry.test.ts`). The maintained scenario-to-spec map lives in [`coverage.md`](./coverage.md); this README keeps the operator quickstart and the historical scenario notes below.
+The current suite has 98 scenario files under `src/scenarios/`. This includes 18 Multi-Agent Shift scenarios (Phases 1-5) added 2026-05-10, the `registry-public.test.ts` public-registry healthcheck added 2026-05-11 (opt-in via `OPENWOP_TEST_PUBLIC_REGISTRY=true`), the `replay-llm-cache-key.test.ts` placeholder added 2026-05-11 (three `it.todo()` cases for the cross-host LLM cache-key recipe per `replay.md` §"LLM cache-key recipe"), the two `production-*.test.ts` scenarios added 2026-05-11 for the `openwop-production` profile per RFC 0009 (`production-backpressure.test.ts`, `production-retention-expiry.test.ts`), and the four `auth-*.test.ts` scenarios added 2026-05-11/12 for the production-auth profiles per RFC 0010 (`auth-api-key-rotation.test.ts`, `auth-oauth2-client-credentials.test.ts`, `auth-oidc-user-bearer.test.ts`, `auth-mtls.test.ts` (opt-in via `OPENWOP_TEST_MTLS=1`)). The maintained scenario-to-spec map lives in [`coverage.md`](./coverage.md); this README keeps the operator quickstart and the historical scenario notes below.
 
 High-level coverage includes:
 
@@ -160,7 +160,7 @@ Server-required (added in 1.7.0):
 |---|---|---|
 | **Redaction** | [`capabilities.md`](../spec/v1/capabilities.md) §"Secrets" + NFR-7 + §"aiProviders" | Vendor-neutral assertions that the server doesn't leak secret material. Three scenario groups: (a) discovery shape contract — `secrets` + `aiProviders` advertisements are well-formed regardless of `secrets.supported`; when `supported === true`, scopes MUST be non-empty + `resolution === 'host-managed'`; `byok ⊆ supported`. (b) bearer-token redaction — invalid Bearer canary in `Authorization` header is not echoed in the 401 response body. (c) credentialRef echo control — gated on `secrets.supported === true`; canary planted in `configurable.ai.credentialRef` MUST NOT appear in any RunEvent payload (poll-based capture; transport-agnostic). Uses runtime-built canary fixtures (`lib/canaries.ts`) that defeat static secret scanners. 6 scenarios. |
 
-Current source tree: 94 scenario files. Use [`coverage.md`](./coverage.md) for current grade/gap tracking.
+Current source tree: 98 scenario files. Use [`coverage.md`](./coverage.md) for current grade/gap tracking.
 
 ## Remaining Gaps
 
@@ -170,7 +170,7 @@ Current source tree: 94 scenario files. Use [`coverage.md`](./coverage.md) for c
 | `messages` mode AI chunks | Needs server-side AI provider mock (fixture spec gap F1 in `fixtures.md`). |
 | Cross-version compat | Needs server-controllable `engineVersion` cycle to test forward-fold-best-effort. |
 | Capability-limit fixtures | Needs fixtures that deliberately exceed `clarificationRounds` / `schemaRounds` / `envelopesPerTurn` to assert `cap.breached` shape beyond the shipped node-execution cap case. |
-| Auth profiles | Needs API-key rotation, OAuth2 client-credentials, and mTLS scenarios for hosts that claim those profiles. RFC pending (Phase B of the gap-closure plan). |
+| Auth profiles | Capability-shape scenarios for `openwop-auth-api-key-rotation`, `openwop-auth-oauth2-client-credentials`, `openwop-auth-oidc-user-bearer`, and `openwop-auth-mtls` (opt-in) shipped 2026-05-11/12 under RFC 0010, with a synthetic OIDC issuer harness at `conformance/src/lib/oidc-issuer.ts`. Remaining: live-IdP positive-path validation against at least one reference host. |
 | Production profile | Capability-shape scenarios shipped 2026-05-11 (`production-backpressure.test.ts`, `production-retention-expiry.test.ts`) under RFC 0009; durability + debug-bundle truncation predicates covered by re-labeled `restart-during-run.test.ts`, `staleClaim.test.ts`, `debug-bundle-truncation.test.ts`. Remaining: end-to-end behavior validation against a host advertising `capabilities.production.supported: true` under `OPENWOP_REQUIRE_BEHAVIOR=true`. |
 
 ---

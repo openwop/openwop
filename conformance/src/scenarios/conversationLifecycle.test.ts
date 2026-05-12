@@ -1,5 +1,6 @@
 /**
  * Multi-Agent Shift Phase 4 — conversation primitive lifecycle.
+ * Normative reference: RFCS/0005-conversation.md
  *
  * Verifies the open → exchange → close lifecycle:
  *   1. `conversation.opened` emitted on `core.conversationGate.open`.

@@ -1,5 +1,6 @@
 /**
  * Multi-Agent Shift Phase 5 — CP-1 conservative-path orchestrator suspend.
+ * Normative reference: RFCS/0006-orchestrator.md
  *
  * Verifies the CP-1 invariant: when a `core.orchestrator.supervisor`
  * would emit a decision with `confidence < escalationThreshold`, the

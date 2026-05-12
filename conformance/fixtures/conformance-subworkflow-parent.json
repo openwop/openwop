@@ -14,7 +14,7 @@
     },
     {
       "id": "subwf-call",
-      "typeId": "core.control.subWorkflow",
+      "typeId": "core.subWorkflow",
       "name": "Invoke Child",
       "position": { "x": 200, "y": 0 },
       "config": {

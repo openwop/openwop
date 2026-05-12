@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.http/1.0.0/fetch.output.json",
+  "title": "FetchNodeOutput",
+  "description": "Output for core.openwop.http.fetch. Carries the response and per-attempt telemetry so downstream nodes can branch on status / inspect bodies / observe retry behaviour.",
+  "type": "object",
+  "required": ["status", "headers", "body", "durationMs", "attempts"],
+  "properties": {
+    "status": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 599,
+      "description": "Final HTTP status code (after retries, if any). The sentinel value `0` indicates network exhaustion — no HTTP response was ever received across all retry attempts. When `status === 0`, the `networkError` field carries the last error's message. Workflow authors checking for success should test `status >= 200 && status < 300`."
+    },
+    "headers": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Final response headers. Header names are lowercased per the Fetch standard. The host MAY strip headers it considers sensitive before persisting; consumers MUST NOT rely on every transport header being present."
+    },
+    "body": {
+      "description": "Response body. Parsed as JSON when `Content-Type` includes `application/json` and the body parses successfully; otherwise the raw UTF-8 string. Empty responses produce `null`.",
+      "type": ["object", "array", "string", "null"]
+    },
+    "durationMs": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total wall-clock duration from first attempt to terminal response, including backoff delays."
+    },
+    "attempts": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Number of attempts made. `1` means the first attempt succeeded; higher values mean retries fired."
+    },
+    "idempotencyKey": {
+      "type": "string",
+      "description": "The `Idempotency-Key` header value sent on this request (when idempotency mode is `auto` and method is non-idempotent). Surfaced for replay-determinism debugging."
+    },
+    "networkError": {
+      "type": "string",
+      "description": "Set ONLY when every attempt failed with a network error (no HTTP response was ever received) — in that case `status` is `0`. Carries the last error's message for diagnostic surfacing. Absent on any non-zero `status`."
+    }
+  },
+  "additionalProperties": false
+}

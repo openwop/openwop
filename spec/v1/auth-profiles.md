@@ -109,7 +109,28 @@ This is distinct from `openwop-auth-oauth2-client-credentials` (which authentica
 
 ## Discovery guidance
 
-Because the base v1 discovery schema is intentionally stable, auth-profile metadata belongs under an extension namespace:
+As of RFC 0010 (2026-05-11), auth-profile metadata has a **formal schema location** at `capabilities.auth.*` in `schemas/capabilities.schema.json`. Hosts SHOULD advertise auth-profile claims and metadata here. The `extensions.auth.*` location below remains valid for historical reasons; clients MUST prefer `capabilities.auth.*` when both are present.
+
+**Preferred (RFC 0010, formal schema):**
+
+```json
+{
+  "capabilities": {
+    "auth": {
+      "profiles": ["openwop-auth-api-key-rotation", "openwop-auth-oauth2-client-credentials", "openwop-auth-oidc-user-bearer"],
+      "rotation": { "supported": true, "minGraceSeconds": 86400 },
+      "oauth2": {
+        "supported": true,
+        "issuer": "https://issuer.example.com/",
+        "audience": "https://api.example.com/openwop",
+        "supportedAlgorithms": ["RS256", "ES256"]
+      }
+    }
+  }
+}
+```
+
+**Legacy (extension namespace; still valid):**
 
 ```json
 {
@@ -128,7 +149,7 @@ Because the base v1 discovery schema is intentionally stable, auth-profile metad
 }
 ```
 
-This extension is advisory. A host passes an auth profile only by satisfying the documented behavior and the corresponding conformance scenarios.
+This advertisement is advisory. A host passes an auth profile only by satisfying the documented behavior and the corresponding conformance scenarios (`auth-api-key-rotation.test.ts`, `auth-oauth2-client-credentials.test.ts`, `auth-oidc-user-bearer.test.ts`, `auth-mtls.test.ts`).
 
 ---
 

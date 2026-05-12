@@ -1,0 +1,25 @@
+{
+  "name": "core.openwop.mcp",
+  "description": "Spec-canonical MCP-operation pack. Four nodes for workflow-author-direct interaction with registered MCP servers — list-tools, invoke-tool, read-resource, server-status. Complements the implicit LLM-mediated tool-call path documented in spec/v1/mcp-integration.md by exposing the same MCP operations as first-class workflow nodes. Routes through the host's MCP client (ctx.mcp.* surface); the pack itself speaks no MCP protocol.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.mcp",
+  "repository": "https://github.com/openwop/openwop",
+  "tags": [],
+  "versions": [
+    {
+      "version": "1.0.0",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/core.openwop.mcp/-/1.0.0.json",
+      "tarballUrl": "/v1/packs/core.openwop.mcp/-/1.0.0.tgz",
+      "signatureUrl": "/v1/packs/core.openwop.mcp/-/1.0.0.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-6+BzctH9myodPgmYDE6esZCQG9fpQycdvf13J+40ze4=",
+      "deprecated": false,
+      "yanked": false
+    }
+  ],
+  "latest": "1.0.0",
+  "deprecated": false
+}

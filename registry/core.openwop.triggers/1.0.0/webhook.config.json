@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.triggers/1.0.0/webhook.config.json",
+  "title": "WebhookTriggerConfig",
+  "type": "object",
+  "required": ["path"],
+  "properties": {
+    "path": {
+      "type": "string",
+      "pattern": "^/[A-Za-z0-9_./-]*$",
+      "minLength": 1,
+      "maxLength": 256,
+      "description": "URL path the host registers for this workflow (e.g., `/hooks/github/push`). Host's webhook subsystem maps the path → workflow registration. Pattern restricts to safe-for-URL characters."
+    },
+    "methods": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
+      "minItems": 1,
+      "default": ["POST"],
+      "description": "HTTP methods this webhook accepts. Defaults to POST. Hosts MAY return 405 on unmatched methods."
+    },
+    "secret": {
+      "type": "string",
+      "description": "Optional HMAC secret reference (a credentialRef per the host's secret-resolution mechanism, NOT a literal). If set, hosts verify incoming requests carry a valid HMAC signature per spec/v1/webhooks.md §verification. Missing signature → host returns 401 BEFORE invoking the workflow."
+    }
+  },
+  "additionalProperties": false
+}

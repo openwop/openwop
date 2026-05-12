@@ -55,13 +55,58 @@ Within the `core.*` scope, the following typeIds are reserved for workflow primi
 | `core.getVariable` | Read from workflow variables. |
 | `core.interrupt` | HITL primitive — see `interrupt.md`. |
 | `core.identity` | Echo-input primitive — passes a named input port to an output port unchanged. Used by conformance fixtures to verify input/output passthrough; servers SHOULD ship for v1 conformance. |
-| `core.subWorkflow` | Synchronous sub-workflow invocation — parent waits for child terminal. See `conformance/fixtures.md` §`conformance-subworkflow-parent`. |
+| `core.subWorkflow` | Synchronous sub-workflow invocation — parent waits for child terminal. Config shape, output shape, and `outputMapping` semantics are normative; see §"`core.subWorkflow` contract" below + `conformance/fixtures.md` §`conformance-subworkflow-parent`. |
 | `core.channelWrite` | Write a value to a named channel using a typed reducer (v1: `append` only) with optional `ttlMs` filtering. Closes C3 channel-TTL fold. See `channels-and-reducers.md` §append + §TTL and `conformance/fixtures.md` §`conformance-channel-ttl`. |
 | `core.orchestrator.supervisor` | Multi-Agent Shift Phase 5. Observes worker completions and emits an `OrchestratorDecision` (`schemas/orchestrator-decision.schema.json`) — discriminated union over `next-worker` / `ask-user` / `terminate`. Hosts advertising `capabilities.agents.orchestrator: true` MUST register this typeId. Pairs with `RunSnapshot.runOrchestrator` (the supervisor identity for the run's lifetime) and the `runOrchestrator.decided` event. Conservative-path: when the supervisor's `agent.decided.confidence` is below the resolved escalation threshold, the node MUST suspend via `node.suspended { reason: 'low-confidence' }` per the CP-1 invariant. |
 | `core.dispatch` | Multi-Agent Shift Phase 6. Consumes the latest `OrchestratorDecision` (typically wired from an upstream `core.orchestrator.supervisor` via DAG edge) and acts on it: `next-worker` dispatches each `nextWorkerIds[i]` as a child run (delegates to `core.subWorkflow` machinery); `ask-user` suspends via `core.conversationGate` (if `capabilities.conversationPrimitive: true`) or `clarification.requested` interrupt; `terminate` completes the run cleanly. Configuration shape: `schemas/dispatch-config.schema.json`. Conservative-path commitment (CP-2): MUST NOT mutate the run's DAG mid-run — each iteration runs against the static template DAG. Hosts advertising `capabilities.agents.dispatch: true` MUST register this typeId. See `conformance/src/scenarios/dispatchLoop.test.ts`. |
 | `core.conversationGate` | Multi-Agent Shift Phase 4. Multi-turn conversation primitive — `open`/`exchange`/`close` lifecycle on a single typeId. `open` mints a `conversationId` and emits `conversation.opened`. `exchange` suspends with the prompt; resume value MUST validate against the per-turn schema declared in node config; emits `conversation.exchanged`. `close` ends the conversation, emitting `conversation.closed`. Conversation log is replay-deterministic via the `message` reducer (see `channels-and-reducers.md`). Hosts advertising `capabilities.conversationPrimitive: true` MUST register this typeId; pre-MAS hosts route multi-turn user interjections through `clarification.requested` instead. |
 
 The naming convention is `core.<conceptName>` — flat camelCase compound for multi-word names. Multi-segment dotted typeIds (e.g., `core.ai.callPrompt`) live in the **portable optional** node-pack tier (`openwop.*` / `vendor.*`), not in Core openwop. Implementations MUST register these typeIds before claiming v1 conformance.
+
+### `core.subWorkflow` contract
+
+`core.subWorkflow` dispatches a child run of a different workflow document and waits for that child's terminal status before completing. The contract is normative for v1 conformance.
+
+**Config shape:**
+
+```json
+{
+  "workflowId": "<child-workflow-id>",
+  "waitForCompletion": true,
+  "onChildFailure": "fail-parent" | "absorb",
+  "outputMapping": { "<parentVar>": "<childVar>" },
+  "propagateCancellation": true
+}
+```
+
+- `workflowId` (required, string): the child workflow document identifier. Hosts MUST refuse the parent run with `unknown_child_workflow` if no such workflow is loaded.
+- `waitForCompletion` (optional, boolean, default `true`): whether the parent blocks on the child's terminal status. `false` is reserved for a future asynchronous variant; v1 hosts MAY refuse `false` with `validation_error`.
+- `onChildFailure` (optional, closed enum, default `"fail-parent"`): `"fail-parent"` propagates the child's failure to the parent's `node.failed` event and subsequent `run.failed`; `"absorb"` records the child's failure but lets the parent continue.
+- `outputMapping` (optional, object): a `parentVar → childVar` map. After the child reaches `completed`, the host MUST copy each named child variable into the parent's variables under the mapped key. Missing child variables MUST surface as `undefined` (the host MUST NOT throw); the host MUST NOT overwrite parent variables for entries whose child source is `undefined`.
+- `propagateCancellation` (optional, boolean, default `true`): when the parent enters `cancelling`, whether to cascade-cancel the in-flight child. See `interrupt-profiles.md` §"Parent-child cancellation."
+
+**Output shape (normative).** On child terminal, the parent's `node.completed` event payload MUST carry `outputs.childRunId` (string) and `outputs.childStatus` (closed enum: `"completed" | "failed" | "cancelled"`):
+
+```json
+{
+  "type": "node.completed",
+  "nodeId": "<subwf-node-id>",
+  "data": {
+    "outputs": {
+      "childRunId": "run-...",
+      "childStatus": "completed"
+    }
+  }
+}
+```
+
+Hosts that want to carry additional fields (e.g., aggregate `childOutcome` enum, retry counters) MAY add them under `data.outputs.*` but MUST NOT remove `childRunId` / `childStatus`.
+
+**Parent linkage.** Every child run launched via `core.subWorkflow` MUST carry `RunSnapshot.parentRunId` (the parent's runId) and `RunSnapshot.parentNodeId` (the dispatching node's id). Both fields are required on the child's `GET /v1/runs/{runId}` response.
+
+**Variable seeding.** A child run's variables MUST be initialized from the child workflow's `variables[].defaultValue` declarations at run-create time. Mid-run mutations to those defaults are out of scope (the next write wins per the channel reducer); the seeding rule covers the initial fold only.
+
+**Conformance:** `conformance/src/scenarios/subworkflow.test.ts` and the `conformance-subworkflow-parent`/`conformance-subworkflow-child` fixtures exercise the contract end-to-end.
 
 ### Versioning
 

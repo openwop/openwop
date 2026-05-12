@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.integration/1.0.0/slack-message.input.json",
+  "title": "SlackMessageInput",
+  "type": "object",
+  "required": ["text"],
+  "properties": {
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40000,
+      "description": "Message text. Slack-flavored markdown (italics via `_`, bold via `*`, code via backticks). MUST be present even when `blocks` is set — fallback when client can't render blocks."
+    },
+    "blocks": {
+      "type": "array",
+      "description": "Slack Block Kit blocks. Host forwards verbatim. Schema-shape is the Slack API's `blocks` argument."
+    },
+    "threadTs": {
+      "type": "string",
+      "description": "Parent message timestamp — when set, this message posts as a reply in the existing thread. Format: Slack message ts like `1715353200.123456`."
+    },
+    "broadcast": {
+      "type": "boolean",
+      "default": false,
+      "description": "Only used when threadTs is set. true = also broadcast the reply to the channel."
+    }
+  },
+  "additionalProperties": false
+}

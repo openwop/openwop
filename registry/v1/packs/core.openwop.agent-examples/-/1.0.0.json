@@ -1,0 +1,65 @@
+{
+  "name": "core.openwop.agent-examples",
+  "version": "1.0.0",
+  "description": "First pure-agent pack — ships two minimal agent manifests with no node runtime. Validates the `agents[]` extension to the pack manifest (per agent-manifest.schema.json + RFC 0003). Echo agent inlines its system prompt; Summarizer references `prompts/summarizer.md` to demonstrate the `systemPromptRef` path. Both agents are stateless (memoryShape.longTerm: false). Vendor-neutral: no model is pinned — hosts resolve via their BYOK aiProviders surface.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.agent-examples",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "core",
+    "agents",
+    "examples",
+    "reference",
+    "stateless"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "agents": [
+    {
+      "agentId": "core.openwop.agent-examples.echo-agent",
+      "persona": "Echo",
+      "label": "Echo Agent",
+      "description": "Repeats the user's most recent message back verbatim. Smoke fixture for the agent-dispatch lifecycle.",
+      "modelClass": "general",
+      "systemPrompt": "You are Echo. Repeat the user's most recent message back verbatim. Do not analyze, paraphrase, embellish, or add commentary. If the message is empty, respond with exactly the empty string.",
+      "toolAllowlist": [],
+      "memoryShape": {
+        "scratchpad": false,
+        "conversation": false,
+        "longTerm": false
+      },
+      "confidence": {
+        "defaultThreshold": 0.95
+      }
+    },
+    {
+      "agentId": "core.openwop.agent-examples.summarizer",
+      "persona": "Summarizer",
+      "label": "Summarizer Agent",
+      "description": "Produces a 2-3 sentence summary of arbitrary input text. Demonstrates the `systemPromptRef` path — the prompt body lives in `prompts/summarizer.md` rather than inlined in the manifest.",
+      "modelClass": "writing",
+      "systemPromptRef": "prompts/summarizer.md",
+      "toolAllowlist": [],
+      "memoryShape": {
+        "scratchpad": false,
+        "conversation": false,
+        "longTerm": false
+      },
+      "confidence": {
+        "defaultThreshold": 0.7
+      }
+    }
+  ],
+  "runtime": {
+    "language": "remote",
+    "entry": "pack.json"
+  },
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "openwop-team-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-OvcPLr9HBXZ2yoDLGua/sOBjzAdrO+unMCoflkRtNgQ="
+}

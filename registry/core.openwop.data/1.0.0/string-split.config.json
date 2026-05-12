@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.data/1.0.0/string-split.config.json",
+  "title": "StringSplitConfig",
+  "type": "object",
+  "required": ["separator"],
+  "properties": {
+    "separator": {
+      "type": "string",
+      "description": "Separator to split on. Empty string splits per-character. Multi-character separators are matched literally (no regex)."
+    },
+    "limit": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Maximum number of pieces. Beyond this, remainder is included in the last piece (NOT discarded — that matches Python str.split(sep, maxsplit) semantics, not JavaScript's String.prototype.split which discards). Omit for no limit."
+    }
+  },
+  "additionalProperties": false
+}

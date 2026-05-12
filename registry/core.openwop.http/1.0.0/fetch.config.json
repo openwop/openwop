@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.http/1.0.0/fetch.config.json",
+  "title": "FetchNodeConfig",
+  "description": "Config for core.openwop.http.fetch. The URL template and method are configured here; per-request body / dynamic substitutions arrive via inputs.",
+  "type": "object",
+  "required": ["url"],
+  "properties": {
+    "url": {
+      "type": "string",
+      "format": "uri-reference",
+      "minLength": 1,
+      "maxLength": 2048,
+      "description": "Request URL. MAY contain `{{name}}` template placeholders replaced from `inputs.variables` at dispatch. The substituted URL MUST resolve to an `http://` or `https://` scheme; other schemes are rejected at runtime with `INVALID_URL`."
+    },
+    "method": {
+      "type": "string",
+      "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"],
+      "default": "GET",
+      "description": "HTTP method. Defaults to GET. Methods that conventionally carry a body (POST/PUT/PATCH) consume `inputs.body`; others ignore it."
+    },
+    "headers": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "maxLength": 8192
+      },
+      "description": "Static request headers. The `Authorization` header, if present, is sent verbatim — workflow authors needing dynamic Bearer auth typically resolve it through the host's secret-injection mechanism and pass the resolved value here at dispatch."
+    },
+    "timeoutMs": {
+      "type": "integer",
+      "minimum": 100,
+      "maximum": 120000,
+      "default": 30000,
+      "description": "Per-attempt request timeout in milliseconds. Bounded to 2 minutes so a hung remote can't stall a run indefinitely."
+    },
+    "retry": {
+      "type": "object",
+      "description": "Retry policy. Applies to 5xx responses and network errors only — 4xx responses are NEVER retried (they're treated as terminal client errors).",
+      "properties": {
+        "maxAttempts": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "default": 3,
+          "description": "Maximum total attempts including the first try. `maxAttempts: 1` disables retries."
+        },
+        "initialDelayMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60000,
+          "default": 500,
+          "description": "Delay before the second attempt. Doubles each subsequent attempt (exponential)."
+        },
+        "maxDelayMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60000,
+          "default": 8000,
+          "description": "Cap on per-attempt backoff delay."
+        }
+      },
+      "additionalProperties": false
+    },
+    "idempotency": {
+      "type": "object",
+      "description": "Idempotency-Key handling. By default the node derives a deterministic key from (runId, nodeId, body-hash) so replays generate the same key — letting the remote server dedupe. Set `mode: 'disabled'` to suppress the header entirely (workflows for endpoints that error on unknown headers).",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["auto", "disabled"],
+          "default": "auto",
+          "description": "`auto` (default) sends `Idempotency-Key: <derived>` on every non-GET non-HEAD non-OPTIONS request. `disabled` omits the header."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

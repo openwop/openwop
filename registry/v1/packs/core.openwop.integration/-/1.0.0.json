@@ -1,0 +1,63 @@
+{
+  "name": "core.openwop.integration",
+  "version": "1.0.0",
+  "description": "Spec-canonical integration pack — universal communication primitives that route through the host's provider-specific adapters. Phase 1 v1.0.0 ships email-send + slack-message (both communication; both side-effectful with engine Layer-2 cost-once caching via deterministic Idempotency-Key derivation). File-system, database-query, and GitHub-action nodes defer to future minors — each needs real connection-pool / credential abstractions in the host.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.integration",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "core",
+    "integration",
+    "email",
+    "slack",
+    "communication"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "nodes": [
+    {
+      "typeId": "core.openwop.integration.email-send",
+      "version": "1.0.0",
+      "label": "Email Send",
+      "description": "Sends an email via the host's email adapter. Provider-agnostic — host routes to SMTP / SES / Resend / SendGrid / whatever it advertises in `Capabilities.email.providers`. Side-effectful + cacheable. Deterministic Idempotency-Key derivation (SHA-256 over runId+nodeId+to+subject+body) so the engine's Layer-2 cache prevents duplicate sends on replay.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/email-send.config.json",
+      "inputSchemaRef": "schemas/email-send.input.json",
+      "outputSchemaRef": "schemas/email-send.output.json"
+    },
+    {
+      "typeId": "core.openwop.integration.slack-message",
+      "version": "1.0.0",
+      "label": "Slack Message",
+      "description": "Posts a message to Slack via the host's Slack adapter. Supports text + blocks + thread-reply. Side-effectful + cacheable. Deterministic Idempotency-Key prevents duplicate posts on replay.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/slack-message.config.json",
+      "inputSchemaRef": "schemas/slack-message.input.json",
+      "outputSchemaRef": "schemas/slack-message.output.json"
+    }
+  ],
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "openwop-team-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-ShpRjB9sZsi6wc3uIgl78Z+u7Iq0lwWOUrQVglOUdG8="
+}

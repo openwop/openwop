@@ -1,5 +1,6 @@
 /**
  * Multi-Agent Shift Phase 4 — `conversation.exchange` differs from `clarification.requested`.
+ * Normative reference: RFCS/0005-conversation.md
  *
  * Verifies that `core.conversationGate.exchange` produces
  * `conversation.exchanged` events in the run log — distinct from the

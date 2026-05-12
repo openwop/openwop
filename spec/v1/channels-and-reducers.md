@@ -601,9 +601,10 @@ External tooling can render channels separately from raw variables — by name, 
 Semantics:
 
 - Applies to reducers with monotonic-append semantics: `append`, `votes`, `feedback`. SHOULD be ignored for `replace` / `merge` / `counter` (those have no entry-age concept).
-- Drop policy is **lazy**: the engine MAY drop entries on read or on next write. There is no guarantee that a particular dropped entry will not appear in an SSE `state.snapshot` after its TTL expires; the next read after the snapshot will reflect the drop.
-- Per-entry timestamps come from the `RunEventDoc.timestamp` field on the `channel.written` event. The reducer compares against `now()` at fold time.
-- Combines with `maxSize`: both apply. Whichever bound trips first wins.
+- **Entry shape (normative).** On a channel that declares `ttlMs`, each entry stored under the channel's state MUST be wrapped in `{ value: T, _ts: number }`, where `_ts` is the write-time wall-clock in milliseconds since the Unix epoch as observed by the engine at append time. Hosts MUST NOT strip `_ts` from the entry between write and read. The wrap applies to the channel state surface (`RunSnapshot.variables.<channelName>`, `RunSnapshot.channels.<channelName>`, `channel.written` event payloads); raw `T` values are reserved for channels that omit `ttlMs`.
+- **Pruning timing (normative).** Pruning MUST happen at write time: before appending the new entry, the engine MUST remove every prior entry whose `_ts < (now - ttlMs)`. Engines MAY also prune opportunistically on read (e.g., to serve a fresher snapshot if wall-clock has advanced between writes), but write-time pruning is mandatory so any subsequent `RunSnapshot.variables` projection reflects the pruned state without depending on read-side fold timing. Servers MUST NOT surface entries with `_ts < (now - ttlMs)` on `GET /v1/runs/{runId}` once the next write has landed.
+- Per-entry timestamps come from the `RunEventDoc.timestamp` field on the `channel.written` event AND from the embedded `_ts` on each entry; both MUST agree at fold time. The reducer compares `_ts` against `now()` at fold time.
+- Combines with `maxSize`: both apply. Whichever bound trips first wins; `ttlMs` is applied first (per the write-time pruning rule), then `maxSize` enforces the entry-count ceiling on the remainder.
 - Replay-safe: TTL drop is deterministic given the event log + `now()` at replay time. Replays MUST use the original event timestamps (not replay-wall-clock) for the comparison so the resulting state matches the original run modulo TTL drift.
 - An OpenWOP-compliant server MAY refuse `ttlMs` declarations on reducers that don't support it (`400 Bad Request` on workflow registration).
 

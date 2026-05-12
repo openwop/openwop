@@ -1,5 +1,6 @@
 /**
  * Multi-Agent Shift Phase 1 — confidence-escalation contract (CP-1).
+ * Normative reference: RFCS/0002-agent-identity-and-reasoning-events.md
  *
  * Verifies: when an `agent.decided` event carries `confidence < threshold`,
  * the host MUST emit `node.suspended { reason: 'low-confidence' }` and

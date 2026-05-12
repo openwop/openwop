@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.triggers/1.0.0/event.config.json",
+  "title": "EventTriggerConfig",
+  "type": "object",
+  "required": ["eventName"],
+  "properties": {
+    "eventName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[a-z][a-zA-Z0-9._-]*$",
+      "description": "Event name this workflow subscribes to (e.g., `'order.created'`, `'user.signup'`). Hosts route events with matching `name` to the registered workflow. Pattern follows the dot-separated convention used elsewhere in the spec."
+    },
+    "source": {
+      "type": "string",
+      "description": "Optional source filter. When set, only events from this source trigger the workflow. Sources are host-defined (e.g., `'crm'`, `'billing'`, vendor names)."
+    }
+  },
+  "additionalProperties": false
+}

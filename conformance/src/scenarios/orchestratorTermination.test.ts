@@ -1,5 +1,6 @@
 /**
  * Multi-Agent Shift Phase 5 — orchestrator terminate decision (CO-3).
+ * Normative reference: RFCS/0006-orchestrator.md
  *
  * Verifies that when an `core.orchestrator.supervisor` emits a decision
  * with `kind: 'terminate'`:

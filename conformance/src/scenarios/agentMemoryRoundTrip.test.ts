@@ -1,5 +1,6 @@
 /**
  * Multi-Agent Shift Phase 3 — MemoryAdapter list/get round-trip.
+ * Normative reference: RFCS/0004-memory-layer.md
  *
  * Verifies that a host advertising `capabilities.agents.memoryBackends:
  * ['long-term']` resolves `AgentRef.memoryRef` to MemoryEntry results
