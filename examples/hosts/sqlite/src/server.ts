@@ -1607,12 +1607,21 @@ function handleEventsPoll(
   const sinceParam = url.searchParams.get('since');
   const since = sinceParam !== null ? Number(sinceParam) : -1;
   const rows = stmts.getEventsAfter.all(runId, since) as EventRow[];
+  // Emit BOTH legacy host field names (seq, data) AND canonical
+  // RunEventDoc fields (eventId, sequence, payload) per
+  // schemas/run-event.schema.json §required. Older readers keep
+  // working; conformance scenarios that grep the canonical 6 fields
+  // start passing. eventId derived as `evt-${runId}-${seq}` —
+  // deterministic, unique per run, no separate column needed.
   const events = rows.map((r) => ({
+    eventId: `evt-${r.run_id}-${r.seq}`,
     seq: r.seq,
+    sequence: r.seq,
     runId: r.run_id,
     type: r.type,
     nodeId: r.node_id,
     data: r.data_json !== null ? JSON.parse(r.data_json) : null,
+    payload: r.data_json !== null ? JSON.parse(r.data_json) : null,
     timestamp: r.timestamp,
   }));
   const lastSeq = events.length > 0 ? events[events.length - 1]!.seq : since;
@@ -1651,9 +1660,21 @@ function handleEventsSse(req: IncomingMessage, res: ServerResponse, runId: strin
   });
 
   const writeEvent = (event: RunEvent): void => {
+    // Same canonical-vs-legacy field shape as handleEventsPoll above.
+    const canonical = {
+      eventId: `evt-${event.runId}-${event.seq}`,
+      runId: event.runId,
+      seq: event.seq,
+      sequence: event.seq,
+      type: event.type,
+      nodeId: event.nodeId,
+      data: event.data,
+      payload: event.data,
+      timestamp: event.timestamp,
+    };
     res.write(`id: ${event.seq}\n`);
     res.write(`event: ${event.type}\n`);
-    res.write(`data: ${JSON.stringify(event)}\n\n`);
+    res.write(`data: ${JSON.stringify(canonical)}\n\n`);
   };
 
   const backlog = stmts.getEventsAfter.all(runId, resumeAfterSeq) as EventRow[];
