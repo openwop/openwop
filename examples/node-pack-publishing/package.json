@@ -1,6 +1,6 @@
 {
   "name": "@openwop/openwop-example-node-pack-publishing",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "OpenWOP node-pack publishing walkthrough: build a manifest, sign with Ed25519, and publish via PUT. Defaults to --dry-run because live publishing requires registry credentials.",
   "type": "module",

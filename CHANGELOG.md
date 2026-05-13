@@ -9,11 +9,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ---
 
-## [1.0.0] — 2026-05-12 — openwop v1.0 release
+## [1.1.0] — 2026-05-12 — openwop v1.0 close-out + additive features
 
-The first openwop v1.0 release ready for first non-steward adoption. The protocol contract was frozen on 2026-05-08 (see the spec-freeze entry below); the 4-day window between the freeze and this release closed every controllable gap from the 2026-05-10 deep-dive review, hardened the reference hosts to production-runtime parity, and verified end-to-end against `@openwop/openwop-conformance` v1.0.
+The close-out release for v1.0. The protocol contract was frozen on 2026-05-08 (see the spec-freeze entry below) and first published as v1.0.0 on 2026-05-11 (see entry below). This 1.1.0 release closes every controllable gap from the 2026-05-10 deep-dive review and the 2026-05-12 architectural re-evaluation, hardens the Postgres reference host to production-runtime parity, and lands 18 additive feature surfaces (Phase H launch-blockers + Phase I enterprise-blockers).
 
-This entry consolidates the development trail (22 dated `[1.0 — additions]` rows previously between this section and the 2026-05-08 freeze marker) into one comprehensive release record. Per-artifact history lives in `git log`; the protocol-gap-closure-plan archive in `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` tracks per-track closure status; conformance evidence per host lives in `examples/hosts/*/conformance.md` + `INTEROP-MATRIX.md`.
+All changes in this release are **additive per `COMPATIBILITY.md` §2.1** — no existing required fields changed type or optionality, no event-type shape changed, no endpoint contract relaxed, no existing `MUST` weakened. Hosts that were v1.0.0-compliant remain v1.x-compliant; this release just adds new capability surfaces that hosts may now advertise + new conformance scenarios that gate on those advertisements.
+
+Per-track closure status is tracked in `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` (archived 2026-05-12); per-host conformance evidence lives in `examples/hosts/*/conformance.md` + `INTEROP-MATRIX.md`.
 
 ### Spec corpus state
 
@@ -64,12 +66,12 @@ Hosts advertise optional behaviors at `/.well-known/openwop`. New capability blo
 - `capabilities.production.{supported, backpressure, retention, debugBundle}` — production-profile claim (RFC 0009).
 - `capabilities.observability.{otel, metrics}` — OTel emission with `openwop.{run.backlog, queue.depth, run.duration}` metrics; OTLP/HTTP-JSON + OTLP/HTTP-protobuf encodings supported.
 
-### Reference SDKs at 1.0.0
+### Reference SDKs at 1.1.0
 
-- **`@openwop/openwop`** (TypeScript, npm) — first-class methods on `OpenwopClient` for every OpenAPI endpoint; `HTTP_ERROR_CODES` catalog with 40+ canonical codes; `RunEventDoc` type + `isTerminalRunStatus` helper; new typed exports: `MemoryEntry`, `MemoryListOptions`, `AgentRef`, `AgentsCapability`, `AuthProfileClaim`, `AICredentialRef`, `McpToolCallNodeConfig`, `HttpRequestNodeConfig`.
+- **`@openwop/openwop`** (TypeScript, npm) — first-class methods on `OpenwopClient` for every OpenAPI endpoint; `HTTP_ERROR_CODES` catalog with 40+ canonical codes; `RunEventDoc` type + `isTerminalRunStatus` helper; new typed exports added in 1.1.0: `MemoryEntry`, `MemoryListOptions`, `AgentRef`, `AgentsCapability`, `AuthProfileClaim`, `AICredentialRef`, `McpToolCallNodeConfig`, `HttpRequestNodeConfig`.
 - **`openwop-client`** (Python, PyPI) — stdlib-only port preserving the same surface; `HTTP_ERROR_CODES` frozenset; matching wire types.
 - **`github.com/openwop/openwop/sdk/go`** (Go modules) — same surface; `HTTPErrorCodes` slice; doc comments on every exported symbol; `go vet` clean.
-- **Rust SDK** — foundation deferred to a follow-up release; parity scorecard target = full when it ships.
+- **Rust SDK** — foundation demand-gated; conformance suite is language-agnostic black-box, so future Rust client tests against the same wire contract.
 
 ### Reference hosts
 
@@ -80,9 +82,9 @@ Four reference implementations live under `examples/hosts/`. Conformance evidenc
 - **Python in-memory** (Python 3.11 stdlib-only, `examples/hosts/python/`) — cross-language portability proof; **700/788 (100% of applicable, ZERO failures)** conformance pass rate.
 - **Postgres** (TypeScript, `examples/hosts/postgres/`) — production durability path; first host claiming `openwop-production`; **730/799 (91.4%)** conformance pass rate. Ships with BYOK + 4-mode AI policy + MCP client + HTTP client (SSRF-guarded) + MemoryAdapter + agents capability + API-key rotation + auth-scoped discovery + OAuth2-CC + OIDC user-bearer JWT validators (RS256 + ES256 with JWKS cache + `alg: "none"` rejection) + cap-breach enforcement + per-workflow configurableSchema validation + subworkflow outputMapping + parent linkage.
 
-### Conformance suite at 1.0.0
+### Conformance suite at 1.1.0
 
-- **`@openwop/openwop-conformance`** — 103 scenario files under `conformance/src/scenarios/`. New since freeze: multi-agent scenarios (RFCs 0002–0007), production-profile (backpressure + retention-expiry), auth profiles (api-key-rotation + OAuth2-CC + OIDC + mTLS shape), audit-log integrity, BYOK roundtrip, MCP/A2A real-impl interop (verified against `@modelcontextprotocol/server-everything` + A2A 0.3 JSON-RPC reference), agent memory (roundtrip + cross-tenant + redaction + TTL), webhook signed delivery, stream-modes (buffer + mixed-mode), bulk-cancel, MCP-toolcall redaction, HTTP-client SSRF.
+- **`@openwop/openwop-conformance`** — 103 scenario files under `conformance/src/scenarios/`. New since the 1.0.0 publish: production-profile (backpressure + retention-expiry), auth profiles (api-key-rotation + OAuth2-CC + OIDC + mTLS shape), audit-log integrity, BYOK roundtrip, MCP/A2A real-impl interop (verified against `@modelcontextprotocol/server-everything` + A2A 0.3 JSON-RPC reference), agent memory (roundtrip + cross-tenant + redaction + TTL), webhook signed delivery, stream-modes (buffer + mixed-mode), bulk-cancel, MCP-toolcall redaction, HTTP-client SSRF, WASM pack ABI-version-rejection + memory-cap positive-path, configurableSchema positive overlay, pause-resume race + drain semantics.
 - **Two execution modes**: `npm test` (parallel files, ~95s) and `npm run test:strict` (`--no-file-parallelism` for production-backpressure + OTel envelope coverage).
 - **Behavior-gated**: `OPENWOP_REQUIRE_BEHAVIOR=true` flips capability-gated scenarios from skip to fail when the host doesn't advertise the profile.
 
@@ -98,7 +100,7 @@ Four reference implementations live under `examples/hosts/`. Conformance evidenc
 
 ### Wire-shape stability
 
-This is the first published openwop release. The wire contract is **frozen at v1.0** per `COMPATIBILITY.md` §2 — additive changes only inside v1.x, safety-fix only when correctness or CVE-class issues require it. Breaking changes wait for v2. Conformance pass under `@openwop/openwop-conformance` v1.0.0 is a stable target — non-pass on any later 1.x.x suite minor is NOT a v1 conformance regression.
+The wire contract remains **frozen at v1** per `COMPATIBILITY.md` §2 — additive changes only inside v1.x, safety-fix only when correctness or CVE-class issues require it. Breaking changes wait for v2. This 1.1.0 release adds new optional capability surfaces; hosts that advertised the 1.0.0 capability set remain v1.x-compliant without change.
 
 ### Domain and package naming
 
@@ -118,6 +120,36 @@ This is the first published openwop release. The wire contract is **frozen at v1
 6. AsyncAPI 3.1 `asyncapi validate` clean
 7. Publish-metadata + npm-pack-contents + Python/Go release-surface clean
 8. SECURITY invariants — every protocol-tier MUST-NOT has a public test
+
+---
+
+## [1.0.0] — 2026-05-11 — openwop v1.0 first publish
+
+First publication of the openwop spec corpus to the package registries. Captures everything that was in scope at the v1 spec freeze (2026-05-08) plus three days of pre-publish hardening: SQLite host conformance fixes, registry TLS provisioning, audit-log integrity profile shipped end-to-end on SQLite, CI gate hardening (NPM_CACHE / GOCACHE cross-platform), recruitment artifacts for first non-steward host + pack-author.
+
+### Published artifacts
+
+- **npm:** `@openwop/openwop@1.0.0` (TypeScript SDK), `@openwop/openwop-conformance@1.0.0` (conformance suite). Published 2026-05-11 05:06–05:09 UTC.
+- **PyPI:** `openwop-client@1.0.0` (Python SDK).
+- **Go modules:** tagged `sdk/go/v1.0.0` on origin.
+- **Tag:** `v1.0.0` on origin at commit `6a637f1`.
+
+### Scope at 1.0.0
+
+- Spec freeze content per `[1.0] — 2026-05-08` entry below — 26 prose specs at FINAL v1; 17 first-class JSON Schemas; OpenAPI 3.1 + AsyncAPI 3.1; three reference SDKs (TS/Python/Go); conformance suite v1.0.0.
+- Phase A conformance behavior closure — SQLite host pass rate 91.5% under `OPENWOP_REQUIRE_BEHAVIOR=true`.
+- Phase B spec corpus completion — all `DRAFT`/`STUB`/`OUTLINE` tags retired; `host-capabilities.md` promoted; `i18n.md` + `compliance.md` annexes shipped.
+- Phase C round 1 — three reference hosts (in-memory, sqlite, python) advertising their respective capability surfaces.
+- Phase F — MCP + A2A probe extensions (synthetic fakes).
+- Registry — `packs.openwop.dev` live with TLS; 3+ packs published with Ed25519 chains.
+- CI — `npm run openwop:check` 8-step gate green.
+
+### Known gaps at 1.0.0 (closed in 1.1.0)
+
+- Postgres reference host had not yet shipped the BYOK / MCP / HTTP / agent-memory / OAuth2-CC / OIDC / API-key-rotation / auth-scoped-discovery surfaces.
+- 11 conformance scenarios were shape-graded (not behavior-graded).
+- Phase F real-impl interop (against `@modelcontextprotocol/server-everything` + A2A 0.3 reference) was not yet wired.
+- Phase H launch-blockers + Phase I enterprise-blockers from the 2026-05-12 architectural re-evaluation were not yet identified.
 
 ---
 

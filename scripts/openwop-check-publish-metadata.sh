@@ -17,7 +17,7 @@ SPEC_ROOT="."
 EXPECTED_REPO="github.com/openwop/openwop"
 EXPECTED_GO_MODULE="${EXPECTED_REPO}/sdk/go"
 EXPECTED_NPM_SCOPE="@openwop"
-EXPECTED_V1_VERSION="1.0.0"
+EXPECTED_V1_VERSION="1.1.0"
 fail=0
 
 err() { echo "  FAIL: $*" >&2; fail=1; }
