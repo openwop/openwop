@@ -558,6 +558,24 @@
       ]
     },
     {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.market-intel-ad-angles@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.market-intel-ad-angles",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/vendor.myndhyve.market-intel-ad-angles/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "de7d55fd078f2929d35d219100cd9d43755ea5fd323ce424b3650facd8ade7c3"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "bom-ref": "pkg:openwop/vendor.myndhyve.market-intel-voc@1.0.0",
       "type": "library",
       "name": "vendor.myndhyve.market-intel-voc",

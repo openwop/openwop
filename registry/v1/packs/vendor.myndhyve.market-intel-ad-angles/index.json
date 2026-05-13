@@ -1,0 +1,25 @@
+{
+  "name": "vendor.myndhyve.market-intel-ad-angles",
+  "description": "MyndHyve market-intel.ad-angles — generates 5-10 ad-angle briefs from VoC research + ICP/product context via one AI call. Each brief carries angleName, segment, corePain, promise, mechanism, proof requirements, objections to handle, 3-5 hook variants, recommended CTA, source quotes, and a 5-dimension score (volume / intensity / commercialIntent / clarity / uniqueness + weighted total). Briefs are sorted by total score descending. Second marketIntel pack of the Stage 5 cohort.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/market-intel-ad-angles",
+  "repository": "https://github.com/openwop/openwop",
+  "tags": [],
+  "versions": [
+    {
+      "version": "1.0.0",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/vendor.myndhyve.market-intel-ad-angles/-/1.0.0.json",
+      "tarballUrl": "/v1/packs/vendor.myndhyve.market-intel-ad-angles/-/1.0.0.tgz",
+      "signatureUrl": "/v1/packs/vendor.myndhyve.market-intel-ad-angles/-/1.0.0.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-sCWZix9HkIjBun29/ep1ZgwfdfJi+p9xjRtngm8NTMU=",
+      "deprecated": false,
+      "yanked": false
+    }
+  ],
+  "latest": "1.0.0",
+  "deprecated": false
+}

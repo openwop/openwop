@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.market-intel-ad-angles/1.0.0/ad-angles.output.json",
+  "title": "MarketIntelAdAnglesOutput",
+  "type": "object",
+  "required": ["briefs", "segmentBreakdown", "crossAngleThemes", "testingPriority", "warnings", "briefCount", "success"],
+  "properties": {
+    "briefs": {
+      "type": "array",
+      "description": "Sorted by score.total descending.",
+      "items": {
+        "type": "object",
+        "required": ["angleId", "angleName", "segment", "corePain", "promise", "mechanism", "proofNeeded", "objectionsToHandle", "hookVariants", "recommendedCta", "sourceQuotes", "score", "rationale"],
+        "properties": {
+          "angleId": { "type": "string" },
+          "angleName": { "type": "string" },
+          "segment": { "type": "string", "enum": ["ready_now", "researching", "problem_aware", "unaware"] },
+          "corePain": { "type": "string" },
+          "promise": { "type": "string" },
+          "mechanism": { "type": "string" },
+          "proofNeeded": { "type": "array", "items": { "type": "string" } },
+          "objectionsToHandle": { "type": "array", "items": { "type": "string" } },
+          "hookVariants": { "type": "array", "items": { "type": "string" } },
+          "recommendedCta": { "type": "string", "enum": ["info_offer", "demo", "trial", "audit", "consult", "buy_now", "learn_more"] },
+          "sourceQuotes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["quote", "url"],
+              "properties": {
+                "quote": { "type": "string", "minLength": 5 },
+                "url": { "type": "string" },
+                "community": { "type": "string" }
+              },
+              "additionalProperties": true
+            }
+          },
+          "score": {
+            "type": "object",
+            "required": ["volume", "intensity", "commercialIntent", "clarity", "uniqueness", "total"],
+            "properties": {
+              "volume": { "type": "number", "minimum": 1, "maximum": 10 },
+              "intensity": { "type": "number", "minimum": 1, "maximum": 10 },
+              "commercialIntent": { "type": "number", "minimum": 1, "maximum": 10 },
+              "clarity": { "type": "number", "minimum": 1, "maximum": 10 },
+              "uniqueness": { "type": "number", "minimum": 1, "maximum": 10 },
+              "total": { "type": "number", "minimum": 0 }
+            },
+            "additionalProperties": false
+          },
+          "rationale": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "segmentBreakdown": {
+      "type": "object",
+      "required": ["ready_now", "researching", "problem_aware", "unaware"],
+      "properties": {
+        "ready_now": { "type": "integer" },
+        "researching": { "type": "integer" },
+        "problem_aware": { "type": "integer" },
+        "unaware": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    "crossAngleThemes": { "type": "array", "items": { "type": "string" } },
+    "testingPriority": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["angleId", "reason"],
+        "properties": {
+          "angleId": { "type": "string" },
+          "reason": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "warnings": { "type": "array", "items": { "type": "string" } },
+    "briefCount": { "type": "integer", "minimum": 0 },
+    "model": { "type": "string" },
+    "usage": {
+      "type": "object",
+      "properties": {
+        "promptTokens": { "type": "integer" },
+        "completionTokens": { "type": "integer" }
+      },
+      "additionalProperties": true
+    },
+    "success": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}

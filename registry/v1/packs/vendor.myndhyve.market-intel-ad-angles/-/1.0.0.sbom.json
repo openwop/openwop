@@ -1,0 +1,183 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.market-intel-ad-angles@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.market-intel-ad-angles",
+      "version": "1.0.0",
+      "description": "MyndHyve market-intel.ad-angles — generates 5-10 ad-angle briefs from VoC research + ICP/product context via one AI call. Each brief carries angleName, segment, corePain, promise, mechanism, proof requirements, objections to handle, 3-5 hook variants, recommended CTA, source quotes, and a 5-dimension score (volume / intensity / commercialIntent / clarity / uniqueness + weighted total). Briefs are sorted by total score descending. Second marketIntel pack of the Stage 5 cohort.",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://myndhyve.ai/packs/market-intel-ad-angles"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/openwop/openwop"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "b025998b1f479088c1ba7dbdfdea75660c1f75f262fa9f718d1b67826f0d4cc5"
+        }
+      ],
+      "purl": "pkg:openwop/vendor.myndhyve.market-intel-ad-angles@1.0.0"
+    },
+    "tools": [
+      {
+        "vendor": "openwop",
+        "name": "generate-sbom.mjs",
+        "version": "1"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "file",
+      "name": "LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0cea879ed215e3961316e97ab5e4d7a2b2bca999358668599bd53a1c953bc0d9"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "975"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "README.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "51654125a8e692161d87b8a7cdc656d050f4abefb1b818ec2878c512deb5d47f"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "3874"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "index.mjs",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "b2cbba1f585997c49263fbc87743849b022f7e9a3a651f07d4d6b63ff901feae"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "15597"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "keys/pack.json.sig",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e3a5e71a91148659798b458926b745891bff9b21557ba59054402434ee0c0d92"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "64"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "pack.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a456722957e14b5881bcdf088064035c72265f5150376f9afb7f575233a29745"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "1756"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/ad-angles.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "657d5e59c8af8b672fd5602ec16908b963f8f9266401bcbb1e433d54d153ac7a"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "839"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/ad-angles.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "cec32de67d27e2e2bc70638468df40c8963301f9649a3596b7e15021fe1b8bfb"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "2884"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/ad-angles.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d78da6a8613e7ea3339f4d3723a8831efdba0e3139c1bc8e16dc2dad0af15a14"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "3881"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:openwop/vendor.myndhyve.market-intel-ad-angles@1.0.0",
+      "dependsOn": [
+        "host:aiProviders"
+      ]
+    }
+  ]
+}

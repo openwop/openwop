@@ -1,0 +1,51 @@
+{
+  "name": "vendor.myndhyve.market-intel-ad-angles",
+  "version": "1.0.0",
+  "description": "MyndHyve market-intel.ad-angles — generates 5-10 ad-angle briefs from VoC research + ICP/product context via one AI call. Each brief carries angleName, segment, corePain, promise, mechanism, proof requirements, objections to handle, 3-5 hook variants, recommended CTA, source quotes, and a 5-dimension score (volume / intensity / commercialIntent / clarity / uniqueness + weighted total). Briefs are sorted by total score descending. Second marketIntel pack of the Stage 5 cohort.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/market-intel-ad-angles",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "vendor",
+    "myndhyve",
+    "market-intel",
+    "ad-angles",
+    "voc",
+    "copywriting"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "aiProviders": "supported"
+  },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "nodes": [
+    {
+      "typeId": "market-intel.ad-angles",
+      "version": "1.0.0",
+      "label": "Generate Ad Angle Briefs",
+      "description": "Single AI call. Input: VoC quotes (pains/desires/objections/triggers/proofRequests/alternatives) + ICP + product + top communities + optional competitors. Output: scored ad-angle briefs ranked by total score, segmentBreakdown, crossAngleThemes, testingPriority. Soft validation: invalid briefs are dropped with per-brief warnings.",
+      "category": "data",
+      "role": "action",
+      "capabilities": [
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/ad-angles.config.json",
+      "inputSchemaRef": "schemas/ad-angles.input.json",
+      "outputSchemaRef": "schemas/ad-angles.output.json"
+    }
+  ],
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "myndhyve-internal-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-sCWZix9HkIjBun29/ep1ZgwfdfJi+p9xjRtngm8NTMU="
+}
