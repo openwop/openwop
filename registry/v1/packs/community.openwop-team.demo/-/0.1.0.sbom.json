@@ -32,13 +32,13 @@
         {
           "type": "other",
           "comment": "publisher signing key (Ed25519)",
-          "url": "/keys/openwop-registry-root.pub"
+          "url": "/keys/community-openwop-team-demo-1.pub"
         }
       ],
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "7c0c8a499004d269e3ca04fac23ee00293f466a2477908367310cc39f2f072bc"
+          "content": "6cf66ef2e3b1baf8bdaf1ab6426a7e079ad43b8585d1906f6a0e6459ba2fa21a"
         }
       ],
       "purl": "pkg:openwop/community.openwop-team.demo@0.1.0"
@@ -102,17 +102,49 @@
     },
     {
       "type": "file",
-      "name": "pack.json",
+      "name": "keys/community.openwop-team.pub.pem",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "f663a48912553c6d11ab20f75ef74aac1f271994c9237f06509a3a4a617ab2f9"
+          "content": "432461188f212d101a061fdb2a5b4b90b2ba79504983646d79ae5146dc769aac"
         }
       ],
       "properties": [
         {
           "name": "openwop:size",
-          "value": "2961"
+          "value": "113"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "keys/pack.json.sig",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c9c475e31f591dee333111786c841c60d102742d31ab9c149679bd1a9cf6aa49"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "64"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "pack.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "bca4ae8b771ddb3a845d3960b5cb0038c42650066fcc2d72fa2245ce7be04027"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "2609"
         }
       ]
     },
