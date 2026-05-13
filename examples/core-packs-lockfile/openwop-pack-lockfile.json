@@ -1,0 +1,51 @@
+{
+  "lockfileVersion": 1,
+  "generatedAt": "2026-05-13T09:47:04.588Z",
+  "registry": "https://packs.openwop.dev",
+  "packs": [
+    {
+      "name": "core.openwop.ai",
+      "version": "1.0.0",
+      "resolved": "https://packs.openwop.dev/v1/packs/core.openwop.ai/-/1.0.0.tgz",
+      "integrity": "sha256-4vVid0p2eqjX/6zYHwFgCElbsvn7YdvDXHkENA9y//U=",
+      "signature": {
+        "algorithm": "ed25519",
+        "publicKey": "ORLpnWQX+LXPEMbzfru6TnEolAq5bkg+mIcuoggEe/w=",
+        "value": "GvMrhStzkSyVy0ehJrfHDskrAFnbHUDbhKdR9Wj29iOakGUOwsSLQSXx9LkPnoW/yghpFwHdReTUcfbSWkF8BA=="
+      }
+    },
+    {
+      "name": "core.openwop.http",
+      "version": "1.0.0",
+      "resolved": "https://packs.openwop.dev/v1/packs/core.openwop.http/-/1.0.0.tgz",
+      "integrity": "sha256-8+Z70OvbfHrTW1efblN8yHXsKPUBwBO+eWYX3OS278E=",
+      "signature": {
+        "algorithm": "ed25519",
+        "publicKey": "ORLpnWQX+LXPEMbzfru6TnEolAq5bkg+mIcuoggEe/w=",
+        "value": "foPx0u0SAkq8rRDSkBlhJUWVk+5UTyqIvLeO3XbTukdYKHOlj8KoHNf0NCnpVtFey0bVd13bmfTzHb4IuU8eDA=="
+      }
+    },
+    {
+      "name": "core.openwop.mcp",
+      "version": "1.0.0",
+      "resolved": "https://packs.openwop.dev/v1/packs/core.openwop.mcp/-/1.0.0.tgz",
+      "integrity": "sha256-6+BzctH9myodPgmYDE6esZCQG9fpQycdvf13J+40ze4=",
+      "signature": {
+        "algorithm": "ed25519",
+        "publicKey": "ORLpnWQX+LXPEMbzfru6TnEolAq5bkg+mIcuoggEe/w=",
+        "value": "FrEe0vFxBMeIWzRXMGjXpqOj6gOu7DYJ1pB6u+kg1iUb5awnRADosYA9S86tV3uaXusGyCAs4EaH3fa/Sz8RDw=="
+      }
+    },
+    {
+      "name": "core.openwop.triggers",
+      "version": "1.0.0",
+      "resolved": "https://packs.openwop.dev/v1/packs/core.openwop.triggers/-/1.0.0.tgz",
+      "integrity": "sha256-vu9qrTd7hFbwxtUYStu0Om97luRo4l8yx8j3sfdJgsI=",
+      "signature": {
+        "algorithm": "ed25519",
+        "publicKey": "ORLpnWQX+LXPEMbzfru6TnEolAq5bkg+mIcuoggEe/w=",
+        "value": "DSi0150wJJZUQjFy3XIaZ8XELyWI+0WN3alNhfJV2rIMN15azeWtryW9cEac+bC2RpijY/4b63U8TuvmdMzzCg=="
+      }
+    }
+  ]
+}
