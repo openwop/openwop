@@ -122,7 +122,7 @@ assertNoCommonLeaks(conformancePack.name, conformanceFiles);
 assertAllowedRoots(
   conformancePack.name,
   conformanceFiles,
-  new Set(['LICENSE', 'README.md', 'api', 'coverage.md', 'dist', 'fixtures', 'fixtures.md', 'package.json', 'schemas', 'src', 'vitest.config.ts']),
+  new Set(['CHANGELOG.md', 'LICENSE', 'README.md', 'api', 'coverage.md', 'dist', 'fixtures', 'fixtures.md', 'package.json', 'schemas', 'src', 'vitest.config.ts']),
 );
 assertIncludes(conformancePack.name, conformanceFiles, [
   'LICENSE',
