@@ -3,15 +3,110 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="description" content="OpenWOP is an open protocol for defining, running, streaming, interrupting, replaying, and validating durable AI workflows across hosts." />
-<title>OpenWOP — Workflow Orchestration Protocol</title>
-<link rel="icon" href="assets/OpenWOP.svg" type="image/svg+xml" />
 
+<!-- ─── Primary meta ────────────────────────────────────────────────── -->
+<title>OpenWOP — Multi-Agent Workflow Orchestration Protocol</title>
+<meta name="description" content="Open, vendor-neutral wire protocol for durable multi-agent workflow orchestration. Run lifecycle, replay, BYOK, signed events across compliant hosts." />
+<meta name="author" content="OpenWOP" />
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+<meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1" />
+<link rel="canonical" href="https://openwop.dev/" />
+
+<!-- ─── Open Graph (Facebook, LinkedIn, Slack, Discord, etc.) ───────── -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="OpenWOP" />
+<meta property="og:url" content="https://openwop.dev/" />
+<meta property="og:title" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol" />
+<meta property="og:description" content="Open, vendor-neutral wire protocol for durable multi-agent workflow orchestration. Run lifecycle, replay, BYOK, signed events across compliant hosts." />
+<meta property="og:image" content="https://openwop.dev/assets/og-cover.png" />
+<meta property="og:image:secure_url" content="https://openwop.dev/assets/og-cover.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol" />
+<meta property="og:locale" content="en_US" />
+
+<!-- ─── Twitter / X card ────────────────────────────────────────────── -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:site" content="@davidscotttufts" />
+<meta name="twitter:creator" content="@davidscotttufts" />
+<meta name="twitter:title" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol" />
+<meta name="twitter:description" content="Open, vendor-neutral wire protocol for durable multi-agent workflow orchestration. Run lifecycle, replay, BYOK, signed events across compliant hosts." />
+<meta name="twitter:image" content="https://openwop.dev/assets/og-cover.png" />
+<meta name="twitter:image:alt" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol" />
+
+<!-- ─── Icons / theme / PWA manifest ────────────────────────────────── -->
+<link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml" />
+<link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png" />
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png" />
+<link rel="mask-icon" href="/assets/OpenWOP.svg" color="#1a1a17" />
+<link rel="manifest" href="/manifest.webmanifest" />
+<meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)" />
+<meta name="color-scheme" content="light dark" />
+<meta name="application-name" content="OpenWOP" />
+<meta name="apple-mobile-web-app-title" content="OpenWOP" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="format-detection" content="telephone=no" />
+
+<!-- ─── Fonts ───────────────────────────────────────────────────────── -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" />
 
-<link rel="stylesheet" href="styles.css?v=design-2026-05-12c" />
+<!-- ─── Styles ──────────────────────────────────────────────────────── -->
+<link rel="stylesheet" href="styles.css?v=design-2026-05-12d" />
+
+<!-- ─── Structured data (schema.org / JSON-LD) ──────────────────────── -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://openwop.dev/#organization",
+      "name": "OpenWOP",
+      "url": "https://openwop.dev/",
+      "logo": "https://openwop.dev/assets/OpenWOP.svg",
+      "sameAs": ["https://github.com/openwop/openwop"]
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://openwop.dev/#website",
+      "url": "https://openwop.dev/",
+      "name": "OpenWOP",
+      "description": "Open protocol for multi-agent workflow orchestration",
+      "publisher": { "@id": "https://openwop.dev/#organization" },
+      "inLanguage": "en-US"
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://openwop.dev/#webpage",
+      "url": "https://openwop.dev/",
+      "name": "OpenWOP — Multi-Agent Workflow Orchestration Protocol",
+      "description": "Open, vendor-neutral wire protocol for durable multi-agent workflow orchestration.",
+      "isPartOf": { "@id": "https://openwop.dev/#website" },
+      "about": { "@id": "https://openwop.dev/#protocol" },
+      "primaryImageOfPage": "https://openwop.dev/assets/og-cover.png",
+      "inLanguage": "en-US"
+    },
+    {
+      "@type": "SoftwareSourceCode",
+      "@id": "https://openwop.dev/#protocol",
+      "name": "OpenWOP",
+      "alternateName": "Workflow Orchestration Protocol",
+      "description": "Open wire-level protocol for durable multi-agent workflow orchestration over REST, SSE, and signed webhooks. Defines run lifecycle, suspend/resume, replay/fork, BYOK, signed event streaming, and human-in-the-loop pauses.",
+      "url": "https://openwop.dev/",
+      "codeRepository": "https://github.com/openwop/openwop",
+      "programmingLanguage": ["TypeScript", "Python", "Go"],
+      "license": "https://www.apache.org/licenses/LICENSE-2.0",
+      "author": { "@id": "https://openwop.dev/#organization" },
+      "version": "1.0"
+    }
+  ]
+}
+</script>
 </head>
 <body>
 
@@ -310,53 +405,56 @@
   <div class="wrap">
     <div class="block-head">
       <div class="label"><span class="marker"><span class="dot"></span>§ 00 / Prologue</span></div>
-      <h2>Your competitors are rebuilding how software works.<br /><em>Are you?</em></h2>
+      <h2>Multi-agent orchestration is how <em>software is starting to think.</em></h2>
       <p class="block-lede">
-        Something is quietly happening inside the companies that are pulling ahead right now,
-        and it has nothing to do with which AI model they picked.
+        The hard problem in software right now isn't which model you call. It's the layer
+        between the calls: how they connect, when they hand off, what happens when a human
+        needs to step in, what state survives a restart. Every platform is building that
+        layer, and the implementations aren't wire-compatible.
       </p>
     </div>
 
     <div class="prologue-body ana-block-prose">
       <p>
-        They are not winning because they have access to better technology.
-        Every company has access to the same models. They are not winning because they
-        hired more engineers or spent more on cloud. They are winning because they
-        fundamentally changed how their software <em>thinks</em> and operates.
-        They stopped building systems that follow instructions and started building
-        systems that <em>understand intent</em>.
+        For thirty years, software did what you told it. You wrote the rules, the logic,
+        the workflow, and every output traced back to something a human had set upstream.
+        That kind of software is predictable, auditable, and deterministic. It has worked
+        very well. The applications worth building now don't fit that pattern. They make
+        decisions during the run, not before it.
       </p>
 
       <p>
-        That shift sounds philosophical until you feel it competitively. And more
-        leaders are starting to feel it.
+        Multi-agent workflow orchestration is how that kind of intelligence actually shows
+        up inside a real product. A chatbot wrapped around a model isn't enough, and retry
+        logic around a single call certainly isn't. What you need is
+        <em>a supervisor that reads context, hands work to specialized agents, asks a human
+        when it doesn't know, resumes when the answer comes back, and reaches the outcome
+        you wanted rather than the one you specified up front.</em>
+        That layer is where intelligence and context enter your software. It's also where
+        state, durability, and observability have to be rebuilt to support them.
       </p>
 
       <p>
-        For thirty years, software did what you told it. You defined the rules,
-        the logic, the workflow. Every output was the direct result of something a
-        human specified upstream. Predictable. Auditable. Deterministic.
-        That model worked extraordinarily well &mdash; and it is increasingly not enough.
+        Every platform that touches this layer is building it differently. LangGraph,
+        Temporal, Step Functions, vendor agent frameworks, and in-house runtimes are all
+        reinventing the same primitives with their own conventions: run lifecycle, suspend
+        and resume, replay and fork, BYOK, signed event streaming, the shape of a
+        human-in-the-loop pause. Code written against one host won't move to another.
+        The debugger you wrote for your runtime can't read someone else's. Customers who
+        pick a platform inherit its lifecycle, whether they want to or not.
       </p>
 
       <p>
-        The companies rebuilding right now are wiring AI agents into the fabric of
-        how their software operates. Not as a feature. Not as a chatbot bolted onto
-        the side. <em>As the actual decision-making layer.</em> Multiple agents working
-        together, handing off to each other, pausing for human input at the right
-        moments, resuming, learning from context, getting to the outcome you actually
-        wanted instead of the one you thought to specify in advance.
-      </p>
-
-      <p>
-        That is a fundamentally different kind of software. And building it requires
-        infrastructure that most organizations are not yet thinking about seriously
-        enough.
+        OpenWOP is the wire contract this layer has been missing. It's a protocol, not a
+        runtime or a framework, that defines how clients and hosts start, stream, interrupt,
+        resume, replay, validate, and observe durable multi-agent workflows. The result is
+        that the layer where your software thinks becomes portable: something you can move
+        between hosts, inspect across versions, or replace when the runtime stops serving
+        you.
       </p>
 
       <p class="prologue-close">
-        This is the conversation worth having right now. And it is exactly what
-        OpenWOP was built for.
+        OpenWOP is the common language for the layer where your software thinks.
       </p>
     </div>
   </div>
@@ -1347,8 +1445,8 @@
 
     <div class="foot-meta">
       <span>© 2026 OpenWOP contributors</span>
-      <span>Apache 2.0 · openwop.dev</span>
-      <span>Built with care.</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+      <span>Built with Claude Code</span>
     </div>
   </div>
 </footer>

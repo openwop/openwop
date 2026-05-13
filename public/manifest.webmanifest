@@ -1,0 +1,17 @@
+{
+  "name": "OpenWOP — Multi-Agent Workflow Orchestration Protocol",
+  "short_name": "OpenWOP",
+  "description": "Open, vendor-neutral wire protocol for durable multi-agent workflow orchestration.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f4f1ea",
+  "theme_color": "#f4f1ea",
+  "lang": "en-US",
+  "dir": "ltr",
+  "icons": [
+    { "src": "/assets/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/assets/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/assets/OpenWOP.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
