@@ -27,6 +27,91 @@ Method signatures use TypeScript-flavor shapes; concrete hosts MAY return additi
 
 ---
 
+## §host.aiProviders
+
+**Capability flag:** `aiProviders: supported` *(advertised via top-level `Capabilities.aiProviders.supported[]`; see [capabilities.md §aiProviders](capabilities.md#aiproviders))*
+
+**Used by:** `core.openwop.ai`, `vendor.myndhyve.ai`, `vendor.myndhyve.ads-copy-generate`, `vendor.myndhyve.landing-page`, `vendor.myndhyve.market-intel-*` (all single-AI-call packs).
+
+The lower-level escape hatch for AI invocation. Packs that need raw model output (untyped text + optional structured-output schema) call `ctx.callAI` directly. The typed-envelope companion is `§host.aiEnvelope`.
+
+```typescript
+ctx.callAI({
+  provider?: string,             // anthropic | openai | google | gemini | ...; defaults to host's preferred routing
+  model?: string,                // model id; host-default when omitted
+  systemPrompt?: string,
+  messages: Array<{ role: 'user' | 'assistant' | 'system', content: string }>,
+  temperature?: number,          // 0..2
+  maxTokens?: number,            // upper bound; host MAY cap further
+  stopSequences?: string[],
+  responseSchema?: object,       // JSON Schema for structured-output mode (host routes to a provider that supports it)
+}) → Promise<{
+  content?: string,              // primary text output (omit when only `data` is set)
+  data?: object,                 // parsed structured output when `responseSchema` was supplied
+  usage?: {
+    inputTokens?: number,        // also accepted as `promptTokens` for back-compat with provider conventions
+    outputTokens?: number,       // also accepted as `completionTokens`
+    totalTokens?: number,
+  },
+  finishReason?: string,         // 'stop' | 'length' | 'content_filter' | 'tool_calls' | ...
+  model?: string,                // model id the host actually routed to (may differ from `model` request when host applies a fallback)
+}>
+```
+
+**Required methods:** `callAI`.
+
+**Optional sub-capabilities:**
+
+| Flag | Adds | Used by |
+|---|---|---|
+| `aiProviders.toolCalling: supported` | `ctx.callAIWithTools(...)` — model may emit `tool_call` entries | `core.openwop.ai` (`core.ai.callPromptWithTools`) |
+| `aiProviders.embeddings: supported` | `ctx.callAI({ embeddingMode: true, dimensions?: number })` returns `{ embedding: number[], dimensions, model }` | `core.openwop.ai` (`core.ai.embed`) |
+| `aiProviders.imageGeneration: supported` | `ctx.callImageGenerator(...)` — generates binary image asset (returns URL or base64 data); see optional method block below | future `vendor.myndhyve.ads-image-generate` |
+
+```typescript
+// Available when host advertises `aiProviders.imageGeneration: supported`.
+ctx.callImageGenerator({
+  provider?: string,             // gemini | openai (dall-e) | stability | ...
+  model?: string,                // 'imagen-3' | 'dall-e-3' | ...
+  prompt: string,
+  negativePrompt?: string,
+  width: number,                 // pixels; host MAY cap (typical max 2048)
+  height: number,
+  count?: number,                // default 1; host MAY cap
+  seed?: number,                 // deterministic seed (host-supplied or pack-supplied)
+  brandColors?: string[],        // optional hint forwarded to providers that accept brand-color guidance
+}) → Promise<{
+  images: Array<{
+    url?: string,                // host-served URL (preferred for large assets)
+    base64?: string,             // inline base64 (smaller assets; host's choice)
+    mimeType: string,            // 'image/png' | 'image/jpeg' | 'image/webp'
+    width: number,
+    height: number,
+    seed?: number,
+    safetyFiltered: boolean,
+    metadata?: { model?: string, generationTimeMs?: number },
+  }>,
+  filteredCount: number,         // count of images dropped by safety filter
+  totalTimeMs?: number,
+  usage?: { totalCost?: number },
+}>
+```
+
+**Failure modes:**
+- `host_capability_missing` — `ctx.callAI` absent (workflow-register-time refusal via `peerDependencies: { aiProviders: "supported" }` is the correct path; runtime check is defense-in-depth)
+- `provider_unavailable` — provider rejected the call or is unreachable
+- `provider_quota_exhausted` — BYOK quota / host-side rate limit
+- `provider_not_supported` — caller requested a `provider` not in `Capabilities.aiProviders.supported[]`
+- `model_not_supported` — model id not allowed for the chosen provider
+- `response_schema_invalid` — `responseSchema` malformed (caller fault)
+- `content_too_long` — request exceeds the model's context window (host SHOULD reject pre-flight when possible)
+- `image_generation_failed` — sub-capability-specific (`ctx.callImageGenerator`)
+- `image_safety_filtered_all` — every requested image was safety-filtered (all → `filteredCount: count`, `images: []`)
+
+**Determinism note.** `ctx.callAI` is not deterministic in general (temperature > 0, provider-side seed drift). Replay-aware hosts MAY snapshot the AI response in the run event log and replay deterministically; the contract here doesn't require it. See [replay.md §"AI determinism"](replay.md).
+
+---
+
 ## §host.aiEnvelope
 
 **Capability flag:** `host.aiEnvelope: supported`
