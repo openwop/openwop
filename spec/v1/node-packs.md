@@ -447,6 +447,31 @@ Unpublish — registries SHOULD refuse this for versions older than 72 hours (np
 
 Full-text search across name + description + keywords. Returns paginated results.
 
+### Optional registry endpoints
+
+Two additional `GET` surfaces are defined for hosts that expose a public pack-discovery layer:
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /v1/packs` | Top-level listing of every pack the host serves. Response shape mirrors `GET /v1/packs/-/catalog` (an array of `{name, latest, description, ...}` summaries). |
+| `GET /v1/packs/export` | Exported `AgentManifest` projection of the host's installed agents (per pack). Response: `{manifests: [{agentId, modelClass, sourceManifestId?, ...}]}` per `agent-manifest.schema.json`. |
+
+Both endpoints are **OPTIONAL**. Hosts where the pack catalog is server-internal infrastructure (no public discovery surface) MAY decline to implement them.
+
+#### Non-support signaling
+
+Hosts that don't expose either endpoint MUST signal the choice with `404 Not Found` and a structured error body:
+
+```json
+{ "error": "not_implemented", "message": "..." }
+```
+
+`501 Not Implemented` is also accepted for the same purpose.
+
+The two-status acceptance lets hosts pick between (a) routing the path to a generic 404 handler and (b) implementing an explicit "this endpoint exists in the spec but is not surfaced here" stub. Either is conformant.
+
+The conformance suite's `agentPackInstall` and `agentPackExport` scenarios consume this signal to scope themselves: a 404/501 on the listing/export probe is treated as a spec-allowed skip, not a failure. Hosts that DO implement the endpoint must return 200 with the documented response shape.
+
 ---
 
 ## Trust model
