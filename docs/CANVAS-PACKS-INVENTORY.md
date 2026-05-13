@@ -70,7 +70,13 @@ PR #48 also formalized the de-facto `ctx.callAI` contract (which 14+ already-pub
 
 ### Registry status (post-Phases B+C)
 
-`packs.openwop.dev` now hosts **48 packs** with **44 vendor typeIds** under `vendor.myndhyve.*` (plus the framework `core.openwop.*` packs). The four canvas verticals from the v2 audit (App Builder, Ads Studio, Landing Page, Campaign Sequence) are fully expressible as DAGs of published packs — see `examples/market-intel-pipeline/` for the canonical multi-pack composition reference.
+`packs.openwop.dev` now hosts **48 packs** with **44 vendor typeIds** under `vendor.myndhyve.*` (plus the framework `core.openwop.*` packs). The four canvas verticals from the v2 audit (App Builder, Ads Studio, Landing Page, Campaign Sequence) are fully expressible as DAGs of published packs.
+
+Discovery surfaces:
+
+- [`docs/PACK-CATALOG.md`](./PACK-CATALOG.md) — categorized inventory of every published pack with one-line descriptions, grouped by domain (framework / identity / canvas verticals / marketIntel / ads / campaign-sequence) plus a "Use cases → which packs" composition table.
+- [`examples/market-intel-pipeline/`](../examples/market-intel-pipeline/) — VoC research → ad-angle pipeline (9 packs composed declaratively; 2 entry variants).
+- [`examples/ads-publish-pipeline/`](../examples/ads-publish-pipeline/) — creative generation → platform publish (8 packs composed declaratively; 3 sibling variants targeting Meta / Google / TikTok). Composes downstream of the marketIntel pipeline via `audience-targeting.outputs.targetingPacks`.
 
 ---
 
