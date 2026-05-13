@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>openwop registry — packs.openwop.dev</title>
-<meta name="description" content="The canonical signed node-pack registry for the openwop workflow orchestration protocol. 42 pack(s), 43 version(s) published.">
+<meta name="description" content="The canonical signed node-pack registry for the openwop workflow orchestration protocol. 43 pack(s), 44 version(s) published.">
 <meta name="robots" content="index, follow">
 
 <meta property="og:type" content="website">
@@ -95,8 +95,8 @@
     <h1>openwop registry</h1>
     <p class="lead">Canonical signed node-pack registry for the <a href="https://openwop.dev/">openwop</a> workflow orchestration protocol.</p>
     <div class="summary">
-      <div><strong>42</strong><span>packs published</span></div>
-      <div><strong>43</strong><span>versions total</span></div>
+      <div><strong>43</strong><span>packs published</span></div>
+      <div><strong>44</strong><span>versions total</span></div>
       <div><strong>Ed25519</strong><span>signing algorithm</span></div>
     </div>
   </header>
@@ -238,6 +238,17 @@
             <a href="/v1/packs/vendor.myndhyve.ads-export/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
             · <a href="/v1/packs/vendor.myndhyve.ads-export/-/1.0.0.tgz" title="signed tarball (tgz)">tgz</a>
             · <a href="/v1/packs/vendor.myndhyve.ads-export/-/1.0.0.sig" title="Ed25519 signature">sig</a>
+          </td>
+        </tr>
+        <tr>
+          <td class="name"><code>vendor.myndhyve.ads-image-generate</code> </td>
+          <td class="version">1.0.0</td>
+          <td class="desc">MyndHyve ads.image.generate — generate ad creative images via the host&#39;s ctx.callImageGenerator (host.aiProviders.imageGeneration sub-capability from spec PR #48). Batches N prompts through one host call each, computes per-placement dimensions from caller-supplied placementSpec, applies platform/style/brand-color prompt enhancement, and aggregates safety-filter stats. First consumer of the new sub-capability.</td>
+          <td class="license">Apache-2.0</td>
+          <td class="artifacts">
+            <a href="/v1/packs/vendor.myndhyve.ads-image-generate/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
+            · <a href="/v1/packs/vendor.myndhyve.ads-image-generate/-/1.0.0.tgz" title="signed tarball (tgz)">tgz</a>
+            · <a href="/v1/packs/vendor.myndhyve.ads-image-generate/-/1.0.0.sig" title="Ed25519 signature">sig</a>
           </td>
         </tr>
         <tr>
@@ -619,7 +630,7 @@ const ok = verify(null, readFileSync('pack.tgz'), pub, readFileSync('pack.sig'))
   </section>
 
   <footer>
-    Generated 2026-05-13T15:42:29.599Z · <a href="https://openwop.dev/">openwop.dev</a> · <a href="https://github.com/openwop/openwop">openwop on GitHub</a>
+    Generated 2026-05-13T15:50:17.743Z · <a href="https://openwop.dev/">openwop.dev</a> · <a href="https://github.com/openwop/openwop">openwop on GitHub</a>
   </footer>
 </main>
 </body>

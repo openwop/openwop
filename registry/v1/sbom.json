@@ -234,6 +234,24 @@
       ]
     },
     {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.ads-image-generate@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.ads-image-generate",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/vendor.myndhyve.ads-image-generate/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "8f6714328bfc902367ff42a15bbeb52e9154fd866c206f0eeefc3cff2d4bdf55"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "bom-ref": "pkg:openwop/vendor.myndhyve.ads-platforms@1.0.0",
       "type": "library",
       "name": "vendor.myndhyve.ads-platforms",

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-image-generate/1.0.0/image-generate.input.json",
+  "title": "AdsImageGenerateInput",
+  "type": "object",
+  "required": ["prompts"],
+  "properties": {
+    "prompts": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "description": "Image generation prompts. One ctx.callImageGenerator per prompt; aborts mid-batch on ctx.signal."
+    },
+    "platform": { "type": "string", "description": "Target ad platform (meta/google/tiktok/linkedin/...). Used in prompt enhancement. Defaults to 'meta'." },
+    "placement": { "type": "string", "description": "Target placement id (e.g., 'meta-feed', 'google-display'). Defaults to '{platform}-feed'." },
+    "aspectRatio": {
+      "type": "object",
+      "description": "Fallback dimension derivation when placementSpec is absent. Used as ratio with config.maxDimension.",
+      "properties": {
+        "width": { "type": "number", "minimum": 1 },
+        "height": { "type": "number", "minimum": 1 }
+      }
+    },
+    "placementSpec": {
+      "type": "object",
+      "description": "Caller-supplied placement spec (replaces source's PlatformSpecRegistry lookup). When imageSpec.recommendedWidth/Height are present, used as output dimensions (capped at maxDimension).",
+      "properties": {
+        "imageSpec": {
+          "type": "object",
+          "properties": {
+            "recommendedWidth": { "type": "integer", "minimum": 1 },
+            "recommendedHeight": { "type": "integer", "minimum": 1 }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "style": {
+      "type": "string",
+      "description": "Style key. Known: photorealistic / illustration / flat-design / minimalist / bold-graphic / lifestyle / product-shot. Unknown keys passed through as free-form text.",
+      "enum": ["photorealistic", "illustration", "flat-design", "minimalist", "bold-graphic", "lifestyle", "product-shot"]
+    },
+    "brandColors": { "type": "array", "items": { "type": "string" }, "description": "Hex/name color list appended to prompt context." },
+    "negativePrompt": { "type": "string", "description": "Provider-specific exclusion prompt (forwarded verbatim)." },
+    "count": { "type": "integer", "minimum": 1, "maximum": 8, "description": "Images per prompt. Defaults to 2; pack caps to 8 (host MAY cap further)." },
+    "seed": { "type": "integer", "description": "Deterministic seed. When supplied, prompt i uses seed+i for variation." }
+  },
+  "additionalProperties": true
+}
