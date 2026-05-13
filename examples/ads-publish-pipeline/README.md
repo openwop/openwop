@@ -2,11 +2,15 @@
 
 > Reference workflow composing the [vendor.myndhyve.ads-* pack catalog](https://packs.openwop.dev) into an end-to-end creative + publishing pipeline. **8 packs orchestrated declaratively** — replaces the ~600 LOC of orchestration logic in MyndHyve's Ads Studio canvas with a workflow definition the host runs through its standard engine.
 
-## The pipeline
+## The pipelines
 
-| Workflow | When to use | Nodes |
-|---|---|---|
-| [`ads-creative-publish-meta.json`](./ads-creative-publish-meta.json) | You have a campaign goal + ICP + product + Meta credentials. Want to generate ad creative end-to-end and publish to Meta as PAUSED draft (ready for human review). | 9 |
+Three platform variants of the same 9-node pipeline. The first 8 nodes (creative generation + validation + export) are identical across all variants; only the terminal `publish-*` node and its credential-ref variables differ.
+
+| Workflow | Platform | API version | Credentials | Notes |
+|---|---|---|---|---|
+| [`ads-creative-publish-meta.json`](./ads-creative-publish-meta.json) | Meta (Facebook + Instagram) | Marketing API v21.0 | 1 OAuth ref | `Authorization: Bearer`; PAUSED status; cascade-aware rollback. |
+| [`ads-creative-publish-google.json`](./ads-creative-publish-google.json) | Google Ads | API v18 | 2 refs (OAuth + developer-token) | `customerId` + optional MCC `loginCustomerId`; camelCase fields; REVERSE-order REMOVE rollback. |
+| [`ads-creative-publish-tiktok.json`](./ads-creative-publish-tiktok.json) | TikTok | Marketing API v1.3 | 1 OAuth ref | `Access-Token` header (NOT Bearer); business-code envelope; `ENABLE`/`DISABLE` enums; NO rollback (API limitation). |
 
 ## Conceptual pipeline (Meta single-platform)
 
@@ -56,14 +60,9 @@
 | `aiProviders.imageGeneration: supported` | `generate-images` |
 | `secrets.resolveInPack: supported` | `publish-meta` (resolves `metaCredentialRef` via `ctx.secrets.resolve`) |
 
-## Targeting Google or TikTok instead
+## Authoring your own variant
 
-Swap the terminal `publish-meta` node for one of:
-
-- **Google**: replace with `ads.publish.google` (vendor.myndhyve.ads-publish-google@1.0.0). Add a second secret (developer-token), use `customerId`/`loginCustomerId`, and use Google's targeting shape (`geoTargetTypeId`, `languageConstants[]`, `userInterestIds[]`).
-- **TikTok**: replace with `ads.publish.tiktok` (vendor.myndhyve.ads-publish-tiktok@1.0.0). Use `advertiserId`, TikTok placements (`PLACEMENT_TIKTOK`/`PLACEMENT_PANGLE`/`PLACEMENT_GLOBAL_APP_BUNDLE`), and TikTok status enums (`ENABLE`/`DISABLE` — no D!).
-
-The first 8 nodes (creative generation + validation + export) are platform-agnostic; only the terminal `publish-*` node changes.
+The first 8 nodes (creative generation + validation + export) are platform-agnostic. Swap only the terminal `publish-*` node to retarget. The three published variants in this directory are the canonical reference for each platform's input shape — fork whichever matches your platform and adjust credentials + targeting + budget shape.
 
 ## Multi-platform fan-out
 

@@ -1,0 +1,190 @@
+{
+  "id": "vendor.myndhyve.ads-creative-publish-google",
+  "name": "Ads Creative + Publish (Google Ads)",
+  "version": "1.0",
+  "description": "Google Ads variant of the ads-creative-publish pipeline. First 8 nodes are platform-agnostic (identical to the Meta variant); only the terminal `ads.publish.google` differs. Google Ads API v18 needs TWO secrets (OAuth + developer-token) and uses Google's customerId/loginCustomerId scheme + camelCase field names. Status enums are `ENABLED`/`PAUSED`. Rollback is REVERSE-order REMOVE.",
+  "nodes": [
+    {
+      "id": "build-brief",
+      "typeId": "ads.brief.build",
+      "name": "Build Creative Brief",
+      "position": { "x": 0, "y": 0 },
+      "config": { "temperature": 0.4, "maxTokens": 3000 },
+      "inputs": {
+        "goal": "$.run.variables.campaignGoal",
+        "icpContext": "$.run.variables.icpContext",
+        "productContext": "$.run.variables.productContext",
+        "tone": "$.run.variables.tone"
+      }
+    },
+    {
+      "id": "plan-variants",
+      "typeId": "ads.variant.plan",
+      "name": "Plan Creative Variants",
+      "position": { "x": 200, "y": 0 },
+      "config": { "temperature": 0.6, "maxTokens": 4000 },
+      "inputs": {
+        "brief": "$.nodes.build-brief.outputs.brief",
+        "platforms": ["google"],
+        "variantCount": 5,
+        "placements": ["google-search", "google-display", "google-youtube-pre-roll"]
+      }
+    },
+    {
+      "id": "lookup-specs",
+      "typeId": "ads.platform.specs",
+      "name": "Lookup Placement Specs (Google)",
+      "position": { "x": 400, "y": 0 },
+      "inputs": {
+        "platforms": ["google"],
+        "placements": ["google-search", "google-display", "google-youtube-pre-roll"]
+      }
+    },
+    {
+      "id": "generate-copy",
+      "typeId": "ads.copy.generate",
+      "name": "Generate Ad Copy",
+      "position": { "x": 600, "y": 0 },
+      "config": { "temperature": 0.8, "maxTokens": 4096 },
+      "inputs": {
+        "brief": "$.nodes.build-brief.outputs.brief",
+        "variants": "$.nodes.plan-variants.outputs.variants",
+        "placements": ["google-search", "google-display"],
+        "placementTextLimits": "$.nodes.lookup-specs.outputs.textLimits",
+        "variantCount": 3
+      }
+    },
+    {
+      "id": "generate-images",
+      "typeId": "ads.image.generate",
+      "name": "Generate Ad Images",
+      "position": { "x": 800, "y": 0 },
+      "config": {
+        "model": "$.run.variables.imageModel",
+        "imagesPerVariant": 1
+      },
+      "inputs": {
+        "brief": "$.nodes.build-brief.outputs.brief",
+        "variants": "$.nodes.plan-variants.outputs.variants",
+        "assetSpecs": "$.nodes.lookup-specs.outputs.assetSpecs"
+      }
+    },
+    {
+      "id": "validate-creative",
+      "typeId": "ads.creative.validate",
+      "name": "Validate Creative",
+      "position": { "x": 1000, "y": 0 },
+      "inputs": {
+        "copyVariants": "$.nodes.generate-copy.outputs.variants",
+        "imageAssets": "$.nodes.generate-images.outputs.images",
+        "placementSpecs": "$.nodes.lookup-specs.outputs.specs",
+        "strictMode": false
+      }
+    },
+    {
+      "id": "build-tracking",
+      "typeId": "ads.tracking.link",
+      "name": "Build Tracking Links",
+      "position": { "x": 1200, "y": 0 },
+      "inputs": {
+        "destinationUrl": "$.run.variables.destinationUrl",
+        "campaign": "$.run.variables.campaignName",
+        "source": "google",
+        "medium": "cpc",
+        "variants": "$.nodes.plan-variants.outputs.variants"
+      }
+    },
+    {
+      "id": "export-pack",
+      "typeId": "ads.export.pack",
+      "name": "Bundle AdExportPack",
+      "position": { "x": 1400, "y": 0 },
+      "inputs": {
+        "copyVariants": "$.nodes.generate-copy.outputs.variants",
+        "imageAssets": "$.nodes.generate-images.outputs.images",
+        "trackingLinks": "$.nodes.build-tracking.outputs.links",
+        "validationReport": "$.nodes.validate-creative.outputs.report",
+        "brief": "$.nodes.build-brief.outputs.brief"
+      }
+    },
+    {
+      "id": "publish-google",
+      "typeId": "ads.publish.google",
+      "name": "Publish to Google Ads",
+      "position": { "x": 1600, "y": 0 },
+      "inputs": {
+        "credentialRef": "$.run.variables.googleOauthCredentialRef",
+        "developerTokenRef": "$.run.variables.googleDeveloperTokenRef",
+        "customerId": "$.run.variables.googleCustomerId",
+        "loginCustomerId": "$.run.variables.googleLoginCustomerId",
+        "campaign": {
+          "name": "$.run.variables.campaignName",
+          "advertisingChannelType": "$.run.variables.advertisingChannelType",
+          "status": "PAUSED",
+          "biddingStrategyType": "$.run.variables.biddingStrategyType"
+        },
+        "budget": {
+          "name": "$.run.variables.budgetName",
+          "amountMicros": "$.run.variables.dailyBudgetMicros",
+          "deliveryMethod": "STANDARD"
+        },
+        "adGroup": {
+          "name": "$.run.variables.adGroupName",
+          "type": "SEARCH_STANDARD",
+          "cpcBidMicros": "$.run.variables.cpcBidMicros"
+        },
+        "creative": "$.nodes.export-pack.outputs.pack",
+        "ad": {
+          "name": "$.run.variables.adName",
+          "status": "PAUSED"
+        }
+      }
+    }
+  ],
+  "edges": [
+    { "id": "e1", "sourceNodeId": "build-brief", "targetNodeId": "plan-variants" },
+    { "id": "e2", "sourceNodeId": "plan-variants", "targetNodeId": "lookup-specs" },
+    { "id": "e3", "sourceNodeId": "lookup-specs", "targetNodeId": "generate-copy" },
+    { "id": "e4", "sourceNodeId": "generate-copy", "targetNodeId": "generate-images" },
+    { "id": "e5", "sourceNodeId": "generate-images", "targetNodeId": "validate-creative" },
+    { "id": "e6", "sourceNodeId": "validate-creative", "targetNodeId": "build-tracking" },
+    { "id": "e7", "sourceNodeId": "build-tracking", "targetNodeId": "export-pack" },
+    { "id": "e8", "sourceNodeId": "export-pack", "targetNodeId": "publish-google" }
+  ],
+  "triggers": [{ "id": "manual", "type": "manual", "enabled": true }],
+  "variables": [
+    { "name": "campaignGoal", "type": "string", "required": true, "description": "Plain-language campaign goal." },
+    { "name": "icpContext", "type": "object", "required": true, "description": "Ideal customer profile." },
+    { "name": "productContext", "type": "object", "required": true, "description": "Product context." },
+    { "name": "tone", "type": "string", "required": false, "description": "Optional voice/tone hint." },
+    { "name": "imageModel", "type": "string", "required": false, "description": "Image-generation model identifier." },
+    { "name": "destinationUrl", "type": "string", "required": true, "description": "Landing-page URL (UTM-tagged)." },
+    { "name": "campaignName", "type": "string", "required": true, "description": "Google Ads campaign name." },
+    { "name": "advertisingChannelType", "type": "string", "required": true, "description": "Google enum: SEARCH / DISPLAY / VIDEO / SHOPPING / PERFORMANCE_MAX / DEMAND_GEN." },
+    { "name": "biddingStrategyType", "type": "string", "required": true, "description": "Google enum: MANUAL_CPC / MAXIMIZE_CLICKS / MAXIMIZE_CONVERSIONS / TARGET_CPA / TARGET_ROAS." },
+    { "name": "budgetName", "type": "string", "required": true, "description": "Shared budget resource name." },
+    { "name": "dailyBudgetMicros", "type": "number", "required": true, "description": "Daily budget in micros (1_000_000 = 1 unit of account currency)." },
+    { "name": "adGroupName", "type": "string", "required": true, "description": "Ad group name." },
+    { "name": "cpcBidMicros", "type": "number", "required": true, "description": "Default CPC bid in micros." },
+    { "name": "adName", "type": "string", "required": true, "description": "Ad name." },
+    { "name": "googleOauthCredentialRef", "type": "string", "required": true, "description": "Opaque OAuth credential reference (resolved via ctx.secrets.resolve)." },
+    { "name": "googleDeveloperTokenRef", "type": "string", "required": true, "description": "Opaque developer-token reference (resolved via ctx.secrets.resolve). Google Ads API requires both OAuth + developer token." },
+    { "name": "googleCustomerId", "type": "string", "required": true, "description": "Google Ads customer ID (10-digit, no dashes)." },
+    { "name": "googleLoginCustomerId", "type": "string", "required": false, "description": "Manager (MCC) customer ID; required when operating on linked accounts." }
+  ],
+  "metadata": {
+    "tags": ["ads", "creative", "publish", "google", "vendor.myndhyve"],
+    "packs": [
+      "vendor.myndhyve.ads-studio-core@1.0.0",
+      "vendor.myndhyve.ads-platforms@1.0.0",
+      "vendor.myndhyve.ads-copy-generate@1.0.0",
+      "vendor.myndhyve.ads-image-generate@1.0.0",
+      "vendor.myndhyve.ads-creative-validate@1.0.0",
+      "vendor.myndhyve.ads-tools@1.0.0",
+      "vendor.myndhyve.ads-export@1.0.0",
+      "vendor.myndhyve.ads-publish-google@1.0.0"
+    ],
+    "hostCapabilities": ["aiProviders", "aiProviders.imageGeneration", "secrets.resolveInPack"]
+  },
+  "settings": { "timeout": 1800000, "maxRetries": 0 }
+}
