@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.app-builder/1.0.0/per-screen.output.json",
+  "title": "AppBuilderPerScreenOutput",
+  "type": "object",
+  "required": ["success", "taskTitle"],
+  "properties": {
+    "success": { "type": "boolean" },
+    "screenId": { "type": ["string", "null"], "description": "Screen artifact id from envelope payload — payload.artifactId / payload.screenId / payload.id (first match). May be null when the host's envelope payload omits an id." },
+    "taskTitle": { "type": "string" },
+    "envelopePayload": { "type": "object", "additionalProperties": true, "description": "Raw payload from the envelope-await result. Forwarded for downstream nodes that need access to fields beyond the screen id." }
+  },
+  "additionalProperties": true
+}
