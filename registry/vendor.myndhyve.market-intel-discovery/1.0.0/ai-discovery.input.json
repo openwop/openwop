@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.market-intel-discovery/1.0.0/ai-discovery.input.json",
+  "title": "MarketIntelAiDiscoveryInput",
+  "type": "object",
+  "required": ["topic"],
+  "properties": {
+    "topic": { "type": "string", "minLength": 1, "description": "Research topic — required. Drives the entire AI search." },
+    "industry": { "type": "string", "description": "Industry vertical for relevance filtering (e.g., 'SaaS', 'fintech', 'healthcare')." },
+    "audience": { "type": "string", "description": "Target audience description (e.g., 'startup founders', 'DevOps engineers')." },
+    "platforms": { "type": "array", "items": { "type": "string" }, "description": "Preferred platforms (e.g., ['reddit', 'hackernews']). When omitted, the AI suggests the best mix." },
+    "minUrls": { "type": "integer", "minimum": 1, "description": "Suggested floor for URL count (passed to AI as a soft target). Defaults to 10." },
+    "minCommunities": { "type": "integer", "minimum": 1, "description": "Suggested floor for community count. Defaults to 5." },
+    "minQueries": { "type": "integer", "minimum": 1, "description": "Suggested floor for search-query count. Defaults to 5." }
+  },
+  "additionalProperties": true
+}
