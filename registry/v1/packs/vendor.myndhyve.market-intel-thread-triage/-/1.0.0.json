@@ -1,0 +1,51 @@
+{
+  "name": "vendor.myndhyve.market-intel-thread-triage",
+  "version": "1.0.0",
+  "description": "MyndHyve market-intel.thread-triage — cost-aware pre-filter for VoC extraction. Triages candidate threads into priority tiers (critical/high/medium/low/skip), predicts VoC value + intent stages + tag types, estimates extraction tokens per thread, and builds an extraction queue within token budget. Sits between ai-discovery and voc-extraction in the canonical pipeline. Sixth marketIntel pack of the Stage 5 cohort.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/market-intel-thread-triage",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "vendor",
+    "myndhyve",
+    "market-intel",
+    "thread-triage",
+    "cost-aware",
+    "voc"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "aiProviders": "supported"
+  },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "nodes": [
+    {
+      "typeId": "market-intel.thread-triage",
+      "version": "1.0.0",
+      "label": "Triage Candidate Threads",
+      "description": "Single AI call. Inputs: candidateThreads (≥1) + icpContext + productContext + maxThreads/minEngagement/tokenBudgetRemaining (optional). Outputs: triagedThreads (with priority+predictedVoCValue+predictedIntentStages+predictedTagTypes+extractionRisk+rationale), extractionQueue (string ids), skippedThreads, diversityAnalysis (intent/platform/problem coverage), and summary (rebuilt from validated data). Soft validation: invalid threads dropped; summary always reflects what was actually validated.",
+      "category": "data",
+      "role": "action",
+      "capabilities": [
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/thread-triage.config.json",
+      "inputSchemaRef": "schemas/thread-triage.input.json",
+      "outputSchemaRef": "schemas/thread-triage.output.json"
+    }
+  ],
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "myndhyve-internal-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-wzYPKu4uHWSvG2R6uTo7JoYMkW/46pAGSW6jExTPo6g="
+}

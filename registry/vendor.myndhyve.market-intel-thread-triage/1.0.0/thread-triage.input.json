@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.market-intel-thread-triage/1.0.0/thread-triage.input.json",
+  "title": "MarketIntelThreadTriageInput",
+  "type": "object",
+  "required": ["candidateThreads", "icpContext", "productContext"],
+  "properties": {
+    "candidateThreads": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "url", "title", "community", "platform", "createdAt"],
+        "properties": {
+          "id": { "type": "string" },
+          "url": { "type": "string" },
+          "title": { "type": "string" },
+          "community": { "type": "string" },
+          "platform": { "type": "string" },
+          "engagement": {
+            "type": "object",
+            "properties": {
+              "upvotes": { "type": "integer" },
+              "comments": { "type": "integer" },
+              "views": { "type": "integer" }
+            },
+            "additionalProperties": true
+          },
+          "preview": { "type": "string", "description": "Truncated to 150 chars in the prompt." },
+          "createdAt": { "type": "string", "description": "ISO 8601 timestamp." },
+          "metadata": { "type": "object", "additionalProperties": true }
+        },
+        "additionalProperties": true
+      }
+    },
+    "icpContext": {
+      "type": "object",
+      "required": ["roles", "industry", "problems", "outcomes"],
+      "properties": {
+        "roles": { "type": "array", "items": { "type": "string" } },
+        "industry": { "type": "string" },
+        "problems": { "type": "array", "items": { "type": "string" } },
+        "outcomes": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": true
+    },
+    "productContext": {
+      "type": "object",
+      "required": ["name", "category", "differentiators"],
+      "properties": {
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "differentiators": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": true
+    },
+    "maxThreads": { "type": "integer", "minimum": 1, "description": "Max threads to select for extraction. Defaults to 20." },
+    "minEngagement": { "type": "integer", "minimum": 0, "description": "Soft AI hint. Defaults to 0." },
+    "tokenBudgetRemaining": { "type": "integer", "minimum": 0, "description": "Soft AI hint for cost-aware prioritization. Defaults to 50000." }
+  },
+  "additionalProperties": true
+}

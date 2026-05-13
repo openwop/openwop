@@ -630,6 +630,24 @@
       ]
     },
     {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.market-intel-thread-triage@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.market-intel-thread-triage",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/vendor.myndhyve.market-intel-thread-triage/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "aa6cc6bb3c52c7d6048a61ac65794d88c771a45efc5c24ce09c6bf80c1da5218"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "bom-ref": "pkg:openwop/vendor.myndhyve.market-intel-voc@1.0.0",
       "type": "library",
       "name": "vendor.myndhyve.market-intel-voc",

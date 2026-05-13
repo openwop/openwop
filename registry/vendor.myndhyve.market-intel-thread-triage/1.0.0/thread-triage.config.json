@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.market-intel-thread-triage/1.0.0/thread-triage.config.json",
+  "title": "MarketIntelThreadTriageConfig",
+  "type": "object",
+  "properties": {
+    "provider": { "type": "string" },
+    "model": { "type": "string" },
+    "temperature": { "type": "number", "minimum": 0, "maximum": 2, "description": "Defaults to 0.3 — triage is a precision task." },
+    "maxTokens": { "type": "integer", "minimum": 512, "description": "Defaults to 4096." }
+  },
+  "additionalProperties": true
+}
