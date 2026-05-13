@@ -22,6 +22,12 @@ set -euo pipefail
 SPEC_ROOT="."
 NPM_CACHE="${NPM_CONFIG_CACHE:-/tmp/openwop-npm-cache}"
 
+# Stale npm _locks left from killed earlier invocations (or from concurrent
+# `npx -y` calls) cause `ECOMPROMISED Lock compromised` on the next run.
+# The locks are advisory and safe to wipe at gate start; npm regenerates
+# whatever it needs.
+rm -rf "$NPM_CACHE/_locks" 2>/dev/null || true
+
 echo "=== openwop:check — validating $SPEC_ROOT/ ==="
 echo
 

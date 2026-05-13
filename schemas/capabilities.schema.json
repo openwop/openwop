@@ -84,11 +84,11 @@
     },
     "nodePackRuntimes": {
       "type": "object",
-      "description": "Optional v1 advertisement of node-pack runtimes the host loads. See `node-packs.md` §runtime formats and RFC 0008 (WASM ABI). Hosts that don't load packs MAY omit this block entirely.",
+      "description": "Optional v1 advertisement of node-pack runtimes the host loads. See `node-packs.md` §runtime formats and RFC 0008 (WASM ABI). Hosts that don't load packs MAY omit this block entirely. NOTE: this block intentionally uses `additionalProperties: true` (here and on the nested runtime objects) so a future RFC may add a runtime type (e.g., `python-wasm`, `js-wasm`) without a breaking-change rev of this schema; the trade is that a strict-mode validator will accept arbitrary extra keys under these objects. A future RFC that promotes the open-set fields to first-class SHOULD tighten them to `additionalProperties: false` in the same RFC.",
       "properties": {
         "wasm": {
           "type": "object",
-          "description": "WASM core-module runtime per RFC 0008. Hosts that load `runtime.language: \"wasm\"` packs MUST advertise `supported: true` and at least one entry in `abiVersions[]`.",
+          "description": "WASM core-module runtime per RFC 0008. Hosts that load `runtime.language: \"wasm\"` packs MUST advertise `supported: true` and at least one entry in `abiVersions[]`. `additionalProperties: true` preserved for future RFC 0008 amendments (e.g., per-pack memory accounting fields).",
           "required": ["supported"],
           "properties": {
             "supported": {
@@ -125,7 +125,7 @@
         },
         "wasmComponent": {
           "type": "object",
-          "description": "WASM Component Model variant (WIT-defined interfaces). Reserved for hosts that load `runtime.language: \"wasm-component\"` packs.",
+          "description": "WASM Component Model variant (WIT-defined interfaces). Reserved for hosts that load `runtime.language: \"wasm-component\"` packs. `additionalProperties: true` preserved until the Component Model spec stabilises in the v1.x line; tighten in the RFC that promotes wasm-component to a first-class runtime alongside `wasm`.",
           "properties": {
             "supported": { "type": "boolean" }
           },

@@ -789,11 +789,14 @@ describe.skipIf(
   () => {
     // describe.skipIf still evaluates the body for test registration; defaults guard against null
     // dirname() when sources are missing under the published-tarball layout. it() blocks below are
-    // skipped at run time, so the path values are never actually read.
+    // skipped at run time, so the path values are never actually read. The sentinel is
+    // intentionally an obviously-invalid path so a stack trace from any future code that DOES
+    // dereference it points the reader at this comment.
+    const UNUSED_IN_PUBLISHED_LAYOUT = '/__sdk_paths_unused_in_published_layout__';
     const sdkSources = {
-      typescript: TYPESCRIPT_RUN_HELPERS_PATH ?? '.',
-      python: PYTHON_TYPES_PATH ?? '.',
-      go: GO_TYPES_PATH ?? '.',
+      typescript: TYPESCRIPT_RUN_HELPERS_PATH ?? UNUSED_IN_PUBLISHED_LAYOUT,
+      python: PYTHON_TYPES_PATH ?? UNUSED_IN_PUBLISHED_LAYOUT,
+      go: GO_TYPES_PATH ?? UNUSED_IN_PUBLISHED_LAYOUT,
     };
     const sdkReadmes = {
       typescript: pathResolve(dirname(sdkSources.typescript), '..', 'README.md'),
@@ -1145,8 +1148,10 @@ describe.skipIf(README_PATH === null)('spec-corpus: local Markdown links resolve
 
         const target = pathResolve(dirname(file), decoded);
         // Published-tarball layout: the conformance README references ../spec/v1/... and other paths
-        // that resolve OUTSIDE the package boundary. Repo layout has the full tree available.
-        if (LAYOUT === 'published' && !target.startsWith(repoRoot)) continue;
+        // that resolve OUTSIDE the package boundary. Repo layout has the full tree available. The
+        // `target === repoRoot || target.startsWith(repoRoot + sep)` form avoids a sibling-path
+        // false-negative when repoRoot=/foo/bar and target=/foo/barbaz.
+        if (LAYOUT === 'published' && target !== repoRoot && !target.startsWith(repoRoot + '/')) continue;
         expect(
           existsSync(target),
           `${relFile} links to missing local target: ${link}`,
