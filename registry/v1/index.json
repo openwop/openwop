@@ -1,7 +1,7 @@
 {
   "registryVersion": "1.0.0",
   "generatedAt": "2026-05-10T00:00:00Z",
-  "packCount": 38,
+  "packCount": 39,
   "packs": [
     {
       "name": "community.openwop-team.demo",
@@ -268,6 +268,15 @@
       "name": "vendor.myndhyve.market-intel-ad-angles",
       "latestVersion": "1.0.0",
       "description": "MyndHyve market-intel.ad-angles — generates 5-10 ad-angle briefs from VoC research + ICP/product context via one AI call. Each brief carries angleName, segment, corePain, promise, mechanism, proof requirements, objections to handle, 3-5 hook variants, recommended CTA, source quotes, and a 5-dimension score (volume / intensity / commercialIntent / clarity / uniqueness + weighted total). Briefs are sorted by total score descending. Second marketIntel pack of the Stage 5 cohort.",
+      "license": "Apache-2.0",
+      "tags": [],
+      "deprecated": false,
+      "yanked": false
+    },
+    {
+      "name": "vendor.myndhyve.market-intel-audience-targeting",
+      "latestVersion": "1.0.0",
+      "description": "MyndHyve market-intel.audience-targeting — generate per-platform paid-media targeting packs (interests + keywords + community placements + audience definitions) for 6 ad platforms (meta / google / linkedin / tiktok / reddit / x) from market-research data (communities + angles). One AI call. Outputs cross-platform insights + testing sequence (phased) + budget allocation. Seventh marketIntel pack of the Stage 5 cohort.",
       "license": "Apache-2.0",
       "tags": [],
       "deprecated": false,

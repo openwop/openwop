@@ -576,6 +576,24 @@
       ]
     },
     {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.market-intel-audience-targeting@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.market-intel-audience-targeting",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/vendor.myndhyve.market-intel-audience-targeting/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "1eef1cbae82c975c3f6c5ac31c145e30ae5c6de35bb1703234ca74253234339f"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "bom-ref": "pkg:openwop/vendor.myndhyve.market-intel-content-extraction@1.0.0",
       "type": "library",
       "name": "vendor.myndhyve.market-intel-content-extraction",
