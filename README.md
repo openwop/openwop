@@ -207,7 +207,9 @@ The two API specs reference the JSON Schemas via cross-file `$ref`; bundlers inl
 
 These are deliberately deferred:
 
-- **Reference node-pack registry deployment** — the spec is drafted at `node-packs.md`; the actual hosted registry at `https://packs.openwop.dev/` is post-v1 ecosystem work tracked in `ROADMAP.md`.
+- **External security audit + vendor-neutral org migration** — both ecosystem milestones gated on a ≥1-non-steward maintainer tripwire per [`ROADMAP.md`](./ROADMAP.md) §Phase 4.
+
+The reference node-pack registry at [`packs.openwop.dev`](https://packs.openwop.dev) **is live** (Stage 1–4 deployed 2026-05-12, packCount 48 as of 2026-05-13 across `core.openwop.*` / `community.openwop-team.*` / `vendor.openwop.*` / `vendor.myndhyve.*` trust tiers). See [`docs/PACK-CATALOG.md`](./docs/PACK-CATALOG.md) for the categorized inventory and [`examples/market-intel-pipeline/`](./examples/market-intel-pipeline/) + [`examples/ads-publish-pipeline/`](./examples/ads-publish-pipeline/) for reference compositions.
 
 ## Reporting issues
 
