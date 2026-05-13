@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.market-intel-query-builder/1.0.0/query-builder.config.json",
+  "title": "MarketIntelQueryBuilderConfig",
+  "type": "object",
+  "properties": {
+    "provider": { "type": "string" },
+    "model": { "type": "string" },
+    "temperature": { "type": "number", "minimum": 0, "maximum": 2, "description": "Defaults to 0.4 — query variations benefit from moderate diversity." },
+    "maxTokens": { "type": "integer", "minimum": 1024, "description": "Defaults to 6000 — 4 intent stages × 8 query groups × variations is substantial." }
+  },
+  "additionalProperties": true
+}

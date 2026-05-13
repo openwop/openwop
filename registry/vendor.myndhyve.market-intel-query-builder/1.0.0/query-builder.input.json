@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.market-intel-query-builder/1.0.0/query-builder.input.json",
+  "title": "MarketIntelQueryBuilderInput",
+  "type": "object",
+  "required": ["icpContext", "productContext"],
+  "properties": {
+    "icpContext": {
+      "type": "object",
+      "required": ["roles", "industry", "problems", "outcomes"],
+      "properties": {
+        "roles": { "type": "array", "items": { "type": "string" } },
+        "industry": { "type": "string" },
+        "problems": { "type": "array", "items": { "type": "string" } },
+        "outcomes": { "type": "array", "items": { "type": "string" } },
+        "budgetRange": { "type": "string" },
+        "stage": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "productContext": {
+      "type": "object",
+      "required": ["name", "category", "differentiators", "offerSummary"],
+      "properties": {
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "differentiators": { "type": "array", "items": { "type": "string" } },
+        "offerSummary": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "competitors": { "type": "array", "items": { "type": "string" } },
+    "seedKeywords": { "type": "array", "items": { "type": "string" } },
+    "geography": { "type": "string" },
+    "targetPlatforms": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["reddit", "stackexchange", "hn", "forums", "reviews"] }
+    },
+    "maxQueriesPerStage": { "type": "integer", "minimum": 1, "description": "Defaults to 8 (per intent stage)." }
+  },
+  "additionalProperties": true
+}

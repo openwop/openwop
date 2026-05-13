@@ -1,7 +1,7 @@
 {
   "registryVersion": "1.0.0",
   "generatedAt": "2026-05-10T00:00:00Z",
-  "packCount": 39,
+  "packCount": 40,
   "packs": [
     {
       "name": "community.openwop-team.demo",
@@ -304,6 +304,15 @@
       "name": "vendor.myndhyve.market-intel-opportunity-scoring",
       "latestVersion": "1.0.0",
       "description": "MyndHyve market-intel.opportunity-scoring — score and rank communities AND messaging angles on a 5-dimension scale (volume / intensity / commercialIntent / clarity / uniqueness, weighted total) given a VoC corpus + community metadata. Composable primitive slotting between voc-extraction (aggregator) and ad-angles (downstream). Source-side this prompt is used inside the market-intel.research orchestrator; published here as a standalone typeId so workflow authors can compose it directly. Fourth marketIntel pack of the Stage 5 cohort.",
+      "license": "Apache-2.0",
+      "tags": [],
+      "deprecated": false,
+      "yanked": false
+    },
+    {
+      "name": "vendor.myndhyve.market-intel-query-builder",
+      "latestVersion": "1.0.0",
+      "description": "MyndHyve market-intel.query-builder — generate intent-mapped search queries (4-8 query groups × 4 intent stages, 2-4 variations each, synonym maps, platform hints) + per-competitor query packs (comparison/switching/alternative) + topic clusters from ICP + product context. Pairs with ai-discovery: query-builder produces 'what to search for', ai-discovery produces 'where to search'. Eighth marketIntel pack of the Stage 5 cohort.",
       "license": "Apache-2.0",
       "tags": [],
       "deprecated": false,
