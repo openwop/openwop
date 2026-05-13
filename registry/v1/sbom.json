@@ -558,6 +558,24 @@
       ]
     },
     {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.market-intel-voc@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.market-intel-voc",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/vendor.myndhyve.market-intel-voc/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "2538aaf8b31d5d756d3ccbee5584b0d0e28c3fc8aaac5ef06161397b28eb6037"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "bom-ref": "pkg:openwop/vendor.myndhyve.web-research@1.0.0",
       "type": "library",
       "name": "vendor.myndhyve.web-research",

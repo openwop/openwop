@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>openwop registry — packs.openwop.dev</title>
-<meta name="description" content="The canonical signed node-pack registry for the openwop workflow orchestration protocol. 32 pack(s), 33 version(s) published.">
+<meta name="description" content="The canonical signed node-pack registry for the openwop workflow orchestration protocol. 33 pack(s), 34 version(s) published.">
 <meta name="robots" content="index, follow">
 
 <meta property="og:type" content="website">
@@ -95,8 +95,8 @@
     <h1>openwop registry</h1>
     <p class="lead">Canonical signed node-pack registry for the <a href="https://openwop.dev/">openwop</a> workflow orchestration protocol.</p>
     <div class="summary">
-      <div><strong>32</strong><span>packs published</span></div>
-      <div><strong>33</strong><span>versions total</span></div>
+      <div><strong>33</strong><span>packs published</span></div>
+      <div><strong>34</strong><span>versions total</span></div>
       <div><strong>Ed25519</strong><span>signing algorithm</span></div>
     </div>
   </header>
@@ -428,6 +428,17 @@
           </td>
         </tr>
         <tr>
+          <td class="name"><code>vendor.myndhyve.market-intel-voc</code> </td>
+          <td class="version">1.0.0</td>
+          <td class="desc">MyndHyve market-intel.voc-extraction — extract Voice of Customer records (verbatim quotes + tagType + intentStage + confidence + rationale) from a single piece of content via a single AI call. First marketIntel pack of the Stage 5 cohort. Schema validation strips invalid records with per-record warnings; output preserves source structure (records + summary + warnings).</td>
+          <td class="license">Apache-2.0</td>
+          <td class="artifacts">
+            <a href="/v1/packs/vendor.myndhyve.market-intel-voc/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
+            · <a href="/v1/packs/vendor.myndhyve.market-intel-voc/-/1.0.0.tgz" title="signed tarball (tgz)">tgz</a>
+            · <a href="/v1/packs/vendor.myndhyve.market-intel-voc/-/1.0.0.sig" title="Ed25519 signature">sig</a>
+          </td>
+        </tr>
+        <tr>
           <td class="name"><code>vendor.myndhyve.web-research</code> </td>
           <td class="version">1.0.0</td>
           <td class="desc">MyndHyve web-research pack — 4 nodes for the search → fetch → research → synthesize pipeline. webSearch + fetchUrls + researchWeb route through the host&#39;s webResearch adapter (search API + scraping policy + rate-limit + cache layer); synthesize composes results into a typed envelope via the AI envelope surface.</td>
@@ -509,7 +520,7 @@ const ok = verify(null, readFileSync('pack.tgz'), pub, readFileSync('pack.sig'))
   </section>
 
   <footer>
-    Generated 2026-05-13T11:29:08.708Z · <a href="https://openwop.dev/">openwop.dev</a> · <a href="https://github.com/openwop/openwop">openwop on GitHub</a>
+    Generated 2026-05-13T12:06:47.781Z · <a href="https://openwop.dev/">openwop.dev</a> · <a href="https://github.com/openwop/openwop">openwop on GitHub</a>
   </footer>
 </main>
 </body>

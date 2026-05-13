@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.market-intel-voc/1.0.0/voc-extraction.config.json",
+  "title": "MarketIntelVocExtractionConfig",
+  "type": "object",
+  "properties": {
+    "provider": { "type": "string", "description": "AI provider override (anthropic / openai / google). Host default routes when omitted." },
+    "model": { "type": "string", "description": "Model id override. Host default for the chosen provider when omitted." },
+    "temperature": { "type": "number", "minimum": 0, "maximum": 2, "description": "Defaults to 0.3 — VoC extraction is precision-oriented; high temperature would hallucinate quotes." },
+    "maxTokens": { "type": "integer", "minimum": 256, "description": "Max output tokens. Defaults to 4096; raise for long-form content with many candidate quotes." }
+  },
+  "additionalProperties": true
+}
