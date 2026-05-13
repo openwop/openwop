@@ -1,0 +1,36 @@
+{
+  "name": "vendor.myndhyve.ads-publish-google",
+  "version": "1.0.0",
+  "description": "MyndHyve ads.publish.google — publish an ad to Google Ads API v18 (Search + Display). Symmetric companion to ads-publish-meta. Resolves 2 secrets (OAuth + developer-token) via ctx.secrets.resolve, then runs the 4-step publish pipeline (budget → campaign → ad-group → ad) with best-effort REMOVE-rollback. Supports 6 bidding strategies + 6 channel types + responsive_search & responsive_display ad formats.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/ads-publish-google",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": ["vendor", "myndhyve", "ads", "publish", "google", "google-ads", "marketing-api"],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "secrets.resolveInPack": "supported"
+  },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "nodes": [
+    {
+      "typeId": "ads.publish.google",
+      "version": "1.0.0",
+      "label": "Publish Ad to Google Ads",
+      "description": "Single typeId. Inputs: oauthCredentialRef + developerTokenCredentialRef (TWO opaque secret refs — Google needs both) + customerId + optional loginCustomerId (for MCC) + campaign + adGroup + ad. Resolves both secrets via ctx.secrets.resolve(ref, purpose) with separate purpose strings, then sequentially mutates: campaignBudget → campaign → adGroup → adGroupAd (responsive_search OR responsive_display). Best-effort REMOVE-status rollback on failure in REVERSE creation order (Google Ads has no cascade-delete). Returns all 4 resource names + budget resource name + publishedStatus + publishedAt.",
+      "category": "data",
+      "role": "action",
+      "capabilities": ["side-effectful"],
+      "configSchemaRef": "schemas/publish-google.config.json",
+      "inputSchemaRef": "schemas/publish-google.input.json",
+      "outputSchemaRef": "schemas/publish-google.output.json"
+    }
+  ]
+}
