@@ -342,6 +342,24 @@
       ]
     },
     {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.ads-publish-tiktok@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.ads-publish-tiktok",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/vendor.myndhyve.ads-publish-tiktok/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "1c14e6ea81311c7f93e7c2d235f0d3077e0748c9b5441977f232c3ae569a2a86"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "bom-ref": "pkg:openwop/vendor.myndhyve.ads-studio-core@1.0.0",
       "type": "library",
       "name": "vendor.myndhyve.ads-studio-core",

@@ -1,0 +1,51 @@
+{
+  "name": "vendor.myndhyve.ads-publish-tiktok",
+  "version": "1.0.0",
+  "description": "MyndHyve ads.publish.tiktok — publish an ad to TikTok Marketing API v1.3. Third + final platform-publish pack of the Stage 5 cohort. Single OAuth secret (Access-Token header, not Bearer); TikTok envelope { code, message, data } where code !== 0 means business error even on HTTP 200; optional image upload by URL before ad creation. 3-step pipeline (campaign → adgroup → ad; no separate budget). No rollback per TikTok API semantics (no hard-delete via this surface); partialState surfaced for manual cleanup.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/ads-publish-tiktok",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "vendor",
+    "myndhyve",
+    "ads",
+    "publish",
+    "tiktok",
+    "marketing-api"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "secrets.resolveInPack": "supported"
+  },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "nodes": [
+    {
+      "typeId": "ads.publish.tiktok",
+      "version": "1.0.0",
+      "label": "Publish Ad to TikTok",
+      "description": "Single typeId. Inputs: credentialRef (opaque OAuth access token ref) + advertiserId + campaign + adGroup + ad + optional imageUploadUrl (for URL → image_id pre-step). Resolves access token via ctx.secrets.resolve(ref, purpose), then optionally uploads image, then sequentially creates campaign → ad-group → ad. Handles TikTok's quirky { code, message, data } response envelope: HTTP 200 + code !== 0 maps to retryability via business-code lookup (40000/40001 → TIKTOK_INVALID_PARAMS, 51301 → TIKTOK_RATE_LIMIT, etc.). NO rollback — TikTok has no hard-delete via this API surface; partialState surfaced in error details for manual cleanup.",
+      "category": "data",
+      "role": "action",
+      "capabilities": [
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/publish-tiktok.config.json",
+      "inputSchemaRef": "schemas/publish-tiktok.input.json",
+      "outputSchemaRef": "schemas/publish-tiktok.output.json"
+    }
+  ],
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "myndhyve-internal-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-1X9cM8gl8n8icdl9N0uKpShtv4jvbvOfxj8aZvQCp/s="
+}

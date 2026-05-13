@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-publish-tiktok/1.0.0/publish-tiktok.input.json",
+  "title": "AdsPublishTiktokInput",
+  "type": "object",
+  "required": ["credentialRef", "advertiserId", "campaign", "adGroup", "ad"],
+  "properties": {
+    "credentialRef": { "type": "string", "minLength": 1, "description": "Opaque secret ref for the TikTok OAuth access token (sent as Access-Token header — NOT Bearer)." },
+    "advertiserId": { "type": "string", "minLength": 1, "description": "TikTok advertiser id." },
+    "imageUploadUrl": { "type": "string", "description": "When provided AND ad.imageIds/videoId are absent, pack uploads this URL via /file/image/ad/upload/ before creating the ad and uses the returned image_id." },
+    "imageFileName": { "type": "string", "description": "Optional filename hint for the upload (defaults to 'image.jpg')." },
+    "campaign": {
+      "type": "object",
+      "required": ["name", "objective"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "objective": { "type": "string", "enum": ["REACH", "TRAFFIC", "VIDEO_VIEWS", "LEAD_GENERATION", "CONVERSIONS", "APP_PROMOTION", "PRODUCT_SALES"] },
+        "budgetMode": { "type": "string", "enum": ["BUDGET_MODE_DAY", "BUDGET_MODE_TOTAL", "BUDGET_MODE_INFINITE"], "description": "Default INFINITE (no campaign-level cap; budget set at ad-group level)." },
+        "budget": { "type": "number", "minimum": 0 },
+        "operationStatus": { "type": "string", "enum": ["ENABLE", "DISABLE"], "description": "Default DISABLE (safe — no auto-spend)." }
+      },
+      "additionalProperties": true
+    },
+    "adGroup": {
+      "type": "object",
+      "required": ["name", "optimizationGoal"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "optimizationGoal": { "type": "string", "enum": ["CLICK", "CONVERT", "IMPRESSION", "REACH", "VIDEO_VIEW", "LEAD_GENERATION"] },
+        "placements": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["PLACEMENT_TIKTOK", "PLACEMENT_PANGLE", "PLACEMENT_GLOBAL_APP_BUNDLE"] }
+        },
+        "bidPrice": { "type": "number", "minimum": 0 },
+        "budget": { "type": "number", "minimum": 0 },
+        "budgetMode": { "type": "string", "enum": ["BUDGET_MODE_DAY", "BUDGET_MODE_TOTAL", "BUDGET_MODE_INFINITE"] },
+        "operationStatus": { "type": "string", "enum": ["ENABLE", "DISABLE"] },
+        "scheduleStartTime": { "type": "string" },
+        "scheduleEndTime": { "type": "string" },
+        "locationIds": { "type": "array", "items": { "type": "string" } },
+        "ageGroups": { "type": "array", "items": { "type": "string" } },
+        "genders": { "type": "array", "items": { "type": "string", "enum": ["GENDER_MALE", "GENDER_FEMALE", "GENDER_UNLIMITED"] } },
+        "languages": { "type": "array", "items": { "type": "string" } },
+        "interestCategoryIds": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": true
+    },
+    "ad": {
+      "type": "object",
+      "required": ["name", "adText"],
+      "description": "Must provide one of: ad.videoId / ad.imageIds[] / inputs.imageUploadUrl (for url upload).",
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "adText": { "type": "string", "minLength": 1, "description": "Ad body text." },
+        "callToAction": { "type": "string", "description": "Default 'LEARN_MORE'." },
+        "landingPageUrl": { "type": "string" },
+        "displayName": { "type": "string" },
+        "imageIds": { "type": "array", "items": { "type": "string" }, "description": "Pre-uploaded TikTok image ids. Or use inputs.imageUploadUrl for in-pack upload." },
+        "videoId": { "type": "string", "description": "Pre-uploaded TikTok video id." },
+        "operationStatus": { "type": "string", "enum": ["ENABLE", "DISABLE"] }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}
