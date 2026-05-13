@@ -1,0 +1,268 @@
+{
+  "id": "vendor.myndhyve.ads-creative-publish-meta",
+  "name": "Ads Creative + Publish (Meta)",
+  "version": "1.0",
+  "description": "End-to-end ad creative + publishing pipeline for Meta. 9-node linear DAG: build brief → plan variants → lookup placement specs → generate copy → generate images → validate creative → build tracking links → export pack → publish to Meta Marketing API v21.0. To target Google or TikTok instead, swap the terminal `ads.publish.meta` node for `ads.publish.google` or `ads.publish.tiktok` and adjust credentials accordingly. Multi-platform fan-out is left to the host orchestrator (RFC 0007 fanOutSupported).",
+  "nodes": [
+    {
+      "id": "build-brief",
+      "typeId": "ads.brief.build",
+      "name": "Build Creative Brief",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "temperature": 0.4,
+        "maxTokens": 3000
+      },
+      "inputs": {
+        "goal": "$.run.variables.campaignGoal",
+        "icpContext": "$.run.variables.icpContext",
+        "productContext": "$.run.variables.productContext",
+        "tone": "$.run.variables.tone"
+      }
+    },
+    {
+      "id": "plan-variants",
+      "typeId": "ads.variant.plan",
+      "name": "Plan Creative Variants",
+      "position": { "x": 200, "y": 0 },
+      "config": {
+        "temperature": 0.6,
+        "maxTokens": 4000
+      },
+      "inputs": {
+        "brief": "$.nodes.build-brief.outputs.brief",
+        "platforms": ["meta"],
+        "variantCount": 5,
+        "placements": ["meta-feed", "meta-story", "meta-reels"]
+      }
+    },
+    {
+      "id": "lookup-specs",
+      "typeId": "ads.platform.specs",
+      "name": "Lookup Placement Specs (Meta)",
+      "position": { "x": 400, "y": 0 },
+      "inputs": {
+        "platforms": ["meta"],
+        "placements": ["meta-feed", "meta-story", "meta-reels"]
+      }
+    },
+    {
+      "id": "generate-copy",
+      "typeId": "ads.copy.generate",
+      "name": "Generate Ad Copy",
+      "position": { "x": 600, "y": 0 },
+      "config": {
+        "temperature": 0.8,
+        "maxTokens": 4096
+      },
+      "inputs": {
+        "brief": "$.nodes.build-brief.outputs.brief",
+        "variants": "$.nodes.plan-variants.outputs.variants",
+        "placements": ["meta-feed", "meta-story", "meta-reels"],
+        "placementTextLimits": "$.nodes.lookup-specs.outputs.textLimits",
+        "variantCount": 3
+      }
+    },
+    {
+      "id": "generate-images",
+      "typeId": "ads.image.generate",
+      "name": "Generate Ad Images",
+      "position": { "x": 800, "y": 0 },
+      "config": {
+        "model": "$.run.variables.imageModel",
+        "imagesPerVariant": 1
+      },
+      "inputs": {
+        "brief": "$.nodes.build-brief.outputs.brief",
+        "variants": "$.nodes.plan-variants.outputs.variants",
+        "assetSpecs": "$.nodes.lookup-specs.outputs.assetSpecs"
+      }
+    },
+    {
+      "id": "validate-creative",
+      "typeId": "ads.creative.validate",
+      "name": "Validate Creative (text + image + length)",
+      "position": { "x": 1000, "y": 0 },
+      "inputs": {
+        "copyVariants": "$.nodes.generate-copy.outputs.variants",
+        "imageAssets": "$.nodes.generate-images.outputs.images",
+        "placementSpecs": "$.nodes.lookup-specs.outputs.specs",
+        "strictMode": false
+      }
+    },
+    {
+      "id": "build-tracking",
+      "typeId": "ads.tracking.link",
+      "name": "Build Tracking Links",
+      "position": { "x": 1200, "y": 0 },
+      "inputs": {
+        "destinationUrl": "$.run.variables.destinationUrl",
+        "campaign": "$.run.variables.campaignName",
+        "source": "meta",
+        "medium": "cpc",
+        "variants": "$.nodes.plan-variants.outputs.variants"
+      }
+    },
+    {
+      "id": "export-pack",
+      "typeId": "ads.export.pack",
+      "name": "Bundle AdExportPack",
+      "position": { "x": 1400, "y": 0 },
+      "inputs": {
+        "copyVariants": "$.nodes.generate-copy.outputs.variants",
+        "imageAssets": "$.nodes.generate-images.outputs.images",
+        "trackingLinks": "$.nodes.build-tracking.outputs.links",
+        "validationReport": "$.nodes.validate-creative.outputs.report",
+        "brief": "$.nodes.build-brief.outputs.brief"
+      }
+    },
+    {
+      "id": "publish-meta",
+      "typeId": "ads.publish.meta",
+      "name": "Publish to Meta",
+      "position": { "x": 1600, "y": 0 },
+      "inputs": {
+        "credentialRef": "$.run.variables.metaCredentialRef",
+        "adAccountId": "$.run.variables.metaAdAccountId",
+        "campaign": {
+          "name": "$.run.variables.campaignName",
+          "objective": "$.run.variables.campaignObjective",
+          "status": "PAUSED",
+          "dailyBudget": "$.run.variables.dailyBudgetCents"
+        },
+        "adSet": {
+          "name": "$.run.variables.adSetName",
+          "targeting": "$.run.variables.targeting",
+          "billingEvent": "IMPRESSIONS",
+          "optimizationGoal": "REACH"
+        },
+        "creative": "$.nodes.export-pack.outputs.pack",
+        "ad": {
+          "name": "$.run.variables.adName",
+          "status": "PAUSED"
+        }
+      }
+    }
+  ],
+  "edges": [
+    { "id": "e1", "sourceNodeId": "build-brief", "targetNodeId": "plan-variants" },
+    { "id": "e2", "sourceNodeId": "plan-variants", "targetNodeId": "lookup-specs" },
+    { "id": "e3", "sourceNodeId": "lookup-specs", "targetNodeId": "generate-copy" },
+    { "id": "e4", "sourceNodeId": "generate-copy", "targetNodeId": "generate-images" },
+    { "id": "e5", "sourceNodeId": "generate-images", "targetNodeId": "validate-creative" },
+    { "id": "e6", "sourceNodeId": "validate-creative", "targetNodeId": "build-tracking" },
+    { "id": "e7", "sourceNodeId": "build-tracking", "targetNodeId": "export-pack" },
+    { "id": "e8", "sourceNodeId": "export-pack", "targetNodeId": "publish-meta" }
+  ],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    {
+      "name": "campaignGoal",
+      "type": "string",
+      "required": true,
+      "description": "Plain-language campaign goal (e.g., 'Drive trial signups from B2B SaaS founders')."
+    },
+    {
+      "name": "icpContext",
+      "type": "object",
+      "required": true,
+      "description": "Ideal customer profile: { roles, industry, problems, outcomes }."
+    },
+    {
+      "name": "productContext",
+      "type": "object",
+      "required": true,
+      "description": "Product: { name, category, differentiators, mechanisms, proofPoints, offerSummary, targetAudience }."
+    },
+    {
+      "name": "tone",
+      "type": "string",
+      "required": false,
+      "description": "Optional voice/tone hint (e.g., 'confident, evidence-backed, no hyperbole')."
+    },
+    {
+      "name": "imageModel",
+      "type": "string",
+      "required": false,
+      "description": "Image-generation model identifier (host-defined; pack passes through to ctx.callImageGenerator)."
+    },
+    {
+      "name": "destinationUrl",
+      "type": "string",
+      "required": true,
+      "description": "Landing-page URL (UTM-tagged by build-tracking)."
+    },
+    {
+      "name": "campaignName",
+      "type": "string",
+      "required": true,
+      "description": "Human-readable Meta campaign name."
+    },
+    {
+      "name": "campaignObjective",
+      "type": "string",
+      "required": true,
+      "description": "Meta campaign objective enum (OUTCOME_TRAFFIC, OUTCOME_AWARENESS, OUTCOME_LEADS, OUTCOME_SALES, OUTCOME_APP_PROMOTION, OUTCOME_ENGAGEMENT)."
+    },
+    {
+      "name": "dailyBudgetCents",
+      "type": "number",
+      "required": true,
+      "description": "Daily budget in account-currency minor units (e.g., 5000 = $50.00)."
+    },
+    {
+      "name": "adSetName",
+      "type": "string",
+      "required": true,
+      "description": "Human-readable Meta ad-set name."
+    },
+    {
+      "name": "adName",
+      "type": "string",
+      "required": true,
+      "description": "Human-readable Meta ad name."
+    },
+    {
+      "name": "targeting",
+      "type": "object",
+      "required": true,
+      "description": "Meta targeting object: { geo_locations, age_min, age_max, genders, interests, ... }."
+    },
+    {
+      "name": "metaCredentialRef",
+      "type": "string",
+      "required": true,
+      "description": "Opaque credential reference resolvable by host via ctx.secrets.resolve({ ref, purpose }). Not the access token itself — the host stores tokens; this workflow only passes the reference."
+    },
+    {
+      "name": "metaAdAccountId",
+      "type": "string",
+      "required": true,
+      "description": "Meta ad-account ID (without 'act_' prefix; pack adds it)."
+    }
+  ],
+  "metadata": {
+    "tags": ["ads", "creative", "publish", "meta", "vendor.myndhyve"],
+    "packs": [
+      "vendor.myndhyve.ads-studio-core@1.0.0",
+      "vendor.myndhyve.ads-platforms@1.0.0",
+      "vendor.myndhyve.ads-copy-generate@1.0.0",
+      "vendor.myndhyve.ads-image-generate@1.0.0",
+      "vendor.myndhyve.ads-creative-validate@1.0.0",
+      "vendor.myndhyve.ads-tools@1.0.0",
+      "vendor.myndhyve.ads-export@1.0.0",
+      "vendor.myndhyve.ads-publish-meta@1.0.0"
+    ],
+    "hostCapabilities": [
+      "aiProviders",
+      "aiProviders.imageGeneration",
+      "secrets.resolveInPack"
+    ]
+  },
+  "settings": {
+    "timeout": 1800000,
+    "maxRetries": 0
+  }
+}
