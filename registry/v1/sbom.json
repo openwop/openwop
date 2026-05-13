@@ -342,6 +342,24 @@
       ]
     },
     {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.app-builder@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.app-builder",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/vendor.myndhyve.app-builder/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "39c0ff37bb468fceac8b37df2586cc776d8529eb06044fb9a9da73760d61a81b"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "bom-ref": "pkg:openwop/vendor.myndhyve.brand@1.0.0",
       "type": "library",
       "name": "vendor.myndhyve.brand",

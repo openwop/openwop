@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.app-builder/1.0.0/iterate-tasks.output.json",
+  "title": "AppBuilderIterateTasksOutput",
+  "type": "object",
+  "required": ["success", "tasksProcessed", "tasksSucceeded", "tasksFailed", "taskResults", "errors", "failuresByReason"],
+  "properties": {
+    "success": { "type": "boolean", "description": "Overall: true when ≥1 task succeeded AND failOnAnyTaskError didn't trip. False on empty plan? No — empty plan returns success:true with tasksProcessed:0." },
+    "tasksProcessed": { "type": "integer", "minimum": 0, "description": "Tasks actually attempted (excludes skipped)." },
+    "tasksSucceeded": { "type": "integer", "minimum": 0 },
+    "tasksFailed": { "type": "integer", "minimum": 0 },
+    "taskResults": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["taskTitle", "success"],
+        "properties": {
+          "taskId": { "type": ["string", "null"] },
+          "taskTitle": { "type": "string" },
+          "success": { "type": "boolean" },
+          "skipped": { "type": "boolean", "description": "True when this task was not attempted (abort signal OR failOnAnyTaskError tripped earlier)." },
+          "screenId": { "type": ["string", "null"] },
+          "failureReason": { "type": "string", "enum": ["timeout", "cancelled", "envelope-malformed", "ai-no-response", "route-failed", "other"] },
+          "error": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "errors": {
+      "type": "array",
+      "description": "Compact failure list (excludes skipped). Same per-error shape as the source iterate-tasks executor.",
+      "items": {
+        "type": "object",
+        "required": ["taskTitle", "error"],
+        "properties": {
+          "taskId": { "type": ["string", "null"] },
+          "taskTitle": { "type": "string" },
+          "error": { "type": "string" },
+          "failureReason": { "type": "string", "enum": ["timeout", "cancelled", "envelope-malformed", "ai-no-response", "route-failed", "other"] }
+        },
+        "additionalProperties": true
+      }
+    },
+    "failuresByReason": {
+      "type": "object",
+      "description": "Histogram of failures bucketed by categorized reason — for host-side telemetry / dashboards.",
+      "required": ["timeout", "cancelled", "envelope-malformed", "ai-no-response", "route-failed", "other"],
+      "properties": {
+        "timeout": { "type": "integer", "minimum": 0 },
+        "cancelled": { "type": "integer", "minimum": 0 },
+        "envelope-malformed": { "type": "integer", "minimum": 0 },
+        "ai-no-response": { "type": "integer", "minimum": 0 },
+        "route-failed": { "type": "integer", "minimum": 0 },
+        "other": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": true
+}
