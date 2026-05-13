@@ -115,11 +115,11 @@ try {
     const sse1Controller = new AbortController();
     const sse2Controller = new AbortController();
     const sse1Promise = fetch(`${baseUrl}/v1/runs/${encodeURIComponent(r1.runId)}/events`, {
-      headers: { Authorization: `Bearer ${apiKey}` },
+      headers: { Authorization: `Bearer ${apiKey}`, Accept: 'text/event-stream' },
       signal: sse1Controller.signal,
     });
     const sse2Promise = fetch(`${baseUrl}/v1/runs/${encodeURIComponent(r2.runId)}/events`, {
-      headers: { Authorization: `Bearer ${apiKey}` },
+      headers: { Authorization: `Bearer ${apiKey}`, Accept: 'text/event-stream' },
       signal: sse2Controller.signal,
     });
 

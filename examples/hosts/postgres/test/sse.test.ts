@@ -217,7 +217,7 @@ try {
       const { runId } = (await create.json()) as { runId: string };
 
       const sseRes = await fetch(`${baseUrl}/v1/runs/${encodeURIComponent(runId)}/events`, {
-        headers: { Authorization: `Bearer ${apiKey}` },
+        headers: { Authorization: `Bearer ${apiKey}`, Accept: 'text/event-stream' },
       });
       assert.equal(sseRes.status, 200);
       const frames = await readSseFrames(sseRes);
