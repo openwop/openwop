@@ -1,0 +1,32 @@
+{
+  "name": "vendor.myndhyve.ads-policy",
+  "version": "1.0.0",
+  "description": "MyndHyve ads.policy.check — built-in policy text-rule scanner. Detects claims (guarantees, income, superlatives), trademark mentions, prohibited content (before/after, deceptive urgency), discriminatory targeting. Caller-supplied placement text-limits + trust-guardrail results for fuller coverage; standalone for text-rule-only checks.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/ads-policy",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": ["vendor", "myndhyve", "ads", "policy", "compliance", "trust"],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "nodes": [
+    {
+      "typeId": "ads.policy.check",
+      "version": "1.0.0",
+      "label": "Run Ad Policy Check",
+      "description": "Scan ad copy against 7 built-in policy text rules (claims-guarantee, claims-income, claims-superlative, trademark-competitor, prohibited-before-after, prohibited-urgency-scam, targeting-discrimination). Pattern + keyword matching with severity-driven fail/warning classification. Optional inputs.placementTextLimits adds placement-aware text-length validation. Optional inputs.trustGuardrailChecks merges caller-supplied trust-guardrail results.",
+      "category": "data",
+      "role": "action",
+      "configSchemaRef": "schemas/policy-check.config.json",
+      "inputSchemaRef": "schemas/policy-check.input.json",
+      "outputSchemaRef": "schemas/policy-check.output.json"
+    }
+  ]
+}

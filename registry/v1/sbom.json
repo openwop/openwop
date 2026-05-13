@@ -29,7 +29,7 @@
           "hashes": [
             {
               "alg": "SHA-256",
-              "content": "9b59993395b8fe22e9203700047102ce8260fe5e10c338e4e1edb447cd992e7e"
+              "content": "0254959b358bf573b0c7839ca8e3651f3a5b6127b545234025fd871f3169b2f8"
             }
           ]
         }
@@ -210,6 +210,24 @@
             {
               "alg": "SHA-256",
               "content": "67b36753b2cd0e37acc7df40bc822765821228eca65045427b9faba59376f604"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.ads-policy@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.ads-policy",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/vendor.myndhyve.ads-policy/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "221aa7f2ebf93c4315535cd2cb5e06928cad88f14346395b1e37facd42451632"
             }
           ]
         }

@@ -4,39 +4,35 @@
   "version": 1,
   "metadata": {
     "component": {
-      "bom-ref": "pkg:openwop/community.openwop-team.demo@0.1.0",
+      "bom-ref": "pkg:openwop/vendor.myndhyve.ads-policy@1.0.0",
       "type": "library",
-      "name": "community.openwop-team.demo",
-      "version": "0.1.0",
-      "description": "First community-namespace demo pack. Mixed pack — one trivial node (`uppercase`) plus one agent (`greeter`) — exercising both extension paths in a single tarball under the open-publish `community.*` tier. Manual Ed25519 signed (not Sigstore) to demonstrate the non-OIDC publishing path documented in registry-operations.md §Step 2. MIT-licensed for SPDX-diversity with the Apache-2.0 core packs.",
+      "name": "vendor.myndhyve.ads-policy",
+      "version": "1.0.0",
+      "description": "MyndHyve ads.policy.check — built-in policy text-rule scanner. Detects claims (guarantees, income, superlatives), trademark mentions, prohibited content (before/after, deceptive urgency), discriminatory targeting. Caller-supplied placement text-limits + trust-guardrail results for fuller coverage; standalone for text-rule-only checks.",
       "licenses": [
         {
           "license": {
-            "id": "MIT"
+            "id": "Apache-2.0"
           }
         }
       ],
       "externalReferences": [
         {
           "type": "website",
-          "url": "https://openwop.dev/packs/community.openwop-team.demo"
+          "url": "https://myndhyve.ai/packs/ads-policy"
         },
         {
           "type": "vcs",
           "url": "https://github.com/openwop/openwop"
-        },
-        {
-          "type": "distribution",
-          "url": "/v1/packs/community.openwop-team.demo/-/0.1.0.tgz"
         }
       ],
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "6cf66ef2e3b1baf8bdaf1ab6426a7e079ad43b8585d1906f6a0e6459ba2fa21a"
+          "content": "5b302f2b5f1d8159263b9bb376ffdfe480ea3c06cefee727fae132cf8504bfaa"
         }
       ],
-      "purl": "pkg:openwop/community.openwop-team.demo@0.1.0"
+      "purl": "pkg:openwop/vendor.myndhyve.ads-policy@1.0.0"
     },
     "tools": [
       {
@@ -53,13 +49,13 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "a9c68f86b8ec2cf3c35de692a0b5a68bfa4f126dd4846fcb85e6b6393fcdb65b"
+          "content": "0cea879ed215e3961316e97ab5e4d7a2b2bca999358668599bd53a1c953bc0d9"
         }
       ],
       "properties": [
         {
           "name": "openwop:size",
-          "value": "1093"
+          "value": "975"
         }
       ]
     },
@@ -69,13 +65,13 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "51e7ef56728dc8f5b8dc4b4c4148590fa02c0d8c2c62e63107cb3e4ea03192aa"
+          "content": "5b2042f7ff6712256e60406b8c17396a800d55d5402b0d858e0f16b3c5dbf36b"
         }
       ],
       "properties": [
         {
           "name": "openwop:size",
-          "value": "5022"
+          "value": "2903"
         }
       ]
     },
@@ -85,29 +81,13 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "6079c6db593aba6c0d203e80466532982739fa3eca10a1c83ba12c7b61063a96"
+          "content": "70e9570937725f6fa54903666f0fa3053c6d17ff8951694a4521bd19a393cf8c"
         }
       ],
       "properties": [
         {
           "name": "openwop:size",
-          "value": "900"
-        }
-      ]
-    },
-    {
-      "type": "file",
-      "name": "keys/community.openwop-team.pub.pem",
-      "hashes": [
-        {
-          "alg": "SHA-256",
-          "content": "432461188f212d101a061fdb2a5b4b90b2ba79504983646d79ae5146dc769aac"
-        }
-      ],
-      "properties": [
-        {
-          "name": "openwop:size",
-          "value": "113"
+          "value": "10913"
         }
       ]
     },
@@ -117,7 +97,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "c9c475e31f591dee333111786c841c60d102742d31ab9c149679bd1a9cf6aa49"
+          "content": "6ad32a09fab4cd3d6bdb0ebfbf045fb4b780eb7977ed82eb34a7bb40da823c0a"
         }
       ],
       "properties": [
@@ -133,68 +113,68 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "bca4ae8b771ddb3a845d3960b5cb0038c42650066fcc2d72fa2245ce7be04027"
+          "content": "0ec9b6aa48bfb331b1b85b1956451574c3499f4d982b3c7e62e2358f34c141da"
         }
       ],
       "properties": [
         {
           "name": "openwop:size",
-          "value": "2609"
+          "value": "1609"
         }
       ]
     },
     {
       "type": "file",
-      "name": "schemas/uppercase.config.json",
+      "name": "schemas/policy-check.config.json",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "c5d22ce269a41509c2d28cce7657fdb7ac0c34b546d5d5b5e3afd17734328f18"
+          "content": "862eeca6681d001350af860b85356076b4d78c78e48a623f987b4e5e698a18cf"
         }
       ],
       "properties": [
         {
           "name": "openwop:size",
-          "value": "380"
+          "value": "630"
         }
       ]
     },
     {
       "type": "file",
-      "name": "schemas/uppercase.input.json",
+      "name": "schemas/policy-check.input.json",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "bf9a823477e3a042904f3219e3f3d41c0addfb016e8bb50fd47c283b17def128"
+          "content": "36046c8254d0eae94ac3dac13fe8dddb9457d30aaf8ebfc2ed23866d236f9737"
         }
       ],
       "properties": [
         {
           "name": "openwop:size",
-          "value": "617"
+          "value": "2307"
         }
       ]
     },
     {
       "type": "file",
-      "name": "schemas/uppercase.output.json",
+      "name": "schemas/policy-check.output.json",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "b4d2239575c7fb904f56d9dc2fca79283ba73df52f074ed4156032c9b72444bb"
+          "content": "bd1adc5aebb0dd49d197dad232c201b4a8cd44b1a032cebd9b2644854be1dc26"
         }
       ],
       "properties": [
         {
           "name": "openwop:size",
-          "value": "465"
+          "value": "1464"
         }
       ]
     }
   ],
   "dependencies": [
     {
-      "ref": "pkg:openwop/community.openwop-team.demo@0.1.0",
+      "ref": "pkg:openwop/vendor.myndhyve.ads-policy@1.0.0",
       "dependsOn": []
     }
   ]

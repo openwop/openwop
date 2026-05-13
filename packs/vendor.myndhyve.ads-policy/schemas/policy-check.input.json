@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-policy/1.0.0/policy-check.input.json",
+  "title": "AdsPolicyCheckInput",
+  "type": "object",
+  "required": ["copyText"],
+  "properties": {
+    "copyText": {
+      "type": "object",
+      "properties": {
+        "headline": { "type": "string" },
+        "description": { "type": "string" },
+        "bodyText": { "type": "string" },
+        "ctaText": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "platforms": { "type": "array", "items": { "type": "string" } },
+    "placements": { "type": "array", "items": { "type": "string" } },
+    "adId": { "type": "string" },
+    "placementTextLimits": {
+      "type": "object",
+      "description": "OPTIONAL placement-aware text-length limits. Keys are placement ids; values are { headline?, description?, bodyText?, ctaText? }, each { min?, max, recommended? }. Workflow author resolves these from a host.adPlatformSpecs reader OR the vendor.myndhyve.ads-platforms pack OR inline. When absent the executor skips placement length checks.",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "headline": { "type": "object", "additionalProperties": true },
+          "description": { "type": "object", "additionalProperties": true },
+          "bodyText": { "type": "object", "additionalProperties": true },
+          "ctaText": { "type": "object", "additionalProperties": true }
+        },
+        "additionalProperties": true
+      }
+    },
+    "trustGuardrailChecks": {
+      "type": "array",
+      "description": "OPTIONAL pre-computed trust-guardrail check results (from MyndHyve's TrustGuardrailService or equivalent). Merged into output.riskFlags. When absent the executor returns policy-only results.",
+      "items": {
+        "type": "object",
+        "required": ["status", "message"],
+        "properties": {
+          "rule": { "type": "string" },
+          "category": { "type": "string" },
+          "status": { "type": "string", "enum": ["pass", "fail", "warning"] },
+          "message": { "type": "string" },
+          "autoResolvable": { "type": "boolean" }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}
