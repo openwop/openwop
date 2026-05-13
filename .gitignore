@@ -1,52 +1,66 @@
+# ── Node / TypeScript ────────────────────────────────────────────────────────
 node_modules/
 dist/
 *.tsbuildinfo
-.DS_Store
 
-# Reference-host runtime artifacts (signing keys, SQLite DBs, audit
-# logs). Per-deployment; never committed.
-examples/hosts/postgres/data/
-examples/hosts/sqlite/data/
+# npm pack output (run `npm pack` to regenerate from source).
+*.tgz
 
-# Python
+# Yarn berry / pnpm / npm caches & state.
+.npm/
+.yarn/cache
+.yarn/install-state.gz
+.pnp.cjs
+.pnp.loader.mjs
+.pnpm-store/
+
+# npm/yarn debug logs.
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dev-tool caches (ESLint, Stylelint, Turborepo, Vite, Next, Parcel, generic).
+.eslintcache
+.stylelintcache
+.turbo/
+.vite/
+.next/
+.parcel-cache/
+.cache/
+
+# Node REPL history (sometimes left in repo root by interactive sessions).
+.node_repl_history
+
+# ── Python ───────────────────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]
 .venv/
+venv/
 .mypy_cache/
 .pytest_cache/
 .ruff_cache/
 *.egg-info/
 build/
 
-# Go
+# ── Go ───────────────────────────────────────────────────────────────────────
 *.test
 *.out
 
-# Editors
-.vscode/
-.idea/
+# ── Reference-host runtime artifacts ─────────────────────────────────────────
+# Per-deployment signing keys, SQLite DBs, audit logs. Never committed.
+examples/hosts/postgres/data/
+examples/hosts/sqlite/data/
 
-# Claude Code per-developer runtime state (scheduled-task locks,
-# session logs, etc.). Tracked skill definitions under
-# `.claude/skills/` are NOT ignored — only the runtime artifacts.
-.claude/*.lock
-.claude/scheduled_tasks.lock
-.claude/sessions/
-.claude/logs/
-
-# npm pack output (run `npm pack` to regenerate from source)
-*.tgz
-
-# Platform
-# .github/
-.firebase/
-
-# Environment & secrets
-.env
-.env.local
-.env.*.local
-*.pem
-*.key
+# ── Registry: un-ignore the publication artifacts ────────────────────────────
+# The root `*.tgz` rule above would otherwise block every new signed pack
+# tarball under `registry/v1/packs/**`. These are intentional content (the
+# verifiable artifacts consumers download), NOT npm-pack development output.
+# Companion signatures + public keys are explicitly un-ignored too so a
+# future broader rule can't silently break the registry.
+!registry/**/*.tgz
+!registry/**/*.sig
+!registry/keys/*.pub
+!packs/**/*.sig
 
 # Public keys distributed with community-tier packs ARE meant to be
 # tracked — they're the verifier counterpart to detached signatures.
@@ -54,27 +68,92 @@ build/
 # secrets vault per docs/PACKS-MVP-PLAN.md §"Operational note."
 !packs/**/keys/*.pub.pem
 
-# Logs & temp files
+# ── Environment & secrets ────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+.envrc.local
+.direnv/
+*.pem
+*.key
+
+# Sentry CLI auth.
+.sentryclirc
+
+# ── Editors / IDEs ───────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.code-workspace
+.history/
+*.iml
+*.iws
+*.ipr
+.netrwhist
+Session.vim
+*.swp
+*.swo
+*.bak
+
+# Universal ctags / etags (root-anchored — wouldn't want to hide a deliberately-
+# named `tags` file deeper in the tree).
+/tags
+/TAGS
+/.tags
+
+# ── OS-specific ──────────────────────────────────────────────────────────────
+.DS_Store
+.!*
+._*
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+Thumbs.db
+
+# ── Git merge / patch artifacts ──────────────────────────────────────────────
+*.orig
+*.rej
+
+# ── Coverage ─────────────────────────────────────────────────────────────────
+coverage/
+.coverage
+*.cover
+.nyc_output/
+lcov.info
+*.lcov
+
+# ── Logs & temp files ────────────────────────────────────────────────────────
 *.log
 *.tmp
 *.temp
 *~
 
-# OS-specific
-Thumbs.db
+# Firebase emulator + CLI debug streams (`.firebase/` is the deploy cache;
+# `.firebaserc` + `firebase.json` are tracked project config).
+.firebase/
+firebase-debug.log
+firestore-debug.log
+database-debug.log
+ui-debug.log
 
-# Build artifacts & coverage
-coverage/
-.coverage
-*.cover
-.nyc_output/
-
-# Database files
+# ── Database files ───────────────────────────────────────────────────────────
 *.db
 *.sqlite
 *.sqlite3
 
-# Editor backups
-*.swp
-*.swo
-*.bak
+# ── Process / daemon state ───────────────────────────────────────────────────
+*.pid
+
+# ── Docker compose overrides ─────────────────────────────────────────────────
+# `compose.yml` / `docker-compose.yml` are tracked; per-developer overrides
+# are local-only.
+compose.override.yml
+docker-compose.override.yml
+
+# ── Claude Code per-developer runtime state ──────────────────────────────────
+# Scheduled-task locks, session logs, etc. Tracked skill definitions under
+# `.claude/skills/` are NOT ignored — only the runtime artifacts.
+.claude/*.lock
+.claude/scheduled_tasks.lock
+.claude/sessions/
+.claude/logs/
