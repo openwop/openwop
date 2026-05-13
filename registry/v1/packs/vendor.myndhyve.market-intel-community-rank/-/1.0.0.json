@@ -1,0 +1,51 @@
+{
+  "name": "vendor.myndhyve.market-intel-community-rank",
+  "version": "1.0.0",
+  "description": "MyndHyve market-intel.community-rank — rank candidate communities (from a discovery step or connector) by VoC research relevance. Per-community: relevanceScore (0..1) + signalQuality (high/medium/low) + ICP problem alignment + expected intent stages + search strategy + risk factors. Distinct from market-intel.ai-discovery (which generates NEW community suggestions): this pack ranks EXISTING candidates. Ninth marketIntel pack of the Stage 5 cohort.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/market-intel-community-rank",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "vendor",
+    "myndhyve",
+    "market-intel",
+    "community-rank",
+    "voc",
+    "discovery"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "aiProviders": "supported"
+  },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "nodes": [
+    {
+      "typeId": "market-intel.community-rank",
+      "version": "1.0.0",
+      "label": "Rank Candidate Communities",
+      "description": "Single AI call. Inputs: candidateCommunities[] (≥1) with initial scores + icpContext + productContext + optional maxCommunities/minRelevance/preferredPlatforms. Outputs: selectedCommunities (sorted by relevanceScore desc) + rejectedCommunities + platformCoverage (per-platform count + avg relevance) + summary (rebuilt from validated data). Soft validation: invalid entries dropped; platformCoverage and summary always reflect what was actually validated.",
+      "category": "data",
+      "role": "action",
+      "capabilities": [
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/community-rank.config.json",
+      "inputSchemaRef": "schemas/community-rank.input.json",
+      "outputSchemaRef": "schemas/community-rank.output.json"
+    }
+  ],
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "myndhyve-internal-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-koUUvPeS3tlYMYlWYSf82nScd8ZX0iEnwmHnvgxCtp8="
+}

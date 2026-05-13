@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.market-intel-community-rank/1.0.0/community-rank.output.json",
+  "title": "MarketIntelCommunityRankOutput",
+  "type": "object",
+  "required": ["selectedCommunities", "rejectedCommunities", "platformCoverage", "summary", "warnings", "selectedCount", "success"],
+  "properties": {
+    "selectedCommunities": {
+      "type": "array",
+      "description": "Sorted by relevanceScore descending.",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "platform", "url", "relevanceScore", "signalQuality", "relevantProblems", "expectedIntentStages", "rankingRationale", "searchStrategy", "riskFactors"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "platform": { "type": "string", "enum": ["reddit", "hackernews", "stackexchange", "forum", "reviews", "other"] },
+          "url": { "type": "string" },
+          "relevanceScore": { "type": "number", "minimum": 0, "maximum": 1 },
+          "signalQuality": { "type": "string", "enum": ["high", "medium", "low"] },
+          "relevantProblems": { "type": "array", "items": { "type": "string" } },
+          "expectedIntentStages": { "type": "array", "items": { "type": "string" } },
+          "rankingRationale": { "type": "string" },
+          "searchStrategy": { "type": "string" },
+          "riskFactors": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": true
+      }
+    },
+    "rejectedCommunities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "reason"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "reason": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "platformCoverage": {
+      "type": "array",
+      "description": "Computed from validated selectedCommunities (not echoed from AI). Sorted by communityCount desc.",
+      "items": {
+        "type": "object",
+        "required": ["platform", "communityCount", "avgRelevance"],
+        "properties": {
+          "platform": { "type": "string", "enum": ["reddit", "hackernews", "stackexchange", "forum", "reviews", "other"] },
+          "communityCount": { "type": "integer", "minimum": 0 },
+          "avgRelevance": { "type": "number", "minimum": 0, "maximum": 1 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["totalCandidates", "totalSelected", "avgRelevanceScore", "topPlatform"],
+      "properties": {
+        "totalCandidates": { "type": "integer", "minimum": 0 },
+        "totalSelected": { "type": "integer", "minimum": 0 },
+        "avgRelevanceScore": { "type": "number", "minimum": 0, "maximum": 1 },
+        "topPlatform": { "type": "string", "enum": ["reddit", "hackernews", "stackexchange", "forum", "reviews", "other"] }
+      },
+      "additionalProperties": false
+    },
+    "warnings": { "type": "array", "items": { "type": "string" } },
+    "selectedCount": { "type": "integer", "minimum": 0 },
+    "model": { "type": "string" },
+    "usage": {
+      "type": "object",
+      "properties": {
+        "promptTokens": { "type": "integer" },
+        "completionTokens": { "type": "integer" }
+      },
+      "additionalProperties": true
+    },
+    "success": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}

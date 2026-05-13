@@ -1,7 +1,7 @@
 {
   "registryVersion": "1.0.0",
   "generatedAt": "2026-05-10T00:00:00Z",
-  "packCount": 40,
+  "packCount": 41,
   "packs": [
     {
       "name": "community.openwop-team.demo",
@@ -277,6 +277,15 @@
       "name": "vendor.myndhyve.market-intel-audience-targeting",
       "latestVersion": "1.0.0",
       "description": "MyndHyve market-intel.audience-targeting — generate per-platform paid-media targeting packs (interests + keywords + community placements + audience definitions) for 6 ad platforms (meta / google / linkedin / tiktok / reddit / x) from market-research data (communities + angles). One AI call. Outputs cross-platform insights + testing sequence (phased) + budget allocation. Seventh marketIntel pack of the Stage 5 cohort.",
+      "license": "Apache-2.0",
+      "tags": [],
+      "deprecated": false,
+      "yanked": false
+    },
+    {
+      "name": "vendor.myndhyve.market-intel-community-rank",
+      "latestVersion": "1.0.0",
+      "description": "MyndHyve market-intel.community-rank — rank candidate communities (from a discovery step or connector) by VoC research relevance. Per-community: relevanceScore (0..1) + signalQuality (high/medium/low) + ICP problem alignment + expected intent stages + search strategy + risk factors. Distinct from market-intel.ai-discovery (which generates NEW community suggestions): this pack ranks EXISTING candidates. Ninth marketIntel pack of the Stage 5 cohort.",
       "license": "Apache-2.0",
       "tags": [],
       "deprecated": false,
