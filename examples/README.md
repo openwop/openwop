@@ -77,8 +77,13 @@ Separate from the runnable examples above, these directories contain declarative
 |---|---|---|---|
 | [`market-intel-pipeline/`](./market-intel-pipeline/) | VoC research → ad-angle generation (2 variants: full + AI-first) | 9 `vendor.myndhyve.market-intel-*` + `ads.copy.generate` | `aiProviders` + (production) `host.webResearch.fetchBatch` |
 | [`ads-publish-pipeline/`](./ads-publish-pipeline/) | Creative generation → publish to Meta / Google / TikTok (3 sibling variants) | 8 `vendor.myndhyve.ads-*` per variant | `aiProviders` + `aiProviders.imageGeneration` + `secrets.resolveInPack` |
+| [`rag-grounded-chat/`](./rag-grounded-chat/) | Knowledge-base retrieval → AI chat with inline `[#N]` citations | `vendor.myndhyve.knowledge-tools` + `core.openwop.ai` | `host.knowledge` + `aiProviders` |
 
-The two pipelines compose: `market-intel-pipeline/market-intel-research.json`'s `audience-targeting.outputs.targetingPacks.meta` maps directly into `ads-publish-pipeline/ads-creative-publish-meta.json`'s `targeting` variable. See [`docs/PACK-CATALOG.md`](../docs/PACK-CATALOG.md) for the full pack inventory grouped by domain.
+Pipelines compose downstream of each other:
+- `market-intel-pipeline/market-intel-research.json`'s `audience-targeting.outputs.targetingPacks.meta` maps directly into `ads-publish-pipeline/ads-creative-publish-meta.json`'s `targeting` variable.
+- `rag-grounded-chat/` is the smallest reference for the `host.knowledge` spec extension — its 2-node shape is the building block for any RAG-augmented workflow.
+
+See [`docs/PACK-CATALOG.md`](../docs/PACK-CATALOG.md) for the full pack inventory grouped by domain.
 
 ## See also
 
