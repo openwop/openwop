@@ -1,0 +1,187 @@
+{
+  "id": "vendor.myndhyve.ads-creative-publish-tiktok",
+  "name": "Ads Creative + Publish (TikTok)",
+  "version": "1.0",
+  "description": "TikTok variant of the ads-creative-publish pipeline. First 8 nodes are platform-agnostic (identical to the Meta variant); only the terminal `ads.publish.tiktok` differs. TikTok Marketing API v1.3 uses `Access-Token` header (NOT Bearer), business-code envelope (HTTP 200 + `code !== 0` = error), `ENABLE`/`DISABLE` status enums (no D!), and provides NO hard-delete — so the pack does NOT attempt rollback on failure. Variant placements target TikTok video formats.",
+  "nodes": [
+    {
+      "id": "build-brief",
+      "typeId": "ads.brief.build",
+      "name": "Build Creative Brief",
+      "position": { "x": 0, "y": 0 },
+      "config": { "temperature": 0.4, "maxTokens": 3000 },
+      "inputs": {
+        "goal": "$.run.variables.campaignGoal",
+        "icpContext": "$.run.variables.icpContext",
+        "productContext": "$.run.variables.productContext",
+        "tone": "$.run.variables.tone"
+      }
+    },
+    {
+      "id": "plan-variants",
+      "typeId": "ads.variant.plan",
+      "name": "Plan Creative Variants",
+      "position": { "x": 200, "y": 0 },
+      "config": { "temperature": 0.6, "maxTokens": 4000 },
+      "inputs": {
+        "brief": "$.nodes.build-brief.outputs.brief",
+        "platforms": ["tiktok"],
+        "variantCount": 5,
+        "placements": ["tiktok-feed", "tiktok-topview"]
+      }
+    },
+    {
+      "id": "lookup-specs",
+      "typeId": "ads.platform.specs",
+      "name": "Lookup Placement Specs (TikTok)",
+      "position": { "x": 400, "y": 0 },
+      "inputs": {
+        "platforms": ["tiktok"],
+        "placements": ["tiktok-feed", "tiktok-topview"]
+      }
+    },
+    {
+      "id": "generate-copy",
+      "typeId": "ads.copy.generate",
+      "name": "Generate Ad Copy",
+      "position": { "x": 600, "y": 0 },
+      "config": { "temperature": 0.8, "maxTokens": 4096 },
+      "inputs": {
+        "brief": "$.nodes.build-brief.outputs.brief",
+        "variants": "$.nodes.plan-variants.outputs.variants",
+        "placements": ["tiktok-feed"],
+        "placementTextLimits": "$.nodes.lookup-specs.outputs.textLimits",
+        "variantCount": 3
+      }
+    },
+    {
+      "id": "generate-images",
+      "typeId": "ads.image.generate",
+      "name": "Generate Ad Images",
+      "position": { "x": 800, "y": 0 },
+      "config": {
+        "model": "$.run.variables.imageModel",
+        "imagesPerVariant": 1
+      },
+      "inputs": {
+        "brief": "$.nodes.build-brief.outputs.brief",
+        "variants": "$.nodes.plan-variants.outputs.variants",
+        "assetSpecs": "$.nodes.lookup-specs.outputs.assetSpecs"
+      }
+    },
+    {
+      "id": "validate-creative",
+      "typeId": "ads.creative.validate",
+      "name": "Validate Creative",
+      "position": { "x": 1000, "y": 0 },
+      "inputs": {
+        "copyVariants": "$.nodes.generate-copy.outputs.variants",
+        "imageAssets": "$.nodes.generate-images.outputs.images",
+        "placementSpecs": "$.nodes.lookup-specs.outputs.specs",
+        "strictMode": false
+      }
+    },
+    {
+      "id": "build-tracking",
+      "typeId": "ads.tracking.link",
+      "name": "Build Tracking Links",
+      "position": { "x": 1200, "y": 0 },
+      "inputs": {
+        "destinationUrl": "$.run.variables.destinationUrl",
+        "campaign": "$.run.variables.campaignName",
+        "source": "tiktok",
+        "medium": "cpc",
+        "variants": "$.nodes.plan-variants.outputs.variants"
+      }
+    },
+    {
+      "id": "export-pack",
+      "typeId": "ads.export.pack",
+      "name": "Bundle AdExportPack",
+      "position": { "x": 1400, "y": 0 },
+      "inputs": {
+        "copyVariants": "$.nodes.generate-copy.outputs.variants",
+        "imageAssets": "$.nodes.generate-images.outputs.images",
+        "trackingLinks": "$.nodes.build-tracking.outputs.links",
+        "validationReport": "$.nodes.validate-creative.outputs.report",
+        "brief": "$.nodes.build-brief.outputs.brief"
+      }
+    },
+    {
+      "id": "publish-tiktok",
+      "typeId": "ads.publish.tiktok",
+      "name": "Publish to TikTok",
+      "position": { "x": 1600, "y": 0 },
+      "inputs": {
+        "credentialRef": "$.run.variables.tiktokCredentialRef",
+        "advertiserId": "$.run.variables.tiktokAdvertiserId",
+        "campaign": {
+          "campaignName": "$.run.variables.campaignName",
+          "objectiveType": "$.run.variables.campaignObjective",
+          "budgetMode": "BUDGET_MODE_DAY",
+          "budget": "$.run.variables.dailyBudgetUnits",
+          "operationStatus": "DISABLE"
+        },
+        "adGroup": {
+          "adgroupName": "$.run.variables.adGroupName",
+          "placementType": "$.run.variables.placementType",
+          "placements": "$.run.variables.placements",
+          "billingEvent": "OCPM",
+          "optimizationGoal": "$.run.variables.optimizationGoal",
+          "targeting": "$.run.variables.targeting"
+        },
+        "creative": "$.nodes.export-pack.outputs.pack",
+        "ad": {
+          "adName": "$.run.variables.adName",
+          "imageUploadUrl": "$.nodes.generate-images.outputs.images[0].url",
+          "imageFileName": "creative-1.png"
+        }
+      }
+    }
+  ],
+  "edges": [
+    { "id": "e1", "sourceNodeId": "build-brief", "targetNodeId": "plan-variants" },
+    { "id": "e2", "sourceNodeId": "plan-variants", "targetNodeId": "lookup-specs" },
+    { "id": "e3", "sourceNodeId": "lookup-specs", "targetNodeId": "generate-copy" },
+    { "id": "e4", "sourceNodeId": "generate-copy", "targetNodeId": "generate-images" },
+    { "id": "e5", "sourceNodeId": "generate-images", "targetNodeId": "validate-creative" },
+    { "id": "e6", "sourceNodeId": "validate-creative", "targetNodeId": "build-tracking" },
+    { "id": "e7", "sourceNodeId": "build-tracking", "targetNodeId": "export-pack" },
+    { "id": "e8", "sourceNodeId": "export-pack", "targetNodeId": "publish-tiktok" }
+  ],
+  "triggers": [{ "id": "manual", "type": "manual", "enabled": true }],
+  "variables": [
+    { "name": "campaignGoal", "type": "string", "required": true, "description": "Plain-language campaign goal." },
+    { "name": "icpContext", "type": "object", "required": true, "description": "Ideal customer profile." },
+    { "name": "productContext", "type": "object", "required": true, "description": "Product context." },
+    { "name": "tone", "type": "string", "required": false, "description": "Optional voice/tone hint." },
+    { "name": "imageModel", "type": "string", "required": false, "description": "Image-generation model identifier." },
+    { "name": "destinationUrl", "type": "string", "required": true, "description": "Landing-page URL (UTM-tagged)." },
+    { "name": "campaignName", "type": "string", "required": true, "description": "TikTok campaign name." },
+    { "name": "campaignObjective", "type": "string", "required": true, "description": "TikTok enum: REACH / TRAFFIC / VIDEO_VIEWS / LEAD_GENERATION / CONVERSIONS / APP_PROMOTION / PRODUCT_SALES." },
+    { "name": "dailyBudgetUnits", "type": "number", "required": true, "description": "Daily budget in account-currency units (whole numbers, not cents/micros)." },
+    { "name": "adGroupName", "type": "string", "required": true, "description": "TikTok ad-group name." },
+    { "name": "placementType", "type": "string", "required": true, "description": "TikTok enum: PLACEMENT_TYPE_AUTOMATIC / PLACEMENT_TYPE_NORMAL." },
+    { "name": "placements", "type": "array", "required": true, "description": "TikTok placement IDs (when placementType=PLACEMENT_TYPE_NORMAL): PLACEMENT_TIKTOK / PLACEMENT_PANGLE / PLACEMENT_GLOBAL_APP_BUNDLE." },
+    { "name": "optimizationGoal", "type": "string", "required": true, "description": "TikTok enum: CLICK / CONVERT / IMPRESSION / REACH / VIDEO_VIEW / LEAD_GENERATION." },
+    { "name": "adName", "type": "string", "required": true, "description": "TikTok ad name." },
+    { "name": "targeting", "type": "object", "required": true, "description": "TikTok targeting: { locationIds[], ageGroups[], genders[], languages[], interestCategoryIds[] } — all optional." },
+    { "name": "tiktokCredentialRef", "type": "string", "required": true, "description": "Opaque TikTok OAuth credential reference (resolved via ctx.secrets.resolve)." },
+    { "name": "tiktokAdvertiserId", "type": "string", "required": true, "description": "TikTok advertiser ID." }
+  ],
+  "metadata": {
+    "tags": ["ads", "creative", "publish", "tiktok", "vendor.myndhyve"],
+    "packs": [
+      "vendor.myndhyve.ads-studio-core@1.0.0",
+      "vendor.myndhyve.ads-platforms@1.0.0",
+      "vendor.myndhyve.ads-copy-generate@1.0.0",
+      "vendor.myndhyve.ads-image-generate@1.0.0",
+      "vendor.myndhyve.ads-creative-validate@1.0.0",
+      "vendor.myndhyve.ads-tools@1.0.0",
+      "vendor.myndhyve.ads-export@1.0.0",
+      "vendor.myndhyve.ads-publish-tiktok@1.0.0"
+    ],
+    "hostCapabilities": ["aiProviders", "aiProviders.imageGeneration", "secrets.resolveInPack"]
+  },
+  "settings": { "timeout": 1800000, "maxRetries": 0 }
+}
