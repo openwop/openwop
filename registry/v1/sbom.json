@@ -594,6 +594,24 @@
       ]
     },
     {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.market-intel-opportunity-scoring@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.market-intel-opportunity-scoring",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/vendor.myndhyve.market-intel-opportunity-scoring/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "2086da703d8bb8919410bc2742a6df855fc6f47ba16d13cea14cd8ef5cebfcdc"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "bom-ref": "pkg:openwop/vendor.myndhyve.market-intel-voc@1.0.0",
       "type": "library",
       "name": "vendor.myndhyve.market-intel-voc",
