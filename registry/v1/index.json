@@ -1,7 +1,7 @@
 {
   "registryVersion": "1.0.0",
   "generatedAt": "2026-05-10T00:00:00Z",
-  "packCount": 44,
+  "packCount": 45,
   "packs": [
     {
       "name": "community.openwop-team.demo",
@@ -115,6 +115,15 @@
       "name": "vendor.myndhyve.ads-image-generate",
       "latestVersion": "1.0.0",
       "description": "MyndHyve ads.image.generate — generate ad creative images via the host's ctx.callImageGenerator (host.aiProviders.imageGeneration sub-capability from spec PR #48). Batches N prompts through one host call each, computes per-placement dimensions from caller-supplied placementSpec, applies platform/style/brand-color prompt enhancement, and aggregates safety-filter stats. First consumer of the new sub-capability.",
+      "license": "Apache-2.0",
+      "tags": [],
+      "deprecated": false,
+      "yanked": false
+    },
+    {
+      "name": "vendor.myndhyve.ads-metrics-import",
+      "latestVersion": "1.0.0",
+      "description": "MyndHyve ads.metrics.import — pure-logic aggregation of ad metric snapshots. Caller supplies snapshots[]; pack filters by platformAdIds + optional platform/dateRange, validates each entry, and computes weighted aggregations (overallCtr / overallCpc / overallRoas / overallConversionRate + per-platform breakdown). Mirrors source AdMetricsService.getAggregatedMetrics math. No host capabilities required.",
       "license": "Apache-2.0",
       "tags": [],
       "deprecated": false,

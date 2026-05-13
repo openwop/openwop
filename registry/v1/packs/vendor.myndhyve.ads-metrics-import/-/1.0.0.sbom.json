@@ -1,0 +1,181 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.ads-metrics-import@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.ads-metrics-import",
+      "version": "1.0.0",
+      "description": "MyndHyve ads.metrics.import — pure-logic aggregation of ad metric snapshots. Caller supplies snapshots[]; pack filters by platformAdIds + optional platform/dateRange, validates each entry, and computes weighted aggregations (overallCtr / overallCpc / overallRoas / overallConversionRate + per-platform breakdown). Mirrors source AdMetricsService.getAggregatedMetrics math. No host capabilities required.",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://myndhyve.ai/packs/ads-metrics-import"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/openwop/openwop"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c1f8996bdc606e4efd9c9560402525e08a81fe12275cf3aac7062771ff127107"
+        }
+      ],
+      "purl": "pkg:openwop/vendor.myndhyve.ads-metrics-import@1.0.0"
+    },
+    "tools": [
+      {
+        "vendor": "openwop",
+        "name": "generate-sbom.mjs",
+        "version": "1"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "file",
+      "name": "LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0cea879ed215e3961316e97ab5e4d7a2b2bca999358668599bd53a1c953bc0d9"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "975"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "README.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "342b559b1521a2391f03dd4317cc58e8faee608fa232e614e2ec3250f4bbe648"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "4577"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "index.mjs",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "69b287e0e1cdfd467f45e0a773dfd6a69280cb0e1511a9e21071c4599a3e4669"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "7298"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "keys/pack.json.sig",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "26f8fe5933b6cde9427fd1a4c015b056a7fa99f874f468a7ad24abd43066b810"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "64"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "pack.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "b6d7072d9fe962dc725c22864ff0ab23a069dc101fd8740cf8632f56804168b4"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "1759"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/metrics-import.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f066a9262e2d1a2c4211c2747bfa0d6bea7c80739e6610ed2e17a965ebfcf52b"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "402"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/metrics-import.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "90a28d750d117f9a55c44273746d337cd8ca14e2bb79caa9505d0f22a877b918"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "2957"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/metrics-import.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9e8852847ce75d1f222c2076ea39f8cbb1e8f3e0fde3d0a81009a60678e52cc3"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "2581"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:openwop/vendor.myndhyve.ads-metrics-import@1.0.0",
+      "dependsOn": []
+    }
+  ]
+}
