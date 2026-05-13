@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.market-intel-voc/1.0.0/voc-extraction.output.json",
+  "title": "MarketIntelVocExtractionOutput",
+  "type": "object",
+  "required": ["records", "summary", "warnings", "recordCount", "success"],
+  "properties": {
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["quote", "tagType", "intentStage", "confidence", "classificationRationale"],
+        "properties": {
+          "quote": { "type": "string", "minLength": 10 },
+          "tagType": { "type": "string", "enum": ["pain", "desire", "objection", "trigger", "proof_request", "alternative"] },
+          "intentStage": { "type": "string", "enum": ["ready_now", "researching", "problem_aware", "unaware"] },
+          "impliedOutcome": { "type": "string" },
+          "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+          "classificationRationale": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["totalQuotesFound", "highConfidenceCount", "tagDistribution", "intentDistribution"],
+      "properties": {
+        "totalQuotesFound": { "type": "integer", "minimum": 0 },
+        "highConfidenceCount": { "type": "integer", "minimum": 0 },
+        "tagDistribution": {
+          "type": "object",
+          "required": ["pain", "desire", "objection", "trigger", "proof_request", "alternative"],
+          "properties": {
+            "pain": { "type": "integer" },
+            "desire": { "type": "integer" },
+            "objection": { "type": "integer" },
+            "trigger": { "type": "integer" },
+            "proof_request": { "type": "integer" },
+            "alternative": { "type": "integer" }
+          },
+          "additionalProperties": false
+        },
+        "intentDistribution": {
+          "type": "object",
+          "required": ["ready_now", "researching", "problem_aware", "unaware"],
+          "properties": {
+            "ready_now": { "type": "integer" },
+            "researching": { "type": "integer" },
+            "problem_aware": { "type": "integer" },
+            "unaware": { "type": "integer" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": true
+    },
+    "warnings": { "type": "array", "items": { "type": "string" } },
+    "recordCount": { "type": "integer", "minimum": 0 },
+    "model": { "type": "string" },
+    "usage": {
+      "type": "object",
+      "properties": {
+        "promptTokens": { "type": "integer" },
+        "completionTokens": { "type": "integer" }
+      },
+      "additionalProperties": true
+    },
+    "success": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}

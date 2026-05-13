@@ -1,0 +1,36 @@
+{
+  "name": "vendor.myndhyve.market-intel-voc",
+  "version": "1.0.0",
+  "description": "MyndHyve market-intel.voc-extraction — extract Voice of Customer records (verbatim quotes + tagType + intentStage + confidence + rationale) from a single piece of content via a single AI call. First marketIntel pack of the Stage 5 cohort. Schema validation strips invalid records with per-record warnings; output preserves source structure (records + summary + warnings).",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/market-intel-voc",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": ["vendor", "myndhyve", "market-intel", "voc", "voice-of-customer", "research"],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "aiProviders": "supported"
+  },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "nodes": [
+    {
+      "typeId": "market-intel.voc-extraction",
+      "version": "1.0.0",
+      "label": "Extract Voice of Customer",
+      "description": "Issue one AI call against content + ICP/product context; parse JSON; validate against the VoC schema (6 tag types × 4 intent stages × clamped confidence). Records that fail validation are dropped with per-record warnings, NOT errored — so a partial parse still returns the valid subset.",
+      "category": "data",
+      "role": "action",
+      "capabilities": ["side-effectful"],
+      "configSchemaRef": "schemas/voc-extraction.config.json",
+      "inputSchemaRef": "schemas/voc-extraction.input.json",
+      "outputSchemaRef": "schemas/voc-extraction.output.json"
+    }
+  ]
+}
