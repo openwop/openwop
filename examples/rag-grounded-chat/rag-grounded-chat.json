@@ -1,0 +1,103 @@
+{
+  "id": "vendor.myndhyve.rag-grounded-chat",
+  "name": "RAG-Grounded Chat",
+  "version": "1.0",
+  "description": "2-node reference workflow demonstrating the v1 `host.knowledge` spec extension. Retrieves relevant chunks from a knowledge base, builds a grounding-instructed user prompt with `[#N]` citation markers, and routes to an AI chat completion that cites its sources. Output carries the AI answer + the `citations[]` array so the calling UI can render footnotes. Replaces ~150 LOC of ad-hoc RAG plumbing with two registered packs composed declaratively.",
+  "nodes": [
+    {
+      "id": "augment-question",
+      "typeId": "knowledge.augment-prompt",
+      "name": "Retrieve + Augment User Question",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "maxCharsPerChunk": 1200,
+        "totalCharBudget": 6000
+      },
+      "inputs": {
+        "userMessage": "$.run.variables.userQuestion",
+        "retrievalQuery": "$.run.variables.retrievalQuery",
+        "workspaceId": "$.run.variables.workspaceId",
+        "collectionIds": "$.run.variables.collectionIds",
+        "candidateLimit": 20,
+        "resultLimit": 5,
+        "scoreThreshold": 0.5
+      }
+    },
+    {
+      "id": "answer-with-sources",
+      "typeId": "core.ai.chatCompletion",
+      "name": "Generate Cited Answer",
+      "position": { "x": 200, "y": 0 },
+      "config": {
+        "provider": "$.run.variables.aiProvider",
+        "model": "$.run.variables.aiModel",
+        "temperature": 0.2,
+        "systemPrompt": "You answer using ONLY the sources provided in the user message. When you use information from a source, cite it as [#N] inline (matching the marker in the Sources block). If the sources don't contain the answer, say so honestly — do not invent facts."
+      },
+      "inputs": {
+        "messages": [
+          { "role": "user", "content": "$.nodes.augment-question.outputs.augmentedUserMessage" }
+        ]
+      }
+    }
+  ],
+  "edges": [
+    { "id": "e1", "sourceNodeId": "augment-question", "targetNodeId": "answer-with-sources" }
+  ],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    {
+      "name": "userQuestion",
+      "type": "string",
+      "required": true,
+      "description": "The end-user's question to ground against the knowledge base."
+    },
+    {
+      "name": "retrievalQuery",
+      "type": "string",
+      "required": false,
+      "description": "Optional retrieval-query override. When omitted, defaults to userQuestion. Use when the question's natural-language form would retrieve poorly (e.g., 'How does it work?' → 'product onboarding flow')."
+    },
+    {
+      "name": "workspaceId",
+      "type": "string",
+      "required": false,
+      "description": "Workspace scope passed through to ctx.knowledge.retrieve. Host enforces tenant isolation."
+    },
+    {
+      "name": "collectionIds",
+      "type": "array",
+      "required": false,
+      "description": "Optional collection-ID filter. When omitted, retrieval spans every collection visible to the principal."
+    },
+    {
+      "name": "aiProvider",
+      "type": "string",
+      "required": true,
+      "description": "AI provider identifier from `capabilities.aiProviders.supported` (e.g., 'anthropic', 'openai', 'gemini'). Host routes the call via its BYOK/configured-key path."
+    },
+    {
+      "name": "aiModel",
+      "type": "string",
+      "required": true,
+      "description": "Provider model identifier (e.g., 'claude-sonnet-4-6', 'gpt-4o', 'gemini-2.5-pro')."
+    }
+  ],
+  "metadata": {
+    "tags": ["rag", "knowledge", "ai", "vendor.myndhyve"],
+    "packs": [
+      "vendor.myndhyve.knowledge-tools@1.0.0",
+      "core.openwop.ai@1.0.0"
+    ],
+    "hostCapabilities": [
+      "host.knowledge",
+      "aiProviders"
+    ]
+  },
+  "settings": {
+    "timeout": 600000,
+    "maxRetries": 0
+  }
+}
