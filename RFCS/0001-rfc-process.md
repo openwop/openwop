@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0001 |
 | **Title** | The RFC Process |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-01 |
-| **Updated** | 2026-05-01 |
+| **Updated** | 2026-05-13 (Active → Accepted: all 6 acceptance-criteria items satisfied. `RFCS/README.md` + `RFCS/0000-template.md` shipped at the same commit as this file. `GOVERNANCE.md` cross-references `RFCS/` at five locations (§"Spec change process" line 47 + 51 + 58 + 88 + 93). `CHANGELOG.md` records the RFC process landing under the v1.1.0 entry (§"RFCs landed" line 39). `rfc` PR label created in the public repository 2026-05-13 (color `#5319e7`, description "RFC change per RFCS/0001-rfc-process.md (normative-additive / safety-fix / breaking)"). The §7 normative-acceptance gate (`Until this RFC reaches Accepted, the public repository accepts only editorial changes`) was respected in spirit since the RFC's filing: every normative change since 2026-05-01 has been gated on a per-RFC comment window OR the bootstrap-phase waiver documented at `CONTRIBUTING.md` §"Bootstrap-phase notes" + `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". With this promotion the process is fully operational; subsequent normative additions land under standard RFC review rather than the bootstrap waiver pattern.) |
 | **Affects** | `GOVERNANCE.md`, `RFCS/`, `CONTRIBUTING.md` |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -144,9 +144,9 @@ This RFC is the first one. The acceptance criteria below double as the LT1 deliv
 - [x] `RFCS/README.md` exists and documents the process.
 - [x] `RFCS/0000-template.md` exists and matches the structure required by §6 above.
 - [x] `RFCS/0001-rfc-process.md` (this file) is filed.
-- [ ] `GOVERNANCE.md` references `RFCS/` in §"Spec change process" and links to this RFC.
-- [ ] `CHANGELOG.md` has an entry under `[Unreleased]` → `### Governance` describing the RFC process landing.
-- [ ] An `rfc` PR label is created in the public repository.
+- [x] `GOVERNANCE.md` references `RFCS/` in §"Spec change process" and links to this RFC. (Confirmed 2026-05-13: GOVERNANCE.md cross-references `RFCS/` at lines 47, 51, 58, 88, 93.)
+- [x] `CHANGELOG.md` records the RFC process landing. (Confirmed 2026-05-13: `[1.1.0]` entry §"RFCs landed" line 39 — `**RFC 0001** — RFC process itself (Accepted)`.)
+- [x] An `rfc` PR label is created in the public repository. (Created 2026-05-13 via `gh label create rfc --color "5319e7"`.)
 
 ## References
 

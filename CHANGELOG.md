@@ -44,9 +44,9 @@ Per-track closure status is tracked in `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` (arch
 - **RFC 0006** — Orchestrator-supervisor role (`Accepted`).
 - **RFC 0007** — `core.dispatch` core node (`Accepted`).
 - **RFC 0008** — WASM ABI (`Accepted` 2026-05-13) + Component-Model variant annex.
-- **RFC 0009** — Production-profile conformance (`Active`).
-- **RFC 0010** — Auth-profile conformance + v1.0 closure umbrella (`Active`).
-- **RFC 0011** — Auth-scoped discovery (`Active`).
+- **RFC 0009** — Production-profile conformance (`Accepted` 2026-05-12).
+- **RFC 0010** — Auth-profile conformance + v1.0 closure umbrella (`Accepted` 2026-05-12).
+- **RFC 0011** — Auth-scoped discovery (`Accepted` 2026-05-12).
 
 ### Multi-Agent Shift (RFCs 0002–0007 + RFC 0008)
 
