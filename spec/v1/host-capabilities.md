@@ -66,7 +66,8 @@ ctx.callAI({
 |---|---|---|
 | `aiProviders.toolCalling: supported` | `ctx.callAIWithTools(...)` — model may emit `tool_call` entries | `core.openwop.ai` (`core.ai.callPromptWithTools`) |
 | `aiProviders.embeddings: supported` | `ctx.callAI({ embeddingMode: true, dimensions?: number })` returns `{ embedding: number[], dimensions, model }` | `core.openwop.ai` (`core.ai.embed`) |
-| `aiProviders.imageGeneration: supported` | `ctx.callImageGenerator(...)` — generates binary image asset (returns URL or base64 data); see optional method block below | future `vendor.myndhyve.ads-image-generate` |
+| `aiProviders.imageGeneration: supported` | `ctx.callImageGenerator(...)` — generates binary image asset (returns URL or base64 data); see optional method block below | `vendor.myndhyve.ads-image-generate` |
+| `aiProviders.videoGeneration: supported` | `ctx.callVideoGenerator(...)` — generates binary video asset (returns URL); see optional method block below. Long-running (typical 30-120s); host hides polling internally. | future `vendor.myndhyve.ads-video-generate` |
 
 ```typescript
 // Available when host advertises `aiProviders.imageGeneration: supported`.
@@ -97,6 +98,46 @@ ctx.callImageGenerator({
 }>
 ```
 
+```typescript
+// Available when host advertises `aiProviders.videoGeneration: supported`.
+// Host hides async polling internally — the Promise resolves only when
+// the video is finalized OR rejects on terminal failure. Typical
+// latency 30-120 seconds; packs MUST honor ctx.signal for abort.
+ctx.callVideoGenerator({
+  provider?: string,             // google (veo) | runway | pika | ...
+  model?: string,                // 'veo-2' | 'gen-3' | ...
+  prompt: string,
+  negativePrompt?: string,
+  width: number,                 // pixels; host MAY cap
+  height: number,
+  durationSeconds: number,       // target duration; host MAY round to provider's allowed lengths
+  includeAudio?: boolean,        // default false
+  seed?: number,
+  brandColors?: string[],
+}) → Promise<{
+  video: {
+    url: string,                 // host-served URL (videos are too large for inline base64)
+    durationSeconds: number,
+    width: number,
+    height: number,
+    mimeType: string,            // 'video/mp4' | 'video/webm'
+    fileSizeBytes?: number,
+    thumbnailUrl?: string,
+    seed?: number,
+    safetyFiltered: boolean,
+    metadata?: {
+      model?: string,
+      generationTimeMs?: number,
+      frameCount?: number,
+      fps?: number,
+      codec?: string,
+    },
+  },
+  totalTimeMs?: number,
+  usage?: { totalCost?: number },
+}>
+```
+
 **Failure modes:**
 - `host_capability_missing` — `ctx.callAI` absent (workflow-register-time refusal via `peerDependencies: { aiProviders: "supported" }` is the correct path; runtime check is defense-in-depth)
 - `provider_unavailable` — provider rejected the call or is unreachable
@@ -107,6 +148,10 @@ ctx.callImageGenerator({
 - `content_too_long` — request exceeds the model's context window (host SHOULD reject pre-flight when possible)
 - `image_generation_failed` — sub-capability-specific (`ctx.callImageGenerator`)
 - `image_safety_filtered_all` — every requested image was safety-filtered (all → `filteredCount: count`, `images: []`)
+- `video_generation_failed` — sub-capability-specific (`ctx.callVideoGenerator`)
+- `video_safety_filtered` — video was safety-filtered (resolves with `video.safetyFiltered: true` AND a placeholder thumbnail; never throws — packs decide how to surface)
+- `video_generation_timeout` — long-running job exceeded the host's max wait window (host-configured, typical 5 min). Pack should treat as retryable.
+- `video_generation_cancelled` — `ctx.signal.aborted` fired during the polling loop OR the underlying job was cancelled host-side. Not retryable from the pack's perspective.
 
 **Determinism note.** `ctx.callAI` is not deterministic in general (temperature > 0, provider-side seed drift). Replay-aware hosts MAY snapshot the AI response in the run event log and replay deterministically; the contract here doesn't require it. See [replay.md §"AI determinism"](replay.md).
 
