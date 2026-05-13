@@ -1,0 +1,45 @@
+{
+  "name": "vendor.myndhyve.ads-creative-validate",
+  "version": "1.0.0",
+  "description": "MyndHyve ads.creative.validate — full compliance scanner combining built-in policy text rules, placement text-length checks, AND asset-format checks (image/video dimensions, file sizes, durations). Caller supplies placement spec data via inputs (resolve upstream from vendor.myndhyve.ads-platforms OR host.adPlatformSpecs).",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/ads-creative-validate",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "vendor",
+    "myndhyve",
+    "ads",
+    "compliance",
+    "validation",
+    "creative"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "nodes": [
+    {
+      "typeId": "ads.creative.validate",
+      "version": "1.0.0",
+      "label": "Validate Creative",
+      "description": "Run full compliance scan: 7 built-in text rules (claims, trademark, prohibited content, discriminatory targeting), asset-format checks (image dimensions + file size + video duration), and placement text-length checks. Returns per-check status with pass/fail/warning + overall passed flag + per-asset violations.",
+      "category": "data",
+      "role": "action",
+      "configSchemaRef": "schemas/creative-validate.config.json",
+      "inputSchemaRef": "schemas/creative-validate.input.json",
+      "outputSchemaRef": "schemas/creative-validate.output.json"
+    }
+  ],
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "myndhyve-internal-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-anTiMnCNjakD0beCtPWILNQJE2veJfkMd0+HCH/u5Sg="
+}

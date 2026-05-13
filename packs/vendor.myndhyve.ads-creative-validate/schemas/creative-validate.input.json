@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-creative-validate/1.0.0/creative-validate.input.json",
+  "title": "AdsCreativeValidateInput",
+  "type": "object",
+  "required": ["copyText"],
+  "properties": {
+    "copyText": {
+      "type": "object",
+      "properties": {
+        "headline": { "type": "string" },
+        "description": { "type": "string" },
+        "bodyText": { "type": "string" },
+        "ctaText": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "placement"],
+        "properties": {
+          "type": { "type": "string", "enum": ["image", "video", "carousel", "audio"] },
+          "placement": { "type": "string" },
+          "width": { "type": "integer" },
+          "height": { "type": "integer" },
+          "fileSize": { "type": "integer", "minimum": 0 },
+          "duration": { "type": "number", "minimum": 0 }
+        },
+        "additionalProperties": true
+      }
+    },
+    "platforms": { "type": "array", "items": { "type": "string" } },
+    "placements": { "type": "array", "items": { "type": "string" } },
+    "placementTextLimits": {
+      "type": "object",
+      "description": "OPTIONAL per-placement text-length limits. Same shape as ads-policy pack.",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "headline": { "type": "object", "additionalProperties": true },
+          "description": { "type": "object", "additionalProperties": true },
+          "bodyText": { "type": "object", "additionalProperties": true },
+          "ctaText": { "type": "object", "additionalProperties": true }
+        },
+        "additionalProperties": true
+      }
+    },
+    "placementSpecs": {
+      "type": "object",
+      "description": "OPTIONAL per-placement creative specs for asset-format validation. Each entry has imageSpec {minWidth, minHeight, maxFileSize} and/or videoSpec {minDuration, maxDuration, maxFileSize}. Resolve upstream from vendor.myndhyve.ads-platforms pack OR host.adPlatformSpecs. When absent the executor skips asset-format checks.",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "imageSpec": {
+            "type": "object",
+            "properties": {
+              "minWidth": { "type": "integer" },
+              "minHeight": { "type": "integer" },
+              "maxFileSize": { "type": "integer" }
+            },
+            "additionalProperties": true
+          },
+          "videoSpec": {
+            "type": "object",
+            "properties": {
+              "minDuration": { "type": "number" },
+              "maxDuration": { "type": "number" },
+              "maxFileSize": { "type": "integer" }
+            },
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}
