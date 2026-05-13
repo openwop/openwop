@@ -1,0 +1,25 @@
+{
+  "name": "vendor.myndhyve.knowledge-tools",
+  "description": "MyndHyve knowledge-tools — first reference consumer of the v1 host.knowledge surface. Two typeIds: (1) knowledge.retrieve — thin pass-through over ctx.knowledge.retrieve with optional score-floor filtering; (2) knowledge.augment-prompt — composition primitive that retrieves + renders a Sources block + builds an augmented user message + emits a citation list. Host advertises host.knowledge: supported per spec/v1/host-capabilities.md §host.knowledge.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/knowledge-tools",
+  "repository": "https://github.com/openwop/openwop",
+  "tags": [],
+  "versions": [
+    {
+      "version": "1.0.0",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/vendor.myndhyve.knowledge-tools/-/1.0.0.json",
+      "tarballUrl": "/v1/packs/vendor.myndhyve.knowledge-tools/-/1.0.0.tgz",
+      "signatureUrl": "/v1/packs/vendor.myndhyve.knowledge-tools/-/1.0.0.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-1CuVLoqERUCHn6Q+iBVb/NhffNt4t5sZ3pJruBJXPjo=",
+      "deprecated": false,
+      "yanked": false
+    }
+  ],
+  "latest": "1.0.0",
+  "deprecated": false
+}

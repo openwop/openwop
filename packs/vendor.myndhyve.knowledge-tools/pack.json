@@ -1,0 +1,48 @@
+{
+  "name": "vendor.myndhyve.knowledge-tools",
+  "version": "1.0.0",
+  "description": "MyndHyve knowledge-tools — first reference consumer of the v1 host.knowledge surface. Two typeIds: (1) knowledge.retrieve — thin pass-through over ctx.knowledge.retrieve with optional score-floor filtering; (2) knowledge.augment-prompt — composition primitive that retrieves + renders a Sources block + builds an augmented user message + emits a citation list. Host advertises host.knowledge: supported per spec/v1/host-capabilities.md §host.knowledge.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/knowledge-tools",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": ["vendor", "myndhyve", "knowledge", "rag", "retrieval", "grounding", "citations"],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "host.knowledge": "supported"
+  },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "nodes": [
+    {
+      "typeId": "knowledge.retrieve",
+      "version": "1.0.0",
+      "label": "Retrieve Knowledge",
+      "description": "Issue a RAG retrieval against the host's knowledge base. Surfaces chunks + de-duplicated sources + a hasResults flag. Optional config.scoreFloor drops chunks below a host-normalized relevance score; droppedByScoreFloor reports how many were dropped.",
+      "category": "data",
+      "role": "action",
+      "capabilities": ["side-effectful"],
+      "configSchemaRef": "schemas/retrieve.config.json",
+      "inputSchemaRef": "schemas/retrieve.input.json",
+      "outputSchemaRef": "schemas/retrieve.output.json"
+    },
+    {
+      "typeId": "knowledge.augment-prompt",
+      "version": "1.0.0",
+      "label": "Augment Prompt with Knowledge",
+      "description": "Retrieve relevant chunks + build a grounded augmented user message ready to hand to an AI node. Outputs augmentedUserMessage (with embedded Sources block + per-chunk [#N] markers), citations[] for caller-side rendering, and raw chunks/sources for downstream nodes. Falls back to a 'no source material' header when retrieval returns 0 results.",
+      "category": "data",
+      "role": "action",
+      "capabilities": ["side-effectful"],
+      "configSchemaRef": "schemas/augment-prompt.config.json",
+      "inputSchemaRef": "schemas/augment-prompt.input.json",
+      "outputSchemaRef": "schemas/augment-prompt.output.json"
+    }
+  ]
+}
