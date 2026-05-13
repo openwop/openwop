@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-publish-google/1.0.0/publish-google.input.json",
+  "title": "AdsPublishGoogleInput",
+  "type": "object",
+  "required": ["oauthCredentialRef", "developerTokenCredentialRef", "customerId", "campaign", "adGroup", "ad"],
+  "properties": {
+    "oauthCredentialRef": { "type": "string", "minLength": 1, "description": "Opaque secret ref for the Google OAuth access token." },
+    "developerTokenCredentialRef": { "type": "string", "minLength": 1, "description": "Opaque secret ref for the Google Ads API developer-token (separate from OAuth)." },
+    "customerId": { "type": "string", "minLength": 1, "description": "Google Ads customer id (10 digits; pack strips dashes)." },
+    "loginCustomerId": { "type": "string", "description": "For MCC accounts: the manager customer id to act on behalf of. Sent as login-customer-id header." },
+    "campaign": {
+      "type": "object",
+      "required": ["name", "advertisingChannelType", "biddingStrategy"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "advertisingChannelType": { "type": "string", "enum": ["SEARCH", "DISPLAY", "SHOPPING", "VIDEO", "PERFORMANCE_MAX", "DEMAND_GEN"] },
+        "status": { "type": "string", "enum": ["ENABLED", "PAUSED", "REMOVED"], "description": "Defaults to PAUSED (safe — no auto-spend)." },
+        "biddingStrategy": { "type": "string", "enum": ["TARGET_CPA", "TARGET_ROAS", "MAXIMIZE_CONVERSIONS", "MAXIMIZE_CONVERSION_VALUE", "MAXIMIZE_CLICKS", "MANUAL_CPC"] },
+        "dailyBudgetMicros": { "type": "integer", "minimum": 1, "description": "Daily budget in micros ($1 = 1_000_000). Defaults to 10000000 ($10)." },
+        "startDate": { "type": "string", "description": "YYYY-MM-DD." },
+        "endDate": { "type": "string", "description": "YYYY-MM-DD." },
+        "targetCpaMicros": { "type": "integer", "minimum": 1, "description": "Required when biddingStrategy=TARGET_CPA." },
+        "targetRoas": { "type": "number", "minimum": 0.01, "description": "Required when biddingStrategy=TARGET_ROAS (1.0 = break-even; 4.0 = 4× return target)." }
+      },
+      "additionalProperties": true
+    },
+    "adGroup": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "enum": ["ENABLED", "PAUSED", "REMOVED"] },
+        "cpcBidMicros": { "type": "integer", "minimum": 1, "description": "Default CPC bid in micros (only relevant for MANUAL_CPC bidding)." }
+      },
+      "additionalProperties": true
+    },
+    "ad": {
+      "type": "object",
+      "required": ["format", "headlines", "descriptions", "finalUrls"],
+      "properties": {
+        "format": { "type": "string", "enum": ["responsive_search", "responsive_display"] },
+        "headlines": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1, "description": "Required. RSA: 3-15 headlines. RDA: 1-5 short headlines." },
+        "descriptions": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1, "description": "RSA: 2-4. RDA: 1-5." },
+        "finalUrls": { "type": "array", "items": { "type": "string" }, "minItems": 1, "description": "Landing page URLs." },
+        "path1": { "type": "string", "description": "RSA only: first URL display path segment." },
+        "path2": { "type": "string", "description": "RSA only: second URL display path segment." },
+        "longHeadline": { "type": "string", "description": "Required for responsive_display." },
+        "businessName": { "type": "string", "description": "Required for responsive_display." },
+        "marketingImages": { "type": "array", "items": { "type": "string" }, "description": "Required for responsive_display. Asset resource names from prior upload (customers/{id}/assets/{assetId})." }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}
