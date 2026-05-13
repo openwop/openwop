@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-export/1.0.0/export-pack.input.json",
+  "title": "AdsExportPackInput",
+  "type": "object",
+  "required": ["name", "campaignId", "format", "exportedBy", "items"],
+  "properties": {
+    "name": { "type": "string", "minLength": 1 },
+    "campaignId": { "type": "string", "minLength": 1 },
+    "format": { "type": "string", "enum": ["json", "csv", "zip"], "default": "json" },
+    "exportedBy": { "type": "string", "description": "Provenance string — typically `run:<runId>` or `user:<userId>`." },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["adId", "adName", "copyVariants", "assets", "trackingLinks", "placements"],
+        "properties": {
+          "adId": { "type": "string" },
+          "adName": { "type": "string" },
+          "copyVariants": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "headline": { "type": "string" },
+                "description": { "type": "string" },
+                "bodyText": { "type": "string" },
+                "ctaText": { "type": "string" },
+                "platformAdaptations": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "placement": { "type": "string" },
+                      "headline": { "type": "string" },
+                      "description": { "type": "string" },
+                      "bodyText": { "type": "string" },
+                      "ctaText": { "type": "string" }
+                    },
+                    "additionalProperties": true
+                  }
+                }
+              },
+              "additionalProperties": true
+            }
+          },
+          "assets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["type", "fileSize"],
+              "properties": {
+                "name": { "type": "string" },
+                "type": { "type": "string" },
+                "url": { "type": "string" },
+                "fileSize": { "type": "integer", "minimum": 0 },
+                "width": { "type": "integer" },
+                "height": { "type": "integer" }
+              },
+              "additionalProperties": true
+            }
+          },
+          "trackingLinks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "platform": { "type": "string" },
+                "fullUrl": { "type": "string" }
+              },
+              "additionalProperties": true
+            }
+          },
+          "placements": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "campaignName": { "type": "string", "description": "Optional — used in manifest output when present." }
+  },
+  "additionalProperties": true
+}
