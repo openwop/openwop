@@ -1,0 +1,25 @@
+{
+  "name": "vendor.myndhyve.market-intel-content-extraction",
+  "description": "MyndHyve market-intel.content-extraction — extract structured content from raw HTML via one ctx.callAI. Outputs title, cleaned content, author, publishedAt, contentType, engagement metrics, tags, summary, and relevantQuotes. Sits between host.webResearch.fetchBatch and market-intel.voc-extraction in the canonical pipeline. Fifth marketIntel pack of the Stage 5 cohort.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/market-intel-content-extraction",
+  "repository": "https://github.com/openwop/openwop",
+  "tags": [],
+  "versions": [
+    {
+      "version": "1.0.0",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/vendor.myndhyve.market-intel-content-extraction/-/1.0.0.json",
+      "tarballUrl": "/v1/packs/vendor.myndhyve.market-intel-content-extraction/-/1.0.0.tgz",
+      "signatureUrl": "/v1/packs/vendor.myndhyve.market-intel-content-extraction/-/1.0.0.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-4A9S83fJ1x6z9ADRP2E7zIaovQrpjpZqEbqZOxAZ1AE=",
+      "deprecated": false,
+      "yanked": false
+    }
+  ],
+  "latest": "1.0.0",
+  "deprecated": false
+}

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.market-intel-content-extraction/1.0.0/content-extraction.config.json",
+  "title": "MarketIntelContentExtractionConfig",
+  "type": "object",
+  "properties": {
+    "provider": { "type": "string" },
+    "model": { "type": "string" },
+    "temperature": { "type": "number", "minimum": 0, "maximum": 2, "description": "Defaults to 0.2 — extraction must be faithful to source." },
+    "maxTokens": { "type": "integer", "minimum": 512, "description": "Defaults to 3000." },
+    "htmlTruncateChars": { "type": "integer", "minimum": 1000, "description": "Defaults to 50000. HTML longer than this is truncated and wasTruncated is set to true in outputs." }
+  },
+  "additionalProperties": true
+}
