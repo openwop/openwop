@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-video-generate/1.0.0/video-generate.input.json",
+  "title": "AdsVideoGenerateInput",
+  "type": "object",
+  "required": ["prompt"],
+  "properties": {
+    "prompt": { "type": "string", "minLength": 1, "description": "Video generation prompt." },
+    "negativePrompt": { "type": "string" },
+    "platform": { "type": "string", "description": "Target ad platform. Defaults to 'meta'." },
+    "placement": { "type": "string", "description": "Target placement id. Defaults to '{platform}-feed'." },
+    "durationSeconds": { "type": "number", "minimum": 1, "description": "Target duration. Host MAY round to provider's allowed lengths. Defaults to 8." },
+    "includeAudio": { "type": "boolean", "description": "Include generated audio track. Defaults to false." },
+    "aspectRatio": {
+      "type": "object",
+      "description": "Fallback dimension derivation when placementSpec absent.",
+      "properties": {
+        "width": { "type": "number", "minimum": 1 },
+        "height": { "type": "number", "minimum": 1 }
+      }
+    },
+    "placementSpec": {
+      "type": "object",
+      "description": "Caller-supplied placement spec. When videoSpec.recommendedWidth/Height are present, used as output dimensions.",
+      "properties": {
+        "videoSpec": {
+          "type": "object",
+          "properties": {
+            "recommendedWidth": { "type": "integer", "minimum": 1 },
+            "recommendedHeight": { "type": "integer", "minimum": 1 }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "style": {
+      "type": "string",
+      "description": "Style key. Known: cinematic / motion-graphics / product-demo / lifestyle / animated / stop-motion / documentary. Unknown keys passed as free-form text.",
+      "enum": ["cinematic", "motion-graphics", "product-demo", "lifestyle", "animated", "stop-motion", "documentary"]
+    },
+    "brandColors": { "type": "array", "items": { "type": "string" } },
+    "seed": { "type": "integer" }
+  },
+  "additionalProperties": true
+}

@@ -324,6 +324,24 @@
       ]
     },
     {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.ads-video-generate@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.ads-video-generate",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/vendor.myndhyve.ads-video-generate/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "cc07143f4a8fa03db4e1771792021448f7009b9b3397d520de4315c70f1f6408"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "bom-ref": "pkg:openwop/vendor.myndhyve.agent-orchestration@1.0.0",
       "type": "library",
       "name": "vendor.myndhyve.agent-orchestration",

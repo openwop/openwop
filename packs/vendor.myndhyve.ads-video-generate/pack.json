@@ -1,0 +1,36 @@
+{
+  "name": "vendor.myndhyve.ads-video-generate",
+  "version": "1.0.0",
+  "description": "MyndHyve ads.video.generate — generate ad creative videos via the host's ctx.callVideoGenerator (aiProviders.videoGeneration sub-capability from spec PR #53). Symmetric companion to ads-image-generate but adapted for video (single video per call, host hides async polling internally, typical 30-120s latency). Caller-supplied placementSpec.videoSpec replaces source's PlatformSpecRegistry lookup.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/ads-video-generate",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": ["vendor", "myndhyve", "ads", "video-generation", "creative", "veo", "runway"],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "aiProviders.videoGeneration": "supported"
+  },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "nodes": [
+    {
+      "typeId": "ads.video.generate",
+      "version": "1.0.0",
+      "label": "Generate Ad Video",
+      "description": "Single video generation via ctx.callVideoGenerator. Dimensions resolved from inputs.placementSpec.videoSpec OR inputs.aspectRatio fallback (1920×1080 landscape default; 1080-max portrait). Prompt enhanced with platform/style/duration/brandColors context. Honors ctx.signal — propagated to host as video_generation_cancelled. Returns asset URL + duration + dimensions + safety flag + usage stats.",
+      "category": "data",
+      "role": "action",
+      "capabilities": ["side-effectful"],
+      "configSchemaRef": "schemas/video-generate.config.json",
+      "inputSchemaRef": "schemas/video-generate.input.json",
+      "outputSchemaRef": "schemas/video-generate.output.json"
+    }
+  ]
+}

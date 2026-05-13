@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-video-generate/1.0.0/video-generate.output.json",
+  "title": "AdsVideoGenerateOutput",
+  "type": "object",
+  "required": ["asset", "platform", "placement", "dimensions", "durationSeconds", "usage", "success"],
+  "properties": {
+    "asset": {
+      "type": "object",
+      "required": ["url", "durationSeconds", "width", "height", "mimeType", "safetyFiltered", "metadata"],
+      "properties": {
+        "url": { "type": "string", "description": "Host-served URL. Videos are too large for inline base64 — URL-only per §host.aiProviders.videoGeneration." },
+        "durationSeconds": { "type": "number", "minimum": 0 },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "mimeType": { "type": "string", "enum": ["video/mp4", "video/webm"] },
+        "fileSizeBytes": { "type": ["integer", "null"] },
+        "thumbnailUrl": { "type": ["string", "null"] },
+        "seed": { "type": "integer" },
+        "safetyFiltered": { "type": "boolean" },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "enhancedPrompt": { "type": "string" },
+            "platform": { "type": "string" },
+            "placement": { "type": "string" },
+            "model": { "type": "string" },
+            "generationTimeMs": { "type": "integer" },
+            "frameCount": { "type": "integer" },
+            "fps": { "type": "integer" },
+            "codec": { "type": "string" }
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "platform": { "type": "string" },
+    "placement": { "type": "string" },
+    "dimensions": {
+      "type": "object",
+      "required": ["width", "height"],
+      "properties": {
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "durationSeconds": { "type": "number" },
+    "usage": {
+      "type": "object",
+      "properties": {
+        "totalTimeMs": { "type": "integer", "minimum": 0 },
+        "totalCost": { "type": "number", "minimum": 0 }
+      },
+      "additionalProperties": true
+    },
+    "success": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}
