@@ -1,0 +1,25 @@
+{
+  "name": "vendor.myndhyve.ads-metrics-import",
+  "description": "MyndHyve ads.metrics.import — pure-logic aggregation of ad metric snapshots. Caller supplies snapshots[]; pack filters by platformAdIds + optional platform/dateRange, validates each entry, and computes weighted aggregations (overallCtr / overallCpc / overallRoas / overallConversionRate + per-platform breakdown). Mirrors source AdMetricsService.getAggregatedMetrics math. No host capabilities required.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/ads-metrics-import",
+  "repository": "https://github.com/openwop/openwop",
+  "tags": [],
+  "versions": [
+    {
+      "version": "1.0.0",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/vendor.myndhyve.ads-metrics-import/-/1.0.0.json",
+      "tarballUrl": "/v1/packs/vendor.myndhyve.ads-metrics-import/-/1.0.0.tgz",
+      "signatureUrl": "/v1/packs/vendor.myndhyve.ads-metrics-import/-/1.0.0.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-wfiZa9xgbk79nJVgQCUl4IqB/hInXPOqxwYncf8ScQc=",
+      "deprecated": false,
+      "yanked": false
+    }
+  ],
+  "latest": "1.0.0",
+  "deprecated": false
+}

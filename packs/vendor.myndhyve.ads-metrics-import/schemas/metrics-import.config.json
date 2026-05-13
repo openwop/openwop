@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-metrics-import/1.0.0/metrics-import.config.json",
+  "title": "AdsMetricsImportConfig",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": true,
+  "description": "Pure-logic pack — no config knobs. Reserved for future config (e.g., aggregation strategy override)."
+}

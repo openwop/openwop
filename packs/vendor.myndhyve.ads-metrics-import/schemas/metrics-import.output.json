@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-metrics-import/1.0.0/metrics-import.output.json",
+  "title": "AdsMetricsImportOutput",
+  "type": "object",
+  "required": ["snapshots", "aggregated", "matchedCount", "droppedCount", "success"],
+  "properties": {
+    "snapshots": {
+      "type": "array",
+      "description": "Filtered + validated snapshots (subset of inputs.snapshots matching platformAdIds + optional platform/dateRange).",
+      "items": {
+        "type": "object",
+        "required": ["entityId", "platform", "dateRange", "impressions", "clicks", "spend", "conversions", "conversionValue"],
+        "additionalProperties": true
+      }
+    },
+    "aggregated": {
+      "type": "object",
+      "required": ["totalSpend", "totalImpressions", "totalClicks", "totalConversions", "totalConversionValue", "overallCtr", "overallCpc", "overallRoas", "overallConversionRate", "byPlatform"],
+      "properties": {
+        "totalSpend": { "type": "number", "minimum": 0 },
+        "totalImpressions": { "type": "number", "minimum": 0 },
+        "totalClicks": { "type": "number", "minimum": 0 },
+        "totalConversions": { "type": "number", "minimum": 0 },
+        "totalConversionValue": { "type": "number", "minimum": 0 },
+        "overallCtr": { "type": "number", "minimum": 0, "description": "% — clicks/impressions × 100." },
+        "overallCpc": { "type": "number", "minimum": 0, "description": "$/click — spend/clicks." },
+        "overallRoas": { "type": "number", "minimum": 0, "description": "conversionValue/spend." },
+        "overallConversionRate": { "type": "number", "minimum": 0, "description": "% — conversions/clicks × 100." },
+        "byPlatform": {
+          "type": "object",
+          "description": "Per-platform snapshot map. Last snapshot per platform wins (matches source semantic).",
+          "additionalProperties": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "additionalProperties": false
+    },
+    "matchedCount": { "type": "integer", "minimum": 0, "description": "Count of snapshots that passed both validation AND filtering." },
+    "droppedCount": { "type": "integer", "minimum": 0, "description": "Count of validated snapshots that didn't match the filter." },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Per-snapshot validation issues (e.g., missing entityId). Omitted when empty."
+    },
+    "success": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}
