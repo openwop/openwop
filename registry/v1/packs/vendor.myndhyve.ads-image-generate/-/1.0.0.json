@@ -1,0 +1,52 @@
+{
+  "name": "vendor.myndhyve.ads-image-generate",
+  "version": "1.0.0",
+  "description": "MyndHyve ads.image.generate — generate ad creative images via the host's ctx.callImageGenerator (host.aiProviders.imageGeneration sub-capability from spec PR #48). Batches N prompts through one host call each, computes per-placement dimensions from caller-supplied placementSpec, applies platform/style/brand-color prompt enhancement, and aggregates safety-filter stats. First consumer of the new sub-capability.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/ads-image-generate",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "vendor",
+    "myndhyve",
+    "ads",
+    "image-generation",
+    "creative",
+    "imagen",
+    "dall-e"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "aiProviders.imageGeneration": "supported"
+  },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "nodes": [
+    {
+      "typeId": "ads.image.generate",
+      "version": "1.0.0",
+      "label": "Generate Ad Images",
+      "description": "Batches inputs.prompts[] through ctx.callImageGenerator. Per-placement dimensions resolved from inputs.placementSpec.imageSpec (recommendedWidth/Height, capped at config.maxDimension) or fallback to inputs.aspectRatio + maxDimension. Each prompt enhanced with platform/placement/style/brandColors context. Aborts mid-batch on ctx.signal. Returns assets[] + per-prompt stats + total filtered count.",
+      "category": "data",
+      "role": "action",
+      "capabilities": [
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/image-generate.config.json",
+      "inputSchemaRef": "schemas/image-generate.input.json",
+      "outputSchemaRef": "schemas/image-generate.output.json"
+    }
+  ],
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "myndhyve-internal-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-OYqanKiDMQw+RgyD3jDP5xTMIC8jRWJvc1wGGfGW76M="
+}

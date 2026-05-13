@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-image-generate/1.0.0/image-generate.output.json",
+  "title": "AdsImageGenerateOutput",
+  "type": "object",
+  "required": ["assets", "totalGenerated", "filteredCount", "perPromptStats", "dimensions", "platform", "placement", "usage", "success"],
+  "properties": {
+    "assets": {
+      "type": "array",
+      "description": "Generated images across all prompts. Each carries promptIndex + enhancedPrompt in metadata for traceability.",
+      "items": {
+        "type": "object",
+        "required": ["mimeType", "width", "height", "safetyFiltered", "metadata"],
+        "properties": {
+          "url": { "type": "string", "description": "Host-served URL (preferred for large assets)." },
+          "base64": { "type": "string", "description": "Inline base64 (smaller assets; host's choice)." },
+          "mimeType": { "type": "string", "enum": ["image/png", "image/jpeg", "image/webp"] },
+          "width": { "type": "integer", "minimum": 1 },
+          "height": { "type": "integer", "minimum": 1 },
+          "seed": { "type": "integer" },
+          "safetyFiltered": { "type": "boolean" },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "promptIndex": { "type": "integer", "minimum": 0 },
+              "enhancedPrompt": { "type": "string" }
+            }
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "totalGenerated": { "type": "integer", "minimum": 0 },
+    "filteredCount": { "type": "integer", "minimum": 0, "description": "Total safety-filtered images across all prompts." },
+    "perPromptStats": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["promptIndex", "generated", "filtered", "batchTimeMs"],
+        "properties": {
+          "promptIndex": { "type": "integer", "minimum": 0 },
+          "generated": { "type": "integer", "minimum": 0 },
+          "filtered": { "type": "integer", "minimum": 0 },
+          "batchTimeMs": { "type": "integer", "minimum": 0 }
+        },
+        "additionalProperties": true
+      }
+    },
+    "dimensions": {
+      "type": "object",
+      "required": ["width", "height"],
+      "properties": {
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "platform": { "type": "string" },
+    "placement": { "type": "string" },
+    "usage": {
+      "type": "object",
+      "properties": {
+        "totalTimeMs": { "type": "integer", "minimum": 0 },
+        "totalCost": { "type": "number", "minimum": 0 }
+      },
+      "additionalProperties": true
+    },
+    "success": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}
