@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.market-intel-community-rank/1.0.0/community-rank.input.json",
+  "title": "MarketIntelCommunityRankInput",
+  "type": "object",
+  "required": ["candidateCommunities", "icpContext", "productContext"],
+  "properties": {
+    "candidateCommunities": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "platform", "url", "initialRelevanceScore", "initialRationale"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "platform": { "type": "string", "enum": ["reddit", "hackernews", "stackexchange", "forum", "reviews", "other"] },
+          "url": { "type": "string" },
+          "memberCount": { "type": "integer", "minimum": 0 },
+          "activityLevel": { "type": "string", "enum": ["low", "medium", "high"] },
+          "initialRelevanceScore": { "type": "number", "minimum": 0, "maximum": 1 },
+          "initialRationale": { "type": "string" },
+          "metadata": { "type": "object", "additionalProperties": true }
+        },
+        "additionalProperties": true
+      }
+    },
+    "icpContext": {
+      "type": "object",
+      "required": ["roles", "industry", "problems", "outcomes"],
+      "properties": {
+        "roles": { "type": "array", "items": { "type": "string" } },
+        "industry": { "type": "string" },
+        "problems": { "type": "array", "items": { "type": "string" } },
+        "outcomes": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": true
+    },
+    "productContext": {
+      "type": "object",
+      "required": ["name", "category", "differentiators"],
+      "properties": {
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "differentiators": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": true
+    },
+    "maxCommunities": { "type": "integer", "minimum": 1, "description": "Soft AI cap. Defaults to 10." },
+    "minRelevance": { "type": "number", "minimum": 0, "maximum": 1, "description": "Soft AI hint for inclusion threshold. Defaults to 0.3." },
+    "preferredPlatforms": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["reddit", "hackernews", "stackexchange", "forum", "reviews", "other"] }
+    }
+  },
+  "additionalProperties": true
+}

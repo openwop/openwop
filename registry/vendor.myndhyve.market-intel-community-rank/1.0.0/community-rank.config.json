@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.market-intel-community-rank/1.0.0/community-rank.config.json",
+  "title": "MarketIntelCommunityRankConfig",
+  "type": "object",
+  "properties": {
+    "provider": { "type": "string" },
+    "model": { "type": "string" },
+    "temperature": { "type": "number", "minimum": 0, "maximum": 2, "description": "Defaults to 0.3 — ranking is precision-oriented." },
+    "maxTokens": { "type": "integer", "minimum": 1024, "description": "Defaults to 4096." }
+  },
+  "additionalProperties": true
+}
