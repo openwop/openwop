@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-tools/1.0.0/brief-extract.config.json",
+  "title": "AdsBriefExtractConfig",
+  "type": "object",
+  "properties": {
+    "defaultAngleCount": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10,
+      "default": 3,
+      "description": "Default number of angles to derive when input.angleCount is absent."
+    }
+  },
+  "additionalProperties": true
+}

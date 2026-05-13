@@ -198,6 +198,24 @@
       ]
     },
     {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.ads-tools@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.ads-tools",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/vendor.myndhyve.ads-tools/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "bfd0fdb0b258e271790164984787a494da98e64b1f0e52738511b24f2470f80a"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "bom-ref": "pkg:openwop/vendor.myndhyve.agent-orchestration@1.0.0",
       "type": "library",
       "name": "vendor.myndhyve.agent-orchestration",

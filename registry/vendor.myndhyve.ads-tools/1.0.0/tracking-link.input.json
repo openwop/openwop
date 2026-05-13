@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-tools/1.0.0/tracking-link.input.json",
+  "title": "AdsTrackingLinkInput",
+  "type": "object",
+  "required": ["destinationUrl", "campaignName"],
+  "properties": {
+    "destinationUrl": { "type": "string", "format": "uri" },
+    "campaignName": { "type": "string", "minLength": 1 },
+    "platform": {
+      "type": "string",
+      "enum": ["meta", "google", "tiktok", "linkedin", "x", "pinterest", "snapchat", "reddit", "amazon"],
+      "description": "Single-platform mode. EITHER platform OR platforms[] MUST be set."
+    },
+    "platforms": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["meta", "google", "tiktok", "linkedin", "x", "pinterest", "snapchat", "reddit", "amazon"] },
+      "description": "Multi-platform mode. Emits one TrackingLink per platform."
+    },
+    "variantId": { "type": "string" },
+    "utmTerm": { "type": "string" },
+    "utmContent": { "type": "string" },
+    "includeClickId": { "type": "boolean", "default": true, "description": "When true, appends the platform's click-id macro to the URL." },
+    "customParams": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Extra query params. Keys are sanitized (non-alphanumeric → `_`); values are passed through."
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-tools/1.0.0/brief-extract.input.json",
+  "title": "AdsBriefExtractInput",
+  "type": "object",
+  "required": ["pageId", "sections"],
+  "properties": {
+    "pageId": { "type": "string", "minLength": 1 },
+    "objective": {
+      "type": "string",
+      "enum": ["awareness", "traffic", "engagement", "leads", "conversions", "sales"],
+      "default": "conversions"
+    },
+    "funnelId": { "type": "string" },
+    "stepId": { "type": "string" },
+    "angleCount": { "type": "integer", "minimum": 1, "maximum": 10 },
+    "sections": {
+      "type": "array",
+      "description": "Page sections. MyndHyve's in-tree executor reads these from useCampaignStudioStore; the pack expects the caller to resolve + pass them in. Each section: { id, type, content: { headline, description, ctaText, features[], testimonials[], stats[], plans[], items[] — type-specific keys } }",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "content"],
+        "properties": {
+          "id": { "type": "string" },
+          "type": { "type": "string" },
+          "content": { "type": "object", "additionalProperties": true }
+        },
+        "additionalProperties": true
+      }
+    },
+    "pageTitle": { "type": "string", "description": "Page title; mapped to brief.contentContext.productName when contentContext isn't supplied." },
+    "pageDescription": { "type": "string", "description": "Page SEO description (optional)." },
+    "contentContext": { "type": "object", "additionalProperties": true, "description": "Optional pre-built ContentContext. When absent the executor derives it from extracted content + objective." }
+  },
+  "additionalProperties": true
+}
