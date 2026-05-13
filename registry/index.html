@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>openwop registry — packs.openwop.dev</title>
-<meta name="description" content="The canonical signed node-pack registry for the openwop workflow orchestration protocol. 38 pack(s), 39 version(s) published.">
+<meta name="description" content="The canonical signed node-pack registry for the openwop workflow orchestration protocol. 39 pack(s), 40 version(s) published.">
 <meta name="robots" content="index, follow">
 
 <meta property="og:type" content="website">
@@ -95,8 +95,8 @@
     <h1>openwop registry</h1>
     <p class="lead">Canonical signed node-pack registry for the <a href="https://openwop.dev/">openwop</a> workflow orchestration protocol.</p>
     <div class="summary">
-      <div><strong>38</strong><span>packs published</span></div>
-      <div><strong>39</strong><span>versions total</span></div>
+      <div><strong>39</strong><span>packs published</span></div>
+      <div><strong>40</strong><span>versions total</span></div>
       <div><strong>Ed25519</strong><span>signing algorithm</span></div>
     </div>
   </header>
@@ -439,6 +439,17 @@
           </td>
         </tr>
         <tr>
+          <td class="name"><code>vendor.myndhyve.market-intel-audience-targeting</code> </td>
+          <td class="version">1.0.0</td>
+          <td class="desc">MyndHyve market-intel.audience-targeting — generate per-platform paid-media targeting packs (interests + keywords + community placements + audience definitions) for 6 ad platforms (meta / google / linkedin / tiktok / reddit / x) from market-research data (communities + angles). One AI call. Outputs cross-platform insights + testing sequence (phased) + budget allocation. Seventh marketIntel pack of the Stage 5 cohort.</td>
+          <td class="license">Apache-2.0</td>
+          <td class="artifacts">
+            <a href="/v1/packs/vendor.myndhyve.market-intel-audience-targeting/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
+            · <a href="/v1/packs/vendor.myndhyve.market-intel-audience-targeting/-/1.0.0.tgz" title="signed tarball (tgz)">tgz</a>
+            · <a href="/v1/packs/vendor.myndhyve.market-intel-audience-targeting/-/1.0.0.sig" title="Ed25519 signature">sig</a>
+          </td>
+        </tr>
+        <tr>
           <td class="name"><code>vendor.myndhyve.market-intel-content-extraction</code> </td>
           <td class="version">1.0.0</td>
           <td class="desc">MyndHyve market-intel.content-extraction — extract structured content from raw HTML via one ctx.callAI. Outputs title, cleaned content, author, publishedAt, contentType, engagement metrics, tags, summary, and relevantQuotes. Sits between host.webResearch.fetchBatch and market-intel.voc-extraction in the canonical pipeline. Fifth marketIntel pack of the Stage 5 cohort.</td>
@@ -575,7 +586,7 @@ const ok = verify(null, readFileSync('pack.tgz'), pub, readFileSync('pack.sig'))
   </section>
 
   <footer>
-    Generated 2026-05-13T13:55:31.635Z · <a href="https://openwop.dev/">openwop.dev</a> · <a href="https://github.com/openwop/openwop">openwop on GitHub</a>
+    Generated 2026-05-13T14:03:55.779Z · <a href="https://openwop.dev/">openwop.dev</a> · <a href="https://github.com/openwop/openwop">openwop on GitHub</a>
   </footer>
 </main>
 </body>

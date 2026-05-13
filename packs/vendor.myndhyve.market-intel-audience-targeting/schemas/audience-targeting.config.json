@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.market-intel-audience-targeting/1.0.0/audience-targeting.config.json",
+  "title": "MarketIntelAudienceTargetingConfig",
+  "type": "object",
+  "properties": {
+    "provider": { "type": "string" },
+    "model": { "type": "string" },
+    "temperature": { "type": "number", "minimum": 0, "maximum": 2, "description": "Defaults to 0.4 — targeting benefits from moderate variation across platforms." },
+    "maxTokens": { "type": "integer", "minimum": 1024, "description": "Defaults to 8000 — output is large: per-platform packs (≥4 sub-arrays each) + cross-platform insights + sequencing + budget." }
+  },
+  "additionalProperties": true
+}

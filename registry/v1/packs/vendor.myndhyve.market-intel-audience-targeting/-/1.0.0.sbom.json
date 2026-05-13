@@ -1,0 +1,183 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.market-intel-audience-targeting@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.market-intel-audience-targeting",
+      "version": "1.0.0",
+      "description": "MyndHyve market-intel.audience-targeting — generate per-platform paid-media targeting packs (interests + keywords + community placements + audience definitions) for 6 ad platforms (meta / google / linkedin / tiktok / reddit / x) from market-research data (communities + angles). One AI call. Outputs cross-platform insights + testing sequence (phased) + budget allocation. Seventh marketIntel pack of the Stage 5 cohort.",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://myndhyve.ai/packs/market-intel-audience-targeting"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/openwop/openwop"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "3b49878462d8ba0bb76f713c7bac78ab06c17290ccb2b16903badc3e329fe685"
+        }
+      ],
+      "purl": "pkg:openwop/vendor.myndhyve.market-intel-audience-targeting@1.0.0"
+    },
+    "tools": [
+      {
+        "vendor": "openwop",
+        "name": "generate-sbom.mjs",
+        "version": "1"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "file",
+      "name": "LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0cea879ed215e3961316e97ab5e4d7a2b2bca999358668599bd53a1c953bc0d9"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "975"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "README.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a2e3dc231cb091256beb4568ba8885ead7e97c5ba7614de1e5d62b838028c881"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "5175"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "index.mjs",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f8f60ead5c95d71cd4ffb8ff1641c51aaec71cbd93bc5704ca738cdd37654914"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "17582"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "keys/pack.json.sig",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "866a67baf09d99ee18f7135b13c1816c92a3c0de7e05a310201d6c62681f1404"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "64"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "pack.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4707a71e80c63c2d1860f47b93e5fae8df14007b94ec097de7992edd6a9df5a1"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "1871"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/audience-targeting.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "12b680b9537cd0ac1cabc47d7aed34f9e952fc26d92a4e79f4815b09dc52511c"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "755"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/audience-targeting.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4cf3824de2c7a75a1a0e632013a80f21ad17366676d9a72993cd4103d9e586de"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "2940"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/audience-targeting.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "abcf73b6eba3d507133c7ae908cb6e61650eac9713a702fe5380254410cdba86"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "5834"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:openwop/vendor.myndhyve.market-intel-audience-targeting@1.0.0",
+      "dependsOn": [
+        "host:aiProviders"
+      ]
+    }
+  ]
+}
