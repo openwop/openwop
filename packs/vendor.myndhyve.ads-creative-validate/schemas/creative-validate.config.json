@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-creative-validate/1.0.0/creative-validate.config.json",
+  "title": "AdsCreativeValidateConfig",
+  "type": "object",
+  "properties": {
+    "customRules": {
+      "type": "array",
+      "items": { "type": "object", "additionalProperties": true },
+      "description": "Optional caller-supplied text rules appended to the 7 built-ins. Same shape: { id, name, category, severity, platforms[], patterns[], keywords[], recommendation, enabled, autoResolvable }."
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,7 +1,7 @@
 {
   "registryVersion": "1.0.0",
   "generatedAt": "2026-05-10T00:00:00Z",
-  "packCount": 29,
+  "packCount": 30,
   "packs": [
     {
       "name": "community.openwop-team.demo",
@@ -79,6 +79,15 @@
       "name": "core.openwop.triggers",
       "latestVersion": "1.0.0",
       "description": "Workflow-trigger pack. Seven entry-point shapes — webhook, schedule, event, envelope, chatMessage, canvas, artifact — that hosts use to register workflows for external-event-driven dispatch. Trigger nodes are pass-through executors: they forward `ctx.triggerData` (set by the engine when the trigger fires) to outputs. The pack contributes the typed config + payload schemas + the runtime pass-through.",
+      "license": "Apache-2.0",
+      "tags": [],
+      "deprecated": false,
+      "yanked": false
+    },
+    {
+      "name": "vendor.myndhyve.ads-creative-validate",
+      "latestVersion": "1.0.0",
+      "description": "MyndHyve ads.creative.validate — full compliance scanner combining built-in policy text rules, placement text-length checks, AND asset-format checks (image/video dimensions, file sizes, durations). Caller supplies placement spec data via inputs (resolve upstream from vendor.myndhyve.ads-platforms OR host.adPlatformSpecs).",
       "license": "Apache-2.0",
       "tags": [],
       "deprecated": false,

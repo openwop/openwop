@@ -1,0 +1,181 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.ads-creative-validate@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.ads-creative-validate",
+      "version": "1.0.0",
+      "description": "MyndHyve ads.creative.validate — full compliance scanner combining built-in policy text rules, placement text-length checks, AND asset-format checks (image/video dimensions, file sizes, durations). Caller supplies placement spec data via inputs (resolve upstream from vendor.myndhyve.ads-platforms OR host.adPlatformSpecs).",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://myndhyve.ai/packs/ads-creative-validate"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/openwop/openwop"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "6a74e232708d8da903d1b782b4f5882cd409136bde25f90c774f87087feee528"
+        }
+      ],
+      "purl": "pkg:openwop/vendor.myndhyve.ads-creative-validate@1.0.0"
+    },
+    "tools": [
+      {
+        "vendor": "openwop",
+        "name": "generate-sbom.mjs",
+        "version": "1"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "file",
+      "name": "LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0cea879ed215e3961316e97ab5e4d7a2b2bca999358668599bd53a1c953bc0d9"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "975"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "README.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "54ff48c1a1c27b887c6d8748ef5d55f605b9b63cfcb649b6079de2de7c48be91"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "2452"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "index.mjs",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ee0b20e131f7db9844875a324c3c7b295335bbfcad7d8e417ee1611afb64da00"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "12021"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "keys/pack.json.sig",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "5e7c7f321667700ff53def70be4932f9a006bec87790c51ddd41bdafab9243d5"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "64"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "pack.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ae0e1a45246afe1c636a58e3b7619389c56d513ca13ba121316b225a8f03c15d"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "1509"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/creative-validate.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "b28bfde0575457b414d6fe8746412d439890639637a11fd46338b79875cf5e7e"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "620"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/creative-validate.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "86522eaf5f928b28e6143b99a41ad2757e906e796c71f70afb24e6554bcf3920"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "3021"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/creative-validate.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "321b013d4a94352d210beed8060d3e4735e6626d7dc404dbd3f3ec05a3774bc1"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "1874"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:openwop/vendor.myndhyve.ads-creative-validate@1.0.0",
+      "dependsOn": []
+    }
+  ]
+}

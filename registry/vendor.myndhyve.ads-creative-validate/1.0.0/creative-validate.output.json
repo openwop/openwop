@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-creative-validate/1.0.0/creative-validate.output.json",
+  "title": "AdsCreativeValidateOutput",
+  "type": "object",
+  "required": ["report", "isValid", "violations", "success"],
+  "properties": {
+    "report": {
+      "type": "object",
+      "required": ["checks", "passed", "summary", "rulesEvaluated", "scannedAt"],
+      "properties": {
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["status", "message"],
+            "properties": {
+              "rule": { "type": "string" },
+              "category": { "type": "string" },
+              "status": { "type": "string", "enum": ["pass", "fail", "warning"] },
+              "message": { "type": "string" },
+              "autoResolvable": { "type": "boolean" }
+            },
+            "additionalProperties": true
+          }
+        },
+        "passed": { "type": "boolean", "description": "True when zero fail-severity checks." },
+        "summary": {
+          "type": "object",
+          "properties": {
+            "pass": { "type": "integer", "minimum": 0 },
+            "fail": { "type": "integer", "minimum": 0 },
+            "warning": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": true
+        },
+        "rulesEvaluated": { "type": "integer", "minimum": 0 },
+        "scannedAt": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": true
+    },
+    "isValid": { "type": "boolean" },
+    "violations": {
+      "type": "array",
+      "items": { "type": "object", "additionalProperties": true },
+      "description": "Subset of report.checks where status == 'fail'."
+    },
+    "success": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}
