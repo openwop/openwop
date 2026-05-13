@@ -132,7 +132,7 @@
   <div class="wrap hero-grid">
     <div class="hero-text">
       <div class="eyebrow">
-        <span class="v">v1.0</span>
+        <span class="v">v1.1</span>
         <span>Workflow Orchestration Protocol — Core Specification</span>
       </div>
 
@@ -161,7 +161,7 @@
 
       <div class="meta-row">
         <span><b>Apache 2.0</b> licensed</span>
-        <span><b>REST + SSE</b> wire contract</span>
+        <span><b>REST · SSE · gRPC</b> wire contract</span>
         <span><a class="meta-link" href="https://github.com/openwop/openwop/tree/main/conformance"><b>Conformance</b> tested</a></span>
         <span><b>npm · PyPI · Go</b> SDKs</span>
       </div>
@@ -991,7 +991,7 @@
         <div class="ana-block-prose">
           <p>Node Packs are signed bundles of reusable node implementations — the agent equivalent of language packages. A pack carries a manifest (<code>pack.json</code>), one or more node implementations, optional agent manifests, and a detached signature.</p>
           <p>Packs may be authored in <em>TypeScript</em>, <em>Python</em>, <em>Go</em>, or pre-compiled <em>WASM</em>. The WASM path gives cross-language portability: any host with a WASM runtime loads the same artifact identically, so a Rust-authored pack runs unchanged on a JavaScript reference host.</p>
-          <p>The canonical signed registry is live at <a href="https://packs.openwop.dev/">packs.openwop.dev</a> — read-only MVP today, write API and lifecycle ops via PR-based publishing. Host-private registries are first-class for tenanted deployments; namespace tiers (<code>core.*</code>, <code>vendor.*</code>, <code>community.*</code>, <code>private.*</code>) keep the public/private boundary explicit.</p>
+          <p>The canonical signed registry is live at <a href="https://packs.openwop.dev/">packs.openwop.dev</a>. Eight foundational core packs ship at v1.0.0 — <code>core.openwop.{examples, http, data, ai, integration, mcp, agent-examples, triggers}</code> — all Ed25519-signed against <code>openwop-registry-root</code>. The first WASM reference pack, <code>vendor.openwop.rust-hello</code> (Rust → wasm32, 28 KiB), is also live as the canonical cross-language example. Write API and lifecycle ops via PR-based publishing. Host-private registries are first-class for tenanted deployments; namespace tiers (<code>core.*</code>, <code>vendor.*</code>, <code>community.*</code>, <code>private.*</code>) keep the public/private boundary explicit.</p>
         </div>
         <figure class="ana-block-fig">
           <svg viewBox="0 0 720 280" preserveAspectRatio="xMidYMid meet" role="img" aria-label="A node pack (signed bundle with version and Ed25519 signature) shows four language badges (TypeScript, Python, Go, WASM). An arrow connects the pack to the canonical registry packs.openwop.dev, which in turn feeds OpenWOP-compliant host consumers. A namespace legend shows the four tier prefixes: core, vendor, community, private.">
@@ -1228,15 +1228,15 @@
     <div class="spec">
       <div class="row">
         <div class="key">Version</div>
-        <div class="val">1.0 (Core)<small>FINAL v1 · 2026-05-08 · Stable REST, SSE, schema, and conformance surfaces. Multi-agent extensions — agent identity, reasoning events, agent packs, memory adapter, multi-turn conversation, orchestrator, and dispatch — accepted into the v1 line on 2026-05-11.</small></div>
+        <div class="val">1.1.0 (Core)<small>v1.0 FINAL frozen 2026-05-08 · v1.1.0 released 2026-05-12. v1.1 is additive per <code>COMPATIBILITY.md</code> §2.1 — no breaking changes to the v1.0 wire contract. Adds the four auth profiles (API-key-rotation, OAuth2 client-credentials, OIDC user-bearer, mTLS), production-profile conformance (RFC 0009), gRPC transport profile, and the full multi-agent capability surface (agent identity, reasoning events, memory adapter, orchestrator + dispatch). RFC 0008 WASM ABI is now Active with a reference Rust pack live on the registry.</small></div>
       </div>
       <div class="row">
         <div class="key">Transport</div>
-        <div class="val">REST + SSE<small>OpenAPI 3.1 for request / response endpoints; AsyncAPI 3.1 for event streams.</small></div>
+        <div class="val">REST · SSE · gRPC<small>OpenAPI 3.1 for request / response endpoints; AsyncAPI 3.1 for event streams. The gRPC transport profile (<code>api/grpc/openwop.proto</code>, canonical <code>openwop.v1.Engine</code> service) is profile-gated via <code>capabilities.supportedTransports</code> and gives byte-identical run semantics over a typed RPC contract for hosts that need it.</small></div>
       </div>
       <div class="row">
         <div class="key">Discovery</div>
-        <div class="val">/.well-known/openwop<small>Hosts advertise protocol version, the nine v1.x capability profiles (<code>openwop-core</code> plus <code>-interrupts</code>, <code>-stream-sse</code>, <code>-stream-poll</code>, <code>-secrets</code>, <code>-provider-policy</code>, <code>-replay-fork</code>, <code>-fixtures</code>, <code>-node-packs</code>), limits, and implementation metadata so clients negotiate features instead of guessing.</small></div>
+        <div class="val">/.well-known/openwop<small>Hosts advertise protocol version, capability profiles, limits, and implementation metadata so clients negotiate features instead of guessing. The v1.x profile set: <code>openwop-core</code>, <code>-stream-sse</code>, <code>-stream-poll</code>, <code>-secrets</code>, <code>-provider-policy</code>, <code>-replay-fork</code>, <code>-fixtures</code>, <code>-node-packs</code>, <code>-production</code>, <code>-audit-log-integrity</code>, <code>-discovery-auth-scoped</code>, the four interrupt profiles (<code>-interrupt-quorum</code>, <code>-interrupt-auth-required</code>, <code>-interrupt-external-event</code>, <code>-interrupt-cascade-cancel</code>), and the four auth profiles (<code>-auth-api-key-rotation</code>, <code>-auth-oauth2-client-credentials</code>, <code>-auth-oidc-user-bearer</code>, <code>-auth-mtls</code>). Optional profiles are claimed only when the host implements them end-to-end.</small></div>
       </div>
       <div class="row">
         <div class="key">Tracing</div>
@@ -1254,6 +1254,10 @@
           <a href="https://pypi.org/project/openwop-client/">openwop-client</a> ·
           <a href="https://pkg.go.dev/github.com/openwop/openwop/sdk/go">openwop/sdk/go</a>
         </small></div>
+      </div>
+      <div class="row">
+        <div class="key">Reference hosts</div>
+        <div class="val">4 implementations<small>In-memory (Node), SQLite (Node), Python (stdlib-only), and Postgres. The Postgres host is the first to claim <code>openwop-production</code> with mechanical proof (advisory locking, orphan recovery, 503/Retry-After backpressure, 7-day retention) and advertises all four auth profiles with end-to-end JWT validation. The Python host passes 100% of applicable scenarios in <code>@openwop/openwop-conformance</code>, proving cross-language wire-shape portability. See <a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">INTEROP-MATRIX.md</a> for full claims and conformance evidence.</small></div>
       </div>
       <div class="row">
         <div class="key">License</div>
@@ -1283,8 +1287,11 @@
           Model Context Protocol exposes tools, resources, and prompts to LLM apps.
           OpenWOP sits at the workflow layer: starting runs, pausing them for humans,
           streaming events, replaying history, and validating host behavior.
+          The two compose: v1.1 hosts can advertise an MCP client capability and
+          route an LLM through the <code>core.mcp.toolCall</code> node, with MCP content
+          carried under an untrusted trust-boundary per the OpenWOP threat model.
         </p>
-        <div class="quote">MCP standardizes tool access. OpenWOP standardizes durable workflow execution.</div>
+        <div class="quote">MCP standardizes tool access. OpenWOP standardizes durable workflow execution. A v1.1 host can call the former from inside the latter.</div>
       </div>
 
       <div class="compare-card">
@@ -1391,7 +1398,7 @@
       <div class="pack">
         <div class="tag"><span>04 · pkg.go.dev</span><a class="view" href="https://pkg.go.dev/github.com/openwop/openwop/sdk/go">view ↗</a></div>
         <div class="name">openwop/sdk/go</div>
-        <p>Go reference SDK. Single module, no external deps. Run client, SSE consumer, typed errors. Pinned at <code>v1.0.0</code>.</p>
+        <p>Go reference SDK. Single module, no external deps. Run client, SSE consumer, typed errors. Pinned at <code>v1.1.0</code>.</p>
         <div class="install"><span class="p">$</span>go get github.com/openwop/openwop/sdk/go</div>
       </div>
     </div>
