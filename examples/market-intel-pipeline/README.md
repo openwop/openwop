@@ -115,6 +115,7 @@ See [`spec/v1/rest-endpoints.md`](../../spec/v1/rest-endpoints.md) for the run l
 - **Multi-source fan-out** — left to host orchestrator (RFC 0007).
 - **`market-intel.community-rank`** — optional refinement node; add between `discover-sources` and `extract-content` when candidate communities need ranking.
 - **`market-intel.research` and `market-intel.ai-first-research` as typeIds** — *intentionally not packs*. The orchestrator-as-pack approach was reviewed and rejected; these workflow definitions are the canonical answer.
+- **Paid-ads publishing** — the `ads.copy.generate` terminal node produces copy variants; to publish those to Meta / Google / TikTok, chain the output into [`examples/ads-publish-pipeline/`](../ads-publish-pipeline/). The bridge is the `audience-targeting.outputs.targetingPacks` field: the matching platform's targeting pack maps directly into the publish pipeline's `targeting` variable.
 
 ## License
 

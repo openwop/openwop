@@ -69,9 +69,21 @@ Examples that hit an external host use `Idempotency-Key` so CI re-runs don't mul
 3. Add a row to the matrix in `.github/workflows/examples.yml`.
 4. The example MUST `process.exit(1)` on any unexpected status code or shape mismatch — silent success is forbidden.
 
+## Workflow-definition examples (declarative JSON, no runner)
+
+Separate from the runnable examples above, these directories contain declarative workflow JSONs that hosts POST to `/v1/workflows`. They are not standalone runners — they are reference compositions of the [vendor.myndhyve.* pack catalog](https://packs.openwop.dev) showing how to chain published packs end-to-end.
+
+| Directory | Pipeline | Packs composed | Required host capabilities |
+|---|---|---|---|
+| [`market-intel-pipeline/`](./market-intel-pipeline/) | VoC research → ad-angle generation (2 variants: full + AI-first) | 9 `vendor.myndhyve.market-intel-*` + `ads.copy.generate` | `aiProviders` + (production) `host.webResearch.fetchBatch` |
+| [`ads-publish-pipeline/`](./ads-publish-pipeline/) | Creative generation → publish to Meta / Google / TikTok (3 sibling variants) | 8 `vendor.myndhyve.ads-*` per variant | `aiProviders` + `aiProviders.imageGeneration` + `secrets.resolveInPack` |
+
+The two pipelines compose: `market-intel-pipeline/market-intel-research.json`'s `audience-targeting.outputs.targetingPacks.meta` maps directly into `ads-publish-pipeline/ads-creative-publish-meta.json`'s `targeting` variable. See [`docs/PACK-CATALOG.md`](../docs/PACK-CATALOG.md) for the full pack inventory grouped by domain.
+
 ## See also
 
 - [`hosts/in-memory/`](./hosts/in-memory/) — reference host that powers most examples.
 - [`hosts/sqlite/`](./hosts/sqlite/) — durable reference host; "build your own host" walkthrough.
 - [`../QUICKSTART-10MIN.md`](../QUICKSTART-10MIN.md) — fastest "hello world" path.
 - [`../spec/v1/profiles.md`](../spec/v1/profiles.md) — closed catalog of compatibility profiles examples gate on.
+- [`../docs/PACK-CATALOG.md`](../docs/PACK-CATALOG.md) — registry of all 48 published packs grouped by domain.
