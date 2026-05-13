@@ -26,6 +26,17 @@ build/
 .vscode/
 .idea/
 
+# Claude Code per-developer runtime state (scheduled-task locks,
+# session logs, etc.). Tracked skill definitions under
+# `.claude/skills/` are NOT ignored — only the runtime artifacts.
+.claude/*.lock
+.claude/scheduled_tasks.lock
+.claude/sessions/
+.claude/logs/
+
+# npm pack output (run `npm pack` to regenerate from source)
+*.tgz
+
 # Platform
 # .github/
 .firebase/
