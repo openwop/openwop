@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-video-generate/1.0.0/video-generate.config.json",
+  "title": "AdsVideoGenerateConfig",
+  "type": "object",
+  "properties": {
+    "provider": { "type": "string", "description": "Provider id (google / runway / pika / ...). Forwarded to ctx.callVideoGenerator; host MAY route to default when omitted." },
+    "model": { "type": "string", "description": "Model id (e.g., 'veo-2', 'gen-3'). Forwarded to ctx.callVideoGenerator." }
+  },
+  "additionalProperties": true
+}
