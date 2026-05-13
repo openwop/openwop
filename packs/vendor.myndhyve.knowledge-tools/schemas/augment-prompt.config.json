@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.knowledge-tools/1.0.0/augment-prompt.config.json",
+  "title": "KnowledgeAugmentPromptConfig",
+  "type": "object",
+  "properties": {
+    "candidateLimit": { "type": "integer", "minimum": 1 },
+    "resultLimit": { "type": "integer", "minimum": 1 },
+    "scoreThreshold": { "type": "number", "minimum": 0, "maximum": 1 },
+    "scoreFloor": { "type": "number", "minimum": 0, "maximum": 1 },
+    "maxCharsPerChunk": { "type": "integer", "minimum": 100, "description": "Truncation cap applied to each chunk's content before insertion. Default 800." },
+    "totalCharBudget": { "type": "integer", "minimum": 500, "description": "Total cap on the Sources block size; chunks past this budget are dropped. Default 6000." },
+    "groundedHeader": { "type": "string", "description": "Override the 'Use ONLY the sources below…' instruction line shown when chunks are present." },
+    "noResultsHeader": { "type": "string", "description": "Override the header shown when retrieval returns 0 results." }
+  },
+  "additionalProperties": true
+}

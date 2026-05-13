@@ -504,6 +504,24 @@
       ]
     },
     {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.knowledge-tools@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.knowledge-tools",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/vendor.myndhyve.knowledge-tools/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "4e6a9b5040431f7d967dadade6436a28e0b54375e84f393910cfe12aa027024f"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "bom-ref": "pkg:openwop/vendor.myndhyve.landing-page@1.0.0",
       "type": "library",
       "name": "vendor.myndhyve.landing-page",

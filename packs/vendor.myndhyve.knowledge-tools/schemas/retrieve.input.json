@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.knowledge-tools/1.0.0/retrieve.input.json",
+  "title": "KnowledgeRetrieveInput",
+  "type": "object",
+  "required": ["query"],
+  "properties": {
+    "query": { "type": "string", "minLength": 1, "description": "Natural-language retrieval query." },
+    "workspaceId": { "type": "string", "description": "Workspace to scope retrieval to. Omit to use the run's workspace." },
+    "collectionIds": { "type": "array", "items": { "type": "string" }, "description": "Scope to specific knowledge collections. Inaccessible ids are silently dropped." },
+    "category": { "type": "string", "description": "Optional category facet filter." },
+    "candidateLimit": { "type": "integer", "minimum": 1, "description": "Pre-rank candidate pool size; host caps the upper bound." },
+    "resultLimit": { "type": "integer", "minimum": 1, "description": "Post-rank returned chunks; host caps the upper bound." },
+    "scoreThreshold": { "type": "number", "minimum": 0, "maximum": 1, "description": "Host-side minimum relevanceScore (passed through to ctx.knowledge.retrieve)." }
+  },
+  "additionalProperties": true
+}
