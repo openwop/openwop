@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-publish-meta/1.0.0/publish-meta.config.json",
+  "title": "AdsPublishMetaConfig",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": true,
+  "description": "Pure pass-through pack — no config knobs (all values come via inputs). Reserved for future config (e.g., rollback strategy override)."
+}

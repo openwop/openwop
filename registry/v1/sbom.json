@@ -306,6 +306,24 @@
       ]
     },
     {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.ads-publish-meta@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.ads-publish-meta",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/vendor.myndhyve.ads-publish-meta/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "b9e186267980bf88fe370e1a43157784e46a172c1a8e604ffb4b6d238340a863"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "bom-ref": "pkg:openwop/vendor.myndhyve.ads-studio-core@1.0.0",
       "type": "library",
       "name": "vendor.myndhyve.ads-studio-core",

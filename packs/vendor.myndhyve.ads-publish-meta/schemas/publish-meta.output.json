@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-publish-meta/1.0.0/publish-meta.output.json",
+  "title": "AdsPublishMetaOutput",
+  "type": "object",
+  "required": ["platform", "adAccountId", "campaignId", "adSetId", "creativeId", "adId", "publishedStatus", "publishedAt", "success"],
+  "properties": {
+    "platform": { "type": "string", "const": "meta" },
+    "adAccountId": { "type": "string" },
+    "campaignId": { "type": "string" },
+    "adSetId": { "type": "string" },
+    "creativeId": { "type": "string" },
+    "adId": { "type": "string" },
+    "publishedStatus": { "type": "string", "enum": ["ACTIVE", "PAUSED"], "description": "Echoes the campaign.status request value (default PAUSED — safe). Workflow author MAY transition to ACTIVE after additional gates." },
+    "publishedAt": { "type": "string", "description": "ISO 8601 timestamp when the publish pipeline completed." },
+    "success": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}

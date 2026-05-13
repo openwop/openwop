@@ -1,0 +1,25 @@
+{
+  "name": "vendor.myndhyve.ads-publish-meta",
+  "description": "MyndHyve ads.publish.meta — publish an ad to Meta Marketing API v21.0 (Facebook/Instagram). First consumer of the secrets.resolveInPack sub-capability (spec PR #52). Resolves OAuth token via ctx.secrets.resolve, then runs the 4-step publish pipeline (creative → campaign → ad set → ad) with best-effort rollback on failure. Validates all 6 Meta enums (objective, status, bidStrategy, billingEvent, targeting flexible-spec, placements) pre-flight. Maps Meta API errors to retryable/non-retryable per spec failure-mode glossary.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/ads-publish-meta",
+  "repository": "https://github.com/openwop/openwop",
+  "tags": [],
+  "versions": [
+    {
+      "version": "1.0.0",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/vendor.myndhyve.ads-publish-meta/-/1.0.0.json",
+      "tarballUrl": "/v1/packs/vendor.myndhyve.ads-publish-meta/-/1.0.0.tgz",
+      "signatureUrl": "/v1/packs/vendor.myndhyve.ads-publish-meta/-/1.0.0.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-9yr4KrNuovdZ/+t9bKmyo8kgIYmCXIfSaQ+oI0LBoHw=",
+      "deprecated": false,
+      "yanked": false
+    }
+  ],
+  "latest": "1.0.0",
+  "deprecated": false
+}
