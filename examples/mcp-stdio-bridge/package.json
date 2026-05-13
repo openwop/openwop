@@ -1,0 +1,17 @@
+{
+  "name": "@openwop/example-mcp-stdio-bridge",
+  "version": "1.1.0",
+  "private": true,
+  "description": "HTTP shim that lets the openwop MCP conformance probe exercise stdio-transport MCP servers. Spawns the configured stdio command as a child process, forwards JSON-RPC requests over stdin, correlates responses by id, returns them as application/json — the probe's content-negotiated default. Per-session child processes are kept alive across requests so MCP initialize state survives.",
+  "type": "module",
+  "main": "bridge.mjs",
+  "scripts": {
+    "start": "node bridge.mjs",
+    "smoke": "node smoke.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "express": "^4.21.2",
+    "zod": "^3.23.8"
+  }
+}

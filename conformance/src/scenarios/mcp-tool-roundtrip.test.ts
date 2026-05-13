@@ -32,15 +32,22 @@
  *     probe at a real MCP server. Auto-detects the transport from the
  *     server's `Content-Type` response header:
  *       - `application/json` → single-JSON response, parsed as one
- *         JSON-RPC frame.
+ *         JSON-RPC frame. Verified end-to-end against
+ *         `@modelcontextprotocol/sdk@1.29.0` `enableJsonResponse: true`
+ *         streamable-http servers (2026-05-12).
  *       - `text/event-stream` → streamable-http+SSE; the probe reads
  *         SSE frames until it finds one whose `data:` payload matches
- *         the JSON-RPC `id` we sent, then returns that frame.
+ *         the JSON-RPC `id` we sent, then returns that frame. Verified
+ *         end-to-end against `@modelcontextprotocol/sdk@1.29.0`
+ *         streamable-http servers WITHOUT `enableJsonResponse`
+ *         (2026-05-13).
  *     The stdio transport (default for `modelcontextprotocol/servers`
- *     reference servers) is still out of scope — those run as a child
- *     process speaking JSON-RPC over stdin/stdout, no HTTP endpoint to
- *     point env vars at. Operators wanting interop evidence against
- *     stdio servers run them under a `mcp-bridge` HTTP adapter.
+ *     reference servers) is HTTP-incompatible by design — those run
+ *     as a child process speaking JSON-RPC over stdin/stdout, no HTTP
+ *     endpoint. Operators collecting interop evidence against stdio
+ *     servers run them under the documented HTTP-to-stdio bridge at
+ *     `examples/mcp-stdio-bridge/` (verified end-to-end 2026-05-13;
+ *     probe + bridge + `echo-stdio-server.mjs` round-trip passes 2/2).
  *     Assertions stay shape-only: tools/list returns ≥1 tool, a
  *     tools/call returns valid MCP content (a `result.content` array,
  *     possibly `isError: true` — both are spec-conformant).

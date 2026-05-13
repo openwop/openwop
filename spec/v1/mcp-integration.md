@@ -119,7 +119,7 @@ The v1.0 conformance baseline includes `mcp-discoverability.test.ts`, which asse
   - `application/json` — single-JSON response per request (MCP streamable-http transport in single-response mode).
   - `text/event-stream` — SSE stream of JSON-RPC frames; the probe reads frames until it finds one whose `data:` payload matches its request `id`, then returns that frame.
 
-  The stdio transport — the default for [`modelcontextprotocol/servers`](https://github.com/modelcontextprotocol/servers) reference servers — is out of scope for the env-var probe (those servers speak JSON-RPC over stdin/stdout, not HTTP). Operators wanting interop evidence against stdio servers run them under an HTTP adapter such as `mcp-bridge` and point `OPENWOP_MCP_REAL_SERVER_URL` at that.
+  The stdio transport — the default for [`modelcontextprotocol/servers`](https://github.com/modelcontextprotocol/servers) reference servers — is HTTP-incompatible by design (those servers speak JSON-RPC over stdin/stdout, not HTTP). The openwop tree ships a documented HTTP-to-stdio bridge at `examples/mcp-stdio-bridge/` that wraps any newline-delimited-JSON-RPC stdio server and exposes it as HTTP for the probe. End-to-end verified 2026-05-13 (probe → bridge → bundled `echo-stdio-server.mjs`, 2/2 pass). Operator workflow: boot the bridge with `OPENWOP_MCP_STDIO_CMD=<exe>` + `OPENWOP_MCP_STDIO_ARGS=<json-array>`, then point `OPENWOP_MCP_REAL_SERVER_URL` at the bridge's port (default 4021).
 
   Assertions in this mode are shape-only: `tools/list` returns ≥ 1 tool, `tools/call` against the first listed tool returns a `result.content` array (valid OR `isError: true`-marked — both spec-conformant).
 
