@@ -277,12 +277,30 @@ The `runtime.language` field declares how the engine loads the pack:
 | `javascript` | Path to a JS module (CommonJS or ESM) | Engine running in Node 20+ or a JS-compatible WASM host |
 | `python` | Path to a Python module / wheel | Python 3.10+ runtime adjacent to the engine |
 | `go` | Path to a Go plugin (`.so`) or compiled binary | Go 1.22+ runtime; plugin support varies by platform |
-| `wasm` | Path to a `.wasm` file with a defined ABI (planned v1.x profile) | Any host with a WASM runtime |
+| `wasm` | Path to a `.wasm` core module with a defined ABI | Any host with a WASM runtime + the RFC 0008 ABI v1 shim |
+| `wasm-component` | Path to a WASM Component Model module (WIT-defined interfaces) | Host with a Component-Model-aware runtime (Wasmtime ≥ 14, etc.) |
 | `remote` | URL to an HTTP endpoint conforming to the MCP tool surface | Engine acts as MCP client; pack runs anywhere reachable |
 
 A registry MAY refuse uploads of any `language` it doesn't support. An engine implementation MAY refuse to load packs whose `language` it can't execute, returning `400 unsupported_runtime` at workflow-register time.
 
 For cross-language interop (a JavaScript engine loading a Python pack), the `remote` runtime is the recommended bridge — the engine speaks MCP to the pack process running in its native runtime.
+
+### WASM runtime
+
+`language: wasm` packs are normatively specified by [RFC 0008 — WASM ABI v1](../../RFCS/0008-wasm-abi.md). Hosts loading WASM packs MUST advertise `capabilities.nodePackRuntimes.wasm.{supported, abiVersions, maxMemoryBytes}` per `capabilities.schema.json` and MUST reject packs whose declared `openwop_abi_version()` is not in the advertised `abiVersions[]` (per RFC 0008 §H). The reference loader at `examples/hosts/in-memory/src/wasm-loader.ts` ships zero-dep (uses Node's native `WebAssembly` runtime + a hand-rolled host-import bridge); it is the canonical baseline implementers compare against. Six conformance scenarios cover the surface end-to-end:
+
+| Scenario | Surface | RFC 0008 §reference |
+|---|---|---|
+| `wasm-pack-load.test.ts` | Module instantiation + manifest cross-check | §B (exports), §H (ABI handshake) |
+| `wasm-pack-invoke-completed.test.ts` | `openwop_node_invoke` → `outcome: 'completed'` round-trip | §D (response envelope) |
+| `wasm-pack-invoke-suspended.test.ts` | `openwop_node_invoke` → `outcome: 'suspended'` interrupt path | §D, §F (status codes) |
+| `wasm-pack-replay-determinism.test.ts` | Replay-mode invocation reproduces output bytes-for-bytes | §I (determinism) |
+| `wasm-pack-memory-cap.test.ts` | Misbehaving-pack memory-cap breach → `cap.breached` + terminal `failed` | §K (resource limits) |
+| `wasm-pack-abi-version-rejection.test.ts` | Pack declaring ABI 999 omitted from `loadedPacks[]` | §H (ABI version handshake) |
+
+The two deliberately-misbehaving packs at `examples/packs/rust-misbehaving-memory/` (memory-cap) and `examples/packs/rust-misbehaving-abi/` (ABI 999) drive the positive paths for the last two scenarios. Production hosts MAY use Wasmtime / Wasmer / wasmtime-py / wasmer-go runtimes; the ABI contract is runtime-agnostic.
+
+For the Component Model variant (`language: wasm-component`), per-pack interfaces are defined in WIT rather than the hand-rolled imports/exports from RFC 0008 §C. Hosts advertise via `capabilities.nodePackRuntimes.wasmComponent.supported`; the surface is reserved for an additive sub-RFC.
 
 ---
 
@@ -505,7 +523,7 @@ A workflow that references a typeId not provided by any registered pack MUST be 
 
 | # | Gap | Owner |
 |---|---|---|
-| NP1 | WASM ABI for `language: wasm` packs — needs a stable function-signature contract. | future v1.x |
+| ~~NP1~~ | ~~WASM ABI for `language: wasm` packs~~ — ✅ closed by [RFC 0008 — WASM ABI v1](../../RFCS/0008-wasm-abi.md) (Active 2026-05-10, eligible for Accepted promotion). See §"WASM runtime" above. | closed |
 | NP2 | Pack-level `dependencies` resolution (transitive packs) — currently underspecified. | future v1.x |
 | NP3 | Mirror / federation between registries (npm-style upstream-fallback). | future |
 | ~~NP4~~ | ~~Pack deprecation flow~~ — closed by `registry-operations.md` §"Deprecation flow" (2026-04-29). | ✅ closed |

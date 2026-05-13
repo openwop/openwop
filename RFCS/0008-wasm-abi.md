@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0008 |
 | **Title** | WASM ABI for Cross-Language Node Packs |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-10 |
-| **Updated** | 2026-05-11 (Draft → Active: reference Rust pack `vendor.openwop.rust-hello@1.0.0` published live to `packs.openwop.dev`; six conformance scenarios land at capability-gated state; spec text frozen for the v1.x line) |
+| **Updated** | 2026-05-13 (Active → Accepted: all 8 acceptance-criteria items satisfied — spec text merged; `node-pack-manifest.schema.json` carries `wasm` + `wasm-component` in `runtime.language` enum (line 195) and `format` enum (line 204); `spec/v1/node-packs.md` §"WASM runtime" subsection landed 2026-05-13 cross-linking to this RFC with the 6-scenario coverage table; `schemas/capabilities.schema.json` declares `nodePackRuntimes.wasm.{supported, abiVersions, maxMemoryBytes, loadedPacks}` since 2026-05-13; six conformance scenarios all capability-gated under `capabilities.nodePackRuntimes.wasm.supported` — load, invoke-completed, invoke-suspended, replay-determinism, memory-cap, abi-version-rejection — plus the two deliberately-misbehaving Rust packs (`rust-misbehaving-memory` for §K, `rust-misbehaving-abi` for §H) that drive the positive paths; in-memory reference host at `examples/hosts/in-memory/src/wasm-loader.ts` implements the loader zero-dep over Node's native `WebAssembly`; CHANGELOG records the RFC in the v1.1.0 entry; example Rust pack at `examples/packs/rust-hello/` published live to `packs.openwop.dev` since 2026-05-11. The Component Model variant (`language: wasm-component`) remains reserved for an additive sub-RFC.) |
 | **Affects** | `schemas/node-pack-manifest.schema.json`, `spec/v1/node-packs.md`, `spec/v1/registry-operations.md`, `spec/v1/capabilities.md` |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
