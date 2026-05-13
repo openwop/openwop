@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-copy-generate/1.0.0/copy-generate.output.json",
+  "title": "AdsCopyGenerateOutput",
+  "type": "object",
+  "required": ["variants", "messageMatchScores", "success"],
+  "properties": {
+    "variants": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "angle", "headline", "platformAdaptations"],
+        "properties": {
+          "id": { "type": "string" },
+          "angle": { "type": "string" },
+          "headline": { "type": "string" },
+          "description": { "type": "string" },
+          "bodyText": { "type": "string" },
+          "ctaText": { "type": "string" },
+          "platformAdaptations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["placement", "headline", "wasTruncated"],
+              "properties": {
+                "placement": { "type": "string" },
+                "headline": { "type": "string" },
+                "description": { "type": "string" },
+                "bodyText": { "type": "string" },
+                "ctaText": { "type": "string" },
+                "wasTruncated": { "type": "boolean" }
+              },
+              "additionalProperties": true
+            }
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "messageMatchScores": {
+      "type": "array",
+      "description": "Reserved for future message-match scoring. Always [] in 1.0.0.",
+      "items": { "type": "object", "additionalProperties": true }
+    },
+    "model": { "type": "string", "description": "AI model id that produced the variants (echoed from the host)." },
+    "usage": {
+      "type": "object",
+      "properties": {
+        "promptTokens": { "type": "integer" },
+        "completionTokens": { "type": "integer" }
+      },
+      "additionalProperties": true
+    },
+    "success": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}
