@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-platforms/1.0.0/platform-specs.output.json",
+  "title": "AdsPlatformSpecsOutput",
+  "type": "object",
+  "required": ["specSet", "specCount", "success"],
+  "properties": {
+    "specSet": {
+      "type": "object",
+      "required": ["platforms", "specs"],
+      "properties": {
+        "platforms": { "type": "array", "items": { "type": "string" } },
+        "specs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["platform", "placement", "displayName", "supportedTypes", "textLimits"],
+            "properties": {
+              "platform": { "type": "string" },
+              "placement": { "type": "string" },
+              "displayName": { "type": "string" },
+              "supportedTypes": {
+                "type": "array",
+                "items": { "type": "string", "enum": ["image", "video", "carousel", "audio", "text"] }
+              },
+              "textLimits": { "type": "object", "additionalProperties": true },
+              "imageSpec": { "type": "object", "additionalProperties": true },
+              "videoSpec": { "type": "object", "additionalProperties": true },
+              "audioSpec": { "type": "object", "additionalProperties": true },
+              "ctaOptions": { "type": "object", "additionalProperties": true },
+              "safeZones": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+              "captionGuidance": { "type": "object", "additionalProperties": true },
+              "audioGuidance": { "type": "object", "additionalProperties": true }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "specCount": { "type": "integer", "minimum": 0 },
+    "success": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}

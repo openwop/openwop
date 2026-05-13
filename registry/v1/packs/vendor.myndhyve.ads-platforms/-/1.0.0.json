@@ -1,0 +1,47 @@
+{
+  "name": "vendor.myndhyve.ads-platforms",
+  "version": "1.0.0",
+  "description": "MyndHyve ads.platform.specs — pure-data executor exposing the creative specs for 9 ad platforms (amazon, google, linkedin, meta, pinterest, reddit, snapchat, tiktok, x) across their placements. ~1500 LOC of platform spec data (aspect ratios, text limits, file sizes, format support, CTA presets, safe zones, caption + audio guidance) inlined verbatim from src/canvas-types/campaign-studio/ads-studio/platforms/. No host capabilities required.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/ads-platforms",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "vendor",
+    "myndhyve",
+    "ads",
+    "platforms",
+    "specs",
+    "meta",
+    "google",
+    "tiktok"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "nodes": [
+    {
+      "typeId": "ads.platform.specs",
+      "version": "1.0.0",
+      "label": "Resolve Platform Specs",
+      "description": "Return the creative-spec set for the requested platforms (+ optional placement filter). Each spec carries platform / placement id, displayName, supportedTypes, textLimits (per-field min/max/recommended), imageSpec, videoSpec, ctaOptions, safeZones (where defined), captionGuidance, audioGuidance. 22 placements indexed across the 9 platforms; the executor returns the unfiltered union when only `platforms[]` is supplied.",
+      "category": "data",
+      "role": "action",
+      "configSchemaRef": "schemas/platform-specs.config.json",
+      "inputSchemaRef": "schemas/platform-specs.input.json",
+      "outputSchemaRef": "schemas/platform-specs.output.json"
+    }
+  ],
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "myndhyve-internal-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-N42xp5IP3E4QRqWDD4bwN4bdUpopELg6ODLAQd+U03s="
+}
