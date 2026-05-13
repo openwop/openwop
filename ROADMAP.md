@@ -73,6 +73,7 @@ Capability profiles are clusters of optional behaviors a host can advertise via 
 | Replay / fork | Spec landed (`replay.md`); conformance partial — `replay-fork.test.ts` + `replayDeterminism.test.ts` cover replay-cache hit / divergence-event / receipt-required; fork-from-arbitrary-event-types coverage incomplete | Optional. |
 | Channel TTL | Spec landed (`channels-and-reducers.md`); included in the v1.0 conformance baseline (`channel-ttl.test.ts`) | Optional. |
 | Cost attribution | Spec landed (`observability.md` §"AI cost"); included in the v1.0 conformance baseline (e2e via `conformance.cost.emit` fixture node) | Optional. |
+| Memory compaction | `Draft` — RFC 0012 (`RFCS/0012-memory-compaction-profile.md`, 2026-05-13). Defines optional `capabilities.memory.compaction` advertisement, `memory.compacted` event, and the SR-1 carry-forward invariant that extends RFC 0004 §D through host-side memory distillation. Three conformance scenarios planned, all gated on advertisement. Live open question: whether §D belongs in this RFC or folds into a clarifying revision of RFC 0004 — see RFC 0012 §Unresolved questions #4. May close `Withdrawn` if no implementer adoption signal arrives within the comment window. | Optional. Drives no v1 contract change; lands in a v1.X conformance minor. |
 
 ### Hosted infrastructure
 

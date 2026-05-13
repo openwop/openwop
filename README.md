@@ -229,6 +229,9 @@ See [CHANGELOG.md](./CHANGELOG.md) — `[1] — 2026-05-08 — OpenWOP v1 FINAL 
 - [**RFC 0006**](./RFCS/0006-orchestrator.md) — Orchestrator: New `runOrchestrator` field on `WorkflowRunDocument`, orchestrator-driven routing, replay cache-only determinism
 - [**RFC 0007**](./RFCS/0007-dispatch.md) — Dispatch: New `core.dispatch` node pattern for sub-workflow invocation with fresh agent context
 
+**v1.x Capability Profiles (Draft):**
+- [**RFC 0012**](./RFCS/0012-memory-compaction-profile.md) — Memory compaction profile (`Draft`, 2026-05-13): optional `capabilities.memory.compaction` advertisement, `memory.compacted` event vocabulary, and an SR-1 carry-forward invariant that extends RFC 0004 §D through host-side memory distillation. Additive; no v1 contract change.
+
 **v1 Foundation (2026-04-27):**
 Current state: 26 prose specs FINAL v1 · 19 JSON Schemas · OpenAPI 3.1 + AsyncAPI 3.1 · conformance suite package at 1.0 · 3 reference SDKs at 1.0.
 
