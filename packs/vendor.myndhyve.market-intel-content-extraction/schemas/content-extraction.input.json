@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.market-intel-content-extraction/1.0.0/content-extraction.input.json",
+  "title": "MarketIntelContentExtractionInput",
+  "type": "object",
+  "required": ["rawHtml", "url"],
+  "properties": {
+    "rawHtml": { "type": "string", "minLength": 1, "description": "Raw HTML to extract from. Truncated to config.htmlTruncateChars (default 50000) before the prompt; wasTruncated reports this." },
+    "url": { "type": "string", "minLength": 1, "description": "Source URL — propagates through to output for traceability." },
+    "contentTypeHint": { "type": "string", "description": "Optional hint to the AI about the expected content type (e.g., 'reddit thread', 'medium article')." }
+  },
+  "additionalProperties": true
+}
