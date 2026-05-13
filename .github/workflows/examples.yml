@@ -55,6 +55,21 @@ jobs:
         with:
           node-version: '20'
 
+      # Detect whether external-host secrets are available. External-host
+      # examples skip cleanly when the operator hasn't configured the
+      # OPENWOP_EXTERNAL_* secrets (e.g., forks, public branches).
+      - name: Resolve external-host availability
+        id: external
+        env:
+          EXT_URL: ${{ secrets.OPENWOP_EXTERNAL_BASE_URL }}
+        run: |
+          if [ "${{ matrix.example.host }}" = "external" ] && [ -z "$EXT_URL" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipping ${{ matrix.example.name }} — OPENWOP_EXTERNAL_BASE_URL not configured."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       # In-memory host setup — only when host == in-memory
       - name: Install in-memory host
         if: matrix.example.host == 'in-memory'
@@ -78,14 +93,24 @@ jobs:
 
       # Common: install + run the example.
       - name: Install example deps
+        if: steps.external.outputs.skip != 'true'
         working-directory: examples/${{ matrix.example.name }}
         run: npm install --silent
 
       - name: Run example
+        if: steps.external.outputs.skip != 'true'
         working-directory: examples/${{ matrix.example.name }}
         env:
-          OPENWOP_BASE_URL: ${{ matrix.example.host == 'external' && secrets.OPENWOP_EXTERNAL_BASE_URL || 'http://127.0.0.1:3737' }}
-          OPENWOP_API_KEY: ${{ matrix.example.host == 'external' && secrets.OPENWOP_EXTERNAL_API_KEY || 'openwop-inmem-dev-key' }}
+          # Three host modes:
+          #   - in-memory: target the local reference host started above (localhost:3737)
+          #   - external:  use the operator-provided secrets; when secrets are unset,
+          #                leave empty so the example's `if (!BASE_URL) skip()` branch fires
+          #   - dry-run:   no env vars needed (the example ignores them)
+          # The previous expression collapsed `external + missing secrets` to localhost,
+          # which defeated each example's skip-equivalent contract; now external-with-
+          # empty-secret falls through to '' and the example exits 0 cleanly.
+          OPENWOP_BASE_URL: ${{ matrix.example.host == 'in-memory' && 'http://127.0.0.1:3737' || (matrix.example.host == 'external' && secrets.OPENWOP_EXTERNAL_BASE_URL) || '' }}
+          OPENWOP_API_KEY: ${{ matrix.example.host == 'in-memory' && 'openwop-inmem-dev-key' || (matrix.example.host == 'external' && secrets.OPENWOP_EXTERNAL_API_KEY) || '' }}
         run: npm test
         timeout-minutes: 2
 
