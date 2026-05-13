@@ -45,6 +45,7 @@ import {
   FIXTURES_DIR,
   FIXTURES_DOC_PATH,
   GO_TYPES_PATH,
+  LAYOUT,
   PYTHON_TYPES_PATH,
   README_PATH,
   SCENARIOS_DIR,
@@ -786,10 +787,13 @@ describe.skipIf(
 )(
   'spec-corpus: SDK HTTP error helpers match canonical REST vocabulary',
   () => {
+    // describe.skipIf still evaluates the body for test registration; defaults guard against null
+    // dirname() when sources are missing under the published-tarball layout. it() blocks below are
+    // skipped at run time, so the path values are never actually read.
     const sdkSources = {
-      typescript: TYPESCRIPT_RUN_HELPERS_PATH as string,
-      python: PYTHON_TYPES_PATH as string,
-      go: GO_TYPES_PATH as string,
+      typescript: TYPESCRIPT_RUN_HELPERS_PATH ?? '.',
+      python: PYTHON_TYPES_PATH ?? '.',
+      go: GO_TYPES_PATH ?? '.',
     };
     const sdkReadmes = {
       typescript: pathResolve(dirname(sdkSources.typescript), '..', 'README.md'),
@@ -1072,12 +1076,18 @@ describe.skipIf(V1_DIR === null)('spec-corpus: prose docs carry a Status: legend
 });
 
 describe.skipIf(V1_DIR === null || README_PATH === null)('spec-corpus: README document index matches spec/v1', () => {
-  const v1Dir = V1_DIR as string;
-  const readmePath = README_PATH as string;
+  // describe.skipIf skips test execution but still evaluates the describe callback at registration
+  // time. Guard each side-effecting read against null so the body registers cleanly under the
+  // published-tarball layout where V1_DIR / README_PATH resolve to null.
+  const v1Dir = V1_DIR;
+  const readmePath = README_PATH ?? '';
 
-  const proseFiles = readdirSync(v1Dir)
-    .filter((f) => f.endsWith('.md'))
-    .sort();
+  const proseFiles =
+    v1Dir === null
+      ? []
+      : readdirSync(v1Dir)
+          .filter((f) => f.endsWith('.md'))
+          .sort();
 
   it('README Total count equals the number of spec/v1 prose docs', () => {
     const index = extractReadmeDocumentIndex(readFileSync(readmePath, 'utf8'));
@@ -1109,8 +1119,10 @@ describe.skipIf(V1_DIR === null || README_PATH === null)('spec-corpus: README do
 });
 
 describe.skipIf(README_PATH === null)('spec-corpus: local Markdown links resolve', () => {
-  const repoRoot = dirname(README_PATH as string);
-  const markdownFiles = listMarkdownFilesRecursive(repoRoot);
+  // describe.skipIf skips test execution but still evaluates the body for registration; default
+  // to '.' so dirname() never receives null in the published-tarball layout.
+  const repoRoot = README_PATH === null ? '.' : dirname(README_PATH);
+  const markdownFiles = README_PATH === null ? [] : listMarkdownFilesRecursive(repoRoot);
 
   it('finds Markdown files to check', () => {
     expect(markdownFiles.length, 'repo checkout should contain Markdown docs').toBeGreaterThan(0);
@@ -1132,6 +1144,9 @@ describe.skipIf(README_PATH === null)('spec-corpus: local Markdown links resolve
         }
 
         const target = pathResolve(dirname(file), decoded);
+        // Published-tarball layout: the conformance README references ../spec/v1/... and other paths
+        // that resolve OUTSIDE the package boundary. Repo layout has the full tree available.
+        if (LAYOUT === 'published' && !target.startsWith(repoRoot)) continue;
         expect(
           existsSync(target),
           `${relFile} links to missing local target: ${link}`,
@@ -1142,21 +1157,29 @@ describe.skipIf(README_PATH === null)('spec-corpus: local Markdown links resolve
 });
 
 describe.skipIf(README_PATH === null)('spec-corpus: public docs avoid private implementation breadcrumbs', () => {
-  const repoRoot = dirname(README_PATH as string);
-  const publicTextFiles = [
-    README_PATH as string,
-    join(repoRoot, 'QUICKSTART.md'),
-    join(repoRoot, 'QUICKSTART-10MIN.md'),
-    join(repoRoot, 'sdk', 'typescript', 'README.md'),
-    join(repoRoot, 'sdk', 'python', 'README.md'),
-    join(repoRoot, 'sdk', 'go', 'README.md'),
-    ...(CONFORMANCE_README_PATH ? [CONFORMANCE_README_PATH] : []),
-    ...(FIXTURES_DOC_PATH ? [FIXTURES_DOC_PATH] : []),
-    ...listTextFilesRecursive(join(repoRoot, 'examples'), new Set(['.md', 'package.json'])),
-    ...readdirSync(join(repoRoot, 'SECURITY')).filter((f) => f.endsWith('.md') || f.endsWith('.yaml')).map((f) => join(repoRoot, 'SECURITY', f)),
-    ...(V1_DIR !== null ? readdirSync(V1_DIR).filter((f) => f.endsWith('.md')).map((f) => join(V1_DIR as string, f)) : []),
-    ...readdirSync(SCHEMAS_DIR).filter((f) => f.endsWith('.json')).map((f) => join(SCHEMAS_DIR, f)),
-  ].filter((path) => existsSync(path));
+  // describe.skipIf skips test execution but still evaluates the body for registration; guard each
+  // path read against null/missing-dir so the body never throws under the published-tarball layout.
+  const repoRoot = README_PATH === null ? '.' : dirname(README_PATH);
+  const securityDir = join(repoRoot, 'SECURITY');
+  const publicTextFiles =
+    README_PATH === null
+      ? []
+      : [
+          README_PATH,
+          join(repoRoot, 'QUICKSTART.md'),
+          join(repoRoot, 'QUICKSTART-10MIN.md'),
+          join(repoRoot, 'sdk', 'typescript', 'README.md'),
+          join(repoRoot, 'sdk', 'python', 'README.md'),
+          join(repoRoot, 'sdk', 'go', 'README.md'),
+          ...(CONFORMANCE_README_PATH ? [CONFORMANCE_README_PATH] : []),
+          ...(FIXTURES_DOC_PATH ? [FIXTURES_DOC_PATH] : []),
+          ...listTextFilesRecursive(join(repoRoot, 'examples'), new Set(['.md', 'package.json'])),
+          ...(existsSync(securityDir)
+            ? readdirSync(securityDir).filter((f) => f.endsWith('.md') || f.endsWith('.yaml')).map((f) => join(securityDir, f))
+            : []),
+          ...(V1_DIR !== null ? ((v1Dir: string) => readdirSync(v1Dir).filter((f) => f.endsWith('.md')).map((f) => join(v1Dir, f)))(V1_DIR) : []),
+          ...readdirSync(SCHEMAS_DIR).filter((f) => f.endsWith('.json')).map((f) => join(SCHEMAS_DIR, f)),
+        ].filter((path) => existsSync(path));
 
   const banned = [
     { label: 'private workflow-runtime paths', pattern: /services\/workflow-runtime/ },

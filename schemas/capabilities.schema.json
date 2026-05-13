@@ -82,6 +82,58 @@
       "type": "object",
       "description": "Optional v1 per-run overlay schema — what `RunOptions.configurable` keys this server honors."
     },
+    "nodePackRuntimes": {
+      "type": "object",
+      "description": "Optional v1 advertisement of node-pack runtimes the host loads. See `node-packs.md` §runtime formats and RFC 0008 (WASM ABI). Hosts that don't load packs MAY omit this block entirely.",
+      "properties": {
+        "wasm": {
+          "type": "object",
+          "description": "WASM core-module runtime per RFC 0008. Hosts that load `runtime.language: \"wasm\"` packs MUST advertise `supported: true` and at least one entry in `abiVersions[]`.",
+          "required": ["supported"],
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "Host loads RFC 0008 WASM packs."
+            },
+            "abiVersions": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "uniqueItems": true,
+              "minItems": 1,
+              "description": "ABI versions the loader accepts. v1.1 hosts MUST include `1`. Packs declaring `openwop_abi_version()` outside this list MUST be rejected at load time per RFC 0008 §H."
+            },
+            "maxMemoryBytes": {
+              "type": "integer",
+              "minimum": 1048576,
+              "maximum": 8589934592,
+              "description": "Per-pack memory ceiling enforced by the host loader. Range: 1 MiB ≤ value ≤ 8 GiB. RFC 0008 §K — when a pack exceeds this, the host MUST emit `cap.breached` with `kind: \"wasm-memory\"`."
+            },
+            "loadedPacks": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true,
+              "description": "Pack names that passed instantiation (ABI check + load). Packs rejected per RFC 0008 §H MUST NOT appear here. Hosts MAY advertise this for observability; conformance asserts rejection by absence (Track 7)."
+            }
+          },
+          "additionalProperties": true
+        },
+        "wasmComponent": {
+          "type": "object",
+          "description": "WASM Component Model variant (WIT-defined interfaces). Reserved for hosts that load `runtime.language: \"wasm-component\"` packs.",
+          "properties": {
+            "supported": { "type": "boolean" }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
     "observability": {
       "type": "object",
       "description": "Optional v1 hints about emitted spans/metrics/logs. See observability.md.",
