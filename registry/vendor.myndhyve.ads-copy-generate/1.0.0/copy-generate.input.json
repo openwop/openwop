@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-copy-generate/1.0.0/copy-generate.input.json",
+  "title": "AdsCopyGenerateInput",
+  "type": "object",
+  "required": ["brief", "placements"],
+  "properties": {
+    "brief": {
+      "type": "object",
+      "description": "Source brief for copy generation. sellingPoints[] is required (non-empty).",
+      "required": ["sellingPoints"],
+      "properties": {
+        "sellingPoints": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "angles": { "type": "array", "items": { "type": "string" } },
+        "targetAudience": { "type": "string" },
+        "goal": { "type": "string" },
+        "tone": { "type": "string" },
+        "contentContext": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "businessName": { "type": "string" },
+            "productName": { "type": "string" },
+            "targetAudience": { "type": "string" }
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "placements": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "description": "Placement ids (e.g. 'meta-feed', 'google-search'). One per platform-placement pair you want adapted copy for."
+    },
+    "variantCount": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10,
+      "description": "Number of copy variants to generate. Defaults to 3; clamped to [1, 10]."
+    },
+    "tone": {
+      "type": "string",
+      "description": "Override tone for this generation. Falls back to brief.tone, then 'professional'."
+    },
+    "angle": {
+      "type": "string",
+      "description": "If supplied, all variants use this angle. Otherwise the prompt asks for one angle per variant (from brief.angles when available)."
+    },
+    "additionalInstructions": {
+      "type": "string",
+      "description": "Optional free-form prompt addendum forwarded to the AI."
+    },
+    "placementTextLimits": {
+      "type": "object",
+      "description": "Map of placement id → text-length limits. When supplied, each variant's platformAdaptations[] truncates fields to the per-placement maxes. Resolve upstream from vendor.myndhyve.ads-platforms (specSet.specs[].textLimits) or a host.adPlatformSpecs capability.",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "headline": { "type": "object", "properties": { "max": { "type": "integer" } }, "additionalProperties": true },
+          "description": { "type": "object", "properties": { "max": { "type": "integer" } }, "additionalProperties": true },
+          "bodyText": { "type": "object", "properties": { "max": { "type": "integer" } }, "additionalProperties": true },
+          "ctaText": { "type": "object", "properties": { "max": { "type": "integer" } }, "additionalProperties": true }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}
