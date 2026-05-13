@@ -1,0 +1,25 @@
+{
+  "name": "vendor.myndhyve.market-intel-discovery",
+  "description": "MyndHyve market-intel.ai-discovery — AI-powered source-discovery via one ctx.callAI. Given a topic + optional industry/audience/platforms, returns relevant URLs, communities (with platform / relevanceScore / estimatedPostCount), and search queries. Replaces the manual URL-input step of the marketIntel research pipeline. Third marketIntel pack of the Stage 5 cohort.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/market-intel-discovery",
+  "repository": "https://github.com/openwop/openwop",
+  "tags": [],
+  "versions": [
+    {
+      "version": "1.0.0",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/vendor.myndhyve.market-intel-discovery/-/1.0.0.json",
+      "tarballUrl": "/v1/packs/vendor.myndhyve.market-intel-discovery/-/1.0.0.tgz",
+      "signatureUrl": "/v1/packs/vendor.myndhyve.market-intel-discovery/-/1.0.0.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-Ctr5nYleESXwrDEfJyOJihGyc4As7p4vLOu7f7If65g=",
+      "deprecated": false,
+      "yanked": false
+    }
+  ],
+  "latest": "1.0.0",
+  "deprecated": false
+}
