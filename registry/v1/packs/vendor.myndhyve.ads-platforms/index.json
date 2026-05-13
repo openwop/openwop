@@ -1,0 +1,25 @@
+{
+  "name": "vendor.myndhyve.ads-platforms",
+  "description": "MyndHyve ads.platform.specs — pure-data executor exposing the creative specs for 9 ad platforms (amazon, google, linkedin, meta, pinterest, reddit, snapchat, tiktok, x) across their placements. ~1500 LOC of platform spec data (aspect ratios, text limits, file sizes, format support, CTA presets, safe zones, caption + audio guidance) inlined verbatim from src/canvas-types/campaign-studio/ads-studio/platforms/. No host capabilities required.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/ads-platforms",
+  "repository": "https://github.com/openwop/openwop",
+  "tags": [],
+  "versions": [
+    {
+      "version": "1.0.0",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/vendor.myndhyve.ads-platforms/-/1.0.0.json",
+      "tarballUrl": "/v1/packs/vendor.myndhyve.ads-platforms/-/1.0.0.tgz",
+      "signatureUrl": "/v1/packs/vendor.myndhyve.ads-platforms/-/1.0.0.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-N42xp5IP3E4QRqWDD4bwN4bdUpopELg6ODLAQd+U03s=",
+      "deprecated": false,
+      "yanked": false
+    }
+  ],
+  "latest": "1.0.0",
+  "deprecated": false
+}

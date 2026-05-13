@@ -1,7 +1,7 @@
 {
   "registryVersion": "1.0.0",
   "generatedAt": "2026-05-10T00:00:00Z",
-  "packCount": 27,
+  "packCount": 28,
   "packs": [
     {
       "name": "community.openwop-team.demo",
@@ -88,6 +88,15 @@
       "name": "vendor.myndhyve.ads-export",
       "latestVersion": "1.0.0",
       "description": "MyndHyve ads.export.pack — pure-logic export pack builder. Bundles copy variants + creative assets + tracking links into a structured AdExportPack record (JSON-serializable). Lifted from src/canvas-types/campaign-studio/ads-studio/export/AdExportPackService.ts. No host capabilities required; deterministic.",
+      "license": "Apache-2.0",
+      "tags": [],
+      "deprecated": false,
+      "yanked": false
+    },
+    {
+      "name": "vendor.myndhyve.ads-platforms",
+      "latestVersion": "1.0.0",
+      "description": "MyndHyve ads.platform.specs — pure-data executor exposing the creative specs for 9 ad platforms (amazon, google, linkedin, meta, pinterest, reddit, snapchat, tiktok, x) across their placements. ~1500 LOC of platform spec data (aspect ratios, text limits, file sizes, format support, CTA presets, safe zones, caption + audio guidance) inlined verbatim from src/canvas-types/campaign-studio/ads-studio/platforms/. No host capabilities required.",
       "license": "Apache-2.0",
       "tags": [],
       "deprecated": false,

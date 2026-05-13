@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-platforms/1.0.0/platform-specs.input.json",
+  "title": "AdsPlatformSpecsInput",
+  "type": "object",
+  "required": ["platforms"],
+  "properties": {
+    "platforms": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "enum": ["amazon", "google", "linkedin", "meta", "pinterest", "reddit", "snapchat", "tiktok", "x"]
+      },
+      "description": "Platforms whose placements should be returned. Order is preserved in the response."
+    },
+    "placements": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Optional placement-level filter. When supplied, only the matching placements are returned (regardless of which platforms are in `platforms[]`). Known placement ids: meta-feed, meta-stories, meta-reels, meta-right-column, meta-marketplace, meta-messenger, google-search, google-display, google-youtube-instream, google-youtube-bumper, google-discovery, google-performance-max, linkedin-feed, linkedin-message, tiktok-feed, tiktok-spark, x-timeline, x-explore, pinterest-feed, pinterest-search, snapchat-feed, snapchat-stories, reddit-feed, reddit-promoted-post, amazon-display, amazon-video, amazon-audio."
+    }
+  },
+  "additionalProperties": true
+}

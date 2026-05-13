@@ -363,6 +363,30 @@ function main() {
   if (wouldChange(AGGREGATE_PATH, aggregateBytes)) {
     if (CHECK_MODE) {
       fail(`${AGGREGATE_PATH} drifted (rerun generate-sbom.mjs)`);
+      // Diagnostic: show first divergent byte and surrounding context so
+      // CI-only drifts are debuggable without re-running locally.
+      try {
+        const current = readFileSync(AGGREGATE_PATH);
+        const desired = aggregateBytes;
+        const minLen = Math.min(current.length, desired.length);
+        let firstDiff = -1;
+        for (let i = 0; i < minLen; i++) {
+          if (current[i] !== desired[i]) { firstDiff = i; break; }
+        }
+        if (firstDiff === -1 && current.length !== desired.length) firstDiff = minLen;
+        console.error(`  [diag] sizes — on-disk: ${current.length}, regenerated: ${desired.length}`);
+        if (firstDiff >= 0) {
+          const start = Math.max(0, firstDiff - 40);
+          const end = Math.min(minLen, firstDiff + 40);
+          const onDisk = current.subarray(start, end).toString('utf8').replace(/\n/g, '\\n');
+          const regen = desired.subarray(start, end).toString('utf8').replace(/\n/g, '\\n');
+          console.error(`  [diag] first divergence at byte ${firstDiff} (showing ±40 chars):`);
+          console.error(`  [diag] on-disk:     ${onDisk}`);
+          console.error(`  [diag] regenerated: ${regen}`);
+        }
+      } catch (err) {
+        console.error(`  [diag] failed to capture diff context: ${err.message}`);
+      }
       drift++;
     } else {
       writeFileSync(AGGREGATE_PATH, aggregateBytes);
