@@ -1,10 +1,10 @@
 # OpenWOP Protocol Gap Closure Plan
 
-> **Status: archived — v1.0 release reached 2026-05-12.** This document is preserved for traceability. Every controllable track is closed; the residual items are external-action items (vendor-neutral org migration, external security review engagement) tripwire-gated per `ROADMAP.md`. Last reviewed: 2026-05-12.
+> **Status: archived — v1.0 release reached 2026-05-12; v1.1.0 close-out shipped 2026-05-13.** This document is preserved for traceability. Every controllable track is closed; the residual items are external-action items (vendor-neutral org migration, external security review engagement) tripwire-gated per `ROADMAP.md`. Last reviewed: 2026-05-13.
 
 This document turned the protocol deep-dive review into implementation tracks. It is intentionally operational: each gap has an artifact to change, a compatibility rule, and a concrete acceptance signal. The track-status table below summarizes the closure verdict; each track's section below preserves the original work + acceptance criteria for historical reference.
 
-## Archive status (2026-05-12)
+## Archive status (2026-05-13)
 
 | # | Track | Status | Closure evidence |
 |---|---|---|---|
@@ -14,11 +14,11 @@ This document turned the protocol deep-dive review into implementation tracks. I
 | 4 | Interrupt Profile | ✅ **CLOSED** | 4 fixtures (quorum / external-event / auth-required / parent-child-cancel) + matching conformance scenarios shipped. |
 | 5 | Replay and Determinism | ✅ **CLOSED** | `replay.md` retention + privacy + scoring sections shipped; arbitrary-event fork + deterministic replay scenarios pass. LLM cache-key recipe at `replay.md` §"LLM cache-key recipe" §A–§E; placeholder scenario `replay-llm-cache-key.test.ts` at `it.todo()` until first LLM-calling reference-host node lands. |
 | 6 | MCP and A2A Proof | ✅ **CLOSED** | Phase F real-impl interop closed 2026-05-12 (commits `8a53126` MCP + `57f7871` A2A 0.3). Synthetic fakes + real-impl env vars + INTEROP-MATRIX "Composition partners" row all landed. |
-| 7 | Node-Pack Registry MVP | 🟢 **MOSTLY CLOSED** | Registry live at `packs.openwop.dev` with TLS; 3+ packs published with Ed25519 chains verified; WASM ABI RFC 0008 Active; Component-Model annex Active; reference Rust pack + Wasmtime-free loader + 6 conformance scenarios + memory-bomb misbehaving pack all shipped; lockfile spec at `node-packs.md` §"Dependency resolution + lockfile". **Remaining (external-blocked):** 4 high-stakes `core.openwop.{ai,http,mcp,triggers}` packs gated on external security audit per `SECURITY/external-audit-engagement.md`. |
+| 7 | Node-Pack Registry MVP | 🟢 **CONTROLLABLE HALF CLOSED** | Registry live at `packs.openwop.dev` with TLS; 3+ packs published with Ed25519 chains verified; WASM ABI RFC 0008 Active; Component-Model annex Active; reference Rust pack + Wasmtime-free loader + 6 conformance scenarios + memory-bomb misbehaving pack + ABI-mismatch misbehaving pack all shipped; lockfile spec at `node-packs.md` §"Dependency resolution + lockfile"; workspace lockfile demo at `examples/core-packs-lockfile/` (commit `daeaef5`) pinning all 4 audit-gated packs to v1.0.0 with SRI + Ed25519; the 4 `core.openwop.{ai,http,mcp,triggers}` packs are **built + signed + lockfile-resolvable in-tree** (Phase E controllable half — `registry/v1/packs/core.openwop.<name>/-/1.0.0.{tgz,sig,json,sbom.json}`). **Remaining (external-blocked):** public publication of the 4 high-stakes packs to `packs.openwop.dev` gated on external security audit per `SECURITY/external-audit-engagement.md` §2.1. |
 | 8 | Production Profile | ✅ **CLOSED** | `production-profile.md` (RFC 0009) + `scale-profiles.md` shipped; Postgres reference host claims + verifies via `production-backpressure.test.ts` + `production-retention-expiry.test.ts`. |
 | 9 | Governance and Interop Evidence | 🟡 **EXTERNAL-BLOCKED** | Phase 3 deliverables all ready: 5 per-vendor external-audit outreach drafts at `SECURITY/outreach/external-audit/`, 4-tier non-steward-host recruitment at `docs/recruitment/external-host.md`, pack-author recruitment at `docs/recruitment/external-pack-author.md`. Hosted leaderboard at `site/` rebuilds cleanly. **Bottleneck:** out-of-band outreach + non-steward maintainer tripwire (tracked in `ROADMAP.md` Phase 4). |
 | 10 | Multi-Agent Spec Closure | ✅ **CLOSED** | RFCs 0002–0007 at `Accepted` status; AgentRef positioning addendum landed; conformance scenarios cite RFCs in docstrings. Integration-seams audit reconciled (`docs/MULTI-AGENT-INTEGRATION-GAPS.md` archived). |
-| 11 | Observability Verification Harness | 🟢 **MOSTLY CLOSED** | OTLP/HTTP-JSON + OTLP/HTTP-protobuf encodings landed; `otel-emission.test.ts` + `metric-emission.test.ts` + `otel-trace-propagation.test.ts` pass against reference hosts under `--no-file-parallelism`; `openwop.cost.*` + `openwop.queue.depth` + `openwop.run.backlog` + `openwop.run.duration` normated. **Remaining (deferred):** OTLP/gRPC transport — tripwire-gated. |
+| 11 | Observability Verification Harness | ✅ **CLOSED** | OTLP/HTTP-JSON + OTLP/HTTP-protobuf + **OTLP/gRPC** encodings landed (commit `2a1658b` — h2c HTTP/2 + hand-rolled framing at `conformance/src/lib/grpc-framing.ts`, zero new npm deps); `otel-emission.test.ts` + `metric-emission.test.ts` + `otel-trace-propagation.test.ts` + `otel-emission-grpc.test.ts` pass against reference hosts under `--no-file-parallelism`; `capabilities.observability.otel.transports[]` declares the supported wire encodings; `openwop.cost.*` + `openwop.queue.depth` + `openwop.run.backlog` + `openwop.run.duration` normated. |
 | 12 | SDK Parity and Non-TS Reference Host | ✅ **CLOSED** | `sdk/PARITY.md` matrix shipped; Python reference host verified end-to-end with public conformance result (100% of applicable tests); `PUBLISHING.md` documents the cadence rule. **Deferred:** 4th-language SDK (Rust most likely) — demand-gated, not a normative acceptance criterion. |
 | 13 | Spec Surface Additions (Post-v1 Gaps) | ✅ **CLOSED** | All 7 acceptance items checked: pause/resume + 429 envelope + multi-region idempotency + append-reducer ordering + `configurableSchema` field + webhook sig-algorithm version + audit-log integrity annex. Conformance scenarios all shipped + capability-gated. |
 
@@ -28,10 +28,12 @@ This document turned the protocol deep-dive review into implementation tracks. I
 - ✅ **Compliance vocabulary** — landed at `spec/v1/compliance.md` (FINAL, non-normative — SOC 2 / GDPR / HIPAA / ISO 27001 mapping).
 - ✅ **Bug-bounty program** — landed at `SECURITY/bug-bounty.md` (annex; activation tracked behind the maintainer tripwire).
 - ✅ **CNA registration** — landed at `SECURITY/cna.md` (annex; engagement-letter step deferred to the external-audit closure).
+- ✅ **Workspace pack lockfile demo** — landed at `examples/core-packs-lockfile/` (commit `daeaef5`, 2026-05-13): air-gapped resolver-and-verify proof for the 4 audit-gated core packs at v1.0.0, validating `schemas/pack-lockfile.schema.json` with SRI integrity hashes + raw Ed25519 signature material.
+- ✅ **`capabilities.nodePackRuntimes` schema declaration** — formalized at `schemas/capabilities.schema.json` (commit `09e28fd`, 2026-05-12): strict-mode validators now enforce the shape of `wasm.{supported,abiVersions[],maxMemoryBytes,loadedPacks[]}` + the `wasmComponent` reservation.
 
 ### Closure verdict
 
-11 of 13 tracks fully closed; 2 mostly closed with the remaining items external-action-gated (Track 7's 4 high-stakes core packs await the external security audit; Track 11's OTLP/gRPC transport is deferred to Phase J tripwire). 0 tracks open without a documented external trigger. The protocol is **ready for v1.0 release** per the criteria in `ROADMAP.md`.
+12 of 13 tracks fully closed; 1 closed on the controllable half (Track 7: 4 high-stakes core packs are built + signed + lockfile-pinned in-tree; only public publication to `packs.openwop.dev` awaits the external security audit). 0 tracks open without a documented external trigger. The protocol is **shipped at v1.1.0** (2026-05-13 release: npm `@openwop/openwop@1.1.0`, npm `@openwop/openwop-conformance@1.1.0`, PyPI `openwop-client@1.1.0`, Go `sdk/go@v1.1.0`).
 
 The phased-delivery details below are preserved in their original 2026-05-10 form for historical traceability. Each track's `Acceptance` block has the closure checkpoints inline; this archive header is the at-a-glance index.
 
@@ -59,9 +61,9 @@ The phased-delivery details below are preserved in their original 2026-05-10 for
 | Scale / production operations | C+ | Production profile for queueing, retention, retries, backpressure |
 | Governance / ecosystem | C+ | Public leaderboard and non-steward implementation evidence |
 | Multi-agent extensions (RFCs 0002–0007) | ✅ B (was D+) | Six RFCs landed at `Active` 2026-05-10; promote to `Accepted` once conformance scenarios + reference-host implementation ship. |
-| Observability verification | B (was B−) | ✅ `openwop.cost.*` already existed; queue-depth / backlog / orchestrator-decision / cross-region idempotency metrics landed 2026-05-10. Remaining: OTel-emission harness in conformance suite. |
-| SDK breadth / cross-language hosts | B (was C+) | ✅ Python reference host landed at `examples/hosts/python/` (2026-05-10, ~600 LOC stdlib-only); `INTEROP-MATRIX.md` row added. Remaining: full conformance suite run + Python/Go SDK parity audit vs TS. |
-| Spec surface additions (post-v1 gaps) | ✅ B+ (was B−) | Landed 2026-05-10: `pause`/`resume`, normative `429` envelope, multi-region idempotency annex, `append` ordering, `configurableSchema`, webhook sig-algo versioning, audit-log integrity profile. Remaining: OIDC user-bearer profile. |
+| Observability verification | ✅ A (was B−) | ✅ `openwop.cost.*`; queue-depth / backlog / orchestrator-decision / cross-region idempotency metrics landed 2026-05-10. ✅ OTel-emission harness landed (`conformance/src/lib/otel-collector.ts`); ✅ OTLP/gRPC transport landed at commit `2a1658b` (`conformance/src/lib/grpc-framing.ts`, zero new npm deps). |
+| SDK breadth / cross-language hosts | ✅ A− (was C+) | ✅ Python reference host at `examples/hosts/python/` (~600 LOC stdlib-only) — 100% of applicable scenarios pass. ✅ `sdk/PARITY.md` matrix shipped; ✅ all 3 published SDKs at v1.1.0. Rust SDK demand-gated, not v1.x-blocking. |
+| Spec surface additions (post-v1 gaps) | ✅ A− (was B−) | Landed 2026-05-10/11/12: `pause`/`resume`, normative `429` envelope, multi-region idempotency annex, `append` ordering, `configurableSchema`, webhook sig-algo versioning, audit-log integrity profile, ✅ OIDC user-bearer profile (Phase I.4 — `auth-oidc-user-bearer.test.ts` + synthetic issuer harness at `conformance/src/lib/oidc-issuer.ts`). |
 
 ## Track 1: Spec Hygiene
 
@@ -108,7 +110,7 @@ The phased-delivery details below are preserved in their original 2026-05-10 for
 **Acceptance:**
 - ✅ `capabilities.md` links the change-detection annex.
 - ✅ Discovery conformance covers base public shape, optional profile shape, and optional capability-change headers.
-- Remaining: auth-scoped discovery variants when a host advertises them.
+- ✅ Auth-scoped discovery variants — `discovery-auth-scoped.test.ts` verifies a second principal receives a STRICT subset on Postgres host (RFC 0011 §A, Phase I.5).
 
 ## Track 3: Auth Profile
 
@@ -123,7 +125,7 @@ The phased-delivery details below are preserved in their original 2026-05-10 for
 **Acceptance:**
 - ✅ New auth profile doc.
 - ✅ Threat model updated for rotation and token exchange failure modes.
-- Remaining: conformance profile tests gated on advertised auth capabilities.
+- ✅ Conformance profile tests gated on advertised auth capabilities — `auth-api-key-rotation.test.ts`, `auth-oauth2-client-credentials.test.ts`, `auth-oidc-user-bearer.test.ts`, `auth-mtls.test.ts` (opt-in via `OPENWOP_TEST_MTLS=1`).
 
 ## Track 4: Interrupt Profile
 
@@ -163,12 +165,12 @@ The phased-delivery details below are preserved in their original 2026-05-10 for
 - ✅ Add `a2a-task-roundtrip.test.ts` using a synthetic A2A peer.
 - ✅ Real-impl interop env vars landed 2026-05-11 (Phase 3 T3.4): `OPENWOP_MCP_REAL_SERVER_URL` + `OPENWOP_A2A_REAL_PEER_URL` switch the wire-shape probes from the in-process fakes to real reference implementations. Synthetic-peer drift-point subtests stay fake-only since real peers don't expose state-forcing APIs. **Wire-shape scope (MCP):** the probe POSTs JSON-RPC and reads a single-JSON response — matches MCP's `streamable-http` in single-response mode. It does NOT yet support stdio transport (the default for `modelcontextprotocol/servers` references) or SSE-streamed responses; an operator collecting interop evidence today runs a custom `StreamableHTTPServerTransport`-style adapter. Adding SSE-frame parsing to the probe is a follow-up still under Track 6. The honest framing in `spec/v1/mcp-integration.md` §"Conformance + interop" calls this out.
 - ✅ `metadata.openwop.*` projection shape canonicalized in `a2a-integration.md` §"State projection (reverse)" + the four drift-point assertions in `a2a-task-roundtrip.test.ts`.
-- Remaining: actually point the scenarios at a live reference impl + publish the result in `INTEROP-MATRIX.md` "Composition partners" subsection. This is the out-of-band step in `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` Phase 3 T3.4 (operator runs a reference server locally + invokes the suite with the env var set).
+- ✅ Real-impl interop closed 2026-05-12 (commits `8a53126` MCP + `57f7871` A2A 0.3): probe extensions wired against `@modelcontextprotocol/server-everything` + the A2A 0.3 JSON-RPC reference. `INTEROP-MATRIX.md` §"Composition partners" carries the resulting rows.
 
 **Acceptance:**
 - ✅ Hosts advertising MCP/A2A capabilities run and pass the corresponding optional scenarios.
 - ✅ `a2a-integration.md` has one canonical metadata example clients can implement.
-- Remaining: published cross-impl evidence (operator step).
+- 🟡 Cross-impl evidence beyond the steward's own runs is operator-side — first non-steward host running the composition-partner scenarios is tripwire-gated per Track 9 / `ROADMAP.md` Phase 4.
 
 ## Track 7: Node-Pack Registry MVP
 
@@ -198,7 +200,7 @@ The phased-delivery details below are preserved in their original 2026-05-10 for
 **Acceptance:**
 - ✅ `production-profile.md` and `scale-profiles.md`.
 - ✅ `INTEROP-MATRIX.md` records production-profile claims separately from core conformance.
-- Remaining: production-profile conformance scenarios.
+- ✅ Production-profile conformance scenarios — `production-backpressure.test.ts` + `production-retention-expiry.test.ts` verified end-to-end against the Postgres reference host (Phase H/I close-out).
 
 ## Track 9: Governance And Interop Evidence
 
@@ -342,9 +344,9 @@ These items convert "very good documentation by one team" into "a protocol other
 
 ### Phase 3 — Ecosystem (weeks 18–36)
 
-13. **Track 7 — WASM ABI RFC** ✅ Draft landed at `RFCS/0008-wasm-abi.md` (2026-05-10). Remaining: reference Rust pack + Wasmtime-based loader in the TS reference host + six conformance scenarios per the RFC §Conformance.
-14. **Track 12 — Postgres reference host** to validate the `RunEventLogIO` contract at scale.
-15. **Track 13 — OIDC / SSO user-bearer profile** ✅ landed at `auth-profiles.md` §"openwop-auth-oidc-user-bearer". **Multi-region idempotency annex** ✅ landed at `idempotency.md`. **Webhook signature-algorithm version field** ✅ landed at `webhooks.md`. Remaining: synthetic OIDC issuer harness for conformance.
+13. **Track 7 — WASM ABI RFC** ✅ Draft landed at `RFCS/0008-wasm-abi.md` (2026-05-10), promoted to `Active` 2026-05-11. ✅ Reference Rust pack at `examples/packs/rust-hello/` (28 KiB wasm32, built + signed). ✅ Wasmtime-free loader at `examples/hosts/in-memory/src/wasm-loader.ts`. ✅ Six conformance scenarios per RFC §Conformance + two deliberately-misbehaving packs (`rust-misbehaving-memory` for the memory cap, `rust-misbehaving-abi` for ABI-version rejection). ✅ `capabilities.nodePackRuntimes.wasm` declared in `schemas/capabilities.schema.json` (commit `09e28fd`).
+14. **Track 12 — Postgres reference host** ✅ at `examples/hosts/postgres/` — production-profile-satisfying; Phase H + I close-out brings BYOK / MCP / HTTP / agent-memory / OAuth2-CC / OIDC / API-key-rotation / auth-scoped discovery / pack-registry consumption.
+15. **Track 13 — OIDC / SSO user-bearer profile** ✅ landed at `auth-profiles.md` §"openwop-auth-oidc-user-bearer". **Multi-region idempotency annex** ✅ landed at `idempotency.md`. **Webhook signature-algorithm version field** ✅ landed at `webhooks.md`. ✅ Synthetic OIDC issuer harness for conformance at `conformance/src/lib/oidc-issuer.ts` + unit test at `conformance/src/lib/oidc-issuer.test.ts`; consumed by `auth-oidc-user-bearer.test.ts` via `OPENWOP_TEST_OIDC_ISSUER_URL` for the 6 host-side validation cases (valid sub/iss/aud/exp + iss mismatch + aud mismatch + expired + unknown kid + insufficient scope).
 
 ### Phase 4 — Standards lifecycle (months 9–18)
 
