@@ -1,0 +1,190 @@
+{
+  "id": "vendor.myndhyve.market-intel-ai-first-research",
+  "name": "Market Intel — AI-First Research Pipeline",
+  "version": "1.0",
+  "description": "Variant of market-intel-research that skips explicit search-query generation. Used when the workflow author has a target topic + ICP but no pre-curated source URLs OR seed queries — ai-discovery generates everything from the topic alone. 8-node pipeline (no query-builder step). Mirrors the AI-first mode of MyndHyve's executors.ts:executeMarketResearch.",
+  "nodes": [
+    {
+      "id": "discover-sources",
+      "typeId": "market-intel.ai-discovery",
+      "name": "AI Source Discovery",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "temperature": 0.3
+      },
+      "inputs": {
+        "topic": "$.run.variables.researchTopic",
+        "industry": "$.run.variables.icpContext.industry",
+        "audience": "$.run.variables.targetAudience",
+        "platforms": "$.run.variables.preferredPlatforms",
+        "minUrls": 15,
+        "minCommunities": 8
+      }
+    },
+    {
+      "id": "triage-threads",
+      "typeId": "market-intel.thread-triage",
+      "name": "Triage Candidate Threads (cost-aware)",
+      "position": { "x": 200, "y": 0 },
+      "config": {
+        "temperature": 0.3
+      },
+      "inputs": {
+        "candidateThreads": "$.run.variables.fetchedThreads",
+        "icpContext": "$.run.variables.icpContext",
+        "productContext": "$.run.variables.productContext",
+        "maxThreads": 20,
+        "tokenBudgetRemaining": 50000
+      }
+    },
+    {
+      "id": "extract-content",
+      "typeId": "market-intel.content-extraction",
+      "name": "Extract Page Content",
+      "position": { "x": 400, "y": 0 },
+      "config": {
+        "temperature": 0.2,
+        "htmlTruncateChars": 50000
+      },
+      "inputs": {
+        "rawHtml": "$.run.variables.pageHtml",
+        "url": "$.run.variables.pageUrl",
+        "contentTypeHint": "discussion"
+      }
+    },
+    {
+      "id": "extract-voc",
+      "typeId": "market-intel.voc-extraction",
+      "name": "Extract VoC Records",
+      "position": { "x": 600, "y": 0 },
+      "config": {
+        "temperature": 0.3
+      },
+      "inputs": {
+        "content": "$.nodes.extract-content.outputs.content",
+        "sourceUrl": "$.nodes.extract-content.outputs.url",
+        "sourceTitle": "$.nodes.extract-content.outputs.title",
+        "platform": "$.run.variables.platform",
+        "community": "$.run.variables.community",
+        "icpContext": "$.run.variables.icpContext",
+        "productContext": "$.run.variables.productContext",
+        "maxRecords": 15
+      }
+    },
+    {
+      "id": "score-opportunities",
+      "typeId": "market-intel.opportunity-scoring",
+      "name": "Score Communities + Angles",
+      "position": { "x": 800, "y": 0 },
+      "config": {
+        "temperature": 0.3
+      },
+      "inputs": {
+        "vocRecords": "$.nodes.extract-voc.outputs.records",
+        "communities": "$.nodes.discover-sources.outputs.communities",
+        "icpContext": "$.run.variables.icpContext",
+        "productContext": "$.run.variables.productContext"
+      }
+    },
+    {
+      "id": "generate-angles",
+      "typeId": "market-intel.ad-angles",
+      "name": "Generate Ad Angles",
+      "position": { "x": 1000, "y": 0 },
+      "config": {
+        "temperature": 0.6
+      },
+      "inputs": {
+        "vocQuotes": {
+          "pains": "$.nodes.extract-voc.outputs.records[?(@.tagType=='pain')]",
+          "desires": "$.nodes.extract-voc.outputs.records[?(@.tagType=='desire')]",
+          "objections": "$.nodes.extract-voc.outputs.records[?(@.tagType=='objection')]",
+          "triggers": "$.nodes.extract-voc.outputs.records[?(@.tagType=='trigger')]",
+          "proofRequests": "$.nodes.extract-voc.outputs.records[?(@.tagType=='proof_request')]",
+          "alternatives": "$.nodes.extract-voc.outputs.records[?(@.tagType=='alternative')]"
+        },
+        "topCommunities": "$.nodes.score-opportunities.outputs.rankedCommunities",
+        "icpContext": "$.run.variables.icpContext",
+        "productContext": "$.run.variables.productContext"
+      }
+    },
+    {
+      "id": "build-targeting",
+      "typeId": "market-intel.audience-targeting",
+      "name": "Build Audience Targeting",
+      "position": { "x": 1200, "y": 0 },
+      "config": {
+        "temperature": 0.4
+      },
+      "inputs": {
+        "communities": "$.nodes.score-opportunities.outputs.rankedCommunities",
+        "angles": "$.nodes.generate-angles.outputs.briefs",
+        "icpContext": "$.run.variables.icpContext",
+        "productContext": "$.run.variables.productContext",
+        "targetPlatforms": "$.run.variables.adPlatforms"
+      }
+    },
+    {
+      "id": "generate-copy",
+      "typeId": "ads.copy.generate",
+      "name": "Generate Ad Copy",
+      "position": { "x": 1400, "y": 0 },
+      "config": {
+        "temperature": 0.8
+      },
+      "inputs": {
+        "brief": {
+          "sellingPoints": "$.nodes.generate-angles.outputs.briefs[*].promise",
+          "angles": "$.nodes.generate-angles.outputs.briefs[*].angleName",
+          "goal": "$.run.variables.researchTopic"
+        },
+        "placements": "$.run.variables.adPlacements",
+        "variantCount": 3
+      }
+    }
+  ],
+  "edges": [
+    { "id": "e1", "sourceNodeId": "discover-sources", "targetNodeId": "triage-threads" },
+    { "id": "e2", "sourceNodeId": "triage-threads", "targetNodeId": "extract-content" },
+    { "id": "e3", "sourceNodeId": "extract-content", "targetNodeId": "extract-voc" },
+    { "id": "e4", "sourceNodeId": "extract-voc", "targetNodeId": "score-opportunities" },
+    { "id": "e5", "sourceNodeId": "score-opportunities", "targetNodeId": "generate-angles" },
+    { "id": "e6", "sourceNodeId": "generate-angles", "targetNodeId": "build-targeting" },
+    { "id": "e7", "sourceNodeId": "build-targeting", "targetNodeId": "generate-copy" }
+  ],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "researchTopic", "type": "string", "required": true },
+    { "name": "icpContext", "type": "object", "required": true },
+    { "name": "productContext", "type": "object", "required": true },
+    { "name": "targetAudience", "type": "string", "required": false },
+    { "name": "preferredPlatforms", "type": "array", "required": false },
+    { "name": "fetchedThreads", "type": "array", "required": false, "description": "Pre-fetched candidate threads for triage. Production wires this from a host.webResearch.fetchBatch node between discover-sources and triage-threads." },
+    { "name": "pageHtml", "type": "string", "required": false },
+    { "name": "pageUrl", "type": "string", "required": false },
+    { "name": "platform", "type": "string", "required": false },
+    { "name": "community", "type": "string", "required": false },
+    { "name": "adPlatforms", "type": "array", "required": false },
+    { "name": "adPlacements", "type": "array", "required": false }
+  ],
+  "metadata": {
+    "tags": ["market-intel", "voc", "ai-first", "vendor.myndhyve"],
+    "packs": [
+      "vendor.myndhyve.market-intel-discovery@1.0.0",
+      "vendor.myndhyve.market-intel-thread-triage@1.0.0",
+      "vendor.myndhyve.market-intel-content-extraction@1.0.0",
+      "vendor.myndhyve.market-intel-voc@1.0.0",
+      "vendor.myndhyve.market-intel-opportunity-scoring@1.0.0",
+      "vendor.myndhyve.market-intel-ad-angles@1.0.0",
+      "vendor.myndhyve.market-intel-audience-targeting@1.0.0",
+      "vendor.myndhyve.ads-copy-generate@1.0.0"
+    ],
+    "hostCapabilities": ["aiProviders"]
+  },
+  "settings": {
+    "timeout": 1800000,
+    "maxRetries": 0
+  }
+}

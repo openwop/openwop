@@ -1,0 +1,227 @@
+{
+  "id": "vendor.myndhyve.market-intel-research",
+  "name": "Market Intel — Full Research Pipeline",
+  "version": "1.0",
+  "description": "Linear 9-node pipeline composing the marketIntel pack catalog end-to-end: search-query generation → community discovery → web fetch (host capability) → content extraction → VoC extraction → opportunity scoring → ad-angle generation → audience targeting → ad-copy generation. Replaces the in-tree `market-intel.research` orchestrator that lives inside MyndHyve's executors.ts (~830 LOC) with a declarative DAG composing the 9 published packs. Multi-source fan-out (extracting + analyzing N pages) is left to the host's orchestrator capability (RFC 0007 fanOutSupported); this fixture demonstrates the single-source path.",
+  "nodes": [
+    {
+      "id": "build-queries",
+      "typeId": "market-intel.query-builder",
+      "name": "Build Search Queries",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "temperature": 0.4,
+        "maxTokens": 6000
+      },
+      "inputs": {
+        "icpContext": "$.run.variables.icpContext",
+        "productContext": "$.run.variables.productContext",
+        "competitors": "$.run.variables.competitors",
+        "targetPlatforms": ["reddit", "hn", "stackexchange"],
+        "maxQueriesPerStage": 5
+      }
+    },
+    {
+      "id": "discover-sources",
+      "typeId": "market-intel.ai-discovery",
+      "name": "AI Source Discovery",
+      "position": { "x": 200, "y": 0 },
+      "config": {
+        "temperature": 0.3
+      },
+      "inputs": {
+        "topic": "$.run.variables.researchTopic",
+        "industry": "$.nodes.build-queries.inputs.icpContext.industry",
+        "platforms": ["reddit", "hackernews", "stackexchange"],
+        "minUrls": 10,
+        "minCommunities": 5
+      }
+    },
+    {
+      "id": "extract-content",
+      "typeId": "market-intel.content-extraction",
+      "name": "Extract Page Content",
+      "position": { "x": 400, "y": 0 },
+      "config": {
+        "temperature": 0.2,
+        "htmlTruncateChars": 50000
+      },
+      "inputs": {
+        "rawHtml": "$.run.variables.pageHtml",
+        "url": "$.nodes.discover-sources.outputs.sources[0]",
+        "contentTypeHint": "discussion"
+      }
+    },
+    {
+      "id": "extract-voc",
+      "typeId": "market-intel.voc-extraction",
+      "name": "Extract VoC Records",
+      "position": { "x": 600, "y": 0 },
+      "config": {
+        "temperature": 0.3,
+        "maxTokens": 4096
+      },
+      "inputs": {
+        "content": "$.nodes.extract-content.outputs.content",
+        "sourceUrl": "$.nodes.extract-content.outputs.url",
+        "sourceTitle": "$.nodes.extract-content.outputs.title",
+        "platform": "reddit",
+        "community": "$.run.variables.community",
+        "icpContext": "$.run.variables.icpContext",
+        "productContext": "$.run.variables.productContext",
+        "maxRecords": 15
+      }
+    },
+    {
+      "id": "score-opportunities",
+      "typeId": "market-intel.opportunity-scoring",
+      "name": "Score Communities + Angles",
+      "position": { "x": 800, "y": 0 },
+      "config": {
+        "temperature": 0.3
+      },
+      "inputs": {
+        "vocRecords": "$.nodes.extract-voc.outputs.records",
+        "communities": "$.run.variables.communities",
+        "icpContext": "$.run.variables.icpContext",
+        "productContext": "$.run.variables.productContext",
+        "maxOpportunities": 10
+      }
+    },
+    {
+      "id": "generate-angles",
+      "typeId": "market-intel.ad-angles",
+      "name": "Generate Ad Angles",
+      "position": { "x": 1000, "y": 0 },
+      "config": {
+        "temperature": 0.6,
+        "maxTokens": 6000
+      },
+      "inputs": {
+        "vocQuotes": {
+          "pains": "$.nodes.extract-voc.outputs.records[?(@.tagType=='pain')]",
+          "desires": "$.nodes.extract-voc.outputs.records[?(@.tagType=='desire')]",
+          "objections": "$.nodes.extract-voc.outputs.records[?(@.tagType=='objection')]",
+          "triggers": "$.nodes.extract-voc.outputs.records[?(@.tagType=='trigger')]",
+          "proofRequests": "$.nodes.extract-voc.outputs.records[?(@.tagType=='proof_request')]",
+          "alternatives": "$.nodes.extract-voc.outputs.records[?(@.tagType=='alternative')]"
+        },
+        "topCommunities": "$.nodes.score-opportunities.outputs.rankedCommunities",
+        "icpContext": "$.run.variables.icpContext",
+        "productContext": "$.run.variables.productContext",
+        "targetAngleCount": 8
+      }
+    },
+    {
+      "id": "build-targeting",
+      "typeId": "market-intel.audience-targeting",
+      "name": "Build Audience Targeting",
+      "position": { "x": 1200, "y": 0 },
+      "config": {
+        "temperature": 0.4,
+        "maxTokens": 8000
+      },
+      "inputs": {
+        "communities": "$.nodes.score-opportunities.outputs.rankedCommunities",
+        "angles": "$.nodes.generate-angles.outputs.briefs",
+        "icpContext": "$.run.variables.icpContext",
+        "productContext": "$.run.variables.productContext",
+        "targetPlatforms": ["meta", "google", "linkedin"]
+      }
+    },
+    {
+      "id": "generate-copy",
+      "typeId": "ads.copy.generate",
+      "name": "Generate Ad Copy",
+      "position": { "x": 1400, "y": 0 },
+      "config": {
+        "temperature": 0.8,
+        "maxTokens": 4096
+      },
+      "inputs": {
+        "brief": {
+          "sellingPoints": "$.nodes.generate-angles.outputs.briefs[*].promise",
+          "angles": "$.nodes.generate-angles.outputs.briefs[*].angleName",
+          "targetAudience": "$.run.variables.productContext.targetAudience",
+          "goal": "$.run.variables.researchTopic"
+        },
+        "placements": ["meta-feed", "google-search"],
+        "variantCount": 3
+      }
+    }
+  ],
+  "edges": [
+    { "id": "e1", "sourceNodeId": "build-queries", "targetNodeId": "discover-sources" },
+    { "id": "e2", "sourceNodeId": "discover-sources", "targetNodeId": "extract-content" },
+    { "id": "e3", "sourceNodeId": "extract-content", "targetNodeId": "extract-voc" },
+    { "id": "e4", "sourceNodeId": "extract-voc", "targetNodeId": "score-opportunities" },
+    { "id": "e5", "sourceNodeId": "score-opportunities", "targetNodeId": "generate-angles" },
+    { "id": "e6", "sourceNodeId": "generate-angles", "targetNodeId": "build-targeting" },
+    { "id": "e7", "sourceNodeId": "build-targeting", "targetNodeId": "generate-copy" }
+  ],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    {
+      "name": "researchTopic",
+      "type": "string",
+      "required": true,
+      "description": "The research topic / area of investigation."
+    },
+    {
+      "name": "icpContext",
+      "type": "object",
+      "required": true,
+      "description": "Ideal customer profile: { roles, industry, problems, outcomes }."
+    },
+    {
+      "name": "productContext",
+      "type": "object",
+      "required": true,
+      "description": "Product description: { name, category, differentiators, mechanisms, proofPoints, keywords, offerSummary, targetAudience }."
+    },
+    {
+      "name": "competitors",
+      "type": "array",
+      "required": false,
+      "description": "Competitor names for query-builder + audience exclusions."
+    },
+    {
+      "name": "community",
+      "type": "string",
+      "required": false,
+      "description": "Community identifier for VoC extraction (e.g., 'r/SaaS')."
+    },
+    {
+      "name": "communities",
+      "type": "array",
+      "required": false,
+      "description": "Pre-aggregated community metadata for opportunity-scoring."
+    },
+    {
+      "name": "pageHtml",
+      "type": "string",
+      "required": false,
+      "description": "Raw HTML for content-extraction (when host-fetched out-of-band). Production deployments wire a host.webResearch.fetchBatch node between discover-sources and extract-content."
+    }
+  ],
+  "metadata": {
+    "tags": ["market-intel", "voc", "ads", "vendor.myndhyve"],
+    "packs": [
+      "vendor.myndhyve.market-intel-query-builder@1.0.0",
+      "vendor.myndhyve.market-intel-discovery@1.0.0",
+      "vendor.myndhyve.market-intel-content-extraction@1.0.0",
+      "vendor.myndhyve.market-intel-voc@1.0.0",
+      "vendor.myndhyve.market-intel-opportunity-scoring@1.0.0",
+      "vendor.myndhyve.market-intel-ad-angles@1.0.0",
+      "vendor.myndhyve.market-intel-audience-targeting@1.0.0",
+      "vendor.myndhyve.ads-copy-generate@1.0.0"
+    ],
+    "hostCapabilities": ["aiProviders"]
+  },
+  "settings": {
+    "timeout": 1800000,
+    "maxRetries": 0
+  }
+}
