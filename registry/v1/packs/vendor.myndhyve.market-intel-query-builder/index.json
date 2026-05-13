@@ -1,0 +1,25 @@
+{
+  "name": "vendor.myndhyve.market-intel-query-builder",
+  "description": "MyndHyve market-intel.query-builder — generate intent-mapped search queries (4-8 query groups × 4 intent stages, 2-4 variations each, synonym maps, platform hints) + per-competitor query packs (comparison/switching/alternative) + topic clusters from ICP + product context. Pairs with ai-discovery: query-builder produces 'what to search for', ai-discovery produces 'where to search'. Eighth marketIntel pack of the Stage 5 cohort.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/market-intel-query-builder",
+  "repository": "https://github.com/openwop/openwop",
+  "tags": [],
+  "versions": [
+    {
+      "version": "1.0.0",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/vendor.myndhyve.market-intel-query-builder/-/1.0.0.json",
+      "tarballUrl": "/v1/packs/vendor.myndhyve.market-intel-query-builder/-/1.0.0.tgz",
+      "signatureUrl": "/v1/packs/vendor.myndhyve.market-intel-query-builder/-/1.0.0.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-r4IjoHdrsEeN36fBxvBJWvR2NGKItG6arRU+WfZgGeM=",
+      "deprecated": false,
+      "yanked": false
+    }
+  ],
+  "latest": "1.0.0",
+  "deprecated": false
+}

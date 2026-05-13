@@ -648,6 +648,24 @@
       ]
     },
     {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.market-intel-query-builder@1.0.0",
+      "type": "library",
+      "name": "vendor.myndhyve.market-intel-query-builder",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/vendor.myndhyve.market-intel-query-builder/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "1cc83a7fb7da7ef4302e813224db73d6f272a89428b61f3acc645394daf9f301"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "bom-ref": "pkg:openwop/vendor.myndhyve.market-intel-thread-triage@1.0.0",
       "type": "library",
       "name": "vendor.myndhyve.market-intel-thread-triage",

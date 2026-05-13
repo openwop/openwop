@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.market-intel-query-builder/1.0.0/query-builder.output.json",
+  "title": "MarketIntelQueryBuilderOutput",
+  "type": "object",
+  "required": ["queryGroups", "competitorQueries", "topicClusters", "summary", "warnings", "queryGroupCount", "success"],
+  "properties": {
+    "queryGroups": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["intentStage", "primaryQuery", "variations", "synonyms", "rationale", "expectedSignal"],
+        "properties": {
+          "intentStage": { "type": "string", "enum": ["ready_now", "researching", "problem_aware", "unaware"] },
+          "primaryQuery": { "type": "string", "minLength": 1 },
+          "variations": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+          "synonyms": {
+            "type": "object",
+            "additionalProperties": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+          },
+          "rationale": { "type": "string" },
+          "expectedSignal": { "type": "string", "enum": ["high", "medium", "low"] },
+          "platformHints": {
+            "type": "object",
+            "properties": {
+              "reddit": { "type": "string" },
+              "stackexchange": { "type": "string" },
+              "hn": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "competitorQueries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["competitor", "comparisonQueries", "switchingQueries", "alternativeQueries"],
+        "properties": {
+          "competitor": { "type": "string", "minLength": 1 },
+          "comparisonQueries": { "type": "array", "items": { "type": "string" } },
+          "switchingQueries": { "type": "array", "items": { "type": "string" } },
+          "alternativeQueries": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": true
+      }
+    },
+    "topicClusters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["clusterName", "queries", "relatedTerms"],
+        "properties": {
+          "clusterName": { "type": "string" },
+          "queries": { "type": "array", "items": { "type": "string" } },
+          "relatedTerms": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": true
+      }
+    },
+    "summary": {
+      "type": "object",
+      "description": "Rebuilt from validated data; AI-claimed counts are ignored. totalQueries counts primary+variations+competitor queries.",
+      "required": ["totalQueries", "queriesByIntent", "competitorCoverage"],
+      "properties": {
+        "totalQueries": { "type": "integer", "minimum": 0 },
+        "queriesByIntent": {
+          "type": "object",
+          "required": ["ready_now", "researching", "problem_aware", "unaware"],
+          "properties": {
+            "ready_now": { "type": "integer" },
+            "researching": { "type": "integer" },
+            "problem_aware": { "type": "integer" },
+            "unaware": { "type": "integer" }
+          },
+          "additionalProperties": false
+        },
+        "competitorCoverage": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "warnings": { "type": "array", "items": { "type": "string" } },
+    "queryGroupCount": { "type": "integer", "minimum": 0 },
+    "model": { "type": "string" },
+    "usage": {
+      "type": "object",
+      "properties": {
+        "promptTokens": { "type": "integer" },
+        "completionTokens": { "type": "integer" }
+      },
+      "additionalProperties": true
+    },
+    "success": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}
