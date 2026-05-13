@@ -1,10 +1,76 @@
 # Canvas Packs Inventory
 
-> **Status: Phase A audit, revised 2026-05-12 v2.** Inventory of canvas-bound workflow node types that exist in a real OpenWOP host (myndhyve.ai) but are not yet published as packs at `packs.openwop.dev`. This document drives the publish plan for Phases B–D in the openwop-multi-agent integration track. Pairs with `spec/v1/host-capabilities.md` (the capability surface canvas packs consume).
+> **Status: Phases A+B+C COMPLETE as of 2026-05-13.** All 30 audited canvas-bound executors are now published at `packs.openwop.dev`, plus 6 additional packs that emerged during the publish work (decomposing multi-platform executors into platform-specific packs, separating compositional primitives from orchestrators). Phase D (spec promotion + workflow-chain RFC) remains. See "Delivery log — Phases B+C" below.
 >
 > **Revision history:**
 > - v1 (2026-05-12): initial inventory — 85 typeIds across 7 sub-packs. **Incorrectly conflated editor presets with real executors.**
-> - v2 (2026-05-12, this revision): corrected to **30 real `defineNode()` executors** across 4 sub-packs after auditing actual `defineNode(` call sites. The 55 dropped typeIds are editor presets (drag-tile abstractions that map to pre-configured `core.ai.callPrompt` workflows in the runtime). They are NOT pack-publishable as node typeIds; a separate publishing mechanism (workflow-template packs, future spec extension) is the right home.
+> - v2 (2026-05-12): corrected to **30 real `defineNode()` executors** across 4 sub-packs after auditing actual `defineNode(` call sites. The 55 dropped typeIds are editor presets (drag-tile abstractions that map to pre-configured `core.ai.callPrompt` workflows in the runtime). They are NOT pack-publishable as node typeIds; a separate publishing mechanism (workflow-template packs, future spec extension) is the right home.
+> - **v3 (2026-05-13, this revision): closure status.** Phases B+C delivered across 23 PRs. The 30 audited executors decomposed into 17 published packs (more than the v2-proposed 4 sub-packs) — see decomposition log below.
+
+---
+
+## Delivery log — Phases B+C (2026-05-13)
+
+The v2 plan proposed a 4-sub-pack decomposition. Actual delivery ended up with **17 packs** as decomposition choices became clearer during implementation. Each typeId is published at packs.openwop.dev under `vendor.myndhyve.*`:
+
+| Audited typeId | Final pack | Notes |
+|---|---|---|
+| **app-builder** (2) | | |
+| `app-builder.iterate-tasks` | `vendor.myndhyve.app-builder@1.0.0` | Multi-task loop; ports `iterateTasksExecutor.ts`. Drops host-side concerns (progress cards, telemetry, pilot materializer, engine-internal envelope routing). |
+| `app-builder.per-screen` | `vendor.myndhyve.app-builder@1.0.0` | Single-screen; ports `perScreenExecutor.ts`. Shares `buildPerScreenPrompt` + `categorizeFailure` with iterate-tasks (same pack). |
+| **ads-studio** (15 → split across 11 packs) | | |
+| `ads.brief.extract` + `ads.tracking.link` | `vendor.myndhyve.ads-tools` | Pure-logic, no AI; bundled. |
+| `ads.brief.build` + `ads.variant.plan` + `ads.video.qa` + `ads.winner.synthesize` | `vendor.myndhyve.ads-studio-core` | AI orchestration cohort; bundled per shared coupling. |
+| `ads.platform.specs` | `vendor.myndhyve.ads-platforms` | Pure-data platform-spec registry. |
+| `ads.policy.check` | `vendor.myndhyve.ads-policy` | Text rules only. |
+| `ads.creative.validate` | `vendor.myndhyve.ads-creative-validate` | Text rules + asset-format + placement-length. |
+| `ads.export.pack` | `vendor.myndhyve.ads-export` | Pure-logic export packager. |
+| `ads.copy.generate` | `vendor.myndhyve.ads-copy-generate` | First `aiProviders` consumer in cohort. |
+| `ads.image.generate` | `vendor.myndhyve.ads-image-generate` | First `aiProviders.imageGeneration` consumer (sub-cap added in spec PR #48). |
+| `ads.video.generate` | `vendor.myndhyve.ads-video-generate` | First `aiProviders.videoGeneration` consumer (sub-cap added in spec PR #53). |
+| `ads.metrics.import` | `vendor.myndhyve.ads-metrics-import` | Pure-logic aggregation; audit-corrected scope (source is client-side cache, not API fetcher). |
+| `ads.publish.platform` → **split into 3 platform packs** | | |
+| → `ads.publish.meta` | `vendor.myndhyve.ads-publish-meta` | Meta Marketing API v21.0. First `secrets.resolveInPack` consumer (spec PR #52). |
+| → `ads.publish.google` | `vendor.myndhyve.ads-publish-google` | Google Ads API v18. 2-secret (OAuth + developer-token), REVERSE rollback. |
+| → `ads.publish.tiktok` | `vendor.myndhyve.ads-publish-tiktok` | TikTok Marketing API v1.3. `Access-Token` header, business-code envelope, no rollback. |
+| **landing-page** (7) | `vendor.myndhyve.landing-page` | Single pack with 7 typeIds. `peerDeps: { aiProviders: supported }` for the content-generate + variants-generate nodes. |
+| **campaign-sequence** (6 → split into 2 packs) | | |
+| `campaign.sequence.{wait, tag, condition}` | `vendor.myndhyve.campaign-sequence` | Pure-logic triggers; no host capability. |
+| `campaign.sequence.{email, sms, webhook}` | `vendor.myndhyve.campaign-sequence-integration` | `peerDeps: { host.campaignMessaging: supported }` — integration channels. |
+
+### Additional packs that emerged (beyond the audited 30)
+
+The publish work surfaced 9 more publishable typeIds across 6 new packs that weren't in the v2 audit but proved tractable during the porting:
+
+- `vendor.myndhyve.knowledge-tools` — 2 typeIds (`knowledge.retrieve`, `knowledge.augment-prompt`). First `host.knowledge` consumer (spec PR #37 added the sub-cap).
+- `vendor.myndhyve.market-intel-voc` — `market-intel.voc-extraction`. Lifted from in-tree prompt-pack code that wasn't an explicit canvas-types executor but was workflow-published.
+- `vendor.myndhyve.market-intel-ad-angles` — `market-intel.ad-angles`. Same provenance.
+- `vendor.myndhyve.market-intel-discovery` — `market-intel.ai-discovery`. Same.
+- `vendor.myndhyve.market-intel-opportunity-scoring` — `market-intel.opportunity-scoring`. Same.
+- `vendor.myndhyve.market-intel-content-extraction` — `market-intel.content-extraction`. Same.
+- `vendor.myndhyve.market-intel-thread-triage` — `market-intel.thread-triage`. Same.
+- `vendor.myndhyve.market-intel-audience-targeting` — `market-intel.audience-targeting`. Same.
+- `vendor.myndhyve.market-intel-query-builder` — `market-intel.query-builder`. Same.
+- `vendor.myndhyve.market-intel-community-rank` — `market-intel.community-rank`. Same.
+
+These market-intel packs were originally workflow-internal prompt-packs; publishing them as standalone composable nodes was an extension of the inventory scope (in the spirit of the audit, not strictly within it). They're documented separately in `examples/market-intel-pipeline/README.md`.
+
+### Spec extensions that landed during Phases B+C
+
+Four spec PRs added the host-capability surface the new packs depend on:
+
+| PR | Spec section | Sub-capability | Used by |
+|---|---|---|---|
+| #37 | `§host.knowledge` | `host.knowledge` (RAG retrieval) | `knowledge-tools` |
+| #48 | `§host.aiProviders` | `aiProviders.imageGeneration` (`ctx.callImageGenerator`) | `ads-image-generate` |
+| #52 | `§host.secrets` | `secrets.resolveInPack` (`ctx.secrets.resolve`) | `ads-publish-{meta,google,tiktok}` |
+| #53 | `§host.aiProviders` | `aiProviders.videoGeneration` (`ctx.callVideoGenerator`) | `ads-video-generate` |
+
+PR #48 also formalized the de-facto `ctx.callAI` contract (which 14+ already-published packs depend on but wasn't normatively spec'd; the `core.openwop.ai` README explicitly noted this gap).
+
+### Registry status (post-Phases B+C)
+
+`packs.openwop.dev` now hosts **48 packs** with **44 vendor typeIds** under `vendor.myndhyve.*` (plus the framework `core.openwop.*` packs). The four canvas verticals from the v2 audit (App Builder, Ads Studio, Landing Page, Campaign Sequence) are fully expressible as DAGs of published packs — see `examples/market-intel-pipeline/` for the canonical multi-pack composition reference.
 
 ---
 
