@@ -1,0 +1,44 @@
+{
+  "name": "vendor.myndhyve.ads-export",
+  "version": "1.0.0",
+  "description": "MyndHyve ads.export.pack — pure-logic export pack builder. Bundles copy variants + creative assets + tracking links into a structured AdExportPack record (JSON-serializable). Lifted from src/canvas-types/campaign-studio/ads-studio/export/AdExportPackService.ts. No host capabilities required; deterministic.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/ads-export",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "vendor",
+    "myndhyve",
+    "ads",
+    "export",
+    "campaign"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "nodes": [
+    {
+      "typeId": "ads.export.pack",
+      "version": "1.0.0",
+      "label": "Create Ads Export Pack",
+      "description": "Bundle copy variants + creative assets + tracking links into an AdExportPack record. Validates item count + total asset size against configurable maxima. Returns the pack record (JSON-serializable); host stores it or pipes to a downstream `core.openwop.http.fetch` for upload. Optional `config.emitCsv` / `config.emitJson` produce string representations of the pack alongside the record.",
+      "category": "data",
+      "role": "action",
+      "configSchemaRef": "schemas/export-pack.config.json",
+      "inputSchemaRef": "schemas/export-pack.input.json",
+      "outputSchemaRef": "schemas/export-pack.output.json"
+    }
+  ],
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "myndhyve-internal-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-B4LdcwMrPR/LiAMT+QkKOdMrv1TWIHuMyy0mVKbzQ2U="
+}
