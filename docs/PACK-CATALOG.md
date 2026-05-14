@@ -74,7 +74,7 @@ The auto-play screen-generation workflow lifted from MyndHyve's App Builder canv
 
 ## Ads Studio (creative authoring + validation)
 
-11 typeIds covering brief extraction → variant planning → creative generation → validation → export. Mix of pure-logic + `aiProviders` consumers.
+14 typeIds across 10 packs covering brief extraction → variant planning → creative generation → validation → export → post-publish metrics. Mix of pure-logic + `aiProviders` + `aiProviders.imageGeneration` + `aiProviders.videoGeneration` consumers.
 
 | Pack | Peer-dep | typeIds |
 |---|---|---|
