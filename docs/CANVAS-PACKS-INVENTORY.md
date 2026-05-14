@@ -40,7 +40,7 @@ The v2 plan proposed a 4-sub-pack decomposition. Actual delivery ended up with *
 
 ### Additional packs that emerged (beyond the audited 30)
 
-The publish work surfaced 9 more publishable typeIds across 6 new packs that weren't in the v2 audit but proved tractable during the porting:
+The publish work surfaced 11 more publishable typeIds across 10 new packs that weren't in the v2 audit but proved tractable during the porting:
 
 - `vendor.myndhyve.knowledge-tools` — 2 typeIds (`knowledge.retrieve`, `knowledge.augment-prompt`). First `host.knowledge` consumer (spec PR #37 added the sub-cap).
 - `vendor.myndhyve.market-intel-voc` — `market-intel.voc-extraction`. Lifted from in-tree prompt-pack code that wasn't an explicit canvas-types executor but was workflow-published.
