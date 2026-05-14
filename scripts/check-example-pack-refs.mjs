@@ -72,11 +72,27 @@ function readTarballFile(tarballBytes, wantPath) {
 }
 
 const DEFAULT_REGISTRY = 'https://packs.openwop.dev';
+const FETCH_TIMEOUT_MS = 15000;
 const args = process.argv.slice(2);
 const registryFlag = args.indexOf('--registry');
 const offlineFlag = args.indexOf('--offline');
 const registry = registryFlag >= 0 ? args[registryFlag + 1] : DEFAULT_REGISTRY;
 const offlineIndex = offlineFlag >= 0 ? args[offlineFlag + 1] : null;
+
+/**
+ * fetch() with a hard timeout via AbortController. Without this a slow-
+ * but-reachable registry would hang until GitHub Actions' job-level
+ * timeout (5min default), masking the real failure.
+ */
+async function fetchWithTimeout(url, opts = {}) {
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...opts, signal: controller.signal });
+  } finally {
+    clearTimeout(t);
+  }
+}
 
 function listExampleWorkflowFiles(root = 'examples') {
   const out = [];
@@ -113,9 +129,10 @@ async function loadTopIndex() {
   const url = `${registry.replace(/\/$/, '')}/v1/index.json`;
   let res;
   try {
-    res = await fetch(url, { redirect: 'follow' });
+    res = await fetchWithTimeout(url, { redirect: 'follow' });
   } catch (e) {
-    console.error(`ERROR: registry unreachable at ${url}: ${e.message}`);
+    const detail = e.name === 'AbortError' ? `timeout after ${FETCH_TIMEOUT_MS}ms` : e.message;
+    console.error(`ERROR: registry unreachable at ${url}: ${detail}`);
     console.error(`  Hint: pass --offline registry/v1/index.json to validate against in-tree state`);
     process.exit(2);
   }
@@ -134,9 +151,13 @@ async function loadPackIndex(name) {
     return JSON.parse(readFileSync(path, 'utf8'));
   }
   const url = `${registry.replace(/\/$/, '')}/v1/packs/${name}/index.json`;
-  const res = await fetch(url, { redirect: 'follow' });
-  if (!res.ok) return null;
-  return res.json();
+  try {
+    const res = await fetchWithTimeout(url, { redirect: 'follow' });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
 }
 
 async function loadPackVersion(name, version) {
@@ -147,9 +168,13 @@ async function loadPackVersion(name, version) {
     return JSON.parse(readFileSync(path, 'utf8'));
   }
   const url = `${registry.replace(/\/$/, '')}/v1/packs/${name}/-/${version}.json`;
-  const res = await fetch(url, { redirect: 'follow' });
-  if (!res.ok) return null;
-  return res.json();
+  try {
+    const res = await fetchWithTimeout(url, { redirect: 'follow' });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -163,23 +188,23 @@ async function loadPackSchema(name, version, schemaRef) {
   if (offlineIndex) {
     const dir = offlineIndex.replace(/\/v1\/index\.json$/, '');
     const tarballPath = `${dir}/v1/packs/${name}/-/${version}.tgz`;
-    if (!existsSync(tarballPath)) return null;
+    if (!existsSync(tarballPath)) return { schema: null };
     try {
       const bytes = readTarballFile(readFileSync(tarballPath), schemaRef);
-      if (!bytes) return null;
-      return JSON.parse(bytes.toString('utf8'));
+      if (!bytes) return { schema: null };
+      return { schema: JSON.parse(bytes.toString('utf8')) };
     } catch (e) {
-      return null;
+      return { schema: null, parseError: e.message };
     }
   }
   const filename = schemaRef.replace(/^schemas\//, '');
   const url = `${registry.replace(/\/$/, '')}/v1/packs/${name}/${version}/${filename}`;
   try {
-    const res = await fetch(url, { redirect: 'follow' });
-    if (!res.ok) return null;
-    return res.json();
-  } catch {
-    return null;
+    const res = await fetchWithTimeout(url, { redirect: 'follow' });
+    if (!res.ok) return { schema: null };
+    return { schema: await res.json() };
+  } catch (e) {
+    return { schema: null, parseError: e.message };
   }
 }
 
@@ -208,17 +233,19 @@ async function buildPackResolver(topIndex) {
       }
       return { ok: true };
     },
-    async typeIdsOf(name, wantVersion) {
+    async manifestOf(name, wantVersion) {
       const key = `${name}@${wantVersion}`;
       if (!manifestCache.has(key)) {
-        const manifest = await loadPackVersion(name, wantVersion);
-        const typeIds = manifest?.nodes?.map((n) => n.typeId).filter(Boolean) ?? null;
-        manifestCache.set(key, typeIds);
+        manifestCache.set(key, await loadPackVersion(name, wantVersion));
       }
       return manifestCache.get(key);
     },
+    async typeIdsOf(name, wantVersion) {
+      const manifest = await this.manifestOf(name, wantVersion);
+      return manifest?.nodes?.map((n) => n.typeId).filter(Boolean) ?? null;
+    },
     async nodeDefOf(name, wantVersion, typeId) {
-      const manifest = await loadPackVersion(name, wantVersion);
+      const manifest = await this.manifestOf(name, wantVersion);
       return manifest?.nodes?.find((n) => n.typeId === typeId) ?? null;
     },
     async schemaOf(name, wantVersion, schemaRef) {
@@ -241,6 +268,9 @@ function declaredConfigKeys(schema) {
 }
 
 function extractDeclaredPacks(parsed) {
+  // Precondition: every spec contains `@` (enforced by isWorkflowDefinition's
+  // .every((p) => typeof p === 'string' && p.includes('@'))). spec.indexOf('@')
+  // returning -1 here would indicate the precondition was bypassed.
   return (parsed.metadata?.packs ?? []).map((spec) => {
     const at = spec.indexOf('@');
     return { spec, name: spec.slice(0, at), version: spec.slice(at + 1) };
@@ -348,13 +378,16 @@ async function main() {
       if (!pack) continue; // already reported as TYPEID_UNRESOLVED
       const def = await resolver.nodeDefOf(pack.name, pack.version, node.typeId);
       if (!def?.configSchemaRef) continue; // pack declares no config schema
-      const schema = await resolver.schemaOf(pack.name, pack.version, def.configSchemaRef);
+      const { schema, parseError } = await resolver.schemaOf(pack.name, pack.version, def.configSchemaRef);
       if (!schema) {
+        const why = parseError
+          ? `parse error: ${parseError}`
+          : 'not fetchable';
         report.push({
           file,
           kind: 'WARN',
           spec: `${node.id}:${node.typeId}`,
-          reason: `config schema ${def.configSchemaRef} not fetchable — skipping key validation`,
+          reason: `config schema ${def.configSchemaRef} ${why} — skipping key validation`,
         });
         warnCount += 1;
         continue;
