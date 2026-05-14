@@ -30,6 +30,7 @@
  */
 
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
+import { createServer as createHttpsServer } from 'node:https';
 import { randomUUID, createHash, timingSafeEqual } from 'node:crypto';
 import { readFileSync, readdirSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname, resolve as resolvePath } from 'node:path';
@@ -106,7 +107,11 @@ import {
   setupMemorySchema,
   REFERENCE_MEMORY_CAPABILITY,
 } from './memory-adapter.js';
-import { REFERENCE_AGENTS_CAPABILITY } from './agent-events.js';
+import {
+  REFERENCE_AGENTS_CAPABILITY,
+  buildAgentReasonedPayload,
+  resolveReasoningVerbosity,
+} from './agent-events.js';
 import {
   JwtValidator,
   JwtValidationError,
@@ -137,6 +142,20 @@ const TENANT2_API_KEY = process.env.OPENWOP_TENANT2_API_KEY ?? null;
 // claiming the profile MUST advertise a non-zero minGraceSeconds (24h
 // is the conventional default per the SQLite reference).
 const ROTATION_MIN_GRACE_SECONDS = 86_400;
+
+// Phase I.7 — auth-profiles.md §"openwop-auth-mtls". When the operator
+// configures cert + key paths, the host listens on HTTPS with mutual
+// TLS. Client certs that fail to verify against the optional CA bundle
+// terminate at the TLS handshake (per `auth-profiles.md` §`openwop-auth-
+// mtls`, hosts MAY surface failure at either the TLS layer or 401
+// `invalid_token`; this reference uses the TLS layer for simplicity).
+// `subjectMapping: 'cn'` — production deployers extend to SAN-based
+// mapping by parsing `req.socket.getPeerCertificate()`.
+const MTLS_CERT_PATH = process.env.OPENWOP_MTLS_CERT_PATH ?? null;
+const MTLS_KEY_PATH = process.env.OPENWOP_MTLS_KEY_PATH ?? null;
+const MTLS_CA_PATH = process.env.OPENWOP_MTLS_CA_PATH ?? null;
+const MTLS_REQUIRED = process.env.OPENWOP_MTLS_REQUIRED !== 'false';
+const MTLS_ENABLED = MTLS_CERT_PATH !== null && MTLS_KEY_PATH !== null;
 
 // Phase I.3 + I.4 — OAuth2-CC + OIDC user-bearer validators. Each is
 // `null` when the operator hasn't configured the env vars; the host
@@ -305,30 +324,44 @@ const IDEMPOTENCY_TTL_MS = 24 * 60 * 60 * 1000;
 
 // ─── Fixture loading (identical to SQLite host) ──────────────────────────────
 
+function loadFixturesFromDir(dir: string): boolean {
+  try {
+    const entries = readdirSync(dir);
+    for (const file of entries) {
+      if (!file.endsWith('.json')) continue;
+      const raw = readFileSync(join(dir, file), 'utf8');
+      const parsed = JSON.parse(raw) as FixtureWorkflow;
+      workflows.set(parsed.id, parsed);
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function loadFixtures(): void {
   let probe = __dirname;
   for (let i = 0; i < 10; i++) {
-    const candidate = join(probe, 'conformance', 'fixtures');
-    try {
-      const entries = readdirSync(candidate);
-      for (const file of entries) {
-        if (!file.endsWith('.json')) continue;
-        const raw = readFileSync(join(candidate, file), 'utf8');
-        const parsed = JSON.parse(raw) as FixtureWorkflow;
-        workflows.set(parsed.id, parsed);
-      }
-      return;
-    } catch {
-      probe = dirname(probe);
+    if (loadFixturesFromDir(join(probe, 'conformance', 'fixtures'))) {
+      break;
     }
+    probe = dirname(probe);
   }
-  // Fallback: minimal noop fixture if nothing else loads.
-  workflows.set('conformance-noop', {
-    id: 'conformance-noop',
-    name: 'Noop',
-    version: '1.0',
-    nodes: [{ id: 'noop', typeId: 'core.noop', name: 'Noop', inputs: {} }],
-  });
+  // Test seam: load additional fixtures from an env-pointed directory.
+  // Used by host-internal smoke tests that exercise typeIds not yet in
+  // the protocol-normative fixture catalog (e.g., `core.llm.*`,
+  // `core.mcp.toolCall` against a non-standard config).
+  const extra = process.env.OPENWOP_EXTRA_FIXTURES_DIR;
+  if (extra) loadFixturesFromDir(extra);
+  if (workflows.size === 0) {
+    // Fallback: minimal noop fixture if nothing else loads.
+    workflows.set('conformance-noop', {
+      id: 'conformance-noop',
+      name: 'Noop',
+      version: '1.0',
+      nodes: [{ id: 'noop', typeId: 'core.noop', name: 'Noop', inputs: {} }],
+    });
+  }
 }
 
 // ─── Data access (all async, all goes through Querier) ───────────────────────
@@ -489,6 +522,29 @@ const runFailureErrors = new Map<string, { code: string; message: string }>();
  */
 function makeEventId(runId: string, seq: number): string {
   return `evt-${runId}-${seq}`;
+}
+
+/**
+ * Resolve the run's effective reasoning verbosity by reading
+ * `runs.configurable_json.reasoningVerbosity` (set by callers via
+ * `RunOptions.configurable.reasoningVerbosity`). Falls back to the
+ * host default per `capabilities.md` §`agents.reasoning` ("summary"
+ * with a 512-token cap). Used by the LLM emission path; per-run
+ * I/O is cheap and serializes correctly with the executor's
+ * row-level locking.
+ */
+async function readReasoningVerbosity(
+  runId: string,
+): Promise<'off' | 'summary' | 'full'> {
+  const q = await querier();
+  const res = await q.query<{ configurable_json: Record<string, unknown> | null }>(
+    'SELECT configurable_json FROM runs WHERE run_id = $1',
+    [runId],
+  );
+  return resolveReasoningVerbosity(
+    res.rows[0]?.configurable_json ?? null,
+    REFERENCE_AGENTS_CAPABILITY.reasoning.verbosity,
+  );
 }
 
 async function appendEvent(
@@ -880,6 +936,7 @@ async function executeNode(
         model?: string;
         credentialRef?: string;
         input?: unknown;
+        agentId?: string;
       };
       if (typeof cfg.provider !== 'string' || typeof cfg.model !== 'string') {
         const err = {
@@ -988,6 +1045,38 @@ async function executeNode(
           runId,
         ]);
       });
+      // Phase I.2 — reasoning-event emission per capabilities.md §`agents`
+      // (Phase 1). The host carries the LLM output through a verbosity-
+      // gated `agent.reasoned` and a confidence-bearing `agent.decided`
+      // so downstream consumers (audit, debug bundles, replay) see a
+      // wire-canonical trace even though this reference uses a stub AI
+      // proxy. Verbosity precedence: run.configurable → host default
+      // ("summary") per `resolveReasoningVerbosity`.
+      const llmAgentId = cfg.agentId ?? `agent:${cfg.provider}/${cfg.model}`;
+      const reasoningVerbosity = await readReasoningVerbosity(runId);
+      const reasonedPayload = buildAgentReasonedPayload(
+        { agentId: llmAgentId },
+        result.outputText,
+        { verbosity: reasoningVerbosity, tokenLimit: REFERENCE_AGENTS_CAPABILITY.reasoning.tokenLimit },
+      );
+      if (reasonedPayload !== null) {
+        await appendEvent(runId, 'agent.reasoned', {
+          nodeId: node.id,
+          data: {
+            agentId: llmAgentId,
+            reasoning: reasonedPayload.reasoning,
+            verbosity: reasoningVerbosity,
+          },
+        });
+      }
+      await appendEvent(runId, 'agent.decided', {
+        nodeId: node.id,
+        data: {
+          agentId: llmAgentId,
+          decision: { kind: 'llm-completion', outputLength: result.outputText.length },
+          confidence: 1,
+        },
+      });
       break;
     }
 
@@ -1006,7 +1095,26 @@ async function executeNode(
       // `as Partial<T>` is sufficient — matching the
       // core.approvalGate / core.clarificationGate pattern above
       // and avoiding the banned `as unknown as T` shape.
-      const cfg = (node.config ?? {}) as Partial<McpToolCallConfig>;
+      const cfg = (node.config ?? {}) as Partial<McpToolCallConfig> & { agentId?: string };
+      // Phase I.2 — reasoning-event emission per capabilities.md §`agents`
+      // (Phase 1). `agent.toolCalled` / `agent.toolReturned` pair via
+      // shared `callId` per `run-event-payloads.schema.json`. MCP-1
+      // redaction holds: only the SHA-256 of the argument JSON and the
+      // SHA-256 of the result content appear on the event payload —
+      // raw args + content are never persisted to the event log.
+      const mcpAgentId = cfg.agentId ?? `agent:mcp/${cfg.serverId ?? 'unknown'}/${cfg.toolName ?? 'unknown'}`;
+      const mcpCallId = `mcp-${node.id}-${Date.now().toString(36)}`;
+      const argsJson = JSON.stringify(cfg.arguments ?? {});
+      const argumentsSha256 = createHash('sha256').update(argsJson, 'utf8').digest('hex');
+      await appendEvent(runId, 'agent.toolCalled', {
+        nodeId: node.id,
+        data: {
+          agentId: mcpAgentId,
+          toolName: cfg.toolName ?? '',
+          callId: mcpCallId,
+          argumentsSha256,
+        },
+      });
       try {
         const result = await callMcpTool(cfg, signal);
         const summary = summarizeMcpForEventLog(cfg, result);
@@ -1016,6 +1124,23 @@ async function executeNode(
         // `mcp.invoked` audit event so audit trails can correlate
         // tool calls without the raw payload.
         await appendEvent(runId, 'mcp.invoked', { nodeId: node.id, data: summary });
+        // Pair the earlier `agent.toolCalled` with its `agent.toolReturned`.
+        // SR-1 / MCP-1: the result body itself never appears on the event
+        // — only its SHA + length + success bit.
+        await appendEvent(runId, 'agent.toolReturned', {
+          nodeId: node.id,
+          data: {
+            agentId: mcpAgentId,
+            toolName: cfg.toolName ?? '',
+            callId: mcpCallId,
+            outcome: {
+              resultSha256: summary.resultSha256,
+              resultLength: summary.resultLength,
+              isError: summary.isError,
+              durationMs: summary.durationMs,
+            },
+          },
+        });
         const q = await querier();
         await withTransaction(q, async () => {
           const res = await q.query<{ variables_json: Record<string, unknown> | null }>(
@@ -1050,6 +1175,18 @@ async function executeNode(
         const mcpErr = err instanceof McpClientError
           ? { code: err.code, message: err.message, ...(err.details ? { details: err.details } : {}) }
           : { code: 'node_execution_failed', message: err instanceof Error ? err.message : String(err) };
+        // Pair the earlier `agent.toolCalled` with a terminal `agent.toolReturned { error }`
+        // — `outcome` and `error` are mutually exclusive per the canonical
+        // `agentToolReturned` payload.
+        await appendEvent(runId, 'agent.toolReturned', {
+          nodeId: node.id,
+          data: {
+            agentId: mcpAgentId,
+            toolName: cfg.toolName ?? '',
+            callId: mcpCallId,
+            error: { code: mcpErr.code, message: mcpErr.message },
+          },
+        });
         await appendEvent(runId, 'node.failed', { nodeId: node.id, data: mcpErr });
         runFailureErrors.set(runId, { code: mcpErr.code, message: mcpErr.message });
         endNodeSpan(runId, node.id, 'failed');
@@ -1956,6 +2093,12 @@ function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
   if (OIDC_VALIDATOR !== null) {
     profiles.push('openwop-auth-oidc-user-bearer');
   }
+  // Phase I.7 — only advertised when the operator has wired cert + key
+  // paths and the host is actually terminating TLS. Honesty principle:
+  // a deployment without mTLS material MUST NOT claim this profile.
+  if (MTLS_ENABLED) {
+    profiles.push('openwop-auth-mtls');
+  }
   sendJSON(
     res,
     200,
@@ -2024,6 +2167,20 @@ function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
                   issuer: OIDC_VALIDATOR.issuer,
                   audience: OIDC_VALIDATOR.audience,
                   supportedAlgorithms: [...OIDC_VALIDATOR.supportedAlgorithms] as SupportedAlgorithm[],
+                },
+              }
+            : {}),
+          // Phase I.7 — auth-profiles.md §"openwop-auth-mtls".
+          // Subject-mapping defaults to `cn` (the cert's Common Name
+          // names the transport principal). Production deployers
+          // extend to SAN-based mapping; this reference keeps `cn`
+          // for compatibility with the broadest set of cert tooling.
+          ...(MTLS_ENABLED
+            ? {
+                mtls: {
+                  supported: true,
+                  required: MTLS_REQUIRED,
+                  subjectMapping: 'cn' as const,
                 },
               }
             : {}),
@@ -3733,17 +3890,45 @@ export async function start(): Promise<{ close: () => Promise<void> }> {
   // share the workload safely.
   await recoverOrphans();
 
-  _server = createServer((req, res) => {
+  const requestHandler = (req: IncomingMessage, res: ServerResponse): void => {
     void route(req, res).catch((err: unknown) => {
       const message = err instanceof Error ? err.message : String(err);
       if (!res.headersSent) sendError(res, 500, 'internal', message);
       else res.end();
     });
-  });
+  };
+
+  // Phase I.7 — mTLS termination via node:https when cert + key paths
+  // are configured. `requestCert: true` + `rejectUnauthorized:
+  // MTLS_REQUIRED` is the standard Node TLS posture: clients without a
+  // cert are rejected at the TLS handshake when mTLS is required, or
+  // pass through to the bearer auth layer when optional. The cert's
+  // subject CN is available at `req.socket.getPeerCertificate()`
+  // inside route handlers for principal mapping (left as a hook for
+  // production deployers per the honesty principle — this reference
+  // accepts any cert signed by the configured CA).
+  if (MTLS_ENABLED) {
+    const cert = readFileSync(MTLS_CERT_PATH!, 'utf8');
+    const key = readFileSync(MTLS_KEY_PATH!, 'utf8');
+    const caBundle = MTLS_CA_PATH !== null ? readFileSync(MTLS_CA_PATH, 'utf8') : undefined;
+    _server = createHttpsServer(
+      {
+        cert,
+        key,
+        ...(caBundle !== undefined ? { ca: caBundle } : {}),
+        requestCert: true,
+        rejectUnauthorized: MTLS_REQUIRED,
+      },
+      requestHandler,
+    );
+  } else {
+    _server = createServer(requestHandler);
+  }
 
   await new Promise<void>((resolve) => _server!.listen(PORT, HOST, () => resolve()));
+  const scheme = MTLS_ENABLED ? 'https' : 'http';
   console.log(
-    `[openwop-host-postgres] listening on http://${HOST}:${PORT} (api key: ${API_KEY}, processId: ${PROCESS_ID}, ${workflows.size} fixtures)`,
+    `[openwop-host-postgres] listening on ${scheme}://${HOST}:${PORT} (api key: ${API_KEY}, processId: ${PROCESS_ID}, ${workflows.size} fixtures${MTLS_ENABLED ? `, mtls=${MTLS_REQUIRED ? 'required' : 'optional'}` : ''})`,
   );
 
   // Register signal handlers exactly once per process. Calling `start()`

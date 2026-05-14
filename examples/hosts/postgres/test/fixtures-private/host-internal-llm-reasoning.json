@@ -1,0 +1,28 @@
+{
+  "id": "host-internal-llm-reasoning",
+  "name": "Host-Internal: LLM Reasoning Emission",
+  "version": "1.0",
+  "description": "Host-internal smoke fixture for the Postgres reference host. Exercises core.llm.chat with the stubbed AI proxy so the smoke test can assert canonical agent.reasoned + agent.decided emissions per run-event-payloads.schema.json §agentReasoned / §agentDecided. NOT loaded by the conformance suite — only by the postgres-host test/fixtures-private path via OPENWOP_EXTRA_FIXTURES_DIR.",
+  "nodes": [
+    {
+      "id": "reasoner",
+      "typeId": "core.llm.chat",
+      "name": "Stubbed LLM call",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "provider": "openai",
+        "model": "gpt-4o",
+        "agentId": "agent:host-internal-reasoner",
+        "input": "hello world"
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["host-internal", "reasoning"] },
+  "settings": { "timeout": 15000 }
+}
