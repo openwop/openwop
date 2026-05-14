@@ -59,6 +59,22 @@ The 2026-05-12 architect review framed the remaining gap-closure work as **myndh
 
 Hosts publish which suite version they pass; non-pass on a later suite is **not** a v1 conformance regression.
 
+## v1.2 outlook (projected)
+
+A projection of what would land in a v1.2 minor — each item carries a **gate condition** that determines whether it ships. The list is descriptive, not a commitment: surfaces only ship when their gate condition is met. Items can move to "Withdrawn" if no implementer adoption signal arrives within the RFC comment window.
+
+| Candidate | Gate | Status |
+|---|---|---|
+| **RFC 0012 — Memory compaction profile** | RFC 0012 reaches `Active` after the 7-day additive comment window; at least one reference host implements §A advertisement + §B `memory.compacted` event + §D carry-forward; three conformance scenarios from §Conformance land capability-gated | `Draft` (filed 2026-05-13). The compaction profile extends [RFC 0004](./RFCS/0004-memory-layer.md) §D — host-side memory distillation — preserving the SR-1 secret-redaction invariant across compaction. Live open question: whether §D belongs in this RFC or folds into a clarifying revision of RFC 0004 — see RFC 0012 §Unresolved questions #4. |
+| **WASM Component Model sub-RFC** | First adopter requests `runtime.language: "wasm-component"` packs; manifest enum already reserved in `node-pack-manifest.schema.json`; capability already declared in `capabilities.schema.json` `nodePackRuntimes.wasmComponent` | Reserved. The hand-rolled imports/exports of [RFC 0008 §C](./RFCS/0008-wasm-abi.md) get replaced by WIT-defined interfaces. Loader implementation gated on Wasmtime ≥ 14 (Component Model GA). |
+| **Rust SDK v0.1** | Concrete adopter asks for it OR a non-steward host implementation lands in Rust | `Demand-gated`. The conformance suite is language-agnostic, so a Rust client tests against the same wire contract; the question is whether anyone is writing one. No flip without adopter pull. |
+| **4 audit-gated `core.openwop.*` packs** | External security audit completes per `SECURITY/external-audit-engagement.md`; the `community-openwop-team-demo-1`-style namespace-scoped per-tier key for the steward team is operational | Built + signed in-tree at `registry/v1/packs/core.openwop.{ai,http,mcp,triggers}/-/1.0.0.{tgz,sig,sbom.json,json}`. Publication to `packs.openwop.dev` is the only blocked step. Audit outreach drafts ready at `SECURITY/outreach/external-audit/` for Trail of Bits / NCC Group / Doyensec / Cure53 / Latacora. |
+| **Cross-host SSE replay verification** | `core.subWorkflow` advertised + capability-gated trace-propagation scenario added | Captured in the "Remaining" column of `conformance/coverage.md` §"Observability" — extends `otel-trace-propagation.test.ts` with a cross-host parent → child propagation assertion. ~half-day of work. |
+| **mTLS termination on Postgres reference host** | Operator generates a CA/server/client-cert triple; host advertises `capabilities.auth.mtls` when `OPENWOP_HTTPS_CERT_PATH` is set | Currently every reference host's INTEROP-MATRIX row says "Not claimed" for `openwop-auth-mtls`. The conformance scenario `auth-mtls.test.ts` is opt-in via `OPENWOP_TEST_MTLS=1`. ~1 day to flip Postgres from "Not claimed" to verified end-to-end. |
+| **Multi-region idempotency end-to-end fixture** | Host advertises `capabilities.idempotency.crossRegion: "best-effort"` (or `"strict"`) | Spec is in `idempotency.md` §"Multi-region idempotency (annex)"; existing scenario `multi-region-idempotency.test.ts` covers capability-shape only. ~half-day to add behavior assertion against the documented MUSTs. |
+
+v1.2 ships when 1-2 of these mature; the rest move to the next minor or to `Withdrawn`. No fixed calendar.
+
 ## Post-v1 ecosystem
 
 These are larger initiatives that expand the openwop ecosystem without modifying the v1 contract.

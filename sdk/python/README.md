@@ -14,6 +14,8 @@ This SDK is hand-authored rather than codegen'd from OpenAPI. Same rationale as 
 
 ## Quickstart
 
+> New here? **[`QUICKSTART.md`](./QUICKSTART.md)** is a 5-minute end-to-end walkthrough that boots the in-memory reference host on your laptop and runs a workflow against it. No managed-service setup. The snippet below is the same flow against an arbitrary OpenWOP host.
+
 ```python
 from openwop_client import (
     OpenwopClient,

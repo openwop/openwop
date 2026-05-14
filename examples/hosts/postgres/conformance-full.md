@@ -1,7 +1,7 @@
 # OpenWOP Postgres Reference Host — Production-Profile Conformance Report
 
-> **Snapshot:** 2026-05-12 — Phase H + Phase I close-out.
-> **Status:** First host on `INTEROP-MATRIX.md` advertising `production-profile.md`. Conformance reaches **728/797 (91.3%)** against `@openwop/openwop-conformance` v1.0, up from 610/682 (89.4%) at the 2026-05-11 baseline.
+> **Snapshot:** 2026-05-13 — re-measurement after the Postgres-host CI lockfile fix + SSE Accept-header fix + Phase H/I/G close-out work + 9 stage5 vendor packs since the prior measurement.
+> **Status:** First host on `INTEROP-MATRIX.md` advertising `production-profile.md`. Conformance reaches **781/850 (91.9% total; 95.2% of non-todo; 96.4% of applicable)** against `@openwop/openwop-conformance` v1.1.0 with the conditional-profile env vars set (`OPENWOP_SECONDARY_API_KEY` + `OPENWOP_TENANT2_API_KEY` + `OPENWOP_WEBHOOK_ALLOW_PRIVATE`). The 1 failure is a documented flake (`webhook-signed-delivery.test.ts` — passes in isolation; full-suite timing collision with neighbor tests). Up from 728/797 (91.3%) at the 2026-05-12 baseline: +53 scenarios + +53 passes net of the new Phase H/I capability surfaces landing.
 > **Reproducibility:** every claim below maps to a test path in this host's `test/` directory or to a section in `examples/hosts/postgres/README.md`.
 
 This report is the public-result evidence required by `spec/v1/production-profile.md` §"Compatibility baseline" (MUST publish suite version + command). It also serves as the precondition record cited by the spec's PROVISIONAL → FINAL flip.

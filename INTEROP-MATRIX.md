@@ -22,7 +22,7 @@ Latest `npx vitest run` against each running reference host.
 
 | Host | Passed | Failed | Skipped | Todo | Total | Pass rate (default) |
 |---|---:|---:|---:|---:|---:|---:|
-| Postgres reference | **730** | 1 (parallel-mode cap-saturation residue — see `production-backpressure.test.ts` `--no-file-parallelism` directive; rotates between cap-collateral neighbors depending on run order, not a real host bug) | 38 | 30 | 799 | **91.4%** (measured 2026-05-12 post-Phase-I + subworkflow close-out + production-backpressure cap-collateral cleanup) |
+| Postgres reference | **781** | 1 (`webhook-signed-delivery` — documented flake; passes in isolation; full-suite timing collision with neighbor tests) | 38 | 30 | 850 | **91.9%** total; 96.4% of applicable (measured 2026-05-13 against suite v1.1.0 with `OPENWOP_SECONDARY_API_KEY` + `OPENWOP_TENANT2_API_KEY` + `OPENWOP_WEBHOOK_ALLOW_PRIVATE` to advertise the conditional profiles. Up from 730/799 — +51 scenarios + +51 passes net of Phase H/I capability surfaces + 9 stage5 vendor packs landing) |
 | SQLite reference | 669 | **0** | 32 | 30 | 731 | **91.5%** (Phase A close-out, 2026-05-12) |
 | In-memory reference | — | — | — | — | — | not measured this round |
 | Python reference | **700** | **0** | 58 | 30 | 788 | **100%** of applicable (88.8% total) — post-Phase-C-round-2 close-out, 2026-05-12 |
