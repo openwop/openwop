@@ -12,7 +12,7 @@ Spec-canonical typeIds. Required by most non-trivial workflows. Signed by `openw
 
 | Pack | Purpose |
 |---|---|
-| [`core.openwop.ai`](https://packs.openwop.dev/v1/packs/core.openwop.ai/index.json) | 3 nodes: `core.ai.callPrompt`, `core.ai.callPromptWithTools`, `core.ai.embed`. The bedrock AI-call primitives every workflow consuming `host.aiProviders` uses. |
+| [`core.openwop.ai`](https://packs.openwop.dev/v1/packs/core.openwop.ai/index.json) | 4 nodes: `core.ai.chatCompletion` (free-form chat), `core.ai.structuredOutput` (typed-envelope output), `core.ai.toolCalling` (tool-use loop), `core.openwop.ai.embeddings`. The bedrock AI-call primitives every workflow consuming `host.aiProviders` uses. |
 | [`core.openwop.triggers`](https://packs.openwop.dev/v1/packs/core.openwop.triggers/index.json) | Workflow trigger primitives — webhook, schedule, manual. |
 | [`core.openwop.data`](https://packs.openwop.dev/v1/packs/core.openwop.data/index.json) | Data shaping + structural primitives — pure transforms over workflow state. |
 | [`core.openwop.http`](https://packs.openwop.dev/v1/packs/core.openwop.http/index.json) | Generic HTTP request primitives for hosts that advertise general fetch. |
