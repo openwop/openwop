@@ -18,7 +18,7 @@ The v2 plan proposed a 4-sub-pack decomposition. Actual delivery ended up with *
 | **app-builder** (2) | | |
 | `app-builder.iterate-tasks` | `vendor.myndhyve.app-builder@1.0.0` | Multi-task loop; ports `iterateTasksExecutor.ts`. Drops host-side concerns (progress cards, telemetry, pilot materializer, engine-internal envelope routing). |
 | `app-builder.per-screen` | `vendor.myndhyve.app-builder@1.0.0` | Single-screen; ports `perScreenExecutor.ts`. Shares `buildPerScreenPrompt` + `categorizeFailure` with iterate-tasks (same pack). |
-| **ads-studio** (15 → split across 11 packs) | | |
+| **ads-studio** (15 → split across 13 packs) | | |
 | `ads.brief.extract` + `ads.tracking.link` | `vendor.myndhyve.ads-tools` | Pure-logic, no AI; bundled. |
 | `ads.brief.build` + `ads.variant.plan` + `ads.video.qa` + `ads.winner.synthesize` | `vendor.myndhyve.ads-studio-core` | AI orchestration cohort; bundled per shared coupling. |
 | `ads.platform.specs` | `vendor.myndhyve.ads-platforms` | Pure-data platform-spec registry. |
