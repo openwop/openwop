@@ -18,6 +18,18 @@
  *     scenario exercises real behavior — useful for hosts that want to
  *     claim full coverage in `INTEROP-MATRIX.md`.
  *
+ *   - **Strict-mode opt-out (skip in strict mode too):** set
+ *     `OPENWOP_OPTED_OUT_PROFILES=name1,name2,...` to declare that the
+ *     host operator has deliberately chosen NOT to implement those
+ *     profiles. In strict mode the gate skips them with a "honest
+ *     opt-out" log line instead of failing — minimal hosts that
+ *     advertise only what they implement can still go strict-mode
+ *     green without falsifying capability claims. Conflict check:
+ *     if a profile appears in BOTH `OPENWOP_OPTED_OUT_PROFILES` AND
+ *     the host's discovery `capabilities.auth.profiles[]` (or
+ *     equivalent), the gate logs a loud warning — opt-outs and
+ *     advertisements are mutually exclusive.
+ *
  * Usage:
  *
  *   ```ts
@@ -42,18 +54,45 @@ import { loadEnv } from './env.js';
 
 /**
  * Returns true if the scenario should proceed with assertions (advertised),
- * false if the scenario should `return` early (default-mode skip). In strict
- * mode (`OPENWOP_REQUIRE_BEHAVIOR=true`), throws if not advertised — so the
- * caller never actually receives `false` in that mode.
+ * false if the scenario should `return` early (default-mode skip OR
+ * strict-mode honest opt-out). In strict mode (`OPENWOP_REQUIRE_BEHAVIOR=true`)
+ * with `profileName` NOT in `OPENWOP_OPTED_OUT_PROFILES`, throws — so the
+ * caller never receives `false` in that combination.
+ *
+ * If the host BOTH advertises the profile AND the operator listed it in
+ * the opt-out env var, surface a warning (likely typo) and treat as
+ * advertised (proceed). Advertisement always wins over opt-out: opting
+ * out of a profile you actually implement is meaningless.
  */
 export function behaviorGate(profileName: string, advertised: boolean): boolean {
+  const env = loadEnv();
+  const optedOut = env.optedOutProfiles.has(profileName);
+
+  if (advertised && optedOut) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[${profileName}] both ADVERTISED by the host AND listed in OPENWOP_OPTED_OUT_PROFILES — ` +
+        `opt-out is ignored. Remove from the env var to clear this warning.`,
+    );
+  }
+
   if (advertised) return true;
 
-  const env = loadEnv();
+  if (optedOut) {
+    // Honest opt-out: the operator declared the host does not implement
+    // this profile. Skip in BOTH default and strict mode.
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[${profileName}] honest opt-out (OPENWOP_OPTED_OUT_PROFILES); skipping`,
+    );
+    return false;
+  }
+
   if (env.requireBehavior) {
     expect(
       advertised,
-      `OPENWOP_REQUIRE_BEHAVIOR=true: host MUST advertise the ${profileName} profile for this scenario to run. ` +
+      `OPENWOP_REQUIRE_BEHAVIOR=true: host MUST advertise the ${profileName} profile for this scenario to run, ` +
+        `or declare opt-out via OPENWOP_OPTED_OUT_PROFILES=${profileName}. ` +
         `See conformance/coverage.md §"Capability-gated scenarios".`,
     ).toBe(true);
     // expect.toBe(true) throws; we won't reach here.

@@ -26,6 +26,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { createHash, createPublicKey, verify as cryptoVerify } from 'node:crypto';
 
 const REGISTRY_BASE = 'https://packs.openwop.dev';
 const ENABLED = process.env.OPENWOP_TEST_PUBLIC_REGISTRY === 'true';
@@ -128,4 +129,94 @@ describe('registry-public: spec-canonical pack manifests resolve', () => {
       expect(manifest.version).toBe(version);
     });
   }
+});
+
+describe('registry-public: tarball + signature + Ed25519 verify roundtrip', () => {
+  // core.openwop.examples@1.0.0 is the canonical reference pack for this
+  // check: published since the registry MVP, signed with the
+  // `openwop-registry-root` key over the whole tarball (method='ed25519').
+  // The same recipe applies to any pack at the registry; this scenario
+  // exercises the worst-case full roundtrip so clients have a wire-level
+  // contract for verifying packs before installing them.
+  //
+  // What gets asserted, in order:
+  //   1. Version manifest, tarball, signature, and public key all 200.
+  //   2. SRI integrity in the manifest matches a fresh sha256 of the
+  //      tarball bytes — protects against tarball tampering between
+  //      publish + retrieval.
+  //   3. Detached Ed25519 signature verifies against the public key over
+  //      the bytes the publisher signed (per signing.method).
+  const PACK_NAME = 'core.openwop.examples';
+  const PACK_VERSION = '1.0.0';
+
+  async function getBinary(path: string): Promise<{ status: number; bytes: Buffer }> {
+    const res = await fetch(`${REGISTRY_BASE}${path}`);
+    const ab = await res.arrayBuffer();
+    return { status: res.status, bytes: Buffer.from(ab) };
+  }
+
+  async function getText(path: string): Promise<{ status: number; body: string }> {
+    const res = await fetch(`${REGISTRY_BASE}${path}`);
+    const body = await res.text();
+    return { status: res.status, body };
+  }
+
+  it(`tarball + sig + public key all retrievable, SRI matches, Ed25519 verifies for ${PACK_NAME}@${PACK_VERSION}`, async () => {
+    if (!ENABLED) return;
+
+    // 1. Manifest (JSON).
+    const manifestRes = await get(`/v1/packs/${PACK_NAME}/-/${PACK_VERSION}.json`);
+    expect(manifestRes.status).toBe(200);
+    const manifest = manifestRes.json as {
+      signing?: { method?: string; keyId?: string; publicKeyUrl?: string };
+      integrity?: string;
+    };
+    expect(typeof manifest.signing?.method).toBe('string');
+    expect(typeof manifest.signing?.keyId).toBe('string');
+    expect(typeof manifest.integrity).toBe('string');
+
+    // 2. Tarball.
+    const tarball = await getBinary(`/v1/packs/${PACK_NAME}/-/${PACK_VERSION}.tgz`);
+    expect(tarball.status, 'tarball MUST be retrievable').toBe(200);
+    expect(tarball.bytes.byteLength, 'tarball MUST be non-empty').toBeGreaterThan(0);
+
+    // 3. Detached signature (64-byte raw Ed25519).
+    const sig = await getBinary(`/v1/packs/${PACK_NAME}/-/${PACK_VERSION}.sig`);
+    expect(sig.status, 'signature MUST be retrievable').toBe(200);
+    expect(sig.bytes.byteLength, 'Ed25519 detached signature MUST be 64 bytes').toBe(64);
+
+    // 4. Public key — fetch from the publisher-declared URL when present,
+    //    else fall back to the canonical `/keys/<keyId>.pub` shape.
+    const keyUrl = manifest.signing!.publicKeyUrl ?? `/keys/${manifest.signing!.keyId}.pub`;
+    const keyRes = await getText(keyUrl);
+    expect(keyRes.status, `public key MUST be retrievable at ${keyUrl}`).toBe(200);
+    const publicKey = createPublicKey(keyRes.body);
+
+    // 5. SRI integrity check: `sha256-<base64>=` MUST match a fresh
+    //    sha256 of the tarball bytes per registry-operations.md.
+    expect(manifest.integrity).toMatch(/^sha256-[A-Za-z0-9+/]+=*$/);
+    const expectedSri = `sha256-${createHash('sha256').update(tarball.bytes).digest('base64')}`;
+    expect(expectedSri, 'SRI integrity in manifest MUST match a fresh sha256 of the tarball').toBe(
+      manifest.integrity,
+    );
+
+    // 6. Ed25519 verification. Two canonical signing conventions per
+    //    `node-packs.md` §"Signing recipe": `method=ed25519` signs the
+    //    whole tarball; `method=manual` signs the pack.json bytes inside
+    //    the tarball. core.openwop.examples uses `ed25519`.
+    const method = manifest.signing!.method;
+    expect(['ed25519', 'manual']).toContain(method);
+
+    // For `ed25519` the signed bytes are the tarball; for `manual` the
+    // signed bytes are pack.json extracted from the tarball. This
+    // scenario picks `core.openwop.examples` specifically because it's
+    // `method=ed25519` — the simpler path. Extending to `manual` would
+    // require the tarball extractor from registry/scripts/verify-
+    // signatures.mjs which is intentionally out of scope here.
+    if (method !== 'ed25519') return;
+
+    const verified = cryptoVerify(null, tarball.bytes, publicKey, sig.bytes);
+    expect(verified, `Ed25519 signature over ${PACK_NAME}@${PACK_VERSION}.tgz MUST verify against ${manifest.signing!.keyId}`)
+      .toBe(true);
+  });
 });

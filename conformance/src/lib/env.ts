@@ -16,6 +16,15 @@
  *     Default is false — scenarios skip with a warning so default conformance
  *     runs cover what the host has implemented. See `lib/behavior-gate.ts`
  *     and `conformance/coverage.md` §"Capability-gated scenarios".
+ *
+ *   OPENWOP_OPTED_OUT_PROFILES — comma-separated profile names the host
+ *     operator has DELIBERATELY chosen not to implement. In strict mode
+ *     these scenarios skip (logged as "honest opt-out") rather than
+ *     failing — distinguishes "host doesn't claim this surface" (good)
+ *     from "host claims but doesn't deliver" (bug). Lets honest minimal
+ *     hosts go strict-mode green without falsifying capability claims.
+ *     Example for SQLite:
+ *       OPENWOP_OPTED_OUT_PROFILES=openwop-production,openwop-auth-mtls
  */
 
 export interface ConformanceEnv {
@@ -24,6 +33,15 @@ export interface ConformanceEnv {
   readonly implementationName: string;
   readonly implementationVersion: string;
   readonly requireBehavior: boolean;
+  /**
+   * Profiles the host operator has declared the host does NOT claim. Set
+   * via `OPENWOP_OPTED_OUT_PROFILES=name1,name2`. In strict mode, the
+   * behavior-gate honors this set as PASS-by-opt-out rather than failing
+   * the scenario. Never include a profile the host actually advertises —
+   * that's a typo, not an opt-out, and `behaviorGate` will surface a
+   * warning if it detects the conflict.
+   */
+  readonly optedOutProfiles: ReadonlySet<string>;
 }
 
 let cached: ConformanceEnv | null = null;
@@ -48,12 +66,21 @@ export function loadEnv(): ConformanceEnv {
   // Strip trailing slash so URL composition is consistent.
   const normalizedBase = baseUrl.replace(/\/$/, '');
 
+  const optedOutRaw = process.env.OPENWOP_OPTED_OUT_PROFILES?.trim() ?? '';
+  const optedOutProfiles = new Set(
+    optedOutRaw
+      .split(',')
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0),
+  );
+
   cached = {
     baseUrl: normalizedBase,
     apiKey,
     implementationName: process.env.OPENWOP_IMPLEMENTATION_NAME?.trim() ?? 'unknown',
     implementationVersion: process.env.OPENWOP_IMPLEMENTATION_VERSION?.trim() ?? 'unknown',
     requireBehavior: process.env.OPENWOP_REQUIRE_BEHAVIOR === 'true',
+    optedOutProfiles,
   };
   return cached;
 }

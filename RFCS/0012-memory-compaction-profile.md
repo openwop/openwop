@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0012 |
 | **Title** | Memory Compaction Profile |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-13 |
-| **Updated** | 2026-05-13 |
+| **Updated** | 2026-05-13 (Draft → Active; 7-day public comment window opens, closes 2026-05-20) |
 | **Affects** | `spec/v1/capabilities.md` (new optional `capabilities.memory.compaction` block), `spec/v1/observability.md` (new optional event type `memory.compacted`), `SECURITY/invariants.yaml` (SR-1 carry-forward through compaction outputs), `schemas/memory-entry.schema.json` (no shape change; new tag-prefix convention) |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
