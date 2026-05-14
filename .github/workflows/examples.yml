@@ -24,14 +24,30 @@ on:
       - '.github/workflows/examples.yml'
       - 'conformance/fixtures/**'
       - 'scripts/check-example-pack-refs.mjs'
+      - 'scripts/check-doc-pack-claims.mjs'
       - 'registry/v1/**'
+      - 'docs/**'
+      - 'spec/**'
+      - 'RFCS/**'
+      - 'packs/**/README.md'
+      - 'README.md'
+      - 'ROADMAP.md'
+      - 'CHANGELOG.md'
   pull_request:
     paths:
       - 'examples/**'
       - '.github/workflows/examples.yml'
       - 'conformance/fixtures/**'
       - 'scripts/check-example-pack-refs.mjs'
+      - 'scripts/check-doc-pack-claims.mjs'
       - 'registry/v1/**'
+      - 'docs/**'
+      - 'spec/**'
+      - 'RFCS/**'
+      - 'packs/**/README.md'
+      - 'README.md'
+      - 'ROADMAP.md'
+      - 'CHANGELOG.md'
 
 jobs:
   validate-workflow-defs:
@@ -49,6 +65,11 @@ jobs:
           node-version: '20'
       - name: Validate metadata.packs[] references resolve
         run: node scripts/check-example-pack-refs.mjs --offline registry/v1/index.json
+      - name: Validate doc-prose pack claims
+        # Catches registry-wide pack-count drift in prose (catalog/spec/RFC/
+        # README/ROADMAP) and "future \`<pack>\`" qualifiers for shipped packs.
+        # Complements the per-workflow validate-workflow-defs check above.
+        run: node scripts/check-doc-pack-claims.mjs --offline registry/v1/index.json
 
   examples:
     name: examples (${{ matrix.example.name }})

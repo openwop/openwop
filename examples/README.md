@@ -85,7 +85,10 @@ Pipelines compose downstream of each other:
 
 See [`docs/PACK-CATALOG.md`](../docs/PACK-CATALOG.md) for the full pack inventory grouped by domain.
 
-**Drift gate:** `scripts/check-example-pack-refs.mjs` validates that every `metadata.packs[]` entry in a workflow-definition file resolves to a published, non-yanked version. The gate runs in CI (`.github/workflows/examples.yml` → `validate-workflow-defs` job) against the in-tree `registry/v1/index.json`. Run it locally with `node scripts/check-example-pack-refs.mjs` (live registry) or `node scripts/check-example-pack-refs.mjs --offline registry/v1/index.json` (in-tree).
+**Drift gates** (both in `.github/workflows/examples.yml` → `validate-workflow-defs` job, both run against the in-tree `registry/v1/index.json`):
+
+1. `scripts/check-example-pack-refs.mjs` — validates that every `metadata.packs[]` entry in a workflow-definition file resolves to a published, non-yanked version; that every node typeId is shipped by a declared pack; and that every `node.config` key is declared in the pack's configSchema. Run locally: `node scripts/check-example-pack-refs.mjs --offline registry/v1/index.json`.
+2. `scripts/check-doc-pack-claims.mjs` — validates registry-wide pack-count claims in prose (catalog / spec / RFC / README / ROADMAP / pack READMEs) and flags "future `<pack-name>`" qualifiers for packs that already ship. Run locally: `node scripts/check-doc-pack-claims.mjs --offline registry/v1/index.json`.
 
 ## See also
 
