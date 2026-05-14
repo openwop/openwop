@@ -38,7 +38,7 @@ This pack inlines:
 
 Trust-guardrail results are delegated to the caller (MyndHyve's TrustGuardrailService stays in-tree; this pack accepts its output). This keeps the pack at ~300 LOC vs. inlining the 1230 LOC TrustGuardrailService.
 
-Asset-format checks defer to a future `vendor.myndhyve.ads-creative-validate` pack — they need richer platform spec data.
+Asset-format checks defer to the [`vendor.myndhyve.ads-creative-validate`](../vendor.myndhyve.ads-creative-validate/) pack — it accepts caller-supplied `placementSpecs` from `ads-platforms` and runs text-rule + asset-format + text-length checks together.
 
 ## License
 
