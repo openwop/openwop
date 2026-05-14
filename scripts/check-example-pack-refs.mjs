@@ -1,8 +1,16 @@
 #!/usr/bin/env node
 /**
- * Validates that every `metadata.packs[]` entry in `examples/* /*.json`
- * workflow-definition files resolves to a published, non-yanked pack version
- * at the configured registry (default: https://packs.openwop.dev).
+ * Validates `examples/* /*.json` workflow-definition files against the
+ * registry in three passes:
+ *
+ *   1. metadata.packs[] resolution — each <name>@<version> exists +
+ *      is not yanked at the registry.
+ *   2. typeId resolution — each node's typeId is shipped by one of
+ *      the declared packs (per-version manifest's nodes[].typeId).
+ *   3. config-key validation — each key in a node's config object is
+ *      declared in the pack's configSchema (when the schema has
+ *      additionalProperties: false). Catches typoed field names that
+ *      otherwise silently fall back to pack defaults.
  *
  *   node scripts/check-example-pack-refs.mjs
  *   node scripts/check-example-pack-refs.mjs --registry https://packs.openwop.dev
@@ -12,14 +20,56 @@
  * `<name>@<version>` strings. Files without that shape are silently skipped
  * (they are runnable examples with package.json, not workflow definitions).
  *
+ * Offline mode reads schemas from the in-tree tarballs at
+ * `registry/v1/packs/{name}/-/{version}.tgz`. Live mode fetches them from
+ * the CDN's derived schema mirror at /v1/packs/{name}/{version}/<file>.
+ * Live-mode warnings for missing schemas are expected (only ~12 schemas
+ * are CDN-mirrored as of 2026-05-13; the rest live only in tarballs).
+ * The CI gate runs in offline mode where coverage is complete.
+ *
  * Exit codes:
- *   0  all references resolve to published, non-yanked versions
- *   1  one or more references unresolved / yanked / wrong version
+ *   0  all three passes clean
+ *   1  one or more references unresolved / yanked / wrong typeId / unknown config key
  *   2  registry unreachable + no --offline fallback supplied
  */
 
 import { readdirSync, readFileSync, statSync, existsSync } from 'node:fs';
 import { join, basename } from 'node:path';
+import { gunzipSync } from 'node:zlib';
+
+/**
+ * Extract a single file's bytes from a gzipped USTAR tarball. Returns
+ * null if the file isn't present. Pattern lifted from
+ * registry/scripts/generate-sbom.mjs's enumerateTarball() — same USTAR
+ * conventions (`./` prefix stripping, 512-byte blocks, octal size).
+ */
+function readTarballFile(tarballBytes, wantPath) {
+  const decompressed = gunzipSync(tarballBytes);
+  const BLOCK = 512;
+  for (let off = 0; off + BLOCK <= decompressed.length; ) {
+    const nameBuf = decompressed.subarray(off, off + 100);
+    const nameEnd = nameBuf.indexOf(0);
+    const rawName = nameBuf.subarray(0, nameEnd < 0 ? 100 : nameEnd).toString('utf8');
+    if (rawName === '') break;
+    const name = rawName.replace(/^\.\//, '');
+    const sizeStr = decompressed
+      .subarray(off + 124, off + 136)
+      .toString('ascii')
+      .replace(/\0/g, '')
+      .trim();
+    const size = parseInt(sizeStr, 8) || 0;
+    const typeflag = decompressed[off + 156];
+    if (typeflag === 0x78 || typeflag === 0x4c) {
+      throw new Error(`USTAR extended header (typeflag=0x${typeflag.toString(16)}) not supported`);
+    }
+    const isRegular = typeflag === 0x30 || typeflag === 0;
+    if (isRegular && name === wantPath) {
+      return decompressed.subarray(off + BLOCK, off + BLOCK + size);
+    }
+    off += BLOCK + Math.ceil(size / BLOCK) * BLOCK;
+  }
+  return null;
+}
 
 const DEFAULT_REGISTRY = 'https://packs.openwop.dev';
 const args = process.argv.slice(2);
@@ -102,6 +152,37 @@ async function loadPackVersion(name, version) {
   return res.json();
 }
 
+/**
+ * Fetch a schema file referenced by configSchemaRef / inputSchemaRef
+ * (e.g., "schemas/chat-completion.config.json"). In offline mode the
+ * source is the in-tree tarball at registry/v1/packs/{name}/-/{version}.tgz;
+ * in live mode it's the derived mirror at
+ *   /v1/packs/{name}/{version}/<schema-basename>
+ */
+async function loadPackSchema(name, version, schemaRef) {
+  if (offlineIndex) {
+    const dir = offlineIndex.replace(/\/v1\/index\.json$/, '');
+    const tarballPath = `${dir}/v1/packs/${name}/-/${version}.tgz`;
+    if (!existsSync(tarballPath)) return null;
+    try {
+      const bytes = readTarballFile(readFileSync(tarballPath), schemaRef);
+      if (!bytes) return null;
+      return JSON.parse(bytes.toString('utf8'));
+    } catch (e) {
+      return null;
+    }
+  }
+  const filename = schemaRef.replace(/^schemas\//, '');
+  const url = `${registry.replace(/\/$/, '')}/v1/packs/${name}/${version}/${filename}`;
+  try {
+    const res = await fetch(url, { redirect: 'follow' });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
 async function buildPackResolver(topIndex) {
   const known = new Set((topIndex.packs ?? []).map((p) => p.name));
   const detailCache = new Map();
@@ -136,7 +217,27 @@ async function buildPackResolver(topIndex) {
       }
       return manifestCache.get(key);
     },
+    async nodeDefOf(name, wantVersion, typeId) {
+      const manifest = await loadPackVersion(name, wantVersion);
+      return manifest?.nodes?.find((n) => n.typeId === typeId) ?? null;
+    },
+    async schemaOf(name, wantVersion, schemaRef) {
+      return loadPackSchema(name, wantVersion, schemaRef);
+    },
   };
+}
+
+/**
+ * Return the set of top-level `properties` keys declared by a JSON Schema,
+ * or null if the schema doesn't declare a properties object (e.g., uses
+ * oneOf/anyOf only — too complex for the key-check pass).
+ */
+function declaredConfigKeys(schema) {
+  if (!schema || typeof schema !== 'object') return null;
+  if (schema.properties && typeof schema.properties === 'object') {
+    return new Set(Object.keys(schema.properties));
+  }
+  return null;
 }
 
 function extractDeclaredPacks(parsed) {
@@ -236,6 +337,44 @@ async function main() {
         errorCount += 1;
       }
     }
+
+    // Pass 3 — config-key validation: every key in node.config MUST be declared
+    // in the pack's configSchema.properties. Doesn't validate types or recurse;
+    // catches typoed field names (e.g., "temperture" instead of "temperature")
+    // which silently fall back to pack defaults.
+    for (const node of parsed.nodes ?? []) {
+      if (!node.config || typeof node.config !== 'object') continue;
+      const pack = typeIdToPack.get(node.typeId);
+      if (!pack) continue; // already reported as TYPEID_UNRESOLVED
+      const def = await resolver.nodeDefOf(pack.name, pack.version, node.typeId);
+      if (!def?.configSchemaRef) continue; // pack declares no config schema
+      const schema = await resolver.schemaOf(pack.name, pack.version, def.configSchemaRef);
+      if (!schema) {
+        report.push({
+          file,
+          kind: 'WARN',
+          spec: `${node.id}:${node.typeId}`,
+          reason: `config schema ${def.configSchemaRef} not fetchable — skipping key validation`,
+        });
+        warnCount += 1;
+        continue;
+      }
+      const declared = declaredConfigKeys(schema);
+      if (!declared) continue; // schema uses oneOf/etc — too complex for key-check
+      if (schema.additionalProperties !== false) continue; // open schemas don't drift on typos
+      for (const key of Object.keys(node.config)) {
+        if (!declared.has(key)) {
+          const suggest = Array.from(declared).join(', ');
+          report.push({
+            file,
+            kind: 'CONFIG_KEY',
+            spec: `${node.id}:${node.typeId}.${key}`,
+            reason: `config key not declared in ${def.configSchemaRef}; allowed: ${suggest || '(none)'}`,
+          });
+          errorCount += 1;
+        }
+      }
+    }
   }
 
   console.log(
@@ -243,7 +382,9 @@ async function main() {
   );
 
   if (report.length === 0) {
-    console.log('OK: every metadata.packs[] reference resolves to a non-yanked, non-deprecated published version, and every node typeId is shipped by a declared pack.');
+    console.log(
+      'OK: every metadata.packs[] reference resolves to a non-yanked, non-deprecated published version; every node typeId is shipped by a declared pack; every node.config key is declared in the pack\'s configSchema.',
+    );
     return 0;
   }
 
