@@ -23,11 +23,15 @@ on:
       - 'examples/**'
       - '.github/workflows/examples.yml'
       - 'conformance/fixtures/**'
+      - 'scripts/check-example-pack-refs.mjs'
+      - 'registry/v1/**'
   pull_request:
     paths:
       - 'examples/**'
       - '.github/workflows/examples.yml'
       - 'conformance/fixtures/**'
+      - 'scripts/check-example-pack-refs.mjs'
+      - 'registry/v1/**'
 
 jobs:
   validate-workflow-defs:
