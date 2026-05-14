@@ -89,9 +89,23 @@ async function loadPackIndex(name) {
   return res.json();
 }
 
+async function loadPackVersion(name, version) {
+  if (offlineIndex) {
+    const dir = offlineIndex.replace(/\/v1\/index\.json$/, '');
+    const path = `${dir}/v1/packs/${name}/-/${version}.json`;
+    if (!existsSync(path)) return null;
+    return JSON.parse(readFileSync(path, 'utf8'));
+  }
+  const url = `${registry.replace(/\/$/, '')}/v1/packs/${name}/-/${version}.json`;
+  const res = await fetch(url, { redirect: 'follow' });
+  if (!res.ok) return null;
+  return res.json();
+}
+
 async function buildPackResolver(topIndex) {
   const known = new Set((topIndex.packs ?? []).map((p) => p.name));
   const detailCache = new Map();
+  const manifestCache = new Map();
   return {
     async resolve(name, wantVersion) {
       if (!known.has(name)) return { ok: false, reason: 'pack name not found in registry' };
@@ -113,7 +127,27 @@ async function buildPackResolver(topIndex) {
       }
       return { ok: true };
     },
+    async typeIdsOf(name, wantVersion) {
+      const key = `${name}@${wantVersion}`;
+      if (!manifestCache.has(key)) {
+        const manifest = await loadPackVersion(name, wantVersion);
+        const typeIds = manifest?.nodes?.map((n) => n.typeId).filter(Boolean) ?? null;
+        manifestCache.set(key, typeIds);
+      }
+      return manifestCache.get(key);
+    },
   };
+}
+
+function extractDeclaredPacks(parsed) {
+  return (parsed.metadata?.packs ?? []).map((spec) => {
+    const at = spec.indexOf('@');
+    return { spec, name: spec.slice(0, at), version: spec.slice(at + 1) };
+  });
+}
+
+function extractNodeTypeIds(parsed) {
+  return (parsed.nodes ?? []).map((n) => ({ nodeId: n.id, typeId: n.typeId })).filter((n) => n.typeId);
 }
 
 async function main() {
@@ -143,17 +177,63 @@ async function main() {
     if (!isWorkflowDefinition(parsed)) continue;
     workflowCount += 1;
 
-    for (const spec of parsed.metadata.packs) {
-      const at = spec.indexOf('@');
-      const name = spec.slice(0, at);
-      const wantVersion = spec.slice(at + 1);
-      const result = await resolver.resolve(name, wantVersion);
+    const declared = extractDeclaredPacks(parsed);
+
+    // Pass 1 — pack@version resolution + cache the per-version manifests
+    const resolvedPacks = [];
+    for (const pack of declared) {
+      const result = await resolver.resolve(pack.name, pack.version);
       if (!result.ok) {
-        report.push({ file, kind: 'UNRESOLVED', spec, reason: result.reason });
+        report.push({ file, kind: 'UNRESOLVED', spec: pack.spec, reason: result.reason });
         errorCount += 1;
-      } else if (result.warn) {
-        report.push({ file, kind: 'WARN', spec, reason: result.warn });
+        continue;
+      }
+      if (result.warn) {
+        report.push({ file, kind: 'WARN', spec: pack.spec, reason: result.warn });
         warnCount += 1;
+      }
+      resolvedPacks.push(pack);
+    }
+
+    // Pass 2 — typeId resolution: each node's typeId MUST exist in one of the
+    // declared (and resolved) packs.
+    const typeIdToPack = new Map();
+    for (const pack of resolvedPacks) {
+      const typeIds = await resolver.typeIdsOf(pack.name, pack.version);
+      if (!typeIds) {
+        report.push({
+          file,
+          kind: 'MANIFEST_UNREACHABLE',
+          spec: pack.spec,
+          reason: 'per-version manifest unreachable — cannot verify typeIds',
+        });
+        errorCount += 1;
+        continue;
+      }
+      for (const tid of typeIds) {
+        if (typeIdToPack.has(tid)) {
+          // typeId collision across declared packs — surface as warning
+          report.push({
+            file,
+            kind: 'WARN',
+            spec: tid,
+            reason: `typeId shipped by both ${typeIdToPack.get(tid).spec} and ${pack.spec}`,
+          });
+          warnCount += 1;
+        }
+        typeIdToPack.set(tid, pack);
+      }
+    }
+
+    for (const node of extractNodeTypeIds(parsed)) {
+      if (!typeIdToPack.has(node.typeId)) {
+        report.push({
+          file,
+          kind: 'TYPEID_UNRESOLVED',
+          spec: `${node.nodeId}:${node.typeId}`,
+          reason: `typeId not shipped by any declared pack — add the providing pack to metadata.packs[] or fix the typeId`,
+        });
+        errorCount += 1;
       }
     }
   }
@@ -163,7 +243,7 @@ async function main() {
   );
 
   if (report.length === 0) {
-    console.log('OK: every metadata.packs[] reference resolves to a non-yanked, non-deprecated published version.');
+    console.log('OK: every metadata.packs[] reference resolves to a non-yanked, non-deprecated published version, and every node typeId is shipped by a declared pack.');
     return 0;
   }
 
