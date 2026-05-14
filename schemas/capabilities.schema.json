@@ -331,6 +331,52 @@
       },
       "additionalProperties": true
     },
+    "memory": {
+      "type": "object",
+      "description": "MemoryAdapter capability block per RFC 0004 + the optional compaction profile per RFC 0012. Hosts that don't wire any memory surface omit the entire block.",
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "When `true`, host implements the four-operation MemoryAdapter contract (`list`, `get`, `put`, `delete`) per RFC 0004 §A."
+        },
+        "maxEntrySizeBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Upper bound on `MemoryEntry.content` size. Hosts SHOULD reject `put` exceeding this with `validation_error`."
+        },
+        "ttlSupported": {
+          "type": "boolean",
+          "description": "When `true`, host honors `expiresAt` per RFC 0004 §E."
+        },
+        "compaction": {
+          "type": "object",
+          "description": "RFC 0012 Memory Compaction Profile (Active). Hosts that distill many short-lived MemoryEntry rows into fewer long-lived ones MAY advertise here; advertising implies the SR-1 carry-forward invariant (`SECURITY/invariants.yaml` row `memory-compaction-sr-1-carry-forward`).",
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "When `true`, host performs compaction over `longTerm` memory and emits the `memory.compacted` event per `observability.md` §Canonical event vocabulary."
+            },
+            "trigger": {
+              "type": "string",
+              "enum": ["host-managed", "client-requested", "both"],
+              "description": "Required when `supported: true`. `host-managed` runs on a host-internal schedule clients do not control. `client-requested` and `both` are reserved enum values; v1.x normates only `host-managed`."
+            },
+            "maxInputEntries": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Informational ceiling on how many source entries one compaction call collapses. Not wire-enforced."
+            },
+            "maxOutputBytes": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Informational ceiling on the distilled entry size. SHOULD be ≤ `memory.maxEntrySizeBytes`."
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": true
+    },
     "conversationPrimitive": {
       "type": "boolean",
       "description": "Multi-Agent Shift Phase 4. When `true`, host advertises that it implements the `core.conversationGate` typeId AND honors the `conversation.start` / `conversation.exchange` / `conversation.close` suspend variants. Hosts that don't claim this fall back to `clarification.requested` interrupts for multi-turn user interjections."

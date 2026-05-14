@@ -437,6 +437,31 @@ Distinct from the umbrella `agents.memoryBackends: string[]` array — this bloc
 - `maxEntrySizeBytes` — upper bound on `MemoryEntry.content` size. Hosts SHOULD reject `put` requests exceeding this with `validation_error`.
 - `ttlSupported` — when `true`, host honors `expiresAt` per RFC 0004 §E.
 
+#### `memory.compaction` (RFC 0012, `Active`)
+
+Optional sub-block. Hosts that distill many short-lived `MemoryEntry` rows into fewer long-lived ones MAY advertise it; hosts that don't are assumed not to compact (clients MUST NOT infer compaction from entry counts).
+
+```json
+"memory": {
+  "supported": true,
+  "maxEntrySizeBytes": 65536,
+  "ttlSupported": true,
+  "compaction": {
+    "supported": true,
+    "trigger": "host-managed",
+    "maxInputEntries": 1000,
+    "maxOutputBytes": 65536
+  }
+}
+```
+
+- `supported` (boolean, REQUIRED when the sub-block is present) — when `true`, host performs compaction over `longTerm` memory and emits the `memory.compacted` event per `observability.md` §"Canonical event vocabulary".
+- `trigger` (closed enum `"host-managed" | "client-requested" | "both"`, REQUIRED when `supported: true`) — `host-managed` runs on a host-internal schedule clients do not control. `client-requested` and `both` are reserved enum values; v1.x normates only `host-managed`.
+- `maxInputEntries` (integer, OPTIONAL) — informational ceiling on how many source entries one compaction collapses. Not wire-enforced.
+- `maxOutputBytes` (integer, OPTIONAL) — informational ceiling on the distilled entry size. SHOULD be `≤ memory.maxEntrySizeBytes`.
+
+**SR-1 carry-forward (normative).** Hosts advertising `memory.compaction.supported: true` MUST route compacted entry content through the same BYOK redaction harness applied to a fresh `put`. Per RFC 0012 §D, the fact that source entries were SR-1-compliant at original `put` time is NOT evidence to skip redaction on derived content — summarization models can introduce secret-shaped substrings not present in any source. See `SECURITY/invariants.yaml` row `memory-compaction-sr-1-carry-forward`.
+
 ### `runs.pauseResume` (Track 13)
 
 ```json

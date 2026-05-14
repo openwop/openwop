@@ -109,7 +109,8 @@
         "runOrchestrator.decided",
         "conversation.opened",
         "conversation.exchanged",
-        "conversation.closed"
+        "conversation.closed",
+        "memory.compacted"
       ]
     }
   }

@@ -607,6 +607,27 @@ invariants:
       for the placeholder substitution at write time; the host MUST
       reject content over `maxEntrySizeBytes` to bound exposure.
 
+  - id: memory-compaction-sr-1-carry-forward
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/memory-compaction-sr1-carry-forward.test.ts
+    note: |
+      RFC 0012 §D (Active 2026-05-13). SR-1 applies transitively
+      through compaction: when a host advertising
+      `capabilities.memory.compaction.supported: true` produces a
+      compacted MemoryEntry whose content is derived from one or more
+      source entries, the host MUST route the derived content through
+      the same BYOK redaction harness it would apply to a fresh
+      `put`. The fact that source entries were SR-1-compliant at
+      original `put` time is NOT evidence to skip redaction on
+      derived content — summarization models can introduce secret-
+      shaped substrings (hallucinated tokens, format-leaks from
+      in-context examples) not present in any source. The redaction
+      harness is the only protocol-level defense at the compaction
+      boundary.
+
   # ===== Phase I auth-rotation token redaction =====
 
   - id: auth-key-rotation-no-canary-echo

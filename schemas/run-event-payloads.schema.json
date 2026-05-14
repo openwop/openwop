@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v1/run-event-payloads.schema.json",
   "title": "RunEventPayloads",
-  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n47 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
+  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n48 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
   "type": "object",
   "$defs": {
     "_typeIndex": {
@@ -56,7 +56,8 @@
         "runOrchestrator.decided":   { "$ref": "#/$defs/runOrchestratorDecided" },
         "conversation.opened":       { "$ref": "#/$defs/conversationOpened" },
         "conversation.exchanged":    { "$ref": "#/$defs/conversationExchanged" },
-        "conversation.closed":       { "$ref": "#/$defs/conversationClosed" }
+        "conversation.closed":       { "$ref": "#/$defs/conversationClosed" },
+        "memory.compacted":          { "$ref": "#/$defs/memoryCompacted" }
       }
     },
 
@@ -656,6 +657,21 @@
         "conversationId": { "type": "string", "minLength": 1, "maxLength": 256 },
         "reason":         { "type": "string", "description": "Optional close reason (e.g., 'goal-reached', 'max-turns', 'user-cancelled')." },
         "turnCount":      { "type": "integer", "minimum": 0, "description": "Total turns completed in this conversation (number of `conversation.exchanged` events emitted)." }
+      },
+      "additionalProperties": true
+    },
+
+    "memoryCompacted": {
+      "type": "object",
+      "description": "RFC 0012 (Memory Compaction Profile). Emitted by a host advertising `capabilities.memory.compaction.supported: true` each time a compaction run completes, regardless of trigger. `outputId` MUST be readable via `MemoryAdapter.get(memoryRef, outputId)` until normal TTL eviction. SR-1 carry-forward (RFC 0012 §D) applies: the host MUST route compacted entry content through the same BYOK redaction harness applied to a fresh `put`.",
+      "required": ["memoryRef", "outputId", "sourceCount", "trigger", "byteSize"],
+      "properties": {
+        "memoryRef":   { "type": "string", "minLength": 1, "description": "Opaque MemoryAdapter handle per RFC 0004 §C. Bounds compaction to a single memory scope." },
+        "outputId":    { "type": "string", "minLength": 1, "description": "Id of the new MemoryEntry created by compaction." },
+        "sourceIds":   { "type": "array", "items": { "type": "string", "minLength": 1 }, "description": "Ids of entries collapsed into outputId. Hosts MAY omit when sourceCount > 100; the `compacted-from:<runId>` tag convention (RFC 0012 §C) becomes the authoritative provenance signal. When present, MUST be exhaustive within the array (no 'and N more' semantics)." },
+        "sourceCount": { "type": "integer", "minimum": 1, "description": "Total source entries collapsed, including any not enumerated in `sourceIds`." },
+        "trigger":     { "type": "string", "enum": ["host-managed", "client-requested", "both"], "description": "Matches `capabilities.memory.compaction.trigger`; indicates which trigger path drove this run. v1.x normates only `host-managed`." },
+        "byteSize":    { "type": "integer", "minimum": 0, "description": "Byte size of the resulting MemoryEntry.content." }
       },
       "additionalProperties": true
     }
