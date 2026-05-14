@@ -85,6 +85,8 @@ Pipelines compose downstream of each other:
 
 See [`docs/PACK-CATALOG.md`](../docs/PACK-CATALOG.md) for the full pack inventory grouped by domain.
 
+**Drift gate:** `scripts/check-example-pack-refs.mjs` validates that every `metadata.packs[]` entry in a workflow-definition file resolves to a published, non-yanked version. The gate runs in CI (`.github/workflows/examples.yml` → `validate-workflow-defs` job) against the in-tree `registry/v1/index.json`. Run it locally with `node scripts/check-example-pack-refs.mjs` (live registry) or `node scripts/check-example-pack-refs.mjs --offline registry/v1/index.json` (in-tree).
+
 ## See also
 
 - [`hosts/in-memory/`](./hosts/in-memory/) — reference host that powers most examples.

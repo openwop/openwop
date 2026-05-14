@@ -30,6 +30,22 @@ on:
       - 'conformance/fixtures/**'
 
 jobs:
+  validate-workflow-defs:
+    name: Validate workflow-definition pack references
+    runs-on: ubuntu-latest
+    # Workflow-definition examples (market-intel-pipeline, ads-publish-pipeline,
+    # rag-grounded-chat) declare their pack dependencies in metadata.packs[].
+    # This gate catches drift if a referenced pack is yanked or its version is
+    # no longer published. Uses the in-tree registry so the check runs against
+    # what the PR claims is publishable, not what's currently CDN-cached.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Validate metadata.packs[] references resolve
+        run: node scripts/check-example-pack-refs.mjs --offline registry/v1/index.json
+
   examples:
     name: examples (${{ matrix.example.name }})
     runs-on: ubuntu-latest
