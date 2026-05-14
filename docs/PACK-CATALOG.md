@@ -113,12 +113,12 @@ The auto-play screen-generation workflow lifted from MyndHyve's App Builder canv
 | Use case | Compose these packs |
 |---|---|
 | **End-to-end VoC research → ad copy** | `market-intel-query-builder` → `market-intel-discovery` → (host fetch) → `market-intel-content-extraction` → `market-intel-voc` → `market-intel-opportunity-scoring` → `market-intel-ad-angles` → `market-intel-audience-targeting` → `ads-copy-generate`. See [`examples/market-intel-pipeline/`](../examples/market-intel-pipeline/). |
-| **Publish a paid-ads campaign to Meta** | `ads-copy-generate` (copy) → `ads-image-generate` (creative) → `ads-creative-validate` → `ads-publish-meta` |
-| **Same, multi-platform** | Above + `ads-publish-google` + `ads-publish-tiktok` |
+| **Publish a paid-ads campaign to Meta** | `ads-brief-build` → `ads-variant-plan` → `ads-platforms` (specs) → `ads-copy-generate` → `ads-image-generate` → `ads-creative-validate` → `ads-tools` (tracking links) → `ads-export` → `ads-publish-meta`. See [`examples/ads-publish-pipeline/ads-creative-publish-meta.json`](../examples/ads-publish-pipeline/ads-creative-publish-meta.json). |
+| **Same, multi-platform (Google or TikTok)** | Replace terminal `publish-meta` with `publish-google` or `publish-tiktok` — see [`examples/ads-publish-pipeline/`](../examples/ads-publish-pipeline/) for the three sibling variants showing per-platform credential + targeting shape differences. |
 | **App-Builder auto-play** | `app-builder.iterate-tasks` (composes `app-builder.per-screen` internally per task) |
 | **Landing page generation** | `landing.content.generate` → `landing.structure.create` → `landing.theme.apply` → `landing.tracking.setup` → `landing.page.validate` → `landing.page.publish` |
-| **RAG-grounded AI call** | `knowledge.augment-prompt` (composes `knowledge.retrieve` + Sources block) → `core.ai.callPrompt` |
-| **Drip campaign with conditional branching** | `campaign.sequence.condition` → `campaign.sequence.wait` → `campaign.sequence.email` (or `.sms`, `.webhook`) |
+| **RAG-grounded AI call** | `knowledge.augment-prompt` (composes `knowledge.retrieve` + Sources block) → `core.ai.chatCompletion`. See [`examples/rag-grounded-chat/`](../examples/rag-grounded-chat/) — 2-node reference for the `host.knowledge` extension. |
+| **Drip campaign with conditional branching** | `campaign.sequence.condition` → `campaign.sequence.wait` → `campaign.sequence.email` (or `.sms`, `.webhook`). Note: these executors are host-scheduler-dispatched (the host enrollment scheduler decides when each fires); compose them as a sequence template, not an engine-edge-driven DAG. |
 
 ---
 
