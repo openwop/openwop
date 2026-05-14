@@ -106,6 +106,9 @@ import {
 import {
   setupMemorySchema,
   REFERENCE_MEMORY_CAPABILITY,
+  REFERENCE_COMPACTION_CAPABILITY,
+  runCompaction,
+  writeMemoryEntry,
 } from './memory-adapter.js';
 import {
   REFERENCE_AGENTS_CAPABILITY,
@@ -156,6 +159,15 @@ const MTLS_KEY_PATH = process.env.OPENWOP_MTLS_KEY_PATH ?? null;
 const MTLS_CA_PATH = process.env.OPENWOP_MTLS_CA_PATH ?? null;
 const MTLS_REQUIRED = process.env.OPENWOP_MTLS_REQUIRED !== 'false';
 const MTLS_ENABLED = MTLS_CERT_PATH !== null && MTLS_KEY_PATH !== null;
+
+// RFC 0012 (Active 2026-05-13). Two env flags:
+//   OPENWOP_MEMORY_COMPACTION=true — advertise capabilities.memory.compaction
+//   OPENWOP_TEST_TRIGGER_COMPACTION=true — expose the `/v1/test/memory/compact`
+//     test seam so conformance scenarios can synchronously drive a
+//     compaction run (otherwise host-managed only; clients have no
+//     wire-level trigger per RFC 0012 §A).
+const MEMORY_COMPACTION_ENABLED = process.env.OPENWOP_MEMORY_COMPACTION === 'true';
+const TEST_TRIGGER_COMPACTION = process.env.OPENWOP_TEST_TRIGGER_COMPACTION === 'true';
 
 // Phase I.3 + I.4 — OAuth2-CC + OIDC user-bearer validators. Each is
 // `null` when the operator hasn't configured the env vars; the host
@@ -2214,7 +2226,9 @@ function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
         // (session-end triggers, feedback promotion). TTL enforced
         // server-side; CTI-1 cross-tenant isolation upheld via
         // tenant_id filtering on every query.
-        memory: REFERENCE_MEMORY_CAPABILITY,
+        memory: MEMORY_COMPACTION_ENABLED
+          ? { ...REFERENCE_MEMORY_CAPABILITY, compaction: REFERENCE_COMPACTION_CAPABILITY }
+          : REFERENCE_MEMORY_CAPABILITY,
         // Phase I.2 — capabilities.md §`agents`. Multi-Agent Shift
         // Phase 1-6 advertisement. Host emits the canonical event
         // shapes (agent.reasoned/toolCalled/toolReturned/handoff/
@@ -2855,6 +2869,124 @@ async function handleBulkCancel(req: IncomingMessage, res: ServerResponse): Prom
     }),
   );
   sendJSON(res, 200, { results });
+}
+
+/**
+ * RFC 0012 test seam — `POST /v1/test/memory/seed`. Plants source
+ * entries in the host's `memory_entries` table so a conformance
+ * scenario can drive a compaction run synchronously. Body shape:
+ *
+ *   { memoryRef: string, entries: Array<{ id, content, tags? }> }
+ *
+ * Only registered when BOTH `OPENWOP_MEMORY_COMPACTION=true` AND
+ * `OPENWOP_TEST_TRIGGER_COMPACTION=true`. The protocol does not
+ * normate this seam — it exists purely to give the conformance
+ * suite a way to set up the compaction precondition.
+ */
+async function handleTestMemorySeed(
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<void> {
+  if (!(await checkAuth(req, res))) return;
+  const bodyText = await readBody(req);
+  let parsed: {
+    memoryRef?: unknown;
+    entries?: Array<{ id?: unknown; content?: unknown; tags?: unknown }>;
+  };
+  try {
+    parsed = JSON.parse(bodyText) as typeof parsed;
+  } catch {
+    sendError(res, 400, 'validation_error', 'Request body MUST be valid JSON.');
+    return;
+  }
+  if (typeof parsed.memoryRef !== 'string' || parsed.memoryRef.length === 0) {
+    sendError(res, 400, 'validation_error', 'memoryRef MUST be a non-empty string.');
+    return;
+  }
+  if (!Array.isArray(parsed.entries) || parsed.entries.length === 0) {
+    sendError(res, 400, 'validation_error', 'entries MUST be a non-empty array.');
+    return;
+  }
+  const q = await querier();
+  const planted: string[] = [];
+  for (const entry of parsed.entries) {
+    if (typeof entry.id !== 'string' || typeof entry.content !== 'string') {
+      sendError(res, 400, 'validation_error', 'each entry MUST carry { id, content } as strings.');
+      return;
+    }
+    const tags = Array.isArray(entry.tags)
+      ? entry.tags.filter((t): t is string => typeof t === 'string')
+      : [];
+    await writeMemoryEntry(q, {
+      tenantId: 'tenant:default',
+      memoryRef: parsed.memoryRef,
+      memoryId: entry.id,
+      content: entry.content,
+      tags,
+    });
+    planted.push(entry.id);
+  }
+  sendJSON(res, 201, { plantedIds: planted });
+}
+
+/**
+ * RFC 0012 test seam — `POST /v1/test/memory/compact`. Drives a
+ * host-managed compaction run synchronously. Body shape:
+ *
+ *   { memoryRef: string, maxInputEntries?: number, maxOutputBytes?: number }
+ *
+ * Returns the canonical `memory.compacted` event payload per
+ * `run-event-payloads.schema.json` §`memoryCompacted` (plus a
+ * top-level `type: 'memory.compacted'` for parity with the event-log
+ * envelope shape). Returns 204 when the memoryRef has <2 entries (no
+ * compaction performed). Only registered when both env flags are set.
+ */
+async function handleTestMemoryCompact(
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<void> {
+  if (!(await checkAuth(req, res))) return;
+  const bodyText = await readBody(req);
+  let parsed: {
+    memoryRef?: unknown;
+    maxInputEntries?: unknown;
+    maxOutputBytes?: unknown;
+  };
+  try {
+    parsed = JSON.parse(bodyText) as typeof parsed;
+  } catch {
+    sendError(res, 400, 'validation_error', 'Request body MUST be valid JSON.');
+    return;
+  }
+  if (typeof parsed.memoryRef !== 'string' || parsed.memoryRef.length === 0) {
+    sendError(res, 400, 'validation_error', 'memoryRef MUST be a non-empty string.');
+    return;
+  }
+  const q = await querier();
+  const options: { maxInputEntries?: number; maxOutputBytes?: number } = {};
+  if (typeof parsed.maxInputEntries === 'number' && parsed.maxInputEntries > 0) {
+    options.maxInputEntries = parsed.maxInputEntries;
+  }
+  if (typeof parsed.maxOutputBytes === 'number' && parsed.maxOutputBytes > 0) {
+    options.maxOutputBytes = parsed.maxOutputBytes;
+  }
+  const result = await runCompaction(q, 'tenant:default', parsed.memoryRef, options);
+  if (result === null) {
+    sendJSON(res, 204, {});
+    return;
+  }
+  // Canonical memory.compacted event payload per run-event-payloads.schema.json.
+  sendJSON(res, 200, {
+    type: 'memory.compacted',
+    payload: {
+      memoryRef: parsed.memoryRef,
+      outputId: result.outputId,
+      sourceIds: result.sourceIds,
+      sourceCount: result.sourceCount,
+      trigger: 'host-managed',
+      byteSize: result.byteSize,
+    },
+  });
 }
 
 async function handleRegisterWebhook(req: IncomingMessage, res: ServerResponse): Promise<void> {
@@ -3679,6 +3811,15 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   if (method === 'POST' && path === '/v1/webhooks') return handleRegisterWebhook(req, res);
   if (method === 'POST' && path === '/v1/runs') return handleCreateRun(req, res);
   if (method === 'POST' && path === '/v1/runs:bulk-cancel') return handleBulkCancel(req, res);
+  // RFC 0012 test seams — only enabled when both
+  // OPENWOP_MEMORY_COMPACTION=true AND OPENWOP_TEST_TRIGGER_COMPACTION=true.
+  // The protocol normates `trigger: 'host-managed'`; these seams let
+  // conformance scenarios drive the host-managed scheduler synchronously
+  // without baking the trigger into the wire surface.
+  if (MEMORY_COMPACTION_ENABLED && TEST_TRIGGER_COMPACTION) {
+    if (method === 'POST' && path === '/v1/test/memory/seed') return handleTestMemorySeed(req, res);
+    if (method === 'POST' && path === '/v1/test/memory/compact') return handleTestMemoryCompact(req, res);
+  }
   const mwh = WEBHOOK_ID_PATTERN.exec(path);
   if (mwh && method === 'DELETE') {
     return handleUnregisterWebhook(req, res, decodeURIComponent(mwh[1]!));

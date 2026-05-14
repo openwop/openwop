@@ -68,6 +68,23 @@ export const REFERENCE_MEMORY_CAPABILITY = {
   ttlSupported: true,
 } as const;
 
+/**
+ * RFC 0012 (`Active` 2026-05-13) compaction sub-block per
+ * `capabilities.md` §`memory.compaction`. Only advertised when
+ * `OPENWOP_MEMORY_COMPACTION=true`. v1.x normates only
+ * `trigger: 'host-managed'`; the reference host honors this by
+ * NOT exposing a client-facing API surface. A test-only seam at
+ * `POST /v1/test/memory/compact` gated on
+ * `OPENWOP_TEST_TRIGGER_COMPACTION=true` lets conformance scenarios
+ * drive the host-managed scheduler synchronously.
+ */
+export const REFERENCE_COMPACTION_CAPABILITY = {
+  supported: true,
+  trigger: 'host-managed' as const,
+  maxInputEntries: 1000,
+  maxOutputBytes: MAX_ENTRY_SIZE_BYTES,
+} as const;
+
 /** Ensure the `memory_entries` table + indexes exist. Idempotent. */
 export async function setupMemorySchema(q: Querier): Promise<void> {
   await q.query(`
@@ -225,4 +242,118 @@ export async function deleteMemoryEntry(
     [tenantId, memoryRef, memoryId],
   );
   return (res.rowCount ?? 0) > 0;
+}
+
+// ─── RFC 0012 (Active) memory compaction ────────────────────────────────────
+
+export interface CompactionResult {
+  readonly outputId: string;
+  readonly sourceIds: string[];
+  readonly sourceCount: number;
+  readonly byteSize: number;
+}
+
+/**
+ * Re-apply the SR-1 redaction harness to derived content per RFC 0012
+ * §D ("SR-1 carry-forward"). The contract: the fact that source entries
+ * were SR-1-compliant at original `put` time is NOT evidence to skip
+ * redaction on derived content — summarization models can introduce
+ * secret-shaped substrings (hallucinated tokens, format-leaks from
+ * in-context examples) not present in any source.
+ *
+ * The reference impl is deliberately conservative: we look for the
+ * canonical `[BYOK:<value>]` form-leak signature (placeholder name was
+ * carried forward verbatim) AND any `<REDACTED:...>` marker that
+ * smells like a non-canonical SR-1 form. Both get re-substituted with
+ * the canonical `[REDACTED:carry-forward-<n>]` placeholder so the
+ * derived content never carries an exfiltratable token.
+ *
+ * Production hosts plug their real redaction pass here (the same one
+ * used by `MemoryAdapter.put`); the canonical contract is that
+ * `derivedContent` MUST pass the same harness as a fresh `put`.
+ */
+export function applyCompactionRedaction(derivedContent: string): string {
+  let out = derivedContent;
+  let counter = 0;
+  // Strip raw `[BYOK:...]` placeholders that an LLM might have
+  // carried forward (the canonical post-resolution form should have
+  // been a `[REDACTED:...]` marker; `[BYOK:...]` surviving on derived
+  // content is the form-leak signature).
+  out = out.replace(/\[BYOK:[^\]]+\]/g, () => `[REDACTED:carry-forward-${counter++}]`);
+  // Re-canonicalize non-standard redacted markers (e.g.
+  // `<REDACTED:...>`) into the canonical form.
+  out = out.replace(/<REDACTED:[^>]+>/g, () => `[REDACTED:carry-forward-${counter++}]`);
+  return out;
+}
+
+/**
+ * Run a host-managed memory compaction over the oldest N entries in a
+ * given `memoryRef`. Returns the new entry's metadata for the caller
+ * to emit a canonical `memory.compacted` event per RFC 0012 §B.
+ *
+ * Algorithm (reference impl — production hosts plug a real summarizer):
+ *   1. Read up to `maxInputEntries` oldest entries from `memoryRef`.
+ *   2. Concatenate their content with a separator (the stand-in for
+ *      a real LLM summarization call — the wire surface is summarizer-
+ *      agnostic per RFC 0012 §E).
+ *   3. Run the concatenated content through `applyCompactionRedaction`
+ *      to honor §D SR-1 carry-forward.
+ *   4. Truncate to `maxOutputBytes`.
+ *   5. Persist via `writeMemoryEntry` with a `compacted-from:<runId>`
+ *      tag per RFC 0012 §C.
+ *   6. Return outcome for the caller to emit `memory.compacted`.
+ *
+ * NOT exposed on the wire — RFC 0012 §A normates only
+ * `trigger: 'host-managed'`. Callers wire host-internal schedulers
+ * here; the conformance suite triggers via the test seam.
+ */
+export async function runCompaction(
+  q: Querier,
+  tenantId: string,
+  memoryRef: string,
+  options: { maxInputEntries?: number; maxOutputBytes?: number } = {},
+): Promise<CompactionResult | null> {
+  const maxInput = options.maxInputEntries ?? REFERENCE_COMPACTION_CAPABILITY.maxInputEntries;
+  const maxOutput = options.maxOutputBytes ?? REFERENCE_COMPACTION_CAPABILITY.maxOutputBytes;
+
+  // Read the oldest entries (LRU-style — distill stale memory first).
+  const now = new Date().toISOString();
+  const res = await q.query<{ memory_id: string; content: string }>(
+    `SELECT memory_id, content FROM memory_entries
+      WHERE tenant_id = $1 AND memory_ref = $2
+        AND (expires_at IS NULL OR expires_at > $3)
+      ORDER BY created_at ASC
+      LIMIT $4`,
+    [tenantId, memoryRef, now, maxInput],
+  );
+  if (res.rows.length < 2) {
+    // Compaction is meaningless with <2 entries.
+    return null;
+  }
+
+  const sources = res.rows;
+  const concatenated = sources.map((s) => s.content).join('\n\n---\n\n');
+  const redacted = applyCompactionRedaction(concatenated);
+  const truncated = Buffer.byteLength(redacted, 'utf8') > maxOutput
+    ? Buffer.from(redacted, 'utf8').subarray(0, maxOutput).toString('utf8')
+    : redacted;
+  const byteSize = Buffer.byteLength(truncated, 'utf8');
+
+  const compactionRunId = `compaction-${Date.now().toString(36)}`;
+  const outputId = `mem-${compactionRunId}`;
+  await writeMemoryEntry(q, {
+    tenantId,
+    memoryRef,
+    memoryId: outputId,
+    content: truncated,
+    // RFC 0012 §C provenance tag.
+    tags: [`compacted-from:${compactionRunId}`, 'compacted'],
+  });
+
+  return {
+    outputId,
+    sourceIds: sources.map((s) => s.memory_id),
+    sourceCount: sources.length,
+    byteSize,
+  };
 }
