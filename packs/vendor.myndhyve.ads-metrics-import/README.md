@@ -12,7 +12,7 @@
 
 The MyndHyve source `AdMetricsService` is a **client-side cache** with cache lookup + aggregation math. Platform-API fetching is marked "Phase 2 (TBD)" in the source comments — the current `ads.metrics.import` executor reads from the in-memory cache + aggregates. **No external fetch happens.**
 
-This pack mirrors that exactly via the `inputs.snapshots[]` input-passthrough pattern (same as `ads-policy`, `ads-creative-validate`, `opportunity-scoring`). External platform-API fetching is left to a future companion pack that wraps each platform's Marketing API (Meta / Google / TikTok) via `ctx.secrets.resolve` (spec PR #52) + direct `fetch()`. That work is out of scope for this pack.
+This pack mirrors that exactly via the `inputs.snapshots[]` input-passthrough pattern (same as `ads-policy`, `ads-creative-validate`, `opportunity-scoring`). External platform-API publish-side calls are handled by the platform-specific publish packs ([`ads-publish-meta`](../vendor.myndhyve.ads-publish-meta/), [`ads-publish-google`](../vendor.myndhyve.ads-publish-google/), [`ads-publish-tiktok`](../vendor.myndhyve.ads-publish-tiktok/)) via `ctx.secrets.resolve` (spec PR #52). A symmetric metrics-fetch counterpart for those platforms is not yet authored; callers run their own retrieval and pass snapshots into this pack.
 
 ## Output shape
 
@@ -49,14 +49,16 @@ Empty `inputs.snapshots[]` is allowed — returns zero-valued aggregation + warn
 | Missing optional metrics | Stored as `null` |
 | Missing `fetchedAt` | Default to current ISO timestamp |
 
-## Composition with `ads.copy.generate` / `ads-publish-platform`
+## Composition with `ads.copy.generate` + the platform publish packs
 
 ```
-(future) vendor.myndhyve.ads-publish-platform.fetch-metrics
+(caller-supplied metrics retrieval — host or workflow-level)
   → vendor.myndhyve.ads-metrics-import  ◄── (this pack — aggregation)
        → reporting dashboards / optimization decisions
        → ads.copy.generate (refresh creative based on low-performing variants)
 ```
+
+The platform publish packs (`ads-publish-meta` / `ads-publish-google` / `ads-publish-tiktok`) handle the *publish* side of each Marketing API surface; a symmetric metrics-fetch counterpart is not yet authored as an openwop pack, so callers run their own retrieval and pass snapshots into this pack.
 
 Workflows that already have metrics in a persistent store can skip the fetch step and pipe stored snapshots directly to `ads.metrics.import` via `inputs.snapshots`.
 
@@ -68,7 +70,7 @@ Workflows that already have metrics in a persistent store can skip the fetch ste
 
 **`createScopedLogger('AdMetricsService')`** → `ctx.log` shim.
 
-**Phase-2 external API fetching (TBD in source)** → out of scope, will live in a future `vendor.myndhyve.ads-publish-platform` pack.
+**Phase-2 external API fetching (TBD in source)** → out of scope. The publish-side platform Marketing-API surfaces are covered by the `ads-publish-{meta,google,tiktok}` trio; the fetch-side metrics retrieval is not yet authored as a pack — callers run their own.
 
 ## Source lineage
 
