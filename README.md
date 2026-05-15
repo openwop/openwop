@@ -115,6 +115,7 @@ This repository is the canonical source for the protocol itself; reference imple
 - [`docs/SECURITY-OPERATOR-GUIDE.md`](./docs/SECURITY-OPERATOR-GUIDE.md) — operator-side configuration for auth profiles, BYOK redaction, webhook signing, audit-log integrity, mTLS, MCP trust boundary, and node-pack supply-chain.
 - [`docs/PACK-AUTHOR-QUICKSTART.md`](./docs/PACK-AUTHOR-QUICKSTART.md) — end-to-end path for third-party pack authors: skeleton → signing key → tarball + signature + SBOM → schema validation → local-host smoke → publish PR → lifecycle (versioning, deprecate, yank, key rotation).
 - [`docs/integrations/durable-runtimes.md`](./docs/integrations/durable-runtimes.md) — implementation guide for hosts built on Temporal / Restate / DBOS / Inngest.
+- [`docs/integrations/serverless-workflow-and-bpmn.md`](./docs/integrations/serverless-workflow-and-bpmn.md) — bridging OpenWOP to / from CNCF Serverless Workflow and OMG BPMN. Honest about what round-trips and what stays host-specific.
 - [`docs/KNOWN-LIMITS.md`](./docs/KNOWN-LIMITS.md) — honest catalog of shape-only coverage, external-gated work, profile claims awaiting non-steward adoption, and surfaces deliberately NOT standardized.
 - [`docs/migration/v1.0-to-v1.1.md`](./docs/migration/v1.0-to-v1.1.md) — what's new in v1.1 (additive only; no migration steps required for v1.0 implementations).
 
