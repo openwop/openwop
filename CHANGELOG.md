@@ -9,6 +9,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ---
 
+## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
+
+- **PACK-1 + PACK-2 — Host-side pack consumer (Postgres, 2026-05-15)** — new `examples/hosts/postgres/src/pack-consumer.ts` runs the canonical install-time security checks per `node-packs.md` §"Dependency resolution + lockfile" + §"Signing recipe": lockfile structural parse, SRI integrity vs. tarball bytes, version-drift detection between lockfile pin and registry-served manifest, and Ed25519 signature verification against PEM public key over tarball bytes. Every failure mode is a typed `PackConsumerError` with a canonical code (`pack_integrity_mismatch`, `pack_signature_invalid`, `pack_version_mismatch`, `pack_lockfile_invalid`, `pack_signature_unverifiable`, `pack_manifest_invalid`); host fails closed in every case. 9-path host smoke (`test/pack-consumer.test.ts`) covers positive + 7 fail-closed + sig-absent-permitted + `loadLockfile` roundtrip against the in-tree `core.openwop.examples@1.0.0` pack. ROADMAP Phase I count flips from 10/11 → 11/11 closed; INTEROP-MATRIX Postgres row retires the "Still deferred: pack-registry consumption" footnote.
+
 ## [1.1.1] — 2026-05-15 — post-1.1.0 additive cleanup + RFC 0012
 
 Six additive commits landed on `main` after the v1.1.0 release tag. None changes a wire shape; all ship in a 1.1.1 patch when the registry SDKs are next published. Two close adopter-experience footnotes (lockfile demo + community pack re-sign), one closes a conformance-probe scope limit (MCP transports), and three close the RFC-process self-acceptance loop (0008 promotion + node-packs §WASM cross-link, 0001 promotion + CHANGELOG status drift fix).
