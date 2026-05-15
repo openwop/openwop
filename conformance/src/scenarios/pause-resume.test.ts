@@ -226,3 +226,46 @@ describe.skipIf(SKIP)('pause/resume: :pause-during-suspend race', () => {
     });
   });
 });
+
+// CF-2 close-out — drain-policy discrimination per
+// `capabilities.md` §`runs.pauseResume`. When a host advertises
+// `drainPolicies[]`, each advertised value MUST be accepted with 202.
+// Skips entirely when no advertisement is present.
+describe.skipIf(SKIP)('pause/resume: drainPolicy discrimination per capabilities advertisement', () => {
+  it('every drainPolicy advertised by the host is accepted on :pause', async () => {
+    const disco = await driver.get('/.well-known/openwop');
+    const drainPolicies =
+      (disco.json as {
+        capabilities?: { runs?: { pauseResume?: { drainPolicies?: string[] } } };
+      }).capabilities?.runs?.pauseResume?.drainPolicies ?? [];
+    if (drainPolicies.length === 0) {
+      // eslint-disable-next-line no-console
+      console.warn('[pause-resume] host advertises no drainPolicies; skipping policy-discrimination subtest');
+      return;
+    }
+
+    for (const policy of drainPolicies) {
+      const create = await driver.post('/v1/runs', {
+        workflowId: FIXTURE!,
+        inputs: { delaySeconds: 30 },
+      });
+      expect(create.status).toBe(201);
+      const runId = (create.json as { runId: string }).runId;
+
+      await pollUntilStatus(runId, 'running', { timeoutMs: 10_000 });
+
+      const pause = await driver.post(`/v1/runs/${encodeURIComponent(runId)}:pause`, {
+        reason: `conformance-drainpolicy-${policy}`,
+        drainPolicy: policy,
+      });
+      expect(pause.status, driver.describe(
+        'capabilities.md §`runs.pauseResume.drainPolicies` + rest-endpoints.md POST /v1/runs/{runId}:pause',
+        `host-advertised drainPolicy='${policy}' MUST be accepted on :pause`,
+      )).toBe(202);
+
+      await driver.post(`/v1/runs/${encodeURIComponent(runId)}/cancel`, {
+        reason: 'conformance-cleanup',
+      });
+    }
+  });
+});

@@ -94,8 +94,8 @@ Every OpenAPI operation should have:
 | `resumeRun` | `pause-resume.test.ts` covers direct route behavior for paused → running and non-paused conflict | Conflict path covered with `details.runStatus`; endpoint is no longer coverage-missing | Good. |
 | `forkRun` | `replay-fork.test.ts`, `replayDeterminism.test.ts` | Negative `fromSeq`, past-end, unknown source, invalid overlay | Add arbitrary-event fork and retention-expired source. |
 | `resolveInterruptByRun` | `interrupt-approval.test.ts`, `interrupt-clarification.test.ts`, `approval-payload.test.ts`, `interruptRace.test.ts` | Invalid action, unknown node, race cases | Add auth-required and quorum profile scenarios. |
-| `inspectInterruptByToken` | Interrupt token coverage partial | Missing explicit token-inspect matrix | Add expired, malformed, and already-resolved token cases. |
-| `resolveInterruptByToken` | Interrupt token coverage partial | Missing explicit token-resolve matrix | Add expired, malformed, wrong-action, and replayed-token cases. |
+| `inspectInterruptByToken` | `interrupt-token-matrix.test.ts` (CF-3, 2026-05-15) covers malformed + unknown token paths | Negative paths covered | Add explicit expired-token case when a host advertises a TTL seam. |
+| `resolveInterruptByToken` | `interrupt-token-matrix.test.ts` covers replay (already-resolved) + unknown token; `interrupt-external-event-correlation.test.ts` covers positive path | Replay path + unknown-token path covered with explicit assertions | Add wrong-action case once the host advertises a typed allowed-actions vocabulary in the interrupt manifest. |
 | `getArtifact` | Indirect through approval payload fixtures | `route-coverage.test.ts` covers unknown artifact `404`/`403` envelope | Add positive artifact read and explicit scope failure scenarios. |
 | `registerWebhook` | Webhook spec exists | `route-coverage.test.ts` covers invalid URL validation envelope | Add positive registration with a test receiver when harness support exists. |
 | `unregisterWebhook` | Webhook spec exists | `route-coverage.test.ts` covers unknown subscription behavior | Add full register-then-unregister roundtrip with a test receiver. |

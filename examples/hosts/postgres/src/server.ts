@@ -2267,7 +2267,13 @@ function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
           redirectPolicy: 'follow',
         },
         runs: {
-          pauseResume: { supported: true },
+          // CF-2: drainPolicies advertised honestly — the reference host
+          // aborts the in-flight node and flips status synchronously, which
+          // matches the canonical `immediate` semantics in capabilities.md
+          // §`runs.pauseResume`. Hosts that wait for the current node to
+          // complete before flipping status MAY additionally advertise
+          // `drain-current-node`.
+          pauseResume: { supported: true, drainPolicies: ['immediate'] as const },
         },
         // RFC 0006 §G + RFC 0007 §G — orchestrator + dispatch
         // capabilities. Phase I.5 — both blocks are OMITTED for the
