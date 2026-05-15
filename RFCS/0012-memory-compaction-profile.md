@@ -7,7 +7,7 @@
 | **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-13 |
-| **Updated** | 2026-05-15 (Active → Accepted; comment window waived under `CONTRIBUTING.md` §"Bootstrap-phase notes" — sole-steward repo with no non-steward maintainer per `MAINTAINERS.md` and no external commenters of record. All 6 acceptance criteria satisfied at promotion time: spec text + invariant + reference impl + 3 conformance scenarios + CHANGELOG + INTEROP-MATRIX. Future RFCs revert to the 7-day window once a non-steward maintainer joins.) |
+| **Updated** | 2026-05-15 (Active → Accepted; see §"Comment window note" below) |
 | **Affects** | `spec/v1/capabilities.md` (new optional `capabilities.memory.compaction` block), `spec/v1/observability.md` (new optional event type `memory.compacted`), `SECURITY/invariants.yaml` (SR-1 carry-forward through compaction outputs), `schemas/memory-entry.schema.json` (no shape change; new tag-prefix convention) |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -167,6 +167,16 @@ All three scenarios skip cleanly when the capability is absent. Suite-version bu
 - [x] Three conformance scenarios from §Conformance, all capability-gated. — `memory-compaction-{event-emitted,sr1-carry-forward,provenance-tag}.test.ts`, all gated on `capabilities.memory.compaction.supported`. 3/3 pass live against the Postgres reference host.
 - [x] CHANGELOG entry under the v1.X version that ships the suite minor. — `[1.1.1 — unreleased]` block carries the Phase 1, Phase 2, and Phase 3 prep bullets.
 - [x] `INTEROP-MATRIX.md` row updated for any reference host that advertises the profile, with a one-line evidence claim. — Postgres row's Phase I.7 / I.2 / RFC 0012 evidence paragraph names the conditional env vars + the host smoke file.
+
+## Comment window note
+
+The canonical 7-day public comment window opened on 2026-05-13 (`Draft → Active`) and was scheduled to close on 2026-05-20. Promotion to `Accepted` landed on 2026-05-15 — five days early — under the comment-window waiver in `CONTRIBUTING.md` §"Bootstrap-phase notes":
+
+- `MAINTAINERS.md` lists no non-steward maintainer of record.
+- No external comments were filed during the 48h the window was open.
+- All 6 acceptance criteria are satisfied at promotion time (spec text + SECURITY invariant + Postgres reference impl + 3 conformance scenarios + CHANGELOG + INTEROP-MATRIX).
+
+Future RFCs revert to the canonical 7-day window once `MAINTAINERS.md` lists a non-steward maintainer. The waiver applies only when both conditions hold (sole-steward repo AND zero external commenters); reviewers may revoke it for any specific RFC by filing a single comment in the window.
 
 ## References
 

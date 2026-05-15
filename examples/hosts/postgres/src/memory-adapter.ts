@@ -251,6 +251,14 @@ export interface CompactionResult {
   readonly sourceIds: string[];
   readonly sourceCount: number;
   readonly byteSize: number;
+  /**
+   * Post-redaction content of the persisted entry. Returned so test
+   * seams + host smokes can verify the SR-1 carry-forward invariant
+   * end-to-end (the persisted bytes pass the BYOK redaction harness).
+   * Production callers ignore this field; it never appears on the
+   * wire-level `memory.compacted` event payload.
+   */
+  readonly outputContent: string;
 }
 
 /**
@@ -355,5 +363,6 @@ export async function runCompaction(
     sourceIds: sources.map((s) => s.memory_id),
     sourceCount: sources.length,
     byteSize,
+    outputContent: truncated,
   };
 }

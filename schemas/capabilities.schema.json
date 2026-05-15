@@ -350,16 +350,17 @@
         },
         "compaction": {
           "type": "object",
-          "description": "RFC 0012 Memory Compaction Profile (Active). Hosts that distill many short-lived MemoryEntry rows into fewer long-lived ones MAY advertise here; advertising implies the SR-1 carry-forward invariant (`SECURITY/invariants.yaml` row `memory-compaction-sr-1-carry-forward`).",
+          "description": "RFC 0012 Memory Compaction Profile (Accepted 2026-05-15). Hosts that distill many short-lived MemoryEntry rows into fewer long-lived ones MAY advertise here; advertising implies the SR-1 carry-forward invariant (`SECURITY/invariants.yaml` row `memory-compaction-sr-1-carry-forward`).",
+          "required": ["supported"],
           "properties": {
             "supported": {
               "type": "boolean",
-              "description": "When `true`, host performs compaction over `longTerm` memory and emits the `memory.compacted` event per `observability.md` §Canonical event vocabulary."
+              "description": "REQUIRED when the sub-block is present. When `true`, host performs compaction over `longTerm` memory and emits the `memory.compacted` event per `observability.md` §Canonical event vocabulary."
             },
             "trigger": {
               "type": "string",
               "enum": ["host-managed", "client-requested", "both"],
-              "description": "Required when `supported: true`. `host-managed` runs on a host-internal schedule clients do not control. `client-requested` and `both` are reserved enum values; v1.x normates only `host-managed`."
+              "description": "REQUIRED when `supported: true` per RFC 0012 §A (enforced via the `if/then` clause). `host-managed` runs on a host-internal schedule clients do not control. `client-requested` and `both` are reserved enum values; v1.x normates only `host-managed`."
             },
             "maxInputEntries": {
               "type": "integer",
@@ -372,7 +373,9 @@
               "description": "Informational ceiling on the distilled entry size. SHOULD be ≤ `memory.maxEntrySizeBytes`."
             }
           },
-          "additionalProperties": false
+          "additionalProperties": false,
+          "if": { "properties": { "supported": { "const": true } }, "required": ["supported"] },
+          "then": { "required": ["supported", "trigger"] }
         }
       },
       "additionalProperties": true

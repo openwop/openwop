@@ -437,7 +437,9 @@ Distinct from the umbrella `agents.memoryBackends: string[]` array — this bloc
 - `maxEntrySizeBytes` — upper bound on `MemoryEntry.content` size. Hosts SHOULD reject `put` requests exceeding this with `validation_error`.
 - `ttlSupported` — when `true`, host honors `expiresAt` per RFC 0004 §E.
 
-#### `memory.compaction` (RFC 0012, `Active`)
+#### `memory.compaction` (RFC 0012, `Accepted`)
+
+**Why this exists.** Long-running agents accumulate many small `MemoryEntry` rows over time. Hosts that periodically distill those into fewer, longer-lived summaries face two cross-host concerns: (1) observability — operators monitoring multi-host fleets need a canonical event vocabulary so dashboards don't have to learn each host's vendor extension; (2) security — summarization models can introduce secret-shaped substrings (hallucinated tokens, format-leaks from in-context examples) that were NOT present in any source entry, so the BYOK redaction pass MUST be reapplied at the compaction boundary. This sub-block standardizes both the wire shape and the SR-1 carry-forward invariant; the actual algorithm (summarization model, embedding scheme, scheduling) remains a host choice.
 
 Optional sub-block. Hosts that distill many short-lived `MemoryEntry` rows into fewer long-lived ones MAY advertise it; hosts that don't are assumed not to compact (clients MUST NOT infer compaction from entry counts).
 

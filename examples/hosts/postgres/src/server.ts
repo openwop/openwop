@@ -2975,7 +2975,11 @@ async function handleTestMemoryCompact(
     sendJSON(res, 204, {});
     return;
   }
-  // Canonical memory.compacted event payload per run-event-payloads.schema.json.
+  // Canonical memory.compacted event payload per run-event-payloads.schema.json
+  // PLUS an out-of-band `outputContent` field carrying the persisted entry
+  // bytes so the SR-1 carry-forward conformance scenario can verify the
+  // BYOK redaction harness ran end-to-end (the wire-level `memory.compacted`
+  // event does NOT carry content; this seam is test-only).
   sendJSON(res, 200, {
     type: 'memory.compacted',
     payload: {
@@ -2986,6 +2990,7 @@ async function handleTestMemoryCompact(
       trigger: 'host-managed',
       byteSize: result.byteSize,
     },
+    outputContent: result.outputContent,
   });
 }
 

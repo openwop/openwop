@@ -86,27 +86,42 @@ describe('memory-compaction-sr1-carry-forward: derived content passes the BYOK r
     const event = compactRes.json as {
       type?: string;
       payload?: { outputId?: string; memoryRef?: string };
+      // Out-of-band field from the test seam carrying the persisted
+      // entry bytes; the wire-level `memory.compacted` event does NOT
+      // carry content. Required for SR-1 verification — the canonical
+      // event payload is shape-only and would pass this scenario
+      // trivially without it.
+      outputContent?: string;
     };
     expect(event.type, 'event payload MUST be type=memory.compacted').toBe('memory.compacted');
 
-    // 3. Read the derived entry back via the wire MemoryAdapter
-    //    surface (using a memory-list endpoint — the conformance suite
-    //    has no direct entry-by-id read endpoint without a workflow
-    //    fixture, but the seed/compact seam in step 2 returned the
-    //    canonical payload so we can inspect outputId references).
-    //    For SR-1 carry-forward we verify the EVENT payload itself
-    //    doesn't carry the BYOK markers and that the host's compaction
-    //    redaction did its job; the host smoke at
-    //    examples/hosts/postgres/test/memory-compaction.test.ts already
-    //    verifies the persisted entry content directly.
-    const eventJson = JSON.stringify(event);
-    expect(eventJson.includes('[BYOK:hk_live_canary_42]'), driver.describe(
-      'idempotency.md §"SR-1 carry-forward (compaction extension)"',
-      'memory.compacted event MUST NOT carry source-side [BYOK:...] form-leak signatures',
-    )).toBe(false);
-    expect(eventJson.includes('<REDACTED:db-prod-creds>'), driver.describe(
+    if (typeof event.outputContent !== 'string') {
+      // eslint-disable-next-line no-console
+      console.warn('[rfc0012-sr1] test seam did not return outputContent; the wire-level memory.compacted shape does not surface content so without a host-side seam we cannot verify §D end-to-end. Skipping.');
+      return;
+    }
+
+    // The load-bearing assertion: the PERSISTED entry content (what
+    // future MemoryAdapter.get / list consumers would see) MUST NOT
+    // carry source-side form-leak signatures. A host that skips its
+    // BYOK redaction pass on derived content fails here.
+    expect(event.outputContent.includes('[BYOK:hk_live_canary_42]'), driver.describe(
       'RFC 0012 §D',
-      'memory.compacted event MUST NOT echo non-canonical <REDACTED:...> markers from sources',
+      'derived MemoryEntry.content MUST NOT carry source-side [BYOK:...] form-leak signatures (SR-1 carry-forward)',
     )).toBe(false);
+    expect(event.outputContent.includes('<REDACTED:db-prod-creds>'), driver.describe(
+      'RFC 0012 §D',
+      'derived MemoryEntry.content MUST NOT echo non-canonical <REDACTED:...> markers from sources',
+    )).toBe(false);
+
+    // Positive: the canonical `[REDACTED:...]` placeholder MUST be
+    // present where SR-1 carry-forward re-substituted a source-side
+    // leak. Pinning this prevents a host from "passing" by simply
+    // stripping source content rather than redacting it (which would
+    // also lose audit signal).
+    expect(event.outputContent, driver.describe(
+      'RFC 0012 §D',
+      'derived MemoryEntry.content MUST carry canonical [REDACTED:...] placeholders where source-side leaks were re-substituted',
+    )).toMatch(/\[REDACTED:[^\]]+\]/);
   });
 });
