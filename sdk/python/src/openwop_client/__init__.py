@@ -91,6 +91,13 @@ __all__ = [
     "VerifyValid",
     "VerifyInvalid",
     "DEFAULT_WEBHOOK_FRESHNESS_WINDOW_SECONDS",
+    # Registry-read helpers (SDK-5, 2026-05-15)
+    "RegistryClient",
+    "RegistryDiscovery",
+    "RegistryIndex",
+    "RegistryIndexEntry",
+    "RegistryPackMetadata",
+    "RegistryVersionManifest",
     "__version__",
 ]
 
@@ -100,4 +107,13 @@ from .webhook_helpers import (
     VerifyValid,
     sign_webhook_delivery,
     verify_webhook_signature,
+)
+
+from .registry_helpers import (
+    RegistryClient,
+    RegistryDiscovery,
+    RegistryIndex,
+    RegistryIndexEntry,
+    RegistryPackMetadata,
+    RegistryVersionManifest,
 )

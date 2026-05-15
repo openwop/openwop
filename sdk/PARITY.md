@@ -17,15 +17,15 @@ This matrix records per-protocol-surface feature parity across the three referen
 
 ## Headline
 
-The three SDKs are at **near-perfect parity on the v1.0 wire-core surface** (discovery, run lifecycle, idempotency, event poll + SSE, HITL interrupts, error envelope, scopes-aware HTTP error helpers). The stable v1.x run-control additions now have first-class helpers across all three SDKs: bulk cancel, pause, resume, audit-log verification, debug-bundle retrieval (SDK-4 close-out 2026-05-15), and webhook register/unregister + HMAC verification (SDK-3 close-out 2026-05-15). Only registry reads remain as raw-only rows.
+The three SDKs are at **full parity across every host wire surface AND the public registry read surface as of 2026-05-15**. First-class helpers across all three SDKs: discovery, run lifecycle (create/get/cancel/pause/resume/fork/bulk-cancel), event poll + SSE + stream-options + bulk-cancel, HITL interrupts, error envelope + canonical HTTP error / run error code lists + predicates + active/terminal run-status predicates, audit-log verification, debug-bundle retrieval (SDK-4 close-out 2026-05-15), webhook register/unregister + receiver-side HMAC verification (SDK-3 close-out 2026-05-15), and public-registry reads — discovery, index, per-pack manifest, version manifest, raw tarball, raw signature, public key (SDK-5 close-out 2026-05-15). No remaining raw-only PARITY rows.
 
 Per-SDK net surface counts (counted from the per-surface tables below, excluding the headline-summary row):
 
 | SDK | ✅ helpers | ⚠️ raw-only | ❌ unreachable |
 |---|---:|---:|---:|
-| TypeScript (`@openwop/openwop`) | 30 | 2 | 0 |
-| Python (`openwop-client`) | 30 | 2 | 0 |
-| Go (`github.com/openwop/openwop/sdk/go`) | 30 | 2 | 0 |
+| TypeScript (`@openwop/openwop`) | 32 | 0 | 0 |
+| Python (`openwop-client`) | 32 | 0 | 0 |
+| Go (`github.com/openwop/openwop/sdk/go`) | 32 | 0 | 0 |
 
 (Counts bumped 2026-05-15 — Phase 0/P0 gap-closure added pause/resume helpers across all three SDKs. SDK-6 close-out 2026-05-15 added Python + Go run-status + run-error-code predicates matching TypeScript: Python/Go each gain 3 typed helpers — `ACTIVE_RUN_STATUSES`/`TERMINAL_RUN_STATUSES`/`is_terminal_run_status` AND `RUN_ERROR_CODES`/`is_run_error_code`. Headline counts move 23/23 → 26/26.)
 
@@ -112,7 +112,7 @@ These landed during Track 1 / T1.1 / T1.2 / T1.4 / T1.7 work. Audit-log verifica
 | Webhook HMAC verification helper (receiver-side) | ✅ `verifyWebhookSignature` + `signWebhookDelivery` (SDK-3, 2026-05-15) | ✅ `verify_webhook_signature` + `sign_webhook_delivery` (SDK-3, 2026-05-15) | ✅ `VerifyWebhookSignature` + `SignWebhookDelivery` (SDK-3, 2026-05-15) |
 | Webhooks: HMAC verification helper | ⚠️ none — consumers re-implement HMAC-SHA256 | ⚠️ none | ⚠️ none |
 | Debug bundle: `GET /v1/runs/{id}/debug-bundle` | ✅ `client.runs.debugBundle(id, opts?)` (SDK-4, 2026-05-15) | ✅ `client.runs_debug_bundle(id, max_events=...)` (SDK-4, 2026-05-15) | ✅ `client.GetDebugBundle(ctx, id, opts)` (SDK-4, 2026-05-15) |
-| Registry: `GET /v1/packs/*` read surface | ⚠️ raw HTTP | ⚠️ raw HTTP | ⚠️ raw HTTP |
+| Registry: `GET /v1/packs/*` read surface (SDK-5, 2026-05-15) | ✅ `RegistryClient` (`discovery / index / pack / version / tarball / signature / publicKey`) | ✅ `RegistryClient` (`discovery / index / pack / version / tarball / signature / public_key`) | ✅ `RegistryClient` (`Discovery / Index / Pack / Version / Tarball / Signature / PublicKey`) |
 
 ---
 
@@ -125,7 +125,7 @@ These landed during Track 1 / T1.1 / T1.2 / T1.4 / T1.7 work. Audit-log verifica
 | SSE async-iterable consumer | ✅ AsyncGenerator | ✅ generator | ✅ channel |
 | Track-13 v1.x additions (pause / resume / configurableSchema) | ✅ pause/resume; configurableSchema via workflow docs | ✅ pause/resume; configurableSchema via workflow docs | ✅ pause/resume; configurableSchema via workflow docs |
 | T1.1 + T1.4 + T1.7 v1.x additions (audit / debug-bundle / webhooks) | ✅ audit + debug; ⚠️ webhooks | ✅ audit + debug; ⚠️ webhooks | ✅ audit + debug; ⚠️ webhooks |
-| Pack registry read surface | ⚠️ raw HTTP | ⚠️ raw HTTP | ⚠️ raw HTTP |
+| Pack registry read surface | ✅ `RegistryClient` (SDK-5, 2026-05-15) | ✅ `RegistryClient` (SDK-5, 2026-05-15) | ✅ `RegistryClient` (SDK-5, 2026-05-15) |
 
 ---
 

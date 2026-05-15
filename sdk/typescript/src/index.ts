@@ -83,3 +83,16 @@ export type {
   VerifyWebhookSignatureOptions,
   VerifyWebhookOutcome,
 } from './webhook-helpers.js';
+
+// Public-registry read helpers (SDK-5 close-out 2026-05-15). Read-only
+// typed client for the public node-pack registry at packs.openwop.dev
+// per spec/v1/registry-operations.md.
+export { RegistryClient } from './registry-helpers.js';
+export type {
+  RegistryClientOptions,
+  RegistryDiscovery,
+  RegistryIndex,
+  RegistryIndexEntry,
+  RegistryPackMetadata,
+  RegistryVersionManifest,
+} from './registry-helpers.js';
