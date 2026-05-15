@@ -1085,7 +1085,7 @@ ctx.knowledge.embed({
 
 **Capability flag:** `secrets.resolveInPack: supported` *(advertised via top-level `Capabilities.secrets`; see [capabilities.md §secrets](capabilities.md#secrets))*
 
-**Used by:** packs that must call external HTTP APIs requiring stored credentials (e.g., ad-platform APIs, third-party analytics endpoints, vendor-specific SaaS integrations). Future consumers: `vendor.myndhyve.ads-publish-platform`, `vendor.myndhyve.ads-metrics-import`.
+**Used by:** packs that must call external HTTP APIs requiring stored credentials (e.g., ad-platform APIs, third-party analytics endpoints, vendor-specific SaaS integrations). Current consumers: `vendor.myndhyve.ads-publish-meta`, `vendor.myndhyve.ads-publish-google`, `vendor.myndhyve.ads-publish-tiktok` (the 3 platform-publish packs; the `ads.publish.platform` umbrella decomposed into platform-specific packs during publish).
 
 Resolves an opaque, host-issued secret reference into plaintext **inside the pack process**, for the narrow case where a pack needs raw credentials to call an external service that the host doesn't proxy. **This is the highest-risk host capability in the spec** — every related rule below is a hard requirement, not a recommendation.
 
