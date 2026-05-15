@@ -11,7 +11,7 @@
 | JSON Schemas | 24 | `schemas/*.schema.json` |
 | OpenAPI operations | 19 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 109 | `conformance/src/scenarios/*.test.ts` |
+| Conformance scenario files | 110 | `conformance/src/scenarios/*.test.ts` |
 | RFCs tracked | 13 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## OpenAPI Operations
