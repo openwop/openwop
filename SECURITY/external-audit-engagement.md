@@ -1,6 +1,8 @@
 # External Security Review — Engagement Document
 
-> **Status: DRAFT 2026-05-10.** Vendor-neutral scoping document for the external security review referenced in `SECURITY.md` §9. Solicit quotes against this scope; finalize after vendor selection. Embargo terms align with the disclosure SLA in `SECURITY.md` §6.
+> **Status: DRAFT, scope-pinned 2026-05-15.** Vendor-neutral scoping document for the external security review referenced in `SECURITY.md` §9. Solicit quotes against this scope; finalize after vendor selection. Embargo terms align with the disclosure SLA in `SECURITY.md` §6.
+>
+> **Scope-pin note (SEC-2 close-out, 2026-05-15).** Repo state has advanced since the 2026-05-10 draft: RFC ladder 0001–0012 all `Accepted` (with `Updated:` annotations on each), 0013 remains `Draft`; the Postgres reference host has joined the implementation list and claims `openwop-production` end-to-end; mTLS termination + reasoning-event emission + memory compaction + host-side pack consumption are now mechanically verified on Postgres; high-stakes `core.openwop.{ai,http,mcp,triggers}` packs are built + signed in-tree but remain audit-gated for public publication. The audit engages against the commit pinned in §3 at kickoff.
 
 This document defines what the openwop project asks of an external security review firm. It is written before vendor selection so the same scope can be put to multiple firms, and to make the scope auditable by future readers (what was reviewed; what was deliberately out of scope; what evidence the review will produce).
 
@@ -40,6 +42,7 @@ The review covers the protocol corpus + reference implementations as of the enga
 **Implementation:**
 - The TypeScript reference host at `examples/hosts/in-memory/` (~570 LOC) and SQLite reference host at `examples/hosts/sqlite/` (~700 LOC) AT THE PINNED COMMIT
 - The Python reference host at `examples/hosts/python/` (~600 LOC) AT THE PINNED COMMIT
+- **The Postgres reference host at `examples/hosts/postgres/` (~4300 LOC) AT THE PINNED COMMIT** — first host claiming `openwop-production` end-to-end. Implements MemoryAdapter + agent reasoning events + memory compaction (RFC 0012) + OAuth2-CC + OIDC user-bearer + mTLS termination + API-key rotation + auth-scoped discovery + Ed25519 pack consumption with SRI + signature + lockfile fail-closed enforcement.
 - The conformance suite at `conformance/` AT THE PINNED COMMIT (review the assertions, not just the protocol surface)
 - The three reference SDKs (TypeScript, Python, Go) AT THE PINNED COMMIT
 
@@ -51,9 +54,14 @@ These packs are advertised throughout the spec and will become permanent immutab
 - `core.openwop.triggers` — webhook + schedule + envelope trigger surfaces. Threat models touched: `auth-profiles` (callback-token verification), webhook HMAC signing.
 - `core.openwop.agent-examples` — `runtime: remote` pack; spec for `remote` runtime semantics is incomplete in v1, so audit is deferred until the runtime contract sharpens (likely v1.2+).
 
-**RFCs (drafts at engagement kickoff):**
-- RFCs 0002–0007 (multi-agent extensions — agent identity, agent packs, memory, conversation, orchestrator, dispatch)
-- RFC 0008 (WASM ABI for node packs, `Accepted`; review the ABI and reference loader/conformance scenarios)
+**RFCs (state at engagement kickoff):**
+- RFCs 0002–0007 (multi-agent extensions — agent identity, agent packs, memory, conversation, orchestrator, dispatch) — all `Accepted`.
+- RFC 0008 (WASM ABI for node packs) — `Accepted`; review the ABI and reference loader/conformance scenarios including the misbehaving-memory + misbehaving-abi packs.
+- RFC 0009 (Production-Profile Conformance) — `Accepted`; review the production-profile mechanics on the Postgres reference host (backpressure 503 + retention sweep + audit-log integrity claim).
+- RFC 0010 (Auth-Profile Conformance) — `Accepted`; review the four production-auth profile claims (OAuth2-CC, OIDC, mTLS, API-key rotation) and the canary-redaction discipline.
+- RFC 0011 (Auth-Scoped Discovery Advertisement) — `Accepted`; review the strict-subset projection logic that prevents the discovery payload from leaking capabilities into a less-privileged principal.
+- RFC 0012 (Memory Compaction Profile) — `Accepted` 2026-05-15; review the SR-1 carry-forward invariant (§D) end-to-end (the host's `applyCompactionRedaction` re-applies the BYOK redaction harness to summarization output before persistence; failure mode is silent leakage of secrets the summarizer hallucinated).
+- RFC 0013 (Workflow-chain packs) — `Draft`; out of scope unless the RFC advances to `Active` before kickoff.
 
 ### 2.2 Specific questions the review answers
 
@@ -67,6 +75,8 @@ The deliverable MUST include explicit findings on:
 6. **Multi-tenant isolation** — can a tenant influence another tenant's runs via shared idempotency cache, shared registry index, shared signing-key fingerprints, or shared in-flight event streams?
 7. **WASM ABI safety** (RFC 0008 §G + §K) — do the deterministic-time / deterministic-random / memory-cap invariants close the obvious side-channel + DoS paths?
 8. **Replay safety** — does fork-from-arbitrary-event preserve secret redaction and idempotency invariants? Can a `replay` mode resurrect deleted memory content per RFC 0004 §A?
+9. **Memory compaction carry-forward (RFC 0012 §D)** — does the host's redaction-on-derived-content harness actually re-redact summarizer output? Can an adversarial source-entry sequence get the compactor to emit a non-canonical `<REDACTED:...>` form-leak that escapes the canonical `[REDACTED:...]` substitution? Review `examples/hosts/postgres/src/memory-adapter.ts` `applyCompactionRedaction` + the SR-1 carry-forward conformance scenario.
+10. **Pack-consumer fail-closed posture** — host-side install-time checks per `node-packs.md` §"Dependency resolution + lockfile" + §"Signing recipe" (SRI integrity, Ed25519 signature, version drift, lockfile parse). Review `examples/hosts/postgres/src/pack-consumer.ts` + the 9-path host smoke; verify the host cannot mount a pack whose any check fails.
 
 ### 2.3 Out of scope
 

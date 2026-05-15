@@ -106,7 +106,9 @@ This repository is the canonical source for the protocol itself; reference imple
 | [`compliance.md`](./spec/v1/compliance.md) | FINAL v1 | ~1,500 | Non-normative compliance-vocabulary mapping — protocol surfaces ↔ SOC 2 / GDPR / HIPAA / ISO 27001 controls. Operator reference; does not prescribe certification. |
 | [`grpc-transport.md`](./spec/v1/grpc-transport.md) | FINAL v1 | ~1,400 | Optional alternative transport — `openwop.v1.Engine` gRPC service mirroring the REST surface. REST + SSE remains required; gRPC is opt-in. Canonical `.proto` at `api/grpc/openwop.proto`. |
 
-**Adopter guides:** [`docs/migration/v1.0-to-v1.1.md`](./docs/migration/v1.0-to-v1.1.md) — what's new in v1.1 (additive only; no migration steps required for v1.0 implementations).
+**Adopter guides:**
+- [`docs/IMPLEMENTER-PATH.md`](./docs/IMPLEMENTER-PATH.md) — one-page path from "what is OpenWOP" to "my host has a published row in `INTEROP-MATRIX.md`". Start here if you're building a new host.
+- [`docs/migration/v1.0-to-v1.1.md`](./docs/migration/v1.0-to-v1.1.md) — what's new in v1.1 (additive only; no migration steps required for v1.0 implementations).
 
 **Total**: 32 docs. The 12 v1 launch docs were finalized on 2026-04-27; `webhooks.md`, `storage-adapters.md`, and `registry-operations.md` extend the registry, storage, and webhook surfaces; `profiles.md`, `scale-profiles.md`, `debug-bundle.md`, `positioning.md`, `mcp-integration.md`, `a2a-integration.md`, and `host-extensions.md` graduated to FINAL v1 on 2026-05-05; `auth-profiles.md`, `interrupt-profiles.md`, `production-profile.md`, and `capabilities-change-detection.md` close the 2026-05-10 public-release profile and discovery gaps; `agent-memory.md` documents Phase 3 of the Multi-Agent Shift (2026-05-10); `agent-ref-positioning.md` adds the non-normative `AgentRef` positioning addendum. Multi-agent extensions [`RFCS/0002`](./RFCS/0002-agent-identity-and-reasoning-events.md)–[`RFCS/0007`](./RFCS/0007-dispatch.md) add agent identity, reasoning events, agent packs, memory layer, conversation, orchestrator routing, and dispatch.
 
