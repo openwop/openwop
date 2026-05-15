@@ -10,7 +10,7 @@
       "type": "string",
       "minLength": 3,
       "maxLength": 256,
-      "description": "Globally-unique agent identifier. Naming convention mirrors `node-packs.md` §Naming — `<tier>.<org>.<pack>.<agent>` for vendor/community packs (`vendor.acme.support.tier1`); `core.<name>` for spec-canonical agents (`core.chat`, `core.research`); `host:<id>` slim-runtime form for host-internal AgentRefs that don't ship as packs. Host-internal `host:<id>` agents are valid AgentRefs at the wire level but MUST NOT be published as manifests (the `host:` namespace is reserved for runtime synthesis)."
+      "description": "Globally-unique agent identifier. Naming convention mirrors `node-packs.md` §Naming — `<tier>.<org>.<pack>.<agent>` for vendor/community packs (`vendor.acme.support.tier1`); `core.<name>` for spec-canonical agents (`core.chat`, `core.research`); `host:<id>` slim-runtime form for host-internal AgentRefs that don't ship as packs. Host-internal `host:<id>` agents are valid AgentRefs at the wire level but MUST NOT be published as manifests (the `host:` namespace is reserved for runtime synthesis). External-identity-system compatibility (STD-4): hosts MAY map an `agentId` to a W3C DID, an A2A AgentCard URL, an AGNTCY gateway identifier, or other external identity primitive via host-internal mapping tables. The external identifier MUST NOT be embedded as the wire-level `agentId` (doing so would force resolver dependencies on every consumer); carry it under vendor metadata or as the `host:<scheme>:<id>` form. See `spec/v1/agent-ref-positioning.md` §\"Composition rules\" for the recommended mapping conventions."
     },
     "name": {
       "type": "string",
