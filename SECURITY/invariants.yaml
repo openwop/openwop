@@ -47,7 +47,9 @@ invariants:
     tier: reference-impl
     severity: high
     threat_model: SECURITY/threat-model-secret-leakage.md
-    tests: []
+    tests:
+      - examples/hosts/postgres/test/byok-roundtrip.test.ts
+      - examples/hosts/postgres/test/reasoning-event-emission.test.ts
     note: |
       Sensitive workflow variables MUST be masked per host's advertised
       compliance.defaultMode. Verified in reference impl; conformance
@@ -69,6 +71,15 @@ invariants:
     severity: high
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests: []
+    non_testability_rationale: |
+      OTel attribute allowlist is enforced inside the host's telemetry
+      layer; verifying it in conformance would require a live OTel
+      collector + a host that emits BYOK-relevant spans + an
+      adversarial workflow. Closer-to-host coverage lives in
+      examples/hosts/postgres/test/byok-roundtrip.test.ts (host-side
+      audit). Promote to a conformance scenario when the OTel
+      collector seam at conformance/src/lib/otel-collector.ts grows
+      a deeper attribute inspector.
     note: |
       OTel allowlist enforced by host-specific telemetry tests.
 
@@ -108,6 +119,12 @@ invariants:
     severity: high
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests: []
+    non_testability_rationale: |
+      Debug-bundle OTel span export pairs the host's debug-bundle
+      assembly with the OTel allowlist — same testability story as
+      secret-leakage-otel-attribute. Promote to a conformance
+      scenario once the OTel collector seam grows attribute
+      inspection.
     note: |
       Debug-bundle export of OTel spans must apply allowlist.
 
@@ -115,9 +132,16 @@ invariants:
     tier: reference-impl
     severity: high
     threat_model: SECURITY/threat-model-secret-leakage.md
-    tests: []
+    tests:
+      - examples/hosts/postgres/test/byok-roundtrip.test.ts
+      - examples/hosts/postgres/test/ai-policy.test.ts
     note: |
       Resolved credential material must not enter prompt context.
+      Verified by byok-roundtrip.test.ts (BYOK plaintext NEVER on
+      run variables, debug bundles, or event payloads — only the
+      [REDACTED:<id>] marker + content-hash) and ai-policy.test.ts
+      (4-mode policy enforcement: cleartext credential flows are
+      blocked at the policy layer before reaching the provider).
 
   - id: secret-leakage-stream-chunk
     tier: protocol
@@ -331,17 +355,32 @@ invariants:
     tier: reference-impl
     severity: critical
     threat_model: SECURITY/threat-model-node-packs.md
-    tests: []
+    tests:
+      - registry/scripts/verify-signatures.mjs
     note: |
       Registry-side signature verification at publish.
+      Verified by registry/scripts/verify-signatures.mjs, which is
+      gated in the registry-publish CI workflow per
+      .github/workflows/registry-publish.yml: every published pack
+      must verify against its declared keyId per the namespace
+      allow-list in registry/.well-known/openwop-registry.json
+      before the tarball lands in the index.
 
   - id: node-pack-sig-host-verify
     tier: reference-impl
     severity: critical
     threat_model: SECURITY/threat-model-node-packs.md
-    tests: []
+    tests:
+      - examples/hosts/postgres/test/pack-consumer.test.ts
+      - examples/hosts/postgres/src/pack-consumer.ts
     note: |
       Host-side signature verification at resolve.
+      Verified by examples/hosts/postgres/test/pack-consumer.test.ts
+      (9 paths against core.openwop.examples@1.0.0): positive
+      Ed25519 verification + signature-corruption fail-closed +
+      invalid-public-key rejection + truncated-signature rejection.
+      The PackConsumerError(pack_signature_invalid) path is the
+      load-bearing rejection.
 
   - id: node-pack-sig-key-in-keychain
     tier: protocol
@@ -384,53 +423,87 @@ invariants:
     threat_model: SECURITY/threat-model-node-packs.md
     tests: []
 
+  # SEC-4 close-out note (2026-05-15): the node-pack-sandbox-* group
+  # is non-testable in the public repo until the first reference host
+  # executes pack-loaded typeIds in a sandbox. The Postgres reference
+  # host's pack-consumer.ts (PACK-1/PACK-2) verifies install-time
+  # security (SRI + Ed25519 + version drift + lockfile parse) but
+  # does NOT mount loaded packs into a runtime sandbox. Runtime
+  # invariants gate on the first host that does so.
+  # See plans/openwop-protocol-gap-closure-plan.md Workstream 5 PACK-1
+  # and Workstream 4 SEC-4 for the policy.
+
   - id: node-pack-sandbox-no-process
     tier: reference-impl
     severity: critical
     threat_model: SECURITY/threat-model-node-packs.md
     tests: []
+    non_testability_rationale: |
+      Pending the first reference host that executes pack-loaded
+      typeIds in a sandbox. Postgres reference host's pack-consumer
+      verifies install-time security only.
 
   - id: node-pack-sandbox-no-eval
     tier: reference-impl
     severity: high
     threat_model: SECURITY/threat-model-node-packs.md
     tests: []
+    non_testability_rationale: |
+      Pending a sandboxed pack runtime; see node-pack-sandbox-no-process.
 
   - id: node-pack-sandbox-network-gated
     tier: reference-impl
     severity: critical
     threat_model: SECURITY/threat-model-node-packs.md
     tests: []
+    non_testability_rationale: |
+      Pending a sandboxed pack runtime; see node-pack-sandbox-no-process.
 
   - id: node-pack-sandbox-fs-gated
     tier: reference-impl
     severity: critical
     threat_model: SECURITY/threat-model-node-packs.md
     tests: []
+    non_testability_rationale: |
+      Pending a sandboxed pack runtime; see node-pack-sandbox-no-process.
 
   - id: node-pack-sandbox-no-env
     tier: reference-impl
     severity: critical
     threat_model: SECURITY/threat-model-node-packs.md
     tests: []
+    non_testability_rationale: |
+      Pending a sandboxed pack runtime; see node-pack-sandbox-no-process.
 
   - id: node-pack-sandbox-timeout
     tier: reference-impl
     severity: high
     threat_model: SECURITY/threat-model-node-packs.md
     tests: []
+    non_testability_rationale: |
+      Pending a sandboxed pack runtime; see node-pack-sandbox-no-process.
 
   - id: node-pack-sandbox-memory-cap
     tier: reference-impl
     severity: high
     threat_model: SECURITY/threat-model-node-packs.md
-    tests: []
+    tests:
+      - conformance/src/scenarios/wasm-pack-memory-cap.test.ts
+    note: |
+      Memory-cap enforcement for the WASM runtime is verified by
+      wasm-pack-memory-cap.test.ts against the
+      vendor.openwop.misbehaving-memory pack (declares ABI 1, allocates
+      ~1 GiB, expects cap.breached with kind: wasm-memory). Other
+      runtimes' memory caps are pending — see
+      node-pack-sandbox-no-process.
 
   - id: node-pack-sandbox-isolated-context
     tier: reference-impl
     severity: high
     threat_model: SECURITY/threat-model-node-packs.md
     tests: []
+    non_testability_rationale: |
+      Pending a sandboxed pack runtime; see node-pack-sandbox-no-process.
 
   - id: node-pack-output-untrusted
     tier: protocol
