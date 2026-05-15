@@ -164,6 +164,8 @@ The protocol-level boundaries — `AgentRef`, the runOrchestrator decision envel
 
 See [`spec/v1/a2a-integration.md`](../../spec/v1/a2a-integration.md) §"Operational mapping table" for the 10 cross-protocol edge cases.
 
+→ Runnable form at [`examples/multi-agent-cross-host/`](../multi-agent-cross-host/README.md). That example boots the conformance suite's `A2AFakePeer`, walks 6 scenarios end-to-end (happy path + drift points #3/#4 + plain failure + cancellation + replay determinism), and exports the canonical projection + bridge functions future hosts can adopt.
+
 ---
 
 ## Memory compaction (RFC 0012)

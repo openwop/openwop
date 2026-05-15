@@ -93,7 +93,63 @@ function projectA2AStateToOpenWop(
   }
 }
 
-// ─── JSON-RPC helper ──────────────────────────────────────────────
+// ─── JSON-RPC helper + A2A wire-shape guard ──────────────────────
+
+/**
+ * Minimal shape of an A2A Task wire response per A2A v0.3
+ * `Task` object. Validated at the boundary so the rest of the
+ * bridge can treat the value as typed without unsound casts.
+ */
+interface A2ATaskWire {
+  readonly id: string;
+  readonly status: { readonly state: string };
+}
+
+/**
+ * Runtime validator for the A2A Task wire shape. Throws a clear
+ * diagnostic on shape mismatch (e.g. against a non-conforming
+ * real-world peer) so callers fail at the boundary rather than
+ * mid-pipeline. The bridge MUST NOT trust unverified JSON-RPC
+ * results — this guard is what production hosts implement at the
+ * `core.a2a.invoke` entry point.
+ */
+function assertA2ATaskWire(x: unknown): asserts x is A2ATaskWire {
+  if (!x || typeof x !== 'object') {
+    throw new Error(`A2A wire: expected object, got ${x === null ? 'null' : typeof x}`);
+  }
+  const obj = x as Record<string, unknown>;
+  if (typeof obj.id !== 'string' || obj.id.length === 0) {
+    throw new Error(`A2A wire: missing or empty 'id' (got ${typeof obj.id})`);
+  }
+  if (!obj.status || typeof obj.status !== 'object') {
+    throw new Error(`A2A wire: missing or non-object 'status' field`);
+  }
+  const status = obj.status as Record<string, unknown>;
+  if (typeof status.state !== 'string' || status.state.length === 0) {
+    throw new Error(`A2A wire: missing or empty 'status.state' (got ${typeof status.state})`);
+  }
+}
+
+/**
+ * Parse a JSON-RPC envelope, surfacing protocol errors via thrown
+ * Error and validating the shape of the `result` field if present.
+ */
+function parseRpcEnvelope(raw: unknown, method: string): Record<string, unknown> {
+  if (!raw || typeof raw !== 'object') {
+    throw new Error(`rpc(${method}): non-object response body`);
+  }
+  const body = raw as Record<string, unknown>;
+  if (body.error && typeof body.error === 'object') {
+    const err = body.error as { code?: unknown; message?: unknown };
+    const code = typeof err.code === 'number' ? err.code : -1;
+    const message = typeof err.message === 'string' ? err.message : '(no message)';
+    throw new Error(`rpc(${method}): JSON-RPC ${code} ${message}`);
+  }
+  if (!body.result || typeof body.result !== 'object') {
+    throw new Error(`rpc(${method}): missing or non-object result`);
+  }
+  return body.result as Record<string, unknown>;
+}
 
 async function rpc(
   endpoint: string,
@@ -107,15 +163,8 @@ async function rpc(
     body: JSON.stringify({ jsonrpc: '2.0', id, method, params }),
   });
   if (!res.ok) throw new Error(`rpc(${method}): HTTP ${res.status}`);
-  const body = (await res.json()) as {
-    result?: Record<string, unknown>;
-    error?: { code: number; message: string };
-  };
-  if (body.error) {
-    throw new Error(`rpc(${method}): JSON-RPC ${body.error.code} ${body.error.message}`);
-  }
-  if (!body.result) throw new Error(`rpc(${method}): missing result`);
-  return body.result;
+  const raw: unknown = await res.json();
+  return parseRpcEnvelope(raw, method);
 }
 
 // ─── Bridge node — what `core.a2a.invoke` would look like ─────────
@@ -139,7 +188,7 @@ async function invokeA2APeer(
   taskId: string;
   parentStatus: OpenWopRunStatus;
   parentReason?: string;
-  taskWire: Record<string, unknown>;
+  taskWire: A2ATaskWire;
   stateTransitions: string[];
 }> {
   // 1. Send the initial message.
@@ -150,16 +199,18 @@ async function invokeA2APeer(
     },
     configuration: { skill },
   }, 1);
-  const initialTask = sendResult as { id: string; status: { state: string } };
-  const taskId = initialTask.id;
-  const stateTransitions: string[] = [initialTask.status.state];
+  assertA2ATaskWire(sendResult);
+  const taskId = sendResult.id;
+  const stateTransitions: string[] = [sendResult.status.state];
 
   // 2. Poll until terminal.
   const terminalWire = new Set(['completed', 'failed', 'canceled', 'rejected']);
-  let polled: Record<string, unknown> = initialTask;
+  let polled: A2ATaskWire = sendResult;
   for (let i = 0; i < 20; i++) {
-    polled = await rpc(peerEndpoint, 'tasks/get', { id: taskId }, 2 + i);
-    const current = (polled as { status: { state: string } }).status.state;
+    const next = await rpc(peerEndpoint, 'tasks/get', { id: taskId }, 2 + i);
+    assertA2ATaskWire(next);
+    polled = next;
+    const current = polled.status.state;
     if (stateTransitions[stateTransitions.length - 1] !== current) {
       stateTransitions.push(current);
     }
@@ -169,7 +220,7 @@ async function invokeA2APeer(
     await new Promise((r) => setTimeout(r, 5));
   }
 
-  const finalWire = (polled as { status: { state: string } }).status.state;
+  const finalWire = polled.status.state;
   const projection = projectA2AStateToOpenWop(finalWire);
   return {
     taskId,

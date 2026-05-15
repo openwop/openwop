@@ -18,7 +18,20 @@
  *   2. **Cancellation propagation.** A subset of runs are cancelled
  *      mid-flight; the runner verifies (a) the cancel returns 2xx
  *      and (b) the cancelled run reaches terminal `cancelled` (per
- *      `idempotency.md`) within the configurable deadline.
+ *      `idempotency.md`) within the configurable deadline. Two
+ *      violation kinds disambiguate the failure mode:
+ *
+ *        - `cancel-raced-completion` — the run completed BEFORE the
+ *          cancel arrived. NOT a host bug; the chosen fixture
+ *          finishes faster than the runner's pre-cancel delay
+ *          (default 50ms). Operator action: raise the delay via the
+ *          fixture-internal pacing OR pick a longer-running fixture
+ *          OR lower `OPENWOP_STRESS_CANCEL_FRACTION` to 0.
+ *
+ *        - `cancel-not-propagated` — the run reached terminal
+ *          `failed` / `running` / `timed-out` after a successful
+ *          cancel call. This IS a host bug — the cancel path
+ *          didn't reach the executor.
  *
  *   3. **Memory TTL.** When a fixture uses an entry-TTL'd memory
  *      channel, the runner waits past TTL and verifies the entry
@@ -260,7 +273,18 @@ function detectViolations(results) {
       continue;
     }
     if (t.shouldCancel) {
-      if (t.terminalStatus !== 'cancelled') {
+      if (t.terminalStatus === 'completed') {
+        // Run finished BEFORE the cancel arrived. Operator-tunable;
+        // not a host bug. See header for the two cancel-failure
+        // kinds.
+        violations.push({
+          runIndex: t.runIndex,
+          kind: 'cancel-raced-completion',
+          detail:
+            `run completed before cancel could intercept ` +
+            `(fixture finishes faster than the pre-cancel delay; pick a longer-running fixture)`,
+        });
+      } else if (t.terminalStatus !== 'cancelled') {
         violations.push({
           runIndex: t.runIndex,
           kind: 'cancel-not-propagated',
