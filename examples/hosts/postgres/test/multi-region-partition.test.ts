@@ -57,16 +57,24 @@ interface Region {
   readonly db: PGlite;
   /** Layer-1 idempotency cache: cacheKey → runId. */
   readonly cache: Map<string, string>;
+  /** Per-region monotonic counter for deterministic runId minting. */
+  counter: number;
 }
 
 function makeRegion(name: string): Region {
-  return { name, db: new PGlite('memory://'), cache: new Map() };
+  return { name, db: new PGlite('memory://'), cache: new Map(), counter: 0 };
 }
 
 /**
  * Stand-in for `POST /v1/runs` in a region: idempotent-claim by
  * `(tenantId, endpoint, key)`. Returns the runId the region assigned
  * (existing claim's runId on cache hit, fresh runId on cache miss).
+ *
+ * RunId composition is deterministic — `run-${region}-${counter}` —
+ * so reruns of this smoke produce identical conflict claims, which
+ * makes failure-message diffs reviewable. Lex-min(runId) winner is
+ * therefore stable across runs (always the region whose name sorts
+ * first lexicographically for an equal counter value).
  */
 function regionalCreateRun(
   region: Region,
@@ -77,7 +85,8 @@ function regionalCreateRun(
   const cacheKey = `${endpoint}:${idempotencyKey}`;
   const existing = region.cache.get(cacheKey);
   if (existing !== undefined) return { runId: existing, cached: true };
-  const runId = `run-${region.name}-${idempotencyKey.slice(0, 6)}-${Math.random().toString(36).slice(2, 8)}`;
+  region.counter += 1;
+  const runId = `run-${region.name}-${idempotencyKey.slice(0, 6)}-${region.counter.toString().padStart(4, '0')}`;
   region.cache.set(cacheKey, runId);
   return { runId, cached: false };
 }

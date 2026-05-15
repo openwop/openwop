@@ -8,17 +8,14 @@ name: Postgres host — conformance regression gate
 # Two distinct passes:
 #
 #   in-host-smoke — runs the host's full in-process test suite via
-#     `npm test` in `examples/hosts/postgres/`. As of 2026-05-15 this
-#     covers 25 files: the original 9 wire-surface tests (lifecycle,
-#     audit-tamper, pause-resume, interrupts, webhooks, sse, claim,
-#     backpressure, review-fixes) plus the gap-closure additions
-#     (audit-checkpoint-export, agent-events, ai-policy, byok-roundtrip,
-#     byok-cross-provider, http-client, mcp-client, memory-adapter,
-#     memory-compaction, mtls, multi-region-idempotency,
-#     multi-region-partition, oauth2-oidc, pack-consumer,
-#     reasoning-event-emission, auth-rotation-scoped). The
-#     auth-rotation-scoped test requires three env vars (primary +
-#     secondary + tenant2 keys) wired through `npm run test:auth-rotation`.
+#     `npm test` in `examples/hosts/postgres/`. The script chains every
+#     file under `test/*.test.ts` plus `npm run test:auth-rotation`
+#     for the env-dependent auth-rotation-scoped test (which needs
+#     three keys: primary + secondary + tenant2). The authoritative
+#     count of tests + their names live in `package.json`'s `test`
+#     script — this comment intentionally does NOT enumerate them so a
+#     new test landing only requires the script edit, not a workflow
+#     edit too.
 #
 #   external-suite — boots the host via `npm run start:pglite` (the
 #     pglite-backed entry point) and runs the FULL conformance suite
@@ -49,7 +46,7 @@ on:
 
 jobs:
   in-host-smoke:
-    name: Postgres host — 25 in-host smoke tests
+    name: Postgres host — in-host smoke suite
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
