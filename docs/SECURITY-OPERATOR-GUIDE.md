@@ -74,7 +74,13 @@ Header: openwop-Webhook-Timestamp: <unix-seconds>
 
 ### SDK helpers
 
-(SDK-3 follow-up — webhook helpers + HMAC verification helpers across the three SDKs are still pending. Until they ship, receivers verify by hand using `crypto.createHmac('sha256', secret).update(`${timestamp}.${body}`).digest('hex')`.)
+SDK-3 closed 2026-05-15. All three reference SDKs ship typed register / unregister + HMAC verification helpers:
+
+- **TypeScript:** `client.webhooks.register(body, opts?)` + `client.webhooks.unregister(id)` + `verifyWebhookSignature(secret, sigHeader, tsHeader, rawBody, opts?)` + `signWebhookDelivery(secret, ts, rawBody)`.
+- **Python:** `client.webhooks_register(body, idempotency_key=...)` + `client.webhooks_unregister(id)` + `verify_webhook_signature(secret, sig_header, ts_header, raw_body, freshness_window_seconds=...)` + `sign_webhook_delivery(secret, ts, raw_body)`.
+- **Go:** `client.RegisterWebhook(ctx, body, opts)` + `client.UnregisterWebhook(ctx, id)` + `VerifyWebhookSignature(secret, sigHeader, tsHeader, rawBody, opts)` + `SignWebhookDelivery(secret, ts, rawBody)`.
+
+All three verification helpers use constant-time HMAC comparison + a configurable freshness window (default 5 minutes per spec) + reject malformed headers and tampered bodies. Receivers MUST pass the raw body bytes — re-serialized parsed JSON fails verification because the host signs exact bytes.
 
 ---
 

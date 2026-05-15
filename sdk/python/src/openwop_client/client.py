@@ -37,6 +37,8 @@ from .types import (
     DebugBundle,
     PauseRunRequest,
     PauseRunResponse,
+    RegisterWebhookRequest,
+    RegisterWebhookResponse,
     PollEventsResponse,
     ResolveInterruptRequest,
     ResolveInterruptResponse,
@@ -355,6 +357,43 @@ class OpenwopClient:
             anomalies=anomalies,
             checkpointsValid=d.get("checkpointsValid"),
         )
+
+    def webhooks_register(
+        self,
+        body: RegisterWebhookRequest,
+        *,
+        idempotency_key: str | None = None,
+    ) -> RegisterWebhookResponse:
+        """Register a webhook subscription per ``spec/v1/webhooks.md``.
+
+        The signing ``secret`` is returned ONCE in the response — store
+        it server-side for HMAC verification. The host cannot recover
+        it later.
+        """
+
+        headers = self._mutation_headers(idempotency_key=idempotency_key)
+        d = self._request_json(
+            "POST",
+            "/v1/webhooks",
+            body=_to_jsonable(body),
+            headers=headers,
+        )
+        return RegisterWebhookResponse(
+            subscriptionId=str(d["subscriptionId"]),
+            url=str(d["url"]),
+            secret=str(d["secret"]),
+            eventTypes=list(d.get("eventTypes", [])),
+            createdAt=str(d["createdAt"]),
+        )
+
+    def webhooks_unregister(self, subscription_id: str) -> None:
+        """Unregister a webhook subscription.
+
+        Raises :class:`WopError` with code ``subscription_not_found``
+        when the subscription_id is unknown.
+        """
+
+        self._request_json("DELETE", f"/v1/webhooks/{subscription_id}")
 
     def runs_fork(
         self,

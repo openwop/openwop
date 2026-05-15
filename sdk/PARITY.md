@@ -17,15 +17,15 @@ This matrix records per-protocol-surface feature parity across the three referen
 
 ## Headline
 
-The three SDKs are at **near-perfect parity on the v1.0 wire-core surface** (discovery, run lifecycle, idempotency, event poll + SSE, HITL interrupts, error envelope, scopes-aware HTTP error helpers). The stable v1.x run-control additions now have first-class helpers across all three SDKs: bulk cancel, pause, resume, audit-log verification, and debug-bundle retrieval (SDK-4 close-out 2026-05-15). Remaining raw-only rows are concentrated in webhook management and registry reads.
+The three SDKs are at **near-perfect parity on the v1.0 wire-core surface** (discovery, run lifecycle, idempotency, event poll + SSE, HITL interrupts, error envelope, scopes-aware HTTP error helpers). The stable v1.x run-control additions now have first-class helpers across all three SDKs: bulk cancel, pause, resume, audit-log verification, debug-bundle retrieval (SDK-4 close-out 2026-05-15), and webhook register/unregister + HMAC verification (SDK-3 close-out 2026-05-15). Only registry reads remain as raw-only rows.
 
 Per-SDK net surface counts (counted from the per-surface tables below, excluding the headline-summary row):
 
 | SDK | ✅ helpers | ⚠️ raw-only | ❌ unreachable |
 |---|---:|---:|---:|
-| TypeScript (`@openwop/openwop`) | 27 | 5 | 0 |
-| Python (`openwop-client`) | 27 | 5 | 0 |
-| Go (`github.com/openwop/openwop/sdk/go`) | 27 | 5 | 0 |
+| TypeScript (`@openwop/openwop`) | 30 | 2 | 0 |
+| Python (`openwop-client`) | 30 | 2 | 0 |
+| Go (`github.com/openwop/openwop/sdk/go`) | 30 | 2 | 0 |
 
 (Counts bumped 2026-05-15 — Phase 0/P0 gap-closure added pause/resume helpers across all three SDKs. SDK-6 close-out 2026-05-15 added Python + Go run-status + run-error-code predicates matching TypeScript: Python/Go each gain 3 typed helpers — `ACTIVE_RUN_STATUSES`/`TERMINAL_RUN_STATUSES`/`is_terminal_run_status` AND `RUN_ERROR_CODES`/`is_run_error_code`. Headline counts move 23/23 → 26/26.)
 
@@ -107,8 +107,9 @@ These landed during Track 1 / T1.1 / T1.2 / T1.4 / T1.7 work. Audit-log verifica
 | Surface | TS | Python | Go |
 |---|---|---|---|
 | Audit-log integrity: `GET /v1/audit/verify` (Phase B, 2026-05-12) | ✅ `client.audit.verify(from, to)` | ✅ `client.audit_verify(from, to)` | ✅ `client.VerifyAuditLog(ctx, from, to)` |
-| Webhooks: `POST /v1/webhooks` register (T1.7) | ⚠️ raw HTTP | ⚠️ raw HTTP | ⚠️ raw HTTP |
-| Webhooks: `DELETE /v1/webhooks/{id}` unregister | ⚠️ raw HTTP | ⚠️ raw HTTP | ⚠️ raw HTTP |
+| Webhooks: `POST /v1/webhooks` register (T1.7) | ✅ `client.webhooks.register(body, opts?)` (SDK-3, 2026-05-15) | ✅ `client.webhooks_register(body, idempotency_key=...)` (SDK-3, 2026-05-15) | ✅ `client.RegisterWebhook(ctx, body, opts)` (SDK-3, 2026-05-15) |
+| Webhooks: `DELETE /v1/webhooks/{id}` unregister | ✅ `client.webhooks.unregister(subscriptionId)` (SDK-3, 2026-05-15) | ✅ `client.webhooks_unregister(subscription_id)` (SDK-3, 2026-05-15) | ✅ `client.UnregisterWebhook(ctx, subscriptionID)` (SDK-3, 2026-05-15) |
+| Webhook HMAC verification helper (receiver-side) | ✅ `verifyWebhookSignature` + `signWebhookDelivery` (SDK-3, 2026-05-15) | ✅ `verify_webhook_signature` + `sign_webhook_delivery` (SDK-3, 2026-05-15) | ✅ `VerifyWebhookSignature` + `SignWebhookDelivery` (SDK-3, 2026-05-15) |
 | Webhooks: HMAC verification helper | ⚠️ none — consumers re-implement HMAC-SHA256 | ⚠️ none | ⚠️ none |
 | Debug bundle: `GET /v1/runs/{id}/debug-bundle` | ✅ `client.runs.debugBundle(id, opts?)` (SDK-4, 2026-05-15) | ✅ `client.runs_debug_bundle(id, max_events=...)` (SDK-4, 2026-05-15) | ✅ `client.GetDebugBundle(ctx, id, opts)` (SDK-4, 2026-05-15) |
 | Registry: `GET /v1/packs/*` read surface | ⚠️ raw HTTP | ⚠️ raw HTTP | ⚠️ raw HTTP |

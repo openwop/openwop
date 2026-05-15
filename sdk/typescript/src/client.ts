@@ -25,6 +25,8 @@ import {
   type InterruptByTokenInspection,
   type DebugBundle,
   type DebugBundleOptions,
+  type RegisterWebhookRequest,
+  type RegisterWebhookResponse,
   type PauseRunRequest,
   type PauseRunResponse,
   type PollEventsResponse,
@@ -284,6 +286,39 @@ export class OpenwopClient {
         },
         false, // unauthenticated (token IS the auth)
       ),
+  };
+
+  // ── Webhook subscriptions (per spec/v1/webhooks.md) ─────────────────────
+  readonly webhooks = {
+    /**
+     * Register a webhook subscription. Server signs deliveries with
+     * HMAC-SHA256 over `${timestamp}.${rawBody}` using the
+     * registration-time secret per `spec/v1/webhooks.md` §"Signature
+     * recipe". The secret is returned ONCE in the response — store it
+     * server-side for verification; the host cannot recover it.
+     */
+    register: (
+      body: RegisterWebhookRequest,
+      opts: MutationOptions = {},
+    ): Promise<RegisterWebhookResponse> =>
+      this.#request<RegisterWebhookResponse>({
+        method: 'POST',
+        path: '/v1/webhooks',
+        body,
+        headers: this.#mutationHeaders(opts),
+      }),
+
+    /**
+     * Unregister a webhook subscription. Returns void on success;
+     * throws `WopError` with `subscription_not_found` on unknown
+     * subscriptionId.
+     */
+    unregister: async (subscriptionId: string): Promise<void> => {
+      await this.#request<unknown>({
+        method: 'DELETE',
+        path: `/v1/webhooks/${encodeURIComponent(subscriptionId)}`,
+      });
+    },
   };
 
   // ── Audit-log integrity (gated on openwop-audit-log-integrity profile) ──

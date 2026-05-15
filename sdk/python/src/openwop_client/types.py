@@ -176,6 +176,30 @@ class ResumeRunResponse:
     resumedAt: str | None = None
 
 
+# spec/v1/webhooks.md — webhook subscription register / unregister.
+@dataclass
+class RegisterWebhookRequest:
+    url: str
+    events: list[str]
+    secret: str | None = None
+    tags: list[str] | None = None
+
+
+@dataclass(frozen=True)
+class RegisterWebhookResponse:
+    """Response from POST /v1/webhooks.
+
+    The ``secret`` field is returned ONCE on registration — store it
+    server-side for HMAC verification. The host cannot recover it.
+    """
+
+    subscriptionId: str
+    url: str
+    secret: str
+    eventTypes: list[str]
+    createdAt: str
+
+
 # spec/v1/debug-bundle.md — portable JSON diagnostic export.
 @dataclass(frozen=True)
 class DebugBundle:

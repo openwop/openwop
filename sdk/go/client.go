@@ -240,6 +240,39 @@ func (c *OpenwopClient) BulkCancelRuns(
 	return &out, nil
 }
 
+// RegisterWebhook calls POST /v1/webhooks per spec/v1/webhooks.md.
+// The Secret field on the response is returned ONCE — store it
+// server-side for HMAC verification; the host cannot recover it.
+func (c *OpenwopClient) RegisterWebhook(
+	ctx context.Context,
+	body RegisterWebhookRequest,
+	opts MutationOptions,
+) (*RegisterWebhookResponse, error) {
+	var out RegisterWebhookResponse
+	if err := c.requestJSON(
+		ctx, http.MethodPost,
+		"/v1/webhooks",
+		body, opts.headers(), true, &out,
+	); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// UnregisterWebhook calls DELETE /v1/webhooks/{subscriptionID}.
+// Returns nil on success; an unknown subscription surfaces as a
+// WopError with code "subscription_not_found".
+func (c *OpenwopClient) UnregisterWebhook(
+	ctx context.Context,
+	subscriptionID string,
+) error {
+	return c.requestJSON(
+		ctx, http.MethodDelete,
+		"/v1/webhooks/"+url.PathEscape(subscriptionID),
+		nil, nil, true, nil,
+	)
+}
+
 // VerifyAuditLog calls GET /v1/audit/verify?fromSeq=&toSeq= per
 // auth-profiles.md §"openwop-audit-log-integrity" §4. Requires the
 // audit:read scope on the API key. Hosts that do NOT advertise the

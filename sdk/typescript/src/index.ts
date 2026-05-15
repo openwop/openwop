@@ -30,6 +30,8 @@ export type {
   ForkRunResponse,
   DebugBundle,
   DebugBundleOptions,
+  RegisterWebhookRequest,
+  RegisterWebhookResponse,
   InterruptByTokenInspection,
   PauseRunRequest,
   PauseRunResponse,
@@ -67,3 +69,17 @@ export type {
   RunErrorCode,
   RunError,
 } from './run-helpers.js';
+
+// Webhook-delivery verification helpers (SDK-3 close-out 2026-05-15).
+// HMAC-SHA256 + timestamp freshness window verification per
+// spec/v1/webhooks.md §"Signature recipe". Receivers MUST verify both
+// the HMAC AND the timestamp to defeat replay attacks.
+export {
+  DEFAULT_WEBHOOK_FRESHNESS_WINDOW_SECONDS,
+  verifyWebhookSignature,
+  signWebhookDelivery,
+} from './webhook-helpers.js';
+export type {
+  VerifyWebhookSignatureOptions,
+  VerifyWebhookOutcome,
+} from './webhook-helpers.js';

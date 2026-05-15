@@ -33,6 +33,8 @@ from .types import (
     PauseRunRequest,
     PauseRunResponse,
     PollEventsResponse,
+    RegisterWebhookRequest,
+    RegisterWebhookResponse,
     ResolveInterruptRequest,
     ResolveInterruptResponse,
     ResumeRunRequest,
@@ -71,6 +73,8 @@ __all__ = [
     "PauseRunRequest",
     "PauseRunResponse",
     "PollEventsResponse",
+    "RegisterWebhookRequest",
+    "RegisterWebhookResponse",
     "ResolveInterruptRequest",
     "ResolveInterruptResponse",
     "ResumeRunRequest",
@@ -81,5 +85,19 @@ __all__ = [
     "RunStatus",
     "StreamMode",
     "is_http_error_code",
+    # Webhook helpers (SDK-3, 2026-05-15)
+    "verify_webhook_signature",
+    "sign_webhook_delivery",
+    "VerifyValid",
+    "VerifyInvalid",
+    "DEFAULT_WEBHOOK_FRESHNESS_WINDOW_SECONDS",
     "__version__",
 ]
+
+from .webhook_helpers import (
+    DEFAULT_WEBHOOK_FRESHNESS_WINDOW_SECONDS,
+    VerifyInvalid,
+    VerifyValid,
+    sign_webhook_delivery,
+    verify_webhook_signature,
+)

@@ -37,9 +37,9 @@
 
 | SDK | Typed helpers | Raw-only surfaces | Unreachable surfaces |
 |---|---:|---:|---:|
-| TypeScript | 27 | 5 | 0 |
-| Python | 27 | 5 | 0 |
-| Go | 27 | 5 | 0 |
+| TypeScript | 30 | 2 | 0 |
+| Python | 30 | 2 | 0 |
+| Go | 30 | 2 | 0 |
 
 ## Reference Host Conformance Evidence
 

@@ -132,6 +132,30 @@ export interface DebugBundleOptions {
   maxEvents?: number;
 }
 
+export interface RegisterWebhookRequest {
+  /** Receiver URL the host will POST signed deliveries to. */
+  url: string;
+  /** Event types to subscribe to (subset of the `RunEventType` enum). */
+  events: readonly string[];
+  /** Optional pre-shared secret; if omitted the host generates one and returns it in the response. */
+  secret?: string;
+  /** Optional tag filter — only events from runs carrying these tags are delivered. */
+  tags?: readonly string[];
+}
+
+export interface RegisterWebhookResponse {
+  /** Server-issued opaque subscription id; pass to `webhooks.unregister`. */
+  subscriptionId: string;
+  url: string;
+  /**
+   * The signing secret. **Returned ONCE on registration** — the host
+   * cannot recover it later. Store it server-side for HMAC verification.
+   */
+  secret: string;
+  eventTypes: readonly string[];
+  createdAt: string;
+}
+
 export interface PauseRunRequest {
   reason?: string;
   drainPolicy?: 'immediate' | 'drain-current-node';

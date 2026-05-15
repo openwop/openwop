@@ -219,6 +219,29 @@ type BulkCancelRunsResponse struct {
 	Results []BulkCancelRunResult `json:"results"`
 }
 
+// RegisterWebhookRequest is the body for POST /v1/webhooks per
+// spec/v1/webhooks.md.
+type RegisterWebhookRequest struct {
+	URL    string   `json:"url"`
+	Events []string `json:"events"`
+	// Secret is optional; if omitted the host generates one and
+	// returns it in the response.
+	Secret string `json:"secret,omitempty"`
+	// Tags filters delivery to runs carrying these tags.
+	Tags []string `json:"tags,omitempty"`
+}
+
+// RegisterWebhookResponse mirrors the 201 register-webhook payload.
+// Secret is returned ONCE on registration — store it server-side for
+// HMAC verification; the host cannot recover it.
+type RegisterWebhookResponse struct {
+	SubscriptionID string   `json:"subscriptionId"`
+	URL            string   `json:"url"`
+	Secret         string   `json:"secret"`
+	EventTypes     []string `json:"eventTypes"`
+	CreatedAt      string   `json:"createdAt"`
+}
+
 // AuditVerifyCheckpoint is one entry in AuditVerifyResult.Checkpoints
 // per auth-profiles.md §"openwop-audit-log-integrity" §4.
 type AuditVerifyCheckpoint struct {
