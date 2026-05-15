@@ -24,12 +24,12 @@ Per-SDK net surface counts (counted from the per-surface tables below, excluding
 | SDK | ✅ helpers | ⚠️ raw-only | ❌ unreachable |
 |---|---:|---:|---:|
 | TypeScript (`@openwop/openwop`) | 26 | 6 | 0 |
-| Python (`openwop-client`) | 23 | 9 | 0 |
-| Go (`github.com/openwop/openwop/sdk/go`) | 23 | 9 | 0 |
+| Python (`openwop-client`) | 26 | 6 | 0 |
+| Go (`github.com/openwop/openwop/sdk/go`) | 26 | 6 | 0 |
 
-(Counts bumped 2026-05-15 — Phase 0/P0 gap-closure added pause/resume helpers across all three SDKs and corrected the matrix for already-existing stream `bufferMs` + mixed-mode helpers.)
+(Counts bumped 2026-05-15 — Phase 0/P0 gap-closure added pause/resume helpers across all three SDKs. SDK-6 close-out 2026-05-15 added Python + Go run-status + run-error-code predicates matching TypeScript: Python/Go each gain 3 typed helpers — `ACTIVE_RUN_STATUSES`/`TERMINAL_RUN_STATUSES`/`is_terminal_run_status` AND `RUN_ERROR_CODES`/`is_run_error_code`. Headline counts move 23/23 → 26/26.)
 
-TypeScript is the slight leader: it ships dedicated `RUN_ERROR_CODES` / `isRunErrorCode` helpers and `ACTIVE_RUN_STATUSES` / `TERMINAL_RUN_STATUSES` constants + an `isTerminalRunStatus` predicate; Python and Go consumers can compose the same checks from the exported type unions / string constants but without a one-symbol helper. Adding the matching helpers to Python and Go is a session-sized follow-up; everything else is parity-clean across the three.
+Helper parity across run-status + run-error-code predicates landed 2026-05-15 (SDK-6 close-out). Python adds `ACTIVE_RUN_STATUSES` / `TERMINAL_RUN_STATUSES` frozensets + `is_terminal_run_status` predicate + `RUN_ERROR_CODES` frozenset + `is_run_error_code` predicate. Go adds `ActiveRunStatuses` / `TerminalRunStatuses` / `IsTerminalRunStatus` / `RunErrorCodes` / `IsRunErrorCode`. All three SDKs now expose the same vocabulary at the same call-site shape; the prior TypeScript-only convenience asymmetry is closed.
 
 ---
 
@@ -83,15 +83,15 @@ TypeScript is the slight leader: it ships dedicated `RUN_ERROR_CODES` / `isRunEr
 |---|---|---|---|
 | Error envelope parsing | ✅ `WopError` extends `Error` with `.code`/`.details`/`.traceId` | ✅ `WopError` raised from non-2xx with `.code`/`.details`/`.trace_id` | ✅ `*WopError` returned with `.Code`/`.Details`/`.TraceID` |
 | Canonical HTTP error-code list | ✅ `HTTP_ERROR_CODES` + `isHttpErrorCode` | ✅ `is_http_error_code` | ✅ `IsHTTPErrorCode` |
-| Canonical run-error-code list | ✅ `RUN_ERROR_CODES` + `isRunErrorCode` | ⚠️ no explicit helper (constants in `types.py`) | ⚠️ no explicit helper |
+| Canonical run-error-code list | ✅ `RUN_ERROR_CODES` + `isRunErrorCode` | ✅ `RUN_ERROR_CODES` + `is_run_error_code` (SDK-6, 2026-05-15) | ✅ `RunErrorCodes` + `IsRunErrorCode` (SDK-6, 2026-05-15) |
 | Trace-context extraction from response | ✅ `traceId` on `WopError` | ✅ `trace_id` | ✅ `TraceID` |
 
 ### Run-status taxonomy
 
 | Surface | TS | Python | Go |
 |---|---|---|---|
-| `ACTIVE_RUN_STATUSES` / `TERMINAL_RUN_STATUSES` constants | ✅ exported | ⚠️ via enum/constants in `types.py` | ⚠️ via `RunStatus` typed strings |
-| `isTerminalRunStatus(status)` predicate | ✅ exported | ⚠️ manual comparison | ⚠️ manual comparison |
+| `ACTIVE_RUN_STATUSES` / `TERMINAL_RUN_STATUSES` constants | ✅ exported | ✅ `ACTIVE_RUN_STATUSES` + `TERMINAL_RUN_STATUSES` frozensets (SDK-6, 2026-05-15) | ✅ `ActiveRunStatuses` + `TerminalRunStatuses` (SDK-6, 2026-05-15) |
+| `isTerminalRunStatus(status)` predicate | ✅ exported | ✅ `is_terminal_run_status` (SDK-6, 2026-05-15) | ✅ `IsTerminalRunStatus` (SDK-6, 2026-05-15) |
 
 ### Mutation helpers
 

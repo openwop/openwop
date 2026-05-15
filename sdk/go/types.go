@@ -394,3 +394,106 @@ func IsHTTPErrorCode(value string) bool {
 	}
 	return false
 }
+
+// ─── Run statuses (forward-compatible) ──────────────────────────────────
+
+// ActiveRunStatuses lists run statuses considered active — the run MAY
+// still transition. Hosts MAY emit additional terminal values per the
+// schema's forward-compat clause; readers MUST treat unknown statuses as
+// terminal-unknown, NOT as still-active. Use IsTerminalRunStatus for
+// forward-compatible checks. Mirrors the TypeScript SDK's
+// ACTIVE_RUN_STATUSES constant + isTerminalRunStatus predicate.
+var ActiveRunStatuses = []string{
+	"pending",
+	"running",
+	"paused",
+	"waiting-approval",
+	"waiting-input",
+}
+
+// TerminalRunStatuses lists the spec-known terminal statuses. Hosts MAY
+// emit additional terminal values (e.g., "timed-out", "interrupted"); use
+// IsTerminalRunStatus for forward-compat checks instead of literal-set
+// membership.
+var TerminalRunStatuses = []string{
+	"completed",
+	"failed",
+	"cancelled",
+}
+
+// IsTerminalRunStatus returns true when status indicates the run will not
+// transition further. Implemented as a negative check against
+// ActiveRunStatuses: any value NOT in the spec's known-active set is
+// treated as terminal. This implements the schema's forward-compat clause
+// — the alternative (positive check against TerminalRunStatuses) would
+// loop polling forever on any unknown value.
+func IsTerminalRunStatus(status string) bool {
+	for _, active := range ActiveRunStatuses {
+		if status == active {
+			return false
+		}
+	}
+	return true
+}
+
+// ─── Run-document error codes ───────────────────────────────────────────
+
+// RunErrorCodes lists canonical RunSnapshot.Error.Code identifiers used
+// when a run reaches `failed`. Distinct from HTTPErrorCodes, which describe
+// HTTP-level request failures (a request can fail with `unauthenticated`
+// before a run exists; a run can fail later with `node_execution_failed`).
+// Mirrors the TypeScript SDK's RUN_ERROR_CODES constant.
+var RunErrorCodes = []string{
+	// Authorization / access
+	"auth_required",
+	"forbidden",
+	"workspace_not_found",
+
+	// Run-state conflicts
+	"run_already_active",
+	"run_not_found",
+	"run_terminal",
+	"engine_version_mismatch",
+
+	// Validation
+	"invalid_workflow_definition",
+	"invalid_trigger_input",
+	"node_type_not_found",
+	"config_validation_failed",
+
+	// Quota / budget
+	"token_budget_exceeded",
+	"concurrent_run_limit_reached",
+	"rate_limited",
+
+	// Execution
+	"node_timeout",
+	"global_timeout",
+	"node_execution_failed",
+	"external_call_failed",
+	"recursion_limit_exceeded",
+	"capability_not_provided",
+
+	// Approval
+	"approval_timeout",
+	"approval_token_invalid",
+	"approval_token_expired",
+	"approval_token_consumed",
+
+	// Persistence
+	"persistence_failed",
+	"doc_budget_exceeded",
+}
+
+// IsRunErrorCode returns true when value is a known canonical
+// RunSnapshot.Error.Code. Returns false for unknown / malformed values
+// rather than panicking — SDK consumers usually want to display a fallback
+// for unknown codes.
+func IsRunErrorCode(value string) bool {
+	for _, code := range RunErrorCodes {
+		if value == code {
+			return true
+		}
+	}
+	return false
+}

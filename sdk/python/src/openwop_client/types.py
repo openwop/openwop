@@ -367,3 +367,100 @@ class ErrorEnvelope:
     error: str
     message: str
     details: dict[str, Any] | None = None
+
+
+# ─── Run statuses (forward-compatible) ────────────────────────────────────
+
+ACTIVE_RUN_STATUSES: frozenset[str] = frozenset(
+    {
+        "pending",
+        "running",
+        "paused",
+        "waiting-approval",
+        "waiting-input",
+    }
+)
+"""Run statuses considered active — the run MAY still transition.
+
+Hosts MAY emit additional terminal values per the schema's forward-compat
+clause (e.g., ``timed-out``, ``interrupted``); readers MUST treat unknown
+statuses as terminal-unknown, NOT as still-active. Match the TypeScript
+SDK's ``ACTIVE_RUN_STATUSES`` constant + ``isTerminalRunStatus`` predicate.
+"""
+
+TERMINAL_RUN_STATUSES: frozenset[str] = frozenset(
+    {
+        "completed",
+        "failed",
+        "cancelled",
+    }
+)
+"""Spec-known terminal statuses. Hosts MAY emit additional terminal values;
+use :func:`is_terminal_run_status` for forward-compat checks instead of
+literal-set membership.
+"""
+
+
+def is_terminal_run_status(status: str) -> bool:
+    """Return True when ``status`` indicates the run will not transition further.
+
+    Implemented as a negative check against :data:`ACTIVE_RUN_STATUSES` — any
+    value NOT in the spec's known-active set is treated as terminal. This
+    implements the schema's forward-compat clause; the alternative (positive
+    check against :data:`TERMINAL_RUN_STATUSES`) would loop polling forever
+    on any unknown value.
+    """
+
+    return isinstance(status, str) and status not in ACTIVE_RUN_STATUSES
+
+
+# ─── Run-document error codes ─────────────────────────────────────────────
+
+RUN_ERROR_CODES: frozenset[str] = frozenset(
+    {
+        # Authorization / access
+        "auth_required",
+        "forbidden",
+        "workspace_not_found",
+        # Run-state conflicts
+        "run_already_active",
+        "run_not_found",
+        "run_terminal",
+        "engine_version_mismatch",
+        # Validation
+        "invalid_workflow_definition",
+        "invalid_trigger_input",
+        "node_type_not_found",
+        "config_validation_failed",
+        # Quota / budget
+        "token_budget_exceeded",
+        "concurrent_run_limit_reached",
+        "rate_limited",
+        # Execution
+        "node_timeout",
+        "global_timeout",
+        "node_execution_failed",
+        "external_call_failed",
+        "recursion_limit_exceeded",
+        "capability_not_provided",
+        # Approval
+        "approval_timeout",
+        "approval_token_invalid",
+        "approval_token_expired",
+        "approval_token_consumed",
+        # Persistence
+        "persistence_failed",
+        "doc_budget_exceeded",
+    }
+)
+"""Run-document error codes — stable identifiers used in
+``RunSnapshot.error.code`` when a run reaches ``failed``. Distinct from
+:data:`HTTP_ERROR_CODES` (which describe HTTP-level request failures).
+Matches the TypeScript SDK's ``RUN_ERROR_CODES`` constant.
+"""
+
+
+def is_run_error_code(value: object) -> bool:
+    """Return True when ``value`` is a known canonical run-document error code."""
+
+    return isinstance(value, str) and value in RUN_ERROR_CODES
