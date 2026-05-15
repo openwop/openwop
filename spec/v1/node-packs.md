@@ -165,6 +165,50 @@ Workspace operators MAY commit a `pack-lock.json` lockfile alongside their workf
 - `pack_peer_dependency_missing` — host doesn't advertise a required peer capability.
 - `pack_lockfile_incomplete` — workspace references a pack not in the lockfile.
 - `pack_version_not_found` — lockfile pins a version the registry no longer serves (post-yank scenario). Operators recover by regenerating the lockfile or pinning to an alternative version.
+- `pack_dependency_conflict` — two packs in the dependency graph pin incompatible versions of a third pack and the resolver cannot find a common version satisfying both ranges. Caller resolves by adjusting the conflicting packs' ranges OR by pinning an explicit override in the lockfile (per §"Transitive dependency resolution" below).
+- `pack_dependency_cycle` — the dependency graph contains a cycle (`A → B → A` or longer). Pack dependencies MUST form a DAG.
+
+### Transitive dependency resolution
+
+Closes NP2. Packs MAY declare `dependencies` in their manifest — other packs whose nodes / agents the depending pack composes with. Transitive dependencies are resolved recursively:
+
+```json
+"dependencies": {
+  "vendor.example.shared": "^1.2.0",
+  "core.openwop.examples": "1.0.0"
+}
+```
+
+Values are semver ranges per [semver.org](https://semver.org/) (`X.Y.Z` exact, `^X.Y.Z` compatible, `~X.Y.Z` patch-only). Resolvers MUST honor the canonical npm-family precedence: exact > tilde > caret > wildcard.
+
+**Resolution algorithm (normative).** A resolver invoked against a workspace's top-level manifests:
+
+1. **Collect direct dependencies.** Build the set of `(packName, range)` pairs from every workflow definition's `requires[]` and from each loaded pack's manifest-level `dependencies`.
+2. **Recurse depth-first.** For each unresolved `(packName, range)`, fetch the pack's `index.json` from the registry, pick the highest version satisfying the range, then enqueue its own `dependencies` for resolution. Continue until the queue is empty.
+3. **Detect conflicts.** If two paths through the graph produce different version selections for the same `packName`, the resolver MUST search for a single version that satisfies BOTH ranges. If no version satisfies both, fail with `pack_dependency_conflict` carrying `details: { packName, conflictingRanges: [{requestedBy, range}, ...] }`.
+4. **Detect cycles.** A pack's `dependencies` graph MUST form a DAG. If the recursion re-enters a pack already on the active path, fail with `pack_dependency_cycle` carrying `details: { cycle: [<packName>, ...] }`.
+5. **Pin in the lockfile.** Every resolved pack — direct AND transitive — gets a top-level entry in `pack-lock.json` `packs[]`. The `dependencies` field on each entry pins the EXACT version chosen for each of that pack's declared dependencies. Transitive packs appear ONCE in the top-level array regardless of how many parents request them.
+
+**Override pinning.** When a workspace needs to force a specific transitive version (security patch, conflict resolution), the lockfile MAY carry a top-level `overrides` map keyed by `packName`. Resolvers MUST honor overrides ahead of normal range resolution; the override version MUST still satisfy at least one parent's declared range (otherwise the override is silently breaking the contract — fail with `pack_dependency_conflict`).
+
+```json
+{
+  "lockfileVersion": 1,
+  "registry": "https://packs.openwop.dev",
+  "overrides": {
+    "vendor.example.shared": "1.2.5"
+  },
+  "packs": [ /* ... */ ]
+}
+```
+
+**Resolver determinism.** Two resolvers run against the same registry snapshot + same top-level manifests + same overrides MUST produce byte-identical lockfiles. Determinism is achieved by:
+
+- Sorting `packs[]` lexicographically by `name` then `version`.
+- Sorting each pack's `dependencies` map keys lexicographically.
+- Stripping whitespace per a canonical JSON serialization (single-newline-terminated, 2-space indent in the published reference).
+
+**Forward-compat note.** Future v1.x minors MAY add lockfile fields (e.g., `peerOverrides`, `optionalDependencies` resolution hints). Resolvers MUST ignore unknown top-level lockfile fields per `COMPATIBILITY.md` §2.1; existing fields keep their semantics.
 
 ---
 
@@ -524,8 +568,8 @@ A workflow that references a typeId not provided by any registered pack MUST be 
 | # | Gap | Owner |
 |---|---|---|
 | ~~NP1~~ | ~~WASM ABI for `language: wasm` packs~~ — closed by [RFC 0008 — WASM ABI v1](../../RFCS/0008-wasm-abi.md) (`Accepted`). See §"WASM runtime" above. | closed |
-| NP2 | Pack-level `dependencies` resolution (transitive packs) — currently underspecified. | future v1.x |
-| NP3 | Mirror / federation between registries (npm-style upstream-fallback). | future |
+| ~~NP2~~ | ~~Pack-level `dependencies` resolution (transitive packs) — currently underspecified.~~ — closed 2026-05-15 (PACK-3) by §"Transitive dependency resolution" above (5-step normative algorithm + override-pinning + resolver-determinism rules + new `pack_dependency_conflict` and `pack_dependency_cycle` error codes; `pack-lockfile.schema.json` extended with `overrides` map). | ✅ closed |
+| ~~NP3~~ | ~~Mirror / federation between registries (npm-style upstream-fallback).~~ — closed 2026-05-15 (PACK-4) by `registry-operations.md` §"Registry mirror + federation" (workspace `fallbackRegistries[]` ordering, per-registry trust roots, no-transitive-trust rule, offline-mode behavior, 2 new error codes `pack_registry_unreachable` + `pack_namespace_unauthorized`, `capabilities.packRegistry` advertisement). | ✅ closed |
 | ~~NP4~~ | ~~Pack deprecation flow~~ — closed by `registry-operations.md` §"Deprecation flow" (2026-04-29). | ✅ closed |
 | ~~NP5~~ | ~~Signing key rotation~~ — closed by `registry-operations.md` §"Signing-key rotation flow" (2026-04-29). | ✅ closed |
 

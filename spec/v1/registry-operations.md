@@ -315,6 +315,84 @@ The registry's role is structural — it can't decide which packs are legitimate
 
 ---
 
+## Registry mirror + federation (closes NP3)
+
+Closes NP3 from `node-packs.md` §"Open spec gaps". A workspace MAY consume packs from multiple registries — a primary (typically `packs.openwop.dev`) with one or more fallbacks (private mirror, enterprise self-host, air-gapped read-only replica). This section defines the cross-registry trust + resolution rules.
+
+### Workspace federation configuration
+
+A workspace declares federation via the lockfile's `registry` field (single) OR via per-entry `resolved` URLs (multi). Mixed-namespace lockfiles per §"Mixed-namespace lockfiles" already permit per-entry registries; this section formalizes the resolution + trust contract.
+
+```json
+{
+  "lockfileVersion": 1,
+  "registry": "https://packs.example-corp.internal",
+  "fallbackRegistries": [
+    "https://packs.openwop.dev"
+  ],
+  "packs": [
+    {
+      "name": "vendor.example.internal-pack",
+      "version": "1.0.0",
+      "resolved": "https://packs.example-corp.internal/v1/packs/vendor.example.internal-pack/-/1.0.0.tgz",
+      "integrity": "sha256-..."
+    }
+  ]
+}
+```
+
+`fallbackRegistries[]` is an ordered list of registry base URLs. When a pack is not found in the primary registry's `index.json`, resolvers MUST consult each fallback in order. The first registry returning a `200` for the version manifest wins.
+
+### Trust roots are per-registry
+
+**Normative rule.** A signing key trusted by one registry is NOT automatically trusted by another. Each registry maintains its own `signingKeys[]` allow-list in `.well-known/openwop-registry.json` per its tier policy. Resolvers MUST verify a fetched pack's signature against the public key URL declared in THAT pack's version manifest (which points back at the issuing registry's `/keys/<keyId>.pub`), NOT against a globally-trusted key store.
+
+Operationally:
+
+1. Fetch the version manifest from registry R.
+2. The manifest declares `signing.keyId` + `signing.publicKeyUrl`.
+3. The resolver fetches the public key from R + verifies the signature against it.
+4. R's discovery doc (`/.well-known/openwop-registry.json`) lists `signingKeys[]` with each key's `permittedNamespaces`. The resolver MUST also verify the pack's name matches the key's allow-list. Mismatch fails with `pack_signature_invalid` (canonical code from `node-packs.md`).
+
+A private mirror that **rewrites** signatures (re-signing with the mirror's own key over the same tarball bytes) MUST also publish its own `signingKeys[]` entry permitting the rewritten pack's namespace. Resolvers see only what the mirror serves; the mirror's namespace allow-list IS the trust boundary.
+
+### Federation does NOT imply trust transitivity
+
+A workspace that includes `https://packs.openwop.dev` as a fallback does NOT thereby trust every key in that registry's `signingKeys[]`. The workspace declares which fallbacks to consult; the per-pack signature verification still happens against the fallback's declared trust root. An operator who wants to restrict to a subset of keys MUST mirror the packs into a private registry that only lists those keys.
+
+### Offline behavior
+
+Resolvers operating against an air-gapped workspace (no network) MUST:
+
+1. Refuse to fall through to a network registry. Behaviour when no entry's `resolved` URL is reachable: fail with `pack_version_not_found` (canonical code from `node-packs.md`).
+2. Verify integrity + signature against locally-cached bytes per the usual rules.
+3. Honor lockfile pinning verbatim.
+
+Workspaces destined for air-gapped operation SHOULD ship the tarballs + signatures alongside the lockfile (e.g., as a sealed archive). The protocol does not normate the archive format; that's deployer choice.
+
+### Failure modes (additive codes)
+
+In addition to the canonical codes in `node-packs.md` §"Failure modes", federated resolution adds:
+
+- `pack_registry_unreachable` — a fallback registry returned a transport-layer error (timeout, DNS, connection refused). Caller MAY retry on a different fallback or fail closed.
+- `pack_namespace_unauthorized` — a fetched pack's signature key is not allow-listed for the pack's namespace per the issuing registry's `signingKeys[]`. Indicates either misconfiguration or supply-chain tampering at the registry layer.
+
+### Capability advertisement
+
+Hosts that consume packs from a federated registry set MAY advertise the federation under `capabilities.packRegistry`:
+
+```json
+"packRegistry": {
+  "primary": "https://packs.example-corp.internal",
+  "fallbacks": ["https://packs.openwop.dev"],
+  "offlineMode": false
+}
+```
+
+This is informational — clients use it to understand which registries the host trusts, not to override the host's resolver behavior.
+
+---
+
 ## Host-private marketplace relationship (non-normative example)
 
 > **Non-normative.** This section illustrates how a host product can layer a private marketplace registry on top of the public openwop registry contract. The wire format is unchanged; only deployment-side details differ. An OpenWOP-compliant registry implementation does NOT need to support private-marketplace dual-resolution to claim conformance — this is host-extension territory.
