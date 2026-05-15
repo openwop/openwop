@@ -61,7 +61,7 @@ interface AuditEntryRow {
   readonly entry_hash: string;
 }
 
-interface CheckpointRow {
+export interface CheckpointRow {
   readonly checkpoint_id: string;
   readonly at_sequence: number;
   readonly merkle_root: string;
