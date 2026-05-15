@@ -169,6 +169,16 @@ const MTLS_ENABLED = MTLS_CERT_PATH !== null && MTLS_KEY_PATH !== null;
 const MEMORY_COMPACTION_ENABLED = process.env.OPENWOP_MEMORY_COMPACTION === 'true';
 const TEST_TRIGGER_COMPACTION = process.env.OPENWOP_TEST_TRIGGER_COMPACTION === 'true';
 
+// CF-6 test seam — when set, every non-trivial route returns 429 with
+// the canonical rate-limit envelope per rest-endpoints.md §"429 Too
+// Many Requests envelope". Lets the conformance suite's
+// rate-limit-envelope.test.ts exercise the shape deterministically
+// without relying on real-world load triggering a 429. The protocol
+// itself does NOT normate a forced-rate-limit toggle; this is purely
+// a test-only seam.
+const FORCE_RATE_LIMIT = process.env.OPENWOP_FORCE_RATE_LIMIT === 'true';
+const FORCE_RATE_LIMIT_RETRY_AFTER_SECONDS = 5;
+
 // Phase I.3 + I.4 — OAuth2-CC + OIDC user-bearer validators. Each is
 // `null` when the operator hasn't configured the env vars; the host
 // then advertises only the bearer-equality profile. When configured,
@@ -3791,6 +3801,30 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
   const path = url.pathname;
   const method = req.method ?? 'GET';
+
+  // CF-6 deterministic 429 — test-only seam. When
+  // OPENWOP_FORCE_RATE_LIMIT=true is set, return the canonical
+  // rate-limit envelope on every request so the conformance suite's
+  // rate-limit-envelope.test.ts can deterministically exercise the
+  // shape. The seam predates the backpressure check so the test
+  // doesn't need to fill the inflight cap first.
+  if (FORCE_RATE_LIMIT) {
+    res.writeHead(429, {
+      'Content-Type': 'application/json',
+      'Retry-After': String(FORCE_RATE_LIMIT_RETRY_AFTER_SECONDS),
+    });
+    res.end(
+      JSON.stringify({
+        error: 'rate_limited',
+        message: `Forced 429 via OPENWOP_FORCE_RATE_LIMIT (test-only seam); retry after ${FORCE_RATE_LIMIT_RETRY_AFTER_SECONDS}s.`,
+        details: {
+          scope: 'global',
+          retryAfterMs: FORCE_RATE_LIMIT_RETRY_AFTER_SECONDS * 1000,
+        },
+      }),
+    );
+    return;
+  }
 
   // Backpressure: cap concurrent inflight HTTP handlers. Discovery +
   // OpenAPI bypass the cap so health probes still respond when the host
