@@ -138,6 +138,7 @@ Per [`observability.md`](../spec/v1/observability.md):
 - **Audit-log re-anchor (CF-11)**: export checkpoints via the host's export helper + run `node scripts/verify-audit-checkpoints.mjs <bundle>` from an independent machine. Exit 0 = chain valid.
 - **Webhook delivery success**: HMAC verification on the receiver side; circuit-breaker state.
 - **SSE longevity (CF-10)**: run `node conformance/soak/sse-longevity.mjs` for 10–30 minutes against the host; alert when `longestQuietSeconds` exceeds the heartbeat interval or `reconnects > 0`.
+- **Load profile (OPS-2)**: run `node conformance/soak/load-profile.mjs` against a non-prod replica before each release. Compare `p50`/`p95`/`p99` create-run latency to the prior release's baseline; alert on >2× regression.
 - **Strict-mode conformance**: re-run weekly to catch drift.
 
 ---
