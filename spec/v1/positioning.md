@@ -24,6 +24,27 @@ Concretely: openwop standardizes how independent systems define, start, stream, 
 
 ---
 
+## Standards composition matrix
+
+> STD-1 close-out (2026-05-15). The earlier comparison table mixed standards (MCP, A2A) and runtimes (Temporal, LangGraph). This standalone matrix isolates the **standards** OpenWOP composes with and states the composition posture explicitly: when to use OpenWOP alongside the standard, what OpenWOP does NOT duplicate, and the current mapping-document status.
+
+| Standard | Use OpenWOP **alongside** for | Do NOT duplicate | Mapping status |
+|---|---|---|---|
+| **MCP** (Model Context Protocol) | The "what tools an LLM can call" surface. OpenWOP nodes invoke MCP tools via `core.mcp.toolCall` with `trustBoundary: "untrusted"`. | The MCP wire surface itself. OpenWOP MUST NOT define new tool-discovery / tool-call vocabulary. | **Active.** [`mcp-integration.md`](./mcp-integration.md) — three transports (streamable-http JSON + streamable-http SSE + stdio) verified end-to-end. |
+| **A2A** (Agent2Agent Protocol) | Inter-agent discovery + message exchange (AgentCard / Task / Skill). An OpenWOP host can expose itself as an A2A agent (Workflow → Skill, run → Task). | Inter-agent transport semantics. OpenWOP MUST NOT define a parallel agent-discovery surface. | **Active.** [`a2a-integration.md`](./a2a-integration.md) — state-projection table + roundtrip smoke. |
+| **OpenAPI 3.1** | The REST wire contract description for hosts. | An OpenAPI replacement. Every operation in OpenWOP ships an `operationId` in `api/openapi.yaml`. | **Normative.** [`api/openapi.yaml`](../../api/openapi.yaml) IS the canonical wire contract; redocly lints clean in CI. |
+| **AsyncAPI 3.1** | The SSE event-channel contract. | An AsyncAPI replacement. | **Normative.** [`api/asyncapi.yaml`](../../api/asyncapi.yaml) is the canonical event contract. |
+| **OpenTelemetry** | Distributed tracing + metrics under the canonical `openwop.*` semantic namespace per [`observability.md`](./observability.md). OTLP/HTTP-JSON + HTTP-protobuf + gRPC all accepted by the conformance suite's collector. | A vendor telemetry shape. Hosts SHOULD emit canonical `openwop.*` spans; vendor extensions ship under namespaced prefixes. | **Active.** Canonical namespace + 6 conformance scenarios covering trace continuity across `runs:fork`, interrupts, and `core.subWorkflow`. |
+| **CloudEvents** | Wire envelope for OpenWOP events emitted to external sinks (Pub/Sub, Kafka, EventBridge). The OpenWOP `RunEvent` shape composes; only the envelope differs. | An export-format replacement. Native OpenWOP event log stays JSON per [`observability.md`](./observability.md) §"Canonical run lifecycle event names". | **Non-normative — pending.** STD-2 follow-up will add a mapping document (`spec/v1/cloudevents-mapping.md`) once one exporter exists. |
+| **DID** (W3C Decentralized Identifiers) | Optional identity backing for `AgentRef.agentId` in trust-sensitive deployments. An AgentRef MAY carry a DID without making DID mandatory. | A required identity layer. OpenWOP MUST NOT force DID adoption. | **Non-normative — pending.** STD-4 follow-up will add an `AgentRef.did` optional field + mapping note. |
+| **Serverless Workflow (CNCF)** | Workflow-definition export/import for hosts that interoperate with cloud orchestrators. | A workflow-definition replacement. OpenWOP keeps its own DAG shape per [`workflow-definition.schema.json`](../../schemas/workflow-definition.schema.json). | **Non-normative — deferred.** STD-5 follow-up — clear statement of what round-trips and what doesn't (AI/HITL semantics may not map cleanly). |
+| **BPMN** (OMG) | Import/export with enterprise process-modeling tools. | A modeling language replacement. OpenWOP doesn't try to be a BPMN renderer. | **Non-normative — deferred.** Same scope/status as Serverless Workflow. |
+| **Temporal / Restate / DBOS / Inngest** | Durable-execution substrates. Any OpenWOP host MAY use these as its internal runtime. | A durable-execution replacement. OpenWOP is a wire contract, not a runtime. | **Implementation notes — pending.** STD-6 follow-up — `docs/integrations/` guides for runtime implementers. |
+
+**Reading the table.** The `Use OpenWOP alongside for` column states the composition value. The `Do NOT duplicate` column makes explicit which surface OpenWOP deliberately doesn't own — most adoption confusion comes from prospective adopters reading OpenWOP as a competitor to one of these standards rather than a composer of them. The `Mapping status` column tracks whether a dedicated mapping document exists, is pending, or is deliberately deferred until an actual implementer drives the work.
+
+---
+
 ## Comparison table
 
 | System | Strength | openwop comparison |
