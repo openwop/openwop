@@ -83,6 +83,21 @@ When to bump status:
 - `tsc --noEmit` must pass with `strict + exactOptionalPropertyTypes`. No `as any`, no `@ts-ignore`.
 - Zero runtime dependencies remains a goal. New deps need a stated reason in the PR description.
 
+### Reference applications (`apps/`)
+
+A separate tier from `examples/` (single-file demos) and `examples/hosts/` (conformance-test targets). Each `apps/<sample>/` is a deployable template — backend + frontend + Dockerfile + auth + storage + observability wired together.
+
+Conventions when contributing a new sample (or a new BE/FE under an existing one):
+
+- **Layout.** Backends live under `apps/<sample>/backend/<language>/`; frontends under `apps/<sample>/frontend/<framework>/`. Mirror an existing sample's structure.
+- **Boundary discipline.** Anything sample-specific (stub auth, demo packs, local workflows) MUST live under `local.*` or `sample.*` namespaces — never under `core.*`, `openwop.*`, or `vendor.<org>.*`. The `host-extensions.md` namespace rule applies inside `apps/` exactly as it does in production hosts.
+- **Honest discovery.** The `/.well-known/openwop` advertisement MUST reflect what the sample actually implements. Do not claim profiles or capabilities that are stubbed — downgrade the advertisement instead.
+- **Banned patterns.** No `as any`, `@ts-ignore`, or `@ts-nocheck` in `apps/<sample>/<lane>/<language>/src/`. Production-grade hygiene applies even though samples are non-normative — the sample teaches by example.
+- **Dependencies.** Sample dependencies are local to the sample; root `npm install` and the spec corpus are unaffected. New deps need a one-line justification in the PR.
+- **CI.** Sample CI runs in its own workflow step. A sample failure does NOT block a spec release; the gate stays scoped to spec/SDK/conformance/security.
+- **Public docs.** Mention the sample in the root `README.md` "Reference applications" section + add a `[Unreleased]` line in `CHANGELOG.md`. Do NOT introduce deployment-target language ("Cloud Run", "AWS Lambda", "Fly.io") into `README.md` / `QUICKSTART.md` — `spec-corpus-validity.test.ts` enforces neutrality there. The sample's own README is the place for deployment specifics.
+- **Documentation.** Each `apps/<sample>/` has a `README.md` (run instructions + honest pass-matrix) and `ARCHITECTURE.md` (component map + boundary discipline). The latter cites where each spec requirement is implemented in the sample.
+
 ---
 
 ## The CI gate

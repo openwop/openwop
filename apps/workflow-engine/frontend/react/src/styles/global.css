@@ -1,0 +1,269 @@
+/* Sample-grade hand-rolled styles. Mirrors the openwop public/styles.css
+ * tone — minimal tokens, no framework. Replace with your design system. */
+
+:root {
+  --color-bg: #0b0e14;
+  --color-surface: #141821;
+  --color-surface-2: #1c2230;
+  --color-border: #2a3142;
+  --color-text: #e6e8ee;
+  --color-text-muted: #8b93a7;
+  --color-accent: #5b8cff;
+  --color-accent-hover: #7da3ff;
+  --color-success: #4ade80;
+  --color-warning: #fbbf24;
+  --color-danger: #f87171;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", monospace;
+  --radius: 6px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --color-bg: #f7f8fa;
+    --color-surface: #ffffff;
+    --color-surface-2: #f0f2f6;
+    --color-border: #d8dde6;
+    --color-text: #1a1d24;
+    --color-text-muted: #5a6275;
+    --color-accent: #2563eb;
+    --color-accent-hover: #1d4ed8;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-header {
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-3) var(--space-5);
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.app-header nav {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.app-header nav a {
+  color: var(--color-text-muted);
+  text-decoration: none;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius);
+  font-size: 13px;
+}
+
+.app-header nav a.active,
+.app-header nav a:hover {
+  color: var(--color-text);
+  background: var(--color-surface-2);
+}
+
+.app-main {
+  flex: 1;
+  padding: var(--space-5);
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.app-footer {
+  padding: var(--space-3) var(--space-5);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+button {
+  font-family: inherit;
+  font-size: 13px;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+button:hover {
+  background: var(--color-accent-hover);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button.secondary {
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+input, textarea, select {
+  font-family: inherit;
+  font-size: 13px;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  width: 100%;
+}
+
+textarea {
+  font-family: var(--font-mono);
+  resize: vertical;
+}
+
+label {
+  display: block;
+  margin-bottom: var(--space-1);
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.card h2 {
+  margin: 0 0 var(--space-3);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 11px;
+  border-radius: 12px;
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+}
+
+.status-badge.completed { color: var(--color-success); }
+.status-badge.failed,
+.status-badge.cancelled { color: var(--color-danger); }
+.status-badge.waiting-approval,
+.status-badge.waiting-input,
+.status-badge.paused { color: var(--color-warning); }
+
+pre, code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+pre {
+  background: var(--color-surface-2);
+  padding: var(--space-3);
+  border-radius: var(--radius);
+  overflow-x: auto;
+}
+
+.event-stream {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--color-surface-2);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.event-stream .event {
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.event-stream .event:last-child {
+  border-bottom: none;
+}
+
+.event-stream .event-type {
+  color: var(--color-accent);
+}
+
+.event-stream .event-seq {
+  color: var(--color-text-muted);
+  margin-right: var(--space-2);
+}
+
+.form-row {
+  margin-bottom: var(--space-3);
+}
+
+.button-row {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.alert {
+  padding: var(--space-3);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-3);
+  font-size: 13px;
+}
+
+.alert.warning {
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid var(--color-warning);
+}
+
+.alert.error {
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid var(--color-danger);
+}
+
+.alert.info {
+  background: rgba(91, 140, 255, 0.1);
+  border: 1px solid var(--color-accent);
+}
+
+.muted {
+  color: var(--color-text-muted);
+}

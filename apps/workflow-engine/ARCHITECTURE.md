@@ -1,0 +1,137 @@
+# workflow-engine — Architecture
+
+> Companion to [`README.md`](./README.md). This file documents the *shape* of the sample — what each layer is for, what stays neutral, and the boundary discipline that keeps the sample from drifting into a private fork.
+
+## Layers
+
+```
+┌────────────────────────────────────────────────────────────────────┐
+│  frontend/react/                                                   │
+│  React UI — consumes @openwop/openwop SDK, renders interrupts,    │
+│  streams events, displays capabilities, handles BYOK input        │
+├────────────────────────────────────────────────────────────────────┤
+│              ↑ HTTPS + SSE + Bearer auth (wire only)              │
+├────────────────────────────────────────────────────────────────────┤
+│  backend/typescript/                                               │
+│  Express server                                                   │
+│    ├── routes/         REST + SSE wire surface                    │
+│    ├── middleware/     auth, traceContext, errorEnvelope          │
+│    ├── bootstrap/      one-shot boot installers                   │
+│    ├── executor/       node-module dispatch loop                  │
+│    ├── host/           HostAdapterSuite — 15 neutral adapters     │
+│    ├── byok/           secret resolver + ephemeral run secrets    │
+│    ├── packs/          tarball loader + SRI/Ed25519 verify        │
+│    ├── observability/  OTel tracer + cost emitter                 │
+│    └── storage/        sqlite (default) | memory (tests)          │
+└────────────────────────────────────────────────────────────────────┘
+                          ↓ depends on (npm)
+                @openwop/openwop          (wire types + SDK)
+                @openwop/openwop-conformance  (test harness)
+```
+
+**Dependency direction is strict and downward.** The frontend never imports backend internals. The backend never imports frontend code. Both layers consume `@openwop/openwop` for wire types — same package, different surface.
+
+## What's a "thin host wrapper"?
+
+The MyndHyve `services/workflow-runtime/` is ~17K LOC because it wires a private engine package into a product host with Firebase auth, Firestore storage, KMS BYOK, Cloud Tasks dispatch, MyndHyve canvas types, and 47 vendor packs.
+
+This sample is target ~2–3K LOC because it:
+
+- Implements the wire surface from scratch (like `examples/hosts/postgres/`), since the public `@openwop/openwop` SDK is a *client*, not an engine.
+- Stubs auth (any non-empty Bearer token → synthetic principal).
+- Stubs storage at sqlite (in-process; one node).
+- Stubs BYOK at an in-memory map.
+- Stubs Cloud Tasks dispatch with `setImmediate`.
+- Registers only `core.*` packs + one demo pack (`local.sample.demo`).
+- Has no canvas types, kanban, brand, entities, or product surface.
+
+A real deployment swaps each stub for a real implementation. The route handlers and the executor stay.
+
+## The 15 host adapter slots
+
+Mirrors the MyndHyve `HostAdapterSuite` triage. Each slot has a neutral implementation in this sample:
+
+| Slot | Real wrap (8) | Sample impl |
+|---|---|---|
+| `tenantResolver` | ✅ | sqlite table `tenants` |
+| `scopeResolver` | ✅ | sqlite table `scopes` |
+| `workflowCatalog` | ✅ | sqlite table `workflows` + filesystem fallback |
+| `principalAuthorizer` | ✅ | role-based, sqlite-backed |
+| `identityResolver` | ✅ | stub: any-non-empty-Bearer → synthetic principal |
+| `observabilitySink` | ✅ | OTel console exporter |
+| `auditSink` | ✅ | sqlite append-only `audit_log` |
+| `secretResolver` | ✅ | in-memory map (BYOK) |
+
+| Slot | Minimal wrap (3) | Sample impl |
+|---|---|---|
+| `artifactResolver` | ✅ | `local-fs:///` URI scheme only |
+| `contextProviderRegistry` | ✅ | in-memory `Map` |
+| `extensionManifestRegistry` | ✅ | sqlite (empty by default) |
+
+| Slot | Throw-on-use stub (4) | Sample impl |
+|---|---|---|
+| `enterprisePolicyResolver` | ⛔ | throws `host_capability_missing` |
+| `environmentResolver` | ⛔ | throws `host_capability_missing` |
+| `connectorInvoker` | ⛔ | throws `host_capability_missing` |
+| `providerPolicyResolver` | ⛔ | throws `host_capability_missing` |
+
+A pack that declares `peerDependencies: ["host.connectors"]` will be refused at register-time when its required surface is `throw-on-use`. This is the OpenWOP `host.*` capability contract working as designed (see `spec/v1/host-capabilities.md`).
+
+## Boundary discipline
+
+Three rules, restated for sample scope:
+
+### 1. No frontend imports in the backend, no backend imports in the frontend
+
+The two `package.json`s have disjoint dependency trees. The frontend declares `@openwop/openwop`; the backend declares its server deps + `@openwop/openwop` for wire types only. There is no shared local package between them.
+
+### 2. All sample-local additions live under `local.*` or `sample.*` namespaces
+
+- Demo pack: `local.sample.demo` (NOT `core.*`, NOT `vendor.openwop.*`)
+- Demo workflow: `sample.demo.uppercase`
+- Discovery's extension block: `extensions.sample.*` only
+
+This protects the `core.*` and `openwop.*` namespaces from sample-driven drift.
+
+### 3. The Cloud Run shape is a deployment archetype, not a coupling
+
+The Dockerfile is multi-stage Node 22-slim + esbuild bundle, listening on `$PORT`, with `/health` + `/readiness` probes — i.e., the canonical Cloud Run shape. But the code itself doesn't import `@google-cloud/*` packages. A deployer who runs the same image on Fly.io / Render / ECS / Kubernetes gets the same behavior.
+
+## Component-by-component map vs. the should-be doc
+
+For each requirement in `MYNDHYVE-ON-OPENWOP-SHOULD-BE-ANALYSIS.md` §3, here's where the sample implements it:
+
+| Should-be requirement | Sample location |
+|---|---|
+| Engine kernel via `@openwop/openwop` | `src/executor/` (implements wire surface; `@openwop/openwop` consumed for types) |
+| `/.well-known/openwop` advertisement | `src/routes/discovery.ts` |
+| Run lifecycle endpoints | `src/routes/runs.ts` |
+| 4 interrupt kinds + signed-token callback | `src/routes/interrupts.ts` |
+| 4 stream modes + Last-Event-ID resume | `src/routes/streams.ts` |
+| `Idempotency-Key` + `invocationId` | `src/routes/runs.ts` + `src/executor/invocationLog.ts` |
+| BYOK end-to-end with strip-on-persist | `src/byok/` + `src/storage/sqlite/runStore.ts` (strip-on-persist invariant tested) |
+| Pack consumption (SRI + Ed25519) | `src/packs/tarballLoader.ts` |
+| OTel under `openwop.*` | `src/observability/tracer.ts` |
+| Cloud Run shape | `Dockerfile` + `src/index.ts` (`$PORT`, health probes) |
+| Conformance harness | `conformance/` |
+
+| Frontend should-be | Sample location |
+|---|---|
+| `@openwop/openwop` browser consumption | `src/client/` (thin wrappers) |
+| Run lifecycle UI | `src/runs/` |
+| SSE event stream rendering | `src/streams/EventStreamView.tsx` |
+| 4 interrupt renderers | `src/interrupts/` |
+| Capability discovery UI | `src/discovery/CapabilitiesPanel.tsx` |
+| BYOK key entry + policy explainer | `src/byok/` |
+
+## Failure modes the sample explicitly does NOT guard against
+
+These are valid critiques of the sample as a *production* artifact, but in scope only for the documented "next step" follow-ups:
+
+- **Multi-instance dispatch.** sqlite + in-process executor means one instance, period. Real deployments need claim acquisition (postgres advisory locks) + Cloud Tasks / SQS / Pub/Sub.
+- **Webhook durability.** HMAC delivery is wired; the durable retry queue is stubbed (`setImmediate`).
+- **Audit-log integrity.** No hash chain, no Ed25519 checkpoint signatures. Use the postgres reference host for that profile.
+- **Production SLA claims.** Sample doesn't advertise `openwop-production-profile`.
+- **Pack publishing.** Read-only catalog only. Publishing lives in the postgres host's `pack-consumer.ts` story + `examples/node-pack-publishing/`.
+
+When swapping a stub for a real implementation, also update the relevant `capabilities` block in `src/routes/discovery.ts` so the advertisement stays honest.

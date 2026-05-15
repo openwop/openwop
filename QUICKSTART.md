@@ -288,6 +288,26 @@ const eventLog = new EventLog(io, { engineVersion: 1 });
 
 ---
 
+## 11. Try the reference application (BE + FE template)
+
+Want a starting template that bundles a single-container backend with a React frontend? See [`apps/workflow-engine/`](./apps/workflow-engine/).
+
+```bash
+# Terminal 1 — backend
+cd apps/workflow-engine/backend/typescript
+npm install
+npm run dev          # http://localhost:8080
+
+# Terminal 2 — frontend
+cd apps/workflow-engine/frontend/react
+npm install
+npm run dev          # http://localhost:5173
+```
+
+The frontend connects to the backend via `@openwop/openwop` and demonstrates run lifecycle, SSE streaming, all 4 interrupt kinds, capability discovery, and a BYOK key-entry surface. Sample / template code; not production-hardened. See [`apps/workflow-engine/ARCHITECTURE.md`](./apps/workflow-engine/ARCHITECTURE.md) for the boundary discipline.
+
+---
+
 ## See also
 
 - [`README.md`](./README.md) — full document index with status legend.
