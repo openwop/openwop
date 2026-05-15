@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/external-audit-findings.schema.json",
+  "title": "ExternalAuditFindings",
+  "description": "Machine-readable tracker for findings from the external security review per SECURITY/external-audit-engagement.md. Populated once the audit report arrives so each finding maps to a public advisory id, a remediation commit, and an embargo state. Empty array is valid (pre-audit state).",
+  "type": "object",
+  "required": ["bundleVersion", "findings"],
+  "properties": {
+    "bundleVersion": {
+      "type": "string",
+      "const": "1",
+      "description": "Tracker schema version. Bumped only on incompatible shape changes."
+    },
+    "auditVendor": {
+      "type": "string",
+      "description": "Vendor that produced the report (e.g., 'Trail of Bits', 'NCC Group'). Omitted pre-vendor-selection."
+    },
+    "engagementCommit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$",
+      "description": "Full Git SHA of the repo state the audit engaged against. Pinned at kickoff per SECURITY/external-audit-engagement.md §3."
+    },
+    "engagementStartedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp the audit kickoff occurred."
+    },
+    "engagementCompletedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp the audit report was delivered. Omitted while in progress."
+    },
+    "publicSummaryUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL to the public-facing summary of the audit (typically a blog post or PDF). Omitted while embargoed."
+    },
+    "findings": {
+      "type": "array",
+      "description": "One entry per finding. Empty array is valid pre-audit. Entries SHOULD be append-only after publication; downgrading or removing a finding requires a CHANGELOG note explaining why.",
+      "items": { "$ref": "#/$defs/Finding" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "Finding": {
+      "type": "object",
+      "required": ["findingId", "title", "severity", "status", "summary"],
+      "properties": {
+        "findingId": {
+          "type": "string",
+          "pattern": "^OPENWOP-AUDIT-[0-9]{4}-[0-9]{3}$",
+          "description": "Stable identifier in the form `OPENWOP-AUDIT-YYYY-NNN` (YYYY = audit year; NNN = serial). The serial is assigned by the steward at intake; once published it MUST NOT change. Distinct from `advisoryId` (which is the public CVE-style id assigned by the CNA per SECURITY.md §"Advisory IDs")."
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "Short human-readable title (single line)."
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["critical", "high", "medium", "low", "informational"],
+          "description": "CVSS-style severity. Critical/high MUST block public publication of high-stakes core packs per `SECURITY/external-audit-engagement.md` §2.1."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["open", "in-progress", "mitigated", "fixed", "wontfix", "duplicate"],
+          "description": "Lifecycle state. `wontfix` requires a documented rationale; `duplicate` requires a `duplicateOf` finding id."
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "description": "One-paragraph summary suitable for the public report. MUST NOT carry exploit details until embargo lifts."
+        },
+        "affectedSurfaces": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Spec / schema / host-impl surfaces the finding touches. E.g., `spec/v1/webhooks.md`, `examples/hosts/postgres/src/pack-consumer.ts`, `SECURITY/threat-model-prompt-injection.md`."
+        },
+        "threatModels": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "SECURITY/threat-model-auth-profiles.md",
+              "SECURITY/threat-model-secret-leakage.md",
+              "SECURITY/threat-model-prompt-injection.md",
+              "SECURITY/threat-model-node-packs.md",
+              "SECURITY/threat-model-provider-policy.md"
+            ]
+          },
+          "uniqueItems": true,
+          "description": "Threat-model docs this finding lives under. MUST reference at least one when severity is critical/high."
+        },
+        "invariantIds": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Invariant ids from `SECURITY/invariants.yaml` the finding violates or strengthens. Cross-references audit findings to the existing invariant catalog."
+        },
+        "remediationCommits": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{7,40}$"
+          },
+          "description": "Git SHAs of commits that close the finding. Multiple acceptable for findings requiring layered fixes."
+        },
+        "advisoryId": {
+          "type": "string",
+          "pattern": "^openwop-SA-[0-9]{4}-[0-9]{4}$",
+          "description": "Public CNA-assigned advisory id when the finding warrants a security advisory (typically critical/high). Format per SECURITY.md §\"Advisory IDs\". Omitted for findings handled inline without an advisory."
+        },
+        "embargoLiftedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp the embargo expired and the finding became public. While embargoed, the `summary` MUST stay generic; technical detail lands at lift-time."
+        },
+        "duplicateOf": {
+          "type": "string",
+          "pattern": "^OPENWOP-AUDIT-[0-9]{4}-[0-9]{3}$",
+          "description": "When `status === \"duplicate\"`, the canonical finding id this entry duplicates."
+        },
+        "wontfixRationale": {
+          "type": "string",
+          "minLength": 1,
+          "description": "When `status === \"wontfix\"`, the documented reason. Audit reviewer countersign-off SHOULD be referenced."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

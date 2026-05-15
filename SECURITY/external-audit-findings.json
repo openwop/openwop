@@ -1,0 +1,5 @@
+{
+  "$schema": "./external-audit-findings.schema.json",
+  "bundleVersion": "1",
+  "findings": []
+}

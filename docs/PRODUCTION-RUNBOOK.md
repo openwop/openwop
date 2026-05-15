@@ -135,7 +135,9 @@ Per [`observability.md`](../spec/v1/observability.md):
 - **Backpressure alert**: 503 rate vs your inflight cap.
 - **Retention sweep**: events older than `retentionDays` are evicted on schedule.
 - **Audit checkpoint cadence**: per the host's `checkpointIntervalEntries` + `checkpointIntervalSeconds` advertisement.
+- **Audit-log re-anchor (CF-11)**: export checkpoints via the host's export helper + run `node scripts/verify-audit-checkpoints.mjs <bundle>` from an independent machine. Exit 0 = chain valid.
 - **Webhook delivery success**: HMAC verification on the receiver side; circuit-breaker state.
+- **SSE longevity (CF-10)**: run `node conformance/soak/sse-longevity.mjs` for 10–30 minutes against the host; alert when `longestQuietSeconds` exceeds the heartbeat interval or `reconnects > 0`.
 - **Strict-mode conformance**: re-run weekly to catch drift.
 
 ---
