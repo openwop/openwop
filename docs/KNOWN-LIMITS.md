@@ -1,0 +1,116 @@
+# OpenWOP Known Limits
+
+> DOC-6 from `plans/openwop-protocol-gap-closure-plan.md`. Honest catalog of where the protocol corpus has shape-only coverage, external-gated work, profile claims with no non-steward implementer yet, or behavior tests too coarse to fully prove an invariant. Adoption trust improves when limits are explicit; this page is part of that contract.
+
+The page is **deliberately disagreeable.** If a row here understates what the protocol can prove, file a PR with the missing evidence. If a row overstates the issue, file a PR retiring it.
+
+For machine-readable counts, see [`docs/PROTOCOL-STATUS.md`](./PROTOCOL-STATUS.md). For the operational gap-closure roadmap that drives this page, see [`plans/openwop-protocol-gap-closure-plan.md`](../plans/openwop-protocol-gap-closure-plan.md).
+
+---
+
+## Shape-only conformance coverage
+
+These conformance scenarios validate the discovery / capability shape but cannot mechanically verify the host's run-time behavior without operator-supplied harness state.
+
+| Scenario | Shape-only because | What would close it |
+|---|---|---|
+| `multi-region-idempotency.test.ts` | Partition + reconciliation requires actual multi-region replication infrastructure that no reference host ships. The algorithm itself is verified at `examples/hosts/postgres/src/multi-region.ts` (canonical resolver, 6-path unit test). | CF-12 / OPS-5 — multi-region simulation harness or a deployed multi-region host. |
+| `replay-llm-cache-key.test.ts` | Cross-host LLM cache-key recipe — placeholder scenario with three `it.todo()` cases. | One adopter implementing the recipe end-to-end + a matching reference fixture. |
+| `auth-mtls.test.ts` (behavior portion) | Opt-in via `OPENWOP_TEST_MTLS=1` + operator-supplied cert paths. Capability-shape verification runs unconditionally; client-cert reject verification needs the harness. | Postgres reference host already implements mTLS termination + 3-path smoke (`test/mtls.test.ts`); the cross-host conformance behavior path lights up when a non-steward host follows. |
+| `pack-registry-publish.test.ts` | Validates server-side publish-time signature checks against a synthetic registry fixture, not the live `packs.openwop.dev` end-to-end. | Already largely closed — `registry-public.test.ts` tarball + signature verify roundtrip (CF-9 close-out 2026-05-13) covers the live path. Remaining: live-registry write-side coverage when the write API ships. |
+
+---
+
+## Behavior tests too coarse to fully prove an invariant
+
+Some invariants are stated normatively but mechanically verified at a level that admits non-compliant edge cases the scenario doesn't probe.
+
+| Invariant | Test today | Gap |
+|---|---|---|
+| `secret-leakage-otel-attribute` (reference-impl tier) | Verified host-internally via `examples/hosts/postgres/test/byok-roundtrip.test.ts`. | The conformance OTel collector seam doesn't yet inspect span attributes; a host could pass conformance while leaking BYOK material on telemetry exports. Marked `non_testability_rationale` in `SECURITY/invariants.yaml`. |
+| `secret-leakage-debug-bundle-otel` | Same as above. | Same — collector seam pending. |
+| `node-pack-sandbox-*` (8 reference-impl invariants) | None — no reference host executes pack-loaded typeIds in a sandbox. Postgres pack-consumer verifies install-time security only (PACK-1/PACK-2). | First reference host that mounts loaded typeIds into a sandbox. |
+| Cross-engine append ordering | `append-ordering.test.ts` covers intra-engine sequence ordering. | CF-8 — multi-engine fixture exercising two engines writing to the same event log. |
+
+---
+
+## Profiles claimed by reference hosts but pending non-steward adoption
+
+Per the project's `MAINTAINERS.md` `### Vendor-neutral tripwire`, several profile claims are reference-host-only today. They are mechanically verified — strict-mode conformance scenarios pass against the reference — but no non-steward implementer has shipped a host claiming them.
+
+| Profile | Reference host | Non-steward implementer status |
+|---|---|---|
+| `openwop-production` | Postgres | None yet. Outreach in `docs/recruitment/external-host.md`. |
+| `openwop-auth-oauth2-client-credentials` | Postgres | None yet. |
+| `openwop-auth-oidc-user-bearer` | Postgres | None yet. |
+| `openwop-auth-mtls` | Postgres | None yet. |
+| `openwop-auth-api-key-rotation` | Postgres | None yet. |
+| `openwop-discovery-auth-scoped` | Postgres | None yet. |
+| `capabilities.memory.compaction` (RFC 0012) | Postgres | None yet. |
+
+A non-steward implementer claiming any of these would fire the vendor-neutral migration tripwire in `MAINTAINERS.md`.
+
+---
+
+## Hosted infrastructure: what is live + what is not
+
+| Surface | Status |
+|---|---|
+| `packs.openwop.dev` registry | **Live.** 48 packs across 4 trust tiers as of 2026-05-13. Tarball + Ed25519 signature + SRI integrity verified end-to-end (`registry-public.test.ts`). |
+| `openwop.dev` site | Auto-built from spec corpus per `.github/workflows/site.yml`. Auto-deploy is gated on `vars.ALLOW_DEPLOY=1` (release-manager-controlled). |
+| Conformance leaderboard | **Not yet live.** GOV-3 plan task — needs a hosted page rendering `INTEROP-MATRIX.md` evidence + badge semantics. |
+| External audit report | **Not yet engaged.** Outreach drafted at `SECURITY/outreach/external-audit/STATUS.md`; SEC-2 audit scope pinned to current repo state 2026-05-15. |
+| High-stakes `core.openwop.{ai,http,mcp,triggers}` packs | **Built + signed in-tree, audit-gated for public publication.** See `SECURITY/external-audit-engagement.md` §2.1. |
+
+---
+
+## External-action gates (cannot be closed without outside engagement)
+
+The plan calls these out explicitly — none can be moved by repo-side mechanical work alone.
+
+| Plan task | What's required |
+|---|---|
+| SEC-1 | Refresh + SEND external audit outreach to ≥3 vendors. |
+| SEC-7 | Complete audit vendor selection + contract + kickoff. |
+| SEC-8 | Remediate findings + publish public summary. |
+| GOV-1 | Send external host recruitment outreach. |
+| GOV-2 | Send external pack-author outreach. |
+| GOV-5 | Add at least one external reviewer before maintainer promotion. |
+| GOV-6 | Land one non-steward host or adapter row in INTEROP-MATRIX. |
+| GOV-7 | Promote a non-steward maintainer when criteria are met. |
+| GOV-8 | Open vendor-neutral org migration RFC after tripwire fires. |
+
+---
+
+## RFCs not yet `Accepted`
+
+| RFC | Status | Why open |
+|---|---|---|
+| 0013 (Workflow-chain packs) | `Draft` | Pending schema + conformance proof + editor implementation. PACK-7 close-out: either advance or `Withdrawn`. |
+
+---
+
+## Surfaces deliberately NOT standardized
+
+OpenWOP is intentionally narrow. These surfaces live in adopter / vendor / host territory by design — adoption confusion sometimes treats their absence as a gap. It is not.
+
+- **Model SDK shape.** How a host calls OpenAI / Anthropic / etc. is the host's choice.
+- **Internal runtime topology.** Workers, queues, schedulers — OpenWOP is the wire contract, not the runtime.
+- **Tool protocol.** MCP is the wire surface; how tools execute inside a tool server is the tool server's concern.
+- **Cross-process agent messaging.** A2A is the wire surface; internal RPC is the host's choice.
+- **Storage adapter shape.** OpenWOP defines `RunEventLogIO` + `SuspendIO` contracts; Postgres / DynamoDB / SQLite / etc. is the host's choice.
+- **Authentication backend.** OpenWOP defines bearer auth + auth-extension profiles; IdP integration is the host's deployment concern.
+- **Pack execution sandbox.** RFC 0008 defines the WASM ABI; host runtime sandbox implementation is per-host.
+
+See [`spec/v1/positioning.md`](../spec/v1/positioning.md) §"Standards composition matrix" for the full composition stance.
+
+---
+
+## See also
+
+- [`docs/PROTOCOL-STATUS.md`](./PROTOCOL-STATUS.md) — generated repo state.
+- [`plans/openwop-protocol-gap-closure-plan.md`](../plans/openwop-protocol-gap-closure-plan.md) — controllable + external-gated work.
+- [`docs/IMPLEMENTER-PATH.md`](./IMPLEMENTER-PATH.md) — adoption-side path.
+- [`docs/PROFILE-DECISION-GUIDE.md`](./PROFILE-DECISION-GUIDE.md) — profile-selection decision tree.
+- [`INTEROP-MATRIX.md`](../INTEROP-MATRIX.md) — public host roster + evidence claims.
+- [`SECURITY/invariants.yaml`](../SECURITY/invariants.yaml) — protocol-tier + reference-impl-tier invariants with test references or non-testability rationales.
