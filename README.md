@@ -222,7 +222,7 @@ These are deliberately deferred:
 
 - **External security audit + vendor-neutral org migration** — both ecosystem milestones gated on a ≥1-non-steward maintainer tripwire per [`ROADMAP.md`](./ROADMAP.md) §Phase 4.
 
-The reference node-pack registry at [`packs.openwop.dev`](https://packs.openwop.dev) **is live** (Stage 1–4 deployed 2026-05-12, packCount 48 as of 2026-05-13 across `core.openwop.*` / `community.openwop-team.*` / `vendor.openwop.*` / `vendor.myndhyve.*` trust tiers). See [`docs/PACK-CATALOG.md`](./docs/PACK-CATALOG.md) for the categorized inventory and [`examples/market-intel-pipeline/`](./examples/market-intel-pipeline/) + [`examples/ads-publish-pipeline/`](./examples/ads-publish-pipeline/) for reference compositions.
+The reference node-pack registry at [`packs.openwop.dev`](https://packs.openwop.dev) **is live** (Stage 1–4 deployed 2026-05-12, packCount 48 as of 2026-05-13 across `core.openwop.*` / `community.openwop-team.*` / `vendor.openwop.*` / `vendor.myndhyve.*` trust tiers). See [`docs/PACK-CATALOG.md`](./docs/PACK-CATALOG.md) for the categorized inventory and [`examples/market-intel-pipeline/`](./examples/market-intel-pipeline/) + [`examples/ads-publish-pipeline/`](./examples/ads-publish-pipeline/) for reference compositions. For the canonical multi-agent worked example (orchestrator + dispatch + AgentRef + reasoning events + HITL + memory + RFC 0012 compaction) see [`examples/multi-agent-research-assistant/`](./examples/multi-agent-research-assistant/).
 
 ## Reporting issues
 
