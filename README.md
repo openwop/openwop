@@ -111,6 +111,8 @@ This repository is the canonical source for the protocol itself; reference imple
 - [`docs/IMPLEMENTER-PATH.md`](./docs/IMPLEMENTER-PATH.md) — one-page path from "what is OpenWOP" to "my host has a published row in `INTEROP-MATRIX.md`". Start here if you're building a new host.
 - [`docs/PROFILE-DECISION-GUIDE.md`](./docs/PROFILE-DECISION-GUIDE.md) — decision tree for which OpenWOP capability profiles to claim (and which to honestly opt out of).
 - [`docs/IMPLEMENTATION-CERTIFICATION.md`](./docs/IMPLEMENTATION-CERTIFICATION.md) — how a host author publishes a conformance claim that third parties can audit + reproduce + pin to a commit.
+- [`docs/PRODUCTION-RUNBOOK.md`](./docs/PRODUCTION-RUNBOOK.md) — operator playbook for booting an OpenWOP host that honors `openwop-production` per RFC 0009.
+- [`docs/integrations/durable-runtimes.md`](./docs/integrations/durable-runtimes.md) — implementation guide for hosts built on Temporal / Restate / DBOS / Inngest.
 - [`docs/KNOWN-LIMITS.md`](./docs/KNOWN-LIMITS.md) — honest catalog of shape-only coverage, external-gated work, profile claims awaiting non-steward adoption, and surfaces deliberately NOT standardized.
 - [`docs/migration/v1.0-to-v1.1.md`](./docs/migration/v1.0-to-v1.1.md) — what's new in v1.1 (additive only; no migration steps required for v1.0 implementations).
 

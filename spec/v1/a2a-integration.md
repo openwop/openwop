@@ -231,6 +231,25 @@ The real-impl path is the **Phase 3 T3.4 interop-evidence** for `docs/PROTOCOL-G
 
 ---
 
+## Operational mapping table (STD-3 deeper coverage, 2026-05-15)
+
+The earlier sections cover happy-path projection. Production deployments hit edge cases the roundtrip smoke doesn't exercise. The table below documents the recommended projection for each.
+
+| Operational concern | A2A side | OpenWOP side | Recommended mapping |
+|---|---|---|---|
+| **Failure on the OpenWOP side mid-run** | Task transitions to `failed`. | Run reaches terminal `failed`; `RunSnapshot.error` carries the canonical `RunErrorCode`. | The A2A bridge MUST surface `Task.error.message` derived from `RunSnapshot.error.message`. Carry the typed `code` in `Task.metadata.openwop.errorCode` for clients that recognize it. |
+| **OpenWOP HITL interrupt opens** | Task transitions to `input-required`. | Run status flips to `waiting-approval` / `waiting-input` / `waiting-clarification`. | Project the interrupt's signed token into `Task.metadata.openwop.interruptToken`. The A2A client invokes `POST /v1/interrupts/{token}` directly OR via an `a2a:Message` whose `metadata.openwop.action` carries the resolution payload. |
+| **OpenWOP cancellation** (`POST /v1/runs/{id}/cancel`) | The A2A bridge MUST issue an A2A cancel toward the peer. | Run reaches `cancelled` with `reason: 'cross_protocol_cancel'`. | Cancellation flows bidirectionally; whichever side initiates wins. Document the precedence in your A2A bridge's deployment notes if both sides can initiate. |
+| **A2A peer goes unreachable during run** | A2A transport error (timeout / 5xx). | Bridge node SHOULD retry per its retry policy; on exhaustion, emit `node.failed` with `code: 'external_call_failed'`. | Don't transition the run to `failed` solely on transport unreachability — let `core.dispatch` retry semantics apply per RFC 0007. |
+| **Concurrent runs against the same A2A peer** | A2A peer MAY serialize OR parallelize per its own AgentCard. | OpenWOP run lifecycle is independent per `runId`. | Each OpenWOP run gets its own A2A Task; correlation via `Task.metadata.openwop.runId`. The A2A bridge node MUST NOT assume serialization. |
+| **Identity propagation under multi-hop** | A2A doesn't normate identity propagation beyond AgentCard. | OpenWOP propagates `RunSnapshot.runOrchestrator.agentId` for replay determinism. | When OpenWOP dispatches to A2A, the bridge SHOULD include the calling AgentRef in `Message.metadata.openwop.callerAgentId` so downstream peers can attribute. NEVER include BYOK credential material. |
+| **Time-skew between A2A and OpenWOP clocks** | A2A `Task.createdAt` is the peer's clock. | OpenWOP `Run.createdAt` is the OpenWOP host's clock. | Bridge nodes SHOULD record both timestamps; observers MUST NOT assume monotonicity across the boundary. |
+| **Backpressure on the A2A peer** | A2A 503 / `unavailable` state. | OpenWOP run hits transport-layer `unavailable`. | The bridge node SHOULD project peer-backpressure to a transient `external_call_failed`; `core.dispatch` retry semantics apply. Don't bubble backpressure as run-level `failed`. |
+| **Trust-boundary on A2A messages** | A2A messages from peers are external. | OpenWOP's `mcpClient.trustBoundary: 'untrusted'` discipline applies analogously. | Any A2A message content reaching OpenWOP run state MUST be tagged `contentTrust: 'untrusted'` before downstream LLM nodes consume it, matching `threat-model-prompt-injection.md` §"UNTRUSTED" semantics. |
+| **Replay determinism across the boundary** | A2A peers MAY emit different responses on replay (the peer's choice). | OpenWOP replay caches per RFC 0006 §C apply. | The bridge node MUST cache the A2A peer's response in the OpenWOP event-log payload; replay-time A2A calls MUST be replaced by the cached response, not re-issued. |
+
+These mappings stay non-normative for v1.x — A2A's spec is itself evolving. Hosts that codify deviations from this table SHOULD document them in their own integration notes.
+
 ## Future work
 
 - Codify a recommended `metadata.openwop.*` shape so A2A clients can render openwop-interrupt-rich payloads consistently across hosts.
