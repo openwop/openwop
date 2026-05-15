@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0012 |
 | **Title** | Memory Compaction Profile |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-13 |
-| **Updated** | 2026-05-13 (Draft → Active; 7-day public comment window opens, closes 2026-05-20) |
+| **Updated** | 2026-05-15 (Active → Accepted; comment window waived under `CONTRIBUTING.md` §"Bootstrap-phase notes" — sole-steward repo with no non-steward maintainer per `MAINTAINERS.md` and no external commenters of record. All 6 acceptance criteria satisfied at promotion time: spec text + invariant + reference impl + 3 conformance scenarios + CHANGELOG + INTEROP-MATRIX. Future RFCs revert to the 7-day window once a non-steward maintainer joins.) |
 | **Affects** | `spec/v1/capabilities.md` (new optional `capabilities.memory.compaction` block), `spec/v1/observability.md` (new optional event type `memory.compacted`), `SECURITY/invariants.yaml` (SR-1 carry-forward through compaction outputs), `schemas/memory-entry.schema.json` (no shape change; new tag-prefix convention) |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -161,12 +161,12 @@ All three scenarios skip cleanly when the capability is absent. Suite-version bu
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (this RFC + `capabilities.md` annex + `observability.md` event-vocabulary row).
-- [ ] `SECURITY/invariants.yaml` entry for `memory-compaction-sr-1-carry-forward` (or explicit decision to fold into RFC 0004's existing SR-1 row).
-- [ ] At least one reference host (in-memory or Postgres) implements §A advertisement + §B event emission + §D carry-forward.
-- [ ] Three conformance scenarios from §Conformance, all capability-gated.
-- [ ] CHANGELOG entry under the v1.X version that ships the suite minor.
-- [ ] `INTEROP-MATRIX.md` row updated for any reference host that advertises the profile, with a one-line evidence claim.
+- [x] Spec text merged (this RFC + `capabilities.md` annex + `observability.md` event-vocabulary row). — Landed 2026-05-13 in `c30a284` (Phase 2).
+- [x] `SECURITY/invariants.yaml` entry for `memory-compaction-sr-1-carry-forward` (or explicit decision to fold into RFC 0004's existing SR-1 row). — Landed 2026-05-13 in `c30a284`; new protocol-tier row (severity: critical) referenced by `memory-compaction-sr1-carry-forward.test.ts`. Protocol-tier invariants 35 → 36.
+- [x] At least one reference host (in-memory or Postgres) implements §A advertisement + §B event emission + §D carry-forward. — Postgres reference host, landed 2026-05-14 in `2bf082a`. Conditional advertisement gated on `OPENWOP_MEMORY_COMPACTION=true`; `runCompaction` + `applyCompactionRedaction` enforce SR-1 §D end-to-end; host smoke verifies 7 paths.
+- [x] Three conformance scenarios from §Conformance, all capability-gated. — `memory-compaction-{event-emitted,sr1-carry-forward,provenance-tag}.test.ts`, all gated on `capabilities.memory.compaction.supported`. 3/3 pass live against the Postgres reference host.
+- [x] CHANGELOG entry under the v1.X version that ships the suite minor. — `[1.1.1 — unreleased]` block carries the Phase 1, Phase 2, and Phase 3 prep bullets.
+- [x] `INTEROP-MATRIX.md` row updated for any reference host that advertises the profile, with a one-line evidence claim. — Postgres row's Phase I.7 / I.2 / RFC 0012 evidence paragraph names the conditional env vars + the host smoke file.
 
 ## References
 
