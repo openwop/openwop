@@ -103,6 +103,27 @@ export interface CancelRunResponse {
   status: 'cancelled' | 'cancelling';
 }
 
+export interface PauseRunRequest {
+  reason?: string;
+  drainPolicy?: 'immediate' | 'drain-current-node';
+}
+
+export interface PauseRunResponse {
+  runId: string;
+  status: 'paused';
+  pausedAt?: string;
+}
+
+export interface ResumeRunRequest {
+  reason?: string;
+}
+
+export interface ResumeRunResponse {
+  runId: string;
+  status: 'running';
+  resumedAt?: string;
+}
+
 // rest-endpoints.md §"POST /v1/runs:bulk-cancel" (closes R1).
 export interface BulkCancelRunsRequest {
   runIds: readonly string[];

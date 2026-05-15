@@ -1,6 +1,6 @@
 # openwop Spec v1 — Node Packs and the Public Registry
 
-> **Status: FINAL v1 (2026-04-27).** Comprehensive coverage of the pack manifest format, distribution, signing, and registry HTTP API. Language-neutral stable surface for external review. Not yet referenced from a publicly-deployed registry. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: FINAL v1 (2026-04-27).** Comprehensive coverage of the pack manifest format, distribution, signing, and registry HTTP API. Language-neutral stable surface for external review. The hosted reference registry is live at `https://packs.openwop.dev/`; local registry contents are summarized in `docs/PROTOCOL-STATUS.md`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ---
 
@@ -523,7 +523,7 @@ A workflow that references a typeId not provided by any registered pack MUST be 
 
 | # | Gap | Owner |
 |---|---|---|
-| ~~NP1~~ | ~~WASM ABI for `language: wasm` packs~~ — ✅ closed by [RFC 0008 — WASM ABI v1](../../RFCS/0008-wasm-abi.md) (Active 2026-05-10, eligible for Accepted promotion). See §"WASM runtime" above. | closed |
+| ~~NP1~~ | ~~WASM ABI for `language: wasm` packs~~ — closed by [RFC 0008 — WASM ABI v1](../../RFCS/0008-wasm-abi.md) (`Accepted`). See §"WASM runtime" above. | closed |
 | NP2 | Pack-level `dependencies` resolution (transitive packs) — currently underspecified. | future v1.x |
 | NP3 | Mirror / federation between registries (npm-style upstream-fallback). | future |
 | ~~NP4~~ | ~~Pack deprecation flow~~ — closed by `registry-operations.md` §"Deprecation flow" (2026-04-29). | ✅ closed |

@@ -84,10 +84,14 @@ npx tsc --noEmit   # typecheck the SDK source
 | `GET /v1/runs/{id}/events` (SSE) | `client.runs.events(id, opts?)` (async iterable) |
 | `GET /v1/runs/{id}/events/poll` | `client.runs.pollEvents(id, opts?)` |
 | `POST /v1/runs/{id}/cancel` | `client.runs.cancel(id, body?)` |
+| `POST /v1/runs:bulk-cancel` | `client.runs.bulkCancel(body, opts?)` |
+| `POST /v1/runs/{id}:pause` | `client.runs.pause(id, body?, opts?)` |
+| `POST /v1/runs/{id}:resume` | `client.runs.resume(id, body?, opts?)` |
 | `POST /v1/runs/{id}:fork` | `client.runs.fork(id, body)` |
 | `POST /v1/runs/{id}/interrupts/{nodeId}` | `client.interrupts.resolveByRun(id, nodeId, body)` |
 | `GET /v1/interrupts/{token}` | `client.interrupts.inspectByToken(token)` |
 | `POST /v1/interrupts/{token}` | `client.interrupts.resolveByToken(token, body)` |
+| `GET /v1/audit/verify` | `client.audit.verify(fromSeq, toSeq)` |
 
 **Idempotency-Key** is supported via the `idempotencyKey` option on every mutation method.
 

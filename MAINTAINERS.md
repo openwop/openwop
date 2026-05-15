@@ -116,6 +116,7 @@ Per `CONTRIBUTING.md` §"Bootstrap-phase notes," additive RFCs MAY be promoted D
 | 0009 | Production-Profile Conformance | 2026-05-11 | 2026-05-11 | < 1 day | Additive; INTEROP-MATRIX Postgres row already claimed `production-profile.md` without mechanical evidence — closing the gap was higher-value than the 7-day delay |
 | 0010 | Auth-Profile Conformance | 2026-05-11 | 2026-05-12 | < 1 day | Additive; consolidates four production-auth profile claims from `auth-profiles.md` (FINAL v1) into mechanical conformance — same posture as RFC 0009 |
 | 0011 | Auth-Scoped Discovery Advertisement | 2026-05-12 | 2026-05-12 | < 1 day | Additive; closes ROADMAP Track 2 "next add auth-scoped discovery variants when a host advertises them" by formalizing `capabilities.discovery.authScoped` as a capability flag and adding the three conformance subtests called out in `capabilities-change-detection.md` §"Conformance expectations" |
+| 0012 | Memory Compaction Profile | 2026-05-13 | 2026-05-15 | < 2 days | Additive; closes the SR-1 carry-forward gap for host-managed memory compaction and shipped with Postgres reference behavior plus conformance scenarios before external reviewers existed |
 
 When the count gets uncomfortable (e.g., > 5 waivers within a 30-day window, or > 15 total before the first non-steward maintainer joins), that's a signal to slow down and stage at least one RFC through a real 7-day window even without external reviewers — exercising the process is itself a credibility surface.
 

@@ -1,5 +1,9 @@
 # `openwopclient` Changelog
 
+## [1.0 — additions] — 2026-05-15 — pause/resume helpers
+
+- **New run-control helpers.** `OpenwopClient.PauseRun(ctx, runID, body, opts)` calls `POST /v1/runs/{id}:pause`; `OpenwopClient.ResumeRun(ctx, runID, body, opts)` calls `POST /v1/runs/{id}:resume`. New types: `PauseRunRequest`, `PauseRunResponse`, `ResumeRunRequest`, `ResumeRunResponse`.
+
 ## [1.0 — additions] — 2026-05-12 — Phase B SDK helpers + pack-lockfile error codes
 
 - **New methods for Phase B endpoints.** `OpenwopClient.BulkCancelRuns(ctx, body, opts)` calls `POST /v1/runs:bulk-cancel` per `rest-endpoints.md` (closes R1); `OpenwopClient.VerifyAuditLog(ctx, fromSeq, toSeq)` calls `GET /v1/audit/verify` per `auth-profiles.md` §`openwop-audit-log-integrity`. New types: `BulkCancelRunsRequest`, `BulkCancelRunsResponse`, `BulkCancelRunResult`, `AuditVerifyResult`, `AuditVerifyCheckpoint`, `AuditVerifyAnomaly`.

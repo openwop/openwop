@@ -53,7 +53,7 @@ These packs are advertised throughout the spec and will become permanent immutab
 
 **RFCs (drafts at engagement kickoff):**
 - RFCs 0002–0007 (multi-agent extensions — agent identity, agent packs, memory, conversation, orchestrator, dispatch)
-- RFC 0008 (WASM ABI for node packs — likely still `Draft` at kickoff; review the ABI even if implementation is pending)
+- RFC 0008 (WASM ABI for node packs, `Accepted`; review the ABI and reference loader/conformance scenarios)
 
 ### 2.2 Specific questions the review answers
 

@@ -8,8 +8,9 @@
 #   4. Go SDK passes go vet + tests (skipped if Go is not installed)
 #   5. OpenAPI lints clean (redocly)
 #   6. AsyncAPI validates (asyncapi-cli)
-#   7. Publish/package audit (metadata + npm/Python/Go release surfaces)
-#   8. Security invariants — every protocol-tier MUST-NOT in
+#   7. Generated protocol status + active-doc stale-status guard
+#   8. Publish/package audit (metadata + npm/Python/Go release surfaces)
+#   9. Security invariants — every protocol-tier MUST-NOT in
 #      SECURITY/invariants.yaml has at least one matching public test.
 #
 # Mirror of .github/workflows/openwop-spec.yml — run this before pushing
@@ -34,7 +35,7 @@ echo
 # 1. TypeScript SDK — build first (emits dist/) so step 2's corpus-validity
 # test can assert against the dist artifacts. Order matters: the conformance
 # corpus-validity test in step 2 reads sdk/typescript/dist/*.map.
-echo "[1/8] TypeScript reference SDK (build + emit dist/)..."
+echo "[1/9] TypeScript reference SDK (build + emit dist/)..."
 (
   cd "$SPEC_ROOT/sdk/typescript"
   if [[ ! -d node_modules ]]; then
@@ -48,7 +49,7 @@ echo "[1/8] TypeScript reference SDK (build + emit dist/)..."
 echo
 
 # 2. Conformance package — typecheck + server-free scenarios.
-echo "[2/8] Conformance suite (typecheck + server-free scenarios)..."
+echo "[2/9] Conformance suite (typecheck + server-free scenarios)..."
 (
   cd "$SPEC_ROOT/conformance"
   if [[ ! -d node_modules ]]; then
@@ -65,7 +66,7 @@ echo
 # 3. Python SDK — syntax check + import smoke. Mypy is NOT run here
 # (it's an optional dev dep); contributors can `pip install -e .[dev]`
 # and run mypy locally for a stricter check.
-echo "[3/8] Python reference SDK (syntax + import smoke)..."
+echo "[3/9] Python reference SDK (syntax + import smoke)..."
 (
   cd "$SPEC_ROOT/sdk/python"
   PY=$(command -v python3.13 || command -v python3.12 || command -v python3.11 || command -v python3.10 || command -v python3)
@@ -84,7 +85,7 @@ echo "[3/8] Python reference SDK (syntax + import smoke)..."
 echo
 
 # 4. Go SDK — go vet + tests (skipped if Go not installed).
-echo "[4/8] Go reference SDK (go vet + tests)..."
+echo "[4/9] Go reference SDK (go vet + tests)..."
 (
   cd "$SPEC_ROOT/sdk/go"
   if ! command -v go >/dev/null 2>&1; then
@@ -98,7 +99,7 @@ echo "[4/8] Go reference SDK (go vet + tests)..."
 echo
 
 # 5. OpenAPI lint via redocly.
-echo "[5/8] OpenAPI 3.1 (redocly lint)..."
+echo "[5/9] OpenAPI 3.1 (redocly lint)..."
 (
   cd "$SPEC_ROOT/api"
   npm_config_cache="$NPM_CACHE" npx -y -p @redocly/cli@latest redocly lint openapi.yaml
@@ -106,21 +107,28 @@ echo "[5/8] OpenAPI 3.1 (redocly lint)..."
 echo
 
 # 6. AsyncAPI validate.
-echo "[6/8] AsyncAPI 3.1 (asyncapi validate)..."
+echo "[6/9] AsyncAPI 3.1 (asyncapi validate)..."
 npm_config_cache="$NPM_CACHE" npx -y -p @asyncapi/cli@latest asyncapi validate "$SPEC_ROOT/api/asyncapi.yaml"
 echo
 
-# 7. Publish-metadata + package-content audit — catches placeholder URLs,
+# 7. Generated protocol status — catches stale corpus counts, RFC status
+# drift, registry-count drift, SDK parity-count drift, and active-doc stale
+# phrases that should not survive outside archived historical docs.
+echo "[7/9] Generated protocol status..."
+node "$SPEC_ROOT/scripts/generate-protocol-status.mjs" --check
+echo
+
+# 8. Publish-metadata + package-content audit — catches placeholder URLs,
 # stale module paths, package posture drift, and package content leaks.
-echo "[7/8] Publish metadata + package contents..."
+echo "[8/9] Publish metadata + package contents..."
 "$(dirname "$0")/openwop-check-publish-metadata.sh"
 "$(dirname "$0")/check-npm-pack-contents.sh"
 "$(dirname "$0")/check-python-go-release-surface.sh"
 echo
 
-# 8. Security invariants — every protocol-tier MUST-NOT in
+# 9. Security invariants — every protocol-tier MUST-NOT in
 # SECURITY/invariants.yaml has at least one matching public test.
-echo "[8/8] Security invariants..."
+echo "[9/9] Security invariants..."
 "$(dirname "$0")/check-security-invariants.sh"
 echo
 

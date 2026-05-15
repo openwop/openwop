@@ -23,10 +23,14 @@ import {
   type ForkRunRequest,
   type ForkRunResponse,
   type InterruptByTokenInspection,
+  type PauseRunRequest,
+  type PauseRunResponse,
   type PollEventsResponse,
   type ResolveInterruptByTokenResponse,
   type ResolveInterruptRequest,
   type ResolveInterruptResponse,
+  type ResumeRunRequest,
+  type ResumeRunResponse,
   type RunEventDoc,
   type RunSnapshot,
 } from './types.js';
@@ -114,6 +118,30 @@ export class OpenwopClient {
       this.#request<CancelRunResponse>({
         method: 'POST',
         path: `/v1/runs/${encodeURIComponent(runId)}/cancel`,
+        body,
+        headers: this.#mutationHeaders(opts),
+      }),
+
+    pause: (
+      runId: string,
+      body: PauseRunRequest = {},
+      opts: MutationOptions = {},
+    ): Promise<PauseRunResponse> =>
+      this.#request<PauseRunResponse>({
+        method: 'POST',
+        path: `/v1/runs/${encodeURIComponent(runId)}:pause`,
+        body,
+        headers: this.#mutationHeaders(opts),
+      }),
+
+    resume: (
+      runId: string,
+      body: ResumeRunRequest = {},
+      opts: MutationOptions = {},
+    ): Promise<ResumeRunResponse> =>
+      this.#request<ResumeRunResponse>({
+        method: 'POST',
+        path: `/v1/runs/${encodeURIComponent(runId)}:resume`,
         body,
         headers: this.#mutationHeaders(opts),
       }),

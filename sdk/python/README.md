@@ -80,10 +80,14 @@ pip install -e .[dev]
 | `GET /v1/runs/{id}/events` (SSE) | `client.runs_events(id, stream_mode=...)` (sync generator) |
 | `GET /v1/runs/{id}/events/poll` | `client.runs_poll_events(id, last_sequence=..., timeout_seconds=...)` |
 | `POST /v1/runs/{id}/cancel` | `client.runs_cancel(id, body=..., idempotency_key=...)` |
+| `POST /v1/runs:bulk-cancel` | `client.runs_bulk_cancel(body, idempotency_key=...)` |
+| `POST /v1/runs/{id}:pause` | `client.runs_pause(id, body=..., idempotency_key=...)` |
+| `POST /v1/runs/{id}:resume` | `client.runs_resume(id, body=..., idempotency_key=...)` |
 | `POST /v1/runs/{id}:fork` | `client.runs_fork(id, body, idempotency_key=...)` |
 | `POST /v1/runs/{id}/interrupts/{nodeId}` | `client.interrupts_resolve_by_run(id, node_id, body)` |
 | `GET /v1/interrupts/{token}` | `client.interrupts_inspect_by_token(token)` |
 | `POST /v1/interrupts/{token}` | `client.interrupts_resolve_by_token(token, body)` |
+| `GET /v1/audit/verify` | `client.audit_verify(from_seq, to_seq)` |
 
 **Idempotency-Key** is supported via the `idempotency_key=` keyword argument on every mutation method.
 

@@ -1,5 +1,9 @@
 # `@openwop/openwop` Changelog
 
+## [1.0 — additions] — 2026-05-15 — pause/resume helpers
+
+- **New run-control helpers.** `client.runs.pause(runId, body?, opts?)` calls `POST /v1/runs/{id}:pause`; `client.runs.resume(runId, body?, opts?)` calls `POST /v1/runs/{id}:resume`. New exported types: `PauseRunRequest`, `PauseRunResponse`, `ResumeRunRequest`, `ResumeRunResponse`.
+
 ## [1.0 — additions] — 2026-05-12 — Phase B SDK helpers + pack-lockfile error codes
 
 - **New helpers for Phase B endpoints.** `client.runs.bulkCancel(body, opts?)` calls `POST /v1/runs:bulk-cancel` per `rest-endpoints.md` (closes R1); `client.audit.verify(fromSeq, toSeq)` calls `GET /v1/audit/verify` per `auth-profiles.md` §`openwop-audit-log-integrity`. New types exported: `BulkCancelRunsRequest`, `BulkCancelRunsResponse`, `BulkCancelRunResult`, `AuditVerifyResult`, `AuditVerifyCheckpoint`, `AuditVerifyAnomaly`.

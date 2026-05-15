@@ -1,6 +1,6 @@
 # SDK Parity Matrix
 
-> **Status:** Living document. Last reviewed 2026-05-11 against:
+> **Status:** Living document. Last reviewed 2026-05-15 against:
 > - `@openwop/openwop` TypeScript SDK (~960 LOC, 5 files under `sdk/typescript/src/`)
 > - `openwop-client` Python SDK (~990 LOC, 5 files under `sdk/python/src/openwop_client/`)
 > - `github.com/openwop/openwop/sdk/go` Go SDK (~880 LOC, 4 files under `sdk/go/`)
@@ -17,17 +17,17 @@ This matrix records per-protocol-surface feature parity across the three referen
 
 ## Headline
 
-The three SDKs are at **near-perfect parity on the v1.0 wire-core surface** (discovery, run lifecycle, idempotency, event poll + SSE, HITL interrupts, error envelope, scopes-aware HTTP error helpers). They are **uniformly absent** on the v1.x optional surfaces landed 2026-04 through 2026-05-11 (audit-log integrity, webhooks register/deliver, debug-bundle GET, pause/resume, registry endpoints). The uniformity is the important property here — no SDK is ahead of any other on the wire-core surfaces, so cross-language migration of a downstream application is symmetric.
+The three SDKs are at **near-perfect parity on the v1.0 wire-core surface** (discovery, run lifecycle, idempotency, event poll + SSE, HITL interrupts, error envelope, scopes-aware HTTP error helpers). The stable v1.x run-control additions now have first-class helpers across all three SDKs: bulk cancel, pause, resume, and audit-log verification. Remaining raw-only rows are concentrated in webhook management, debug-bundle retrieval, registry reads, and Python/Go convenience predicates.
 
 Per-SDK net surface counts (counted from the per-surface tables below, excluding the headline-summary row):
 
 | SDK | ✅ helpers | ⚠️ raw-only | ❌ unreachable |
 |---|---:|---:|---:|
-| TypeScript (`@openwop/openwop`) | 22 | 10 | 0 |
-| Python (`openwop-client`) | 19 | 13 | 0 |
-| Go (`github.com/openwop/openwop/sdk/go`) | 19 | 13 | 0 |
+| TypeScript (`@openwop/openwop`) | 26 | 6 | 0 |
+| Python (`openwop-client`) | 23 | 9 | 0 |
+| Go (`github.com/openwop/openwop/sdk/go`) | 23 | 9 | 0 |
 
-(Counts bumped 2026-05-12 — Phase B added 2 first-class helpers per SDK: `bulkCancel` for `POST /v1/runs:bulk-cancel` (closes R1) + `audit.verify` / `audit_verify` / `VerifyAuditLog` for `GET /v1/audit/verify`.)
+(Counts bumped 2026-05-15 — Phase 0/P0 gap-closure added pause/resume helpers across all three SDKs and corrected the matrix for already-existing stream `bufferMs` + mixed-mode helpers.)
 
 TypeScript is the slight leader: it ships dedicated `RUN_ERROR_CODES` / `isRunErrorCode` helpers and `ACTIVE_RUN_STATUSES` / `TERMINAL_RUN_STATUSES` constants + an `isTerminalRunStatus` predicate; Python and Go consumers can compose the same checks from the exported type unions / string constants but without a one-symbol helper. Adding the matching helpers to Python and Go is a session-sized follow-up; everything else is parity-clean across the three.
 
@@ -57,8 +57,8 @@ TypeScript is the slight leader: it ships dedicated `RUN_ERROR_CODES` / `isRunEr
 | `POST /v1/runs/{id}/cancel` | ✅ `client.runs.cancel(id, ...)` | ✅ `client.runs_cancel(id, ...)` | ✅ `client.CancelRun(ctx, ...)` |
 | `POST /v1/runs:bulk-cancel` (Phase B, 2026-05-12) | ✅ `client.runs.bulkCancel({...})` | ✅ `client.runs_bulk_cancel(...)` | ✅ `client.BulkCancelRuns(ctx, ...)` |
 | `POST /v1/runs/{id}:fork` | ✅ `client.runs.fork(id, ...)` | ✅ `client.runs_fork(id, ...)` | ✅ `client.ForkRun(ctx, ...)` |
-| `POST /v1/runs/{id}:pause` (Track 13, 2026-05-10) | ⚠️ raw HTTP | ⚠️ raw HTTP | ⚠️ raw HTTP |
-| `POST /v1/runs/{id}:resume` (Track 13, 2026-05-10) | ⚠️ raw HTTP | ⚠️ raw HTTP | ⚠️ raw HTTP |
+| `POST /v1/runs/{id}:pause` (Track 13, 2026-05-10) | ✅ `client.runs.pause(id, body?, opts?)` | ✅ `client.runs_pause(id, body=..., idempotency_key=...)` | ✅ `client.PauseRun(ctx, id, body, opts)` |
+| `POST /v1/runs/{id}:resume` (Track 13, 2026-05-10) | ✅ `client.runs.resume(id, body?, opts?)` | ✅ `client.runs_resume(id, body=..., idempotency_key=...)` | ✅ `client.ResumeRun(ctx, id, body, opts)` |
 
 ### Events
 
@@ -66,8 +66,8 @@ TypeScript is the slight leader: it ships dedicated `RUN_ERROR_CODES` / `isRunEr
 |---|---|---|---|
 | `GET /v1/runs/{id}/events/poll` | ✅ `client.runs.pollEvents(id, opts)` | ✅ `client.runs_poll_events(id, ...)` | ✅ `client.PollRunEvents(ctx, ...)` |
 | `GET /v1/runs/{id}/events` (SSE) | ✅ `client.runs.events(id, opts)` AsyncGenerator | ✅ `sse.stream_events(client, id, ...)` generator | ✅ `client.StreamEvents(ctx, ...)` channel |
-| `bufferMs` query (stream-modes-buffer) | ⚠️ raw HTTP | ⚠️ raw HTTP | ⚠️ raw HTTP |
-| Mixed `?streamMode=values,updates` | ⚠️ raw HTTP | ⚠️ raw HTTP | ⚠️ raw HTTP |
+| `bufferMs` query (stream-modes-buffer) | ✅ `client.runs.events(id, { bufferMs })` | ✅ `client.runs_events(id, buffer_ms=...)` | ✅ `client.StreamEvents(ctx, id, StreamEventsOptions{BufferMs: ...})` |
+| Mixed `?streamMode=values,updates` | ✅ `client.runs.events(id, { streamMode: [...] })` | ✅ `client.runs_events(id, stream_mode=[...])` | ✅ `client.StreamEvents(ctx, id, StreamEventsOptions{StreamModes: ...})` |
 
 ### HITL interrupts
 
@@ -102,7 +102,7 @@ TypeScript is the slight leader: it ships dedicated `RUN_ERROR_CODES` / `isRunEr
 
 ### Optional v1.x surfaces
 
-These landed during Track 1 / T1.1 / T1.2 / T1.4 / T1.7 work; no SDK has helpers yet. All accessible via raw HTTP — the SDKs expose a request method that accepts an arbitrary path.
+These landed during Track 1 / T1.1 / T1.2 / T1.4 / T1.7 work. Audit-log verification has helpers across all three SDKs; the remaining rows are accessible via raw HTTP until dedicated helper ergonomics are warranted.
 
 | Surface | TS | Python | Go |
 |---|---|---|---|
@@ -122,8 +122,8 @@ These landed during Track 1 / T1.1 / T1.2 / T1.4 / T1.7 work; no SDK has helpers
 | Wire core (discovery + runs + events + interrupts + errors) | ✅ full | ✅ full | ✅ full |
 | Mutation-header helpers | ✅ full | ✅ full | ✅ full |
 | SSE async-iterable consumer | ✅ AsyncGenerator | ✅ generator | ✅ channel |
-| Track-13 v1.x additions (pause / resume / configurableSchema) | ⚠️ raw HTTP | ⚠️ raw HTTP | ⚠️ raw HTTP |
-| T1.1 + T1.4 + T1.7 v1.x additions (audit / debug-bundle / webhooks) | ⚠️ raw HTTP | ⚠️ raw HTTP | ⚠️ raw HTTP |
+| Track-13 v1.x additions (pause / resume / configurableSchema) | ✅ pause/resume; configurableSchema via workflow docs | ✅ pause/resume; configurableSchema via workflow docs | ✅ pause/resume; configurableSchema via workflow docs |
+| T1.1 + T1.4 + T1.7 v1.x additions (audit / debug-bundle / webhooks) | ✅ audit; ⚠️ debug/webhooks | ✅ audit; ⚠️ debug/webhooks | ✅ audit; ⚠️ debug/webhooks |
 | Pack registry read surface | ⚠️ raw HTTP | ⚠️ raw HTTP | ⚠️ raw HTTP |
 
 ---

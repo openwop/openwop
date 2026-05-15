@@ -82,10 +82,14 @@ go test ./...
 | `GET /v1/runs/{id}/events` (SSE) | `client.StreamEvents(ctx, id, opts) → (<-chan, cleanup, err)` |
 | `GET /v1/runs/{id}/events/poll` | `client.PollRunEvents(ctx, id, opts)` |
 | `POST /v1/runs/{id}/cancel` | `client.CancelRun(ctx, id, body, opts)` |
+| `POST /v1/runs:bulk-cancel` | `client.BulkCancelRuns(ctx, body, opts)` |
+| `POST /v1/runs/{id}:pause` | `client.PauseRun(ctx, id, body, opts)` |
+| `POST /v1/runs/{id}:resume` | `client.ResumeRun(ctx, id, body, opts)` |
 | `POST /v1/runs/{id}:fork` | `client.ForkRun(ctx, id, body, opts)` |
 | `POST /v1/runs/{id}/interrupts/{nodeId}` | `client.ResolveInterruptByRun(ctx, id, nodeID, body, opts)` |
 | `GET /v1/interrupts/{token}` | `client.InspectInterruptByToken(ctx, token)` |
 | `POST /v1/interrupts/{token}` | `client.ResolveInterruptByToken(ctx, token, body, opts)` |
+| `GET /v1/audit/verify` | `client.VerifyAuditLog(ctx, fromSeq, toSeq)` |
 
 **Idempotency-Key + X-Dedup** are passed via `MutationOptions{IdempotencyKey: "...", Dedup: true}` on every mutation.
 

@@ -147,6 +147,31 @@ type CancelRunResponse struct {
 	Status string `json:"status"` // "cancelled" | "cancelling"
 }
 
+// PauseRunRequest is the optional body for POST /v1/runs/{id}:pause.
+type PauseRunRequest struct {
+	Reason      string `json:"reason,omitempty"`
+	DrainPolicy string `json:"drainPolicy,omitempty"` // "immediate" | "drain-current-node"
+}
+
+// PauseRunResponse mirrors the 202 pause payload.
+type PauseRunResponse struct {
+	RunID    string    `json:"runId"`
+	Status   RunStatus `json:"status"` // "paused"
+	PausedAt string    `json:"pausedAt,omitempty"`
+}
+
+// ResumeRunRequest is the optional body for POST /v1/runs/{id}:resume.
+type ResumeRunRequest struct {
+	Reason string `json:"reason,omitempty"`
+}
+
+// ResumeRunResponse mirrors the 202 resume payload.
+type ResumeRunResponse struct {
+	RunID     string    `json:"runId"`
+	Status    RunStatus `json:"status"` // "running"
+	ResumedAt string    `json:"resumedAt,omitempty"`
+}
+
 // BulkCancelRunsRequest mirrors POST /v1/runs:bulk-cancel body
 // per rest-endpoints.md §"POST /v1/runs:bulk-cancel" (closes R1).
 type BulkCancelRunsRequest struct {
@@ -308,9 +333,9 @@ const (
 	HTTPErrorHttpNetworkError     = "http_network_error"
 	HTTPErrorHttpUnexpectedStatus = "http_unexpected_status"
 	// Phase H webhook codes (spec-de-facto per webhook-negative.test.ts).
-	HTTPErrorWebhookUrlRejected    = "webhook_url_rejected"
-	HTTPErrorSubscriptionNotFound  = "subscription_not_found"
-	HTTPErrorInternalError         = "internal_error"
+	HTTPErrorWebhookUrlRejected   = "webhook_url_rejected"
+	HTTPErrorSubscriptionNotFound = "subscription_not_found"
+	HTTPErrorInternalError        = "internal_error"
 )
 
 // HTTPErrorCodes lists canonical ErrorEnvelope.Error codes for common

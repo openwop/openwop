@@ -5,6 +5,8 @@
   "description": "OpenWOP v1.0 protocol specification corpus and release tooling.",
   "license": "Apache-2.0",
   "scripts": {
+    "protocol:status": "node scripts/generate-protocol-status.mjs --write",
+    "protocol:status:check": "node scripts/generate-protocol-status.mjs --check",
     "openwop:check": "bash scripts/openwop-check.sh",
     "check": "bash scripts/openwop-check.sh",
     "check:publish": "bash scripts/openwop-check-publish-metadata.sh && bash scripts/check-npm-pack-contents.sh && bash scripts/check-python-go-release-surface.sh"

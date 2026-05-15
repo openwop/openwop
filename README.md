@@ -225,7 +225,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full guide. In short — file i
 
 See [CHANGELOG.md](./CHANGELOG.md) — `[1] — 2026-05-08 — OpenWOP v1 FINAL (multi-agent extensions)` is the current top entry.
 
-**v1 Multi-Agent Extensions (RFCs Active 2026-05-10):**
+**v1 Multi-Agent Extensions (Accepted):**
 - [**RFC 0002**](./RFCS/0002-agent-identity-and-reasoning-events.md) — Agent identity + reasoning events: `AgentRef` wire shape, `agent.reasoned`/`agent.toolCalled`/`agent.toolReturned`/`agent.handoff`/`agent.decided`/`runOrchestrator.decided` event types, confidence scoring, messaging reducer, replay determinism
 - [**RFC 0003**](./RFCS/0003-agent-packs.md) — Agent packs: Extend `pack.json` with `agents[]` for agent manifest distribution alongside node implementations
 - [**RFC 0004**](./RFCS/0004-memory-layer.md) — Memory layer: `MemoryAdapter` host interface for agent memory persistence with BYOK redaction guarantees
@@ -233,11 +233,11 @@ See [CHANGELOG.md](./CHANGELOG.md) — `[1] — 2026-05-08 — OpenWOP v1 FINAL 
 - [**RFC 0006**](./RFCS/0006-orchestrator.md) — Orchestrator: New `runOrchestrator` field on `WorkflowRunDocument`, orchestrator-driven routing, replay cache-only determinism
 - [**RFC 0007**](./RFCS/0007-dispatch.md) — Dispatch: New `core.dispatch` node pattern for sub-workflow invocation with fresh agent context
 
-**v1.x Capability Profiles (Draft):**
+**v1.x Capability Profiles (Accepted / Draft):**
 - [**RFC 0012**](./RFCS/0012-memory-compaction-profile.md) — Memory compaction profile (`Accepted` 2026-05-15): optional `capabilities.memory.compaction` advertisement, `memory.compacted` event vocabulary, and an SR-1 carry-forward invariant that extends RFC 0004 §D through host-side memory distillation. Additive; no v1 contract change. Postgres reference host implements end-to-end when `OPENWOP_MEMORY_COMPACTION=true`.
 
 **v1 Foundation (2026-04-27):**
-Current state: 26 prose specs FINAL v1 · 19 JSON Schemas · OpenAPI 3.1 + AsyncAPI 3.1 · conformance suite package at 1.0 · 3 reference SDKs at 1.0.
+Current generated state: 32 prose specs · 24 JSON Schemas · 19 OpenAPI operations · AsyncAPI 3.1 · 107 conformance scenario files · 3 reference SDKs. See [docs/PROTOCOL-STATUS.md](./docs/PROTOCOL-STATUS.md) for the machine-generated snapshot.
 
 - **Protocol corpus** — Normative REST, SSE, discovery, auth, idempotency, replay/fork, interruption, observability, node-pack, host-extension, and version-negotiation contracts are frozen for v1.
 - **Machine-readable contracts** — OpenAPI 3.1, AsyncAPI 3.1, and JSON Schemas are bundled and cross-validated by the conformance corpus.

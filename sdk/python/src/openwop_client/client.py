@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict, is_dataclass
-from typing import Any, Iterator, Sequence, cast
+from typing import Any, Iterator, Literal, Sequence, cast
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -34,9 +34,13 @@ from .types import (
     ForkRunRequest,
     ForkRunResponse,
     InterruptByTokenInspection,
+    PauseRunRequest,
+    PauseRunResponse,
     PollEventsResponse,
     ResolveInterruptRequest,
     ResolveInterruptResponse,
+    ResumeRunRequest,
+    ResumeRunResponse,
     RunConfigurable,
     RunEventDoc,
     RunSnapshot,
@@ -200,6 +204,46 @@ class OpenwopClient:
             headers=headers,
         )
         return CancelRunResponse(runId=str(d["runId"]), status=d["status"])
+
+    def runs_pause(
+        self,
+        run_id: str,
+        body: PauseRunRequest | None = None,
+        *,
+        idempotency_key: str | None = None,
+    ) -> PauseRunResponse:
+        headers = self._mutation_headers(idempotency_key=idempotency_key)
+        d = self._request_json(
+            "POST",
+            f"/v1/runs/{run_id}:pause",
+            body=_to_jsonable(body) if body is not None else {},
+            headers=headers,
+        )
+        return PauseRunResponse(
+            runId=str(d["runId"]),
+            status=cast(Literal["paused"], d["status"]),
+            pausedAt=d.get("pausedAt"),
+        )
+
+    def runs_resume(
+        self,
+        run_id: str,
+        body: ResumeRunRequest | None = None,
+        *,
+        idempotency_key: str | None = None,
+    ) -> ResumeRunResponse:
+        headers = self._mutation_headers(idempotency_key=idempotency_key)
+        d = self._request_json(
+            "POST",
+            f"/v1/runs/{run_id}:resume",
+            body=_to_jsonable(body) if body is not None else {},
+            headers=headers,
+        )
+        return ResumeRunResponse(
+            runId=str(d["runId"]),
+            status=cast(Literal["running"], d["status"]),
+            resumedAt=d.get("resumedAt"),
+        )
 
     def runs_bulk_cancel(
         self,

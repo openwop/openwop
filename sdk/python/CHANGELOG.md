@@ -1,5 +1,9 @@
 # `openwop-client` Changelog
 
+## [1.0 — additions] — 2026-05-15 — pause/resume helpers
+
+- **New run-control helpers.** `OpenwopClient.runs_pause(run_id, body=None, *, idempotency_key=None)` calls `POST /v1/runs/{id}:pause`; `OpenwopClient.runs_resume(run_id, body=None, *, idempotency_key=None)` calls `POST /v1/runs/{id}:resume`. New dataclasses exported: `PauseRunRequest`, `PauseRunResponse`, `ResumeRunRequest`, `ResumeRunResponse`.
+
 ## [1.0 — additions] — 2026-05-12 — Phase B SDK helpers + pack-lockfile error codes
 
 - **New methods for Phase B endpoints.** `OpenwopClient.runs_bulk_cancel(body, *, idempotency_key=None)` calls `POST /v1/runs:bulk-cancel` per `rest-endpoints.md` (closes R1); `OpenwopClient.audit_verify(from_seq, to_seq)` calls `GET /v1/audit/verify` per `auth-profiles.md` §`openwop-audit-log-integrity`. New dataclasses exported: `BulkCancelRunsRequest`, `BulkCancelRunsResponse`, `BulkCancelRunResult`, `AuditVerifyResult`, `AuditVerifyCheckpoint`, `AuditVerifyAnomaly`.

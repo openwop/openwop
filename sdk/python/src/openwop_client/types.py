@@ -151,6 +151,31 @@ class CancelRunResponse:
     status: Literal["cancelled", "cancelling"]
 
 
+@dataclass
+class PauseRunRequest:
+    reason: str | None = None
+    drainPolicy: Literal["immediate", "drain-current-node"] | None = None
+
+
+@dataclass(frozen=True)
+class PauseRunResponse:
+    runId: str
+    status: Literal["paused"]
+    pausedAt: str | None = None
+
+
+@dataclass
+class ResumeRunRequest:
+    reason: str | None = None
+
+
+@dataclass(frozen=True)
+class ResumeRunResponse:
+    runId: str
+    status: Literal["running"]
+    resumedAt: str | None = None
+
+
 # rest-endpoints.md §"POST /v1/runs:bulk-cancel" (closes R1).
 @dataclass
 class BulkCancelRunsRequest:

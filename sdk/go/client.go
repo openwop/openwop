@@ -152,6 +152,42 @@ func (c *OpenwopClient) CancelRun(
 	return &out, nil
 }
 
+// PauseRun calls POST /v1/runs/{runID}:pause.
+func (c *OpenwopClient) PauseRun(
+	ctx context.Context,
+	runID string,
+	body PauseRunRequest,
+	opts MutationOptions,
+) (*PauseRunResponse, error) {
+	var out PauseRunResponse
+	if err := c.requestJSON(
+		ctx, http.MethodPost,
+		"/v1/runs/"+url.PathEscape(runID)+":pause",
+		body, opts.headers(), true, &out,
+	); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// ResumeRun calls POST /v1/runs/{runID}:resume.
+func (c *OpenwopClient) ResumeRun(
+	ctx context.Context,
+	runID string,
+	body ResumeRunRequest,
+	opts MutationOptions,
+) (*ResumeRunResponse, error) {
+	var out ResumeRunResponse
+	if err := c.requestJSON(
+		ctx, http.MethodPost,
+		"/v1/runs/"+url.PathEscape(runID)+":resume",
+		body, opts.headers(), true, &out,
+	); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 // BulkCancelRuns calls POST /v1/runs:bulk-cancel.
 //
 // Per rest-endpoints.md §"POST /v1/runs:bulk-cancel" (closes R1). The
