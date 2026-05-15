@@ -176,6 +176,27 @@ class ResumeRunResponse:
     resumedAt: str | None = None
 
 
+# spec/v1/debug-bundle.md — portable JSON diagnostic export.
+@dataclass(frozen=True)
+class DebugBundle:
+    """Portable JSON export of a single run's diagnostic state.
+
+    Hosts MAY omit non-required fields. Consumers MUST treat masked /
+    omitted / hashed values as the spec-canonical content per
+    ``redactionMode`` — they are NOT placeholders for missing data.
+    """
+
+    bundleVersion: str
+    generatedAt: str
+    host: dict[str, Any]
+    run: dict[str, Any]
+    events: list[dict[str, Any]]
+    redactionApplied: bool
+    redactionMode: Literal["mask", "omit", "hash", "passthrough"]
+    truncated: bool | None = None
+    truncatedReason: str | None = None
+
+
 # rest-endpoints.md §"POST /v1/runs:bulk-cancel" (closes R1).
 @dataclass
 class BulkCancelRunsRequest:

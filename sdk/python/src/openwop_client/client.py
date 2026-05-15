@@ -34,6 +34,7 @@ from .types import (
     ForkRunRequest,
     ForkRunResponse,
     InterruptByTokenInspection,
+    DebugBundle,
     PauseRunRequest,
     PauseRunResponse,
     PollEventsResponse,
@@ -188,6 +189,46 @@ class OpenwopClient:
     def runs_get(self, run_id: str) -> RunSnapshot:
         d = self._request_json("GET", f"/v1/runs/{run_id}")
         return _run_snapshot_from_dict(d)
+
+    def runs_debug_bundle(
+        self,
+        run_id: str,
+        *,
+        max_events: int | None = None,
+    ) -> DebugBundle | None:
+        """Fetch the portable JSON diagnostic export per
+        ``spec/v1/debug-bundle.md``.
+
+        Returns ``None`` when the host doesn't advertise
+        ``capabilities.debugBundle.supported: true`` (endpoint returns
+        404 per the spec). The host's ``redactionMode`` reflects its
+        advertised ``capabilities.compliance.defaultMode``; callers MUST
+        treat masked/omitted/hashed values as the spec-canonical content.
+        """
+
+        path = f"/v1/runs/{run_id}/debug-bundle"
+        if max_events is not None:
+            path = f"{path}?maxEvents={max_events}"
+        try:
+            d = self._request_json("GET", path)
+        except WopError as err:
+            if err.status == 404:
+                return None
+            raise
+        return DebugBundle(
+            bundleVersion=str(d["bundleVersion"]),
+            generatedAt=str(d["generatedAt"]),
+            host=cast(dict[str, Any], d.get("host", {})),
+            run=cast(dict[str, Any], d.get("run", {})),
+            events=cast(list[dict[str, Any]], d.get("events", [])),
+            redactionApplied=bool(d["redactionApplied"]),
+            redactionMode=cast(
+                Literal["mask", "omit", "hash", "passthrough"],
+                d["redactionMode"],
+            ),
+            truncated=d.get("truncated"),
+            truncatedReason=d.get("truncatedReason"),
+        )
 
     def runs_cancel(
         self,

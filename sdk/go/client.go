@@ -134,6 +134,35 @@ func (c *OpenwopClient) GetRun(ctx context.Context, runID string) (*RunSnapshot,
 	return &out, nil
 }
 
+// GetDebugBundle calls GET /v1/runs/{runID}/debug-bundle per
+// spec/v1/debug-bundle.md. Returns (nil, nil) when the host doesn't
+// advertise capabilities.debugBundle.supported: true (endpoint returns
+// 404 per the spec); callers can branch on capability discovery
+// without parsing the error envelope. The bundle's RedactionMode
+// reflects the host's advertised capabilities.compliance.defaultMode.
+func (c *OpenwopClient) GetDebugBundle(
+	ctx context.Context,
+	runID string,
+	opts DebugBundleOptions,
+) (*DebugBundle, error) {
+	path := "/v1/runs/" + url.PathEscape(runID) + "/debug-bundle"
+	if opts.MaxEvents > 0 {
+		path += "?maxEvents=" + url.QueryEscape(strconv.Itoa(opts.MaxEvents))
+	}
+	var out DebugBundle
+	err := c.requestJSON(ctx, http.MethodGet, path, nil, nil, true, &out)
+	if err != nil {
+		// Surface 404 as (nil, nil) so callers can branch on
+		// capability discovery without unwrapping the error type.
+		var werr *WopError
+		if errors.As(err, &werr) && werr.Status == 404 {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &out, nil
+}
+
 // CancelRun calls POST /v1/runs/{runID}/cancel.
 func (c *OpenwopClient) CancelRun(
 	ctx context.Context,

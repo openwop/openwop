@@ -147,6 +147,33 @@ type CancelRunResponse struct {
 	Status string `json:"status"` // "cancelled" | "cancelling"
 }
 
+// DebugBundle is the portable JSON diagnostic export per
+// spec/v1/debug-bundle.md + schemas/debug-bundle.schema.json.
+// Hosts MAY omit non-required fields. Consumers MUST treat
+// masked/omitted/hashed values as the spec-canonical content per
+// RedactionMode — they are NOT placeholders for missing data.
+type DebugBundle struct {
+	BundleVersion    string                   `json:"bundleVersion"`
+	GeneratedAt      string                   `json:"generatedAt"`
+	Host             map[string]any           `json:"host"`
+	Run              map[string]any           `json:"run"`
+	Events           []map[string]any         `json:"events"`
+	RedactionApplied bool                     `json:"redactionApplied"`
+	// RedactionMode is one of "mask" / "omit" / "hash" / "passthrough".
+	RedactionMode    string                   `json:"redactionMode"`
+	Truncated        bool                     `json:"truncated,omitempty"`
+	TruncatedReason  string                   `json:"truncatedReason,omitempty"`
+}
+
+// DebugBundleOptions carries query parameters for GetDebugBundle.
+// MaxEvents is a host-extension parameter (the SQLite reference
+// convention); zero means "use host default". Spec-canonical hosts
+// MAY ignore it. Non-zero values lower the host's size cap for
+// testing the truncation path without driving the bundle past 8 MB.
+type DebugBundleOptions struct {
+	MaxEvents int
+}
+
 // PauseRunRequest is the optional body for POST /v1/runs/{id}:pause.
 type PauseRunRequest struct {
 	Reason      string `json:"reason,omitempty"`

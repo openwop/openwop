@@ -23,6 +23,8 @@ import {
   type ForkRunRequest,
   type ForkRunResponse,
   type InterruptByTokenInspection,
+  type DebugBundle,
+  type DebugBundleOptions,
   type PauseRunRequest,
   type PauseRunResponse,
   type PollEventsResponse,
@@ -109,6 +111,33 @@ export class OpenwopClient {
         method: 'GET',
         path: `/v1/runs/${encodeURIComponent(runId)}`,
       }),
+
+    /**
+     * Fetch the portable JSON diagnostic export for a single run per
+     * `spec/v1/debug-bundle.md`. The bundle's `redactionMode` reflects
+     * the host's advertised `capabilities.compliance.defaultMode`; the
+     * caller MUST treat masked/omitted/hashed fields as the
+     * spec-canonical value. The `truncated` + `truncatedReason` fields
+     * indicate the host hit its size cap.
+     *
+     * Returns `null` when the host doesn't advertise
+     * `capabilities.debugBundle.supported: true` (the endpoint returns
+     * 404 in that case per `debug-bundle.md` §"Authorization").
+     */
+    debugBundle: async (runId: string, opts: DebugBundleOptions = {}): Promise<DebugBundle | null> => {
+      const params = new URLSearchParams();
+      if (opts.maxEvents !== undefined) params.set('maxEvents', String(opts.maxEvents));
+      const query = params.toString();
+      const path = `/v1/runs/${encodeURIComponent(runId)}/debug-bundle${query ? `?${query}` : ''}`;
+      try {
+        return await this.#request<DebugBundle>({ method: 'GET', path });
+      } catch (err) {
+        // Host doesn't advertise the capability → 404. Surface as null so callers
+        // can branch on capability discovery without try/catch.
+        if (err instanceof Error && /\b404\b/.test(err.message)) return null;
+        throw err;
+      }
+    },
 
     cancel: (
       runId: string,

@@ -28,6 +28,8 @@ export type {
   ErrorEnvelope,
   ForkRunRequest,
   ForkRunResponse,
+  DebugBundle,
+  DebugBundleOptions,
   InterruptByTokenInspection,
   PauseRunRequest,
   PauseRunResponse,

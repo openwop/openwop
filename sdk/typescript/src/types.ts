@@ -103,6 +103,35 @@ export interface CancelRunResponse {
   status: 'cancelled' | 'cancelling';
 }
 
+/**
+ * Portable JSON diagnostic export for a single run per
+ * `spec/v1/debug-bundle.md` + `schemas/debug-bundle.schema.json`.
+ *
+ * Hosts MAY omit non-required fields. Consumers MUST treat masked /
+ * omitted / hashed values as the spec-canonical content per the host's
+ * advertised `redactionMode` — they are NOT placeholders for missing
+ * data.
+ */
+export interface DebugBundle {
+  bundleVersion: string;
+  generatedAt: string;
+  host: { name?: string; version?: string; vendor?: string };
+  run: Record<string, unknown>;
+  events: ReadonlyArray<Record<string, unknown>>;
+  redactionApplied: boolean;
+  /** Reflects the host's `capabilities.compliance.defaultMode`. */
+  redactionMode: 'mask' | 'omit' | 'hash' | 'passthrough';
+  /** True when the bundle hit the host's size cap; pair with `truncatedReason`. */
+  truncated?: boolean;
+  truncatedReason?: string;
+  [key: string]: unknown;
+}
+
+export interface DebugBundleOptions {
+  /** Optional host-extension query parameter to lower the size cap for testing. Spec-canonical hosts SHOULD prefer `host.<vendor>.<query>` namespacing; this is the SQLite-reference convention. */
+  maxEvents?: number;
+}
+
 export interface PauseRunRequest {
   reason?: string;
   drainPolicy?: 'immediate' | 'drain-current-node';

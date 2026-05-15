@@ -17,15 +17,15 @@ This matrix records per-protocol-surface feature parity across the three referen
 
 ## Headline
 
-The three SDKs are at **near-perfect parity on the v1.0 wire-core surface** (discovery, run lifecycle, idempotency, event poll + SSE, HITL interrupts, error envelope, scopes-aware HTTP error helpers). The stable v1.x run-control additions now have first-class helpers across all three SDKs: bulk cancel, pause, resume, and audit-log verification. Remaining raw-only rows are concentrated in webhook management, debug-bundle retrieval, registry reads, and Python/Go convenience predicates.
+The three SDKs are at **near-perfect parity on the v1.0 wire-core surface** (discovery, run lifecycle, idempotency, event poll + SSE, HITL interrupts, error envelope, scopes-aware HTTP error helpers). The stable v1.x run-control additions now have first-class helpers across all three SDKs: bulk cancel, pause, resume, audit-log verification, and debug-bundle retrieval (SDK-4 close-out 2026-05-15). Remaining raw-only rows are concentrated in webhook management and registry reads.
 
 Per-SDK net surface counts (counted from the per-surface tables below, excluding the headline-summary row):
 
 | SDK | ✅ helpers | ⚠️ raw-only | ❌ unreachable |
 |---|---:|---:|---:|
-| TypeScript (`@openwop/openwop`) | 26 | 6 | 0 |
-| Python (`openwop-client`) | 26 | 6 | 0 |
-| Go (`github.com/openwop/openwop/sdk/go`) | 26 | 6 | 0 |
+| TypeScript (`@openwop/openwop`) | 27 | 5 | 0 |
+| Python (`openwop-client`) | 27 | 5 | 0 |
+| Go (`github.com/openwop/openwop/sdk/go`) | 27 | 5 | 0 |
 
 (Counts bumped 2026-05-15 — Phase 0/P0 gap-closure added pause/resume helpers across all three SDKs. SDK-6 close-out 2026-05-15 added Python + Go run-status + run-error-code predicates matching TypeScript: Python/Go each gain 3 typed helpers — `ACTIVE_RUN_STATUSES`/`TERMINAL_RUN_STATUSES`/`is_terminal_run_status` AND `RUN_ERROR_CODES`/`is_run_error_code`. Headline counts move 23/23 → 26/26.)
 
@@ -110,7 +110,7 @@ These landed during Track 1 / T1.1 / T1.2 / T1.4 / T1.7 work. Audit-log verifica
 | Webhooks: `POST /v1/webhooks` register (T1.7) | ⚠️ raw HTTP | ⚠️ raw HTTP | ⚠️ raw HTTP |
 | Webhooks: `DELETE /v1/webhooks/{id}` unregister | ⚠️ raw HTTP | ⚠️ raw HTTP | ⚠️ raw HTTP |
 | Webhooks: HMAC verification helper | ⚠️ none — consumers re-implement HMAC-SHA256 | ⚠️ none | ⚠️ none |
-| Debug bundle: `GET /v1/runs/{id}/debug-bundle` | ⚠️ raw HTTP | ⚠️ raw HTTP | ⚠️ raw HTTP |
+| Debug bundle: `GET /v1/runs/{id}/debug-bundle` | ✅ `client.runs.debugBundle(id, opts?)` (SDK-4, 2026-05-15) | ✅ `client.runs_debug_bundle(id, max_events=...)` (SDK-4, 2026-05-15) | ✅ `client.GetDebugBundle(ctx, id, opts)` (SDK-4, 2026-05-15) |
 | Registry: `GET /v1/packs/*` read surface | ⚠️ raw HTTP | ⚠️ raw HTTP | ⚠️ raw HTTP |
 
 ---
@@ -123,7 +123,7 @@ These landed during Track 1 / T1.1 / T1.2 / T1.4 / T1.7 work. Audit-log verifica
 | Mutation-header helpers | ✅ full | ✅ full | ✅ full |
 | SSE async-iterable consumer | ✅ AsyncGenerator | ✅ generator | ✅ channel |
 | Track-13 v1.x additions (pause / resume / configurableSchema) | ✅ pause/resume; configurableSchema via workflow docs | ✅ pause/resume; configurableSchema via workflow docs | ✅ pause/resume; configurableSchema via workflow docs |
-| T1.1 + T1.4 + T1.7 v1.x additions (audit / debug-bundle / webhooks) | ✅ audit; ⚠️ debug/webhooks | ✅ audit; ⚠️ debug/webhooks | ✅ audit; ⚠️ debug/webhooks |
+| T1.1 + T1.4 + T1.7 v1.x additions (audit / debug-bundle / webhooks) | ✅ audit + debug; ⚠️ webhooks | ✅ audit + debug; ⚠️ webhooks | ✅ audit + debug; ⚠️ webhooks |
 | Pack registry read surface | ⚠️ raw HTTP | ⚠️ raw HTTP | ⚠️ raw HTTP |
 
 ---
