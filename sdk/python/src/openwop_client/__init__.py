@@ -41,7 +41,7 @@ from .types import (
     is_http_error_code,
 )
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 
 __all__ = [
     "OpenwopClient",

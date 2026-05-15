@@ -9,7 +9,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ---
 
-## [1.1.1 — unreleased] — 2026-05-13 — post-1.1.0 additive cleanup
+## [1.1.1] — 2026-05-15 — post-1.1.0 additive cleanup + RFC 0012
 
 Six additive commits landed on `main` after the v1.1.0 release tag. None changes a wire shape; all ship in a 1.1.1 patch when the registry SDKs are next published. Two close adopter-experience footnotes (lockfile demo + community pack re-sign), one closes a conformance-probe scope limit (MCP transports), and three close the RFC-process self-acceptance loop (0008 promotion + node-packs §WASM cross-link, 0001 promotion + CHANGELOG status drift fix).
 
