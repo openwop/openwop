@@ -16,10 +16,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RunEventDoc } from '@openwop/openwop';
-import { createRun } from '../../client/runsClient.js';
+import { cancelRun, createRun } from '../../client/runsClient.js';
 import { subscribeToRun, type Subscription } from '../../client/streamsClient.js';
 import { listOpenInterrupts, type OpenInterrupt } from '../../client/interruptsClient.js';
 import type { BYOKActiveConfig } from '../../byok/lib/useBYOKConfig.js';
+import { useApplyAnimation } from './useApplyAnimation.js';
 
 export interface ChatMessage {
   id: string;
@@ -84,6 +85,11 @@ export interface UseChatSessionResult {
   error: string | null;
   /** Submit a user message and start a new turn. */
   send: (text: string, config: BYOKActiveConfig) => Promise<void>;
+  /** Cancel the in-flight turn (if any). No-op when nothing is streaming. */
+  cancel: () => Promise<void>;
+  /** Append a synthetic system-role message to the visible thread.
+   *  Used by slash-command handlers (e.g., /help output, /cost summary). */
+  emitSystem: (content: string) => void;
   /** Wipe the session and start fresh. */
   reset: () => void;
   /** Resolve an active interrupt belonging to the most recent assistant bubble. */
@@ -95,6 +101,27 @@ export function useChatSession(): UseChatSessionResult {
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const subRef = useRef<Subscription | null>(null);
+  /** Run id of the in-flight turn. Used by cancel(). */
+  const inFlightRunIdRef = useRef<string | null>(null);
+  /** Assistant message id of the in-flight bubble. Used by cancel(). */
+  const inFlightAssistantIdRef = useRef<string | null>(null);
+
+  // Apply-animation: batches token deltas into ~one update per
+  // animation frame. The flush callback appends the accumulated tail
+  // to whichever in-flight assistant bubble exists.
+  const animation = useApplyAnimation({
+    frameBudgetMs: 16,
+    onFlush: (tail) => {
+      const assistantId = inFlightAssistantIdRef.current;
+      if (!assistantId) return;
+      setSession((s) => ({
+        ...s,
+        messages: s.messages.map((m) =>
+          m.id === assistantId ? { ...m, content: m.content + tail } : m,
+        ),
+      }));
+    },
+  });
 
   useEffect(() => {
     persistSession(session);
@@ -139,6 +166,7 @@ export function useChatSession(): UseChatSessionResult {
       messages: [...s.messages, userMsg, assistantMsg],
     }));
 
+    inFlightAssistantIdRef.current = assistantId;
     let runId: string;
     try {
       const created = await createRun({
@@ -156,6 +184,7 @@ export function useChatSession(): UseChatSessionResult {
         metadata: { chatSessionId: session.id, chatMessageId: assistantId },
       });
       runId = created.runId;
+      inFlightRunIdRef.current = runId;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setSession((s) => ({
@@ -170,8 +199,10 @@ export function useChatSession(): UseChatSessionResult {
       return;
     }
 
-    // Subscribe to SSE; append deltas to the in-flight bubble.
+    // Subscribe to SSE; route token deltas through apply-animation so a
+    // fast stream doesn't thrash React with per-token re-renders.
     subRef.current?.close();
+    animation.reset();
     let accumulated = '';
     subRef.current = subscribeToRun(runId, {
       modes: ['updates'],
@@ -179,12 +210,12 @@ export function useChatSession(): UseChatSessionResult {
         const payload = (ev.payload as Record<string, unknown>) ?? {};
         if (ev.type === 'node.message' && typeof payload.delta === 'string') {
           accumulated += payload.delta;
-          const snapshot = accumulated;
-          setSession((s) => ({
-            ...s,
-            messages: s.messages.map((m) => m.id === assistantId ? { ...m, content: snapshot } : m),
-          }));
+          animation.push(payload.delta);
         } else if (ev.type === 'node.completed') {
+          // Flush any buffered animation tail so the bubble has the
+          // full streamed content before we overwrite with the final
+          // outputs.completion (which is authoritative).
+          animation.flush();
           const outputs = (payload.outputs as Record<string, unknown>) ?? {};
           const completion = typeof outputs.completion === 'string' ? outputs.completion : accumulated;
           const usage = outputs.usage as Record<string, number> | undefined;
@@ -223,6 +254,7 @@ export function useChatSession(): UseChatSessionResult {
             messages: s.messages.map((m) => m.id === assistantId ? { ...m, activeInterrupt: null } : m),
           }));
         } else if (ev.type === 'run.failed') {
+          animation.flush();
           const err = (payload.error as Record<string, string>) ?? { code: 'unknown', message: 'unknown failure' };
           setSession((s) => ({
             ...s,
@@ -234,15 +266,101 @@ export function useChatSession(): UseChatSessionResult {
             } : m),
           }));
           setIsSending(false);
-        } else if (ev.type === 'run.completed' || ev.type === 'run.cancelled') {
+          inFlightRunIdRef.current = null;
+          inFlightAssistantIdRef.current = null;
+        } else if (ev.type === 'run.cancelled') {
+          // User-initiated stop. Mark the in-flight bubble as cancelled
+          // with whatever content we accumulated so far.
+          animation.flush();
+          setSession((s) => ({
+            ...s,
+            messages: s.messages.map((m) => m.id === assistantId ? {
+              ...m,
+              isStreaming: false,
+              content: accumulated || '',
+              meta: { runId, error: { code: 'cancelled', message: 'Stopped by user.' } },
+            } : m),
+          }));
           setIsSending(false);
+          inFlightRunIdRef.current = null;
+          inFlightAssistantIdRef.current = null;
+        } else if (ev.type === 'run.completed') {
+          setIsSending(false);
+          inFlightRunIdRef.current = null;
+          inFlightAssistantIdRef.current = null;
         }
       },
       onError: () => {
         setError('SSE stream lost; the bubble may be incomplete.');
       },
+      onTimeout: (kind) => {
+        animation.flush();
+        setSession((s) => ({
+          ...s,
+          messages: s.messages.map((m) => m.id === assistantId ? {
+            ...m,
+            isStreaming: false,
+            content: accumulated,
+            meta: {
+              runId,
+              error: {
+                code: 'stream_timeout',
+                message: kind === 'idle'
+                  ? 'No tokens received for 30s — the stream appears stuck. The bubble shows whatever arrived before the timeout.'
+                  : 'Stream exceeded the absolute deadline (120s). The bubble shows whatever arrived before the timeout.',
+              },
+            },
+          } : m),
+        }));
+        setIsSending(false);
+        inFlightRunIdRef.current = null;
+        inFlightAssistantIdRef.current = null;
+      },
     });
   }, [session.id, session.messages]);
+
+  const cancel = useCallback(async () => {
+    const runId = inFlightRunIdRef.current;
+    if (!runId) return;
+    // Close the SSE subscription immediately so further deltas don't
+    // arrive after the user clicked Stop. Flush any buffered animation
+    // tail first so it lands in the bubble. The BE's cancelRun call
+    // races in parallel — whichever finishes first wins.
+    animation.flush();
+    subRef.current?.close();
+    subRef.current = null;
+    try {
+      await cancelRun(runId, 'cancelled by user from chat');
+    } catch (err) {
+      // Cancel failed (run already terminal, network blip, etc.) —
+      // still surface a friendly cancellation in the bubble.
+      setError(err instanceof Error ? err.message : String(err));
+    }
+    const assistantId = inFlightAssistantIdRef.current;
+    if (assistantId) {
+      setSession((s) => ({
+        ...s,
+        messages: s.messages.map((m) => m.id === assistantId ? {
+          ...m,
+          isStreaming: false,
+          meta: { ...(m.meta ?? {}), error: { code: 'cancelled', message: 'Stopped by user.' }, runId: runId },
+        } : m),
+      }));
+    }
+    inFlightRunIdRef.current = null;
+    inFlightAssistantIdRef.current = null;
+    setIsSending(false);
+  }, []);
+
+  const emitSystem = useCallback((content: string) => {
+    const msg: ChatMessage = {
+      id: crypto.randomUUID(),
+      role: 'system',
+      content,
+      createdAt: new Date().toISOString(),
+    };
+    setSession((s) => ({ ...s, messages: [...s.messages, msg] }));
+  }, []);
 
   const reset = useCallback(() => {
     subRef.current?.close();
@@ -267,5 +385,5 @@ export function useChatSession(): UseChatSessionResult {
     }));
   }, []);
 
-  return { session, isSending, error, send, reset, resolveInterrupt };
+  return { session, isSending, error, send, cancel, emitSystem, reset, resolveInterrupt };
 }

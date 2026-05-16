@@ -9,6 +9,8 @@
  */
 
 import type { ChatMessage } from './hooks/useChatSession.js';
+import { MessageRenderer } from './MessageRenderer.js';
+import { formatUsd, turnCostUsd } from './lib/cost.js';
 
 interface Props {
   message: ChatMessage;
@@ -16,7 +18,18 @@ interface Props {
 
 export function MessageBubble({ message }: Props): JSX.Element {
   const isUser = message.role === 'user';
+  const isSystem = message.role === 'system';
   const isError = !!message.meta?.error;
+
+  if (isSystem) {
+    // System messages (from slash-command handlers like /help) render
+    // as a muted info banner, not a bubble.
+    return (
+      <div className="alert info" style={{ fontSize: 12, whiteSpace: 'pre-wrap' }}>
+        {message.content}
+      </div>
+    );
+  }
 
   return (
     <div style={{
@@ -37,11 +50,11 @@ export function MessageBubble({ message }: Props): JSX.Element {
         border: isError ? '1px solid var(--color-danger)' : '1px solid transparent',
         fontSize: 14,
         lineHeight: 1.5,
-        whiteSpace: 'pre-wrap',
-        wordBreak: 'break-word',
+        // whiteSpace + wordBreak applied inside MessageRenderer's text segments
+        // so code blocks can use their own `white-space: pre` formatting.
       }}>
         {message.content
-          ? message.content
+          ? <MessageRenderer content={message.content} />
           : message.isStreaming
             ? <span style={{ opacity: 0.6 }}>Thinking…</span>
             : isError
@@ -74,6 +87,10 @@ export function MessageBubble({ message }: Props): JSX.Element {
             {message.meta.outputTokens != null && (
               <span> · out {message.meta.outputTokens}</span>
             )}
+            {(() => {
+              const cost = turnCostUsd(message.meta);
+              return cost != null ? <span> · {formatUsd(cost)}</span> : null;
+            })()}
           </div>
         )}
       </div>

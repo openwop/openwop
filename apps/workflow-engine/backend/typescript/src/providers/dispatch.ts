@@ -33,6 +33,16 @@ export interface DispatchResult {
     inputTokens?: number;
     outputTokens?: number;
   };
+  /** Provider-reported reason the stream stopped, when known.
+   *  Gemini: STOP | MAX_TOKENS | SAFETY | RECITATION | OTHER
+   *  OpenAI: stop | length | content_filter | tool_calls
+   *  Anthropic: end_turn | max_tokens | stop_sequence | tool_use
+   */
+  finishReason?: string;
+  /** Provider-side block reason (Gemini's `promptFeedback.blockReason`). */
+  blockReason?: string;
+  /** Safety category that tripped (Gemini's `safetyRatings[].category` of any blocked rating). */
+  safetyCategory?: string;
 }
 
 export async function dispatchChat(req: DispatchRequest): Promise<DispatchResult> {
@@ -82,6 +92,7 @@ async function dispatchAnthropic(req: DispatchRequest): Promise<DispatchResult> 
   let completion = '';
   let inputTokens: number | undefined;
   let outputTokens: number | undefined;
+  let finishReason: string | undefined;
 
   for await (const event of parseSseStream(res.body)) {
     if (event.event === 'content_block_delta') {
@@ -102,8 +113,12 @@ async function dispatchAnthropic(req: DispatchRequest): Promise<DispatchResult> 
       } catch { /* */ }
     } else if (event.event === 'message_delta') {
       try {
-        const data = JSON.parse(event.data) as { usage?: { output_tokens?: number } };
-        outputTokens = data.usage?.output_tokens;
+        const data = JSON.parse(event.data) as {
+          usage?: { output_tokens?: number };
+          delta?: { stop_reason?: string };
+        };
+        if (data.usage?.output_tokens != null) outputTokens = data.usage.output_tokens;
+        if (data.delta?.stop_reason) finishReason = data.delta.stop_reason;
       } catch { /* */ }
     }
   }
@@ -113,6 +128,7 @@ async function dispatchAnthropic(req: DispatchRequest): Promise<DispatchResult> 
     model: req.model,
     completion,
     usage: { inputTokens, outputTokens },
+    ...(finishReason ? { finishReason } : {}),
   };
 }
 
@@ -143,19 +159,22 @@ async function dispatchOpenAI(req: DispatchRequest): Promise<DispatchResult> {
   let completion = '';
   let inputTokens: number | undefined;
   let outputTokens: number | undefined;
+  let finishReason: string | undefined;
 
   for await (const event of parseSseStream(res.body)) {
     if (event.data === '[DONE]') break;
     try {
       const data = JSON.parse(event.data) as {
-        choices?: Array<{ delta?: { content?: string } }>;
+        choices?: Array<{ delta?: { content?: string }; finish_reason?: string | null }>;
         usage?: { prompt_tokens?: number; completion_tokens?: number };
       };
-      const delta = data.choices?.[0]?.delta?.content;
+      const choice = data.choices?.[0];
+      const delta = choice?.delta?.content;
       if (delta) {
         completion += delta;
         await req.onDelta?.(delta);
       }
+      if (choice?.finish_reason) finishReason = choice.finish_reason;
       if (data.usage) {
         inputTokens = data.usage.prompt_tokens;
         outputTokens = data.usage.completion_tokens;
@@ -170,6 +189,7 @@ async function dispatchOpenAI(req: DispatchRequest): Promise<DispatchResult> {
     model: req.model,
     completion,
     usage: { inputTokens, outputTokens },
+    ...(finishReason ? { finishReason } : {}),
   };
 }
 
@@ -183,13 +203,21 @@ async function dispatchGoogle(req: DispatchRequest): Promise<DispatchResult> {
   const systemMessage = req.messages.find((m) => m.role === 'system');
   const conversation = req.messages.filter((m) => m.role !== 'system');
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(req.model)}:streamGenerateContent?alt=sse`;
+  // Use ?key= query param (universal across Gemini surfaces) rather
+  // than the x-goog-api-key header — fewer surfaces ignore it.
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(req.model)}:streamGenerateContent?alt=sse&key=${encodeURIComponent(req.apiKey)}`;
+
+  // Thinking config only applies to the 2.5 reasoning models
+  // (Flash + Pro). Flash-Lite doesn't have thinking — sending
+  // thinkingConfig there is harmless but pointless. Pro/Flash with
+  // thinking on can consume the entire maxOutputTokens budget on
+  // reasoning; default to off for predictable chat streaming.
+  const needsThinkingDisable =
+    req.model.includes('2.5-') && !req.model.includes('-lite');
+
   const res = await fetch(url, {
     method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-goog-api-key': req.apiKey,
-    },
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
       contents: conversation.map((m) => ({
         role: m.role === 'assistant' ? 'model' : m.role,
@@ -198,47 +226,96 @@ async function dispatchGoogle(req: DispatchRequest): Promise<DispatchResult> {
       ...(systemMessage ? { systemInstruction: { parts: [{ text: systemMessage.content }] } } : {}),
       generationConfig: {
         maxOutputTokens: req.maxTokens ?? 4096,
-        // Gemini 2.5 family uses internal reasoning tokens that count
-        // against maxOutputTokens. With thinking on and a small budget,
-        // the model can consume the entire budget on reasoning and emit
-        // zero visible text. Disabled by default for predictable chat
-        // streaming; production deployers re-enable per request.
-        thinkingConfig: { thinkingBudget: 0 },
+        ...(needsThinkingDisable ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
       },
     }),
   });
   if (!res.ok) {
     const errBody = await res.text();
-    throw new Error(`google_${res.status}: ${errBody.slice(0, 300)}`);
+    throw new Error(`google_${res.status}: ${errBody.slice(0, 500)}`);
   }
   if (!res.body) throw new Error('google_no_response_body');
 
   let completion = '';
   let inputTokens: number | undefined;
   let outputTokens: number | undefined;
+  let finishReason: string | undefined;
+  let blockReason: string | undefined;
+  let safetyCategory: string | undefined;
+  let chunkCount = 0;
+  let lastRawChunk: string | undefined;
+
+  interface GeminiCandidate {
+    content?: { parts?: Array<{ text?: string }> };
+    finishReason?: string;
+    safetyRatings?: Array<{ category?: string; blocked?: boolean; probability?: string }>;
+  }
+  interface GeminiSseData {
+    candidates?: GeminiCandidate[];
+    usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number };
+    promptFeedback?: { blockReason?: string; safetyRatings?: Array<{ category?: string; blocked?: boolean }> };
+  }
 
   for await (const event of parseSseStream(res.body)) {
+    chunkCount++;
+    lastRawChunk = event.data;
+    let data: GeminiSseData;
     try {
-      const data = JSON.parse(event.data) as {
-        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-        usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number };
-      };
-      const parts = data.candidates?.[0]?.content?.parts;
-      if (parts) {
-        for (const part of parts) {
-          if (part.text) {
-            completion += part.text;
-            await req.onDelta?.(part.text);
-          }
+      data = JSON.parse(event.data) as GeminiSseData;
+    } catch {
+      continue;
+    }
+
+    const candidate = data.candidates?.[0];
+    const parts = candidate?.content?.parts;
+    if (parts) {
+      for (const part of parts) {
+        if (part.text) {
+          completion += part.text;
+          await req.onDelta?.(part.text);
         }
       }
-      if (data.usageMetadata) {
-        inputTokens = data.usageMetadata.promptTokenCount;
-        outputTokens = data.usageMetadata.candidatesTokenCount;
-      }
-    } catch {
-      /* skip malformed chunk */
     }
+    if (candidate?.finishReason) {
+      finishReason = candidate.finishReason;
+    }
+    if (candidate?.safetyRatings) {
+      const blocked = candidate.safetyRatings.find((r) => r.blocked);
+      if (blocked?.category) safetyCategory = blocked.category;
+    }
+    if (data.promptFeedback?.blockReason) {
+      blockReason = data.promptFeedback.blockReason;
+    }
+    if (data.promptFeedback?.safetyRatings) {
+      const blocked = data.promptFeedback.safetyRatings.find((r) => r.blocked);
+      if (blocked?.category && !safetyCategory) safetyCategory = blocked.category;
+    }
+    if (data.usageMetadata) {
+      inputTokens = data.usageMetadata.promptTokenCount;
+      outputTokens = data.usageMetadata.candidatesTokenCount;
+    }
+  }
+
+  // Diagnostic: when we parsed zero chunks OR got chunks but zero text,
+  // log the response shape so the next debug iteration knows what to fix.
+  if (chunkCount === 0 || completion.length === 0) {
+    // eslint-disable-next-line no-console
+    console.warn('[dispatch.google] empty/short response — diagnostic dump:', {
+      model: req.model,
+      chunkCount,
+      completionLength: completion.length,
+      finishReason,
+      blockReason,
+      safetyCategory,
+      inputTokens,
+      outputTokens,
+      lastRawChunkPreview: lastRawChunk ? lastRawChunk.slice(0, 500) : '<no chunks>',
+      responseStatus: res.status,
+      responseHeaders: {
+        'content-type': res.headers.get('content-type'),
+        'content-length': res.headers.get('content-length'),
+      },
+    });
   }
 
   return {
@@ -246,6 +323,9 @@ async function dispatchGoogle(req: DispatchRequest): Promise<DispatchResult> {
     model: req.model,
     completion,
     usage: { inputTokens, outputTokens },
+    ...(finishReason ? { finishReason } : {}),
+    ...(blockReason ? { blockReason } : {}),
+    ...(safetyCategory ? { safetyCategory } : {}),
   };
 }
 
@@ -265,13 +345,23 @@ async function* parseSseStream(stream: ReadableStream<Uint8Array>): AsyncIterabl
       const { value, done } = await reader.read();
       if (done) break;
       buf += decoder.decode(value, { stream: true });
-      // SSE messages are separated by \n\n
-      const parts = buf.split('\n\n');
+      // SSE messages are separated by \n\n (or \r\n\r\n on Windows-y
+      // servers). Tolerate both — split on \n\n after normalizing.
+      const normalized = buf.replace(/\r\n/g, '\n');
+      const parts = normalized.split('\n\n');
       buf = parts.pop() ?? '';
       for (const part of parts) {
         const ev = parseSseMessage(part);
         if (ev) yield ev;
       }
+    }
+    // Flush: many servers (Gemini included) terminate the stream
+    // without a trailing \n\n, which would otherwise lose the LAST
+    // chunk — exactly where finishReason + usageMetadata live.
+    buf += decoder.decode();
+    if (buf.trim().length > 0) {
+      const ev = parseSseMessage(buf.replace(/\r\n/g, '\n'));
+      if (ev) yield ev;
     }
   } finally {
     reader.releaseLock();

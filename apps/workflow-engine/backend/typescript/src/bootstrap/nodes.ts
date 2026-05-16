@@ -12,7 +12,7 @@
 import { getNodeRegistry } from '../executor/nodeRegistry.js';
 import type { NodeModule } from '../executor/types.js';
 import { emitCost } from '../observability/costEmitter.js';
-import { dispatchChat, type ChatMessage, type ProviderId } from '../providers/dispatch.js';
+import { dispatchChat, type ChatMessage, type DispatchResult, type ProviderId } from '../providers/dispatch.js';
 import { getDefaultModel } from '../providers/catalog.js';
 
 const noopNode: NodeModule = {
@@ -159,13 +159,14 @@ const sampleChatResponderNode: NodeModule = {
         completionTokens: result.usage?.outputTokens,
       });
       if (result.completion.length === 0) {
-        // Provider returned 200 but no text. Provider-specific diagnostic
-        // so the user sees actionable next steps in the chat bubble.
+        // Provider returned 200 but no text. Use the real provider-
+        // reported diagnostic (finishReason, blockReason, safetyCategory)
+        // when present; fall back to provider-specific heuristics.
         return {
           status: 'failure',
           error: {
             code: 'empty_completion',
-            message: diagnoseEmptyCompletion(result.provider, result.model),
+            message: diagnoseEmptyCompletion(result),
           },
         };
       }
@@ -196,44 +197,47 @@ const sampleUppercaseNode: NodeModule = {
 };
 
 /**
- * Provider-specific diagnostic for the 200 OK + no text case. Helps
- * users decode the silent-failure surface area each provider has.
+ * Provider-specific diagnostic for the 200 OK + no text case.
+ * Prefers REAL provider-reported reasons (finishReason / blockReason
+ * / safetyCategory) over heuristic guesses.
  */
-function diagnoseEmptyCompletion(provider: string, model: string): string {
-  if (provider === 'google' && model.includes('2.5-') && !model.includes('-lite')) {
-    return (
-      `Gemini ${model} returned 200 OK with no text. Gemini 2.5 Flash/Pro ` +
-      'use internal reasoning tokens that count against `maxOutputTokens`. ' +
-      'With a small budget the model can consume the entire budget on ' +
-      'reasoning and emit zero visible text. Try `gemini-2.5-flash-lite` ' +
-      '(8× output cap, no reasoning) or raise maxTokens >= 8192.'
-    );
+function diagnoseEmptyCompletion(result: DispatchResult): string {
+  const { provider, model, finishReason, blockReason, safetyCategory, usage } = result;
+  const tail = ` [provider=${provider} model=${model}` +
+    (finishReason ? ` finishReason=${finishReason}` : '') +
+    (blockReason ? ` blockReason=${blockReason}` : '') +
+    (safetyCategory ? ` safety=${safetyCategory}` : '') +
+    (usage?.outputTokens != null ? ` outputTokens=${usage.outputTokens}` : '') +
+    ']';
+
+  // Authoritative reasons first.
+  if (blockReason) {
+    return `Prompt blocked by ${provider} (${blockReason}). Rephrase the prompt or check for sensitive content.${tail}`;
   }
-  if (provider === 'google') {
-    return (
-      `Gemini ${model} returned 200 OK with no text. Likely a safety filter ` +
-      'blocked the output (check the prompt for sensitive content) or the ' +
-      'response was filtered with no `promptFeedback`. Try rephrasing.'
-    );
+  if (safetyCategory) {
+    return `Output blocked by ${provider} safety filter (${safetyCategory}). Try rephrasing.${tail}`;
   }
-  if (provider === 'anthropic') {
-    return (
-      `Claude ${model} returned 200 OK with no text. Rare — usually means ` +
-      'an empty system prompt edge case or extended-thinking budget exhaustion. ' +
-      'Check that `system` is non-empty if you pass one.'
-    );
+  if (finishReason === 'MAX_TOKENS' || finishReason === 'length' || finishReason === 'max_tokens') {
+    return `Model hit max-tokens before emitting visible text. Raise maxTokens (currently 4096) or switch to a model with a larger output cap.${tail}`;
   }
-  if (provider === 'openai') {
-    return (
-      `OpenAI ${model} returned 200 OK with no text. Most often a moderation ` +
-      'block (refer to response.choices[0].finish_reason) or a maxTokens=0 misconfiguration.'
-    );
+  if (finishReason === 'SAFETY' || finishReason === 'content_filter') {
+    return `Output blocked by safety/content filter. Try rephrasing the prompt.${tail}`;
   }
-  return (
-    `Provider ${provider} (${model}) returned 200 OK with no text. ` +
-    'Common causes: reasoning budget consumed entire maxOutputTokens, ' +
-    'safety filter, or provider-side rate limit.'
-  );
+  if (finishReason === 'RECITATION') {
+    return `Output blocked because it matched training-data recitation. Rephrase to encourage paraphrasing.${tail}`;
+  }
+  if (finishReason === 'STOP' || finishReason === 'stop' || finishReason === 'end_turn') {
+    // STOP + zero output is an oddity — most likely an internal-reasoning model
+    // exhausted its budget before the visible-output phase started.
+    if (provider === 'google' && model.includes('2.5-') && !model.includes('-lite')) {
+      return `Gemini ${model} stopped cleanly with zero visible text. Most likely cause: internal reasoning consumed the maxOutputTokens budget before the visible-output phase began. Try \`gemini-2.5-flash-lite\` (no reasoning) or raise maxTokens >= 8192.${tail}`;
+    }
+    return `Provider stopped cleanly with zero visible text. Could be a model-side filter, an empty system-prompt edge case, or a tool-only response without text.${tail}`;
+  }
+
+  // No finishReason at all — likely a stream that terminated early (network
+  // failure, server-side timeout) or a parsing bug.
+  return `Provider returned 200 OK with no text and no finishReason. The stream may have terminated early, or the response shape didn't match what the dispatcher parses.${tail}`;
 }
 
 let registered = false;

@@ -18,6 +18,12 @@ export interface SubscribeOptions {
   onEvent: (event: RunEventDoc) => void;
   onError?: (err: Event) => void;
   onClose?: () => void;
+  /** Dual-layer timeouts. Idle resets on each event arrival; absolute
+   *  is a hard deadline that never resets. Either firing closes the
+   *  subscription and invokes onTimeout. */
+  idleTimeoutMs?: number;
+  absoluteTimeoutMs?: number;
+  onTimeout?: (kind: 'idle' | 'absolute') => void;
 }
 
 export interface Subscription {
@@ -55,7 +61,39 @@ export function subscribeToRun(runId: string, opts: SubscribeOptions): Subscript
     'node.interrupt.resolved',
     'node.message',
   ];
+  // Dual-layer timeouts. Defaults: 30s idle (resets per event), 120s
+  // absolute (never resets). Both protect against silently-hung streams
+  // (provider stalled, network partition with no FIN, server crash).
+  const idleMs = opts.idleTimeoutMs ?? 30_000;
+  const absoluteMs = opts.absoluteTimeoutMs ?? 120_000;
+  let idleTimer: ReturnType<typeof setTimeout> | null = null;
+  let absoluteTimer: ReturnType<typeof setTimeout> | null = null;
+  let timedOut = false;
+
+  function clearTimers(): void {
+    if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+    if (absoluteTimer) { clearTimeout(absoluteTimer); absoluteTimer = null; }
+  }
+
+  function fireTimeout(kind: 'idle' | 'absolute'): void {
+    if (timedOut) return;
+    timedOut = true;
+    clearTimers();
+    es.close();
+    opts.onTimeout?.(kind);
+  }
+
+  function resetIdle(): void {
+    if (timedOut) return;
+    if (idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => fireTimeout('idle'), idleMs);
+  }
+
+  absoluteTimer = setTimeout(() => fireTimeout('absolute'), absoluteMs);
+  resetIdle();
+
   const handler = (raw: MessageEvent) => {
+    resetIdle();
     try {
       const parsed = JSON.parse(raw.data) as RunEventDoc;
       opts.onEvent(parsed);
@@ -79,9 +117,10 @@ export function subscribeToRun(runId: string, opts: SubscribeOptions): Subscript
   // means transient — the browser will auto-reconnect with Last-Event-ID.
   let manuallyClosed = false;
   es.onerror = () => {
-    if (manuallyClosed) return;
+    if (manuallyClosed || timedOut) return;
     if (es.readyState === EventSource.CLOSED) {
       // Stop the auto-reconnect loop on a clean server close.
+      clearTimers();
       es.close();
       opts.onClose?.();
       return;
@@ -97,6 +136,7 @@ export function subscribeToRun(runId: string, opts: SubscribeOptions): Subscript
   return {
     close() {
       manuallyClosed = true;
+      clearTimers();
       es.close();
       opts.onClose?.();
     },
