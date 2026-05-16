@@ -78,7 +78,7 @@ export async function createApp(config: AppConfig): Promise<Express> {
   configureSecretResolver({ storage, dataDir });
 
   // Pre-seed BYOK from env (kept for backward-compat with conformance
-  // / scripted-test setups). Runtime adds via POST /v1/byok/secrets.
+  // / scripted-test setups). Runtime adds via POST /v1/host/sample/byok/secrets.
   loadSecretsFromEnv();
 
   // Pre-register node modules + install singletons before the first

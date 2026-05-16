@@ -212,7 +212,7 @@ export async function executeRun(
     // resume runs without an API key. So the token MUST NOT appear in the
     // public event log: SSE consumers, webhook subscribers, and the events
     // poll endpoint would otherwise leak a resolution capability. Authenticated
-    // callers fetch the token via GET /v1/runs/{id}/interrupts.
+    // callers fetch the token via GET /v1/host/sample/runs/{id}/interrupts.
     eventLog.append({
       runId: run.runId,
       nodeId: node.nodeId,

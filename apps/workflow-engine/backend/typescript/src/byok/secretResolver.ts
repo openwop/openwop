@@ -102,7 +102,7 @@ export function resolveSecret(credentialRef: string): string | null {
   }
 }
 
-/** Persist a new (or updated) secret. Called by POST /v1/byok/secrets. */
+/** Persist a new (or updated) secret. Called by POST /v1/host/sample/byok/secrets. */
 export function setSecret(credentialRef: string, value: string): void {
   const { storage, masterKey } = requireConfigured();
   const record = encrypt(value, masterKey);
@@ -110,7 +110,7 @@ export function setSecret(credentialRef: string, value: string): void {
   plaintextCache.set(credentialRef, value);
 }
 
-/** Remove a secret. Called by DELETE /v1/byok/secrets/:ref. */
+/** Remove a secret. Called by DELETE /v1/host/sample/byok/secrets/:ref. */
 export function removeSecret(credentialRef: string): void {
   const { storage } = requireConfigured();
   storage.deleteSecret(credentialRef);

@@ -63,10 +63,11 @@ async function jsonFetch<T = unknown>(
       ...(init.headers ?? {}),
     },
   });
-  const body = res.headers.get('content-type')?.includes('json')
-    ? ((await res.json()) as T)
-    : ((await res.text()) as unknown as T);
-  return { status: res.status, body };
+  // JSON-only — if a route returns non-JSON (HTML error page, plain
+  // text 401) the parse failure throws and surfaces as a test error
+  // with the raw response in the stack. For deliberately-unauth probes
+  // call `fetch` directly.
+  return { status: res.status, body: (await res.json()) as T };
 }
 
 describe('discovery', () => {
