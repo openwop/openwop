@@ -111,6 +111,17 @@ export function openSqliteStorage(dbPath: string): Storage {
     VALUES (@key, @responseBody, @responseStatus, @createdAt)
   `);
 
+  const upsertSecretStmt = db.prepare(`
+    INSERT INTO byok_secrets (credential_ref, encrypted_record, created_at, updated_at)
+    VALUES (@ref, @rec, @now, @now)
+    ON CONFLICT(credential_ref) DO UPDATE SET
+      encrypted_record = excluded.encrypted_record,
+      updated_at       = excluded.updated_at
+  `);
+  const getSecretStmt = db.prepare(`SELECT encrypted_record FROM byok_secrets WHERE credential_ref = ?`);
+  const deleteSecretStmt = db.prepare(`DELETE FROM byok_secrets WHERE credential_ref = ?`);
+  const listSecretRefsStmt = db.prepare(`SELECT credential_ref FROM byok_secrets ORDER BY credential_ref ASC`);
+
   const insertAuditStmt = db.prepare(`
     INSERT INTO audit_log (audit_id, timestamp, principal_id, action, resource, outcome, payload)
     VALUES (@auditId, @timestamp, @principalId, @action, @resource, @outcome, @payload)
@@ -442,6 +453,24 @@ export function openSqliteStorage(dbPath: string): Storage {
         JSON.stringify(result ?? null),
         new Date().toISOString(),
       );
+    },
+
+    upsertEncryptedSecret(credentialRef, encryptedRecordJson, now) {
+      upsertSecretStmt.run({ ref: credentialRef, rec: encryptedRecordJson, now });
+    },
+
+    getEncryptedSecret(credentialRef) {
+      const row = getSecretStmt.get(credentialRef) as { encrypted_record: string } | undefined;
+      return row?.encrypted_record ?? null;
+    },
+
+    deleteSecret(credentialRef) {
+      deleteSecretStmt.run(credentialRef);
+    },
+
+    listSecretRefs() {
+      const rows = listSecretRefsStmt.all() as Array<{ credential_ref: string }>;
+      return rows.map((r) => r.credential_ref);
     },
 
     close() {

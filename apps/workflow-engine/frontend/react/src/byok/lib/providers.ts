@@ -6,7 +6,7 @@
  * provider taxonomy.
  */
 
-export type ProviderId = 'anthropic' | 'openai';
+export type ProviderId = 'anthropic' | 'openai' | 'google';
 
 export interface ProviderModel {
   id: string;
@@ -65,6 +65,21 @@ export const PROVIDERS: readonly ProviderConfig[] = [
     models: [
       { id: 'gpt-4o-mini', label: 'GPT-4o mini', contextWindow: 128_000, capabilities: ['text', 'tools', 'vision'], cost: { input: 0.00015, output: 0.0006 }, recommended: true },
       { id: 'gpt-4o', label: 'GPT-4o', contextWindow: 128_000, capabilities: ['text', 'tools', 'vision'], cost: { input: 0.0025, output: 0.01 } },
+    ],
+  },
+  {
+    id: 'google',
+    label: 'Google',
+    badgeColor: '#4285f4',
+    description: 'Gemini family. Very long context, fast streaming.',
+    apiKeyPlaceholder: 'AIza…',
+    apiKeyHelpText: 'Your key stays in the sample BE\'s in-memory map. Real deploys swap for KMS.',
+    apiKeyConsoleUrl: 'https://aistudio.google.com/apikey',
+    apiKeyPrefix: 'AIza',
+    models: [
+      { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', contextWindow: 1_000_000, capabilities: ['text', 'tools', 'vision'], cost: { input: 0.0003, output: 0.0025 }, recommended: true },
+      { id: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', contextWindow: 2_000_000, capabilities: ['text', 'tools', 'vision'], cost: { input: 0.00125, output: 0.01 } },
+      { id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash', contextWindow: 1_000_000, capabilities: ['text', 'tools', 'vision'], cost: { input: 0.0001, output: 0.0004 } },
     ],
   },
 ];

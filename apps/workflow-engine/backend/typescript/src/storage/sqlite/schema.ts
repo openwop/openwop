@@ -8,7 +8,7 @@
 
 import type { Database } from 'better-sqlite3';
 
-export const LATEST_SCHEMA_VERSION = 1;
+export const LATEST_SCHEMA_VERSION = 2;
 
 const MIGRATIONS: Record<number, (db: Database) => void> = {
   1: (db) => {
@@ -113,6 +113,19 @@ const MIGRATIONS: Record<number, (db: Database) => void> = {
       );
 
       CREATE INDEX IF NOT EXISTS idx_audit_ts ON audit_log (timestamp DESC);
+    `);
+  },
+  2: (db) => {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS byok_secrets (
+        credential_ref TEXT PRIMARY KEY,
+        -- Encrypted record: JSON-serialized { v, iv, ct, tag } with
+        -- AES-256-GCM ciphertext per src/byok/encryption.ts. The raw
+        -- secret value MUST NEVER be written to this column.
+        encrypted_record TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
     `);
   },
 };

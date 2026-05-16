@@ -157,6 +157,22 @@ const sampleChatResponderNode: NodeModule = {
         promptTokens: result.usage?.inputTokens,
         completionTokens: result.usage?.outputTokens,
       });
+      if (result.completion.length === 0) {
+        // Provider returned 200 but no text. Most common cause: Gemini
+        // 2.5 thinking budget consuming the entire maxOutputTokens
+        // budget, or a safety filter blocking output with no
+        // promptFeedback. Surface a useful error instead of a silent
+        // empty bubble.
+        return {
+          status: 'failure',
+          error: {
+            code: 'empty_completion',
+            message: `Provider ${result.provider} (${result.model}) returned 200 OK with no text. ` +
+              'Common causes: reasoning budget consumed entire maxOutputTokens (try a different model), ' +
+              'safety filter (rephrase the prompt), or empty system prompt edge case.',
+          },
+        };
+      }
       return {
         status: 'success',
         outputs: {

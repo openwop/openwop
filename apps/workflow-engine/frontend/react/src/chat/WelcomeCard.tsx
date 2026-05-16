@@ -55,12 +55,13 @@ export function WelcomeCard({ onPickSuggestion }: Props): JSX.Element {
             className="secondary"
             onClick={() => onPickSuggestion(s.prompt)}
             style={{
-              padding: 12, textAlign: 'left', flexDirection: 'column', alignItems: 'flex-start',
-              gap: 4, border: '1px solid var(--color-border)',
+              display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
+              padding: 12, textAlign: 'left',
+              gap: 6, border: '1px solid var(--color-border)',
             }}
           >
             <span style={{ fontWeight: 600, fontSize: 13 }}>{s.title}</span>
-            <span className="muted" style={{ fontSize: 11 }}>{s.prompt}</span>
+            <span className="muted" style={{ fontSize: 11, lineHeight: 1.4 }}>{s.prompt}</span>
           </button>
         ))}
       </div>

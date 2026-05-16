@@ -123,8 +123,8 @@ function ProviderGrid({
             className="secondary"
             onClick={() => onPick(p)}
             style={{
-              display: 'flex', alignItems: 'flex-start', gap: 12,
-              padding: 12, textAlign: 'left', flexDirection: 'row',
+              display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 12,
+              padding: 12, textAlign: 'left',
               border: '1px solid var(--color-border)',
             }}
           >
@@ -172,6 +172,27 @@ function ModelGrid({
   onPick: (m: ProviderModel) => void;
   onBack: () => void;
 }): JSX.Element {
+  const [customMode, setCustomMode] = useState(false);
+  const [customId, setCustomId] = useState('');
+  const [customError, setCustomError] = useState<string | null>(null);
+
+  function submitCustom(): void {
+    const id = customId.trim();
+    if (!id) {
+      setCustomError('Model id is required.');
+      return;
+    }
+    // Construct a synthetic ProviderModel. Capabilities + context
+    // window + cost are unknown for custom models — we use neutral
+    // placeholders and the chat surface tolerates missing usage data.
+    onPick({
+      id,
+      label: id,
+      contextWindow: 0,
+      capabilities: ['text'],
+    });
+  }
+
   return (
     <div>
       <h2 style={{ margin: 0, fontSize: 14 }}>Pick a model</h2>
@@ -184,7 +205,8 @@ function ModelGrid({
             className="secondary"
             onClick={() => onPick(m)}
             style={{
-              padding: 12, textAlign: 'left', flexDirection: 'column', alignItems: 'flex-start',
+              display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4,
+              padding: 12, textAlign: 'left',
               borderColor: m.id === selectedModelId ? 'var(--color-accent)' : 'var(--color-border)',
             }}
           >
@@ -205,12 +227,88 @@ function ModelGrid({
             </div>
           </button>
         ))}
+
+        {/* "Other" — escape hatch for models not in the curated list
+            (preview releases, fine-tunes, snapshots, future versions
+            we haven't bumped the taxonomy for). */}
+        {!customMode ? (
+          <button
+            type="button"
+            className="secondary"
+            onClick={() => setCustomMode(true)}
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4,
+              padding: 12, textAlign: 'left',
+              borderColor: 'var(--color-border)',
+              borderStyle: 'dashed',
+            }}
+          >
+            <div style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontWeight: 600, fontSize: 13 }}>Other…</span>
+              <span style={{ marginLeft: 'auto', fontSize: 11 }} className="muted">enter model id manually</span>
+            </div>
+            <div className="muted" style={{ fontSize: 11, marginTop: 6 }}>
+              For preview releases, fine-tunes, snapshots, or any model not in the list above.
+            </div>
+          </button>
+        ) : (
+          <div
+            className="card"
+            style={{
+              margin: 0,
+              padding: 12,
+              borderStyle: 'dashed',
+              background: 'var(--color-surface-2)',
+            }}
+          >
+            <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8 }}>Custom model</div>
+            <div className="form-row">
+              <label>Model id (as the provider expects it)</label>
+              <input
+                value={customId}
+                onChange={(e) => { setCustomId(e.target.value); setCustomError(null); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); submitCustom(); } }}
+                placeholder={providerCustomPlaceholder(provider.id)}
+                autoFocus
+                spellCheck={false}
+              />
+              <div className="muted" style={{ fontSize: 11, marginTop: 4 }}>
+                {providerCustomHelp(provider.id)}
+              </div>
+            </div>
+            {customError && <div className="alert error" style={{ fontSize: 12 }}>{customError}</div>}
+            <div className="button-row">
+              <button type="button" onClick={submitCustom} disabled={!customId.trim()}>Use this model</button>
+              <button type="button" className="secondary" onClick={() => { setCustomMode(false); setCustomId(''); setCustomError(null); }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
       <div className="button-row">
         <button type="button" className="secondary" onClick={onBack}>Back</button>
       </div>
     </div>
   );
+}
+
+function providerCustomPlaceholder(id: string): string {
+  switch (id) {
+    case 'anthropic': return 'claude-opus-4-1-20250805';
+    case 'openai':    return 'gpt-4-turbo-2024-04-09';
+    case 'google':    return 'gemini-1.5-pro-002';
+    default:          return 'provider-model-id';
+  }
+}
+
+function providerCustomHelp(id: string): string {
+  switch (id) {
+    case 'anthropic': return 'e.g. a model snapshot like `claude-opus-4-1-20250805` or a beta release.';
+    case 'openai':    return 'e.g. `gpt-4-turbo-2024-04-09`, a fine-tune `ft:gpt-4o-mini:org:name:id`, or a preview.';
+    case 'google':    return 'e.g. `gemini-1.5-pro-002` or any model id from the Gemini model catalog.';
+    default:          return 'Whatever model id the provider\'s API accepts.';
+  }
 }
 
 // ── Step 3: key entry ──────────────────────────────────────────────────

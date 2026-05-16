@@ -76,6 +76,16 @@ export interface Storage {
   getInvocation(key: { runId: string; nodeId: string; attempt: number; providerKey: string }): unknown | null;
   putInvocation(key: { runId: string; nodeId: string; attempt: number; providerKey: string }, result: unknown): void;
 
+  // ── BYOK secrets (encrypted at rest) ──
+  /** Persist an encrypted secret record. Caller MUST encrypt before calling. */
+  upsertEncryptedSecret(credentialRef: string, encryptedRecordJson: string, now: string): void;
+  /** Read back the encrypted record (caller decrypts). Returns null if absent. */
+  getEncryptedSecret(credentialRef: string): string | null;
+  /** Remove a secret entirely. */
+  deleteSecret(credentialRef: string): void;
+  /** List all stored credentialRefs (NEVER values). */
+  listSecretRefs(): readonly string[];
+
   // ── lifecycle ──
   close(): void;
 }

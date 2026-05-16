@@ -26,7 +26,8 @@ import { ensureRuntimeCapabilityRegistryInstalled } from './bootstrap/runtimeCap
 import { ensureNodePackResolverInstalled } from './bootstrap/nodePackResolver.js';
 import { openStorage } from './storage/index.js';
 import { createHostAdapterSuite } from './host/index.js';
-import { loadSecretsFromEnv } from './byok/secretResolver.js';
+import { configureSecretResolver, loadSecretsFromEnv } from './byok/secretResolver.js';
+import { dirname, resolve as resolvePath } from 'node:path';
 import { registerHealthRoutes } from './routes/health.js';
 import { registerDiscoveryRoutes } from './routes/discovery.js';
 import { registerRunRoutes } from './routes/runs.js';
@@ -66,6 +67,15 @@ export async function createApp(config: AppConfig): Promise<Express> {
 
   const storage = openStorage(config.storageDsn);
   const hostSuite = createHostAdapterSuite({ storage });
+
+  // Wire BYOK to sqlite + AES-256-GCM-at-rest. Master key resolution:
+  // env (OPENWOP_BYOK_ENCRYPTION_KEY) → data/.byok-master-key (auto-
+  // generated 0600 on first boot). See src/byok/encryption.ts for the
+  // honest security boundary discussion.
+  const dataDir = config.storageDsn.startsWith('sqlite://')
+    ? dirname(resolvePath(config.storageDsn.slice('sqlite://'.length)))
+    : resolvePath('./data');
+  configureSecretResolver({ storage, dataDir });
 
   // Pre-seed BYOK from env (kept for backward-compat with conformance
   // / scripted-test setups). Runtime adds via POST /v1/byok/secrets.
