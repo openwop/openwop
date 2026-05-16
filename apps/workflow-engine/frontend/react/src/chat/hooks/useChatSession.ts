@@ -82,6 +82,12 @@ export interface SendOptions {
   /** Enable provider-native web search for this turn (anthropic / openai
    *  / google all support; gated per-model via providers.json `webSearch`). */
   webSearch?: boolean;
+  /** Workflow-bound tools the chat node can dispatch via the Anthropic
+   *  tools API (anthropic provider only — gated upstream). Each entry
+   *  is { workflowId, name, description }; the chat responder node
+   *  turns these into Anthropic tool definitions and dispatches the
+   *  named workflow on tool_use. */
+  tools?: ReadonlyArray<{ workflowId: string; name: string; description: string }>;
 }
 
 const LS_KEY = 'openwop.sample.chat.session';
@@ -232,6 +238,7 @@ export function useChatSession(): UseChatSessionResult {
           credentialRef: config.credentialRef,
           messages: providerMessages,
           webSearch: opts?.webSearch === true,
+          ...(opts?.tools && opts.tools.length > 0 ? { tools: opts.tools } : {}),
         },
         configurable: {
           credentialRefs: [config.credentialRef],
@@ -325,6 +332,13 @@ export function useChatSession(): UseChatSessionResult {
           setIsSending(false);
           inFlightRunIdRef.current = null;
           inFlightAssistantIdRef.current = null;
+          // Close the SSE subscription explicitly so the idle timer
+          // doesn't fire 30s later and overwrite the bubble with a
+          // spurious stream_timeout error. The BE already closed its
+          // side via res.end(); browser EventSource auto-reconnect
+          // would otherwise keep our timer alive.
+          subRef.current?.close();
+          subRef.current = null;
         } else if (ev.type === 'run.cancelled') {
           // User-initiated stop. Mark the in-flight bubble as cancelled
           // with whatever content we accumulated so far.
@@ -341,10 +355,14 @@ export function useChatSession(): UseChatSessionResult {
           setIsSending(false);
           inFlightRunIdRef.current = null;
           inFlightAssistantIdRef.current = null;
+          subRef.current?.close();
+          subRef.current = null;
         } else if (ev.type === 'run.completed') {
           setIsSending(false);
           inFlightRunIdRef.current = null;
           inFlightAssistantIdRef.current = null;
+          subRef.current?.close();
+          subRef.current = null;
         }
       },
       onError: () => {
