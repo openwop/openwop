@@ -52,6 +52,19 @@ examples/hosts/postgres/data/
 examples/hosts/sqlite/data/
 apps/workflow-engine/backend/typescript/data/
 
+# ── apps/workflow-engine: stray colocated TypeScript emit ────────────────────
+# `tsc` invoked without `--noEmit` (e.g., `tsc -b` outside the build
+# script) writes a `.js`+`.js.map` next to every `.ts`/`.tsx` source.
+# Source of truth is always the `.ts`/`.tsx` file — Vite imports those
+# directly. The general `dist/` rule above handles the BE bundle
+# output; these rules catch the colocated emit and the BE's `lib/`
+# directory that `tsc -b` sometimes targets. Scoped to this subtree so
+# legitimate `.js` files elsewhere in the repo (scripts/, etc.) are
+# untouched.
+apps/workflow-engine/**/src/**/*.js
+apps/workflow-engine/**/src/**/*.js.map
+apps/workflow-engine/backend/typescript/lib/
+
 # ── Registry: un-ignore the publication artifacts ────────────────────────────
 # The root `*.tgz` rule above would otherwise block every new signed pack
 # tarball under `registry/v1/packs/**`. These are intentional content (the
