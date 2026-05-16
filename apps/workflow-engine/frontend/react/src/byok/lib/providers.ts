@@ -43,11 +43,59 @@ export interface ProviderConfig {
   models: readonly ProviderModel[];
 }
 
-// Strip the JSON-only meta fields (_comment / _schemaVersion / _docsUrl
-// / _notes) — they're hints for whoever edits providers.json, not
-// runtime data. The JSON's shape past those keys matches ProviderConfig.
-const raw = providersData as unknown as { providers: ProviderConfig[] };
-export const PROVIDERS: readonly ProviderConfig[] = raw.providers;
+interface ProvidersDocument {
+  providers: ProviderConfig[];
+}
+
+/**
+ * Runtime validator for providers.json. Fails loud at module load if
+ * anyone edits the JSON and breaks the shape — better than silent
+ * `undefined`/`NaN` rendering in the wizard.
+ *
+ * Narrow on purpose: checks fields the wizard renders + dispatches on.
+ * JSON-only meta fields (`_comment`, `_schemaVersion`, `_docsUrl`,
+ * `_notes`) are ignored.
+ */
+function validateProvidersDocument(raw: unknown): ProvidersDocument {
+  if (!raw || typeof raw !== 'object' || !('providers' in raw)) {
+    throw new Error('providers.json: missing top-level `providers` array');
+  }
+  const providers = (raw as { providers: unknown }).providers;
+  if (!Array.isArray(providers) || providers.length === 0) {
+    throw new Error('providers.json: `providers` MUST be a non-empty array');
+  }
+  for (const p of providers) assertProviderShape(p);
+  return { providers: providers as ProviderConfig[] };
+}
+
+function assertProviderShape(p: unknown): asserts p is ProviderConfig {
+  if (!p || typeof p !== 'object') throw new Error('providers.json: each provider MUST be an object');
+  const rec = p as Record<string, unknown>;
+  for (const field of ['id', 'label', 'badgeColor', 'description', 'apiKeyPlaceholder', 'apiKeyHelpText', 'apiKeyConsoleUrl'] as const) {
+    if (typeof rec[field] !== 'string' || (rec[field] as string).length === 0) {
+      throw new Error(`providers.json: provider missing string field \`${field}\` (got ${typeof rec[field]})`);
+    }
+  }
+  if (!Array.isArray(rec.models) || rec.models.length === 0) {
+    throw new Error(`providers.json: provider \`${String(rec.id)}\` MUST have a non-empty models array`);
+  }
+  for (const m of rec.models as unknown[]) {
+    if (!m || typeof m !== 'object') throw new Error('providers.json: each model MUST be an object');
+    const mrec = m as Record<string, unknown>;
+    if (typeof mrec.id !== 'string' || typeof mrec.label !== 'string') {
+      throw new Error(`providers.json: model in \`${String(rec.id)}\` missing id/label strings`);
+    }
+    if (typeof mrec.contextWindow !== 'number' || mrec.contextWindow < 0) {
+      throw new Error(`providers.json: model \`${String(mrec.id)}\` MUST have a non-negative contextWindow number`);
+    }
+    if (!Array.isArray(mrec.capabilities)) {
+      throw new Error(`providers.json: model \`${String(mrec.id)}\` MUST have a capabilities array`);
+    }
+  }
+}
+
+const validated = validateProvidersDocument(providersData);
+export const PROVIDERS: readonly ProviderConfig[] = validated.providers;
 
 export function getProvider(id: ProviderId): ProviderConfig {
   const p = PROVIDERS.find((x) => x.id === id);

@@ -398,18 +398,6 @@ export function openSqliteStorage(dbPath: string): Storage {
       });
     },
 
-    lookupIdempotency(key) {
-      const existing = getIdempotencyStmt.get(key) as
-        | { key: string; response_body: string; response_status: number; created_at: string }
-        | undefined;
-      if (!existing) return null;
-      return {
-        key: existing.key,
-        responseBody: existing.response_body,
-        responseStatus: existing.response_status,
-        createdAt: existing.created_at,
-      };
-    },
     claimIdempotency(key, createdAt) {
       // Single sqlite txn: SELECT then INSERT under exclusive write lock.
       // better-sqlite3 serializes write txns process-wide, so two concurrent

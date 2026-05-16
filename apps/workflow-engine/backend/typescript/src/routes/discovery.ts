@@ -50,7 +50,23 @@ export function registerDiscoveryRoutes(app: Express, _deps: Deps): void {
         '/v1/webhooks': { post: { summary: 'Register a webhook subscription' } },
         '/v1/webhooks/{subscriptionId}': { delete: { summary: 'Delete a webhook subscription' } },
         '/v1/packs': { get: { summary: 'List installed packs' } },
+
+        // ── Sample-extension routes (NOT part of the OpenWOP wire
+        //    contract — vendor-prefixed per host-extensions.md) ──
+        '/v1/host/sample/byok/secrets': {
+          get: { summary: 'List stored BYOK credentialRefs (refs only)', tags: ['sample-extension'] },
+          post: { summary: 'Store a BYOK credentialRef + value', tags: ['sample-extension'] },
+        },
+        '/v1/host/sample/byok/secrets/{credentialRef}': {
+          delete: { summary: 'Remove a stored BYOK secret', tags: ['sample-extension'] },
+        },
+        '/v1/host/sample/runs/{runId}/interrupts': {
+          get: { summary: 'List open interrupts for a run (authed; returns tokens)', tags: ['sample-extension'] },
+        },
       },
+      tags: [
+        { name: 'sample-extension', description: 'Sample-only routes outside the canonical OpenWOP v1 wire contract. Vendor-prefixed under /v1/host/sample/* per spec/v1/host-extensions.md.' },
+      ],
     });
   });
 }

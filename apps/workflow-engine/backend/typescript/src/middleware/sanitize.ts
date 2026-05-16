@@ -23,20 +23,38 @@ export function sanitizeForErrorMessage(input: string): string {
     .replace(LONG_BASE64_RE, '<redacted:high-entropy>');
 }
 
-/** Recursively walk a value and sanitize any string fields. */
-export function sanitizeDetails<T>(value: T): T {
+/**
+ * Recursively walk a value and sanitize any string fields. Returns the
+ * structural sibling of the input (strings replaced; arrays + objects
+ * recursed; everything else returned as-is).
+ *
+ * Internal: non-generic to avoid `as unknown as T` casts. Callers cast
+ * at the boundary via `sanitizeDetails(value) as typeof value` if they
+ * want to preserve a static type.
+ */
+function sanitizeWalk(value: unknown): unknown {
   if (typeof value === 'string') {
-    return sanitizeForErrorMessage(value) as unknown as T;
+    return sanitizeForErrorMessage(value);
   }
   if (Array.isArray(value)) {
-    return value.map(sanitizeDetails) as unknown as T;
+    return value.map(sanitizeWalk);
   }
   if (value && typeof value === 'object') {
     const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-      out[k] = sanitizeDetails(v);
+      out[k] = sanitizeWalk(v);
     }
-    return out as unknown as T;
+    return out;
   }
   return value;
+}
+
+/**
+ * Public wrapper preserving the caller's static type for ergonomics.
+ * Because the walk is structurally invariant (strings are still strings,
+ * arrays are still arrays, etc.), the runtime shape matches the input
+ * type and the cast at the boundary is safe.
+ */
+export function sanitizeDetails<T>(value: T): T {
+  return sanitizeWalk(value) as T;
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import type { RunSnapshot, RunEventDoc } from '@openwop/openwop';
 import { cancelRun, forkRun, getRun, pollEvents } from '../client/runsClient.js';
@@ -17,15 +17,15 @@ export function RunDetailPage() {
   const [activeInterrupt, setActiveInterrupt] = useState<OpenInterrupt | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function refreshInterrupts() {
+  const refreshInterrupts = useCallback(async () => {
     if (!runId) return;
     try {
       const open = await listOpenInterrupts(runId);
-      setActiveInterrupt(open.length > 0 ? open[open.length - 1]! : null);
+      setActiveInterrupt(open.length > 0 ? (open[open.length - 1] ?? null) : null);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }
-  }
+  }, [runId]);
 
   // Initial snapshot + replay buffered events + open-interrupt fetch.
   useEffect(() => {
@@ -45,8 +45,7 @@ export function RunDetailPage() {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [runId]);
+  }, [runId, refreshInterrupts]);
 
   // Subscribe to live SSE events.
   useEffect(() => {
@@ -75,8 +74,7 @@ export function RunDetailPage() {
       onError: () => setError('Event stream connection error (will reconnect)'),
     });
     return () => sub.close();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [runId]);
+  }, [runId, refreshInterrupts]);
 
   async function onCancel() {
     if (!runId) return;

@@ -42,8 +42,6 @@ export interface Storage {
   listWebhooks(filter: { eventType?: string; tags?: readonly string[] }): readonly WebhookSubscriptionRecord[];
 
   // ── idempotency ──
-  /** Returns the cached record for `key`, or null if absent. */
-  lookupIdempotency(key: string): IdempotencyRecord | null;
   /**
    * Atomically: if `key` is unknown, insert a `__pending__` placeholder and
    * return `{ claimed: true, existing: null }`. If `key` is already present,

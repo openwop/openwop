@@ -9,7 +9,7 @@ const SAMPLE_WORKFLOWS = [
 
 export function RunsIndexPage() {
   const nav = useNavigate();
-  const [workflowId, setWorkflowId] = useState(SAMPLE_WORKFLOWS[0]!.id);
+  const [workflowId, setWorkflowId] = useState(SAMPLE_WORKFLOWS[0]?.id ?? 'sample.demo.uppercase');
   const [tenantId, setTenantId] = useState('demo');
   const [inputsRaw, setInputsRaw] = useState(JSON.stringify({ text: 'hello world' }, null, 2));
   const [submitting, setSubmitting] = useState(false);

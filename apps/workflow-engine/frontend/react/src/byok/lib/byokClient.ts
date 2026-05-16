@@ -1,5 +1,5 @@
 /**
- * Thin wrapper around the BE's /v1/byok/secrets routes.
+ * Thin wrapper around the BE's /v1/host/sample/byok/secrets routes.
  */
 
 import { config } from '../../client/config.js';
@@ -10,14 +10,14 @@ const baseHeaders = (): HeadersInit => ({
 });
 
 export async function listStoredRefs(): Promise<readonly string[]> {
-  const res = await fetch(`${config.baseUrl}/v1/byok/secrets`, { headers: baseHeaders() });
+  const res = await fetch(`${config.baseUrl}/v1/host/sample/byok/secrets`, { headers: baseHeaders() });
   if (!res.ok) throw new Error(`listStoredRefs returned ${res.status}`);
   const body = (await res.json()) as { credentialRefs: string[] };
   return body.credentialRefs;
 }
 
 export async function storeKey(credentialRef: string, value: string): Promise<{ credentialRef: string; masked: string }> {
-  const res = await fetch(`${config.baseUrl}/v1/byok/secrets`, {
+  const res = await fetch(`${config.baseUrl}/v1/host/sample/byok/secrets`, {
     method: 'POST',
     headers: baseHeaders(),
     body: JSON.stringify({ credentialRef, value }),
@@ -36,7 +36,7 @@ export async function storeKey(credentialRef: string, value: string): Promise<{ 
 }
 
 export async function deleteKey(credentialRef: string): Promise<void> {
-  const res = await fetch(`${config.baseUrl}/v1/byok/secrets/${encodeURIComponent(credentialRef)}`, {
+  const res = await fetch(`${config.baseUrl}/v1/host/sample/byok/secrets/${encodeURIComponent(credentialRef)}`, {
     method: 'DELETE',
     headers: baseHeaders(),
   });

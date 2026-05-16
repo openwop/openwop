@@ -10,9 +10,19 @@
  *      access to the data directory (because the master key is on
  *      disk alongside the database).
  *
+ *   ✗ Does NOT protect against: process memory inspection. The
+ *      `secretResolver.ts` cache holds decrypted plaintexts in a
+ *      module-level Map after first resolve, so a memory dump reveals
+ *      every active BYOK secret as plaintext. A real KMS keeps the
+ *      master key inside an HSM and returns cipher-text-bound tokens
+ *      that never decrypt in your process; the sample's in-process
+ *      cache is the corner that production deploys MUST replace.
+ *
  * Real deployers swap the master-key source for KMS / Vault / a
- * hardware-backed secret. The wire shape of the encrypted record
- * stays the same — only `loadMasterKey()` changes.
+ * hardware-backed secret AND wire `secretResolver.ts` to fetch each
+ * decrypt-on-demand instead of caching plaintext. The wire shape of
+ * the encrypted record stays the same — only `loadMasterKey()` and
+ * the cache policy change.
  *
  * Master-key resolution order:
  *   1. OPENWOP_BYOK_ENCRYPTION_KEY env var (64 hex chars = 32 bytes)

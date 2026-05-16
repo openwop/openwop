@@ -29,7 +29,9 @@ const PUBLIC_PATH_PREFIXES = [
   // Publishing (POST /v1/packs/...) would require auth — sample doesn't ship publish.
   '/v1/packs',
   // Signed-token interrupt resolution is intentionally unauth per spec —
-  // the token IS the authorization.
+  // the token IS the authorization. Note: this matches POST + GET on
+  // /v1/interrupts/:token only; the authed-list endpoint lives under
+  // /v1/host/sample/runs/:id/interrupts and is auth-gated.
   '/v1/interrupts',
 ];
 

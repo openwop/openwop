@@ -63,7 +63,13 @@ export function registerInterruptRoutes(app: Express, deps: Deps): void {
 
   // Authenticated list of open interrupts for a run. Returns tokens —
   // public event log no longer carries them (see executor.ts §node.suspended).
-  app.get('/v1/runs/:runId/interrupts', (req, res, next) => {
+  //
+  // Vendor-prefixed under /v1/host/sample/* per host-extensions.md
+  // §"Canonical prefixes". This endpoint is a strong RFC candidate —
+  // every host that strips tokens from the public event log needs a
+  // way for authed callers to list open interrupts with tokens. For
+  // now it stays sample-scoped to avoid contract drift.
+  app.get('/v1/host/sample/runs/:runId/interrupts', (req, res, next) => {
     try {
       const run = storage.getRun(req.params.runId);
       if (!run) throw new OpenwopError('run_not_found', `run ${req.params.runId} not found`, 404);

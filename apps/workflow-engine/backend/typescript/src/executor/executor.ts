@@ -37,6 +37,41 @@ export interface ExecuteRunResult {
   pausedAtIndex?: number;
 }
 
+/**
+ * Emit the canonical terminal-failure event sequence: `node.failed`
+ * (when a node was active) → `run.failed` → update run record. Called
+ * from every failure path in executeRun so SSE consumers + the streams
+ * route's TERMINAL_EVENT_TYPES gate see a consistent event trail.
+ */
+function emitTerminalFailure(input: {
+  storage: Storage;
+  runId: string;
+  nodeId?: string;
+  error: { code: string; message: string };
+}): void {
+  const eventLog = getEventLog();
+  const errorPayload = stripSecretsFromPersisted({ error: input.error });
+  if (input.nodeId) {
+    eventLog.append({
+      runId: input.runId,
+      nodeId: input.nodeId,
+      type: 'node.failed',
+      payload: errorPayload,
+    });
+  }
+  eventLog.append({
+    runId: input.runId,
+    type: 'run.failed',
+    payload: errorPayload,
+  });
+  input.storage.updateRun(input.runId, {
+    status: 'failed',
+    completedAt: new Date().toISOString(),
+    error: input.error,
+  });
+  clearRunSecrets(input.runId);
+}
+
 export async function executeRun(
   storage: Storage,
   run: RunRecord,
@@ -72,14 +107,9 @@ export async function executeRun(
   } catch (err) {
     const code = err instanceof OpenwopError ? err.code : 'internal_error';
     const message = err instanceof Error ? err.message : String(err);
-    const errorPayload = { error: { code, message } };
-    eventLog.append({ runId: run.runId, type: 'run.failed', payload: errorPayload });
-    storage.updateRun(run.runId, {
-      status: 'failed',
-      completedAt: new Date().toISOString(),
-      error: { code, message },
-    });
-    clearRunSecrets(run.runId);
+    // No active node yet — pass undefined nodeId so we emit run.failed
+    // only (skip node.failed). The helper handles this.
+    emitTerminalFailure({ storage, runId: run.runId, error: { code, message } });
     return { status: 'failed' };
   }
 
@@ -87,19 +117,12 @@ export async function executeRun(
     const node = definition.nodes[i]!;
     const module = await registry.resolve(node.typeId);
     if (!module) {
-      const errCode = 'workflow_not_found';
-      eventLog.append({
+      emitTerminalFailure({
+        storage,
         runId: run.runId,
         nodeId: node.nodeId,
-        type: 'run.failed',
-        payload: { error: { code: errCode, message: `node module not registered: ${node.typeId}` } },
+        error: { code: 'workflow_not_found', message: `node module not registered: ${node.typeId}` },
       });
-      storage.updateRun(run.runId, {
-        status: 'failed',
-        completedAt: new Date().toISOString(),
-        error: { code: errCode, message: `node module not registered: ${node.typeId}` },
-      });
-      clearRunSecrets(run.runId);
       return { status: 'failed' };
     }
 
@@ -107,18 +130,12 @@ export async function executeRun(
     if (module.requires) {
       for (const cap of module.requires) {
         if (!hasCapability(cap)) {
-          eventLog.append({
+          emitTerminalFailure({
+            storage,
             runId: run.runId,
             nodeId: node.nodeId,
-            type: 'run.failed',
-            payload: { error: { code: 'host_capability_missing', capability: cap } },
-          });
-          storage.updateRun(run.runId, {
-            status: 'failed',
-            completedAt: new Date().toISOString(),
             error: { code: 'host_capability_missing', message: `capability ${cap} not provided by host` },
           });
-          clearRunSecrets(run.runId);
           return { status: 'failed' };
         }
       }
@@ -173,28 +190,12 @@ export async function executeRun(
     }
 
     if (outcome.status === 'failure') {
-      const errorPayload = stripSecretsFromPersisted({ error: outcome.error });
-      eventLog.append({
+      emitTerminalFailure({
+        storage,
         runId: run.runId,
         nodeId: node.nodeId,
-        type: 'node.failed',
-        payload: errorPayload,
-      });
-      // Run-level terminal event — SSE consumers + the streams route's
-      // TERMINAL_EVENT_TYPES set both gate on `run.failed`, so without
-      // this the stream stays open until heartbeat timeout and any
-      // chat-style UI sits on its loading state.
-      eventLog.append({
-        runId: run.runId,
-        type: 'run.failed',
-        payload: errorPayload,
-      });
-      storage.updateRun(run.runId, {
-        status: 'failed',
-        completedAt: new Date().toISOString(),
         error: outcome.error,
       });
-      clearRunSecrets(run.runId);
       return { status: 'failed' };
     }
 

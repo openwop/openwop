@@ -135,3 +135,37 @@ These are valid critiques of the sample as a *production* artifact, but in scope
 - **Pack publishing.** Read-only catalog only. Publishing lives in the postgres host's `pack-consumer.ts` story + `examples/node-pack-publishing/`.
 
 When swapping a stub for a real implementation, also update the relevant `capabilities` block in `src/routes/discovery.ts` so the advertisement stays honest.
+
+---
+
+## Surfaces added after the initial scaffolding
+
+### AI chat surface (`frontend/react/src/chat/` + `backend/.../bootstrap/nodes.ts` `local.sample.chat.responder`)
+
+A vertical slice from chat input → real provider dispatch → streamed tokens back into the bubble. Components:
+
+- `ChatTab.tsx` — state machine that routes between BYOK wizard (no key) and `ChatSidebar` (key present).
+- `ChatSidebar.tsx` + `ChatHeader` + `MessageFeed` + `MessageBubble` + `ChatInput` + `WelcomeCard` — the sidebar UI.
+- `useChatSession.ts` — message thread state + per-turn dispatch. Each turn = one `POST /v1/runs` with `workflowId: 'sample.chat.turn'`. Subscribes to SSE; appends `node.message` deltas to the in-flight assistant bubble; on `node.suspended` fetches the open interrupt and renders the matching card via the registry.
+- **Card registry** (`chat/registry/`) is the extensibility seam. Adopters call `registerCard({cardType, Component, ...})` from any module to add their own card type. Built-in registrations cover the 4 interrupt kinds (approval / clarification / refinement / cancellation). Cards wrap in `CardErrorBoundary` so a broken third-party card doesn't crash the panel.
+
+BE-side: `local.sample.chat.responder` node calls Anthropic / OpenAI / Google providers via raw `fetch` (no SDK deps). Each token delta becomes a `node.message` event through `ctx.emit()` — strip-on-persist applies automatically.
+
+### Sample-extension HTTP routes (vendor-prefixed)
+
+Per `spec/v1/host-extensions.md` §"Canonical prefixes", anything outside the OpenWOP v1 wire contract MUST be vendor-prefixed. Sample's additions:
+
+- `GET / POST / DELETE /v1/host/sample/byok/secrets[/:ref]` — runtime BYOK key management (replaces the env-only flow).
+- `GET /v1/host/sample/runs/:id/interrupts` — authed list of open interrupts with their resume tokens. Necessary because `node.suspended` events strip the token from the public event log so SSE / webhook fanout can't leak a resolution capability. Strong candidate for future RFC promotion — every host that strips tokens needs this surface.
+
+### BYOK persistence (`backend/.../byok/`)
+
+- `secretResolver.ts` delegates to sqlite via new `Storage` methods (`upsertEncryptedSecret` / `getEncryptedSecret` / `deleteSecret` / `listSecretRefs`).
+- `encryption.ts` provides AES-256-GCM with master-key resolution: `OPENWOP_BYOK_ENCRYPTION_KEY` env var → auto-generated `data/.byok-master-key` (0600 perms) on first boot.
+- Security boundary documented at the top of `encryption.ts`: protects against backup leaks and database extraction; does NOT protect against full filesystem access (master key on disk) or process memory inspection (decrypted plaintext cached in-process). Real KMS swaps both `loadMasterKey()` and the cache policy.
+
+### Shared provider catalog (`apps/workflow-engine/providers.json`)
+
+Single source of truth for AI provider + model data. Both BE (`src/providers/catalog.ts` for default-model fallback) and FE (`src/byok/lib/providers.ts` for the wizard) read from the same file. The FE loader includes a runtime validator that fails loud on shape mismatch — better than silent `undefined`/`NaN` rendering.
+
+Edit the JSON to add/remove providers or models. The `_schemaVersion` field hints at versioned schema for future migrations.

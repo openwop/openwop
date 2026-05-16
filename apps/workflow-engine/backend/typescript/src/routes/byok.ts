@@ -1,16 +1,23 @@
 /**
- * BYOK secret-management routes.
+ * Sample-extension BYOK secret-management routes.
  *
- *   GET    /v1/byok/secrets             — list stored refs (NEVER values)
- *   POST   /v1/byok/secrets             — { credentialRef, value } → stored
- *   DELETE /v1/byok/secrets/:credentialRef
+ *   GET    /v1/host/sample/byok/secrets             — list stored refs (NEVER values)
+ *   POST   /v1/host/sample/byok/secrets             — { credentialRef, value } → stored
+ *   DELETE /v1/host/sample/byok/secrets/:credentialRef
  *
- * Sample-grade: keys live in the in-process `secretResolver` map and
- * vanish on restart. Real deployers wire KMS-wrapped storage behind
- * the same routes. The response payloads MUST NOT echo the secret
- * value back to the caller, even on success.
+ * Namespace: these routes live under `/v1/host/sample/*` per
+ * `spec/v1/host-extensions.md` §"Canonical prefixes" — they are NOT
+ * part of the OpenWOP v1 wire contract, so they MUST live under a
+ * vendor-prefixed path so a future spec version that defines its own
+ * BYOK key-management surface doesn't collide. Adopters replacing the
+ * sample with their own host should pick their own prefix
+ * (`/v1/host/<your-vendor>/byok/...`).
  *
- * Authed: every route requires a valid Bearer token (handled by the
+ * Storage: keys persist to sqlite + AES-256-GCM at rest via
+ * `src/byok/encryption.ts`. Real deployers swap for KMS — the route
+ * shape stays the same.
+ *
+ * Auth: every route requires a valid Bearer token (handled by the
  * global auth middleware).
  */
 
@@ -26,11 +33,11 @@ interface SetSecretRequest {
 const REF_PATTERN = /^[a-zA-Z0-9_.\-:]{1,128}$/;
 
 export function registerByokRoutes(app: Express): void {
-  app.get('/v1/byok/secrets', (_req, res) => {
+  app.get('/v1/host/sample/byok/secrets', (_req, res) => {
     res.json({ credentialRefs: listSecretRefs() });
   });
 
-  app.post('/v1/byok/secrets', (req, res, next) => {
+  app.post('/v1/host/sample/byok/secrets', (req, res, next) => {
     try {
       const body = req.body as SetSecretRequest;
       if (!body || typeof body !== 'object') {
@@ -64,7 +71,7 @@ export function registerByokRoutes(app: Express): void {
     }
   });
 
-  app.delete('/v1/byok/secrets/:credentialRef', (req, res, next) => {
+  app.delete('/v1/host/sample/byok/secrets/:credentialRef', (req, res, next) => {
     try {
       const ref = req.params.credentialRef;
       if (!REF_PATTERN.test(ref)) {

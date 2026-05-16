@@ -159,18 +159,13 @@ const sampleChatResponderNode: NodeModule = {
         completionTokens: result.usage?.outputTokens,
       });
       if (result.completion.length === 0) {
-        // Provider returned 200 but no text. Most common cause: Gemini
-        // 2.5 thinking budget consuming the entire maxOutputTokens
-        // budget, or a safety filter blocking output with no
-        // promptFeedback. Surface a useful error instead of a silent
-        // empty bubble.
+        // Provider returned 200 but no text. Provider-specific diagnostic
+        // so the user sees actionable next steps in the chat bubble.
         return {
           status: 'failure',
           error: {
             code: 'empty_completion',
-            message: `Provider ${result.provider} (${result.model}) returned 200 OK with no text. ` +
-              'Common causes: reasoning budget consumed entire maxOutputTokens (try a different model), ' +
-              'safety filter (rephrase the prompt), or empty system prompt edge case.',
+            message: diagnoseEmptyCompletion(result.provider, result.model),
           },
         };
       }
@@ -199,6 +194,47 @@ const sampleUppercaseNode: NodeModule = {
     return { status: 'success', outputs: { text: text.toUpperCase() } };
   },
 };
+
+/**
+ * Provider-specific diagnostic for the 200 OK + no text case. Helps
+ * users decode the silent-failure surface area each provider has.
+ */
+function diagnoseEmptyCompletion(provider: string, model: string): string {
+  if (provider === 'google' && model.includes('2.5-') && !model.includes('-lite')) {
+    return (
+      `Gemini ${model} returned 200 OK with no text. Gemini 2.5 Flash/Pro ` +
+      'use internal reasoning tokens that count against `maxOutputTokens`. ' +
+      'With a small budget the model can consume the entire budget on ' +
+      'reasoning and emit zero visible text. Try `gemini-2.5-flash-lite` ' +
+      '(8× output cap, no reasoning) or raise maxTokens >= 8192.'
+    );
+  }
+  if (provider === 'google') {
+    return (
+      `Gemini ${model} returned 200 OK with no text. Likely a safety filter ` +
+      'blocked the output (check the prompt for sensitive content) or the ' +
+      'response was filtered with no `promptFeedback`. Try rephrasing.'
+    );
+  }
+  if (provider === 'anthropic') {
+    return (
+      `Claude ${model} returned 200 OK with no text. Rare — usually means ` +
+      'an empty system prompt edge case or extended-thinking budget exhaustion. ' +
+      'Check that `system` is non-empty if you pass one.'
+    );
+  }
+  if (provider === 'openai') {
+    return (
+      `OpenAI ${model} returned 200 OK with no text. Most often a moderation ` +
+      'block (refer to response.choices[0].finish_reason) or a maxTokens=0 misconfiguration.'
+    );
+  }
+  return (
+    `Provider ${provider} (${model}) returned 200 OK with no text. ` +
+    'Common causes: reasoning budget consumed entire maxOutputTokens, ' +
+    'safety filter, or provider-side rate limit.'
+  );
+}
 
 let registered = false;
 
