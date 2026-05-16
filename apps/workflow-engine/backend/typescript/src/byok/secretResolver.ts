@@ -46,9 +46,20 @@ export function resolveSecret(credentialRef: string): string | null {
   return map.get(credentialRef) ?? null;
 }
 
-/** Test/dev affordance — set a secret in-process. */
+/** Set a secret in-process. Called by POST /v1/byok/secrets at runtime. */
 export function setSecret(credentialRef: string, value: string): void {
   map.set(credentialRef, value);
+}
+
+/** Remove a secret in-process. Called by DELETE /v1/byok/secrets/:ref. */
+export function removeSecret(credentialRef: string): void {
+  map.delete(credentialRef);
+}
+
+/** Return the set of credentialRef strings currently stored.
+ *  NEVER returns values — used by the listing endpoint. */
+export function listSecretRefs(): readonly string[] {
+  return Array.from(map.keys()).sort();
 }
 
 export function clearSecrets(): void {

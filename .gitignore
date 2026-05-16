@@ -50,6 +50,7 @@ build/
 # Per-deployment signing keys, SQLite DBs, audit logs. Never committed.
 examples/hosts/postgres/data/
 examples/hosts/sqlite/data/
+apps/workflow-engine/backend/typescript/data/
 
 # ── Registry: un-ignore the publication artifacts ────────────────────────────
 # The root `*.tgz` rule above would otherwise block every new signed pack

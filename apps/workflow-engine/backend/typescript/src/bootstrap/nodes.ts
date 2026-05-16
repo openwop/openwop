@@ -12,6 +12,7 @@
 import { getNodeRegistry } from '../executor/nodeRegistry.js';
 import type { NodeModule } from '../executor/types.js';
 import { emitCost } from '../observability/costEmitter.js';
+import { dispatchChat, type ChatMessage, type ProviderId } from '../providers/dispatch.js';
 
 const noopNode: NodeModule = {
   typeId: 'core.noop',
@@ -110,6 +111,68 @@ const sampleMockAiNode: NodeModule = {
   },
 };
 
+// Chat responder — dispatches to a real AI provider via raw fetch.
+// Reads BYOK credentialRef from ctx.secrets, model/provider from inputs,
+// and streams tokens via node.message events.
+const sampleChatResponderNode: NodeModule = {
+  typeId: 'local.sample.chat.responder',
+  version: '0.1.0',
+  async execute(ctx) {
+    const inputs = (ctx.inputs && typeof ctx.inputs === 'object') ? (ctx.inputs as Record<string, unknown>) : {};
+    const provider = (inputs.provider as ProviderId | undefined) ?? 'anthropic';
+    const model = (inputs.model as string | undefined) ?? 'claude-sonnet-4-5';
+    const credentialRef = inputs.credentialRef as string | undefined;
+    const messages = inputs.messages as ChatMessage[] | undefined;
+    const maxTokens = typeof inputs.maxTokens === 'number' ? inputs.maxTokens : 1024;
+
+    if (!credentialRef) {
+      return { status: 'failure', error: { code: 'credential_required', message: 'A credentialRef MUST be provided to dispatch a chat turn.' } };
+    }
+    const apiKey = ctx.secrets[credentialRef];
+    if (!apiKey) {
+      return { status: 'failure', error: { code: 'credential_unavailable', message: `Secret ${credentialRef} not resolved by host.` } };
+    }
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return { status: 'failure', error: { code: 'invalid_request', message: 'Field `messages` MUST be a non-empty array.' } };
+    }
+
+    try {
+      const result = await dispatchChat({
+        provider,
+        model,
+        apiKey,
+        messages,
+        maxTokens,
+        onDelta: async (delta) => {
+          // Stream token deltas as node.message events. The executor's
+          // ctx.emit strips any secret values from the payload before
+          // append, so accidental key echoes from the provider don't
+          // leak into the event log.
+          await ctx.emit('node.message', { delta });
+        },
+      });
+      emitCost({
+        provider: result.provider,
+        model: result.model,
+        promptTokens: result.usage?.inputTokens,
+        completionTokens: result.usage?.outputTokens,
+      });
+      return {
+        status: 'success',
+        outputs: {
+          completion: result.completion,
+          provider: result.provider,
+          model: result.model,
+          usage: result.usage,
+        },
+      };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return { status: 'failure', error: { code: 'internal_error', message } };
+    }
+  },
+};
+
 const sampleUppercaseNode: NodeModule = {
   typeId: 'local.sample.demo.uppercase',
   version: '0.1.0',
@@ -132,5 +195,6 @@ export function ensureNodesRegistered(): void {
   registry.register(interruptNode);
   registry.register(sampleUppercaseNode);
   registry.register(sampleMockAiNode);
+  registry.register(sampleChatResponderNode);
   registered = true;
 }

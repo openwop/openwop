@@ -70,10 +70,33 @@ export function subscribeToRun(runId: string, opts: SubscribeOptions): Subscript
   // Default unnamed-event handler too, in case the BE drops the event: field.
   es.onmessage = handler;
 
-  if (opts.onError) es.onerror = opts.onError;
+  // EventSource fires `onerror` on every connection close — including
+  // the totally-expected close after a terminal event AND React
+  // StrictMode's effect-cleanup-then-remount double-dispatch in dev.
+  // Only treat OPEN-state errors as user-visible failures. CLOSED means
+  // the server hung up cleanly (we've already received the terminal
+  // event, or we deliberately closed the subscription). CONNECTING
+  // means transient — the browser will auto-reconnect with Last-Event-ID.
+  let manuallyClosed = false;
+  es.onerror = () => {
+    if (manuallyClosed) return;
+    if (es.readyState === EventSource.CLOSED) {
+      // Stop the auto-reconnect loop on a clean server close.
+      es.close();
+      opts.onClose?.();
+      return;
+    }
+    // readyState === CONNECTING (0) → transient; browser handles reconnect.
+    // readyState === OPEN (1) → genuine mid-stream error worth surfacing.
+    if (es.readyState === EventSource.OPEN && opts.onError) {
+      const dummyEvent = new Event('error');
+      opts.onError(dummyEvent);
+    }
+  };
 
   return {
     close() {
+      manuallyClosed = true;
       es.close();
       opts.onClose?.();
     },

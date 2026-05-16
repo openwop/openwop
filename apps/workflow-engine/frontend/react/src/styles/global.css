@@ -22,6 +22,21 @@
   --space-4: 16px;
   --space-5: 24px;
   --space-6: 32px;
+
+  /* Chat-specific tokens */
+  --color-msg-user-bg: var(--color-accent);
+  --color-msg-user-text: #ffffff;
+  --color-msg-assistant-bg: var(--color-surface-2);
+  --radius-bubble: 16px;
+  --radius-pill: 24px;
+  --max-bubble-width: 75ch;
+  --chat-input-height-max: 120px;
+  --chat-feed-pad: var(--space-4);
+}
+
+@keyframes openwop-pulse {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.8; }
 }
 
 @media (prefers-color-scheme: light) {

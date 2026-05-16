@@ -16,6 +16,7 @@ import { createTracer } from './observability/tracer.js';
 import { createLogger } from './observability/logger.js';
 import { traceContextMiddleware } from './middleware/traceContext.js';
 import { authMiddleware } from './middleware/auth.js';
+import { corsMiddleware } from './middleware/cors.js';
 import { errorEnvelopeMiddleware } from './middleware/errorEnvelope.js';
 import { ensureNodesRegistered } from './bootstrap/nodes.js';
 import { ensureSuspendManagerInstalled } from './bootstrap/suspend.js';
@@ -25,6 +26,7 @@ import { ensureRuntimeCapabilityRegistryInstalled } from './bootstrap/runtimeCap
 import { ensureNodePackResolverInstalled } from './bootstrap/nodePackResolver.js';
 import { openStorage } from './storage/index.js';
 import { createHostAdapterSuite } from './host/index.js';
+import { loadSecretsFromEnv } from './byok/secretResolver.js';
 import { registerHealthRoutes } from './routes/health.js';
 import { registerDiscoveryRoutes } from './routes/discovery.js';
 import { registerRunRoutes } from './routes/runs.js';
@@ -32,6 +34,7 @@ import { registerInterruptRoutes } from './routes/interrupts.js';
 import { registerStreamRoutes } from './routes/streams.js';
 import { registerWebhookRoutes } from './routes/webhooks.js';
 import { registerPackRoutes } from './routes/packs.js';
+import { registerByokRoutes } from './routes/byok.js';
 
 const log = createLogger('workflow-engine');
 
@@ -64,6 +67,10 @@ export async function createApp(config: AppConfig): Promise<Express> {
   const storage = openStorage(config.storageDsn);
   const hostSuite = createHostAdapterSuite({ storage });
 
+  // Pre-seed BYOK from env (kept for backward-compat with conformance
+  // / scripted-test setups). Runtime adds via POST /v1/byok/secrets.
+  loadSecretsFromEnv();
+
   // Pre-register node modules + install singletons before the first
   // request lands. Mirrors the MyndHyve workflow-runtime boot order.
   ensureNodesRegistered();
@@ -81,6 +88,10 @@ export async function createApp(config: AppConfig): Promise<Express> {
   app.use('/v1/packs', express.json({ limit: '50mb' }));
   app.use(express.json({ limit: '1mb' }));
 
+  // CORS — MUST come before auth so OPTIONS preflight succeeds without
+  // credentials per the CORS spec.
+  app.use(corsMiddleware());
+
   // W3C traceparent → active OTel context. Mounted before route
   // registrations so handlers see the propagated context.
   app.use(traceContextMiddleware());
@@ -96,6 +107,7 @@ export async function createApp(config: AppConfig): Promise<Express> {
   registerStreamRoutes(app, { storage });
   registerWebhookRoutes(app, { storage });
   registerPackRoutes(app, { storage });
+  registerByokRoutes(app);
 
   // Express 4 catch-all (no path string — avoids path-to-regexp v6 issue).
   app.use((_req, res) => {

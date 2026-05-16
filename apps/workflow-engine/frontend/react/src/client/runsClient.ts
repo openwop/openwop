@@ -18,7 +18,17 @@ import type {
 } from '@openwop/openwop';
 import { config } from './config.js';
 
-const client = new OpenwopClient({ baseUrl: config.baseUrl, apiKey: config.apiKey });
+// Pass an explicitly-bound `fetch` to work around an SDK bug — the
+// client stores `opts.fetch ?? fetch` and later calls `this.#fetch(...)`,
+// which strips the bound `this`. In Node that's harmless; browsers throw
+// "Illegal invocation" because window.fetch refuses unbound calls.
+// Filed-equivalent: @openwop/openwop v1.1.1 client.js:184. Safe to
+// remove this workaround once the SDK lands `this.#fetch.call(globalThis, ...)`.
+const client = new OpenwopClient({
+  baseUrl: config.baseUrl,
+  apiKey: config.apiKey,
+  fetch: (input, init) => globalThis.fetch(input, init),
+});
 
 export interface RunListItem {
   runId: string;

@@ -173,6 +173,17 @@ export function createHostAdapterSuite(deps: { storage: Storage }): HostAdapterS
             },
           };
         }
+        if (workflowId === 'sample.chat.turn') {
+          return {
+            workflowId,
+            definition: {
+              workflowId,
+              nodes: [
+                { nodeId: 'respond', typeId: 'local.sample.chat.responder' },
+              ],
+            },
+          };
+        }
         // Future: read from storage's `workflows` table.
         return null;
       },
