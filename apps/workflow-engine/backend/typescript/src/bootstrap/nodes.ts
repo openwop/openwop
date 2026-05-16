@@ -125,6 +125,7 @@ const sampleChatResponderNode: NodeModule = {
     const credentialRef = inputs.credentialRef as string | undefined;
     const messages = inputs.messages as ChatMessage[] | undefined;
     const maxTokens = typeof inputs.maxTokens === 'number' ? inputs.maxTokens : 1024;
+    const webSearch = inputs.webSearch === true;
 
     if (!credentialRef) {
       return { status: 'failure', error: { code: 'credential_required', message: 'A credentialRef MUST be provided to dispatch a chat turn.' } };
@@ -144,6 +145,7 @@ const sampleChatResponderNode: NodeModule = {
         apiKey,
         messages,
         maxTokens,
+        webSearch,
         onDelta: async (delta) => {
           // Stream token deltas as node.message events. The executor's
           // ctx.emit strips any secret values from the payload before
@@ -177,6 +179,7 @@ const sampleChatResponderNode: NodeModule = {
           provider: result.provider,
           model: result.model,
           usage: result.usage,
+          ...(result.citations && result.citations.length > 0 ? { citations: result.citations } : {}),
         },
       };
     } catch (err) {

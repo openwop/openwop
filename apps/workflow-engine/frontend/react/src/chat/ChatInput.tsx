@@ -1,46 +1,56 @@
 /**
- * Auto-resizing textarea + send / stop / mic buttons.
+ * Auto-resizing textarea + send / stop / mic buttons + pending-audio
+ * attachment chip.
+ *
+ * Voice input uses MediaRecorder (multi-modal). The recorded audio
+ * blob is attached to the next send() as a ContentPart, and the
+ * model (Gemini today; Anthropic/OpenAI Phase 4 v2) transcribes
+ * implicitly as part of its response. Bypasses the Web Speech API
+ * entirely — no Google-cloud dependency, works in Firefox.
  *
  * Keyboard contract:
  *   - Enter (no modifier) → send
  *   - Shift+Enter → newline
  *   - Esc (while streaming) → cancel
- *
- * Mic button shown only when the browser supports SpeechRecognition.
- * During recording, the textarea shows the interim transcript live;
- * on stop, the final transcript replaces the contents (user can edit
- * before sending).
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { useVoiceInput } from './hooks/useVoiceInput.js';
+import { useAudioRecorder, blobToBase64, type RecordedAudio } from './hooks/useAudioRecorder.js';
 import { CommandAutocomplete } from './CommandAutocomplete.js';
+import type { ContentPart } from './hooks/useChatSession.js';
+
+interface PendingAudio {
+  id: string;
+  audio: RecordedAudio;
+}
 
 interface Props {
-  onSend: (text: string) => void;
+  onSend: (text: string, attachments?: readonly ContentPart[]) => void;
   /** When provided AND `disabled` is true (turn in flight), Send morphs into Stop. */
   onCancel?: (() => void | Promise<void>) | null;
   disabled?: boolean;
   placeholder?: string;
   /** Reason the send button is disabled, shown in title tooltip. */
   disabledReason?: string;
+  /** Hint that the active provider supports audio input. When false,
+   *  the mic still records, but on send we'll surface a clear error
+   *  rather than ship audio to an incompatible model. */
+  supportsAudioInput?: boolean;
 }
 
-export function ChatInput({ onSend, onCancel, disabled, placeholder, disabledReason }: Props): JSX.Element {
+export function ChatInput({
+  onSend,
+  onCancel,
+  disabled,
+  placeholder,
+  disabledReason,
+  supportsAudioInput,
+}: Props): JSX.Element {
   const [text, setText] = useState('');
-  /** Saved text when voice recording starts, so the interim transcript
-   *  doesn't clobber what the user already typed. */
-  const textBeforeVoiceRef = useRef('');
+  const [pendingAudio, setPendingAudio] = useState<PendingAudio | null>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
 
-  const voice = useVoiceInput({
-    onInterim: (interim) => {
-      setText((textBeforeVoiceRef.current ? textBeforeVoiceRef.current + ' ' : '') + interim);
-    },
-    onFinal: (final) => {
-      setText((textBeforeVoiceRef.current ? textBeforeVoiceRef.current + ' ' : '') + final);
-    },
-  });
+  const recorder = useAudioRecorder();
 
   // Auto-resize: clamp scrollHeight to var(--chat-input-height-max) (120px).
   useEffect(() => {
@@ -50,42 +60,88 @@ export function ChatInput({ onSend, onCancel, disabled, placeholder, disabledRea
     el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
   }, [text]);
 
-  function submit(): void {
-    if (!text.trim() || disabled) return;
-    onSend(text.trim());
+  async function submit(): Promise<void> {
+    if (disabled) return;
+    if (!text.trim() && !pendingAudio) return;
+    const attachments: ContentPart[] = [];
+    if (pendingAudio) {
+      const dataBase64 = await blobToBase64(pendingAudio.audio.blob);
+      attachments.push({
+        type: 'audio',
+        mimeType: pendingAudio.audio.mimeType,
+        dataBase64,
+        durationSeconds: pendingAudio.audio.durationSeconds,
+      });
+    }
+    onSend(text.trim(), attachments.length > 0 ? attachments : undefined);
     setText('');
-    textBeforeVoiceRef.current = '';
+    setPendingAudio(null);
   }
 
   function onKey(e: React.KeyboardEvent<HTMLTextAreaElement>): void {
     if (e.key === 'Enter' && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
       e.preventDefault();
-      submit();
+      void submit();
     } else if (e.key === 'Escape' && disabled && onCancel) {
       e.preventDefault();
       void onCancel();
     }
   }
 
-  function toggleVoice(): void {
-    if (voice.isRecording) {
-      voice.stop();
+  async function toggleVoice(): Promise<void> {
+    if (recorder.isRecording) {
+      const audio = await recorder.stop();
+      if (audio) {
+        setPendingAudio({ id: crypto.randomUUID(), audio });
+      }
     } else {
-      // Snapshot current text so voice transcript appends rather than replaces.
-      textBeforeVoiceRef.current = text;
-      voice.start();
+      await recorder.start();
     }
   }
 
-  const canSend = !disabled && text.trim().length > 0;
+  const canSend = !disabled && (text.trim().length > 0 || pendingAudio !== null);
 
   return (
     <div style={{ position: 'relative' }}>
       <CommandAutocomplete
         text={text}
         onPick={(name) => { setText(name + ' '); taRef.current?.focus(); }}
-        onDismiss={() => { /* The Esc handler in onKey will already cancel a stream; here we just want to dismiss the popover, which is automatic when text changes — no-op. */ }}
+        onDismiss={() => { /* dismiss is implicit on text change */ }}
       />
+      {pendingAudio && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '6px 10px',
+            marginBottom: 6,
+            background: 'var(--color-surface-2)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 'var(--radius)',
+            fontSize: 12,
+          }}
+        >
+          <span aria-hidden>🎤</span>
+          <span style={{ flex: 1 }}>
+            Voice attachment ({pendingAudio.audio.durationSeconds.toFixed(1)}s, {pendingAudio.audio.mimeType.split(';')[0]})
+            {supportsAudioInput === false && (
+              <span style={{ color: 'var(--color-warning)', marginLeft: 6 }}>
+                — current model doesn't accept audio. Switch to a Gemini model or remove the attachment.
+              </span>
+            )}
+          </span>
+          <button
+            type="button"
+            className="secondary"
+            onClick={() => setPendingAudio(null)}
+            style={{ padding: '2px 8px', fontSize: 11, minHeight: 0 }}
+            aria-label="Remove voice attachment"
+          >
+            Remove
+          </button>
+        </div>
+      )}
       <div style={{
         display: 'flex', alignItems: 'flex-end', gap: 8,
         padding: 8,
@@ -99,7 +155,7 @@ export function ChatInput({ onSend, onCancel, disabled, placeholder, disabledRea
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={onKey}
-          placeholder={voice.isRecording ? 'Listening…' : (placeholder ?? 'Ask anything…')}
+          placeholder={recorder.isRecording ? 'Recording…' : (placeholder ?? 'Ask anything…')}
           disabled={disabled}
           spellCheck={false}
           style={{
@@ -116,23 +172,23 @@ export function ChatInput({ onSend, onCancel, disabled, placeholder, disabledRea
             width: '100%',
           }}
         />
-        {voice.isSupported && (
+        {recorder.isSupported && (
           <button
             type="button"
-            onClick={toggleVoice}
-            disabled={disabled && !voice.isRecording}
-            title={voice.isRecording ? 'Stop recording' : 'Start voice input'}
-            aria-label={voice.isRecording ? 'Stop voice input' : 'Start voice input'}
-            aria-pressed={voice.isRecording}
+            onClick={() => { void toggleVoice(); }}
+            disabled={disabled && !recorder.isRecording}
+            title={recorder.isRecording ? 'Stop recording' : 'Record voice attachment'}
+            aria-label={recorder.isRecording ? 'Stop voice recording' : 'Start voice recording'}
+            aria-pressed={recorder.isRecording}
             style={{
               borderRadius: '50%',
               minWidth: 36, width: 36, height: 36,
               padding: 0,
               fontSize: 16,
-              background: voice.isRecording ? 'var(--color-danger)' : 'var(--color-surface-2)',
-              color: voice.isRecording ? 'white' : 'var(--color-text)',
+              background: recorder.isRecording ? 'var(--color-danger)' : 'var(--color-surface-2)',
+              color: recorder.isRecording ? 'white' : 'var(--color-text)',
               border: '1px solid var(--color-border)',
-              animation: voice.isRecording ? 'openwop-mic-pulse 1.2s ease-in-out infinite' : 'none',
+              animation: recorder.isRecording ? 'openwop-mic-pulse 1.2s ease-in-out infinite' : 'none',
             }}
           >
             🎤
@@ -157,7 +213,7 @@ export function ChatInput({ onSend, onCancel, disabled, placeholder, disabledRea
         ) : (
           <button
             type="button"
-            onClick={submit}
+            onClick={() => { void submit(); }}
             disabled={!canSend}
             title={!canSend && disabledReason ? disabledReason : 'Send (Enter)'}
             aria-label="Send"
@@ -172,8 +228,8 @@ export function ChatInput({ onSend, onCancel, disabled, placeholder, disabledRea
           </button>
         )}
       </div>
-      {voice.error && (
-        <div className="alert error" style={{ marginTop: 6, fontSize: 11 }}>{voice.error}</div>
+      {recorder.error && (
+        <div className="alert error" style={{ marginTop: 6, fontSize: 11 }}>{recorder.error}</div>
       )}
     </div>
   );

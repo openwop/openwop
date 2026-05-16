@@ -10,9 +10,15 @@
 
 export type ProviderId = 'anthropic' | 'openai' | 'google';
 
+/** A single piece of content within a message. Mirrors the FE shape
+ *  in src/chat/hooks/useChatSession.ts. */
+export type ContentPart =
+  | { type: 'text'; text: string }
+  | { type: 'audio'; mimeType: string; dataBase64: string; durationSeconds?: number };
+
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
-  content: string;
+  content: string | readonly ContentPart[];
 }
 
 export interface DispatchRequest {
@@ -21,8 +27,17 @@ export interface DispatchRequest {
   apiKey: string;
   messages: readonly ChatMessage[];
   maxTokens?: number;
+  /** Enable provider-native web search for this turn. */
+  webSearch?: boolean;
   /** Called for each streaming token chunk (text delta). */
   onDelta?: (delta: string) => void | Promise<void>;
+}
+
+/** A normalized citation surfaced from a provider's web-search tool result. */
+export interface Citation {
+  title?: string;
+  url: string;
+  snippet?: string;
 }
 
 export interface DispatchResult {
@@ -43,6 +58,8 @@ export interface DispatchResult {
   blockReason?: string;
   /** Safety category that tripped (Gemini's `safetyRatings[].category` of any blocked rating). */
   safetyCategory?: string;
+  /** Normalized citations from a web-search-enabled turn. Empty when search wasn't used. */
+  citations?: readonly Citation[];
 }
 
 export async function dispatchChat(req: DispatchRequest): Promise<DispatchResult> {
@@ -79,8 +96,8 @@ async function dispatchAnthropic(req: DispatchRequest): Promise<DispatchResult> 
       model: req.model,
       max_tokens: req.maxTokens ?? 4096,
       stream: true,
-      ...(systemMessage ? { system: systemMessage.content } : {}),
-      messages: conversation.map((m) => ({ role: m.role, content: m.content })),
+      ...(systemMessage ? { system: contentToText(systemMessage.content, 'Anthropic') } : {}),
+      messages: conversation.map((m) => ({ role: m.role, content: contentToText(m.content, 'Anthropic') })),
     }),
   });
   if (!res.ok) {
@@ -147,7 +164,7 @@ async function dispatchOpenAI(req: DispatchRequest): Promise<DispatchResult> {
       max_tokens: req.maxTokens ?? 4096,
       stream: true,
       stream_options: { include_usage: true },
-      messages: req.messages.map((m) => ({ role: m.role, content: m.content })),
+      messages: req.messages.map((m) => ({ role: m.role, content: contentToText(m.content, 'OpenAI') })),
     }),
   });
   if (!res.ok) {
@@ -221,9 +238,13 @@ async function dispatchGoogle(req: DispatchRequest): Promise<DispatchResult> {
     body: JSON.stringify({
       contents: conversation.map((m) => ({
         role: m.role === 'assistant' ? 'model' : m.role,
-        parts: [{ text: m.content }],
+        parts: contentToGeminiParts(m.content),
       })),
-      ...(systemMessage ? { systemInstruction: { parts: [{ text: systemMessage.content }] } } : {}),
+      ...(systemMessage ? { systemInstruction: { parts: contentToGeminiParts(systemMessage.content) } } : {}),
+      // Native web search via Google's grounding tool. Each grounded
+      // response is billed as a "grounded response" (~$35/1k) per
+      // ai.google.dev/gemini-api/docs/pricing.
+      ...(req.webSearch ? { tools: [{ googleSearch: {} }] } : {}),
       generationConfig: {
         maxOutputTokens: req.maxTokens ?? 4096,
         ...(needsThinkingDisable ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
@@ -245,16 +266,25 @@ async function dispatchGoogle(req: DispatchRequest): Promise<DispatchResult> {
   let chunkCount = 0;
   let lastRawChunk: string | undefined;
 
+  interface GeminiGroundingChunk {
+    web?: { uri?: string; title?: string };
+  }
   interface GeminiCandidate {
     content?: { parts?: Array<{ text?: string }> };
     finishReason?: string;
     safetyRatings?: Array<{ category?: string; blocked?: boolean; probability?: string }>;
+    groundingMetadata?: {
+      groundingChunks?: GeminiGroundingChunk[];
+      webSearchQueries?: string[];
+    };
   }
   interface GeminiSseData {
     candidates?: GeminiCandidate[];
     usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number };
     promptFeedback?: { blockReason?: string; safetyRatings?: Array<{ category?: string; blocked?: boolean }> };
   }
+
+  const citationsByUrl = new Map<string, Citation>();
 
   for await (const event of parseSseStream(res.body)) {
     chunkCount++;
@@ -282,6 +312,15 @@ async function dispatchGoogle(req: DispatchRequest): Promise<DispatchResult> {
     if (candidate?.safetyRatings) {
       const blocked = candidate.safetyRatings.find((r) => r.blocked);
       if (blocked?.category) safetyCategory = blocked.category;
+    }
+    if (candidate?.groundingMetadata?.groundingChunks) {
+      for (const chunk of candidate.groundingMetadata.groundingChunks) {
+        const url = chunk.web?.uri;
+        if (!url) continue;
+        if (!citationsByUrl.has(url)) {
+          citationsByUrl.set(url, { url, title: chunk.web?.title });
+        }
+      }
     }
     if (data.promptFeedback?.blockReason) {
       blockReason = data.promptFeedback.blockReason;
@@ -318,6 +357,7 @@ async function dispatchGoogle(req: DispatchRequest): Promise<DispatchResult> {
     });
   }
 
+  const citations = Array.from(citationsByUrl.values());
   return {
     provider: 'google',
     model: req.model,
@@ -326,7 +366,49 @@ async function dispatchGoogle(req: DispatchRequest): Promise<DispatchResult> {
     ...(finishReason ? { finishReason } : {}),
     ...(blockReason ? { blockReason } : {}),
     ...(safetyCategory ? { safetyCategory } : {}),
+    ...(citations.length > 0 ? { citations } : {}),
   };
+}
+
+// ── Content-part converters (one per provider) ────────────────────────
+
+/** Flatten ContentPart[] → text-only string for providers that don't
+ *  accept multi-modal in our supported API surface (Anthropic Messages,
+ *  OpenAI Chat Completions on non-audio-preview models). Throws when
+ *  audio/image parts are present so the responder node can surface a
+ *  clear "this provider doesn't support audio input" error instead of
+ *  silently dropping the attachment. */
+function contentToText(content: string | readonly ContentPart[], providerLabel: string): string {
+  if (typeof content === 'string') return content;
+  const unsupported = content.find((p) => p.type !== 'text');
+  if (unsupported) {
+    throw new Error(
+      `${providerLabel} doesn't support ${unsupported.type} content parts in this sample. ` +
+      'Audio input requires Gemini (via inlineData) or OpenAI gpt-4o-audio-preview / Anthropic ' +
+      "Phase 4 v2. Pick a Gemini model + retry, or text-only.",
+    );
+  }
+  return content.filter((p): p is { type: 'text'; text: string } => p.type === 'text').map((p) => p.text).join('');
+}
+
+
+
+/** Convert a unified ContentPart[] (or string) to Gemini's `parts` format.
+ *  Gemini accepts {text} + {inlineData: {mimeType, data}} parts; the
+ *  audio formats it accepts include audio/wav, audio/mp3, audio/ogg,
+ *  audio/flac, audio/aiff, audio/aac. webm/opus has spotty support so
+ *  callers should record audio in a compatible format. */
+function contentToGeminiParts(content: string | readonly ContentPart[]): Array<Record<string, unknown>> {
+  if (typeof content === 'string') return [{ text: content }];
+  const out: Array<Record<string, unknown>> = [];
+  for (const part of content) {
+    if (part.type === 'text') {
+      out.push({ text: part.text });
+    } else if (part.type === 'audio') {
+      out.push({ inlineData: { mimeType: part.mimeType, data: part.dataBase64 } });
+    }
+  }
+  return out;
 }
 
 // ── SSE parser (shared between providers) ────────────────────────────

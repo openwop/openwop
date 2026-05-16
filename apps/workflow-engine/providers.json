@@ -14,6 +14,7 @@
       "customModelPlaceholder": "claude-opus-4-1-20250805",
       "customModelHelp": "e.g. a model snapshot like `claude-opus-4-1-20250805` or a beta release.",
       "_docsUrl": "https://platform.claude.com/docs/en/about-claude/models/overview",
+      "_capabilityNote": "webSearch + audioInput deferred: Anthropic's web_search_20250305 tool requires custom stream-event handling (server_tool_use / web_search_tool_result blocks); audio input isn't yet in the public Messages API. Add when shipping Phase 4 v2.",
       "models": [
         { "id": "claude-sonnet-4-6", "label": "Claude Sonnet 4.6", "contextWindow": 1000000, "capabilities": ["text", "tools", "vision"], "cost": { "input": 0.003, "output": 0.015 }, "recommended": true },
         { "id": "claude-opus-4-7",   "label": "Claude Opus 4.7",   "contextWindow": 1000000, "capabilities": ["text", "tools", "vision"], "cost": { "input": 0.005, "output": 0.025 } },
@@ -32,6 +33,7 @@
       "customModelPlaceholder": "gpt-5.4-nano",
       "customModelHelp": "e.g. `gpt-5.4-nano`, a fine-tune `ft:gpt-5.4-mini:org:name:id`, or a preview.",
       "_docsUrl": "https://developers.openai.com/api/docs/models",
+      "_capabilityNote": "webSearch + audioInput deferred: OpenAI's web_search_preview tool requires the Responses API (different endpoint + body shape than Chat Completions); audio input requires gpt-4o-audio-preview (separate model lineup). Add when shipping Phase 4 v2.",
       "models": [
         { "id": "gpt-5.4",       "label": "GPT-5.4",       "contextWindow": 1000000, "capabilities": ["text", "tools", "vision"], "cost": { "input": 0.0025, "output": 0.015 }, "recommended": true },
         { "id": "gpt-5.5",       "label": "GPT-5.5",       "contextWindow": 1000000, "capabilities": ["text", "tools", "vision"], "cost": { "input": 0.005,  "output": 0.030 } },
@@ -52,9 +54,9 @@
       "_docsUrl": "https://ai.google.dev/gemini-api/docs/models",
       "_notes": "Flash-Lite is the recommended default — 8× output cap and avoids the 2.5-family reasoning-budget issue that can return empty completions when maxOutputTokens is exhausted by internal thinking.",
       "models": [
-        { "id": "gemini-2.5-flash-lite", "label": "Gemini 2.5 Flash-Lite", "contextWindow": 1000000, "capabilities": ["text", "tools", "vision"], "cost": { "input": 0.0001,  "output": 0.0004 }, "recommended": true },
-        { "id": "gemini-2.5-flash",      "label": "Gemini 2.5 Flash",      "contextWindow": 1000000, "capabilities": ["text", "tools", "vision"], "cost": { "input": 0.0003,  "output": 0.0025 } },
-        { "id": "gemini-2.5-pro",        "label": "Gemini 2.5 Pro",        "contextWindow": 1000000, "capabilities": ["text", "tools", "vision"], "cost": { "input": 0.00125, "output": 0.01 } }
+        { "id": "gemini-2.5-flash-lite", "label": "Gemini 2.5 Flash-Lite", "contextWindow": 1000000, "capabilities": ["text", "tools", "vision"], "cost": { "input": 0.0001,  "output": 0.0004 }, "webSearch": true, "audioInput": true, "recommended": true },
+        { "id": "gemini-2.5-flash",      "label": "Gemini 2.5 Flash",      "contextWindow": 1000000, "capabilities": ["text", "tools", "vision"], "cost": { "input": 0.0003,  "output": 0.0025 }, "webSearch": true, "audioInput": true },
+        { "id": "gemini-2.5-pro",        "label": "Gemini 2.5 Pro",        "contextWindow": 1000000, "capabilities": ["text", "tools", "vision"], "cost": { "input": 0.00125, "output": 0.01 }, "webSearch": true, "audioInput": true }
       ]
     }
   ]

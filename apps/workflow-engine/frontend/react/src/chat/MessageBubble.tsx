@@ -12,6 +12,11 @@ import type { ChatMessage } from './hooks/useChatSession.js';
 import { MessageRenderer } from './MessageRenderer.js';
 import { formatUsd, turnCostUsd } from './lib/cost.js';
 
+function hasContent(content: ChatMessage['content']): boolean {
+  if (typeof content === 'string') return content.length > 0;
+  return content.length > 0;
+}
+
 interface Props {
   message: ChatMessage;
 }
@@ -23,10 +28,11 @@ export function MessageBubble({ message }: Props): JSX.Element {
 
   if (isSystem) {
     // System messages (from slash-command handlers like /help) render
-    // as a muted info banner, not a bubble.
+    // as a muted info banner, not a bubble. They're always text.
+    const text = typeof message.content === 'string' ? message.content : '';
     return (
       <div className="alert info" style={{ fontSize: 12, whiteSpace: 'pre-wrap' }}>
-        {message.content}
+        {text}
       </div>
     );
   }
@@ -53,14 +59,14 @@ export function MessageBubble({ message }: Props): JSX.Element {
         // whiteSpace + wordBreak applied inside MessageRenderer's text segments
         // so code blocks can use their own `white-space: pre` formatting.
       }}>
-        {message.content
+        {hasContent(message.content)
           ? <MessageRenderer content={message.content} />
           : message.isStreaming
             ? <span style={{ opacity: 0.6 }}>Thinking…</span>
             : isError
               ? <span style={{ opacity: 0.7 }}>No response — see error below.</span>
               : null}
-        {message.isStreaming && message.content.length > 0 && (
+        {message.isStreaming && hasContent(message.content) && (
           <span style={{
             display: 'inline-block',
             width: 8, height: 12,
@@ -91,6 +97,41 @@ export function MessageBubble({ message }: Props): JSX.Element {
               const cost = turnCostUsd(message.meta);
               return cost != null ? <span> · {formatUsd(cost)}</span> : null;
             })()}
+            {message.meta.citations && message.meta.citations.length > 0 && (
+              <span> · 🌐 {message.meta.citations.length} source{message.meta.citations.length === 1 ? '' : 's'}</span>
+            )}
+          </div>
+        )}
+        {!isUser && !message.isStreaming && message.meta?.citations && message.meta.citations.length > 0 && (
+          <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {message.meta.citations.map((c, i) => {
+              let host = '';
+              try { host = new URL(c.url).host.replace(/^www\./, ''); } catch { host = c.url; }
+              return (
+                <a
+                  key={`${i}-${c.url}`}
+                  href={c.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={c.title ?? c.url}
+                  style={{
+                    fontSize: 11,
+                    padding: '2px 8px',
+                    borderRadius: 12,
+                    background: 'var(--color-surface)',
+                    border: '1px solid var(--color-border)',
+                    color: 'var(--color-text)',
+                    textDecoration: 'none',
+                    maxWidth: 200,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  [{i + 1}] {c.title ?? host}
+                </a>
+              );
+            })}
           </div>
         )}
       </div>

@@ -19,6 +19,10 @@ export interface ProviderModel {
   capabilities: readonly ('text' | 'vision' | 'tools' | 'structured')[];
   cost?: { input: number; output: number };
   recommended?: boolean;
+  /** Provider exposes native web-search tool the dispatcher can flip on. */
+  webSearch?: boolean;
+  /** Model accepts raw audio input as a content part (no separate STT). */
+  audioInput?: boolean;
 }
 
 export interface ProviderConfig {

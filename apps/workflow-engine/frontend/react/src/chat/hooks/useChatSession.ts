@@ -22,10 +22,27 @@ import { listOpenInterrupts, type OpenInterrupt } from '../../client/interruptsC
 import type { BYOKActiveConfig } from '../../byok/lib/useBYOKConfig.js';
 import { useApplyAnimation } from './useApplyAnimation.js';
 
+/** A single piece of content within a message. Models that support
+ *  multi-modal input (audio, image) accept multiple parts; a pure-text
+ *  message has a single text part — equivalent to `content: string`. */
+export type ContentPart =
+  | { type: 'text'; text: string }
+  | { type: 'audio'; mimeType: string; dataBase64: string; durationSeconds?: number };
+
+/** A normalized citation surfaced from a provider's web-search tool result. */
+export interface Citation {
+  title?: string;
+  url: string;
+  snippet?: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';
-  content: string;
+  /** Message content. `string` is the common case for text-only.
+   *  `ContentPart[]` is for multi-modal user turns (audio + text)
+   *  or future assistant turns that include non-text artifacts. */
+  content: string | readonly ContentPart[];
   /** When true, the bubble is receiving streaming deltas. */
   isStreaming?: boolean;
   /** When set, render an interrupt card inline beneath this bubble. */
@@ -38,8 +55,16 @@ export interface ChatMessage {
     inputTokens?: number;
     outputTokens?: number;
     error?: { code: string; message: string };
+    /** Citations from a web-search-enabled turn. */
+    citations?: readonly Citation[];
   };
   createdAt: string;
+}
+
+/** Helpers: extract the text portion (for cost calc / history history reconstruction). */
+export function messageText(m: ChatMessage): string {
+  if (typeof m.content === 'string') return m.content;
+  return m.content.filter((p): p is { type: 'text'; text: string } => p.type === 'text').map((p) => p.text).join('');
 }
 
 export interface ChatSession {
@@ -47,6 +72,16 @@ export interface ChatSession {
   title: string;
   messages: ChatMessage[];
   createdAt: string;
+}
+
+/** Per-turn options for send(). */
+export interface SendOptions {
+  /** Audio / image / file attachments. Bundled into the user message as
+   *  ContentPart[]; provider dispatchers convert per-provider. */
+  attachments?: readonly ContentPart[];
+  /** Enable provider-native web search for this turn (anthropic / openai
+   *  / google all support; gated per-model via providers.json `webSearch`). */
+  webSearch?: boolean;
 }
 
 const LS_KEY = 'openwop.sample.chat.session';
@@ -84,7 +119,7 @@ export interface UseChatSessionResult {
   /** Last error from a turn dispatch. */
   error: string | null;
   /** Submit a user message and start a new turn. */
-  send: (text: string, config: BYOKActiveConfig) => Promise<void>;
+  send: (text: string, config: BYOKActiveConfig, opts?: SendOptions) => Promise<void>;
   /** Cancel the in-flight turn (if any). No-op when nothing is streaming. */
   cancel: () => Promise<void>;
   /** Append a synthetic system-role message to the visible thread.
@@ -116,8 +151,12 @@ export function useChatSession(): UseChatSessionResult {
       if (!assistantId) return;
       setSession((s) => ({
         ...s,
+        // Assistant streams are always string content (LLMs stream text).
+        // The ContentPart[] path is for user multi-modal messages.
         messages: s.messages.map((m) =>
-          m.id === assistantId ? { ...m, content: m.content + tail } : m,
+          m.id === assistantId
+            ? { ...m, content: (typeof m.content === 'string' ? m.content : '') + tail }
+            : m,
         ),
       }));
     },
@@ -131,14 +170,22 @@ export function useChatSession(): UseChatSessionResult {
     subRef.current?.close();
   }, []);
 
-  const send = useCallback(async (text: string, config: BYOKActiveConfig) => {
+  const send = useCallback(async (text: string, config: BYOKActiveConfig, opts?: SendOptions) => {
     setIsSending(true);
     setError(null);
 
+    const attachments = opts?.attachments ?? [];
+    const userContent: string | readonly ContentPart[] = attachments.length === 0
+      ? text
+      : [
+          // Audio first so the model "hears" before the text caption.
+          ...attachments,
+          ...(text.trim().length > 0 ? [{ type: 'text' as const, text }] : []),
+        ];
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
       role: 'user',
-      content: text,
+      content: userContent,
       createdAt: new Date().toISOString(),
     };
     const assistantId = crypto.randomUUID();
@@ -150,14 +197,21 @@ export function useChatSession(): UseChatSessionResult {
       createdAt: new Date().toISOString(),
     };
 
-    // Compose the provider message history from the existing thread + the new user turn.
+    // Compose the provider message history from the existing thread +
+    // the new user turn. Past messages with multi-modal content pass
+    // their ContentPart[] through; text-only messages stay as strings.
+    // (Dispatchers convert per-provider on the BE.)
     const providerMessages = [
       { role: 'system', content: SYSTEM_PROMPT },
       ...session.messages
         .filter((m) => m.role === 'user' || m.role === 'assistant')
-        .filter((m) => !m.isStreaming && m.content.length > 0)
+        .filter((m) => {
+          if (m.isStreaming) return false;
+          if (typeof m.content === 'string') return m.content.length > 0;
+          return m.content.length > 0;
+        })
         .map((m) => ({ role: m.role, content: m.content })),
-      { role: 'user', content: text },
+      { role: 'user', content: userContent },
     ];
 
     setSession((s) => ({
@@ -177,6 +231,7 @@ export function useChatSession(): UseChatSessionResult {
           model: config.model,
           credentialRef: config.credentialRef,
           messages: providerMessages,
+          webSearch: opts?.webSearch === true,
         },
         configurable: {
           credentialRefs: [config.credentialRef],
@@ -219,6 +274,7 @@ export function useChatSession(): UseChatSessionResult {
           const outputs = (payload.outputs as Record<string, unknown>) ?? {};
           const completion = typeof outputs.completion === 'string' ? outputs.completion : accumulated;
           const usage = outputs.usage as Record<string, number> | undefined;
+          const citations = Array.isArray(outputs.citations) ? outputs.citations as Citation[] : undefined;
           setSession((s) => ({
             ...s,
             messages: s.messages.map((m) => m.id === assistantId ? {
@@ -231,6 +287,7 @@ export function useChatSession(): UseChatSessionResult {
                 model: outputs.model as string | undefined,
                 inputTokens: usage?.inputTokens,
                 outputTokens: usage?.outputTokens,
+                ...(citations && citations.length > 0 ? { citations } : {}),
               },
             } : m),
           }));
