@@ -11,6 +11,7 @@
 import type { ChatMessage } from './hooks/useChatSession.js';
 import { MessageRenderer } from './MessageRenderer.js';
 import { formatUsd, turnCostUsd } from './lib/cost.js';
+import { GlobeIcon } from './icons/index.js';
 
 function hasContent(content: ChatMessage['content']): boolean {
   if (typeof content === 'string') return content.length > 0;
@@ -98,7 +99,9 @@ export function MessageBubble({ message }: Props): JSX.Element {
               return cost != null ? <span> · {formatUsd(cost)}</span> : null;
             })()}
             {message.meta.citations && message.meta.citations.length > 0 && (
-              <span> · 🌐 {message.meta.citations.length} source{message.meta.citations.length === 1 ? '' : 's'}</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginLeft: 4 }}>
+                · <GlobeIcon size={11} /> {message.meta.citations.length} source{message.meta.citations.length === 1 ? '' : 's'}
+              </span>
             )}
           </div>
         )}

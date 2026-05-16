@@ -7,6 +7,7 @@ import { ConfiguredProviderCard } from '../byok/ConfiguredProviderCard.js';
 import type { BYOKActiveConfig } from '../byok/lib/useBYOKConfig.js';
 import type { ChatSession } from './hooks/useChatSession.js';
 import { formatUsd, sessionCostUsd } from './lib/cost.js';
+import { GlobeIcon } from './icons/index.js';
 
 interface Props {
   config: BYOKActiveConfig;
@@ -14,7 +15,7 @@ interface Props {
   onRemoveKey: () => void | Promise<void>;
   onNewChat: () => void;
   session: ChatSession;
-  /** When non-null, render a 🌐 web-search toggle button. */
+  /** When non-null, render a globe-icon web-search toggle button. */
   onToggleWebSearch: (() => void) | null;
   webSearchEnabled: boolean;
 }
@@ -59,7 +60,7 @@ export function ChatHeader({
               gap: 4,
             }}
           >
-            🌐 web{webSearchEnabled ? ' on' : ''}
+            <GlobeIcon size={12} /> web{webSearchEnabled ? ' on' : ''}
           </button>
         )}
         {totalCost > 0 && (

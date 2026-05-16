@@ -17,6 +17,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAudioRecorder, blobToBase64, type RecordedAudio } from './hooks/useAudioRecorder.js';
 import { CommandAutocomplete } from './CommandAutocomplete.js';
+import { MicIcon, SendIcon, StopIcon } from './icons/index.js';
 import type { ContentPart } from './hooks/useChatSession.js';
 
 interface PendingAudio {
@@ -122,7 +123,7 @@ export function ChatInput({
             fontSize: 12,
           }}
         >
-          <span aria-hidden>🎤</span>
+          <MicIcon size={14} />
           <span style={{ flex: 1 }}>
             Voice attachment ({pendingAudio.audio.durationSeconds.toFixed(1)}s, {pendingAudio.audio.mimeType.split(';')[0]})
             {supportsAudioInput === false && (
@@ -181,17 +182,17 @@ export function ChatInput({
             aria-label={recorder.isRecording ? 'Stop voice recording' : 'Start voice recording'}
             aria-pressed={recorder.isRecording}
             style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
               borderRadius: '50%',
               minWidth: 36, width: 36, height: 36,
               padding: 0,
-              fontSize: 16,
               background: recorder.isRecording ? 'var(--color-danger)' : 'var(--color-surface-2)',
               color: recorder.isRecording ? 'white' : 'var(--color-text)',
               border: '1px solid var(--color-border)',
               animation: recorder.isRecording ? 'openwop-mic-pulse 1.2s ease-in-out infinite' : 'none',
             }}
           >
-            🎤
+            <MicIcon size={18} />
           </button>
         )}
         {disabled && onCancel ? (
@@ -201,6 +202,7 @@ export function ChatInput({
             title="Stop generating (Esc)"
             aria-label="Stop generating"
             style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
               borderRadius: '50%',
               minWidth: 36, width: 36, height: 36,
               padding: 0,
@@ -208,7 +210,7 @@ export function ChatInput({
               color: 'white',
             }}
           >
-            <span style={{ display: 'inline-block', width: 10, height: 10, background: 'currentColor', verticalAlign: 'middle' }} />
+            <StopIcon size={12} />
           </button>
         ) : (
           <button
@@ -218,13 +220,13 @@ export function ChatInput({
             title={!canSend && disabledReason ? disabledReason : 'Send (Enter)'}
             aria-label="Send"
             style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
               borderRadius: '50%',
               minWidth: 36, width: 36, height: 36,
               padding: 0,
-              fontSize: 16,
             }}
           >
-            ↑
+            <SendIcon size={16} />
           </button>
         )}
       </div>

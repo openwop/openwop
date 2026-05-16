@@ -13,6 +13,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ContentPart } from './hooks/useChatSession.js';
+import { MicIcon } from './icons/MicIcon.js';
 
 interface TextSegment { kind: 'text'; content: string }
 interface CodeSegment { kind: 'code'; content: string; language?: string }
@@ -176,7 +177,7 @@ function AudioAttachment({ mimeType, dataBase64, durationSeconds }: AudioProps):
         fontSize: 12,
       }}
     >
-      <span aria-hidden>🎤</span>
+      <MicIcon size={14} />
       <span style={{ flexShrink: 0 }}>
         Voice{durationSeconds != null ? ` (${durationSeconds.toFixed(1)}s)` : ''}
       </span>

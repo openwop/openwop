@@ -3,6 +3,8 @@
  * MyndHyve's ChatWelcomeCard.tsx — centered icon + title + 2×2 grid.
  */
 
+import { SparklesIcon } from './icons/index.js';
+
 interface Props {
   onPickSuggestion: (text: string) => void;
 }
@@ -35,10 +37,11 @@ export function WelcomeCard({ onPickSuggestion }: Props): JSX.Element {
       <div style={{
         width: 56, height: 56, borderRadius: '50%',
         background: 'var(--color-surface-2)',
+        color: 'var(--color-accent)',
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-        marginBottom: 16, fontSize: 24,
+        marginBottom: 16,
       }} aria-hidden>
-        🤖
+        <SparklesIcon size={28} />
       </div>
       <h2 style={{ margin: 0, fontSize: 18 }}>How can I help?</h2>
       <p className="muted" style={{ marginTop: 4, fontSize: 13 }}>

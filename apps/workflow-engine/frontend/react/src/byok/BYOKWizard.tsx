@@ -14,6 +14,7 @@
 
 import { useMemo, useState } from 'react';
 import { PROVIDERS, type ProviderConfig, type ProviderModel } from './lib/providers.js';
+import { ShieldIcon } from '../chat/icons/index.js';
 import { storeKey } from './lib/byokClient.js';
 import type { BYOKActiveConfig } from './lib/useBYOKConfig.js';
 
@@ -344,7 +345,7 @@ function KeyEntry({
       </p>
 
       <div className="alert info" style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-        <span style={{ fontSize: 16 }}>🛡</span>
+        <ShieldIcon size={16} style={{ flexShrink: 0, marginTop: 1, color: 'var(--color-accent)' }} />
         <span style={{ fontSize: 12 }}>
           {provider.apiKeyHelpText} You pay {provider.label} directly for usage.
         </span>
