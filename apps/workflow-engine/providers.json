@@ -1,0 +1,61 @@
+{
+  "_comment": "Single source of truth for AI provider taxonomy. Edit this file to add/remove providers or models — both the BE (src/bootstrap/nodes.ts default-fallback) and FE (src/byok/lib/providers.ts wizard) read from here at boot. Pricing is per-1K-token to match the existing FE display format (multiply by 1000 for per-1M). All data verified against each provider's official docs in May 2026.",
+  "_schemaVersion": 1,
+  "providers": [
+    {
+      "id": "anthropic",
+      "label": "Anthropic",
+      "badgeColor": "#cc785c",
+      "description": "Claude 4 family. Strong reasoning, tool use, long context.",
+      "apiKeyPlaceholder": "sk-ant-…",
+      "apiKeyHelpText": "Your key stays in the sample BE's sqlite-backed BYOK store (AES-256-GCM at rest). Real deploys swap for KMS.",
+      "apiKeyConsoleUrl": "https://console.anthropic.com/settings/keys",
+      "apiKeyPrefix": "sk-ant-",
+      "customModelPlaceholder": "claude-opus-4-1-20250805",
+      "customModelHelp": "e.g. a model snapshot like `claude-opus-4-1-20250805` or a beta release.",
+      "_docsUrl": "https://platform.claude.com/docs/en/about-claude/models/overview",
+      "models": [
+        { "id": "claude-sonnet-4-6", "label": "Claude Sonnet 4.6", "contextWindow": 1000000, "capabilities": ["text", "tools", "vision"], "cost": { "input": 0.003, "output": 0.015 }, "recommended": true },
+        { "id": "claude-opus-4-7",   "label": "Claude Opus 4.7",   "contextWindow": 1000000, "capabilities": ["text", "tools", "vision"], "cost": { "input": 0.005, "output": 0.025 } },
+        { "id": "claude-haiku-4-5",  "label": "Claude Haiku 4.5",  "contextWindow": 200000,  "capabilities": ["text", "tools", "vision"], "cost": { "input": 0.001, "output": 0.005 } }
+      ]
+    },
+    {
+      "id": "openai",
+      "label": "OpenAI",
+      "badgeColor": "#10a37f",
+      "description": "GPT-5 family. 1M context window, broad ecosystem support.",
+      "apiKeyPlaceholder": "sk-…",
+      "apiKeyHelpText": "Your key stays in the sample BE's sqlite-backed BYOK store (AES-256-GCM at rest). Real deploys swap for KMS.",
+      "apiKeyConsoleUrl": "https://platform.openai.com/api-keys",
+      "apiKeyPrefix": "sk-",
+      "customModelPlaceholder": "gpt-5.4-nano",
+      "customModelHelp": "e.g. `gpt-5.4-nano`, a fine-tune `ft:gpt-5.4-mini:org:name:id`, or a preview.",
+      "_docsUrl": "https://developers.openai.com/api/docs/models",
+      "models": [
+        { "id": "gpt-5.4",       "label": "GPT-5.4",       "contextWindow": 1000000, "capabilities": ["text", "tools", "vision"], "cost": { "input": 0.0025, "output": 0.015 }, "recommended": true },
+        { "id": "gpt-5.5",       "label": "GPT-5.5",       "contextWindow": 1000000, "capabilities": ["text", "tools", "vision"], "cost": { "input": 0.005,  "output": 0.030 } },
+        { "id": "gpt-5.4-mini",  "label": "GPT-5.4 mini",  "contextWindow": 400000,  "capabilities": ["text", "tools", "vision"] }
+      ]
+    },
+    {
+      "id": "google",
+      "label": "Google",
+      "badgeColor": "#4285f4",
+      "description": "Gemini 2.5 family. Very long context, fast streaming, multimodal.",
+      "apiKeyPlaceholder": "AIza…",
+      "apiKeyHelpText": "Your key stays in the sample BE's sqlite-backed BYOK store (AES-256-GCM at rest). Real deploys swap for KMS.",
+      "apiKeyConsoleUrl": "https://aistudio.google.com/apikey",
+      "apiKeyPrefix": "AIza",
+      "customModelPlaceholder": "gemini-3.1-pro-preview",
+      "customModelHelp": "e.g. `gemini-3.1-pro-preview` or any model id from the Gemini model catalog. Note: gemini-2.0-flash is deprecated and sunsets 2026-06-01 — don't use it.",
+      "_docsUrl": "https://ai.google.dev/gemini-api/docs/models",
+      "_notes": "Flash-Lite is the recommended default — 8× output cap and avoids the 2.5-family reasoning-budget issue that can return empty completions when maxOutputTokens is exhausted by internal thinking.",
+      "models": [
+        { "id": "gemini-2.5-flash-lite", "label": "Gemini 2.5 Flash-Lite", "contextWindow": 1000000, "capabilities": ["text", "tools", "vision"], "cost": { "input": 0.0001,  "output": 0.0004 }, "recommended": true },
+        { "id": "gemini-2.5-flash",      "label": "Gemini 2.5 Flash",      "contextWindow": 1000000, "capabilities": ["text", "tools", "vision"], "cost": { "input": 0.0003,  "output": 0.0025 } },
+        { "id": "gemini-2.5-pro",        "label": "Gemini 2.5 Pro",        "contextWindow": 1000000, "capabilities": ["text", "tools", "vision"], "cost": { "input": 0.00125, "output": 0.01 } }
+      ]
+    }
+  ]
+}

@@ -268,12 +268,12 @@ function ModelGrid({
                 value={customId}
                 onChange={(e) => { setCustomId(e.target.value); setCustomError(null); }}
                 onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); submitCustom(); } }}
-                placeholder={providerCustomPlaceholder(provider.id)}
+                placeholder={provider.customModelPlaceholder ?? 'provider-model-id'}
                 autoFocus
                 spellCheck={false}
               />
               <div className="muted" style={{ fontSize: 11, marginTop: 4 }}>
-                {providerCustomHelp(provider.id)}
+                {provider.customModelHelp ?? `Whatever model id ${provider.label}'s API accepts.`}
               </div>
             </div>
             {customError && <div className="alert error" style={{ fontSize: 12 }}>{customError}</div>}
@@ -291,24 +291,6 @@ function ModelGrid({
       </div>
     </div>
   );
-}
-
-function providerCustomPlaceholder(id: string): string {
-  switch (id) {
-    case 'anthropic': return 'claude-opus-4-1-20250805';
-    case 'openai':    return 'gpt-4-turbo-2024-04-09';
-    case 'google':    return 'gemini-1.5-pro-002';
-    default:          return 'provider-model-id';
-  }
-}
-
-function providerCustomHelp(id: string): string {
-  switch (id) {
-    case 'anthropic': return 'e.g. a model snapshot like `claude-opus-4-1-20250805` or a beta release.';
-    case 'openai':    return 'e.g. `gpt-4-turbo-2024-04-09`, a fine-tune `ft:gpt-4o-mini:org:name:id`, or a preview.';
-    case 'google':    return 'e.g. `gemini-1.5-pro-002` or any model id from the Gemini model catalog.';
-    default:          return 'Whatever model id the provider\'s API accepts.';
-  }
 }
 
 // ── Step 3: key entry ──────────────────────────────────────────────────

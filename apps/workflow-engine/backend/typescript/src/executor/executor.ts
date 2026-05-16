@@ -51,16 +51,36 @@ export async function executeRun(
   const startIndex = options.resumeFromNodeIndex ?? 0;
   let nodeInputs: unknown = options.resumeValue ?? run.inputs;
 
-  // Resolve all required secrets up-front. Run-level secrets stay in
-  // the ephemeral per-run context until clearRunSecrets() at terminal.
-  await prepareRunSecrets(run, definition);
-
+  // Emit run.started FIRST so a secret-prep failure produces a
+  // visible event trail. Otherwise a missing-ref run sits in
+  // `pending` forever with zero events, because the prepareRunSecrets
+  // throw is swallowed by the route's `.catch(log.error)`.
   if (startIndex === 0) {
     eventLog.append({ runId: run.runId, type: 'run.started', payload: { workflowId: run.workflowId } });
     storage.updateRun(run.runId, { status: 'running' });
   } else {
     eventLog.append({ runId: run.runId, type: 'run.resumed', payload: { resumedAtNode: definition.nodes[startIndex]?.nodeId } });
     storage.updateRun(run.runId, { status: 'running', currentNodeId: definition.nodes[startIndex]?.nodeId });
+  }
+
+  // Resolve all required secrets up-front. Run-level secrets stay in
+  // the ephemeral per-run context until clearRunSecrets() at terminal.
+  // A failure here is terminal — emit run.failed instead of letting
+  // the throw propagate silently.
+  try {
+    await prepareRunSecrets(run, definition);
+  } catch (err) {
+    const code = err instanceof OpenwopError ? err.code : 'internal_error';
+    const message = err instanceof Error ? err.message : String(err);
+    const errorPayload = { error: { code, message } };
+    eventLog.append({ runId: run.runId, type: 'run.failed', payload: errorPayload });
+    storage.updateRun(run.runId, {
+      status: 'failed',
+      completedAt: new Date().toISOString(),
+      error: { code, message },
+    });
+    clearRunSecrets(run.runId);
+    return { status: 'failed' };
   }
 
   for (let i = startIndex; i < definition.nodes.length; i++) {
@@ -153,11 +173,21 @@ export async function executeRun(
     }
 
     if (outcome.status === 'failure') {
+      const errorPayload = stripSecretsFromPersisted({ error: outcome.error });
       eventLog.append({
         runId: run.runId,
         nodeId: node.nodeId,
         type: 'node.failed',
-        payload: stripSecretsFromPersisted({ error: outcome.error }),
+        payload: errorPayload,
+      });
+      // Run-level terminal event — SSE consumers + the streams route's
+      // TERMINAL_EVENT_TYPES set both gate on `run.failed`, so without
+      // this the stream stays open until heartbeat timeout and any
+      // chat-style UI sits on its loading state.
+      eventLog.append({
+        runId: run.runId,
+        type: 'run.failed',
+        payload: errorPayload,
       });
       storage.updateRun(run.runId, {
         status: 'failed',

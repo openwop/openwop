@@ -13,6 +13,7 @@ import { getNodeRegistry } from '../executor/nodeRegistry.js';
 import type { NodeModule } from '../executor/types.js';
 import { emitCost } from '../observability/costEmitter.js';
 import { dispatchChat, type ChatMessage, type ProviderId } from '../providers/dispatch.js';
+import { getDefaultModel } from '../providers/catalog.js';
 
 const noopNode: NodeModule = {
   typeId: 'core.noop',
@@ -120,7 +121,7 @@ const sampleChatResponderNode: NodeModule = {
   async execute(ctx) {
     const inputs = (ctx.inputs && typeof ctx.inputs === 'object') ? (ctx.inputs as Record<string, unknown>) : {};
     const provider = (inputs.provider as ProviderId | undefined) ?? 'anthropic';
-    const model = (inputs.model as string | undefined) ?? 'claude-sonnet-4-5';
+    const model = (inputs.model as string | undefined) ?? getDefaultModel(provider);
     const credentialRef = inputs.credentialRef as string | undefined;
     const messages = inputs.messages as ChatMessage[] | undefined;
     const maxTokens = typeof inputs.maxTokens === 'number' ? inputs.maxTokens : 1024;

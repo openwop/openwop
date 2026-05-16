@@ -40,9 +40,13 @@ export function MessageBubble({ message }: Props): JSX.Element {
         whiteSpace: 'pre-wrap',
         wordBreak: 'break-word',
       }}>
-        {message.content || (message.isStreaming && (
-          <span style={{ opacity: 0.6 }}>Thinking…</span>
-        ))}
+        {message.content
+          ? message.content
+          : message.isStreaming
+            ? <span style={{ opacity: 0.6 }}>Thinking…</span>
+            : isError
+              ? <span style={{ opacity: 0.7 }}>No response — see error below.</span>
+              : null}
         {message.isStreaming && message.content.length > 0 && (
           <span style={{
             display: 'inline-block',

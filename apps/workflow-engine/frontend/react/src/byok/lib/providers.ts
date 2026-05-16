@@ -1,19 +1,22 @@
 /**
- * BYOK provider taxonomy. Adding a 4th provider = adding a row here +
- * wiring the dispatcher in `apps/workflow-engine/backend/typescript/src/providers/dispatch.ts`.
+ * BYOK provider taxonomy. The data lives in the sibling JSON file at
+ * `apps/workflow-engine/providers.json` — both the BE
+ * (`src/bootstrap/nodes.ts` default-fallback) and this FE read from
+ * the same source. Edit the JSON to add/remove providers or models;
+ * the types in this file are pure structure for type-safety.
  *
- * Trust signals (badge colors) borrowed from MyndHyve's BYOKPanel.tsx
- * provider taxonomy.
+ * Vite inlines JSON at build time so the import is free at runtime.
  */
 
-export type ProviderId = 'anthropic' | 'openai' | 'google';
+import providersData from '../../../../../providers.json';
+
+export type ProviderId = string;
 
 export interface ProviderModel {
   id: string;
   label: string;
   contextWindow: number;
   capabilities: readonly ('text' | 'vision' | 'tools' | 'structured')[];
-  /** Approximate USD per 1K tokens — input / output. For informational display only. */
   cost?: { input: number; output: number };
   recommended?: boolean;
 }
@@ -31,61 +34,30 @@ export interface ProviderConfig {
   apiKeyHelpText: string;
   /** Where the user gets a key. Rendered as a "Get key" link. */
   apiKeyConsoleUrl: string;
-  /** Models offered. First item with `recommended: true` is the default. */
-  models: readonly ProviderModel[];
-  /** Inferred convention: `sk-ant-` for Anthropic, `sk-` for OpenAI. Used for soft validation. */
+  /** Soft validation prefix — used for the "Anthropic keys usually start with…" warning. */
   apiKeyPrefix?: string;
+  /** Placeholder for the "Other…" custom-model input. */
+  customModelPlaceholder?: string;
+  /** Helper text shown under the "Other…" custom-model input. */
+  customModelHelp?: string;
+  models: readonly ProviderModel[];
 }
 
-export const PROVIDERS: readonly ProviderConfig[] = [
-  {
-    id: 'anthropic',
-    label: 'Anthropic',
-    badgeColor: '#cc785c',
-    description: 'Claude 4 family. Strong reasoning, tool use, long context.',
-    apiKeyPlaceholder: 'sk-ant-…',
-    apiKeyHelpText: 'Your key stays in the sample BE\'s in-memory map. Real deploys swap for KMS.',
-    apiKeyConsoleUrl: 'https://console.anthropic.com/settings/keys',
-    apiKeyPrefix: 'sk-ant-',
-    models: [
-      { id: 'claude-sonnet-4-5', label: 'Claude Sonnet 4.5', contextWindow: 200_000, capabilities: ['text', 'tools', 'vision'], cost: { input: 0.003, output: 0.015 }, recommended: true },
-      { id: 'claude-opus-4-5', label: 'Claude Opus 4.5', contextWindow: 200_000, capabilities: ['text', 'tools', 'vision'], cost: { input: 0.015, output: 0.075 } },
-      { id: 'claude-haiku-4-5', label: 'Claude Haiku 4.5', contextWindow: 200_000, capabilities: ['text', 'tools'], cost: { input: 0.0008, output: 0.004 } },
-    ],
-  },
-  {
-    id: 'openai',
-    label: 'OpenAI',
-    badgeColor: '#10a37f',
-    description: 'GPT-4 family. Broad ecosystem support.',
-    apiKeyPlaceholder: 'sk-…',
-    apiKeyHelpText: 'Your key stays in the sample BE\'s in-memory map. Real deploys swap for KMS.',
-    apiKeyConsoleUrl: 'https://platform.openai.com/api-keys',
-    apiKeyPrefix: 'sk-',
-    models: [
-      { id: 'gpt-4o-mini', label: 'GPT-4o mini', contextWindow: 128_000, capabilities: ['text', 'tools', 'vision'], cost: { input: 0.00015, output: 0.0006 }, recommended: true },
-      { id: 'gpt-4o', label: 'GPT-4o', contextWindow: 128_000, capabilities: ['text', 'tools', 'vision'], cost: { input: 0.0025, output: 0.01 } },
-    ],
-  },
-  {
-    id: 'google',
-    label: 'Google',
-    badgeColor: '#4285f4',
-    description: 'Gemini family. Very long context, fast streaming.',
-    apiKeyPlaceholder: 'AIza…',
-    apiKeyHelpText: 'Your key stays in the sample BE\'s in-memory map. Real deploys swap for KMS.',
-    apiKeyConsoleUrl: 'https://aistudio.google.com/apikey',
-    apiKeyPrefix: 'AIza',
-    models: [
-      { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', contextWindow: 1_000_000, capabilities: ['text', 'tools', 'vision'], cost: { input: 0.0003, output: 0.0025 }, recommended: true },
-      { id: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', contextWindow: 2_000_000, capabilities: ['text', 'tools', 'vision'], cost: { input: 0.00125, output: 0.01 } },
-      { id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash', contextWindow: 1_000_000, capabilities: ['text', 'tools', 'vision'], cost: { input: 0.0001, output: 0.0004 } },
-    ],
-  },
-];
+// Strip the JSON-only meta fields (_comment / _schemaVersion / _docsUrl
+// / _notes) — they're hints for whoever edits providers.json, not
+// runtime data. The JSON's shape past those keys matches ProviderConfig.
+const raw = providersData as unknown as { providers: ProviderConfig[] };
+export const PROVIDERS: readonly ProviderConfig[] = raw.providers;
 
 export function getProvider(id: ProviderId): ProviderConfig {
   const p = PROVIDERS.find((x) => x.id === id);
   if (!p) throw new Error(`Unknown provider: ${id}`);
   return p;
+}
+
+/** Return the recommended default model for a provider (first `recommended: true`, else first model). */
+export function getDefaultModel(providerId: ProviderId): ProviderModel | null {
+  const p = PROVIDERS.find((x) => x.id === providerId);
+  if (!p) return null;
+  return p.models.find((m) => m.recommended) ?? p.models[0] ?? null;
 }
