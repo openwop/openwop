@@ -10,9 +10,9 @@ export function App() {
       <header className="app-header">
         <h1>OpenWOP — workflow-engine sample</h1>
         <nav>
+          <NavLink to="/ai">AI</NavLink>
           <NavLink to="/" end>Runs</NavLink>
           <NavLink to="/capabilities">Capabilities</NavLink>
-          <NavLink to="/ai">AI</NavLink>
         </nav>
       </header>
       <main className="app-main">

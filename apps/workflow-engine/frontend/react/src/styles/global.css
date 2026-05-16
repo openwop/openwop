@@ -90,6 +90,17 @@ html, body {
   display: flex;
   align-items: center;
   gap: var(--space-5);
+  /* Sticky so the header stays visible while the main pane scrolls.
+   * z-index keeps it above content (especially the SSE event-stream
+   * code blocks which have their own absolute-positioned copy buttons).
+   * backdrop-filter softens the seam between header and content when
+   * content scrolls under it. */
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: saturate(180%) blur(8px);
+  -webkit-backdrop-filter: saturate(180%) blur(8px);
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
 }
 
 .app-header h1 {
