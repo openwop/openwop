@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.flow/1.0.0/router.output.json",
+  "title": "RouterOutput",
+  "type": "object",
+  "required": [
+    "branches",
+    "value"
+  ],
+  "properties": {
+    "branches": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "value": {}
+  },
+  "additionalProperties": false
+}

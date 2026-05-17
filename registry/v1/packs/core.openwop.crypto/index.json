@@ -1,0 +1,41 @@
+{
+  "name": "core.openwop.crypto",
+  "kind": "node",
+  "description": "Pure cryptographic primitives: hashing, HMAC, AEAD encrypt/decrypt, asymmetric sign/verify, JWT mint/verify, TOTP, x509 parse + chain verify. Built on node:crypto (Node 20+). Zero npm deps. Pure with respect to keys passed in via inputs.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.crypto",
+  "repository": "https://github.com/openwop/openwop",
+  "tags": [],
+  "typeIds": [
+    "core.crypto.hash",
+    "core.crypto.hmac-sign",
+    "core.crypto.hmac-verify",
+    "core.crypto.aead-encrypt",
+    "core.crypto.aead-decrypt",
+    "core.crypto.sign",
+    "core.crypto.verify",
+    "core.crypto.jwt-mint",
+    "core.crypto.jwt-verify",
+    "core.crypto.totp-generate",
+    "core.crypto.totp-verify",
+    "core.crypto.x509-parse",
+    "core.crypto.x509-verify-chain"
+  ],
+  "versions": [
+    {
+      "version": "1.0.0",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/core.openwop.crypto/-/1.0.0.json",
+      "tarballUrl": "/v1/packs/core.openwop.crypto/-/1.0.0.tgz",
+      "signatureUrl": "/v1/packs/core.openwop.crypto/-/1.0.0.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-rhtNuIwtA1WwpVD3ABwkVhhksEyGK6DWn/dwW85ajLo=",
+      "deprecated": false,
+      "yanked": false
+    }
+  ],
+  "latest": "1.0.0",
+  "deprecated": false
+}

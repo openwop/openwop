@@ -348,52 +348,17 @@ pre {
   border-top: none;
 }
 
-.builder-open-menu {
-  position: relative;
-}
-
-.builder-open-menu-popover {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 4px);
-  z-index: 60;
-  min-width: 280px;
-  max-height: 320px;
-  overflow-y: auto;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  padding: var(--space-1);
-}
-
-.builder-open-menu-item {
-  display: flex;
-  align-items: center;
-}
-
-.builder-open-menu-open {
-  flex: 1;
-  text-align: left;
-  background: transparent;
-  color: var(--color-text);
-  padding: var(--space-2);
-  border-radius: var(--radius);
-}
-
-.builder-open-menu-open:hover {
-  background: var(--color-surface-2);
-}
-
-.builder-open-menu-delete {
-  background: transparent;
+.builder-toolbar-back {
   color: var(--color-text-muted);
+  text-decoration: none;
+  font-size: 13px;
   padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius);
 }
 
-.builder-open-menu-delete:hover {
+.builder-toolbar-back:hover {
+  color: var(--color-text);
   background: var(--color-surface-2);
-  color: var(--color-danger);
 }
 
 .builder-body {
@@ -651,6 +616,82 @@ pre {
   margin-bottom: var(--space-3);
 }
 
+/* Top-of-builder demo notice. Sits above the toolbar so users see it
+   before they invest in a workflow that won't persist past a restart. */
+.demo-host-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 6px var(--space-3);
+  background: rgba(91, 140, 255, 0.10);
+  border-bottom: 1px solid var(--color-accent);
+  font-size: 12px;
+  color: var(--color-text);
+}
+
+.demo-host-banner-icon {
+  flex-shrink: 0;
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.demo-host-banner-text {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.4;
+}
+
+.demo-host-banner-text code {
+  font-size: 11px;
+  padding: 1px 4px;
+  background: var(--color-surface-2);
+  border-radius: 3px;
+}
+
+.demo-host-banner-close {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.demo-host-banner-close:hover {
+  background: var(--color-surface-2);
+  color: var(--color-text);
+}
+
+/* Capabilities panel — pack-coverage + host-surface tables. */
+.cap-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: var(--space-2);
+}
+
+.cap-table th,
+.cap-table td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.cap-table th {
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.cap-table code {
+  font-size: 11px;
+}
+
 .builder-canvas {
   flex: 1;
   min-width: 0;
@@ -829,4 +870,195 @@ pre {
 .builder-inspector-required {
   color: var(--color-danger);
   margin-left: 2px;
+}
+
+/* Workflows dashboard ---------------------------------------------------- */
+
+.workflows-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.workflows-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.workflows-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.workflows-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.workflows-search {
+  flex: 1 1 240px;
+  min-width: 200px;
+}
+
+.workflows-sort {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.workflows-sort label {
+  margin: 0;
+  font-size: 12px;
+}
+
+.workflows-sort select {
+  width: auto;
+  min-width: 110px;
+}
+
+.workflows-sort-dir {
+  width: 32px;
+  padding: 4px;
+  font-size: 14px;
+}
+
+.workflows-toolbar-summary {
+  font-size: 12px;
+  margin-left: auto;
+}
+
+.workflows-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-3);
+}
+
+.workflow-card {
+  position: relative;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 88px;
+}
+
+.workflow-card:hover {
+  border-color: var(--color-accent);
+  background: var(--color-surface-2);
+}
+
+.workflow-card:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.workflow-card-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.workflow-card-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.workflow-card-rename-input {
+  font-size: 14px;
+  font-weight: 600;
+  padding: 4px 6px;
+  width: 100%;
+}
+
+.workflow-card-meta {
+  display: flex;
+  gap: var(--space-2);
+  font-size: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.workflow-card-menu {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.workflow-card-menu-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--color-text-muted);
+  padding: 2px 8px;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.workflow-card-menu-btn:hover {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.workflow-card-menu-popover {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 60;
+  min-width: 160px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  padding: var(--space-1);
+  display: flex;
+  flex-direction: column;
+}
+
+.workflow-card-menu-popover button {
+  background: transparent;
+  color: var(--color-text);
+  text-align: left;
+  padding: var(--space-2);
+  border-radius: var(--radius);
+  font-size: 13px;
+  border: none;
+  cursor: pointer;
+}
+
+.workflow-card-menu-popover button:hover {
+  background: var(--color-surface-2);
+}
+
+.workflow-card-menu-danger {
+  color: var(--color-danger) !important;
+}
+
+.workflow-card-menu-danger:hover {
+  background: rgba(248, 113, 113, 0.1) !important;
+}
+
+.workflow-card-empty {
+  text-align: center;
+  padding: var(--space-6) var(--space-4);
+}
+
+.workflow-card-empty p {
+  margin: 0 0 var(--space-2);
+}
+
+.workflow-card-empty p:last-child {
+  margin-bottom: 0;
 }

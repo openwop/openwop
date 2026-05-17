@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.storage/1.0.0/table-upsert.config.json",
+  "title": "TableUpsertConfig",
+  "type": "object",
+  "required": [
+    "table",
+    "keyColumns"
+  ],
+  "properties": {
+    "table": {
+      "type": "string"
+    },
+    "keyColumns": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

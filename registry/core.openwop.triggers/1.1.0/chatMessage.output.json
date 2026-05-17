@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "channel": { "type": "string" },
+    "messageText": { "type": "string" },
+    "conversationId": { "type": "string" },
+    "peerId": { "type": "string" },
+    "conversationKind": { "type": "string", "enum": ["dm", "group", "thread"] }
+  },
+  "required": ["channel", "messageText", "conversationId", "peerId", "conversationKind"],
+  "additionalProperties": false
+}

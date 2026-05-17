@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.a2a/1.1.0/server-trigger.output.json",
+  "title": "A2aServerTriggerOutput",
+  "type": "object",
+  "required": [
+    "method"
+  ],
+  "properties": {
+    "method": {
+      "type": "string"
+    },
+    "message": {},
+    "taskId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "contextId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "transport": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

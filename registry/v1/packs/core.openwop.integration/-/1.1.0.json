@@ -1,0 +1,138 @@
+{
+  "name": "core.openwop.integration",
+  "version": "1.1.0",
+  "description": "Integration-layer primitives. v1.0 (email-send, slack-message) plus v1.1 (chat-message-generic, sms-send, voice-call-place, voice-call-tts-greet, notification-push) — provider-neutral cross-cutting integration helpers.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.integration",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "core",
+    "integration",
+    "email",
+    "slack",
+    "communication"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "nodes": [
+    {
+      "typeId": "core.openwop.integration.email-send",
+      "version": "1.0.0",
+      "label": "Email Send",
+      "description": "Sends an email via the host's email adapter. Provider-agnostic — host routes to SMTP / SES / Resend / SendGrid / whatever it advertises in `Capabilities.email.providers`. Side-effectful + cacheable. Deterministic Idempotency-Key derivation (SHA-256 over runId+nodeId+to+subject+body) so the engine's Layer-2 cache prevents duplicate sends on replay.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/email-send.config.json",
+      "inputSchemaRef": "schemas/email-send.input.json",
+      "outputSchemaRef": "schemas/email-send.output.json"
+    },
+    {
+      "typeId": "core.openwop.integration.slack-message",
+      "version": "1.0.0",
+      "label": "Slack Message",
+      "description": "Posts a message to Slack via the host's Slack adapter. Supports text + blocks + thread-reply. Side-effectful + cacheable. Deterministic Idempotency-Key prevents duplicate posts on replay.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/slack-message.config.json",
+      "inputSchemaRef": "schemas/slack-message.input.json",
+      "outputSchemaRef": "schemas/slack-message.output.json"
+    },
+    {
+      "typeId": "core.openwop.integration.chat-message-generic",
+      "version": "1.0.0",
+      "label": "Chat Message Generic",
+      "description": "Provider-neutral chat-room post via host.messaging.dispatchEgressEnvelope.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/chat-message-generic.config.json",
+      "inputSchemaRef": "schemas/chat-message-generic.input.json",
+      "outputSchemaRef": "schemas/chat-message-generic.output.json"
+    },
+    {
+      "typeId": "core.openwop.integration.sms-send",
+      "version": "1.0.0",
+      "label": "SMS Send",
+      "description": "Send an SMS via host.messaging.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/sms-send.config.json",
+      "inputSchemaRef": "schemas/sms-send.input.json",
+      "outputSchemaRef": "schemas/sms-send.output.json"
+    },
+    {
+      "typeId": "core.openwop.integration.voice-call-place",
+      "version": "1.0.0",
+      "label": "Voice Call — Place",
+      "description": "Place an outbound voice call.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/voice-call-place.config.json",
+      "inputSchemaRef": "schemas/voice-call-place.input.json",
+      "outputSchemaRef": "schemas/voice-call-place.output.json"
+    },
+    {
+      "typeId": "core.openwop.integration.voice-call-tts-greet",
+      "version": "1.0.0",
+      "label": "Voice Call — TTS Greet",
+      "description": "Play a TTS greeting on a connected call.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/voice-call-tts-greet.config.json",
+      "inputSchemaRef": "schemas/voice-call-tts-greet.input.json",
+      "outputSchemaRef": "schemas/voice-call-tts-greet.output.json"
+    },
+    {
+      "typeId": "core.openwop.integration.notification-push",
+      "version": "1.0.0",
+      "label": "Push Notification",
+      "description": "APNS / FCM push notification delivery.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/notification-push.config.json",
+      "inputSchemaRef": "schemas/notification-push.input.json",
+      "outputSchemaRef": "schemas/notification-push.output.json"
+    }
+  ],
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "openwop-team-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-Dyz4JyqF6DQh9o+/b1gwSwNu30qG+RhQUvIBRXZK+sI="
+}

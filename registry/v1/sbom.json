@@ -36,6 +36,24 @@
       ]
     },
     {
+      "bom-ref": "pkg:openwop/core.openwop.a2a@1.1.0",
+      "type": "library",
+      "name": "core.openwop.a2a",
+      "version": "1.1.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.a2a/-/1.1.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "9ae90e806dce63cdd933e5707cf71bd73423bf5275a4d374f2dac529785c3bc6"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "bom-ref": "pkg:openwop/core.openwop.agent-examples@1.0.0",
       "type": "library",
       "name": "core.openwop.agent-examples",
@@ -48,6 +66,24 @@
             {
               "alg": "SHA-256",
               "content": "0b6a6f2925b0dc176b47187eb9ab1c6db42288a87496b82db4e659955885bcf5"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/core.openwop.agents@1.0.0",
+      "type": "library",
+      "name": "core.openwop.agents",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.agents/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "4d3e6c35eb79862f7d2439ef20a84ed745e911abf27bdafb14e95e3ccc358a89"
             }
           ]
         }
@@ -72,6 +108,42 @@
       ]
     },
     {
+      "bom-ref": "pkg:openwop/core.openwop.ai@1.1.0",
+      "type": "library",
+      "name": "core.openwop.ai",
+      "version": "1.1.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.ai/-/1.1.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "de2a54038bf4af815175f05cf8d473852ef49505eeccbdebc6e2ea4e939b95b6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/core.openwop.crypto@1.0.0",
+      "type": "library",
+      "name": "core.openwop.crypto",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.crypto/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "3f4f4435f1959c1b056f7919ad2b2333046752c17442ff6dc32863ad03aa1519"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "bom-ref": "pkg:openwop/core.openwop.data@1.0.0",
       "type": "library",
       "name": "core.openwop.data",
@@ -84,6 +156,42 @@
             {
               "alg": "SHA-256",
               "content": "719d93ad5b0828702371f320ea43fb3435bd361d5b82384f3d404161067d4bbd"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/core.openwop.data@1.1.0",
+      "type": "library",
+      "name": "core.openwop.data",
+      "version": "1.1.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.data/-/1.1.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "d2906766b22c003a3c26df18f50913265fbc2003a388cf189b5b17ff336d6e24"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/core.openwop.db@1.0.0",
+      "type": "library",
+      "name": "core.openwop.db",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.db/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "7266af724926d844089b4771903fb3f1380a0a0695c86f671f2a58be94304bdc"
             }
           ]
         }
@@ -108,6 +216,60 @@
       ]
     },
     {
+      "bom-ref": "pkg:openwop/core.openwop.files@1.0.0",
+      "type": "library",
+      "name": "core.openwop.files",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.files/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "9be6a74b8470d7fdfac2cf40a101d75850900e31501305bac46168c2c45b7963"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/core.openwop.flow@1.0.1",
+      "type": "library",
+      "name": "core.openwop.flow",
+      "version": "1.0.1",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.flow/-/1.0.1.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "b20ad5fea46fd2149a603afb3fac16300bd201ddaabbedac51991ac8725a0496"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/core.openwop.hitl@1.0.0",
+      "type": "library",
+      "name": "core.openwop.hitl",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.hitl/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "b61a69aba5f07b5de4b8ba636e6e215a110fcbd6eb70ecef2b41667380ab98ee"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "bom-ref": "pkg:openwop/core.openwop.http@1.0.0",
       "type": "library",
       "name": "core.openwop.http",
@@ -120,6 +282,24 @@
             {
               "alg": "SHA-256",
               "content": "40e48ac825de0a5754976cad122a4f0c403ba28d45ce98c09b8890b2962c395e"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/core.openwop.http@1.1.0",
+      "type": "library",
+      "name": "core.openwop.http",
+      "version": "1.1.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.http/-/1.1.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "dcae97ffa29d4cba778f963d07f5b5459add7363e554974f16f2fce641c4f362"
             }
           ]
         }
@@ -144,6 +324,24 @@
       ]
     },
     {
+      "bom-ref": "pkg:openwop/core.openwop.integration@1.1.0",
+      "type": "library",
+      "name": "core.openwop.integration",
+      "version": "1.1.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.integration/-/1.1.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "837f0bbf46add6a05fe3c95f338e88ba1d1b38505dd13a7531713027298788ad"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "bom-ref": "pkg:openwop/core.openwop.mcp@1.0.0",
       "type": "library",
       "name": "core.openwop.mcp",
@@ -162,6 +360,96 @@
       ]
     },
     {
+      "bom-ref": "pkg:openwop/core.openwop.mcp@1.1.0",
+      "type": "library",
+      "name": "core.openwop.mcp",
+      "version": "1.1.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.mcp/-/1.1.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "518c6d6379aefe761a5776386ac09a0a853770f2ae59cb1ac874a68dad636256"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/core.openwop.messaging@1.0.0",
+      "type": "library",
+      "name": "core.openwop.messaging",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.messaging/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "d2573b0ee96b8d36a6dfc48ee4f9f3a1edec4608eb28bcd3172bdf4745525d5d"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/core.openwop.obs@1.0.0",
+      "type": "library",
+      "name": "core.openwop.obs",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.obs/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "059b55ff0bded219e63151d6f50f5edd5ed9034ba0c65e3f4a7c51eba8e415fb"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/core.openwop.rag@1.0.0",
+      "type": "library",
+      "name": "core.openwop.rag",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.rag/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "5b81564d76520c2ff06bd77473797a9e7c14b5b48e97db8181279302780ac2dc"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/core.openwop.storage@1.0.0",
+      "type": "library",
+      "name": "core.openwop.storage",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.storage/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "e8b86cd8816a227b0a2c4336456299ea4751d475025232bd4f9bee5f952aef90"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "bom-ref": "pkg:openwop/core.openwop.triggers@1.0.0",
       "type": "library",
       "name": "core.openwop.triggers",
@@ -174,6 +462,24 @@
             {
               "alg": "SHA-256",
               "content": "f83a384b7f7e5133a973acb8972f48b3ea3315f112373dc54efecaa7ba3b7b7e"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/core.openwop.triggers@1.1.0",
+      "type": "library",
+      "name": "core.openwop.triggers",
+      "version": "1.1.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.triggers/-/1.1.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "ed43e38bcf141a784687a92361455ff4fa9772261595b82eb6ea958137cb05a4"
             }
           ]
         }

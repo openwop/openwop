@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.db/1.0.0/nosql-insert.output.json",
+  "title": "NosqlInsertOutput",
+  "type": "object",
+  "required": [
+    "inserted"
+  ],
+  "properties": {
+    "inserted": {
+      "type": "integer"
+    },
+    "ids": {
+      "type": "array"
+    }
+  },
+  "additionalProperties": false
+}

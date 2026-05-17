@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.crypto/1.0.0/jwt-verify.config.json",
+  "title": "JwtVerifyConfig",
+  "type": "object",
+  "properties": {
+    "keyEncoding": {
+      "type": "string",
+      "enum": [
+        "utf8",
+        "hex",
+        "base64",
+        "base64url"
+      ]
+    },
+    "expectedIssuer": {
+      "type": "string"
+    },
+    "expectedAudience": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

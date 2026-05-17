@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.db/1.0.0/search-index.config.json",
+  "title": "SearchIndexConfig",
+  "type": "object",
+  "required": [
+    "index"
+  ],
+  "properties": {
+    "index": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

@@ -23,16 +23,20 @@ export function getNodeRegistry() {
     get(typeId: string): NodeModule | null {
       return inProcess.get(typeId) ?? null;
     },
-    /** Async resolve — falls through to the pack resolver on miss. */
+    /** Async resolve — falls through to the pack resolver on miss.
+     *  Note: a pack-resolver call usually registers EVERY typeId in
+     *  the pack (loadPackFromManifest iterates the full `nodes` map),
+     *  not just the one we asked for. The resolver's return value is
+     *  typically the FIRST module registered in that pass — which is
+     *  not necessarily the one we wanted. So after the resolver runs,
+     *  re-read inProcess[typeId] to get the right module. */
     async resolve(typeId: string): Promise<NodeModule | null> {
       const direct = inProcess.get(typeId);
       if (direct) return direct;
       if (resolver) {
-        const loaded = await resolver(typeId);
-        if (loaded) {
-          inProcess.set(loaded.typeId, loaded);
-          return loaded;
-        }
+        await resolver(typeId);
+        const reread = inProcess.get(typeId);
+        if (reread) return reread;
       }
       return null;
     },

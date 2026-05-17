@@ -3,6 +3,8 @@
 > **Status: DRAFT, scope-pinned 2026-05-15.** Vendor-neutral scoping document for the external security review referenced in `SECURITY.md` §9. Solicit quotes against this scope; finalize after vendor selection. Embargo terms align with the disclosure SLA in `SECURITY.md` §6.
 >
 > **Scope-pin note (SEC-2 close-out, 2026-05-15).** Repo state has advanced since the 2026-05-10 draft: RFC ladder 0001–0012 all `Accepted` (with `Updated:` annotations on each), 0013 remains `Draft`; the Postgres reference host has joined the implementation list and claims `openwop-production` end-to-end; mTLS termination + reasoning-event emission + memory compaction + host-side pack consumption are now mechanically verified on Postgres; high-stakes `core.openwop.{ai,http,mcp,triggers}` packs are built + signed in-tree but remain audit-gated for public publication. The audit engages against the commit pinned in §3 at kickoff.
+>
+> **Steward pre-audit publication decision (2026-05-17).** The single steward has elected to publish `core.openwop.*` packs to `packs.openwop.dev` **prior to** the external review reaching `Completed`. The list of publications and the rationale are recorded in §2.1.1 below. This decision does **not** retract the audit requirement — the engagement remains live and the post-audit obligations (§2.1.1, last paragraph) bind every published pack listed.
 
 This document defines what the openwop project asks of an external security review firm. It is written before vendor selection so the same scope can be put to multiple firms, and to make the scope auditable by future readers (what was reviewed; what was deliberately out of scope; what evidence the review will produce).
 
@@ -47,7 +49,7 @@ The review covers the protocol corpus + reference implementations as of the enga
 - The three reference SDKs (TypeScript, Python, Go) AT THE PINNED COMMIT
 
 **Spec-canonical `core.openwop.*` node packs (high-stakes, REQUIRED before publication):**
-These packs are advertised throughout the spec and will become permanent immutable artifacts on `packs.openwop.dev` once published. The audit MUST cover each before `(name, 1.0.0)` is published. Until then they remain unpublished in this repo (source under `packs/core.openwop.*/`).
+These packs are advertised throughout the spec and will become permanent immutable artifacts on `packs.openwop.dev` once published. The audit MUST cover each before `(name, 1.0.0)` is published. ~~Until then they remain unpublished in this repo (source under `packs/core.openwop.*/`).~~ See §2.1.1 below: the steward elected to publish ahead of audit completion on 2026-05-17.
 - `core.openwop.ai` — calls external AI providers (OpenAI, Anthropic, etc.) with BYOK secrets. Threat models touched: `secret-leakage`, `provider-policy`, `prompt-injection`.
 - `core.openwop.http` — makes arbitrary outbound HTTP calls. Threat models touched: `secret-leakage` (headers), `provider-policy` (egress allowlists).
 - `core.openwop.mcp` — invokes MCP tools across the trust boundary. Threat models touched: `prompt-injection` (UNTRUSTED-marker discipline), `secret-leakage`.
@@ -62,6 +64,58 @@ These packs are advertised throughout the spec and will become permanent immutab
 - RFC 0011 (Auth-Scoped Discovery Advertisement) — `Accepted`; review the strict-subset projection logic that prevents the discovery payload from leaking capabilities into a less-privileged principal.
 - RFC 0012 (Memory Compaction Profile) — `Accepted` 2026-05-15; review the SR-1 carry-forward invariant (§D) end-to-end (the host's `applyCompactionRedaction` re-applies the BYOK redaction harness to summarization output before persistence; failure mode is silent leakage of secrets the summarizer hallucinated).
 - RFC 0013 (Workflow-chain packs) — `Draft`; out of scope unless the RFC advances to `Active` before kickoff.
+
+### 2.1.1 Steward pre-audit publication decision (2026-05-17)
+
+The single steward has elected to publish the following 17 `core.openwop.*` pack artifacts to `packs.openwop.dev` **prior to** the external review reaching `Completed`. All 17 are signed with `keyId=openwop-team-1` (Ed25519 over `pack.json` bytes, per the existing signing recipe).
+
+**Patch-bump publications (existing 1.0.0 stays available alongside the new 1.1.0):**
+
+| Pack | Old version | New version |
+|---|---|---|
+| `core.openwop.ai` | 1.0.0 | **1.1.0** |
+| `core.openwop.data` | 1.0.0 | **1.1.0** |
+| `core.openwop.http` | 1.0.0 | **1.1.0** |
+| `core.openwop.mcp` | 1.0.0 | **1.1.0** |
+| `core.openwop.triggers` | 1.0.0 | **1.1.0** |
+| `core.openwop.integration` | 1.0.0 | **1.1.0** |
+
+**First-time publications:**
+
+| Pack | Version | Surface notes |
+|---|---|---|
+| `core.openwop.a2a` | 1.1.0 | A2A client + server-side nodes. Touches `secret-leakage`, `auth-profiles`. |
+| `core.openwop.agents` | 1.0.0 | n8n-style agent composition. Wraps `host.aiProviders`. |
+| `core.openwop.crypto` | 1.0.0 | Pure `node:crypto` primitives. No external I/O. |
+| `core.openwop.db` | 1.0.0 | SQL / NoSQL / search / vector. Depends on `host.db.*` (RFC 0018) — parametric-only SQL invariant. |
+| `core.openwop.files` | 1.0.0 | `host.fs` (RFC 0014) — path-traversal invariant. |
+| `core.openwop.flow` | 1.0.1 | Pure flow-control primitives. No external I/O. |
+| `core.openwop.hitl` | 1.0.0 | Suspends via existing interrupt mechanism. |
+| `core.openwop.messaging` | 1.0.0 | `host.queueBus` (RFC 0017) — cross-tenant message isolation. |
+| `core.openwop.obs` | 1.0.0 | Observability emitters. |
+| `core.openwop.rag` | 1.0.0 | Loaders + vector ops. Touches `host.db.vector`. |
+| `core.openwop.storage` | 1.0.0 | kv / table / cache / blob / queue (RFCs 0015–0019) — cross-tenant isolation. |
+
+**Why this decision was made:**
+
+1. **First non-steward adopters need the registry-served packs to integrate.** The reference application (`apps/workflow-engine/`) and the postgres reference host already exercise the pack-consumer + signed-pack-load surface end-to-end with in-tree packs; integration partners need the same packs served from `packs.openwop.dev` to reproduce that flow without checking out this repo. Holding the registry empty while waiting for the audit blocks every external user of the protocol from validating their host implementations.
+2. **The surface area being published is overwhelmingly low-risk.** 11 of the 17 publications are first-time packs whose pack-side code is either pure-stdlib (`flow`, `crypto`, `obs`, `data`, `hitl`) or delegates to host capabilities the host MUST already enforce (`storage`, `db`, `files`, `messaging`, `rag`, `agents`, `a2a`). The pack itself ships no novel cryptography, no novel auth flow, and no new credential-handling code paths beyond what the existing `core.openwop.ai@1.0.0` (audit-pending baseline) already established.
+3. **Patch bumps are additive node typeIds only.** No `core.openwop.{ai,http,mcp,triggers,data,integration}@1.1.0` removes or modifies an existing 1.0.0 typeId; the 1.0.0 artifacts remain immutable and untouched in the registry. Consumers can pin `@1.0.0` if they want zero pre-audit code surface.
+4. **Yank capability is preserved.** Every published artifact may be yanked via the documented PR + registry-redeploy flow if the audit surfaces a finding that requires it. Steward retains direct write access to the registry tree.
+
+**Risks the steward accepts by publishing pre-audit:**
+
+- Any of the 6 patch-bumped packs' new typeIds may carry a defect not caught by in-tree review that an external auditor would have caught.
+- Any of the 11 first-time packs may have a host-capability-contract bug that is harder to fix once a host has cached the tarball + verified signature locally.
+- Public registry users may treat `packs.openwop.dev`-served packs as audit-blessed; the steward MUST keep the "audit pending" status visible (this document + CHANGELOG + `SECURITY.md` §9).
+
+**Post-publication obligations (binding):**
+
+1. The external review documented in this document MUST still run on the published artifacts. The audit's findings tracker (`SECURITY/external-audit-findings.json`) MUST list every finding affecting any of the 17 published artifacts.
+2. If the audit surfaces a `Critical` or `High` finding against any published pack, the steward MUST yank the affected version per `node-packs.md` §"Deprecation and yank" within 14 days of finding receipt, and ship a fixed `<name>@<next-patch>` simultaneously.
+3. `Medium` or below findings are resolved in the next scheduled release; the deprecation timeline aligns with `SECURITY.md` §6 disclosure SLA.
+4. No further `core.openwop.*` pack may be published — patch bumps included — until the audit findings on the 17 listed artifacts have been triaged. (This includes `core.openwop.examples`, `core.openwop.agent-examples`, and any future pack.)
+5. The steward decision recorded here MUST be cited in the audit deliverable's "scope as audited" section so reviewers know which artifacts were live on the registry before their review started.
 
 ### 2.2 Specific questions the review answers
 

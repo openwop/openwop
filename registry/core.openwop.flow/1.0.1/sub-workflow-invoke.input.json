@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.flow/1.0.0/sub-workflow-invoke.input.json",
+  "title": "SubWorkflowInvokeInput",
+  "type": "object",
+  "required": [
+    "workflowRef"
+  ],
+  "properties": {
+    "workflowRef": {
+      "type": "string",
+      "description": "workflowId or `name@version` reference."
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "runOptions": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

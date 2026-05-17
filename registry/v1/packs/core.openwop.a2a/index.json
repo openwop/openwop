@@ -1,0 +1,45 @@
+{
+  "name": "core.openwop.a2a",
+  "kind": "node",
+  "description": "Full A2A (Agent-to-Agent) primitives. Client-side: 12 nodes (discover, send, stream, list/get/cancel tasks, resubscribe, multi-turn coordinator, push-config CRUD). Server-side: workflow IS an A2A agent (server-trigger, agent-card-publish, emit-status, emit-artifact, push-send). Routes through ctx.a2a.* host surface. Tracks spec/v1/a2a-integration.md.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.a2a",
+  "repository": "https://github.com/openwop/openwop",
+  "tags": [],
+  "typeIds": [
+    "core.openwop.a2a.discover-agent",
+    "core.openwop.a2a.send-message",
+    "core.openwop.a2a.send-and-stream",
+    "core.openwop.a2a.get-task",
+    "core.openwop.a2a.list-tasks",
+    "core.openwop.a2a.cancel-task",
+    "core.openwop.a2a.resubscribe",
+    "core.openwop.a2a.multi-turn-coordinator",
+    "core.openwop.a2a.push-config-create",
+    "core.openwop.a2a.push-config-get",
+    "core.openwop.a2a.push-config-list",
+    "core.openwop.a2a.push-config-delete",
+    "core.openwop.a2a.server-trigger",
+    "core.openwop.a2a.agent-card-publish",
+    "core.openwop.a2a.emit-status",
+    "core.openwop.a2a.emit-artifact",
+    "core.openwop.a2a.push-send"
+  ],
+  "versions": [
+    {
+      "version": "1.1.0",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/core.openwop.a2a/-/1.1.0.json",
+      "tarballUrl": "/v1/packs/core.openwop.a2a/-/1.1.0.tgz",
+      "signatureUrl": "/v1/packs/core.openwop.a2a/-/1.1.0.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-ZvFoyBzieWrDAEGvc5o9HXCzcqINbH+bWvYIobE9AdQ=",
+      "deprecated": false,
+      "yanked": false
+    }
+  ],
+  "latest": "1.1.0",
+  "deprecated": false
+}

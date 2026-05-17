@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.storage/1.0.0/blob-presign.config.json",
+  "title": "BlobPresignConfig",
+  "type": "object",
+  "properties": {
+    "bucket": {
+      "type": "string"
+    },
+    "operation": {
+      "type": "string",
+      "enum": [
+        "get",
+        "put"
+      ],
+      "default": "get"
+    },
+    "ttlSeconds": {
+      "type": "integer",
+      "default": 900
+    }
+  },
+  "additionalProperties": false
+}

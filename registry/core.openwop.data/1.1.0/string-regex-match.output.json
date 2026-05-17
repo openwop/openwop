@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.data/1.1.0/string-regex-match.output.json",
+  "title": "StringRegexMatchOutput",
+  "type": "object",
+  "required": [
+    "matched"
+  ],
+  "properties": {
+    "matched": {
+      "type": "boolean"
+    },
+    "match": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "groups": {
+      "type": "array"
+    },
+    "named": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

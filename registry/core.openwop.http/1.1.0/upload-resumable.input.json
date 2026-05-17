@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.http/1.1.0/upload-resumable.input.json",
+  "title": "UploadResumableInput",
+  "type": "object",
+  "required": [
+    "url",
+    "contentBase64"
+  ],
+  "properties": {
+    "url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "contentBase64": {
+      "type": "string"
+    },
+    "contentType": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": {}
+    }
+  },
+  "additionalProperties": false
+}

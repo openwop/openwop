@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.obs/1.0.0/alert-fire.output.json",
+  "title": "AlertFireOutput",
+  "type": "object",
+  "required": [
+    "fired"
+  ],
+  "properties": {
+    "fired": {
+      "type": "boolean"
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

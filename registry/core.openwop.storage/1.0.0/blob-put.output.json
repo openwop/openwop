@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.storage/1.0.0/blob-put.output.json",
+  "title": "BlobPutOutput",
+  "type": "object",
+  "required": [
+    "key"
+  ],
+  "properties": {
+    "key": {
+      "type": "string"
+    },
+    "size": {
+      "type": "integer"
+    },
+    "etag": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

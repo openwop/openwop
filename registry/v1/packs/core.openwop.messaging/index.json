@@ -1,0 +1,35 @@
+{
+  "name": "core.openwop.messaging",
+  "kind": "node",
+  "description": "Queue + stream primitives — publish, consume (trigger), ack/nack/dead-letter, stream subscribe/publish. Capability-gated on host.queueBus (RFC 0017). Sibling to host.messaging (outbound-egress-only).",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.messaging",
+  "repository": "https://github.com/openwop/openwop",
+  "tags": [],
+  "typeIds": [
+    "core.messaging.publish",
+    "core.messaging.consume",
+    "core.messaging.ack",
+    "core.messaging.nack",
+    "core.messaging.dead-letter",
+    "core.messaging.stream-subscribe",
+    "core.messaging.stream-publish"
+  ],
+  "versions": [
+    {
+      "version": "1.0.0",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/core.openwop.messaging/-/1.0.0.json",
+      "tarballUrl": "/v1/packs/core.openwop.messaging/-/1.0.0.tgz",
+      "signatureUrl": "/v1/packs/core.openwop.messaging/-/1.0.0.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-vYHVupO8Qf4OEO39GY8JmF5dH46xSdWMHB/fkQXO99g=",
+      "deprecated": false,
+      "yanked": false
+    }
+  ],
+  "latest": "1.0.0",
+  "deprecated": false
+}

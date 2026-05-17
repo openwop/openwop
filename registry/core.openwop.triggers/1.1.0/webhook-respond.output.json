@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.triggers/1.1.0/webhook-respond.output.json",
+  "title": "WebhookRespondOutput",
+  "type": "object",
+  "required": [
+    "responded"
+  ],
+  "properties": {
+    "responded": {
+      "type": "boolean"
+    },
+    "status": {
+      "type": "integer"
+    },
+    "headers": {
+      "type": "object"
+    },
+    "body": {}
+  },
+  "additionalProperties": false
+}

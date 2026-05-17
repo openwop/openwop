@@ -1,0 +1,41 @@
+{
+  "name": "core.openwop.rag",
+  "kind": "node",
+  "description": "Retrieval-Augmented-Generation primitives: loaders, splitters, vector ops (thin wrappers over core.openwop.db.vector-*), and retrievers (basic / multi-query / contextual-compression).",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.rag",
+  "repository": "https://github.com/openwop/openwop",
+  "tags": [],
+  "typeIds": [
+    "core.rag.loader-url",
+    "core.rag.loader-file",
+    "core.rag.loader-github",
+    "core.rag.loader-s3",
+    "core.rag.splitter-recursive",
+    "core.rag.splitter-character",
+    "core.rag.splitter-token",
+    "core.rag.vector-upsert",
+    "core.rag.vector-query",
+    "core.rag.vector-delete",
+    "core.rag.retriever-basic",
+    "core.rag.retriever-multi-query",
+    "core.rag.retriever-contextual-compression"
+  ],
+  "versions": [
+    {
+      "version": "1.0.0",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/core.openwop.rag/-/1.0.0.json",
+      "tarballUrl": "/v1/packs/core.openwop.rag/-/1.0.0.tgz",
+      "signatureUrl": "/v1/packs/core.openwop.rag/-/1.0.0.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-7Jos8BmR9H7kzDMIyYWeA4MDL3/gsA4xEupSgMMRTX0=",
+      "deprecated": false,
+      "yanked": false
+    }
+  ],
+  "latest": "1.0.0",
+  "deprecated": false
+}

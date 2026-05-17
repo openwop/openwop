@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.a2a/1.0.0/get-task.input.json",
+  "title": "GetTaskInput",
+  "type": "object",
+  "required": [
+    "taskId"
+  ],
+  "properties": {
+    "taskId": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

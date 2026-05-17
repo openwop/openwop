@@ -51,6 +51,9 @@ build/
 examples/hosts/postgres/data/
 examples/hosts/sqlite/data/
 apps/workflow-engine/backend/typescript/data/
+# Frontend dev-server runtime state (sqlite + host-fs sandbox written by
+# the in-memory host surfaces). Never source.
+apps/workflow-engine/frontend/react/data/
 
 # ── apps/workflow-engine: stray colocated TypeScript emit ────────────────────
 # `tsc` invoked without `--noEmit` (e.g., `tsc -b` outside the build
@@ -154,8 +157,13 @@ ui-debug.log
 *.db
 *.sqlite
 *.sqlite3
-# Exception: the database-adapter node pack directory.
+# Exception: the database-adapter node pack directory + its registry
+# artifacts (the *.db wildcard above otherwise matches the dir name).
 !packs/core.openwop.db/
+!registry/core.openwop.db/
+!registry/core.openwop.db/**
+!registry/v1/packs/core.openwop.db/
+!registry/v1/packs/core.openwop.db/**
 !packs/core.openwop.db/**
 
 # ── Process / daemon state ───────────────────────────────────────────────────

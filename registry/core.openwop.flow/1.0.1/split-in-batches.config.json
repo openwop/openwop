@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.flow/1.0.0/split-in-batches.config.json",
+  "title": "SplitInBatchesConfig",
+  "type": "object",
+  "required": [
+    "batchSize"
+  ],
+  "properties": {
+    "batchSize": {
+      "type": "integer",
+      "minimum": 1
+    }
+  },
+  "additionalProperties": false
+}

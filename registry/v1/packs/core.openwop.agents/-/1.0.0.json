@@ -1,0 +1,210 @@
+{
+  "name": "core.openwop.agents",
+  "version": "1.0.0",
+  "description": "Agent composition primitives. Root agent.run + sub-nodes (tools, memory, parsers, model selector). Composes via RFC 0013 expansion semantics and consumes host.aiProviders + host.agentRuntime.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.agents",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "core",
+    "agents",
+    "tools",
+    "memory",
+    "react",
+    "tool-calling"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "aiProviders": "supported"
+  },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "nodes": [
+    {
+      "typeId": "core.agents.run",
+      "version": "1.0.0",
+      "label": "Agent Run",
+      "description": "Root agent loop. Reads sub-nodes (tools, memory, model). Iterates until terminal output or max steps. Streaming-output emits per-step events.",
+      "category": "data",
+      "role": "streaming-output",
+      "capabilities": [
+        "cacheable",
+        "side-effectful",
+        "streamable"
+      ],
+      "configSchemaRef": "schemas/run.config.json",
+      "inputSchemaRef": "schemas/run.input.json",
+      "outputSchemaRef": "schemas/run.output.json"
+    },
+    {
+      "typeId": "core.agents.tool-function",
+      "version": "1.0.0",
+      "label": "Tool — Function",
+      "description": "Declarative tool: name + JSON-Schema input + handler reference.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/tool-function.config.json",
+      "inputSchemaRef": "schemas/tool-function.input.json",
+      "outputSchemaRef": "schemas/tool-function.output.json"
+    },
+    {
+      "typeId": "core.agents.tool-workflow",
+      "version": "1.0.0",
+      "label": "Tool — Workflow",
+      "description": "Wraps another workflow as an agent tool.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/tool-workflow.config.json",
+      "inputSchemaRef": "schemas/tool-workflow.input.json",
+      "outputSchemaRef": "schemas/tool-workflow.output.json"
+    },
+    {
+      "typeId": "core.agents.tool-mcp",
+      "version": "1.0.0",
+      "label": "Tool — MCP",
+      "description": "Wraps an MCP tool from a connected server.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/tool-mcp.config.json",
+      "inputSchemaRef": "schemas/tool-mcp.input.json",
+      "outputSchemaRef": "schemas/tool-mcp.output.json"
+    },
+    {
+      "typeId": "core.agents.tool-http",
+      "version": "1.0.0",
+      "label": "Tool — HTTP",
+      "description": "Wraps an OpenAPI operation as an agent tool.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/tool-http.config.json",
+      "inputSchemaRef": "schemas/tool-http.input.json",
+      "outputSchemaRef": "schemas/tool-http.output.json"
+    },
+    {
+      "typeId": "core.agents.memory-window",
+      "version": "1.0.0",
+      "label": "Memory — Window",
+      "description": "Recent-N-message buffer.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/memory-window.config.json",
+      "inputSchemaRef": "schemas/memory-window.input.json",
+      "outputSchemaRef": "schemas/memory-window.output.json"
+    },
+    {
+      "typeId": "core.agents.memory-summary",
+      "version": "1.0.0",
+      "label": "Memory — Summary",
+      "description": "LLM-rollup summary memory.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/memory-summary.config.json",
+      "inputSchemaRef": "schemas/memory-summary.input.json",
+      "outputSchemaRef": "schemas/memory-summary.output.json"
+    },
+    {
+      "typeId": "core.agents.memory-kv-store",
+      "version": "1.0.0",
+      "label": "Memory — KV-store",
+      "description": "Long-lived KV-backed memory via core.openwop.storage.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/memory-kv-store.config.json",
+      "inputSchemaRef": "schemas/memory-kv-store.input.json",
+      "outputSchemaRef": "schemas/memory-kv-store.output.json"
+    },
+    {
+      "typeId": "core.agents.output-parser-structured",
+      "version": "1.0.0",
+      "label": "Output Parser — Structured",
+      "description": "JSON-Schema-typed output validator (uses core.openwop.data.json-schema-validate).",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/output-parser-structured.config.json",
+      "inputSchemaRef": "schemas/output-parser-structured.input.json",
+      "outputSchemaRef": "schemas/output-parser-structured.output.json"
+    },
+    {
+      "typeId": "core.agents.output-parser-list",
+      "version": "1.0.0",
+      "label": "Output Parser — List",
+      "description": "Newline-delimited list parser.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/output-parser-list.config.json",
+      "inputSchemaRef": "schemas/output-parser-list.input.json",
+      "outputSchemaRef": "schemas/output-parser-list.output.json"
+    },
+    {
+      "typeId": "core.agents.output-parser-auto-fix",
+      "version": "1.0.0",
+      "label": "Output Parser — Auto-Fix",
+      "description": "Retries with parser feedback on validation failure.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/output-parser-auto-fix.config.json",
+      "inputSchemaRef": "schemas/output-parser-auto-fix.input.json",
+      "outputSchemaRef": "schemas/output-parser-auto-fix.output.json"
+    },
+    {
+      "typeId": "core.agents.model-selector",
+      "version": "1.0.0",
+      "label": "Model Selector",
+      "description": "Dynamic model routing.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/model-selector.config.json",
+      "inputSchemaRef": "schemas/model-selector.input.json",
+      "outputSchemaRef": "schemas/model-selector.output.json"
+    }
+  ],
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "openwop-team-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-oEEgqXRlF3+asBcRVvcLKUesodXqthMxRXbc5Ndl3KE="
+}

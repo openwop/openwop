@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.triggers/1.1.0/sub-workflow.output.json",
+  "title": "SubWorkflowOutput",
+  "type": "object",
+  "required": [
+    "parentRunId"
+  ],
+  "properties": {
+    "parentRunId": {
+      "type": "string"
+    },
+    "parentNodeId": {
+      "type": "string"
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "invokedBy": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

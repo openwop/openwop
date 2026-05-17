@@ -1,0 +1,323 @@
+{
+  "name": "core.openwop.files",
+  "version": "1.0.0",
+  "description": "File + binary primitives — fs CRUD, base64, mime detection, image / PDF / archive processing, FTP / SFTP / SSH. Capability-gated on host.fs (RFC 0014). Hosts MUST enforce sandbox root + path-traversal protection.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.files",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "core",
+    "files",
+    "fs",
+    "image",
+    "pdf",
+    "archive",
+    "ftp"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "fs": "supported"
+  },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "nodes": [
+    {
+      "typeId": "core.files.read",
+      "version": "1.0.0",
+      "label": "File Read",
+      "description": "Read a file from host.fs (returns base64). Host enforces sandbox + path traversal.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/read.config.json",
+      "inputSchemaRef": "schemas/read.input.json",
+      "outputSchemaRef": "schemas/read.output.json"
+    },
+    {
+      "typeId": "core.files.write",
+      "version": "1.0.0",
+      "label": "File Write",
+      "description": "Write a file. Optional create-only mode.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/write.config.json",
+      "inputSchemaRef": "schemas/write.input.json",
+      "outputSchemaRef": "schemas/write.output.json"
+    },
+    {
+      "typeId": "core.files.delete",
+      "version": "1.0.0",
+      "label": "File Delete",
+      "description": "Delete a file. Idempotent.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/delete.config.json",
+      "inputSchemaRef": "schemas/delete.input.json",
+      "outputSchemaRef": "schemas/delete.output.json"
+    },
+    {
+      "typeId": "core.files.stat",
+      "version": "1.0.0",
+      "label": "File Stat",
+      "description": "fstat — returns size, mtime, isDirectory.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/stat.config.json",
+      "inputSchemaRef": "schemas/stat.input.json",
+      "outputSchemaRef": "schemas/stat.output.json"
+    },
+    {
+      "typeId": "core.files.list",
+      "version": "1.0.0",
+      "label": "File List",
+      "description": "List a directory.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/list.config.json",
+      "inputSchemaRef": "schemas/list.input.json",
+      "outputSchemaRef": "schemas/list.output.json"
+    },
+    {
+      "typeId": "core.files.to-base64",
+      "version": "1.0.0",
+      "label": "To Base64",
+      "description": "Pure utility: utf8 → base64.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/to-base64.config.json",
+      "inputSchemaRef": "schemas/to-base64.input.json",
+      "outputSchemaRef": "schemas/to-base64.output.json"
+    },
+    {
+      "typeId": "core.files.from-base64",
+      "version": "1.0.0",
+      "label": "From Base64",
+      "description": "Pure utility: base64 → utf8 (or hex).",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/from-base64.config.json",
+      "inputSchemaRef": "schemas/from-base64.input.json",
+      "outputSchemaRef": "schemas/from-base64.output.json"
+    },
+    {
+      "typeId": "core.files.detect-mime",
+      "version": "1.0.0",
+      "label": "Detect MIME",
+      "description": "Sniff content type from first bytes + filename hint.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/detect-mime.config.json",
+      "inputSchemaRef": "schemas/detect-mime.input.json",
+      "outputSchemaRef": "schemas/detect-mime.output.json"
+    },
+    {
+      "typeId": "core.files.image-resize",
+      "version": "1.0.0",
+      "label": "Image Resize",
+      "description": "Resize an image. Delegates to ctx.image.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/image-resize.config.json",
+      "inputSchemaRef": "schemas/image-resize.input.json",
+      "outputSchemaRef": "schemas/image-resize.output.json"
+    },
+    {
+      "typeId": "core.files.image-crop",
+      "version": "1.0.0",
+      "label": "Image Crop",
+      "description": "Crop an image by bbox.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/image-crop.config.json",
+      "inputSchemaRef": "schemas/image-crop.input.json",
+      "outputSchemaRef": "schemas/image-crop.output.json"
+    },
+    {
+      "typeId": "core.files.image-format-convert",
+      "version": "1.0.0",
+      "label": "Image Format Convert",
+      "description": "Convert between JPEG / PNG / WebP / AVIF.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/image-format-convert.config.json",
+      "inputSchemaRef": "schemas/image-format-convert.input.json",
+      "outputSchemaRef": "schemas/image-format-convert.output.json"
+    },
+    {
+      "typeId": "core.files.pdf-extract-text",
+      "version": "1.0.0",
+      "label": "PDF Extract Text",
+      "description": "Extract text from a PDF.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/pdf-extract-text.config.json",
+      "inputSchemaRef": "schemas/pdf-extract-text.input.json",
+      "outputSchemaRef": "schemas/pdf-extract-text.output.json"
+    },
+    {
+      "typeId": "core.files.pdf-split",
+      "version": "1.0.0",
+      "label": "PDF Split",
+      "description": "Split a PDF by page ranges.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/pdf-split.config.json",
+      "inputSchemaRef": "schemas/pdf-split.input.json",
+      "outputSchemaRef": "schemas/pdf-split.output.json"
+    },
+    {
+      "typeId": "core.files.pdf-merge",
+      "version": "1.0.0",
+      "label": "PDF Merge",
+      "description": "Merge N PDFs.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/pdf-merge.config.json",
+      "inputSchemaRef": "schemas/pdf-merge.input.json",
+      "outputSchemaRef": "schemas/pdf-merge.output.json"
+    },
+    {
+      "typeId": "core.files.archive-create",
+      "version": "1.0.0",
+      "label": "Archive Create",
+      "description": "Create a zip / tar / gz archive.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/archive-create.config.json",
+      "inputSchemaRef": "schemas/archive-create.input.json",
+      "outputSchemaRef": "schemas/archive-create.output.json"
+    },
+    {
+      "typeId": "core.files.archive-extract",
+      "version": "1.0.0",
+      "label": "Archive Extract",
+      "description": "Extract a zip / tar / gz archive.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/archive-extract.config.json",
+      "inputSchemaRef": "schemas/archive-extract.input.json",
+      "outputSchemaRef": "schemas/archive-extract.output.json"
+    },
+    {
+      "typeId": "core.files.ftp",
+      "version": "1.0.0",
+      "label": "FTP Get / Put",
+      "description": "FTP file transfer. Delegates to ctx.ftp.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/ftp.config.json",
+      "inputSchemaRef": "schemas/ftp.input.json",
+      "outputSchemaRef": "schemas/ftp.output.json"
+    },
+    {
+      "typeId": "core.files.sftp",
+      "version": "1.0.0",
+      "label": "SFTP Get / Put",
+      "description": "SFTP file transfer. Delegates to ctx.sftp.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/sftp.config.json",
+      "inputSchemaRef": "schemas/sftp.input.json",
+      "outputSchemaRef": "schemas/sftp.output.json"
+    },
+    {
+      "typeId": "core.files.ssh-run",
+      "version": "1.0.0",
+      "label": "SSH Run",
+      "description": "Execute a command on a remote host via SSH.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/ssh-run.config.json",
+      "inputSchemaRef": "schemas/ssh-run.input.json",
+      "outputSchemaRef": "schemas/ssh-run.output.json"
+    }
+  ],
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "openwop-team-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-9geX/AjJD/PcmA2qb8qeaDcwgJLelxFMPAIpA8dddxg="
+}

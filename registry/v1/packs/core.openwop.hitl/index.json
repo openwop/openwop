@@ -1,0 +1,31 @@
+{
+  "name": "core.openwop.hitl",
+  "kind": "node",
+  "description": "Human-in-the-loop primitives. form-request, approval-request, ask-user — each suspends the run via the existing interrupt mechanism. Zero npm deps.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.hitl",
+  "repository": "https://github.com/openwop/openwop",
+  "tags": [],
+  "typeIds": [
+    "core.hitl.form-request",
+    "core.hitl.approval-request",
+    "core.hitl.ask-user"
+  ],
+  "versions": [
+    {
+      "version": "1.0.0",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/core.openwop.hitl/-/1.0.0.json",
+      "tarballUrl": "/v1/packs/core.openwop.hitl/-/1.0.0.tgz",
+      "signatureUrl": "/v1/packs/core.openwop.hitl/-/1.0.0.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-RILBImw5zwRt6itXWCLe8ULivXg6obUw5WiLul9HNEs=",
+      "deprecated": false,
+      "yanked": false
+    }
+  ],
+  "latest": "1.0.0",
+  "deprecated": false
+}

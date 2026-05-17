@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.mcp/1.0.0/list-tools.config.json",
+  "title": "ListToolsConfig",
+  "type": "object",
+  "required": ["serverId"],
+  "properties": {
+    "serverId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Host-side identifier for the registered MCP server (e.g., `'web-search'`, `'filesystem'`). The host's MCP client maps this to the actual server endpoint + transport. Unknown serverId returns `mcp_server_not_registered`."
+    }
+  },
+  "additionalProperties": false
+}

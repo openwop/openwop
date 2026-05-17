@@ -1,0 +1,47 @@
+{
+  "name": "core.openwop.files",
+  "kind": "node",
+  "description": "File + binary primitives — fs CRUD, base64, mime detection, image / PDF / archive processing, FTP / SFTP / SSH. Capability-gated on host.fs (RFC 0014). Hosts MUST enforce sandbox root + path-traversal protection.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.files",
+  "repository": "https://github.com/openwop/openwop",
+  "tags": [],
+  "typeIds": [
+    "core.files.read",
+    "core.files.write",
+    "core.files.delete",
+    "core.files.stat",
+    "core.files.list",
+    "core.files.to-base64",
+    "core.files.from-base64",
+    "core.files.detect-mime",
+    "core.files.image-resize",
+    "core.files.image-crop",
+    "core.files.image-format-convert",
+    "core.files.pdf-extract-text",
+    "core.files.pdf-split",
+    "core.files.pdf-merge",
+    "core.files.archive-create",
+    "core.files.archive-extract",
+    "core.files.ftp",
+    "core.files.sftp",
+    "core.files.ssh-run"
+  ],
+  "versions": [
+    {
+      "version": "1.0.0",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/core.openwop.files/-/1.0.0.json",
+      "tarballUrl": "/v1/packs/core.openwop.files/-/1.0.0.tgz",
+      "signatureUrl": "/v1/packs/core.openwop.files/-/1.0.0.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-9geX/AjJD/PcmA2qb8qeaDcwgJLelxFMPAIpA8dddxg=",
+      "deprecated": false,
+      "yanked": false
+    }
+  ],
+  "latest": "1.0.0",
+  "deprecated": false
+}

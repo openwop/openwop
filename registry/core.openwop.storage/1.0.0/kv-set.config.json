@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.storage/1.0.0/kv-set.config.json",
+  "title": "KvSetConfig",
+  "type": "object",
+  "properties": {
+    "namespace": {
+      "type": "string"
+    },
+    "ttlSeconds": {
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false
+}

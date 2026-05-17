@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.storage/1.0.0/table-update.input.json",
+  "title": "TableUpdateInput",
+  "type": "object",
+  "required": [
+    "filter",
+    "update"
+  ],
+  "properties": {
+    "filter": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "update": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

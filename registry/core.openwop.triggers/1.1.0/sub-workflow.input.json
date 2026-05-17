@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.triggers/1.1.0/sub-workflow.input.json",
+  "title": "SubWorkflowInput",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false
+}

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.files/1.0.0/stat.output.json",
+  "title": "FileStatOutput",
+  "type": "object",
+  "required": [
+    "exists"
+  ],
+  "properties": {
+    "exists": {
+      "type": "boolean"
+    },
+    "size": {
+      "type": "integer"
+    },
+    "mtime": {
+      "type": "string"
+    },
+    "isDirectory": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.http/1.1.0/long-poll.output.json",
+  "title": "LongPollOutput",
+  "type": "object",
+  "required": [
+    "status",
+    "iterations"
+  ],
+  "properties": {
+    "status": {
+      "type": "integer"
+    },
+    "headers": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "body": {},
+    "iterations": {
+      "type": "integer"
+    },
+    "exhausted": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}

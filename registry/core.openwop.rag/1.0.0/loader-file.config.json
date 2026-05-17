@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.rag/1.0.0/loader-file.config.json",
+  "title": "LoaderFileConfig",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false
+}

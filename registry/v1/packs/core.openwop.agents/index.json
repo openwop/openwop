@@ -1,0 +1,40 @@
+{
+  "name": "core.openwop.agents",
+  "kind": "node",
+  "description": "Agent composition primitives. Root agent.run + sub-nodes (tools, memory, parsers, model selector). Composes via RFC 0013 expansion semantics and consumes host.aiProviders + host.agentRuntime.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.agents",
+  "repository": "https://github.com/openwop/openwop",
+  "tags": [],
+  "typeIds": [
+    "core.agents.run",
+    "core.agents.tool-function",
+    "core.agents.tool-workflow",
+    "core.agents.tool-mcp",
+    "core.agents.tool-http",
+    "core.agents.memory-window",
+    "core.agents.memory-summary",
+    "core.agents.memory-kv-store",
+    "core.agents.output-parser-structured",
+    "core.agents.output-parser-list",
+    "core.agents.output-parser-auto-fix",
+    "core.agents.model-selector"
+  ],
+  "versions": [
+    {
+      "version": "1.0.0",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/core.openwop.agents/-/1.0.0.json",
+      "tarballUrl": "/v1/packs/core.openwop.agents/-/1.0.0.tgz",
+      "signatureUrl": "/v1/packs/core.openwop.agents/-/1.0.0.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-oEEgqXRlF3+asBcRVvcLKUesodXqthMxRXbc5Ndl3KE=",
+      "deprecated": false,
+      "yanked": false
+    }
+  ],
+  "latest": "1.0.0",
+  "deprecated": false
+}

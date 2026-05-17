@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.hitl/1.0.0/ask-user.output.json",
+  "title": "AskUserOutput",
+  "type": "object",
+  "required": [
+    "answer"
+  ],
+  "properties": {
+    "answer": {
+      "type": "string"
+    },
+    "answeredBy": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "answeredAt": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.triggers/1.1.0/email-imap.config.json",
+  "title": "EmailImapConfig",
+  "type": "object",
+  "required": [
+    "host",
+    "folder",
+    "intervalSeconds"
+  ],
+  "properties": {
+    "host": {
+      "type": "string"
+    },
+    "folder": {
+      "type": "string",
+      "default": "INBOX"
+    },
+    "intervalSeconds": {
+      "type": "integer",
+      "minimum": 30,
+      "default": 300
+    },
+    "filter": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

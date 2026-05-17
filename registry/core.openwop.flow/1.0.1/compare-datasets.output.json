@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.flow/1.0.0/compare-datasets.output.json",
+  "title": "CompareDatasetsOutput",
+  "type": "object",
+  "required": [
+    "addedIn2",
+    "removedFrom1",
+    "changed",
+    "unchanged"
+  ],
+  "properties": {
+    "addedIn2": {
+      "type": "array"
+    },
+    "removedFrom1": {
+      "type": "array"
+    },
+    "changed": {
+      "type": "array",
+      "items": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "Diff",
+        "type": "object",
+        "required": [
+          "before",
+          "after"
+        ],
+        "properties": {
+          "before": {},
+          "after": {}
+        },
+        "additionalProperties": false
+      }
+    },
+    "unchanged": {
+      "type": "array"
+    }
+  },
+  "additionalProperties": false
+}

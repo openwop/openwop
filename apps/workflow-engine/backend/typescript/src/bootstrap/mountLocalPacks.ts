@@ -26,7 +26,7 @@
  * installRegistryPacks.ts. See ARCHITECTURE.md §"Path to real packs".
  */
 
-import { existsSync, readdirSync, readFileSync, renameSync, statSync, symlinkSync, mkdirSync } from 'node:fs';
+import { existsSync, lstatSync, readdirSync, readFileSync, readlinkSync, renameSync, rmSync, statSync, symlinkSync, mkdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createLogger } from '../observability/logger.js';
@@ -83,11 +83,25 @@ export function ensureLocalPacksMounted(): MountResult {
 
     const dest = join(destDir, entry);
     if (existsSync(dest)) {
+      // Idempotent: if a previous boot already shadowed this pack, the
+      // dest is now a symlink into the repo. Nothing to do.
+      if (isSymlinkToRepo(dest, src)) {
+        skipped.push(entry);
+        continue;
+      }
       if (preferLocal && shouldShadow(src, dest)) {
         const installedVer = readManifestVersion(dest) ?? 'unknown';
         const newName = `${entry}.registry-${installedVer}`;
+        const newPath = join(destDir, newName);
         try {
-          renameSync(dest, join(destDir, newName));
+          // A previous shadow pass may have already preserved this same
+          // registry version. If so, just discard the freshly-installed
+          // dir rather than failing on rename collision.
+          if (existsSync(newPath)) {
+            rmSync(dest, { recursive: true, force: true });
+          } else {
+            renameSync(dest, newPath);
+          }
           symlinkSync(src, dest, 'dir');
           shadowed.push(entry);
           log.warn('local pack shadows registry install (dev mode; set OPENWOP_STRICT_REGISTRY=true to disable)', {
@@ -131,6 +145,16 @@ export function ensureLocalPacksMounted(): MountResult {
     destDir,
   });
   return { mounted, skipped, shadowed, disabled: false };
+}
+
+function isSymlinkToRepo(dest: string, expectedTarget: string): boolean {
+  try {
+    if (!lstatSync(dest).isSymbolicLink()) return false;
+    const target = readlinkSync(dest);
+    return target === expectedTarget;
+  } catch {
+    return false;
+  }
 }
 
 function shouldShadow(srcDir: string, destDir: string): boolean {

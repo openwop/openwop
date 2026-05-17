@@ -1,0 +1,48 @@
+{
+  "name": "core.openwop.storage",
+  "kind": "node",
+  "description": "State primitives — kv / table / cache / blob / queue. Each node gated on its specific host capability block (host.kvStorage, host.tableStorage, host.cache, host.blobStorage, host.queue) per RFCs 0015–0019. Pack delegates to ctx.storage.* host surface. Zero npm deps.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.storage",
+  "repository": "https://github.com/openwop/openwop",
+  "tags": [],
+  "typeIds": [
+    "core.storage.kv-get",
+    "core.storage.kv-set",
+    "core.storage.kv-delete",
+    "core.storage.kv-list",
+    "core.storage.kv-atomic-increment",
+    "core.storage.kv-cas",
+    "core.storage.table-insert",
+    "core.storage.table-update",
+    "core.storage.table-upsert",
+    "core.storage.table-delete",
+    "core.storage.table-query",
+    "core.storage.table-count",
+    "core.storage.cache-get",
+    "core.storage.cache-put",
+    "core.storage.cache-evict",
+    "core.storage.blob-put",
+    "core.storage.blob-get",
+    "core.storage.blob-presign",
+    "core.storage.queue-enqueue",
+    "core.storage.queue-dequeue"
+  ],
+  "versions": [
+    {
+      "version": "1.0.0",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/core.openwop.storage/-/1.0.0.json",
+      "tarballUrl": "/v1/packs/core.openwop.storage/-/1.0.0.tgz",
+      "signatureUrl": "/v1/packs/core.openwop.storage/-/1.0.0.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-cq3BVSzw9vj8p9XFWZ4scqUmc8mr6EHwe604NEjcAG0=",
+      "deprecated": false,
+      "yanked": false
+    }
+  ],
+  "latest": "1.0.0",
+  "deprecated": false
+}

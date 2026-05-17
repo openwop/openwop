@@ -1,0 +1,78 @@
+{
+  "name": "core.openwop.hitl",
+  "version": "1.0.0",
+  "description": "Human-in-the-loop primitives. form-request, approval-request, ask-user — each suspends the run via the existing interrupt mechanism. Zero npm deps.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.hitl",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "core",
+    "hitl",
+    "approval",
+    "form",
+    "interrupt"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "nodes": [
+    {
+      "typeId": "core.hitl.form-request",
+      "version": "1.0.0",
+      "label": "HITL Form",
+      "description": "Suspend on a typed JSON-Schema form. Constraint: flat schema (string/number/boolean/enum, formats email/uri/date/date-time) — mirrors MCP elicitation.",
+      "category": "control",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful",
+        "streamable"
+      ],
+      "configSchemaRef": "schemas/form-request.config.json",
+      "inputSchemaRef": "schemas/form-request.input.json",
+      "outputSchemaRef": "schemas/form-request.output.json"
+    },
+    {
+      "typeId": "core.hitl.approval-request",
+      "version": "1.0.0",
+      "label": "HITL Approval",
+      "description": "Suspend on a binary approve / reject choice with optional comment. Honors quorum if the host advertises it.",
+      "category": "control",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful",
+        "streamable"
+      ],
+      "configSchemaRef": "schemas/approval-request.config.json",
+      "inputSchemaRef": "schemas/approval-request.input.json",
+      "outputSchemaRef": "schemas/approval-request.output.json"
+    },
+    {
+      "typeId": "core.hitl.ask-user",
+      "version": "1.0.0",
+      "label": "HITL Ask User",
+      "description": "Suspend on a free-text chat question. Used inside chat-driven workflows.",
+      "category": "control",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful",
+        "streamable"
+      ],
+      "configSchemaRef": "schemas/ask-user.config.json",
+      "inputSchemaRef": "schemas/ask-user.input.json",
+      "outputSchemaRef": "schemas/ask-user.output.json"
+    }
+  ],
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "openwop-team-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-RILBImw5zwRt6itXWCLe8ULivXg6obUw5WiLul9HNEs="
+}

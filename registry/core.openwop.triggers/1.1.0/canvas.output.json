@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "canvasTypeId": { "type": "string" },
+    "canvasEvent": { "type": "string" },
+    "objectId": { "type": "string" },
+    "eventData": { "type": "object", "additionalProperties": true }
+  },
+  "required": ["canvasTypeId", "canvasEvent", "objectId", "eventData"],
+  "additionalProperties": false
+}

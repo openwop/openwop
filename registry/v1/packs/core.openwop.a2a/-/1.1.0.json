@@ -1,0 +1,286 @@
+{
+  "name": "core.openwop.a2a",
+  "version": "1.1.0",
+  "description": "Full A2A (Agent-to-Agent) primitives. Client-side: 12 nodes (discover, send, stream, list/get/cancel tasks, resubscribe, multi-turn coordinator, push-config CRUD). Server-side: workflow IS an A2A agent (server-trigger, agent-card-publish, emit-status, emit-artifact, push-send). Routes through ctx.a2a.* host surface. Tracks spec/v1/a2a-integration.md.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.a2a",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "core",
+    "a2a",
+    "agent",
+    "tasks",
+    "integration"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "a2a": "supported"
+  },
+  "nodes": [
+    {
+      "typeId": "core.openwop.a2a.discover-agent",
+      "version": "1.0.0",
+      "label": "A2A Discover Agent",
+      "description": "Fetch /.well-known/agent.json from a remote A2A agent. If `extended:true`, follow up with agent/getExtendedAgentCard (requires auth).",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/discover-agent.config.json",
+      "inputSchemaRef": "schemas/discover-agent.input.json",
+      "outputSchemaRef": "schemas/discover-agent.output.json"
+    },
+    {
+      "typeId": "core.openwop.a2a.send-message",
+      "version": "1.0.0",
+      "label": "A2A Send Message",
+      "description": "JSON-RPC `message/send` — creates a new task (or appends to an existing taskId/contextId) and returns the resulting Task or Message.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/send-message.config.json",
+      "inputSchemaRef": "schemas/send-message.input.json",
+      "outputSchemaRef": "schemas/send-message.output.json"
+    },
+    {
+      "typeId": "core.openwop.a2a.send-and-stream",
+      "version": "1.0.0",
+      "label": "A2A Send & Stream",
+      "description": "JSON-RPC `message/stream` — sends the message and opens an SSE stream of TaskStatusUpdateEvent + TaskArtifactUpdateEvent until terminal state.",
+      "category": "integration",
+      "role": "streaming-output",
+      "capabilities": [
+        "cacheable",
+        "side-effectful",
+        "streamable"
+      ],
+      "configSchemaRef": "schemas/send-and-stream.config.json",
+      "inputSchemaRef": "schemas/send-and-stream.input.json",
+      "outputSchemaRef": "schemas/send-and-stream.output.json"
+    },
+    {
+      "typeId": "core.openwop.a2a.get-task",
+      "version": "1.0.0",
+      "label": "A2A Get Task",
+      "description": "JSON-RPC `tasks/get` — reads task state + history + artifacts.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/get-task.config.json",
+      "inputSchemaRef": "schemas/get-task.input.json",
+      "outputSchemaRef": "schemas/get-task.output.json"
+    },
+    {
+      "typeId": "core.openwop.a2a.list-tasks",
+      "version": "1.0.0",
+      "label": "A2A List Tasks",
+      "description": "JSON-RPC `tasks/list` — cursor-paginated by status/contextId filter.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/list-tasks.config.json",
+      "inputSchemaRef": "schemas/list-tasks.input.json",
+      "outputSchemaRef": "schemas/list-tasks.output.json"
+    },
+    {
+      "typeId": "core.openwop.a2a.cancel-task",
+      "version": "1.0.0",
+      "label": "A2A Cancel Task",
+      "description": "JSON-RPC `tasks/cancel` — request cancellation of a running task.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/cancel-task.config.json",
+      "inputSchemaRef": "schemas/cancel-task.input.json",
+      "outputSchemaRef": "schemas/cancel-task.output.json"
+    },
+    {
+      "typeId": "core.openwop.a2a.resubscribe",
+      "version": "1.0.0",
+      "label": "A2A Resubscribe",
+      "description": "JSON-RPC `tasks/resubscribe` — reopen an SSE stream against an existing task after disconnect.",
+      "category": "integration",
+      "role": "streaming-output",
+      "capabilities": [
+        "cacheable",
+        "side-effectful",
+        "streamable"
+      ],
+      "configSchemaRef": "schemas/resubscribe.config.json",
+      "inputSchemaRef": "schemas/resubscribe.input.json",
+      "outputSchemaRef": "schemas/resubscribe.output.json"
+    },
+    {
+      "typeId": "core.openwop.a2a.multi-turn-coordinator",
+      "version": "1.0.0",
+      "label": "A2A Multi-Turn Coordinator",
+      "description": "Suspends the run on INPUT_REQUIRED / AUTH_REQUIRED states, awaits user reply via the existing interrupt mechanism, and replies via the same taskId/contextId.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful",
+        "streamable"
+      ],
+      "configSchemaRef": "schemas/multi-turn-coordinator.config.json",
+      "inputSchemaRef": "schemas/multi-turn-coordinator.input.json",
+      "outputSchemaRef": "schemas/multi-turn-coordinator.output.json"
+    },
+    {
+      "typeId": "core.openwop.a2a.push-config-create",
+      "version": "1.0.0",
+      "label": "A2A Push Config — Create",
+      "description": "JSON-RPC `tasks/pushNotificationConfig/create` — register a webhook for async task delivery.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/push-config-create.config.json",
+      "inputSchemaRef": "schemas/push-config-create.input.json",
+      "outputSchemaRef": "schemas/push-config-create.output.json"
+    },
+    {
+      "typeId": "core.openwop.a2a.push-config-get",
+      "version": "1.0.0",
+      "label": "A2A Push Config — Get",
+      "description": "JSON-RPC `tasks/pushNotificationConfig/get`.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/push-config-get.config.json",
+      "inputSchemaRef": "schemas/push-config-get.input.json",
+      "outputSchemaRef": "schemas/push-config-get.output.json"
+    },
+    {
+      "typeId": "core.openwop.a2a.push-config-list",
+      "version": "1.0.0",
+      "label": "A2A Push Config — List",
+      "description": "JSON-RPC `tasks/pushNotificationConfig/list`.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/push-config-list.config.json",
+      "inputSchemaRef": "schemas/push-config-list.input.json",
+      "outputSchemaRef": "schemas/push-config-list.output.json"
+    },
+    {
+      "typeId": "core.openwop.a2a.push-config-delete",
+      "version": "1.0.0",
+      "label": "A2A Push Config — Delete",
+      "description": "JSON-RPC `tasks/pushNotificationConfig/delete`.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/push-config-delete.config.json",
+      "inputSchemaRef": "schemas/push-config-delete.input.json",
+      "outputSchemaRef": "schemas/push-config-delete.output.json"
+    },
+    {
+      "typeId": "core.openwop.a2a.server-trigger",
+      "version": "1.0.0",
+      "label": "A2A Server Trigger",
+      "description": "Workflow-as-A2A-agent entry point. Mounts the JSON-RPC endpoint, drives the task state machine, routes inbound `message/send` and `message/stream` into the workflow.",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/server-trigger.config.json",
+      "inputSchemaRef": "schemas/server-trigger.input.json",
+      "outputSchemaRef": "schemas/server-trigger.output.json"
+    },
+    {
+      "typeId": "core.openwop.a2a.agent-card-publish",
+      "version": "1.0.0",
+      "label": "A2A Agent Card — Publish",
+      "description": "Publishes `/.well-known/agent.json` from a workflow-authored manifest (skills, security schemes, capability flags, signed/extended variants).",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/agent-card-publish.config.json",
+      "inputSchemaRef": "schemas/agent-card-publish.input.json",
+      "outputSchemaRef": "schemas/agent-card-publish.output.json"
+    },
+    {
+      "typeId": "core.openwop.a2a.emit-status",
+      "version": "1.0.0",
+      "label": "A2A Emit Status",
+      "description": "Emits a `TaskStatusUpdateEvent` to all SSE subscribers and registered webhook configs.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/emit-status.config.json",
+      "inputSchemaRef": "schemas/emit-status.input.json",
+      "outputSchemaRef": "schemas/emit-status.output.json"
+    },
+    {
+      "typeId": "core.openwop.a2a.emit-artifact",
+      "version": "1.0.0",
+      "label": "A2A Emit Artifact",
+      "description": "Emits a `TaskArtifactUpdateEvent` (with `append`/`lastChunk` flags) to subscribers and webhooks.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/emit-artifact.config.json",
+      "inputSchemaRef": "schemas/emit-artifact.input.json",
+      "outputSchemaRef": "schemas/emit-artifact.output.json"
+    },
+    {
+      "typeId": "core.openwop.a2a.push-send",
+      "version": "1.0.0",
+      "label": "A2A Push Send",
+      "description": "POSTs the same event envelope to the client-registered webhook URL. Honors the host's delivery-receipt + retry policy.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/push-send.config.json",
+      "inputSchemaRef": "schemas/push-send.input.json",
+      "outputSchemaRef": "schemas/push-send.output.json"
+    }
+  ],
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "openwop-team-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-ZvFoyBzieWrDAEGvc5o9HXCzcqINbH+bWvYIobE9AdQ="
+}

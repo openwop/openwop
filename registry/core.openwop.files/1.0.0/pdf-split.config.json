@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.files/1.0.0/pdf-split.config.json",
+  "title": "PdfSplitConfig",
+  "type": "object",
+  "required": [
+    "ranges"
+  ],
+  "properties": {
+    "ranges": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.http/1.1.0/download-stream.output.json",
+  "title": "DownloadStreamOutput",
+  "type": "object",
+  "required": [
+    "status",
+    "totalBytes",
+    "contentBase64"
+  ],
+  "properties": {
+    "status": {
+      "type": "integer"
+    },
+    "totalBytes": {
+      "type": "integer"
+    },
+    "contentBase64": {
+      "type": "string"
+    },
+    "contentType": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

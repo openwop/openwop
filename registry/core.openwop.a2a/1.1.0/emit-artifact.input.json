@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.a2a/1.1.0/emit-artifact.input.json",
+  "title": "A2aEmitArtifactInput",
+  "type": "object",
+  "required": [
+    "taskId",
+    "artifact"
+  ],
+  "properties": {
+    "taskId": {
+      "type": "string"
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "append": {
+      "type": "boolean"
+    },
+    "lastChunk": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.rag/1.0.0/retriever-multi-query.config.json",
+  "title": "RetrieverMultiQueryConfig",
+  "type": "object",
+  "required": [
+    "collection"
+  ],
+  "properties": {
+    "collection": {
+      "type": "string"
+    },
+    "topK": {
+      "type": "integer"
+    },
+    "variants": {
+      "type": "integer",
+      "default": 3
+    },
+    "model": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

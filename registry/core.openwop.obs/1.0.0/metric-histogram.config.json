@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.obs/1.0.0/metric-histogram.config.json",
+  "title": "MetricHistogramConfig",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "unit": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.flow/1.0.0/error-handler-break.output.json",
+  "title": "ErrorHandlerBreakOutput",
+  "type": "object",
+  "required": [
+    "directive"
+  ],
+  "properties": {
+    "directive": {
+      "type": "string",
+      "const": "break"
+    },
+    "fallback": {},
+    "upstreamError": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

@@ -334,7 +334,10 @@ function createQueue(state: TenantMap<QueueEntry[]>, scope: BundleScope): QueueS
 // SQL — better-sqlite3, one in-memory DB per tenant.
 // ───────────────────────────────────────────────────────────────────
 
-const PARAM_REJECT_RE = /(?:\$\{|`|\b(?:OR|AND)\s+(?:'[^']*'|"[^"]*")\s*=\s*\1)/i;
+// Sample-grade injection heuristic. Flags template-literal interpolation
+// (`${`) and the classic `OR '1'='1'` shape. A real parser belongs in the
+// pack delegate when this is wired to a production SQL impl.
+const PARAM_REJECT_RE = /\$\{|\b(?:OR|AND)\b\s+(?:'[^']*'|"[^"]*")\s*=\s*(?:'[^']*'|"[^"]*")/i;
 
 function createSql(dbPool: Map<string, Database.Database>, scope: BundleScope): SqlSurface {
   const dbFor = () => {
@@ -358,17 +361,19 @@ function createSql(dbPool: Map<string, Database.Database>, scope: BundleScope): 
     }
   };
   return {
-    async query({ sql, params }) {
-      const sqlStr = String(sql);
+    async query(args: Record<string, unknown>) {
+      const sqlStr = String(args.sql);
       requireParametric(sqlStr);
       const stmt = dbFor().prepare(sqlStr);
+      const params = args.params;
       const rows = Array.isArray(params) ? stmt.all(...(params as unknown[])) : stmt.all();
-      return { rows, count: rows.length };
+      return { rows: rows as unknown[], count: (rows as unknown[]).length };
     },
-    async execute({ sql, params }) {
-      const sqlStr = String(sql);
+    async execute(args: Record<string, unknown>) {
+      const sqlStr = String(args.sql);
       requireParametric(sqlStr);
       const stmt = dbFor().prepare(sqlStr);
+      const params = args.params;
       const info = Array.isArray(params) ? stmt.run(...(params as unknown[])) : stmt.run();
       return { changes: info.changes, lastInsertRowid: Number(info.lastInsertRowid) };
     },

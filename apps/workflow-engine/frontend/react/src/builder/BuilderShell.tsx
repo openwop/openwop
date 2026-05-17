@@ -1,31 +1,31 @@
 /**
  * Three-region builder layout + top toolbar.
  *
- * Toolbar: workflow name input, [New], [Open ▾], [Run], undo/redo.
+ * Toolbar: ‹ Workflows back-link, name input, [New], [Run], undo/redo.
  * Layout: palette (260px) | canvas (flex 1) | inspector (320px).
  *
  * Auto-saves to localStorage on every store mutation; no explicit Save
  * button — matches the chat session pattern (useChatSession.ts:87-113).
+ * The workflow list lives at /builder (WorkflowsDashboard).
  */
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { NodePalette } from './palette/NodePalette.js';
 import { BuilderCanvas } from './canvas/BuilderCanvas.js';
 import { Inspector } from './inspector/Inspector.js';
+import { DemoHostBanner } from './DemoHostBanner.js';
 import { useBuilderStore } from './store/builderStore.js';
-import { listSavedWorkflows, newWorkflowId } from './persistence/localStore.js';
+import { newWorkflowId } from './persistence/localStore.js';
 import { registerWorkflow } from './persistence/registerClient.js';
 import { serializeWorkflow, SerializeError } from './schema/serialize.js';
 import { createRun } from '../client/runsClient.js';
 
 interface Props {
   onNewWorkflow(): void;
-  onOpenWorkflow(id: string): void;
-  onDeleteWorkflow(id: string): void;
 }
 
-export function BuilderShell({ onNewWorkflow, onOpenWorkflow, onDeleteWorkflow }: Props) {
+export function BuilderShell({ onNewWorkflow }: Props) {
   const nav = useNavigate();
   const workflowId = useBuilderStore((s) => s.workflowId);
   const name = useBuilderStore((s) => s.name);
@@ -36,7 +36,6 @@ export function BuilderShell({ onNewWorkflow, onOpenWorkflow, onDeleteWorkflow }
 
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [openMenuOpen, setOpenMenuOpen] = useState(false);
 
   async function onRun() {
     setRunning(true);
@@ -68,11 +67,13 @@ export function BuilderShell({ onNewWorkflow, onOpenWorkflow, onDeleteWorkflow }
     }
   }
 
-  const saved = listSavedWorkflows();
-
   return (
     <div className="builder-shell">
+      <DemoHostBanner />
       <div className="builder-toolbar">
+        <Link to="/builder" className="builder-toolbar-back" title="Back to workflows">
+          ‹ Workflows
+        </Link>
         <input
           className="builder-toolbar-name"
           value={name}
@@ -84,43 +85,6 @@ export function BuilderShell({ onNewWorkflow, onOpenWorkflow, onDeleteWorkflow }
         <button className="secondary" onClick={undo} disabled={!canUndo} title="Undo">↶</button>
         <button className="secondary" onClick={redo} disabled={!canRedo} title="Redo">↷</button>
         <button className="secondary" onClick={onNewWorkflow}>New</button>
-        <div className="builder-open-menu">
-          <button
-            className="secondary"
-            onClick={() => setOpenMenuOpen((v) => !v)}
-            disabled={saved.length === 0}
-          >
-            Open ▾ ({saved.length})
-          </button>
-          {openMenuOpen && (
-            <div className="builder-open-menu-popover">
-              {saved.map((wf) => (
-                <div key={wf.id} className="builder-open-menu-item">
-                  <button
-                    className="builder-open-menu-open"
-                    onClick={() => {
-                      setOpenMenuOpen(false);
-                      onOpenWorkflow(wf.id);
-                    }}
-                  >
-                    {wf.name}
-                    <span className="muted"> · {wf.nodes.length} nodes</span>
-                  </button>
-                  <button
-                    className="builder-open-menu-delete"
-                    title="Delete"
-                    onClick={() => {
-                      if (!confirm(`Delete "${wf.name}"?`)) return;
-                      onDeleteWorkflow(wf.id);
-                    }}
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
         <button onClick={onRun} disabled={running}>
           {running ? 'Running…' : 'Run'}
         </button>

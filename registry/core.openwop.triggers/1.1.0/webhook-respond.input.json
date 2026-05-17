@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.triggers/1.1.0/webhook-respond.input.json",
+  "title": "WebhookRespondInput",
+  "type": "object",
+  "properties": {
+    "body": {}
+  },
+  "additionalProperties": false
+}

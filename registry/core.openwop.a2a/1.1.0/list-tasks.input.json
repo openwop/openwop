@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.a2a/1.0.0/list-tasks.input.json",
+  "title": "ListTasksInput",
+  "type": "object",
+  "properties": {
+    "filter": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "cursor": {
+      "type": "string"
+    },
+    "limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000
+    }
+  },
+  "additionalProperties": false
+}

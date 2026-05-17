@@ -4,13 +4,16 @@ import { RunDetailPage } from './runs/RunDetailPage.js';
 import { CapabilitiesPanel } from './discovery/CapabilitiesPanel.js';
 import { ChatTab } from './chat/ChatTab.js';
 import { BuilderTab } from './builder/BuilderTab.js';
+import { WorkflowsDashboard } from './builder/WorkflowsDashboard.js';
 
 export function App() {
   const location = useLocation();
   // The builder canvas is its own scroll/zoom region — bypass the
   // centered 1200px-wide .app-main constraint so the canvas can fill
   // the viewport. All other routes use the normal main container.
-  const fullBleed = location.pathname.startsWith('/builder');
+  // Full-bleed only for the canvas (`/builder/:workflowId`), not the
+  // dashboard list at `/builder`, which uses the centered main column.
+  const fullBleed = /^\/builder\/[^/]+/.test(location.pathname);
   return (
     <div className="app-shell">
       <header className="app-header">
@@ -28,7 +31,7 @@ export function App() {
           <Route path="/runs/:runId" element={<RunDetailPage />} />
           <Route path="/capabilities" element={<CapabilitiesPanel />} />
           <Route path="/ai" element={<ChatTab />} />
-          <Route path="/builder" element={<BuilderTab />} />
+          <Route path="/builder" element={<WorkflowsDashboard />} />
           <Route path="/builder/:workflowId" element={<BuilderTab />} />
         </Routes>
       </main>

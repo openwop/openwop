@@ -164,6 +164,48 @@ Per `spec/v1/host-extensions.md` §"Canonical prefixes", anything outside the Op
 - `encryption.ts` provides AES-256-GCM with master-key resolution: `OPENWOP_BYOK_ENCRYPTION_KEY` env var → auto-generated `data/.byok-master-key` (0600 perms) on first boot.
 - Security boundary documented at the top of `encryption.ts`: protects against backup leaks and database extraction; does NOT protect against full filesystem access (master key on disk) or process memory inspection (decrypted plaintext cached in-process). Real KMS swaps both `loadMasterKey()` and the cache policy.
 
+### Pack coverage: all `core.openwop.*` nodes in the builder palette
+
+On boot the server runs three layered pack-loading steps:
+
+1. **`ensureRegistryPacksInstalled()`** — fetches published, Ed25519-signed packs (`core.openwop.ai`, `core.openwop.http`, …) from `packs.openwop.dev` and verifies them per spec. Trust anchor: registry public keys at `<repo>/registry/keys/<keyId>.pub`.
+2. **`ensureLocalPacksMounted()`** — dev-mode fallback (`src/bootstrap/mountLocalPacks.ts`). Symlinks every `core.openwop.*` directory from the repo's `packs/` tree into the same `OPENWOP_PACK_DIR` the registry installer writes to. Two refinements:
+   - **Skip-if-installed** — never clobbers a registry-installed pack with the same name.
+   - **Shadow-if-newer** (default; opt out with `OPENWOP_STRICT_REGISTRY=true`) — when the repo manifest version is greater than the registry-installed version, rename the installed dir aside (`<name>.registry-<oldVersion>`) and symlink the repo dir in its place. Logged loudly; reversible by deleting the symlink and `mv`-ing the `.registry-*` dir back.
+3. **`seedDefaultHostSurfaces()`** + **`initInMemorySurfaces({ dataDir })`** — declares the full RFC 0014–0019 surface list with `supported=false` defaults, then wires in-memory adapters (`src/host/inMemorySurfaces.ts`) and flips each wired surface to `supported=true`.
+
+The catalog endpoint (`GET /v1/host/sample/node-catalog`) cross-references each node's typeId against `bootstrap/hostSurfaceMap.ts` to compute `requiresHostSurfaces` + `missingHostSurfaces`. The UI dims palette items whose surfaces aren't advertised and shows a warning banner in the inspector; runs of those nodes return a friendly `host_capability_missing` envelope (augmented in `packs/tarballLoader.ts`).
+
+### In-memory host surfaces (demo-grade)
+
+`src/host/inMemorySurfaces.ts` builds one surface bundle per run, scope-bound to `tenantId`:
+
+| Field on `ctx` | Backing impl | Used by packs |
+|---|---|---|
+| `ctx.storage.kv` | `Map<tenantId, Map<key, entry>>` with TTL | `core.openwop.storage` (kv-*) |
+| `ctx.storage.table` | tenant-scoped Map, table namespacing via key prefix | `core.openwop.storage` (table-*) |
+| `ctx.storage.cache` | KV under a separate state Map | `core.openwop.storage` (cache-*) |
+| `ctx.storage.blob` | Map of base64 blobs, synthetic `presign()` URL | `core.openwop.storage` (blob-*) |
+| `ctx.storage.queue` | FIFO array per (tenant, queue) | `core.openwop.storage` (queue-*) |
+| `ctx.db.sql` | `better-sqlite3` `:memory:` DB per tenant + parametric heuristic | `core.openwop.db` (sql-*) |
+| `ctx.db.vector` | brute-force cosine over an in-memory Map | `core.openwop.db` (vector-*), `core.openwop.rag` (vector-*) |
+| `ctx.fs` | sandboxed local fs under `<dataDir>/host-fs/<tenant>/` with path-escape rejection | `core.openwop.files` (read/write/stat/list/delete) |
+| `ctx.queueBus` | in-memory publish/ack/nack/streamPublish | `core.openwop.messaging` (publish/ack/nack/stream-*) |
+| `ctx.observability` | delegates to the workflow-engine structured logger | `core.openwop.obs` (log/metric/span/alert) |
+
+Surfaces NOT wired (advertised honestly as `supported=false`): `host.mcp`, `host.a2a`, `host.triggers` (subset), `host.db.nosql`, `host.db.search`. The palette badges these as "host?" in the UI and the inspector explains.
+
+### Path to real backends (future Phase 6)
+
+The interface contracts in `src/host/inMemorySurfaces.ts` (`KvSurface`, `TableSurface`, `SqlSurface`, …) are the *same* shapes a real-backend host will satisfy. The `NodeContext` typing in `src/executor/types.ts` (`HostStorageSurfaces`, `HostDbSurfaces`, …) doesn't bind to a specific implementation. To swap any single surface with a real backend:
+
+1. Create `src/host/<name>Backend.ts` exporting a factory that returns the same `KvSurface` / `SqlSurface` / etc. shape.
+2. Pass the new factory through `buildHostSurfaceBundle` (today a static `return { … }` — split per-surface if you want hot-swap behavior).
+3. Update the registration call in `initInMemorySurfaces()` (or a new sibling `initRealSurfaces()`) so `registerHostSurface()` advertises the new `implementation` tag (e.g. `'postgres'`, `'redis'`, `'s3'`). The capabilities panel + the demo banner read this advertisement — once everything is `supported=true` with a non-`in-memory` implementation, the banner self-hides.
+4. Re-run `npm run test:conformance` to ensure the openwop-conformance suite still passes against the new wiring.
+
+The reference for *real* backend wiring lives in `examples/hosts/postgres` — that example already pressures the RFC 0014–0019 contracts against actual services, and is the natural place to ship production-grade adapters before they migrate into this sample's host suite.
+
 ### Shared provider catalog (`apps/workflow-engine/providers.json`)
 
 Single source of truth for AI provider + model data. Both BE (`src/providers/catalog.ts` for default-model fallback) and FE (`src/byok/lib/providers.ts` for the wizard) read from the same file. The FE loader includes a runtime validator that fails loud on shape mismatch — better than silent `undefined`/`NaN` rendering.
