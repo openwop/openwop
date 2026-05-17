@@ -16,8 +16,15 @@ import {
   listSavedWorkflows,
   newWorkflowId,
   renameSavedWorkflow,
+  upsertSavedWorkflow,
 } from './persistence/localStore.js';
 import type { SavedWorkflow } from './schema/workflow.js';
+import {
+  CATEGORY_LABELS,
+  PREMADE_WORKFLOWS,
+  cloneTemplateToUserWorkflow,
+  type TemplateWorkflow,
+} from './templates/premadeWorkflows.js';
 
 type SortBy = 'updated' | 'created' | 'name';
 type SortDir = 'asc' | 'desc';
@@ -129,6 +136,12 @@ export function WorkflowsDashboard() {
     setTimeout(() => URL.revokeObjectURL(url), 0);
   }
 
+  function onUseTemplate(template: TemplateWorkflow) {
+    const cloned = cloneTemplateToUserWorkflow(template);
+    upsertSavedWorkflow(cloned);
+    nav(`/builder/${cloned.id}`);
+  }
+
   return (
     <section className="workflows-dashboard">
       <div className="workflows-header">
@@ -136,73 +149,91 @@ export function WorkflowsDashboard() {
         <button onClick={onCreate}>+ New workflow</button>
       </div>
 
-      <div className="workflows-toolbar">
-        <input
-          type="search"
-          className="workflows-search"
-          placeholder="Search by name…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        <div className="workflows-sort">
-          <label htmlFor="wf-sort">Sort by</label>
-          <select
-            id="wf-sort"
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortBy)}
-          >
-            {(['updated', 'created', 'name'] as SortBy[]).map((k) => (
-              <option key={k} value={k}>{SORT_LABELS[k]}</option>
-            ))}
-          </select>
-          <button
-            className="secondary workflows-sort-dir"
-            onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
-            title={sortDir === 'asc' ? 'Ascending — click to flip' : 'Descending — click to flip'}
-            aria-label={`Sort direction: ${sortDir}`}
-          >
-            {sortDir === 'asc' ? '↑' : '↓'}
-          </button>
+      <div className="workflows-section">
+        <div className="workflows-section-header">
+          <h3>Your workflows</h3>
         </div>
-        <span className="workflows-toolbar-summary muted">
-          {filtered.length} of {all.length}
-        </span>
+
+        <div className="workflows-toolbar">
+          <input
+            type="search"
+            className="workflows-search"
+            placeholder="Search by name…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          <div className="workflows-sort">
+            <label htmlFor="wf-sort">Sort by</label>
+            <select
+              id="wf-sort"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortBy)}
+            >
+              {(['updated', 'created', 'name'] as SortBy[]).map((k) => (
+                <option key={k} value={k}>{SORT_LABELS[k]}</option>
+              ))}
+            </select>
+            <button
+              className="secondary workflows-sort-dir"
+              onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
+              title={sortDir === 'asc' ? 'Ascending — click to flip' : 'Descending — click to flip'}
+              aria-label={`Sort direction: ${sortDir}`}
+            >
+              {sortDir === 'asc' ? '↑' : '↓'}
+            </button>
+          </div>
+          <span className="workflows-toolbar-summary muted">
+            {filtered.length} of {all.length}
+          </span>
+        </div>
+
+        {all.length === 0 ? (
+          <div className="card workflow-card-empty">
+            <p>No workflows yet.</p>
+            <p className="muted">
+              Click <strong>+ New workflow</strong> for a blank canvas, or pick a template below.
+            </p>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="card workflow-card-empty">
+            <p className="muted">No workflows match “{query}”.</p>
+          </div>
+        ) : (
+          <div className="workflows-grid" ref={gridRef}>
+            {filtered.map((wf) => (
+              <WorkflowCard
+                key={wf.id}
+                wf={wf}
+                menuOpen={menuOpenId === wf.id}
+                onMenuToggle={() => setMenuOpenId((cur) => (cur === wf.id ? null : wf.id))}
+                renaming={renamingId === wf.id}
+                onRenameStart={() => {
+                  setRenamingId(wf.id);
+                  setMenuOpenId(null);
+                }}
+                onRenameCommit={(name) => onRenameCommit(wf.id, name)}
+                onRenameCancel={() => setRenamingId(null)}
+                onOpen={() => onOpen(wf.id)}
+                onDuplicate={() => onDuplicate(wf.id)}
+                onDelete={() => onDelete(wf)}
+                onExport={() => onExport(wf.id)}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
-      {all.length === 0 ? (
-        <div className="card workflow-card-empty">
-          <p>No workflows yet.</p>
-          <p className="muted">
-            Click <strong>+ New workflow</strong> to open a blank canvas.
-          </p>
+      <div className="workflows-section">
+        <div className="workflows-section-header">
+          <h3>Templates</h3>
+          <span className="muted">Premade starting points — click <em>Use template</em> to clone into your workflows.</span>
         </div>
-      ) : filtered.length === 0 ? (
-        <div className="card workflow-card-empty">
-          <p className="muted">No workflows match “{query}”.</p>
-        </div>
-      ) : (
-        <div className="workflows-grid" ref={gridRef}>
-          {filtered.map((wf) => (
-            <WorkflowCard
-              key={wf.id}
-              wf={wf}
-              menuOpen={menuOpenId === wf.id}
-              onMenuToggle={() => setMenuOpenId((cur) => (cur === wf.id ? null : wf.id))}
-              renaming={renamingId === wf.id}
-              onRenameStart={() => {
-                setRenamingId(wf.id);
-                setMenuOpenId(null);
-              }}
-              onRenameCommit={(name) => onRenameCommit(wf.id, name)}
-              onRenameCancel={() => setRenamingId(null)}
-              onOpen={() => onOpen(wf.id)}
-              onDuplicate={() => onDuplicate(wf.id)}
-              onDelete={() => onDelete(wf)}
-              onExport={() => onExport(wf.id)}
-            />
+        <div className="workflows-grid">
+          {PREMADE_WORKFLOWS.map((tpl) => (
+            <TemplateCard key={tpl.templateId} template={tpl} onUse={() => onUseTemplate(tpl)} />
           ))}
         </div>
-      )}
+      </div>
     </section>
   );
 }
@@ -350,5 +381,39 @@ function RenameInput({ initialValue, onCommit, onCancel }: RenameInputProps) {
       }}
       onBlur={(e) => commit(e.currentTarget.value)}
     />
+  );
+}
+
+interface TemplateCardProps {
+  template: TemplateWorkflow;
+  onUse(): void;
+}
+
+function TemplateCard({ template, onUse }: TemplateCardProps) {
+  const nodeCount = template.nodes.length;
+  return (
+    <div className="workflow-card workflow-template-card">
+      <div className="workflow-card-title-row">
+        <h3 className="workflow-card-title">{template.name}</h3>
+        <span className={`workflow-template-badge workflow-template-badge-${template.category}`}>
+          {CATEGORY_LABELS[template.category]}
+        </span>
+      </div>
+      <p className="workflow-template-description muted">{template.description}</p>
+      <div className="workflow-card-meta muted">
+        <span>{nodeCount} {nodeCount === 1 ? 'node' : 'nodes'}</span>
+        {template.requiresBYOK && (
+          <>
+            <span aria-hidden="true">·</span>
+            <span className="workflow-template-byok-pill" title="Needs a BYOK credential">
+              Requires BYOK
+            </span>
+          </>
+        )}
+      </div>
+      <div className="workflow-template-actions">
+        <button onClick={onUse}>Use template</button>
+      </div>
+    </div>
   );
 }

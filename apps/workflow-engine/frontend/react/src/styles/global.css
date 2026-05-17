@@ -1062,3 +1062,101 @@ pre {
 .workflow-card-empty p:last-child {
   margin-bottom: 0;
 }
+
+/* Workflows dashboard — sections + templates ----------------------------- */
+
+.workflows-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.workflows-section-header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-2);
+}
+
+.workflows-section-header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.workflows-section-header em {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.workflow-template-card {
+  /* Templates aren't clickable as a whole; the "Use template" button is. */
+  cursor: default;
+}
+
+.workflow-template-card:hover {
+  /* Override .workflow-card:hover — no accent border on templates. */
+  border-color: var(--color-border);
+  background: var(--color-surface);
+}
+
+.workflow-template-description {
+  font-size: 12px;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.workflow-template-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 12px;
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.workflow-template-badge-quickstart {
+  background: rgba(74, 222, 128, 0.12);
+  color: var(--color-success);
+}
+
+.workflow-template-badge-hitl {
+  background: rgba(251, 191, 36, 0.12);
+  color: var(--color-warning);
+}
+
+.workflow-template-badge-ai {
+  background: rgba(91, 140, 255, 0.14);
+  color: var(--color-accent);
+}
+
+.workflow-template-badge-pipeline {
+  background: rgba(167, 139, 250, 0.16);
+  color: #a78bfa;
+}
+
+.workflow-template-byok-pill {
+  display: inline-block;
+  padding: 1px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 12px;
+  background: rgba(251, 191, 36, 0.12);
+  color: var(--color-warning);
+}
+
+.workflow-template-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: auto;
+  padding-top: var(--space-2);
+}
