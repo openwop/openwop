@@ -1,437 +1,1097 @@
 {
   "registryVersion": "1.0.0",
   "generatedAt": "2026-05-10T00:00:00Z",
-  "packCount": 48,
+  "packCount": 59,
   "packs": [
     {
       "name": "community.openwop-team.demo",
+      "kind": "node",
       "latestVersion": "0.1.0",
       "description": "First community-namespace demo pack. Mixed pack — one trivial node (`uppercase`) plus one agent (`greeter`) — exercising both extension paths in a single tarball under the open-publish `community.*` tier. Manual Ed25519 signed (not Sigstore) to demonstrate the non-OIDC publishing path documented in registry-operations.md §Step 2. MIT-licensed for SPDX-diversity with the Apache-2.0 core packs.",
       "license": "MIT",
       "tags": [],
+      "typeIds": [
+        "community.openwop-team.demo.uppercase"
+      ],
+      "deprecated": false,
+      "yanked": false
+    },
+    {
+      "name": "core.openwop.a2a",
+      "kind": "node",
+      "latestVersion": "1.1.0",
+      "description": "Full A2A (Agent-to-Agent) primitives. Client-side: 12 nodes (discover, send, stream, list/get/cancel tasks, resubscribe, multi-turn coordinator, push-config CRUD). Server-side: workflow IS an A2A agent (server-trigger, agent-card-publish, emit-status, emit-artifact, push-send). Routes through ctx.a2a.* host surface. Tracks spec/v1/a2a-integration.md.",
+      "license": "Apache-2.0",
+      "tags": [],
+      "typeIds": [
+        "core.openwop.a2a.discover-agent",
+        "core.openwop.a2a.send-message",
+        "core.openwop.a2a.send-and-stream",
+        "core.openwop.a2a.get-task",
+        "core.openwop.a2a.list-tasks",
+        "core.openwop.a2a.cancel-task",
+        "core.openwop.a2a.resubscribe",
+        "core.openwop.a2a.multi-turn-coordinator",
+        "core.openwop.a2a.push-config-create",
+        "core.openwop.a2a.push-config-get",
+        "core.openwop.a2a.push-config-list",
+        "core.openwop.a2a.push-config-delete",
+        "core.openwop.a2a.server-trigger",
+        "core.openwop.a2a.agent-card-publish",
+        "core.openwop.a2a.emit-status",
+        "core.openwop.a2a.emit-artifact",
+        "core.openwop.a2a.push-send"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "core.openwop.agent-examples",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "First pure-agent pack — ships two minimal agent manifests with no node runtime. Validates the `agents[]` extension to the pack manifest (per agent-manifest.schema.json + RFC 0003). Echo agent inlines its system prompt; Summarizer references `prompts/summarizer.md` to demonstrate the `systemPromptRef` path. Both agents are stateless (memoryShape.longTerm: false). Vendor-neutral: no model is pinned — hosts resolve via their BYOK aiProviders surface.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [],
+      "deprecated": false,
+      "yanked": false
+    },
+    {
+      "name": "core.openwop.agents",
+      "kind": "node",
+      "latestVersion": "1.0.0",
+      "description": "Agent composition primitives. Root agent.run + sub-nodes (tools, memory, parsers, model selector). Composes via RFC 0013 expansion semantics and consumes host.aiProviders + host.agentRuntime.",
+      "license": "Apache-2.0",
+      "tags": [],
+      "typeIds": [
+        "core.agents.run",
+        "core.agents.tool-function",
+        "core.agents.tool-workflow",
+        "core.agents.tool-mcp",
+        "core.agents.tool-http",
+        "core.agents.memory-window",
+        "core.agents.memory-summary",
+        "core.agents.memory-kv-store",
+        "core.agents.output-parser-structured",
+        "core.agents.output-parser-list",
+        "core.agents.output-parser-auto-fix",
+        "core.agents.model-selector"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "core.openwop.ai",
-      "latestVersion": "1.0.0",
-      "description": "Spec-canonical AI-call pack. Three foundational nodes (chat-completion, structured-output, embeddings) that route through the host's BYOK aiProviders surface — the pack itself makes no HTTP calls. peerDependencies on `aiProviders.supported`. Side-effectful (declared) so the engine's Layer-2 invocation log caches responses keyed on (runId, nodeId, request-hash) for replay safety.",
+      "kind": "node",
+      "latestVersion": "1.1.0",
+      "description": "Spec-canonical AI-call pack. v1.0 (chatCompletion, structuredOutput, toolCalling, embeddings) plus v1.1 multi-modal + LLM helpers — image generate/edit/upscale, audio transcribe/synthesize, video generate, rerank, classify, extract, guardrails, transform. Routes through host BYOK aiProviders.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "core.ai.chatCompletion",
+        "core.ai.structuredOutput",
+        "core.ai.toolCalling",
+        "core.openwop.ai.embeddings",
+        "core.openwop.ai.image-generate",
+        "core.openwop.ai.image-edit",
+        "core.openwop.ai.image-upscale",
+        "core.openwop.ai.audio-transcribe",
+        "core.openwop.ai.audio-synthesize",
+        "core.openwop.ai.video-generate",
+        "core.openwop.ai.rerank",
+        "core.openwop.ai.classify",
+        "core.openwop.ai.extract",
+        "core.openwop.ai.guardrails",
+        "core.openwop.ai.transform"
+      ],
+      "deprecated": false,
+      "yanked": false
+    },
+    {
+      "name": "core.openwop.crypto",
+      "kind": "node",
+      "latestVersion": "1.0.0",
+      "description": "Pure cryptographic primitives: hashing, HMAC, AEAD encrypt/decrypt, asymmetric sign/verify, JWT mint/verify, TOTP, x509 parse + chain verify. Built on node:crypto (Node 20+). Zero npm deps. Pure with respect to keys passed in via inputs.",
+      "license": "Apache-2.0",
+      "tags": [],
+      "typeIds": [
+        "core.crypto.hash",
+        "core.crypto.hmac-sign",
+        "core.crypto.hmac-verify",
+        "core.crypto.aead-encrypt",
+        "core.crypto.aead-decrypt",
+        "core.crypto.sign",
+        "core.crypto.verify",
+        "core.crypto.jwt-mint",
+        "core.crypto.jwt-verify",
+        "core.crypto.totp-generate",
+        "core.crypto.totp-verify",
+        "core.crypto.x509-parse",
+        "core.crypto.x509-verify-chain"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "core.openwop.data",
-      "latestVersion": "1.0.0",
-      "description": "Spec-canonical data-utility pack. Five pure, replay-safe nodes covering the most common workflow-author needs: string-case transformation, string splitting, array filtering, array mapping (with template substitution), and shallow object merging. Zero npm deps. Runs on any Node 20+ host advertising the openwop-node-packs profile.",
+      "kind": "node",
+      "latestVersion": "1.1.0",
+      "description": "Spec-canonical data-utility pack. v1.0 baseline (string-case, string-split, array-filter, array-map, object-merge) plus v1.1 additions: string format/regex/encode, array sort/unique/flatten/chunk/zip/reduce, object pick/omit/rename/get-path/set-path, json parse/stringify/schema-validate, jsonpath query, csv parse/stringify, datetime suite, number format/round/clamp, uuid. Zero npm deps (Node 20+).",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "core.openwop.data.string-case",
+        "core.openwop.data.string-split",
+        "core.openwop.data.array-filter",
+        "core.openwop.data.array-map",
+        "core.openwop.data.object-merge",
+        "core.openwop.data.string-format",
+        "core.openwop.data.string-regex-match",
+        "core.openwop.data.string-regex-replace",
+        "core.openwop.data.string-regex-extract",
+        "core.openwop.data.string-encode",
+        "core.openwop.data.array-sort",
+        "core.openwop.data.array-unique",
+        "core.openwop.data.array-flatten",
+        "core.openwop.data.array-chunk",
+        "core.openwop.data.array-zip",
+        "core.openwop.data.array-reduce",
+        "core.openwop.data.object-pick",
+        "core.openwop.data.object-omit",
+        "core.openwop.data.object-rename-keys",
+        "core.openwop.data.object-get-path",
+        "core.openwop.data.object-set-path",
+        "core.openwop.data.json-parse",
+        "core.openwop.data.json-stringify",
+        "core.openwop.data.json-schema-validate",
+        "core.openwop.data.jsonpath-query",
+        "core.openwop.data.csv-parse",
+        "core.openwop.data.csv-stringify",
+        "core.openwop.data.datetime-now",
+        "core.openwop.data.datetime-parse",
+        "core.openwop.data.datetime-format",
+        "core.openwop.data.datetime-add",
+        "core.openwop.data.datetime-diff",
+        "core.openwop.data.datetime-timezone",
+        "core.openwop.data.number-format",
+        "core.openwop.data.number-round",
+        "core.openwop.data.number-clamp",
+        "core.openwop.data.uuid"
+      ],
+      "deprecated": false,
+      "yanked": false
+    },
+    {
+      "name": "core.openwop.db",
+      "kind": "node",
+      "latestVersion": "1.0.0",
+      "description": "Database adapter primitives — sql, nosql, search, vector. Each gated on its host capability (host.sql, host.nosql, host.searchIndex, host.vectorStore) per RFC 0018. Pack speaks no driver — delegates to ctx.db.*. Parametric SQL only (host enforces).",
+      "license": "Apache-2.0",
+      "tags": [],
+      "typeIds": [
+        "core.db.sql-query",
+        "core.db.sql-execute",
+        "core.db.sql-transaction",
+        "core.db.nosql-find",
+        "core.db.nosql-insert",
+        "core.db.nosql-update",
+        "core.db.nosql-delete",
+        "core.db.search-index",
+        "core.db.search-query",
+        "core.db.vector-upsert",
+        "core.db.vector-query",
+        "core.db.vector-delete"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "core.openwop.examples",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "Spec-canonical examples pack — three minimal nodes (echo, coin-flip, delay-with-progress) that exercise the core node-pack contract end-to-end. Zero npm deps; runs on any Node 20+ host advertising the openwop-node-packs profile. See docs/PACKS-MVP-PLAN.md.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "core.openwop.examples.echo",
+        "core.openwop.examples.coin-flip",
+        "core.openwop.examples.delay-with-progress"
+      ],
+      "deprecated": false,
+      "yanked": false
+    },
+    {
+      "name": "core.openwop.files",
+      "kind": "node",
+      "latestVersion": "1.0.0",
+      "description": "File + binary primitives — fs CRUD, base64, mime detection, image / PDF / archive processing, FTP / SFTP / SSH. Capability-gated on host.fs (RFC 0014). Hosts MUST enforce sandbox root + path-traversal protection.",
+      "license": "Apache-2.0",
+      "tags": [],
+      "typeIds": [
+        "core.files.read",
+        "core.files.write",
+        "core.files.delete",
+        "core.files.stat",
+        "core.files.list",
+        "core.files.to-base64",
+        "core.files.from-base64",
+        "core.files.detect-mime",
+        "core.files.image-resize",
+        "core.files.image-crop",
+        "core.files.image-format-convert",
+        "core.files.pdf-extract-text",
+        "core.files.pdf-split",
+        "core.files.pdf-merge",
+        "core.files.archive-create",
+        "core.files.archive-extract",
+        "core.files.ftp",
+        "core.files.sftp",
+        "core.files.ssh-run"
+      ],
+      "deprecated": false,
+      "yanked": false
+    },
+    {
+      "name": "core.openwop.flow",
+      "kind": "node",
+      "latestVersion": "1.0.1",
+      "description": "Spec-canonical flow-control primitives. 25 nodes covering branching, merging, iteration, aggregation, batching, sorting, deduplication, repetition, suspension, sub-workflow invocation, and Make-style error handlers. Pure or suspending — no external I/O. Zero npm deps. Engine >=1.0.0 <2.0.0.",
+      "license": "Apache-2.0",
+      "tags": [],
+      "typeIds": [
+        "core.flow.if",
+        "core.flow.switch",
+        "core.flow.router",
+        "core.flow.filter",
+        "core.flow.merge",
+        "core.flow.iterator",
+        "core.flow.aggregate-array",
+        "core.flow.aggregate-numeric",
+        "core.flow.aggregate-text",
+        "core.flow.aggregate-table",
+        "core.flow.split-in-batches",
+        "core.flow.sort",
+        "core.flow.limit",
+        "core.flow.distinct",
+        "core.flow.compare-datasets",
+        "core.flow.repeater",
+        "core.flow.noop",
+        "core.flow.stop-and-error",
+        "core.flow.wait",
+        "core.flow.sub-workflow-invoke",
+        "core.flow.error-handler-resume",
+        "core.flow.error-handler-ignore",
+        "core.flow.error-handler-break",
+        "core.flow.error-handler-commit",
+        "core.flow.error-handler-rollback",
+        "core.conditional",
+        "core.delay",
+        "core.loop",
+        "core.parallel"
+      ],
+      "deprecated": false,
+      "yanked": false
+    },
+    {
+      "name": "core.openwop.hitl",
+      "kind": "node",
+      "latestVersion": "1.0.0",
+      "description": "Human-in-the-loop primitives. form-request, approval-request, ask-user — each suspends the run via the existing interrupt mechanism. Zero npm deps.",
+      "license": "Apache-2.0",
+      "tags": [],
+      "typeIds": [
+        "core.hitl.form-request",
+        "core.hitl.approval-request",
+        "core.hitl.ask-user"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "core.openwop.http",
-      "latestVersion": "1.0.0",
-      "description": "Spec-canonical HTTP fetch node. Single typeId `core.openwop.http.fetch` with retry, exponential backoff, and deterministic Idempotency-Key derivation for replay safety. Authentication is the workflow author's concern — pass an `Authorization` header via the `headers` config field (literal token or resolved via the host's secret-injection mechanism). The pack itself declares no `requiresSecrets` so it runs on every host regardless of `secrets.supported`. Zero npm deps; uses Node 20's built-in fetch (undici).",
+      "kind": "node",
+      "latestVersion": "1.1.0",
+      "description": "HTTP + general transport pack. v1.0 baseline: core.openwop.http.fetch (retry, backoff, idempotency). v1.1 additions: openapi-call, GraphQL (query/mutation/subscription), SOAP, gRPC (4 streaming variants), SSE consume, WebSocket client, long-poll, upload (multipart + resumable), download stream, pagination decorators (cursor/offset/link-header), rate-limit-aware retry, circuit breaker, idempotency-key generator, webhook signature verifier (Stripe/GitHub/Slack/raw-hmac). Zero npm deps — Node 20+ fetch/undici; transports requiring native libs delegate to host capabilities.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "core.openwop.http.fetch",
+        "core.openwop.http.openapi-call",
+        "core.openwop.http.graphql-query",
+        "core.openwop.http.graphql-mutation",
+        "core.openwop.http.graphql-subscription",
+        "core.openwop.http.soap-call",
+        "core.openwop.http.grpc-unary",
+        "core.openwop.http.grpc-server-stream",
+        "core.openwop.http.grpc-client-stream",
+        "core.openwop.http.grpc-bidi",
+        "core.openwop.http.sse-consume",
+        "core.openwop.http.websocket-client",
+        "core.openwop.http.long-poll",
+        "core.openwop.http.upload-multipart",
+        "core.openwop.http.upload-resumable",
+        "core.openwop.http.download-stream",
+        "core.openwop.http.pagination-cursor",
+        "core.openwop.http.pagination-offset",
+        "core.openwop.http.pagination-link-header",
+        "core.openwop.http.retry-rate-limit-aware",
+        "core.openwop.http.circuit-breaker",
+        "core.openwop.http.idempotency-key",
+        "core.openwop.http.webhook-verify"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "core.openwop.integration",
-      "latestVersion": "1.0.0",
-      "description": "Spec-canonical integration pack — universal communication primitives that route through the host's provider-specific adapters. Phase 1 v1.0.0 ships email-send + slack-message (both communication; both side-effectful with engine Layer-2 cost-once caching via deterministic Idempotency-Key derivation). File-system, database-query, and GitHub-action nodes defer to future minors — each needs real connection-pool / credential abstractions in the host.",
+      "kind": "node",
+      "latestVersion": "1.1.0",
+      "description": "Integration-layer primitives. v1.0 (email-send, slack-message) plus v1.1 (chat-message-generic, sms-send, voice-call-place, voice-call-tts-greet, notification-push) — provider-neutral cross-cutting integration helpers.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "core.openwop.integration.email-send",
+        "core.openwop.integration.slack-message",
+        "core.openwop.integration.chat-message-generic",
+        "core.openwop.integration.sms-send",
+        "core.openwop.integration.voice-call-place",
+        "core.openwop.integration.voice-call-tts-greet",
+        "core.openwop.integration.notification-push"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "core.openwop.mcp",
-      "latestVersion": "1.0.0",
-      "description": "Spec-canonical MCP-operation pack. Four nodes for workflow-author-direct interaction with registered MCP servers — list-tools, invoke-tool, read-resource, server-status. Complements the implicit LLM-mediated tool-call path documented in spec/v1/mcp-integration.md by exposing the same MCP operations as first-class workflow nodes. Routes through the host's MCP client (ctx.mcp.* surface); the pack itself speaks no MCP protocol.",
+      "kind": "node",
+      "latestVersion": "1.1.0",
+      "description": "Spec-canonical MCP (Model Context Protocol) pack. v1.0 four-node client baseline (list-tools, invoke-tool, read-resource, server-status) plus the v1.1 additions: full client-side surface (resources, prompts, completion, logging, ping) AND server-side (workflow IS an MCP server — server-trigger + expose-tool/resource/prompt + handle-sampling/elicitation + provide-roots). Tracks modelcontextprotocol.io 2025-06-18 spec via spec/v1/mcp-integration.md.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "core.openwop.mcp.list-tools",
+        "core.openwop.mcp.invoke-tool",
+        "core.openwop.mcp.read-resource",
+        "core.openwop.mcp.server-status",
+        "core.openwop.mcp.list-resources",
+        "core.openwop.mcp.list-resource-templates",
+        "core.openwop.mcp.subscribe-resource",
+        "core.openwop.mcp.list-prompts",
+        "core.openwop.mcp.get-prompt",
+        "core.openwop.mcp.completion",
+        "core.openwop.mcp.set-log-level",
+        "core.openwop.mcp.log-listener",
+        "core.openwop.mcp.ping",
+        "core.openwop.mcp.server-trigger",
+        "core.openwop.mcp.expose-tool",
+        "core.openwop.mcp.expose-resource",
+        "core.openwop.mcp.expose-resource-template",
+        "core.openwop.mcp.expose-prompt",
+        "core.openwop.mcp.handle-sampling",
+        "core.openwop.mcp.handle-elicitation",
+        "core.openwop.mcp.provide-roots"
+      ],
+      "deprecated": false,
+      "yanked": false
+    },
+    {
+      "name": "core.openwop.messaging",
+      "kind": "node",
+      "latestVersion": "1.0.0",
+      "description": "Queue + stream primitives — publish, consume (trigger), ack/nack/dead-letter, stream subscribe/publish. Capability-gated on host.queueBus (RFC 0017). Sibling to host.messaging (outbound-egress-only).",
+      "license": "Apache-2.0",
+      "tags": [],
+      "typeIds": [
+        "core.messaging.publish",
+        "core.messaging.consume",
+        "core.messaging.ack",
+        "core.messaging.nack",
+        "core.messaging.dead-letter",
+        "core.messaging.stream-subscribe",
+        "core.messaging.stream-publish"
+      ],
+      "deprecated": false,
+      "yanked": false
+    },
+    {
+      "name": "core.openwop.obs",
+      "kind": "node",
+      "latestVersion": "1.0.0",
+      "description": "Observability emission primitives. Workflows publish logs / metrics / traces / alerts under the canonical openwop.* OTel namespace. Delegates to ctx.observability when the host advertises it, no-ops gracefully otherwise. Zero npm deps.",
+      "license": "Apache-2.0",
+      "tags": [],
+      "typeIds": [
+        "core.obs.log",
+        "core.obs.metric-counter",
+        "core.obs.metric-gauge",
+        "core.obs.metric-histogram",
+        "core.obs.trace-span-start",
+        "core.obs.trace-span-end",
+        "core.obs.alert-fire"
+      ],
+      "deprecated": false,
+      "yanked": false
+    },
+    {
+      "name": "core.openwop.rag",
+      "kind": "node",
+      "latestVersion": "1.0.0",
+      "description": "Retrieval-Augmented-Generation primitives: loaders, splitters, vector ops (thin wrappers over core.openwop.db.vector-*), and retrievers (basic / multi-query / contextual-compression).",
+      "license": "Apache-2.0",
+      "tags": [],
+      "typeIds": [
+        "core.rag.loader-url",
+        "core.rag.loader-file",
+        "core.rag.loader-github",
+        "core.rag.loader-s3",
+        "core.rag.splitter-recursive",
+        "core.rag.splitter-character",
+        "core.rag.splitter-token",
+        "core.rag.vector-upsert",
+        "core.rag.vector-query",
+        "core.rag.vector-delete",
+        "core.rag.retriever-basic",
+        "core.rag.retriever-multi-query",
+        "core.rag.retriever-contextual-compression"
+      ],
+      "deprecated": false,
+      "yanked": false
+    },
+    {
+      "name": "core.openwop.storage",
+      "kind": "node",
+      "latestVersion": "1.0.0",
+      "description": "State primitives — kv / table / cache / blob / queue. Each node gated on its specific host capability block (host.kvStorage, host.tableStorage, host.cache, host.blobStorage, host.queue) per RFCs 0015–0019. Pack delegates to ctx.storage.* host surface. Zero npm deps.",
+      "license": "Apache-2.0",
+      "tags": [],
+      "typeIds": [
+        "core.storage.kv-get",
+        "core.storage.kv-set",
+        "core.storage.kv-delete",
+        "core.storage.kv-list",
+        "core.storage.kv-atomic-increment",
+        "core.storage.kv-cas",
+        "core.storage.table-insert",
+        "core.storage.table-update",
+        "core.storage.table-upsert",
+        "core.storage.table-delete",
+        "core.storage.table-query",
+        "core.storage.table-count",
+        "core.storage.cache-get",
+        "core.storage.cache-put",
+        "core.storage.cache-evict",
+        "core.storage.blob-put",
+        "core.storage.blob-get",
+        "core.storage.blob-presign",
+        "core.storage.queue-enqueue",
+        "core.storage.queue-dequeue"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "core.openwop.triggers",
-      "latestVersion": "1.0.0",
-      "description": "Workflow-trigger pack. Seven entry-point shapes — webhook, schedule, event, envelope, chatMessage, canvas, artifact — that hosts use to register workflows for external-event-driven dispatch. Trigger nodes are pass-through executors: they forward `ctx.triggerData` (set by the engine when the trigger fires) to outputs. The pack contributes the typed config + payload schemas + the runtime pass-through.",
+      "kind": "node",
+      "latestVersion": "1.1.0",
+      "description": "Workflow-trigger pack. Sixteen entry-point shapes — original seven (webhook, schedule, event, envelope, chatMessage, canvas, artifact) plus the v1.1 additions (mailhook, email-imap, form, rss, manual, error, sub-workflow, cron-advanced) and the webhook-response action. Trigger nodes are pass-through executors: they forward `ctx.triggerData` (set by the engine when the trigger fires) to outputs.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "core.trigger.webhook",
+        "core.trigger.schedule",
+        "core.trigger.event",
+        "core.trigger.envelope",
+        "core.trigger.chatMessage",
+        "core.trigger.canvas",
+        "core.trigger.artifact",
+        "core.trigger.webhook-respond",
+        "core.trigger.mailhook",
+        "core.trigger.email-imap",
+        "core.trigger.form",
+        "core.trigger.rss",
+        "core.trigger.manual",
+        "core.trigger.error",
+        "core.trigger.sub-workflow",
+        "core.trigger.cron-advanced"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.ads-copy-generate",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve ads.copy.generate — AI-powered multi-variant ad copy generation with per-placement adaptation (truncation to caller-supplied text limits). Routes the AI call through ctx.callAI; replaces the source PlatformSpecRegistry read with caller-supplied inputs.placementTextLimits (resolve upstream from vendor.myndhyve.ads-platforms OR host.adPlatformSpecs).",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "ads.copy.generate"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.ads-creative-validate",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve ads.creative.validate — full compliance scanner combining built-in policy text rules, placement text-length checks, AND asset-format checks (image/video dimensions, file sizes, durations). Caller supplies placement spec data via inputs (resolve upstream from vendor.myndhyve.ads-platforms OR host.adPlatformSpecs).",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "ads.creative.validate"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.ads-export",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve ads.export.pack — pure-logic export pack builder. Bundles copy variants + creative assets + tracking links into a structured AdExportPack record (JSON-serializable). Lifted from src/canvas-types/campaign-studio/ads-studio/export/AdExportPackService.ts. No host capabilities required; deterministic.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "ads.export.pack"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.ads-image-generate",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve ads.image.generate — generate ad creative images via the host's ctx.callImageGenerator (host.aiProviders.imageGeneration sub-capability from spec PR #48). Batches N prompts through one host call each, computes per-placement dimensions from caller-supplied placementSpec, applies platform/style/brand-color prompt enhancement, and aggregates safety-filter stats. First consumer of the new sub-capability.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "ads.image.generate"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.ads-metrics-import",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve ads.metrics.import — pure-logic aggregation of ad metric snapshots. Caller supplies snapshots[]; pack filters by platformAdIds + optional platform/dateRange, validates each entry, and computes weighted aggregations (overallCtr / overallCpc / overallRoas / overallConversionRate + per-platform breakdown). Mirrors source AdMetricsService.getAggregatedMetrics math. No host capabilities required.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "ads.metrics.import"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.ads-platforms",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve ads.platform.specs — pure-data executor exposing the creative specs for 9 ad platforms (amazon, google, linkedin, meta, pinterest, reddit, snapchat, tiktok, x) across their placements. ~1500 LOC of platform spec data (aspect ratios, text limits, file sizes, format support, CTA presets, safe zones, caption + audio guidance) inlined verbatim from src/canvas-types/campaign-studio/ads-studio/platforms/. No host capabilities required.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "ads.platform.specs"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.ads-policy",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve ads.policy.check — built-in policy text-rule scanner. Detects claims (guarantees, income, superlatives), trademark mentions, prohibited content (before/after, deceptive urgency), discriminatory targeting. Caller-supplied placement text-limits + trust-guardrail results for fuller coverage; standalone for text-rule-only checks.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "ads.policy.check"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.ads-publish-google",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve ads.publish.google — publish an ad to Google Ads API v18 (Search + Display). Symmetric companion to ads-publish-meta. Resolves 2 secrets (OAuth + developer-token) via ctx.secrets.resolve, then runs the 4-step publish pipeline (budget → campaign → ad-group → ad) with best-effort REMOVE-rollback. Supports 6 bidding strategies + 6 channel types + responsive_search & responsive_display ad formats.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "ads.publish.google"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.ads-publish-meta",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve ads.publish.meta — publish an ad to Meta Marketing API v21.0 (Facebook/Instagram). First consumer of the secrets.resolveInPack sub-capability (spec PR #52). Resolves OAuth token via ctx.secrets.resolve, then runs the 4-step publish pipeline (creative → campaign → ad set → ad) with best-effort rollback on failure. Validates all 6 Meta enums (objective, status, bidStrategy, billingEvent, targeting flexible-spec, placements) pre-flight. Maps Meta API errors to retryable/non-retryable per spec failure-mode glossary.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "ads.publish.meta"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.ads-publish-tiktok",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve ads.publish.tiktok — publish an ad to TikTok Marketing API v1.3. Third + final platform-publish pack of the Stage 5 cohort. Single OAuth secret (Access-Token header, not Bearer); TikTok envelope { code, message, data } where code !== 0 means business error even on HTTP 200; optional image upload by URL before ad creation. 3-step pipeline (campaign → adgroup → ad; no separate budget). No rollback per TikTok API semantics (no hard-delete via this surface); partialState surfaced for manual cleanup.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "ads.publish.tiktok"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.ads-studio-core",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve Ads Studio core — four pure-logic executors lifted from src/canvas-types/campaign-studio/nodes/adsStudioPack/. ads.brief.build (CreativeBriefBuilder), ads.variant.plan (VariantPlanService), ads.video.qa (VideoQAService), ads.winner.synthesize (WinnerSynthesisService). All four executors are deterministic — no host capabilities required beyond the core NodeContext. Marks the Phase A pilot of the canvas-type executor migration per openwop/openwop#11.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "ads.brief.build",
+        "ads.variant.plan",
+        "ads.video.qa",
+        "ads.winner.synthesize"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.ads-tools",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve Ads Studio tools — 2 pure-logic executors (ads.brief.extract, ads.tracking.link) lifted from src/canvas-types/campaign-studio/ads-studio/. Both are deterministic — no AI calls, no host capabilities. brief.extract derives an AdBrief from caller-supplied page sections; tracking.link builds UTM-tagged per-platform URLs with click-ID macros.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "ads.brief.extract",
+        "ads.tracking.link"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.ads-video-generate",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve ads.video.generate — generate ad creative videos via the host's ctx.callVideoGenerator (aiProviders.videoGeneration sub-capability from spec PR #53). Symmetric companion to ads-image-generate but adapted for video (single video per call, host hides async polling internally, typical 30-120s latency). Caller-supplied placementSpec.videoSpec replaces source's PlatformSpecRegistry lookup.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "ads.video.generate"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.agent-orchestration",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve agent-orchestration pack. Six nodes that operate on RFC 0007 / 0008 / 0011 protocol primitives — spawn, delegate-smart, consensus-vote, message-send, skill-invoke, swarm-execute. Routes through the host's agent runtime (ctx.agentRuntime.*). Inherits RFC 0007 §F suspend mechanics for low-confidence escalation.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "agent.spawn",
+        "agent.delegate.smart",
+        "agent.consensus.vote",
+        "agent.message.send",
+        "agent.skill.invoke",
+        "agent.swarm.execute",
+        "coordination.vote",
+        "coordination.consensus",
+        "coordination.compete",
+        "coordination.map-reduce",
+        "coordination.delegate",
+        "coordination.round-robin"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.ai",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve envelope-protocol AI nodes. Distinct from core.openwop.ai (which ships provider-agnostic chat-completion + structured-output + embeddings) — this pack ships MyndHyve-specific nodes that work with typed envelopes (`prd.create`, `theme.create`, etc.) emitted into the workflow's envelope stream, and prompts resolved from MyndHyve's prompt library by ID.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "core.ai.generateFromPrompt",
+        "core.ai.awaitEnvelope",
+        "core.ai.callPrompt"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.app-builder",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve App Builder typeIds — app-builder.per-screen (single-task screen generation: chat-send → typed-envelope-await with bounded retry) + app-builder.iterate-tasks (multi-task serial loop over feature tasks with task-level failure isolation). Both consume host.chat + host.aiEnvelope.await. Host concerns (progress cards, telemetry, pilot materializer) intentionally NOT in pack — pack returns categorized task results that host MAY render however it wishes.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "app-builder.per-screen",
+        "app-builder.iterate-tasks"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.brand",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve brand-workflow pack. 14 nodes — 8 theme (analyze/discovery/generate/implement/publish/review/templates/validate) + 6 persona (discover/generate/keywordStrategy/publish/review/validate). Each is an AI-driven envelope-emitting node anchored on the brand canvas type. Routes through ctx.brand.* + ctx.aiEnvelope.generate.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "brand.theme.analyze",
+        "brand.theme.discovery",
+        "brand.theme.generate",
+        "brand.theme.implement",
+        "brand.theme.publish",
+        "brand.theme.review",
+        "brand.theme.templates",
+        "brand.theme.validate",
+        "brand.persona.discover",
+        "brand.persona.generate",
+        "brand.persona.keywordStrategy",
+        "brand.persona.publish",
+        "brand.persona.review",
+        "brand.persona.validate"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.campaign-sequence",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve campaign-sequence step executors — three pure-control nodes (wait, tag, condition) lifted from src/canvas-types/campaign-studio/sequences/sequenceStepModules.ts. Self-contained: only ctx.inputs + ctx.log; no host capabilities required beyond core NodeContext. The integration siblings (email, sms, webhook) ship in a follow-up pack once openwop NodeContext extensions for host.email / host.sms / host.http land.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "campaign.sequence.wait",
+        "campaign.sequence.tag",
+        "campaign.sequence.condition"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.campaign-sequence-integration",
+      "kind": "node",
       "latestVersion": "1.0.1",
       "description": "MyndHyve campaign-sequence integration nodes — email, sms, webhook. Companion pack to vendor.myndhyve.campaign-sequence (which carries the 3 pure-control nodes). Declares `host.campaignMessaging` peerDependency for the email + sms surface (matching MyndHyve's EmailSMSAdapterService shape); webhook is self-contained via Node 20 fetch + bundled HMAC signature.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "campaign.sequence.email",
+        "campaign.sequence.sms",
+        "campaign.sequence.webhook"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.canvas",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "First vendor-namespace pack. Ships MyndHyve canvas-coordination nodes — canvasRead / canvasWrite / canvasCreate / crossCanvasInvoke — preserving the `core.coordination.*` typeIds in the wild (typeId-preserve strategy from the migration plan §4). The pack itself is MyndHyve-internal: hosts that don't advertise `host.canvas: supported` cannot register it.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "core.coordination.canvasRead",
+        "core.coordination.canvasWrite",
+        "core.coordination.canvasCreate",
+        "core.coordination.crossCanvasInvoke"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.chat",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve chat-bridge nodes — sendMessage, progressCard, updateCard, phaseInputGate, approvalGate, clarificationGate. Routes through the host's chat adapter (ctx.chat.*) + ctx.suspend for HITL gates. Preserves the core.chat.* typeIds in the wild.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "core.chat.sendMessage",
+        "core.chat.progressCard",
+        "core.chat.updateCard",
+        "core.chat.phaseInputGate",
+        "core.chat.approvalGate",
+        "core.chat.clarificationGate"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.data-integration",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve data-integration pack. 7 nodes for fetching from typed data sources (REST / GraphQL / A2A / MCP), transforming results, applying bindings to UI templates, and managing run-scoped variables. Routes through ctx.dataIntegration.* host adapter.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "data.source.rest",
+        "data.source.graphql",
+        "data.source.a2a",
+        "data.source.mcp",
+        "data.transform",
+        "data.variable.compute",
+        "data.variable.fetch",
+        "data.binding.apply"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.entities",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve entities + validation + asset-decision + messaging primitives. 5 nodes covering project creation, cross-stage validation (deterministic, no LLM), workspace asset decision gates (brand / persona / KB), and chat send/reply via the messaging connector layer.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "core.entities.projectCreate",
+        "core.validation.crossStageCheck",
+        "core.workflow.assetDecisionGate",
+        "messaging.chatSend",
+        "messaging.chatReply"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.kanban",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve kanban-coordination pack. 7 nodes covering board lifecycle, task management (assign + AI-powered decompose), timeline planning, automation rules, and resource monitoring. Routes through ctx.kanban.* host adapter.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "kanban.board.create",
+        "kanban.board.review",
+        "kanban.task.assign",
+        "kanban.task.decompose",
+        "kanban.timeline.plan",
+        "kanban.workflow.automate",
+        "kanban.resource.monitor"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.knowledge-tools",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve knowledge-tools — first reference consumer of the v1 host.knowledge surface. Two typeIds: (1) knowledge.retrieve — thin pass-through over ctx.knowledge.retrieve with optional score-floor filtering; (2) knowledge.augment-prompt — composition primitive that retrieves + renders a Sources block + builds an augmented user message + emits a citation list. Host advertises host.knowledge: supported per spec/v1/host-capabilities.md §host.knowledge.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "knowledge.retrieve",
+        "knowledge.augment-prompt"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.landing-page",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve landing-page executors — 7 nodes (landing.{content.generate, structure.create, variants.generate, theme.apply, tracking.setup, page.validate, page.publish}). Lifted from src/canvas-types/campaign-studio/nodes/pageBuilder/. Two AI-call sites (content.generate, variants.generate) route through ctx.callAI; the original useDesignSystemStore + useIntegrationStore reads are replaced with input-passthrough — the workflow author resolves design tokens + tracking integrations upstream and feeds them into the executor.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "landing.content.generate",
+        "landing.structure.create",
+        "landing.variants.generate",
+        "landing.theme.apply",
+        "landing.tracking.setup",
+        "landing.page.validate",
+        "landing.page.publish"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.launch-studio",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve Launch Studio pack. 2 nodes for the LS backbone: link a project to a step + propagate inherited artifact context, and dispatch ready WOP stack items (todo → doing) for a step's canvas type.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "launch-studio.linkStep",
+        "launch-studio.dispatchStackItems"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.market-intel-ad-angles",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve market-intel.ad-angles — generates 5-10 ad-angle briefs from VoC research + ICP/product context via one AI call. Each brief carries angleName, segment, corePain, promise, mechanism, proof requirements, objections to handle, 3-5 hook variants, recommended CTA, source quotes, and a 5-dimension score (volume / intensity / commercialIntent / clarity / uniqueness + weighted total). Briefs are sorted by total score descending. Second marketIntel pack of the Stage 5 cohort.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "market-intel.ad-angles"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.market-intel-audience-targeting",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve market-intel.audience-targeting — generate per-platform paid-media targeting packs (interests + keywords + community placements + audience definitions) for 6 ad platforms (meta / google / linkedin / tiktok / reddit / x) from market-research data (communities + angles). One AI call. Outputs cross-platform insights + testing sequence (phased) + budget allocation. Seventh marketIntel pack of the Stage 5 cohort.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "market-intel.audience-targeting"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.market-intel-community-rank",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve market-intel.community-rank — rank candidate communities (from a discovery step or connector) by VoC research relevance. Per-community: relevanceScore (0..1) + signalQuality (high/medium/low) + ICP problem alignment + expected intent stages + search strategy + risk factors. Distinct from market-intel.ai-discovery (which generates NEW community suggestions): this pack ranks EXISTING candidates. Ninth marketIntel pack of the Stage 5 cohort.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "market-intel.community-rank"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.market-intel-content-extraction",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve market-intel.content-extraction — extract structured content from raw HTML via one ctx.callAI. Outputs title, cleaned content, author, publishedAt, contentType, engagement metrics, tags, summary, and relevantQuotes. Sits between host.webResearch.fetchBatch and market-intel.voc-extraction in the canonical pipeline. Fifth marketIntel pack of the Stage 5 cohort.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "market-intel.content-extraction"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.market-intel-discovery",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve market-intel.ai-discovery — AI-powered source-discovery via one ctx.callAI. Given a topic + optional industry/audience/platforms, returns relevant URLs, communities (with platform / relevanceScore / estimatedPostCount), and search queries. Replaces the manual URL-input step of the marketIntel research pipeline. Third marketIntel pack of the Stage 5 cohort.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "market-intel.ai-discovery"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.market-intel-opportunity-scoring",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve market-intel.opportunity-scoring — score and rank communities AND messaging angles on a 5-dimension scale (volume / intensity / commercialIntent / clarity / uniqueness, weighted total) given a VoC corpus + community metadata. Composable primitive slotting between voc-extraction (aggregator) and ad-angles (downstream). Source-side this prompt is used inside the market-intel.research orchestrator; published here as a standalone typeId so workflow authors can compose it directly. Fourth marketIntel pack of the Stage 5 cohort.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "market-intel.opportunity-scoring"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.market-intel-query-builder",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve market-intel.query-builder — generate intent-mapped search queries (4-8 query groups × 4 intent stages, 2-4 variations each, synonym maps, platform hints) + per-competitor query packs (comparison/switching/alternative) + topic clusters from ICP + product context. Pairs with ai-discovery: query-builder produces 'what to search for', ai-discovery produces 'where to search'. Eighth marketIntel pack of the Stage 5 cohort.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "market-intel.query-builder"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.market-intel-thread-triage",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve market-intel.thread-triage — cost-aware pre-filter for VoC extraction. Triages candidate threads into priority tiers (critical/high/medium/low/skip), predicts VoC value + intent stages + tag types, estimates extraction tokens per thread, and builds an extraction queue within token budget. Sits between ai-discovery and voc-extraction in the canonical pipeline. Sixth marketIntel pack of the Stage 5 cohort.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "market-intel.thread-triage"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.market-intel-voc",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve market-intel.voc-extraction — extract Voice of Customer records (verbatim quotes + tagType + intentStage + confidence + rationale) from a single piece of content via a single AI call. First marketIntel pack of the Stage 5 cohort. Schema validation strips invalid records with per-record warnings; output preserves source structure (records + summary + warnings).",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "market-intel.voc-extraction"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.web-research",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve web-research pack — 4 nodes for the search → fetch → research → synthesize pipeline. webSearch + fetchUrls + researchWeb route through the host's webResearch adapter (search API + scraping policy + rate-limit + cache layer); synthesize composes results into a typed envelope via the AI envelope surface.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "data.source.webSearch",
+        "data.transform.fetchUrls",
+        "ai.research.web",
+        "ai.process.synthesize"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.myndhyve.wop-refinement",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "MyndHyve WOP feature-refinement node — wop.feature.refine. Driven by a `feature.breakdown` LLM envelope; decides whether a stack item is actionable as a node, executable as a chain, must be split into sub-items, needs clarification, or should be blocked. Enforces hard `maxDepth` + `maxGeneratedItems` constraints regardless of LLM proposal. Used by both runner-driven dispatch (StackAutoplayRunner) and chain-driven sub-workflows.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "wop.feature.refine"
+      ],
       "deprecated": false,
       "yanked": false
     },
     {
       "name": "vendor.openwop.rust-hello",
+      "kind": "node",
       "latestVersion": "1.0.0",
       "description": "Reference WASM node pack proving RFC 0008 ABI v1 works end-to-end across an independent toolchain. One node type: vendor.openwop.rust-hello.greet.",
       "license": "Apache-2.0",
       "tags": [],
+      "typeIds": [
+        "vendor.openwop.rust-hello.greet"
+      ],
       "deprecated": false,
       "yanked": false
     }

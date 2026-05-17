@@ -1,11 +1,37 @@
 {
   "name": "core.openwop.http",
-  "description": "Spec-canonical HTTP fetch node. Single typeId `core.openwop.http.fetch` with retry, exponential backoff, and deterministic Idempotency-Key derivation for replay safety. Authentication is the workflow author's concern — pass an `Authorization` header via the `headers` config field (literal token or resolved via the host's secret-injection mechanism). The pack itself declares no `requiresSecrets` so it runs on every host regardless of `secrets.supported`. Zero npm deps; uses Node 20's built-in fetch (undici).",
+  "kind": "node",
+  "description": "HTTP + general transport pack. v1.0 baseline: core.openwop.http.fetch (retry, backoff, idempotency). v1.1 additions: openapi-call, GraphQL (query/mutation/subscription), SOAP, gRPC (4 streaming variants), SSE consume, WebSocket client, long-poll, upload (multipart + resumable), download stream, pagination decorators (cursor/offset/link-header), rate-limit-aware retry, circuit breaker, idempotency-key generator, webhook signature verifier (Stripe/GitHub/Slack/raw-hmac). Zero npm deps — Node 20+ fetch/undici; transports requiring native libs delegate to host capabilities.",
   "author": "OpenWOP Working Group",
   "license": "Apache-2.0",
   "homepage": "https://openwop.dev/packs/core.openwop.http",
   "repository": "https://github.com/openwop/openwop",
   "tags": [],
+  "typeIds": [
+    "core.openwop.http.fetch",
+    "core.openwop.http.openapi-call",
+    "core.openwop.http.graphql-query",
+    "core.openwop.http.graphql-mutation",
+    "core.openwop.http.graphql-subscription",
+    "core.openwop.http.soap-call",
+    "core.openwop.http.grpc-unary",
+    "core.openwop.http.grpc-server-stream",
+    "core.openwop.http.grpc-client-stream",
+    "core.openwop.http.grpc-bidi",
+    "core.openwop.http.sse-consume",
+    "core.openwop.http.websocket-client",
+    "core.openwop.http.long-poll",
+    "core.openwop.http.upload-multipart",
+    "core.openwop.http.upload-resumable",
+    "core.openwop.http.download-stream",
+    "core.openwop.http.pagination-cursor",
+    "core.openwop.http.pagination-offset",
+    "core.openwop.http.pagination-link-header",
+    "core.openwop.http.retry-rate-limit-aware",
+    "core.openwop.http.circuit-breaker",
+    "core.openwop.http.idempotency-key",
+    "core.openwop.http.webhook-verify"
+  ],
   "versions": [
     {
       "version": "1.0.0",
@@ -18,8 +44,20 @@
       "integrity": "sha256-8+Z70OvbfHrTW1efblN8yHXsKPUBwBO+eWYX3OS278E=",
       "deprecated": false,
       "yanked": false
+    },
+    {
+      "version": "1.1.0",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/core.openwop.http/-/1.1.0.json",
+      "tarballUrl": "/v1/packs/core.openwop.http/-/1.1.0.tgz",
+      "signatureUrl": "/v1/packs/core.openwop.http/-/1.1.0.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-t+xsevQxeV8R87/ft3cK5+F0T5RLhQE9sseij4TV9Ns=",
+      "deprecated": false,
+      "yanked": false
     }
   ],
-  "latest": "1.0.0",
+  "latest": "1.1.0",
   "deprecated": false
 }

@@ -1,11 +1,15 @@
 {
   "name": "community.openwop-team.demo",
+  "kind": "node",
   "description": "First community-namespace demo pack. Mixed pack — one trivial node (`uppercase`) plus one agent (`greeter`) — exercising both extension paths in a single tarball under the open-publish `community.*` tier. Manual Ed25519 signed (not Sigstore) to demonstrate the non-OIDC publishing path documented in registry-operations.md §Step 2. MIT-licensed for SPDX-diversity with the Apache-2.0 core packs.",
   "author": "OpenWOP Team (community contributor)",
   "license": "MIT",
   "homepage": "https://openwop.dev/packs/community.openwop-team.demo",
   "repository": "https://github.com/openwop/openwop",
   "tags": [],
+  "typeIds": [
+    "community.openwop-team.demo.uppercase"
+  ],
   "versions": [
     {
       "version": "0.1.0",

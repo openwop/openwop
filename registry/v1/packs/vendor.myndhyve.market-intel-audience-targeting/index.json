@@ -1,11 +1,15 @@
 {
   "name": "vendor.myndhyve.market-intel-audience-targeting",
+  "kind": "node",
   "description": "MyndHyve market-intel.audience-targeting — generate per-platform paid-media targeting packs (interests + keywords + community placements + audience definitions) for 6 ad platforms (meta / google / linkedin / tiktok / reddit / x) from market-research data (communities + angles). One AI call. Outputs cross-platform insights + testing sequence (phased) + budget allocation. Seventh marketIntel pack of the Stage 5 cohort.",
   "author": "MyndHyve",
   "license": "Apache-2.0",
   "homepage": "https://myndhyve.ai/packs/market-intel-audience-targeting",
   "repository": "https://github.com/openwop/openwop",
   "tags": [],
+  "typeIds": [
+    "market-intel.audience-targeting"
+  ],
   "versions": [
     {
       "version": "1.0.0",

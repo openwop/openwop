@@ -1,11 +1,17 @@
 {
   "name": "core.openwop.examples",
+  "kind": "node",
   "description": "Spec-canonical examples pack — three minimal nodes (echo, coin-flip, delay-with-progress) that exercise the core node-pack contract end-to-end. Zero npm deps; runs on any Node 20+ host advertising the openwop-node-packs profile. See docs/PACKS-MVP-PLAN.md.",
   "author": "OpenWOP Working Group",
   "license": "Apache-2.0",
   "homepage": "https://openwop.dev/packs/core.openwop.examples",
   "repository": "https://github.com/openwop/openwop",
   "tags": [],
+  "typeIds": [
+    "core.openwop.examples.echo",
+    "core.openwop.examples.coin-flip",
+    "core.openwop.examples.delay-with-progress"
+  ],
   "versions": [
     {
       "version": "1.0.0",

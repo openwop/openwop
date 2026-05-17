@@ -1,11 +1,15 @@
 {
   "name": "vendor.myndhyve.ads-creative-validate",
+  "kind": "node",
   "description": "MyndHyve ads.creative.validate — full compliance scanner combining built-in policy text rules, placement text-length checks, AND asset-format checks (image/video dimensions, file sizes, durations). Caller supplies placement spec data via inputs (resolve upstream from vendor.myndhyve.ads-platforms OR host.adPlatformSpecs).",
   "author": "MyndHyve",
   "license": "Apache-2.0",
   "homepage": "https://myndhyve.ai/packs/ads-creative-validate",
   "repository": "https://github.com/openwop/openwop",
   "tags": [],
+  "typeIds": [
+    "ads.creative.validate"
+  ],
   "versions": [
     {
       "version": "1.0.0",

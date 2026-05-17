@@ -198,14 +198,31 @@ function rebuildPack(packName) {
   }
 
   const latest = versions[versions.length - 1];
+  // Pack kind per RFC 0013. Node packs (the default and original kind)
+  // either omit `kind` or set it to "node"; workflow-chain packs set
+  // `kind: "workflow-chain"`. Consumers MUST inspect `kind` before
+  // assuming dispatch semantics (workflow-chain packs aren't directly
+  // dispatchable — they expand at workflow-author time).
+  const kind = pack?.kind ?? 'node';
+  // Per-pack typeIds[] surfaced for catalog/discovery. For node packs
+  // this is nodes[].typeId; for workflow-chain packs it's
+  // chains[].chainId (parallel surface — both are namespaced ids
+  // consumers reference). Empty array when neither is populated.
+  const typeIds =
+    kind === 'workflow-chain'
+      ? (pack?.chains ?? []).map((c) => c.chainId).filter(Boolean)
+      : (pack?.nodes ?? []).map((n) => n.typeId).filter(Boolean);
+
   const indexDoc = {
     name: packName,
+    kind,
     description: pack?.description ?? '',
     author: pack?.author ?? '',
     license: pack?.license ?? '',
     homepage: pack?.homepage,
     repository: pack?.repository,
     tags: pack?.tags ?? [],
+    typeIds,
     versions: versionEntries,
     latest,
     deprecated: versionEntries.every((v) => v.deprecated),
@@ -224,10 +241,12 @@ function rebuildRegistryIndex(packDocs) {
     packCount: packDocs.length,
     packs: packDocs.map((p) => ({
       name: p.name,
+      kind: p.kind,
       latestVersion: p.latest,
       description: p.description,
       license: p.license,
       tags: p.tags,
+      typeIds: p.typeIds,
       deprecated: p.deprecated,
       yanked: false,
     })),

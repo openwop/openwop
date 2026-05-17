@@ -143,48 +143,138 @@ function check(packName, version, errors) {
     errors.push(`${packName}@${version}: version-manifest version mismatch`);
   }
 
-  // 2. Schema refs resolve inside the tarball + parse as JSON.
-  // (Full Ajv compile check intentionally omitted to keep this script
-  // npm-install-free in CI; the spec-corpus-validity scenario in the
-  // conformance suite already compiles every shipped schema.)
-  const nodes = tarballManifest.nodes ?? [];
+  // 2. Pack-kind discriminator (RFC 0013). Routes the rest of validation:
+  //   - kind=node (default) → existing nodes[] checks (schema refs etc.)
+  //   - kind=workflow-chain → chains[] checks (dag fragments, no schema refs)
+  // Manifests carrying BOTH nodes[] AND chains[] are rejected as
+  // pack_kind_invalid per workflow-chain-packs.md §"Pack kind discriminator".
+  const kind = tarballManifest.kind ?? 'node';
+  const hasNodes = Array.isArray(tarballManifest.nodes) && tarballManifest.nodes.length > 0;
+  const hasChains = Array.isArray(tarballManifest.chains) && tarballManifest.chains.length > 0;
+  if (hasNodes && hasChains) {
+    errors.push(
+      `${packName}@${version}: pack_kind_invalid — manifests MUST have exactly one of nodes[] or chains[], not both`,
+    );
+    return;
+  }
+  if (kind === 'workflow-chain' && hasNodes) {
+    errors.push(
+      `${packName}@${version}: pack_kind_invalid — kind: "workflow-chain" rejects nodes[]; use chains[] instead`,
+    );
+    return;
+  }
+  if (kind === 'node' && hasChains) {
+    errors.push(
+      `${packName}@${version}: pack_kind_invalid — kind: "node" (or omitted) rejects chains[]; set kind: "workflow-chain"`,
+    );
+    return;
+  }
 
-  // 4. No duplicate typeIds.
-  const seenTypeIds = new Set();
-  for (const node of nodes) {
-    const typeId = node.typeId;
-    if (!typeId) {
-      errors.push(`${packName}@${version}: a node is missing typeId`);
-      continue;
+  if (kind === 'workflow-chain') {
+    // Workflow-chain pack checks per workflow-chain-packs.md.
+    if (!hasChains) {
+      errors.push(
+        `${packName}@${version}: kind: "workflow-chain" requires a non-empty chains[]`,
+      );
+      return;
     }
-    if (seenTypeIds.has(typeId)) {
-      errors.push(`${packName}@${version}: duplicate typeId '${typeId}' within pack`);
-    }
-    seenTypeIds.add(typeId);
-
-    for (const refKey of ['inputSchemaRef', 'outputSchemaRef', 'configSchemaRef']) {
-      const ref = node[refKey];
-      if (!ref) continue;
-      // Absolute https refs are allowed (e.g., shared schema URLs) but
-      // can't be validated at gate time without outbound fetch. Skip.
-      if (ref.startsWith('http://') || ref.startsWith('https://')) continue;
-      if (ref.includes('..')) {
-        errors.push(`${packName}@${version} ${typeId}.${refKey}='${ref}' has path traversal`);
+    const seenChainIds = new Set();
+    for (const chain of tarballManifest.chains) {
+      const chainId = chain.chainId;
+      if (!chainId) {
+        errors.push(`${packName}@${version}: a chain entry is missing chainId`);
         continue;
       }
-      const schemaBytes = entries.get(ref);
-      if (!schemaBytes) {
+      // Same reverse-DNS pattern as node typeIds. Defensive duplicate of the
+      // schema's `pattern` so structural errors surface here even when
+      // schema validation isn't run inline.
+      if (!/^[a-z][a-zA-Z0-9._-]*$/.test(chainId)) {
         errors.push(
-          `${packName}@${version} ${typeId}.${refKey}='${ref}' references missing file in tarball`,
+          `${packName}@${version}: chainId '${chainId}' violates the reverse-DNS pattern ^[a-z][a-zA-Z0-9._-]*$`,
+        );
+      }
+      if (seenChainIds.has(chainId)) {
+        errors.push(`${packName}@${version}: duplicate chainId '${chainId}' within pack`);
+      }
+      seenChainIds.add(chainId);
+
+      // Every chain MUST declare a non-empty dag.nodes[] (per the schema's
+      // required[] but defensively re-asserted here).
+      const dagNodes = chain.dag?.nodes;
+      if (!Array.isArray(dagNodes) || dagNodes.length === 0) {
+        errors.push(
+          `${packName}@${version} chain '${chainId}': dag.nodes MUST be a non-empty array`,
         );
         continue;
       }
-      try {
-        JSON.parse(schemaBytes.toString('utf8'));
-      } catch (err) {
-        errors.push(
-          `${packName}@${version} ${typeId}.${refKey}='${ref}' is invalid JSON: ${err.message}`,
-        );
+      // Each fragment node MUST have a typeId so the host editor can
+      // resolve at expansion time.
+      const seenNodeIds = new Set();
+      for (const node of dagNodes) {
+        if (!node.id) {
+          errors.push(
+            `${packName}@${version} chain '${chainId}': a dag.nodes[] entry is missing id`,
+          );
+          continue;
+        }
+        if (seenNodeIds.has(node.id)) {
+          errors.push(
+            `${packName}@${version} chain '${chainId}': duplicate node id '${node.id}' within fragment`,
+          );
+        }
+        seenNodeIds.add(node.id);
+        if (!node.typeId) {
+          errors.push(
+            `${packName}@${version} chain '${chainId}' node '${node.id}': missing typeId`,
+          );
+        }
+      }
+    }
+  } else {
+    // Node-pack checks (existing behavior preserved).
+    // Schema refs resolve inside the tarball + parse as JSON.
+    // (Full Ajv compile check intentionally omitted to keep this script
+    // npm-install-free in CI; the spec-corpus-validity scenario in the
+    // conformance suite already compiles every shipped schema.)
+    const nodes = tarballManifest.nodes ?? [];
+
+    // No duplicate typeIds.
+    const seenTypeIds = new Set();
+    for (const node of nodes) {
+      const typeId = node.typeId;
+      if (!typeId) {
+        errors.push(`${packName}@${version}: a node is missing typeId`);
+        continue;
+      }
+      if (seenTypeIds.has(typeId)) {
+        errors.push(`${packName}@${version}: duplicate typeId '${typeId}' within pack`);
+      }
+      seenTypeIds.add(typeId);
+
+      for (const refKey of ['inputSchemaRef', 'outputSchemaRef', 'configSchemaRef']) {
+        const ref = node[refKey];
+        if (!ref) continue;
+        // Absolute https refs are allowed (e.g., shared schema URLs) but
+        // can't be validated at gate time without outbound fetch. Skip.
+        if (ref.startsWith('http://') || ref.startsWith('https://')) continue;
+        if (ref.includes('..')) {
+          errors.push(`${packName}@${version} ${typeId}.${refKey}='${ref}' has path traversal`);
+          continue;
+        }
+        const schemaBytes = entries.get(ref);
+        if (!schemaBytes) {
+          errors.push(
+            `${packName}@${version} ${typeId}.${refKey}='${ref}' references missing file in tarball`,
+          );
+          continue;
+        }
+        try {
+          JSON.parse(schemaBytes.toString('utf8'));
+        } catch (err) {
+          errors.push(
+            `${packName}@${version} ${typeId}.${refKey}='${ref}' is invalid JSON: ${err.message}`,
+          );
+        }
       }
     }
   }

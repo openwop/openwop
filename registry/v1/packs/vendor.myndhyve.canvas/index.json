@@ -1,11 +1,18 @@
 {
   "name": "vendor.myndhyve.canvas",
+  "kind": "node",
   "description": "First vendor-namespace pack. Ships MyndHyve canvas-coordination nodes — canvasRead / canvasWrite / canvasCreate / crossCanvasInvoke — preserving the `core.coordination.*` typeIds in the wild (typeId-preserve strategy from the migration plan §4). The pack itself is MyndHyve-internal: hosts that don't advertise `host.canvas: supported` cannot register it.",
   "author": "MyndHyve",
   "license": "Apache-2.0",
   "homepage": "https://myndhyve.ai/packs/canvas",
   "repository": "https://github.com/openwop/openwop",
   "tags": [],
+  "typeIds": [
+    "core.coordination.canvasRead",
+    "core.coordination.canvasWrite",
+    "core.coordination.canvasCreate",
+    "core.coordination.crossCanvasInvoke"
+  ],
   "versions": [
     {
       "version": "1.0.0",

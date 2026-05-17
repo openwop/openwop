@@ -1,11 +1,35 @@
 {
   "name": "core.openwop.mcp",
-  "description": "Spec-canonical MCP-operation pack. Four nodes for workflow-author-direct interaction with registered MCP servers — list-tools, invoke-tool, read-resource, server-status. Complements the implicit LLM-mediated tool-call path documented in spec/v1/mcp-integration.md by exposing the same MCP operations as first-class workflow nodes. Routes through the host's MCP client (ctx.mcp.* surface); the pack itself speaks no MCP protocol.",
+  "kind": "node",
+  "description": "Spec-canonical MCP (Model Context Protocol) pack. v1.0 four-node client baseline (list-tools, invoke-tool, read-resource, server-status) plus the v1.1 additions: full client-side surface (resources, prompts, completion, logging, ping) AND server-side (workflow IS an MCP server — server-trigger + expose-tool/resource/prompt + handle-sampling/elicitation + provide-roots). Tracks modelcontextprotocol.io 2025-06-18 spec via spec/v1/mcp-integration.md.",
   "author": "OpenWOP Working Group",
   "license": "Apache-2.0",
   "homepage": "https://openwop.dev/packs/core.openwop.mcp",
   "repository": "https://github.com/openwop/openwop",
   "tags": [],
+  "typeIds": [
+    "core.openwop.mcp.list-tools",
+    "core.openwop.mcp.invoke-tool",
+    "core.openwop.mcp.read-resource",
+    "core.openwop.mcp.server-status",
+    "core.openwop.mcp.list-resources",
+    "core.openwop.mcp.list-resource-templates",
+    "core.openwop.mcp.subscribe-resource",
+    "core.openwop.mcp.list-prompts",
+    "core.openwop.mcp.get-prompt",
+    "core.openwop.mcp.completion",
+    "core.openwop.mcp.set-log-level",
+    "core.openwop.mcp.log-listener",
+    "core.openwop.mcp.ping",
+    "core.openwop.mcp.server-trigger",
+    "core.openwop.mcp.expose-tool",
+    "core.openwop.mcp.expose-resource",
+    "core.openwop.mcp.expose-resource-template",
+    "core.openwop.mcp.expose-prompt",
+    "core.openwop.mcp.handle-sampling",
+    "core.openwop.mcp.handle-elicitation",
+    "core.openwop.mcp.provide-roots"
+  ],
   "versions": [
     {
       "version": "1.0.0",
@@ -18,8 +42,20 @@
       "integrity": "sha256-6+BzctH9myodPgmYDE6esZCQG9fpQycdvf13J+40ze4=",
       "deprecated": false,
       "yanked": false
+    },
+    {
+      "version": "1.1.0",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/core.openwop.mcp/-/1.1.0.json",
+      "tarballUrl": "/v1/packs/core.openwop.mcp/-/1.1.0.tgz",
+      "signatureUrl": "/v1/packs/core.openwop.mcp/-/1.1.0.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-xXE/v5iQplr9K6Y4gtyPMEytv6FRmq0xrGJ1hbIiyVw=",
+      "deprecated": false,
+      "yanked": false
     }
   ],
-  "latest": "1.0.0",
+  "latest": "1.1.0",
   "deprecated": false
 }

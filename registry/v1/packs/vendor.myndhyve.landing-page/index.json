@@ -1,11 +1,21 @@
 {
   "name": "vendor.myndhyve.landing-page",
+  "kind": "node",
   "description": "MyndHyve landing-page executors — 7 nodes (landing.{content.generate, structure.create, variants.generate, theme.apply, tracking.setup, page.validate, page.publish}). Lifted from src/canvas-types/campaign-studio/nodes/pageBuilder/. Two AI-call sites (content.generate, variants.generate) route through ctx.callAI; the original useDesignSystemStore + useIntegrationStore reads are replaced with input-passthrough — the workflow author resolves design tokens + tracking integrations upstream and feeds them into the executor.",
   "author": "MyndHyve",
   "license": "Apache-2.0",
   "homepage": "https://myndhyve.ai/packs/landing-page",
   "repository": "https://github.com/openwop/openwop",
   "tags": [],
+  "typeIds": [
+    "landing.content.generate",
+    "landing.structure.create",
+    "landing.variants.generate",
+    "landing.theme.apply",
+    "landing.tracking.setup",
+    "landing.page.validate",
+    "landing.page.publish"
+  ],
   "versions": [
     {
       "version": "1.0.0",

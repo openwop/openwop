@@ -1,11 +1,15 @@
 {
   "name": "vendor.myndhyve.ads-publish-google",
+  "kind": "node",
   "description": "MyndHyve ads.publish.google — publish an ad to Google Ads API v18 (Search + Display). Symmetric companion to ads-publish-meta. Resolves 2 secrets (OAuth + developer-token) via ctx.secrets.resolve, then runs the 4-step publish pipeline (budget → campaign → ad-group → ad) with best-effort REMOVE-rollback. Supports 6 bidding strategies + 6 channel types + responsive_search & responsive_display ad formats.",
   "author": "MyndHyve",
   "license": "Apache-2.0",
   "homepage": "https://myndhyve.ai/packs/ads-publish-google",
   "repository": "https://github.com/openwop/openwop",
   "tags": [],
+  "typeIds": [
+    "ads.publish.google"
+  ],
   "versions": [
     {
       "version": "1.0.0",

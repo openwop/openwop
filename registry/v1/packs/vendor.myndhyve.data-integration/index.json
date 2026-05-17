@@ -1,11 +1,22 @@
 {
   "name": "vendor.myndhyve.data-integration",
+  "kind": "node",
   "description": "MyndHyve data-integration pack. 7 nodes for fetching from typed data sources (REST / GraphQL / A2A / MCP), transforming results, applying bindings to UI templates, and managing run-scoped variables. Routes through ctx.dataIntegration.* host adapter.",
   "author": "MyndHyve",
   "license": "Apache-2.0",
   "homepage": "https://myndhyve.ai/packs/data-integration",
   "repository": "https://github.com/openwop/openwop",
   "tags": [],
+  "typeIds": [
+    "data.source.rest",
+    "data.source.graphql",
+    "data.source.a2a",
+    "data.source.mcp",
+    "data.transform",
+    "data.variable.compute",
+    "data.variable.fetch",
+    "data.binding.apply"
+  ],
   "versions": [
     {
       "version": "1.0.0",

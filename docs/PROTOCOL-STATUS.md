@@ -54,17 +54,17 @@
 
 | Metric | Count | Source |
 |---|---:|---|
-| Index `packCount` | 48 | `registry/v1/index.json` |
-| Indexed pack rows | 48 | `registry/v1/index.json` |
-| Local pack directories | 48 | `registry/v1/packs/*` |
-| Version manifests | 49 | `registry/v1/packs/*/-/*.json` |
-| Tarballs | 49 | `registry/v1/packs/*/-/*.tgz` |
-| Signatures | 49 | `registry/v1/packs/*/-/*.sig` |
+| Index `packCount` | 59 | `registry/v1/index.json` |
+| Indexed pack rows | 59 | `registry/v1/index.json` |
+| Local pack directories | 59 | `registry/v1/packs/*` |
+| Version manifests | 66 | `registry/v1/packs/*/-/*.json` |
+| Tarballs | 66 | `registry/v1/packs/*/-/*.tgz` |
+| Signatures | 66 | `registry/v1/packs/*/-/*.sig` |
 
 | Scope | Indexed packs |
 |---|---:|
 | community.openwop-team | 1 |
-| core.openwop | 8 |
+| core.openwop | 19 |
 | vendor.myndhyve | 38 |
 | vendor.openwop | 1 |
 

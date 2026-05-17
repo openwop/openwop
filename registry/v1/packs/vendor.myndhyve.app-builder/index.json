@@ -1,11 +1,16 @@
 {
   "name": "vendor.myndhyve.app-builder",
+  "kind": "node",
   "description": "MyndHyve App Builder typeIds — app-builder.per-screen (single-task screen generation: chat-send → typed-envelope-await with bounded retry) + app-builder.iterate-tasks (multi-task serial loop over feature tasks with task-level failure isolation). Both consume host.chat + host.aiEnvelope.await. Host concerns (progress cards, telemetry, pilot materializer) intentionally NOT in pack — pack returns categorized task results that host MAY render however it wishes.",
   "author": "MyndHyve",
   "license": "Apache-2.0",
   "homepage": "https://myndhyve.ai/packs/app-builder",
   "repository": "https://github.com/openwop/openwop",
   "tags": [],
+  "typeIds": [
+    "app-builder.per-screen",
+    "app-builder.iterate-tasks"
+  ],
   "versions": [
     {
       "version": "1.0.0",

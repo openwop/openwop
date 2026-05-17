@@ -1,11 +1,15 @@
 {
   "name": "vendor.myndhyve.market-intel-thread-triage",
+  "kind": "node",
   "description": "MyndHyve market-intel.thread-triage — cost-aware pre-filter for VoC extraction. Triages candidate threads into priority tiers (critical/high/medium/low/skip), predicts VoC value + intent stages + tag types, estimates extraction tokens per thread, and builds an extraction queue within token budget. Sits between ai-discovery and voc-extraction in the canonical pipeline. Sixth marketIntel pack of the Stage 5 cohort.",
   "author": "MyndHyve",
   "license": "Apache-2.0",
   "homepage": "https://myndhyve.ai/packs/market-intel-thread-triage",
   "repository": "https://github.com/openwop/openwop",
   "tags": [],
+  "typeIds": [
+    "market-intel.thread-triage"
+  ],
   "versions": [
     {
       "version": "1.0.0",

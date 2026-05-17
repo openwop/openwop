@@ -1,11 +1,16 @@
 {
   "name": "vendor.myndhyve.ads-tools",
+  "kind": "node",
   "description": "MyndHyve Ads Studio tools — 2 pure-logic executors (ads.brief.extract, ads.tracking.link) lifted from src/canvas-types/campaign-studio/ads-studio/. Both are deterministic — no AI calls, no host capabilities. brief.extract derives an AdBrief from caller-supplied page sections; tracking.link builds UTM-tagged per-platform URLs with click-ID macros.",
   "author": "MyndHyve",
   "license": "Apache-2.0",
   "homepage": "https://myndhyve.ai/packs/ads-tools",
   "repository": "https://github.com/openwop/openwop",
   "tags": [],
+  "typeIds": [
+    "ads.brief.extract",
+    "ads.tracking.link"
+  ],
   "versions": [
     {
       "version": "1.0.0",

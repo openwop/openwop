@@ -1,11 +1,18 @@
 {
   "name": "vendor.myndhyve.web-research",
+  "kind": "node",
   "description": "MyndHyve web-research pack — 4 nodes for the search → fetch → research → synthesize pipeline. webSearch + fetchUrls + researchWeb route through the host's webResearch adapter (search API + scraping policy + rate-limit + cache layer); synthesize composes results into a typed envelope via the AI envelope surface.",
   "author": "MyndHyve",
   "license": "Apache-2.0",
   "homepage": "https://myndhyve.ai/packs/web-research",
   "repository": "https://github.com/openwop/openwop",
   "tags": [],
+  "typeIds": [
+    "data.source.webSearch",
+    "data.transform.fetchUrls",
+    "ai.research.web",
+    "ai.process.synthesize"
+  ],
   "versions": [
     {
       "version": "1.0.0",

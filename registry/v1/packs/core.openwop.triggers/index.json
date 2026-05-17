@@ -1,11 +1,30 @@
 {
   "name": "core.openwop.triggers",
-  "description": "Workflow-trigger pack. Seven entry-point shapes — webhook, schedule, event, envelope, chatMessage, canvas, artifact — that hosts use to register workflows for external-event-driven dispatch. Trigger nodes are pass-through executors: they forward `ctx.triggerData` (set by the engine when the trigger fires) to outputs. The pack contributes the typed config + payload schemas + the runtime pass-through.",
+  "kind": "node",
+  "description": "Workflow-trigger pack. Sixteen entry-point shapes — original seven (webhook, schedule, event, envelope, chatMessage, canvas, artifact) plus the v1.1 additions (mailhook, email-imap, form, rss, manual, error, sub-workflow, cron-advanced) and the webhook-response action. Trigger nodes are pass-through executors: they forward `ctx.triggerData` (set by the engine when the trigger fires) to outputs.",
   "author": "OpenWOP Working Group",
   "license": "Apache-2.0",
   "homepage": "https://openwop.dev/packs/core.openwop.triggers",
   "repository": "https://github.com/openwop/openwop",
   "tags": [],
+  "typeIds": [
+    "core.trigger.webhook",
+    "core.trigger.schedule",
+    "core.trigger.event",
+    "core.trigger.envelope",
+    "core.trigger.chatMessage",
+    "core.trigger.canvas",
+    "core.trigger.artifact",
+    "core.trigger.webhook-respond",
+    "core.trigger.mailhook",
+    "core.trigger.email-imap",
+    "core.trigger.form",
+    "core.trigger.rss",
+    "core.trigger.manual",
+    "core.trigger.error",
+    "core.trigger.sub-workflow",
+    "core.trigger.cron-advanced"
+  ],
   "versions": [
     {
       "version": "1.0.0",
@@ -18,8 +37,20 @@
       "integrity": "sha256-vu9qrTd7hFbwxtUYStu0Om97luRo4l8yx8j3sfdJgsI=",
       "deprecated": false,
       "yanked": false
+    },
+    {
+      "version": "1.1.0",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/core.openwop.triggers/-/1.1.0.json",
+      "tarballUrl": "/v1/packs/core.openwop.triggers/-/1.1.0.tgz",
+      "signatureUrl": "/v1/packs/core.openwop.triggers/-/1.1.0.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-4Mqn486KGxMhwqBHWydR64H86gfu9x0WQVV76EmCRFo=",
+      "deprecated": false,
+      "yanked": false
     }
   ],
-  "latest": "1.0.0",
+  "latest": "1.1.0",
   "deprecated": false
 }

@@ -1,11 +1,17 @@
 {
   "name": "vendor.myndhyve.campaign-sequence",
+  "kind": "node",
   "description": "MyndHyve campaign-sequence step executors — three pure-control nodes (wait, tag, condition) lifted from src/canvas-types/campaign-studio/sequences/sequenceStepModules.ts. Self-contained: only ctx.inputs + ctx.log; no host capabilities required beyond core NodeContext. The integration siblings (email, sms, webhook) ship in a follow-up pack once openwop NodeContext extensions for host.email / host.sms / host.http land.",
   "author": "MyndHyve",
   "license": "Apache-2.0",
   "homepage": "https://myndhyve.ai/packs/campaign-sequence",
   "repository": "https://github.com/openwop/openwop",
   "tags": [],
+  "typeIds": [
+    "campaign.sequence.wait",
+    "campaign.sequence.tag",
+    "campaign.sequence.condition"
+  ],
   "versions": [
     {
       "version": "1.0.0",

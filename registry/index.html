@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>openwop registry — packs.openwop.dev</title>
-<meta name="description" content="The canonical signed node-pack registry for the openwop workflow orchestration protocol. 48 pack(s), 49 version(s) published.">
+<meta name="description" content="The canonical signed node-pack registry for the openwop workflow orchestration protocol. 59 pack(s), 66 version(s) published.">
 <meta name="robots" content="index, follow">
 
 <meta property="og:type" content="website">
@@ -95,8 +95,8 @@
     <h1>openwop registry</h1>
     <p class="lead">Canonical signed node-pack registry for the <a href="https://openwop.dev/">openwop</a> workflow orchestration protocol.</p>
     <div class="summary">
-      <div><strong>48</strong><span>packs published</span></div>
-      <div><strong>49</strong><span>versions total</span></div>
+      <div><strong>59</strong><span>packs published</span></div>
+      <div><strong>66</strong><span>versions total</span></div>
       <div><strong>Ed25519</strong><span>signing algorithm</span></div>
     </div>
   </header>
@@ -120,6 +120,17 @@
           </td>
         </tr>
         <tr>
+          <td class="name"><code>core.openwop.a2a</code> </td>
+          <td class="version">1.1.0</td>
+          <td class="desc">Full A2A (Agent-to-Agent) primitives. Client-side: 12 nodes (discover, send, stream, list/get/cancel tasks, resubscribe, multi-turn coordinator, push-config CRUD). Server-side: workflow IS an A2A agent (server-trigger, agent-card-publish, emit-status, emit-artifact, push-send). Routes through ctx.a2a.* host surface. Tracks spec/v1/a2a-integration.md.</td>
+          <td class="license">Apache-2.0</td>
+          <td class="artifacts">
+            <a href="/v1/packs/core.openwop.a2a/-/1.1.0.json" title="version manifest (JSON)">manifest</a>
+            · <a href="/v1/packs/core.openwop.a2a/-/1.1.0.tgz" title="signed tarball (tgz)">tgz</a>
+            · <a href="/v1/packs/core.openwop.a2a/-/1.1.0.sig" title="Ed25519 signature">sig</a>
+          </td>
+        </tr>
+        <tr>
           <td class="name"><code>core.openwop.agent-examples</code> </td>
           <td class="version">1.0.0</td>
           <td class="desc">First pure-agent pack — ships two minimal agent manifests with no node runtime. Validates the `agents[]` extension to the pack manifest (per agent-manifest.schema.json + RFC 0003). Echo agent inlines its system prompt; Summarizer references `prompts/summarizer.md` to demonstrate the `systemPromptRef` path. Both agents are stateless (memoryShape.longTerm: false). Vendor-neutral: no model is pinned — hosts resolve via their BYOK aiProviders surface.</td>
@@ -131,25 +142,58 @@
           </td>
         </tr>
         <tr>
-          <td class="name"><code>core.openwop.ai</code> </td>
+          <td class="name"><code>core.openwop.agents</code> </td>
           <td class="version">1.0.0</td>
-          <td class="desc">Spec-canonical AI-call pack. Three foundational nodes (chat-completion, structured-output, embeddings) that route through the host&#39;s BYOK aiProviders surface — the pack itself makes no HTTP calls. peerDependencies on `aiProviders.supported`. Side-effectful (declared) so the engine&#39;s Layer-2 invocation log caches responses keyed on (runId, nodeId, request-hash) for replay safety.</td>
+          <td class="desc">Agent composition primitives. Root agent.run + sub-nodes (tools, memory, parsers, model selector). Composes via RFC 0013 expansion semantics and consumes host.aiProviders + host.agentRuntime.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
-            <a href="/v1/packs/core.openwop.ai/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
-            · <a href="/v1/packs/core.openwop.ai/-/1.0.0.tgz" title="signed tarball (tgz)">tgz</a>
-            · <a href="/v1/packs/core.openwop.ai/-/1.0.0.sig" title="Ed25519 signature">sig</a>
+            <a href="/v1/packs/core.openwop.agents/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
+            · <a href="/v1/packs/core.openwop.agents/-/1.0.0.tgz" title="signed tarball (tgz)">tgz</a>
+            · <a href="/v1/packs/core.openwop.agents/-/1.0.0.sig" title="Ed25519 signature">sig</a>
+          </td>
+        </tr>
+        <tr>
+          <td class="name"><code>core.openwop.ai</code> </td>
+          <td class="version">1.1.0</td>
+          <td class="desc">Spec-canonical AI-call pack. v1.0 (chatCompletion, structuredOutput, toolCalling, embeddings) plus v1.1 multi-modal + LLM helpers — image generate/edit/upscale, audio transcribe/synthesize, video generate, rerank, classify, extract, guardrails, transform. Routes through host BYOK aiProviders.</td>
+          <td class="license">Apache-2.0</td>
+          <td class="artifacts">
+            <a href="/v1/packs/core.openwop.ai/-/1.1.0.json" title="version manifest (JSON)">manifest</a>
+            · <a href="/v1/packs/core.openwop.ai/-/1.1.0.tgz" title="signed tarball (tgz)">tgz</a>
+            · <a href="/v1/packs/core.openwop.ai/-/1.1.0.sig" title="Ed25519 signature">sig</a>
+          </td>
+        </tr>
+        <tr>
+          <td class="name"><code>core.openwop.crypto</code> </td>
+          <td class="version">1.0.0</td>
+          <td class="desc">Pure cryptographic primitives: hashing, HMAC, AEAD encrypt/decrypt, asymmetric sign/verify, JWT mint/verify, TOTP, x509 parse + chain verify. Built on node:crypto (Node 20+). Zero npm deps. Pure with respect to keys passed in via inputs.</td>
+          <td class="license">Apache-2.0</td>
+          <td class="artifacts">
+            <a href="/v1/packs/core.openwop.crypto/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
+            · <a href="/v1/packs/core.openwop.crypto/-/1.0.0.tgz" title="signed tarball (tgz)">tgz</a>
+            · <a href="/v1/packs/core.openwop.crypto/-/1.0.0.sig" title="Ed25519 signature">sig</a>
           </td>
         </tr>
         <tr>
           <td class="name"><code>core.openwop.data</code> </td>
-          <td class="version">1.0.0</td>
-          <td class="desc">Spec-canonical data-utility pack. Five pure, replay-safe nodes covering the most common workflow-author needs: string-case transformation, string splitting, array filtering, array mapping (with template substitution), and shallow object merging. Zero npm deps. Runs on any Node 20+ host advertising the openwop-node-packs profile.</td>
+          <td class="version">1.1.0</td>
+          <td class="desc">Spec-canonical data-utility pack. v1.0 baseline (string-case, string-split, array-filter, array-map, object-merge) plus v1.1 additions: string format/regex/encode, array sort/unique/flatten/chunk/zip/reduce, object pick/omit/rename/get-path/set-path, json parse/stringify/schema-validate, jsonpath query, csv parse/stringify, datetime suite, number format/round/clamp, uuid. Zero npm deps (Node 20+).</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
-            <a href="/v1/packs/core.openwop.data/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
-            · <a href="/v1/packs/core.openwop.data/-/1.0.0.tgz" title="signed tarball (tgz)">tgz</a>
-            · <a href="/v1/packs/core.openwop.data/-/1.0.0.sig" title="Ed25519 signature">sig</a>
+            <a href="/v1/packs/core.openwop.data/-/1.1.0.json" title="version manifest (JSON)">manifest</a>
+            · <a href="/v1/packs/core.openwop.data/-/1.1.0.tgz" title="signed tarball (tgz)">tgz</a>
+            · <a href="/v1/packs/core.openwop.data/-/1.1.0.sig" title="Ed25519 signature">sig</a>
+          </td>
+        </tr>
+        <tr>
+          <td class="name"><code>core.openwop.db</code> </td>
+          <td class="version">1.0.0</td>
+          <td class="desc">Database adapter primitives — sql, nosql, search, vector. Each gated on its host capability (host.sql, host.nosql, host.searchIndex, host.vectorStore) per RFC 0018. Pack speaks no driver — delegates to ctx.db.*. Parametric SQL only (host enforces).</td>
+          <td class="license">Apache-2.0</td>
+          <td class="artifacts">
+            <a href="/v1/packs/core.openwop.db/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
+            · <a href="/v1/packs/core.openwop.db/-/1.0.0.tgz" title="signed tarball (tgz)">tgz</a>
+            · <a href="/v1/packs/core.openwop.db/-/1.0.0.sig" title="Ed25519 signature">sig</a>
           </td>
         </tr>
         <tr>
@@ -164,47 +208,124 @@
           </td>
         </tr>
         <tr>
-          <td class="name"><code>core.openwop.http</code> </td>
+          <td class="name"><code>core.openwop.files</code> </td>
           <td class="version">1.0.0</td>
-          <td class="desc">Spec-canonical HTTP fetch node. Single typeId `core.openwop.http.fetch` with retry, exponential backoff, and deterministic Idempotency-Key derivation for replay safety. Authentication is the workflow author&#39;s concern — pass an `Authorization` header via the `headers` config field (literal token or resolved via the host&#39;s secret-injection mechanism). The pack itself declares no `requiresSecrets` so it runs on every host regardless of `secrets.supported`. Zero npm deps; uses Node 20&#39;s built-in fetch (undici).</td>
+          <td class="desc">File + binary primitives — fs CRUD, base64, mime detection, image / PDF / archive processing, FTP / SFTP / SSH. Capability-gated on host.fs (RFC 0014). Hosts MUST enforce sandbox root + path-traversal protection.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
-            <a href="/v1/packs/core.openwop.http/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
-            · <a href="/v1/packs/core.openwop.http/-/1.0.0.tgz" title="signed tarball (tgz)">tgz</a>
-            · <a href="/v1/packs/core.openwop.http/-/1.0.0.sig" title="Ed25519 signature">sig</a>
+            <a href="/v1/packs/core.openwop.files/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
+            · <a href="/v1/packs/core.openwop.files/-/1.0.0.tgz" title="signed tarball (tgz)">tgz</a>
+            · <a href="/v1/packs/core.openwop.files/-/1.0.0.sig" title="Ed25519 signature">sig</a>
+          </td>
+        </tr>
+        <tr>
+          <td class="name"><code>core.openwop.flow</code> </td>
+          <td class="version">1.0.1</td>
+          <td class="desc">Spec-canonical flow-control primitives. 25 nodes covering branching, merging, iteration, aggregation, batching, sorting, deduplication, repetition, suspension, sub-workflow invocation, and Make-style error handlers. Pure or suspending — no external I/O. Zero npm deps. Engine &gt;=1.0.0 &lt;2.0.0.</td>
+          <td class="license">Apache-2.0</td>
+          <td class="artifacts">
+            <a href="/v1/packs/core.openwop.flow/-/1.0.1.json" title="version manifest (JSON)">manifest</a>
+            · <a href="/v1/packs/core.openwop.flow/-/1.0.1.tgz" title="signed tarball (tgz)">tgz</a>
+            · <a href="/v1/packs/core.openwop.flow/-/1.0.1.sig" title="Ed25519 signature">sig</a>
+          </td>
+        </tr>
+        <tr>
+          <td class="name"><code>core.openwop.hitl</code> </td>
+          <td class="version">1.0.0</td>
+          <td class="desc">Human-in-the-loop primitives. form-request, approval-request, ask-user — each suspends the run via the existing interrupt mechanism. Zero npm deps.</td>
+          <td class="license">Apache-2.0</td>
+          <td class="artifacts">
+            <a href="/v1/packs/core.openwop.hitl/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
+            · <a href="/v1/packs/core.openwop.hitl/-/1.0.0.tgz" title="signed tarball (tgz)">tgz</a>
+            · <a href="/v1/packs/core.openwop.hitl/-/1.0.0.sig" title="Ed25519 signature">sig</a>
+          </td>
+        </tr>
+        <tr>
+          <td class="name"><code>core.openwop.http</code> </td>
+          <td class="version">1.1.0</td>
+          <td class="desc">HTTP + general transport pack. v1.0 baseline: core.openwop.http.fetch (retry, backoff, idempotency). v1.1 additions: openapi-call, GraphQL (query/mutation/subscription), SOAP, gRPC (4 streaming variants), SSE consume, WebSocket client, long-poll, upload (multipart + resumable), download stream, pagination decorators (cursor/offset/link-header), rate-limit-aware retry, circuit breaker, idempotency-key generator, webhook signature verifier (Stripe/GitHub/Slack/raw-hmac). Zero npm deps — Node 20+ fetch/undici; transports requiring native libs delegate to host capabilities.</td>
+          <td class="license">Apache-2.0</td>
+          <td class="artifacts">
+            <a href="/v1/packs/core.openwop.http/-/1.1.0.json" title="version manifest (JSON)">manifest</a>
+            · <a href="/v1/packs/core.openwop.http/-/1.1.0.tgz" title="signed tarball (tgz)">tgz</a>
+            · <a href="/v1/packs/core.openwop.http/-/1.1.0.sig" title="Ed25519 signature">sig</a>
           </td>
         </tr>
         <tr>
           <td class="name"><code>core.openwop.integration</code> </td>
-          <td class="version">1.0.0</td>
-          <td class="desc">Spec-canonical integration pack — universal communication primitives that route through the host&#39;s provider-specific adapters. Phase 1 v1.0.0 ships email-send + slack-message (both communication; both side-effectful with engine Layer-2 cost-once caching via deterministic Idempotency-Key derivation). File-system, database-query, and GitHub-action nodes defer to future minors — each needs real connection-pool / credential abstractions in the host.</td>
+          <td class="version">1.1.0</td>
+          <td class="desc">Integration-layer primitives. v1.0 (email-send, slack-message) plus v1.1 (chat-message-generic, sms-send, voice-call-place, voice-call-tts-greet, notification-push) — provider-neutral cross-cutting integration helpers.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
-            <a href="/v1/packs/core.openwop.integration/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
-            · <a href="/v1/packs/core.openwop.integration/-/1.0.0.tgz" title="signed tarball (tgz)">tgz</a>
-            · <a href="/v1/packs/core.openwop.integration/-/1.0.0.sig" title="Ed25519 signature">sig</a>
+            <a href="/v1/packs/core.openwop.integration/-/1.1.0.json" title="version manifest (JSON)">manifest</a>
+            · <a href="/v1/packs/core.openwop.integration/-/1.1.0.tgz" title="signed tarball (tgz)">tgz</a>
+            · <a href="/v1/packs/core.openwop.integration/-/1.1.0.sig" title="Ed25519 signature">sig</a>
           </td>
         </tr>
         <tr>
           <td class="name"><code>core.openwop.mcp</code> </td>
-          <td class="version">1.0.0</td>
-          <td class="desc">Spec-canonical MCP-operation pack. Four nodes for workflow-author-direct interaction with registered MCP servers — list-tools, invoke-tool, read-resource, server-status. Complements the implicit LLM-mediated tool-call path documented in spec/v1/mcp-integration.md by exposing the same MCP operations as first-class workflow nodes. Routes through the host&#39;s MCP client (ctx.mcp.* surface); the pack itself speaks no MCP protocol.</td>
+          <td class="version">1.1.0</td>
+          <td class="desc">Spec-canonical MCP (Model Context Protocol) pack. v1.0 four-node client baseline (list-tools, invoke-tool, read-resource, server-status) plus the v1.1 additions: full client-side surface (resources, prompts, completion, logging, ping) AND server-side (workflow IS an MCP server — server-trigger + expose-tool/resource/prompt + handle-sampling/elicitation + provide-roots). Tracks modelcontextprotocol.io 2025-06-18 spec via spec/v1/mcp-integration.md.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
-            <a href="/v1/packs/core.openwop.mcp/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
-            · <a href="/v1/packs/core.openwop.mcp/-/1.0.0.tgz" title="signed tarball (tgz)">tgz</a>
-            · <a href="/v1/packs/core.openwop.mcp/-/1.0.0.sig" title="Ed25519 signature">sig</a>
+            <a href="/v1/packs/core.openwop.mcp/-/1.1.0.json" title="version manifest (JSON)">manifest</a>
+            · <a href="/v1/packs/core.openwop.mcp/-/1.1.0.tgz" title="signed tarball (tgz)">tgz</a>
+            · <a href="/v1/packs/core.openwop.mcp/-/1.1.0.sig" title="Ed25519 signature">sig</a>
+          </td>
+        </tr>
+        <tr>
+          <td class="name"><code>core.openwop.messaging</code> </td>
+          <td class="version">1.0.0</td>
+          <td class="desc">Queue + stream primitives — publish, consume (trigger), ack/nack/dead-letter, stream subscribe/publish. Capability-gated on host.queueBus (RFC 0017). Sibling to host.messaging (outbound-egress-only).</td>
+          <td class="license">Apache-2.0</td>
+          <td class="artifacts">
+            <a href="/v1/packs/core.openwop.messaging/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
+            · <a href="/v1/packs/core.openwop.messaging/-/1.0.0.tgz" title="signed tarball (tgz)">tgz</a>
+            · <a href="/v1/packs/core.openwop.messaging/-/1.0.0.sig" title="Ed25519 signature">sig</a>
+          </td>
+        </tr>
+        <tr>
+          <td class="name"><code>core.openwop.obs</code> </td>
+          <td class="version">1.0.0</td>
+          <td class="desc">Observability emission primitives. Workflows publish logs / metrics / traces / alerts under the canonical openwop.* OTel namespace. Delegates to ctx.observability when the host advertises it, no-ops gracefully otherwise. Zero npm deps.</td>
+          <td class="license">Apache-2.0</td>
+          <td class="artifacts">
+            <a href="/v1/packs/core.openwop.obs/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
+            · <a href="/v1/packs/core.openwop.obs/-/1.0.0.tgz" title="signed tarball (tgz)">tgz</a>
+            · <a href="/v1/packs/core.openwop.obs/-/1.0.0.sig" title="Ed25519 signature">sig</a>
+          </td>
+        </tr>
+        <tr>
+          <td class="name"><code>core.openwop.rag</code> </td>
+          <td class="version">1.0.0</td>
+          <td class="desc">Retrieval-Augmented-Generation primitives: loaders, splitters, vector ops (thin wrappers over core.openwop.db.vector-*), and retrievers (basic / multi-query / contextual-compression).</td>
+          <td class="license">Apache-2.0</td>
+          <td class="artifacts">
+            <a href="/v1/packs/core.openwop.rag/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
+            · <a href="/v1/packs/core.openwop.rag/-/1.0.0.tgz" title="signed tarball (tgz)">tgz</a>
+            · <a href="/v1/packs/core.openwop.rag/-/1.0.0.sig" title="Ed25519 signature">sig</a>
+          </td>
+        </tr>
+        <tr>
+          <td class="name"><code>core.openwop.storage</code> </td>
+          <td class="version">1.0.0</td>
+          <td class="desc">State primitives — kv / table / cache / blob / queue. Each node gated on its specific host capability block (host.kvStorage, host.tableStorage, host.cache, host.blobStorage, host.queue) per RFCs 0015–0019. Pack delegates to ctx.storage.* host surface. Zero npm deps.</td>
+          <td class="license">Apache-2.0</td>
+          <td class="artifacts">
+            <a href="/v1/packs/core.openwop.storage/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
+            · <a href="/v1/packs/core.openwop.storage/-/1.0.0.tgz" title="signed tarball (tgz)">tgz</a>
+            · <a href="/v1/packs/core.openwop.storage/-/1.0.0.sig" title="Ed25519 signature">sig</a>
           </td>
         </tr>
         <tr>
           <td class="name"><code>core.openwop.triggers</code> </td>
-          <td class="version">1.0.0</td>
-          <td class="desc">Workflow-trigger pack. Seven entry-point shapes — webhook, schedule, event, envelope, chatMessage, canvas, artifact — that hosts use to register workflows for external-event-driven dispatch. Trigger nodes are pass-through executors: they forward `ctx.triggerData` (set by the engine when the trigger fires) to outputs. The pack contributes the typed config + payload schemas + the runtime pass-through.</td>
+          <td class="version">1.1.0</td>
+          <td class="desc">Workflow-trigger pack. Sixteen entry-point shapes — original seven (webhook, schedule, event, envelope, chatMessage, canvas, artifact) plus the v1.1 additions (mailhook, email-imap, form, rss, manual, error, sub-workflow, cron-advanced) and the webhook-response action. Trigger nodes are pass-through executors: they forward `ctx.triggerData` (set by the engine when the trigger fires) to outputs.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
-            <a href="/v1/packs/core.openwop.triggers/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
-            · <a href="/v1/packs/core.openwop.triggers/-/1.0.0.tgz" title="signed tarball (tgz)">tgz</a>
-            · <a href="/v1/packs/core.openwop.triggers/-/1.0.0.sig" title="Ed25519 signature">sig</a>
+            <a href="/v1/packs/core.openwop.triggers/-/1.1.0.json" title="version manifest (JSON)">manifest</a>
+            · <a href="/v1/packs/core.openwop.triggers/-/1.1.0.tgz" title="signed tarball (tgz)">tgz</a>
+            · <a href="/v1/packs/core.openwop.triggers/-/1.1.0.sig" title="Ed25519 signature">sig</a>
           </td>
         </tr>
         <tr>
@@ -685,7 +806,7 @@ const ok = verify(null, readFileSync('pack.tgz'), pub, readFileSync('pack.sig'))
   </section>
 
   <footer>
-    Generated 2026-05-13T19:25:36.697Z · <a href="https://openwop.dev/">openwop.dev</a> · <a href="https://github.com/openwop/openwop">openwop on GitHub</a>
+    Generated 2026-05-17T14:25:27.426Z · <a href="https://openwop.dev/">openwop.dev</a> · <a href="https://github.com/openwop/openwop">openwop on GitHub</a>
   </footer>
 </main>
 </body>

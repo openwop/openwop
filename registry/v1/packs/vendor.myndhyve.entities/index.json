@@ -1,11 +1,19 @@
 {
   "name": "vendor.myndhyve.entities",
+  "kind": "node",
   "description": "MyndHyve entities + validation + asset-decision + messaging primitives. 5 nodes covering project creation, cross-stage validation (deterministic, no LLM), workspace asset decision gates (brand / persona / KB), and chat send/reply via the messaging connector layer.",
   "author": "MyndHyve",
   "license": "Apache-2.0",
   "homepage": "https://myndhyve.ai/packs/entities",
   "repository": "https://github.com/openwop/openwop",
   "tags": [],
+  "typeIds": [
+    "core.entities.projectCreate",
+    "core.validation.crossStageCheck",
+    "core.workflow.assetDecisionGate",
+    "messaging.chatSend",
+    "messaging.chatReply"
+  ],
   "versions": [
     {
       "version": "1.0.0",

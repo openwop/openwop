@@ -1,11 +1,29 @@
 {
   "name": "core.openwop.ai",
-  "description": "Spec-canonical AI-call pack. Three foundational nodes (chat-completion, structured-output, embeddings) that route through the host's BYOK aiProviders surface — the pack itself makes no HTTP calls. peerDependencies on `aiProviders.supported`. Side-effectful (declared) so the engine's Layer-2 invocation log caches responses keyed on (runId, nodeId, request-hash) for replay safety.",
+  "kind": "node",
+  "description": "Spec-canonical AI-call pack. v1.0 (chatCompletion, structuredOutput, toolCalling, embeddings) plus v1.1 multi-modal + LLM helpers — image generate/edit/upscale, audio transcribe/synthesize, video generate, rerank, classify, extract, guardrails, transform. Routes through host BYOK aiProviders.",
   "author": "OpenWOP Working Group",
   "license": "Apache-2.0",
   "homepage": "https://openwop.dev/packs/core.openwop.ai",
   "repository": "https://github.com/openwop/openwop",
   "tags": [],
+  "typeIds": [
+    "core.ai.chatCompletion",
+    "core.ai.structuredOutput",
+    "core.ai.toolCalling",
+    "core.openwop.ai.embeddings",
+    "core.openwop.ai.image-generate",
+    "core.openwop.ai.image-edit",
+    "core.openwop.ai.image-upscale",
+    "core.openwop.ai.audio-transcribe",
+    "core.openwop.ai.audio-synthesize",
+    "core.openwop.ai.video-generate",
+    "core.openwop.ai.rerank",
+    "core.openwop.ai.classify",
+    "core.openwop.ai.extract",
+    "core.openwop.ai.guardrails",
+    "core.openwop.ai.transform"
+  ],
   "versions": [
     {
       "version": "1.0.0",
@@ -18,8 +36,20 @@
       "integrity": "sha256-4vVid0p2eqjX/6zYHwFgCElbsvn7YdvDXHkENA9y//U=",
       "deprecated": false,
       "yanked": false
+    },
+    {
+      "version": "1.1.0",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/core.openwop.ai/-/1.1.0.json",
+      "tarballUrl": "/v1/packs/core.openwop.ai/-/1.1.0.tgz",
+      "signatureUrl": "/v1/packs/core.openwop.ai/-/1.1.0.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-4i41sTVpNh9B3lGAO3GJlji1Nov6RU+YFRR4DWLTGIQ=",
+      "deprecated": false,
+      "yanked": false
     }
   ],
-  "latest": "1.0.0",
+  "latest": "1.1.0",
   "deprecated": false
 }

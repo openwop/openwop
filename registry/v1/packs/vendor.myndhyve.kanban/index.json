@@ -1,11 +1,21 @@
 {
   "name": "vendor.myndhyve.kanban",
+  "kind": "node",
   "description": "MyndHyve kanban-coordination pack. 7 nodes covering board lifecycle, task management (assign + AI-powered decompose), timeline planning, automation rules, and resource monitoring. Routes through ctx.kanban.* host adapter.",
   "author": "MyndHyve",
   "license": "Apache-2.0",
   "homepage": "https://myndhyve.ai/packs/kanban",
   "repository": "https://github.com/openwop/openwop",
   "tags": [],
+  "typeIds": [
+    "kanban.board.create",
+    "kanban.board.review",
+    "kanban.task.assign",
+    "kanban.task.decompose",
+    "kanban.timeline.plan",
+    "kanban.workflow.automate",
+    "kanban.resource.monitor"
+  ],
   "versions": [
     {
       "version": "1.0.0",
