@@ -31,6 +31,10 @@ export interface DispatchRequest {
   webSearch?: boolean;
   /** Called for each streaming token chunk (text delta). */
   onDelta?: (delta: string) => void | Promise<void>;
+  /** Optional abort signal so callers (e.g., the aiProviders host
+   *  adapter's per-call timeout) can hard-abort the underlying fetch
+   *  instead of leaving it dangling. */
+  signal?: AbortSignal;
 }
 
 /** A normalized citation surfaced from a provider's web-search tool result. */
@@ -99,6 +103,7 @@ async function dispatchAnthropic(req: DispatchRequest): Promise<DispatchResult> 
       ...(systemMessage ? { system: contentToText(systemMessage.content, 'Anthropic') } : {}),
       messages: conversation.map((m) => ({ role: m.role, content: contentToText(m.content, 'Anthropic') })),
     }),
+    ...(req.signal ? { signal: req.signal } : {}),
   });
   if (!res.ok) {
     const errBody = await res.text();
@@ -166,6 +171,7 @@ async function dispatchOpenAI(req: DispatchRequest): Promise<DispatchResult> {
       stream_options: { include_usage: true },
       messages: req.messages.map((m) => ({ role: m.role, content: contentToText(m.content, 'OpenAI') })),
     }),
+    ...(req.signal ? { signal: req.signal } : {}),
   });
   if (!res.ok) {
     const errBody = await res.text();
@@ -250,6 +256,7 @@ async function dispatchGoogle(req: DispatchRequest): Promise<DispatchResult> {
         ...(needsThinkingDisable ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
       },
     }),
+    ...(req.signal ? { signal: req.signal } : {}),
   });
   if (!res.ok) {
     const errBody = await res.text();

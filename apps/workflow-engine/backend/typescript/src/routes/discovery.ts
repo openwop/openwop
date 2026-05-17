@@ -98,10 +98,25 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
         scopes: ['tenant', 'user', 'run'],
         resolution: 'host-managed',
       },
+      // Spec-shaped per `spec/v1/capabilities.md:126-163` + `host-capabilities.md §host.aiProviders`.
+      // Sample host wires three providers via raw fetch (see
+      // `providers/dispatch.ts`); each requires BYOK. Tool-calling is
+      // Anthropic-only for v1 (the only provider with a wired
+      // tool_use loop in `providers/dispatchAnthropicTools.ts`).
+      // Embeddings + image/video generation are NOT implemented — honestly
+      // advertised so packs that depend on those sub-caps don't load.
       aiProviders: {
-        supported: [],
-        byok: false,
-        policies: ['optional'],
+        supported: ['anthropic', 'openai', 'google'],
+        byok: ['anthropic', 'openai', 'google'],
+        policies: {
+          modes: ['disabled', 'optional', 'required', 'restricted'],
+          scopes: ['workspace', 'project', 'canvas-type'],
+          errorCode: 'provider_policy_denied',
+        },
+        toolCalling: { supported: true, providers: ['anthropic'] },
+        embeddings: { supported: false },
+        imageGeneration: { supported: false },
+        videoGeneration: { supported: false },
       },
       interrupts: {
         supported: true,

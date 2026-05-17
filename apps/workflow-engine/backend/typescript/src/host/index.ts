@@ -15,6 +15,7 @@ import type { Storage } from '../storage/storage.js';
 import type { Principal } from '../types.js';
 import { OpenwopError } from '../types.js';
 import type { WorkflowDefinition } from '../executor/types.js';
+import { getRegisteredWorkflow } from './workflowsRegistry.js';
 
 const log = createLogger('host');
 
@@ -107,8 +108,30 @@ export interface ConnectorInvoker {
   invoke(connectorId: string, args: unknown): Promise<unknown>;
 }
 
+/**
+ * Four-mode AI provider policy per `spec/v1/capabilities.md:268-275`.
+ * `disabled` blocks the provider entirely; `optional` (default) allows
+ * any model; `required` mandates a BYOK credentialRef; `restricted`
+ * limits the caller to a whitelist of model ids (empty list MUST fail
+ * closed per `capabilities.md:285`).
+ */
+export type AiProviderPolicyMode = 'disabled' | 'optional' | 'required' | 'restricted';
+
+export interface AiProviderPolicy {
+  provider: string;
+  mode: AiProviderPolicyMode;
+  /** Glob list for `restricted`; ignored for other modes. */
+  allowedModels?: readonly string[];
+}
+
 export interface ProviderPolicyResolver {
-  resolveForRun(input: { tenantId: string; scopeId?: string }): Promise<{ provider: string; allowedModels: readonly string[] }[]>;
+  /**
+   * Returns one row per *known* provider. Absent provider → caller
+   * defaults to `optional`. Per `capabilities.md:284`, resolver
+   * outages fail open to `optional` — `aiProvidersHost.ts` enforces
+   * the fail-open rule when this throws.
+   */
+  resolveForRun(input: { tenantId: string; scopeId?: string }): Promise<readonly AiProviderPolicy[]>;
 }
 
 // ── Throw-on-use stub helper ──
@@ -184,7 +207,13 @@ export function createHostAdapterSuite(deps: { storage: Storage }): HostAdapterS
             },
           };
         }
-        // Future: read from storage's `workflows` table.
+        // Builder-registered workflows from the in-memory registry,
+        // populated via `POST /v1/host/sample/workflows`. Sample-grade
+        // (process-local). Real hosts read from storage's `workflows` table.
+        const registered = getRegisteredWorkflow(workflowId);
+        if (registered) {
+          return { workflowId, definition: registered };
+        }
         return null;
       },
     },
@@ -263,8 +292,57 @@ export function createHostAdapterSuite(deps: { storage: Storage }): HostAdapterS
     enterprisePolicyResolver: throwOnUse<EnterprisePolicyResolver>('host.enterprisePolicy'),
     environmentResolver: throwOnUse<EnvironmentResolver>('host.environment'),
     connectorInvoker: throwOnUse<ConnectorInvoker>('host.connectors'),
-    providerPolicyResolver: throwOnUse<ProviderPolicyResolver>('host.aiProviders'),
+
+    // ── provider policy resolver (env-var driven; sample-grade global)
+    //   OPENWOP_AI_POLICY_<PROVIDER>=disabled|optional|required|restricted[:model1,model2,...]
+    // Real hosts persist per-tenant + per-scope policy in their tenants
+    // table; the sample applies one policy set to every (tenantId,
+    // scopeId) tuple. The full four-mode predicate from
+    // `spec/v1/capabilities.md:246-289` is implemented — only the
+    // *scoping* is sample-grade.
+    providerPolicyResolver: createEnvVarProviderPolicyResolver(),
   };
+}
+
+// ── Provider policy resolver ──
+
+const KNOWN_PROVIDERS: readonly string[] = ['anthropic', 'openai', 'google'];
+
+function createEnvVarProviderPolicyResolver(): ProviderPolicyResolver {
+  return {
+    async resolveForRun(_input) {
+      const out: AiProviderPolicy[] = [];
+      for (const provider of KNOWN_PROVIDERS) {
+        const raw = process.env[`OPENWOP_AI_POLICY_${provider.toUpperCase()}`];
+        if (!raw) {
+          out.push({ provider, mode: 'optional' });
+          continue;
+        }
+        const parsed = parseEnvPolicy(provider, raw);
+        if (parsed) out.push(parsed);
+      }
+      return out;
+    },
+  };
+}
+
+function parseEnvPolicy(provider: string, raw: string): AiProviderPolicy | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return { provider, mode: 'optional' };
+  const [modeRaw, modelsRaw] = trimmed.split(':');
+  const mode = (modeRaw ?? '').toLowerCase() as AiProviderPolicyMode;
+  if (mode !== 'disabled' && mode !== 'optional' && mode !== 'required' && mode !== 'restricted') {
+    log.warn('invalid OPENWOP_AI_POLICY mode; treating as optional', { provider, raw });
+    return { provider, mode: 'optional' };
+  }
+  if (mode === 'restricted') {
+    const models = (modelsRaw ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+    return { provider, mode, allowedModels: models };
+  }
+  return { provider, mode };
 }
 
 // ── In-memory secret resolver (sample-only impl) ──

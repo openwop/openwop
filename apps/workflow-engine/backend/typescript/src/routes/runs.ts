@@ -145,7 +145,9 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
       // so the HTTP response returns immediately and the dispatcher runs
       // separately. setImmediate keeps the sample single-instance.
       setImmediate(() => {
-        executeRun(storage, run, wf.definition).catch((err) => {
+        executeRun(storage, run, wf.definition, {
+          policyResolver: hostSuite.providerPolicyResolver,
+        }).catch((err) => {
           log.error('inline dispatch failed', {
             runId,
             error: err instanceof Error ? err.message : String(err),
@@ -269,7 +271,9 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
       res.status(202).json(response);
 
       setImmediate(() => {
-        executeRun(storage, forkedRun, wf.definition).catch((err) => {
+        executeRun(storage, forkedRun, wf.definition, {
+          policyResolver: hostSuite.providerPolicyResolver,
+        }).catch((err) => {
           log.error('fork dispatch failed', {
             runId: newRunId,
             error: err instanceof Error ? err.message : String(err),

@@ -26,6 +26,42 @@ export function clearRunSecrets(runId: string): void {
 }
 
 /**
+ * Build a Proxy view over a secrets map that allows direct key
+ * lookup (`secrets[ref]`) but throws when code attempts to ENUMERATE
+ * the map (`Object.keys`, `Object.entries`, `JSON.stringify`,
+ * spread, `for…in`, etc.).
+ *
+ * Used by the executor to hand pack-loaded node code a non-iterable
+ * view of `ctx.secrets` — packs that need to authenticate against a
+ * provider can look up a known ref by name, but can't exfiltrate the
+ * whole keyring through an `outputs` field. The host-owned adapter
+ * (`aiProvidersHost.ts`) receives the RAW map so its convention-
+ * based lookup still works.
+ *
+ * NOTE: This is defense-in-depth. A malicious pack with arbitrary
+ * code execution could still call `String.prototype` tricks or use
+ * `Reflect.ownKeys` shenanigans. The true sandbox is the worker-
+ * thread / wasm isolation per RFC 0008 (not implemented in this sample).
+ */
+export function nonEnumerableSecretsView(secrets: Record<string, string>): Record<string, string> {
+  return new Proxy(secrets, {
+    get(target, prop) {
+      if (typeof prop !== 'string') return undefined;
+      return target[prop];
+    },
+    has(target, prop) {
+      return typeof prop === 'string' && prop in target;
+    },
+    ownKeys() {
+      throw new Error('secrets_view_not_enumerable: ctx.secrets is non-enumerable in pack code; look up known refs by name (e.g., secrets["anthropic"]).');
+    },
+    getOwnPropertyDescriptor() {
+      throw new Error('secrets_view_not_enumerable: ctx.secrets is non-enumerable in pack code; look up known refs by name (e.g., secrets["anthropic"]).');
+    },
+  }) as Record<string, string>;
+}
+
+/**
  * Returns a deep-copy of `payload` with any string value matching a
  * known secret replaced by `"<<redacted:${credentialRef}>>"`. Walks
  * nested objects + arrays.

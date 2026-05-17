@@ -24,12 +24,15 @@ import {
   getRunSecrets,
   clearRunSecrets,
   stripSecretsFromPersisted,
+  nonEnumerableSecretsView,
 } from '../byok/ephemeralRunSecrets.js';
 import { resolveSecret } from '../byok/secretResolver.js';
 import { OpenwopError } from '../types.js';
 import type { Storage } from '../storage/storage.js';
 import type { NodeContext, NodeOutcome, WorkflowDefinition } from './types.js';
 import type { RunRecord } from '../types.js';
+import type { ProviderPolicyResolver } from '../host/index.js';
+import { createAiProvidersAdapter, AiProviderError } from '../aiProviders/aiProvidersHost.js';
 
 export interface ExecuteRunResult {
   status: RunRecord['status'];
@@ -76,7 +79,14 @@ export async function executeRun(
   storage: Storage,
   run: RunRecord,
   definition: WorkflowDefinition,
-  options: { resumeFromNodeIndex?: number; resumeValue?: unknown } = {},
+  options: {
+    resumeFromNodeIndex?: number;
+    resumeValue?: unknown;
+    /** Optional host policy resolver. When absent (legacy callers in
+     *  tests / forks), the per-node ctx omits `callAI` and packs that
+     *  rely on `aiProviders` fail with `host_capability_missing`. */
+    policyResolver?: ProviderPolicyResolver;
+  } = {},
 ): Promise<ExecuteRunResult> {
   const tracer = trace.getTracer('openwop.workflow-engine-sample');
   const registry = getNodeRegistry();
@@ -144,6 +154,29 @@ export async function executeRun(
     storage.updateRun(run.runId, { currentNodeId: node.nodeId });
     eventLog.append({ runId: run.runId, nodeId: node.nodeId, type: 'node.started', payload: {} });
 
+    // Two views of the secrets map:
+    //   - `rawSecrets` (host-side): adapter uses this to look up
+    //     credentials by convention (`secrets[provider]`, etc.).
+    //   - `secretsForCtx` (pack-side): a Proxy that allows direct
+    //     `secrets[ref]` lookup but throws on enumeration, so a
+    //     pack can't `JSON.stringify(ctx.secrets)` and exfiltrate
+    //     the whole keyring through an output field. Real hosts'
+    //     pack sandboxes (RFC 0008) would enforce this at the
+    //     module-loader level; the sample uses a Proxy as a
+    //     defense-in-depth layer.
+    const rawSecrets = getRunSecrets(run.runId);
+    const secretsForCtx = nonEnumerableSecretsView(rawSecrets);
+    const aiAdapter = options.policyResolver
+      ? createAiProvidersAdapter({
+          runId: run.runId,
+          nodeId: node.nodeId,
+          tenantId: run.tenantId,
+          ...(run.scopeId ? { scopeId: run.scopeId } : {}),
+          attempt: 1,
+          secrets: rawSecrets,
+          policyResolver: options.policyResolver,
+        })
+      : null;
     const ctx: NodeContext = {
       runId: run.runId,
       nodeId: node.nodeId,
@@ -153,10 +186,11 @@ export async function executeRun(
       config: node.config ?? {},
       configurable: run.configurable ?? {},
       attempt: 1,
-      secrets: getRunSecrets(run.runId),
+      secrets: secretsForCtx,
       async emit(type, payload) {
         eventLog.append({ runId: run.runId, nodeId: node.nodeId, type, payload: stripSecretsFromPersisted(payload) });
       },
+      ...(aiAdapter ? { callAI: aiAdapter.callAI, callAIWithTools: aiAdapter.callAIWithTools } : {}),
     };
 
     let outcome: NodeOutcome;
@@ -173,7 +207,13 @@ export async function executeRun(
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       span.setStatus({ code: SpanStatusCode.ERROR, message });
-      outcome = { status: 'failure', error: { code: 'internal_error', message } };
+      // AI-provider failures carry a normalized code from
+      // `aiProvidersHost.AiProviderError` per spec §host.aiProviders;
+      // preserve that code so callers can react ('provider_policy_denied',
+      // 'model_not_supported', 'safety_filter', …) instead of seeing a
+      // flattened 'internal_error'.
+      const code = err instanceof AiProviderError ? err.code : 'internal_error';
+      outcome = { status: 'failure', error: { code, message } };
     } finally {
       span.end();
     }

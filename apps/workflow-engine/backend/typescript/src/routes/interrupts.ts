@@ -140,6 +140,7 @@ async function resolveAndResume(
     executeRun(storage, run, wf.definition, {
       resumeFromNodeIndex: nodeIndex + 1,
       resumeValue,
+      policyResolver: hostSuite.providerPolicyResolver,
     }).catch((err) => {
       log.error('resume dispatch failed', {
         runId: run.runId,

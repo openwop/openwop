@@ -24,6 +24,7 @@ import { ensureEventLogInstalled } from './bootstrap/eventLog.js';
 import { ensureInvocationLogInstalled } from './bootstrap/invocationLog.js';
 import { ensureRuntimeCapabilityRegistryInstalled } from './bootstrap/runtimeCapabilityRegistry.js';
 import { ensureNodePackResolverInstalled } from './bootstrap/nodePackResolver.js';
+import { ensureRegistryPacksInstalled } from './bootstrap/installRegistryPacks.js';
 import { openStorage } from './storage/index.js';
 import { createHostAdapterSuite } from './host/index.js';
 import { configureSecretResolver, loadSecretsFromEnv } from './byok/secretResolver.js';
@@ -36,6 +37,8 @@ import { registerStreamRoutes } from './routes/streams.js';
 import { registerWebhookRoutes } from './routes/webhooks.js';
 import { registerPackRoutes } from './routes/packs.js';
 import { registerByokRoutes } from './routes/byok.js';
+import { registerWorkflowRoutes } from './routes/workflows.js';
+import { registerNodeCatalogRoute } from './routes/nodeCatalog.js';
 
 const log = createLogger('workflow-engine');
 
@@ -90,6 +93,11 @@ export async function createApp(config: AppConfig): Promise<Express> {
   ensureRuntimeCapabilityRegistryInstalled();
   ensureNodePackResolverInstalled(storage);
 
+  // Fetch + verify + install registry packs the sample wants in the
+  // builder palette. Non-blocking: install failures are logged and
+  // the sample still serves the locally-registered nodes.
+  await ensureRegistryPacksInstalled();
+
   const app = express();
 
   // Higher-limit JSON parser for /v1/packs/* publish payloads. MUST
@@ -118,6 +126,8 @@ export async function createApp(config: AppConfig): Promise<Express> {
   registerWebhookRoutes(app, { storage });
   registerPackRoutes(app, { storage });
   registerByokRoutes(app);
+  registerWorkflowRoutes(app);
+  registerNodeCatalogRoute(app);
 
   // Express 4 catch-all (no path string — avoids path-to-regexp v6 issue).
   app.use((_req, res) => {
