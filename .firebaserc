@@ -10,6 +10,9 @@
         ],
         "packs": [
           "packs-openwop-dev"
+        ],
+        "app": [
+          "app-openwop-dev"
         ]
       }
     }

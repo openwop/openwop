@@ -13,7 +13,7 @@
 import { useSyncExternalStore } from 'react';
 import { NODE_CATALOG, type ConfigField, type NodeCatalogEntry } from './nodeCatalog.js';
 import type { NodeCategory } from '../schema/workflow.js';
-import { config } from '../../client/config.js';
+import { authedHeaders, config, fetchOpts } from '../../client/config.js';
 
 interface ServerCatalogNode {
   typeId: string;
@@ -93,9 +93,9 @@ export function loadDynamicCatalog(): Promise<void> {
   if (loadPromise) return loadPromise;
   loadPromise = (async () => {
     try {
-      const res = await fetch(`${config.baseUrl}/v1/host/sample/node-catalog`, {
-        headers: { authorization: `Bearer ${config.apiKey}` },
-      });
+      const res = await fetch(`${config.baseUrl}/v1/host/sample/node-catalog`, fetchOpts({
+        headers: authedHeaders(),
+      }));
       if (!res.ok) return;
       const body = (await res.json()) as { nodes: ServerCatalogNode[] };
       for (const node of body.nodes) {

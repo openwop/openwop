@@ -35,12 +35,16 @@ export function subscribeToRun(runId: string, opts: SubscribeOptions): Subscript
   if (opts.modes && opts.modes.length > 0) {
     url.searchParams.set('mode', opts.modes.join(','));
   }
-  // Sample auth via query string. The BE's auth middleware reads the
-  // Authorization header for normal routes; for SSE we bypass that here
-  // and rely on the route exemption pattern used by EventSource.
-  url.searchParams.set('apiKey', config.apiKey);
+  // SSE auth: in bearer mode we pass the apiKey via ?apiKey= because
+  // EventSource can't set custom headers (WHATWG limitation). In
+  // cookie mode we rely on the session cookie travelling with
+  // `withCredentials: true` — same-origin under app.openwop.dev so
+  // the openwop.session cookie attaches automatically.
+  if (config.authMode === 'bearer') {
+    url.searchParams.set('apiKey', config.apiKey);
+  }
 
-  const es = new EventSource(url.toString());
+  const es = new EventSource(url.toString(), { withCredentials: config.authMode === 'cookie' });
 
   // Generic listener catches every typed event the BE emits via SSE
   // `event:` field. EventSource fires named events on `addEventListener`

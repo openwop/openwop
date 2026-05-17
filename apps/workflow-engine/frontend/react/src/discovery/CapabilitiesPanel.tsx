@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getCapabilities } from '../client/runsClient.js';
-import { config } from '../client/config.js';
+import { authedHeaders, config, fetchOpts } from '../client/config.js';
 
 interface HostSurfaceAd {
   name: string;
@@ -36,9 +36,9 @@ export function CapabilitiesPanel() {
     let cancelled = false;
     Promise.all([
       getCapabilities() as Promise<Caps>,
-      fetch(`${config.baseUrl}/v1/host/sample/node-catalog`, {
-        headers: { authorization: `Bearer ${config.apiKey}` },
-      }).then((r) => r.json() as Promise<CatalogResp>),
+      fetch(`${config.baseUrl}/v1/host/sample/node-catalog`, fetchOpts({
+        headers: authedHeaders(),
+      })).then((r) => r.json() as Promise<CatalogResp>),
     ])
       .then(([c, k]) => {
         if (cancelled) return;

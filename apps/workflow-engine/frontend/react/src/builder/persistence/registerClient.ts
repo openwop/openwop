@@ -4,7 +4,7 @@
  * dispatches `POST /v1/runs` through the normal runs client.
  */
 
-import { config } from '../../client/config.js';
+import { authedHeaders, config, fetchOpts } from '../../client/config.js';
 
 interface RegisterBody {
   workflowId: string;
@@ -16,14 +16,11 @@ interface RegisterBody {
 }
 
 export async function registerWorkflow(body: RegisterBody): Promise<{ workflowId: string; nodeCount: number }> {
-  const res = await fetch(`${config.baseUrl}/v1/host/sample/workflows`, {
+  const res = await fetch(`${config.baseUrl}/v1/host/sample/workflows`, fetchOpts({
     method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      authorization: `Bearer ${config.apiKey}`,
-    },
+    headers: authedHeaders({ 'content-type': 'application/json' }),
     body: JSON.stringify(body),
-  });
+  }));
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`register_workflow_failed (${res.status}): ${text.slice(0, 300)}`);

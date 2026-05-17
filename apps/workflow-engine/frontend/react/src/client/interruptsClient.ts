@@ -4,7 +4,7 @@
  */
 
 import { getSdkClient } from './runsClient.js';
-import { config } from './config.js';
+import { authedHeaders, config, fetchOpts } from './config.js';
 
 export async function resolveByRun(runId: string, nodeId: string, resumeValue: unknown): Promise<void> {
   await getSdkClient().interrupts.resolveByRun(runId, nodeId, { resumeValue });
@@ -43,9 +43,9 @@ export interface OpenInterrupt {
  *  prefixed under /v1/host/sample/* per host-extensions.md (strong
  *  candidate for future RFC promotion). */
 export async function listOpenInterrupts(runId: string): Promise<readonly OpenInterrupt[]> {
-  const res = await fetch(`${config.baseUrl}/v1/host/sample/runs/${encodeURIComponent(runId)}/interrupts`, {
-    headers: { authorization: `Bearer ${config.apiKey}` },
-  });
+  const res = await fetch(`${config.baseUrl}/v1/host/sample/runs/${encodeURIComponent(runId)}/interrupts`, fetchOpts({
+    headers: authedHeaders(),
+  }));
   if (!res.ok) throw new Error(`listOpenInterrupts returned ${res.status}`);
   const body = (await res.json()) as { interrupts: OpenInterrupt[] };
   return body.interrupts;
