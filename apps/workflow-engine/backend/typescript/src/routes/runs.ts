@@ -45,7 +45,13 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
       const principal = req.principal;
       if (!principal) throw new OpenwopError('unauthenticated', 'Bearer token required', 401);
 
-      const tenantId = body.tenantId ?? 'default';
+      // Tenant id: session-authed callers get their cookie-derived
+      // tenant by default; explicit body.tenantId still works but the
+      // principalAuthorizer rejects a mismatch. Bearer-authed callers
+      // fall back to the body field or 'default'. Closes the
+      // cross-tenant impersonation hole flagged in the P0.2 deploy
+      // hardening for app.openwop.dev.
+      const tenantId = body.tenantId ?? req.tenantId ?? 'default';
       const allowed = await hostSuite.principalAuthorizer.authorize(
         principal,
         'run.create',

@@ -19,6 +19,9 @@ const TOKEN = 'sample-token';
 
 beforeAll(async () => {
   process.env.OPENWOP_STORAGE_DSN = 'memory://';
+  // Tests run in legacy Bearer-only mode (no cookies). The cookie
+  // path is exercised separately in test/auth-cookies.test.ts.
+  process.env.OPENWOP_AUTH_DISABLE_COOKIES = 'true';
   const app = await createApp({
     port: PORT,
     storageDsn: 'memory://',
