@@ -15,6 +15,7 @@ import { getProvider } from '../byok/lib/providers.js';
 import type { BYOKActiveConfig } from '../byok/lib/useBYOKConfig.js';
 import type { ContentPart } from './hooks/useChatSession.js';
 import { buildAvailableTools } from './lib/availableTools.js';
+import { detectBareMention } from './lib/workflowMentions.js';
 
 // Ensure built-in commands are registered before first render.
 registerDefaultCommands();
@@ -27,7 +28,7 @@ interface Props {
 }
 
 export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'demo' }: Props): JSX.Element {
-  const { session, isSending, error, send, cancel, emitSystem, reset, resolveInterrupt } = useChatSession();
+  const { session, isSending, error, send, cancel, emitSystem, reset, resolveInterrupt, runWorkflowMention } = useChatSession();
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [toolsEnabled, setToolsEnabled] = useState(false);
 
@@ -48,9 +49,20 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
 
   const disabledReason = isSending ? 'A turn is in flight — wait for the response.' : undefined;
 
-  /** Submit path: intercepts /commands and dispatches via the registry;
-   *  falls through to send() for regular chat. */
+  /** Submit path: intercepts /commands and bare `@mention` workflow
+   *  dispatches via their respective handlers; falls through to send()
+   *  for regular chat (which may still trigger workflow tool-use through
+   *  the Anthropic-only `availableTools` path). */
   const onUserSubmit = useCallback(async (text: string, attachments?: readonly ContentPart[]) => {
+    // Bare `@<slug>` (no other text, no attachments) → direct workflow
+    // dispatch. Avoids the LLM round-trip and works on every provider.
+    if (!attachments) {
+      const mention = detectBareMention(text);
+      if (mention) {
+        await runWorkflowMention(mention);
+        return;
+      }
+    }
     const cmd = findCommand(text);
     if (cmd && !attachments) {
       // Slash commands don't accept attachments — preserve the command's
@@ -71,7 +83,7 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
       webSearch: webSearchEnabled && supportsWebSearch,
       tools: toolsEnabled && supportsTools ? buildAvailableTools() : undefined,
     });
-  }, [send, cancel, reset, emitSystem, config, webSearchEnabled, supportsWebSearch, toolsEnabled, supportsTools]);
+  }, [send, cancel, reset, emitSystem, config, webSearchEnabled, supportsWebSearch, toolsEnabled, supportsTools, runWorkflowMention]);
 
   return (
     <div style={{

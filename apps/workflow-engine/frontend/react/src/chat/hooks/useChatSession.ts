@@ -21,6 +21,10 @@ import { subscribeToRun, type Subscription } from '../../client/streamsClient.js
 import { listOpenInterrupts, type OpenInterrupt } from '../../client/interruptsClient.js';
 import type { BYOKActiveConfig } from '../../byok/lib/useBYOKConfig.js';
 import { useApplyAnimation } from './useApplyAnimation.js';
+import { getSavedWorkflow } from '../../builder/persistence/localStore.js';
+import { serializeWorkflow } from '../../builder/schema/serialize.js';
+import { registerWorkflow } from '../../builder/persistence/registerClient.js';
+import type { WorkflowMentionEntry } from '../lib/workflowMentions.js';
 
 /** A single piece of content within a message. Models that support
  *  multi-modal input (audio, image) accept multiple parts; a pure-text
@@ -36,12 +40,38 @@ export interface Citation {
   snippet?: string;
 }
 
+/** State attached to a `workflow_run` chat message. Tracks the
+ *  workflow execution lifecycle for direct `@mention` dispatch
+ *  (bypassing the LLM tool-calling path). */
+export interface WorkflowRunState {
+  slug: string;
+  workflowName: string;
+  workflowId: string;
+  /** Null while POST /v1/runs is in flight, then set. */
+  runId: string | null;
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+  totalNodes: number;
+  /** Deduped node ids whose `node.completed` event has been seen. */
+  completedNodeIds: string[];
+  /** Friendly name of the most recently started node. */
+  currentNodeName: string | null;
+  /** Map of backend nodeId → friendly name from the builder graph.
+   *  Empty for sample workflows where we don't have the SavedWorkflow. */
+  nodeNames: Record<string, string>;
+  startedAt: string;
+  outputs?: Record<string, unknown>;
+  error?: { code: string; message: string };
+}
+
 export interface ChatMessage {
   id: string;
-  role: 'user' | 'assistant' | 'system';
+  role: 'user' | 'assistant' | 'system' | 'workflow_run';
   /** Message content. `string` is the common case for text-only.
    *  `ContentPart[]` is for multi-modal user turns (audio + text)
-   *  or future assistant turns that include non-text artifacts. */
+   *  or future assistant turns that include non-text artifacts.
+   *  For role `workflow_run` this carries a short status summary
+   *  ("@slug — running step N of M"); the structured state lives
+   *  in `workflowRun` below. */
   content: string | readonly ContentPart[];
   /** When true, the bubble is receiving streaming deltas. */
   isStreaming?: boolean;
@@ -58,6 +88,8 @@ export interface ChatMessage {
     /** Citations from a web-search-enabled turn. */
     citations?: readonly Citation[];
   };
+  /** Structured state for `role: 'workflow_run'` messages. */
+  workflowRun?: WorkflowRunState;
   createdAt: string;
 }
 
@@ -126,6 +158,10 @@ export interface UseChatSessionResult {
   error: string | null;
   /** Submit a user message and start a new turn. */
   send: (text: string, config: BYOKActiveConfig, opts?: SendOptions) => Promise<void>;
+  /** Run a workflow directly via an `@mention`. Bypasses the LLM and
+   *  dispatches POST /v1/runs immediately; surfaces progress + HITL
+   *  interrupts inline in the chat feed as a `workflow_run` message. */
+  runWorkflowMention: (entry: WorkflowMentionEntry) => Promise<void>;
   /** Cancel the in-flight turn (if any). No-op when nothing is streaming. */
   cancel: () => Promise<void>;
   /** Append a synthetic system-role message to the visible thread.
@@ -460,5 +496,169 @@ export function useChatSession(): UseChatSessionResult {
     }));
   }, []);
 
-  return { session, isSending, error, send, cancel, emitSystem, reset, resolveInterrupt };
+  /** Update a single `workflow_run` message's `workflowRun` state. */
+  function updateWorkflowRun(
+    messageId: string,
+    patch: (prev: WorkflowRunState) => WorkflowRunState,
+  ): void {
+    setSession((s) => ({
+      ...s,
+      messages: s.messages.map((m) => {
+        if (m.id !== messageId || !m.workflowRun) return m;
+        return { ...m, workflowRun: patch(m.workflowRun) };
+      }),
+    }));
+  }
+
+  const runWorkflowMention = useCallback(async (entry: WorkflowMentionEntry) => {
+    setError(null);
+    const userMsg: ChatMessage = {
+      id: crypto.randomUUID(),
+      role: 'user',
+      content: `@${entry.slug}`,
+      createdAt: new Date().toISOString(),
+    };
+    const runMsgId = crypto.randomUUID();
+    const startedAt = new Date().toISOString();
+
+    // Builder-saved workflows live in localStorage and need to be
+    // registered with the backend's in-memory catalog before /v1/runs
+    // resolves them. Hardcoded `sample.*` workflows are already in the
+    // catalog — skip registration and node-name population.
+    const isBuilderWorkflow = entry.workflowId.startsWith('wf_');
+    const saved = isBuilderWorkflow ? getSavedWorkflow(entry.workflowId) : undefined;
+    if (isBuilderWorkflow && !saved) {
+      // The mention pointed to a workflow that's no longer in localStorage.
+      const msg: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: 'system',
+        content: `Workflow "${entry.displayName}" was deleted. Pick another from the dashboard or remove the mention.`,
+        createdAt: new Date().toISOString(),
+      };
+      setSession((s) => ({ ...s, messages: [...s.messages, userMsg, msg] }));
+      return;
+    }
+
+    // Build nodeId → friendly-name map for "running step N of M — <name>".
+    // Mirrors serialize.ts:174 nodeId pattern: `${sanitizedKind}_${index}`.
+    const nodeNames: Record<string, string> = {};
+    let totalNodes = 0;
+    let inputs: Record<string, unknown> = {};
+    if (saved) {
+      totalNodes = saved.nodes.length;
+      saved.nodes.forEach((n, i) => {
+        const safeKind = n.kind.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 50);
+        nodeNames[`${safeKind}_${i}`] = n.name;
+      });
+      const raw = saved.defaultInputs?.trim();
+      if (raw) {
+        try { inputs = JSON.parse(raw) as Record<string, unknown>; } catch { /* empty */ }
+      }
+    }
+
+    const initial: WorkflowRunState = {
+      slug: entry.slug,
+      workflowName: entry.displayName,
+      workflowId: entry.workflowId,
+      runId: null,
+      status: 'pending',
+      totalNodes,
+      completedNodeIds: [],
+      currentNodeName: null,
+      nodeNames,
+      startedAt,
+    };
+    const runMsg: ChatMessage = {
+      id: runMsgId,
+      role: 'workflow_run',
+      content: `@${entry.slug} — starting…`,
+      createdAt: startedAt,
+      workflowRun: initial,
+    };
+    setSession((s) => ({ ...s, messages: [...s.messages, userMsg, runMsg] }));
+
+    let runId: string;
+    try {
+      if (saved) {
+        const def = serializeWorkflow(saved);
+        await registerWorkflow(def);
+      }
+      const created = await createRun({
+        workflowId: entry.workflowId,
+        tenantId: 'demo',
+        inputs,
+        metadata: { chatSessionId: session.id, chatMessageId: runMsgId, mentionSlug: entry.slug },
+      });
+      runId = created.runId;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      updateWorkflowRun(runMsgId, (prev) => ({
+        ...prev,
+        status: 'failed',
+        error: { code: 'dispatch_failed', message: msg },
+      }));
+      setError(msg);
+      return;
+    }
+
+    updateWorkflowRun(runMsgId, (prev) => ({ ...prev, runId, status: 'running' }));
+
+    const sub = subscribeToRun(runId, {
+      modes: ['updates'],
+      onEvent: async (ev: RunEventDoc) => {
+        const payload = (ev.payload as Record<string, unknown>) ?? {};
+        const nodeId = ev.nodeId ?? (typeof payload.nodeId === 'string' ? payload.nodeId : undefined);
+
+        if (ev.type === 'node.started' && nodeId) {
+          updateWorkflowRun(runMsgId, (prev) => ({
+            ...prev,
+            currentNodeName: prev.nodeNames[nodeId] ?? nodeId,
+          }));
+        } else if (ev.type === 'node.completed' && nodeId) {
+          updateWorkflowRun(runMsgId, (prev) => (
+            prev.completedNodeIds.includes(nodeId)
+              ? prev
+              : { ...prev, completedNodeIds: [...prev.completedNodeIds, nodeId] }
+          ));
+        } else if (ev.type === 'node.suspended') {
+          try {
+            const open = await listOpenInterrupts(runId);
+            const active = open[open.length - 1] ?? null;
+            setSession((s) => ({
+              ...s,
+              messages: s.messages.map((m) => m.id === runMsgId ? { ...m, activeInterrupt: active } : m),
+            }));
+          } catch { /* swallow */ }
+        } else if (ev.type === 'node.interrupt.resolved') {
+          setSession((s) => ({
+            ...s,
+            messages: s.messages.map((m) => m.id === runMsgId ? { ...m, activeInterrupt: null } : m),
+          }));
+        } else if (ev.type === 'run.completed') {
+          const outputs = (payload.outputs as Record<string, unknown>) ?? undefined;
+          updateWorkflowRun(runMsgId, (prev) => ({
+            ...prev,
+            status: 'completed',
+            ...(outputs ? { outputs } : {}),
+          }));
+          sub.close();
+        } else if (ev.type === 'run.failed') {
+          const err = (payload.error as Record<string, string>) ?? { code: 'unknown', message: 'unknown failure' };
+          updateWorkflowRun(runMsgId, (prev) => ({
+            ...prev,
+            status: 'failed',
+            error: { code: err.code ?? 'unknown', message: err.message ?? 'unknown failure' },
+          }));
+          sub.close();
+        } else if (ev.type === 'run.cancelled') {
+          updateWorkflowRun(runMsgId, (prev) => ({ ...prev, status: 'cancelled' }));
+          sub.close();
+        }
+      },
+      onError: () => { /* SSE drops don't tear down the bubble */ },
+      onTimeout: () => { /* idle timeout — leave bubble as-is */ },
+    });
+  }, [session.id]);
+
+  return { session, isSending, error, send, cancel, emitSystem, reset, resolveInterrupt, runWorkflowMention };
 }

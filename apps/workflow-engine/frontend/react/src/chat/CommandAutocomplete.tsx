@@ -39,18 +39,24 @@ export function CommandAutocomplete({ text, onPick, onDismiss }: Props): JSX.Ele
       if (matches.length === 0) return;
       if (e.key === 'ArrowDown') {
         e.preventDefault();
+        e.stopPropagation();
         setSelectedIdx((i) => (i + 1) % matches.length);
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
+        e.stopPropagation();
         setSelectedIdx((i) => (i - 1 + matches.length) % matches.length);
       } else if (e.key === 'Enter' || e.key === 'Tab') {
         // Only intercept when our popover is visible AND no modifier.
         if (e.shiftKey || e.metaKey || e.ctrlKey) return;
         e.preventDefault();
+        // stopPropagation so the textarea's React onKeyDown does NOT
+        // also see this Enter and submit the half-typed command.
+        e.stopPropagation();
         const picked = matches[selectedIdx];
         if (picked) onPick(picked.name);
       } else if (e.key === 'Escape') {
         e.preventDefault();
+        e.stopPropagation();
         onDismiss();
       }
     }

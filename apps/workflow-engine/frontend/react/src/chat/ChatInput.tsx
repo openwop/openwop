@@ -17,6 +17,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAudioRecorder, blobToBase64, type RecordedAudio } from './hooks/useAudioRecorder.js';
 import { CommandAutocomplete } from './CommandAutocomplete.js';
+import { WorkflowMentionAutocomplete } from './WorkflowMentionAutocomplete.js';
 import { MicIcon, SendIcon, StopIcon } from './icons/index.js';
 import type { ContentPart } from './hooks/useChatSession.js';
 
@@ -49,7 +50,17 @@ export function ChatInput({
 }: Props): JSX.Element {
   const [text, setText] = useState('');
   const [pendingAudio, setPendingAudio] = useState<PendingAudio | null>(null);
+  // Tracked for the @-mention popover. Synced from onChange / onSelect
+  // / onClick / onKeyUp on the textarea so the popover sees the live
+  // caret position.
+  const [cursorPos, setCursorPos] = useState(0);
   const taRef = useRef<HTMLTextAreaElement>(null);
+
+  function syncCursor(): void {
+    const el = taRef.current;
+    if (!el) return;
+    setCursorPos(el.selectionStart ?? 0);
+  }
 
   const recorder = useAudioRecorder();
 
@@ -80,6 +91,12 @@ export function ChatInput({
   }
 
   function onKey(e: React.KeyboardEvent<HTMLTextAreaElement>): void {
+    // Belt-and-braces: any popover (CommandAutocomplete, the @-mention
+    // popover, future popovers) should stopPropagation on the native
+    // event so React's synthetic handler never sees the key — but if
+    // a future popover forgets, the `defaultPrevented` check here is
+    // a backstop that prevents submitting a half-typed command/mention.
+    if (e.defaultPrevented) return;
     if (e.key === 'Enter' && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
       e.preventDefault();
       void submit();
@@ -108,6 +125,22 @@ export function ChatInput({
         text={text}
         onPick={(name) => { setText(name + ' '); taRef.current?.focus(); }}
         onDismiss={() => { /* dismiss is implicit on text change */ }}
+      />
+      <WorkflowMentionAutocomplete
+        text={text}
+        cursorPos={cursorPos}
+        onPick={(newText, newCursorPos) => {
+          setText(newText);
+          // Restore the cursor after React commits the new value.
+          requestAnimationFrame(() => {
+            const el = taRef.current;
+            if (!el) return;
+            el.focus();
+            el.setSelectionRange(newCursorPos, newCursorPos);
+            setCursorPos(newCursorPos);
+          });
+        }}
+        onDismiss={() => { /* dismiss is implicit on text/cursor change */ }}
       />
       {pendingAudio && (
         <div
@@ -154,8 +187,11 @@ export function ChatInput({
           ref={taRef}
           rows={1}
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => { setText(e.target.value); setCursorPos(e.target.selectionStart ?? 0); }}
           onKeyDown={onKey}
+          onKeyUp={syncCursor}
+          onSelect={syncCursor}
+          onClick={syncCursor}
           placeholder={recorder.isRecording ? 'Recording…' : (placeholder ?? 'Ask anything…')}
           disabled={disabled}
           spellCheck={false}
