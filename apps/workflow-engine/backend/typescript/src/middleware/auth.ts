@@ -41,10 +41,16 @@
  */
 
 import type { RequestHandler } from 'express';
-import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import type { Principal } from '../types.js';
 import { createLogger } from '../observability/logger.js';
 import { noteTenantActivity } from '../routes/admin.js';
+import {
+  OidcVerifier,
+  OidcVerificationError,
+  readOidcConfigFromEnv,
+  type OidcClaims,
+} from './oidcVerifier.js';
 
 const log = createLogger('middleware.auth');
 
@@ -191,9 +197,37 @@ function readValidKeys(): ReadonlySet<string> {
   return new Set(raw.split(',').map((s) => s.trim()).filter((s) => s.length > 0));
 }
 
+/** Lazy-init OIDC verifier — if config is unset, returns null and the
+ *  bearer branch falls through to the API-key allow-list. */
+let oidcVerifierInstance: OidcVerifier | null | undefined;
+function getOidcVerifier(): OidcVerifier | null {
+  if (oidcVerifierInstance !== undefined) return oidcVerifierInstance;
+  const cfg = readOidcConfigFromEnv();
+  oidcVerifierInstance = cfg ? new OidcVerifier(cfg) : null;
+  if (oidcVerifierInstance) {
+    log.info('OIDC verifier configured', { issuer: cfg!.issuer, audience: cfg!.audience });
+  }
+  return oidcVerifierInstance;
+}
+
+/** Map a verified OIDC claim set to a deterministic openwop tenant id.
+ *  Issuer-scoped SHA-256 of `<iss>:<sub>` so cross-IdP `sub` collisions
+ *  are impossible. Truncates to 32 hex chars (128 bits) — plenty for
+ *  unique-per-user across any realistic IdP+user count. */
+function tenantIdFromOidc(claims: OidcClaims): string {
+  const h = createHash('sha256').update(`${claims.iss}:${claims.sub}`).digest('hex').slice(0, 32);
+  return `user:${h}`;
+}
+
+/** Test affordance — wipe the verifier singleton so subsequent calls
+ *  re-read env vars. Used by unit tests that flip OPENWOP_OIDC_*. */
+export function _resetOidcVerifier(): void {
+  oidcVerifierInstance = undefined;
+}
+
 export function authMiddleware(): RequestHandler {
   const cookiesDisabled = process.env.OPENWOP_AUTH_DISABLE_COOKIES === 'true';
-  return (req, res, next) => {
+  return async (req, res, next) => {
     if (PUBLIC_PATH_PREFIXES.some((p) => req.path === p || req.path.startsWith(p + '/'))) {
       next();
       return;
@@ -208,24 +242,51 @@ export function authMiddleware(): RequestHandler {
       bearerToken = req.query.apiKey.trim();
     }
     if (bearerToken) {
-      if (!readValidKeys().has(bearerToken)) {
-        res.status(401).json({
-          error: 'unauthenticated',
-          message: 'Bearer token is not recognized by this host.',
-        });
+      // Try the API-key allow-list first (cheap, sync). API keys are
+      // short opaque strings; OIDC tokens are dot-segmented JWTs. The
+      // shape disambiguates without crypto.
+      if (readValidKeys().has(bearerToken)) {
+        // API-key path — wildcard tenant (conformance harness / admin
+        // tooling). Real deployments narrow via a key→tenant table.
+        req.principal = {
+          principalId: `bearer:${bearerToken.slice(0, 8)}`,
+          tenants: ['*'],
+          token: bearerToken,
+        };
+        next();
         return;
       }
-      // Bearer-authed principals get the wildcard tenant — they're
-      // typically the conformance harness or a steward-internal tool.
-      // Real deployments should narrow this via a key-to-tenant table.
-      const principal: Principal = {
-        principalId: `bearer:${bearerToken.slice(0, 8)}`,
-        tenants: ['*'],
-        token: bearerToken,
-      };
-      req.principal = principal;
-      // No req.tenantId for bearer auth — caller provides it.
-      next();
+      // Looks like a JWT? Try OIDC verification.
+      const looksLikeJwt = bearerToken.split('.').length === 3;
+      const oidc = getOidcVerifier();
+      if (looksLikeJwt && oidc) {
+        try {
+          const claims = await oidc.verify(bearerToken);
+          const tenantId = tenantIdFromOidc(claims);
+          req.tenantId = tenantId;
+          req.principal = {
+            principalId: `oidc:${claims.sub}`,
+            tenants: [tenantId],
+            token: bearerToken,
+          };
+          noteTenantActivity(tenantId);
+          next();
+          return;
+        } catch (err: unknown) {
+          const code = err instanceof OidcVerificationError ? err.code : 'verification_failed';
+          res.status(401).json({
+            error: 'unauthenticated',
+            message: 'OIDC token rejected.',
+            details: { reason: code },
+          });
+          return;
+        }
+      }
+      // No allow-list hit + not a JWT (or OIDC not configured) → 401.
+      res.status(401).json({
+        error: 'unauthenticated',
+        message: 'Bearer token is not recognized by this host.',
+      });
       return;
     }
 

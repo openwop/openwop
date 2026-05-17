@@ -114,11 +114,10 @@ describe('P0.4 rate limit', () => {
     // First run reserves slot via the route handler's
     // reserveConcurrentSlot; second run should 429 because the
     // middleware's pre-flight check sees 1 inflight (= the cap).
-    const post = (tenant: string) => fetch(`http://127.0.0.1:${port}/v1/runs`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-test-tenant': tenant },
-      body: '{}',
-    });
+    // Full integration coverage of the route → reserve → release
+    // chain is in test/auth-cookies.test.ts via createApp(); here
+    // we exercise the isolation-level reserve/release contract.
+    //
     // Need a test route that actually calls reserveConcurrentSlot.
     // The existing /v1/runs handler in startApp() doesn't, so add a
     // dedicated test route that mimics what routes/runs.ts does.
