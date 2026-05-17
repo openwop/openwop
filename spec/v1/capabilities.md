@@ -374,7 +374,7 @@ RFC 0013 (Phase 1, `Draft`). When `supported: true`, the host's workflow editor 
 
 **Conformance.** `workflow-chain-pack-manifest-validation.test.ts` gates on this flag for the registry-validation path; future `workflow-chain-expansion.test.ts` (Phase 2/3) will gate on it for end-to-end expansion. Hosts that don't advertise the capability are skipped, not failed.
 
-**Refusal contract.** When the field is absent, the host MUST NOT silently accept workflow JSON containing post-expansion artifacts that obviously originated from an unrecognized chain pack (no automatic backfill). Authors targeting a non-expansion host MUST inline the equivalent DAG manually.
+**Runtime invariance.** The `workflowChainPacks` capability advertises **editor** support only — the runtime engine never sees chain-pack-specific surface (workflows reach the runtime fully expanded into concrete `core.*`/published-vendor typeIds). Hosts that omit the capability still execute workflows containing post-expansion DAGs cleanly; what they can't do is implement the author-time drag-tile flow. There is no runtime refusal contract for this capability — the chain reference is workflow-edit-time only and leaves no surface for the runtime to gate on.
 
 ### `observability`
 

@@ -124,7 +124,7 @@ A subset of `schemas/workflow-definition.schema.json`. Differences from a top-le
 | `id` / `name` / `version` | MUST be omitted. Host generates per-expansion (`${parentWorkflow.id}::${chainId}::${expansionId}`). |
 | `triggers` / `settings` / `metadata` | MUST be omitted. Inherited from parent. |
 | `variables` | Replaced by top-level `parameters`. Host editor collects values at author-time. |
-| `nodes[]` | Required. Each node's `typeId` MUST reference a published node-pack typeId OR a reserved `core.*` typeId. |
+| `nodes[]` | Required. Each node's `typeId` MUST reference a published node-pack typeId OR a reserved `core.*` typeId. Each fragment node mirrors the shape of a top-level `WorkflowNode` (per `schemas/workflow-definition.schema.json#/$defs/WorkflowNode`) with relaxed `required[]` — chain authors MAY omit `name`/`position`/`config`/`inputs` for trivial pass-through nodes. The `FragmentNode` definition in `workflow-chain-pack-manifest.schema.json` SHOULD be kept in sync as `WorkflowNode` evolves. |
 | `edges[]` | Required when `nodes.length > 1`. Same shape as in a top-level workflow definition. |
 
 ### Parameter substitution
@@ -320,7 +320,7 @@ Hosts and registries operating on workflow-chain packs MUST use these error code
 
 4. `workflow-chain-unresolvable-typeid.test.ts` — Author drops a chain whose `dag.nodes[].typeId` references an unpublished pack; expansion rejected with `chain_unresolvable_typeid`.
 
-Each scenario gates on `capabilities.workflowChainPacks.supported: true`; hosts that don't advertise the capability MUST be skipped, not failed.
+For **host-conformance scenarios** (Phase 2/3 — expansion, signature verification, unresolvable-typeid), each scenario gates on `capabilities.workflowChainPacks.supported: true`; hosts that don't advertise the capability MUST be skipped, not failed. **Server-free scenarios** that validate the spec corpus itself (e.g., `workflow-chain-pack-manifest-validation.test.ts`) run unconditionally — the schema is the spec regardless of which hosts implement it.
 
 ---
 
@@ -353,4 +353,4 @@ Each scenario gates on `capabilities.workflowChainPacks.supported: true`; hosts 
 - [`schemas/workflow-chain-pack-manifest.schema.json`](../../schemas/workflow-chain-pack-manifest.schema.json) — canonical manifest JSON Schema.
 - [`schemas/workflow-definition.schema.json`](../../schemas/workflow-definition.schema.json) — the schema that `WorkflowDefinitionFragment` references.
 - [`capabilities.md`](./capabilities.md) §`workflowChainPacks` — capability advertisement.
-- [`registry-operations.md`](./registry-operations.md) §Signature-verification — reused verification flow.
+- [`registry-operations.md`](./registry-operations.md) — operator-side registry surfaces (deprecation, yank, signing-key rotation) that workflow-chain packs reuse unchanged from node packs.

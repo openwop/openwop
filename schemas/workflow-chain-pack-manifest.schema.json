@@ -42,7 +42,8 @@
           "description": "Semver range — which openwop protocol versions this pack works against."
         }
       },
-      "additionalProperties": true
+      "additionalProperties": true,
+      "$comment": "Open by design — packs MAY advertise extra engine constraints (`node`, `python`, etc.) that consumer hosts ignore but operator tooling consumes. Mirrors the shape used in node-pack-manifest.schema.json."
     },
     "dependencies": {
       "type": "object",
@@ -88,7 +89,8 @@
         "parameters": {
           "type": "object",
           "description": "JSON Schema 2020-12 fragment describing the parameter values the host editor MUST collect from the author at drop time. Authors-supplied values are validated against this schema before expansion proceeds; invalid input MUST be rejected with `chain_parameter_invalid`.",
-          "additionalProperties": true
+          "additionalProperties": true,
+          "$comment": "Open by design — this field IS a JSON Schema document, so it must accept any of the 30+ JSON Schema 2020-12 keywords (`type`, `properties`, `required`, `oneOf`, `allOf`, etc.). Strict closure would require importing the JSON Schema meta-schema."
         },
         "dag": { "$ref": "#/$defs/WorkflowDefinitionFragment" },
         "outputs": {
@@ -144,6 +146,7 @@
     },
     "FragmentNode": {
       "type": "object",
+      "description": "Mirror of `workflow-definition.schema.json#/$defs/WorkflowNode` with relaxed `required[]` (chain authors MAY omit `name`/`position`/`config`/`inputs` for trivial pass-through nodes). Maintenance note: when fields are added to `WorkflowNode` in `workflow-definition.schema.json`, mirror the addition here so chain packs can express the same shapes. Drift here means chain-pack authors can't use new node features.",
       "required": ["id", "typeId"],
       "properties": {
         "id": {
@@ -169,12 +172,14 @@
         "config": {
           "type": "object",
           "description": "Node config — host-validated against the referenced typeId's config schema. String fields MAY contain `{{params.<name>}}` placeholders that the host MUST substitute at expansion time.",
-          "additionalProperties": true
+          "additionalProperties": true,
+          "$comment": "Open by design — node config shapes are per-typeId and only known to the host at expansion time when the referenced typeId's config schema is resolved. Cross-typeId enforcement happens at the expansion step, not at manifest-validation time."
         },
         "inputs": {
           "type": "object",
           "description": "Per-port input wiring. String values MAY contain `{{params.<name>}}` placeholders.",
-          "additionalProperties": true
+          "additionalProperties": true,
+          "$comment": "Open by design — port shapes are per-typeId, same reasoning as `config` above."
         }
       },
       "additionalProperties": false
