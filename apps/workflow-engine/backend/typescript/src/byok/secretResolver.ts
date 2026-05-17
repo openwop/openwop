@@ -30,8 +30,37 @@ const log = createLogger('byok.secretResolver');
 let backend: Storage | null = null;
 let masterKeyPath: string | null = null;
 
-/** Lazy-decryption cache. Reset on setSecret / removeSecret. */
+/** Lazy-decryption cache for the SQLite-backed path. Keyed by ref. */
 const plaintextCache = new Map<string, string>();
+
+/**
+ * Per-tenant in-memory store for ephemeral-mode BYOK (P0.3 in the
+ * deploy plan). Populated when `OPENWOP_BYOK_EPHEMERAL=true` is set on
+ * the host. Secrets never touch disk; they live in this Map until the
+ * daily cleanup endpoint (P0.5) wipes the tenant's entry, OR until the
+ * process restarts. Cloud Run cold starts wipe all session secrets,
+ * which is the intended public-demo posture documented in the demo
+ * banner.
+ *
+ * Shape: `Map<tenantId, Map<credentialRef, plaintextValue>>`.
+ */
+const ephemeralSecrets = new Map<string, Map<string, string>>();
+
+function ephemeralEnabled(): boolean {
+  return process.env.OPENWOP_BYOK_EPHEMERAL === 'true';
+}
+
+function ephemeralBucket(tenantId: string): Map<string, string> {
+  let b = ephemeralSecrets.get(tenantId);
+  if (!b) { b = new Map(); ephemeralSecrets.set(tenantId, b); }
+  return b;
+}
+
+/** Scope context for secret operations. Required in ephemeral mode;
+ *  optional in SQLite mode (where the resolver is process-global). */
+export interface SecretScope {
+  tenantId: string;
+}
 
 /**
  * Wire the resolver to the storage backend + master-key location.
@@ -80,7 +109,18 @@ export function loadSecretsFromEnv(): number {
   }
 }
 
-export function resolveSecret(credentialRef: string): string | null {
+export function resolveSecret(credentialRef: string, scope?: SecretScope): string | null {
+  if (ephemeralEnabled()) {
+    if (!scope?.tenantId) {
+      // In ephemeral mode the caller MUST provide a scope. Without
+      // tenantId we'd have to fall back to a global map, which would
+      // share secrets across tenants — exactly the leak we're closing.
+      log.warn('resolveSecret called without scope in ephemeral mode', { credentialRef });
+      return null;
+    }
+    return ephemeralBucket(scope.tenantId).get(credentialRef) ?? null;
+  }
+
   const cached = plaintextCache.get(credentialRef);
   if (cached !== undefined) return cached;
 
@@ -103,7 +143,14 @@ export function resolveSecret(credentialRef: string): string | null {
 }
 
 /** Persist a new (or updated) secret. Called by POST /v1/host/sample/byok/secrets. */
-export function setSecret(credentialRef: string, value: string): void {
+export function setSecret(credentialRef: string, value: string, scope?: SecretScope): void {
+  if (ephemeralEnabled()) {
+    if (!scope?.tenantId) {
+      throw new Error('setSecret in ephemeral mode requires scope.tenantId');
+    }
+    ephemeralBucket(scope.tenantId).set(credentialRef, value);
+    return;
+  }
   const { storage, masterKey } = requireConfigured();
   const record = encrypt(value, masterKey);
   storage.upsertEncryptedSecret(credentialRef, JSON.stringify(record), new Date().toISOString());
@@ -111,25 +158,64 @@ export function setSecret(credentialRef: string, value: string): void {
 }
 
 /** Remove a secret. Called by DELETE /v1/host/sample/byok/secrets/:ref. */
-export function removeSecret(credentialRef: string): void {
+export function removeSecret(credentialRef: string, scope?: SecretScope): void {
+  if (ephemeralEnabled()) {
+    if (!scope?.tenantId) throw new Error('removeSecret in ephemeral mode requires scope.tenantId');
+    ephemeralBucket(scope.tenantId).delete(credentialRef);
+    return;
+  }
   const { storage } = requireConfigured();
   storage.deleteSecret(credentialRef);
   plaintextCache.delete(credentialRef);
 }
 
-/** Return all stored credentialRefs. NEVER returns values. */
-export function listSecretRefs(): readonly string[] {
+/** Return all stored credentialRefs for the given scope. NEVER returns values. */
+export function listSecretRefs(scope?: SecretScope): readonly string[] {
+  if (ephemeralEnabled()) {
+    if (!scope?.tenantId) return [];
+    return Array.from(ephemeralBucket(scope.tenantId).keys());
+  }
   const { storage } = requireConfigured();
   return storage.listSecretRefs();
+}
+
+/** Wipe one tenant's ephemeral secrets. Called from the daily cleanup
+ *  endpoint (P0.5) when an anon session passes its TTL. */
+export function clearTenantEphemeralSecrets(tenantId: string): number {
+  if (!ephemeralEnabled()) return 0;
+  const b = ephemeralSecrets.get(tenantId);
+  if (!b) return 0;
+  const n = b.size;
+  ephemeralSecrets.delete(tenantId);
+  return n;
+}
+
+/** Wipe ephemeral secrets for any tenant whose id is NOT in `keep`.
+ *  Used by the daily cleanup job to GC expired anon sessions in bulk. */
+export function clearExpiredEphemeralSecrets(keep: ReadonlySet<string>): number {
+  if (!ephemeralEnabled()) return 0;
+  let n = 0;
+  for (const tenantId of Array.from(ephemeralSecrets.keys())) {
+    if (!keep.has(tenantId)) {
+      n += ephemeralSecrets.get(tenantId)!.size;
+      ephemeralSecrets.delete(tenantId);
+    }
+  }
+  return n;
 }
 
 /** Test affordance — wipe the in-process cache without touching storage. */
 export function clearCache(): void {
   plaintextCache.clear();
+  ephemeralSecrets.clear();
 }
 
 /** Test affordance — wipe storage AND cache. */
 export function clearAllSecrets(): void {
+  if (ephemeralEnabled()) {
+    ephemeralSecrets.clear();
+    return;
+  }
   const { storage } = requireConfigured();
   for (const ref of storage.listSecretRefs()) storage.deleteSecret(ref);
   plaintextCache.clear();

@@ -32,9 +32,17 @@ interface SetSecretRequest {
 
 const REF_PATTERN = /^[a-zA-Z0-9_.\-:]{1,128}$/;
 
+function scopeFromReq(req: import('express').Request): { tenantId: string } | undefined {
+  // In ephemeral mode the resolver needs a tenantId. Pull it from the
+  // session-cookie-derived req.tenantId set by the auth middleware.
+  // Bearer-authed callers (tenants: ['*']) get no scope, falling back
+  // to the SQLite path which is global.
+  return req.tenantId ? { tenantId: req.tenantId } : undefined;
+}
+
 export function registerByokRoutes(app: Express): void {
-  app.get('/v1/host/sample/byok/secrets', (_req, res) => {
-    res.json({ credentialRefs: listSecretRefs() });
+  app.get('/v1/host/sample/byok/secrets', (req, res) => {
+    res.json({ credentialRefs: listSecretRefs(scopeFromReq(req)) });
   });
 
   app.post('/v1/host/sample/byok/secrets', (req, res, next) => {
@@ -59,7 +67,7 @@ export function registerByokRoutes(app: Express): void {
           { field: 'value' },
         );
       }
-      setSecret(body.credentialRef, body.value);
+      setSecret(body.credentialRef, body.value, scopeFromReq(req));
       // Echo back ONLY the ref + a masked preview. Never the value.
       res.status(201).json({
         credentialRef: body.credentialRef,
@@ -77,7 +85,7 @@ export function registerByokRoutes(app: Express): void {
       if (!REF_PATTERN.test(ref)) {
         throw new OpenwopError('validation_error', 'Invalid credentialRef.', 400, { credentialRef: ref });
       }
-      removeSecret(ref);
+      removeSecret(ref, scopeFromReq(req));
       res.status(204).send();
     } catch (err) {
       next(err);

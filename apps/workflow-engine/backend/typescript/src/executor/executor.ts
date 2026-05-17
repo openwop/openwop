@@ -614,17 +614,23 @@ function hydrateSnapshot(
 /* ─── Secret prep (unchanged from linear executor) ─────────── */
 
 async function prepareRunSecrets(run: RunRecord, definition: WorkflowDefinition): Promise<void> {
+  // In OPENWOP_BYOK_EPHEMERAL=true mode the resolver needs the run's
+  // tenant so it can find the right per-session bucket. Anon runs get
+  // a session-derived tenant id ('anon:<sid>'); bearer-authed runs
+  // pass the bearer's body.tenantId (still global in non-ephemeral
+  // mode).
+  const scope = { tenantId: run.tenantId };
   const required = new Map<string, string>();
   for (const node of definition.nodes) {
     const cfgRefs = (node.config?.credentialRefs as string[] | undefined) ?? [];
     for (const ref of cfgRefs) {
-      const value = resolveSecret(ref);
+      const value = resolveSecret(ref, scope);
       if (value) required.set(ref, value);
     }
   }
   const cfgRefs = (run.configurable?.credentialRefs as string[] | undefined) ?? [];
   for (const ref of cfgRefs) {
-    const value = resolveSecret(ref);
+    const value = resolveSecret(ref, scope);
     if (value) required.set(ref, value);
     else {
       throw new OpenwopError(
