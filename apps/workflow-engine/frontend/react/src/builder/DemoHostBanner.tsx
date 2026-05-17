@@ -1,20 +1,27 @@
 /**
- * One-line dismissible banner at the top of the builder shell. Reads
- * `/.well-known/openwop` once, counts in-memory surfaces, and warns
- * the user that state is ephemeral. Hidden once the user clicks the
- * close button (persisted in localStorage so it stays dismissed
- * across reloads).
+ * Top-of-page dismissible banner for the public app.openwop.dev demo.
+ * Stay-quiet defaults:
+ *   - Hidden when the host has no in-memory surfaces (i.e., a real
+ *     production host — banner copy doesn't apply).
+ *   - Hidden once the visitor dismisses it (localStorage flag, ~30d).
  *
- * If the host advertises every surface with a non-in-memory
- * implementation, the banner stays hidden — the demo affordance is
- * only useful for the example builder's default host.
+ * Copy is tuned for an anonymous-session demo:
+ *   - "Anonymous demo" because every visitor lands as `anon:<sid>`
+ *     via the session cookie minted by the backend auth middleware
+ *     (P0.2). No signup yet.
+ *   - "Workflows + BYOK keys reset every 24h" because the cleanup
+ *     endpoint (P0.5) wipes the session's ephemeral state on a
+ *     daily cron, AND because the session cookie itself expires at
+ *     24h so even without cleanup the user effectively gets a fresh
+ *     start.
+ *   - Links to /privacy for the cookie + retention disclosure.
  */
 
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { config } from '../client/config.js';
 
-const DISMISS_KEY = 'openwop:builder:demo-banner:dismissed';
-const PHASE6_DOCS = 'examples/hosts/postgres';
+const DISMISS_KEY = 'openwop:demo-banner:dismissed';
 
 interface HostSurfaceAd {
   name: string;
@@ -58,15 +65,17 @@ export function DemoHostBanner() {
     <div className="demo-host-banner" role="status" aria-live="polite">
       <span className="demo-host-banner-icon" aria-hidden>ⓘ</span>
       <span className="demo-host-banner-text">
-        <strong>Demo host:</strong> {inMemoryCount} surface{inMemoryCount === 1 ? '' : 's'} are in-memory
-        (storage, db, queue, blob, fs). State is process-local — restarts wipe it. For a host
-        that wires real backends, see <code>{PHASE6_DOCS}</code>.
+        <strong>Anonymous demo.</strong>{' '}
+        Your workflows + any BYOK keys you add are scoped to this browser
+        session and reset after 24&nbsp;hours. Nothing is shared with other
+        visitors. Signup with persistent storage is coming soon.{' '}
+        <Link to="/privacy">Privacy & cookies →</Link>
       </span>
       <button
         className="demo-host-banner-close"
         type="button"
         onClick={dismiss}
-        aria-label="Dismiss demo notice"
+        aria-label="Dismiss notice"
         title="Dismiss"
       >
         ×

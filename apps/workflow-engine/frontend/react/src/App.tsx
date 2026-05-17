@@ -1,10 +1,12 @@
-import { NavLink, Route, Routes, useLocation } from 'react-router-dom';
+import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { RunsIndexPage } from './runs/RunsIndexPage.js';
 import { RunDetailPage } from './runs/RunDetailPage.js';
 import { CapabilitiesPanel } from './discovery/CapabilitiesPanel.js';
 import { ChatTab } from './chat/ChatTab.js';
 import { BuilderTab } from './builder/BuilderTab.js';
 import { WorkflowsDashboard } from './builder/WorkflowsDashboard.js';
+import { DemoHostBanner } from './builder/DemoHostBanner.js';
+import { PrivacyPage } from './PrivacyPage.js';
 
 export function App() {
   const location = useLocation();
@@ -16,6 +18,7 @@ export function App() {
   const fullBleed = /^\/builder\/[^/]+/.test(location.pathname);
   return (
     <div className="app-shell">
+      <DemoHostBanner />
       <header className="app-header">
         <h1>OpenWOP — workflow-engine sample</h1>
         <nav>
@@ -33,10 +36,12 @@ export function App() {
           <Route path="/capabilities" element={<CapabilitiesPanel />} />
           <Route path="/builder" element={<WorkflowsDashboard />} />
           <Route path="/builder/:workflowId" element={<BuilderTab />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
         </Routes>
       </main>
       <footer className="app-footer">
-        Sample / template code. Not production-hardened.
+        Sample / template code. Not production-hardened. ·{' '}
+        <Link to="/privacy">Privacy</Link>
       </footer>
     </div>
   );

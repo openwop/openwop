@@ -66,6 +66,12 @@ const PUBLIC_PATH_PREFIXES = [
   '/v1/openapi.json',
   '/v1/packs',
   '/v1/interrupts',
+  // Admin endpoints do their own constant-time check against
+  // OPENWOP_ADMIN_TOKEN (separate from OPENWOP_API_KEYS so the
+  // session/bearer paths can't confuse the two). Bypassing the
+  // session-cookie auth path here lets Cloud Scheduler hit the
+  // cleanup cron with just the Bearer admin token.
+  '/v1/host/sample/admin',
 ];
 
 const COOKIE_NAME = 'openwop.session';

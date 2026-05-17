@@ -4,6 +4,8 @@
 
 If you're building agentic systems, AI workflow engines, multi-agent applications, agent orchestration platforms, or human-in-the-loop pipelines and want a protocol layer instead of vendor lock-in, OpenWOP is the contract.
 
+> **Try it live: [app.openwop.dev](https://app.openwop.dev/)** — anonymous demo of the reference workflow-engine app. Build a workflow visually, run it against the 17 published `core.openwop.*` packs, see the SSE event stream + interrupt cards + capabilities advertisement. Anonymous sessions reset every 24h; BYOK keys you paste are session-only and never persisted. [Privacy & cookies](https://app.openwop.dev/privacy).
+
 ## Multi-Agent Architecture (v1+)
 
 OpenWOP v1 introduces first-class support for **orchestrator-driven multi-agent workflows**:

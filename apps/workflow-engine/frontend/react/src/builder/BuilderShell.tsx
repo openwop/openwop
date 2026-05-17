@@ -14,7 +14,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { NodePalette } from './palette/NodePalette.js';
 import { BuilderCanvas } from './canvas/BuilderCanvas.js';
 import { Inspector } from './inspector/Inspector.js';
-import { DemoHostBanner } from './DemoHostBanner.js';
 import { useBuilderStore } from './store/builderStore.js';
 import { newWorkflowId } from './persistence/localStore.js';
 import { registerWorkflow } from './persistence/registerClient.js';
@@ -69,7 +68,6 @@ export function BuilderShell({ onNewWorkflow }: Props) {
 
   return (
     <div className="builder-shell">
-      <DemoHostBanner />
       <div className="builder-toolbar">
         <Link to="/builder" className="builder-toolbar-back" title="Back to workflows">
           ‹ Workflows

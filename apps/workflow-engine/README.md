@@ -3,6 +3,8 @@
 > **Status:** Sample / template code. Not production-hardened. Use as a starting template, not a deploy target.
 > **SDK version verified against:** `@openwop/openwop` v1.1.1, `@openwop/openwop-conformance` v1.1.0
 > **Last verified:** 2026-05-15
+>
+> **Live demo:** [app.openwop.dev](https://app.openwop.dev/) — anonymous, browser-session-scoped. Build + run workflows visually; BYOK keys are session-only. Resets every 24h. [Smoke test](./DEPLOY-SMOKE.md) · [Privacy](https://app.openwop.dev/privacy)
 
 A deployable reference application demonstrating the full vertical slice of an OpenWOP host: a Cloud Run-shape TypeScript backend that implements the v1.1 wire contract, paired with a React frontend that consumes it via the published SDK.
 
