@@ -649,6 +649,31 @@ invariants:
       protocol-tier invariant asserts the advertisement contract so
       independent implementers cannot ship a partial guard silently.
 
+  # ===== Idempotency-Key determinism (1.1.2 safety-fix) =====
+
+  - id: idempotency-key-deterministic
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/idempotency-key-determinism.test.ts
+    note: |
+      `core.openwop.http.idempotency-key` MUST be deterministic in
+      `(runId, nodeId, payload)` — same logical request → same key, so
+      the remote endpoint can dedupe across retries. Verified against
+      the canonical SHA-256 formula
+      `sha256(runId || \0 || nodeId || \0 || JSON.stringify(payload))`
+      with output shape `openwop-<sha256-prefix-16>` per the 1.1.2
+      schemas.
+      Hardens against the 1.1.0/1.1.1 defect where the default `uuid`
+      mode returned `randomUUID()` per call (each retry got a fresh key
+      → remote service treated every attempt as a new request, the
+      opposite of retry-safety). Removed in 1.1.2 as a safety-fix per
+      `COMPATIBILITY.md §3`; calls with `mode: "uuid"` now reject with
+      `CONFIG_INVALID`. The cross-impl vector test in the scenario lets
+      third-party `core.openwop.http` reimplementations verify wire
+      agreement on a fixed set of (runId, nodeId, payload) inputs.
+
   # ===== Agent memory (Phase I.1) =====
 
   - id: agent-memory-cti-1
