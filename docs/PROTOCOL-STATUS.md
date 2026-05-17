@@ -58,9 +58,9 @@
 | Index `packCount` | 59 | `registry/v1/index.json` |
 | Indexed pack rows | 59 | `registry/v1/index.json` |
 | Local pack directories | 59 | `registry/v1/packs/*` |
-| Version manifests | 72 | `registry/v1/packs/*/-/*.json` |
-| Tarballs | 72 | `registry/v1/packs/*/-/*.tgz` |
-| Signatures | 72 | `registry/v1/packs/*/-/*.sig` |
+| Version manifests | 74 | `registry/v1/packs/*/-/*.json` |
+| Tarballs | 74 | `registry/v1/packs/*/-/*.tgz` |
+| Signatures | 74 | `registry/v1/packs/*/-/*.sig` |
 
 | Scope | Indexed packs |
 |---|---:|
