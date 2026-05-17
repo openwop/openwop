@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createRun } from '../client/runsClient.js';
+import { listSavedWorkflows } from '../builder/persistence/localStore.js';
+import { serializeWorkflow, SerializeError } from '../builder/schema/serialize.js';
+import { registerWorkflow } from '../builder/persistence/registerClient.js';
 
 const SAMPLE_WORKFLOWS = [
   { id: 'sample.demo.uppercase', label: 'sample.demo.uppercase — single-node uppercase' },
@@ -9,7 +12,15 @@ const SAMPLE_WORKFLOWS = [
 
 export function RunsIndexPage() {
   const nav = useNavigate();
-  const [workflowId, setWorkflowId] = useState(SAMPLE_WORKFLOWS[0]?.id ?? 'sample.demo.uppercase');
+  const savedWorkflows = useMemo(() => listSavedWorkflows(), []);
+  const allOptions = useMemo(
+    () => [
+      ...SAMPLE_WORKFLOWS,
+      ...savedWorkflows.map((wf) => ({ id: wf.id, label: `${wf.name} — ${wf.nodes.length} nodes (saved in builder)` })),
+    ],
+    [savedWorkflows],
+  );
+  const [workflowId, setWorkflowId] = useState(allOptions[0]?.id ?? 'sample.demo.uppercase');
   const [tenantId, setTenantId] = useState('demo');
   const [inputsRaw, setInputsRaw] = useState(JSON.stringify({ text: 'hello world' }, null, 2));
   const [submitting, setSubmitting] = useState(false);
@@ -21,10 +32,21 @@ export function RunsIndexPage() {
     setSubmitting(true);
     try {
       const inputs = JSON.parse(inputsRaw);
+      // Builder-saved workflows need to be registered with the backend's
+      // in-memory catalog before POST /v1/runs can resolve them.
+      const saved = savedWorkflows.find((w) => w.id === workflowId);
+      if (saved) {
+        const def = serializeWorkflow(saved);
+        await registerWorkflow(def);
+      }
       const res = await createRun({ workflowId, tenantId, inputs });
       nav(`/runs/${res.runId}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      if (err instanceof SerializeError) {
+        setError(`Saved workflow is not runnable: ${err.message}`);
+      } else {
+        setError(err instanceof Error ? err.message : String(err));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -38,7 +60,7 @@ export function RunsIndexPage() {
           <div className="form-row">
             <label>Workflow</label>
             <select value={workflowId} onChange={(e) => setWorkflowId(e.target.value)}>
-              {SAMPLE_WORKFLOWS.map((w) => (
+              {allOptions.map((w) => (
                 <option key={w.id} value={w.id}>{w.label}</option>
               ))}
             </select>
