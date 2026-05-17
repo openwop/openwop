@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.flow/1.0.0/repeater.output.json",
+  "title": "RepeaterOutput",
+  "type": "object",
+  "required": [
+    "items",
+    "count"
+  ],
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "Tick",
+        "type": "object",
+        "required": [
+          "i",
+          "index",
+          "total"
+        ],
+        "properties": {
+          "i": {
+            "type": "number"
+          },
+          "index": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "count": {
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.data/1.1.0/object-rename-keys.output.json",
+  "title": "ObjectRenameKeysOutput",
+  "type": "object",
+  "required": [
+    "object"
+  ],
+  "properties": {
+    "object": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

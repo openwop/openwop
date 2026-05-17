@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.flow/1.0.0/noop.input.json",
+  "title": "NoopInput",
+  "type": "object",
+  "properties": {
+    "value": {}
+  },
+  "additionalProperties": false
+}

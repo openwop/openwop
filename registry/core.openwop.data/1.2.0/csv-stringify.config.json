@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.data/1.1.0/csv-stringify.config.json",
+  "title": "CsvStringifyConfig",
+  "type": "object",
+  "properties": {
+    "headers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "emitHeader": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "additionalProperties": false
+}

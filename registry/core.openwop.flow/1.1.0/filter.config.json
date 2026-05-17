@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.flow/1.0.0/filter.config.json",
+  "title": "FilterConfig",
+  "type": "object",
+  "required": [
+    "predicate"
+  ],
+  "properties": {
+    "predicate": {
+      "type": "object",
+      "required": [
+        "path",
+        "op"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Dot-notation path into the input value."
+        },
+        "op": {
+          "type": "string",
+          "enum": [
+            "eq",
+            "neq",
+            "lt",
+            "lte",
+            "gt",
+            "gte",
+            "in",
+            "contains",
+            "starts-with",
+            "ends-with",
+            "regex",
+            "exists",
+            "not-exists",
+            "truthy",
+            "falsy"
+          ]
+        },
+        "value": {
+          "description": "Comparison target. Omitted for `exists`/`not-exists`/`truthy`/`falsy`."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

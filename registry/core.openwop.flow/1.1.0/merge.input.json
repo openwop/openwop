@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.flow/1.0.0/merge.input.json",
+  "title": "MergeInput",
+  "type": "object",
+  "required": [
+    "inputs"
+  ],
+  "properties": {
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "array"
+      },
+      "description": "Array of input arrays to merge."
+    }
+  },
+  "additionalProperties": false
+}
