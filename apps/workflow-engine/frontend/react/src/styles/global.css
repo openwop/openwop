@@ -1042,12 +1042,12 @@ pre {
   background: var(--color-surface-2);
 }
 
-.workflow-card-menu-danger {
-  color: var(--color-danger) !important;
+.workflow-card-menu-popover .workflow-card-menu-danger {
+  color: var(--color-danger);
 }
 
-.workflow-card-menu-danger:hover {
-  background: rgba(248, 113, 113, 0.1) !important;
+.workflow-card-menu-popover .workflow-card-menu-danger:hover {
+  background: rgba(248, 113, 113, 0.1);
 }
 
 .workflow-card-empty {

@@ -49,7 +49,6 @@ function compareWorkflows(a: SavedWorkflow, b: SavedWorkflow, by: SortBy): numbe
     case 'created':
       return a.createdAt.localeCompare(b.createdAt);
     case 'updated':
-    default:
       return a.updatedAt.localeCompare(b.updatedAt);
   }
 }
@@ -79,12 +78,9 @@ export function WorkflowsDashboard() {
   useEffect(() => {
     if (menuOpenId === null) return;
     function onDocClick(e: MouseEvent) {
-      const target = e.target as Node;
-      const root = gridRef.current;
-      if (!root) return;
-      // Close if the click landed outside any kebab menu/button.
-      const inMenu = (target as Element).closest?.('.workflow-card-menu');
-      if (!inMenu) setMenuOpenId(null);
+      const { target } = e;
+      if (!(target instanceof Element)) return;
+      if (!target.closest('.workflow-card-menu')) setMenuOpenId(null);
     }
     document.addEventListener('mousedown', onDocClick);
     return () => document.removeEventListener('mousedown', onDocClick);
@@ -129,7 +125,8 @@ export function WorkflowsDashboard() {
     document.body.appendChild(a);
     a.click();
     a.remove();
-    URL.revokeObjectURL(url);
+    // Older Safari/iOS need the URL to outlive the synchronous click.
+    setTimeout(() => URL.revokeObjectURL(url), 0);
   }
 
   return (
@@ -237,13 +234,12 @@ function WorkflowCard({
   onDelete,
   onExport,
 }: CardProps) {
-  const [draft, setDraft] = useState(wf.name);
-  useEffect(() => {
-    if (renaming) setDraft(wf.name);
-  }, [renaming, wf.name]);
-
   function onCardKey(e: React.KeyboardEvent<HTMLDivElement>) {
     if (renaming) return;
+    // Only act on keystrokes targeting the card itself, not bubbled from
+    // child <button>s — Enter/Space on the kebab or a menu item must not
+    // also navigate to the canvas.
+    if (e.target !== e.currentTarget) return;
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       onOpen();
@@ -257,26 +253,18 @@ function WorkflowCard({
       tabIndex={renaming ? -1 : 0}
       onClick={(e) => {
         if (renaming) return;
-        // Ignore clicks that bubbled from the menu region.
-        if ((e.target as Element).closest('.workflow-card-menu')) return;
+        // Ignore clicks that originated inside the menu region.
+        if (e.target instanceof Element && e.target.closest('.workflow-card-menu')) return;
         onOpen();
       }}
       onKeyDown={onCardKey}
     >
       <div className="workflow-card-title-row">
         {renaming ? (
-          <input
-            autoFocus
-            className="workflow-card-rename-input"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => {
-              e.stopPropagation();
-              if (e.key === 'Enter') onRenameCommit(draft);
-              else if (e.key === 'Escape') onRenameCancel();
-            }}
-            onBlur={() => onRenameCommit(draft)}
+          <RenameInput
+            initialValue={wf.name}
+            onCommit={onRenameCommit}
+            onCancel={onRenameCancel}
           />
         ) : (
           <h3 className="workflow-card-title">{wf.name}</h3>
@@ -322,5 +310,45 @@ function WorkflowCard({
         <span title={wf.updatedAt}>Updated {formatRelativeTime(wf.updatedAt)}</span>
       </div>
     </div>
+  );
+}
+
+interface RenameInputProps {
+  initialValue: string;
+  onCommit(name: string): void;
+  onCancel(): void;
+}
+
+/**
+ * Uncontrolled rename input. Parent remounts via `renaming` toggle so
+ * `defaultValue` always reflects the live name. The committed ref
+ * suppresses the blur→commit race when Enter triggers unmount before
+ * blur fires.
+ */
+function RenameInput({ initialValue, onCommit, onCancel }: RenameInputProps) {
+  const committed = useRef(false);
+
+  function commit(value: string) {
+    if (committed.current) return;
+    committed.current = true;
+    onCommit(value);
+  }
+
+  return (
+    <input
+      autoFocus
+      className="workflow-card-rename-input"
+      defaultValue={initialValue}
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => {
+        e.stopPropagation();
+        if (e.key === 'Enter') commit(e.currentTarget.value);
+        else if (e.key === 'Escape') {
+          committed.current = true;
+          onCancel();
+        }
+      }}
+      onBlur={(e) => commit(e.currentTarget.value)}
+    />
   );
 }
