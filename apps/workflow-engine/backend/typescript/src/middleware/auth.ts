@@ -44,6 +44,7 @@ import type { RequestHandler } from 'express';
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import type { Principal } from '../types.js';
 import { createLogger } from '../observability/logger.js';
+import { noteTenantActivity } from '../routes/admin.js';
 
 const log = createLogger('middleware.auth');
 
@@ -243,6 +244,9 @@ export function authMiddleware(): RequestHandler {
       tenants: [session.tenantId],
       token: '', // sessions don't carry a bearer token
     };
+    // Tells the daily cleanup endpoint this tenant is still live so
+    // its ephemeral BYOK secrets aren't GC'd.
+    noteTenantActivity(session.tenantId);
     next();
   };
 }

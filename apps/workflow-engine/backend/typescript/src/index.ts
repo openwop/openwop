@@ -41,6 +41,7 @@ import { registerStreamRoutes } from './routes/streams.js';
 import { registerWebhookRoutes } from './routes/webhooks.js';
 import { registerPackRoutes } from './routes/packs.js';
 import { registerByokRoutes } from './routes/byok.js';
+import { registerAdminRoutes } from './routes/admin.js';
 import { registerWorkflowRoutes } from './routes/workflows.js';
 import { registerNodeCatalogRoute } from './routes/nodeCatalog.js';
 
@@ -170,6 +171,7 @@ export async function createApp(config: AppConfig): Promise<Express> {
   registerWebhookRoutes(app, { storage });
   registerPackRoutes(app, { storage });
   registerByokRoutes(app);
+  registerAdminRoutes(app);
   registerWorkflowRoutes(app);
   registerNodeCatalogRoute(app);
 

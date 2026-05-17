@@ -10,7 +10,7 @@
 import { beforeEach, afterAll, describe, expect, it } from 'vitest';
 import express from 'express';
 import http from 'node:http';
-import { ipRateLimitMiddleware, runQuotaMiddleware, _resetRateLimitState } from '../src/middleware/rateLimit.ts';
+import { ipRateLimitMiddleware, runQuotaMiddleware, _resetRateLimitState } from '../src/middleware/rateLimit.js';
 
 let server: http.Server;
 let port: number;
