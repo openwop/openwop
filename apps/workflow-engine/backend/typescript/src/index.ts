@@ -16,6 +16,7 @@ import { createTracer } from './observability/tracer.js';
 import { createLogger } from './observability/logger.js';
 import { traceContextMiddleware } from './middleware/traceContext.js';
 import { authMiddleware } from './middleware/auth.js';
+import { ipRateLimitMiddleware } from './middleware/rateLimit.js';
 import { corsMiddleware } from './middleware/cors.js';
 import { errorEnvelopeMiddleware } from './middleware/errorEnvelope.js';
 import { ensureNodesRegistered } from './bootstrap/nodes.js';
@@ -110,18 +111,31 @@ export async function createApp(config: AppConfig): Promise<Express> {
   ensureRuntimeCapabilityRegistryInstalled();
   ensureNodePackResolverInstalled(storage);
 
+  // Dev mount first: symlink every `core.openwop.*` pack from the
+  // repo's `packs/` tree into the pack dir. When the backend boots
+  // inside the workspace (most dev runs), this gives the builder
+  // palette every pack in the repo with zero network calls.
+  // Opt out with OPENWOP_MOUNT_LOCAL_PACKS=false. See
+  // mountLocalPacks.ts for the trust-model discussion.
+  const mountResult = ensureLocalPacksMounted();
+
   // Fetch + verify + install registry packs the sample wants in the
   // builder palette. Non-blocking: install failures are logged and
   // the sample still serves the locally-registered nodes.
+  //
+  // Default: when the local mount found the workspace AND
+  // OPENWOP_INSTALL_PACKS is unset, skip the network registry install
+  // — every default-pack the sample wants is already on disk from the
+  // local mount. Explicit `OPENWOP_INSTALL_PACKS=<list>` or running
+  // outside the workspace (e.g., Docker / Cloud Run) still triggers
+  // the registry fetch.
+  const localMountServedDefaults =
+    !mountResult.disabled &&
+    (mountResult.mounted.length + mountResult.skipped.length + mountResult.shadowed.length) > 0;
+  if (!process.env.OPENWOP_INSTALL_PACKS && localMountServedDefaults) {
+    process.env.OPENWOP_INSTALL_PACKS = 'none';
+  }
   await ensureRegistryPacksInstalled();
-
-  // Dev mount: symlink any `core.openwop.*` pack from the repo's
-  // `packs/` tree into the pack dir IF it isn't already there from a
-  // registry install. Registry installs always win — the mount only
-  // fills the gap for packs not yet published. Opt out with
-  // OPENWOP_MOUNT_LOCAL_PACKS=false. See mountLocalPacks.ts for the
-  // trust-model discussion.
-  ensureLocalPacksMounted();
 
   const app = express();
 
@@ -142,6 +156,11 @@ export async function createApp(config: AppConfig): Promise<Express> {
   // Bearer-token auth — stub: any non-empty token resolves to a synthetic
   // principal. Replace with Firebase / OIDC / your IdP for real deploys.
   app.use(authMiddleware());
+
+  // Per-IP request bucket. Applies to every authed route. Per-session
+  // run-quota is mounted directly on POST /v1/runs in routes/runs.ts
+  // (it needs the principal to scope by session).
+  app.use(ipRateLimitMiddleware());
 
   registerHealthRoutes(app);
   registerDiscoveryRoutes(app, { storage, config });

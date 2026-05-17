@@ -25,6 +25,7 @@ import { OpenwopError, type RunRecord } from '../types.js';
 import { executeRun } from '../executor/executor.js';
 import { getEventLog } from '../executor/eventLog.js';
 import { createLogger } from '../observability/logger.js';
+import { runQuotaMiddleware } from '../middleware/rateLimit.js';
 
 const log = createLogger('routes.runs');
 
@@ -36,7 +37,7 @@ interface Deps {
 export function registerRunRoutes(app: Express, deps: Deps): void {
   const { storage, hostSuite } = deps;
 
-  app.post('/v1/runs', async (req, res, next) => {
+  app.post('/v1/runs', runQuotaMiddleware(), async (req, res, next) => {
     try {
       const body = req.body as CreateRunRequest;
       if (!body || typeof body !== 'object' || !body.workflowId) {
