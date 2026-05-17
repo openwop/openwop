@@ -779,9 +779,14 @@ invariants:
       RFC 0020 §D: hosts advertising `capabilities.mcp.serverMount.supported`
       MUST validate inbound `tools/call.arguments` against the tool's declared
       `inputSchema` BEFORE starting the workflow run. Malformed or
-      missing-required-field arguments MUST be rejected with isError:true
-      before any node executes — prevents prompt-injection-driven
-      argument-forgery from leaking through.
+      missing-required-field arguments MUST be rejected before any node
+      executes — either as a JSON-RPC envelope error (`-32602 invalid params`,
+      per JSON-RPC 2.0 spec for argument validation at the envelope layer)
+      OR as a `CallToolResult { isError: true, content: [...] }` (per
+      modelcontextprotocol.io for tool-execution-time errors). Both shapes
+      are spec-conformant; either prevents prompt-injection-driven
+      argument-forgery from leaking through. The reference workflow-engine
+      sample uses `-32602` (envelope-correct for pre-workflow validation).
 
   # ===== RFC 0014 host.fs sandbox =====
 

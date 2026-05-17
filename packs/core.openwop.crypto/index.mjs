@@ -241,8 +241,26 @@ export async function jwtMint(ctx) {
 
 export async function jwtVerifyNode(ctx) {
   const token = ctx.inputs.token;
-  const [h] = token.split('.');
-  const header = JSON.parse(b64urlDecode(h).toString('utf8'));
+  // Defensive shape checks — malformed tokens surface as a clean
+  // `{ valid: false, reason: 'malformed_token' | 'malformed_header' }`
+  // envelope instead of an uncaught TypeError or SyntaxError.
+  if (typeof token !== 'string' || token.length === 0) {
+    return { status: 'success', outputs: { valid: false, reason: 'malformed_token' } };
+  }
+  const parts = token.split('.');
+  if (parts.length !== 3) {
+    return { status: 'success', outputs: { valid: false, reason: 'malformed_token' } };
+  }
+  const [h] = parts;
+  let header;
+  try {
+    header = JSON.parse(b64urlDecode(h).toString('utf8'));
+  } catch {
+    return { status: 'success', outputs: { valid: false, reason: 'malformed_header' } };
+  }
+  if (header == null || typeof header !== 'object') {
+    return { status: 'success', outputs: { valid: false, reason: 'malformed_header' } };
+  }
   const alg = header.alg;
   ensure(JWT_ALGS.has(alg), 'JWT_ALG_UNSUPPORTED', `unsupported JWT alg: ${alg}`);
 
@@ -300,8 +318,19 @@ export async function jwtVerifyNode(ctx) {
   }
   const valid = jwtVerifySig(token, key, alg);
   if (!valid) return { status: 'success', outputs: { valid: false, reason: 'signature' } };
-  const [, p] = token.split('.');
-  const claims = JSON.parse(b64urlDecode(p).toString('utf8'));
+  const [, p] = parts;
+  // Signature verified above — a malformed-JSON claims segment under a
+  // valid signature is extraordinary but possible; surface as a clean
+  // reason rather than an uncaught SyntaxError.
+  let claims;
+  try {
+    claims = JSON.parse(b64urlDecode(p).toString('utf8'));
+  } catch {
+    return { status: 'success', outputs: { valid: false, reason: 'malformed_claims' } };
+  }
+  if (claims == null || typeof claims !== 'object') {
+    return { status: 'success', outputs: { valid: false, reason: 'malformed_claims' } };
+  }
   const now = Math.floor(Date.now() / 1000);
   if (claims.exp != null && claims.exp < now) return { status: 'success', outputs: { valid: false, reason: 'expired', claims } };
   if (claims.nbf != null && claims.nbf > now) return { status: 'success', outputs: { valid: false, reason: 'not-yet-valid', claims } };

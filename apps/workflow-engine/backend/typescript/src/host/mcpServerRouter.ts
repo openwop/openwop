@@ -14,9 +14,23 @@
  * All inbound traffic crosses an `untrusted` boundary per RFC 0020 §D.
  * `tools/call.arguments` validates against the registered `inputSchema`
  * BEFORE workflow start — see `SECURITY/invariants.yaml`
- * `mcp-server-untrusted-args`.
+ * `mcp-server-untrusted-args`. The resource URI sandbox normalizes via
+ * `new URL()` + allowlists schemes (`mcp:`, `https:`, `openwop-resource:`)
+ * + rejects path components containing `..` after decode, defeating
+ * encoded-traversal attacks (`%2e%2e%2f`, `..%2f`, etc.).
  *
- * @see RFCS/0020-host-mcp-server-composition.md
+ * KNOWN GAP — downstream trustBoundary propagation: this router records
+ * `metadata.trustBoundary: 'untrusted'` on every MCP-originated run, but
+ * the executor / AI-providers host do NOT yet consume that flag. A
+ * workflow exposed as an MCP tool that pipes `arguments` directly into
+ * `ctx.callAI()` will not get a host-enforced prompt-injection marker on
+ * the AI request. RFC 0020 §D's "Outputs from an MCP tool feeding into
+ * an LLM downstream remain `trustBoundary: 'untrusted'`" requires
+ * threading a `trustBoundary?: 'trusted'|'untrusted'` field through
+ * `NodeContext` + `AiCallRequest` + the `agent.toolCalled` event. Future
+ * work; closing this is host-impl scope, not RFC 0020 acceptance scope.
+ *
+ * @see RFCS/0020-host-mcp-server-composition.md §D
  */
 
 import { randomUUID } from 'node:crypto';
@@ -257,10 +271,12 @@ async function dispatchResourcesRead(
 ): Promise<JsonRpcResponse> {
   const uri = typeof params.uri === 'string' ? params.uri : null;
   if (!uri) return rpcError(id, RPC_INVALID_PARAMS, 'resources/read requires params.uri');
-  // Sandbox the URI: reject relative paths, file:// outside the host
-  // sandbox, and anything that smells like path traversal.
-  if (uri.includes('../') || uri.includes('..\\')) {
-    return rpcError(id, RPC_INVALID_PARAMS, 'resource uri rejected: path traversal');
+  // RFC 0020 §D: resource URIs MUST be normalized + sandboxed. Parse via
+  // WHATWG URL (handles percent-decoding), reject non-allowlisted schemes,
+  // then reject any path component that decodes to `..` (defeats
+  // encoded-traversal: `%2e%2e%2f`, `..%2f`, `%2e%2e/`, etc.).
+  if (!isSafeResourceUri(uri)) {
+    return rpcError(id, RPC_INVALID_PARAMS, 'resource uri rejected: unsupported scheme or path traversal');
   }
   const resource = findResourceByUri(uri);
   if (!resource) return rpcError(id, RPC_INVALID_PARAMS, `resource '${uri}' not exposed`);
@@ -499,6 +515,28 @@ async function runWorkflowSync(input: {
           ? 'cancelled'
           : 'awaiting-input';
   return { status, outputs, error };
+}
+
+/** RFC 0020 §D resource URI sandbox. Returns true iff the URI parses,
+ *  uses an allowlisted scheme, and no decoded path segment contains a
+ *  parent-directory marker (`..`) or empty/space segment. Defeats
+ *  encoded-traversal attacks: `%2e%2e%2f`, `..%2f`, `%2e%2e/`, etc. */
+const ALLOWED_RESOURCE_SCHEMES = new Set(['mcp:', 'openwop-resource:', 'https:']);
+function isSafeResourceUri(raw: string): boolean {
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    return false;
+  }
+  if (!ALLOWED_RESOURCE_SCHEMES.has(parsed.protocol)) return false;
+  // pathname is automatically percent-decoded for the comparison below.
+  const segments = decodeURIComponent(parsed.pathname).split('/');
+  for (const seg of segments) {
+    const trimmed = seg.trim();
+    if (trimmed === '..' || trimmed === '.') return false;
+  }
+  return true;
 }
 
 function coerceContentText(outputs: Record<string, unknown> | null): string {

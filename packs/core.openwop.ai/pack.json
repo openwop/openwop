@@ -1,6 +1,6 @@
 {
   "name": "core.openwop.ai",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Spec-canonical AI-call pack. v1.0 (chatCompletion, structuredOutput, toolCalling, embeddings) plus v1.1 multi-modal + LLM helpers — image generate/edit/upscale, audio transcribe/synthesize, video generate, rerank, classify, extract, guardrails, transform. Routes through host BYOK aiProviders.",
   "author": "OpenWOP Working Group",
   "license": "Apache-2.0",

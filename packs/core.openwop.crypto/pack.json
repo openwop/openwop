@@ -1,6 +1,6 @@
 {
   "name": "core.openwop.crypto",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Pure cryptographic primitives: hashing, HMAC, AEAD encrypt/decrypt, asymmetric sign/verify, JWT mint/verify, TOTP, x509 parse + chain verify. Built on node:crypto (Node 20+). Zero npm deps. Pure with respect to keys passed in via inputs.",
   "author": "OpenWOP Working Group",
   "license": "Apache-2.0",

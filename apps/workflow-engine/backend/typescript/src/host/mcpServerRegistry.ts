@@ -11,9 +11,16 @@
  * workflow via `POST /v1/host/sample/workflows` and immediately have it
  * advertised in `tools/list`.
  *
- * Tenant scoping: the workflowsRegistry today is process-global (sample-
- * grade), but the MCP router scopes lookups by the calling principal's
- * `tenants[]` claim so cross-tenant isolation still holds.
+ * Tenant scoping (sample-grade HONESTLY): the underlying `workflowsRegistry`
+ * is process-global by design (a real host would persist per-tenant in
+ * storage). The functions below enumerate ALL registered workflows without
+ * a tenant filter — the sample host has a single shared workflow space.
+ * **Real hosts MUST tenant-scope** every lookup (`listTools`, `listResources`,
+ * `listPrompts`, `find*ByName/Uri`) against the calling `principal.tenants`
+ * before returning entries to the MCP wire, or cross-tenant workflow
+ * disclosure occurs. Track this when promoting `apps/workflow-engine` to
+ * a non-sample reference host, OR when adding multi-tenant capability to
+ * `workflowsRegistry.ts` itself.
  *
  * @see RFCS/0020-host-mcp-server-composition.md §A points 1-3
  * @see packs/core.openwop.mcp/schemas/expose-tool.config.json

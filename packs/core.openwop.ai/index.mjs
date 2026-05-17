@@ -308,7 +308,26 @@ export async function extract(ctx) {
     responseSchema: ctx.config.schema,
     model: ctx.config.model,
   });
-  return { status: 'success', outputs: { value: r.data ?? r.parsed ?? JSON.parse(r.text ?? r.content ?? 'null'), confidence: 1 } };
+  // Prefer provider-parsed shapes when present; fall back to text parse
+  // only when neither r.data nor r.parsed is provided. A non-JSON text
+  // body — model ignored responseSchema — surfaces as raw text with
+  // confidence 0 instead of throwing an uncaught SyntaxError. Mirrors
+  // the catch-and-fallback pattern used by `transform()` below.
+  if (r.data != null) {
+    return { status: 'success', outputs: { value: r.data, confidence: 1 } };
+  }
+  if (r.parsed != null) {
+    return { status: 'success', outputs: { value: r.parsed, confidence: 1 } };
+  }
+  const raw = r.text ?? r.content ?? null;
+  if (raw == null) {
+    return { status: 'success', outputs: { value: null, confidence: 0 } };
+  }
+  try {
+    return { status: 'success', outputs: { value: JSON.parse(raw), confidence: 1 } };
+  } catch {
+    return { status: 'success', outputs: { value: raw, confidence: 0 } };
+  }
 }
 
 export async function guardrails(ctx) {

@@ -11,6 +11,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### `core.openwop.ai@1.1.1` + `core.openwop.crypto@1.0.3` — defensive parsing of model output + JWT shapes (2026-05-17)
+
+Closes the MEDIUM JSON.parse audit findings from the post-publish review (third defect class after the http@1.1.2 idempotency-key bug and the 6-node pure-vs-non-deterministic batch). Three uncaught `JSON.parse` sites turned what should be clean error envelopes into TypeError / SyntaxError exits.
+
+- **`core.openwop.ai@1.1.1`** — `extract()` (the structured-data extraction node) wrapped the LLM response parse in a fall-through expression: `r.data ?? r.parsed ?? JSON.parse(r.text ?? r.content ?? 'null')`. When the model ignored `responseSchema` and returned non-JSON text, the inner parse threw. Now mirrors the catch-and-fallback pattern already used by `transform()` in the same file: provider-parsed shapes (`r.data`, `r.parsed`) take precedence; non-JSON text surfaces as raw output with `confidence: 0` so downstream nodes can branch on confidence rather than handle a Node runtime exception.
+- **`core.openwop.crypto@1.0.3`** — `jwtVerifyNode()` hardened against malformed token shapes. Three new defensive returns (each with a clean `{ valid: false, reason: ... }` envelope, additive to the existing reason set): `malformed_token` when the input isn't a 3-part dot-separated string, `malformed_header` when the header segment isn't valid JSON, `malformed_claims` when the claims segment isn't valid JSON (the latter is signature-verified-but-malformed — extraordinary but possible). Adjacent type guards on parsed-object shape (`null`/non-object) close the residual gap where a JSON `null` or `42` as the header bypasses property access. The 1.0.1 alg-confusion guard (`JWT_VERIFIER_ALGORITHM_REQUIRED`) is unchanged and still reached for valid-shape tokens.
+- **Compatibility:** safety-fix per `COMPATIBILITY.md §3`. The new `malformed_*` reason values are additive to the existing reason enum (`signature` / `expired` / `not-yet-valid` / `iss` / `aud` / etc.) — consumers checking specific known reasons fall through to their default case unchanged.
+- **Publication:** built + signed + republished alongside this commit (same flow as the earlier today's batch). 76 signed packs verified after publish.
+
 ### `core.openwop.data@1.2.1` + `core.openwop.crypto@1.0.2` — correctness fix for nodes mis-declared as `pure` (2026-05-17)
 
 Post-publish audit (see CHANGELOG `[Unreleased]` §"core.openwop.http@1.1.2" for the headline finding that motivated this sweep) surfaced 6 more nodes in the same defect class: declared `role: "pure"` + `capabilities: ["cacheable"]` while their runtime depends on wall-clock time or randomness. Under the engine's caching contract (`node-pack-manifest.schema.json` §"capabilities" — "engine uses these to decide caching"), a `pure + cacheable` node MAY be cached by input-hash, which for empty-input nodes like `uuid` collapses to "one cached value forever" and for time-dependent nodes returns stale data past expiration.
