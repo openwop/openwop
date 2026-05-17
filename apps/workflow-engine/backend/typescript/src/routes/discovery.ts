@@ -11,6 +11,7 @@ import type { Express } from 'express';
 import type { AppConfig } from '../index.js';
 import { listCapabilities } from '../executor/runtimeCapabilities.js';
 import type { Storage } from '../storage/storage.js';
+import { listHostSurfaces } from '../bootstrap/hostSurfaceRegistry.js';
 
 interface Deps {
   storage: Storage;
@@ -131,6 +132,10 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       webhooks: { supported: true, signed: true, durable: false },
       observability: { otel: { namespace: 'openwop' } },
       runtimeCapabilities: listCapabilities(),
+      // Host surface registry — what `ctx.*` surfaces this host wires.
+      // The catalog endpoint cross-references this to mark each node
+      // as runnable-here or "needs host.X".
+      hostSurfaces: listHostSurfaces(),
     },
     extensions: {
       // Sample-namespace extensions block. Clients tolerate absence.

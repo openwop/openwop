@@ -33,6 +33,7 @@ import type { NodeContext, NodeOutcome, WorkflowDefinition } from './types.js';
 import type { RunRecord } from '../types.js';
 import type { ProviderPolicyResolver } from '../host/index.js';
 import { createAiProvidersAdapter, AiProviderError } from '../aiProviders/aiProvidersHost.js';
+import { buildHostSurfaceBundle } from '../host/inMemorySurfaces.js';
 
 export interface ExecuteRunResult {
   status: RunRecord['status'];
@@ -177,6 +178,15 @@ export async function executeRun(
           policyResolver: options.policyResolver,
         })
       : null;
+    // Host capability bundle — built per-run with the tenant baked in.
+    // Demo-grade in-memory adapters (storage/db/fs/queueBus/observability)
+    // live in `host/inMemorySurfaces.ts`. Each `ctx.<surface>` here is
+    // the same shape Phase-6 real-backend hosts will satisfy.
+    const surfaces = buildHostSurfaceBundle({
+      tenantId: run.tenantId,
+      ...(run.scopeId ? { scopeId: run.scopeId } : {}),
+    });
+
     const ctx: NodeContext = {
       runId: run.runId,
       nodeId: node.nodeId,
@@ -191,6 +201,11 @@ export async function executeRun(
         eventLog.append({ runId: run.runId, nodeId: node.nodeId, type, payload: stripSecretsFromPersisted(payload) });
       },
       ...(aiAdapter ? { callAI: aiAdapter.callAI, callAIWithTools: aiAdapter.callAIWithTools } : {}),
+      storage: surfaces.storage,
+      db: surfaces.db,
+      fs: surfaces.fs,
+      queueBus: surfaces.queueBus,
+      observability: surfaces.observability,
     };
 
     let outcome: NodeOutcome;

@@ -21,6 +21,8 @@ import type { Express } from 'express';
 import { OpenwopError } from '../types.js';
 import { getNodeRegistry } from '../executor/nodeRegistry.js';
 import { resolveDefaultPackDir } from '../packs/registryInstaller.js';
+import { requiredHostSurfacesFor } from '../bootstrap/hostSurfaceMap.js';
+import { listHostSurfaces } from '../bootstrap/hostSurfaceRegistry.js';
 
 const MAX_SCHEMA_INLINE_BYTES = 8 * 1024;
 
@@ -39,6 +41,14 @@ interface CatalogNode {
   configSchema?: unknown;
   inputSchema?: unknown;
   outputSchema?: unknown;
+  /** Host surfaces this node needs to execute on the host (e.g.,
+   *  `host.kvStorage`). Derived from hostSurfaceMap.ts. Empty array
+   *  means "no host surface required" (pure data / control nodes). */
+  requiresHostSurfaces: string[];
+  /** Subset of `requiresHostSurfaces` that THIS host does NOT advertise.
+   *  Empty array means the node is runnable here. Populated server-side
+   *  so the client doesn't have to cross-reference advertisement. */
+  missingHostSurfaces: string[];
 }
 
 interface PackManifestNode {
@@ -63,6 +73,10 @@ interface PackManifest {
 export function registerNodeCatalogRoute(app: Express): void {
   app.get('/v1/host/sample/node-catalog', (_req, res, next) => {
     try {
+      const supported = new Set(
+        listHostSurfaces().filter((s) => s.supported).map((s) => s.name),
+      );
+
       const nodes: CatalogNode[] = [];
 
       // 1. Locally-registered modules from the in-process NodeRegistry.
@@ -72,6 +86,7 @@ export function registerNodeCatalogRoute(app: Express): void {
       for (const typeId of registry.listTypeIds()) {
         const mod = registry.get(typeId);
         if (!mod) continue;
+        const required = requiredHostSurfacesFor(typeId);
         nodes.push({
           typeId,
           version: mod.version,
@@ -79,6 +94,8 @@ export function registerNodeCatalogRoute(app: Express): void {
           description: '',
           category: 'flow',
           source: 'local',
+          requiresHostSurfaces: [...required],
+          missingHostSurfaces: required.filter((s) => !supported.has(s)),
         });
       }
 
@@ -100,6 +117,7 @@ export function registerNodeCatalogRoute(app: Express): void {
           }
           if (!Array.isArray(manifest.nodes)) continue;
           for (const n of manifest.nodes) {
+            const required = requiredHostSurfacesFor(n.typeId);
             nodes.push({
               typeId: n.typeId,
               version: n.version,
@@ -113,6 +131,8 @@ export function registerNodeCatalogRoute(app: Express): void {
               configSchema: readSchemaInline(packDir, entry, n.configSchemaRef),
               inputSchema: readSchemaInline(packDir, entry, n.inputSchemaRef),
               outputSchema: readSchemaInline(packDir, entry, n.outputSchemaRef),
+              requiresHostSurfaces: [...required],
+              missingHostSurfaces: required.filter((s) => !supported.has(s)),
             });
           }
         }

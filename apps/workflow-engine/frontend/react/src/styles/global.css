@@ -403,12 +403,22 @@ pre {
 }
 
 .builder-palette {
-  width: 240px;
-  flex: 0 0 240px;
+  width: 260px;
+  flex: 0 0 260px;
   border-right: 1px solid var(--color-border);
-  padding: var(--space-3);
+  padding: var(--space-3) 0;
   overflow-y: auto;
   background: var(--color-surface);
+}
+
+.builder-palette-header {
+  padding: 0 var(--space-3) var(--space-2);
+  position: sticky;
+  top: 0;
+  background: var(--color-surface);
+  z-index: 2;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: var(--space-2);
 }
 
 .builder-palette-title {
@@ -418,34 +428,170 @@ pre {
 }
 
 .builder-palette-hint {
-  margin: 0 0 var(--space-3);
+  margin: 0 0 var(--space-2);
   font-size: 11px;
 }
 
+.builder-palette-search {
+  position: relative;
+}
+
+.builder-palette-search-input {
+  width: 100%;
+  padding: 6px 28px 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 12px;
+  font-family: inherit;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.builder-palette-search-input:focus {
+  border-color: var(--color-accent, #5b8cff);
+  box-shadow: 0 0 0 2px rgba(91, 140, 255, 0.15);
+}
+
+.builder-palette-search-input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.builder-palette-search-clear {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 0;
+}
+
+.builder-palette-search-clear:hover {
+  background: var(--color-surface-2);
+  color: var(--color-text);
+}
+
+.builder-palette-search-summary {
+  margin: var(--space-1) 0 0;
+  font-size: 11px;
+}
+
+.builder-palette-empty {
+  margin: var(--space-3);
+  font-size: 12px;
+  text-align: center;
+}
+
 .builder-palette-group {
-  margin-bottom: var(--space-3);
+  margin: 0 var(--space-2) var(--space-1);
 }
 
 .builder-palette-group-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  width: 100%;
+  padding: 4px var(--space-1);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--color-text-muted);
-  margin-bottom: var(--space-1);
-  padding: 0 var(--space-1);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  border-radius: 4px;
+}
+
+.builder-palette-group-label:hover {
+  background: var(--color-surface-2);
+  color: var(--color-text);
+}
+
+.builder-palette-disclosure {
+  display: inline-block;
+  width: 12px;
+  font-size: 10px;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.builder-palette-group-name {
+  flex: 1;
+  font-weight: 600;
+}
+
+.builder-palette-group-count,
+.builder-palette-subgroup-count {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  background: var(--color-surface-2);
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.builder-palette-subgroup {
+  margin: 2px 0 4px;
+}
+
+.builder-palette-subgroup-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  width: 100%;
+  padding: 2px var(--space-1) 2px 18px;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  border-radius: 4px;
+}
+
+.builder-palette-subgroup-label:hover {
+  background: var(--color-surface-2);
+  color: var(--color-text);
+}
+
+.builder-palette-subgroup-name {
+  flex: 1;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .builder-palette-item {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-2);
+  padding: 6px var(--space-2);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  margin-bottom: var(--space-1);
+  margin: 2px 0 2px 18px;
   cursor: grab;
   background: var(--color-surface);
   user-select: none;
+}
+
+/* When a category has no sub-headers (single sub-section), pull items
+   back flush so the indentation matches single-tier sections. */
+.builder-palette-subgroup:only-child .builder-palette-item {
+  margin-left: 18px;
 }
 
 .builder-palette-item:hover {
@@ -471,6 +617,38 @@ pre {
 
 .builder-palette-item-label {
   font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Node needs a host surface this engine doesn't advertise. Drag still
+   works (the workflow is portable to a fuller host), but make it
+   visually obvious in the palette that running it here won't work. */
+.builder-palette-item-blocked {
+  opacity: 0.7;
+  border-style: dashed;
+}
+
+.builder-palette-item-blocked:hover {
+  opacity: 0.9;
+}
+
+.builder-palette-item-host-warn {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-warn, #b45309);
+  background: rgba(217, 119, 6, 0.12);
+  border-radius: 3px;
+  padding: 1px 5px;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+.builder-inspector-host-warn {
+  margin-bottom: var(--space-3);
 }
 
 .builder-canvas {

@@ -25,6 +25,9 @@ import { ensureInvocationLogInstalled } from './bootstrap/invocationLog.js';
 import { ensureRuntimeCapabilityRegistryInstalled } from './bootstrap/runtimeCapabilityRegistry.js';
 import { ensureNodePackResolverInstalled } from './bootstrap/nodePackResolver.js';
 import { ensureRegistryPacksInstalled } from './bootstrap/installRegistryPacks.js';
+import { ensureLocalPacksMounted } from './bootstrap/mountLocalPacks.js';
+import { seedDefaultHostSurfaces } from './bootstrap/hostSurfaceRegistry.js';
+import { initInMemorySurfaces } from './host/inMemorySurfaces.js';
 import { openStorage } from './storage/index.js';
 import { createHostAdapterSuite } from './host/index.js';
 import { configureSecretResolver, loadSecretsFromEnv } from './byok/secretResolver.js';
@@ -86,6 +89,20 @@ export async function createApp(config: AppConfig): Promise<Express> {
 
   // Pre-register node modules + install singletons before the first
   // request lands. Mirrors the MyndHyve workflow-runtime boot order.
+  // Seed host-surface registry with "supported=false" defaults so the
+  // discovery + catalog routes can show the full surface list with
+  // honest support flags. Phase-3 adapters call registerHostSurface()
+  // again with `supported: true` once they're wired.
+  seedDefaultHostSurfaces();
+
+  // Wire demo-grade in-memory host surfaces (kv/table/cache/blob/queue
+  // /fs/sql/vector/messaging/observability) so pack-authored nodes
+  // delegating to ctx.storage / ctx.db / ctx.fs / ctx.queueBus / ctx.observability
+  // actually execute. All state is process-local — restarts wipe it.
+  // Phase 6 replaces these with real-backend adapters (see
+  // examples/hosts/postgres). The surface shapes don't change.
+  initInMemorySurfaces({ dataDir });
+
   ensureNodesRegistered();
   ensureSuspendManagerInstalled(storage);
   ensureEventLogInstalled(storage);
@@ -97,6 +114,14 @@ export async function createApp(config: AppConfig): Promise<Express> {
   // builder palette. Non-blocking: install failures are logged and
   // the sample still serves the locally-registered nodes.
   await ensureRegistryPacksInstalled();
+
+  // Dev mount: symlink any `core.openwop.*` pack from the repo's
+  // `packs/` tree into the pack dir IF it isn't already there from a
+  // registry install. Registry installs always win — the mount only
+  // fills the gap for packs not yet published. Opt out with
+  // OPENWOP_MOUNT_LOCAL_PACKS=false. See mountLocalPacks.ts for the
+  // trust-model discussion.
+  ensureLocalPacksMounted();
 
   const app = express();
 

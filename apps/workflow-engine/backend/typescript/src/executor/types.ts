@@ -129,7 +129,59 @@ export interface NodeContext {
    * `aiProviders.toolCalling.supported`. Anthropic-only in this sample.
    */
   callAIWithTools?(req: AiToolCallRequest): Promise<AiToolCallResult>;
+  /**
+   * Host capability surfaces per RFCs 0014–0019. Present when the host
+   * wires `initInMemorySurfaces()` (demo) or a real-backend equivalent.
+   * Pack delegates index into these maps directly; the index signatures
+   * are intentionally loose to match how packs spread `{ ...config,
+   * ...inputs }` into surface methods. See
+   * `src/host/inMemorySurfaces.ts` for the demo implementation and
+   * the surface-shape comments next to each field.
+   */
+  storage?: HostStorageSurfaces;
+  /** ctx.db.{sql, vector, …} — see RFC 0018. */
+  db?: HostDbSurfaces;
+  /** ctx.fs — RFC 0014 file-system surface. */
+  fs?: HostFsSurface;
+  /** ctx.queueBus — RFC 0017 messaging bus (used by core.messaging.* nodes). */
+  queueBus?: HostQueueBusSurface;
+  /** ctx.observability — used by core.openwop.obs nodes. */
+  observability?: HostObservabilitySurface;
 }
+
+/** Loose-typed surface map. The concrete shape lives in
+ *  `host/inMemorySurfaces.ts`; this signature only constrains that
+ *  every method is async + returns a record. Tightening this would
+ *  require importing the concrete `KvSurface | TableSurface | …`
+ *  union here, but those types belong to the host layer, not the
+ *  executor — so we use a structural shape that matches the pack
+ *  delegate's call site. */
+type HostSurfaceMethod = (args: Record<string, unknown>) => Promise<Record<string, unknown>>;
+type HostSurfaceCollection = { readonly [method: string]: HostSurfaceMethod };
+
+export interface HostStorageSurfaces {
+  kv?: HostSurfaceCollection;
+  table?: HostSurfaceCollection;
+  cache?: HostSurfaceCollection;
+  blob?: HostSurfaceCollection;
+  queue?: HostSurfaceCollection;
+}
+export interface HostDbSurfaces {
+  sql?: HostSurfaceCollection;
+  nosql?: HostSurfaceCollection;
+  search?: HostSurfaceCollection;
+  vector?: HostSurfaceCollection;
+}
+export type HostFsSurface = HostSurfaceCollection & {
+  image?: HostSurfaceCollection;
+  pdf?: HostSurfaceCollection;
+  archive?: HostSurfaceCollection;
+  ftp?: HostSurfaceCollection;
+  sftp?: HostSurfaceCollection;
+  ssh?: HostSurfaceCollection;
+};
+export type HostQueueBusSurface = HostSurfaceCollection;
+export type HostObservabilitySurface = HostSurfaceCollection;
 
 export type NodeOutcome =
   | { status: 'success'; outputs: unknown }

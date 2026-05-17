@@ -28,6 +28,10 @@ interface ServerCatalogNode {
   configSchema?: unknown;
   inputSchema?: unknown;
   outputSchema?: unknown;
+  /** Host surfaces this node needs (e.g. `host.kvStorage`). */
+  requiresHostSurfaces?: readonly string[];
+  /** Subset of requiresHostSurfaces this host does NOT advertise. */
+  missingHostSurfaces?: readonly string[];
 }
 
 const dynamicByKind = new Map<string, NodeCatalogEntry>();
@@ -128,6 +132,13 @@ function toCatalogEntry(node: ServerCatalogNode): NodeCatalogEntry {
     inputs: portsFromSchema(node.inputSchema, 'in'),
     outputs: portsFromSchema(node.outputSchema, 'out'),
     configFields: configFieldsFromSchema(node.configSchema),
+    ...(node.packName ? { packName: node.packName } : {}),
+    ...(node.requiresHostSurfaces && node.requiresHostSurfaces.length > 0
+      ? { requiresHostSurfaces: node.requiresHostSurfaces }
+      : {}),
+    ...(node.missingHostSurfaces && node.missingHostSurfaces.length > 0
+      ? { missingHostSurfaces: node.missingHostSurfaces }
+      : {}),
   };
 }
 

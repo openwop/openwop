@@ -37,6 +37,18 @@ export interface NodeCatalogEntry {
   inputs: PortDef[];
   outputs: PortDef[];
   configFields: ConfigField[];
+  /** Pack name (e.g., `core.openwop.flow`) when the node comes from a pack
+   *  manifest. Absent for host-local nodes. Used by the palette to render
+   *  collapsible pack sub-sections. */
+  packName?: string;
+  /** Host surfaces the node's runtime needs (e.g. `host.kvStorage`).
+   *  Absent or empty for pure data/control/flow nodes. */
+  requiresHostSurfaces?: readonly string[];
+  /** Subset of `requiresHostSurfaces` THIS host doesn't advertise.
+   *  Non-empty means dragging the node onto the canvas still works,
+   *  but executing it will fail with HOST_CAPABILITY_MISSING. Server-
+   *  computed so the client doesn't have to cross-reference advertising. */
+  missingHostSurfaces?: readonly string[];
 }
 
 export const NODE_CATALOG: readonly NodeCatalogEntry[] = [

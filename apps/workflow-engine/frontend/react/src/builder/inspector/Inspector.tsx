@@ -21,10 +21,28 @@ export function Inspector() {
       </aside>
     );
   }
+  const missing = entry.missingHostSurfaces ?? [];
   return (
     <aside className="builder-inspector">
       <h3 className="builder-inspector-title">{entry.label}</h3>
       <p className="muted builder-inspector-desc">{entry.description}</p>
+
+      {missing.length > 0 ? (
+        <div
+          className="alert warning builder-inspector-host-warn"
+          role="status"
+          aria-label="Host capability missing"
+        >
+          <strong>Needs host capability:</strong> {missing.join(', ')}.
+          <div className="muted builder-inspector-help" style={{ marginTop: 4 }}>
+            This engine doesn't advertise the required surface. The node will
+            still serialize and ship in the workflow, but running it here returns
+            <code> HOST_CAPABILITY_MISSING</code>. Wire the surface in your host,
+            or run <code>examples/hosts/postgres</code> for a host that advertises
+            every surface.
+          </div>
+        </div>
+      ) : null}
 
       <div className="form-row">
         <label>Name</label>

@@ -130,7 +130,15 @@ export async function loadPackFromManifest(packDir: string): Promise<NodeModule 
             err && typeof err === 'object' && 'code' in err && typeof (err as { code: unknown }).code === 'string'
               ? ((err as { code: string }).code)
               : 'pack_node_error';
-          const message = err instanceof Error ? err.message : String(err);
+          const rawMessage = err instanceof Error ? err.message : String(err);
+          // HOST_CAPABILITY_MISSING is the common case for packs that
+          // delegate to ctx.storage / ctx.db / ctx.fs / etc. on hosts
+          // that don't advertise the surface. Augment with a guide
+          // pointer instead of leaving the bare delegate error.
+          const message =
+            code === 'HOST_CAPABILITY_MISSING'
+              ? `${rawMessage}. This host does not advertise the required surface — see GET /.well-known/openwop capabilities.hostSurfaces, or run examples/hosts/postgres for a host that wires every surface.`
+              : rawMessage;
           return { status: 'failure', error: { code, message } };
         }
         const r = result as { status?: string; outputs?: unknown };
