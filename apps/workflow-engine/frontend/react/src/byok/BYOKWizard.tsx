@@ -115,17 +115,20 @@ function ProviderGrid({
       <h2 style={{ margin: 0, fontSize: 14 }}>Pick a provider</h2>
       <p style={{ marginTop: 8, marginBottom: 8, fontSize: 12, lineHeight: 1.5 }}>
         <strong>BYOK</strong> ("bring your own key") means you supply the API
-        key for the model provider you pick below. The provider — Anthropic,
-        OpenAI, or Google — bills you directly for your usage. OpenWOP never
-        sees the bill and never proxies your usage.
+        key for the model provider you pick below. The provider bills you
+        directly for your usage; OpenWOP doesn't bill you or take a cut. The
+        sample server forwards each request to the provider using your key,
+        then streams the response back.
       </p>
       <p className="muted" style={{ marginTop: 0, marginBottom: 4, fontSize: 12, lineHeight: 1.5 }}>
         Your key is stored on the sample server (sqlite-backed, AES-256-GCM
         encrypted at rest) and sent only to the provider you picked. Set
-        <code style={{ margin: '0 4px' }}>OPENWOP_BYOK_EPHEMERAL=1</code> on the
-        server to switch to in-memory-only mode that wipes on restart.
-        Production hosts swap the storage layer for a managed KMS — see
-        <code style={{ margin: '0 4px' }}>src/byok/secretResolver.ts</code>.
+        <code style={{ margin: '0 4px' }}>OPENWOP_BYOK_EPHEMERAL=true</code> on
+        the server to switch to in-memory-only mode that wipes on restart.
+        Production hosts swap this storage for a managed key-management
+        service (KMS) like AWS KMS, GCP KMS, or HashiCorp Vault — see
+        <code style={{ margin: '0 4px' }}>src/byok/secretResolver.ts</code> for
+        the adapter pattern.
       </p>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 16 }}>
         {PROVIDERS.map((p) => (
