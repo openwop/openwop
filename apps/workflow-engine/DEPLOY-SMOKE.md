@@ -11,6 +11,9 @@ BASE="https://app.openwop.dev/api"
 CJAR=/tmp/smoke-cookies.txt
 rm -f $CJAR
 
+# 0. Liveness probe (the canonical "is the backend up" check)
+curl -sI "$BASE/health" | head -1   # HTTP/2 200 expected
+
 # 1. Well-known capabilities (no auth)
 curl -s "$BASE/.well-known/openwop" | \
   python3 -c "import json,sys; d=json.load(sys.stdin); print('protocol:', d['protocolVersion']); print('surfaces:', len(d['capabilities']['hostSurfaces'])); print('aiProviders:', d['capabilities']['aiProviders']['supported'])"

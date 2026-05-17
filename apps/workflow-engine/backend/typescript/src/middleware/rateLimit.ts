@@ -37,6 +37,7 @@
 
 import type { Request, RequestHandler } from 'express';
 import { createLogger } from '../observability/logger.js';
+import { onRunTerminal } from '../executor/runLifecycle.js';
 
 const log = createLogger('middleware.rateLimit');
 
@@ -94,7 +95,10 @@ function clientIp(req: Request): string {
   // header on a network where clients can spoof it; behind a single
   // trusted L7 proxy it's the canonical source.
   const xff = req.header('x-forwarded-for');
-  if (xff) return xff.split(',')[0]!.trim();
+  if (xff) {
+    const first = xff.split(',')[0] ?? xff;
+    return first.trim();
+  }
   return req.socket.remoteAddress ?? 'unknown';
 }
 
@@ -215,15 +219,49 @@ export function runQuotaMiddleware(): RequestHandler {
         if (bucket && bucket.day === today) bucket.count++;
         else ipRunCountsDay.set(key, { day: today, count: 1 });
       }
-      // Track in-flight (released by 60s TTL)
-      if (isSession && limits.sessionConcurrent > 0) {
-        const list = sessionInflightRuns.get(key) ?? [];
-        list.push({ startedAtMs: Date.now(), runId: 'pending' });
-        sessionInflightRuns.set(key, list);
-      }
+      // Inflight tracking is wired explicitly via reserveConcurrentSlot
+      // in the runs route — it ties to the actual runId AND auto-
+      // releases on the run's terminal event via runLifecycle. The
+      // middleware no longer pushes a 'pending' placeholder here; the
+      // 60s TTL safety-net stays only as a backstop in case a route
+      // forgets to reserve.
     });
+    // Stash the session key on the request so the route handler can
+    // call reserveConcurrentSlot with the real runId once it's created.
+    (req as Request & { _sessionKey?: string })._sessionKey = key;
     next();
   };
+}
+
+/**
+ * Bind a session's concurrent-runs slot to the actual runId, and
+ * register an auto-release on the run's terminal event. Called from
+ * the runs route after the run record is created.
+ *
+ * Returns a manual release function for paths that need to release
+ * before the executor reaches a terminal state (e.g., a creation-
+ * time failure that doesn't go through the run.* lifecycle).
+ */
+export function reserveConcurrentSlot(req: Request, runId: string): () => void {
+  const key = (req as Request & { _sessionKey?: string })._sessionKey;
+  if (!key) return () => undefined; // no-op for routes outside the runQuotaMiddleware
+  const list = sessionInflightRuns.get(key) ?? [];
+  list.push({ startedAtMs: Date.now(), runId });
+  sessionInflightRuns.set(key, list);
+  let released = false;
+  const release = () => {
+    if (released) return;
+    released = true;
+    const cur = sessionInflightRuns.get(key);
+    if (!cur) return;
+    const next = cur.filter((r) => r.runId !== runId);
+    if (next.length === 0) sessionInflightRuns.delete(key);
+    else sessionInflightRuns.set(key, next);
+  };
+  // Auto-release when the executor emits a terminal event for this run.
+  // The runLifecycle bus fires once per runId and clears listeners.
+  onRunTerminal(runId, release);
+  return release;
 }
 
 // ── Test affordances ──

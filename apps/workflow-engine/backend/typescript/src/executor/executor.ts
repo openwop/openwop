@@ -55,6 +55,7 @@ import type { RunRecord } from '../types.js';
 import type { ProviderPolicyResolver } from '../host/index.js';
 import { createAiProvidersAdapter, AiProviderError } from '../aiProviders/aiProvidersHost.js';
 import { buildHostSurfaceBundle } from '../host/inMemorySurfaces.js';
+import { notifyRunTerminal } from './runLifecycle.js';
 import {
   buildGraph,
   buildNodeInputs,
@@ -113,6 +114,7 @@ function emitTerminalFailure(input: {
     error: input.error,
   });
   clearRunSecrets(input.runId);
+  notifyRunTerminal(input.runId);
 }
 
 /**
@@ -248,6 +250,17 @@ async function runOneNode(input: {
     fs: surfaces.fs,
     queueBus: surfaces.queueBus,
     observability: surfaces.observability,
+    // RFC 0020 — host-side MCP. The sample host builds its MCP registry
+    // declaratively from workflow definitions (see host/mcpServerRegistry.ts),
+    // so `expose` is a stable no-op that returns a synthetic handle. Pack
+    // delegates from core.openwop.mcp.expose-* call this and chain on
+    // outputs.handle; nothing depends on the handle's identity in v1.
+    mcp: {
+      expose: async (args) => ({
+        handle: `mcp:${run.runId}:${nodeRef.nodeId}`,
+        kind: typeof args.kind === 'string' ? args.kind : 'tool',
+      }),
+    },
   };
 
   let outcome: NodeOutcome;
@@ -513,6 +526,7 @@ function finalizeRun(input: {
     });
     storage.updateRun(run.runId, { status: 'completed', completedAt: new Date().toISOString() });
     clearRunSecrets(run.runId);
+    notifyRunTerminal(run.runId);
     return { status: 'completed' };
   }
   if (disposition.status === 'failed') {

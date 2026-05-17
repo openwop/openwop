@@ -25,7 +25,8 @@ import { OpenwopError, type RunRecord } from '../types.js';
 import { executeRun } from '../executor/executor.js';
 import { getEventLog } from '../executor/eventLog.js';
 import { createLogger } from '../observability/logger.js';
-import { runQuotaMiddleware } from '../middleware/rateLimit.js';
+import { runQuotaMiddleware, reserveConcurrentSlot } from '../middleware/rateLimit.js';
+import { notifyRunTerminal } from '../executor/runLifecycle.js';
 
 const log = createLogger('routes.runs');
 
@@ -121,6 +122,13 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
         updatedAt: now,
       };
       storage.insertRun(run);
+      // Bind the run to a concurrent-runs slot (P0.4 rate limit) — the
+      // middleware reserved abstract capacity in its pre-flight check,
+      // and this call ties the reservation to the actual runId so the
+      // runLifecycle bus can auto-release on run.completed / run.failed
+      // / run.cancelled. No-op for routes outside the rate-limit
+      // middleware (e.g., conformance harness bypass).
+      reserveConcurrentSlot(req, runId);
       hostSuite.auditSink.record({
         principalId: principal.principalId,
         action: 'run.create',
@@ -196,6 +204,7 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
         type: 'run.cancelled',
         payload: { reason },
       });
+      notifyRunTerminal(run.runId);
       res.json({ runId: run.runId, status: 'cancelled' });
     } catch (err) {
       next(err);
