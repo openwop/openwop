@@ -11,6 +11,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Workflow-chain packs — RFC 0013 Phase 4 in-tree example (2026-05-17)
+
+- **`examples/packs/workflow-chain-sample/`** (NEW) — reference workflow-chain pack proving the RFC 0013 manifest format works end-to-end with real-world-shaped content. Ships two chains: a 1-node `summarize-text` (literal parameter substitution into a single `core.ai.callPrompt`) and a 2-node `fetch-and-summarize` (multi-node DAG with edge wiring `fetch.body → summarize.sourceText` + capability propagation `side-effectful` to both nodes). The canonical proof that the chain-pack contract is implementable.
+- **`conformance/src/scenarios/workflow-chain-pack-manifest-validation.test.ts`** extended — now loads `examples/packs/workflow-chain-sample/pack.json` from disk and validates it against the schema as an additional positive case (skips cleanly under the published-tarball layout where `examples/` isn't bundled). Future schema authors evolving `workflow-chain-pack-manifest.schema.json` get an automatic regression signal that the example pack stays accepted.
+- **Public-registry publication NOT in scope.** This pack is in-repo only — public-registry publication of workflow-chain packs is gated on the same external security audit that gates the new `core.openwop.*` packs (per `SECURITY/external-audit-engagement.md` §2.1). The RFC's Phase 4 vendor publications (`vendor.myndhyve.app-builder-presets` covering the 55 CANVAS-PACKS-INVENTORY editor presets) remain genuinely deferred — they need (a) production signing keys, (b) MyndHyve preset content, (c) audit-completion signal. This in-tree sample closes the proof-of-implementability gap without taking on those operational dependencies.
+- **No signing in this batch.** No `pack.json.sig` or signing key material ships in `examples/packs/workflow-chain-sample/`. Production chain packs MUST be signed per `node-packs.md §Signing` (reused unchanged); the signing-flow test path is exercised by `workflow-chain-pack-signature-verification.test.ts` using an in-memory keypair.
+
+This commit closes the RFC 0013 in-tree implementability proof. All four phases of RFC 0013 are now landed in some form:
+
+- **Phase 1** (spec + schema + capability + manifest-validation conformance): commit 664e363
+- **Phase 2** (registry build-index + conformance-check `kind` routing): commit f7da629
+- **Phase 3** (reference expansion library + 3 host-side scenarios): commit 1c9dba6
+- **Phase 4 in-tree** (example chain pack + loading test): this commit
+- **Phase 4 vendor publications** (`vendor.myndhyve.*` packs to packs.openwop.dev): deferred pending external security audit
+
 ### Workflow-chain packs — RFC 0013 Phase 3 (2026-05-17)
 
 - **`conformance/src/lib/workflow-chain-expansion.ts`** (NEW) — reference implementation of the 9-step host-editor expansion semantics from `workflow-chain-packs.md` §"Expansion semantics (normative)". Pure function, zero I/O, zero crypto. Implements steps 3 (typeId resolution check, delegated via `isTypeIdResolvable` callback), 5 (`{{params.<name>}}` literal substitution, recursive into nested config/inputs), 6 (per-expansion chainId-derived node-id rewrite for collision-free splice), 8 (chain-level `capabilities[]` propagation to every expanded node), and edge endpoint rewriting that preserves port-name suffixes and leaves out-of-fragment refs untouched (lets the host wire parent-workflow adjacency post-splice). Exports `expandChain(chain, ctx) → ExpandedFragment` + `ChainUnresolvableTypeIdError`. ~190 LOC. Hosts implementing chain expansion MAY import directly OR port the algorithm; the contract is the spec.

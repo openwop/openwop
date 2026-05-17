@@ -1,0 +1,131 @@
+{
+  "name": "vendor.openwop.workflow-chain-sample",
+  "version": "1.0.0",
+  "kind": "workflow-chain",
+  "description": "Reference workflow-chain pack proving the RFC 0013 manifest format works end-to-end across schema validation, registry indexing, and the reference expansion library. Two chains: a 1-node 'summarize text' chain showing literal parameter substitution, and a 2-node 'fetch-and-summarize' chain showing multi-node DAG composition with edge wiring and capability propagation. In-tree only (NOT published to packs.openwop.dev); the canonical proof that the chain-pack contract is implementable with real-world-shaped content.",
+  "author": "openwop project",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/spec/v1/workflow-chain-packs.md",
+  "repository": "https://github.com/openwop/openwop",
+  "engines": {
+    "openwop": ">=1.1 <2.0.0"
+  },
+  "chains": [
+    {
+      "chainId": "vendor.openwop.workflow-chain-sample.summarize-text",
+      "version": "1.0.0",
+      "label": "Summarize Text",
+      "description": "Drag-tile that expands to a single core.ai.callPrompt with the summarization system prompt + author-supplied length / tone parameters substituted in. Mirrors the 'Generate PRD' positive example from workflow-chain-packs.md §Examples — the canonical 1-node chain shape.",
+      "parameters": {
+        "type": "object",
+        "required": ["sourceText"],
+        "properties": {
+          "sourceText": {
+            "type": "string",
+            "description": "The text to summarize. Surfaced via {{params.sourceText}} placeholder in the system prompt."
+          },
+          "targetLength": {
+            "type": "string",
+            "enum": ["one-sentence", "one-paragraph", "executive-summary"],
+            "default": "one-paragraph",
+            "description": "How long the summary should be."
+          },
+          "tone": {
+            "type": "string",
+            "default": "neutral",
+            "description": "Tone for the summary (e.g., 'casual', 'technical', 'executive')."
+          }
+        }
+      },
+      "dag": {
+        "nodes": [
+          {
+            "id": "summarize-call",
+            "typeId": "core.ai.callPrompt",
+            "name": "Summarize",
+            "position": { "x": 0, "y": 0 },
+            "config": {
+              "systemPrompt": "You are an expert summarizer. Produce a {{params.targetLength}} summary in a {{params.tone}} tone. Avoid lists unless the source uses them. Avoid hedging.\n\nSource text:\n{{params.sourceText}}",
+              "envelopeType": "summary.v1",
+              "provider": "anthropic"
+            },
+            "inputs": {}
+          }
+        ],
+        "edges": []
+      },
+      "outputs": {
+        "summaryText": {
+          "type": "string",
+          "description": "The summarized text from the AI call's envelope payload."
+        }
+      },
+      "capabilities": ["cacheable"]
+    },
+    {
+      "chainId": "vendor.openwop.workflow-chain-sample.fetch-and-summarize",
+      "version": "1.0.0",
+      "label": "Fetch &amp; Summarize URL",
+      "description": "Drag-tile that expands to a two-node DAG: core.openwop.http.get fetches the URL, then core.ai.callPrompt summarizes the response body. Demonstrates multi-node chain composition with edge wiring, parameter substitution across multiple nodes, and capability propagation (side-effectful from the HTTP fetch propagates to both expanded nodes per spec §Capability propagation).",
+      "parameters": {
+        "type": "object",
+        "required": ["url"],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The URL to fetch. Surfaced via {{params.url}} in the HTTP node config."
+          },
+          "targetLength": {
+            "type": "string",
+            "enum": ["one-sentence", "one-paragraph", "executive-summary"],
+            "default": "one-paragraph"
+          }
+        }
+      },
+      "dag": {
+        "nodes": [
+          {
+            "id": "fetch",
+            "typeId": "core.openwop.http.get",
+            "name": "Fetch URL",
+            "position": { "x": 0, "y": 0 },
+            "config": {
+              "url": "{{params.url}}",
+              "timeoutMs": 30000
+            },
+            "inputs": {}
+          },
+          {
+            "id": "summarize",
+            "typeId": "core.ai.callPrompt",
+            "name": "Summarize",
+            "position": { "x": 280, "y": 0 },
+            "config": {
+              "systemPrompt": "Produce a {{params.targetLength}} summary of the fetched page content. Strip navigation, ads, and boilerplate. Focus on the article body.",
+              "envelopeType": "summary.v1",
+              "provider": "anthropic"
+            },
+            "inputs": {
+              "sourceText": "{{params.url}} — fetched body wired by edge"
+            }
+          }
+        ],
+        "edges": [
+          { "from": "fetch.body", "to": "summarize.sourceText" }
+        ]
+      },
+      "outputs": {
+        "summaryText": {
+          "type": "string",
+          "description": "The summarized page content."
+        },
+        "sourceUrl": {
+          "type": "string",
+          "description": "Echo of the input URL for downstream reference."
+        }
+      },
+      "capabilities": ["side-effectful"]
+    }
+  ]
+}

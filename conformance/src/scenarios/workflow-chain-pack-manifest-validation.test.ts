@@ -28,14 +28,23 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync, existsSync } from 'node:fs';
+import { join, dirname } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import type { ErrorObject } from 'ajv';
-import { SCHEMAS_DIR } from '../lib/paths.js';
+import { SCHEMAS_DIR, V1_DIR } from '../lib/paths.js';
 
 const SCHEMA_PATH = join(SCHEMAS_DIR, 'workflow-chain-pack-manifest.schema.json');
+// In-repo example pack — proves the schema validates a non-trivial
+// real-world-shaped manifest (closes RFC 0013 Phase 4 in-tree path).
+// Resolved relative to the repo root (V1_DIR is non-null in the repo
+// layout AND in any in-tree mirror; null under the published-tarball
+// layout where examples/ isn't bundled). Skipped cleanly when unavailable.
+const REPO_ROOT = V1_DIR ? dirname(dirname(V1_DIR)) : null;
+const EXAMPLE_PACK_PATH = REPO_ROOT
+  ? join(REPO_ROOT, 'examples/packs/workflow-chain-sample/pack.json')
+  : null;
 
 describe('category: workflow-chain-pack manifest validation', () => {
   const ajv = new Ajv2020({ allErrors: true, strict: false });
@@ -169,6 +178,30 @@ describe('category: workflow-chain-pack manifest validation', () => {
     expect(
       hasPatternErr,
       'Expected a `pattern` violation on the chains[].chainId field.',
+    ).toBe(true);
+  });
+
+  it('positive: the in-repo example pack at examples/packs/workflow-chain-sample/ validates against the schema', () => {
+    if (!EXAMPLE_PACK_PATH || !existsSync(EXAMPLE_PACK_PATH)) {
+      // Published-tarball layout doesn't ship examples/; skip cleanly.
+      return;
+    }
+    const manifest = JSON.parse(readFileSync(EXAMPLE_PACK_PATH, 'utf8'));
+    const ok = validate(manifest);
+    const errs = (validate.errors ?? [])
+      .map((e: ErrorObject) => `${e.instancePath || '/'}: ${e.message}`)
+      .join('\n');
+    expect(
+      ok,
+      `examples/packs/workflow-chain-sample/pack.json MUST validate against workflow-chain-pack-manifest.schema.json (closes RFC 0013 Phase 4 in-tree path). Errors:\n${errs}`,
+    ).toBe(true);
+    // Spot-check the structural claims the example README makes:
+    expect(manifest.kind, 'example pack MUST declare kind: "workflow-chain"').toBe(
+      'workflow-chain',
+    );
+    expect(
+      Array.isArray(manifest.chains) && manifest.chains.length === 2,
+      'example pack MUST ship exactly 2 chains (1-node + 2-node shapes) per its README contract',
     ).toBe(true);
   });
 
