@@ -150,6 +150,54 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
           maxFileSizeBytes: 50 * 1024 * 1024, // 50 MiB
         };
       })(),
+      // RFC 0015 — host.kvStorage. In-memory adapter advertises full
+      // surface; restart wipes state.
+      kvStorage: {
+        supported: true,
+        maxKeyBytes: 1024,
+        maxValueBytes: 1024 * 1024, // 1 MiB
+        maxTtlSeconds: 7 * 24 * 60 * 60, // 7 days
+        atomicIncrement: true,
+        compareAndSwap: true,
+      },
+      // RFC 0016 — host.tableStorage.
+      tableStorage: {
+        supported: true,
+        maxRowsPerTable: 100000,
+        maxColumnsPerRow: 128,
+        indexable: false,
+        fullTextSearch: false,
+      },
+      // RFC 0017 — host.queueBus. Demo backend; in-memory pub/sub.
+      queueBus: {
+        supported: true,
+        backends: ['in-memory'] as const,
+        deadLetterSupported: true,
+        stream: { supported: false, fromBeginning: false },
+      },
+      // RFC 0018 — host.sql via sqlite-in-memory.
+      sql: {
+        supported: true,
+        transactions: true,
+        drivers: ['sqlite'] as const,
+      },
+      // RFC 0018 — host.vectorStore via brute-force cosine over in-memory Map.
+      vectorStore: {
+        supported: true,
+        backends: ['in-memory'] as const,
+      },
+      // RFC 0019 — host.blobStorage. presign() returns a synthetic data: URL.
+      blobStorage: {
+        supported: true,
+        presignSupported: true,
+        maxObjectBytes: 50 * 1024 * 1024, // 50 MiB
+      },
+      // RFC 0019 — host.cache.
+      cache: {
+        supported: true,
+        maxValueBytes: 1024 * 1024, // 1 MiB
+        maxTtlSeconds: 24 * 60 * 60, // 24 hours
+      },
     },
     extensions: {
       // Sample-namespace extensions block. Clients tolerate absence.
