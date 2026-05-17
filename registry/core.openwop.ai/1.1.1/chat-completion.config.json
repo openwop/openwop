@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.ai/1.0.0/chat-completion.config.json",
+  "title": "ChatCompletionConfig",
+  "type": "object",
+  "required": ["provider", "model"],
+  "properties": {
+    "provider": {
+      "type": "string",
+      "description": "AI provider id (e.g., `anthropic`, `openai`, `gemini`, `bedrock`, `vertex`). MUST be in `Capabilities.aiProviders.supported` for the run to dispatch."
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Provider-specific model id. The pack does NOT validate this — the host's aiProviders surface returns `model_not_supported` if the host can't route."
+    },
+    "systemPrompt": {
+      "type": "string",
+      "description": "Optional system prompt. Hosts that route to providers without first-class system roles MAY merge into the first message."
+    },
+    "temperature": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 2,
+      "description": "Sampling temperature. Provider-specific upper bound: typically 1 for OpenAI, 2 for some others. Hosts MAY clamp."
+    },
+    "maxTokens": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100000,
+      "description": "Maximum tokens to generate. Hosts MAY enforce a lower per-tenant cap."
+    },
+    "stopSequences": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "maxItems": 8,
+      "description": "Optional stop sequences. Provider-specific limit (Anthropic: 4, OpenAI: 4); hosts MAY truncate."
+    }
+  },
+  "additionalProperties": false
+}

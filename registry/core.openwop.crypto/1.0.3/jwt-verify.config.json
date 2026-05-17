@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.crypto/1.0.1/jwt-verify.config.json",
+  "title": "JwtVerifyConfig",
+  "description": "Configuration for core.crypto.jwt-verify. SECURITY: callers MUST set `expectedAlgorithm` or `allowedAlgorithms` to bind the verifier to specific algorithm(s). Leaving them absent makes the verifier trust the token's self-declared `alg` header, which permits the CVE-2015-9235 alg-confusion attack. The pack rejects unset-and-no-env-override calls with `JWT_VERIFIER_ALGORITHM_REQUIRED`.",
+  "type": "object",
+  "properties": {
+    "keyEncoding": {
+      "type": "string",
+      "enum": [
+        "utf8",
+        "hex",
+        "base64",
+        "base64url"
+      ]
+    },
+    "expectedAlgorithm": {
+      "type": "string",
+      "enum": ["HS256", "HS384", "HS512", "RS256", "PS256", "ES256", "EdDSA"],
+      "description": "Single allowed JWT algorithm. Either this OR `allowedAlgorithms` MUST be set."
+    },
+    "allowedAlgorithms": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["HS256", "HS384", "HS512", "RS256", "PS256", "ES256", "EdDSA"]
+      },
+      "minItems": 1,
+      "uniqueItems": true,
+      "description": "Allow-list of JWT algorithms accepted by this verifier. Either this OR `expectedAlgorithm` MUST be set."
+    },
+    "expectedIssuer": {
+      "type": "string"
+    },
+    "expectedAudience": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

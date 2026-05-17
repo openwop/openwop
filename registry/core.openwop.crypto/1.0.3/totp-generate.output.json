@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.crypto/1.0.0/totp-generate.output.json",
+  "title": "TotpGenerateOutput",
+  "type": "object",
+  "required": [
+    "code",
+    "at",
+    "step",
+    "digits",
+    "algorithm"
+  ],
+  "properties": {
+    "code": {
+      "type": "string"
+    },
+    "at": {
+      "type": "integer"
+    },
+    "step": {
+      "type": "integer"
+    },
+    "digits": {
+      "type": "integer"
+    },
+    "algorithm": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

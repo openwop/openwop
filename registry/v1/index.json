@@ -87,7 +87,7 @@
     {
       "name": "core.openwop.ai",
       "kind": "node",
-      "latestVersion": "1.1.0",
+      "latestVersion": "1.1.1",
       "description": "Spec-canonical AI-call pack. v1.0 (chatCompletion, structuredOutput, toolCalling, embeddings) plus v1.1 multi-modal + LLM helpers — image generate/edit/upscale, audio transcribe/synthesize, video generate, rerank, classify, extract, guardrails, transform. Routes through host BYOK aiProviders.",
       "license": "Apache-2.0",
       "tags": [],
@@ -114,7 +114,7 @@
     {
       "name": "core.openwop.crypto",
       "kind": "node",
-      "latestVersion": "1.0.2",
+      "latestVersion": "1.0.3",
       "description": "Pure cryptographic primitives: hashing, HMAC, AEAD encrypt/decrypt, asymmetric sign/verify, JWT mint/verify, TOTP, x509 parse + chain verify. Built on node:crypto (Node 20+). Zero npm deps. Pure with respect to keys passed in via inputs.",
       "license": "Apache-2.0",
       "tags": [],

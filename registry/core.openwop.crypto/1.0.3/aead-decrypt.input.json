@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.crypto/1.0.0/aead-decrypt.input.json",
+  "title": "AeadDecryptInput",
+  "type": "object",
+  "required": [
+    "key",
+    "ciphertext",
+    "iv",
+    "authTag"
+  ],
+  "properties": {
+    "key": {
+      "type": "string"
+    },
+    "ciphertext": {
+      "type": "string"
+    },
+    "iv": {
+      "type": "string"
+    },
+    "authTag": {
+      "type": "string"
+    },
+    "aad": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

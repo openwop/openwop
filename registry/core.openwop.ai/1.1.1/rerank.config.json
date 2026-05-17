@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.ai/1.1.0/rerank.config.json",
+  "title": "AiRerankConfig",
+  "type": "object",
+  "properties": {
+    "model": {
+      "type": "string"
+    },
+    "topN": {
+      "type": "integer",
+      "default": 10
+    }
+  },
+  "additionalProperties": false
+}
