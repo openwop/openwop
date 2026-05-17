@@ -14,6 +14,7 @@ import { registerDefaultCommands } from './registry/defaultCommands.js';
 import { getProvider } from '../byok/lib/providers.js';
 import type { BYOKActiveConfig } from '../byok/lib/useBYOKConfig.js';
 import type { ContentPart } from './hooks/useChatSession.js';
+import { buildAvailableTools } from './lib/availableTools.js';
 
 // Ensure built-in commands are registered before first render.
 registerDefaultCommands();
@@ -28,6 +29,7 @@ interface Props {
 export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'demo' }: Props): JSX.Element {
   const { session, isSending, error, send, cancel, emitSystem, reset, resolveInterrupt } = useChatSession();
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
+  const [toolsEnabled, setToolsEnabled] = useState(false);
 
   // Per-turn capability hints sourced from providers.json for the active model.
   const activeModel = (() => {
@@ -39,6 +41,10 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
   })();
   const supportsAudioInput = activeModel?.audioInput === true;
   const supportsWebSearch = activeModel?.webSearch === true;
+  // Tool calling is gated to Anthropic in the backend dispatcher
+  // (OpenAI / Google have their own wire shapes — see
+  // backend/.../bootstrap/nodes.ts useTools).
+  const supportsTools = config.provider === 'anthropic';
 
   const disabledReason = isSending ? 'A turn is in flight — wait for the response.' : undefined;
 
@@ -63,8 +69,9 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
     await send(text, config, {
       attachments,
       webSearch: webSearchEnabled && supportsWebSearch,
+      tools: toolsEnabled && supportsTools ? buildAvailableTools() : undefined,
     });
-  }, [send, cancel, reset, emitSystem, config, webSearchEnabled, supportsWebSearch]);
+  }, [send, cancel, reset, emitSystem, config, webSearchEnabled, supportsWebSearch, toolsEnabled, supportsTools]);
 
   return (
     <div style={{
@@ -84,6 +91,8 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
         session={session}
         webSearchEnabled={webSearchEnabled}
         onToggleWebSearch={supportsWebSearch ? () => setWebSearchEnabled((v) => !v) : null}
+        toolsEnabled={toolsEnabled}
+        onToggleTools={supportsTools ? () => setToolsEnabled((v) => !v) : null}
       />
 
       {session.messages.length === 0 ? (

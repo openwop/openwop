@@ -13,7 +13,9 @@ import { getNodeRegistry } from '../executor/nodeRegistry.js';
 import type { NodeModule } from '../executor/types.js';
 import { emitCost } from '../observability/costEmitter.js';
 import { dispatchChat, type ChatMessage, type DispatchResult, type ProviderId } from '../providers/dispatch.js';
+import { dispatchAnthropicWithTools, type ToolDef } from '../providers/dispatchAnthropicTools.js';
 import { getDefaultModel } from '../providers/catalog.js';
+import { dispatchSubRun, type SubRunResult } from '../subruns/subRunDispatcher.js';
 
 const noopNode: NodeModule = {
   typeId: 'core.noop',
@@ -115,6 +117,13 @@ const sampleMockAiNode: NodeModule = {
 // Chat responder — dispatches to a real AI provider via raw fetch.
 // Reads BYOK credentialRef from ctx.secrets, model/provider from inputs,
 // and streams tokens via node.message events.
+//
+// Tool calling: when inputs.tools is a non-empty array of
+// {workflowId, name, description}, the node routes anthropic dispatch
+// through `dispatchAnthropicWithTools` and lets the model invoke saved
+// workflows as tools. Each tool_use dispatches a sub-run via
+// `dispatchSubRun` with a 30s budget; the result (or a "pending" stub
+// if it hits an interrupt) feeds back as tool_result.
 const sampleChatResponderNode: NodeModule = {
   typeId: 'local.sample.chat.responder',
   version: '0.1.0',
@@ -126,6 +135,7 @@ const sampleChatResponderNode: NodeModule = {
     const messages = inputs.messages as ChatMessage[] | undefined;
     const maxTokens = typeof inputs.maxTokens === 'number' ? inputs.maxTokens : 1024;
     const webSearch = inputs.webSearch === true;
+    const rawTools = Array.isArray(inputs.tools) ? (inputs.tools as ToolBinding[]) : [];
 
     if (!credentialRef) {
       return { status: 'failure', error: { code: 'credential_required', message: 'A credentialRef MUST be provided to dispatch a chat turn.' } };
@@ -138,22 +148,83 @@ const sampleChatResponderNode: NodeModule = {
       return { status: 'failure', error: { code: 'invalid_request', message: 'Field `messages` MUST be a non-empty array.' } };
     }
 
+    // Tool mode is gated to Anthropic for v1; OpenAI/Google have
+    // their own tool-call wire shapes and we keep the dispatcher
+    // surface minimal until there's demand.
+    const useTools = rawTools.length > 0 && provider === 'anthropic';
+    const toolBindings = useTools ? validateToolBindings(rawTools) : [];
+
     try {
-      const result = await dispatchChat({
-        provider,
-        model,
-        apiKey,
-        messages,
-        maxTokens,
-        webSearch,
-        onDelta: async (delta) => {
-          // Stream token deltas as node.message events. The executor's
-          // ctx.emit strips any secret values from the payload before
-          // append, so accidental key echoes from the provider don't
-          // leak into the event log.
-          await ctx.emit('node.message', { delta });
-        },
-      });
+      const onDelta = async (delta: string) => {
+        await ctx.emit('node.message', { delta });
+      };
+      let result: DispatchResult;
+      if (useTools) {
+        const toolDefs: ToolDef[] = toolBindings.map((t) => ({
+          name: t.name,
+          description: t.description,
+          inputSchema: { type: 'object', additionalProperties: true },
+        }));
+        const bindingByName = new Map(toolBindings.map((t) => [t.name, t]));
+        result = await dispatchAnthropicWithTools({
+          provider: 'anthropic',
+          model,
+          apiKey,
+          messages,
+          maxTokens,
+          onDelta,
+          tools: toolDefs,
+          onToolUse: async (use) => {
+            const binding = bindingByName.get(use.name);
+            if (!binding) {
+              return {
+                toolUseId: use.id,
+                content: `tool_not_found: ${use.name}`,
+                isError: true,
+              };
+            }
+            // Emit a structured event for the UI to render its own
+            // tool-use card (favored over the dispatcher's inline
+            // Markdown breadcrumb).
+            await ctx.emit('node.tool_use', {
+              toolUseId: use.id,
+              name: use.name,
+              workflowId: binding.workflowId,
+              input: use.input,
+            });
+            const subResult = await dispatchSubRun({
+              workflowId: binding.workflowId,
+              inputs: use.input,
+              budgetMs: 30_000,
+              tenantId: ctx.tenantId,
+              ...(ctx.scopeId ? { scopeId: ctx.scopeId } : {}),
+            });
+            await ctx.emit('node.tool_result', {
+              toolUseId: use.id,
+              name: use.name,
+              status: subResult.status,
+              ...(subResult.status === 'completed' ? { output: subResult.output } : {}),
+              ...(subResult.status === 'failed' ? { error: subResult.error } : {}),
+              ...(subResult.status !== 'completed' && 'runId' in subResult ? { runId: subResult.runId } : {}),
+            });
+            return {
+              toolUseId: use.id,
+              content: formatSubRunResult(subResult),
+              isError: subResult.status === 'failed',
+            };
+          },
+        });
+      } else {
+        result = await dispatchChat({
+          provider,
+          model,
+          apiKey,
+          messages,
+          maxTokens,
+          webSearch,
+          onDelta,
+        });
+      }
       emitCost({
         provider: result.provider,
         model: result.model,
@@ -188,6 +259,47 @@ const sampleChatResponderNode: NodeModule = {
     }
   },
 };
+
+interface ToolBinding {
+  workflowId: string;
+  name: string;
+  description: string;
+}
+
+function validateToolBindings(raw: unknown[]): ToolBinding[] {
+  const out: ToolBinding[] = [];
+  for (const r of raw) {
+    if (!r || typeof r !== 'object') continue;
+    const rec = r as Record<string, unknown>;
+    if (typeof rec.workflowId !== 'string') continue;
+    if (typeof rec.name !== 'string' || !/^[a-zA-Z0-9_-]{1,64}$/.test(rec.name)) continue;
+    if (typeof rec.description !== 'string') continue;
+    out.push({ workflowId: rec.workflowId, name: rec.name, description: rec.description });
+  }
+  return out;
+}
+
+function formatSubRunResult(r: SubRunResult): string {
+  if (r.status === 'completed') {
+    try {
+      return typeof r.output === 'string' ? r.output : JSON.stringify(r.output);
+    } catch {
+      return String(r.output);
+    }
+  }
+  if (r.status === 'pending') {
+    return JSON.stringify({
+      status: 'pending',
+      runId: r.runId,
+      message: `Workflow is still running or waiting on an interrupt after the ${r.budgetMs}ms tool budget. Tell the user they can resume it at /runs/${r.runId}.`,
+    });
+  }
+  return JSON.stringify({
+    status: 'failed',
+    runId: r.runId,
+    error: r.error,
+  });
+}
 
 const sampleUppercaseNode: NodeModule = {
   typeId: 'local.sample.demo.uppercase',

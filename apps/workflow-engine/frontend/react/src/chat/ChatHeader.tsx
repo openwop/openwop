@@ -18,6 +18,9 @@ interface Props {
   /** When non-null, render a globe-icon web-search toggle button. */
   onToggleWebSearch: (() => void) | null;
   webSearchEnabled: boolean;
+  /** When non-null, render a tools toggle button. Anthropic only for v1. */
+  onToggleTools: (() => void) | null;
+  toolsEnabled: boolean;
 }
 
 export function ChatHeader({
@@ -28,6 +31,8 @@ export function ChatHeader({
   session,
   onToggleWebSearch,
   webSearchEnabled,
+  onToggleTools,
+  toolsEnabled,
 }: Props): JSX.Element {
   const totalCost = sessionCostUsd(session);
   const messageCount = session.messages.length;
@@ -61,6 +66,31 @@ export function ChatHeader({
             }}
           >
             <GlobeIcon size={12} /> web{webSearchEnabled ? ' on' : ''}
+          </button>
+        )}
+        {onToggleTools && (
+          <button
+            type="button"
+            onClick={onToggleTools}
+            title={toolsEnabled
+              ? 'Tools ON — the AI can call saved workflows as tools this turn'
+              : 'Tools off (click to enable). Lets the AI invoke saved workflows.'}
+            aria-pressed={toolsEnabled}
+            aria-label="Toggle workflow tools"
+            style={{
+              borderRadius: 12,
+              padding: '2px 10px',
+              fontSize: 11,
+              background: toolsEnabled ? 'var(--color-accent)' : 'var(--color-surface-2)',
+              color: toolsEnabled ? 'white' : 'var(--color-text)',
+              border: '1px solid var(--color-border)',
+              minHeight: 0,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+          >
+            🔧 tools{toolsEnabled ? ' on' : ''}
           </button>
         )}
         {totalCost > 0 && (
