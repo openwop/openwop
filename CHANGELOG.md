@@ -11,6 +11,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### `core.openwop.data@1.2.1` + `core.openwop.crypto@1.0.2` — correctness fix for nodes mis-declared as `pure` (2026-05-17)
+
+Post-publish audit (see CHANGELOG `[Unreleased]` §"core.openwop.http@1.1.2" for the headline finding that motivated this sweep) surfaced 6 more nodes in the same defect class: declared `role: "pure"` + `capabilities: ["cacheable"]` while their runtime depends on wall-clock time or randomness. Under the engine's caching contract (`node-pack-manifest.schema.json` §"capabilities" — "engine uses these to decide caching"), a `pure + cacheable` node MAY be cached by input-hash, which for empty-input nodes like `uuid` collapses to "one cached value forever" and for time-dependent nodes returns stale data past expiration.
+
+Patched (role: `pure` → `side-effect`, capabilities: `["cacheable"]` → `["side-effectful"]` — matches the canonical `core.openwop.http.fetch` declaration):
+
+- **`core.openwop.data@1.2.1`** — `data.uuid` (uses `randomUUID()` — same defect class as the `http.idempotency-key@1.1.0` bug; empty inputs → input-hash collision → same UUID forever under `pure+cacheable`) + `data.datetime-now` (uses `new Date()` — workflows expecting fresh wall-clock time would get a frozen value).
+- **`core.openwop.crypto@1.0.2`** — `crypto.jwt-mint` (uses `Date.now()` for `iat` claim; cached mints never refresh `iat`/`exp`), `crypto.jwt-verify` (uses `Date.now()` for `exp` check; **security**: cached "valid" past token expiration), `crypto.totp-generate` (uses 30-sec window; **security**: defeats TOTP rotation per RFC 6238), `crypto.totp-verify` (uses 30-sec window; **security**: cached "valid" past window).
+- **No runtime behavior changes** — `index.mjs` files unchanged. The fix is purely the manifest's contract declaration: the engine now correctly caches outputs by `(runId, nodeId)` (replay-safe) and never by input-hash (no stale values across fresh executions).
+- **Compatibility:** safety-fix per `COMPATIBILITY.md §3`. The pre-fix declarations were incorrect — these nodes never satisfied the `pure` contract. Workflow authors who hit the input-hash cache path in 1.2.0 / 1.0.1 were getting *worse* behavior than the spec promised.
+- **Yank policy** consistent with the SSRF + JWT alg-confusion + idempotency-key batch: old versions remain immutable + accessible; deprecation flag flip lands ~2026-05-24 after the 7-day soak.
+- **Publication:** built + signed + republished alongside this commit (same flow as `http@1.1.2`). `verify-signatures.mjs` confirms both new versions against `keyId=openwop-team-1`.
+
 ### `core.openwop.http@1.1.2` — idempotency-key generator made deterministic (2026-05-17)
 
 Closes a correctness/security bug in `core.openwop.http.idempotency-key`: the previous default mode (`uuid`) returned a fresh `randomUUID()` on every call, defeating the entire point of an Idempotency-Key. Workflow authors composing `idempotency-key → fetch` were getting a different key on every retry, so the remote service treated each attempt as a new request — exactly what idempotency keys are supposed to prevent. Caught during the post-publication review of the 17 `core.openwop.*` packs published 2026-05-17.
