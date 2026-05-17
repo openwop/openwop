@@ -1,16 +1,10 @@
 /**
- * cache-cross-tenant-isolation — RFC 0019 advertisement-shape verification + behavioral placeholders.
+ * cache-cross-tenant-isolation — RFC 0019 §B point 2.
  *
- * Status: ACTIVE (advertisement-shape). RFC 0019 promoted to `Active`
- * 2026-05-17. The matching `capabilities.cache` block has landed in
- * `schemas/capabilities.schema.json`. This scenario asserts the advertisement
- * shape against any host that boots the conformance suite, and keeps the
- * deeper behavioral assertions as `it.todo()` until a reference host wires
- * a test seam.
+ * Status: ACTIVE (advertisement + behavioral). Asserts that cache entries
+ * put under tenant A MUST NOT hit on get under tenant B at the same key.
  *
- * Summary: Cache entries scoped per tenant.
- *
- * @see RFCS/0019-*.md
+ * @see RFCS/0019-host-blob-cache-capability.md
  */
 
 import { describe, it, expect } from 'vitest';
@@ -28,10 +22,14 @@ async function readCap(): Promise<Record<string, unknown> | null> {
   return (final && typeof final === 'object' ? (final as Record<string, unknown>) : null);
 }
 
+async function call(tenantId: string, op: string, args: Record<string, unknown>) {
+  return driver.post('/v1/host/sample/test/surface', { tenantId, surface: 'cache', op, args });
+}
+
 describe('cache-cross-tenant-isolation: advertisement shape (RFC 0019)', () => {
   it('capabilities.cache is either absent or a well-formed object', async () => {
     const cap = await readCap();
-    if (cap === null) return; // host doesn't advertise — skip
+    if (cap === null) return;
     expect(
       typeof cap.supported,
       driver.describe(
@@ -42,6 +40,22 @@ describe('cache-cross-tenant-isolation: advertisement shape (RFC 0019)', () => {
   });
 });
 
-describe('cache-cross-tenant-isolation: behavioral assertions (placeholders — need host test seam)', () => {
-  it.todo("put under tenant A → get under tenant B returns miss");
+describe('cache-cross-tenant-isolation: behavioral (RFC 0019 §B point 2)', () => {
+  it('put under tenant A → get under tenant B returns miss', async () => {
+    const cap = await readCap();
+    if (!cap || cap.supported !== true) return;
+    const key = `xtenant-cache-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+
+    const putRes = await call('tenant-a', 'put', { key, value: 'from-A', ttlSeconds: 60 });
+    if (putRes.status === 404) return;
+    expect(putRes.status, 'put MUST succeed').toBe(200);
+
+    const getRes = await call('tenant-b', 'get', { key });
+    expect(getRes.status).toBe(200);
+    const body = getRes.json as { hit?: boolean };
+    expect(
+      body.hit,
+      driver.describe('RFC 0019 §B point 2', 'tenant B MUST NOT hit tenant A cache entry at same key'),
+    ).toBe(false);
+  });
 });

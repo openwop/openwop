@@ -1,16 +1,14 @@
 /**
- * sql-injection-rejection — RFC 0018 advertisement-shape verification + behavioral placeholders.
+ * sql-injection-rejection — RFC 0018 §C + SECURITY/invariants.yaml
+ * `sql-parametric-only`.
  *
- * Status: ACTIVE (advertisement-shape). RFC 0018 promoted to `Active`
- * 2026-05-17. The matching `capabilities.sql` block has landed in
- * `schemas/capabilities.schema.json`. This scenario asserts the advertisement
- * shape against any host that boots the conformance suite, and keeps the
- * deeper behavioral assertions as `it.todo()` until a reference host wires
- * a test seam.
+ * Status: ACTIVE (advertisement + behavioral). The host's SQL surface
+ * MUST treat parameter values as literal data, not SQL fragments. We
+ * verify by binding an injection-shape string as a parameter and
+ * confirming it returns no rows (parametric binding turns it into a
+ * literal value comparison rather than an OR-true).
  *
- * Summary: host.sql MUST reject non-parametric queries that inline user input.
- *
- * @see RFCS/0018-*.md
+ * @see RFCS/0018-host-sql-vector-search-capability.md
  */
 
 import { describe, it, expect } from 'vitest';
@@ -28,10 +26,14 @@ async function readCap(): Promise<Record<string, unknown> | null> {
   return (final && typeof final === 'object' ? (final as Record<string, unknown>) : null);
 }
 
+async function call(op: string, args: Record<string, unknown>) {
+  return driver.post('/v1/host/sample/test/surface', { tenantId: 'tenant-a', surface: 'sql', op, args });
+}
+
 describe('sql-injection-rejection: advertisement shape (RFC 0018)', () => {
   it('capabilities.sql is either absent or a well-formed object', async () => {
     const cap = await readCap();
-    if (cap === null) return; // host doesn't advertise — skip
+    if (cap === null) return;
     expect(
       typeof cap.supported,
       driver.describe(
@@ -42,7 +44,41 @@ describe('sql-injection-rejection: advertisement shape (RFC 0018)', () => {
   });
 });
 
-describe('sql-injection-rejection: behavioral assertions (placeholders — need host test seam)', () => {
-  it.todo("query({ sql: \"SELECT * FROM users WHERE id = '\" + userInput + \"'\", params: [] }) is rejected");
-  it.todo("query({ sql: 'SELECT * FROM users WHERE id = ?', params: [userInput] }) succeeds");
+describe('sql-injection-rejection: behavioral (RFC 0018 §C)', () => {
+  it('parametric SELECT with bound user input rejects injection-shape strings as data', async () => {
+    const cap = await readCap();
+    if (!cap || cap.supported !== true) return;
+
+    const create = await call('execute', {
+      sql: `CREATE TABLE IF NOT EXISTS sql_inj_t (id TEXT PRIMARY KEY, body TEXT)`,
+      params: [],
+    });
+    if (create.status === 404) return;
+    await call('execute', { sql: `INSERT OR REPLACE INTO sql_inj_t VALUES (?, ?)`, params: ['k1', 'ok'] });
+
+    // Parametric round-trip MUST succeed.
+    const okRes = await call('query', {
+      sql: `SELECT body FROM sql_inj_t WHERE id = ?`,
+      params: ['k1'],
+    });
+    expect(okRes.status).toBe(200);
+    const okBody = okRes.json as { rows?: Array<Record<string, unknown>> };
+    expect(okBody.rows?.[0]?.body, 'parametric round-trip MUST return stored value').toBe('ok');
+
+    // Injection-shape input MUST be bound as a literal value, not SQL.
+    const attack = `' OR '1'='1`;
+    const attackRes = await call('query', {
+      sql: `SELECT body FROM sql_inj_t WHERE id = ?`,
+      params: [attack],
+    });
+    expect(attackRes.status).toBe(200);
+    const attackBody = attackRes.json as { rows?: Array<Record<string, unknown>> };
+    expect(
+      Array.isArray(attackBody.rows) ? attackBody.rows.length : -1,
+      driver.describe(
+        'SECURITY/invariants.yaml sql-parametric-only',
+        'parametric binding MUST treat injection-shape input as a literal value, not SQL',
+      ),
+    ).toBe(0);
+  });
 });

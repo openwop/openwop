@@ -1,16 +1,12 @@
 /**
- * queue-cross-tenant-isolation — RFC 0017 advertisement-shape verification + behavioral placeholders.
+ * queue-cross-tenant-isolation — RFC 0017 §C + SECURITY/invariants.yaml
+ * `queue-cross-tenant-isolation`.
  *
- * Status: ACTIVE (advertisement-shape). RFC 0017 promoted to `Active`
- * 2026-05-17. The matching `capabilities.queueBus` block has landed in
- * `schemas/capabilities.schema.json`. This scenario asserts the advertisement
- * shape against any host that boots the conformance suite, and keeps the
- * deeper behavioral assertions as `it.todo()` until a reference host wires
- * a test seam.
+ * Status: ACTIVE (advertisement + behavioral). Asserts that messages
+ * published under tenant A on topic T MUST NOT be consumed under tenant B
+ * on the same topic.
  *
- * Summary: host.queueBus MUST partition messages by tenant.
- *
- * @see RFCS/0017-*.md
+ * @see RFCS/0017-host-queue-bus-capability.md
  */
 
 import { describe, it, expect } from 'vitest';
@@ -28,10 +24,14 @@ async function readCap(): Promise<Record<string, unknown> | null> {
   return (final && typeof final === 'object' ? (final as Record<string, unknown>) : null);
 }
 
+async function call(tenantId: string, op: string, args: Record<string, unknown>) {
+  return driver.post('/v1/host/sample/test/surface', { tenantId, surface: 'queueBus', op, args });
+}
+
 describe('queue-cross-tenant-isolation: advertisement shape (RFC 0017)', () => {
   it('capabilities.queueBus is either absent or a well-formed object', async () => {
     const cap = await readCap();
-    if (cap === null) return; // host doesn't advertise — skip
+    if (cap === null) return;
     expect(
       typeof cap.supported,
       driver.describe(
@@ -42,6 +42,25 @@ describe('queue-cross-tenant-isolation: advertisement shape (RFC 0017)', () => {
   });
 });
 
-describe('queue-cross-tenant-isolation: behavioral assertions (placeholders — need host test seam)', () => {
-  it.todo("publish under tenant A on topic T → consume under tenant B on topic T returns not-found");
+describe('queue-cross-tenant-isolation: behavioral (RFC 0017 §C)', () => {
+  it('publish under tenant A → consume under tenant B returns not-found', async () => {
+    const cap = await readCap();
+    if (!cap || cap.supported !== true) return;
+    const topic = `xtenant.${Date.now()}.${Math.random().toString(36).slice(2, 6)}`;
+
+    const pubRes = await call('tenant-a', 'publish', { topic, payload: { hello: 'A' } });
+    if (pubRes.status === 404) return;
+    expect(pubRes.status, 'publish MUST succeed').toBe(200);
+
+    const consRes = await call('tenant-b', 'consume', { topic, timeoutMs: 100 });
+    expect(consRes.status).toBe(200);
+    const body = consRes.json as { found?: boolean };
+    expect(
+      body.found,
+      driver.describe(
+        'SECURITY/invariants.yaml queue-cross-tenant-isolation',
+        'tenant B MUST NOT consume tenant A messages on the same topic',
+      ),
+    ).toBe(false);
+  });
 });

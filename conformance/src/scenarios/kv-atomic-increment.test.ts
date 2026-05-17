@@ -1,16 +1,11 @@
 /**
- * kv-atomic-increment — RFC 0015 advertisement-shape verification + behavioral placeholders.
+ * kv-atomic-increment — RFC 0015 §B point 4 (atomic increment).
  *
- * Status: ACTIVE (advertisement-shape). RFC 0015 promoted to `Active`
- * 2026-05-17. The matching `capabilities.kvStorage` block has landed in
- * `schemas/capabilities.schema.json`. This scenario asserts the advertisement
- * shape against any host that boots the conformance suite, and keeps the
- * deeper behavioral assertions as `it.todo()` until a reference host wires
- * a test seam.
+ * Status: ACTIVE (advertisement + behavioral). Behavioral half drives N
+ * concurrent +1 increments through the reference-host test seam and asserts
+ * the final value equals N. Hosts that don't expose the seam soft-skip.
  *
- * Summary: Atomic increment MUST be atomic across concurrent callers.
- *
- * @see RFCS/0015-*.md
+ * @see RFCS/0015-host-kv-storage-capability.md
  */
 
 import { describe, it, expect } from 'vitest';
@@ -28,10 +23,14 @@ async function readCap(): Promise<Record<string, unknown> | null> {
   return (final && typeof final === 'object' ? (final as Record<string, unknown>) : null);
 }
 
+async function call(op: string, args: Record<string, unknown>) {
+  return driver.post('/v1/host/sample/test/surface', { tenantId: 'tenant-a', surface: 'kv', op, args });
+}
+
 describe('kv-atomic-increment: advertisement shape (RFC 0015)', () => {
   it('capabilities.kvStorage is either absent or a well-formed object', async () => {
     const cap = await readCap();
-    if (cap === null) return; // host doesn't advertise — skip
+    if (cap === null) return;
     expect(
       typeof cap.supported,
       driver.describe(
@@ -44,23 +43,32 @@ describe('kv-atomic-increment: advertisement shape (RFC 0015)', () => {
   it('atomicIncrement is a boolean when set', async () => {
     const cap = await readCap();
     if (!cap || cap.supported !== true) return;
-    const subParts = ["atomicIncrement"];
-    let sub: unknown = cap;
-    for (const p of subParts) {
-      if (sub && typeof sub === 'object') sub = (sub as Record<string, unknown>)[p];
-      else { sub = undefined; break; }
-    }
-    if (sub === undefined) return; // optional sub-field
-    expect(
-      typeof sub,
-      driver.describe(
-        'RFC 0015 §A',
-        'kvStorage.atomicIncrement MUST be boolean when present',
-      ),
-    ).toBe('boolean');
+    const sub = cap.atomicIncrement;
+    if (sub === undefined) return;
+    expect(typeof sub, driver.describe('RFC 0015 §A', 'atomicIncrement MUST be boolean when present')).toBe('boolean');
   });
 });
 
-describe('kv-atomic-increment: behavioral assertions (placeholders — need host test seam)', () => {
-  it.todo("1000 concurrent +1 increments → final value is 1000");
+describe('kv-atomic-increment: behavioral (RFC 0015 §B point 4)', () => {
+  it('N concurrent +1 increments converge to exactly N', async () => {
+    const cap = await readCap();
+    if (!cap || cap.supported !== true || cap.atomicIncrement !== true) return;
+    const key = `atomic-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const probe = await call('atomicIncrement', { key, delta: 0 });
+    if (probe.status === 404) return; // seam not exposed
+
+    const N = 50;
+    const results = await Promise.all(
+      Array.from({ length: N }, () => call('atomicIncrement', { key, delta: 1 })),
+    );
+    for (const r of results) {
+      expect(r.status, 'each increment MUST succeed').toBe(200);
+    }
+    const finalRes = await call('get', { key });
+    const finalBody = finalRes.json as { value?: unknown };
+    expect(
+      finalBody.value,
+      driver.describe('RFC 0015 §B point 4', `${N} concurrent increments MUST converge to exactly ${N}`),
+    ).toBe(N);
+  });
 });
