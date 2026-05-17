@@ -27,6 +27,7 @@
 | `run-snapshot.schema.json` | `rest-endpoints.md` §RunSnapshot | Projected run state from `GET /v1/runs/{runId}` |
 | `security-advisory.schema.json` | `registry-operations.md` + INCIDENT-RESPONSE runbook | Registry-owned CVE advisory record at `registry/security/advisories.json`. One entry per disclosed vulnerability — id, severity, affected pack-name + SemVer range, optional fixedIn/advisoryUrl/credits. Enforced by `check-advisories.mjs` in `.github/workflows/registry-publish.yml`. |
 | `suspend-request.schema.json` | `interrupt.md` | `InterruptPayload` with 8 `kind` discriminators (approval, clarification, external-event, custom, conversation.start, conversation.exchange, conversation.close, low-confidence) |
+| `workflow-chain-pack-manifest.schema.json` | `workflow-chain-packs.md` + RFC 0013 | Manifest for workflow-chain packs (`kind: "workflow-chain"`) — pre-configured DAG fragments expanded inline at workflow-author time. Peer to `node-pack-manifest.schema.json`; disjoint via the `kind` discriminator. |
 | `workflow-definition.schema.json` | `channels-and-reducers.md` + `node-packs.md` | DAG of nodes + edges + triggers + variables + channels |
 
 ## Validating against the schemas

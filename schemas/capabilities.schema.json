@@ -384,6 +384,18 @@
       "type": "boolean",
       "description": "Multi-Agent Shift Phase 4. When `true`, host advertises that it implements the `core.conversationGate` typeId AND honors the `conversation.start` / `conversation.exchange` / `conversation.close` suspend variants. Hosts that don't claim this fall back to `clarification.requested` interrupts for multi-turn user interjections."
     },
+    "workflowChainPacks": {
+      "type": "object",
+      "description": "RFC 0013 (Phase 1, `Draft`). When `supported: true`, the host's workflow editor implements workflow-chain pack expansion per `workflow-chain-packs.md` — author drops a chain tile, host resolves the pack, prompts for `parameters`, substitutes `{{params.<name>}}` placeholders, rewrites node ids, splices the resulting DAG into the parent workflow. Hosts that don't implement expansion omit this block (or set `supported: false`); conformance scenarios under `conformance/src/scenarios/workflow-chain-*.test.ts` skip cleanly against those hosts.",
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "Whether the host's workflow editor implements chain expansion at author time. `false` (or omission) signals the host does NOT consume workflow-chain packs."
+        }
+      },
+      "required": ["supported"],
+      "additionalProperties": false
+    },
     "compliance": {
       "type": "object",
       "description": "Privacy / compliance behavior advertised to clients (closes O5). Lets consumers know what masking mode is in effect so a `\"[REDACTED]\"` value in event log payloads is recognizable as a server-side mask vs an upstream null.",

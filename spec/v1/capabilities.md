@@ -362,6 +362,20 @@ Multi-Agent Shift Phase 4 capability. When `true`, host advertises that it imple
 
 **Backward compat.** Pre-MAS hosts omit the field. v1.0 conformance baseline reads the field when present and skips conversation scenarios when absent.
 
+### `workflowChainPacks`
+
+RFC 0013 (Phase 1, `Draft`). When `supported: true`, the host's workflow editor implements **workflow-chain pack expansion** per [`workflow-chain-packs.md`](./workflow-chain-packs.md) — the author drops a chain tile, the host resolves the pack (verifying signature), prompts for `parameters`, substitutes `{{params.<name>}}` placeholders throughout the chain's DAG, rewrites node ids for collision avoidance, and splices the resulting nodes into the parent workflow. Dispatching runtimes see only the expanded `core.*`/published-vendor typeIds — the chain reference is NOT preserved at runtime, so this capability is a workflow-edit-time concern only.
+
+```json
+"workflowChainPacks": { "supported": true }
+```
+
+**Field shape:** OPTIONAL `object`. When present, `supported: boolean` is REQUIRED. Hosts that don't implement chain expansion omit the block entirely (or set `supported: false`).
+
+**Conformance.** `workflow-chain-pack-manifest-validation.test.ts` gates on this flag for the registry-validation path; future `workflow-chain-expansion.test.ts` (Phase 2/3) will gate on it for end-to-end expansion. Hosts that don't advertise the capability are skipped, not failed.
+
+**Refusal contract.** When the field is absent, the host MUST NOT silently accept workflow JSON containing post-expansion artifacts that obviously originated from an unrecognized chain pack (no automatic backfill). Authors targeting a non-expansion host MUST inline the equivalent DAG manually.
+
 ### `observability`
 
 Optional v1 observability advertisement. See `observability.md`.

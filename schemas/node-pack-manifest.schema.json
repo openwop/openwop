@@ -10,6 +10,11 @@
     { "properties": { "agents": { "type": "array", "minItems": 1 } }, "required": ["agents"] }
   ],
   "properties": {
+    "kind": {
+      "type": "string",
+      "const": "node",
+      "description": "Pack kind discriminator. For node packs (the default and original kind) `kind` is either omitted entirely OR set to the literal string `\"node\"`. Manifests carrying `kind: \"workflow-chain\"` validate against `workflow-chain-pack-manifest.schema.json` instead — see workflow-chain-packs.md and RFC 0013."
+    },
     "name": {
       "type": "string",
       "description": "Reverse-DNS pack name. Reserved scopes: `core.*` (spec-canonical), `vendor.<org>.*` (vendor-published), `community.<author>.*` (individual), `private.<host>.*` (host-internal — MUST NOT appear in `packs.openwop.dev`). `local.*` is for in-repo unpublished packs and MUST NOT appear in any registry. See node-packs.md §Naming for the full reservation table.",

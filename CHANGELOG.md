@@ -11,6 +11,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Workflow-chain packs — RFC 0013 Phase 1 (2026-05-17)
+
+- **New `kind: "workflow-chain"` pack format** alongside the existing node packs. Pre-configured DAG fragments published as registry artifacts; host workflow editors expand them inline at workflow-author time, substituting `{{params.<name>}}` placeholders and rewriting node ids for collision avoidance. The runtime dispatching engine sees only the expanded concrete `core.*`/published-vendor typeIds — no new dispatch surface required, preserving the "every dispatched typeId has a runtime executor" invariant.
+- **New spec doc** `spec/v1/workflow-chain-packs.md` (`Draft`) — normative manifest format + WorkflowDefinitionFragment shape + expansion semantics + error codes (`pack_kind_invalid`, `chain_unresolvable_typeid`, `chain_parameter_invalid`, `pack_signature_invalid`).
+- **New schema** `schemas/workflow-chain-pack-manifest.schema.json` (JSON Schema 2020-12, `$id` under openwop.dev, `additionalProperties: false` on every object) — disjoint peer to `node-pack-manifest.schema.json` via the `kind` discriminator (`const: "workflow-chain"` here vs `const: "node"` on the node-pack schema).
+- **Optional `kind` field** added to `schemas/node-pack-manifest.schema.json` — `const: "node"` so the existing schema accepts manifests with `kind: "node"` or no `kind` field (backward-compat: every existing manifest preserves its semantics). Manifests carrying `kind: "workflow-chain"` validate against the new peer schema instead.
+- **New capability** `Capabilities.workflowChainPacks: { supported: boolean }` — hosts that implement chain expansion advertise `true`; conformance scenarios gate on the flag and skip cleanly against hosts that omit it.
+- **New conformance scenario** `conformance/src/scenarios/workflow-chain-pack-manifest-validation.test.ts` — server-free, runs in <1s, exercises positive sample + two negatives (kind/contents mismatch via `additionalProperties` violation; invalid `chainId` via `pattern` violation) + a defensive case for missing `kind` field.
+- **Cross-reference added** to `spec/v1/node-packs.md` §"Manifest format" pointing at the new workflow-chain spec doc.
+- **README + schemas/README + conformance/README** updated to surface the new doc, schema, and scenario.
+- **Wire-shape impact:** all changes additive per `COMPATIBILITY.md` §2.1. No existing manifest is invalidated. No existing workflow JSON shape changes (the expanded result uses the existing `WorkflowDefinition` schema). No existing dispatch surface changes.
+- **Phasing.** Phase 1 (this batch) ships the spec text + schemas + capability flag + manifest-validation conformance. Phase 2 (deferred) adds registry build-index/conformance-check script support. Phase 3 (deferred) implements expansion in the reference host + adds `workflow-chain-expansion.test.ts` + `workflow-chain-pack-signature-verification.test.ts` + `workflow-chain-unresolvable-typeid.test.ts`. Phase 4 (deferred) publishes the first concrete chain packs (`vendor.myndhyve.app-builder-presets`, etc., per the CANVAS-PACKS-INVENTORY audit's 55 unpublished typeIds).
+- **Spec status.** `workflow-chain-packs.md` promotes from `Draft` to `FINAL v1` when (a) the reference host implements expansion and (b) the manifest-validation + expansion conformance scenarios both pass against it.
+
 ### Node-pack catalog expansion (2026-05-17)
 
 - **6 new `core.openwop.*` packs** plus extensions to **5 existing core packs**, derived from a comparative study of Make.com, n8n, MCP, A2A, and broader API protocols. Total: ~240 new node typeIds + 6 new RFCs.

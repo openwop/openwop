@@ -216,6 +216,8 @@ Values are semver ranges per [semver.org](https://semver.org/) (`X.Y.Z` exact, `
 
 A pack's manifest is a JSON file named `pack.json` at the pack root. Schema: `schemas/node-pack-manifest.schema.json`.
 
+> **Pack kinds.** Two pack kinds share the `pack.json` filename and are distinguished by an optional top-level `kind` field. Node packs (described in this document) use `kind: "node"` or omit the field entirely. **Workflow-chain packs** — registry-distributed pre-configured DAG fragments that the host editor expands inline at workflow-author time — use `kind: "workflow-chain"` and validate against [`workflow-chain-pack-manifest.schema.json`](../../schemas/workflow-chain-pack-manifest.schema.json). See [`workflow-chain-packs.md`](./workflow-chain-packs.md) (closes RFC 0013 Phase 1). Manifests MUST have exactly one of `nodes[]` (kind=node) OR `chains[]` (kind=workflow-chain); mixing is rejected with `pack_kind_invalid`.
+
 ```json
 {
   "name": "vendor.acme.salesforce-tools",
