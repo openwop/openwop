@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.ai/1.1.0/transform.input.json",
+  "title": "AiTransformInput",
+  "type": "object",
+  "required": [
+    "value",
+    "instruction"
+  ],
+  "properties": {
+    "value": {},
+    "instruction": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

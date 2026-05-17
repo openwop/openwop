@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.files/1.0.0/sftp.output.json",
+  "title": "SftpOutput",
+  "type": "object",
+  "properties": {
+    "contentBase64": {
+      "type": "string"
+    },
+    "entries": {
+      "type": "array"
+    },
+    "ok": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}

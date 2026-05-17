@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.triggers/1.1.0/webhook-respond.config.json",
+  "title": "WebhookRespondConfig",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "integer",
+      "minimum": 100,
+      "maximum": 599,
+      "default": 200
+    },
+    "headers": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

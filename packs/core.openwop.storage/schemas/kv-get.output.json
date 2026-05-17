@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.storage/1.0.0/kv-get.output.json",
+  "title": "KvGetOutput",
+  "type": "object",
+  "required": [
+    "found"
+  ],
+  "properties": {
+    "value": {},
+    "found": {
+      "type": "boolean"
+    },
+    "ttlRemainingMs": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

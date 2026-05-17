@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.integration/1.1.0/sms-send.output.json",
+  "title": "SmsSendOutput",
+  "type": "object",
+  "required": [
+    "success"
+  ],
+  "properties": {
+    "success": {
+      "type": "boolean"
+    },
+    "messageId": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

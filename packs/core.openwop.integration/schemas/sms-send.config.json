@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.integration/1.1.0/sms-send.config.json",
+  "title": "SmsSendConfig",
+  "type": "object",
+  "properties": {
+    "provider": {
+      "type": "string",
+      "enum": [
+        "twilio",
+        "vonage",
+        "aws-sns",
+        "generic"
+      ],
+      "default": "generic"
+    }
+  },
+  "additionalProperties": false
+}

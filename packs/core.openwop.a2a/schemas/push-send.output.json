@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.a2a/1.1.0/push-send.output.json",
+  "title": "A2aPushSendOutput",
+  "type": "object",
+  "required": [
+    "receipt"
+  ],
+  "properties": {
+    "receipt": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

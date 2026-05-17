@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.messaging/1.0.0/publish.input.json",
+  "title": "MqPublishInput",
+  "type": "object",
+  "required": [
+    "payload"
+  ],
+  "properties": {
+    "payload": {},
+    "headers": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

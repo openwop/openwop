@@ -137,11 +137,71 @@ export async function slackMessage(ctx) {
   };
 }
 
+/* ─── v1.1 additions ────────────────────────────────────────── */
+
+export async function chatMessageGeneric(ctx) {
+  if (typeof ctx.messaging?.dispatchEgressEnvelope !== 'function') {
+    throw Object.assign(new Error('host does not implement ctx.messaging.dispatchEgressEnvelope'), { code: 'HOST_CAPABILITY_MISSING' });
+  }
+  const envelope = {
+    type: 'chat.egress',
+    version: '1',
+    channel: ctx.inputs.channel,
+    accountId: ctx.inputs.accountId ?? 'default',
+    delivery: { conversationId: ctx.inputs.conversationId, threadId: ctx.inputs.threadId, inReplyTo: ctx.inputs.inReplyTo },
+    content: { text: ctx.inputs.text, media: ctx.inputs.media ?? [] },
+    idempotencyKey: ctx.inputs.idempotencyKey ?? `${ctx.runId}:${ctx.nodeId}`,
+    mode: { typing: false, draftStreaming: false },
+  };
+  const r = await ctx.messaging.dispatchEgressEnvelope({ envelope, connectorInstanceId: ctx.config.connectorInstanceId, nodeId: ctx.nodeId });
+  return { status: 'success', outputs: r };
+}
+
+export async function smsSend(ctx) {
+  if (typeof ctx.messaging?.sendSms !== 'function') {
+    throw Object.assign(new Error('host does not implement ctx.messaging.sendSms'), { code: 'HOST_CAPABILITY_MISSING' });
+  }
+  const r = await ctx.messaging.sendSms({ provider: ctx.config.provider, to: ctx.inputs.to, from: ctx.inputs.from, text: ctx.inputs.text });
+  return { status: 'success', outputs: r };
+}
+
+export async function voiceCallPlace(ctx) {
+  if (typeof ctx.voice?.placeCall !== 'function') {
+    throw Object.assign(new Error('host does not implement ctx.voice.placeCall'), { code: 'HOST_CAPABILITY_MISSING' });
+  }
+  const r = await ctx.voice.placeCall({ provider: ctx.config.provider, to: ctx.inputs.to, from: ctx.inputs.from, twiml: ctx.inputs.twiml, callbackUrl: ctx.inputs.callbackUrl });
+  return { status: 'success', outputs: r };
+}
+
+export async function voiceCallTtsGreet(ctx) {
+  if (typeof ctx.voice?.tts !== 'function') {
+    throw Object.assign(new Error('host does not implement ctx.voice.tts'), { code: 'HOST_CAPABILITY_MISSING' });
+  }
+  const r = await ctx.voice.tts({ callId: ctx.inputs.callId, text: ctx.inputs.text, voice: ctx.config.voice });
+  return { status: 'success', outputs: r };
+}
+
+export async function notificationPush(ctx) {
+  if (typeof ctx.notification?.push !== 'function') {
+    throw Object.assign(new Error('host does not implement ctx.notification.push'), { code: 'HOST_CAPABILITY_MISSING' });
+  }
+  const r = await ctx.notification.push({
+    provider: ctx.config.provider,
+    deviceToken: ctx.inputs.deviceToken, title: ctx.inputs.title, body: ctx.inputs.body, data: ctx.inputs.data ?? {},
+  });
+  return { status: 'success', outputs: r };
+}
+
 /* ─── Pack registry ────────────────────────────────────────── */
 
 export const nodes = {
   'core.openwop.integration.email-send': emailSend,
   'core.openwop.integration.slack-message': slackMessage,
+  'core.openwop.integration.chat-message-generic': chatMessageGeneric,
+  'core.openwop.integration.sms-send': smsSend,
+  'core.openwop.integration.voice-call-place': voiceCallPlace,
+  'core.openwop.integration.voice-call-tts-greet': voiceCallTtsGreet,
+  'core.openwop.integration.notification-push': notificationPush,
 };
 
 export default nodes;

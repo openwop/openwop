@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.http/1.1.0/circuit-breaker.output.json",
+  "title": "CircuitBreakerOutput",
+  "type": "object",
+  "required": [
+    "circuitOpen"
+  ],
+  "properties": {
+    "circuitOpen": {
+      "type": "boolean"
+    },
+    "status": {
+      "type": "integer"
+    },
+    "headers": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "body": {},
+    "openUntilMs": {
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false
+}

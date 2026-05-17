@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.a2a/1.0.0/push-config-create.output.json",
+  "title": "PushConfigCreateOutput",
+  "type": "object",
+  "required": [
+    "result"
+  ],
+  "properties": {
+    "result": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.db/1.0.0/search-query.output.json",
+  "title": "SearchQueryOutput",
+  "type": "object",
+  "required": [
+    "hits"
+  ],
+  "properties": {
+    "hits": {
+      "type": "array"
+    },
+    "totalHits": {
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false
+}

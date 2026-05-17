@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.storage/1.0.0/blob-get.config.json",
+  "title": "BlobGetConfig",
+  "type": "object",
+  "properties": {
+    "bucket": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.crypto/1.0.0/totp-generate.input.json",
+  "title": "TotpGenerateInput",
+  "type": "object",
+  "required": [
+    "secret"
+  ],
+  "properties": {
+    "secret": {
+      "type": "string"
+    },
+    "at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false
+}

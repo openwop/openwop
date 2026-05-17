@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.integration/1.1.0/chat-message-generic.output.json",
+  "title": "ChatMessageGenericOutput",
+  "type": "object",
+  "required": [
+    "success"
+  ],
+  "properties": {
+    "success": {
+      "type": "boolean"
+    },
+    "deliveryId": {
+      "type": "string"
+    },
+    "platformMessageId": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

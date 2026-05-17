@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.messaging/1.0.0/publish.output.json",
+  "title": "MqPublishOutput",
+  "type": "object",
+  "properties": {
+    "messageId": {
+      "type": "string"
+    },
+    "partition": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

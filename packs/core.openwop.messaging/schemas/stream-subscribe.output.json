@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.messaging/1.0.0/stream-subscribe.output.json",
+  "title": "StreamSubscribeOutput",
+  "type": "object",
+  "required": [
+    "record"
+  ],
+  "properties": {
+    "record": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "offset": {
+      "type": "string"
+    },
+    "partition": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

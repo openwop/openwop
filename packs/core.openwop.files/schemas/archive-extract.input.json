@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.files/1.0.0/archive-extract.input.json",
+  "title": "ArchiveExtractInput",
+  "type": "object",
+  "required": [
+    "contentBase64"
+  ],
+  "properties": {
+    "contentBase64": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

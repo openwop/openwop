@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.mcp/1.1.0/server-trigger.config.json",
+  "title": "McpServerTriggerConfig",
+  "type": "object",
+  "properties": {
+    "transport": {
+      "type": "string",
+      "enum": [
+        "stdio",
+        "streamable-http"
+      ],
+      "default": "streamable-http"
+    },
+    "path": {
+      "type": "string",
+      "description": "For streamable-http transport."
+    }
+  },
+  "additionalProperties": false
+}

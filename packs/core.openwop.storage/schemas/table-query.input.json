@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.storage/1.0.0/table-query.input.json",
+  "title": "TableQueryInput",
+  "type": "object",
+  "properties": {
+    "filter": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "cursor": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

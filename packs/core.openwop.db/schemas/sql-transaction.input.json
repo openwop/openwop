@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.db/1.0.0/sql-transaction.input.json",
+  "title": "SqlTransactionInput",
+  "type": "object",
+  "required": [
+    "statements"
+  ],
+  "properties": {
+    "statements": {
+      "type": "array",
+      "items": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "Stmt",
+        "type": "object",
+        "required": [
+          "sql"
+        ],
+        "properties": {
+          "sql": {
+            "type": "string"
+          },
+          "params": {
+            "type": "array"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

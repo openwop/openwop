@@ -1,0 +1,136 @@
+{
+  "name": "core.openwop.messaging",
+  "version": "1.0.0",
+  "description": "Queue + stream primitives — publish, consume (trigger), ack/nack/dead-letter, stream subscribe/publish. Capability-gated on host.queueBus (RFC 0017). Sibling to host.messaging (outbound-egress-only).",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.messaging",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "core",
+    "messaging",
+    "queue",
+    "stream",
+    "kafka",
+    "rabbitmq",
+    "sqs",
+    "pubsub"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "queueBus": "supported"
+  },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "nodes": [
+    {
+      "typeId": "core.messaging.publish",
+      "version": "1.0.0",
+      "label": "MQ Publish",
+      "description": "Publish a message to a topic / queue.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/publish.config.json",
+      "inputSchemaRef": "schemas/publish.input.json",
+      "outputSchemaRef": "schemas/publish.output.json"
+    },
+    {
+      "typeId": "core.messaging.consume",
+      "version": "1.0.0",
+      "label": "MQ Consume Trigger",
+      "description": "Inbound subscription. ctx.triggerData carries the message.",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/consume.config.json",
+      "inputSchemaRef": "schemas/consume.input.json",
+      "outputSchemaRef": "schemas/consume.output.json"
+    },
+    {
+      "typeId": "core.messaging.ack",
+      "version": "1.0.0",
+      "label": "MQ Ack",
+      "description": "Acknowledge message delivery.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/ack.config.json",
+      "inputSchemaRef": "schemas/ack.input.json",
+      "outputSchemaRef": "schemas/ack.output.json"
+    },
+    {
+      "typeId": "core.messaging.nack",
+      "version": "1.0.0",
+      "label": "MQ Nack",
+      "description": "Negatively acknowledge — request redelivery.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/nack.config.json",
+      "inputSchemaRef": "schemas/nack.input.json",
+      "outputSchemaRef": "schemas/nack.output.json"
+    },
+    {
+      "typeId": "core.messaging.dead-letter",
+      "version": "1.0.0",
+      "label": "MQ Dead Letter",
+      "description": "Move a message to the configured dead-letter queue.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/dead-letter.config.json",
+      "inputSchemaRef": "schemas/dead-letter.input.json",
+      "outputSchemaRef": "schemas/dead-letter.output.json"
+    },
+    {
+      "typeId": "core.messaging.stream-subscribe",
+      "version": "1.0.0",
+      "label": "Stream Subscribe Trigger",
+      "description": "Subscribe to a stream (Kafka / Kinesis / Redis-Streams).",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/stream-subscribe.config.json",
+      "inputSchemaRef": "schemas/stream-subscribe.input.json",
+      "outputSchemaRef": "schemas/stream-subscribe.output.json"
+    },
+    {
+      "typeId": "core.messaging.stream-publish",
+      "version": "1.0.0",
+      "label": "Stream Publish",
+      "description": "Publish a record to a stream.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/stream-publish.config.json",
+      "inputSchemaRef": "schemas/stream-publish.input.json",
+      "outputSchemaRef": "schemas/stream-publish.output.json"
+    }
+  ]
+}

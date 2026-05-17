@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.crypto/1.0.0/aead-decrypt.output.json",
+  "title": "AeadDecryptOutput",
+  "type": "object",
+  "required": [
+    "plaintext",
+    "algorithm"
+  ],
+  "properties": {
+    "plaintext": {
+      "type": "string"
+    },
+    "algorithm": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

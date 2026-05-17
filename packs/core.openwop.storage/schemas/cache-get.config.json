@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.storage/1.0.0/cache-get.config.json",
+  "title": "CacheGetConfig",
+  "type": "object",
+  "properties": {
+    "namespace": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

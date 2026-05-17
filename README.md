@@ -252,6 +252,14 @@ See [CHANGELOG.md](./CHANGELOG.md) — `[1] — 2026-05-08 — OpenWOP v1 FINAL 
 
 **v1.x Capability Profiles (Accepted / Draft):**
 - [**RFC 0012**](./RFCS/0012-memory-compaction-profile.md) — Memory compaction profile (`Accepted` 2026-05-15): optional `capabilities.memory.compaction` advertisement, `memory.compacted` event vocabulary, and an SR-1 carry-forward invariant that extends RFC 0004 §D through host-side memory distillation. Additive; no v1 contract change. Postgres reference host implements end-to-end when `OPENWOP_MEMORY_COMPACTION=true`.
+- [**RFC 0013**](./RFCS/0013-workflow-chain-packs.md) — Workflow-chain packs (`Active`): pack-kind distinguished manifest for workflow templates with host-side expansion semantics. Pairs with the n8n-style root+sub-node composition shipped in `core.openwop.agents`.
+- [**RFC 0014**](./RFCS/0014-host-fs-capability.md) — `host.fs` filesystem capability (`Draft`, 2026-05-17): read/write/list/stat/delete inside a sandbox root with `fs-path-traversal` invariant. Unblocks `core.openwop.files`.
+- [**RFC 0015**](./RFCS/0015-host-kv-storage-capability.md) — `host.kvStorage` key-value store (`Draft`, 2026-05-17): TTL + atomic increment + CAS + cross-tenant isolation. Unblocks `core.openwop.storage` kv-* nodes.
+- [**RFC 0016**](./RFCS/0016-host-table-storage-capability.md) — `host.tableStorage` structured records (`Draft`, 2026-05-17): typed columns + cursor pagination. Make-Data-Store equivalent.
+- [**RFC 0017**](./RFCS/0017-host-queue-bus-capability.md) — `host.queueBus` inbound queue + stream (`Draft`, 2026-05-17): publish + consume (trigger) + ack/nack/dead-letter + stream subscribe with cross-tenant isolation. Unblocks `core.openwop.messaging`.
+- [**RFC 0018**](./RFCS/0018-host-sql-vector-search-capability.md) — Database adapter capabilities (`Draft`, 2026-05-17): `host.sql` (parametric-only) + `host.nosql` + `host.vectorStore` + `host.searchIndex`. Unblocks `core.openwop.db` + `core.openwop.rag`.
+- [**RFC 0019**](./RFCS/0019-host-blob-cache-capability.md) — `host.blobStorage` + `host.cache` (`Draft`, 2026-05-17): binary artifacts with presigned URLs + TTL cache. Unblocks `core.openwop.storage` blob/cache nodes.
+- [**RFC 0020**](./RFCS/0020-host-mcp-server-composition.md) — Host-side MCP server composition (`Draft`, 2026-05-17): extends `spec/v1/mcp-integration.md` with a §"OpenWOP host as MCP server" section + `capabilities.mcp.serverMount` block + bidirectional sampling/elicitation bridges. Unblocks the 8 server-side `core.openwop.mcp.*` nodes shipped in v1.1.0.
 
 **v1 Foundation (2026-04-27):**
 Current generated state: 32 prose specs · 24 JSON Schemas · 19 OpenAPI operations · AsyncAPI 3.1 · 107 conformance scenario files · 3 reference SDKs. See [docs/PROTOCOL-STATUS.md](./docs/PROTOCOL-STATUS.md) for the machine-generated snapshot.

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.flow/1.0.0/limit.output.json",
+  "title": "LimitOutput",
+  "type": "object",
+  "required": [
+    "array",
+    "count"
+  ],
+  "properties": {
+    "array": {
+      "type": "array"
+    },
+    "count": {
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.storage/1.0.0/kv-set.output.json",
+  "title": "KvSetOutput",
+  "type": "object",
+  "properties": {
+    "ok": {
+      "type": "boolean"
+    },
+    "replaced": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}

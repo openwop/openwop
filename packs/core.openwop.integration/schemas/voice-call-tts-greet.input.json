@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.integration/1.1.0/voice-call-tts-greet.input.json",
+  "title": "VoiceCallTtsGreetInput",
+  "type": "object",
+  "required": [
+    "callId",
+    "text"
+  ],
+  "properties": {
+    "callId": {
+      "type": "string"
+    },
+    "text": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

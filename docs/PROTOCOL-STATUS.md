@@ -11,8 +11,8 @@
 | JSON Schemas | 24 | `schemas/*.schema.json` |
 | OpenAPI operations | 19 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 110 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 13 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| Conformance scenario files | 137 | `conformance/src/scenarios/*.test.ts` |
+| RFCs tracked | 20 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## OpenAPI Operations
 
@@ -23,15 +23,15 @@
 | Status | Count |
 |---|---:|
 | Accepted | 12 |
-| Draft | 1 |
+| Draft | 8 |
 
 | Latest RFC | Title | Status |
 |---|---|---|
-| RFC 0013 | Workflow-chain packs (pre-configured DAG fragments published as registry artifacts) | Draft |
-| RFC 0012 | Memory Compaction Profile | Accepted |
-| RFC 0011 | Auth-Scoped Discovery Advertisement | Accepted |
-| RFC 0010 | Auth-Profile Conformance | Accepted |
-| RFC 0009 | Production-Profile Conformance | Accepted |
+| RFC 0020 | Host-side MCP server composition | Draft |
+| RFC 0019 | Blob storage + TTL cache capabilities | Draft |
+| RFC 0018 | Database adapter capabilities (SQL, vector, search) | Draft |
+| RFC 0017 | host.queueBus inbound queue + stream capability | Draft |
+| RFC 0016 | host.tableStorage structured record store | Draft |
 
 ## SDK Helper Coverage
 

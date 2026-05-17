@@ -114,6 +114,123 @@ export async function artifactTrigger(ctx) {
   };
 }
 
+/* ─── v1.1 additions ────────────────────────────────────────── */
+
+export async function webhookRespond(ctx) {
+  if (typeof ctx.respondToWebhook !== 'function') {
+    // Best-effort: emit a downstream envelope so the host can route.
+    return { status: 'success', outputs: { responded: false, status: ctx.config.status ?? 200, headers: ctx.config.headers ?? {}, body: ctx.inputs.body ?? null } };
+  }
+  await ctx.respondToWebhook({
+    status: ctx.config.status ?? 200,
+    headers: ctx.config.headers ?? {},
+    body: ctx.inputs.body ?? null,
+  });
+  return { status: 'success', outputs: { responded: true } };
+}
+
+export async function mailhookTrigger(ctx) {
+  const d = ctx.triggerData ?? {};
+  return {
+    status: 'success',
+    outputs: {
+      from: asStr(d.from),
+      to: Array.isArray(d.to) ? d.to : [],
+      subject: asStr(d.subject),
+      text: asStr(d.text),
+      html: asStr(d.html),
+      attachments: Array.isArray(d.attachments) ? d.attachments : [],
+      headers: asObj(d.headers),
+    },
+  };
+}
+
+export async function emailImapTrigger(ctx) {
+  const d = ctx.triggerData ?? {};
+  return {
+    status: 'success',
+    outputs: {
+      uid: asStr(d.uid),
+      from: asStr(d.from),
+      to: Array.isArray(d.to) ? d.to : [],
+      subject: asStr(d.subject),
+      text: asStr(d.text),
+      html: asStr(d.html),
+      attachments: Array.isArray(d.attachments) ? d.attachments : [],
+      receivedAt: asStr(d.receivedAt),
+      folder: asStr(d.folder, 'INBOX'),
+    },
+  };
+}
+
+export async function formTrigger(ctx) {
+  const d = ctx.triggerData ?? {};
+  return {
+    status: 'success',
+    outputs: {
+      values: asObj(d.values),
+      submittedAt: asStr(d.submittedAt),
+      submitterId: asStr(d.submitterId),
+      submitterEmail: asStr(d.submitterEmail),
+    },
+  };
+}
+
+export async function rssTrigger(ctx) {
+  const d = ctx.triggerData ?? {};
+  return {
+    status: 'success',
+    outputs: {
+      title: asStr(d.title),
+      link: asStr(d.link),
+      description: asStr(d.description),
+      content: asStr(d.content),
+      author: asStr(d.author),
+      publishedAt: asStr(d.publishedAt),
+      guid: asStr(d.guid),
+    },
+  };
+}
+
+export async function manualTrigger(ctx) {
+  return passThrough(ctx, { payload: null });
+}
+
+export async function errorTriggerNode(ctx) {
+  const d = ctx.triggerData ?? {};
+  return {
+    status: 'success',
+    outputs: {
+      failedRunId: asStr(d.failedRunId),
+      workflowId: asStr(d.workflowId),
+      failedNodeId: asStr(d.failedNodeId),
+      errorEnvelope: asObj(d.errorEnvelope),
+    },
+  };
+}
+
+export async function subWorkflowTrigger(ctx) {
+  const d = ctx.triggerData ?? {};
+  return {
+    status: 'success',
+    outputs: {
+      parentRunId: asStr(d.parentRunId),
+      parentNodeId: asStr(d.parentNodeId),
+      inputs: asObj(d.inputs),
+      invokedBy: asStr(d.invokedBy),
+    },
+  };
+}
+
+export async function cronAdvancedTrigger(ctx) {
+  return passThrough(ctx, {
+    rrule: ctx.config?.rrule ?? '',
+    cron: ctx.config?.cron ?? '',
+    timezone: ctx.config?.timezone ?? 'UTC',
+    isCatchUp: false,
+  });
+}
+
 /* ─── Pack registry ─────────────────────────────────────────── */
 
 export const nodes = {
@@ -124,6 +241,15 @@ export const nodes = {
   'core.trigger.chatMessage': chatMessageTrigger,
   'core.trigger.canvas': canvasTrigger,
   'core.trigger.artifact': artifactTrigger,
+  'core.trigger.webhook-respond': webhookRespond,
+  'core.trigger.mailhook': mailhookTrigger,
+  'core.trigger.email-imap': emailImapTrigger,
+  'core.trigger.form': formTrigger,
+  'core.trigger.rss': rssTrigger,
+  'core.trigger.manual': manualTrigger,
+  'core.trigger.error': errorTriggerNode,
+  'core.trigger.sub-workflow': subWorkflowTrigger,
+  'core.trigger.cron-advanced': cronAdvancedTrigger,
 };
 
 export default nodes;

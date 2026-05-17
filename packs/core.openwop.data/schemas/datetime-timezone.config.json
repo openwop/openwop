@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.data/1.1.0/datetime-timezone.config.json",
+  "title": "DatetimeTimezoneConfig",
+  "type": "object",
+  "required": [
+    "timezone"
+  ],
+  "properties": {
+    "timezone": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

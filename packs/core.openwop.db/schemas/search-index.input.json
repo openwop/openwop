@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.db/1.0.0/search-index.input.json",
+  "title": "SearchIndexInput",
+  "type": "object",
+  "required": [
+    "id",
+    "document"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "document": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

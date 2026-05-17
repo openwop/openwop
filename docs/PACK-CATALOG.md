@@ -10,18 +10,33 @@
 
 Spec-canonical typeIds. Required by most non-trivial workflows. Signed by `openwop-registry-root`.
 
-| Pack | Purpose |
-|---|---|
-| [`core.openwop.ai`](https://packs.openwop.dev/v1/packs/core.openwop.ai/index.json) | 4 nodes: `core.ai.chatCompletion` (free-form chat), `core.ai.structuredOutput` (typed-envelope output), `core.ai.toolCalling` (tool-use loop), `core.openwop.ai.embeddings`. The bedrock AI-call primitives every workflow consuming `host.aiProviders` uses. |
-| [`core.openwop.triggers`](https://packs.openwop.dev/v1/packs/core.openwop.triggers/index.json) | Workflow trigger primitives — webhook, schedule, manual. |
-| [`core.openwop.data`](https://packs.openwop.dev/v1/packs/core.openwop.data/index.json) | Data shaping + structural primitives — pure transforms over workflow state. |
-| [`core.openwop.http`](https://packs.openwop.dev/v1/packs/core.openwop.http/index.json) | Generic HTTP request primitives for hosts that advertise general fetch. |
-| [`core.openwop.integration`](https://packs.openwop.dev/v1/packs/core.openwop.integration/index.json) | Integration-layer primitives — connector glue + adapter shapes. |
-| [`core.openwop.mcp`](https://packs.openwop.dev/v1/packs/core.openwop.mcp/index.json) | MCP (Model Context Protocol) bridge primitives. |
-| [`core.openwop.examples`](https://packs.openwop.dev/v1/packs/core.openwop.examples/index.json) | Reference example workflows demonstrating multi-pack composition. |
-| [`core.openwop.agent-examples`](https://packs.openwop.dev/v1/packs/core.openwop.agent-examples/index.json) | Reference agent-pack examples per RFC 0003. |
-| [`community.openwop-team.demo`](https://packs.openwop.dev/v1/packs/community.openwop-team.demo/index.json) | Community-tier demo pack (separate `community.openwop-team-1` signing key). |
-| [`vendor.openwop.rust-hello`](https://packs.openwop.dev/v1/packs/vendor.openwop.rust-hello/index.json) | "Hello world" Rust-wasm node demonstrating multi-language support per RFC 0008. |
+| Pack | Version | Purpose |
+|---|---|---|
+| [`core.openwop.ai`](https://packs.openwop.dev/v1/packs/core.openwop.ai/index.json) | 1.1.0 | 4 v1.0 nodes (chatCompletion / structuredOutput / toolCalling / embeddings) + 11 v1.1 multi-modal nodes (image generate/edit/upscale, audio transcribe/synthesize, video generate, rerank, classify, extract, guardrails, transform). |
+| [`core.openwop.triggers`](https://packs.openwop.dev/v1/packs/core.openwop.triggers/index.json) | 1.1.0 | 7 v1.0 trigger shapes (webhook/schedule/event/envelope/chatMessage/canvas/artifact) + 9 v1.1 additions (webhook-respond, mailhook, email-imap, form, rss, manual, error, sub-workflow, cron-advanced). |
+| [`core.openwop.data`](https://packs.openwop.dev/v1/packs/core.openwop.data/index.json) | 1.1.0 | 5 v1.0 primitives + 32 v1.1 utilities — string format/regex/encode, array sort/unique/flatten/chunk/zip/reduce, object pick/omit/rename/get-path/set-path, json parse/stringify/schema-validate, jsonpath query, csv parse/stringify, datetime suite, number format/round/clamp, uuid. |
+| [`core.openwop.http`](https://packs.openwop.dev/v1/packs/core.openwop.http/index.json) | 1.1.0 | v1.0 fetch + 22 v1.1 nodes — openapi-call, GraphQL (query/mutation/subscription), SOAP, gRPC (4 streaming variants), SSE consume, WebSocket client, long-poll, multipart/resumable upload, streaming download, pagination decorators (cursor/offset/link-header), rate-limit-aware retry, circuit breaker, idempotency-key generator, webhook signature verifier. |
+| [`core.openwop.integration`](https://packs.openwop.dev/v1/packs/core.openwop.integration/index.json) | 1.1.0 | v1.0 email-send + slack-message; v1.1 adds chat-message-generic, sms-send, voice-call-place, voice-call-tts-greet, notification-push. |
+| [`core.openwop.mcp`](https://packs.openwop.dev/v1/packs/core.openwop.mcp/index.json) | 1.1.0 | 4 v1.0 client primitives + 9 v1.1 client additions (list-resources, subscribe-resource, list-prompts, get-prompt, completion, set-log-level, log-listener, ping, list-resource-templates) + 8 server-side nodes (server-trigger, expose-tool/resource/resource-template/prompt, handle-sampling/elicitation, provide-roots). Tracks modelcontextprotocol.io 2025-06-18. |
+| [`core.openwop.examples`](https://packs.openwop.dev/v1/packs/core.openwop.examples/index.json) | 1.0.0 | Reference example workflows demonstrating multi-pack composition. |
+| [`core.openwop.agent-examples`](https://packs.openwop.dev/v1/packs/core.openwop.agent-examples/index.json) | 1.0.0 | Reference agent-pack examples per RFC 0003. |
+| `core.openwop.flow` | **NEW 1.0.1** (in-tree)¹ | 29 flow-control primitives — if/switch/router/filter/merge (5 modes)/iterator/aggregate (array/numeric/text/table)/split-in-batches/sort/limit/distinct/compare-datasets/repeater/noop/stop-and-error/wait/sub-workflow-invoke + 5 Make-style error handlers (resume/ignore/break/commit/rollback) + 4 reserved-typeId aliases (`core.conditional`/`core.delay`/`core.loop`/`core.parallel`). |
+| `core.openwop.crypto` | **NEW 1.0.0** (in-tree)¹ | 13 pure crypto primitives — hash, hmac sign/verify, AEAD encrypt/decrypt (AES-GCM, ChaCha20-Poly1305), asymmetric sign/verify (ed25519, RS256, PS256, ES256), JWT mint/verify (JWKS-aware), TOTP generate/verify, x509 parse + chain verify. Zero npm deps. |
+| `core.openwop.a2a` | **NEW 1.1.0** (in-tree)¹ | 17 A2A nodes — 12 client (discover-agent, send-message, send-and-stream, get-task, list-tasks, cancel-task, resubscribe, multi-turn-coordinator, push-config CRUD) + 5 server-side (server-trigger, agent-card-publish, emit-status, emit-artifact, push-send). Tracks `spec/v1/a2a-integration.md`. |
+| `core.openwop.obs` | **NEW 1.0.0** (in-tree)¹ | 7 observability emitters — log, metric (counter/gauge/histogram), trace-span-start/end, alert-fire. All under `openwop.workflow.*` OTel namespace. |
+| `core.openwop.hitl` | **NEW 1.0.0** (in-tree)¹ | 3 human-in-the-loop primitives — form-request (typed JSON-Schema form, flat-schema-only), approval-request (binary + comment + quorum), ask-user (free-text). Suspend via `spec/v1/interrupt.md`. |
+| `core.openwop.storage` | **NEW 1.0.0** (in-tree)¹ ² | 20 state primitives — kv (get/set/delete/list/atomic-increment/cas), table (insert/update/upsert/delete/query/count), cache (get/put/evict), blob (put/get/presign), queue (enqueue/dequeue). Per-node capability-gated on RFCs 0015/0016/0017/0019. |
+| `core.openwop.files` | **NEW 1.0.0** (in-tree)¹ ² | 19 file primitives — fs CRUD, base64 helpers, mime detection, image (resize/crop/format-convert), pdf (extract-text/split/merge), archive (create/extract), ftp/sftp/ssh-run. Gated on `host.fs` (RFC 0014). |
+| `core.openwop.db` | **NEW 1.0.0** (in-tree)¹ ² | 12 database primitives — sql (query/execute/transaction; parametric-only), nosql (find/insert/update/delete), search (index/query), vector (upsert/query/delete). Per-node capability-gated on RFC 0018 surfaces. |
+| `core.openwop.messaging` | **NEW 1.0.0** (in-tree)¹ ² | 7 queue + stream primitives — publish, consume (trigger), ack/nack/dead-letter, stream-subscribe (trigger), stream-publish. Gated on `host.queueBus` (RFC 0017). |
+| `core.openwop.agents` | **NEW 1.0.0** (in-tree)¹ | 12 agent-composition primitives — root `agent.run` + sub-nodes (tool-function/workflow/mcp/http, memory-window/summary/kv-store, output-parser-structured/list/auto-fix, model-selector). n8n-style root+sub composition; consumes `host.aiProviders.toolCalling` + optional `host.agentRuntime`. |
+| `core.openwop.rag` | **NEW 1.0.0** (in-tree)¹ | 13 RAG primitives — loaders (url/file/github/s3), splitters (recursive/character/token), vector ops (upsert/query/delete), retrievers (basic/multi-query/contextual-compression). Composes with `core.openwop.ai.embeddings` + `core.openwop.db.vector-*`. |
+| [`community.openwop-team.demo`](https://packs.openwop.dev/v1/packs/community.openwop-team.demo/index.json) | 0.1.0 | Community-tier demo pack (separate `community.openwop-team-1` signing key). |
+
+¹ **In-tree only as of 2026-05-17** — manifest, schemas, and runtime live under `packs/<name>/`; lockfile-resolvable for testing; **NOT yet served from `packs.openwop.dev`**. Public publication is gated on the same external security audit as the existing 4 high-stakes core packs (per `SECURITY/external-audit-engagement.md` §2.1). When publication lands, this column flips to "Published" and a registry link appears.
+
+² **Capability-gated** — requires the corresponding RFC (0014-0019) to land at `Active` status AND the host to advertise the matching `capabilities.<key>` block. Workflow registration will fail with `pack_peer_dependency_missing` (where the pack declares a peerDependency) or per-node `HOST_CAPABILITY_MISSING` (where the pack defers to runtime resolution) until both conditions are met.
+| [`vendor.openwop.rust-hello`](https://packs.openwop.dev/v1/packs/vendor.openwop.rust-hello/index.json) | 1.0.0 | "Hello world" Rust-wasm node demonstrating multi-language support per RFC 0008. |
 
 ## Identity + general-purpose (`vendor.myndhyve.*`)
 

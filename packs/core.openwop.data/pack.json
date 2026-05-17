@@ -1,12 +1,24 @@
 {
   "name": "core.openwop.data",
-  "version": "1.0.0",
-  "description": "Spec-canonical data-utility pack. Five pure, replay-safe nodes covering the most common workflow-author needs: string-case transformation, string splitting, array filtering, array mapping (with template substitution), and shallow object merging. Zero npm deps. Runs on any Node 20+ host advertising the openwop-node-packs profile.",
+  "version": "1.1.0",
+  "description": "Spec-canonical data-utility pack. v1.0 baseline (string-case, string-split, array-filter, array-map, object-merge) plus v1.1 additions: string format/regex/encode, array sort/unique/flatten/chunk/zip/reduce, object pick/omit/rename/get-path/set-path, json parse/stringify/schema-validate, jsonpath query, csv parse/stringify, datetime suite, number format/round/clamp, uuid. Zero npm deps (Node 20+).",
   "author": "OpenWOP Working Group",
   "license": "Apache-2.0",
   "homepage": "https://openwop.dev/packs/core.openwop.data",
   "repository": "https://github.com/openwop/openwop",
-  "keywords": ["core", "data", "utilities", "string", "array", "object"],
+  "keywords": [
+    "core",
+    "data",
+    "utilities",
+    "string",
+    "array",
+    "object",
+    "json",
+    "csv",
+    "datetime",
+    "jsonpath",
+    "uuid"
+  ],
   "engines": {
     "openwop": ">=1.0.0 <2.0.0"
   },
@@ -18,7 +30,9 @@
       "description": "Transforms input string to upper / lower / title case. Pure, replay-safe, locale-agnostic (uses JavaScript built-in casing — title case is naive: first letter of each whitespace-separated word).",
       "category": "data",
       "role": "pure",
-      "capabilities": ["cacheable"],
+      "capabilities": [
+        "cacheable"
+      ],
       "configSchemaRef": "schemas/string-case.config.json",
       "inputSchemaRef": "schemas/string-case.input.json",
       "outputSchemaRef": "schemas/string-case.output.json"
@@ -30,7 +44,9 @@
       "description": "Splits input string on a separator. Pure. Returns an array. Empty separator splits into per-character array.",
       "category": "data",
       "role": "pure",
-      "capabilities": ["cacheable"],
+      "capabilities": [
+        "cacheable"
+      ],
       "configSchemaRef": "schemas/string-split.config.json",
       "inputSchemaRef": "schemas/string-split.input.json",
       "outputSchemaRef": "schemas/string-split.output.json"
@@ -42,7 +58,9 @@
       "description": "Filters an array by a simple equality predicate on a path. Pure. Predicate shape: { path: 'dot.notation', equals: <value> }. For richer predicate languages, downstream packs can layer (e.g., JSONPath or JMESPath as a future v1.x extension).",
       "category": "data",
       "role": "pure",
-      "capabilities": ["cacheable"],
+      "capabilities": [
+        "cacheable"
+      ],
       "configSchemaRef": "schemas/array-filter.config.json",
       "inputSchemaRef": "schemas/array-filter.input.json",
       "outputSchemaRef": "schemas/array-filter.output.json"
@@ -54,7 +72,9 @@
       "description": "Maps an array via a simple template — each element's keys are substituted into a `{{key}}` template. Pure. For richer transformation languages (jq-style, JSONata), downstream packs can layer.",
       "category": "data",
       "role": "pure",
-      "capabilities": ["cacheable"],
+      "capabilities": [
+        "cacheable"
+      ],
       "configSchemaRef": "schemas/array-map.config.json",
       "inputSchemaRef": "schemas/array-map.input.json",
       "outputSchemaRef": "schemas/array-map.output.json"
@@ -66,10 +86,460 @@
       "description": "Shallow-merges two objects. Later (`override`) wins on key collision. Pure. Deep-merge is intentionally out of scope; downstream packs can ship that variant.",
       "category": "data",
       "role": "pure",
-      "capabilities": ["cacheable"],
+      "capabilities": [
+        "cacheable"
+      ],
       "configSchemaRef": "schemas/object-merge.config.json",
       "inputSchemaRef": "schemas/object-merge.input.json",
       "outputSchemaRef": "schemas/object-merge.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.string-format",
+      "version": "1.0.0",
+      "label": "String Format",
+      "description": "v1.1 data utility — string-format.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/string-format.config.json",
+      "inputSchemaRef": "schemas/string-format.input.json",
+      "outputSchemaRef": "schemas/string-format.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.string-regex-match",
+      "version": "1.0.0",
+      "label": "String Regex Match",
+      "description": "v1.1 data utility — string-regex-match.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/string-regex-match.config.json",
+      "inputSchemaRef": "schemas/string-regex-match.input.json",
+      "outputSchemaRef": "schemas/string-regex-match.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.string-regex-replace",
+      "version": "1.0.0",
+      "label": "String Regex Replace",
+      "description": "v1.1 data utility — string-regex-replace.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/string-regex-replace.config.json",
+      "inputSchemaRef": "schemas/string-regex-replace.input.json",
+      "outputSchemaRef": "schemas/string-regex-replace.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.string-regex-extract",
+      "version": "1.0.0",
+      "label": "String Regex Extract",
+      "description": "v1.1 data utility — string-regex-extract.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/string-regex-extract.config.json",
+      "inputSchemaRef": "schemas/string-regex-extract.input.json",
+      "outputSchemaRef": "schemas/string-regex-extract.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.string-encode",
+      "version": "1.0.0",
+      "label": "String Encode",
+      "description": "v1.1 data utility — string-encode.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/string-encode.config.json",
+      "inputSchemaRef": "schemas/string-encode.input.json",
+      "outputSchemaRef": "schemas/string-encode.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.array-sort",
+      "version": "1.0.0",
+      "label": "Array Sort",
+      "description": "v1.1 data utility — array-sort.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/array-sort.config.json",
+      "inputSchemaRef": "schemas/array-sort.input.json",
+      "outputSchemaRef": "schemas/array-sort.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.array-unique",
+      "version": "1.0.0",
+      "label": "Array Unique",
+      "description": "v1.1 data utility — array-unique.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/array-unique.config.json",
+      "inputSchemaRef": "schemas/array-unique.input.json",
+      "outputSchemaRef": "schemas/array-unique.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.array-flatten",
+      "version": "1.0.0",
+      "label": "Array Flatten",
+      "description": "v1.1 data utility — array-flatten.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/array-flatten.config.json",
+      "inputSchemaRef": "schemas/array-flatten.input.json",
+      "outputSchemaRef": "schemas/array-flatten.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.array-chunk",
+      "version": "1.0.0",
+      "label": "Array Chunk",
+      "description": "v1.1 data utility — array-chunk.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/array-chunk.config.json",
+      "inputSchemaRef": "schemas/array-chunk.input.json",
+      "outputSchemaRef": "schemas/array-chunk.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.array-zip",
+      "version": "1.0.0",
+      "label": "Array Zip",
+      "description": "v1.1 data utility — array-zip.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/array-zip.config.json",
+      "inputSchemaRef": "schemas/array-zip.input.json",
+      "outputSchemaRef": "schemas/array-zip.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.array-reduce",
+      "version": "1.0.0",
+      "label": "Array Reduce",
+      "description": "v1.1 data utility — array-reduce.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/array-reduce.config.json",
+      "inputSchemaRef": "schemas/array-reduce.input.json",
+      "outputSchemaRef": "schemas/array-reduce.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.object-pick",
+      "version": "1.0.0",
+      "label": "Object Pick",
+      "description": "v1.1 data utility — object-pick.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/object-pick.config.json",
+      "inputSchemaRef": "schemas/object-pick.input.json",
+      "outputSchemaRef": "schemas/object-pick.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.object-omit",
+      "version": "1.0.0",
+      "label": "Object Omit",
+      "description": "v1.1 data utility — object-omit.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/object-omit.config.json",
+      "inputSchemaRef": "schemas/object-omit.input.json",
+      "outputSchemaRef": "schemas/object-omit.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.object-rename-keys",
+      "version": "1.0.0",
+      "label": "Object Rename Keys",
+      "description": "v1.1 data utility — object-rename-keys.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/object-rename-keys.config.json",
+      "inputSchemaRef": "schemas/object-rename-keys.input.json",
+      "outputSchemaRef": "schemas/object-rename-keys.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.object-get-path",
+      "version": "1.0.0",
+      "label": "Object Get Path",
+      "description": "v1.1 data utility — object-get-path.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/object-get-path.config.json",
+      "inputSchemaRef": "schemas/object-get-path.input.json",
+      "outputSchemaRef": "schemas/object-get-path.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.object-set-path",
+      "version": "1.0.0",
+      "label": "Object Set Path",
+      "description": "v1.1 data utility — object-set-path.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/object-set-path.config.json",
+      "inputSchemaRef": "schemas/object-set-path.input.json",
+      "outputSchemaRef": "schemas/object-set-path.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.json-parse",
+      "version": "1.0.0",
+      "label": "Json Parse",
+      "description": "v1.1 data utility — json-parse.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/json-parse.config.json",
+      "inputSchemaRef": "schemas/json-parse.input.json",
+      "outputSchemaRef": "schemas/json-parse.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.json-stringify",
+      "version": "1.0.0",
+      "label": "Json Stringify",
+      "description": "v1.1 data utility — json-stringify.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/json-stringify.config.json",
+      "inputSchemaRef": "schemas/json-stringify.input.json",
+      "outputSchemaRef": "schemas/json-stringify.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.json-schema-validate",
+      "version": "1.0.0",
+      "label": "Json Schema Validate",
+      "description": "v1.1 data utility — json-schema-validate.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/json-schema-validate.config.json",
+      "inputSchemaRef": "schemas/json-schema-validate.input.json",
+      "outputSchemaRef": "schemas/json-schema-validate.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.jsonpath-query",
+      "version": "1.0.0",
+      "label": "Jsonpath Query",
+      "description": "v1.1 data utility — jsonpath-query.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/jsonpath-query.config.json",
+      "inputSchemaRef": "schemas/jsonpath-query.input.json",
+      "outputSchemaRef": "schemas/jsonpath-query.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.csv-parse",
+      "version": "1.0.0",
+      "label": "Csv Parse",
+      "description": "v1.1 data utility — csv-parse.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/csv-parse.config.json",
+      "inputSchemaRef": "schemas/csv-parse.input.json",
+      "outputSchemaRef": "schemas/csv-parse.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.csv-stringify",
+      "version": "1.0.0",
+      "label": "Csv Stringify",
+      "description": "v1.1 data utility — csv-stringify.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/csv-stringify.config.json",
+      "inputSchemaRef": "schemas/csv-stringify.input.json",
+      "outputSchemaRef": "schemas/csv-stringify.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.datetime-now",
+      "version": "1.0.0",
+      "label": "Datetime Now",
+      "description": "v1.1 data utility — datetime-now.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/datetime-now.config.json",
+      "inputSchemaRef": "schemas/datetime-now.input.json",
+      "outputSchemaRef": "schemas/datetime-now.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.datetime-parse",
+      "version": "1.0.0",
+      "label": "Datetime Parse",
+      "description": "v1.1 data utility — datetime-parse.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/datetime-parse.config.json",
+      "inputSchemaRef": "schemas/datetime-parse.input.json",
+      "outputSchemaRef": "schemas/datetime-parse.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.datetime-format",
+      "version": "1.0.0",
+      "label": "Datetime Format",
+      "description": "v1.1 data utility — datetime-format.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/datetime-format.config.json",
+      "inputSchemaRef": "schemas/datetime-format.input.json",
+      "outputSchemaRef": "schemas/datetime-format.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.datetime-add",
+      "version": "1.0.0",
+      "label": "Datetime Add",
+      "description": "v1.1 data utility — datetime-add.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/datetime-add.config.json",
+      "inputSchemaRef": "schemas/datetime-add.input.json",
+      "outputSchemaRef": "schemas/datetime-add.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.datetime-diff",
+      "version": "1.0.0",
+      "label": "Datetime Diff",
+      "description": "v1.1 data utility — datetime-diff.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/datetime-diff.config.json",
+      "inputSchemaRef": "schemas/datetime-diff.input.json",
+      "outputSchemaRef": "schemas/datetime-diff.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.datetime-timezone",
+      "version": "1.0.0",
+      "label": "Datetime Timezone",
+      "description": "v1.1 data utility — datetime-timezone.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/datetime-timezone.config.json",
+      "inputSchemaRef": "schemas/datetime-timezone.input.json",
+      "outputSchemaRef": "schemas/datetime-timezone.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.number-format",
+      "version": "1.0.0",
+      "label": "Number Format",
+      "description": "v1.1 data utility — number-format.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/number-format.config.json",
+      "inputSchemaRef": "schemas/number-format.input.json",
+      "outputSchemaRef": "schemas/number-format.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.number-round",
+      "version": "1.0.0",
+      "label": "Number Round",
+      "description": "v1.1 data utility — number-round.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/number-round.config.json",
+      "inputSchemaRef": "schemas/number-round.input.json",
+      "outputSchemaRef": "schemas/number-round.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.number-clamp",
+      "version": "1.0.0",
+      "label": "Number Clamp",
+      "description": "v1.1 data utility — number-clamp.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/number-clamp.config.json",
+      "inputSchemaRef": "schemas/number-clamp.input.json",
+      "outputSchemaRef": "schemas/number-clamp.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.uuid",
+      "version": "1.0.0",
+      "label": "Uuid",
+      "description": "v1.1 data utility — uuid.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/uuid.config.json",
+      "inputSchemaRef": "schemas/uuid.input.json",
+      "outputSchemaRef": "schemas/uuid.output.json"
     }
   ],
   "runtime": {

@@ -150,6 +150,150 @@ export async function serverStatus(ctx) {
   }
 }
 
+/* ─── v1.1 client-side additions ──────────────────────────── */
+
+function callMcp(method) {
+  return async function (ctx) {
+    ensureMcp(ctx);
+    const fn = ctx.mcp[method];
+    if (typeof fn !== 'function') {
+      throw Object.assign(new Error(`host does not implement ctx.mcp.${method}`), { code: 'host_capability_missing' });
+    }
+    const result = await fn.call(ctx.mcp, {
+      serverId: ctx.config.serverId,
+      ...ctx.config,
+      ...ctx.inputs,
+    });
+    return { status: 'success', outputs: { result } };
+  };
+}
+
+export const listResources = callMcp('listResources');
+export const listResourceTemplates = callMcp('listResourceTemplates');
+export const listPrompts = callMcp('listPrompts');
+export const getPrompt = callMcp('getPrompt');
+export const completion = callMcp('completion');
+export const setLogLevel = callMcp('setLogLevel');
+
+export async function subscribeResource(ctx) {
+  ensureMcp(ctx);
+  if (typeof ctx.mcp.subscribeResource !== 'function') {
+    throw Object.assign(new Error('host does not implement ctx.mcp.subscribeResource'), { code: 'host_capability_missing' });
+  }
+  const events = [];
+  const emit = typeof ctx.emit === 'function' ? ctx.emit : null;
+  await ctx.mcp.subscribeResource(
+    { serverId: ctx.config.serverId, uri: ctx.inputs.uri },
+    async (event) => { events.push(event); if (emit) await emit({ kind: 'node.progress', payload: event }); },
+  );
+  return { status: 'success', outputs: { events, eventCount: events.length } };
+}
+
+export async function logListener(ctx) {
+  ensureMcp(ctx);
+  if (typeof ctx.mcp.logListener !== 'function') {
+    throw Object.assign(new Error('host does not implement ctx.mcp.logListener'), { code: 'host_capability_missing' });
+  }
+  const events = [];
+  const emit = typeof ctx.emit === 'function' ? ctx.emit : null;
+  await ctx.mcp.logListener(
+    { serverId: ctx.config.serverId, durationMs: ctx.config.durationMs ?? 60000 },
+    async (event) => { events.push(event); if (emit) await emit({ kind: 'node.progress', payload: event }); },
+  );
+  return { status: 'success', outputs: { events, eventCount: events.length } };
+}
+
+export async function ping(ctx) {
+  ensureMcp(ctx);
+  if (typeof ctx.mcp.ping !== 'function') {
+    return { status: 'success', outputs: { ok: false, roundtripMs: null, reason: 'host does not implement ctx.mcp.ping' } };
+  }
+  const t0 = Date.now();
+  try {
+    await ctx.mcp.ping({ serverId: ctx.config.serverId });
+    return { status: 'success', outputs: { ok: true, roundtripMs: Date.now() - t0 } };
+  } catch (e) {
+    return { status: 'success', outputs: { ok: false, roundtripMs: Date.now() - t0, reason: e?.message ?? 'unknown' } };
+  }
+}
+
+/* ─── Server-side (workflow IS an MCP server) ─────────────── */
+
+export async function serverTrigger(ctx) {
+  // Trigger-style: the host's MCP-server mount fires this when a JSON-RPC request arrives.
+  const data = ctx.triggerData ?? {};
+  return {
+    status: 'success',
+    outputs: {
+      method: data.method ?? '',
+      params: data.params ?? {},
+      sessionId: data.sessionId ?? null,
+      protocolVersion: data.protocolVersion ?? null,
+    },
+  };
+}
+
+function exposeOp(kind) {
+  return async function (ctx) {
+    if (typeof ctx.mcp?.expose !== 'function') {
+      throw Object.assign(new Error('host does not implement ctx.mcp.expose'), { code: 'host_capability_missing' });
+    }
+    const handle = await ctx.mcp.expose({ kind, manifest: { ...ctx.config, ...ctx.inputs } });
+    return { status: 'success', outputs: { handle, kind } };
+  };
+}
+
+export const exposeTool = exposeOp('tool');
+export const exposeResource = exposeOp('resource');
+export const exposeResourceTemplate = exposeOp('resource-template');
+export const exposePrompt = exposeOp('prompt');
+
+export async function handleSampling(ctx) {
+  if (typeof ctx.callAI !== 'function') {
+    throw Object.assign(new Error('host does not expose ctx.callAI for sampling routing'), { code: 'host_capability_missing' });
+  }
+  const req = ctx.inputs.request;
+  const result = await ctx.callAI({
+    messages: req.messages,
+    systemPrompt: req.systemPrompt,
+    maxTokens: req.maxTokens,
+    stopSequences: req.stopSequences,
+    modelPreferences: req.modelPreferences,
+  });
+  return { status: 'success', outputs: { result } };
+}
+
+export async function handleElicitation(ctx) {
+  if (typeof ctx.suspend !== 'function') {
+    throw Object.assign(new Error('host does not support suspend'), { code: 'HOST_CAPABILITY_MISSING' });
+  }
+  const req = ctx.inputs.request;
+  const result = await ctx.suspend({
+    kind: 'clarification',
+    profile: 'openwop-mcp-elicitation',
+    prompt: req.message,
+    formSchema: req.requestedSchema,
+  });
+  return {
+    status: 'success',
+    outputs: {
+      action: result.action ?? 'accept',
+      content: result.payload ?? {},
+    },
+  };
+}
+
+export async function provideRoots(ctx) {
+  // Declarative — emits the list. Host's MCP server reads ctx.config.roots when responding to roots/list.
+  return {
+    status: 'success',
+    outputs: {
+      roots: (ctx.config.roots || []).map((r) => ({ uri: r.uri, name: r.name ?? null })),
+      count: (ctx.config.roots || []).length,
+    },
+  };
+}
+
 /* ─── Pack registry ────────────────────────────────────────── */
 
 export const nodes = {
@@ -157,6 +301,23 @@ export const nodes = {
   'core.openwop.mcp.invoke-tool': invokeTool,
   'core.openwop.mcp.read-resource': readResource,
   'core.openwop.mcp.server-status': serverStatus,
+  'core.openwop.mcp.list-resources': listResources,
+  'core.openwop.mcp.list-resource-templates': listResourceTemplates,
+  'core.openwop.mcp.subscribe-resource': subscribeResource,
+  'core.openwop.mcp.list-prompts': listPrompts,
+  'core.openwop.mcp.get-prompt': getPrompt,
+  'core.openwop.mcp.completion': completion,
+  'core.openwop.mcp.set-log-level': setLogLevel,
+  'core.openwop.mcp.log-listener': logListener,
+  'core.openwop.mcp.ping': ping,
+  'core.openwop.mcp.server-trigger': serverTrigger,
+  'core.openwop.mcp.expose-tool': exposeTool,
+  'core.openwop.mcp.expose-resource': exposeResource,
+  'core.openwop.mcp.expose-resource-template': exposeResourceTemplate,
+  'core.openwop.mcp.expose-prompt': exposePrompt,
+  'core.openwop.mcp.handle-sampling': handleSampling,
+  'core.openwop.mcp.handle-elicitation': handleElicitation,
+  'core.openwop.mcp.provide-roots': provideRoots,
 };
 
 export default nodes;

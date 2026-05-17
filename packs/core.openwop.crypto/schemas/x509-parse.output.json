@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.crypto/1.0.0/x509-parse.output.json",
+  "title": "X509ParseOutput",
+  "type": "object",
+  "required": [
+    "subject",
+    "issuer",
+    "fingerprint256",
+    "validFrom",
+    "validTo",
+    "serialNumber"
+  ],
+  "properties": {
+    "subject": {
+      "type": "string"
+    },
+    "issuer": {
+      "type": "string"
+    },
+    "san": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "fingerprint256": {
+      "type": "string"
+    },
+    "validFrom": {
+      "type": "string"
+    },
+    "validTo": {
+      "type": "string"
+    },
+    "serialNumber": {
+      "type": "string"
+    },
+    "ca": {
+      "type": "boolean"
+    },
+    "keyUsage": {}
+  },
+  "additionalProperties": false
+}

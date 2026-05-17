@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.triggers/1.1.0/form.output.json",
+  "title": "FormOutput",
+  "type": "object",
+  "required": [
+    "values"
+  ],
+  "properties": {
+    "values": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "submittedAt": {
+      "type": "string"
+    },
+    "submitterId": {
+      "type": "string"
+    },
+    "submitterEmail": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

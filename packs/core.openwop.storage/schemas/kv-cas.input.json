@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.storage/1.0.0/kv-cas.input.json",
+  "title": "KvCasInput",
+  "type": "object",
+  "required": [
+    "key",
+    "expect",
+    "set"
+  ],
+  "properties": {
+    "key": {
+      "type": "string"
+    },
+    "expect": {},
+    "set": {}
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.a2a/1.0.0/resubscribe.output.json",
+  "title": "ResubscribeOutput",
+  "type": "object",
+  "required": [
+    "terminal",
+    "events"
+  ],
+  "properties": {
+    "terminal": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "contextId": {
+          "type": "string"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "history": {
+          "type": "array"
+        },
+        "artifacts": {
+          "type": "array"
+        }
+      }
+    },
+    "events": {
+      "type": "array"
+    }
+  },
+  "additionalProperties": false
+}

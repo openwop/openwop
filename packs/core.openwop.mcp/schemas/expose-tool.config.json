@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.mcp/1.1.0/expose-tool.config.json",
+  "title": "McpExposeToolConfig",
+  "type": "object",
+  "required": [
+    "name"
+  ],
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Flat JSON Schema constrained to primitive/enum properties."
+    }
+  },
+  "additionalProperties": false
+}

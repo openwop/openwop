@@ -262,6 +262,77 @@ export async function toolCalling(ctx) {
   };
 }
 
+/* ─── v1.1 multi-modal + LLM helpers ───────────────────────── */
+
+function delegateProvider(method) {
+  return async function (ctx) {
+    const fn = ctx[method] ?? ctx.aiProviders?.[method];
+    if (typeof fn !== 'function') {
+      throw Object.assign(new Error(`host does not implement ${method}`), { code: 'HOST_CAPABILITY_MISSING' });
+    }
+    const result = await fn.call(ctx, { ...ctx.config, ...ctx.inputs });
+    return { status: 'success', outputs: result };
+  };
+}
+
+export const imageGenerate = delegateProvider('callImageGenerator');
+export const imageEdit = async (ctx) => {
+  const fn = ctx.callImageEditor ?? ctx.aiProviders?.callImageEditor;
+  if (typeof fn !== 'function') throw Object.assign(new Error('host does not implement callImageEditor'), { code: 'HOST_CAPABILITY_MISSING' });
+  const r = await fn.call(ctx, { ...ctx.config, ...ctx.inputs });
+  return { status: 'success', outputs: r };
+};
+export const imageUpscale = delegateProvider('callImageUpscaler');
+export const audioTranscribe = delegateProvider('callSpeechToText');
+export const audioSynthesize = delegateProvider('callTextToSpeech');
+export const videoGenerate = delegateProvider('callVideoGenerator');
+export const rerank = delegateProvider('callReranker');
+
+export async function classify(ctx) {
+  if (typeof ctx.callAI !== 'function') throw Object.assign(new Error('host does not implement ctx.callAI'), { code: 'HOST_CAPABILITY_MISSING' });
+  const labels = ctx.config.labels;
+  const r = await ctx.callAI({
+    systemPrompt: 'You are a single-label classifier. Reply with exactly one label from the provided list and nothing else.',
+    messages: [{ role: 'user', content: `Labels: ${labels.join(', ')}\n\nText:\n${ctx.inputs.text}` }],
+    model: ctx.config.model,
+  });
+  const label = (r.text ?? r.content ?? '').trim();
+  return { status: 'success', outputs: { label: labels.includes(label) ? label : labels[0], confidence: labels.includes(label) ? 0.8 : 0.2, allScores: [] } };
+}
+
+export async function extract(ctx) {
+  if (typeof ctx.callAI !== 'function') throw Object.assign(new Error('host does not implement ctx.callAI'), { code: 'HOST_CAPABILITY_MISSING' });
+  const r = await ctx.callAI({
+    systemPrompt: 'Extract structured data per the provided JSON Schema. Reply with JSON only.',
+    messages: [{ role: 'user', content: `Schema:\n${JSON.stringify(ctx.config.schema)}\n\nText:\n${ctx.inputs.text}` }],
+    responseSchema: ctx.config.schema,
+    model: ctx.config.model,
+  });
+  return { status: 'success', outputs: { value: r.data ?? r.parsed ?? JSON.parse(r.text ?? r.content ?? 'null'), confidence: 1 } };
+}
+
+export async function guardrails(ctx) {
+  if (typeof ctx.guardrails?.evaluate === 'function') {
+    const r = await ctx.guardrails.evaluate({ text: ctx.inputs.text, checks: ctx.config.checks });
+    return { status: 'success', outputs: r };
+  }
+  // No-op fallback: pass everything through.
+  return { status: 'success', outputs: { passed: true, violations: [] } };
+}
+
+export async function transform(ctx) {
+  if (typeof ctx.callAI !== 'function') throw Object.assign(new Error('host does not implement ctx.callAI'), { code: 'HOST_CAPABILITY_MISSING' });
+  const exShown = (ctx.config.examples ?? []).map((e) => `Input: ${JSON.stringify(e.input)}\nOutput: ${JSON.stringify(e.output)}`).join('\n\n');
+  const r = await ctx.callAI({
+    systemPrompt: 'Transform the input per the instruction. Reply with the transformed JSON value only.',
+    messages: [{ role: 'user', content: `Instruction: ${ctx.inputs.instruction}\n\n${exShown}\n\nInput: ${JSON.stringify(ctx.inputs.value)}\nOutput:` }],
+    model: ctx.config.model,
+  });
+  let result;
+  try { result = JSON.parse(r.text ?? r.content ?? 'null'); } catch { result = r.text ?? r.content; }
+  return { status: 'success', outputs: { result } };
+}
+
 /* ─── Pack registry ─────────────────────────────────────────── */
 
 export const nodes = {
@@ -269,6 +340,18 @@ export const nodes = {
   'core.ai.structuredOutput': structuredOutput,
   'core.ai.toolCalling': toolCalling,
   'core.openwop.ai.embeddings': embeddings,
+  // v1.1
+  'core.openwop.ai.image-generate': imageGenerate,
+  'core.openwop.ai.image-edit': imageEdit,
+  'core.openwop.ai.image-upscale': imageUpscale,
+  'core.openwop.ai.audio-transcribe': audioTranscribe,
+  'core.openwop.ai.audio-synthesize': audioSynthesize,
+  'core.openwop.ai.video-generate': videoGenerate,
+  'core.openwop.ai.rerank': rerank,
+  'core.openwop.ai.classify': classify,
+  'core.openwop.ai.extract': extract,
+  'core.openwop.ai.guardrails': guardrails,
+  'core.openwop.ai.transform': transform,
 };
 
 export default nodes;

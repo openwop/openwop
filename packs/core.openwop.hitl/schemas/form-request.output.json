@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.hitl/1.0.0/form-request.output.json",
+  "title": "FormRequestOutput",
+  "type": "object",
+  "required": [
+    "action"
+  ],
+  "properties": {
+    "action": {
+      "type": "string",
+      "enum": [
+        "accept",
+        "decline",
+        "cancel"
+      ]
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "respondedBy": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "respondedAt": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

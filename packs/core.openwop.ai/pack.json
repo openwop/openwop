@@ -1,12 +1,19 @@
 {
   "name": "core.openwop.ai",
-  "version": "1.0.0",
-  "description": "Spec-canonical AI-call pack. Three foundational nodes (chat-completion, structured-output, embeddings) that route through the host's BYOK aiProviders surface — the pack itself makes no HTTP calls. peerDependencies on `aiProviders.supported`. Side-effectful (declared) so the engine's Layer-2 invocation log caches responses keyed on (runId, nodeId, request-hash) for replay safety.",
+  "version": "1.1.0",
+  "description": "Spec-canonical AI-call pack. v1.0 (chatCompletion, structuredOutput, toolCalling, embeddings) plus v1.1 multi-modal + LLM helpers — image generate/edit/upscale, audio transcribe/synthesize, video generate, rerank, classify, extract, guardrails, transform. Routes through host BYOK aiProviders.",
   "author": "OpenWOP Working Group",
   "license": "Apache-2.0",
   "homepage": "https://openwop.dev/packs/core.openwop.ai",
   "repository": "https://github.com/openwop/openwop",
-  "keywords": ["core", "ai", "llm", "chat", "embeddings", "byok"],
+  "keywords": [
+    "core",
+    "ai",
+    "llm",
+    "chat",
+    "embeddings",
+    "byok"
+  ],
   "engines": {
     "openwop": ">=1.0.0 <2.0.0"
   },
@@ -21,7 +28,10 @@
       "description": "Free-form LLM chat. Returns the model's text response + token usage. Side-effectful + cacheable — replays return the cached node.completed payload via the host's Layer-2 invocation log keyed on (runId, nodeId, request-hash).",
       "category": "data",
       "role": "side-effect",
-      "capabilities": ["cacheable", "side-effectful"],
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
       "configSchemaRef": "schemas/chat-completion.config.json",
       "inputSchemaRef": "schemas/chat-completion.input.json",
       "outputSchemaRef": "schemas/chat-completion.output.json"
@@ -33,7 +43,10 @@
       "description": "LLM call constrained to produce JSON matching a caller-supplied JSON Schema. Implementation routes through the host's provider-specific structured-output mechanism (tool-calling for Anthropic, JSON mode for OpenAI, response_schema for Gemini). Output is the parsed JSON, validated against the schema.",
       "category": "data",
       "role": "side-effect",
-      "capabilities": ["cacheable", "side-effectful"],
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
       "configSchemaRef": "schemas/structured-output.config.json",
       "inputSchemaRef": "schemas/structured-output.input.json",
       "outputSchemaRef": "schemas/structured-output.output.json"
@@ -45,7 +58,10 @@
       "description": "LLM call with declared tools — model may emit tool_call entries the workflow handles in downstream nodes. Requires the host to advertise `aiProviders.toolCalling` (ctx.callAIWithTools); refuses to register otherwise.",
       "category": "data",
       "role": "side-effect",
-      "capabilities": ["cacheable", "side-effectful"],
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
       "configSchemaRef": "schemas/tool-calling.config.json",
       "inputSchemaRef": "schemas/tool-calling.input.json",
       "outputSchemaRef": "schemas/tool-calling.output.json"
@@ -57,10 +73,178 @@
       "description": "Generates a vector embedding for the input text. Returns the embedding + the dimensionality + the model used. Routes through the host's embeddings provider.",
       "category": "data",
       "role": "side-effect",
-      "capabilities": ["cacheable", "side-effectful"],
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
       "configSchemaRef": "schemas/embeddings.config.json",
       "inputSchemaRef": "schemas/embeddings.input.json",
       "outputSchemaRef": "schemas/embeddings.output.json"
+    },
+    {
+      "typeId": "core.openwop.ai.image-generate",
+      "version": "1.0.0",
+      "label": "AI Image Generate",
+      "description": "Image generation via host.aiProviders.imageGeneration (e.g., DALL·E / Imagen / SD).",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/image-generate.config.json",
+      "inputSchemaRef": "schemas/image-generate.input.json",
+      "outputSchemaRef": "schemas/image-generate.output.json"
+    },
+    {
+      "typeId": "core.openwop.ai.image-edit",
+      "version": "1.0.0",
+      "label": "AI Image Edit",
+      "description": "Inpaint / mask-based edit.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/image-edit.config.json",
+      "inputSchemaRef": "schemas/image-edit.input.json",
+      "outputSchemaRef": "schemas/image-edit.output.json"
+    },
+    {
+      "typeId": "core.openwop.ai.image-upscale",
+      "version": "1.0.0",
+      "label": "AI Image Upscale",
+      "description": "2x/4x upscale.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/image-upscale.config.json",
+      "inputSchemaRef": "schemas/image-upscale.input.json",
+      "outputSchemaRef": "schemas/image-upscale.output.json"
+    },
+    {
+      "typeId": "core.openwop.ai.audio-transcribe",
+      "version": "1.0.0",
+      "label": "AI Audio Transcribe",
+      "description": "STT via host.aiProviders. Returns text + segments.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/audio-transcribe.config.json",
+      "inputSchemaRef": "schemas/audio-transcribe.input.json",
+      "outputSchemaRef": "schemas/audio-transcribe.output.json"
+    },
+    {
+      "typeId": "core.openwop.ai.audio-synthesize",
+      "version": "1.0.0",
+      "label": "AI Audio Synthesize",
+      "description": "TTS via host.aiProviders.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/audio-synthesize.config.json",
+      "inputSchemaRef": "schemas/audio-synthesize.input.json",
+      "outputSchemaRef": "schemas/audio-synthesize.output.json"
+    },
+    {
+      "typeId": "core.openwop.ai.video-generate",
+      "version": "1.0.0",
+      "label": "AI Video Generate",
+      "description": "Video generation via host.aiProviders.videoGeneration.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/video-generate.config.json",
+      "inputSchemaRef": "schemas/video-generate.input.json",
+      "outputSchemaRef": "schemas/video-generate.output.json"
+    },
+    {
+      "typeId": "core.openwop.ai.rerank",
+      "version": "1.0.0",
+      "label": "AI Rerank",
+      "description": "Rerank candidate documents by query relevance.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/rerank.config.json",
+      "inputSchemaRef": "schemas/rerank.input.json",
+      "outputSchemaRef": "schemas/rerank.output.json"
+    },
+    {
+      "typeId": "core.openwop.ai.classify",
+      "version": "1.0.0",
+      "label": "AI Classify",
+      "description": "Single-label classifier via LLM. Returns top label + confidence.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/classify.config.json",
+      "inputSchemaRef": "schemas/classify.input.json",
+      "outputSchemaRef": "schemas/classify.output.json"
+    },
+    {
+      "typeId": "core.openwop.ai.extract",
+      "version": "1.0.0",
+      "label": "AI Extract",
+      "description": "Schema-driven information extraction.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/extract.config.json",
+      "inputSchemaRef": "schemas/extract.input.json",
+      "outputSchemaRef": "schemas/extract.output.json"
+    },
+    {
+      "typeId": "core.openwop.ai.guardrails",
+      "version": "1.0.0",
+      "label": "AI Guardrails",
+      "description": "PII / toxicity / topic filter. Pure-ish (uses optional ctx.guardrails or returns pass-through).",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/guardrails.config.json",
+      "inputSchemaRef": "schemas/guardrails.input.json",
+      "outputSchemaRef": "schemas/guardrails.output.json"
+    },
+    {
+      "typeId": "core.openwop.ai.transform",
+      "version": "1.0.0",
+      "label": "AI Transform",
+      "description": "LLM-backed field transformer with examples.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/transform.config.json",
+      "inputSchemaRef": "schemas/transform.input.json",
+      "outputSchemaRef": "schemas/transform.output.json"
     }
   ],
   "runtime": {

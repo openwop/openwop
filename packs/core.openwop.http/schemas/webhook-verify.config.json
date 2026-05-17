@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.http/1.1.0/webhook-verify.config.json",
+  "title": "WebhookVerifyConfig",
+  "type": "object",
+  "required": [
+    "family"
+  ],
+  "properties": {
+    "family": {
+      "type": "string",
+      "enum": [
+        "stripe",
+        "github",
+        "slack",
+        "raw-hmac"
+      ]
+    },
+    "algorithm": {
+      "type": "string",
+      "enum": [
+        "sha256",
+        "sha384",
+        "sha512"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

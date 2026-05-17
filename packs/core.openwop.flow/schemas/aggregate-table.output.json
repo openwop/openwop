@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.flow/1.0.0/aggregate-table.output.json",
+  "title": "AggregateTableOutput",
+  "type": "object",
+  "required": [
+    "columns",
+    "rows",
+    "rowCount"
+  ],
+  "properties": {
+    "columns": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "array"
+      }
+    },
+    "rowCount": {
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false
+}

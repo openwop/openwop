@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.storage/1.0.0/blob-get.output.json",
+  "title": "BlobGetOutput",
+  "type": "object",
+  "required": [
+    "found"
+  ],
+  "properties": {
+    "found": {
+      "type": "boolean"
+    },
+    "contentBase64": {
+      "type": "string"
+    },
+    "contentType": {
+      "type": "string"
+    },
+    "size": {
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false
+}

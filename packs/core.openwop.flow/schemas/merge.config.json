@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.flow/1.0.0/merge.config.json",
+  "title": "MergeConfig",
+  "type": "object",
+  "required": [
+    "mode"
+  ],
+  "properties": {
+    "mode": {
+      "type": "string",
+      "enum": [
+        "append",
+        "combine-by-key",
+        "combine-by-position",
+        "multiplex",
+        "choose-branch"
+      ]
+    },
+    "keyPath": {
+      "type": "string",
+      "description": "Required when mode is `combine-by-key`."
+    }
+  },
+  "additionalProperties": false
+}

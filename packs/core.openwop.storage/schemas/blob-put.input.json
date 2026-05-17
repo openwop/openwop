@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.storage/1.0.0/blob-put.input.json",
+  "title": "BlobPutInput",
+  "type": "object",
+  "required": [
+    "key",
+    "contentBase64"
+  ],
+  "properties": {
+    "key": {
+      "type": "string"
+    },
+    "contentBase64": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.files/1.0.0/pdf-extract-text.output.json",
+  "title": "PdfExtractTextOutput",
+  "type": "object",
+  "required": [
+    "text"
+  ],
+  "properties": {
+    "text": {
+      "type": "string"
+    },
+    "pages": {
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false
+}

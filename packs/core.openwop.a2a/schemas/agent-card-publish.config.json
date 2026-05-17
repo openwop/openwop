@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.a2a/1.1.0/agent-card-publish.config.json",
+  "title": "AgentCardPublishConfig",
+  "type": "object",
+  "properties": {
+    "card": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "signed": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "additionalProperties": false
+}
