@@ -1,6 +1,6 @@
 {
   "name": "core.openwop.flow",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Spec-canonical flow-control primitives. 25 nodes covering branching, merging, iteration, aggregation, batching, sorting, deduplication, repetition, suspension, sub-workflow invocation, and Make-style error handlers. Pure or suspending — no external I/O. Zero npm deps. Engine >=1.0.0 <2.0.0.",
   "author": "OpenWOP Working Group",
   "license": "Apache-2.0",
@@ -24,7 +24,7 @@
       "version": "1.0.0",
       "label": "If",
       "description": "Two-branch conditional. Evaluates a simple expression `{path, op, value}` against the input and routes to `then` or `else`. Ops: eq, neq, lt, lte, gt, gte, in, contains, starts-with, ends-with, regex, exists, not-exists, truthy, falsy.",
-      "category": "control",
+      "category": "flow",
       "role": "pure",
       "capabilities": [
         "cacheable"
@@ -38,7 +38,7 @@
       "version": "1.0.0",
       "label": "Switch",
       "description": "N-way value-table lookup. Maps an input value to one of N output labels via an exact-match table, with optional `default` label.",
-      "category": "control",
+      "category": "flow",
       "role": "pure",
       "capabilities": [
         "cacheable"
@@ -52,7 +52,7 @@
       "version": "1.0.0",
       "label": "Router",
       "description": "Fan-out to labelled branches, each with its own predicate. Evaluates routes top-to-bottom. First-match-wins or all-match modes. Optional default route.",
-      "category": "control",
+      "category": "flow",
       "role": "pure",
       "capabilities": [
         "cacheable"
@@ -66,7 +66,7 @@
       "version": "1.0.0",
       "label": "Filter",
       "description": "Predicate-based drop. Same predicate shape as `core.flow.if`. Items matching pass through; items failing are dropped (returns `passed: false`).",
-      "category": "control",
+      "category": "flow",
       "role": "pure",
       "capabilities": [
         "cacheable"
@@ -79,8 +79,8 @@
       "typeId": "core.flow.merge",
       "version": "1.0.0",
       "label": "Merge",
-      "description": "Combine N input arrays. Modes: `append` (concat in order), `combine-by-key` (join on a key path), `combine-by-position` (zip), `multiplex` (cartesian product), `choose-branch` (return first non-empty input).",
-      "category": "control",
+      "description": "Combine N input arrays. Modes: `append` (concat in order), `combine-by-key` (join on a key path), `combine-by-position` (zip), `multiplex` (cartesian product), `choose-branch` (return first non-empty input), `sql-query` (SQL JOIN — requires host.sql per RFC 0018).",
+      "category": "flow",
       "role": "pure",
       "capabilities": [
         "cacheable"
@@ -94,7 +94,7 @@
       "version": "1.0.0",
       "label": "Iterator",
       "description": "Decomposes an array into one output bundle per element. Downstream nodes run per element. Output includes `index` and `total` for cursor-aware downstream logic.",
-      "category": "control",
+      "category": "flow",
       "role": "pure",
       "capabilities": [
         "cacheable",
@@ -109,7 +109,7 @@
       "version": "1.0.0",
       "label": "Aggregate (Array)",
       "description": "Inverse of iterator: collapse N input bundles into one bundle whose payload is the array of values.",
-      "category": "control",
+      "category": "flow",
       "role": "pure",
       "capabilities": [
         "cacheable"
@@ -123,7 +123,7 @@
       "version": "1.0.0",
       "label": "Aggregate (Numeric)",
       "description": "Reduce a numeric field across an array. Operations: sum, count, avg, min, max. NaN-skipping. Empty input returns `null`.",
-      "category": "control",
+      "category": "flow",
       "role": "pure",
       "capabilities": [
         "cacheable"
@@ -137,7 +137,7 @@
       "version": "1.0.0",
       "label": "Aggregate (Text)",
       "description": "Concatenate a string field across an array with a separator. Optional per-element template substitution.",
-      "category": "control",
+      "category": "flow",
       "role": "pure",
       "capabilities": [
         "cacheable"
@@ -151,7 +151,7 @@
       "version": "1.0.0",
       "label": "Aggregate (Table)",
       "description": "Materialize bundles into a 2D table: ordered `columns[]` configuration + `rows[]` output. Useful upstream of CSV emit or BI sinks.",
-      "category": "control",
+      "category": "flow",
       "role": "pure",
       "capabilities": [
         "cacheable"
@@ -165,7 +165,7 @@
       "version": "1.0.0",
       "label": "Split In Batches",
       "description": "Chunk an array into batches of N. Returns the current batch + `done` flag + `remaining` count. Workflows loop on this node by feeding the `remaining` array back in.",
-      "category": "control",
+      "category": "flow",
       "role": "pure",
       "capabilities": [
         "cacheable"
@@ -179,7 +179,7 @@
       "version": "1.0.0",
       "label": "Sort",
       "description": "Sort an array by one or more key paths. Stable. Direction per-key. Numeric, string, or natural compare.",
-      "category": "control",
+      "category": "flow",
       "role": "pure",
       "capabilities": [
         "cacheable"
@@ -193,7 +193,7 @@
       "version": "1.0.0",
       "label": "Limit",
       "description": "Return the first N items of an array. Optional `offset` for skip-then-take. No-ops on shorter arrays.",
-      "category": "control",
+      "category": "flow",
       "role": "pure",
       "capabilities": [
         "cacheable"
@@ -207,7 +207,7 @@
       "version": "1.0.0",
       "label": "Distinct",
       "description": "Drop duplicates by key path (or full-element JSON canonicalization when path absent). Preserves first-occurrence order.",
-      "category": "control",
+      "category": "flow",
       "role": "pure",
       "capabilities": [
         "cacheable"
@@ -221,7 +221,7 @@
       "version": "1.0.0",
       "label": "Compare Datasets",
       "description": "Diff two arrays by primary-key path. Returns four arrays: `addedIn2`, `removedFrom1`, `changed` (with `before`/`after`), `unchanged`.",
-      "category": "control",
+      "category": "flow",
       "role": "pure",
       "capabilities": [
         "cacheable"
@@ -235,7 +235,7 @@
       "version": "1.0.0",
       "label": "Repeater",
       "description": "Generate N bundles with an incrementing counter `i` (start, step, count). Source-style node — emits without an input.",
-      "category": "control",
+      "category": "flow",
       "role": "pure",
       "capabilities": [
         "cacheable",
@@ -250,7 +250,7 @@
       "version": "1.0.0",
       "label": "No-op",
       "description": "Pass-through placeholder. Returns its input unchanged. Useful as a labelled join point in a graph.",
-      "category": "control",
+      "category": "flow",
       "role": "pure",
       "capabilities": [
         "cacheable"
@@ -264,7 +264,7 @@
       "version": "1.0.0",
       "label": "Stop And Error",
       "description": "Aborts the workflow with a structured error envelope (code + message + details). Side-effecting: terminates the run.",
-      "category": "control",
+      "category": "flow",
       "role": "side-effect",
       "capabilities": [
         "side-effectful"
@@ -278,7 +278,7 @@
       "version": "1.0.0",
       "label": "Wait",
       "description": "Suspend the run. Modes: `duration` (seconds, ≤86400), `until` (ISO-8601 timestamp), `webhook` (external HTTP callback signed per webhooks.md). Resumes via the existing interrupt mechanism (interrupt.md).",
-      "category": "control",
+      "category": "flow",
       "role": "side-effect",
       "capabilities": [
         "side-effectful",
@@ -293,7 +293,7 @@
       "version": "1.0.0",
       "label": "Invoke Sub-Workflow",
       "description": "Synchronously invoke another workflow. Delegates to reserved `core.subWorkflow` typeId per node-packs.md. Inputs forwarded; sub-workflow outputs returned. Failures propagate.",
-      "category": "control",
+      "category": "flow",
       "role": "side-effect",
       "capabilities": [
         "side-effectful",
@@ -308,7 +308,7 @@
       "version": "1.0.0",
       "label": "Error Handler — Resume",
       "description": "When attached to an upstream node's error route, substitute a fallback bundle and continue. Make.com semantics.",
-      "category": "control",
+      "category": "flow",
       "role": "side-effect",
       "capabilities": [
         "side-effectful"
@@ -322,7 +322,7 @@
       "version": "1.0.0",
       "label": "Error Handler — Ignore",
       "description": "Silently drop the failed bundle and continue. Make.com semantics.",
-      "category": "control",
+      "category": "flow",
       "role": "side-effect",
       "capabilities": [
         "side-effectful"
@@ -336,7 +336,7 @@
       "version": "1.0.0",
       "label": "Error Handler — Break",
       "description": "Stop the run and mark it incomplete so it can be reprocessed (retry semantics owned by the host). Make.com semantics.",
-      "category": "control",
+      "category": "flow",
       "role": "side-effect",
       "capabilities": [
         "side-effectful"
@@ -350,7 +350,7 @@
       "version": "1.0.0",
       "label": "Error Handler — Commit",
       "description": "Stop the run and commit transactional side effects upstream (DB writes, data-store mutations). Hosts without transactional adapters treat as Break.",
-      "category": "control",
+      "category": "flow",
       "role": "side-effect",
       "capabilities": [
         "side-effectful"
@@ -364,7 +364,7 @@
       "version": "1.0.0",
       "label": "Error Handler — Rollback",
       "description": "Stop the run and request rollback of transactional side effects upstream. Non-transactional side effects (sent emails, posted webhooks) cannot be undone.",
-      "category": "control",
+      "category": "flow",
       "role": "side-effect",
       "capabilities": [
         "side-effectful"
@@ -378,7 +378,7 @@
       "version": "1.0.0",
       "label": "Conditional (alias)",
       "description": "Reserved alias of core.flow.if (per node-packs.md §Reserved Core typeIds). Same runtime behavior; preserves the reserved name for spec compliance.",
-      "category": "control",
+      "category": "flow",
       "role": "pure",
       "capabilities": [
         "cacheable"
@@ -392,7 +392,7 @@
       "version": "1.0.0",
       "label": "Delay (alias)",
       "description": "Reserved alias of core.flow.wait. Same runtime behavior; preserves the reserved name for spec compliance.",
-      "category": "control",
+      "category": "flow",
       "role": "side-effect",
       "capabilities": [
         "side-effectful",
@@ -407,7 +407,7 @@
       "version": "1.0.0",
       "label": "Loop (alias)",
       "description": "Reserved alias of core.flow.iterator. Same runtime behavior; preserves the reserved name for spec compliance.",
-      "category": "control",
+      "category": "flow",
       "role": "pure",
       "capabilities": [
         "cacheable",
@@ -422,7 +422,7 @@
       "version": "1.0.0",
       "label": "Parallel (alias)",
       "description": "Reserved alias of core.flow.router (fan-out). Same runtime behavior; preserves the reserved name for spec compliance.",
-      "category": "control",
+      "category": "flow",
       "role": "pure",
       "capabilities": [
         "cacheable"

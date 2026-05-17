@@ -52,12 +52,24 @@ All 25 nodes are pure-or-suspending (no external I/O). Side-effects are limited 
 - `core.interrupt` — interrupt primitive owned by the engine per `spec/v1/interrupt.md`; HITL surfaces in `core.openwop.hitl`.
 - `core.subWorkflow` — engine-owned sub-workflow contract per `spec/v1/node-packs.md` §"`core.subWorkflow` contract". `core.flow.sub-workflow-invoke` is the workflow-author-facing wrapper.
 
+## Intentionally not in this pack
+
+Two flow-adjacent primitives from comparable workflow editors were considered and deliberately excluded from `core.openwop.flow`. They are not "forgotten" — they each need protocol surface that doesn't exist yet, and shipping them here would either lie about that or paper over it.
+
+| Primitive | Source | Why not here | Where it should land |
+|---|---|---|---|
+| **Execute Command** (shell) | n8n core | Needs a `host.shell` capability with a `shell-command-injection` SECURITY invariant + sandbox model. The `core.openwop.files.ssh-run` node already covers remote-host shell via SSH; local shell is the missing piece and requires its own RFC (host-side capability + invariant + threat-model entry under `SECURITY/threat-model-*.md`). | Future RFC + new capability + future `core.openwop.shell` pack. |
+| **Evaluation** (AI test harness) | n8n core (recent) | Pairs with the Evaluation Trigger to run assertion blocks against AI output. The semantic is closer to a test framework than a workflow primitive — it belongs alongside `agent.run` + the agents/RAG cluster, not core flow. | Future `core.openwop.eval` pack alongside `core.openwop.agents`. |
+
+If you reach for one of these and don't find it: that's the spec's "open spec gap" — file an RFC against the relevant capability surface rather than reaching into `core.openwop.flow` for it.
+
 ## Compatibility
 
 - Engine: `openwop >=1.0.0 <2.0.0`.
 - Side-effecting nodes (`flow.wait`, `flow.sub-workflow-invoke`) cooperate with the existing replay invocation log (`replay.md` §"Layer-2 invocation log") via the `cacheable` + `side-effectful` capability markers.
 - `flow.sub-workflow-invoke` requires the host to honor reserved `core.subWorkflow` typeId per `node-packs.md` §"`core.subWorkflow` contract".
 - Error-handler nodes are advisory: a host without transactional adapters MUST treat `commit`/`rollback` as `break`.
+- `flow.merge` mode `sql-query` requires the host to advertise `host.sql` per RFC 0018; absent that surface, the runtime throws `HOST_CAPABILITY_MISSING` at execution time (the workflow stays portable — only the run on a sql-less host fails).
 
 ## See also
 

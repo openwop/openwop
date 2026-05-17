@@ -1,6 +1,6 @@
 {
   "name": "core.openwop.data",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Spec-canonical data-utility pack. v1.0 baseline (string-case, string-split, array-filter, array-map, object-merge) plus v1.1 additions: string format/regex/encode, array sort/unique/flatten/chunk/zip/reduce, object pick/omit/rename/get-path/set-path, json parse/stringify/schema-validate, jsonpath query, csv parse/stringify, datetime suite, number format/round/clamp, uuid. Zero npm deps (Node 20+).",
   "author": "OpenWOP Working Group",
   "license": "Apache-2.0",
@@ -246,6 +246,20 @@
       "configSchemaRef": "schemas/array-reduce.config.json",
       "inputSchemaRef": "schemas/array-reduce.input.json",
       "outputSchemaRef": "schemas/array-reduce.output.json"
+    },
+    {
+      "typeId": "core.openwop.data.array-group-by",
+      "version": "1.0.0",
+      "label": "Array Group By",
+      "description": "Group an array by a key path, computing N aggregations per group in a single pass. Mirrors n8n Summarize. Ops: sum/count/avg/min/max/first/last/array.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/array-group-by.config.json",
+      "inputSchemaRef": "schemas/array-group-by.input.json",
+      "outputSchemaRef": "schemas/array-group-by.output.json"
     },
     {
       "typeId": "core.openwop.data.object-pick",

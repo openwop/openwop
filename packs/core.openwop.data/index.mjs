@@ -256,6 +256,111 @@ export async function arrayReduce(ctx) {
   return { status: 'success', outputs: { result: acc } };
 }
 
+/**
+ * Group an array by a key path, computing N aggregations per group in a single
+ * pass. Mirrors n8n's "Summarize" node. The key is canonicalized via
+ * JSON.stringify so structural keys (object / array) are usable; the literal
+ * key value is preserved in the output. Empty/missing key paths land under
+ * `key: null`.
+ *
+ * Configurable aggregations:
+ *   - sum / avg / min / max — numeric over `path` (NaN-skipping)
+ *   - count — count of group members; `path` ignored
+ *   - first / last — first or last value at `path` in input-order
+ *   - array — collect every value at `path` into an array (preserves dups)
+ */
+export async function arrayGroupBy(ctx) {
+  const keyPath = ctx.config.keyPath;
+  const aggs = ctx.config.aggregations ?? [];
+  const groups = new Map(); // canonicalKey → { key, count, items, sums:{}, mins:{}, maxs:{}, firsts:{}, lasts:{}, arrays:{} }
+
+  for (const item of ctx.inputs.array ?? []) {
+    const keyValue = keyPath ? resolvePath(item, keyPath) : null;
+    const canonicalKey = JSON.stringify(keyValue ?? null);
+    let bucket = groups.get(canonicalKey);
+    if (!bucket) {
+      bucket = {
+        key: keyValue ?? null,
+        count: 0,
+        sums: Object.create(null),
+        mins: Object.create(null),
+        maxs: Object.create(null),
+        nums: Object.create(null), // per-agg numeric-value count for avg
+        firsts: Object.create(null),
+        lasts: Object.create(null),
+        arrays: Object.create(null),
+      };
+      groups.set(canonicalKey, bucket);
+    }
+    bucket.count++;
+    for (const a of aggs) {
+      const v = a.path ? resolvePath(item, a.path) : undefined;
+      switch (a.op) {
+        case 'sum':
+        case 'avg': {
+          const n = Number(v);
+          if (Number.isFinite(n)) {
+            bucket.sums[a.outputKey] = (bucket.sums[a.outputKey] ?? 0) + n;
+            bucket.nums[a.outputKey] = (bucket.nums[a.outputKey] ?? 0) + 1;
+          }
+          break;
+        }
+        case 'min': {
+          const n = Number(v);
+          if (Number.isFinite(n)) {
+            bucket.mins[a.outputKey] = bucket.mins[a.outputKey] === undefined ? n : Math.min(bucket.mins[a.outputKey], n);
+          }
+          break;
+        }
+        case 'max': {
+          const n = Number(v);
+          if (Number.isFinite(n)) {
+            bucket.maxs[a.outputKey] = bucket.maxs[a.outputKey] === undefined ? n : Math.max(bucket.maxs[a.outputKey], n);
+          }
+          break;
+        }
+        case 'count':
+          // count handled by bucket.count; but a named count agg still lands as its own key.
+          bucket.sums[a.outputKey] = (bucket.sums[a.outputKey] ?? 0) + 1;
+          break;
+        case 'first':
+          if (!(a.outputKey in bucket.firsts)) bucket.firsts[a.outputKey] = v;
+          break;
+        case 'last':
+          bucket.lasts[a.outputKey] = v;
+          break;
+        case 'array':
+          if (!bucket.arrays[a.outputKey]) bucket.arrays[a.outputKey] = [];
+          bucket.arrays[a.outputKey].push(v);
+          break;
+        default:
+          throw Object.assign(new Error(`unknown groupBy op: ${a.op}`), { code: 'CONFIG_INVALID' });
+      }
+    }
+  }
+
+  const output = [];
+  for (const bucket of groups.values()) {
+    const row = { key: bucket.key, count: bucket.count };
+    for (const a of aggs) {
+      switch (a.op) {
+        case 'sum':
+        case 'count': row[a.outputKey] = bucket.sums[a.outputKey] ?? 0; break;
+        case 'avg':
+          row[a.outputKey] = bucket.nums[a.outputKey] ? bucket.sums[a.outputKey] / bucket.nums[a.outputKey] : null;
+          break;
+        case 'min': row[a.outputKey] = bucket.mins[a.outputKey] ?? null; break;
+        case 'max': row[a.outputKey] = bucket.maxs[a.outputKey] ?? null; break;
+        case 'first': row[a.outputKey] = bucket.firsts[a.outputKey] ?? null; break;
+        case 'last': row[a.outputKey] = bucket.lasts[a.outputKey] ?? null; break;
+        case 'array': row[a.outputKey] = bucket.arrays[a.outputKey] ?? []; break;
+      }
+    }
+    output.push(row);
+  }
+  return { status: 'success', outputs: { groups: output, groupCount: output.length } };
+}
+
 /* ─── v1.1 object utilities ─────────────────────────────────── */
 
 export async function objectPick(ctx) {
@@ -547,6 +652,7 @@ export const nodes = {
   'core.openwop.data.array-chunk': arrayChunk,
   'core.openwop.data.array-zip': arrayZip,
   'core.openwop.data.array-reduce': arrayReduce,
+  'core.openwop.data.array-group-by': arrayGroupBy,
   // v1.1 objects
   'core.openwop.data.object-pick': objectPick,
   'core.openwop.data.object-omit': objectOmit,

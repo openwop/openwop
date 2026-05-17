@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.flow/1.0.0/merge.config.json",
+  "$id": "https://packs.openwop.dev/core.openwop.flow/1.1.0/merge.config.json",
   "title": "MergeConfig",
   "type": "object",
   "required": [
@@ -14,13 +14,28 @@
         "combine-by-key",
         "combine-by-position",
         "multiplex",
-        "choose-branch"
+        "choose-branch",
+        "sql-query"
       ]
     },
     "keyPath": {
       "type": "string",
       "description": "Required when mode is `combine-by-key`."
+    },
+    "sql": {
+      "type": "string",
+      "description": "Required when mode is `sql-query`. SQL string executed via host.sql (RFC 0018). Each input array is exposed as a named rowset `input_0`, `input_1`, …. Workflows MUST stay parametric per the sql-parametric-only invariant."
     }
   },
+  "allOf": [
+    {
+      "if": { "properties": { "mode": { "const": "combine-by-key" } } },
+      "then": { "required": ["mode", "keyPath"] }
+    },
+    {
+      "if": { "properties": { "mode": { "const": "sql-query" } } },
+      "then": { "required": ["mode", "sql"] }
+    }
+  ],
   "additionalProperties": false
 }

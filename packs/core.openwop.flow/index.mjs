@@ -170,6 +170,29 @@ export async function mergeNode(ctx) {
     case 'choose-branch':
       merged = inputs.find((a) => Array.isArray(a) && a.length > 0) || [];
       break;
+    case 'sql-query': {
+      // SQL-JOIN-shape merge — delegates to ctx.db.sql.query when the host
+      // advertises host.sql (RFC 0018). The workflow stays portable; only
+      // runs on sql-less hosts fail (at execution time, not registration).
+      const sql = ctx.config.sql;
+      if (typeof sql !== 'string' || !sql.trim()) {
+        throw Object.assign(new Error('merge mode `sql-query` requires config.sql'), { code: 'CONFIG_INVALID' });
+      }
+      const fn = ctx.db?.sql?.query;
+      if (typeof fn !== 'function') {
+        throw Object.assign(
+          new Error('merge mode `sql-query` requires host.sql to be advertised'),
+          { code: 'HOST_CAPABILITY_MISSING' },
+        );
+      }
+      // Bind each input array as a named rowset `input_0`, `input_1`, etc.
+      // Host implementations create temp views over these names for the
+      // duration of the query.
+      const tables = Object.fromEntries(inputs.map((arr, i) => [`input_${i}`, arr]));
+      const result = await fn.call(ctx.db.sql, { sql, tables, params: [] });
+      merged = Array.isArray(result?.rows) ? result.rows : [];
+      break;
+    }
     default:
       throw Object.assign(new Error(`unknown merge mode: ${mode}`), { code: 'CONFIG_INVALID' });
   }
