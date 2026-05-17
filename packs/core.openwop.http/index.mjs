@@ -697,18 +697,54 @@ export async function circuitBreaker(ctx) {
   }
 }
 
+/**
+ * core.openwop.http.idempotency-key — deterministic Idempotency-Key generator.
+ *
+ * The whole point of an Idempotency-Key is retry-safety: the same logical
+ * request MUST produce the same key so the remote service can dedupe
+ * across retries. Both modes are deterministic.
+ *
+ * Modes:
+ *   - `composite` (default) — SHA-256 of (ctx.runId, ctx.nodeId, payload).
+ *     Matches the canonical formula used by `core.openwop.http.fetch`
+ *     when `idempotency.mode: auto` is in effect. `runId` / `nodeId` are
+ *     pulled from `ctx` first; `inputs.runId` / `inputs.nodeId` act as
+ *     overrides for hosts that don't surface them on ctx.
+ *   - `hash` — SHA-256 of the payload alone. Use when the key must be
+ *     stable across runs (e.g., a global remote-dedup cache).
+ *
+ * Output key format: `openwop-<sha256-prefix-16>` — ~64 bits of
+ * uniqueness, header-friendly length, matches `fetchNode`'s
+ * `deriveIdempotencyKey`.
+ *
+ * The previous `uuid` mode returned `randomUUID()` per call. That
+ * defeated retry-safety (every retry got a fresh key, so the remote
+ * service treated each attempt as a new request). Removed in 1.1.2 as a
+ * safety-fix per `COMPATIBILITY.md` §3.
+ */
 export async function idempotencyKey(ctx) {
-  const mode = ctx.config.mode || 'uuid';
-  if (mode === 'uuid') return { status: 'success', outputs: { key: randomUUID() } };
+  const mode = ctx.config?.mode || 'composite';
+  const inputs = ctx.inputs ?? {};
+  const payload = inputs.payload;
   if (mode === 'hash') {
-    const h = createHash('sha256').update(JSON.stringify(ctx.inputs.payload)).digest('hex');
-    return { status: 'success', outputs: { key: h } };
+    const h = createHash('sha256').update(JSON.stringify(payload ?? null), 'utf8').digest('hex');
+    return { status: 'success', outputs: { key: 'openwop-' + h.slice(0, 16) } };
   }
   if (mode === 'composite') {
-    const h = createHash('sha256').update(`${ctx.inputs.runId}:${ctx.inputs.nodeId}:${JSON.stringify(ctx.inputs.payload)}`).digest('hex');
-    return { status: 'success', outputs: { key: h } };
+    const runId = ctx.runId ?? inputs.runId ?? '';
+    const nodeId = ctx.nodeId ?? inputs.nodeId ?? '';
+    const h = createHash('sha256');
+    h.update(String(runId), 'utf8');
+    h.update('\0', 'utf8');
+    h.update(String(nodeId), 'utf8');
+    h.update('\0', 'utf8');
+    if (payload !== undefined && payload !== null) h.update(JSON.stringify(payload), 'utf8');
+    return { status: 'success', outputs: { key: 'openwop-' + h.digest('hex').slice(0, 16) } };
   }
-  throw Object.assign(new Error(`unknown mode: ${mode}`), { code: 'CONFIG_INVALID' });
+  throw Object.assign(
+    new Error(`unknown mode: ${mode}. Valid modes: composite (default), hash. The non-deterministic 'uuid' mode was removed in 1.1.2 as a safety-fix — it defeated retry-safety.`),
+    { code: 'CONFIG_INVALID' },
+  );
 }
 
 export async function webhookVerify(ctx) {
