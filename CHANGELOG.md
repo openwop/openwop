@@ -22,6 +22,24 @@ Closes a correctness/security bug in `core.openwop.http.idempotency-key`: the pr
 - **Publication:** source fix only in this commit. Tarball build + signing + registry publication follow the same flow as the P0.1 batch — gated on the steward running `scripts/build-pack-tarball.mjs` + `registry/scripts/verify-signatures.mjs`.
 - **No callers in-tree.** `grep` across `conformance/`, `examples/`, `apps/`, `packs/*/test/` finds zero references to `core.openwop.http.idempotency-key`. The fix's blast radius is whatever external workflows have adopted the node since 2026-05-13 publication of `1.1.0`.
 
+### RFC 0015-0019 behavioral conformance via opt-in test seam (2026-05-17, post-commit `8b3bf43`)
+
+Eight of the `it.todo()` behavioral assertions from the RFC 0014-0020 promotion batch upgraded to live behavioral via a new opt-in reference-host test seam.
+
+- **`apps/workflow-engine/backend/typescript/src/routes/testSeam.ts`** (NEW) — generic env-gated dispatch endpoint `POST /v1/host/sample/test/surface`. Body `{ tenantId, surface, op, args }` covers all 8 surfaces (kv/table/cache/blob/queueBus/sql/vector/fs). OFF by default; flip on with `OPENWOP_TEST_SEAM_ENABLED=true`. Boot warns `NEVER enable in production` to the logs. Sample-vendor-namespaced under `/v1/host/sample/test/*` per `spec/v1/host-extensions.md` §"Canonical prefixes" — NOT part of the openwop wire contract.
+- **Conformance promotions:** 8 scenarios upgraded from `it.todo()` placeholders to live behavioral assertions that POST to the seam with two distinct tenant IDs and assert isolation/atomicity. Hosts that don't expose the seam (HTTP 404) soft-skip the behavioral half and verify advertisement shape only.
+  - `kv-cross-tenant-isolation.test.ts` — set under tenant-A → get under tenant-B returns `found:false`; same-tenant round-trip verified.
+  - `kv-atomic-increment.test.ts` — 50 concurrent `+1` increments converge to exactly 50.
+  - `kv-cas.test.ts` — matching `expect` swaps; stale `expect` rejects with `swapped:false` and returns actual current value.
+  - `table-cross-tenant-isolation.test.ts` — insert under tenant-A → query under tenant-B returns 0 rows.
+  - `queue-cross-tenant-isolation.test.ts` — publish under tenant-A → consume under tenant-B returns `found:false`.
+  - `blob-cross-tenant-isolation.test.ts` — put under tenant-A → get under tenant-B returns `found:false`.
+  - `cache-cross-tenant-isolation.test.ts` — put under tenant-A → get under tenant-B returns `hit:false`.
+  - `sql-injection-rejection.test.ts` — parametric round-trip succeeds; the same query with an injection-shape input bound as a parameter returns 0 rows (proves the host's surface treats parameters as literal data, not SQL).
+- **`conformance/coverage.md`** — added 6 new rows to §"Capability-gated scenarios: shape vs behavior" with the dual-grade view + seam dependency note.
+- **`apps/workflow-engine/backend/typescript/src/host/inMemorySurfaces.ts`** — exported `SurfaceArgs` and `SurfaceFn` types so the test seam can type-dispatch without the banned `as unknown as` double-cast pattern. Dispatch is now a typed switch + single-cast string-keyed lookup.
+- **Compatibility classification:** additive. The seam is a sample-host extension; no openwop wire shape changes. The previously-stale CHANGELOG line about behavioral assertions remaining as `it.todo()` is superseded by this entry for the 8 listed scenarios. `mcp-server-*` behavioral scenarios remain `it.todo()` pending RFC 0020 reference-host implementation.
+
 ### All 7 capability RFCs (0014-0020) promoted Draft → Active (2026-05-17)
 
 The full batch from earlier this session moves from `Draft` to `Active` end-to-end. RFC 0014 lands with a full behavioral conformance scenario; RFCs 0015-0020 land with advertisement-shape scenarios + behavioral assertions parked as `it.todo()` placeholders until a reference host wires the test seam.

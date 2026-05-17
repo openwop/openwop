@@ -37,6 +37,7 @@
 
 import type { Express } from 'express';
 import { buildHostSurfaceBundle } from '../host/inMemorySurfaces.js';
+import type { HostSurfaceBundle, SurfaceArgs, SurfaceFn } from '../host/inMemorySurfaces.js';
 import { OpenwopError } from '../types.js';
 import { createLogger } from '../observability/logger.js';
 
@@ -49,7 +50,37 @@ interface SeamBody {
   args?: Record<string, unknown>;
 }
 
-const VALID_SURFACES = new Set(['kv', 'table', 'cache', 'blob', 'queueBus', 'sql', 'vector', 'fs']);
+const SURFACES = ['kv', 'table', 'cache', 'blob', 'queueBus', 'sql', 'vector', 'fs'] as const;
+type SurfaceName = (typeof SURFACES)[number];
+
+function isSurfaceName(s: string): s is SurfaceName {
+  return (SURFACES as readonly string[]).includes(s);
+}
+
+/** Map the requested surface name to its typed instance on the bundle.
+ *  Each branch returns the surface as an `object` so the caller can do a
+ *  string-keyed method lookup without double-casting through `unknown`. */
+function selectSurface(bundle: HostSurfaceBundle, name: SurfaceName): object {
+  switch (name) {
+    case 'kv': return bundle.storage.kv;
+    case 'table': return bundle.storage.table;
+    case 'cache': return bundle.storage.cache;
+    case 'blob': return bundle.storage.blob;
+    case 'queueBus': return bundle.queueBus;
+    case 'sql': return bundle.db.sql;
+    case 'vector': return bundle.db.vector;
+    case 'fs': return bundle.fs;
+  }
+}
+
+/** Resolve `op` against a surface using a single-cast string-keyed lookup.
+ *  Returns the typed `SurfaceFn` if `op` resolves to a function, else
+ *  undefined. The in-memory surface factories use closures over their
+ *  tenant scope (see `createKv` et al.), so no `this`-binding is needed. */
+function lookupMethod(surface: object, op: string): SurfaceFn | undefined {
+  const candidate = (surface as Record<string, unknown>)[op];
+  return typeof candidate === 'function' ? (candidate as SurfaceFn) : undefined;
+}
 
 export function registerTestSeamRoutes(app: Express): void {
   if (process.env.OPENWOP_TEST_SEAM_ENABLED !== 'true') {
@@ -64,10 +95,10 @@ export function registerTestSeamRoutes(app: Express): void {
       res.status(400).json({ error: 'invalid_argument', message: 'tenantId required' });
       return;
     }
-    if (typeof body.surface !== 'string' || !VALID_SURFACES.has(body.surface)) {
+    if (typeof body.surface !== 'string' || !isSurfaceName(body.surface)) {
       res.status(400).json({
         error: 'invalid_argument',
-        message: `surface must be one of {${[...VALID_SURFACES].join(', ')}}`,
+        message: `surface must be one of {${SURFACES.join(', ')}}`,
       });
       return;
     }
@@ -75,9 +106,9 @@ export function registerTestSeamRoutes(app: Express): void {
       res.status(400).json({ error: 'invalid_argument', message: 'op required' });
       return;
     }
-    const args = body.args && typeof body.args === 'object' ? body.args : {};
+    const args: SurfaceArgs = body.args && typeof body.args === 'object' ? body.args : {};
 
-    let bundle;
+    let bundle: HostSurfaceBundle;
     try {
       bundle = buildHostSurfaceBundle({ tenantId: body.tenantId });
     } catch (err) {
@@ -88,25 +119,9 @@ export function registerTestSeamRoutes(app: Express): void {
       return;
     }
 
-    type SurfaceMethod = (args: Record<string, unknown>) => Promise<unknown> | unknown;
-    const dispatch: Record<string, Record<string, SurfaceMethod>> = {
-      kv: bundle.storage.kv as unknown as Record<string, SurfaceMethod>,
-      table: bundle.storage.table as unknown as Record<string, SurfaceMethod>,
-      cache: bundle.storage.cache as unknown as Record<string, SurfaceMethod>,
-      blob: bundle.storage.blob as unknown as Record<string, SurfaceMethod>,
-      queueBus: bundle.queueBus as unknown as Record<string, SurfaceMethod>,
-      sql: bundle.db.sql as unknown as Record<string, SurfaceMethod>,
-      vector: bundle.db.vector as unknown as Record<string, SurfaceMethod>,
-      fs: bundle.fs as unknown as Record<string, SurfaceMethod>,
-    };
-
-    const surface = dispatch[body.surface];
-    if (!surface) {
-      res.status(503).json({ error: 'host_capability_missing', message: `surface ${body.surface} not wired` });
-      return;
-    }
-    const method = surface[body.op];
-    if (typeof method !== 'function') {
+    const surface = selectSurface(bundle, body.surface);
+    const method = lookupMethod(surface, body.op);
+    if (!method) {
       res.status(400).json({
         error: 'invalid_argument',
         message: `op '${body.op}' not implemented on surface '${body.surface}'`,

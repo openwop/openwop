@@ -62,10 +62,10 @@ export interface HostSurfaceBundle {
  *  `{ ...ctx.config, ...ctx.inputs }` onto the call, so the host sees
  *  one flat record with both. The host must know its own field names
  *  (matches the schemas under packs/<name>/schemas/). */
-type SurfaceArgs = Record<string, unknown>;
+export type SurfaceArgs = Record<string, unknown>;
 /** All surface methods are async + return a free-form result that the
  *  pack delegate forwards as `outputs`. */
-type SurfaceFn = (args: SurfaceArgs) => Promise<Record<string, unknown>>;
+export type SurfaceFn = (args: SurfaceArgs) => Promise<Record<string, unknown>>;
 
 export type KvSurface = {
   get: SurfaceFn;
