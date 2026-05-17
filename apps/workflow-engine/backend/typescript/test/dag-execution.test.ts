@@ -18,8 +18,8 @@
 import { describe, expect, it, beforeAll, beforeEach } from 'vitest';
 import { executeRun } from '../src/executor/executor.js';
 import { getNodeRegistry } from '../src/executor/nodeRegistry.js';
-import { getEventLog } from '../src/executor/eventLog.js';
-import { getSuspendManager } from '../src/executor/suspendManager.js';
+// eventLog backend is set via setEventLogBackend below; the executor reads
+// it through getEventLog() so no direct import here.
 import { openStorage } from '../src/storage/index.js';
 import { setEventLogBackend } from '../src/executor/eventLog.js';
 import { setSuspendBackend } from '../src/executor/suspendManager.js';
@@ -182,7 +182,9 @@ describe('DAG: suspend on one branch', () => {
     // bleed across runs.
   });
 
-  it('one branch suspends, other completes; run reaches waiting', async () => {
+  it('one branch suspends, other completes; run reaches waiting-approval', async () => {
+    // test.always-suspends emits kind=approval; finalize maps that to
+    // 'waiting-approval' (regression guard from code-review #1).
     const run = newRun('wf.suspend-branch');
     const def: WorkflowDefinition = {
       workflowId: 'wf.suspend-branch',
@@ -197,11 +199,39 @@ describe('DAG: suspend on one branch', () => {
       ],
     };
     const result = await executeRun(storage, run, def);
-    expect(result.status).toBe('waiting-input');
+    expect(result.status).toBe('waiting-approval');
     expect(result.pausedNodeIds).toContain('slow');
     const events = storage.listEvents(run.runId);
     expect(events.some((e) => e.type === 'node.completed' && e.nodeId === 'fast')).toBe(true);
     expect(events.some((e) => e.type === 'node.suspended' && e.nodeId === 'slow')).toBe(true);
+  });
+});
+
+describe('DAG: edge condition predicate (end-to-end)', () => {
+  it('condition path/op/value filters edge contribution', async () => {
+    // a emits { output: 5 }; edge a→pass fires only if output > 0 — not
+    // expressible with our predicate vocabulary (`gt` isn't in the set), so
+    // test the documented set: `truthy` op against the output value.
+    const run = newRun('wf.edge-condition');
+    const def: WorkflowDefinition = {
+      workflowId: 'wf.edge-condition',
+      nodes: [
+        { nodeId: 'a', typeId: 'test.passthrough' },
+        { nodeId: 'pass', typeId: 'test.passthrough' },
+      ],
+      edges: [
+        {
+          edgeId: 'e1',
+          sourceNodeId: 'a',
+          targetNodeId: 'pass',
+          condition: { path: 'output', op: 'truthy' },
+        },
+      ],
+    };
+    const result = await executeRun(storage, run, def);
+    expect(result.status).toBe('completed');
+    const events = storage.listEvents(run.runId);
+    expect(events.some((e) => e.type === 'node.completed' && e.nodeId === 'pass')).toBe(true);
   });
 });
 

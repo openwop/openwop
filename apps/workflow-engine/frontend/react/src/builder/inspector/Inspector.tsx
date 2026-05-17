@@ -204,6 +204,11 @@ function EdgeInspector({ edge }: { edge: BuilderEdge }) {
         <div className="muted builder-inspector-help">
           {TRIGGER_RULE_OPTIONS.find((o) => o.value === rule)?.help}
         </div>
+        <div className="muted builder-inspector-help" style={{ marginTop: 4 }}>
+          Applies to target <code>{edge.target}</code>. When multiple edges target
+          the same node, all should declare the same rule (the scheduler picks
+          the rule from the lexicographically-first edge id if they diverge).
+        </div>
       </div>
 
       <div className="builder-inspector-divider" />
@@ -261,6 +266,12 @@ function EdgeInspector({ edge }: { edge: BuilderEdge }) {
                   updateEdge(edge.id, { condition: { ...cond, value: parsed } });
                 }}
               />
+              <div className="muted builder-inspector-help">
+                Plain text stays a string. Values that parse as JSON
+                (<code>5</code>, <code>true</code>, <code>null</code>,
+                <code>{`["a","b"]`}</code>) are stored as the parsed value.
+                Partial JSON (<code>{`{"x": 1`}</code>) silently stays a string.
+              </div>
             </div>
           ) : null}
         </>

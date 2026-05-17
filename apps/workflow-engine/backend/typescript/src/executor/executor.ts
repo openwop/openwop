@@ -20,8 +20,12 @@
  *   - The scheduler re-enters and drains until the next terminal.
  *
  * Replay determinism: the Layer-2 invocation log (per spec/v1/replay.md)
- * already keys outputs on (runId, nodeId, request-hash), so cached
- * results return regardless of scheduler order.
+ * keys outputs on (runId, nodeId, request-hash), so re-execution is
+ * idempotent regardless of scheduler order. The canonical post-hoc
+ * ordering is `event.sequence` — the executor's single-process event-log
+ * writer serializes appends so concurrent completions get monotonic
+ * sequence numbers. Multi-process hosts (e.g., Postgres) achieve the
+ * same property via a storage-layer monotonic sequence.
  *
  * @see scheduler.ts for the trigger-rule + condition evaluation.
  */
@@ -385,24 +389,74 @@ export async function executeRun(
 
   const maxConcurrency = maxConcurrentNodes();
   const nodeById = new Map(definition.nodes.map((n) => [n.nodeId, n]));
-  const inflight = new Set<string>();
+  /** In-flight node tasks. Set lets us race them with Promise.race when
+   *  no new ready nodes are available — replaces the 5ms busy-wait poll
+   *  used in earlier revisions. */
+  const inflight = new Set<Promise<void>>();
+  /** Per-node interrupt kind, captured at suspension time so finalizeRun
+   *  can map kind → waiting-* status (approval → 'waiting-approval',
+   *  cancellation → 'paused', else 'waiting-input'). */
+  const suspendedKinds = new Map<string, string>();
+
+  function launch(nodeId: string): void {
+    const nodeRef = nodeById.get(nodeId);
+    const task = (async () => {
+      if (!nodeRef) {
+        markFailed(nodeId, { code: 'internal_error', message: `node ${nodeId} not in definition` }, snapshot);
+        return;
+      }
+      const inputsByPort = buildNodeInputs(nodeId, graph, snapshot, run.inputs);
+      const out = await runOneNode({
+        storage,
+        run,
+        nodeRef,
+        inputsByPort,
+        ...(options.policyResolver ? { policyResolver: options.policyResolver } : {}),
+      });
+      if (out.kind === 'success') {
+        markCompleted(nodeId, out.outputs, snapshot);
+        releaseDownstream(nodeId, graph, snapshot);
+      } else if (out.kind === 'failure') {
+        markFailed(nodeId, out.error, snapshot);
+        releaseDownstream(nodeId, graph, snapshot);
+      } else {
+        const interrupt = suspend.createInterrupt({
+          runId: run.runId,
+          nodeId,
+          kind: out.interrupt.kind,
+          data: out.interrupt.data,
+          resumeSchema: out.interrupt.resumeSchema,
+        });
+        eventLog.append({
+          runId: run.runId,
+          nodeId,
+          type: 'node.suspended',
+          payload: { interruptId: interrupt.interruptId, kind: interrupt.kind },
+        });
+        suspendedKinds.set(nodeId, out.interrupt.kind);
+        markSuspended(nodeId, snapshot);
+      }
+    })();
+    // Self-remove on settle so Promise.race doesn't see completed tasks.
+    const wrapped = task.finally(() => { inflight.delete(wrapped); });
+    inflight.add(wrapped);
+  }
 
   /**
    * Drain ready queue with bounded concurrency. Returns when no more nodes
    * can run without external input.
    */
   while (true) {
-    // Pop up to (maxConcurrency - inflight.size) ready nodes.
     const slots = Math.max(0, maxConcurrency - inflight.size);
     const batch = slots > 0 ? popReady(slots, snapshot) : [];
 
     if (batch.length === 0 && inflight.size === 0) {
-      // No ready nodes and nothing running — check disposition.
       const disp = inspectDisposition(snapshot, graph, 0);
       if (disp.done) {
-        return finalizeRun({ storage, run, snapshot, graph, definition, disposition: disp });
+        return finalizeRun({
+          storage, run, snapshot, graph, definition, disposition: disp, suspendedKinds,
+        });
       }
-      // Should not reach here if the snapshot is sound; bail with internal error.
       emitTerminalFailure({
         storage,
         runId: run.runId,
@@ -412,63 +466,15 @@ export async function executeRun(
     }
 
     if (batch.length === 0) {
-      // Nothing newly ready but in-flight nodes are still running. Race them.
-      // (We model this as Promise.race on the inflight set tracked below.)
-      await new Promise<void>((resolve) => {
-        const tick = () => {
-          if (inflight.size === 0) resolve();
-          else setTimeout(tick, 5);
-        };
-        tick();
-      });
+      // No newly-ready nodes; wait for one in-flight node to settle so we
+      // can re-evaluate readiness. Promise.race resolves as soon as any
+      // pending task settles (Note: .finally already removed it from the
+      // set by the time we re-enter the loop).
+      await Promise.race(inflight);
       continue;
     }
 
-    // Launch all batch nodes concurrently.
-    await Promise.all(
-      batch.map(async (nodeId) => {
-        inflight.add(nodeId);
-        const nodeRef = nodeById.get(nodeId);
-        if (!nodeRef) {
-          markFailed(nodeId, { code: 'internal_error', message: `node ${nodeId} not in definition` }, snapshot);
-          inflight.delete(nodeId);
-          return;
-        }
-        const inputsByPort = buildNodeInputs(nodeId, graph, snapshot, run.inputs);
-        const out = await runOneNode({
-          storage,
-          run,
-          nodeRef,
-          inputsByPort,
-          ...(options.policyResolver ? { policyResolver: options.policyResolver } : {}),
-        });
-        if (out.kind === 'success') {
-          markCompleted(nodeId, out.outputs, snapshot);
-          releaseDownstream(nodeId, graph, snapshot);
-        } else if (out.kind === 'failure') {
-          markFailed(nodeId, out.error, snapshot);
-          // Downstream may activate via any_failed / all_complete rules.
-          releaseDownstream(nodeId, graph, snapshot);
-        } else {
-          // Suspended — create durable interrupt + record state.
-          const interrupt = suspend.createInterrupt({
-            runId: run.runId,
-            nodeId,
-            kind: out.interrupt.kind,
-            data: out.interrupt.data,
-            resumeSchema: out.interrupt.resumeSchema,
-          });
-          eventLog.append({
-            runId: run.runId,
-            nodeId,
-            type: 'node.suspended',
-            payload: { interruptId: interrupt.interruptId, kind: interrupt.kind },
-          });
-          markSuspended(nodeId, snapshot);
-        }
-        inflight.delete(nodeId);
-      }),
-    );
+    for (const nodeId of batch) launch(nodeId);
   }
 }
 
@@ -479,8 +485,9 @@ function finalizeRun(input: {
   graph: SchedulerGraph;
   definition: WorkflowDefinition;
   disposition: ReturnType<typeof inspectDisposition>;
+  suspendedKinds: Map<string, string>;
 }): ExecuteRunResult {
-  const { storage, run, snapshot, definition, disposition } = input;
+  const { storage, run, snapshot, definition, disposition, suspendedKinds } = input;
   const eventLog = getEventLog();
   if (disposition.status === 'completed') {
     // Aggregate the outputs of every node with no outgoing edges (terminal
@@ -521,10 +528,10 @@ function finalizeRun(input: {
     .filter(([, s]) => s === 'suspended')
     .map(([id]) => id);
   const firstSuspended = disposition.suspendedNodeId ?? suspendedIds[0]!;
-  const interruptKind = inferWaitingKind(firstSuspended, run);
+  const interruptKind = inferWaitingKind(firstSuspended, suspendedKinds);
   storage.updateRun(run.runId, { status: interruptKind, currentNodeId: firstSuspended });
   // Persist scheduler snapshot for resume.
-  persistSnapshot(storage, run.runId, snapshot);
+  persistSnapshot(storage, run.runId, snapshot, suspendedKinds);
   // Back-compat: also surface pausedAtIndex for legacy callers when the
   // workflow is purely linear and exactly one node is suspended.
   const linearShape = (input.definition.edges ?? []).every((e) => e.edgeId.startsWith('implicit_'));
@@ -539,10 +546,13 @@ function finalizeRun(input: {
   };
 }
 
-function inferWaitingKind(_nodeId: string, _run: RunRecord): RunRecord['status'] {
-  // Inspecting interrupt kind requires a lookup against suspendManager;
-  // for the sample we keep a single 'waiting-input' default. The
-  // suspendManager tracks the precise kind for resume routing.
+function inferWaitingKind(
+  nodeId: string,
+  suspendedKinds: Map<string, string>,
+): RunRecord['status'] {
+  const kind = suspendedKinds.get(nodeId);
+  if (kind === 'approval') return 'waiting-approval';
+  if (kind === 'cancellation') return 'paused';
   return 'waiting-input';
 }
 
@@ -554,17 +564,32 @@ function unwrapSingleOutput(outputs?: Record<string, unknown>): unknown {
 
 /* ─── Snapshot persistence (for resume) ─────────────────────── */
 
+/** Persisted scheduler snapshot. The version tag lets a future schema
+ *  change (e.g., adding per-node attempt counters) refuse incompatible
+ *  resume rather than silently producing wrong state. Sample is in-memory
+ *  so this only matters across in-process re-init, but the discipline
+ *  prevents the bug class from leaking into the host storage shape. */
 export interface SerializedSnapshot {
+  schemaVersion: 1;
   nodeState: Array<[string, string]>;
   nodeOutputs: Array<[string, Record<string, unknown>]>;
   nodeErrors: Array<[string, { code: string; message: string }]>;
+  /** Per-node interrupt kind, mirrored from `suspendedKinds`. */
+  suspendedKinds?: Array<[string, string]>;
 }
 
-function persistSnapshot(storage: Storage, runId: string, snapshot: SchedulerSnapshot): void {
+function persistSnapshot(
+  storage: Storage,
+  runId: string,
+  snapshot: SchedulerSnapshot,
+  suspendedKinds: Map<string, string>,
+): void {
   const ser: SerializedSnapshot = {
+    schemaVersion: 1,
     nodeState: [...snapshot.nodeState.entries()].map(([k, v]) => [k, v]),
     nodeOutputs: [...snapshot.nodeOutputs.entries()],
     nodeErrors: [...snapshot.nodeErrors.entries()],
+    suspendedKinds: [...suspendedKinds.entries()],
   };
   storage.updateRun(runId, { schedulerSnapshot: JSON.stringify(ser) as never });
 }
@@ -573,6 +598,12 @@ function hydrateSnapshot(
   definition: WorkflowDefinition,
   ser: SerializedSnapshot,
 ): SchedulerSnapshot {
+  if (ser.schemaVersion !== 1) {
+    throw Object.assign(
+      new Error(`unsupported scheduler snapshot version: ${(ser as { schemaVersion: number }).schemaVersion}`),
+      { code: 'unsupported_snapshot_version' },
+    );
+  }
   const fresh = freshSnapshot(definition);
   for (const [id, s] of ser.nodeState) fresh.nodeState.set(id, s as never);
   for (const [id, o] of ser.nodeOutputs) fresh.nodeOutputs.set(id, o);

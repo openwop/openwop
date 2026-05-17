@@ -217,7 +217,8 @@ export function evaluateTrigger(
       if (anyFailed) return 'ready';
       if (allTerminal && !anyFailed) return 'skip';
       // anyTerminal but no fail yet — keep waiting in case another upstream fails.
-      return anyTerminal ? 'wait' : 'wait';
+      void anyTerminal; // intentional read; behavior is the same either way.
+      return 'wait';
   }
 }
 
@@ -229,9 +230,12 @@ export function evaluateTrigger(
  * Edges from non-completed sources (failed/skipped) also contribute nothing
  * — the target sees `undefined` on those input ports.
  *
- * If the node has no incoming edges, returns `{ input: runInputs }` so the
- * source node receives `run.inputs` on its default port. (`runInputs` may
- * itself be a port-keyed object — common when triggered from a webhook.)
+ * Source nodes (no incoming edges) get `{ input: runInputs }`. The executor's
+ * `runOneNode` then unwraps the single-`input` key back to the raw value so
+ * legacy nodes that read `ctx.inputs.foo` against the run's input payload
+ * continue to work — preserves bit-identical behavior with the pre-DAG
+ * linear executor for source-position nodes. Downstream nodes (with edges)
+ * always see a port-keyed map.
  */
 export function buildNodeInputs(
   nodeId: string,
@@ -241,9 +245,6 @@ export function buildNodeInputs(
 ): Record<string, unknown> {
   const ins = graph.incoming.get(nodeId) ?? [];
   if (ins.length === 0) {
-    if (runInputs && typeof runInputs === 'object' && !Array.isArray(runInputs)) {
-      return { ...(runInputs as Record<string, unknown>), input: runInputs };
-    }
     return { input: runInputs };
   }
   const out: Record<string, unknown> = {};
@@ -358,11 +359,18 @@ export function inspectDisposition(
 
 /* ─── Concurrency knob ──────────────────────────────────────── */
 
+/** Hard ceiling on per-run concurrent in-flight nodes. Sample's event loop
+ *  thrashes well below this; production-grade hosts override via env var.
+ *  Real-backend hosts (Postgres) MAY raise this since their durability
+ *  layer absorbs the burst. */
+const DEFAULT_MAX_CONCURRENT = 8;
+const HARD_CEILING = 64;
+
 export function maxConcurrentNodes(): number {
   const raw = process.env.OPENWOP_MAX_CONCURRENT_NODES;
   const n = Number(raw);
-  if (!Number.isFinite(n) || n <= 0) return 8;
-  return Math.min(n, 1024);
+  if (!Number.isFinite(n) || n <= 0) return DEFAULT_MAX_CONCURRENT;
+  return Math.min(Math.trunc(n), HARD_CEILING);
 }
 
 /* ─── State helpers (mutations the executor invokes) ────────── */
