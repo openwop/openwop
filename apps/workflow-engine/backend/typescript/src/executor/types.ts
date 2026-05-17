@@ -205,15 +205,45 @@ export interface NodeModule {
   execute(ctx: NodeContext): Promise<NodeOutcome>;
 }
 
-/** Workflow definition — stored either in the workflows table or in-memory. */
+/** DAG edge between two nodes. Mirrors `WorkflowEdge` in
+ *  `spec/v1/workflow-definition.schema.json`. */
+export interface EdgeDef {
+  edgeId: string;
+  sourceNodeId: string;
+  /** Source output port. Defaults to `'output'`. */
+  sourceOutput?: string;
+  targetNodeId: string;
+  /** Target input port. Defaults to `'input'`. */
+  targetInput?: string;
+  /** Fan-in semantics for the target. Defaults to `'all_success'`. */
+  triggerRule?: 'all_success' | 'any_success' | 'all_complete' | 'none_failed' | 'any_failed';
+  /** Optional condition predicate evaluated against the source's output.
+   *  When false, this edge contributes no input to the target (but
+   *  triggerRule may still fire the target via other edges). */
+  condition?: {
+    path: string;
+    op: 'eq' | 'neq' | 'truthy' | 'falsy' | 'exists' | 'contains';
+    value?: unknown;
+  };
+  label?: string;
+}
+
+/** Workflow definition — stored either in the workflows table or in-memory.
+ *  Accepts both the legacy linear shape (nodes only) and the spec-canonical
+ *  DAG shape (nodes + edges). The executor delegates to the DAG scheduler
+ *  whenever `edges` is non-empty; pure-linear runs are a degenerate case of
+ *  the same scheduler with a chain of single-edge connections. */
 export interface WorkflowDefinition {
   workflowId: string;
-  /** Linear node sequence. Sample doesn't model branching DAGs (use core.subWorkflow + interrupt for control flow). */
   nodes: ReadonlyArray<{
     nodeId: string;
     typeId: string;
     config?: Record<string, unknown>;
   }>;
+  /** DAG edges. When absent or empty, the executor builds an implicit linear
+   *  chain from `nodes` (back-compat path for callers that pre-date the
+   *  scheduler). */
+  edges?: ReadonlyArray<EdgeDef>;
   /** Input schema (informational only in this sample; real hosts validate via Ajv). */
   inputSchema?: Record<string, unknown>;
   configurableSchema?: Record<string, unknown>;

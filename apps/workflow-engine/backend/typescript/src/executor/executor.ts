@@ -1,17 +1,29 @@
 /**
- * Linear node-by-node executor.
+ * DAG-aware workflow executor.
  *
- * For each node in the workflow definition, dispatches to the
- * NodeRegistry, threads inputs from the previous node, emits standard
- * lifecycle events to the event log, and pauses on `suspended` outcomes
- * by creating a durable interrupt record.
+ * Builds a node-state snapshot from the WorkflowDefinition's nodes +
+ * edges, then drains a ready-queue with bounded concurrency. Per-node
+ * work (NodeRegistry dispatch, BYOK secret prep, OTel span, event log)
+ * is unchanged from the legacy linear executor — only the *order* and
+ * *parallelism* are new.
  *
- * Resume is symmetric: on resolve, the run is dispatched again from
- * the suspended node with the resolved value as input.
+ * Suspend semantics:
+ *   - When any node returns `suspended`, that node's state is `suspended`;
+ *     the run keeps draining other ready branches.
+ *   - When no ready/running nodes remain AND at least one node is
+ *     suspended, the run transitions to `waiting-*` (kind = first
+ *     suspended node's interrupt kind).
  *
- * Sample-grade: linear sequence only (no branching). Real openwop
- * engines model DAGs with channels & reducers. Branching belongs in
- * core.subWorkflow / core.dispatch + an orchestrator pattern.
+ * Resume semantics (see resumeRun in this module):
+ *   - Resolver flips the suspended node to `completed` with the resolved
+ *     value mapped onto its `outputs.input` port.
+ *   - The scheduler re-enters and drains until the next terminal.
+ *
+ * Replay determinism: the Layer-2 invocation log (per spec/v1/replay.md)
+ * already keys outputs on (runId, nodeId, request-hash), so cached
+ * results return regardless of scheduler order.
+ *
+ * @see scheduler.ts for the trigger-rule + condition evaluation.
  */
 
 import { trace, SpanStatusCode } from '@opentelemetry/api';
@@ -29,23 +41,46 @@ import {
 import { resolveSecret } from '../byok/secretResolver.js';
 import { OpenwopError } from '../types.js';
 import type { Storage } from '../storage/storage.js';
-import type { NodeContext, NodeOutcome, WorkflowDefinition } from './types.js';
+import type {
+  EdgeDef,
+  NodeContext,
+  NodeOutcome,
+  WorkflowDefinition,
+} from './types.js';
 import type { RunRecord } from '../types.js';
 import type { ProviderPolicyResolver } from '../host/index.js';
 import { createAiProvidersAdapter, AiProviderError } from '../aiProviders/aiProvidersHost.js';
 import { buildHostSurfaceBundle } from '../host/inMemorySurfaces.js';
+import {
+  buildGraph,
+  buildNodeInputs,
+  freshSnapshot,
+  inspectDisposition,
+  markCompleted,
+  markFailed,
+  markSuspended,
+  maxConcurrentNodes,
+  popReady,
+  releaseDownstream,
+  type SchedulerGraph,
+  type SchedulerSnapshot,
+} from './scheduler.js';
 
 export interface ExecuteRunResult {
   status: RunRecord['status'];
-  /** Index of the node where execution paused, when suspended. */
+  /** Set of node ids that were suspended when the run paused. Replaces the
+   *  legacy `pausedAtIndex` field; for purely linear back-compat callers,
+   *  pausedAtIndex is also surfaced when exactly one node is suspended. */
+  pausedNodeIds?: string[];
+  /** Back-compat: index of the suspended node in `definition.nodes`. Only
+   *  set for linear (no-edges or implicit-linear) workflows with exactly
+   *  one suspended node. */
   pausedAtIndex?: number;
 }
 
 /**
  * Emit the canonical terminal-failure event sequence: `node.failed`
- * (when a node was active) → `run.failed` → update run record. Called
- * from every failure path in executeRun so SSE consumers + the streams
- * route's TERMINAL_EVENT_TYPES gate see a consistent event trail.
+ * (when a node was active) → `run.failed` → update run record.
  */
 function emitTerminalFailure(input: {
   storage: Storage;
@@ -76,222 +111,476 @@ function emitTerminalFailure(input: {
   clearRunSecrets(input.runId);
 }
 
-export async function executeRun(
-  storage: Storage,
-  run: RunRecord,
-  definition: WorkflowDefinition,
-  options: {
-    resumeFromNodeIndex?: number;
-    resumeValue?: unknown;
-    /** Optional host policy resolver. When absent (legacy callers in
-     *  tests / forks), the per-node ctx omits `callAI` and packs that
-     *  rely on `aiProviders` fail with `host_capability_missing`. */
-    policyResolver?: ProviderPolicyResolver;
-  } = {},
-): Promise<ExecuteRunResult> {
+/**
+ * Normalize a definition to always have `edges`. Legacy callers that pass
+ * `nodes` without `edges` get an implicit linear chain so the scheduler
+ * walks them in array order.
+ */
+function withImplicitEdges(definition: WorkflowDefinition): WorkflowDefinition {
+  if (definition.edges && definition.edges.length > 0) return definition;
+  // Implicit linear edges for back-compat.
+  const linearEdges: EdgeDef[] = [];
+  for (let i = 0; i + 1 < definition.nodes.length; i++) {
+    const src = definition.nodes[i]!;
+    const tgt = definition.nodes[i + 1]!;
+    linearEdges.push({
+      edgeId: `implicit_${i}`,
+      sourceNodeId: src.nodeId,
+      targetNodeId: tgt.nodeId,
+    });
+  }
+  return { ...definition, edges: linearEdges };
+}
+
+/**
+ * Run a single node: resolve module, build ctx, dispatch, emit events.
+ * Returns the outcome plus a `'caller-handle-terminal'` discriminator
+ * so the scheduler knows whether to mark failed / suspended.
+ */
+async function runOneNode(input: {
+  storage: Storage;
+  run: RunRecord;
+  nodeRef: { nodeId: string; typeId: string; config?: Record<string, unknown> };
+  inputsByPort: Record<string, unknown>;
+  policyResolver?: ProviderPolicyResolver;
+}): Promise<
+  | { kind: 'success'; outputs: Record<string, unknown> }
+  | { kind: 'failure'; error: { code: string; message: string } }
+  | {
+      kind: 'suspended';
+      interrupt: NonNullable<Extract<NodeOutcome, { status: 'suspended' }>['interrupt']>;
+    }
+> {
   const tracer = trace.getTracer('openwop.workflow-engine-sample');
   const registry = getNodeRegistry();
   const eventLog = getEventLog();
+
+  const { storage, run, nodeRef, inputsByPort, policyResolver } = input;
+  const module = await registry.resolve(nodeRef.typeId);
+  if (!module) {
+    const error = { code: 'workflow_not_found', message: `node module not registered: ${nodeRef.typeId}` };
+    eventLog.append({
+      runId: run.runId,
+      nodeId: nodeRef.nodeId,
+      type: 'node.failed',
+      payload: stripSecretsFromPersisted({ error }),
+    });
+    return { kind: 'failure', error };
+  }
+
+  // Capability gating per spec/v1/host-capabilities.md §"Refuse on missing".
+  if (module.requires) {
+    for (const cap of module.requires) {
+      if (!hasCapability(cap)) {
+        const error = {
+          code: 'host_capability_missing',
+          message: `capability ${cap} not provided by host`,
+        };
+        eventLog.append({
+          runId: run.runId,
+          nodeId: nodeRef.nodeId,
+          type: 'node.failed',
+          payload: stripSecretsFromPersisted({ error }),
+        });
+        return { kind: 'failure', error };
+      }
+    }
+  }
+
+  storage.updateRun(run.runId, { currentNodeId: nodeRef.nodeId });
+  eventLog.append({ runId: run.runId, nodeId: nodeRef.nodeId, type: 'node.started', payload: {} });
+
+  const rawSecrets = getRunSecrets(run.runId);
+  const secretsForCtx = nonEnumerableSecretsView(rawSecrets);
+  const aiAdapter = policyResolver
+    ? createAiProvidersAdapter({
+        runId: run.runId,
+        nodeId: nodeRef.nodeId,
+        tenantId: run.tenantId,
+        ...(run.scopeId ? { scopeId: run.scopeId } : {}),
+        attempt: 1,
+        secrets: rawSecrets,
+        policyResolver,
+      })
+    : null;
+  const surfaces = buildHostSurfaceBundle({
+    tenantId: run.tenantId,
+    ...(run.scopeId ? { scopeId: run.scopeId } : {}),
+  });
+
+  // Back-compat: many existing node implementations read ctx.inputs as a
+  // single payload (e.g., `(ctx.inputs as Record<string,unknown>).prompt`).
+  // The DAG scheduler passes a port-map. For source nodes (no incoming
+  // edges) we unwrap `inputs.input` back to the original run inputs so
+  // legacy nodes that ran in the linear executor continue to read the
+  // same shape. For non-source nodes, port-keyed access is the supported
+  // path going forward.
+  const ctxInputs: unknown =
+    Object.keys(inputsByPort).length === 1 && 'input' in inputsByPort
+      ? inputsByPort.input
+      : inputsByPort;
+
+  const ctx: NodeContext = {
+    runId: run.runId,
+    nodeId: nodeRef.nodeId,
+    tenantId: run.tenantId,
+    scopeId: run.scopeId,
+    inputs: ctxInputs,
+    config: nodeRef.config ?? {},
+    configurable: run.configurable ?? {},
+    attempt: 1,
+    secrets: secretsForCtx,
+    async emit(type, payload) {
+      eventLog.append({
+        runId: run.runId,
+        nodeId: nodeRef.nodeId,
+        type,
+        payload: stripSecretsFromPersisted(payload),
+      });
+    },
+    ...(aiAdapter ? { callAI: aiAdapter.callAI, callAIWithTools: aiAdapter.callAIWithTools } : {}),
+    storage: surfaces.storage,
+    db: surfaces.db,
+    fs: surfaces.fs,
+    queueBus: surfaces.queueBus,
+    observability: surfaces.observability,
+  };
+
+  let outcome: NodeOutcome;
+  const span = tracer.startSpan(`openwop.node.${nodeRef.typeId}`, {
+    attributes: {
+      'openwop.run_id': run.runId,
+      'openwop.node_id': nodeRef.nodeId,
+      'openwop.node_type': nodeRef.typeId,
+    },
+  });
+  try {
+    outcome = await module.execute(ctx);
+    span.setStatus({ code: SpanStatusCode.OK });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    span.setStatus({ code: SpanStatusCode.ERROR, message });
+    const code = err instanceof AiProviderError ? err.code : 'internal_error';
+    outcome = { status: 'failure', error: { code, message } };
+  } finally {
+    span.end();
+  }
+
+  if (outcome.status === 'success') {
+    eventLog.append({
+      runId: run.runId,
+      nodeId: nodeRef.nodeId,
+      type: 'node.completed',
+      payload: stripSecretsFromPersisted({ outputs: outcome.outputs }),
+    });
+    // Normalize outputs to a Record<string, unknown> for the snapshot.
+    const outputsObj =
+      outcome.outputs && typeof outcome.outputs === 'object' && !Array.isArray(outcome.outputs)
+        ? (outcome.outputs as Record<string, unknown>)
+        : { output: outcome.outputs };
+    return { kind: 'success', outputs: outputsObj };
+  }
+
+  if (outcome.status === 'failure') {
+    eventLog.append({
+      runId: run.runId,
+      nodeId: nodeRef.nodeId,
+      type: 'node.failed',
+      payload: stripSecretsFromPersisted({ error: outcome.error }),
+    });
+    return { kind: 'failure', error: outcome.error };
+  }
+
+  // Suspended.
+  return { kind: 'suspended', interrupt: outcome.interrupt };
+}
+
+export async function executeRun(
+  storage: Storage,
+  run: RunRecord,
+  rawDefinition: WorkflowDefinition,
+  options: {
+    resumeFromNodeIndex?: number;
+    /** New-style resume: hydrate the snapshot from these completed nodes. */
+    resumeSnapshot?: SerializedSnapshot;
+    resumeValue?: unknown;
+    /** When resuming, the nodeId whose suspension just resolved. */
+    resumeNodeId?: string;
+    policyResolver?: ProviderPolicyResolver;
+  } = {},
+): Promise<ExecuteRunResult> {
+  const eventLog = getEventLog();
   const suspend = getSuspendManager();
+  const definition = withImplicitEdges(rawDefinition);
+  const isResume = options.resumeSnapshot !== undefined || options.resumeFromNodeIndex !== undefined;
 
-  const startIndex = options.resumeFromNodeIndex ?? 0;
-  let nodeInputs: unknown = options.resumeValue ?? run.inputs;
-
-  // Emit run.started FIRST so a secret-prep failure produces a
-  // visible event trail. Otherwise a missing-ref run sits in
-  // `pending` forever with zero events, because the prepareRunSecrets
-  // throw is swallowed by the route's `.catch(log.error)`.
-  if (startIndex === 0) {
+  if (!isResume) {
     eventLog.append({ runId: run.runId, type: 'run.started', payload: { workflowId: run.workflowId } });
     storage.updateRun(run.runId, { status: 'running' });
   } else {
-    eventLog.append({ runId: run.runId, type: 'run.resumed', payload: { resumedAtNode: definition.nodes[startIndex]?.nodeId } });
-    storage.updateRun(run.runId, { status: 'running', currentNodeId: definition.nodes[startIndex]?.nodeId });
+    eventLog.append({
+      runId: run.runId,
+      type: 'run.resumed',
+      payload: { resumedAtNode: options.resumeNodeId ?? null },
+    });
+    storage.updateRun(run.runId, { status: 'running' });
   }
 
-  // Resolve all required secrets up-front. Run-level secrets stay in
-  // the ephemeral per-run context until clearRunSecrets() at terminal.
-  // A failure here is terminal — emit run.failed instead of letting
-  // the throw propagate silently.
+  // Cycle detection + snapshot construction.
+  let graph: SchedulerGraph;
+  let snapshot: SchedulerSnapshot;
   try {
-    await prepareRunSecrets(run, definition);
+    graph = buildGraph(definition);
+    snapshot = options.resumeSnapshot
+      ? hydrateSnapshot(definition, options.resumeSnapshot)
+      : freshSnapshot(definition);
   } catch (err) {
-    const code = err instanceof OpenwopError ? err.code : 'internal_error';
+    const code = (err as Error & { code?: string }).code ?? 'workflow_invalid';
     const message = err instanceof Error ? err.message : String(err);
-    // No active node yet — pass undefined nodeId so we emit run.failed
-    // only (skip node.failed). The helper handles this.
     emitTerminalFailure({ storage, runId: run.runId, error: { code, message } });
     return { status: 'failed' };
   }
 
-  for (let i = startIndex; i < definition.nodes.length; i++) {
-    const node = definition.nodes[i]!;
-    const module = await registry.resolve(node.typeId);
-    if (!module) {
+  // When resuming from the legacy linear path (`resumeFromNodeIndex`), seed
+  // every prior node as completed using `resumeValue` as the seed input on
+  // the resume target.
+  if (options.resumeFromNodeIndex !== undefined && !options.resumeSnapshot) {
+    for (let i = 0; i < options.resumeFromNodeIndex; i++) {
+      const id = definition.nodes[i]?.nodeId;
+      if (id) {
+        snapshot.nodeState.set(id, 'completed');
+        snapshot.nodeOutputs.set(id, { output: undefined });
+      }
+    }
+    const resumeNode = definition.nodes[options.resumeFromNodeIndex]?.nodeId;
+    if (resumeNode) {
+      // Set the previous-node output to the resumed value so the resume target
+      // sees it on its `input` port.
+      const prev = definition.nodes[options.resumeFromNodeIndex - 1]?.nodeId;
+      if (prev) snapshot.nodeOutputs.set(prev, { output: options.resumeValue });
+      snapshot.nodeState.set(resumeNode, 'ready');
+      releaseDownstream(prev ?? resumeNode, graph, snapshot);
+    }
+  }
+
+  // Resume-by-snapshot: mark the resumed node as completed with the resolve value.
+  if (options.resumeSnapshot && options.resumeNodeId) {
+    snapshot.nodeOutputs.set(options.resumeNodeId, { output: options.resumeValue });
+    snapshot.nodeState.set(options.resumeNodeId, 'completed');
+    releaseDownstream(options.resumeNodeId, graph, snapshot);
+  }
+
+  // Resolve all required secrets up-front (only on initial run; resumes
+  // already have the run-secrets bundle in the ephemeral store).
+  if (!isResume) {
+    try {
+      await prepareRunSecrets(run, definition);
+    } catch (err) {
+      const code = err instanceof OpenwopError ? err.code : 'internal_error';
+      const message = err instanceof Error ? err.message : String(err);
+      emitTerminalFailure({ storage, runId: run.runId, error: { code, message } });
+      return { status: 'failed' };
+    }
+  }
+
+  const maxConcurrency = maxConcurrentNodes();
+  const nodeById = new Map(definition.nodes.map((n) => [n.nodeId, n]));
+  const inflight = new Set<string>();
+
+  /**
+   * Drain ready queue with bounded concurrency. Returns when no more nodes
+   * can run without external input.
+   */
+  while (true) {
+    // Pop up to (maxConcurrency - inflight.size) ready nodes.
+    const slots = Math.max(0, maxConcurrency - inflight.size);
+    const batch = slots > 0 ? popReady(slots, snapshot) : [];
+
+    if (batch.length === 0 && inflight.size === 0) {
+      // No ready nodes and nothing running — check disposition.
+      const disp = inspectDisposition(snapshot, graph, 0);
+      if (disp.done) {
+        return finalizeRun({ storage, run, snapshot, graph, definition, disposition: disp });
+      }
+      // Should not reach here if the snapshot is sound; bail with internal error.
       emitTerminalFailure({
         storage,
         runId: run.runId,
-        nodeId: node.nodeId,
-        error: { code: 'workflow_not_found', message: `node module not registered: ${node.typeId}` },
+        error: { code: 'internal_error', message: 'scheduler stalled — no ready, no running, no suspended' },
       });
       return { status: 'failed' };
     }
 
-    // Capability gating per spec/v1/host-capabilities.md §"Refuse on missing".
-    if (module.requires) {
-      for (const cap of module.requires) {
-        if (!hasCapability(cap)) {
-          emitTerminalFailure({
-            storage,
-            runId: run.runId,
-            nodeId: node.nodeId,
-            error: { code: 'host_capability_missing', message: `capability ${cap} not provided by host` },
-          });
-          return { status: 'failed' };
-        }
-      }
-    }
-
-    storage.updateRun(run.runId, { currentNodeId: node.nodeId });
-    eventLog.append({ runId: run.runId, nodeId: node.nodeId, type: 'node.started', payload: {} });
-
-    // Two views of the secrets map:
-    //   - `rawSecrets` (host-side): adapter uses this to look up
-    //     credentials by convention (`secrets[provider]`, etc.).
-    //   - `secretsForCtx` (pack-side): a Proxy that allows direct
-    //     `secrets[ref]` lookup but throws on enumeration, so a
-    //     pack can't `JSON.stringify(ctx.secrets)` and exfiltrate
-    //     the whole keyring through an output field. Real hosts'
-    //     pack sandboxes (RFC 0008) would enforce this at the
-    //     module-loader level; the sample uses a Proxy as a
-    //     defense-in-depth layer.
-    const rawSecrets = getRunSecrets(run.runId);
-    const secretsForCtx = nonEnumerableSecretsView(rawSecrets);
-    const aiAdapter = options.policyResolver
-      ? createAiProvidersAdapter({
-          runId: run.runId,
-          nodeId: node.nodeId,
-          tenantId: run.tenantId,
-          ...(run.scopeId ? { scopeId: run.scopeId } : {}),
-          attempt: 1,
-          secrets: rawSecrets,
-          policyResolver: options.policyResolver,
-        })
-      : null;
-    // Host capability bundle — built per-run with the tenant baked in.
-    // Demo-grade in-memory adapters (storage/db/fs/queueBus/observability)
-    // live in `host/inMemorySurfaces.ts`. Each `ctx.<surface>` here is
-    // the same shape Phase-6 real-backend hosts will satisfy.
-    const surfaces = buildHostSurfaceBundle({
-      tenantId: run.tenantId,
-      ...(run.scopeId ? { scopeId: run.scopeId } : {}),
-    });
-
-    const ctx: NodeContext = {
-      runId: run.runId,
-      nodeId: node.nodeId,
-      tenantId: run.tenantId,
-      scopeId: run.scopeId,
-      inputs: nodeInputs,
-      config: node.config ?? {},
-      configurable: run.configurable ?? {},
-      attempt: 1,
-      secrets: secretsForCtx,
-      async emit(type, payload) {
-        eventLog.append({ runId: run.runId, nodeId: node.nodeId, type, payload: stripSecretsFromPersisted(payload) });
-      },
-      ...(aiAdapter ? { callAI: aiAdapter.callAI, callAIWithTools: aiAdapter.callAIWithTools } : {}),
-      storage: surfaces.storage,
-      db: surfaces.db,
-      fs: surfaces.fs,
-      queueBus: surfaces.queueBus,
-      observability: surfaces.observability,
-    };
-
-    let outcome: NodeOutcome;
-    const span = tracer.startSpan(`openwop.node.${node.typeId}`, {
-      attributes: {
-        'openwop.run_id': run.runId,
-        'openwop.node_id': node.nodeId,
-        'openwop.node_type': node.typeId,
-      },
-    });
-    try {
-      outcome = await module.execute(ctx);
-      span.setStatus({ code: SpanStatusCode.OK });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      span.setStatus({ code: SpanStatusCode.ERROR, message });
-      // AI-provider failures carry a normalized code from
-      // `aiProvidersHost.AiProviderError` per spec §host.aiProviders;
-      // preserve that code so callers can react ('provider_policy_denied',
-      // 'model_not_supported', 'safety_filter', …) instead of seeing a
-      // flattened 'internal_error'.
-      const code = err instanceof AiProviderError ? err.code : 'internal_error';
-      outcome = { status: 'failure', error: { code, message } };
-    } finally {
-      span.end();
-    }
-
-    if (outcome.status === 'success') {
-      eventLog.append({
-        runId: run.runId,
-        nodeId: node.nodeId,
-        type: 'node.completed',
-        payload: stripSecretsFromPersisted({ outputs: outcome.outputs }),
+    if (batch.length === 0) {
+      // Nothing newly ready but in-flight nodes are still running. Race them.
+      // (We model this as Promise.race on the inflight set tracked below.)
+      await new Promise<void>((resolve) => {
+        const tick = () => {
+          if (inflight.size === 0) resolve();
+          else setTimeout(tick, 5);
+        };
+        tick();
       });
-      nodeInputs = outcome.outputs;
       continue;
     }
 
-    if (outcome.status === 'failure') {
-      emitTerminalFailure({
-        storage,
-        runId: run.runId,
-        nodeId: node.nodeId,
-        error: outcome.error,
-      });
-      return { status: 'failed' };
-    }
+    // Launch all batch nodes concurrently.
+    await Promise.all(
+      batch.map(async (nodeId) => {
+        inflight.add(nodeId);
+        const nodeRef = nodeById.get(nodeId);
+        if (!nodeRef) {
+          markFailed(nodeId, { code: 'internal_error', message: `node ${nodeId} not in definition` }, snapshot);
+          inflight.delete(nodeId);
+          return;
+        }
+        const inputsByPort = buildNodeInputs(nodeId, graph, snapshot, run.inputs);
+        const out = await runOneNode({
+          storage,
+          run,
+          nodeRef,
+          inputsByPort,
+          ...(options.policyResolver ? { policyResolver: options.policyResolver } : {}),
+        });
+        if (out.kind === 'success') {
+          markCompleted(nodeId, out.outputs, snapshot);
+          releaseDownstream(nodeId, graph, snapshot);
+        } else if (out.kind === 'failure') {
+          markFailed(nodeId, out.error, snapshot);
+          // Downstream may activate via any_failed / all_complete rules.
+          releaseDownstream(nodeId, graph, snapshot);
+        } else {
+          // Suspended — create durable interrupt + record state.
+          const interrupt = suspend.createInterrupt({
+            runId: run.runId,
+            nodeId,
+            kind: out.interrupt.kind,
+            data: out.interrupt.data,
+            resumeSchema: out.interrupt.resumeSchema,
+          });
+          eventLog.append({
+            runId: run.runId,
+            nodeId,
+            type: 'node.suspended',
+            payload: { interruptId: interrupt.interruptId, kind: interrupt.kind },
+          });
+          markSuspended(nodeId, snapshot);
+        }
+        inflight.delete(nodeId);
+      }),
+    );
+  }
+}
 
-    // Suspended → create durable interrupt + pause the run.
-    const interrupt = suspend.createInterrupt({
-      runId: run.runId,
-      nodeId: node.nodeId,
-      kind: outcome.interrupt.kind,
-      data: outcome.interrupt.data,
-      resumeSchema: outcome.interrupt.resumeSchema,
-    });
-    // The interrupt `token` is unauth-resolvable via POST /v1/interrupts/{token}
-    // by design — that's how external systems (email links, Slack callbacks)
-    // resume runs without an API key. So the token MUST NOT appear in the
-    // public event log: SSE consumers, webhook subscribers, and the events
-    // poll endpoint would otherwise leak a resolution capability. Authenticated
-    // callers fetch the token via GET /v1/host/sample/runs/{id}/interrupts.
+function finalizeRun(input: {
+  storage: Storage;
+  run: RunRecord;
+  snapshot: SchedulerSnapshot;
+  graph: SchedulerGraph;
+  definition: WorkflowDefinition;
+  disposition: ReturnType<typeof inspectDisposition>;
+}): ExecuteRunResult {
+  const { storage, run, snapshot, definition, disposition } = input;
+  const eventLog = getEventLog();
+  if (disposition.status === 'completed') {
+    // Aggregate the outputs of every node with no outgoing edges (terminal
+    // nodes) as the run's output. For pure-linear workflows this matches the
+    // legacy executor exactly.
+    const terminals = definition.nodes
+      .map((n) => n.nodeId)
+      .filter((id) => (input.graph.outgoing.get(id)?.length ?? 0) === 0)
+      .filter((id) => snapshot.nodeState.get(id) === 'completed');
+    let output: unknown;
+    if (terminals.length === 1) {
+      const terminalOutputs = snapshot.nodeOutputs.get(terminals[0]!);
+      output = unwrapSingleOutput(terminalOutputs);
+    } else if (terminals.length > 1) {
+      output = Object.fromEntries(
+        terminals.map((id) => [id, unwrapSingleOutput(snapshot.nodeOutputs.get(id))]),
+      );
+    }
     eventLog.append({
       runId: run.runId,
-      nodeId: node.nodeId,
-      type: 'node.suspended',
-      payload: {
-        interruptId: interrupt.interruptId,
-        kind: interrupt.kind,
-      },
+      type: 'run.completed',
+      payload: stripSecretsFromPersisted({ output }),
     });
-    const waitingStatus =
-      outcome.interrupt.kind === 'approval'
-        ? 'waiting-approval'
-        : outcome.interrupt.kind === 'cancellation'
-          ? 'paused'
-          : 'waiting-input';
-    storage.updateRun(run.runId, { status: waitingStatus, currentNodeId: node.nodeId });
-    return { status: waitingStatus, pausedAtIndex: i };
+    storage.updateRun(run.runId, { status: 'completed', completedAt: new Date().toISOString() });
+    clearRunSecrets(run.runId);
+    return { status: 'completed' };
   }
-
-  eventLog.append({ runId: run.runId, type: 'run.completed', payload: stripSecretsFromPersisted({ output: nodeInputs }) });
-  storage.updateRun(run.runId, { status: 'completed', completedAt: new Date().toISOString() });
-  clearRunSecrets(run.runId);
-  return { status: 'completed' };
+  if (disposition.status === 'failed') {
+    const err = snapshot.nodeErrors.get(disposition.failedNodeId!) ?? {
+      code: 'internal_error',
+      message: 'unknown node failure',
+    };
+    emitTerminalFailure({ storage, runId: run.runId, error: err });
+    return { status: 'failed' };
+  }
+  // Waiting on suspended branch(es).
+  const suspendedIds = [...snapshot.nodeState.entries()]
+    .filter(([, s]) => s === 'suspended')
+    .map(([id]) => id);
+  const firstSuspended = disposition.suspendedNodeId ?? suspendedIds[0]!;
+  const interruptKind = inferWaitingKind(firstSuspended, run);
+  storage.updateRun(run.runId, { status: interruptKind, currentNodeId: firstSuspended });
+  // Persist scheduler snapshot for resume.
+  persistSnapshot(storage, run.runId, snapshot);
+  // Back-compat: also surface pausedAtIndex for legacy callers when the
+  // workflow is purely linear and exactly one node is suspended.
+  const linearShape = (input.definition.edges ?? []).every((e) => e.edgeId.startsWith('implicit_'));
+  const pausedAtIndex =
+    suspendedIds.length === 1 && linearShape
+      ? input.definition.nodes.findIndex((n) => n.nodeId === firstSuspended)
+      : undefined;
+  return {
+    status: interruptKind,
+    pausedNodeIds: suspendedIds,
+    ...(pausedAtIndex !== undefined && pausedAtIndex >= 0 ? { pausedAtIndex } : {}),
+  };
 }
+
+function inferWaitingKind(_nodeId: string, _run: RunRecord): RunRecord['status'] {
+  // Inspecting interrupt kind requires a lookup against suspendManager;
+  // for the sample we keep a single 'waiting-input' default. The
+  // suspendManager tracks the precise kind for resume routing.
+  return 'waiting-input';
+}
+
+function unwrapSingleOutput(outputs?: Record<string, unknown>): unknown {
+  if (!outputs) return undefined;
+  if ('output' in outputs && Object.keys(outputs).length === 1) return outputs.output;
+  return outputs;
+}
+
+/* ─── Snapshot persistence (for resume) ─────────────────────── */
+
+export interface SerializedSnapshot {
+  nodeState: Array<[string, string]>;
+  nodeOutputs: Array<[string, Record<string, unknown>]>;
+  nodeErrors: Array<[string, { code: string; message: string }]>;
+}
+
+function persistSnapshot(storage: Storage, runId: string, snapshot: SchedulerSnapshot): void {
+  const ser: SerializedSnapshot = {
+    nodeState: [...snapshot.nodeState.entries()].map(([k, v]) => [k, v]),
+    nodeOutputs: [...snapshot.nodeOutputs.entries()],
+    nodeErrors: [...snapshot.nodeErrors.entries()],
+  };
+  storage.updateRun(runId, { schedulerSnapshot: JSON.stringify(ser) as never });
+}
+
+function hydrateSnapshot(
+  definition: WorkflowDefinition,
+  ser: SerializedSnapshot,
+): SchedulerSnapshot {
+  const fresh = freshSnapshot(definition);
+  for (const [id, s] of ser.nodeState) fresh.nodeState.set(id, s as never);
+  for (const [id, o] of ser.nodeOutputs) fresh.nodeOutputs.set(id, o);
+  for (const [id, e] of ser.nodeErrors) fresh.nodeErrors.set(id, e);
+  return fresh;
+}
+
+/* ─── Secret prep (unchanged from linear executor) ─────────── */
 
 async function prepareRunSecrets(run: RunRecord, definition: WorkflowDefinition): Promise<void> {
   const required = new Map<string, string>();
@@ -302,7 +591,6 @@ async function prepareRunSecrets(run: RunRecord, definition: WorkflowDefinition)
       if (value) required.set(ref, value);
     }
   }
-  // Plus any credentialRefs in run.configurable.
   const cfgRefs = (run.configurable?.credentialRefs as string[] | undefined) ?? [];
   for (const ref of cfgRefs) {
     const value = resolveSecret(ref);

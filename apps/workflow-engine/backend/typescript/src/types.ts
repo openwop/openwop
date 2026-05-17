@@ -47,6 +47,10 @@ export interface RunRecord {
   error?: { code: string; message: string };
   /** Current node, when in a running/waiting state. */
   currentNodeId?: string;
+  /** Serialized DAG scheduler snapshot — populated when the run pauses on
+   *  one or more suspended branches. JSON-encoded `SerializedSnapshot`
+   *  (see executor/executor.ts). Absent for non-DAG (legacy linear) runs. */
+  schedulerSnapshot?: string;
 }
 
 /** Persisted run event with monotonic sequence per run. */

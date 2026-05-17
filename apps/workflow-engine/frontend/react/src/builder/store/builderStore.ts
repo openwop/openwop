@@ -30,6 +30,7 @@ export interface BuilderState {
   nodes: BuilderNode[];
   edges: BuilderEdge[];
   selectedNodeId: string | null;
+  selectedEdgeId: string | null;
   past: Snapshot[];
   future: Snapshot[];
 
@@ -37,10 +38,12 @@ export interface BuilderState {
   setName(name: string): void;
   setDefaultInputs(value: string): void;
   selectNode(id: string | null): void;
+  selectEdge(id: string | null): void;
   addNode(kind: string, position: { x: number; y: number }): string;
   updateNode(id: string, patch: Partial<Pick<BuilderNode, 'name' | 'position' | 'config'>>): void;
   removeNode(id: string): void;
   addEdge(edge: Omit<BuilderEdge, 'id'>): void;
+  updateEdge(id: string, patch: Partial<Omit<BuilderEdge, 'id' | 'source' | 'target' | 'sourcePort' | 'targetPort'>>): void;
   removeEdge(id: string): void;
   undo(): void;
   redo(): void;
@@ -62,6 +65,7 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   nodes: [],
   edges: [],
   selectedNodeId: null,
+  selectedEdgeId: null,
   past: [],
   future: [],
 
@@ -89,7 +93,11 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   },
 
   selectNode(id) {
-    set({ selectedNodeId: id });
+    set({ selectedNodeId: id, selectedEdgeId: null });
+  },
+
+  selectEdge(id) {
+    set({ selectedEdgeId: id, selectedNodeId: null });
   },
 
   addNode(kind, position) {
@@ -157,9 +165,20 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
     get().persist();
   },
 
+  updateEdge(id, patch) {
+    pushHistory(set, get);
+    set({
+      edges: get().edges.map((e) => (e.id === id ? { ...e, ...patch } : e)),
+    });
+    get().persist();
+  },
+
   removeEdge(id) {
     pushHistory(set, get);
-    set({ edges: get().edges.filter((e) => e.id !== id) });
+    set({
+      edges: get().edges.filter((e) => e.id !== id),
+      selectedEdgeId: get().selectedEdgeId === id ? null : get().selectedEdgeId,
+    });
     get().persist();
   },
 

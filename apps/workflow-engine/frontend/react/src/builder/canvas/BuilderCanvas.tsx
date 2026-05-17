@@ -114,6 +114,18 @@ function BuilderCanvasInner() {
     [removeEdge],
   );
 
+  const selectEdge = useBuilderStore((s) => s.selectEdge);
+  const onEdgeClick = useCallback(
+    (_e: React.MouseEvent, edge: Edge) => {
+      selectEdge(edge.id);
+    },
+    [selectEdge],
+  );
+  const onPaneClick = useCallback(() => {
+    selectNode(null);
+    selectEdge(null);
+  }, [selectNode, selectEdge]);
+
   const onConnect = useCallback(
     (conn: Connection) => {
       if (!conn.source || !conn.target || !conn.sourceHandle || !conn.targetHandle) return;
@@ -173,6 +185,8 @@ function BuilderCanvasInner() {
         nodeTypes={NODE_TYPES}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onEdgeClick={onEdgeClick}
+        onPaneClick={onPaneClick}
         onConnect={onConnect}
         isValidConnection={isValidConnection}
         fitView

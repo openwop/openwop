@@ -133,15 +133,36 @@ async function resolveAndResume(
   const nodeIndex = wf.definition.nodes.findIndex((n) => n.nodeId === interrupt.nodeId);
   if (nodeIndex < 0) throw new OpenwopError('internal_error', `suspended node ${interrupt.nodeId} not in workflow`, 500);
 
-  // Resume by re-running from the node *after* the suspended one with
-  // the resolved value as input. The suspended node's "completion" is
-  // the resolution itself.
+  // Resume the DAG scheduler. If a serialized snapshot exists (post-DAG),
+  // hydrate it and mark the suspended node as completed with the resolved
+  // value. If not (legacy linear path), fall back to `resumeFromNodeIndex`
+  // which the executor handles via its implicit-linear chain logic.
+  const serializedSnapshot = run.schedulerSnapshot;
   setImmediate(() => {
-    executeRun(storage, run, wf.definition, {
-      resumeFromNodeIndex: nodeIndex + 1,
-      resumeValue,
-      policyResolver: hostSuite.providerPolicyResolver,
-    }).catch((err) => {
+    const resumeOptions =
+      typeof serializedSnapshot === 'string'
+        ? (() => {
+            try {
+              return {
+                resumeSnapshot: JSON.parse(serializedSnapshot) as never,
+                resumeNodeId: interrupt.nodeId,
+                resumeValue,
+                policyResolver: hostSuite.providerPolicyResolver,
+              };
+            } catch {
+              return {
+                resumeFromNodeIndex: nodeIndex + 1,
+                resumeValue,
+                policyResolver: hostSuite.providerPolicyResolver,
+              };
+            }
+          })()
+        : {
+            resumeFromNodeIndex: nodeIndex + 1,
+            resumeValue,
+            policyResolver: hostSuite.providerPolicyResolver,
+          };
+    executeRun(storage, run, wf.definition, resumeOptions).catch((err) => {
       log.error('resume dispatch failed', {
         runId: run.runId,
         error: err instanceof Error ? err.message : String(err),
