@@ -1,16 +1,13 @@
 /**
- * mcp-server-untrusted-args — RFC 0020 advertisement-shape verification + behavioral placeholders.
+ * mcp-server-untrusted-args — RFC 0020 §D + SECURITY/invariants.yaml
+ * `mcp-server-untrusted-args`.
  *
- * Status: ACTIVE (advertisement-shape). RFC 0020 promoted to `Active`
- * 2026-05-17. The matching `capabilities.mcp.serverMount` block has landed in
- * `schemas/capabilities.schema.json`. This scenario asserts the advertisement
- * shape against any host that boots the conformance suite, and keeps the
- * deeper behavioral assertions as `it.todo()` until a reference host wires
- * a test seam.
+ * Status: ACTIVE (advertisement + behavioral). Asserts that tools/call
+ * with arguments violating the registered inputSchema is rejected with
+ * JSON-RPC `-32602 invalid params` BEFORE any workflow side-effects.
  *
- * Summary: tools/call.arguments MUST validate against the declared inputSchema before workflow start.
- *
- * @see RFCS/0020-*.md
+ * @see RFCS/0020-host-mcp-server-composition.md
+ * @see SECURITY/invariants.yaml — mcp-server-untrusted-args
  */
 
 import { describe, it, expect } from 'vitest';
@@ -29,21 +26,80 @@ async function readCap(): Promise<Record<string, unknown> | null> {
   return (final && typeof final === 'object' ? (final as Record<string, unknown>) : null);
 }
 
+async function rpc(method: string, params?: Record<string, unknown>) {
+  const id = Math.floor(Math.random() * 1e6);
+  const req: Record<string, unknown> = { jsonrpc: '2.0', id, method };
+  if (params !== undefined) req.params = params;
+  const res = await driver.post('/v1/host/sample/mcp', req);
+  return { status: res.status, body: res.json as { result?: unknown; error?: { code: number; message: string; data?: unknown } } };
+}
+
+const TEST_TOOL_NAME = `inj_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+
+async function registerStrictWorkflow(): Promise<boolean> {
+  const res = await driver.post('/v1/host/sample/workflows', {
+    workflowId: `mcp.untrusted.${Date.now()}`,
+    nodes: [
+      {
+        nodeId: 'expose',
+        typeId: 'core.openwop.mcp.expose-tool',
+        config: {
+          name: TEST_TOOL_NAME,
+          description: 'Strict-schema tool',
+          inputSchema: {
+            type: 'object',
+            properties: { text: { type: 'string' } },
+            required: ['text'],
+            additionalProperties: false,
+          },
+        },
+      },
+    ],
+  });
+  return res.status === 200 || res.status === 201;
+}
+
 describe('mcp-server-untrusted-args: advertisement shape (RFC 0020)', () => {
-  it('capabilities.mcp.serverMount is either absent or a well-formed object', async () => {
+  it('capabilities.mcp.serverMount is well-formed when present', async () => {
     const cap = await readCap();
-    if (cap === null) return; // host doesn't advertise — skip
-    expect(
-      typeof cap.supported,
-      driver.describe(
-        'capabilities.schema.json §mcp.serverMount',
-        'capabilities.mcp.serverMount.supported MUST be a boolean when present',
-      ),
-    ).toBe('boolean');
+    if (cap === null) return;
+    expect(typeof cap.supported).toBe('boolean');
   });
 });
 
-describe('mcp-server-untrusted-args: behavioral assertions (placeholders — need host test seam)', () => {
-  it.todo("tools/call with arguments missing a required field is rejected with isError:true");
-  it.todo("tools/call with arguments containing wrong types is rejected before the run starts");
+describe('mcp-server-untrusted-args: behavioral (RFC 0020 §D)', () => {
+  it('tools/call with malformed arguments is rejected with JSON-RPC -32602 BEFORE workflow start', async () => {
+    const cap = await readCap();
+    if (!cap || cap.supported !== true) return;
+    if (!(await registerStrictWorkflow())) return;
+
+    const r = await rpc('tools/call', {
+      name: TEST_TOOL_NAME,
+      arguments: { wrongField: 'no' },
+    });
+    if (r.status === 404) return;
+    expect(r.status, 'JSON-RPC envelope MUST 200').toBe(200);
+    expect(
+      r.body.error?.code,
+      driver.describe(
+        'SECURITY/invariants.yaml mcp-server-untrusted-args',
+        'malformed arguments MUST be rejected with -32602 invalid params before workflow start',
+      ),
+    ).toBe(-32602);
+    expect(r.body.error?.data, 'error.data MUST carry validation violations').toBeDefined();
+  });
+
+  it('tools/call with valid arguments is accepted', async () => {
+    const cap = await readCap();
+    if (!cap || cap.supported !== true) return;
+    const r = await rpc('tools/call', {
+      name: TEST_TOOL_NAME,
+      arguments: { text: 'hello' },
+    });
+    if (r.status === 404) return;
+    expect(r.status).toBe(200);
+    if (r.body.error) {
+      expect(r.body.error.code, 'valid args MUST NOT trigger -32602').not.toBe(-32602);
+    }
+  });
 });

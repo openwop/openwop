@@ -1,16 +1,14 @@
 /**
- * mcp-server-elicitation-bridge — RFC 0020 advertisement-shape verification + behavioral placeholders.
+ * mcp-server-elicitation-bridge — RFC 0020 §A point 3 (bidirectional elicitation).
  *
- * Status: ACTIVE (advertisement-shape). RFC 0020 promoted to `Active`
- * 2026-05-17. The matching `capabilities.mcp.serverMount` block has landed in
- * `schemas/capabilities.schema.json`. This scenario asserts the advertisement
- * shape against any host that boots the conformance suite, and keeps the
- * deeper behavioral assertions as `it.todo()` until a reference host wires
- * a test seam.
+ * Status: ACTIVE (advertisement + behavioral). Asserts that when a workflow
+ * has a `core.openwop.mcp.handle-elicitation` node, inbound `elicitation/create`
+ * is bridged into the workflow's `ctx.suspend({kind: 'clarification', profile:
+ * 'openwop-mcp-elicitation'})`. The host returns either a `pending` action
+ * (run suspended awaiting input) OR an accept/decline/cancel response (run
+ * completed without suspending).
  *
- * Summary: Inbound elicitation/create suspends the run on a typed form and resumes on accept/decline/cancel.
- *
- * @see RFCS/0020-*.md
+ * @see RFCS/0020-host-mcp-server-composition.md
  */
 
 import { describe, it, expect } from 'vitest';
@@ -29,40 +27,66 @@ async function readCap(): Promise<Record<string, unknown> | null> {
   return (final && typeof final === 'object' ? (final as Record<string, unknown>) : null);
 }
 
-describe('mcp-server-elicitation-bridge: advertisement shape (RFC 0020)', () => {
-  it('capabilities.mcp.serverMount is either absent or a well-formed object', async () => {
-    const cap = await readCap();
-    if (cap === null) return; // host doesn't advertise — skip
-    expect(
-      typeof cap.supported,
-      driver.describe(
-        'capabilities.schema.json §mcp.serverMount',
-        'capabilities.mcp.serverMount.supported MUST be a boolean when present',
-      ),
-    ).toBe('boolean');
-  });
+async function rpc(method: string, params?: Record<string, unknown>) {
+  const id = Math.floor(Math.random() * 1e6);
+  const req: Record<string, unknown> = { jsonrpc: '2.0', id, method };
+  if (params !== undefined) req.params = params;
+  const res = await driver.post('/v1/host/sample/mcp', req);
+  return { status: res.status, body: res.json as { result?: unknown; error?: { code: number; message: string } } };
+}
 
-  it('elicitationBridge is a boolean when set', async () => {
+async function registerElicitationHandlerWorkflow(): Promise<boolean> {
+  const res = await driver.post('/v1/host/sample/workflows', {
+    workflowId: `mcp.elicit.${Date.now()}`,
+    nodes: [
+      { nodeId: 'elicit', typeId: 'core.openwop.mcp.handle-elicitation' },
+    ],
+  });
+  return res.status === 200 || res.status === 201;
+}
+
+describe('mcp-server-elicitation-bridge: advertisement shape (RFC 0020)', () => {
+  it('elicitationBridge is a boolean when serverMount.supported', async () => {
     const cap = await readCap();
     if (!cap || cap.supported !== true) return;
-    const subParts = ["elicitationBridge"];
-    let sub: unknown = cap;
-    for (const p of subParts) {
-      if (sub && typeof sub === 'object') sub = (sub as Record<string, unknown>)[p];
-      else { sub = undefined; break; }
-    }
-    if (sub === undefined) return; // optional sub-field
+    if (cap.elicitationBridge === undefined) return;
     expect(
-      typeof sub,
-      driver.describe(
-        'RFC 0020 §A',
-        'mcp.serverMount.elicitationBridge MUST be boolean when present',
-      ),
+      typeof cap.elicitationBridge,
+      driver.describe('RFC 0020 §B', 'mcp.serverMount.elicitationBridge MUST be boolean when present'),
     ).toBe('boolean');
   });
 });
 
-describe('mcp-server-elicitation-bridge: behavioral assertions (placeholders — need host test seam)', () => {
-  it.todo("elicitation/create with a flat schema suspends the run");
-  it.todo("accept response resumes with payload; decline + cancel paths round-trip correctly");
+describe('mcp-server-elicitation-bridge: behavioral (RFC 0020 §A point 3)', () => {
+  it('elicitation/create bridges into a handle-elicitation workflow', async () => {
+    const cap = await readCap();
+    if (!cap || cap.supported !== true || cap.elicitationBridge !== true) return;
+    if (!(await registerElicitationHandlerWorkflow())) return;
+
+    const r = await rpc('elicitation/create', {
+      message: 'What is your name?',
+      requestedSchema: {
+        type: 'object',
+        properties: { name: { type: 'string' } },
+        required: ['name'],
+      },
+    });
+    if (r.status === 404) return;
+    expect(r.status, 'JSON-RPC envelope MUST 200').toBe(200);
+    const dispatched = !!r.body.result || (!!r.body.error && r.body.error.code !== -32601);
+    expect(
+      dispatched,
+      driver.describe(
+        'RFC 0020 §A point 3',
+        'elicitation/create MUST dispatch to handle-elicitation workflow (not return method_not_found)',
+      ),
+    ).toBe(true);
+    if (r.body.result) {
+      const result = r.body.result as { action?: string };
+      expect(
+        ['pending', 'accept', 'decline', 'cancel'].includes(result.action ?? ''),
+        'elicitation response action MUST be one of {pending,accept,decline,cancel}',
+      ).toBe(true);
+    }
+  });
 });

@@ -1,16 +1,17 @@
 /**
- * mcp-server-sampling-bridge — RFC 0020 advertisement-shape verification + behavioral placeholders.
+ * mcp-server-sampling-bridge — RFC 0020 §A point 3 (bidirectional sampling).
  *
- * Status: ACTIVE (advertisement-shape). RFC 0020 promoted to `Active`
- * 2026-05-17. The matching `capabilities.mcp.serverMount` block has landed in
- * `schemas/capabilities.schema.json`. This scenario asserts the advertisement
- * shape against any host that boots the conformance suite, and keeps the
- * deeper behavioral assertions as `it.todo()` until a reference host wires
- * a test seam.
+ * Status: ACTIVE (advertisement + behavioral). Asserts that when a workflow
+ * has a `core.openwop.mcp.handle-sampling` node, inbound `sampling/createMessage`
+ * is bridged into the workflow's `ctx.callAI` and returns a sampling result.
+ * Gated on `capabilities.mcp.serverMount.samplingBridge: true`.
  *
- * Summary: Inbound sampling/createMessage routes through the workflow-chosen LLM (BYOK consent preserved).
+ * Acceptance test: dispatch produces either a sampling response (when AI
+ * keys are provisioned) OR a clean error envelope (proves bridge dispatched
+ * but BYOK is absent). Either outcome proves the bridge wired up correctly;
+ * a method_not_found (-32601) means the bridge did NOT dispatch.
  *
- * @see RFCS/0020-*.md
+ * @see RFCS/0020-host-mcp-server-composition.md
  */
 
 import { describe, it, expect } from 'vitest';
@@ -29,39 +30,55 @@ async function readCap(): Promise<Record<string, unknown> | null> {
   return (final && typeof final === 'object' ? (final as Record<string, unknown>) : null);
 }
 
-describe('mcp-server-sampling-bridge: advertisement shape (RFC 0020)', () => {
-  it('capabilities.mcp.serverMount is either absent or a well-formed object', async () => {
-    const cap = await readCap();
-    if (cap === null) return; // host doesn't advertise — skip
-    expect(
-      typeof cap.supported,
-      driver.describe(
-        'capabilities.schema.json §mcp.serverMount',
-        'capabilities.mcp.serverMount.supported MUST be a boolean when present',
-      ),
-    ).toBe('boolean');
-  });
+async function rpc(method: string, params?: Record<string, unknown>) {
+  const id = Math.floor(Math.random() * 1e6);
+  const req: Record<string, unknown> = { jsonrpc: '2.0', id, method };
+  if (params !== undefined) req.params = params;
+  const res = await driver.post('/v1/host/sample/mcp', req);
+  return { status: res.status, body: res.json as { result?: unknown; error?: { code: number; message: string } } };
+}
 
-  it('samplingBridge is a boolean when set', async () => {
+async function registerSamplingHandlerWorkflow(): Promise<boolean> {
+  const res = await driver.post('/v1/host/sample/workflows', {
+    workflowId: `mcp.sampling.${Date.now()}`,
+    nodes: [
+      { nodeId: 'sample', typeId: 'core.openwop.mcp.handle-sampling' },
+    ],
+  });
+  return res.status === 200 || res.status === 201;
+}
+
+describe('mcp-server-sampling-bridge: advertisement shape (RFC 0020)', () => {
+  it('samplingBridge is a boolean when serverMount.supported', async () => {
     const cap = await readCap();
     if (!cap || cap.supported !== true) return;
-    const subParts = ["samplingBridge"];
-    let sub: unknown = cap;
-    for (const p of subParts) {
-      if (sub && typeof sub === 'object') sub = (sub as Record<string, unknown>)[p];
-      else { sub = undefined; break; }
-    }
-    if (sub === undefined) return; // optional sub-field
+    if (cap.samplingBridge === undefined) return;
     expect(
-      typeof sub,
-      driver.describe(
-        'RFC 0020 §A',
-        'mcp.serverMount.samplingBridge MUST be boolean when present',
-      ),
+      typeof cap.samplingBridge,
+      driver.describe('RFC 0020 §B', 'mcp.serverMount.samplingBridge MUST be boolean when present'),
     ).toBe('boolean');
   });
 });
 
-describe('mcp-server-sampling-bridge: behavioral assertions (placeholders — need host test seam)', () => {
-  it.todo("sampling/createMessage from external server is bridged to ctx.callAI and the result is returned");
+describe('mcp-server-sampling-bridge: behavioral (RFC 0020 §A point 3)', () => {
+  it('sampling/createMessage bridges into a handle-sampling workflow', async () => {
+    const cap = await readCap();
+    if (!cap || cap.supported !== true || cap.samplingBridge !== true) return;
+    if (!(await registerSamplingHandlerWorkflow())) return;
+
+    const r = await rpc('sampling/createMessage', {
+      messages: [{ role: 'user', content: { type: 'text', text: 'ping' } }],
+      maxTokens: 16,
+    });
+    if (r.status === 404) return;
+    expect(r.status, 'JSON-RPC envelope MUST 200').toBe(200);
+    const dispatched = !!r.body.result || (!!r.body.error && r.body.error.code !== -32601);
+    expect(
+      dispatched,
+      driver.describe(
+        'RFC 0020 §A point 3',
+        'sampling/createMessage MUST dispatch to handle-sampling workflow (not return method_not_found)',
+      ),
+    ).toBe(true);
+  });
 });

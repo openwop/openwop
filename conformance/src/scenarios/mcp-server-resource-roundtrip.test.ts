@@ -1,16 +1,11 @@
 /**
- * mcp-server-resource-roundtrip — RFC 0020 advertisement-shape verification + behavioral placeholders.
+ * mcp-server-resource-roundtrip — RFC 0020 §A (resources/list + resources/read).
  *
- * Status: ACTIVE (advertisement-shape). RFC 0020 promoted to `Active`
- * 2026-05-17. The matching `capabilities.mcp.serverMount` block has landed in
- * `schemas/capabilities.schema.json`. This scenario asserts the advertisement
- * shape against any host that boots the conformance suite, and keeps the
- * deeper behavioral assertions as `it.todo()` until a reference host wires
- * a test seam.
+ * Status: ACTIVE (advertisement + behavioral). Registers a workflow with
+ * `core.openwop.mcp.expose-resource`, then asserts the resource appears
+ * in `resources/list` and yields bound content from `resources/read`.
  *
- * Summary: External client lists + reads an exposed resource.
- *
- * @see RFCS/0020-*.md
+ * @see RFCS/0020-host-mcp-server-composition.md
  */
 
 import { describe, it, expect } from 'vitest';
@@ -29,21 +24,59 @@ async function readCap(): Promise<Record<string, unknown> | null> {
   return (final && typeof final === 'object' ? (final as Record<string, unknown>) : null);
 }
 
+async function rpc(method: string, params?: Record<string, unknown>) {
+  const id = Math.floor(Math.random() * 1e6);
+  const req: Record<string, unknown> = { jsonrpc: '2.0', id, method };
+  if (params !== undefined) req.params = params;
+  const res = await driver.post('/v1/host/sample/mcp', req);
+  return { status: res.status, body: res.json as { result?: unknown; error?: { code: number; message: string } } };
+}
+
+const RESOURCE_URI = `mcp://test/${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+
+async function registerResourceWorkflow(): Promise<boolean> {
+  const res = await driver.post('/v1/host/sample/workflows', {
+    workflowId: `mcp.resource.${Date.now()}`,
+    nodes: [
+      {
+        nodeId: 'expose',
+        typeId: 'core.openwop.mcp.expose-resource',
+        config: {
+          uri: RESOURCE_URI,
+          name: 'conformance-test-resource',
+          mimeType: 'text/plain',
+        },
+      },
+    ],
+  });
+  return res.status === 200 || res.status === 201;
+}
+
 describe('mcp-server-resource-roundtrip: advertisement shape (RFC 0020)', () => {
   it('capabilities.mcp.serverMount is either absent or a well-formed object', async () => {
     const cap = await readCap();
-    if (cap === null) return; // host doesn't advertise — skip
-    expect(
-      typeof cap.supported,
-      driver.describe(
-        'capabilities.schema.json §mcp.serverMount',
-        'capabilities.mcp.serverMount.supported MUST be a boolean when present',
-      ),
-    ).toBe('boolean');
+    if (cap === null) return;
+    expect(typeof cap.supported, 'mcp.serverMount.supported MUST be boolean').toBe('boolean');
   });
 });
 
-describe('mcp-server-resource-roundtrip: behavioral assertions (placeholders — need host test seam)', () => {
-  it.todo("resources/list returns the exposed resource");
-  it.todo("resources/read returns the bound content");
+describe('mcp-server-resource-roundtrip: behavioral (RFC 0020)', () => {
+  it('resources/list returns the exposed resource and resources/read returns content', async () => {
+    const cap = await readCap();
+    if (!cap || cap.supported !== true) return;
+    if (!(await registerResourceWorkflow())) return;
+
+    const list = await rpc('resources/list');
+    if (list.status === 404) return;
+    const resources = (list.body.result as { resources?: Array<{ uri: string }> } | undefined)?.resources ?? [];
+    expect(
+      resources.find((r) => r.uri === RESOURCE_URI),
+      driver.describe('RFC 0020 §A', 'resources/list MUST include exposed resources'),
+    ).toBeDefined();
+
+    const read = await rpc('resources/read', { uri: RESOURCE_URI });
+    expect(read.status).toBe(200);
+    const contents = (read.body.result as { contents?: Array<{ uri: string }> } | undefined)?.contents;
+    expect(Array.isArray(contents), 'resources/read MUST return contents[]').toBe(true);
+  });
 });

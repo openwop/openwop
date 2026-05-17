@@ -93,7 +93,7 @@ export function seedDefaultHostSurfaces(): void {
     { name: 'host.db.vector', supported: false, note: 'RFC 0018 §vector.' },
     { name: 'host.messaging', supported: false },
     { name: 'host.observability', supported: false, note: 'Wired implicitly via emit() — surface flag not yet honored.' },
-    { name: 'host.mcp', supported: false, note: 'Requires an external MCP server.' },
+    { name: 'host.mcp', supported: process.env.OPENWOP_MCP_SERVER_ENABLED === 'true', implementation: 'workflow-engine', note: 'RFC 0020 (Active). Sample-host MCP server mount at /v1/host/sample/mcp; advertise streamable-http transport. OFF by default — set OPENWOP_MCP_SERVER_ENABLED=true.' },
     { name: 'host.triggers', supported: false, note: 'Webhooks already supported via /v1/webhooks; full trigger fan-out not yet wired.' },
     { name: 'host.a2a', supported: false, note: 'A2A requires a peer agent.' },
     // These two are already advertised honestly elsewhere — pre-seed

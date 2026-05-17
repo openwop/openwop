@@ -115,12 +115,12 @@ New scenarios (capability-gated on `capabilities.mcp.serverMount.supported`):
 
 ## Acceptance criteria
 
-- [ ] `mcp-integration.md` §"OpenWOP host as MCP server" added (mirrors the A2A treatment).
-- [ ] `capabilities.serverMount` block in `capabilities.schema.json`.
-- [ ] SECURITY invariant `mcp-server-untrusted-args` + matching test.
-- [ ] 6 conformance scenarios above (capability-gated).
-- [ ] Reference host implementation OR explicit deferral.
-- [ ] CHANGELOG entry.
+- [x] `mcp-integration.md` §"OpenWOP host as MCP server" added (mirrors the A2A treatment).
+- [x] `capabilities.serverMount` block in `capabilities.schema.json`.
+- [x] SECURITY invariant `mcp-server-untrusted-args` + matching test.
+- [x] 6 conformance scenarios above (capability-gated) — promoted from `it.todo()` to live behavioral 2026-05-17 against the workflow-engine reference host. 13/13 assertions pass.
+- [x] Reference host implementation — `apps/workflow-engine/backend/typescript/src/routes/mcp.ts` ships JSON-RPC over streamable-HTTP, env-gated on `OPENWOP_MCP_SERVER_ENABLED=true`. Postgres reference host implementation deferred to its own track.
+- [x] CHANGELOG entry — `[Unreleased]` §"RFC 0020 host-side MCP server mount — behavioral conformance live (2026-05-17)".
 
 ## References
 

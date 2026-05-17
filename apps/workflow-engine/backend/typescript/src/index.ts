@@ -42,6 +42,7 @@ import { registerWebhookRoutes } from './routes/webhooks.js';
 import { registerPackRoutes } from './routes/packs.js';
 import { registerByokRoutes } from './routes/byok.js';
 import { registerTestSeamRoutes } from './routes/testSeam.js';
+import { registerMcpServerRoutes } from './routes/mcp.js';
 import { registerAdminRoutes } from './routes/admin.js';
 import { registerWorkflowRoutes } from './routes/workflows.js';
 import { registerNodeCatalogRoute } from './routes/nodeCatalog.js';
@@ -189,6 +190,7 @@ export async function createApp(config: AppConfig): Promise<Express> {
   registerPackRoutes(app, { storage });
   registerByokRoutes(app);
   registerTestSeamRoutes(app);
+  registerMcpServerRoutes(app, { storage, hostSuite });
   registerAdminRoutes(app);
   registerWorkflowRoutes(app);
   registerNodeCatalogRoute(app);

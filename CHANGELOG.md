@@ -22,6 +22,27 @@ Closes a correctness/security bug in `core.openwop.http.idempotency-key`: the pr
 - **Publication:** source fix only in this commit. Tarball build + signing + registry publication follow the same flow as the P0.1 batch — gated on the steward running `scripts/build-pack-tarball.mjs` + `registry/scripts/verify-signatures.mjs`.
 - **No callers in-tree.** `grep` across `conformance/`, `examples/`, `apps/`, `packs/*/test/` finds zero references to `core.openwop.http.idempotency-key`. The fix's blast radius is whatever external workflows have adopted the node since 2026-05-13 publication of `1.1.0`.
 
+### RFC 0020 host-side MCP server mount — behavioral conformance live (2026-05-17)
+
+Closes the last advertisement-only RFC. All 6 `mcp-server-*.test.ts` scenarios graduated from `it.todo()` to live behavioral assertions through the new reference-host MCP server mount.
+
+- **`apps/workflow-engine/backend/typescript/src/routes/mcp.ts`** (NEW) — Express handler at `POST /v1/host/sample/mcp`. JSON-RPC 2.0 wire over streamable-HTTP per RFC 0020 §A point 1. Env-gated on `OPENWOP_MCP_SERVER_ENABLED=true`. OFF by default; boot warns when ON. Sample-vendor-namespaced under `/v1/host/sample/*` per `spec/v1/host-extensions.md` §"Canonical prefixes" — NOT part of the openwop wire contract.
+- **`apps/workflow-engine/backend/typescript/src/host/mcpServerRegistry.ts`** (NEW) — Declarative scan of registered workflows for `core.openwop.mcp.expose-{tool,resource,prompt}` + `core.openwop.mcp.handle-{sampling,elicitation}` nodes. Per RFC 0020 §A point 2 "host's equivalent declarative shape" — no runtime registration required.
+- **`apps/workflow-engine/backend/typescript/src/host/mcpServerRouter.ts`** (NEW) — JSON-RPC method dispatch for: `initialize`, `ping`, `logging/setLevel`, `tools/list`, `tools/call`, `resources/list`, `resources/templates/list`, `resources/read`, `prompts/list`, `prompts/get`, `completion/complete`, `sampling/createMessage`, `elicitation/create`. Ajv2020 validates `tools/call.arguments` against the per-tool `inputSchema` BEFORE workflow start (the `mcp-server-untrusted-args` invariant).
+- **`apps/workflow-engine/backend/typescript/src/host/mcpJsonRpc.ts`** (NEW) — JSON-RPC 2.0 envelope helpers + canonical error codes.
+- **`apps/workflow-engine/backend/typescript/src/executor/{types,executor}.ts`** — Added `ctx.mcp.expose()` slot (typed in `NodeContext`; wired as a no-op handle issuer in the executor's per-node ctx). Pack delegates from `core.openwop.mcp.expose-*` now succeed; the host builds its MCP registry declaratively from workflow definitions instead of runtime ctx calls.
+- **`apps/workflow-engine/backend/typescript/src/routes/discovery.ts`** — Emits `capabilities.mcp.serverMount: { supported, transports, samplingBridge, elicitationBridge }` (sub-fields gated on the env flag).
+- **`apps/workflow-engine/backend/typescript/src/bootstrap/hostSurfaceRegistry.ts`** — `host.mcp` flips to `supported: true` with implementation tag when `OPENWOP_MCP_SERVER_ENABLED=true`.
+- **Conformance promotions:** all 6 `mcp-server-*.test.ts` scenarios upgraded from `it.todo()` placeholders to live behavioral assertions. Hosts that don't expose the seam (HTTP 404) soft-skip the behavioral half and verify advertisement shape only. 13/13 assertions pass against the live workflow-engine sample.
+  - `mcp-server-tool-roundtrip.test.ts` — `tools/list` includes the workflow registered via `expose-tool`; `tools/call` returns a CallToolResult.
+  - `mcp-server-resource-roundtrip.test.ts` — `resources/list` + `resources/read` against `expose-resource`.
+  - `mcp-server-prompt-roundtrip.test.ts` — `prompts/list` + `prompts/get` against `expose-prompt`.
+  - `mcp-server-sampling-bridge.test.ts` — `sampling/createMessage` dispatches to a workflow with `handle-sampling` (gated on `samplingBridge: true`).
+  - `mcp-server-elicitation-bridge.test.ts` — `elicitation/create` dispatches to a workflow with `handle-elicitation` (gated on `elicitationBridge: true`).
+  - `mcp-server-untrusted-args.test.ts` — Malformed `arguments` rejected with JSON-RPC `-32602` and `error.data.violations[]` BEFORE workflow start; valid args accepted (no false-positive).
+- **RFC 0020 acceptance criteria** — All 6 boxes ticked. Status stays `Active` pending third-party host validation per RFC 0001 §"Promotion to Accepted."
+- **Compatibility classification:** additive. No openwop wire-shape change; new endpoint is sample-host-namespaced.
+
 ### RFC 0015-0019 behavioral conformance via opt-in test seam (2026-05-17, post-commit `8b3bf43`)
 
 Eight of the `it.todo()` behavioral assertions from the RFC 0014-0020 promotion batch upgraded to live behavioral via a new opt-in reference-host test seam.

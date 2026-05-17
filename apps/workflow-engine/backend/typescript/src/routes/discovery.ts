@@ -198,6 +198,20 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
         maxValueBytes: 1024 * 1024, // 1 MiB
         maxTtlSeconds: 24 * 60 * 60, // 24 hours
       },
+      // RFC 0020 — host-side MCP server composition. Sample host
+      // exposes workflows as MCP tools/resources/prompts when
+      // OPENWOP_MCP_SERVER_ENABLED=true. Endpoint:
+      // POST /v1/host/sample/mcp (sample-vendor-namespaced).
+      mcp: {
+        serverMount: process.env.OPENWOP_MCP_SERVER_ENABLED === 'true'
+          ? {
+              supported: true,
+              transports: ['streamable-http'] as const,
+              samplingBridge: true,
+              elicitationBridge: true,
+            }
+          : { supported: false },
+      },
     },
     extensions: {
       // Sample-namespace extensions block. Clients tolerate absence.

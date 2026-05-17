@@ -147,6 +147,13 @@ export interface NodeContext {
   queueBus?: HostQueueBusSurface;
   /** ctx.observability — used by core.openwop.obs nodes. */
   observability?: HostObservabilitySurface;
+  /** ctx.mcp — RFC 0020 host-side MCP server. The `expose` method is a
+   *  no-op for hosts that build their MCP registry declaratively (by
+   *  scanning workflow definitions). Pack delegates from
+   *  core.openwop.mcp.expose-* call this and expect a `{handle}` result. */
+  mcp?: {
+    expose: (args: Record<string, unknown>) => Promise<Record<string, unknown>>;
+  };
 }
 
 /** Loose-typed surface map. The concrete shape lives in
