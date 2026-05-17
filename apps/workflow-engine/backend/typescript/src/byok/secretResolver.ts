@@ -196,10 +196,11 @@ export function clearExpiredEphemeralSecrets(keep: ReadonlySet<string>): number 
   if (!ephemeralEnabled()) return 0;
   let n = 0;
   for (const tenantId of Array.from(ephemeralSecrets.keys())) {
-    if (!keep.has(tenantId)) {
-      n += ephemeralSecrets.get(tenantId)!.size;
-      ephemeralSecrets.delete(tenantId);
-    }
+    if (keep.has(tenantId)) continue;
+    const bucket = ephemeralSecrets.get(tenantId);
+    if (!bucket) continue;
+    n += bucket.size;
+    ephemeralSecrets.delete(tenantId);
   }
   return n;
 }

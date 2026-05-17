@@ -165,6 +165,14 @@ function readCookie(header: string | undefined, name: string): string | undefine
 
 function setSessionCookie(res: import('express').Response, signed: string): void {
   const secure = process.env.NODE_ENV === 'production' || process.env.OPENWOP_COOKIE_SECURE === 'true';
+  // SameSite=Lax intentional. The cookie is scoped to the user-facing
+  // host (app.openwop.dev) where the SPA + backend share an origin via
+  // Firebase Hosting's `/api/**` → Cloud Run rewrite. Direct browser
+  // requests to the underlying Cloud Run URL (`*-run.app`) are cross-
+  // site, so the cookie correctly does NOT travel there. Do NOT relax
+  // to SameSite=None — that would weaken CSRF defenses without
+  // unlocking any legitimate flow (anyone hitting the Cloud Run URL
+  // directly is already off the supported path).
   const parts = [
     `${COOKIE_NAME}=${signed}`,
     `Path=/`,

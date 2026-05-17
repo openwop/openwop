@@ -14,6 +14,17 @@
  *     a tenantId we haven't seen recently has no live cookie that
  *     could read it.
  *
+ *     CURRENT SCOPE: only ephemeral BYOK secrets + the tenant-activity
+ *     tracker are wiped. Run records, event logs, and registered
+ *     workflows live in `Storage` (sqlite or `memory://`), which lacks
+ *     a `deleteRunsByTenant` API. They become unreachable as soon as
+ *     the session cookie expires (the auth layer scopes every read
+ *     to `req.tenantId`), and they're definitively gone on cold-start
+ *     (Cloud Run min=0 typically recycles in <1h idle). Extending
+ *     the Storage interface with per-tenant delete is queued as a
+ *     follow-up — see the Phase-3 plan note in
+ *     SECURITY/external-audit-engagement.md §2.1.1.
+ *
  *     Cloud Scheduler hits this daily at 03:00 UTC:
  *       gcloud scheduler jobs create http openwop-app-daily-cleanup \
  *         --schedule="0 3 * * *" --uri="https://app.openwop.dev/api/v1/host/sample/admin/cleanup" \

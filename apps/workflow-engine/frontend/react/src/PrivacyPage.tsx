@@ -45,7 +45,7 @@ Flags:   HttpOnly; Secure; SameSite=Lax`}
           <tbody>
             <tr>
               <td>Workflows you build</td>
-              <td>In-memory on the Cloud Run instance</td>
+              <td>In-memory on the Cloud Run instance, scoped to your session's tenant</td>
               <td>Until 24h cleanup OR cold-start (whichever comes first)</td>
             </tr>
             <tr>
@@ -54,9 +54,9 @@ Flags:   HttpOnly; Secure; SameSite=Lax`}
               <td>Until 24h cleanup OR cold-start. NEVER written to disk.</td>
             </tr>
             <tr>
-              <td>Run history + event logs</td>
-              <td>In-memory on the Cloud Run instance</td>
-              <td>Until cold-start (Cloud Run min=0 — typically &lt; 1 hour idle)</td>
+              <td>Run records + event logs</td>
+              <td>In-memory on the Cloud Run instance, scoped to your session's tenant</td>
+              <td>Until 24h cleanup OR cold-start. Wiped via the daily cleanup endpoint when the session goes idle.</td>
             </tr>
             <tr>
               <td>Cookie ID (<code>sid</code>)</td>
@@ -96,9 +96,13 @@ Flags:   HttpOnly; Secure; SameSite=Lax`}
           Google Cloud Run records request metadata (method, path, status, IP,
           user-agent) for operational debugging. Request bodies and response
           bodies are NOT captured. The application's structured logs strip BYOK
-          secrets via the SR-1 redaction harness from
-          <code> spec/v1/run-events.md</code> §"Secret redaction"; no API key
-          values appear in any log line.
+          secrets via the <code>stripSecretsFromPersisted</code> harness on
+          every event-log + interrupt boundary; the protocol invariants
+          <code>secret-leakage-eventlog-payload</code> and{' '}
+          <code>secret-leakage-error-envelope</code> (tracked in{' '}
+          <code>SECURITY/invariants.yaml</code>) gate this with public
+          conformance tests. No API-key plaintext appears in any log line,
+          event payload, error envelope, or audit record.
         </p>
 
         <h3>How to delete your data immediately</h3>
