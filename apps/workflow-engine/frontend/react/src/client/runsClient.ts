@@ -24,16 +24,24 @@ import { config } from './config.js';
 // "Illegal invocation" because window.fetch refuses unbound calls.
 // Filed-equivalent: @openwop/openwop v1.1.1 client.js:184. Safe to
 // remove this workaround once the SDK lands `this.#fetch.call(globalThis, ...)`.
-// In cookie auth mode we don't pass an apiKey to the SDK — the cookie
-// rides on `credentials: 'include'` via the custom fetch below. In
-// bearer mode the apiKey populates the Authorization header.
+// In cookie auth mode we don't actually use the apiKey, but the SDK
+// validates it as non-empty at construction. Pass a placeholder so
+// `new OpenwopClient` succeeds, then strip the SDK-added
+// `Authorization` header in the fetch wrapper before it hits the
+// backend (the openwop.session cookie carries auth instead, rolling
+// with `credentials: 'include'`).
 const client = new OpenwopClient({
   baseUrl: config.baseUrl,
-  apiKey: config.authMode === 'cookie' ? '' : config.apiKey,
-  fetch: (input, init) => globalThis.fetch(input, {
-    ...init,
-    ...(config.authMode === 'cookie' ? { credentials: 'include' } : {}),
-  }),
+  apiKey: config.authMode === 'cookie' ? 'cookie-mode-placeholder' : config.apiKey,
+  fetch: (input, init) => {
+    if (config.authMode === 'cookie') {
+      const headers = new Headers(init?.headers);
+      headers.delete('authorization');
+      headers.delete('Authorization');
+      return globalThis.fetch(input, { ...init, headers, credentials: 'include' });
+    }
+    return globalThis.fetch(input, init);
+  },
 });
 
 export interface RunListItem {
