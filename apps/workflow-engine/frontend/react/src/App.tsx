@@ -19,18 +19,18 @@ export function App() {
       <header className="app-header">
         <h1>OpenWOP — workflow-engine sample</h1>
         <nav>
-          <NavLink to="/ai">AI</NavLink>
+          <NavLink to="/" end>AI</NavLink>
           <NavLink to="/builder">Workflows</NavLink>
-          <NavLink to="/" end>Runs</NavLink>
+          <NavLink to="/runs">Runs</NavLink>
           <NavLink to="/capabilities">Capabilities</NavLink>
         </nav>
       </header>
       <main className={fullBleed ? 'app-main app-main-fullbleed' : 'app-main'}>
         <Routes>
-          <Route path="/" element={<RunsIndexPage />} />
+          <Route path="/" element={<ChatTab />} />
+          <Route path="/runs" element={<RunsIndexPage />} />
           <Route path="/runs/:runId" element={<RunDetailPage />} />
           <Route path="/capabilities" element={<CapabilitiesPanel />} />
-          <Route path="/ai" element={<ChatTab />} />
           <Route path="/builder" element={<WorkflowsDashboard />} />
           <Route path="/builder/:workflowId" element={<BuilderTab />} />
         </Routes>
