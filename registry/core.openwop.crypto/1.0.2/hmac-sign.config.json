@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.crypto/1.0.0/hmac-sign.config.json",
+  "title": "HmacSignConfig",
+  "type": "object",
+  "properties": {
+    "algorithm": {
+      "type": "string",
+      "enum": [
+        "sha256",
+        "sha384",
+        "sha512"
+      ],
+      "default": "sha256"
+    },
+    "keyEncoding": {
+      "type": "string",
+      "enum": [
+        "utf8",
+        "hex",
+        "base64",
+        "base64url"
+      ]
+    },
+    "inputEncoding": {
+      "type": "string",
+      "enum": [
+        "utf8",
+        "hex",
+        "base64",
+        "base64url"
+      ]
+    },
+    "outputEncoding": {
+      "type": "string",
+      "enum": [
+        "hex",
+        "base64",
+        "base64url"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

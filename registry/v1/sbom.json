@@ -162,6 +162,24 @@
       ]
     },
     {
+      "bom-ref": "pkg:openwop/core.openwop.crypto@1.0.2",
+      "type": "library",
+      "name": "core.openwop.crypto",
+      "version": "1.0.2",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.crypto/-/1.0.2.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "a72ca01c98cce5dab080745214f1cd2279015a1ad05cff2d2392af88759c045c"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "bom-ref": "pkg:openwop/core.openwop.data@1.0.0",
       "type": "library",
       "name": "core.openwop.data",
@@ -210,6 +228,24 @@
             {
               "alg": "SHA-256",
               "content": "b3f665052379d0094d530adf0e110b075d1ee5c3afffc22a30daea270c89c496"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/core.openwop.data@1.2.1",
+      "type": "library",
+      "name": "core.openwop.data",
+      "version": "1.2.1",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.data/-/1.2.1.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "caeb53f7d4696bf261926441073eb7fbdd1a3364d0d1490106d73670b5785a38"
             }
           ]
         }

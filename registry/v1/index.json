@@ -114,7 +114,7 @@
     {
       "name": "core.openwop.crypto",
       "kind": "node",
-      "latestVersion": "1.0.1",
+      "latestVersion": "1.0.2",
       "description": "Pure cryptographic primitives: hashing, HMAC, AEAD encrypt/decrypt, asymmetric sign/verify, JWT mint/verify, TOTP, x509 parse + chain verify. Built on node:crypto (Node 20+). Zero npm deps. Pure with respect to keys passed in via inputs.",
       "license": "Apache-2.0",
       "tags": [],
@@ -139,7 +139,7 @@
     {
       "name": "core.openwop.data",
       "kind": "node",
-      "latestVersion": "1.2.0",
+      "latestVersion": "1.2.1",
       "description": "Spec-canonical data-utility pack. v1.0 baseline (string-case, string-split, array-filter, array-map, object-merge) plus v1.1 additions: string format/regex/encode, array sort/unique/flatten/chunk/zip/reduce, object pick/omit/rename/get-path/set-path, json parse/stringify/schema-validate, jsonpath query, csv parse/stringify, datetime suite, number format/round/clamp, uuid. Zero npm deps (Node 20+).",
       "license": "Apache-2.0",
       "tags": [],

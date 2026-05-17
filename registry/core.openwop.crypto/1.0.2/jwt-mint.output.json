@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.crypto/1.0.0/jwt-mint.output.json",
+  "title": "JwtMintOutput",
+  "type": "object",
+  "required": [
+    "token",
+    "algorithm"
+  ],
+  "properties": {
+    "token": {
+      "type": "string"
+    },
+    "algorithm": {
+      "type": "string"
+    },
+    "expiresAt": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

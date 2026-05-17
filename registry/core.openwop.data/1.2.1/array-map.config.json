@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.data/1.0.0/array-map.config.json",
+  "title": "ArrayMapConfig",
+  "type": "object",
+  "required": ["template"],
+  "properties": {
+    "template": {
+      "type": "string",
+      "description": "Output template. `{{key}}` placeholders are substituted from each input element's keys (dot-notation supported, e.g., `{{user.name}}`). Missing keys produce the empty string. Non-string values are JSON-stringified. The template is interpreted PER ELEMENT — output is the array of substituted strings."
+    }
+  },
+  "additionalProperties": false
+}

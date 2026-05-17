@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.data/1.2.0/array-group-by.output.json",
+  "title": "ArrayGroupByOutput",
+  "type": "object",
+  "required": [
+    "groups",
+    "groupCount"
+  ],
+  "properties": {
+    "groups": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "title": "Group",
+        "required": [
+          "key",
+          "count"
+        ],
+        "properties": {
+          "key": {
+            "description": "Literal value of the group key (may be string/number/boolean/null/object/array)."
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Total members in this group."
+          }
+        },
+        "additionalProperties": true
+      },
+      "description": "One row per unique key. Additional properties are the named aggregations (outputKey from config)."
+    },
+    "groupCount": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of unique groups."
+    }
+  },
+  "additionalProperties": false
+}

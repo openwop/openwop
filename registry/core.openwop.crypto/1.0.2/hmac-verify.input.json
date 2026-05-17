@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.crypto/1.0.0/hmac-verify.input.json",
+  "title": "HmacVerifyInput",
+  "type": "object",
+  "required": [
+    "key",
+    "data",
+    "signature"
+  ],
+  "properties": {
+    "key": {
+      "type": "string"
+    },
+    "data": {
+      "type": "string"
+    },
+    "signature": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}
