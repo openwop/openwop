@@ -106,9 +106,7 @@
               "envelopeType": "summary.v1",
               "provider": "anthropic"
             },
-            "inputs": {
-              "sourceText": "{{params.url}} — fetched body wired by edge"
-            }
+            "inputs": {}
           }
         ],
         "edges": [

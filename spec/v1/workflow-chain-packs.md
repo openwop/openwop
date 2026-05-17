@@ -308,19 +308,19 @@ Hosts and registries operating on workflow-chain packs MUST use these error code
 
 ## Conformance
 
-**New scenarios (Phase 1):**
+**Landed scenarios (all server-free against the reference expansion library at [`conformance/src/lib/workflow-chain-expansion.ts`](../../conformance/src/lib/workflow-chain-expansion.ts)):**
 
-1. `workflow-chain-pack-manifest-validation.test.ts` — Positive: a valid `kind: "workflow-chain"` manifest parses + indexes via the registry build path. Negatives: manifest with both `nodes[]` and `chains[]` returns `pack_kind_invalid`; chain entry with `chainId` not matching the reverse-DNS pattern returns `invalid_manifest`.
+1. `workflow-chain-pack-manifest-validation.test.ts` — Positive: a valid `kind: "workflow-chain"` manifest parses + indexes via the registry build path; the in-repo [`examples/packs/workflow-chain-sample/`](../../examples/packs/workflow-chain-sample/) pack validates from disk. Negatives: manifest with both `nodes[]` and `chains[]` returns `pack_kind_invalid`; chain entry with `chainId` not matching the reverse-DNS pattern returns `invalid_manifest`; manifest with missing `kind` field is rejected.
 
-**Phase 2 scenarios (deferred to follow-up tracker):**
+2. `workflow-chain-pack-signature-verification.test.ts` — Ed25519 verification recipe reused unchanged from `node-packs.md §Signing`: valid (manifest + signature) pairs verify; tampered manifests fail with byte-level tamper detection; wrong-key signatures fail; chain-pack `signing` block carries the same `publicKeyRef` / `signatureRef` / `method` shape as node packs.
 
-2. `workflow-chain-pack-signature-verification.test.ts` — Reuses node-pack-signature-verification fixtures; only manifest content differs.
+3. `workflow-chain-expansion.test.ts` — Exercises the 9-step expansion algorithm: parameter substitution (literal + recursive into nested objects + same-name multi-position); node id collision avoidance (same chain expanded twice produces non-colliding ids; chainId dots slugged to underscores; `idMap` surfaced for caller-side parent-workflow edge wiring); edge rewriting (fragment-internal refs rewritten; port-name suffix preserved; out-of-fragment refs untouched); capability propagation (chain-level `capabilities[]` copied uniformly to every expanded node); runtime-invariance contract (expanded fragment carries ONLY concrete typeIds — no chain reference survives).
 
-3. `workflow-chain-expansion.test.ts` — Author submits a workflow referencing a chain at edit-time; host editor expands inline; dispatched workflow contains only `core.*`/published-vendor typeIds; parameter substitution resolves correctly in `config` + `inputs` (recursive into nested strings); node id collision avoidance produces unique ids when the same chain is expanded twice in one workflow.
+4. `workflow-chain-unresolvable-typeid.test.ts` — Rejection throws `ChainUnresolvableTypeIdError` with `code` + `typeId` + `chainId` for diagnostic; rejection happens BEFORE any output is produced (no partial expansion); fail-fast on the FIRST unknown typeId encountered.
 
-4. `workflow-chain-unresolvable-typeid.test.ts` — Author drops a chain whose `dag.nodes[].typeId` references an unpublished pack; expansion rejected with `chain_unresolvable_typeid`.
+**Still missing for FINAL promotion:** a fifth scenario class exercising end-to-end expansion against a real reference host (loading a workflow that references a chain, having the host's workflow editor invoke `expandChain`, persisting the result, dispatching the run, observing only concrete typeIds reach the runtime). This belongs to the reference-host implementation work tracked in RFC 0013's "Acceptance criteria" item 7. When a reference host implements it, the new scenario gates on `capabilities.workflowChainPacks.supported: true` (per §"Capability gating") and the conformance suite skips cleanly against hosts that don't advertise the capability.
 
-For **host-conformance scenarios** (Phase 2/3 — expansion, signature verification, unresolvable-typeid), each scenario gates on `capabilities.workflowChainPacks.supported: true`; hosts that don't advertise the capability MUST be skipped, not failed. **Server-free scenarios** that validate the spec corpus itself (e.g., `workflow-chain-pack-manifest-validation.test.ts`) run unconditionally — the schema is the spec regardless of which hosts implement it.
+**Gating rule.** Host-conformance scenarios MUST gate on `capabilities.workflowChainPacks.supported: true`; hosts that don't advertise the capability MUST be skipped, not failed. **Server-free scenarios** (all four above) validate the spec corpus itself and run unconditionally — the schema and reference library are the spec regardless of which hosts implement them.
 
 ---
 

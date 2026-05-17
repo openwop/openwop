@@ -204,14 +204,24 @@ function rebuildPack(packName) {
   // assuming dispatch semantics (workflow-chain packs aren't directly
   // dispatchable — they expand at workflow-author time).
   const kind = pack?.kind ?? 'node';
-  // Per-pack typeIds[] surfaced for catalog/discovery. For node packs
-  // this is nodes[].typeId; for workflow-chain packs it's
-  // chains[].chainId (parallel surface — both are namespaced ids
-  // consumers reference). Empty array when neither is populated.
+  // Per-pack typeIds[] surfaced for catalog/discovery. The semantics:
+  //   - node packs (kind=node, the default): merge nodes[].typeId AND
+  //     agents[].agentId so pure-agent packs (per RFC 0003) and mixed
+  //     node+agent packs both surface their full id set. Without the
+  //     agentId merge, agent-only packs would carry an empty typeIds[]
+  //     even though they ship real consumer-facing ids.
+  //   - workflow-chain packs (kind=workflow-chain, RFC 0013): chains[].chainId.
+  // All three id types share the same reverse-DNS shape; consumers MUST
+  // inspect `kind` if they need to discriminate dispatch semantics
+  // (node typeIds dispatch directly; chainIds expand at edit time;
+  // agentIds are resolved as AgentRef references).
   const typeIds =
     kind === 'workflow-chain'
       ? (pack?.chains ?? []).map((c) => c.chainId).filter(Boolean)
-      : (pack?.nodes ?? []).map((n) => n.typeId).filter(Boolean);
+      : [
+          ...(pack?.nodes ?? []).map((n) => n.typeId),
+          ...(pack?.agents ?? []).map((a) => a.agentId),
+        ].filter(Boolean);
 
   const indexDoc = {
     name: packName,

@@ -35,6 +35,17 @@
 import { describe, it, expect } from 'vitest';
 import { expandChain, type WorkflowChain } from '../lib/workflow-chain-expansion.js';
 
+/** Index helper that narrows away the `T | undefined` from `noUncheckedIndexedAccess`
+ *  with an actionable error message — replaces `arr[i]!` non-null assertions so a
+ *  shape mismatch surfaces as a real diagnostic instead of a TypeError-on-property-access. */
+function at<T>(arr: ReadonlyArray<T>, i: number, label: string): T {
+  const value = arr[i];
+  if (value === undefined) {
+    throw new Error(`${label}[${i}] expected to be defined (length=${arr.length})`);
+  }
+  return value;
+}
+
 /** Canonical sample chain used across multiple cases — mirrors the
  *  spec doc's "Positive: 1-node chain" example, kept tight so each
  *  assertion is focused on one rule. */
@@ -81,7 +92,7 @@ describe('category: workflow-chain expansion — placeholder substitution', () =
       isTypeIdResolvable: RESOLVE_ALL,
     });
     expect(fragment.nodes).toHaveLength(1);
-    const config = fragment.nodes[0]!.config as { systemPrompt: string };
+    const config = at(fragment.nodes, 0, 'fragment.nodes').config as { systemPrompt: string };
     expect(
       config.systemPrompt,
       'Per workflow-chain-packs.md §"Parameter substitution": placeholders MUST be substituted literally at expansion time.',
@@ -114,7 +125,7 @@ describe('category: workflow-chain expansion — placeholder substitution', () =
       params: { who: 'world' },
       isTypeIdResolvable: RESOLVE_ALL,
     });
-    const config = fragment.nodes[0]!.config as {
+    const config = at(fragment.nodes, 0, 'fragment.nodes').config as {
       outer: { middle: { message: string; tags: string[] } };
     };
     expect(
@@ -144,7 +155,7 @@ describe('category: workflow-chain expansion — placeholder substitution', () =
       },
       { expansionId: 'x', params: {}, isTypeIdResolvable: RESOLVE_ALL },
     );
-    const config = fragment.nodes[0]!.config as { literal: string; empty: string };
+    const config = at(fragment.nodes, 0, 'fragment.nodes').config as { literal: string; empty: string };
     expect(config.literal).toBe('no placeholders here');
     expect(config.empty).toBe('');
   });
@@ -166,7 +177,7 @@ describe('category: workflow-chain expansion — placeholder substitution', () =
       },
       { expansionId: 'x', params: { who: 'Ada' }, isTypeIdResolvable: RESOLVE_ALL },
     );
-    const config = fragment.nodes[0]!.config as { a: string; b: string; joined: string };
+    const config = at(fragment.nodes, 0, 'fragment.nodes').config as { a: string; b: string; joined: string };
     expect(config.a).toBe('Ada');
     expect(config.b).toBe('Ada');
     expect(config.joined).toBe('hi Ada, hi again Ada');
@@ -186,11 +197,11 @@ describe('category: workflow-chain expansion — node id collision avoidance', (
       isTypeIdResolvable: RESOLVE_ALL,
     });
     expect(
-      first.nodes[0]!.id,
+      at(first.nodes, 0, 'first.nodes').id,
       'Per spec §"Expansion semantics" step 6: each expansion MUST use a unique `expansionId` prefix so multi-expansion DAGs do not collide.',
-    ).not.toBe(second.nodes[0]!.id);
-    expect(first.nodes[0]!.id).toBe('vendor_acme_generatePRD_a8f3_prd-call');
-    expect(second.nodes[0]!.id).toBe('vendor_acme_generatePRD_b9e4_prd-call');
+    ).not.toBe(at(second.nodes, 0, 'second.nodes').id);
+    expect(at(first.nodes, 0, 'first.nodes').id).toBe('vendor_acme_generatePRD_a8f3_prd-call');
+    expect(at(second.nodes, 0, 'second.nodes').id).toBe('vendor_acme_generatePRD_b9e4_prd-call');
   });
 
   it('rewritten ids replace dots in chainId with underscores for storage-key safety', () => {
@@ -200,10 +211,10 @@ describe('category: workflow-chain expansion — node id collision avoidance', (
       isTypeIdResolvable: RESOLVE_ALL,
     });
     expect(
-      fragment.nodes[0]!.id,
+      at(fragment.nodes, 0, 'fragment.nodes').id,
       'chainId `vendor.acme.generatePRD` MUST be slugged (dots → underscores) so the resulting id is safe to use in storage backends that reserve `.` for hierarchical keys.',
     ).toMatch(/^vendor_acme_generatePRD_/);
-    expect(fragment.nodes[0]!.id).not.toMatch(/\./);
+    expect(at(fragment.nodes, 0, 'fragment.nodes').id).not.toMatch(/\./);
   });
 
   it('exposes idMap so the caller can wire parent-workflow edges into the expansion', () => {
@@ -243,10 +254,10 @@ describe('category: workflow-chain expansion — edge rewriting', () => {
     });
     expect(fragment.edges).toHaveLength(1);
     expect(
-      fragment.edges[0]!.from,
+      at(fragment.edges, 0, 'fragment.edges').from,
       'Edge `from` ids that match fragment node ids MUST be rewritten with the same prefix as the nodes themselves.',
     ).toBe('vendor_acme_twoStep_e1_first');
-    expect(fragment.edges[0]!.to).toBe('vendor_acme_twoStep_e1_second');
+    expect(at(fragment.edges, 0, 'fragment.edges').to).toBe('vendor_acme_twoStep_e1_second');
   });
 
   it('preserves port-name suffix (`nodeId.portName`) when rewriting edge refs', () => {
@@ -263,10 +274,10 @@ describe('category: workflow-chain expansion — edge rewriting', () => {
       isTypeIdResolvable: RESOLVE_ALL,
     });
     expect(
-      fragment.edges[0]!.from,
+      at(fragment.edges, 0, 'fragment.edges').from,
       'Port-name suffix (after the `.`) MUST be preserved verbatim during id rewriting.',
     ).toBe('vendor_acme_twoStep_e2_first.out');
-    expect(fragment.edges[0]!.to).toBe('vendor_acme_twoStep_e2_second.in');
+    expect(at(fragment.edges, 0, 'fragment.edges').to).toBe('vendor_acme_twoStep_e2_second.in');
   });
 
   it('leaves edge refs alone when they don\'t match a fragment node id', () => {
@@ -289,12 +300,12 @@ describe('category: workflow-chain expansion — edge rewriting', () => {
       isTypeIdResolvable: RESOLVE_ALL,
     });
     expect(
-      fragment.edges[0]!.from,
+      at(fragment.edges, 0, 'fragment.edges').from,
       'Edge refs to nodes OUTSIDE the fragment MUST pass through unchanged so the parent host can wire adjacent edges post-splice.',
     ).toBe('parent-upstream');
-    expect(fragment.edges[0]!.to).toBe('vendor_acme_twoStep_e3_first');
-    expect(fragment.edges[1]!.from).toBe('vendor_acme_twoStep_e3_second');
-    expect(fragment.edges[1]!.to).toBe('parent-downstream');
+    expect(at(fragment.edges, 0, 'fragment.edges').to).toBe('vendor_acme_twoStep_e3_first');
+    expect(at(fragment.edges, 1, 'fragment.edges').from).toBe('vendor_acme_twoStep_e3_second');
+    expect(at(fragment.edges, 1, 'fragment.edges').to).toBe('parent-downstream');
   });
 });
 
@@ -331,7 +342,7 @@ describe('category: workflow-chain expansion — capability propagation', () => 
       isTypeIdResolvable: RESOLVE_ALL,
     });
     expect(
-      fragment.nodes[0]!.capabilities,
+      at(fragment.nodes, 0, 'fragment.nodes').capabilities,
       'When the chain declares no `capabilities[]`, expanded nodes MUST NOT carry an empty array (preserves wire-shape minimality).',
     ).toBeUndefined();
   });
