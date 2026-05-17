@@ -13,6 +13,7 @@ import type {
   CreateRunResponse,
   ForkRunRequest,
   ForkRunResponse,
+  MutationOptions,
   PollEventsResponse,
   RunSnapshot,
 } from '@openwop/openwop';
@@ -56,8 +57,14 @@ export async function getCapabilities(): Promise<Capabilities & Record<string, u
   return (await client.discovery.capabilities()) as Capabilities & Record<string, unknown>;
 }
 
-export async function createRun(req: CreateRunRequest): Promise<CreateRunResponse> {
-  return client.runs.create(req);
+/** Forwards an optional `MutationOptions` so callers can supply the
+ *  `Idempotency-Key` (per spec/v1/idempotency.md Layer 1) and any other
+ *  knob the SDK exposes on mutation requests (`dedup`, etc.). */
+export async function createRun(
+  req: CreateRunRequest,
+  opts?: MutationOptions,
+): Promise<CreateRunResponse> {
+  return client.runs.create(req, opts);
 }
 
 export async function getRun(runId: string): Promise<RunSnapshot> {

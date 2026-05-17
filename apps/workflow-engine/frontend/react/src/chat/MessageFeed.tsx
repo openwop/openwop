@@ -22,9 +22,11 @@ interface Props {
   messages: readonly ChatMessage[];
   tenantId: string;
   onResolveInterrupt: (messageId: string, value: unknown) => Promise<void>;
+  /** Cancel an in-flight workflow_run by chat-message id. */
+  onCancelWorkflowRun: (messageId: string) => Promise<void>;
 }
 
-export function MessageFeed({ messages, tenantId, onResolveInterrupt }: Props): JSX.Element {
+export function MessageFeed({ messages, tenantId, onResolveInterrupt, onCancelWorkflowRun }: Props): JSX.Element {
   const endRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll on new messages OR content change (streaming deltas).
@@ -39,7 +41,9 @@ export function MessageFeed({ messages, tenantId, onResolveInterrupt }: Props): 
     }}>
       {messages.map((m) => (
         <div key={m.id}>
-          {m.role === 'workflow_run' ? <WorkflowRunBubble message={m} /> : <MessageBubble message={m} />}
+          {m.role === 'workflow_run'
+            ? <WorkflowRunBubble message={m} onCancel={() => onCancelWorkflowRun(m.id)} />
+            : <MessageBubble message={m} />}
           {m.activeInterrupt && (
             <div style={{ marginLeft: 12, marginRight: 'max(0px, calc(100% - var(--max-bubble-width, 75ch) - 12px))' }}>
               <CardHost

@@ -28,7 +28,7 @@ interface Props {
 }
 
 export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'demo' }: Props): JSX.Element {
-  const { session, isSending, error, send, cancel, emitSystem, reset, resolveInterrupt, runWorkflowMention } = useChatSession();
+  const { session, isSending, error, send, cancel, emitSystem, reset, resolveInterrupt, runWorkflowMention, cancelWorkflowRun } = useChatSession();
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [toolsEnabled, setToolsEnabled] = useState(false);
 
@@ -116,6 +116,7 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
           messages={session.messages}
           tenantId={tenantId}
           onResolveInterrupt={resolveInterrupt}
+          onCancelWorkflowRun={cancelWorkflowRun}
         />
       )}
 

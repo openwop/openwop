@@ -19,6 +19,9 @@ import type { ChatMessage, WorkflowRunState } from './hooks/useChatSession.js';
 
 interface Props {
   message: ChatMessage;
+  /** Caller cancels the in-flight run (no-op if status !== 'running').
+   *  Optional so tests / passive renders can omit. */
+  onCancel?: () => void | Promise<void>;
 }
 
 const STATUS_LABELS: Record<WorkflowRunState['status'], string> = {
@@ -47,9 +50,10 @@ function formatElapsed(startedAt: string): string {
   return `${mins}m ${remSecs}s`;
 }
 
-export function WorkflowRunBubble({ message }: Props): JSX.Element | null {
+export function WorkflowRunBubble({ message, onCancel }: Props): JSX.Element | null {
   const run = message.workflowRun;
   if (!run) return null;
+  const canCancel = run.status === 'running' && !!run.runId && !!onCancel;
 
   const completed = run.completedNodeIds.length;
   const total = run.totalNodes;
@@ -80,7 +84,7 @@ export function WorkflowRunBubble({ message }: Props): JSX.Element | null {
         fontSize: 14,
         lineHeight: 1.5,
       }}>
-        {/* Header: name + status pill */}
+        {/* Header: name + status pill (+ optional Cancel) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
           <span style={{ fontWeight: 600, fontSize: 13 }}>
             {run.workflowName}
@@ -96,6 +100,17 @@ export function WorkflowRunBubble({ message }: Props): JSX.Element | null {
           }}>
             {STATUS_LABELS[run.status]}
           </span>
+          {canCancel && (
+            <button
+              type="button"
+              className="secondary"
+              style={{ marginLeft: 'auto', fontSize: 11, padding: '2px 10px', minHeight: 0 }}
+              onClick={() => { void onCancel?.(); }}
+              title="Cancel this run"
+            >
+              Cancel
+            </button>
+          )}
         </div>
 
         {/* Progress */}

@@ -16,7 +16,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RunEventDoc } from '@openwop/openwop';
-import { cancelRun, createRun } from '../../client/runsClient.js';
+import { cancelRun, createRun, getRun } from '../../client/runsClient.js';
 import { subscribeToRun, type Subscription } from '../../client/streamsClient.js';
 import { listOpenInterrupts, type OpenInterrupt } from '../../client/interruptsClient.js';
 import type { BYOKActiveConfig } from '../../byok/lib/useBYOKConfig.js';
@@ -53,6 +53,12 @@ export interface WorkflowRunState {
   totalNodes: number;
   /** Deduped node ids whose `node.completed` event has been seen. */
   completedNodeIds: string[];
+  /** Deduped node ids whose `node.failed` event has been seen. The
+   *  executor may keep running other branches after a failure (error-
+   *  routing trigger rules); the bubble surfaces failures via the
+   *  terminal `run.failed` event but tracks per-node failures here for
+   *  future UI use and progress-bar accuracy. */
+  failedNodeIds: string[];
   /** Friendly name of the most recently started node. */
   currentNodeName: string | null;
   /** Map of backend nodeId → friendly name from the builder graph.
@@ -162,6 +168,9 @@ export interface UseChatSessionResult {
    *  dispatches POST /v1/runs immediately; surfaces progress + HITL
    *  interrupts inline in the chat feed as a `workflow_run` message. */
   runWorkflowMention: (entry: WorkflowMentionEntry) => Promise<void>;
+  /** Cancel an in-flight workflow_run. No-op if the message is not a
+   *  workflow_run, its run is not in flight, or its runId isn't set. */
+  cancelWorkflowRun: (messageId: string) => Promise<void>;
   /** Cancel the in-flight turn (if any). No-op when nothing is streaming. */
   cancel: () => Promise<void>;
   /** Append a synthetic system-role message to the visible thread.
@@ -182,6 +191,12 @@ export function useChatSession(): UseChatSessionResult {
   const inFlightRunIdRef = useRef<string | null>(null);
   /** Assistant message id of the in-flight bubble. Used by cancel(). */
   const inFlightAssistantIdRef = useRef<string | null>(null);
+  /** SSE subscriptions for live workflow_run messages, keyed by the
+   *  workflow_run chat-message id. Bare-mention dispatches are
+   *  long-lived and independent of the chat-turn lifecycle — they
+   *  can run concurrently and outlive any single chat turn, so they
+   *  need their own ref. Cleared on terminal events + unmount. */
+  const workflowSubsRef = useRef<Map<string, Subscription>>(new Map());
 
   // Apply-animation: batches token deltas into ~one update per
   // animation frame. The flush callback appends the accumulated tail
@@ -210,7 +225,62 @@ export function useChatSession(): UseChatSessionResult {
 
   useEffect(() => () => {
     subRef.current?.close();
+    for (const sub of workflowSubsRef.current.values()) sub.close();
+    workflowSubsRef.current.clear();
   }, []);
+
+  // Hydration poll: any persisted workflow_run with status='running' is
+  // stale (the SSE subscription died on the previous tab/reload). Fetch
+  // a one-shot snapshot per stuck run and reconcile to a terminal state.
+  // Missed mid-run interrupts can't be reconstructed from a snapshot;
+  // the user can resolve them from /runs/:runId if needed. The ref guard
+  // ensures we only walk the initial session — subsequent session
+  // changes drive their own SSE and don't need re-reconciliation.
+  const didHydrateRef = useRef(false);
+  useEffect(() => {
+    if (didHydrateRef.current) return;
+    didHydrateRef.current = true;
+    let cancelled = false;
+    void (async () => {
+      const stuck = session.messages.filter(
+        (m): m is ChatMessage & { workflowRun: WorkflowRunState } =>
+          m.role === 'workflow_run'
+          && m.workflowRun?.status === 'running'
+          && typeof m.workflowRun?.runId === 'string',
+      );
+      for (const m of stuck) {
+        const runId = m.workflowRun.runId;
+        if (!runId) continue;
+        try {
+          const snap = await getRun(runId);
+          if (cancelled) return;
+          const next: WorkflowRunState['status'] | null = (() => {
+            switch (snap.status) {
+              case 'completed': return 'completed';
+              case 'failed':    return 'failed';
+              case 'cancelled': return 'cancelled';
+              default: return null;
+            }
+          })();
+          if (!next) continue;
+          setSession((s) => ({
+            ...s,
+            messages: s.messages.map((mm) => mm.id === m.id && mm.workflowRun ? {
+              ...mm,
+              workflowRun: {
+                ...mm.workflowRun,
+                status: next,
+                ...(next === 'failed' ? { error: { code: 'reconciled', message: 'Run failed; details in /runs.' } } : {}),
+              },
+            } : mm),
+          }));
+        } catch {
+          /* network error — leave the bubble as-is; user can refresh later */
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [session]);
 
   const send = useCallback(async (text: string, config: BYOKActiveConfig, opts?: SendOptions) => {
     setIsSending(true);
@@ -265,24 +335,42 @@ export function useChatSession(): UseChatSessionResult {
     inFlightAssistantIdRef.current = assistantId;
     let runId: string;
     try {
-      const created = await createRun({
-        workflowId: 'sample.chat.turn',
-        tenantId: 'demo',
-        inputs: {
-          provider: config.provider,
-          model: config.model,
-          credentialRef: config.credentialRef,
-          messages: providerMessages,
-          webSearch: opts?.webSearch === true,
-          ...(opts?.tools && opts.tools.length > 0 ? { tools: opts.tools } : {}),
+      const created = await createRun(
+        {
+          workflowId: 'sample.chat.turn',
+          tenantId: 'demo',
+          inputs: {
+            provider: config.provider,
+            model: config.model,
+            credentialRef: config.credentialRef,
+            messages: providerMessages,
+            webSearch: opts?.webSearch === true,
+            ...(opts?.tools && opts.tools.length > 0 ? { tools: opts.tools } : {}),
+          },
+          configurable: {
+            credentialRefs: [config.credentialRef],
+          },
+          metadata: { chatSessionId: session.id, chatMessageId: assistantId },
         },
-        configurable: {
-          credentialRefs: [config.credentialRef],
-        },
-        metadata: { chatSessionId: session.id, chatMessageId: assistantId },
-      });
+        // Per spec/v1/idempotency.md Layer 1: stable key per user intent.
+        // `assistantId` is generated once per `send()` call, so retries
+        // of the same intent collapse server-side instead of creating
+        // duplicate runs.
+        { idempotencyKey: assistantId },
+      );
       runId = created.runId;
       inFlightRunIdRef.current = runId;
+      // Stamp the bubble with the runId immediately so any mid-stream
+      // interrupt has a valid run to resolve against — the rest of
+      // `meta` (provider/model/tokens/citations) populates on
+      // `node.completed` below.
+      setSession((s) => ({
+        ...s,
+        messages: s.messages.map((m) => m.id === assistantId
+          ? { ...m, meta: { ...(m.meta ?? {}), runId } }
+          : m,
+        ),
+      }));
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setSession((s) => ({
@@ -497,10 +585,10 @@ export function useChatSession(): UseChatSessionResult {
   }, []);
 
   /** Update a single `workflow_run` message's `workflowRun` state. */
-  function updateWorkflowRun(
+  const updateWorkflowRun = useCallback((
     messageId: string,
     patch: (prev: WorkflowRunState) => WorkflowRunState,
-  ): void {
+  ): void => {
     setSession((s) => ({
       ...s,
       messages: s.messages.map((m) => {
@@ -508,7 +596,24 @@ export function useChatSession(): UseChatSessionResult {
         return { ...m, workflowRun: patch(m.workflowRun) };
       }),
     }));
+  }, []);
+
+  /** Close + remove a workflow_run's SSE subscription. Safe to call
+   *  even if the entry is missing (no-op). */
+  function closeWorkflowSub(messageId: string): void {
+    const sub = workflowSubsRef.current.get(messageId);
+    if (!sub) return;
+    sub.close();
+    workflowSubsRef.current.delete(messageId);
   }
+
+  /** Built-in fallback inputs for hardcoded sample.* workflows that
+   *  ship without a SavedWorkflow defaultInputs blob. Keeps `@uppercase`
+   *  from dispatching with an empty `inputs.text` and silently emitting
+   *  an empty string. */
+  const SAMPLE_DEFAULT_INPUTS: Record<string, Record<string, unknown>> = {
+    'sample.demo.uppercase': { text: 'hello world' },
+  };
 
   const runWorkflowMention = useCallback(async (entry: WorkflowMentionEntry) => {
     setError(null);
@@ -543,7 +648,7 @@ export function useChatSession(): UseChatSessionResult {
     // Mirrors serialize.ts:174 nodeId pattern: `${sanitizedKind}_${index}`.
     const nodeNames: Record<string, string> = {};
     let totalNodes = 0;
-    let inputs: Record<string, unknown> = {};
+    let inputs: Record<string, unknown> = SAMPLE_DEFAULT_INPUTS[entry.workflowId] ?? {};
     if (saved) {
       totalNodes = saved.nodes.length;
       saved.nodes.forEach((n, i) => {
@@ -564,6 +669,7 @@ export function useChatSession(): UseChatSessionResult {
       status: 'pending',
       totalNodes,
       completedNodeIds: [],
+      failedNodeIds: [],
       currentNodeName: null,
       nodeNames,
       startedAt,
@@ -583,12 +689,20 @@ export function useChatSession(): UseChatSessionResult {
         const def = serializeWorkflow(saved);
         await registerWorkflow(def);
       }
-      const created = await createRun({
-        workflowId: entry.workflowId,
-        tenantId: 'demo',
-        inputs,
-        metadata: { chatSessionId: session.id, chatMessageId: runMsgId, mentionSlug: entry.slug },
-      });
+      const created = await createRun(
+        {
+          workflowId: entry.workflowId,
+          tenantId: 'demo',
+          inputs,
+          metadata: { chatSessionId: session.id, chatMessageId: runMsgId, mentionSlug: entry.slug },
+        },
+        // Per spec/v1/idempotency.md Layer 1: `runMsgId` is generated
+        // once per `runWorkflowMention()` invocation and persisted on
+        // the workflow_run message. A page refresh or SDK retry that
+        // re-submits with this key will collapse onto the original
+        // run server-side instead of creating a duplicate.
+        { idempotencyKey: runMsgId },
+      );
       runId = created.runId;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -620,6 +734,22 @@ export function useChatSession(): UseChatSessionResult {
               ? prev
               : { ...prev, completedNodeIds: [...prev.completedNodeIds, nodeId] }
           ));
+        } else if (ev.type === 'node.failed' && nodeId) {
+          // The executor may keep running other branches on failure
+          // (error-routing trigger rules). Track failed nodes so the
+          // progress bar accounts for them and clear `currentNodeName`
+          // so the UI doesn't claim a failed node is still "running".
+          updateWorkflowRun(runMsgId, (prev) => (
+            prev.failedNodeIds.includes(nodeId)
+              ? prev
+              : {
+                  ...prev,
+                  failedNodeIds: [...prev.failedNodeIds, nodeId],
+                  currentNodeName: prev.currentNodeName === (prev.nodeNames[nodeId] ?? nodeId)
+                    ? null
+                    : prev.currentNodeName,
+                }
+          ));
         } else if (ev.type === 'node.suspended') {
           try {
             const open = await listOpenInterrupts(runId);
@@ -641,7 +771,7 @@ export function useChatSession(): UseChatSessionResult {
             status: 'completed',
             ...(outputs ? { outputs } : {}),
           }));
-          sub.close();
+          closeWorkflowSub(runMsgId);
         } else if (ev.type === 'run.failed') {
           const err = (payload.error as Record<string, string>) ?? { code: 'unknown', message: 'unknown failure' };
           updateWorkflowRun(runMsgId, (prev) => ({
@@ -649,16 +779,49 @@ export function useChatSession(): UseChatSessionResult {
             status: 'failed',
             error: { code: err.code ?? 'unknown', message: err.message ?? 'unknown failure' },
           }));
-          sub.close();
+          closeWorkflowSub(runMsgId);
         } else if (ev.type === 'run.cancelled') {
           updateWorkflowRun(runMsgId, (prev) => ({ ...prev, status: 'cancelled' }));
-          sub.close();
+          closeWorkflowSub(runMsgId);
         }
       },
       onError: () => { /* SSE drops don't tear down the bubble */ },
       onTimeout: () => { /* idle timeout — leave bubble as-is */ },
     });
-  }, [session.id]);
+    workflowSubsRef.current.set(runMsgId, sub);
+  }, [session.id, updateWorkflowRun]);
 
-  return { session, isSending, error, send, cancel, emitSystem, reset, resolveInterrupt, runWorkflowMention };
+  const cancelWorkflowRun = useCallback(async (messageId: string) => {
+    const msg = session.messages.find((m) => m.id === messageId);
+    const runId = msg?.workflowRun?.runId;
+    if (!runId || msg?.workflowRun?.status !== 'running') return;
+    try {
+      await cancelRun(runId, 'User cancelled from chat.');
+      // The backend's run.cancelled event will flip the status + close
+      // the SSE subscription via the existing terminal-event handler.
+      // Optimistic UI: nothing to do here — the bubble updates on the
+      // event arriving.
+    } catch (err) {
+      const m = err instanceof Error ? err.message : String(err);
+      updateWorkflowRun(messageId, (prev) => ({
+        ...prev,
+        status: 'failed',
+        error: { code: 'cancel_failed', message: m },
+      }));
+      closeWorkflowSub(messageId);
+    }
+  }, [session.messages, updateWorkflowRun]);
+
+  return {
+    session,
+    isSending,
+    error,
+    send,
+    cancel,
+    emitSystem,
+    reset,
+    resolveInterrupt,
+    runWorkflowMention,
+    cancelWorkflowRun,
+  };
 }
