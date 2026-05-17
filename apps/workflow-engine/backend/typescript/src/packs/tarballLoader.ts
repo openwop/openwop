@@ -20,6 +20,7 @@ import { createHash, verify as verifySig, KeyObject, createPublicKey } from 'nod
 import { pathToFileURL } from 'node:url';
 import type { NodeModule } from '../executor/types.js';
 import { createLogger } from '../observability/logger.js';
+import { isInstalledPack, verifyInstalledPack } from './registryInstaller.js';
 
 const log = createLogger('packs.tarballLoader');
 
@@ -49,12 +50,28 @@ export async function loadPackFromManifest(packDir: string): Promise<NodeModule 
   const manifestRaw = readFileSync(manifestPath);
   const manifest = JSON.parse(manifestRaw.toString('utf-8')) as PackManifest;
 
+  // Registry-installed packs carry a `.openwop-installed.json` trust
+  // marker. Install-time verified the tarball SRI + Ed25519 signature
+  // over `pack.json` bytes — re-verifying the legacy
+  // `manifest.signature` (sha384-over-pack.json) would be both
+  // redundant and use a different algorithm. We DO re-verify the
+  // marker's content hashes on every load so post-install tampering
+  // (e.g., `index.mjs` swapped) is caught.
+  const trustedFromInstall = isInstalledPack(packDir);
+  if (trustedFromInstall) {
+    const reason = verifyInstalledPack(packDir);
+    if (reason) {
+      log.error('installed pack tampering detected; refusing to load', { packDir, reason });
+      return null;
+    }
+  }
+
   // Per spec/v1/node-packs.md: SRI + Ed25519 verification is REQUIRED for
   // packs from a registry. The sample only loads from disk so verification
   // is opt-in via the manifest's `signature` block — this exists primarily
   // to demonstrate the verification path; production callers wire this for
   // every pack tarball before extraction.
-  if (manifest.signature) {
+  if (manifest.signature && !trustedFromInstall) {
     const pubPath = join(packDir, manifest.signature.publicKeyPath);
     const sigPath = join(packDir, manifest.signature.signaturePath);
     if (!existsSync(pubPath) || !existsSync(sigPath)) {
@@ -96,10 +113,26 @@ export async function loadPackFromManifest(packDir: string): Promise<NodeModule 
       typeId,
       version: manifest.version,
       async execute(ctx) {
-        const result = await (fn as (c: unknown) => Promise<unknown>)({
-          inputs: ctx.inputs,
-          config: ctx.config,
-        });
+        // Forward the spec-defined NodeContext surface to the pack.
+        // Packs receive `inputs` + `config` (the static node config)
+        // PLUS the host-capability methods (`callAI`, `callAIWithTools`,
+        // `emit`, `secrets`, …) per `spec/v1/host-capabilities.md`.
+        // The pack-side `pack-node-error` shape preserves whatever the
+        // node throws; we don't downgrade errors with `code` to a
+        // generic `pack_node_error` because policy-denied / model-not-
+        // allowed errors need their canonical code to propagate to
+        // the run event log.
+        let result: unknown;
+        try {
+          result = await (fn as (c: unknown) => Promise<unknown>)(ctx);
+        } catch (err) {
+          const code =
+            err && typeof err === 'object' && 'code' in err && typeof (err as { code: unknown }).code === 'string'
+              ? ((err as { code: string }).code)
+              : 'pack_node_error';
+          const message = err instanceof Error ? err.message : String(err);
+          return { status: 'failure', error: { code, message } };
+        }
         const r = result as { status?: string; outputs?: unknown };
         if (r.status === 'success') {
           return { status: 'success', outputs: r.outputs };
@@ -116,10 +149,18 @@ export async function loadPackFromManifest(packDir: string): Promise<NodeModule 
 /**
  * Verify a pack tarball's SRI integrity hash + Ed25519 signature.
  *
- * Call before extracting/loading. Real registries serve packs with:
- *   - integrity: "sha384-<base64>"   (Subresource Integrity)
- *   - signature: <base64 Ed25519 sig over the canonical manifest hash>
- *   - publicKeyId: <opaque key id> resolved against the registry's keys
+ * This helper covers the LEGACY on-disk shape (sha384 integrity over
+ * the raw `pack.json` bytes; signature over those same bytes). It's
+ * NOT the registry recipe — packs from packs.openwop.dev are SHA-256
+ * SRI over the whole tarball, with Ed25519 signing the raw
+ * `pack.json` bytes extracted from the tarball. See
+ * `registry/scripts/verify-signatures.mjs` (canonical) and
+ * `packs/registryInstaller.ts` (this codebase's consumer) for that
+ * flow.
+ *
+ * SRI verifies bytes-vs-hash; signature verifies bytes-vs-key. The
+ * signature is NOT over the SRI hash — that would be a layer of
+ * indirection the canonical verifier doesn't perform.
  */
 export interface VerifyResult {
   ok: boolean;
@@ -149,9 +190,11 @@ export function verifyPackSignature(input: {
     return { ok: false, reason: `invalid_public_key: ${err instanceof Error ? err.message : 'unknown'}` };
   }
 
-  // Ed25519 signs the SRI hash itself (canonical content-addressed).
+  // Ed25519 signs the manifest bytes directly (NOT the SRI hash).
+  // Mirrors `registry/scripts/verify-signatures.mjs` so a publisher
+  // who reads either helper builds compatible signatures.
   const sig = Buffer.from(input.signatureBase64, 'base64');
-  const verified = verifySig(null, Buffer.from(computed, 'base64'), publicKey, sig);
+  const verified = verifySig(null, input.tarballBytes, publicKey, sig);
   if (!verified) {
     return { ok: false, reason: 'signature_invalid' };
   }

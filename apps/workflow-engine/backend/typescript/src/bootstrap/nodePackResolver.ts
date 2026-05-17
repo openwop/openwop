@@ -10,14 +10,17 @@
  */
 
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { join } from 'node:path';
 import { setNodePackResolver } from '../executor/nodeRegistry.js';
 import { loadPackFromManifest } from '../packs/tarballLoader.js';
+import { resolveDefaultPackDir } from '../packs/registryInstaller.js';
 import { createLogger } from '../observability/logger.js';
 import type { Storage } from '../storage/storage.js';
 
 const log = createLogger('bootstrap.nodePackResolver');
-const PACK_DIR = process.env.OPENWOP_PACK_DIR ?? resolve('./packs');
+// MUST match `registryInstaller.resolveDefaultPackDir()` so the
+// resolver looks in the same directory the installer writes to.
+const PACK_DIR = resolveDefaultPackDir();
 
 export function ensureNodePackResolverInstalled(_storage: Storage): void {
   setNodePackResolver(async (typeId) => {
