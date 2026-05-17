@@ -113,28 +113,48 @@ function ProviderGrid({
   return (
     <div>
       <h2 style={{ margin: 0, fontSize: 14 }}>Pick a provider</h2>
-      <p className="muted" style={{ marginTop: 4, fontSize: 12 }}>
-        You bring your own key. The sample BE stores it in-memory only — see <code>src/byok/secretResolver.ts</code>.
+      <p style={{ marginTop: 8, marginBottom: 8, fontSize: 12, lineHeight: 1.5 }}>
+        <strong>BYOK</strong> ("bring your own key") means you supply the API
+        key for the model provider you pick below. The provider — Anthropic,
+        OpenAI, or Google — bills you directly for your usage. OpenWOP never
+        sees the bill and never proxies your usage.
+      </p>
+      <p className="muted" style={{ marginTop: 0, marginBottom: 4, fontSize: 12, lineHeight: 1.5 }}>
+        Your key is stored on the sample server (sqlite-backed, AES-256-GCM
+        encrypted at rest) and sent only to the provider you picked. Set
+        <code style={{ margin: '0 4px' }}>OPENWOP_BYOK_EPHEMERAL=1</code> on the
+        server to switch to in-memory-only mode that wipes on restart.
+        Production hosts swap the storage layer for a managed KMS — see
+        <code style={{ margin: '0 4px' }}>src/byok/secretResolver.ts</code>.
       </p>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 16 }}>
         {PROVIDERS.map((p) => (
-          <button
-            key={p.id}
-            type="button"
-            className="secondary"
-            onClick={() => onPick(p)}
-            style={{
-              display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 12,
-              padding: 12, textAlign: 'left',
-              border: '1px solid var(--color-border)',
-            }}
-          >
-            <ProviderBadge provider={p} />
-            <div>
-              <div style={{ fontWeight: 600, fontSize: 13 }}>{p.label}</div>
-              <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>{p.description}</div>
-            </div>
-          </button>
+          <div key={p.id} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => onPick(p)}
+              style={{
+                display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 12,
+                padding: 12, textAlign: 'left',
+                border: '1px solid var(--color-border)',
+              }}
+            >
+              <ProviderBadge provider={p} />
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 13 }}>{p.label}</div>
+                <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>{p.description}</div>
+              </div>
+            </button>
+            <a
+              href={p.apiKeyConsoleUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ fontSize: 11, paddingLeft: 4 }}
+            >
+              Get a {p.label} API key →
+            </a>
+          </div>
         ))}
       </div>
       {onCancel && (

@@ -42,7 +42,7 @@ export function ChatTab(): JSX.Element {
       <div className="alert error" style={{ margin: 24 }}>
         Cannot reach backend: <code>{error}</code>
         <div style={{ marginTop: 8, fontSize: 12 }}>
-          Is the BE running at <code>{import.meta.env.VITE_OPENWOP_BASE_URL ?? 'http://localhost:8080'}</code>?
+          Is the server running at <code>{import.meta.env.VITE_OPENWOP_BASE_URL ?? 'http://localhost:8080'}</code>?
         </div>
       </div>
     );
