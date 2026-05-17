@@ -7,7 +7,10 @@
   "homepage": "https://openwop.dev/packs/core.openwop.agent-examples",
   "repository": "https://github.com/openwop/openwop",
   "tags": [],
-  "typeIds": [],
+  "typeIds": [
+    "core.openwop.agent-examples.echo-agent",
+    "core.openwop.agent-examples.summarizer"
+  ],
   "versions": [
     {
       "version": "1.0.0",

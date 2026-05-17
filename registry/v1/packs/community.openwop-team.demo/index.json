@@ -8,7 +8,8 @@
   "repository": "https://github.com/openwop/openwop",
   "tags": [],
   "typeIds": [
-    "community.openwop-team.demo.uppercase"
+    "community.openwop-team.demo.uppercase",
+    "community.openwop-team.demo.greeter"
   ],
   "versions": [
     {

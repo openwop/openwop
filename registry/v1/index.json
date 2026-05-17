@@ -139,7 +139,7 @@
     {
       "name": "core.openwop.data",
       "kind": "node",
-      "latestVersion": "1.1.0",
+      "latestVersion": "1.2.0",
       "description": "Spec-canonical data-utility pack. v1.0 baseline (string-case, string-split, array-filter, array-map, object-merge) plus v1.1 additions: string format/regex/encode, array sort/unique/flatten/chunk/zip/reduce, object pick/omit/rename/get-path/set-path, json parse/stringify/schema-validate, jsonpath query, csv parse/stringify, datetime suite, number format/round/clamp, uuid. Zero npm deps (Node 20+).",
       "license": "Apache-2.0",
       "tags": [],
@@ -160,6 +160,7 @@
         "core.openwop.data.array-chunk",
         "core.openwop.data.array-zip",
         "core.openwop.data.array-reduce",
+        "core.openwop.data.array-group-by",
         "core.openwop.data.object-pick",
         "core.openwop.data.object-omit",
         "core.openwop.data.object-rename-keys",
@@ -258,7 +259,7 @@
     {
       "name": "core.openwop.flow",
       "kind": "node",
-      "latestVersion": "1.0.1",
+      "latestVersion": "1.1.0",
       "description": "Spec-canonical flow-control primitives. 25 nodes covering branching, merging, iteration, aggregation, batching, sorting, deduplication, repetition, suspension, sub-workflow invocation, and Make-style error handlers. Pure or suspending — no external I/O. Zero npm deps. Engine >=1.0.0 <2.0.0.",
       "license": "Apache-2.0",
       "tags": [],
