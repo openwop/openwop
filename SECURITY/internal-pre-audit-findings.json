@@ -1,0 +1,216 @@
+{
+  "bundleVersion": "1",
+  "auditVendor": "steward-internal",
+  "engagementCommit": "1c9dba6d791d103b77af0d7dbd8724ec1b246b3c",
+  "engagementStartedAt": "2026-05-17T10:38:00Z",
+  "engagementCompletedAt": "2026-05-17T11:30:00Z",
+  "findings": [
+    {
+      "findingId": "OPENWOP-AUDIT-2026-001",
+      "title": "JWT verify trusts caller-supplied alg header (alg-confusion / CVE-2015-9235 pattern)",
+      "severity": "high",
+      "status": "open",
+      "summary": "`core.openwop.crypto.jwt-verify` reads the algorithm from the inbound token's header and uses it to select the verification path (HMAC vs RSA vs ECDSA vs EdDSA). The pack does not require the caller to declare an `expectedAlgorithm` and reject mismatches. An attacker that knows the verifier's public RSA / EC / Ed25519 key (which is public by definition) can submit a token with `alg: HS256` and that public key as the HMAC secret — the HS256 branch of `jwtVerifySig` will verify the attacker-signed token because the public key bytes are treated as a symmetric secret. This is the canonical JWT algorithm-confusion bug (CVE-2015-9235; described in RFC 8725 §2.1). Mitigation: add `expectedAlgorithm` (or `allowedAlgorithms: string[]`) to `JwtVerifyConfig`, mark it as REQUIRED in the schema, and reject any token whose header `alg` is not in the allow-list before any key material is touched. Also: when JWKS is provided, key-type cross-check (RSA key → only RS*/PS*; EC key → only ES*; OKP key → only EdDSA) closes the residual gap.",
+      "affectedSurfaces": [
+        "packs/core.openwop.crypto/index.mjs",
+        "packs/core.openwop.crypto/schemas/jwt-verify.config.json"
+      ],
+      "threatModels": [
+        "SECURITY/threat-model-auth-profiles.md"
+      ],
+      "invariantIds": []
+    },
+    {
+      "findingId": "OPENWOP-AUDIT-2026-002",
+      "title": "HTTP / RAG packs have no SSRF defense at the pack layer",
+      "severity": "high",
+      "status": "open",
+      "summary": "`core.openwop.http.fetch` (and the v1.1 additions `openapi-call`, `sse-consume`, `download-stream`, `upload-multipart`, `webhook-verify` HEAD checks) plus `core.openwop.rag.loader-url` and `loader-github` pass workflow-author-supplied URLs to `globalThis.fetch` with no allow-list, no loopback/link-local block, no metadata-endpoint block, and no host-side hook the pack consults before dialing. A workflow on a multi-tenant host can target `http://169.254.169.254/latest/meta-data/iam/security-credentials/` (AWS IMDS) or any other internal endpoint reachable from the host and exfiltrate the response in `outputs.body`. The spec leaves egress policy to the host's provider-policy surface, but the packs themselves should at minimum (a) document a `network.egressAllowList` host capability the pack consults when present, (b) refuse non-http/https schemes (the http pack already does — confirmed line 285), (c) refuse loopback / link-local / RFC 1918 ranges by default unless the host advertises `network.allowPrivateRanges: true`. Until the host enforces egress, treating any deploy of these packs on an untrusted multi-tenant fabric as exfiltration-capable is correct.",
+      "affectedSurfaces": [
+        "packs/core.openwop.http/index.mjs",
+        "packs/core.openwop.rag/index.mjs",
+        "SECURITY/threat-model-provider-policy.md"
+      ],
+      "threatModels": [
+        "SECURITY/threat-model-provider-policy.md",
+        "SECURITY/threat-model-secret-leakage.md"
+      ],
+      "invariantIds": []
+    },
+    {
+      "findingId": "OPENWOP-AUDIT-2026-003",
+      "title": "`core.agents.run` invokes caller-supplied tool handlers as raw JS functions",
+      "severity": "high",
+      "status": "open",
+      "summary": "When the host does NOT provide `ctx.agentRuntime` and the pack falls back to its inline tool-calling loop, `agentRun()` reads each tool declaration from `ctx.inputs.tools` and invokes `tool.handler(call.arguments, ctx)` directly. `tool.handler` is therefore an arbitrary JS function controllable by whoever populates `inputs.tools` for the run. That function executes in the pack's process with the full `ctx` (including `ctx.callAI`, `ctx.storage`, `ctx.secrets` non-enumerable view, etc.). This breaks the spec's `prompt-injection-tool-allowlist` invariant: tools must be a host-resolved registry, not an executable payload. Mitigation: tools should be a structured declaration (`{ kind, name, ref, argumentsSchema }`) the HOST resolves to a handler via its own connector / tool registry. The pack's fallback path should refuse runs where any tool has a function-typed `handler` and require an explicit `tool.kind` discriminator the host knows how to invoke.",
+      "affectedSurfaces": [
+        "packs/core.openwop.agents/index.mjs",
+        "SECURITY/threat-model-prompt-injection.md"
+      ],
+      "threatModels": [
+        "SECURITY/threat-model-prompt-injection.md",
+        "SECURITY/threat-model-node-packs.md"
+      ],
+      "invariantIds": [
+        "prompt-injection-tool-allowlist"
+      ]
+    },
+    {
+      "findingId": "OPENWOP-AUDIT-2026-004",
+      "title": "ReDoS exposure in flow + data packs via author-controlled regex strings",
+      "severity": "medium",
+      "status": "open",
+      "summary": "`core.flow.if` / `core.flow.filter` / `core.flow.router` (via `evalPredicate` with op `'regex'`) and `core.openwop.data.string-regex-{match,replace,extract}` instantiate `new RegExp(target)` on a pattern that comes from `ctx.config` (workflow-author-controlled). The pack runs the regex synchronously against `ctx.inputs.value`, which can come from user input or upstream LLM output. A pathological pattern (e.g., `(a+)+b` against `aaaaaaaa…X`) burns CPU and blocks the worker for the entire single-node timeout — a multi-tenant host with shared compute observes worker-pool exhaustion. Mitigations: (a) host capability `regex.engineCapsTimeoutMs` so the pack can ask for time-bounded matching; (b) pre-compile + reject patterns containing nested-quantifier red flags (a static analyzer like `safe-regex` catches the common cases); (c) document this in the pack manifest's `requires.runtime` so hosts can opt to refuse pattern-injection runs.",
+      "affectedSurfaces": [
+        "packs/core.openwop.flow/index.mjs",
+        "packs/core.openwop.data/index.mjs"
+      ],
+      "threatModels": [
+        "SECURITY/threat-model-node-packs.md"
+      ],
+      "invariantIds": [
+        "node-pack-sandbox-timeout"
+      ]
+    },
+    {
+      "findingId": "OPENWOP-AUDIT-2026-005",
+      "title": "MCP pack surfaces `untrustedContent` flag but does not marker-wrap the content itself",
+      "severity": "medium",
+      "status": "open",
+      "summary": "`core.openwop.mcp.invoke-tool` and `read-resource` propagate the host's `untrustedContent: boolean` flag in their outputs but pass `result.result` / `result.content` through raw. The `prompt-injection-mcp-marker` invariant requires MCP-derived content to be wrapped in `<UNTRUSTED>…</UNTRUSTED>` before it reaches any LLM-consuming node. The current implementation places the marker contract entirely on the host AND the workflow author — a workflow that pipes `mcp.invoke-tool` output directly into `core.ai.chat-completion`'s `inputs.messages` defeats the marker discipline because no wrapping ever happened. Mitigation: when `untrustedContent === true`, the pack itself should wrap the surfaced content in the canonical `<UNTRUSTED>…</UNTRUSTED>` markers so downstream nodes inherit the containment by construction. This is defense-in-depth — the host MAY still wrap at its layer, but the pack's belt-and-suspenders prevents the workflow-author misuse pattern.",
+      "affectedSurfaces": [
+        "packs/core.openwop.mcp/index.mjs",
+        "SECURITY/threat-model-prompt-injection.md",
+        "spec/v1/mcp-integration.md"
+      ],
+      "threatModels": [
+        "SECURITY/threat-model-prompt-injection.md"
+      ],
+      "invariantIds": [
+        "prompt-injection-mcp-marker"
+      ]
+    },
+    {
+      "findingId": "OPENWOP-AUDIT-2026-006",
+      "title": "HMAC + cipher key length not validated; weak inputs accepted silently",
+      "severity": "medium",
+      "status": "open",
+      "summary": "`core.openwop.crypto.hmac-sign` / `hmac-verify` accept any key length. NIST SP 800-117 recommends HMAC keys be at least the underlying hash's output length (32 bytes for HMAC-SHA256). A 1-byte or empty key is currently accepted and produces a valid-but-trivially-forgeable MAC. Similarly, `aead-encrypt` accepts any key length; AES-256-GCM requires exactly 32 bytes and ChaCha20-Poly1305 requires exactly 32 bytes — non-conforming lengths throw inside `createCipheriv` but with a stack-trace error rather than a typed user-facing `KEY_LENGTH_INVALID` code. Mitigation: add explicit length asserts at the top of each node (`ensure(key.length >= minLen, 'KEY_LENGTH_TOO_SHORT', …)`), drive the threshold from the algorithm constant, and surface it in the schema's description. Also documents the boundary for security-aware workflow authors.",
+      "affectedSurfaces": [
+        "packs/core.openwop.crypto/index.mjs"
+      ],
+      "threatModels": [
+        "SECURITY/threat-model-auth-profiles.md"
+      ],
+      "invariantIds": []
+    },
+    {
+      "findingId": "OPENWOP-AUDIT-2026-007",
+      "title": "x509 chain verification accepts trust root where root.subject === leaf.subject",
+      "severity": "low",
+      "status": "open",
+      "summary": "`core.openwop.crypto.x509-verify-chain` line 366 finds a trusted root via `roots.find((r) => r.subject === current.issuer || r.subject === current.subject)`. The second clause (`r.subject === current.subject`) is suspect: it accepts as trusted any cert in the trust pool whose subject DN equals the chain's terminal cert. If an attacker can get a self-signed cert added to a deployer's trust roots with a subject DN matching their target, chain verification short-circuits to true. The pairwise signature verification at line 372 (`c.verify(priorIssuer.publicKey)`) is the real gate, but the trust-root selection logic shouldn't permit this branch. Mitigation: drop the `|| r.subject === current.subject` clause; require the chain's terminal cert's issuer to match a trust root's subject exactly. If the workflow uses chains where the root is included in the chain (self-signed terminal), the canonical fix is to verify the terminal cert's signature against its own public key separately, then match (root.subject === leaf.subject) explicitly with the verifier acknowledging the self-sign.",
+      "affectedSurfaces": [
+        "packs/core.openwop.crypto/index.mjs"
+      ],
+      "threatModels": [
+        "SECURITY/threat-model-auth-profiles.md"
+      ],
+      "invariantIds": []
+    },
+    {
+      "findingId": "OPENWOP-AUDIT-2026-008",
+      "title": "RAG loaderUrl forwards caller-supplied headers (Authorization leak vector)",
+      "severity": "medium",
+      "status": "open",
+      "summary": "`core.openwop.rag.loader-url` passes `ctx.inputs.headers` verbatim into `fetch(url, { headers })`. A workflow that wires upstream LLM output (or any untrusted source) into `inputs.headers` can inject an `Authorization` header pointed at an attacker-controlled URL — exfiltrating the bearer token. More broadly: any caller-controlled header value can override host-provided headers because there's no merge / shadow rule. Mitigation: (a) declare an `allowedHeaders` allow-list in the pack-side config (`accept`, `accept-language`, `if-modified-since`, etc.); (b) strip `authorization`, `cookie`, `proxy-authorization` from caller-provided headers; (c) document the resulting policy in the pack README.",
+      "affectedSurfaces": [
+        "packs/core.openwop.rag/index.mjs"
+      ],
+      "threatModels": [
+        "SECURITY/threat-model-secret-leakage.md"
+      ],
+      "invariantIds": [
+        "secret-leakage-author-emit"
+      ]
+    },
+    {
+      "findingId": "OPENWOP-AUDIT-2026-009",
+      "title": "TOTP digits not bounded; oversize values produce ambiguous codes",
+      "severity": "low",
+      "status": "open",
+      "summary": "`core.crypto.totp-generate` / `totp-verify` read `digits` from config without bounds-checking. RFC 6238 specifies 6–8 digits as the canonical range; values >9 hit JavaScript number precision issues in the modulo operation and produce codes that may not match what authenticator apps produce. Larger values (>16) waste compute on an integer that doesn't fit in `Number`. Mitigation: clamp `digits` to `[6, 10]` (the RFC's normative range allows 6–8; 9–10 is sometimes used in HOTP variants) with explicit rejection of out-of-range values via `TOTP_DIGITS_OUT_OF_RANGE`.",
+      "affectedSurfaces": [
+        "packs/core.openwop.crypto/index.mjs"
+      ],
+      "threatModels": [
+        "SECURITY/threat-model-auth-profiles.md"
+      ],
+      "invariantIds": []
+    },
+    {
+      "findingId": "OPENWOP-AUDIT-2026-010",
+      "title": "HITL approvalRequest propagates `decidedBy` from suspend result without host-derived attestation",
+      "severity": "low",
+      "status": "open",
+      "summary": "`core.hitl.approval-request` reads `result.decidedBy` from the host's suspend-resolution payload and surfaces it as a workflow output. The pack does not (and architecturally cannot) verify that the host derived `decidedBy` from the authenticated principal rather than honoring a client-supplied value. The `prompt-injection-decidedby-host-only` invariant requires the HOST to derive this — but a workflow that displays `decidedBy` to other users without re-checking through host APIs propagates whatever the host gave it. This is a host-contract finding, not a pack defect; documented here so the audit checks the host side. Mitigation (host-side): every host claiming `interrupts.kinds: [approval]` MUST refuse any resume payload that contains a caller-asserted `decidedBy` field, deriving it instead from `req.principal` at the resume endpoint. The pack's behavior is correct given a conformant host.",
+      "affectedSurfaces": [
+        "packs/core.openwop.hitl/index.mjs",
+        "spec/v1/interrupt-profiles.md"
+      ],
+      "threatModels": [
+        "SECURITY/threat-model-prompt-injection.md"
+      ],
+      "invariantIds": [
+        "prompt-injection-decidedby-host-only"
+      ]
+    },
+    {
+      "findingId": "OPENWOP-AUDIT-2026-011",
+      "title": "Pack-side delegate errors propagate raw delegate-call args (potential secret echo)",
+      "severity": "low",
+      "status": "open",
+      "summary": "Several host-delegate packs (`core.openwop.storage`, `core.openwop.db`, `core.openwop.files`, `core.openwop.messaging`) construct error messages by interpolating `surface.method` from the closure. The `code` field is always `HOST_CAPABILITY_MISSING`, which the workflow-engine's `tarballLoader.ts` augmenter then expands with documentation references. The risk vector: any future pack that constructs an error message containing the actual call ARGS (e.g., `host does not implement ctx.storage.kv.get for key=<key>`) could echo a secret-derived value into the error envelope. None of the current packs do this — the audit should establish this as a coding-style invariant: pack-side error messages MUST NOT interpolate `ctx.config` / `ctx.inputs` values into error strings. SR-1 redaction depends on the host's `stripSecretsFromPersisted` harness running on every persisted error; pack-side untyped error strings sidestep that harness.",
+      "affectedSurfaces": [
+        "packs/core.openwop.storage/index.mjs",
+        "packs/core.openwop.db/index.mjs",
+        "packs/core.openwop.files/index.mjs",
+        "packs/core.openwop.messaging/index.mjs",
+        "SECURITY/threat-model-secret-leakage.md"
+      ],
+      "threatModels": [
+        "SECURITY/threat-model-secret-leakage.md"
+      ],
+      "invariantIds": [
+        "secret-leakage-eventlog-variable",
+        "secret-leakage-error-envelope"
+      ]
+    },
+    {
+      "findingId": "OPENWOP-AUDIT-2026-012",
+      "title": "Pack manifests claim `cacheable + side-effectful` simultaneously without spec text on cache scoping",
+      "severity": "informational",
+      "status": "open",
+      "summary": "Across the 17 published packs, the `core.openwop.{ai, http, mcp, storage, db, files, messaging}` packs declare `capabilities: ['cacheable', 'side-effectful']` on every node. The intended semantics (per inline doc comments) is that the host's Layer-2 invocation log caches `(runId, nodeId, request-hash)`-keyed outputs so replays don't re-execute. However, `cacheable` + `side-effectful` is a semantic pair the spec doesn't yet normatively define: there's no `cacheable` field documented in `spec/v1/node-packs.md` §\"Manifest format\" with the cache-scope rules. The de-facto contract is documented in `spec/v1/replay.md` §\"Replay determinism\" but the manifest-side discriminator is informal. This isn't a defect — it's a spec-gap finding. Mitigation: add an explicit `cacheable` field to the manifest schema with normative wording, OR drop the `capabilities` array entirely and rely on `role: 'side-effect'` plus a hostside cache-policy. The audit deliverable should comment on which direction the protocol prefers.",
+      "affectedSurfaces": [
+        "spec/v1/node-packs.md",
+        "schemas/node-pack-manifest.schema.json",
+        "spec/v1/replay.md"
+      ],
+      "threatModels": [],
+      "invariantIds": []
+    },
+    {
+      "findingId": "OPENWOP-AUDIT-2026-013",
+      "title": "No findings of severity Critical found in pack-side code",
+      "severity": "informational",
+      "status": "open",
+      "summary": "After full read of all 17 published packs' `index.mjs` + `pack.json` + schemas against the 10 audit questions enumerated in `SECURITY/external-audit-engagement.md` §2.2, no Critical-severity findings were identified at the PACK layer. The 3 High-severity findings (#001 JWT alg-confusion, #002 SSRF, #003 agent tool handler) are real bugs the pack authors should fix; they're not Critical because (a) #001's fully-public-key threat model is RFC 8725's exact target and the mitigation is a known one-line schema change, (b) #002 is the canonical host-layer concern that production hosts (the Postgres reference per its egress policy) already constrain, (c) #003 only triggers when the host opts NOT to provide `ctx.agentRuntime` and the workflow author chooses the fallback path. The external audit may upgrade any of these to Critical based on deployment context the steward-internal review can't anticipate; record this finding as the baseline.",
+      "affectedSurfaces": [
+        "SECURITY/external-audit-engagement.md"
+      ],
+      "threatModels": [],
+      "invariantIds": []
+    }
+  ]
+}

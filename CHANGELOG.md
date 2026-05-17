@@ -11,6 +11,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Steward-internal pre-audit triage of the 17 published packs (2026-05-17)
+
+Per the post-publication obligation in `SECURITY/external-audit-engagement.md` §2.1.1, the steward performed an internal security review of the 17 `core.openwop.*` artifacts published to `packs.openwop.dev` earlier today, ahead of the external audit. Findings recorded machine-readably in `SECURITY/internal-pre-audit-findings.json` (validates against `external-audit-findings.schema.json`); reviewer-narrative summary in `SECURITY/internal-pre-audit-summary.md`.
+
+- **13 findings total: 0 Critical, 3 High, 4 Medium, 4 Low, 2 Informational.** No Critical issues identified at the pack-runtime layer.
+- **High findings (3):**
+  - `OPENWOP-AUDIT-2026-001` — `core.openwop.crypto.jwt-verify` trusts caller-supplied `alg` header (classic JWT alg-confusion / CVE-2015-9235 pattern). Mitigation: add `expectedAlgorithm` field to the config schema; reject mismatches before key material is touched.
+  - `OPENWOP-AUDIT-2026-002` — `core.openwop.http` + `core.openwop.rag.loader-url` make caller-controlled outbound `fetch` calls with no SSRF defense at the pack layer. Host egress policy still gates this on production hosts; the pack-side hardening is defense-in-depth.
+  - `OPENWOP-AUDIT-2026-003` — `core.openwop.agents.agent.run` invokes caller-supplied tool handlers as raw JS functions in its fallback loop (when host doesn't provide `ctx.agentRuntime`). Tool registry must be host-resolved per `prompt-injection-tool-allowlist`.
+- **Pre-existing schema bug fixed.** `SECURITY/external-audit-findings.schema.json` line 53 contained unescaped double-quotes that made the file un-parseable as JSON since it landed in SEC-3 close-out 2026-05-15. Phrased the inner reference as a comma-clause instead. The schema now compiles in Ajv 2020-12 strict mode and the new findings file validates against it.
+- **Commitments recorded.** The summary doc lists 3 commitments: (1) patch findings #001 + #003 within 7 days, (2) submit the internal-findings file to the external auditor at engagement kickoff, (3) no further `core.openwop.*` publications until external audit triages these 17 (already obligated by §2.1.1).
+- **What this does NOT replace.** The external audit's §2.1 scope (spec corpus, 4 reference hosts, conformance suite, 5 threat models, 3 SDKs) remains entirely out of scope for the steward-internal review. This triage is a baseline for the auditor to start from, not a substitute.
+
+
 ### Workflow-chain packs — RFC 0013 Phase 4 in-tree example (2026-05-17)
 
 - **`examples/packs/workflow-chain-sample/`** (NEW) — reference workflow-chain pack proving the RFC 0013 manifest format works end-to-end with real-world-shaped content. Ships two chains: a 1-node `summarize-text` (literal parameter substitution into a single `core.ai.callPrompt`) and a 2-node `fetch-and-summarize` (multi-node DAG with edge wiring `fetch.body → summarize.sourceText` + capability propagation `side-effectful` to both nodes). The canonical proof that the chain-pack contract is implementable.

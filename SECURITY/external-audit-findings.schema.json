@@ -50,7 +50,7 @@
         "findingId": {
           "type": "string",
           "pattern": "^OPENWOP-AUDIT-[0-9]{4}-[0-9]{3}$",
-          "description": "Stable identifier in the form `OPENWOP-AUDIT-YYYY-NNN` (YYYY = audit year; NNN = serial). The serial is assigned by the steward at intake; once published it MUST NOT change. Distinct from `advisoryId` (which is the public CVE-style id assigned by the CNA per SECURITY.md §"Advisory IDs")."
+          "description": "Stable identifier in the form `OPENWOP-AUDIT-YYYY-NNN` (YYYY = audit year; NNN = serial). The serial is assigned by the steward at intake; once published it MUST NOT change. Distinct from `advisoryId` (the public CVE-style id assigned by the CNA per SECURITY.md, section: Advisory IDs)."
         },
         "title": {
           "type": "string",
