@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.rag/1.0.0/splitter-token.config.json",
+  "title": "SplitterTokenConfig",
+  "type": "object",
+  "properties": {
+    "chunkSize": {
+      "type": "integer",
+      "default": 512
+    },
+    "chunkOverlap": {
+      "type": "integer",
+      "default": 50
+    },
+    "tokenizer": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

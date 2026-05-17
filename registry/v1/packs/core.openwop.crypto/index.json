@@ -34,8 +34,20 @@
       "integrity": "sha256-rhtNuIwtA1WwpVD3ABwkVhhksEyGK6DWn/dwW85ajLo=",
       "deprecated": false,
       "yanked": false
+    },
+    {
+      "version": "1.0.1",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/core.openwop.crypto/-/1.0.1.json",
+      "tarballUrl": "/v1/packs/core.openwop.crypto/-/1.0.1.tgz",
+      "signatureUrl": "/v1/packs/core.openwop.crypto/-/1.0.1.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-1FR+M8UDrInBcf6W6vlxeFiQICrDswBo4lgk5QgEE+Y=",
+      "deprecated": false,
+      "yanked": false
     }
   ],
-  "latest": "1.0.0",
+  "latest": "1.0.1",
   "deprecated": false
 }

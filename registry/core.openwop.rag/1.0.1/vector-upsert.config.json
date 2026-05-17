@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.rag/1.0.0/vector-upsert.config.json",
+  "title": "RagVectorUpsertConfig",
+  "type": "object",
+  "required": [
+    "collection"
+  ],
+  "properties": {
+    "collection": {
+      "type": "string"
+    },
+    "embeddingModel": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

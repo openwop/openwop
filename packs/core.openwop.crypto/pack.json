@@ -1,12 +1,21 @@
 {
   "name": "core.openwop.crypto",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Pure cryptographic primitives: hashing, HMAC, AEAD encrypt/decrypt, asymmetric sign/verify, JWT mint/verify, TOTP, x509 parse + chain verify. Built on node:crypto (Node 20+). Zero npm deps. Pure with respect to keys passed in via inputs.",
   "author": "OpenWOP Working Group",
   "license": "Apache-2.0",
   "homepage": "https://openwop.dev/packs/core.openwop.crypto",
   "repository": "https://github.com/openwop/openwop",
-  "keywords": ["core", "crypto", "hash", "hmac", "jwt", "totp", "x509", "ed25519"],
+  "keywords": [
+    "core",
+    "crypto",
+    "hash",
+    "hmac",
+    "jwt",
+    "totp",
+    "x509",
+    "ed25519"
+  ],
   "engines": {
     "openwop": ">=1.0.0 <2.0.0"
   },
@@ -18,7 +27,9 @@
       "description": "Cryptographic hash. Algorithms: sha-256, sha-384, sha-512, sha-1 (legacy), md5 (legacy), blake2b512. Output as hex or base64.",
       "category": "data",
       "role": "pure",
-      "capabilities": ["cacheable"],
+      "capabilities": [
+        "cacheable"
+      ],
       "configSchemaRef": "schemas/hash.config.json",
       "inputSchemaRef": "schemas/hash.input.json",
       "outputSchemaRef": "schemas/hash.output.json"
@@ -30,7 +41,9 @@
       "description": "HMAC sign with SHA-256/384/512. Key passed as utf8/hex/base64 string. Output as hex or base64.",
       "category": "data",
       "role": "pure",
-      "capabilities": ["cacheable"],
+      "capabilities": [
+        "cacheable"
+      ],
       "configSchemaRef": "schemas/hmac-sign.config.json",
       "inputSchemaRef": "schemas/hmac-sign.input.json",
       "outputSchemaRef": "schemas/hmac-sign.output.json"
@@ -42,7 +55,9 @@
       "description": "Constant-time HMAC verification. Returns { valid: bool }. Rejects length mismatches without leaking timing.",
       "category": "data",
       "role": "pure",
-      "capabilities": ["cacheable"],
+      "capabilities": [
+        "cacheable"
+      ],
       "configSchemaRef": "schemas/hmac-verify.config.json",
       "inputSchemaRef": "schemas/hmac-verify.input.json",
       "outputSchemaRef": "schemas/hmac-verify.output.json"
@@ -54,7 +69,9 @@
       "description": "Authenticated encryption with associated data. Algorithms: aes-256-gcm, chacha20-poly1305. Non-deterministic — emits a fresh random nonce per call.",
       "category": "data",
       "role": "pure",
-      "capabilities": ["side-effectful"],
+      "capabilities": [
+        "side-effectful"
+      ],
       "configSchemaRef": "schemas/aead-encrypt.config.json",
       "inputSchemaRef": "schemas/aead-encrypt.input.json",
       "outputSchemaRef": "schemas/aead-encrypt.output.json"
@@ -66,7 +83,9 @@
       "description": "Authenticated decryption. Rejects tampered ciphertext with `INVALID_AUTH_TAG`.",
       "category": "data",
       "role": "pure",
-      "capabilities": ["cacheable"],
+      "capabilities": [
+        "cacheable"
+      ],
       "configSchemaRef": "schemas/aead-decrypt.config.json",
       "inputSchemaRef": "schemas/aead-decrypt.input.json",
       "outputSchemaRef": "schemas/aead-decrypt.output.json"
@@ -78,7 +97,9 @@
       "description": "Asymmetric signature. Algorithms: ed25519, rs256, ps256, es256. Private key in PEM.",
       "category": "data",
       "role": "pure",
-      "capabilities": ["cacheable"],
+      "capabilities": [
+        "cacheable"
+      ],
       "configSchemaRef": "schemas/sign.config.json",
       "inputSchemaRef": "schemas/sign.input.json",
       "outputSchemaRef": "schemas/sign.output.json"
@@ -90,7 +111,9 @@
       "description": "Asymmetric signature verification. Public key in PEM.",
       "category": "data",
       "role": "pure",
-      "capabilities": ["cacheable"],
+      "capabilities": [
+        "cacheable"
+      ],
       "configSchemaRef": "schemas/verify.config.json",
       "inputSchemaRef": "schemas/verify.input.json",
       "outputSchemaRef": "schemas/verify.output.json"
@@ -102,7 +125,9 @@
       "description": "Mint a JWT. Algorithms: HS256/384/512, RS256, PS256, ES256, EdDSA. Standard claims (iss, sub, aud, exp, nbf, iat, jti) handled.",
       "category": "data",
       "role": "pure",
-      "capabilities": ["cacheable"],
+      "capabilities": [
+        "cacheable"
+      ],
       "configSchemaRef": "schemas/jwt-mint.config.json",
       "inputSchemaRef": "schemas/jwt-mint.input.json",
       "outputSchemaRef": "schemas/jwt-mint.output.json"
@@ -114,7 +139,9 @@
       "description": "Verify a JWT. Checks signature + exp / nbf / iss / aud. JWKS-aware (accepts a JWKS JSON to resolve kid).",
       "category": "data",
       "role": "pure",
-      "capabilities": ["cacheable"],
+      "capabilities": [
+        "cacheable"
+      ],
       "configSchemaRef": "schemas/jwt-verify.config.json",
       "inputSchemaRef": "schemas/jwt-verify.input.json",
       "outputSchemaRef": "schemas/jwt-verify.output.json"
@@ -126,7 +153,9 @@
       "description": "RFC 6238 TOTP code. SHA-1/256/512. 6/8 digit output. Configurable timestep (default 30s).",
       "category": "data",
       "role": "pure",
-      "capabilities": ["cacheable"],
+      "capabilities": [
+        "cacheable"
+      ],
       "configSchemaRef": "schemas/totp-generate.config.json",
       "inputSchemaRef": "schemas/totp-generate.input.json",
       "outputSchemaRef": "schemas/totp-generate.output.json"
@@ -138,7 +167,9 @@
       "description": "Verify a TOTP code. Configurable drift window (default ±1 timestep) for clock skew tolerance.",
       "category": "data",
       "role": "pure",
-      "capabilities": ["cacheable"],
+      "capabilities": [
+        "cacheable"
+      ],
       "configSchemaRef": "schemas/totp-verify.config.json",
       "inputSchemaRef": "schemas/totp-verify.input.json",
       "outputSchemaRef": "schemas/totp-verify.output.json"
@@ -150,7 +181,9 @@
       "description": "Parse a PEM x509 certificate. Returns issuer, subject, SAN, fingerprint (sha-256), validFrom, validTo, serialNumber.",
       "category": "data",
       "role": "pure",
-      "capabilities": ["cacheable"],
+      "capabilities": [
+        "cacheable"
+      ],
       "configSchemaRef": "schemas/x509-parse.config.json",
       "inputSchemaRef": "schemas/x509-parse.input.json",
       "outputSchemaRef": "schemas/x509-parse.output.json"
@@ -162,7 +195,9 @@
       "description": "Verify a leaf cert chains to one of N trust-root certs. Checks signature, validity, and basicConstraints CA flag on each intermediate.",
       "category": "data",
       "role": "pure",
-      "capabilities": ["cacheable"],
+      "capabilities": [
+        "cacheable"
+      ],
       "configSchemaRef": "schemas/x509-verify-chain.config.json",
       "inputSchemaRef": "schemas/x509-verify-chain.input.json",
       "outputSchemaRef": "schemas/x509-verify-chain.output.json"

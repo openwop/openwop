@@ -9,7 +9,7 @@
       "findingId": "OPENWOP-AUDIT-2026-001",
       "title": "JWT verify trusts caller-supplied alg header (alg-confusion / CVE-2015-9235 pattern)",
       "severity": "high",
-      "status": "open",
+      "status": "fixed",
       "summary": "`core.openwop.crypto.jwt-verify` reads the algorithm from the inbound token's header and uses it to select the verification path (HMAC vs RSA vs ECDSA vs EdDSA). The pack does not require the caller to declare an `expectedAlgorithm` and reject mismatches. An attacker that knows the verifier's public RSA / EC / Ed25519 key (which is public by definition) can submit a token with `alg: HS256` and that public key as the HMAC secret — the HS256 branch of `jwtVerifySig` will verify the attacker-signed token because the public key bytes are treated as a symmetric secret. This is the canonical JWT algorithm-confusion bug (CVE-2015-9235; described in RFC 8725 §2.1). Mitigation: add `expectedAlgorithm` (or `allowedAlgorithms: string[]`) to `JwtVerifyConfig`, mark it as REQUIRED in the schema, and reject any token whose header `alg` is not in the allow-list before any key material is touched. Also: when JWKS is provided, key-type cross-check (RSA key → only RS*/PS*; EC key → only ES*; OKP key → only EdDSA) closes the residual gap.",
       "affectedSurfaces": [
         "packs/core.openwop.crypto/index.mjs",
@@ -24,7 +24,7 @@
       "findingId": "OPENWOP-AUDIT-2026-002",
       "title": "HTTP / RAG packs have no SSRF defense at the pack layer",
       "severity": "high",
-      "status": "open",
+      "status": "fixed",
       "summary": "`core.openwop.http.fetch` (and the v1.1 additions `openapi-call`, `sse-consume`, `download-stream`, `upload-multipart`, `webhook-verify` HEAD checks) plus `core.openwop.rag.loader-url` and `loader-github` pass workflow-author-supplied URLs to `globalThis.fetch` with no allow-list, no loopback/link-local block, no metadata-endpoint block, and no host-side hook the pack consults before dialing. A workflow on a multi-tenant host can target `http://169.254.169.254/latest/meta-data/iam/security-credentials/` (AWS IMDS) or any other internal endpoint reachable from the host and exfiltrate the response in `outputs.body`. The spec leaves egress policy to the host's provider-policy surface, but the packs themselves should at minimum (a) document a `network.egressAllowList` host capability the pack consults when present, (b) refuse non-http/https schemes (the http pack already does — confirmed line 285), (c) refuse loopback / link-local / RFC 1918 ranges by default unless the host advertises `network.allowPrivateRanges: true`. Until the host enforces egress, treating any deploy of these packs on an untrusted multi-tenant fabric as exfiltration-capable is correct.",
       "affectedSurfaces": [
         "packs/core.openwop.http/index.mjs",

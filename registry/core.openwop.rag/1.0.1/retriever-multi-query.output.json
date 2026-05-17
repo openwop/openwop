@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.rag/1.0.0/retriever-multi-query.output.json",
+  "title": "RetrieverMultiQueryOutput",
+  "type": "object",
+  "required": [
+    "hits"
+  ],
+  "properties": {
+    "hits": {
+      "type": "array"
+    },
+    "queriesUsed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

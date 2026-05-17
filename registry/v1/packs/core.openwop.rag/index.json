@@ -34,8 +34,20 @@
       "integrity": "sha256-7Jos8BmR9H7kzDMIyYWeA4MDL3/gsA4xEupSgMMRTX0=",
       "deprecated": false,
       "yanked": false
+    },
+    {
+      "version": "1.0.1",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/core.openwop.rag/-/1.0.1.json",
+      "tarballUrl": "/v1/packs/core.openwop.rag/-/1.0.1.tgz",
+      "signatureUrl": "/v1/packs/core.openwop.rag/-/1.0.1.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-FWRhlcAFwYbQJyCxhJZ0o2gNtOIESxR9Ql2Z/heXYvQ=",
+      "deprecated": false,
+      "yanked": false
     }
   ],
-  "latest": "1.0.0",
+  "latest": "1.0.1",
   "deprecated": false
 }

@@ -3,10 +3,84 @@
  * (embeddings) + core.openwop.db (vector ops) + core.openwop.http (loaders).
  *
  * Splitters run pure with stdlib. Loaders + retrievers delegate to host.
+ *
+ * SSRF defense (closes OPENWOP-AUDIT-2026-002): every outbound fetch
+ * is gated by `safeFetch` from this module which resolves the URL,
+ * rejects loopback / link-local / RFC-1918 / metadata destinations,
+ * and strips sensitive caller headers (Authorization / Cookie /
+ * Proxy-Authorization). Opt-out for self-hosted/local-dev:
+ *   OPENWOP_HTTP_ALLOW_PRIVATE_RANGES=true
  */
 
+import { lookup } from 'node:dns/promises';
+
+const PRIVATE_V4_RANGES = [
+  [0x7F000000, 0xFF000000], [0x0A000000, 0xFF000000], [0xAC100000, 0xFFF00000],
+  [0xC0A80000, 0xFFFF0000], [0xA9FE0000, 0xFFFF0000], [0x00000000, 0xFF000000],
+  [0x64400000, 0xFFC00000], [0xE0000000, 0xF0000000], [0xF0000000, 0xF0000000],
+];
+
+function v4Int(addr) {
+  return addr.split('.').reduce((a, p) => (a << 8) | (parseInt(p, 10) & 0xff), 0) >>> 0;
+}
+
+function blockedV4(addr) {
+  const n = v4Int(addr);
+  // `&` returns signed 32-bit — unsigned-coerce before comparing.
+  return PRIVATE_V4_RANGES.some(([b, m]) => ((n & m) >>> 0) === b);
+}
+
+function blockedV6(addr) {
+  const low = addr.toLowerCase();
+  if (low === '::1' || low === '::' || low === '0:0:0:0:0:0:0:0' || low === '0:0:0:0:0:0:0:1') return true;
+  const v4mapped = low.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
+  if (v4mapped) return blockedV4(v4mapped[1]);
+  return /^fe[89ab]/.test(low) || /^f[cd]/.test(low) || low.startsWith('ff');
+}
+
+const FORBIDDEN_HEADERS = new Set(['authorization', 'cookie', 'proxy-authorization', 'set-cookie']);
+
+function scrubHeaders(h) {
+  if (!h || typeof h !== 'object' || Array.isArray(h)) return {};
+  const out = {};
+  for (const [k, v] of Object.entries(h)) {
+    if (typeof k === 'string' && !FORBIDDEN_HEADERS.has(k.toLowerCase())) out[k] = v;
+  }
+  return out;
+}
+
+async function safeFetch(rawUrl, init = {}) {
+  let u;
+  try { u = new URL(rawUrl); } catch { throw Object.assign(new Error(`invalid URL: ${rawUrl}`), { code: 'URL_INVALID' }); }
+  if (u.protocol !== 'http:' && u.protocol !== 'https:') {
+    throw Object.assign(new Error(`scheme not allowed: ${u.protocol}`), { code: 'URL_SCHEME_BLOCKED' });
+  }
+  if (process.env.OPENWOP_HTTP_ALLOW_PRIVATE_RANGES !== 'true') {
+    const host = u.hostname.toLowerCase();
+    if (host === 'localhost' || host === '0.0.0.0' || host === '::1') {
+      throw Object.assign(new Error(`destination blocked: ${host}`), { code: 'URL_BLOCKED' });
+    }
+    const isV4 = /^(\d{1,3}\.){3}\d{1,3}$/.test(host);
+    const isV6 = host.includes(':');
+    if (isV4 && blockedV4(host)) throw Object.assign(new Error(`destination blocked: ${host}`), { code: 'URL_BLOCKED' });
+    else if (isV6 && blockedV6(host)) throw Object.assign(new Error(`destination blocked: ${host}`), { code: 'URL_BLOCKED' });
+    else if (!isV4 && !isV6) {
+      let addrs;
+      try { addrs = await lookup(host, { all: true }); }
+      catch (err) { throw Object.assign(new Error(`DNS resolution failed: ${host}: ${err.message}`), { code: 'URL_DNS_FAILED' }); }
+      for (const { address, family } of addrs) {
+        if (family === 4 && blockedV4(address)) throw Object.assign(new Error(`destination resolves to blocked IP: ${host} → ${address}`), { code: 'URL_BLOCKED' });
+        if (family === 6 && blockedV6(address)) throw Object.assign(new Error(`destination resolves to blocked IP: ${host} → ${address}`), { code: 'URL_BLOCKED' });
+      }
+    }
+  }
+  const cleanInit = { ...init };
+  if (cleanInit.headers) cleanInit.headers = scrubHeaders(cleanInit.headers);
+  return fetch(rawUrl, cleanInit);
+}
+
 async function fetchUrl(url, headers) {
-  const r = await fetch(url, { headers });
+  const r = await safeFetch(url, { headers });
   const ct = r.headers.get('content-type') || '';
   let content;
   if (ct.includes('application/json')) content = await r.json();
@@ -29,7 +103,7 @@ export async function loaderGithub(ctx) {
   const ref = ctx.config.ref ?? 'main';
   const path = ctx.inputs.path ?? '';
   const url = `https://api.github.com/repos/${ctx.config.repo}/contents/${path}?ref=${ref}`;
-  const r = await fetch(url, { headers: { accept: 'application/vnd.github+json' } });
+  const r = await safeFetch(url, { headers: { accept: 'application/vnd.github+json' } });
   const data = await r.json();
   const docs = (Array.isArray(data) ? data : [data]).map((f) => ({ name: f.name, path: f.path, sha: f.sha, downloadUrl: f.download_url }));
   return { status: 'success', outputs: { documents: docs } };

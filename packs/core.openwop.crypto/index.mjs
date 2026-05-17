@@ -245,11 +245,56 @@ export async function jwtVerifyNode(ctx) {
   const header = JSON.parse(b64urlDecode(h).toString('utf8'));
   const alg = header.alg;
   ensure(JWT_ALGS.has(alg), 'JWT_ALG_UNSUPPORTED', `unsupported JWT alg: ${alg}`);
+
+  // Closes OPENWOP-AUDIT-2026-001 (JWT alg-confusion / CVE-2015-9235).
+  // Verifier MUST declare the algorithm(s) it trusts; never accept the
+  // alg the token's own header claims. Without this guard, an attacker
+  // who knows the verifier's public RSA / EC / Ed25519 key (public by
+  // definition) can submit a token with `alg: HS256` and the public-key
+  // bytes as the HMAC secret — the HS path verifies the forgery.
+  //
+  // Config takes `expectedAlgorithm` (string) or `allowedAlgorithms`
+  // (string[]). REQUIRED unless `OPENWOP_JWT_ALLOW_HEADER_ALG=true`
+  // (intended only for migration from pre-1.0.1 deployments; logs a
+  // warning at module init).
+  const expected = ctx.config.expectedAlgorithm;
+  const allowed = ctx.config.allowedAlgorithms;
+  if (expected || (Array.isArray(allowed) && allowed.length > 0)) {
+    const allow = expected ? [expected] : allowed;
+    if (!allow.includes(alg)) {
+      throw Object.assign(
+        new Error(`JWT alg ${alg} not in caller-allowed set [${allow.join(', ')}]`),
+        { code: 'JWT_ALG_NOT_ALLOWED' },
+      );
+    }
+  } else if (process.env.OPENWOP_JWT_ALLOW_HEADER_ALG !== 'true') {
+    throw Object.assign(
+      new Error('JwtVerifyConfig MUST set expectedAlgorithm or allowedAlgorithms — see OPENWOP-AUDIT-2026-001'),
+      { code: 'JWT_VERIFIER_ALGORITHM_REQUIRED' },
+    );
+  }
+
   let key;
   if (ctx.inputs.jwks) {
     const k = (ctx.inputs.jwks.keys || []).find((x) => x.kid === header.kid);
     ensure(k, 'JWT_KID_UNKNOWN', `kid not found in JWKS: ${header.kid}`);
     key = createPublicKey({ key: k, format: 'jwk' });
+    // JWKS key-type cross-check: the JWK's `kty` constrains which
+    // alg families are legal. Closes the residual gap where a token
+    // could ask for HS256 against an RSA JWK and the HS path would
+    // try to use the public-key bytes as an HMAC secret.
+    const ktyAllowed = {
+      'oct': ['HS256', 'HS384', 'HS512'],
+      'RSA': ['RS256', 'PS256'],
+      'EC': ['ES256'],
+      'OKP': ['EdDSA'],
+    };
+    if (k.kty && ktyAllowed[k.kty] && !ktyAllowed[k.kty].includes(alg)) {
+      throw Object.assign(
+        new Error(`JWT alg ${alg} incompatible with JWK kty=${k.kty} (expected one of ${ktyAllowed[k.kty].join('/')})`),
+        { code: 'JWT_ALG_KEY_MISMATCH' },
+      );
+    }
   } else {
     key = alg.startsWith('HS') ? toBuffer(ctx.inputs.key, ctx.config.keyEncoding) : ctx.inputs.key;
   }

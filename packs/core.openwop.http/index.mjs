@@ -25,9 +25,139 @@
  */
 
 import { createHash } from 'node:crypto';
+import { lookup } from 'node:dns/promises';
 
 const TEMPLATE_RE = /\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/g;
 const NON_IDEMPOTENT = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+/* ─── SSRF defense (closes OPENWOP-AUDIT-2026-002) ────────────
+ * Every outbound fetch in this pack flows through `safeFetch` →
+ * `assertPublicUrl`. The destination's hostname is resolved (via
+ * node:dns/promises#lookup) and every returned address is checked
+ * against the blocked-range table below. Caller-supplied headers
+ * with sensitive names are stripped before the request leaves the
+ * pack so an attacker controlling `inputs.headers` can't redirect
+ * an Authorization bearer.
+ *
+ * Opt-out for local-dev / self-hosted: set
+ *   OPENWOP_HTTP_ALLOW_PRIVATE_RANGES=true
+ * on the host process. Production deployments MUST NOT set this
+ * — the demo at app.openwop.dev runs with it unset.
+ */
+const PRIVATE_V4_RANGES = [
+  // [networkInt, maskInt]
+  [0x7F000000, 0xFF000000], // 127.0.0.0/8     loopback
+  [0x0A000000, 0xFF000000], // 10.0.0.0/8      RFC 1918
+  [0xAC100000, 0xFFF00000], // 172.16.0.0/12   RFC 1918
+  [0xC0A80000, 0xFFFF0000], // 192.168.0.0/16  RFC 1918
+  [0xA9FE0000, 0xFFFF0000], // 169.254.0.0/16  link-local + GCP/AWS metadata
+  [0x00000000, 0xFF000000], // 0.0.0.0/8       "this network"
+  [0x64400000, 0xFFC00000], // 100.64.0.0/10   CGNAT
+  [0xE0000000, 0xF0000000], // 224.0.0.0/4     multicast
+  [0xF0000000, 0xF0000000], // 240.0.0.0/4     reserved
+];
+
+function ipv4ToInt(addr) {
+  return addr.split('.').reduce((acc, part) => (acc << 8) | (parseInt(part, 10) & 0xff), 0) >>> 0;
+}
+
+function isBlockedV4(addr) {
+  const n = ipv4ToInt(addr);
+  for (const [base, mask] of PRIVATE_V4_RANGES) {
+    // JS `&` returns a signed 32-bit int — coerce to unsigned before
+    // comparing against the unsigned literals in the range table.
+    if (((n & mask) >>> 0) === base) return true;
+  }
+  return false;
+}
+
+function isBlockedV6(addr) {
+  // Block loopback, unspecified, link-local, ULA, multicast.
+  // IPv4-mapped IPv6 (::ffff:a.b.c.d) is unwrapped + re-checked as v4.
+  const low = addr.toLowerCase();
+  if (low === '::1' || low === '::' || low === '0:0:0:0:0:0:0:0' || low === '0:0:0:0:0:0:0:1') return true;
+  const v4mapped = low.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
+  if (v4mapped) return isBlockedV4(v4mapped[1]);
+  // fe80::/10 — link-local. First two hextets fall in fe80..febf.
+  if (/^fe[89ab]/.test(low)) return true;
+  // fc00::/7 — unique-local addresses.
+  if (/^f[cd]/.test(low)) return true;
+  // ff00::/8 — multicast.
+  if (low.startsWith('ff')) return true;
+  return false;
+}
+
+function parseLiteralIp(host) {
+  let h = host;
+  if (h.startsWith('[') && h.endsWith(']')) h = h.slice(1, -1);
+  if (/^(\d{1,3}\.){3}\d{1,3}$/.test(h)) return { v4: h };
+  if (h.includes(':')) return { v6: h };
+  return null;
+}
+
+const FORBIDDEN_HEADERS = new Set([
+  'authorization',
+  'cookie',
+  'proxy-authorization',
+  'set-cookie',
+]);
+
+function sanitizeHeaders(headers) {
+  if (!headers || typeof headers !== 'object') return {};
+  if (Array.isArray(headers)) return headers; // Fetch supports [[k,v]] but pack never builds it that way; pass through.
+  const out = {};
+  for (const [k, v] of Object.entries(headers)) {
+    if (typeof k !== 'string') continue;
+    if (FORBIDDEN_HEADERS.has(k.toLowerCase())) continue;
+    out[k] = v;
+  }
+  return out;
+}
+
+async function assertPublicUrl(rawUrl) {
+  let u;
+  try { u = new URL(rawUrl); }
+  catch { throw makeError('URL_INVALID', `invalid URL: ${rawUrl}`); }
+  if (u.protocol !== 'http:' && u.protocol !== 'https:') {
+    throw makeError('URL_SCHEME_BLOCKED', `scheme not allowed: ${u.protocol}`);
+  }
+  if (process.env.OPENWOP_HTTP_ALLOW_PRIVATE_RANGES === 'true') return;
+  const host = u.hostname.toLowerCase();
+  if (host === 'localhost' || host === '0.0.0.0' || host === '::1' || host === '[::1]') {
+    throw makeError('URL_BLOCKED', `destination blocked (hostname): ${host}`);
+  }
+  const literal = parseLiteralIp(host);
+  if (literal) {
+    if (literal.v4 && isBlockedV4(literal.v4)) throw makeError('URL_BLOCKED', `destination blocked: ${host}`);
+    if (literal.v6 && isBlockedV6(literal.v6)) throw makeError('URL_BLOCKED', `destination blocked: ${host}`);
+    return;
+  }
+  let addrs;
+  try {
+    addrs = await lookup(host, { all: true });
+  } catch (err) {
+    throw makeError('URL_DNS_FAILED', `DNS resolution failed for ${host}: ${err.message}`);
+  }
+  for (const { address, family } of addrs) {
+    if (family === 4 && isBlockedV4(address)) {
+      throw makeError('URL_BLOCKED', `destination resolves to blocked IP: ${host} → ${address}`);
+    }
+    if (family === 6 && isBlockedV6(address)) {
+      throw makeError('URL_BLOCKED', `destination resolves to blocked IP: ${host} → ${address}`);
+    }
+  }
+}
+
+/** SSRF-hardened fetch wrapper. ALL outbound calls in this pack go
+ *  through this. Validates the URL, scrubs sensitive caller headers,
+ *  then delegates to the injected fetch impl (`ctx.fetch` for tests
+ *  or `globalThis.fetch` for production). */
+async function safeFetch(rawUrl, init = {}, fetchImpl = globalThis.fetch) {
+  await assertPublicUrl(rawUrl);
+  const cleanInit = { ...init };
+  if (cleanInit.headers) cleanInit.headers = sanitizeHeaders(cleanInit.headers);
+  return fetchImpl(rawUrl, cleanInit);
+}
 
 /**
  * Substitute `{{name}}` placeholders. Missing keys throw INVALID_URL.
@@ -180,12 +310,12 @@ export async function fetchNode(ctx) {
     const timeoutHandle = setTimeout(() => attemptController.abort(), timeoutMs);
 
     try {
-      const res = await fetchImpl(url, {
+      const res = await safeFetch(url, {
         method,
         headers,
         body: bodyBytes ?? undefined,
         signal: attemptController.signal,
-      });
+      }, fetchImpl);
       clearTimeout(timeoutHandle);
       ctx.signal?.removeEventListener('abort', onCallerAbort);
 
@@ -224,6 +354,10 @@ export async function fetchNode(ctx) {
       // Network error / abort. Retry if attempts remaining AND not caller-aborted.
       if (ctx.signal?.aborted) {
         throw makeError('aborted', 'caller aborted request');
+      }
+      // SSRF-defense errors are deterministic — no retry.
+      if (err && (err.code === 'URL_BLOCKED' || err.code === 'URL_SCHEME_BLOCKED' || err.code === 'URL_INVALID' || err.code === 'URL_DNS_FAILED')) {
+        throw err;
       }
       if (attempts < maxAttempts) {
         ctx.emit?.({
@@ -279,7 +413,7 @@ export async function fetchNode(ctx) {
 import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 
 async function bareFetch(url, init) {
-  const r = await fetch(url, init);
+  const r = await safeFetch(url, init);
   let body;
   const ct = r.headers.get('content-type') || '';
   if (ct.includes('application/json')) body = await r.json().catch(() => null);
@@ -343,7 +477,7 @@ export async function graphqlSubscription(ctx) {
 
 export async function soapCall(ctx) {
   const envelope = ctx.inputs.envelope;
-  const res = await fetch(ctx.config.endpoint, {
+  const res = await safeFetch(ctx.config.endpoint, {
     method: 'POST',
     headers: { 'content-type': 'text/xml; charset=utf-8', 'soapaction': ctx.config.soapAction || '', ...(ctx.inputs.headers ?? {}) },
     body: envelope,
@@ -381,7 +515,7 @@ export async function sseConsume(ctx) {
   const emit = typeof ctx.emit === 'function' ? ctx.emit : null;
   const controller = new AbortController();
   const timer = ctx.config.durationMs ? setTimeout(() => controller.abort(), ctx.config.durationMs) : null;
-  const res = await fetch(ctx.inputs.url, { headers: { accept: 'text/event-stream', ...(ctx.inputs.headers ?? {}) }, signal: controller.signal });
+  const res = await safeFetch(ctx.inputs.url, { headers: { accept: 'text/event-stream', ...(ctx.inputs.headers ?? {}) }, signal: controller.signal });
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
@@ -463,7 +597,7 @@ export async function uploadResumable(ctx) {
 }
 
 export async function downloadStream(ctx) {
-  const res = await fetch(ctx.inputs.url, { method: 'GET', headers: ctx.inputs.headers ?? {} });
+  const res = await safeFetch(ctx.inputs.url, { method: 'GET', headers: ctx.inputs.headers ?? {} });
   const chunks = [];
   const emit = typeof ctx.emit === 'function' ? ctx.emit : null;
   const reader = res.body.getReader();

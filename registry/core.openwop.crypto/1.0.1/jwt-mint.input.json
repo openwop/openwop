@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.crypto/1.0.0/jwt-mint.input.json",
+  "title": "JwtMintInput",
+  "type": "object",
+  "required": [
+    "key",
+    "claims"
+  ],
+  "properties": {
+    "key": {
+      "type": "string"
+    },
+    "claims": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "kid": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

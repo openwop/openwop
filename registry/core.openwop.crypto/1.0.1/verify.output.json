@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.crypto/1.0.0/verify.output.json",
+  "title": "VerifyOutput",
+  "type": "object",
+  "required": [
+    "valid"
+  ],
+  "properties": {
+    "valid": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}

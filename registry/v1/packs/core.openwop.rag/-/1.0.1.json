@@ -1,0 +1,230 @@
+{
+  "name": "core.openwop.rag",
+  "version": "1.0.1",
+  "description": "Retrieval-Augmented-Generation primitives: loaders, splitters, vector ops (thin wrappers over core.openwop.db.vector-*), and retrievers (basic / multi-query / contextual-compression).",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.rag",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "core",
+    "rag",
+    "retrieval",
+    "embeddings",
+    "vector",
+    "loader",
+    "splitter"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "aiProviders": "supported"
+  },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "nodes": [
+    {
+      "typeId": "core.rag.loader-url",
+      "version": "1.0.0",
+      "label": "Loader — URL",
+      "description": "Fetch and parse a URL into a Document.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/loader-url.config.json",
+      "inputSchemaRef": "schemas/loader-url.input.json",
+      "outputSchemaRef": "schemas/loader-url.output.json"
+    },
+    {
+      "typeId": "core.rag.loader-file",
+      "version": "1.0.0",
+      "label": "Loader — File",
+      "description": "Load a file (delegates to core.files.read).",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/loader-file.config.json",
+      "inputSchemaRef": "schemas/loader-file.input.json",
+      "outputSchemaRef": "schemas/loader-file.output.json"
+    },
+    {
+      "typeId": "core.rag.loader-github",
+      "version": "1.0.0",
+      "label": "Loader — GitHub",
+      "description": "Load a repo path (files or a directory).",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/loader-github.config.json",
+      "inputSchemaRef": "schemas/loader-github.input.json",
+      "outputSchemaRef": "schemas/loader-github.output.json"
+    },
+    {
+      "typeId": "core.rag.loader-s3",
+      "version": "1.0.0",
+      "label": "Loader — S3",
+      "description": "Load object(s) from S3 (delegates to host.blobStorage).",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/loader-s3.config.json",
+      "inputSchemaRef": "schemas/loader-s3.input.json",
+      "outputSchemaRef": "schemas/loader-s3.output.json"
+    },
+    {
+      "typeId": "core.rag.splitter-recursive",
+      "version": "1.0.0",
+      "label": "Splitter — Recursive Character",
+      "description": "Recursive character splitter (paragraph/sentence/word).",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/splitter-recursive.config.json",
+      "inputSchemaRef": "schemas/splitter-recursive.input.json",
+      "outputSchemaRef": "schemas/splitter-recursive.output.json"
+    },
+    {
+      "typeId": "core.rag.splitter-character",
+      "version": "1.0.0",
+      "label": "Splitter — Character",
+      "description": "Fixed-window character splitter.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/splitter-character.config.json",
+      "inputSchemaRef": "schemas/splitter-character.input.json",
+      "outputSchemaRef": "schemas/splitter-character.output.json"
+    },
+    {
+      "typeId": "core.rag.splitter-token",
+      "version": "1.0.0",
+      "label": "Splitter — Token",
+      "description": "Token-based splitter (approx via word count when no tokenizer present).",
+      "category": "data",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/splitter-token.config.json",
+      "inputSchemaRef": "schemas/splitter-token.input.json",
+      "outputSchemaRef": "schemas/splitter-token.output.json"
+    },
+    {
+      "typeId": "core.rag.vector-upsert",
+      "version": "1.0.0",
+      "label": "RAG Vector Upsert",
+      "description": "Thin wrapper over core.db.vector-upsert that auto-embeds text.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/vector-upsert.config.json",
+      "inputSchemaRef": "schemas/vector-upsert.input.json",
+      "outputSchemaRef": "schemas/vector-upsert.output.json"
+    },
+    {
+      "typeId": "core.rag.vector-query",
+      "version": "1.0.0",
+      "label": "RAG Vector Query",
+      "description": "Auto-embed query + run k-NN.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/vector-query.config.json",
+      "inputSchemaRef": "schemas/vector-query.input.json",
+      "outputSchemaRef": "schemas/vector-query.output.json"
+    },
+    {
+      "typeId": "core.rag.vector-delete",
+      "version": "1.0.0",
+      "label": "RAG Vector Delete",
+      "description": "Wrapper over core.db.vector-delete.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/vector-delete.config.json",
+      "inputSchemaRef": "schemas/vector-delete.input.json",
+      "outputSchemaRef": "schemas/vector-delete.output.json"
+    },
+    {
+      "typeId": "core.rag.retriever-basic",
+      "version": "1.0.0",
+      "label": "Retriever — Basic",
+      "description": "Single vector-query.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/retriever-basic.config.json",
+      "inputSchemaRef": "schemas/retriever-basic.input.json",
+      "outputSchemaRef": "schemas/retriever-basic.output.json"
+    },
+    {
+      "typeId": "core.rag.retriever-multi-query",
+      "version": "1.0.0",
+      "label": "Retriever — Multi-Query",
+      "description": "Generates N query variants via LLM, retrieves each, merges + dedupes.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/retriever-multi-query.config.json",
+      "inputSchemaRef": "schemas/retriever-multi-query.input.json",
+      "outputSchemaRef": "schemas/retriever-multi-query.output.json"
+    },
+    {
+      "typeId": "core.rag.retriever-contextual-compression",
+      "version": "1.0.0",
+      "label": "Retriever — Contextual Compression",
+      "description": "Post-filters retrieved chunks via LLM relevance scoring.",
+      "category": "data",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/retriever-contextual-compression.config.json",
+      "inputSchemaRef": "schemas/retriever-contextual-compression.input.json",
+      "outputSchemaRef": "schemas/retriever-contextual-compression.output.json"
+    }
+  ],
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "openwop-team-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-FWRhlcAFwYbQJyCxhJZ0o2gNtOIESxR9Ql2Z/heXYvQ="
+}

@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.crypto/1.0.0/x509-parse.config.json",
+  "title": "X509ParseConfig",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false
+}
