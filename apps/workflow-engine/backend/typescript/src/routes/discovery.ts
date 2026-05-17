@@ -12,6 +12,7 @@ import type { AppConfig } from '../index.js';
 import { listCapabilities } from '../executor/runtimeCapabilities.js';
 import type { Storage } from '../storage/storage.js';
 import { listHostSurfaces } from '../bootstrap/hostSurfaceRegistry.js';
+import { getFsSandboxRoot } from '../host/inMemorySurfaces.js';
 
 interface Deps {
   storage: Storage;
@@ -136,6 +137,19 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       // The catalog endpoint cross-references this to mark each node
       // as runnable-here or "needs host.X".
       hostSurfaces: listHostSurfaces(),
+      // RFC 0014 — host.fs capability block (canonical spec shape).
+      // Mirrors the host-surface-registry advertisement so generic
+      // openwop clients can read the standard shape from
+      // `capabilities.fs.{supported,sandboxRoot,maxFileSizeBytes}`.
+      fs: (() => {
+        const root = getFsSandboxRoot();
+        if (!root) return { supported: false };
+        return {
+          supported: true,
+          sandboxRoot: root,
+          maxFileSizeBytes: 50 * 1024 * 1024, // 50 MiB
+        };
+      })(),
     },
     extensions: {
       // Sample-namespace extensions block. Clients tolerate absence.

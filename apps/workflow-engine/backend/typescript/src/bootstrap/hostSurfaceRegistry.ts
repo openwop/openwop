@@ -86,7 +86,7 @@ export function seedDefaultHostSurfaces(): void {
     { name: 'host.cache', supported: false, note: 'RFC 0019 §cache.' },
     { name: 'host.blobStorage', supported: false, note: 'RFC 0019 §blob.' },
     { name: 'host.queue', supported: false, note: 'RFC 0017.' },
-    { name: 'host.fs', supported: false, note: 'RFC 0014.' },
+    { name: 'host.fs', supported: true, implementation: 'workflow-engine', note: 'RFC 0014 (Active). In-memory sandboxed filesystem from host/inMemorySurfaces.ts; sandboxRoot under {dataDir}/fs.' },
     { name: 'host.db.sql', supported: false, note: 'RFC 0018 §SQL.' },
     { name: 'host.db.nosql', supported: false, note: 'RFC 0018 §NoSQL.' },
     { name: 'host.db.search', supported: false, note: 'RFC 0018 §search.' },

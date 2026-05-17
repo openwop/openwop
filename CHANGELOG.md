@@ -11,6 +11,35 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### `core.openwop.http@1.1.2` — idempotency-key generator made deterministic (2026-05-17)
+
+Closes a correctness/security bug in `core.openwop.http.idempotency-key`: the previous default mode (`uuid`) returned a fresh `randomUUID()` on every call, defeating the entire point of an Idempotency-Key. Workflow authors composing `idempotency-key → fetch` were getting a different key on every retry, so the remote service treated each attempt as a new request — exactly what idempotency keys are supposed to prevent. Caught during the post-publication review of the 17 `core.openwop.*` packs published 2026-05-17.
+
+- **`packs/core.openwop.http/index.mjs`** — `idempotencyKey()` rewritten. Default mode is now `composite` (SHA-256 of `runId\0nodeId\0payload`, key format `openwop-<sha256-prefix-16>` — matches the canonical formula already used by `core.openwop.http.fetch`'s `deriveIdempotencyKey`). `hash` mode preserved for payload-only keys. The `uuid` mode is **removed**; calls with `mode: uuid` reject with `CONFIG_INVALID` and an error message naming the safety-fix.
+- **`composite` now reads `runId`/`nodeId` from `ctx`** (with `inputs.runId` / `inputs.nodeId` as overrides). Previously required them as inputs, which was awkward — the host already knows them. Both reference hosts (Postgres + SQLite) surface them on ctx.
+- **Schemas bumped to `/1.1.2/`** — `idempotency-key.{config,input,output}.json` `$id` paths refresh; config enum drops `uuid`, keeps `composite` + `hash`; output gains a `pattern: ^openwop-[0-9a-f]{16}$` constraint matching the new key format.
+- **Compatibility classification:** safety-fix per `COMPATIBILITY.md` §3. The pre-fix behavior was a correctness bug (the node's documented purpose is retry-safety; `uuid` mode could not deliver it). Workflows pinned to `1.1.1` and depending on the `uuid` mode silently get *worse* behavior on retry; pinning to `1.1.2` gets the correct behavior. Old versions (`1.1.0`, `1.1.1`) will be flagged `deprecated` in the registry index alongside the existing crypto/http/rag deprecation batch (per `[Unreleased]` §"Pack patches: SSRF + JWT alg-confusion fixes (P0.1)" yank policy).
+- **Publication:** source fix only in this commit. Tarball build + signing + registry publication follow the same flow as the P0.1 batch — gated on the steward running `scripts/build-pack-tarball.mjs` + `registry/scripts/verify-signatures.mjs`.
+- **No callers in-tree.** `grep` across `conformance/`, `examples/`, `apps/`, `packs/*/test/` finds zero references to `core.openwop.http.idempotency-key`. The fix's blast radius is whatever external workflows have adopted the node since 2026-05-13 publication of `1.1.0`.
+
+### All 7 capability RFCs (0014-0020) promoted Draft → Active (2026-05-17)
+
+The full batch from earlier this session moves from `Draft` to `Active` end-to-end. RFC 0014 lands with a full behavioral conformance scenario; RFCs 0015-0020 land with advertisement-shape scenarios + behavioral assertions parked as `it.todo()` placeholders until a reference host wires the test seam.
+
+- **`schemas/capabilities.schema.json`** — 10 new capability blocks landed: `fs` (0014), `kvStorage` (0015), `tableStorage` (0016), `queueBus` (0017), `sql` + `nosql` + `vectorStore` + `searchIndex` (0018), `blobStorage` + `cache` (0019), and the `mcp.serverMount` sub-block (0020). Every block is optional + `additionalProperties: false`.
+- **`SECURITY/invariants.yaml`** — 5 new protocol-tier invariants: `fs-path-traversal` (critical), `kv-cross-tenant-isolation` (critical), `queue-cross-tenant-isolation` (critical), `sql-parametric-only` (critical), `mcp-server-untrusted-args` (high). Every invariant has at least one passing conformance scenario.
+- **`conformance/src/scenarios/`** — `fs-path-traversal.test.ts` promoted to full behavioral assertions (advertisement shape + two path-escape attempts that soft-skip without a test seam). The other 26 scenarios promoted to live advertisement-shape assertions via the `scripts/promote-rfc-scenarios.mjs` generator; deeper behavioral assertions (cross-tenant proofs, atomicity proofs) stay as `it.todo()` until a reference host wires a two-tenant test seam.
+- **`apps/workflow-engine`** — first host to advertise `capabilities.fs.supported: true` end-to-end with the runtime sandbox root (`<dataDir>/host-fs`). The in-memory fs surface's path-traversal rejection code aligned to canonical `path_outside_sandbox`. Reference for the remaining 6 capabilities sits in `host/inMemorySurfaces.ts`; the canonical `capabilities.*` discovery wiring of each lands as those surfaces graduate from `host-surface-registry` to typed blocks.
+- **All 7 RFCs** — `Status: Draft → Active` in `RFCS/00{14,15,16,17,18,19,20}-*.md`. Remaining acceptance-criteria boxes (reference impl pass) ticket through the workflow-engine + Postgres-host work.
+
+### `examples/branching-workflow/` (2026-05-17)
+
+End-to-end DAG-executor demo: a workflow with two parallel paths fanning out from a source, merging at a `core.flow.merge` (mode `combine-by-position`), terminating at a sink. The example script asserts the witness that both branches emitted `node.started` BEFORE either emitted `node.completed` — proves the host's scheduler runs branches concurrently and not serially. Linear-only hosts reject the workflow at submit time with `workflow_invalid`. Skip-equivalent without `OPENWOP_BASE_URL` set.
+
+### Workflow-engine sample: local-pack mount precedence (2026-05-17)
+
+The example application's boot order now runs `ensureLocalPacksMounted()` BEFORE `ensureRegistryPacksInstalled()`. When the backend boots inside the workspace and `OPENWOP_INSTALL_PACKS` is unset, the registry network install is auto-disabled — every default-pack the sample wants is already on disk from the local mount. Operators who run the sample in Docker / Cloud Run (no workspace mount) continue to get the network install. Closes the "only 2 flow nodes in the builder" UX bug surfaced this session.
+
 ### Pack patches: SSRF + JWT alg-confusion fixes (P0.1) (2026-05-17)
 
 Closes 2 of the 3 High-severity findings from yesterday's pre-audit triage. First step of the `app.openwop.dev` public-deploy hardening (Phase 0). Three packs patched + republished to `packs.openwop.dev`; old versions remain available for pinned consumers.

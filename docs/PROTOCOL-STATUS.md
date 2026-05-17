@@ -23,15 +23,16 @@
 | Status | Count |
 |---|---:|
 | Accepted | 12 |
-| Draft | 8 |
+| Active | 7 |
+| Draft | 1 |
 
 | Latest RFC | Title | Status |
 |---|---|---|
-| RFC 0020 | Host-side MCP server composition | Draft |
-| RFC 0019 | Blob storage + TTL cache capabilities | Draft |
-| RFC 0018 | Database adapter capabilities (SQL, vector, search) | Draft |
-| RFC 0017 | host.queueBus inbound queue + stream capability | Draft |
-| RFC 0016 | host.tableStorage structured record store | Draft |
+| RFC 0020 | Host-side MCP server composition | Active |
+| RFC 0019 | Blob storage + TTL cache capabilities | Active |
+| RFC 0018 | Database adapter capabilities (SQL, vector, search) | Active |
+| RFC 0017 | host.queueBus inbound queue + stream capability | Active |
+| RFC 0016 | host.tableStorage structured record store | Active |
 
 ## SDK Helper Coverage
 

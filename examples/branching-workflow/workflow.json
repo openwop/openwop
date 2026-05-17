@@ -1,0 +1,60 @@
+{
+  "id": "branching-demo",
+  "name": "Branching Workflow Demo",
+  "description": "Two parallel paths fan out from a source, run concurrently, then fan back in at a merge node. Proves DAG execution end-to-end.",
+  "version": "1.0.0",
+  "status": "active",
+  "nodes": [
+    {
+      "id": "source",
+      "typeId": "core.noop",
+      "name": "Source",
+      "position": { "x": 100, "y": 200 },
+      "config": {},
+      "inputs": {}
+    },
+    {
+      "id": "branchA",
+      "typeId": "local.sample.demo.uppercase",
+      "name": "Branch A — uppercase",
+      "position": { "x": 300, "y": 100 },
+      "config": {},
+      "inputs": {}
+    },
+    {
+      "id": "branchB",
+      "typeId": "local.sample.demo.mock-ai",
+      "name": "Branch B — mock AI",
+      "position": { "x": 300, "y": 300 },
+      "config": {},
+      "inputs": {}
+    },
+    {
+      "id": "merge",
+      "typeId": "core.flow.merge",
+      "name": "Merge (combine-by-position)",
+      "position": { "x": 500, "y": 200 },
+      "config": { "mode": "combine-by-position" },
+      "inputs": {}
+    },
+    {
+      "id": "sink",
+      "typeId": "core.noop",
+      "name": "Sink",
+      "position": { "x": 700, "y": 200 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [
+    { "id": "e1", "sourceNodeId": "source", "targetNodeId": "branchA" },
+    { "id": "e2", "sourceNodeId": "source", "targetNodeId": "branchB" },
+    { "id": "e3", "sourceNodeId": "branchA", "targetNodeId": "merge", "triggerRule": "all_success" },
+    { "id": "e4", "sourceNodeId": "branchB", "targetNodeId": "merge", "triggerRule": "all_success" },
+    { "id": "e5", "sourceNodeId": "merge", "targetNodeId": "sink" }
+  ],
+  "triggers": [{ "id": "manual", "type": "manual" }],
+  "variables": {},
+  "metadata": { "example": "branching-workflow", "demonstrates": ["fan-out", "fan-in", "all_success-merge"] },
+  "settings": {}
+}

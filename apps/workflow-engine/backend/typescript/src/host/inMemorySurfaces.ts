@@ -460,7 +460,8 @@ function createFs(rootDir: string, scope: BundleScope): FsSurface {
     const normalized = normalize(rel).replace(/^[/\\]+/, '');
     const abs = resolve(tenantRoot, normalized);
     if (!abs.startsWith(tenantRoot + sep) && abs !== tenantRoot) {
-      throw Object.assign(new Error('Path escapes tenant sandbox.'), { code: 'FS_PATH_ESCAPE' });
+      // Canonical per RFC 0014 §B + SECURITY/invariants.yaml fs-path-traversal.
+      throw Object.assign(new Error('Path escapes tenant sandbox.'), { code: 'path_outside_sandbox' });
     }
     return abs;
   };
@@ -588,6 +589,13 @@ const _sqlPool = new Map<string, Database.Database>();
 
 let _fsRoot: string | null = null;
 let _initialized = false;
+
+/** RFC 0014 §A — exposed for /.well-known/openwop discovery so the
+ *  spec-canonical `capabilities.fs.sandboxRoot` matches the in-memory
+ *  surface's actual root. Returns null before initInMemorySurfaces() runs. */
+export function getFsSandboxRoot(): string | null {
+  return _fsRoot;
+}
 
 /** Initialize the surfaces module + advertise each surface. Idempotent. */
 export function initInMemorySurfaces(deps: { dataDir: string }): void {

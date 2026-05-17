@@ -4,7 +4,7 @@
 |---|---|
 | **RFC** | 0014 |
 | **Title** | host.fs filesystem capability |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | OpenWOP Working Group |
 | **Created** | 2026-05-17 |
 | **Updated** | 2026-05-17 |

@@ -701,6 +701,83 @@ invariants:
       harness is the only protocol-level defense at the compaction
       boundary.
 
+  # ===== RFC 0015 host.kvStorage cross-tenant isolation =====
+
+  - id: kv-cross-tenant-isolation
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/kv-cross-tenant-isolation.test.ts
+    note: |
+      RFC 0015 §B point 1: hosts advertising `capabilities.kvStorage.supported`
+      MUST partition values by tenant. A `get` for one tenant MUST NOT return
+      values from another tenant, even with identical keys. Mirrors
+      `agent-memory-cti-1`. Same applies to `list` enumeration.
+
+  # ===== RFC 0017 host.queueBus cross-tenant message isolation =====
+
+  - id: queue-cross-tenant-isolation
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/queue-cross-tenant-isolation.test.ts
+    note: |
+      RFC 0017 §C: hosts advertising `capabilities.queueBus.supported` MUST
+      partition messages by tenant. A consumer for tenant A MUST NOT receive
+      messages published by tenant B, even on the same logical topic.
+
+  # ===== RFC 0018 host.sql parametric-only =====
+
+  - id: sql-parametric-only
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/sql-injection-rejection.test.ts
+    note: |
+      RFC 0018 §C: hosts advertising `capabilities.sql.supported` MUST reject
+      non-parametric SQL queries that inline user input. The `ctx.db.sql.query`
+      surface MUST treat the `sql` string as a parametric template; bound
+      values flow through `params[]`, never via string interpolation.
+
+  # ===== RFC 0020 host-side MCP untrusted-args invariant =====
+
+  - id: mcp-server-untrusted-args
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/mcp-server-untrusted-args.test.ts
+    note: |
+      RFC 0020 §D: hosts advertising `capabilities.mcp.serverMount.supported`
+      MUST validate inbound `tools/call.arguments` against the tool's declared
+      `inputSchema` BEFORE starting the workflow run. Malformed or
+      missing-required-field arguments MUST be rejected with isError:true
+      before any node executes — prevents prompt-injection-driven
+      argument-forgery from leaking through.
+
+  # ===== RFC 0014 host.fs sandbox =====
+
+  - id: fs-path-traversal
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/fs-path-traversal.test.ts
+    note: |
+      RFC 0014 §B + §C: hosts advertising `capabilities.fs.supported`
+      MUST resolve every input path relative to `sandboxRoot` and
+      reject any path that escapes via `..` segments OR via symlinks
+      pointing outside the sandbox root. The same MUST-NOT applies to
+      `core.openwop.files.{read,write,delete,stat,list}` and to the
+      transport sub-surfaces (ftp/sftp/ssh) when those are advertised.
+      Path-escape attempts MUST return `path_outside_sandbox` rather
+      than silently following the link or partially fulfilling. Tested
+      against any host advertising `capabilities.fs.supported`; skips
+      cleanly otherwise.
+
   # ===== Phase I auth-rotation token redaction =====
 
   - id: auth-key-rotation-no-canary-echo

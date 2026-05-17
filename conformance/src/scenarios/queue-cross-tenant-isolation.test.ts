@@ -1,20 +1,47 @@
 /**
- * queue-cross-tenant-isolation — placeholder scenario for RFC 0017 §C `queue-cross-tenant-isolation` invariant.
+ * queue-cross-tenant-isolation — RFC 0017 advertisement-shape verification + behavioral placeholders.
  *
- * Status: PLACEHOLDER. RFC 0017 is at `Draft` status as of 2026-05-17.
- * This scenario lands as `it.todo()` so the contract surface is tracked.
- * Promote to live assertions when:
- *   1. RFC 0017 reaches `Active` status, AND
- *   2. The matching capability block lands in `schemas/capabilities.schema.json`, AND
- *   3. At least one reference host advertises `capabilities.queueBus.supported`.
+ * Status: ACTIVE (advertisement-shape). RFC 0017 promoted to `Active`
+ * 2026-05-17. The matching `capabilities.queueBus` block has landed in
+ * `schemas/capabilities.schema.json`. This scenario asserts the advertisement
+ * shape against any host that boots the conformance suite, and keeps the
+ * deeper behavioral assertions as `it.todo()` until a reference host wires
+ * a test seam.
  *
  * Summary: host.queueBus MUST partition messages by tenant.
  *
  * @see RFCS/0017-*.md
  */
 
-import { describe, it } from 'vitest';
+import { describe, it, expect } from 'vitest';
+import { driver } from '../lib/driver.js';
 
-describe('queue-cross-tenant-isolation: placeholder for RFC 0017', () => {
+interface DiscoveryDoc {
+  capabilities?: Record<string, unknown>;
+}
+
+async function readCap(): Promise<Record<string, unknown> | null> {
+  const res = await driver.get('/.well-known/openwop');
+  const body = res.json as DiscoveryDoc | undefined;
+  const top = body?.capabilities as Record<string, unknown> | undefined;
+  const final = (top && typeof top === 'object') ? (top as Record<string, unknown>)["queueBus"] : undefined;
+  return (final && typeof final === 'object' ? (final as Record<string, unknown>) : null);
+}
+
+describe('queue-cross-tenant-isolation: advertisement shape (RFC 0017)', () => {
+  it('capabilities.queueBus is either absent or a well-formed object', async () => {
+    const cap = await readCap();
+    if (cap === null) return; // host doesn't advertise — skip
+    expect(
+      typeof cap.supported,
+      driver.describe(
+        'capabilities.schema.json §queueBus',
+        'capabilities.queueBus.supported MUST be a boolean when present',
+      ),
+    ).toBe('boolean');
+  });
+});
+
+describe('queue-cross-tenant-isolation: behavioral assertions (placeholders — need host test seam)', () => {
   it.todo("publish under tenant A on topic T → consume under tenant B on topic T returns not-found");
 });

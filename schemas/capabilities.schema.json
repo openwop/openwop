@@ -384,6 +384,175 @@
       "type": "boolean",
       "description": "Multi-Agent Shift Phase 4. When `true`, host advertises that it implements the `core.conversationGate` typeId AND honors the `conversation.start` / `conversation.exchange` / `conversation.close` suspend variants. Hosts that don't claim this fall back to `clarification.requested` interrupts for multi-turn user interjections."
     },
+    "fs": {
+      "type": "object",
+      "description": "RFC 0014 (`Active`). Filesystem capability — read/write/list/stat/delete inside a sandbox root. Required by the `core.openwop.files` pack. Hosts MUST resolve every input path relative to `sandboxRoot`, reject any path that escapes via `..` segments or symlinks, and enforce `maxFileSizeBytes` on write. Path-traversal rejection is normative — see `SECURITY/invariants.yaml` row `fs-path-traversal`.",
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "Host advertises `ctx.fs.{read,write,delete,stat,list}`. `false` (or omission) signals the host does NOT expose a filesystem surface; `core.openwop.files` registration MUST refuse on such hosts."
+        },
+        "sandboxRoot": {
+          "type": "string",
+          "description": "Absolute path. Every fs operation is resolved relative to this root. MUST be set when `supported: true`."
+        },
+        "maxFileSizeBytes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Per-file size cap enforced on write. 0 = unlimited (NOT recommended). Reads of files larger than this MAY return `file_too_large`."
+        },
+        "image": {
+          "type": "object",
+          "description": "Image-processing sub-capability. Optional.",
+          "properties": {
+            "supported": { "type": "boolean" },
+            "formats": {
+              "type": "array",
+              "items": { "type": "string", "enum": ["jpeg", "png", "webp", "avif", "gif"] }
+            }
+          },
+          "additionalProperties": false
+        },
+        "pdf": {
+          "type": "object",
+          "description": "PDF-processing sub-capability. Optional.",
+          "properties": {
+            "supported": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "transport": {
+          "type": "object",
+          "description": "Network file-transport sub-capabilities. Optional.",
+          "properties": {
+            "ftp": { "type": "boolean" },
+            "sftp": { "type": "boolean" },
+            "ssh": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "if": { "properties": { "supported": { "const": true } }, "required": ["supported"] },
+      "then": { "required": ["supported", "sandboxRoot"] },
+      "additionalProperties": false
+    },
+    "kvStorage": {
+      "type": "object",
+      "description": "RFC 0015 (`Active`). TTL-aware key-value store with atomic increment + compare-and-swap. Required by `core.openwop.storage` kv-* nodes. Hosts MUST partition values by tenant (`kv-cross-tenant-isolation` invariant) and atomically apply increments + CAS when those flags are advertised.",
+      "properties": {
+        "supported": { "type": "boolean" },
+        "maxKeyBytes": { "type": "integer", "minimum": 0 },
+        "maxValueBytes": { "type": "integer", "minimum": 0 },
+        "maxTtlSeconds": { "type": "integer", "minimum": 0 },
+        "atomicIncrement": { "type": "boolean" },
+        "compareAndSwap": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "tableStorage": {
+      "type": "object",
+      "description": "RFC 0016 (`Active`). Structured-record store with user-defined schemas. Sibling to kvStorage. Cross-tenant isolation enforced (mirrors RFC 0015 invariant).",
+      "properties": {
+        "supported": { "type": "boolean" },
+        "maxRowsPerTable": { "type": "integer", "minimum": 0 },
+        "maxColumnsPerRow": { "type": "integer", "minimum": 0 },
+        "indexable": { "type": "boolean" },
+        "fullTextSearch": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "queueBus": {
+      "type": "object",
+      "description": "RFC 0017 (`Active`). Inbound queue + stream capability — publish, consume (trigger), ack/nack/dead-letter. Cross-tenant message isolation invariant (`queue-cross-tenant-isolation`). Sibling to host.messaging (which is outbound-egress-only).",
+      "properties": {
+        "supported": { "type": "boolean" },
+        "backends": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["rabbitmq", "kafka", "sqs", "sns", "pubsub", "mqtt", "nats", "redis-streams", "in-memory"] }
+        },
+        "deadLetterSupported": { "type": "boolean" },
+        "stream": {
+          "type": "object",
+          "properties": {
+            "supported": { "type": "boolean" },
+            "fromBeginning": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "sql": {
+      "type": "object",
+      "description": "RFC 0018 (`Active`). SQL database adapter with parametric-only enforcement. Hosts MUST reject non-parametric queries that inline user input (`sql-parametric-only` invariant — guards against SQL injection across every workflow).",
+      "properties": {
+        "supported": { "type": "boolean" },
+        "datasources": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+        "transactions": { "type": "boolean" },
+        "drivers": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["postgres", "mysql", "mariadb", "sqlite", "mssql", "clickhouse", "snowflake", "bigquery", "duckdb"] }
+        }
+      },
+      "additionalProperties": false
+    },
+    "nosql": {
+      "type": "object",
+      "description": "RFC 0018 (`Active`). MongoDB-shape document store adapter.",
+      "properties": {
+        "supported": { "type": "boolean" },
+        "datasources": { "type": "array" },
+        "drivers": { "type": "array", "items": { "type": "string", "enum": ["mongodb", "dynamodb", "cosmosdb", "firestore"] } }
+      },
+      "additionalProperties": false
+    },
+    "vectorStore": {
+      "type": "object",
+      "description": "RFC 0018 (`Active`). Vector-DB capability for k-NN search.",
+      "properties": {
+        "supported": { "type": "boolean" },
+        "collections": { "type": "array" },
+        "backends": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["pinecone", "qdrant", "weaviate", "milvus", "pgvector", "redis", "mongodb-atlas", "chroma", "azure-ai-search", "in-memory"] }
+        }
+      },
+      "additionalProperties": false
+    },
+    "searchIndex": {
+      "type": "object",
+      "description": "RFC 0018 (`Active`). Full-text search index adapter.",
+      "properties": {
+        "supported": { "type": "boolean" },
+        "indexes": { "type": "array" },
+        "backends": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["elasticsearch", "opensearch", "meilisearch", "typesense", "algolia"] }
+        }
+      },
+      "additionalProperties": false
+    },
+    "blobStorage": {
+      "type": "object",
+      "description": "RFC 0019 (`Active`). Binary artifact store with presigned URLs. Per-bucket tenant isolation. Presigned URLs MUST expire at the advertised TTL.",
+      "properties": {
+        "supported": { "type": "boolean" },
+        "buckets": { "type": "array" },
+        "presignSupported": { "type": "boolean" },
+        "maxObjectBytes": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "cache": {
+      "type": "object",
+      "description": "RFC 0019 (`Active`). TTL cache for HTTP / AI response memoization. Per-tenant scoping; TTL drift ≤ 1s.",
+      "properties": {
+        "supported": { "type": "boolean" },
+        "maxValueBytes": { "type": "integer", "minimum": 0 },
+        "maxTtlSeconds": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
     "workflowChainPacks": {
       "type": "object",
       "description": "RFC 0013 (Phase 1, `Draft`). When `supported: true`, the host's workflow editor implements workflow-chain pack expansion per `workflow-chain-packs.md` — author drops a chain tile, host resolves the pack, prompts for `parameters`, substitutes `{{params.<name>}}` placeholders, rewrites node ids, splices the resulting DAG into the parent workflow. Hosts that don't implement expansion omit this block (or set `supported: false`); conformance scenarios under `conformance/src/scenarios/workflow-chain-*.test.ts` skip cleanly against those hosts.",
@@ -394,6 +563,28 @@
         }
       },
       "required": ["supported"],
+      "additionalProperties": false
+    },
+    "mcp": {
+      "type": "object",
+      "description": "RFC 0020 (`Active`). MCP (Model Context Protocol) composition surface. The client half is consumed implicitly via `host.mcp` host-surface; this block adds the optional server half — workflow exposed AS an MCP server with bidirectional sampling/elicitation bridges.",
+      "properties": {
+        "supported": { "type": "boolean", "description": "Host advertises a client-side MCP surface (ctx.mcp.*). See spec/v1/mcp-integration.md." },
+        "serverMount": {
+          "type": "object",
+          "description": "Server-side MCP composition (workflow IS an MCP server). When supported, the host mounts an MCP endpoint and routes inbound tools/call, resources/read, prompts/get into workflows. Inbound MUST be treated as `trustBoundary: 'untrusted'`.",
+          "properties": {
+            "supported": { "type": "boolean" },
+            "transports": {
+              "type": "array",
+              "items": { "type": "string", "enum": ["stdio", "streamable-http"] }
+            },
+            "samplingBridge": { "type": "boolean", "description": "Inbound sampling/createMessage bridges to the workflow's ctx.callAI." },
+            "elicitationBridge": { "type": "boolean", "description": "Inbound elicitation/create bridges to ctx.suspend." }
+          },
+          "additionalProperties": false
+        }
+      },
       "additionalProperties": false
     },
     "compliance": {

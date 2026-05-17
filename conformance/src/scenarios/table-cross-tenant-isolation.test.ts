@@ -1,20 +1,47 @@
 /**
- * table-cross-tenant-isolation — placeholder scenario for RFC 0016 §B point 1 (cross-tenant isolation).
+ * table-cross-tenant-isolation — RFC 0016 advertisement-shape verification + behavioral placeholders.
  *
- * Status: PLACEHOLDER. RFC 0016 is at `Draft` status as of 2026-05-17.
- * This scenario lands as `it.todo()` so the contract surface is tracked.
- * Promote to live assertions when:
- *   1. RFC 0016 reaches `Active` status, AND
- *   2. The matching capability block lands in `schemas/capabilities.schema.json`, AND
- *   3. At least one reference host advertises `capabilities.tableStorage.supported`.
+ * Status: ACTIVE (advertisement-shape). RFC 0016 promoted to `Active`
+ * 2026-05-17. The matching `capabilities.tableStorage` block has landed in
+ * `schemas/capabilities.schema.json`. This scenario asserts the advertisement
+ * shape against any host that boots the conformance suite, and keeps the
+ * deeper behavioral assertions as `it.todo()` until a reference host wires
+ * a test seam.
  *
  * Summary: host.tableStorage MUST partition rows by tenant.
  *
  * @see RFCS/0016-*.md
  */
 
-import { describe, it } from 'vitest';
+import { describe, it, expect } from 'vitest';
+import { driver } from '../lib/driver.js';
 
-describe('table-cross-tenant-isolation: placeholder for RFC 0016', () => {
+interface DiscoveryDoc {
+  capabilities?: Record<string, unknown>;
+}
+
+async function readCap(): Promise<Record<string, unknown> | null> {
+  const res = await driver.get('/.well-known/openwop');
+  const body = res.json as DiscoveryDoc | undefined;
+  const top = body?.capabilities as Record<string, unknown> | undefined;
+  const final = (top && typeof top === 'object') ? (top as Record<string, unknown>)["tableStorage"] : undefined;
+  return (final && typeof final === 'object' ? (final as Record<string, unknown>) : null);
+}
+
+describe('table-cross-tenant-isolation: advertisement shape (RFC 0016)', () => {
+  it('capabilities.tableStorage is either absent or a well-formed object', async () => {
+    const cap = await readCap();
+    if (cap === null) return; // host doesn't advertise — skip
+    expect(
+      typeof cap.supported,
+      driver.describe(
+        'capabilities.schema.json §tableStorage',
+        'capabilities.tableStorage.supported MUST be a boolean when present',
+      ),
+    ).toBe('boolean');
+  });
+});
+
+describe('table-cross-tenant-isolation: behavioral assertions (placeholders — need host test seam)', () => {
   it.todo("insert under tenant A → query under tenant B returns 0 rows for the same table+filter");
 });
