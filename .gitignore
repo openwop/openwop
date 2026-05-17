@@ -171,3 +171,4 @@ docker-compose.override.yml
 .claude/scheduled_tasks.lock
 .claude/sessions/
 .claude/logs/
+/data/
