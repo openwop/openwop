@@ -41,6 +41,7 @@ import { registerStreamRoutes } from './routes/streams.js';
 import { registerWebhookRoutes } from './routes/webhooks.js';
 import { registerPackRoutes } from './routes/packs.js';
 import { registerByokRoutes } from './routes/byok.js';
+import { registerTestSeamRoutes } from './routes/testSeam.js';
 import { registerAdminRoutes } from './routes/admin.js';
 import { registerWorkflowRoutes } from './routes/workflows.js';
 import { registerNodeCatalogRoute } from './routes/nodeCatalog.js';
@@ -140,6 +141,22 @@ export async function createApp(config: AppConfig): Promise<Express> {
 
   const app = express();
 
+  // Firebase Hosting → Cloud Run rewrite preserves the `/api` source
+  // prefix when proxying (e.g. browser hits `/api/v1/runs`, backend
+  // receives `/api/v1/runs`). Strip the prefix here so the rest of
+  // the routes (`/v1/*`, `/.well-known/openwop`, `/health`) work
+  // without per-route `/api`-prefixed clones. Local dev + bearer
+  // callers without the prefix are unaffected — the strip is a no-op
+  // when the path doesn't start with `/api/`.
+  app.use((req, _res, next) => {
+    if (req.url.startsWith('/api/')) {
+      req.url = req.url.slice(4) || '/';
+    } else if (req.url === '/api') {
+      req.url = '/';
+    }
+    next();
+  });
+
   // Higher-limit JSON parser for /v1/packs/* publish payloads. MUST
   // register before the global 1mb parser; body-parser is no-op when
   // req._body is set, so registration order is precedence order.
@@ -171,6 +188,7 @@ export async function createApp(config: AppConfig): Promise<Express> {
   registerWebhookRoutes(app, { storage });
   registerPackRoutes(app, { storage });
   registerByokRoutes(app);
+  registerTestSeamRoutes(app);
   registerAdminRoutes(app);
   registerWorkflowRoutes(app);
   registerNodeCatalogRoute(app);
