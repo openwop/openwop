@@ -245,6 +245,74 @@ describe.skipIf(HTTP_SKIP)('ai-envelope-shape: behavioral acceptEnvelope round-t
     expect(body.capKind).toBe('envelopes');
   });
 
+  it('accepted outcome carries normalizedMeta.contentTrust per RFC 0021 §A point 6', async () => {
+    // No meta.contentTrust on inbound + runTrustBoundary='untrusted'
+    // → host propagates per RFC 0021 §A point 6 (trust-boundary normalization).
+    const res = await driver.post('/v1/host/sample/envelope/accept', {
+      envelope: {
+        type: 'clarification.request',
+        schemaVersion: 1,
+        envelopeId: 'env-norm-1',
+        correlationId: 'run-norm:node-1:turn-0:abc',
+        payload: { questions: [{ id: 'q1', question: 'why?' }] },
+        meta: { source: 'ai-generation', ts: '2026-05-18T10:00:00Z' },
+      },
+      runTrustBoundary: 'untrusted',
+    });
+    if (res.status === 404) return;
+    expect(res.status).toBe(200);
+    const body = res.json as { status?: string; normalizedMeta?: { contentTrust?: string } };
+    expect(body.status).toBe('accepted');
+    expect(
+      body.normalizedMeta?.contentTrust,
+      driver.describe(
+        'RFC 0021 §A point 6',
+        'host MUST propagate runTrustBoundary onto normalizedMeta.contentTrust when envelope meta.contentTrust is absent',
+      ),
+    ).toBe('untrusted');
+  });
+
+  it('envelope-supplied meta.contentTrust takes precedence over runTrustBoundary', async () => {
+    const res = await driver.post('/v1/host/sample/envelope/accept', {
+      envelope: {
+        type: 'clarification.request',
+        schemaVersion: 1,
+        envelopeId: 'env-norm-2',
+        correlationId: 'run-norm:node-1:turn-1:def',
+        payload: { questions: [{ id: 'q1', question: 'why?' }] },
+        meta: { source: 'ai-generation', ts: '2026-05-18T10:00:00Z', contentTrust: 'trusted' },
+      },
+      runTrustBoundary: 'untrusted', // explicitly conflicts; envelope wins
+    });
+    if (res.status === 404) return;
+    const body = res.json as { status?: string; normalizedMeta?: { contentTrust?: string } };
+    expect(body.status).toBe('accepted');
+    expect(
+      body.normalizedMeta?.contentTrust,
+      driver.describe(
+        'RFC 0021 §A point 6',
+        'envelope meta.contentTrust MUST take precedence over runTrustBoundary',
+      ),
+    ).toBe('trusted');
+  });
+
+  it('non-ISO-8601 meta.ts → status: invalid (format defense-in-depth)', async () => {
+    const res = await driver.post('/v1/host/sample/envelope/accept', {
+      envelope: {
+        type: 'error',
+        schemaVersion: 1,
+        envelopeId: 'env-bad-ts',
+        correlationId: 'run-bad-ts:node-1:turn-0:abc',
+        payload: { code: 'x', message: 'y' },
+        meta: { source: 'ai-generation', ts: 'tomorrow' },
+      },
+    });
+    if (res.status === 404) return;
+    const body = res.json as { status?: string; reason?: string };
+    expect(body.status, 'malformed timestamp MUST be rejected').toBe('invalid');
+    expect(body.reason).toContain('ISO 8601');
+  });
+
   it('universal kind allowed regardless of nodeAllowedKinds (always-allowed per §"Universal kinds")', async () => {
     const res = await driver.post('/v1/host/sample/envelope/accept', {
       envelope: {

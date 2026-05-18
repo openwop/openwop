@@ -52,7 +52,20 @@ const UNIVERSAL_KINDS = [
 ] as const;
 export type UniversalKind = (typeof UNIVERSAL_KINDS)[number];
 
+// Ajv2020 in `strict: false` mode tolerates unknown `format` keywords
+// (e.g., `"format": "date-time"` on `meta.ts`). The `ai-envelope.schema.json`
+// declares the format but Ajv silently ignores it without `ajv-formats`
+// registered. We avoid a new direct dependency (`ajv-formats` is a
+// transitive of `@openwop/openwop-conformance` only) and add a manual
+// ISO 8601 sanity check below (see `ISO_8601_RE`). Hosts that need
+// strict format validation SHOULD register `ajv-formats` on their own
+// Ajv instance.
 const ajv = new Ajv2020({ strict: false, allErrors: true });
+
+/** RFC 3339 / ISO 8601 subset: `YYYY-MM-DDTHH:MM:SS[.fff]Z` or
+ *  with a `±HH:MM` offset. Mirrors what `ajv-formats` `date-time`
+ *  accepts without pulling in the dep. */
+const ISO_8601_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})$/;
 let _envelopeValidator: ValidateFunction | null = null;
 const _payloadValidators = new Map<string, ValidateFunction>();
 
@@ -106,7 +119,18 @@ export interface ValidationDetail {
 }
 
 export type EnvelopeOutcome =
-  | { status: 'accepted'; recordedEventIds: string[]; envelopeId: string }
+  | {
+      status: 'accepted';
+      recordedEventIds: string[];
+      envelopeId: string;
+      /** RFC 0021 §A point 6 — trust-boundary normalization. When the
+       *  inbound envelope's `meta.contentTrust` was absent, this carries
+       *  the run-level propagated value (`opts.runTrustBoundary`) so the
+       *  caller knows what to persist on the recorded view. When the
+       *  envelope already had `meta.contentTrust` set, this echoes it
+       *  back. Defaults to `'trusted'` when neither is supplied. */
+      normalizedMeta: { contentTrust: 'trusted' | 'untrusted' };
+    }
   | { status: 'invalid'; reason: string; details: ValidationDetail[] }
   | { status: 'gated'; reason: string; allowedKinds: readonly string[] }
   | { status: 'breached'; reason: string; capKind: 'envelopes' | 'schema' | 'clarification' };
@@ -159,6 +183,25 @@ export function acceptEnvelope(envelope: unknown, opts: AcceptOptions = {}): Env
     };
   }
   const env = envelope as AIEnvelope;
+
+  // Defense-in-depth: validate `meta.ts` against ISO 8601. The schema
+  // declares `format: "date-time"` which Ajv ignores under strict:false
+  // (no ajv-formats); we MUST NOT accept "tomorrow" or other non-
+  // timestamp strings on a field that downstream consumers parse as a Date.
+  if (typeof env.meta?.ts !== 'string' || !ISO_8601_RE.test(env.meta.ts)) {
+    return {
+      status: 'invalid',
+      reason: 'meta.ts MUST be an ISO 8601 / RFC 3339 timestamp',
+      details: [
+        {
+          instancePath: '/meta/ts',
+          schemaPath: '#/properties/meta/properties/ts/format',
+          keyword: 'format',
+          message: `expected ISO 8601 (e.g., "2026-05-18T10:00:00Z"); got ${JSON.stringify(env.meta?.ts)}`,
+        },
+      ],
+    };
+  }
 
   // Step 2: kind validation against host's supportedEnvelopes.
   const universals = UNIVERSAL_KINDS as readonly string[];
@@ -230,15 +273,23 @@ export function acceptEnvelope(envelope: unknown, opts: AcceptOptions = {}): Env
     }
   }
 
-  // Step 6: trust-boundary normalization. When inbound envelope omits
-  // meta.contentTrust, propagate from the run-level trust boundary so
-  // downstream consumers see the marker. We don't mutate the input —
-  // the caller persists the recorded view separately.
+  // Step 6: trust-boundary normalization. RFC 0021 §A point 6 + §"Trust
+  // boundary." Precedence (most → least specific):
+  //   (a) envelope's own `meta.contentTrust` (the LLM declared it)
+  //   (b) `opts.runTrustBoundary` (host propagated from run.metadata)
+  //   (c) `'trusted'` default
+  // The acceptor returns the resolved value on `normalizedMeta` so the
+  // caller knows what to persist on the recorded view. We don't mutate
+  // the input.
+  const normalizedContentTrust: 'trusted' | 'untrusted' =
+    env.meta?.contentTrust ?? opts.runTrustBoundary ?? 'trusted';
+
   const envelopeId = env.envelopeId || `env-${randomUUID()}`;
   return {
     status: 'accepted',
     recordedEventIds: [], // host emits RunEventDocs; this acceptor stays pure
     envelopeId,
+    normalizedMeta: { contentTrust: normalizedContentTrust },
   };
 }
 

@@ -11,6 +11,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### RFC 0021 §A `acceptEnvelope` reference implementation (2026-05-18, post-commit `d84d3a8`)
+
+Closes the spec-to-impl loop for the RFC 0021 promotion. The workflow-engine reference host now actually runs the Ajv2020 gate that the spec section §A point 1-3 demanded; `acceptEnvelope` ships as a pure function the conformance suite exercises through an env-gated test seam.
+
+- **`apps/workflow-engine/backend/typescript/src/host/envelopeAcceptor.ts`** (NEW, ~280 LOC) — implements the 6-step accept pipeline from `spec/v1/ai-envelope.md` §"Primitive": shape validation against `ai-envelope.schema.json` → kind validation against `hostSupportedEnvelopes` → per-kind payload validation against `schemas/envelopes/<kind>.schema.json` → Envelope Contract gate (`nodeAllowedKinds`) → engine-limit cap enforcement (`clarificationRounds`/`schemaRounds`/`envelopesPerTurn`) → trust-boundary normalization (returns `normalizedMeta.contentTrust` from envelope-supplied value OR `runTrustBoundary` propagation OR `'trusted'` default). Defense-in-depth ISO 8601 check on `meta.ts` (Ajv2020 `strict:false` doesn't enforce `format:"date-time"`; the acceptor rejects malformed timestamps with a structured `details` entry).
+- **`apps/.../routes/testSeam.ts`** — adds `POST /v1/host/sample/envelope/accept` env-gated on `OPENWOP_TEST_SEAM_ENABLED=true`. Body: `{envelope, hostSupportedEnvelopes?, nodeAllowedKinds?, runTrustBoundary?, counters?}`. Response is the raw `EnvelopeOutcome` union (accepted / invalid / gated / breached). Mirrors the RFC 0020 test-seam pattern.
+- **`apps/.../routes/discovery.ts`** — FIXED pre-existing bug: `supportedEnvelopes` was advertising transport names (`['rest', 'sse']`) instead of AI envelope kinds (the field is the kind catalog per `capabilities.schema.json`). Now correctly advertises the 4 universal kinds from RFC 0021 §"Universal kinds (normative)" + populates `schemaVersions[<universal>] = 1` for each. The transport list correctly lives in `supportedTransports` (already correct).
+- **`conformance/src/scenarios/ai-envelope-shape.test.ts`** — 8 BEHAVIORAL assertions through the seam: accepted / invalid (shape) / invalid (ISO 8601 timestamp) / gated (vendor kind not advertised) / breached (counter at cap) / universal-kind-always-allowed / `normalizedMeta.contentTrust` propagation from `runTrustBoundary` / envelope-supplied contentTrust precedence over `runTrustBoundary`. 18/18 tests pass (8 offline schema-compile + 8 behavioral + 2 HTTP-driven advertisement).
+- **`conformance/coverage.md`** — AI Envelope row grade upgraded `C (shape-only)` → `B (shape + 8 behavioral accept-pipeline assertions)`; scenario list now includes `ai-envelope-shape.test.ts`.
+
+**Compatibility classification: additive + one sample-host safety-fix.** The acceptor is purely additive — new file, new test seam, no openwop wire shape changes. The `supportedEnvelopes` correction in `discovery.ts` is a safety-fix at the sample-host layer per `COMPATIBILITY.md §3`: the field was always documented (since v1.0 in `capabilities.schema.json`) to carry AI envelope kinds; the implementation was advertising transports — wrong values. Consumers reading the field expecting envelope kinds were getting garbage; consumers reading it expecting transports were getting a value that has its own canonical home in `supportedTransports`. Both shapes were honest after the fix.
+
+### Storage adapter parity harness — SQLite vs Postgres via pg-mem (2026-05-18, post-commit `d84d3a8`)
+
+Closes the "613 LOC unreviewed Postgres adapter" thread from commit `1093ce3`. The new `pg`-based StorageAdapter now runs the same 19 Storage operations as the SQLite backend, validated via `pg-mem` (in-memory Postgres dev dependency) injected through `vi.hoisted` + `vi.mock('pg', ...)`.
+
+- **`apps/workflow-engine/backend/typescript/test/storage-adapter-parity.test.ts`** (NEW, ~420 LOC) — 39 tests (19 unique × 2 backends + 1 integrity guard). Coverage: runs lifecycle (insert/get/update/list); events monotonic sequence (impl-defined offset); interrupts (insert/getByToken/resolve/listOpen); idempotency claim; webhooks; BYOK secrets (global + tenant-scoped isolation); audit append; tenant hard delete cascade; tenant reassign (anon → user migration).
+- **Result:** 39/39 pass. 15 sqlite tests pass behaviorally + 15 postgres tests pass behaviorally + 8 documented pg-mem-incompatible-skips (enumerated in `PG_MEM_INCOMPAT`) + 1 skip-set integrity guard that fails loud if a renamed test silently drops out of the skip set.
+- **Documented pg-mem gaps** (require real Postgres / testcontainers / live Cloud SQL to exercise; future drop-in): JSONB array param auto-stringification (webhook `events`); `WITH ... INSERT ... RETURNING` CTE atomicity (event sequence); `INSERT ... ON CONFLICT DO NOTHING RETURNING` ordering (idempotency claim); cascading DELETE coverage (`deleteAllTenantData`).
+- **Compatibility:** test-only addition. No production code changes.
+
 ### RFC 0021 — `spec/v1/ai-envelope.md` DRAFT v1.x → FINAL v1.1 (2026-05-18)
 
 Closes the long-standing wire-shape gap where 8 v1 surfaces reference "AI Envelope" as a typed-wire concept without specifying the shape. Promotes the existing prose to FINAL v1.1, normates the 4 universal-kind payload schemas, and ships an in-tree conformance scenario asserting the contract.

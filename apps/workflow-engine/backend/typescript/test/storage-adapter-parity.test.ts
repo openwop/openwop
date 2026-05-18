@@ -147,6 +147,17 @@ function skipPgMem(name: BackendName, testName: string): boolean {
   return name === 'postgres' && PG_MEM_INCOMPAT.has(testName);
 }
 
+// Track which PG_MEM_INCOMPAT entries were consumed by at least one
+// `trackedSkipPgMem(...)` call. After the suite collection finishes, the
+// guard test below verifies every key was matched — guarding against
+// silent breakage when a test is renamed and the skip stops applying.
+const _pgMemIncompatHits = new Set<string>();
+const _origSkipPgMem = skipPgMem;
+function trackedSkipPgMem(name: BackendName, testName: string): boolean {
+  if (PG_MEM_INCOMPAT.has(testName)) _pgMemIncompatHits.add(testName);
+  return _origSkipPgMem(name, testName);
+}
+
 describe('Storage parity: runs lifecycle', () => {
   it.each(backendNames)('%s: insertRun → getRun returns identical record', async (name) => {
     const s = S(name);
@@ -192,7 +203,7 @@ describe('Storage parity: runs lifecycle', () => {
 
 describe('Storage parity: events monotonic sequence', () => {
   it.each(backendNames)('%s: appendEvent assigns +1 per call (impl-defined offset)', async (name) => {
-    if (skipPgMem(name, 'appendEvent assigns +1 per call (impl-defined offset)')) return;
+    if (trackedSkipPgMem(name, 'appendEvent assigns +1 per call (impl-defined offset)')) return;
     const s = S(name);
     const run = mkRun(`event-seq-${name}`);
     await s.insertRun(run);
@@ -207,7 +218,7 @@ describe('Storage parity: events monotonic sequence', () => {
   });
 
   it.each(backendNames)('%s: listEvents returns sequence-ordered events', async (name) => {
-    if (skipPgMem(name, 'listEvents returns sequence-ordered events')) return;
+    if (trackedSkipPgMem(name, 'listEvents returns sequence-ordered events')) return;
     const s = S(name);
     const run = mkRun(`event-list-${name}`);
     await s.insertRun(run);
@@ -221,7 +232,7 @@ describe('Storage parity: events monotonic sequence', () => {
   });
 
   it.each(backendNames)('%s: getMaxSequence increases monotonically per append', async (name) => {
-    if (skipPgMem(name, 'getMaxSequence increases monotonically per append')) return;
+    if (trackedSkipPgMem(name, 'getMaxSequence increases monotonically per append')) return;
     const s = S(name);
     const run = mkRun(`event-max-${name}`);
     await s.insertRun(run);
@@ -279,7 +290,7 @@ describe('Storage parity: interrupts', () => {
 
 describe('Storage parity: idempotency claim', () => {
   it.each(backendNames)('%s: first call claims; second returns existing', async (name) => {
-    if (skipPgMem(name, 'first call claims; second returns existing')) return;
+    if (trackedSkipPgMem(name, 'first call claims; second returns existing')) return;
     const s = S(name);
     const key = `idem-${name}-${Math.random().toString(36).slice(2)}`;
     const first = await s.claimIdempotency(key, baseTime);
@@ -291,7 +302,7 @@ describe('Storage parity: idempotency claim', () => {
   });
 
   it.each(backendNames)('%s: putIdempotency upgrades the pending placeholder', async (name) => {
-    if (skipPgMem(name, 'putIdempotency upgrades the pending placeholder')) return;
+    if (trackedSkipPgMem(name, 'putIdempotency upgrades the pending placeholder')) return;
     const s = S(name);
     const key = `idem-upgrade-${name}-${Math.random().toString(36).slice(2)}`;
     await s.claimIdempotency(key, baseTime);
@@ -309,7 +320,7 @@ describe('Storage parity: idempotency claim', () => {
 
 describe('Storage parity: webhooks', () => {
   it.each(backendNames)('%s: insertWebhook → getWebhook round-trips', async (name) => {
-    if (skipPgMem(name, 'insertWebhook → getWebhook round-trips')) return;
+    if (trackedSkipPgMem(name, 'insertWebhook → getWebhook round-trips')) return;
     const s = S(name);
     const wh = mkWebhook(`${name}-1`);
     await s.insertWebhook(wh);
@@ -319,7 +330,7 @@ describe('Storage parity: webhooks', () => {
   });
 
   it.each(backendNames)('%s: deleteWebhook removes the row', async (name) => {
-    if (skipPgMem(name, 'deleteWebhook removes the row')) return;
+    if (trackedSkipPgMem(name, 'deleteWebhook removes the row')) return;
     const s = S(name);
     const wh = mkWebhook(`${name}-delete`);
     await s.insertWebhook(wh);
@@ -367,7 +378,7 @@ describe('Storage parity: audit append', () => {
 
 describe('Storage parity: tenant hard delete cascade', () => {
   it.each(backendNames)('%s: deleteAllTenantData cascades runs + events + interrupts + secrets', async (name) => {
-    if (skipPgMem(name, 'deleteAllTenantData cascades runs + events + interrupts + secrets')) return;
+    if (trackedSkipPgMem(name, 'deleteAllTenantData cascades runs + events + interrupts + secrets')) return;
     const s = S(name);
     const T = `del-tenant-${name}-${Math.random().toString(36).slice(2)}`;
     const r1 = mkRun(`del-1-${name}`, { tenantId: T });
@@ -401,5 +412,23 @@ describe('Storage parity: tenant reassign (anon → user migration)', () => {
     expect(counts.runs).toBe(2);
     expect((await s.listRuns({ tenantId: fromT })).length).toBe(0);
     expect((await s.listRuns({ tenantId: toT })).length).toBe(2);
+  });
+});
+
+describe('Storage parity: PG_MEM_INCOMPAT skip-set integrity guard', () => {
+  // Guard against silent breakage: if a test in PG_MEM_INCOMPAT gets
+  // renamed without updating the set, the postgres half stops being
+  // skipped and the failure surfaces noisily. This guard runs LAST
+  // (vitest preserves file-order); by then every other test has been
+  // collected + (for the affected ones) called `trackedSkipPgMem`.
+  it('every PG_MEM_INCOMPAT key matches at least one collected test', () => {
+    const orphaned: string[] = [];
+    for (const key of PG_MEM_INCOMPAT) {
+      if (!_pgMemIncompatHits.has(key)) orphaned.push(key);
+    }
+    expect(
+      orphaned,
+      `PG_MEM_INCOMPAT keys with no matching test (likely renamed): ${orphaned.join(', ')}`,
+    ).toEqual([]);
   });
 });
