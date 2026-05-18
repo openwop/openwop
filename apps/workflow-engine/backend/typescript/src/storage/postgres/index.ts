@@ -541,15 +541,32 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
       }
     },
 
-    async incrementManagedUsage() {
-      // Managed-provider per-day token cap is a sample-host (sqlite)
-      // feature. Postgres adopters running the workflow-engine in
-      // production typically front their LLM access with a different
-      // billing/quota system, so this is a no-op rather than an error.
+    async incrementManagedUsage(tenantId, providerId, dateUtc, inputTokens, outputTokens) {
+      await pool.query(
+        `INSERT INTO managed_provider_usage (tenant_id, date, provider_id, input_tokens, output_tokens)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (tenant_id, date, provider_id) DO UPDATE SET
+           input_tokens  = managed_provider_usage.input_tokens  + EXCLUDED.input_tokens,
+           output_tokens = managed_provider_usage.output_tokens + EXCLUDED.output_tokens`,
+        [tenantId, dateUtc, providerId, inputTokens, outputTokens],
+      );
     },
 
-    async getManagedUsage() {
-      return { inputTokens: 0, outputTokens: 0 };
+    async getManagedUsage(tenantId, providerId, dateUtc) {
+      const { rows } = await pool.query<{ input_tokens: number; output_tokens: number }>(
+        `SELECT input_tokens, output_tokens FROM managed_provider_usage
+           WHERE tenant_id = $1 AND date = $2 AND provider_id = $3`,
+        [tenantId, dateUtc, providerId],
+      );
+      const row = rows[0];
+      if (!row) return { inputTokens: 0, outputTokens: 0 };
+      // pg returns INTEGER as JS number; BIGINT would come back as string
+      // (the daily cap is small enough that INTEGER suffices, but
+      // belt-and-suspenders coerce in case a deployer widens the column).
+      return {
+        inputTokens: typeof row.input_tokens === 'number' ? row.input_tokens : Number(row.input_tokens),
+        outputTokens: typeof row.output_tokens === 'number' ? row.output_tokens : Number(row.output_tokens),
+      };
     },
 
     async close() {

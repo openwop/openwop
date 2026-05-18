@@ -32,7 +32,7 @@ export interface Queryable {
   ): Promise<{ rows: R[] }>;
 }
 
-export const LATEST_SCHEMA_VERSION = 1;
+export const LATEST_SCHEMA_VERSION = 2;
 
 const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
   1: async (client) => {
@@ -142,6 +142,23 @@ const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
         created_at TIMESTAMPTZ NOT NULL,
         updated_at TIMESTAMPTZ NOT NULL,
         PRIMARY KEY (tenant_id, credential_ref)
+      );
+    `);
+  },
+  2: async (client) => {
+    // Per-tenant, per-day token usage for managed (server-held-key)
+    // providers — see src/providers/managedProvider.ts. Mirrors the
+    // sqlite-side migration v4. `date` is the UTC calendar day in
+    // YYYY-MM-DD form (TEXT, not DATE, to match the sqlite shape so
+    // the Storage interface can stay backend-agnostic).
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS managed_provider_usage (
+        tenant_id TEXT NOT NULL,
+        date TEXT NOT NULL,
+        provider_id TEXT NOT NULL,
+        input_tokens INTEGER NOT NULL DEFAULT 0,
+        output_tokens INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (tenant_id, date, provider_id)
       );
     `);
   },
