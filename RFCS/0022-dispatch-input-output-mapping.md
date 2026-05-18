@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0022 |
 | **Title** | `core.dispatch` + `core.subWorkflow` runtime variable mapping |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-18 |
-| **Updated** | 2026-05-18 |
+| **Updated** | 2026-05-18 (Draft → Active: bootstrap-phase waiver per `CONTRIBUTING.md` §"Bootstrap-phase notes" + `MAINTAINERS.md` §"Bootstrap-phase RFC waivers." Additive RFC; the 7-day comment window would only serve as a delay against zero external reviewers. Sibling pattern to RFCs 0009 / 0010 / 0011 / 0012. Schema deltas + spec prose + four `it.todo()` conformance placeholders + capability advertisements all landed at `Draft` in commits cf7df05 + 02a84e1; promoting to `Active` so adopters (notably the MyndHyve Launch Studio consumer that drove the RFC) can pin against the locked wire shape while reference-host implementation is pending. Promotes to `Accepted` once the four placeholders graduate to live behavioral tests against a reference host advertising `capabilities.agents.dispatchMapping` + `capabilities.subWorkflow.inputMapping`.) |
 | **Affects** | `schemas/dispatch-config.schema.json`, `schemas/capabilities.schema.json`, `spec/v1/node-packs.md` (`core.dispatch` row + `core.subWorkflow contract` §), `spec/v1/capabilities.md` (new advertisements), `RFCS/0007-dispatch.md` (additive amendment) |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |

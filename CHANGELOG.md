@@ -48,6 +48,14 @@ Companion harness to the existing pg-mem-backed `test/storage-adapter-parity.tes
 - **First-run cost:** ~80 MB / 30s image pull (`postgres:16-alpine`); subsequent runs hit the local image cache.
 - **Closes** the "613 LOC unreviewed Postgres adapter" thread from commit `1093ce3`: when Docker is available, all 8 `PG_MEM_INCOMPAT` patterns get end-to-end validation against real Postgres. Pairs with the SQLite-via-`:memory:` parity in the sibling file.
 
+### RFC 0022 promotion Draft → Active (2026-05-18)
+
+Promoted by steward decision per the bootstrap-phase RFC waiver in `CONTRIBUTING.md` §"Bootstrap-phase notes" + `MAINTAINERS.md` §"Bootstrap-phase RFC waivers." The 7-day additive-RFC comment window would have served only as a delay against zero external reviewers; the wire shape was effectively locked when the schema deltas landed in `cf7df05`, and adopters (notably the MyndHyve Launch Studio consumer) need a stable pin to build against.
+
+- `RFCS/0022-*.md` — `Status` flips `Draft` → `Active`; the `Updated` row records the full waiver rationale.
+- `MAINTAINERS.md` §"Bootstrap-phase RFC waivers" — new row for RFC 0022 (5th waivered RFC after 0009 / 0010 / 0011 / 0012). The MAINTAINERS guidance soft-threshold is "> 5 waivers within a 30-day window" — this lands AT 5, so the next additive RFC SHOULD route through a real 7-day window even without external reviewers.
+- The four `it.todo()` conformance placeholders remain placeholders. Promotion to `Accepted` is gated on a reference host advertising `capabilities.agents.dispatchMapping` + `capabilities.subWorkflow.inputMapping` AND the placeholders graduating to live behavioral tests.
+
 ### RFC 0022 (Draft) — `core.dispatch` + `core.subWorkflow` runtime variable mapping (2026-05-18)
 
 Closes the same authoring gap on the two openwop workflow-invocation primitives in one additive RFC. Both `core.dispatch` (RFC 0007 — has neither `inputMapping` nor `outputMapping`) and `core.subWorkflow` (`node-packs.md` §"`core.subWorkflow` contract" — has `outputMapping` only) lack a first-class way to project parent variables into child inputs at runtime. Without these, supervisor-driven workflows build hybrid DAGs that interleave dispatch + subWorkflow + side-channel storage — mechanical workaround that doesn't survive contact with non-trivial production cases. Found via the MyndHyve Launch Studio adaptive-supervisor rebuild (`vendor.myndhyve.launchStudioSupervisor`); RFC text ported from the MyndHyve internal draft at `docs/rfcs/openwop-dispatch-input-output-mapping.md`. Initially scoped to `core.dispatch` only; widened to cover `core.subWorkflow` after audit revealed the symmetric half-fixed gap.

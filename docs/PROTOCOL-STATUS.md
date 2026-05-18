@@ -23,13 +23,13 @@
 | Status | Count |
 |---|---:|
 | Accepted | 12 |
-| Active | 8 |
-| Draft | 3 |
+| Active | 9 |
+| Draft | 2 |
 
 | Latest RFC | Title | Status |
 |---|---|---|
 | RFC 0023 | Conformance Agent-Event Emitters | Draft |
-| RFC 0022 | `core.dispatch` + `core.subWorkflow` runtime variable mapping | Draft |
+| RFC 0022 | `core.dispatch` + `core.subWorkflow` runtime variable mapping | Active |
 | RFC 0021 | AI Envelope Primitive - wire shape, universal kinds, Envelope Contract gate | Active |
 | RFC 0020 | Host-side MCP server composition | Active |
 | RFC 0019 | Blob storage + TTL cache capabilities | Active |
