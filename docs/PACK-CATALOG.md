@@ -19,7 +19,7 @@ Spec-canonical typeIds. Required by most non-trivial workflows. Signed by `openw
 | [`core.openwop.integration`](https://packs.openwop.dev/v1/packs/core.openwop.integration/index.json) | 1.1.0 | v1.0 email-send + slack-message; v1.1 adds chat-message-generic, sms-send, voice-call-place, voice-call-tts-greet, notification-push. |
 | [`core.openwop.mcp`](https://packs.openwop.dev/v1/packs/core.openwop.mcp/index.json) | 1.1.0 | 4 v1.0 client primitives + 9 v1.1 client additions (list-resources, subscribe-resource, list-prompts, get-prompt, completion, set-log-level, log-listener, ping, list-resource-templates) + 8 server-side nodes (server-trigger, expose-tool/resource/resource-template/prompt, handle-sampling/elicitation, provide-roots). Tracks modelcontextprotocol.io 2025-06-18. |
 | [`core.openwop.examples`](https://packs.openwop.dev/v1/packs/core.openwop.examples/index.json) | 1.0.0 | Reference example workflows demonstrating multi-pack composition. |
-| [`core.openwop.agent-examples`](https://packs.openwop.dev/v1/packs/core.openwop.agent-examples/index.json) | 1.0.0 | Reference agent-pack examples per RFC 0003. |
+| [`core.openwop.agent-examples`](https://packs.openwop.dev/v1/packs/core.openwop.agent-examples/index.json) | 1.1.0 | Reference / smoke-fixture agent pack — 5 agents exercising every shape on `agent-manifest.schema.json` (inline prompt, prompt-ref, conversation memory, scratchpad memory, non-empty toolAllowlist, handoff schemas). |
 | `core.openwop.flow` | **NEW 1.0.1** (in-tree)¹ | 29 flow-control primitives — if/switch/router/filter/merge (5 modes)/iterator/aggregate (array/numeric/text/table)/split-in-batches/sort/limit/distinct/compare-datasets/repeater/noop/stop-and-error/wait/sub-workflow-invoke + 5 Make-style error handlers (resume/ignore/break/commit/rollback) + 4 reserved-typeId aliases (`core.conditional`/`core.delay`/`core.loop`/`core.parallel`). |
 | `core.openwop.crypto` | **NEW 1.0.0** (in-tree)¹ | 13 pure crypto primitives — hash, hmac sign/verify, AEAD encrypt/decrypt (AES-GCM, ChaCha20-Poly1305), asymmetric sign/verify (ed25519, RS256, PS256, ES256), JWT mint/verify (JWKS-aware), TOTP generate/verify, x509 parse + chain verify. Zero npm deps. |
 | `core.openwop.a2a` | **NEW 1.1.0** (in-tree)¹ | 17 A2A nodes — 12 client (discover-agent, send-message, send-and-stream, get-task, list-tasks, cancel-task, resubscribe, multi-turn-coordinator, push-config CRUD) + 5 server-side (server-trigger, agent-card-publish, emit-status, emit-artifact, push-send). Tracks `spec/v1/a2a-integration.md`. |
@@ -37,6 +37,68 @@ Spec-canonical typeIds. Required by most non-trivial workflows. Signed by `openw
 
 ² **Capability-gated** — requires the corresponding RFC (0014-0019) to land at `Active` status AND the host to advertise the matching `capabilities.<key>` block. Workflow registration will fail with `pack_peer_dependency_missing` (where the pack declares a peerDependency) or per-node `HOST_CAPABILITY_MISSING` (where the pack defers to runtime resolution) until both conditions are met.
 | [`vendor.openwop.rust-hello`](https://packs.openwop.dev/v1/packs/vendor.openwop.rust-hello/index.json) | 1.0.0 | "Hello world" Rust-wasm node demonstrating multi-language support per RFC 0008. |
+
+## Agent packs — Tier 1: horizontal patterns (`core.openwop.agents.*`)
+
+Pure-agent packs (no node runtime) shipping reusable agent personas per RFC 0003. Every framework that ships an agent library ships these eight patterns; openwop's differentiator is typed `handoff.{task,return}SchemaRef` on every pack — `oneOf`-shaped where appropriate. All packs require `aiProviders`; tool-using packs additionally require `host.agentRuntime` per RFC 0007 + 2026-05-17 safety-fix `OPENWOP-AUDIT-2026-003`. Signed by `openwop-team-1`.
+
+| Pack | Version | `modelClass` | Memory | Purpose |
+|---|---|---|---|---|
+| `core.openwop.agents.react` | **NEW 1.0.0** (in-tree)¹ | reasoning | scratchpad | Canonical ReAct (Reason + Act) loop. Default toolAllowlist: `openwop:core.http.fetch`. Mirrors LangGraph `react-agent`. |
+| `core.openwop.agents.supervisor` | **NEW 1.0.0** (in-tree)¹ | reasoning | scratchpad + conversation | Multi-agent supervisor — routes goals to subagents via RFC 0007 dispatch. ToolAllowlist scoped to `openwop:core.dispatch.{agent,await}`. Mirrors LangGraph Supervisor + CrewAI hierarchical. |
+| `core.openwop.agents.deep-research` | **NEW 1.0.0** (in-tree)¹ ² | research | scratchpad + longTerm | Plan → retrieve → synthesize. RAG + web research. `longTerm: true` triggers RFC 0004 redaction harness for cross-run finding re-use. Mirrors LangGraph Deep Agents. |
+| `core.openwop.agents.structured-extractor` | **NEW 1.0.0** (in-tree)¹ | classification | none | Caller-supplied JSON Schema + auto-fix loop. Mirrors LangGraph Trustcall. |
+| `core.openwop.agents.classifier` | **NEW 1.0.0** (in-tree)¹ | classification | none | Single-shot text classifier — single-label or multi-label, per-label confidence + rationale. |
+| `core.openwop.agents.long-doc-summarizer` | **NEW 1.0.0** (in-tree)¹ | writing | scratchpad | Map-reduce summarizer for inputs beyond a single LLM context window. Styles: brief / outline / narrative. |
+| `core.openwop.agents.code-reviewer` | **NEW 1.0.0** (in-tree)¹ | coding | scratchpad | Diff-aware code review. Severity (`blocking` / `important` / `nit`) × 6 categories. Cites file:line. |
+| `core.openwop.agents.doc-writer` | **NEW 1.0.0** (in-tree)¹ | writing | scratchpad | Technical docs in 5 shapes (`readme-section` / `api-reference` / `architecture-note` / `changelog` / `runbook`). RAG-grounded. |
+
+## Agent packs — Tier 2: productivity skills (`core.openwop.agents.*`)
+
+Narrow, high-utility skill packs that mirror the Anthropic Skills marketplace's top categories (`frontend-design` alone has ~277k installs in marketplace as of early 2026). All pure-agent, signed by `openwop-team-1`.
+
+| Pack | Version | `modelClass` | Purpose |
+|---|---|---|---|
+| `core.openwop.agents.document-author` | **NEW 1.0.0** (in-tree)¹ | writing | PDF / Word / Excel / PowerPoint / Markdown authoring from briefs. Mirrors Anthropic's top official Office-document skills. |
+| `core.openwop.agents.frontend-designer` | **NEW 1.0.0** (in-tree)¹ | writing | Design-system-aware component specs + layout JSON + React/HTML skeleton. Mirrors Anthropic's `frontend-design` skill. |
+| `core.openwop.agents.git-author` | **NEW 1.0.0** (in-tree)¹ | writing | Commit messages / PR titles + bodies / release notes / changelog entries from diffs. Conventional-Commits-aware. |
+| `core.openwop.agents.api-designer` | **NEW 1.0.0** (in-tree)¹ | coding | OpenAPI 3.1 / AsyncAPI 3.0 / JSON Schema 2020-12 authoring. Self-validates output (auto-fix loop). |
+| `core.openwop.agents.test-author` | **NEW 1.0.0** (in-tree)¹ | coding | Unit / integration / e2e test generation. Framework-aware (Jest/Vitest/Pytest/Go/Playwright). Matches house style from neighbor tests. |
+
+## Agent packs — Tier 3: vertical agents (`core.openwop.agents.*` + vendor showcases)
+
+Vertical-vocation packs targeting the highest-spend enterprise categories per 2026 IDC data: Sales (3.4-mo median payback), Customer Support (top adoption), Finance/Ops (8.9-mo payback), and Compliance. Eight `core.openwop.agents.*` packs + two `vendor.myndhyve.*` showcase crews that wrap existing market-intel and ads node packs into chat-driven personas.
+
+### Horizontal verticals (`core.openwop.agents.*`)
+
+| Pack | Version | `modelClass` | Memory | Purpose |
+|---|---|---|---|---|
+| `core.openwop.agents.sdr` | **NEW 1.0.0** (in-tree)¹ ² | writing | scratchpad + longTerm | Prospect research + personalized outreach (email/LinkedIn/SMS). Sales-vertical agent (highest-ROI per IDC). |
+| `core.openwop.agents.sales-coach` | **NEW 1.0.0** (in-tree)¹ ² | reasoning | scratchpad + longTerm | Call-transcript analysis on 5 dimensions (talk ratio / discovery / objection handling / next steps / confidence). Tracks per-rep development arc. |
+| `core.openwop.agents.support-triage` | **NEW 1.0.0** (in-tree)¹ | classification | none | Support ticket categorization + queue routing + severity × segment → priority. Pairs with support-resolver. |
+| `core.openwop.agents.support-resolver` | **NEW 1.0.0** (in-tree)¹ ² | writing | scratchpad + conversation + longTerm | KB-grounded ticket resolution with explicit citations + escalation handoff. 0.75 confidence threshold (wrong answers cost more than escalations). |
+| `core.openwop.agents.invoice-extractor` | **NEW 1.0.0** (in-tree)¹ | classification | none | Structured invoice extraction with math/consistency anomaly detection + duplicate + vendor-watchlist checks. 0.85 confidence threshold. |
+| `core.openwop.agents.expense-categorizer` | **NEW 1.0.0** (in-tree)¹ | classification | none | Expense → chart-of-accounts classification with policy-violation flags (amount limits, receipt requirements, mileage rate, prohibited vendors). |
+| `core.openwop.agents.policy-reviewer` | **NEW 1.0.0** (in-tree)¹ | reasoning | scratchpad | Content review against caller-supplied policy rules. Per-rule pass / fail / borderline / N/A with quoted evidence. Use cases: ad policy, content moderation, code-of-conduct, regulatory. |
+| `core.openwop.agents.audit-summarizer` | **NEW 1.0.0** (in-tree)¹ ² | writing | scratchpad + longTerm | Audit-log → executive summary with 5 anomaly types (unusual access, off-hours, config drift, policy violation, volume anomaly). Tracks pattern shifts vs prior periods. |
+
+### Vendor showcases (`vendor.myndhyve.*`)
+
+| Pack | Version | `modelClass` | Wraps | Purpose |
+|---|---|---|---|---|
+| `vendor.myndhyve.market-intel-crew` | **NEW 1.0.0** (in-tree)¹ ² | research | 9 `vendor.myndhyve.market-intel-*` typeIds | Research Director persona over the full VoC pipeline (query-builder → discovery → community-rank → thread-triage → content-extraction → voc-extraction → opportunity-scoring → ad-angles → audience-targeting). Single chat-driven dispatch. Signed by `myndhyve-internal-1`. |
+| `vendor.myndhyve.ads-crew` | **NEW 1.0.0** (in-tree)¹ ² | reasoning | 14 `vendor.myndhyve.ads-*` typeIds | Creative Director persona over MyndHyve Ads Studio. 4 modes (`plan` / `produce` / `publish` / `analyze`) — brief → variants → copy → image/video → validate → export → publish across Meta/Google/TikTok. Signed by `myndhyve-internal-1`. |
+
+## Agent packs — Tier 4: multi-agent crews + bridges (`core.openwop.agents.*` + `core.openwop.skills-bridge`)
+
+Pre-bundled multi-agent crews (mirror CrewAI's crew templates + LangGraph Supervisor) plus a hybrid bridge pack that imports the Anthropic/OpenAI SKILL.md format as openwop AgentManifests. Each crew pack ships 3-4 agents in one `agents[]` array — atomic crew dispatch without external pack lookups.
+
+| Pack | Version | Agents / Nodes | Purpose |
+|---|---|---|---|
+| `core.openwop.agents.research-crew` | **NEW 1.0.0** (in-tree)¹ ² | 4 agents / 0 nodes | Multi-agent research with explicit role separation. Planner decomposes goal; Retriever gathers evidence per sub-question; Critic gates the Writer on evidence quality. Auditable per role. Mirrors LangGraph + CrewAI crew templates. |
+| `core.openwop.agents.devops-crew` | **NEW 1.0.0** (in-tree)¹ ² | 3 agents / 0 nodes | DevOps automation with safety-first staging. Planner decomposes runbook into preCheck → action → postCheck → rollback steps; Executor runs one step at a time with approval gating on production; Verifier confirms post-state with read-only checks. Gated on `host.fs` + `host.queueBus`. |
+| `core.openwop.agents.support-crew` | **NEW 1.0.0** (in-tree)¹ ² | 3 agents / 0 nodes | Full ticket lifecycle in one atomic dispatch. Bundles the standalone `support-triage` + `support-resolver` contracts plus a dedicated Escalator that builds the handoff packet for human reviewers. |
+| `core.openwop.skills-bridge` | **NEW 1.0.0** (in-tree)¹ | 1 agent / 1 node | **Hybrid pack** (only one in the agent catalog). Bridges Anthropic/OpenAI Agent Skills (SKILL.md format, open standard since Dec 2025) to openwop AgentManifests. `core.skills-bridge.convert` node parses SKILL.md → AgentManifest; `core.openwop.skills-bridge.adapter` agent runs imported skills inside an openwop dispatch. Positions openwop as the orchestration layer above the Skills standard, not in competition. JavaScript runtime (Node ≥20). |
 
 ## Identity + general-purpose (`vendor.myndhyve.*`)
 

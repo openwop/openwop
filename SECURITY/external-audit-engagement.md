@@ -56,6 +56,29 @@ These packs are advertised throughout the spec and will become permanent immutab
 - `core.openwop.triggers` — webhook + schedule + envelope trigger surfaces. Threat models touched: `auth-profiles` (callback-token verification), webhook HMAC signing.
 - `core.openwop.agent-examples` — `runtime: remote` pack; spec for `remote` runtime semantics is incomplete in v1, so audit is deferred until the runtime contract sharpens (likely v1.2+).
 
+**Agent-pack catalog batch (added 2026-05-17, in-tree, NOT YET PUBLISHED):**
+
+27 new agent packs landed in-tree on 2026-05-17 against the RFC 0003 surface (in addition to bumping `core.openwop.agent-examples` from 1.0.0 → 1.1.0 with 3 new fixture agents). All 26 of these are pure-agent packs (`runtime.language: "remote"`, no executable runtime); 1 is a hybrid (the skills-bridge pack ships a small JavaScript node). They share the same publication gate as the other in-tree-only core packs above — publication to `packs.openwop.dev` is deferred until the external audit covers them per the rules of this engagement.
+
+Audit scope per pack: validate (a) the `systemPromptRef` body for prompt-injection escape vectors (the prompts are user-facing surfaces in BYOK contexts); (b) the `toolAllowlist` against the published node-pack catalog for least-privilege overreach; (c) the `handoff.{task,return}SchemaRef` JSON Schemas for unsafe `additionalProperties: true` leakage of caller-controlled fields into trusted persistence; (d) for `memoryShape.longTerm: true` agents, that the host's RFC 0004 redaction harness fires on every cross-run write the agent persona could induce. Skills-bridge specifically requires source-review of `packs/core.openwop.skills-bridge/index.mjs` for the SKILL.md parser (untrusted-input parser, runs on host).
+
+Pure-agent packs (`core.openwop.*`, signed by `openwop-team-1`):
+
+- **Tier 1 — horizontal patterns (8):** `agents.react`, `agents.supervisor`, `agents.deep-research`, `agents.structured-extractor`, `agents.classifier`, `agents.long-doc-summarizer`, `agents.code-reviewer`, `agents.doc-writer`.
+- **Tier 2 — productivity skills (5):** `agents.document-author`, `agents.frontend-designer`, `agents.git-author`, `agents.api-designer`, `agents.test-author`.
+- **Tier 3 — horizontal verticals (8):** `agents.sdr`, `agents.sales-coach`, `agents.support-triage`, `agents.support-resolver`, `agents.invoice-extractor`, `agents.expense-categorizer`, `agents.policy-reviewer`, `agents.audit-summarizer`. `longTerm: true` on 4 of these (sdr, sales-coach, support-resolver, audit-summarizer) — verify redaction-harness coverage.
+- **Tier 4 — multi-agent crews (3):** `agents.research-crew` (4 agents), `agents.devops-crew` (3 agents — gated on `host.fs` + `host.queueBus`), `agents.support-crew` (3 agents).
+- **Hybrid bridge (1):** `skills-bridge` — 1 node (JS runtime, `core.skills-bridge.convert`) + 1 agent (`adapter`). Audit MUST review the SKILL.md parser implementation.
+
+Vendor showcase packs (`vendor.myndhyve.*`, signed by `myndhyve-internal-1`):
+
+- `vendor.myndhyve.market-intel-crew` — wraps 9 `market-intel-*` typeIds into a Research Director persona.
+- `vendor.myndhyve.ads-crew` — wraps 14 `ads-*` typeIds into a Creative Director persona with 4 operating modes.
+
+Cross-cutting checks for all 27 + the 3 new fixture agents: (1) every `toolAllowlist` entry resolves to a node typeId that itself has cleared audit; (2) every prompt under `packs/<name>/prompts/` is reviewed against `SECURITY/threat-model-prompt-injection.md` UNTRUSTED-marker discipline; (3) handoff schemas with `oneOf [success, error]` shapes are validated by the host's RFC 0003 §D resolver before persistence; (4) the new conformance scenario `conformance/src/scenarios/agentPackHandoffSchemaValidation.test.ts` (HV-1) passes against the reference Postgres host with these packs installed.
+
+Publication condition: each pack listed above moves from "in-tree" to "published on `packs.openwop.dev`" only when audit findings touching that pack are either (a) marked `informational` only, or (b) remediated and the remediation merged. Aggregate condition for the batch: all 27 + 1 must be cleared together (a single dangling finding holds the batch).
+
 **RFCs (state at engagement kickoff):**
 - RFCs 0002–0007 (multi-agent extensions — agent identity, agent packs, memory, conversation, orchestrator, dispatch) — all `Accepted`.
 - RFC 0008 (WASM ABI for node packs) — `Accepted`; review the ABI and reference loader/conformance scenarios including the misbehaving-memory + misbehaving-abi packs.

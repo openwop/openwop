@@ -60,6 +60,15 @@ When to bump status:
 - Use `additionalProperties: false` on every object — explicit field lists are mandatory for spec docs even if a runtime relaxes them.
 - New required fields: bump the schema's implicit minor version + update CHANGELOG.md. New optional fields are non-breaking.
 
+### Pack-internal JSON Schemas (`packs/<name>/schemas/*.schema.json`)
+
+Distinct from the spec-corpus schemas above. These live inside a pack's tarball and are referenced via `pack.json` (`configSchemaRef` / `inputSchemaRef` / `outputSchemaRef` for nodes; `handoff.{task,return}SchemaRef` for agent manifests per RFC 0003 §D). Rules:
+
+- `$schema: "https://json-schema.org/draft/2020-12/schema"` — same as spec corpus.
+- `$id` MUST use the **registry-canonical, version-bearing** form: `https://packs.openwop.dev/<pack-name>/<version>/<file-name>.schema.json`. The version segment MUST match `pack.json.version`. This keeps `$id` immutable across pack version bumps — caching tools that key on `$id` see distinct documents per pack version (per JSON Schema 2020-12 `$id` immutability semantics).
+- `additionalProperties: false` on every object — same discipline as spec corpus.
+- Pack `version` bump: regenerate every `$id` in the pack's `schemas/` directory to the new version. `scripts/precheck-packs.mjs` SHOULD catch drift; pack authors MAY also wire a regen step into their release script.
+
 ### OpenAPI / AsyncAPI
 
 - Reference JSON Schemas via cross-file `$ref` (`../schemas/<name>.schema.json`); never inline.
