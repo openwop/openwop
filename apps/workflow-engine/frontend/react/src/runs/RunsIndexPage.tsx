@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createRun } from '../client/runsClient.js';
+import { createRun, listMyRuns, type RunListItem } from '../client/runsClient.js';
 import { listSavedWorkflows } from '../builder/persistence/localStore.js';
 import { serializeWorkflow, SerializeError } from '../builder/schema/serialize.js';
 import { registerWorkflow } from '../builder/persistence/registerClient.js';
+import { useAuth } from '../auth/useAuth.js';
 
 const SAMPLE_WORKFLOWS = [
   { id: 'sample.demo.uppercase', label: 'sample.demo.uppercase — single-node uppercase' },
@@ -12,6 +13,7 @@ const SAMPLE_WORKFLOWS = [
 
 export function RunsIndexPage() {
   const nav = useNavigate();
+  const { user, isConfigured } = useAuth();
   const savedWorkflows = useMemo(() => listSavedWorkflows(), []);
   const allOptions = useMemo(
     () => [
@@ -21,10 +23,31 @@ export function RunsIndexPage() {
     [savedWorkflows],
   );
   const [workflowId, setWorkflowId] = useState(allOptions[0]?.id ?? 'sample.demo.uppercase');
-  const [tenantId, setTenantId] = useState('demo');
   const [inputsRaw, setInputsRaw] = useState(JSON.stringify({ text: 'hello world' }, null, 2));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [runs, setRuns] = useState<RunListItem[]>([]);
+  const [runsLoading, setRunsLoading] = useState(false);
+  const [runsError, setRunsError] = useState<string | null>(null);
+
+  async function refreshRuns() {
+    setRunsLoading(true);
+    setRunsError(null);
+    try {
+      const list = await listMyRuns({ limit: 20 });
+      setRuns(list);
+    } catch (err) {
+      setRunsError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setRunsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void refreshRuns();
+    // Refresh whenever sign-in state flips so the user sees their
+    // new tenant's runs after migration.
+  }, [user?.uid]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -39,7 +62,12 @@ export function RunsIndexPage() {
         const def = serializeWorkflow(saved);
         await registerWorkflow(def);
       }
-      const res = await createRun({ workflowId, tenantId, inputs });
+      // Tenant is no longer carried in the request body — the backend
+      // derives it from the authenticated principal (cookie or OIDC).
+      // Sending an empty string still satisfies the schema; the auth
+      // middleware overrides it with the principal's tenant.
+      const res = await createRun({ workflowId, tenantId: '', inputs });
+      void refreshRuns();
       nav(`/runs/${res.runId}`);
     } catch (err) {
       if (err instanceof SerializeError) {
@@ -52,10 +80,17 @@ export function RunsIndexPage() {
     }
   }
 
+  const tenantScope = isConfigured && user
+    ? `Signed in as ${user.displayName ?? user.email ?? user.uid}`
+    : 'Anonymous session (24h lifetime)';
+
   return (
     <section>
       <div className="card">
         <h2>Create a run</h2>
+        <p className="muted" style={{ marginTop: 0 }}>
+          {tenantScope}
+        </p>
         <form onSubmit={onSubmit}>
           <div className="form-row">
             <label>Workflow</label>
@@ -64,10 +99,6 @@ export function RunsIndexPage() {
                 <option key={w.id} value={w.id}>{w.label}</option>
               ))}
             </select>
-          </div>
-          <div className="form-row">
-            <label>Tenant</label>
-            <input value={tenantId} onChange={(e) => setTenantId(e.target.value)} />
           </div>
           <div className="form-row">
             <label>Inputs (JSON)</label>
@@ -88,6 +119,49 @@ export function RunsIndexPage() {
       </div>
 
       <div className="card">
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+          <h2 style={{ margin: 0 }}>Recent runs</h2>
+          <button
+            type="button"
+            className="button-secondary"
+            onClick={refreshRuns}
+            disabled={runsLoading}
+          >
+            {runsLoading ? 'Loading…' : 'Refresh'}
+          </button>
+        </div>
+        {runsError ? <div className="alert error">{runsError}</div> : null}
+        {!runsLoading && runs.length === 0 ? (
+          <p className="muted">No runs yet. Create one above to get started.</p>
+        ) : (
+          <table className="runs-table">
+            <thead>
+              <tr>
+                <th>Run</th>
+                <th>Workflow</th>
+                <th>Status</th>
+                <th>Started</th>
+              </tr>
+            </thead>
+            <tbody>
+              {runs.map((r) => (
+                <tr
+                  key={r.runId}
+                  onClick={() => nav(`/runs/${r.runId}`)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <td><code>{r.runId.slice(0, 8)}…</code></td>
+                  <td>{r.workflowId}</td>
+                  <td><StatusBadge status={r.status} /></td>
+                  <td className="muted">{r.startedAt ? new Date(r.startedAt).toLocaleString() : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <div className="card">
         <h2>About this sample</h2>
         <p className="muted">
           The two seeded workflows are defined in the backend's <code>workflowCatalog</code>
@@ -97,4 +171,13 @@ export function RunsIndexPage() {
       </div>
     </section>
   );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const tone =
+    status === 'completed' ? 'success'
+      : status === 'failed' || status === 'cancelled' ? 'error'
+        : status === 'running' || status === 'waiting' ? 'in-progress'
+          : 'muted';
+  return <span className={`status-badge status-${tone}`}>{status}</span>;
 }

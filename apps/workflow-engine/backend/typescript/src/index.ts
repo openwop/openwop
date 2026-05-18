@@ -47,6 +47,8 @@ import { registerMcpServerRoutes } from './routes/mcp.js';
 import { registerAdminRoutes } from './routes/admin.js';
 import { registerWorkflowRoutes } from './routes/workflows.js';
 import { registerNodeCatalogRoute } from './routes/nodeCatalog.js';
+import { registerMigrateRoute } from './routes/migrate.js';
+import { registerAccountRoutes } from './routes/account.js';
 
 const log = createLogger('workflow-engine');
 
@@ -198,6 +200,8 @@ export async function createApp(config: AppConfig): Promise<Express> {
   registerWebhookRoutes(app, { storage });
   registerPackRoutes(app, { storage });
   registerByokRoutes(app);
+  registerMigrateRoute(app, { storage });
+  registerAccountRoutes(app, { storage });
   registerTestSeamRoutes(app);
   registerMcpServerRoutes(app, { storage, hostSuite });
   registerAdminRoutes(app);

@@ -53,7 +53,13 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
       // fall back to the body field or 'default'. Closes the
       // cross-tenant impersonation hole flagged in the P0.2 deploy
       // hardening for app.openwop.dev.
-      const tenantId = body.tenantId ?? req.tenantId ?? 'default';
+      // Empty-string body.tenantId (e.g., SPA submitting under the
+      // authenticated session) falls through to req.tenantId. Non-empty
+      // body.tenantId is honored verbatim and may be rejected by
+      // principalAuthorizer if it doesn't match the principal's
+      // allow-list.
+      const bodyTenant = typeof body.tenantId === 'string' && body.tenantId.length > 0 ? body.tenantId : undefined;
+      const tenantId = bodyTenant ?? req.tenantId ?? 'default';
       const allowed = await hostSuite.principalAuthorizer.authorize(
         principal,
         'run.create',
@@ -169,6 +175,39 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
           });
         });
       });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  /**
+   * GET /v1/runs — list recent runs for the authenticated tenant.
+   *
+   * Tenant scope is taken from req.tenantId (set by auth middleware
+   * from the OIDC bearer or session cookie). Wildcard-tenant Bearer
+   * callers (the conformance harness) can pass `?tenantId=foo` to
+   * filter explicitly; otherwise tenant=* sees everything.
+   *
+   * Query params:
+   *   status   optional run status filter
+   *   limit    max rows (default 50, capped to 200)
+   */
+  app.get('/v1/runs', async (req, res, next) => {
+    try {
+      const requestedTenant = typeof req.query.tenantId === 'string' ? req.query.tenantId : undefined;
+      const principalTenants = req.principal?.tenants ?? [];
+      const principalIsWildcard = principalTenants.includes('*');
+      const tenantFilter = principalIsWildcard
+        ? requestedTenant
+        : (req.tenantId ?? undefined);
+      const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+      const limit = Math.min(Number(req.query.limit) || 50, 200);
+      const runs = await storage.listRuns({
+        ...(tenantFilter ? { tenantId: tenantFilter } : {}),
+        ...(status ? { status } : {}),
+        limit,
+      });
+      res.json({ runs: runs.map(projectRunSnapshot) });
     } catch (err) {
       next(err);
     }

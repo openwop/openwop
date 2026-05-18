@@ -13,6 +13,10 @@
 
 import { useState } from 'react';
 import { useAuth } from './useAuth.js';
+import { migrateAnonToUser } from './migrateTenant.js';
+import { getCurrentIdToken } from './firebase.js';
+import { setCurrentIdToken } from '../client/config.js';
+import { deleteAccount, RequiresRecentLoginError } from './deleteAccount.js';
 
 export function SignInButton() {
   const { user, loading, isConfigured, signIn, signOut } = useAuth();
@@ -20,8 +24,28 @@ export function SignInButton() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   if (!isConfigured || loading) return null;
+
+  /**
+   * After a sign-in popup resolves, Firebase fires onIdTokenChanged
+   * which populates the cached ID token. We force-prime it here so
+   * the very next fetch (the migrate call) carries the bearer
+   * immediately instead of racing the subscriber.
+   */
+  async function postSignInMigrate(): Promise<void> {
+    const token = await getCurrentIdToken();
+    if (token) setCurrentIdToken(token);
+    const result = await migrateAnonToUser();
+    if (result?.migrated) {
+      // Best-effort console log — surfacing this as a toast is a
+      // P3.6 polish item.
+      console.info('openwop: anon → user migration', result);
+    }
+  }
 
   if (!user) {
     return (
@@ -59,6 +83,7 @@ export function SignInButton() {
                   setError(null);
                   try {
                     await signIn.google();
+                    await postSignInMigrate();
                     setModalOpen(false);
                   } catch (err) {
                     setError(err instanceof Error ? err.message : String(err));
@@ -78,6 +103,7 @@ export function SignInButton() {
                   setError(null);
                   try {
                     await signIn.github();
+                    await postSignInMigrate();
                     setModalOpen(false);
                   } catch (err) {
                     setError(err instanceof Error ? err.message : String(err));
@@ -140,7 +166,78 @@ export function SignInButton() {
           >
             Sign out
           </button>
-          {/* Account deletion lands in P3.6.5 */}
+          <button
+            className="account-menu-item account-menu-danger"
+            role="menuitem"
+            onClick={() => {
+              setMenuOpen(false);
+              setConfirmingDelete(true);
+              setDeleteError(null);
+            }}
+            type="button"
+          >
+            Delete account…
+          </button>
+        </div>
+      ) : null}
+      {confirmingDelete ? (
+        <div
+          className="signin-modal-backdrop"
+          onClick={() => !deleting && setConfirmingDelete(false)}
+        >
+          <div
+            className="signin-modal"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-label="Confirm account deletion"
+          >
+            <h3 className="signin-modal-title">Delete your account?</h3>
+            <p>
+              This permanently removes every workflow, run, event,
+              interrupt, and BYOK credential you've stored under{' '}
+              <strong>{user.email ?? user.displayName ?? user.uid}</strong>.
+              Your Firebase identity record is revoked too. There is
+              no undo.
+            </p>
+            {deleteError ? <div className="alert error">{deleteError}</div> : null}
+            <div className="button-row">
+              <button
+                type="button"
+                className="signin-modal-cancel"
+                disabled={deleting}
+                onClick={() => setConfirmingDelete(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="signin-provider signin-danger"
+                disabled={deleting}
+                onClick={async () => {
+                  setDeleting(true);
+                  setDeleteError(null);
+                  try {
+                    const result = await deleteAccount();
+                    console.info('openwop: account deleted', result);
+                    setConfirmingDelete(false);
+                    // Force reload — the SPA's caches reference a
+                    // tenant id that no longer exists.
+                    window.location.href = '/';
+                  } catch (err) {
+                    if (err instanceof RequiresRecentLoginError) {
+                      setDeleteError(err.message);
+                    } else {
+                      setDeleteError(err instanceof Error ? err.message : String(err));
+                    }
+                  } finally {
+                    setDeleting(false);
+                  }
+                }}
+              >
+                {deleting ? 'Deleting…' : 'Yes, delete everything'}
+              </button>
+            </div>
+          </div>
         </div>
       ) : null}
     </div>

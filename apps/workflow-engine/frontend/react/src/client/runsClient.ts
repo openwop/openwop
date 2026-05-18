@@ -95,6 +95,31 @@ export async function pollEvents(runId: string, lastSequence = 0): Promise<PollE
   return client.runs.pollEvents(runId, { lastSequence });
 }
 
+/**
+ * List recent runs scoped to the authenticated tenant. The backend
+ * derives the tenant from the bearer / cookie, so this client doesn't
+ * need to pass a tenantId. Returns at most `limit` rows (default 50).
+ */
+export async function listMyRuns(opts: { status?: string; limit?: number } = {}): Promise<RunListItem[]> {
+  const params = new URLSearchParams();
+  if (opts.status) params.set('status', opts.status);
+  if (opts.limit) params.set('limit', String(opts.limit));
+  const query = params.toString();
+  const url = `${config.baseUrl}/v1/runs${query ? `?${query}` : ''}`;
+  const headers = authedHeaders({ accept: 'application/json' });
+  const includeCreds = config.authMode === 'cookie' || Boolean(headers.authorization);
+  const res = await fetch(url, {
+    method: 'GET',
+    headers,
+    credentials: includeCreds ? 'include' : 'same-origin',
+  });
+  if (!res.ok) {
+    throw new Error(`listMyRuns failed: ${res.status} ${res.statusText}`);
+  }
+  const body = (await res.json()) as { runs: RunListItem[] };
+  return body.runs;
+}
+
 /** Returns the underlying SDK client for surfaces not yet wrapped here. */
 export function getSdkClient(): OpenwopClient {
   return client;
