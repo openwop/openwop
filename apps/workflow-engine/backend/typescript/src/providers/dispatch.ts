@@ -112,12 +112,22 @@ async function dispatchAnthropic(req: DispatchRequest): Promise<DispatchResult> 
   const systemMessage = req.messages.find((m) => m.role === 'system');
   const conversation = req.messages.filter((m) => m.role !== 'system');
 
-  // Claude 4 extended thinking. Opt-in via the `thinking` request
-  // parameter. Costs extra output tokens (the budget caps the spend);
-  // skipped entirely when the host resolved verbosity to 'off'.
+  // Claude extended thinking. Opt-in via the `thinking` request
+  // parameter — costs extra output tokens (the budget caps the spend).
+  //
+  // Default is 'off' so callers that don't explicitly request reasoning
+  // (e.g. `aiProvidersHost.ts:dispatchPlain` from a workflow pack's
+  // `ctx.callAI`) don't see a surprise bill regression. The chat-
+  // responder's BYOK branch passes `reasoningVerbosity: 'full'` when
+  // the run doesn't override, so the "Try it free" / BYOK chat surface
+  // still gets thinking by default.
+  //
   // Per https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking.
+  // Regex matches the Claude 4 family today (claude-{opus,sonnet,haiku}-4*).
+  // When Claude 5+ ships, widen to `[4-9]` or replace with a
+  // `providers.json`-driven model-feature map.
   const thinkingEnabled =
-    (req.reasoningVerbosity ?? 'summary') !== 'off' && /^claude-(?:opus|sonnet|haiku)-4/.test(req.model);
+    (req.reasoningVerbosity ?? 'off') !== 'off' && /^claude-(?:opus|sonnet|haiku)-[4-9]/.test(req.model);
   const thinkingBudget = 4000;
 
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -412,18 +422,15 @@ async function dispatchGoogle(req: DispatchRequest): Promise<DispatchResult> {
   // Thinking config only applies to the 2.5 reasoning models
   // (Flash + Pro). Flash-Lite doesn't have thinking.
   //
-  // Two modes per host policy (req.reasoningVerbosity):
-  //   - 'off'                     → disable thinking entirely
-  //                                 (thinkingBudget: 0); preserves the
-  //                                 empty-completion safety of the prior
-  //                                 default.
-  //   - 'summary' / 'full' / unset → enable + capture thoughts. We bump
-  //                                 the maxOutputTokens floor so visible
-  //                                 text still has room when thinking
-  //                                 consumes much of the budget.
+  // Default is 'off' so callers that don't explicitly request reasoning
+  // (workflow-runtime `ctx.callAI` paths) don't see surprise extra
+  // output tokens. Explicit opt-in via `reasoningVerbosity: 'full'`
+  // (or 'summary') re-enables thinking. The original empty-completion
+  // safety — thinking consuming the entire maxOutputTokens budget — is
+  // preserved by the 8192-token floor on opt-in.
   const isReasoningModel =
     req.model.includes('2.5-') && !req.model.includes('-lite');
-  const thinkingEnabled = isReasoningModel && (req.reasoningVerbosity ?? 'summary') !== 'off';
+  const thinkingEnabled = isReasoningModel && (req.reasoningVerbosity ?? 'off') !== 'off';
 
   const res = await fetch(url, {
     method: 'POST',
@@ -490,11 +497,12 @@ async function dispatchGoogle(req: DispatchRequest): Promise<DispatchResult> {
   }
 
   const citationsByUrl = new Map<string, Citation>();
-  // Buffer thought content per response. Gemini doesn't surface a
-  // structured "thought block close" boundary in streaming — thought
-  // parts flow alongside text parts, and the response is considered
-  // complete when finishReason arrives. We emit one consolidated
-  // `agent.reasoned` (via onReasoningBlock) at stream end.
+  // Buffer thought content per response. Gemini doesn't surface
+  // per-block boundaries in streaming (no equivalent of Anthropic's
+  // `content_block_stop` or MiniMax's `</think>`). If a model emits
+  // multiple thinking phases in one turn (rare), they collapse into
+  // one `agent.reasoned` event at stream end. Acceptable v1 limitation
+  // — consumers still see the full reasoning, just not segmented.
   let thoughtBuf = '';
 
   for await (const event of parseSseStream(res.body)) {

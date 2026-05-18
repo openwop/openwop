@@ -10,7 +10,7 @@
  */
 
 import { getNodeRegistry } from '../executor/nodeRegistry.js';
-import type { NodeModule } from '../executor/types.js';
+import type { NodeContext, NodeModule } from '../executor/types.js';
 import { emitCost } from '../observability/costEmitter.js';
 import { dispatchChat, type ChatMessage, type DispatchResult, type ProviderId } from '../providers/dispatch.js';
 import { dispatchAnthropicWithTools, type ToolDef } from '../providers/dispatchAnthropicTools.js';
@@ -132,6 +132,60 @@ const sampleMockAiNode: NodeModule = {
 // `dispatchSubRun` with a 30s budget; the result (or a "pending" stub
 // if it hits an interrupt) feeds back as tool_result.
 /**
+ * Resolve `agent.reasoned` verbosity per `capabilities.md` precedence:
+ *   per-run `RunOptions.configurable.reasoningVerbosity`
+ *   > host capability default (advertised in /.well-known/openwop)
+ *   > suite default (default arg)
+ * Returns the resolved verbosity along with `agent.reasoning.delta` +
+ * `agent.reasoned` emission callbacks bound to `ctx` and `agentId`.
+ *
+ * The callbacks are `undefined` when resolved verbosity is `'off'` —
+ * the dispatcher's optional spread (`...(cb ? { cb } : {})`) skips
+ * registration entirely in that case, so the provider's server-side
+ * thinking surface stays disabled too.
+ *
+ * SR-1 redaction: `ctx.emit` routes every payload through
+ * `stripSecretsFromPersisted` (executor.ts:emit). Any host-resolved
+ * credential the model echoes into reasoning is redacted before the
+ * event lands in the log. See `SECURITY/threat-model-secret-leakage.md`.
+ */
+function buildReasoningCallbacks(
+  ctx: NodeContext,
+  agentId: string,
+  defaultVerbosity: 'summary' | 'full' | 'off',
+): {
+  verbosity: 'summary' | 'full' | 'off';
+  onReasoningDelta?: (delta: string) => Promise<void>;
+  onReasoningBlock?: (block: string) => Promise<void>;
+} {
+  const reqVerbosity = ctx.configurable?.reasoningVerbosity;
+  const verbosity: 'summary' | 'full' | 'off' =
+    reqVerbosity === 'off' || reqVerbosity === 'full' || reqVerbosity === 'summary'
+      ? reqVerbosity
+      : defaultVerbosity;
+  if (verbosity === 'off') return { verbosity };
+  // RFC 0024: per-block sequence counter. Resets to 0 on each closed
+  // block so consumers can detect dropped deltas within a block without
+  // global cross-block bookkeeping.
+  let seq = 0;
+  return {
+    verbosity,
+    onReasoningDelta: async (delta: string): Promise<void> => {
+      await ctx.emit('agent.reasoning.delta', { agentId, delta, sequence: seq, verbosity });
+      seq++;
+    },
+    onReasoningBlock: async (block: string): Promise<void> => {
+      // Closing event carries the full content (truncated under
+      // 'summary'). Per RFC 0024, this event is authoritative even
+      // if it disagrees with the delta concatenation.
+      const reasoning = verbosity === 'summary' ? block.slice(0, 2048) : block;
+      await ctx.emit('agent.reasoned', { agentId, reasoning, verbosity });
+      seq = 0;
+    },
+  };
+}
+
+/**
  * Sample chat-responder. Sits in the `vendor.openwop-sample.*` namespace
  * per `spec/v1/node-packs.md` §"Reserved-typeIds" (the unrestricted
  * carve-out), which puts it inside RFC 0023 §A's authorized-emitter
@@ -163,55 +217,16 @@ const sampleChatResponderNode: NodeModule = {
     // BYOK row for managed providers.
     if (isManagedCredentialRef(credentialRef)) {
       const userFacingProvider = managedProviderIdFromRef(credentialRef);
-
-      // Resolve agent.reasoned verbosity per capabilities.md precedence:
-      //   per-run RunOptions.configurable.reasoningVerbosity
-      //   > host capability default (advertised in /.well-known/openwop)
-      //   > spec suite default 'summary'
-      // When resolved value is 'off', skip emit entirely. When 'summary',
-      // truncate to the token-limit (default 512 tokens ≈ 2048 chars
-      // using the conservative chars-per-token approximation).
-      const reqVerbosity = ctx.configurable?.reasoningVerbosity;
-      const verbosity: 'summary' | 'full' | 'off' =
-        reqVerbosity === 'off' || reqVerbosity === 'full' || reqVerbosity === 'summary'
-          ? reqVerbosity
-          : 'full'; // host default for the managed tile — show full reasoning by default for Phase 1 UX
+      // Managed-tile agentId hides the underlying model (e.g.
+      // 'openwop-free-assistant', NOT 'minimax-assistant'). Matches the
+      // dispatchManagedChat result-rewriting boundary.
+      const agentId = `${userFacingProvider}-assistant`;
+      const { onReasoningDelta, onReasoningBlock } = buildReasoningCallbacks(ctx, agentId, 'full');
 
       try {
         const onDelta = async (delta: string) => {
           await ctx.emit('node.message', { delta });
         };
-        // `ctx.emit` already routes payloads through
-        // `stripSecretsFromPersisted` (executor.ts:253), so any
-        // host-resolved BYOK credential the model happens to echo in
-        // its reasoning is redacted before the event lands in the log.
-        // Per SECURITY/threat-model-secret-leakage.md SR-1.
-        const agentId = `${userFacingProvider}-assistant`;
-        // RFC 0024: per-block sequence counter. Resets to 0 on each
-        // closed block so consumers can detect dropped deltas within
-        // a block without needing global cross-block bookkeeping.
-        let reasoningSeq = 0;
-        const onReasoningDelta = verbosity === 'off'
-          ? undefined
-          : async (delta: string): Promise<void> => {
-              await ctx.emit('agent.reasoning.delta', {
-                agentId,
-                delta,
-                sequence: reasoningSeq,
-                verbosity,
-              });
-              reasoningSeq++;
-            };
-        const onReasoningBlock = verbosity === 'off'
-          ? undefined
-          : async (block: string): Promise<void> => {
-              // Closing event carries the full content (truncated under
-              // summary mode). Per RFC 0024, this event is authoritative
-              // even if it disagrees with the concatenation of deltas.
-              const reasoning = verbosity === 'summary' ? block.slice(0, 2048) : block;
-              await ctx.emit('agent.reasoned', { agentId, reasoning, verbosity });
-              reasoningSeq = 0;
-            };
         const managed = await dispatchManagedChat({
           userFacingProvider,
           tenantId: ctx.tenantId,
@@ -265,39 +280,12 @@ const sampleChatResponderNode: NodeModule = {
     const useTools = rawTools.length > 0 && provider === 'anthropic';
     const toolBindings = useTools ? validateToolBindings(rawTools) : [];
 
-    // Resolve reasoning verbosity for BYOK turns (same precedence as
-    // the managed-provider branch above). BYOK users picked their own
-    // model so the `agentId` carries the real provider+model — no
-    // hiding required.
-    const byokReqVerbosity = ctx.configurable?.reasoningVerbosity;
-    const byokVerbosity: 'summary' | 'full' | 'off' =
-      byokReqVerbosity === 'off' || byokReqVerbosity === 'full' || byokReqVerbosity === 'summary'
-        ? byokReqVerbosity
-        : 'full';
+    // BYOK agentId reveals the actual provider+model — by design.
+    // Managed-tile hides the underlying model (`openwop-free-assistant`);
+    // BYOK users picked their own model so honesty wins over uniformity.
     const byokAgentId = `${provider}-${model}-assistant`.slice(0, 256);
-    let byokReasoningSeq = 0;
-    const byokOnReasoningDelta = byokVerbosity === 'off'
-      ? undefined
-      : async (delta: string): Promise<void> => {
-          await ctx.emit('agent.reasoning.delta', {
-            agentId: byokAgentId,
-            delta,
-            sequence: byokReasoningSeq,
-            verbosity: byokVerbosity,
-          });
-          byokReasoningSeq++;
-        };
-    const byokOnReasoningBlock = byokVerbosity === 'off'
-      ? undefined
-      : async (block: string): Promise<void> => {
-          const reasoning = byokVerbosity === 'summary' ? block.slice(0, 2048) : block;
-          await ctx.emit('agent.reasoned', {
-            agentId: byokAgentId,
-            reasoning,
-            verbosity: byokVerbosity,
-          });
-          byokReasoningSeq = 0;
-        };
+    const { verbosity: byokVerbosity, onReasoningDelta: byokOnReasoningDelta, onReasoningBlock: byokOnReasoningBlock } =
+      buildReasoningCallbacks(ctx, byokAgentId, 'full');
 
     try {
       const onDelta = async (delta: string) => {
