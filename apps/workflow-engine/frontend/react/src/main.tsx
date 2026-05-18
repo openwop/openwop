@@ -2,6 +2,14 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { App } from './App.js';
+// Side-effect import: initializes Firebase Auth (if configured) so the
+// `onIdTokenChanged` subscriber populates the cached ID token before
+// any fetch fires. No-op when Firebase env vars are unset.
+import './auth/firebase.js';
+import { getCurrentUser } from './auth/firebase.js';
+// Trigger lazy init synchronously at module load so the auth state
+// settles before the first fetch.
+void getCurrentUser();
 
 const rootEl = document.getElementById('root');
 if (!rootEl) {

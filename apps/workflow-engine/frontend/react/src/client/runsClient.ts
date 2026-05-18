@@ -17,7 +17,7 @@ import type {
   PollEventsResponse,
   RunSnapshot,
 } from '@openwop/openwop';
-import { config } from './config.js';
+import { authedHeaders, config } from './config.js';
 
 // Pass an explicitly-bound `fetch` to work around an SDK bug — the
 // client stores `opts.fetch ?? fetch` and later calls `this.#fetch(...)`,
@@ -34,14 +34,26 @@ import { config } from './config.js';
 const client = new OpenwopClient({
   baseUrl: config.baseUrl,
   apiKey: config.authMode === 'cookie' ? 'cookie-mode-placeholder' : config.apiKey,
+  // Single fetch wrapper that handles all three auth modes
+  // consistently with the rest of the SPA's clients:
+  //   - Strip the SDK-injected Authorization (the placeholder)
+  //   - Inject whatever authedHeaders() says we should send (cached
+  //     Firebase ID token, or apiKey in bearer mode, or nothing in
+  //     cookie mode)
+  //   - In cookie or signed-in modes, attach credentials: 'include'
+  //     so the session cookie travels for auth-fallback paths.
   fetch: (input, init) => {
-    if (config.authMode === 'cookie') {
-      const headers = new Headers(init?.headers);
-      headers.delete('authorization');
-      headers.delete('Authorization');
-      return globalThis.fetch(input, { ...init, headers, credentials: 'include' });
+    const headers = new Headers(init?.headers);
+    headers.delete('authorization');
+    headers.delete('Authorization');
+    for (const [k, v] of Object.entries(authedHeaders())) {
+      headers.set(k, v);
     }
-    return globalThis.fetch(input, init);
+    const cleanInit: RequestInit = { ...init, headers };
+    if (config.authMode === 'cookie' || headers.has('authorization')) {
+      cleanInit.credentials = 'include';
+    }
+    return globalThis.fetch(input, cleanInit);
   },
 });
 

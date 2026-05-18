@@ -7,6 +7,7 @@ import { BuilderTab } from './builder/BuilderTab.js';
 import { WorkflowsDashboard } from './builder/WorkflowsDashboard.js';
 import { DemoHostBanner } from './builder/DemoHostBanner.js';
 import { PrivacyPage } from './PrivacyPage.js';
+import { SignInButton } from './auth/SignInButton.js';
 
 export function App() {
   const location = useLocation();
@@ -27,6 +28,8 @@ export function App() {
           <NavLink to="/runs">Runs</NavLink>
           <NavLink to="/capabilities">Capabilities</NavLink>
         </nav>
+        <div className="app-header-spacer" />
+        <SignInButton />
       </header>
       <main className={fullBleed ? 'app-main app-main-fullbleed' : 'app-main'}>
         <Routes>

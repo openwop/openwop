@@ -20,6 +20,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { config } from '../client/config.js';
+import { useAuth } from '../auth/useAuth.js';
 
 const DISMISS_KEY = 'openwop:demo-banner:dismissed';
 
@@ -30,11 +31,16 @@ interface HostSurfaceAd {
 }
 
 export function DemoHostBanner() {
+  const { user } = useAuth();
   const [hidden, setHidden] = useState<boolean>(() => {
     try { return localStorage.getItem(DISMISS_KEY) === 'true'; }
     catch { return false; }
   });
   const [inMemoryCount, setInMemoryCount] = useState<number | null>(null);
+
+  // Signed-in users get persistent storage — the demo-host disclosure
+  // doesn't apply to them. Hide the banner entirely.
+  if (user) return null;
 
   useEffect(() => {
     if (hidden) return;

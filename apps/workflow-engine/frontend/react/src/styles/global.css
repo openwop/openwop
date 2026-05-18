@@ -1160,3 +1160,111 @@ pre {
   margin-top: auto;
   padding-top: var(--space-2);
 }
+
+/* ── Auth (P3.2) ─────────────────────────────────────────────────── */
+
+.app-header-spacer { flex: 1; }
+
+.signin-trigger {
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  padding: 6px 14px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  cursor: pointer;
+}
+.signin-trigger:hover {
+  background: var(--color-border);
+}
+
+.signin-modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  padding: var(--space-4);
+}
+.signin-modal {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: var(--space-5);
+  width: 100%; max-width: 420px;
+  display: flex; flex-direction: column;
+  gap: var(--space-3);
+}
+.signin-modal-title { margin: 0; font-size: 18px; }
+.signin-modal-lede { font-size: 13px; margin: 0; }
+.signin-provider {
+  padding: 10px var(--space-3);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  background: var(--color-surface-2);
+  color: var(--color-text);
+}
+.signin-provider:hover { background: var(--color-border); }
+.signin-provider:disabled { opacity: 0.5; cursor: wait; }
+.signin-modal-cancel {
+  background: transparent;
+  color: var(--color-text-muted);
+  border: none;
+  padding: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.account-menu { position: relative; }
+.account-menu-trigger {
+  display: flex; align-items: center; gap: var(--space-2);
+  background: transparent;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  padding: 4px 10px 4px 4px;
+  border-radius: 20px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.account-menu-trigger:hover { background: var(--color-surface-2); }
+.account-menu-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+}
+.account-menu-initials {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--color-accent);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600;
+}
+.account-menu-name {
+  max-width: 180px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.account-menu-popover {
+  position: absolute; right: 0; top: calc(100% + 4px);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  min-width: 240px;
+  padding: var(--space-2);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  z-index: 100;
+}
+.account-menu-header {
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: var(--space-2);
+}
+.account-menu-displayname { font-size: 13px; font-weight: 500; }
+.account-menu-email { font-size: 11px; margin-top: 2px; }
+.account-menu-item {
+  display: block; width: 100%; text-align: left;
+  background: transparent; border: none;
+  padding: 8px var(--space-2);
+  font-size: 13px; color: var(--color-text);
+  cursor: pointer; border-radius: 4px;
+}
+.account-menu-item:hover { background: var(--color-surface-2); }

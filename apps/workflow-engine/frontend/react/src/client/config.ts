@@ -26,19 +26,53 @@ export const config = {
   authMode: ((import.meta.env.VITE_OPENWOP_AUTH_MODE as string | undefined) ?? 'bearer') as AuthMode,
 };
 
-/** Headers carrying auth. In cookie mode, returns an empty object —
- *  the browser sends the session cookie automatically as long as the
- *  fetch carries `credentials: 'include'` (see `fetchOpts`). */
+/**
+ * Cached Firebase ID token. Populated by `setCurrentIdToken()` which
+ * the auth bootstrap calls from its `onIdTokenChanged` subscriber.
+ * Reading the token is synchronous so `authedHeaders()` stays sync —
+ * all the existing fetch call sites don't need to become async.
+ *
+ * Lifecycle: starts null. On first `onIdTokenChanged` fire (immediately
+ * after page-load auth restore), gets set to either a string or null
+ * (depending on whether a Firebase session exists). On sign-out,
+ * cleared to null. On token rotation (~hourly), replaced.
+ *
+ * Worst case: a fetch fires between page-load and the first
+ * `onIdTokenChanged` callback — token is null, request falls back
+ * to cookie/bearer mode. Acceptable because the session cookie still
+ * works for the anon path AND the next fetch (post-rotation) is
+ * authed correctly.
+ */
+let cachedIdToken: string | null = null;
+export function setCurrentIdToken(token: string | null): void {
+  cachedIdToken = token;
+}
+
+/** Headers carrying auth.
+ *   - Signed-in (cached ID token present): Authorization: Bearer <id-token>
+ *   - cookie mode: empty (cookie travels via credentials: 'include')
+ *   - bearer mode: Authorization: Bearer <apiKey>
+ *
+ * Token takes precedence over cookie when both are available, so a
+ * user who just signed in starts hitting the OIDC backend path without
+ * the cookie path competing.
+ */
 export function authedHeaders(extra?: Record<string, string>): Record<string, string> {
   const base = extra ? { ...extra } : {};
-  if (config.authMode === 'bearer') base['authorization'] = `Bearer ${config.apiKey}`;
+  if (cachedIdToken) {
+    base['authorization'] = `Bearer ${cachedIdToken}`;
+  } else if (config.authMode === 'bearer') {
+    base['authorization'] = `Bearer ${config.apiKey}`;
+  }
   return base;
 }
 
-/** Per-call fetch options injecting `credentials: 'include'` in cookie
- *  mode so the openwop.session cookie travels with the request. */
+/** Per-call fetch options. Includes `credentials: 'include'` in cookie
+ *  mode AND when an ID token is present (defense-in-depth: if the
+ *  token is rejected, the cookie fallback still works on the same
+ *  request thanks to backend's bearer-then-cookie order). */
 export function fetchOpts(init?: RequestInit): RequestInit {
-  if (config.authMode === 'cookie') {
+  if (config.authMode === 'cookie' || cachedIdToken) {
     return { ...(init ?? {}), credentials: 'include' };
   }
   return init ?? {};
