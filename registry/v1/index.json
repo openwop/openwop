@@ -87,7 +87,7 @@
     {
       "name": "core.openwop.ai",
       "kind": "node",
-      "latestVersion": "1.1.1",
+      "latestVersion": "1.1.2",
       "description": "Spec-canonical AI-call pack. v1.0 (chatCompletion, structuredOutput, toolCalling, embeddings) plus v1.1 multi-modal + LLM helpers — image generate/edit/upscale, audio transcribe/synthesize, video generate, rerank, classify, extract, guardrails, transform. Routes through host BYOK aiProviders.",
       "license": "Apache-2.0",
       "tags": [],
@@ -369,7 +369,7 @@
     {
       "name": "core.openwop.mcp",
       "kind": "node",
-      "latestVersion": "1.1.0",
+      "latestVersion": "1.1.1",
       "description": "Spec-canonical MCP (Model Context Protocol) pack. v1.0 four-node client baseline (list-tools, invoke-tool, read-resource, server-status) plus the v1.1 additions: full client-side surface (resources, prompts, completion, logging, ping) AND server-side (workflow IS an MCP server — server-trigger + expose-tool/resource/prompt + handle-sampling/elicitation + provide-roots). Tracks modelcontextprotocol.io 2025-06-18 spec via spec/v1/mcp-integration.md.",
       "license": "Apache-2.0",
       "tags": [],

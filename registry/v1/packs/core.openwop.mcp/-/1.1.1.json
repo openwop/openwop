@@ -6,7 +6,16 @@
   "license": "Apache-2.0",
   "homepage": "https://openwop.dev/packs/core.openwop.mcp",
   "repository": "https://github.com/openwop/openwop",
-  "keywords": ["core", "mcp", "tools", "resources", "prompts", "elicitation", "sampling", "integration"],
+  "keywords": [
+    "core",
+    "mcp",
+    "tools",
+    "resources",
+    "prompts",
+    "elicitation",
+    "sampling",
+    "integration"
+  ],
   "engines": {
     "openwop": ">=1.0.0 <2.0.0"
   },
@@ -21,7 +30,10 @@
       "description": "Lists tools exposed by a registered MCP server. Useful for dynamic tool-discovery workflows and for diagnostics. Side-effectful: server-side tool catalog can change between calls. Cached via Layer-2 invocation log.",
       "category": "integration",
       "role": "side-effect",
-      "capabilities": ["cacheable", "side-effectful"],
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
       "configSchemaRef": "schemas/list-tools.config.json",
       "inputSchemaRef": "schemas/list-tools.input.json",
       "outputSchemaRef": "schemas/list-tools.output.json"
@@ -33,7 +45,10 @@
       "description": "Invokes a tool on a registered MCP server with caller-supplied arguments. Unlike LLM-mediated tool calls (which happen inside an AI node implicitly per spec/v1/mcp-integration.md), this node lets workflow authors invoke tools deterministically from the DAG. Side-effectful + cacheable.",
       "category": "integration",
       "role": "side-effect",
-      "capabilities": ["cacheable", "side-effectful"],
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
       "configSchemaRef": "schemas/invoke-tool.config.json",
       "inputSchemaRef": "schemas/invoke-tool.input.json",
       "outputSchemaRef": "schemas/invoke-tool.output.json"
@@ -45,7 +60,10 @@
       "description": "Reads a resource by URI from a registered MCP server. Returns the content + MIME type. Side-effectful (resource content may change between calls) + cacheable.",
       "category": "integration",
       "role": "side-effect",
-      "capabilities": ["cacheable", "side-effectful"],
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
       "configSchemaRef": "schemas/read-resource.config.json",
       "inputSchemaRef": "schemas/read-resource.input.json",
       "outputSchemaRef": "schemas/read-resource.output.json"
@@ -57,118 +75,271 @@
       "description": "Health/availability check against a registered MCP server. Returns availability + reported name/version + measured latency. Side-effectful (real network round-trip).",
       "category": "integration",
       "role": "side-effect",
-      "capabilities": ["cacheable", "side-effectful"],
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
       "configSchemaRef": "schemas/server-status.config.json",
       "inputSchemaRef": "schemas/server-status.input.json",
       "outputSchemaRef": "schemas/server-status.output.json"
     },
-    { "typeId": "core.openwop.mcp.list-resources", "version": "1.0.0", "label": "MCP List Resources",
+    {
+      "typeId": "core.openwop.mcp.list-resources",
+      "version": "1.0.0",
+      "label": "MCP List Resources",
       "description": "JSON-RPC `resources/list` on a registered MCP server. Returns the static-resource catalog.",
-      "category": "integration", "role": "side-effect", "capabilities": ["cacheable","side-effectful"],
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
       "configSchemaRef": "schemas/list-resources.config.json",
       "inputSchemaRef": "schemas/list-resources.input.json",
-      "outputSchemaRef": "schemas/list-resources.output.json" },
-    { "typeId": "core.openwop.mcp.list-resource-templates", "version": "1.0.0", "label": "MCP List Resource Templates",
+      "outputSchemaRef": "schemas/list-resources.output.json"
+    },
+    {
+      "typeId": "core.openwop.mcp.list-resource-templates",
+      "version": "1.0.0",
+      "label": "MCP List Resource Templates",
       "description": "JSON-RPC `resources/templates/list`. Returns templated resources (RFC 6570 URI templates).",
-      "category": "integration", "role": "side-effect", "capabilities": ["cacheable","side-effectful"],
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
       "configSchemaRef": "schemas/list-resource-templates.config.json",
       "inputSchemaRef": "schemas/list-resource-templates.input.json",
-      "outputSchemaRef": "schemas/list-resource-templates.output.json" },
-    { "typeId": "core.openwop.mcp.subscribe-resource", "version": "1.0.0", "label": "MCP Subscribe Resource",
+      "outputSchemaRef": "schemas/list-resource-templates.output.json"
+    },
+    {
+      "typeId": "core.openwop.mcp.subscribe-resource",
+      "version": "1.0.0",
+      "label": "MCP Subscribe Resource",
       "description": "JSON-RPC `resources/subscribe`. Trigger-style — fires downstream on `notifications/resources/updated`. Pair with an unsubscribe in the cleanup phase.",
-      "category": "integration", "role": "streaming-output", "capabilities": ["side-effectful","streamable"],
+      "category": "integration",
+      "role": "streaming-output",
+      "capabilities": [
+        "side-effectful",
+        "streamable"
+      ],
       "configSchemaRef": "schemas/subscribe-resource.config.json",
       "inputSchemaRef": "schemas/subscribe-resource.input.json",
-      "outputSchemaRef": "schemas/subscribe-resource.output.json" },
-    { "typeId": "core.openwop.mcp.list-prompts", "version": "1.0.0", "label": "MCP List Prompts",
+      "outputSchemaRef": "schemas/subscribe-resource.output.json"
+    },
+    {
+      "typeId": "core.openwop.mcp.list-prompts",
+      "version": "1.0.0",
+      "label": "MCP List Prompts",
       "description": "JSON-RPC `prompts/list`. Lets workflows enumerate server-defined prompts before retrieving one.",
-      "category": "integration", "role": "side-effect", "capabilities": ["cacheable","side-effectful"],
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
       "configSchemaRef": "schemas/list-prompts.config.json",
       "inputSchemaRef": "schemas/list-prompts.input.json",
-      "outputSchemaRef": "schemas/list-prompts.output.json" },
-    { "typeId": "core.openwop.mcp.get-prompt", "version": "1.0.0", "label": "MCP Get Prompt",
+      "outputSchemaRef": "schemas/list-prompts.output.json"
+    },
+    {
+      "typeId": "core.openwop.mcp.get-prompt",
+      "version": "1.0.0",
+      "label": "MCP Get Prompt",
       "description": "JSON-RPC `prompts/get`. Fetches a server-defined prompt with caller-supplied arguments; output feeds an LLM node.",
-      "category": "integration", "role": "side-effect", "capabilities": ["cacheable","side-effectful"],
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
       "configSchemaRef": "schemas/get-prompt.config.json",
       "inputSchemaRef": "schemas/get-prompt.input.json",
-      "outputSchemaRef": "schemas/get-prompt.output.json" },
-    { "typeId": "core.openwop.mcp.completion", "version": "1.0.0", "label": "MCP Completion",
+      "outputSchemaRef": "schemas/get-prompt.output.json"
+    },
+    {
+      "typeId": "core.openwop.mcp.completion",
+      "version": "1.0.0",
+      "label": "MCP Completion",
       "description": "JSON-RPC `completion/complete`. Server-side argument autocomplete for prompts / resource templates. Powers smart-input UI on other workflow nodes.",
-      "category": "integration", "role": "side-effect", "capabilities": ["cacheable","side-effectful"],
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
       "configSchemaRef": "schemas/completion.config.json",
       "inputSchemaRef": "schemas/completion.input.json",
-      "outputSchemaRef": "schemas/completion.output.json" },
-    { "typeId": "core.openwop.mcp.set-log-level", "version": "1.0.0", "label": "MCP Set Log Level",
+      "outputSchemaRef": "schemas/completion.output.json"
+    },
+    {
+      "typeId": "core.openwop.mcp.set-log-level",
+      "version": "1.0.0",
+      "label": "MCP Set Log Level",
       "description": "JSON-RPC `logging/setLevel`. Adjusts the server's emission level for the duration of the session.",
-      "category": "integration", "role": "side-effect", "capabilities": ["side-effectful"],
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful"
+      ],
       "configSchemaRef": "schemas/set-log-level.config.json",
       "inputSchemaRef": "schemas/set-log-level.input.json",
-      "outputSchemaRef": "schemas/set-log-level.output.json" },
-    { "typeId": "core.openwop.mcp.log-listener", "version": "1.0.0", "label": "MCP Log Listener",
+      "outputSchemaRef": "schemas/set-log-level.output.json"
+    },
+    {
+      "typeId": "core.openwop.mcp.log-listener",
+      "version": "1.0.0",
+      "label": "MCP Log Listener",
       "description": "Subscribes to `notifications/message` events from the server. Streaming — emits one downstream event per log line.",
-      "category": "integration", "role": "streaming-output", "capabilities": ["side-effectful","streamable"],
+      "category": "integration",
+      "role": "streaming-output",
+      "capabilities": [
+        "side-effectful",
+        "streamable"
+      ],
       "configSchemaRef": "schemas/log-listener.config.json",
       "inputSchemaRef": "schemas/log-listener.input.json",
-      "outputSchemaRef": "schemas/log-listener.output.json" },
-    { "typeId": "core.openwop.mcp.ping", "version": "1.0.0", "label": "MCP Ping",
+      "outputSchemaRef": "schemas/log-listener.output.json"
+    },
+    {
+      "typeId": "core.openwop.mcp.ping",
+      "version": "1.0.0",
+      "label": "MCP Ping",
       "description": "JSON-RPC `ping`. Latency probe; returns roundtripMs.",
-      "category": "integration", "role": "side-effect", "capabilities": ["side-effectful"],
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful"
+      ],
       "configSchemaRef": "schemas/ping.config.json",
       "inputSchemaRef": "schemas/ping.input.json",
-      "outputSchemaRef": "schemas/ping.output.json" },
-    { "typeId": "core.openwop.mcp.server-trigger", "version": "1.0.0", "label": "MCP Server Trigger",
+      "outputSchemaRef": "schemas/ping.output.json"
+    },
+    {
+      "typeId": "core.openwop.mcp.server-trigger",
+      "version": "1.0.0",
+      "label": "MCP Server Trigger",
       "description": "Workflow-as-MCP-server entry point. Mounts an MCP endpoint (stdio or streamable HTTP) and routes inbound `tools/call` / `resources/read` / `prompts/get` into the workflow.",
-      "category": "integration", "role": "pure", "capabilities": ["cacheable"],
+      "category": "integration",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
       "configSchemaRef": "schemas/server-trigger.config.json",
       "inputSchemaRef": "schemas/server-trigger.input.json",
-      "outputSchemaRef": "schemas/server-trigger.output.json" },
-    { "typeId": "core.openwop.mcp.expose-tool", "version": "1.0.0", "label": "MCP Expose Tool",
+      "outputSchemaRef": "schemas/server-trigger.output.json"
+    },
+    {
+      "typeId": "core.openwop.mcp.expose-tool",
+      "version": "1.0.0",
+      "label": "MCP Expose Tool",
       "description": "Declarative: marks a workflow as an MCP tool with name + JSON-Schema input + output content shape. Consumed by the server-trigger when mounting.",
-      "category": "integration", "role": "side-effect", "capabilities": ["side-effectful"],
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful"
+      ],
       "configSchemaRef": "schemas/expose-tool.config.json",
       "inputSchemaRef": "schemas/expose-tool.input.json",
-      "outputSchemaRef": "schemas/expose-tool.output.json" },
-    { "typeId": "core.openwop.mcp.expose-resource", "version": "1.0.0", "label": "MCP Expose Resource",
+      "outputSchemaRef": "schemas/expose-tool.output.json"
+    },
+    {
+      "typeId": "core.openwop.mcp.expose-resource",
+      "version": "1.0.0",
+      "label": "MCP Expose Resource",
       "description": "Declarative: binds a workflow to a `resource_uri`. Emits `notifications/resources/updated` when the bound state changes.",
-      "category": "integration", "role": "side-effect", "capabilities": ["side-effectful"],
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful"
+      ],
       "configSchemaRef": "schemas/expose-resource.config.json",
       "inputSchemaRef": "schemas/expose-resource.input.json",
-      "outputSchemaRef": "schemas/expose-resource.output.json" },
-    { "typeId": "core.openwop.mcp.expose-resource-template", "version": "1.0.0", "label": "MCP Expose Resource Template",
+      "outputSchemaRef": "schemas/expose-resource.output.json"
+    },
+    {
+      "typeId": "core.openwop.mcp.expose-resource-template",
+      "version": "1.0.0",
+      "label": "MCP Expose Resource Template",
       "description": "Declarative: binds a workflow to an RFC 6570 URI template.",
-      "category": "integration", "role": "side-effect", "capabilities": ["side-effectful"],
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful"
+      ],
       "configSchemaRef": "schemas/expose-resource-template.config.json",
       "inputSchemaRef": "schemas/expose-resource-template.input.json",
-      "outputSchemaRef": "schemas/expose-resource-template.output.json" },
-    { "typeId": "core.openwop.mcp.expose-prompt", "version": "1.0.0", "label": "MCP Expose Prompt",
+      "outputSchemaRef": "schemas/expose-resource-template.output.json"
+    },
+    {
+      "typeId": "core.openwop.mcp.expose-prompt",
+      "version": "1.0.0",
+      "label": "MCP Expose Prompt",
       "description": "Declarative: exposes a templated prompt with a variable list. Returns a GetPromptResult to inbound `prompts/get`.",
-      "category": "integration", "role": "side-effect", "capabilities": ["side-effectful"],
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful"
+      ],
       "configSchemaRef": "schemas/expose-prompt.config.json",
       "inputSchemaRef": "schemas/expose-prompt.input.json",
-      "outputSchemaRef": "schemas/expose-prompt.output.json" },
-    { "typeId": "core.openwop.mcp.handle-sampling", "version": "1.0.0", "label": "MCP Handle Sampling",
+      "outputSchemaRef": "schemas/expose-prompt.output.json"
+    },
+    {
+      "typeId": "core.openwop.mcp.handle-sampling",
+      "version": "1.0.0",
+      "label": "MCP Handle Sampling",
       "description": "Handles inbound `sampling/createMessage` from a connected server. Routes to a workflow-chosen LLM (preserves consent — user's model under user's BYOK).",
-      "category": "integration", "role": "side-effect", "capabilities": ["side-effectful"],
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful"
+      ],
       "configSchemaRef": "schemas/handle-sampling.config.json",
       "inputSchemaRef": "schemas/handle-sampling.input.json",
-      "outputSchemaRef": "schemas/handle-sampling.output.json" },
-    { "typeId": "core.openwop.mcp.handle-elicitation", "version": "1.0.0", "label": "MCP Handle Elicitation",
+      "outputSchemaRef": "schemas/handle-sampling.output.json"
+    },
+    {
+      "typeId": "core.openwop.mcp.handle-elicitation",
+      "version": "1.0.0",
+      "label": "MCP Handle Elicitation",
       "description": "Handles inbound `elicitation/create` by suspending on a typed form (flat schema: string/number/boolean/enum, formats email/uri/date/date-time). Returns accept/decline/cancel + payload.",
-      "category": "integration", "role": "side-effect", "capabilities": ["side-effectful","streamable"],
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful",
+        "streamable"
+      ],
       "configSchemaRef": "schemas/handle-elicitation.config.json",
       "inputSchemaRef": "schemas/handle-elicitation.input.json",
-      "outputSchemaRef": "schemas/handle-elicitation.output.json" },
-    { "typeId": "core.openwop.mcp.provide-roots", "version": "1.0.0", "label": "MCP Provide Roots",
+      "outputSchemaRef": "schemas/handle-elicitation.output.json"
+    },
+    {
+      "typeId": "core.openwop.mcp.provide-roots",
+      "version": "1.0.0",
+      "label": "MCP Provide Roots",
       "description": "Answers `roots/list` from a workflow-managed list of `file://` URIs. Pairs with `host.fs` for actually serving content.",
-      "category": "integration", "role": "side-effect", "capabilities": ["side-effectful"],
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful"
+      ],
       "configSchemaRef": "schemas/provide-roots.config.json",
       "inputSchemaRef": "schemas/provide-roots.input.json",
-      "outputSchemaRef": "schemas/provide-roots.output.json" }
+      "outputSchemaRef": "schemas/provide-roots.output.json"
+    }
   ],
   "runtime": {
     "language": "javascript",
     "format": "esm",
     "entry": "./index.mjs",
     "minRuntimeVersion": "node>=20"
-  }
+  },
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "openwop-team-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-mi1lY81dtADGH4CwxRiCsH2CwemvBE3JSSve9QcGPHI="
 }

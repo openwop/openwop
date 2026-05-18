@@ -73,12 +73,30 @@ export async function invokeTool(ctx) {
   const result = await ctx.mcp.invokeTool(serverId, toolName, args, {
     ...(timeoutMs !== undefined ? { timeoutMs } : {}),
   });
+  // RFC 0020 §D + SECURITY/threat-model-prompt-injection.md
+  // `prompt-injection-mcp-marker` invariant: MCP tool responses MUST be
+  // wrapped in `<UNTRUSTED tool="...">...</UNTRUSTED>` markers before
+  // reaching the next LLM turn. We surface a `markedContent` convenience
+  // field whenever (a) the host's MCP client flagged the response as
+  // untrusted OR (b) the run is operating under an untrusted boundary
+  // (every inbound MCP-server-mount tools/call). Downstream nodes can
+  // consume markedContent directly OR re-derive from result.
+  const untrustedContent = result?.untrustedContent === true;
+  const runIsUntrusted = ctx.trustBoundary === 'untrusted';
+  const shouldMark = untrustedContent || runIsUntrusted;
+  let markedContent;
+  if (shouldMark && result?.result != null) {
+    const raw = typeof result.result === 'string' ? result.result : JSON.stringify(result.result);
+    const safeTool = String(toolName).replace(/"/g, '&quot;');
+    markedContent = `<UNTRUSTED tool="${safeTool}">${raw}</UNTRUSTED>`;
+  }
   return {
     status: 'success',
     outputs: {
       result: result?.result ?? null,
       isError: result?.isError === true,
-      ...(result?.untrustedContent !== undefined ? { untrustedContent: result.untrustedContent === true } : {}),
+      ...(result?.untrustedContent !== undefined ? { untrustedContent } : {}),
+      ...(markedContent !== undefined ? { markedContent } : {}),
       durationMs: Date.now() - start,
     },
   };

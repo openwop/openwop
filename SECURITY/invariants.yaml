@@ -179,9 +179,14 @@ invariants:
     threat_model: SECURITY/threat-model-prompt-injection.md
     tests:
       - src/core/ai/prompts/__tests__/*.test.ts
+      - apps/workflow-engine/backend/typescript/test/untrusted-marker.test.ts
     note: |
       Untrusted-marker discipline enforced at prompt construction.
       Reference-impl-tier; protocol can't observe prompt strings.
+      The in-tree test (`untrusted-marker.test.ts`) exercises the
+      `core.openwop.ai` pack delegates' `applyUntrustedMarkers` helper:
+      trusted runs leave content unmarked; untrusted runs wrap user-role
+      content in `<UNTRUSTED>...</UNTRUSTED>` per RFC 0020 §D.
 
   - id: prompt-injection-kb-marker
     tier: reference-impl
@@ -225,9 +230,15 @@ invariants:
     tier: reference-impl
     severity: medium
     threat_model: SECURITY/threat-model-prompt-injection.md
-    tests: []
+    tests:
+      - apps/workflow-engine/backend/typescript/test/untrusted-marker.test.ts
     note: |
       MCP tool responses wrapped in untrusted markers in next LLM turn.
+      The in-tree test exercises the `core.openwop.mcp.invoke-tool`
+      delegate's new `markedContent` field: wraps result in
+      `<UNTRUSTED tool="<name>">...</UNTRUSTED>` whenever the host's
+      MCP client flags untrustedContent OR the run is operating under
+      `ctx.trustBoundary === 'untrusted'` (RFC 0020 §D).
 
   - id: prompt-injection-mcp-no-approval
     tier: protocol

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.mcp/1.0.0/invoke-tool.output.json",
+  "$id": "https://packs.openwop.dev/core.openwop.mcp/1.1.1/invoke-tool.output.json",
   "title": "InvokeToolOutput",
   "type": "object",
   "required": ["result", "isError"],
@@ -15,6 +15,10 @@
     "untrustedContent": {
       "type": "boolean",
       "description": "Whether the host marked this result as untrusted-origin content per SECURITY/threat-model-prompt-injection.md (`prompt-injection-mcp-marker`). When `true`, downstream LLM nodes MUST wrap the result in untrusted markers before passing to the model."
+    },
+    "markedContent": {
+      "type": "string",
+      "description": "Convenience field present iff (a) the host's MCP client flagged the response as untrusted OR (b) the run is operating under `ctx.trustBoundary === 'untrusted'` (every inbound MCP-server-mount tools/call). The string is the tool's result wrapped in `<UNTRUSTED tool=\"<name>\">...</UNTRUSTED>` per the `prompt-injection-mcp-marker` invariant. Downstream chat-completion nodes can pipe this directly into a user message."
     },
     "durationMs": { "type": "integer", "minimum": 0 }
   },

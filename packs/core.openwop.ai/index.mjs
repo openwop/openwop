@@ -58,6 +58,30 @@ function ensureCallAI(ctx) {
 }
 
 /**
+ * RFC 0020 §D + SECURITY/threat-model-prompt-injection.md §"Mitigations":
+ * when a run is flagged `ctx.trustBoundary === 'untrusted'` (today: every
+ * inbound MCP `tools/call` invocation via the host's MCP server mount),
+ * user-role message content MUST be wrapped in `<UNTRUSTED>...</UNTRUSTED>`
+ * markers before reaching the LLM. System-role content is workflow-author-
+ * controlled and stays unmarked; assistant-role content is downstream of
+ * the original user wrap and stays unmarked.
+ *
+ * Idempotent: messages whose `content` already contains an `<UNTRUSTED>`
+ * substring (e.g., multi-turn re-feed) are NOT rewrapped.
+ *
+ * Returns the input array verbatim when ctx.trustBoundary is absent or
+ * `'trusted'` — zero behavioral change for non-MCP-mount runs.
+ */
+function applyUntrustedMarkers(messages, trustBoundary) {
+  if (trustBoundary !== 'untrusted' || !Array.isArray(messages)) return messages;
+  return messages.map((m) => {
+    if (!m || m.role !== 'user' || typeof m.content !== 'string') return m;
+    if (m.content.includes('<UNTRUSTED>')) return m; // already wrapped
+    return { ...m, content: `<UNTRUSTED>${m.content}</UNTRUSTED>` };
+  });
+}
+
+/**
  * Canonical finishReason mapping. Providers return varied strings
  * (Anthropic: "end_turn"/"max_tokens"; OpenAI: "stop"/"length"/
  * "tool_calls"; Gemini: "STOP"/"MAX_TOKENS"/"SAFETY"). The host's
@@ -84,7 +108,7 @@ export async function chatCompletion(ctx) {
   const result = await ctx.callAI({
     provider,
     model,
-    messages,
+    messages: applyUntrustedMarkers(messages, ctx.trustBoundary),
     ...(systemPrompt !== undefined ? { systemPrompt } : {}),
     ...(temperature !== undefined ? { temperature } : {}),
     ...(maxTokens !== undefined ? { maxTokens } : {}),
@@ -146,7 +170,7 @@ export async function structuredOutput(ctx) {
     const result = await ctx.callAI({
       provider,
       model,
-      messages,
+      messages: applyUntrustedMarkers(messages, ctx.trustBoundary),
       responseSchema: outputSchema,
       ...(systemPrompt !== undefined ? { systemPrompt } : {}),
       ...(temperature !== undefined ? { temperature } : {}),
@@ -191,7 +215,7 @@ export async function embeddings(ctx) {
     provider,
     model,
     embeddingMode: true,
-    messages: [{ role: 'user', content: text }],
+    messages: applyUntrustedMarkers([{ role: 'user', content: text }], ctx.trustBoundary),
     ...(dimensions !== undefined ? { dimensions } : {}),
   });
 
@@ -242,7 +266,7 @@ export async function toolCalling(ctx) {
   const result = await ctx.callAIWithTools({
     provider,
     model,
-    messages,
+    messages: applyUntrustedMarkers(messages, ctx.trustBoundary),
     tools,
     ...(toolChoice !== undefined ? { toolChoice } : {}),
     ...(systemPrompt !== undefined ? { systemPrompt } : {}),
@@ -293,7 +317,7 @@ export async function classify(ctx) {
   const labels = ctx.config.labels;
   const r = await ctx.callAI({
     systemPrompt: 'You are a single-label classifier. Reply with exactly one label from the provided list and nothing else.',
-    messages: [{ role: 'user', content: `Labels: ${labels.join(', ')}\n\nText:\n${ctx.inputs.text}` }],
+    messages: applyUntrustedMarkers([{ role: 'user', content: `Labels: ${labels.join(', ')}\n\nText:\n${ctx.inputs.text}` }], ctx.trustBoundary),
     model: ctx.config.model,
   });
   const label = (r.text ?? r.content ?? '').trim();
@@ -304,7 +328,7 @@ export async function extract(ctx) {
   if (typeof ctx.callAI !== 'function') throw Object.assign(new Error('host does not implement ctx.callAI'), { code: 'HOST_CAPABILITY_MISSING' });
   const r = await ctx.callAI({
     systemPrompt: 'Extract structured data per the provided JSON Schema. Reply with JSON only.',
-    messages: [{ role: 'user', content: `Schema:\n${JSON.stringify(ctx.config.schema)}\n\nText:\n${ctx.inputs.text}` }],
+    messages: applyUntrustedMarkers([{ role: 'user', content: `Schema:\n${JSON.stringify(ctx.config.schema)}\n\nText:\n${ctx.inputs.text}` }], ctx.trustBoundary),
     responseSchema: ctx.config.schema,
     model: ctx.config.model,
   });
@@ -344,7 +368,7 @@ export async function transform(ctx) {
   const exShown = (ctx.config.examples ?? []).map((e) => `Input: ${JSON.stringify(e.input)}\nOutput: ${JSON.stringify(e.output)}`).join('\n\n');
   const r = await ctx.callAI({
     systemPrompt: 'Transform the input per the instruction. Reply with the transformed JSON value only.',
-    messages: [{ role: 'user', content: `Instruction: ${ctx.inputs.instruction}\n\n${exShown}\n\nInput: ${JSON.stringify(ctx.inputs.value)}\nOutput:` }],
+    messages: applyUntrustedMarkers([{ role: 'user', content: `Instruction: ${ctx.inputs.instruction}\n\n${exShown}\n\nInput: ${JSON.stringify(ctx.inputs.value)}\nOutput:` }], ctx.trustBoundary),
     model: ctx.config.model,
   });
   let result;

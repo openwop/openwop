@@ -252,5 +252,11 @@
     "format": "esm",
     "entry": "./index.mjs",
     "minRuntimeVersion": "node>=20"
-  }
+  },
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "openwop-team-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-AyU+DiXb8uaqL5HNf5gtCOR+C5SZOcXTgC5Tr55y3Wk="
 }

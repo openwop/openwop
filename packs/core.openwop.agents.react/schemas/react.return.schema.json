@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/packs/core.openwop.agents.react/react.return.schema.json",
+  "title": "ReActReturn",
+  "description": "Return payload for the ReAct agent. Validated before persistence per RFC 0003 §D.",
+  "type": "object",
+  "required": ["answer", "steps", "stoppedReason"],
+  "properties": {
+    "answer": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Final synthesized answer to the user's goal."
+    },
+    "steps": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ReActStep" },
+      "description": "Ordered Reason+Act trace. Each entry pairs a Thought with the Action taken (tool call) and the Observation returned. The terminal step is the final-answer Action."
+    },
+    "stoppedReason": {
+      "type": "string",
+      "enum": ["completed", "max_steps", "tool_error", "refused"],
+      "description": "Why the loop terminated. `completed` = produced a final answer; `max_steps` = hit the cap; `tool_error` = unrecoverable tool failure; `refused` = agent declined for safety."
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Agent's self-reported confidence in the final answer. Drives escalation per RFC 0002 §F."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "ReActStep": {
+      "type": "object",
+      "required": ["thought", "action"],
+      "properties": {
+        "thought": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "action": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": ["type", "toolId", "arguments"],
+              "properties": {
+                "type": { "const": "toolCall" },
+                "toolId": { "type": "string", "minLength": 1 },
+                "arguments": { "type": "object", "additionalProperties": true }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": ["type", "answer"],
+              "properties": {
+                "type": { "const": "finalAnswer" },
+                "answer": { "type": "string", "minLength": 1 }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "observation": {
+          "type": ["string", "object", "array", "null"],
+          "description": "Result returned by the tool call. Omitted when the action is finalAnswer."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

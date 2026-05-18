@@ -129,3 +129,4 @@ New scenarios (capability-gated on `capabilities.mcp.serverMount.supported`):
 - `core.openwop.mcp@1.1.0` pack (8 mcp.server-* nodes that this RFC normates).
 - modelcontextprotocol.io 2025-06-18 spec (canonical wire reference).
 - `SECURITY/threat-model-prompt-injection.md` (untrusted-boundary invariants).
+- `core.openwop.ai@1.1.2` + `core.openwop.mcp@1.1.1` packs (2026-05-17) — honor §D downstream by wrapping user-role content in `<UNTRUSTED>...</UNTRUSTED>` markers when `ctx.trustBoundary === 'untrusted'`. See `CHANGELOG.md [Unreleased]` §"UNTRUSTED-marker discipline" and `apps/workflow-engine/backend/typescript/test/untrusted-marker.test.ts` (14 in-tree tests covering both packs' delegate behavior).

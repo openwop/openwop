@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/packs/core.openwop.agents.react/react.task.schema.json",
+  "title": "ReActTask",
+  "description": "Task payload for the ReAct agent. Validated at dispatch per RFC 0003 §D.",
+  "type": "object",
+  "required": ["goal"],
+  "properties": {
+    "goal": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 10000,
+      "description": "The user's request, in natural language."
+    },
+    "maxSteps": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 32,
+      "default": 6,
+      "description": "Hard cap on Reason+Act iterations. Host enforces; agent reads to plan ahead."
+    },
+    "toolAllowlist": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true,
+      "description": "Per-dispatch tool allowlist. Extends (does not replace) the pack's default allowlist. Host MAY intersect with a host-level allowlist."
+    },
+    "context": {
+      "type": "object",
+      "description": "Free-form context object the host MAY pass through (e.g., user metadata, tenant tags). Agent SHOULD use it but is not required to.",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
