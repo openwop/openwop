@@ -11,6 +11,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### 7 `aiEnvelope.*` conformance scenarios graduated to behavioral (2026-05-18)
+
+Closes the dependency the 7 advertisement-shape placeholders were waiting on (the `acceptEnvelope` seam landed in commit `d84d3a8`). 28 of 57 envelope assertions now run behaviorally through `POST /v1/host/sample/envelope/accept`; the remaining 29 are documented engine-integration placeholders that require state beyond the pure-function acceptor (correlationId dedup, schema-version drift cross-reference, BYOK redaction pipeline, RunEventDoc projection).
+
+- **`conformance/src/scenarios/aiEnvelope.universalKinds.test.ts`** — 5 behavioral: accepted `clarification.request` / `schema.request` / `schema.response` / `error` + invalid (missing `questions[]`).
+- **`conformance/src/scenarios/aiEnvelope.contractRefusal.test.ts`** — 4 behavioral: gated outside `nodeAllowedKinds` + `allowedKinds` union shape + universals-always-allowed + host gate fires before node gate.
+- **`conformance/src/scenarios/aiEnvelope.capBreached.test.ts`** — 4 behavioral: `envelopesPerTurn` / `clarificationRounds` / `schemaRounds` caps + breach reason cites the limit value.
+- **`conformance/src/scenarios/aiEnvelope.trustBoundaryPropagation.test.ts`** — 4 behavioral: envelope-supplied `contentTrust` normalized + `runTrustBoundary` propagation + per-emission precedence + default `'trusted'`.
+- **`conformance/src/scenarios/aiEnvelope.{correlationReplay,schemaDrift,redaction}.test.ts`** — placeholders sharpened with explicit unlock criteria (per-run correlationId dedup state, schemaVersions[<kind>] floor cross-reference, BYOK redaction pipeline integration). Engine-level wiring beyond the pure-function acceptor's scope.
+- **`conformance/coverage.md`** — AI Envelope row scenario list now includes the 7 newly-graduated scenarios; grade context updated.
+
+### Storage adapter parity — real Postgres via `@testcontainers/postgresql` (2026-05-18)
+
+Companion harness to the existing pg-mem-backed `test/storage-adapter-parity.test.ts`. Targets the 8 SQL patterns pg-mem can't model (JSONB array marshalling, `WITH ... INSERT ... RETURNING` CTE atomicity, `INSERT ... ON CONFLICT DO NOTHING RETURNING` ordering, cascading DELETE) at a real Postgres instance.
+
+- **`apps/workflow-engine/backend/typescript/test/storage-adapter-parity-testcontainers.test.ts`** (landed via commit `02a84e1`, 235 LOC) — 8 tests, one per `PG_MEM_INCOMPAT` pattern in the companion file. Spins up `postgres:16-alpine` via `@testcontainers/postgresql`; the same Postgres-adapter SQL that runs against Cloud SQL runs against the container here.
+- **`apps/workflow-engine/backend/typescript/package.json`** — adds `@testcontainers/postgresql@^11.14.0` as a dev dependency.
+- **Docker fallback:** the suite soft-skips when Docker isn't reachable (probed via `docker info` at suite-init). Dev machines without Docker keep `npm test` green; CI with Docker exercises the full coverage. Override via `OPENWOP_SKIP_TESTCONTAINERS=1` to force-skip in CI environments that intentionally exclude Docker.
+- **First-run cost:** ~80 MB / 30s image pull (`postgres:16-alpine`); subsequent runs hit the local image cache.
+- **Closes** the "613 LOC unreviewed Postgres adapter" thread from commit `1093ce3`: when Docker is available, all 8 `PG_MEM_INCOMPAT` patterns get end-to-end validation against real Postgres. Pairs with the SQLite-via-`:memory:` parity in the sibling file.
+
 ### RFC 0022 (Draft) — `core.dispatch` + `core.subWorkflow` runtime variable mapping (2026-05-18)
 
 Closes the same authoring gap on the two openwop workflow-invocation primitives in one additive RFC. Both `core.dispatch` (RFC 0007 — has neither `inputMapping` nor `outputMapping`) and `core.subWorkflow` (`node-packs.md` §"`core.subWorkflow` contract" — has `outputMapping` only) lack a first-class way to project parent variables into child inputs at runtime. Without these, supervisor-driven workflows build hybrid DAGs that interleave dispatch + subWorkflow + side-channel storage — mechanical workaround that doesn't survive contact with non-trivial production cases. Found via the MyndHyve Launch Studio adaptive-supervisor rebuild (`vendor.myndhyve.launchStudioSupervisor`); RFC text ported from the MyndHyve internal draft at `docs/rfcs/openwop-dispatch-input-output-mapping.md`. Initially scoped to `core.dispatch` only; widened to cover `core.subWorkflow` after audit revealed the symmetric half-fixed gap.
