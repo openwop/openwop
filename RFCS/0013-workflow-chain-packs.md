@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0013 |
 | **Title** | Workflow-chain packs (pre-configured DAG fragments published as registry artifacts) |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@dtuftsg) |
 | **Created** | 2026-05-13 |
-| **Updated** | 2026-05-13 |
+| **Updated** | 2026-05-18 |
 | **Affects** | `spec/v1/node-packs.md`, new `spec/v1/workflow-chain-packs.md`, `schemas/pack-manifest.schema.json`, registry HTTP API |
 | **Compatibility** | `additive` — introduces a new pack kind alongside the existing node-pack format; no existing surface changes |
 | **Supersedes** | — |
@@ -318,13 +318,21 @@ Also: runtime sub-DAG dispatch makes it impossible to debug an expanded chain wi
 
 ## Acceptance criteria
 
-- [ ] Spec text merged: new `spec/v1/workflow-chain-packs.md` document + diff to `node-packs.md` cross-referencing.
-- [ ] Schema files merged: `pack-manifest-workflow-chain.schema.json` + `pack-manifest.schema.json` extension.
-- [ ] `Capabilities.workflowChainPacks` documented in `capabilities.md`.
-- [ ] Build-index + conformance-check scripts updated to recognize `kind: "workflow-chain"` manifests.
-- [ ] At least one of: `workflow-chain-pack-manifest-validation.test.ts` (positive + 2 negatives), `workflow-chain-expansion.test.ts` (parameter substitution + id collision). Both required for `Accepted` status.
-- [ ] CHANGELOG entry under v1.2 (or next minor after RFC merges).
-- [ ] Reference host (per `ROADMAP.md`) implements expansion + passes the new conformance scenarios — OR the RFC explicitly defers reference-host implementation to a follow-up tracker.
+Promotion to `Active` (2026-05-18 — spec + tooling + tests merged, reference host pending):
+
+- [x] Spec text merged: new `spec/v1/workflow-chain-packs.md` document + diff to `node-packs.md` cross-referencing.
+- [x] Schema files merged: `workflow-chain-pack-manifest.schema.json` (peer to `node-pack-manifest.schema.json`; kind=workflow-chain manifests validate against this schema, kind=node manifests against the existing node-pack schema — see `node-packs.md` §"Pack kinds" for the discriminator).
+- [x] `Capabilities.workflowChainPacks` documented in `capabilities.md` + advertised via `capabilities.schema.json`.
+- [x] Build-index + conformance-check scripts updated to recognize `kind: "workflow-chain"` manifests.
+- [x] All four conformance scenarios merged: `workflow-chain-pack-manifest-validation.test.ts`, `workflow-chain-pack-signature-verification.test.ts`, `workflow-chain-expansion.test.ts`, `workflow-chain-unresolvable-typeid.test.ts`.
+- [x] In-tree example pack `examples/packs/workflow-chain-sample/` (two chains: 1-node + multi-node) — proves the manifest format is implementable end-to-end.
+- [x] CHANGELOG entries under `[1.1.2 — unreleased]` covering the spec/tooling/conformance merges + the Phase 4 example pack.
+
+Remaining gate for `Accepted`:
+
+- [ ] Reference host expansion implementation. The conformance scenarios run server-free against fixture manifests; promotion to `Accepted` requires at least one openwop reference host (the in-memory host is the natural fit) to implement workflow-edit-time expansion + advertise `capabilities.workflowChainPacks: true` + pass the four scenarios under the live host runner. Estimated ~5 days of editor work per the Implementation notes below.
+
+  **Tracker decision:** the reference-host implementation is **deferred to a follow-up tracker** rather than blocking promotion to `Active`. The spec contract + schemas + conformance suite + the example pack collectively pin the wire shape; downstream adopters (MyndHyve App Builder / Campaign Studio editors) can move forward against the locked contract. Reopening to amend the wire shape would require a new RFC.
 
 ## References
 

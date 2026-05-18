@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### RFC 0013 (Workflow-chain packs) — Status: `Draft` → `Active` (2026-05-18)
+
+Promotes RFC 0013 to `Active` now that the spec/schema/conformance work from Phases 1, 2, and 4 has all merged on `main` (commits `c4ec715`, `664e363`, `87153dc`, `0189d6d`). The 7-day additive-RFC comment window opened on 2026-05-13 and closes on 2026-05-20; no blocking comments landed during the window so the status flip is procedural cleanup rather than a substantive decision. The RFC's PR thread and `RFCS/README.md` "RFC index" were already calling it Active — only the RFC header was stale.
+
+- **Spec corpus state:** `spec/v1/workflow-chain-packs.md` (DRAFT v1.x — promotes to FINAL once the reference host implements expansion) + `schemas/workflow-chain-pack-manifest.schema.json` + `capabilities.workflowChainPacks` flag + `node-packs.md §"Pack kinds"` cross-reference + the four conformance scenarios (`workflow-chain-pack-manifest-validation.test.ts`, `workflow-chain-pack-signature-verification.test.ts`, `workflow-chain-expansion.test.ts`, `workflow-chain-unresolvable-typeid.test.ts`) + the `examples/packs/workflow-chain-sample/` proof pack. Wire shape is locked under the `Active` status.
+- **Remaining gate to `Accepted`:** reference-host workflow-editor expansion implementation (Phase 3 in the RFC's plan, ~5 days estimated). Explicitly deferred to a follow-up tracker per the RFC's own acceptance-criteria note — the locked wire-shape contract + conformance suite + example pack collectively bind the contract for downstream adopters (MyndHyve App Builder / Campaign Studio editors) without blocking on reference-host work.
+- **MyndHyve preset publications (RFC's Phase 4):** the 55 unpublished editor presets from the `CANVAS-PACKS-INVENTORY` audit remain a downstream tracker. Public-registry publication of any chain pack is gated on the same external security audit that gates the new `core.openwop.*` packs (per `SECURITY/external-audit-engagement.md §2.1`).
+
+Compatibility: additive. No spec / schema / wire-shape diff vs. the merged Phase 1+2+4 work — this entry exists only to record the maintainer status flip.
+
 ### `@openwop/openwop-conformance` 1.1.1 → 1.2.0 (2026-05-18)
 
 Minor bump per `PUBLISHING.md` §"Versioning alignment" — conformance scenario additions land on a minor; other artifacts (SDK + spec corpus) are untouched. Captures the RFC 0022 + RFC 0023 fixture/scenario landings (new `core.conformance.mock-agent` typeId surface, 4 RFC 0022 behavioral scenarios graduated from `it.todo()`, 9 new fixtures, 2 fixture re-pins, causationId strict-chain assertion, per-event-type handoff identity check). Detailed entry under `conformance/CHANGELOG.md` §[1.2.0]. Publication via the `openwop-conformance/v1.2.0` tag → `publish-conformance` workflow job per `PUBLISHING.md` §"Tag conventions." SDK + spec corpus remain at their current versions.
