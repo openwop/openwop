@@ -11,6 +11,7 @@
 import type { ChatMessage } from './hooks/useChatSession.js';
 import { MessageRenderer } from './MessageRenderer.js';
 import { ThoughtsDisclosure } from './ThoughtsDisclosure.js';
+import { ToolCallCard, HandoffIndicator, DecisionBadge } from './AgentEventCards.js';
 import { formatUsd, turnCostUsd } from './lib/cost.js';
 import { GlobeIcon } from './icons/index.js';
 
@@ -85,6 +86,19 @@ export function MessageBubble({ message }: Props): JSX.Element {
         {message.meta?.error && (
           <div style={{ marginTop: 6, fontSize: 11, opacity: 0.8 }}>
             <strong>{message.meta.error.code}:</strong> {message.meta.error.message}
+          </div>
+        )}
+        {!isUser && message.agentEvents && (
+          <div style={{ marginTop: 8 }}>
+            {message.agentEvents.handoffs.map((h, i) => (
+              <HandoffIndicator key={`h-${i}-${h.at}`} handoff={h} />
+            ))}
+            {message.agentEvents.toolCalls.map((tc) => (
+              <ToolCallCard key={`tc-${tc.callId}`} call={tc} />
+            ))}
+            {message.agentEvents.decisions.map((d, i) => (
+              <DecisionBadge key={`d-${i}-${d.at}`} decision={d} />
+            ))}
           </div>
         )}
         {!isUser && !message.isStreaming && message.meta && !message.meta.error && (

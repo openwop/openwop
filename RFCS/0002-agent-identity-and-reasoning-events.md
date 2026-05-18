@@ -106,13 +106,14 @@ Emitted when an agent produces a private reasoning trace before acting. Payload:
 ```json
 {
   "agentId": "string",
-  "summary": "string — short one-line digest",
-  "trace": "string (optional) — full reasoning text, MAY be redacted",
-  "tokenCount": "integer (optional)"
+  "reasoning": "string — the trace itself (summary or full per resolved verbosity)",
+  "verbosity": "summary | full | off (optional)"
 }
 ```
 
-Hosts SHOULD redact `trace` from the public event stream if the run advertises BYOK + redaction; the `summary` field is the public-safe projection.
+Hosts MUST redact secret material from `reasoning` before persistence per SR-1 in `SECURITY/threat-model-secret-leakage.md`. The trace's length is bounded by `capabilities.agents.reasoning.tokenLimit` (default 512 tokens) when the resolved verbosity is `summary`. RFC 0024 (separate proposal) adds the optional `agent.reasoning.delta` sibling event for live-streaming UX while a reasoning block is still open; consumers MAY ignore deltas and read only the closing `agent.reasoned` for the authoritative content.
+
+> **Schema-evolution note (2026-05-18).** This RFC's prose originally proposed `{summary, trace, tokenCount}` payload fields. The schema finalized in `schemas/run-event-payloads.schema.json` (`$defs.agentReasoned`) uses `{reasoning, verbosity}` — a tighter, single-field shape that lets a per-run override (`RunOptions.configurable.reasoningVerbosity`) choose summary vs full vs off at dispatch time. The schema is the normative wire contract; this section was updated to match. Hosts implementing against the original prose MUST migrate to the schema's field names.
 
 #### `agent.toolCalled`
 

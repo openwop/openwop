@@ -69,6 +69,40 @@ export interface WorkflowRunState {
   error?: { code: string; message: string };
 }
 
+/** A tool the assistant agent invoked during this turn — built from a
+ *  `agent.toolCalled` + matching `agent.toolReturned` pair (RFC 0002 §B).
+ *  Rendered as an inline card under the assistant bubble. */
+export interface AgentToolCall {
+  callId: string;
+  toolName: string;
+  agentId: string;
+  inputs?: unknown;
+  outcome?: unknown;
+  error?: { code: string; message: string };
+  startedAt: string;
+  /** When set, the toolReturned event has arrived. Card collapses from
+   *  "Running…" to a duration badge. */
+  finishedAt?: string;
+}
+
+/** Control transfer between agents within this turn (RFC 0002 §B,
+ *  `agent.handoff`). Rendered as a chevron-separated chip under the
+ *  bubble owned by the receiving agent. */
+export interface AgentHandoff {
+  fromAgentId: string;
+  toAgentId: string;
+  reason?: string;
+  at: string;
+}
+
+/** Typed decision the agent produced (RFC 0002 §B, `agent.decided`). */
+export interface AgentDecision {
+  agentId: string;
+  decision: unknown;
+  confidence?: number;
+  at: string;
+}
+
 /** Reasoning trace surfaced from `agent.reasoned` events (RFC 0002).
  *  Rendered above the assistant bubble as a collapsible "Thoughts"
  *  disclosure — Claude.ai / o1 style. The reasoning content is
@@ -108,6 +142,14 @@ export interface ChatMessage {
    *  streaming deltas. Rendered as a collapsible Thoughts disclosure
    *  above the assistant bubble. */
   thoughts?: ChatMessageThoughts;
+  /** Optional agent-event timeline for this turn — tool calls, handoffs,
+   *  decisions surfaced from the `agent.*` event family (RFC 0002 §B).
+   *  Rendered as a sequence of inline cards below the message content. */
+  agentEvents?: {
+    toolCalls: AgentToolCall[];
+    handoffs: AgentHandoff[];
+    decisions: AgentDecision[];
+  };
   /** When set, render an interrupt card inline beneath this bubble. */
   activeInterrupt?: OpenInterrupt | null;
   /** Final-turn metadata for the assistant bubble. */
@@ -450,6 +492,97 @@ export function useChatSession(): UseChatSessionResult {
                   ...(prev?.durationMs != null ? { durationMs: prev.durationMs } : {}),
                   ...(verbosity ? { verbosity } : prev?.verbosity ? { verbosity: prev.verbosity } : {}),
                   ...(agentId ? { agentId } : prev?.agentId ? { agentId: prev.agentId } : {}),
+                },
+              };
+            }),
+          }));
+        } else if (ev.type === 'agent.toolCalled' && typeof payload.callId === 'string' && typeof payload.toolName === 'string') {
+          const callId = payload.callId;
+          const toolName = payload.toolName;
+          const agentIdRaw = typeof payload.agentId === 'string' ? payload.agentId : '';
+          const now = new Date().toISOString();
+          setSession((s) => ({
+            ...s,
+            messages: s.messages.map((m) => {
+              if (m.id !== assistantId) return m;
+              const prev = m.agentEvents ?? { toolCalls: [], handoffs: [], decisions: [] };
+              return {
+                ...m,
+                agentEvents: {
+                  ...prev,
+                  toolCalls: [
+                    ...prev.toolCalls,
+                    { callId, toolName, agentId: agentIdRaw, inputs: payload.inputs, startedAt: now },
+                  ],
+                },
+              };
+            }),
+          }));
+        } else if (ev.type === 'agent.toolReturned' && typeof payload.callId === 'string') {
+          const callId = payload.callId;
+          const errorPayload = payload.error;
+          const error = errorPayload && typeof errorPayload === 'object' && 'code' in errorPayload && 'message' in errorPayload
+            ? { code: String((errorPayload as Record<string, unknown>).code), message: String((errorPayload as Record<string, unknown>).message) }
+            : undefined;
+          const now = new Date().toISOString();
+          setSession((s) => ({
+            ...s,
+            messages: s.messages.map((m) => {
+              if (m.id !== assistantId) return m;
+              const prev = m.agentEvents;
+              if (!prev) return m;
+              return {
+                ...m,
+                agentEvents: {
+                  ...prev,
+                  toolCalls: prev.toolCalls.map((tc) =>
+                    tc.callId === callId
+                      ? { ...tc, finishedAt: now, outcome: payload.outcome, ...(error ? { error } : {}) }
+                      : tc,
+                  ),
+                },
+              };
+            }),
+          }));
+        } else if (ev.type === 'agent.handoff' && typeof payload.fromAgentId === 'string' && typeof payload.toAgentId === 'string') {
+          const fromAgentId = payload.fromAgentId;
+          const toAgentId = payload.toAgentId;
+          const reason = typeof payload.reason === 'string' ? payload.reason : undefined;
+          const now = new Date().toISOString();
+          setSession((s) => ({
+            ...s,
+            messages: s.messages.map((m) => {
+              if (m.id !== assistantId) return m;
+              const prev = m.agentEvents ?? { toolCalls: [], handoffs: [], decisions: [] };
+              return {
+                ...m,
+                agentEvents: {
+                  ...prev,
+                  handoffs: [
+                    ...prev.handoffs,
+                    { fromAgentId, toAgentId, at: now, ...(reason ? { reason } : {}) },
+                  ],
+                },
+              };
+            }),
+          }));
+        } else if (ev.type === 'agent.decided' && typeof payload.agentId === 'string') {
+          const agentIdRaw = payload.agentId;
+          const confidence = typeof payload.confidence === 'number' ? payload.confidence : undefined;
+          const now = new Date().toISOString();
+          setSession((s) => ({
+            ...s,
+            messages: s.messages.map((m) => {
+              if (m.id !== assistantId) return m;
+              const prev = m.agentEvents ?? { toolCalls: [], handoffs: [], decisions: [] };
+              return {
+                ...m,
+                agentEvents: {
+                  ...prev,
+                  decisions: [
+                    ...prev.decisions,
+                    { agentId: agentIdRaw, decision: payload.decision, at: now, ...(confidence != null ? { confidence } : {}) },
+                  ],
                 },
               };
             }),
