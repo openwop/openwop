@@ -12,6 +12,7 @@ import type { AppConfig } from '../index.js';
 import { listCapabilities } from '../executor/runtimeCapabilities.js';
 import type { Storage } from '../storage/storage.js';
 import { listHostSurfaces } from '../bootstrap/hostSurfaceRegistry.js';
+import { universalEnvelopeKinds } from '../host/envelopeAcceptor.js';
 import { getFsSandboxRoot } from '../host/inMemorySurfaces.js';
 
 interface Deps {
@@ -82,8 +83,23 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       vendor: 'openwop-samples',
     },
     // Per spec/v1/capabilities.md §3 — REQUIRED top-level fields.
-    supportedEnvelopes: ['rest', 'sse'],
-    schemaVersions: { runEvent: 1, capabilities: 1 },
+    // `supportedEnvelopes` is the AI Envelope kind catalog per RFC 0021
+    // (NOT the transport list — that's `supportedTransports` below).
+    // The 4 universal kinds are always advertised because the host
+    // implements the AIEnvelopeAcceptor (host/envelopeAcceptor.ts) which
+    // validates them against schemas/envelopes/<kind>.schema.json.
+    supportedEnvelopes: [...universalEnvelopeKinds()],
+    schemaVersions: {
+      runEvent: 1,
+      capabilities: 1,
+      // RFC 0021 §C: schemaVersions[<universal-kind>] MUST be 1 when the
+      // host implements the per-kind schemas. The reference acceptor
+      // ships v1 of all 4 universals.
+      'clarification.request': 1,
+      'schema.request': 1,
+      'schema.response': 1,
+      error: 1,
+    },
     limits: {
       // Per capabilities.md §3 (CapabilityLimiter shape) — non-negative integers.
       clarificationRounds: 5,

@@ -38,6 +38,7 @@
 import type { Express } from 'express';
 import { buildHostSurfaceBundle } from '../host/inMemorySurfaces.js';
 import type { HostSurfaceBundle, SurfaceArgs, SurfaceFn } from '../host/inMemorySurfaces.js';
+import { acceptEnvelope, type AcceptOptions } from '../host/envelopeAcceptor.js';
 import { OpenwopError } from '../types.js';
 import { createLogger } from '../observability/logger.js';
 
@@ -164,5 +165,31 @@ export function registerTestSeamRoutes(app: Express): void {
       const message = err instanceof Error ? err.message : String(err);
       res.status(400).json({ error: { code: code ?? 'internal_error', message } });
     }
+  });
+
+  // RFC 0021 §A — AIEnvelopeAcceptor reference implementation. The
+  // conformance suite POSTs candidate envelopes here and asserts the
+  // EnvelopeOutcome shape (accepted / invalid / gated / breached).
+  // Closes the spec-to-impl loop for RFC 0021: the host now actually
+  // runs the Ajv2020 gate that the spec section §A point 1-3 demands.
+  app.post('/v1/host/sample/envelope/accept', async (req, res) => {
+    const body = (req.body ?? {}) as {
+      envelope?: unknown;
+      hostSupportedEnvelopes?: string[];
+      nodeAllowedKinds?: string[];
+      runTrustBoundary?: 'trusted' | 'untrusted';
+      counters?: AcceptOptions['counters'];
+    };
+    if (body.envelope === undefined) {
+      res.status(400).json({ error: { code: 'invalid_argument', message: 'envelope required' } });
+      return;
+    }
+    const opts: AcceptOptions = {};
+    if (body.hostSupportedEnvelopes !== undefined) opts.hostSupportedEnvelopes = body.hostSupportedEnvelopes;
+    if (body.nodeAllowedKinds !== undefined) opts.nodeAllowedKinds = body.nodeAllowedKinds;
+    if (body.runTrustBoundary !== undefined) opts.runTrustBoundary = body.runTrustBoundary;
+    if (body.counters !== undefined) opts.counters = body.counters;
+    const outcome = acceptEnvelope(body.envelope, opts);
+    res.status(200).json(outcome);
   });
 }

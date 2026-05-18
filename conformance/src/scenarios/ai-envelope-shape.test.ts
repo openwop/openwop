@@ -159,6 +159,117 @@ describe('ai-envelope-shape: round-trip validation (RFC 0021 §A)', () => {
   });
 });
 
+describe.skipIf(HTTP_SKIP)('ai-envelope-shape: behavioral acceptEnvelope round-trip (RFC 0021 §A)', () => {
+  it('valid clarification.request envelope → status: accepted', async () => {
+    const res = await driver.post('/v1/host/sample/envelope/accept', {
+      envelope: {
+        type: 'clarification.request',
+        schemaVersion: 1,
+        envelopeId: 'env-conformance-positive-1',
+        correlationId: 'run-conf:node-1:turn-0:abc',
+        payload: { questions: [{ id: 'q1', question: 'Which provider?' }] },
+        meta: { source: 'ai-generation', ts: '2026-05-18T10:00:00Z' },
+      },
+    });
+    if (res.status === 404) return; // host doesn't expose the seam
+    expect(res.status).toBe(200);
+    const body = res.json as { status?: string };
+    expect(
+      body.status,
+      driver.describe('RFC 0021 §A point 1-3', 'valid envelope MUST be accepted'),
+    ).toBe('accepted');
+  });
+
+  it('envelope missing required meta block → status: invalid', async () => {
+    const res = await driver.post('/v1/host/sample/envelope/accept', {
+      envelope: {
+        type: 'error',
+        schemaVersion: 1,
+        envelopeId: 'env-conformance-negative-1',
+        correlationId: 'run-conf:node-1:turn-1:def',
+        payload: { code: 'validation_failed', message: 'no go' },
+        // meta omitted
+      },
+    });
+    if (res.status === 404) return;
+    expect(res.status).toBe(200);
+    const body = res.json as { status?: string; details?: unknown[] };
+    expect(
+      body.status,
+      driver.describe('RFC 0021 §A point 1', 'envelope missing required field MUST be invalid'),
+    ).toBe('invalid');
+    expect(Array.isArray(body.details), 'invalid outcome MUST carry validation details').toBe(true);
+  });
+
+  it('vendor-namespaced kind not in supportedEnvelopes → status: gated', async () => {
+    const res = await driver.post('/v1/host/sample/envelope/accept', {
+      envelope: {
+        type: 'vendor.acme.unknown.kind',
+        schemaVersion: 1,
+        envelopeId: 'env-conformance-gated-1',
+        correlationId: 'run-conf:node-1:turn-2:ghi',
+        payload: {},
+        meta: { source: 'ai-generation', ts: '2026-05-18T10:00:00Z' },
+      },
+      hostSupportedEnvelopes: ['vendor.acme.prd.create'], // does not include the gated kind
+    });
+    if (res.status === 404) return;
+    expect(res.status).toBe(200);
+    const body = res.json as { status?: string; allowedKinds?: string[] };
+    expect(
+      body.status,
+      driver.describe('RFC 0021 §A point 2', 'unadvertised kind MUST be gated'),
+    ).toBe('gated');
+    expect(Array.isArray(body.allowedKinds), 'gated outcome MUST list the allowed kinds').toBe(true);
+  });
+
+  it('counter at cap → status: breached', async () => {
+    const res = await driver.post('/v1/host/sample/envelope/accept', {
+      envelope: {
+        type: 'error',
+        schemaVersion: 1,
+        envelopeId: 'env-conformance-breached-1',
+        correlationId: 'run-conf:node-1:turn-3:jkl',
+        payload: { code: 'x', message: 'y' },
+        meta: { source: 'ai-generation', ts: '2026-05-18T10:00:00Z' },
+      },
+      counters: { envelopesPerTurn: { current: 32, cap: 32 } },
+    });
+    if (res.status === 404) return;
+    expect(res.status).toBe(200);
+    const body = res.json as { status?: string; capKind?: string };
+    expect(
+      body.status,
+      driver.describe('RFC 0021 §"Universal kinds"', 'envelope at cap MUST be breached'),
+    ).toBe('breached');
+    expect(body.capKind).toBe('envelopes');
+  });
+
+  it('universal kind allowed regardless of nodeAllowedKinds (always-allowed per §"Universal kinds")', async () => {
+    const res = await driver.post('/v1/host/sample/envelope/accept', {
+      envelope: {
+        type: 'clarification.request',
+        schemaVersion: 1,
+        envelopeId: 'env-conformance-universal-1',
+        correlationId: 'run-conf:node-1:turn-4:mno',
+        payload: { questions: [{ id: 'q1', question: 'why?' }] },
+        meta: { source: 'ai-generation', ts: '2026-05-18T10:00:00Z' },
+      },
+      nodeAllowedKinds: ['vendor.acme.prd.create'], // doesn't include clarification.request
+    });
+    if (res.status === 404) return;
+    expect(res.status).toBe(200);
+    const body = res.json as { status?: string };
+    expect(
+      body.status,
+      driver.describe(
+        'RFC 0021 §"Universal kinds (normative)"',
+        'universal kinds MUST be allowed even when node allowlist excludes them',
+      ),
+    ).toBe('accepted');
+  });
+});
+
 describe.skipIf(HTTP_SKIP)('ai-envelope-shape: universal-kind advertisement (RFC 0021 §C)', () => {
   it('host advertising any universal kind has a matching schema on disk', async () => {
     const d = await readDiscovery();
