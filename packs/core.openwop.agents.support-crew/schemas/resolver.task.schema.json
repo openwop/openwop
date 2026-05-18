@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.support-crew/1.0.0/resolver.task.schema.json",
+  "title": "SupportCrewResolverTask",
+  "type": "object",
+  "required": ["ticket", "knowledgeSourceIds"],
+  "properties": {
+    "ticket": {
+      "type": "object",
+      "required": ["subject", "body"],
+      "properties": {
+        "subject": { "type": "string", "minLength": 1 },
+        "body": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "knowledgeSourceIds": { "type": "array", "items": { "type": "string" } },
+    "suggestedResolverContext": { "type": "string", "maxLength": 500 },
+    "triageResult": { "type": "object", "additionalProperties": true }
+  },
+  "additionalProperties": false
+}

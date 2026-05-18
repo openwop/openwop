@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.long-doc-summarizer/1.0.0/long-doc-summarizer.task.schema.json",
+  "title": "LongDocSummarizerTask",
+  "type": "object",
+  "required": [
+    "input"
+  ],
+  "properties": {
+    "input": {
+      "type": "string",
+      "minLength": 1
+    },
+    "style": {
+      "type": "string",
+      "enum": [
+        "brief",
+        "outline",
+        "narrative"
+      ],
+      "default": "narrative"
+    },
+    "chunkSize": {
+      "type": "integer",
+      "minimum": 1000,
+      "maximum": 100000,
+      "default": 8000,
+      "description": "Characters per chunk for the map phase."
+    },
+    "chunkOverlap": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 5000,
+      "default": 200
+    },
+    "chunkSummaryMaxChars": {
+      "type": "integer",
+      "minimum": 100,
+      "maximum": 5000,
+      "default": 500
+    },
+    "finalLengthMaxChars": {
+      "type": "integer",
+      "minimum": 100,
+      "maximum": 20000,
+      "default": 2000
+    },
+    "language": {
+      "type": "string",
+      "pattern": "^[a-z]{2,3}(-[A-Z]{2})?$",
+      "default": "en"
+    }
+  },
+  "additionalProperties": false
+}

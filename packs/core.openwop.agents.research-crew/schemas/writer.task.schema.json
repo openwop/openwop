@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.research-crew/1.0.0/writer.task.schema.json",
+  "title": "ResearchWriterTask",
+  "type": "object",
+  "required": ["goal", "approvedEvidence"],
+  "properties": {
+    "goal": { "type": "string", "minLength": 1 },
+    "approvedEvidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["subQuestion", "sources"],
+        "properties": {
+          "subQuestion": { "type": "string" },
+          "sources": { "type": "array", "items": { "additionalProperties": true } },
+          "excerpts": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": false
+      }
+    },
+    "style": { "type": "string", "enum": ["executive", "detailed", "briefing"], "default": "executive" }
+  },
+  "additionalProperties": false
+}

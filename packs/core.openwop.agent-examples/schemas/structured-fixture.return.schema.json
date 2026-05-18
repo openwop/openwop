@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agent-examples/1.1.0/structured-fixture.return.schema.json",
+  "title": "StructuredFixtureReturn",
+  "description": "Return payload for the structured-fixture agent. Validated by the host before persistence per RFC 0003 §D + agent-manifest.schema.json `handoff.returnSchemaRef`. `oneOf` enforces success-XOR-error.",
+  "type": "object",
+  "oneOf": [
+    {
+      "required": [
+        "extracted",
+        "confidence"
+      ],
+      "properties": {
+        "extracted": {
+          "type": "object",
+          "description": "Extracted field values. Keys correspond 1:1 to the task's `extractionFields`. Missing values are `null`.",
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "object"
+              }
+            ]
+          }
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Aggregate confidence across all extracted fields. Drives escalation per RFC 0002 §F."
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Optional one-line note on the extraction (e.g., language detected, ambiguities resolved)."
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "required": [
+        "error"
+      ],
+      "properties": {
+        "error": {
+          "type": "object",
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "enum": [
+                "extraction_failed",
+                "invalid_input",
+                "ambiguous"
+              ]
+            },
+            "message": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  ]
+}

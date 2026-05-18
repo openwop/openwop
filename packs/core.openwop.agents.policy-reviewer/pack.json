@@ -1,0 +1,53 @@
+{
+  "name": "core.openwop.agents.policy-reviewer",
+  "version": "1.0.0",
+  "description": "Policy reviewer agent. Reads content (docs, emails, ads, code) against a set of policy rules and flags violations with rationale. Pure-agent pack.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.agents.policy-reviewer",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "core",
+    "agents",
+    "compliance",
+    "policy",
+    "governance",
+    "vertical"
+  ],
+  "engines": {
+    "openwop": ">=1.1.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "aiProviders": "supported",
+    "host.agentRuntime": "supported"
+  },
+  "agents": [
+    {
+      "agentId": "core.openwop.agents.policy-reviewer.default",
+      "persona": "Policy Reviewer",
+      "label": "Policy Reviewer Agent",
+      "description": "Reviews content against a caller-supplied set of policy rules. Returns per-rule decisions (pass / fail / borderline / N/A) with rationale + quoted evidence from the content. Calibrated for compliance, ad-policy review, content moderation, code-of-conduct checks.",
+      "modelClass": "reasoning",
+      "systemPromptRef": "prompts/policy-reviewer.md",
+      "toolAllowlist": [
+        "openwop:core.rag.retriever-basic"
+      ],
+      "memoryShape": {
+        "scratchpad": true,
+        "conversation": false,
+        "longTerm": false
+      },
+      "handoff": {
+        "taskSchemaRef": "schemas/policy-reviewer.task.schema.json",
+        "returnSchemaRef": "schemas/policy-reviewer.return.schema.json"
+      },
+      "confidence": {
+        "defaultThreshold": 0.8
+      }
+    }
+  ],
+  "runtime": {
+    "language": "remote",
+    "entry": "pack.json"
+  }
+}

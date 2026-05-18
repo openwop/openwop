@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.policy-reviewer/1.0.0/policy-reviewer.return.schema.json",
+  "title": "PolicyReviewerReturn",
+  "type": "object",
+  "oneOf": [
+    {
+      "required": [
+        "overallDecision",
+        "ruleDecisions",
+        "blockingFailureCount"
+      ],
+      "properties": {
+        "overallDecision": {
+          "type": "string",
+          "enum": [
+            "approve",
+            "warn",
+            "block"
+          ]
+        },
+        "ruleDecisions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "ruleId",
+              "decision",
+              "rationale"
+            ],
+            "properties": {
+              "ruleId": {
+                "type": "string"
+              },
+              "decision": {
+                "type": "string",
+                "enum": [
+                  "pass",
+                  "fail",
+                  "borderline",
+                  "n/a"
+                ]
+              },
+              "evidence": {
+                "type": "string"
+              },
+              "rationale": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1000
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "blockingFailureCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "required": [
+        "stoppedReason"
+      ],
+      "properties": {
+        "stoppedReason": {
+          "type": "string",
+          "enum": [
+            "invalid_input",
+            "refused"
+          ]
+        },
+        "detail": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  ]
+}

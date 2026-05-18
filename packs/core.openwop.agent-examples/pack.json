@@ -1,14 +1,20 @@
 {
   "name": "core.openwop.agent-examples",
-  "version": "1.0.0",
-  "description": "First pure-agent pack — ships two minimal agent manifests with no node runtime. Validates the `agents[]` extension to the pack manifest (per agent-manifest.schema.json + RFC 0003). Echo agent inlines its system prompt; Summarizer references `prompts/summarizer.md` to demonstrate the `systemPromptRef` path. Both agents are stateless (memoryShape.longTerm: false). Vendor-neutral: no model is pinned — hosts resolve via their BYOK aiProviders surface.",
+  "version": "1.1.0",
+  "description": "Reference / smoke-fixture agent pack. Exercises every shape on agent-manifest.schema.json: inline systemPrompt, systemPromptRef, conversation memory, scratchpad memory, non-empty toolAllowlist, and handoff.{task,return}SchemaRef. Validates the `agents[]` extension to the pack manifest (per agent-manifest.schema.json + RFC 0003). Vendor-neutral: no model pinned — hosts resolve via their BYOK aiProviders surface.",
   "author": "OpenWOP Working Group",
   "license": "Apache-2.0",
   "homepage": "https://openwop.dev/packs/core.openwop.agent-examples",
   "repository": "https://github.com/openwop/openwop",
-  "keywords": ["core", "agents", "examples", "reference", "stateless"],
+  "keywords": [
+    "core",
+    "agents",
+    "examples",
+    "reference",
+    "fixtures"
+  ],
   "engines": {
-    "openwop": ">=1.0.0 <2.0.0"
+    "openwop": ">=1.1.0 <2.0.0"
   },
   "agents": [
     {
@@ -44,8 +50,69 @@
       "confidence": {
         "defaultThreshold": 0.7
       }
+    },
+    {
+      "agentId": "core.openwop.agent-examples.chat",
+      "persona": "Chat",
+      "label": "Chat Agent",
+      "description": "Multi-turn conversational agent. Smoke fixture for `memoryShape.conversation: true` — exercises per-run dialogue memory binding through the conversation channel (RFC 0005). No tools, no long-term memory.",
+      "modelClass": "general",
+      "systemPromptRef": "prompts/chat.md",
+      "toolAllowlist": [],
+      "memoryShape": {
+        "scratchpad": false,
+        "conversation": true,
+        "longTerm": false
+      },
+      "confidence": {
+        "defaultThreshold": 0.7
+      }
+    },
+    {
+      "agentId": "core.openwop.agent-examples.structured-fixture",
+      "persona": "Structured Fixture",
+      "label": "Structured Fixture Agent",
+      "description": "Schema-validated extraction smoke fixture. Exercises `handoff.taskSchemaRef` + `handoff.returnSchemaRef` — both tarball-relative paths to JSON Schema 2020-12 documents. Hosts validate inbound payloads against `taskSchemaRef` before dispatch and outbound results against `returnSchemaRef` before persistence.",
+      "modelClass": "classification",
+      "systemPromptRef": "prompts/structured-fixture.md",
+      "toolAllowlist": [],
+      "memoryShape": {
+        "scratchpad": false,
+        "conversation": false,
+        "longTerm": false
+      },
+      "handoff": {
+        "taskSchemaRef": "schemas/structured-fixture.task.schema.json",
+        "returnSchemaRef": "schemas/structured-fixture.return.schema.json"
+      },
+      "confidence": {
+        "defaultThreshold": 0.8
+      }
+    },
+    {
+      "agentId": "core.openwop.agent-examples.tool-caller",
+      "persona": "Tool Caller",
+      "label": "Tool Caller Agent",
+      "description": "Non-empty toolAllowlist smoke fixture. Exercises the runtime's tool-allowlist enforcement boundary established by safety-fix OPENWOP-AUDIT-2026-003 (`SECURITY/invariants.yaml#agents-run-no-raw-handler`). Requires the host to advertise `host.agentRuntime` per RFC 0007.",
+      "modelClass": "reasoning",
+      "systemPromptRef": "prompts/tool-caller.md",
+      "toolAllowlist": [
+        "openwop:core.openwop.http.fetch",
+        "openwop:core.openwop.data.jsonpath-query"
+      ],
+      "memoryShape": {
+        "scratchpad": true,
+        "conversation": false,
+        "longTerm": false
+      },
+      "confidence": {
+        "defaultThreshold": 0.7
+      }
     }
   ],
+  "peerDependencies": {
+    "aiProviders": "supported"
+  },
   "runtime": {
     "language": "remote",
     "entry": "pack.json"

@@ -1,0 +1,56 @@
+{
+  "name": "core.openwop.agents.sdr",
+  "version": "1.0.0",
+  "description": "Sales Development Representative agent. Researches prospects, drafts outreach (email/LinkedIn/SMS), schedules follow-ups. Persists prospect history to long-term memory. Pure-agent pack.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.agents.sdr",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "core",
+    "agents",
+    "sales",
+    "sdr",
+    "outreach",
+    "vertical"
+  ],
+  "engines": {
+    "openwop": ">=1.1.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "aiProviders": "supported",
+    "host.agentRuntime": "supported",
+    "openwop.agents.memoryBackends": ">=longTerm"
+  },
+  "agents": [
+    {
+      "agentId": "core.openwop.agents.sdr.default",
+      "persona": "SDR",
+      "label": "Sales Development Rep Agent",
+      "description": "Researches a prospect, drafts personalized outreach across channels (email / LinkedIn / SMS), and writes back prospect-history to long-term memory for follow-up sequences. Per-channel templates honor character limits + tone conventions.",
+      "modelClass": "writing",
+      "systemPromptRef": "prompts/sdr.md",
+      "toolAllowlist": [
+        "openwop:core.openwop.http.fetch",
+        "openwop:core.rag.retriever-basic",
+        "openwop:ai.research.web"
+      ],
+      "memoryShape": {
+        "scratchpad": true,
+        "conversation": false,
+        "longTerm": true
+      },
+      "handoff": {
+        "taskSchemaRef": "schemas/sdr.task.schema.json",
+        "returnSchemaRef": "schemas/sdr.return.schema.json"
+      },
+      "confidence": {
+        "defaultThreshold": 0.7
+      }
+    }
+  ],
+  "runtime": {
+    "language": "remote",
+    "entry": "pack.json"
+  }
+}

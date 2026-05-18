@@ -6,7 +6,14 @@
   "license": "Apache-2.0",
   "homepage": "https://openwop.dev/packs/core.openwop.agents.deep-research",
   "repository": "https://github.com/openwop/openwop",
-  "keywords": ["core", "agents", "research", "rag", "long-horizon", "pattern"],
+  "keywords": [
+    "core",
+    "agents",
+    "research",
+    "rag",
+    "long-horizon",
+    "pattern"
+  ],
   "engines": {
     "openwop": ">=1.1.0 <2.0.0"
   },
@@ -24,10 +31,10 @@
       "modelClass": "research",
       "systemPromptRef": "prompts/deep-research.md",
       "toolAllowlist": [
-        "openwop:core.http.fetch",
-        "openwop:core.rag.retrieve",
-        "openwop:core.rag.contextual-compression",
-        "openwop:vendor.myndhyve.web-research"
+        "openwop:core.openwop.http.fetch",
+        "openwop:core.rag.retriever-basic",
+        "openwop:core.rag.retriever-contextual-compression",
+        "openwop:ai.research.web"
       ],
       "memoryShape": {
         "scratchpad": true,

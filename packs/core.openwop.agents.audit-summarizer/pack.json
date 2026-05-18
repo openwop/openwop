@@ -1,0 +1,36 @@
+{
+  "name": "core.openwop.agents.audit-summarizer",
+  "version": "1.0.0",
+  "description": "Audit-trail summarizer agent. Compresses raw audit logs into executive summaries, highlights anomalies, tracks pattern shifts over time via long-term memory. Pure-agent pack.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.agents.audit-summarizer",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": ["core", "agents", "compliance", "audit", "summarization", "vertical"],
+  "engines": { "openwop": ">=1.1.0 <2.0.0" },
+  "peerDependencies": {
+    "aiProviders": "supported",
+    "host.agentRuntime": "supported",
+    "openwop.agents.memoryBackends": ">=longTerm"
+  },
+  "agents": [
+    {
+      "agentId": "core.openwop.agents.audit-summarizer.default",
+      "persona": "Audit Summarizer",
+      "label": "Audit Summarizer Agent",
+      "description": "Compresses raw audit logs (access logs, change logs, decision logs) into structured executive summaries. Highlights anomalies (unusual access patterns, configuration drift, policy-violating actions). Tracks pattern shifts vs prior periods via long-term memory.",
+      "modelClass": "writing",
+      "systemPromptRef": "prompts/audit-summarizer.md",
+      "toolAllowlist": [
+        "openwop:core.flow.split-in-batches"
+      ],
+      "memoryShape": { "scratchpad": true, "conversation": false, "longTerm": true },
+      "handoff": {
+        "taskSchemaRef": "schemas/audit-summarizer.task.schema.json",
+        "returnSchemaRef": "schemas/audit-summarizer.return.schema.json"
+      },
+      "confidence": { "defaultThreshold": 0.7 }
+    }
+  ],
+  "runtime": { "language": "remote", "entry": "pack.json" }
+}

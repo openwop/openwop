@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.sdr/1.0.0/sdr.task.schema.json",
+  "title": "SdrTask",
+  "type": "object",
+  "required": [
+    "prospect",
+    "channel",
+    "intent"
+  ],
+  "properties": {
+    "prospect": {
+      "type": "object",
+      "required": [
+        "name",
+        "company"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "company": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "type": "string"
+        },
+        "contact": {
+          "type": "object",
+          "properties": {
+            "email": {
+              "type": "string",
+              "format": "email"
+            },
+            "linkedin": {
+              "type": "string"
+            },
+            "phone": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "enrichment": {
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "email",
+        "linkedin",
+        "sms"
+      ]
+    },
+    "intent": {
+      "type": "string",
+      "enum": [
+        "intro",
+        "meeting-request",
+        "follow-up",
+        "nurture",
+        "objection-response"
+      ]
+    },
+    "priorContextRef": {
+      "type": "string"
+    },
+    "tonePreference": {
+      "type": "string",
+      "enum": [
+        "warm",
+        "direct",
+        "consultative",
+        "playful"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

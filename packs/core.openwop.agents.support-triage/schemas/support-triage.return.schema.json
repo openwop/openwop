@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.support-triage/1.0.0/support-triage.return.schema.json",
+  "title": "SupportTriageReturn",
+  "type": "object",
+  "oneOf": [
+    {
+      "required": [
+        "queue",
+        "severity",
+        "priority",
+        "skillTags",
+        "rationale"
+      ],
+      "properties": {
+        "queue": {
+          "type": "string",
+          "minLength": 1
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "critical"
+          ]
+        },
+        "priority": {
+          "type": "string",
+          "enum": [
+            "P1",
+            "P2",
+            "P3",
+            "P4"
+          ]
+        },
+        "skillTags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 3
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "required": [
+        "stoppedReason"
+      ],
+      "properties": {
+        "stoppedReason": {
+          "type": "string",
+          "enum": [
+            "no_queue_match",
+            "invalid_input"
+          ]
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        }
+      },
+      "additionalProperties": false
+    }
+  ]
+}

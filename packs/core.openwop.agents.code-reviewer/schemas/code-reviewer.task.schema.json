@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.code-reviewer/1.0.0/code-reviewer.task.schema.json",
+  "title": "CodeReviewerTask",
+  "type": "object",
+  "oneOf": [
+    {
+      "required": [
+        "diff"
+      ]
+    },
+    {
+      "required": [
+        "files"
+      ]
+    }
+  ],
+  "properties": {
+    "diff": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500000
+    },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "content"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "content": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "strictness": {
+      "type": "string",
+      "enum": [
+        "gentle",
+        "standard",
+        "strict"
+      ],
+      "default": "standard"
+    },
+    "focusAreas": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "correctness",
+          "security",
+          "style",
+          "design",
+          "performance",
+          "test"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "context": {
+      "type": "string",
+      "maxLength": 5000
+    }
+  },
+  "additionalProperties": false
+}

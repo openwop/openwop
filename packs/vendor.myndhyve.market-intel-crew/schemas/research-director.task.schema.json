@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.market-intel-crew/1.0.0/research-director.task.schema.json",
+  "title": "ResearchDirectorTask",
+  "type": "object",
+  "required": [
+    "brief"
+  ],
+  "properties": {
+    "brief": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 20000
+    },
+    "icp": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Pre-defined ICP shape; if absent, query-builder derives one from brief."
+    },
+    "scope": {
+      "type": "string",
+      "enum": [
+        "intel-only",
+        "creative"
+      ],
+      "default": "creative"
+    },
+    "depth": {
+      "type": "string",
+      "enum": [
+        "shallow",
+        "medium",
+        "deep"
+      ],
+      "default": "medium"
+    }
+  },
+  "additionalProperties": false
+}

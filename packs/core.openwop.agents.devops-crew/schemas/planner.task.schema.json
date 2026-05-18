@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.devops-crew/1.0.0/planner.task.schema.json",
+  "title": "DevOpsPlannerTask",
+  "type": "object",
+  "required": ["goal", "environment", "crewSubagents"],
+  "properties": {
+    "goal": { "type": "string", "minLength": 1, "maxLength": 10000 },
+    "runbookRef": { "type": "string" },
+    "environment": { "type": "string", "enum": ["dev", "staging", "prod"] },
+    "crewSubagents": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["agentId", "persona"],
+        "properties": {
+          "agentId": { "type": "string" },
+          "persona": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": false
+}

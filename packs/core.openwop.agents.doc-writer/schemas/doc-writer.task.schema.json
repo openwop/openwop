@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.doc-writer/1.0.0/doc-writer.task.schema.json",
+  "title": "DocWriterTask",
+  "type": "object",
+  "required": [
+    "shape"
+  ],
+  "properties": {
+    "shape": {
+      "type": "string",
+      "enum": [
+        "readme-section",
+        "api-reference",
+        "architecture-note",
+        "changelog",
+        "runbook"
+      ]
+    },
+    "sourceMaterial": {
+      "type": "string",
+      "maxLength": 200000
+    },
+    "knowledgeSourceIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "maxItems": 20
+    },
+    "outputPath": {
+      "type": "string",
+      "minLength": 1
+    },
+    "style": {
+      "type": "string",
+      "enum": [
+        "concise",
+        "comprehensive",
+        "tutorial"
+      ],
+      "default": "concise"
+    },
+    "length": {
+      "type": "integer",
+      "minimum": 50,
+      "maximum": 50000
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

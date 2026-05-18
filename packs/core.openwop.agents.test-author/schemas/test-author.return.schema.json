@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.test-author/1.0.0/test-author.return.schema.json",
+  "title": "TestAuthorReturn",
+  "type": "object",
+  "required": [
+    "testCode",
+    "framework",
+    "scenarios"
+  ],
+  "properties": {
+    "testCode": {
+      "type": "string",
+      "minLength": 1
+    },
+    "framework": {
+      "type": "string",
+      "minLength": 1
+    },
+    "outputPath": {
+      "type": "string"
+    },
+    "scenarios": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "category"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "happy_path",
+              "edge_case",
+              "error_path",
+              "boundary",
+              "concurrency",
+              "regression"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "stoppedReason": {
+      "type": "string",
+      "enum": [
+        "completed",
+        "invalid_input",
+        "refused"
+      ]
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    }
+  },
+  "additionalProperties": false
+}
