@@ -263,40 +263,133 @@ gcloud kms keys add-iam-policy-binding dek-wrap \
   --role=roles/cloudkms.cryptoKeyEncrypterDecrypter
 ```
 
-### 13. Firebase Auth — providers + audience
+### 13. Firebase Auth — providers + OAuth client redirect URIs
 
 In the Firebase console (`https://console.firebase.google.com/project/openwop-dev/authentication`):
 1. Authentication → Sign-in method → enable Google + GitHub providers.
-2. Authentication → Settings → Authorized domains: add `app.openwop.dev`.
+2. Authentication → Settings → Authorized domains: confirm `app.openwop.dev`
+   is listed AND `localhost` is listed (the latter auto-added; needed if you
+   want to test sign-in via `npm run dev`).
+3. Firebase web app must exist BEFORE you can fetch its config in step 15.
+   Create it once:
+   ```bash
+   firebase apps:create WEB "app.openwop.dev" --project=openwop-dev
+   ```
 
 The OIDC issuer for Firebase ID tokens is:
 - Issuer: `https://securetoken.google.com/openwop-dev`
 - Audience: `openwop-dev` (the project id)
 - JWKS: `https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com`
 
+**OAuth client redirect URIs (mandatory manual step):** Firebase Auth's
+**Authorized domains** list controls which *origins* can initiate sign-in. The
+**redirect URIs** for the underlying OAuth clients are a separate concept that
+Firebase only auto-syncs for the default `*.firebaseapp.com` domain. For a
+custom domain you must add it manually:
+
+- **Google** — `https://console.cloud.google.com/apis/credentials?project=openwop-dev`.
+  Open the "Web client (auto created by Google Service)" entry. Add to
+  **Authorized JavaScript origins**: `https://app.openwop.dev`. Add to
+  **Authorized redirect URIs**: `https://app.openwop.dev/__/auth/handler`.
+  Without this Google rejects sign-in with `Error 400: redirect_uri_mismatch`.
+- **GitHub** — `https://github.com/settings/developers` → your "openwop-dev"
+  OAuth app. Add `https://app.openwop.dev/__/auth/handler` to the
+  **Authorization callback URL** list. (GitHub allows only ONE callback URL
+  per app; if you want both the default and custom domains to work, either
+  pick one OR create a second GitHub OAuth app.)
+
+Changes propagate near-instantly; Google docs claim up to a few hours.
+
 ### 14. Re-deploy Cloud Run with Phase 3 env
 
+The default `--update-env-vars` separator is `,`, but the JWKS URL contains
+literal `@` and commas in some hosts, so we use the `^|^` custom-separator
+form. If a previous deploy set `OPENWOP_STORAGE_DSN` as a plain env var, it
+must be removed first — Cloud Run refuses to swap "plain env" → "secret env"
+under the same name.
+
 ```bash
-# Connect Cloud SQL via the unix socket.
+# One-time cleanup if step 6 left OPENWOP_STORAGE_DSN as a plain env var.
 gcloud run services update openwop-app-backend \
-  --region=us-central1 \
-  --add-cloudsql-instances=openwop-dev:us-central1:openwop-app-pg \
-  --update-secrets=OPENWOP_STORAGE_DSN=openwop-storage-dsn:latest \
-  --update-env-vars=\
-OPENWOP_OIDC_ISSUER=https://securetoken.google.com/openwop-dev,\
-OPENWOP_OIDC_AUDIENCE=openwop-dev,\
-OPENWOP_OIDC_JWKS_URL=https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com,\
-OPENWOP_BYOK_KMS_KEY=projects/openwop-dev/locations/us-central1/keyRings/openwop-byok/cryptoKeys/dek-wrap
+  --region=us-central1 --remove-env-vars=OPENWOP_STORAGE_DSN
+
+# Re-build the image from source so the bundle has the P3 code (Postgres
+# adapter, OIDC verifier, KMS bootstrap). `--source` triggers Cloud Build.
+gcloud run deploy openwop-app-backend \
+  --source ./apps/workflow-engine \
+  --region us-central1 --allow-unauthenticated \
+  --memory=512Mi --cpu=1 --concurrency=80 --max-instances=10 \
+  --port=8080 --timeout=300 \
+  --env-vars-file=/tmp/openwop-p3-env.yaml \
+  --set-secrets='OPENWOP_SESSION_SECRET=openwop-session-secret:latest,OPENWOP_ADMIN_TOKEN=openwop-admin-token:latest,OPENWOP_STORAGE_DSN=openwop-storage-dsn:latest' \
+  --add-cloudsql-instances=openwop-dev:us-central1:openwop-app-pg
 ```
 
-### 15. Frontend Firebase config
+Where `/tmp/openwop-p3-env.yaml` contains:
+
+```yaml
+NODE_ENV: production
+OPENWOP_BYOK_EPHEMERAL: "true"
+OPENWOP_COOKIE_SECURE: "true"
+OPENWOP_STRICT_REGISTRY: "true"
+OPENWOP_API_KEYS: ""
+OPENWOP_INSTALL_PACKS: "core.openwop.ai@1.1.1,…"
+OPENWOP_OIDC_ISSUER: "https://securetoken.google.com/openwop-dev"
+OPENWOP_OIDC_AUDIENCE: "openwop-dev"
+OPENWOP_OIDC_JWKS_URL: "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com"
+OPENWOP_BYOK_KMS_KEY: "projects/openwop-dev/locations/us-central1/keyRings/openwop-byok/cryptoKeys/dek-wrap"
+```
+
+**Gotcha**: the bundled image's `package.json` must declare every runtime
+dependency the bundled code imports. Esbuild bundles with `--packages=external`
++ the runtime stage does `npm install --omit=dev`, so transitive-only deps
+disappear at runtime. After P3 landed, the missing one was `ajv` (used by
+`src/host/mcpServerRouter.ts` but only present transitively via
+`@openwop/openwop-conformance` dev-dep). Add `ajv` to `dependencies` in
+`apps/workflow-engine/backend/typescript/package.json` if you see
+`Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'ajv'` in revision logs.
+
+### 15. Frontend Firebase config + Hosting headers
+
+Fetch the web-app config (step 13 must have created the WEB app first):
 
 ```bash
-# Read the web-app config from the Firebase console:
-firebase apps:sdkconfig WEB --project=openwop-dev > /tmp/fb-web.json
-# Add VITE_FIREBASE_API_KEY / VITE_FIREBASE_AUTH_DOMAIN / VITE_FIREBASE_PROJECT_ID
-# to apps/workflow-engine/frontend/react/.env.production and rebuild.
+# Find the appId
+APP_ID=$(firebase apps:list --project=openwop-dev | awk '/WEB/ {print $4}')
+firebase apps:sdkconfig WEB "$APP_ID" --project=openwop-dev
 ```
+
+Copy `apiKey`, `authDomain`, `projectId` into
+`apps/workflow-engine/frontend/react/.env.production`.
+
+**Critical**: `VITE_FIREBASE_AUTH_DOMAIN` must be the SAME custom domain that
+serves the SPA (`app.openwop.dev`), NOT the default `*.firebaseapp.com`.
+Reason: redirect-based sign-in persists in-flight auth state into the
+auth-domain origin's storage. If `authDomain ≠ SPA origin`, the embedded
+auth iframe on the SPA is third-party and modern browsers (Safari ITP / Brave
+Shields / Firefox TCP) partition its storage → `getRedirectResult` returns
+null and sign-in is silently dropped. Firebase Hosting auto-proxies
+`/__/auth/*` on custom domains, so this just works once you point authDomain
+at the custom domain. See commit `e785890` for the full root-cause analysis.
+
+`firebase.json` Hosting headers (`/index.html` MUST have `Cache-Control:
+no-cache, no-store, must-revalidate` AND `Cross-Origin-Opener-Policy:
+same-origin-allow-popups` on the SAME source rule — Firebase Hosting only
+applies headers from the LAST-matching source per request, so two separate
+rules covering the same path will lose one):
+
+```json
+{
+  "source": "**/!(*.@(js|css|svg|png|jpg|jpeg|webp|avif|ico|woff|woff2|map))",
+  "headers": [
+    { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+    { "key": "Cross-Origin-Opener-Policy", "value": "same-origin-allow-popups" }
+  ]
+}
+```
+
+Without the no-cache directive, Firebase Hosting caches `index.html` for ~1
+hour, so newly-deployed bundles aren't picked up until the cache expires.
 
 ### 16. Smoke the Phase 3 surface
 
@@ -316,6 +409,60 @@ curl -i -X POST https://app.openwop.dev/api/v1/host/sample/byok/secrets \
   -H 'content-type: application/json' \
   -d '{"credentialRef":"TEST_KEY","value":"sk-test"}'
 ```
+
+## Phase 3 production-rollout gotchas (post-mortem)
+
+Every item below was a real bug we hit during the initial app.openwop.dev
+deploy. Documented here so the next bootstrap doesn't have to repeat the
+debug cycle.
+
+- **Session cookie name must be `__session`.** Firebase Hosting strips every
+  cookie *except* `__session` from requests it forwards to Cloud Run, so
+  any other name is silently dropped on every API call. The backend reads
+  the cookie name from `OPENWOP_SESSION_COOKIE_NAME` (default `__session`).
+  Behind a reverse proxy that doesn't strip cookies, you can override.
+
+- **Redirect-based sign-in beats popup-based** for any auth flow that runs
+  in a browser with strict COOP defaults. `signInWithPopup`'s polling of
+  `window.closed` triggers `Cross-Origin-Opener-Policy would block` warnings
+  on every poll, persistent through the auth flow. The redirect flow has no
+  popup and no warnings. The trade-off is two full page reloads for the
+  link-account flow (Google rejected + Google signed in to complete the
+  link).
+
+- **`Cross-Origin-Opener-Policy: same-origin-allow-popups`** belongs on
+  every Hosting response, but `same-origin` (the browser default for
+  documents without an explicit header) blocks popup auth. The redirect
+  flow doesn't strictly need this; we set it anyway as defense in depth
+  for adopters who fork the SPA and revert to popups.
+
+- **`authDomain` MUST be the SPA's custom domain.** See step 15 above.
+  Without this, `getRedirectResult` returns null after a successful OAuth
+  round-trip because the auth state was persisted into the default-domain
+  origin's partitioned third-party storage.
+
+- **Modal portal**: any modal whose JSX lives inside a `position: sticky`
+  + `backdrop-filter` ancestor must portal out to `document.body` via
+  `createPortal`. Both properties create stacking contexts that cap the
+  modal's z-index. The `<SignInButton>` modal originally rendered behind
+  `<main>` because the `<header>` had both. Fix: portal both the sign-in
+  and delete-account modals out.
+
+- **Rules of Hooks**: any `useEffect` after a conditional return is a
+  ticking time bomb that detonates on the first render where the
+  conditional flips. `DemoHostBanner` had `if (user) return null;` BEFORE
+  a `useEffect` and crashed the whole SPA the moment a user signed in.
+  Eslint-plugin-react-hooks catches this if enabled; we don't ship a
+  lint config in this repo yet so use it locally
+  (`npx eslint --plugin react-hooks ...`) before sharing screenshots.
+
+- **Local dev points at prod by default.** `apps/workflow-engine/frontend/
+  react/vite.config.ts` proxies `/api/**` to `https://app.openwop.dev` so
+  `npm run dev` in the frontend dir works end-to-end against the deployed
+  backend without spinning up a local Postgres / KMS / Firebase Auth. The
+  proxy rewrites the `__session` cookie's Domain to `localhost` so cookies
+  travel. Override with `OPENWOP_DEV_PROXY_TARGET=http://localhost:8080`
+  to point at a locally-running backend.
 
 ## Roll-forward a new pack version
 
