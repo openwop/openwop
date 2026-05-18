@@ -11,6 +11,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Conformance: tighten agent.toolReturned causationId pairing (2026-05-18)
+
+`agentReasoningEvents.test.ts` now asserts the second half of the RFC 0002 §B pairing contract: `agent.toolReturned.causationId` MUST equal the paired `agent.toolCalled.eventId`. Previously the scenario only validated callId correlation, which masked impl deviations on the strict event-log identity chain that replay-determinism guarantees depend on (`spec/v1/replay.md` §"Determinism with non-deterministic agents").
+
+The new assertion is gated on the matched `agent.toolCalled.eventId` actually surfacing in the host's `/events` projection — hosts that omit eventId from their projection skip-equivalent (and SHOULD add it; the RFC 0002 §B chain isn't enforceable without it). The Postgres reference host already threads the eventId through via `makeEventId(runId, calledEv.seq)` in its `core.conformance.mock-agent` + `core.mcp.toolCall` executors, so the strict assertion passes for it without changes.
+
+- **`conformance/src/scenarios/agentReasoningEvents.test.ts`** — extended the events-type signature with `eventId` + `causationId` fields; added a second `expect` inside the pairing loop that asserts `ret.causationId === matched.eventId` when the host surfaces eventId on the matched event. Comment in the source spells out both pairing requirements with normative citations.
+- **`examples/hosts/postgres/test/mock-agent.test.ts`** — mirrored the strict assertion in the host-internal smoke so impl regressions on the eventId threading get caught locally (i.e., before downstream conformance runs).
+
+**Compatibility:** behavioral tightening of an existing scenario. Hosts that already honor RFC 0002 §B (`causationId` MUST equal the paired `agent.toolCalled.eventId`) continue to pass. Hosts using callId-only pairing without setting `causationId` were previously passing the scenario despite a normative-MUST deviation; they now fail and need to ship the executor extension that returns eventId synchronously from `appendEvent`. Sequenced as a follow-up to RFC 0023's Accepted flip (`a025a85`) so the strict assertion lands as a conformance-only change rather than getting bundled into the RFC text.
+
+
+
 ### RFC 0022 + RFC 0023 Active → Accepted (2026-05-18)
 
 Both RFCs land at `Accepted` after their reference-host implementations clear the bar in `RFCs/README.md` ("`Accepted` once the implementation lands and the conformance suite reflects it").

@@ -51,6 +51,8 @@ function pgliteQuerier(db: PGlite): Querier {
 
 interface RunEvent {
   type: string;
+  eventId?: string;
+  causationId?: string;
   payload?: Record<string, unknown>;
 }
 
@@ -171,7 +173,10 @@ async function main(): Promise<void> {
         }
       }
 
-      // agent.toolReturned MUST pair with a prior agent.toolCalled via callId.
+      // agent.toolReturned MUST pair with a prior agent.toolCalled —
+      // two requirements per RFC 0002 §B: callId correlation AND
+      // causationId === paired toolCalled.eventId. The Postgres host
+      // threads the eventId through via makeEventId(runId, calledEv.seq).
       const called = agentEvents.filter((e) => e.type === 'agent.toolCalled');
       const returned = agentEvents.filter((e) => e.type === 'agent.toolReturned');
       assert.ok(called.length >= 1, 'fixture configures ≥1 mockToolCalls; expected ≥1 agent.toolCalled');
@@ -181,6 +186,17 @@ async function main(): Promise<void> {
         assert.equal(typeof callId, 'string');
         const match = called.find((c) => c.payload?.callId === callId);
         assert.ok(match, `agent.toolReturned.callId=${callId} MUST pair with a prior agent.toolCalled`);
+        // Strict eventId chain — RFC 0002 §B normative MUST.
+        assert.equal(
+          typeof match!.eventId,
+          'string',
+          'paired agent.toolCalled MUST surface eventId on the /events projection',
+        );
+        assert.equal(
+          ret.causationId,
+          match!.eventId,
+          `agent.toolReturned (callId=${callId}) MUST carry causationId === paired agent.toolCalled.eventId per RFC 0002 §B`,
+        );
       }
 
       // The fixture's mockHandoff config triggers agent.handoff.

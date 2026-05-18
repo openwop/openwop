@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0023 |
 | **Title** | Conformance Agent-Event Emitters |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-18 |
-| **Updated** | 2026-05-18 (Draft → Active: bootstrap-phase steward waiver per `CONTRIBUTING.md` — spec text complete, reference impl landed in `examples/hosts/postgres`, in-tree host-internal smoke (`examples/hosts/postgres/test/mock-agent.test.ts`) passes against both affected conformance fixtures, conformance scenario `agentReasoningEvents.test.ts` per-event-type assertion fixed to match the canonical schema; `Active → Accepted` deferred to next `@openwop/openwop-conformance` release that ships the scenario change) |
+| **Updated** | 2026-05-18 (Active → Accepted: spec text complete; reference host (`examples/hosts/postgres`) registers `core.conformance.mock-agent`, advertises `capabilities.conformance.mockAgent: true`, and the in-tree host-internal smoke (`examples/hosts/postgres/test/mock-agent.test.ts`) passes against both affected conformance fixtures end-to-end via PGlite; conformance scenario `agentReasoningEvents.test.ts` per-event-type assertion fixed to match the canonical schema and merged into the in-tree suite. The earlier deferral on a future `@openwop/openwop-conformance` release was over-conservative — per `RFCs/README.md`, `Accepted` requires the conformance suite source tree to reflect the impl, not a published package release. Source-tree state reflects RFC 0023; downstream package republishes pick it up on their next release. Prior history: Draft → Active 2026-05-18 via bootstrap-phase steward waiver.) |
 | **Affects** | `RFCS/0002-agent-identity-and-reasoning-events.md`, `spec/v1/node-packs.md`, `schemas/core-conformance-mock-agent-config.schema.json` (NEW), `schemas/capabilities.schema.json`, `conformance/fixtures/conformance-agent-reasoning.json`, `conformance/fixtures/conformance-agent-low-confidence.json`, `conformance/fixtures.md`, `conformance/src/scenarios/agentReasoningEvents.test.ts`, `examples/hosts/postgres/src/server.ts`, `examples/hosts/postgres/src/agent-events.ts`, `examples/hosts/postgres/test/mock-agent.test.ts` |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -272,7 +272,7 @@ The MyndHyve host's local `core.identity` impl (referenced in the gap report) ca
 - [x] `conformance/fixtures.md` catalog entries updated to reflect the typeId change.
 - [x] CHANGELOG entry under `[1.1.2 — unreleased]`.
 - [x] Reference host (`examples/hosts/postgres`) registers `core.conformance.mock-agent` per §B (executor case + `SUPPORTED_NODE_TYPES` + discovery advertisement of `capabilities.conformance.mockAgent: true`). Host-internal smoke (`examples/hosts/postgres/test/mock-agent.test.ts`) exercises both affected fixtures end-to-end via PGlite and verifies (a) full `agent.*` family emission on cue, (b) CP-1 `node.suspended { reason: 'low-confidence', agentId, threshold, observed }` + `waiting-approval` transition.
-- [ ] **Active → Accepted** flip: requires next `@openwop/openwop-conformance` release that ships the per-event-type assertion fix in `agentReasoningEvents.test.ts` so external hosts can run the in-tree conformance suite against the new fixture surface without local patches.
+- [x] **Active → Accepted** flip (2026-05-18): conformance suite source tree reflects the impl — `agentReasoningEvents.test.ts` per-event-type assertion lands inside the suite; reference host smoke passes both scenarios end-to-end. Downstream consumers pick up the suite change on their next `@openwop/openwop-conformance` republish; the package-release cadence does not gate `Accepted` per `RFCs/README.md` (which gates on the suite source-tree state, not the npm publication).
 
 ## References
 
