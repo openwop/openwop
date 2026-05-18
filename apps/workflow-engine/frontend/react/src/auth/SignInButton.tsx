@@ -12,11 +12,23 @@
  */
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from './useAuth.js';
 import { migrateAnonToUser } from './migrateTenant.js';
 import { getCurrentIdToken } from './firebase.js';
 import { setCurrentIdToken } from '../client/config.js';
 import { deleteAccount, RequiresRecentLoginError } from './deleteAccount.js';
+
+/**
+ * Portal the modal out of the SignInButton's render tree. The button
+ * lives inside `<header className="app-header">`, which is
+ * `position: sticky` + `backdrop-filter` — both create stacking
+ * contexts that cap any descendant's z-index. Without the portal the
+ * modal renders behind `<main>` even with z-index: 1000.
+ */
+function ModalPortal({ children }: { children: React.ReactNode }) {
+  return createPortal(children, document.body);
+}
 
 export function SignInButton() {
   const { user, loading, isConfigured, signIn, signOut } = useAuth();
@@ -58,6 +70,7 @@ export function SignInButton() {
           Sign in
         </button>
         {modalOpen ? (
+          <ModalPortal>
           <div
             className="signin-modal-backdrop"
             onClick={() => setModalOpen(false)}
@@ -123,6 +136,7 @@ export function SignInButton() {
               </button>
             </div>
           </div>
+          </ModalPortal>
         ) : null}
       </>
     );
@@ -181,6 +195,7 @@ export function SignInButton() {
         </div>
       ) : null}
       {confirmingDelete ? (
+        <ModalPortal>
         <div
           className="signin-modal-backdrop"
           onClick={() => !deleting && setConfirmingDelete(false)}
@@ -239,6 +254,7 @@ export function SignInButton() {
             </div>
           </div>
         </div>
+        </ModalPortal>
       ) : null}
     </div>
   );
