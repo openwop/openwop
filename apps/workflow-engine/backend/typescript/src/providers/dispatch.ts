@@ -8,6 +8,8 @@
  * envelopes, etc.) — see `core.openwop.ai/index.mjs`.
  */
 
+import { ThinkBlockStripper } from './thinkBlockStripper.js';
+
 export type ProviderId = 'anthropic' | 'openai' | 'google' | 'minimax';
 
 /** A single piece of content within a message. Mirrors the FE shape
@@ -225,6 +227,13 @@ async function dispatchOpenAI(req: DispatchRequest): Promise<DispatchResult> {
 // Base URL + default model id come from env so operators can swap
 // regional endpoints (api.minimax.io vs api.minimaxi.com) without a
 // code change.
+//
+// MiniMax-M2.7 (and any other reasoning model behind this dispatcher)
+// emits a `<think>...</think>` block inline in the SSE stream before
+// the final answer. `ThinkBlockStripper` filters those blocks out so
+// users see only the visible response; the underlying reasoning never
+// leaves the dispatcher. Imported at module top — see the top of this
+// file for the rest of the imports.
 
 const MINIMAX_DEFAULT_BASE_URL = 'https://api.minimax.io/v1';
 
@@ -255,6 +264,7 @@ async function dispatchMiniMax(req: DispatchRequest): Promise<DispatchResult> {
   let inputTokens: number | undefined;
   let outputTokens: number | undefined;
   let finishReason: string | undefined;
+  const stripper = new ThinkBlockStripper();
 
   for await (const event of parseSseStream(res.body)) {
     if (event.data === '[DONE]') break;
@@ -264,10 +274,13 @@ async function dispatchMiniMax(req: DispatchRequest): Promise<DispatchResult> {
         usage?: { prompt_tokens?: number; completion_tokens?: number };
       };
       const choice = data.choices?.[0];
-      const delta = choice?.delta?.content;
-      if (delta) {
-        completion += delta;
-        await req.onDelta?.(delta);
+      const rawDelta = choice?.delta?.content;
+      if (rawDelta) {
+        const visible = stripper.push(rawDelta);
+        if (visible) {
+          completion += visible;
+          await req.onDelta?.(visible);
+        }
       }
       if (choice?.finish_reason) finishReason = choice.finish_reason;
       if (data.usage) {
@@ -277,6 +290,11 @@ async function dispatchMiniMax(req: DispatchRequest): Promise<DispatchResult> {
     } catch {
       /* skip malformed chunk */
     }
+  }
+  const tail = stripper.flush();
+  if (tail) {
+    completion += tail;
+    await req.onDelta?.(tail);
   }
 
   return {

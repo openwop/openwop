@@ -240,6 +240,127 @@ describe('dispatchManagedChat — happy path', () => {
   });
 });
 
+describe('dispatchManagedChat — system prompt injection', () => {
+  /** Capture the request body sent to MiniMax so we can inspect the
+   *  messages[] array for system-prompt injection. */
+  function captureRequestBody(): { body: () => Record<string, unknown> | null } {
+    const captured: { current: Record<string, unknown> | null } = { current: null };
+    vi.spyOn(globalThis, 'fetch').mockImplementationOnce(async (_url, init) => {
+      try {
+        captured.current = JSON.parse(String((init as RequestInit | undefined)?.body ?? '{}'));
+      } catch {
+        captured.current = null;
+      }
+      const enc = new TextEncoder();
+      const body = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: 'ok' } }] })}\n\n`));
+          controller.enqueue(enc.encode(`data: ${JSON.stringify({ choices: [{ finish_reason: 'stop' }], usage: { prompt_tokens: 1, completion_tokens: 1 } })}\n\n`));
+          controller.enqueue(enc.encode(`data: [DONE]\n\n`));
+          controller.close();
+        },
+      });
+      return new Response(body, { status: 200, headers: { 'content-type': 'text/event-stream' } });
+    });
+    return { body: () => captured.current };
+  }
+
+  it('injects the default system prompt when no system message is present', async () => {
+    process.env.MINIMAX_API_KEY = 'sk-test';
+    delete process.env.OPENWOP_MANAGED_SYSTEM_PROMPT;
+    await bootstrapManagedProvider();
+    const cap = captureRequestBody();
+
+    await dispatchManagedChat({
+      userFacingProvider: 'openwop-free',
+      tenantId: 'user:alice',
+      messages: [{ role: 'user', content: 'hi' }],
+    });
+
+    const sent = cap.body();
+    expect(sent).toBeTruthy();
+    const messages = sent!.messages as Array<{ role: string; content: string }>;
+    expect(messages[0]?.role).toBe('system');
+    expect(messages[0]?.content).toMatch(/OpenWOP/i);
+    expect(messages[1]?.role).toBe('user');
+  });
+
+  it('preserves a caller-supplied system message (no override)', async () => {
+    process.env.MINIMAX_API_KEY = 'sk-test';
+    await bootstrapManagedProvider();
+    const cap = captureRequestBody();
+
+    await dispatchManagedChat({
+      userFacingProvider: 'openwop-free',
+      tenantId: 'user:alice',
+      messages: [
+        { role: 'system', content: 'You are a pirate.' },
+        { role: 'user', content: 'hi' },
+      ],
+    });
+
+    const sent = cap.body();
+    const messages = sent!.messages as Array<{ role: string; content: string }>;
+    expect(messages).toHaveLength(2);
+    expect(messages[0]?.role).toBe('system');
+    expect(messages[0]?.content).toBe('You are a pirate.');
+  });
+
+  it('honors OPENWOP_MANAGED_SYSTEM_PROMPT env override', async () => {
+    process.env.MINIMAX_API_KEY = 'sk-test';
+    process.env.OPENWOP_MANAGED_SYSTEM_PROMPT = 'CUSTOM OPERATOR PROMPT';
+    await bootstrapManagedProvider();
+    const cap = captureRequestBody();
+
+    await dispatchManagedChat({
+      userFacingProvider: 'openwop-free',
+      tenantId: 'user:alice',
+      messages: [{ role: 'user', content: 'hi' }],
+    });
+
+    const sent = cap.body();
+    const messages = sent!.messages as Array<{ role: string; content: string }>;
+    expect(messages[0]?.role).toBe('system');
+    expect(messages[0]?.content).toBe('CUSTOM OPERATOR PROMPT');
+
+    delete process.env.OPENWOP_MANAGED_SYSTEM_PROMPT;
+  });
+
+  it('strips <think> blocks from the MiniMax response', async () => {
+    process.env.MINIMAX_API_KEY = 'sk-test';
+    delete process.env.OPENWOP_MANAGED_SYSTEM_PROMPT;
+    await bootstrapManagedProvider();
+
+    // Synthesize an SSE response with an inline think block.
+    const enc = new TextEncoder();
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      new Response(
+        new ReadableStream<Uint8Array>({
+          start(controller) {
+            controller.enqueue(enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: '<think>scratchpad</think>' } }] })}\n\n`));
+            controller.enqueue(enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: 'visible answer' } }] })}\n\n`));
+            controller.enqueue(enc.encode(`data: ${JSON.stringify({ choices: [{ finish_reason: 'stop' }], usage: { prompt_tokens: 1, completion_tokens: 5 } })}\n\n`));
+            controller.enqueue(enc.encode('data: [DONE]\n\n'));
+            controller.close();
+          },
+        }),
+        { status: 200, headers: { 'content-type': 'text/event-stream' } },
+      ),
+    );
+
+    const result = await dispatchManagedChat({
+      userFacingProvider: 'openwop-free',
+      tenantId: 'user:alice',
+      messages: [{ role: 'user', content: 'hi' }],
+    });
+
+    // Visible answer should be the only content the caller sees.
+    expect(result.completion).toBe('visible answer');
+    expect(result.completion).not.toContain('think');
+    expect(result.completion).not.toContain('scratchpad');
+  });
+});
+
 describe('ManagedProviderError', () => {
   it('carries an error code on the instance', () => {
     const err = new ManagedProviderError('sign_in_required', 'sign in');

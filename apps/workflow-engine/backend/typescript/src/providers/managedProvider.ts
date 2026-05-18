@@ -45,6 +45,16 @@ const log = createLogger('providers.managed');
 
 export const MANAGED_REF_PREFIX = 'managed:';
 
+/** Default grounding prompt for the "Try it free" tier. Overridable via
+ *  `OPENWOP_MANAGED_SYSTEM_PROMPT`. Kept short so it doesn't dominate
+ *  the context window for every turn. */
+const DEFAULT_SYSTEM_PROMPT =
+  'You are an assistant for OpenWOP — a vendor-neutral open spec for AI workflow and agent orchestration. ' +
+  'OpenWOP defines a wire protocol so different hosts can run the same agent workflows; it is a specification, ' +
+  'not a platform or hosted service. The repo lives at https://github.com/openwop/openwop. ' +
+  'Keep answers concise (2-4 sentences for most questions). ' +
+  "When you don't actually know something, say so plainly rather than guessing.";
+
 interface ManagedTarget {
   /** Underlying provider the dispatcher actually calls. Never leaks past this module. */
   provider: ProviderId;
@@ -56,6 +66,10 @@ interface ManagedTarget {
   envKeyName: string;
   /** Per-tenant per-day cap (input + output tokens combined). */
   dailyTokenCap: number;
+  /** System prompt prepended when the caller didn't supply one. Grounds
+   *  the model in OpenWOP context so it doesn't hallucinate about what
+   *  the product is. */
+  defaultSystemPrompt: string;
 }
 
 /**
@@ -74,6 +88,7 @@ function getTargets(): Record<string, ManagedTarget> {
       storageRef: `${MANAGED_REF_PREFIX}openwop-free`,
       envKeyName: 'MINIMAX_API_KEY',
       dailyTokenCap: cap,
+      defaultSystemPrompt: process.env.OPENWOP_MANAGED_SYSTEM_PROMPT ?? DEFAULT_SYSTEM_PROMPT,
     },
   };
 }
@@ -244,11 +259,24 @@ export async function dispatchManagedChat(
     );
   }
 
+  // Inject the default system prompt when the caller didn't supply one.
+  // Grounds the model in OpenWOP context so the "what is openwop?"
+  // hallucination from a stock chat model doesn't reach end users.
+  // Callers who DO supply a system message (workflow authors, packs)
+  // keep full control.
+  const hasSystem = req.messages.some((m) => m.role === 'system');
+  const messages = hasSystem
+    ? req.messages
+    : [
+        { role: 'system' as const, content: target.defaultSystemPrompt },
+        ...req.messages,
+      ];
+
   const result = await dispatchChat({
     provider: target.provider,
     model: target.model,
     apiKey,
-    messages: req.messages,
+    messages,
     ...(req.maxTokens != null ? { maxTokens: req.maxTokens } : {}),
     ...(req.onDelta ? { onDelta: req.onDelta } : {}),
     ...(req.signal ? { signal: req.signal } : {}),
