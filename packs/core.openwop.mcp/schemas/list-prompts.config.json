@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.mcp/1.1.0/list-prompts.config.json",
+  "$id": "https://packs.openwop.dev/core.openwop.mcp/1.1.1/list-prompts.config.json",
   "title": "McpListPromptsConfig",
   "type": "object",
   "required": [

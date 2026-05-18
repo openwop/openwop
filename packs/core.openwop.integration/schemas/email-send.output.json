@@ -1,15 +1,34 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.integration/1.0.0/email-send.output.json",
+  "$id": "https://packs.openwop.dev/core.openwop.integration/1.1.0/email-send.output.json",
   "title": "EmailSendOutput",
   "type": "object",
-  "required": ["sent", "messageId", "provider"],
+  "required": [
+    "sent",
+    "messageId",
+    "provider"
+  ],
   "properties": {
-    "sent": { "type": "boolean", "description": "true when the provider accepted the message; false on terminal failure (4xx-class refusal — bad address, content rejected, etc.)." },
-    "messageId": { "type": "string", "description": "Provider-assigned message identifier. Empty string when `sent: false`." },
-    "provider": { "type": "string", "description": "Provider that actually sent (echoes config.provider; differs only when fallback fires)." },
-    "idempotencyKey": { "type": "string", "description": "The deterministic Idempotency-Key the runtime derived (SHA-256 prefix over runId+nodeId+to+subject+body). Surfaced for replay-determinism debugging." },
-    "error": { "type": "string", "description": "When `sent: false`, provider-reported error message." }
+    "sent": {
+      "type": "boolean",
+      "description": "true when the provider accepted the message; false on terminal failure (4xx-class refusal — bad address, content rejected, etc.)."
+    },
+    "messageId": {
+      "type": "string",
+      "description": "Provider-assigned message identifier. Empty string when `sent: false`."
+    },
+    "provider": {
+      "type": "string",
+      "description": "Provider that actually sent (echoes config.provider; differs only when fallback fires)."
+    },
+    "idempotencyKey": {
+      "type": "string",
+      "description": "The deterministic Idempotency-Key the runtime derived (SHA-256 prefix over runId+nodeId+to+subject+body). Surfaced for replay-determinism debugging."
+    },
+    "error": {
+      "type": "string",
+      "description": "When `sent: false`, provider-reported error message."
+    }
   },
   "additionalProperties": false
 }

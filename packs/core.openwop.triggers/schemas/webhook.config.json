@@ -1,9 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.triggers/1.0.0/webhook.config.json",
+  "$id": "https://packs.openwop.dev/core.openwop.triggers/1.1.0/webhook.config.json",
   "title": "WebhookTriggerConfig",
   "type": "object",
-  "required": ["path"],
+  "required": [
+    "path"
+  ],
   "properties": {
     "path": {
       "type": "string",
@@ -14,9 +16,20 @@
     },
     "methods": {
       "type": "array",
-      "items": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
+      "items": {
+        "type": "string",
+        "enum": [
+          "GET",
+          "POST",
+          "PUT",
+          "PATCH",
+          "DELETE"
+        ]
+      },
       "minItems": 1,
-      "default": ["POST"],
+      "default": [
+        "POST"
+      ],
       "description": "HTTP methods this webhook accepts. Defaults to POST. Hosts MAY return 405 on unmatched methods."
     },
     "secret": {

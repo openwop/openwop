@@ -1,15 +1,23 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/vendor.myndhyve.campaign-sequence-integration/1.0.0/webhook.input.json",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.campaign-sequence-integration/1.0.1/webhook.input.json",
   "title": "CampaignSequenceWebhookInput",
   "type": "object",
-  "required": ["step", "enrollment", "sequence"],
+  "required": [
+    "step",
+    "enrollment",
+    "sequence"
+  ],
   "properties": {
     "step": {
       "type": "object",
-      "required": ["webhookUrl"],
+      "required": [
+        "webhookUrl"
+      ],
       "properties": {
-        "id": { "type": "string" },
+        "id": {
+          "type": "string"
+        },
         "webhookUrl": {
           "type": "string",
           "format": "uri",
@@ -17,7 +25,13 @@
         },
         "webhookMethod": {
           "type": "string",
-          "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"],
+          "enum": [
+            "GET",
+            "POST",
+            "PUT",
+            "PATCH",
+            "DELETE"
+          ],
           "default": "POST"
         },
         "webhookSecret": {
@@ -26,7 +40,9 @@
         },
         "webhookHeaders": {
           "type": "object",
-          "additionalProperties": { "type": "string" },
+          "additionalProperties": {
+            "type": "string"
+          },
           "description": "Extra request headers. Merged AFTER the executor's defaults so callers can override Content-Type if needed."
         },
         "webhookBody": {
@@ -37,18 +53,28 @@
     },
     "enrollment": {
       "type": "object",
-      "required": ["id"],
+      "required": [
+        "id"
+      ],
       "properties": {
-        "id": { "type": "string" },
-        "leadId": { "type": "string" }
+        "id": {
+          "type": "string"
+        },
+        "leadId": {
+          "type": "string"
+        }
       },
       "additionalProperties": true
     },
     "sequence": {
       "type": "object",
-      "required": ["id"],
+      "required": [
+        "id"
+      ],
       "properties": {
-        "id": { "type": "string" }
+        "id": {
+          "type": "string"
+        }
       },
       "additionalProperties": true
     }

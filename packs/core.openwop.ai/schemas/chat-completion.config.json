@@ -1,9 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.ai/1.0.0/chat-completion.config.json",
+  "$id": "https://packs.openwop.dev/core.openwop.ai/1.1.2/chat-completion.config.json",
   "title": "ChatCompletionConfig",
   "type": "object",
-  "required": ["provider", "model"],
+  "required": [
+    "provider",
+    "model"
+  ],
   "properties": {
     "provider": {
       "type": "string",
@@ -32,7 +35,10 @@
     },
     "stopSequences": {
       "type": "array",
-      "items": { "type": "string", "minLength": 1 },
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
       "maxItems": 8,
       "description": "Optional stop sequences. Provider-specific limit (Anthropic: 4, OpenAI: 4); hosts MAY truncate."
     }

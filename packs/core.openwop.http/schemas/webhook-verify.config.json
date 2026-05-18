@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.http/1.1.0/webhook-verify.config.json",
+  "$id": "https://packs.openwop.dev/core.openwop.http/1.1.2/webhook-verify.config.json",
   "title": "WebhookVerifyConfig",
   "type": "object",
   "required": [

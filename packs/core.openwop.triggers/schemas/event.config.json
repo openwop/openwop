@@ -1,9 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.triggers/1.0.0/event.config.json",
+  "$id": "https://packs.openwop.dev/core.openwop.triggers/1.1.0/event.config.json",
   "title": "EventTriggerConfig",
   "type": "object",
-  "required": ["eventName"],
+  "required": [
+    "eventName"
+  ],
   "properties": {
     "eventName": {
       "type": "string",

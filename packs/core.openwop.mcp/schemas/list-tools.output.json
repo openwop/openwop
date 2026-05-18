@@ -1,24 +1,42 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.mcp/1.0.0/list-tools.output.json",
+  "$id": "https://packs.openwop.dev/core.openwop.mcp/1.1.1/list-tools.output.json",
   "title": "ListToolsOutput",
   "type": "object",
-  "required": ["tools", "count"],
+  "required": [
+    "tools",
+    "count"
+  ],
   "properties": {
     "tools": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["name"],
+        "required": [
+          "name"
+        ],
         "properties": {
-          "name": { "type": "string", "minLength": 1, "description": "Tool identifier as the MCP server publishes it (e.g., `'search'`, `'read_file'`)." },
-          "description": { "type": "string", "description": "Free-form tool description from the MCP server." },
-          "inputSchema": { "type": "object", "description": "JSON Schema for the tool's argument shape (forwarded verbatim from the MCP server)." }
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Tool identifier as the MCP server publishes it (e.g., `'search'`, `'read_file'`)."
+          },
+          "description": {
+            "type": "string",
+            "description": "Free-form tool description from the MCP server."
+          },
+          "inputSchema": {
+            "type": "object",
+            "description": "JSON Schema for the tool's argument shape (forwarded verbatim from the MCP server)."
+          }
         },
         "additionalProperties": true
       }
     },
-    "count": { "type": "integer", "minimum": 0 }
+    "count": {
+      "type": "integer",
+      "minimum": 0
+    }
   },
   "additionalProperties": false
 }

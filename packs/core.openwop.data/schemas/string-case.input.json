@@ -1,11 +1,15 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.data/1.0.0/string-case.input.json",
+  "$id": "https://packs.openwop.dev/core.openwop.data/1.2.1/string-case.input.json",
   "title": "StringCaseInput",
   "type": "object",
-  "required": ["text"],
+  "required": [
+    "text"
+  ],
   "properties": {
-    "text": { "type": "string" }
+    "text": {
+      "type": "string"
+    }
   },
   "additionalProperties": false
 }

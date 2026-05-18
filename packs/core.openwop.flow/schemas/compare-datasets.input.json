@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.flow/1.0.0/compare-datasets.input.json",
+  "$id": "https://packs.openwop.dev/core.openwop.flow/1.1.0/compare-datasets.input.json",
   "title": "CompareDatasetsInput",
   "type": "object",
   "required": [

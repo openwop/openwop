@@ -1,13 +1,19 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.ai/1.0.0/embeddings.output.json",
+  "$id": "https://packs.openwop.dev/core.openwop.ai/1.1.2/embeddings.output.json",
   "title": "EmbeddingsOutput",
   "type": "object",
-  "required": ["vector", "dimensions", "model"],
+  "required": [
+    "vector",
+    "dimensions",
+    "model"
+  ],
   "properties": {
     "vector": {
       "type": "array",
-      "items": { "type": "number" },
+      "items": {
+        "type": "number"
+      },
       "minItems": 1,
       "description": "Embedding vector. Length equals `dimensions`. Components are typically in [-1, 1] for normalized embeddings; some providers return unnormalized."
     },
@@ -16,11 +22,17 @@
       "minimum": 1,
       "description": "Vector length. Surface for downstream consumers (vector store insertion) that need the dimensionality."
     },
-    "model": { "type": "string", "description": "Provider-reported actual model." },
+    "model": {
+      "type": "string",
+      "description": "Provider-reported actual model."
+    },
     "usage": {
       "type": "object",
       "properties": {
-        "inputTokens": { "type": "integer", "minimum": 0 }
+        "inputTokens": {
+          "type": "integer",
+          "minimum": 0
+        }
       },
       "additionalProperties": true
     }

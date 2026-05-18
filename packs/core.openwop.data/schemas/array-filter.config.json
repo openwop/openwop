@@ -1,9 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.data/1.0.0/array-filter.config.json",
+  "$id": "https://packs.openwop.dev/core.openwop.data/1.2.1/array-filter.config.json",
   "title": "ArrayFilterConfig",
   "type": "object",
-  "required": ["path", "equals"],
+  "required": [
+    "path",
+    "equals"
+  ],
   "properties": {
     "path": {
       "type": "string",
@@ -11,7 +14,12 @@
     },
     "equals": {
       "description": "Strict-equality compare value. JSON.stringify of element[path] must equal JSON.stringify of equals.",
-      "type": ["string", "number", "boolean", "null"]
+      "type": [
+        "string",
+        "number",
+        "boolean",
+        "null"
+      ]
     }
   },
   "additionalProperties": false

@@ -1,11 +1,16 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.ai/1.0.0/embeddings.config.json",
+  "$id": "https://packs.openwop.dev/core.openwop.ai/1.1.2/embeddings.config.json",
   "title": "EmbeddingsConfig",
   "type": "object",
-  "required": ["provider", "model"],
+  "required": [
+    "provider",
+    "model"
+  ],
   "properties": {
-    "provider": { "type": "string" },
+    "provider": {
+      "type": "string"
+    },
     "model": {
       "type": "string",
       "minLength": 1,

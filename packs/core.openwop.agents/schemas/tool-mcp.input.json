@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.agents/1.0.0/tool-mcp.input.json",
+  "$id": "https://packs.openwop.dev/core.openwop.agents/1.0.1/tool-mcp.input.json",
   "title": "ToolMcpInput",
   "type": "object",
   "properties": {},

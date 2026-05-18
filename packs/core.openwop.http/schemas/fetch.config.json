@@ -1,10 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.http/1.0.0/fetch.config.json",
+  "$id": "https://packs.openwop.dev/core.openwop.http/1.1.2/fetch.config.json",
   "title": "FetchNodeConfig",
   "description": "Config for core.openwop.http.fetch. The URL template and method are configured here; per-request body / dynamic substitutions arrive via inputs.",
   "type": "object",
-  "required": ["url"],
+  "required": [
+    "url"
+  ],
   "properties": {
     "url": {
       "type": "string",
@@ -15,7 +17,15 @@
     },
     "method": {
       "type": "string",
-      "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"],
+      "enum": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE",
+        "HEAD",
+        "OPTIONS"
+      ],
       "default": "GET",
       "description": "HTTP method. Defaults to GET. Methods that conventionally carry a body (POST/PUT/PATCH) consume `inputs.body`; others ignore it."
     },
@@ -68,7 +78,10 @@
       "properties": {
         "mode": {
           "type": "string",
-          "enum": ["auto", "disabled"],
+          "enum": [
+            "auto",
+            "disabled"
+          ],
           "default": "auto",
           "description": "`auto` (default) sends `Idempotency-Key: <derived>` on every non-GET non-HEAD non-OPTIONS request. `disabled` omits the header."
         }

@@ -1,20 +1,35 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/vendor.myndhyve.campaign-sequence-integration/1.0.0/sms.input.json",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.campaign-sequence-integration/1.0.1/sms.input.json",
   "title": "CampaignSequenceSmsInput",
   "type": "object",
-  "required": ["step", "enrollment", "sequence"],
+  "required": [
+    "step",
+    "enrollment",
+    "sequence"
+  ],
   "properties": {
     "step": {
       "type": "object",
-      "required": ["smsBody"],
+      "required": [
+        "smsBody"
+      ],
       "properties": {
-        "smsBody": { "type": "string", "minLength": 1 }
+        "smsBody": {
+          "type": "string",
+          "minLength": 1
+        }
       },
       "additionalProperties": true
     },
-    "enrollment": { "type": "object", "additionalProperties": true },
-    "sequence": { "type": "object", "additionalProperties": true }
+    "enrollment": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "sequence": {
+      "type": "object",
+      "additionalProperties": true
+    }
   },
   "additionalProperties": true
 }

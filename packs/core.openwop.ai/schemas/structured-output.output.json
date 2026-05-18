@@ -1,24 +1,41 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.ai/1.0.0/structured-output.output.json",
+  "$id": "https://packs.openwop.dev/core.openwop.ai/1.1.2/structured-output.output.json",
   "title": "StructuredOutputOutput",
   "type": "object",
-  "required": ["data", "usage"],
+  "required": [
+    "data",
+    "usage"
+  ],
   "properties": {
     "data": {
       "description": "Parsed JSON validated against config.outputSchema. Shape entirely determined by that schema."
     },
     "usage": {
       "type": "object",
-      "required": ["inputTokens", "outputTokens"],
+      "required": [
+        "inputTokens",
+        "outputTokens"
+      ],
       "properties": {
-        "inputTokens": { "type": "integer", "minimum": 0 },
-        "outputTokens": { "type": "integer", "minimum": 0 },
-        "totalTokens": { "type": "integer", "minimum": 0 }
+        "inputTokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "outputTokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "totalTokens": {
+          "type": "integer",
+          "minimum": 0
+        }
       },
       "additionalProperties": true
     },
-    "model": { "type": "string" },
+    "model": {
+      "type": "string"
+    },
     "retries": {
       "type": "integer",
       "minimum": 0,

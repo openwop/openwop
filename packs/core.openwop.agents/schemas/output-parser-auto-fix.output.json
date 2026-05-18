@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.agents/1.0.0/output-parser-auto-fix.output.json",
+  "$id": "https://packs.openwop.dev/core.openwop.agents/1.0.1/output-parser-auto-fix.output.json",
   "title": "OutputParserAutoFixOutput",
   "type": "object",
   "required": [

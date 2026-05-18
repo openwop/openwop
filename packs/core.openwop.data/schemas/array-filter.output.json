@@ -1,13 +1,28 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.data/1.0.0/array-filter.output.json",
+  "$id": "https://packs.openwop.dev/core.openwop.data/1.2.1/array-filter.output.json",
   "title": "ArrayFilterOutput",
   "type": "object",
-  "required": ["array", "matched", "total"],
+  "required": [
+    "array",
+    "matched",
+    "total"
+  ],
   "properties": {
-    "array": { "type": "array", "description": "Filtered subset (matched elements)." },
-    "matched": { "type": "integer", "minimum": 0, "description": "Count of elements that matched." },
-    "total": { "type": "integer", "minimum": 0, "description": "Original array length." }
+    "array": {
+      "type": "array",
+      "description": "Filtered subset (matched elements)."
+    },
+    "matched": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of elements that matched."
+    },
+    "total": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Original array length."
+    }
   },
   "additionalProperties": false
 }

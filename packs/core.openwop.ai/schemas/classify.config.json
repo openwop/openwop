@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.ai/1.1.0/classify.config.json",
+  "$id": "https://packs.openwop.dev/core.openwop.ai/1.1.2/classify.config.json",
   "title": "AiClassifyConfig",
   "type": "object",
   "required": [

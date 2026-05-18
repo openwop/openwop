@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.ai/1.1.0/image-edit.input.json",
+  "$id": "https://packs.openwop.dev/core.openwop.ai/1.1.2/image-edit.input.json",
   "title": "AiImageEditInput",
   "type": "object",
   "required": [

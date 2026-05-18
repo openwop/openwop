@@ -1,9 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.integration/1.0.0/slack-message.config.json",
+  "$id": "https://packs.openwop.dev/core.openwop.integration/1.1.0/slack-message.config.json",
   "title": "SlackMessageConfig",
   "type": "object",
-  "required": ["channel"],
+  "required": [
+    "channel"
+  ],
   "properties": {
     "channel": {
       "type": "string",

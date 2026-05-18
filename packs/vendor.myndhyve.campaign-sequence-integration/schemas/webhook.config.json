@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/vendor.myndhyve.campaign-sequence-integration/1.0.0/webhook.config.json",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.campaign-sequence-integration/1.0.1/webhook.config.json",
   "title": "CampaignSequenceWebhookConfig",
   "type": "object",
   "properties": {

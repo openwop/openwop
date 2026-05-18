@@ -1,11 +1,17 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.mcp/1.0.0/read-resource.config.json",
+  "$id": "https://packs.openwop.dev/core.openwop.mcp/1.1.1/read-resource.config.json",
   "title": "ReadResourceConfig",
   "type": "object",
-  "required": ["serverId", "uri"],
+  "required": [
+    "serverId",
+    "uri"
+  ],
   "properties": {
-    "serverId": { "type": "string", "minLength": 1 },
+    "serverId": {
+      "type": "string",
+      "minLength": 1
+    },
     "uri": {
       "type": "string",
       "minLength": 1,

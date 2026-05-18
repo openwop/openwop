@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.http/1.0.0/fetch.input.json",
+  "$id": "https://packs.openwop.dev/core.openwop.http/1.1.2/fetch.input.json",
   "title": "FetchNodeInput",
   "description": "Input for core.openwop.http.fetch. `variables` substitute into the URL template; `body` is the request body when the method conventionally carries one.",
   "type": "object",
@@ -8,13 +8,22 @@
     "variables": {
       "type": "object",
       "additionalProperties": {
-        "type": ["string", "number", "boolean"]
+        "type": [
+          "string",
+          "number",
+          "boolean"
+        ]
       },
       "description": "Substitution map for `config.url` template placeholders. Each `{{name}}` in the URL is replaced by the corresponding map value (URL-encoded). Missing keys → `INVALID_URL` at dispatch."
     },
     "body": {
       "description": "Request body for POST/PUT/PATCH. Objects/arrays are JSON-serialized with `Content-Type: application/json` (unless config.headers overrides). Strings are sent verbatim. null/undefined send no body.",
-      "type": ["object", "array", "string", "null"]
+      "type": [
+        "object",
+        "array",
+        "string",
+        "null"
+      ]
     }
   },
   "additionalProperties": false

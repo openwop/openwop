@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.mcp/1.1.0/expose-tool.config.json",
+  "$id": "https://packs.openwop.dev/core.openwop.mcp/1.1.1/expose-tool.config.json",
   "title": "McpExposeToolConfig",
   "type": "object",
   "required": [

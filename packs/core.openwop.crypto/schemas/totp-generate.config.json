@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.crypto/1.0.0/totp-generate.config.json",
+  "$id": "https://packs.openwop.dev/core.openwop.crypto/1.0.3/totp-generate.config.json",
   "title": "TotpGenerateConfig",
   "type": "object",
   "properties": {

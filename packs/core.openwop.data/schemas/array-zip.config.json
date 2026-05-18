@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.data/1.1.0/array-zip.config.json",
+  "$id": "https://packs.openwop.dev/core.openwop.data/1.2.1/array-zip.config.json",
   "title": "ArrayZipConfig",
   "type": "object",
   "properties": {},

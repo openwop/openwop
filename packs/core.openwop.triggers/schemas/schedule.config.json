@@ -1,9 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.triggers/1.0.0/schedule.config.json",
+  "$id": "https://packs.openwop.dev/core.openwop.triggers/1.1.0/schedule.config.json",
   "title": "ScheduleTriggerConfig",
   "type": "object",
-  "required": ["cron"],
+  "required": [
+    "cron"
+  ],
   "properties": {
     "cron": {
       "type": "string",
@@ -18,7 +20,11 @@
     },
     "missedFirePolicy": {
       "type": "string",
-      "enum": ["skip", "fire-once", "fire-all"],
+      "enum": [
+        "skip",
+        "fire-once",
+        "fire-all"
+      ],
       "default": "fire-once",
       "description": "What the host does when the workflow was offline through scheduled fires. `skip` = do nothing. `fire-once` = fire one catch-up run with the LATEST missed timestamp. `fire-all` = fire one run per missed timestamp (bounded; hosts MAY cap to avoid backlog explosion)."
     }

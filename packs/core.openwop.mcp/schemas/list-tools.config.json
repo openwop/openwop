@@ -1,9 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.mcp/1.0.0/list-tools.config.json",
+  "$id": "https://packs.openwop.dev/core.openwop.mcp/1.1.1/list-tools.config.json",
   "title": "ListToolsConfig",
   "type": "object",
-  "required": ["serverId"],
+  "required": [
+    "serverId"
+  ],
   "properties": {
     "serverId": {
       "type": "string",

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.crypto/1.0.0/jwt-mint.input.json",
+  "$id": "https://packs.openwop.dev/core.openwop.crypto/1.0.3/jwt-mint.input.json",
   "title": "JwtMintInput",
   "type": "object",
   "required": [

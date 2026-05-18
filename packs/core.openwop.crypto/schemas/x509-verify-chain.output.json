@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.crypto/1.0.0/x509-verify-chain.output.json",
+  "$id": "https://packs.openwop.dev/core.openwop.crypto/1.0.3/x509-verify-chain.output.json",
   "title": "X509VerifyChainOutput",
   "type": "object",
   "required": [

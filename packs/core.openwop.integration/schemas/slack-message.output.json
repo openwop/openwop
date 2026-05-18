@@ -1,15 +1,33 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.integration/1.0.0/slack-message.output.json",
+  "$id": "https://packs.openwop.dev/core.openwop.integration/1.1.0/slack-message.output.json",
   "title": "SlackMessageOutput",
   "type": "object",
-  "required": ["posted", "ts", "channel"],
+  "required": [
+    "posted",
+    "ts",
+    "channel"
+  ],
   "properties": {
-    "posted": { "type": "boolean" },
-    "ts": { "type": "string", "description": "Slack message timestamp (`1715353200.123456`). Empty string when `posted: false`. Use as `threadTs` for replies." },
-    "channel": { "type": "string", "description": "Resolved channel ID (host expands name → ID when given a name)." },
-    "idempotencyKey": { "type": "string", "description": "Deterministic idempotency key (SHA-256 prefix over runId+nodeId+channel+text+blocks)." },
-    "error": { "type": "string", "description": "When `posted: false`, Slack-reported error code (e.g., `channel_not_found`, `not_in_channel`)." }
+    "posted": {
+      "type": "boolean"
+    },
+    "ts": {
+      "type": "string",
+      "description": "Slack message timestamp (`1715353200.123456`). Empty string when `posted: false`. Use as `threadTs` for replies."
+    },
+    "channel": {
+      "type": "string",
+      "description": "Resolved channel ID (host expands name → ID when given a name)."
+    },
+    "idempotencyKey": {
+      "type": "string",
+      "description": "Deterministic idempotency key (SHA-256 prefix over runId+nodeId+channel+text+blocks)."
+    },
+    "error": {
+      "type": "string",
+      "description": "When `posted: false`, Slack-reported error code (e.g., `channel_not_found`, `not_in_channel`)."
+    }
   },
   "additionalProperties": false
 }

@@ -1,13 +1,19 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.data/1.0.0/string-case.config.json",
+  "$id": "https://packs.openwop.dev/core.openwop.data/1.2.1/string-case.config.json",
   "title": "StringCaseConfig",
   "type": "object",
-  "required": ["mode"],
+  "required": [
+    "mode"
+  ],
   "properties": {
     "mode": {
       "type": "string",
-      "enum": ["upper", "lower", "title"],
+      "enum": [
+        "upper",
+        "lower",
+        "title"
+      ],
       "description": "`upper` → ALL CAPS. `lower` → all lowercase. `title` → First Letter Of Each Word (naive, whitespace-delimited)."
     }
   },

@@ -1,9 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.mcp/1.0.0/server-status.output.json",
+  "$id": "https://packs.openwop.dev/core.openwop.mcp/1.1.1/server-status.output.json",
   "title": "ServerStatusOutput",
   "type": "object",
-  "required": ["available", "latencyMs"],
+  "required": [
+    "available",
+    "latencyMs"
+  ],
   "properties": {
     "available": {
       "type": "boolean",

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.rag/1.0.0/loader-file.input.json",
+  "$id": "https://packs.openwop.dev/core.openwop.rag/1.0.1/loader-file.input.json",
   "title": "LoaderFileInput",
   "type": "object",
   "required": [

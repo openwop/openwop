@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.rag/1.0.0/loader-s3.output.json",
+  "$id": "https://packs.openwop.dev/core.openwop.rag/1.0.1/loader-s3.output.json",
   "title": "LoaderS3Output",
   "type": "object",
   "required": [

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.data/1.1.0/array-reduce.output.json",
+  "$id": "https://packs.openwop.dev/core.openwop.data/1.2.1/array-reduce.output.json",
   "title": "ArrayReduceOutput",
   "type": "object",
   "required": [
