@@ -53,10 +53,22 @@ describe.skipIf(SKIP)('agentReasoningEvents: agent.* event family emission', () 
     const agentEvents = list.filter((e) => REASONING_EVENT_TYPES.has(e.type));
     expect(agentEvents.length).toBeGreaterThan(0);
 
-    // Every agent.* event payload MUST carry `agentId` (per RFC 0002 §C).
+    // Every agent.* event payload MUST identify the agent. Per
+    // `run-event-payloads.schema.json` §`agent*` shapes, four of the
+    // five events (`reasoned`, `toolCalled`, `toolReturned`, `decided`)
+    // carry `agentId`; `agent.handoff` carries `fromAgentId` + `toAgentId`
+    // instead. Allow either shape.
     for (const ev of agentEvents) {
-      expect(typeof ev.payload?.agentId).toBe('string');
-      expect((ev.payload!.agentId as string).length).toBeGreaterThanOrEqual(3);
+      const p = (ev.payload ?? {}) as Record<string, unknown>;
+      if (ev.type === 'agent.handoff') {
+        expect(typeof p.fromAgentId).toBe('string');
+        expect(typeof p.toAgentId).toBe('string');
+        expect((p.fromAgentId as string).length).toBeGreaterThanOrEqual(3);
+        expect((p.toAgentId as string).length).toBeGreaterThanOrEqual(3);
+      } else {
+        expect(typeof p.agentId).toBe('string');
+        expect((p.agentId as string).length).toBeGreaterThanOrEqual(3);
+      }
     }
 
     // agent.toolCalled / agent.toolReturned MUST share a `callId` correlation.

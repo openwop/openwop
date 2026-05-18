@@ -4,11 +4,11 @@
 |---|---|
 | **RFC** | 0023 |
 | **Title** | Conformance Agent-Event Emitters |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-18 |
-| **Updated** | 2026-05-18 |
-| **Affects** | `RFCS/0002-agent-identity-and-reasoning-events.md`, `spec/v1/node-packs.md`, `schemas/core-conformance-mock-agent-config.schema.json` (NEW), `conformance/fixtures/conformance-agent-reasoning.json`, `conformance/fixtures/conformance-agent-low-confidence.json`, `conformance/fixtures.md`, `conformance/coverage.md` |
+| **Updated** | 2026-05-18 (Draft → Active: bootstrap-phase steward waiver per `CONTRIBUTING.md` — spec text complete, reference impl landed in `examples/hosts/postgres`, in-tree host-internal smoke (`examples/hosts/postgres/test/mock-agent.test.ts`) passes against both affected conformance fixtures, conformance scenario `agentReasoningEvents.test.ts` per-event-type assertion fixed to match the canonical schema; `Active → Accepted` deferred to next `@openwop/openwop-conformance` release that ships the scenario change) |
+| **Affects** | `RFCS/0002-agent-identity-and-reasoning-events.md`, `spec/v1/node-packs.md`, `schemas/core-conformance-mock-agent-config.schema.json` (NEW), `schemas/capabilities.schema.json`, `conformance/fixtures/conformance-agent-reasoning.json`, `conformance/fixtures/conformance-agent-low-confidence.json`, `conformance/fixtures.md`, `conformance/src/scenarios/agentReasoningEvents.test.ts`, `examples/hosts/postgres/src/server.ts`, `examples/hosts/postgres/src/agent-events.ts`, `examples/hosts/postgres/test/mock-agent.test.ts` |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
 | **Superseded by** | — |
@@ -265,13 +265,14 @@ The MyndHyve host's local `core.identity` impl (referenced in the gap report) ca
 ## Acceptance criteria
 
 - [x] RFC text merged (this file).
-- [ ] `schemas/core-conformance-mock-agent-config.schema.json` published with `$id` under `https://openwop.dev/spec/v1/`.
-- [ ] `spec/v1/node-packs.md` updated: new `core.conformance.mock-agent` row + retroactive `mockConfidence`/`mockPendingDecision` documentation on `core.orchestrator.supervisor`.
-- [ ] RFC 0002 §B amended with the §A Authorized-Emitters table (or a cross-link to this RFC's §A).
-- [ ] `conformance/fixtures/conformance-agent-reasoning.json` + `conformance-agent-low-confidence.json` rewritten per §E.
-- [ ] `conformance/fixtures.md` catalog entries updated to reflect the typeId change.
-- [ ] CHANGELOG entry under `[1.1.2 — unreleased]`.
-- [ ] Reference host (`apps/workflow-engine` or `examples/hosts/postgres`) registers `core.conformance.mock-agent` and the affected scenarios pass against it.
+- [x] `schemas/core-conformance-mock-agent-config.schema.json` published with `$id` under `https://openwop.dev/spec/v1/`.
+- [x] `spec/v1/node-packs.md` updated: new `core.conformance.mock-agent` row + retroactive `mockConfidence`/`mockPendingDecision` documentation on `core.orchestrator.supervisor`.
+- [x] RFC 0002 cross-link landed via `spec/v1/node-packs.md` §"Authorized emitters for `agent.*` events" pointing at RFC 0023 §A. (A direct edit to RFC 0002's prose §B was avoided because RFC 0002 is `Accepted` and per `RFCs/README.md` is treated as historical; the spec-canonical view lives in `node-packs.md`.)
+- [x] `conformance/fixtures/conformance-agent-reasoning.json` + `conformance-agent-low-confidence.json` rewritten per §E.
+- [x] `conformance/fixtures.md` catalog entries updated to reflect the typeId change.
+- [x] CHANGELOG entry under `[1.1.2 — unreleased]`.
+- [x] Reference host (`examples/hosts/postgres`) registers `core.conformance.mock-agent` per §B (executor case + `SUPPORTED_NODE_TYPES` + discovery advertisement of `capabilities.conformance.mockAgent: true`). Host-internal smoke (`examples/hosts/postgres/test/mock-agent.test.ts`) exercises both affected fixtures end-to-end via PGlite and verifies (a) full `agent.*` family emission on cue, (b) CP-1 `node.suspended { reason: 'low-confidence', agentId, threshold, observed }` + `waiting-approval` transition.
+- [ ] **Active → Accepted** flip: requires next `@openwop/openwop-conformance` release that ships the per-event-type assertion fix in `agentReasoningEvents.test.ts` so external hosts can run the in-tree conformance suite against the new fixture surface without local patches.
 
 ## References
 

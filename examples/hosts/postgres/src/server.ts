@@ -112,6 +112,7 @@ import {
 } from './memory-adapter.js';
 import {
   REFERENCE_AGENTS_CAPABILITY,
+  REFERENCE_CONFORMANCE_CAPABILITY,
   buildAgentReasonedPayload,
   resolveReasoningVerbosity,
 } from './agent-events.js';
@@ -1302,6 +1303,198 @@ async function executeNode(
       return 'suspended';
     }
 
+    case 'core.conformance.mock-agent': {
+      // RFC 0023 §B — conformance-only deterministic agent emitter.
+      // Drives the full `agent.*` event family on cue from config keys
+      // so the suite can exercise reasoning-event + low-confidence-suspend
+      // contracts without a live LLM. §B.1 registration gate: refuse the
+      // typeId outside the `conformance-*` workflow-id prefix (even though
+      // this host advertises `capabilities.conformance.mockAgent: true`).
+      // Production deployers SHOULD drop this case from their typeId
+      // registry entirely; the reference host keeps it so the suite has
+      // a host to run the affected scenarios against.
+      const wfRow = await loadRun(runId);
+      const wfId = wfRow?.workflow_id ?? '';
+      if (!wfId.startsWith('conformance-')) {
+        const err = {
+          code: 'typeId_refused',
+          message:
+            `Node "${node.id}" uses "core.conformance.mock-agent" but the workflow id ` +
+            `"${wfId}" is outside the conformance fixture prefix. ` +
+            `Per RFC 0023 §B.1, hosts MUST refuse this typeId for non-conformance workflows.`,
+        };
+        await appendEvent(runId, 'node.failed', { nodeId: node.id, data: err });
+        runFailureErrors.set(runId, err);
+        endNodeSpan(runId, node.id, 'failed');
+        return 'failed';
+      }
+
+      type MockToolCall = {
+        toolId?: string;
+        arguments?: unknown;
+        result?: unknown;
+        error?: { code?: string; message?: string };
+        durationMs?: number;
+      };
+      type MockCfg = {
+        agentId?: string;
+        mockReasoning?:
+          | boolean
+          | { summary?: string; trace?: string; tokenCount?: number };
+        mockToolCalls?: ReadonlyArray<MockToolCall>;
+        mockHandoff?: { toAgentId?: string; reason?: string; context?: unknown };
+        mockDecision?: { decision?: unknown; confidence?: number; reasoning?: string };
+        mockConfidence?: number;
+      };
+      const cfg = (node.config ?? {}) as MockCfg;
+      // RFC 0023 §B: agentId resolution order — config.agentId →
+      // nodes[].agent.agentId → host-minted synthetic id.
+      const pinnedAgentId = (node as { agent?: { agentId?: string } }).agent?.agentId;
+      const agentId = cfg.agentId ?? pinnedAgentId ?? `host:mock-agent:${node.id}`;
+
+      // 1. agent.reasoned (verbosity-gated per the host's existing rule;
+      //    "off" suppresses emission entirely per RFC 0002 §B).
+      if (cfg.mockReasoning !== undefined && cfg.mockReasoning !== null) {
+        const reasoned =
+          typeof cfg.mockReasoning === 'object'
+            ? cfg.mockReasoning
+            : { summary: `[stub] reasoning trace from ${agentId}` };
+        const verbosity = await readReasoningVerbosity(runId);
+        if (verbosity !== 'off') {
+          const summary = typeof reasoned.summary === 'string'
+            ? reasoned.summary
+            : `[stub] reasoning trace from ${agentId}`;
+          await appendEvent(runId, 'agent.reasoned', {
+            nodeId: node.id,
+            data: {
+              agentId,
+              reasoning: summary,
+              verbosity,
+              ...(typeof reasoned.tokenCount === 'number'
+                ? { tokenCount: reasoned.tokenCount }
+                : {}),
+            },
+          });
+        }
+      }
+
+      // 2. agent.toolCalled / agent.toolReturned pairs. Each pair shares
+      //    a host-minted `callId`; the toolReturned event's `causationId`
+      //    equals the toolCalled event's `eventId` per RFC 0002 §B.
+      if (Array.isArray(cfg.mockToolCalls)) {
+        for (let i = 0; i < cfg.mockToolCalls.length; i++) {
+          const tc = cfg.mockToolCalls[i] ?? {};
+          const toolName = typeof tc.toolId === 'string' ? tc.toolId : `unknown-${i}`;
+          const callId = `mock-${node.id}-${i}-${Date.now().toString(36)}`;
+          const calledEv = await appendEvent(runId, 'agent.toolCalled', {
+            nodeId: node.id,
+            data: { agentId, toolName, callId },
+          });
+          const causationId = makeEventId(runId, calledEv.seq);
+          if (tc.error) {
+            await appendEvent(runId, 'agent.toolReturned', {
+              nodeId: node.id,
+              causationId,
+              data: {
+                agentId,
+                toolName,
+                callId,
+                error: {
+                  code: typeof tc.error.code === 'string' ? tc.error.code : 'unknown',
+                  message:
+                    typeof tc.error.message === 'string' ? tc.error.message : '',
+                },
+              },
+            });
+          } else {
+            await appendEvent(runId, 'agent.toolReturned', {
+              nodeId: node.id,
+              causationId,
+              data: {
+                agentId,
+                toolName,
+                callId,
+                outcome: {
+                  ...(typeof tc.durationMs === 'number'
+                    ? { durationMs: tc.durationMs }
+                    : {}),
+                },
+              },
+            });
+          }
+        }
+      }
+
+      // 3. agent.handoff. The pinned `nodes[].agent` becomes
+      //    `fromAgentId`; `mockHandoff.toAgentId` is the receiver.
+      if (cfg.mockHandoff && typeof cfg.mockHandoff.toAgentId === 'string') {
+        await appendEvent(runId, 'agent.handoff', {
+          nodeId: node.id,
+          data: {
+            fromAgentId: agentId,
+            toAgentId: cfg.mockHandoff.toAgentId,
+            ...(typeof cfg.mockHandoff.reason === 'string'
+              ? { reason: cfg.mockHandoff.reason }
+              : {}),
+          },
+        });
+      }
+
+      // 4. agent.decided + CP-1 low-confidence suspend per
+      //    interrupt.md §`kind: "low-confidence"`. Threshold resolution:
+      //    RunOptions.configurable.escalationThreshold → default 0.7.
+      const hasDecision =
+        (cfg.mockDecision !== undefined && cfg.mockDecision !== null) ||
+        typeof cfg.mockConfidence === 'number';
+      if (hasDecision) {
+        const explicit = cfg.mockDecision ?? {};
+        const decisionValue =
+          'decision' in explicit ? explicit.decision : { kind: 'stub-decision' };
+        const confidence =
+          typeof explicit.confidence === 'number'
+            ? explicit.confidence
+            : typeof cfg.mockConfidence === 'number'
+              ? cfg.mockConfidence
+              : undefined;
+        await appendEvent(runId, 'agent.decided', {
+          nodeId: node.id,
+          data: {
+            agentId,
+            decision: decisionValue,
+            ...(confidence !== undefined ? { confidence } : {}),
+            ...(typeof explicit.reasoning === 'string'
+              ? { reasoning: explicit.reasoning }
+              : {}),
+          },
+        });
+        if (confidence !== undefined) {
+          const configurable = (wfRow?.configurable_json ?? {}) as {
+            escalationThreshold?: unknown;
+          };
+          const override = configurable.escalationThreshold;
+          const threshold =
+            typeof override === 'number' && override >= 0 && override <= 1
+              ? override
+              : 0.7;
+          if (confidence < threshold) {
+            await appendEvent(runId, 'node.suspended', {
+              nodeId: node.id,
+              data: {
+                reason: 'low-confidence',
+                agentId,
+                threshold,
+                observed: confidence,
+              },
+            });
+            endNodeSpan(runId, node.id, 'suspended');
+            return 'suspended';
+          }
+        }
+      }
+
+      break;
+    }
+
     case 'core.orchestrator.supervisor': {
       // RFC 0006 §C — orchestrator emits one OrchestratorDecision per
       // tick. For the conformance-dispatch-loop fixture (2-node loop),
@@ -2064,6 +2257,11 @@ const SUPPORTED_NODE_TYPES = new Set([
   // Phase H.2 — MCP tool-call typeId per host-capabilities.md §host.mcp.
   // HTTP/JSON-RPC transport; MCP-1 redaction enforced on event payloads.
   'core.mcp.toolCall',
+  // RFC 0023 §B — conformance-only deterministic agent emitter. Drives
+  // the `agent.*` event family on cue. Registration is gated by
+  // §B.1 inside the executor case (workflow-id prefix `conformance-*`);
+  // production deployers SHOULD drop this from their SUPPORTED_NODE_TYPES.
+  'core.conformance.mock-agent',
 ]);
 
 function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
@@ -2249,6 +2447,13 @@ function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
         // confidence-escalation contract honored via the
         // node.suspended { reason: 'low-confidence' } path.
         agents: REFERENCE_AGENTS_CAPABILITY,
+        // RFC 0023 §B.2 — `capabilities.conformance` block. Advertised
+        // because the host registers `core.conformance.mock-agent` (per
+        // RFC 0023 §B). The §B.1 registration gate inside executeNode
+        // still refuses the typeId for workflow ids outside the
+        // `conformance-*` prefix — this advertisement does NOT make
+        // the typeId reachable from arbitrary tenants.
+        conformance: REFERENCE_CONFORMANCE_CAPABILITY,
         // Phase H.1 + H.1″ — capabilities.md §`aiProviders` +
         // §`aiProviders.policies`. The host advertises BYOK-ready
         // routing for the listed providers AND 4-mode policy

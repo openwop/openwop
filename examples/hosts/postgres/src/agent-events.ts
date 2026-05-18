@@ -174,3 +174,16 @@ export const REFERENCE_AGENTS_CAPABILITY = {
   dispatch: true,
   reasoning: { verbosity: 'summary' as const, tokenLimit: 512 },
 } as const;
+
+/**
+ * RFC 0023 §B.2 — `capabilities.conformance` block. Advertised because
+ * the host registers the conformance-only `core.conformance.mock-agent`
+ * typeId. The §B.1 registration gate refuses the typeId for workflow
+ * ids outside the `conformance-*` prefix even with this flag set —
+ * the flag exists for hosts that want to advertise the typeId is
+ * reachable from the conformance suite, not that it is reachable from
+ * arbitrary tenants.
+ */
+export const REFERENCE_CONFORMANCE_CAPABILITY = {
+  mockAgent: true,
+} as const;
