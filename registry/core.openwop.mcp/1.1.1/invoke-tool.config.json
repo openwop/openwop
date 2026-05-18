@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.mcp/1.0.0/invoke-tool.config.json",
+  "title": "InvokeToolConfig",
+  "type": "object",
+  "required": ["serverId", "toolName"],
+  "properties": {
+    "serverId": { "type": "string", "minLength": 1 },
+    "toolName": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Tool identifier as published by the MCP server (e.g., `'search'`). Use core.openwop.mcp.list-tools to discover available tools."
+    },
+    "timeoutMs": {
+      "type": "integer",
+      "minimum": 100,
+      "maximum": 300000,
+      "default": 30000,
+      "description": "Per-invocation timeout. Bounded to 5 minutes."
+    }
+  },
+  "additionalProperties": false
+}

@@ -204,6 +204,8 @@ ctx.aiEnvelope.await({
 - `provider_quota_exhausted` — BYOK quota / rate limit
 - `envelope_validation_failed` — provider returned non-matching shape after retries
 
+**Relationship to `spec/v1/ai-envelope.md` (DRAFT v1.x).** The `generate()` return shape above is a **projection** of the full `AIEnvelope` document defined in `ai-envelope.md` — it surfaces the fields a node pack typically consumes (`envelopeType`, `payload`, `envelopeId`, `usage`, `model`) without obliging packs to handle every envelope-level concern (`correlationId`, `meta.source`, `meta.contentTrust`, `partial`). When the host accepts the emission for engine processing per `ai-envelope.md` §"Production flow," it wraps the projection back into a full envelope before applying validation, contract gating, redaction, and dedup. A future v1.x evolution MAY widen the projection to surface additional envelope-level fields to packs that opt in; the current narrow shape is preserved for backward compatibility with packs written against pre-DRAFT-v1.x hosts.
+
 ---
 
 ## §host.promptLibrary

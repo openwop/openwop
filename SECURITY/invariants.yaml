@@ -792,7 +792,8 @@ invariants:
       - conformance/src/scenarios/aiEnvelope.redaction.test.ts
     note: |
       `spec/v1/ai-envelope.md` §"Redaction (SR-1 carry-forward)"
-      (DRAFT v1.x, 2026-05-17). SR-1 applies transitively through
+      (FINAL v1.1 since 2026-05-18 via RFC 0021; first cut 2026-05-17).
+      SR-1 applies transitively through
       LLM emission: when a host accepts an AI Envelope from a node,
       the engine MUST route the envelope's payload through the same
       BYOK redaction harness applied to a fresh `MemoryEntry.put`

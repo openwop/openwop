@@ -96,3 +96,21 @@ export type {
   RegistryPackMetadata,
   RegistryVersionManifest,
 } from './registry-helpers.js';
+
+// AI Envelope types (DRAFT v1.x — spec/v1/ai-envelope.md). Inbound LLM-emission
+// envelope, distinct from RunEventDoc (outbound) and ErrorEnvelope (host HTTP).
+export type {
+  AIEnvelope,
+  AIEnvelopeErrorPayload,
+  ClarificationRequestPayload,
+  EnvelopeContract,
+  EnvelopeContractRefusal,
+  EnvelopeContractsCapability,
+  EnvelopeMeta,
+  EnvelopeOutcome,
+  EnvelopeStrictness,
+  PartialInfo,
+  SchemaRequestPayload,
+  SchemaResponsePayload,
+  ValidationDetail,
+} from './types.js';

@@ -49,6 +49,23 @@
       "additionalProperties": false,
       "description": "Hard limits enforced by the engine. See capabilities.md §3."
     },
+    "envelopeStrictness": {
+      "type": "string",
+      "enum": ["warn", "strict"],
+      "description": "AI Envelope schema-version drift handling per `spec/v1/ai-envelope.md` §\"Capability handshake integration\" (DRAFT v1.x). Optional in v1.x; default when absent is `warn`. Under `warn`, the engine MUST attempt validation against the advertised version of a kind and log `envelope_schema_version_drift` when the emitted `schemaVersion` is lower than advertised. Under `strict`, the same condition MUST cause refusal with `unknown_schema_version`. Emitted `schemaVersion` higher than advertised MUST refuse regardless of strictness."
+    },
+    "envelopeContracts": {
+      "type": "object",
+      "description": "AI Envelope contract-gating advertisement per `spec/v1/ai-envelope.md` §\"Capability handshake integration\" (DRAFT v1.x). Optional in v1.x. When `advertised: true`, the host's node-pack manifests carry `EnvelopeContract` blocks per `ai-envelope.md` §\"Envelope Contract\"; tooling and conformance scenarios gate on this flag. When `advertised: false` or the block is absent, hosts MAY accept envelopes without per-typeId `accepts[]` enforcement.",
+      "required": ["advertised"],
+      "properties": {
+        "advertised": {
+          "type": "boolean",
+          "description": "Host's node-pack manifests carry `EnvelopeContract` blocks."
+        }
+      },
+      "additionalProperties": false
+    },
     "extensions": {
       "type": "object",
       "description": "Optional per-canvas-type or per-workflow extensions (additional envelope types, override limits)."
@@ -311,6 +328,11 @@
           "type": "boolean",
           "description": "Phase 6. When `true`, host advertises that it implements the `core.dispatch` Core typeId AND honors the conservative-path commitment CP-2 (`core.dispatch` MUST NOT mutate the run's DAG mid-run). Implies (but does NOT require) `agents.orchestrator: true`."
         },
+        "dispatchMapping": {
+          "type": "boolean",
+          "default": false,
+          "description": "Phase 6.1 (RFC 0022 §A). When `true`, host honors `inputMapping` / `outputMapping` / `perWorkerInputMappings` / `perWorkerOutputMappings` on `DispatchConfig` — building child inputs from parent variables before dispatch and harvesting child variables into parent variables on completion. Implies (but does NOT require) `agents.dispatch: true`. Hosts that set `agents.dispatch: true` but omit / `false` this flag MUST refuse workflows that carry non-empty mapping fields at registration with `validation_error` + `details.requiredCapability: 'agents.dispatchMapping'`."
+        },
         "reasoning": {
           "type": "object",
           "description": "Phase 1 reasoning-event verbosity configuration.",
@@ -383,6 +405,18 @@
     "conversationPrimitive": {
       "type": "boolean",
       "description": "Multi-Agent Shift Phase 4. When `true`, host advertises that it implements the `core.conversationGate` typeId AND honors the `conversation.start` / `conversation.exchange` / `conversation.close` suspend variants. Hosts that don't claim this fall back to `clarification.requested` interrupts for multi-turn user interjections."
+    },
+    "subWorkflow": {
+      "type": "object",
+      "description": "Capability surface for `core.subWorkflow` extensions. The baseline `core.subWorkflow` contract (RFC 0007 + `node-packs.md` §contract) is unconditional and does NOT require a capability flag; this object carries the additive extensions a host MAY support. Added by RFC 0022 §B + §C.",
+      "properties": {
+        "inputMapping": {
+          "type": "boolean",
+          "default": false,
+          "description": "RFC 0022 §B. When `true`, host honors the `inputMapping` field on `core.subWorkflow` configs — seeding the child workflow's initial variable bag from `parentVariables[parentKey]` projections, overriding any matching `variables[].defaultValue` declaration on the child. When `false` or absent, hosts MUST refuse workflows that carry a non-empty `inputMapping` at registration with `validation_error` + `details.requiredCapability: 'subWorkflow.inputMapping'`. Silent ignore is NOT conformant."
+        }
+      },
+      "additionalProperties": false
     },
     "fs": {
       "type": "object",

@@ -1,0 +1,28 @@
+{
+  "id": "conformance-subworkflow-input-mapping",
+  "name": "Conformance: subWorkflow Input Mapping (RFC 0022 §B)",
+  "version": "1.0",
+  "description": "RFC 0022 §B — host honors `inputMapping` on `core.subWorkflow` and seeds child variables from parent-variable projections. Asserts that `inputMapping` overrides any matching `variables[].defaultValue` declaration on the child workflow. Scenario drives the parent + child run lifecycle and inspects the child's initial variables via /v1/runs/{childRunId}. See subworkflow-input-mapping.test.ts.",
+  "nodes": [
+    {
+      "id": "noop",
+      "typeId": "core.identity",
+      "name": "Noop (subworkflow input-mapping fixture)",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "currentPrdId", "type": "string", "defaultValue": "prd-1" }
+  ],
+  "metadata": {
+    "tags": ["conformance", "rfc-0022", "subworkflow", "input-mapping"],
+    "requiresCapability": "capabilities.subWorkflow.inputMapping"
+  },
+  "settings": { "timeout": 10000 }
+}

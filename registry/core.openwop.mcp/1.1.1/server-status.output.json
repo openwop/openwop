@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.mcp/1.0.0/server-status.output.json",
+  "title": "ServerStatusOutput",
+  "type": "object",
+  "required": ["available", "latencyMs"],
+  "properties": {
+    "available": {
+      "type": "boolean",
+      "description": "`true` if the server responded successfully to the health probe within `timeoutMs`. `false` on timeout, transport failure, or protocol error — workflow authors branch on this to retry / fallback / fail-soft."
+    },
+    "name": {
+      "type": "string",
+      "description": "Server-reported name (from MCP `initialize` response). Absent if unavailable."
+    },
+    "version": {
+      "type": "string",
+      "description": "Server-reported version. Absent if unavailable."
+    },
+    "latencyMs": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Round-trip latency in milliseconds. When `available: false`, the timeout value is reported here."
+    },
+    "error": {
+      "type": "string",
+      "description": "When `available: false`, the last error message for diagnostic surfacing."
+    }
+  },
+  "additionalProperties": false
+}

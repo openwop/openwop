@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.ai/1.0.0/embeddings.input.json",
+  "title": "EmbeddingsInput",
+  "type": "object",
+  "required": ["text"],
+  "properties": {
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32768,
+      "description": "Single text to embed. For batch embedding, dispatch this node multiple times in parallel via core.control.parallel (or ship a future `core.openwop.ai.embeddings-batch` variant)."
+    }
+  },
+  "additionalProperties": false
+}

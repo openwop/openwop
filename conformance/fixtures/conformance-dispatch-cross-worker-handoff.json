@@ -1,0 +1,28 @@
+{
+  "id": "conformance-dispatch-cross-worker-handoff",
+  "name": "Conformance: Dispatch Cross-Worker Handoff (RFC 0022 §A)",
+  "version": "1.0",
+  "description": "RFC 0022 §A — sequential fan-out across two children using `perWorkerOutputMappings` + `perWorkerInputMappings`. Child-a writes `sharedVar` via outputMapping; child-b reads `inputs.input = parent's sharedVar` via inputMapping. Asserts that the dispatch node's same-run parent variable bag is the handoff channel between sequential children. See dispatch-cross-worker-handoff.test.ts.",
+  "nodes": [
+    {
+      "id": "noop",
+      "typeId": "core.identity",
+      "name": "Noop (cross-worker-handoff fixture)",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "sharedVar", "type": "string", "defaultValue": "" }
+  ],
+  "metadata": {
+    "tags": ["conformance", "rfc-0022", "dispatch", "cross-worker-handoff"],
+    "requiresCapability": "capabilities.agents.dispatchMapping"
+  },
+  "settings": { "timeout": 10000 }
+}

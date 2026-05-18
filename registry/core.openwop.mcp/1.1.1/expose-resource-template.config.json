@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.mcp/1.1.0/expose-resource-template.config.json",
+  "title": "McpExposeResourceTemplateConfig",
+  "type": "object",
+  "required": [
+    "uriTemplate"
+  ],
+  "properties": {
+    "uriTemplate": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "mimeType": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

@@ -74,6 +74,7 @@ The naming convention is `core.<conceptName>` — flat camelCase compound for mu
   "workflowId": "<child-workflow-id>",
   "waitForCompletion": true,
   "onChildFailure": "fail-parent" | "absorb",
+  "inputMapping": { "<childVar>": "<parentVar>" },
   "outputMapping": { "<parentVar>": "<childVar>" },
   "propagateCancellation": true
 }
@@ -82,6 +83,7 @@ The naming convention is `core.<conceptName>` — flat camelCase compound for mu
 - `workflowId` (required, string): the child workflow document identifier. Hosts MUST refuse the parent run with `unknown_child_workflow` if no such workflow is loaded.
 - `waitForCompletion` (optional, boolean, default `true`): whether the parent blocks on the child's terminal status. `false` is reserved for a future asynchronous variant; v1 hosts MAY refuse `false` with `validation_error`.
 - `onChildFailure` (optional, closed enum, default `"fail-parent"`): `"fail-parent"` propagates the child's failure to the parent's `node.failed` event and subsequent `run.failed`; `"absorb"` records the child's failure but lets the parent continue.
+- `inputMapping` (optional, object — RFC 0022 §B): a `childVar → parentVar` map applied at child-run create time. For each `(childKey, parentKey)` pair, the host MUST seed the child workflow's initial variable bag with `childKey ← parentVariables[parentKey]`. The seeding overrides any `variables[].defaultValue` declaration on the child workflow with a matching name. Unset parent variables MUST surface as `undefined` on the child variable (the host MUST NOT throw, MUST NOT coerce to `null`). The seeding fold is one-shot at run-create time; subsequent parent-variable mutations do NOT propagate to the child mid-run. Gated on `capabilities.subWorkflow.inputMapping: true`; hosts without that advertisement MUST refuse workflows that carry a non-empty `inputMapping` at registration with `validation_error` + `details.requiredCapability: "subWorkflow.inputMapping"`. Silent ignore is NOT conformant.
 - `outputMapping` (optional, object): a `parentVar → childVar` map. After the child reaches `completed`, the host MUST copy each named child variable into the parent's variables under the mapped key. Missing child variables MUST surface as `undefined` (the host MUST NOT throw); the host MUST NOT overwrite parent variables for entries whose child source is `undefined`.
 - `propagateCancellation` (optional, boolean, default `true`): when the parent enters `cancelling`, whether to cascade-cancel the in-flight child. See `interrupt-profiles.md` §"Parent-child cancellation."
 
@@ -104,7 +106,7 @@ Hosts that want to carry additional fields (e.g., aggregate `childOutcome` enum,
 
 **Parent linkage.** Every child run launched via `core.subWorkflow` MUST carry `RunSnapshot.parentRunId` (the parent's runId) and `RunSnapshot.parentNodeId` (the dispatching node's id). Both fields are required on the child's `GET /v1/runs/{runId}` response.
 
-**Variable seeding.** A child run's variables MUST be initialized from the child workflow's `variables[].defaultValue` declarations at run-create time. Mid-run mutations to those defaults are out of scope (the next write wins per the channel reducer); the seeding rule covers the initial fold only.
+**Variable seeding.** A child run's variables MUST be initialized from the child workflow's `variables[].defaultValue` declarations at run-create time. Mid-run mutations to those defaults are out of scope (the next write wins per the channel reducer); the seeding rule covers the initial fold only. When `inputMapping` is set (per RFC 0022 §B) and the host advertises `capabilities.subWorkflow.inputMapping: true`, the seeding fold is two-pass: first `defaultValue` declarations, then `inputMapping` projections (which override matching keys). The two passes are non-conflicting because `defaultValue` is author-supplied at workflow registration while `inputMapping` is host-supplied at runtime.
 
 **Conformance:** `conformance/src/scenarios/subworkflow.test.ts` and the `conformance-subworkflow-parent`/`conformance-subworkflow-child` fixtures exercise the contract end-to-end.
 

@@ -1,0 +1,28 @@
+{
+  "id": "conformance-dispatch-output-mapping",
+  "name": "Conformance: Dispatch Output Mapping (RFC 0022 §A)",
+  "version": "1.0",
+  "description": "RFC 0022 §A — host honors `outputMapping` on `core.dispatch` and harvests child variables back into parent variables on terminal `completed`. Scenario drives the supervisor + dispatch surface directly. See dispatch-output-mapping.test.ts.",
+  "nodes": [
+    {
+      "id": "noop",
+      "typeId": "core.identity",
+      "name": "Noop (output-mapping fixture)",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "parentResult", "type": "string", "defaultValue": "" }
+  ],
+  "metadata": {
+    "tags": ["conformance", "rfc-0022", "dispatch", "output-mapping"],
+    "requiresCapability": "capabilities.agents.dispatchMapping"
+  },
+  "settings": { "timeout": 5000 }
+}

@@ -493,6 +493,126 @@ export interface DiscoveryAuthScopedCapability {
   mode: 'same-endpoint';
 }
 
+// ---------------------------------------------------------------------------
+// AI Envelope (DRAFT v1.x — `spec/v1/ai-envelope.md`)
+//
+// Inbound LLM-emission envelope. Distinct from `RunEventDoc` (outbound event
+// log) and `ErrorEnvelope` (host HTTP error response). Top-level shape is
+// closed; payload shape is selected by `type` and validated against a
+// per-kind JSON Schema advertised via `Capabilities.supportedEnvelopes` +
+// `Capabilities.schemaVersions`. See spec doc for full normative prose.
+// ---------------------------------------------------------------------------
+
+/** Wire metadata on every AI Envelope. */
+export interface EnvelopeMeta {
+  /** Provenance of this emission. */
+  source: 'ai-generation' | 'user' | 'system';
+  /** Mirrors `RunEventDoc.contentTrust`. Hosts MUST set 'untrusted' for MCP / A2A origin. */
+  contentTrust?: 'trusted' | 'untrusted';
+  /** ISO 8601 UTC timestamp. */
+  ts: string;
+  /** Optional W3C trace-context for distributed tracing. */
+  traceparent?: string;
+  /** Optional human-readable label for ops dashboards. */
+  label?: string;
+}
+
+/** Chunking info for streamed emissions. (in-flight) */
+export interface PartialInfo {
+  isPartial: boolean;
+  index: number;
+  /** -1 when total is unknown (streaming without precount). */
+  total: number;
+}
+
+/** Canonical inbound LLM-emission wire shape per `spec/v1/ai-envelope.md`. */
+export interface AIEnvelope<TPayload = unknown> {
+  /** Discriminator for payload shape, kind routing, and Envelope Contract gate. */
+  type: string;
+  /** Per-kind schema version. Absent → treat as 0. */
+  schemaVersion?: number;
+  /** Globally unique envelope id. Engine-assigned if absent on receipt. */
+  envelopeId: string;
+  /** Caller-stable id for dedup, replay short-circuit, and causal chaining. */
+  correlationId: string;
+  /** Set when the emitting node is identifiable. */
+  nodeId?: string;
+  /** Discriminated payload. Shape selected by `type`. */
+  payload: TPayload;
+  /** Wire metadata. */
+  meta: EnvelopeMeta;
+  /** Present when this is one fragment of a streamed emission. */
+  partial?: PartialInfo;
+}
+
+/** Per-typeId envelope-kind permission set per `ai-envelope.md` §"Envelope Contract". */
+export interface EnvelopeContract {
+  /** Kinds the engine will accept from this node. */
+  accepts: string[];
+  /** Refusal behavior for non-`accepts`, non-universal kinds. */
+  refusalMode: 'fail-node' | 'discard-and-warn';
+}
+
+/** Returned by the engine's `acceptEnvelope` path. */
+export type EnvelopeOutcome =
+  | { status: 'accepted'; recordedEventIds: string[] }
+  | { status: 'gated'; reason: string; gate: EnvelopeContractRefusal }
+  | { status: 'invalid'; reason: string; details: ValidationDetail[] }
+  | { status: 'breached'; reason: string; capKind: 'envelopes' | 'schema' | 'clarification' };
+
+export interface EnvelopeContractRefusal {
+  refusedType: string;
+  acceptedTypes: string[];
+  refusalMode: 'fail-node' | 'discard-and-warn';
+}
+
+export interface ValidationDetail {
+  path: string;
+  message: string;
+}
+
+/** Optional capability advertisement. Default when absent: 'warn'. */
+export type EnvelopeStrictness = 'warn' | 'strict';
+
+/** Optional capability advertisement per `ai-envelope.md` §"Capability handshake integration". */
+export interface EnvelopeContractsCapability {
+  advertised: boolean;
+}
+
+// Universal-kind payloads. Per-kind schemas at `schemas/envelopes/<kind>.schema.json`.
+
+/** Payload of the universal `clarification.request` envelope kind. */
+export interface ClarificationRequestPayload {
+  questions: Array<{
+    id: string;
+    question: string;
+    schema?: Record<string, unknown>;
+  }>;
+  contextType?: string;
+}
+
+/** Payload of the universal `schema.request` envelope kind. */
+export interface SchemaRequestPayload {
+  envelopeType: string;
+  reason?: string;
+}
+
+/** Payload of the universal `schema.response` envelope kind (LLM ack). */
+export interface SchemaResponsePayload {
+  envelopeType: string;
+  ack: true;
+}
+
+/**
+ * Payload of the universal `error` envelope kind (the LLM's deliberate error
+ * report). Distinct from `ErrorEnvelope` (the host's HTTP error response).
+ */
+export interface AIEnvelopeErrorPayload {
+  code: string;
+  message: string;
+  details?: Record<string, unknown>;
+}
+
 /**
  * Thrown when the server returns a non-2xx response. Carries the original
  * status, parsed error envelope (if available), the raw response text,

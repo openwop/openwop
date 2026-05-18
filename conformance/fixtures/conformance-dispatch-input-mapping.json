@@ -1,0 +1,28 @@
+{
+  "id": "conformance-dispatch-input-mapping",
+  "name": "Conformance: Dispatch Input Mapping (RFC 0022 §A)",
+  "version": "1.0",
+  "description": "RFC 0022 §A — host honors `inputMapping` on `core.dispatch` and projects parent variables into child inputs. Fixture is a noop workflow; the scenario drives the supervisor + dispatch surface directly per the existing dispatch-loop convention. See dispatch-input-mapping.test.ts.",
+  "nodes": [
+    {
+      "id": "noop",
+      "typeId": "core.identity",
+      "name": "Noop (input-mapping fixture)",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "parentName", "type": "string", "defaultValue": "Alice" }
+  ],
+  "metadata": {
+    "tags": ["conformance", "rfc-0022", "dispatch", "input-mapping"],
+    "requiresCapability": "capabilities.agents.dispatchMapping"
+  },
+  "settings": { "timeout": 5000 }
+}

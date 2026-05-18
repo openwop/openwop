@@ -6,6 +6,11 @@
 |---|---|---|
 | `agent-manifest.schema.json` | `node-packs.md` + agent-pack RFCs | Agent manifest entries distributed alongside node-pack manifests |
 | `agent-ref.schema.json` | `agent-memory.md` + agent-identity RFC | Multi-Agent Shift Phase 1 — slim runtime AgentRef projection carried on `RunSnapshot.agent` / `runOrchestrator`, `WorkflowNode.agent?`, and `agent.*` event payloads |
+| `ai-envelope.schema.json` | `ai-envelope.md` | FINAL v1.1 — inbound LLM-emission envelope. Top-level shape (`type` / `schemaVersion` / `envelopeId` / `correlationId` / `payload` / `meta` / `partial`). Per-kind payload schemas under `envelopes/`. Distinct from `RunEventDoc` (outbound) and `error-envelope.schema.json` (host HTTP errors). |
+| `envelopes/clarification.request.schema.json` | `ai-envelope.md` §"Universal kinds" | FINAL v1.1 — payload for the universal `clarification.request` kind; engine lifts to `kind: "clarification"` `InterruptPayload`. |
+| `envelopes/schema.request.schema.json` | `ai-envelope.md` §"Universal kinds" | FINAL v1.1 — LLM asks the engine for a kind's JSON Schema. Counts against `Capabilities.limits.schemaRounds`. |
+| `envelopes/schema.response.schema.json` | `ai-envelope.md` §"Universal kinds" | FINAL v1.1 — side-channel ack for `schema.request`. Never surfaces to users. |
+| `envelopes/error.schema.json` | `ai-envelope.md` §"Universal kinds" | FINAL v1.1 — LLM's deliberate error report. Distinct from `error-envelope.schema.json` (host HTTP errors). |
 | `audit-verify-result.schema.json` | `auth-profiles.md` §`openwop-audit-log-integrity` | Response payload from `GET /v1/audit/verify` — chain-validity verdict + checkpoints + anomalies |
 | `capabilities.schema.json` | `capabilities.md` | `/.well-known/openwop` response — protocolVersion + supportedEnvelopes + schemaVersions + limits + optional v1 discovery surface |
 | `channel-written-payload.schema.json` | `channels-and-reducers.md` §Channel write event | Payload of the `channel.written` RunEvent — write input + reducer name |
