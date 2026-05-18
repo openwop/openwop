@@ -33,11 +33,24 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { EventEmitter } from 'node:events';
 import { loadWasmPack, type LoadedWasmPack, type WasmHostBridge } from './wasm-loader.js';
+import {
+  expandChainFromRegistry,
+  WorkflowChainExpansionError,
+} from './workflow-chain-expansion.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const HOST = process.env.OPENWOP_HOST ?? '127.0.0.1';
 const PORT = Number(process.env.OPENWOP_PORT ?? 3737);
 const API_KEY = process.env.OPENWOP_API_KEY ?? 'openwop-inmem-dev-key';
+// RFC 0013 Phase 3 — filesystem-mounted registry mirror for workflow-
+// chain pack expansion. When unset OR the dir doesn't exist, the host
+// omits `capabilities.workflowChainPacks` and the expand endpoint
+// returns 503. Default points at the in-tree examples/packs/ so the
+// host works out of the box when run from the repo.
+const PACK_REGISTRY_DIR = process.env.OPENWOP_PACK_REGISTRY_DIR ?? join(
+  dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..', 'examples', 'packs',
+);
+const WORKFLOW_CHAIN_EXPANSION_SUPPORTED = existsSync(PACK_REGISTRY_DIR);
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -580,6 +593,13 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
   // module trips its memory ceiling).
   const wasmSupported = wasmTypeRegistry.size > 0;
   const capabilities: Record<string, unknown> = {};
+  if (WORKFLOW_CHAIN_EXPANSION_SUPPORTED) {
+    // RFC 0013 — host editor implements workflow-chain pack expansion
+    // via the vendor-prefixed POST /v1/host/sample/workflow-chain:expand
+    // endpoint. Per `capabilities.md §workflowChainPacks`: editor-only
+    // surface; the runtime dispatch path is unchanged.
+    capabilities.workflowChainPacks = { supported: true };
+  }
   if (wasmSupported) {
     capabilities.nodePackRuntimes = {
       wasm: {
@@ -933,6 +953,116 @@ const RUN_EVENTS_POLL_PATTERN = /^\/v1\/runs\/([^/]+)\/events\/poll$/;
 const RUN_EVENTS_SSE_PATTERN = /^\/v1\/runs\/([^/]+)\/events$/;
 const RUN_DEBUG_BUNDLE_PATTERN = /^\/v1\/runs\/([^/]+)\/debug-bundle$/;
 
+/**
+ * RFC 0013 Phase 3 — workflow-chain pack expansion endpoint.
+ *
+ * Vendor-prefixed under `/v1/host/sample/*` per
+ * `spec/v1/host-extensions.md` §"Canonical prefixes" — chain expansion
+ * is workflow-edit-time host behavior, not part of the v1 wire
+ * contract. Conformance scenarios gate on
+ * `capabilities.workflowChainPacks.supported` advertised via
+ * `/.well-known/openwop`.
+ *
+ * Request body shape:
+ *   {
+ *     packName: string,
+ *     version?: string,        // pinned version check; optional
+ *     chainId: string,
+ *     parameters: object,      // ALREADY validated against chain.parameters
+ *     parentWorkflowId?: string // echoed in the response for the caller
+ *   }
+ *
+ * Response (200):
+ *   {
+ *     expansionId: string,
+ *     chainId, packName, packVersion,
+ *     nodes: WorkflowFragmentNode[],
+ *     edges: WorkflowFragmentEdge[]
+ *   }
+ *
+ * Error mapping (status → code):
+ *   404 → pack_not_found / chain_not_found
+ *   422 → pack_kind_invalid / pack_manifest_invalid /
+ *         pack_signature_invalid / chain_unresolvable_typeid /
+ *         invalid_request
+ *   500 → pack_signature_unverifiable / internal
+ *   503 → host doesn't advertise the capability
+ */
+async function handleExpandWorkflowChain(
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<void> {
+  if (!checkAuth(req, res)) return;
+  if (!WORKFLOW_CHAIN_EXPANSION_SUPPORTED) {
+    sendError(
+      res,
+      503,
+      'capability_not_advertised',
+      'workflowChainPacks capability is not advertised by this host (OPENWOP_PACK_REGISTRY_DIR unset or unreadable).',
+    );
+    return;
+  }
+  const bodyText = await readBody(req);
+  let body: {
+    packName?: unknown;
+    version?: unknown;
+    chainId?: unknown;
+    parameters?: unknown;
+    parentWorkflowId?: unknown;
+  };
+  try {
+    body = JSON.parse(bodyText);
+  } catch {
+    sendError(res, 422, 'invalid_request', 'request body is not valid JSON');
+    return;
+  }
+  if (typeof body.packName !== 'string' || body.packName.length === 0) {
+    sendError(res, 422, 'invalid_request', 'packName: string is required');
+    return;
+  }
+  if (typeof body.chainId !== 'string' || body.chainId.length === 0) {
+    sendError(res, 422, 'invalid_request', 'chainId: string is required');
+    return;
+  }
+  if (typeof body.parameters !== 'object' || body.parameters === null || Array.isArray(body.parameters)) {
+    sendError(res, 422, 'invalid_request', 'parameters: object is required (may be empty)');
+    return;
+  }
+  if (body.version !== undefined && typeof body.version !== 'string') {
+    sendError(res, 422, 'invalid_request', 'version: must be a string when present');
+    return;
+  }
+
+  try {
+    const result = await expandChainFromRegistry({
+      registryDir: PACK_REGISTRY_DIR,
+      packName: body.packName,
+      chainId: body.chainId,
+      parameters: body.parameters as Record<string, unknown>,
+      ...(typeof body.version === 'string' ? { version: body.version } : {}),
+    });
+    sendJSON(res, 200, {
+      expansionId: result.expansionId,
+      chainId: result.chainId,
+      packName: result.packName,
+      packVersion: result.packVersion,
+      nodes: result.nodes,
+      edges: result.edges,
+      ...(typeof body.parentWorkflowId === 'string' ? { parentWorkflowId: body.parentWorkflowId } : {}),
+    });
+  } catch (err) {
+    if (err instanceof WorkflowChainExpansionError) {
+      const status =
+        err.code === 'pack_not_found' || err.code === 'chain_not_found' ? 404 :
+        err.code === 'pack_signature_unverifiable' ? 500 :
+        422;
+      sendError(res, status, err.code, err.message, err.details ? { details: err.details } : {});
+      return;
+    }
+    throw err;
+  }
+}
+
 async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
   const path = url.pathname;
@@ -946,6 +1076,9 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   }
   if (method === 'POST' && path === '/v1/runs') {
     return handleCreateRun(req, res);
+  }
+  if (method === 'POST' && path === '/v1/host/sample/workflow-chain:expand') {
+    return handleExpandWorkflowChain(req, res);
   }
 
   let m = RUN_EVENTS_POLL_PATTERN.exec(path);

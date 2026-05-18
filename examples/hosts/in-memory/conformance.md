@@ -1,9 +1,10 @@
 # Conformance Result: openwop In-Memory Reference Host
 
-> **Run date:** 2026-05-01
-> **Host version:** `openwop-host-in-memory@1.0.0`
-> **Conformance suite:** `@openwop/openwop-conformance@1.0.0`
+> **Run date:** 2026-05-18 (last update — workflow-chain expansion added)
+> **Host version:** `openwop-host-in-memory@1.1.1`
+> **Conformance suite:** `@openwop/openwop-conformance@1.1.1`
 > **Profile claim:** `openwop-core` + `openwop-stream-poll` + `openwop-stream-sse`
+> **Capability claim (RFC 0013):** `workflowChainPacks.supported: true` — host advertises the chain-expansion capability under `/.well-known/openwop` and serves the vendor-prefixed expansion endpoint `POST /v1/host/sample/workflow-chain:expand`. Mounted on top of `OPENWOP_PACK_REGISTRY_DIR` (defaults to the in-tree `examples/packs/`).
 > **Scale profile claim:** `minimal`
 
 ## Summary
@@ -79,6 +80,13 @@ This host establishes **independent implementation** of the OpenWOP v1 wire cont
 - **Profile-truthful.** The host's discovery payload satisfies exactly the predicates for the profiles it claims; the conformance suite verifies it via `lib/profiles.ts`.
 
 The interop matrix in `INTEROP-MATRIX.md` cross-tabulates this host with other published conformance evidence.
+
+## Workflow-chain pack expansion (RFC 0013 Phase 3 — 2026-05-18)
+
+- **`workflow-chain-host-expansion.test.ts`** — 6/6 passing under `OPENWOP_REQUIRE_BEHAVIOR=true` with `OPENWOP_BASE_URL=http://127.0.0.1:3737`. Cases: discovery advertises the capability; 1-node chain expansion with substituted config + rewritten id + capability propagation; 2-node chain with edge rewriting; 404 `pack_not_found`; 404 `chain_not_found`; 422 `invalid_request` on malformed body.
+- **Implementation surface:** `examples/hosts/in-memory/src/workflow-chain-expansion.ts` — pure-function expansion wrapper composing the spec-authoritative `expandChain()` algorithm with the host-specific I/O (registry filesystem mirror lookup + optional Ed25519 signature verification). HTTP handler in `server.ts` (`handleExpandWorkflowChain`).
+- **Host-side test:** `examples/hosts/in-memory/test/workflow-chain-expansion.test.ts` — 5/5 passing under `npx tsx`. Covers the same paths as a pure-function exercise (no HTTP boot).
+- **Sample pack:** `examples/packs/workflow-chain-sample/pack.json` (in-tree, unsigned — sample-host concession; production deployers MUST require signatures per `node-packs.md §"Verification flow"`).
 
 ## Known v1.x Expansion Candidates
 

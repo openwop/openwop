@@ -11,6 +11,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### RFC 0013 (Workflow-chain packs) — Status: `Active` → `Accepted` (2026-05-18)
+
+Reference-host expansion landed on the in-memory host, closing the last gate for `Accepted`. The wire-shape contract is now exercised end-to-end against a live deployment, not just the pure-library server-free scenarios.
+
+- **Reference host implementation:** `examples/hosts/in-memory/src/workflow-chain-expansion.ts` (~330 LOC, zero runtime deps). Composes the spec-authoritative `expandChain()` algorithm with the host-specific I/O the spec deliberately leaves to implementers — filesystem registry resolution (default `OPENWOP_PACK_REGISTRY_DIR=examples/packs/`) + optional Ed25519 signature verification per `node-packs.md §Signing` (chain packs reuse the node-pack signing recipe verbatim). The pure expansion algorithm is a verbatim copy of `conformance/src/lib/workflow-chain-expansion.ts` (zero-runtime-deps policy on the in-memory host precludes cross-package import); the new live-host scenario asserts the two implementations stay in sync.
+- **HTTP surface:** `POST /v1/host/sample/workflow-chain:expand`, vendor-prefixed per `host-extensions.md §"Canonical prefixes"`. Request body `{ packName, version?, chainId, parameters, parentWorkflowId? }`; response `{ expansionId, chainId, packName, packVersion, nodes, edges }`. Error-code → HTTP-status mapping: `pack_not_found` / `chain_not_found` → 404; `pack_kind_invalid` / `pack_manifest_invalid` / `pack_signature_invalid` / `chain_unresolvable_typeid` / `invalid_request` → 422; `pack_signature_unverifiable` → 500.
+- **Capability advertisement:** in-memory host now emits `capabilities.workflowChainPacks: { supported: true }` on `/.well-known/openwop` when the configured registry dir is readable at boot.
+- **Tests landed:**
+  - `examples/hosts/in-memory/test/workflow-chain-expansion.test.ts` — 5 cases, pure-function (positive 1-node + 2-node with edges + capability propagation, pack-not-found, chain-not-found, `pack_kind_invalid` for a mocked node-kind pack).
+  - `conformance/src/scenarios/workflow-chain-host-expansion.test.ts` — 6 cases, capability-gated live-host scenario (discovery advertisement / 1-node + 2-node positive / `pack_not_found` 404 / `chain_not_found` 404 / `invalid_request` 422). Runs under `OPENWOP_REQUIRE_BEHAVIOR=true` against the in-memory host's HTTP endpoint.
+- **Docs updated:** `conformance/coverage.md` adds a new "Workflow-chain packs" row (grade A — 4 server-free + 1 live-host scenario); `examples/hosts/in-memory/conformance.md` records the new pass counts + the implementation surface; `INTEROP-MATRIX.md` updates the in-memory host row to advertise the capability; `RFCS/0013-workflow-chain-packs.md` Acceptance checklist marks the reference-host item complete and flips Status to `Accepted`.
+- **Out of scope:** Phase 4 vendor pack publications (the 55 unpublished editor presets from CANVAS-PACKS-INVENTORY) remain a downstream tracker. Public-registry publication of workflow-chain packs is gated on the same external security audit that gates the new `core.openwop.*` packs (per `SECURITY/external-audit-engagement.md §2.1`).
+
+Compatibility: implementation-only. No spec / schema / wire-shape diff. The new endpoint lives under the vendor `/v1/host/sample/*` prefix already documented in `host-extensions.md`.
+
 ### RFC 0014–0021 graduation cohort — Status: `Active` → `Accepted` (2026-05-18)
 
 Eight Active RFCs reached `Accepted` in a single docs-completion session, closing the long-standing §7 acceptance gap where impl + conformance had landed but the normative prose hadn't caught up.

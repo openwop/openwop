@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0013 |
 | **Title** | Workflow-chain packs (pre-configured DAG fragments published as registry artifacts) |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@dtuftsg) |
 | **Created** | 2026-05-13 |
-| **Updated** | 2026-05-18 |
+| **Updated** | 2026-05-18 (Active → Accepted: reference-host expansion landed) |
 | **Affects** | `spec/v1/node-packs.md`, new `spec/v1/workflow-chain-packs.md`, `schemas/pack-manifest.schema.json`, registry HTTP API |
 | **Compatibility** | `additive` — introduces a new pack kind alongside the existing node-pack format; no existing surface changes |
 | **Supersedes** | — |
@@ -328,11 +328,11 @@ Promotion to `Active` (2026-05-18 — spec + tooling + tests merged, reference h
 - [x] In-tree example pack `examples/packs/workflow-chain-sample/` (two chains: 1-node + multi-node) — proves the manifest format is implementable end-to-end.
 - [x] CHANGELOG entries under `[1.1.2 — unreleased]` covering the spec/tooling/conformance merges + the Phase 4 example pack.
 
-Remaining gate for `Accepted`:
+Promotion to `Accepted` (2026-05-18 — reference-host expansion landed):
 
-- [ ] Reference host expansion implementation. The conformance scenarios run server-free against fixture manifests; promotion to `Accepted` requires at least one openwop reference host (the in-memory host is the natural fit) to implement workflow-edit-time expansion + advertise `capabilities.workflowChainPacks: true` + pass the four scenarios under the live host runner. Estimated ~5 days of editor work per the Implementation notes below.
+- [x] Reference host expansion implementation. The in-memory reference host now advertises `capabilities.workflowChainPacks.supported: true` and serves the vendor-prefixed `POST /v1/host/sample/workflow-chain:expand` endpoint, which wraps the spec-authoritative `expandChain()` algorithm with filesystem registry resolution + Ed25519 signature verification. Per-host pure-function smoke at `examples/hosts/in-memory/test/workflow-chain-expansion.test.ts` (5 cases) + live-host conformance scenario at `conformance/src/scenarios/workflow-chain-host-expansion.test.ts` (6 cases, gated on `OPENWOP_REQUIRE_BEHAVIOR=true`) both pass. Closes the wire-shape contract end-to-end against a deployed host.
 
-  **Tracker decision:** the reference-host implementation is **deferred to a follow-up tracker** rather than blocking promotion to `Active`. The spec contract + schemas + conformance suite + the example pack collectively pin the wire shape; downstream adopters (MyndHyve App Builder / Campaign Studio editors) can move forward against the locked contract. Reopening to amend the wire shape would require a new RFC.
+  **Reference-host implementation:** `examples/hosts/in-memory/src/workflow-chain-expansion.ts` (~330 LOC). Pure `node:crypto` + `node:fs` + `node:url`. The pure expansion algorithm is a verbatim copy of `conformance/src/lib/workflow-chain-expansion.ts` (the spec-authoritative version exercised by the server-free scenarios); the live-host scenario asserts the two implementations stay in sync by black-box comparison of their outputs on the same fixture inputs.
 
 ## References
 
