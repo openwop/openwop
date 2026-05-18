@@ -34,15 +34,24 @@ export interface DispatchRequest {
   /** Called for each streaming token chunk (text delta). */
   onDelta?: (delta: string) => void | Promise<void>;
   /** Called for each reasoning-content chunk emitted by reasoning models
-   *  (e.g. MiniMax-M2.7 `<think>...</think>` blocks). `delta` carries
-   *  the new chunk of the currently-open block (live-streaming UX);
-   *  empty when nothing new arrived this push. Providers that don't
-   *  emit a reasoning channel never call this. */
+   *  (e.g. MiniMax-M2.7 `<think>...</think>` blocks, Anthropic extended-
+   *  thinking `thinking_delta` blocks, Gemini 2.5 `thought` parts).
+   *  `delta` carries the new chunk of the currently-open block (live-
+   *  streaming UX); empty when nothing new arrived this push.
+   *  Providers / models that don't emit a reasoning channel never
+   *  call this. */
   onReasoningDelta?: (delta: string) => void | Promise<void>;
   /** Called once per CLOSED reasoning block with the complete contents.
    *  Callers emit one `agent.reasoned` event per call. Fires AFTER all
    *  the block's `onReasoningDelta` calls. */
   onReasoningBlock?: (block: string) => void | Promise<void>;
+  /** Resolved per-run reasoning verbosity (per `capabilities.md` §"agents
+   *  reasoning"). Dispatchers use this to decide whether to opt into a
+   *  provider's server-side thinking surface (Anthropic `thinking`
+   *  parameter, Gemini `thinkingConfig`, etc.). When `'off'`, dispatchers
+   *  MUST NOT enable thinking even if the model supports it — saves
+   *  tokens and avoids surfacing reasoning the operator suppressed. */
+  reasoningVerbosity?: 'summary' | 'full' | 'off';
   /** Optional abort signal so callers (e.g., the aiProviders host
    *  adapter's per-call timeout) can hard-abort the underlying fetch
    *  instead of leaving it dangling. */
@@ -103,6 +112,14 @@ async function dispatchAnthropic(req: DispatchRequest): Promise<DispatchResult> 
   const systemMessage = req.messages.find((m) => m.role === 'system');
   const conversation = req.messages.filter((m) => m.role !== 'system');
 
+  // Claude 4 extended thinking. Opt-in via the `thinking` request
+  // parameter. Costs extra output tokens (the budget caps the spend);
+  // skipped entirely when the host resolved verbosity to 'off'.
+  // Per https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking.
+  const thinkingEnabled =
+    (req.reasoningVerbosity ?? 'summary') !== 'off' && /^claude-(?:opus|sonnet|haiku)-4/.test(req.model);
+  const thinkingBudget = 4000;
+
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -112,10 +129,13 @@ async function dispatchAnthropic(req: DispatchRequest): Promise<DispatchResult> 
     },
     body: JSON.stringify({
       model: req.model,
-      max_tokens: req.maxTokens ?? 4096,
+      // Thinking budget consumes the same output-tokens bucket; raise
+      // the floor so visible text still has room when thinking is on.
+      max_tokens: req.maxTokens ?? (thinkingEnabled ? 8192 : 4096),
       stream: true,
       ...(systemMessage ? { system: contentToText(systemMessage.content, 'Anthropic') } : {}),
       messages: conversation.map((m) => ({ role: m.role, content: contentToText(m.content, 'Anthropic') })),
+      ...(thinkingEnabled ? { thinking: { type: 'enabled', budget_tokens: thinkingBudget } } : {}),
     }),
     ...(req.signal ? { signal: req.signal } : {}),
   });
@@ -129,19 +149,56 @@ async function dispatchAnthropic(req: DispatchRequest): Promise<DispatchResult> 
   let inputTokens: number | undefined;
   let outputTokens: number | undefined;
   let finishReason: string | undefined;
+  // Content-block tracker: when thinking is enabled, Anthropic streams
+  // a `type: 'thinking'` block (followed by `thinking_delta` events)
+  // BEFORE the `type: 'text'` block. Track the active block's index +
+  // type so we route each delta correctly.
+  const blockTypeByIndex = new Map<number, 'thinking' | 'text'>();
+  const thinkingByIndex = new Map<number, string>();
 
   for await (const event of parseSseStream(res.body)) {
-    if (event.event === 'content_block_delta') {
+    if (event.event === 'content_block_start') {
       try {
-        const data = JSON.parse(event.data) as { delta?: { text?: string } };
-        const delta = data.delta?.text;
-        if (delta) {
-          completion += delta;
-          await req.onDelta?.(delta);
+        const data = JSON.parse(event.data) as {
+          index?: number;
+          content_block?: { type?: string };
+        };
+        const idx = data.index;
+        const ty = data.content_block?.type;
+        if (typeof idx === 'number' && (ty === 'thinking' || ty === 'text')) {
+          blockTypeByIndex.set(idx, ty);
+          if (ty === 'thinking') thinkingByIndex.set(idx, '');
         }
-      } catch {
-        /* skip malformed chunk */
-      }
+      } catch { /* */ }
+    } else if (event.event === 'content_block_delta') {
+      try {
+        const data = JSON.parse(event.data) as {
+          index?: number;
+          delta?: { type?: string; text?: string; thinking?: string };
+        };
+        const idx = data.index;
+        const dty = data.delta?.type;
+        if (dty === 'text_delta' && data.delta?.text) {
+          completion += data.delta.text;
+          await req.onDelta?.(data.delta.text);
+        } else if (dty === 'thinking_delta' && typeof data.delta?.thinking === 'string') {
+          const chunk = data.delta.thinking;
+          if (typeof idx === 'number') {
+            thinkingByIndex.set(idx, (thinkingByIndex.get(idx) ?? '') + chunk);
+          }
+          await req.onReasoningDelta?.(chunk);
+        }
+      } catch { /* */ }
+    } else if (event.event === 'content_block_stop') {
+      try {
+        const data = JSON.parse(event.data) as { index?: number };
+        const idx = data.index;
+        if (typeof idx === 'number' && blockTypeByIndex.get(idx) === 'thinking') {
+          const block = thinkingByIndex.get(idx) ?? '';
+          thinkingByIndex.delete(idx);
+          if (block.length > 0) await req.onReasoningBlock?.(block);
+        }
+      } catch { /* */ }
     } else if (event.event === 'message_start') {
       try {
         const data = JSON.parse(event.data) as { message?: { usage?: { input_tokens?: number } } };
@@ -197,6 +254,12 @@ async function dispatchOpenAI(req: DispatchRequest): Promise<DispatchResult> {
   let inputTokens: number | undefined;
   let outputTokens: number | undefined;
   let finishReason: string | undefined;
+  // OpenAI-compatible endpoints (BYOK against DeepSeek-R1, qwen-think,
+  // GLM-4-think, MiniMax) emit reasoning inline as `<think>...</think>`
+  // in the content delta. The splitter is a no-op for models that
+  // don't use this convention (OpenAI o1/GPT-5 reasoning is not
+  // surfaced in the API at all — only via `usage.reasoning_tokens`).
+  const splitter = new ThinkBlockSplitter();
 
   for await (const event of parseSseStream(res.body)) {
     if (event.data === '[DONE]') break;
@@ -206,10 +269,15 @@ async function dispatchOpenAI(req: DispatchRequest): Promise<DispatchResult> {
         usage?: { prompt_tokens?: number; completion_tokens?: number };
       };
       const choice = data.choices?.[0];
-      const delta = choice?.delta?.content;
-      if (delta) {
-        completion += delta;
-        await req.onDelta?.(delta);
+      const rawDelta = choice?.delta?.content;
+      if (rawDelta) {
+        const { visible, reasoningDelta, closedBlocks } = splitter.push(rawDelta);
+        if (visible) {
+          completion += visible;
+          await req.onDelta?.(visible);
+        }
+        if (reasoningDelta) await req.onReasoningDelta?.(reasoningDelta);
+        for (const block of closedBlocks) await req.onReasoningBlock?.(block);
       }
       if (choice?.finish_reason) finishReason = choice.finish_reason;
       if (data.usage) {
@@ -219,6 +287,11 @@ async function dispatchOpenAI(req: DispatchRequest): Promise<DispatchResult> {
     } catch {
       /* skip malformed chunk */
     }
+  }
+  const tail = splitter.flush();
+  if (tail.visible) {
+    completion += tail.visible;
+    await req.onDelta?.(tail.visible);
   }
 
   return {
@@ -337,12 +410,20 @@ async function dispatchGoogle(req: DispatchRequest): Promise<DispatchResult> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(req.model)}:streamGenerateContent?alt=sse&key=${encodeURIComponent(req.apiKey)}`;
 
   // Thinking config only applies to the 2.5 reasoning models
-  // (Flash + Pro). Flash-Lite doesn't have thinking — sending
-  // thinkingConfig there is harmless but pointless. Pro/Flash with
-  // thinking on can consume the entire maxOutputTokens budget on
-  // reasoning; default to off for predictable chat streaming.
-  const needsThinkingDisable =
+  // (Flash + Pro). Flash-Lite doesn't have thinking.
+  //
+  // Two modes per host policy (req.reasoningVerbosity):
+  //   - 'off'                     → disable thinking entirely
+  //                                 (thinkingBudget: 0); preserves the
+  //                                 empty-completion safety of the prior
+  //                                 default.
+  //   - 'summary' / 'full' / unset → enable + capture thoughts. We bump
+  //                                 the maxOutputTokens floor so visible
+  //                                 text still has room when thinking
+  //                                 consumes much of the budget.
+  const isReasoningModel =
     req.model.includes('2.5-') && !req.model.includes('-lite');
+  const thinkingEnabled = isReasoningModel && (req.reasoningVerbosity ?? 'summary') !== 'off';
 
   const res = await fetch(url, {
     method: 'POST',
@@ -358,8 +439,12 @@ async function dispatchGoogle(req: DispatchRequest): Promise<DispatchResult> {
       // ai.google.dev/gemini-api/docs/pricing.
       ...(req.webSearch ? { tools: [{ googleSearch: {} }] } : {}),
       generationConfig: {
-        maxOutputTokens: req.maxTokens ?? 4096,
-        ...(needsThinkingDisable ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+        maxOutputTokens: req.maxTokens ?? (thinkingEnabled ? 8192 : 4096),
+        ...(isReasoningModel && !thinkingEnabled
+          ? { thinkingConfig: { thinkingBudget: 0 } }
+          : thinkingEnabled
+            ? { thinkingConfig: { includeThoughts: true } }
+            : {}),
       },
     }),
     ...(req.signal ? { signal: req.signal } : {}),
@@ -382,8 +467,15 @@ async function dispatchGoogle(req: DispatchRequest): Promise<DispatchResult> {
   interface GeminiGroundingChunk {
     web?: { uri?: string; title?: string };
   }
+  interface GeminiPart {
+    text?: string;
+    /** Gemini 2.5 thinking: when this part is a thought (not visible
+     *  answer), the `thought: true` flag distinguishes it. Requires
+     *  `thinkingConfig.includeThoughts: true` in the request. */
+    thought?: boolean;
+  }
   interface GeminiCandidate {
-    content?: { parts?: Array<{ text?: string }> };
+    content?: { parts?: Array<GeminiPart> };
     finishReason?: string;
     safetyRatings?: Array<{ category?: string; blocked?: boolean; probability?: string }>;
     groundingMetadata?: {
@@ -398,6 +490,12 @@ async function dispatchGoogle(req: DispatchRequest): Promise<DispatchResult> {
   }
 
   const citationsByUrl = new Map<string, Citation>();
+  // Buffer thought content per response. Gemini doesn't surface a
+  // structured "thought block close" boundary in streaming — thought
+  // parts flow alongside text parts, and the response is considered
+  // complete when finishReason arrives. We emit one consolidated
+  // `agent.reasoned` (via onReasoningBlock) at stream end.
+  let thoughtBuf = '';
 
   for await (const event of parseSseStream(res.body)) {
     chunkCount++;
@@ -413,7 +511,11 @@ async function dispatchGoogle(req: DispatchRequest): Promise<DispatchResult> {
     const parts = candidate?.content?.parts;
     if (parts) {
       for (const part of parts) {
-        if (part.text) {
+        if (!part.text) continue;
+        if (part.thought) {
+          thoughtBuf += part.text;
+          await req.onReasoningDelta?.(part.text);
+        } else {
           completion += part.text;
           await req.onDelta?.(part.text);
         }
@@ -468,6 +570,10 @@ async function dispatchGoogle(req: DispatchRequest): Promise<DispatchResult> {
         'content-length': res.headers.get('content-length'),
       },
     });
+  }
+
+  if (thoughtBuf.length > 0) {
+    await req.onReasoningBlock?.(thoughtBuf);
   }
 
   const citations = Array.from(citationsByUrl.values());

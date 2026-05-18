@@ -265,6 +265,40 @@ const sampleChatResponderNode: NodeModule = {
     const useTools = rawTools.length > 0 && provider === 'anthropic';
     const toolBindings = useTools ? validateToolBindings(rawTools) : [];
 
+    // Resolve reasoning verbosity for BYOK turns (same precedence as
+    // the managed-provider branch above). BYOK users picked their own
+    // model so the `agentId` carries the real provider+model — no
+    // hiding required.
+    const byokReqVerbosity = ctx.configurable?.reasoningVerbosity;
+    const byokVerbosity: 'summary' | 'full' | 'off' =
+      byokReqVerbosity === 'off' || byokReqVerbosity === 'full' || byokReqVerbosity === 'summary'
+        ? byokReqVerbosity
+        : 'full';
+    const byokAgentId = `${provider}-${model}-assistant`.slice(0, 256);
+    let byokReasoningSeq = 0;
+    const byokOnReasoningDelta = byokVerbosity === 'off'
+      ? undefined
+      : async (delta: string): Promise<void> => {
+          await ctx.emit('agent.reasoning.delta', {
+            agentId: byokAgentId,
+            delta,
+            sequence: byokReasoningSeq,
+            verbosity: byokVerbosity,
+          });
+          byokReasoningSeq++;
+        };
+    const byokOnReasoningBlock = byokVerbosity === 'off'
+      ? undefined
+      : async (block: string): Promise<void> => {
+          const reasoning = byokVerbosity === 'summary' ? block.slice(0, 2048) : block;
+          await ctx.emit('agent.reasoned', {
+            agentId: byokAgentId,
+            reasoning,
+            verbosity: byokVerbosity,
+          });
+          byokReasoningSeq = 0;
+        };
+
     try {
       const onDelta = async (delta: string) => {
         await ctx.emit('node.message', { delta });
@@ -334,6 +368,9 @@ const sampleChatResponderNode: NodeModule = {
           maxTokens,
           webSearch,
           onDelta,
+          reasoningVerbosity: byokVerbosity,
+          ...(byokOnReasoningDelta ? { onReasoningDelta: byokOnReasoningDelta } : {}),
+          ...(byokOnReasoningBlock ? { onReasoningBlock: byokOnReasoningBlock } : {}),
         });
       }
       emitCost({
