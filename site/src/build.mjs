@@ -308,14 +308,36 @@ function extractFirstParagraph(md) {
 
 function buildIndex() {
   const readme = readFile(join(ROOT, 'README.md'));
+  // Stats below are point-in-time as of 2026-05-18. Source counts:
+  //   - 35 spec docs:        `ls spec/v1/*.md | wc -l`
+  //   - 23 RFCs:             `ls RFCS/*.md` minus README + 0000-template
+  //                          (14 Accepted, 8 Active, 2 Draft)
+  //   - 82 pack versions:    `find registry/v1/packs -name "*.tgz" | wc -l`
+  //                          across 62 unique pack names
+  //   - 3 reference SDKs:    sdk/{typescript,python,go}
+  //   - 4 reference hosts:   examples/hosts/{in-memory,sqlite,python,postgres}
+  //   - 157 conformance scenarios: `ls conformance/src/scenarios/*.test.ts | wc -l`
+  // Refresh quarterly or after a major batch lands.
   const heroIntro = `<header class="hero">
     <h1>Multi-Agent Workflow Orchestration Protocol</h1>
     <p class="lede">An open, wire-level protocol for orchestrating workflows in which LLM agents, deterministic tools, sub-workflows, and human reviewers collaborate, with durable suspend / resume, replay, version negotiation, and observability owned by the protocol itself.</p>
-    <p class="status">v1 FINAL · 5 published packages · 3 reference SDKs · 3 reference hosts · 36 conformance scenarios</p>
+    <p class="status">v1.1 · 35 spec docs · 23 RFCs (14 Accepted) · 82 signed pack versions · 3 reference SDKs · 4 reference hosts · 157 conformance scenarios</p>
     <p class="cta">
       <a class="cta-primary" href="/spec/v1/">Read the spec</a>
       <a class="cta-secondary" href="/conformance/">Conformance leaderboard</a>
+      <a class="cta-secondary" href="https://app.openwop.dev/">Try the live demo</a>
     </p>
+    <section class="hero-recent">
+      <h2 class="hero-recent-h">Recent on main</h2>
+      <ul>
+        <li><strong>RFC 0023 (Active)</strong> — Conformance agent-event emitters (<code>core.conformance.mock-agent</code> reference impl shipped 2026-05-18; live on <code>app.openwop.dev</code>).</li>
+        <li><strong>RFC 0022 (Active)</strong> — <code>core.dispatch</code> + <code>core.subWorkflow</code> runtime variable mapping (<code>inputMapping</code> / <code>outputMapping</code> / per-worker variants).</li>
+        <li><strong>RFC 0021 (Active)</strong> — AI Envelope primitive promoted DRAFT v1.x → FINAL v1.1; 4 universal kinds (<code>clarification.request</code>, <code>schema.request</code>, <code>schema.response</code>, <code>error</code>) with per-kind schemas + AIEnvelopeAcceptor reference impl.</li>
+        <li><strong>RFC 0020 (Active)</strong> — Host-side MCP server composition; reference workflow-engine mounts an MCP server at <code>POST /v1/host/sample/mcp</code>; 6 behavioral conformance scenarios green.</li>
+        <li><strong>RFCs 0014-0019 (Active)</strong> — Seven host capability surfaces (<code>host.fs</code>, <code>kvStorage</code>, <code>tableStorage</code>, <code>queueBus</code>, <code>sql</code>, <code>vector</code>, <code>blobStorage</code>, <code>cache</code>) advertised + behaviorally verified via opt-in test seam.</li>
+        <li><strong>Phase 3 deploy</strong> — <code>app.openwop.dev</code> signed-in tier live: Firebase Auth (Google / GitHub), Cloud SQL Postgres for persistent runs/workflows, KMS-wrapped BYOK secrets.</li>
+      </ul>
+    </section>
   </header>`;
 
   const jsonLd = {
