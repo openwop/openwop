@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.deep-research/1.0.0/deep-research.return.schema.json",
+  "title": "DeepResearchReturn",
+  "type": "object",
+  "required": ["report", "findings", "sources", "openQuestions"],
+  "properties": {
+    "report": { "type": "string", "minLength": 1 },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["subQuestion", "claim", "evidenceStrength"],
+        "properties": {
+          "subQuestion": { "type": "string", "minLength": 1 },
+          "claim": { "type": "string", "minLength": 1 },
+          "evidenceStrength": {
+            "type": "string",
+            "enum": ["high", "medium", "low", "contradicted"]
+          },
+          "supportingSources": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "retrievedAt"],
+        "properties": {
+          "id": { "type": "string", "description": "URL or document ID." },
+          "retrievedAt": { "type": "string", "format": "date-time" },
+          "title": { "type": "string" },
+          "relevance": { "type": "string", "maxLength": 200 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "openQuestions": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+  },
+  "additionalProperties": false
+}
