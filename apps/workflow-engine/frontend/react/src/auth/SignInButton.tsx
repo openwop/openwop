@@ -15,7 +15,14 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from './useAuth.js';
 import { migrateAnonToUser } from './migrateTenant.js';
-import { ExistingProviderSignInError, getCurrentIdToken } from './firebase.js';
+import {
+  ExistingProviderSignInError,
+  getCurrentIdToken,
+  linkPendingCredential,
+  signInWithGithub,
+  signInWithGoogle,
+} from './firebase.js';
+import type { AuthCredential } from 'firebase/auth';
 import { setCurrentIdToken } from '../client/config.js';
 import { deleteAccount, RequiresRecentLoginError } from './deleteAccount.js';
 
@@ -56,12 +63,89 @@ function ModalPortal({ children }: { children: React.ReactNode }) {
   return createPortal(children, document.body);
 }
 
+interface PendingLink {
+  email: string;
+  existingProviders: readonly string[];
+  pendingCredential: AuthCredential | null;
+  attemptedProvider: 'google.com' | 'github.com';
+}
+
+function providerLabel(id: string): string {
+  if (id === 'google.com') return 'Google';
+  if (id === 'github.com') return 'GitHub';
+  return id;
+}
+
+/**
+ * Body shown after Firebase rejects sign-in with
+ * `auth/account-exists-with-different-credential`. Explains the
+ * collision in plain language and offers a single-click flow to:
+ *   1. Sign in with the existing provider.
+ *   2. Link the rejected credential to the same Firebase user.
+ *
+ * When `existingProviders` is empty (email-enumeration protection
+ * stripped the list), both buttons are offered.
+ */
+function LinkAccountBody(props: {
+  pendingLink: PendingLink;
+  busy: boolean;
+  error: string | null;
+  onContinue: (which: 'google' | 'github') => Promise<void>;
+  onCancel: () => void;
+}) {
+  const { pendingLink, busy, error, onContinue, onCancel } = props;
+  const attempted = providerLabel(pendingLink.attemptedProvider);
+  const known = pendingLink.existingProviders.length > 0;
+  // Render only the existing provider's button when we know it.
+  // Otherwise fall back to both, the user picks the one they
+  // remember signing up with.
+  const choices = known
+    ? pendingLink.existingProviders
+    : ['google.com', 'github.com'].filter((p) => p !== pendingLink.attemptedProvider);
+  return (
+    <>
+      <h3 className="signin-modal-title">Link your {attempted} account</h3>
+      <p className="signin-modal-lede muted">
+        <strong>{pendingLink.email}</strong> is already signed up
+        {known ? ` with ${pendingLink.existingProviders.map(providerLabel).join(' or ')}` : ''}.
+        Sign in with that provider once and we'll attach {attempted} so
+        you can use either next time.
+      </p>
+      {error ? <div className="alert error" role="alert">{error}</div> : null}
+      {choices.map((id) => {
+        const which = id === 'google.com' ? 'google' : 'github';
+        const cls = id === 'google.com' ? 'signin-provider signin-google' : 'signin-provider signin-github';
+        return (
+          <button
+            key={id}
+            className={cls}
+            disabled={busy}
+            type="button"
+            onClick={() => onContinue(which)}
+          >
+            Continue with {providerLabel(id)}
+          </button>
+        );
+      })}
+      <button
+        className="signin-modal-cancel"
+        type="button"
+        disabled={busy}
+        onClick={onCancel}
+      >
+        Cancel
+      </button>
+    </>
+  );
+}
+
 export function SignInButton() {
-  const { user, loading, isConfigured, signIn, signOut } = useAuth();
+  const { user, loading, isConfigured, signOut } = useAuth();
   const [modalOpen, setModalOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingLink, setPendingLink] = useState<PendingLink | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -82,6 +166,69 @@ export function SignInButton() {
       // Best-effort console log — surfacing this as a toast is a
       // P3.6 polish item.
       console.info('openwop: anon → user migration', result);
+    }
+  }
+
+  /**
+   * Run a provider sign-in with full error handling. Returns true on
+   * success (modal should close), false if we surfaced an error or
+   * switched to the link-account flow (modal stays open).
+   */
+  async function attemptSignIn(which: 'google' | 'github'): Promise<boolean> {
+    setBusy(true);
+    setError(null);
+    try {
+      await (which === 'google' ? signInWithGoogle() : signInWithGithub());
+      await postSignInMigrate();
+      return true;
+    } catch (err) {
+      if (err instanceof ExistingProviderSignInError) {
+        // Capture state for the link flow and rewrite the modal.
+        setPendingLink({
+          email: err.email,
+          existingProviders: err.existingProviders,
+          pendingCredential: err.pendingCredential,
+          attemptedProvider: err.attemptedProvider,
+        });
+        setError(null);
+      } else {
+        setError(describeSignInError(err));
+      }
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /**
+   * After the user signs in with their existing provider, attach the
+   * pending (rejected) credential to the same Firebase user. From
+   * this point on either provider button signs them into the same
+   * account / `user:<sha>` tenant.
+   */
+  async function completeLink(which: 'google' | 'github'): Promise<void> {
+    if (!pendingLink) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await (which === 'google' ? signInWithGoogle() : signInWithGithub());
+      if (pendingLink.pendingCredential) {
+        try {
+          await linkPendingCredential(pendingLink.pendingCredential);
+        } catch (err) {
+          // Linking failed but the user is signed in — surface a
+          // soft warning, keep them moving. They can retry from the
+          // account menu next session.
+          console.warn('openwop: provider linking failed', err);
+        }
+      }
+      await postSignInMigrate();
+      setPendingLink(null);
+      setModalOpen(false);
+    } catch (err) {
+      setError(describeSignInError(err));
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -107,59 +254,53 @@ export function SignInButton() {
               role="dialog"
               aria-label="Sign in"
             >
-              <h3 className="signin-modal-title">Sign in to save your work</h3>
-              <p className="signin-modal-lede muted">
-                Workflows + BYOK keys you add after signing in persist across
-                sessions. Anonymous demo state is wiped every 24h.
-              </p>
-              {error ? <div className="alert error" role="alert">{error}</div> : null}
-              <button
-                className="signin-provider signin-google"
-                disabled={busy}
-                type="button"
-                onClick={async () => {
-                  setBusy(true);
-                  setError(null);
-                  try {
-                    await signIn.google();
-                    await postSignInMigrate();
-                    setModalOpen(false);
-                  } catch (err) {
-                    setError(describeSignInError(err));
-                  } finally {
-                    setBusy(false);
-                  }
-                }}
-              >
-                Continue with Google
-              </button>
-              <button
-                className="signin-provider signin-github"
-                disabled={busy}
-                type="button"
-                onClick={async () => {
-                  setBusy(true);
-                  setError(null);
-                  try {
-                    await signIn.github();
-                    await postSignInMigrate();
-                    setModalOpen(false);
-                  } catch (err) {
-                    setError(describeSignInError(err));
-                  } finally {
-                    setBusy(false);
-                  }
-                }}
-              >
-                Continue with GitHub
-              </button>
-              <button
-                className="signin-modal-cancel"
-                type="button"
-                onClick={() => setModalOpen(false)}
-              >
-                Cancel
-              </button>
+              {pendingLink ? (
+                <LinkAccountBody
+                  pendingLink={pendingLink}
+                  busy={busy}
+                  error={error}
+                  onContinue={completeLink}
+                  onCancel={() => { setPendingLink(null); setError(null); }}
+                />
+              ) : (
+                <>
+                  <h3 className="signin-modal-title">Sign in to save your work</h3>
+                  <p className="signin-modal-lede muted">
+                    Workflows + BYOK keys you add after signing in persist across
+                    sessions. Anonymous demo state is wiped every 24h.
+                  </p>
+                  {error ? <div className="alert error" role="alert">{error}</div> : null}
+                  <button
+                    className="signin-provider signin-google"
+                    disabled={busy}
+                    type="button"
+                    onClick={async () => {
+                      const ok = await attemptSignIn('google');
+                      if (ok) setModalOpen(false);
+                    }}
+                  >
+                    Continue with Google
+                  </button>
+                  <button
+                    className="signin-provider signin-github"
+                    disabled={busy}
+                    type="button"
+                    onClick={async () => {
+                      const ok = await attemptSignIn('github');
+                      if (ok) setModalOpen(false);
+                    }}
+                  >
+                    Continue with GitHub
+                  </button>
+                  <button
+                    className="signin-modal-cancel"
+                    type="button"
+                    onClick={() => setModalOpen(false)}
+                  >
+                    Cancel
+                  </button>
+                </>
+              )}
             </div>
           </div>
           </ModalPortal>

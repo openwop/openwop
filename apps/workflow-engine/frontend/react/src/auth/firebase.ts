@@ -29,9 +29,11 @@ import {
   getAuth,
   GoogleAuthProvider,
   GithubAuthProvider,
+  linkWithCredential,
   signInWithPopup,
   signOut as fbSignOut,
   onIdTokenChanged,
+  type AuthCredential,
   type AuthProvider,
   type User,
   type Auth,
@@ -40,20 +42,31 @@ import { setCurrentIdToken } from '../client/config.js';
 
 /**
  * Raised when sign-in fails because the email is already registered
- * via a different provider. Carries the email + the providers the
- * email IS registered with so the UI can tell the user which button
- * to click instead. Matches the `auth/account-exists-with-different-
- * credential` Firebase error code.
+ * via a different provider. Carries the email, the providers the
+ * email IS registered with, AND the pending credential from the
+ * attempted-but-rejected provider — together they let the caller
+ * run the link-account flow:
+ *
+ *   1. UI prompts user to sign in with `existingProviders[0]`.
+ *   2. After that succeeds, `linkPendingCredential(pendingCredential)`
+ *      attaches the rejected credential to the now-signed-in user
+ *      so subsequent visits work with EITHER provider.
+ *
+ * Matches the `auth/account-exists-with-different-credential` Firebase
+ * error code. `pendingCredential` is null if the rejected provider was
+ * one Firebase couldn't extract a credential from (e.g., password).
  */
 export class ExistingProviderSignInError extends Error {
   constructor(
     public readonly email: string,
     public readonly existingProviders: readonly string[],
+    public readonly pendingCredential: AuthCredential | null,
+    public readonly attemptedProvider: 'google.com' | 'github.com',
   ) {
     const friendly = existingProviders.map(friendlyProviderName).join(' or ');
     super(
       `${email} is already signed up with ${friendly || 'another provider'}. ` +
-        `Click "${friendly ? `Continue with ${friendly}` : 'the other provider'}" to sign in instead.`,
+        `Sign in with ${friendly || 'that provider'} to link your ${friendlyProviderName(attemptedProvider)} account.`,
     );
     this.name = 'ExistingProviderSignInError';
   }
@@ -138,14 +151,15 @@ function project(u: User | null): AuthUser | null {
   };
 }
 
+type AttemptedProviderId = 'google.com' | 'github.com';
+
 /**
- * Run the popup-sign-in flow against `provider` and translate the
- * `auth/account-exists-with-different-credential` Firebase error code
- * into a typed `ExistingProviderSignInError` carrying the email +
- * existing providers — the UI uses both to render a useful message
- * (e.g., "alice@example.com is already signed up with Google.").
+ * Run the popup-sign-in flow against `provider`. On the cross-provider
+ * collision (auth/account-exists-with-different-credential), throw an
+ * `ExistingProviderSignInError` carrying enough state for the caller
+ * to run the account-linking flow.
  */
-async function signInWith(provider: AuthProvider): Promise<AuthUser> {
+async function signInWith(provider: AuthProvider, providerId: AttemptedProviderId): Promise<AuthUser> {
   const a = ensureInit();
   if (!a) throw new Error('Firebase Auth not configured');
   try {
@@ -156,26 +170,51 @@ async function signInWith(provider: AuthProvider): Promise<AuthUser> {
     const e = err as FbError;
     if (e.code === 'auth/account-exists-with-different-credential' && e.customData?.email) {
       const email = e.customData.email;
+      // Extract the rejected credential so the caller can link it
+      // after the user signs in with the existing provider. Each
+      // provider has its own `credentialFromError` static.
+      const pendingCred =
+        providerId === 'google.com'
+          ? GoogleAuthProvider.credentialFromError(err as Parameters<typeof GoogleAuthProvider.credentialFromError>[0])
+          : GithubAuthProvider.credentialFromError(err as Parameters<typeof GithubAuthProvider.credentialFromError>[0]);
       let providers: readonly string[] = [];
       try {
         providers = await fetchSignInMethodsForEmail(a, email);
       } catch {
         // fetchSignInMethodsForEmail can fail under email-enumeration
         // protection. We still raise the typed error; the UI just
-        // shows the "another provider" fallback message.
+        // shows the "another provider" fallback message and offers
+        // both buttons.
       }
-      throw new ExistingProviderSignInError(email, providers);
+      throw new ExistingProviderSignInError(email, providers, pendingCred, providerId);
     }
     throw err;
   }
 }
 
 export async function signInWithGoogle(): Promise<AuthUser> {
-  return signInWith(new GoogleAuthProvider());
+  return signInWith(new GoogleAuthProvider(), 'google.com');
 }
 
 export async function signInWithGithub(): Promise<AuthUser> {
-  return signInWith(new GithubAuthProvider());
+  return signInWith(new GithubAuthProvider(), 'github.com');
+}
+
+/**
+ * Attach `pendingCredential` to the currently signed-in Firebase user.
+ * Called after the user completes the existing-provider sign-in flow
+ * to finalize linking. After this call, subsequent visits can sign
+ * in with EITHER provider and land on the same Firebase user (= same
+ * `user:<sha>` tenant on the backend).
+ *
+ * Throws if no user is signed in OR if the credential is invalid.
+ */
+export async function linkPendingCredential(pendingCredential: AuthCredential): Promise<void> {
+  const a = ensureInit();
+  if (!a) throw new Error('Firebase Auth not configured');
+  const u = a.currentUser;
+  if (!u) throw new Error('No signed-in user to link to.');
+  await linkWithCredential(u, pendingCredential);
 }
 
 export async function signOut(): Promise<void> {
