@@ -78,7 +78,9 @@ async function startSyntheticIssuer(audience: string): Promise<SyntheticIssuer> 
 }
 
 const SESSION_SECRET = 'test-session-secret-32+chars-aaaaaaaaaaaaaa';
-const COOKIE_NAME = 'openwop.session';
+// Tracks middleware/auth.ts default — Firebase Hosting strips every
+// cookie except `__session` when forwarding to Cloud Run.
+const COOKIE_NAME = '__session';
 
 function mintAnonCookie(sid: string): string {
   const now = Math.floor(Date.now() / 1000);

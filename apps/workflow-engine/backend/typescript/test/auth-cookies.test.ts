@@ -38,7 +38,7 @@ afterAll(async () => {
 
 function extractCookie(setCookieHeader: string | null): string | null {
   if (!setCookieHeader) return null;
-  // "openwop.session=value; Path=/; Max-Age=..." — extract just `key=value`.
+  // "__session=value; Path=/; Max-Age=..." — extract just `key=value`.
   const head = setCookieHeader.split(';')[0]!;
   return head.trim();
 }
@@ -50,7 +50,7 @@ describe('cookie-mode auth (P0.2)', () => {
     const res = await fetch(`${BASE}/v1/host/sample/workflows`);
     expect(res.status).toBe(200);
     const cookie = extractCookie(res.headers.get('set-cookie'));
-    expect(cookie).toMatch(/^openwop\.session=/);
+    expect(cookie).toMatch(/^__session=/);
   });
 
   it('preserves the session across requests + derives tenantId from cookie', async () => {
@@ -118,7 +118,7 @@ describe('cookie-mode auth (P0.2)', () => {
 
   it('rejects a tampered signature → new cookie minted', async () => {
     // Forge a payload + bad sig
-    const forged = 'openwop.session=eyJzaWQiOiJYIiwidGVuYW50SWQiOiJhbm9uOlgiLCJ0aWVyIjoiYW5vbiIsImlhdCI6MSwiZXhwIjoyMDAwMDAwMDAwfQ.BADSIG';
+    const forged = '__session=eyJzaWQiOiJYIiwidGVuYW50SWQiOiJhbm9uOlgiLCJ0aWVyIjoiYW5vbiIsImlhdCI6MSwiZXhwIjoyMDAwMDAwMDAwfQ.BADSIG';
     const res = await fetch(`${BASE}/v1/host/sample/workflows`, {
       headers: { cookie: forged },
     });

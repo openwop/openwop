@@ -45,7 +45,10 @@ import { isKmsConfigured } from '../byok/kmsEncryption.js';
 
 const log = createLogger('routes.migrate');
 
-const COOKIE_NAME = 'openwop.session';
+// Mirrors middleware/auth.ts — Firebase Hosting strips every cookie
+// except `__session`, so the demo's auth cookie is `__session`.
+// Override via OPENWOP_SESSION_COOKIE_NAME for non-Hosting deploys.
+const COOKIE_NAME = process.env.OPENWOP_SESSION_COOKIE_NAME || '__session';
 
 interface SessionPayload {
   sid: string;

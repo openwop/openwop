@@ -1,7 +1,8 @@
 /**
  * Auth middleware. Supports two modes:
  *
- *   1. Signed session cookie (`openwop.session`) — the default for
+ *   1. Signed session cookie (`__session` by default, configurable via
+ *      OPENWOP_SESSION_COOKIE_NAME) — the default for
  *      browser visitors on the public demo. On first request without
  *      a cookie, mints one: HS256 over a small JSON payload
  *      `{ sid, tenantId: "anon:<sid>", tier: "anon", iat, exp }`. Each
@@ -31,7 +32,7 @@
  *
  * Session cookie shape — single base64url-encoded value containing
  * payload + HS256 signature:
- *    openwop.session=<payloadB64>.<sigB64>
+ *    __session=<payloadB64>.<sigB64>
  * where payloadB64 = base64url(JSON.stringify({sid, tenantId, tier, iat, exp}))
  *       sigB64     = base64url(HMAC_SHA256(secret, payloadB64))
  * Constant-time signature compare via timingSafeEqual.
@@ -80,7 +81,13 @@ const PUBLIC_PATH_PREFIXES = [
   '/v1/host/sample/admin',
 ];
 
-const COOKIE_NAME = 'openwop.session';
+// Firebase Hosting strips every cookie except `__session` from
+// requests it forwards to Cloud Run/Functions
+// (https://firebase.google.com/docs/hosting/manage-cache#using_cookies).
+// Adopters fronting the workflow-engine with a different reverse proxy
+// can override this via OPENWOP_SESSION_COOKIE_NAME — default keeps
+// the app.openwop.dev demo working.
+const COOKIE_NAME = process.env.OPENWOP_SESSION_COOKIE_NAME || '__session';
 const COOKIE_TTL_SECONDS = 86_400; // 24h
 const REFRESH_THRESHOLD_SECONDS = 21_600; // refresh when < 6h left
 
