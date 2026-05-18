@@ -15,6 +15,8 @@ import type { NodeContext, NodeOutcome } from '../src/executor/types.js';
 interface CapturedEvent {
   type: string;
   payload: unknown;
+  eventId: string;
+  sequence: number;
 }
 
 function makeCtx(overrides?: {
@@ -23,6 +25,7 @@ function makeCtx(overrides?: {
   nodeId?: string;
 }): { ctx: NodeContext; events: CapturedEvent[] } {
   const events: CapturedEvent[] = [];
+  let nextSeq = 1;
   const ctx: NodeContext = {
     runId: 'run-mock',
     nodeId: overrides?.nodeId ?? 'mock-1',
@@ -33,7 +36,10 @@ function makeCtx(overrides?: {
     attempt: 1,
     secrets: {},
     async emit(type, payload) {
-      events.push({ type, payload });
+      const eventId = `evt-${nextSeq.toString().padStart(8, '0')}`;
+      const sequence = nextSeq++;
+      events.push({ type, payload, eventId, sequence });
+      return { eventId, sequence };
     },
   };
   return { ctx, events };
@@ -111,7 +117,7 @@ describe('core.conformance.mock-agent', () => {
       expect((events[2].payload as { toolId: string }).toolId).toBe('second');
     });
 
-    it('pairs toolCalled/toolReturned via callId; returned event causationId equals called callId', async () => {
+    it('pairs toolCalled/toolReturned: returned.causationId === called.eventId (RFC 0002 §B strict)', async () => {
       const { ctx, events } = makeCtx({
         config: {
           mockToolCalls: [{ toolId: 't', arguments: {}, result: {} }],
@@ -119,10 +125,13 @@ describe('core.conformance.mock-agent', () => {
         },
       });
       await mockAgentNode.execute(ctx);
-      const called = events[0].payload as { callId: string };
-      const returned = events[1].payload as { callId: string; causationId: string };
-      expect(returned.callId).toBe(called.callId);
-      expect(returned.causationId).toBe(called.callId);
+      const calledEvent = events[0];
+      const returnedPayload = events[1].payload as { callId: string; causationId: string };
+      // Wire-level pairing: causationId === eventId of the corresponding toolCalled.
+      expect(returnedPayload.causationId).toBe(calledEvent.eventId);
+      // Application-level pairing: callId surfaces for UI/debug reconstruction.
+      const calledPayload = calledEvent.payload as { callId: string };
+      expect(returnedPayload.callId).toBe(calledPayload.callId);
     });
 
     it('passes through error envelope when present (no result)', async () => {

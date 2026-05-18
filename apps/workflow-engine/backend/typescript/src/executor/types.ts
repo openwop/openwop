@@ -126,8 +126,16 @@ export interface NodeContext {
   trustBoundary?: 'trusted' | 'untrusted';
   /** Resolved BYOK secret values keyed by `credentialRef`. Empty if none required. */
   secrets: Record<string, string>;
-  /** Emit a side-effect-free event into the run log. */
-  emit(type: string, payload: unknown): Promise<void>;
+  /**
+   * Emit a side-effect-free event into the run log.
+   *
+   * Returns the persisted event's `eventId` + `sequence` so the node
+   * can build downstream `causationId` chains per RFC 0002 §B (e.g.,
+   * `agent.toolReturned.causationId MUST equal agent.toolCalled.eventId`).
+   * Callers that don't need the return value can ignore it — additive
+   * relative to the prior `Promise<void>` signature.
+   */
+  emit(type: string, payload: unknown): Promise<{ eventId: string; sequence: number }>;
   /**
    * Spec-defined AI provider entry point per
    * `spec/v1/host-capabilities.md §host.aiProviders`. Present when

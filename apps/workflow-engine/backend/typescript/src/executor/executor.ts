@@ -246,12 +246,15 @@ async function runOneNode(input: {
         : 'trusted',
     secrets: secretsForCtx,
     async emit(type, payload) {
-      await eventLog.append({
+      const record = await eventLog.append({
         runId: run.runId,
         nodeId: nodeRef.nodeId,
         type,
         payload: stripSecretsFromPersisted(payload),
       });
+      // Surface eventId + sequence so nodes can build causationId chains
+      // (RFC 0002 §B). Pre-existing void-returning callers ignore.
+      return { eventId: record.eventId, sequence: record.sequence };
     },
     ...(aiAdapter ? { callAI: aiAdapter.callAI, callAIWithTools: aiAdapter.callAIWithTools } : {}),
     storage: surfaces.storage,

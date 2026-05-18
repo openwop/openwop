@@ -139,12 +139,17 @@ export const mockAgentNode: NodeModule = {
       await ctx.emit('agent.reasoned', buildReasoningPayload(agentId, config.mockReasoning));
     }
 
-    // 2. agent.toolCalled / agent.toolReturned pairs, in array order
+    // 2. agent.toolCalled / agent.toolReturned pairs, in array order.
+    // Strict causationId pairing per RFC 0002 §B: `agent.toolReturned.causationId`
+    // MUST equal the eventId of the corresponding `agent.toolCalled`. The
+    // host-minted `callId` is application-level pairing; the executor's
+    // eventId is the wire-level pairing. Both are surfaced for downstream
+    // consumers (event-log replay reconstructs deterministic chains via
+    // causationId; UI/debug surfaces reconstruct call→return via callId).
     if (Array.isArray(config.mockToolCalls)) {
       for (const call of config.mockToolCalls) {
-        // Host-minted callId; the returned event's causationId matches.
         const callId = randomUUID();
-        await ctx.emit('agent.toolCalled', {
+        const calledRecord = await ctx.emit('agent.toolCalled', {
           agentId,
           callId,
           toolId: call.toolId,
@@ -153,12 +158,8 @@ export const mockAgentNode: NodeModule = {
         const returnedPayload: Record<string, unknown> = {
           agentId,
           callId,
-          // causationId pairs to the toolCalled event per RFC 0002 §B —
-          // executor's event-log appendEvent assigns the eventId, so we
-          // surface the callId pairing here. Hosts that propagate eventId
-          // explicitly can override this projection in their reference
-          // executor.
-          causationId: callId,
+          // RFC 0002 §B: MUST equal corresponding agent.toolCalled.eventId.
+          causationId: calledRecord.eventId,
           toolId: call.toolId,
           ...(call.result !== undefined && { result: call.result }),
           ...(call.error !== undefined && { error: call.error }),
