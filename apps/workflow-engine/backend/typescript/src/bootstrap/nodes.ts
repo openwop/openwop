@@ -16,6 +16,7 @@ import { dispatchChat, type ChatMessage, type DispatchResult, type ProviderId } 
 import { dispatchAnthropicWithTools, type ToolDef } from '../providers/dispatchAnthropicTools.js';
 import { getDefaultModel } from '../providers/catalog.js';
 import { dispatchSubRun, type SubRunResult } from '../subruns/subRunDispatcher.js';
+import { registerMockAgentNode } from './conformanceMockAgent.js';
 
 const noopNode: NodeModule = {
   typeId: 'core.noop',
@@ -368,5 +369,10 @@ export function ensureNodesRegistered(): void {
   registry.register(sampleUppercaseNode);
   registry.register(sampleMockAiNode);
   registry.register(sampleChatResponderNode);
+  // RFC 0023 — conformance-only typeId for agent-event emission hooks.
+  // Reference host always registers it; production deployments of this
+  // codebase SHOULD remove this call + drop the
+  // capabilities.conformance.mockAgent advertisement.
+  registerMockAgentNode();
   registered = true;
 }

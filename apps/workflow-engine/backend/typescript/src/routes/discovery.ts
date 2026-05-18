@@ -146,6 +146,12 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       replay: { supported: false, fork: false },
       agents: { supported: false },
       memory: { supported: false },
+      // RFC 0023 §B.2 — capabilities.conformance.mockAgent. Reference
+      // host registers core.conformance.mock-agent unconditionally
+      // (see bootstrap/conformanceMockAgent.ts). Production deployments
+      // of this codebase SHOULD remove the registration call AND set
+      // this to false.
+      conformance: { mockAgent: true },
       webhooks: { supported: true, signed: true, durable: false },
       observability: { otel: { namespace: 'openwop' } },
       runtimeCapabilities: listCapabilities(),
