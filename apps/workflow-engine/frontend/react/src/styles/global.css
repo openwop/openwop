@@ -1197,8 +1197,14 @@ pre {
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.6);
   z-index: 1000;
-  display: flex; align-items: center; justify-content: center;
+  /* `align-items: center` clips a too-tall modal symmetrically from
+     the top AND bottom (so the title disappears above the viewport).
+     `start` + `overflow-y: auto` anchors the modal near the top, and
+     the whole backdrop scrolls if the modal exceeds the viewport. */
+  display: flex; align-items: start; justify-content: center;
   padding: var(--space-4);
+  padding-top: max(var(--space-4), 8vh);
+  overflow-y: auto;
 }
 .signin-modal {
   background: var(--color-surface);
@@ -1206,6 +1212,11 @@ pre {
   border-radius: 8px;
   padding: var(--space-5);
   width: 100%; max-width: 420px;
+  /* Cap height so very tall modals (long error message, long body
+     copy) get an internal scroll bar instead of growing beyond the
+     viewport. */
+  max-height: calc(100vh - 2 * var(--space-4));
+  overflow-y: auto;
   display: flex; flex-direction: column;
   gap: var(--space-3);
 }
