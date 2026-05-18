@@ -1,0 +1,30 @@
+{
+  "id": "conformance-agent-pack-handoff-schema-validation",
+  "name": "Conformance: Agent Pack Handoff Schema Validation",
+  "version": "1.0",
+  "description": "Phase 2 / HV-1. The fixture itself is a no-op workflow — the scenario verifies host behavior at the agent-dispatch surface for `core.openwop.agent-examples.structured-fixture` (the canonical handoff-schema fixture agent). The agent's manifest carries `handoff.taskSchemaRef` + `handoff.returnSchemaRef`; the host MUST validate dispatch payloads against the task schema (RFC 0003 §D) BEFORE invoking the agent, and return payloads against the return schema BEFORE persistence. The test drives the dispatch surface directly with three scenario branches (valid-task / invalid-task / mock-return-violation) per agentPackHandoffSchemaValidation.test.ts.",
+  "nodes": [
+    {
+      "id": "noop",
+      "typeId": "core.identity",
+      "name": "Noop (handoff-validation fixture)",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "scenario", "type": "string" }
+  ],
+  "metadata": {
+    "tags": ["conformance", "multi-agent", "phase-2", "handoff-validation"],
+    "requiresInstalledPack": "core.openwop.agent-examples",
+    "requiresAgentId": "core.openwop.agent-examples.structured-fixture",
+    "notes": "Test invokes the agent-dispatch surface directly with three scenarios per inputs.scenario; the workflow is a noop placeholder so it validates against workflow-definition.schema.json without requiring a dispatch typeId not yet in the in-tree node catalog."
+  },
+  "settings": { "timeout": 5000 }
+}

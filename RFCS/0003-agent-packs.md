@@ -135,6 +135,10 @@ New scenarios required to upgrade from `Active` to `Accepted`:
 - `agent-pack-namespace-scoping.test.ts` — manifest with cross-namespace agent IDs is rejected.
 - `agent-pack-prompt-traversal.test.ts` — `systemPromptRef` with path traversal (`../`) is rejected at install time.
 
+Additive scenarios added post-Acceptance:
+
+- `agentPackHandoffSchemaValidation.test.ts` (HV-1, added 2026-05-17 alongside the agent-pack catalog rollout) — verifies §D handoff-schema enforcement end-to-end. The host MUST validate dispatch payloads against `handoff.taskSchemaRef` before invoking the agent AND validate return payloads against `handoff.returnSchemaRef` before persistence. Three branches: valid task (→ `completed`), invalid task missing required field (→ `failed` with structured violation), mock return-schema violation (→ violation surfaced before persistence). Fixture: `conformance-agent-pack-handoff-schema-validation`. Capability-gated on `capabilities.agents.{supported,dispatch}`.
+
 ## Alternatives considered
 
 1. **Separate `agent-pack.json` file.** Rejected: two file formats, two signing surfaces, two registry submission flows. The whole point of reusing node packs is that agents-only packs are operationally indistinguishable from node-only packs.

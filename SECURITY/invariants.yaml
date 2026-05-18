@@ -279,6 +279,27 @@ invariants:
       `toolCalls[].name` against the workflow's declared `tools[]` set
       before dispatching. Pack-side complement at `agents-run-no-raw-handler`.
 
+  - id: agent-pack-handoff-schema-enforcement
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/agentPackHandoffSchemaValidation.test.ts
+    note: |
+      When an `AgentManifest` carries `handoff.taskSchemaRef` and/or
+      `handoff.returnSchemaRef` (RFC 0003 §D), the host MUST validate
+      inbound dispatch payloads against `taskSchemaRef` BEFORE invoking
+      the agent, AND validate outbound return payloads against
+      `returnSchemaRef` BEFORE persistence. Invalid payloads in either
+      direction MUST be rejected with a structured error envelope; the
+      agent MUST NOT see a malformed task, and the persistence store
+      MUST NOT contain an off-schema result. Pairs with the prompt-
+      injection threat model: typed handoffs are a load-bearing defense
+      against an attacker who controls the inputs into an agent dispatch
+      from a less-trusted surface (chat, webhook, conversation channel)
+      and tries to widen the agent's input contract beyond what the
+      manifest author declared. Closes HV-1.
+
   - id: agents-run-no-raw-handler
     tier: protocol
     severity: high
@@ -762,6 +783,32 @@ invariants:
       in-context examples) not present in any source. The redaction
       harness is the only protocol-level defense at the compaction
       boundary.
+
+  - id: envelope-redaction-sr-1-carry-forward
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/aiEnvelope.redaction.test.ts
+    note: |
+      `spec/v1/ai-envelope.md` §"Redaction (SR-1 carry-forward)"
+      (DRAFT v1.x, 2026-05-17). SR-1 applies transitively through
+      LLM emission: when a host accepts an AI Envelope from a node,
+      the engine MUST route the envelope's payload through the same
+      BYOK redaction harness applied to a fresh `MemoryEntry.put`
+      per `agent-memory.md` §"SR-1 secret-redaction invariant".
+      The fact that the LLM was instructed not to emit secrets is
+      NOT evidence to skip redaction — the model can hallucinate
+      secret-shaped substrings from prompt context, in-context
+      examples, or tool results. Redacted material MUST NOT appear
+      in resulting `RunEventDoc`s, OTel span attributes
+      (`openwop.envelope_*`), debug-bundle exports, or error
+      envelopes returned to the client on validation refusal. The
+      redaction pass runs AFTER schema validation and BEFORE
+      dedup/handler routing per the spec's production-flow
+      ordering. Behavioral assertions in the test file ship as
+      `it.todo()` until a reference host wires the envelope
+      accept path.
 
   # ===== RFC 0015 host.kvStorage cross-tenant isolation =====
 
