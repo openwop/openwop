@@ -1498,11 +1498,26 @@ async function executeNode(
 
     case 'core.orchestrator.supervisor': {
       // RFC 0006 §C — orchestrator emits one OrchestratorDecision per
-      // tick. For the conformance-dispatch-loop fixture (2-node loop),
-      // behavior is deterministic: first tick → `next-worker`,
-      // subsequent ticks → `terminate`. Production orchestrators
-      // delegate to an LLM; this reference uses the event-log decision
-      // count as state so replay is trivially deterministic.
+      // tick. The reference uses the event-log decision count as state
+      // so replay is trivially deterministic.
+      //
+      // Two modes:
+      //
+      // 1. `mockDispatchPlan` (RFC 0022 §"Unresolved questions" #6 —
+      //    added 2026-05-18 alongside the RFC 0022 reference impl):
+      //    when `node.config.mockDispatchPlan` is a non-empty array of
+      //    `OrchestratorDecision` shapes, the supervisor emits them in
+      //    order — first tick uses plan[0], second tick plan[1], etc.
+      //    Once the plan is exhausted, falls back to `terminate`. Lets
+      //    conformance fixtures drive multi-worker dispatch sequences
+      //    without an LLM. Production orchestrators delegate to an
+      //    LLM; this mode is conformance-only (the supervisor block
+      //    is non-normative reference code).
+      //
+      // 2. Default (legacy): first tick → `next-worker:
+      //    ['conformance-noop']`, subsequent ticks → `terminate`.
+      //    Preserves behavior of the original `conformance-dispatch-
+      //    loop` fixture from before mockDispatchPlan landed.
       const q = await querier();
       const priorRes = await q.query<{ n: string }>(
         `SELECT COUNT(*)::text AS n FROM events WHERE run_id = $1 AND type = 'runOrchestrator.decided'`,
@@ -1510,9 +1525,37 @@ async function executeNode(
       );
       const prior = Number(priorRes.rows[0]?.n ?? '0');
       const agentId = (node.config?.agentId as string | undefined) ?? 'core.reference-supervisor';
-      const decision = prior === 0
-        ? { kind: 'next-worker' as const, nextWorkerIds: ['conformance-noop'] }
-        : { kind: 'terminate' as const, reason: 'goal-reached' };
+      const mockPlan = Array.isArray(node.config?.mockDispatchPlan)
+        ? (node.config!.mockDispatchPlan as Array<{
+            kind?: string;
+            nextWorkerIds?: string[];
+            reason?: string;
+            prompt?: string;
+          }>)
+        : null;
+      let decision: { kind: 'next-worker'; nextWorkerIds: string[] }
+        | { kind: 'terminate'; reason?: string };
+      if (mockPlan && mockPlan.length > 0 && prior < mockPlan.length) {
+        const entry = mockPlan[prior]!;
+        if (entry.kind === 'next-worker' && Array.isArray(entry.nextWorkerIds)) {
+          decision = { kind: 'next-worker', nextWorkerIds: entry.nextWorkerIds };
+        } else if (entry.kind === 'terminate') {
+          decision = { kind: 'terminate', ...(entry.reason !== undefined ? { reason: entry.reason } : {}) };
+        } else {
+          // Malformed plan entry — fall back to terminate to keep the
+          // run finite. Surfaces in the event log as a `terminate`
+          // with a `mockPlan-malformed` reason so authors notice.
+          decision = { kind: 'terminate', reason: 'mockPlan-malformed' };
+        }
+      } else if (mockPlan && mockPlan.length > 0) {
+        // Plan exhausted; terminate the loop.
+        decision = { kind: 'terminate', reason: 'mockPlan-exhausted' };
+      } else {
+        // Default legacy mode.
+        decision = prior === 0
+          ? { kind: 'next-worker', nextWorkerIds: ['conformance-noop'] }
+          : { kind: 'terminate', reason: 'goal-reached' };
+      }
       await appendEvent(runId, 'runOrchestrator.decided', {
         nodeId: node.id,
         data: { agentId, decision },
@@ -2370,6 +2413,20 @@ const SUPPORTED_NODE_TYPES = new Set([
   // §B.1 inside the executor case (workflow-id prefix `conformance-*`);
   // production deployers SHOULD drop this from their SUPPORTED_NODE_TYPES.
   'core.conformance.mock-agent',
+  // node-packs.md §"Reserved Core OpenWOP node typeIds" — the host's
+  // executeNode switch already implements these three; they belong in
+  // the advertisement filter so fixtures that use them (orchestrator-
+  // dispatch, orchestrator-low-confidence, dispatch-mapping fixtures,
+  // and the various core.identity-only fixtures the host loads from
+  // `conformance/fixtures/`) actually surface on `capabilities.fixtures`.
+  // Their omission was silently downgrading the orchestrator + dispatch
+  // scenario coverage on this host. RFC 0022 §C `dispatchMapping` and
+  // RFC 0023 §B `mock-agent` advertisements depend on these being
+  // present too, since the dispatch-mapping fixtures wire supervisor
+  // + dispatch + per-worker child typeIds.
+  'core.identity',
+  'core.orchestrator.supervisor',
+  'core.dispatch',
 ]);
 
 function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {

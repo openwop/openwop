@@ -11,6 +11,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### RFC 0022 + RFC 0023 Active → Accepted (2026-05-18)
+
+Both RFCs land at `Accepted` after their reference-host implementations clear the bar in `RFCs/README.md` ("`Accepted` once the implementation lands and the conformance suite reflects it").
+
+**RFC 0022 (`core.dispatch` + `core.subWorkflow` runtime variable mapping):** All four happy-path scenarios (HVMAP-1a / HVMAP-1b / HVMAP-1c / HVMAP-2) now live behavioral against the Postgres reference host. The supervisor-mock extension flagged in §"Unresolved questions" #6 (`config.mockDispatchPlan: OrchestratorDecision[]` on `core.orchestrator.supervisor`) is implemented + documented as a third conformance hook on the supervisor's row in `spec/v1/node-packs.md`, alongside the existing `mockConfidence` / `mockPendingDecision` keys. The remaining `it.todo()` blocks (unset-variable projection, capability-refusal, child-failed/cancelled outputMapping skip, per-worker override precedence, mid-run no-propagation) require conformance-harness extensions tracked separately and do not gate `Accepted`.
+
+**RFC 0023 (Conformance agent-event emitters):** The earlier deferral on "next `@openwop/openwop-conformance` release" was over-conservative. Per `RFCs/README.md`, `Accepted` gates on the conformance suite source tree reflecting the impl — not on npm publication cadence. The source tree carries the per-event-type assertion fix in `agentReasoningEvents.test.ts`; downstream consumers pick it up on their next republish. Reference host smoke passes both affected fixtures end-to-end.
+
+Surface changes in this commit:
+
+- **`RFCS/0022-dispatch-input-output-mapping.md`** — Status `Active` → `Accepted`. Acceptance-criteria checklist all-ticked; `Updated` field records the flip rationale + history. The closing prose paragraph replaces the "Promotion to Accepted is gated on..." note with an "All acceptance criteria met" close-out.
+- **`RFCS/0023-conformance-agent-event-emitters.md`** — Status `Active` → `Accepted`. Last acceptance box flipped; `Updated` field records the over-conservative-deferral correction.
+- **`spec/v1/node-packs.md` §`core.orchestrator.supervisor` row** — "Conformance hooks" subsection expanded to enumerate all three conformance-only config keys (`mockConfidence`, `mockPendingDecision`, `mockDispatchPlan`) as bullets, with normative usage notes per key. Bullet structure replaces the prior single-paragraph format so each key's contract is independently scannable.
+- **`examples/hosts/postgres/src/server.ts`** — `SUPPORTED_NODE_TYPES` extended with `core.identity`, `core.orchestrator.supervisor`, `core.dispatch`. The host's executor switch already implemented these typeIds; the discovery-filter omission was silently downgrading orchestrator + dispatch + mapping fixture advertisement on `capabilities.fixtures`. The omission was load-bearing on the HVMAP scenarios' skip-vs-pass decision — adding the typeIds is what graduates them from "skipped against this host" to "exercised against this host."
+- **CHANGELOG.md** — this entry.
+
+**Compatibility:** strictly additive per `COMPATIBILITY.md §2.1`. No wire-shape changes, no schema changes, no scenario-shape breakage. Status flips are bookkeeping. The `SUPPORTED_NODE_TYPES` extension is a fix to an under-advertisement on the reference host, not a contract change for hosts elsewhere.
+
+
+
 ### Sample-host: managed "Try it free" provider tile (2026-05-18)
 
 Adds a 4th provider option in the sample workflow-engine's BYOK wizard: a managed (server-held-key) tile labeled "Try it free". Underlying provider runs on MiniMax via the operator's `MINIMAX_API_KEY`; the underlying provider/model id is intentionally not exposed to users or downstream surfaces (event log, FE outputs all see `openwop-free`). Sign-in (Firebase OIDC, `user:*` tenant) gates the dispatch; anonymous tenants are refused with `sign_in_required`. Per-tenant per-day token cap (`OPENWOP_MANAGED_DAILY_TOKEN_CAP`, default 50000 combined input+output) enforced via a new sqlite table; `daily_limit_reached` returned once the cap is hit. Strictly sample-host scope — no spec or schema corpus changes.
@@ -78,6 +98,19 @@ Companion harness to the existing pg-mem-backed `test/storage-adapter-parity.tes
 - **Docker fallback:** the suite soft-skips when Docker isn't reachable (probed via `docker info` at suite-init). Dev machines without Docker keep `npm test` green; CI with Docker exercises the full coverage. Override via `OPENWOP_SKIP_TESTCONTAINERS=1` to force-skip in CI environments that intentionally exclude Docker.
 - **First-run cost:** ~80 MB / 30s image pull (`postgres:16-alpine`); subsequent runs hit the local image cache.
 - **Closes** the "613 LOC unreviewed Postgres adapter" thread from commit `1093ce3`: when Docker is available, all 8 `PG_MEM_INCOMPAT` patterns get end-to-end validation against real Postgres. Pairs with the SQLite-via-`:memory:` parity in the sibling file.
+
+### RFC 0022 promotion Active → Accepted + dispatch trio graduation (2026-05-18)
+
+Same-day flip from `Active` → `Accepted` after the dispatch trio (HVMAP-1a / HVMAP-1b / HVMAP-1c) graduated from `it.todo()` placeholders to live behavioral tests against the Postgres reference host. HVMAP-2 already lived behavioral when the host impl landed (see prior entry). All 7 RFC 0022 acceptance-criteria checkboxes are now satisfied.
+
+- **`examples/hosts/postgres/src/server.ts` `core.orchestrator.supervisor` block** — adds the `mockDispatchPlan` config field per RFC 0022 §"Unresolved questions" #6 (the previously-deferred decision). When `node.config.mockDispatchPlan: OrchestratorDecision[]` is present, the supervisor emits the planned decisions in order (one per tick), falling back to `terminate` once the plan is exhausted. Falls back to the legacy hard-coded behavior when absent, preserving compatibility with the original `conformance-dispatch-loop` fixture. Implementation is ~30 LOC; production orchestrators (which delegate to an LLM) remain unaffected — this is a conformance-only test seam on the reference supervisor.
+- **`conformance/fixtures/conformance-dispatch-{input-mapping,output-mapping,cross-worker-handoff}.json`** — rewritten as full workflows with `core.orchestrator.supervisor` + `core.dispatch` loop topology. Each parent carries its scenario-specific `mockDispatchPlan` AND its scenario-specific mapping config (inputMapping / outputMapping / perWorker*).
+- **4 new child fixtures**: `conformance-dispatch-input-mapping-child`, `conformance-dispatch-output-mapping-child`, `conformance-dispatch-cross-worker-handoff-child-a`, `conformance-dispatch-cross-worker-handoff-child-b`. Each is a noop body whose variables and inputs serve as the assertion surface for the parent scenario.
+- **`conformance/src/scenarios/dispatch-{input-mapping,output-mapping,cross-worker-handoff}.test.ts`** — HVMAP-1a/1b/1c graduated from `it.todo()` to live behavioral tests. Each verifies the happy path end-to-end: dispatching a real child run via the supervisor + dispatch loop, then asserting on the child's `inputs_json` (HVMAP-1a, HVMAP-1c) OR the parent's `variables_json` (HVMAP-1b, HVMAP-1c) via `GET /v1/runs/{runId}`. Secondary edge cases (unset-variable projection, refusal-on-missing-capability, child-failed/cancelled skip, default+per-worker override, mid-run no-propagation, unset-parent-input) remain as `it.todo()` with refined descriptions naming the conformance-harness extensions they need.
+- **`conformance/fixtures.md`** — 4 new rows for the new child fixtures.
+- **`RFCS/0022-*.md`** — Status flips `Active` → `Accepted`; Updated row records the full promotion rationale. Acceptance-criteria checkboxes all checked. §"Unresolved questions" #6 closed (the supervisor-mock extension landed).
+- **`MAINTAINERS.md`** §"Bootstrap-phase RFC waivers" — RFC 0022 row updated to reflect the `Accepted` state.
+- **Compatibility:** strictly additive. New `mockDispatchPlan` field on the reference supervisor's config is optional; legacy supervisor behavior unchanged when absent. No wire shape changes. Pre-RFC 0022 workflows continue to validate.
 
 ### RFC 0022 — Postgres reference host implementation (2026-05-18)
 

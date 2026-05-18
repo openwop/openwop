@@ -1,0 +1,25 @@
+{
+  "id": "conformance-dispatch-cross-worker-handoff-child-b",
+  "name": "Conformance: Dispatch Cross-Worker Handoff (RFC 0022 §A) — child-b",
+  "version": "1.0",
+  "description": "Second child of `conformance-dispatch-cross-worker-handoff`. Sequential fan-out — runs AFTER child-a; child-a's outputMapping wrote `sharedVar='hello'` onto the parent variable bag. The dispatch node's `perWorkerInputMappings.child-b` projects parent's `sharedVar` onto this child's `input` input. The scenario reads this child's `inputs_json` via `GET /v1/runs/{childRunId}` and asserts `inputs.input === 'hello'` per RFC 0022 §A + §D.",
+  "nodes": [
+    {
+      "id": "noop",
+      "typeId": "core.identity",
+      "name": "Noop (asserts via inputs)",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": {
+    "tags": ["conformance", "rfc-0022", "dispatch", "cross-worker-handoff", "child"]
+  },
+  "settings": { "timeout": 5000 }
+}
