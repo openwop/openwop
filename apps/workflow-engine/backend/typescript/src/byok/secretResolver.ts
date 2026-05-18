@@ -23,6 +23,12 @@
 import { resolve } from 'node:path';
 import { createLogger } from '../observability/logger.js';
 import { decrypt, encrypt, loadMasterKey, type EncryptedRecord } from './encryption.js';
+import {
+  isKmsConfigured,
+  kmsDecrypt,
+  kmsEncrypt,
+  type KmsEncryptedRecord,
+} from './kmsEncryption.js';
 import type { Storage } from '../storage/storage.js';
 
 const log = createLogger('byok.secretResolver');
@@ -56,11 +62,25 @@ function ephemeralBucket(tenantId: string): Map<string, string> {
   return b;
 }
 
-/** Scope context for secret operations. Required in ephemeral mode;
- *  optional in SQLite mode (where the resolver is process-global). */
+/** Scope context for secret operations. Required in ephemeral mode
+ *  and for signed-in (`user:*`) tenants; optional otherwise. */
 export interface SecretScope {
   tenantId: string;
 }
+
+/**
+ * Tenant policy:
+ *   - `user:<sha>`  → signed-in; persistent, KMS-encrypted, tenant-scoped
+ *   - `anon:<sid>`  → anonymous; ephemeral, never persisted
+ *   - anything else (`demo`, conformance) → flat path (legacy)
+ */
+function isSignedInTenant(tenantId: string | undefined): tenantId is string {
+  return typeof tenantId === 'string' && tenantId.startsWith('user:');
+}
+
+/** Per-tenant decrypt cache (keyed by tenantId + ref). */
+const tenantPlaintextCache = new Map<string, string>();
+const tenantCacheKey = (tenantId: string, ref: string) => `${tenantId}::${ref}`;
 
 /**
  * Wire the resolver to the storage backend + master-key location.
@@ -110,6 +130,11 @@ export async function loadSecretsFromEnv(): Promise<number> {
 }
 
 export async function resolveSecret(credentialRef: string, scope?: SecretScope): Promise<string | null> {
+  // Signed-in tenant: KMS-encrypted tenant-scoped storage.
+  if (isSignedInTenant(scope?.tenantId)) {
+    return resolveTenantSecret(scope!.tenantId, credentialRef);
+  }
+
   if (ephemeralEnabled()) {
     if (!scope?.tenantId) {
       // In ephemeral mode the caller MUST provide a scope. Without
@@ -142,8 +167,52 @@ export async function resolveSecret(credentialRef: string, scope?: SecretScope):
   }
 }
 
+async function resolveTenantSecret(tenantId: string, credentialRef: string): Promise<string | null> {
+  const cacheKey = tenantCacheKey(tenantId, credentialRef);
+  const cached = tenantPlaintextCache.get(cacheKey);
+  if (cached !== undefined) return cached;
+
+  if (!isKmsConfigured()) {
+    log.warn('signed-in tenant secret requested but KMS not configured', { tenantId, credentialRef });
+    return null;
+  }
+
+  const { storage } = requireConfigured();
+  const encryptedJson = await storage.getTenantSecret(tenantId, credentialRef);
+  if (!encryptedJson) return null;
+
+  try {
+    const record = JSON.parse(encryptedJson) as KmsEncryptedRecord;
+    const plaintext = await kmsDecrypt(record);
+    tenantPlaintextCache.set(cacheKey, plaintext);
+    return plaintext;
+  } catch (err) {
+    log.error('failed to KMS-decrypt tenant secret', {
+      tenantId, credentialRef,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return null;
+  }
+}
+
 /** Persist a new (or updated) secret. Called by POST /v1/host/sample/byok/secrets. */
 export async function setSecret(credentialRef: string, value: string, scope?: SecretScope): Promise<void> {
+  if (isSignedInTenant(scope?.tenantId)) {
+    if (!isKmsConfigured()) {
+      throw new Error('signed-in tenant cannot set secret: KMS not configured');
+    }
+    const { storage } = requireConfigured();
+    const record = await kmsEncrypt(value);
+    await storage.upsertTenantSecret(
+      scope!.tenantId,
+      credentialRef,
+      JSON.stringify(record),
+      new Date().toISOString(),
+    );
+    tenantPlaintextCache.set(tenantCacheKey(scope!.tenantId, credentialRef), value);
+    return;
+  }
+
   if (ephemeralEnabled()) {
     if (!scope?.tenantId) {
       throw new Error('setSecret in ephemeral mode requires scope.tenantId');
@@ -159,6 +228,12 @@ export async function setSecret(credentialRef: string, value: string, scope?: Se
 
 /** Remove a secret. Called by DELETE /v1/host/sample/byok/secrets/:ref. */
 export async function removeSecret(credentialRef: string, scope?: SecretScope): Promise<void> {
+  if (isSignedInTenant(scope?.tenantId)) {
+    const { storage } = requireConfigured();
+    await storage.deleteTenantSecret(scope!.tenantId, credentialRef);
+    tenantPlaintextCache.delete(tenantCacheKey(scope!.tenantId, credentialRef));
+    return;
+  }
   if (ephemeralEnabled()) {
     if (!scope?.tenantId) throw new Error('removeSecret in ephemeral mode requires scope.tenantId');
     ephemeralBucket(scope.tenantId).delete(credentialRef);
@@ -171,12 +246,86 @@ export async function removeSecret(credentialRef: string, scope?: SecretScope): 
 
 /** Return all stored credentialRefs for the given scope. NEVER returns values. */
 export async function listSecretRefs(scope?: SecretScope): Promise<readonly string[]> {
+  if (isSignedInTenant(scope?.tenantId)) {
+    const { storage } = requireConfigured();
+    return storage.listTenantSecretRefs(scope!.tenantId);
+  }
   if (ephemeralEnabled()) {
     if (!scope?.tenantId) return [];
     return Array.from(ephemeralBucket(scope.tenantId).keys());
   }
   const { storage } = requireConfigured();
   return storage.listSecretRefs();
+}
+
+/**
+ * Migrate an anon tenant's in-memory ephemeral secrets into the user
+ * tenant's KMS-encrypted persistent store. Called by the anon→user
+ * migration handler after Firebase Auth sign-in.
+ *
+ * Returns `{ migrated, failed }`. Per-entry failures (KMS API blip,
+ * network error) re-insert the value into the source bucket so a
+ * later retry can pick them up; successfully-migrated entries are
+ * dropped from the source. This avoids the partial-loss window
+ * flagged in code-review MEDIUM #3.
+ *
+ * Throws if KMS isn't configured (signed-in writes require KMS) —
+ * callers should gate on `isKmsConfigured()` first.
+ */
+export async function migrateEphemeralSecretsToTenant(
+  fromAnonTenantId: string,
+  toUserTenantId: string,
+): Promise<{ migrated: number; failed: number }> {
+  if (!ephemeralEnabled()) return { migrated: 0, failed: 0 };
+  if (!isSignedInTenant(toUserTenantId)) {
+    throw new Error('migration target must be a signed-in (user:*) tenant');
+  }
+  const bucket = ephemeralSecrets.get(fromAnonTenantId);
+  if (!bucket || bucket.size === 0) return { migrated: 0, failed: 0 };
+  const entries = Array.from(bucket.entries());
+  let migrated = 0;
+  let failed = 0;
+  for (const [ref, value] of entries) {
+    try {
+      await setSecret(ref, value, { tenantId: toUserTenantId });
+      bucket.delete(ref);
+      migrated++;
+    } catch (err) {
+      log.warn('per-secret migration failed; left in source bucket for retry', {
+        fromAnonTenantId, toUserTenantId, credentialRef: ref,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      failed++;
+    }
+  }
+  // Drop the source bucket only when it's empty (every entry moved).
+  if (bucket.size === 0) ephemeralSecrets.delete(fromAnonTenantId);
+  return { migrated, failed };
+}
+
+/**
+ * Drop only the in-process plaintext-cache entries for a tenant.
+ * Cheaper companion to `deleteAllSecretsForTenant` for the account-
+ * deletion flow where the cascade has already removed the rows.
+ */
+export function clearTenantSecretCache(tenantId: string): void {
+  for (const key of Array.from(tenantPlaintextCache.keys())) {
+    if (key.startsWith(`${tenantId}::`)) tenantPlaintextCache.delete(key);
+  }
+}
+
+/**
+ * Delete every secret owned by `tenantId` — rows + cache. Used when
+ * the caller has NOT already wiped the rows via `deleteAllTenantData`
+ * (account deletion handles that itself via the storage cascade).
+ * Returns the count of rows removed.
+ */
+export async function deleteAllSecretsForTenant(tenantId: string): Promise<number> {
+  if (!backend) {
+    throw new Error('secretResolver not configured');
+  }
+  clearTenantSecretCache(tenantId);
+  return backend.deleteAllTenantSecrets(tenantId);
 }
 
 /** Wipe one tenant's ephemeral secrets. Called from the daily cleanup
@@ -205,9 +354,10 @@ export function clearExpiredEphemeralSecrets(keep: ReadonlySet<string>): number 
   return n;
 }
 
-/** Test affordance — wipe the in-process cache without touching storage. */
+/** Test affordance — wipe every in-process cache without touching storage. */
 export function clearCache(): void {
   plaintextCache.clear();
+  tenantPlaintextCache.clear();
   ephemeralSecrets.clear();
 }
 
@@ -220,4 +370,5 @@ export async function clearAllSecrets(): Promise<void> {
   const { storage } = requireConfigured();
   for (const ref of await storage.listSecretRefs()) await storage.deleteSecret(ref);
   plaintextCache.clear();
+  tenantPlaintextCache.clear();
 }

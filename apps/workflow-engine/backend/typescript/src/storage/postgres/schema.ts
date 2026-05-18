@@ -19,11 +19,22 @@
  *   byok_secrets      encrypted-at-rest BYOK credential records
  */
 
-import type { Client } from 'pg';
+/**
+ * Minimal client surface the migrations need. `pg.Client` and
+ * `pg.PoolClient` both satisfy it (their `query` method shape is
+ * identical for our usage). Accepting the narrower type lets callers
+ * pass a `pool.connect()` result without unsafe casts.
+ */
+export interface Queryable {
+  query<R extends Record<string, unknown> = Record<string, unknown>>(
+    sql: string,
+    params?: readonly unknown[],
+  ): Promise<{ rows: R[] }>;
+}
 
 export const LATEST_SCHEMA_VERSION = 1;
 
-const MIGRATIONS: Record<number, (client: Client) => Promise<void>> = {
+const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
   1: async (client) => {
     await client.query(`
       CREATE TABLE IF NOT EXISTS runs (
@@ -136,7 +147,7 @@ const MIGRATIONS: Record<number, (client: Client) => Promise<void>> = {
   },
 };
 
-export async function applyMigrations(client: Client): Promise<void> {
+export async function applyMigrations(client: Queryable): Promise<void> {
   await client.query(`
     CREATE TABLE IF NOT EXISTS __schema_version (
       id INTEGER PRIMARY KEY CHECK (id = 1),

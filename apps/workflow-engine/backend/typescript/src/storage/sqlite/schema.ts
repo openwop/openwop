@@ -8,7 +8,7 @@
 
 import type { Database } from 'better-sqlite3';
 
-export const LATEST_SCHEMA_VERSION = 2;
+export const LATEST_SCHEMA_VERSION = 3;
 
 const MIGRATIONS: Record<number, (db: Database) => void> = {
   1: (db) => {
@@ -125,6 +125,25 @@ const MIGRATIONS: Record<number, (db: Database) => void> = {
         encrypted_record TEXT NOT NULL,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
+      );
+    `);
+  },
+  3: (db) => {
+    // P3.4: tenant-scoped BYOK for signed-in users. The legacy flat
+    // table stays for backward-compat (treated as `tenant_id =
+    // __global__`); new rows from the KMS-backed signed-in path carry
+    // their owning tenant id. Composite PK enforces isolation.
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS byok_tenant_secrets (
+        tenant_id TEXT NOT NULL,
+        credential_ref TEXT NOT NULL,
+        -- KMS-envelope record per src/byok/kmsEncryption.ts; v: 2.
+        -- For local dev (no OPENWOP_BYOK_KMS_KEY) we use an
+        -- AES-256-GCM stub KMS so the wire shape is identical.
+        encrypted_record TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, credential_ref)
       );
     `);
   },

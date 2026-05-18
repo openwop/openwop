@@ -121,7 +121,7 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
   // holding a pool slot for the duration of DDL.
   const migrationClient = await pool.connect();
   try {
-    await applyMigrations(migrationClient as unknown as import('pg').Client);
+    await applyMigrations(migrationClient);
   } finally {
     migrationClient.release();
   }
@@ -223,6 +223,9 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
           input.payload ?? null, input.timestamp, input.causationId ?? null,
         ],
       );
+      // INSERT … RETURNING always emits exactly one row on success;
+      // pg surfaces SQL errors as a thrown rejection, not an empty
+      // result set. The `!` encodes that post-condition.
       return rowToEvent(rows[0]!);
     },
 
@@ -343,6 +346,9 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
         `SELECT key, response_body, response_status, created_at FROM idempotency WHERE key = $1`,
         [key],
       );
+      // Reachable only when the INSERT hit the (key) UNIQUE conflict,
+      // which means a row already exists with that key. The SELECT
+      // therefore returns exactly one row.
       const r = rows[0]!;
       return {
         claimed: false,
@@ -434,6 +440,105 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
         `SELECT credential_ref FROM byok_secrets WHERE tenant_id = '__global__' ORDER BY credential_ref ASC`,
       );
       return rows.map((r) => r.credential_ref);
+    },
+
+    async upsertTenantSecret(tenantId, credentialRef, encryptedRecordJson, now) {
+      await pool.query(
+        `INSERT INTO byok_secrets (credential_ref, tenant_id, encrypted_record, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $4)
+         ON CONFLICT (tenant_id, credential_ref) DO UPDATE SET
+           encrypted_record = EXCLUDED.encrypted_record,
+           updated_at = EXCLUDED.updated_at`,
+        [credentialRef, tenantId, encryptedRecordJson, now],
+      );
+    },
+
+    async getTenantSecret(tenantId, credentialRef) {
+      const { rows } = await pool.query<{ encrypted_record: string }>(
+        `SELECT encrypted_record FROM byok_secrets WHERE tenant_id = $1 AND credential_ref = $2`,
+        [tenantId, credentialRef],
+      );
+      return rows[0]?.encrypted_record ?? null;
+    },
+
+    async deleteTenantSecret(tenantId, credentialRef) {
+      await pool.query(
+        `DELETE FROM byok_secrets WHERE tenant_id = $1 AND credential_ref = $2`,
+        [tenantId, credentialRef],
+      );
+    },
+
+    async listTenantSecretRefs(tenantId) {
+      const { rows } = await pool.query<{ credential_ref: string }>(
+        `SELECT credential_ref FROM byok_secrets WHERE tenant_id = $1 ORDER BY credential_ref ASC`,
+        [tenantId],
+      );
+      return rows.map((r) => r.credential_ref);
+    },
+
+    async deleteAllTenantSecrets(tenantId) {
+      const res = await pool.query(`DELETE FROM byok_secrets WHERE tenant_id = $1`, [tenantId]);
+      return res.rowCount ?? 0;
+    },
+
+    async deleteAllTenantData(tenantId) {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const runRows = await client.query<{ run_id: string }>(
+          `SELECT run_id FROM runs WHERE tenant_id = $1`,
+          [tenantId],
+        );
+        const runIds = runRows.rows.map((r) => r.run_id);
+        let events = 0;
+        let interrupts = 0;
+        if (runIds.length > 0) {
+          const er = await client.query(`DELETE FROM events WHERE run_id = ANY($1::text[])`, [runIds]);
+          events = er.rowCount ?? 0;
+          const ir = await client.query(`DELETE FROM interrupts WHERE run_id = ANY($1::text[])`, [runIds]);
+          interrupts = ir.rowCount ?? 0;
+        }
+        const rr = await client.query(`DELETE FROM runs WHERE tenant_id = $1`, [tenantId]);
+        const wr = await client.query(`DELETE FROM workflows WHERE tenant_id = $1`, [tenantId]);
+        const sr = await client.query(`DELETE FROM byok_secrets WHERE tenant_id = $1`, [tenantId]);
+        await client.query('COMMIT');
+        return {
+          runs: rr.rowCount ?? 0,
+          events,
+          interrupts,
+          workflows: wr.rowCount ?? 0,
+          secrets: sr.rowCount ?? 0,
+        };
+      } catch (err) {
+        await client.query('ROLLBACK').catch(() => {});
+        throw err;
+      } finally {
+        client.release();
+      }
+    },
+
+    async reassignTenant(fromTenant, toTenant) {
+      // Wrap both UPDATEs in a single transaction so partial failure
+      // doesn't leave the data split across two tenants.
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const r1 = await client.query(
+          `UPDATE runs SET tenant_id = $1 WHERE tenant_id = $2`,
+          [toTenant, fromTenant],
+        );
+        const r2 = await client.query(
+          `UPDATE workflows SET tenant_id = $1 WHERE tenant_id = $2`,
+          [toTenant, fromTenant],
+        );
+        await client.query('COMMIT');
+        return { runs: r1.rowCount ?? 0, workflows: r2.rowCount ?? 0 };
+      } catch (err) {
+        await client.query('ROLLBACK').catch(() => {});
+        throw err;
+      } finally {
+        client.release();
+      }
     },
 
     async close() {

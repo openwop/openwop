@@ -122,6 +122,26 @@ export function openSqliteStorage(dbPath: string): Storage {
   const deleteSecretStmt = db.prepare(`DELETE FROM byok_secrets WHERE credential_ref = ?`);
   const listSecretRefsStmt = db.prepare(`SELECT credential_ref FROM byok_secrets ORDER BY credential_ref ASC`);
 
+  const upsertTenantSecretStmt = db.prepare(`
+    INSERT INTO byok_tenant_secrets (tenant_id, credential_ref, encrypted_record, created_at, updated_at)
+    VALUES (@tenant, @ref, @rec, @now, @now)
+    ON CONFLICT(tenant_id, credential_ref) DO UPDATE SET
+      encrypted_record = excluded.encrypted_record,
+      updated_at       = excluded.updated_at
+  `);
+  const getTenantSecretStmt = db.prepare(
+    `SELECT encrypted_record FROM byok_tenant_secrets WHERE tenant_id = ? AND credential_ref = ?`,
+  );
+  const deleteTenantSecretStmt = db.prepare(
+    `DELETE FROM byok_tenant_secrets WHERE tenant_id = ? AND credential_ref = ?`,
+  );
+  const listTenantSecretRefsStmt = db.prepare(
+    `SELECT credential_ref FROM byok_tenant_secrets WHERE tenant_id = ? ORDER BY credential_ref ASC`,
+  );
+  const deleteAllTenantSecretsStmt = db.prepare(
+    `DELETE FROM byok_tenant_secrets WHERE tenant_id = ?`,
+  );
+
   const insertAuditStmt = db.prepare(`
     INSERT INTO audit_log (audit_id, timestamp, principal_id, action, resource, outcome, payload)
     VALUES (@auditId, @timestamp, @principalId, @action, @resource, @outcome, @payload)
@@ -459,6 +479,71 @@ export function openSqliteStorage(dbPath: string): Storage {
     async listSecretRefs() {
       const rows = listSecretRefsStmt.all() as Array<{ credential_ref: string }>;
       return rows.map((r) => r.credential_ref);
+    },
+
+    async upsertTenantSecret(tenantId, credentialRef, encryptedRecordJson, now) {
+      upsertTenantSecretStmt.run({
+        tenant: tenantId, ref: credentialRef, rec: encryptedRecordJson, now,
+      });
+    },
+
+    async getTenantSecret(tenantId, credentialRef) {
+      const row = getTenantSecretStmt.get(tenantId, credentialRef) as
+        | { encrypted_record: string }
+        | undefined;
+      return row?.encrypted_record ?? null;
+    },
+
+    async deleteTenantSecret(tenantId, credentialRef) {
+      deleteTenantSecretStmt.run(tenantId, credentialRef);
+    },
+
+    async listTenantSecretRefs(tenantId) {
+      const rows = listTenantSecretRefsStmt.all(tenantId) as Array<{ credential_ref: string }>;
+      return rows.map((r) => r.credential_ref);
+    },
+
+    async deleteAllTenantSecrets(tenantId) {
+      const res = deleteAllTenantSecretsStmt.run(tenantId);
+      return Number(res.changes ?? 0);
+    },
+
+    async deleteAllTenantData(tenantId) {
+      const deleteTxn = db.transaction((tid: string) => {
+        // 1. Find every run owned by the tenant — we need their ids to
+        //    cascade events + interrupts. No FK constraints in this
+        //    schema, so the cascade is explicit.
+        const runRows = db.prepare(`SELECT run_id FROM runs WHERE tenant_id = ?`).all(tid) as Array<{ run_id: string }>;
+        const runIds = runRows.map((r) => r.run_id);
+        let events = 0;
+        let interrupts = 0;
+        for (const rid of runIds) {
+          const er = db.prepare(`DELETE FROM events WHERE run_id = ?`).run(rid);
+          events += Number(er.changes ?? 0);
+          const ir = db.prepare(`DELETE FROM interrupts WHERE run_id = ?`).run(rid);
+          interrupts += Number(ir.changes ?? 0);
+        }
+        const rr = db.prepare(`DELETE FROM runs WHERE tenant_id = ?`).run(tid);
+        const wr = db.prepare(`DELETE FROM workflows WHERE tenant_id = ?`).run(tid);
+        const sr = db.prepare(`DELETE FROM byok_tenant_secrets WHERE tenant_id = ?`).run(tid);
+        return {
+          runs: Number(rr.changes ?? 0),
+          events,
+          interrupts,
+          workflows: Number(wr.changes ?? 0),
+          secrets: Number(sr.changes ?? 0),
+        };
+      });
+      return deleteTxn(tenantId);
+    },
+
+    async reassignTenant(fromTenant, toTenant) {
+      const reassignTxn = db.transaction((from: string, to: string) => {
+        const r1 = db.prepare(`UPDATE runs SET tenant_id = ? WHERE tenant_id = ?`).run(to, from);
+        const r2 = db.prepare(`UPDATE workflows SET tenant_id = ? WHERE tenant_id = ?`).run(to, from);
+        return { runs: Number(r1.changes ?? 0), workflows: Number(r2.changes ?? 0) };
+      });
+      return reassignTxn(fromTenant, toTenant);
     },
 
     async close() {

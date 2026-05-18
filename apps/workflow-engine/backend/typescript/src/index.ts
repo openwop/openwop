@@ -32,6 +32,7 @@ import { initInMemorySurfaces } from './host/inMemorySurfaces.js';
 import { openStorage } from './storage/index.js';
 import { createHostAdapterSuite } from './host/index.js';
 import { configureSecretResolver, loadSecretsFromEnv } from './byok/secretResolver.js';
+import { bootstrapKmsFromEnv } from './byok/kmsEncryption.js';
 import { dirname, resolve as resolvePath } from 'node:path';
 import { registerHealthRoutes } from './routes/health.js';
 import { registerDiscoveryRoutes } from './routes/discovery.js';
@@ -86,6 +87,14 @@ export async function createApp(config: AppConfig): Promise<Express> {
     ? dirname(resolvePath(config.storageDsn.slice('sqlite://'.length)))
     : resolvePath('./data');
   configureSecretResolver({ storage, dataDir });
+
+  // KMS envelope encryption for signed-in (`user:*`) tenants. When
+  // OPENWOP_BYOK_KMS_KEY is set, every signed-in tenant secret gets
+  // KMS-wrapped DEK encryption per src/byok/kmsEncryption.ts. Anon
+  // tenants stay on the ephemeral in-memory path. Local dev / sqlite
+  // boots without KMS — signed-in secrets are simply rejected with a
+  // logged warning until the env is supplied.
+  bootstrapKmsFromEnv();
 
   // Pre-seed BYOK from env (kept for backward-compat with conformance
   // / scripted-test setups). Runtime adds via POST /v1/host/sample/byok/secrets.

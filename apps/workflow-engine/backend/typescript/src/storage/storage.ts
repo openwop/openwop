@@ -91,6 +91,55 @@ export interface Storage {
   /** List all stored credentialRefs (NEVER values). */
   listSecretRefs(): Promise<readonly string[]>;
 
+  // ── Tenant-scoped BYOK secrets (KMS-encrypted, signed-in users) ──
+  /** Persist a tenant-scoped encrypted secret. Caller MUST encrypt before calling. */
+  upsertTenantSecret(tenantId: string, credentialRef: string, encryptedRecordJson: string, now: string): Promise<void>;
+  /** Read back a tenant-scoped encrypted record. Returns null if absent. */
+  getTenantSecret(tenantId: string, credentialRef: string): Promise<string | null>;
+  /** Remove a tenant-scoped secret. */
+  deleteTenantSecret(tenantId: string, credentialRef: string): Promise<void>;
+  /** List a tenant's credentialRefs (NEVER values). */
+  listTenantSecretRefs(tenantId: string): Promise<readonly string[]>;
+  /** Remove every secret owned by a tenant. Used for account deletion. */
+  deleteAllTenantSecrets(tenantId: string): Promise<number>;
+
+  // ── tenant hard delete (account deletion) ──
+  /**
+   * Hard-delete every row owned by `tenantId`. Returns per-table row
+   * counts. Used by the account-deletion flow (P3.6.5).
+   *
+   * Cascade order:
+   *   1. events  — deleted by runId for every run owned by the tenant
+   *   2. interrupts — same
+   *   3. runs — direct DELETE
+   *   4. workflows — direct DELETE
+   *   5. byok_tenant_secrets — direct DELETE (KMS-wrapped DEKs become
+   *      orphan; the plaintext is unrecoverable)
+   *
+   * Note: this does NOT touch the audit log — security-relevant events
+   * persist past account deletion by design.
+   */
+  deleteAllTenantData(tenantId: string): Promise<{
+    runs: number;
+    events: number;
+    interrupts: number;
+    workflows: number;
+    secrets: number;
+  }>;
+
+  // ── tenant reassignment (anon → user migration) ──
+  /**
+   * Reassign every row owned by `fromTenant` to `toTenant`. Used when
+   * an anonymous visitor signs up — their `anon:<sid>` work becomes
+   * persistent under their new `user:<sha>` tenant id. Returns per-
+   * table row counts so the caller can attribute audit entries.
+   *
+   * Idempotent: re-calling with no remaining rows returns zeros. Does
+   * NOT touch BYOK secrets (handled out-of-band by the resolver —
+   * anon secrets are ephemeral-only).
+   */
+  reassignTenant(fromTenant: string, toTenant: string): Promise<{ runs: number; workflows: number }>;
+
   // ── lifecycle ──
   close(): Promise<void>;
 }
