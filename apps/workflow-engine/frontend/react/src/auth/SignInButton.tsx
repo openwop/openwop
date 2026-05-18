@@ -15,9 +15,35 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from './useAuth.js';
 import { migrateAnonToUser } from './migrateTenant.js';
-import { getCurrentIdToken } from './firebase.js';
+import { ExistingProviderSignInError, getCurrentIdToken } from './firebase.js';
 import { setCurrentIdToken } from '../client/config.js';
 import { deleteAccount, RequiresRecentLoginError } from './deleteAccount.js';
+
+function describeSignInError(err: unknown): string {
+  if (err instanceof ExistingProviderSignInError) return err.message;
+  if (err instanceof Error) {
+    // Strip the `Firebase: Error (auth/...)` wrapper so the modal
+    // doesn't surface a code that means nothing to the visitor.
+    const m = err.message.match(/^Firebase: Error \(auth\/([a-z-]+)\)\.?$/);
+    if (m) {
+      switch (m[1]) {
+        case 'popup-closed-by-user':
+        case 'cancelled-popup-request':
+          return 'Sign-in was cancelled.';
+        case 'popup-blocked':
+          return 'Your browser blocked the sign-in popup. Allow popups for app.openwop.dev and try again.';
+        case 'operation-not-allowed':
+          return 'This provider isn\'t enabled for the deployment. The maintainer needs to turn it on in the Firebase Console.';
+        case 'network-request-failed':
+          return 'Network error reaching the identity provider. Check your connection and try again.';
+        default:
+          return `Sign-in failed: ${m[1]}.`;
+      }
+    }
+    return err.message;
+  }
+  return String(err);
+}
 
 /**
  * Portal the modal out of the SignInButton's render tree. The button
@@ -99,7 +125,7 @@ export function SignInButton() {
                     await postSignInMigrate();
                     setModalOpen(false);
                   } catch (err) {
-                    setError(err instanceof Error ? err.message : String(err));
+                    setError(describeSignInError(err));
                   } finally {
                     setBusy(false);
                   }
@@ -119,7 +145,7 @@ export function SignInButton() {
                     await postSignInMigrate();
                     setModalOpen(false);
                   } catch (err) {
-                    setError(err instanceof Error ? err.message : String(err));
+                    setError(describeSignInError(err));
                   } finally {
                     setBusy(false);
                   }

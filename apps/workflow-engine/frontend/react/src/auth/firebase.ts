@@ -25,16 +25,50 @@
 
 import { initializeApp, type FirebaseApp } from 'firebase/app';
 import {
+  fetchSignInMethodsForEmail,
   getAuth,
   GoogleAuthProvider,
   GithubAuthProvider,
   signInWithPopup,
   signOut as fbSignOut,
   onIdTokenChanged,
+  type AuthProvider,
   type User,
   type Auth,
 } from 'firebase/auth';
 import { setCurrentIdToken } from '../client/config.js';
+
+/**
+ * Raised when sign-in fails because the email is already registered
+ * via a different provider. Carries the email + the providers the
+ * email IS registered with so the UI can tell the user which button
+ * to click instead. Matches the `auth/account-exists-with-different-
+ * credential` Firebase error code.
+ */
+export class ExistingProviderSignInError extends Error {
+  constructor(
+    public readonly email: string,
+    public readonly existingProviders: readonly string[],
+  ) {
+    const friendly = existingProviders.map(friendlyProviderName).join(' or ');
+    super(
+      `${email} is already signed up with ${friendly || 'another provider'}. ` +
+        `Click "${friendly ? `Continue with ${friendly}` : 'the other provider'}" to sign in instead.`,
+    );
+    this.name = 'ExistingProviderSignInError';
+  }
+}
+
+function friendlyProviderName(providerId: string): string {
+  switch (providerId) {
+    case 'google.com':
+    case 'googleAuthProvider': return 'Google';
+    case 'github.com':
+    case 'githubAuthProvider': return 'GitHub';
+    case 'password': return 'email + password';
+    default: return providerId;
+  }
+}
 
 interface FirebaseConfig {
   apiKey: string;
@@ -104,20 +138,44 @@ function project(u: User | null): AuthUser | null {
   };
 }
 
-export async function signInWithGoogle(): Promise<AuthUser> {
+/**
+ * Run the popup-sign-in flow against `provider` and translate the
+ * `auth/account-exists-with-different-credential` Firebase error code
+ * into a typed `ExistingProviderSignInError` carrying the email +
+ * existing providers — the UI uses both to render a useful message
+ * (e.g., "alice@example.com is already signed up with Google.").
+ */
+async function signInWith(provider: AuthProvider): Promise<AuthUser> {
   const a = ensureInit();
   if (!a) throw new Error('Firebase Auth not configured');
-  const provider = new GoogleAuthProvider();
-  const result = await signInWithPopup(a, provider);
-  return project(result.user)!;
+  try {
+    const result = await signInWithPopup(a, provider);
+    return project(result.user)!;
+  } catch (err) {
+    type FbError = { code?: string; customData?: { email?: string } };
+    const e = err as FbError;
+    if (e.code === 'auth/account-exists-with-different-credential' && e.customData?.email) {
+      const email = e.customData.email;
+      let providers: readonly string[] = [];
+      try {
+        providers = await fetchSignInMethodsForEmail(a, email);
+      } catch {
+        // fetchSignInMethodsForEmail can fail under email-enumeration
+        // protection. We still raise the typed error; the UI just
+        // shows the "another provider" fallback message.
+      }
+      throw new ExistingProviderSignInError(email, providers);
+    }
+    throw err;
+  }
+}
+
+export async function signInWithGoogle(): Promise<AuthUser> {
+  return signInWith(new GoogleAuthProvider());
 }
 
 export async function signInWithGithub(): Promise<AuthUser> {
-  const a = ensureInit();
-  if (!a) throw new Error('Firebase Auth not configured');
-  const provider = new GithubAuthProvider();
-  const result = await signInWithPopup(a, provider);
-  return project(result.user)!;
+  return signInWith(new GithubAuthProvider());
 }
 
 export async function signOut(): Promise<void> {
