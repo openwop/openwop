@@ -338,7 +338,11 @@ export function useChatSession(): UseChatSessionResult {
       const created = await createRun(
         {
           workflowId: 'sample.chat.turn',
-          tenantId: 'demo',
+          // Omit body.tenantId so the BE infers from the authenticated
+          // session/bearer (req.tenantId): `anon:<sid>` for cookie-anon
+          // callers, `user:<hash>` for Firebase-signed-in callers. A
+          // hardcoded 'demo' here is rejected by principalAuthorizer
+          // for any non-bearer-with-demo-allowlist principal.
           inputs: {
             provider: config.provider,
             model: config.model,
@@ -692,7 +696,8 @@ export function useChatSession(): UseChatSessionResult {
       const created = await createRun(
         {
           workflowId: entry.workflowId,
-          tenantId: 'demo',
+          // Same as the chat-turn createRun above: omit body.tenantId
+          // so the BE infers from the authenticated session.
           inputs,
           metadata: { chatSessionId: session.id, chatMessageId: runMsgId, mentionSlug: entry.slug },
         },
