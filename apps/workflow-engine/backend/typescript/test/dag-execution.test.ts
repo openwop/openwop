@@ -81,7 +81,7 @@ beforeAll(() => {
   });
 });
 
-function newRun(workflowId: string): RunRecord {
+async function newRun(workflowId: string): Promise<RunRecord> {
   const now = new Date().toISOString();
   const run: RunRecord = {
     runId: `run-${Math.random().toString(36).slice(2)}`,
@@ -94,13 +94,13 @@ function newRun(workflowId: string): RunRecord {
     createdAt: now,
     updatedAt: now,
   };
-  storage.insertRun(run);
+  await storage.insertRun(run);
   return run;
 }
 
 describe('DAG: fan-out', () => {
   it('1 → {2, 3} runs both downstreams', async () => {
-    const run = newRun('wf.fan-out');
+    const run = await newRun('wf.fan-out');
     const def: WorkflowDefinition = {
       workflowId: 'wf.fan-out',
       nodes: [
@@ -115,7 +115,7 @@ describe('DAG: fan-out', () => {
     };
     const result = await executeRun(storage, run, def);
     expect(result.status).toBe('completed');
-    const events = storage.listEvents(run.runId).map((e) => e.type);
+    const events = (await storage.listEvents(run.runId)).map((e) => e.type);
     expect(events.filter((t) => t === 'node.completed')).toHaveLength(3);
     expect(events).toContain('run.completed');
   });
@@ -123,7 +123,7 @@ describe('DAG: fan-out', () => {
 
 describe('DAG: fan-in', () => {
   it('all_success waits for every upstream', async () => {
-    const run = newRun('wf.fan-in-all');
+    const run = await newRun('wf.fan-in-all');
     const def: WorkflowDefinition = {
       workflowId: 'wf.fan-in-all',
       nodes: [
@@ -138,7 +138,7 @@ describe('DAG: fan-in', () => {
     };
     const result = await executeRun(storage, run, def);
     expect(result.status).toBe('completed');
-    const events = storage.listEvents(run.runId);
+    const events = await storage.listEvents(run.runId);
     const completedIds = events.filter((e) => e.type === 'node.completed').map((e) => e.nodeId);
     expect(new Set(completedIds)).toEqual(new Set(['a', 'b', 'c']));
     // c MUST appear after both a and b.
@@ -152,7 +152,7 @@ describe('DAG: fan-in', () => {
 
 describe('DAG: error routing with any_failed', () => {
   it('downstream fires only when an upstream fails', async () => {
-    const run = newRun('wf.error-route');
+    const run = await newRun('wf.error-route');
     const def: WorkflowDefinition = {
       workflowId: 'wf.error-route',
       nodes: [
@@ -170,7 +170,7 @@ describe('DAG: error routing with any_failed', () => {
     // any_failed branch ran: recover ran. b is a sibling that completed.
     // The run completed because recover (a terminal node) succeeded.
     expect(result.status).toBe('completed');
-    const events = storage.listEvents(run.runId);
+    const events = await storage.listEvents(run.runId);
     expect(events.some((e) => e.type === 'node.failed' && e.nodeId === 'a')).toBe(true);
     expect(events.some((e) => e.type === 'node.completed' && e.nodeId === 'recover')).toBe(true);
   });
@@ -185,7 +185,7 @@ describe('DAG: suspend on one branch', () => {
   it('one branch suspends, other completes; run reaches waiting-approval', async () => {
     // test.always-suspends emits kind=approval; finalize maps that to
     // 'waiting-approval' (regression guard from code-review #1).
-    const run = newRun('wf.suspend-branch');
+    const run = await newRun('wf.suspend-branch');
     const def: WorkflowDefinition = {
       workflowId: 'wf.suspend-branch',
       nodes: [
@@ -201,7 +201,7 @@ describe('DAG: suspend on one branch', () => {
     const result = await executeRun(storage, run, def);
     expect(result.status).toBe('waiting-approval');
     expect(result.pausedNodeIds).toContain('slow');
-    const events = storage.listEvents(run.runId);
+    const events = await storage.listEvents(run.runId);
     expect(events.some((e) => e.type === 'node.completed' && e.nodeId === 'fast')).toBe(true);
     expect(events.some((e) => e.type === 'node.suspended' && e.nodeId === 'slow')).toBe(true);
   });
@@ -212,7 +212,7 @@ describe('DAG: edge condition predicate (end-to-end)', () => {
     // a emits { output: 5 }; edge a→pass fires only if output > 0 — not
     // expressible with our predicate vocabulary (`gt` isn't in the set), so
     // test the documented set: `truthy` op against the output value.
-    const run = newRun('wf.edge-condition');
+    const run = await newRun('wf.edge-condition');
     const def: WorkflowDefinition = {
       workflowId: 'wf.edge-condition',
       nodes: [
@@ -230,7 +230,7 @@ describe('DAG: edge condition predicate (end-to-end)', () => {
     };
     const result = await executeRun(storage, run, def);
     expect(result.status).toBe('completed');
-    const events = storage.listEvents(run.runId);
+    const events = await storage.listEvents(run.runId);
     expect(events.some((e) => e.type === 'node.completed' && e.nodeId === 'pass')).toBe(true);
   });
 });
@@ -239,7 +239,7 @@ describe('DAG: concurrency cap', () => {
   it('OPENWOP_MAX_CONCURRENT_NODES=1 still drains a fan-out of 5', async () => {
     process.env.OPENWOP_MAX_CONCURRENT_NODES = '1';
     try {
-      const run = newRun('wf.concurrency-cap');
+      const run = await newRun('wf.concurrency-cap');
       const def: WorkflowDefinition = {
         workflowId: 'wf.concurrency-cap',
         nodes: [
@@ -260,8 +260,7 @@ describe('DAG: concurrency cap', () => {
       };
       const result = await executeRun(storage, run, def);
       expect(result.status).toBe('completed');
-      const completed = storage
-        .listEvents(run.runId)
+      const completed = (await storage.listEvents(run.runId))
         .filter((e) => e.type === 'node.completed')
         .map((e) => e.nodeId);
       expect(new Set(completed)).toEqual(new Set(['a', 'b1', 'b2', 'b3', 'b4', 'b5']));
@@ -273,7 +272,7 @@ describe('DAG: concurrency cap', () => {
 
 describe('DAG: cycle rejection', () => {
   it('fails with cycle_detected before any node.* events', async () => {
-    const run = newRun('wf.cycle');
+    const run = await newRun('wf.cycle');
     const def: WorkflowDefinition = {
       workflowId: 'wf.cycle',
       nodes: [
@@ -289,7 +288,7 @@ describe('DAG: cycle rejection', () => {
     };
     const result = await executeRun(storage, run, def);
     expect(result.status).toBe('failed');
-    const events = storage.listEvents(run.runId);
+    const events = await storage.listEvents(run.runId);
     expect(events.some((e) => e.type === 'node.started')).toBe(false);
     const failure = events.find((e) => e.type === 'run.failed');
     expect(failure).toBeDefined();
@@ -299,7 +298,7 @@ describe('DAG: cycle rejection', () => {
 
 describe('DAG: linear back-compat', () => {
   it('legacy linear definition (no edges) still works', async () => {
-    const run = newRun('wf.legacy-linear');
+    const run = await newRun('wf.legacy-linear');
     const def: WorkflowDefinition = {
       workflowId: 'wf.legacy-linear',
       nodes: [
@@ -311,8 +310,7 @@ describe('DAG: linear back-compat', () => {
     };
     const result = await executeRun(storage, run, def);
     expect(result.status).toBe('completed');
-    const completed = storage
-      .listEvents(run.runId)
+    const completed = (await storage.listEvents(run.runId))
       .filter((e) => e.type === 'node.completed')
       .map((e) => e.nodeId);
     expect(completed).toEqual(['a', 'b', 'c']);

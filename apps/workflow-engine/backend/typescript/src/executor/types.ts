@@ -111,6 +111,19 @@ export interface NodeContext {
   configurable: Record<string, unknown>;
   /** Per-attempt counter; first attempt = 1. */
   attempt: number;
+  /** Trust boundary of inputs entering this node (RFC 0020 §D).
+   *
+   *   - `'trusted'` (default): inputs come from authenticated openwop callers,
+   *     internal workflow chaining, or other host-trusted sources.
+   *   - `'untrusted'`: inputs originated from an external untrusted boundary
+   *     (e.g. inbound MCP `tools/call.arguments`, A2A peer messages, raw
+   *     webhook payloads). Pack nodes that forward this content to LLM
+   *     surfaces SHOULD mark it as untrusted per the
+   *     `threat-model-prompt-injection.md` UNTRUSTED-marker convention.
+   *
+   * Read from `run.metadata.trustBoundary` at run-start; constant across
+   * the run. Defaults to `'trusted'` when metadata is absent. */
+  trustBoundary?: 'trusted' | 'untrusted';
   /** Resolved BYOK secret values keyed by `credentialRef`. Empty if none required. */
   secrets: Record<string, string>;
   /** Emit a side-effect-free event into the run log. */

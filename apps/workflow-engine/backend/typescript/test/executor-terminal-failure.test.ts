@@ -42,7 +42,7 @@ beforeEach(() => {
   configureSecretResolver({ storage, dataDir });
 });
 
-function newRun(workflowId: string): RunRecord {
+async function newRun(workflowId: string): Promise<RunRecord> {
   const now = new Date().toISOString();
   const run: RunRecord = {
     runId: `run-${Math.random().toString(36).slice(2, 10)}`,
@@ -55,13 +55,13 @@ function newRun(workflowId: string): RunRecord {
     createdAt: now,
     updatedAt: now,
   };
-  storage.insertRun(run);
+  await storage.insertRun(run);
   return run;
 }
 
 describe('executor terminal-failure event sequence', () => {
   it('emits node.failed → run.failed when a node typeId is not registered', async () => {
-    const run = newRun('wf.test.missing-node');
+    const run = await newRun('wf.test.missing-node');
     const definition: WorkflowDefinition = {
       workflowId: 'wf.test.missing-node',
       nodes: [{ nodeId: 'n1', typeId: 'no.such.node.type' }],
@@ -71,7 +71,7 @@ describe('executor terminal-failure event sequence', () => {
 
     expect(result.status).toBe('failed');
 
-    const events = storage.listEvents(run.runId);
+    const events = await storage.listEvents(run.runId);
     const sequence = events.map((e) => e.type);
     // run.started fires before the node loop; then the helper appends
     // node.failed + run.failed in that order.
@@ -84,7 +84,7 @@ describe('executor terminal-failure event sequence', () => {
     expect((runFailed.payload as { error: { code: string } }).error.code).toBe('workflow_not_found');
     expect(nodeFailed.sequence).toBeLessThan(runFailed.sequence);
 
-    const stored = storage.getRun(run.runId)!;
+    const stored = (await storage.getRun(run.runId))!;
     expect(stored.status).toBe('failed');
     expect(stored.error?.code).toBe('workflow_not_found');
     expect(stored.completedAt).toBeDefined();
@@ -100,7 +100,7 @@ describe('executor terminal-failure event sequence', () => {
       },
     });
 
-    const run = newRun('wf.test.cap-gated');
+    const run = await newRun('wf.test.cap-gated');
     const definition: WorkflowDefinition = {
       workflowId: 'wf.test.cap-gated',
       nodes: [{ nodeId: 'n1', typeId: 'test.capability-gated.node' }],
@@ -110,7 +110,7 @@ describe('executor terminal-failure event sequence', () => {
 
     expect(result.status).toBe('failed');
 
-    const events = storage.listEvents(run.runId);
+    const events = await storage.listEvents(run.runId);
     const sequence = events.map((e) => e.type);
     expect(sequence).toEqual(['run.started', 'node.failed', 'run.failed']);
 
@@ -121,7 +121,7 @@ describe('executor terminal-failure event sequence', () => {
     expect((runFailed.payload as { error: { code: string } }).error.code).toBe('host_capability_missing');
     expect(nodeFailed.sequence).toBeLessThan(runFailed.sequence);
 
-    const stored = storage.getRun(run.runId)!;
+    const stored = (await storage.getRun(run.runId))!;
     expect(stored.status).toBe('failed');
     expect(stored.error?.code).toBe('host_capability_missing');
   });

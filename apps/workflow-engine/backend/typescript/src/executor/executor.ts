@@ -87,28 +87,28 @@ export interface ExecuteRunResult {
  * Emit the canonical terminal-failure event sequence: `node.failed`
  * (when a node was active) → `run.failed` → update run record.
  */
-function emitTerminalFailure(input: {
+async function emitTerminalFailure(input: {
   storage: Storage;
   runId: string;
   nodeId?: string;
   error: { code: string; message: string };
-}): void {
+}): Promise<void> {
   const eventLog = getEventLog();
   const errorPayload = stripSecretsFromPersisted({ error: input.error });
   if (input.nodeId) {
-    eventLog.append({
+    await eventLog.append({
       runId: input.runId,
       nodeId: input.nodeId,
       type: 'node.failed',
       payload: errorPayload,
     });
   }
-  eventLog.append({
+  await eventLog.append({
     runId: input.runId,
     type: 'run.failed',
     payload: errorPayload,
   });
-  input.storage.updateRun(input.runId, {
+  await input.storage.updateRun(input.runId, {
     status: 'failed',
     completedAt: new Date().toISOString(),
     error: input.error,
@@ -165,7 +165,7 @@ async function runOneNode(input: {
   const module = await registry.resolve(nodeRef.typeId);
   if (!module) {
     const error = { code: 'workflow_not_found', message: `node module not registered: ${nodeRef.typeId}` };
-    eventLog.append({
+    await eventLog.append({
       runId: run.runId,
       nodeId: nodeRef.nodeId,
       type: 'node.failed',
@@ -182,7 +182,7 @@ async function runOneNode(input: {
           code: 'host_capability_missing',
           message: `capability ${cap} not provided by host`,
         };
-        eventLog.append({
+        await eventLog.append({
           runId: run.runId,
           nodeId: nodeRef.nodeId,
           type: 'node.failed',
@@ -193,8 +193,8 @@ async function runOneNode(input: {
     }
   }
 
-  storage.updateRun(run.runId, { currentNodeId: nodeRef.nodeId });
-  eventLog.append({ runId: run.runId, nodeId: nodeRef.nodeId, type: 'node.started', payload: {} });
+  await storage.updateRun(run.runId, { currentNodeId: nodeRef.nodeId });
+  await eventLog.append({ runId: run.runId, nodeId: nodeRef.nodeId, type: 'node.started', payload: {} });
 
   const rawSecrets = getRunSecrets(run.runId);
   const secretsForCtx = nonEnumerableSecretsView(rawSecrets);
@@ -235,9 +235,18 @@ async function runOneNode(input: {
     config: nodeRef.config ?? {},
     configurable: run.configurable ?? {},
     attempt: 1,
+    // RFC 0020 §D: propagate the run-level trust boundary onto every
+    // node ctx. The MCP server mount (routes/mcp.ts) sets
+    // run.metadata.trustBoundary='untrusted' on inbound tools/call so
+    // workflow nodes that forward content to LLM surfaces can apply
+    // the prompt-injection UNTRUSTED-marker convention.
+    trustBoundary:
+      run.metadata && (run.metadata as Record<string, unknown>).trustBoundary === 'untrusted'
+        ? 'untrusted'
+        : 'trusted',
     secrets: secretsForCtx,
     async emit(type, payload) {
-      eventLog.append({
+      await eventLog.append({
         runId: run.runId,
         nodeId: nodeRef.nodeId,
         type,
@@ -284,7 +293,7 @@ async function runOneNode(input: {
   }
 
   if (outcome.status === 'success') {
-    eventLog.append({
+    await eventLog.append({
       runId: run.runId,
       nodeId: nodeRef.nodeId,
       type: 'node.completed',
@@ -299,7 +308,7 @@ async function runOneNode(input: {
   }
 
   if (outcome.status === 'failure') {
-    eventLog.append({
+    await eventLog.append({
       runId: run.runId,
       nodeId: nodeRef.nodeId,
       type: 'node.failed',
@@ -332,15 +341,15 @@ export async function executeRun(
   const isResume = options.resumeSnapshot !== undefined || options.resumeFromNodeIndex !== undefined;
 
   if (!isResume) {
-    eventLog.append({ runId: run.runId, type: 'run.started', payload: { workflowId: run.workflowId } });
-    storage.updateRun(run.runId, { status: 'running' });
+    await eventLog.append({ runId: run.runId, type: 'run.started', payload: { workflowId: run.workflowId } });
+    await storage.updateRun(run.runId, { status: 'running' });
   } else {
-    eventLog.append({
+    await eventLog.append({
       runId: run.runId,
       type: 'run.resumed',
       payload: { resumedAtNode: options.resumeNodeId ?? null },
     });
-    storage.updateRun(run.runId, { status: 'running' });
+    await storage.updateRun(run.runId, { status: 'running' });
   }
 
   // Cycle detection + snapshot construction.
@@ -354,7 +363,7 @@ export async function executeRun(
   } catch (err) {
     const code = (err as Error & { code?: string }).code ?? 'workflow_invalid';
     const message = err instanceof Error ? err.message : String(err);
-    emitTerminalFailure({ storage, runId: run.runId, error: { code, message } });
+    await emitTerminalFailure({ storage, runId: run.runId, error: { code, message } });
     return { status: 'failed' };
   }
 
@@ -395,7 +404,7 @@ export async function executeRun(
     } catch (err) {
       const code = err instanceof OpenwopError ? err.code : 'internal_error';
       const message = err instanceof Error ? err.message : String(err);
-      emitTerminalFailure({ storage, runId: run.runId, error: { code, message } });
+      await emitTerminalFailure({ storage, runId: run.runId, error: { code, message } });
       return { status: 'failed' };
     }
   }
@@ -433,14 +442,14 @@ export async function executeRun(
         markFailed(nodeId, out.error, snapshot);
         releaseDownstream(nodeId, graph, snapshot);
       } else {
-        const interrupt = suspend.createInterrupt({
+        const interrupt = await suspend.createInterrupt({
           runId: run.runId,
           nodeId,
           kind: out.interrupt.kind,
           data: out.interrupt.data,
           resumeSchema: out.interrupt.resumeSchema,
         });
-        eventLog.append({
+        await eventLog.append({
           runId: run.runId,
           nodeId,
           type: 'node.suspended',
@@ -466,11 +475,11 @@ export async function executeRun(
     if (batch.length === 0 && inflight.size === 0) {
       const disp = inspectDisposition(snapshot, graph, 0);
       if (disp.done) {
-        return finalizeRun({
+        return await finalizeRun({
           storage, run, snapshot, graph, definition, disposition: disp, suspendedKinds,
         });
       }
-      emitTerminalFailure({
+      await emitTerminalFailure({
         storage,
         runId: run.runId,
         error: { code: 'internal_error', message: 'scheduler stalled — no ready, no running, no suspended' },
@@ -491,7 +500,7 @@ export async function executeRun(
   }
 }
 
-function finalizeRun(input: {
+async function finalizeRun(input: {
   storage: Storage;
   run: RunRecord;
   snapshot: SchedulerSnapshot;
@@ -499,7 +508,7 @@ function finalizeRun(input: {
   definition: WorkflowDefinition;
   disposition: ReturnType<typeof inspectDisposition>;
   suspendedKinds: Map<string, string>;
-}): ExecuteRunResult {
+}): Promise<ExecuteRunResult> {
   const { storage, run, snapshot, definition, disposition, suspendedKinds } = input;
   const eventLog = getEventLog();
   if (disposition.status === 'completed') {
@@ -519,12 +528,12 @@ function finalizeRun(input: {
         terminals.map((id) => [id, unwrapSingleOutput(snapshot.nodeOutputs.get(id))]),
       );
     }
-    eventLog.append({
+    await eventLog.append({
       runId: run.runId,
       type: 'run.completed',
       payload: stripSecretsFromPersisted({ output }),
     });
-    storage.updateRun(run.runId, { status: 'completed', completedAt: new Date().toISOString() });
+    await storage.updateRun(run.runId, { status: 'completed', completedAt: new Date().toISOString() });
     clearRunSecrets(run.runId);
     notifyRunTerminal(run.runId);
     return { status: 'completed' };
@@ -534,7 +543,7 @@ function finalizeRun(input: {
       code: 'internal_error',
       message: 'unknown node failure',
     };
-    emitTerminalFailure({ storage, runId: run.runId, error: err });
+    await emitTerminalFailure({ storage, runId: run.runId, error: err });
     return { status: 'failed' };
   }
   // Waiting on suspended branch(es).
@@ -543,9 +552,9 @@ function finalizeRun(input: {
     .map(([id]) => id);
   const firstSuspended = disposition.suspendedNodeId ?? suspendedIds[0]!;
   const interruptKind = inferWaitingKind(firstSuspended, suspendedKinds);
-  storage.updateRun(run.runId, { status: interruptKind, currentNodeId: firstSuspended });
+  await storage.updateRun(run.runId, { status: interruptKind, currentNodeId: firstSuspended });
   // Persist scheduler snapshot for resume.
-  persistSnapshot(storage, run.runId, snapshot, suspendedKinds);
+  await persistSnapshot(storage, run.runId, snapshot, suspendedKinds);
   // Back-compat: also surface pausedAtIndex for legacy callers when the
   // workflow is purely linear and exactly one node is suspended.
   const linearShape = (input.definition.edges ?? []).every((e) => e.edgeId.startsWith('implicit_'));
@@ -592,12 +601,12 @@ export interface SerializedSnapshot {
   suspendedKinds?: Array<[string, string]>;
 }
 
-function persistSnapshot(
+async function persistSnapshot(
   storage: Storage,
   runId: string,
   snapshot: SchedulerSnapshot,
   suspendedKinds: Map<string, string>,
-): void {
+): Promise<void> {
   const ser: SerializedSnapshot = {
     schemaVersion: 1,
     nodeState: [...snapshot.nodeState.entries()].map(([k, v]) => [k, v]),
@@ -605,7 +614,7 @@ function persistSnapshot(
     nodeErrors: [...snapshot.nodeErrors.entries()],
     suspendedKinds: [...suspendedKinds.entries()],
   };
-  storage.updateRun(runId, { schedulerSnapshot: JSON.stringify(ser) as never });
+  await storage.updateRun(runId, { schedulerSnapshot: JSON.stringify(ser) as never });
 }
 
 function hydrateSnapshot(
@@ -638,13 +647,13 @@ async function prepareRunSecrets(run: RunRecord, definition: WorkflowDefinition)
   for (const node of definition.nodes) {
     const cfgRefs = (node.config?.credentialRefs as string[] | undefined) ?? [];
     for (const ref of cfgRefs) {
-      const value = resolveSecret(ref, scope);
+      const value = await resolveSecret(ref, scope);
       if (value) required.set(ref, value);
     }
   }
   const cfgRefs = (run.configurable?.credentialRefs as string[] | undefined) ?? [];
   for (const ref of cfgRefs) {
-    const value = resolveSecret(ref, scope);
+    const value = await resolveSecret(ref, scope);
     if (value) required.set(ref, value);
     else {
       throw new OpenwopError(

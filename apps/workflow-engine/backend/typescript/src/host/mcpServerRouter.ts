@@ -19,16 +19,15 @@
  * + rejects path components containing `..` after decode, defeating
  * encoded-traversal attacks (`%2e%2e%2f`, `..%2f`, etc.).
  *
- * KNOWN GAP — downstream trustBoundary propagation: this router records
- * `metadata.trustBoundary: 'untrusted'` on every MCP-originated run, but
- * the executor / AI-providers host do NOT yet consume that flag. A
- * workflow exposed as an MCP tool that pipes `arguments` directly into
- * `ctx.callAI()` will not get a host-enforced prompt-injection marker on
- * the AI request. RFC 0020 §D's "Outputs from an MCP tool feeding into
- * an LLM downstream remain `trustBoundary: 'untrusted'`" requires
- * threading a `trustBoundary?: 'trusted'|'untrusted'` field through
- * `NodeContext` + `AiCallRequest` + the `agent.toolCalled` event. Future
- * work; closing this is host-impl scope, not RFC 0020 acceptance scope.
+ * Downstream trustBoundary propagation (RFC 0020 §D): every MCP-originated
+ * run is created with `metadata.trustBoundary: 'untrusted'`. The executor
+ * reads that and surfaces it on each node's `ctx.trustBoundary` so pack
+ * nodes that forward content to LLM surfaces can apply the
+ * `threat-model-prompt-injection.md` UNTRUSTED-marker convention. Further
+ * propagation hooks — emitting `agent.toolCalled` events with the trust
+ * marker, attaching `inboundContentTrust` to `agent.reasoned` spans —
+ * remain follow-up work and are tracked under the trust-marker plumbing
+ * inside `core.openwop.ai`/`core.openwop.mcp` pack delegates.
  *
  * @see RFCS/0020-host-mcp-server-composition.md §D
  */
@@ -476,14 +475,14 @@ async function runWorkflowSync(input: {
     createdAt: now,
     updatedAt: now,
   };
-  deps.storage.insertRun(run);
+  await deps.storage.insertRun(run);
 
   const exec = await executeRun(deps.storage, run, wf.definition, {
     policyResolver: deps.hostSuite.providerPolicyResolver,
   });
 
   // Read terminal status + outputs from the event log.
-  const events = deps.storage.listEvents(runId);
+  const events = await deps.storage.listEvents(runId);
   let outputs: Record<string, unknown> | null = null;
   let error: { code: string; message: string } | null = null;
   for (let i = events.length - 1; i >= 0; i--) {
