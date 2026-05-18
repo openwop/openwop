@@ -144,9 +144,12 @@ gcloud run services add-iam-policy-binding openwop-app-backend \
 firebase hosting:sites:create app-openwop-dev --project openwop-dev
 firebase target:apply hosting app app-openwop-dev --project openwop-dev
 
-# Build the SPA (cookie auth mode + same-origin /api/** baseUrl)
-( cd apps/workflow-engine/frontend/react && \
-  VITE_OPENWOP_BASE_URL=/api VITE_OPENWOP_AUTH_MODE=cookie npm run build )
+# Build the SPA. The production env vars (VITE_OPENWOP_BASE_URL=/api,
+# VITE_OPENWOP_AUTH_MODE=cookie) live in `.env.production` at the
+# frontend root and Vite auto-loads them. `vite.config.ts` asserts
+# baseUrl is non-default in production mode, so a missing `.env.production`
+# aborts the build instead of silently shipping the dev fallback.
+( cd apps/workflow-engine/frontend/react && npm run build )
 
 # Deploy
 firebase deploy --only hosting:app --project openwop-dev
