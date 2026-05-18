@@ -8,7 +8,7 @@
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-18 |
 | **Updated** | 2026-05-18 |
-| **Affects** | `schemas/run-event-payloads.schema.json`, `schemas/capabilities.schema.json`, `spec/v1/agents.md`, `spec/v1/run-events.md`, `api/asyncapi.yaml`, `conformance/src/scenarios/`, `conformance/fixtures/`, `examples/hosts/postgres/`, `apps/workflow-engine/` |
+| **Affects** | `schemas/run-event-payloads.schema.json`, `schemas/run-event.schema.json`, `schemas/capabilities.schema.json`, `spec/v1/capabilities.md` §`agents.reasoning`, `spec/v1/node-packs.md` §"Authorized emitters", `api/asyncapi.yaml`, `conformance/src/scenarios/`, `conformance/fixtures/`, `examples/hosts/postgres/`, `apps/workflow-engine/` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md §2.1` |
 | **Supersedes** | — |
 | **Superseded by** | — |
@@ -185,7 +185,7 @@ Add optional `delta: string`, `done: boolean`, `sequence: integer` to the existi
 
 ## Acceptance criteria
 
-- [ ] Spec text merged: `spec/v1/agents.md` §`agent.reasoning.delta` section + `spec/v1/run-events.md` event-type table row.
+- [ ] Spec text merged: paragraph in `spec/v1/capabilities.md` §`agents.reasoning` describing the `streaming` flag + default + opt-in semantics; new event-type entry in `spec/v1/node-packs.md` §"Authorized emitters for `agent.*` events" listing `agent.reasoning.delta` alongside the existing five `agent.*` events.
 - [ ] Schema updated: `schemas/run-event-payloads.schema.json` adds `agentReasoningDelta`; `schemas/capabilities.schema.json` adds `agents.reasoning.streaming`.
 - [ ] AsyncAPI channel added: `api/asyncapi.yaml` advertises the new event message + schema reference.
 - [ ] At least one conformance scenario gated on `capabilities.agents.reasoning.streaming: true`.

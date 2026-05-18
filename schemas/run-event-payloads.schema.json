@@ -567,7 +567,7 @@
 
     "agentReasoningDelta": {
       "type": "object",
-      "description": "RFC 0024. Incremental reasoning chunk for live-streaming UX. Emitted while a reasoning block is still open, BEFORE the corresponding `agent.reasoned` finalization. Consumers concatenate `delta` strings in arrival order to reconstruct the in-progress trace; the closing `agent.reasoned` event carries the FULL authoritative `reasoning`. Gated on `capabilities.agents.reasoning.streaming: true`.",
+      "description": "RFC 0024. Incremental reasoning chunk for live-streaming UX. Emitted while a reasoning block is still open, BEFORE the corresponding `agent.reasoned` finalization. Consumers concatenate `delta` strings in arrival order to reconstruct the in-progress trace; the closing `agent.reasoned` event carries the FULL authoritative `reasoning`. Gated on `capabilities.agents.reasoning.streaming: true`. NOTE: `additionalProperties: true` mirrors the Phase-1 multi-agent-shift carve-out applied to the sibling `agentReasoned` schema — a deliberate forward-compat exception per RFC 0024 §Compatibility, not a precedent generalizable to other event payloads.",
       "required": ["agentId", "delta", "sequence"],
       "properties": {
         "agentId":   { "type": "string", "minLength": 3, "maxLength": 256, "description": "AgentRef.agentId of the reasoning agent. MUST match the eventual closing `agent.reasoned`." },

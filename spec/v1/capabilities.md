@@ -344,6 +344,8 @@ Multi-Agent Shift capability block (v1+). Hosts that implement any multi-agent s
 
 Runs MAY override the host default via `RunOptions.configurable.reasoningVerbosity` (see `run-options.md`).
 
+**Streaming reasoning (RFC 0024).** Hosts MAY advertise `agents.reasoning.streaming: true` to declare they emit `agent.reasoning.delta` events incrementally while a reasoning block is still open, in addition to the final `agent.reasoned`. Defaults to `false`. Consumers MUST tolerate both modes: a streaming host emits zero-or-more `agent.reasoning.delta` events followed by exactly one closing `agent.reasoned`; a non-streaming host emits only the closing event. The closing `agent.reasoned` event remains authoritative for reasoning content — if a host's truncation / redaction pipeline transforms the trace at finalize time, consumers reading only the closing event see the canonical result. See RFC 0024 §Proposal for the full normative contract.
+
 **Backward compat.** Clients MUST tolerate the entire `agents` block's absence — pre-MAS hosts omit it. Within the block, every field is optional; pattern is "declare what you support, omit what you don't."
 
 ### `conversationPrimitive`
