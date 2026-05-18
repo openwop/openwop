@@ -12,11 +12,21 @@
  */
 
 import { openSqliteStorage } from './sqlite/index.js';
+import { openPostgresStorage } from './postgres/index.js';
 import type { Storage } from './storage.js';
 
 export type { Storage } from './storage.js';
 
-export function openStorage(dsn: string): Storage {
+/**
+ * Open a Storage backend by DSN. Async because the Postgres backend
+ * runs schema migrations during open(); sqlite returns immediately.
+ *
+ * Supported DSNs:
+ *   - `sqlite://<path>`              — local file
+ *   - `memory://` or `:memory:`      — in-memory sqlite
+ *   - `postgres://...` / `postgresql://...` — Postgres (Cloud SQL)
+ */
+export async function openStorage(dsn: string): Promise<Storage> {
   if (dsn.startsWith('sqlite://')) {
     const path = dsn.slice('sqlite://'.length);
     return openSqliteStorage(path);
@@ -26,9 +36,12 @@ export function openStorage(dsn: string): Storage {
     // second in-memory implementation in the sample.
     return openSqliteStorage(':memory:');
   }
+  if (dsn.startsWith('postgres://') || dsn.startsWith('postgresql://')) {
+    return openPostgresStorage(dsn);
+  }
   throw new Error(
     `Unsupported storage DSN scheme: ${dsn}. ` +
-      'Built-in support: sqlite://<path> or memory://. ' +
-      'See src/storage/README.md to add Postgres / Firestore / DynamoDB.',
+      'Built-in support: sqlite://<path>, memory://, postgres://<dsn>. ' +
+      'See src/storage/README.md to add Firestore / DynamoDB.',
   );
 }

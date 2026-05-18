@@ -244,7 +244,7 @@ export function openSqliteStorage(dbPath: string): Storage {
   }
 
   return {
-    insertRun(run) {
+    async insertRun(run) {
       insertRunStmt.run({
         runId: run.runId,
         workflowId: run.workflowId,
@@ -268,13 +268,13 @@ export function openSqliteStorage(dbPath: string): Storage {
       });
     },
 
-    getRun(runId) {
+    async getRun(runId) {
       const row = getRunStmt.get(runId);
       return row ? rowToRun(row) : null;
     },
 
-    updateRun(runId, patch) {
-      const existing = this.getRun(runId);
+    async updateRun(runId, patch) {
+      const existing = await this.getRun(runId);
       if (!existing) return;
       const merged: RunRecord = { ...existing, ...patch, updatedAt: new Date().toISOString() };
       const updateStmt = db.prepare(`
@@ -306,7 +306,7 @@ export function openSqliteStorage(dbPath: string): Storage {
       });
     },
 
-    listRuns({ tenantId, status, limit = 100 }) {
+    async listRuns({ tenantId, status, limit = 100 }) {
       const rows = listRunsStmt.all({
         tenantId: tenantId ?? null,
         status: status ?? null,
@@ -315,23 +315,23 @@ export function openSqliteStorage(dbPath: string): Storage {
       return rows.map(rowToRun);
     },
 
-    appendEvent(input) {
+    async appendEvent(input) {
       const eventId = input.eventId || randomUUID();
       const result = appendEventTxn({ ...input, eventId });
       return result;
     },
 
-    listEvents(runId, { fromSeq = 0, limit = 1000 } = {}) {
+    async listEvents(runId, { fromSeq = 0, limit = 1000 } = {}) {
       const rows = listEventsStmt.all({ runId, fromSeq, limit });
       return rows.map(rowToEvent);
     },
 
-    getMaxSequence(runId) {
+    async getMaxSequence(runId) {
       const row = getMaxSeqStmt.get(runId) as { max: number };
       return row.max;
     },
 
-    insertInterrupt(record) {
+    async insertInterrupt(record) {
       insertInterruptStmt.run({
         ...record,
         data: JSON.stringify(record.data ?? null),
@@ -339,31 +339,31 @@ export function openSqliteStorage(dbPath: string): Storage {
       });
     },
 
-    getInterrupt(interruptId) {
+    async getInterrupt(interruptId) {
       const row = getInterruptStmt.get(interruptId);
       return row ? rowToInterrupt(row) : null;
     },
 
-    getInterruptByToken(token) {
+    async getInterruptByToken(token) {
       const row = getInterruptByTokenStmt.get(token);
       return row ? rowToInterrupt(row) : null;
     },
 
-    getInterruptByNode(runId, nodeId) {
+    async getInterruptByNode(runId, nodeId) {
       const row = getInterruptByNodeStmt.get(runId, nodeId);
       return row ? rowToInterrupt(row) : null;
     },
 
-    resolveInterrupt(interruptId, resolvedValue, resolvedAt) {
+    async resolveInterrupt(interruptId, resolvedValue, resolvedAt) {
       resolveInterruptStmt.run(resolvedAt, JSON.stringify(resolvedValue ?? null), interruptId);
     },
 
-    listOpenInterrupts(runId) {
+    async listOpenInterrupts(runId) {
       const rows = listOpenInterruptsStmt.all(runId);
       return rows.map(rowToInterrupt);
     },
 
-    insertWebhook(record) {
+    async insertWebhook(record) {
       insertWebhookStmt.run({
         subscriptionId: record.subscriptionId,
         url: record.url,
@@ -374,16 +374,16 @@ export function openSqliteStorage(dbPath: string): Storage {
       });
     },
 
-    getWebhook(subscriptionId) {
+    async getWebhook(subscriptionId) {
       const row = getWebhookStmt.get(subscriptionId);
       return row ? rowToWebhook(row) : null;
     },
 
-    deleteWebhook(subscriptionId) {
+    async deleteWebhook(subscriptionId) {
       deleteWebhookStmt.run(subscriptionId);
     },
 
-    listWebhooks({ eventType, tags }) {
+    async listWebhooks({ eventType, tags }) {
       const rows = listWebhooksStmt.all().map(rowToWebhook);
       return rows.filter((sub) => {
         if (eventType && !sub.events.includes(eventType) && !sub.events.includes('*')) {
@@ -398,13 +398,13 @@ export function openSqliteStorage(dbPath: string): Storage {
       });
     },
 
-    claimIdempotency(key, createdAt) {
+    async claimIdempotency(key, createdAt) {
       // Single sqlite txn: SELECT then INSERT under exclusive write lock.
       // better-sqlite3 serializes write txns process-wide, so two concurrent
       // claims for the same key see consistent state.
       return claimIdempotencyTxn(key, createdAt);
     },
-    putIdempotency(record) {
+    async putIdempotency(record) {
       upsertIdempotencyStmt.run({
         key: record.key,
         responseBody: record.responseBody,
@@ -413,7 +413,7 @@ export function openSqliteStorage(dbPath: string): Storage {
       });
     },
 
-    appendAudit(input) {
+    async appendAudit(input) {
       insertAuditStmt.run({
         auditId: randomUUID(),
         timestamp: input.timestamp,
@@ -425,14 +425,14 @@ export function openSqliteStorage(dbPath: string): Storage {
       });
     },
 
-    getInvocation({ runId, nodeId, attempt, providerKey }) {
+    async getInvocation({ runId, nodeId, attempt, providerKey }) {
       const row = getInvocationStmt.get(runId, nodeId, attempt, providerKey) as
         | { result: string }
         | undefined;
       return row?.result ? JSON.parse(row.result) : null;
     },
 
-    putInvocation({ runId, nodeId, attempt, providerKey }, result) {
+    async putInvocation({ runId, nodeId, attempt, providerKey }, result) {
       putInvocationStmt.run(
         runId,
         nodeId,
@@ -443,25 +443,25 @@ export function openSqliteStorage(dbPath: string): Storage {
       );
     },
 
-    upsertEncryptedSecret(credentialRef, encryptedRecordJson, now) {
+    async upsertEncryptedSecret(credentialRef, encryptedRecordJson, now) {
       upsertSecretStmt.run({ ref: credentialRef, rec: encryptedRecordJson, now });
     },
 
-    getEncryptedSecret(credentialRef) {
+    async getEncryptedSecret(credentialRef) {
       const row = getSecretStmt.get(credentialRef) as { encrypted_record: string } | undefined;
       return row?.encrypted_record ?? null;
     },
 
-    deleteSecret(credentialRef) {
+    async deleteSecret(credentialRef) {
       deleteSecretStmt.run(credentialRef);
     },
 
-    listSecretRefs() {
+    async listSecretRefs() {
       const rows = listSecretRefsStmt.all() as Array<{ credential_ref: string }>;
       return rows.map((r) => r.credential_ref);
     },
 
-    close() {
+    async close() {
       db.close();
     },
   };

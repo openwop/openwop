@@ -89,14 +89,14 @@ function requireConfigured(): { storage: Storage; masterKey: Buffer } {
  *
  * Returns the count of secrets loaded.
  */
-export function loadSecretsFromEnv(): number {
+export async function loadSecretsFromEnv(): Promise<number> {
   const raw = process.env.OPENWOP_SAMPLE_SECRETS;
   if (!raw) return 0;
   try {
     const parsed = JSON.parse(raw) as Record<string, string>;
     let count = 0;
     for (const [ref, value] of Object.entries(parsed)) {
-      setSecret(ref, value);
+      await setSecret(ref, value);
       count++;
     }
     log.info('loaded BYOK secrets from env', { count });
@@ -109,7 +109,7 @@ export function loadSecretsFromEnv(): number {
   }
 }
 
-export function resolveSecret(credentialRef: string, scope?: SecretScope): string | null {
+export async function resolveSecret(credentialRef: string, scope?: SecretScope): Promise<string | null> {
   if (ephemeralEnabled()) {
     if (!scope?.tenantId) {
       // In ephemeral mode the caller MUST provide a scope. Without
@@ -125,7 +125,7 @@ export function resolveSecret(credentialRef: string, scope?: SecretScope): strin
   if (cached !== undefined) return cached;
 
   const { storage, masterKey } = requireConfigured();
-  const encryptedJson = storage.getEncryptedSecret(credentialRef);
+  const encryptedJson = await storage.getEncryptedSecret(credentialRef);
   if (!encryptedJson) return null;
 
   try {
@@ -143,7 +143,7 @@ export function resolveSecret(credentialRef: string, scope?: SecretScope): strin
 }
 
 /** Persist a new (or updated) secret. Called by POST /v1/host/sample/byok/secrets. */
-export function setSecret(credentialRef: string, value: string, scope?: SecretScope): void {
+export async function setSecret(credentialRef: string, value: string, scope?: SecretScope): Promise<void> {
   if (ephemeralEnabled()) {
     if (!scope?.tenantId) {
       throw new Error('setSecret in ephemeral mode requires scope.tenantId');
@@ -153,24 +153,24 @@ export function setSecret(credentialRef: string, value: string, scope?: SecretSc
   }
   const { storage, masterKey } = requireConfigured();
   const record = encrypt(value, masterKey);
-  storage.upsertEncryptedSecret(credentialRef, JSON.stringify(record), new Date().toISOString());
+  await storage.upsertEncryptedSecret(credentialRef, JSON.stringify(record), new Date().toISOString());
   plaintextCache.set(credentialRef, value);
 }
 
 /** Remove a secret. Called by DELETE /v1/host/sample/byok/secrets/:ref. */
-export function removeSecret(credentialRef: string, scope?: SecretScope): void {
+export async function removeSecret(credentialRef: string, scope?: SecretScope): Promise<void> {
   if (ephemeralEnabled()) {
     if (!scope?.tenantId) throw new Error('removeSecret in ephemeral mode requires scope.tenantId');
     ephemeralBucket(scope.tenantId).delete(credentialRef);
     return;
   }
   const { storage } = requireConfigured();
-  storage.deleteSecret(credentialRef);
+  await storage.deleteSecret(credentialRef);
   plaintextCache.delete(credentialRef);
 }
 
 /** Return all stored credentialRefs for the given scope. NEVER returns values. */
-export function listSecretRefs(scope?: SecretScope): readonly string[] {
+export async function listSecretRefs(scope?: SecretScope): Promise<readonly string[]> {
   if (ephemeralEnabled()) {
     if (!scope?.tenantId) return [];
     return Array.from(ephemeralBucket(scope.tenantId).keys());
@@ -212,12 +212,12 @@ export function clearCache(): void {
 }
 
 /** Test affordance — wipe storage AND cache. */
-export function clearAllSecrets(): void {
+export async function clearAllSecrets(): Promise<void> {
   if (ephemeralEnabled()) {
     ephemeralSecrets.clear();
     return;
   }
   const { storage } = requireConfigured();
-  for (const ref of storage.listSecretRefs()) storage.deleteSecret(ref);
+  for (const ref of await storage.listSecretRefs()) await storage.deleteSecret(ref);
   plaintextCache.clear();
 }

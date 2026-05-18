@@ -47,7 +47,7 @@ export function registerWebhookRoutes(app: Express, deps: Deps): void {
     });
   });
 
-  app.post('/v1/webhooks', (req, res, next) => {
+  app.post('/v1/webhooks', async (req, res, next) => {
     try {
       const body = req.body as RegisterWebhookRequest;
       // Validate required fields per spec/v1/webhooks.md §"Subscription".
@@ -70,7 +70,7 @@ export function registerWebhookRoutes(app: Express, deps: Deps): void {
       }
       const subscriptionId = randomUUID();
       const secret = body.secret ?? randomBytes(32).toString('base64url');
-      storage.insertWebhook({
+      await storage.insertWebhook({
         subscriptionId,
         url: body.url,
         events: body.events,
@@ -90,9 +90,9 @@ export function registerWebhookRoutes(app: Express, deps: Deps): void {
     }
   });
 
-  app.delete('/v1/webhooks/:subscriptionId', (req, res, next) => {
+  app.delete('/v1/webhooks/:subscriptionId', async (req, res, next) => {
     try {
-      const sub = storage.getWebhook(req.params.subscriptionId);
+      const sub = await storage.getWebhook(req.params.subscriptionId);
       if (!sub) {
         throw new OpenwopError(
           'subscription_not_found',
@@ -101,7 +101,7 @@ export function registerWebhookRoutes(app: Express, deps: Deps): void {
           { subscriptionId: req.params.subscriptionId },
         );
       }
-      storage.deleteWebhook(req.params.subscriptionId);
+      await storage.deleteWebhook(req.params.subscriptionId);
       res.status(204).send();
     } catch (err) {
       next(err);
@@ -110,7 +110,7 @@ export function registerWebhookRoutes(app: Express, deps: Deps): void {
 }
 
 async function deliverToSubscribers(storage: Storage, event: EventRecord): Promise<void> {
-  const subscribers = storage.listWebhooks({ eventType: event.type });
+  const subscribers = await storage.listWebhooks({ eventType: event.type });
   for (const sub of subscribers) {
     setImmediate(() => deliverOne(sub, event).catch(() => undefined));
   }

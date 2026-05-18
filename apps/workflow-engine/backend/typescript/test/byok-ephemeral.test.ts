@@ -22,67 +22,67 @@ import {
 } from '../src/byok/secretResolver.js';
 
 describe('BYOK ephemeral mode (P0.3)', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     process.env.OPENWOP_BYOK_EPHEMERAL = 'true';
-    clearAllSecrets();
+    await clearAllSecrets();
   });
 
-  afterAll(() => {
-    clearAllSecrets();
+  afterAll(async () => {
+    await clearAllSecrets();
     process.env.OPENWOP_BYOK_EPHEMERAL = '';
   });
 
-  it('isolates secrets between tenants', () => {
-    setSecret('anthropic', 'KEY-A', { tenantId: 'anon:alice' });
-    setSecret('anthropic', 'KEY-B', { tenantId: 'anon:bob' });
-    expect(resolveSecret('anthropic', { tenantId: 'anon:alice' })).toBe('KEY-A');
-    expect(resolveSecret('anthropic', { tenantId: 'anon:bob' })).toBe('KEY-B');
+  it('isolates secrets between tenants', async () => {
+    await setSecret('anthropic', 'KEY-A', { tenantId: 'anon:alice' });
+    await setSecret('anthropic', 'KEY-B', { tenantId: 'anon:bob' });
+    expect(await resolveSecret('anthropic', { tenantId: 'anon:alice' })).toBe('KEY-A');
+    expect(await resolveSecret('anthropic', { tenantId: 'anon:bob' })).toBe('KEY-B');
   });
 
-  it('returns null when scope is omitted in ephemeral mode (no global fallback)', () => {
-    setSecret('anthropic', 'KEY-A', { tenantId: 'anon:alice' });
+  it('returns null when scope is omitted in ephemeral mode (no global fallback)', async () => {
+    await setSecret('anthropic', 'KEY-A', { tenantId: 'anon:alice' });
     // Caller forgot scope — must NOT leak alice's key.
-    expect(resolveSecret('anthropic')).toBeNull();
+    expect(await resolveSecret('anthropic')).toBeNull();
   });
 
-  it('listSecretRefs returns only the caller-scoped tenant refs', () => {
-    setSecret('openai', 'A', { tenantId: 'anon:alice' });
-    setSecret('anthropic', 'A2', { tenantId: 'anon:alice' });
-    setSecret('openai', 'B', { tenantId: 'anon:bob' });
-    expect([...listSecretRefs({ tenantId: 'anon:alice' })].sort()).toEqual(['anthropic', 'openai']);
-    expect([...listSecretRefs({ tenantId: 'anon:bob' })]).toEqual(['openai']);
-    expect([...listSecretRefs({ tenantId: 'anon:never-set' })]).toEqual([]);
+  it('listSecretRefs returns only the caller-scoped tenant refs', async () => {
+    await setSecret('openai', 'A', { tenantId: 'anon:alice' });
+    await setSecret('anthropic', 'A2', { tenantId: 'anon:alice' });
+    await setSecret('openai', 'B', { tenantId: 'anon:bob' });
+    expect([...(await listSecretRefs({ tenantId: 'anon:alice' }))].sort()).toEqual(['anthropic', 'openai']);
+    expect([...(await listSecretRefs({ tenantId: 'anon:bob' }))]).toEqual(['openai']);
+    expect([...(await listSecretRefs({ tenantId: 'anon:never-set' }))]).toEqual([]);
   });
 
-  it('removeSecret only affects the caller-scoped tenant', () => {
-    setSecret('openai', 'A', { tenantId: 'anon:alice' });
-    setSecret('openai', 'B', { tenantId: 'anon:bob' });
-    removeSecret('openai', { tenantId: 'anon:alice' });
-    expect(resolveSecret('openai', { tenantId: 'anon:alice' })).toBeNull();
-    expect(resolveSecret('openai', { tenantId: 'anon:bob' })).toBe('B');
+  it('removeSecret only affects the caller-scoped tenant', async () => {
+    await setSecret('openai', 'A', { tenantId: 'anon:alice' });
+    await setSecret('openai', 'B', { tenantId: 'anon:bob' });
+    await removeSecret('openai', { tenantId: 'anon:alice' });
+    expect(await resolveSecret('openai', { tenantId: 'anon:alice' })).toBeNull();
+    expect(await resolveSecret('openai', { tenantId: 'anon:bob' })).toBe('B');
   });
 
-  it('clearTenantEphemeralSecrets wipes only the named tenant', () => {
-    setSecret('a', '1', { tenantId: 'anon:alice' });
-    setSecret('b', '2', { tenantId: 'anon:bob' });
+  it('clearTenantEphemeralSecrets wipes only the named tenant', async () => {
+    await setSecret('a', '1', { tenantId: 'anon:alice' });
+    await setSecret('b', '2', { tenantId: 'anon:bob' });
     const n = clearTenantEphemeralSecrets('anon:alice');
     expect(n).toBe(1);
-    expect(resolveSecret('a', { tenantId: 'anon:alice' })).toBeNull();
-    expect(resolveSecret('b', { tenantId: 'anon:bob' })).toBe('2');
+    expect(await resolveSecret('a', { tenantId: 'anon:alice' })).toBeNull();
+    expect(await resolveSecret('b', { tenantId: 'anon:bob' })).toBe('2');
   });
 
-  it('clearExpiredEphemeralSecrets keeps only the named tenants', () => {
-    setSecret('a', '1', { tenantId: 'anon:alice' });
-    setSecret('b', '2', { tenantId: 'anon:bob' });
-    setSecret('c', '3', { tenantId: 'anon:carol' });
+  it('clearExpiredEphemeralSecrets keeps only the named tenants', async () => {
+    await setSecret('a', '1', { tenantId: 'anon:alice' });
+    await setSecret('b', '2', { tenantId: 'anon:bob' });
+    await setSecret('c', '3', { tenantId: 'anon:carol' });
     const wiped = clearExpiredEphemeralSecrets(new Set(['anon:alice']));
     expect(wiped).toBe(2);
-    expect(resolveSecret('a', { tenantId: 'anon:alice' })).toBe('1');
-    expect(resolveSecret('b', { tenantId: 'anon:bob' })).toBeNull();
-    expect(resolveSecret('c', { tenantId: 'anon:carol' })).toBeNull();
+    expect(await resolveSecret('a', { tenantId: 'anon:alice' })).toBe('1');
+    expect(await resolveSecret('b', { tenantId: 'anon:bob' })).toBeNull();
+    expect(await resolveSecret('c', { tenantId: 'anon:carol' })).toBeNull();
   });
 
-  it('setSecret without scope throws in ephemeral mode', () => {
-    expect(() => setSecret('a', '1')).toThrow(/scope\.tenantId/);
+  it('setSecret without scope throws in ephemeral mode', async () => {
+    await expect(setSecret('a', '1')).rejects.toThrow(/scope\.tenantId/);
   });
 });

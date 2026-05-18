@@ -35,12 +35,12 @@ export function registerInterruptRoutes(app: Express, deps: Deps): void {
   app.post('/v1/runs/:runId/interrupts/:nodeId', async (req, res, next) => {
     try {
       const { runId, nodeId } = req.params;
-      const interrupt = storage.getInterruptByNode(runId, nodeId);
+      const interrupt = await storage.getInterruptByNode(runId, nodeId);
       if (!interrupt) throw new OpenwopError('interrupt_not_found', 'no open interrupt for this node', 404);
       if (interrupt.resolvedAt) throw new OpenwopError('interrupt_already_resolved', 'interrupt already resolved', 409);
       const body = req.body as ResolveInterruptRequest;
       await resolveAndResume(storage, hostSuite, interrupt.interruptId, body?.resumeValue);
-      const run = storage.getRun(runId);
+      const run = await storage.getRun(runId);
       res.json({ runId, nodeId, status: run?.status ?? 'running' });
     } catch (err) {
       next(err);
@@ -50,12 +50,13 @@ export function registerInterruptRoutes(app: Express, deps: Deps): void {
   app.post('/v1/interrupts/:token', async (req, res, next) => {
     try {
       const { token } = req.params;
-      const interrupt = storage.getInterruptByToken(token);
+      const interrupt = await storage.getInterruptByToken(token);
       if (!interrupt) throw new OpenwopError('invalid_interrupt_token', 'unknown interrupt token', 404);
       if (interrupt.resolvedAt) throw new OpenwopError('interrupt_already_resolved', 'interrupt already resolved', 409);
       const body = req.body as { resumeValue?: unknown };
       await resolveAndResume(storage, hostSuite, interrupt.interruptId, body?.resumeValue);
-      res.json({ runId: interrupt.runId, nodeId: interrupt.nodeId, status: storage.getRun(interrupt.runId)?.status });
+      const run = await storage.getRun(interrupt.runId);
+      res.json({ runId: interrupt.runId, nodeId: interrupt.nodeId, status: run?.status });
     } catch (err) {
       next(err);
     }
@@ -69,11 +70,11 @@ export function registerInterruptRoutes(app: Express, deps: Deps): void {
   // every host that strips tokens from the public event log needs a
   // way for authed callers to list open interrupts with tokens. For
   // now it stays sample-scoped to avoid contract drift.
-  app.get('/v1/host/sample/runs/:runId/interrupts', (req, res, next) => {
+  app.get('/v1/host/sample/runs/:runId/interrupts', async (req, res, next) => {
     try {
-      const run = storage.getRun(req.params.runId);
+      const run = await storage.getRun(req.params.runId);
       if (!run) throw new OpenwopError('run_not_found', `run ${req.params.runId} not found`, 404);
-      const open = storage.listOpenInterrupts(run.runId);
+      const open = await storage.listOpenInterrupts(run.runId);
       res.json({
         runId: run.runId,
         interrupts: open.map((it) => ({
@@ -91,9 +92,9 @@ export function registerInterruptRoutes(app: Express, deps: Deps): void {
     }
   });
 
-  app.get('/v1/interrupts/:token', (req, res, next) => {
+  app.get('/v1/interrupts/:token', async (req, res, next) => {
     try {
-      const interrupt = storage.getInterruptByToken(req.params.token);
+      const interrupt = await storage.getInterruptByToken(req.params.token);
       if (!interrupt) throw new OpenwopError('invalid_interrupt_token', 'unknown interrupt token', 404);
       res.json({
         kind: interrupt.kind,
@@ -114,18 +115,18 @@ async function resolveAndResume(
   interruptId: string,
   resumeValue: unknown,
 ): Promise<void> {
-  const interrupt = storage.getInterrupt(interruptId);
+  const interrupt = await storage.getInterrupt(interruptId);
   if (!interrupt) throw new OpenwopError('interrupt_not_found', 'interrupt missing on resume', 404);
 
-  getSuspendManager().resolve(interruptId, resumeValue);
-  getEventLog().append({
+  await getSuspendManager().resolve(interruptId, resumeValue);
+  await getEventLog().append({
     runId: interrupt.runId,
     nodeId: interrupt.nodeId,
     type: 'node.interrupt.resolved',
     payload: { interruptId, kind: interrupt.kind },
   });
 
-  const run = storage.getRun(interrupt.runId);
+  const run = await storage.getRun(interrupt.runId);
   if (!run) throw new OpenwopError('run_not_found', `run ${interrupt.runId} missing during resume`, 404);
   const wf = await hostSuite.workflowCatalog.getWorkflow(run.workflowId);
   if (!wf) throw new OpenwopError('workflow_not_found', `workflow ${run.workflowId} not found`, 404);

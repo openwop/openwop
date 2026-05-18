@@ -29,8 +29,8 @@ import { join } from 'node:path';
 
 let storage: Storage;
 
-beforeEach(() => {
-  storage = openStorage('memory://');
+beforeEach(async () => {
+  storage = await openStorage('memory://');
   setEventLogBackend(storage);
   setSuspendBackend(storage);
   setRuntimeCapabilities([]);

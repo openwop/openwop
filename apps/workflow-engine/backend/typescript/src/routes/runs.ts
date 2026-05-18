@@ -87,7 +87,7 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
       // the cached response (final) or 409 (still in flight).
       const idempotencyKey = req.header('idempotency-key') ?? undefined;
       if (idempotencyKey) {
-        const claim = storage.claimIdempotency(idempotencyKey, new Date().toISOString());
+        const claim = await storage.claimIdempotency(idempotencyKey, new Date().toISOString());
         if (!claim.claimed) {
           const existing = claim.existing;
           if (existing && existing.responseBody !== '__pending__') {
@@ -121,7 +121,7 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
         createdAt: now,
         updatedAt: now,
       };
-      storage.insertRun(run);
+      await storage.insertRun(run);
       // Bind the run to a concurrent-runs slot (P0.4 rate limit) — the
       // middleware reserved abstract capacity in its pre-flight check,
       // and this call ties the reservation to the actual runId so the
@@ -146,7 +146,7 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
 
       // Cache the response for replay (now that it's final).
       if (idempotencyKey) {
-        storage.putIdempotency({
+        await storage.putIdempotency({
           key: idempotencyKey,
           responseBody: JSON.stringify(response),
           responseStatus: 202,
@@ -176,7 +176,7 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
 
   app.get('/v1/runs/:runId', async (req, res, next) => {
     try {
-      const run = storage.getRun(req.params.runId);
+      const run = await storage.getRun(req.params.runId);
       if (!run) throw new OpenwopError('run_not_found', `run ${req.params.runId} not found`, 404);
       res.json(projectRunSnapshot(run));
     } catch (err) {
@@ -186,7 +186,7 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
 
   app.post('/v1/runs/:runId/cancel', async (req, res, next) => {
     try {
-      const run = storage.getRun(req.params.runId);
+      const run = await storage.getRun(req.params.runId);
       if (!run) throw new OpenwopError('run_not_found', `run ${req.params.runId} not found`, 404);
       const terminal = ['completed', 'failed', 'cancelled'];
       if (terminal.includes(run.status)) {
@@ -194,12 +194,12 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
         return;
       }
       const reason = (req.body?.reason as string) ?? 'cancelled by request';
-      storage.updateRun(run.runId, {
+      await storage.updateRun(run.runId, {
         status: 'cancelled',
         completedAt: new Date().toISOString(),
         error: { code: 'cancelled', message: reason },
       });
-      getEventLog().append({
+      await getEventLog().append({
         runId: run.runId,
         type: 'run.cancelled',
         payload: { reason },
@@ -219,7 +219,7 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
       // Express regex routes expose captures via req.params['0'], ['1'], …
       const runId = (req.params as Record<string, string>)['0'];
       if (!runId) throw new OpenwopError('invalid_request', 'runId path segment required', 400);
-      const sourceRun = storage.getRun(runId);
+      const sourceRun = await storage.getRun(runId);
       if (!sourceRun) throw new OpenwopError('run_not_found', `run ${runId} not found`, 404);
       const body = req.body as ForkRunRequest;
       if (typeof body?.fromSeq !== 'number' || body.fromSeq < 0) {
@@ -228,7 +228,7 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
       if (body.mode !== 'replay' && body.mode !== 'branch') {
         throw new OpenwopError('fork_unsupported_mode', `mode must be one of replay|branch`, 400);
       }
-      const maxSeq = storage.getMaxSequence(sourceRun.runId);
+      const maxSeq = await storage.getMaxSequence(sourceRun.runId);
       if (body.fromSeq > maxSeq) {
         throw new OpenwopError('fork_invalid_seq', `fromSeq ${body.fromSeq} > maxSeq ${maxSeq}`, 400);
       }
@@ -249,15 +249,15 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
         configurable: { ...sourceRun.configurable, ...(body.runOptionsOverlay ?? {}) },
         idempotencyKey: undefined,
       };
-      storage.insertRun(forkedRun);
+      await storage.insertRun(forkedRun);
 
       // Replay events up to fromSeq into the new run, then re-dispatch.
       // Sample-grade: copies events as-is. Real impls re-execute pure
       // nodes deterministically (the `replay` mode) vs. branching from
       // a checkpoint (the `branch` mode).
-      const sourceEvents = storage.listEvents(sourceRun.runId, { fromSeq: 0, limit: body.fromSeq });
+      const sourceEvents = await storage.listEvents(sourceRun.runId, { fromSeq: 0, limit: body.fromSeq });
       for (const ev of sourceEvents) {
-        getEventLog().append({
+        await getEventLog().append({
           runId: newRunId,
           type: ev.type,
           nodeId: ev.nodeId,
@@ -301,13 +301,13 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
     }
   });
 
-  app.get('/v1/runs/:runId/events/poll', (req, res, next) => {
+  app.get('/v1/runs/:runId/events/poll', async (req, res, next) => {
     try {
-      const run = storage.getRun(req.params.runId);
+      const run = await storage.getRun(req.params.runId);
       if (!run) throw new OpenwopError('run_not_found', `run ${req.params.runId} not found`, 404);
       const fromSeq = Number(req.query.fromSeq ?? 0) || 0;
       const limit = Math.min(Number(req.query.limit ?? 100) || 100, 1000);
-      const events = storage.listEvents(run.runId, { fromSeq, limit });
+      const events = await storage.listEvents(run.runId, { fromSeq, limit });
       const isComplete = ['completed', 'failed', 'cancelled'].includes(run.status);
       respondJson(res, 200, { events, isComplete });
     } catch (err) {

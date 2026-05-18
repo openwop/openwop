@@ -41,11 +41,15 @@ function scopeFromReq(req: import('express').Request): { tenantId: string } | un
 }
 
 export function registerByokRoutes(app: Express): void {
-  app.get('/v1/host/sample/byok/secrets', (req, res) => {
-    res.json({ credentialRefs: listSecretRefs(scopeFromReq(req)) });
+  app.get('/v1/host/sample/byok/secrets', async (req, res, next) => {
+    try {
+      res.json({ credentialRefs: await listSecretRefs(scopeFromReq(req)) });
+    } catch (err) {
+      next(err);
+    }
   });
 
-  app.post('/v1/host/sample/byok/secrets', (req, res, next) => {
+  app.post('/v1/host/sample/byok/secrets', async (req, res, next) => {
     try {
       const body = req.body as SetSecretRequest;
       if (!body || typeof body !== 'object') {
@@ -67,7 +71,7 @@ export function registerByokRoutes(app: Express): void {
           { field: 'value' },
         );
       }
-      setSecret(body.credentialRef, body.value, scopeFromReq(req));
+      await setSecret(body.credentialRef, body.value, scopeFromReq(req));
       // Echo back ONLY the ref + a masked preview. Never the value.
       res.status(201).json({
         credentialRef: body.credentialRef,
@@ -79,13 +83,13 @@ export function registerByokRoutes(app: Express): void {
     }
   });
 
-  app.delete('/v1/host/sample/byok/secrets/:credentialRef', (req, res, next) => {
+  app.delete('/v1/host/sample/byok/secrets/:credentialRef', async (req, res, next) => {
     try {
       const ref = req.params.credentialRef;
       if (!REF_PATTERN.test(ref)) {
         throw new OpenwopError('validation_error', 'Invalid credentialRef.', 400, { credentialRef: ref });
       }
-      removeSecret(ref, scopeFromReq(req));
+      await removeSecret(ref, scopeFromReq(req));
       res.status(204).send();
     } catch (err) {
       next(err);

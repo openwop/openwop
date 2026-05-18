@@ -1,9 +1,16 @@
 /**
  * Narrow storage interface used by the workflow-engine sample.
  *
- * Backends implement these methods atomically. The sqlite default impl
- * uses transactions where multiple writes must be atomic (e.g., event
- * append + sequence increment).
+ * As of P3.3, every method returns a Promise. The sqlite + memory
+ * backends wrap their sync `better-sqlite3` calls in `async` (cheap;
+ * the Promise is resolved synchronously). The Postgres backend uses
+ * `pg` natively. Callers `await` every call.
+ *
+ * Backends implement these methods atomically (per-method ACID where
+ * the backing store supports it). The sqlite impl uses transactions
+ * where multiple writes must be atomic (e.g., event append + sequence
+ * increment); the Postgres impl uses `BEGIN`/`COMMIT` around the same
+ * sequences.
  */
 
 import type {
@@ -16,30 +23,30 @@ import type {
 
 export interface Storage {
   // ── runs ──
-  insertRun(run: RunRecord): void;
-  getRun(runId: string): RunRecord | null;
-  updateRun(runId: string, patch: Partial<RunRecord>): void;
-  listRuns(filter: { tenantId?: string; status?: string; limit?: number }): readonly RunRecord[];
+  insertRun(run: RunRecord): Promise<void>;
+  getRun(runId: string): Promise<RunRecord | null>;
+  updateRun(runId: string, patch: Partial<RunRecord>): Promise<void>;
+  listRuns(filter: { tenantId?: string; status?: string; limit?: number }): Promise<readonly RunRecord[]>;
 
   // ── events ──
   /** Atomic append: assigns next sequence per (runId), returns sequence. */
-  appendEvent(input: Omit<EventRecord, 'sequence'>): EventRecord;
-  listEvents(runId: string, opts?: { fromSeq?: number; limit?: number }): readonly EventRecord[];
-  getMaxSequence(runId: string): number;
+  appendEvent(input: Omit<EventRecord, 'sequence'>): Promise<EventRecord>;
+  listEvents(runId: string, opts?: { fromSeq?: number; limit?: number }): Promise<readonly EventRecord[]>;
+  getMaxSequence(runId: string): Promise<number>;
 
   // ── interrupts ──
-  insertInterrupt(record: InterruptRecord): void;
-  getInterrupt(interruptId: string): InterruptRecord | null;
-  getInterruptByToken(token: string): InterruptRecord | null;
-  getInterruptByNode(runId: string, nodeId: string): InterruptRecord | null;
-  resolveInterrupt(interruptId: string, resolvedValue: unknown, resolvedAt: string): void;
-  listOpenInterrupts(runId: string): readonly InterruptRecord[];
+  insertInterrupt(record: InterruptRecord): Promise<void>;
+  getInterrupt(interruptId: string): Promise<InterruptRecord | null>;
+  getInterruptByToken(token: string): Promise<InterruptRecord | null>;
+  getInterruptByNode(runId: string, nodeId: string): Promise<InterruptRecord | null>;
+  resolveInterrupt(interruptId: string, resolvedValue: unknown, resolvedAt: string): Promise<void>;
+  listOpenInterrupts(runId: string): Promise<readonly InterruptRecord[]>;
 
   // ── webhooks ──
-  insertWebhook(record: WebhookSubscriptionRecord): void;
-  getWebhook(subscriptionId: string): WebhookSubscriptionRecord | null;
-  deleteWebhook(subscriptionId: string): void;
-  listWebhooks(filter: { eventType?: string; tags?: readonly string[] }): readonly WebhookSubscriptionRecord[];
+  insertWebhook(record: WebhookSubscriptionRecord): Promise<void>;
+  getWebhook(subscriptionId: string): Promise<WebhookSubscriptionRecord | null>;
+  deleteWebhook(subscriptionId: string): Promise<void>;
+  listWebhooks(filter: { eventType?: string; tags?: readonly string[] }): Promise<readonly WebhookSubscriptionRecord[]>;
 
   // ── idempotency ──
   /**
@@ -51,9 +58,9 @@ export interface Storage {
    * existing record (which may itself be `__pending__` if the holder is
    * still building the response — caller MUST handle that case).
    */
-  claimIdempotency(key: string, createdAt: string): { claimed: boolean; existing: IdempotencyRecord | null };
+  claimIdempotency(key: string, createdAt: string): Promise<{ claimed: boolean; existing: IdempotencyRecord | null }>;
   /** Insert-or-replace the cached record (used to upgrade `__pending__` → final). */
-  putIdempotency(record: IdempotencyRecord): void;
+  putIdempotency(record: IdempotencyRecord): Promise<void>;
 
   // ── audit log ──
   appendAudit(input: {
@@ -63,7 +70,7 @@ export interface Storage {
     resource?: string;
     outcome?: string;
     payload?: unknown;
-  }): void;
+  }): Promise<void>;
 
   // ── invocation log (engine-side idempotency) ──
   /**
@@ -71,19 +78,19 @@ export interface Storage {
    * if present, else null. Callers MUST supply a non-empty providerKey
    * derived from the external call shape.
    */
-  getInvocation(key: { runId: string; nodeId: string; attempt: number; providerKey: string }): unknown | null;
-  putInvocation(key: { runId: string; nodeId: string; attempt: number; providerKey: string }, result: unknown): void;
+  getInvocation(key: { runId: string; nodeId: string; attempt: number; providerKey: string }): Promise<unknown | null>;
+  putInvocation(key: { runId: string; nodeId: string; attempt: number; providerKey: string }, result: unknown): Promise<void>;
 
   // ── BYOK secrets (encrypted at rest) ──
   /** Persist an encrypted secret record. Caller MUST encrypt before calling. */
-  upsertEncryptedSecret(credentialRef: string, encryptedRecordJson: string, now: string): void;
+  upsertEncryptedSecret(credentialRef: string, encryptedRecordJson: string, now: string): Promise<void>;
   /** Read back the encrypted record (caller decrypts). Returns null if absent. */
-  getEncryptedSecret(credentialRef: string): string | null;
+  getEncryptedSecret(credentialRef: string): Promise<string | null>;
   /** Remove a secret entirely. */
-  deleteSecret(credentialRef: string): void;
+  deleteSecret(credentialRef: string): Promise<void>;
   /** List all stored credentialRefs (NEVER values). */
-  listSecretRefs(): readonly string[];
+  listSecretRefs(): Promise<readonly string[]>;
 
   // ── lifecycle ──
-  close(): void;
+  close(): Promise<void>;
 }

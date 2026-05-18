@@ -29,9 +29,9 @@ interface Deps {
 export function registerStreamRoutes(app: Express, deps: Deps): void {
   const { storage } = deps;
 
-  app.get('/v1/runs/:runId/events', (req, res, next) => {
+  app.get('/v1/runs/:runId/events', async (req, res, next) => {
     try {
-      const run = storage.getRun(req.params.runId);
+      const run = await storage.getRun(req.params.runId);
       if (!run) throw new OpenwopError('run_not_found', `run ${req.params.runId} not found`, 404);
 
       const modes = parseModes(req.query.mode as string | undefined);
@@ -63,7 +63,7 @@ export function registerStreamRoutes(app: Express, deps: Deps): void {
       res.flushHeaders();
 
       // Replay buffered events.
-      const buffered = storage.listEvents(run.runId, { fromSeq, limit: 10_000 });
+      const buffered = await storage.listEvents(run.runId, { fromSeq, limit: 10_000 });
       for (const ev of buffered) {
         if (passesModeFilter(ev, modes)) {
           writeSseEvent(res, ev);

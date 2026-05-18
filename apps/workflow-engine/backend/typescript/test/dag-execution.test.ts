@@ -31,7 +31,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-const storage: Storage = openStorage('memory://');
+const storage: Storage = await openStorage('memory://');
 setEventLogBackend(storage);
 setSuspendBackend(storage);
 initInMemorySurfaces({ dataDir: mkdtempSync(join(tmpdir(), 'openwop-dag-')) });

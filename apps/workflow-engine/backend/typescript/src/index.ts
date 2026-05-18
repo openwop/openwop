@@ -75,7 +75,7 @@ export async function createApp(config: AppConfig): Promise<Express> {
     consoleExporter: config.enableConsoleTracer,
   });
 
-  const storage = openStorage(config.storageDsn);
+  const storage = await openStorage(config.storageDsn);
   const hostSuite = createHostAdapterSuite({ storage });
 
   // Wire BYOK to sqlite + AES-256-GCM-at-rest. Master key resolution:
@@ -89,7 +89,7 @@ export async function createApp(config: AppConfig): Promise<Express> {
 
   // Pre-seed BYOK from env (kept for backward-compat with conformance
   // / scripted-test setups). Runtime adds via POST /v1/host/sample/byok/secrets.
-  loadSecretsFromEnv();
+  await loadSecretsFromEnv();
 
   // Pre-register node modules + install singletons before the first
   // request lands. Mirrors the MyndHyve workflow-runtime boot order.
