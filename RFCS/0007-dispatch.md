@@ -225,4 +225,5 @@ All gated on `capabilities.dispatch.supported: true`.
 - `schemas/dispatch-config.schema.json`
 - RFC 0006 (Orchestrator — produces the decisions dispatch consumes)
 - RFC 0005 (Conversation — `ask-user` routing target)
+- RFC 0022 (Dispatch + subWorkflow runtime variable mapping — additive amendment that adds `inputMapping` / `outputMapping` / `perWorker*` fields to `DispatchConfig`; capability-gated on `capabilities.agents.dispatchMapping`)
 - `spec/v1/interrupt-profiles.md` (parent-child cancellation cascade interacts with `terminate`)

@@ -11,6 +11,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### RFC 0022 (Draft) — `core.dispatch` + `core.subWorkflow` runtime variable mapping (2026-05-18)
+
+Closes the same authoring gap on the two openwop workflow-invocation primitives in one additive RFC. Both `core.dispatch` (RFC 0007 — has neither `inputMapping` nor `outputMapping`) and `core.subWorkflow` (`node-packs.md` §"`core.subWorkflow` contract" — has `outputMapping` only) lack a first-class way to project parent variables into child inputs at runtime. Without these, supervisor-driven workflows build hybrid DAGs that interleave dispatch + subWorkflow + side-channel storage — mechanical workaround that doesn't survive contact with non-trivial production cases. Found via the MyndHyve Launch Studio adaptive-supervisor rebuild (`vendor.myndhyve.launchStudioSupervisor`); RFC text ported from the MyndHyve internal draft at `docs/rfcs/openwop-dispatch-input-output-mapping.md`. Initially scoped to `core.dispatch` only; widened to cover `core.subWorkflow` after audit revealed the symmetric half-fixed gap.
+
+- **`RFCS/0022-dispatch-input-output-mapping.md` (NEW, `Draft`)** — full proposal: §A `core.dispatch` schema delta (4 new optional fields: `inputMapping`, `outputMapping`, `perWorkerInputMappings`, `perWorkerOutputMappings`); §B `core.subWorkflow` `inputMapping` field (symmetric to the existing `outputMapping`); §C capability advertisements (two flags, independently advertisable); §D fan-out interaction (sequential normative now, parallel deferred); §E positive + negative examples; 5 alternatives (all rejected); 5 open questions.
+- **`schemas/dispatch-config.schema.json`** — 4 new optional `string→string` map fields per §A.
+- **`schemas/capabilities.schema.json`** — `agents.dispatchMapping: boolean` + new top-level `subWorkflow` object with `inputMapping: boolean`.
+- **`spec/v1/node-packs.md` §"`core.subWorkflow` contract"** — new normative `inputMapping` field + two-pass seeding rule (defaultValue then inputMapping projection).
+- **`RFCS/0007-dispatch.md` §References** — adds forward link to RFC 0022.
+- **`conformance/src/scenarios/dispatch-input-mapping.test.ts` + `dispatch-output-mapping.test.ts` + `dispatch-cross-worker-handoff.test.ts` + `subworkflow-input-mapping.test.ts` (NEW)** — 4 `it.todo()` placeholder scenarios (13 cases total covering happy paths, override semantics, unset-variable projection, mid-run propagation suppression, and capability-refusal). Gated on the two new capability flags.
+- **`conformance/fixtures/conformance-dispatch-{input,output,cross-worker-handoff}-mapping.json` + `conformance-subworkflow-input-mapping.json` (NEW)** — 4 noop fixtures (the test scenarios drive the dispatch + subWorkflow surfaces directly; fixtures supply parent-variable defaults).
+- **`conformance/fixtures.md` + `coverage.md` + `README.md`** — catalog updates; scenario count 153 → 157.
+- **Compatibility:** strictly additive per `COMPATIBILITY.md §2.1`. All new fields are optional. Pre-RFC workflows get bit-identical behavior. New capability flags default to `false`. Workflows using the new fields fail-closed at registration on hosts without the matching flag (NOT silent acceptance).
+- **Status flow:** RFC opens `Draft`; promotes to `Active` after the 7-day additive RFC window OR the bootstrap-phase steward waiver per `CONTRIBUTING.md`. Implementation cycle (reference host + scenario promotion) lands separately under §"Acceptance criteria".
+
+
+
 ### RFC 0021 §A `acceptEnvelope` reference implementation (2026-05-18, post-commit `d84d3a8`)
 
 Closes the spec-to-impl loop for the RFC 0021 promotion. The workflow-engine reference host now actually runs the Ajv2020 gate that the spec section §A point 1-3 demanded; `acceptEnvelope` ships as a pure function the conformance suite exercises through an env-gated test seam.
