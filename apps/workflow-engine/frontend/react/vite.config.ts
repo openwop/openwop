@@ -38,6 +38,26 @@ export default defineConfig(({ mode }) => {
         // By default Vite blocks files outside the project root.
         allow: [resolve(__dirname, '..', '..')],
       },
+      // Default-to-prod proxy: forward `/api/*` requests from the
+      // dev server to the deployed backend at app.openwop.dev. Keeps
+      // the SPA and the API on the same origin from the browser's
+      // POV so the __session cookie travels naturally on
+      // credentials: 'include' fetches.
+      //
+      // Override by setting OPENWOP_DEV_PROXY_TARGET=http://localhost:8080
+      // (or another URL) in your shell or `.env.local` to point at a
+      // locally-running backend instead.
+      proxy: {
+        '/api': {
+          target: process.env.OPENWOP_DEV_PROXY_TARGET ?? 'https://app.openwop.dev',
+          changeOrigin: true,
+          secure: true,
+          // Strip Set-Cookie's Domain attribute so cookies bind to
+          // `localhost` (the browser-visible origin) instead of
+          // `app.openwop.dev` — otherwise the browser drops them.
+          cookieDomainRewrite: '',
+        },
+      },
     },
     build: {
       outDir: 'dist',
