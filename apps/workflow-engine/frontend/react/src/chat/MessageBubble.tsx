@@ -10,6 +10,7 @@
 
 import type { ChatMessage } from './hooks/useChatSession.js';
 import { MessageRenderer } from './MessageRenderer.js';
+import { ThoughtsDisclosure } from './ThoughtsDisclosure.js';
 import { formatUsd, turnCostUsd } from './lib/cost.js';
 import { GlobeIcon } from './icons/index.js';
 
@@ -60,9 +61,12 @@ export function MessageBubble({ message }: Props): JSX.Element {
         // whiteSpace + wordBreak applied inside MessageRenderer's text segments
         // so code blocks can use their own `white-space: pre` formatting.
       }}>
+        {!isUser && message.thoughts && (
+          <ThoughtsDisclosure thoughts={message.thoughts} />
+        )}
         {hasContent(message.content)
           ? <MessageRenderer content={message.content} />
-          : message.isStreaming
+          : message.isStreaming && !message.thoughts
             ? <span style={{ opacity: 0.6 }}>Thinking…</span>
             : isError
               ? <span style={{ opacity: 0.7 }}>No response — see error below.</span>

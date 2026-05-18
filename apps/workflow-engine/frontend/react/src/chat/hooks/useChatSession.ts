@@ -69,6 +69,29 @@ export interface WorkflowRunState {
   error?: { code: string; message: string };
 }
 
+/** Reasoning trace surfaced from `agent.reasoned` events (RFC 0002).
+ *  Rendered above the assistant bubble as a collapsible "Thoughts"
+ *  disclosure — Claude.ai / o1 style. The reasoning content is
+ *  authoritative once `finishedAt` is set; before that, the disclosure
+ *  shows a "Thinking…" pulse. */
+export interface ChatMessageThoughts {
+  /** Accumulated reasoning text. For Phase 1, set once on
+   *  `agent.reasoned`. For Phase 2 streaming, grows incrementally via
+   *  `agent.reasoning.delta`. */
+  content: string;
+  /** Verbosity mode this reasoning was produced under. */
+  verbosity?: 'summary' | 'full' | 'off';
+  /** AgentRef.agentId of the reasoning agent. */
+  agentId?: string;
+  /** Wall-clock when the first reasoning chunk arrived. */
+  startedAt: string;
+  /** Wall-clock when the reasoning block closed. Unset while
+   *  in-flight; the disclosure shows a pulsing "Thinking…" state. */
+  finishedAt?: string;
+  /** Convenience: elapsed time in ms, computed on finalize. */
+  durationMs?: number;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'system' | 'workflow_run';
@@ -81,6 +104,10 @@ export interface ChatMessage {
   content: string | readonly ContentPart[];
   /** When true, the bubble is receiving streaming deltas. */
   isStreaming?: boolean;
+  /** Optional reasoning trace from `agent.reasoned` / Phase 2
+   *  streaming deltas. Rendered as a collapsible Thoughts disclosure
+   *  above the assistant bubble. */
+  thoughts?: ChatMessageThoughts;
   /** When set, render an interrupt card inline beneath this bubble. */
   activeInterrupt?: OpenInterrupt | null;
   /** Final-turn metadata for the assistant bubble. */
@@ -401,6 +428,60 @@ export function useChatSession(): UseChatSessionResult {
         if (ev.type === 'node.message' && typeof payload.delta === 'string') {
           accumulated += payload.delta;
           animation.push(payload.delta);
+        } else if (ev.type === 'agent.reasoning.delta' && typeof payload.delta === 'string') {
+          // Phase 2 streaming reasoning. Incremental chunks arrive
+          // before the final agent.reasoned; the disclosure renders
+          // them live with a typewriter cursor.
+          const delta = payload.delta;
+          const verbosity = payload.verbosity as ChatMessageThoughts['verbosity'];
+          const agentId = typeof payload.agentId === 'string' ? payload.agentId : undefined;
+          const now = new Date().toISOString();
+          setSession((s) => ({
+            ...s,
+            messages: s.messages.map((m) => {
+              if (m.id !== assistantId) return m;
+              const prev = m.thoughts;
+              return {
+                ...m,
+                thoughts: {
+                  content: (prev?.content ?? '') + delta,
+                  startedAt: prev?.startedAt ?? now,
+                  ...(prev?.finishedAt ? { finishedAt: prev.finishedAt } : {}),
+                  ...(prev?.durationMs != null ? { durationMs: prev.durationMs } : {}),
+                  ...(verbosity ? { verbosity } : prev?.verbosity ? { verbosity: prev.verbosity } : {}),
+                  ...(agentId ? { agentId } : prev?.agentId ? { agentId: prev.agentId } : {}),
+                },
+              };
+            }),
+          }));
+        } else if (ev.type === 'agent.reasoned' && typeof payload.reasoning === 'string') {
+          // Phase 1 path: full block delivered in one event after
+          // </think>. Also acts as the "finalize" for any Phase 2
+          // streaming deltas that preceded it.
+          const reasoning = payload.reasoning;
+          const verbosity = payload.verbosity as ChatMessageThoughts['verbosity'];
+          const agentId = typeof payload.agentId === 'string' ? payload.agentId : undefined;
+          const now = new Date().toISOString();
+          setSession((s) => ({
+            ...s,
+            messages: s.messages.map((m) => {
+              if (m.id !== assistantId) return m;
+              const prev = m.thoughts;
+              const startedAt = prev?.startedAt ?? now;
+              const durationMs = Date.parse(now) - Date.parse(startedAt);
+              return {
+                ...m,
+                thoughts: {
+                  content: reasoning,
+                  startedAt,
+                  finishedAt: now,
+                  durationMs: Number.isFinite(durationMs) ? durationMs : 0,
+                  ...(verbosity ? { verbosity } : {}),
+                  ...(agentId ? { agentId } : {}),
+                },
+              };
+            }),
+          }));
         } else if (ev.type === 'node.completed') {
           // Flush any buffered animation tail so the bubble has the
           // full streamed content before we overwrite with the final

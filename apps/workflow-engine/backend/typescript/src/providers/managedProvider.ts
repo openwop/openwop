@@ -207,6 +207,11 @@ export interface ManagedDispatchRequest {
   messages: readonly ChatMessage[];
   maxTokens?: number;
   onDelta?: (delta: string) => void | Promise<void>;
+  /** Streaming reasoning chunk (currently-open block). Phase 2 path. */
+  onReasoningDelta?: (delta: string) => void | Promise<void>;
+  /** Complete reasoning block. Caller emits one `agent.reasoned` event
+   *  per call. Phase 1 path. */
+  onReasoningBlock?: (block: string) => void | Promise<void>;
   signal?: AbortSignal;
 }
 
@@ -279,6 +284,8 @@ export async function dispatchManagedChat(
     messages,
     ...(req.maxTokens != null ? { maxTokens: req.maxTokens } : {}),
     ...(req.onDelta ? { onDelta: req.onDelta } : {}),
+    ...(req.onReasoningDelta ? { onReasoningDelta: req.onReasoningDelta } : {}),
+    ...(req.onReasoningBlock ? { onReasoningBlock: req.onReasoningBlock } : {}),
     ...(req.signal ? { signal: req.signal } : {}),
   });
 

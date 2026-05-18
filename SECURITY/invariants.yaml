@@ -40,8 +40,14 @@ invariants:
       - conformance/src/scenarios/redaction.test.ts
     note: |
       Persisted event payloads MUST NOT contain raw key material.
-      Conformance scenario drives canaries through every persistence
-      surface and asserts no leak.
+      Applies to ALL `RunEventType` kinds — including `agent.reasoned`,
+      which carries free-form reasoning text that a model might echo a
+      host-resolved credential into. The host's `ctx.emit` plumbing MUST
+      route every payload through the host-internal redaction layer
+      before persistence (reference impl: `stripSecretsFromPersisted`
+      in `apps/workflow-engine/backend/typescript/src/byok/ephemeralRunSecrets.ts`,
+      wrapped at `executor.ts:emit`). Conformance scenario drives canaries
+      through every persistence surface and asserts no leak.
 
   - id: secret-leakage-eventlog-variable
     tier: reference-impl

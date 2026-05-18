@@ -129,7 +129,7 @@ export const NODE_CATALOG: readonly NodeCatalogEntry[] = [
   },
   {
     kind: 'chat',
-    typeId: 'local.sample.chat.responder',
+    typeId: 'vendor.openwop-sample.chat-responder',
     label: 'Chat (real provider)',
     description: 'Calls a real LLM via BYOK. Expects inputs.messages and inputs.credentialRef.',
     category: 'ai',

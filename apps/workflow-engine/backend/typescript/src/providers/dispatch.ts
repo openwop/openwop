@@ -8,7 +8,7 @@
  * envelopes, etc.) — see `core.openwop.ai/index.mjs`.
  */
 
-import { ThinkBlockStripper } from './thinkBlockStripper.js';
+import { ThinkBlockSplitter } from './thinkBlockSplitter.js';
 
 export type ProviderId = 'anthropic' | 'openai' | 'google' | 'minimax';
 
@@ -33,6 +33,16 @@ export interface DispatchRequest {
   webSearch?: boolean;
   /** Called for each streaming token chunk (text delta). */
   onDelta?: (delta: string) => void | Promise<void>;
+  /** Called for each reasoning-content chunk emitted by reasoning models
+   *  (e.g. MiniMax-M2.7 `<think>...</think>` blocks). `delta` carries
+   *  the new chunk of the currently-open block (live-streaming UX);
+   *  empty when nothing new arrived this push. Providers that don't
+   *  emit a reasoning channel never call this. */
+  onReasoningDelta?: (delta: string) => void | Promise<void>;
+  /** Called once per CLOSED reasoning block with the complete contents.
+   *  Callers emit one `agent.reasoned` event per call. Fires AFTER all
+   *  the block's `onReasoningDelta` calls. */
+  onReasoningBlock?: (block: string) => void | Promise<void>;
   /** Optional abort signal so callers (e.g., the aiProviders host
    *  adapter's per-call timeout) can hard-abort the underlying fetch
    *  instead of leaving it dangling. */
@@ -264,7 +274,7 @@ async function dispatchMiniMax(req: DispatchRequest): Promise<DispatchResult> {
   let inputTokens: number | undefined;
   let outputTokens: number | undefined;
   let finishReason: string | undefined;
-  const stripper = new ThinkBlockStripper();
+  const splitter = new ThinkBlockSplitter();
 
   for await (const event of parseSseStream(res.body)) {
     if (event.data === '[DONE]') break;
@@ -276,10 +286,16 @@ async function dispatchMiniMax(req: DispatchRequest): Promise<DispatchResult> {
       const choice = data.choices?.[0];
       const rawDelta = choice?.delta?.content;
       if (rawDelta) {
-        const visible = stripper.push(rawDelta);
+        const { visible, reasoningDelta, closedBlocks } = splitter.push(rawDelta);
         if (visible) {
           completion += visible;
           await req.onDelta?.(visible);
+        }
+        if (reasoningDelta) {
+          await req.onReasoningDelta?.(reasoningDelta);
+        }
+        for (const block of closedBlocks) {
+          await req.onReasoningBlock?.(block);
         }
       }
       if (choice?.finish_reason) finishReason = choice.finish_reason;
@@ -291,10 +307,10 @@ async function dispatchMiniMax(req: DispatchRequest): Promise<DispatchResult> {
       /* skip malformed chunk */
     }
   }
-  const tail = stripper.flush();
-  if (tail) {
-    completion += tail;
-    await req.onDelta?.(tail);
+  const tail = splitter.flush();
+  if (tail.visible) {
+    completion += tail.visible;
+    await req.onDelta?.(tail.visible);
   }
 
   return {

@@ -4,7 +4,7 @@
  * Reads the single source of truth at `apps/workflow-engine/providers.json`
  * so adding a new provider model only requires editing one file. The
  * BE uses this for:
- *   - Default model fallback in `local.sample.chat.responder`
+ *   - Default model fallback in `vendor.openwop-sample.chat-responder`
  *     (when the FE doesn't supply `inputs.model`).
  *   - Forward-compat validation surface (future: reject unknown
  *     provider IDs at run-create with a useful error envelope).

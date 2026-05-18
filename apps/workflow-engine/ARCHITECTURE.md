@@ -140,7 +140,7 @@ When swapping a stub for a real implementation, also update the relevant `capabi
 
 ## Surfaces added after the initial scaffolding
 
-### AI chat surface (`frontend/react/src/chat/` + `backend/.../bootstrap/nodes.ts` `local.sample.chat.responder`)
+### AI chat surface (`frontend/react/src/chat/` + `backend/.../bootstrap/nodes.ts` `vendor.openwop-sample.chat-responder`)
 
 A vertical slice from chat input → real provider dispatch → streamed tokens back into the bubble. Components:
 
@@ -149,7 +149,7 @@ A vertical slice from chat input → real provider dispatch → streamed tokens 
 - `useChatSession.ts` — message thread state + per-turn dispatch. Each turn = one `POST /v1/runs` with `workflowId: 'sample.chat.turn'`. Subscribes to SSE; appends `node.message` deltas to the in-flight assistant bubble; on `node.suspended` fetches the open interrupt and renders the matching card via the registry.
 - **Card registry** (`chat/registry/`) is the extensibility seam. Adopters call `registerCard({cardType, Component, ...})` from any module to add their own card type. Built-in registrations cover the 4 interrupt kinds (approval / clarification / refinement / cancellation). Cards wrap in `CardErrorBoundary` so a broken third-party card doesn't crash the panel.
 
-BE-side: `local.sample.chat.responder` node calls Anthropic / OpenAI / Google providers via raw `fetch` (no SDK deps). Each token delta becomes a `node.message` event through `ctx.emit()` — strip-on-persist applies automatically.
+BE-side: `vendor.openwop-sample.chat-responder` node calls Anthropic / OpenAI / Google providers via raw `fetch` (no SDK deps). Each token delta becomes a `node.message` event through `ctx.emit()` — strip-on-persist applies automatically.
 
 ### Sample-extension HTTP routes (vendor-prefixed)
 

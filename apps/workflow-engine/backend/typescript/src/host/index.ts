@@ -202,7 +202,7 @@ export function createHostAdapterSuite(deps: { storage: Storage }): HostAdapterS
             definition: {
               workflowId,
               nodes: [
-                { nodeId: 'respond', typeId: 'local.sample.chat.responder' },
+                { nodeId: 'respond', typeId: 'vendor.openwop-sample.chat-responder' },
               ],
             },
           };

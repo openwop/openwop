@@ -131,9 +131,15 @@ const sampleMockAiNode: NodeModule = {
 // workflows as tools. Each tool_use dispatches a sub-run via
 // `dispatchSubRun` with a 30s budget; the result (or a "pending" stub
 // if it hits an interrupt) feeds back as tool_result.
+/**
+ * Sample chat-responder. Sits in the `vendor.openwop-sample.*` namespace
+ * per `spec/v1/node-packs.md` §"Reserved-typeIds" (the unrestricted
+ * carve-out), which puts it inside RFC 0023 §A's authorized-emitter
+ * scope for `agent.reasoned` events.
+ */
 const sampleChatResponderNode: NodeModule = {
-  typeId: 'local.sample.chat.responder',
-  version: '0.1.0',
+  typeId: 'vendor.openwop-sample.chat-responder',
+  version: '0.2.0',
   async execute(ctx) {
     const inputs = (ctx.inputs && typeof ctx.inputs === 'object') ? (ctx.inputs as Record<string, unknown>) : {};
     const provider = (inputs.provider as ProviderId | undefined) ?? 'anthropic';
@@ -157,16 +163,43 @@ const sampleChatResponderNode: NodeModule = {
     // BYOK row for managed providers.
     if (isManagedCredentialRef(credentialRef)) {
       const userFacingProvider = managedProviderIdFromRef(credentialRef);
+
+      // Resolve agent.reasoned verbosity per capabilities.md precedence:
+      //   per-run RunOptions.configurable.reasoningVerbosity
+      //   > host capability default (advertised in /.well-known/openwop)
+      //   > spec suite default 'summary'
+      // When resolved value is 'off', skip emit entirely. When 'summary',
+      // truncate to the token-limit (default 512 tokens ≈ 2048 chars
+      // using the conservative chars-per-token approximation).
+      const reqVerbosity = ctx.configurable?.reasoningVerbosity;
+      const verbosity: 'summary' | 'full' | 'off' =
+        reqVerbosity === 'off' || reqVerbosity === 'full' || reqVerbosity === 'summary'
+          ? reqVerbosity
+          : 'full'; // host default for the managed tile — show full reasoning by default for Phase 1 UX
+
       try {
         const onDelta = async (delta: string) => {
           await ctx.emit('node.message', { delta });
         };
+        // `ctx.emit` already routes payloads through
+        // `stripSecretsFromPersisted` (executor.ts:253), so any
+        // host-resolved BYOK credential the model happens to echo in
+        // its reasoning is redacted before the event lands in the log.
+        // Per SECURITY/threat-model-secret-leakage.md SR-1.
+        const agentId = `${userFacingProvider}-assistant`;
+        const onReasoningBlock = verbosity === 'off'
+          ? undefined
+          : async (block: string): Promise<void> => {
+              const reasoning = verbosity === 'summary' ? block.slice(0, 2048) : block;
+              await ctx.emit('agent.reasoned', { agentId, reasoning, verbosity });
+            };
         const managed = await dispatchManagedChat({
           userFacingProvider,
           tenantId: ctx.tenantId,
           messages: messages as ChatMessage[],
           maxTokens,
           onDelta,
+          ...(onReasoningBlock ? { onReasoningBlock } : {}),
         });
         emitCost({
           provider: managed.provider,
