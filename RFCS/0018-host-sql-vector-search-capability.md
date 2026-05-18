@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0018 |
 | **Title** | Database adapter capabilities (SQL, vector, search) |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | OpenWOP Working Group |
 | **Created** | 2026-05-17 |
-| **Updated** | 2026-05-17 |
+| **Updated** | 2026-05-18 (Active → Accepted: all 6 acceptance-criteria items satisfied. 4 capability blocks (`sql`, `nosql`, `vectorStore`, `searchIndex`) in schema; 4 prose sections in `spec/v1/host-capabilities.md` (§host.sql / §host.nosql / §host.vectorStore / §host.searchIndex) landed at commit c5831fe; invariant `sql-parametric-only`; 4 scenarios (`sql-injection-rejection`, `sql-transaction-atomicity`, `vector-knn-roundtrip`, `search-bm25-roundtrip`) all behavioral; reference impls advertised in `routes/discovery.ts` lines 200–210 (sqlite for SQL, in-memory cosine-similarity for vector, linear scan for search); CHANGELOG entry under `[Unreleased]`.) |
 | **Affects** | `spec/v1/host-capabilities.md` · `schemas/capabilities.schema.json` · `SECURITY/invariants.yaml` |
 | **Compatibility** | `additive` |
 
@@ -95,12 +95,12 @@ The SQL injection invariant is the load-bearing one: every concatenation-style "
 
 ## Acceptance criteria
 
-- [ ] Four capability blocks.
-- [ ] Prose section per block in `host-capabilities.md`.
-- [ ] Invariant `sql-parametric-only`.
-- [ ] 4 conformance scenarios.
-- [ ] In-memory reference for sql (sqlite) + vector (cosine-similarity in-memory) + search (linear scan).
-- [ ] CHANGELOG entry.
+- [x] Four capability blocks.
+- [x] Prose section per block in `host-capabilities.md`. (Landed at commit c5831fe.)
+- [x] Invariant `sql-parametric-only`.
+- [x] 4 conformance scenarios.
+- [x] In-memory reference for sql (sqlite) + vector (cosine-similarity in-memory) + search (linear scan).
+- [x] CHANGELOG entry.
 
 ## Unresolved questions
 

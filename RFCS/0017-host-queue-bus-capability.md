@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0017 |
 | **Title** | host.queueBus inbound queue + stream capability |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | OpenWOP Working Group |
 | **Created** | 2026-05-17 |
-| **Updated** | 2026-05-17 |
+| **Updated** | 2026-05-18 (Active → Accepted: all 5 acceptance-criteria items satisfied. `capabilities.queueBus` block in schema; `spec/v1/host-capabilities.md §host.queueBus` landed at commit c5831fe; invariant `queue-cross-tenant-isolation` + 3 mandatory scenarios (`queue-publish-consume-roundtrip`, `queue-cross-tenant-isolation`, `queue-ack-nack-dlq`) + 1 gated (`stream-subscribe-from-beginning`); reference impl advertised in `routes/discovery.ts` lines 193–199; CHANGELOG entry under `[Unreleased]`.) |
 | **Affects** | `spec/v1/host-capabilities.md` · `schemas/capabilities.schema.json` · `SECURITY/invariants.yaml` |
 | **Compatibility** | `additive` |
 
@@ -78,11 +78,11 @@ n8n RabbitMQ/Kafka/SQS/NATS/MQTT/Pub-Sub nodes all expose the same pattern: a tr
 
 ## Acceptance criteria
 
-- [ ] Capability block.
-- [ ] Prose section.
-- [ ] Invariant + 3 mandatory scenarios + 1 gated.
-- [ ] In-memory reference impl.
-- [ ] CHANGELOG entry.
+- [x] Capability block.
+- [x] Prose section. (Landed at commit c5831fe.)
+- [x] Invariant + 3 mandatory scenarios + 1 gated.
+- [x] In-memory reference impl.
+- [x] CHANGELOG entry.
 
 ## References
 

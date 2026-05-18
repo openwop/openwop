@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0020 |
 | **Title** | Host-side MCP server composition |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | OpenWOP Working Group |
 | **Created** | 2026-05-17 |
-| **Updated** | 2026-05-17 |
+| **Updated** | 2026-05-18 (Active → Accepted: all 6 acceptance-criteria items satisfied. `spec/v1/mcp-integration.md §"OpenWOP host as MCP server"` landed at commit c5831fe (the §1-§6 buildout — mount transports, state-projection table, sampling/elicitation bridges, untrusted-boundary discipline, capability advertisement, 6 scenario references); `capabilities.mcp.serverMount` block in schema; SECURITY invariant `mcp-server-untrusted-args`; 6 scenarios (`mcp-server-tool-roundtrip`, `mcp-server-resource-roundtrip`, `mcp-server-prompt-roundtrip`, `mcp-server-sampling-bridge`, `mcp-server-elicitation-bridge`, `mcp-server-untrusted-args`) all behavioral (13/13 assertions pass); reference impl at `apps/workflow-engine/backend/typescript/src/routes/mcp.ts` (JSON-RPC over streamable-HTTP, env-gated `OPENWOP_MCP_SERVER_ENABLED=true`); CHANGELOG entry under `[Unreleased]`.) |
 | **Affects** | `spec/v1/mcp-integration.md` · `schemas/capabilities.schema.json` · new conformance scenarios |
 | **Compatibility** | `additive` |
 

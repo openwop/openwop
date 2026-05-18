@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0019 |
 | **Title** | Blob storage + TTL cache capabilities |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | OpenWOP Working Group |
 | **Created** | 2026-05-17 |
-| **Updated** | 2026-05-17 |
+| **Updated** | 2026-05-18 (Active → Accepted: all 5 acceptance-criteria items satisfied. 2 capability blocks (`blobStorage`, `cache`) in schema; 2 prose sections (§host.blobStorage / §host.cache) in `spec/v1/host-capabilities.md` landed at commit c5831fe; 2 SECURITY invariants (`blob-cross-tenant-isolation`, `cache-cross-tenant-isolation`) added at commit c5831fe; 5 scenarios (`blob-roundtrip`, `blob-presign-expiry`, `blob-cross-tenant-isolation`, `cache-ttl-expiry`, `cache-cross-tenant-isolation`) all behavioral; reference impls advertised in `routes/discovery.ts` lines 211–222; CHANGELOG entry under `[Unreleased]`.) |
 | **Affects** | `spec/v1/host-capabilities.md` · `schemas/capabilities.schema.json` · `SECURITY/invariants.yaml` |
 | **Compatibility** | `additive` |
 
@@ -72,11 +72,11 @@ Workflow editors universally surface object storage (S3 / GCS / Azure Blob) and 
 
 ## Acceptance criteria
 
-- [ ] Two capability blocks.
-- [ ] Prose section per block.
-- [ ] 5 conformance scenarios.
-- [ ] In-memory reference (per-tenant Map for cache; per-tenant Map<bucket, Map<key,buffer>> for blob).
-- [ ] CHANGELOG entry.
+- [x] Two capability blocks.
+- [x] Prose section per block. (Landed at commit c5831fe.)
+- [x] 5 conformance scenarios.
+- [x] In-memory reference (per-tenant Map for cache; per-tenant Map<bucket, Map<key,buffer>> for blob).
+- [x] CHANGELOG entry.
 
 ## References
 

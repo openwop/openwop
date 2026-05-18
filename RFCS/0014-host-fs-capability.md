@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0014 |
 | **Title** | host.fs filesystem capability |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | OpenWOP Working Group |
 | **Created** | 2026-05-17 |
-| **Updated** | 2026-05-17 |
+| **Updated** | 2026-05-18 (Active → Accepted: all 6 acceptance-criteria items satisfied. `capabilities.fs` block in `schemas/capabilities.schema.json`; `spec/v1/host-capabilities.md §host.fs` landed at commit c5831fe; SECURITY invariant `fs-path-traversal` in `SECURITY/invariants.yaml` line 878; `conformance/src/scenarios/fs-path-traversal.test.ts` (3 assertions, behavioral); reference impl in `apps/workflow-engine/backend/typescript/src/host/inMemorySurfaces.ts` advertised in `routes/discovery.ts` lines 162–174; CHANGELOG entry under `[Unreleased]`.) |
 | **Affects** | `spec/v1/host-capabilities.md` · `schemas/capabilities.schema.json` · `SECURITY/invariants.yaml` · new conformance scenarios for path-traversal and sandbox-root |
 | **Compatibility** | `additive` |
 
@@ -95,12 +95,12 @@ Gated on `capabilities.fs.supported`.
 
 ## Acceptance criteria
 
-- [ ] Capability block in `capabilities.schema.json`.
-- [ ] `host-capabilities.md` §host.fs section.
-- [ ] SECURITY invariant `fs-path-traversal` in `SECURITY/invariants.yaml`.
-- [ ] `fs-path-traversal.test.ts` conformance scenario.
-- [ ] Reference host in-memory fs implementation.
-- [ ] CHANGELOG entry under `[Unreleased]`.
+- [x] Capability block in `capabilities.schema.json`.
+- [x] `host-capabilities.md` §host.fs section. (Landed at commit c5831fe.)
+- [x] SECURITY invariant `fs-path-traversal` in `SECURITY/invariants.yaml`.
+- [x] `fs-path-traversal.test.ts` conformance scenario.
+- [x] Reference host in-memory fs implementation.
+- [x] CHANGELOG entry under `[Unreleased]`.
 
 ## References
 

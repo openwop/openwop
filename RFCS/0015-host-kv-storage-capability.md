@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0015 |
 | **Title** | host.kvStorage key-value capability |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | OpenWOP Working Group |
 | **Created** | 2026-05-17 |
-| **Updated** | 2026-05-17 |
+| **Updated** | 2026-05-18 (Active → Accepted: all 5 acceptance-criteria items satisfied. `capabilities.kvStorage` block in schema; `spec/v1/host-capabilities.md §host.kvStorage` landed at commit c5831fe; invariant `kv-cross-tenant-isolation` + 4 scenarios (`kv-cross-tenant-isolation`, `kv-atomic-increment`, `kv-cas`, `kv-ttl-expiry`) all behavioral; reference impl advertised in `routes/discovery.ts` lines 176–184; CHANGELOG entry under `[Unreleased]`.) |
 | **Affects** | `spec/v1/host-capabilities.md` · `schemas/capabilities.schema.json` · `SECURITY/invariants.yaml` (cross-tenant) · new conformance scenarios |
 | **Compatibility** | `additive` |
 
@@ -81,11 +81,11 @@ Mirrors the existing `agentMemoryCrossTenantIsolation` invariant.
 
 ## Acceptance criteria
 
-- [ ] Capability block.
-- [ ] `host-capabilities.md` §host.kvStorage section.
-- [ ] Invariant + 4 scenarios.
-- [ ] In-memory reference host implementation.
-- [ ] CHANGELOG entry.
+- [x] Capability block.
+- [x] `host-capabilities.md` §host.kvStorage section. (Landed at commit c5831fe.)
+- [x] Invariant + 4 scenarios.
+- [x] In-memory reference host implementation.
+- [x] CHANGELOG entry.
 
 ## References
 
