@@ -8,11 +8,11 @@
 | Surface | Current value | Source |
 |---|---:|---|
 | Spec prose documents | 35 | `spec/v1/*.md` |
-| JSON Schemas | 26 | `schemas/*.schema.json` |
+| JSON Schemas | 27 | `schemas/*.schema.json` |
 | OpenAPI operations | 19 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 157 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 22 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 23 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## OpenAPI Operations
 
@@ -24,15 +24,15 @@
 |---|---:|
 | Accepted | 12 |
 | Active | 8 |
-| Draft | 2 |
+| Draft | 3 |
 
 | Latest RFC | Title | Status |
 |---|---|---|
+| RFC 0023 | Conformance Agent-Event Emitters | Draft |
 | RFC 0022 | `core.dispatch` + `core.subWorkflow` runtime variable mapping | Draft |
 | RFC 0021 | AI Envelope Primitive - wire shape, universal kinds, Envelope Contract gate | Active |
 | RFC 0020 | Host-side MCP server composition | Active |
 | RFC 0019 | Blob storage + TTL cache capabilities | Active |
-| RFC 0018 | Database adapter capabilities (SQL, vector, search) | Active |
 
 ## SDK Helper Coverage
 
