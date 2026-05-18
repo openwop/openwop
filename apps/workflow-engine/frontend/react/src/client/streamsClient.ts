@@ -31,7 +31,16 @@ export interface Subscription {
 }
 
 export function subscribeToRun(runId: string, opts: SubscribeOptions): Subscription {
-  const url = new URL(`${config.baseUrl}/v1/runs/${encodeURIComponent(runId)}/events`);
+  // `new URL()` requires an absolute URL OR a relative URL with a base.
+  // In prod `config.baseUrl` is `/api` (relative, served via Firebase
+  // Hosting rewrite) — without a base, the constructor throws
+  // "Invalid URL". Pass `window.location.origin` as the base: it's
+  // ignored when baseUrl is absolute (e.g. http://localhost:8080 in
+  // dev) and used when relative, so this works in both modes.
+  const url = new URL(
+    `${config.baseUrl}/v1/runs/${encodeURIComponent(runId)}/events`,
+    window.location.origin,
+  );
   if (opts.modes && opts.modes.length > 0) {
     url.searchParams.set('mode', opts.modes.join(','));
   }
