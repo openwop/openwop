@@ -210,6 +210,113 @@ bash apps/workflow-engine/DEPLOY-SMOKE.md  # the seven-step sequence
 # Or run the curl commands from that file inline.
 ```
 
+## Phase 3 — Signed-in tier (Firebase Auth + Cloud SQL + KMS)
+
+Phase 3 layers persistent storage on top of the anon cookie tier. Anonymous
+visitors keep working exactly as before; signed-in users (Google or
+GitHub via Firebase Auth) get persistent runs + workflows + BYOK secrets,
+KMS-encrypted at rest.
+
+### 11. Cloud SQL Postgres
+
+```bash
+# Create a small Postgres 15 instance (~$10/mo at the cheapest tier).
+gcloud sql instances create openwop-app-pg \
+  --database-version=POSTGRES_15 \
+  --tier=db-f1-micro \
+  --region=us-central1 \
+  --storage-type=SSD \
+  --storage-size=10 \
+  --backup-start-time=04:00 \
+  --availability-type=ZONAL
+
+# Create the application database + user.
+gcloud sql databases create openwop --instance=openwop-app-pg
+gcloud sql users create openwop_app --instance=openwop-app-pg \
+  --password="$(openssl rand -base64 32 | tr -d '+/=')"
+
+# Connection string lives in Secret Manager.
+DB_PASSWORD=$(gcloud sql users list --instance=openwop-app-pg \
+  --filter='name:openwop_app' --format='value(name)')  # placeholder; copy from the create command output
+INSTANCE_CONN=$(gcloud sql instances describe openwop-app-pg \
+  --format='value(connectionName)')
+DSN="postgresql://openwop_app:${DB_PASSWORD}@/openwop?host=/cloudsql/${INSTANCE_CONN}"
+printf '%s' "$DSN" | gcloud secrets create openwop-storage-dsn --data-file=-
+```
+
+### 12. KMS key for BYOK envelope encryption
+
+```bash
+gcloud kms keyrings create openwop-byok --location=us-central1
+gcloud kms keys create dek-wrap \
+  --keyring=openwop-byok --location=us-central1 \
+  --purpose=encryption \
+  --rotation-period=90d \
+  --next-rotation-time="$(date -u -v+90d '+%Y-%m-%dT%H:%M:%SZ')"
+
+# Grant the Cloud Run runtime SA encrypt/decrypt on the key.
+RUNTIME_SA=$(gcloud run services describe openwop-app-backend \
+  --region=us-central1 --format='value(spec.template.spec.serviceAccountName)')
+gcloud kms keys add-iam-policy-binding dek-wrap \
+  --keyring=openwop-byok --location=us-central1 \
+  --member="serviceAccount:${RUNTIME_SA}" \
+  --role=roles/cloudkms.cryptoKeyEncrypterDecrypter
+```
+
+### 13. Firebase Auth — providers + audience
+
+In the Firebase console (`https://console.firebase.google.com/project/openwop-dev/authentication`):
+1. Authentication → Sign-in method → enable Google + GitHub providers.
+2. Authentication → Settings → Authorized domains: add `app.openwop.dev`.
+
+The OIDC issuer for Firebase ID tokens is:
+- Issuer: `https://securetoken.google.com/openwop-dev`
+- Audience: `openwop-dev` (the project id)
+- JWKS: `https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com`
+
+### 14. Re-deploy Cloud Run with Phase 3 env
+
+```bash
+# Connect Cloud SQL via the unix socket.
+gcloud run services update openwop-app-backend \
+  --region=us-central1 \
+  --add-cloudsql-instances=openwop-dev:us-central1:openwop-app-pg \
+  --update-secrets=OPENWOP_STORAGE_DSN=openwop-storage-dsn:latest \
+  --update-env-vars=\
+OPENWOP_OIDC_ISSUER=https://securetoken.google.com/openwop-dev,\
+OPENWOP_OIDC_AUDIENCE=openwop-dev,\
+OPENWOP_OIDC_JWKS_URL=https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com,\
+OPENWOP_BYOK_KMS_KEY=projects/openwop-dev/locations/us-central1/keyRings/openwop-byok/cryptoKeys/dek-wrap
+```
+
+### 15. Frontend Firebase config
+
+```bash
+# Read the web-app config from the Firebase console:
+firebase apps:sdkconfig WEB --project=openwop-dev > /tmp/fb-web.json
+# Add VITE_FIREBASE_API_KEY / VITE_FIREBASE_AUTH_DOMAIN / VITE_FIREBASE_PROJECT_ID
+# to apps/workflow-engine/frontend/react/.env.production and rebuild.
+```
+
+### 16. Smoke the Phase 3 surface
+
+```bash
+# Anon-tier still works (no auth).
+curl -i -X POST https://app.openwop.dev/api/v1/runs \
+  -H 'content-type: application/json' \
+  -d '{"workflowId":"sample.demo.uppercase","tenantId":"","inputs":{"text":"hi"}}'
+
+# Sign in via the SPA, copy the ID token from devtools, then:
+curl -i https://app.openwop.dev/api/v1/runs \
+  -H "authorization: Bearer <ID_TOKEN>"
+
+# BYOK secret set as signed-in user
+curl -i -X POST https://app.openwop.dev/api/v1/host/sample/byok/secrets \
+  -H "authorization: Bearer <ID_TOKEN>" \
+  -H 'content-type: application/json' \
+  -d '{"credentialRef":"TEST_KEY","value":"sk-test"}'
+```
+
 ## Roll-forward a new pack version
 
 Step 6's `PACKS=$(...)` block always resolves `latest` from the registry,
