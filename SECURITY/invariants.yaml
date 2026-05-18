@@ -264,6 +264,32 @@ invariants:
     tests: []
     note: |
       Tool-call envelopes validated against workflow's tools allowlist.
+      Host-side enforcement: the host MUST validate every LLM-emitted
+      `toolCalls[].name` against the workflow's declared `tools[]` set
+      before dispatching. Pack-side complement at `agents-run-no-raw-handler`.
+
+  - id: agents-run-no-raw-handler
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/agents-run-tool-allowlist.test.ts
+    note: |
+      `core.openwop.agents.run` MUST refuse `inputs.tools[]` entries with
+      a function-typed `handler` property. Tools MUST be structured
+      declarations (`{ kind, name, ref?, argumentsSchema? }`) the host
+      resolves through its connector registry — never executable JS
+      supplied by the workflow author.
+      Closes `OPENWOP-AUDIT-2026-003`: the 1.0.0 pack invoked
+      `tool.handler(call.arguments, ctx)` directly in its fallback loop,
+      executing arbitrary workflow-supplied code against the pack's full
+      `ctx` (including `ctx.callAI`, `ctx.storage`, secrets views). 1.0.1
+      refuses function handlers at the validateTools boundary with
+      `INVALID_TOOL_DECLARATION`, BEFORE any LLM call. Tool-driven runs
+      additionally require `ctx.agentRuntime` (host-resolved dispatch).
+      This protocol-tier invariant pairs with the reference-impl-tier
+      `prompt-injection-tool-allowlist`: defense-in-depth across both
+      layers.
 
   - id: prompt-injection-tenant-host-derived
     tier: protocol

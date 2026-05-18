@@ -41,7 +41,7 @@
       "findingId": "OPENWOP-AUDIT-2026-003",
       "title": "`core.agents.run` invokes caller-supplied tool handlers as raw JS functions",
       "severity": "high",
-      "status": "open",
+      "status": "fixed",
       "summary": "When the host does NOT provide `ctx.agentRuntime` and the pack falls back to its inline tool-calling loop, `agentRun()` reads each tool declaration from `ctx.inputs.tools` and invokes `tool.handler(call.arguments, ctx)` directly. `tool.handler` is therefore an arbitrary JS function controllable by whoever populates `inputs.tools` for the run. That function executes in the pack's process with the full `ctx` (including `ctx.callAI`, `ctx.storage`, `ctx.secrets` non-enumerable view, etc.). This breaks the spec's `prompt-injection-tool-allowlist` invariant: tools must be a host-resolved registry, not an executable payload. Mitigation: tools should be a structured declaration (`{ kind, name, ref, argumentsSchema }`) the HOST resolves to a handler via its own connector / tool registry. The pack's fallback path should refuse runs where any tool has a function-typed `handler` and require an explicit `tool.kind` discriminator the host knows how to invoke.",
       "affectedSurfaces": [
         "packs/core.openwop.agents/index.mjs",

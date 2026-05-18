@@ -11,7 +11,7 @@
 | JSON Schemas | 25 | `schemas/*.schema.json` |
 | OpenAPI operations | 19 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 142 | `conformance/src/scenarios/*.test.ts` |
+| Conformance scenario files | 143 | `conformance/src/scenarios/*.test.ts` |
 | RFCs tracked | 20 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## OpenAPI Operations
@@ -58,9 +58,9 @@
 | Index `packCount` | 59 | `registry/v1/index.json` |
 | Indexed pack rows | 59 | `registry/v1/index.json` |
 | Local pack directories | 59 | `registry/v1/packs/*` |
-| Version manifests | 74 | `registry/v1/packs/*/-/*.json` |
-| Tarballs | 74 | `registry/v1/packs/*/-/*.tgz` |
-| Signatures | 74 | `registry/v1/packs/*/-/*.sig` |
+| Version manifests | 76 | `registry/v1/packs/*/-/*.json` |
+| Tarballs | 76 | `registry/v1/packs/*/-/*.tgz` |
+| Signatures | 76 | `registry/v1/packs/*/-/*.sig` |
 
 | Scope | Indexed packs |
 |---|---:|

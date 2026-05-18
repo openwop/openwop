@@ -11,6 +11,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### `core.openwop.agents@1.0.1` — closes `OPENWOP-AUDIT-2026-003` (raw-JS tool handler) (2026-05-17)
+
+Patches the final remaining HIGH-severity finding from the steward-internal pre-audit (`SECURITY/internal-pre-audit-findings.json`). The 1.0.0 pack's `agentRun()` fallback invoked workflow-author-supplied `tool.handler(call.arguments, ctx)` as raw JS — breaking `prompt-injection-tool-allowlist` from `SECURITY/threat-model-prompt-injection.md §"Authority bypass"`. The LLM (untrusted per `§UNTRUSTED`) decided which handler to invoke; the handler ran in the pack's process with the full `ctx` (including `ctx.callAI`, `ctx.storage`, secrets views).
+
+- **`packs/core.openwop.agents/index.mjs`** — rewritten `agentRun()` + new `validateTools()` boundary:
+  - Function-typed `handler` properties are **refused** with `INVALID_TOOL_DECLARATION` BEFORE any LLM call.
+  - Tool declarations MUST be structured: `{ name: string, kind: string, ref?: string, argumentsSchema?: object }`. Missing `name` or `kind` → `INVALID_TOOL_DECLARATION`.
+  - Tool-driven runs (`tools.length > 0`) require `ctx.agentRuntime.run` (host-resolved registry per `host-capabilities.md §host.agentRuntime`). Without `agentRuntime`, refuses with `HOST_CAPABILITY_MISSING` + migration pointer.
+  - Tool-less runs (`tools.length === 0`) still fall back to `ctx.callAIWithTools` with an empty tools array — no tool dispatch, no exposure. Safe path preserved.
+  - `model-selector` regex hardened: malformed predicates are skipped (no uncaught `SyntaxError`), and prompts are length-capped at 4096 chars before evaluation (defense against catastrophic-backtracking ReDoS).
+- **`conformance/src/scenarios/agents-run-tool-allowlist.test.ts`** (NEW) — 7-case server-free scenario locking in the refusal semantics. Asserts function-handler refusal, name/kind validation, tools-without-runtime refusal, tool-less safe-fallback path, and `agentRuntime` thread-through.
+- **`SECURITY/invariants.yaml`** — new `agents-run-no-raw-handler` row (protocol-tier, severity high). Pairs with the existing reference-impl-tier `prompt-injection-tool-allowlist` for defense-in-depth (host validates tool-call envelopes; pack refuses raw-handler shape).
+- **`SECURITY/internal-pre-audit-findings.json`** — `OPENWOP-AUDIT-2026-003.status: open → fixed`. All 3 HIGH-severity findings from the pre-audit are now patched (`#001 JWT alg-confusion` in 2026-05-17 P0.1 batch, `#002 SSRF` in P0.1, `#003 agent tool handler` here). Honors the 7-day patch commitment recorded in `SECURITY/internal-pre-audit-summary.md` from 2026-05-17.
+- **Compatibility:** safety-fix per `COMPATIBILITY.md §3`. The 1.0.0 inline-handler fallback was a security defect; removing it is the patch. Workflows that supplied function-typed handlers in 1.0.0 now receive a clean error envelope with the migration pointer rather than silent code execution. Hosts that already implement `ctx.agentRuntime` see no behavior change.
+- **Publication:** built + signed + republished alongside this commit. `verify-signatures.mjs` confirms `core.openwop.agents@1.0.1` against `keyId=openwop-team-1`.
+
 ### `core.openwop.ai@1.1.1` + `core.openwop.crypto@1.0.3` — defensive parsing of model output + JWT shapes (2026-05-17)
 
 Closes the MEDIUM JSON.parse audit findings from the post-publish review (third defect class after the http@1.1.2 idempotency-key bug and the 6-node pure-vs-non-deterministic batch). Three uncaught `JSON.parse` sites turned what should be clean error envelopes into TypeError / SyntaxError exits.

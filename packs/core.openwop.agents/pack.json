@@ -1,6 +1,6 @@
 {
   "name": "core.openwop.agents",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Agent composition primitives. Root agent.run + sub-nodes (tools, memory, parsers, model selector). Composes via RFC 0013 expansion semantics and consumes host.aiProviders + host.agentRuntime.",
   "author": "OpenWOP Working Group",
   "license": "Apache-2.0",
