@@ -11,18 +11,17 @@
  * matched to the existing dark builder palette.
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from './useAuth.js';
 import { migrateAnonToUser } from './migrateTenant.js';
 import {
   ExistingProviderSignInError,
   getCurrentIdToken,
-  linkPendingCredential,
+  getRedirectState,
   signInWithGithub,
   signInWithGoogle,
 } from './firebase.js';
-import type { AuthCredential } from 'firebase/auth';
 import { setCurrentIdToken } from '../client/config.js';
 import { deleteAccount, RequiresRecentLoginError } from './deleteAccount.js';
 
@@ -66,7 +65,6 @@ function ModalPortal({ children }: { children: React.ReactNode }) {
 interface PendingLink {
   email: string;
   existingProviders: readonly string[];
-  pendingCredential: AuthCredential | null;
   attemptedProvider: 'google.com' | 'github.com';
 }
 
@@ -150,84 +148,64 @@ export function SignInButton() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  if (!isConfigured || loading) return null;
-
   /**
-   * After a sign-in popup resolves, Firebase fires onIdTokenChanged
-   * which populates the cached ID token. We force-prime it here so
-   * the very next fetch (the migrate call) carries the bearer
-   * immediately instead of racing the subscriber.
+   * Subscribe to the boot-time redirect-result promise exactly once.
+   * MUST run before any conditional return so the hook count stays
+   * stable across renders (Rules of Hooks).
+   *
+   * If we landed on this page coming back from a sign-in redirect,
+   * the result is reported here and we either:
+   *   - open the modal in link-mode (cross-provider collision), OR
+   *   - run the post-sign-in migration (success), OR
+   *   - surface a friendly error (other auth failure).
    */
-  async function postSignInMigrate(): Promise<void> {
-    const token = await getCurrentIdToken();
-    if (token) setCurrentIdToken(token);
-    const result = await migrateAnonToUser();
-    if (result?.migrated) {
-      // Best-effort console log — surfacing this as a toast is a
-      // P3.6 polish item.
-      console.info('openwop: anon → user migration', result);
-    }
-  }
-
-  /**
-   * Run a provider sign-in with full error handling. Returns true on
-   * success (modal should close), false if we surfaced an error or
-   * switched to the link-account flow (modal stays open).
-   */
-  async function attemptSignIn(which: 'google' | 'github'): Promise<boolean> {
-    setBusy(true);
-    setError(null);
-    try {
-      await (which === 'google' ? signInWithGoogle() : signInWithGithub());
-      await postSignInMigrate();
-      return true;
-    } catch (err) {
-      if (err instanceof ExistingProviderSignInError) {
-        // Capture state for the link flow and rewrite the modal.
+  useEffect(() => {
+    let cancelled = false;
+    void getRedirectState().then(async (state) => {
+      if (cancelled) return;
+      if (state.kind === 'link-required') {
+        const err = state.error;
         setPendingLink({
           email: err.email,
           existingProviders: err.existingProviders,
-          pendingCredential: err.pendingCredential,
           attemptedProvider: err.attemptedProvider,
         });
-        setError(null);
-      } else {
-        setError(describeSignInError(err));
+        setModalOpen(true);
+      } else if (state.kind === 'success') {
+        const token = await getCurrentIdToken();
+        if (token) setCurrentIdToken(token);
+        const result = await migrateAnonToUser();
+        if (result?.migrated) console.info('openwop: anon → user migration', result);
+        setModalOpen(false);
+        setPendingLink(null);
+      } else if (state.kind === 'error') {
+        setError(describeSignInError(state.error));
+        setModalOpen(true);
       }
-      return false;
-    } finally {
-      setBusy(false);
-    }
-  }
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  if (!isConfigured || loading) return null;
 
   /**
-   * After the user signs in with their existing provider, attach the
-   * pending (rejected) credential to the same Firebase user. From
-   * this point on either provider button signs them into the same
-   * account / `user:<sha>` tenant.
+   * Kick off a redirect-based sign-in. The page navigates away to
+   * Firebase's auth handler; control returns via a fresh page load,
+   * where `processRedirectResult()` (called at boot) reports the
+   * outcome via the `getRedirectState()` promise that the mount
+   * effect above subscribes to. This function only initiates the
+   * redirect; the browser handles the rest.
    */
-  async function completeLink(which: 'google' | 'github'): Promise<void> {
-    if (!pendingLink) return;
+  async function attemptSignIn(which: 'google' | 'github'): Promise<void> {
     setBusy(true);
     setError(null);
     try {
       await (which === 'google' ? signInWithGoogle() : signInWithGithub());
-      if (pendingLink.pendingCredential) {
-        try {
-          await linkPendingCredential(pendingLink.pendingCredential);
-        } catch (err) {
-          // Linking failed but the user is signed in — surface a
-          // soft warning, keep them moving. They can retry from the
-          // account menu next session.
-          console.warn('openwop: provider linking failed', err);
-        }
-      }
-      await postSignInMigrate();
-      setPendingLink(null);
-      setModalOpen(false);
+      // signInWithRedirect resolves AFTER initiating the redirect.
+      // The browser navigates within a tick; the modal stays open
+      // until then.
     } catch (err) {
       setError(describeSignInError(err));
-    } finally {
       setBusy(false);
     }
   }
@@ -259,7 +237,7 @@ export function SignInButton() {
                   pendingLink={pendingLink}
                   busy={busy}
                   error={error}
-                  onContinue={completeLink}
+                  onContinue={attemptSignIn}
                   onCancel={() => { setPendingLink(null); setError(null); }}
                 />
               ) : (
@@ -274,10 +252,7 @@ export function SignInButton() {
                     className="signin-provider signin-google"
                     disabled={busy}
                     type="button"
-                    onClick={async () => {
-                      const ok = await attemptSignIn('google');
-                      if (ok) setModalOpen(false);
-                    }}
+                    onClick={() => { void attemptSignIn('google'); }}
                   >
                     Continue with Google
                   </button>
@@ -285,10 +260,7 @@ export function SignInButton() {
                     className="signin-provider signin-github"
                     disabled={busy}
                     type="button"
-                    onClick={async () => {
-                      const ok = await attemptSignIn('github');
-                      if (ok) setModalOpen(false);
-                    }}
+                    onClick={() => { void attemptSignIn('github'); }}
                   >
                     Continue with GitHub
                   </button>

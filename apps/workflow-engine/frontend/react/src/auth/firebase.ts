@@ -27,18 +27,86 @@ import { initializeApp, type FirebaseApp } from 'firebase/app';
 import {
   fetchSignInMethodsForEmail,
   getAuth,
+  getRedirectResult,
   GoogleAuthProvider,
   GithubAuthProvider,
   linkWithCredential,
-  signInWithPopup,
+  OAuthProvider,
+  signInWithRedirect,
   signOut as fbSignOut,
   onIdTokenChanged,
   type AuthCredential,
-  type AuthProvider,
   type User,
   type Auth,
 } from 'firebase/auth';
 import { setCurrentIdToken } from '../client/config.js';
+
+// ─── redirect-flow state persistence ────────────────────────────
+// We use the redirect-based sign-in flow (not popup) to dodge the
+// `Cross-Origin-Opener-Policy would block window.closed` console
+// warnings that Firebase's popup-poller triggers. Cost: the flow now
+// spans multiple page loads, so state has to live in sessionStorage.
+//
+// Two keys:
+//   - openwop.auth.attempted   set BEFORE signInWithRedirect so the
+//                              redirect-back handler knows which
+//                              provider to ask `credentialFromError`
+//                              for on the cross-provider collision
+//   - openwop.auth.pendingLink set when we capture a rejected
+//                              credential, consumed when the user
+//                              comes back from signing in with the
+//                              existing provider (so we can link the
+//                              rejected credential to the same user)
+
+const ATTEMPTED_PROVIDER_KEY = 'openwop.auth.attempted';
+const PENDING_LINK_KEY = 'openwop.auth.pendingLink';
+
+type ProviderId = 'google.com' | 'github.com';
+
+function setAttemptedProvider(id: ProviderId): void {
+  try { sessionStorage.setItem(ATTEMPTED_PROVIDER_KEY, id); } catch { /* private mode */ }
+}
+function consumeAttemptedProvider(): ProviderId | null {
+  try {
+    const v = sessionStorage.getItem(ATTEMPTED_PROVIDER_KEY);
+    sessionStorage.removeItem(ATTEMPTED_PROVIDER_KEY);
+    return v === 'google.com' || v === 'github.com' ? v : null;
+  } catch { return null; }
+}
+
+interface SerializedLink {
+  cred: ReturnType<AuthCredential['toJSON']>;
+  attemptedProvider: ProviderId;
+}
+
+function stashPendingLink(cred: AuthCredential, attemptedProvider: ProviderId): void {
+  try {
+    sessionStorage.setItem(PENDING_LINK_KEY, JSON.stringify({
+      cred: cred.toJSON(),
+      attemptedProvider,
+    } satisfies SerializedLink));
+  } catch { /* private mode */ }
+}
+function consumePendingLink(): { cred: AuthCredential; attemptedProvider: ProviderId } | null {
+  try {
+    const raw = sessionStorage.getItem(PENDING_LINK_KEY);
+    if (!raw) return null;
+    sessionStorage.removeItem(PENDING_LINK_KEY);
+    const parsed = JSON.parse(raw) as SerializedLink;
+    // OAuthProvider.credentialFromJSON resurrects either Google or
+    // GitHub OAuth credentials (both extend OAuthProvider).
+    const cred = OAuthProvider.credentialFromJSON(parsed.cred);
+    return { cred, attemptedProvider: parsed.attemptedProvider };
+  } catch { return null; }
+}
+
+/** Test affordance / sign-out cleanup. */
+export function clearPendingLinkState(): void {
+  try {
+    sessionStorage.removeItem(ATTEMPTED_PROVIDER_KEY);
+    sessionStorage.removeItem(PENDING_LINK_KEY);
+  } catch { /* ignore */ }
+}
 
 /**
  * Raised when sign-in fails because the email is already registered
@@ -151,75 +219,118 @@ function project(u: User | null): AuthUser | null {
   };
 }
 
-type AttemptedProviderId = 'google.com' | 'github.com';
-
 /**
- * Run the popup-sign-in flow against `provider`. On the cross-provider
- * collision (auth/account-exists-with-different-credential), throw an
- * `ExistingProviderSignInError` carrying enough state for the caller
- * to run the account-linking flow.
+ * Kick off redirect-based sign-in with Google. Never returns — the
+ * page navigates away to Firebase's auth handler and comes back on
+ * a fresh page load. The redirect-back is observed by
+ * `processRedirectResult()` at app boot.
  */
-async function signInWith(provider: AuthProvider, providerId: AttemptedProviderId): Promise<AuthUser> {
+export async function signInWithGoogle(): Promise<void> {
   const a = ensureInit();
   if (!a) throw new Error('Firebase Auth not configured');
+  setAttemptedProvider('google.com');
+  await signInWithRedirect(a, new GoogleAuthProvider());
+}
+
+/** Same as `signInWithGoogle`, for GitHub. */
+export async function signInWithGithub(): Promise<void> {
+  const a = ensureInit();
+  if (!a) throw new Error('Firebase Auth not configured');
+  setAttemptedProvider('github.com');
+  await signInWithRedirect(a, new GithubAuthProvider());
+}
+
+/**
+ * What the redirect-back handler decided about the just-completed
+ * sign-in attempt. The SignInButton subscribes to this state.
+ */
+export type RedirectState =
+  | { kind: 'none' }
+  | { kind: 'success'; linked: boolean }
+  | { kind: 'link-required'; error: ExistingProviderSignInError }
+  | { kind: 'error'; error: Error };
+
+/**
+ * Memoized boot-time promise. Components await this once on mount;
+ * subsequent calls reuse the same promise so the redirect result is
+ * processed exactly once per page load.
+ */
+let redirectStatePromise: Promise<RedirectState> | null = null;
+export function getRedirectState(): Promise<RedirectState> {
+  if (redirectStatePromise === null) {
+    redirectStatePromise = processRedirectResult();
+  }
+  return redirectStatePromise;
+}
+
+/**
+ * Process the result of the most recent redirect-based sign-in.
+ *
+ * Outcomes:
+ *   - none           the user landed here without a sign-in redirect
+ *                    in flight (normal page load or hard refresh)
+ *   - success        sign-in completed; the linked flag indicates
+ *                    whether we also attached a previously-stashed
+ *                    pending credential (the second half of the
+ *                    link-account flow)
+ *   - link-required  Firebase rejected this redirect with the
+ *                    cross-provider collision; carries the typed
+ *                    `ExistingProviderSignInError` for the UI to
+ *                    render and the pending credential has already
+ *                    been stashed for the next redirect-back
+ *   - error          some other auth failure; surfaced verbatim
+ *
+ * Must be called exactly once per page load, before the UI binds to
+ * auth state (otherwise the redirect-back result is silently
+ * dropped). Safe to call when the app booted without a redirect in
+ * flight — returns { kind: 'none' }.
+ */
+export async function processRedirectResult(): Promise<RedirectState> {
+  const a = ensureInit();
+  if (!a) return { kind: 'none' };
+  const attemptedProvider = consumeAttemptedProvider();
   try {
-    const result = await signInWithPopup(a, provider);
-    return project(result.user)!;
+    const result = await getRedirectResult(a);
+    if (!result) return { kind: 'none' };
+    // Successfully signed in via redirect. If there's a pending
+    // credential stash from the previous (rejected) redirect, link
+    // it now so subsequent visits work with either provider.
+    const pending = consumePendingLink();
+    let linked = false;
+    if (pending) {
+      try {
+        await linkWithCredential(result.user, pending.cred);
+        linked = true;
+      } catch (err) {
+        console.warn('openwop: provider linking failed', err);
+      }
+    }
+    return { kind: 'success', linked };
   } catch (err) {
     type FbError = { code?: string; customData?: { email?: string } };
     const e = err as FbError;
-    if (e.code === 'auth/account-exists-with-different-credential' && e.customData?.email) {
+    if (e.code === 'auth/account-exists-with-different-credential' && e.customData?.email && attemptedProvider) {
       const email = e.customData.email;
-      // Extract the rejected credential so the caller can link it
-      // after the user signs in with the existing provider. Each
-      // provider has its own `credentialFromError` static.
       const pendingCred =
-        providerId === 'google.com'
+        attemptedProvider === 'google.com'
           ? GoogleAuthProvider.credentialFromError(err as Parameters<typeof GoogleAuthProvider.credentialFromError>[0])
           : GithubAuthProvider.credentialFromError(err as Parameters<typeof GithubAuthProvider.credentialFromError>[0]);
       let providers: readonly string[] = [];
       try {
         providers = await fetchSignInMethodsForEmail(a, email);
-      } catch {
-        // fetchSignInMethodsForEmail can fail under email-enumeration
-        // protection. We still raise the typed error; the UI just
-        // shows the "another provider" fallback message and offers
-        // both buttons.
-      }
-      throw new ExistingProviderSignInError(email, providers, pendingCred, providerId);
+      } catch { /* email-enum protection; fall through */ }
+      if (pendingCred) stashPendingLink(pendingCred, attemptedProvider);
+      const typed = new ExistingProviderSignInError(email, providers, pendingCred, attemptedProvider);
+      return { kind: 'link-required', error: typed };
     }
-    throw err;
+    return { kind: 'error', error: err instanceof Error ? err : new Error(String(err)) };
   }
-}
-
-export async function signInWithGoogle(): Promise<AuthUser> {
-  return signInWith(new GoogleAuthProvider(), 'google.com');
-}
-
-export async function signInWithGithub(): Promise<AuthUser> {
-  return signInWith(new GithubAuthProvider(), 'github.com');
-}
-
-/**
- * Attach `pendingCredential` to the currently signed-in Firebase user.
- * Called after the user completes the existing-provider sign-in flow
- * to finalize linking. After this call, subsequent visits can sign
- * in with EITHER provider and land on the same Firebase user (= same
- * `user:<sha>` tenant on the backend).
- *
- * Throws if no user is signed in OR if the credential is invalid.
- */
-export async function linkPendingCredential(pendingCredential: AuthCredential): Promise<void> {
-  const a = ensureInit();
-  if (!a) throw new Error('Firebase Auth not configured');
-  const u = a.currentUser;
-  if (!u) throw new Error('No signed-in user to link to.');
-  await linkWithCredential(u, pendingCredential);
 }
 
 export async function signOut(): Promise<void> {
   const a = ensureInit();
   if (!a) return;
+  clearPendingLinkState();
   await fbSignOut(a);
   cachedUser = null;
 }
