@@ -58,8 +58,8 @@ All fixtures MUST advertise:
 | Interrupt — Auth Required | `conformance-interrupt-auth-required` | Verifies `openwop-interrupt-auth-required` profile (bearer-token resume only) | `completed` after bearer resolve | unbounded (suspends) |
 | Interrupt — Parent/Child Cancel | `conformance-interrupt-parent-child-cancel` + `conformance-interrupt-parent-child-cancel-child` | Verifies `openwop-interrupt-parent-child` cancel cascade | `cancelled` (both runs) | ≤ 30s |
 | Agent Identity | `conformance-agent-identity` | Phase 1 — `RunSnapshot.agent` / `runOrchestrator` AgentRef wire-shape | `completed` | ≤ 10s |
-| Agent Reasoning | `conformance-agent-reasoning` | Phase 1 — `agent.*` event family emission + `callId` pairing | `completed` | ≤ 15s |
-| Agent Low-Confidence | `conformance-agent-low-confidence` | Phase 1 / CP-1 — confidence < threshold suspends with `node.suspended { reason: 'low-confidence' }` | `waiting-approval` (suspends) | unbounded (suspends) |
+| Agent Reasoning | `conformance-agent-reasoning` | Phase 1 / RFC 0023 — `agent.*` event family emission + `callId` pairing on `core.conformance.mock-agent` | `completed` | ≤ 15s |
+| Agent Low-Confidence | `conformance-agent-low-confidence` | Phase 1 / CP-1 / RFC 0023 — `core.conformance.mock-agent` emits `agent.decided` with confidence < threshold; host MUST follow with `node.suspended { reason: 'low-confidence' }` | `waiting-approval` (suspends) | unbounded (suspends) |
 | Message Reducer | `conformance-message-reducer` | Phase 1 — `message` reducer idempotency on duplicate `messageId` | `completed` | ≤ 10s |
 | Agent Pack Install | `conformance-agent-pack-install` | Phase 2 — pack `agents[]` surface as AgentManifest at `GET /v1/packs` | `completed` | ≤ 5s |
 | Agent Pack Export | `conformance-agent-pack-export` | Phase 2 — workspace agents project to AgentManifest at `GET /v1/packs/export` | `completed` | ≤ 5s |

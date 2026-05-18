@@ -283,6 +283,17 @@
       },
       "additionalProperties": true
     },
+    "conformance": {
+      "type": "object",
+      "description": "Conformance-only capability block (RFC 0023). Advertises which conformance-only typeIds (`core.conformance.*`) the host has registered. Hosts that don't ship conformance-only typeIds omit this block entirely. Production deployments SHOULD omit this block; conformance-only typeIds carry test hooks (e.g., `mockReasoning`, `mockConfidence`) that MUST NOT be reachable from production tenants.",
+      "properties": {
+        "mockAgent": {
+          "type": "boolean",
+          "description": "RFC 0023 §B.2. When `true`, the host has registered the `core.conformance.mock-agent` typeId. The scenarios `agentReasoningEvents.test.ts` and `agentConfidenceEscalation.test.ts` rely on the typeId being reachable. Hosts that register the typeId only for workflow ids matching the conformance fixture prefix (`conformance-*`) and refuse it for other tenants MAY still advertise `true` — the advertisement says only that the typeId is reachable from the conformance suite, not that it is reachable from arbitrary workflows."
+        }
+      },
+      "additionalProperties": false
+    },
     "fixtures": {
       "type": "array",
       "items": { "type": "string", "minLength": 1 },
