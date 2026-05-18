@@ -35,6 +35,16 @@ Python reference's 53 baseline failures (the 2026-05-12 first-measurement agains
 
 Third-party hosts can append rows by opening a PR with their advertised profiles, suite version, and a public conformance result.
 
+### Third-party host adoption — RFC 0021 external-validation gate (2026-05-18)
+
+Per `RFCS/0001-rfc-process.md` §"Promotion to Accepted," some RFCs require a non-steward host to advertise the new surface before the RFC can flip `Active → Accepted`. RFC 0021 (AI Envelope) gated on this; closed by:
+
+| Third-party host | URL | Advertised surface | Conformance evidence |
+|---|---|---|---|
+| **MyndHyve workflow-runtime** | `https://myndhyve-prod.web.app/.well-known/openwop` | `supportedEnvelopes: ['clarification.request', 'schema.request', 'schema.response', 'error']` + `schemaVersions[<each>] = 1` (RFC 0021 §C) | `OPENWOP_BASE_URL=https://myndhyve-prod.web.app npx vitest run src/scenarios/ai-envelope-shape.test.ts` → **18/18 pass** (schema-compile + positive/negative round-trip + advertisement-contract + 7 behavioral `acceptEnvelope` round-trips + universal-kind allowlist override). MyndHyve commit `4d475f0b`; Cloud Run revision `workflow-runtime-00169-5kl`. |
+
+This row only tracks third-party adoption that closes an RFC external-validation gate — it is NOT a general-purpose conformance leaderboard. Hosts looking to publish full pass/fail/skip counts append a row to §"External conformance suite — pass rates" above.
+
 ### Composition partners — real-impl interop evidence (2026-05-12)
 
 Per `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` §"Track 6: MCP And A2A Proof" T3.4. The openwop conformance suite's MCP/A2A probes can be pointed at live reference implementations via `OPENWOP_MCP_REAL_SERVER_URL` / `OPENWOP_A2A_REAL_PEER_URL` to verify wire-shape interop beyond the in-process fakes.

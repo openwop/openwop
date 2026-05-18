@@ -1007,6 +1007,8 @@ ctx.mcp.serverStatus({
 - `mcp_tool_not_found`
 - `mcp_tool_invocation_failed`
 
+**See also — server direction (RFC 0020).** The surface above covers workflows that *call out* to remote MCP servers. Hosts MAY also advertise the *server-mount* direction via `capabilities.mcp.serverMount: { supported: true, transports, samplingBridge, elicitationBridge }` — exposing their workflows as MCP tools, resources, and prompts callable by external MCP-aware LLM clients. See [`mcp-integration.md` §"OpenWOP host as MCP server"](mcp-integration.md) for the state-projection table, bidirectional `sampling/createMessage` and `elicitation/create` callbacks, trust-boundary discipline, and 6 capability-gated conformance scenarios.
+
 ---
 
 ## §host.knowledge
