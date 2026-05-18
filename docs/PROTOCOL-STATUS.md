@@ -12,7 +12,7 @@
 | OpenAPI operations | 19 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 157 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 23 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 24 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## OpenAPI Operations
 
@@ -22,16 +22,17 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 21 |
-| Active | 2 |
+| Accepted | 22 |
+| Active | 1 |
+| Draft | 1 |
 
 | Latest RFC | Title | Status |
 |---|---|---|
+| RFC 0024 | Streaming `agent.reasoned` Deltas | Draft |
 | RFC 0023 | Conformance Agent-Event Emitters | Accepted |
 | RFC 0022 | `core.dispatch` + `core.subWorkflow` runtime variable mapping | Accepted |
-| RFC 0021 | AI Envelope Primitive - wire shape, universal kinds, Envelope Contract gate | Active |
+| RFC 0021 | AI Envelope Primitive - wire shape, universal kinds, Envelope Contract gate | Accepted |
 | RFC 0020 | Host-side MCP server composition | Accepted |
-| RFC 0019 | Blob storage + TTL cache capabilities | Accepted |
 
 ## SDK Helper Coverage
 
