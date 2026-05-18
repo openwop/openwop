@@ -11,6 +11,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### `@openwop/openwop-conformance` 1.1.1 → 1.2.0 (2026-05-18)
+
+Minor bump per `PUBLISHING.md` §"Versioning alignment" — conformance scenario additions land on a minor; other artifacts (SDK + spec corpus) are untouched. Captures the RFC 0022 + RFC 0023 fixture/scenario landings (new `core.conformance.mock-agent` typeId surface, 4 RFC 0022 behavioral scenarios graduated from `it.todo()`, 9 new fixtures, 2 fixture re-pins, causationId strict-chain assertion, per-event-type handoff identity check). Detailed entry under `conformance/CHANGELOG.md` §[1.2.0]. Publication via the `openwop-conformance/v1.2.0` tag → `publish-conformance` workflow job per `PUBLISHING.md` §"Tag conventions." SDK + spec corpus remain at their current versions.
+
+- **`conformance/package.json`** — `version: 1.1.1 → 1.2.0`.
+- **`conformance/CHANGELOG.md`** — new `[1.2.0]` section under `# @openwop/openwop-conformance Changelog`. Captures all additions + tightenings + compatibility note + the remaining `it.todo()` deferrals tracked as future work.
+
+
+
 ### Conformance: tighten agent.toolReturned causationId pairing (2026-05-18)
 
 `agentReasoningEvents.test.ts` now asserts the second half of the RFC 0002 §B pairing contract: `agent.toolReturned.causationId` MUST equal the paired `agent.toolCalled.eventId`. Previously the scenario only validated callId correlation, which masked impl deviations on the strict event-log identity chain that replay-determinism guarantees depend on (`spec/v1/replay.md` §"Determinism with non-deterministic agents").

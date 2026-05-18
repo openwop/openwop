@@ -18,6 +18,14 @@ EXPECTED_REPO="github.com/openwop/openwop"
 EXPECTED_GO_MODULE="${EXPECTED_REPO}/sdk/go"
 EXPECTED_NPM_SCOPE="@openwop"
 EXPECTED_V1_VERSION="1.1.1"
+# `@openwop/openwop-conformance` independently bumps minors as conformance
+# scenarios are added/removed, per `PUBLISHING.md` §"Versioning alignment"
+# ("Conformance scenario addition | @openwop/openwop-conformance minor
+# bump; other artifacts unaffected."). The SDK + Python + Go artifacts
+# stay locked to EXPECTED_V1_VERSION until the next coordinated spec-
+# corpus release. Bump this when the next `openwop-conformance/v*` tag
+# rolls.
+EXPECTED_CONFORMANCE_VERSION="1.2.0"
 fail=0
 
 err() { echo "  FAIL: $*" >&2; fail=1; }
@@ -120,14 +128,22 @@ done
 #    versions such as conformance 1.18.x/1.19.x are point-in-time artifacts,
 #    not valid OpenWOP release metadata.
 echo "[8/12] v1.0 manifest version alignment..."
-for PKG in "$SPEC_ROOT/sdk/typescript/package.json" "$SPEC_ROOT/conformance/package.json"; do
-  PKG_VERSION=$(grep -E '"version":' "$PKG" | head -1 | sed -E 's/.*"version":[[:space:]]*"([^"]+)".*/\1/')
-  if [[ "$PKG_VERSION" != "$EXPECTED_V1_VERSION" ]]; then
-    err "$PKG has version '$PKG_VERSION', expected '$EXPECTED_V1_VERSION'."
-  else
-    ok "$PKG version is $EXPECTED_V1_VERSION."
-  fi
-done
+TS_PKG="$SPEC_ROOT/sdk/typescript/package.json"
+TS_VERSION=$(grep -E '"version":' "$TS_PKG" | head -1 | sed -E 's/.*"version":[[:space:]]*"([^"]+)".*/\1/')
+if [[ "$TS_VERSION" != "$EXPECTED_V1_VERSION" ]]; then
+  err "$TS_PKG has version '$TS_VERSION', expected '$EXPECTED_V1_VERSION'."
+else
+  ok "$TS_PKG version is $EXPECTED_V1_VERSION."
+fi
+# Conformance package tracks its own minor cadence per PUBLISHING.md
+# §"Versioning alignment" — checked against EXPECTED_CONFORMANCE_VERSION.
+CONF_PKG="$SPEC_ROOT/conformance/package.json"
+CONF_VERSION=$(grep -E '"version":' "$CONF_PKG" | head -1 | sed -E 's/.*"version":[[:space:]]*"([^"]+)".*/\1/')
+if [[ "$CONF_VERSION" != "$EXPECTED_CONFORMANCE_VERSION" ]]; then
+  err "$CONF_PKG has version '$CONF_VERSION', expected '$EXPECTED_CONFORMANCE_VERSION'."
+else
+  ok "$CONF_PKG version is $EXPECTED_CONFORMANCE_VERSION."
+fi
 PY_VERSION=$(grep -E '^version = ' "$PYPROJECT" | head -1 | sed -E 's/version = "([^"]+)"/\1/')
 if [[ "$PY_VERSION" != "$EXPECTED_V1_VERSION" ]]; then
   err "$PYPROJECT has version '$PY_VERSION', expected '$EXPECTED_V1_VERSION'."
