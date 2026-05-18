@@ -1,6 +1,6 @@
 # openwop Spec v1 — AI Envelope Primitive
 
-> **Status: DRAFT v1.x (first cut, 2026-05-17).** Closes the long-standing gap where `Capabilities.supportedEnvelopes`, `Capabilities.schemaVersions`, `Capabilities.limits.envelopesPerTurn`, `Capabilities.limits.schemaRounds`, `Capabilities.limits.clarificationRounds`, `host.aiEnvelope.generate`, the `envelopeType` field on workflow-chain pack manifests, and the `openwop-interrupts` profile's `supportedEnvelopes.includes('clarification.request')` check all reference a wire concept whose own shape is not specified anywhere in v1 prose. This document specifies that shape, the universal kinds, the per-kind schema discipline, and the per-node "Envelope Contract" gate. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend. Fields marked **(stable)** lock; fields marked **(in-flight)** may shift compatibly before promotion to FINAL.
+> **Status: FINAL v1.1 (promoted via [RFC 0021](../../RFCS/0021-ai-envelope-primitive.md), 2026-05-18; first cut 2026-05-17).** Closes the long-standing gap where `Capabilities.supportedEnvelopes`, `Capabilities.schemaVersions`, `Capabilities.limits.envelopesPerTurn`, `Capabilities.limits.schemaRounds`, `Capabilities.limits.clarificationRounds`, `host.aiEnvelope.generate`, the `envelopeType` field on workflow-chain pack manifests, and the `openwop-interrupts` profile's `supportedEnvelopes.includes('clarification.request')` check all reference a wire concept whose own shape is not specified anywhere in v1 prose. This document specifies that shape, the universal kinds, the per-kind schema discipline, and the per-node "Envelope Contract" gate. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend. Fields marked **(stable)** lock; fields marked **(in-flight)** may shift compatibly within v1.x.
 
 ---
 
@@ -17,7 +17,7 @@ Eight v1 surfaces already reference "envelopes" as a distinct wire concept:
 - `positioning.md` line 119 lists "LLM-driven workflows with structured envelopes (`prd.create` / `theme.create` / `tasks.create` / `clarification.request` / etc.)" as one of openwop's positioning claims.
 - `apps/workflow-engine/backend/typescript/src/routes/discovery.ts` line 91 advertises `envelopesPerTurn: 32` from the reference host.
 
-What none of these specify: the **AI Envelope's own wire shape**, the **universal kinds every engine must recognize**, the **per-kind schema discipline**, the **per-node permission set** (which kinds a given typeId accepts), the **dedup/replay semantics**, the **trust-boundary tagging**, or the **redaction invariant**. Hosts have been free-handing all of these. This document closes the gap.
+What none of these specify: the **AI Envelope's own wire shape**, the **universal kinds every engine MUST recognize**, the **per-kind schema discipline**, the **per-node permission set** (which kinds a given typeId accepts), the **dedup/replay semantics**, the **trust-boundary tagging**, or the **redaction invariant**. Hosts have been free-handing all of these. This document closes the gap.
 
 ---
 
@@ -497,10 +497,10 @@ See `docs/migration/v1.0-to-v1.1.md` for the field-by-field migration table once
 | E2 | Multi-turn envelope conversations (an envelope whose handler emits a follow-up `schema.request` that the LLM answers in the next turn) — the `correlationId` chaining model is described but the conversation-state surface is not. | future v1.x |
 | E3 | Vendor-kind registry — whether namespaced kinds (`vendor.myndhyve.prd.create`) should be advertised through a `kinds` registry parallel to the node-pack registry per `registry-operations.md`, or stay host-private. | future v1.x |
 | E4 | Schema sub-typing — `vendor.x.prd.create` v2 might want to declare "everything v1 accepted, plus new optional field" without restating the v1 schema. JSON Schema $ref vs flat duplication; not locked. | future v1.x |
-| E5 | Refusal-mode interaction with retry policies — `refusalMode: "fail-node"` plus a per-run retry policy may produce surprising loops if the LLM keeps emitting refused kinds. The interaction needs a worked example. | future v1.x |
+| E5 | Refusal-mode interaction with retry policies — `refusalMode: "fail-node"` plus a per-run retry policy can produce surprising loops if the LLM keeps emitting refused kinds. The interaction needs a worked example. | future v1.x |
 | E6 | OTel attribute names — `openwop.envelope_kind`, `openwop.envelope_id`, `openwop.envelope_correlation_id` are implied but not added to `observability.md` §"Canonical span attributes" until this spec graduates from DRAFT. | follow-up |
 
-These gaps do NOT block conformance against the DRAFT surface; they list what graduates to FINAL must close.
+These gaps do NOT block conformance against the DRAFT surface; they list what a graduation to FINAL MUST close.
 
 ---
 

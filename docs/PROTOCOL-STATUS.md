@@ -11,8 +11,8 @@
 | JSON Schemas | 26 | `schemas/*.schema.json` |
 | OpenAPI operations | 19 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 150 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 20 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| Conformance scenario files | 153 | `conformance/src/scenarios/*.test.ts` |
+| RFCs tracked | 21 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## OpenAPI Operations
 
@@ -23,16 +23,16 @@
 | Status | Count |
 |---|---:|
 | Accepted | 12 |
-| Active | 7 |
+| Active | 8 |
 | Draft | 1 |
 
 | Latest RFC | Title | Status |
 |---|---|---|
+| RFC 0021 | AI Envelope Primitive - wire shape, universal kinds, Envelope Contract gate | Active |
 | RFC 0020 | Host-side MCP server composition | Active |
 | RFC 0019 | Blob storage + TTL cache capabilities | Active |
 | RFC 0018 | Database adapter capabilities (SQL, vector, search) | Active |
 | RFC 0017 | host.queueBus inbound queue + stream capability | Active |
-| RFC 0016 | host.tableStorage structured record store | Active |
 
 ## SDK Helper Coverage
 

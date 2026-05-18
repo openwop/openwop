@@ -58,10 +58,22 @@
       "signingMethod": "manual",
       "signingKeyId": "openwop-registry-root",
       "integrity": "sha256-zwmwyLJmLwtqYJlrYe3ogVI7e0bIrGFa+V1Ktu5RuXQ=",
+      "deprecated": true,
+      "yanked": false
+    },
+    {
+      "version": "1.1.2",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/core.openwop.ai/-/1.1.2.json",
+      "tarballUrl": "/v1/packs/core.openwop.ai/-/1.1.2.tgz",
+      "signatureUrl": "/v1/packs/core.openwop.ai/-/1.1.2.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-registry-root",
+      "integrity": "sha256-AyU+DiXb8uaqL5HNf5gtCOR+C5SZOcXTgC5Tr55y3Wk=",
       "deprecated": false,
       "yanked": false
     }
   ],
-  "latest": "1.1.1",
+  "latest": "1.1.2",
   "deprecated": false
 }

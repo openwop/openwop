@@ -59,7 +59,8 @@ echo "[2/9] Conformance suite (typecheck + server-free scenarios)..."
   npx tsc --noEmit
   npx vitest run \
     src/scenarios/fixtures-valid.test.ts \
-    src/scenarios/spec-corpus-validity.test.ts
+    src/scenarios/spec-corpus-validity.test.ts \
+    src/scenarios/ai-envelope-shape.test.ts
 )
 echo
 

@@ -1,6 +1,9 @@
 {
   "name": "core.openwop.mcp",
   "version": "1.1.0",
+  "deprecated": true,
+  "deprecationReason": "Superseded by 1.1.1 (invoke-tool emits outputs.markedContent — <UNTRUSTED tool=\"...\">...</UNTRUSTED> wrapped — when host's MCP client flags untrustedContent OR ctx.trustBoundary='untrusted'). 1.1.0 forces downstream chat-completion consumers to re-derive the marker. Pin to 1.1.1.",
+  "supersededBy": "1.1.1",
   "description": "Spec-canonical MCP (Model Context Protocol) pack. v1.0 four-node client baseline (list-tools, invoke-tool, read-resource, server-status) plus the v1.1 additions: full client-side surface (resources, prompts, completion, logging, ping) AND server-side (workflow IS an MCP server — server-trigger + expose-tool/resource/prompt + handle-sampling/elicitation + provide-roots). Tracks modelcontextprotocol.io 2025-06-18 spec via spec/v1/mcp-integration.md.",
   "author": "OpenWOP Working Group",
   "license": "Apache-2.0",

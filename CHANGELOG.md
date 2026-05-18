@@ -11,6 +11,33 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### RFC 0021 — `spec/v1/ai-envelope.md` DRAFT v1.x → FINAL v1.1 (2026-05-18)
+
+Closes the long-standing wire-shape gap where 8 v1 surfaces reference "AI Envelope" as a typed-wire concept without specifying the shape. Promotes the existing prose to FINAL v1.1, normates the 4 universal-kind payload schemas, and ships an in-tree conformance scenario asserting the contract.
+
+- **`RFCS/0021-ai-envelope-primitive.md`** (NEW) — captures motivation, schema diffs, compatibility classification, conformance criteria, alternatives considered, unresolved questions.
+- **`spec/v1/ai-envelope.md`** — Status header DRAFT v1.x → FINAL v1.1 (date 2026-05-18). Prose body unchanged.
+- **`schemas/ai-envelope.schema.json`** — already shipped 2026-05-17 (parallel-agent draft). Description updated to reflect FINAL v1.1 status.
+- **`schemas/envelopes/{clarification.request,schema.request,schema.response,error}.schema.json`** — 4 universal-kind payload schemas (already shipped 2026-05-17). RFC 0021 §B normates each as `$id` under `https://openwop.dev/spec/v1/envelopes/<kind>.schema.json` with `additionalProperties: false`.
+- **`conformance/src/scenarios/ai-envelope-shape.test.ts`** (NEW) — 10 tests covering: capability advertisement shape (HTTP-driven, soft-skip without `OPENWOP_BASE_URL`); top-level + 4 universal-kind schema Ajv2020 compile (server-free); positive + 2 negative round-trip fixtures (server-free); advertised-universal kind ↔ schema linkage. 8/10 pass offline; 2 HTTP-driven skip cleanly without base URL.
+- **`scripts/openwop-check.sh`** — added `ai-envelope-shape.test.ts` to the gate's server-free subset so the wire contract is verified on every push.
+- **Compatibility:** additive per `COMPATIBILITY.md §2.1`. No required field changes, no event-shape changes, no MUST relaxation. Hosts that don't advertise envelope kinds see no behavioral change.
+
+### `core.openwop.ai@1.1.1` + `core.openwop.mcp@1.1.0` marked deprecated (2026-05-18)
+
+The two superseded pack versions from the 2026-05-17 UNTRUSTED-marker safety-fix are now flagged `deprecated: true` in their respective version manifests at `registry/v1/packs/core.openwop.{ai,mcp}/-/{1.1.1,1.1.0}.json`. Each carries a `deprecationReason` citing the security gap and a `supersededBy` pointer to the safety-fix version. Skipped the 7-day soak per operator decision — the safety-fix is non-breaking and pinning to the deprecated version leaves MCP-server-mount workflows exposed to prompt-injection-driven argument forgery.
+
+- `core.openwop.ai@1.1.1` → `supersededBy: 1.1.2`
+- `core.openwop.mcp@1.1.0` → `supersededBy: 1.1.1`
+- `registry/v1/packs/core.openwop.{ai,mcp}/index.json` regenerated via `registry/scripts/build-index.mjs`; the per-version `deprecated` flag flows through.
+
+### Three reference agent-pack conformance scenarios (2026-05-18)
+
+The three `core.openwop.agents.{deep-research,react,supervisor}@1.0.0` packs published 2026-05-17 are registry-signed but had no in-tree conformance scenarios proving their `agents[]` manifests are reachable via the host pack-catalog surface AND that each manifest matches the contract documented in `RFCS/0003-agent-packs.md` + `schemas/agent-manifest.schema.json`.
+
+- **`conformance/src/scenarios/agentPackCatalog.test.ts`** (NEW) — 4 tests (one per pack + a "coherent batch" cross-check). Each test soft-skips when the host doesn't advertise `capabilities.agents.supported: true` OR doesn't expose `/v1/packs`. Validates: `agentId` namespace pattern, `modelClass` enum membership, `systemPrompt XOR systemPromptRef`, `toolAllowlist` scope-prefix discipline, per-pack invariants (deep-research uses `longTerm` memory + RAG retrievers; react carries handoff schemas; supervisor uses `delegate` or `reasoning` modelClass).
+- **Compatibility:** additive. Hosts without agent support remain un-affected.
+
 ### `spec/v1/ai-envelope.md` — closes the AI Envelope specification gap (2026-05-17)
 
 Eight v1 surfaces already reference "AI Envelopes" as a distinct wire concept (`Capabilities.supportedEnvelopes` + `schemaVersions` + the `envelopesPerTurn`/`schemaRounds`/`clarificationRounds` limits in `capabilities.md` + `capabilities.schema.json`; the `ctx.aiEnvelope.generate({envelopeType, payload, ...})` contract in `host-capabilities.md` §host.aiEnvelope; the `envelopeType: "prd.create"` config on `core.ai.callPrompt` in `workflow-chain-packs.md`; the `c.supportedEnvelopes.includes('clarification.request')` derivation in `profiles.md`; vendor-namespaced kinds in `host-extensions.md`; "structured envelopes" in `positioning.md`; and `envelopesPerTurn: 32` advertised by the reference host's `routes/discovery.ts`). None of these specified the envelope's own wire shape, its universal kinds, its per-kind schema discipline, its dedup/replay semantics, or its per-node permission set. This batch closes that gap as a DRAFT v1.x normative surface — additive, no breaking change.

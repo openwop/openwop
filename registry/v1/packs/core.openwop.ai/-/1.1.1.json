@@ -1,6 +1,9 @@
 {
   "name": "core.openwop.ai",
   "version": "1.1.1",
+  "deprecated": true,
+  "deprecationReason": "Superseded by 1.1.2 (UNTRUSTED-marker discipline on ctx.trustBoundary='untrusted' runs — RFC 0020 §D follow-up). 1.1.1 does not wrap user-role content in <UNTRUSTED>...</UNTRUSTED> markers before reaching the LLM, leaving MCP-server-mount workflows exposed to prompt-injection-driven argument forgery. Pin to 1.1.2.",
+  "supersededBy": "1.1.2",
   "description": "Spec-canonical AI-call pack. v1.0 (chatCompletion, structuredOutput, toolCalling, embeddings) plus v1.1 multi-modal + LLM helpers — image generate/edit/upscale, audio transcribe/synthesize, video generate, rerank, classify, extract, guardrails, transform. Routes through host BYOK aiProviders.",
   "author": "OpenWOP Working Group",
   "license": "Apache-2.0",
