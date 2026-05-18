@@ -37,6 +37,9 @@ interface AgentCaps {
     | {
         verbosity: 'summary' | 'full' | 'off' | undefined;
         tokenLimit: number | undefined;
+        /** RFC 0024. When true, host may emit `agent.reasoning.delta`
+         *  events in addition to the closing `agent.reasoned`. */
+        streaming: boolean;
       }
     | undefined;
 }
@@ -84,6 +87,7 @@ export function setMultiAgentCapabilities(c: DiscoveryPayload | null | undefined
               typeof (reasoningRaw as Record<string, unknown>).tokenLimit === 'number'
                 ? ((reasoningRaw as Record<string, unknown>).tokenLimit as number)
                 : undefined,
+            streaming: asBoolean((reasoningRaw as Record<string, unknown>).streaming),
           }
         : undefined;
     _agentCaps = {
@@ -111,6 +115,12 @@ export function isAgentSupported(): boolean {
 /** Phase 1 reasoning verbosity. */
 export function getReasoningVerbosity(): 'summary' | 'full' | 'off' | undefined {
   return _agentCaps?.reasoning?.verbosity;
+}
+
+/** RFC 0024 — host emits incremental `agent.reasoning.delta` events
+ *  while a reasoning block is still open. */
+export function isReasoningStreamingSupported(): boolean {
+  return _agentCaps?.reasoning?.streaming === true;
 }
 
 /** Phase 2 — host supports the named modelClass. */

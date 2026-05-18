@@ -31,6 +31,11 @@
               "type": "integer",
               "minimum": 0,
               "description": "Optional reasoning-token count for observability/cost attribution."
+            },
+            "streamChunks": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "RFC 0024. When present, the host MUST emit one `agent.reasoning.delta` event per array entry (in order; `sequence` starts at 0 and increments by 1), THEN emit the closing `agent.reasoned` event whose `reasoning` field equals the concatenation of all `streamChunks`. When absent, only the closing `agent.reasoned` event fires (the pre-RFC-0024 behavior). Gated at conformance test time on `capabilities.agents.reasoning.streaming: true`."
             }
           }
         }

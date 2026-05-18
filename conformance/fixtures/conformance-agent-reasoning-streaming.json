@@ -1,0 +1,37 @@
+{
+  "id": "conformance-agent-reasoning-streaming",
+  "name": "Conformance: Streaming agent.reasoning.delta (RFC 0024)",
+  "version": "1.0",
+  "description": "RFC 0024. Drives the `core.conformance.mock-agent` node to emit incremental `agent.reasoning.delta` events (one per `mockReasoning.streamChunks` entry, sequence 0..N-1) followed by exactly one closing `agent.reasoned` whose `reasoning` equals the concatenation of all chunks. Gated on `capabilities.agents.reasoning.streaming: true`. See agentReasoningStreaming.test.ts.",
+  "nodes": [
+    {
+      "id": "streaming-reasoner",
+      "typeId": "core.conformance.mock-agent",
+      "name": "Streaming Reasoning Agent",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "mockReasoning": {
+          "summary": "Streamed reasoning trace for RFC 0024 conformance.",
+          "tokenCount": 12,
+          "streamChunks": [
+            "Let me think about this. ",
+            "First, the user is asking a question. ",
+            "Therefore, I should respond clearly."
+          ]
+        }
+      },
+      "inputs": {},
+      "agent": {
+        "agentId": "core.conformance.streaming-reasoner",
+        "modelClass": "reasoning"
+      }
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "multi-agent", "phase-1", "reasoning", "streaming", "rfc-0024"] },
+  "settings": { "timeout": 15000 }
+}
