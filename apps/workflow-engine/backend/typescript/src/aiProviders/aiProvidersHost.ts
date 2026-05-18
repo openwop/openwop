@@ -41,6 +41,12 @@ import type {
 import type { AiProviderPolicy, ProviderPolicyResolver } from '../host/index.js';
 import { dispatchChat, type ChatMessage, type ProviderId } from '../providers/dispatch.js';
 import { dispatchAnthropicToolsRound } from '../providers/dispatchAnthropicTools.js';
+import {
+  dispatchManagedChat,
+  isManagedCredentialRef,
+  managedProviderIdFromRef,
+  ManagedProviderError,
+} from '../providers/managedProvider.js';
 import { emitCost } from '../observability/costEmitter.js';
 import { getInvocationLog } from '../executor/invocationLog.js';
 import { createLogger } from '../observability/logger.js';
@@ -130,6 +136,16 @@ async function callAI(scope: AdapterScope, req: AiCallRequest): Promise<AiCallRe
       { capability: 'aiProviders.embeddings' },
     );
   }
+
+  // Managed-provider short-circuit. Bypasses policy + invocation-log
+  // cache + BYOK resolution; the managed pipeline owns sign-in check,
+  // daily cap, server-held-key lookup, and result rewriting. Replay
+  // determinism does NOT apply: managed dispatch is for ad-hoc chat,
+  // not workflow runs (which keep using BYOK).
+  if (isManagedCredentialRef(req.credentialRef)) {
+    return callAIManaged(scope, req);
+  }
+
   assertProviderSupported(req.provider);
   await enforcePolicy(scope, req.provider, req.model, req.credentialRef);
 
@@ -260,6 +276,52 @@ async function callAIWithTools(scope: AdapterScope, req: AiToolCallRequest): Pro
     credentialRefHashed,
   };
   return aiResult;
+}
+
+async function callAIManaged(scope: AdapterScope, req: AiCallRequest): Promise<AiCallResult> {
+  if (req.responseSchema || req.embeddingMode) {
+    throw new AiProviderError(
+      'host_capability_missing',
+      'Managed provider supports plain chat only (no structured-output / embedding mode in this sample).',
+      { capability: 'managed_provider.modes' },
+    );
+  }
+  const userFacingProvider = managedProviderIdFromRef(req.credentialRef!);
+  const credentialRefHashed = sha256Hex(req.credentialRef!);
+  try {
+    const managed = await dispatchManagedChat({
+      userFacingProvider,
+      tenantId: scope.tenantId,
+      messages: toChatMessages(req),
+      ...(req.maxTokens != null ? { maxTokens: req.maxTokens } : {}),
+    });
+    if (managed.usage?.inputTokens != null || managed.usage?.outputTokens != null) {
+      emitCost({
+        provider: managed.provider,
+        model: managed.model,
+        promptTokens: managed.usage.inputTokens,
+        completionTokens: managed.usage.outputTokens,
+      });
+    }
+    return {
+      content: managed.completion,
+      ...(managed.usage ? { usage: managed.usage } : {}),
+      finishReason: normalizeFinishReason(managed.finishReason),
+      model: managed.model,
+      credentialRefHashed,
+    };
+  } catch (err) {
+    if (err instanceof ManagedProviderError) {
+      // Map managed-pipeline errors to canonical aiProviders codes so
+      // existing callers don't need to learn a new vocabulary.
+      const code: AiProviderErrorCode =
+        err.code === 'sign_in_required' ? 'byok_required'
+          : err.code === 'daily_limit_reached' ? 'provider_rate_limited'
+          : 'provider_unavailable';
+      throw new AiProviderError(code, err.message, { managedCode: err.code });
+    }
+    throw err;
+  }
 }
 
 // ── Pipeline stages ───────────────────────────────────────────────

@@ -656,6 +656,18 @@ async function prepareRunSecrets(run: RunRecord, definition: WorkflowDefinition)
   }
   const cfgRefs = (run.configurable?.credentialRefs as string[] | undefined) ?? [];
   for (const ref of cfgRefs) {
+    // Managed credential refs (`managed:*`) are sentinels for the
+    // server-held-key path in providers/managedProvider.ts — the node
+    // (chat-responder / aiProvidersHost) detects the prefix and routes
+    // dispatch through a different pipeline that owns its own
+    // credential lookup, sign-in gating, and daily cap enforcement.
+    // The resolver doesn't know about these refs (they live in the
+    // shared byok_secrets table, not the per-tenant byok_tenant_secrets),
+    // so skip resolution entirely. Authority for "is this actually
+    // usable?" stays with the managed-dispatch path, which surfaces
+    // `managed_unavailable` / `sign_in_required` / `daily_limit_reached`
+    // at call time.
+    if (ref.startsWith('managed:')) continue;
     const value = await resolveSecret(ref, scope);
     if (value) required.set(ref, value);
     else {

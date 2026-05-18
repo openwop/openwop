@@ -140,6 +140,30 @@ export interface Storage {
    */
   reassignTenant(fromTenant: string, toTenant: string): Promise<{ runs: number; workflows: number }>;
 
+  // ── managed-provider per-day usage ──
+  /**
+   * Increment a tenant's token usage for a managed (server-held-key)
+   * provider on a given UTC date. Upserts; first call for a (tenant,
+   * date, provider) inserts a row with the supplied counts.
+   *
+   * Used by `src/providers/managedProvider.ts` to enforce per-user
+   * daily caps against the operator's shared MiniMax (etc.) key.
+   */
+  incrementManagedUsage(
+    tenantId: string,
+    providerId: string,
+    dateUtc: string,
+    inputTokens: number,
+    outputTokens: number,
+  ): Promise<void>;
+  /** Read a tenant's accumulated tokens for a managed provider on a UTC date.
+   *  Returns `{ inputTokens: 0, outputTokens: 0 }` when no row exists. */
+  getManagedUsage(
+    tenantId: string,
+    providerId: string,
+    dateUtc: string,
+  ): Promise<{ inputTokens: number; outputTokens: number }>;
+
   // ── lifecycle ──
   close(): Promise<void>;
 }

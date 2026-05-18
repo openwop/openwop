@@ -541,6 +541,17 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
       }
     },
 
+    async incrementManagedUsage() {
+      // Managed-provider per-day token cap is a sample-host (sqlite)
+      // feature. Postgres adopters running the workflow-engine in
+      // production typically front their LLM access with a different
+      // billing/quota system, so this is a no-op rather than an error.
+    },
+
+    async getManagedUsage() {
+      return { inputTokens: 0, outputTokens: 0 };
+    },
+
     async close() {
       await pool.end();
     },

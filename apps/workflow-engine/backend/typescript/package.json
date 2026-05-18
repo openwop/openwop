@@ -6,8 +6,8 @@
   "type": "module",
   "main": "lib/index.js",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "start": "node lib/index.js",
+    "dev": "tsx watch --env-file-if-exists=.env src/index.ts",
+    "start": "node --env-file-if-exists=.env lib/index.js",
     "build": "rm -rf lib && esbuild src/index.ts --bundle --platform=node --target=node22 --format=esm --outfile=lib/index.js --packages=external --sourcemap --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\"",
     "build:tsc": "rm -rf dist && tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit",

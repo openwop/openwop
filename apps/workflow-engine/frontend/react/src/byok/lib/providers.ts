@@ -32,12 +32,20 @@ export interface ProviderConfig {
   badgeColor: string;
   /** One-line description shown under the name on the wizard card. */
   description: string;
-  /** Placeholder for the API key input (e.g., "sk-ant-…"). */
-  apiKeyPlaceholder: string;
-  /** Helper text shown beneath the key input. */
-  apiKeyHelpText: string;
-  /** Where the user gets a key. Rendered as a "Get key" link. */
-  apiKeyConsoleUrl: string;
+  /** Managed providers run on a server-held key. The BYOK wizard skips
+   *  the model picker + key entry steps; clicking the tile triggers
+   *  sign-in (if anon) or directly activates the provider (if authed).
+   *  apiKey* / customModel* fields below are not required when managed. */
+  managed?: boolean;
+  /** Hint shown beneath a managed-provider tile to signed-out users
+   *  (e.g., "Sign in to use"). Ignored for non-managed providers. */
+  signedInHint?: string;
+  /** Placeholder for the API key input (e.g., "sk-ant-…"). Required for non-managed providers. */
+  apiKeyPlaceholder?: string;
+  /** Helper text shown beneath the key input. Required for non-managed providers. */
+  apiKeyHelpText?: string;
+  /** Where the user gets a key. Rendered as a "Get key" link. Required for non-managed providers. */
+  apiKeyConsoleUrl?: string;
   /** Soft validation prefix — used for the "Anthropic keys usually start with…" warning. */
   apiKeyPrefix?: string;
   /** Placeholder for the "Other…" custom-model input. */
@@ -75,7 +83,11 @@ function validateProvidersDocument(raw: unknown): ProvidersDocument {
 function assertProviderShape(p: unknown): asserts p is ProviderConfig {
   if (!p || typeof p !== 'object') throw new Error('providers.json: each provider MUST be an object');
   const rec = p as Record<string, unknown>;
-  for (const field of ['id', 'label', 'badgeColor', 'description', 'apiKeyPlaceholder', 'apiKeyHelpText', 'apiKeyConsoleUrl'] as const) {
+  const managed = rec.managed === true;
+  const alwaysRequired = ['id', 'label', 'badgeColor', 'description'] as const;
+  const byokOnlyRequired = ['apiKeyPlaceholder', 'apiKeyHelpText', 'apiKeyConsoleUrl'] as const;
+  const required = managed ? alwaysRequired : [...alwaysRequired, ...byokOnlyRequired];
+  for (const field of required) {
     if (typeof rec[field] !== 'string' || (rec[field] as string).length === 0) {
       throw new Error(`providers.json: provider missing string field \`${field}\` (got ${typeof rec[field]})`);
     }

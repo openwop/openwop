@@ -8,7 +8,7 @@
  * envelopes, etc.) — see `core.openwop.ai/index.mjs`.
  */
 
-export type ProviderId = 'anthropic' | 'openai' | 'google';
+export type ProviderId = 'anthropic' | 'openai' | 'google' | 'minimax';
 
 /** A single piece of content within a message. Mirrors the FE shape
  *  in src/chat/hooks/useChatSession.ts. */
@@ -74,6 +74,8 @@ export async function dispatchChat(req: DispatchRequest): Promise<DispatchResult
       return dispatchOpenAI(req);
     case 'google':
       return dispatchGoogle(req);
+    case 'minimax':
+      return dispatchMiniMax(req);
     default: {
       const exhaustive: never = req.provider;
       throw new Error(`Unknown provider: ${exhaustive as string}`);
@@ -209,6 +211,76 @@ async function dispatchOpenAI(req: DispatchRequest): Promise<DispatchResult> {
 
   return {
     provider: 'openai',
+    model: req.model,
+    completion,
+    usage: { inputTokens, outputTokens },
+    ...(finishReason ? { finishReason } : {}),
+  };
+}
+
+// ── MiniMax (OpenAI-compatible chat completions) ─────────────────────
+// International console: https://www.minimax.io/platform
+// MiniMax exposes an OpenAI-shaped /v1/chat/completions endpoint, so
+// the wire shape mirrors dispatchOpenAI exactly except for base URL.
+// Base URL + default model id come from env so operators can swap
+// regional endpoints (api.minimax.io vs api.minimaxi.com) without a
+// code change.
+
+const MINIMAX_DEFAULT_BASE_URL = 'https://api.minimax.io/v1';
+
+async function dispatchMiniMax(req: DispatchRequest): Promise<DispatchResult> {
+  const baseUrl = (process.env.MINIMAX_API_BASE_URL ?? MINIMAX_DEFAULT_BASE_URL).replace(/\/$/, '');
+  const res = await fetch(`${baseUrl}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      authorization: `Bearer ${req.apiKey}`,
+    },
+    body: JSON.stringify({
+      model: req.model,
+      max_tokens: req.maxTokens ?? 4096,
+      stream: true,
+      stream_options: { include_usage: true },
+      messages: req.messages.map((m) => ({ role: m.role, content: contentToText(m.content, 'MiniMax') })),
+    }),
+    ...(req.signal ? { signal: req.signal } : {}),
+  });
+  if (!res.ok) {
+    const errBody = await res.text();
+    throw new Error(`minimax_${res.status}: ${errBody.slice(0, 300)}`);
+  }
+  if (!res.body) throw new Error('minimax_no_response_body');
+
+  let completion = '';
+  let inputTokens: number | undefined;
+  let outputTokens: number | undefined;
+  let finishReason: string | undefined;
+
+  for await (const event of parseSseStream(res.body)) {
+    if (event.data === '[DONE]') break;
+    try {
+      const data = JSON.parse(event.data) as {
+        choices?: Array<{ delta?: { content?: string }; finish_reason?: string | null }>;
+        usage?: { prompt_tokens?: number; completion_tokens?: number };
+      };
+      const choice = data.choices?.[0];
+      const delta = choice?.delta?.content;
+      if (delta) {
+        completion += delta;
+        await req.onDelta?.(delta);
+      }
+      if (choice?.finish_reason) finishReason = choice.finish_reason;
+      if (data.usage) {
+        inputTokens = data.usage.prompt_tokens;
+        outputTokens = data.usage.completion_tokens;
+      }
+    } catch {
+      /* skip malformed chunk */
+    }
+  }
+
+  return {
+    provider: 'minimax',
     model: req.model,
     completion,
     usage: { inputTokens, outputTokens },

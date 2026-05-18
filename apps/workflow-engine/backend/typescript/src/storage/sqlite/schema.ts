@@ -8,7 +8,7 @@
 
 import type { Database } from 'better-sqlite3';
 
-export const LATEST_SCHEMA_VERSION = 3;
+export const LATEST_SCHEMA_VERSION = 4;
 
 const MIGRATIONS: Record<number, (db: Database) => void> = {
   1: (db) => {
@@ -144,6 +144,22 @@ const MIGRATIONS: Record<number, (db: Database) => void> = {
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         PRIMARY KEY (tenant_id, credential_ref)
+      );
+    `);
+  },
+  4: (db) => {
+    // Per-tenant, per-day token usage for managed (server-held-key)
+    // providers — see src/providers/managedProvider.ts. Lets us cap
+    // each signed-in user's daily consumption against the operator's
+    // shared key. `date` is the UTC calendar day in YYYY-MM-DD form.
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS managed_provider_usage (
+        tenant_id TEXT NOT NULL,
+        date TEXT NOT NULL,
+        provider_id TEXT NOT NULL,
+        input_tokens INTEGER NOT NULL DEFAULT 0,
+        output_tokens INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (tenant_id, date, provider_id)
       );
     `);
   },

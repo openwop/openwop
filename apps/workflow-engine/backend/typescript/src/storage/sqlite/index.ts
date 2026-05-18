@@ -142,6 +142,18 @@ export function openSqliteStorage(dbPath: string): Storage {
     `DELETE FROM byok_tenant_secrets WHERE tenant_id = ?`,
   );
 
+  const incrManagedUsageStmt = db.prepare(`
+    INSERT INTO managed_provider_usage (tenant_id, date, provider_id, input_tokens, output_tokens)
+    VALUES (@tenant, @date, @provider, @inTok, @outTok)
+    ON CONFLICT(tenant_id, date, provider_id) DO UPDATE SET
+      input_tokens  = input_tokens  + excluded.input_tokens,
+      output_tokens = output_tokens + excluded.output_tokens
+  `);
+  const getManagedUsageStmt = db.prepare(
+    `SELECT input_tokens, output_tokens FROM managed_provider_usage
+       WHERE tenant_id = ? AND date = ? AND provider_id = ?`,
+  );
+
   const insertAuditStmt = db.prepare(`
     INSERT INTO audit_log (audit_id, timestamp, principal_id, action, resource, outcome, payload)
     VALUES (@auditId, @timestamp, @principalId, @action, @resource, @outcome, @payload)
@@ -544,6 +556,24 @@ export function openSqliteStorage(dbPath: string): Storage {
         return { runs: Number(r1.changes ?? 0), workflows: Number(r2.changes ?? 0) };
       });
       return reassignTxn(fromTenant, toTenant);
+    },
+
+    async incrementManagedUsage(tenantId, providerId, dateUtc, inputTokens, outputTokens) {
+      incrManagedUsageStmt.run({
+        tenant: tenantId,
+        date: dateUtc,
+        provider: providerId,
+        inTok: inputTokens,
+        outTok: outputTokens,
+      });
+    },
+
+    async getManagedUsage(tenantId, providerId, dateUtc) {
+      const row = getManagedUsageStmt.get(tenantId, dateUtc, providerId) as
+        | { input_tokens: number; output_tokens: number }
+        | undefined;
+      if (!row) return { inputTokens: 0, outputTokens: 0 };
+      return { inputTokens: row.input_tokens, outputTokens: row.output_tokens };
     },
 
     async close() {

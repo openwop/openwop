@@ -15,6 +15,12 @@ import { emitCost } from '../observability/costEmitter.js';
 import { dispatchChat, type ChatMessage, type DispatchResult, type ProviderId } from '../providers/dispatch.js';
 import { dispatchAnthropicWithTools, type ToolDef } from '../providers/dispatchAnthropicTools.js';
 import { getDefaultModel } from '../providers/catalog.js';
+import {
+  dispatchManagedChat,
+  isManagedCredentialRef,
+  managedProviderIdFromRef,
+  ManagedProviderError,
+} from '../providers/managedProvider.js';
 import { dispatchSubRun, type SubRunResult } from '../subruns/subRunDispatcher.js';
 import { registerMockAgentNode } from './conformanceMockAgent.js';
 
@@ -141,12 +147,63 @@ const sampleChatResponderNode: NodeModule = {
     if (!credentialRef) {
       return { status: 'failure', error: { code: 'credential_required', message: 'A credentialRef MUST be provided to dispatch a chat turn.' } };
     }
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return { status: 'failure', error: { code: 'invalid_request', message: 'Field `messages` MUST be a non-empty array.' } };
+    }
+
+    // Managed-provider path: server-held key, per-tenant daily cap,
+    // underlying provider hidden. The chat-responder short-circuits
+    // BEFORE the standard ctx.secrets lookup so users never need a
+    // BYOK row for managed providers.
+    if (isManagedCredentialRef(credentialRef)) {
+      const userFacingProvider = managedProviderIdFromRef(credentialRef);
+      try {
+        const onDelta = async (delta: string) => {
+          await ctx.emit('node.message', { delta });
+        };
+        const managed = await dispatchManagedChat({
+          userFacingProvider,
+          tenantId: ctx.tenantId,
+          messages: messages as ChatMessage[],
+          maxTokens,
+          onDelta,
+        });
+        emitCost({
+          provider: managed.provider,
+          model: managed.model,
+          promptTokens: managed.usage?.inputTokens,
+          completionTokens: managed.usage?.outputTokens,
+        });
+        if (managed.completion.length === 0) {
+          return {
+            status: 'failure',
+            error: {
+              code: 'empty_completion',
+              message: 'Free tier returned no content. Try again or pick a different provider.',
+            },
+          };
+        }
+        return {
+          status: 'success',
+          outputs: {
+            completion: managed.completion,
+            provider: managed.provider,
+            model: managed.model,
+            usage: managed.usage,
+          },
+        };
+      } catch (err) {
+        if (err instanceof ManagedProviderError) {
+          return { status: 'failure', error: { code: err.code, message: err.message } };
+        }
+        const message = err instanceof Error ? err.message : String(err);
+        return { status: 'failure', error: { code: 'internal_error', message } };
+      }
+    }
+
     const apiKey = ctx.secrets[credentialRef];
     if (!apiKey) {
       return { status: 'failure', error: { code: 'credential_unavailable', message: `Secret ${credentialRef} not resolved by host.` } };
-    }
-    if (!Array.isArray(messages) || messages.length === 0) {
-      return { status: 'failure', error: { code: 'invalid_request', message: 'Field `messages` MUST be a non-empty array.' } };
     }
 
     // Tool mode is gated to Anthropic for v1; OpenAI/Google have

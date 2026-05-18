@@ -168,6 +168,8 @@ async function makeStorage(): Promise<Storage> {
     deleteAllTenantSecrets: async () => 0,
     reassignTenant: async () => ({ runs: 0, workflows: 0 }),
     deleteAllTenantData: async () => ({ runs: 0, events: 0, interrupts: 0, workflows: 0, secrets: 0 }),
+    incrementManagedUsage: async () => {},
+    getManagedUsage: async () => ({ inputTokens: 0, outputTokens: 0 }),
     close: async () => { await pool.end(); },
   };
 }

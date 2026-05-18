@@ -84,7 +84,14 @@ export function useBYOKConfig(): UseBYOKConfigResult {
     await refresh();
   }, [refresh]);
 
-  const isValid = config !== null && storedRefs.includes(config.credentialRef);
+  // Managed providers (server-held key, `managed:*` sentinel) bypass
+  // the storedRefs check — the BE owns the key, and signed-in tenants'
+  // /byok/secrets only lists their tenant-scoped BYOK refs. Authority
+  // for "is this actually usable?" stays with the BE: a missing
+  // managed row surfaces as `managed_unavailable` at dispatch time.
+  const isValid =
+    config !== null &&
+    (config.credentialRef.startsWith('managed:') || storedRefs.includes(config.credentialRef));
 
   return { config, isValid, storedRefs, setConfig, refresh, isLoading, error };
 }

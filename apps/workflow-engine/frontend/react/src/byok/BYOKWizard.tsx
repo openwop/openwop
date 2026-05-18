@@ -12,10 +12,11 @@
  * `useAutoRef()` for their own naming policy.
  */
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { PROVIDERS, type ProviderConfig, type ProviderModel } from './lib/providers.js';
 import { ShieldIcon } from '../chat/icons/index.js';
 import { storeKey } from './lib/byokClient.js';
+import { useAuth } from '../auth/useAuth.js';
 import type { BYOKActiveConfig } from './lib/useBYOKConfig.js';
 
 interface Props {
@@ -24,10 +25,49 @@ interface Props {
   onCancel?: () => void;
 }
 
+const MANAGED_PENDING_KEY = 'openwop.sample.byok.pendingManaged';
+
+/** Sentinel credentialRef for managed providers. The BE recognizes this
+ *  prefix and routes through `managedProvider.ts` instead of looking up
+ *  a tenant-scoped BYOK row. The value is purely a routing marker —
+ *  the real key lives encrypted in `byok_tenant_secrets` under a
+ *  synthetic admin tenant. */
+function managedCredentialRef(providerId: string): string {
+  return `managed:${providerId}`;
+}
+
 export function BYOKWizard({ onComplete, onCancel }: Props): JSX.Element {
+  const { user, signIn } = useAuth();
   const [step, setStep] = useState<'provider' | 'model' | 'key'>('provider');
   const [provider, setProvider] = useState<ProviderConfig | null>(null);
   const [model, setModel] = useState<ProviderModel | null>(null);
+
+  // After the sign-in redirect returns, auto-activate the managed
+  // provider the user clicked pre-sign-in. Without this, the user
+  // would land back on the wizard and have to click the tile again.
+  useEffect(() => {
+    if (!user) return;
+    const pendingId = localStorage.getItem(MANAGED_PENDING_KEY);
+    if (!pendingId) return;
+    localStorage.removeItem(MANAGED_PENDING_KEY);
+    const p = PROVIDERS.find((x) => x.id === pendingId && x.managed);
+    if (!p) return;
+    const m = p.models[0];
+    if (!m) return;
+    void onComplete({ provider: p.id, model: m.id, credentialRef: managedCredentialRef(p.id) });
+  }, [user, onComplete]);
+
+  async function activateManaged(p: ProviderConfig): Promise<void> {
+    if (!user) {
+      // Stash the picked provider so we can resume after the redirect.
+      localStorage.setItem(MANAGED_PENDING_KEY, p.id);
+      await signIn.google();
+      return;
+    }
+    const m = p.models[0];
+    if (!m) return;
+    await onComplete({ provider: p.id, model: m.id, credentialRef: managedCredentialRef(p.id) });
+  }
 
   return (
     <div className="card">
@@ -35,7 +75,12 @@ export function BYOKWizard({ onComplete, onCancel }: Props): JSX.Element {
 
       {step === 'provider' && (
         <ProviderGrid
+          isAuthed={user !== null}
           onPick={(p) => {
+            if (p.managed) {
+              void activateManaged(p);
+              return;
+            }
             setProvider(p);
             const rec = p.models.find((m) => m.recommended) ?? p.models[0]!;
             setModel(rec);
@@ -106,9 +151,11 @@ function BYOKStepper({ current }: { current: 'provider' | 'model' | 'key' }): JS
 function ProviderGrid({
   onPick,
   onCancel,
+  isAuthed,
 }: {
   onPick: (p: ProviderConfig) => void;
   onCancel?: () => void;
+  isAuthed: boolean;
 }): JSX.Element {
   return (
     <div>
@@ -147,16 +194,26 @@ function ProviderGrid({
               <div>
                 <div style={{ fontWeight: 600, fontSize: 13 }}>{p.label}</div>
                 <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>{p.description}</div>
+                {p.managed && !isAuthed && p.signedInHint && (
+                  <div style={{
+                    fontSize: 11, marginTop: 4, fontWeight: 600,
+                    color: 'var(--color-accent)',
+                  }}>
+                    {p.signedInHint} →
+                  </div>
+                )}
               </div>
             </button>
-            <a
-              href={p.apiKeyConsoleUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ fontSize: 11, paddingLeft: 4 }}
-            >
-              Get a {p.label} API key →
-            </a>
+            {!p.managed && p.apiKeyConsoleUrl && (
+              <a
+                href={p.apiKeyConsoleUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: 11, paddingLeft: 4 }}
+              >
+                Get a {p.label} API key →
+              </a>
+            )}
           </div>
         ))}
       </div>

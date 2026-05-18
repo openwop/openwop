@@ -58,6 +58,18 @@
         { "id": "gemini-2.5-flash",      "label": "Gemini 2.5 Flash",      "contextWindow": 1000000, "capabilities": ["text", "tools", "vision"], "cost": { "input": 0.0003,  "output": 0.0025 }, "webSearch": true, "audioInput": true },
         { "id": "gemini-2.5-pro",        "label": "Gemini 2.5 Pro",        "contextWindow": 1000000, "capabilities": ["text", "tools", "vision"], "cost": { "input": 0.00125, "output": 0.01 }, "webSearch": true, "audioInput": true }
       ]
+    },
+    {
+      "_comment": "Managed provider — operator holds the API key server-side and pays the bill. Users sign in to use it without bringing their own key. The underlying provider + model are intentionally NOT exposed to the FE (no _internalProvider / _internalModel here); both are resolved server-side from MINIMAX_API_KEY + a default model id in the bootstrap step. The wizard skips the model picker and key-entry steps when `managed: true`. Daily token cap per signed-in tenant is enforced by the BE — see managedProvider.ts.",
+      "id": "openwop-free",
+      "label": "Try it free",
+      "managed": true,
+      "badgeColor": "#8b5cf6",
+      "description": "No API key needed — sign in and start chatting.",
+      "signedInHint": "Sign in to use",
+      "models": [
+        { "id": "auto", "label": "Auto", "contextWindow": 200000, "capabilities": ["text"], "recommended": true }
+      ]
     }
   ]
 }

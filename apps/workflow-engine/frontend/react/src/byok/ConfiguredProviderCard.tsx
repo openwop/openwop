@@ -20,12 +20,18 @@ export function ConfiguredProviderCard({ config, onChange, onRemoved, compact }:
   const provider = getProvider(config.provider);
   const model = provider.models.find((m) => m.id === config.model);
   const [removing, setRemoving] = useState(false);
+  const isManaged = provider.managed === true;
 
   async function onDelete(): Promise<void> {
-    if (!confirm(`Delete BYOK key for ${provider.label}?`)) return;
+    // Managed providers don't have a user-owned key to delete — the
+    // "remove" action just clears the active config (server-held key
+    // stays put).
+    if (!isManaged && !confirm(`Delete BYOK key for ${provider.label}?`)) return;
     setRemoving(true);
     try {
-      await deleteKey(config.credentialRef);
+      if (!isManaged) {
+        await deleteKey(config.credentialRef);
+      }
       await onRemoved();
     } finally {
       setRemoving(false);
@@ -51,7 +57,10 @@ export function ConfiguredProviderCard({ config, onChange, onRemoved, compact }:
         background: 'var(--color-surface)', fontSize: 11,
       }}>
         {badge}
-        <span><strong>{provider.label}</strong> · {model?.label ?? config.model}</span>
+        <span>
+          <strong>{provider.label}</strong>
+          {!isManaged && model && <> · {model.label ?? config.model}</>}
+        </span>
         <button
           type="button"
           className="secondary"
@@ -69,13 +78,15 @@ export function ConfiguredProviderCard({ config, onChange, onRemoved, compact }:
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontWeight: 600, fontSize: 13 }}>{provider.label}</div>
         <div className="muted" style={{ fontSize: 11 }}>
-          {model?.label ?? config.model} · key <code>{config.credentialRef}</code>
+          {isManaged
+            ? 'Server-managed · daily usage limit applies'
+            : <>{model?.label ?? config.model} · key <code>{config.credentialRef}</code></>}
         </div>
       </div>
       <div className="button-row" style={{ margin: 0 }}>
         <button type="button" className="secondary" onClick={onChange} aria-label="Change">Change</button>
-        <button type="button" className="secondary" disabled={removing} onClick={onDelete} aria-label="Delete key">
-          {removing ? '…' : 'Delete'}
+        <button type="button" className="secondary" disabled={removing} onClick={onDelete} aria-label={isManaged ? 'Disconnect' : 'Delete key'}>
+          {removing ? '…' : (isManaged ? 'Disconnect' : 'Delete')}
         </button>
       </div>
     </div>

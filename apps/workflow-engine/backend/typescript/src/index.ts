@@ -33,6 +33,10 @@ import { openStorage } from './storage/index.js';
 import { createHostAdapterSuite } from './host/index.js';
 import { configureSecretResolver, loadSecretsFromEnv } from './byok/secretResolver.js';
 import { bootstrapKmsFromEnv } from './byok/kmsEncryption.js';
+import {
+  bootstrapManagedProvider,
+  configureManagedProvider,
+} from './providers/managedProvider.js';
 import { dirname, resolve as resolvePath } from 'node:path';
 import { registerHealthRoutes } from './routes/health.js';
 import { registerDiscoveryRoutes } from './routes/discovery.js';
@@ -101,6 +105,13 @@ export async function createApp(config: AppConfig): Promise<Express> {
   // Pre-seed BYOK from env (kept for backward-compat with conformance
   // / scripted-test setups). Runtime adds via POST /v1/host/sample/byok/secrets.
   await loadSecretsFromEnv();
+
+  // Managed-provider key bootstrap. If MINIMAX_API_KEY (etc.) is set,
+  // encrypt it with the BYOK master key and persist into byok_secrets
+  // under `managed:<provider>`. Idempotent: rotates if the env value
+  // changed, no-ops if unchanged. See providers/managedProvider.ts.
+  configureManagedProvider({ storage, dataDir });
+  await bootstrapManagedProvider();
 
   // Pre-register node modules + install singletons before the first
   // request lands. Mirrors the MyndHyve workflow-runtime boot order.
