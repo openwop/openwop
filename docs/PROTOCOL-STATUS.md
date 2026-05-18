@@ -7,11 +7,11 @@
 
 | Surface | Current value | Source |
 |---|---:|---|
-| Spec prose documents | 34 | `spec/v1/*.md` |
-| JSON Schemas | 25 | `schemas/*.schema.json` |
+| Spec prose documents | 35 | `spec/v1/*.md` |
+| JSON Schemas | 26 | `schemas/*.schema.json` |
 | OpenAPI operations | 19 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 143 | `conformance/src/scenarios/*.test.ts` |
+| Conformance scenario files | 150 | `conformance/src/scenarios/*.test.ts` |
 | RFCs tracked | 20 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## OpenAPI Operations
@@ -55,17 +55,17 @@
 
 | Metric | Count | Source |
 |---|---:|---|
-| Index `packCount` | 59 | `registry/v1/index.json` |
-| Indexed pack rows | 59 | `registry/v1/index.json` |
-| Local pack directories | 59 | `registry/v1/packs/*` |
-| Version manifests | 79 | `registry/v1/packs/*/-/*.json` |
-| Tarballs | 79 | `registry/v1/packs/*/-/*.tgz` |
-| Signatures | 79 | `registry/v1/packs/*/-/*.sig` |
+| Index `packCount` | 62 | `registry/v1/index.json` |
+| Indexed pack rows | 62 | `registry/v1/index.json` |
+| Local pack directories | 62 | `registry/v1/packs/*` |
+| Version manifests | 82 | `registry/v1/packs/*/-/*.json` |
+| Tarballs | 82 | `registry/v1/packs/*/-/*.tgz` |
+| Signatures | 82 | `registry/v1/packs/*/-/*.sig` |
 
 | Scope | Indexed packs |
 |---|---:|
 | community.openwop-team | 1 |
-| core.openwop | 19 |
+| core.openwop | 22 |
 | vendor.myndhyve | 38 |
 | vendor.openwop | 1 |
 

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openwop.dev/packs/core.openwop.agents.react/react.task.schema.json",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.react/1.0.0/react.task.schema.json",
   "title": "ReActTask",
   "description": "Task payload for the ReAct agent. Validated at dispatch per RFC 0003 §D.",
   "type": "object",

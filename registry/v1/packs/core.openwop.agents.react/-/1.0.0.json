@@ -1,0 +1,59 @@
+{
+  "name": "core.openwop.agents.react",
+  "version": "1.0.0",
+  "description": "Canonical ReAct (Reason + Act) loop agent. Pure-agent pack — ships one agent manifest with a configurable toolAllowlist. Composes via RFC 0007 dispatch and consumes host.aiProviders + host.agentRuntime. The 'hello world' of openwop agents.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.agents.react",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "core",
+    "agents",
+    "react",
+    "reasoning",
+    "tools",
+    "pattern"
+  ],
+  "engines": {
+    "openwop": ">=1.1.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "aiProviders": "supported",
+    "host.agentRuntime": "supported"
+  },
+  "agents": [
+    {
+      "agentId": "core.openwop.agents.react.default",
+      "persona": "ReAct",
+      "label": "ReAct Agent",
+      "description": "Iterative Reason+Act loop. Thinks one step, takes one action (tool call or final answer), observes result, repeats. Default allowlist permits openwop:core.http.fetch — workflows override via the dispatch envelope.",
+      "modelClass": "reasoning",
+      "systemPromptRef": "prompts/react.md",
+      "toolAllowlist": [
+        "openwop:core.http.fetch"
+      ],
+      "memoryShape": {
+        "scratchpad": true,
+        "conversation": false,
+        "longTerm": false
+      },
+      "handoff": {
+        "taskSchemaRef": "schemas/react.task.schema.json",
+        "returnSchemaRef": "schemas/react.return.schema.json"
+      },
+      "confidence": {
+        "defaultThreshold": 0.7
+      }
+    }
+  ],
+  "runtime": {
+    "language": "remote",
+    "entry": "pack.json"
+  },
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "openwop-team-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-Y95qx5AnW7xPVGurpG5pH7jw+w0W+ioWqe6ZZPNDMYM="
+}

@@ -69,7 +69,23 @@ import {
 // ── Helpers ─────────────────────────────────────────────────────────────
 
 function listJsonFiles(dir: string): string[] {
-  return readdirSync(dir).filter((f) => f.endsWith('.json'));
+  // Recurse into subdirectories so e.g. `schemas/envelopes/*.schema.json`
+  // appears as `envelopes/<file>` to match the README's path-prefixed
+  // table entries. Preserves the non-recursive-relative-output contract
+  // for files directly under `dir`.
+  const out: string[] = [];
+  const walk = (subPath: string): void => {
+    const fullPath = subPath === '' ? dir : `${dir}/${subPath}`;
+    for (const entry of readdirSync(fullPath, { withFileTypes: true })) {
+      if (entry.isDirectory()) {
+        walk(subPath === '' ? entry.name : `${subPath}/${entry.name}`);
+      } else if (entry.isFile() && entry.name.endsWith('.json')) {
+        out.push(subPath === '' ? entry.name : `${subPath}/${entry.name}`);
+      }
+    }
+  };
+  walk('');
+  return out;
 }
 
 function listScenarioTestFiles(dir: string): string[] {

@@ -1,0 +1,60 @@
+{
+  "name": "core.openwop.agents.supervisor",
+  "version": "1.0.0",
+  "description": "Multi-agent supervisor. Routes user tasks to specialized subagents via RFC 0007 dispatch + RFC 0006 orchestrator semantics. Mirrors LangGraph Supervisor and CrewAI's hierarchical-process pattern. Pure-agent pack.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.agents.supervisor",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "core",
+    "agents",
+    "supervisor",
+    "multi-agent",
+    "orchestrator",
+    "pattern"
+  ],
+  "engines": {
+    "openwop": ">=1.1.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "aiProviders": "supported",
+    "host.agentRuntime": "supported"
+  },
+  "agents": [
+    {
+      "agentId": "core.openwop.agents.supervisor.default",
+      "persona": "Supervisor",
+      "label": "Supervisor Agent",
+      "description": "Receives a goal, decomposes it into subtasks, picks the right subagent per subtask, dispatches via RFC 0007, aggregates results. Decides when the goal is complete and returns a synthesized final answer.",
+      "modelClass": "reasoning",
+      "systemPromptRef": "prompts/supervisor.md",
+      "toolAllowlist": [
+        "openwop:core.dispatch.agent",
+        "openwop:core.dispatch.await"
+      ],
+      "memoryShape": {
+        "scratchpad": true,
+        "conversation": true,
+        "longTerm": false
+      },
+      "handoff": {
+        "taskSchemaRef": "schemas/supervisor.task.schema.json",
+        "returnSchemaRef": "schemas/supervisor.return.schema.json"
+      },
+      "confidence": {
+        "defaultThreshold": 0.75
+      }
+    }
+  ],
+  "runtime": {
+    "language": "remote",
+    "entry": "pack.json"
+  },
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "openwop-team-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-QsSPadxrczrGA3WhY/POb047TZRd41HE/zmAlr8o8bA="
+}

@@ -1,0 +1,152 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "bom-ref": "pkg:openwop/core.openwop.agents.supervisor@1.0.0",
+      "type": "library",
+      "name": "core.openwop.agents.supervisor",
+      "version": "1.0.0",
+      "description": "Multi-agent supervisor. Routes user tasks to specialized subagents via RFC 0007 dispatch + RFC 0006 orchestrator semantics. Mirrors LangGraph Supervisor and CrewAI's hierarchical-process pattern. Pure-agent pack.",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://openwop.dev/packs/core.openwop.agents.supervisor"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/openwop/openwop"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "42c48f69dc6b733ac60375a163f3ce6f4e3b4d945de351c4ff398096bf28f1b0"
+        }
+      ],
+      "purl": "pkg:openwop/core.openwop.agents.supervisor@1.0.0"
+    },
+    "tools": [
+      {
+        "vendor": "openwop",
+        "name": "generate-sbom.mjs",
+        "version": "1"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "file",
+      "name": "LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0cea879ed215e3961316e97ab5e4d7a2b2bca999358668599bd53a1c953bc0d9"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "975"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "README.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "fa62d726d05bca51f42df6a78b0d1f16fbc874706fa6848ea32d26a1293d73ca"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "2942"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "keys/pack.json.sig",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0f6765ac88cb1f7e3e3e01eaa5c5236b9b2bd376cdc4e7a32350a188d52aac03"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "64"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "pack.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e14f53c121728978ff503ec5c3e5f762321a0986b4f7a697b51d90f27b3a2df8"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "1525"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/supervisor.return.schema.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4c52c2358ef95c8f6c92a2d139b4d9d1bb99d89c29d935dfac387a1a44dd9bc8"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "1215"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/supervisor.task.schema.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e2126112f3e12f86e4b4eae42841a922a0b00b074dd22c0d5e54d044394438f9"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "1199"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:openwop/core.openwop.agents.supervisor@1.0.0",
+      "dependsOn": [
+        "host:aiProviders",
+        "host:host.agentRuntime"
+      ]
+    }
+  ]
+}

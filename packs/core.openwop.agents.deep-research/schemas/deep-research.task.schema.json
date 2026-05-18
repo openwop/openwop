@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openwop.dev/packs/core.openwop.agents.deep-research/deep-research.task.schema.json",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.deep-research/1.0.0/deep-research.task.schema.json",
   "title": "DeepResearchTask",
   "type": "object",
   "required": ["question"],

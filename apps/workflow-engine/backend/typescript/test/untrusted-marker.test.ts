@@ -21,12 +21,9 @@ import { describe, it, expect } from 'vitest';
 
 // Import the reference pack delegates directly (`.mjs` modules; Node ESM).
 // The pack runtime is host-agnostic so we can exercise it with a mock ctx.
-// @ts-expect-error — JS pack module has no type declarations; the public
-// pack contract is documented in the pack's `index.mjs` JSDoc + the
-// per-node JSON Schemas. This is a justified `@ts-expect-error` per
-// the project's test-file allowance (single import, no shape ambiguity).
+// Ambient types in `test/types/pack-modules.d.ts` declare the minimal
+// delegate signature so the imports typecheck without `@ts-expect-error`.
 import { chatCompletion, classify, extract, transform, embeddings } from '../../../../packs/core.openwop.ai/index.mjs';
-// @ts-expect-error — see above.
 import { invokeTool } from '../../../../packs/core.openwop.mcp/index.mjs';
 
 interface CapturedCallAI {

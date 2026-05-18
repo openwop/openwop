@@ -72,6 +72,60 @@
       ]
     },
     {
+      "bom-ref": "pkg:openwop/core.openwop.agents.deep-research@1.0.0",
+      "type": "library",
+      "name": "core.openwop.agents.deep-research",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.agents.deep-research/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "8106f1c9c47cc7b0786919a25fe27d41eeec481dfce12aef2a44de4f6dfc3dc0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/core.openwop.agents.react@1.0.0",
+      "type": "library",
+      "name": "core.openwop.agents.react",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.agents.react/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "cfd7836afd1a7e136da9bd4ab5fda5c30658ea763fa2993017868a8a5d9404fd"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:openwop/core.openwop.agents.supervisor@1.0.0",
+      "type": "library",
+      "name": "core.openwop.agents.supervisor",
+      "version": "1.0.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.agents.supervisor/-/1.0.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "f6c13b9166698d13bfd1b04c230510be77f0b2542be6bad91d1b1a51c3dc05d4"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "bom-ref": "pkg:openwop/core.openwop.agents@1.0.0",
       "type": "library",
       "name": "core.openwop.agents",

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openwop.dev/packs/core.openwop.agents.supervisor/supervisor.return.schema.json",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.supervisor/1.0.0/supervisor.return.schema.json",
   "title": "SupervisorReturn",
   "type": "object",
   "required": ["answer", "dispatchedSubagents", "stoppedReason"],
