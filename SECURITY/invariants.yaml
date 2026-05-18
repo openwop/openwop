@@ -893,6 +893,52 @@ invariants:
       against any host advertising `capabilities.fs.supported`; skips
       cleanly otherwise.
 
+  # ===== RFC 0016 host.tableStorage cross-tenant isolation =====
+
+  - id: table-cross-tenant-isolation
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/table-cross-tenant-isolation.test.ts
+    note: |
+      RFC 0016 §B point 1: hosts advertising `capabilities.tableStorage.supported`
+      MUST partition rows by tenant. A `query` or direct `get` by rowId for
+      tenant A MUST NOT return rows written by tenant B, even within the same
+      table name. Mirrors `kv-cross-tenant-isolation`. Applies to all six
+      surface methods (`createTable`, `insert`, `get`, `query`, `update`,
+      `delete`).
+
+  # ===== RFC 0019 host.blobStorage cross-tenant isolation =====
+
+  - id: blob-cross-tenant-isolation
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/blob-cross-tenant-isolation.test.ts
+    note: |
+      RFC 0019 §B point 1: hosts advertising `capabilities.blobStorage.supported`
+      MUST partition blobs by tenant. A `get` for tenant A MUST NOT return
+      blobs written by tenant B, even with identical `bucket`/`key`. Same
+      applies to `list` enumeration and presigned-URL resolution — a presigned
+      URL minted for tenant A MUST NOT resolve under tenant B's namespace.
+
+  # ===== RFC 0019 host.cache cross-tenant isolation =====
+
+  - id: cache-cross-tenant-isolation
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/cache-cross-tenant-isolation.test.ts
+    note: |
+      RFC 0019 §B point 2: hosts advertising `capabilities.cache.supported`
+      MUST partition cache entries by tenant. A `get` for tenant A MUST NOT
+      return values written by tenant B, even with identical keys. Mirrors
+      `kv-cross-tenant-isolation` — `host.cache` is the short-TTL memoization
+      sibling and inherits the same isolation requirement.
+
   # ===== Phase I auth-rotation token redaction =====
 
   - id: auth-key-rotation-no-canary-echo

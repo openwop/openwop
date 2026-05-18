@@ -127,6 +127,96 @@ The real-impl path is the **Phase 3 T3.4 interop-evidence** for `docs/PROTOCOL-G
 
 ---
 
+## OpenWOP host as MCP server
+
+The §"Concrete example" above covers the *client* direction — an OpenWOP workflow calling out to a remote MCP server via `ctx.mcp.*`. This section covers the *server* direction — an OpenWOP host advertising its workflows as MCP tools, resources, and prompts, callable by external MCP-aware LLM clients (Claude Desktop, Cursor, ChatGPT, etc.). It parallels `a2a-integration.md` §"OpenWOP host as A2A agent". Source: [RFC 0020](../../RFCS/0020-host-mcp-server-composition.md).
+
+### 1. Mount
+
+A host MAY expose an MCP-server endpoint over **stdio** (subprocess transport) and/or **streamable-HTTP** (JSON-RPC over HTTP with `Content-Type: application/json` or `text/event-stream` per the connection). When a host advertises `capabilities.mcp.serverMount.supported: true`, it MUST serve the following methods per modelcontextprotocol.io 2025-06-18:
+
+| Method | Required | Notes |
+|---|---|---|
+| `tools/list`, `tools/call` | Required | Workflows registered via `core.openwop.mcp.expose-tool` appear here. |
+| `resources/list`, `resources/templates/list`, `resources/read` | Required | Workflows registered via `core.openwop.mcp.expose-resource` appear here. |
+| `resources/subscribe`, `resources/unsubscribe` | Optional | For live-update notifications. |
+| `prompts/list`, `prompts/get` | Required | Workflows registered via `core.openwop.mcp.expose-prompt` appear here. |
+| `completion/complete` | Optional | For prompt completion hints. |
+| `ping`, `logging/setLevel` | Required | Standard MCP lifecycle. |
+| `notifications/tools/list_changed`, `notifications/resources/list_changed`, `notifications/resources/updated`, `notifications/prompts/list_changed`, `notifications/message`, `notifications/progress`, `notifications/cancelled` | Required when applicable | Emitted as workflow / run state changes. |
+
+The reference `apps/workflow-engine` sample ships a JSON-RPC over streamable-HTTP server at `routes/mcp.ts`, env-gated on `OPENWOP_MCP_SERVER_ENABLED=true`.
+
+### 2. State projection: workflow → MCP tool
+
+A workflow exposed via `core.openwop.mcp.expose-tool` (or the host's declarative equivalent) is advertised in the host's `tools/list` response. Each `tools/call` invocation starts a new openwop run with:
+
+- `inputs` derived from `params.arguments`, validated against the tool's declared `inputSchema` *before* the run starts.
+- `runOptions.trustBoundary: 'untrusted'` (tool arguments arrive from an external LLM; the same trust posture as inbound `host.mcp` tool results).
+- The MCP server response shape follows this projection:
+
+| OpenWOP run state | MCP server response |
+|---|---|
+| `pending` / `running` | Request blocks; subscribed clients receive `notifications/progress` SSE frames. |
+| `completed` | `CallToolResult { content: [...], isError: false }` |
+| `failed` | `CallToolResult { content: [error message], isError: true }` |
+| `awaiting-input` (clarification) | Out-of-band: bridged via `elicitation/create` callback to the inbound MCP client, NOT a `tools/call` response. |
+| `awaiting-input` (approval) | Same out-of-band path; the client's `elicitation/create` response maps to the openwop interrupt resume payload (`accept` / `decline` / `cancel`). |
+| `canceled` | `CallToolResult { content: [...], isError: true }` with `tool_canceled` error tag. |
+
+### 3. Bidirectional callbacks
+
+The openwop ↔ MCP composition is **bidirectional**: an inbound MCP request can drive a workflow that itself calls *out* through the MCP client surface, or that asks the *original caller* for additional input. Two bridges power this:
+
+- **`sampling/createMessage` → `ctx.callAI`.** When a workflow uses `core.openwop.mcp.handle-sampling`, the host MUST bridge inbound `sampling/createMessage` requests into the workflow's `ctx.callAI`. This preserves user consent and BYOK semantics: the *user's* model runs under the *user's* key, never the server's. Gated on `capabilities.mcp.serverMount.samplingBridge: true`.
+- **`elicitation/create` → `ctx.suspend`.** When a workflow uses `core.openwop.mcp.handle-elicitation`, the host MUST bridge inbound `elicitation/create` requests into `ctx.suspend({kind: 'clarification', profile: 'openwop-mcp-elicitation'})`. The MCP client's response maps to the resume payload along the `accept` / `decline` / `cancel` axis required by MCP's flat-schema constraint. Gated on `capabilities.mcp.serverMount.elicitationBridge: true`.
+
+Conformance: `conformance/src/scenarios/mcp-server-sampling-bridge.test.ts` and `mcp-server-elicitation-bridge.test.ts`.
+
+### 4. Trust boundary
+
+All inbound MCP requests cross an `untrusted` trust boundary, regardless of transport. Hosts MUST:
+
+1. Validate every `tools/call.arguments` against the tool's declared `inputSchema` *before* starting the workflow run. Malformed or missing-required-field arguments MUST be rejected as a JSON-RPC error (`-32602 invalid params`) OR as a `CallToolResult { isError: true, content: [...] }` — both shapes are spec-conformant. The reference workflow-engine sample uses `-32602` (envelope-correct for pre-workflow validation).
+2. Normalize and sandbox resource URIs returned by `resources/read` (no path traversal, no schemes outside the advertised allowlist).
+3. Render prompt arguments to text *without* template-evaluation; arguments MUST NOT be `eval`'d or used to construct shell commands.
+4. Propagate `ctx.trustBoundary: 'untrusted'` to every downstream LLM call inside the run. Pack-level UNTRUSTED-marker discipline (per `SECURITY/threat-model-prompt-injection.md` §"UNTRUSTED-marker convention") wraps tool-arg-sourced user content in `<UNTRUSTED>…</UNTRUSTED>` markers when forwarded to `ctx.callAI`.
+
+The existing `prompt-injection-mcp-marker` invariant (`SECURITY/threat-model-prompt-injection.md`) applies symmetrically: outputs from an MCP tool feeding into an LLM downstream remain `untrusted`. The new `mcp-server-untrusted-args` invariant (`SECURITY/invariants.yaml`) verifies argument-schema validation; reference test: `conformance/src/scenarios/mcp-server-untrusted-args.test.ts`.
+
+### 5. Capability advertisement
+
+```json
+{
+  "mcp": {
+    "supported": true,
+    "serverMount": {
+      "supported": true,
+      "transports": ["stdio", "streamable-http"],
+      "samplingBridge": true,
+      "elicitationBridge": true
+    }
+  }
+}
+```
+
+Hosts that don't advertise `serverMount.supported: true` MUST refuse registration of any pack declaring `peerDependencies: { "mcp.serverMount": "supported" }` (e.g., `core.openwop.mcp@1.1.0`'s `server-trigger` + `expose-tool` + `handle-*` nodes) — registration MUST fail with `pack_peer_dependency_missing`.
+
+### 6. Conformance
+
+Six scenarios (all gated on `capabilities.mcp.serverMount.supported`):
+
+- `mcp-server-tool-roundtrip.test.ts` — `tools/list` then `tools/call` against a workflow exposed via `core.openwop.mcp.expose-tool`.
+- `mcp-server-resource-roundtrip.test.ts` — `resources/list` then `resources/read`.
+- `mcp-server-prompt-roundtrip.test.ts` — `prompts/list` then `prompts/get`.
+- `mcp-server-sampling-bridge.test.ts` — inbound `sampling/createMessage` bridges to workflow's `ctx.callAI` (further gated on `samplingBridge: true`).
+- `mcp-server-elicitation-bridge.test.ts` — inbound `elicitation/create` bridges to `ctx.suspend` and the accept / decline / cancel path round-trips (further gated on `elicitationBridge: true`).
+- `mcp-server-untrusted-args.test.ts` — malformed `arguments` rejected per `inputSchema` before any node executes.
+
+13/13 assertions pass against the reference `apps/workflow-engine` host as of 2026-05-17.
+
+---
+
 ## What openwop does NOT specify about MCP
 
 - **Which MCP servers to load.** Host-implementation choice. Some hosts ship a curated set; some allow operator config.

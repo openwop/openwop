@@ -1147,6 +1147,447 @@ The plaintext returned by `ctx.secrets.resolve(...)` is the most sensitive value
 
 ---
 
+## §host.fs
+
+**Capability flag:** `fs.supported: true` *(advertised via top-level `Capabilities.fs`; see [capabilities.md](capabilities.md))*
+
+**Used by:** `core.openwop.files` (read / write / delete / stat / list nodes); transport sub-surfaces (FTP / SFTP / SSH) gate the corresponding `core.openwop.files.transport.*` nodes.
+
+A sandboxed filesystem surface. Every path-bearing call is resolved relative to the host-configured `sandboxRoot`; path-traversal and symlink-escape MUST be rejected.
+
+```typescript
+ctx.fs.read({ path: string }) → Promise<{ bytes: Uint8Array, contentType?: string }>
+ctx.fs.write({ path: string, bytes: Uint8Array, contentType?: string }) → Promise<{ path: string, sizeBytes: number }>
+ctx.fs.delete({ path: string }) → Promise<{ deleted: boolean }>
+ctx.fs.stat({ path: string }) → Promise<{ sizeBytes: number, modifiedAt: string, contentType?: string }>
+ctx.fs.list({ prefix?: string, cursor?: string, limit?: number }) → Promise<{ entries: Array<{ path: string, sizeBytes: number }>, nextCursor?: string }>
+```
+
+**Required methods:** `read`, `write`, `delete`, `stat`, `list`. The `image`, `pdf`, and `transport.{ftp,sftp,ssh}` sub-surfaces are optional and gate the corresponding pack delegates.
+
+**Hard rules:**
+
+| Rule | Detail |
+|---|---|
+| Path resolution | Every `path` MUST be normalized and resolved relative to `sandboxRoot`. Absolute paths outside the root MUST return `path_outside_sandbox`. |
+| Path traversal | Paths containing `..` segments that escape the root MUST return `path_outside_sandbox`. |
+| Symlink escape | Symlinks that resolve outside the sandbox root MUST return `path_outside_sandbox`. The host MUST NOT follow such links partially. |
+| Size enforcement | Writes exceeding `maxFileSizeBytes` MUST return `file_too_large`. Reads of larger files MAY return `file_too_large` rather than streaming. |
+| Permission errors | Permission denial MUST return `fs_permission_denied`, not silently fail or fall through. |
+
+**Capability advertisement shape:**
+
+```json
+{
+  "fs": {
+    "supported": true,
+    "sandboxRoot": "/var/openwop/fs",
+    "maxFileSizeBytes": 104857600,
+    "image": { "supported": true, "formats": ["jpeg","png","webp"] },
+    "pdf":   { "supported": true },
+    "transport": { "ftp": false, "sftp": true, "ssh": false }
+  }
+}
+```
+
+**Failure modes:** `host_capability_missing` · `path_outside_sandbox` · `file_too_large` · `fs_permission_denied` · `file_not_found`.
+
+**SECURITY invariant:** `fs-path-traversal` (`SECURITY/invariants.yaml`) — verified by `conformance/src/scenarios/fs-path-traversal.test.ts`. Source: [RFC 0014](../../RFCS/0014-host-fs-capability.md) §B–C.
+
+---
+
+## §host.kvStorage
+
+**Capability flag:** `kvStorage.supported: true`
+
+**Used by:** `core.openwop.storage` kv-* nodes (get / put / delete / cas / atomic-increment / ttl).
+
+TTL-aware key-value store with atomic primitives. Per-tenant isolation is non-negotiable.
+
+```typescript
+ctx.storage.kv.get({ key: string }) → Promise<{ value?: unknown, expiresAt?: string }>
+ctx.storage.kv.put({ key: string, value: unknown, ttlSeconds?: number }) → Promise<{ ok: true }>
+ctx.storage.kv.delete({ key: string }) → Promise<{ deleted: boolean }>
+ctx.storage.kv.atomicIncrement({ key: string, delta?: number }) → Promise<{ value: number }>
+ctx.storage.kv.compareAndSwap({ key: string, expectedValue: unknown, newValue: unknown }) → Promise<{ swapped: boolean }>
+ctx.storage.kv.list({ prefix?: string, cursor?: string, limit?: number }) → Promise<{ entries: Array<{ key: string }>, nextCursor?: string }>
+```
+
+**Required methods:** `get`, `put`, `delete`, `list`. `atomicIncrement` and `compareAndSwap` are conditionally required when the corresponding capability flag is advertised.
+
+**Hard rules:**
+
+| Rule | Detail |
+|---|---|
+| Cross-tenant isolation | A `get` for tenant A MUST NOT return values written by tenant B, even with identical keys. Same applies to `list` enumeration. Mirrors `agent-memory-cti-1`. |
+| Size limits | Keys exceeding `maxKeyBytes` MUST be rejected; values exceeding `maxValueBytes` MUST be rejected. |
+| TTL drift | Expiry visibility MUST be honored with at most 1-second drift. |
+| Atomic increment | When `atomicIncrement: true` is advertised, increments MUST be atomic across concurrent callers. |
+| Compare-and-swap | When `compareAndSwap: true` is advertised, CAS MUST be atomic (no read-modify-write races). Stale `expectedValue` returns `{swapped: false}` without mutation. |
+
+**Capability advertisement shape:**
+
+```json
+{
+  "kvStorage": {
+    "supported": true,
+    "maxKeyBytes": 256,
+    "maxValueBytes": 1048576,
+    "maxTtlSeconds": 2592000,
+    "atomicIncrement": true,
+    "compareAndSwap": true
+  }
+}
+```
+
+**Failure modes:** `host_capability_missing` · `kv_key_too_large` · `kv_value_too_large` · `kv_ttl_exceeds_max` · `kv_quota_exhausted`.
+
+**SECURITY invariant:** `kv-cross-tenant-isolation` — verified by `conformance/src/scenarios/kv-cross-tenant-isolation.test.ts` + `kv-atomic-increment.test.ts` + `kv-cas.test.ts` + `kv-ttl-expiry.test.ts`. Source: [RFC 0015](../../RFCS/0015-host-kv-storage-capability.md) §B–C.
+
+---
+
+## §host.tableStorage
+
+**Capability flag:** `tableStorage.supported: true`
+
+**Used by:** `core.openwop.storage` table-* nodes (row CRUD + cursor pagination + schema enforcement).
+
+Structured-record store. Sibling of `host.kvStorage` for workflows that need typed columns rather than opaque values. Schema is declared on first insert; subsequent rows MUST conform.
+
+```typescript
+ctx.storage.table.createTable({ name: string, schema: Record<string, 'string'|'number'|'boolean'|'json'> }) → Promise<{ ok: true }>
+ctx.storage.table.insert({ table: string, row: Record<string, unknown> }) → Promise<{ rowId: string }>
+ctx.storage.table.get({ table: string, rowId: string }) → Promise<{ row?: Record<string, unknown> }>
+ctx.storage.table.query({ table: string, filter?: Record<string, unknown>, cursor?: string, limit?: number }) → Promise<{ rows: Array<Record<string, unknown>>, nextCursor?: string }>
+ctx.storage.table.update({ table: string, rowId: string, patch: Record<string, unknown> }) → Promise<{ ok: true }>
+ctx.storage.table.delete({ table: string, rowId: string }) → Promise<{ deleted: boolean }>
+```
+
+**Required methods:** all six.
+
+**Hard rules:**
+
+| Rule | Detail |
+|---|---|
+| Cross-tenant isolation | A `query` for tenant A MUST NOT return rows written by tenant B. Same applies to direct `get` by rowId. Mirrors `kv-cross-tenant-isolation`. |
+| Schema enforcement | Insert / update MUST reject rows whose column types diverge from the declared schema, returning `table_schema_violation`. |
+| Cursor pagination | `query` MUST support cursor-based pagination; `nextCursor` MUST be opaque and stable across calls. |
+| Row count limit | Insert MUST be rejected when `maxRowsPerTable` is reached, returning `table_row_limit_reached`. |
+
+**Capability advertisement shape:**
+
+```json
+{
+  "tableStorage": {
+    "supported": true,
+    "maxRowsPerTable": 1000000,
+    "maxColumnsPerRow": 64,
+    "indexable": true,
+    "fullTextSearch": false
+  }
+}
+```
+
+**Failure modes:** `host_capability_missing` · `table_schema_violation` · `table_row_limit_reached` · `table_not_found`.
+
+**SECURITY invariant:** `table-cross-tenant-isolation` — verified by `conformance/src/scenarios/table-cross-tenant-isolation.test.ts` + `table-cursor-pagination.test.ts` + `table-schema-enforcement.test.ts`. Source: [RFC 0016](../../RFCS/0016-host-table-storage-capability.md) §B–C.
+
+---
+
+## §host.queueBus
+
+**Capability flag:** `queueBus.supported: true`
+
+**Used by:** `core.openwop.messaging` consume / publish / ack / nack / DLQ / stream-subscribe nodes. Sibling of (existing) `host.messaging` — that surface is outbound-egress-only; `host.queueBus` covers full message-queue semantics including delivery acknowledgement and inbound triggers.
+
+```typescript
+ctx.queueBus.publish({ topic: string, payload: unknown, headers?: Record<string,string> }) → Promise<{ messageId: string }>
+ctx.queueBus.consume({ topic: string, consumerGroup?: string, maxMessages?: number }) → Promise<{ messages: Array<{ messageId: string, payload: unknown, deliveryToken: string }> }>
+ctx.queueBus.ack({ deliveryToken: string }) → Promise<{ ok: true }>
+ctx.queueBus.nack({ deliveryToken: string, requeue?: boolean }) → Promise<{ ok: true }>
+ctx.queueBus.deadLetter({ deliveryToken: string, reason: string }) → Promise<{ ok: true }>
+ctx.queueBus.streamSubscribe({ topic: string, fromBeginning?: boolean }) → AsyncIterable<{ messageId: string, payload: unknown }>
+```
+
+**Required methods:** `publish`, `consume`, `ack`, `nack`. `deadLetter` is required when `deadLetterSupported: true` is advertised. `streamSubscribe` is required when `stream.supported: true` is advertised; `fromBeginning: true` is gated on `stream.fromBeginning: true`.
+
+**Hard rules:**
+
+| Rule | Detail |
+|---|---|
+| Cross-tenant isolation | A consumer for tenant A MUST NOT receive messages published by tenant B, even on the same logical topic. |
+| Ack semantics | `ack` MUST remove the message from the queue; `nack` MUST return it for redelivery; `deadLetter` MUST route it to the configured DLQ. |
+| Trigger delivery | When a workflow registers `core.messaging.consume` as a trigger, the host MUST deliver one workflow run per inbound message — no batching, no skipping. |
+| Backend transparency | Hosts MAY back the surface with any advertised backend (`rabbitmq`, `kafka`, `sqs`, etc.); wire shape MUST be backend-invariant. |
+
+**Capability advertisement shape:**
+
+```json
+{
+  "queueBus": {
+    "supported": true,
+    "backends": ["rabbitmq", "sqs", "in-memory"],
+    "deadLetterSupported": true,
+    "stream": { "supported": true, "fromBeginning": true }
+  }
+}
+```
+
+**Failure modes:** `host_capability_missing` · `queue_topic_not_found` · `queue_delivery_token_expired` · `queue_backend_unavailable`.
+
+**SECURITY invariant:** `queue-cross-tenant-isolation` — verified by `conformance/src/scenarios/queue-cross-tenant-isolation.test.ts` + `queue-publish-consume-roundtrip.test.ts` + `queue-ack-nack-dlq.test.ts` + `stream-subscribe-from-beginning.test.ts`. Source: [RFC 0017](../../RFCS/0017-host-queue-bus-capability.md) §B–C.
+
+---
+
+## §host.sql
+
+**Capability flag:** `sql.supported: true`
+
+**Used by:** `core.openwop.db` sql-* nodes. SQL injection prevention is enforced at the host — the pack MUST NOT concatenate user input into SQL.
+
+```typescript
+ctx.db.sql.query({ datasourceId: string, sql: string, params: ReadonlyArray<unknown> }) → Promise<{ rows: Array<Record<string, unknown>>, rowCount: number }>
+ctx.db.sql.execute({ datasourceId: string, sql: string, params: ReadonlyArray<unknown> }) → Promise<{ rowsAffected: number }>
+ctx.db.sql.transaction({ datasourceId: string, operations: Array<{ sql: string, params: ReadonlyArray<unknown> }> }) → Promise<{ committed: boolean }>
+```
+
+**Required methods:** `query`, `execute`. `transaction` is required when `transactions: true` is advertised.
+
+**Hard rules:**
+
+| Rule | Detail |
+|---|---|
+| Parametric-only | `sql` MUST be treated as a parametric template; bound values MUST flow through `params[]`, never via string interpolation. Hosts SHOULD verify parameter binding before execution. |
+| Cross-datasource isolation | Datasources are scoped per tenant; cross-tenant access MUST return `datasource_access_denied`. |
+| Transaction atomicity | When `transactions: true` is advertised, partial failure inside `transaction` MUST roll back the entire batch. |
+| Driver transparency | Hosts MAY back the surface with any advertised driver (`postgres`, `mysql`, `sqlite`, etc.); wire shape MUST be driver-invariant. |
+
+**Capability advertisement shape:**
+
+```json
+{
+  "sql": {
+    "supported": true,
+    "datasources": [{ "id": "primary", "driver": "postgres" }],
+    "transactions": true,
+    "drivers": ["postgres", "sqlite"]
+  }
+}
+```
+
+**Failure modes:** `host_capability_missing` · `sql_non_parametric` · `datasource_not_found` · `datasource_access_denied` · `sql_syntax_error` · `sql_transaction_aborted`.
+
+**SECURITY invariant:** `sql-parametric-only` — verified by `conformance/src/scenarios/sql-injection-rejection.test.ts` + `sql-transaction-atomicity.test.ts`. Source: [RFC 0018](../../RFCS/0018-host-sql-vector-search-capability.md) §B–C.
+
+---
+
+## §host.nosql
+
+**Capability flag:** `nosql.supported: true`
+
+**Used by:** `core.openwop.db` nosql-* nodes (document-store CRUD).
+
+Document-store sibling of `host.sql`. Driver-invariant document API; backends include MongoDB, DynamoDB, CosmosDB, Firestore.
+
+```typescript
+ctx.db.nosql.insert({ datasourceId: string, collection: string, doc: Record<string, unknown> }) → Promise<{ id: string }>
+ctx.db.nosql.get({ datasourceId: string, collection: string, id: string }) → Promise<{ doc?: Record<string, unknown> }>
+ctx.db.nosql.query({ datasourceId: string, collection: string, filter: Record<string, unknown>, cursor?: string, limit?: number }) → Promise<{ docs: Array<Record<string, unknown>>, nextCursor?: string }>
+ctx.db.nosql.update({ datasourceId: string, collection: string, id: string, patch: Record<string, unknown> }) → Promise<{ ok: true }>
+ctx.db.nosql.delete({ datasourceId: string, collection: string, id: string }) → Promise<{ deleted: boolean }>
+```
+
+**Required methods:** `insert`, `get`, `query`, `update`, `delete`.
+
+**Hard rules:**
+
+| Rule | Detail |
+|---|---|
+| Cross-tenant isolation | Datasources are scoped per tenant; cross-tenant access MUST return `datasource_access_denied`. |
+| Filter sanitization | `filter` operators MUST NOT permit injection (e.g., `$where` JavaScript evaluation in MongoDB MUST be rejected unless an explicit allowlist is configured). |
+| Driver transparency | Wire shape MUST be driver-invariant across advertised backends. |
+
+**Capability advertisement shape:**
+
+```json
+{
+  "nosql": {
+    "supported": true,
+    "datasources": [{ "id": "primary", "driver": "mongodb" }],
+    "drivers": ["mongodb", "dynamodb", "cosmosdb", "firestore"]
+  }
+}
+```
+
+**Failure modes:** `host_capability_missing` · `datasource_not_found` · `datasource_access_denied` · `nosql_filter_rejected`.
+
+Source: [RFC 0018](../../RFCS/0018-host-sql-vector-search-capability.md) §A–B.
+
+---
+
+## §host.vectorStore
+
+**Capability flag:** `vectorStore.supported: true`
+
+**Used by:** `core.openwop.rag` vector-* nodes (upsert + KNN query + delete). Required by RAG packs that need similarity search.
+
+```typescript
+ctx.db.vector.upsert({ collection: string, vectors: Array<{ id: string, embedding: ReadonlyArray<number>, metadata?: Record<string, unknown> }> }) → Promise<{ upserted: number }>
+ctx.db.vector.query({ collection: string, embedding: ReadonlyArray<number>, k: number, filter?: Record<string, unknown> }) → Promise<{ matches: Array<{ id: string, score: number, metadata?: Record<string, unknown> }> }>
+ctx.db.vector.delete({ collection: string, ids: ReadonlyArray<string> }) → Promise<{ deleted: number }>
+```
+
+**Required methods:** `upsert`, `query`, `delete`.
+
+**Hard rules:**
+
+| Rule | Detail |
+|---|---|
+| Cross-tenant isolation | A `query` for tenant A MUST NOT return vectors written by tenant B, even within the same collection name. |
+| KNN roundtrip | An `upsert` followed by `query` with the same embedding MUST return the inserted ids in the top-k matches when k ≥ |inserted|. |
+| Backend transparency | Wire shape MUST be backend-invariant across advertised backends (`pinecone`, `qdrant`, `pgvector`, `in-memory`, etc.). |
+
+**Capability advertisement shape:**
+
+```json
+{
+  "vectorStore": {
+    "supported": true,
+    "collections": [{ "name": "documents", "dimensions": 1536 }],
+    "backends": ["pgvector", "in-memory"]
+  }
+}
+```
+
+**Failure modes:** `host_capability_missing` · `vector_collection_not_found` · `vector_dimension_mismatch`.
+
+**Conformance:** `conformance/src/scenarios/vector-knn-roundtrip.test.ts`. Source: [RFC 0018](../../RFCS/0018-host-sql-vector-search-capability.md) §A–B.
+
+---
+
+## §host.searchIndex
+
+**Capability flag:** `searchIndex.supported: true`
+
+**Used by:** `core.openwop.rag` search-* nodes (full-text / BM25 ranking). Sibling of `host.vectorStore` for lexical-rather-than-semantic retrieval.
+
+```typescript
+ctx.db.search.index({ index: string, docs: Array<{ id: string, fields: Record<string, string|number|boolean> }> }) → Promise<{ indexed: number }>
+ctx.db.search.query({ index: string, q: string, k?: number, filter?: Record<string, unknown> }) → Promise<{ hits: Array<{ id: string, score: number, fields?: Record<string, unknown> }> }>
+ctx.db.search.delete({ index: string, ids: ReadonlyArray<string> }) → Promise<{ deleted: number }>
+```
+
+**Required methods:** `index`, `query`, `delete`.
+
+**Hard rules:**
+
+| Rule | Detail |
+|---|---|
+| Cross-tenant isolation | A `query` for tenant A MUST NOT return hits indexed by tenant B. |
+| BM25 roundtrip | An `index` followed by `query` with a substring of an indexed field MUST return the indexed id with score > 0. |
+| Backend transparency | Wire shape MUST be backend-invariant (`elasticsearch`, `opensearch`, `meilisearch`, `typesense`, `algolia`, in-memory linear scan). |
+
+**Capability advertisement shape:**
+
+```json
+{
+  "searchIndex": {
+    "supported": true,
+    "indexes": [{ "name": "docs" }],
+    "backends": ["meilisearch", "in-memory"]
+  }
+}
+```
+
+**Failure modes:** `host_capability_missing` · `search_index_not_found` · `search_query_syntax_error`.
+
+**Conformance:** `conformance/src/scenarios/search-bm25-roundtrip.test.ts`. Source: [RFC 0018](../../RFCS/0018-host-sql-vector-search-capability.md) §A–B.
+
+---
+
+## §host.blobStorage
+
+**Capability flag:** `blobStorage.supported: true`
+
+**Used by:** `core.openwop.storage` blob-* nodes (binary artifact store with presigned URLs). S3 / GCS / Azure Blob equivalent.
+
+```typescript
+ctx.storage.blob.put({ bucket: string, key: string, bytes: Uint8Array, contentType?: string }) → Promise<{ url: string, sizeBytes: number }>
+ctx.storage.blob.get({ bucket: string, key: string }) → Promise<{ bytes: Uint8Array, contentType?: string }>
+ctx.storage.blob.delete({ bucket: string, key: string }) → Promise<{ deleted: boolean }>
+ctx.storage.blob.presign({ bucket: string, key: string, expiresInSeconds: number, method: 'GET'|'PUT' }) → Promise<{ url: string, expiresAt: string }>
+ctx.storage.blob.list({ bucket: string, prefix?: string, cursor?: string }) → Promise<{ entries: Array<{ key: string, sizeBytes: number }>, nextCursor?: string }>
+```
+
+**Required methods:** `put`, `get`, `delete`, `list`. `presign` is required when `presignSupported: true` is advertised.
+
+**Hard rules:**
+
+| Rule | Detail |
+|---|---|
+| Cross-tenant isolation | A `get` for tenant A MUST NOT return blobs written by tenant B, even with identical `bucket`/`key`. |
+| Presigned URL expiry | Presigned URLs MUST expire at the advertised TTL; presigned requests after expiry MUST fail at the storage layer, not after auth-skip. |
+| Object size limit | Writes exceeding `maxObjectBytes` MUST return `blob_object_too_large`. |
+
+**Capability advertisement shape:**
+
+```json
+{
+  "blobStorage": {
+    "supported": true,
+    "buckets": [{ "name": "artifacts", "region": "us-central1" }],
+    "presignSupported": true,
+    "maxObjectBytes": 5368709120
+  }
+}
+```
+
+**Failure modes:** `host_capability_missing` · `blob_bucket_not_found` · `blob_object_not_found` · `blob_object_too_large` · `blob_presign_expired`.
+
+**SECURITY invariant:** `blob-cross-tenant-isolation` — verified by `conformance/src/scenarios/blob-cross-tenant-isolation.test.ts` + `blob-roundtrip.test.ts` + `blob-presign-expiry.test.ts`. Source: [RFC 0019](../../RFCS/0019-host-blob-cache-capability.md) §B–C.
+
+---
+
+## §host.cache
+
+**Capability flag:** `cache.supported: true`
+
+**Used by:** `core.openwop.storage` cache-* nodes (TTL cache for HTTP / AI response memoization). Lets idempotency-key replay deduplicate identical AI calls across runs without engaging the heavier Layer-2 invocation log.
+
+```typescript
+ctx.storage.cache.get({ key: string }) → Promise<{ value?: unknown, expiresAt?: string }>
+ctx.storage.cache.put({ key: string, value: unknown, ttlSeconds: number }) → Promise<{ ok: true }>
+ctx.storage.cache.delete({ key: string }) → Promise<{ deleted: boolean }>
+```
+
+**Required methods:** `get`, `put`, `delete`.
+
+**Hard rules:**
+
+| Rule | Detail |
+|---|---|
+| Cross-tenant isolation | A `get` for tenant A MUST NOT return values written by tenant B, even with identical keys. |
+| TTL drift | Expiry visibility MUST be honored with at most 1-second drift on read. |
+| Value size limit | Writes exceeding `maxValueBytes` MUST return `cache_value_too_large`. |
+
+**Capability advertisement shape:**
+
+```json
+{
+  "cache": {
+    "supported": true,
+    "maxValueBytes": 1048576,
+    "maxTtlSeconds": 86400
+  }
+}
+```
+
+**Failure modes:** `host_capability_missing` · `cache_value_too_large` · `cache_ttl_exceeds_max`.
+
+**SECURITY invariant:** `cache-cross-tenant-isolation` — verified by `conformance/src/scenarios/cache-cross-tenant-isolation.test.ts` + `cache-ttl-expiry.test.ts`. Source: [RFC 0019](../../RFCS/0019-host-blob-cache-capability.md) §B–C.
+
+---
+
 ## Reserved-but-undocumented surfaces
 
 The following `host.*` capability slots are reserved for future surfaces. Hosts MUST NOT advertise them until this spec defines the contract.
