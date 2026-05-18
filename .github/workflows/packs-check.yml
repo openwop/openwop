@@ -1,0 +1,77 @@
+# Pack-catalog audits — runs on PRs and pushes to main that touch in-tree
+# pack content under `packs/`. Distinct from `registry-publish.yml` (which
+# fires on `registry/**` changes for published-artifact deploys) and from
+# `openwop-spec.yml` (which gates the spec corpus + 9-step `openwop:check`).
+#
+# Today this job runs `scripts/check-agent-tool-allowlist.mjs`. It catches
+# drift between agent-pack `toolAllowlist[]` entries and the node-pack
+# typeId catalog as packs version-bump or rename. Wired here rather than
+# into `openwop-check.sh` (the 9-step gate) because that gate is reserved
+# for the spec corpus pass.
+#
+# Future audits over `packs/` are added as additional steps in this job.
+
+name: packs-check
+
+on:
+  pull_request:
+    paths:
+      - 'packs/**'
+      - 'scripts/check-agent-tool-allowlist.mjs'
+      - '.github/workflows/packs-check.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packs/**'
+      - 'scripts/check-agent-tool-allowlist.mjs'
+      - '.github/workflows/packs-check.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    name: Pack-catalog audits
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Agent toolAllowlist resolves to a real node typeId
+        run: node scripts/check-agent-tool-allowlist.mjs
+
+      - name: Every pack-internal schema with $id matches pack-name/version
+        # Schemas WITHOUT $id are treated as partials and skipped (legacy
+        # node-pack schemas predating the convention). Schemas WITH $id MUST
+        # match the registry-canonical form per CONTRIBUTING.md
+        # §"Pack-internal JSON Schemas". This catches drift on schemas the
+        # current batch touched while allowing the legacy partials a separate
+        # cleanup track.
+        run: |
+          node -e "
+            const fs = require('fs');
+            const path = require('path');
+            let problems = 0;
+            const dirs = fs.readdirSync('packs').filter(d => fs.existsSync(path.join('packs', d, 'pack.json')));
+            for (const dir of dirs) {
+              const packJson = JSON.parse(fs.readFileSync(path.join('packs', dir, 'pack.json'), 'utf8'));
+              const version = packJson.version;
+              const schemasDir = path.join('packs', dir, 'schemas');
+              if (!fs.existsSync(schemasDir)) continue;
+              for (const file of fs.readdirSync(schemasDir)) {
+                if (!file.endsWith('.json')) continue;
+                const sch = JSON.parse(fs.readFileSync(path.join(schemasDir, file), 'utf8'));
+                if (!sch['\$id']) continue;
+                const expected = 'https://packs.openwop.dev/' + dir + '/' + version + '/' + file;
+                if (sch['\$id'] !== expected) {
+                  console.error('  drift: ' + dir + '/schemas/' + file + ' \$id=\"' + sch['\$id'] + '\" expected=\"' + expected + '\"');
+                  problems++;
+                }
+              }
+            }
+            if (problems > 0) { console.error('  ' + problems + ' pack-internal schema \$id mismatches.'); process.exit(1); }
+            console.log('  OK — all pack-internal schemas with \$id match <pack>/<version>/.');
+          "
