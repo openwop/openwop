@@ -357,6 +357,11 @@
               "type": "integer",
               "minimum": 0,
               "description": "Effective cap on reasoning trace length when verbosity is `summary`. Default 512 tokens."
+            },
+            "streaming": {
+              "type": "boolean",
+              "default": false,
+              "description": "RFC 0024. When `true`, the host MAY emit `agent.reasoning.delta` events while a reasoning block is still open, in addition to the final `agent.reasoned`. Hosts that omit / `false` this flag emit only the final `agent.reasoned`. Consumers MUST tolerate both modes."
             }
           },
           "additionalProperties": false

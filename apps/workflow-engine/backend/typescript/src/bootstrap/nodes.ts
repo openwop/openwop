@@ -187,11 +187,30 @@ const sampleChatResponderNode: NodeModule = {
         // its reasoning is redacted before the event lands in the log.
         // Per SECURITY/threat-model-secret-leakage.md SR-1.
         const agentId = `${userFacingProvider}-assistant`;
+        // RFC 0024: per-block sequence counter. Resets to 0 on each
+        // closed block so consumers can detect dropped deltas within
+        // a block without needing global cross-block bookkeeping.
+        let reasoningSeq = 0;
+        const onReasoningDelta = verbosity === 'off'
+          ? undefined
+          : async (delta: string): Promise<void> => {
+              await ctx.emit('agent.reasoning.delta', {
+                agentId,
+                delta,
+                sequence: reasoningSeq,
+                verbosity,
+              });
+              reasoningSeq++;
+            };
         const onReasoningBlock = verbosity === 'off'
           ? undefined
           : async (block: string): Promise<void> => {
+              // Closing event carries the full content (truncated under
+              // summary mode). Per RFC 0024, this event is authoritative
+              // even if it disagrees with the concatenation of deltas.
               const reasoning = verbosity === 'summary' ? block.slice(0, 2048) : block;
               await ctx.emit('agent.reasoned', { agentId, reasoning, verbosity });
+              reasoningSeq = 0;
             };
         const managed = await dispatchManagedChat({
           userFacingProvider,
@@ -199,6 +218,7 @@ const sampleChatResponderNode: NodeModule = {
           messages: messages as ChatMessage[],
           maxTokens,
           onDelta,
+          ...(onReasoningDelta ? { onReasoningDelta } : {}),
           ...(onReasoningBlock ? { onReasoningBlock } : {}),
         });
         emitCost({

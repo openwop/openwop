@@ -11,6 +11,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### RFC 0024 (Draft) — Streaming `agent.reasoned` deltas (2026-05-18)
+
+Closes the SOTA-parity gap between `agent.reasoned` (RFC 0002) and the live-reasoning UX shipped by Claude.ai extended thinking and ChatGPT o1. The existing `agent.reasoned` event fires once per closed reasoning block with the full trace, which means users see a "Thinking…" placeholder for tens of seconds and then a wall of text appears all at once. RFC 0024 adds a sibling event type `agent.reasoning.delta` and a capability flag `capabilities.agents.reasoning.streaming` so hosts that support reasoning models (MiniMax-M2.7, DeepSeek-R1, Anthropic extended thinking, OpenAI o1) can stream the trace incrementally — one event per token chunk — while the block is still open. The closing `agent.reasoned` event continues to fire with the complete authoritative content; existing consumers that read only `agent.reasoned` keep working without change.
+
+- **`RFCS/0024-agent-reasoning-streaming.md` (NEW, `Draft`)** — Summary + Motivation + Proposal (with schema diffs) + RFC 2119 normative semantics for emitter / consumer / replay determinism + Compatibility (strictly additive) + Conformance scenarios + 4 alternatives considered (including the rejected schema-overload approach) + 4 unresolved questions + Implementation notes + Acceptance criteria.
+- **`schemas/run-event-payloads.schema.json`** — Adds `agentReasoningDelta` `$def` with required `{agentId, delta, sequence}` + optional `verbosity`. Maps `agent.reasoning.delta` event type to it in the `eventPayloads` discriminator. Variant count bumped 48 → 49.
+- **`schemas/run-event.schema.json`** — Adds `"agent.reasoning.delta"` to the `RunEventType` enum.
+- **`schemas/capabilities.schema.json`** — Adds optional `capabilities.agents.reasoning.streaming: boolean` (default `false`). Hosts that omit it advertise the existing non-streaming contract.
+- **`apps/workflow-engine/backend/typescript/src/bootstrap/nodes.ts`** — Reference impl: chat-responder's managed-provider branch emits incremental `agent.reasoning.delta` events from the `ThinkBlockSplitter`'s `reasoningDelta` callback, with a per-block `sequence` counter that resets at each closed block; the closing `agent.reasoned` carries the authoritative full content.
+- **`apps/workflow-engine/backend/typescript/src/routes/discovery.ts`** — Sample host advertises `capabilities.agents.reasoning.streaming: true` honestly.
+- **`apps/workflow-engine/frontend/react/src/chat/hooks/useChatSession.ts`** — Reference FE: subscribes to both `agent.reasoned` and `agent.reasoning.delta`; deltas append to the in-flight `thoughts.content` buffer; the closing event finalizes it.
+- **Compatibility:** strictly additive per `COMPATIBILITY.md §2.1`. No existing event-payload shape changes; new event type is the new surface; new capability flag defaults to `false`. Old consumers see no change. RFC 0024 opens with the 7-day additive comment window per `RFCS/README.md`.
+
 ### RFC 0013 (Workflow-chain packs) — Status: `Draft` → `Active` (2026-05-18)
 
 Promotes RFC 0013 to `Active` now that the spec/schema/conformance work from Phases 1, 2, and 4 has all merged on `main` (commits `c4ec715`, `664e363`, `87153dc`, `0189d6d`). The 7-day additive-RFC comment window opened on 2026-05-13 and closes on 2026-05-20; no blocking comments landed during the window so the status flip is procedural cleanup rather than a substantive decision. The RFC's PR thread and `RFCS/README.md` "RFC index" were already calling it Active — only the RFC header was stale.

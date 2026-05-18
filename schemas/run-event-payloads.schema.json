@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v1/run-event-payloads.schema.json",
   "title": "RunEventPayloads",
-  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n48 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
+  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n49 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
   "type": "object",
   "$defs": {
     "_typeIndex": {
@@ -49,6 +49,7 @@
         "lease.handed-off":          { "$ref": "#/$defs/leaseHandedOff" },
         "replay.diverged":           { "$ref": "#/$defs/replayDiverged" },
         "agent.reasoned":            { "$ref": "#/$defs/agentReasoned" },
+        "agent.reasoning.delta":     { "$ref": "#/$defs/agentReasoningDelta" },
         "agent.toolCalled":          { "$ref": "#/$defs/agentToolCalled" },
         "agent.toolReturned":        { "$ref": "#/$defs/agentToolReturned" },
         "agent.handoff":             { "$ref": "#/$defs/agentHandoff" },
@@ -560,6 +561,19 @@
         "agentId":   { "type": "string", "minLength": 3, "maxLength": 256, "description": "AgentRef.agentId of the reasoning agent." },
         "reasoning": { "type": "string", "description": "Reasoning text. Bounded by `capabilities.agents.reasoning.tokenLimit` when verbosity is `summary` (default 512 tokens)." },
         "verbosity": { "type": "string", "enum": ["summary", "full", "off"], "description": "Verbosity mode this trace was produced under. Hosts MAY emit `'off'` to record the suppression decision without payload content." }
+      },
+      "additionalProperties": true
+    },
+
+    "agentReasoningDelta": {
+      "type": "object",
+      "description": "RFC 0024. Incremental reasoning chunk for live-streaming UX. Emitted while a reasoning block is still open, BEFORE the corresponding `agent.reasoned` finalization. Consumers concatenate `delta` strings in arrival order to reconstruct the in-progress trace; the closing `agent.reasoned` event carries the FULL authoritative `reasoning`. Gated on `capabilities.agents.reasoning.streaming: true`.",
+      "required": ["agentId", "delta", "sequence"],
+      "properties": {
+        "agentId":   { "type": "string", "minLength": 3, "maxLength": 256, "description": "AgentRef.agentId of the reasoning agent. MUST match the eventual closing `agent.reasoned`." },
+        "delta":     { "type": "string", "description": "New reasoning content since the previous delta event in this block (or since block open, if `sequence` is 0)." },
+        "sequence":  { "type": "integer", "minimum": 0, "description": "Monotonically-increasing index within the current reasoning block. Starts at 0 for the first delta in a block; resets at each new block open. Consumers MAY use this to detect dropped events." },
+        "verbosity": { "type": "string", "enum": ["summary", "full", "off"], "description": "Verbosity mode the host resolved for this block. SHOULD match the verbosity reported on the closing `agent.reasoned`." }
       },
       "additionalProperties": true
     },

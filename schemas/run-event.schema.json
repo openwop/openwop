@@ -102,6 +102,7 @@
         "lease.handed-off",
         "replay.diverged",
         "agent.reasoned",
+        "agent.reasoning.delta",
         "agent.toolCalled",
         "agent.toolReturned",
         "agent.handoff",

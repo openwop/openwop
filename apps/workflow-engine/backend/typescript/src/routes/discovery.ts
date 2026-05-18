@@ -144,13 +144,14 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       // events 0..fromSeq, but doesn't reconstruct the executor's
       // resume position. Honest advertisement: not yet supported.
       replay: { supported: false, fork: false },
-      // Phase 1 of the multi-agent shift. Sample host emits
-      // `agent.reasoned` events from the chat-responder
+      // Phase 1 of the multi-agent shift + RFC 0024 streaming. Sample
+      // host emits both `agent.reasoned` (closing) AND
+      // `agent.reasoning.delta` (streaming) events from the chat-responder
       // (`vendor.openwop-sample.chat-responder`) for managed-provider
-      // turns; per-run override via `RunOptions.configurable.reasoningVerbosity`.
+      // turns. Per-run override via `RunOptions.configurable.reasoningVerbosity`.
       agents: {
         supported: true,
-        reasoning: { verbosity: 'full', tokenLimit: 512 },
+        reasoning: { verbosity: 'full', tokenLimit: 512, streaming: true },
       },
       memory: { supported: false },
       // RFC 0023 §B.2 — capabilities.conformance.mockAgent. Reference
