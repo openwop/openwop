@@ -38,10 +38,11 @@ export function DemoHostBanner() {
   });
   const [inMemoryCount, setInMemoryCount] = useState<number | null>(null);
 
-  // Signed-in users get persistent storage — the demo-host disclosure
-  // doesn't apply to them. Hide the banner entirely.
-  if (user) return null;
-
+  // Probe the host's capability advertisement regardless of sign-in
+  // state so the hook count stays stable across renders (Rules of
+  // Hooks: every hook call MUST run on every render — moving an early
+  // return ABOVE this useEffect would skip it on the signed-in path
+  // and trip React error #300 the next time the user signs in).
   useEffect(() => {
     if (hidden) return;
     let aborted = false;
@@ -60,6 +61,9 @@ export function DemoHostBanner() {
     return () => { aborted = true; };
   }, [hidden]);
 
+  // Signed-in users get persistent storage — the demo-host disclosure
+  // doesn't apply to them. Hide the banner AFTER all hooks have run.
+  if (user) return null;
   if (hidden || inMemoryCount == null || inMemoryCount === 0) return null;
 
   const dismiss = () => {

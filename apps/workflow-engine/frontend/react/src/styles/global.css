@@ -71,6 +71,21 @@ html, body {
   line-height: 1.5;
 }
 
+/* Bare anchors (no className) — default to the accent color so links
+   are readable on both dark + light backgrounds. Component-level
+   anchors (.app-header nav a, .signin-* etc.) override as needed. */
+a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+a:hover {
+  color: var(--color-accent-hover);
+}
+a:visited {
+  color: var(--color-accent);
+}
+
 #root {
   min-height: 100vh;
   display: flex;
