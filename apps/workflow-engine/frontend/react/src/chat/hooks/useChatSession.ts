@@ -174,6 +174,34 @@ export function messageText(m: ChatMessage): string {
   return m.content.filter((p): p is { type: 'text'; text: string } => p.type === 'text').map((p) => p.text).join('');
 }
 
+/** Functional state-update helper for a single message in the session.
+ *  Encapsulates the spread-map-spread dance so callers can express the
+ *  diff in one line ("transform message m"). */
+function updateMessage(
+  setSession: React.Dispatch<React.SetStateAction<ChatSession>>,
+  messageId: string,
+  transform: (m: ChatMessage) => ChatMessage,
+): void {
+  setSession((s) => ({
+    ...s,
+    messages: s.messages.map((m) => (m.id === messageId ? transform(m) : m)),
+  }));
+}
+
+/** Specialization of {@link updateMessage} for the `agentEvents` field.
+ *  Takes a callback that receives the prior agent-event log (with empty
+ *  defaults) and returns the next one. */
+function updateAgentEvents(
+  setSession: React.Dispatch<React.SetStateAction<ChatSession>>,
+  messageId: string,
+  appender: (prev: NonNullable<ChatMessage['agentEvents']>) => NonNullable<ChatMessage['agentEvents']>,
+): void {
+  updateMessage(setSession, messageId, (m) => ({
+    ...m,
+    agentEvents: appender(m.agentEvents ?? { toolCalls: [], handoffs: [], decisions: [] }),
+  }));
+}
+
 export interface ChatSession {
   id: string;
   title: string;
@@ -478,45 +506,29 @@ export function useChatSession(): UseChatSessionResult {
           const verbosity = payload.verbosity as ChatMessageThoughts['verbosity'];
           const agentId = typeof payload.agentId === 'string' ? payload.agentId : undefined;
           const now = new Date().toISOString();
-          setSession((s) => ({
-            ...s,
-            messages: s.messages.map((m) => {
-              if (m.id !== assistantId) return m;
-              const prev = m.thoughts;
-              return {
-                ...m,
-                thoughts: {
-                  content: (prev?.content ?? '') + delta,
-                  startedAt: prev?.startedAt ?? now,
-                  ...(prev?.finishedAt ? { finishedAt: prev.finishedAt } : {}),
-                  ...(prev?.durationMs != null ? { durationMs: prev.durationMs } : {}),
-                  ...(verbosity ? { verbosity } : prev?.verbosity ? { verbosity: prev.verbosity } : {}),
-                  ...(agentId ? { agentId } : prev?.agentId ? { agentId: prev.agentId } : {}),
-                },
-              };
-            }),
-          }));
+          updateMessage(setSession, assistantId, (m) => {
+            const prev = m.thoughts;
+            return {
+              ...m,
+              thoughts: {
+                content: (prev?.content ?? '') + delta,
+                startedAt: prev?.startedAt ?? now,
+                ...(prev?.finishedAt ? { finishedAt: prev.finishedAt } : {}),
+                ...(prev?.durationMs != null ? { durationMs: prev.durationMs } : {}),
+                ...(verbosity ? { verbosity } : prev?.verbosity ? { verbosity: prev.verbosity } : {}),
+                ...(agentId ? { agentId } : prev?.agentId ? { agentId: prev.agentId } : {}),
+              },
+            };
+          });
         } else if (ev.type === 'agent.toolCalled' && typeof payload.callId === 'string' && typeof payload.toolName === 'string') {
           const callId = payload.callId;
           const toolName = payload.toolName;
           const agentIdRaw = typeof payload.agentId === 'string' ? payload.agentId : '';
+          const inputs = payload.inputs;
           const now = new Date().toISOString();
-          setSession((s) => ({
-            ...s,
-            messages: s.messages.map((m) => {
-              if (m.id !== assistantId) return m;
-              const prev = m.agentEvents ?? { toolCalls: [], handoffs: [], decisions: [] };
-              return {
-                ...m,
-                agentEvents: {
-                  ...prev,
-                  toolCalls: [
-                    ...prev.toolCalls,
-                    { callId, toolName, agentId: agentIdRaw, inputs: payload.inputs, startedAt: now },
-                  ],
-                },
-              };
-            }),
+          updateAgentEvents(setSession, assistantId, (prev) => ({
+            ...prev,
+            toolCalls: [...prev.toolCalls, { callId, toolName, agentId: agentIdRaw, inputs, startedAt: now }],
           }));
         } else if (ev.type === 'agent.toolReturned' && typeof payload.callId === 'string') {
           const callId = payload.callId;
@@ -524,68 +536,36 @@ export function useChatSession(): UseChatSessionResult {
           const error = errorPayload && typeof errorPayload === 'object' && 'code' in errorPayload && 'message' in errorPayload
             ? { code: String((errorPayload as Record<string, unknown>).code), message: String((errorPayload as Record<string, unknown>).message) }
             : undefined;
+          const outcome = payload.outcome;
           const now = new Date().toISOString();
-          setSession((s) => ({
-            ...s,
-            messages: s.messages.map((m) => {
-              if (m.id !== assistantId) return m;
-              const prev = m.agentEvents;
-              if (!prev) return m;
-              return {
-                ...m,
-                agentEvents: {
-                  ...prev,
-                  toolCalls: prev.toolCalls.map((tc) =>
-                    tc.callId === callId
-                      ? { ...tc, finishedAt: now, outcome: payload.outcome, ...(error ? { error } : {}) }
-                      : tc,
-                  ),
-                },
-              };
-            }),
+          updateAgentEvents(setSession, assistantId, (prev) => ({
+            ...prev,
+            toolCalls: prev.toolCalls.map((tc) =>
+              tc.callId === callId
+                ? { ...tc, finishedAt: now, outcome, ...(error ? { error } : {}) }
+                : tc,
+            ),
           }));
         } else if (ev.type === 'agent.handoff' && typeof payload.fromAgentId === 'string' && typeof payload.toAgentId === 'string') {
           const fromAgentId = payload.fromAgentId;
           const toAgentId = payload.toAgentId;
           const reason = typeof payload.reason === 'string' ? payload.reason : undefined;
           const now = new Date().toISOString();
-          setSession((s) => ({
-            ...s,
-            messages: s.messages.map((m) => {
-              if (m.id !== assistantId) return m;
-              const prev = m.agentEvents ?? { toolCalls: [], handoffs: [], decisions: [] };
-              return {
-                ...m,
-                agentEvents: {
-                  ...prev,
-                  handoffs: [
-                    ...prev.handoffs,
-                    { fromAgentId, toAgentId, at: now, ...(reason ? { reason } : {}) },
-                  ],
-                },
-              };
-            }),
+          updateAgentEvents(setSession, assistantId, (prev) => ({
+            ...prev,
+            handoffs: [...prev.handoffs, { fromAgentId, toAgentId, at: now, ...(reason ? { reason } : {}) }],
           }));
         } else if (ev.type === 'agent.decided' && typeof payload.agentId === 'string') {
           const agentIdRaw = payload.agentId;
           const confidence = typeof payload.confidence === 'number' ? payload.confidence : undefined;
+          const decision = payload.decision;
           const now = new Date().toISOString();
-          setSession((s) => ({
-            ...s,
-            messages: s.messages.map((m) => {
-              if (m.id !== assistantId) return m;
-              const prev = m.agentEvents ?? { toolCalls: [], handoffs: [], decisions: [] };
-              return {
-                ...m,
-                agentEvents: {
-                  ...prev,
-                  decisions: [
-                    ...prev.decisions,
-                    { agentId: agentIdRaw, decision: payload.decision, at: now, ...(confidence != null ? { confidence } : {}) },
-                  ],
-                },
-              };
-            }),
+          updateAgentEvents(setSession, assistantId, (prev) => ({
+            ...prev,
+            decisions: [
+              ...prev.decisions,
+              { agentId: agentIdRaw, decision, at: now, ...(confidence != null ? { confidence } : {}) },
+            ],
           }));
         } else if (ev.type === 'agent.reasoned' && typeof payload.reasoning === 'string') {
           // Phase 1 path: full block delivered in one event after
@@ -595,26 +575,21 @@ export function useChatSession(): UseChatSessionResult {
           const verbosity = payload.verbosity as ChatMessageThoughts['verbosity'];
           const agentId = typeof payload.agentId === 'string' ? payload.agentId : undefined;
           const now = new Date().toISOString();
-          setSession((s) => ({
-            ...s,
-            messages: s.messages.map((m) => {
-              if (m.id !== assistantId) return m;
-              const prev = m.thoughts;
-              const startedAt = prev?.startedAt ?? now;
-              const durationMs = Date.parse(now) - Date.parse(startedAt);
-              return {
-                ...m,
-                thoughts: {
-                  content: reasoning,
-                  startedAt,
-                  finishedAt: now,
-                  durationMs: Number.isFinite(durationMs) ? durationMs : 0,
-                  ...(verbosity ? { verbosity } : {}),
-                  ...(agentId ? { agentId } : {}),
-                },
-              };
-            }),
-          }));
+          updateMessage(setSession, assistantId, (m) => {
+            const startedAt = m.thoughts?.startedAt ?? now;
+            const durationMs = Date.parse(now) - Date.parse(startedAt);
+            return {
+              ...m,
+              thoughts: {
+                content: reasoning,
+                startedAt,
+                finishedAt: now,
+                durationMs: Number.isFinite(durationMs) ? durationMs : 0,
+                ...(verbosity ? { verbosity } : {}),
+                ...(agentId ? { agentId } : {}),
+              },
+            };
+          });
         } else if (ev.type === 'node.completed') {
           // Flush any buffered animation tail so the bubble has the
           // full streamed content before we overwrite with the final
