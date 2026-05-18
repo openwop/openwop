@@ -90,6 +90,24 @@
       ]
     },
     {
+      "bom-ref": "pkg:openwop/core.openwop.agents@1.0.1",
+      "type": "library",
+      "name": "core.openwop.agents",
+      "version": "1.0.1",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.agents/-/1.0.1.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "76cd9f504bf81c3d10e7976fa271f6418de3e534f702100c487f557b2ab6c7a4"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "bom-ref": "pkg:openwop/core.openwop.ai@1.0.0",
       "type": "library",
       "name": "core.openwop.ai",

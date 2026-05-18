@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents/1.0.0/tool-workflow.config.json",
+  "title": "ToolWorkflowConfig",
+  "type": "object",
+  "required": [
+    "name",
+    "workflowRef"
+  ],
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "workflowRef": {
+      "type": "string"
+    },
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
