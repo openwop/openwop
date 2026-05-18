@@ -191,21 +191,20 @@
             {
               "key": "Cache-Control",
               "value": "public, max-age=31536000, immutable"
+            },
+            {
+              "key": "Cross-Origin-Opener-Policy",
+              "value": "same-origin-allow-popups"
             }
           ]
         },
         {
-          "source": "/index.html",
+          "source": "**/!(*.@(js|css|svg|png|jpg|jpeg|webp|avif|ico|woff|woff2|map))",
           "headers": [
             {
               "key": "Cache-Control",
               "value": "no-cache, no-store, must-revalidate"
-            }
-          ]
-        },
-        {
-          "source": "**",
-          "headers": [
+            },
             {
               "key": "Cross-Origin-Opener-Policy",
               "value": "same-origin-allow-popups"

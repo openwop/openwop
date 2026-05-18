@@ -229,6 +229,9 @@ export async function signInWithGoogle(): Promise<void> {
   const a = ensureInit();
   if (!a) throw new Error('Firebase Auth not configured');
   setAttemptedProvider('google.com');
+  console.info('openwop.auth: signInWithRedirect → google.com', {
+    sessionId: sessionStorage.getItem(ATTEMPTED_PROVIDER_KEY),
+  });
   await signInWithRedirect(a, new GoogleAuthProvider());
 }
 
@@ -237,6 +240,9 @@ export async function signInWithGithub(): Promise<void> {
   const a = ensureInit();
   if (!a) throw new Error('Firebase Auth not configured');
   setAttemptedProvider('github.com');
+  console.info('openwop.auth: signInWithRedirect → github.com', {
+    sessionId: sessionStorage.getItem(ATTEMPTED_PROVIDER_KEY),
+  });
   await signInWithRedirect(a, new GithubAuthProvider());
 }
 
@@ -287,10 +293,33 @@ export function getRedirectState(): Promise<RedirectState> {
  */
 export async function processRedirectResult(): Promise<RedirectState> {
   const a = ensureInit();
-  if (!a) return { kind: 'none' };
+  if (!a) {
+    console.info('openwop.auth: redirect — firebase not configured');
+    return { kind: 'none' };
+  }
   const attemptedProvider = consumeAttemptedProvider();
+  console.info('openwop.auth: redirect — processing', {
+    attemptedProvider,
+    currentUserBefore: a.currentUser?.email ?? null,
+  });
   try {
     const result = await getRedirectResult(a);
+    console.info('openwop.auth: getRedirectResult', {
+      hasResult: !!result,
+      uid: result?.user?.uid,
+      email: result?.user?.email,
+      providerId: result?.providerId,
+      currentUserAfter: a.currentUser?.email ?? null,
+    });
+    // If getRedirectResult returned null BUT we were expecting a
+    // redirect AND auth.currentUser is set, Firebase already processed
+    // the sign-in on a prior load — treat it as success so the migrate
+    // hook still fires. This covers the "user opened DevTools mid-
+    // redirect" / strict-mode-replay corner case.
+    if (!result && attemptedProvider && a.currentUser) {
+      console.info('openwop.auth: redirect — recovering from pre-processed sign-in');
+      return { kind: 'success', linked: false };
+    }
     if (!result) return { kind: 'none' };
     // Successfully signed in via redirect. If there's a pending
     // credential stash from the previous (rejected) redirect, link
@@ -302,11 +331,12 @@ export async function processRedirectResult(): Promise<RedirectState> {
         await linkWithCredential(result.user, pending.cred);
         linked = true;
       } catch (err) {
-        console.warn('openwop: provider linking failed', err);
+        console.warn('openwop.auth: provider linking failed', err);
       }
     }
     return { kind: 'success', linked };
   } catch (err) {
+    console.warn('openwop.auth: getRedirectResult threw', err);
     type FbError = { code?: string; customData?: { email?: string } };
     const e = err as FbError;
     if (e.code === 'auth/account-exists-with-different-credential' && e.customData?.email && attemptedProvider) {
