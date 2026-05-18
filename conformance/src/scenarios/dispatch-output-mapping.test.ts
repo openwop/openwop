@@ -8,12 +8,19 @@
  * Failed / cancelled children MUST skip the mapping; the parent's variable
  * stays at its pre-dispatch state for that child.
  *
+ * Host status (2026-05-18): Postgres reference host implements §A
+ * runtime end-to-end — see `examples/hosts/postgres/src/server.ts`
+ * `core.dispatch` block (effectiveOutputMapping projection + skip-on-
+ * failed-or-cancelled guard). Awaiting supervisor-mock extension to
+ * drive the dispatch decisions per-fixture (same blocker as HVMAP-1a).
+ *
  * Capability-gated: skips when host doesn't advertise
  * `capabilities.agents.dispatchMapping: true`. Fixture-gated: requires
  * `conformance-dispatch-output-mapping`.
  *
  * @see RFCS/0022-dispatch-input-output-mapping.md §A
  * @see schemas/dispatch-config.schema.json #/properties/outputMapping
+ * @see examples/hosts/postgres/src/server.ts (core.dispatch executor)
  */
 
 import { describe, it } from 'vitest';

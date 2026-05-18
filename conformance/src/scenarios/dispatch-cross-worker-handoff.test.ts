@@ -15,6 +15,15 @@
  *
  * @see RFCS/0022-dispatch-input-output-mapping.md §A + §D
  * @see schemas/dispatch-config.schema.json #/properties/perWorker*
+ *
+ * Host status (2026-05-18): Postgres reference host implements §A + §D
+ * runtime end-to-end. The `core.dispatch` executor in
+ * `examples/hosts/postgres/src/server.ts` loops over `nextWorkerIds[]`
+ * sequentially, harvesting each child's outputMapping into the shared
+ * parent variable bag before the next sibling's inputMapping reads it.
+ * The cross-worker-handoff property is therefore wired; the remaining
+ * gap is the supervisor-mock extension that drives multi-worker
+ * decisions per fixture (same blocker as HVMAP-1a / 1b).
  */
 
 import { describe, it } from 'vitest';

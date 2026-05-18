@@ -290,6 +290,8 @@ Use a single `capabilities.workflowInvocation.runtimeMapping: true` that gates b
 
 5. **Mid-run `inputMapping` updates for `core.subWorkflow`.** The seeding fold is one-shot at child run-create time. Should mid-run parent-variable changes propagate to the child? Recommend NO — `core.subWorkflow` is synchronous-completion-based; the child is short-lived enough that mid-run propagation adds complexity without clear demand. Flagged for v1.3 reconsideration.
 
+6. **Supervisor-mock extension for dispatch-trio conformance scenarios.** Added 2026-05-18 alongside the Postgres reference impl. HVMAP-1a / HVMAP-1b / HVMAP-1c require the conformance harness to drive specific `OrchestratorDecision` sequences per fixture (different `nextWorkerIds[]` shapes, different fan-out depths). The existing `core.orchestrator.supervisor` reference implementation emits a single hard-coded `next-worker: ['conformance-noop']` decision — fine for the original RFC 0007 dispatch-loop test, insufficient for these. Two candidate mechanisms: (a) add `node.config.mockDispatchPlan: OrchestratorDecision[]` to the supervisor block in `examples/hosts/postgres/src/server.ts` so fixtures can drive the decision script via per-node config; (b) wire the RFC 0023 `core.conformance.mock-agent` typeId to the supervisor side of the dispatch chain. Neither blocks the host's RFC 0022 wire-surface implementation (which IS complete); both are conformance-harness infrastructure. Promotion of RFC 0022 to `Accepted` is gated on whichever path lands.
+
 ## Implementation notes (non-normative)
 
 Migration cost (reference impl):
@@ -308,14 +310,16 @@ Downstream adoption (`vendor.myndhyve.launchStudioSupervisor`): the adaptive roo
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (this file).
-- [ ] `schemas/dispatch-config.schema.json` updated with the four new fields.
-- [ ] `schemas/capabilities.schema.json` updated with `agents.dispatchMapping` AND `subWorkflow.inputMapping`.
-- [ ] `spec/v1/node-packs.md` §"`core.subWorkflow` contract" updated with the new `inputMapping` field + normative bullet.
-- [ ] `RFCS/0007-dispatch.md` references this RFC in a "See also" or amendment note.
-- [ ] Four new conformance scenarios + four fixtures land in `conformance/`.
-- [ ] At least one reference host implements + passes the new scenarios; INTEROP-MATRIX row reflects the new capability advertisements.
-- [ ] CHANGELOG entry under `[Unreleased]`.
+- [x] Spec text merged (this file). (2026-05-18, cf7df05)
+- [x] `schemas/dispatch-config.schema.json` updated with the four new fields. (2026-05-18, cf7df05)
+- [x] `schemas/capabilities.schema.json` updated with `agents.dispatchMapping` AND `subWorkflow.inputMapping`. (2026-05-18, cf7df05)
+- [x] `spec/v1/node-packs.md` §"`core.subWorkflow` contract" updated with the new `inputMapping` field + normative bullet. (2026-05-18, cf7df05)
+- [x] `RFCS/0007-dispatch.md` references this RFC in a "See also" or amendment note. (2026-05-18, 02a84e1)
+- [x] Four new conformance scenarios + four fixtures land in `conformance/`. (2026-05-18 — HVMAP-2 graduated to a live behavioral test against the Postgres reference host; HVMAP-1a/1b/1c stay `it.todo()` pending the supervisor-mock extension flagged in §"Unresolved questions" #6)
+- [x] At least one reference host implements + passes the new scenarios; INTEROP-MATRIX row reflects the new capability advertisements. (2026-05-18 — Postgres reference host advertises `capabilities.agents.dispatchMapping: true` + `capabilities.subWorkflow.inputMapping: true`; `dispatch.node` executor + `subWorkflow.node` executor wired per §A + §B; HVMAP-2 passes end-to-end; HVMAP-1a/1b/1c gated on the supervisor-mock extension, not on host capability)
+- [x] CHANGELOG entry under `[Unreleased]`. (2026-05-18, this commit)
+
+Promotion to `Accepted` is gated on HVMAP-1a/1b/1c graduating to live behavioral tests against the reference host — see §"Unresolved questions" #6. Until then, RFC 0022 stays at `Active` (the wire surface is locked + the host implements it, but the conformance evidence for the dispatch trio is incomplete).
 
 ## References
 

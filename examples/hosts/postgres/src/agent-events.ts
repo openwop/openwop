@@ -172,7 +172,22 @@ export const REFERENCE_AGENTS_CAPABILITY = {
   memoryBackends: ['long-term'] as const,
   orchestrator: true,
   dispatch: true,
+  // RFC 0022 §A — host honors inputMapping / outputMapping /
+  // perWorkerInputMappings / perWorkerOutputMappings on DispatchConfig.
+  dispatchMapping: true,
   reasoning: { verbosity: 'summary' as const, tokenLimit: 512 },
+} as const;
+
+/**
+ * RFC 0022 §B — `capabilities.subWorkflow` advertisement. The baseline
+ * `core.subWorkflow` contract is unconditional; this top-level block
+ * carries the additive RFC 0022 extension flags.
+ */
+export const REFERENCE_SUBWORKFLOW_CAPABILITY = {
+  // RFC 0022 §B — host honors `inputMapping` on `core.subWorkflow` and
+  // seeds child variables from parent-variable projections after the
+  // `defaultValue` fold.
+  inputMapping: true,
 } as const;
 
 /**

@@ -112,6 +112,7 @@ import {
 } from './memory-adapter.js';
 import {
   REFERENCE_AGENTS_CAPABILITY,
+  REFERENCE_SUBWORKFLOW_CAPABILITY,
   REFERENCE_CONFORMANCE_CAPABILITY,
   buildAgentReasonedPayload,
   resolveReasoningVerbosity,
@@ -1560,9 +1561,18 @@ async function executeNode(
 
       if (kind === 'next-worker') {
         // RFC 0007 §D `next-worker`: dispatch a child run via the
-        // existing core.subWorkflow machinery for nextWorkerIds[0].
-        // After child terminal, route back to the orchestrator via
-        // DAG loopback.
+        // existing core.subWorkflow machinery for each nextWorkerIds[i]
+        // sequentially (RFC 0007 §D `fanOutPolicy: 'sequential'`).
+        // After all children terminate, route back to the orchestrator
+        // via DAG loopback.
+        //
+        // RFC 0022 §A — when the dispatch node's config carries
+        // inputMapping / outputMapping / perWorker{Input,Output}Mappings,
+        // the host MUST (1) project parent variables into child inputs
+        // before invocation, and (2) harvest child variables back into
+        // parent variables on terminal `completed`. The same in-loop
+        // parent variable bag is the handoff channel between sibling
+        // children under sequential fan-out (RFC 0022 §D).
         const nextWorkerIds = Array.isArray(payload?.decision?.nextWorkerIds)
           ? (payload!.decision!.nextWorkerIds as string[])
           : [];
@@ -1573,102 +1583,179 @@ async function executeNode(
           endNodeSpan(runId, node.id, 'failed');
           return 'failed';
         }
-        const childWorkflowId = nextWorkerIds[0]!;
-        if (!workflows.has(childWorkflowId)) {
-          const err = {
-            code: 'unknown_child_workflow',
-            message: `core.dispatch (node "${node.id}") next-worker references unknown workflowId "${childWorkflowId}".`,
-          };
-          await appendEvent(runId, 'node.failed', { nodeId: node.id, causationId: decisionEventId, data: err });
-          runFailureErrors.set(runId, err);
-          endNodeSpan(runId, node.id, 'failed');
-          return 'failed';
-        }
-        // Idempotent reuse + create.
-        const existingRes = await q.query<{ run_id: string }>(
-          'SELECT run_id FROM runs WHERE parent_run_id = $1 AND parent_node_id = $2',
-          [runId, node.id],
-        );
-        let childRunId = existingRes.rows[0]?.run_id;
-        if (!childRunId) {
-          childRunId = `run-${randomUUID()}`;
-          const childStartedAt = new Date().toISOString();
-          await q.query(
-            `INSERT INTO runs (run_id, workflow_id, status, inputs_json, started_at, parent_run_id, parent_node_id, variables_json)
-             VALUES ($1, $2, 'pending', '{}'::JSONB, $3, $4, $5, $6)`,
-            [childRunId, childWorkflowId, childStartedAt, runId, node.id,
-              JSON.stringify(seedVariablesFromWorkflow(childWorkflowId))],
-          );
-          await appendEvent(runId, 'node.dispatched', {
-            nodeId: node.id,
-            causationId: decisionEventId,
-            data: { childRunId, childWorkflowId },
-          });
-          const innerChildRunId = childRunId;
-          void runWorkflow(innerChildRunId).catch(async (err: unknown) => {
-            const message = err instanceof Error ? err.message : String(err);
-            await appendEvent(innerChildRunId, 'run.failed', { data: { code: 'internal', message } });
-            await setRunTerminal(innerChildRunId, 'failed', { code: 'internal', message });
-          });
-        }
-        // Poll for child terminal.
-        while (true) {
-          const refreshedParent = await loadRun(runId);
-          if (refreshedParent?.status === 'cancelling') {
-            await cancelRunInternal(childRunId, 'parent-cancelled');
-            await appendEvent(runId, 'node.cancelled', { nodeId: node.id, causationId: decisionEventId });
-            endNodeSpan(runId, node.id, 'cancelled');
-            return 'cancelled';
-          }
-          const child = await loadRun(childRunId);
-          if (!child) {
-            const err = { code: 'child_missing', message: `core.dispatch child run "${childRunId}" disappeared.` };
+        // RFC 0022 §A — read mapping fields off the dispatch node's
+        // config. All four are optional; absent ones default to {}.
+        const dispatchConfig = (node.config ?? {}) as {
+          inputMapping?: Record<string, string>;
+          outputMapping?: Record<string, string>;
+          perWorkerInputMappings?: Record<string, Record<string, string>>;
+          perWorkerOutputMappings?: Record<string, Record<string, string>>;
+        };
+        let lastChildRunId: string | null = null;
+        let lastChildStatus: 'completed' | 'failed' | 'cancelled' | null = null;
+        for (let workerIdx = 0; workerIdx < nextWorkerIds.length; workerIdx++) {
+          const childWorkflowId = nextWorkerIds[workerIdx]!;
+          if (!workflows.has(childWorkflowId)) {
+            const err = {
+              code: 'unknown_child_workflow',
+              message: `core.dispatch (node "${node.id}") next-worker references unknown workflowId "${childWorkflowId}".`,
+            };
             await appendEvent(runId, 'node.failed', { nodeId: node.id, causationId: decisionEventId, data: err });
             runFailureErrors.set(runId, err);
             endNodeSpan(runId, node.id, 'failed');
             return 'failed';
           }
-          if (child.status === 'completed' || child.status === 'failed' || child.status === 'cancelled') {
-            const childStatus = child.status as 'completed' | 'failed' | 'cancelled';
-            if (childStatus === 'completed') {
-              await appendEvent(runId, 'node.completed', {
-                nodeId: node.id,
-                causationId: decisionEventId,
-                data: { outputs: { childRunId, childStatus } },
-              });
-              endNodeSpan(runId, node.id, 'completed');
-              // DAG cycle back to orchestrator-supervisor.
-              const wfRow = await loadRun(runId);
-              const workflow = wfRow ? workflows.get(wfRow.workflow_id) : null;
-              const supervisorIdx = workflow
-                ? workflow.nodes.findIndex((n) => n.typeId === 'core.orchestrator.supervisor')
-                : -1;
-              if (supervisorIdx >= 0) {
-                loopbackTargets.set(runId, supervisorIdx);
-                return 'loopback';
-              }
-              await q.query("UPDATE runs SET status = 'running' WHERE run_id = $1", [runId]);
-              return 'completed';
+          // RFC 0022 §A — compute the effective input mapping for this
+          // worker. perWorker overrides take precedence over the
+          // dispatch-level default.
+          const effectiveInputMapping =
+            dispatchConfig.perWorkerInputMappings?.[childWorkflowId] ??
+            dispatchConfig.inputMapping ??
+            {};
+          // Project parent variables → child inputs. Unset parent vars
+          // surface as `undefined` on the child input per RFC 0022 §A
+          // normative bullet (not omitted, not `null`).
+          const parentVarsRes = await q.query<{ variables_json: Record<string, unknown> | null }>(
+            'SELECT variables_json FROM runs WHERE run_id = $1',
+            [runId],
+          );
+          const parentVars = (parentVarsRes.rows[0]?.variables_json ?? {}) as Record<string, unknown>;
+          const childInputs: Record<string, unknown> = {};
+          for (const [childKey, parentKey] of Object.entries(effectiveInputMapping)) {
+            if (typeof parentKey !== 'string') continue;
+            childInputs[childKey] = parentVars[parentKey];
+          }
+          // Idempotent reuse + create. For multi-worker fan-out, each
+          // child gets a distinct (parent_run, parent_node, workerIdx)
+          // tuple — the per-node existing-child lookup matches the
+          // first child only, so subsequent siblings always create new.
+          const childParentNodeId = workerIdx === 0 ? node.id : `${node.id}#${workerIdx}`;
+          const existingRes = await q.query<{ run_id: string }>(
+            'SELECT run_id FROM runs WHERE parent_run_id = $1 AND parent_node_id = $2',
+            [runId, childParentNodeId],
+          );
+          let childRunId = existingRes.rows[0]?.run_id;
+          if (!childRunId) {
+            childRunId = `run-${randomUUID()}`;
+            const childStartedAt = new Date().toISOString();
+            await q.query(
+              `INSERT INTO runs (run_id, workflow_id, status, inputs_json, started_at, parent_run_id, parent_node_id, variables_json)
+               VALUES ($1, $2, 'pending', $7::JSONB, $3, $4, $5, $6)`,
+              [childRunId, childWorkflowId, childStartedAt, runId, childParentNodeId,
+                JSON.stringify(seedVariablesFromWorkflow(childWorkflowId)),
+                JSON.stringify(childInputs)],
+            );
+            await appendEvent(runId, 'node.dispatched', {
+              nodeId: node.id,
+              causationId: decisionEventId,
+              data: { childRunId, childWorkflowId },
+            });
+            const innerChildRunId = childRunId;
+            void runWorkflow(innerChildRunId).catch(async (err: unknown) => {
+              const message = err instanceof Error ? err.message : String(err);
+              await appendEvent(innerChildRunId, 'run.failed', { data: { code: 'internal', message } });
+              await setRunTerminal(innerChildRunId, 'failed', { code: 'internal', message });
+            });
+          }
+          // Poll for THIS child's terminal status before advancing to
+          // the next sibling (sequential fan-out per RFC 0007 §D).
+          let childTerminal: 'completed' | 'failed' | 'cancelled' | null = null;
+          while (true) {
+            const refreshedParent = await loadRun(runId);
+            if (refreshedParent?.status === 'cancelling') {
+              await cancelRunInternal(childRunId, 'parent-cancelled');
+              await appendEvent(runId, 'node.cancelled', { nodeId: node.id, causationId: decisionEventId });
+              endNodeSpan(runId, node.id, 'cancelled');
+              return 'cancelled';
             }
+            const child = await loadRun(childRunId);
+            if (!child) {
+              const err = { code: 'child_missing', message: `core.dispatch child run "${childRunId}" disappeared.` };
+              await appendEvent(runId, 'node.failed', { nodeId: node.id, causationId: decisionEventId, data: err });
+              runFailureErrors.set(runId, err);
+              endNodeSpan(runId, node.id, 'failed');
+              return 'failed';
+            }
+            if (child.status === 'completed' || child.status === 'failed' || child.status === 'cancelled') {
+              childTerminal = child.status as 'completed' | 'failed' | 'cancelled';
+              break;
+            }
+            try {
+              await sleep(50, signal);
+            } catch {
+              // signal aborted; loop top will see cancelling.
+            }
+          }
+          lastChildRunId = childRunId;
+          lastChildStatus = childTerminal;
+          if (childTerminal !== 'completed') {
+            // RFC 0022 §A — failed / cancelled children MUST skip
+            // outputMapping; parent variables stay at pre-dispatch
+            // state for that worker.
             const err = {
               code: 'child_failed',
-              message: `core.dispatch child run "${childRunId}" terminated '${childStatus}'.`,
+              message: `core.dispatch child run "${childRunId}" terminated '${childTerminal}'.`,
             };
             await appendEvent(runId, 'node.failed', {
               nodeId: node.id,
               causationId: decisionEventId,
-              data: { ...err, outputs: { childRunId, childStatus } },
+              data: { ...err, outputs: { childRunId, childStatus: childTerminal } },
             });
             runFailureErrors.set(runId, err);
             endNodeSpan(runId, node.id, 'failed');
             return 'failed';
           }
-          try {
-            await sleep(50, signal);
-          } catch {
-            // signal aborted; loop top will see cancelling.
+          // RFC 0022 §A — harvest child variables into parent
+          // variables via the effective output mapping. Visible to
+          // the next sibling's inputMapping (RFC 0022 §D — sequential
+          // fan-out shares the parent variable bag).
+          const effectiveOutputMapping =
+            dispatchConfig.perWorkerOutputMappings?.[childWorkflowId] ??
+            dispatchConfig.outputMapping ??
+            {};
+          if (Object.keys(effectiveOutputMapping).length > 0) {
+            const childVarsRes = await q.query<{ variables_json: Record<string, unknown> | null }>(
+              'SELECT variables_json FROM runs WHERE run_id = $1',
+              [childRunId],
+            );
+            const childVars = (childVarsRes.rows[0]?.variables_json ?? {}) as Record<string, unknown>;
+            const parentVarsRowRes = await q.query<{ variables_json: Record<string, unknown> | null }>(
+              'SELECT variables_json FROM runs WHERE run_id = $1',
+              [runId],
+            );
+            const parentVarsRow = {
+              ...((parentVarsRowRes.rows[0]?.variables_json ?? {}) as Record<string, unknown>),
+            };
+            for (const [parentKey, childKey] of Object.entries(effectiveOutputMapping)) {
+              if (typeof childKey !== 'string') continue;
+              parentVarsRow[parentKey] = childVars[childKey];
+            }
+            await q.query('UPDATE runs SET variables_json = $1 WHERE run_id = $2', [
+              JSON.stringify(parentVarsRow),
+              runId,
+            ]);
           }
         }
+        // All workers completed. RFC 0007 §D contract — emit
+        // node.completed with the LAST child's (childRunId, childStatus).
+        await appendEvent(runId, 'node.completed', {
+          nodeId: node.id,
+          causationId: decisionEventId,
+          data: { outputs: { childRunId: lastChildRunId, childStatus: lastChildStatus } },
+        });
+        endNodeSpan(runId, node.id, 'completed');
+        // DAG cycle back to orchestrator-supervisor.
+        const wfRow = await loadRun(runId);
+        const workflow = wfRow ? workflows.get(wfRow.workflow_id) : null;
+        const supervisorIdx = workflow
+          ? workflow.nodes.findIndex((n) => n.typeId === 'core.orchestrator.supervisor')
+          : -1;
+        if (supervisorIdx >= 0) {
+          loopbackTargets.set(runId, supervisorIdx);
+          return 'loopback';
+        }
+        await q.query("UPDATE runs SET status = 'running' WHERE run_id = $1", [runId]);
+        return 'completed';
       }
 
       // Unsupported decision kind (ask-user deferred — Postgres host
@@ -1724,9 +1811,13 @@ async function executeNode(
       // node-packs.md §"core.subWorkflow contract" (Phase A.4). Output
       // shape: `data.outputs.{childRunId, childStatus}`. outputMapping
       // copies named child variables → parent vars on child terminal.
+      // RFC 0022 §B — inputMapping seeds the child workflow's initial
+      // variable bag from parent-variable projections, overriding any
+      // matching `variables[].defaultValue` declaration on the child.
       const config = (node.config ?? {}) as {
         workflowId?: string;
         propagateCancellation?: boolean;
+        inputMapping?: Record<string, string>;
         outputMapping?: Record<string, string>;
         onChildFailure?: 'fail-parent' | 'absorb';
       };
@@ -1752,11 +1843,28 @@ async function executeNode(
       if (!childRunId) {
         childRunId = `run-${randomUUID()}`;
         const childStartedAt = new Date().toISOString();
+        // RFC 0022 §B — two-pass child variable seeding: first
+        // `variables[].defaultValue` declarations (existing host
+        // behavior), then `inputMapping` projections override matching
+        // keys. Unset parent variables surface as `undefined` on the
+        // child variable (NOT omitted, NOT `null`).
+        const childVarsSeed = seedVariablesFromWorkflow(childWorkflowId);
+        if (config.inputMapping && typeof config.inputMapping === 'object') {
+          const parentVarsRes = await q.query<{ variables_json: Record<string, unknown> | null }>(
+            'SELECT variables_json FROM runs WHERE run_id = $1',
+            [runId],
+          );
+          const parentVars = (parentVarsRes.rows[0]?.variables_json ?? {}) as Record<string, unknown>;
+          for (const [childKey, parentKey] of Object.entries(config.inputMapping)) {
+            if (typeof parentKey !== 'string') continue;
+            childVarsSeed[childKey] = parentVars[parentKey];
+          }
+        }
         await q.query(
           `INSERT INTO runs (run_id, workflow_id, status, inputs_json, started_at, parent_run_id, parent_node_id, variables_json)
            VALUES ($1, $2, 'pending', '{}'::JSONB, $3, $4, $5, $6)`,
           [childRunId, childWorkflowId, childStartedAt, runId, node.id,
-            JSON.stringify(seedVariablesFromWorkflow(childWorkflowId))],
+            JSON.stringify(childVarsSeed)],
         );
         await appendEvent(runId, 'node.dispatched', {
           nodeId: node.id,
@@ -2447,6 +2555,12 @@ function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
         // confidence-escalation contract honored via the
         // node.suspended { reason: 'low-confidence' } path.
         agents: REFERENCE_AGENTS_CAPABILITY,
+        // RFC 0022 §B+§C — `capabilities.subWorkflow` block. Top-level
+        // namespace for additive `core.subWorkflow` extension flags.
+        // Carries `inputMapping: true` because the executor block
+        // below seeds child variables from the parent via the
+        // RFC 0022 §B normative bullet.
+        subWorkflow: REFERENCE_SUBWORKFLOW_CAPABILITY,
         // RFC 0023 §B.2 — `capabilities.conformance` block. Advertised
         // because the host registers `core.conformance.mock-agent` (per
         // RFC 0023 §B). The §B.1 registration gate inside executeNode

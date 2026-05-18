@@ -5,44 +5,96 @@
  *
  * Verifies that when a `core.subWorkflow` config carries `inputMapping`,
  * the host seeds the child run's initial variable bag with
- * `parentVariables[parentKey]` projections, AFTER the child's
- * `variables[].defaultValue` fold (so inputMapping overrides matching
- * defaults). Unset parent variables MUST surface as `undefined` on the
- * child variable. The seeding fold is one-shot at run-create time;
- * mid-run parent mutations MUST NOT propagate to the child.
+ * `parentVariables[parentKey]` projections AFTER the child's
+ * `variables[].defaultValue` fold (so `inputMapping` overrides matching
+ * defaults). Verified end-to-end against the Postgres reference host on
+ * 2026-05-18 alongside the RFC's `Active` promotion.
  *
  * Capability-gated: skips when host doesn't advertise
  * `capabilities.subWorkflow.inputMapping: true`. Fixture-gated: requires
- * `conformance-subworkflow-input-mapping`.
+ * `conformance-subworkflow-input-mapping` + the matching child fixture.
  *
  * @see RFCS/0022-dispatch-input-output-mapping.md §B
  * @see spec/v1/node-packs.md §"`core.subWorkflow` contract"
  */
 
-import { describe, it } from 'vitest';
+import { describe, it, expect } from 'vitest';
+import { driver } from '../lib/driver.js';
+import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 
-const FIXTURE = 'conformance-subworkflow-input-mapping';
-const SKIP = !isFixtureAdvertised(FIXTURE);
+const PARENT = 'conformance-subworkflow-input-mapping';
+const CHILD = 'conformance-subworkflow-input-mapping-child';
+const SKIP = !isFixtureAdvertised(PARENT) || !isFixtureAdvertised(CHILD);
+
+interface RunEvent {
+  readonly type: string;
+  readonly nodeId?: string;
+  readonly payload?: { outputs?: { childRunId?: string } } & Record<string, unknown>;
+}
+
+interface RunSnapshot {
+  readonly status: string;
+  readonly variables?: Record<string, unknown>;
+}
 
 describe.skipIf(SKIP)('subworkflow-input-mapping: parent → child variable seeding (RFC 0022 §B)', () => {
+  it('HVMAP-2: inputMapping seeds child variables, overrides defaultValue, child reads parent projection', async () => {
+    // Parent fixture declares currentPrdId='prd-1' as its defaultValue.
+    // The parent's `core.subWorkflow` node carries
+    // `inputMapping: { receivedPrdId: 'currentPrdId' }`. Child fixture
+    // declares `receivedPrdId.defaultValue='baked-in'` — the mapping
+    // MUST override that default per RFC 0022 §B.
+    const create = await driver.post('/v1/runs', { workflowId: PARENT });
+    expect(create.status).toBe(201);
+    const parentRunId = (create.json as { runId: string }).runId;
+
+    const parentTerminal = (await pollUntilTerminal(parentRunId)) as RunSnapshot;
+    expect(parentTerminal.status, driver.describe(
+      'RFCS/0022-dispatch-input-output-mapping.md §B',
+      'parent run MUST reach terminal `completed` once the child finishes',
+    )).toBe('completed');
+
+    // Locate the child run via the parent's event log.
+    const eventsRes = await driver.get(`/v1/runs/${encodeURIComponent(parentRunId)}/events`);
+    expect(eventsRes.status).toBe(200);
+    const events = ((eventsRes.json as { events?: RunEvent[] } | undefined)?.events ?? []);
+    const subwfCompleted = events.find(
+      (e) => e.type === 'node.completed' && e.nodeId === 'subwf-call',
+    );
+    expect(subwfCompleted, driver.describe(
+      'spec/v1/node-packs.md §"`core.subWorkflow` contract"',
+      'parent event log MUST contain `node.completed` for the subwf-call node',
+    )).toBeDefined();
+    const childRunId = subwfCompleted?.payload?.outputs?.childRunId;
+    expect(typeof childRunId).toBe('string');
+
+    // Inspect the child run's final variables — receivedPrdId MUST be
+    // the parent's projection ("prd-1"), NOT the child's defaultValue
+    // ("baked-in").
+    const childSnapshotRes = await driver.get(`/v1/runs/${encodeURIComponent(childRunId!)}`);
+    expect(childSnapshotRes.status).toBe(200);
+    const childSnapshot = childSnapshotRes.json as RunSnapshot;
+    expect(childSnapshot.status, driver.describe(
+      'spec/v1/node-packs.md §"`core.subWorkflow` contract"',
+      'child run MUST reach terminal `completed`',
+    )).toBe('completed');
+    const childVars = childSnapshot.variables ?? {};
+    expect(childVars.receivedPrdId, driver.describe(
+      'RFCS/0022-dispatch-input-output-mapping.md §B',
+      'child `receivedPrdId` MUST be parent\'s `currentPrdId` projection ("prd-1"), overriding the child\'s defaultValue "baked-in"',
+    )).toBe('prd-1');
+  });
+
   it.todo(
-    'HVMAP-2: parent.currentPrdId="prd-1"; subWorkflow.config.inputMapping={receivedPrdId:"currentPrdId"}; child run\'s initial variables MUST have receivedPrdId === "prd-1".',
+    'HVMAP-2-unset: parent.currentPrdId unset; child receivedPrdId MUST surface as `undefined` (NOT omitted, NOT `null`). Requires a second parent fixture variant that omits currentPrdId\'s defaultValue.',
   );
 
   it.todo(
-    'HVMAP-2-override-default: child workflow declares variables[{name:"receivedPrdId",defaultValue:"baked-in"}]; inputMapping projects currentPrdId; child run\'s initial variables MUST have receivedPrdId === parent\'s currentPrdId (NOT "baked-in").',
+    'HVMAP-2-no-midrun-propagation: child mid-run; parent updates currentPrdId; child receivedPrdId MUST remain at seeded value (one-shot fold per §B normative bullet). Requires a multi-step child that suspends + a parent path that mutates.',
   );
 
   it.todo(
-    'HVMAP-2-unset: parent.currentPrdId is unset; inputMapping={receivedPrdId:"currentPrdId"}; child receivedPrdId MUST surface as `undefined` (NOT omitted, NOT `null`).',
-  );
-
-  it.todo(
-    'HVMAP-2-no-midrun-propagation: child mid-run; parent updates currentPrdId; child\'s receivedPrdId MUST remain at its seeded value (one-shot fold).',
-  );
-
-  it.todo(
-    'HVMAP-2-refusal: host advertises core.subWorkflow surface but NOT capabilities.subWorkflow.inputMapping: true; workflow with non-empty inputMapping MUST fail registration with validation_error + details.requiredCapability === "subWorkflow.inputMapping".',
+    'HVMAP-2-refusal: host advertises core.subWorkflow surface but NOT capabilities.subWorkflow.inputMapping: true; workflow with non-empty inputMapping MUST fail registration with validation_error + details.requiredCapability === "subWorkflow.inputMapping". Requires a host-capability-toggle hook in the conformance harness.',
   );
 });
