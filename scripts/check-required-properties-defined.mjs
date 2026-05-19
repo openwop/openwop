@@ -79,31 +79,54 @@ function walk(node, jsonPath, scopeChain, file) {
   //   - schemas that have `oneOf` / `anyOf` / `allOf` sibling
   //     branches: the required entry might be defined inside one of
   //     the branches (e.g., a discriminator `kind` required at root
-  //     whose value-set is pinned by each oneOf variant). Each
-  //     branch's own `required` is still walked for in-branch typos.
+  //     whose value-set is pinned by each oneOf variant). For these
+  //     polymorphic roots we still typo-check — but against the
+  //     UNION of properties defined in any branch, NOT just the
+  //     root's own scope. A required entry that isn't defined in
+  //     any branch's `properties` is a typo regardless of which
+  //     branch matches at runtime.
   const hasOwnProperties =
     node.properties !== undefined &&
     node.properties !== null &&
     typeof node.properties === 'object';
-  const fullyOpenShape =
-    !hasOwnProperties && node.additionalProperties !== false;
-  const hasPolymorphicBranches =
-    Array.isArray(node.oneOf) || Array.isArray(node.anyOf) || Array.isArray(node.allOf);
-  if (
-    Array.isArray(node.required) &&
-    node.required.length > 0 &&
-    !fullyOpenShape &&
-    !hasPolymorphicBranches
-  ) {
+  // Polymorphic branches CAN constrain the property set even when
+  // the root has no own `properties`. Only treat the schema as
+  // fully-open if neither the root nor any branch declares a
+  // closed property surface (computed below after we walk branches).
+  const hasOwnConstraint = hasOwnProperties || node.additionalProperties === false;
+  if (Array.isArray(node.required) && node.required.length > 0) {
     const known = collectPropertyNamesFromScope(nextChain);
-    for (const [i, name] of node.required.entries()) {
-      if (typeof name !== 'string') continue;
-      if (!known.has(name)) {
-        violations.push({
-          file,
-          path: `${jsonPath.join('/')}/required/${i}`,
-          name,
-        });
+    // Add the union of properties declared in any polymorphic
+    // branch (oneOf / anyOf / allOf elements). Branches that are
+    // themselves open-shape (no `properties`) contribute nothing —
+    // but if EVERY branch is open-shape, we still skip the check
+    // entirely (there's no closed property set to typo against).
+    const branchArrays = ['oneOf', 'anyOf', 'allOf']
+      .map((k) => node[k])
+      .filter((arr) => Array.isArray(arr));
+    let anyBranchHasClosedShape = false;
+    for (const arr of branchArrays) {
+      for (const branch of arr) {
+        if (branch && typeof branch === 'object' && branch.properties && typeof branch.properties === 'object') {
+          anyBranchHasClosedShape = true;
+          for (const name of Object.keys(branch.properties)) known.add(name);
+        }
+      }
+    }
+    // Treat as fully-open ONLY if neither the root nor any branch
+    // declares a closed property surface. Otherwise we have a
+    // constrained shape worth typo-checking against.
+    const fullyOpen = !hasOwnConstraint && !anyBranchHasClosedShape;
+    if (!fullyOpen) {
+      for (const [i, name] of node.required.entries()) {
+        if (typeof name !== 'string') continue;
+        if (!known.has(name)) {
+          violations.push({
+            file,
+            path: `${jsonPath.join('/')}/required/${i}`,
+            name,
+          });
+        }
       }
     }
   }

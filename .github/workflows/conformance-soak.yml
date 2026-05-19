@@ -45,6 +45,7 @@ jobs:
           cache-dependency-path: |
             examples/hosts/sqlite/package-lock.json
             conformance/package-lock.json
+            sdk/typescript/package-lock.json
 
       - name: Install SQLite reference host
         working-directory: examples/hosts/sqlite
