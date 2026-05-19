@@ -26,6 +26,16 @@
  * This module is sync. The async fetch lives in `setup.ts` which calls
  * `setAdvertisedFixtures(...)` from a top-level `await`.
  *
+ * Honest opt-out (symmetric to `OPENWOP_OPTED_OUT_PROFILES`):
+ *   `OPENWOP_OPTED_OUT_FIXTURES` (CSV, supports trailing `*` glob)
+ *   subtracts matching fixture-ids from the cached set even when the
+ *   host advertises them. Operators use this when the host happens to
+ *   carry a fixture file (e.g., it auto-loads every `conformance-*.json`
+ *   on disk) but does NOT implement the underlying feature — so the
+ *   gated scenario should skip instead of running and failing. The
+ *   subtraction happens at cache-population time, so the predicate
+ *   remains a single sync set lookup at scenario-evaluation time.
+ *
  * @see spec/v1/capabilities.md §`fixtures`
  * @see spec/v1/profiles.md §`openwop-fixtures`
  * @see RFCS/0003-fixture-gating.md
@@ -36,18 +46,45 @@ import type { DiscoveryPayload } from './profiles.js';
 let _advertisedFixtures: ReadonlySet<string> | null = null;
 
 /**
+ * Parse `OPENWOP_OPTED_OUT_FIXTURES` into a match predicate. Each entry
+ * is either an exact id or a glob with a trailing `*`. Returns a
+ * function that answers "is this fixture-id opted out?" — empty / unset
+ * env reduces to "always false."
+ */
+function loadOptedOutPredicate(): (id: string) => boolean {
+  const raw = process.env.OPENWOP_OPTED_OUT_FIXTURES?.trim() ?? '';
+  if (raw.length === 0) return () => false;
+  const exact = new Set<string>();
+  const prefixes: string[] = [];
+  for (const entry of raw.split(',').map((s) => s.trim()).filter((s) => s.length > 0)) {
+    if (entry.endsWith('*')) {
+      prefixes.push(entry.slice(0, -1));
+    } else {
+      exact.add(entry);
+    }
+  }
+  return (id) => exact.has(id) || prefixes.some((p) => id.startsWith(p));
+}
+
+/**
  * Populate the cache from a discovery-doc payload. The function is
  * tolerant of malformed inputs — anything other than a string array
  * collapses to "no fixtures advertised" rather than throwing, so the
  * suite remains resilient against host bugs in the discovery surface.
+ *
+ * Applies `OPENWOP_OPTED_OUT_FIXTURES` at this step: opted-out ids are
+ * filtered out of the cache before storage so downstream lookups can
+ * stay a single sync set-membership test.
  */
 export function setAdvertisedFixtures(c: DiscoveryPayload | null | undefined): void {
   if (c == null || !Array.isArray(c.fixtures)) {
     _advertisedFixtures = new Set();
     return;
   }
+  const isOptedOut = loadOptedOutPredicate();
   const ids = c.fixtures.filter(
-    (entry): entry is string => typeof entry === 'string' && entry.length > 0,
+    (entry): entry is string =>
+      typeof entry === 'string' && entry.length > 0 && !isOptedOut(entry),
   );
   _advertisedFixtures = new Set(ids);
 }

@@ -23,6 +23,10 @@
  *   - Host doesn't advertise `capabilities.observability`.
  *   - `conformance-subworkflow-parent` fixture not advertised (host
  *     doesn't implement `core.subWorkflow`).
+ *   - `OPENWOP_OPTED_OUT_SCENARIOS` contains
+ *     `otel-trace-propagation-subworkflow` — host claims
+ *     observability + subWorkflow but explicitly does NOT propagate
+ *     traceparent across the dispatch boundary.
  *
  * @see spec/v1/observability.md §"Trace context propagation"
  * @see spec/v1/node-packs.md §`core.subWorkflow`
@@ -33,9 +37,11 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { isScenarioOptedOut } from '../lib/env.js';
 import { getCollector, waitForRunSpans } from '../lib/otel-collector.js';
 
 const PARENT_FIXTURE = 'conformance-subworkflow-parent';
+const SCENARIO_ID = 'otel-trace-propagation-subworkflow';
 
 interface RunEvent {
   type: string;
@@ -64,6 +70,19 @@ async function isObservabilityAdvertised(): Promise<boolean> {
 
 describe('otel-trace-propagation-subworkflow: traceparent threads parent → child via core.subWorkflow', () => {
   it('child run spans inherit the parent run\'s inbound traceId', async () => {
+    if (isScenarioOptedOut(SCENARIO_ID)) {
+      // Host operator has declared this scenario opted-out via
+      // `OPENWOP_OPTED_OUT_SCENARIOS`. Used when the host advertises
+      // `conformance-subworkflow-parent` (correctly — non-OTel
+      // subworkflow scenarios pass) AND observability (for audit-log
+      // integrity), but doesn't propagate traceparent across the
+      // `core.subWorkflow` dispatch boundary. Fixture-opt-out would
+      // be too coarse (kills passing non-OTel subworkflow tests);
+      // capability-opt-out would lie about observability claims.
+      // eslint-disable-next-line no-console
+      console.warn(`[${SCENARIO_ID}] scenario opted out via OPENWOP_OPTED_OUT_SCENARIOS; skipping`);
+      return;
+    }
     if (!getCollector()) {
       // eslint-disable-next-line no-console
       console.warn('[otel-trace-propagation-subworkflow] collector not started; skipping');
