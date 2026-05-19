@@ -108,6 +108,18 @@ jobs:
           OPENWOP_REQUIRE_BEHAVIOR: 'true'
           OPENWOP_OTEL_COLLECTOR: 'true'
           OPENWOP_OTEL_COLLECTOR_PORT: ${{ env.OPENWOP_OTEL_COLLECTOR_PORT }}
+          # Profiles + capabilities the SQLite reference host honestly
+          # does NOT claim per INTEROP-MATRIX.md (verified against the
+          # host's `/.well-known/openwop` advertisement). Per
+          # `conformance/src/lib/env.ts` §OPENWOP_OPTED_OUT_PROFILES,
+          # listing them here flips strict-mode failure → PASS-by-opt-
+          # out for the matching `behaviorGate(<name>, …)` call sites.
+          # Distinguishes "host doesn't claim this surface" (good) from
+          # "host claims but doesn't deliver" (bug). Without this, the
+          # soak gate fails on every push even when no regression
+          # occurred — the suite has more capability-gated scenarios
+          # than this reference host claims.
+          OPENWOP_OPTED_OUT_PROFILES: 'openwop-production,openwop-auth-oauth2-client-credentials,openwop-auth-oidc-user-bearer,openwop-auth-mtls,openwop-replay-fork,workflowChainPacks'
           # OPENWOP_TEST_PUBLIC_REGISTRY deliberately NOT set here — it
           # would mix `packs.openwop.dev` reachability into the host
           # regression signal. Registry health is the next job's
