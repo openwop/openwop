@@ -182,7 +182,16 @@ export interface Storage {
     runId: string,
     correlationId: string,
   ): Promise<{ outcome: unknown; envelopeType: string; recordedAt: string } | null>;
-  /** Persist (runId, correlationId) → outcome. Insert-or-replace. */
+  /**
+   * Persist (runId, correlationId) → outcome. Insert-or-replace.
+   *
+   * `recordedAt` MUST be an ISO-8601 UTC string (the `Z` form, e.g.
+   * `new Date().toISOString()`). The sqlite backend stores it as TEXT
+   * verbatim while the postgres backend stores it as TIMESTAMPTZ and
+   * round-trips through `Date.toISOString()` on read — both round-trip
+   * cleanly only for ISO-8601-Z input. Non-UTC-Z timestamps would
+   * silently diverge between backends.
+   */
   putEnvelopeCorrelation(
     runId: string,
     correlationId: string,

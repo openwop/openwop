@@ -209,7 +209,15 @@ describe('aiEnvelope.correlationReplay: cross-process replay via persisted dedup
   it('persisted outcome replays for the same correlationId even with NO in-memory priorCorrelations', async () => {
     const runId = `r-cr-persist-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const correlationId = `${runId}:n:0:persist1`;
-    const envelope = {
+    // Two envelopes with the SAME correlationId but DIFFERENT
+    // envelopeIds. The acceptor reflects the inbound envelopeId on a
+    // fresh accept; a cache-hit returns the FIRST call's envelopeId
+    // regardless of what the second call carried. The envelopeId
+    // divergence is what makes this assertion non-trivial: if the
+    // persisted store is consulted, second.envelopeId === 'env-cr-
+    // persist-1'; if the handler re-runs (cache miss), it would
+    // surface 'env-cr-persist-2'.
+    const env1 = {
       type: 'clarification.request',
       schemaVersion: 1,
       envelopeId: 'env-cr-persist-1',
@@ -217,26 +225,33 @@ describe('aiEnvelope.correlationReplay: cross-process replay via persisted dedup
       payload: { questions: [{ id: 'q1', question: 'why?' }] },
       meta: baseMeta,
     };
+    const env2 = {
+      type: 'clarification.request',
+      schemaVersion: 1,
+      envelopeId: 'env-cr-persist-2',
+      correlationId,
+      payload: { questions: [{ id: 'q1', question: 'why?' }] },
+      meta: baseMeta,
+    };
     // First accept persists the outcome under (runId, correlationId).
-    const first = await accept(envelope, { persistedDedup: { runId } });
+    const first = await accept(env1, { persistedDedup: { runId } });
     if (first.status === 404) return; // seam not exposed — soft-skip
     expect(first.body.status).toBe('accepted');
-    const cachedEnvelopeId = first.body.envelopeId;
+    expect(first.body.envelopeId).toBe('env-cr-persist-1');
 
     // Second accept — same correlationId, NO priorCorrelations passed
-    // in-band. If the persisted store is consulted, the cached outcome
-    // is returned (same envelopeId). If only the in-memory map were
-    // used, the handler would re-run and mint a different envelopeId
-    // (or accept again with the original — either way, NOT the proof
-    // of cross-process semantics).
-    const second = await accept(envelope, { persistedDedup: { runId } });
+    // in-band, DIFFERENT envelopeId. If the persisted store is
+    // consulted, the cached outcome's envelopeId (env-cr-persist-1)
+    // is returned. If only the in-memory map were used, the handler
+    // would re-run and reflect env-cr-persist-2.
+    const second = await accept(env2, { persistedDedup: { runId } });
     expect(
       second.body.envelopeId,
       driver.describe(
         'ai-envelope.md §"Replay determinism"',
-        'persisted outcome MUST replay across calls without an in-memory priorCorrelations map (cross-process recovery semantics)',
+        'persisted outcome MUST replay across calls without an in-memory priorCorrelations map (cross-process recovery: cached envelopeId surfaces even when the inbound envelope carries a different envelopeId)',
       ),
-    ).toBe(cachedEnvelopeId);
+    ).toBe('env-cr-persist-1');
     expect(second.body.status).toBe('accepted');
   });
 

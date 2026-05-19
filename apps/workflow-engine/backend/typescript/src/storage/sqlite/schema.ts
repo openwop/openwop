@@ -8,7 +8,7 @@
 
 import type { Database } from 'better-sqlite3';
 
-export const LATEST_SCHEMA_VERSION = 5;
+export const LATEST_SCHEMA_VERSION = 6;
 
 const MIGRATIONS: Record<number, (db: Database) => void> = {
   1: (db) => {
@@ -191,6 +191,20 @@ const MIGRATIONS: Record<number, (db: Database) => void> = {
         recorded_at TEXT NOT NULL,
         PRIMARY KEY (run_id, correlation_id)
       );
+    `);
+  },
+  6: (db) => {
+    // Run-scoped index for future cleanup-on-run-terminal queries
+    // (`DELETE FROM envelope_correlations WHERE run_id = ?`). The
+    // composite PK covers point-lookups but its leading column scan
+    // is sufficient for the run-scoped delete — sqlite happily uses
+    // the leftmost-prefix of the PK index for this. The explicit
+    // index here is belt-and-suspenders for backends where PK index
+    // prefix-scan is less reliable, and signals intent at the schema
+    // level.
+    db.exec(`
+      CREATE INDEX IF NOT EXISTS idx_envelope_correlations_run
+        ON envelope_correlations (run_id);
     `);
   },
 };

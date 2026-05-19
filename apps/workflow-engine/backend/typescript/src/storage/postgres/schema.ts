@@ -32,7 +32,7 @@ export interface Queryable {
   ): Promise<{ rows: R[] }>;
 }
 
-export const LATEST_SCHEMA_VERSION = 3;
+export const LATEST_SCHEMA_VERSION = 4;
 
 const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
   1: async (client) => {
@@ -178,6 +178,17 @@ const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
         recorded_at TIMESTAMPTZ NOT NULL,
         PRIMARY KEY (run_id, correlation_id)
       );
+    `);
+  },
+  4: async (client) => {
+    // Run-scoped index for future cleanup-on-run-terminal queries
+    // (`DELETE FROM envelope_correlations WHERE run_id = $1`). The
+    // composite PK's leftmost-prefix usually covers this, but the
+    // explicit index makes the intent visible and matches the sqlite
+    // v6 mirror. Mirrors `sqlite/schema.ts` v6.
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_envelope_correlations_run
+        ON envelope_correlations (run_id);
     `);
   },
 };
