@@ -88,6 +88,21 @@
   50%      { box-shadow: 0 0 0 6px oklch(55% 0.16 28 / 0); }
 }
 
+/* ─── Reduced motion ──────────────────────────────────────────────────
+ * Honor prefers-reduced-motion: reduce. Mirrors the canonical block in
+ * public/styles.css per DESIGN.md §11 / DESIGN.app.md §6 invariant 1.
+ * App-specific keyframes (openwop-pulse, openwop-mic-pulse, and the
+ * ThoughtsDisclosure component's inline openwop-thoughts-* keyframes)
+ * are all collapsed by the universal selector below. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* ── Warm-dark mode (canonical override per DESIGN.md §9) ──
  * Inverts paper ↔ ink; rule + ink-2/3 darken proportionally;
  * clay stays luminance-balanced and works on either surface. */
@@ -835,33 +850,48 @@ pre {
   font-size: 11px;
 }
 
+/* ─── xyflow workflow canvas — editorial theming via vendor CSS-variable
+ * surface (preferred) + direct selector overrides where needed. Scope is
+ * .builder-canvas; documented in DESIGN.app.md §7. */
 .builder-canvas {
   flex: 1;
   min-width: 0;
   min-height: 0;
-  background: var(--color-bg);
+  background: var(--paper);
+  /* xyflow's canonical CSS-variable surface */
+  --xy-background-color-default: var(--paper);
+  --xy-background-pattern-color-default: var(--rule-2);
+  --xy-edge-stroke-default: var(--ink-2);
+  --xy-edge-stroke-selected-default: var(--clay);
+  --xy-handle-background-color-default: var(--clay);
+  --xy-handle-border-color-default: var(--paper);
+  --xy-controls-button-background-color-default: var(--paper);
+  --xy-controls-button-background-color-hover-default: var(--clay-wash);
+  --xy-controls-button-color-default: var(--ink);
+  --xy-controls-button-border-color-default: var(--rule);
 }
 
-/* xyflow override so dot pattern + node colors blend with our tokens. */
 .builder-canvas .react-flow {
-  background: var(--color-bg);
+  background: var(--paper);
 }
 
 .builder-canvas .react-flow__controls {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  box-shadow: 0 1px 3px var(--ink-shadow);
 }
 
 .builder-canvas .react-flow__controls-button {
-  background: var(--color-surface);
-  color: var(--color-text);
+  background: var(--paper);
+  color: var(--ink);
   border: none;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--rule);
+  transition: background .15s ease;
 }
 
 .builder-canvas .react-flow__controls-button:hover {
-  background: var(--color-surface-2);
+  background: var(--clay-wash);
 }
 
 .builder-canvas .react-flow__controls-button svg {
@@ -869,27 +899,29 @@ pre {
 }
 
 .builder-canvas .react-flow__edge-path {
-  stroke: var(--color-text-muted);
-  stroke-width: 2;
+  stroke: var(--ink-2);
+  stroke-width: 1.5;
 }
 
 .builder-canvas .react-flow__edge.selected .react-flow__edge-path {
-  stroke: var(--color-accent);
+  stroke: var(--clay);
+  stroke-width: 2;
 }
 
 .builder-node {
   min-width: 180px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-left: 3px solid var(--color-text-muted);
-  border-radius: var(--radius);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--ink-3);
+  border-radius: 2px;
+  font-family: var(--sans);
   font-size: 12px;
-  color: var(--color-text);
+  color: var(--ink);
   box-shadow: 0 1px 3px var(--ink-shadow);
 }
 
 .builder-node-selected {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--clay);
   outline-offset: -1px;
 }
 
@@ -898,7 +930,7 @@ pre {
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--rule);
 }
 
 .builder-node-badge {
@@ -907,10 +939,15 @@ pre {
   justify-content: center;
   width: 20px;
   height: 20px;
-  border-radius: 4px;
-  color: white;
+  border-radius: 2px;
+  /* Each node category sets its own background via a colour class
+   * (.builder-node-badge-ai, etc.). Default fg is paper for contrast
+   * against typical category fills (clay, ink, success-tint). */
+  color: var(--paper);
+  font-family: var(--mono);
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 500;
+  letter-spacing: 0.04em;
   flex-shrink: 0;
 }
 
@@ -950,15 +987,17 @@ pre {
 }
 
 .builder-node-port-label {
-  font-family: var(--font-mono);
+  font-family: var(--mono);
   font-size: 10px;
-  color: var(--color-text-muted);
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
 }
 
 .builder-canvas .react-flow__handle {
-  width: 14px;
-  height: 14px;
-  border: 2px solid var(--color-surface);
+  width: 12px;
+  height: 12px;
+  background: var(--clay);
+  border: 2px solid var(--paper);
 }
 .builder-canvas .react-flow__handle-left  { left:  -7px; }
 .builder-canvas .react-flow__handle-right { right: -7px; }
@@ -1307,21 +1346,31 @@ pre {
   padding-top: var(--space-2);
 }
 
-/* ── Auth (P3.2) ─────────────────────────────────────────────────── */
+/* ── Auth (P3.2) ─────────────────────────────────────────────────────
+ * Editorial-pill trigger matches .topnav .pill from the marketing site.
+ * Modal chrome is paper-on-paper-on-scrim with rule hairlines.
+ * Vendor brand SVGs inside .signin-provider are NEVER recolored
+ * (DESIGN.app.md §8). */
 
 .app-header-spacer { flex: 1; }
 
 .signin-trigger {
-  background: var(--color-surface-2);
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--ink);
   padding: 6px 14px;
-  border-radius: var(--radius);
-  font-size: 13px;
+  border-radius: 999px;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
   cursor: pointer;
+  transition: background .15s ease, color .15s ease;
 }
 .signin-trigger:hover {
-  background: var(--color-border);
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
 }
 
 .signin-modal-backdrop {
@@ -1338,41 +1387,67 @@ pre {
   overflow-y: auto;
 }
 .signin-modal {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
   padding: var(--space-5);
   width: 100%; max-width: 420px;
-  /* Cap height so very tall modals (long error message, long body
-     copy) get an internal scroll bar instead of growing beyond the
-     viewport. */
   max-height: calc(100vh - 2 * var(--space-4));
   overflow-y: auto;
   display: flex; flex-direction: column;
   gap: var(--space-3);
+  box-shadow: 0 8px 24px var(--ink-shadow);
 }
-.signin-modal-title { margin: 0; font-size: 18px; }
-.signin-modal-lede { font-size: 13px; margin: 0; }
+.signin-modal-title {
+  margin: 0;
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.signin-modal-title em { font-style: italic; color: var(--clay); }
+.signin-modal-lede {
+  font-size: 13.5px;
+  line-height: 1.55;
+  margin: 0;
+  color: var(--ink-2);
+}
 .signin-provider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   padding: 10px var(--space-3);
-  border-radius: var(--radius);
-  border: 1px solid var(--color-border);
+  border-radius: 2px;
+  border: 1px solid var(--rule);
+  font-family: var(--sans);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  background: var(--color-surface-2);
-  color: var(--color-text);
+  background: var(--paper);
+  color: var(--ink);
+  transition: border-color .15s ease, background .15s ease;
 }
-.signin-provider:hover { background: var(--color-border); }
+.signin-provider:hover {
+  background: var(--paper);
+  border-color: var(--ink);
+}
 .signin-provider:disabled { opacity: 0.5; cursor: wait; }
+/* Vendor brand SVGs inside .signin-provider preserve their canonical
+ * fills (DESIGN.app.md §8). Do NOT add `currentColor` rules here. */
 .signin-modal-cancel {
   background: transparent;
-  color: var(--color-text-muted);
+  color: var(--ink-3);
   border: none;
   padding: 6px;
-  font-size: 13px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
   cursor: pointer;
 }
+.signin-modal-cancel:hover { color: var(--clay); }
 
 .account-menu { position: relative; }
 .account-menu-trigger {

@@ -121,24 +121,33 @@ Rules:
 
 ## 7. xyflow (workflow canvas) theming
 
-`@xyflow/react` ships its own CSS. Override via the canvas wrapper scope:
+`@xyflow/react` ships its own CSS. The app scopes overrides to `.builder-canvas` (matches the wrapper class in `src/builder/canvas/BuilderCanvas.tsx`) and uses xyflow's canonical CSS-variable surface plus a few direct selector overrides where the variable surface doesn't reach:
 
 ```css
-:where(.workflow-canvas) {
-  --xy-background-color: var(--paper);
-  --xy-node-color: var(--ink);
-  --xy-node-border: var(--rule);
-  --xy-edge-stroke: var(--ink-2);
-  --xy-edge-stroke-selected: var(--clay);
-  --xy-handle-color: var(--clay);
-  --xy-controls-button-bg: var(--paper);
-  --xy-controls-button-border: var(--rule);
+.builder-canvas {
+  --xy-background-color-default: var(--paper);
+  --xy-background-pattern-color-default: var(--rule-2);
+  --xy-edge-stroke-default: var(--ink-2);
+  --xy-edge-stroke-selected-default: var(--clay);
+  --xy-handle-background-color-default: var(--clay);
+  --xy-handle-border-color-default: var(--paper);
+  --xy-controls-button-background-color-default: var(--paper);
+  --xy-controls-button-background-color-hover-default: var(--clay-wash);
+  --xy-controls-button-color-default: var(--ink);
+  --xy-controls-button-border-color-default: var(--rule);
 }
 ```
 
-Node-internal styling (the React component each `<Handle>` renders inside) uses app tokens directly. Edge labels render in `--mono` at 11px.
+Direct selector overrides cover the rest:
 
-Background: dotted grid using `var(--rule-2)` at 1.5px / 20px spacing. **Never** the default cool-gray grid.
+- `.builder-canvas .react-flow__edge-path` — `stroke: var(--ink-2); stroke-width: 1.5;`
+- `.builder-canvas .react-flow__edge.selected .react-flow__edge-path` — `stroke: var(--clay); stroke-width: 2;`
+- `.builder-canvas .react-flow__controls` — paper background, rule border, 2px radius, ink-shadow
+- `.builder-canvas .react-flow__handle` — 12×12 clay disc with a 2px paper border (the "port" affordance)
+
+Node-internal styling (the React component each `<Handle>` renders inside) uses app tokens directly via `.builder-node*` classes. Port labels render in `--mono` at 10px / 0.04em. Node body uses `--sans`.
+
+Background: dotted grid using `var(--rule-2)`. **Never** the default cool-gray grid.
 
 ---
 
