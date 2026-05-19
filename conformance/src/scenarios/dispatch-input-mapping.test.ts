@@ -24,6 +24,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { setHostCapability, resetHostCapabilities, isToggleAvailable } from '../lib/host-toggle.js';
 
 const PARENT = 'conformance-dispatch-input-mapping';
 const CHILD = 'conformance-dispatch-input-mapping-child';
@@ -88,7 +89,45 @@ describe.skipIf(SKIP)('dispatch-input-mapping: parent → child variable project
     'HVMAP-1a-null: parent variable unset → child input surfaces as `undefined` (NOT omitted, NOT `null`) per §A normative bullet. Requires a fixture variant omitting parentName.defaultValue.',
   );
 
-  it.todo(
-    'HVMAP-1a-refusal: host advertises capabilities.agents.dispatch: true but NOT capabilities.agents.dispatchMapping: true; workflow with non-empty inputMapping MUST fail registration with validation_error + details.requiredCapability === "agents.dispatchMapping". Requires a host-capability-toggle hook in the conformance harness.',
-  );
+});
+
+describe('dispatch-input-mapping: registration refusal (RFC 0022 §C HVMAP-1a-refusal)', () => {
+  it('host with agents.dispatchMapping toggled OFF MUST refuse non-empty inputMapping at registration', async () => {
+    if (!(await isToggleAvailable())) return; // seam not exposed — soft-skip
+    await setHostCapability('agents.dispatchMapping', false);
+    try {
+      const workflow = {
+        workflowId: `hvmap-1a-refusal-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        nodes: [
+          {
+            nodeId: 'dispatch-1',
+            typeId: 'core.dispatch',
+            config: {
+              nextWorkerIds: ['child-a'],
+              inputMapping: { childInput: 'parentVar' }, // non-empty — refusal trigger
+            },
+          },
+        ],
+      };
+      const res = await driver.post('/v1/host/sample/workflows', workflow);
+      expect(
+        res.status,
+        driver.describe(
+          'RFCS/0022-dispatch-input-output-mapping.md §C',
+          'workflow with non-empty inputMapping MUST be refused when capabilities.agents.dispatchMapping is not advertised',
+        ),
+      ).toBe(400);
+      const body = res.json as { error?: string; details?: { requiredCapability?: string } };
+      expect(body.error).toBe('validation_error');
+      expect(
+        body.details?.requiredCapability,
+        driver.describe(
+          'RFCS/0022-dispatch-input-output-mapping.md §C',
+          'refusal MUST surface requiredCapability: "agents.dispatchMapping"',
+        ),
+      ).toBe('agents.dispatchMapping');
+    } finally {
+      await resetHostCapabilities();
+    }
+  });
 });

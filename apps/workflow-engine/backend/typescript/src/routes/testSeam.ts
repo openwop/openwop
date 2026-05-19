@@ -39,6 +39,11 @@ import type { Express } from 'express';
 import { buildHostSurfaceBundle } from '../host/inMemorySurfaces.js';
 import type { HostSurfaceBundle, SurfaceArgs, SurfaceFn } from '../host/inMemorySurfaces.js';
 import { acceptEnvelope, type AcceptOptions } from '../host/envelopeAcceptor.js';
+import {
+  setCapabilityOverlay,
+  resetCapabilityOverlay,
+  snapshotCapabilityOverlay,
+} from '../host/capabilityOverlay.js';
 import { OpenwopError } from '../types.js';
 import { createLogger } from '../observability/logger.js';
 
@@ -215,5 +220,34 @@ export function registerTestSeamRoutes(app: Express): void {
     }
     const outcome = acceptEnvelope(body.envelope, opts);
     res.status(200).json(outcome);
+  });
+
+  // Capability-toggle test seam (RFC 0022 §C refusal-case tests).
+  // POST /v1/host/sample/test/capability-toggle
+  // Body shapes:
+  //   { name: 'agents.dispatchMapping', value: false }   // set overlay
+  //   { name: 'agents.dispatchMapping', value: null }    // remove overlay (restore default)
+  //   { reset: true }                                    // clear ALL overlay entries
+  // Response: { overlay: <current overlay snapshot> }
+  app.post('/v1/host/sample/test/capability-toggle', (req, res) => {
+    const body = (req.body ?? {}) as { name?: unknown; value?: unknown; reset?: unknown };
+    if (body.reset === true) {
+      resetCapabilityOverlay();
+      res.status(200).json({ overlay: snapshotCapabilityOverlay(), reset: true });
+      return;
+    }
+    if (typeof body.name !== 'string' || body.name.length === 0) {
+      res.status(400).json({ error: { code: 'invalid_argument', message: 'name required when reset:false' } });
+      return;
+    }
+    let value: boolean | undefined;
+    if (body.value === null) value = undefined;
+    else if (typeof body.value === 'boolean') value = body.value;
+    else {
+      res.status(400).json({ error: { code: 'invalid_argument', message: 'value MUST be boolean | null' } });
+      return;
+    }
+    setCapabilityOverlay(body.name, value);
+    res.status(200).json({ overlay: snapshotCapabilityOverlay(), set: { name: body.name, value: value ?? null } });
   });
 }

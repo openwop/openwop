@@ -21,10 +21,59 @@ import {
   listRegisteredWorkflows,
   registerWorkflow,
 } from '../host/workflowsRegistry.js';
+import { resolveCapabilityFlag } from '../host/capabilityOverlay.js';
 
 const WORKFLOW_ID_PATTERN = /^[a-zA-Z0-9_.\-:]{1,128}$/;
 const NODE_ID_PATTERN = /^[a-zA-Z0-9_\-]{1,64}$/;
 const TYPE_ID_PATTERN = /^[a-zA-Z0-9_.\-]{1,128}$/;
+
+/** RFC 0022 §C — workflow-register MUST refuse with `validation_error` +
+ *  `details.requiredCapability` when a node's mapping field is non-empty
+ *  AND the matching capability flag is not advertised (or has been
+ *  toggled off via the test-seam overlay). */
+function checkMappingCapability(
+  nodes: ReadonlyArray<{ nodeId: string; typeId: string; config?: Record<string, unknown> }>,
+): void {
+  for (const node of nodes) {
+    const cfg = node.config ?? {};
+    if (node.typeId === 'core.dispatch') {
+      const hasMapping = hasNonEmptyMapping(cfg, ['inputMapping', 'outputMapping', 'perWorkerInputMappings', 'perWorkerOutputMappings']);
+      if (hasMapping && resolveCapabilityFlag('agents.dispatchMapping') !== true) {
+        throw new OpenwopError(
+          'validation_error',
+          `Node '${node.nodeId}' (core.dispatch) declares non-empty mapping fields but the host does not advertise capabilities.agents.dispatchMapping: true.`,
+          400,
+          { nodeId: node.nodeId, requiredCapability: 'agents.dispatchMapping' },
+        );
+      }
+    }
+    if (node.typeId === 'core.subWorkflow') {
+      const hasMapping = hasNonEmptyMapping(cfg, ['inputMapping']);
+      if (hasMapping && resolveCapabilityFlag('subWorkflow.inputMapping') !== true) {
+        throw new OpenwopError(
+          'validation_error',
+          `Node '${node.nodeId}' (core.subWorkflow) declares non-empty inputMapping but the host does not advertise capabilities.subWorkflow.inputMapping: true.`,
+          400,
+          { nodeId: node.nodeId, requiredCapability: 'subWorkflow.inputMapping' },
+        );
+      }
+    }
+  }
+}
+
+function hasNonEmptyMapping(cfg: Record<string, unknown>, fields: readonly string[]): boolean {
+  for (const f of fields) {
+    const v = cfg[f];
+    if (!v) continue;
+    if (typeof v !== 'object') continue;
+    if (Array.isArray(v)) {
+      if (v.length > 0) return true;
+      continue;
+    }
+    if (Object.keys(v as Record<string, unknown>).length > 0) return true;
+  }
+  return false;
+}
 
 export function registerWorkflowRoutes(app: Express): void {
   app.get('/v1/host/sample/workflows', (_req, res) => {
@@ -114,5 +163,7 @@ function validateDefinition(raw: unknown): WorkflowDefinition {
       ...(node.config ? { config: node.config as Record<string, unknown> } : {}),
     };
   });
+  // RFC 0022 §C capability-gate refusal check.
+  checkMappingCapability(nodes);
   return { workflowId, nodes };
 }

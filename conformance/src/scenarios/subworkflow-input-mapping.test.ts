@@ -22,6 +22,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { setHostCapability, resetHostCapabilities, isToggleAvailable } from '../lib/host-toggle.js';
 
 const PARENT = 'conformance-subworkflow-input-mapping';
 const CHILD = 'conformance-subworkflow-input-mapping-child';
@@ -94,7 +95,45 @@ describe.skipIf(SKIP)('subworkflow-input-mapping: parent → child variable seed
     'HVMAP-2-no-midrun-propagation: child mid-run; parent updates currentPrdId; child receivedPrdId MUST remain at seeded value (one-shot fold per §B normative bullet). Requires a multi-step child that suspends + a parent path that mutates.',
   );
 
-  it.todo(
-    'HVMAP-2-refusal: host advertises core.subWorkflow surface but NOT capabilities.subWorkflow.inputMapping: true; workflow with non-empty inputMapping MUST fail registration with validation_error + details.requiredCapability === "subWorkflow.inputMapping". Requires a host-capability-toggle hook in the conformance harness.',
-  );
+});
+
+describe('subworkflow-input-mapping: registration refusal (RFC 0022 §C HVMAP-2-refusal)', () => {
+  it('host with subWorkflow.inputMapping toggled OFF MUST refuse non-empty inputMapping at registration', async () => {
+    if (!(await isToggleAvailable())) return; // seam not exposed — soft-skip
+    await setHostCapability('subWorkflow.inputMapping', false);
+    try {
+      const workflow = {
+        workflowId: `hvmap-2-refusal-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        nodes: [
+          {
+            nodeId: 'subwf-1',
+            typeId: 'core.subWorkflow',
+            config: {
+              childWorkflowId: 'some-child',
+              inputMapping: { receivedPrdId: 'currentPrdId' }, // non-empty — refusal trigger
+            },
+          },
+        ],
+      };
+      const res = await driver.post('/v1/host/sample/workflows', workflow);
+      expect(
+        res.status,
+        driver.describe(
+          'RFCS/0022-dispatch-input-output-mapping.md §C',
+          'workflow with non-empty subWorkflow.inputMapping MUST be refused when capability is not advertised',
+        ),
+      ).toBe(400);
+      const body = res.json as { error?: string; details?: { requiredCapability?: string } };
+      expect(body.error).toBe('validation_error');
+      expect(
+        body.details?.requiredCapability,
+        driver.describe(
+          'RFCS/0022-dispatch-input-output-mapping.md §C',
+          'refusal MUST surface requiredCapability: "subWorkflow.inputMapping"',
+        ),
+      ).toBe('subWorkflow.inputMapping');
+    } finally {
+      await resetHostCapabilities();
+    }
+  });
 });
