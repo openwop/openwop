@@ -45,6 +45,22 @@ Cross-SDK design symmetry: each language uses its idiomatic event-handling patte
 
 This commit + the pre-existing reference-host implementations (commit `08ac7bc`) resolve the SDK-helper acceptance line. `Active → Accepted` flip still gated on either (a) external host advertisement evidence in `INTEROP-MATRIX.md`, or (b) `@openwop/openwop-conformance` republish.
 
+### RFC 0026 (Draft) — `provider.usage` event (2026-05-19)
+
+New optional event type `provider.usage` added to the `RunEventType` enum + matching payload schema in `schemas/run-event-payloads.schema.json#/$defs/providerUsage`. Pairs with the existing OTel `openwop.cost.*` attribute group (per `observability.md §"Cost attribution attributes"`) — the OTel surface is observability-only; this RFC lands the durable event-log sibling so replay reads it back deterministically, webhook subscribers receive it live, and external billing reconciliation has a fine-grained audit trail. 7-day comment window; bootstrap-phase waiver eligible per the RFC 0021-0025 precedent.
+
+- **`RFCS/0026-provider-usage-event.md` (NEW, `Draft`)** — Summary + Motivation (cites `docs/PROTOCOL-GAP-CLOSURE-PLAN.md:265` + the existing OTel/rollup gap) + Proposal §A event shape, §B emission timing, §C OTel projection, §D BYOK trust boundary, §E capability handshake + Compatibility (additive) + Conformance (3 describe blocks) + 4 alternatives + 3 unresolved + Acceptance.
+- **`schemas/run-event.schema.json`** — adds `"provider.usage"` to the `RunEventType` enum.
+- **`schemas/run-event-payloads.schema.json`** — `providerUsage` `$def` (required `{provider, model, inputTokens, outputTokens}` + optional `{totalTokens, costEstimateUsd, currency, cacheHit, nodeId, traceId}`; `additionalProperties: false`); maps in eventPayloads discriminator.
+- **`schemas/capabilities.schema.json`** — new optional `providerUsage: { supported, costEstimates?, currency? }` block.
+- **`api/asyncapi.yaml`** — new `ProviderUsage` message referencing the payload via cross-file `$ref`.
+- **`SECURITY/invariants.yaml`** — new `provider-usage-no-credential-leak` invariant (protocol-tier, severity high) with `conformance/src/scenarios/provider-usage.test.ts` as the test.
+- **`spec/v1/observability.md`** — new §"Provider usage events (RFC 0026)" between §"Cost attribution attributes" and §"Open spec gaps".
+- **`apps/workflow-engine/.../providers/usageEmitter.ts` (NEW)** — `buildProviderUsagePayload()` extracts usage from Anthropic / OpenAI / Gemini response shapes; advisory `costEstimateUsd` via static rate table. Payload reads ONLY from each provider's `usage`/`usageMetadata` block — credentialRef and prompt/response text NEVER referenced.
+- **`apps/workflow-engine/.../routes/testSeam.ts`** — new `POST /v1/host/sample/test/emit-provider-usage` endpoint; defense-in-depth refuses payloads containing `credentialRef` field or `secret:`-prefixed strings.
+- **`conformance/src/scenarios/provider-usage.test.ts` (NEW)** — advertisement-shape + schema round-trip (3 negative fixtures including credentialRef rejection) + event presence + credential-leak refusal via emit seam + Thread E.1's `queryTestEvents`.
+- **Compatibility:** strictly additive per `COMPATIBILITY.md §2.1`. New event type; old consumers ignore. New optional capability flag.
+
 ### Test-coverage debt — Threads B + C + D.2 + F + Phase 3/4 partials (2026-05-18 → 2026-05-19)
 
 29 `it.todo()` → behavioral conversions across 16 conformance scenarios (suite-wide count `83 → 54`). All changes are additive per `COMPATIBILITY.md §2.1`; no wire-shape, schema, or endpoint contract changes. Each new behavioral assertion soft-skips on capability absence, fixture non-advertisement, or HTTP 404 against hosts without the sample-namespaced seam.

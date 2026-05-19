@@ -172,10 +172,31 @@ a:visited {
   background: color-mix(in srgb, var(--color-surface) 88%, transparent);
 }
 
+/* Brand mark in the header — Open<em>WOP</em> with italic serif "WOP"
+ * mirrors public/index.html .foot-mark per DESIGN.md §6. */
 .app-header h1 {
   margin: 0;
+  font-family: var(--sans);
+  font-weight: 500;
   font-size: 16px;
-  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--ink);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.app-header h1 em {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--clay);
+}
+.app-header-sub {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
 }
 
 .app-header nav {
@@ -184,17 +205,25 @@ a:visited {
 }
 
 .app-header nav a {
-  color: var(--color-text-muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
   text-decoration: none;
   padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius);
-  font-size: 13px;
+  border-radius: 2px;
+  transition: color .15s ease, background .15s ease;
 }
 
-.app-header nav a.active,
 .app-header nav a:hover {
-  color: var(--color-text);
-  background: var(--color-surface-2);
+  color: var(--clay);
+  background: transparent;
+}
+
+.app-header nav a.active {
+  color: var(--ink);
+  background: var(--clay-wash);
 }
 
 .app-main {
@@ -207,25 +236,38 @@ a:visited {
 
 .app-footer {
   padding: var(--space-3) var(--space-5);
-  border-top: 1px solid var(--color-border);
-  color: var(--color-text-muted);
-  font-size: 12px;
+  border-top: 1px solid var(--rule);
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   text-align: center;
 }
 
+/* ─── Buttons — editorial register, mirrors public/styles.css .btn family ──
+ * Default button = .btn-primary equivalent: ink-on-paper with clay hover.
+ * button.secondary = .btn-ghost equivalent: paper with rule border, ink-hover border.
+ * App density is higher than the marketing site, so we keep the smaller
+ * 13px/8-12 padding rather than the site's 14px/12-18. */
 button {
-  font-family: inherit;
+  font-family: var(--sans);
+  font-weight: 500;
   font-size: 13px;
+  letter-spacing: 0.01em;
   padding: var(--space-2) var(--space-3);
-  background: var(--color-accent);
-  color: white;
-  border: none;
-  border-radius: var(--radius);
+  background: var(--ink);
+  color: var(--paper);
+  border: 1px solid var(--ink);
+  border-radius: 2px;
   cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
 }
 
 button:hover {
-  background: var(--color-accent-hover);
+  background: var(--clay);
+  border-color: var(--clay);
+  color: var(--paper);
 }
 
 button:disabled {
@@ -234,55 +276,82 @@ button:disabled {
 }
 
 button.secondary {
-  background: var(--color-surface-2);
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+}
+
+button.secondary:hover {
+  background: var(--paper);
+  border-color: var(--ink);
+  color: var(--ink);
 }
 
 input, textarea, select {
-  font-family: inherit;
+  font-family: var(--sans);
   font-size: 13px;
   padding: var(--space-2) var(--space-3);
-  background: var(--color-surface);
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
   width: 100%;
+  transition: border-color .15s ease;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: var(--clay-rule);
+  outline: none;
 }
 
 textarea {
-  font-family: var(--font-mono);
+  font-family: var(--mono);
   resize: vertical;
 }
 
 label {
   display: block;
   margin-bottom: var(--space-1);
-  font-size: 12px;
-  color: var(--color-text-muted);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
 }
 
+/* ─── Card — generic surface, matches .compare-card register ───────── */
 .card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
   padding: var(--space-4);
   margin-bottom: var(--space-4);
 }
 
 .card h2 {
   margin: 0 0 var(--space-3);
-  font-size: 14px;
-  font-weight: 600;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--ink);
 }
 
+.card h2 em { font-style: italic; color: var(--clay); }
+
+/* ─── Status badge — mono label, functional-color text, paper-2 fill.
+ * Color pairs with a text label (never color alone) per DESIGN.app.md §11. */
 .status-badge {
   display: inline-block;
   padding: 2px 8px;
-  font-size: 11px;
-  border-radius: 12px;
-  background: var(--color-surface-2);
-  color: var(--color-text-muted);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 2px;
+  background: var(--paper-2);
+  color: var(--ink-3);
 }
 
 .status-badge.completed { color: var(--color-success); }
@@ -291,16 +360,18 @@ label {
 .status-badge.waiting-approval,
 .status-badge.waiting-input,
 .status-badge.paused { color: var(--color-warning); }
+.status-badge.running { color: var(--clay); }
 
 pre, code {
-  font-family: var(--font-mono);
+  font-family: var(--mono);
   font-size: 12px;
 }
 
 pre {
-  background: var(--color-surface-2);
+  background: var(--paper-2);
   padding: var(--space-3);
-  border-radius: var(--radius);
+  border-radius: 2px;
+  border: 1px solid var(--rule);
   overflow-x: auto;
 }
 

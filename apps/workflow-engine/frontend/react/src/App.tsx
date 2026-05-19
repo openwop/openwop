@@ -21,7 +21,7 @@ export function App() {
     <div className="app-shell">
       <DemoHostBanner />
       <header className="app-header">
-        <h1>OpenWOP — workflow-engine sample</h1>
+        <h1>Open<em>WOP</em> <span className="app-header-sub">workflow-engine sample</span></h1>
         <nav>
           <NavLink to="/" end>AI</NavLink>
           <NavLink to="/builder">Workflows</NavLink>

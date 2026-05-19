@@ -103,6 +103,7 @@
         "replay.diverged",
         "agent.reasoned",
         "agent.reasoning.delta",
+        "provider.usage",
         "agent.toolCalled",
         "agent.toolReturned",
         "agent.handoff",

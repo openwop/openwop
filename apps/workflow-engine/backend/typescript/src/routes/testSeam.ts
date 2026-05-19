@@ -411,6 +411,44 @@ export function registerTestSeamRoutes(app: Express, deps: { storage: Storage })
     res.send(Buffer.from(entry.contentBase64, 'base64'));
   });
 
+  // RFC 0026 — provider.usage event emission seam.
+  // POST /v1/host/sample/test/emit-provider-usage
+  // Body: { runId, payload: ProviderUsagePayload, correlationId?, nodeId? }
+  // Synthesizes the event into the test event log; conformance scenarios
+  // query it via the E.1 event-log seam to verify shape.
+  app.post('/v1/host/sample/test/emit-provider-usage', async (req, res) => {
+    const body = (req.body ?? {}) as { runId?: string; payload?: Record<string, unknown>; correlationId?: string; nodeId?: string };
+    if (typeof body.runId !== 'string' || body.runId.length === 0) {
+      res.status(400).json({ error: { code: 'invalid_argument', message: 'runId required' } });
+      return;
+    }
+    const payload = body.payload;
+    if (!payload || typeof payload !== 'object' || typeof payload.provider !== 'string' || typeof payload.model !== 'string' || typeof payload.inputTokens !== 'number' || typeof payload.outputTokens !== 'number') {
+      res.status(400).json({ error: { code: 'invalid_argument', message: 'payload MUST be { provider, model, inputTokens, outputTokens } per RFC 0026 §A' } });
+      return;
+    }
+    // Defense-in-depth: refuse payloads that look like they could carry a
+    // credentialRef (`credentialRef` field literally OR a value containing
+    // 'secret:' which is the openwop credential-ref prefix). This enforces
+    // the `provider-usage-no-credential-leak` SECURITY invariant at the
+    // seam layer; downstream emitters MUST sanitize further per RFC 0026 §D.
+    const serialized = JSON.stringify(payload);
+    if (serialized.includes('credentialRef') || serialized.includes('"secret:')) {
+      res.status(400).json({ error: { code: 'provider_usage_credential_leak', message: 'payload contains credentialRef-shaped content; RFC 0026 §D + SECURITY/invariants.yaml provider-usage-no-credential-leak' } });
+      return;
+    }
+    // Project to the test event log via the projection seam's append helper.
+    const { appendTestEvent } = await import('../host/envelopeEventLog.js');
+    const event = appendTestEvent({
+      runId: body.runId,
+      type: 'provider.usage',
+      payload: payload as Record<string, unknown>,
+      ...(typeof body.correlationId === 'string' ? { causationId: body.correlationId } : {}),
+      ...(typeof body.nodeId === 'string' ? { nodeId: body.nodeId } : {}),
+    });
+    res.status(200).json({ event });
+  });
+
   // LLM cache-key recipe seam — replay.md §"LLM cache-key recipe".
   // POST /v1/host/sample/test/llm-cache-key
   // Body: an LLMCacheKeyInput-shaped object (extra fields ignored per §A).

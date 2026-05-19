@@ -732,6 +732,16 @@ Privacy: cost attributes MUST NOT include the prompt/response text (use `openwop
 
 ---
 
+## Provider usage events (RFC 0026)
+
+The OTel `openwop.cost.*` attribute group above is the observability sibling; the durable event-log sibling is the `provider.usage` event type added by [RFC 0026](../../RFCS/0026-provider-usage-event.md). Hosts that advertise `capabilities.providerUsage.supported: true` MUST emit exactly ONE `provider.usage` event per LLM provider invocation, BEFORE the corresponding `node.completed`. The event carries required `{provider, model, inputTokens, outputTokens}` plus optional `{totalTokens, costEstimateUsd, currency, cacheHit, nodeId, traceId}`. Hosts that don't advertise the capability omit the event entirely; old consumers that ignore unknown event types are unaffected per `COMPATIBILITY.md §2.1`.
+
+The event is REPLAY-DETERMINISTIC for `inputTokens` + `outputTokens` (drawn from the cached provider response on replay); `costEstimateUsd` MAY be omitted on replay even when the original emission included it, since the host's rate table may have changed between runs. The OTel projection (§"Cost attribution attributes" above) is RECOMMENDED but NOT REQUIRED — hosts MAY emit only the event when they don't run an OTel exporter.
+
+The payload MUST NOT carry credentialRefs, hashed credential identifiers, or prompt/response substrings — same redaction posture as the OTel attributes per `SECURITY/threat-model-secret-leakage.md §SR-1`. Enforced by `SECURITY/invariants.yaml` row `provider-usage-no-credential-leak`.
+
+---
+
 ## Open spec gaps
 
 | # | Gap | Owner |

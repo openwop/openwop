@@ -881,6 +881,24 @@ invariants:
       argument-forgery from leaking through. The reference workflow-engine
       sample uses `-32602` (envelope-correct for pre-workflow validation).
 
+  # ===== RFC 0026 provider.usage credential-leak invariant =====
+
+  - id: provider-usage-no-credential-leak
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/provider-usage.test.ts
+    note: |
+      RFC 0026 §D: hosts advertising `capabilities.providerUsage.supported`
+      MUST NOT include credentialRef strings, hashed credential
+      identifiers, or prompt/response substrings in the `provider.usage`
+      event payload. The payload schema's `additionalProperties: false`
+      enforces shape; this invariant adds the semantic constraint that
+      the documented optional fields MUST be sanitized of credential
+      content. Same redaction posture as the OTel `openwop.cost.*`
+      attributes per `observability.md §"Cost attribution attributes"`.
+
   # ===== RFC 0014 host.fs sandbox =====
 
   - id: fs-path-traversal

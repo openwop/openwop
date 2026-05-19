@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v1/run-event-payloads.schema.json",
   "title": "RunEventPayloads",
-  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n49 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
+  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n50 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
   "type": "object",
   "$defs": {
     "_typeIndex": {
@@ -50,6 +50,7 @@
         "replay.diverged":           { "$ref": "#/$defs/replayDiverged" },
         "agent.reasoned":            { "$ref": "#/$defs/agentReasoned" },
         "agent.reasoning.delta":     { "$ref": "#/$defs/agentReasoningDelta" },
+        "provider.usage":            { "$ref": "#/$defs/providerUsage" },
         "agent.toolCalled":          { "$ref": "#/$defs/agentToolCalled" },
         "agent.toolReturned":        { "$ref": "#/$defs/agentToolReturned" },
         "agent.handoff":             { "$ref": "#/$defs/agentHandoff" },
@@ -576,6 +577,25 @@
         "verbosity": { "type": "string", "enum": ["summary", "full", "off"], "description": "Verbosity mode the host resolved for this block. SHOULD match the verbosity reported on the closing `agent.reasoned`." }
       },
       "additionalProperties": true
+    },
+
+    "providerUsage": {
+      "type": "object",
+      "description": "RFC 0026. Per-call usage record emitted after every LLM provider invocation. Durably persisted in the run event log; consumed by replay, webhook subscribers, billing reconciliation. The OTel `openwop.cost.*` attribute group (per `observability.md §\"Cost attribution attributes\"`) is the observability sibling — this event type is the durable record. Replay determinism: `inputTokens` + `outputTokens` MUST replay identically; `costEstimateUsd` MAY be omitted on replay. The payload MUST NOT carry credentialRefs, hashed credential identifiers, or prompt/response substrings per `SECURITY/threat-model-secret-leakage.md §SR-1` (enforced by SECURITY invariant `provider-usage-no-credential-leak`).",
+      "required": ["provider", "model", "inputTokens", "outputTokens"],
+      "properties": {
+        "provider":        { "type": "string", "minLength": 1, "description": "Canonical provider id (lowercase ASCII, e.g. \"anthropic\", \"openai\", \"google\"). Same value as the `openwop.cost.provider` OTel attribute." },
+        "model":           { "type": "string", "minLength": 1, "description": "Provider-stamped model id as the model expects it. Same value used in the LLM cache-key recipe per `replay.md §A`." },
+        "inputTokens":     { "type": "integer", "minimum": 0, "description": "Input/prompt tokens billed for this call. Matches the provider response's input-token count verbatim." },
+        "outputTokens":    { "type": "integer", "minimum": 0, "description": "Output/completion tokens billed for this call. Matches the provider response's output-token count verbatim." },
+        "totalTokens":     { "type": "integer", "minimum": 0, "description": "Convenience sum (inputTokens + outputTokens). Consumers MAY compute themselves; emitters MAY include for readability." },
+        "costEstimateUsd": { "type": "number", "minimum": 0, "description": "ADVISORY estimate in USD computed by the host's static rate table. MUST NOT be used for billing — real billing is external. Hosts SHOULD omit when no rate is known rather than emit 0." },
+        "currency":        { "type": "string", "pattern": "^[A-Z]{3}$", "description": "ISO 4217 code when `costEstimateUsd` is non-USD; the field name stays `costEstimateUsd` for back-compat but `currency` overrides the implied denomination." },
+        "cacheHit":        { "type": "boolean", "description": "True iff this call was served from the LLM response cache per `replay.md §\"LLM cache-key recipe\"`. When true, inputTokens/outputTokens reflect the ORIGINAL call's billed values; the cached invocation incurred zero new provider cost." },
+        "nodeId":          { "type": "string", "description": "The node id that initiated the provider call. Required for per-node cost attribution dashboards." },
+        "traceId":         { "type": "string", "description": "OTel trace id linking this event to the matching `openwop.cost.*` span. Lets observability backends correlate event-log entries with traces." }
+      },
+      "additionalProperties": false
     },
 
     "agentToolCalled": {

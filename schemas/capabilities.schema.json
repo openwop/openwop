@@ -210,6 +210,17 @@
       "uniqueItems": true,
       "description": "Optional v1 host-advertised opaque capability ids that NodeModules may declare in `NodeModule.requires`. Naming convention: dotted, domain-scoped (`chat.sendPrompt`, `canvas.write`, `secrets.byok`). Provider value shapes are documented per-capability alongside consumers, NOT in the protocol package — the protocol owns the *check*, not domain provider contracts. A client that submits a workflow whose nodes declare a `requires` entry SHOULD first verify the host advertises that capability; a host that lacks a capability MUST refuse to dispatch nodes that declare it, terminating the run with `RunSnapshot.error.code = 'capability_not_provided'`. See `capabilities.md` §\"Runtime capabilities\"."
     },
+    "providerUsage": {
+      "type": "object",
+      "description": "RFC 0026 (Draft). Hosts that emit `provider.usage` events after every LLM provider invocation per RFC 0026 §B. The event carries per-call token counts in the durable event log; cost rollup remains in `RunSnapshot.metrics.openwopCost`. Old hosts ignore.",
+      "properties": {
+        "supported": { "type": "boolean", "description": "Host emits one `provider.usage` event per LLM provider call." },
+        "costEstimates": { "type": "boolean", "description": "When true, the host includes `costEstimateUsd` on `provider.usage` events using its internal rate table. When false/absent, only token counts are emitted." },
+        "currency": { "type": "string", "pattern": "^[A-Z]{3}$", "description": "Default ISO 4217 currency for `costEstimateUsd` values. When absent, USD is assumed." }
+      },
+      "required": ["supported"],
+      "additionalProperties": false
+    },
     "aiProviders": {
       "type": "object",
       "description": "Optional v1 companion to `secrets`. Advertises which AI providers the host's AI-proxy can route to and which permit BYOK.",

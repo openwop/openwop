@@ -43,8 +43,16 @@ export function WelcomeCard({ onPickSuggestion }: Props): JSX.Element {
       }} aria-hidden>
         <SparklesIcon size={28} />
       </div>
-      <h2 style={{ margin: 0, fontSize: 18 }}>How can I help?</h2>
-      <p className="muted" style={{ marginTop: 4, fontSize: 13 }}>
+      <h2 style={{
+        margin: 0,
+        fontFamily: 'var(--serif)',
+        fontStyle: 'italic',
+        fontWeight: 400,
+        fontSize: 30,
+        letterSpacing: '-0.01em',
+        color: 'var(--ink)',
+      }}>How can I help?</h2>
+      <p className="muted" style={{ marginTop: 8, fontSize: 13 }}>
         Ask anything — the response is streamed from your configured provider via an OpenWOP run.
       </p>
       <div style={{
