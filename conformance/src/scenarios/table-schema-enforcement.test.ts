@@ -42,6 +42,43 @@ describe('table-schema-enforcement: advertisement shape (RFC 0016)', () => {
   });
 });
 
-describe('table-schema-enforcement: behavioral assertions (placeholders — need host test seam)', () => {
-  it.todo("first insert declares schema; subsequent insert with wrong column type is rejected");
+async function call(op: string, args: Record<string, unknown>) {
+  return driver.post('/v1/host/sample/test/surface', { tenantId: 'tenant-a', surface: 'table', op, args });
+}
+
+describe('table-schema-enforcement: behavioral (RFC 0016 §B point 2)', () => {
+  it('first insert declares schema; subsequent insert with wrong column type is rejected', async () => {
+    const probe = await call('insert', { table: '__probe__', row: { id: 'probe-0' } });
+    if (probe.status === 404) return; // seam not exposed
+    const table = `sch-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    // First insert — declares the schema from this row's columns.
+    const first = await call('insert', {
+      table,
+      row: { id: 'row-1', name: 'alice', count: 42, active: true },
+    });
+    expect(first.status).toBe(200);
+
+    // Second insert — matching schema; MUST succeed.
+    const second = await call('insert', {
+      table,
+      row: { id: 'row-2', name: 'bob', count: 7, active: false },
+    });
+    expect(second.status).toBe(200);
+
+    // Third insert — `count` declared as number; sending a string MUST be rejected.
+    const bad = await call('insert', {
+      table,
+      row: { id: 'row-3', name: 'mallory', count: 'oops-a-string', active: true },
+    });
+    expect(
+      bad.status >= 400 && bad.status < 500,
+      driver.describe('RFC 0016 §B point 2', 'type-divergent insert MUST be rejected with 4xx'),
+    ).toBe(true);
+    const body = bad.json as { error?: { code?: string } | string };
+    const code = typeof body.error === 'string' ? body.error : body.error?.code;
+    expect(
+      code,
+      driver.describe('RFC 0016 §B point 2', 'rejection MUST carry the table_schema_violation error code'),
+    ).toBe('table_schema_violation');
+  });
 });

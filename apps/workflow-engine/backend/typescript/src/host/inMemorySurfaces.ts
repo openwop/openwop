@@ -220,14 +220,49 @@ function createKv(state: TenantMap<KvEntry>, scope: BundleScope): KvSurface {
 }
 
 interface TableRow { id: string; [field: string]: unknown; }
+/** RFC 0016 §B point 2 — schema declared on first insert; subsequent
+ *  rows MUST conform. Per-tenant + per-table column-type registry. */
+type TableColType = 'string' | 'number' | 'boolean' | 'object';
+const _tableSchemas = new Map<string /* tenantId::tableName */, Map<string, TableColType>>();
+function inferColType(v: unknown): TableColType {
+  if (typeof v === 'string') return 'string';
+  if (typeof v === 'number') return 'number';
+  if (typeof v === 'boolean') return 'boolean';
+  return 'object';
+}
 function createTable(state: TenantMap<TableRow>, scope: BundleScope): TableSurface {
   // Tenant-bucket is a Map<rowId, row>. `args.table` namespaces by
   // table name via a prefix on the row id (since we only have one Map).
   const key = (table: unknown, id: unknown) => `${String(table)}::${String(id)}`;
   const bucket = () => state.bucket(scope.tenantId);
+  const schemaKey = (table: unknown) => `${scope.tenantId}::${String(table)}`;
   return {
     async insert({ table, row }) {
       const r = row as TableRow;
+      const sKey = schemaKey(table);
+      let schema = _tableSchemas.get(sKey);
+      if (!schema) {
+        // First insert — declare the schema from this row's columns.
+        schema = new Map();
+        for (const [col, val] of Object.entries(r)) {
+          if (col === 'id') continue;
+          schema.set(col, inferColType(val));
+        }
+        _tableSchemas.set(sKey, schema);
+      } else {
+        // Subsequent insert — every column MUST conform.
+        for (const [col, val] of Object.entries(r)) {
+          if (col === 'id') continue;
+          const declared = schema.get(col);
+          if (declared === undefined) continue; // new column — additive, allowed
+          const got = inferColType(val);
+          if (got !== declared) {
+            throw Object.assign(new Error(`Column '${col}' declared as '${declared}', got '${got}'`), {
+              code: 'table_schema_violation',
+            });
+          }
+        }
+      }
       bucket().set(key(table, r.id), { ...r });
       return { id: r.id };
     },
@@ -253,9 +288,18 @@ function createTable(state: TenantMap<TableRow>, scope: BundleScope): TableSurfa
       const existed = b.delete(k);
       return { deleted: existed ? 1 : 0 };
     },
-    async query({ table, filter, limit }) {
+    async query({ table, filter, limit, cursor }) {
       const t = String(table);
-      const rows: TableRow[] = [];
+      // RFC 0016 §B point 3 — cursor pagination. The cursor is an
+      // opaque token; the in-memory impl uses base64(after_id) so the
+      // caller can resume after the last-returned row deterministically.
+      const afterId = typeof cursor === 'string' && cursor.length > 0
+        ? Buffer.from(cursor, 'base64').toString('utf8')
+        : '';
+      const lim = typeof limit === 'number' && limit > 0 ? limit : Number.MAX_SAFE_INTEGER;
+      // Collect all matching rows in deterministic order (sorted by id),
+      // skipping anything ≤ afterId, capped at `lim`.
+      const allMatching: TableRow[] = [];
       for (const [k, row] of bucket().entries()) {
         if (!k.startsWith(`${t}::`)) continue;
         if (filter && typeof filter === 'object') {
@@ -265,10 +309,22 @@ function createTable(state: TenantMap<TableRow>, scope: BundleScope): TableSurfa
           }
           if (!ok) continue;
         }
-        rows.push(row);
-        if (typeof limit === 'number' && rows.length >= limit) break;
+        allMatching.push(row);
       }
-      return { rows, count: rows.length };
+      allMatching.sort((a, b) => a.id.localeCompare(b.id));
+      const rows: TableRow[] = [];
+      for (const row of allMatching) {
+        if (afterId && row.id <= afterId) continue;
+        rows.push(row);
+        if (rows.length >= lim) break;
+      }
+      const last = rows[rows.length - 1];
+      // `nextCursor` is null when we've reached the end of the result set;
+      // otherwise it encodes the last-returned id for resumption.
+      const consumedThroughId = last ? last.id : afterId;
+      const hasMore = allMatching.some((r) => r.id > consumedThroughId);
+      const nextCursor = hasMore && last ? Buffer.from(last.id, 'utf8').toString('base64') : null;
+      return { rows, count: rows.length, nextCursor };
     },
     async count({ table }) {
       const t = String(table);
