@@ -186,8 +186,41 @@ describe('aiEnvelope.schemaDrift: behavioral strictness gate (FINAL v1.1)', () =
   });
 });
 
-describe('aiEnvelope.schemaDrift: engine-projection placeholders', () => {
-  // The drift-on-OTel-span and log.appended assertions stay deferred — they
-  // require an observability scrape seam beyond the pure-function acceptor.
-  it.todo('drift logs include envelope_schema_version_drift attribute on the OTel span (engine-projection seam needed)');
+// E.2 OTel scrape seam.
+import { queryTestSpans, isOtelSeamAvailable } from '../lib/otel-scrape.js';
+import { resetTestSeam } from '../lib/event-log-query.js';
+
+describe('aiEnvelope.schemaDrift: OTel drift attribute projection (E.2)', () => {
+  it('below-floor + strictness:warn → OTel span MUST carry envelope_schema_version_drift attribute', async () => {
+    if (!(await isOtelSeamAvailable())) return;
+    const runId = `r-drift-otel-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const r = await accept(
+      {
+        type: 'clarification.request',
+        schemaVersion: 0, // below the v1 floor
+        envelopeId: 'env-drift-otel-1',
+        correlationId: `${runId}:n:0:drift-otel`,
+        payload: { questions: [{ id: 'q1', question: 'why?' }] },
+        meta: baseMeta,
+      },
+      {
+        schemaVersionFloor: { 'clarification.request': 1 },
+        envelopeStrictness: 'warn',
+        projectTo: { runId, nodeId: 'n' },
+      },
+    );
+    if (r.status === 404) return;
+    expect(r.body.status).toBe('accepted');
+
+    const spans = await queryTestSpans({ runId });
+    if (!spans.ok) return;
+    expect(
+      spans.data.some((s) => s.attributes.envelope_schema_version_drift === true),
+      driver.describe(
+        'ai-envelope.md §"Schema discipline"',
+        'below-floor accept under strictness:warn MUST project envelope_schema_version_drift attribute on the OTel span',
+      ),
+    ).toBe(true);
+    await resetTestSeam();
+  });
 });

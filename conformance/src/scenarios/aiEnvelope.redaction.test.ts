@@ -192,11 +192,62 @@ describe('aiEnvelope.redaction: behavioral acceptor-level scrub (FINAL v1.1)', (
   });
 });
 
-describe('aiEnvelope.redaction: engine-projection placeholders', () => {
-  // The OTel-span and debug-bundle-export assertions stay deferred — they
-  // require observability-scrape and debug-bundle-fetch seams beyond the
-  // pure-function acceptor. Tracked under Phase 3 (surface seams) /
-  // Phase 5 (host instrumentation) of the test-coverage plan.
-  it.todo('redacted substring absent from OTel envelope_* span attributes (requires OTel scrape seam)');
-  it.todo('redacted substring absent from debug-bundle export (requires debug-bundle fetch seam)');
+// E.2 OTel scrape + E.3 debug-bundle seams.
+import { queryTestSpans, exportDebugBundle, isOtelSeamAvailable } from '../lib/otel-scrape.js';
+import { resetTestSeam } from '../lib/event-log-query.js';
+
+describe('aiEnvelope.redaction: OTel + debug-bundle scrape (E.2 + E.3)', () => {
+  it('redacted canary plaintext MUST be absent from OTel envelope_* span attributes', async () => {
+    if (!(await isOtelSeamAvailable())) return;
+    const runId = `r-red-otel-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    await accept(
+      {
+        type: 'error',
+        schemaVersion: 1,
+        envelopeId: 'env-red-otel-1',
+        correlationId: `${runId}:n:0:red-otel`,
+        payload: { code: 'leak_demo', message: `tool result included ${CANARY_VALUE} verbatim` },
+        meta: baseMeta,
+      },
+      { byokCanaries: CANARIES, projectTo: { runId, nodeId: 'n' } },
+    );
+    const spans = await queryTestSpans({ runId });
+    if (!spans.ok) return;
+    const allAttrs = spans.data.flatMap((s) => Object.values(s.attributes).map((v) => String(v)));
+    expect(
+      allAttrs.some((v) => v.includes(CANARY_VALUE)),
+      driver.describe(
+        'SECURITY/threat-model-secret-leakage.md §SR-1',
+        'BYOK canary plaintext MUST NOT appear in any OTel envelope_* span attribute',
+      ),
+    ).toBe(false);
+    await resetTestSeam();
+  });
+
+  it('redacted canary plaintext MUST be absent from debug-bundle export', async () => {
+    if (!(await isOtelSeamAvailable())) return;
+    const runId = `r-red-bundle-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    await accept(
+      {
+        type: 'clarification.request',
+        schemaVersion: 1,
+        envelopeId: 'env-red-bundle-1',
+        correlationId: `${runId}:n:0:red-bundle`,
+        payload: { questions: [{ id: 'q1', question: `embed ${CANARY_VALUE} here` }] },
+        meta: baseMeta,
+      },
+      { byokCanaries: CANARIES, projectTo: { runId, nodeId: 'n' } },
+    );
+    const bundle = await exportDebugBundle(runId);
+    if (!bundle.ok) return;
+    const serialized = JSON.stringify(bundle.data);
+    expect(
+      serialized.includes(CANARY_VALUE),
+      driver.describe(
+        'SECURITY/threat-model-secret-leakage.md §SR-1',
+        'BYOK canary plaintext MUST NOT appear in the debug-bundle export (events + spans)',
+      ),
+    ).toBe(false);
+    await resetTestSeam();
+  });
 });

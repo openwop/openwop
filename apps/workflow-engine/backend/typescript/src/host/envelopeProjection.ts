@@ -26,6 +26,7 @@
 
 import type { EnvelopeOutcome } from './envelopeAcceptor.js';
 import { appendTestEvent, type TestRunEvent } from './envelopeEventLog.js';
+import { appendTestSpan } from '../observability/spanBuffer.js';
 
 export interface ProjectOpts {
   /** Run id to scope the projection. Test-only — production hosts use
@@ -36,17 +37,62 @@ export interface ProjectOpts {
   correlationId: string;
   /** Envelope's `type` field (e.g. 'clarification.request'). */
   envelopeType: string;
+  /** Envelope's `schemaVersion` for OTel drift attribute projection. */
+  envelopeSchemaVersion?: number;
   /** Optional node id the projection associates the events with. */
   nodeId?: string;
   /** Refusal mode per RFC 0021's Envelope Contract section. Defaults
    *  to 'fail-node' for `gated` outcomes. */
   refusalMode?: 'fail-node' | 'discard-and-warn';
+  /** Schema-version drift context — when an `accepted` outcome happened
+   *  via the schemaVersionFloor + envelopeStrictness='warn' path
+   *  (below-floor schemaVersion accepted with warning), project an
+   *  OTel span attribute `envelope_schema_version_drift = true` per
+   *  `ai-envelope.md §"Schema discipline"`. */
+  driftFloor?: number;
 }
 
 export function projectOutcome(outcome: EnvelopeOutcome, opts: ProjectOpts): TestRunEvent[] {
   const projected: TestRunEvent[] = [];
-  const { runId, correlationId, envelopeType, nodeId, refusalMode = 'fail-node' } = opts;
+  const { runId, correlationId, envelopeType, envelopeSchemaVersion, nodeId, refusalMode = 'fail-node', driftFloor } = opts;
   const causationId = correlationId;
+
+  // Emit an OTel `envelope_*` span for every projected outcome. Per
+  // `observability.md` §"AI cost" + RFC 0021 §"Schema discipline":
+  //   - span name = `envelope.${status}`
+  //   - attributes never include payload contents (the projection here
+  //     persists ONLY the categorized outcome shape, so canary plaintext
+  //     never reaches the span — satisfies the SR-1 carry-forward
+  //     invariant for OTel).
+  //   - schema-drift attribute when below-floor + warn-strictness was
+  //     used (driftFloor is supplied by the caller in that path).
+  const spanAttrs: Record<string, string | number | boolean> = {
+    envelope_type: envelopeType,
+    envelope_outcome: outcome.status,
+    envelope_correlation_id: correlationId,
+  };
+  if (typeof envelopeSchemaVersion === 'number') {
+    spanAttrs.envelope_schema_version = envelopeSchemaVersion;
+  }
+  if (
+    outcome.status === 'accepted' &&
+    typeof driftFloor === 'number' &&
+    typeof envelopeSchemaVersion === 'number' &&
+    envelopeSchemaVersion !== driftFloor
+  ) {
+    spanAttrs.envelope_schema_version_drift = true;
+    spanAttrs.envelope_schema_version_floor = driftFloor;
+  }
+  if (outcome.status === 'accepted') {
+    spanAttrs.envelope_content_trust = outcome.normalizedMeta.contentTrust;
+    if (typeof outcome.envelopeId === 'string') spanAttrs.envelope_id = outcome.envelopeId;
+  }
+  appendTestSpan({
+    name: `envelope.${outcome.status}`,
+    attributes: spanAttrs,
+    runId,
+    ...(outcome.status === 'accepted' && typeof outcome.envelopeId === 'string' ? { envelopeId: outcome.envelopeId } : {}),
+  });
 
   if (outcome.status === 'accepted') {
     const contentTrust = outcome.normalizedMeta.contentTrust;

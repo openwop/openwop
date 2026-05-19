@@ -41,6 +41,7 @@ import type { HostSurfaceBundle, SurfaceArgs, SurfaceFn } from '../host/inMemory
 import { acceptEnvelope, type AcceptOptions } from '../host/envelopeAcceptor.js';
 import { projectOutcome } from '../host/envelopeProjection.js';
 import { listTestEvents, resetTestEventLog } from '../host/envelopeEventLog.js';
+import { listTestSpans, resetTestSpanBuffer } from '../observability/spanBuffer.js';
 import {
   setCapabilityOverlay,
   resetCapabilityOverlay,
@@ -247,12 +248,15 @@ export function registerTestSeamRoutes(app: Express): void {
     // Optional E.1 projection: emit the spec-prescribed events into the
     // test event log so conformance can query them via /test/runs/:runId/events.
     if (body.projectTo && typeof body.projectTo.runId === 'string') {
-      const env = (body.envelope ?? {}) as { type?: string; correlationId?: string };
+      const env = (body.envelope ?? {}) as { type?: string; correlationId?: string; schemaVersion?: number };
       if (typeof env.type === 'string' && typeof env.correlationId === 'string') {
+        const driftFloor = body.schemaVersionFloor?.[env.type];
         projectOutcome(outcome, {
           runId: body.projectTo.runId,
           correlationId: env.correlationId,
           envelopeType: env.type,
+          ...(typeof env.schemaVersion === 'number' ? { envelopeSchemaVersion: env.schemaVersion } : {}),
+          ...(typeof driftFloor === 'number' ? { driftFloor } : {}),
           ...(body.projectTo.nodeId !== undefined ? { nodeId: body.projectTo.nodeId } : {}),
           ...(body.projectTo.refusalMode !== undefined ? { refusalMode: body.projectTo.refusalMode } : {}),
         });
@@ -279,11 +283,45 @@ export function registerTestSeamRoutes(app: Express): void {
     res.status(200).json({ events: listTestEvents(runId, filter) });
   });
 
-  // Reset the test event log + capability overlay (suite teardown).
+  // Reset the test event log + capability overlay + OTel span buffer (suite teardown).
   app.post('/v1/host/sample/test/reset', (_req, res) => {
     resetTestEventLog();
     resetCapabilityOverlay();
+    resetTestSpanBuffer();
     res.status(200).json({ ok: true });
+  });
+
+  // E.2 — OTel scrape seam. Returns the test-only span buffer populated
+  // by `envelopeProjection.ts` so conformance scenarios can assert
+  // attribute redaction (canary absent) + drift attrs.
+  app.get('/v1/host/sample/test/otel/spans', (req, res) => {
+    const q = req.query as Record<string, string | undefined>;
+    const filter: { envelopeId?: string; runId?: string; name?: string } = {};
+    if (typeof q.envelopeId === 'string') filter.envelopeId = q.envelopeId;
+    if (typeof q.runId === 'string') filter.runId = q.runId;
+    if (typeof q.name === 'string') filter.name = q.name;
+    res.status(200).json({ spans: listTestSpans(filter) });
+  });
+
+  // E.3 — Debug-bundle export seam. Bundles the run's events + spans
+  // into a single payload mirroring what a production host's debug-
+  // bundle export endpoint would return. Lets conformance assert the
+  // bundle contains no BYOK canary plaintext (SR-1 carry-forward across
+  // the debug-bundle surface).
+  app.post('/v1/host/sample/test/debug-bundle/export', (req, res) => {
+    const body = (req.body ?? {}) as { runId?: string };
+    if (typeof body.runId !== 'string' || body.runId.length === 0) {
+      res.status(400).json({ error: { code: 'invalid_argument', message: 'runId required' } });
+      return;
+    }
+    res.status(200).json({
+      bundle: {
+        runId: body.runId,
+        events: listTestEvents(body.runId),
+        spans: listTestSpans({ runId: body.runId }),
+        exportedAt: new Date().toISOString(),
+      },
+    });
   });
 
   // Presigned-URL resolver — RFC 0019 §B point 1. The blob surface's
