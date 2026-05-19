@@ -50,7 +50,13 @@ const API_KEY = process.env.OPENWOP_API_KEY ?? 'openwop-inmem-dev-key';
 const PACK_REGISTRY_DIR = process.env.OPENWOP_PACK_REGISTRY_DIR ?? join(
   dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..', 'examples', 'packs',
 );
-const WORKFLOW_CHAIN_EXPANSION_SUPPORTED = existsSync(PACK_REGISTRY_DIR);
+// Liveness probe — re-evaluated on every /.well-known/openwop request
+// AND every expand call so the advertisement tracks reality if the
+// registry dir is removed/created mid-process. The probe is a single
+// `existsSync` per call; cheap.
+function workflowChainExpansionSupported(): boolean {
+  return existsSync(PACK_REGISTRY_DIR);
+}
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -593,7 +599,7 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
   // module trips its memory ceiling).
   const wasmSupported = wasmTypeRegistry.size > 0;
   const capabilities: Record<string, unknown> = {};
-  if (WORKFLOW_CHAIN_EXPANSION_SUPPORTED) {
+  if (workflowChainExpansionSupported()) {
     // RFC 0013 — host editor implements workflow-chain pack expansion
     // via the vendor-prefixed POST /v1/host/sample/workflow-chain:expand
     // endpoint. Per `capabilities.md §workflowChainPacks`: editor-only
@@ -993,7 +999,7 @@ async function handleExpandWorkflowChain(
   res: ServerResponse,
 ): Promise<void> {
   if (!checkAuth(req, res)) return;
-  if (!WORKFLOW_CHAIN_EXPANSION_SUPPORTED) {
+  if (!workflowChainExpansionSupported()) {
     sendError(
       res,
       503,

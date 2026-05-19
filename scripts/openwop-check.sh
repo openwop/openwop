@@ -114,9 +114,13 @@ echo
 
 # 7. Generated protocol status — catches stale corpus counts, RFC status
 # drift, registry-count drift, SDK parity-count drift, and active-doc stale
-# phrases that should not survive outside archived historical docs.
+# phrases that should not survive outside archived historical docs. Also
+# guards against silent drift between sanctioned duplicate-source files
+# (RFC 0013 expansion algorithm: spec-authoritative copy in conformance/
+# vs. zero-deps mirror in examples/hosts/in-memory/).
 echo "[7/9] Generated protocol status..."
 node "$SPEC_ROOT/scripts/generate-protocol-status.mjs" --check
+node "$SPEC_ROOT/scripts/check-workflow-chain-expansion-sync.mjs"
 echo
 
 # 8. Publish-metadata + package-content audit — catches placeholder URLs,

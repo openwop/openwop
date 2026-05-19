@@ -42,7 +42,47 @@ describe('queue-publish-consume-roundtrip: advertisement shape (RFC 0017)', () =
   });
 });
 
-describe('queue-publish-consume-roundtrip: behavioral assertions (placeholders — need host test seam)', () => {
-  it.todo("publish → consume returns the message with the right payload + headers");
-  it.todo("ack removes the message; subsequent consume returns not-found within timeout");
+async function call(op: string, args: Record<string, unknown>) {
+  return driver.post('/v1/host/sample/test/surface', { tenantId: 'tenant-a', surface: 'queueBus', op, args });
+}
+
+describe('queue-publish-consume-roundtrip: behavioral (RFC 0017 §B point 2)', () => {
+  it('publish → consume returns the same payload + subject', async () => {
+    const probe = await call('consume', { subject: '__probe__' });
+    if (probe.status === 404) return; // seam not exposed
+    const subject = `q-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const payload = { event: 'order.created', orderId: 42 };
+    const pub = await call('publish', { subject, payload });
+    expect(pub.status).toBe(200);
+
+    const got = await call('consume', { subject });
+    expect(got.status).toBe(200);
+    const body = got.json as { found?: boolean; subject?: string; payload?: unknown; deliveryToken?: string };
+    expect(body.found, 'consume MUST find the just-published message').toBe(true);
+    expect(body.subject).toBe(subject);
+    expect(
+      body.payload,
+      driver.describe('RFC 0017 §B point 2', 'consume MUST return the exact published payload'),
+    ).toEqual(payload);
+    expect(typeof body.deliveryToken, 'consume MUST return a deliveryToken for ack/nack').toBe('string');
+  });
+
+  it('ack removes the message; subsequent consume on empty queue returns found:false', async () => {
+    const probe = await call('consume', { subject: '__probe__' });
+    if (probe.status === 404) return;
+    const subject = `q-ack-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    await call('publish', { subject, payload: { v: 1 } });
+    const got = await call('consume', { subject });
+    const deliveryToken = (got.json as { deliveryToken?: string }).deliveryToken;
+    const ackRes = await call('ack', { deliveryToken });
+    expect(ackRes.status).toBe(200);
+    expect((ackRes.json as { acked?: boolean }).acked).toBe(true);
+
+    const empty = await call('consume', { subject });
+    const emptyBody = empty.json as { found?: boolean };
+    expect(
+      emptyBody.found,
+      driver.describe('RFC 0017 §B point 2', 'consume after ack MUST surface as found:false'),
+    ).toBe(false);
+  });
 });

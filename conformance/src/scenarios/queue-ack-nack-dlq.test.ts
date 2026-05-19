@@ -61,7 +61,61 @@ describe('queue-ack-nack-dlq: advertisement shape (RFC 0017)', () => {
   });
 });
 
-describe('queue-ack-nack-dlq: behavioral assertions (placeholders — need host test seam)', () => {
-  it.todo("nack(requeue=true) → message is redelivered on next consume");
-  it.todo("deadLetter → message appears on the configured DLQ");
+async function call(op: string, args: Record<string, unknown>) {
+  return driver.post('/v1/host/sample/test/surface', { tenantId: 'tenant-a', surface: 'queueBus', op, args });
+}
+
+describe('queue-ack-nack-dlq: behavioral (RFC 0017 §B point 2 — nack + DLQ)', () => {
+  it('nack(requeue=true) → message is redelivered on next consume with deliveryCount incremented', async () => {
+    const probe = await call('consume', { subject: '__probe__' });
+    if (probe.status === 404) return;
+    const subject = `q-nack-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    await call('publish', { subject, payload: { v: 'redeliver-me' } });
+
+    const first = await call('consume', { subject });
+    const firstBody = first.json as { deliveryToken?: string; payload?: unknown; deliveryCount?: number };
+    expect(firstBody.deliveryCount).toBe(1);
+    const nackRes = await call('nack', { deliveryToken: firstBody.deliveryToken, requeue: true });
+    expect((nackRes.json as { requeued?: boolean }).requeued).toBe(true);
+
+    const second = await call('consume', { subject });
+    const secondBody = second.json as { found?: boolean; payload?: unknown; deliveryCount?: number };
+    expect(
+      secondBody.found,
+      driver.describe('RFC 0017 §B point 2', 'nack(requeue=true) MUST make the message available to next consume'),
+    ).toBe(true);
+    expect(secondBody.payload).toEqual(firstBody.payload);
+    expect(
+      secondBody.deliveryCount,
+      driver.describe('RFC 0017 §B point 2', 'redelivered message MUST have incremented deliveryCount'),
+    ).toBe(2);
+  });
+
+  it('deadLetter → message appears on the <subject>.dlq subject; original subject is empty', async () => {
+    const probe = await call('consume', { subject: '__probe__' });
+    if (probe.status === 404) return;
+    const subject = `q-dlq-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    await call('publish', { subject, payload: { v: 'poison' } });
+
+    const consumed = await call('consume', { subject });
+    const deliveryToken = (consumed.json as { deliveryToken?: string }).deliveryToken;
+    const dlqRes = await call('deadLetter', { deliveryToken, reason: 'unparseable_payload' });
+    expect((dlqRes.json as { deadLettered?: boolean }).deadLettered).toBe(true);
+    const dlqSubject = (dlqRes.json as { dlqSubject?: string }).dlqSubject;
+    expect(dlqSubject).toBe(`${subject}.dlq`);
+
+    // Original subject MUST be empty now
+    const originalEmpty = await call('consume', { subject });
+    expect((originalEmpty.json as { found?: boolean }).found).toBe(false);
+
+    // DLQ MUST carry the message + the deadLetterReason
+    const dlqMsg = await call('consume', { subject: `${subject}.dlq` });
+    const dlqBody = dlqMsg.json as { found?: boolean; payload?: { original?: unknown; deadLetterReason?: string } };
+    expect(
+      dlqBody.found,
+      driver.describe('RFC 0017 §B point 2', 'deadLetter MUST route the message to the <subject>.dlq subject'),
+    ).toBe(true);
+    expect(dlqBody.payload?.deadLetterReason).toBe('unparseable_payload');
+    expect(dlqBody.payload?.original).toEqual({ v: 'poison' });
+  });
 });

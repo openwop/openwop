@@ -94,10 +94,18 @@ export class ChainUnresolvableTypeIdError extends Error {
 
 const PARAM_PATTERN = /\{\{params\.([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g;
 
+/** Recursive literal substitution of `{{params.<name>}}` placeholders in
+ *  any string field. Non-string values pass through unchanged; nested
+ *  arrays/objects are walked. */
 function substitute(value: unknown, params: Record<string, unknown>): unknown {
   if (typeof value === 'string') {
     return value.replace(PARAM_PATTERN, (_match, name: string) => {
       const v = params[name];
+      // Per the spec, parameter values are validated against the chain's
+      // parameters schema BEFORE expansion, so `v === undefined` here
+      // means the chain author referenced an undeclared parameter — the
+      // safest substitution is the empty string (matching the standard
+      // {{...}} convention in n8n/Handlebars).
       return v === undefined ? '' : String(v);
     });
   }
@@ -110,28 +118,52 @@ function substitute(value: unknown, params: Record<string, unknown>): unknown {
   return value;
 }
 
-function rewriteEdgeRef(ref: string, fragmentNodeIds: ReadonlySet<string>, prefix: string): string {
+/** Rewrite an edge endpoint ref. `ref` is either `<nodeId>` or
+ *  `<nodeId>.<portName>`. Only the nodeId portion is rewritten; the
+ *  portName (if present) is preserved verbatim. Refs that don't match
+ *  a fragment node id pass through unchanged (lets edges to/from
+ *  parent-workflow nodes work via post-splice wiring). */
+function rewriteEdgeRef(
+  ref: string,
+  fragmentNodeIds: ReadonlySet<string>,
+  prefix: string,
+): string {
   const dotIdx = ref.indexOf('.');
   const nodeId = dotIdx === -1 ? ref : ref.slice(0, dotIdx);
   const portPart = dotIdx === -1 ? '' : ref.slice(dotIdx);
   return fragmentNodeIds.has(nodeId) ? `${prefix}${nodeId}${portPart}` : ref;
 }
 
+/** Compute the per-expansion node-id prefix from the chainId + expansionId.
+ *  The chainId's dots are replaced with underscores so the resulting ids
+ *  remain valid in storage backends that reserve `.` for hierarchical
+ *  keys. */
 function computePrefix(chainId: string, expansionId: string): string {
   return `${chainId.replace(/\./g, '_')}_${expansionId}_`;
 }
 
+/**
+ * Expand a workflow-chain into a concrete fragment ready to splice into a
+ * parent workflow. Implements steps 3 + 5 + 6 + 8 of the normative
+ * `workflow-chain-packs.md` §"Expansion semantics" flow.
+ *
+ * @throws ChainUnresolvableTypeIdError when any `dag.nodes[].typeId`
+ *   fails the caller's `isTypeIdResolvable` predicate.
+ */
 export function expandChain(chain: WorkflowChain, ctx: ExpansionContext): ExpandedFragment {
+  // Step 3: validate every typeId resolves.
   for (const node of chain.dag.nodes) {
     if (!ctx.isTypeIdResolvable(node.typeId)) {
       throw new ChainUnresolvableTypeIdError(node.typeId, chain.chainId);
     }
   }
+
   const prefix = computePrefix(chain.chainId, ctx.expansionId);
   const fragmentNodeIds = new Set(chain.dag.nodes.map((n) => n.id));
   const idMap = new Map<string, string>();
   for (const id of fragmentNodeIds) idMap.set(id, `${prefix}${id}`);
 
+  // Steps 5 + 6 + 8: substitute placeholders, rewrite ids, propagate capabilities.
   const expandedNodes = chain.dag.nodes.map((n) => {
     const out: ExpandedFragment['nodes'][number] = {
       id: `${prefix}${n.id}`,
@@ -139,8 +171,12 @@ export function expandChain(chain: WorkflowChain, ctx: ExpansionContext): Expand
     };
     if (n.name !== undefined) out.name = n.name;
     if (n.position !== undefined) out.position = n.position;
-    if (n.config !== undefined) out.config = substitute(n.config, ctx.params) as Record<string, unknown>;
-    if (n.inputs !== undefined) out.inputs = substitute(n.inputs, ctx.params) as Record<string, unknown>;
+    if (n.config !== undefined) {
+      out.config = substitute(n.config, ctx.params) as Record<string, unknown>;
+    }
+    if (n.inputs !== undefined) {
+      out.inputs = substitute(n.inputs, ctx.params) as Record<string, unknown>;
+    }
     if (chain.capabilities && chain.capabilities.length > 0) {
       out.capabilities = [...chain.capabilities];
     }

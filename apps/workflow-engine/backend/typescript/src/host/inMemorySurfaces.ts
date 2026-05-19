@@ -116,6 +116,13 @@ export type FsSurface = {
 };
 export type QueueBusSurface = {
   publish: SurfaceFn;
+  /** RFC 0017 §B point 2 — consume one message from the named `subject`.
+   *  Returns `{ found, deliveryToken, payload, subject, id }` on hit;
+   *  `{ found: false }` on empty. Consumed messages move to an
+   *  in-flight tracking map keyed by `deliveryToken`; `ack` removes
+   *  the entry, `nack` re-queues, `deadLetter` routes to a `.dlq`
+   *  subject. */
+  consume: SurfaceFn;
   ack: SurfaceFn;
   nack: SurfaceFn;
   deadLetter: SurfaceFn;
@@ -514,6 +521,11 @@ function sanitizeSegment(s: string): string {
 // ───────────────────────────────────────────────────────────────────
 
 interface BusMessage { id: string; payload: unknown; subject: string; deliveryCount: number; }
+/** RFC 0017 ack/nack/dlq state machine: messages move from the per-
+ *  subject queue → in-flight map on `consume`. `ack` drops the entry;
+ *  `nack(requeue=true)` puts it back at the head of the subject queue;
+ *  `deadLetter` appends it to a per-tenant `<subject>.dlq` subject. */
+const _busInFlight = new Map<string /* tenantId */, Map<string /* deliveryToken */, BusMessage>>();
 function createQueueBus(state: TenantMap<BusMessage[]>, scope: BundleScope): QueueBusSurface {
   const subj = (subject: unknown) => {
     const t = state.bucket(scope.tenantId);
@@ -522,6 +534,11 @@ function createQueueBus(state: TenantMap<BusMessage[]>, scope: BundleScope): Que
     if (!arr) { arr = []; t.set(k, arr); }
     return arr;
   };
+  const inflightForTenant = () => {
+    let m = _busInFlight.get(scope.tenantId);
+    if (!m) { m = new Map(); _busInFlight.set(scope.tenantId, m); }
+    return m;
+  };
   let seq = 0;
   return {
     async publish({ subject, payload }) {
@@ -529,9 +546,49 @@ function createQueueBus(state: TenantMap<BusMessage[]>, scope: BundleScope): Que
       subj(subject).push({ id, payload, subject: String(subject), deliveryCount: 1 });
       return { id, published: true };
     },
-    async ack({ id }) { return { acked: true, id }; },
-    async nack({ id }) { return { nacked: true, id }; },
-    async deadLetter({ id, reason }) { return { deadLettered: true, id, reason }; },
+    async consume({ subject }) {
+      const arr = subj(subject);
+      const msg = arr.shift();
+      if (!msg) return { found: false };
+      const deliveryToken = `dt-${++seq}`;
+      inflightForTenant().set(deliveryToken, msg);
+      return {
+        found: true,
+        deliveryToken,
+        id: msg.id,
+        subject: msg.subject,
+        payload: msg.payload,
+        deliveryCount: msg.deliveryCount,
+      };
+    },
+    async ack({ deliveryToken }) {
+      const m = inflightForTenant();
+      const existed = m.delete(String(deliveryToken));
+      return { acked: existed, deliveryToken };
+    },
+    async nack({ deliveryToken, requeue }) {
+      const m = inflightForTenant();
+      const key = String(deliveryToken);
+      const msg = m.get(key);
+      if (!msg) return { nacked: false, reason: 'unknown_delivery_token' };
+      m.delete(key);
+      if (requeue === false) {
+        return { nacked: true, requeued: false };
+      }
+      const arr = subj(msg.subject);
+      arr.unshift({ ...msg, deliveryCount: msg.deliveryCount + 1 });
+      return { nacked: true, requeued: true };
+    },
+    async deadLetter({ deliveryToken, reason }) {
+      const m = inflightForTenant();
+      const key = String(deliveryToken);
+      const msg = m.get(key);
+      if (!msg) return { deadLettered: false, reason: 'unknown_delivery_token' };
+      m.delete(key);
+      const dlqSubject = `${msg.subject}.dlq`;
+      subj(dlqSubject).push({ ...msg, payload: { original: msg.payload, deadLetterReason: String(reason ?? 'unspecified') } });
+      return { deadLettered: true, dlqSubject };
+    },
     async streamPublish({ stream, record }) {
       const id = `r-${++seq}`;
       subj(stream).push({ id, payload: record, subject: String(stream), deliveryCount: 1 });
