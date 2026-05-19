@@ -229,9 +229,6 @@ export async function signInWithGoogle(): Promise<void> {
   const a = ensureInit();
   if (!a) throw new Error('Firebase Auth not configured');
   setAttemptedProvider('google.com');
-  console.info('openwop.auth: signInWithRedirect → google.com', {
-    sessionId: sessionStorage.getItem(ATTEMPTED_PROVIDER_KEY),
-  });
   await signInWithRedirect(a, new GoogleAuthProvider());
 }
 
@@ -240,9 +237,6 @@ export async function signInWithGithub(): Promise<void> {
   const a = ensureInit();
   if (!a) throw new Error('Firebase Auth not configured');
   setAttemptedProvider('github.com');
-  console.info('openwop.auth: signInWithRedirect → github.com', {
-    sessionId: sessionStorage.getItem(ATTEMPTED_PROVIDER_KEY),
-  });
   await signInWithRedirect(a, new GithubAuthProvider());
 }
 
@@ -293,31 +287,16 @@ export function getRedirectState(): Promise<RedirectState> {
  */
 export async function processRedirectResult(): Promise<RedirectState> {
   const a = ensureInit();
-  if (!a) {
-    console.info('openwop.auth: redirect — firebase not configured');
-    return { kind: 'none' };
-  }
+  if (!a) return { kind: 'none' };
   const attemptedProvider = consumeAttemptedProvider();
-  console.info('openwop.auth: redirect — processing', {
-    attemptedProvider,
-    currentUserBefore: a.currentUser?.email ?? null,
-  });
   try {
     const result = await getRedirectResult(a);
-    console.info('openwop.auth: getRedirectResult', {
-      hasResult: !!result,
-      uid: result?.user?.uid,
-      email: result?.user?.email,
-      providerId: result?.providerId,
-      currentUserAfter: a.currentUser?.email ?? null,
-    });
     // If getRedirectResult returned null BUT we were expecting a
     // redirect AND auth.currentUser is set, Firebase already processed
     // the sign-in on a prior load — treat it as success so the migrate
     // hook still fires. This covers the "user opened DevTools mid-
     // redirect" / strict-mode-replay corner case.
     if (!result && attemptedProvider && a.currentUser) {
-      console.info('openwop.auth: redirect — recovering from pre-processed sign-in');
       return { kind: 'success', linked: false };
     }
     if (!result) return { kind: 'none' };
