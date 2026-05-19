@@ -120,6 +120,37 @@ jobs:
           # occurred — the suite has more capability-gated scenarios
           # than this reference host claims.
           OPENWOP_OPTED_OUT_PROFILES: 'openwop-production,openwop-auth-oauth2-client-credentials,openwop-auth-oidc-user-bearer,openwop-auth-mtls,openwop-replay-fork,workflowChainPacks'
+          # Fixture-id opt-outs — the SQLite host auto-loads every
+          # `conformance-*.json` fixture on disk (so the fixture IS
+          # advertised in `/.well-known/openwop`) but does not implement
+          # the underlying feature for the entries below:
+          #   - conformance-dispatch-{input-mapping,output-mapping,
+          #     cross-worker-handoff}*  → RFC 0022 §A / §D variable
+          #     projection between parent and dispatched child runs is
+          #     not implemented in the reference SQLite executor.
+          #   - conformance-subworkflow-input-mapping*                  → RFC 0022 §B input
+          #     seeding into a `core.subWorkflow` child is not
+          #     implemented in the reference SQLite executor.
+          # Per `conformance/src/lib/fixtures.ts`, these ids are
+          # subtracted from the advertised-fixture cache at suite init
+          # so `isFixtureAdvertised(...)` skips the gated scenarios.
+          # NOTE: `conformance-subworkflow-parent` stays advertised
+          # because the non-OTel `subworkflow.test.ts` passes on SQLite;
+          # the OTel-specific opt-out is below.
+          OPENWOP_OPTED_OUT_FIXTURES: 'conformance-dispatch-input-mapping*,conformance-dispatch-output-mapping*,conformance-dispatch-cross-worker-handoff*,conformance-subworkflow-input-mapping*'
+          # Scenario-id opt-outs — finer-grained than fixture or
+          # profile opt-out. Used when the host correctly advertises
+          # the prerequisite fixture + capability, but the specific
+          # scenario depends on a feature the host doesn't implement:
+          #   - otel-trace-propagation-subworkflow → SQLite advertises
+          #     `conformance-subworkflow-parent` AND
+          #     `capabilities.observability` (for audit-log integrity),
+          #     but doesn't propagate `traceparent` across the
+          #     `core.subWorkflow` dispatch boundary.
+          # Per `conformance/src/lib/env.ts §isScenarioOptedOut`,
+          # individual tests consult this set inside their skip
+          # predicate.
+          OPENWOP_OPTED_OUT_SCENARIOS: 'otel-trace-propagation-subworkflow'
           # OPENWOP_TEST_PUBLIC_REGISTRY deliberately NOT set here — it
           # would mix `packs.openwop.dev` reachability into the host
           # regression signal. Registry health is the next job's
