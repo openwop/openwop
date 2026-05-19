@@ -124,10 +124,7 @@ export const NODE_CATALOG: readonly NodeCatalogEntry[] = [
     description: 'Returns a deterministic mock completion for inputs.prompt. No external calls.',
     category: 'ai',
     badge: 'M',
-    /* Indigo for AI-category nodes — visually distinct from clay (flow)
-     * and the success / warning / danger functional tokens. Mirrored in
-     * .workflow-template-badge-pipeline in global.css. */
-    accent: 'oklch(60% 0.12 280)',
+    accent: 'var(--color-ai)',
     inputs: [{ name: 'prompt', type: 'string' }],
     outputs: [{ name: 'completion', type: 'string' }],
     configFields: [],
@@ -139,9 +136,7 @@ export const NODE_CATALOG: readonly NodeCatalogEntry[] = [
     description: 'Calls a real LLM via BYOK. Expects inputs.messages and inputs.credentialRef.',
     category: 'ai',
     badge: 'C',
-    /* Same indigo as mock-ai — both are 'ai' category. The differing
-     * label + badge letter distinguish them. */
-    accent: 'oklch(60% 0.12 280)',
+    accent: 'var(--color-ai)',
     inputs: [{ name: 'messages', type: 'object' }],
     outputs: [{ name: 'completion', type: 'string' }],
     configFields: [],

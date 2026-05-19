@@ -38,6 +38,7 @@ The marketing site has no `--color-success` etc.; the app needs them because it 
 --color-success: oklch(62% 0.13 145);   /* desaturated forest, on-paper safe */
 --color-warning: oklch(72% 0.14 75);    /* warmer amber, neighbour of --star-glow */
 --color-danger:  oklch(55% 0.16 28);    /* muted brick red */
+--color-ai:      oklch(60% 0.12 280);   /* indigo for the AI node category and the "pipeline" template badge; distinct from clay (flow) and the success/warning/danger triad */
 --scrim:         rgb(0 0 0 / 0.6);      /* modal backdrop; intentionally neutral on either theme */
 ```
 
@@ -174,13 +175,19 @@ The BYOK wizard is a credibility moment for the protocol — the user is pasting
 
 ## 10. Inline-style policy
 
-DESIGN.md §10/§11 ban `style="…color/font…"` in HTML. The same rule applies to React's `style={{}}` prop — with one carve-out:
+DESIGN.md §10/§11 ban `style="…color/font…"` in HTML. The same rule applies to React's `style={{}}` prop — with the carve-outs below:
 
-- **Geometry MAY remain inline** (grid-template-areas, `transform: translate(...)`, `gridColumn`, `top/left` for absolute-positioned coordinate-driven UI).
-- **Color / font-family / font-size / background MUST be className-driven** through global.css.
-- **Dynamic per-event tinting** (e.g., a node that shifts hue with a metric) goes through a CSS custom property set inline (`style={{ '--metric-tint': value }}`) and consumed by a className.
+- **Geometry MAY remain inline** (`gridTemplateAreas`, `transform: translate(...)`, `gridColumn`, `top` / `left` for absolute-positioned coordinate-driven UI, `gap`, `padding`, `display`).
+- **Component-local typographic scale MAY remain inline as literal `fontSize` values** in the 10–14px range (`fontSize: 10`, `fontSize: 11`, `fontSize: 12`). These are geometry, not brand, and tracking them through a className utility table adds noise without buying themability. ~97 such residuals live in the chat module and are deliberately allowed.
+- **Token-referenced font-family is allowed inline** (`style={{ fontFamily: 'var(--mono)' }}` / `'var(--serif)'` / `'var(--sans)'`). The *value* is a token (themeable) even though the *placement* is inline. Literal font-family strings (`fontFamily: 'JetBrains Mono'` etc.) are still banned.
+- **Color / background MUST be className-driven** through global.css, OR pass a token reference through inline `style` (`style={{ background: 'var(--clay-soft)' }}` is allowed because the value is a token; `style={{ background: '#5b8cff' }}` is not).
+- **Dynamic per-event tinting** (e.g., a node that shifts hue with a metric, or a category accent that varies per `entry.kind`) goes through a CSS custom property set inline (`style={{ '--metric-tint': value }}`) and consumed by a className, OR a token reference forwarded inline (`style={{ background: entry.accent }}` where `entry.accent` is `var(--color-ai)` etc.). Literal hex / rgb / OKLCH values are not allowed in the dynamic-tint path.
 
-Lint gate: `grep -rEn "style=\{\{[^}]*(color|background|font)" src/` SHOULD return 0 hits. Phase B of the design migration is auditing this; ≤ 20 justified residuals is the post-Phase-B bar.
+Lint gates:
+
+- `grep -rEn "#[0-9a-fA-F]{3,6}" src/` MUST return 0 hits (zero hex literals anywhere in TS/TSX). Post-Phase-E bar: enforced.
+- `grep -rEn "style=\{\{[^}]*(color|background)[^}]*[\"'](?!var\()" src/` MUST return 0 hits (no literal color values inline). Post-Phase-E bar: enforced.
+- `grep -rEn "style=\{\{[^}]*(color|background|font)" src/` shows the residuals allowed by the carve-outs above; should be reviewed but not blocked.
 
 ---
 

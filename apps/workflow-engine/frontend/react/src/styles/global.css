@@ -37,6 +37,7 @@
   --color-success: oklch(62% 0.13 145);   /* desaturated forest, on-paper safe */
   --color-warning: oklch(72% 0.14 75);    /* warmer amber, neighbour of --star-glow */
   --color-danger:  oklch(55% 0.16 28);    /* muted brick red */
+  --color-ai:      oklch(60% 0.12 280);   /* indigo for AI-category nodes; visually distinct from clay (flow) and the success/warning/danger functional tokens */
   --scrim:         rgb(0 0 0 / 0.6);      /* modal backdrop; neutral on either theme */
 
   /* ── Legacy app-token aliases — points old refs at the new palette. ──
@@ -84,8 +85,10 @@
 }
 
 @keyframes openwop-mic-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 oklch(55% 0.16 28 / 0.5); }
-  50%      { box-shadow: 0 0 0 6px oklch(55% 0.16 28 / 0); }
+  /* Danger-color ring via color-mix so it follows --color-danger across
+   * theme + dark-mode lift instead of pinning to a literal OKLCH value. */
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklch, var(--color-danger) 50%, transparent); }
+  50%      { box-shadow: 0 0 0 6px color-mix(in oklch, var(--color-danger)  0%, transparent); }
 }
 
 /* ─── Reduced motion ──────────────────────────────────────────────────
@@ -124,6 +127,7 @@
     --color-success: oklch(72% 0.14 145);
     --color-warning: oklch(80% 0.14 75);
     --color-danger:  oklch(65% 0.16 28);
+    --color-ai:      oklch(70% 0.12 280);
   }
 }
 
@@ -1322,11 +1326,10 @@ pre {
 }
 
 .workflow-template-badge-pipeline {
-  /* "pipeline" badge — use a desaturated indigo for visual distinction
-   * from the other three categories. Token-defined inline to keep the
-   * palette additions out of :root; if this color recurs, lift to token. */
-  background: color-mix(in oklch, oklch(60% 0.12 280) 16%, transparent);
-  color: oklch(50% 0.12 280);
+  /* "pipeline" badge — reuses --color-ai (the AI/indigo category token)
+   * so it themes through the warm-dark override. */
+  background: color-mix(in oklch, var(--color-ai) 16%, transparent);
+  color: var(--color-ai);
 }
 
 .workflow-template-byok-pill {

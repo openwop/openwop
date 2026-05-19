@@ -161,11 +161,11 @@ function ProviderGrid({
     <div>
       <h2 style={{ margin: 0, fontSize: 14 }}>Pick a provider</h2>
       <p style={{ marginTop: 8, marginBottom: 8, fontSize: 12, lineHeight: 1.5 }}>
-        <strong>BYOK</strong> ("bring your own key") means you supply the API
-        key for the model provider you pick below. The provider bills you
-        directly for your usage; OpenWOP doesn't bill you or take a cut. The
-        sample server forwards each request to the provider using your key,
-        then streams the response back.
+        <abbr title="Bring Your Own Key"><strong>BYOK</strong></abbr> means
+        you supply the API key for the model provider you pick below. The
+        provider bills you directly for your usage; OpenWOP doesn't bill you
+        or take a cut. The sample server forwards each request to the
+        provider using your key, then streams the response back.
       </p>
       <p className="muted" style={{ marginTop: 0, marginBottom: 4, fontSize: 12, lineHeight: 1.5 }}>
         Your key is stored on the sample server (sqlite-backed, AES-256-GCM

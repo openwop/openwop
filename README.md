@@ -156,6 +156,12 @@ End-to-end deployable templates under [`apps/`](./apps/) — a tier above `examp
 - **[`registry-operations.md`](./spec/v1/registry-operations.md)** — operator-side reference for node-pack registries: submission / validation / deprecation / yank / signing-key rotation flows.
 - **[`storage-adapters.md`](./spec/v1/storage-adapters.md)** — `RunEventLogIO` + `SuspendIO` contracts for storage backends; in-memory references.
 
+## Design standards
+
+- **[`DESIGN.md`](./DESIGN.md)** — marketing-site standards + shared editorial palette (`--paper` / `--ink` / `--clay` / `--star-glow`) + Instrument Serif + Geist + Geist Mono type triple. Source of truth for `public/styles.css` and the warm-dark token override that any future surface adopts.
+- **[`DESIGN.app.md`](./DESIGN.app.md)** — reference-app standards for `apps/workflow-engine/frontend/react/`. App-specific components, functional status tokens, xyflow canvas theming, Firebase-Auth vendor-mark policy, inline-style policy. Mirrors shared tokens from `DESIGN.md` per the SYNC RULE in `apps/workflow-engine/frontend/react/src/styles/global.css :root`.
+- Reviewed by `/ux-review`.
+
 ## Status legend
 
 | Tag | Meaning |
