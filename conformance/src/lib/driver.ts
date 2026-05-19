@@ -78,6 +78,21 @@ class OpenWOPDriver {
     return this.request('POST', path, { ...init, body });
   }
 
+  /** PUT helper. The body is JSON-stringified by default; pass a string
+   *  Content-Type header for raw-body PUTs (e.g. tarball uploads).
+   *  Production hosts that accept tarball PUTs on /v1/packs/* expect
+   *  `Content-Type: application/octet-stream`; callers MUST set the
+   *  header explicitly when uploading non-JSON. */
+  put(path: string, body: unknown, init: OpenWOPRequestInit = {}): Promise<OpenWOPResponse> {
+    return this.request('PUT', path, { ...init, body });
+  }
+
+  /** DELETE alias for the canonical name. Keeps the call-site shorter
+   *  for scenarios that delete via `driver.del(...)`. */
+  del(path: string, init: OpenWOPRequestInit = {}): Promise<OpenWOPResponse> {
+    return this.request('DELETE', path, init);
+  }
+
   delete(path: string, init: OpenWOPRequestInit = {}): Promise<OpenWOPResponse> {
     return this.request('DELETE', path, init);
   }
