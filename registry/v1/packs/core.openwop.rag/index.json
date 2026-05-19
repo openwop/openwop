@@ -22,6 +22,8 @@
     "core.rag.retriever-multi-query",
     "core.rag.retriever-contextual-compression"
   ],
+  "nodeCount": 13,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.0",

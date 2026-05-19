@@ -16,6 +16,8 @@
     "core.obs.trace-span-end",
     "core.obs.alert-fire"
   ],
+  "nodeCount": 7,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.0",

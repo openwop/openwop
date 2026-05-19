@@ -21,6 +21,8 @@
     "coordination.delegate",
     "coordination.round-robin"
   ],
+  "nodeCount": 12,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.0",

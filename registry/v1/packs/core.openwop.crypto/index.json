@@ -22,6 +22,8 @@
     "core.crypto.x509-parse",
     "core.crypto.x509-verify-chain"
   ],
+  "nodeCount": 13,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.0",

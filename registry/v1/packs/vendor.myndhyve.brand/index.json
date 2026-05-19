@@ -23,6 +23,8 @@
     "brand.persona.review",
     "brand.persona.validate"
   ],
+  "nodeCount": 14,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.0",

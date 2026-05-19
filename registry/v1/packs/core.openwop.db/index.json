@@ -21,6 +21,8 @@
     "core.db.vector-query",
     "core.db.vector-delete"
   ],
+  "nodeCount": 12,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.0",

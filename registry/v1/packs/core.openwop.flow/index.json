@@ -38,6 +38,8 @@
     "core.loop",
     "core.parallel"
   ],
+  "nodeCount": 29,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.1",

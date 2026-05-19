@@ -12,6 +12,8 @@
     "core.hitl.approval-request",
     "core.hitl.ask-user"
   ],
+  "nodeCount": 3,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.0",

@@ -194,6 +194,111 @@
   }
   .flag-deprecated { color: var(--flag-deprecated); background: var(--flag-deprecated-bg); }
   .flag-yanked     { color: var(--flag-yanked);     background: var(--flag-yanked-bg); }
+  .flag-mixed      { color: var(--ink-3);           background: var(--paper-2); }
+
+  /* ─── Tabs — CSS-only radio-pattern. Zero JavaScript. ────────────────
+   * The .tabs container holds two hidden radio inputs followed by the
+   * label row and the two panels. :checked on each radio drives sibling
+   * selectors that show the matching panel and highlight the matching
+   * label. Default tab = nodes (the larger bucket today). */
+  .tabs { margin: 8px 0; }
+  .tab-radio {
+    /* Visually hide the radio but keep it keyboard-focusable.
+     * Browsers focus the label's associated input — clicking the
+     * label toggles the radio, which drives the :checked sibling rules. */
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .tab-list {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .tab {
+    cursor: pointer;
+    padding: 10px 16px 12px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color .15s ease, border-color .15s ease;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .tab:hover { color: var(--clay); }
+  .tab-count {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.04em;
+    padding: 1px 6px;
+    border-radius: 2px;
+    background: var(--paper-2);
+    color: var(--ink-3);
+  }
+  /* :focus-visible reaches the LABEL when keyboard focus is on the radio
+   * input — most browsers forward :focus-visible to the styled label via
+   * the +/~ selector. Keep an explicit outline so screen-reader users
+   * see which tab is keyboard-focused. */
+  .tab-radio:focus-visible + .tab-list .tab[for="tab-nodes"],
+  .tab-radio:focus-visible ~ .tab-list .tab {
+    outline: none;
+  }
+  #tab-nodes:focus-visible  ~ .tab-list .tab[for="tab-nodes"],
+  #tab-agents:focus-visible ~ .tab-list .tab[for="tab-agents"] {
+    outline: 2px solid var(--clay);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+  /* Active-tab styling — :checked drives sibling rules. */
+  #tab-nodes:checked  ~ .tab-list .tab[for="tab-nodes"],
+  #tab-agents:checked ~ .tab-list .tab[for="tab-agents"] {
+    color: var(--ink);
+    border-bottom-color: var(--clay);
+  }
+  #tab-nodes:checked  ~ .tab-list .tab[for="tab-nodes"]  .tab-count,
+  #tab-agents:checked ~ .tab-list .tab[for="tab-agents"] .tab-count {
+    background: var(--clay-soft);
+    color: var(--clay);
+  }
+  /* Show only the panel whose radio is checked. */
+  .tab-panel { display: none; }
+  #tab-nodes:checked  ~ .tab-panel-nodes  { display: block; }
+  #tab-agents:checked ~ .tab-panel-agents { display: block; }
+  .tab-desc {
+    color: var(--ink-2);
+    font-size: 14.5px;
+    line-height: 1.6;
+    margin: 0 0 24px;
+    max-width: 76ch;
+  }
+  .tab-desc strong { color: var(--ink); font-weight: 500; }
+  .tab-desc a { color: var(--ink); border-bottom: 1px dotted var(--rule-2); }
+  .tab-desc a:hover { color: var(--clay); border-bottom-color: var(--clay); }
+  .tab-desc code {
+    background: var(--paper-2);
+    padding: 1px 5px;
+    border-radius: 2px;
+    font-size: 12.5px;
+  }
+
+  /* Per-tab pack-count column. */
+  th.count-h, td.count {
+    text-align: right;
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+  }
+  td.count { color: var(--ink); }
 
   /* ─── Endpoint list — mono code + grey note ─────────────────────────── */
   .endpoint-list { list-style: none; padding: 0; margin: 12px 0; }
@@ -267,14 +372,41 @@
 
   <section id="catalog">
     <h2>Catalog</h2>
-    <table>
+    <div class="tabs">
+      <input type="radio" name="catalog-tab" id="tab-nodes" class="tab-radio" checked>
+      <input type="radio" name="catalog-tab" id="tab-agents" class="tab-radio">
+
+      <div class="tab-list" role="tablist" aria-label="Pack categories">
+        <label class="tab" for="tab-nodes" role="tab">
+          <span class="tab-label">Node packs</span>
+          <span class="tab-count">58</span>
+        </label>
+        <label class="tab" for="tab-agents" role="tab">
+          <span class="tab-label">Agent packs</span>
+          <span class="tab-count">5</span>
+        </label>
+      </div>
+
+      <div class="tab-panel tab-panel-nodes" role="tabpanel" aria-labelledby="tab-nodes">
+        <p class="tab-desc">
+          <strong>Node packs</strong> ship reusable workflow building blocks — typed
+          input/output handlers, control nodes (flow / branching / approval gates),
+          and integrations (HTTP, storage, MCP). Authors drop them into the canvas
+          at edit time; hosts load and verify them at runtime. See the
+          <a href="https://openwop.dev/spec/v1/node-packs.md">node-packs.md</a>
+          spec for the manifest contract and the SRI + Ed25519 trust model.
+          Mixed packs that also ship agents are flagged
+          <span class="flag flag-mixed">+ agent</span>.
+        </p>
+            <table>
       <thead>
-        <tr><th>Name</th><th>Version</th><th>Description</th><th>License</th><th>Artifacts</th></tr>
+        <tr><th>Name</th><th>Version</th><th class="count-h">Nodes</th><th>Description</th><th>License</th><th>Artifacts</th></tr>
       </thead>
       <tbody>
         <tr>
-          <td class="name"><code>community.openwop-team.demo</code> </td>
+          <td class="name"><code>community.openwop-team.demo</code> <span class="flag flag-mixed">+ agent</span></td>
           <td class="version">0.1.0</td>
+          <td class="count" title="nodes in latest manifest">1</td>
           <td class="desc">First community-namespace demo pack. Mixed pack — one trivial node (`uppercase`) plus one agent (`greeter`) — exercising both extension paths in a single tarball under the open-publish `community.*` tier. Manual Ed25519 signed (not Sigstore) to demonstrate the non-OIDC publishing path documented in registry-operations.md §Step 2. MIT-licensed for SPDX-diversity with the Apache-2.0 core packs.</td>
           <td class="license">MIT</td>
           <td class="artifacts">
@@ -286,6 +418,7 @@
         <tr>
           <td class="name"><code>core.openwop.a2a</code> </td>
           <td class="version">1.1.0</td>
+          <td class="count" title="nodes in latest manifest">17</td>
           <td class="desc">Full A2A (Agent-to-Agent) primitives. Client-side: 12 nodes (discover, send, stream, list/get/cancel tasks, resubscribe, multi-turn coordinator, push-config CRUD). Server-side: workflow IS an A2A agent (server-trigger, agent-card-publish, emit-status, emit-artifact, push-send). Routes through ctx.a2a.* host surface. Tracks spec/v1/a2a-integration.md.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -295,19 +428,9 @@
           </td>
         </tr>
         <tr>
-          <td class="name"><code>core.openwop.agent-examples</code> </td>
-          <td class="version">1.0.0</td>
-          <td class="desc">First pure-agent pack — ships two minimal agent manifests with no node runtime. Validates the `agents[]` extension to the pack manifest (per agent-manifest.schema.json + RFC 0003). Echo agent inlines its system prompt; Summarizer references `prompts/summarizer.md` to demonstrate the `systemPromptRef` path. Both agents are stateless (memoryShape.longTerm: false). Vendor-neutral: no model is pinned — hosts resolve via their BYOK aiProviders surface.</td>
-          <td class="license">Apache-2.0</td>
-          <td class="artifacts">
-            <a href="/v1/packs/core.openwop.agent-examples/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
-            · <a href="/v1/packs/core.openwop.agent-examples/-/1.0.0.tgz" title="signed tarball (tgz)">tgz</a>
-            · <a href="/v1/packs/core.openwop.agent-examples/-/1.0.0.sig" title="Ed25519 signature">sig</a>
-          </td>
-        </tr>
-        <tr>
           <td class="name"><code>core.openwop.agents</code> </td>
           <td class="version">1.0.1</td>
+          <td class="count" title="nodes in latest manifest">12</td>
           <td class="desc">Agent composition primitives. Root agent.run + sub-nodes (tools, memory, parsers, model selector). Composes via RFC 0013 expansion semantics and consumes host.aiProviders + host.agentRuntime.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -317,41 +440,9 @@
           </td>
         </tr>
         <tr>
-          <td class="name"><code>core.openwop.agents.deep-research</code> </td>
-          <td class="version">1.0.0</td>
-          <td class="desc">Long-horizon research agent. Plans, dispatches sub-investigations, retrieves from RAG + web, writes up findings. Mirrors LangGraph Deep Agents (planner + subagents + filesystem). Pure-agent pack.</td>
-          <td class="license">Apache-2.0</td>
-          <td class="artifacts">
-            <a href="/v1/packs/core.openwop.agents.deep-research/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
-            · <a href="/v1/packs/core.openwop.agents.deep-research/-/1.0.0.tgz" title="signed tarball (tgz)">tgz</a>
-            · <a href="/v1/packs/core.openwop.agents.deep-research/-/1.0.0.sig" title="Ed25519 signature">sig</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="name"><code>core.openwop.agents.react</code> </td>
-          <td class="version">1.0.0</td>
-          <td class="desc">Canonical ReAct (Reason + Act) loop agent. Pure-agent pack — ships one agent manifest with a configurable toolAllowlist. Composes via RFC 0007 dispatch and consumes host.aiProviders + host.agentRuntime. The &#39;hello world&#39; of openwop agents.</td>
-          <td class="license">Apache-2.0</td>
-          <td class="artifacts">
-            <a href="/v1/packs/core.openwop.agents.react/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
-            · <a href="/v1/packs/core.openwop.agents.react/-/1.0.0.tgz" title="signed tarball (tgz)">tgz</a>
-            · <a href="/v1/packs/core.openwop.agents.react/-/1.0.0.sig" title="Ed25519 signature">sig</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="name"><code>core.openwop.agents.supervisor</code> </td>
-          <td class="version">1.0.0</td>
-          <td class="desc">Multi-agent supervisor. Routes user tasks to specialized subagents via RFC 0007 dispatch + RFC 0006 orchestrator semantics. Mirrors LangGraph Supervisor and CrewAI&#39;s hierarchical-process pattern. Pure-agent pack.</td>
-          <td class="license">Apache-2.0</td>
-          <td class="artifacts">
-            <a href="/v1/packs/core.openwop.agents.supervisor/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
-            · <a href="/v1/packs/core.openwop.agents.supervisor/-/1.0.0.tgz" title="signed tarball (tgz)">tgz</a>
-            · <a href="/v1/packs/core.openwop.agents.supervisor/-/1.0.0.sig" title="Ed25519 signature">sig</a>
-          </td>
-        </tr>
-        <tr>
           <td class="name"><code>core.openwop.ai</code> </td>
           <td class="version">1.1.2</td>
+          <td class="count" title="nodes in latest manifest">15</td>
           <td class="desc">Spec-canonical AI-call pack. v1.0 (chatCompletion, structuredOutput, toolCalling, embeddings) plus v1.1 multi-modal + LLM helpers — image generate/edit/upscale, audio transcribe/synthesize, video generate, rerank, classify, extract, guardrails, transform. Routes through host BYOK aiProviders.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -363,6 +454,7 @@
         <tr>
           <td class="name"><code>core.openwop.crypto</code> </td>
           <td class="version">1.0.3</td>
+          <td class="count" title="nodes in latest manifest">13</td>
           <td class="desc">Pure cryptographic primitives: hashing, HMAC, AEAD encrypt/decrypt, asymmetric sign/verify, JWT mint/verify, TOTP, x509 parse + chain verify. Built on node:crypto (Node 20+). Zero npm deps. Pure with respect to keys passed in via inputs.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -374,6 +466,7 @@
         <tr>
           <td class="name"><code>core.openwop.data</code> </td>
           <td class="version">1.2.1</td>
+          <td class="count" title="nodes in latest manifest">38</td>
           <td class="desc">Spec-canonical data-utility pack. v1.0 baseline (string-case, string-split, array-filter, array-map, object-merge) plus v1.1 additions: string format/regex/encode, array sort/unique/flatten/chunk/zip/reduce, object pick/omit/rename/get-path/set-path, json parse/stringify/schema-validate, jsonpath query, csv parse/stringify, datetime suite, number format/round/clamp, uuid. Zero npm deps (Node 20+).</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -385,6 +478,7 @@
         <tr>
           <td class="name"><code>core.openwop.db</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">12</td>
           <td class="desc">Database adapter primitives — sql, nosql, search, vector. Each gated on its host capability (host.sql, host.nosql, host.searchIndex, host.vectorStore) per RFC 0018. Pack speaks no driver — delegates to ctx.db.*. Parametric SQL only (host enforces).</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -396,6 +490,7 @@
         <tr>
           <td class="name"><code>core.openwop.examples</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">3</td>
           <td class="desc">Spec-canonical examples pack — three minimal nodes (echo, coin-flip, delay-with-progress) that exercise the core node-pack contract end-to-end. Zero npm deps; runs on any Node 20+ host advertising the openwop-node-packs profile. See docs/PACKS-MVP-PLAN.md.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -407,6 +502,7 @@
         <tr>
           <td class="name"><code>core.openwop.files</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">19</td>
           <td class="desc">File + binary primitives — fs CRUD, base64, mime detection, image / PDF / archive processing, FTP / SFTP / SSH. Capability-gated on host.fs (RFC 0014). Hosts MUST enforce sandbox root + path-traversal protection.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -418,6 +514,7 @@
         <tr>
           <td class="name"><code>core.openwop.flow</code> </td>
           <td class="version">1.1.0</td>
+          <td class="count" title="nodes in latest manifest">29</td>
           <td class="desc">Spec-canonical flow-control primitives. 25 nodes covering branching, merging, iteration, aggregation, batching, sorting, deduplication, repetition, suspension, sub-workflow invocation, and Make-style error handlers. Pure or suspending — no external I/O. Zero npm deps. Engine &gt;=1.0.0 &lt;2.0.0.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -429,6 +526,7 @@
         <tr>
           <td class="name"><code>core.openwop.hitl</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">3</td>
           <td class="desc">Human-in-the-loop primitives. form-request, approval-request, ask-user — each suspends the run via the existing interrupt mechanism. Zero npm deps.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -440,6 +538,7 @@
         <tr>
           <td class="name"><code>core.openwop.http</code> </td>
           <td class="version">1.1.2</td>
+          <td class="count" title="nodes in latest manifest">23</td>
           <td class="desc">HTTP + general transport pack. v1.0 baseline: core.openwop.http.fetch (retry, backoff, idempotency). v1.1 additions: openapi-call, GraphQL (query/mutation/subscription), SOAP, gRPC (4 streaming variants), SSE consume, WebSocket client, long-poll, upload (multipart + resumable), download stream, pagination decorators (cursor/offset/link-header), rate-limit-aware retry, circuit breaker, idempotency-key generator, webhook signature verifier (Stripe/GitHub/Slack/raw-hmac). Zero npm deps — Node 20+ fetch/undici; transports requiring native libs delegate to host capabilities.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -451,6 +550,7 @@
         <tr>
           <td class="name"><code>core.openwop.integration</code> </td>
           <td class="version">1.1.0</td>
+          <td class="count" title="nodes in latest manifest">7</td>
           <td class="desc">Integration-layer primitives. v1.0 (email-send, slack-message) plus v1.1 (chat-message-generic, sms-send, voice-call-place, voice-call-tts-greet, notification-push) — provider-neutral cross-cutting integration helpers.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -462,6 +562,7 @@
         <tr>
           <td class="name"><code>core.openwop.mcp</code> </td>
           <td class="version">1.1.1</td>
+          <td class="count" title="nodes in latest manifest">21</td>
           <td class="desc">Spec-canonical MCP (Model Context Protocol) pack. v1.0 four-node client baseline (list-tools, invoke-tool, read-resource, server-status) plus the v1.1 additions: full client-side surface (resources, prompts, completion, logging, ping) AND server-side (workflow IS an MCP server — server-trigger + expose-tool/resource/prompt + handle-sampling/elicitation + provide-roots). Tracks modelcontextprotocol.io 2025-06-18 spec via spec/v1/mcp-integration.md.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -473,6 +574,7 @@
         <tr>
           <td class="name"><code>core.openwop.messaging</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">7</td>
           <td class="desc">Queue + stream primitives — publish, consume (trigger), ack/nack/dead-letter, stream subscribe/publish. Capability-gated on host.queueBus (RFC 0017). Sibling to host.messaging (outbound-egress-only).</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -484,6 +586,7 @@
         <tr>
           <td class="name"><code>core.openwop.obs</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">7</td>
           <td class="desc">Observability emission primitives. Workflows publish logs / metrics / traces / alerts under the canonical openwop.* OTel namespace. Delegates to ctx.observability when the host advertises it, no-ops gracefully otherwise. Zero npm deps.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -495,6 +598,7 @@
         <tr>
           <td class="name"><code>core.openwop.rag</code> </td>
           <td class="version">1.0.1</td>
+          <td class="count" title="nodes in latest manifest">13</td>
           <td class="desc">Retrieval-Augmented-Generation primitives: loaders, splitters, vector ops (thin wrappers over core.openwop.db.vector-*), and retrievers (basic / multi-query / contextual-compression).</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -506,6 +610,7 @@
         <tr>
           <td class="name"><code>core.openwop.storage</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">20</td>
           <td class="desc">State primitives — kv / table / cache / blob / queue. Each node gated on its specific host capability block (host.kvStorage, host.tableStorage, host.cache, host.blobStorage, host.queue) per RFCs 0015–0019. Pack delegates to ctx.storage.* host surface. Zero npm deps.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -517,6 +622,7 @@
         <tr>
           <td class="name"><code>core.openwop.triggers</code> </td>
           <td class="version">1.1.0</td>
+          <td class="count" title="nodes in latest manifest">16</td>
           <td class="desc">Workflow-trigger pack. Sixteen entry-point shapes — original seven (webhook, schedule, event, envelope, chatMessage, canvas, artifact) plus the v1.1 additions (mailhook, email-imap, form, rss, manual, error, sub-workflow, cron-advanced) and the webhook-response action. Trigger nodes are pass-through executors: they forward `ctx.triggerData` (set by the engine when the trigger fires) to outputs.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -528,6 +634,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.ads-copy-generate</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">1</td>
           <td class="desc">MyndHyve ads.copy.generate — AI-powered multi-variant ad copy generation with per-placement adaptation (truncation to caller-supplied text limits). Routes the AI call through ctx.callAI; replaces the source PlatformSpecRegistry read with caller-supplied inputs.placementTextLimits (resolve upstream from vendor.myndhyve.ads-platforms OR host.adPlatformSpecs).</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -539,6 +646,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.ads-creative-validate</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">1</td>
           <td class="desc">MyndHyve ads.creative.validate — full compliance scanner combining built-in policy text rules, placement text-length checks, AND asset-format checks (image/video dimensions, file sizes, durations). Caller supplies placement spec data via inputs (resolve upstream from vendor.myndhyve.ads-platforms OR host.adPlatformSpecs).</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -550,6 +658,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.ads-export</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">1</td>
           <td class="desc">MyndHyve ads.export.pack — pure-logic export pack builder. Bundles copy variants + creative assets + tracking links into a structured AdExportPack record (JSON-serializable). Lifted from src/canvas-types/campaign-studio/ads-studio/export/AdExportPackService.ts. No host capabilities required; deterministic.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -561,6 +670,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.ads-image-generate</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">1</td>
           <td class="desc">MyndHyve ads.image.generate — generate ad creative images via the host&#39;s ctx.callImageGenerator (host.aiProviders.imageGeneration sub-capability from spec PR #48). Batches N prompts through one host call each, computes per-placement dimensions from caller-supplied placementSpec, applies platform/style/brand-color prompt enhancement, and aggregates safety-filter stats. First consumer of the new sub-capability.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -572,6 +682,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.ads-metrics-import</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">1</td>
           <td class="desc">MyndHyve ads.metrics.import — pure-logic aggregation of ad metric snapshots. Caller supplies snapshots[]; pack filters by platformAdIds + optional platform/dateRange, validates each entry, and computes weighted aggregations (overallCtr / overallCpc / overallRoas / overallConversionRate + per-platform breakdown). Mirrors source AdMetricsService.getAggregatedMetrics math. No host capabilities required.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -583,6 +694,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.ads-platforms</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">1</td>
           <td class="desc">MyndHyve ads.platform.specs — pure-data executor exposing the creative specs for 9 ad platforms (amazon, google, linkedin, meta, pinterest, reddit, snapchat, tiktok, x) across their placements. ~1500 LOC of platform spec data (aspect ratios, text limits, file sizes, format support, CTA presets, safe zones, caption + audio guidance) inlined verbatim from src/canvas-types/campaign-studio/ads-studio/platforms/. No host capabilities required.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -594,6 +706,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.ads-policy</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">1</td>
           <td class="desc">MyndHyve ads.policy.check — built-in policy text-rule scanner. Detects claims (guarantees, income, superlatives), trademark mentions, prohibited content (before/after, deceptive urgency), discriminatory targeting. Caller-supplied placement text-limits + trust-guardrail results for fuller coverage; standalone for text-rule-only checks.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -605,6 +718,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.ads-publish-google</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">1</td>
           <td class="desc">MyndHyve ads.publish.google — publish an ad to Google Ads API v18 (Search + Display). Symmetric companion to ads-publish-meta. Resolves 2 secrets (OAuth + developer-token) via ctx.secrets.resolve, then runs the 4-step publish pipeline (budget → campaign → ad-group → ad) with best-effort REMOVE-rollback. Supports 6 bidding strategies + 6 channel types + responsive_search &amp; responsive_display ad formats.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -616,6 +730,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.ads-publish-meta</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">1</td>
           <td class="desc">MyndHyve ads.publish.meta — publish an ad to Meta Marketing API v21.0 (Facebook/Instagram). First consumer of the secrets.resolveInPack sub-capability (spec PR #52). Resolves OAuth token via ctx.secrets.resolve, then runs the 4-step publish pipeline (creative → campaign → ad set → ad) with best-effort rollback on failure. Validates all 6 Meta enums (objective, status, bidStrategy, billingEvent, targeting flexible-spec, placements) pre-flight. Maps Meta API errors to retryable/non-retryable per spec failure-mode glossary.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -627,6 +742,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.ads-publish-tiktok</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">1</td>
           <td class="desc">MyndHyve ads.publish.tiktok — publish an ad to TikTok Marketing API v1.3. Third + final platform-publish pack of the Stage 5 cohort. Single OAuth secret (Access-Token header, not Bearer); TikTok envelope { code, message, data } where code !== 0 means business error even on HTTP 200; optional image upload by URL before ad creation. 3-step pipeline (campaign → adgroup → ad; no separate budget). No rollback per TikTok API semantics (no hard-delete via this surface); partialState surfaced for manual cleanup.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -638,6 +754,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.ads-studio-core</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">4</td>
           <td class="desc">MyndHyve Ads Studio core — four pure-logic executors lifted from src/canvas-types/campaign-studio/nodes/adsStudioPack/. ads.brief.build (CreativeBriefBuilder), ads.variant.plan (VariantPlanService), ads.video.qa (VideoQAService), ads.winner.synthesize (WinnerSynthesisService). All four executors are deterministic — no host capabilities required beyond the core NodeContext. Marks the Phase A pilot of the canvas-type executor migration per openwop/openwop#11.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -649,6 +766,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.ads-tools</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">2</td>
           <td class="desc">MyndHyve Ads Studio tools — 2 pure-logic executors (ads.brief.extract, ads.tracking.link) lifted from src/canvas-types/campaign-studio/ads-studio/. Both are deterministic — no AI calls, no host capabilities. brief.extract derives an AdBrief from caller-supplied page sections; tracking.link builds UTM-tagged per-platform URLs with click-ID macros.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -660,6 +778,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.ads-video-generate</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">1</td>
           <td class="desc">MyndHyve ads.video.generate — generate ad creative videos via the host&#39;s ctx.callVideoGenerator (aiProviders.videoGeneration sub-capability from spec PR #53). Symmetric companion to ads-image-generate but adapted for video (single video per call, host hides async polling internally, typical 30-120s latency). Caller-supplied placementSpec.videoSpec replaces source&#39;s PlatformSpecRegistry lookup.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -671,6 +790,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.agent-orchestration</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">12</td>
           <td class="desc">MyndHyve agent-orchestration pack. Six nodes that operate on RFC 0007 / 0008 / 0011 protocol primitives — spawn, delegate-smart, consensus-vote, message-send, skill-invoke, swarm-execute. Routes through the host&#39;s agent runtime (ctx.agentRuntime.*). Inherits RFC 0007 §F suspend mechanics for low-confidence escalation.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -682,6 +802,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.ai</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">3</td>
           <td class="desc">MyndHyve envelope-protocol AI nodes. Distinct from core.openwop.ai (which ships provider-agnostic chat-completion + structured-output + embeddings) — this pack ships MyndHyve-specific nodes that work with typed envelopes (`prd.create`, `theme.create`, etc.) emitted into the workflow&#39;s envelope stream, and prompts resolved from MyndHyve&#39;s prompt library by ID.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -693,6 +814,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.app-builder</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">2</td>
           <td class="desc">MyndHyve App Builder typeIds — app-builder.per-screen (single-task screen generation: chat-send → typed-envelope-await with bounded retry) + app-builder.iterate-tasks (multi-task serial loop over feature tasks with task-level failure isolation). Both consume host.chat + host.aiEnvelope.await. Host concerns (progress cards, telemetry, pilot materializer) intentionally NOT in pack — pack returns categorized task results that host MAY render however it wishes.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -704,6 +826,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.brand</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">14</td>
           <td class="desc">MyndHyve brand-workflow pack. 14 nodes — 8 theme (analyze/discovery/generate/implement/publish/review/templates/validate) + 6 persona (discover/generate/keywordStrategy/publish/review/validate). Each is an AI-driven envelope-emitting node anchored on the brand canvas type. Routes through ctx.brand.* + ctx.aiEnvelope.generate.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -715,6 +838,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.campaign-sequence</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">3</td>
           <td class="desc">MyndHyve campaign-sequence step executors — three pure-control nodes (wait, tag, condition) lifted from src/canvas-types/campaign-studio/sequences/sequenceStepModules.ts. Self-contained: only ctx.inputs + ctx.log; no host capabilities required beyond core NodeContext. The integration siblings (email, sms, webhook) ship in a follow-up pack once openwop NodeContext extensions for host.email / host.sms / host.http land.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -726,6 +850,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.campaign-sequence-integration</code> </td>
           <td class="version">1.0.1</td>
+          <td class="count" title="nodes in latest manifest">3</td>
           <td class="desc">MyndHyve campaign-sequence integration nodes — email, sms, webhook. Companion pack to vendor.myndhyve.campaign-sequence (which carries the 3 pure-control nodes). Declares `host.campaignMessaging` peerDependency for the email + sms surface (matching MyndHyve&#39;s EmailSMSAdapterService shape); webhook is self-contained via Node 20 fetch + bundled HMAC signature.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -737,6 +862,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.canvas</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">4</td>
           <td class="desc">First vendor-namespace pack. Ships MyndHyve canvas-coordination nodes — canvasRead / canvasWrite / canvasCreate / crossCanvasInvoke — preserving the `core.coordination.*` typeIds in the wild (typeId-preserve strategy from the migration plan §4). The pack itself is MyndHyve-internal: hosts that don&#39;t advertise `host.canvas: supported` cannot register it.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -748,6 +874,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.chat</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">6</td>
           <td class="desc">MyndHyve chat-bridge nodes — sendMessage, progressCard, updateCard, phaseInputGate, approvalGate, clarificationGate. Routes through the host&#39;s chat adapter (ctx.chat.*) + ctx.suspend for HITL gates. Preserves the core.chat.* typeIds in the wild.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -759,6 +886,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.data-integration</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">8</td>
           <td class="desc">MyndHyve data-integration pack. 7 nodes for fetching from typed data sources (REST / GraphQL / A2A / MCP), transforming results, applying bindings to UI templates, and managing run-scoped variables. Routes through ctx.dataIntegration.* host adapter.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -770,6 +898,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.entities</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">5</td>
           <td class="desc">MyndHyve entities + validation + asset-decision + messaging primitives. 5 nodes covering project creation, cross-stage validation (deterministic, no LLM), workspace asset decision gates (brand / persona / KB), and chat send/reply via the messaging connector layer.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -781,6 +910,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.kanban</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">7</td>
           <td class="desc">MyndHyve kanban-coordination pack. 7 nodes covering board lifecycle, task management (assign + AI-powered decompose), timeline planning, automation rules, and resource monitoring. Routes through ctx.kanban.* host adapter.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -792,6 +922,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.knowledge-tools</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">2</td>
           <td class="desc">MyndHyve knowledge-tools — first reference consumer of the v1 host.knowledge surface. Two typeIds: (1) knowledge.retrieve — thin pass-through over ctx.knowledge.retrieve with optional score-floor filtering; (2) knowledge.augment-prompt — composition primitive that retrieves + renders a Sources block + builds an augmented user message + emits a citation list. Host advertises host.knowledge: supported per spec/v1/host-capabilities.md §host.knowledge.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -803,6 +934,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.landing-page</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">7</td>
           <td class="desc">MyndHyve landing-page executors — 7 nodes (landing.{content.generate, structure.create, variants.generate, theme.apply, tracking.setup, page.validate, page.publish}). Lifted from src/canvas-types/campaign-studio/nodes/pageBuilder/. Two AI-call sites (content.generate, variants.generate) route through ctx.callAI; the original useDesignSystemStore + useIntegrationStore reads are replaced with input-passthrough — the workflow author resolves design tokens + tracking integrations upstream and feeds them into the executor.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -814,6 +946,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.launch-studio</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">2</td>
           <td class="desc">MyndHyve Launch Studio pack. 2 nodes for the LS backbone: link a project to a step + propagate inherited artifact context, and dispatch ready WOP stack items (todo → doing) for a step&#39;s canvas type.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -825,6 +958,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.market-intel-ad-angles</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">1</td>
           <td class="desc">MyndHyve market-intel.ad-angles — generates 5-10 ad-angle briefs from VoC research + ICP/product context via one AI call. Each brief carries angleName, segment, corePain, promise, mechanism, proof requirements, objections to handle, 3-5 hook variants, recommended CTA, source quotes, and a 5-dimension score (volume / intensity / commercialIntent / clarity / uniqueness + weighted total). Briefs are sorted by total score descending. Second marketIntel pack of the Stage 5 cohort.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -836,6 +970,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.market-intel-audience-targeting</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">1</td>
           <td class="desc">MyndHyve market-intel.audience-targeting — generate per-platform paid-media targeting packs (interests + keywords + community placements + audience definitions) for 6 ad platforms (meta / google / linkedin / tiktok / reddit / x) from market-research data (communities + angles). One AI call. Outputs cross-platform insights + testing sequence (phased) + budget allocation. Seventh marketIntel pack of the Stage 5 cohort.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -847,6 +982,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.market-intel-community-rank</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">1</td>
           <td class="desc">MyndHyve market-intel.community-rank — rank candidate communities (from a discovery step or connector) by VoC research relevance. Per-community: relevanceScore (0..1) + signalQuality (high/medium/low) + ICP problem alignment + expected intent stages + search strategy + risk factors. Distinct from market-intel.ai-discovery (which generates NEW community suggestions): this pack ranks EXISTING candidates. Ninth marketIntel pack of the Stage 5 cohort.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -858,6 +994,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.market-intel-content-extraction</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">1</td>
           <td class="desc">MyndHyve market-intel.content-extraction — extract structured content from raw HTML via one ctx.callAI. Outputs title, cleaned content, author, publishedAt, contentType, engagement metrics, tags, summary, and relevantQuotes. Sits between host.webResearch.fetchBatch and market-intel.voc-extraction in the canonical pipeline. Fifth marketIntel pack of the Stage 5 cohort.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -869,6 +1006,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.market-intel-discovery</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">1</td>
           <td class="desc">MyndHyve market-intel.ai-discovery — AI-powered source-discovery via one ctx.callAI. Given a topic + optional industry/audience/platforms, returns relevant URLs, communities (with platform / relevanceScore / estimatedPostCount), and search queries. Replaces the manual URL-input step of the marketIntel research pipeline. Third marketIntel pack of the Stage 5 cohort.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -880,6 +1018,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.market-intel-opportunity-scoring</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">1</td>
           <td class="desc">MyndHyve market-intel.opportunity-scoring — score and rank communities AND messaging angles on a 5-dimension scale (volume / intensity / commercialIntent / clarity / uniqueness, weighted total) given a VoC corpus + community metadata. Composable primitive slotting between voc-extraction (aggregator) and ad-angles (downstream). Source-side this prompt is used inside the market-intel.research orchestrator; published here as a standalone typeId so workflow authors can compose it directly. Fourth marketIntel pack of the Stage 5 cohort.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -891,6 +1030,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.market-intel-query-builder</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">1</td>
           <td class="desc">MyndHyve market-intel.query-builder — generate intent-mapped search queries (4-8 query groups × 4 intent stages, 2-4 variations each, synonym maps, platform hints) + per-competitor query packs (comparison/switching/alternative) + topic clusters from ICP + product context. Pairs with ai-discovery: query-builder produces &#39;what to search for&#39;, ai-discovery produces &#39;where to search&#39;. Eighth marketIntel pack of the Stage 5 cohort.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -902,6 +1042,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.market-intel-thread-triage</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">1</td>
           <td class="desc">MyndHyve market-intel.thread-triage — cost-aware pre-filter for VoC extraction. Triages candidate threads into priority tiers (critical/high/medium/low/skip), predicts VoC value + intent stages + tag types, estimates extraction tokens per thread, and builds an extraction queue within token budget. Sits between ai-discovery and voc-extraction in the canonical pipeline. Sixth marketIntel pack of the Stage 5 cohort.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -913,6 +1054,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.market-intel-voc</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">1</td>
           <td class="desc">MyndHyve market-intel.voc-extraction — extract Voice of Customer records (verbatim quotes + tagType + intentStage + confidence + rationale) from a single piece of content via a single AI call. First marketIntel pack of the Stage 5 cohort. Schema validation strips invalid records with per-record warnings; output preserves source structure (records + summary + warnings).</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -924,6 +1066,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.web-research</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">4</td>
           <td class="desc">MyndHyve web-research pack — 4 nodes for the search → fetch → research → synthesize pipeline. webSearch + fetchUrls + researchWeb route through the host&#39;s webResearch adapter (search API + scraping policy + rate-limit + cache layer); synthesize composes results into a typed envelope via the AI envelope surface.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -935,6 +1078,7 @@
         <tr>
           <td class="name"><code>vendor.myndhyve.wop-refinement</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">1</td>
           <td class="desc">MyndHyve WOP feature-refinement node — wop.feature.refine. Driven by a `feature.breakdown` LLM envelope; decides whether a stack item is actionable as a node, executable as a chain, must be split into sub-items, needs clarification, or should be blocked. Enforces hard `maxDepth` + `maxGeneratedItems` constraints regardless of LLM proposal. Used by both runner-driven dispatch (StackAutoplayRunner) and chain-driven sub-workflows.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -946,6 +1090,7 @@
         <tr>
           <td class="name"><code>vendor.openwop.rust-hello</code> </td>
           <td class="version">1.0.0</td>
+          <td class="count" title="nodes in latest manifest">1</td>
           <td class="desc">Reference WASM node pack proving RFC 0008 ABI v1 works end-to-end across an independent toolchain. One node type: vendor.openwop.rust-hello.greet.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
@@ -956,6 +1101,88 @@
         </tr>
       </tbody>
     </table>
+      </div>
+
+      <div class="tab-panel tab-panel-agents" role="tabpanel" aria-labelledby="tab-agents">
+        <p class="tab-desc">
+          <strong>Agent packs</strong> ship reusable agent personas — each one bundles
+          a system prompt, a tool allowlist, a memory shape, and handoff schemas. They
+          are addressed by <code>AgentRef</code> and resolved at run time through the
+          host's agent runtime, so the same pack can plug into supervisor, ReAct, or
+          deep-research orchestration patterns. See
+          <a href="https://github.com/openwop/openwop/blob/main/RFCS/0003-agent-packs.md">RFC 0003 (Active)</a>
+          for the manifest contract. Mixed packs that also ship nodes are flagged
+          <span class="flag flag-mixed">+ nodes</span>.
+        </p>
+            <table>
+      <thead>
+        <tr><th>Name</th><th>Version</th><th class="count-h">Agents</th><th>Description</th><th>License</th><th>Artifacts</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="name"><code>community.openwop-team.demo</code> <span class="flag flag-mixed">+ nodes</span></td>
+          <td class="version">0.1.0</td>
+          <td class="count" title="agents in latest manifest">1</td>
+          <td class="desc">First community-namespace demo pack. Mixed pack — one trivial node (`uppercase`) plus one agent (`greeter`) — exercising both extension paths in a single tarball under the open-publish `community.*` tier. Manual Ed25519 signed (not Sigstore) to demonstrate the non-OIDC publishing path documented in registry-operations.md §Step 2. MIT-licensed for SPDX-diversity with the Apache-2.0 core packs.</td>
+          <td class="license">MIT</td>
+          <td class="artifacts">
+            <a href="/v1/packs/community.openwop-team.demo/-/0.1.0.json" title="version manifest (JSON)">manifest</a>
+            · <a href="/v1/packs/community.openwop-team.demo/-/0.1.0.tgz" title="signed tarball (tgz)">tgz</a>
+            · <a href="/v1/packs/community.openwop-team.demo/-/0.1.0.sig" title="Ed25519 signature">sig</a>
+          </td>
+        </tr>
+        <tr>
+          <td class="name"><code>core.openwop.agent-examples</code> </td>
+          <td class="version">1.0.0</td>
+          <td class="count" title="agents in latest manifest">2</td>
+          <td class="desc">First pure-agent pack — ships two minimal agent manifests with no node runtime. Validates the `agents[]` extension to the pack manifest (per agent-manifest.schema.json + RFC 0003). Echo agent inlines its system prompt; Summarizer references `prompts/summarizer.md` to demonstrate the `systemPromptRef` path. Both agents are stateless (memoryShape.longTerm: false). Vendor-neutral: no model is pinned — hosts resolve via their BYOK aiProviders surface.</td>
+          <td class="license">Apache-2.0</td>
+          <td class="artifacts">
+            <a href="/v1/packs/core.openwop.agent-examples/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
+            · <a href="/v1/packs/core.openwop.agent-examples/-/1.0.0.tgz" title="signed tarball (tgz)">tgz</a>
+            · <a href="/v1/packs/core.openwop.agent-examples/-/1.0.0.sig" title="Ed25519 signature">sig</a>
+          </td>
+        </tr>
+        <tr>
+          <td class="name"><code>core.openwop.agents.deep-research</code> </td>
+          <td class="version">1.0.0</td>
+          <td class="count" title="agents in latest manifest">1</td>
+          <td class="desc">Long-horizon research agent. Plans, dispatches sub-investigations, retrieves from RAG + web, writes up findings. Mirrors LangGraph Deep Agents (planner + subagents + filesystem). Pure-agent pack.</td>
+          <td class="license">Apache-2.0</td>
+          <td class="artifacts">
+            <a href="/v1/packs/core.openwop.agents.deep-research/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
+            · <a href="/v1/packs/core.openwop.agents.deep-research/-/1.0.0.tgz" title="signed tarball (tgz)">tgz</a>
+            · <a href="/v1/packs/core.openwop.agents.deep-research/-/1.0.0.sig" title="Ed25519 signature">sig</a>
+          </td>
+        </tr>
+        <tr>
+          <td class="name"><code>core.openwop.agents.react</code> </td>
+          <td class="version">1.0.0</td>
+          <td class="count" title="agents in latest manifest">1</td>
+          <td class="desc">Canonical ReAct (Reason + Act) loop agent. Pure-agent pack — ships one agent manifest with a configurable toolAllowlist. Composes via RFC 0007 dispatch and consumes host.aiProviders + host.agentRuntime. The &#39;hello world&#39; of openwop agents.</td>
+          <td class="license">Apache-2.0</td>
+          <td class="artifacts">
+            <a href="/v1/packs/core.openwop.agents.react/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
+            · <a href="/v1/packs/core.openwop.agents.react/-/1.0.0.tgz" title="signed tarball (tgz)">tgz</a>
+            · <a href="/v1/packs/core.openwop.agents.react/-/1.0.0.sig" title="Ed25519 signature">sig</a>
+          </td>
+        </tr>
+        <tr>
+          <td class="name"><code>core.openwop.agents.supervisor</code> </td>
+          <td class="version">1.0.0</td>
+          <td class="count" title="agents in latest manifest">1</td>
+          <td class="desc">Multi-agent supervisor. Routes user tasks to specialized subagents via RFC 0007 dispatch + RFC 0006 orchestrator semantics. Mirrors LangGraph Supervisor and CrewAI&#39;s hierarchical-process pattern. Pure-agent pack.</td>
+          <td class="license">Apache-2.0</td>
+          <td class="artifacts">
+            <a href="/v1/packs/core.openwop.agents.supervisor/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
+            · <a href="/v1/packs/core.openwop.agents.supervisor/-/1.0.0.tgz" title="signed tarball (tgz)">tgz</a>
+            · <a href="/v1/packs/core.openwop.agents.supervisor/-/1.0.0.sig" title="Ed25519 signature">sig</a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+      </div>
+    </div>
   </section>
 
   <section id="trust">
@@ -1003,7 +1230,7 @@ const ok = verify(null, readFileSync('pack.tgz'), pub, readFileSync('pack.sig'))
   </section>
 
   <footer>
-    Generated 2026-05-19T20:52:31.237Z · <a href="https://openwop.dev/">openwop.dev</a> · <a href="https://github.com/openwop/openwop">openwop on GitHub</a>
+    Generated 2026-05-19T21:13:35.758Z · <a href="https://openwop.dev/">openwop.dev</a> · <a href="https://github.com/openwop/openwop">openwop on GitHub</a>
   </footer>
 </main>
 </body>

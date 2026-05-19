@@ -25,6 +25,8 @@
     "core.trigger.sub-workflow",
     "core.trigger.cron-advanced"
   ],
+  "nodeCount": 16,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.0",

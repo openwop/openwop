@@ -11,6 +11,8 @@
     "ads.brief.extract",
     "ads.tracking.link"
   ],
+  "nodeCount": 2,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.0",

@@ -13,6 +13,8 @@
     "ai.research.web",
     "ai.process.synthesize"
   ],
+  "nodeCount": 4,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.0",

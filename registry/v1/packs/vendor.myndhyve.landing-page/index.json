@@ -16,6 +16,8 @@
     "landing.page.validate",
     "landing.page.publish"
   ],
+  "nodeCount": 7,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.0",

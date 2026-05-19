@@ -10,6 +10,8 @@
   "typeIds": [
     "core.openwop.agents.react.default"
   ],
+  "nodeCount": 0,
+  "agentCount": 1,
   "versions": [
     {
       "version": "1.0.0",

@@ -8,6 +8,8 @@
   "typeIds": [
     "vendor.openwop.rust-hello.greet"
   ],
+  "nodeCount": 1,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.0",

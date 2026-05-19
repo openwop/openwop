@@ -32,6 +32,8 @@
     "core.openwop.http.idempotency-key",
     "core.openwop.http.webhook-verify"
   ],
+  "nodeCount": 23,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.0",

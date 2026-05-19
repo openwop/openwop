@@ -10,6 +10,8 @@
   "typeIds": [
     "ads.copy.generate"
   ],
+  "nodeCount": 1,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.0",

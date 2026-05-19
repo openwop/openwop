@@ -47,6 +47,8 @@
     "core.openwop.data.number-clamp",
     "core.openwop.data.uuid"
   ],
+  "nodeCount": 38,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.0",

@@ -21,6 +21,8 @@
     "core.agents.output-parser-auto-fix",
     "core.agents.model-selector"
   ],
+  "nodeCount": 12,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.0",

@@ -11,6 +11,8 @@
     "community.openwop-team.demo.uppercase",
     "community.openwop-team.demo.greeter"
   ],
+  "nodeCount": 1,
+  "agentCount": 1,
   "versions": [
     {
       "version": "0.1.0",

@@ -30,6 +30,8 @@
     "core.openwop.mcp.handle-elicitation",
     "core.openwop.mcp.provide-roots"
   ],
+  "nodeCount": 21,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.0",

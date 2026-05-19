@@ -26,6 +26,8 @@
     "core.openwop.a2a.emit-artifact",
     "core.openwop.a2a.push-send"
   ],
+  "nodeCount": 17,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.1.0",

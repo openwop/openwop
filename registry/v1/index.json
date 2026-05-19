@@ -14,6 +14,8 @@
         "community.openwop-team.demo.uppercase",
         "community.openwop-team.demo.greeter"
       ],
+      "nodeCount": 1,
+      "agentCount": 1,
       "deprecated": false,
       "yanked": false
     },
@@ -43,6 +45,8 @@
         "core.openwop.a2a.emit-artifact",
         "core.openwop.a2a.push-send"
       ],
+      "nodeCount": 17,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -57,6 +61,8 @@
         "core.openwop.agent-examples.echo-agent",
         "core.openwop.agent-examples.summarizer"
       ],
+      "nodeCount": 0,
+      "agentCount": 2,
       "deprecated": false,
       "yanked": false
     },
@@ -81,6 +87,8 @@
         "core.agents.output-parser-auto-fix",
         "core.agents.model-selector"
       ],
+      "nodeCount": 12,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -94,6 +102,8 @@
       "typeIds": [
         "core.openwop.agents.deep-research.default"
       ],
+      "nodeCount": 0,
+      "agentCount": 1,
       "deprecated": false,
       "yanked": false
     },
@@ -107,6 +117,8 @@
       "typeIds": [
         "core.openwop.agents.react.default"
       ],
+      "nodeCount": 0,
+      "agentCount": 1,
       "deprecated": false,
       "yanked": false
     },
@@ -120,6 +132,8 @@
       "typeIds": [
         "core.openwop.agents.supervisor.default"
       ],
+      "nodeCount": 0,
+      "agentCount": 1,
       "deprecated": false,
       "yanked": false
     },
@@ -147,6 +161,8 @@
         "core.openwop.ai.guardrails",
         "core.openwop.ai.transform"
       ],
+      "nodeCount": 15,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -172,6 +188,8 @@
         "core.crypto.x509-parse",
         "core.crypto.x509-verify-chain"
       ],
+      "nodeCount": 13,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -222,6 +240,8 @@
         "core.openwop.data.number-clamp",
         "core.openwop.data.uuid"
       ],
+      "nodeCount": 38,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -246,6 +266,8 @@
         "core.db.vector-query",
         "core.db.vector-delete"
       ],
+      "nodeCount": 12,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -261,6 +283,8 @@
         "core.openwop.examples.coin-flip",
         "core.openwop.examples.delay-with-progress"
       ],
+      "nodeCount": 3,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -292,6 +316,8 @@
         "core.files.sftp",
         "core.files.ssh-run"
       ],
+      "nodeCount": 19,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -333,6 +359,8 @@
         "core.loop",
         "core.parallel"
       ],
+      "nodeCount": 29,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -348,6 +376,8 @@
         "core.hitl.approval-request",
         "core.hitl.ask-user"
       ],
+      "nodeCount": 3,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -383,6 +413,8 @@
         "core.openwop.http.idempotency-key",
         "core.openwop.http.webhook-verify"
       ],
+      "nodeCount": 23,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -402,6 +434,8 @@
         "core.openwop.integration.voice-call-tts-greet",
         "core.openwop.integration.notification-push"
       ],
+      "nodeCount": 7,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -435,6 +469,8 @@
         "core.openwop.mcp.handle-elicitation",
         "core.openwop.mcp.provide-roots"
       ],
+      "nodeCount": 21,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -454,6 +490,8 @@
         "core.messaging.stream-subscribe",
         "core.messaging.stream-publish"
       ],
+      "nodeCount": 7,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -473,6 +511,8 @@
         "core.obs.trace-span-end",
         "core.obs.alert-fire"
       ],
+      "nodeCount": 7,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -498,6 +538,8 @@
         "core.rag.retriever-multi-query",
         "core.rag.retriever-contextual-compression"
       ],
+      "nodeCount": 13,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -530,6 +572,8 @@
         "core.storage.queue-enqueue",
         "core.storage.queue-dequeue"
       ],
+      "nodeCount": 20,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -558,6 +602,8 @@
         "core.trigger.sub-workflow",
         "core.trigger.cron-advanced"
       ],
+      "nodeCount": 16,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -571,6 +617,8 @@
       "typeIds": [
         "ads.copy.generate"
       ],
+      "nodeCount": 1,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -584,6 +632,8 @@
       "typeIds": [
         "ads.creative.validate"
       ],
+      "nodeCount": 1,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -597,6 +647,8 @@
       "typeIds": [
         "ads.export.pack"
       ],
+      "nodeCount": 1,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -610,6 +662,8 @@
       "typeIds": [
         "ads.image.generate"
       ],
+      "nodeCount": 1,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -623,6 +677,8 @@
       "typeIds": [
         "ads.metrics.import"
       ],
+      "nodeCount": 1,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -636,6 +692,8 @@
       "typeIds": [
         "ads.platform.specs"
       ],
+      "nodeCount": 1,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -649,6 +707,8 @@
       "typeIds": [
         "ads.policy.check"
       ],
+      "nodeCount": 1,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -662,6 +722,8 @@
       "typeIds": [
         "ads.publish.google"
       ],
+      "nodeCount": 1,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -675,6 +737,8 @@
       "typeIds": [
         "ads.publish.meta"
       ],
+      "nodeCount": 1,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -688,6 +752,8 @@
       "typeIds": [
         "ads.publish.tiktok"
       ],
+      "nodeCount": 1,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -704,6 +770,8 @@
         "ads.video.qa",
         "ads.winner.synthesize"
       ],
+      "nodeCount": 4,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -718,6 +786,8 @@
         "ads.brief.extract",
         "ads.tracking.link"
       ],
+      "nodeCount": 2,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -731,6 +801,8 @@
       "typeIds": [
         "ads.video.generate"
       ],
+      "nodeCount": 1,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -755,6 +827,8 @@
         "coordination.delegate",
         "coordination.round-robin"
       ],
+      "nodeCount": 12,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -770,6 +844,8 @@
         "core.ai.awaitEnvelope",
         "core.ai.callPrompt"
       ],
+      "nodeCount": 3,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -784,6 +860,8 @@
         "app-builder.per-screen",
         "app-builder.iterate-tasks"
       ],
+      "nodeCount": 2,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -810,6 +888,8 @@
         "brand.persona.review",
         "brand.persona.validate"
       ],
+      "nodeCount": 14,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -825,6 +905,8 @@
         "campaign.sequence.tag",
         "campaign.sequence.condition"
       ],
+      "nodeCount": 3,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -840,6 +922,8 @@
         "campaign.sequence.sms",
         "campaign.sequence.webhook"
       ],
+      "nodeCount": 3,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -856,6 +940,8 @@
         "core.coordination.canvasCreate",
         "core.coordination.crossCanvasInvoke"
       ],
+      "nodeCount": 4,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -874,6 +960,8 @@
         "core.chat.approvalGate",
         "core.chat.clarificationGate"
       ],
+      "nodeCount": 6,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -894,6 +982,8 @@
         "data.variable.fetch",
         "data.binding.apply"
       ],
+      "nodeCount": 8,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -911,6 +1001,8 @@
         "messaging.chatSend",
         "messaging.chatReply"
       ],
+      "nodeCount": 5,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -930,6 +1022,8 @@
         "kanban.workflow.automate",
         "kanban.resource.monitor"
       ],
+      "nodeCount": 7,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -944,6 +1038,8 @@
         "knowledge.retrieve",
         "knowledge.augment-prompt"
       ],
+      "nodeCount": 2,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -963,6 +1059,8 @@
         "landing.page.validate",
         "landing.page.publish"
       ],
+      "nodeCount": 7,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -977,6 +1075,8 @@
         "launch-studio.linkStep",
         "launch-studio.dispatchStackItems"
       ],
+      "nodeCount": 2,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -990,6 +1090,8 @@
       "typeIds": [
         "market-intel.ad-angles"
       ],
+      "nodeCount": 1,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -1003,6 +1105,8 @@
       "typeIds": [
         "market-intel.audience-targeting"
       ],
+      "nodeCount": 1,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -1016,6 +1120,8 @@
       "typeIds": [
         "market-intel.community-rank"
       ],
+      "nodeCount": 1,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -1029,6 +1135,8 @@
       "typeIds": [
         "market-intel.content-extraction"
       ],
+      "nodeCount": 1,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -1042,6 +1150,8 @@
       "typeIds": [
         "market-intel.ai-discovery"
       ],
+      "nodeCount": 1,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -1055,6 +1165,8 @@
       "typeIds": [
         "market-intel.opportunity-scoring"
       ],
+      "nodeCount": 1,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -1068,6 +1180,8 @@
       "typeIds": [
         "market-intel.query-builder"
       ],
+      "nodeCount": 1,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -1081,6 +1195,8 @@
       "typeIds": [
         "market-intel.thread-triage"
       ],
+      "nodeCount": 1,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -1094,6 +1210,8 @@
       "typeIds": [
         "market-intel.voc-extraction"
       ],
+      "nodeCount": 1,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -1110,6 +1228,8 @@
         "ai.research.web",
         "ai.process.synthesize"
       ],
+      "nodeCount": 4,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -1123,6 +1243,8 @@
       "typeIds": [
         "wop.feature.refine"
       ],
+      "nodeCount": 1,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     },
@@ -1136,6 +1258,8 @@
       "typeIds": [
         "vendor.openwop.rust-hello.greet"
       ],
+      "nodeCount": 1,
+      "agentCount": 0,
       "deprecated": false,
       "yanked": false
     }

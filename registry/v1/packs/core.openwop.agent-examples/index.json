@@ -11,6 +11,8 @@
     "core.openwop.agent-examples.echo-agent",
     "core.openwop.agent-examples.summarizer"
   ],
+  "nodeCount": 0,
+  "agentCount": 2,
   "versions": [
     {
       "version": "1.0.0",

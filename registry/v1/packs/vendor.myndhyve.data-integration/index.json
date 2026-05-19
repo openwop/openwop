@@ -17,6 +17,8 @@
     "data.variable.fetch",
     "data.binding.apply"
   ],
+  "nodeCount": 8,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.0",

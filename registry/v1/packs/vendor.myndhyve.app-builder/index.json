@@ -11,6 +11,8 @@
     "app-builder.per-screen",
     "app-builder.iterate-tasks"
   ],
+  "nodeCount": 2,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.0",

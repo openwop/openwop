@@ -12,6 +12,8 @@
     "core.openwop.examples.coin-flip",
     "core.openwop.examples.delay-with-progress"
   ],
+  "nodeCount": 3,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.0",

@@ -15,6 +15,8 @@
     "core.chat.approvalGate",
     "core.chat.clarificationGate"
   ],
+  "nodeCount": 6,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.0",

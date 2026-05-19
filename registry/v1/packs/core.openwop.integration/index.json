@@ -16,6 +16,8 @@
     "core.openwop.integration.voice-call-tts-greet",
     "core.openwop.integration.notification-push"
   ],
+  "nodeCount": 7,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.0",

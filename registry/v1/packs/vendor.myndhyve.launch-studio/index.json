@@ -11,6 +11,8 @@
     "launch-studio.linkStep",
     "launch-studio.dispatchStackItems"
   ],
+  "nodeCount": 2,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.0",

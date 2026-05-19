@@ -16,6 +16,8 @@
     "core.messaging.stream-subscribe",
     "core.messaging.stream-publish"
   ],
+  "nodeCount": 7,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.0",

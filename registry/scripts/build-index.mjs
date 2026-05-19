@@ -223,6 +223,15 @@ function rebuildPack(packName) {
           ...(pack?.agents ?? []).map((a) => a.agentId),
         ].filter(Boolean);
 
+  // Per-pack node + agent counts surface the composition of the latest
+  // manifest so the catalog landing page can bucket "node packs" vs
+  // "agent packs" without re-reading each manifest. Mixed packs (both
+  // arrays non-empty) appear in BOTH tabs — they ship both kinds of
+  // consumer-facing artifacts. Additive field per RFC 0003 / RFC 0013;
+  // unknown-key tolerance covers older clients.
+  const nodeCount  = Array.isArray(pack?.nodes)  ? pack.nodes.length  : 0;
+  const agentCount = Array.isArray(pack?.agents) ? pack.agents.length : 0;
+
   const indexDoc = {
     name: packName,
     kind,
@@ -233,6 +242,8 @@ function rebuildPack(packName) {
     repository: pack?.repository,
     tags: pack?.tags ?? [],
     typeIds,
+    nodeCount,
+    agentCount,
     versions: versionEntries,
     latest,
     deprecated: versionEntries.every((v) => v.deprecated),
@@ -257,6 +268,8 @@ function rebuildRegistryIndex(packDocs) {
       license: p.license,
       tags: p.tags,
       typeIds: p.typeIds,
+      nodeCount: p.nodeCount,
+      agentCount: p.agentCount,
       deprecated: p.deprecated,
       yanked: false,
     })),
@@ -306,17 +319,28 @@ function emitLandingPage(packDocs) {
   const total = packDocs.length;
   const totalVersions = packDocs.reduce((acc, p) => acc + (p.versions?.length ?? 0), 0);
 
-  const rows = packDocs
-    .slice()
-    .sort((a, b) => a.name.localeCompare(b.name))
-    .map((p) => {
-      const v = p.versions[p.versions.length - 1];
-      const flags = [];
-      if (p.deprecated || v?.deprecated) flags.push('<span class="flag flag-deprecated">deprecated</span>');
-      if (v?.yanked) flags.push('<span class="flag flag-yanked">yanked</span>');
-      return `        <tr>
+  // Bucket packs into "node" + "agent" categories. Mixed packs (both
+  // arrays non-empty in the manifest) appear in BOTH tabs since they
+  // ship both kinds of consumer-facing artifacts.
+  const nodePacks  = packDocs.filter((p) => (p.nodeCount  ?? 0) > 0);
+  const agentPacks = packDocs.filter((p) => (p.agentCount ?? 0) > 0);
+
+  const rowFor = (p, kindHint) => {
+    const v = p.versions[p.versions.length - 1];
+    const flags = [];
+    if (p.deprecated || v?.deprecated) flags.push('<span class="flag flag-deprecated">deprecated</span>');
+    if (v?.yanked) flags.push('<span class="flag flag-yanked">yanked</span>');
+    // Mark mixed packs so a user scanning one tab knows the same pack
+    // also lives in the other tab.
+    if (kindHint === 'node' && (p.agentCount ?? 0) > 0) flags.push('<span class="flag flag-mixed">+ agent</span>');
+    if (kindHint === 'agent' && (p.nodeCount ?? 0) > 0) flags.push('<span class="flag flag-mixed">+ nodes</span>');
+    const countCell = kindHint === 'node'
+      ? `<td class="count" title="nodes in latest manifest">${p.nodeCount ?? 0}</td>`
+      : `<td class="count" title="agents in latest manifest">${p.agentCount ?? 0}</td>`;
+    return `        <tr>
           <td class="name"><code>${htmlEscape(p.name)}</code> ${flags.join(' ')}</td>
           <td class="version">${htmlEscape(p.latest)}</td>
+          ${countCell}
           <td class="desc">${htmlEscape(p.description || '—')}</td>
           <td class="license">${htmlEscape(p.license || '—')}</td>
           <td class="artifacts">
@@ -325,8 +349,27 @@ function emitLandingPage(packDocs) {
             · <a href="${htmlEscape(v?.signatureUrl ?? '#')}" title="Ed25519 signature">sig</a>
           </td>
         </tr>`;
-    })
-    .join('\n');
+  };
+
+  const buildRows = (packs, kindHint) =>
+    packs
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((p) => rowFor(p, kindHint))
+      .join('\n');
+
+  const nodeRows  = buildRows(nodePacks,  'node');
+  const agentRows = buildRows(agentPacks, 'agent');
+
+  const tableFor = (rows, countHeader) =>
+    `    <table>
+      <thead>
+        <tr><th>Name</th><th>Version</th><th class="count-h">${countHeader}</th><th>Description</th><th>License</th><th>Artifacts</th></tr>
+      </thead>
+      <tbody>
+${rows}
+      </tbody>
+    </table>`;
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -524,6 +567,111 @@ function emitLandingPage(packDocs) {
   }
   .flag-deprecated { color: var(--flag-deprecated); background: var(--flag-deprecated-bg); }
   .flag-yanked     { color: var(--flag-yanked);     background: var(--flag-yanked-bg); }
+  .flag-mixed      { color: var(--ink-3);           background: var(--paper-2); }
+
+  /* ─── Tabs — CSS-only radio-pattern. Zero JavaScript. ────────────────
+   * The .tabs container holds two hidden radio inputs followed by the
+   * label row and the two panels. :checked on each radio drives sibling
+   * selectors that show the matching panel and highlight the matching
+   * label. Default tab = nodes (the larger bucket today). */
+  .tabs { margin: 8px 0; }
+  .tab-radio {
+    /* Visually hide the radio but keep it keyboard-focusable.
+     * Browsers focus the label's associated input — clicking the
+     * label toggles the radio, which drives the :checked sibling rules. */
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .tab-list {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .tab {
+    cursor: pointer;
+    padding: 10px 16px 12px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color .15s ease, border-color .15s ease;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .tab:hover { color: var(--clay); }
+  .tab-count {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.04em;
+    padding: 1px 6px;
+    border-radius: 2px;
+    background: var(--paper-2);
+    color: var(--ink-3);
+  }
+  /* :focus-visible reaches the LABEL when keyboard focus is on the radio
+   * input — most browsers forward :focus-visible to the styled label via
+   * the +/~ selector. Keep an explicit outline so screen-reader users
+   * see which tab is keyboard-focused. */
+  .tab-radio:focus-visible + .tab-list .tab[for="tab-nodes"],
+  .tab-radio:focus-visible ~ .tab-list .tab {
+    outline: none;
+  }
+  #tab-nodes:focus-visible  ~ .tab-list .tab[for="tab-nodes"],
+  #tab-agents:focus-visible ~ .tab-list .tab[for="tab-agents"] {
+    outline: 2px solid var(--clay);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+  /* Active-tab styling — :checked drives sibling rules. */
+  #tab-nodes:checked  ~ .tab-list .tab[for="tab-nodes"],
+  #tab-agents:checked ~ .tab-list .tab[for="tab-agents"] {
+    color: var(--ink);
+    border-bottom-color: var(--clay);
+  }
+  #tab-nodes:checked  ~ .tab-list .tab[for="tab-nodes"]  .tab-count,
+  #tab-agents:checked ~ .tab-list .tab[for="tab-agents"] .tab-count {
+    background: var(--clay-soft);
+    color: var(--clay);
+  }
+  /* Show only the panel whose radio is checked. */
+  .tab-panel { display: none; }
+  #tab-nodes:checked  ~ .tab-panel-nodes  { display: block; }
+  #tab-agents:checked ~ .tab-panel-agents { display: block; }
+  .tab-desc {
+    color: var(--ink-2);
+    font-size: 14.5px;
+    line-height: 1.6;
+    margin: 0 0 24px;
+    max-width: 76ch;
+  }
+  .tab-desc strong { color: var(--ink); font-weight: 500; }
+  .tab-desc a { color: var(--ink); border-bottom: 1px dotted var(--rule-2); }
+  .tab-desc a:hover { color: var(--clay); border-bottom-color: var(--clay); }
+  .tab-desc code {
+    background: var(--paper-2);
+    padding: 1px 5px;
+    border-radius: 2px;
+    font-size: 12.5px;
+  }
+
+  /* Per-tab pack-count column. */
+  th.count-h, td.count {
+    text-align: right;
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+  }
+  td.count { color: var(--ink); }
 
   /* ─── Endpoint list — mono code + grey note ─────────────────────────── */
   .endpoint-list { list-style: none; padding: 0; margin: 12px 0; }
@@ -600,14 +748,53 @@ function emitLandingPage(packDocs) {
 ${
   total === 0
     ? '    <div class="empty">No packs published yet. The first one lands soon.</div>'
-    : `    <table>
-      <thead>
-        <tr><th>Name</th><th>Version</th><th>Description</th><th>License</th><th>Artifacts</th></tr>
-      </thead>
-      <tbody>
-${rows}
-      </tbody>
-    </table>`
+    : `    <div class="tabs">
+      <input type="radio" name="catalog-tab" id="tab-nodes" class="tab-radio" checked>
+      <input type="radio" name="catalog-tab" id="tab-agents" class="tab-radio">
+
+      <div class="tab-list" role="tablist" aria-label="Pack categories">
+        <label class="tab" for="tab-nodes" role="tab">
+          <span class="tab-label">Node packs</span>
+          <span class="tab-count">${nodePacks.length}</span>
+        </label>
+        <label class="tab" for="tab-agents" role="tab">
+          <span class="tab-label">Agent packs</span>
+          <span class="tab-count">${agentPacks.length}</span>
+        </label>
+      </div>
+
+      <div class="tab-panel tab-panel-nodes" role="tabpanel" aria-labelledby="tab-nodes">
+        <p class="tab-desc">
+          <strong>Node packs</strong> ship reusable workflow building blocks — typed
+          input/output handlers, control nodes (flow / branching / approval gates),
+          and integrations (HTTP, storage, MCP). Authors drop them into the canvas
+          at edit time; hosts load and verify them at runtime. See the
+          <a href="https://openwop.dev/spec/v1/node-packs.md">node-packs.md</a>
+          spec for the manifest contract and the SRI + Ed25519 trust model.
+          Mixed packs that also ship agents are flagged
+          <span class="flag flag-mixed">+ agent</span>.
+        </p>
+        ${nodePacks.length === 0
+          ? '<div class="empty">No node packs published yet.</div>'
+          : tableFor(nodeRows, 'Nodes')}
+      </div>
+
+      <div class="tab-panel tab-panel-agents" role="tabpanel" aria-labelledby="tab-agents">
+        <p class="tab-desc">
+          <strong>Agent packs</strong> ship reusable agent personas — each one bundles
+          a system prompt, a tool allowlist, a memory shape, and handoff schemas. They
+          are addressed by <code>AgentRef</code> and resolved at run time through the
+          host's agent runtime, so the same pack can plug into supervisor, ReAct, or
+          deep-research orchestration patterns. See
+          <a href="https://github.com/openwop/openwop/blob/main/RFCS/0003-agent-packs.md">RFC 0003 (Active)</a>
+          for the manifest contract. Mixed packs that also ship nodes are flagged
+          <span class="flag flag-mixed">+ nodes</span>.
+        </p>
+        ${agentPacks.length === 0
+          ? '<div class="empty">No agent packs published yet — the first pure-agent packs are in the <code>core.openwop.agents.*</code> family.</div>'
+          : tableFor(agentRows, 'Agents')}
+      </div>
+    </div>`
 }
   </section>
 

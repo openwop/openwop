@@ -29,6 +29,8 @@
     "core.storage.queue-enqueue",
     "core.storage.queue-dequeue"
   ],
+  "nodeCount": 20,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.0",

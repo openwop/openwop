@@ -28,6 +28,8 @@
     "core.files.sftp",
     "core.files.ssh-run"
   ],
+  "nodeCount": 19,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.0",

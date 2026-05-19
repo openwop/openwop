@@ -12,6 +12,8 @@
     "campaign.sequence.tag",
     "campaign.sequence.condition"
   ],
+  "nodeCount": 3,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.0",

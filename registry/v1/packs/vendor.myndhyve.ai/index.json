@@ -12,6 +12,8 @@
     "core.ai.awaitEnvelope",
     "core.ai.callPrompt"
   ],
+  "nodeCount": 3,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.0",

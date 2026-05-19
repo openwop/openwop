@@ -24,6 +24,8 @@
     "core.openwop.ai.guardrails",
     "core.openwop.ai.transform"
   ],
+  "nodeCount": 15,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.0",

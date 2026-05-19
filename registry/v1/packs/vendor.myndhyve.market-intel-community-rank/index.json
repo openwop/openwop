@@ -10,6 +10,8 @@
   "typeIds": [
     "market-intel.community-rank"
   ],
+  "nodeCount": 1,
+  "agentCount": 0,
   "versions": [
     {
       "version": "1.0.0",
