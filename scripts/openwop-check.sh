@@ -124,6 +124,22 @@ echo "[7/9] Generated protocol status..."
 node "$SPEC_ROOT/scripts/generate-protocol-status.mjs" --check
 node "$SPEC_ROOT/scripts/check-workflow-chain-expansion-sync.mjs"
 node "$SPEC_ROOT/scripts/check-required-properties-defined.mjs"
+# Workflow-engine sample bundles a vendored copy of conformance/fixtures/
+# into its Docker image (apps/workflow-engine/conformance-fixtures/, per
+# the Dockerfile + scripts/sync-fixtures.sh). Catch silent drift: if the
+# vendored copy gets out of sync, the deployed sample BE will serve
+# stale fixtures that don't match what the conformance suite asserts.
+SAMPLE_VENDORED="$SPEC_ROOT/apps/workflow-engine/conformance-fixtures"
+CANONICAL_FIXTURES="$SPEC_ROOT/conformance/fixtures"
+if [ -d "$SAMPLE_VENDORED" ] && [ -d "$CANONICAL_FIXTURES" ]; then
+  if ! diff -rq "$CANONICAL_FIXTURES" "$SAMPLE_VENDORED" >/dev/null 2>&1; then
+    echo "  FAIL: apps/workflow-engine/conformance-fixtures/ is out of sync with conformance/fixtures/" >&2
+    echo "  Run: bash apps/workflow-engine/scripts/sync-fixtures.sh" >&2
+    diff -rq "$CANONICAL_FIXTURES" "$SAMPLE_VENDORED" >&2
+    exit 1
+  fi
+  echo "  ok: workflow-engine vendored conformance-fixtures in sync"
+fi
 echo
 
 # 8. Publish-metadata + package-content audit — catches placeholder URLs,
