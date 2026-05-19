@@ -110,6 +110,14 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
     },
     supportedTransports: ['rest', 'sse'],
     stream: { modes: ['values', 'updates', 'messages', 'debug'] },
+    // Conformance fixtures loaded from in-tree `conformance/fixtures/`
+    // at boot. Each fixture id here is a workflowId the host can run
+    // via `POST /v1/runs { workflowId }` — the openwop conformance
+    // suite reads this top-level `fixtures` array (per
+    // `conformance/src/lib/fixtures.ts:80` — `c.fixtures`) at suite
+    // init to decide which fixture-gated scenarios apply to this
+    // host. Mirrors the SQLite reference host's discovery shape.
+    fixtures: listLoadedConformanceFixtures(),
     capabilities: {
       auth: { profiles: [] },
       secrets: {
@@ -172,12 +180,6 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       // of this codebase SHOULD remove the registration call AND set
       // this to false.
       conformance: { mockAgent: true },
-      // Conformance fixtures loaded from in-tree `conformance/fixtures/`
-      // at boot. Each fixture id here is a workflowId the host can run
-      // via `POST /v1/runs { workflowId }` — used by the openwop
-      // conformance suite to decide which capability-gated scenarios
-      // apply to this host.
-      fixtures: listLoadedConformanceFixtures(),
       webhooks: { supported: true, signed: true, durable: false },
       observability: { otel: { namespace: 'openwop' } },
       runtimeCapabilities: listCapabilities(),

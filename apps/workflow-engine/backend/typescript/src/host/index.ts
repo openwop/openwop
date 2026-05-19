@@ -62,11 +62,35 @@ const conformanceFixtures = new Map<string, WorkflowDefinition>();
       if (!file.endsWith('.json')) continue;
       try {
         const raw = readFileSync(join(dir, file), 'utf-8');
-        const parsed = JSON.parse(raw) as WorkflowDefinition & { id?: string; workflowId?: string };
+        const parsed = JSON.parse(raw) as WorkflowDefinition & {
+          id?: string;
+          workflowId?: string;
+          nodes?: ReadonlyArray<{ id?: string; nodeId?: string; typeId: string; config?: Record<string, unknown> }>;
+        };
         const id = parsed.workflowId ?? parsed.id;
-        if (typeof id === 'string' && id.length > 0) {
-          conformanceFixtures.set(id, { ...parsed, workflowId: id });
-        }
+        if (typeof id !== 'string' || id.length === 0) continue;
+        // Normalize `nodes[].id` (the conformance fixture authoring
+        // shape, per `conformance/fixtures/*.json`) to
+        // `nodes[].nodeId` (the executor's WorkflowDefinition shape,
+        // per `executor/types.ts:264`). Both shapes carry the same
+        // semantic identifier; only the field name differs because
+        // the fixtures predate the executor's interface rename. The
+        // scheduler's Kahn-algorithm topological sort consults
+        // `nodeId` exclusively (`executor/scheduler.ts:101`) — without
+        // this normalization every loaded fixture appears to the
+        // scheduler as a graph of `undefined`-keyed nodes and the
+        // cycle detector throws `cycle_detected` on the first run.
+        const normalizedNodes = Array.isArray(parsed.nodes)
+          ? parsed.nodes.map((n) => ({
+              ...n,
+              nodeId: n.nodeId ?? n.id ?? '',
+            }))
+          : [];
+        conformanceFixtures.set(id, {
+          ...parsed,
+          workflowId: id,
+          nodes: normalizedNodes,
+        });
       } catch {
         /* skip malformed fixture */
       }

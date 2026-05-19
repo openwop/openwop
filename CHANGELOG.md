@@ -11,6 +11,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Workflow-engine sample — fixture-loader foundational fixes (2026-05-19)
+
+Two foundational fixes that turn the workflow-engine sample into an actual conformance target. Before this commit, the sample loaded 62 conformance fixtures into the in-process Map but downstream consumers couldn't see or run them: discovery advertised them at the wrong path, and every loaded fixture threw `cycle_detected` on execution because the executor's `nodeId` field was unset.
+
+- **`apps/workflow-engine/backend/typescript/src/host/index.ts`** — fixture loader normalizes `nodes[].id` (the conformance fixture authoring shape per `conformance/fixtures/*.json`) to `nodes[].nodeId` (the executor's `WorkflowDefinition` shape per `executor/types.ts:264`). The scheduler's Kahn-algorithm topological sort consults `nodeId` exclusively (`executor/scheduler.ts:101`); without normalization, every fixture appeared as a graph of `undefined`-keyed nodes and the cycle detector threw `cycle_detected` on the first run.
+- **`apps/workflow-engine/backend/typescript/src/routes/discovery.ts`** — moved `fixtures: listLoadedConformanceFixtures()` from inside the `capabilities` block to the top-level discovery doc. The conformance suite reads `c.fixtures` at the top level (per `conformance/src/lib/fixtures.ts:80`); the nested location meant `setAdvertisedFixtures()` collapsed to "no fixtures advertised" and every `isFixtureAdvertised(...)` gate skipped. Mirrors the SQLite reference host's discovery shape.
+
+Local verification: discovery now advertises 62 fixtures at the top level. `POST /v1/runs {workflowId: "conformance-noop"}` reaches `status: completed` (previously: `cycle_detected`). Downstream fixture-gated scenarios now run far enough to expose real wire-shape gaps (e.g., the sample returns HTTP `202` where the conformance suite expects `201` on `POST /v1/runs`) — those are separate fixes; this commit unblocks them.
+
+Compatibility: **implementation-only** (workflow-engine sample). No wire-shape, schema, or endpoint contract changes — the top-level `fixtures` array already matches the spec shape that other reference hosts advertise.
+
 ### Downstream-LLM untrusted-content wrap (2026-05-19)
 
 Closes the `aiEnvelope.trustBoundaryPropagation` downstream-LLM-reconsume it.todo via a new pure helper `wrapForLLMPrompt(...)` and matching test-seam endpoint. Per `ai-envelope.md §"Trust boundary"` line 380: downstream LLM nodes that re-consume a `RunEventDoc` whose `contentTrust === 'untrusted'` MUST wrap the content with `<UNTRUSTED source="..." type="...">...</UNTRUSTED>` markers before reaching the prompt. The convention follows `SECURITY/threat-model-prompt-injection.md` (`prompt-injection-input-marker` / `prompt-injection-kb-marker` / `prompt-injection-artifact-marker` / `prompt-injection-mcp-marker`).
