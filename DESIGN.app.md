@@ -1,0 +1,216 @@
+# OpenWOP Reference App — Design Standards
+
+> Source of truth for `apps/workflow-engine/frontend/react/`. Reviewed by `/ux-review`.
+>
+> **Companion to `DESIGN.md`.** Shared tokens (palette, type triple, spacing) live in `DESIGN.md §3`–§5 and §9, mirrored verbatim in `apps/workflow-engine/frontend/react/src/styles/global.css :root`. This doc covers what is **app-specific**: app-only components, app-only animations, framework-integration rules (xyflow, Firebase Auth), and the app's broader UX register.
+
+When the marketing site (`DESIGN.md`) and this doc disagree on a shared token, the bug is one of them is out of sync — they MUST land in lockstep.
+
+---
+
+## 1. Purpose & audience
+
+`apps/workflow-engine/frontend/react/` is the reference deployment behind `https://app.openwop.dev/`. It exists so protocol implementers and evaluators can exercise the v1 wire contract without cloning the repo — workflow building, run lifecycle, SSE event streaming, HITL interrupts, capability discovery, BYOK paste-and-run.
+
+Visual register: **the same editorial-technical voice as the marketing site**, applied to an interactive surface. Where the marketing site is read once, the app is operated. Editorial discipline applies to chrome, navigation, headings, status, and labels; the workflow canvas is allowed denser geometric tooling.
+
+---
+
+## 2. Token sync
+
+The `:root` block in `src/styles/global.css` carries:
+
+| Block | Source of truth | Sync rule |
+|---|---|---|
+| Shared editorial palette (`--paper`, `--ink`, `--rule`, `--clay`, `--star-glow`, type triple) | `DESIGN.md §4` + `public/styles.css :root` | **MUST stay identical**; change both in one commit. The CSS file carries a `SYNC RULE` comment block above `:root` |
+| Warm-dark override (`@media (prefers-color-scheme: dark)`) | `DESIGN.md §9.1` | Same |
+| App-functional tokens (`--color-success` / `--color-warning` / `--color-danger`) | This doc, §3 | App-only; not mirrored to marketing site |
+| Legacy app aliases (`--color-bg`, `--color-surface`, `--font-sans`, …) | This doc, §4 | Transitional. Shrinks over time as references migrate to canonical names |
+| App geometry (`--radius`, `--space-1..6`, `--radius-bubble`, etc.) | This doc | App-only |
+
+The marketing site has no `--color-success` etc.; the app needs them because it surfaces run states. Status colors are **functional, not brand**.
+
+---
+
+## 3. App-functional tokens
+
+```css
+--color-success: oklch(62% 0.13 145);   /* desaturated forest, on-paper safe */
+--color-warning: oklch(72% 0.14 75);    /* warmer amber, neighbour of --star-glow */
+--color-danger:  oklch(55% 0.16 28);    /* muted brick red */
+```
+
+Rules:
+
+1. **Use functional tokens only for run-state semantics.** A button doesn't get `--color-danger` for emphasis — it gets clay. `--color-danger` is reserved for `RunStatus = failed | cancelled`, error banners, and the destructive secondary state of confirm dialogs.
+2. **Status colors lift in dark mode** (DESIGN.md §9.2 invariant 4): success → `oklch(72% 0.14 145)`, warning → `oklch(80% 0.14 75)`, danger → `oklch(65% 0.16 28)`. Keep the chroma; lift the luminance.
+3. **Never use a status color as a background fill at body weight.** Surface as an icon, a dot, a label, or a hairline. Backgrounds compete with `--paper`.
+
+---
+
+## 4. Legacy aliases (transitional)
+
+The app's pre-migration tokens are aliased to the shared palette:
+
+```css
+--color-bg:           var(--paper);
+--color-surface:      var(--paper);
+--color-surface-2:    var(--paper-2);
+--color-border:       var(--rule);
+--color-text:         var(--ink);
+--color-text-muted:   var(--ink-3);
+--color-accent:       var(--clay);
+--color-accent-hover: oklch(54% 0.13 40);
+--font-sans:          var(--sans);
+--font-mono:          var(--mono);
+```
+
+These exist so the Phase A token swap is atomic — every existing component keeps rendering. **Subsequent phases migrate references off the aliases:** `var(--color-bg)` → `var(--paper)`, `var(--color-text)` → `var(--ink)`, `var(--color-accent)` → `var(--clay)`. When zero references remain to a given alias, delete the alias.
+
+Do not add new references to the alias block. Net new code uses canonical names.
+
+---
+
+## 5. Components — app-specific canonical list
+
+Cross-surface components (`.btn`, `.marker`, etc.) live in `DESIGN.md §6`. The list below is app-only.
+
+| Class | Purpose | Notes |
+|---|---|---|
+| `.app-shell` | top-level flex column wrapper | min-height 100vh |
+| `.app-header` | sticky app nav | 64px tall; ink on paper; matches `.topbar` register from the marketing site |
+| `.app-main` | scrollable content region under `.app-header` | inherits `--paper` |
+| `.app-footer` | minimal footer | mono attribution, paper |
+| `.card` | generic surface card | border-only via `--rule`; no shadow; hover tint `--clay-wash`; matches `.compare-card` register |
+| `.status-badge` + `.completed` / `.failed` / `.cancelled` / `.running` variants | run-state pill | mono label; functional color from §3; no fill — color on `--paper-2` |
+| `.muted` | low-emphasis text | `var(--ink-3)`; mono OR sans depending on context |
+| `.secondary` | secondary button surface | matches `.btn-ghost` register |
+| `.chat-feed` + `.message-bubble.user` / `.message-bubble.assistant` | chat surfaces | bubble: clay for user, paper-2 for assistant; metadata rendered in mono `--ink-3` |
+| `.workflow-canvas` | xyflow wrapper | sets a `:where(.react-flow)` scope for token overrides (see §7) |
+| `.interrupt-card` | HITL interrupt surface | matches `.compare-card` register; clay-rule top border to mark "action required" |
+| `.byok-wizard` | BYOK step-through | progressive disclosure; `<abbr>`-expand acronyms per step per DESIGN.md §2 |
+| `.signin-button` (Google / GitHub variants) | auth chrome | wraps vendor brand SVG marks; container is ink-on-paper; **brand marks themselves are never re-colored** (DESIGN.md §13) |
+| `.demo-host-banner` | "you're on the demo host" banner | clay-wash background, mono marker, dismissible |
+
+When adding a new app-specific component:
+
+1. Add a row here.
+2. Cite the marketing-site register it borrows from (`.compare-card`, `.proof-card`, `.pack`, `.start`).
+3. Use only shared tokens for color/type/spacing.
+4. No shadows heavier than the marketing site's `.terminal`; no gradients that compete with paper.
+
+---
+
+## 6. Animations
+
+The app animates more than the marketing site because it shows live activity. Discipline:
+
+| Keyframe | Purpose | Constraint |
+|---|---|---|
+| `openwop-pulse` | "live / streaming" indicator (opacity 0.2 → 0.8 → 0.2) | duration 1.6s–2.4s; opacity only |
+| `openwop-mic-pulse` | recording / capturing prompt | box-shadow ring using `--color-danger` alpha; ≤ 6px ring radius |
+
+Rules:
+
+1. **All animations MUST honor `prefers-reduced-motion: reduce`.** The shared rule in `global.css` zeroes durations.
+2. No animation drives a state change (e.g., do not animate a card *into* the success state — set the state, animate the badge once and stop).
+3. New keyframes are app-only unless they are also added to `DESIGN.md §11`.
+
+---
+
+## 7. xyflow (workflow canvas) theming
+
+`@xyflow/react` ships its own CSS. Override via the canvas wrapper scope:
+
+```css
+:where(.workflow-canvas) {
+  --xy-background-color: var(--paper);
+  --xy-node-color: var(--ink);
+  --xy-node-border: var(--rule);
+  --xy-edge-stroke: var(--ink-2);
+  --xy-edge-stroke-selected: var(--clay);
+  --xy-handle-color: var(--clay);
+  --xy-controls-button-bg: var(--paper);
+  --xy-controls-button-border: var(--rule);
+}
+```
+
+Node-internal styling (the React component each `<Handle>` renders inside) uses app tokens directly. Edge labels render in `--mono` at 11px.
+
+Background: dotted grid using `var(--rule-2)` at 1.5px / 20px spacing. **Never** the default cool-gray grid.
+
+---
+
+## 8. Firebase Auth chrome
+
+The Google + GitHub sign-in buttons embed vendor brand SVGs. DESIGN.md §13 invariant:
+
+- **Vendor brand SVG marks are never re-colored.** Use the exact Google `g` mark + the GitHub octocat in their canonical fills.
+- The surrounding `.signin-button` container chrome (border, label, focus ring) follows the app's editorial register: `border: 1px solid var(--rule)`, `background: var(--paper)`, `color: var(--ink)`, `font-family: var(--sans)`.
+- "Continue with Google" / "Continue with GitHub" label uses `--sans` weight 500.
+
+---
+
+## 9. BYOK wizard editorial pass
+
+The BYOK wizard is a credibility moment for the protocol — the user is pasting a model-provider key and trusting the host's session-scoping promise. Visual register:
+
+- One panel per step (paste, validate, confirm, succeed).
+- First-occurrence acronyms expand per panel via `<abbr title="…">` (DESIGN.md §2): **BYOK**, **KMS**, **HMAC**.
+- Status uses functional tokens (§3); the "secret accepted" success state is a single clay accent dot + body confirmation, NOT a green checkmark fill.
+- Copy is third-person factual ("Keys live in-session and are redacted from event payloads"), not first-person ("we promise we won't store this").
+
+---
+
+## 10. Inline-style policy
+
+DESIGN.md §10/§11 ban `style="…color/font…"` in HTML. The same rule applies to React's `style={{}}` prop — with one carve-out:
+
+- **Geometry MAY remain inline** (grid-template-areas, `transform: translate(...)`, `gridColumn`, `top/left` for absolute-positioned coordinate-driven UI).
+- **Color / font-family / font-size / background MUST be className-driven** through global.css.
+- **Dynamic per-event tinting** (e.g., a node that shifts hue with a metric) goes through a CSS custom property set inline (`style={{ '--metric-tint': value }}`) and consumed by a className.
+
+Lint gate: `grep -rEn "style=\{\{[^}]*(color|background|font)" src/` SHOULD return 0 hits. Phase B of the design migration is auditing this; ≤ 20 justified residuals is the post-Phase-B bar.
+
+---
+
+## 11. Accessibility (inherits DESIGN.md §7, plus app-specific)
+
+In addition to the marketing-site rules:
+
+- Run-status badges MUST NOT communicate state by color alone. Always pair the color with a text label OR a glyph.
+- Chat bubbles MUST have a `role="log"` ancestor and announce new entries via `aria-live="polite"`.
+- Interrupt cards MUST trap focus into the response form on render; releasing focus is contingent on submission or dismissal.
+- xyflow canvases MUST expose keyboard navigation; if vendor defaults are insufficient, add app-level handlers.
+- Firebase popup auth flows MUST surface a visible "still signing in…" status if the popup is closed mid-flow.
+
+---
+
+## 12. Component checklist for any new app addition
+
+Before merging a PR that introduces a new app component:
+
+- [ ] New class added to §5 (app components) OR DESIGN.md §6 (if it's cross-surface)
+- [ ] Uses only shared tokens (canonical names) + app-functional tokens for color/type/spacing
+- [ ] No hard-coded hex / OKLCH literal in component CSS
+- [ ] No inline `style={{}}` for color/font (geometry OK)
+- [ ] Has `:focus-visible` keyboard reachability
+- [ ] Renders correctly under `prefers-color-scheme: dark` (single visual sweep)
+- [ ] Has a documented breakpoint behavior for ≤760px
+- [ ] All animations honor `prefers-reduced-motion`
+- [ ] Acronyms expand on first appearance per panel
+
+---
+
+## 13. Related files
+
+- `DESIGN.md` — marketing-site standards + shared tokens
+- `apps/workflow-engine/frontend/react/src/styles/global.css` — the lone stylesheet
+- `apps/workflow-engine/frontend/react/index.html` — Google Fonts link
+- `apps/workflow-engine/DEPLOY.md`, `DEPLOY-SMOKE.md` — deployment + smoke
+
+---
+
+## 14. Open standards we follow
+
+Same as DESIGN.md §16: WCAG 2.2 AA, OKLCH, `prefers-reduced-motion` / `prefers-color-scheme` / `prefers-contrast`, RFC 2119 keyword discipline in any normative app prose (e.g., the `/privacy` page).

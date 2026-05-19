@@ -187,37 +187,45 @@ Any future infographic MUST follow this pattern unless the SVG's text labels are
 
 ## 9. Light / dark mode
 
-The site is **light-mode-only today**. Future dark mode MUST follow these rules:
+The marketing site at `public/` is **light-mode-only today**. The reference app at `apps/workflow-engine/frontend/react/` ships the **canonical warm-dark override** below. When the marketing site adopts dark mode, it adopts this same block verbatim.
 
-### 9.1 Token strategy
+### 9.1 Canonical warm-dark token override (normative)
 
-1. Add a `@media (prefers-color-scheme: dark)` block inside `:root` that overrides the same token names:
-   ```css
-   @media (prefers-color-scheme: dark) {
-     :root {
-       --paper:   #1c1a16;
-       --paper-2: #24211c;
-       --ink:     #f0ecdf;
-       --ink-2:   #b9b4a3;
-       --ink-3:   #7a7568;
-       --rule:    #2e2a23;
-       --rule-2:  #3c372e;
-       /* --clay tokens may stay; verify contrast */
-     }
-   }
-   ```
-2. **No component CSS may change** when dark mode lands — that is the test. If a component breaks, it had hard-coded values.
-3. Add a manual override class on `<html>` (`.theme-dark`, `.theme-light`) for an explicit user toggle. The media query is the default.
+```css
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper:        #1a1a17;
+    --paper-2:      #232220;
+    --rule:         #3a3833;
+    --rule-2:       #4a4842;
+    --ink:          #f4f1ea;
+    --ink-2:        #d9d4c5;
+    --ink-3:        #a8a39a;
+    --ink-shadow:   rgb(0 0 0 / 0.35);
+    /* --clay, --clay-soft/rule/wash/glow/bg-hi, --star-glow stay identical;
+       OKLCH keeps them luminance-balanced on either surface. */
+  }
+}
+```
 
-### 9.2 SVG fills
+The inversion `paper ↔ ink`, `paper-2 ↔ ink-2`, etc., is the contract — same token names, swapped role. Any future doc-level override MUST follow this same shape.
 
-- SVG nodes that use `fill="var(--paper)"` and `stroke="var(--ink)"` will theme automatically.
-- SVG nodes that use raw `fill="#000"` or `fill="black"` will NOT theme. These are bugs; convert to tokens.
-- The robot head embedded in the orchestrator uses `var(--paper)` + `var(--ink)` and will theme correctly.
+### 9.2 Implementation invariants (MUST)
 
-### 9.3 Clay accent in dark mode
+1. **No component CSS changes when dark mode flips.** If a component breaks in dark mode, it had hard-coded values — that is the test.
+2. The `@media (prefers-color-scheme: dark)` block lives inside the same `:root` declaration as the light tokens, never as a separate stylesheet.
+3. A manual override class on `<html>` (`.theme-dark`, `.theme-light`) MAY be added for explicit user toggle; the media query is the default.
+4. App-side functional tokens (`--color-success` / `--color-warning` / `--color-danger`) lift by ~10% luminance in the dark block to maintain on-dark contrast. They are NOT brand tokens and are NOT mirrored to the marketing site.
 
-OKLCH provides automatic visual consistency across themes. The current `--clay: oklch(58% 0.13 40)` works in both modes — verify contrast against the dark `--paper` (target: AA at body weight) before shipping.
+### 9.3 SVG fills
+
+- SVG nodes that use `fill="var(--paper)"` and `stroke="var(--ink)"` theme automatically.
+- SVG nodes that use raw `fill="#000"` or `fill="black"` do NOT theme. These are bugs; convert to tokens.
+- The robot head embedded in the orchestrator uses `var(--paper)` + `var(--ink)` and themes correctly.
+
+### 9.4 Clay accent across modes
+
+OKLCH provides automatic visual consistency. The shared `--clay: oklch(58% 0.13 40)` works on both `--paper: #f4f1ea` and dark `--paper: #1a1a17`. Verify contrast (target: WCAG AA at body weight) before shipping any new clay-on-paper / clay-on-ink combination.
 
 ---
 
@@ -307,11 +315,13 @@ Before merging a new component, confirm:
 
 | File | Purpose |
 |---|---|
-| `public/styles.css` | All visual rules (tokens, components, responsive, a11y) |
-| `public/index.html` | Page composition; copy lives here |
-| `public/main.js` | Reveal-on-scroll observer |
+| `public/styles.css` | Marketing-site visual rules + canonical shared `:root` (tokens, components, responsive, a11y) |
+| `public/index.html` | Marketing-site page composition; copy lives here |
+| `public/main.js` | Reveal-on-scroll observer + GitHub-star count fetch |
 | `public/assets/OpenWOP.svg` | Brand mark |
-| `.claude/skills/ux-review/SKILL.md` | Review skill that enforces this document |
+| `DESIGN.app.md` | Companion design doc for the reference app at `apps/workflow-engine/frontend/react/`. App-specific components, functional status tokens, xyflow + Firebase Auth carve-outs |
+| `apps/workflow-engine/frontend/react/src/styles/global.css` | Reference-app stylesheet; `:root` mirrors `public/styles.css` per the SYNC RULE in DESIGN.app.md §2 |
+| `.claude/skills/ux-review/SKILL.md` | Review skill that enforces this document and `DESIGN.app.md` |
 
 ---
 
