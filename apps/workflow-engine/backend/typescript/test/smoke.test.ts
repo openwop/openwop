@@ -97,7 +97,7 @@ describe('run lifecycle', () => {
         inputs: { text: 'hello' },
       }),
     });
-    expect(create.status).toBe(202);
+    expect(create.status).toBe(201);
     expect(typeof create.body.runId).toBe('string');
     const runId = create.body.runId;
 
@@ -123,7 +123,7 @@ describe('run lifecycle', () => {
         inputs: { text: 'idem' },
       }),
     });
-    expect(first.status).toBe(202);
+    expect(first.status).toBe(201);
     // Wait briefly for the inline dispatch to finish so the cached
     // response is final (not __pending__) before the second request.
     await new Promise((r) => setTimeout(r, 100));
@@ -136,7 +136,7 @@ describe('run lifecycle', () => {
         inputs: { text: 'idem' },
       }),
     });
-    expect(second.status).toBe(202);
+    expect(second.status).toBe(201);
     expect(second.body.runId).toBe(first.body.runId);
   });
 });

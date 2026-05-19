@@ -155,12 +155,12 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
         await storage.putIdempotency({
           key: idempotencyKey,
           responseBody: JSON.stringify(response),
-          responseStatus: 202,
+          responseStatus: 201,
           createdAt: now,
         });
       }
 
-      res.status(202).json(response);
+      res.status(201).json(response);
 
       // Dispatch inline. Real impls hand off to Cloud Tasks / Pub/Sub / SQS
       // so the HTTP response returns immediately and the dispatcher runs
@@ -323,7 +323,7 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
         status: 'pending',
         eventsUrl: `${req.protocol}://${req.get('host')}/v1/runs/${newRunId}/events`,
       };
-      res.status(202).json(response);
+      res.status(201).json(response);
 
       setImmediate(() => {
         executeRun(storage, forkedRun, wf.definition, {

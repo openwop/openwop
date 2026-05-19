@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Workflow-engine sample — POST /v1/runs returns 201 (spec-aligned) (2026-05-19)
+
+The sample previously returned HTTP `202 Accepted` on `POST /v1/runs` based on the "Cloud Tasks dispatch is async" rationale. Per `api/openapi.yaml` (line 188) and the conformance suite's `runs-lifecycle.test.ts:42`, the spec mandates `201 Created` — the run resource exists immediately, execution is async but that's an implementation detail. Wire-shape gap unblocked by the prior fixture-loader commit (`e2ed9a8`).
+
+- **`apps/workflow-engine/backend/typescript/src/routes/runs.ts`** — both `res.status(202)` sites flipped to `201` (line 163 `POST /v1/runs` synchronous path, line 326 idempotency-replay path). Idempotency cache write at line 158 also updated to persist `201` so subsequent replays surface the spec-compliant status.
+- **Sample internal tests** — `smoke.test.ts` (3 sites), `auth-cookies.test.ts` (1), `rate-limit.test.ts` (3 — including the test-internal `app.post('/v1/runs', ...)` mock), `storage-adapter-parity.test.ts` + `storage-adapter-parity-testcontainers.test.ts` (1 each on `responseStatus`) flipped to assert `201`. All 211 sample-internal tests pass.
+- **Conformance** — `runs-lifecycle.test.ts` now passes 3/3 against the sample (was 2 failing). Other downstream fixture-gated scenarios that pre-validate run creation are also unblocked.
+
+Compatibility: **implementation-only** (workflow-engine sample). No spec, schema, OpenAPI, or other reference-host changes. The spec already documents `201`; this brings the sample into line.
+
 ### RFC 0026 follow-ups + missing-await bug in callAI invocation-log lookup (2026-05-19)
 
 Resolves five code-review findings against the RFC 0026 Active → Accepted promotion commit, plus a pre-existing async-await bug that the new test caught.

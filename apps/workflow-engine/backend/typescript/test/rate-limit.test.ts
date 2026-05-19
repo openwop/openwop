@@ -27,7 +27,7 @@ async function startApp(): Promise<{ port: number; close: () => Promise<void> }>
   });
   app.use(ipRateLimitMiddleware());
   app.get('/ping', (_req, res) => res.json({ ok: true }));
-  app.post('/v1/runs', runQuotaMiddleware(), (_req, res) => res.status(202).json({ ok: true }));
+  app.post('/v1/runs', runQuotaMiddleware(), (_req, res) => res.status(201).json({ ok: true }));
   return new Promise((resolve) => {
     server = app.listen(0, () => {
       port = (server.address() as { port: number }).port;
@@ -77,7 +77,7 @@ describe('P0.4 rate limit', () => {
         headers: { 'content-type': 'application/json', 'x-test-tenant': 'anon:alice' },
         body: '{}',
       });
-      expect(r.status).toBe(202);
+      expect(r.status).toBe(201);
     }
     const blocked = await fetch(`http://127.0.0.1:${port}/v1/runs`, {
       method: 'POST',
@@ -103,7 +103,7 @@ describe('P0.4 rate limit', () => {
       headers: { 'content-type': 'application/json', 'x-test-tenant': 'anon:bob' },
       body: '{}',
     });
-    expect(bob.status).toBe(202);
+    expect(bob.status).toBe(201);
   });
 
   it('concurrent-runs slot releases on run.terminal — pre-flight pegs, then frees', async () => {

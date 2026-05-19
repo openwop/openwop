@@ -183,11 +183,11 @@ describe('Postgres parity (real DB): idempotency — INSERT-ON-CONFLICT-RETURNIN
     await s.putIdempotency({
       key,
       responseBody: '{"runId":"pg-r"}',
-      responseStatus: 202,
+      responseStatus: 201,
       createdAt: baseTime,
     });
     const second = await s.claimIdempotency(key, baseTime);
-    expect(second.existing?.responseStatus).toBe(202);
+    expect(second.existing?.responseStatus).toBe(201);
   });
 });
 

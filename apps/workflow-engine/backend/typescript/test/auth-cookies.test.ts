@@ -75,7 +75,7 @@ describe('cookie-mode auth (P0.2)', () => {
       headers: { 'content-type': 'application/json', cookie },
       body: JSON.stringify({ workflowId: 'cookie-test', inputs: { text: 'hello' } }),
     });
-    expect(runRes.status).toBe(202);
+    expect(runRes.status).toBe(201);
     const run = (await runRes.json()) as { runId: string };
 
     // Fetch run snapshot to confirm the run was authed to the cookie's
