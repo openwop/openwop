@@ -46,9 +46,32 @@ export type {
   RunSnapshot,
   RunStatus,
   StreamMode,
+  TypedRunEvent,
+  AgentReasonedPayload,
+  AgentReasoningDeltaPayload,
+  AgentToolCalledPayload,
+  AgentToolReturnedPayload,
+  AgentHandoffPayload,
+  AgentDecidedPayload,
 } from './types.js';
 export { streamEvents } from './sse.js';
 export type { EventsStreamContext, EventsStreamOptions } from './sse.js';
+
+// RFC 0002 + RFC 0024 typed event helpers — type guards over `RunEventDoc`
+// plus a high-level streaming-reasoning subscription helper.
+export {
+  isAgentReasoned,
+  isAgentReasoningDelta,
+  isAgentToolCalled,
+  isAgentToolReturned,
+  isAgentHandoff,
+  isAgentDecided,
+  subscribeToAgentReasoning,
+} from './event-helpers.js';
+export type {
+  AgentReasoningCallbacks,
+  Unsubscribe,
+} from './event-helpers.js';
 
 // Run-status + run-error helpers (added in 1). Forward-compat predicates
 // over the wire-format unions declared above; full design + rationale in

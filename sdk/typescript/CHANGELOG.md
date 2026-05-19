@@ -1,5 +1,14 @@
 # `@openwop/openwop` Changelog
 
+## [1.0 — additions] — 2026-05-19 — typed `agent.*` event helpers (RFC 0024)
+
+- **New typed payload interfaces** for the `agent.*` event family in `src/types.ts`: `AgentReasonedPayload`, `AgentReasoningDeltaPayload`, `AgentToolCalledPayload`, `AgentToolReturnedPayload`, `AgentHandoffPayload`, `AgentDecidedPayload`. Each mirrors the corresponding `schemas/run-event-payloads.schema.json` $def exactly. Plus a `TypedRunEvent<T>` generic that pairs a narrowed `RunEventDoc` with a known payload shape.
+- **Six type-guard predicates** in `src/event-helpers.ts`: `isAgentReasoned(ev)` / `isAgentReasoningDelta(ev)` / `isAgentToolCalled(ev)` / `isAgentToolReturned(ev)` / `isAgentHandoff(ev)` / `isAgentDecided(ev)`. Each verifies the `type` discriminator AND that required payload fields are present with the correct primitive types; returns `false` (no throw) for malformed or unknown events. Narrows the input via TypeScript's `ev is TypedRunEvent<…>` predicate so the guarded branch gets compile-time-typed payload access.
+- **High-level streaming-reasoning helper** `subscribeToAgentReasoning(ctx, runId, callbacks)` that wraps `streamEvents()` and fans out `agent.reasoning.delta` + `agent.reasoned` into typed `onDelta` / `onClosed` callbacks. Callback exceptions surface via `onError` without tearing down the stream; cleanup via the returned `Unsubscribe` thunk aborts the underlying fetch.
+- **Capability flag** `capabilities.agents.reasoning.streaming?: boolean` added to `AgentsCapability` (per RFC 0024). Hosts that omit it advertise the existing non-streaming contract.
+- 16 unit tests under `src/__tests__/event-helpers.test.ts` covering true-positive narrowing, true-negative rejections (missing fields, wrong types, malformed payloads, unknown event types), and a schema-mirror sanity test that reads the canonical `run-event-payloads.schema.json` and asserts required-field parity per $def.
+- `RunEventDoc.type` stays open `string` — forward-compat per `COMPATIBILITY.md §2.1`.
+
 ## [1.0 — additions] — 2026-05-15 — pause/resume helpers
 
 - **New run-control helpers.** `client.runs.pause(runId, body?, opts?)` calls `POST /v1/runs/{id}:pause`; `client.runs.resume(runId, body?, opts?)` calls `POST /v1/runs/{id}:resume`. New exported types: `PauseRunRequest`, `PauseRunResponse`, `ResumeRunRequest`, `ResumeRunResponse`.

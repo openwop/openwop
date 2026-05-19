@@ -462,7 +462,98 @@ export interface AgentsCapability {
   reasoning?: {
     verbosity: ReasoningVerbosity;
     tokenLimit?: number;
+    /** RFC 0024. When `true`, host MAY emit `agent.reasoning.delta`
+     *  events incrementally while a reasoning block is still open,
+     *  in addition to the final `agent.reasoned`. Consumers that
+     *  only read `agent.reasoned` remain correct (the closing event
+     *  is authoritative). */
+    streaming?: boolean;
   };
+}
+
+// ─── agent.* event payloads (RFC 0002 §B + RFC 0024) ────────────────────
+//
+// Mirror of `schemas/run-event-payloads.schema.json#$defs.agent*`. Field
+// names + types match the canonical wire contract verbatim; the `[key:
+// string]: unknown` index signature reflects the deliberate
+// `additionalProperties: true` carve-out on the agent.* payloads (Phase
+// 1 of the multi-agent shift). When the canonical schema changes, these
+// interfaces MUST be updated in lock-step — see the assertion in
+// `__tests__/event-helpers.test.ts` that exercises every required field.
+
+/** `agent.reasoned` payload (RFC 0002 §B). Fired once per closed
+ *  reasoning block. The `reasoning` field is authoritative — when a
+ *  streaming host also emitted `agent.reasoning.delta` events, this
+ *  event still carries the complete trace (possibly after host-side
+ *  truncation under `verbosity: 'summary'`). */
+export interface AgentReasonedPayload {
+  agentId: string;
+  reasoning: string;
+  verbosity?: ReasoningVerbosity;
+  [key: string]: unknown;
+}
+
+/** `agent.reasoning.delta` payload (RFC 0024). Incremental reasoning
+ *  chunk emitted while a reasoning block is still open. Consumers
+ *  concatenate `delta` strings in `sequence` order to reconstruct
+ *  the in-progress trace; the closing `agent.reasoned` event carries
+ *  the authoritative final content. */
+export interface AgentReasoningDeltaPayload {
+  agentId: string;
+  delta: string;
+  sequence: number;
+  verbosity?: ReasoningVerbosity;
+  [key: string]: unknown;
+}
+
+/** `agent.toolCalled` payload (RFC 0002 §B). Pairs with `agent.toolReturned`
+ *  via shared `callId`; the toolReturned event's `causationId` equals
+ *  the toolCalled event's `eventId`. */
+export interface AgentToolCalledPayload {
+  agentId: string;
+  toolName: string;
+  callId: string;
+  inputs?: unknown;
+  [key: string]: unknown;
+}
+
+/** `agent.toolReturned` payload (RFC 0002 §B). `outcome` and `error`
+ *  are mutually exclusive: success returns set `outcome`; failures set
+ *  `error`. Hosts that need stricter validation layer it host-side. */
+export interface AgentToolReturnedPayload {
+  agentId: string;
+  toolName: string;
+  callId: string;
+  outcome?: unknown;
+  error?: ErrorEnvelope;
+  [key: string]: unknown;
+}
+
+/** `agent.handoff` payload (RFC 0002 §B). Note the distinct field
+ *  names — `fromAgentId` / `toAgentId`, NOT a single `agentId` like
+ *  the other agent.* events. */
+export interface AgentHandoffPayload {
+  fromAgentId: string;
+  toAgentId: string;
+  reason?: string;
+  [key: string]: unknown;
+}
+
+/** `agent.decided` payload (RFC 0002 §B). `confidence` in `[0, 1]`
+ *  drives the low-confidence escalation contract (`node.suspended
+ *  { reason: 'low-confidence' }`) when below the resolved threshold. */
+export interface AgentDecidedPayload {
+  agentId: string;
+  decision: unknown;
+  confidence?: number;
+  [key: string]: unknown;
+}
+
+/** A `RunEventDoc` narrowed to a specific event-type discriminator +
+ *  payload shape. Returned by the `isAgent*` type guards in
+ *  `event-helpers.ts`. */
+export interface TypedRunEvent<T> extends RunEventDoc {
+  payload: T;
 }
 
 // ─── Auth profile claims (Phase I.5 + I.6) ──────────────────────────────
