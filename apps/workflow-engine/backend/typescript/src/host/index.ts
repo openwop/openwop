@@ -34,11 +34,18 @@ import { getRegisteredWorkflow } from './workflowsRegistry.js';
 function findConformanceFixturesDir(): string | null {
   const here = dirname(fileURLToPath(import.meta.url));
   const candidates = [
-    resolve(here, '../../../../../../conformance/fixtures'),  // tsx dev from src/host
-    resolve(here, '../../../../../conformance/fixtures'),     // tsx dev one fewer (just in case)
-    resolve(here, '../../../../conformance/fixtures'),        // esbuild bundle lib/
-    resolve(here, './conformance/fixtures'),                  // vendored alongside
-    resolve(process.cwd(), 'conformance/fixtures'),           // CWD fallback
+    // tsx dev from `src/host/index.ts`: `<repo>/apps/workflow-engine/backend/typescript/src/host`
+    // → six `..` segments back to repo root, then `conformance/fixtures`.
+    resolve(here, '../../../../../../conformance/fixtures'),
+    // esbuild bundle running at `<repo>/apps/workflow-engine/backend/typescript/lib/index.js`
+    // → four `..` segments back to repo root.
+    resolve(here, '../../../../conformance/fixtures'),
+    // Docker runtime: lib/ at `/app/lib/`, fixtures vendored at
+    // `/app/conformance/fixtures/` (sibling of lib/) per the Dockerfile
+    // `COPY conformance-fixtures ./conformance/fixtures` directive.
+    resolve(here, '../conformance/fixtures'),
+    // Test/last-resort: CWD-relative.
+    resolve(process.cwd(), 'conformance/fixtures'),
   ];
   for (const path of candidates) {
     if (existsSync(path)) return path;
