@@ -78,9 +78,16 @@ interface MockDecision {
   reasoning?: string;
 }
 
+interface MockReasoningObjectWithStreaming extends MockReasoningObject {
+  /** RFC 0024 — when present, emit one `agent.reasoning.delta` event
+   *  per chunk (sequence 0..N-1) BEFORE the closing `agent.reasoned`.
+   *  The closing event's `reasoning` field equals the concatenation. */
+  streamChunks?: ReadonlyArray<string>;
+}
+
 interface MockAgentConfig {
   agentId?: string;
-  mockReasoning?: boolean | MockReasoningObject;
+  mockReasoning?: boolean | MockReasoningObjectWithStreaming;
   mockToolCalls?: ReadonlyArray<MockToolCall>;
   mockHandoff?: MockHandoff;
   mockDecision?: MockDecision;
@@ -107,23 +114,36 @@ function resolveEscalationThreshold(ctx: NodeContext): number {
   return DEFAULT_ESCALATION_THRESHOLD;
 }
 
+function resolveReasoningVerbosity(ctx: NodeContext): 'summary' | 'full' | 'off' {
+  const req = ctx.configurable?.reasoningVerbosity;
+  return req === 'off' || req === 'full' || req === 'summary' ? req : 'summary';
+}
+
+/** Build the closing `agent.reasoned` payload per
+ *  `schemas/run-event-payloads.schema.json` §`agentReasoned`:
+ *  `{ agentId, reasoning, verbosity? }` — using the SCHEMA field
+ *  names, not the RFC-0002-prose `{summary, trace, tokenCount}`
+ *  pre-finalize names (the prose was aligned to the schema in
+ *  the RFC 0002 editorial cleanup, 2026-05-18). */
 function buildReasoningPayload(
   agentId: string,
-  spec: boolean | MockReasoningObject,
+  spec: true | MockReasoningObjectWithStreaming,
+  verbosity: 'summary' | 'full' | 'off',
 ): Record<string, unknown> {
   if (spec === true) {
     return {
       agentId,
-      summary: 'mock-agent reasoning trace (boolean spec)',
-      tokenCount: 0,
+      reasoning: 'mock-agent reasoning trace (boolean spec)',
+      verbosity,
     };
   }
-  const obj = spec as MockReasoningObject;
+  const reasoning = Array.isArray(spec.streamChunks) && spec.streamChunks.length > 0
+    ? spec.streamChunks.join('')
+    : spec.summary;
   return {
     agentId,
-    summary: obj.summary,
-    ...(obj.trace !== undefined && { trace: obj.trace }),
-    ...(obj.tokenCount !== undefined && { tokenCount: obj.tokenCount }),
+    reasoning,
+    verbosity,
   };
 }
 
@@ -134,9 +154,28 @@ export const mockAgentNode: NodeModule = {
     const config = (ctx.config ?? {}) as MockAgentConfig;
     const agentId = resolveAgentId(ctx, config);
 
-    // 1. agent.reasoned
+    // 1. agent.reasoned (+ optional `agent.reasoning.delta` deltas per
+    //    RFC 0024 when `mockReasoning.streamChunks` is provided).
+    //    Verbosity-gated per `capabilities.md` §`agents.reasoning`:
+    //    'off' suppresses both delta and closing events.
     if (config.mockReasoning !== undefined && config.mockReasoning !== false) {
-      await ctx.emit('agent.reasoned', buildReasoningPayload(agentId, config.mockReasoning));
+      const verbosity = resolveReasoningVerbosity(ctx);
+      if (verbosity !== 'off') {
+        const spec = config.mockReasoning;
+        const streamChunks =
+          typeof spec === 'object' && Array.isArray(spec.streamChunks)
+            ? spec.streamChunks.filter((c): c is string => typeof c === 'string')
+            : [];
+        for (let i = 0; i < streamChunks.length; i++) {
+          await ctx.emit('agent.reasoning.delta', {
+            agentId,
+            delta: streamChunks[i],
+            sequence: i,
+            verbosity,
+          });
+        }
+        await ctx.emit('agent.reasoned', buildReasoningPayload(agentId, spec, verbosity));
+      }
     }
 
     // 2. agent.toolCalled / agent.toolReturned pairs, in array order.

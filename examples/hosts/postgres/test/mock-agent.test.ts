@@ -266,9 +266,71 @@ async function main(): Promise<void> {
       );
     }
 
+    // ── 3. conformance-agent-reasoning-streaming (RFC 0024) ────────────
+    {
+      const create = await fetch(`${baseUrl}/v1/runs`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ workflowId: 'conformance-agent-reasoning-streaming' }),
+      });
+      assert.equal(create.status, 201, 'POST /v1/runs MUST return 201');
+      const { runId } = (await create.json()) as { runId: string };
+
+      await poll(
+        async () => {
+          const r = await fetch(
+            `${baseUrl}/v1/runs/${encodeURIComponent(runId)}`,
+            { headers },
+          );
+          if (!r.ok) return null;
+          return (await r.json()) as { status: string };
+        },
+        (v) => v.status === 'completed' || v.status === 'failed',
+        { timeoutMs: 10_000 },
+      );
+
+      const events = await pollEvents(baseUrl, runId, headers);
+
+      // Fixture has 3 streamChunks. Host MUST emit:
+      //   - 3 agent.reasoning.delta with sequence 0..2
+      //   - 1 closing agent.reasoned whose reasoning equals concat(chunks)
+      const deltas = events.filter((e) => e.type === 'agent.reasoning.delta');
+      const finals = events.filter((e) => e.type === 'agent.reasoned');
+      assert.equal(deltas.length, 3, `RFC 0024: expected 3 agent.reasoning.delta; got ${deltas.length}`);
+      assert.equal(finals.length, 1, `RFC 0024: expected 1 closing agent.reasoned; got ${finals.length}`);
+
+      // sequence 0,1,2 monotonic
+      const sequences = deltas.map((e) => e.payload?.sequence);
+      assert.deepEqual(sequences, [0, 1, 2], 'RFC 0024: sequence MUST start at 0 and increment by 1');
+
+      // agentId consistent across the block
+      const agentIds = new Set(
+        [...deltas, ...finals]
+          .map((e) => e.payload?.agentId)
+          .filter((a): a is string => typeof a === 'string'),
+      );
+      assert.equal(agentIds.size, 1, `RFC 0024: agentId MUST be consistent; got ${[...agentIds].join(',')}`);
+
+      // closing reasoning equals concatenation of delta strings
+      const concatenated = deltas.map((e) => e.payload?.delta).join('');
+      assert.equal(
+        finals[0]!.payload?.reasoning,
+        concatenated,
+        'RFC 0024: closing agent.reasoned.reasoning MUST equal concatenation of streamChunks (mock-agent contract)',
+      );
+
+      // ordering: every delta precedes the closing event
+      const closingIdx = events.findIndex((e) => e.type === 'agent.reasoned');
+      const lastDeltaIdx = events.map((e) => e.type).lastIndexOf('agent.reasoning.delta');
+      assert.ok(
+        lastDeltaIdx < closingIdx,
+        'RFC 0024: every agent.reasoning.delta MUST precede the closing agent.reasoned',
+      );
+    }
+
     // eslint-disable-next-line no-console
     console.log(
-      'ok mock-agent — RFC 0023 §B emission contract verified against conformance-agent-reasoning + conformance-agent-low-confidence',
+      'ok mock-agent — RFC 0023 §B + RFC 0024 emission contracts verified against conformance-agent-reasoning + conformance-agent-low-confidence + conformance-agent-reasoning-streaming',
     );
   } finally {
     await close();

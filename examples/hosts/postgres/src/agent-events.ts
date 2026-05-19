@@ -175,7 +175,12 @@ export const REFERENCE_AGENTS_CAPABILITY = {
   // RFC 0022 §A — host honors inputMapping / outputMapping /
   // perWorkerInputMappings / perWorkerOutputMappings on DispatchConfig.
   dispatchMapping: true,
-  reasoning: { verbosity: 'summary' as const, tokenLimit: 512 },
+  // RFC 0024 — host emits incremental `agent.reasoning.delta` events
+  // for any `core.conformance.mock-agent` invocation that supplies
+  // `mockReasoning.streamChunks` (the only emission path that varies
+  // chunked output on this host today). Other emitters honor the
+  // closing-event-only contract, which `streaming: true` still allows.
+  reasoning: { verbosity: 'summary' as const, tokenLimit: 512, streaming: true },
 } as const;
 
 /**

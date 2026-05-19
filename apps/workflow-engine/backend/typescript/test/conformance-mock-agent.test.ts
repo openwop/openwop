@@ -56,19 +56,23 @@ describe('core.conformance.mock-agent', () => {
   });
 
   describe('mockReasoning', () => {
-    it('boolean true → emits agent.reasoned with stub summary', async () => {
+    it('boolean true → emits agent.reasoned with schema-compliant `reasoning` field', async () => {
+      // Per `schemas/run-event-payloads.schema.json` §`agentReasoned`,
+      // the payload field is `reasoning` (string). The earlier
+      // RFC-0002-prose `{summary, trace, tokenCount}` shape was
+      // aligned to the schema in the 2026-05-18 editorial cleanup.
       const { ctx, events } = makeCtx({
         config: { mockReasoning: true, agentId: 'agent-foo' },
       });
       await mockAgentNode.execute(ctx);
       expect(events).toHaveLength(1);
       expect(events[0].type).toBe('agent.reasoned');
-      const payload = events[0].payload as { agentId: string; summary: string };
+      const payload = events[0].payload as { agentId: string; reasoning: string };
       expect(payload.agentId).toBe('agent-foo');
-      expect(payload.summary.length).toBeGreaterThan(0);
+      expect(payload.reasoning.length).toBeGreaterThan(0);
     });
 
-    it('object → projects fields onto agent.reasoned payload', async () => {
+    it('object → projects summary onto agent.reasoned.reasoning per schema', async () => {
       const { ctx, events } = makeCtx({
         config: {
           mockReasoning: { summary: 'considered options', tokenCount: 42, trace: 'thoughts...' },
@@ -78,13 +82,49 @@ describe('core.conformance.mock-agent', () => {
       await mockAgentNode.execute(ctx);
       const payload = events[0].payload as {
         agentId: string;
-        summary: string;
-        tokenCount: number;
-        trace: string;
+        reasoning: string;
+        verbosity: string;
       };
-      expect(payload.summary).toBe('considered options');
-      expect(payload.tokenCount).toBe(42);
-      expect(payload.trace).toBe('thoughts...');
+      expect(payload.reasoning).toBe('considered options');
+      expect(payload.verbosity).toBe('summary');
+    });
+
+    it('RFC 0024 streamChunks → emits N agent.reasoning.delta + closing agent.reasoned', async () => {
+      const chunks = ['Let me think. ', 'First, the user. ', 'Therefore, X.'];
+      const { ctx, events } = makeCtx({
+        config: {
+          mockReasoning: { summary: chunks.join(''), streamChunks: chunks },
+          agentId: 'agent-foo',
+        },
+      });
+      await mockAgentNode.execute(ctx);
+      // N delta events with sequence 0..N-1, then 1 closing event.
+      expect(events).toHaveLength(chunks.length + 1);
+      for (let i = 0; i < chunks.length; i++) {
+        expect(events[i].type).toBe('agent.reasoning.delta');
+        const p = events[i].payload as { agentId: string; delta: string; sequence: number };
+        expect(p.agentId).toBe('agent-foo');
+        expect(p.delta).toBe(chunks[i]);
+        expect(p.sequence).toBe(i);
+      }
+      expect(events[chunks.length].type).toBe('agent.reasoned');
+      const closing = events[chunks.length].payload as { agentId: string; reasoning: string };
+      expect(closing.agentId).toBe('agent-foo');
+      expect(closing.reasoning).toBe(chunks.join(''));
+    });
+
+    it('verbosity "off" suppresses both delta and closing events', async () => {
+      const chunks = ['a', 'b', 'c'];
+      const { ctx, events } = makeCtx({
+        config: {
+          mockReasoning: { summary: 'x', streamChunks: chunks },
+          agentId: 'agent-foo',
+        },
+        configurable: { reasoningVerbosity: 'off' },
+      });
+      await mockAgentNode.execute(ctx);
+      expect(events.some((e) => e.type === 'agent.reasoning.delta')).toBe(false);
+      expect(events.some((e) => e.type === 'agent.reasoned')).toBe(false);
     });
 
     it('false → no event emitted', async () => {

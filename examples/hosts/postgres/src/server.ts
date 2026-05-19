@@ -1341,7 +1341,16 @@ async function executeNode(
         agentId?: string;
         mockReasoning?:
           | boolean
-          | { summary?: string; trace?: string; tokenCount?: number };
+          | {
+              summary?: string;
+              trace?: string;
+              tokenCount?: number;
+              /** RFC 0024 — when present, emit one `agent.reasoning.delta`
+               *  event per chunk (sequence 0..N-1) BEFORE the closing
+               *  `agent.reasoned`. The closing event's `reasoning` equals
+               *  the concatenation of all chunks. */
+              streamChunks?: ReadonlyArray<string>;
+            };
         mockToolCalls?: ReadonlyArray<MockToolCall>;
         mockHandoff?: { toAgentId?: string; reason?: string; context?: unknown };
         mockDecision?: { decision?: unknown; confidence?: number; reasoning?: string };
@@ -1355,6 +1364,12 @@ async function executeNode(
 
       // 1. agent.reasoned (verbosity-gated per the host's existing rule;
       //    "off" suppresses emission entirely per RFC 0002 §B).
+      //
+      // RFC 0024 streaming: when the config carries `streamChunks`, emit
+      // one `agent.reasoning.delta` per chunk BEFORE the closing
+      // `agent.reasoned`. The closing event's `reasoning` is the
+      // concatenation of the chunks (authoritative per RFC 0024
+      // §Proposal — consumers MUST treat the closing event as canonical).
       if (cfg.mockReasoning !== undefined && cfg.mockReasoning !== null) {
         const reasoned =
           typeof cfg.mockReasoning === 'object'
@@ -1362,14 +1377,34 @@ async function executeNode(
             : { summary: `[stub] reasoning trace from ${agentId}` };
         const verbosity = await readReasoningVerbosity(runId);
         if (verbosity !== 'off') {
-          const summary = typeof reasoned.summary === 'string'
-            ? reasoned.summary
-            : `[stub] reasoning trace from ${agentId}`;
+          const streamChunks = Array.isArray(reasoned.streamChunks)
+            ? reasoned.streamChunks.filter((c): c is string => typeof c === 'string')
+            : [];
+          // RFC 0024 streaming path: emit deltas in order, sequence 0..N-1.
+          for (let i = 0; i < streamChunks.length; i++) {
+            await appendEvent(runId, 'agent.reasoning.delta', {
+              nodeId: node.id,
+              data: {
+                agentId,
+                delta: streamChunks[i],
+                sequence: i,
+                verbosity,
+              },
+            });
+          }
+          // Closing event. When streamChunks are present, the canonical
+          // reasoning is the concatenation; otherwise fall back to the
+          // configured summary (or a host stub if neither is supplied).
+          const reasoning = streamChunks.length > 0
+            ? streamChunks.join('')
+            : typeof reasoned.summary === 'string'
+              ? reasoned.summary
+              : `[stub] reasoning trace from ${agentId}`;
           await appendEvent(runId, 'agent.reasoned', {
             nodeId: node.id,
             data: {
               agentId,
-              reasoning: summary,
+              reasoning,
               verbosity,
               ...(typeof reasoned.tokenCount === 'number'
                 ? { tokenCount: reasoned.tokenCount }
