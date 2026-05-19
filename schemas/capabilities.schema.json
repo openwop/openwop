@@ -212,7 +212,7 @@
     },
     "providerUsage": {
       "type": "object",
-      "description": "RFC 0026 (Draft). Hosts that emit `provider.usage` events after every LLM provider invocation per RFC 0026 §B. The event carries per-call token counts in the durable event log; cost rollup remains in `RunSnapshot.metrics.openwopCost`. Old hosts ignore.",
+      "description": "RFC 0026. Hosts that emit `provider.usage` events after every LLM provider invocation per RFC 0026 §B. The event carries per-call token counts in the durable event log; cost rollup remains in `RunSnapshot.metrics.openwopCost`. Old hosts ignore.",
       "properties": {
         "supported": { "type": "boolean", "description": "Host emits one `provider.usage` event per LLM provider call." },
         "costEstimates": { "type": "boolean", "description": "When true, the host includes `costEstimateUsd` on `provider.usage` events using its internal rate table. When false/absent, only token counts are emitted." },

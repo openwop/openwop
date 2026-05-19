@@ -79,10 +79,15 @@ export interface AdapterScope {
   timeoutMs?: number;
   /**
    * RFC 0026 — `provider.usage` event emitter. When present, the adapter
-   * fires one `provider.usage` event after each real provider dispatch
-   * (cache hits don't re-emit; the original call's event is replayed
-   * from the run event log). The cleartext credential is never read.
+   * fires one `provider.usage` event per upstream provider invocation
+   * from inside `dispatchPlain` (so `dispatchStructured`'s parse-retry
+   * loop produces one event per attempt). Invocation-log cache hits
+   * return early in `callAI` before reaching the dispatch layer, so no
+   * duplicate event is written — the original call's event was already
+   * persisted on the first invocation and is available to SSE / webhook
+   * subscribers and fork replay via `replay.md §"Forking + resumption"`.
    *
+   * The cleartext credential is never read at the emission site.
    * Wired from the executor's per-node ctx so the event lands in the
    * same run event log with the same nodeId.
    */
@@ -213,7 +218,7 @@ async function callAI(scope: AdapterScope, req: AiCallRequest): Promise<AiCallRe
     providerKey,
   };
   const invocationLog = getInvocationLog();
-  const cached = invocationLog.get(cacheKey) as AiCallResult | null;
+  const cached = (await invocationLog.get(cacheKey)) as AiCallResult | null;
   if (cached) {
     log.debug('callAI: invocation-log cache hit', {
       runId: scope.runId,
@@ -241,15 +246,16 @@ async function callAI(scope: AdapterScope, req: AiCallRequest): Promise<AiCallRe
     });
   }
 
-  // RFC 0026 — emit `provider.usage` event BEFORE we return / before
-  // any subsequent `node.completed` lands. Best-effort: a failing emit
-  // never fails the LLM call.
-  await emitProviderUsage(scope, req.provider, req.model, result.usage?.inputTokens, result.usage?.outputTokens);
+  // RFC 0026 — `provider.usage` event(s) were already emitted from
+  // inside `dispatchPlain` (one per upstream provider invocation,
+  // including each attempt inside `dispatchStructured`'s parse-retry
+  // loop). callAI does NOT re-emit here — that would either double-
+  // count single calls or collapse N retry attempts into 1 event.
 
   // `result` from dispatch* never carries `credentialRefHashed`, so
   // caching `{...result}` is already secret-free. The hashed ref is
   // re-attached for the current return value below.
-  invocationLog.put(cacheKey, result);
+  await invocationLog.put(cacheKey, result);
   return { ...result, credentialRefHashed };
 }
 
@@ -514,7 +520,7 @@ async function dispatchPlain(
   req: AiCallRequest,
   apiKey: string,
 ): Promise<AiCallResult> {
-  return mapDispatchErrors(req.provider, () =>
+  const result = await mapDispatchErrors(req.provider, () =>
     runWithTimeout(scope, async (signal) => {
       const raw = await dispatchChat({
         provider: req.provider as ProviderId,
@@ -535,6 +541,13 @@ async function dispatchPlain(
       };
     }),
   );
+  // RFC 0026 §B: emit one `provider.usage` event per upstream provider
+  // invocation. Located here (NOT at the `callAI` boundary) so that
+  // `dispatchStructured`'s parse-retry loop — which calls dispatchPlain
+  // up to STRUCTURED_OUTPUT_RETRIES + 1 times — emits one event per
+  // attempt rather than collapsing N invocations into a single event.
+  await emitProviderUsage(scope, req.provider, req.model, result.usage?.inputTokens, result.usage?.outputTokens);
+  return result;
 }
 
 const STRUCTURED_OUTPUT_RETRIES = 2;

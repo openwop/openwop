@@ -168,22 +168,8 @@ export function buildProviderUsagePayload(
   }
   if (!usage) return null;
 
-  const totalTokens = usage.totalTokens ?? usage.inputTokens + usage.outputTokens;
-  const costEstimateUsd = computeCostUsd(model, usage.inputTokens, usage.outputTokens);
-
-  const payload: ProviderUsagePayload = {
-    provider: providerId,
-    model,
-    inputTokens: usage.inputTokens,
-    outputTokens: usage.outputTokens,
-    totalTokens,
-  };
-  if (costEstimateUsd !== undefined) {
-    payload.costEstimateUsd = costEstimateUsd;
-    payload.currency = 'USD';
-  }
-  if (opts.nodeId !== undefined) payload.nodeId = opts.nodeId;
-  if (opts.traceId !== undefined) payload.traceId = opts.traceId;
-  if (opts.cacheHit !== undefined) payload.cacheHit = opts.cacheHit;
-  return payload;
+  return buildProviderUsagePayloadFromTokens(providerId, model, usage.inputTokens, usage.outputTokens, {
+    ...(usage.totalTokens !== undefined ? { totalTokens: usage.totalTokens } : {}),
+    ...opts,
+  });
 }
