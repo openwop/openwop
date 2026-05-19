@@ -106,30 +106,12 @@
   }
 }
 
-/* ── Warm-dark mode (canonical override per DESIGN.md §9) ──
- * Inverts paper ↔ ink; rule + ink-2/3 darken proportionally;
- * clay stays luminance-balanced and works on either surface. */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --paper:        #1a1a17;
-    --paper-2:      #232220;
-    --rule:         #3a3833;
-    --rule-2:       #4a4842;
-    --ink:          #f4f1ea;
-    --ink-2:        #d9d4c5;
-    --ink-3:        #a8a39a;
-    --ink-shadow:   rgb(0 0 0 / 0.35);
-
-    /* Legacy aliases auto-rebind because they reference the tokens above. */
-    --color-accent-hover: oklch(64% 0.13 40);
-
-    /* Status colors lift slightly for dark contrast. */
-    --color-success: oklch(72% 0.14 145);
-    --color-warning: oklch(80% 0.14 75);
-    --color-danger:  oklch(65% 0.16 28);
-    --color-ai:      oklch(70% 0.12 280);
-  }
-}
+/* ── Dark mode is deferred. ──
+ * The marketing site at openwop.dev is light-only today; the reference
+ * app and the registry follow suit so the three surfaces read identically
+ * on a dark-OS. A coherent warm-dark variant lands across all three at
+ * the same time when DESIGN.md §9 promotes back to normative. The recipe
+ * stays in the doc, just isn't wired here. */
 
 * {
   box-sizing: border-box;

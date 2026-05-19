@@ -23,7 +23,7 @@ The `:root` block in `src/styles/global.css` carries:
 | Block | Source of truth | Sync rule |
 |---|---|---|
 | Shared editorial palette (`--paper`, `--ink`, `--rule`, `--clay`, `--star-glow`, type triple) | `DESIGN.md §4` + `public/styles.css :root` | **MUST stay identical**; change both in one commit. The CSS file carries a `SYNC RULE` comment block above `:root` |
-| Warm-dark override (`@media (prefers-color-scheme: dark)`) | `DESIGN.md §9.1` | Same |
+| Warm-dark override (`@media (prefers-color-scheme: dark)`) | `DESIGN.md §9.1` (deferred — informative) | Not wired today; lands across all three surfaces in one release |
 | App-functional tokens (`--color-success` / `--color-warning` / `--color-danger`) | This doc, §3 | App-only; not mirrored to marketing site |
 | Legacy app aliases (`--color-bg`, `--color-surface`, `--font-sans`, …) | This doc, §4 | Transitional. Shrinks over time as references migrate to canonical names |
 | App geometry (`--radius`, `--space-1..6`, `--radius-bubble`, etc.) | This doc | App-only |
@@ -45,7 +45,7 @@ The marketing site has no `--color-success` etc.; the app needs them because it 
 Rules:
 
 1. **Use functional tokens only for run-state semantics.** A button doesn't get `--color-danger` for emphasis — it gets clay. `--color-danger` is reserved for `RunStatus = failed | cancelled`, error banners, and the destructive secondary state of confirm dialogs.
-2. **Status colors lift in dark mode** (DESIGN.md §9.2 invariant 4): success → `oklch(72% 0.14 145)`, warning → `oklch(80% 0.14 75)`, danger → `oklch(65% 0.16 28)`. Keep the chroma; lift the luminance.
+2. **Status colors will lift in dark mode when it lands** (DESIGN.md §9.2 invariant 4): success → `oklch(72% 0.14 145)`, warning → `oklch(80% 0.14 75)`, danger → `oklch(65% 0.16 28)`, ai → `oklch(70% 0.12 280)`. Keep the chroma; lift the luminance. The lifted values are not in the stylesheet today because dark mode is deferred (`DESIGN.md §9`).
 3. **Never use a status color as a background fill at body weight.** Surface as an icon, a dot, a label, or a hairline. Backgrounds compete with `--paper`.
 
 ---
@@ -212,7 +212,7 @@ Before merging a PR that introduces a new app component:
 - [ ] No hard-coded hex / OKLCH literal in component CSS
 - [ ] No inline `style={{}}` for color/font (geometry OK)
 - [ ] Has `:focus-visible` keyboard reachability
-- [ ] Renders correctly under `prefers-color-scheme: dark` (single visual sweep)
+- [ ] Renders correctly under `prefers-color-scheme: dark` when that override lands (deferred today — see DESIGN.md §9)
 - [ ] Has a documented breakpoint behavior for ≤760px
 - [ ] All animations honor `prefers-reduced-motion`
 - [ ] Acronyms expand on first appearance per panel

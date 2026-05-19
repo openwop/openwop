@@ -18,81 +18,231 @@
 <link rel="alternate" type="application/json" title="Discovery" href="/.well-known/openwop-registry">
 <link rel="alternate" type="application/json" title="Registry index" href="/v1/index.json">
 
+<!-- Fonts — shared with openwop.dev + app.openwop.dev per DESIGN.md §3.
+     font-display: swap means system fonts paint first; Geist + Instrument
+     Serif swap in when available so the page is still readable offline. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+
 <style>
+  /* Tokens mirror public/styles.css :root — see DESIGN.md §4. Keep in
+     lockstep with the marketing site and apps/.../react/src/styles/global.css. */
   :root {
-    --bg: #ffffff;
-    --fg: #15171b;
-    --muted: #6b7280;
-    --border: #e4e6eb;
-    --accent: #1e4dd4;
-    --accent-bg: #eef2ff;
-    --code-bg: #f5f6f8;
-    --flag-deprecated: #a16207;
-    --flag-deprecated-bg: #fef3c7;
-    --flag-yanked: #b91c1c;
-    --flag-yanked-bg: #fee2e2;
+    --paper:        #f4f1ea;
+    --paper-2:      #ece8de;
+    --rule:         #d9d4c5;
+    --rule-2:       #c4bfae;
+    --ink:          #1a1a17;
+    --ink-2:        #4a4842;
+    --ink-3:        #837f72;
+    --clay:         oklch(58% 0.13 40);
+    --clay-soft:    oklch(58% 0.13 40 / 0.10);
+    --clay-rule:    oklch(58% 0.13 40 / 0.35);
+    --clay-wash:    oklch(58% 0.13 40 / 0.04);
+    --clay-glow:    oklch(58% 0.13 40 / 0.50);
+
+    --serif: "Instrument Serif", "Times New Roman", serif;
+    --sans:  "Geist", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --mono:  "Geist Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+
+    /* Registry-only functional tokens — flags for deprecated / yanked packs.
+       Functional, not brand; do NOT mirror to the marketing site or app. */
+    --flag-deprecated:    oklch(60% 0.13 75);
+    --flag-deprecated-bg: oklch(60% 0.13 75 / 0.12);
+    --flag-yanked:        oklch(55% 0.16 28);
+    --flag-yanked-bg:     oklch(55% 0.16 28 / 0.12);
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #0e1014;
-      --fg: #e8eaed;
-      --muted: #9aa0a6;
-      --border: #2a2d34;
-      --accent: #88aaff;
-      --accent-bg: #1c2540;
-      --code-bg: #1a1c22;
-      --flag-deprecated: #facc15;
-      --flag-deprecated-bg: #3a2f06;
-      --flag-yanked: #f87171;
-      --flag-yanked-bg: #3a1414;
-    }
-  }
+  /* Light-mode only today. Dark mode lands when all three surfaces
+     (marketing site, app, registry) ship a coherent dark variant
+     together — see DESIGN.md §9. */
   * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg); }
+  html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink); }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, "Helvetica Neue", Arial, sans-serif;
+    font-family: var(--sans);
     font-size: 16px;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
-  main { max-width: 960px; margin: 0 auto; padding: 48px 24px 64px; }
+  main { max-width: 960px; margin: 0 auto; padding: clamp(40px, 6vw, 72px) clamp(20px, 4vw, 32px) 64px; }
+
+  /* ─── Headlines — serif italic emphasis matches public/styles.css h2 ── */
   header { margin-bottom: 40px; }
-  h1 { font-size: 32px; margin: 0 0 8px; letter-spacing: -0.02em; }
-  h2 { font-size: 22px; margin: 40px 0 12px; letter-spacing: -0.01em; }
-  h3 { font-size: 16px; margin: 24px 0 8px; }
-  .lead { color: var(--muted); font-size: 18px; margin: 0; }
-  code, pre { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
-  code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; }
-  pre { background: var(--code-bg); padding: 12px 16px; border-radius: 6px; overflow-x: auto; line-height: 1.5; }
-  pre code { background: transparent; padding: 0; }
-  a { color: var(--accent); text-decoration: none; }
-  a:hover { text-decoration: underline; }
-  .summary { display: flex; gap: 16px; flex-wrap: wrap; margin: 16px 0 24px; }
-  .summary > div { padding: 12px 16px; border: 1px solid var(--border); border-radius: 6px; min-width: 120px; }
-  .summary strong { display: block; font-size: 22px; line-height: 1.2; }
-  .summary span { color: var(--muted); font-size: 13px; }
+  h1 {
+    font-family: var(--sans);
+    font-weight: 500;
+    font-size: clamp(28px, 4vw, 38px);
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+    margin: 0 0 12px;
+    color: var(--ink);
+  }
+  h1 em {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 400;
+    color: var(--clay);
+  }
+  h2 {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(26px, 3vw, 34px);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    margin: 48px 0 14px;
+    color: var(--ink);
+  }
+  h3 {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 28px 0 10px;
+    font-weight: 500;
+  }
+  .lead { color: var(--ink-2); font-size: 17px; line-height: 1.55; margin: 0; max-width: 64ch; }
+
+  /* ─── Code / pre — paper-2 fill, rule border, mono ──────────────────── */
+  code, pre { font-family: var(--mono); font-size: 0.92em; }
+  code { background: var(--paper-2); padding: 1px 6px; border-radius: 2px; color: var(--ink); }
+  pre {
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    padding: 14px 18px;
+    border-radius: 2px;
+    overflow-x: auto;
+    line-height: 1.5;
+  }
+  pre code { background: transparent; padding: 0; border: 0; }
+  a { color: var(--ink); text-decoration: none; border-bottom: 1px dotted var(--rule-2); transition: color .15s ease, border-color .15s ease; }
+  a:hover { color: var(--clay); border-bottom-color: var(--clay); }
+  h1 a, h2 a, h3 a, .summary a, .endpoint-list a, footer a { border-bottom: none; }
+  a code { border-bottom: 0; }
+
+  /* ─── Summary cards — border-only, hover wash ───────────────────────── */
+  .summary { display: flex; gap: 14px; flex-wrap: wrap; margin: 20px 0 28px; }
+  .summary > div {
+    padding: 14px 18px;
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    min-width: 140px;
+    background: var(--paper);
+    transition: background .15s ease;
+  }
+  .summary > div:hover { background: var(--clay-wash); }
+  .summary strong {
+    display: block;
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 400;
+    font-size: 26px;
+    line-height: 1.1;
+    color: var(--ink);
+  }
+  .summary span {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  /* ─── Catalog table — hairline rules, mono uppercase header ─────────── */
   table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 14px; }
-  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
-  th { font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+  th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  thead th { border-bottom: 1px solid var(--ink-3); }
+  th {
+    font-family: var(--mono);
+    font-weight: 500;
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  tbody tr { transition: background .15s ease; }
+  tbody tr:hover { background: var(--clay-wash); }
   td.name code { font-size: 13px; }
-  td.version { color: var(--muted); font-variant-numeric: tabular-nums; }
+  td.version { color: var(--ink-3); font-family: var(--mono); font-variant-numeric: tabular-nums; }
   td.artifacts { font-size: 13px; }
   td.artifacts a { white-space: nowrap; }
-  .flag { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; vertical-align: middle; }
+
+  /* ─── Flags — functional color pairs with text label (DESIGN.app.md §11) */
+  .flag {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 2px;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    vertical-align: middle;
+  }
   .flag-deprecated { color: var(--flag-deprecated); background: var(--flag-deprecated-bg); }
-  .flag-yanked { color: var(--flag-yanked); background: var(--flag-yanked-bg); }
-  .endpoint-list { list-style: none; padding: 0; margin: 8px 0; }
-  .endpoint-list li { display: flex; gap: 12px; padding: 6px 0; align-items: baseline; flex-wrap: wrap; }
+  .flag-yanked     { color: var(--flag-yanked);     background: var(--flag-yanked-bg); }
+
+  /* ─── Endpoint list — mono code + grey note ─────────────────────────── */
+  .endpoint-list { list-style: none; padding: 0; margin: 12px 0; }
+  .endpoint-list li {
+    display: flex;
+    gap: 14px;
+    padding: 8px 0;
+    align-items: baseline;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--rule);
+  }
+  .endpoint-list li:last-child { border-bottom: 0; }
   .endpoint-list li code { font-size: 13px; }
-  .endpoint-list li .note { color: var(--muted); font-size: 13px; }
-  footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; }
-  .empty { padding: 24px; border: 1px dashed var(--border); border-radius: 6px; color: var(--muted); text-align: center; }
+  .endpoint-list li .note { color: var(--ink-3); font-size: 13px; }
+
+  footer {
+    margin-top: 72px;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule);
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  footer a { color: var(--ink-3); border-bottom: 1px dotted var(--rule-2); }
+  footer a:hover { color: var(--clay); border-bottom-color: var(--clay); }
+
+  .empty {
+    padding: 32px;
+    border: 1px dashed var(--rule-2);
+    border-radius: 2px;
+    color: var(--ink-3);
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+
+  /* ─── Mobile breakpoints — matches DESIGN.md §8 (640 / 760) ─────────── */
+  @media (max-width: 760px) {
+    .summary > div { flex: 1 1 calc(50% - 14px); min-width: 0; }
+  }
+  @media (max-width: 640px) {
+    .summary > div { flex: 1 1 100%; }
+    table { font-size: 13px; }
+    th, td { padding: 10px 8px; }
+  }
+  /* ─── Reduced motion ─────────────────────────────────────────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 </style>
 </head>
 <body>
 <main>
   <header>
-    <h1>openwop registry</h1>
+    <h1>open<em>wop</em> registry</h1>
     <p class="lead">Canonical signed node-pack registry for the <a href="https://openwop.dev/">openwop</a> workflow orchestration protocol.</p>
     <div class="summary">
       <div><strong>62</strong><span>packs published</span></div>
@@ -839,7 +989,7 @@ const ok = verify(null, readFileSync('pack.tgz'), pub, readFileSync('pack.sig'))
   </section>
 
   <footer>
-    Generated 2026-05-18T12:19:03.599Z · <a href="https://openwop.dev/">openwop.dev</a> · <a href="https://github.com/openwop/openwop">openwop on GitHub</a>
+    Generated 2026-05-19T20:38:17.367Z · <a href="https://openwop.dev/">openwop.dev</a> · <a href="https://github.com/openwop/openwop">openwop on GitHub</a>
   </footer>
 </main>
 </body>

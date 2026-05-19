@@ -187,9 +187,11 @@ Any future infographic MUST follow this pattern unless the SVG's text labels are
 
 ## 9. Light / dark mode
 
-The marketing site at `public/` is **light-mode-only today**. The reference app at `apps/workflow-engine/frontend/react/` ships the **canonical warm-dark override** below. When the marketing site adopts dark mode, it adopts this same block verbatim.
+**All three openwop surfaces are light-mode only today** — `public/` (marketing site), `apps/workflow-engine/frontend/react/` (reference app), and `registry/` (pack registry at packs.openwop.dev) ship the warm editorial palette without a `@media (prefers-color-scheme: dark)` override. A user on a dark-OS sees the same cream / ink / clay register everywhere.
 
-### 9.1 Canonical warm-dark token override (normative)
+Dark mode is **deferred** until a coherent warm-dark variant lands across all three surfaces in the same release. The recipe below is the candidate; it isn't wired anywhere right now.
+
+### 9.1 Candidate warm-dark token override (deferred — informative)
 
 ```css
 @media (prefers-color-scheme: dark) {
@@ -210,22 +212,23 @@ The marketing site at `public/` is **light-mode-only today**. The reference app 
 
 The inversion `paper ↔ ink`, `paper-2 ↔ ink-2`, etc., is the contract — same token names, swapped role. Any future doc-level override MUST follow this same shape.
 
-### 9.2 Implementation invariants (MUST)
+### 9.2 Implementation invariants (apply when dark mode lands)
 
 1. **No component CSS changes when dark mode flips.** If a component breaks in dark mode, it had hard-coded values — that is the test.
 2. The `@media (prefers-color-scheme: dark)` block lives inside the same `:root` declaration as the light tokens, never as a separate stylesheet.
 3. A manual override class on `<html>` (`.theme-dark`, `.theme-light`) MAY be added for explicit user toggle; the media query is the default.
-4. App-side functional tokens (`--color-success` / `--color-warning` / `--color-danger`) lift by ~10% luminance in the dark block to maintain on-dark contrast. They are NOT brand tokens and are NOT mirrored to the marketing site.
+4. App-side functional tokens (`--color-success` / `--color-warning` / `--color-danger` / `--color-ai`) lift by ~10% luminance in the dark block to maintain on-dark contrast. They are NOT brand tokens and are NOT mirrored to the marketing site.
+5. All three surfaces (`public/`, `apps/.../react/src/styles/global.css`, `registry/scripts/build-index.mjs`) MUST adopt the override in one release — partial-coverage dark mode produces the "two of three surfaces feel different" failure mode that triggered §9's walk-back.
 
 ### 9.3 SVG fills
 
-- SVG nodes that use `fill="var(--paper)"` and `stroke="var(--ink)"` theme automatically.
-- SVG nodes that use raw `fill="#000"` or `fill="black"` do NOT theme. These are bugs; convert to tokens.
-- The robot head embedded in the orchestrator uses `var(--paper)` + `var(--ink)` and themes correctly.
+- SVG nodes that use `fill="var(--paper)"` and `stroke="var(--ink)"` will theme automatically when dark mode lands.
+- SVG nodes that use raw `fill="#000"` or `fill="black"` will NOT theme. These are bugs; convert to tokens.
+- The robot head embedded in the orchestrator uses `var(--paper)` + `var(--ink)` and will theme correctly.
 
 ### 9.4 Clay accent across modes
 
-OKLCH provides automatic visual consistency. The shared `--clay: oklch(58% 0.13 40)` works on both `--paper: #f4f1ea` and dark `--paper: #1a1a17`. Verify contrast (target: WCAG AA at body weight) before shipping any new clay-on-paper / clay-on-ink combination.
+OKLCH provides automatic visual consistency. The shared `--clay: oklch(58% 0.13 40)` works on both `--paper: #f4f1ea` and the candidate dark `--paper: #1a1a17`. Verify contrast (target: WCAG AA at body weight) before shipping any clay-on-dark-paper combination.
 
 ---
 
