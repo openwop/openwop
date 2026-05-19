@@ -11,8 +11,8 @@
 | JSON Schemas | 27 | `schemas/*.schema.json` |
 | OpenAPI operations | 19 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 159 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 25 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| Conformance scenario files | 160 | `conformance/src/scenarios/*.test.ts` |
+| RFCs tracked | 26 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## OpenAPI Operations
 
@@ -24,15 +24,15 @@
 |---|---:|
 | Accepted | 23 |
 | Active | 1 |
-| Draft | 1 |
+| Draft | 2 |
 
 | Latest RFC | Title | Status |
 |---|---|---|
+| RFC 0026 | `provider.usage` event - per-call durable usage record for LLM provider invocations | Draft |
 | RFC 0025 | Test-mode registry namespace for conformance publish-error catalog | Draft |
 | RFC 0024 | Streaming `agent.reasoned` Deltas | Active |
 | RFC 0023 | Conformance Agent-Event Emitters | Accepted |
 | RFC 0022 | `core.dispatch` + `core.subWorkflow` runtime variable mapping | Accepted |
-| RFC 0021 | AI Envelope Primitive - wire shape, universal kinds, Envelope Contract gate | Accepted |
 
 ## SDK Helper Coverage
 
