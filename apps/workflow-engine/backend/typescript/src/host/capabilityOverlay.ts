@@ -17,15 +17,25 @@
 
 const overlay = new Map<string, boolean>();
 
-/** Default capability values the workflow-engine advertises in
- *  `/.well-known/openwop`. Mirrors `routes/discovery.ts` for the keys
- *  the workflow-register handler consults. Extend as needed. */
+/** Default capability values the workflow-engine consults at
+ *  workflow-register time. Per RFC 0022 §C lines 115/138/224 the
+ *  reference workflow-engine implements the register-time REFUSAL
+ *  contract (a workflow with non-empty mapping fields gets
+ *  `validation_error + details.requiredCapability` when the flag
+ *  isn't claimed) but does NOT yet implement the dispatch/subWorkflow
+ *  executors — so the honest advertisement is `false`.
+ *
+ *  Design choice (2026-05-19, code-review MEDIUM #3): we keep the
+ *  flags at `false` here AND omit them from
+ *  `routes/discovery.ts` rather than advertising `agents.dispatch:
+ *  true` to make the HVMAP-1a-refusal scenario fire against this
+ *  host. Rationale: advertising what we don't actually execute would
+ *  violate `INTEROP-MATRIX.md`'s honesty principle. Hosts that DO
+ *  implement dispatch (MyndHyve, the Postgres reference) are the
+ *  natural test target for the refusal scenarios; the conformance
+ *  test soft-skips against the workflow-engine until the dispatch
+ *  executor lands. */
 const DEFAULTS: Readonly<Record<string, boolean>> = {
-  // RFC 0022 §C — the reference workflow-engine does NOT implement
-  // dispatch input/output mapping today; advertisement is false. The
-  // overlay can flip this on for tests that want the host to claim
-  // the contract, but the reference impl will still refuse at execute
-  // time (separate concern from the register-time gate).
   'agents.dispatchMapping': false,
   'subWorkflow.inputMapping': false,
 };

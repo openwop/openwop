@@ -191,7 +191,11 @@ export function registerTestSeamRoutes(app: Express): void {
        *  the conformance harness can ship it as plain JSON without serializing
        *  a Map. The acceptor consumes a ReadonlyMap; we adapt here. */
       priorCorrelations?: Array<{ correlationId: string; outcome: unknown; envelopeType: string }>;
-      byokCanaries?: string[];
+      /** RFC 0021 §"Redaction" + `agent-memory.md` §SR-1 — canonical SR-1
+       *  shape is `{ value, secretId }`. The seam validates each entry has
+       *  both fields before passing to the acceptor; entries with empty
+       *  `value` are dropped. */
+      byokCanaries?: Array<{ value: string; secretId: string }>;
     };
     if (body.envelope === undefined) {
       res.status(400).json({ error: { code: 'invalid_argument', message: 'envelope required' } });
@@ -205,7 +209,13 @@ export function registerTestSeamRoutes(app: Express): void {
     if (body.schemaVersionFloor !== undefined) opts.schemaVersionFloor = body.schemaVersionFloor;
     if (body.envelopeStrictness !== undefined) opts.envelopeStrictness = body.envelopeStrictness;
     if (Array.isArray(body.byokCanaries) && body.byokCanaries.length > 0) {
-      opts.byokCanaries = body.byokCanaries;
+      // Drop entries missing either field — keeps the acceptor's
+      // [REDACTED:<secretId>] substitution deterministic.
+      const canaries = body.byokCanaries.filter(
+        (c): c is { value: string; secretId: string } =>
+          typeof c?.value === 'string' && c.value.length > 0 && typeof c?.secretId === 'string' && c.secretId.length > 0,
+      );
+      if (canaries.length > 0) opts.byokCanaries = canaries;
     }
     if (Array.isArray(body.priorCorrelations) && body.priorCorrelations.length > 0) {
       const map = new Map<string, { outcome: import('../host/envelopeAcceptor.js').EnvelopeOutcome; envelopeType: string }>();

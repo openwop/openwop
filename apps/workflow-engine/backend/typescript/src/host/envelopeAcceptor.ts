@@ -184,14 +184,17 @@ export interface AcceptOptions {
    *  run lifetime). If the cached entry's `envelopeType` differs from
    *  the inbound `type`, refuse with `envelope_correlation_conflict`. */
   priorCorrelations?: ReadonlyMap<string, { outcome: EnvelopeOutcome; envelopeType: string }>;
-  /** RFC 0021 §"Redaction (SR-1 carry-forward)" — canary substrings to
-   *  scrub from the recorded view BEFORE persistence. Each canary is
-   *  replaced with `[REDACTED:byok-canary]` in `redactedPayload` of the
-   *  accepted outcome. Mirrors `agent-memory.md` §SR-1: the LLM CAN
-   *  hallucinate secret-shaped substrings from prompt context, so the
-   *  host MUST scrub regardless of whether the model "promised" not to
-   *  emit them. Empty array or undefined → no scrub pass. */
-  byokCanaries?: readonly string[];
+  /** RFC 0021 §"Redaction (SR-1 carry-forward)" + `agent-memory.md` §SR-1 —
+   *  canaries to scrub from the recorded view BEFORE persistence. Each
+   *  entry pairs the secret's plaintext `value` with the `secretId` that
+   *  identifies it in the host's BYOK vault. The acceptor substitutes
+   *  every occurrence of `value` with the canonical SR-1 marker
+   *  `[REDACTED:<secretId>]` (per `agent-memory.md:66`) in the
+   *  `redactedPayload` of the accepted outcome. The LLM CAN hallucinate
+   *  secret-shaped substrings from prompt context, so the host MUST scrub
+   *  regardless of whether the model "promised" not to emit them. Empty
+   *  array or undefined → no scrub pass. */
+  byokCanaries?: ReadonlyArray<{ readonly value: string; readonly secretId: string }>;
 }
 
 function validationDetail(d: { instancePath: string; schemaPath: string; keyword: string; message?: string | undefined }): ValidationDetail {
@@ -381,11 +384,12 @@ export function acceptEnvelope(envelope: unknown, opts: AcceptOptions = {}): Env
   const envelopeId = env.envelopeId || `env-${randomUUID()}`;
 
   // Step 7: BYOK canary redaction (RFC 0021 §"Redaction (SR-1 carry-
-  // forward)"). Runs AFTER validation + gates + counters so the redaction
-  // pass operates only on payloads that would otherwise be accepted.
-  // Substitutes each canary substring with the canonical `[REDACTED:byok-canary]`
-  // marker. The substitution is deep + idempotent — payloads that already
-  // contain a `[REDACTED:...]` marker are unaffected.
+  // forward)" + `agent-memory.md` §SR-1). Runs AFTER validation + gates
+  // + counters so the redaction pass operates only on payloads that
+  // would otherwise be accepted. Each canary's `value` is replaced with
+  // the canonical SR-1 marker `[REDACTED:<secretId>]` per
+  // `agent-memory.md:66`. Deep + idempotent — payloads that already
+  // contain `[REDACTED:...]` markers are unaffected.
   if (opts.byokCanaries && opts.byokCanaries.length > 0) {
     const redaction = redactCanaries(env.payload, opts.byokCanaries);
     return {
@@ -408,25 +412,29 @@ export function acceptEnvelope(envelope: unknown, opts: AcceptOptions = {}): Env
 }
 
 /** Recursive canary substitution. Walks strings/arrays/objects and
- *  replaces each canary occurrence with `[REDACTED:byok-canary]`. Returns
- *  the rebuilt value (input is not mutated) plus the count of
- *  substitutions performed.
+ *  replaces each canary's `value` with the canonical SR-1 marker
+ *  `[REDACTED:<secretId>]` per `agent-memory.md:66`. Returns the
+ *  rebuilt value (input is not mutated) plus the total count of
+ *  substitutions performed across all canaries.
  *
  *  Non-string scalar values (number, boolean, null) pass through
  *  unchanged. Cycle-safe by tracking visited objects. */
-function redactCanaries(input: unknown, canaries: readonly string[]): { value: unknown; count: number } {
+function redactCanaries(
+  input: unknown,
+  canaries: ReadonlyArray<{ readonly value: string; readonly secretId: string }>,
+): { value: unknown; count: number } {
   let total = 0;
   const seen = new WeakSet<object>();
   function walk(v: unknown): unknown {
     if (typeof v === 'string') {
       let out = v;
-      for (const canary of canaries) {
+      for (const { value: canary, secretId } of canaries) {
         if (canary.length === 0) continue;
         if (out.includes(canary)) {
           // Count substitutions across the whole string for this canary.
           const occurrences = out.split(canary).length - 1;
           total += occurrences;
-          out = out.split(canary).join('[REDACTED:byok-canary]');
+          out = out.split(canary).join(`[REDACTED:${secretId}]`);
         }
       }
       return out;

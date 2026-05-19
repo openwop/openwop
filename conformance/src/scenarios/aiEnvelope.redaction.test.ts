@@ -58,35 +58,38 @@ async function accept(envelope: unknown, opts: Record<string, unknown> = {}): Pr
 }
 
 const baseMeta = { source: 'ai-generation' as const, ts: '2026-05-18T10:00:00Z' };
-const CANARY = 'sk-canary-DO-NOT-LEAK-9d7f3a2b';
+const CANARY_VALUE = 'sk-canary-DO-NOT-LEAK-9d7f3a2b';
+const CANARY_SECRET_ID = 'byok-secret-test-fixture-001';
+const CANARIES = [{ value: CANARY_VALUE, secretId: CANARY_SECRET_ID }];
+const CANONICAL_MARKER = `[REDACTED:${CANARY_SECRET_ID}]`;
 
 describe('aiEnvelope.redaction: behavioral acceptor-level scrub (FINAL v1.1)', () => {
-  it('canary substring in payload → replaced with [REDACTED:byok-canary] in redactedPayload', async () => {
+  it('canary in payload → substituted with canonical SR-1 [REDACTED:<secretId>] marker per agent-memory.md:66', async () => {
     const r = await accept(
       {
         type: 'error',
         schemaVersion: 1,
         envelopeId: 'env-red-1',
         correlationId: 'r:n:0:red1',
-        payload: { code: 'leak_demo', message: `tool result included ${CANARY} verbatim` },
+        payload: { code: 'leak_demo', message: `tool result included ${CANARY_VALUE} verbatim` },
         meta: baseMeta,
       },
-      { byokCanaries: [CANARY] },
+      { byokCanaries: CANARIES },
     );
     if (r.status === 404) return;
     expect(r.body.status).toBe('accepted');
     expect(r.body.redactionCount, 'redactionCount MUST be > 0 when canary appears').toBeGreaterThan(0);
     expect(
-      JSON.stringify(r.body.redactedPayload).includes(CANARY),
-      driver.describe('ai-envelope.md §"Redaction (SR-1 carry-forward)"', 'canary MUST be absent from the redacted view'),
+      JSON.stringify(r.body.redactedPayload).includes(CANARY_VALUE),
+      driver.describe('ai-envelope.md §"Redaction (SR-1 carry-forward)"', 'canary plaintext MUST be absent from the redacted view'),
     ).toBe(false);
     expect(
       JSON.stringify(r.body.redactedPayload),
-      driver.describe('ai-envelope.md §"Redaction (SR-1 carry-forward)"', 'redaction MUST use the canonical [REDACTED:byok-canary] marker'),
-    ).toContain('[REDACTED:byok-canary]');
+      driver.describe('agent-memory.md §SR-1 line 66', 'persisted entry MUST carry [REDACTED:<secretId>] in place of the plaintext'),
+    ).toContain(CANONICAL_MARKER);
   });
 
-  it('canary across nested object fields → all occurrences scrubbed', async () => {
+  it('canary across nested object fields → all occurrences scrubbed with canonical marker', async () => {
     const r = await accept(
       {
         type: 'clarification.request',
@@ -95,22 +98,47 @@ describe('aiEnvelope.redaction: behavioral acceptor-level scrub (FINAL v1.1)', (
         correlationId: 'r:n:0:rednested',
         payload: {
           questions: [
-            { id: 'q1', question: `What is ${CANARY}?` },
-            { id: 'q2', question: 'unrelated', context: { trace: `${CANARY}/${CANARY}` } },
+            { id: 'q1', question: `What is ${CANARY_VALUE}?` },
+            { id: 'q2', question: 'unrelated', context: { trace: `${CANARY_VALUE}/${CANARY_VALUE}` } },
           ],
         },
         meta: baseMeta,
       },
-      { byokCanaries: [CANARY] },
+      { byokCanaries: CANARIES },
     );
     if (r.status === 404) return;
     expect(r.body.status).toBe('accepted');
     expect(
-      JSON.stringify(r.body.redactedPayload).includes(CANARY),
-      'no canary remnant anywhere in the redacted view (recursive scrub)',
+      JSON.stringify(r.body.redactedPayload).includes(CANARY_VALUE),
+      'no canary plaintext remnant anywhere in the redacted view (recursive scrub)',
     ).toBe(false);
-    // q1's question, q2's context.trace had 2 occurrences = total 3
+    // q1's question (1 occurrence), q2's context.trace (2 occurrences) = total 3
     expect(r.body.redactionCount).toBe(3);
+  });
+
+  it('multiple canaries → each substituted with its own secretId marker', async () => {
+    const C1 = { value: 'sk-canary-alpha-xxxx', secretId: 'secret-alpha' };
+    const C2 = { value: 'sk-canary-beta-yyyy', secretId: 'secret-beta' };
+    const r = await accept(
+      {
+        type: 'error',
+        schemaVersion: 1,
+        envelopeId: 'env-red-multi',
+        correlationId: 'r:n:0:redmulti',
+        payload: { code: 'multi_leak', message: `first=${C1.value}, second=${C2.value}` },
+        meta: baseMeta,
+      },
+      { byokCanaries: [C1, C2] },
+    );
+    if (r.status === 404) return;
+    expect(r.body.status).toBe('accepted');
+    const view = JSON.stringify(r.body.redactedPayload);
+    expect(view.includes(C1.value)).toBe(false);
+    expect(view.includes(C2.value)).toBe(false);
+    expect(
+      view.includes(`[REDACTED:${C1.secretId}]`) && view.includes(`[REDACTED:${C2.secretId}]`),
+      driver.describe('agent-memory.md §SR-1', 'each canary MUST be substituted with its OWN [REDACTED:<secretId>] marker'),
+    ).toBe(true);
   });
 
   it('redaction runs AFTER schema validation: payload with [REDACTED:...]-shaped substrings still validates', async () => {
@@ -122,10 +150,10 @@ describe('aiEnvelope.redaction: behavioral acceptor-level scrub (FINAL v1.1)', (
         schemaVersion: 1,
         envelopeId: 'env-red-shape',
         correlationId: 'r:n:0:redshape',
-        payload: { code: 'demo', message: 'already had [REDACTED:byok-canary] before we saw it' },
+        payload: { code: 'demo', message: 'already had [REDACTED:secret-prior] before we saw it' },
         meta: baseMeta,
       },
-      { byokCanaries: [CANARY] }, // canary NOT in payload; substitution count expected 0
+      { byokCanaries: CANARIES }, // canary NOT in payload; substitution count expected 0
     );
     if (r.status === 404) return;
     expect(
@@ -136,7 +164,7 @@ describe('aiEnvelope.redaction: behavioral acceptor-level scrub (FINAL v1.1)', (
     expect(r.body.redactionCount ?? 0).toBe(0);
   });
 
-  it('canary in invalid envelope (validation refusal) → error response MUST NOT echo the canary', async () => {
+  it('canary in invalid envelope (validation refusal) → error response MUST NOT echo the canary plaintext', async () => {
     // ISO 8601 violation triggers an `invalid` outcome BEFORE the redaction
     // pass runs. The acceptor's validation-detail extractor MUST NOT echo
     // the payload contents into the error response.
@@ -146,19 +174,19 @@ describe('aiEnvelope.redaction: behavioral acceptor-level scrub (FINAL v1.1)', (
         schemaVersion: 1,
         envelopeId: 'env-red-leak',
         correlationId: 'r:n:0:redleak',
-        payload: { code: 'demo', message: `secret value is ${CANARY}` },
+        payload: { code: 'demo', message: `secret value is ${CANARY_VALUE}` },
         meta: { ...baseMeta, ts: 'tomorrow' }, // bad ts → invalid
       },
-      { byokCanaries: [CANARY] },
+      { byokCanaries: CANARIES },
     );
     if (r.status === 404) return;
     expect(r.body.status).toBe('invalid');
     const bodyString = JSON.stringify(r.body);
     expect(
-      bodyString.includes(CANARY),
+      bodyString.includes(CANARY_VALUE),
       driver.describe(
         'SECURITY/threat-model-secret-leakage.md §SR-1',
-        'error response on validation refusal MUST NOT echo BYOK canary content',
+        'error response on validation refusal MUST NOT echo BYOK canary plaintext',
       ),
     ).toBe(false);
   });
