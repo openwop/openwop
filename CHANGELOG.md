@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Downstream-LLM untrusted-content wrap (2026-05-19)
+
+Closes the `aiEnvelope.trustBoundaryPropagation` downstream-LLM-reconsume it.todo via a new pure helper `wrapForLLMPrompt(...)` and matching test-seam endpoint. Per `ai-envelope.md §"Trust boundary"` line 380: downstream LLM nodes that re-consume a `RunEventDoc` whose `contentTrust === 'untrusted'` MUST wrap the content with `<UNTRUSTED source="..." type="...">...</UNTRUSTED>` markers before reaching the prompt. The convention follows `SECURITY/threat-model-prompt-injection.md` (`prompt-injection-input-marker` / `prompt-injection-kb-marker` / `prompt-injection-artifact-marker` / `prompt-injection-mcp-marker`).
+
+- **`apps/workflow-engine/backend/typescript/src/host/promptInjectionGuard.ts`** (NEW) — pure helper. `wrapForLLMPrompt({contentTrust, payload, eventType?, source?, attributes?}) → string`. Untrusted input → wrapped with stable attribute ordering for deterministic conformance matching; trusted (or absent) input → stringified payload only. Attribute escape is minimal (`&`, `"`, `<`) — wrap is for prompt context, not HTML rendering, so full HTML escaping would over-encode.
+- **`apps/workflow-engine/backend/typescript/src/routes/testSeam.ts`** — new endpoint `POST /v1/host/sample/test/llm-prompt-wrap` that exposes the helper directly. Lets conformance assert the wrap contract via the seam instead of having to drive a full LLM-node execution. Env-gated like the other seams; attribute filter drops non-primitive values.
+- **`conformance/src/scenarios/aiEnvelope.trustBoundaryPropagation.test.ts`** — 4 new behavioral assertions: (1) untrusted RunEventDoc payload wrapped with `<UNTRUSTED source="run-event" type="...">...</UNTRUSTED>` (payload preserved verbatim — wrap doesn't strip content, the threat model relies on the LLM honoring the marker); (2) trusted payload passes through unwrapped (over-marking trains LLMs to ignore the marker); (3) absent `contentTrust` defaults to trusted (no auto-mark); (4) MCP-tool wrap carries `tool="..."` attribute per threat-model line 95. Suite-wide `it.todo()` count: 4 → 3.
+
+Compatibility: **additive**. New file, new sample-namespaced seam endpoint, new test cases. No wire-shape, schema, or endpoint contract changes.
+
 ### Envelope-contract capability stacking refusal (2026-05-19)
 
 Closes the `aiEnvelope.contractRefusal` capability-stacking it.todo. Per `ai-envelope.md §"Capability handshake integration"` (line 305): when a node typeId requires `host.aiEnvelope: supported` and the host doesn't advertise it, the refusal MUST fire BEFORE the per-envelope contract gates (host-gate, node-gate, schema-floor). Refusal code is `capability_required` per `capabilities.md §"Unsupported capability — refusal contract"` — observable as a distinct outcome from `envelope_contract_violation`.

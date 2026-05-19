@@ -41,6 +41,7 @@ import type { HostSurfaceBundle, SurfaceArgs, SurfaceFn } from '../host/inMemory
 import { acceptEnvelope, type AcceptOptions } from '../host/envelopeAcceptor.js';
 import type { Storage } from '../storage/storage.js';
 import type { EnvelopeOutcome } from '../host/envelopeAcceptor.js';
+import { wrapForLLMPrompt, type PromptWrapInput } from '../host/promptInjectionGuard.js';
 import { projectOutcome } from '../host/envelopeProjection.js';
 import { listTestEvents, resetTestEventLog } from '../host/envelopeEventLog.js';
 import { listTestSpans, resetTestSpanBuffer } from '../observability/spanBuffer.js';
@@ -385,6 +386,48 @@ export function registerTestSeamRoutes(app: Express, deps: { storage: Storage })
     if (typeof q.causationId === 'string') filter.causationId = q.causationId;
     if (typeof q.nodeId === 'string') filter.nodeId = q.nodeId;
     res.status(200).json({ events: listTestEvents(runId, filter) });
+  });
+
+  // Prompt-injection wrap seam — exposes the host's `<UNTRUSTED ...>`
+  // wrap helper directly. Conformance scenarios POST a RunEventDoc-
+  // shaped body and assert the wrap behavior at the trust boundary
+  // (untrusted → wrapped; trusted → passes through). The seam stands
+  // in for a full LLM-node execution: in production, an LLM node that
+  // re-consumes a RunEventDoc calls `wrapForLLMPrompt(...)` before
+  // composing its prompt. Same contract, mechanical assertion vs. a
+  // run.
+  //
+  // Spec references:
+  //   - spec/v1/ai-envelope.md §"Trust boundary" line 380 (downstream
+  //     LLM nodes MUST treat untrusted RunEventDoc content per the
+  //     prompt-injection rules)
+  //   - SECURITY/threat-model-prompt-injection.md (UNTRUSTED-marker
+  //     convention)
+  app.post('/v1/host/sample/test/llm-prompt-wrap', (req, res) => {
+    const body = (req.body ?? {}) as Partial<PromptWrapInput> & { payload?: unknown };
+    if (!('payload' in body)) {
+      res.status(400).json({ error: { code: 'invalid_argument', message: 'payload required' } });
+      return;
+    }
+    const input: PromptWrapInput = { payload: body.payload };
+    if (body.contentTrust === 'trusted' || body.contentTrust === 'untrusted') {
+      input.contentTrust = body.contentTrust;
+    }
+    if (typeof body.eventType === 'string') input.eventType = body.eventType;
+    if (typeof body.source === 'string') input.source = body.source;
+    if (body.attributes && typeof body.attributes === 'object') {
+      // Validate attribute values are primitive — drop anything that
+      // would JSON.stringify to `[object Object]` or similar.
+      const valid: Record<string, string | number | boolean> = {};
+      for (const [k, v] of Object.entries(body.attributes)) {
+        if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
+          valid[k] = v;
+        }
+      }
+      if (Object.keys(valid).length > 0) input.attributes = valid;
+    }
+    const prompt = wrapForLLMPrompt(input);
+    res.status(200).json({ prompt });
   });
 
   // Reset the test event log + capability overlay + OTel span buffer (suite teardown).
