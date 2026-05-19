@@ -7,7 +7,7 @@
 | **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-18 |
-| **Updated** | 2026-05-18 (Draft → Active: bootstrap-phase steward waiver per `CONTRIBUTING.md` — spec text complete in `spec/v1/capabilities.md` §`agents.reasoning` + `spec/v1/node-packs.md` §"Authorized emitters", schemas land additively, capability flag advertised, conformance scenario `agentReasoningStreaming.test.ts` gated correctly, BOTH reference impls land in `examples/hosts/postgres/src/server.ts` (mock-agent streamChunks emission, commit `08ac7bc`) and `apps/workflow-engine/backend/typescript/src/bootstrap/conformanceMockAgent.ts` (sample mock-agent + schema-field-alignment cleanup, same commit). Postgres in-tree smoke (`examples/hosts/postgres/test/mock-agent.test.ts`) verifies the streaming contract end-to-end against pglite. `Active → Accepted` flip deferred to: (a) external host advertisement evidence in `INTEROP-MATRIX.md`, or (b) the next `@openwop/openwop-conformance` republish that ships the new fixture/scenario to downstream consumers — whichever lands first.) |
+| **Updated** | 2026-05-18 (Draft → Active — see [Status history](#status-history) below). |
 | **Affects** | `schemas/run-event-payloads.schema.json`, `schemas/run-event.schema.json`, `schemas/capabilities.schema.json`, `spec/v1/capabilities.md` §`agents.reasoning`, `spec/v1/node-packs.md` §"Authorized emitters", `api/asyncapi.yaml`, `conformance/src/scenarios/`, `conformance/fixtures/`, `examples/hosts/postgres/`, `apps/workflow-engine/` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md §2.1` |
 | **Supersedes** | — |
@@ -195,6 +195,25 @@ Add optional `delta: string`, `done: boolean`, `sequence: integer` to the existi
   - **Postgres** (`examples/hosts/postgres/src/server.ts`) — emits the same shape; `test/mock-agent.test.ts` third block verifies the contract end-to-end against pglite. Capability advertised via `REFERENCE_AGENTS_CAPABILITY.reasoning.streaming: true` (commit `08ac7bc`).
 - [x] Additive RFC promotion under the bootstrap-phase steward waiver per `CONTRIBUTING.md` §"Bootstrap-phase notes". The 7-day RFC window cited in `RFCS/README.md` is the post-bootstrap process; bootstrap-phase additive RFCs with reference-impl verification (this RFC has BOTH ref hosts implementing AND a conformance scenario passing) graduate directly. Pattern matches RFC 0023 (Draft → Active 2026-05-18 same-day) and RFC 0022 (Draft → Active 2026-05-18 same-day).
 - [ ] **Active → Accepted** flip: requires either (a) external host advertisement evidence in `INTEROP-MATRIX.md` (third-party host claiming the streaming flag), OR (b) next `@openwop/openwop-conformance` republish so downstream consumers run the scenario without local patches.
+
+## Status history
+
+### Draft → Active (2026-05-18)
+
+Promoted under the bootstrap-phase steward waiver per `CONTRIBUTING.md` §"Bootstrap-phase notes". Same path RFC 0022 and RFC 0023 used the same day.
+
+Evidence at promotion:
+
+- Spec prose merged: `spec/v1/capabilities.md` §`agents.reasoning` (streaming flag paragraph) + `spec/v1/node-packs.md` §"Authorized emitters" (RFC 0024 addendum).
+- Schemas additive: `agentReasoningDelta` payload + `RunEventType` enum value + `capabilities.agents.reasoning.streaming` flag (default `false`).
+- Conformance scenario `agentReasoningStreaming.test.ts` gated on `capabilities.agents.reasoning.streaming: true` — 5 assertions (event count, sequence monotonicity, agentId consistency, concatenation equality, ordering invariant).
+- **Both** reference impls landed in commit `08ac7bc`:
+  - Workflow-engine sample (`apps/workflow-engine/backend/typescript/src/bootstrap/conformanceMockAgent.ts`) — mock-agent `streamChunks` emission + schema-field-alignment cleanup (the pre-finalize prose-name bug fixed in the same commit).
+  - Postgres reference host (`examples/hosts/postgres/src/server.ts`) — mock-agent `streamChunks` emission; in-tree pglite smoke (`test/mock-agent.test.ts` third block) verifies the contract end-to-end.
+
+### Active → Accepted (deferred)
+
+Requires either (a) external host advertisement evidence in `INTEROP-MATRIX.md` (third-party host claiming `capabilities.agents.reasoning.streaming: true`), OR (b) next `@openwop/openwop-conformance` republish carrying the new fixture+scenario to downstream consumers — whichever lands first. The SDK typed-helper for `agent.reasoning.delta` events (mentioned in §"Implementation notes") is also tracked here for the Accepted flip.
 
 ## References
 

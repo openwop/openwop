@@ -40,9 +40,11 @@ invariants:
       - conformance/src/scenarios/redaction.test.ts
     note: |
       Persisted event payloads MUST NOT contain raw key material.
-      Applies to ALL `RunEventType` kinds — including `agent.reasoned`,
-      which carries free-form reasoning text that a model might echo a
-      host-resolved credential into. The host's `ctx.emit` plumbing MUST
+      Applies to ALL `RunEventType` kinds — most notably the two
+      free-form-reasoning event types `agent.reasoned` (RFC 0002 §B)
+      and `agent.reasoning.delta` (RFC 0024 streaming sibling), where
+      a model can echo a host-resolved credential it saw during
+      tool-using or prompt-handling. The host's `ctx.emit` plumbing MUST
       route every payload through the host-internal redaction layer
       before persistence (reference impl: `stripSecretsFromPersisted`
       in `apps/workflow-engine/backend/typescript/src/byok/ephemeralRunSecrets.ts`,
