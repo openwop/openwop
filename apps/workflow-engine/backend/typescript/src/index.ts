@@ -213,7 +213,7 @@ export async function createApp(config: AppConfig): Promise<Express> {
   registerByokRoutes(app);
   registerMigrateRoute(app, { storage });
   registerAccountRoutes(app, { storage });
-  registerTestSeamRoutes(app);
+  registerTestSeamRoutes(app, { storage });
   registerMcpServerRoutes(app, { storage, hostSuite });
   registerAdminRoutes(app);
   registerWorkflowRoutes(app);

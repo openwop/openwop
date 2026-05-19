@@ -32,7 +32,7 @@ export interface Queryable {
   ): Promise<{ rows: R[] }>;
 }
 
-export const LATEST_SCHEMA_VERSION = 2;
+export const LATEST_SCHEMA_VERSION = 3;
 
 const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
   1: async (client) => {
@@ -159,6 +159,24 @@ const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
         input_tokens INTEGER NOT NULL DEFAULT 0,
         output_tokens INTEGER NOT NULL DEFAULT 0,
         PRIMARY KEY (tenant_id, date, provider_id)
+      );
+    `);
+  },
+  3: async (client) => {
+    // Envelope-correlation persistence — mirrors sqlite migration v5.
+    // Backs the cross-process replay contract from
+    // `ai-envelope.md §"Replay determinism"`. Outcome JSON carries the
+    // already-redacted payload from envelopeAcceptor.ts §"Step 7", so
+    // plaintext envelopes never enter this table (SR-1 redaction-
+    // carry-forward holds across the persistence boundary).
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS envelope_correlations (
+        run_id TEXT NOT NULL,
+        correlation_id TEXT NOT NULL,
+        outcome TEXT NOT NULL,
+        envelope_type TEXT NOT NULL,
+        recorded_at TIMESTAMPTZ NOT NULL,
+        PRIMARY KEY (run_id, correlation_id)
       );
     `);
   },

@@ -8,7 +8,7 @@
 
 import type { Database } from 'better-sqlite3';
 
-export const LATEST_SCHEMA_VERSION = 4;
+export const LATEST_SCHEMA_VERSION = 5;
 
 const MIGRATIONS: Record<number, (db: Database) => void> = {
   1: (db) => {
@@ -160,6 +160,36 @@ const MIGRATIONS: Record<number, (db: Database) => void> = {
         input_tokens INTEGER NOT NULL DEFAULT 0,
         output_tokens INTEGER NOT NULL DEFAULT 0,
         PRIMARY KEY (tenant_id, date, provider_id)
+      );
+    `);
+  },
+  5: (db) => {
+    // Envelope-correlation persistence — backs the cross-process replay
+    // contract from `ai-envelope.md §"Replay determinism"`. When the
+    // envelope acceptor short-circuits on a duplicate correlationId,
+    // the in-process Map covers the same-process case; this table
+    // covers the recovered-process case (envelope accepted by an
+    // instance that then died before its caller persisted downstream
+    // state — a recovered instance MUST reply with the SAME outcome
+    // rather than re-running the handler against a now-different
+    // capability surface).
+    //
+    // `outcome` stores the JSON-serialized EnvelopeOutcome from
+    // src/host/envelopeAcceptor.ts:121, which already carries
+    // `redactedPayload` (SR-1 redaction was applied BEFORE caching).
+    // Plaintext envelopes never enter this table.
+    //
+    // Per-(runId, correlationId) primary key matches the in-process
+    // Map's keying so test scenarios that swap between the two share
+    // the same conflict semantics.
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS envelope_correlations (
+        run_id TEXT NOT NULL,
+        correlation_id TEXT NOT NULL,
+        outcome TEXT NOT NULL,
+        envelope_type TEXT NOT NULL,
+        recorded_at TEXT NOT NULL,
+        PRIMARY KEY (run_id, correlation_id)
       );
     `);
   },

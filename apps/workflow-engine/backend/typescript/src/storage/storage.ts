@@ -164,6 +164,33 @@ export interface Storage {
     dateUtc: string,
   ): Promise<{ inputTokens: number; outputTokens: number }>;
 
+  // ── envelope-correlation cache (cross-process replay safety) ──
+  /**
+   * Read back a previously-accepted envelope outcome for a given
+   * (runId, correlationId). Returns null if no record exists. Backs
+   * the persisted-dedup-state seam for `host.aiEnvelope.correlationReplay`
+   * cross-process semantics: if a process dies between accepting the
+   * first emission and persisting downstream side-effects, a recovered
+   * process that re-emits the same correlationId reads back the
+   * original outcome from this surface instead of re-running the
+   * acceptor (which could now decide differently if e.g. capability
+   * flags changed). Outcome JSON carries the already-redacted payload
+   * — never the raw envelope — so SR-1 redaction-carry-forward holds
+   * across the persistence boundary.
+   */
+  getEnvelopeCorrelation(
+    runId: string,
+    correlationId: string,
+  ): Promise<{ outcome: unknown; envelopeType: string; recordedAt: string } | null>;
+  /** Persist (runId, correlationId) → outcome. Insert-or-replace. */
+  putEnvelopeCorrelation(
+    runId: string,
+    correlationId: string,
+    outcome: unknown,
+    envelopeType: string,
+    recordedAt: string,
+  ): Promise<void>;
+
   // ── lifecycle ──
   close(): Promise<void>;
 }

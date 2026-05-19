@@ -170,6 +170,8 @@ async function makeStorage(): Promise<Storage> {
     deleteAllTenantData: async () => ({ runs: 0, events: 0, interrupts: 0, workflows: 0, secrets: 0 }),
     incrementManagedUsage: async () => {},
     getManagedUsage: async () => ({ inputTokens: 0, outputTokens: 0 }),
+    getEnvelopeCorrelation: async () => null,
+    putEnvelopeCorrelation: async () => {},
     close: async () => { await pool.end(); },
   };
 }

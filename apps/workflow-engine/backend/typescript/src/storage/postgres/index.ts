@@ -569,6 +569,39 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
       };
     },
 
+    async getEnvelopeCorrelation(runId, correlationId) {
+      const { rows } = await pool.query<{ outcome: string; envelope_type: string; recorded_at: Date | string }>(
+        `SELECT outcome, envelope_type, recorded_at FROM envelope_correlations
+           WHERE run_id = $1 AND correlation_id = $2`,
+        [runId, correlationId],
+      );
+      const row = rows[0];
+      if (!row) return null;
+      // pg returns TIMESTAMPTZ as Date; the interface uses ISO-string
+      // for backend-symmetry with the sqlite adapter.
+      const recordedAt = row.recorded_at instanceof Date
+        ? row.recorded_at.toISOString()
+        : row.recorded_at;
+      return {
+        outcome: JSON.parse(row.outcome) as unknown,
+        envelopeType: row.envelope_type,
+        recordedAt,
+      };
+    },
+
+    async putEnvelopeCorrelation(runId, correlationId, outcome, envelopeType, recordedAt) {
+      await pool.query(
+        `INSERT INTO envelope_correlations
+           (run_id, correlation_id, outcome, envelope_type, recorded_at)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (run_id, correlation_id) DO UPDATE SET
+           outcome       = EXCLUDED.outcome,
+           envelope_type = EXCLUDED.envelope_type,
+           recorded_at   = EXCLUDED.recorded_at`,
+        [runId, correlationId, JSON.stringify(outcome), envelopeType, recordedAt],
+      );
+    },
+
     async close() {
       await pool.end();
     },

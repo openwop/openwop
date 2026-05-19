@@ -154,6 +154,16 @@ export function openSqliteStorage(dbPath: string): Storage {
        WHERE tenant_id = ? AND date = ? AND provider_id = ?`,
   );
 
+  const getEnvelopeCorrelationStmt = db.prepare(
+    `SELECT outcome, envelope_type, recorded_at FROM envelope_correlations
+       WHERE run_id = ? AND correlation_id = ?`,
+  );
+  const putEnvelopeCorrelationStmt = db.prepare(`
+    INSERT OR REPLACE INTO envelope_correlations
+      (run_id, correlation_id, outcome, envelope_type, recorded_at)
+    VALUES (?, ?, ?, ?, ?)
+  `);
+
   const insertAuditStmt = db.prepare(`
     INSERT INTO audit_log (audit_id, timestamp, principal_id, action, resource, outcome, payload)
     VALUES (@auditId, @timestamp, @principalId, @action, @resource, @outcome, @payload)
@@ -574,6 +584,28 @@ export function openSqliteStorage(dbPath: string): Storage {
         | undefined;
       if (!row) return { inputTokens: 0, outputTokens: 0 };
       return { inputTokens: row.input_tokens, outputTokens: row.output_tokens };
+    },
+
+    async getEnvelopeCorrelation(runId, correlationId) {
+      const row = getEnvelopeCorrelationStmt.get(runId, correlationId) as
+        | { outcome: string; envelope_type: string; recorded_at: string }
+        | undefined;
+      if (!row) return null;
+      return {
+        outcome: JSON.parse(row.outcome) as unknown,
+        envelopeType: row.envelope_type,
+        recordedAt: row.recorded_at,
+      };
+    },
+
+    async putEnvelopeCorrelation(runId, correlationId, outcome, envelopeType, recordedAt) {
+      putEnvelopeCorrelationStmt.run(
+        runId,
+        correlationId,
+        JSON.stringify(outcome),
+        envelopeType,
+        recordedAt,
+      );
     },
 
     async close() {

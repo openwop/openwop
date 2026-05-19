@@ -39,6 +39,8 @@ import type { Express } from 'express';
 import { buildHostSurfaceBundle, resolvePresignToken } from '../host/inMemorySurfaces.js';
 import type { HostSurfaceBundle, SurfaceArgs, SurfaceFn } from '../host/inMemorySurfaces.js';
 import { acceptEnvelope, type AcceptOptions } from '../host/envelopeAcceptor.js';
+import type { Storage } from '../storage/storage.js';
+import type { EnvelopeOutcome } from '../host/envelopeAcceptor.js';
 import { projectOutcome } from '../host/envelopeProjection.js';
 import { listTestEvents, resetTestEventLog } from '../host/envelopeEventLog.js';
 import { listTestSpans, resetTestSpanBuffer } from '../observability/spanBuffer.js';
@@ -93,7 +95,7 @@ function lookupMethod(surface: object, op: string): SurfaceFn | undefined {
   return typeof candidate === 'function' ? (candidate as SurfaceFn) : undefined;
 }
 
-export function registerTestSeamRoutes(app: Express): void {
+export function registerTestSeamRoutes(app: Express, deps: { storage: Storage }): void {
   if (process.env.OPENWOP_TEST_SEAM_ENABLED !== 'true') {
     log.info('test seam disabled (set OPENWOP_TEST_SEAM_ENABLED=true to enable)');
     return;
@@ -211,6 +213,19 @@ export function registerTestSeamRoutes(app: Express): void {
         nodeId?: string;
         refusalMode?: 'fail-node' | 'discard-and-warn';
       };
+      /** Persisted dedup-state seam — backs the cross-process replay
+       *  contract from `ai-envelope.md §"Replay determinism"`. When set,
+       *  the acceptor's priorCorrelations is seeded from the
+       *  `envelope_correlations` storage table (keyed by runId), so a
+       *  fresh process (or any caller without an in-memory map) gets
+       *  the SAME cached outcome it would have gotten from the
+       *  original process's in-memory priorCorrelations. After accept,
+       *  the resulting outcome is persisted so subsequent re-emissions
+       *  read it back. Combine with `priorCorrelations` to override
+       *  per-call; persisted entries win on collision with explicit
+       *  entries (the persisted store is the cross-process source of
+       *  truth). */
+      persistedDedup?: { runId: string };
     };
     if (body.envelope === undefined) {
       res.status(400).json({ error: { code: 'invalid_argument', message: 'envelope required' } });
@@ -232,19 +247,66 @@ export function registerTestSeamRoutes(app: Express): void {
       );
       if (canaries.length > 0) opts.byokCanaries = canaries;
     }
+    const dedupMap = new Map<string, { outcome: EnvelopeOutcome; envelopeType: string }>();
     if (Array.isArray(body.priorCorrelations) && body.priorCorrelations.length > 0) {
-      const map = new Map<string, { outcome: import('../host/envelopeAcceptor.js').EnvelopeOutcome; envelopeType: string }>();
       for (const e of body.priorCorrelations) {
         if (typeof e?.correlationId === 'string' && typeof e?.envelopeType === 'string') {
-          map.set(e.correlationId, {
-            outcome: e.outcome as import('../host/envelopeAcceptor.js').EnvelopeOutcome,
+          dedupMap.set(e.correlationId, {
+            outcome: e.outcome as EnvelopeOutcome,
             envelopeType: e.envelopeType,
           });
         }
       }
-      opts.priorCorrelations = map;
     }
+    // Persisted dedup seam: if a runId is supplied AND the inbound
+    // envelope carries a correlationId, consult the persisted store
+    // and merge any cached outcome into the dedup map (overriding any
+    // explicit entry for the same correlationId — the persisted store
+    // is authoritative for cross-process semantics).
+    const inboundCorrelationId =
+      body.envelope && typeof body.envelope === 'object' &&
+      typeof (body.envelope as { correlationId?: unknown }).correlationId === 'string'
+        ? (body.envelope as { correlationId: string }).correlationId
+        : null;
+    if (body.persistedDedup?.runId && inboundCorrelationId) {
+      const persisted = await deps.storage.getEnvelopeCorrelation(
+        body.persistedDedup.runId,
+        inboundCorrelationId,
+      );
+      if (persisted) {
+        dedupMap.set(inboundCorrelationId, {
+          outcome: persisted.outcome as EnvelopeOutcome,
+          envelopeType: persisted.envelopeType,
+        });
+      }
+    }
+    if (dedupMap.size > 0) opts.priorCorrelations = dedupMap;
+
     const outcome = acceptEnvelope(body.envelope, opts);
+
+    // Persist the outcome for future cross-process re-emissions. Only
+    // persist when the caller supplied persistedDedup AND the inbound
+    // envelope carried a correlationId AND the cache didn't already
+    // serve this call (re-persisting an already-cached outcome would
+    // bump recordedAt for no reason — semantically the same record).
+    if (
+      body.persistedDedup?.runId &&
+      inboundCorrelationId &&
+      !dedupMap.has(inboundCorrelationId)
+    ) {
+      const envType =
+        body.envelope && typeof body.envelope === 'object' &&
+        typeof (body.envelope as { type?: unknown }).type === 'string'
+          ? (body.envelope as { type: string }).type
+          : 'unknown';
+      await deps.storage.putEnvelopeCorrelation(
+        body.persistedDedup.runId,
+        inboundCorrelationId,
+        outcome,
+        envType,
+        new Date().toISOString(),
+      );
+    }
     // Optional E.1 projection: emit the spec-prescribed events into the
     // test event log so conformance can query them via /test/runs/:runId/events.
     if (body.projectTo && typeof body.projectTo.runId === 'string') {
