@@ -42,7 +42,47 @@ describe('vector-knn-roundtrip: advertisement shape (RFC 0018)', () => {
   });
 });
 
-describe('vector-knn-roundtrip: behavioral assertions (placeholders — need host test seam)', () => {
-  it.todo("upsert 10 vectors → query with one of them returns it as top-1");
-  it.todo("topK respects the configured limit");
+async function call(op: string, args: Record<string, unknown>) {
+  return driver.post('/v1/host/sample/test/surface', { tenantId: 'tenant-a', surface: 'vector', op, args });
+}
+
+describe('vector-knn-roundtrip: behavioral (RFC 0018 §A.vectorStore)', () => {
+  it('upsert 10 vectors → query with one of them returns it as the top match', async () => {
+    const probe = await call('query', { namespace: '__probe__', vector: [1, 0], topK: 1 });
+    if (probe.status === 404) return; // seam not exposed
+    const namespace = `knn-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const items = Array.from({ length: 10 }, (_, i) => ({
+      id: `vec-${i}`,
+      vector: [Math.cos((i * Math.PI) / 5), Math.sin((i * Math.PI) / 5)],
+    }));
+    const upsertRes = await call('upsert', { namespace, items });
+    expect(upsertRes.status).toBe(200);
+
+    const queryRes = await call('query', { namespace, vector: items[3]!.vector, topK: 1 });
+    expect(queryRes.status).toBe(200);
+    const body = queryRes.json as { matches?: Array<{ id?: string; score?: number }> };
+    expect(Array.isArray(body.matches), 'matches MUST be an array').toBe(true);
+    expect(body.matches!.length).toBeGreaterThan(0);
+    expect(
+      body.matches![0]!.id,
+      driver.describe('RFC 0018 §A.vectorStore', 'query with an indexed vector MUST return it as the top match'),
+    ).toBe('vec-3');
+  });
+
+  it('topK respects the configured limit', async () => {
+    const probe = await call('query', { namespace: '__probe__', vector: [1, 0], topK: 1 });
+    if (probe.status === 404) return;
+    const namespace = `topk-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const items = Array.from({ length: 8 }, (_, i) => ({
+      id: `t-${i}`,
+      vector: [i / 10, 1 - i / 10],
+    }));
+    await call('upsert', { namespace, items });
+    const r3 = await call('query', { namespace, vector: [0.5, 0.5], topK: 3 });
+    const body = r3.json as { matches?: unknown[] };
+    expect(
+      Array.isArray(body.matches) && body.matches.length <= 3,
+      driver.describe('RFC 0018 §A.vectorStore', 'query MUST return at most topK matches'),
+    ).toBe(true);
+  });
 });

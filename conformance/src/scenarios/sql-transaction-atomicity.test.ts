@@ -61,6 +61,35 @@ describe('sql-transaction-atomicity: advertisement shape (RFC 0018)', () => {
   });
 });
 
-describe('sql-transaction-atomicity: behavioral assertions (placeholders — need host test seam)', () => {
-  it.todo("transaction with N statements where N-th fails → no rows from earlier statements visible");
+async function call(op: string, args: Record<string, unknown>) {
+  return driver.post('/v1/host/sample/test/surface', { tenantId: 'tenant-a', surface: 'sql', op, args });
+}
+
+describe('sql-transaction-atomicity: behavioral (RFC 0018 §B.sql — transaction atomicity)', () => {
+  it('transaction with N statements where N-th fails → earlier writes MUST roll back', async () => {
+    const probe = await call('execute', { sql: 'CREATE TABLE IF NOT EXISTS atomicity_probe (id TEXT PRIMARY KEY)', params: [] });
+    if (probe.status === 404) return;
+    const table = `t_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    await call('execute', { sql: `CREATE TABLE ${table} (id INTEGER PRIMARY KEY, val TEXT)`, params: [] });
+
+    const txnRes = await call('transaction', {
+      statements: [
+        { sql: `INSERT INTO ${table}(id, val) VALUES (?, ?)`, params: [1, 'one'] },
+        { sql: `INSERT INTO ${table}(id, val) VALUES (?, ?)`, params: [2, 'two'] },
+        { sql: `INSERT INTO ${table}(id, val) VALUES (?, ?)`, params: [1, 'duplicate'] }, // PK violation
+      ],
+    });
+    expect(
+      txnRes.status >= 400 && txnRes.status < 500,
+      driver.describe('RFC 0018 §B.sql', 'transaction with failing statement MUST surface as 4xx'),
+    ).toBe(true);
+
+    const queryRes = await call('query', { sql: `SELECT id, val FROM ${table}`, params: [] });
+    expect(queryRes.status).toBe(200);
+    const body = queryRes.json as { rows?: unknown[] };
+    expect(
+      Array.isArray(body.rows) && body.rows.length === 0,
+      driver.describe('RFC 0018 §B.sql', 'rows from earlier statements in a failed transaction MUST NOT be visible'),
+    ).toBe(true);
+  });
 });

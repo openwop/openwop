@@ -42,6 +42,37 @@ describe('kv-ttl-expiry: advertisement shape (RFC 0015)', () => {
   });
 });
 
-describe('kv-ttl-expiry: behavioral assertions (placeholders — need host test seam)', () => {
-  it.todo("set with ttl=2 → get at t+1 returns the value; get at t+3 returns not-found");
+async function call(op: string, args: Record<string, unknown>) {
+  return driver.post('/v1/host/sample/test/surface', { tenantId: 'tenant-a', surface: 'kv', op, args });
+}
+
+describe('kv-ttl-expiry: behavioral (RFC 0015 §B point 3 — 1s TTL drift)', () => {
+  it('set with ttlSeconds=2 → get before expiry returns value; get after expiry returns found:false', async () => {
+    const probe = await call('get', { key: '__ttl-probe__' });
+    if (probe.status === 404) return; // host doesn't expose the seam
+    const key = `ttl-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const setRes = await call('set', { key, value: 'expires-soon', ttlSeconds: 2 });
+    expect(setRes.status).toBe(200);
+
+    // Read within the window
+    const within = await call('get', { key });
+    expect(within.status).toBe(200);
+    const withinBody = within.json as { value?: unknown; found?: boolean };
+    expect(
+      withinBody.value,
+      driver.describe('RFC 0015 §B point 3', 'get within TTL window MUST return the stored value'),
+    ).toBe('expires-soon');
+    expect(withinBody.found).toBe(true);
+
+    // Wait past expiry (2s TTL + 1s drift allowance per RFC 0015 §B point 3)
+    await new Promise((r) => setTimeout(r, 3000));
+
+    const after = await call('get', { key });
+    expect(after.status).toBe(200);
+    const afterBody = after.json as { value?: unknown; found?: boolean };
+    expect(
+      afterBody.found,
+      driver.describe('RFC 0015 §B point 3', 'get after TTL expiry MUST surface as found:false (≤1s drift)'),
+    ).toBe(false);
+  });
 });

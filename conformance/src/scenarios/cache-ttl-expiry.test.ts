@@ -42,6 +42,32 @@ describe('cache-ttl-expiry: advertisement shape (RFC 0019)', () => {
   });
 });
 
-describe('cache-ttl-expiry: behavioral assertions (placeholders — need host test seam)', () => {
-  it.todo("put with ttl=2 → hit within window; miss after");
+async function call(op: string, args: Record<string, unknown>) {
+  return driver.post('/v1/host/sample/test/surface', { tenantId: 'tenant-a', surface: 'cache', op, args });
+}
+
+describe('cache-ttl-expiry: behavioral (RFC 0019 §B point 2 — 1s TTL drift)', () => {
+  it('put with ttlSeconds=2 → hit within window; miss after expiry', async () => {
+    const probe = await call('get', { key: '__cache-probe__' });
+    if (probe.status === 404) return;
+    const key = `c-ttl-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const putRes = await call('put', { key, value: 'evicts-soon', ttlSeconds: 2 });
+    expect(putRes.status).toBe(200);
+
+    const within = await call('get', { key });
+    const withinBody = within.json as { value?: unknown; found?: boolean };
+    expect(
+      withinBody.value,
+      driver.describe('RFC 0019 §B point 2', 'cache get within TTL MUST return the stored value'),
+    ).toBe('evicts-soon');
+
+    await new Promise((r) => setTimeout(r, 3000));
+
+    const after = await call('get', { key });
+    const afterBody = after.json as { value?: unknown; found?: boolean };
+    expect(
+      afterBody.found,
+      driver.describe('RFC 0019 §B point 2', 'cache get after TTL expiry MUST surface as found:false (≤1s drift)'),
+    ).toBe(false);
+  });
 });
