@@ -18,7 +18,7 @@
  * @see RFCS/0003-fixture-gating.md
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
   isFixtureAdvertised,
   setAdvertisedFixtures,
@@ -26,6 +26,7 @@ import {
   isFixtureCacheReady,
   __resetForTests,
 } from '../lib/fixtures.js';
+import { isScenarioOptedOut } from '../lib/env.js';
 
 beforeEach(() => {
   __resetForTests();
@@ -133,5 +134,142 @@ describe('fixtures: __resetForTests', () => {
     __resetForTests();
     expect(isFixtureCacheReady()).toBe(false);
     expect(getAdvertisedFixtures()).toBe(null);
+  });
+});
+
+describe('fixtures: OPENWOP_OPTED_OUT_FIXTURES env filtering', () => {
+  // The opt-out predicate is re-read inside setAdvertisedFixtures() on
+  // every call, so mutating process.env between cases (and re-calling
+  // setAdvertisedFixtures) re-evaluates the parse. afterEach restores
+  // the original env so other suites aren't affected.
+  const ORIGINAL = process.env.OPENWOP_OPTED_OUT_FIXTURES;
+  afterEach(() => {
+    if (ORIGINAL === undefined) delete process.env.OPENWOP_OPTED_OUT_FIXTURES;
+    else process.env.OPENWOP_OPTED_OUT_FIXTURES = ORIGINAL;
+  });
+
+  it('exact id is filtered out of the advertised set', () => {
+    process.env.OPENWOP_OPTED_OUT_FIXTURES = 'conformance-dispatch-input-mapping';
+    setAdvertisedFixtures({
+      fixtures: ['conformance-noop', 'conformance-dispatch-input-mapping'],
+    });
+    expect(isFixtureAdvertised('conformance-noop')).toBe(true);
+    expect(isFixtureAdvertised('conformance-dispatch-input-mapping')).toBe(false);
+  });
+
+  it('trailing-* glob filters every matching id', () => {
+    process.env.OPENWOP_OPTED_OUT_FIXTURES = 'conformance-dispatch-*';
+    setAdvertisedFixtures({
+      fixtures: [
+        'conformance-noop',
+        'conformance-dispatch-input-mapping',
+        'conformance-dispatch-output-mapping',
+        'conformance-dispatch-cross-worker-handoff',
+      ],
+    });
+    expect(isFixtureAdvertised('conformance-noop')).toBe(true);
+    expect(isFixtureAdvertised('conformance-dispatch-input-mapping')).toBe(false);
+    expect(isFixtureAdvertised('conformance-dispatch-output-mapping')).toBe(false);
+    expect(isFixtureAdvertised('conformance-dispatch-cross-worker-handoff')).toBe(false);
+  });
+
+  it('exact + glob entries mix in one env value', () => {
+    process.env.OPENWOP_OPTED_OUT_FIXTURES =
+      'conformance-dispatch-*,conformance-subworkflow-input-mapping';
+    setAdvertisedFixtures({
+      fixtures: [
+        'conformance-noop',
+        'conformance-dispatch-input-mapping',
+        'conformance-subworkflow-input-mapping',
+        'conformance-subworkflow-parent',
+      ],
+    });
+    expect(isFixtureAdvertised('conformance-noop')).toBe(true);
+    expect(isFixtureAdvertised('conformance-dispatch-input-mapping')).toBe(false);
+    expect(isFixtureAdvertised('conformance-subworkflow-input-mapping')).toBe(false);
+    // subworkflow-parent is NOT subworkflow-input-mapping — exact match required.
+    expect(isFixtureAdvertised('conformance-subworkflow-parent')).toBe(true);
+  });
+
+  it('non-matching opt-out entries leave the advertised set intact', () => {
+    process.env.OPENWOP_OPTED_OUT_FIXTURES = 'conformance-nonexistent';
+    setAdvertisedFixtures({ fixtures: ['conformance-noop'] });
+    expect(isFixtureAdvertised('conformance-noop')).toBe(true);
+    expect(getAdvertisedFixtures()?.size).toBe(1);
+  });
+
+  it('empty / whitespace-only entries are ignored', () => {
+    process.env.OPENWOP_OPTED_OUT_FIXTURES = ', ,conformance-noop, ,';
+    setAdvertisedFixtures({ fixtures: ['conformance-noop', 'conformance-delay'] });
+    expect(isFixtureAdvertised('conformance-noop')).toBe(false);
+    expect(isFixtureAdvertised('conformance-delay')).toBe(true);
+  });
+
+  it('unset env behaves identically to no filtering', () => {
+    delete process.env.OPENWOP_OPTED_OUT_FIXTURES;
+    setAdvertisedFixtures({ fixtures: ['conformance-noop', 'conformance-delay'] });
+    expect(getAdvertisedFixtures()?.size).toBe(2);
+  });
+
+  it('whitespace-only env behaves identically to unset', () => {
+    process.env.OPENWOP_OPTED_OUT_FIXTURES = '   ';
+    setAdvertisedFixtures({ fixtures: ['conformance-noop'] });
+    expect(isFixtureAdvertised('conformance-noop')).toBe(true);
+  });
+
+  it('env is re-read on each setAdvertisedFixtures call (no memoization)', () => {
+    process.env.OPENWOP_OPTED_OUT_FIXTURES = 'conformance-noop';
+    setAdvertisedFixtures({ fixtures: ['conformance-noop', 'conformance-delay'] });
+    expect(isFixtureAdvertised('conformance-noop')).toBe(false);
+
+    // Mutate env and re-set — the new env value MUST take effect.
+    process.env.OPENWOP_OPTED_OUT_FIXTURES = 'conformance-delay';
+    setAdvertisedFixtures({ fixtures: ['conformance-noop', 'conformance-delay'] });
+    expect(isFixtureAdvertised('conformance-noop')).toBe(true);
+    expect(isFixtureAdvertised('conformance-delay')).toBe(false);
+  });
+});
+
+describe('env: OPENWOP_OPTED_OUT_SCENARIOS predicate', () => {
+  const ORIGINAL = process.env.OPENWOP_OPTED_OUT_SCENARIOS;
+  afterEach(() => {
+    if (ORIGINAL === undefined) delete process.env.OPENWOP_OPTED_OUT_SCENARIOS;
+    else process.env.OPENWOP_OPTED_OUT_SCENARIOS = ORIGINAL;
+  });
+
+  it('unset env → every scenario id returns false', () => {
+    delete process.env.OPENWOP_OPTED_OUT_SCENARIOS;
+    expect(isScenarioOptedOut('otel-trace-propagation-subworkflow')).toBe(false);
+    expect(isScenarioOptedOut('any-scenario')).toBe(false);
+  });
+
+  it('exact scenario id match returns true', () => {
+    process.env.OPENWOP_OPTED_OUT_SCENARIOS = 'otel-trace-propagation-subworkflow';
+    expect(isScenarioOptedOut('otel-trace-propagation-subworkflow')).toBe(true);
+    expect(isScenarioOptedOut('otel-trace-propagation')).toBe(false);
+  });
+
+  it('CSV with multiple ids matches each entry exactly', () => {
+    process.env.OPENWOP_OPTED_OUT_SCENARIOS = 'scenario-a,scenario-b,scenario-c';
+    expect(isScenarioOptedOut('scenario-a')).toBe(true);
+    expect(isScenarioOptedOut('scenario-b')).toBe(true);
+    expect(isScenarioOptedOut('scenario-c')).toBe(true);
+    expect(isScenarioOptedOut('scenario-d')).toBe(false);
+  });
+
+  it('whitespace around entries is tolerated', () => {
+    process.env.OPENWOP_OPTED_OUT_SCENARIOS = '  scenario-a , scenario-b  ';
+    expect(isScenarioOptedOut('scenario-a')).toBe(true);
+    expect(isScenarioOptedOut('scenario-b')).toBe(true);
+  });
+
+  it('env is re-read on each call (no memoization)', () => {
+    process.env.OPENWOP_OPTED_OUT_SCENARIOS = 'scenario-a';
+    expect(isScenarioOptedOut('scenario-a')).toBe(true);
+    expect(isScenarioOptedOut('scenario-b')).toBe(false);
+
+    process.env.OPENWOP_OPTED_OUT_SCENARIOS = 'scenario-b';
+    expect(isScenarioOptedOut('scenario-a')).toBe(false);
+    expect(isScenarioOptedOut('scenario-b')).toBe(true);
   });
 });

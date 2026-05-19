@@ -2942,12 +2942,23 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   // `auth.md §"Error envelope"`. Without this stub, the catch-all
   // 404 below would respond before any auth check, letting an
   // unauthenticated caller probe whether a runId/artifactId pair
-  // exists (info-leak). The match runs `checkAuth` (which 401s
-  // internally on missing/invalid Bearer) and only then 404s the
-  // unknown artifact.
+  // exists (info-leak). Match ANY method: checkAuth runs first
+  // (401s internally on missing/invalid Bearer); then 405 for
+  // non-GET methods (per `rest-endpoints.md §getArtifact` —
+  // artifact endpoint advertises GET only); then 404 on GET since
+  // the host has no artifact storage to look up.
   m = RUN_ARTIFACT_PATTERN.exec(path);
-  if (m && method === 'GET') {
+  if (m) {
     if (!checkAuth(req, res)) return;
+    if (method !== 'GET') {
+      sendError(
+        res,
+        405,
+        'method_not_allowed',
+        `Artifact endpoint accepts GET only; received ${method}.`,
+      );
+      return;
+    }
     sendError(
       res,
       404,

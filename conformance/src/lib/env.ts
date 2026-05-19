@@ -64,16 +64,6 @@ export interface ConformanceEnv {
    * warning if it detects the conflict.
    */
   readonly optedOutProfiles: ReadonlySet<string>;
-  /**
-   * Scenario ids the host operator has declared the host does NOT
-   * implement at a granularity finer than profile-opt-out or
-   * fixture-opt-out can express. Set via
-   * `OPENWOP_OPTED_OUT_SCENARIOS=id1,id2`. Individual tests consult
-   * this set via `isScenarioOptedOut(...)` inside their `describe.skipIf`
-   * predicate. Reserved for cases where the suite-wide mechanisms
-   * (profile gate, fixture gate) can't carry the needed granularity.
-   */
-  readonly optedOutScenarios: ReadonlySet<string>;
 }
 
 let cached: ConformanceEnv | null = null;
@@ -98,17 +88,13 @@ export function loadEnv(): ConformanceEnv {
   // Strip trailing slash so URL composition is consistent.
   const normalizedBase = baseUrl.replace(/\/$/, '');
 
-  const parseCsv = (raw: string | undefined): ReadonlySet<string> =>
-    new Set(
-      (raw ?? '')
-        .trim()
-        .split(',')
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0),
-    );
-
-  const optedOutProfiles = parseCsv(process.env.OPENWOP_OPTED_OUT_PROFILES);
-  const optedOutScenarios = parseCsv(process.env.OPENWOP_OPTED_OUT_SCENARIOS);
+  const optedOutRaw = process.env.OPENWOP_OPTED_OUT_PROFILES?.trim() ?? '';
+  const optedOutProfiles = new Set(
+    optedOutRaw
+      .split(',')
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0),
+  );
 
   cached = {
     baseUrl: normalizedBase,
@@ -117,7 +103,6 @@ export function loadEnv(): ConformanceEnv {
     implementationVersion: process.env.OPENWOP_IMPLEMENTATION_VERSION?.trim() ?? 'unknown',
     requireBehavior: process.env.OPENWOP_REQUIRE_BEHAVIOR === 'true',
     optedOutProfiles,
-    optedOutScenarios,
   };
   return cached;
 }
@@ -128,7 +113,25 @@ export function loadEnv(): ConformanceEnv {
  * predicate when neither profile-opt-out nor fixture-opt-out is
  * granular enough. Logs the skip reason via the caller — this helper
  * is silent so callers can format their own message.
+ *
+ * Re-reads `process.env` on every call (single env access + split, no
+ * cache). Symmetric with `lib/fixtures.ts:loadOptedOutPredicate` which
+ * re-reads on every `setAdvertisedFixtures(...)` call — so unit tests
+ * can mutate `process.env.OPENWOP_OPTED_OUT_SCENARIOS` between cases
+ * without having to invalidate a memoization.
  */
 export function isScenarioOptedOut(scenarioId: string): boolean {
-  return loadEnv().optedOutScenarios.has(scenarioId);
+  const raw = process.env.OPENWOP_OPTED_OUT_SCENARIOS?.trim() ?? '';
+  if (raw.length === 0) return false;
+  for (const entry of raw.split(',')) {
+    if (entry.trim() === scenarioId) return true;
+  }
+  return false;
+}
+
+/** Test-only: clear the `loadEnv()` memoization so subsequent calls
+ * re-read `process.env`. Required for any test that mutates the env
+ * vars consumed by `loadEnv()` mid-suite. */
+export function __resetEnvCacheForTests(): void {
+  cached = null;
 }

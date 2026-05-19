@@ -1,8 +1,8 @@
 # Conformance Result: openwop SQLite Reference Host
 
-> **Run date:** 2026-05-12 (audit-log-integrity + four interrupt profiles added 2026-05-11; `openwop-auth-api-key-rotation` added 2026-05-12 in Phase A close-out; `openwop-discovery-auth-scoped` added 2026-05-12 in Phase D close-out under RFC 0011)
+> **Run date:** 2026-05-19 (snapshot refreshed after soak-gate close-out via `OPENWOP_OPTED_OUT_FIXTURES` + `OPENWOP_OPTED_OUT_SCENARIOS` + the SQLite artifact-route auth stub — see CHANGELOG `[1.1.2 — unreleased]`. Previous snapshots: 2026-05-12 Phase A/D close-out; 2026-05-11 audit-log + four interrupt profiles)
 > **Host version:** `openwop-host-sqlite@1.0.0`
-> **Conformance suite:** `@openwop/openwop-conformance@1.X.0` (post-RFC-0011 wave; 99 scenario files)
+> **Conformance suite:** `@openwop/openwop-conformance@1.2.0` (post-soak-gate close-out; 140 scenario files)
 > **Profile claim:** `openwop-core` · `openwop-stream-poll` · `openwop-stream-sse` · `openwop-audit-log-integrity` · `openwop-interrupt-quorum` · `openwop-interrupt-auth-required` · `openwop-interrupt-external-event` · `openwop-interrupt-cascade-cancel` · `openwop-auth-api-key-rotation` · `openwop-discovery-auth-scoped`. Debug-bundle advertised.
 > **Profiles explicitly NOT claimed (per honesty principle):** `openwop-production` (Postgres host is the canonical claimant — see `INTEROP-MATRIX.md`), `openwop-auth-oauth2-client-credentials`, `openwop-auth-oidc-user-bearer`, `openwop-auth-mtls`. The reference HTTP listener does not enforce backpressure/retention, parse JWTs, or terminate TLS, so advertising those profiles would be over-claiming.
 > **Scale claim:** `minimal` (single-process; SQLite single-writer)
@@ -11,9 +11,17 @@
 
 Against the live SQLite host (`npm start` from `examples/hosts/sqlite/`):
 
-- **Test files:** 99 total (post-Phase-D suite).
-- **Tests (default-mode):** **669 passing / 0 failing / 32 skipped / 30 todo** (Phase A close-out, 2026-05-12) — 91.5% default-mode pass rate against 731 total.
-- **Tests (strict-mode, `OPENWOP_REQUIRE_BEHAVIOR=true`):** 669 passing / 10 strict-fail / 32 skipped / 30 todo. The 10 strict-fails are deliberate honesty opt-outs — scenarios for profiles the host explicitly does NOT claim (production, OAuth2-CC, OIDC, mTLS, replay-retention). `behaviorGate` correctly converts skip→fail under strict mode when a host hasn't claimed the underlying profile; that's the price of advertising only what the host implements.
+- **Test files:** 140 total (post-soak-gate close-out — suite grew with RFC 0013 workflow-chain-packs, RFC 0022 dispatch mapping, audit-tamper scenarios, etc.).
+- **Tests (strict-mode, `OPENWOP_REQUIRE_BEHAVIOR=true` + opt-out envs):** **1216 passing / 0 failing / 55 skipped / 7 todo** (2026-05-19, against suite `@openwop/openwop-conformance@1.2.0`). Required envs for a green run: `OPENWOP_OPTED_OUT_PROFILES=openwop-production,openwop-auth-oauth2-client-credentials,openwop-auth-oidc-user-bearer,openwop-auth-mtls,openwop-replay-fork,workflowChainPacks` + `OPENWOP_OPTED_OUT_FIXTURES=conformance-dispatch-input-mapping*,conformance-dispatch-output-mapping*,conformance-dispatch-cross-worker-handoff*,conformance-subworkflow-input-mapping*` + `OPENWOP_OPTED_OUT_SCENARIOS=otel-trace-propagation-subworkflow`. The 55 skips break down as: profile-opt-outs (this host doesn't claim production, OAuth2-CC, OIDC, mTLS, replay-fork, workflow-chain-packs), fixture-opt-outs (RFC 0022 §A/§B variable projection not implemented in the reference executor), and one scenario-opt-out (traceparent doesn't thread the `core.subWorkflow` dispatch boundary).
+- **Test command (mirrors `.github/workflows/conformance-soak.yml`):**
+  ```
+  OPENWOP_BASE_URL=http://127.0.0.1:3838 OPENWOP_API_KEY=openwop-sqlite-dev-key \
+    OPENWOP_REQUIRE_BEHAVIOR=true \
+    OPENWOP_OPTED_OUT_PROFILES='...' \
+    OPENWOP_OPTED_OUT_FIXTURES='...' \
+    OPENWOP_OPTED_OUT_SCENARIOS='otel-trace-propagation-subworkflow' \
+    npx vitest run --no-file-parallelism
+  ```
 - **RFC 0011 auth-scoped discovery (verified end-to-end 2026-05-12):** With `OPENWOP_TENANT2_API_KEY` configured, the host returns three views — unauthenticated + primary (6 capability keys: `auth`, `discovery`, `dispatch`, `orchestrator`, `secrets`, `webhooks`) vs tenant2 (4 keys: `auth`, `discovery`, `secrets`, `webhooks`). Tenant2's keyset is a strict subset of primary's, satisfying the no-authorization-oracle invariant from `capabilities-change-detection.md` §"Scoped capability views" line 69. All 3 RFC 0011 subtests in `discovery.test.ts` pass under `OPENWOP_REQUIRE_BEHAVIOR=true` + `OPENWOP_TEST_UNAUTHORIZED_API_KEY=<tenant2-key>`.
 - **RFC 0010 auth-profile rotation (verified end-to-end 2026-05-12):** Two-key overlap via `OPENWOP_SECONDARY_API_KEY`; constant-time dual-candidate `checkAuth`; canary-redaction confirmed. `auth-api-key-rotation.test.ts` passes 3/3 under behavior mode.
 
