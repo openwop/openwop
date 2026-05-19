@@ -211,9 +211,13 @@ Evidence at promotion:
   - Workflow-engine sample (`apps/workflow-engine/backend/typescript/src/bootstrap/conformanceMockAgent.ts`) — mock-agent `streamChunks` emission + schema-field-alignment cleanup (the pre-finalize prose-name bug fixed in the same commit).
   - Postgres reference host (`examples/hosts/postgres/src/server.ts`) — mock-agent `streamChunks` emission; in-tree pglite smoke (`test/mock-agent.test.ts` third block) verifies the contract end-to-end.
 
+### SDK typed-helper rollout (2026-05-19)
+
+All three reference SDKs (TS / Python / Go) gain typed payload types + type-guard predicates for the full `agent.*` event family, plus a high-level streaming-reasoning subscription helper on the TS SDK. Each SDK ships a schema-mirror test that catches drift between the hand-authored types and the canonical `schemas/run-event-payloads.schema.json` $defs. The §"Implementation notes" SDK-helper item is now resolved.
+
 ### Active → Accepted (deferred)
 
-Requires either (a) external host advertisement evidence in `INTEROP-MATRIX.md` (third-party host claiming `capabilities.agents.reasoning.streaming: true`), OR (b) next `@openwop/openwop-conformance` republish carrying the new fixture+scenario to downstream consumers — whichever lands first. The SDK typed-helper for `agent.reasoning.delta` events (mentioned in §"Implementation notes") is also tracked here for the Accepted flip.
+Requires either (a) external host advertisement evidence in `INTEROP-MATRIX.md` (third-party host claiming `capabilities.agents.reasoning.streaming: true`), OR (b) next `@openwop/openwop-conformance` republish carrying the new fixture+scenario to downstream consumers — whichever lands first.
 
 ## References
 

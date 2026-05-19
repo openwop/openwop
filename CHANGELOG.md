@@ -11,6 +11,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### RFC 0024 SDK typed-helper rollout (2026-05-19)
+
+Closes the SDK-helper line in RFC 0024's §"Status history → Active → Accepted (deferred)" acceptance criteria. All three reference SDKs gain typed-payload interfaces + type-guard predicates for the full `agent.*` event family, plus a high-level streaming-reasoning subscription helper on the TS SDK. Schema-mirror tests in each SDK catch drift between the hand-authored types and the canonical `schemas/run-event-payloads.schema.json` $defs.
+
+- **`sdk/typescript/`** — 6 typed payload interfaces + 6 type guards + 1 high-level `subscribeToAgentReasoning(ctx, runId, callbacks)` helper that fans out `agent.reasoning.delta` and `agent.reasoned` into typed callbacks. Capability `AgentsCapability.reasoning.streaming?: boolean` added per RFC 0024. 16 new unit tests; 37/37 pass.
+- **`sdk/python/`** — new `openwop_client.events` module with 6 TypedDict payload classes + 6 runtime predicates + 6 typed extractor functions. Stdlib-only. 22 new unittest cases; 22/22 pass.
+- **`sdk/go/`** — new `events.go` with 6 typed payload structs + 6 predicates + 6 `UnmarshalAgent*(ev) (payload, error)` helpers. Sentinel `ErrNotMatchingEvent` for type-discriminator mismatches. 7 new test functions; all pass. `go vet` + `gofmt -l` clean on the new files.
+
+Cross-SDK design symmetry: each language uses its idiomatic event-handling pattern (TS `is*` narrowing, Python predicate + extractor, Go `Unmarshal*` returning typed payload + error). Forward-compat preserved across all three — `RunEventDoc.type` stays open `string`, unknown event types return `false` from every predicate rather than throwing.
+
+This commit + the pre-existing reference-host implementations (commit `08ac7bc`) resolve the SDK-helper acceptance line. `Active → Accepted` flip still gated on either (a) external host advertisement evidence in `INTEROP-MATRIX.md`, or (b) `@openwop/openwop-conformance` republish.
+
 ### Test-coverage debt — Threads B + C + D.2 + F + Phase 3/4 partials (2026-05-18 → 2026-05-19)
 
 29 `it.todo()` → behavioral conversions across 16 conformance scenarios (suite-wide count `83 → 54`). All changes are additive per `COMPATIBILITY.md §2.1`; no wire-shape, schema, or endpoint contract changes. Each new behavioral assertion soft-skips on capability absence, fixture non-advertisement, or HTTP 404 against hosts without the sample-namespaced seam.
