@@ -46,28 +46,129 @@ describe('aiEnvelope.redaction: advertisement shape (FINAL v1.1)', () => {
   });
 });
 
-describe('aiEnvelope.redaction: BYOK-redaction placeholders', () => {
-  // The 6 assertions below require the engine's BYOK redaction pipeline
-  // (per SECURITY/threat-model-secret-leakage.md SR-1 carry-forward) to
-  // hook into envelope acceptance AND every downstream surface that
-  // persists envelope content (RunEventDoc, OTel span attributes,
-  // debug-bundle export, error envelope projection).
-  //
-  // The reference workflow-engine sample's `acceptEnvelope` is pure +
-  // doesn't touch payload contents. Redaction lives at a different
-  // layer (BYOK secretResolver + event-log sanitizer). Promoting these
-  // to behavioral requires either:
-  //   (a) chaining the acceptor through `stripSecretsFromPersisted`
-  //       before persisting the recorded view, OR
-  //   (b) an end-to-end test that plants a BYOK canary in an envelope
-  //       payload, runs through the full accept → emit → persist → export
-  //       chain, and asserts the canary is absent on every output.
-  //
-  // (b) is the spec-faithful path. Tracked as host-impl follow-up.
-  it.todo('emit envelope whose payload contains a known BYOK substring → substring absent from emitted RunEventDocs');
-  it.todo('redacted substring absent from OTel envelope_* span attributes');
-  it.todo('redacted substring absent from debug-bundle export');
-  it.todo('redacted substring absent from error envelope on validation refusal (no leak via error path)');
-  it.todo('redaction marker is the canonical [REDACTED:<reason>] form, NOT a model-generated <REDACTED> string');
-  it.todo('redaction runs AFTER schema validation: a payload with redacted-shaped substrings still validates structurally');
+// Behavioral assertions through the workflow-engine sample's env-gated
+// `POST /v1/host/sample/envelope/accept` seam. The seam threads a
+// `byokCanaries: string[]` option into AcceptOptions so the acceptor
+// can apply the §"Redaction (SR-1 carry-forward)" pass on accepted
+// envelopes, returning `redactedPayload` in the outcome. Each test
+// soft-skips on HTTP 404 (host doesn't expose the seam).
+async function accept(envelope: unknown, opts: Record<string, unknown> = {}): Promise<{ status: number; body: { status?: string; reason?: string; redactedPayload?: unknown; redactionCount?: number; details?: unknown[] } }> {
+  const res = await driver.post('/v1/host/sample/envelope/accept', { envelope, ...opts });
+  return { status: res.status, body: res.json as { status?: string; reason?: string; redactedPayload?: unknown; redactionCount?: number; details?: unknown[] } };
+}
+
+const baseMeta = { source: 'ai-generation' as const, ts: '2026-05-18T10:00:00Z' };
+const CANARY = 'sk-canary-DO-NOT-LEAK-9d7f3a2b';
+
+describe('aiEnvelope.redaction: behavioral acceptor-level scrub (FINAL v1.1)', () => {
+  it('canary substring in payload → replaced with [REDACTED:byok-canary] in redactedPayload', async () => {
+    const r = await accept(
+      {
+        type: 'error',
+        schemaVersion: 1,
+        envelopeId: 'env-red-1',
+        correlationId: 'r:n:0:red1',
+        payload: { code: 'leak_demo', message: `tool result included ${CANARY} verbatim` },
+        meta: baseMeta,
+      },
+      { byokCanaries: [CANARY] },
+    );
+    if (r.status === 404) return;
+    expect(r.body.status).toBe('accepted');
+    expect(r.body.redactionCount, 'redactionCount MUST be > 0 when canary appears').toBeGreaterThan(0);
+    expect(
+      JSON.stringify(r.body.redactedPayload).includes(CANARY),
+      driver.describe('ai-envelope.md §"Redaction (SR-1 carry-forward)"', 'canary MUST be absent from the redacted view'),
+    ).toBe(false);
+    expect(
+      JSON.stringify(r.body.redactedPayload),
+      driver.describe('ai-envelope.md §"Redaction (SR-1 carry-forward)"', 'redaction MUST use the canonical [REDACTED:byok-canary] marker'),
+    ).toContain('[REDACTED:byok-canary]');
+  });
+
+  it('canary across nested object fields → all occurrences scrubbed', async () => {
+    const r = await accept(
+      {
+        type: 'clarification.request',
+        schemaVersion: 1,
+        envelopeId: 'env-red-nested',
+        correlationId: 'r:n:0:rednested',
+        payload: {
+          questions: [
+            { id: 'q1', question: `What is ${CANARY}?` },
+            { id: 'q2', question: 'unrelated', context: { trace: `${CANARY}/${CANARY}` } },
+          ],
+        },
+        meta: baseMeta,
+      },
+      { byokCanaries: [CANARY] },
+    );
+    if (r.status === 404) return;
+    expect(r.body.status).toBe('accepted');
+    expect(
+      JSON.stringify(r.body.redactedPayload).includes(CANARY),
+      'no canary remnant anywhere in the redacted view (recursive scrub)',
+    ).toBe(false);
+    // q1's question, q2's context.trace had 2 occurrences = total 3
+    expect(r.body.redactionCount).toBe(3);
+  });
+
+  it('redaction runs AFTER schema validation: payload with [REDACTED:...]-shaped substrings still validates', async () => {
+    // The error-kind payload schema requires { code, message }. A pre-redacted
+    // marker in the message MUST NOT trip validation.
+    const r = await accept(
+      {
+        type: 'error',
+        schemaVersion: 1,
+        envelopeId: 'env-red-shape',
+        correlationId: 'r:n:0:redshape',
+        payload: { code: 'demo', message: 'already had [REDACTED:byok-canary] before we saw it' },
+        meta: baseMeta,
+      },
+      { byokCanaries: [CANARY] }, // canary NOT in payload; substitution count expected 0
+    );
+    if (r.status === 404) return;
+    expect(
+      r.body.status,
+      driver.describe('ai-envelope.md §"Redaction (SR-1 carry-forward)"', 'redaction MUST run AFTER schema validation; pre-existing markers do not affect validation'),
+    ).toBe('accepted');
+    // No canary present → redactionCount absent or 0
+    expect(r.body.redactionCount ?? 0).toBe(0);
+  });
+
+  it('canary in invalid envelope (validation refusal) → error response MUST NOT echo the canary', async () => {
+    // ISO 8601 violation triggers an `invalid` outcome BEFORE the redaction
+    // pass runs. The acceptor's validation-detail extractor MUST NOT echo
+    // the payload contents into the error response.
+    const r = await accept(
+      {
+        type: 'error',
+        schemaVersion: 1,
+        envelopeId: 'env-red-leak',
+        correlationId: 'r:n:0:redleak',
+        payload: { code: 'demo', message: `secret value is ${CANARY}` },
+        meta: { ...baseMeta, ts: 'tomorrow' }, // bad ts → invalid
+      },
+      { byokCanaries: [CANARY] },
+    );
+    if (r.status === 404) return;
+    expect(r.body.status).toBe('invalid');
+    const bodyString = JSON.stringify(r.body);
+    expect(
+      bodyString.includes(CANARY),
+      driver.describe(
+        'SECURITY/threat-model-secret-leakage.md §SR-1',
+        'error response on validation refusal MUST NOT echo BYOK canary content',
+      ),
+    ).toBe(false);
+  });
+});
+
+describe('aiEnvelope.redaction: engine-projection placeholders', () => {
+  // The OTel-span and debug-bundle-export assertions stay deferred — they
+  // require observability-scrape and debug-bundle-fetch seams beyond the
+  // pure-function acceptor. Tracked under Phase 3 (surface seams) /
+  // Phase 5 (host instrumentation) of the test-coverage plan.
+  it.todo('redacted substring absent from OTel envelope_* span attributes (requires OTel scrape seam)');
+  it.todo('redacted substring absent from debug-bundle export (requires debug-bundle fetch seam)');
 });

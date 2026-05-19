@@ -45,25 +45,130 @@ describe('aiEnvelope.correlationReplay: advertisement shape (FINAL v1.1)', () =>
   });
 });
 
-describe('aiEnvelope.correlationReplay: engine-state placeholders', () => {
-  // The 4 assertions below require the engine to maintain a per-run
-  // correlationId → cached-outcome map AND project envelope acceptance
-  // onto RunEventDocs with `causationId = envelope.correlationId`.
-  //
-  // The reference workflow-engine sample's `acceptEnvelope` is a pure
-  // function (host/envelopeAcceptor.ts) — it validates + categorizes
-  // a single envelope without tracking state across calls. Promoting
-  // these to behavioral requires either:
-  //   (a) extending the acceptor with an injected dedup store
-  //       (per-run correlationId map keyed by runId), OR
-  //   (b) a higher-level test seam that wires the acceptor into the
-  //       run lifecycle + event log.
-  //
-  // (b) is the spec-faithful path (per ai-envelope.md §"Replay
-  // determinism" the dedup is engine-level, not acceptor-level).
-  // Tracked as host-impl follow-up.
-  it.todo('emit envelope twice with same correlationId → second returns cached outcome; no duplicate RunEventDocs');
-  it.todo('emit envelope with correlationId C, then with same C and different type → refuse envelope_correlation_conflict');
-  it.todo('cross-process replay: process-death after accept; recovered process re-emits same correlationId → cached outcome, no handler re-invocation');
-  it.todo('resulting RunEventDoc.causationId equals the envelope.correlationId (causal chain preserved)');
+// Behavioral assertions through the workflow-engine sample's env-gated
+// `POST /v1/host/sample/envelope/accept` seam. The seam accepts a flat
+// `priorCorrelations` array (each entry: `{correlationId, outcome, envelopeType}`)
+// that the acceptor consumes as the per-run dedup store. Each test
+// soft-skips on HTTP 404 (host doesn't expose the seam).
+//
+// The cross-process replay assertion (process death + recovery) still
+// stays deferred — it requires a higher-level lifecycle seam that
+// persists the dedup state, which is engine scope, not acceptor scope.
+async function accept(envelope: unknown, opts: Record<string, unknown> = {}): Promise<{ status: number; body: { status?: string; reason?: string; envelopeId?: string; normalizedMeta?: { contentTrust?: string } } }> {
+  const res = await driver.post('/v1/host/sample/envelope/accept', { envelope, ...opts });
+  return { status: res.status, body: res.json as { status?: string; reason?: string; envelopeId?: string; normalizedMeta?: { contentTrust?: string } } };
+}
+
+const baseMeta = { source: 'ai-generation' as const, ts: '2026-05-18T10:00:00Z' };
+
+describe('aiEnvelope.correlationReplay: behavioral in-process dedup (FINAL v1.1)', () => {
+  it('same correlationId re-emission returns the cached outcome unchanged', async () => {
+    const envelope = {
+      type: 'clarification.request',
+      schemaVersion: 1,
+      envelopeId: 'env-cr-replay-1',
+      correlationId: 'r:n:0:replay1',
+      payload: { questions: [{ id: 'q1', question: 'why?' }] },
+      meta: baseMeta,
+    };
+    const first = await accept(envelope);
+    if (first.status === 404) return;
+    expect(first.body.status).toBe('accepted');
+    const cachedOutcome = first.body;
+
+    const second = await accept(envelope, {
+      priorCorrelations: [
+        {
+          correlationId: 'r:n:0:replay1',
+          outcome: cachedOutcome,
+          envelopeType: 'clarification.request',
+        },
+      ],
+    });
+    expect(
+      second.body.status,
+      driver.describe(
+        'ai-envelope.md §"Replay determinism"',
+        'second emission with same correlationId MUST return the cached outcome (handler runs at most once per correlationId)',
+      ),
+    ).toBe('accepted');
+    expect(second.body.envelopeId).toBe(cachedOutcome.envelopeId);
+  });
+
+  it('same correlationId, different envelope type → invalid envelope_correlation_conflict', async () => {
+    const r = await accept(
+      {
+        type: 'error', // re-using a correlationId previously bound to clarification.request
+        schemaVersion: 1,
+        envelopeId: 'env-cr-conflict',
+        correlationId: 'r:n:0:conflict',
+        payload: { code: 'x', message: 'y' },
+        meta: baseMeta,
+      },
+      {
+        priorCorrelations: [
+          {
+            correlationId: 'r:n:0:conflict',
+            outcome: { status: 'accepted', envelopeId: 'env-prior', recordedEventIds: [], normalizedMeta: { contentTrust: 'trusted' } },
+            envelopeType: 'clarification.request',
+          },
+        ],
+      },
+    );
+    if (r.status === 404) return;
+    expect(
+      r.body.status,
+      driver.describe(
+        'ai-envelope.md §"Replay determinism"',
+        'same correlationId with different type MUST refuse envelope_correlation_conflict',
+      ),
+    ).toBe('invalid');
+    expect(r.body.reason).toContain('envelope_correlation_conflict');
+  });
+
+  it('cached outcome of any status (invalid/gated/breached) replays identically', async () => {
+    // Plant a `gated` cached outcome; second emission MUST return the same gated outcome
+    // (handler MUST NOT re-run, even if conditions might now accept).
+    const cached = {
+      status: 'gated' as const,
+      reason: 'envelope type \'vendor.x.foo\' not advertised',
+      allowedKinds: ['clarification.request', 'schema.request', 'schema.response', 'error'],
+    };
+    const r = await accept(
+      {
+        type: 'vendor.x.foo',
+        schemaVersion: 1,
+        envelopeId: 'env-cr-cached-gated',
+        correlationId: 'r:n:0:cachedgated',
+        payload: {},
+        meta: baseMeta,
+      },
+      {
+        hostSupportedEnvelopes: ['vendor.x.foo'], // would otherwise accept
+        priorCorrelations: [
+          {
+            correlationId: 'r:n:0:cachedgated',
+            outcome: cached,
+            envelopeType: 'vendor.x.foo',
+          },
+        ],
+      },
+    );
+    if (r.status === 404) return;
+    expect(
+      r.body.status,
+      driver.describe(
+        'ai-envelope.md §"Replay determinism"',
+        'cached non-accepted outcome MUST replay identically (handler at most once per correlationId)',
+      ),
+    ).toBe('gated');
+  });
+});
+
+describe('aiEnvelope.correlationReplay: engine-projection placeholders', () => {
+  // Cross-process replay + RunEventDoc.causationId projection require a
+  // run-lifecycle seam beyond the pure acceptor. Tracked as engine-impl
+  // follow-up under Phase 3 (surface seams) of the test-coverage plan.
+  it.todo('cross-process replay: process-death after accept; recovered process re-emits same correlationId → cached outcome (requires persisted dedup state seam)');
+  it.todo('resulting RunEventDoc.causationId equals the envelope.correlationId (requires event-log query seam)');
 });

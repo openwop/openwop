@@ -130,6 +130,17 @@ export type EnvelopeOutcome =
        *  envelope already had `meta.contentTrust` set, this echoes it
        *  back. Defaults to `'trusted'` when neither is supplied. */
       normalizedMeta: { contentTrust: 'trusted' | 'untrusted' };
+      /** RFC 0021 §"Redaction (SR-1 carry-forward)" — when `opts.byokCanaries`
+       *  is non-empty, the acceptor walks `envelope.payload` (recursively)
+       *  and substitutes each canary substring with `[REDACTED:byok-canary]`.
+       *  The result is published here as the host's authoritative
+       *  recorded view; callers MUST persist `redactedPayload` (NOT the
+       *  inbound `envelope.payload`) on event-log / OTel / debug-bundle /
+       *  error-envelope surfaces. Absent when no canaries were supplied
+       *  OR no substitutions occurred. */
+      redactedPayload?: unknown;
+      /** Number of canary substitutions applied across `redactedPayload`. */
+      redactionCount?: number;
     }
   | { status: 'invalid'; reason: string; details: ValidationDetail[] }
   | { status: 'gated'; reason: string; allowedKinds: readonly string[] }
@@ -156,6 +167,31 @@ export interface AcceptOptions {
     schemaRounds?: { current: number; cap: number };
     clarificationRounds?: { current: number; cap: number };
   };
+  /** RFC 0021 §"Schema discipline" — per-kind advertised floor versions.
+   *  When supplied AND the envelope's `schemaVersion` diverges from the
+   *  floor, the acceptor consults `envelopeStrictness` to decide whether
+   *  to refuse. Below-floor under `'strict'` and ANY above-floor refuses
+   *  with `unknown_schema_version`. Below-floor under `'warn'` (default)
+   *  accepts silently — the engine projects the drift to `log.appended`
+   *  separately. */
+  schemaVersionFloor?: Readonly<Record<string, number>>;
+  /** RFC 0021 §"Capability handshake integration" §`envelopeStrictness`. */
+  envelopeStrictness?: 'warn' | 'strict';
+  /** RFC 0021 §"Replay determinism" — prior `correlationId → outcome` map
+   *  for in-process dedup. When the inbound envelope's `correlationId`
+   *  is already in this map, the acceptor short-circuits and returns the
+   *  cached outcome (handler MUST run at most once per correlationId per
+   *  run lifetime). If the cached entry's `envelopeType` differs from
+   *  the inbound `type`, refuse with `envelope_correlation_conflict`. */
+  priorCorrelations?: ReadonlyMap<string, { outcome: EnvelopeOutcome; envelopeType: string }>;
+  /** RFC 0021 §"Redaction (SR-1 carry-forward)" — canary substrings to
+   *  scrub from the recorded view BEFORE persistence. Each canary is
+   *  replaced with `[REDACTED:byok-canary]` in `redactedPayload` of the
+   *  accepted outcome. Mirrors `agent-memory.md` §SR-1: the LLM CAN
+   *  hallucinate secret-shaped substrings from prompt context, so the
+   *  host MUST scrub regardless of whether the model "promised" not to
+   *  emit them. Empty array or undefined → no scrub pass. */
+  byokCanaries?: readonly string[];
 }
 
 function validationDetail(d: { instancePath: string; schemaPath: string; keyword: string; message?: string | undefined }): ValidationDetail {
@@ -183,6 +219,32 @@ export function acceptEnvelope(envelope: unknown, opts: AcceptOptions = {}): Env
     };
   }
   const env = envelope as AIEnvelope;
+
+  // Step 1b: dedup via `correlationId` (RFC 0021 §"Replay determinism").
+  // The handler MUST run at most once per `correlationId` per run
+  // lifetime. A re-emission with the same correlationId and same type
+  // returns the cached outcome; same correlationId + different type
+  // refuses with `envelope_correlation_conflict`.
+  if (opts.priorCorrelations && typeof env.correlationId === 'string') {
+    const prior = opts.priorCorrelations.get(env.correlationId);
+    if (prior) {
+      if (prior.envelopeType !== env.type) {
+        return {
+          status: 'invalid',
+          reason: 'envelope_correlation_conflict',
+          details: [
+            {
+              instancePath: '/correlationId',
+              schemaPath: '#/properties/correlationId',
+              keyword: 'dedup',
+              message: `correlationId '${env.correlationId}' previously bound to type '${prior.envelopeType}', re-emission with type '${env.type}' refused`,
+            },
+          ],
+        };
+      }
+      return prior.outcome;
+    }
+  }
 
   // Defense-in-depth: validate `meta.ts` against ISO 8601. The schema
   // declares `format: "date-time"` which Ajv ignores under strict:false
@@ -225,6 +287,38 @@ export function acceptEnvelope(envelope: unknown, opts: AcceptOptions = {}): Env
       reason: `payload for kind '${env.type}' failed validation`,
       details: (payloadValidator.errors ?? []).map(validationDetail),
     };
+  }
+
+  // Step 3b: schema-version drift (RFC 0021 §"Schema discipline").
+  // When the host advertises a per-kind floor version AND the inbound
+  // `schemaVersion` diverges:
+  //   - ABOVE floor → refuse `unknown_schema_version` (host doesn't know
+  //     the higher version yet) regardless of strictness.
+  //   - BELOW floor under `strict` → refuse `unknown_schema_version`.
+  //   - BELOW floor under `warn` (default) → accept silently; engine
+  //     projects the drift to `log.appended` at a higher layer.
+  if (opts.schemaVersionFloor && typeof env.schemaVersion === 'number') {
+    const floor = opts.schemaVersionFloor[env.type];
+    if (typeof floor === 'number' && env.schemaVersion !== floor) {
+      const strictness = opts.envelopeStrictness ?? 'warn';
+      const drift = env.schemaVersion > floor ? 'above' : 'below';
+      if (drift === 'above' || strictness === 'strict') {
+        return {
+          status: 'invalid',
+          reason: `unknown_schema_version: kind '${env.type}' advertises floor v${floor}, got v${env.schemaVersion} (drift=${drift}, strictness=${strictness})`,
+          details: [
+            {
+              instancePath: '/schemaVersion',
+              schemaPath: '#/properties/schemaVersion',
+              keyword: 'schemaVersionFloor',
+              message: `expected v${floor} for type '${env.type}', got v${env.schemaVersion}`,
+            },
+          ],
+        };
+      }
+      // 'warn' + below-floor: fall through to accept; the engine emits
+      // `envelope_schema_version_drift` on the OTel span at the projection layer.
+    }
   }
 
   // Step 4: Envelope Contract gate (per-node permission set).
@@ -285,12 +379,74 @@ export function acceptEnvelope(envelope: unknown, opts: AcceptOptions = {}): Env
     env.meta?.contentTrust ?? opts.runTrustBoundary ?? 'trusted';
 
   const envelopeId = env.envelopeId || `env-${randomUUID()}`;
+
+  // Step 7: BYOK canary redaction (RFC 0021 §"Redaction (SR-1 carry-
+  // forward)"). Runs AFTER validation + gates + counters so the redaction
+  // pass operates only on payloads that would otherwise be accepted.
+  // Substitutes each canary substring with the canonical `[REDACTED:byok-canary]`
+  // marker. The substitution is deep + idempotent — payloads that already
+  // contain a `[REDACTED:...]` marker are unaffected.
+  if (opts.byokCanaries && opts.byokCanaries.length > 0) {
+    const redaction = redactCanaries(env.payload, opts.byokCanaries);
+    return {
+      status: 'accepted',
+      recordedEventIds: [],
+      envelopeId,
+      normalizedMeta: { contentTrust: normalizedContentTrust },
+      ...(redaction.count > 0
+        ? { redactedPayload: redaction.value, redactionCount: redaction.count }
+        : {}),
+    };
+  }
+
   return {
     status: 'accepted',
     recordedEventIds: [], // host emits RunEventDocs; this acceptor stays pure
     envelopeId,
     normalizedMeta: { contentTrust: normalizedContentTrust },
   };
+}
+
+/** Recursive canary substitution. Walks strings/arrays/objects and
+ *  replaces each canary occurrence with `[REDACTED:byok-canary]`. Returns
+ *  the rebuilt value (input is not mutated) plus the count of
+ *  substitutions performed.
+ *
+ *  Non-string scalar values (number, boolean, null) pass through
+ *  unchanged. Cycle-safe by tracking visited objects. */
+function redactCanaries(input: unknown, canaries: readonly string[]): { value: unknown; count: number } {
+  let total = 0;
+  const seen = new WeakSet<object>();
+  function walk(v: unknown): unknown {
+    if (typeof v === 'string') {
+      let out = v;
+      for (const canary of canaries) {
+        if (canary.length === 0) continue;
+        if (out.includes(canary)) {
+          // Count substitutions across the whole string for this canary.
+          const occurrences = out.split(canary).length - 1;
+          total += occurrences;
+          out = out.split(canary).join('[REDACTED:byok-canary]');
+        }
+      }
+      return out;
+    }
+    if (Array.isArray(v)) {
+      return v.map(walk);
+    }
+    if (v && typeof v === 'object') {
+      if (seen.has(v)) return v; // cycle — leave reference alone
+      seen.add(v);
+      const out: Record<string, unknown> = {};
+      for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
+        out[k] = walk(val);
+      }
+      return out;
+    }
+    return v;
+  }
+  const value = walk(input);
+  return { value, count: total };
 }
 
 /** Test seam — clears the schema caches. Allows hot-reload tests to

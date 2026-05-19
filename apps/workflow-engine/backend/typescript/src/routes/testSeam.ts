@@ -179,6 +179,13 @@ export function registerTestSeamRoutes(app: Express): void {
       nodeAllowedKinds?: string[];
       runTrustBoundary?: 'trusted' | 'untrusted';
       counters?: AcceptOptions['counters'];
+      schemaVersionFloor?: Record<string, number>;
+      envelopeStrictness?: 'warn' | 'strict';
+      /** Wire shape: `priorCorrelations` is a flat array on the JSON wire so
+       *  the conformance harness can ship it as plain JSON without serializing
+       *  a Map. The acceptor consumes a ReadonlyMap; we adapt here. */
+      priorCorrelations?: Array<{ correlationId: string; outcome: unknown; envelopeType: string }>;
+      byokCanaries?: string[];
     };
     if (body.envelope === undefined) {
       res.status(400).json({ error: { code: 'invalid_argument', message: 'envelope required' } });
@@ -189,6 +196,23 @@ export function registerTestSeamRoutes(app: Express): void {
     if (body.nodeAllowedKinds !== undefined) opts.nodeAllowedKinds = body.nodeAllowedKinds;
     if (body.runTrustBoundary !== undefined) opts.runTrustBoundary = body.runTrustBoundary;
     if (body.counters !== undefined) opts.counters = body.counters;
+    if (body.schemaVersionFloor !== undefined) opts.schemaVersionFloor = body.schemaVersionFloor;
+    if (body.envelopeStrictness !== undefined) opts.envelopeStrictness = body.envelopeStrictness;
+    if (Array.isArray(body.byokCanaries) && body.byokCanaries.length > 0) {
+      opts.byokCanaries = body.byokCanaries;
+    }
+    if (Array.isArray(body.priorCorrelations) && body.priorCorrelations.length > 0) {
+      const map = new Map<string, { outcome: import('../host/envelopeAcceptor.js').EnvelopeOutcome; envelopeType: string }>();
+      for (const e of body.priorCorrelations) {
+        if (typeof e?.correlationId === 'string' && typeof e?.envelopeType === 'string') {
+          map.set(e.correlationId, {
+            outcome: e.outcome as import('../host/envelopeAcceptor.js').EnvelopeOutcome,
+            envelopeType: e.envelopeType,
+          });
+        }
+      }
+      opts.priorCorrelations = map;
+    }
     const outcome = acceptEnvelope(body.envelope, opts);
     res.status(200).json(outcome);
   });
