@@ -139,8 +139,8 @@ function CodeBlock({ source, language }: CodeBlockProps): JSX.Element {
       <pre
         style={{
           margin: 0, padding: 10,
-          fontFamily: 'var(--font-mono)', fontSize: 12, lineHeight: 1.5,
-          background: 'transparent', color: 'var(--color-text)',
+          fontFamily: 'var(--mono)', fontSize: 12, lineHeight: 1.5,
+          background: 'transparent', color: 'var(--ink)',
           overflowX: 'auto', whiteSpace: 'pre', wordBreak: 'normal',
         }}
       >

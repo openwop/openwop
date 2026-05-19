@@ -62,9 +62,13 @@
   --space-5: 24px;
   --space-6: 32px;
 
-  /* Chat-specific tokens — now seated on the warm palette */
-  --color-msg-user-bg:      var(--clay);
-  --color-msg-user-text:    var(--paper);
+  /* Chat-specific tokens — seated on the warm palette.
+   * User bubble uses clay-soft (10% alpha) instead of full clay so the chat
+   * surface reads editorial-calm rather than slab-of-orange. Ink-on-tint
+   * keeps body copy at brand contrast. Assistant bubble is paper-2 — the
+   * subtle "deeper cream" that marks the alternate speaker. */
+  --color-msg-user-bg:      var(--clay-soft);
+  --color-msg-user-text:    var(--ink);
   --color-msg-assistant-bg: var(--paper-2);
   --radius-bubble: 16px;
   --radius-pill: 24px;

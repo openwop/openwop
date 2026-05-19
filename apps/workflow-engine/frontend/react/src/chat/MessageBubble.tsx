@@ -51,11 +51,11 @@ export function MessageBubble({ message }: Props): JSX.Element {
         padding: '8px 12px',
         borderRadius: 'var(--radius-bubble, 16px)',
         background: isError
-          ? 'rgba(248, 113, 113, 0.1)'
+          ? 'color-mix(in oklch, var(--color-danger) 10%, transparent)'
           : isUser
-            ? 'var(--color-msg-user-bg, var(--color-accent))'
-            : 'var(--color-msg-assistant-bg, var(--color-surface-2))',
-        color: isUser ? 'var(--color-msg-user-text, #ffffff)' : 'var(--color-text)',
+            ? 'var(--color-msg-user-bg)'
+            : 'var(--color-msg-assistant-bg)',
+        color: isUser ? 'var(--color-msg-user-text)' : 'var(--ink)',
         border: isError ? '1px solid var(--color-danger)' : '1px solid transparent',
         fontSize: 14,
         lineHeight: 1.5,

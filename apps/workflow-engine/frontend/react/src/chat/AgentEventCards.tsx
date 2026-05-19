@@ -170,9 +170,9 @@ export function HandoffIndicator({ handoff }: { handoff: AgentHandoff }): JSX.El
       }}
       title={handoff.reason}
     >
-      <span style={{ fontFamily: 'var(--font-mono, monospace)' }}>{handoff.fromAgentId}</span>
+      <span style={{ fontFamily: 'var(--mono)' }}>{handoff.fromAgentId}</span>
       <span aria-hidden style={{ opacity: 0.6 }}>→</span>
-      <span style={{ fontFamily: 'var(--font-mono, monospace)' }}>{handoff.toAgentId}</span>
+      <span style={{ fontFamily: 'var(--mono)' }}>{handoff.toAgentId}</span>
       {handoff.reason && (
         <span className="muted" style={{ marginLeft: 4, fontSize: 10, fontStyle: 'italic' }}>
           {handoff.reason}
