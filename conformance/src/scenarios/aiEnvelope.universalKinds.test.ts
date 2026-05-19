@@ -246,10 +246,22 @@ describe('aiEnvelope.universalKinds: engine projection via event-log seam', () =
   });
 });
 
-describe('aiEnvelope.universalKinds: counter-policy placeholder', () => {
-  // schema.response counting against envelopesPerTurn is a host policy
-  // choice per ai-envelope.md §"Universal kinds" — implementations MAY
-  // count it OR exempt it. The conformance contract is "advertise the
-  // choice"; the per-host counter behavior is reference-impl specific.
-  it.todo('schema.response counted-or-exempt against limits.envelopesPerTurn per documented host policy (advertisement test only — no behavioral assertion)');
+describe('aiEnvelope.universalKinds: schema.response counter-policy advertisement (ai-envelope.md §"Universal kinds")', () => {
+  it('host MAY count or exempt schema.response against envelopesPerTurn; when advertised, the policy field MUST be a documented enum value', async () => {
+    // Per ai-envelope.md §"Universal kinds": "Engines MAY count this against
+    // Capabilities.limits.envelopesPerTurn or exempt it; conformance does
+    // not lock this choice." The conformance test only verifies that hosts
+    // advertising a policy field use a documented value.
+    const res = await driver.get('/.well-known/openwop');
+    const body = res.json as { capabilities?: { aiEnvelope?: { schemaResponseCounterPolicy?: string } } } | undefined;
+    const policy = body?.capabilities?.aiEnvelope?.schemaResponseCounterPolicy;
+    if (policy === undefined) return; // no policy advertised — host MAY omit
+    expect(
+      ['counted', 'exempt'].includes(policy),
+      driver.describe(
+        'ai-envelope.md §"Universal kinds"',
+        'when advertised, schemaResponseCounterPolicy MUST be either "counted" or "exempt"',
+      ),
+    ).toBe(true);
+  });
 });

@@ -142,9 +142,35 @@ describe('replay-llm-cache-key: non-recipe fields are EXCLUDED (replay.md §A)',
   });
 });
 
-describe('replay-llm-cache-key: cross-host parity (placeholder)', () => {
-  // Cross-host determinism requires a second host accessible via
-  // OPENWOP_BASE_URL_B. Out of scope for this scenario file; tracked
-  // as a future addition under Phase 5 of the test-coverage plan.
-  it.todo('two hosts at OPENWOP_BASE_URL + OPENWOP_BASE_URL_B compute the same cache key for the same input (replay.md §D)');
+describe('replay-llm-cache-key: cross-host parity (replay.md §D)', () => {
+  it('two hosts compute the same cache key for the same input (when OPENWOP_BASE_URL_B is configured)', async () => {
+    const otherBaseUrl = process.env.OPENWOP_BASE_URL_B;
+    if (!otherBaseUrl || otherBaseUrl.length === 0) return; // second host not configured — soft-skip
+    const input = {
+      provider: 'anthropic',
+      model: 'claude-3-5-sonnet-20240620',
+      messages: [
+        { role: 'system' as const, content: 'cross-host parity probe' },
+        { role: 'user' as const, content: 'compute the same key' },
+      ],
+      temperature: 0.5,
+    };
+    const a = await callSeam(input);
+    if (a.status === 404) return; // host A doesn't expose the seam
+    const otherApiKey = process.env.OPENWOP_API_KEY_B ?? process.env.OPENWOP_API_KEY ?? '';
+    // Issue the second probe directly via fetch since the driver is bound to
+    // OPENWOP_BASE_URL. Authorization mirrors the suite's default.
+    const resB = await fetch(`${otherBaseUrl.replace(/\/$/, '')}/v1/host/sample/test/llm-cache-key`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${otherApiKey}` },
+      body: JSON.stringify(input),
+    });
+    if (resB.status === 404) return; // host B doesn't expose the seam
+    expect(resB.status).toBe(200);
+    const b = (await resB.json()) as { cacheKey?: string };
+    expect(
+      a.cacheKey,
+      driver.describe('replay.md §D', 'two compliant hosts MUST compute byte-identical cache keys for the same recipe input'),
+    ).toBe(b.cacheKey);
+  });
 });
