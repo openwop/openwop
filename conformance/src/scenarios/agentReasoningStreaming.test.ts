@@ -171,6 +171,17 @@ describe.skipIf(SKIP)('agentReasoningStreaming: RFC 0024 incremental + closing e
     expect(closingIdx, 'closing event present').toBeGreaterThan(-1);
     const lastDeltaIdx = arr.map((e) => e.type).lastIndexOf('agent.reasoning.delta');
 
+    // Guard against vacuous pass: a host advertising streaming but
+    // emitting ZERO deltas would otherwise pass `-1 < closingIdx`
+    // trivially. The fixture configures 3 streamChunks, so at least
+    // one delta MUST appear in the event log.
+    expect(
+      lastDeltaIdx,
+      driver.describe(
+        'RFCS/0024-agent-reasoning-streaming.md §Proposal',
+        'streaming host MUST emit at least one `agent.reasoning.delta` for a fixture with non-empty `streamChunks`',
+      ),
+    ).toBeGreaterThan(-1);
     expect(
       lastDeltaIdx,
       driver.describe(

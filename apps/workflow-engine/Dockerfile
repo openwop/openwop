@@ -61,13 +61,31 @@ RUN npm install --omit=dev
 COPY --from=builder /app/lib ./lib
 COPY providers.json ./providers.json
 
-# Conformance fixtures via the `conformance-fixtures` symlink (resolves
-# to ../../conformance/fixtures at gcloud-upload time). The host's
-# `findConformanceFixturesDir()` probes `./conformance/fixtures`
+# Conformance fixtures, vendored at `apps/workflow-engine/conformance-fixtures/`
+# (kept in sync from the canonical `conformance/fixtures/` via
+# `scripts/sync-fixtures.sh`; corpus gate enforces non-drift). The
+# host's `findConformanceFixturesDir()` probes `./conformance/fixtures`
 # relative to `lib/`, so the fixtures must land at
 # `/app/conformance/fixtures/`. Used by `capabilities.fixtures`
 # advertisement + black-box conformance runs.
+#
+# Gated by the `INCLUDE_CONFORMANCE_FIXTURES` build arg (default `true`
+# for the openwop reference deploy). Production forks of this codebase
+# that don't need the conformance surface bundled set this to `false`:
+#   docker build --build-arg INCLUDE_CONFORMANCE_FIXTURES=false ...
+# When `false`, the runtime image ships without the ~50KB fixtures
+# directory; the host's `findConformanceFixturesDir()` returns null and
+# `capabilities.fixtures` advertises an empty array.
+ARG INCLUDE_CONFORMANCE_FIXTURES=true
+
+# Docker COPY can't be conditional on a build arg directly. The
+# `.gitignore`-respecting `conformance-fixtures` dir is always present
+# in the build context; we conditionally REMOVE it post-COPY when the
+# arg disables inclusion. Keeps the Dockerfile single-stage-clean.
 COPY conformance-fixtures ./conformance/fixtures
+RUN if [ "$INCLUDE_CONFORMANCE_FIXTURES" != "true" ]; then \
+      rm -rf ./conformance/fixtures; \
+    fi
 
 ENV NODE_ENV=production
 ENV PORT=8080
