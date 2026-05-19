@@ -1,0 +1,59 @@
+{
+  "id": "conformance-dispatch-per-worker-override",
+  "name": "Conformance: Dispatch Per-Worker Mapping Override (RFC 0022 §A HVMAP-1c-override)",
+  "version": "1.0",
+  "description": "RFC 0022 §A / HVMAP-1c-override — verifies that `perWorkerInputMappings[childId]` OVERRIDES the default `inputMapping` for the named child, while OTHER children continue to use the default. Supervisor plan: `next-worker: ['conformance-dispatch-cross-worker-handoff-child-a', 'conformance-dispatch-cross-worker-handoff-child-b']` → `terminate`. Default `inputMapping: { input: 'defaultX' }`; `perWorkerInputMappings.conformance-dispatch-cross-worker-handoff-child-b: { input: 'sharedVar' }`. child-a receives `input: <defaultX-value>`; child-b receives `input: <sharedVar-value>` (NOT defaultX) per RFC 0022 §A `effectiveInputMapping` precedence. See dispatch-cross-worker-handoff.test.ts § HVMAP-1c-override.",
+  "nodes": [
+    {
+      "id": "supervisor",
+      "typeId": "core.orchestrator.supervisor",
+      "name": "Supervisor (mock plan, multi-worker)",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "mockDispatchPlan": [
+          {
+            "kind": "next-worker",
+            "nextWorkerIds": [
+              "conformance-dispatch-cross-worker-handoff-child-a",
+              "conformance-dispatch-cross-worker-handoff-child-b"
+            ]
+          },
+          { "kind": "terminate", "reason": "goal-reached" }
+        ]
+      },
+      "inputs": {}
+    },
+    {
+      "id": "dispatch",
+      "typeId": "core.dispatch",
+      "name": "Dispatch with default + per-worker override",
+      "position": { "x": 200, "y": 0 },
+      "config": {
+        "askUserRouting": "auto",
+        "workerDispatchModel": "child-run",
+        "fanOutPolicy": "sequential",
+        "inputMapping": { "input": "defaultX" },
+        "perWorkerInputMappings": {
+          "conformance-dispatch-cross-worker-handoff-child-b": { "input": "sharedVar" }
+        }
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [
+    { "id": "e1", "sourceNodeId": "supervisor", "targetNodeId": "dispatch" },
+    { "id": "e2", "sourceNodeId": "dispatch", "targetNodeId": "supervisor" }
+  ],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "defaultX", "type": "string", "defaultValue": "default-x-value" },
+    { "name": "sharedVar", "type": "string", "defaultValue": "shared-value" }
+  ],
+  "metadata": {
+    "tags": ["conformance", "rfc-0022", "dispatch", "per-worker-mapping", "hvmap-1c-override"],
+    "requiresCapability": "capabilities.agents.dispatchMapping"
+  },
+  "settings": { "timeout": 30000 }
+}

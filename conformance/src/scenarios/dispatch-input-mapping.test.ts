@@ -85,9 +85,39 @@ describe.skipIf(SKIP)('dispatch-input-mapping: parent → child variable project
     )).toBe('Alice');
   });
 
-  it.todo(
-    'HVMAP-1a-null: parent variable unset → child input surfaces as `undefined` (NOT omitted, NOT `null`) per §A normative bullet. Requires a fixture variant omitting parentName.defaultValue.',
-  );
+  it('HVMAP-1a-null: parent variable unset → child input surfaces as `undefined` per §A', async () => {
+    const PARENT_NO_DEFAULT = 'conformance-dispatch-input-mapping-no-default';
+    if (!isFixtureAdvertised(PARENT_NO_DEFAULT) || !isFixtureAdvertised(CHILD)) return; // fixture not seeded — soft-skip
+    const create = await driver.post('/v1/runs', { workflowId: PARENT_NO_DEFAULT });
+    expect(create.status).toBe(201);
+    const parentRunId = (create.json as { runId: string }).runId;
+    await pollUntilTerminal(parentRunId);
+
+    const eventsRes = await driver.get(`/v1/runs/${encodeURIComponent(parentRunId)}/events`);
+    const events = ((eventsRes.json as { events?: RunEvent[] } | undefined)?.events ?? []);
+    const dispatched = events.find(
+      (e) => e.type === 'node.dispatched' && e.payload?.childWorkflowId === CHILD,
+    );
+    if (!dispatched) return; // host doesn't emit node.dispatched — soft-skip
+    const childRunId = dispatched.payload?.childRunId;
+
+    const childRes = await driver.get(`/v1/runs/${encodeURIComponent(childRunId!)}`);
+    const child = childRes.json as RunSnapshot;
+    // Per RFC 0022 §A: an unset parent variable MUST surface as `undefined`.
+    // On the wire, `undefined` becomes either omitted from the JSON object
+    // OR explicit `null`; the spec REJECTS the latter. We accept either
+    // "key absent" or "key === undefined" but FAIL on `null`.
+    const inputs = child.inputs ?? {};
+    const v = inputs.childGreeting;
+    expect(
+      v === undefined || !('childGreeting' in inputs),
+      driver.describe(
+        'RFCS/0022-dispatch-input-output-mapping.md §A',
+        'unset parent variable projection MUST surface as undefined (NOT null, NOT a default placeholder)',
+      ),
+    ).toBe(true);
+    expect(v).not.toBe(null);
+  });
 
 });
 

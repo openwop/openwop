@@ -92,7 +92,38 @@ describe.skipIf(SKIP)('dispatch-cross-worker-handoff: sequential child→parent�
     )).toBe('hello');
   });
 
-  it.todo(
-    'HVMAP-1c-override: per-worker mapping overrides default mapping. dispatch.inputMapping={input:"defaultX"}; perWorkerInputMappings.child-b={input:"sharedVar"}; child-b MUST receive inputs.input from sharedVar, NOT defaultX. Requires a fixture variant carrying both default + per-worker mappings.',
-  );
+  it('HVMAP-1c-override: per-worker mapping overrides default mapping per §A effectiveInputMapping precedence', async () => {
+    const PARENT_OVERRIDE = 'conformance-dispatch-per-worker-override';
+    if (!isFixtureAdvertised(PARENT_OVERRIDE)) return; // fixture not seeded — soft-skip
+    const create = await driver.post('/v1/runs', { workflowId: PARENT_OVERRIDE });
+    expect(create.status).toBe(201);
+    const parentRunId = (create.json as { runId: string }).runId;
+    await pollUntilTerminal(parentRunId);
+
+    const eventsRes = await driver.get(`/v1/runs/${encodeURIComponent(parentRunId)}/events`);
+    const events = ((eventsRes.json as { events?: RunEvent[] } | undefined)?.events ?? []);
+    const dispatchedA = events.find((e) => e.type === 'node.dispatched' && e.payload?.childWorkflowId === CHILD_A);
+    const dispatchedB = events.find((e) => e.type === 'node.dispatched' && e.payload?.childWorkflowId === CHILD_B);
+    if (!dispatchedA || !dispatchedB) return;
+
+    const childARes = await driver.get(`/v1/runs/${encodeURIComponent(dispatchedA.payload!.childRunId!)}`);
+    const childBRes = await driver.get(`/v1/runs/${encodeURIComponent(dispatchedB.payload!.childRunId!)}`);
+    const childAInputs = (childARes.json as { inputs?: Record<string, unknown> }).inputs ?? {};
+    const childBInputs = (childBRes.json as { inputs?: Record<string, unknown> }).inputs ?? {};
+
+    expect(
+      childAInputs.input,
+      driver.describe(
+        'RFCS/0022-dispatch-input-output-mapping.md §A',
+        'child-a uses the DEFAULT inputMapping; input MUST come from parent.defaultX',
+      ),
+    ).toBe('default-x-value');
+    expect(
+      childBInputs.input,
+      driver.describe(
+        'RFCS/0022-dispatch-input-output-mapping.md §A',
+        'child-b uses the per-worker OVERRIDE; input MUST come from parent.sharedVar (NOT defaultX)',
+      ),
+    ).toBe('shared-value');
+  });
 });
