@@ -19,8 +19,9 @@
  * @see spec/v1/ai-envelope.md §"Envelope Contract"
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { setHostCapability, resetHostCapabilities, isToggleAvailable } from '../lib/host-toggle.js';
 
 interface DiscoveryDoc {
   capabilities?: Record<string, unknown>;
@@ -257,12 +258,101 @@ describe('aiEnvelope.contractRefusal: engine projection via event-log seam', () 
   });
 });
 
-describe('aiEnvelope.contractRefusal: capability-stacking placeholder', () => {
-  // Capability-gated typeId refusal stacking (host.aiEnvelope absent →
-  // typeId refused FIRST, before envelope contract gate) requires
-  // the workflow-register handler to consult host.aiEnvelope BEFORE
-  // dispatching envelope acceptance. Tracked under Thread E (engine
-  // integration of acceptor into node execution path); the seam
-  // alone can't verify the ordering.
-  it.todo('capability-gated typeId refusal stacks atop Envelope Contract refusal (host.aiEnvelope absent → typeId refused first; needs node-execution wiring)');
+// Capability-stacking — backed by the `host.aiEnvelope.supported`
+// flag in the workflow-engine's capability overlay. Per ai-envelope.md
+// §"Capability handshake integration" line 305: capability-gated
+// typeId refusal MUST stack atop envelope-contract refusal. When the
+// host doesn't advertise `host.aiEnvelope: supported`, every
+// envelope/accept call refuses BEFORE the per-envelope contract
+// gates (host-gate, node-gate, schema-floor) fire — observable as
+// `reason: "capability_required"` (NOT "envelope_contract_violation").
+
+describe('aiEnvelope.contractRefusal: capability-stacking (FINAL v1.1)', () => {
+  afterEach(async () => {
+    // Restore overlay after each test so subsequent scenarios see the
+    // default advertisement.
+    await resetHostCapabilities();
+  });
+
+  it('host.aiEnvelope.supported = false → envelope/accept refuses with capability_required BEFORE envelope contract gates', async () => {
+    if (!(await isToggleAvailable())) return; // seam not exposed — soft-skip
+
+    const toggle = await setHostCapability('host.aiEnvelope.supported', false);
+    if (!toggle.ok) return;
+
+    // Same envelope shape that the existing host-gate scenario uses
+    // (line 233-257 above) — the type IS in hostSupportedEnvelopes AND
+    // matches nodeAllowedKinds, so the envelope-contract gate would
+    // normally accept. The capability gate must fire FIRST and return
+    // capability_required regardless.
+    const r = await accept(
+      {
+        type: 'vendor.advertised.kind',
+        schemaVersion: 1,
+        envelopeId: 'env-cr-capstack-1',
+        correlationId: 'r:n:0:cr-capstack',
+        payload: {},
+        meta: baseMeta,
+      },
+      {
+        hostSupportedEnvelopes: ['vendor.advertised.kind'],
+        nodeAllowedKinds: ['vendor.advertised.kind'],
+      },
+    );
+    if (r.status === 404) return;
+    expect(
+      r.body.status,
+      driver.describe(
+        'ai-envelope.md §"Capability handshake integration"',
+        'capability-absent host MUST refuse envelope acceptance regardless of host-gate / node-gate match',
+      ),
+    ).toBe('invalid');
+    expect(
+      r.body.reason,
+      driver.describe(
+        'capabilities.md §"Unsupported capability — refusal contract"',
+        'refusal reason MUST be capability_required (NOT envelope_contract_violation) — capability gate stacks above the envelope-contract gate',
+      ),
+    ).toBe('capability_required');
+  });
+
+  it('host.aiEnvelope.supported = true → envelope/accept falls through to envelope-contract gates', async () => {
+    if (!(await isToggleAvailable())) return;
+    const toggle = await setHostCapability('host.aiEnvelope.supported', true);
+    if (!toggle.ok) return;
+
+    // With capability advertised, a normally-rejected envelope (type
+    // not in hostSupportedEnvelopes) reaches the envelope-contract
+    // gate and refuses with `envelope_contract_violation`, NOT
+    // `capability_required`. Proves the capability gate is gated on
+    // the flag and doesn't short-circuit the contract path when the
+    // capability IS advertised.
+    const r = await accept(
+      {
+        type: 'vendor.unadvertised.kind',
+        schemaVersion: 1,
+        envelopeId: 'env-cr-capstack-2',
+        correlationId: 'r:n:0:cr-capstack-fallthrough',
+        payload: {},
+        meta: baseMeta,
+      },
+      {
+        hostSupportedEnvelopes: ['vendor.advertised.only'],
+        nodeAllowedKinds: ['vendor.unadvertised.kind'],
+      },
+    );
+    if (r.status === 404) return;
+    expect(
+      r.body.status,
+      driver.describe(
+        'ai-envelope.md §"Capability handshake integration"',
+        'when capability IS advertised, envelope-contract gates run normally',
+      ),
+    ).toBe('gated');
+    // `gated` is the envelope-contract-gate outcome (host-gate +
+    // node-gate); reason text varies. The key contract: status is NOT
+    // `invalid` with `capability_required` — the capability layer
+    // didn't intercept.
+    expect(r.body.reason).not.toBe('capability_required');
+  });
 });

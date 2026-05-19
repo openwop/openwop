@@ -38,6 +38,14 @@ const overlay = new Map<string, boolean>();
 const DEFAULTS: Readonly<Record<string, boolean>> = {
   'agents.dispatchMapping': false,
   'subWorkflow.inputMapping': false,
+  // ai-envelope.md §"Capability handshake integration" + capabilities.md
+  // §"Unsupported capability — refusal contract": a node whose typeId
+  // requires `host.aiEnvelope: supported` MUST be refused if the host
+  // doesn't advertise it. The workflow-engine sample IS implementing
+  // the aiEnvelope acceptor (this whole codebase), so the honest
+  // default is `true` — only conformance tests that exercise the
+  // refusal path toggle it off via the capability-toggle seam.
+  'host.aiEnvelope.supported': true,
 };
 
 /** Resolve a capability flag, consulting the overlay first then the

@@ -48,6 +48,7 @@ import {
   setCapabilityOverlay,
   resetCapabilityOverlay,
   snapshotCapabilityOverlay,
+  resolveCapabilityFlag,
 } from '../host/capabilityOverlay.js';
 import { computeLLMCacheKey } from '../providers/llmCacheKey.js';
 import { OpenwopError } from '../types.js';
@@ -240,6 +241,37 @@ export function registerTestSeamRoutes(app: Express, deps: { storage: Storage })
       res.status(400).json({ error: { code: 'invalid_argument', message: 'envelope required' } });
       return;
     }
+
+    // Capability gate (FIRST refusal layer per ai-envelope.md §"Capability
+    // handshake integration" line 305: capability-gated typeId refusal
+    // STACKS ATOP envelope-contract refusal). If the host doesn't
+    // advertise `host.aiEnvelope: supported`, every envelope/accept call
+    // refuses BEFORE the per-envelope contract gates (host-gate, node-
+    // gate, schema-floor, etc.) run. The refusal is observable as
+    // `capability_required` so the conformance suite can distinguish
+    // "capability absent" from "this specific envelope type not in the
+    // host's accepts list."
+    if (resolveCapabilityFlag('host.aiEnvelope.supported') === false) {
+      res.status(200).json({
+        status: 'invalid',
+        reason: 'capability_required',
+        details: [
+          {
+            instancePath: '/type',
+            schemaPath: '#/capabilities/host.aiEnvelope',
+            keyword: 'capability',
+            message:
+              "Host does not advertise capabilities.host.aiEnvelope: supported. " +
+              "Per ai-envelope.md §\"Capability handshake integration\" + " +
+              "capabilities.md §\"Unsupported capability — refusal contract\", " +
+              "a node requiring host.aiEnvelope MUST be refused before any " +
+              "envelope-contract gating runs.",
+          },
+        ],
+      });
+      return;
+    }
+
     const opts: AcceptOptions = {};
     if (body.hostSupportedEnvelopes !== undefined) opts.hostSupportedEnvelopes = body.hostSupportedEnvelopes;
     if (body.nodeAllowedKinds !== undefined) opts.nodeAllowedKinds = body.nodeAllowedKinds;

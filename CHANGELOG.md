@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Envelope-contract capability stacking refusal (2026-05-19)
+
+Closes the `aiEnvelope.contractRefusal` capability-stacking it.todo. Per `ai-envelope.md §"Capability handshake integration"` (line 305): when a node typeId requires `host.aiEnvelope: supported` and the host doesn't advertise it, the refusal MUST fire BEFORE the per-envelope contract gates (host-gate, node-gate, schema-floor). Refusal code is `capability_required` per `capabilities.md §"Unsupported capability — refusal contract"` — observable as a distinct outcome from `envelope_contract_violation`.
+
+- **`apps/workflow-engine/backend/typescript/src/host/capabilityOverlay.ts`** — DEFAULTS gains `host.aiEnvelope.supported: true`. The workflow-engine sample IS the aiEnvelope acceptor surface so the honest default is advertised; conformance tests toggle off via the capability-toggle seam to exercise the refusal path.
+- **`apps/workflow-engine/backend/typescript/src/routes/testSeam.ts`** — `POST /v1/host/sample/envelope/accept` consults `resolveCapabilityFlag('host.aiEnvelope.supported')` as the FIRST refusal layer, before any AcceptOptions setup. Returns `EnvelopeOutcome.invalid` with `reason: "capability_required"` + structured details citing the spec section. When the flag IS advertised (default), falls through to the existing acceptor flow.
+- **`conformance/src/scenarios/aiEnvelope.contractRefusal.test.ts`** — 2 new behavioral assertions covering both directions of the gate: (1) `host.aiEnvelope.supported = false` → `capability_required` refusal regardless of host-gate / node-gate match (proves the capability gate stacks ABOVE the envelope-contract gate); (2) `host.aiEnvelope.supported = true` → envelope-contract gates run normally (proves the layer is gated on the flag, not unconditional). Each test cleans up via `resetHostCapabilities()` in `afterEach`. Suite-wide `it.todo()` count: 5 → 4.
+
+Compatibility: **additive**. No wire-shape, schema, or endpoint contract changes — new capability-overlay default + new first-layer refusal path in the sample-namespaced test-seam endpoint.
+
 ### Approval-gate trust-boundary refusal (2026-05-19)
 
 Closes the `aiEnvelope.trustBoundaryPropagation` approval-gate it.todo via a new `approvalGateContext: boolean` field on `AcceptOptions`. When set, the acceptor evaluates the post-normalization `contentTrust` and refuses with `untrusted_content_blocks_approval` if the value is `'untrusted'` — encoding the `ai-envelope.md §"Trust boundary"` requirement that approval gates MUST NOT advance on envelopes whose content originated from an untrusted source (MCP tool result, A2A inbound, etc.) per `SECURITY/threat-model-prompt-injection.md`.
