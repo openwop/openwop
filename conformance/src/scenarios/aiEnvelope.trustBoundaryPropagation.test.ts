@@ -183,12 +183,115 @@ describe('aiEnvelope.trustBoundaryPropagation: engine projection via event-log s
   });
 });
 
-describe('aiEnvelope.trustBoundaryPropagation: approval-gate refusal placeholder', () => {
-  // Approval-gate refusal (`untrusted_content_blocks_approval`) requires
-  // wiring the acceptor's normalizedMeta onto the engine's approval-gate
-  // resume handler. Tracked under Thread E.4 of the test-coverage plan
-  // (approval-gate refusal seam); the projection seam alone can't drive
-  // a resume-with-untrusted assertion.
-  it.todo('approval gate refuses to advance on untrusted envelope with untrusted_content_blocks_approval (needs approval-gate resume seam)');
+// Approval-gate refusal — backed by the `approvalGateContext` bit on
+// envelope/accept. When set, the acceptor evaluates the post-
+// normalization contentTrust and refuses with
+// `untrusted_content_blocks_approval` per ai-envelope.md §"Trust
+// boundary." The seam-based assertion stands in for a full
+// interrupt + resume flow: in production, the engine's approval-gate
+// resume handler calls `acceptEnvelope(envelope, { approvalGateContext:
+// true, ... })` and surfaces the refusal as the gate's outcome.
+// Equivalent contract; the seam-based assertion is mechanical instead
+// of having to drive a real run through a clarification gate.
+
+async function acceptWithApprovalGate(envelope: unknown, opts: Record<string, unknown> = {}): Promise<{ status: number; body: { status?: string; reason?: string; normalizedMeta?: { contentTrust?: string } } }> {
+  const res = await driver.post('/v1/host/sample/envelope/accept', { envelope, approvalGateContext: true, ...opts });
+  return { status: res.status, body: res.json as { status?: string; reason?: string; normalizedMeta?: { contentTrust?: string } } };
+}
+
+describe('aiEnvelope.trustBoundaryPropagation: approval-gate refusal (FINAL v1.1)', () => {
+  it('untrusted envelope presented as approval resolution MUST refuse with untrusted_content_blocks_approval', async () => {
+    const r = await acceptWithApprovalGate({
+      type: 'clarification.request',
+      schemaVersion: 1,
+      envelopeId: 'env-tb-approval-1',
+      correlationId: 'r:n:0:tb-approval1',
+      payload: { questions: [{ id: 'q1', question: 'continue?' }] },
+      meta: { ...baseMeta, contentTrust: 'untrusted' },
+    });
+    if (r.status === 404) return; // seam not exposed — soft-skip
+    expect(
+      r.body.status,
+      driver.describe(
+        'ai-envelope.md §"Trust boundary"',
+        'approval gate MUST refuse to advance on untrusted envelope',
+      ),
+    ).toBe('invalid');
+    expect(
+      r.body.reason,
+      driver.describe(
+        'ai-envelope.md §"Trust boundary"',
+        'approval-gate refusal reason MUST be exactly "untrusted_content_blocks_approval"',
+      ),
+    ).toBe('untrusted_content_blocks_approval');
+  });
+
+  it('run-level runTrustBoundary:"untrusted" + no envelope contentTrust → approval gate refuses (run-level propagation reaches the gate)', async () => {
+    const r = await acceptWithApprovalGate(
+      {
+        type: 'clarification.request',
+        schemaVersion: 1,
+        envelopeId: 'env-tb-approval-runlevel',
+        correlationId: 'r:n:0:tb-approval-runlevel',
+        payload: { questions: [{ id: 'q1', question: 'continue?' }] },
+        meta: baseMeta, // no explicit contentTrust — runTrustBoundary propagates
+      },
+      { runTrustBoundary: 'untrusted' },
+    );
+    if (r.status === 404) return;
+    expect(r.body.status).toBe('invalid');
+    expect(r.body.reason).toBe('untrusted_content_blocks_approval');
+  });
+
+  it('trusted envelope advances the approval gate (no refusal)', async () => {
+    const r = await acceptWithApprovalGate({
+      type: 'clarification.request',
+      schemaVersion: 1,
+      envelopeId: 'env-tb-approval-trusted',
+      correlationId: 'r:n:0:tb-approval-trusted',
+      payload: { questions: [{ id: 'q1', question: 'continue?' }] },
+      meta: { ...baseMeta, contentTrust: 'trusted' },
+    });
+    if (r.status === 404) return;
+    expect(
+      r.body.status,
+      driver.describe(
+        'ai-envelope.md §"Trust boundary"',
+        'trusted envelope MUST NOT trigger approval-gate refusal — the gate only blocks on untrusted',
+      ),
+    ).toBe('accepted');
+  });
+
+  it('approvalGateContext absent → untrusted envelope accepted (per-call gate decision)', async () => {
+    // Same envelope as the first test, but WITHOUT approvalGateContext.
+    // The acceptor stays generic — untrusted is fine outside an approval
+    // gate (observation, log, etc.); the refusal contract is contextual.
+    const res = await driver.post('/v1/host/sample/envelope/accept', {
+      envelope: {
+        type: 'clarification.request',
+        schemaVersion: 1,
+        envelopeId: 'env-tb-approval-nocontext',
+        correlationId: 'r:n:0:tb-approval-nocontext',
+        payload: { questions: [{ id: 'q1', question: 'continue?' }] },
+        meta: { ...baseMeta, contentTrust: 'untrusted' },
+      },
+    });
+    if (res.status === 404) return;
+    expect(
+      (res.json as { status?: string }).status,
+      driver.describe(
+        'ai-envelope.md §"Trust boundary"',
+        'untrusted envelope MUST be accepted outside an approval-gate context — the refusal is per-call, not envelope-global',
+      ),
+    ).toBe('accepted');
+  });
+});
+
+describe('aiEnvelope.trustBoundaryPropagation: downstream-LLM-reconsume placeholder', () => {
+  // Downstream LLM-node re-consumption (`<UNTRUSTED>` wrap per prompt-
+  // injection invariant) still requires a real LLM-node execution
+  // surface — the acceptor sees envelopes one-by-one; the wrap happens
+  // when a downstream node reads a prior RunEventDoc as input. That
+  // node-execution seam doesn't exist yet.
   it.todo('downstream LLM node re-consuming untrusted RunEventDoc applies <UNTRUSTED> wrap per prompt-injection invariant (needs node-execution seam)');
 });

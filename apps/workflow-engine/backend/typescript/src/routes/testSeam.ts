@@ -226,6 +226,15 @@ export function registerTestSeamRoutes(app: Express, deps: { storage: Storage })
        *  entries (the persisted store is the cross-process source of
        *  truth). */
       persistedDedup?: { runId: string };
+      /** RFC 0021 §"Trust boundary" — when true, the acceptor evaluates
+       *  the post-normalization contentTrust and refuses with
+       *  `untrusted_content_blocks_approval` if the value is
+       *  `'untrusted'`. Conformance scenarios that drive an approval-
+       *  gate refusal assertion set this bit on the envelope/accept
+       *  call so the spec contract surfaces as an EnvelopeOutcome
+       *  (instead of having to wire a full interrupt + resume flow
+       *  through the engine). */
+      approvalGateContext?: boolean;
     };
     if (body.envelope === undefined) {
       res.status(400).json({ error: { code: 'invalid_argument', message: 'envelope required' } });
@@ -238,6 +247,7 @@ export function registerTestSeamRoutes(app: Express, deps: { storage: Storage })
     if (body.counters !== undefined) opts.counters = body.counters;
     if (body.schemaVersionFloor !== undefined) opts.schemaVersionFloor = body.schemaVersionFloor;
     if (body.envelopeStrictness !== undefined) opts.envelopeStrictness = body.envelopeStrictness;
+    if (body.approvalGateContext === true) opts.approvalGateContext = true;
     if (Array.isArray(body.byokCanaries) && body.byokCanaries.length > 0) {
       // Drop entries missing either field — keeps the acceptor's
       // [REDACTED:<secretId>] substitution deterministic.

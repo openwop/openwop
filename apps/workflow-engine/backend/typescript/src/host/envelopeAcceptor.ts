@@ -195,6 +195,19 @@ export interface AcceptOptions {
    *  regardless of whether the model "promised" not to emit them. Empty
    *  array or undefined → no scrub pass. */
   byokCanaries?: ReadonlyArray<{ readonly value: string; readonly secretId: string }>;
+  /** RFC 0021 §"Trust boundary" — approval-gate refusal context. When
+   *  `true`, the acceptor evaluates the post-normalization
+   *  `contentTrust` and refuses with `untrusted_content_blocks_approval`
+   *  if the value is `'untrusted'`. Approval gates MUST NOT advance on
+   *  envelopes whose content originated from an untrusted source
+   *  (MCP tool result, A2A inbound, etc.) per `ai-envelope.md §"Trust
+   *  boundary"` + `SECURITY/threat-model-prompt-injection.md`. The bit
+   *  is a per-call decision because the same envelope can be valid in
+   *  a non-approval context (e.g., observation, log) and refused in
+   *  the approval-gate context. Acceptor stays pure — the caller marks
+   *  the call as an approval-gate resolution; the acceptor enforces the
+   *  refusal contract. */
+  approvalGateContext?: boolean;
 }
 
 function validationDetail(d: { instancePath: string; schemaPath: string; keyword: string; message?: string | undefined }): ValidationDetail {
@@ -380,6 +393,33 @@ export function acceptEnvelope(envelope: unknown, opts: AcceptOptions = {}): Env
   // the input.
   const normalizedContentTrust: 'trusted' | 'untrusted' =
     env.meta?.contentTrust ?? opts.runTrustBoundary ?? 'trusted';
+
+  // Step 6b: approval-gate refusal. RFC 0021 §"Trust boundary" — when
+  // the envelope is being presented as the resolution to an approval
+  // gate AND the normalized contentTrust is `'untrusted'`, the gate
+  // MUST refuse with `untrusted_content_blocks_approval`. The caller
+  // marks the call as an approval-gate resolution via
+  // `opts.approvalGateContext: true`; the acceptor enforces. Same
+  // envelope can be valid in a non-approval context (observation,
+  // log) — the bit is per-call.
+  if (opts.approvalGateContext === true && normalizedContentTrust === 'untrusted') {
+    return {
+      status: 'invalid',
+      reason: 'untrusted_content_blocks_approval',
+      details: [
+        {
+          instancePath: '/meta/contentTrust',
+          schemaPath: '#/properties/meta/properties/contentTrust',
+          keyword: 'trust-boundary',
+          message:
+            'approval gate refuses untrusted envelope per ai-envelope.md §"Trust boundary": ' +
+            'an envelope whose content originated from an untrusted source (MCP tool result, ' +
+            'A2A inbound, etc.) MUST NOT advance an approval gate. Resubmit a trusted ' +
+            'approval response or refuse the approval flow explicitly.',
+        },
+      ],
+    };
+  }
 
   const envelopeId = env.envelopeId || `env-${randomUUID()}`;
 
