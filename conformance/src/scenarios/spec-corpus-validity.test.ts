@@ -408,12 +408,16 @@ function stripFencedCodeBlocks(markdown: string): string {
   return markdown.replace(/```[\s\S]*?```/g, '');
 }
 
+function stripInlineCodeSpans(markdown: string): string {
+  return markdown.replace(/`[^`\n]*`/g, '');
+}
+
 function extractLocalMarkdownLinks(markdown: string): string[] {
   const links: string[] = [];
   const re = /!?\[[^\]\n]*\]\(([^)\n]+)\)/g;
   let m: RegExpExecArray | null;
 
-  while ((m = re.exec(stripFencedCodeBlocks(markdown))) !== null) {
+  while ((m = re.exec(stripInlineCodeSpans(stripFencedCodeBlocks(markdown)))) !== null) {
     let raw = (m[1] ?? '').trim();
     raw = raw.replace(/\s+"[^"]*"$/, '').trim();
     if (raw.startsWith('<') && raw.endsWith('>')) raw = raw.slice(1, -1);
