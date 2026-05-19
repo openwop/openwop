@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0024 |
 | **Title** | Streaming `agent.reasoned` Deltas |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-18 |
-| **Updated** | 2026-05-18 (Draft → Active — see [Status history](#status-history) below). |
+| **Updated** | 2026-05-19 (Active → Accepted — see [Status history](#status-history) below). |
 | **Affects** | `schemas/run-event-payloads.schema.json`, `schemas/run-event.schema.json`, `schemas/capabilities.schema.json`, `spec/v1/capabilities.md` §`agents.reasoning`, `spec/v1/node-packs.md` §"Authorized emitters", `api/asyncapi.yaml`, `conformance/src/scenarios/`, `conformance/fixtures/`, `examples/hosts/postgres/`, `apps/workflow-engine/` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md §2.1` |
 | **Supersedes** | — |
@@ -194,7 +194,7 @@ Add optional `delta: string`, `done: boolean`, `sequence: integer` to the existi
   - **Workflow-engine sample** (`apps/workflow-engine/backend/typescript/src/bootstrap/conformanceMockAgent.ts`) — emits `agent.reasoning.delta` + closing `agent.reasoned` per `streamChunks`; sample's `test/conformance-mock-agent.test.ts` includes a streaming + verbosity-off pair (19/19 pass). Sample BE advertises `capabilities.agents.reasoning.streaming: true` (commit `455a3d4`).
   - **Postgres** (`examples/hosts/postgres/src/server.ts`) — emits the same shape; `test/mock-agent.test.ts` third block verifies the contract end-to-end against pglite. Capability advertised via `REFERENCE_AGENTS_CAPABILITY.reasoning.streaming: true` (commit `08ac7bc`).
 - [x] Additive RFC promotion under the bootstrap-phase steward waiver per `CONTRIBUTING.md` §"Bootstrap-phase notes". The 7-day RFC window cited in `RFCS/README.md` is the post-bootstrap process; bootstrap-phase additive RFCs with reference-impl verification (this RFC has BOTH ref hosts implementing AND a conformance scenario passing) graduate directly. Pattern matches RFC 0023 (Draft → Active 2026-05-18 same-day) and RFC 0022 (Draft → Active 2026-05-18 same-day).
-- [ ] **Active → Accepted** flip: requires either (a) external host advertisement evidence in `INTEROP-MATRIX.md` (third-party host claiming the streaming flag), OR (b) next `@openwop/openwop-conformance` republish so downstream consumers run the scenario without local patches.
+- [x] **Active → Accepted** flip (2026-05-19): closed by criterion (b) — `@openwop/openwop-conformance@1.3.0` published to npm on 2026-05-19 carrying `conformance-agent-reasoning-streaming.json` + `agentReasoningStreaming.test.ts` + the `streamChunks` mock-agent extension. Downstream consumers now exercise the streaming-reasoning contract without local patches via `npx openwop-conformance --base-url <url> --api-key <k>`. Criterion (a) (external host advertisement evidence in `INTEROP-MATRIX.md`) was an OR condition and remains an adoption data-point, no longer load-bearing for the status flip.
 
 ## Status history
 
@@ -215,9 +215,18 @@ Evidence at promotion:
 
 All three reference SDKs (TS / Python / Go) gain typed payload types + type-guard predicates for the full `agent.*` event family, plus a high-level streaming-reasoning subscription helper on the TS SDK. Each SDK ships a schema-mirror test that catches drift between the hand-authored types and the canonical `schemas/run-event-payloads.schema.json` $defs. The §"Implementation notes" SDK-helper item is now resolved.
 
-### Active → Accepted (deferred)
+### Active → Accepted (2026-05-19)
 
-Requires either (a) external host advertisement evidence in `INTEROP-MATRIX.md` (third-party host claiming `capabilities.agents.reasoning.streaming: true`), OR (b) next `@openwop/openwop-conformance` republish carrying the new fixture+scenario to downstream consumers — whichever lands first.
+Flipped on the publish of `@openwop/openwop-conformance@1.3.0` to npm (release commit `28e7579`, tag `openwop-conformance/v1.3.0`, npm provenance attestation attached by `npm publish --provenance`). Closes acceptance criterion (b): the conformance suite carrying `conformance-agent-reasoning-streaming.json` + `agentReasoningStreaming.test.ts` + the RFC 0023 `core.conformance.mock-agent` schema extended with `mockReasoning.streamChunks` is now installable by any downstream host without a repository checkout.
+
+Verification chain:
+
+- npm registry shows `@openwop/openwop-conformance@1.3.0` available alongside prior versions `[1.0.0, 1.1.0, 1.1.1, 1.2.0, 1.3.0]`.
+- Tarball ships 296 files including the RFC 0024 fixture + scenario + the updated `schemas/core-conformance-mock-agent-config.schema.json` + `schemas/capabilities.schema.json` (verified pre-publish via `npm pack` dry-run + post-publish via `npm install @openwop/openwop-conformance@1.3.0` smoke).
+- SLSA provenance attestation (attached by `npm publish --provenance`) pins the artifact to commit `28e7579` of the public openwop repo.
+- `npx openwop-conformance --base-url <url> --api-key <key>` runs the streaming-reasoning scenario against any host. The scenario auto-skips when `capabilities.agents.reasoning.streaming` is absent or `false`, so existing hosts that haven't opted in are not destabilized by the bump.
+
+Criterion (a) (external third-party host advertising `capabilities.agents.reasoning.streaming: true` in `INTEROP-MATRIX.md`) was an OR condition, not AND — it remains an adoption data point but no longer gates the RFC's status. When a third-party host advertises the flag, the row lands in `INTEROP-MATRIX.md` independently of this RFC.
 
 ## References
 

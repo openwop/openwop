@@ -22,15 +22,14 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 23 |
-| Active | 1 |
+| Accepted | 24 |
 | Draft | 2 |
 
 | Latest RFC | Title | Status |
 |---|---|---|
 | RFC 0026 | `provider.usage` event - per-call durable usage record for LLM provider invocations | Draft |
 | RFC 0025 | Test-mode registry namespace for conformance publish-error catalog | Draft |
-| RFC 0024 | Streaming `agent.reasoned` Deltas | Active |
+| RFC 0024 | Streaming `agent.reasoned` Deltas | Accepted |
 | RFC 0023 | Conformance Agent-Event Emitters | Accepted |
 | RFC 0022 | `core.dispatch` + `core.subWorkflow` runtime variable mapping | Accepted |
 
