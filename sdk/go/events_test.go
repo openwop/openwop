@@ -76,6 +76,8 @@ func TestIsAgentReasoningDelta_RejectsBadSequence(t *testing.T) {
 		float64(1.5), // non-integer
 		"0",          // string
 		nil,          // missing
+		true,         // bool — Go's type-switch falls to default; verify
+		false,
 	}
 	for _, seq := range cases {
 		ev := makeEvent("agent.reasoning.delta", map[string]any{
@@ -86,6 +88,20 @@ func TestIsAgentReasoningDelta_RejectsBadSequence(t *testing.T) {
 		if IsAgentReasoningDelta(ev) {
 			t.Errorf("expected rejection for sequence=%v", seq)
 		}
+	}
+}
+
+func TestIsAgentReasoningDelta_AcceptsEmptyDelta(t *testing.T) {
+	// Schema's `delta` field has no minLength constraint — predicate
+	// must accept empty-string deltas. Cross-SDK contract: TS and Python
+	// also accept this shape.
+	ev := makeEvent("agent.reasoning.delta", map[string]any{
+		"agentId":  "asst-1",
+		"delta":    "",
+		"sequence": float64(0),
+	})
+	if !IsAgentReasoningDelta(ev) {
+		t.Fatal("predicate must accept empty-string delta per schema (no minLength)")
 	}
 }
 

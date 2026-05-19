@@ -111,8 +111,8 @@ func payloadHasString(payload any, field string) bool {
 	if !ok {
 		return false
 	}
-	v, ok := m[field].(string)
-	return ok && v != ""
+	_, ok = m[field].(string)
+	return ok
 }
 
 // IsAgentReasoned reports whether the event is a well-formed
