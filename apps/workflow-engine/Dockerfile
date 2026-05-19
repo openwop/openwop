@@ -2,16 +2,22 @@
 #
 # Multi-stage Node 22-slim + esbuild bundle. The runtime image carries
 # the bundled JS + the externals npm marks (better-sqlite3 native
-# binding, etc.) + the parent-dir `providers.json` AI-provider catalog.
+# binding, etc.) + the parent-dir `providers.json` AI-provider catalog
+# + the in-tree conformance fixtures (vendored via the
+# `conformance-fixtures` symlink → `../../conformance/fixtures`, so the
+# deployed sample BE can stand in as a black-box conformance target
+# per RFC 0024 etc.).
 #
 # Build context: `apps/workflow-engine/` (the parent of `backend/`) so
 # both the backend source AND the shared `providers.json` are reachable.
+# `gcloud run deploy --source` follows symlinks at upload time, so the
+# `conformance-fixtures` symlink resolves to the canonical fixtures
+# directory at build time — single source of truth, no duplication.
 #
 # Deploy (from repo root):
 #   gcloud run deploy openwop-app-backend \
 #     --source apps/workflow-engine/ \
-#     --region us-central1 --allow-unauthenticated \
-#     --set-env-vars NODE_ENV=production,OPENWOP_AUTH_DISABLE_COOKIES=false,...
+#     --region us-central1 --allow-unauthenticated
 #
 # Run locally (without docker build):
 #   cd apps/workflow-engine/backend/typescript && npm run dev
@@ -52,6 +58,14 @@ RUN npm install --omit=dev
 # `/app/providers.json` (sibling of lib/, parent of lib/index.js).
 COPY --from=builder /app/lib ./lib
 COPY providers.json ./providers.json
+
+# Conformance fixtures via the `conformance-fixtures` symlink (resolves
+# to ../../conformance/fixtures at gcloud-upload time). The host's
+# `findConformanceFixturesDir()` probes `./conformance/fixtures`
+# relative to `lib/`, so the fixtures must land at
+# `/app/conformance/fixtures/`. Used by `capabilities.fixtures`
+# advertisement + black-box conformance runs.
+COPY conformance-fixtures ./conformance/fixtures
 
 ENV NODE_ENV=production
 ENV PORT=8080
