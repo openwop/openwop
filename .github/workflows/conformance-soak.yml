@@ -54,6 +54,18 @@ jobs:
         working-directory: conformance
         run: npm ci
 
+      # Several spec-corpus scenarios assert against `sdk/typescript/dist/`
+      # (e.g., `SDK HTTP error helpers match canonical REST vocabulary`'s
+      # three "TypeScript dist …" sub-cases). The local `npm run
+      # openwop:check` gate builds the SDK in its step [1/9] before
+      # invoking conformance; the soak workflow has to mirror that order
+      # or the dist-reading scenarios fail with "ENOENT: no such file".
+      - name: Build TypeScript reference SDK (emit dist/)
+        working-directory: sdk/typescript
+        run: |
+          npm ci
+          npm run build
+
       - name: Pre-allocate ports for host + OTel collector
         run: |
           echo "OPENWOP_PORT=3838" >> $GITHUB_ENV
