@@ -36,7 +36,7 @@
  */
 
 import type { Express } from 'express';
-import { buildHostSurfaceBundle } from '../host/inMemorySurfaces.js';
+import { buildHostSurfaceBundle, resolvePresignToken } from '../host/inMemorySurfaces.js';
 import type { HostSurfaceBundle, SurfaceArgs, SurfaceFn } from '../host/inMemorySurfaces.js';
 import { acceptEnvelope, type AcceptOptions } from '../host/envelopeAcceptor.js';
 import {
@@ -57,7 +57,7 @@ interface SeamBody {
   args?: Record<string, unknown>;
 }
 
-const SURFACES = ['kv', 'table', 'cache', 'blob', 'queueBus', 'sql', 'vector', 'fs'] as const;
+const SURFACES = ['kv', 'table', 'cache', 'blob', 'queueBus', 'sql', 'vector', 'search', 'fs'] as const;
 type SurfaceName = (typeof SURFACES)[number];
 
 function isSurfaceName(s: string): s is SurfaceName {
@@ -76,6 +76,7 @@ function selectSurface(bundle: HostSurfaceBundle, name: SurfaceName): object {
     case 'queueBus': return bundle.queueBus;
     case 'sql': return bundle.db.sql;
     case 'vector': return bundle.db.vector;
+    case 'search': return bundle.db.search;
     case 'fs': return bundle.fs;
   }
 }
@@ -231,6 +232,31 @@ export function registerTestSeamRoutes(app: Express): void {
     }
     const outcome = acceptEnvelope(body.envelope, opts);
     res.status(200).json(outcome);
+  });
+
+  // Presigned-URL resolver — RFC 0019 §B point 1. The blob surface's
+  // `presign` issues opaque tokens (registered in inMemorySurfaces'
+  // `_blobPresignTokens` map); this route resolves them, returning the
+  // payload as raw bytes inside the TTL window and 403 after expiry.
+  app.get('/v1/host/sample/blob/presigned/:token', (req, res) => {
+    const token = decodeURIComponent(req.params.token ?? '');
+    const result = resolvePresignToken(token);
+    if (!result.ok && result.reason === 'not_found') {
+      res.status(404).json({ error: { code: 'blob_presign_not_found', message: 'unknown presign token' } });
+      return;
+    }
+    if (!result.ok && result.reason === 'expired') {
+      res.status(403).json({ error: { code: 'blob_presign_expired', message: 'presign token past its TTL' } });
+      return;
+    }
+    if (!result.ok) {
+      res.status(400).json({ error: { code: 'invalid_argument', message: 'unexpected presign result' } });
+      return;
+    }
+    const { entry } = result;
+    res.status(200);
+    res.setHeader('Content-Type', entry.contentType ?? 'application/octet-stream');
+    res.send(Buffer.from(entry.contentBase64, 'base64'));
   });
 
   // LLM cache-key recipe seam — replay.md §"LLM cache-key recipe".

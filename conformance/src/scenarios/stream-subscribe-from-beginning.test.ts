@@ -61,6 +61,43 @@ describe('stream-subscribe-from-beginning: advertisement shape (RFC 0017)', () =
   });
 });
 
-describe('stream-subscribe-from-beginning: behavioral assertions (placeholders — need host test seam)', () => {
-  it.todo("publish 5 records then subscribe(fromBeginning=true) → consumer receives all 5");
+async function call(op: string, args: Record<string, unknown>) {
+  return driver.post('/v1/host/sample/test/surface', { tenantId: 'tenant-a', surface: 'queueBus', op, args });
+}
+
+describe('stream-subscribe-from-beginning: behavioral (RFC 0017 §A stream.fromBeginning)', () => {
+  it('streamPublish 5 records then streamSubscribe({fromBeginning:true}) MUST surface all 5 in the snapshot', async () => {
+    const probe = await call('streamSubscribe', { stream: '__probe__', fromBeginning: true });
+    if (probe.status === 404) return; // seam not exposed
+    const stream = `s-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    for (let i = 1; i <= 5; i++) {
+      const r = await call('streamPublish', { stream, record: { seq: i, value: `rec-${i}` } });
+      expect(r.status).toBe(200);
+    }
+    const sub = await call('streamSubscribe', { stream, fromBeginning: true });
+    expect(sub.status).toBe(200);
+    const body = sub.json as { records?: Array<{ payload?: { seq?: number } }>; fromBeginningSnapshot?: boolean };
+    expect(
+      Array.isArray(body.records) && body.records.length === 5,
+      driver.describe('RFC 0017 §A.stream.fromBeginning', 'subscribe with fromBeginning:true MUST return ALL records previously published on the stream'),
+    ).toBe(true);
+    // Order MUST be preserved (publish-order = sequential on the same stream).
+    const seqs = body.records!.map((r) => r.payload?.seq);
+    expect(seqs).toEqual([1, 2, 3, 4, 5]);
+    expect(body.fromBeginningSnapshot).toBe(true);
+  });
+
+  it('streamSubscribe({fromBeginning:false}) MUST NOT include pre-subscribe records (live-tail semantics)', async () => {
+    const probe = await call('streamSubscribe', { stream: '__probe__', fromBeginning: true });
+    if (probe.status === 404) return;
+    const stream = `s-live-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    await call('streamPublish', { stream, record: { v: 'before' } });
+    const sub = await call('streamSubscribe', { stream, fromBeginning: false });
+    const body = sub.json as { records?: unknown[]; fromBeginningSnapshot?: boolean };
+    expect(
+      Array.isArray(body.records) && body.records.length === 0,
+      driver.describe('RFC 0017 §A.stream.fromBeginning', 'subscribe with fromBeginning:false MUST omit pre-subscribe records'),
+    ).toBe(true);
+    expect(body.fromBeginningSnapshot).toBe(false);
+  });
 });

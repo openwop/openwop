@@ -52,6 +52,9 @@ export interface HostSurfaceBundle {
   db: {
     sql: SqlSurface;
     vector: VectorSurface;
+    /** RFC 0018 §A.searchIndex — full-text / BM25 search surface.
+     *  Distinct from `vector` (semantic) and `sql` (relational). */
+    search: SearchSurface;
   };
   fs: FsSurface;
   queueBus: QueueBusSurface;
@@ -107,6 +110,16 @@ export type VectorSurface = {
   query: SurfaceFn;
   delete: SurfaceFn;
 };
+/** RFC 0018 §A.searchIndex — full-text search surface. The in-memory
+ *  reference impl uses a naive bag-of-words relevance score (token
+ *  frequency in the indexed fields); production hosts back this with
+ *  Elasticsearch / OpenSearch / Meilisearch / Typesense per the
+ *  advertised `backends[]` list. */
+export type SearchSurface = {
+  index: SurfaceFn;
+  query: SurfaceFn;
+  delete: SurfaceFn;
+};
 export type FsSurface = {
   read: SurfaceFn;
   write: SurfaceFn;
@@ -127,6 +140,13 @@ export type QueueBusSurface = {
   nack: SurfaceFn;
   deadLetter: SurfaceFn;
   streamPublish: SurfaceFn;
+  /** RFC 0017 §A `stream` sub-block — subscribe to the named stream.
+   *  When `fromBeginning: true` returns a snapshot of all records
+   *  currently on the stream; when `false` (or absent) returns an
+   *  empty snapshot (in-memory impl has no buffered new-record
+   *  delivery — real impls would back the surface with a true
+   *  log-style storage like Kafka / NATS JetStream). */
+  streamSubscribe: SurfaceFn;
 };
 export type ObservabilitySurface = {
   log: SurfaceFn;
@@ -346,6 +366,21 @@ function createCache(state: TenantMap<KvEntry>, scope: BundleScope): CacheSurfac
 }
 
 interface BlobEntry { contentBase64: string; contentType?: string; }
+/** RFC 0019 §B point 1 — presigned URLs MUST expire at the advertised
+ *  TTL. The token map below pairs each issued token with the resource
+ *  + expiry; the HTTP route at `/v1/host/sample/blob/presigned/:token`
+ *  (registered by `registerTestSeamRoutes`) resolves it, returning 200
+ *  inside the window and 403 after. */
+interface PresignToken { tenantId: string; key: string; contentBase64: string; contentType?: string; expiresAtMs: number; }
+const _blobPresignTokens = new Map<string, PresignToken>();
+export function resolvePresignToken(token: string, now: number = Date.now()):
+  | { ok: true; entry: PresignToken }
+  | { ok: false; reason: 'not_found' | 'expired' } {
+  const entry = _blobPresignTokens.get(token);
+  if (!entry) return { ok: false, reason: 'not_found' };
+  if (entry.expiresAtMs <= now) return { ok: false, reason: 'expired' };
+  return { ok: true, entry };
+}
 function createBlob(state: TenantMap<BlobEntry>, scope: BundleScope): BlobSurface {
   const bucket = () => state.bucket(scope.tenantId);
   return {
@@ -359,12 +394,20 @@ function createBlob(state: TenantMap<BlobEntry>, scope: BundleScope): BlobSurfac
       return { found: true, contentBase64: e.contentBase64, contentType: e.contentType };
     },
     async presign({ key, expiresInSeconds }) {
-      // In-memory demo: presigned URL is a synthetic data: URL so the
-      // workflow can complete. Real impls return an S3/GCS signed URL.
       const e = bucket().get(String(key));
       if (!e) return { found: false };
-      const url = `data:${e.contentType ?? 'application/octet-stream'};base64,${e.contentBase64.slice(0, 64)}...`;
-      return { url, expiresAtMs: Date.now() + (Number(expiresInSeconds) || 300) * 1000, _demoOnly: true };
+      const ttlSec = Number(expiresInSeconds) > 0 ? Number(expiresInSeconds) : 300;
+      const expiresAtMs = Date.now() + ttlSec * 1000;
+      const token = `pre-${scope.tenantId}-${String(key)}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+      _blobPresignTokens.set(token, {
+        tenantId: scope.tenantId,
+        key: String(key),
+        contentBase64: e.contentBase64,
+        contentType: e.contentType,
+        expiresAtMs,
+      });
+      const url = `/v1/host/sample/blob/presigned/${encodeURIComponent(token)}`;
+      return { url, expiresAtMs, token, expiresInSeconds: ttlSec };
     },
   };
 }
@@ -492,6 +535,65 @@ function createVector(state: TenantMap<Map<string, VectorEntry>>, scope: BundleS
       for (const id of ids as string[]) {
         if (m.delete(id)) n++;
       }
+      return { deleted: n };
+    },
+  };
+}
+
+// ───────────────────────────────────────────────────────────────────
+// Search — naive token-frequency bag-of-words score.
+// ───────────────────────────────────────────────────────────────────
+
+interface SearchDoc { id: string; fields: Record<string, string | number | boolean>; }
+function tokenize(s: string): string[] {
+  return s
+    .toLowerCase()
+    .split(/[\s,.!?;:\-_/\\()[\]{}<>"']+/)
+    .filter((t) => t.length > 0);
+}
+function createSearch(state: TenantMap<Map<string, SearchDoc>>, scope: BundleScope): SearchSurface {
+  const idx = (indexName: unknown) => {
+    const t = state.bucket(scope.tenantId);
+    const k = String(indexName ?? 'default');
+    let m = t.get(k);
+    if (!m) { m = new Map(); t.set(k, m); }
+    return m;
+  };
+  return {
+    async index({ index, docs }) {
+      const m = idx(index);
+      const arr = docs as SearchDoc[];
+      for (const d of arr) m.set(d.id, d);
+      return { indexed: arr.length };
+    },
+    async query({ index, q, k }) {
+      const m = idx(index);
+      const queryTokens = tokenize(String(q ?? ''));
+      if (queryTokens.length === 0) return { hits: [] };
+      const hits: Array<{ id: string; score: number; fields: Record<string, unknown> }> = [];
+      for (const d of m.values()) {
+        // Concatenate all field values into one bag-of-tokens.
+        const haystack = Object.values(d.fields)
+          .map((v) => String(v))
+          .join(' ');
+        const docTokens = tokenize(haystack);
+        if (docTokens.length === 0) continue;
+        let score = 0;
+        for (const qt of queryTokens) {
+          // Naive TF: count occurrences in the doc.
+          const tf = docTokens.filter((t) => t === qt).length;
+          if (tf > 0) score += 1 + Math.log(1 + tf); // weight + diminishing returns
+        }
+        if (score > 0) hits.push({ id: d.id, score, fields: d.fields });
+      }
+      hits.sort((a, b) => b.score - a.score);
+      const limit = typeof k === 'number' && k > 0 ? k : 10;
+      return { hits: hits.slice(0, limit) };
+    },
+    async delete({ index, ids }) {
+      const m = idx(index);
+      let n = 0;
+      for (const id of ids as string[]) if (m.delete(id)) n++;
       return { deleted: n };
     },
   };
@@ -650,6 +752,14 @@ function createQueueBus(state: TenantMap<BusMessage[]>, scope: BundleScope): Que
       subj(stream).push({ id, payload: record, subject: String(stream), deliveryCount: 1 });
       return { id, published: true };
     },
+    async streamSubscribe({ stream, fromBeginning }) {
+      if (fromBeginning !== true) {
+        return { records: [], fromBeginningSnapshot: false };
+      }
+      // Return the full snapshot of records currently on the stream.
+      const records = subj(stream).map((m) => ({ id: m.id, payload: m.payload }));
+      return { records, fromBeginningSnapshot: true, count: records.length };
+    },
   };
 }
 
@@ -698,6 +808,7 @@ const _blobState = new TenantMap<BlobEntry>();
 const _queueState = new TenantMap<QueueEntry[]>();
 const _busState = new TenantMap<BusMessage[]>();
 const _vectorState = new TenantMap<Map<string, VectorEntry>>();
+const _searchState = new TenantMap<Map<string, SearchDoc>>();
 const _sqlPool = new Map<string, Database.Database>();
 
 let _fsRoot: string | null = null;
@@ -726,6 +837,7 @@ export function initInMemorySurfaces(deps: { dataDir: string }): void {
   registerHostSurface({ name: 'host.fs', supported: true, implementation: 'sandboxed-local-fs', note: `Sandboxed under ${_fsRoot}.` });
   registerHostSurface({ name: 'host.db.sql', supported: true, implementation: 'sqlite-in-memory', note: 'better-sqlite3, one in-memory DB per tenant.' });
   registerHostSurface({ name: 'host.db.vector', supported: true, implementation: 'brute-force-cosine', note: 'O(n) cosine over an in-memory Map.' });
+  registerHostSurface({ name: 'host.db.search', supported: true, implementation: 'naive-bag-of-words', note: 'Token-frequency relevance score. Real impls use Elasticsearch / OpenSearch / Meilisearch / Typesense.' });
   registerHostSurface({ name: 'host.messaging', supported: true, implementation: inmem });
   registerHostSurface({ name: 'host.observability', supported: true, implementation: 'structured-logger', note: 'Routes through the workflow-engine logger.' });
 
@@ -751,6 +863,7 @@ export function buildHostSurfaceBundle(scope: BundleScope): HostSurfaceBundle {
     db: {
       sql: createSql(_sqlPool, scope),
       vector: createVector(_vectorState, scope),
+      search: createSearch(_searchState, scope),
     },
     fs: createFs(fsRoot, scope),
     queueBus: createQueueBus(_busState, scope),

@@ -61,6 +61,39 @@ describe('blob-presign-expiry: advertisement shape (RFC 0019)', () => {
   });
 });
 
-describe('blob-presign-expiry: behavioral assertions (placeholders — need host test seam)', () => {
-  it.todo("presign with ttl=60 → URL works during the window, returns 403 after");
+async function call(op: string, args: Record<string, unknown>) {
+  return driver.post('/v1/host/sample/test/surface', { tenantId: 'tenant-a', surface: 'blob', op, args });
+}
+
+describe('blob-presign-expiry: behavioral (RFC 0019 §B point 1)', () => {
+  it('presigned URL MUST resolve to the blob inside its TTL window and return 403 after expiry', async () => {
+    const probe = await call('get', { key: '__probe__' });
+    if (probe.status === 404) return; // seam not exposed
+    const key = `pre-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const contentBase64 = Buffer.from('presigned-payload').toString('base64');
+    await call('put', { key, contentBase64, contentType: 'text/plain' });
+
+    // presign with TTL=2s
+    const presign = await call('presign', { key, expiresInSeconds: 2 });
+    expect(presign.status).toBe(200);
+    const body = presign.json as { url?: string; expiresAtMs?: number };
+    expect(typeof body.url, 'presign MUST return a URL').toBe('string');
+
+    // Fetch within the window — MUST return 200 + the bytes
+    const within = await driver.get(body.url!);
+    if (within.status === 404) return; // host doesn't expose the resolver route — soft-skip the expiry side too
+    expect(
+      within.status,
+      driver.describe('RFC 0019 §B point 1', 'presigned URL MUST resolve to 200 within its TTL window'),
+    ).toBe(200);
+
+    // Wait past expiry (TTL=2s + 1s buffer)
+    await new Promise((r) => setTimeout(r, 3000));
+
+    const after = await driver.get(body.url!);
+    expect(
+      after.status,
+      driver.describe('RFC 0019 §B point 1', 'presigned URL MUST return 403 after TTL expiry'),
+    ).toBe(403);
+  });
 });
