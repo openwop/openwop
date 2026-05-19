@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0026 |
 | **Title** | `provider.usage` event — per-call durable usage record for LLM provider invocations |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-19 |
-| **Updated** | 2026-05-19 |
+| **Updated** | 2026-05-19 (Draft → Active — see [Status history](#status-history) below). |
 | **Affects** | `schemas/run-event.schema.json`, `schemas/run-event-payloads.schema.json`, `schemas/capabilities.schema.json`, `api/asyncapi.yaml`, `spec/v1/observability.md` §"Provider usage events", `conformance/src/scenarios/provider-usage.test.ts`, `apps/workflow-engine/`, `CHANGELOG.md` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md §2.1` |
 | **Supersedes** | — |
@@ -211,3 +211,42 @@ Soft-skips on capability-absent OR seam-absent so non-supporting hosts keep adve
 - `SECURITY/threat-model-secret-leakage.md §SR-1` — the redaction harness `provider.usage` plugs into
 - `RFCS/0024-agent-reasoning-streaming.md` — the precedent template for additive new event types
 - `RFCS/0025-test-mode-registry-namespace.md` — the precedent for the bootstrap-phase waiver flow
+
+## Status history
+
+### Draft → Active (2026-05-19)
+
+Promoted under the bootstrap-phase steward waiver per `CONTRIBUTING.md` §"Bootstrap-phase notes" + `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". Same path RFCs 0021 / 0022 / 0023 / 0024 / 0025 used in this release. The 7-day comment window would only serve as a delay against zero external reviewers; the waiver is recorded here for the running list in `MAINTAINERS.md`.
+
+Evidence at promotion (every acceptance-criteria item from §"Acceptance criteria" verified by `npm run openwop:check` running 9/9 green):
+
+- **RFC text:** follows `RFCS/0000-template.md` — header table, Summary (≤5 sentences), Motivation (3 load-bearing use cases), Proposal (§A–§E covering shape / timing / OTel projection / trust boundary / capability handshake), Compatibility (additive justification), Conformance (3 describe blocks), 4 Alternatives, 3 Unresolved questions, Acceptance criteria, References.
+- **Schemas additive (no MUST relaxed):**
+  - `schemas/run-event.schema.json` — `"provider.usage"` added to `RunEventType` enum (now 50 variants).
+  - `schemas/run-event-payloads.schema.json` — `providerUsage` `$def` with required `{provider, model, inputTokens, outputTokens}` + optional `{totalTokens, costEstimateUsd, currency, cacheHit, nodeId, traceId}`; `additionalProperties: false`. Discriminator entry maps `provider.usage → providerUsage`.
+  - `schemas/capabilities.schema.json` — optional `providerUsage: { supported, costEstimates?, currency? }` block (`required: ["supported"]`, `additionalProperties: false`).
+  - `api/asyncapi.yaml` — `ProviderUsage` message bound to the payload via cross-file `$ref`.
+- **SECURITY invariant:** `provider-usage-no-credential-leak` row (protocol-tier, severity high) added to `SECURITY/invariants.yaml`; verified by `conformance/src/scenarios/provider-usage.test.ts`. The new conformance scenario covers the schema's `additionalProperties: false` enforcement for credentialRef-shaped fields PLUS the seam's defense-in-depth refusal of `secret:`-prefixed values. `scripts/check-security-invariants.sh` 49/49 protocol-tier rows have public test coverage.
+- **Spec prose:** `spec/v1/observability.md` gained §"Provider usage events (RFC 0026)" between §"Cost attribution attributes" and §"Open spec gaps". Cross-references the OTel projection + BYOK trust-boundary invariant.
+- **Reference impl:** `apps/workflow-engine/backend/typescript/src/providers/usageEmitter.ts` (NEW) ships `buildProviderUsagePayload()` plus dedicated extractors for Anthropic / OpenAI / Gemini response shapes. Static rate table snapshot for advisory `costEstimateUsd` (USD per 1M tokens). The function reads ONLY from each provider's `usage`/`usageMetadata` block — credentialRef and prompt/response text are never referenced, satisfying §D at the impl layer.
+- **Test seam:** `apps/workflow-engine/backend/typescript/src/routes/testSeam.ts` extended with `POST /v1/host/sample/test/emit-provider-usage` (env-gated on `OPENWOP_TEST_SEAM_ENABLED=true`); refuses payloads containing `credentialRef` field literally OR strings starting with `secret:` (the openwop credential-ref prefix). Conformance verifies both the positive emit path and the credential-leak refusal.
+- **Conformance:** `conformance/src/scenarios/provider-usage.test.ts` ships 3 describe blocks — capability advertisement shape, schema round-trip (1 positive + 3 negative fixtures), event presence + shape via emit seam + Thread E.1's `queryTestEvents` helper. Suite count 160 → 161. All scenarios pass server-free + with the seam exposed.
+- **CHANGELOG:** RFC-0026 block under `[1.1.2 — unreleased]` records all 11 touched artifacts + the additive compatibility classification.
+- **Site re-render:** automatic via `site/src/build.mjs`'s spec-corpus walk — no manual update needed.
+
+Acceptance criteria checkboxes from the RFC's §"Acceptance criteria" all verifiable:
+
+- [x] RFC follows `RFCS/0000-template.md`
+- [x] Bootstrap-phase waiver invoked + recorded here (waivers list in `MAINTAINERS.md` updated separately if/when that index is regenerated)
+- [x] `provider.usage` in `RunEventType` enum + `eventPayloads` discriminator
+- [x] `providerUsage` payload schema; `additionalProperties: false`
+- [x] `capabilities.providerUsage` capability block
+- [x] AsyncAPI channel
+- [x] `provider-usage-no-credential-leak` SECURITY invariant + matching test
+- [x] `observability.md` §"Provider usage events" prose section
+- [x] Reference impl at `apps/workflow-engine/.../providers/usageEmitter.ts`
+- [x] Conformance scenario at `conformance/src/scenarios/provider-usage.test.ts`
+- [x] CHANGELOG entry under `[Unreleased]`
+- [x] `npm run openwop:check` 9/9 green
+
+Path to `Active → Accepted`: requires either (a) the reference workflow-engine to wire `usageEmitter.ts` into `providers/dispatch.ts` end-to-end so a real LLM-calling workflow emits the event observably + advertises `capabilities.providerUsage.supported: true` in `routes/discovery.ts`, OR (b) a non-steward host advertisement (similar to the MyndHyve adoption that closed RFC 0021's external gate). The reference seam-driven scenario already proves the wire shape; the remaining `Accepted` gate is real-world emission evidence.

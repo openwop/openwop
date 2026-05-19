@@ -60,7 +60,11 @@ Cross-SDK design symmetry: each language uses its idiomatic event-handling patte
 
 This commit + the pre-existing reference-host implementations (commit `08ac7bc`) resolve the SDK-helper acceptance line. `Active → Accepted` flip still gated on either (a) external host advertisement evidence in `INTEROP-MATRIX.md`, or (b) `@openwop/openwop-conformance` republish.
 
-### RFC 0026 (Draft) — `provider.usage` event (2026-05-19)
+### RFC 0026 — Status: `Draft` → `Active` (2026-05-19)
+
+Promoted under the bootstrap-phase steward waiver per `CONTRIBUTING.md` §"Bootstrap-phase notes" — same path RFCs 0021–0025 used in this release. All §"Acceptance criteria" items verified by `npm run openwop:check` running 9/9 green; full evidence list in `RFCS/0026-provider-usage-event.md` §"Status history". RFC status counts after the flip: **Active: 1 (this RFC) · Accepted: 24 · Draft: 1** (RFC 0025 remains in its 7-day window). Path to `Active → Accepted`: (a) reference workflow-engine wires `usageEmitter.ts` into `providers/dispatch.ts` + advertises `capabilities.providerUsage.supported: true` end-to-end, OR (b) a non-steward host advertisement (similar to the MyndHyve adoption that closed RFC 0021's external gate).
+
+### RFC 0026 (filed 2026-05-19, original Draft entry) — `provider.usage` event
 
 New optional event type `provider.usage` added to the `RunEventType` enum + matching payload schema in `schemas/run-event-payloads.schema.json#/$defs/providerUsage`. Pairs with the existing OTel `openwop.cost.*` attribute group (per `observability.md §"Cost attribution attributes"`) — the OTel surface is observability-only; this RFC lands the durable event-log sibling so replay reads it back deterministically, webhook subscribers receive it live, and external billing reconciliation has a fine-grained audit trail. 7-day comment window; bootstrap-phase waiver eligible per the RFC 0021-0025 precedent.
 
