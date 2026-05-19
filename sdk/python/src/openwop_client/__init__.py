@@ -12,6 +12,27 @@ See README.md for usage.
 
 from .client import OpenwopClient
 from .errors import WopError
+from .events import (
+    AgentDecidedPayload,
+    AgentHandoffPayload,
+    AgentReasonedPayload,
+    AgentReasoningDeltaPayload,
+    AgentToolCalledPayload,
+    AgentToolReturnedPayload,
+    ReasoningVerbosity,
+    agent_decided_payload,
+    agent_handoff_payload,
+    agent_reasoned_payload,
+    agent_reasoning_delta_payload,
+    agent_tool_called_payload,
+    agent_tool_returned_payload,
+    is_agent_decided,
+    is_agent_handoff,
+    is_agent_reasoned,
+    is_agent_reasoning_delta,
+    is_agent_tool_called,
+    is_agent_tool_returned,
+)
 from .sse import stream_events
 from .types import (
     AuditVerifyAnomaly,
@@ -85,6 +106,26 @@ __all__ = [
     "RunStatus",
     "StreamMode",
     "is_http_error_code",
+    # Typed agent.* event helpers (RFC 0002 + RFC 0024)
+    "ReasoningVerbosity",
+    "AgentReasonedPayload",
+    "AgentReasoningDeltaPayload",
+    "AgentToolCalledPayload",
+    "AgentToolReturnedPayload",
+    "AgentHandoffPayload",
+    "AgentDecidedPayload",
+    "is_agent_reasoned",
+    "is_agent_reasoning_delta",
+    "is_agent_tool_called",
+    "is_agent_tool_returned",
+    "is_agent_handoff",
+    "is_agent_decided",
+    "agent_reasoned_payload",
+    "agent_reasoning_delta_payload",
+    "agent_tool_called_payload",
+    "agent_tool_returned_payload",
+    "agent_handoff_payload",
+    "agent_decided_payload",
     # Webhook helpers (SDK-3, 2026-05-15)
     "verify_webhook_signature",
     "sign_webhook_delivery",

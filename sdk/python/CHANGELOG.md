@@ -1,5 +1,14 @@
 # `openwop-client` Changelog
 
+## [1.0 — additions] — 2026-05-19 — typed `agent.*` event helpers (RFC 0024)
+
+- **New module** `openwop_client.events` exposing six `TypedDict` payload classes — `AgentReasonedPayload`, `AgentReasoningDeltaPayload`, `AgentToolCalledPayload`, `AgentToolReturnedPayload`, `AgentHandoffPayload`, `AgentDecidedPayload` — mirroring the canonical `schemas/run-event-payloads.schema.json` $defs.
+- **Six runtime predicates** `is_agent_reasoned(ev)` / `is_agent_reasoning_delta(ev)` / `is_agent_tool_called(ev)` / `is_agent_tool_returned(ev)` / `is_agent_handoff(ev)` / `is_agent_decided(ev)` — return `True` only when the `type` discriminator matches AND the payload carries the required wire-contract fields with correct primitive types. `is_agent_reasoning_delta` validates `sequence` is a non-negative integer (and rejects `bool` despite Python's `int` subclassing).
+- **Six typed extractors** `agent_*_payload(ev)` — return the typed payload on a match, `None` on a miss. Convenience for the `if (p := agent_reasoning_delta_payload(ev)) is not None:` idiom.
+- Re-exports for all 19 new public symbols under `openwop_client.__all__`.
+- 22 unittest cases in `tests/test_events.py` covering true-positive / true-negative matrix, extractor `None`-on-miss, unknown-event-type tolerance per `COMPATIBILITY.md §2.1`, and schema-mirror sanity (reads the canonical JSON schema and asserts required-field parity per $def).
+- Stdlib-only (`typing` + `json` + `pathlib` for tests). No third-party deps.
+
 ## [1.0 — additions] — 2026-05-15 — pause/resume helpers
 
 - **New run-control helpers.** `OpenwopClient.runs_pause(run_id, body=None, *, idempotency_key=None)` calls `POST /v1/runs/{id}:pause`; `OpenwopClient.runs_resume(run_id, body=None, *, idempotency_key=None)` calls `POST /v1/runs/{id}:resume`. New dataclasses exported: `PauseRunRequest`, `PauseRunResponse`, `ResumeRunRequest`, `ResumeRunResponse`.
