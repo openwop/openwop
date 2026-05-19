@@ -117,10 +117,13 @@ echo
 # phrases that should not survive outside archived historical docs. Also
 # guards against silent drift between sanctioned duplicate-source files
 # (RFC 0013 expansion algorithm: spec-authoritative copy in conformance/
-# vs. zero-deps mirror in examples/hosts/in-memory/).
+# vs. zero-deps mirror in examples/hosts/in-memory/). Plus the required-
+# property typo-catcher (replaces redocly's flawed walker — see
+# api/redocly.yaml comment for context).
 echo "[7/9] Generated protocol status..."
 node "$SPEC_ROOT/scripts/generate-protocol-status.mjs" --check
 node "$SPEC_ROOT/scripts/check-workflow-chain-expansion-sync.mjs"
+node "$SPEC_ROOT/scripts/check-required-properties-defined.mjs"
 echo
 
 # 8. Publish-metadata + package-content audit — catches placeholder URLs,
