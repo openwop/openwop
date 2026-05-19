@@ -2846,6 +2846,7 @@ const RUN_EVENTS_POLL_PATTERN = /^\/v1\/runs\/([^/]+)\/events\/poll$/;
 const RUN_EVENTS_SSE_PATTERN = /^\/v1\/runs\/([^/]+)\/events$/;
 const RUN_DEBUG_BUNDLE_PATTERN = /^\/v1\/runs\/([^/]+)\/debug-bundle$/;
 const RUN_INTERRUPT_PATTERN = /^\/v1\/runs\/([^/]+)\/interrupts\/([^/]+)$/;
+const RUN_ARTIFACT_PATTERN = /^\/v1\/runs\/([^/]+)\/artifacts\/([^/]+)$/;
 const INTERRUPT_TOKEN_PATTERN = /^\/v1\/interrupts\/([^/]+)$/;
 const WORKFLOW_ID_PATTERN = /^\/v1\/workflows\/([^/]+)$/;
 const WEBHOOK_ID_PATTERN = /^\/v1\/webhooks\/([^/]+)$/;
@@ -2934,6 +2935,28 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
     res.end('This host does not operate a pack registry.');
     return;
   }
+
+  // Artifact endpoint stub. The host doesn't implement artifact
+  // storage end-to-end, but the route MUST 401 on missing auth before
+  // 404'ing on missing resource — per `artifact-auth` scenario and
+  // `auth.md §"Error envelope"`. Without this stub, the catch-all
+  // 404 below would respond before any auth check, letting an
+  // unauthenticated caller probe whether a runId/artifactId pair
+  // exists (info-leak). The match runs `checkAuth` (which 401s
+  // internally on missing/invalid Bearer) and only then 404s the
+  // unknown artifact.
+  m = RUN_ARTIFACT_PATTERN.exec(path);
+  if (m && method === 'GET') {
+    if (!checkAuth(req, res)) return;
+    sendError(
+      res,
+      404,
+      'not_found',
+      `artifact '${decodeURIComponent(m[2]!)}' not found on run '${decodeURIComponent(m[1]!)}'`,
+    );
+    return;
+  }
+
   sendError(res, 404, 'not_found', `No route for ${method} ${path}`);
 }
 
