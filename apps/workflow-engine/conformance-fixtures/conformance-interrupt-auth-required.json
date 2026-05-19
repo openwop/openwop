@@ -1,0 +1,28 @@
+{
+  "id": "conformance-interrupt-auth-required",
+  "name": "Conformance: Interrupt — Auth-Required Resume",
+  "version": "1.0",
+  "description": "Auth-required interrupt fixture for the openwop-interrupt-auth-required profile (interrupt-profiles.md). Suspends on an approval gate that requires the resume caller to present a non-callback bearer (API key OR OAuth2 token) with the approvals:respond scope. The suite verifies (a) signed-token resume via /v1/interrupts/{token} is REJECTED when this profile is active (the profile elevates auth), (b) bearer-token resume succeeds, and (c) bearer-token resume with insufficient scope returns 403. Conformance scenario: interrupt-auth-required-resume.test.ts.",
+  "nodes": [
+    {
+      "id": "gate",
+      "typeId": "core.approvalGate",
+      "name": "Auth-Required Approval Gate",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "title": "Conformance auth-required approval",
+        "description": "Resolution requires a bearer credential with approvals:respond scope.",
+        "actions": ["accept", "reject"],
+        "profile": "openwop-interrupt-auth-required"
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "hitl", "interrupt-profile", "auth-required"] },
+  "settings": { "timeout": 0 }
+}

@@ -3,16 +3,18 @@
 # Multi-stage Node 22-slim + esbuild bundle. The runtime image carries
 # the bundled JS + the externals npm marks (better-sqlite3 native
 # binding, etc.) + the parent-dir `providers.json` AI-provider catalog
-# + the in-tree conformance fixtures (vendored via the
-# `conformance-fixtures` symlink → `../../conformance/fixtures`, so the
+# + the in-tree conformance fixtures (vendored into
+# `apps/workflow-engine/conformance-fixtures/` from the canonical
+# `conformance/fixtures/` via `scripts/sync-fixtures.sh`, so the
 # deployed sample BE can stand in as a black-box conformance target
 # per RFC 0024 etc.).
 #
 # Build context: `apps/workflow-engine/` (the parent of `backend/`) so
 # both the backend source AND the shared `providers.json` are reachable.
-# `gcloud run deploy --source` follows symlinks at upload time, so the
-# `conformance-fixtures` symlink resolves to the canonical fixtures
-# directory at build time — single source of truth, no duplication.
+# Conformance fixtures are vendored as real files (symlinks would
+# survive `gcloud run deploy --source`'s upload but break Docker COPY's
+# build-context isolation). Run `scripts/sync-fixtures.sh` after any
+# canonical fixture change.
 #
 # Deploy (from repo root):
 #   gcloud run deploy openwop-app-backend \

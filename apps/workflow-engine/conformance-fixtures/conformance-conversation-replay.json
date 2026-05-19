@@ -1,0 +1,33 @@
+{
+  "id": "conformance-conversation-replay",
+  "name": "Conformance: Conversation Replay Determinism",
+  "version": "1.0",
+  "description": "Phase 4. Runs a multi-turn conversation to completion, then `:fork` (mode: 'replay') the run. Forked run's `conversation` channel projection MUST be byte-equal to the source run's. See conversationReplayDeterminism.test.ts.",
+  "nodes": [
+    {
+      "id": "convo",
+      "typeId": "core.conversationGate",
+      "name": "Conversation Gate (multi-turn)",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "lifecycle": "open-exchange-close",
+        "mockAutoResume": true,
+        "turnCount": 3
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "channels": {
+    "conversation": {
+      "schema": { "type": "array" },
+      "reducer": "message"
+    }
+  },
+  "metadata": { "tags": ["conformance", "multi-agent", "phase-4", "conversation", "replay-determinism"] },
+  "settings": { "timeout": 30000 }
+}

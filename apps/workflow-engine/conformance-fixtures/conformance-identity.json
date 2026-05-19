@@ -1,0 +1,32 @@
+{
+  "id": "conformance-identity",
+  "name": "Conformance: Identity",
+  "version": "1.0",
+  "description": "Echoes input.payload to output.payload. Verifies input/output passthrough.",
+  "nodes": [
+    {
+      "id": "echo",
+      "typeId": "core.identity",
+      "name": "Echo",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {
+        "payload": { "type": "variable", "variableName": "payload" }
+      }
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    {
+      "name": "payload",
+      "type": "object",
+      "description": "Arbitrary JSON payload to echo back.",
+      "required": true
+    }
+  ],
+  "metadata": { "tags": ["conformance"] },
+  "settings": { "timeout": 10000 }
+}

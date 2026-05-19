@@ -1,0 +1,25 @@
+{
+  "id": "conformance-dispatch-input-mapping-child",
+  "name": "Conformance: Dispatch Input Mapping (RFC 0022 §A) — child",
+  "version": "1.0",
+  "description": "Child fixture for `conformance-dispatch-input-mapping`. Noop body; the scenario reads this child's `inputs_json` (surfaced as `inputs` on `GET /v1/runs/{childRunId}`) and asserts `inputs.childGreeting === 'Alice'` per RFC 0022 §A.",
+  "nodes": [
+    {
+      "id": "noop",
+      "typeId": "core.identity",
+      "name": "Noop (asserts via inputs)",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": {
+    "tags": ["conformance", "rfc-0022", "dispatch", "input-mapping", "child"]
+  },
+  "settings": { "timeout": 5000 }
+}

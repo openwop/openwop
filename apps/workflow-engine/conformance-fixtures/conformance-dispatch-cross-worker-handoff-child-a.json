@@ -1,0 +1,27 @@
+{
+  "id": "conformance-dispatch-cross-worker-handoff-child-a",
+  "name": "Conformance: Dispatch Cross-Worker Handoff (RFC 0022 §A) — child-a",
+  "version": "1.0",
+  "description": "First child of `conformance-dispatch-cross-worker-handoff`. Declares `output.defaultValue='hello'`; on terminal `completed`, parent's `perWorkerOutputMappings.child-a` harvests `output → sharedVar` per RFC 0022 §A. The shared parent variable bag is the handoff channel to child-b (RFC 0022 §D).",
+  "nodes": [
+    {
+      "id": "noop",
+      "typeId": "core.identity",
+      "name": "Noop (output seeded by defaultValue)",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "output", "type": "string", "defaultValue": "hello" }
+  ],
+  "metadata": {
+    "tags": ["conformance", "rfc-0022", "dispatch", "cross-worker-handoff", "child"]
+  },
+  "settings": { "timeout": 5000 }
+}

@@ -1,0 +1,32 @@
+{
+  "id": "conformance-agent-low-confidence",
+  "name": "Conformance: Agent Low-Confidence Escalation",
+  "version": "1.0",
+  "description": "Phase 1 / CP-1 contract (RFC 0023). `core.conformance.mock-agent` emits `agent.decided` with confidence below the default 0.7 escalation threshold (mock confidence is 0.5). Host MUST follow with `node.suspended { reason: 'low-confidence', agentId, threshold, observed }` and transition run to `'waiting-approval'` per `interrupt.md` §`kind: \"low-confidence\"`. See agentConfidenceEscalation.test.ts.",
+  "nodes": [
+    {
+      "id": "low-conf-decider",
+      "typeId": "core.conformance.mock-agent",
+      "name": "Low-Confidence Decider",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "mockDecision": {
+          "decision": { "kind": "stub-low-conf" },
+          "confidence": 0.5
+        }
+      },
+      "inputs": {},
+      "agent": {
+        "agentId": "core.conformance.low-conf-decider",
+        "modelClass": "reasoning"
+      }
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "multi-agent", "phase-1", "low-confidence", "cp-1", "rfc-0023"] },
+  "settings": { "timeout": 15000 }
+}

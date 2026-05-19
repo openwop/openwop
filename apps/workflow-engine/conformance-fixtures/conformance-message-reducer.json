@@ -1,0 +1,31 @@
+{
+  "id": "conformance-message-reducer",
+  "name": "Conformance: Message Reducer Idempotency",
+  "version": "1.0",
+  "description": "Phase 1. Declares a `messages` channel with the `message` reducer; the fixture intentionally emits the same `messageId` twice to exercise idempotency. Final channel state MUST contain each messageId exactly once. See agentMessageReducer.test.ts and channels-and-reducers.md §`message`.",
+  "nodes": [
+    {
+      "id": "emit-duplicate-message",
+      "typeId": "core.identity",
+      "name": "Emit (with intentional duplicate messageId)",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "emitDuplicateMessageId": true
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "channels": {
+    "messages": {
+      "schema": { "type": "array" },
+      "reducer": "message"
+    }
+  },
+  "metadata": { "tags": ["conformance", "multi-agent", "phase-1", "reducer", "idempotency"] },
+  "settings": { "timeout": 10000 }
+}

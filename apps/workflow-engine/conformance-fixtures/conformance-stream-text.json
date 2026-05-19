@@ -1,0 +1,26 @@
+{
+  "id": "conformance-stream-text",
+  "name": "Conformance: Stream Text",
+  "version": "1.0",
+  "description": "Single AI node for messages-mode conformance testing. Test driver invokes with `configurable.mockProvider.id='stream-text'` + canned tokens; the mock intercepts the real AI dispatch and emits deterministic chunks. Closes F1.",
+  "nodes": [
+    {
+      "id": "ai",
+      "typeId": "core.ai.callPrompt",
+      "name": "AI Call (mock-routed)",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "promptId": "conformance.stream-text-noop",
+        "expectsStreaming": true
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "messages-mode"] },
+  "settings": { "timeout": 30000 }
+}

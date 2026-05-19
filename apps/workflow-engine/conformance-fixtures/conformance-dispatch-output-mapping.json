@@ -1,0 +1,49 @@
+{
+  "id": "conformance-dispatch-output-mapping",
+  "name": "Conformance: Dispatch Output Mapping (RFC 0022 §A)",
+  "version": "1.0",
+  "description": "RFC 0022 §A / HVMAP-1b — host harvests child variables back into parent variables via `outputMapping` on `core.dispatch`. Supervisor plan: `next-worker: ['conformance-dispatch-output-mapping-child']` → `terminate`. Child declares `childOutcome.defaultValue='done'`; on child terminal `completed`, the parent's outputMapping projects `childOutcome` onto `parentResult`. Test reads parent's final variables, asserts `parentResult === 'done'`. See dispatch-output-mapping.test.ts.",
+  "nodes": [
+    {
+      "id": "supervisor",
+      "typeId": "core.orchestrator.supervisor",
+      "name": "Supervisor (mock plan)",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "mockDispatchPlan": [
+          { "kind": "next-worker", "nextWorkerIds": ["conformance-dispatch-output-mapping-child"] },
+          { "kind": "terminate", "reason": "goal-reached" }
+        ]
+      },
+      "inputs": {}
+    },
+    {
+      "id": "dispatch",
+      "typeId": "core.dispatch",
+      "name": "Dispatch with outputMapping",
+      "position": { "x": 200, "y": 0 },
+      "config": {
+        "askUserRouting": "auto",
+        "workerDispatchModel": "child-run",
+        "fanOutPolicy": "sequential",
+        "outputMapping": { "parentResult": "childOutcome" }
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [
+    { "id": "e1", "sourceNodeId": "supervisor", "targetNodeId": "dispatch" },
+    { "id": "e2", "sourceNodeId": "dispatch", "targetNodeId": "supervisor" }
+  ],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "parentResult", "type": "string", "defaultValue": "" }
+  ],
+  "metadata": {
+    "tags": ["conformance", "rfc-0022", "dispatch", "output-mapping"],
+    "requiresCapability": "capabilities.agents.dispatchMapping"
+  },
+  "settings": { "timeout": 30000 }
+}

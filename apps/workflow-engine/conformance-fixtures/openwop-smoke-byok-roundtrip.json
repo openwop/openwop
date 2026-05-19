@@ -1,0 +1,25 @@
+{
+  "id": "openwop-smoke-byok-roundtrip",
+  "name": "Conformance: BYOK Roundtrip",
+  "version": "1.0",
+  "description": "End-to-end BYOK secret-resolution smoke fixture. Single node 'resolve-secret' (typeId conformance.secret.echo) fetches the host-provisioned canary secret 'openwop-conformance-canary-secret' via the host's SecretResolver, then emits the SHA-256 hex + byte length to the run's variables — never the raw value. Spec: run-options.md §'Credential references' + auth.md §'Secret resolution' + observability.md §'Redaction'.",
+  "nodes": [
+    {
+      "id": "resolve-secret",
+      "typeId": "conformance.secret.echo",
+      "name": "Resolve Canary Secret",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "secretId": "openwop-conformance-canary-secret"
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "byok", "secrets", "smoke"] },
+  "settings": { "timeout": 10000, "maxRetries": 0 }
+}

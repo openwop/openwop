@@ -1,0 +1,60 @@
+{
+  "id": "conformance-dispatch-cross-worker-handoff",
+  "name": "Conformance: Dispatch Cross-Worker Handoff (RFC 0022 §A + §D)",
+  "version": "1.0",
+  "description": "RFC 0022 §A + §D / HVMAP-1c — sequential fan-out across two children with cross-worker variable handoff via the shared parent variable bag. Supervisor plan: `next-worker: ['conformance-dispatch-cross-worker-handoff-child-a', 'conformance-dispatch-cross-worker-handoff-child-b']` → `terminate`. perWorkerOutputMappings.child-a maps `sharedVar ← output`; perWorkerInputMappings.child-b maps `input ← sharedVar`. Child-a declares `output.defaultValue='hello'`; on terminal, parent's `sharedVar` is set to `'hello'`. Child-b's `input` then receives parent's `sharedVar`. Test asserts child-b's `inputs.input === 'hello'`. See dispatch-cross-worker-handoff.test.ts.",
+  "nodes": [
+    {
+      "id": "supervisor",
+      "typeId": "core.orchestrator.supervisor",
+      "name": "Supervisor (mock plan, multi-worker)",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "mockDispatchPlan": [
+          {
+            "kind": "next-worker",
+            "nextWorkerIds": [
+              "conformance-dispatch-cross-worker-handoff-child-a",
+              "conformance-dispatch-cross-worker-handoff-child-b"
+            ]
+          },
+          { "kind": "terminate", "reason": "goal-reached" }
+        ]
+      },
+      "inputs": {}
+    },
+    {
+      "id": "dispatch",
+      "typeId": "core.dispatch",
+      "name": "Dispatch with per-worker mappings",
+      "position": { "x": 200, "y": 0 },
+      "config": {
+        "askUserRouting": "auto",
+        "workerDispatchModel": "child-run",
+        "fanOutPolicy": "sequential",
+        "perWorkerOutputMappings": {
+          "conformance-dispatch-cross-worker-handoff-child-a": { "sharedVar": "output" }
+        },
+        "perWorkerInputMappings": {
+          "conformance-dispatch-cross-worker-handoff-child-b": { "input": "sharedVar" }
+        }
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [
+    { "id": "e1", "sourceNodeId": "supervisor", "targetNodeId": "dispatch" },
+    { "id": "e2", "sourceNodeId": "dispatch", "targetNodeId": "supervisor" }
+  ],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "sharedVar", "type": "string", "defaultValue": "" }
+  ],
+  "metadata": {
+    "tags": ["conformance", "rfc-0022", "dispatch", "cross-worker-handoff"],
+    "requiresCapability": "capabilities.agents.dispatchMapping"
+  },
+  "settings": { "timeout": 30000 }
+}

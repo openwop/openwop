@@ -1,0 +1,33 @@
+{
+  "id": "conformance-subworkflow-input-mapping-no-default",
+  "name": "Conformance: subWorkflow Input Mapping — currentPrdId unset (RFC 0022 §B HVMAP-2-unset)",
+  "version": "1.0",
+  "description": "RFC 0022 §B / HVMAP-2-unset — parent variant of `conformance-subworkflow-input-mapping` that DECLARES `currentPrdId` in `variables[]` but OMITS its `defaultValue`. The `core.subWorkflow` node's `inputMapping: { receivedPrdId: 'currentPrdId' }` projects an unset parent variable. Per RFC 0022 §B normative bullet: child `receivedPrdId` MUST surface as `undefined` (NOT `null`, NOT omitted) — distinct from the child's own `defaultValue` fold. Same shape as the base fixture; only `currentPrdId.defaultValue` is removed. See subworkflow-input-mapping.test.ts § HVMAP-2-unset.",
+  "nodes": [
+    {
+      "id": "subwf-call",
+      "typeId": "core.subWorkflow",
+      "name": "Invoke child with inputMapping (parent var unset)",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "workflowId": "conformance-subworkflow-input-mapping-child",
+        "waitForCompletion": true,
+        "onChildFailure": "fail-parent",
+        "inputMapping": { "receivedPrdId": "currentPrdId" }
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "currentPrdId", "type": "string" }
+  ],
+  "metadata": {
+    "tags": ["conformance", "rfc-0022", "subworkflow", "input-mapping", "hvmap-2-unset"],
+    "requiresCapability": "capabilities.subWorkflow.inputMapping"
+  },
+  "settings": { "timeout": 10000 }
+}

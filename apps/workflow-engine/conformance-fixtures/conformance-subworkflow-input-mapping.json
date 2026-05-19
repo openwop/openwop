@@ -1,0 +1,33 @@
+{
+  "id": "conformance-subworkflow-input-mapping",
+  "name": "Conformance: subWorkflow Input Mapping (RFC 0022 §B)",
+  "version": "1.0",
+  "description": "RFC 0022 §B — host honors `inputMapping` on `core.subWorkflow` and seeds child variables from parent-variable projections. The parent fixture sets its `currentPrdId='prd-1'`, then invokes the child fixture (`conformance-subworkflow-input-mapping-child`) via `core.subWorkflow` with `inputMapping: { receivedPrdId: 'currentPrdId' }`. The child workflow declares `receivedPrdId.defaultValue='baked-in'` — the RFC normates that `inputMapping` MUST override matching `defaultValue` declarations. The scenario inspects the child run's final variables and asserts `receivedPrdId === 'prd-1'`. See subworkflow-input-mapping.test.ts.",
+  "nodes": [
+    {
+      "id": "subwf-call",
+      "typeId": "core.subWorkflow",
+      "name": "Invoke child with inputMapping",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "workflowId": "conformance-subworkflow-input-mapping-child",
+        "waitForCompletion": true,
+        "onChildFailure": "fail-parent",
+        "inputMapping": { "receivedPrdId": "currentPrdId" }
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "currentPrdId", "type": "string", "defaultValue": "prd-1" }
+  ],
+  "metadata": {
+    "tags": ["conformance", "rfc-0022", "subworkflow", "input-mapping"],
+    "requiresCapability": "capabilities.subWorkflow.inputMapping"
+  },
+  "settings": { "timeout": 10000 }
+}

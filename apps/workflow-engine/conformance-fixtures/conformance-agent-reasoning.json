@@ -1,0 +1,48 @@
+{
+  "id": "conformance-agent-reasoning",
+  "name": "Conformance: Agent Reasoning Events",
+  "version": "1.0",
+  "description": "Phase 1 (RFC 0023). Drives the agent.* event family from a single `core.conformance.mock-agent` node: agent.reasoned → agent.toolCalled/Returned (paired by host-minted callId per RFC 0002 §B) → agent.handoff → agent.decided. Host MUST emit at least one event from the closed set {agent.reasoned, agent.toolCalled, agent.toolReturned, agent.handoff, agent.decided}, each carrying a non-empty `agentId`. See agentReasoningEvents.test.ts.",
+  "nodes": [
+    {
+      "id": "reasoner",
+      "typeId": "core.conformance.mock-agent",
+      "name": "Reasoning Agent",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "mockReasoning": {
+          "summary": "Decomposed query, decided to call a tool, then handed off.",
+          "tokenCount": 24
+        },
+        "mockToolCalls": [
+          {
+            "toolId": "openwop.echo:echo",
+            "arguments": { "x": 1 },
+            "result": { "x": 1 },
+            "durationMs": 1
+          }
+        ],
+        "mockHandoff": {
+          "toAgentId": "core.conformance.handoff-target",
+          "reason": "demo-handoff"
+        },
+        "mockDecision": {
+          "decision": { "next": "done" },
+          "confidence": 1
+        }
+      },
+      "inputs": {},
+      "agent": {
+        "agentId": "core.conformance.reasoning-agent",
+        "modelClass": "reasoning"
+      }
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "multi-agent", "phase-1", "reasoning", "rfc-0023"] },
+  "settings": { "timeout": 15000 }
+}

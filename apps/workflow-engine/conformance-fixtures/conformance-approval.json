@@ -1,0 +1,27 @@
+{
+  "id": "conformance-approval",
+  "name": "Conformance: Approval",
+  "version": "1.0",
+  "description": "Suspends on an approval interrupt. Resume schema: {action: 'accept'|'reject'}. Verifies HITL primitive end-to-end.",
+  "nodes": [
+    {
+      "id": "gate",
+      "typeId": "core.approvalGate",
+      "name": "Approval Gate",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "title": "Conformance approval",
+        "description": "Conformance suite — please accept to complete the run.",
+        "actions": ["accept", "reject"]
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "hitl"] },
+  "settings": { "timeout": 0 }
+}

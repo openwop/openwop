@@ -1,0 +1,39 @@
+{
+  "id": "conformance-configurable-schema",
+  "name": "Conformance: Per-workflow configurableSchema",
+  "version": "1.0",
+  "description": "Workflow that declares a `configurableSchema` constraining `RunOptions.configurable` (run-options.md §'Per-workflow configurableSchema'). The schema forbids unknown additional properties and requires `recursionLimit` to be a positive integer when present. Conformance scenario `configurable-schema.test.ts` verifies: (a) the manifest endpoint `GET /v1/workflows/{id}` surfaces the configurableSchema; (b) `POST /v1/runs` with a mismatched configurable returns `validation_error`. Body is a noop.",
+  "nodes": [
+    {
+      "id": "noop",
+      "typeId": "core.noop",
+      "name": "Noop",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "configurableSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "recursionLimit": {
+        "type": "integer",
+        "minimum": 1,
+        "description": "Cap on per-run node executions; host enforces."
+      },
+      "tags": {
+        "type": "array",
+        "items": { "type": "string" }
+      }
+    }
+  },
+  "metadata": { "tags": ["conformance", "configurable-schema"] },
+  "settings": { "timeout": 10000 }
+}

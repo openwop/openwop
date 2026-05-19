@@ -1,0 +1,30 @@
+{
+  "id": "conformance-clarification",
+  "name": "Conformance: Clarification",
+  "version": "1.0",
+  "description": "Suspends on a clarification interrupt with one fixed question. Resume schema: {answers: {q1: string}}.",
+  "nodes": [
+    {
+      "id": "ask",
+      "typeId": "core.clarificationGate",
+      "name": "Clarification Gate",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "questions": [
+          {
+            "id": "q1",
+            "question": "What is your favorite color?"
+          }
+        ]
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "hitl"] },
+  "settings": { "timeout": 0 }
+}

@@ -1,0 +1,26 @@
+{
+  "id": "conformance-agent-pack-export",
+  "name": "Conformance: Agent Pack Export",
+  "version": "1.0",
+  "description": "Phase 2. No-op workflow; the actual assertion is at GET /v1/packs/export — host MUST project workspace agents to AgentManifest shape with required fields. See agentPackExport.test.ts.",
+  "nodes": [
+    {
+      "id": "noop",
+      "typeId": "core.identity",
+      "name": "Noop (pack-export fixture)",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": {
+    "tags": ["conformance", "multi-agent", "phase-2", "pack-export"],
+    "requiresWorkspaceAgent": "core.conformance.exportable-agent"
+  },
+  "settings": { "timeout": 5000 }
+}

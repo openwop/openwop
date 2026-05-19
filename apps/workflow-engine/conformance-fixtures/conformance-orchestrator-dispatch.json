@@ -1,0 +1,47 @@
+{
+  "id": "conformance-orchestrator-dispatch",
+  "name": "Conformance: Orchestrator Dispatch",
+  "version": "1.0",
+  "description": "Phase 5. Workflow with `core.orchestrator.supervisor` → `core.dispatch` topology. Supervisor mock emits `kind: 'next-worker'` referencing a child workflow id; dispatch executes the child run. Event log MUST contain `runOrchestrator.decided { kind: 'next-worker', nextWorkerIds: [...] }`. See orchestratorDispatch.test.ts.",
+  "nodes": [
+    {
+      "id": "supervisor",
+      "typeId": "core.orchestrator.supervisor",
+      "name": "Supervisor",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "mockDecisions": [
+          { "kind": "next-worker", "nextWorkerIds": ["conformance-noop"] },
+          { "kind": "terminate", "reason": "goal-reached" }
+        ]
+      },
+      "inputs": {},
+      "agent": {
+        "agentId": "core.conformance.supervisor",
+        "modelClass": "reasoning"
+      }
+    },
+    {
+      "id": "dispatch",
+      "typeId": "core.dispatch",
+      "name": "Dispatch",
+      "position": { "x": 200, "y": 0 },
+      "config": {
+        "askUserRouting": "auto",
+        "workerDispatchModel": "child-run",
+        "fanOutPolicy": "sequential"
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [
+    { "id": "e1", "sourceNodeId": "supervisor", "targetNodeId": "dispatch" },
+    { "id": "e2", "sourceNodeId": "dispatch", "targetNodeId": "supervisor" }
+  ],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "multi-agent", "phase-5", "orchestrator", "dispatch"] },
+  "settings": { "timeout": 60000 }
+}

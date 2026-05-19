@@ -1,0 +1,27 @@
+{
+  "id": "conformance-dispatch-output-mapping-child",
+  "name": "Conformance: Dispatch Output Mapping (RFC 0022 §A) — child",
+  "version": "1.0",
+  "description": "Child fixture for `conformance-dispatch-output-mapping`. Declares `childOutcome.defaultValue='done'`; the variable is folded into the child's initial `variables_json` at run-create time. On terminal `completed`, the parent's `outputMapping` harvests `childOutcome` onto the parent's `parentResult` per RFC 0022 §A.",
+  "nodes": [
+    {
+      "id": "noop",
+      "typeId": "core.identity",
+      "name": "Noop (childOutcome seeded by defaultValue)",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "childOutcome", "type": "string", "defaultValue": "done" }
+  ],
+  "metadata": {
+    "tags": ["conformance", "rfc-0022", "dispatch", "output-mapping", "child"]
+  },
+  "settings": { "timeout": 5000 }
+}

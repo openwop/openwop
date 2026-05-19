@@ -1,0 +1,49 @@
+{
+  "id": "conformance-dispatch-input-mapping-no-default",
+  "name": "Conformance: Dispatch Input Mapping — parentName unset (RFC 0022 §A HVMAP-1a-null)",
+  "version": "1.0",
+  "description": "RFC 0022 §A / HVMAP-1a-null — parent variant of `conformance-dispatch-input-mapping` that DECLARES `parentName` in `variables[]` but OMITS its `defaultValue`. The dispatch's `inputMapping: { childGreeting: 'parentName' }` projects an unset parent variable. Per RFC 0022 §A normative bullet: child `inputs.childGreeting` MUST surface as `undefined` (NOT `null`, NOT omitted). Same supervisor + dispatch shape as the base fixture; only the `variables[].parentName.defaultValue` is removed. See dispatch-input-mapping.test.ts § HVMAP-1a-null.",
+  "nodes": [
+    {
+      "id": "supervisor",
+      "typeId": "core.orchestrator.supervisor",
+      "name": "Supervisor (mock plan)",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "mockDispatchPlan": [
+          { "kind": "next-worker", "nextWorkerIds": ["conformance-dispatch-input-mapping-child"] },
+          { "kind": "terminate", "reason": "goal-reached" }
+        ]
+      },
+      "inputs": {}
+    },
+    {
+      "id": "dispatch",
+      "typeId": "core.dispatch",
+      "name": "Dispatch with inputMapping (parent var unset)",
+      "position": { "x": 200, "y": 0 },
+      "config": {
+        "askUserRouting": "auto",
+        "workerDispatchModel": "child-run",
+        "fanOutPolicy": "sequential",
+        "inputMapping": { "childGreeting": "parentName" }
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [
+    { "id": "e1", "sourceNodeId": "supervisor", "targetNodeId": "dispatch" },
+    { "id": "e2", "sourceNodeId": "dispatch", "targetNodeId": "supervisor" }
+  ],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "parentName", "type": "string" }
+  ],
+  "metadata": {
+    "tags": ["conformance", "rfc-0022", "dispatch", "input-mapping", "hvmap-1a-null"],
+    "requiresCapability": "capabilities.agents.dispatchMapping"
+  },
+  "settings": { "timeout": 30000 }
+}

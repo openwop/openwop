@@ -1,0 +1,49 @@
+{
+  "id": "conformance-subworkflow-parent",
+  "name": "Conformance: Sub-workflow (parent)",
+  "version": "1.0",
+  "description": "Parent workflow that dispatches `conformance-subworkflow-child` via `core.subWorkflow` (blocking dispatch with waitForCompletion=true) then completes. Verifies child run starts in the same tenant/scope, parent suspend/resume around child terminal, and child variable propagation through outputMapping. Spec: node-packs.md §Reserved Core OpenWOP node typeIds.",
+  "nodes": [
+    {
+      "id": "parent-start",
+      "typeId": "core.noop",
+      "name": "Parent Start",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    },
+    {
+      "id": "subwf-call",
+      "typeId": "core.subWorkflow",
+      "name": "Invoke Child",
+      "position": { "x": 200, "y": 0 },
+      "config": {
+        "workflowId": "conformance-subworkflow-child",
+        "waitForCompletion": true,
+        "onChildFailure": "fail-parent",
+        "outputMapping": {
+          "childOutcome": "childResult"
+        }
+      },
+      "inputs": {}
+    },
+    {
+      "id": "parent-end",
+      "typeId": "core.noop",
+      "name": "Parent End",
+      "position": { "x": 400, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [
+    { "id": "ep1", "sourceNodeId": "parent-start", "targetNodeId": "subwf-call" },
+    { "id": "ep2", "sourceNodeId": "subwf-call", "targetNodeId": "parent-end" }
+  ],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "subworkflow", "parent"] },
+  "settings": { "timeout": 60000, "maxRetries": 0 }
+}

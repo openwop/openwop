@@ -1,0 +1,32 @@
+{
+  "id": "conformance-agent-memory-roundtrip",
+  "name": "Conformance: Agent Memory Round-Trip",
+  "version": "1.0",
+  "description": "Phase 3. Host writes a memory entry via its host-internal trigger surface, then reads it back through MemoryAdapter.list(). The read-back result MUST conform to schemas/memory-entry.schema.json and land in workflow variable `memoryReadback`. See agentMemoryRoundTrip.test.ts.",
+  "nodes": [
+    {
+      "id": "memory-roundtrip",
+      "typeId": "core.identity",
+      "name": "Memory Round-Trip",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "memoryAction": "write-then-read"
+      },
+      "inputs": {},
+      "agent": {
+        "agentId": "core.conformance.memory-agent",
+        "memoryRef": "conformance/agent-memory-roundtrip",
+        "modelClass": "chat"
+      }
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "memoryReadback", "type": "object" }
+  ],
+  "metadata": { "tags": ["conformance", "multi-agent", "phase-3", "memory"] },
+  "settings": { "timeout": 15000 }
+}

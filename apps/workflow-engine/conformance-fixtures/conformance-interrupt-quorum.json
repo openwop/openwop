@@ -1,0 +1,30 @@
+{
+  "id": "conformance-interrupt-quorum",
+  "name": "Conformance: Interrupt — Quorum Approval",
+  "version": "1.0",
+  "description": "Multi-approver quorum interrupt fixture for the openwop-interrupt-quorum profile (interrupt-profiles.md). Suspends with requiredApprovals: 3 and rejectionPolicy: 'majority'. The suite resolves the interrupt with sequential approvals and verifies (a) partial votes emit incremental events without resuming, (b) the third accept fires the suspend resume, and (c) a majority-reject path on a different run terminates the gate with the rejection envelope. Conformance scenario: interrupt-quorum-resolution.test.ts.",
+  "nodes": [
+    {
+      "id": "gate",
+      "typeId": "core.approvalGate",
+      "name": "Quorum Approval Gate",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "title": "Conformance quorum approval",
+        "description": "Three-approver quorum required.",
+        "actions": ["accept", "reject"],
+        "requiredApprovals": 3,
+        "rejectionPolicy": "majority",
+        "approversList": []
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "hitl", "interrupt-profile", "quorum"] },
+  "settings": { "timeout": 0 }
+}

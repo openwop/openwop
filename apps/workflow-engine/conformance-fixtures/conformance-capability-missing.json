@@ -1,0 +1,23 @@
+{
+  "id": "conformance-capability-missing",
+  "name": "Conformance: Capability Missing",
+  "version": "1.0",
+  "description": "Single-node workflow whose node declares `requires: ['conformance.never-provided']`. The engine MUST refuse to dispatch the node and terminate the run with `error.code = 'capability_not_provided'`. Spec: capabilities.md §'Runtime capabilities'.",
+  "nodes": [
+    {
+      "id": "n1",
+      "typeId": "conformance.requiresMissing",
+      "name": "Requires Missing",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "runtime-capability", "capability-not-provided"] },
+  "settings": { "timeout": 10000, "maxRetries": 0 }
+}

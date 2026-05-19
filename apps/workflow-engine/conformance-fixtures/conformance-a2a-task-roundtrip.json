@@ -1,0 +1,27 @@
+{
+  "id": "conformance-a2a-task-roundtrip",
+  "name": "Conformance: A2A Task Roundtrip",
+  "version": "1.0",
+  "description": "Track 6 fixture for `a2a-task-roundtrip.test.ts`. Workflow invokes a single A2A peer task; the conformance suite stands up a synthetic A2A peer at startup (`OPENWOP_A2A_FAKE_PEER=true`) and operators configure the host to consume the printed AgentCard URL. The fixture covers drift points #3 (`AUTH_REQUIRED` → `waiting-input`) and #4 (`REJECTED` → `failed`) per `a2a-integration.md` §State projection. The `driftScenario` input lets the test toggle which projection to exercise; hosts that don't implement A2A consumption can stub this fixture as `core.noop` and the host-mediated subtest skips when no task POST reaches the synthetic peer.",
+  "nodes": [
+    {
+      "id": "a2a-invoke",
+      "typeId": "core.a2a.invoke",
+      "name": "Invoke A2A peer",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "skill": "echo"
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "driftScenario", "type": "string", "defaultValue": "happy-path" }
+  ],
+  "metadata": { "tags": ["conformance", "a2a", "roundtrip", "state-projection"] },
+  "settings": { "timeout": 0 }
+}

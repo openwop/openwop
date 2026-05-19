@@ -1,0 +1,30 @@
+{
+  "id": "conformance-idempotent",
+  "name": "Conformance: Idempotent",
+  "version": "1.0",
+  "description": "Single-node workflow used purely for Idempotency-Key cache testing. The `nonce` input is not consumed — its only role is to vary the request body.",
+  "nodes": [
+    {
+      "id": "noop",
+      "typeId": "core.noop",
+      "name": "Noop",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    {
+      "name": "nonce",
+      "type": "string",
+      "description": "Caller-supplied opaque token. Server MUST NOT use this for side effects.",
+      "required": true
+    }
+  ],
+  "metadata": { "tags": ["conformance"] },
+  "settings": { "timeout": 10000 }
+}
