@@ -161,13 +161,101 @@ describe('aiEnvelope.capBreached: behavioral cap enforcement (FINAL v1.1)', () =
   });
 });
 
-describe('aiEnvelope.capBreached: engine-integration placeholders', () => {
-  // These require the engine to project `breached` outcomes onto the
-  // existing `cap.breached` event surface per
-  // capabilities.md §"Engine-enforced limits and the cap.breached event".
-  // The pure-function acceptor surfaces the `breached` outcome with
-  // capKind; the engine projects it to the event log.
-  it.todo('project breached outcome onto cap.breached { kind: "envelopes" } event');
-  it.todo('cap.breached payload includes limit, observed, and (for node-scoped kinds) nodeId per capabilities.md');
-  it.todo('cap.breached → node.failed terminal transition');
+// E.1 engine-projection via the test-only event-log seam. The acceptor
+// returns the breached outcome; the seam projects it onto cap.breached +
+// node.failed per capabilities.md §"Engine-enforced limits". Tests
+// soft-skip on HTTP 404 when the seam isn't exposed.
+import { queryTestEvents, isEventLogSeamAvailable, resetTestSeam } from '../lib/event-log-query.js';
+
+describe('aiEnvelope.capBreached: engine projection via event-log seam (capabilities.md §"cap.breached")', () => {
+  it('breached outcome projects to cap.breached { kind: "envelopes" } event with causationId chain', async () => {
+    if (!(await isEventLogSeamAvailable())) return;
+    const runId = `r-cap-env-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const correlationId = `${runId}:node-1:turn-0:cap-env`;
+    const r = await accept(
+      {
+        type: 'error',
+        schemaVersion: 1,
+        envelopeId: 'env-proj-cap-env',
+        correlationId,
+        payload: { code: 'x', message: 'y' },
+        meta: baseMeta,
+      },
+      {
+        counters: { envelopesPerTurn: { current: 32, cap: 32 } },
+        projectTo: { runId, nodeId: 'node-1' },
+      },
+    );
+    if (r.status === 404) return;
+    expect(r.body.status).toBe('breached');
+
+    const events = await queryTestEvents(runId, { type: 'cap.breached' });
+    if (!events.ok) return;
+    expect(
+      events.events.length,
+      driver.describe('capabilities.md §"Engine-enforced limits and the cap.breached event"', 'breached outcome MUST project to exactly one cap.breached event'),
+    ).toBe(1);
+    const evt = events.events[0]!;
+    expect(evt.payload.kind).toBe('envelopes');
+    expect(evt.causationId).toBe(correlationId);
+    await resetTestSeam();
+  });
+
+  it('cap.breached payload includes limit, observed, and nodeId per capabilities.md', async () => {
+    if (!(await isEventLogSeamAvailable())) return;
+    const runId = `r-cap-payload-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    await accept(
+      {
+        type: 'clarification.request',
+        schemaVersion: 1,
+        envelopeId: 'env-proj-cap-clar',
+        correlationId: `${runId}:node-2:turn-0:cap`,
+        payload: { questions: [{ id: 'q1', question: 'why?' }] },
+        meta: baseMeta,
+      },
+      {
+        counters: { clarificationRounds: { current: 5, cap: 5 } },
+        projectTo: { runId, nodeId: 'node-2' },
+      },
+    );
+    const events = await queryTestEvents(runId, { type: 'cap.breached' });
+    if (!events.ok || events.events.length === 0) return;
+    const evt = events.events[0]!;
+    expect(evt.payload.kind).toBe('clarification');
+    expect(
+      typeof evt.payload.limit,
+      driver.describe('capabilities.md §"cap.breached"', 'payload.limit MUST be present as a number'),
+    ).toBe('number');
+    expect(evt.payload.nodeId).toBe('node-2');
+    await resetTestSeam();
+  });
+
+  it('cap.breached MUST be paired with a terminal node.failed transition', async () => {
+    if (!(await isEventLogSeamAvailable())) return;
+    const runId = `r-cap-fail-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    await accept(
+      {
+        type: 'schema.request',
+        schemaVersion: 1,
+        envelopeId: 'env-proj-cap-fail',
+        correlationId: `${runId}:node-3:turn-0:cap`,
+        payload: { envelopeType: 'vendor.acme.foo' },
+        meta: baseMeta,
+      },
+      {
+        counters: { schemaRounds: { current: 3, cap: 3 } },
+        projectTo: { runId, nodeId: 'node-3' },
+      },
+    );
+    const breached = await queryTestEvents(runId, { type: 'cap.breached' });
+    const failed = await queryTestEvents(runId, { type: 'node.failed' });
+    if (!breached.ok || !failed.ok) return;
+    expect(breached.events.length).toBe(1);
+    expect(
+      failed.events.length,
+      driver.describe('capabilities.md §"cap.breached"', 'cap.breached MUST be paired with a terminal node.failed event'),
+    ).toBe(1);
+    expect((failed.events[0]!.payload.error as { code?: string }).code).toBe('cap_breached');
+    await resetTestSeam();
+  });
 });

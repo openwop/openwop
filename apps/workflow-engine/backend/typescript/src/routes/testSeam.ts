@@ -39,6 +39,8 @@ import type { Express } from 'express';
 import { buildHostSurfaceBundle, resolvePresignToken } from '../host/inMemorySurfaces.js';
 import type { HostSurfaceBundle, SurfaceArgs, SurfaceFn } from '../host/inMemorySurfaces.js';
 import { acceptEnvelope, type AcceptOptions } from '../host/envelopeAcceptor.js';
+import { projectOutcome } from '../host/envelopeProjection.js';
+import { listTestEvents, resetTestEventLog } from '../host/envelopeEventLog.js';
 import {
   setCapabilityOverlay,
   resetCapabilityOverlay,
@@ -197,6 +199,17 @@ export function registerTestSeamRoutes(app: Express): void {
        *  both fields before passing to the acceptor; entries with empty
        *  `value` are dropped. */
       byokCanaries?: Array<{ value: string; secretId: string }>;
+      /** When supplied, projects the outcome onto a test-only run event
+       *  log (`envelopeEventLog.ts`) so the conformance suite can query
+       *  the spec-prescribed events (cap.breached, node.failed,
+       *  interrupt.requested, log.appended) via
+       *  `GET /v1/host/sample/test/runs/:runId/events`. RFC 0021 §A point
+       *  1-7 + interrupt.md + capabilities.md §"cap.breached". */
+      projectTo?: {
+        runId: string;
+        nodeId?: string;
+        refusalMode?: 'fail-node' | 'discard-and-warn';
+      };
     };
     if (body.envelope === undefined) {
       res.status(400).json({ error: { code: 'invalid_argument', message: 'envelope required' } });
@@ -231,7 +244,46 @@ export function registerTestSeamRoutes(app: Express): void {
       opts.priorCorrelations = map;
     }
     const outcome = acceptEnvelope(body.envelope, opts);
+    // Optional E.1 projection: emit the spec-prescribed events into the
+    // test event log so conformance can query them via /test/runs/:runId/events.
+    if (body.projectTo && typeof body.projectTo.runId === 'string') {
+      const env = (body.envelope ?? {}) as { type?: string; correlationId?: string };
+      if (typeof env.type === 'string' && typeof env.correlationId === 'string') {
+        projectOutcome(outcome, {
+          runId: body.projectTo.runId,
+          correlationId: env.correlationId,
+          envelopeType: env.type,
+          ...(body.projectTo.nodeId !== undefined ? { nodeId: body.projectTo.nodeId } : {}),
+          ...(body.projectTo.refusalMode !== undefined ? { refusalMode: body.projectTo.refusalMode } : {}),
+        });
+      }
+    }
     res.status(200).json(outcome);
+  });
+
+  // E.1 — event-log query seam. Returns the test-only run event log
+  // populated by `envelope/accept` with `projectTo`. Supports filtering
+  // by type / causationId / correlationId (= causationId) / nodeId.
+  app.get('/v1/host/sample/test/runs/:runId/events', (req, res) => {
+    const runId = req.params.runId;
+    if (!runId) {
+      res.status(400).json({ error: { code: 'invalid_argument', message: 'runId required' } });
+      return;
+    }
+    const filter: { type?: string; correlationId?: string; causationId?: string; nodeId?: string } = {};
+    const q = req.query as Record<string, string | undefined>;
+    if (typeof q.type === 'string') filter.type = q.type;
+    if (typeof q.correlationId === 'string') filter.correlationId = q.correlationId;
+    if (typeof q.causationId === 'string') filter.causationId = q.causationId;
+    if (typeof q.nodeId === 'string') filter.nodeId = q.nodeId;
+    res.status(200).json({ events: listTestEvents(runId, filter) });
+  });
+
+  // Reset the test event log + capability overlay (suite teardown).
+  app.post('/v1/host/sample/test/reset', (_req, res) => {
+    resetTestEventLog();
+    resetCapabilityOverlay();
+    res.status(200).json({ ok: true });
   });
 
   // Presigned-URL resolver — RFC 0019 §B point 1. The blob surface's

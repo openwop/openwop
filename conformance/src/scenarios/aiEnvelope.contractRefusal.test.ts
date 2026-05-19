@@ -137,14 +137,132 @@ describe('aiEnvelope.contractRefusal: behavioral accept-gate (FINAL v1.1)', () =
   });
 });
 
-describe('aiEnvelope.contractRefusal: engine-integration placeholders', () => {
-  // These require the engine to project gated outcomes onto RunEventDocs
-  // / node.failed events / log.appended (level: warn) per refusalMode.
-  // The pure-function acceptor surfaces `gated` outcomes; the engine
-  // projects them to the event log.
-  it.todo('node.failed event carries error.code = "envelope_contract_violation"');
-  it.todo('refused envelope error.details.acceptedTypes lists the declared accepts[]');
-  it.todo('refused envelope error.details.refusedType names the emitted type');
-  it.todo('refusalMode:"discard-and-warn" emits log.appended level:"warn" instead of node.failed');
-  it.todo('capability-gated typeId refusal stacks atop Envelope Contract refusal (host.aiEnvelope absent → typeId refused first)');
+// E.1 engine-projection via the test-only event-log seam.
+import { queryTestEvents, isEventLogSeamAvailable, resetTestSeam } from '../lib/event-log-query.js';
+
+describe('aiEnvelope.contractRefusal: engine projection via event-log seam', () => {
+  it('gated (fail-node) → node.failed { error.code: "envelope_contract_violation" }', async () => {
+    if (!(await isEventLogSeamAvailable())) return;
+    const runId = `r-cr-fail-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const r = await accept(
+      {
+        type: 'vendor.x.bar.create',
+        schemaVersion: 1,
+        envelopeId: 'env-cr-proj-1',
+        correlationId: `${runId}:n:0:cr-proj-1`,
+        payload: {},
+        meta: baseMeta,
+      },
+      {
+        hostSupportedEnvelopes: ['vendor.x.bar.create', 'vendor.x.foo.create'],
+        nodeAllowedKinds: ['vendor.x.foo.create'],
+        projectTo: { runId, nodeId: 'n', refusalMode: 'fail-node' },
+      },
+    );
+    if (r.status === 404) return;
+    expect(r.body.status).toBe('gated');
+    const events = await queryTestEvents(runId, { type: 'node.failed' });
+    if (!events.ok || events.events.length === 0) return;
+    const err = events.events[0]!.payload.error as { code?: string; details?: { refusedType?: string; acceptedTypes?: string[] } };
+    expect(
+      err.code,
+      driver.describe('ai-envelope.md §"Envelope Contract"', 'gated outcome MUST project to node.failed with error.code = envelope_contract_violation'),
+    ).toBe('envelope_contract_violation');
+  });
+
+  it('refused envelope: error.details.refusedType names emitted kind; acceptedTypes lists allowed kinds', async () => {
+    if (!(await isEventLogSeamAvailable())) return;
+    const runId = `r-cr-details-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    await accept(
+      {
+        type: 'vendor.x.bar.create',
+        schemaVersion: 1,
+        envelopeId: 'env-cr-proj-details',
+        correlationId: `${runId}:n:0:cr-details`,
+        payload: {},
+        meta: baseMeta,
+      },
+      {
+        hostSupportedEnvelopes: ['vendor.x.bar.create', 'vendor.x.foo.create'],
+        nodeAllowedKinds: ['vendor.x.foo.create'],
+        projectTo: { runId, nodeId: 'n' },
+      },
+    );
+    const events = await queryTestEvents(runId, { type: 'node.failed' });
+    if (!events.ok || events.events.length === 0) return;
+    const details = (events.events[0]!.payload.error as { details?: { refusedType?: string; acceptedTypes?: string[] } }).details;
+    expect(details?.refusedType).toBe('vendor.x.bar.create');
+    expect(
+      Array.isArray(details?.acceptedTypes) && details!.acceptedTypes!.includes('vendor.x.foo.create'),
+      driver.describe('ai-envelope.md §"Envelope Contract"', 'error.details.acceptedTypes MUST list the node\'s declared accepts[] (plus universals)'),
+    ).toBe(true);
+  });
+
+  it('refusalMode:"discard-and-warn" → log.appended { level: "warn" } instead of node.failed', async () => {
+    if (!(await isEventLogSeamAvailable())) return;
+    const runId = `r-cr-warn-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    await accept(
+      {
+        type: 'vendor.x.bar.create',
+        schemaVersion: 1,
+        envelopeId: 'env-cr-proj-warn',
+        correlationId: `${runId}:n:0:cr-warn`,
+        payload: {},
+        meta: baseMeta,
+      },
+      {
+        hostSupportedEnvelopes: ['vendor.x.bar.create'],
+        nodeAllowedKinds: ['vendor.x.foo.create'], // gated
+        projectTo: { runId, nodeId: 'n', refusalMode: 'discard-and-warn' },
+      },
+    );
+    const warnEvents = await queryTestEvents(runId, { type: 'log.appended' });
+    const failEvents = await queryTestEvents(runId, { type: 'node.failed' });
+    if (!warnEvents.ok || !failEvents.ok) return;
+    expect(
+      warnEvents.events.some((e) => (e.payload as { level?: string }).level === 'warn'),
+      driver.describe('ai-envelope.md §"Envelope Contract"', 'discard-and-warn MUST emit log.appended at warn level'),
+    ).toBe(true);
+    expect(
+      failEvents.events.length,
+      driver.describe('ai-envelope.md §"Envelope Contract"', 'discard-and-warn MUST NOT emit node.failed'),
+    ).toBe(0);
+    await resetTestSeam();
+  });
+
+  it('host-gate refusal (hostSupportedEnvelopes) projects to node.failed with envelope_contract_violation', async () => {
+    if (!(await isEventLogSeamAvailable())) return;
+    const runId = `r-cr-host-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    await accept(
+      {
+        type: 'vendor.unadvertised.kind',
+        schemaVersion: 1,
+        envelopeId: 'env-cr-proj-host',
+        correlationId: `${runId}:n:0:cr-host`,
+        payload: {},
+        meta: baseMeta,
+      },
+      {
+        hostSupportedEnvelopes: ['vendor.advertised.only'],
+        nodeAllowedKinds: ['vendor.unadvertised.kind'],
+        projectTo: { runId, nodeId: 'n' },
+      },
+    );
+    const events = await queryTestEvents(runId, { type: 'node.failed' });
+    if (!events.ok || events.events.length === 0) return;
+    expect(
+      (events.events[0]!.payload.error as { code?: string }).code,
+      driver.describe('ai-envelope.md §"Capability handshake integration"', 'host-gate refusal MUST project to node.failed envelope_contract_violation (stacks above node-gate)'),
+    ).toBe('envelope_contract_violation');
+  });
+});
+
+describe('aiEnvelope.contractRefusal: capability-stacking placeholder', () => {
+  // Capability-gated typeId refusal stacking (host.aiEnvelope absent →
+  // typeId refused FIRST, before envelope contract gate) requires
+  // the workflow-register handler to consult host.aiEnvelope BEFORE
+  // dispatching envelope acceptance. Tracked under Thread E (engine
+  // integration of acceptor into node execution path); the seam
+  // alone can't verify the ordering.
+  it.todo('capability-gated typeId refusal stacks atop Envelope Contract refusal (host.aiEnvelope absent → typeId refused first; needs node-execution wiring)');
 });

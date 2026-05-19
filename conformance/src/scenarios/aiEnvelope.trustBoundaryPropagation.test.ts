@@ -132,12 +132,63 @@ describe('aiEnvelope.trustBoundaryPropagation: behavioral normalization (FINAL v
   });
 });
 
-describe('aiEnvelope.trustBoundaryPropagation: engine-integration placeholders', () => {
-  // These require the engine to project normalizedMeta.contentTrust
-  // onto RunEventDoc.contentTrust + enforce the approval-gate refusal
-  // path. The pure-function acceptor surfaces normalizedMeta; engine
-  // wiring is host-impl scope.
-  it.todo('engine projects normalizedMeta.contentTrust onto RunEventDoc.contentTrust');
-  it.todo('approval gate refuses to advance on untrusted envelope with untrusted_content_blocks_approval');
-  it.todo('downstream LLM node re-consuming untrusted RunEventDoc applies <UNTRUSTED> wrap per prompt-injection invariant');
+// E.1 engine-projection via the test-only event-log seam.
+import { queryTestEvents, isEventLogSeamAvailable, resetTestSeam } from '../lib/event-log-query.js';
+
+describe('aiEnvelope.trustBoundaryPropagation: engine projection via event-log seam', () => {
+  it('normalizedMeta.contentTrust:"untrusted" MUST project onto RunEventDoc.contentTrust', async () => {
+    if (!(await isEventLogSeamAvailable())) return;
+    const runId = `r-tb-proj-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    await accept(
+      {
+        type: 'clarification.request',
+        schemaVersion: 1,
+        envelopeId: 'env-tb-proj-1',
+        correlationId: `${runId}:n:0:tb-proj`,
+        payload: { questions: [{ id: 'q1', question: 'why?' }] },
+        meta: { ...baseMeta, contentTrust: 'untrusted' },
+      },
+      { projectTo: { runId, nodeId: 'n' } },
+    );
+    const events = await queryTestEvents(runId, { type: 'interrupt.requested' });
+    if (!events.ok || events.events.length === 0) return;
+    expect(
+      events.events[0]!.contentTrust,
+      driver.describe(
+        'ai-envelope.md §"Trust boundary"',
+        'engine MUST project normalizedMeta.contentTrust:"untrusted" onto every consequent RunEventDoc.contentTrust',
+      ),
+    ).toBe('untrusted');
+    await resetTestSeam();
+  });
+
+  it('trusted envelope projects RunEventDoc.contentTrust:"trusted" (default + explicit both verified)', async () => {
+    if (!(await isEventLogSeamAvailable())) return;
+    const runId = `r-tb-trusted-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    await accept(
+      {
+        type: 'clarification.request',
+        schemaVersion: 1,
+        envelopeId: 'env-tb-proj-trusted',
+        correlationId: `${runId}:n:0:tb-trusted`,
+        payload: { questions: [{ id: 'q1', question: 'why?' }] },
+        meta: baseMeta, // no contentTrust → default 'trusted'
+      },
+      { projectTo: { runId, nodeId: 'n' } },
+    );
+    const events = await queryTestEvents(runId, { type: 'interrupt.requested' });
+    if (!events.ok || events.events.length === 0) return;
+    expect(events.events[0]!.contentTrust).toBe('trusted');
+    await resetTestSeam();
+  });
+});
+
+describe('aiEnvelope.trustBoundaryPropagation: approval-gate refusal placeholder', () => {
+  // Approval-gate refusal (`untrusted_content_blocks_approval`) requires
+  // wiring the acceptor's normalizedMeta onto the engine's approval-gate
+  // resume handler. Tracked under Thread E.4 of the test-coverage plan
+  // (approval-gate refusal seam); the projection seam alone can't drive
+  // a resume-with-untrusted assertion.
+  it.todo('approval gate refuses to advance on untrusted envelope with untrusted_content_blocks_approval (needs approval-gate resume seam)');
+  it.todo('downstream LLM node re-consuming untrusted RunEventDoc applies <UNTRUSTED> wrap per prompt-injection invariant (needs node-execution seam)');
 });

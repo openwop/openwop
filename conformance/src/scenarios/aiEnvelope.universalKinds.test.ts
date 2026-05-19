@@ -164,13 +164,92 @@ describe('aiEnvelope.universalKinds: behavioral accept via /v1/host/sample/envel
   });
 });
 
-describe('aiEnvelope.universalKinds: engine-integration placeholders', () => {
-  // These assert behaviors beyond the pure-function acceptor — they
-  // need the engine to lift envelopes into interrupts / re-inject
-  // schemas / emit log.appended events. Tracked separately; the
-  // acceptor seam above covers the 5 wire-level assertions.
-  it.todo('lift clarification.request to kind:"clarification" interrupt per interrupt.md');
-  it.todo('schema.request triggers next-turn schema re-injection (host responsibility)');
-  it.todo('schema.response counted (or exempt) against limits.envelopesPerTurn per host policy');
-  it.todo('error envelope projects to log.appended (level: "error"), NOT node.failed');
+// E.1 engine-projection via the test-only event-log seam.
+import { queryTestEvents, isEventLogSeamAvailable, resetTestSeam } from '../lib/event-log-query.js';
+
+describe('aiEnvelope.universalKinds: engine projection via event-log seam', () => {
+  it('clarification.request MUST be lifted to interrupt.requested { kind: "clarification" } per interrupt.md', async () => {
+    if (!(await isEventLogSeamAvailable())) return;
+    const runId = `r-uk-clar-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const r = await accept(
+      {
+        type: 'clarification.request',
+        schemaVersion: 1,
+        envelopeId: 'env-uk-proj-clar',
+        correlationId: `${runId}:n:0:uk-clar`,
+        payload: { questions: [{ id: 'q1', question: 'why?' }] },
+        meta: baseMeta,
+      },
+      { projectTo: { runId, nodeId: 'n' } },
+    );
+    if (r.status === 404) return;
+    expect(r.body.status).toBe('accepted');
+    const events = await queryTestEvents(runId, { type: 'interrupt.requested' });
+    if (!events.ok) return;
+    expect(
+      events.events.length,
+      driver.describe('ai-envelope.md §"Universal kinds"', 'accepted clarification.request MUST project to interrupt.requested per interrupt.md'),
+    ).toBe(1);
+    expect((events.events[0]!.payload as { kind?: string }).kind).toBe('clarification');
+    await resetTestSeam();
+  });
+
+  it('error envelope MUST project to log.appended { level: "error" } — NOT node.failed', async () => {
+    if (!(await isEventLogSeamAvailable())) return;
+    const runId = `r-uk-err-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    await accept(
+      {
+        type: 'error',
+        schemaVersion: 1,
+        envelopeId: 'env-uk-proj-err',
+        correlationId: `${runId}:n:0:uk-err`,
+        payload: { code: 'validation_failed', message: 'cannot produce JSON' },
+        meta: baseMeta,
+      },
+      { projectTo: { runId, nodeId: 'n' } },
+    );
+    const logs = await queryTestEvents(runId, { type: 'log.appended' });
+    const fails = await queryTestEvents(runId, { type: 'node.failed' });
+    if (!logs.ok || !fails.ok) return;
+    expect(
+      logs.events.some((e) => (e.payload as { level?: string }).level === 'error'),
+      driver.describe('ai-envelope.md §"Universal kinds"', 'LLM-emitted error envelope MUST project to log.appended at error level'),
+    ).toBe(true);
+    expect(
+      fails.events.length,
+      driver.describe('ai-envelope.md §"Universal kinds"', 'LLM-emitted error envelope MUST NOT project to node.failed (distinct from terminal node failure)'),
+    ).toBe(0);
+    await resetTestSeam();
+  });
+
+  it('schema.request projects to log.appended (host implements next-turn injection out-of-band)', async () => {
+    if (!(await isEventLogSeamAvailable())) return;
+    const runId = `r-uk-sr-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    await accept(
+      {
+        type: 'schema.request',
+        schemaVersion: 1,
+        envelopeId: 'env-uk-proj-sr',
+        correlationId: `${runId}:n:0:uk-sr`,
+        payload: { envelopeType: 'vendor.acme.foo' },
+        meta: baseMeta,
+      },
+      { projectTo: { runId, nodeId: 'n' } },
+    );
+    const events = await queryTestEvents(runId, { type: 'log.appended' });
+    if (!events.ok) return;
+    expect(
+      events.events.length,
+      driver.describe('ai-envelope.md §"Universal kinds"', 'schema.request MUST project to log.appended (the schema delivery itself happens out-of-band via the host\'s next-turn system prompt)'),
+    ).toBeGreaterThan(0);
+    await resetTestSeam();
+  });
+});
+
+describe('aiEnvelope.universalKinds: counter-policy placeholder', () => {
+  // schema.response counting against envelopesPerTurn is a host policy
+  // choice per ai-envelope.md §"Universal kinds" — implementations MAY
+  // count it OR exempt it. The conformance contract is "advertise the
+  // choice"; the per-host counter behavior is reference-impl specific.
+  it.todo('schema.response counted-or-exempt against limits.envelopesPerTurn per documented host policy (advertisement test only — no behavioral assertion)');
 });

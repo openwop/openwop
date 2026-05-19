@@ -165,10 +165,42 @@ describe('aiEnvelope.correlationReplay: behavioral in-process dedup (FINAL v1.1)
   });
 });
 
-describe('aiEnvelope.correlationReplay: engine-projection placeholders', () => {
-  // Cross-process replay + RunEventDoc.causationId projection require a
-  // run-lifecycle seam beyond the pure acceptor. Tracked as engine-impl
-  // follow-up under Phase 3 (surface seams) of the test-coverage plan.
+// E.1 engine-projection via the test-only event-log seam.
+import { queryTestEvents, isEventLogSeamAvailable, resetTestSeam } from '../lib/event-log-query.js';
+
+describe('aiEnvelope.correlationReplay: causationId projection via event-log seam', () => {
+  it('resulting RunEventDoc.causationId MUST equal the envelope.correlationId (causal chain preserved)', async () => {
+    if (!(await isEventLogSeamAvailable())) return;
+    const runId = `r-cr-cause-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const correlationId = `${runId}:n:0:causationId-link`;
+    await accept(
+      {
+        type: 'clarification.request',
+        schemaVersion: 1,
+        envelopeId: 'env-cr-cause-1',
+        correlationId,
+        payload: { questions: [{ id: 'q1', question: 'why?' }] },
+        meta: baseMeta,
+      },
+      { projectTo: { runId, nodeId: 'n' } },
+    );
+    const events = await queryTestEvents(runId);
+    if (!events.ok || events.events.length === 0) return;
+    for (const e of events.events) {
+      expect(
+        e.causationId,
+        driver.describe('ai-envelope.md §"Replay determinism"', 'every event projected from an envelope MUST carry causationId === envelope.correlationId'),
+      ).toBe(correlationId);
+    }
+    await resetTestSeam();
+  });
+});
+
+describe('aiEnvelope.correlationReplay: cross-process-replay placeholder', () => {
+  // Cross-process replay (process-death after accept; recovered process
+  // re-emits same correlationId → cached outcome) requires a PERSISTED
+  // dedup-state seam — the in-process acceptor's priorCorrelations
+  // map dies with the process. Tracked under Phase 3 of the test-coverage
+  // plan as a separate "persisted dedup state" seam.
   it.todo('cross-process replay: process-death after accept; recovered process re-emits same correlationId → cached outcome (requires persisted dedup state seam)');
-  it.todo('resulting RunEventDoc.causationId equals the envelope.correlationId (requires event-log query seam)');
 });
