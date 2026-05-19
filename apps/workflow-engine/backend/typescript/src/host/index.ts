@@ -10,12 +10,69 @@
  * identity), swap the impl here. Route handlers stay unchanged.
  */
 
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createLogger } from '../observability/logger.js';
 import type { Storage } from '../storage/storage.js';
 import type { Principal } from '../types.js';
 import { OpenwopError } from '../types.js';
 import type { WorkflowDefinition } from '../executor/types.js';
 import { getRegisteredWorkflow } from './workflowsRegistry.js';
+
+/**
+ * Load conformance fixtures from the in-tree `conformance/fixtures/`
+ * directory so the sample BE can stand in as a black-box conformance
+ * target. Only fixtures whose typeIds are registered on this host
+ * (chat-responder, demo-uppercase, mock-agent, core.*) are loadable;
+ * everything else surfaces as "workflow not found" if a run requests it.
+ *
+ * Discovery (`routes/discovery.ts`) advertises the loaded fixtures via
+ * `capabilities.fixtures` so capability-gated conformance scenarios
+ * can detect what this host actually supports.
+ */
+function findConformanceFixturesDir(): string | null {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const candidates = [
+    resolve(here, '../../../../../../conformance/fixtures'),  // tsx dev from src/host
+    resolve(here, '../../../../../conformance/fixtures'),     // tsx dev one fewer (just in case)
+    resolve(here, '../../../../conformance/fixtures'),        // esbuild bundle lib/
+    resolve(here, './conformance/fixtures'),                  // vendored alongside
+    resolve(process.cwd(), 'conformance/fixtures'),           // CWD fallback
+  ];
+  for (const path of candidates) {
+    if (existsSync(path)) return path;
+  }
+  return null;
+}
+
+const conformanceFixtures = new Map<string, WorkflowDefinition>();
+(function loadConformanceFixtures(): void {
+  const dir = findConformanceFixturesDir();
+  if (!dir) return;
+  try {
+    for (const file of readdirSync(dir)) {
+      if (!file.endsWith('.json')) continue;
+      try {
+        const raw = readFileSync(join(dir, file), 'utf-8');
+        const parsed = JSON.parse(raw) as WorkflowDefinition & { id?: string; workflowId?: string };
+        const id = parsed.workflowId ?? parsed.id;
+        if (typeof id === 'string' && id.length > 0) {
+          conformanceFixtures.set(id, { ...parsed, workflowId: id });
+        }
+      } catch {
+        /* skip malformed fixture */
+      }
+    }
+  } catch {
+    /* directory unreadable — sample BE just doesn't act as a conformance target */
+  }
+})();
+
+/** Public — list loaded conformance fixture ids for `capabilities.fixtures`. */
+export function listLoadedConformanceFixtures(): readonly string[] {
+  return Array.from(conformanceFixtures.keys()).sort();
+}
 
 const log = createLogger('host');
 
@@ -214,6 +271,12 @@ export function createHostAdapterSuite(deps: { storage: Storage }): HostAdapterS
         if (registered) {
           return { workflowId, definition: registered };
         }
+        // Conformance fixtures loaded from in-tree `conformance/fixtures/`
+        // at boot. Lets the sample BE answer black-box conformance runs
+        // targeted at `/v1/runs` with a fixture workflowId, gated by
+        // whichever fixture-specific typeIds this host has registered.
+        const fixture = conformanceFixtures.get(workflowId);
+        if (fixture) return { workflowId, definition: fixture };
         return null;
       },
     },

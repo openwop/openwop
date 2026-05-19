@@ -14,6 +14,7 @@ import type { Storage } from '../storage/storage.js';
 import { listHostSurfaces } from '../bootstrap/hostSurfaceRegistry.js';
 import { universalEnvelopeKinds } from '../host/envelopeAcceptor.js';
 import { getFsSandboxRoot } from '../host/inMemorySurfaces.js';
+import { listLoadedConformanceFixtures } from '../host/index.js';
 
 interface Deps {
   storage: Storage;
@@ -160,6 +161,12 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       // of this codebase SHOULD remove the registration call AND set
       // this to false.
       conformance: { mockAgent: true },
+      // Conformance fixtures loaded from in-tree `conformance/fixtures/`
+      // at boot. Each fixture id here is a workflowId the host can run
+      // via `POST /v1/runs { workflowId }` — used by the openwop
+      // conformance suite to decide which capability-gated scenarios
+      // apply to this host.
+      fixtures: listLoadedConformanceFixtures(),
       webhooks: { supported: true, signed: true, durable: false },
       observability: { otel: { namespace: 'openwop' } },
       runtimeCapabilities: listCapabilities(),
