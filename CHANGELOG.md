@@ -11,6 +11,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Workflow-engine sample — variables runtime + core.identity (2026-05-19)
+
+First slice of the variables-runtime build that the dispatch / subWorkflow tier rests on. Closes the `identity-passthrough` conformance scenario (`fixtures.md §conformance-identity`): `inputs.{name}` on `POST /v1/runs` lands in `RunSnapshot.variables.{name}` on `GET /v1/runs/{runId}`, deep-equal round-trip. Suite delta: 1189 → 1194 passing / 55 → 52 failing against the workflow-engine sample.
+
+- **`apps/workflow-engine/backend/typescript/src/host/variablesRuntime.ts`** (NEW) — pure in-process per-run variable bag. `seedRunVariables(runId, decls, inputs)` builds the initial Map (precedence: `inputs[name]` > `defaultValue` > absent). `snapshotRunVariables(runId)` returns the bag as a plain object for `RunSnapshot.variables`. Future scope (HVMAP-2 mid-run mutation): `setRunVariable(...)` already exists; awaits the test-seam endpoint that wires through.
+- **`apps/workflow-engine/backend/typescript/src/executor/types.ts`** — `WorkflowDefinition` interface gains optional `variables[]` (name, type, description, required, defaultValue) so the type system surfaces what the fixture JSON already carried.
+- **`apps/workflow-engine/backend/typescript/src/bootstrap/nodes.ts`** — registers `core.identity` (input → same-named output passthrough). Behaviorally indistinguishable from `core.noop` for now; preserved as a distinct typeId because `conformance/fixtures.md` names it.
+- **`apps/workflow-engine/backend/typescript/src/routes/runs.ts`** — `POST /v1/runs` calls `seedRunVariables(...)` after `insertRun`; `projectRunSnapshot` reads the bag back via `snapshotRunVariables` and includes it in the response only when present (legacy fixtures without `variables[]` get the absent shape).
+
+Local verification: `identity-passthrough.test.ts` passes 1/1 against the sample with an arbitrary nested JSON payload round-tripping intact.
+
+Compatibility: **implementation-only** (workflow-engine sample). Variables runtime is purely additive — the snapshot response gains an optional `variables` field that other reference hosts (in-memory, SQLite) may or may not advertise; conformance gates on fixture presence, not on the field.
+
 ### Workflow-engine sample — POST /v1/runs returns 201 (spec-aligned) (2026-05-19)
 
 The sample previously returned HTTP `202 Accepted` on `POST /v1/runs` based on the "Cloud Tasks dispatch is async" rationale. Per `api/openapi.yaml` (line 188) and the conformance suite's `runs-lifecycle.test.ts:42`, the spec mandates `201 Created` — the run resource exists immediately, execution is async but that's an implementation detail. Wire-shape gap unblocked by the prior fixture-loader commit (`e2ed9a8`).

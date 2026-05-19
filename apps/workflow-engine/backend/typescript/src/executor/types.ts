@@ -275,4 +275,16 @@ export interface WorkflowDefinition {
   /** Input schema (informational only in this sample; real hosts validate via Ajv). */
   inputSchema?: Record<string, unknown>;
   configurableSchema?: Record<string, unknown>;
+  /** Variable declarations — per `spec/v1/workflow-definition.schema.json
+   *  §variables`. The runtime seeds a per-run variable bag from these
+   *  defaults at run-create time (`POST /v1/runs.inputs[name]` overrides
+   *  `defaultValue` per `host/variablesRuntime.ts`). Read back via
+   *  `RunSnapshot.variables` on `GET /v1/runs/{runId}`. */
+  variables?: ReadonlyArray<{
+    name: string;
+    type?: string;
+    description?: string;
+    required?: boolean;
+    defaultValue?: unknown;
+  }>;
 }

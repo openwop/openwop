@@ -33,6 +33,23 @@ const noopNode: NodeModule = {
   },
 };
 
+/** Identity passthrough — copies every input port to a same-named
+ *  output port. Used by `conformance-identity` to assert that
+ *  `inputs.{var}` from POST /v1/runs round-trips to
+ *  `RunSnapshot.variables.{var}`. The output→variable plumbing
+ *  happens in the executor; this node's only job is to be present so
+ *  the run reaches terminal `completed`. Behaviorally indistinguishable
+ *  from `core.noop` today; preserved as a distinct typeId because the
+ *  fixture catalog (and conformance/fixtures.md) names it explicitly. */
+const identityNode: NodeModule = {
+  typeId: 'core.identity',
+  version: '1.0.0',
+  async execute(ctx) {
+    const inputs = (ctx.inputs && typeof ctx.inputs === 'object') ? (ctx.inputs as Record<string, unknown>) : {};
+    return { status: 'success', outputs: { ...inputs } };
+  },
+};
+
 const delayNode: NodeModule = {
   typeId: 'core.delay',
   version: '1.0.0',
@@ -511,6 +528,7 @@ export function ensureNodesRegistered(): void {
   if (registered) return;
   const registry = getNodeRegistry();
   registry.register(noopNode);
+  registry.register(identityNode);
   registry.register(delayNode);
   registry.register(failNode);
   registry.register(approvalGateNode);

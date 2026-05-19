@@ -22,6 +22,7 @@ import type {
 import type { Storage } from '../storage/storage.js';
 import type { HostAdapterSuite } from '../host/index.js';
 import { OpenwopError, type RunRecord } from '../types.js';
+import { seedRunVariables, snapshotRunVariables } from '../host/variablesRuntime.js';
 import { executeRun } from '../executor/executor.js';
 import { getEventLog } from '../executor/eventLog.js';
 import { createLogger } from '../observability/logger.js';
@@ -128,6 +129,12 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
         updatedAt: now,
       };
       await storage.insertRun(run);
+      // Seed the per-run variable bag from workflow defaults +
+      // request inputs. Per `host/variablesRuntime.ts`: `inputs[name]`
+      // overrides `variables[].defaultValue` by variable name; vars
+      // without an override and without a default are not seeded
+      // (read surface returns undefined → key absent in JSON).
+      seedRunVariables(runId, wf.definition.variables, body.inputs);
       // Bind the run to a concurrent-runs slot (P0.4 rate limit) — the
       // middleware reserved abstract capacity in its pre-flight check,
       // and this call ties the reservation to the actual runId so the
@@ -356,6 +363,7 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
 }
 
 function projectRunSnapshot(run: RunRecord) {
+  const variables = snapshotRunVariables(run.runId);
   return {
     runId: run.runId,
     workflowId: run.workflowId,
@@ -367,6 +375,13 @@ function projectRunSnapshot(run: RunRecord) {
     parentRunId: run.parentRunId,
     parentSeq: run.parentSeq,
     forkMode: run.forkMode,
+    // RFC 0022 §B / `workflow-definition.schema.json §variables` —
+    // the per-run variable bag (seeded at run-create from
+    // `workflow.variables[].defaultValue` + `request.inputs`). Absent
+    // when the run was never seeded (legacy fixtures without a
+    // `variables[]` declaration). The omission is meaningful — JSON
+    // serialization drops `undefined` keys.
+    ...(variables !== null ? { variables } : {}),
   };
 }
 
