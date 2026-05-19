@@ -1,0 +1,27 @@
+{
+  "id": "conformance-dispatch-cancellable-child",
+  "name": "Conformance: Dispatch cancellable child (RFC 0022 §B HVMAP-1b-cancelled)",
+  "version": "1.0",
+  "description": "RFC 0022 §B / HVMAP-1b-cancelled — child workflow with a long-running `core.delay` so the test can externally cancel it via `POST /v1/runs/{childRunId}/cancel`. Used by `conformance-dispatch-output-mapping` (parent) to verify that the parent's `outputMapping` MUST be SKIPPED when the child terminates `cancelled`; the parent's `parentResult` variable MUST remain at its pre-dispatch state.",
+  "nodes": [
+    {
+      "id": "wait",
+      "typeId": "core.delay",
+      "name": "Long delay (cancelled externally)",
+      "position": { "x": 0, "y": 0 },
+      "config": { "durationMs": 30000 },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "childOutcome", "type": "string", "defaultValue": "this-should-not-be-harvested" }
+  ],
+  "metadata": {
+    "tags": ["conformance", "rfc-0022", "dispatch", "output-mapping", "hvmap-1b-cancelled", "child"]
+  },
+  "settings": { "timeout": 60000, "maxRetries": 0 }
+}

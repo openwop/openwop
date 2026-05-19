@@ -123,7 +123,7 @@ describe.skipIf(SKIP)('subworkflow-input-mapping: parent → child variable seed
   });
 
   it.todo(
-    'HVMAP-2-no-midrun-propagation: child mid-run; parent updates currentPrdId; child receivedPrdId MUST remain at seeded value (one-shot fold per §B normative bullet). Requires a multi-step child that suspends + a parent path that mutates.',
+    'HVMAP-2-no-midrun-propagation: child mid-run; parent updates currentPrdId; child receivedPrdId MUST remain at seeded value (one-shot fold per §B normative bullet). DEFERRED — requires (1) a multi-step child fixture that suspends mid-run on a clarification gate, plus (2) a parent path that mutates `currentPrdId` AFTER the child is suspended. The reference workflow-engine has no parallel-execution model that lets the parent run a separate "mutate-var" node WHILE the subwf-call is blocked on the child; this needs either a new sample-namespaced `POST /v1/host/sample/test/runs/:runId/variables` seam OR a workflow primitive that splits the parent into a fan-out branch that mutates concurrently. Tracked under Phase 3 of the test-coverage plan as a separate "run-state mutation seam" task.',
   );
 
 });

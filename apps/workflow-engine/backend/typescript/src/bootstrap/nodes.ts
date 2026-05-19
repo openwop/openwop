@@ -43,6 +43,20 @@ const delayNode: NodeModule = {
   },
 };
 
+/** Deterministic-failure node — terminates with `status: 'failed'`
+ *  every time. Inverse of `core.noop`. Conformance fixtures use this
+ *  to exercise downstream paths (e.g., RFC 0022 §B "outputMapping is
+ *  SKIPPED when child terminates failed/cancelled" — HVMAP-1b-failed). */
+const failNode: NodeModule = {
+  typeId: 'core.fail',
+  version: '1.0.0',
+  async execute(ctx) {
+    const code = String(ctx.config?.code ?? 'deterministic_fail');
+    const message = String(ctx.config?.message ?? 'core.fail node terminated deterministically');
+    return { status: 'failure', error: { code, message } };
+  },
+};
+
 const approvalGateNode: NodeModule = {
   typeId: 'core.approvalGate',
   version: '1.0.0',
@@ -498,6 +512,7 @@ export function ensureNodesRegistered(): void {
   const registry = getNodeRegistry();
   registry.register(noopNode);
   registry.register(delayNode);
+  registry.register(failNode);
   registry.register(approvalGateNode);
   registry.register(clarificationGateNode);
   registry.register(interruptNode);

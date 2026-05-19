@@ -1,0 +1,30 @@
+{
+  "id": "conformance-dispatch-deterministic-fail-child",
+  "name": "Conformance: Dispatch deterministic-fail child (RFC 0022 §B HVMAP-1b-failed)",
+  "version": "1.0",
+  "description": "RFC 0022 §B / HVMAP-1b-failed — child workflow that ALWAYS terminates `failed` via the host's `core.fail` node. Used by `conformance-dispatch-output-mapping` (parent) to verify that the parent's `outputMapping` MUST be SKIPPED when the child terminates non-completed; the parent's `parentResult` variable MUST remain at its pre-dispatch state.",
+  "nodes": [
+    {
+      "id": "fail",
+      "typeId": "core.fail",
+      "name": "Deterministic fail",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "code": "hvmap_1b_failed_fixture",
+        "message": "intentional terminal failure for outputMapping-skip assertion"
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "childOutcome", "type": "string", "defaultValue": "this-should-not-be-harvested" }
+  ],
+  "metadata": {
+    "tags": ["conformance", "rfc-0022", "dispatch", "output-mapping", "hvmap-1b-failed", "child"]
+  },
+  "settings": { "timeout": 5000, "maxRetries": 0 }
+}
