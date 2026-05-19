@@ -6,7 +6,7 @@
 
 <!-- ─── Primary meta ────────────────────────────────────────────────── -->
 <title>OpenWOP — Multi-Agent Workflow Orchestration Protocol</title>
-<meta name="description" content="Open, vendor-neutral wire protocol for durable multi-agent workflow orchestration. Run lifecycle, replay, BYOK, signed events across compliant hosts." />
+<meta name="description" content="Open, vendor-neutral wire protocol for durable multi-agent workflow orchestration. Run lifecycle, replay, BYOK, signed events, and conformance-tested host behavior." />
 <meta name="author" content="OpenWOP" />
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
 <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1" />
@@ -17,7 +17,7 @@
 <meta property="og:site_name" content="OpenWOP" />
 <meta property="og:url" content="https://openwop.dev/" />
 <meta property="og:title" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol" />
-<meta property="og:description" content="Open, vendor-neutral wire protocol for durable multi-agent workflow orchestration. Run lifecycle, replay, BYOK, signed events across compliant hosts." />
+<meta property="og:description" content="Open, vendor-neutral wire protocol for durable multi-agent workflow orchestration. Run lifecycle, replay, BYOK, signed events, and conformance-tested host behavior." />
 <meta property="og:image" content="https://openwop.dev/assets/og-cover.png" />
 <meta property="og:image:secure_url" content="https://openwop.dev/assets/og-cover.png" />
 <meta property="og:image:type" content="image/png" />
@@ -31,7 +31,7 @@
 <meta name="twitter:site" content="@davidscotttufts" />
 <meta name="twitter:creator" content="@davidscotttufts" />
 <meta name="twitter:title" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol" />
-<meta name="twitter:description" content="Open, vendor-neutral wire protocol for durable multi-agent workflow orchestration. Run lifecycle, replay, BYOK, signed events across compliant hosts." />
+<meta name="twitter:description" content="Open, vendor-neutral wire protocol for durable multi-agent workflow orchestration. Run lifecycle, replay, BYOK, signed events, and conformance-tested host behavior." />
 <meta name="twitter:image" content="https://openwop.dev/assets/og-cover.png" />
 <meta name="twitter:image:alt" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol" />
 
@@ -56,7 +56,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" />
 
 <!-- ─── Styles ──────────────────────────────────────────────────────── -->
-<link rel="stylesheet" href="styles.css?v=design-2026-05-12d" />
+<link rel="stylesheet" href="styles.css?v=design-2026-05-19d" />
 
 <!-- ─── Structured data (schema.org / JSON-LD) ──────────────────────── -->
 <script type="application/ld+json">
@@ -96,13 +96,13 @@
       "@id": "https://openwop.dev/#protocol",
       "name": "OpenWOP",
       "alternateName": "Workflow Orchestration Protocol",
-      "description": "Open wire-level protocol for durable multi-agent workflow orchestration over REST, SSE, and signed webhooks. Defines run lifecycle, suspend/resume, replay/fork, BYOK, signed event streaming, and human-in-the-loop pauses.",
+      "description": "Open wire-level protocol for durable multi-agent workflow orchestration over REST, SSE, and signed webhooks. Defines run lifecycle, suspend/resume, replay/fork, BYOK, signed event streaming, human checkpoints, and conformance-tested host behavior.",
       "url": "https://openwop.dev/",
       "codeRepository": "https://github.com/openwop/openwop",
       "programmingLanguage": ["TypeScript", "Python", "Go"],
       "license": "https://www.apache.org/licenses/LICENSE-2.0",
       "author": { "@id": "https://openwop.dev/#organization" },
-      "version": "1.0"
+      "version": "1.1"
     }
   ]
 }
@@ -120,7 +120,8 @@
     <nav class="topnav">
       <a class="hide-sm" href="#specification">Specification</a>
       <a class="hide-sm" href="#anatomy">Anatomy</a>
-      <a class="hide-sm" href="#context">In context</a>
+      <a class="hide-sm" href="#proof">Proof</a>
+      <a class="hide-sm" href="#demo">Demo</a>
       <a class="hide-sm" href="#ecosystem">Ecosystem</a>
       <a class="pill" href="https://github.com/openwop/openwop">GitHub →</a>
     </nav>
@@ -1231,7 +1232,7 @@
     <div class="spec">
       <div class="row">
         <div class="key">Version</div>
-        <div class="val">1.1.0 (Core)<small>v1.0 FINAL frozen 2026-05-08 · v1.1.0 released 2026-05-12. v1.1 is additive per <code>COMPATIBILITY.md</code> §2.1 — no breaking changes to the v1.0 wire contract. Adds the four auth profiles (API-key-rotation, OAuth2 client-credentials, OIDC user-bearer, mTLS), production-profile conformance (RFC 0009), gRPC transport profile, and the full multi-agent capability surface (agent identity, reasoning events, memory adapter, orchestrator + dispatch). RFC 0008 WASM ABI is now Active with a reference Rust pack live on the registry.</small></div>
+        <div class="val">1.1.x (v1 stable)<small>v1.0 wire contract frozen 2026-05-08 · v1.1.0 released 2026-05-12 as an additive update. Current work expands behavior coverage without breaking required fields, event payloads, endpoint contracts, or package names. The active surface now includes auth profiles, gRPC transport, WASM pack execution, multi-agent identity and reasoning, memory, orchestrator dispatch, and fixture-backed host behavior.</small></div>
       </div>
       <div class="row">
         <div class="key">Transport</div>
@@ -1239,7 +1240,7 @@
       </div>
       <div class="row">
         <div class="key">Discovery</div>
-        <div class="val">/.well-known/openwop<small>Hosts advertise protocol version, capability profiles, limits, and implementation metadata so clients negotiate features instead of guessing. The v1.x profile set: <code>openwop-core</code>, <code>-stream-sse</code>, <code>-stream-poll</code>, <code>-secrets</code>, <code>-provider-policy</code>, <code>-replay-fork</code>, <code>-fixtures</code>, <code>-node-packs</code>, <code>-production</code>, <code>-audit-log-integrity</code>, <code>-discovery-auth-scoped</code>, the four interrupt profiles (<code>-interrupt-quorum</code>, <code>-interrupt-auth-required</code>, <code>-interrupt-external-event</code>, <code>-interrupt-cascade-cancel</code>), and the four auth profiles (<code>-auth-api-key-rotation</code>, <code>-auth-oauth2-client-credentials</code>, <code>-auth-oidc-user-bearer</code>, <code>-auth-mtls</code>). Optional profiles are claimed only when the host implements them end-to-end.</small></div>
+        <div class="val">/.well-known/openwop<small>Hosts advertise protocol version, capability profiles, limits, fixtures, host surfaces, and implementation metadata so clients negotiate features instead of guessing. The v1.x profile set covers core run control, SSE and poll streams, secrets, provider policy, replay/fork, fixtures, node packs, production posture, audit integrity, scoped discovery, interrupt profiles, auth profiles, and optional agent-reasoning streaming. Optional profiles are claimed only when the host implements them end-to-end.</small></div>
       </div>
       <div class="row">
         <div class="key">Tracing</div>
@@ -1260,7 +1261,7 @@
       </div>
       <div class="row">
         <div class="key">Reference hosts</div>
-        <div class="val">4 implementations<small>In-memory (Node), SQLite (Node), Python (stdlib-only), and Postgres. The Postgres host is the first to claim <code>openwop-production</code> with mechanical proof (advisory locking, orphan recovery, 503/Retry-After backpressure, 7-day retention) and advertises all four auth profiles with end-to-end JWT validation. The Python host passes 100% of applicable scenarios in <code>@openwop/openwop-conformance</code>, proving cross-language wire-shape portability. See <a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">INTEROP-MATRIX.md</a> for full claims and conformance evidence.</small></div>
+        <div class="val">4 hosts + sample app<small>In-memory (Node), SQLite (Node), Python (stdlib-only), and Postgres. The Postgres host is the production-shaped path with mechanical proof for claim acquisition, orphan recovery, backpressure, retention, and auth profiles. The Python host passes 100% of applicable scenarios in <code>@openwop/openwop-conformance</code>, proving cross-language wire-shape portability. The workflow-engine sample app now ships a fixture-backed backend and React UI for hands-on adoption. See <a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">INTEROP-MATRIX.md</a> for full claims and conformance evidence.</small></div>
       </div>
       <div class="row">
         <div class="key">License</div>
@@ -1268,8 +1269,69 @@
       </div>
       <div class="row">
         <div class="key">Compatibility</div>
-        <div class="val">v1.x stable<small>Wire shapes and package names stable through any v1.x release. Four versioning axes — engine, event-log, per-event schema, and per-(run, changeId) pinning — keep in-flight runs safe across deploys. See <code>PUBLISHING.md</code> and <code>ROADMAP.md</code>.</small></div>
+        <div class="val">v1.x stable<small>Wire shapes and package names are stable through v1.x releases. Four versioning axes — engine, event-log, per-event schema, and per-(run, changeId) pinning — keep in-flight runs safe across deploys. See <code>COMPATIBILITY.md</code> and <code>PUBLISHING.md</code>.</small></div>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────── IMPLEMENTATION PROOF ─────────────────────── -->
+<section class="block" id="proof">
+  <div class="wrap">
+    <div class="block-head">
+      <div class="label"><span class="marker"><span class="dot"></span>§ 04 / Implementation proof</span></div>
+      <h2>The recent work turns the contract into <em>runnable evidence</em>.</h2>
+      <p class="block-lede">
+        OpenWOP is not just prose. The repository carries reference hosts, a deployable
+        sample app, vendored fixture workflows, and black-box conformance checks that
+        keep host claims honest.
+      </p>
+    </div>
+
+    <div class="proof-stats" aria-label="OpenWOP repository evidence snapshot">
+      <div><span>159</span><small>scenario files</small></div>
+      <div><span>62</span><small>indexed packs</small></div>
+      <div><span>82</span><small>signed pack versions</small></div>
+      <div><span>4</span><small>reference hosts</small></div>
+      <div><span>27</span><small>JSON schemas</small></div>
+    </div>
+
+    <div class="proof-grid">
+      <article class="proof-card">
+        <span class="proof-k">01 · sample host</span>
+        <h3>Fixtures ship with the app image.</h3>
+        <p>The workflow-engine sample now loads and advertises conformance fixtures at discovery time, and its Docker image vendors the fixture corpus as real files with a sync gate to prevent drift.</p>
+      </article>
+
+      <article class="proof-card">
+        <span class="proof-k">02 · host surfaces</span>
+        <h3>Storage and messaging paths are exercised.</h3>
+        <p>Table schemas, cursor pagination, SQL transactions, cache and key-value TTLs, blob roundtrips, presigned blob URLs, vector search, full-text search, queues, dead-letter routing, and stream snapshots all have runnable sample-host seams.</p>
+      </article>
+
+      <article class="proof-card">
+        <span class="proof-k">03 · replay</span>
+        <h3>Determinism has concrete checks.</h3>
+        <p>The suite now probes a canonical LLM cache-key recipe, correlation replay behavior, schema-version floors, and BYOK redaction so replay-sensitive integrations can test the pieces that usually hide inside a runtime.</p>
+      </article>
+
+      <article class="proof-card">
+        <span class="proof-k">04 · agents</span>
+        <h3>Reasoning can stream safely.</h3>
+        <p>Agent reasoning deltas are sequence-checked before a single closing reasoning event, with ordering guards in the conformance suite and matching reference-host smoke tests.</p>
+      </article>
+
+      <article class="proof-card">
+        <span class="proof-k">05 · capability honesty</span>
+        <h3>Claims are tested as behavior.</h3>
+        <p>Capability toggles let the harness verify register-time refusal paths, while hosts that do not claim a feature skip cleanly instead of pretending to implement it.</p>
+      </article>
+
+      <article class="proof-card">
+        <span class="proof-k">06 · release hygiene</span>
+        <h3>CI blocks common drift.</h3>
+        <p>The corpus gate enforces fixture sync, conformance soak builds the TypeScript SDK before running, and Docker build arguments keep the sample image honest about whether fixtures are present.</p>
+      </article>
     </div>
   </div>
 </section>
@@ -1278,7 +1340,7 @@
 <section class="block" id="context">
   <div class="wrap">
     <div class="block-head">
-      <div class="label"><span class="marker"><span class="dot"></span>§ 04 / In context</span></div>
+      <div class="label"><span class="marker"><span class="dot"></span>§ 05 / In context</span></div>
       <h2>Where it sits, and what it <em>isn't</em>.</h2>
     </div>
 
@@ -1316,7 +1378,7 @@
   <div class="wrap">
     <div class="start">
       <div>
-        <span class="marker" style="margin-bottom:18px; display:inline-flex;"><span class="dot"></span>§ 05 / Get started</span>
+        <span class="marker" style="margin-bottom:18px; display:inline-flex;"><span class="dot"></span>§ 06 / Get started</span>
         <h2>Ten minutes to a <em>running</em> workflow.</h2>
         <p>
           Clone the repo, start the in-memory reference host, create a run over
@@ -1369,11 +1431,95 @@
   </div>
 </section>
 
+<!-- ─────────────────────── TRY IT LIVE ─────────────────────── -->
+<section class="block" id="demo">
+  <div class="wrap">
+    <div class="block-head">
+      <div class="label"><span class="marker"><span class="dot"></span>§ 07 / Try it live</span></div>
+      <h2>A real host, <em>already running</em>.</h2>
+      <p class="block-lede">
+        <a class="meta-link" href="https://app.openwop.dev/">app.openwop.dev</a> runs the
+        workflow-engine reference deployment with the v1 conformance fixtures preloaded.
+        Build a workflow against 44 published <code>core.openwop.*</code> packs, run it,
+        watch the live <abbr title="Server-Sent Events">SSE</abbr> event stream — anonymous,
+        no install, browser-session-scoped. Sessions reset every 24 hours.
+      </p>
+    </div>
+
+    <ol class="demo-flow" aria-label="What to try in the live OpenWOP demo">
+      <li>
+        <span class="demo-k">01 · open</span>
+        <h3>Land anonymously.</h3>
+        <p>Visit <a href="https://app.openwop.dev/">app.openwop.dev</a>. The first hit creates a session-scoped identity — no email, no sign-up. You can sign in with Google or GitHub later if you want runs and workflows to persist past 24 hours.</p>
+      </li>
+      <li>
+        <span class="demo-k">02 · build</span>
+        <h3>Wire a workflow on the canvas.</h3>
+        <p>Drag nodes from the <code>core.openwop.*</code> pack library — <code>http</code>, <code>files</code>, <code>flow</code>, <code>hitl</code>, <code>agents</code>, <code>data</code>. Connect them. Save. The same workflow document the canvas writes is what the v1 API accepts on <code>POST /v1/runs</code>.</p>
+      </li>
+      <li>
+        <span class="demo-k">03 · run</span>
+        <h3>Watch the SSE stream populate.</h3>
+        <p>Press Run. Every state transition, every node start, every <code>values</code> / <code>updates</code> mode tap surfaces in the run page in real time — the exact event vocabulary defined in the spec, not a UI synthesis.</p>
+      </li>
+      <li>
+        <span class="demo-k">04 · interrupt</span>
+        <h3>Resolve a human checkpoint.</h3>
+        <p>Drop a <code>core.openwop.hitl</code> node into the path. When the run reaches it, an interrupt card surfaces in the browser. Respond — the host resumes the run through the same <code>POST /v1/runs/&#123;runId&#125;/events</code> contract a back-end subscriber would use.</p>
+      </li>
+      <li>
+        <span class="demo-k">05 · inspect</span>
+        <h3>Read the host's capability claims.</h3>
+        <p>Fetch <a href="https://app.openwop.dev/api/.well-known/openwop" aria-label="Host capability advertisement at slash dot well-known slash openwop"><code>/.well-known/openwop</code></a>. Cross-check the advertised capability set against the conformance suite's honest-claims gate to see exactly what this deployment will and won't do.</p>
+      </li>
+      <li>
+        <span class="demo-k">06 · optional · BYOK</span>
+        <h3>Paste your own key.</h3>
+        <p>Sign in, open <em>Settings → BYOK</em>, and paste a model-provider key. It stays scoped to your session, never lands on disk, and is redacted from event payloads per the protocol's BYOK invariant. See <a href="https://app.openwop.dev/privacy">privacy &amp; cookies</a>.</p>
+      </li>
+    </ol>
+
+    <div class="demo-cta">
+      <a class="btn btn-primary" href="https://app.openwop.dev/">
+        Open app.openwop.dev <span class="arrow">↗</span>
+      </a>
+      <a class="btn btn-ghost" href="https://github.com/openwop/openwop/blob/main/apps/workflow-engine/DEPLOY-SMOKE.md">
+        Smoke-test script <span class="arrow">↗</span>
+      </a>
+      <a class="btn btn-ghost" href="https://app.openwop.dev/privacy">
+        Privacy &amp; cookies <span class="arrow">↗</span>
+      </a>
+    </div>
+
+    <aside class="star-cta" aria-labelledby="star-cta-heading">
+      <div class="star-cta-text">
+        <span class="marker"><span class="dot"></span>If this is useful to you</span>
+        <h3 id="star-cta-heading">Star <em>openwop/openwop</em> on GitHub.</h3>
+        <!-- TODO(copy): revisit "single-steward … no third-party hosts in production yet" once a third-party host advertises in INTEROP-MATRIX.md. -->
+        <p>
+          OpenWOP is a single-steward protocol repo with no third-party hosts in production yet. A star is the
+          strongest signal that the work is reaching its audience — it shapes whether other teams find this
+          project when they go evaluating the field. Costs nothing, takes a second.
+        </p>
+      </div>
+      <a class="btn-star" href="https://github.com/openwop/openwop" target="_blank" rel="noopener" aria-label="Star openwop/openwop on GitHub">
+        <svg class="gh-mark" viewBox="0 0 16 16" width="18" height="18" aria-hidden="true" focusable="false">
+          <path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+        </svg>
+        <span class="btn-star-label">Star on GitHub</span>
+        <span class="btn-star-sep" aria-hidden="true"></span>
+        <span class="btn-star-icon" aria-hidden="true">★</span>
+        <span class="btn-star-count is-empty" data-star-count aria-hidden="true" aria-live="polite">—</span>
+      </a>
+    </aside>
+  </div>
+</section>
+
 <!-- ─────────────────────── ECOSYSTEM ─────────────────────── -->
 <section class="block" id="ecosystem">
   <div class="wrap">
     <div class="block-head">
-      <div class="label"><span class="marker"><span class="dot"></span>§ 06 / Ecosystem</span></div>
+      <div class="label"><span class="marker"><span class="dot"></span>§ 08 / Ecosystem</span></div>
       <h2>Build <em>against</em> the protocol.</h2>
     </div>
 
@@ -1427,9 +1573,9 @@
       <div>
         <h5>Specification</h5>
         <ul>
-          <li><a href="https://github.com/openwop/openwop/tree/main/spec/v1">v1.0 Core</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/spec/v1">v1.x Core</a></li>
           <li><a href="https://github.com/openwop/openwop/blob/main/CHANGELOG.md">Changelog</a></li>
-          <li><a href="https://github.com/openwop/openwop/tree/main/RFCS">RFCs</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/docs/PROTOCOL-STATUS.md">Protocol status</a></li>
           <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance</a></li>
         </ul>
       </div>

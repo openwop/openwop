@@ -99,7 +99,7 @@ The page composes from a small fixed set. Adding a new component is a design dec
 | `.headline` | display serif | use `em` for italics |
 | `.lede` | hero or section intro paragraph | `max-width: 50ch` |
 | `.block-lede` | optional softening paragraph under a `.block-head` h2 | `max-width: 64ch` |
-| `.actions` + `.btn` + `.btn-primary` / `.btn-ghost` | CTA pair | always two buttons max |
+| `.actions` + `.btn` + `.btn-primary` / `.btn-ghost` | CTA pair | always two buttons max (hero); `.demo-cta` is the section-end variant that MAY carry up to three |
 | `.meta-row` | hero credibility chips | each chip uses `<b>`; one MAY be a `.meta-link` |
 | `.pillars` / `.pillar` | 3-up feature grid | borders only — no card chrome |
 | `.anatomy` + `.ana-list` + `.ana-art` | letter-keyed list + figure | letters A–F |
@@ -109,6 +109,8 @@ The page composes from a small fixed set. Adding a new component is a design dec
 | `.packs` + `.pack` | 4-up package grid (Ecosystem) | hover tint clay-soft |
 | `.diagram-card` + `.diagram-mobile-summary` | hero figure + mobile fallback | hidden ↔ shown at 760px |
 | `.foot` + `.foot-grid` + `.foot-mark` | footer | 4-column at desktop; 2-col + brand spanning at ≤760px |
+| `.demo-flow` + `li` | numbered "what to try" grid (Try-it-live block) | 3-up at desktop, 2-up ≤920, 1-up ≤640; `.demo-k` marker in clay; serif italic h3; hover tint clay-wash |
+| `.star-cta` + `.btn-star` | "Star on GitHub" callout band | clay-wash band with a 2-col grid (text + ink-on-paper inline-flex button); stacks ≤920; button is excepted from the auto-`↗` rule; star glyph uses `--star-glow` |
 
 Any new card must inherit a border-only or rule-only style — never a shadow heavier than the terminal's, never a gradient that competes with the page paper background.
 

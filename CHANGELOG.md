@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Marketing site — demo card + Star-on-GitHub CTA on openwop.dev (2026-05-19)
+
+`public/index.html` gains a new `§ 07 / Try it live` section pointing at `app.openwop.dev`: a six-step "what to test" flow (anonymous landing, canvas build, SSE stream, HITL interrupt, `/.well-known/openwop` capability inspection, optional BYOK paste), three CTA buttons (open the demo, the deploy smoke-test script, the privacy page), and a "Star openwop/openwop on GitHub" callout band with a 1h-cached star-count fetch. Ecosystem renumbers `§ 07 → § 08`; top nav gains a `Demo` link. New components `.demo-flow + li` and `.star-cta + .btn-star` documented in `DESIGN.md §6`; `--star-glow` token added in `:root`; `.btn-star` excepted from the auto-`↗` rule. Editorial / site-only change — no spec, schema, OpenAPI/AsyncAPI, SDK, or conformance surface affected.
+
 ### Conformance soak-gate close-out — opt-out axes + SQLite artifact stub (2026-05-19)
 
 Two operator-side opt-out env vars (additive per `COMPATIBILITY.md §2.1`) plus a host-side stub close the last 6 failures in `.github/workflows/conformance-soak.yml` against the SQLite reference host. Restores the soak workflow to a clean regression signal: **1216 passing / 0 failing / 55 skipped / 7 todo** under strict mode (`OPENWOP_REQUIRE_BEHAVIOR=true`).
