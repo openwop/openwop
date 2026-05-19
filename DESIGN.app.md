@@ -38,6 +38,7 @@ The marketing site has no `--color-success` etc.; the app needs them because it 
 --color-success: oklch(62% 0.13 145);   /* desaturated forest, on-paper safe */
 --color-warning: oklch(72% 0.14 75);    /* warmer amber, neighbour of --star-glow */
 --color-danger:  oklch(55% 0.16 28);    /* muted brick red */
+--scrim:         rgb(0 0 0 / 0.6);      /* modal backdrop; intentionally neutral on either theme */
 ```
 
 Rules:

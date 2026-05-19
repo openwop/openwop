@@ -37,6 +37,7 @@
   --color-success: oklch(62% 0.13 145);   /* desaturated forest, on-paper safe */
   --color-warning: oklch(72% 0.14 75);    /* warmer amber, neighbour of --star-glow */
   --color-danger:  oklch(55% 0.16 28);    /* muted brick red */
+  --scrim:         rgb(0 0 0 / 0.6);      /* modal backdrop; neutral on either theme */
 
   /* ── Legacy app-token aliases — points old refs at the new palette. ──
    * Phase A: aliases let every existing component keep working. Phases B/C
@@ -421,18 +422,18 @@ pre {
 }
 
 .alert.warning {
-  background: rgba(251, 191, 36, 0.1);
+  background: color-mix(in oklch, var(--color-warning) 10%, transparent);
   border: 1px solid var(--color-warning);
 }
 
 .alert.error {
-  background: rgba(248, 113, 113, 0.1);
+  background: color-mix(in oklch, var(--color-danger) 10%, transparent);
   border: 1px solid var(--color-danger);
 }
 
 .alert.info {
-  background: rgba(91, 140, 255, 0.1);
-  border: 1px solid var(--color-accent);
+  background: var(--clay-soft);
+  border: 1px solid var(--clay-rule);
 }
 
 .muted {
@@ -555,8 +556,8 @@ pre {
 }
 
 .builder-palette-search-input:focus {
-  border-color: var(--color-accent, #5b8cff);
-  box-shadow: 0 0 0 2px rgba(91, 140, 255, 0.15);
+  border-color: var(--clay);
+  box-shadow: 0 0 0 2px var(--clay-soft);
 }
 
 .builder-palette-search-input::-webkit-search-cancel-button {
@@ -744,8 +745,8 @@ pre {
 .builder-palette-item-host-warn {
   font-size: 10px;
   font-weight: 600;
-  color: var(--color-warn, #b45309);
-  background: rgba(217, 119, 6, 0.12);
+  color: var(--color-warning);
+  background: color-mix(in oklch, var(--color-warning) 12%, transparent);
   border-radius: 3px;
   padding: 1px 5px;
   letter-spacing: 0.02em;
@@ -763,15 +764,17 @@ pre {
   align-items: center;
   gap: var(--space-2);
   padding: 6px var(--space-3);
-  background: rgba(91, 140, 255, 0.10);
-  border-bottom: 1px solid var(--color-accent);
-  font-size: 12px;
-  color: var(--color-text);
+  background: var(--clay-soft);
+  border-bottom: 1px solid var(--clay-rule);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink);
 }
 
 .demo-host-banner-icon {
   flex-shrink: 0;
-  color: var(--color-accent);
+  color: var(--clay);
   font-weight: 600;
 }
 
@@ -882,7 +885,7 @@ pre {
   border-radius: var(--radius);
   font-size: 12px;
   color: var(--color-text);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  box-shadow: 0 1px 3px var(--ink-shadow);
 }
 
 .builder-node-selected {
@@ -1161,7 +1164,7 @@ pre {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px var(--ink-shadow);
   padding: var(--space-1);
   display: flex;
   flex-direction: column;
@@ -1187,7 +1190,7 @@ pre {
 }
 
 .workflow-card-menu-popover .workflow-card-menu-danger:hover {
-  background: rgba(248, 113, 113, 0.1);
+  background: color-mix(in oklch, var(--color-danger) 10%, transparent);
 }
 
 .workflow-card-empty {
@@ -1265,23 +1268,26 @@ pre {
 }
 
 .workflow-template-badge-quickstart {
-  background: rgba(74, 222, 128, 0.12);
+  background: color-mix(in oklch, var(--color-success) 12%, transparent);
   color: var(--color-success);
 }
 
 .workflow-template-badge-hitl {
-  background: rgba(251, 191, 36, 0.12);
+  background: color-mix(in oklch, var(--color-warning) 12%, transparent);
   color: var(--color-warning);
 }
 
 .workflow-template-badge-ai {
-  background: rgba(91, 140, 255, 0.14);
-  color: var(--color-accent);
+  background: var(--clay-soft);
+  color: var(--clay);
 }
 
 .workflow-template-badge-pipeline {
-  background: rgba(167, 139, 250, 0.16);
-  color: #a78bfa;
+  /* "pipeline" badge — use a desaturated indigo for visual distinction
+   * from the other three categories. Token-defined inline to keep the
+   * palette additions out of :root; if this color recurs, lift to token. */
+  background: color-mix(in oklch, oklch(60% 0.12 280) 16%, transparent);
+  color: oklch(50% 0.12 280);
 }
 
 .workflow-template-byok-pill {
@@ -1290,7 +1296,7 @@ pre {
   font-size: 11px;
   font-weight: 600;
   border-radius: 12px;
-  background: rgba(251, 191, 36, 0.12);
+  background: color-mix(in oklch, var(--color-warning) 12%, transparent);
   color: var(--color-warning);
 }
 
@@ -1320,7 +1326,7 @@ pre {
 
 .signin-modal-backdrop {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0.6);
+  background: var(--scrim);
   z-index: 1000;
   /* `align-items: center` clips a too-tall modal symmetrically from
      the top AND bottom (so the title disappears above the viewport).
@@ -1401,7 +1407,7 @@ pre {
   border-radius: var(--radius);
   min-width: 240px;
   padding: var(--space-2);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  box-shadow: 0 8px 24px var(--ink-shadow);
   z-index: 100;
 }
 .account-menu-header {
