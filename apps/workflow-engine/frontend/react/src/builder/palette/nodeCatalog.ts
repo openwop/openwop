@@ -32,7 +32,9 @@ export interface NodeCatalogEntry {
   category: NodeCategory;
   /** Single-letter badge shown in palette + node header. */
   badge: string;
-  /** Accent color used on the node's category stripe. */
+  /** Accent color used on the node's category stripe. Should be a CSS
+   *  variable reference or an OKLCH literal so it themes with the
+   *  warm-editorial palette per DESIGN.app.md §10. */
   accent: string;
   inputs: PortDef[];
   outputs: PortDef[];
@@ -59,7 +61,7 @@ export const NODE_CATALOG: readonly NodeCatalogEntry[] = [
     description: 'Forwards inputs unchanged to outputs. Useful as a placeholder.',
     category: 'flow',
     badge: 'P',
-    accent: '#8b93a7',
+    accent: 'var(--ink-3)',
     inputs: [{ name: 'in', type: 'any' }],
     outputs: [{ name: 'out', type: 'any' }],
     configFields: [],
@@ -71,7 +73,7 @@ export const NODE_CATALOG: readonly NodeCatalogEntry[] = [
     description: 'Sleeps for a fixed duration, then forwards inputs.',
     category: 'flow',
     badge: 'D',
-    accent: '#5b8cff',
+    accent: 'var(--clay)',
     inputs: [{ name: 'in', type: 'any' }],
     outputs: [{ name: 'out', type: 'any' }],
     configFields: [
@@ -91,7 +93,7 @@ export const NODE_CATALOG: readonly NodeCatalogEntry[] = [
     description: 'Reads inputs.text and emits outputs.text uppercased.',
     category: 'data',
     badge: 'U',
-    accent: '#4ade80',
+    accent: 'var(--color-success)',
     inputs: [{ name: 'text', type: 'string' }],
     outputs: [{ name: 'text', type: 'string' }],
     configFields: [],
@@ -103,7 +105,7 @@ export const NODE_CATALOG: readonly NodeCatalogEntry[] = [
     description: 'Suspends the run for human approval. Resumes on resolve.',
     category: 'control',
     badge: 'A',
-    accent: '#fbbf24',
+    accent: 'var(--color-warning)',
     inputs: [{ name: 'in', type: 'any' }],
     outputs: [{ name: 'out', type: 'any' }],
     configFields: [
@@ -122,7 +124,10 @@ export const NODE_CATALOG: readonly NodeCatalogEntry[] = [
     description: 'Returns a deterministic mock completion for inputs.prompt. No external calls.',
     category: 'ai',
     badge: 'M',
-    accent: '#a78bfa',
+    /* Indigo for AI-category nodes — visually distinct from clay (flow)
+     * and the success / warning / danger functional tokens. Mirrored in
+     * .workflow-template-badge-pipeline in global.css. */
+    accent: 'oklch(60% 0.12 280)',
     inputs: [{ name: 'prompt', type: 'string' }],
     outputs: [{ name: 'completion', type: 'string' }],
     configFields: [],
@@ -134,7 +139,9 @@ export const NODE_CATALOG: readonly NodeCatalogEntry[] = [
     description: 'Calls a real LLM via BYOK. Expects inputs.messages and inputs.credentialRef.',
     category: 'ai',
     badge: 'C',
-    accent: '#f87171',
+    /* Same indigo as mock-ai — both are 'ai' category. The differing
+     * label + badge letter distinguish them. */
+    accent: 'oklch(60% 0.12 280)',
     inputs: [{ name: 'messages', type: 'object' }],
     outputs: [{ name: 'completion', type: 'string' }],
     configFields: [],
