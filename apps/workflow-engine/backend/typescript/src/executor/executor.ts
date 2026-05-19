@@ -207,6 +207,19 @@ async function runOneNode(input: {
         attempt: 1,
         secrets: rawSecrets,
         policyResolver,
+        // RFC 0026 — let the host emit `provider.usage` into the run
+        // event log right after each upstream LLM dispatch. Keeps the
+        // event correlated with the same nodeId / runId that brackets
+        // it with `node.started` / `node.completed`.
+        emit: async (type, payload) => {
+          const record = await eventLog.append({
+            runId: run.runId,
+            nodeId: nodeRef.nodeId,
+            type,
+            payload: stripSecretsFromPersisted(payload),
+          });
+          return { eventId: record.eventId, sequence: record.sequence };
+        },
       })
     : null;
   const surfaces = buildHostSurfaceBundle({

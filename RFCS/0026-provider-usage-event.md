@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0026 |
 | **Title** | `provider.usage` event — per-call durable usage record for LLM provider invocations |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-19 |
-| **Updated** | 2026-05-19 (Draft → Active — see [Status history](#status-history) below). |
+| **Updated** | 2026-05-19 (Draft → Active → Accepted — see [Status history](#status-history) below). |
 | **Affects** | `schemas/run-event.schema.json`, `schemas/run-event-payloads.schema.json`, `schemas/capabilities.schema.json`, `api/asyncapi.yaml`, `spec/v1/observability.md` §"Provider usage events", `conformance/src/scenarios/provider-usage.test.ts`, `apps/workflow-engine/`, `CHANGELOG.md` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md §2.1` |
 | **Supersedes** | — |
@@ -250,3 +250,34 @@ Acceptance criteria checkboxes from the RFC's §"Acceptance criteria" all verifi
 - [x] `npm run openwop:check` 9/9 green
 
 Path to `Active → Accepted`: requires either (a) the reference workflow-engine to wire `usageEmitter.ts` into `providers/dispatch.ts` end-to-end so a real LLM-calling workflow emits the event observably + advertises `capabilities.providerUsage.supported: true` in `routes/discovery.ts`, OR (b) a non-steward host advertisement (similar to the MyndHyve adoption that closed RFC 0021's external gate). The reference seam-driven scenario already proves the wire shape; the remaining `Accepted` gate is real-world emission evidence.
+
+### Active → Accepted (2026-05-19)
+
+Path (a) closed: the reference workflow-engine now emits `provider.usage` events on every real LLM dispatch AND advertises the capability at `/.well-known/openwop`.
+
+Reference-host wire-up (this commit):
+
+- **`apps/workflow-engine/backend/typescript/src/aiProviders/aiProvidersHost.ts`** — `AdapterScope` gained an optional `emit` callback (typed `(type, payload) => Promise<{eventId, sequence}>`). New private helper `emitProviderUsage(scope, provider, model, inputTokens, outputTokens)` calls `buildProviderUsagePayloadFromTokens()` (new export from `usageEmitter.ts`) with the normalized token counts that `dispatchChat` / `dispatchAnthropicToolsRound` / `dispatchManagedChat` already return — credentialRef and prompt/response text are never read. Hooked after each existing `emitCost()` call in all three dispatch paths (`callAI`, `callAIWithTools`, `callAIManaged`). Best-effort emit: a failing event-log append logs a warning but does not fail the LLM call.
+- **`apps/workflow-engine/backend/typescript/src/providers/usageEmitter.ts`** — added `buildProviderUsagePayloadFromTokens(providerId, model, inputTokens, outputTokens, opts)`. Wraps the same rate-table cost computation as `buildProviderUsagePayload()`; differs only in the input shape (normalized counts vs raw provider response). Both helpers honour §D — they never read credentialRef or prompt/response substrings.
+- **`apps/workflow-engine/backend/typescript/src/executor/executor.ts`** — `createAiProvidersAdapter` is now invoked with `emit: async (type, payload) => eventLog.append({runId, nodeId, type, payload: stripSecretsFromPersisted(payload)})`, threading the run's event log into the AI adapter so `provider.usage` events land in the same event stream as `node.started` / `node.completed` with matching `runId` + `nodeId` correlation. SR-1 redaction (`stripSecretsFromPersisted`) runs on every payload.
+- **`apps/workflow-engine/backend/typescript/src/routes/discovery.ts`** — `capabilities.providerUsage` block advertises `{ supported: true, costEstimates: true, currency: 'USD' }`, matching the spec shape in `schemas/capabilities.schema.json` and the values stamped by `usageEmitter.ts` for models in the rate table.
+
+Emission timing satisfies §B: in `callAI`, the emit fires between the upstream provider call returning and `invocationLog.put(cacheKey, result)` + the function's return, so it precedes the executor's `node.completed` append. Same ordering holds in `callAIWithTools` (before the `AiToolCallResult` is constructed) and `callAIManaged` (before the function returns).
+
+Trust-boundary verification (§D):
+
+- The new `buildProviderUsagePayloadFromTokens` accepts only `(provider, model, inputTokens, outputTokens, opts)` — no raw response, no credentialRef parameter.
+- `emitProviderUsage` extracts `traceId` from the OTel active span (already in scope from `wrapInSpan`) but never reads `scope.secrets` or any cleartext credential.
+- The executor's `emit` wrapper runs `stripSecretsFromPersisted(payload)` defensively even though the payload is constructed from typed integers + canonical provider/model strings.
+- Existing conformance scenario `conformance/src/scenarios/provider-usage.test.ts §"event presence + shape"` continues to pass through the test seam, AND the credential-leak defense-in-depth `describe` block continues to reject `secret:`-prefixed values.
+
+Acceptance criteria (final pass):
+
+- [x] All §"Draft → Active" criteria still satisfied.
+- [x] `capabilities.providerUsage.supported: true` advertised at `/.well-known/openwop`.
+- [x] `aiProvidersHost.ts` emits `provider.usage` after every real provider dispatch (`callAI`, `callAIWithTools`, `callAIManaged`).
+- [x] `executor.ts` threads the run event log's `append()` into the AI adapter so events correlate by `runId` + `nodeId`.
+- [x] `npm run openwop:check` 9/9 green.
+- [x] `bash scripts/check-security-invariants.sh` 49/49 protocol-tier rows covered; the new emission path's credential-leak protection is verified by the existing `provider-usage-no-credential-leak` invariant test.
+
+With path (a) closed, RFC 0026 graduates to `Accepted`. Future hosts adopting the event for their own advertisement do not change the protocol's acceptance status — they extend the `INTEROP-MATRIX.md` row set, which is reviewed independently.

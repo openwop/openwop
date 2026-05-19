@@ -48,6 +48,7 @@ import {
   ManagedProviderError,
 } from '../providers/managedProvider.js';
 import { emitCost } from '../observability/costEmitter.js';
+import { buildProviderUsagePayloadFromTokens } from '../providers/usageEmitter.js';
 import { getInvocationLog } from '../executor/invocationLog.js';
 import { createLogger } from '../observability/logger.js';
 
@@ -76,6 +77,42 @@ export interface AdapterScope {
   policyResolver: ProviderPolicyResolver;
   /** Optional per-call timeout override. Defaults to 120s. */
   timeoutMs?: number;
+  /**
+   * RFC 0026 — `provider.usage` event emitter. When present, the adapter
+   * fires one `provider.usage` event after each real provider dispatch
+   * (cache hits don't re-emit; the original call's event is replayed
+   * from the run event log). The cleartext credential is never read.
+   *
+   * Wired from the executor's per-node ctx so the event lands in the
+   * same run event log with the same nodeId.
+   */
+  emit?: (type: string, payload: unknown) => Promise<{ eventId: string; sequence: number }>;
+}
+
+/** RFC 0026 — best-effort `provider.usage` emit. Swallows emit errors so
+ *  a downstream event-log failure can't fail the LLM call itself; logs
+ *  for visibility. Built from the normalized token counts that
+ *  `dispatchChat`/`dispatchAnthropicToolsRound`/`dispatchManagedChat`
+ *  return — credentialRef and prompt/response text are never touched. */
+async function emitProviderUsage(
+  scope: AdapterScope,
+  provider: string,
+  model: string,
+  inputTokens: number | undefined,
+  outputTokens: number | undefined,
+): Promise<void> {
+  if (!scope.emit) return;
+  if (typeof inputTokens !== 'number' || typeof outputTokens !== 'number') return;
+  try {
+    const traceId = trace.getActiveSpan()?.spanContext().traceId;
+    const payload = buildProviderUsagePayloadFromTokens(provider, model, inputTokens, outputTokens, {
+      nodeId: scope.nodeId,
+      ...(traceId ? { traceId } : {}),
+    });
+    await scope.emit('provider.usage', payload);
+  } catch (err) {
+    log.warn('provider.usage emit failed', { err: err instanceof Error ? err.message : String(err) });
+  }
 }
 
 /**
@@ -204,6 +241,11 @@ async function callAI(scope: AdapterScope, req: AiCallRequest): Promise<AiCallRe
     });
   }
 
+  // RFC 0026 — emit `provider.usage` event BEFORE we return / before
+  // any subsequent `node.completed` lands. Best-effort: a failing emit
+  // never fails the LLM call.
+  await emitProviderUsage(scope, req.provider, req.model, result.usage?.inputTokens, result.usage?.outputTokens);
+
   // `result` from dispatch* never carries `credentialRefHashed`, so
   // caching `{...result}` is already secret-free. The hashed ref is
   // re-attached for the current return value below.
@@ -265,6 +307,12 @@ async function callAIWithTools(scope: AdapterScope, req: AiToolCallRequest): Pro
     });
   }
 
+  // RFC 0026 — emit `provider.usage` after the tool-calling round so
+  // billing reconciliation captures per-call records inside multi-turn
+  // tool flows. The pack orchestrates subsequent rounds; each round
+  // re-enters this function and emits its own event.
+  await emitProviderUsage(scope, req.provider, req.model, result.inputTokens, result.outputTokens);
+
   const aiResult: AiToolCallResult = {
     content: result.text,
     toolCalls: result.toolUses,
@@ -303,6 +351,11 @@ async function callAIManaged(scope: AdapterScope, req: AiCallRequest): Promise<A
         completionTokens: managed.usage.outputTokens,
       });
     }
+
+    // RFC 0026 — managed-provider calls emit the same event shape so
+    // tenants can reconcile against their server-held-key spend.
+    await emitProviderUsage(scope, managed.provider, managed.model, managed.usage?.inputTokens, managed.usage?.outputTokens);
+
     return {
       content: managed.completion,
       ...(managed.usage ? { usage: managed.usage } : {}),

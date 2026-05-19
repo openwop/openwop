@@ -154,6 +154,17 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
         supported: true,
         reasoning: { verbosity: 'full', tokenLimit: 512, streaming: true },
       },
+      // RFC 0026 — `provider.usage` event support. Reference host emits
+      // one `provider.usage` event per real LLM dispatch from
+      // `aiProvidersHost.ts` (callAI / callAIWithTools / callAIManaged).
+      // `costEstimates: true` because the dispatcher attaches advisory
+      // `costEstimateUsd` for models in its static rate-table snapshot;
+      // `currency: 'USD'` matches what `usageEmitter.ts` stamps.
+      providerUsage: {
+        supported: true,
+        costEstimates: true,
+        currency: 'USD',
+      },
       memory: { supported: false },
       // RFC 0023 §B.2 — capabilities.conformance.mockAgent. Reference
       // host registers core.conformance.mock-agent unconditionally

@@ -80,6 +80,17 @@ Cross-SDK design symmetry: each language uses its idiomatic event-handling patte
 
 This commit + the pre-existing reference-host implementations (commit `08ac7bc`) resolve the SDK-helper acceptance line. `Active → Accepted` flip still gated on either (a) external host advertisement evidence in `INTEROP-MATRIX.md`, or (b) `@openwop/openwop-conformance` republish.
 
+### RFC 0026 — Status: `Active` → `Accepted` (2026-05-19)
+
+Path (a) of the acceptance gate closed: the reference workflow-engine now emits `provider.usage` on every real LLM dispatch AND advertises the capability at `/.well-known/openwop`. Full evidence in `RFCS/0026-provider-usage-event.md` §"Status history" → §"Active → Accepted". RFC status counts after the flip: **Accepted: 25 · Draft: 1** (RFC 0025 remains in its 7-day window) · **Active: 0**.
+
+- **`apps/workflow-engine/.../aiProviders/aiProvidersHost.ts`** — `AdapterScope` gained an optional `emit` callback. New private helper `emitProviderUsage(scope, provider, model, inputTokens, outputTokens)` wired after each `emitCost(...)` call in `callAI`, `callAIWithTools`, and `callAIManaged`. Best-effort: a failing event-log append logs a warning but does not fail the LLM call.
+- **`apps/workflow-engine/.../providers/usageEmitter.ts`** — added `buildProviderUsagePayloadFromTokens(providerId, model, inputTokens, outputTokens, opts)` for emission sites that consume already-normalized token counts (the shape `dispatchChat` returns). Honours §D — never reads credentialRef or prompt/response substrings.
+- **`apps/workflow-engine/.../executor/executor.ts`** — `createAiProvidersAdapter` is now invoked with `emit: async (type, payload) => eventLog.append({runId, nodeId, type, payload: stripSecretsFromPersisted(payload)})`. SR-1 redaction runs defensively on every payload.
+- **`apps/workflow-engine/.../routes/discovery.ts`** — `capabilities.providerUsage = { supported: true, costEstimates: true, currency: 'USD' }`.
+
+Compatibility: additive per `COMPATIBILITY.md §2.1`. No schema changes; this commit only wires existing schemas into the reference host.
+
 ### RFC 0026 — Status: `Draft` → `Active` (2026-05-19)
 
 Promoted under the bootstrap-phase steward waiver per `CONTRIBUTING.md` §"Bootstrap-phase notes" — same path RFCs 0021–0025 used in this release. All §"Acceptance criteria" items verified by `npm run openwop:check` running 9/9 green; full evidence list in `RFCS/0026-provider-usage-event.md` §"Status history". RFC status counts after the flip: **Active: 1 (this RFC) · Accepted: 24 · Draft: 1** (RFC 0025 remains in its 7-day window). Path to `Active → Accepted`: (a) reference workflow-engine wires `usageEmitter.ts` into `providers/dispatch.ts` + advertises `capabilities.providerUsage.supported: true` end-to-end, OR (b) a non-steward host advertisement (similar to the MyndHyve adoption that closed RFC 0021's external gate).

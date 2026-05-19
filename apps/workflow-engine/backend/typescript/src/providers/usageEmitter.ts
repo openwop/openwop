@@ -93,6 +93,43 @@ export function extractGeminiUsage(response: unknown, _model: string): { inputTo
   };
 }
 
+/** Build the canonical `providerUsage` payload from already-extracted
+ *  token counts (the normalized shape `providers/dispatch.ts` returns
+ *  to its callers). Use this at emission sites that consume
+ *  `DispatchResult`-style values instead of the raw provider response.
+ *
+ *  Per RFC 0026 §D: the payload still MUST NOT carry credentialRef,
+ *  prompt/response substrings, or tool call args/results. Callers
+ *  passing `inputTokens` / `outputTokens` directly are inherently
+ *  payload-free; this helper only adds `costEstimateUsd` from the
+ *  static rate table.
+ */
+export function buildProviderUsagePayloadFromTokens(
+  providerId: string,
+  model: string,
+  inputTokens: number,
+  outputTokens: number,
+  opts: { totalTokens?: number; nodeId?: string; traceId?: string; cacheHit?: boolean } = {},
+): ProviderUsagePayload {
+  const totalTokens = opts.totalTokens ?? inputTokens + outputTokens;
+  const costEstimateUsd = computeCostUsd(model, inputTokens, outputTokens);
+  const payload: ProviderUsagePayload = {
+    provider: providerId,
+    model,
+    inputTokens,
+    outputTokens,
+    totalTokens,
+  };
+  if (costEstimateUsd !== undefined) {
+    payload.costEstimateUsd = costEstimateUsd;
+    payload.currency = 'USD';
+  }
+  if (opts.nodeId !== undefined) payload.nodeId = opts.nodeId;
+  if (opts.traceId !== undefined) payload.traceId = opts.traceId;
+  if (opts.cacheHit !== undefined) payload.cacheHit = opts.cacheHit;
+  return payload;
+}
+
 /** Build the canonical `providerUsage` payload from a provider's response.
  *
  *  Per RFC 0026 §A:
