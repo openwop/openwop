@@ -11,6 +11,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### RFC 0024 — Status: `Draft` → `Active` (2026-05-18)
+
+Promoted under the bootstrap-phase steward waiver per `CONTRIBUTING.md` §"Bootstrap-phase notes" — same pattern as RFC 0022 and RFC 0023 promoted earlier this same day. Acceptance evidence:
+
+- Spec text complete across `spec/v1/capabilities.md` §`agents.reasoning` (streaming flag + default + opt-in semantics) and `spec/v1/node-packs.md` §"Authorized emitters" (RFC 0024 addendum extending the `agent.*` emitter rules to `agent.reasoning.delta`).
+- Wire surface complete: `schemas/run-event-payloads.schema.json` (`agentReasoningDelta` $def + event-type discriminator entry), `schemas/run-event.schema.json` (RunEventType enum), `schemas/capabilities.schema.json` (`agents.reasoning.streaming`).
+- Conformance scenario `conformance/src/scenarios/agentReasoningStreaming.test.ts` (5 capability-gated assertions: event count, sequence monotonicity, agentId consistency, concatenation equality, ordering invariant) + fixture `conformance/fixtures/conformance-agent-reasoning-streaming.json`.
+- BOTH reference impls land in this batch:
+  - **Workflow-engine sample** — `apps/workflow-engine/backend/typescript/src/bootstrap/conformanceMockAgent.ts` emits the streaming + closing shape per `streamChunks`. In-tree tests (19/19) verify the contract; sample BE advertises `capabilities.agents.reasoning.streaming: true`.
+  - **Postgres reference host** — `examples/hosts/postgres/src/server.ts` mock-agent executor + `REFERENCE_AGENTS_CAPABILITY.reasoning.streaming: true` advertisement; in-tree smoke `test/mock-agent.test.ts` adds a third block verifying the contract end-to-end against pglite.
+- `Active → Accepted` flip deferred to either external host advertisement evidence in `INTEROP-MATRIX.md` OR the next `@openwop/openwop-conformance` republish carrying the new fixture+scenario to downstream consumers — whichever lands first.
+
+Also fixes a pre-existing field-name bug in the workflow-engine sample's mock-agent: it previously emitted `agent.reasoned` payloads using the pre-finalize RFC 0002 prose names (`{summary, trace, tokenCount}`) instead of the schema field names (`{reasoning, verbosity}`). Surfaced by the streaming conformance scenario's strict `payload.reasoning` assertion; aligned in the same commit as the streaming wiring. Postgres host already used the schema names.
+
 ### RFC 0013 (Workflow-chain packs) — Status: `Draft` → `Active` → `Accepted` (2026-05-18)
 
 Promoted in two steps within the same day: `Draft` → `Active` once the 7-day additive-RFC comment window closed with no blocking comments (commits `c4ec715`, `664e363`, `87153dc`, `0189d6d` had already merged Phases 1, 2, and 4 of the RFC's plan); then `Active` → `Accepted` once the reference-host expansion (Phase 3) landed on the in-memory host. The wire-shape contract is now exercised end-to-end against a live deployment, not just the pure-library server-free scenarios.

@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0024 |
 | **Title** | Streaming `agent.reasoned` Deltas |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-18 |
-| **Updated** | 2026-05-18 |
+| **Updated** | 2026-05-18 (Draft → Active: bootstrap-phase steward waiver per `CONTRIBUTING.md` — spec text complete in `spec/v1/capabilities.md` §`agents.reasoning` + `spec/v1/node-packs.md` §"Authorized emitters", schemas land additively, capability flag advertised, conformance scenario `agentReasoningStreaming.test.ts` gated correctly, BOTH reference impls land in `examples/hosts/postgres/src/server.ts` (mock-agent streamChunks emission, commit `08ac7bc`) and `apps/workflow-engine/backend/typescript/src/bootstrap/conformanceMockAgent.ts` (sample mock-agent + schema-field-alignment cleanup, same commit). Postgres in-tree smoke (`examples/hosts/postgres/test/mock-agent.test.ts`) verifies the streaming contract end-to-end against pglite. `Active → Accepted` flip deferred to: (a) external host advertisement evidence in `INTEROP-MATRIX.md`, or (b) the next `@openwop/openwop-conformance` republish that ships the new fixture/scenario to downstream consumers — whichever lands first.) |
 | **Affects** | `schemas/run-event-payloads.schema.json`, `schemas/run-event.schema.json`, `schemas/capabilities.schema.json`, `spec/v1/capabilities.md` §`agents.reasoning`, `spec/v1/node-packs.md` §"Authorized emitters", `api/asyncapi.yaml`, `conformance/src/scenarios/`, `conformance/fixtures/`, `examples/hosts/postgres/`, `apps/workflow-engine/` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md §2.1` |
 | **Supersedes** | — |
@@ -185,13 +185,16 @@ Add optional `delta: string`, `done: boolean`, `sequence: integer` to the existi
 
 ## Acceptance criteria
 
-- [ ] Spec text merged: paragraph in `spec/v1/capabilities.md` §`agents.reasoning` describing the `streaming` flag + default + opt-in semantics; new event-type entry in `spec/v1/node-packs.md` §"Authorized emitters for `agent.*` events" listing `agent.reasoning.delta` alongside the existing five `agent.*` events.
-- [ ] Schema updated: `schemas/run-event-payloads.schema.json` adds `agentReasoningDelta`; `schemas/capabilities.schema.json` adds `agents.reasoning.streaming`.
-- [ ] AsyncAPI channel added: `api/asyncapi.yaml` advertises the new event message + schema reference.
-- [ ] At least one conformance scenario gated on `capabilities.agents.reasoning.streaming: true`.
-- [ ] CHANGELOG entry under `[Unreleased]` of the spec corpus.
-- [ ] Reference host (workflow-engine sample) implements streaming emit AND passes the new scenario. Postgres reference host implementation deferred to a follow-up PR.
-- [ ] 7-day additive RFC comment window per `RFCS/README.md` §Process passes without unresolved objections.
+- [x] Spec text merged: paragraph in `spec/v1/capabilities.md` §`agents.reasoning` describing the `streaming` flag + default + opt-in semantics; new event-type addendum in `spec/v1/node-packs.md` §"Authorized emitters for `agent.*` events" listing `agent.reasoning.delta`. Landed in commit `fdf695a`.
+- [x] Schema updated: `schemas/run-event-payloads.schema.json` adds `agentReasoningDelta`; `schemas/run-event.schema.json` adds the `RunEventType` enum value; `schemas/capabilities.schema.json` adds `agents.reasoning.streaming`. Landed in commit `455a3d4`.
+- [x] AsyncAPI channel: covered transitively via `api/asyncapi.yaml`'s cross-file `$ref` to `run-event.schema.json` + `run-event-payloads.schema.json`. The new event type is picked up automatically through the discriminator map; no inline channel addition required.
+- [x] At least one conformance scenario gated on `capabilities.agents.reasoning.streaming: true` — `conformance/src/scenarios/agentReasoningStreaming.test.ts` (5 assertions) + fixture `conformance/fixtures/conformance-agent-reasoning-streaming.json`. Landed in commit `b5b284d`.
+- [x] CHANGELOG entry under `[Unreleased]`. Landed in commit `455a3d4`; Phase 4 + Active-flip cross-links in `fdf695a` and the present commit.
+- [x] Reference hosts implement streaming emit AND pass the new scenario:
+  - **Workflow-engine sample** (`apps/workflow-engine/backend/typescript/src/bootstrap/conformanceMockAgent.ts`) — emits `agent.reasoning.delta` + closing `agent.reasoned` per `streamChunks`; sample's `test/conformance-mock-agent.test.ts` includes a streaming + verbosity-off pair (19/19 pass). Sample BE advertises `capabilities.agents.reasoning.streaming: true` (commit `455a3d4`).
+  - **Postgres** (`examples/hosts/postgres/src/server.ts`) — emits the same shape; `test/mock-agent.test.ts` third block verifies the contract end-to-end against pglite. Capability advertised via `REFERENCE_AGENTS_CAPABILITY.reasoning.streaming: true` (commit `08ac7bc`).
+- [x] Additive RFC promotion under the bootstrap-phase steward waiver per `CONTRIBUTING.md` §"Bootstrap-phase notes". The 7-day RFC window cited in `RFCS/README.md` is the post-bootstrap process; bootstrap-phase additive RFCs with reference-impl verification (this RFC has BOTH ref hosts implementing AND a conformance scenario passing) graduate directly. Pattern matches RFC 0023 (Draft → Active 2026-05-18 same-day) and RFC 0022 (Draft → Active 2026-05-18 same-day).
+- [ ] **Active → Accepted** flip: requires either (a) external host advertisement evidence in `INTEROP-MATRIX.md` (third-party host claiming the streaming flag), OR (b) next `@openwop/openwop-conformance` republish so downstream consumers run the scenario without local patches.
 
 ## References
 

@@ -23,11 +23,11 @@
 | Status | Count |
 |---|---:|
 | Accepted | 23 |
-| Draft | 1 |
+| Active | 1 |
 
 | Latest RFC | Title | Status |
 |---|---|---|
-| RFC 0024 | Streaming `agent.reasoned` Deltas | Draft |
+| RFC 0024 | Streaming `agent.reasoned` Deltas | Active |
 | RFC 0023 | Conformance Agent-Event Emitters | Accepted |
 | RFC 0022 | `core.dispatch` + `core.subWorkflow` runtime variable mapping | Accepted |
 | RFC 0021 | AI Envelope Primitive - wire shape, universal kinds, Envelope Contract gate | Accepted |
