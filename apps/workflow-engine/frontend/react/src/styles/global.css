@@ -174,31 +174,40 @@ a:visited {
   background: color-mix(in srgb, var(--color-surface) 88%, transparent);
 }
 
-/* Brand mark in the header — Open<em>WOP</em> with italic serif "WOP"
- * mirrors public/index.html .foot-mark per DESIGN.md §6. */
-.app-header h1 {
+/* Brand mark in the header — mirrors public/styles.css .foot-mark per
+ * DESIGN.md §6: SVG icon + Instrument Serif "Open" + italic clay "WOP".
+ * Sized down from the marketing site's 38px footer mark to ~22px so it
+ * fits the 64px-tall sticky app header. */
+.app-header h1.brand-mark {
   margin: 0;
-  font-family: var(--sans);
-  font-weight: 500;
-  font-size: 16px;
-  letter-spacing: -0.005em;
-  color: var(--ink);
   display: inline-flex;
-  align-items: baseline;
-  gap: 12px;
-}
-.app-header h1 em {
+  align-items: center;
+  gap: 10px;
   font-family: var(--serif);
-  font-style: italic;
   font-weight: 400;
+  font-size: 22px;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.app-header h1.brand-mark img {
+  width: 28px;
+  height: 28px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.app-header h1.brand-mark em {
+  font-style: italic;
   color: var(--clay);
 }
 .app-header-sub {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 10.5px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  font-style: normal;
   color: var(--ink-3);
+  margin-left: 8px;
 }
 
 .app-header nav {

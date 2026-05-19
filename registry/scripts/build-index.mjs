@@ -397,22 +397,33 @@ function emitLandingPage(packDocs) {
   }
   main { max-width: 960px; margin: 0 auto; padding: clamp(40px, 6vw, 72px) clamp(20px, 4vw, 32px) 64px; }
 
-  /* ─── Headlines — serif italic emphasis matches public/styles.css h2 ── */
+  /* ─── Headlines — brand mark mirrors public/styles.css .foot-mark ───── */
   header { margin-bottom: 40px; }
-  h1 {
-    font-family: var(--sans);
-    font-weight: 500;
-    font-size: clamp(28px, 4vw, 38px);
-    line-height: 1.1;
-    letter-spacing: -0.015em;
-    margin: 0 0 12px;
+  .brand-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    margin: 0 0 14px;
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(32px, 4.5vw, 42px);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
     color: var(--ink);
   }
-  h1 em {
-    font-family: var(--serif);
+  .brand-mark img {
+    width: 44px;
+    height: 44px;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+  .brand-mark em {
     font-style: italic;
-    font-weight: 400;
     color: var(--clay);
+  }
+  .brand-mark-sub {
+    color: var(--ink-3);
+    font-style: normal;
   }
   h2 {
     font-family: var(--serif);
@@ -572,7 +583,10 @@ function emitLandingPage(packDocs) {
 <body>
 <main>
   <header>
-    <h1>open<em>wop</em> registry</h1>
+    <h1 class="brand-mark">
+      <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true">
+      <span>Open<em>WOP</em> <span class="brand-mark-sub">registry</span></span>
+    </h1>
     <p class="lead">Canonical signed node-pack registry for the <a href="https://openwop.dev/">openwop</a> workflow orchestration protocol.</p>
     <div class="summary">
       <div><strong>${total}</strong><span>${total === 1 ? 'pack' : 'packs'} published</span></div>

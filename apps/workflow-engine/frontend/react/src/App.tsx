@@ -21,7 +21,10 @@ export function App() {
     <div className="app-shell">
       <DemoHostBanner />
       <header className="app-header">
-        <h1>Open<em>WOP</em> <span className="app-header-sub">workflow-engine sample</span></h1>
+        <h1 className="brand-mark">
+          <img src="/OpenWOP.svg" alt="" aria-hidden="true" />
+          <span>Open<em>WOP</em> <span className="app-header-sub">workflow-engine sample</span></span>
+        </h1>
         <nav>
           <NavLink to="/" end>AI</NavLink>
           <NavLink to="/builder">Workflows</NavLink>
