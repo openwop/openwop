@@ -44,6 +44,7 @@ import {
   resetCapabilityOverlay,
   snapshotCapabilityOverlay,
 } from '../host/capabilityOverlay.js';
+import { computeLLMCacheKey } from '../providers/llmCacheKey.js';
 import { OpenwopError } from '../types.js';
 import { createLogger } from '../observability/logger.js';
 
@@ -220,6 +221,19 @@ export function registerTestSeamRoutes(app: Express): void {
     }
     const outcome = acceptEnvelope(body.envelope, opts);
     res.status(200).json(outcome);
+  });
+
+  // LLM cache-key recipe seam — replay.md §"LLM cache-key recipe".
+  // POST /v1/host/sample/test/llm-cache-key
+  // Body: an LLMCacheKeyInput-shaped object (extra fields ignored per §A).
+  // Response: { cacheKey: <lowercase-hex SHA-256> }
+  app.post('/v1/host/sample/test/llm-cache-key', (req, res) => {
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    if (typeof body.provider !== 'string' || typeof body.model !== 'string' || !Array.isArray(body.messages)) {
+      res.status(400).json({ error: { code: 'invalid_argument', message: 'provider + model + messages[] required per replay.md §A' } });
+      return;
+    }
+    res.status(200).json({ cacheKey: computeLLMCacheKey(body) });
   });
 
   // Capability-toggle test seam (RFC 0022 §C refusal-case tests).
