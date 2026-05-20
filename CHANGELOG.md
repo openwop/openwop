@@ -11,6 +11,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Workflow-engine sample — fixture input-port → variable resolution (2026-05-19)
+
+Closes the executor gap where fixture-shape input declarations (`nodes[].inputs.portName = {type: 'variable', variableName: 'X'}`) were silently dropped. The executor now resolves these references against the run's variable bag before invoking nodes; literal-shape inputs pass through unchanged. Combined with the `core.delay` node's new fallback to `ctx.inputs.delayMs`, this unblocks the cancellation + bulk-cancel mixed-outcome paths. Suite delta: 1206 → 1210 passing / 41 → 37 failing.
+
+- **`apps/workflow-engine/backend/typescript/src/executor/types.ts`** — `WorkflowDefinition.nodes[]` gains optional `inputs?: Record<string, unknown>` to surface the fixture's per-port declarations to the executor (the JSON already carries the field; TypeScript was previously dropping it).
+- **`apps/workflow-engine/backend/typescript/src/executor/executor.ts`** — `runOneNode` resolves `nodeRef.inputs` against `snapshotRunVariables(run.runId)`:
+  - `{type: 'variable', variableName}` → value from the variable bag (undefined if absent — caller schema validates).
+  - `{type: 'literal', value}` → the literal value.
+  - other / unrecognized shapes → pass through as-is.
+  Resolved per-port values merge into `inputsByPort` with fixture-declared keys taking precedence over edge-supplied ones. Source nodes still unwrap to the legacy `ctx.inputs` shape.
+- **`apps/workflow-engine/backend/typescript/src/bootstrap/nodes.ts`** — `core.delay` reads `ctx.inputs.delayMs` first, then falls back to `ctx.config.durationMs` (legacy hard-coded path). The 60s cap stays.
+
+Conformance: `cancellation > in-flight :cancel reaches terminal cancelled` and `bulk-cancel > mixed-outcome request returns per-id results in order` now pass against the workflow-engine sample. `cap-breach` is still failing (needs recursion-limit handling, separate feature).
+
+Compatibility: **implementation-only**. Variable resolution is purely additive — nodes that don't carry fixture-shape inputs continue to receive the edge-supplied port map unchanged.
+
 ### Workflow-engine conformance harness — wire required env vars (2026-05-19)
 
 `npm run test:conformance` (the sample's in-process conformance bootstrap at `apps/workflow-engine/backend/typescript/conformance/run.ts`) now sets two env vars that the suite needs against this sample:

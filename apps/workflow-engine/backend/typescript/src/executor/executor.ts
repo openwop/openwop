@@ -56,6 +56,7 @@ import type { ProviderPolicyResolver } from '../host/index.js';
 import { createAiProvidersAdapter, AiProviderError } from '../aiProviders/aiProvidersHost.js';
 import { buildHostSurfaceBundle } from '../host/inMemorySurfaces.js';
 import { notifyRunTerminal } from './runLifecycle.js';
+import { snapshotRunVariables } from '../host/variablesRuntime.js';
 import {
   buildGraph,
   buildNodeInputs,
@@ -146,7 +147,7 @@ function withImplicitEdges(definition: WorkflowDefinition): WorkflowDefinition {
 async function runOneNode(input: {
   storage: Storage;
   run: RunRecord;
-  nodeRef: { nodeId: string; typeId: string; config?: Record<string, unknown> };
+  nodeRef: { nodeId: string; typeId: string; config?: Record<string, unknown>; inputs?: Record<string, unknown> };
   inputsByPort: Record<string, unknown>;
   policyResolver?: ProviderPolicyResolver;
 }): Promise<
@@ -227,6 +228,34 @@ async function runOneNode(input: {
     ...(run.scopeId ? { scopeId: run.scopeId } : {}),
   });
 
+  // Fixture-shape input resolution. When the workflow definition's
+  // `nodes[i].inputs[port]` carries a reference shape (e.g.,
+  // `{type: 'variable', variableName: 'X'}`), resolve against the
+  // run's variable bag before merging into inputsByPort. Literal
+  // values (non-objects, or objects without a `type` discriminator)
+  // pass through unchanged. Resolved per-port values override edge-
+  // supplied keys on conflict — the fixture-declared input wins.
+  const variableBag = snapshotRunVariables(run.runId);
+  const resolvedFixtureInputs: Record<string, unknown> = {};
+  if (nodeRef.inputs && typeof nodeRef.inputs === 'object') {
+    for (const [port, decl] of Object.entries(nodeRef.inputs)) {
+      if (decl && typeof decl === 'object' && !Array.isArray(decl)) {
+        const ref = decl as { type?: string; variableName?: string; value?: unknown };
+        if (ref.type === 'variable' && typeof ref.variableName === 'string') {
+          resolvedFixtureInputs[port] = variableBag?.[ref.variableName];
+          continue;
+        }
+        if (ref.type === 'literal') {
+          resolvedFixtureInputs[port] = ref.value;
+          continue;
+        }
+      }
+      // Unrecognized shape — treat as literal.
+      resolvedFixtureInputs[port] = decl;
+    }
+  }
+  const mergedInputsByPort = { ...inputsByPort, ...resolvedFixtureInputs };
+
   // Back-compat: many existing node implementations read ctx.inputs as a
   // single payload (e.g., `(ctx.inputs as Record<string,unknown>).prompt`).
   // The DAG scheduler passes a port-map. For source nodes (no incoming
@@ -235,9 +264,9 @@ async function runOneNode(input: {
   // same shape. For non-source nodes, port-keyed access is the supported
   // path going forward.
   const ctxInputs: unknown =
-    Object.keys(inputsByPort).length === 1 && 'input' in inputsByPort
-      ? inputsByPort.input
-      : inputsByPort;
+    Object.keys(mergedInputsByPort).length === 1 && 'input' in mergedInputsByPort
+      ? mergedInputsByPort.input
+      : mergedInputsByPort;
 
   const ctx: NodeContext = {
     runId: run.runId,

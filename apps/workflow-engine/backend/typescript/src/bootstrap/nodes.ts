@@ -54,7 +54,21 @@ const delayNode: NodeModule = {
   typeId: 'core.delay',
   version: '1.0.0',
   async execute(ctx) {
-    const ms = Math.max(0, Math.min(60_000, Number(ctx.config?.durationMs) || 0));
+    // Support three input sources, in precedence order:
+    //   1. ctx.inputs.delayMs — fixture-shape input port resolved by
+    //      the executor from a variable reference (e.g.,
+    //      conformance-cancellable seeds delayMs=30000 via its
+    //      variable bag, which the executor resolves into the input
+    //      port).
+    //   2. ctx.config.durationMs — legacy direct config (sample
+    //      workflows that hard-code the delay).
+    //   3. 0 — safe default.
+    // The 60s cap stays — the sample isn't a long-running daemon.
+    const inputs = (ctx.inputs ?? {}) as Record<string, unknown>;
+    const fromInput = typeof inputs.delayMs === 'number' ? inputs.delayMs : Number(inputs.delayMs);
+    const fromConfig = Number(ctx.config?.durationMs);
+    const raw = Number.isFinite(fromInput) ? fromInput : (Number.isFinite(fromConfig) ? fromConfig : 0);
+    const ms = Math.max(0, Math.min(60_000, raw));
     await new Promise((r) => setTimeout(r, ms));
     return { status: 'success', outputs: { waitedMs: ms } };
   },

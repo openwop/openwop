@@ -267,6 +267,15 @@ export interface WorkflowDefinition {
     nodeId: string;
     typeId: string;
     config?: Record<string, unknown>;
+    /** Per-port input declarations from the fixture's `inputs:` block.
+     *  Each entry is either:
+     *   - a literal value (passed through unchanged), OR
+     *   - a reference shape `{type: 'variable', variableName: string}`
+     *     that the executor resolves against the run's variable bag
+     *     before invoking the node (per `host/variablesRuntime.ts`).
+     *  Future shapes (`{type: 'literal', value}`, `{type: 'config'}`,
+     *  etc.) can be added without breaking the resolution interface. */
+    inputs?: Record<string, unknown>;
   }>;
   /** DAG edges. When absent or empty, the executor builds an implicit linear
    *  chain from `nodes` (back-compat path for callers that pre-date the
