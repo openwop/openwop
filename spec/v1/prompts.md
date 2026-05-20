@@ -151,12 +151,13 @@ When two installed packs ship the same `templateId`, the stringy form is rejecte
 
 ## Capability advertisement
 
-A host advertises its prompt-resolution support via `capabilities.prompts` (per `capabilities.schema.json`):
+A host advertises its prompt-resolution support via `capabilities.prompts` (per `capabilities.schema.json`). The block carries two **independent** axes — node-execution PromptRef resolution (Phase A) and the `/v1/prompts*` REST surface (Phase B) — each gated by its own flag so a host can implement either without the other.
 
 ```json
 {
   "prompts": {
     "supported": true,
+    "endpointsSupported": false,
     "templateKinds": ["system", "user", "schema-hint"],
     "variableSources": ["input", "variable", "context"],
     "maxTemplateBytes": 16384,
@@ -169,13 +170,14 @@ Field semantics:
 
 | Field | Required | Semantics |
 |---|---|---|
-| `supported` | yes | When `true`, the host resolves PromptRef values on `WorkflowNode.config.{systemPromptRef, userPromptRef, additionalPromptRefs}`. When `false` or absent, those keys are treated as opaque strings and never composed. |
+| `supported` | yes | RFC 0027 Phase A gate. When `true`, the host resolves PromptRef values on `WorkflowNode.config.{systemPromptRef, userPromptRef, additionalPromptRefs}` at node-execution time and emits `prompt.composed` events. When `false` or absent, those keys are treated as opaque strings and never composed. **Does NOT imply the `/v1/prompts*` REST surface is available** — see `endpointsSupported`. |
+| `endpointsSupported` | no | RFC 0028 Phase B gate. When `true`, the host serves the `/v1/prompts*` REST surface (at minimum the read endpoints). When `false` or absent, every `/v1/prompts*` request returns `501 capability_not_provided`. Independent of `supported`. |
 | `templateKinds` | no | Subset of `PromptKind` values the host accepts. Default: all four. |
 | `variableSources` | no | Subset of `PromptVariable.source` values supported. `secret` SHOULD only appear when `capabilities.secrets.supported: true`. |
 | `maxTemplateBytes` | no | Host cap on `text` length. MUST NOT exceed the schema cap (65536). |
 | `observability` | no | `off` / `hashed` / `full` — controls `prompt.composed` emission per §"Composition + observability" below. Default: `hashed`. |
 
-Phase B (RFC 0028) extends this block with `packsSupported`, `mutableLibrary`, `library`. Phase C (RFC 0029) extends it with `defaults`, `agentBindings`. This document covers only the Phase A surface.
+Phase B (RFC 0028) extends this block with `packsSupported` (pack-install path; requires `endpointsSupported: true` to be meaningful), `mutableLibrary` (write endpoints; requires `endpointsSupported: true`), and `library` (per-library knobs). Phase C (RFC 0029) extends it with `defaults` and `agentBindings`. This document covers Phase A; the Phase B fields are documented in §"Discovery & distribution" below.
 
 ---
 
@@ -249,7 +251,7 @@ Phase B of the prompt-library track adds two complementary surfaces:
 
 ### REST endpoints
 
-Six operations under `/v1/prompts*`, all gated on `capabilities.prompts.supported: true`. The mutating three (`POST` / `PUT` / `DELETE`) are additionally gated on `capabilities.prompts.mutableLibrary: true`. Hosts that don't advertise the relevant capability return `501 capability_not_provided`.
+Six operations under `/v1/prompts*`, all gated on `capabilities.prompts.endpointsSupported: true` (NOT `supported`; see §"Capability advertisement" above for the two-axis split — `supported` gates node-execution PromptRef resolution, `endpointsSupported` gates this REST surface). The mutating three (`POST` / `PUT` / `DELETE`) are additionally gated on `capabilities.prompts.mutableLibrary: true`. Hosts that don't advertise the relevant capability return `501 capability_not_provided`.
 
 | Method | Path | OperationId | Purpose |
 |---|---|---|---|

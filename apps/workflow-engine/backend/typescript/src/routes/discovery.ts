@@ -55,6 +55,27 @@ export function registerDiscoveryRoutes(app: Express, _deps: Deps): void {
         '/v1/webhooks/{subscriptionId}': { delete: { summary: 'Delete a webhook subscription' } },
         '/v1/packs': { get: { summary: 'List installed packs' } },
 
+        // RFC 0028 — prompt library. Listed here for the self-describing
+        // stub's API surface map. Gated on
+        // `capabilities.prompts.endpointsSupported: true`; this sample
+        // host advertises `endpointsSupported: false` (Phase A
+        // composition only), so every request below returns
+        // `501 capability_not_provided` per spec/v1/prompts.md
+        // §"Discovery & distribution". When the routes land, this
+        // sample's `endpointsSupported` flips to `true`.
+        '/v1/prompts': {
+          get: { summary: 'List prompt templates (RFC 0028; capability-gated)' },
+          post: { summary: 'Create a user-source prompt template (capability-gated)' },
+        },
+        '/v1/prompts/{templateId}': {
+          get: { summary: 'Fetch a prompt template (RFC 0028; capability-gated)' },
+          put: { summary: 'Replace a user-source prompt template (capability-gated)' },
+          delete: { summary: 'Delete a user-source prompt template (capability-gated)' },
+        },
+        '/v1/prompts:render': {
+          post: { summary: 'Render a prompt template with supplied variable bindings (RFC 0028; capability-gated)' },
+        },
+
         // ── Sample-extension routes (NOT part of the OpenWOP wire
         //    contract — vendor-prefixed per host-extensions.md) ──
         '/v1/host/sample/byok/secrets': {
@@ -79,6 +100,12 @@ export function registerDiscoveryRoutes(app: Express, _deps: Deps): void {
         '/v1/host/sample/chat/sessions/{sessionId}/messages': {
           get: { summary: 'Load every message in a chat session', tags: ['sample-extension'] },
           post: { summary: 'Append a message to a chat session', tags: ['sample-extension'] },
+        },
+        '/v1/host/sample/prompt/compose': {
+          post: {
+            summary: 'RFC 0027 §E compose seam — drives prompt-composed-* conformance scenarios (sample-only; NOT part of the canonical wire contract)',
+            tags: ['sample-extension'],
+          },
         },
       },
       tags: [
@@ -201,7 +228,23 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       // `prompt-composed-trust-marker` in `SECURITY/invariants.yaml`
       // gate the conformance assertions.
       prompts: {
+        // RFC 0027 Phase A — node-execution PromptRef resolution +
+        // prompt.composed emission. The reference host implements the
+        // composition pipeline (`host/promptCompose.ts`) and exercises
+        // it via the `/v1/host/sample/prompt/compose` test seam used
+        // by the conformance scenarios `prompt-composed-secret-redaction`
+        // and `prompt-composed-trust-marker`. Honest about Phase A.
         supported: true,
+        // RFC 0028 Phase B — the spec'd `/v1/prompts*` REST surface
+        // (listPromptTemplates / getPromptTemplate / renderPromptTemplate
+        // / createPromptTemplate / updatePromptTemplate /
+        // deletePromptTemplate). The sample host does NOT serve those
+        // routes yet — implementation is deferred to a follow-up slice.
+        // Explicit `false` here keeps the advertisement honest and
+        // prevents a spec-following client from getting a 404 (route
+        // missing) instead of the spec'd 501 (capability not provided).
+        // When the routes land, flip to true.
+        endpointsSupported: false,
         templateKinds: ['system', 'user', 'few-shot', 'schema-hint'],
         variableSources: ['input', 'variable', 'secret', 'context'],
         maxTemplateBytes: 65536,

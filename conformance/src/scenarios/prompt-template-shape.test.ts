@@ -96,7 +96,7 @@ describe('prompt-template-shape: schema compile (RFC 0027 §A)', () => {
     expect(
       schema.enum,
       driver.describe(
-        'RFC 0027 §A',
+        'spec/v1/prompts.md §PromptTemplate',
         'prompt-kind enum MUST contain exactly the four canonical values',
       ),
     ).toEqual(PROMPT_KIND_VALUES);
@@ -170,7 +170,7 @@ describe('prompt-template-shape: PromptTemplate round-trip (RFC 0027 §A)', () =
     expect(
       validate(negative),
       driver.describe(
-        'RFC 0027 §A',
+        'spec/v1/prompts.md §PromptTemplate',
         'PromptTemplate MUST require text field',
       ),
     ).toBe(false);
@@ -186,7 +186,7 @@ describe('prompt-template-shape: PromptTemplate round-trip (RFC 0027 §A)', () =
     expect(
       validate(negative),
       driver.describe(
-        'RFC 0027 §A',
+        'spec/v1/prompts.md §PromptTemplate',
         'PromptTemplate.version MUST match SemVer 2.0.0 pattern',
       ),
     ).toBe(false);
@@ -202,7 +202,7 @@ describe('prompt-template-shape: PromptTemplate round-trip (RFC 0027 §A)', () =
     expect(
       validate(negative),
       driver.describe(
-        'RFC 0027 §A',
+        'spec/v1/prompts.md §PromptTemplate',
         'PromptTemplate.templateId MUST match ^[a-z0-9][a-z0-9._-]{0,127}$',
       ),
     ).toBe(false);
@@ -218,7 +218,7 @@ describe('prompt-template-shape: PromptTemplate round-trip (RFC 0027 §A)', () =
     expect(
       validate(negative),
       driver.describe(
-        'RFC 0027 §A',
+        'spec/v1/prompts.md §PromptTemplate',
         'PromptTemplate.kind MUST be one of the four canonical values',
       ),
     ).toBe(false);
@@ -235,7 +235,7 @@ describe('prompt-template-shape: PromptTemplate round-trip (RFC 0027 §A)', () =
     expect(
       validate(negative),
       driver.describe(
-        'RFC 0027 §A',
+        'spec/v1/prompts.md §PromptTemplate',
         'PromptTemplate top-level additionalProperties:false MUST reject unknown fields',
       ),
     ).toBe(false);
@@ -252,7 +252,7 @@ describe('prompt-template-shape: PromptTemplate round-trip (RFC 0027 §A)', () =
     expect(
       validate(negative),
       driver.describe(
-        'RFC 0027 §A',
+        'spec/v1/prompts.md §PromptTemplate',
         'PromptVariable.name MUST match common-templating identifier pattern (no dashes)',
       ),
     ).toBe(false);
@@ -293,21 +293,21 @@ describe('prompt-template-shape: PromptRef round-trip (RFC 0027 §B)', () => {
   it('rejects stringy form without `prompt:` prefix', () => {
     expect(
       validate('writer-system'),
-      driver.describe('RFC 0027 §B', 'stringy PromptRef MUST start with prompt:'),
+      driver.describe('spec/v1/prompts.md §PromptRef', 'stringy PromptRef MUST start with prompt:'),
     ).toBe(false);
   });
 
   it('rejects stringy form with non-SemVer version', () => {
     expect(
       validate('prompt:writer-system@latest'),
-      driver.describe('RFC 0027 §B', 'stringy PromptRef version MUST be SemVer'),
+      driver.describe('spec/v1/prompts.md §PromptRef', 'stringy PromptRef version MUST be SemVer'),
     ).toBe(false);
   });
 
   it('rejects object form missing required templateId', () => {
     expect(
       validate({ version: '1.0.0' }),
-      driver.describe('RFC 0027 §B', 'object PromptRef MUST require templateId'),
+      driver.describe('spec/v1/prompts.md §PromptRef', 'object PromptRef MUST require templateId'),
     ).toBe(false);
   });
 
@@ -315,7 +315,7 @@ describe('prompt-template-shape: PromptRef round-trip (RFC 0027 §B)', () => {
     expect(
       validate({ templateId: 'writer-system', unknownExtra: true }),
       driver.describe(
-        'RFC 0027 §B',
+        'spec/v1/prompts.md §PromptRef',
         'object PromptRef additionalProperties:false MUST reject unknown fields',
       ),
     ).toBe(false);
@@ -331,7 +331,7 @@ describe.skipIf(HTTP_SKIP)('prompt-template-shape: capabilities.prompts advertis
     expect(
       typeof prompts.supported,
       driver.describe(
-        'RFC 0027 §D',
+        'spec/v1/prompts.md §Capability advertisement',
         'capabilities.prompts.supported MUST be boolean when block is advertised',
       ),
     ).toBe('boolean');

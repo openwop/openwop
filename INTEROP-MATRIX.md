@@ -54,6 +54,32 @@ Per `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` §"Track 6: MCP And A2A Proof" T3.4. The
 | **MCP** | `@modelcontextprotocol/sdk@1.29.0` — all three transports: `enableJsonResponse: true` streamable-http (`application/json`), default streamable-http (`text/event-stream` SSE-correlated by JSON-RPC id), and stdio (via `examples/mcp-stdio-bridge/`) | `mcp-tool-roundtrip.test.ts` | ✅ 2/2 pass against each transport (single-JSON verified 2026-05-12; SSE-streamed + stdio-bridged verified 2026-05-13) | Surfaced two probe gaps that the in-process fake had been hiding: (1) `initialize` requires `protocolVersion` + `capabilities` + `clientInfo` in `params` (official SDK returns 400 on empty params); (2) `mcp-session-id` from the initialize response MUST be threaded through `tools/list` + `tools/call`. Both closed in the probe; fake-mode compatibility preserved. The probe is HTTP-only by design; stdio MCP servers (the default for `modelcontextprotocol/servers` references) are exercised end-to-end via the bundled HTTP-to-stdio bridge at `examples/mcp-stdio-bridge/` — operators wrap any newline-delimited-JSON-RPC stdio server with the bridge and point `OPENWOP_MCP_REAL_SERVER_URL` at the bridge's port (default 4021). |
 | **A2A** | `@a2a-js/sdk@0.3.13` reference peer (echo skill, JSON-RPC transport) | `a2a-task-roundtrip.test.ts` | ✅ 1/1 direct-probe pass against `http://localhost:4002` (drift-point subtests soft-skip without a host-advertised fixture, which is the documented stance) | Probe migrated from the v0.2-era simple-HTTP shape (`/agent.json` + `POST /tasks` + `GET /tasks/{id}`) to A2A v0.3 JSON-RPC: AgentCard at `/.well-known/agent-card.json`, `message/send` + `tasks/get` over the JSON-RPC endpoint discovered from `card.additionalInterfaces`. Internal `A2ATaskState` enum stays UPPERCASE (matches `a2a-integration.md`'s gRPC reference); wire responses translate to lowercase-hyphen (`completed`, `input-required`, `auth-required`) per the JSON-RPC enum. Probe accepts both Task and Message envelopes from `message/send` since A2A v0.3 leaves that choice to the peer. |
 
+## Capability adoption — RFC 0027 + RFC 0028 prompt library
+
+The prompt-library track introduces two independent capability axes on `capabilities.prompts`:
+
+- **`supported`** (RFC 0027 Phase A) — node-execution PromptRef resolution + `prompt.composed` event emission. See `spec/v1/prompts.md` §"Capability advertisement".
+- **`endpointsSupported`** (RFC 0028 Phase B) — the `/v1/prompts*` REST surface (`listPromptTemplates`, `getPromptTemplate`, `renderPromptTemplate`, plus mutating endpoints when `mutableLibrary: true`). Independent of `supported` — a host MAY implement either without the other.
+
+Adoption status across tracked hosts (2026-05-20):
+
+| Host | `prompts.supported` | `prompts.endpointsSupported` | `prompts.observability` | Notes |
+|---|---|---|---|---|
+| In-memory reference | — | — | — | Not yet wired. |
+| SQLite reference | — | — | — | Not yet wired. |
+| Postgres reference | — | — | — | Not yet wired. |
+| Python reference | — | — | — | Not yet wired. |
+| Workflow-engine sample (`apps/workflow-engine/`) | **true** | false | **full** | RFC 0027 Phase A: implements composition pipeline (`host/promptCompose.ts`) + exercises it via the `/v1/host/sample/prompt/compose` test seam that drives the conformance scenarios `prompt-composed-secret-redaction` + `prompt-composed-trust-marker`. RFC 0028 Phase B endpoints not yet implemented — `endpointsSupported: false` honestly advertised. |
+| MyndHyve workflow-runtime | — | — | — | Not yet adopted. |
+
+Conformance gates:
+
+- `prompt-template-shape.test.ts` — always runs (server-free schema-shape proof).
+- `prompt-composed-secret-redaction.test.ts` — gated on `supported: true` + `observability: "full"`. Skips cleanly for hosts that advertise less.
+- `prompt-composed-trust-marker.test.ts` — same gates.
+
+SECURITY invariants `prompt-composed-secret-redaction` + `prompt-composed-trust-marker` are tracked in `SECURITY/invariants.yaml` (protocol-tier; verified via the above conformance scenarios).
+
 ## Reading Rows
 
 - **Compatibility profile claim** is derived from `/.well-known/openwop` according to `spec/v1/profiles.md`.

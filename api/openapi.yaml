@@ -849,7 +849,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthenticated' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '501':
-          description: 'Host does not advertise capabilities.prompts.supported.'
+          description: 'Host does not advertise capabilities.prompts.endpointsSupported. (RFC 0028 §A — supported gates Phase A node-execution composition; endpointsSupported gates this REST surface independently.)'
           content:
             application/json:
               schema:
@@ -948,7 +948,7 @@ paths:
               schema:
                 $ref: '../schemas/error-envelope.schema.json'
         '501':
-          description: 'Host does not advertise capabilities.prompts.supported.'
+          description: 'Host does not advertise capabilities.prompts.endpointsSupported. (RFC 0028 §A — supported gates Phase A node-execution composition; endpointsSupported gates this REST surface independently.)'
           content:
             application/json:
               schema:
@@ -1108,7 +1108,7 @@ paths:
               schema:
                 $ref: '../schemas/error-envelope.schema.json'
         '501':
-          description: 'Host does not advertise capabilities.prompts.supported.'
+          description: 'Host does not advertise capabilities.prompts.endpointsSupported. (RFC 0028 §A — supported gates Phase A node-execution composition; endpointsSupported gates this REST surface independently.)'
           content:
             application/json:
               schema:

@@ -79,7 +79,7 @@ describe.skipIf(HTTP_SKIP)('prompt-composed-trust-marker: untrusted input wrappe
     expect(
       payload.contentTrust,
       driver.describe(
-        'RFC 0027 §E + RFC 0020 §D',
+        'spec/v1/prompts.md §Composition + observability',
         'prompt.composed.contentTrust MUST be "untrusted" when ANY contributing input is untrusted',
       ),
     ).toBe('untrusted');
@@ -104,7 +104,7 @@ describe.skipIf(HTTP_SKIP)('prompt-composed-trust-marker: untrusted input wrappe
     expect(
       combined.includes('<UNTRUSTED>') && combined.includes('</UNTRUSTED>'),
       driver.describe(
-        'RFC 0027 §E + SECURITY/threat-model-prompt-injection.md',
+        'spec/v1/prompts.md §Composition + observability',
         'composed body MUST wrap untrusted segments with <UNTRUSTED>...</UNTRUSTED> markers',
       ),
     ).toBe(true);
@@ -119,14 +119,14 @@ describe.skipIf(HTTP_SKIP)('prompt-composed-trust-marker: untrusted input wrappe
     expect(
       insideMarkers.includes(UNTRUSTED_PAYLOAD),
       driver.describe(
-        'RFC 0027 §E',
+        'spec/v1/prompts.md §Composition + observability',
         'untrusted payload content MUST appear inside <UNTRUSTED>...</UNTRUSTED> markers',
       ),
     ).toBe(true);
     expect(
       outsideMarkers.includes(UNTRUSTED_PAYLOAD),
       driver.describe(
-        'RFC 0027 §E',
+        'spec/v1/prompts.md §Composition + observability',
         'untrusted payload content MUST NOT appear outside the markers',
       ),
     ).toBe(false);
@@ -149,7 +149,7 @@ describe.skipIf(HTTP_SKIP)('prompt-composed-trust-marker: untrusted input wrappe
     expect(
       payload.contentTrust,
       driver.describe(
-        'RFC 0027 §E',
+        'spec/v1/prompts.md §Composition + observability',
         'prompt.composed.contentTrust MUST be "trusted" when no contributing input is untrusted',
       ),
     ).toBe('trusted');

@@ -103,14 +103,14 @@ describe.skipIf(HTTP_SKIP)('prompt-composed-secret-redaction: composed body reda
     expect(
       systemBody.includes(CANARY_FRAGMENT),
       driver.describe(
-        'RFC 0027 §E + SR-1',
+        'spec/v1/prompts.md §Composition + observability',
         'prompt.composed.systemPrompt MUST NOT contain plaintext secret value',
       ),
     ).toBe(false);
     expect(
       userBody.includes(CANARY_FRAGMENT),
       driver.describe(
-        'RFC 0027 §E + SR-1',
+        'spec/v1/prompts.md §Composition + observability',
         'prompt.composed.userPrompt MUST NOT contain plaintext secret value',
       ),
     ).toBe(false);
@@ -122,7 +122,7 @@ describe.skipIf(HTTP_SKIP)('prompt-composed-secret-redaction: composed body reda
     expect(
       /\[REDACTED:[a-zA-Z0-9._-]+\]/.test(combined),
       driver.describe(
-        'RFC 0027 §E',
+        'spec/v1/prompts.md §Composition + observability',
         'composed body MUST carry [REDACTED:<secretId>] marker where secret-sourced variables appear',
       ),
     ).toBe(true);
@@ -135,7 +135,7 @@ describe.skipIf(HTTP_SKIP)('prompt-composed-secret-redaction: composed body reda
           expect(
             value.includes(CANARY_FRAGMENT),
             driver.describe(
-              'RFC 0027 §E + SR-1',
+              'spec/v1/prompts.md §Composition + observability',
               `variableBindings[${name}] MUST NOT contain plaintext secret value`,
             ),
           ).toBe(false);
@@ -158,14 +158,14 @@ describe.skipIf(HTTP_SKIP)('prompt-composed-secret-redaction: composed body reda
     expect(
       payload.hash && /^sha256:[0-9a-f]{64}$/.test(payload.hash),
       driver.describe(
-        'RFC 0027 §E',
+        'spec/v1/prompts.md §Composition + observability',
         'prompt.composed.hash MUST be present and match sha256:<hex64>',
       ),
     ).toBe(true);
     expect(
       payload.variableHashes !== undefined,
       driver.describe(
-        'RFC 0027 §E',
+        'spec/v1/prompts.md §Composition + observability',
         'prompt.composed.variableHashes MUST be present under all non-off observability modes',
       ),
     ).toBe(true);

@@ -723,6 +723,126 @@ export interface AIEnvelopeErrorPayload {
   details?: Record<string, unknown>;
 }
 
+// ── RFC 0027 + RFC 0028 — Prompt library (spec/v1/prompts.md) ──
+
+/**
+ * Role a PromptTemplate plays when composed into an LLM call. Shared enum
+ * `$ref`-ed by every schema that names a prompt kind. Per
+ * `schemas/prompt-kind.schema.json`.
+ */
+export type PromptKind = 'system' | 'user' | 'few-shot' | 'schema-hint';
+
+/**
+ * Typed interpolation slot in a PromptTemplate. Bindings are validated
+ * against this declaration before composition. Per
+ * `schemas/prompt-template.schema.json#/$defs/PromptVariable`.
+ */
+export interface PromptVariable {
+  name: string;
+  type: 'string' | 'number' | 'boolean' | 'array' | 'object';
+  required: boolean;
+  source?: 'input' | 'variable' | 'secret' | 'context';
+  extractPath?: string;
+  defaultValue?: unknown;
+  description?: string;
+}
+
+/**
+ * Named, versioned, variable-bound prompt body. Per
+ * `schemas/prompt-template.schema.json` + spec/v1/prompts.md §PromptTemplate.
+ *
+ * `meta.packName` + `meta.packVersion` are required when `meta.source: "pack"`
+ * (RFC 0028 §C); a JSON-Schema `if/then` conditional enforces this at the
+ * wire layer.
+ */
+export interface PromptTemplate {
+  templateId: string;
+  version: string;
+  kind: PromptKind;
+  text: string;
+  name?: string;
+  description?: string;
+  variables?: PromptVariable[];
+  modelHints?: {
+    modelClass?: string;
+    temperature?: number;
+    maxTokens?: number;
+    envelopeType?: string;
+  };
+  tags?: string[];
+  meta?: {
+    author?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    source?: 'host' | 'pack' | 'user';
+    packName?: string;
+    packVersion?: string;
+  };
+}
+
+/**
+ * Reference to a PromptTemplate. Two equivalent forms — the stringy URI
+ * `prompt:<templateId>[@<version>]` and the structured object — per
+ * `schemas/prompt-ref.schema.json`. The stringy form is canonical for
+ * inline use; the object form is canonical when `libraryId` disambiguation
+ * or per-reference `variableOverrides` are needed.
+ */
+export type PromptRef =
+  | string
+  | {
+      libraryId?: string;
+      templateId: string;
+      version?: string;
+      variableOverrides?: Record<string, unknown>;
+    };
+
+/** Filter set for `client.prompts.list(...)` per RFC 0028 §A. */
+export interface ListPromptsRequest {
+  kind?: PromptKind;
+  tag?: string;
+  modelClass?: string;
+  source?: 'host' | 'pack' | 'user';
+  cursor?: string;
+  limit?: number;
+}
+
+export interface ListPromptsResponse {
+  items: PromptTemplate[];
+  nextCursor?: string;
+}
+
+/** Identifier set for `client.prompts.get(...)` per RFC 0028 §A. */
+export interface GetPromptRequest {
+  templateId: string;
+  /** Pin to a SemVer version. When omitted, returns the latest. */
+  version?: string;
+  /** Disambiguate when multiple installed packs ship the same templateId. */
+  libraryId?: string;
+}
+
+/** Request shape for `client.prompts.render(...)` per RFC 0028 §A. */
+export interface RenderPromptRequest {
+  ref: PromptRef;
+  variables: Record<string, unknown>;
+  /**
+   * Aggregate trust marker for the supplied bindings; propagated through
+   * composition per RFC 0027 §E. Defaults to `trusted` when omitted.
+   */
+  contentTrust?: 'trusted' | 'untrusted';
+}
+
+/** Response shape for `client.prompts.render(...)`. The `hash` and
+ *  `variableHashes` are always present; `composed` populates only under
+ *  `capabilities.prompts.observability: "full"`. Same deterministic-hash
+ *  invariant as `prompt.composed` events (RFC 0027 §F). */
+export interface RenderPromptResponse {
+  hash: string;
+  refs: string[];
+  variableHashes: Record<string, string>;
+  composed?: string;
+  contentTrust?: 'trusted' | 'untrusted';
+}
+
 /**
  * Thrown when the server returns a non-2xx response. Carries the original
  * status, parsed error envelope (if available), the raw response text,

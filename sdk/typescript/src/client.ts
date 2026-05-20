@@ -22,14 +22,20 @@ import {
   type ErrorEnvelope,
   type ForkRunRequest,
   type ForkRunResponse,
+  type GetPromptRequest,
   type InterruptByTokenInspection,
   type DebugBundle,
   type DebugBundleOptions,
+  type ListPromptsRequest,
+  type ListPromptsResponse,
+  type PromptTemplate,
   type RegisterWebhookRequest,
   type RegisterWebhookResponse,
   type PauseRunRequest,
   type PauseRunResponse,
   type PollEventsResponse,
+  type RenderPromptRequest,
+  type RenderPromptResponse,
   type ResolveInterruptByTokenResponse,
   type ResolveInterruptRequest,
   type ResolveInterruptResponse,
@@ -317,6 +323,126 @@ export class OpenwopClient {
       await this.#request<unknown>({
         method: 'DELETE',
         path: `/v1/webhooks/${encodeURIComponent(subscriptionId)}`,
+      });
+    },
+  };
+
+  // ── Prompt library (RFC 0028; gated on capabilities.prompts.*) ──
+  //
+  // Read endpoints (list, get, render) gate on
+  // `capabilities.prompts.endpointsSupported: true`. Mutating endpoints
+  // (create, update, delete) additionally require
+  // `capabilities.prompts.mutableLibrary: true`. Hosts that don't advertise
+  // the relevant capability return `501 capability_not_provided`; the SDK
+  // surfaces that as a `WopError`. Clients SHOULD pre-flight via
+  // `getCapabilities()` before calling.
+  //
+  // NOTE: `capabilities.prompts.supported: true` (without
+  // `endpointsSupported: true`) ONLY gates node-execution PromptRef
+  // resolution per RFC 0027 Phase A; it does NOT imply these endpoints are
+  // available. See spec/v1/prompts.md §"Capability advertisement" for the
+  // two-axis gating split.
+  readonly prompts = {
+    /**
+     * List prompt templates available to the caller per RFC 0028 §A
+     * (operationId `listPromptTemplates`). Supports kind / tag / modelClass
+     * / source filters + opaque cursor pagination.
+     */
+    list: (req: ListPromptsRequest = {}): Promise<ListPromptsResponse> => {
+      const search = new URLSearchParams();
+      if (req.kind) search.set('kind', req.kind);
+      if (req.tag) search.set('tag', req.tag);
+      if (req.modelClass) search.set('modelClass', req.modelClass);
+      if (req.source) search.set('source', req.source);
+      if (req.cursor) search.set('cursor', req.cursor);
+      if (req.limit !== undefined) search.set('limit', String(req.limit));
+      const query = search.toString();
+      return this.#request<ListPromptsResponse>({
+        method: 'GET',
+        path: `/v1/prompts${query ? `?${query}` : ''}`,
+      });
+    },
+
+    /**
+     * Fetch a single PromptTemplate by id per RFC 0028 §A
+     * (operationId `getPromptTemplate`). Optionally pin a SemVer
+     * `version`; supply `libraryId` to disambiguate when multiple installed
+     * packs ship the same templateId.
+     */
+    get: (req: GetPromptRequest): Promise<PromptTemplate> => {
+      const search = new URLSearchParams();
+      if (req.version) search.set('version', req.version);
+      if (req.libraryId) search.set('libraryId', req.libraryId);
+      const query = search.toString();
+      return this.#request<PromptTemplate>({
+        method: 'GET',
+        path: `/v1/prompts/${encodeURIComponent(req.templateId)}${query ? `?${query}` : ''}`,
+      });
+    },
+
+    /**
+     * Render a PromptTemplate with supplied variable bindings per RFC 0028
+     * §A (operationId `renderPromptTemplate`). Returns composed body +
+     * sha256 hash + per-variable hashes. The deterministic-hash invariant
+     * (RFC 0028 §A) requires the `hash` to match what a matching
+     * `prompt.composed` event would carry at dispatch time. Does NOT
+     * dispatch an LLM call. Secret-source variable values MUST be supplied
+     * as `[REDACTED:<credentialRef>]` markers per
+     * SECURITY/threat-model-secret-leakage.md §SR-1.
+     */
+    render: (req: RenderPromptRequest): Promise<RenderPromptResponse> => {
+      return this.#request<RenderPromptResponse>({
+        method: 'POST',
+        path: '/v1/prompts:render',
+        body: req,
+      });
+    },
+
+    /**
+     * Create a new user-source PromptTemplate per RFC 0028 §A
+     * (operationId `createPromptTemplate`). Mutating endpoint —
+     * requires `capabilities.prompts.mutableLibrary: true`. Supports
+     * `Idempotency-Key` per the standard `MutationOptions` pattern.
+     */
+    create: (template: PromptTemplate, opts: MutationOptions = {}): Promise<void> => {
+      return this.#request<void>({
+        method: 'POST',
+        path: '/v1/prompts',
+        body: template,
+        headers: this.#mutationHeaders(opts),
+      });
+    },
+
+    /**
+     * Replace an existing user-source PromptTemplate per RFC 0028 §A
+     * (operationId `updatePromptTemplate`). Submitted SemVer MUST be
+     * strictly greater than stored. Mutating endpoint — requires
+     * `capabilities.prompts.mutableLibrary: true`. Pack-sourced and
+     * host-built-in templates are read-only (host returns 403).
+     */
+    update: (
+      templateId: string,
+      template: PromptTemplate,
+      opts: MutationOptions = {},
+    ): Promise<PromptTemplate> => {
+      return this.#request<PromptTemplate>({
+        method: 'PUT',
+        path: `/v1/prompts/${encodeURIComponent(templateId)}`,
+        body: template,
+        headers: this.#mutationHeaders(opts),
+      });
+    },
+
+    /**
+     * Delete a user-source PromptTemplate per RFC 0028 §A
+     * (operationId `deletePromptTemplate`). Mutating endpoint —
+     * requires `capabilities.prompts.mutableLibrary: true`. Pack-sourced
+     * and host-built-in templates are read-only (host returns 403).
+     */
+    delete: (templateId: string): Promise<void> => {
+      return this.#request<void>({
+        method: 'DELETE',
+        path: `/v1/prompts/${encodeURIComponent(templateId)}`,
       });
     },
   };

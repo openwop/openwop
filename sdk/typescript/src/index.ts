@@ -53,6 +53,16 @@ export type {
   AgentToolReturnedPayload,
   AgentHandoffPayload,
   AgentDecidedPayload,
+  // RFC 0027 + RFC 0028 — Prompt library (spec/v1/prompts.md)
+  GetPromptRequest,
+  ListPromptsRequest,
+  ListPromptsResponse,
+  PromptKind,
+  PromptRef,
+  PromptTemplate,
+  PromptVariable,
+  RenderPromptRequest,
+  RenderPromptResponse,
 } from './types.js';
 export { streamEvents } from './sse.js';
 export type { EventsStreamContext, EventsStreamOptions } from './sse.js';

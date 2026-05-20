@@ -207,7 +207,7 @@ Hosts that advertise the `openwop-audit-log-integrity` profile per `auth-profile
 
 ### Prompt library (RFC 0028; gated on `capabilities.prompts.*`)
 
-Hosts that advertise `capabilities.prompts.supported: true` per `prompts.md` §"Discovery & distribution" expose the read endpoints. The mutating endpoints additionally require `capabilities.prompts.mutableLibrary: true`. Hosts without the relevant capability return `501 capability_not_provided`.
+Hosts that advertise `capabilities.prompts.endpointsSupported: true` per `prompts.md` §"Discovery & distribution" expose the read endpoints. The mutating endpoints additionally require `capabilities.prompts.mutableLibrary: true`. Hosts without the relevant capability return `501 capability_not_provided`. **Note:** `capabilities.prompts.supported: true` (without `endpointsSupported`) gates only the *node-execution* PromptRef-resolution surface (Phase A); it does NOT imply the REST endpoints are available.
 
 | Method | Path | Auth | Scope | Purpose |
 |---|---|---|---|---|

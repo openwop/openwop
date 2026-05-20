@@ -153,9 +153,19 @@ async function resolveBinding(
       throw new Error(`prompt_variable_unresolved: secret binding for '${decl.name}' missing credentialRef`);
     }
     // Resolve to assert the secret actually exists in the BYOK store.
-    // The resolved value is discarded immediately — the redaction
-    // marker is what surfaces in the observability payload.
-    await resolveSecret(credentialRef, scope);
+    // `resolveSecret` returns null when the credentialRef has no value
+    // in the host's secret store; the seam MUST fail loudly so a
+    // misconfigured canary surfaces in the conformance suite rather
+    // than being masked by the redaction marker. The resolved plaintext
+    // is discarded — only the marker surfaces in the observability
+    // payload per RFC 0027 §E + SECURITY/threat-model-secret-leakage.md
+    // SR-1.
+    const resolved = await resolveSecret(credentialRef, scope);
+    if (resolved === null) {
+      throw new Error(
+        `prompt_secret_unresolvable: credentialRef '${credentialRef}' not provisioned in BYOK store`,
+      );
+    }
     return {
       displayValue: `[REDACTED:${credentialRef}]`,
       observabilityValue: `[REDACTED:${credentialRef}]`,

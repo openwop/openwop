@@ -68,12 +68,16 @@
     },
     "prompts": {
       "type": "object",
-      "description": "RFC 0027 prompt-template support advertisement. When `supported: true`, the host resolves PromptRef values in `WorkflowNode.config.systemPromptRef`/`userPromptRef`/`additionalPromptRefs` and emits `prompt.composed` run events per `spec/v1/prompts.md`. Absent block = no support; consumers passing PromptRef values to such a host MUST tolerate the keys being treated as opaque strings.",
+      "description": "RFC 0027 + RFC 0028 prompt-template support advertisement. The `supported` flag gates **node-execution resolution** of PromptRef values per RFC 0027 (Phase A); the separate `endpointsSupported` flag gates the **REST surface** at `/v1/prompts*` per RFC 0028 (Phase B). The two axes are independent — a host MAY implement Phase A composition without exposing the REST surface, and vice versa. Absent block = no support; consumers passing PromptRef values to such a host MUST tolerate the keys being treated as opaque strings.",
       "required": ["supported"],
       "properties": {
         "supported": {
           "type": "boolean",
-          "description": "Host implements RFC 0027 prompt-template resolution end-to-end. False or absent = the keys `systemPromptRef`, `userPromptRef`, etc. on `WorkflowNode.config` are treated as opaque strings and never composed."
+          "description": "RFC 0027 Phase A. When `true`, the host resolves PromptRef values in `WorkflowNode.config.{systemPromptRef, userPromptRef, additionalPromptRefs}` at node-execution time AND emits `prompt.composed` run events per spec/v1/prompts.md §\"Composition + observability\". Does NOT imply the `/v1/prompts*` REST surface is available — see `endpointsSupported` for that. False or absent = the PromptRef keys on `WorkflowNode.config` are treated as opaque strings and never composed."
+        },
+        "endpointsSupported": {
+          "type": "boolean",
+          "description": "RFC 0028 §A. When `true`, the host serves the `/v1/prompts*` REST surface — at minimum the read endpoints (`listPromptTemplates`, `getPromptTemplate`, `renderPromptTemplate`). The mutating endpoints additionally require `mutableLibrary: true`; the pack-install path additionally requires `packsSupported: true`. False or absent = every `/v1/prompts*` request returns `501 capability_not_provided`. Independent of `supported` — a host MAY advertise `supported: true, endpointsSupported: false` (composition without library REST) or `supported: false, endpointsSupported: true` (library REST against an external resolver, e.g., a façade host)."
         },
         "templateKinds": {
           "type": "array",
