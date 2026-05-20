@@ -19,7 +19,9 @@
  * execution, this scenario fails first.
  *
  * Capability-gated: skips when the host doesn't advertise
- * `capabilities.prompts.supported: true`.
+ * `capabilities.prompts.supported: true`. Under
+ * `OPENWOP_REQUIRE_BEHAVIOR=true`, the gate hardens from SKIP to
+ * FAIL via `behaviorGate('prompts-supported', ...)`.
  *
  * @see spec/v1/prompts.md §"Composition + observability"
  * @see spec/v1/prompts.md §"Resolution chain (normative)"
@@ -31,6 +33,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { behaviorGate } from '../lib/behavior-gate.js';
 
 const WORKFLOW_ID = 'conformance-prompt-end-to-end';
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(WORKFLOW_ID);
@@ -79,7 +82,7 @@ const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 describe.skipIf(SKIP_NO_FIXTURE || HTTP_SKIP)('prompt-end-to-end-events: real dispatch emits agent.promptResolved + prompt.composed (RFC 0027/0029)', () => {
   it('emits agent.promptResolved with chain[].applied: true for layer "node" when systemPromptRef is set on node.config', async () => {
     const d = await readDiscovery();
-    if (!promptsSupported(d)) return;
+    if (!behaviorGate('prompts-supported', promptsSupported(d))) return;
 
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });
     expect(
@@ -131,7 +134,7 @@ describe.skipIf(SKIP_NO_FIXTURE || HTTP_SKIP)('prompt-end-to-end-events: real di
 
   it('emits prompt.composed with sha256:<hex64> hash + non-empty composed body for system-kind template', async () => {
     const d = await readDiscovery();
-    if (!promptsSupported(d)) return;
+    if (!behaviorGate('prompts-supported', promptsSupported(d))) return;
 
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });
     if (create.status !== 201) return;
@@ -177,7 +180,7 @@ describe.skipIf(SKIP_NO_FIXTURE || HTTP_SKIP)('prompt-end-to-end-events: real di
 
   it('emits agent.promptResolved before prompt.composed (causal ordering)', async () => {
     const d = await readDiscovery();
-    if (!promptsSupported(d)) return;
+    if (!behaviorGate('prompts-supported', promptsSupported(d))) return;
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });
     if (create.status !== 201) return;
     const { runId } = create.json as { runId: string };

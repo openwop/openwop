@@ -26,7 +26,9 @@
  * IS exercised against the in-tree `vendor.openwop.prompt-sample`.
  *
  * Capability-gated: skips when the host doesn't advertise
- * `capabilities.prompts.endpointsSupported: true`.
+ * `capabilities.prompts.endpointsSupported: true`. Under
+ * `OPENWOP_REQUIRE_BEHAVIOR=true`, the gate hardens from SKIP to
+ * FAIL via `behaviorGate('prompts-endpoints', ...)`.
  *
  * HTTP-driven: skips when no `OPENWOP_BASE_URL` is configured.
  *
@@ -37,6 +39,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { behaviorGate } from '../lib/behavior-gate.js';
 
 interface DiscoveryDoc {
   capabilities?: {
@@ -79,7 +82,7 @@ const REQUIRE_PACK_INSTALLED = process.env.OPENWOP_TEST_PROMPT_PACK_INSTALLED ==
 describe.skipIf(HTTP_SKIP)('prompt-pack-install: boot-time loader surfaces pack templates (RFC 0028 §B)', () => {
   it('GET /v1/prompts?source=pack returns 200 + an array of PromptTemplate objects when endpointsSupported is advertised', async () => {
     const d = await readDiscovery();
-    if (!endpointsSupported(d)) return;
+    if (!behaviorGate('prompts-endpoints', endpointsSupported(d))) return;
 
     const res = await driver.get('/v1/prompts?source=pack');
     expect(
@@ -117,7 +120,7 @@ describe.skipIf(HTTP_SKIP)('prompt-pack-install: boot-time loader surfaces pack 
 
   it('each pack-source template carries meta.source/packName/packVersion stamps per RFC 0028 §B', async () => {
     const d = await readDiscovery();
-    if (!endpointsSupported(d)) return;
+    if (!behaviorGate('prompts-endpoints', endpointsSupported(d))) return;
 
     const res = await driver.get('/v1/prompts?source=pack');
     if (res.status !== 200) return;
@@ -152,7 +155,7 @@ describe.skipIf(HTTP_SKIP)('prompt-pack-install: boot-time loader surfaces pack 
 
   it('GET /v1/prompts/{templateId} returns a pack-source template by id (reference pack: writer-system)', async () => {
     const d = await readDiscovery();
-    if (!endpointsSupported(d)) return;
+    if (!behaviorGate('prompts-endpoints', endpointsSupported(d))) return;
 
     const list = await driver.get('/v1/prompts?source=pack');
     if (list.status !== 200) return;

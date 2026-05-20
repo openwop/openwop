@@ -33,6 +33,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { driver } from '../lib/driver.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
+import { behaviorGate } from '../lib/behavior-gate.js';
 
 interface DiscoveryDoc {
   capabilities?: {
@@ -81,7 +82,7 @@ describe.skipIf(HTTP_SKIP)('prompt-list-and-fetch: REST surface shape (RFC 0028 
 
   it('GET /v1/prompts returns { items: PromptTemplate[], nextCursor? } when endpointsSupported is true', async () => {
     const d = await readDiscovery();
-    if (!endpointsSupported(d)) return;
+    if (!behaviorGate('prompts-endpoints', endpointsSupported(d))) return;
 
     const res = await driver.get('/v1/prompts');
     expect(res.status, driver.describe('spec/v1/prompts.md §Discovery & distribution', 'GET /v1/prompts MUST return 200 when endpointsSupported: true')).toBe(200);
@@ -104,7 +105,7 @@ describe.skipIf(HTTP_SKIP)('prompt-list-and-fetch: REST surface shape (RFC 0028 
 
   it('GET /v1/prompts?source=host narrows to host-built-in templates', async () => {
     const d = await readDiscovery();
-    if (!endpointsSupported(d)) return;
+    if (!behaviorGate('prompts-endpoints', endpointsSupported(d))) return;
     const res = await driver.get('/v1/prompts?source=host');
     expect(res.status).toBe(200);
     const body = res.json as ListResponse;
@@ -121,7 +122,7 @@ describe.skipIf(HTTP_SKIP)('prompt-list-and-fetch: REST surface shape (RFC 0028 
 
   it('GET /v1/prompts?kind=system narrows to system-kind templates', async () => {
     const d = await readDiscovery();
-    if (!endpointsSupported(d)) return;
+    if (!behaviorGate('prompts-endpoints', endpointsSupported(d))) return;
     const res = await driver.get('/v1/prompts?kind=system');
     expect(res.status).toBe(200);
     const body = res.json as ListResponse;
@@ -132,7 +133,7 @@ describe.skipIf(HTTP_SKIP)('prompt-list-and-fetch: REST surface shape (RFC 0028 
 
   it('GET /v1/prompts/{templateId} returns the template + ETag header for a known fixture', async () => {
     const d = await readDiscovery();
-    if (!endpointsSupported(d)) return;
+    if (!behaviorGate('prompts-endpoints', endpointsSupported(d))) return;
 
     // List first to discover a known templateId we can fetch.
     const list = await driver.get('/v1/prompts?source=host&limit=1');
@@ -160,7 +161,7 @@ describe.skipIf(HTTP_SKIP)('prompt-list-and-fetch: REST surface shape (RFC 0028 
 
   it('GET /v1/prompts/{templateId} with If-None-Match returns 304 when ETag matches', async () => {
     const d = await readDiscovery();
-    if (!endpointsSupported(d)) return;
+    if (!behaviorGate('prompts-endpoints', endpointsSupported(d))) return;
     const list = await driver.get('/v1/prompts?source=host&limit=1');
     if (list.status !== 200) return;
     const body = list.json as ListResponse;
@@ -186,7 +187,7 @@ describe.skipIf(HTTP_SKIP)('prompt-list-and-fetch: REST surface shape (RFC 0028 
 
   it('GET /v1/prompts/unknown-template returns 404 with ErrorEnvelope', async () => {
     const d = await readDiscovery();
-    if (!endpointsSupported(d)) return;
+    if (!behaviorGate('prompts-endpoints', endpointsSupported(d))) return;
     const res = await driver.get('/v1/prompts/conformance-unknown-template-deadbeef');
     expect(res.status).toBe(404);
     const body = res.json as { error?: { code?: string; message?: string } };

@@ -29,6 +29,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { behaviorGate } from '../lib/behavior-gate.js';
 
 interface DiscoveryDoc {
   capabilities?: {

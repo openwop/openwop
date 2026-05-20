@@ -51,6 +51,8 @@ import { emitCost } from '../observability/costEmitter.js';
 import { buildProviderUsagePayloadFromTokens } from '../providers/usageEmitter.js';
 import { getInvocationLog } from '../executor/invocationLog.js';
 import { createLogger } from '../observability/logger.js';
+import { buildReasoningDirective } from '../host/envelopeDirective.js';
+import { getEnvelopeReasoningConfig } from '../host/envelopeReasoningConfig.js';
 
 const log = createLogger('aiProviders.host');
 
@@ -562,9 +564,21 @@ async function dispatchStructured(
   // structured output (Anthropic tool-use, OpenAI response_format,
   // Gemini responseSchema). Sample-grade: prompt nudge + retry.
   const schemaHint = `Respond with a JSON object that matches this schema, with no preamble or trailing text: ${JSON.stringify(req.responseSchema)}`;
-  const augmentedSystem = req.systemPrompt
-    ? `${req.systemPrompt}\n\n${schemaHint}`
-    : schemaHint;
+  // RFC 0030 §A: when the responseSchema declares a top-level `reasoning`
+  // property AND the host's posture is `"advisory"` or `"mandatory"`,
+  // append the reasoning-field directive after the schema-shape hint.
+  // The two directives compose: the schema hint shapes the JSON; the
+  // reasoning directive shapes the order-of-thought inside it. Mirrors
+  // the staged composition pattern in spec/v1/ai-envelope.md §"Reasoning
+  // field (normative)". Hosts MUST NOT reject envelopes where `reasoning`
+  // is absent regardless of directive strength (RFC 0030 §A).
+  const reasoningConfig = getEnvelopeReasoningConfig();
+  const reasoningDirective = reasoningConfig.supported
+    ? buildReasoningDirective(req.responseSchema, reasoningConfig.promptDirective)
+    : null;
+  const augmentedSystem = [req.systemPrompt, schemaHint, reasoningDirective]
+    .filter((s): s is string => Boolean(s))
+    .join('\n\n');
   const enrichedReq: AiCallRequest = { ...req, systemPrompt: augmentedSystem };
 
   let lastError: unknown = null;

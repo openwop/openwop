@@ -34,6 +34,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { behaviorGate } from '../lib/behavior-gate.js';
 
 interface DiscoveryDoc {
   capabilities?: {
@@ -71,7 +72,7 @@ const TEMPLATE_ID = `conformance.user.lifecycle-${Math.random().toString(36).sli
 describe.skipIf(HTTP_SKIP)('prompt-mutable-lifecycle: user-source create/update/delete round-trip (RFC 0028 §A)', () => {
   it('POST /v1/prompts creates a user-source template (201 + Location)', async () => {
     const d = await readDiscovery();
-    if (!mutableSupport(d)) return;
+    if (!behaviorGate('prompts-mutable', mutableSupport(d))) return;
     const body: PromptTemplate = {
       templateId: TEMPLATE_ID,
       version: '1.0.0',
@@ -98,7 +99,7 @@ describe.skipIf(HTTP_SKIP)('prompt-mutable-lifecycle: user-source create/update/
 
   it('GET /v1/prompts/{templateId} returns the new template with meta.source: "user"', async () => {
     const d = await readDiscovery();
-    if (!mutableSupport(d)) return;
+    if (!behaviorGate('prompts-mutable', mutableSupport(d))) return;
     const res = await driver.get(`/v1/prompts/${encodeURIComponent(TEMPLATE_ID)}`);
     expect(res.status).toBe(200);
     const tpl = res.json as PromptTemplate;
@@ -114,7 +115,7 @@ describe.skipIf(HTTP_SKIP)('prompt-mutable-lifecycle: user-source create/update/
 
   it('POST /v1/prompts with same (templateId, version) returns 409', async () => {
     const d = await readDiscovery();
-    if (!mutableSupport(d)) return;
+    if (!behaviorGate('prompts-mutable', mutableSupport(d))) return;
     const body: PromptTemplate = {
       templateId: TEMPLATE_ID,
       version: '1.0.0',
@@ -133,7 +134,7 @@ describe.skipIf(HTTP_SKIP)('prompt-mutable-lifecycle: user-source create/update/
 
   it('PUT /v1/prompts/{templateId} with strictly-greater SemVer replaces the template', async () => {
     const d = await readDiscovery();
-    if (!mutableSupport(d)) return;
+    if (!behaviorGate('prompts-mutable', mutableSupport(d))) return;
     const body: PromptTemplate = {
       templateId: TEMPLATE_ID,
       version: '1.1.0',
@@ -155,7 +156,7 @@ describe.skipIf(HTTP_SKIP)('prompt-mutable-lifecycle: user-source create/update/
 
   it('PUT /v1/prompts/{templateId} with non-monotonic SemVer returns 409', async () => {
     const d = await readDiscovery();
-    if (!mutableSupport(d)) return;
+    if (!behaviorGate('prompts-mutable', mutableSupport(d))) return;
     const body: PromptTemplate = {
       templateId: TEMPLATE_ID,
       version: '0.9.0',
@@ -174,7 +175,7 @@ describe.skipIf(HTTP_SKIP)('prompt-mutable-lifecycle: user-source create/update/
 
   it('DELETE /v1/prompts/{templateId} returns 204 and subsequent GET returns 404', async () => {
     const d = await readDiscovery();
-    if (!mutableSupport(d)) return;
+    if (!behaviorGate('prompts-mutable', mutableSupport(d))) return;
     const del = await driver.delete(`/v1/prompts/${encodeURIComponent(TEMPLATE_ID)}`);
     expect(
       del.status,
@@ -195,7 +196,7 @@ describe.skipIf(HTTP_SKIP)('prompt-mutable-lifecycle: user-source create/update/
 
   it('DELETE on a host-built-in template returns 403', async () => {
     const d = await readDiscovery();
-    if (!mutableSupport(d)) return;
+    if (!behaviorGate('prompts-mutable', mutableSupport(d))) return;
     // Find a host-built-in to probe; the conformance-fixture set
     // is the standard source for this test.
     const list = await driver.get('/v1/prompts?source=host&limit=1');

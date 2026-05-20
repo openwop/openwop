@@ -32,6 +32,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { behaviorGate } from '../lib/behavior-gate.js';
 
 interface DiscoveryDoc {
   capabilities?: {
@@ -78,11 +79,7 @@ const CANARY_FRAGMENT = 'CANARY-CONFORMANCE-SECRET';
 describe.skipIf(HTTP_SKIP)('prompt-composed-secret-redaction: composed body redacts secret-sourced values (RFC 0027 §E)', () => {
   it('emits prompt.composed with [REDACTED:<id>] in place of secret-sourced variable values', async () => {
     const d = await readDiscovery();
-    if (!promptsSupportFull(d)) {
-      // capability not advertised — skip silently (the gate distinguishes
-      // skip from fail via vitest's test-result reporting).
-      return;
-    }
+    if (!behaviorGate('prompts-observability-full', promptsSupportFull(d))) return;
 
     // Driver test-seam endpoint: instructs the reference host to compose
     // a fixture template with one secret-sourced variable bound to a
@@ -153,7 +150,7 @@ describe.skipIf(HTTP_SKIP)('prompt-composed-secret-redaction: composed body reda
 
   it('emits variableHashes for the secret-sourced binding regardless of observability', async () => {
     const d = await readDiscovery();
-    if (!promptsSupportFull(d)) return;
+    if (!behaviorGate('prompts-observability-full', promptsSupportFull(d))) return;
     const res = await driver.post('/v1/host/sample/prompt/compose', {
       templateId: 'conformance.prompt.secret-redaction',
       bindings: { secretRef: 'openwop-conformance-canary-secret' },

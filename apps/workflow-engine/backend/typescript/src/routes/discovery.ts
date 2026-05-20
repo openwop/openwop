@@ -16,6 +16,7 @@ import { universalEnvelopeKinds } from '../host/envelopeAcceptor.js';
 import { getFsSandboxRoot } from '../host/inMemorySurfaces.js';
 import { listLoadedConformanceFixtures } from '../host/index.js';
 import { getPromptsHostConfig } from '../host/promptHostConfig.js';
+import { getEnvelopeReasoningConfig } from '../host/envelopeReasoningConfig.js';
 
 interface Deps {
   storage: Storage;
@@ -272,19 +273,28 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       prompts: { ...getPromptsHostConfig() },
       // RFC 0030 envelope-track advertisement. The universal-kind payload
       // schemas (`schemas/envelopes/*.schema.json`) carry the OPTIONAL
-      // `reasoning` field per RFC 0030 §A. The reference host does NOT yet
-      // inject the prompt-directive instructing the model to populate it —
-      // that wiring is the path to RFC 0030 `Active → Accepted`. Until that
-      // helper ships, advertise `promptDirective: "off"` (honest about the
-      // current posture: schemas accept the field, host doesn't prompt for
-      // it). `tierOneSubsetCompliance: "warn"` is also honest — the universal-
-      // kind schemas use OpenAI-strict-incompatible constraints (minLength /
-      // maxLength / minItems) that pre-date RFC 0030; the strict-mode static
-      // scenario will surface violations under `"strict"` advertisement but
-      // soft-skips under `"warn"`. A future RFC may bring the universal-kind
-      // schemas into Tier-1 strict compliance.
+      // `reasoning` field per RFC 0030 §A. The reference host injects a
+      // system-prompt directive instructing the model to populate it when
+      // the dispatched `responseSchema` declares a top-level `reasoning`
+      // property — implemented by `host/envelopeDirective.ts` and wired
+      // into `aiProviders/aiProvidersHost.ts` `dispatchStructured()`.
+      // Default posture is `"advisory"` (suggestive); operators override
+      // via `OPENWOP_ENVELOPE_REASONING_DIRECTIVE` ∈ {`off`, `advisory`,
+      // `mandatory`}. The advertisement reads through the same accessor
+      // (`host/envelopeReasoningConfig.ts`) so what the host advertises
+      // and what it actually injects stay in lockstep.
+      //
+      // `tierOneSubsetCompliance: "warn"` is honest — the universal-kind
+      // schemas use OpenAI-strict-incompatible constraints (minLength /
+      // maxLength / minItems) that pre-date RFC 0030; the strict-mode
+      // static scenario surfaces violations under `"strict"` advertisement
+      // but soft-skips under `"warn"`. A future RFC may bring the
+      // universal-kind schemas into Tier-1 strict compliance.
       envelopes: {
-        reasoning: { supported: true, promptDirective: 'off' },
+        reasoning: (() => {
+          const cfg = getEnvelopeReasoningConfig();
+          return { supported: cfg.supported, promptDirective: cfg.promptDirective };
+        })(),
         tierOneSubsetCompliance: 'warn',
       },
       memory: { supported: false },

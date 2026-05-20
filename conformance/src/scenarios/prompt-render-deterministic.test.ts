@@ -22,6 +22,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { behaviorGate } from '../lib/behavior-gate.js';
 
 interface DiscoveryDoc {
   capabilities?: {
@@ -86,7 +87,7 @@ const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 describe.skipIf(HTTP_SKIP)('prompt-render-deterministic: hash stable across identical inputs (RFC 0028 §A)', () => {
   it('identical (ref, variables) inputs produce identical hash + variableHashes', async () => {
     const d = await readDiscovery();
-    if (!endpointsSupported(d)) return;
+    if (!behaviorGate('prompts-endpoints', endpointsSupported(d))) return;
 
     const template = await pickTemplateWithInputVar();
     if (!template) return;
@@ -129,7 +130,7 @@ describe.skipIf(HTTP_SKIP)('prompt-render-deterministic: hash stable across iden
 
   it('different variable values produce different hash + at least one different variableHash', async () => {
     const d = await readDiscovery();
-    if (!endpointsSupported(d)) return;
+    if (!behaviorGate('prompts-endpoints', endpointsSupported(d))) return;
 
     const template = await pickTemplateWithInputVar();
     if (!template) return;
@@ -174,7 +175,7 @@ describe.skipIf(HTTP_SKIP)('prompt-render-deterministic: hash stable across iden
 
   it('hash + variableHashes MUST match sha256:<hex64> pattern', async () => {
     const d = await readDiscovery();
-    if (!endpointsSupported(d)) return;
+    if (!behaviorGate('prompts-endpoints', endpointsSupported(d))) return;
 
     const template = await pickTemplateWithInputVar();
     if (!template) return;
@@ -210,7 +211,7 @@ describe.skipIf(HTTP_SKIP)('prompt-render-deterministic: hash stable across iden
     // string (which the kind-specific systemPrompt/userPrompt fields
     // would yield by themselves for these kinds).
     const d = await readDiscovery();
-    if (!endpointsSupported(d)) return;
+    if (!behaviorGate('prompts-endpoints', endpointsSupported(d))) return;
     const list = await driver.get('/v1/prompts?source=host&limit=200');
     if (list.status !== 200) return;
     const body = list.json as ListResponse;
