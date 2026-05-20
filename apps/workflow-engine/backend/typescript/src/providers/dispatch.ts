@@ -10,7 +10,7 @@
 
 import { ThinkBlockSplitter } from './thinkBlockSplitter.js';
 
-export type ProviderId = 'anthropic' | 'openai' | 'google' | 'minimax';
+export type ProviderId = 'anthropic' | 'openai' | 'google' | 'minimax' | 'mock';
 
 /** A single piece of content within a message. Mirrors the FE shape
  *  in src/chat/hooks/useChatSession.ts. */
@@ -97,6 +97,15 @@ export async function dispatchChat(req: DispatchRequest): Promise<DispatchResult
       return dispatchGoogle(req);
     case 'minimax':
       return dispatchMiniMax(req);
+    case 'mock': {
+      // Conformance-only provider — see `dispatchMock.ts`. Production
+      // deployments MUST NOT route real tenants here; the mock provider
+      // is reachable only when the calling node passed `provider: 'mock'`
+      // (which the workflow-engine sample only allows for fixtures
+      // running under `OPENWOP_TEST_SEAM_ENABLED=true`).
+      const { dispatchMock } = await import('./dispatchMock.js');
+      return dispatchMock(req);
+    }
     default: {
       const exhaustive: never = req.provider;
       throw new Error(`Unknown provider: ${exhaustive as string}`);
