@@ -1,0 +1,31 @@
+{
+  "id": "conformance-subworkflow-mid-run-mutation-child",
+  "name": "Conformance: subWorkflow one-shot fold — child (RFC 0022 §B HVMAP-2)",
+  "version": "1.0",
+  "description": "Child fixture for `conformance-subworkflow-mid-run-mutation`. The child declares `receivedPrdId.defaultValue='baked-in'` (overridden at dispatch-time by the parent's `inputMapping`), then suspends on an approval gate so the test can mutate the parent's `currentPrdId` while the child is paused. On resume the child terminates; the assertion reads the child's final `receivedPrdId` variable and confirms it remained at the dispatch-time projected value (NOT the parent's later-mutated value).",
+  "nodes": [
+    {
+      "id": "child-gate",
+      "typeId": "core.approvalGate",
+      "name": "Pause so parent can mutate currentPrdId",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "title": "HVMAP-2 mid-run pause",
+        "description": "Held by the conformance harness so the parent can mutate its variable bag while the child is suspended; on resume the child completes and the test reads its final receivedPrdId.",
+        "actions": ["accept", "reject"]
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "receivedPrdId", "type": "string", "defaultValue": "baked-in" }
+  ],
+  "metadata": {
+    "tags": ["conformance", "rfc-0022", "subworkflow", "input-mapping", "hvmap-2", "child"]
+  },
+  "settings": { "timeout": 30000 }
+}

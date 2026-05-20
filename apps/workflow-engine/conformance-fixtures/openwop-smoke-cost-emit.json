@@ -1,0 +1,37 @@
+{
+  "id": "openwop-smoke-cost-emit",
+  "name": "Conformance: cost-attribute allowlist + credential redaction (O4 / G6)",
+  "version": "1.0",
+  "description": "Drives the `conformance.cost.emit` typeId with a payload that mixes ALLOWLISTED `openwop.cost.*` attributes (per `spec/v1/observability.md §\"Cost attribution attributes\"`) with two intentional violations: (a) a non-allowlisted key (`openwop.cost.evil`) which MUST be dropped by `sanitizeCostForOtel`, and (b) a credential-shaped canary under a non-allowlisted name (`openwop.cost.leaked_token`) which MUST NOT appear in any OTel span attribute. Conformance scenario `cost-attribution.test.ts` reads the run's OTel spans (via the in-suite collector when `OPENWOP_OTEL_COLLECTOR=true`) and asserts the cost-namespace attrs are a strict subset of the allowlist AND that no canary plaintext leaked. Pairs with the `cost-attribution-allowlist-redaction` SECURITY invariant.",
+  "nodes": [
+    {
+      "id": "emit-cost",
+      "typeId": "conformance.cost.emit",
+      "name": "Emit cost attrs (mix of allowed + dropped)",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "attrs": {
+          "openwop.cost.tokens.input": 100,
+          "openwop.cost.tokens.output": 50,
+          "openwop.cost.tokens.total": 150,
+          "openwop.cost.usd": 0.00123,
+          "openwop.cost.currency": "usd",
+          "openwop.cost.estimated": true,
+          "openwop.cost.provider": "anthropic",
+          "openwop.cost.evil": "must-be-dropped",
+          "openwop.cost.leaked_token": "sk-ant-CANARY-openwop-CONFORMANCE-NEVER-SECRET-cost-attr-leak"
+        }
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": {
+    "tags": ["conformance", "observability", "cost-attribution", "g6", "o4", "security"]
+  },
+  "settings": { "timeout": 10000 }
+}

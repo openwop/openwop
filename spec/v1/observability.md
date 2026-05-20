@@ -730,6 +730,8 @@ Aggregation guidance: dashboards SHOULD roll up `openwop.cost.tokens.*` and `ope
 
 Privacy: cost attributes MUST NOT include the prompt/response text (use `openwop.cost.tokens.*` for billable counts, never substring excerpts).
 
+Allowlist enforcement: hosts that emit `openwop.cost.*` attributes onto OTel spans MUST route the emission through an allowlist sanitizer that drops any attribute name outside the canonical seven (`openwop.cost.tokens.input`, `openwop.cost.tokens.output`, `openwop.cost.tokens.total`, `openwop.cost.usd`, `openwop.cost.currency`, `openwop.cost.estimated`, `openwop.cost.provider`). The sanitizer MUST also drop non-primitive values (objects, arrays, null, undefined, functions, symbols) — cost attributes are flat primitives. The intent is defense-in-depth: a buggy upstream that smuggles a credential-shaped value into an unfamiliar key name (e.g., `openwop.cost.leaked_token`) MUST NOT see that value reach observability. Enforced by `SECURITY/invariants.yaml` row `cost-attribution-allowlist-redaction` + the public `cost-attribution.test.ts` conformance scenario.
+
 ---
 
 ## Provider usage events (RFC 0026)
@@ -739,6 +741,48 @@ The OTel `openwop.cost.*` attribute group above is the observability sibling; th
 The event is REPLAY-DETERMINISTIC for `inputTokens` + `outputTokens` (drawn from the cached provider response on replay); `costEstimateUsd` MAY be omitted on replay even when the original emission included it, since the host's rate table may have changed between runs. The OTel projection (§"Cost attribution attributes" above) is RECOMMENDED but NOT REQUIRED — hosts MAY emit only the event when they don't run an OTel exporter.
 
 The payload MUST NOT carry credentialRefs, hashed credential identifiers, or prompt/response substrings — same redaction posture as the OTel attributes per `SECURITY/threat-model-secret-leakage.md §SR-1`. Enforced by `SECURITY/invariants.yaml` row `provider-usage-no-credential-leak`.
+
+---
+
+## Envelope-reliability events (RFC 0032)
+
+Six cross-kind operational `RunEventType` entries standardizing the protocol vocabulary for envelope-emission reliability behavior — retry attempts, retry exhaustion, refusals, truncations, NL-to-Format fallback engagement, and lenient-parsing recovery. Defined in [RFC 0032](../../RFCS/0032-envelope-reliability-events.md); see `ai-envelope.md` §"Envelope-reliability events" for the normative spec.
+
+Hosts that advertise `capabilities.envelopes.reliability.supported: true` MUST emit `envelope.retry.exhausted` and `envelope.refusal` (the two MUST-tier events). The other four (`envelope.retry.attempted`, `envelope.truncated`, `envelope.nlToFormat.engaged`, `envelope.recovery.applied`) are SHOULD/MAY-tier and listed in `events[]` only when the host actually emits them.
+
+### OTel projection (RECOMMENDED)
+
+Hosts SHOULD project the events into the existing OTel attribute group on the envelope-emitting node's span:
+
+| Event | OTel attribute group |
+|---|---|
+| `envelope.retry.attempted` | `openwop.envelope.retry.attempt` (integer) + `openwop.envelope.retry.reason` (string) |
+| `envelope.retry.exhausted` | `openwop.envelope.retry.total_attempts` + `openwop.envelope.retry.final_reason` |
+| `envelope.refusal` | `openwop.envelope.refusal.safety_category` (string, when present). **`refusalText` is omitted from OTel by default** — see §"Trust boundary + redaction" below |
+| `envelope.truncated` | `openwop.envelope.truncated.stop_reason` + `openwop.envelope.truncated.output_token_count` |
+| `envelope.nlToFormat.engaged` | `openwop.envelope.nl_to_format.fallback_calls` |
+| `envelope.recovery.applied` | `openwop.envelope.recovery.path` + `openwop.envelope.recovery.byte_offset` (when present) |
+
+The event log is the load-bearing surface (for replay determinism + webhook subscribers); the OTel projection is supplementary. Hosts that don't run an OTel exporter MAY emit only the events.
+
+### Trust boundary + redaction
+
+Event payloads that carry diagnostic strings (`previousError`, `finalError`, `refusalText`) MUST be passed through the same SR-1 redaction harness applied to envelope payloads per `ai-envelope.md` §"Redaction (SR-1 carry-forward)". The `envelope.refusal.refusalText` field is particularly load-bearing — provider safety-refusal messages can echo offending prompt content. The OTel projection of `envelope.refusal` omits `refusalText` by default; operators who want refusal text in dashboards plumb it through their own pipeline where they own the redaction policy.
+
+SECURITY invariants `envelope-refusal-no-prompt-leak` (high severity) and `envelope-recovery-no-content-leak` (high severity) enforce this discipline (gate timing: lands with reference-host implementation, per the RFC 0027 §G staging precedent).
+
+---
+
+## Envelope-completion retry routing (RFC 0033)
+
+Companion to the envelope-reliability event vocabulary above. [RFC 0033](../../RFCS/0033-envelope-completion-contract.md) normates the retry-routing semantics — specifically the **truncation-vs-schema-violation** distinction that hosts that advertise `capabilities.envelopes.reliability.completion.distinguishesTruncation: true` MUST honor:
+
+- **Truncation** (`stop_reason: max_tokens` or equivalent) → retry with INCREASED output budget (RECOMMENDED 2× multiplier, configurable via `capabilities.envelopes.reliability.completion.truncationBudgetMultiplier`); MUST NOT include a corrective schema fragment in the retry's system prompt.
+- **Schema violation** (clean stop + payload doesn't validate) → retry with corrective system fragment describing the validator's failure; MUST NOT increase the output budget.
+
+Both paths count against `capabilities.limits.schemaRounds`. Exhaustion in the truncation path emits `envelope.retry.exhausted { finalReason: "truncation" }` + `cap.breached { kind: "schema" }` + node fails with NEW error code `envelope_truncation_unrecoverable`. Exhaustion in the schema-violation path emits `envelope.retry.exhausted { finalReason: "schema-violation" }` + `cap.breached` + node fails with existing `envelope_payload_invalid`. Refusal path (RFC 0032 §B.3) is terminal — NO retry — and fails with NEW error code `envelope_refused_by_provider`.
+
+See `spec/v1/rest-endpoints.md` §"Common error codes" for the two new codes; `ai-envelope.md` §"Envelope-completion criteria" for the normative completion criteria.
 
 ---
 

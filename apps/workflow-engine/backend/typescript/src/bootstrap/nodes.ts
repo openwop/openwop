@@ -901,6 +901,33 @@ export function ensureNodesRegistered(): void {
       };
     },
   });
+  // Conformance-only typeId for cost-attribution allowlist enforcement
+  // (`spec/v1/observability.md §"Cost attribution attributes"`). Fixture
+  // configs ship arbitrary `attrs` (including non-allowlisted keys + a
+  // credential-shaped canary). The node hands the raw map to
+  // `emitRawCostAttrs`, which routes through `sanitizeCostForOtel` to
+  // drop everything outside `OPENWOP_COST_ATTRIBUTE_NAMES`. The
+  // conformance suite then reads the live OTel span and asserts the
+  // span attrs ⊆ the allowlist (and that no credential canary leaked).
+  // Production deployments SHOULD skip this registration.
+  registry.register({
+    typeId: 'conformance.cost.emit',
+    version: '1.0.0',
+    async execute(ctx) {
+      const cfg = (ctx.config ?? {}) as { attrs?: unknown };
+      const attrs = (cfg.attrs && typeof cfg.attrs === 'object' && !Array.isArray(cfg.attrs))
+        ? (cfg.attrs as Record<string, unknown>)
+        : {};
+      const { emitRawCostAttrs, sanitizeCostForOtel, applyCostRollup } = await import('../observability/costEmitter.js');
+      // Write sanitized attrs to the active OTel span AND fold the
+      // numeric pieces into the per-run rollup so the snapshot's
+      // metrics.openwopCost reflects them per
+      // `run-snapshot.schema.json §metrics.openwopCost`.
+      emitRawCostAttrs(attrs);
+      applyCostRollup(ctx.runId, sanitizeCostForOtel(attrs));
+      return { status: 'success', outputs: { emittedKeyCount: Object.keys(attrs).length } };
+    },
+  });
   registry.register(delayNode);
   registry.register(failNode);
   registry.register(approvalGateNode);

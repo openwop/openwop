@@ -1,0 +1,33 @@
+{
+  "id": "conformance-subworkflow-mid-run-mutation",
+  "name": "Conformance: subWorkflow inputMapping is a one-shot fold (RFC 0022 §B HVMAP-2)",
+  "version": "1.0",
+  "description": "RFC 0022 §B HVMAP-2 — `inputMapping` is a one-shot fold at child-dispatch time; mid-run mutations to the parent variable bag MUST NOT propagate into the already-seeded child. Parent declares `currentPrdId: 'seeded-id'`, dispatches the child (`conformance-subworkflow-mid-run-mutation-child`) with `inputMapping: { receivedPrdId: 'currentPrdId' }`. The child suspends on an approval gate, giving the test window to POST `/v1/host/sample/test/runs/:parentRunId/variables { variables: { currentPrdId: 'mutated-id' } }` against the parent. After the parent mutation, the test resolves the child's approval; the child terminates and its final `receivedPrdId` variable MUST still equal `seeded-id` (the dispatch-time fold). Pairs with `subworkflow-input-mapping.test.ts §HVMAP-2-no-midrun-propagation`.",
+  "nodes": [
+    {
+      "id": "subwf-call",
+      "typeId": "core.subWorkflow",
+      "name": "Invoke child with inputMapping (one-shot fold)",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "workflowId": "conformance-subworkflow-mid-run-mutation-child",
+        "waitForCompletion": true,
+        "onChildFailure": "fail-parent",
+        "inputMapping": { "receivedPrdId": "currentPrdId" }
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "currentPrdId", "type": "string", "defaultValue": "seeded-id" }
+  ],
+  "metadata": {
+    "tags": ["conformance", "rfc-0022", "subworkflow", "input-mapping", "hvmap-2"],
+    "requiresCapability": "capabilities.subWorkflow.inputMapping"
+  },
+  "settings": { "timeout": 30000 }
+}

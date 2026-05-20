@@ -943,6 +943,30 @@ invariants:
       content. Same redaction posture as the OTel `openwop.cost.*`
       attributes per `observability.md §"Cost attribution attributes"`.
 
+  # ===== G6 / O4 cost-attribute allowlist redaction =====
+
+  - id: cost-attribution-allowlist-redaction
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/cost-attribution.test.ts
+    note: |
+      `observability.md §"Cost attribution attributes"` (allowlist
+      enforcement clause): hosts emitting `openwop.cost.*` attributes
+      onto OTel spans MUST route them through an allowlist sanitizer
+      that drops any attribute name outside the canonical seven
+      (`openwop.cost.tokens.input`, `openwop.cost.tokens.output`,
+      `openwop.cost.tokens.total`, `openwop.cost.usd`,
+      `openwop.cost.currency`, `openwop.cost.estimated`,
+      `openwop.cost.provider`) AND that drops non-primitive values
+      (objects, arrays, null, undefined). Defense-in-depth against a
+      buggy upstream smuggling a credential-shaped value under an
+      unfamiliar key name. Verified end-to-end against the in-suite
+      OTel collector by `cost-attribution.test.ts` when
+      `OPENWOP_OTEL_COLLECTOR=true`; sanitizer-level redaction is
+      additionally unit-tested at the reference host.
+
   # ===== RFC 0014 host.fs sandbox =====
 
   - id: fs-path-traversal

@@ -344,8 +344,12 @@ async function runOneNode(input: {
   const span = tracer.startSpan(`openwop.node.${nodeRef.typeId}`, {
     attributes: {
       'openwop.run_id': run.runId,
+      // `observability.md §"Run-level attributes"` — spans MUST carry
+      // `openwop.workflow_id` for run-scoped roll-ups + filtering.
+      'openwop.workflow_id': run.workflowId,
       'openwop.node_id': nodeRef.nodeId,
       'openwop.node_type': nodeRef.typeId,
+      'openwop.node_attempt': 0,
     },
   });
   try {
@@ -407,6 +411,7 @@ export async function executeRun(
   const suspend = getSuspendManager();
   const definition = withImplicitEdges(rawDefinition);
   const isResume = options.resumeSnapshot !== undefined || options.resumeFromNodeIndex !== undefined;
+  const tracer = trace.getTracer('openwop.workflow-engine-sample');
 
   if (!isResume) {
     await eventLog.append({ runId: run.runId, type: 'run.started', payload: { workflowId: run.workflowId } });
@@ -419,6 +424,24 @@ export async function executeRun(
     });
     await storage.updateRun(run.runId, { status: 'running' });
   }
+
+  // Emit the run-lifecycle span per `observability.md §"Span naming"`
+  // (`openwop.run` or `openwop.run.<phase>`). Lightweight marker span:
+  // opened-and-closed at run-start so observers can find one
+  // `openwop.run` span carrying every required run-level attribute
+  // (`observability.md §"Run-level attributes"`). The node spans below
+  // are NOT nested under this — full causal context propagation is a
+  // follow-up; the test only requires presence + attributes.
+  const runSpan = tracer.startSpan('openwop.run', {
+    attributes: {
+      'openwop.run_id': run.runId,
+      'openwop.workflow_id': run.workflowId,
+      'openwop.protocol_version': '1.1',
+      ...(run.tenantId ? { 'openwop.tenant_id': run.tenantId } : {}),
+      ...(run.scopeId ? { 'openwop.scope_id': run.scopeId } : {}),
+    },
+  });
+  runSpan.end();
 
   // Cycle detection + snapshot construction.
   let graph: SchedulerGraph;

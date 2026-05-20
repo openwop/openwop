@@ -122,9 +122,76 @@ describe.skipIf(SKIP)('subworkflow-input-mapping: parent → child variable seed
     expect(v).not.toBe(null);
   });
 
-  it.todo(
-    'HVMAP-2-no-midrun-propagation: child mid-run; parent updates currentPrdId; child receivedPrdId MUST remain at seeded value (one-shot fold per §B normative bullet). DEFERRED — requires (1) a multi-step child fixture that suspends mid-run on a clarification gate, plus (2) a parent path that mutates `currentPrdId` AFTER the child is suspended. The reference workflow-engine has no parallel-execution model that lets the parent run a separate "mutate-var" node WHILE the subwf-call is blocked on the child; this needs either a new sample-namespaced `POST /v1/host/sample/test/runs/:runId/variables` seam OR a workflow primitive that splits the parent into a fan-out branch that mutates concurrently. Tracked under Phase 3 of the test-coverage plan as a separate "run-state mutation seam" task.',
-  );
+  // HVMAP-2-no-midrun-propagation: `inputMapping` is a one-shot fold at
+  // child-dispatch time. Once the parent's mapping has projected
+  // `currentPrdId → receivedPrdId` and the child has been spawned, any
+  // mid-run mutation to the parent's `currentPrdId` MUST NOT propagate
+  // into the already-seeded child bag. The harness uses the sample-only
+  // test seam `POST /v1/host/sample/test/runs/:runId/variables` (gated
+  // on `OPENWOP_TEST_SEAM_ENABLED=true`; soft-skip when the seam is not
+  // exposed) to mutate the parent's variable bag WHILE the child is
+  // suspended on a `core.approvalGate`, then resolves the gate and reads
+  // the child's terminal `receivedPrdId` variable.
+  const MID_RUN_PARENT = 'conformance-subworkflow-mid-run-mutation';
+  const MID_RUN_CHILD = 'conformance-subworkflow-mid-run-mutation-child';
+  const CHILD_GATE_NODE = 'child-gate';
+
+  it('HVMAP-2-no-midrun-propagation: parent mid-run mutation MUST NOT propagate into the seeded child', async () => {
+    if (!isFixtureAdvertised(MID_RUN_PARENT) || !isFixtureAdvertised(MID_RUN_CHILD)) return; // fixture not seeded — soft-skip
+    if (!(await isToggleAvailable())) return; // sample test seam not exposed — soft-skip
+
+    const create = await driver.post('/v1/runs', { workflowId: MID_RUN_PARENT });
+    expect(create.status).toBe(201);
+    const parentRunId = (create.json as { runId: string }).runId;
+
+    // Wait for the parent to spawn the child and the child to reach
+    // `waiting-approval`. The parent's status mirrors the child's
+    // suspended kind via the dispatcher's parent-suspends-while-child-
+    // suspends contract (interrupt-profiles.md §openwop-interrupt-
+    // cascade-cancel).
+    const { pollUntilStatus } = await import('../lib/polling.js');
+    await pollUntilStatus(parentRunId, 'waiting-approval', { timeoutMs: 15_000 });
+
+    // Find the child runId via the parent snapshot's `childRuns[]`
+    // projection (interrupt-profiles.md §openwop-interrupt-cascade-cancel).
+    const parentSnap = await driver.get(`/v1/runs/${encodeURIComponent(parentRunId)}`);
+    const parentJson = parentSnap.json as { childRuns?: Array<{ runId: string; status: string }> };
+    const childRunId = parentJson.childRuns?.[0]?.runId;
+    expect(childRunId, driver.describe(
+      'fixtures.md conformance-subworkflow-mid-run-mutation',
+      'parent snapshot MUST surface the spawned child runId via childRuns[]',
+    )).toBeDefined();
+
+    // Mutate the parent's `currentPrdId` WHILE the child is suspended.
+    // The mutation MUST NOT propagate per RFC 0022 §B (one-shot fold).
+    const mutate = await driver.post(
+      `/v1/host/sample/test/runs/${encodeURIComponent(parentRunId)}/variables`,
+      { variables: { currentPrdId: 'mutated-id' } },
+    );
+    expect(mutate.status).toBe(200);
+
+    // Resolve the child's approval gate so it terminates.
+    const resolve = await driver.post(
+      `/v1/runs/${encodeURIComponent(childRunId!)}/interrupts/${encodeURIComponent(CHILD_GATE_NODE)}`,
+      { resumeValue: { action: 'accept' } },
+    );
+    expect(resolve.status).toBeGreaterThanOrEqual(200);
+    expect(resolve.status).toBeLessThan(300);
+
+    const childTerminal = (await pollUntilTerminal(childRunId!)) as RunSnapshot;
+    expect(childTerminal.status).toBe('completed');
+
+    // The §B one-shot-fold assertion: the child's terminal
+    // `receivedPrdId` MUST still equal the dispatch-time fold value
+    // (`seeded-id`), NOT the post-mutation parent value (`mutated-id`).
+    expect(
+      childTerminal.variables?.receivedPrdId,
+      driver.describe(
+        'RFCS/0022-dispatch-input-output-mapping.md §B',
+        'mid-run parent mutation MUST NOT propagate; child receivedPrdId stays at dispatch-time fold',
+      ),
+    ).toBe('seeded-id');
+  });
 
 });
 

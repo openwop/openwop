@@ -25,6 +25,7 @@ import type { HostAdapterSuite } from '../host/index.js';
 import { OpenwopError, type RunRecord } from '../types.js';
 import { seedRunVariables, snapshotRunVariables } from '../host/variablesRuntime.js';
 import { getChildParentNodeId } from '../executor/subWorkflowDispatcher.js';
+import { snapshotCostRollup } from '../observability/costEmitter.js';
 import { executeRun } from '../executor/executor.js';
 import { getEventLog } from '../executor/eventLog.js';
 import { createLogger } from '../observability/logger.js';
@@ -675,6 +676,7 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
 function projectRunSnapshot(run: RunRecord): RunSnapshot & {
   parentSeq?: number;
   forkMode?: 'replay' | 'branch';
+  metrics?: { openwopCost?: Record<string, unknown> };
 } {
   const variables = snapshotRunVariables(run.runId);
   const parentNodeId = getChildParentNodeId(run.runId);
@@ -701,6 +703,14 @@ function projectRunSnapshot(run: RunRecord): RunSnapshot & {
     // `variables[]` declaration). The omission is meaningful — JSON
     // serialization drops `undefined` keys.
     ...(variables !== null ? { variables } : {}),
+    // `run-snapshot.schema.json §metrics.openwopCost`: aggregate cost
+    // rollup populated as nodes call recordCost (or, in the conformance
+    // tier, the `conformance.cost.emit` typeId). Absent when nothing
+    // emitted — spec-allowed.
+    ...((() => {
+      const cost = snapshotCostRollup(run.runId);
+      return cost ? { metrics: { openwopCost: cost as Record<string, unknown> } } : {};
+    })()),
   };
 }
 

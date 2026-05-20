@@ -32,11 +32,33 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { getCollector, waitForRunSpans } from '../lib/otel-collector.js';
 
 const NOOP_WORKFLOW_ID = 'conformance-noop';
 const COST_EMIT_WORKFLOW_ID = 'openwop-smoke-cost-emit';
 const SKIP_NO_NOOP = !isFixtureAdvertised(NOOP_WORKFLOW_ID);
 const SKIP_NO_COST_EMIT = !isFixtureAdvertised(COST_EMIT_WORKFLOW_ID);
+
+/** Canonical attribute allowlist mirroring
+ *  `spec/v1/observability.md §"Cost attribution attributes"`. Kept
+ *  in-suite (not imported from the host) so the assertion is a
+ *  cross-host wire contract rather than a sanity check on the sample's
+ *  own constant. */
+const OPENWOP_COST_ATTRIBUTE_NAMES: readonly string[] = [
+  'openwop.cost.tokens.input',
+  'openwop.cost.tokens.output',
+  'openwop.cost.tokens.total',
+  'openwop.cost.usd',
+  'openwop.cost.currency',
+  'openwop.cost.estimated',
+  'openwop.cost.provider',
+];
+
+/** BYOK / Bearer credential-shape detection — same families covered by
+ *  `aiEnvelope.redaction.test.ts` and the host-side ephemeralRunSecrets
+ *  scrubber. Lookarounds anchor to alphanumerics so credentials embedded
+ *  in snake_case / kebab-case neighbors still match. */
+const CREDENTIAL_SHAPE_RE = /(?<![A-Za-z0-9_])(?:sk-(?:ant-|proj-)?[A-Za-z0-9_-]{20,}|Bearer\s+[A-Za-z0-9._~+/=-]{20,}|ghp_[A-Za-z0-9]{20,}|gho_[A-Za-z0-9]{20,})(?![A-Za-z0-9])|CANARY-openwop-CONFORMANCE-NEVER-SECRET[A-Za-z0-9_-]*/g;
 
 describe.skipIf(SKIP_NO_NOOP)('cost-attribution: metrics.openwopCost forward-compat shape (G6)', () => {
   it('on any run, IF metrics.openwopCost is present, its shape MUST match the spec', async () => {
@@ -196,12 +218,98 @@ describe.skipIf(SKIP_NO_COST_EMIT)('cost-attribution: end-to-end roundtrip via c
   });
 });
 
-describe('cost-attribution: G6 / O4 (still deferred — observable-span access required)', () => {
-  it.todo(
-    'the OTel span attribute set MUST NOT contain any key outside OPENWOP_COST_ATTRIBUTE_NAMES (redaction) — BLOCKED on observable-span access; runtime enforcement belongs in host-specific observability tests',
-  );
+describe.skipIf(SKIP_NO_COST_EMIT)('cost-attribution: G6 / O4 allowlist + redaction (live OTel spans)', () => {
+  // Drives the `openwop-smoke-cost-emit` fixture, which posts arbitrary
+  // `attrs` into `conformance.cost.emit` — a mix of (a) all 7
+  // allowlisted attribute names, (b) one non-allowlisted key
+  // (`openwop.cost.evil`), and (c) a credential-shaped canary under a
+  // non-allowlisted name. The host's `sanitizeCostForOtel` MUST drop
+  // (b) and (c) before they reach the active OTel span.
+  //
+  // Reads the live span via the in-suite OTel collector (setup boots it
+  // when `OPENWOP_OTEL_COLLECTOR=true`; the test soft-skips when the
+  // collector isn't available, matching `otel-emission.test.ts`).
 
-  it.todo(
-    'credential-shaped fields in the upstream provider response MUST NOT appear in any OTel attribute or in metrics.openwopCost (regression test for G6 close-criteria allowlist enforcement) — BLOCKED on observable-span access; sanitizer-level redaction is unit-tested today',
-  );
+  it('only allowlisted openwop.cost.* attributes reach the OTel span (G6 close criteria — allowlist enforcement)', async () => {
+    if (!getCollector()) {
+      // eslint-disable-next-line no-console
+      console.warn('[cost-attribution] OTel collector not started; set OPENWOP_OTEL_COLLECTOR=true to run');
+      return;
+    }
+    const collector = getCollector()!;
+    collector.reset();
+
+    const create = await driver.post('/v1/runs', { workflowId: COST_EMIT_WORKFLOW_ID });
+    expect(create.status).toBe(201);
+    const runId = (create.json as { runId: string }).runId;
+    await pollUntilTerminal(runId, { timeoutMs: 15_000 });
+
+    const runSpans = await waitForRunSpans(runId, { timeoutMs: 5_000, minCount: 1 });
+    expect(runSpans.length, driver.describe(
+      'observability.md §"Span attributes"',
+      'host MUST emit at least one span for the cost-emit run',
+    )).toBeGreaterThan(0);
+
+    // Inspect every span across the run for stray cost-namespace attrs.
+    // The fixture only emits on the `emit-cost` node's span, but the
+    // assertion is global: NO openwop.cost.* key may appear outside the
+    // allowlist on ANY span attributable to this run.
+    const ALLOWLIST = new Set(OPENWOP_COST_ATTRIBUTE_NAMES);
+    const stray: Array<{ span: string; key: string }> = [];
+    for (const span of runSpans) {
+      for (const key of span.attributes.keys()) {
+        if (key.startsWith('openwop.cost.') && !ALLOWLIST.has(key)) {
+          stray.push({ span: span.name, key });
+        }
+      }
+    }
+    expect(stray, driver.describe(
+      'observability.md §"Cost attribution attributes" (allowlist enforcement)',
+      'host MUST NOT emit any openwop.cost.* attribute outside OPENWOP_COST_ATTRIBUTE_NAMES; defense-in-depth against accidental leakage of upstream provider fields under unfamiliar key names',
+    )).toEqual([]);
+  });
+
+  it('credential-shaped canaries do NOT leak to any OTel attribute (G6 close criteria — redaction)', async () => {
+    if (!getCollector()) {
+      // eslint-disable-next-line no-console
+      console.warn('[cost-attribution] OTel collector not started; set OPENWOP_OTEL_COLLECTOR=true to run');
+      return;
+    }
+    const collector = getCollector()!;
+    collector.reset();
+
+    const create = await driver.post('/v1/runs', { workflowId: COST_EMIT_WORKFLOW_ID });
+    expect(create.status).toBe(201);
+    const runId = (create.json as { runId: string }).runId;
+    await pollUntilTerminal(runId, { timeoutMs: 15_000 });
+
+    const runSpans = await waitForRunSpans(runId, { timeoutMs: 5_000, minCount: 1 });
+
+    // Serialize EVERY span attribute value across the run and assert
+    // the canary marker is absent. The fixture deliberately ships the
+    // canary under a non-allowlisted key (`openwop.cost.leaked_token`)
+    // so the only way it appears in spans is if the sanitizer leaked.
+    const corpus = runSpans
+      .flatMap((span) => Array.from(span.attributes.values()))
+      .map((v) => (typeof v === 'string' ? v : JSON.stringify(v)))
+      .join('\n');
+
+    expect(
+      corpus.includes('CANARY-openwop-CONFORMANCE-NEVER-SECRET'),
+      driver.describe(
+        'SECURITY/invariants.yaml cost-attribution-allowlist-redaction',
+        'no canary plaintext substring may survive the allowlist sanitizer on its way to OTel spans',
+      ),
+    ).toBe(false);
+
+    // Belt-and-suspenders: also assert no BYOK-shape match anywhere in
+    // span attributes — catches credential-shaped values smuggled
+    // through non-canary keys that the allowlist still happens to let
+    // through (none today, but the regression test is cheap).
+    const byokMatches = corpus.match(CREDENTIAL_SHAPE_RE) ?? [];
+    expect(byokMatches, driver.describe(
+      'SECURITY/invariants.yaml cost-attribution-allowlist-redaction',
+      'no credential-shape substring may appear in cost-attribute span values',
+    )).toEqual([]);
+  });
 });
