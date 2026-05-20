@@ -11,6 +11,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Workflow-engine sample — events/poll lastSequence + SSE bufferMs aggregation (2026-05-19)
+
+Two surface-level fixes. Suite delta: 1218 → 1222 passing / 29 → 25 failing.
+
+- **`apps/workflow-engine/backend/typescript/src/routes/runs.ts`** — `GET /v1/runs/{runId}/events/poll` now accepts `?lastSequence=N` per `rest-endpoints.md` (returns events with `sequence > N`); legacy `?fromSeq=` still works. Forward-compat readers can ask for sequences past the end without a 4xx (empty events + isComplete). Closes `version-negotiation > events/poll forward-compat tolerance`.
+- **`apps/workflow-engine/backend/typescript/src/routes/streams.ts`** — `GET /v1/runs/{runId}/events?bufferMs=N` implements the `stream-modes.md §Aggregation hint`: valid range 1..5000 ms, out-of-range returns 400 + `validation_error` + `details.{min, max}`. When set, events accumulate in an internal batch and flush as a single `event: batch\ndata: [<events>]` SSE frame at the cadence. Terminal events force-flush so consumers don't wait for the next tick. Closes 3 `stream-modes-buffer` subtests.
+
+Compatibility: implementation-only. Existing `fromSeq` query param + non-buffered SSE flow preserved unchanged.
+
 ### Workflow-engine sample — credential-shape redaction on event payloads (2026-05-19)
 
 Suite delta: 1216 → 1218 passing / 31 → 29 failing. The existing `stripSecretsFromPersisted` only scrubbed values that were RESOLVED secrets known to the BYOK ephemeral store; arbitrary credential-shaped strings (canaries the host never saw, hostile user inputs, etc.) passed through verbatim into the event log. Per `capabilities.md §"Secrets" + NFR-7`, observable surfaces MUST NOT carry raw key material regardless of provenance.

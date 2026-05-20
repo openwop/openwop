@@ -464,7 +464,15 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
     try {
       const run = await storage.getRun(req.params.runId);
       if (!run) throw new OpenwopError('run_not_found', `run ${req.params.runId} not found`, 404);
-      const fromSeq = Number(req.query.fromSeq ?? 0) || 0;
+      // Accept both `lastSequence` (spec-canonical per rest-endpoints.md)
+      // and the sample's legacy `fromSeq`. `lastSequence=N` returns
+      // events with sequence > N, so we add 1 when reading it. Beyond-
+      // the-end values return an empty events array per the forward-
+      // compat contract — NOT a 4xx.
+      const lastSeqRaw = req.query.lastSequence;
+      const fromSeq = lastSeqRaw !== undefined
+        ? (Number(lastSeqRaw) || 0) + 1
+        : (Number(req.query.fromSeq ?? 0) || 0);
       const limit = Math.min(Number(req.query.limit ?? 100) || 100, 1000);
       const events = await storage.listEvents(run.runId, { fromSeq, limit });
       const isComplete = ['completed', 'failed', 'cancelled'].includes(run.status);

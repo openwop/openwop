@@ -38,6 +38,26 @@ export function registerStreamRoutes(app: Express, deps: Deps): void {
         (req.query.streamMode ?? req.query.mode) as string | undefined,
       );
 
+      // Aggregation-hint per `stream-modes.md §Aggregation hint`. Valid
+      // range is 1..5000 ms. Out-of-range surfaces as 400; absent →
+      // no aggregation (live events as they arrive). When set, events
+      // accumulate in an internal buffer and flush in a single
+      // `event: batch\ndata: [<events>]` SSE frame at the cadence.
+      const bufferMsRaw = req.query.bufferMs;
+      let bufferMs = 0;
+      if (bufferMsRaw !== undefined) {
+        const parsed = Number(bufferMsRaw);
+        if (!Number.isFinite(parsed) || parsed < 1 || parsed > 5000) {
+          throw new OpenwopError(
+            'validation_error',
+            `bufferMs MUST be a number in [1, 5000]; got ${JSON.stringify(bufferMsRaw)}.`,
+            400,
+            { min: 1, max: 5000 },
+          );
+        }
+        bufferMs = parsed;
+      }
+
       // Last-Event-ID resume: SSE clients send the header with the last
       // sequence they saw. Replay anything > that, then attach live.
       // Validate strictly — silently coercing malformed values to 0 would
@@ -64,40 +84,75 @@ export function registerStreamRoutes(app: Express, deps: Deps): void {
       });
       res.flushHeaders();
 
+      // Aggregation buffer for `?bufferMs=N`. When set, events
+      // accumulate here between flushes; on each tick (or on terminal)
+      // the buffer flushes as a single `event: batch\ndata: [<evs>]`
+      // SSE frame.
+      const pendingBatch: EventRecord[] = [];
+      const flushBatch = (): void => {
+        if (pendingBatch.length === 0) return;
+        const payload = JSON.stringify(pendingBatch);
+        res.write(`event: batch\ndata: ${payload}\n\n`);
+        pendingBatch.length = 0;
+      };
+
       // Replay buffered events.
       const buffered = await storage.listEvents(run.runId, { fromSeq, limit: 10_000 });
       for (const ev of buffered) {
         if (passesModeFilter(ev, modes)) {
-          writeSseEvent(res, ev);
+          if (bufferMs > 0) pendingBatch.push(ev);
+          else writeSseEvent(res, ev);
         }
       }
-
-      // Subscribe to live events for the same run.
-      const unsubscribe = getEventLog().subscribe((ev) => {
-        if (ev.runId !== run.runId) return;
-        if (passesModeFilter(ev, modes)) {
-          writeSseEvent(res, ev);
-        }
-        // Close the stream once we've observed a terminal event.
-        if (TERMINAL_EVENT_TYPES.has(ev.type)) {
-          unsubscribe();
-          res.end();
-        }
-      });
 
       // Heartbeat every 15s to keep proxies from dropping the connection.
       const heartbeat = setInterval(() => {
         res.write(': heartbeat\n\n');
       }, 15_000);
 
+      // Aggregation tick — only when bufferMs > 0. Flushes the batch
+      // even if no events arrived this interval (the consumer counts
+      // batch frames, so empty intervals would skew the count). Skip
+      // if buffer empty to avoid wire chatter.
+      const aggTick = bufferMs > 0
+        ? setInterval(() => { flushBatch(); }, bufferMs)
+        : null;
+
+      // Subscribe to live events for the same run.
+      const unsubscribe = getEventLog().subscribe((ev) => {
+        if (ev.runId !== run.runId) return;
+        if (passesModeFilter(ev, modes)) {
+          if (bufferMs > 0) {
+            pendingBatch.push(ev);
+            // Terminal events force-flush the batch so consumers don't
+            // wait for the next tick to see run.completed.
+            if (TERMINAL_EVENT_TYPES.has(ev.type)) {
+              flushBatch();
+            }
+          } else {
+            writeSseEvent(res, ev);
+          }
+        }
+        // Close the stream once we've observed a terminal event.
+        if (TERMINAL_EVENT_TYPES.has(ev.type)) {
+          unsubscribe();
+          if (aggTick) clearInterval(aggTick);
+          clearInterval(heartbeat);
+          res.end();
+        }
+      });
+
       req.on('close', () => {
         clearInterval(heartbeat);
+        if (aggTick) clearInterval(aggTick);
         unsubscribe();
       });
 
       // If the run is already terminal, flush + close.
       if (['completed', 'failed', 'cancelled'].includes(run.status)) {
+        if (bufferMs > 0) flushBatch();
         unsubscribe();
+        if (aggTick) clearInterval(aggTick);
         clearInterval(heartbeat);
         res.end();
       }
