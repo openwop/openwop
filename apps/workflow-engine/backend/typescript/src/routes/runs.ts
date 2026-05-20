@@ -230,6 +230,44 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
     }
   });
 
+  // Artifact endpoint stub. The host doesn't implement artifact
+  // storage end-to-end yet, but the route MUST 401 on missing Bearer
+  // BEFORE 404'ing on missing resource — per `artifact-auth` scenario
+  // and `auth.md §"Error envelope"`. Without an explicit Bearer the
+  // request would otherwise fall through to the catch-all 404 (the
+  // auth middleware auto-issues anon cookies, so it never 401s on
+  // missing Authorization). Same fix as `examples/hosts/sqlite/src/
+  // server.ts` artifact stub. Closes the info-leak surface for every
+  // HTTP method (per `auth.md`: auth-check stacks above
+  // existence-check).
+  const artifactPathRe = /^\/v1\/runs\/([^/]+)\/artifacts\/([^/]+)$/;
+  app.use((req, res, next) => {
+    const m = artifactPathRe.exec(req.path);
+    if (!m) return next();
+    const header = req.header('authorization');
+    if (!header || !header.toLowerCase().startsWith('bearer ')) {
+      res.status(401).json({
+        error: 'unauthenticated',
+        message: 'Artifact endpoint requires a Bearer token (anon session cookie is not sufficient).',
+      });
+      return;
+    }
+    if (req.method !== 'GET') {
+      res.status(405).json({
+        error: 'method_not_allowed',
+        message: `Artifact endpoint accepts GET only; received ${req.method}.`,
+      });
+      return;
+    }
+    // Authed Bearer + GET — no artifact storage to look up, so 404
+    // with the canonical not_found envelope. Positive-path coverage
+    // lights up when the host gains an artifact-producing fixture.
+    res.status(404).json({
+      error: 'not_found',
+      message: `artifact '${decodeURIComponent(m[2] ?? '')}' not found on run '${decodeURIComponent(m[1] ?? '')}'`,
+    });
+  });
+
   app.post('/v1/runs/:runId/cancel', async (req, res, next) => {
     try {
       const run = await storage.getRun(req.params.runId);

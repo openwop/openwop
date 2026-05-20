@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Workflow-engine sample — artifact-route auth stub (2026-05-19)
+
+Closes the `artifact-auth` conformance gap on the workflow-engine sample. Port of the SQLite host fix (`3c2b5d6` earlier this session): `GET /v1/runs/{runId}/artifacts/{artifactId}` requires an explicit Bearer token; the auto-issued anon session cookie is not sufficient. Closes the info-leak surface for every HTTP method (401 → 405 → 404 stack, in that order). Suite delta: 1194 → 1198 passing / 52 → 49 failing.
+
+- **`apps/workflow-engine/backend/typescript/src/routes/runs.ts`** — new `app.use(...)` middleware that pattern-matches `/v1/runs/{runId}/artifacts/{artifactId}`, returns 401 `unauthenticated` when no `Authorization: Bearer …` header is present, 405 `method_not_allowed` for non-GET methods, and 404 `not_found` for authed GETs (no artifact storage end-to-end yet — positive-path lights up when an artifact-producing fixture lands).
+
+The sample's auth middleware auto-issues anon session cookies on missing-auth requests so they otherwise fall through to the catch-all 404. Conformance test asserts 401 specifically — meaning the artifact endpoint MUST gate on a real bearer principal, not an anon. Mirrors the SQLite host's posture.
+
+Compatibility: **implementation-only** (workflow-engine sample). New route added; no contract or wire-shape changes elsewhere.
+
 ### Workflow-engine sample — variables runtime + core.identity (2026-05-19)
 
 First slice of the variables-runtime build that the dispatch / subWorkflow tier rests on. Closes the `identity-passthrough` conformance scenario (`fixtures.md §conformance-identity`): `inputs.{name}` on `POST /v1/runs` lands in `RunSnapshot.variables.{name}` on `GET /v1/runs/{runId}`, deep-equal round-trip. Suite delta: 1189 → 1194 passing / 55 → 52 failing against the workflow-engine sample.
