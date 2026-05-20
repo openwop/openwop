@@ -182,6 +182,11 @@ export function CapabilitiesPanel() {
           {' '}<a href="https://github.com/openwop/openwop/blob/main/RFCS/0033-envelope-completion-contract.md">0033</a>.
           When a row reads <code>—</code>, the host hasn't advertised that surface yet.
         </p>
+        <p className="muted" style={{ fontSize: 12, marginTop: 0 }}>
+          When the reliability events below fire on a run, they surface live in the AI chat as
+          inline chips inside the assistant bubble (retries, refusals, truncations, model
+          substitutions, prose-to-JSON coercions, partial-payload recoveries).
+        </p>
         {caps ? (
           <table className="cap-table">
             <thead>

@@ -325,11 +325,11 @@
   gap: 6px;
 }
 .reasoning-disclosure summary::-webkit-details-marker { display: none; }
-.reasoning-disclosure summary::before {
-  content: 'ⓘ';
+.reasoning-disclosure-icon {
   font-style: normal;
   font-size: 12px;
   color: var(--color-ai);
+  margin-right: 2px;
 }
 .reasoning-disclosure summary:hover { color: var(--clay); }
 .reasoning-disclosure[open] summary { color: var(--ink); margin-bottom: 6px; }

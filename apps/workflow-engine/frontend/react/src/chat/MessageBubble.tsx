@@ -206,7 +206,10 @@ export function MessageBubble({ message, onRegenerate, onFeedback, onReconfigure
           <ReasoningDisclosure reasoning={message.reasoning} />
         )}
         {!isUser && hasEnvelopeEvents(message.envelopeEvents) && message.envelopeEvents && (
-          <EnvelopeEventsTimeline envelopeEvents={message.envelopeEvents} />
+          <EnvelopeEventsTimeline
+            envelopeEvents={message.envelopeEvents}
+            {...(onReconfigureBYOK ? { onReconfigure: onReconfigureBYOK } : {})}
+          />
         )}
         {!isUser && message.agentEvents && (
           <div style={{ marginTop: 8 }}>

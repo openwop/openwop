@@ -29,6 +29,10 @@ import { CapabilityInsufficientCard } from './cards/CapabilityInsufficientCard.j
 
 interface Props {
   envelopeEvents: NonNullable<ChatMessage['envelopeEvents']>;
+  /** Forwarded to CapabilityInsufficientCard so its "Choose a different
+   *  model" CTA can open the BYOK wizard. Sourced from MessageBubble's
+   *  onReconfigureBYOK prop. When undefined, the card hides the action. */
+  onReconfigure?: () => void;
 }
 
 /** Quick "is this group empty?" check — if every array is empty, the
@@ -48,7 +52,7 @@ export function hasEnvelopeEvents(events: ChatMessage['envelopeEvents']): boolea
   );
 }
 
-export function EnvelopeEventsTimeline({ envelopeEvents }: Props): JSX.Element | null {
+export function EnvelopeEventsTimeline({ envelopeEvents, onReconfigure }: Props): JSX.Element | null {
   if (!hasEnvelopeEvents(envelopeEvents)) return null;
   return (
     <div className="envelope-events" style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -56,7 +60,11 @@ export function EnvelopeEventsTimeline({ envelopeEvents }: Props): JSX.Element |
         <CapabilitySubstitutionCard key={`cs-${i}-${s.at}`} sub={s} />
       ))}
       {envelopeEvents.capabilitiesInsufficient.map((c, i) => (
-        <CapabilityInsufficientCard key={`ci-${i}-${c.at}`} ci={c} />
+        <CapabilityInsufficientCard
+          key={`ci-${i}-${c.at}`}
+          ci={c}
+          {...(onReconfigure ? { onReconfigure } : {})}
+        />
       ))}
       {envelopeEvents.retries.map((r, i) => (
         <RetryAttemptCard key={`r-${i}-${r.at}`} retry={r} />

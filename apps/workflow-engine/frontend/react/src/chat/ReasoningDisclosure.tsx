@@ -24,7 +24,14 @@ export function ReasoningDisclosure({ reasoning }: Props): JSX.Element | null {
   if (!trimmed) return null;
   return (
     <details className="reasoning-disclosure">
-      <summary>Why this answer</summary>
+      <summary>
+        {/* Real-DOM icon (rather than ::before) so it renders consistently
+         *  across Safari/VoiceOver, Firefox/NVDA, and Chrome/JAWS — each
+         *  handles pseudo-element content differently. aria-hidden because
+         *  the text label "Why this answer" already conveys meaning. */}
+        <span aria-hidden="true" className="reasoning-disclosure-icon">ⓘ</span>{' '}
+        Why this answer
+      </summary>
       <div className="reasoning-disclosure-body">{trimmed}</div>
     </details>
   );

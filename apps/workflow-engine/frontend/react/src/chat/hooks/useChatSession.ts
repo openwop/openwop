@@ -681,10 +681,16 @@ export function useChatSession(): UseChatSessionResult {
           const completion = typeof outputs.completion === 'string' ? outputs.completion : accumulated;
           const usage = outputs.usage as Record<string, number> | undefined;
           const citations = Array.isArray(outputs.citations) ? outputs.citations as Citation[] : undefined;
-          // RFC 0030 §A — the model may ship a `reasoning` string alongside
-          // its structured envelope payload. Check both the top-level
-          // `outputs.reasoning` and a nested `outputs.envelope.reasoning`
-          // shape, since universal-kind envelopes carry it on payload.
+          // RFC 0030 §A — the `reasoning` string is OPTIONAL on three
+          // universal envelope kinds (clarification.request, schema.request,
+          // error). A standard chat completion is none of those, so this
+          // capture only fires when the assistant turn happens to surface
+          // a universal-kind envelope (e.g., a node that requested
+          // clarification or returned a typed error). For the typical
+          // happy-path completion the capture returns undefined and
+          // ReasoningDisclosure renders nothing. Probes both the outputs
+          // root and the nested envelope.payload shape so hosts can lift
+          // reasoning either way without breaking the FE.
           const envelopeReasoning = (() => {
             if (typeof outputs.reasoning === 'string' && outputs.reasoning.length > 0) return outputs.reasoning;
             const envelope = outputs.envelope as Record<string, unknown> | undefined;
