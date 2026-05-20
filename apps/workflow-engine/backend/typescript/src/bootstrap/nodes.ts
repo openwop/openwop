@@ -161,13 +161,31 @@ const approvalGateNode: NodeModule = {
   typeId: 'core.approvalGate',
   version: '1.0.0',
   async execute(ctx) {
+    const cfg = (ctx.config ?? {}) as {
+      prompt?: unknown;
+      title?: unknown;
+      description?: unknown;
+      actions?: unknown;
+      requiredApprovals?: unknown;
+      rejectionPolicy?: unknown;
+      approversList?: unknown;
+    };
     return {
       status: 'suspended',
       interrupt: {
         kind: 'approval',
+        // Forward quorum config into interrupt.data so the resolve
+        // handler can read requiredApprovals + rejectionPolicy per
+        // `interrupt-profiles.md §openwop-interrupt-quorum`. The
+        // resolver's `recordQuorumVote` only activates when
+        // requiredApprovals > 1; single-approver gates stay on the
+        // immediate-resume path.
         data: {
-          prompt: ctx.config?.prompt ?? 'Please approve to continue.',
-          actions: ctx.config?.actions ?? ['approve', 'reject'],
+          prompt: typeof cfg.prompt === 'string' ? cfg.prompt : (typeof cfg.title === 'string' ? cfg.title : 'Please approve to continue.'),
+          actions: Array.isArray(cfg.actions) ? cfg.actions : ['approve', 'reject'],
+          ...(typeof cfg.requiredApprovals === 'number' ? { requiredApprovals: cfg.requiredApprovals } : {}),
+          ...(typeof cfg.rejectionPolicy === 'string' ? { rejectionPolicy: cfg.rejectionPolicy } : {}),
+          ...(Array.isArray(cfg.approversList) ? { approversList: cfg.approversList } : {}),
         },
       },
     };

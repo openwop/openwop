@@ -141,6 +141,55 @@ function validateResumeValue(
   }
 }
 
+/** Per-interrupt vote ledger for quorum gates per
+ *  `interrupt-profiles.md §openwop-interrupt-quorum`. In-memory by
+ *  design — votes are ephemeral per suspend cycle; if the host
+ *  process restarts, the run resumes from the persisted interrupt
+ *  with vote count zero (acceptable: spec requires the votes to be
+ *  visible during the gate's lifetime, not durable across restarts). */
+const quorumVotes = new Map<string, { accepts: string[]; rejects: string[] }>();
+
+/** Accumulate a quorum vote. Returns:
+ *   - 'accept-quorum-met' → run can resume with accepted outcome
+ *   - 'reject-majority' → gate fails with rejection
+ *   - 'pending' → record vote, return 200 to client, DON'T resume
+ *   - null → not a quorum gate; caller proceeds with normal resume */
+function recordQuorumVote(
+  interruptId: string,
+  interruptData: unknown,
+  resumeValue: unknown,
+): 'accept-quorum-met' | 'reject-majority' | 'pending' | null {
+  const data = (interruptData ?? {}) as { requiredApprovals?: number; rejectionPolicy?: string };
+  const requiredApprovals = typeof data.requiredApprovals === 'number' && data.requiredApprovals > 1
+    ? data.requiredApprovals
+    : 0;
+  if (requiredApprovals === 0) return null; // not a quorum gate
+  const rv = (resumeValue ?? {}) as { action?: string; voter?: string };
+  if (rv.action !== 'accept' && rv.action !== 'reject') return null;
+  const voter = typeof rv.voter === 'string' ? rv.voter : `anon-${(quorumVotes.get(interruptId)?.accepts.length ?? 0) + (quorumVotes.get(interruptId)?.rejects.length ?? 0) + 1}`;
+  let ledger = quorumVotes.get(interruptId);
+  if (!ledger) {
+    ledger = { accepts: [], rejects: [] };
+    quorumVotes.set(interruptId, ledger);
+  }
+  if (rv.action === 'accept') ledger.accepts.push(voter);
+  else ledger.rejects.push(voter);
+
+  // Resolution checks.
+  if (ledger.accepts.length >= requiredApprovals) return 'accept-quorum-met';
+  if (data.rejectionPolicy === 'majority') {
+    // Majority rejection = more than half of requiredApprovals
+    // rejected. For requiredApprovals=3, majority-reject = 2 rejects.
+    const majorityThreshold = Math.floor(requiredApprovals / 2) + 1;
+    if (ledger.rejects.length >= majorityThreshold) return 'reject-majority';
+  }
+  return 'pending';
+}
+
+function clearQuorumVotes(interruptId: string): void {
+  quorumVotes.delete(interruptId);
+}
+
 async function resolveAndResume(
   storage: Storage,
   hostSuite: HostAdapterSuite,
@@ -149,6 +198,46 @@ async function resolveAndResume(
 ): Promise<void> {
   const interrupt = await storage.getInterrupt(interruptId);
   if (!interrupt) throw new OpenwopError('interrupt_not_found', 'interrupt missing on resume', 404);
+
+  // Quorum-gate handling: accumulate votes until threshold met.
+  // Returns null when not a quorum gate (fall-through to normal resume).
+  const quorumOutcome = recordQuorumVote(interruptId, interrupt.data, resumeValue);
+  if (quorumOutcome === 'pending') {
+    // Vote recorded but quorum not met. Emit a partial-vote event so
+    // callers polling the event log can see the progress. The
+    // interrupt stays open; the run stays in waiting-approval.
+    await getEventLog().append({
+      runId: interrupt.runId,
+      nodeId: interrupt.nodeId,
+      type: 'interrupt.vote.recorded',
+      payload: { interruptId, kind: interrupt.kind, ledger: quorumVotes.get(interruptId) },
+    });
+    return;
+  }
+  if (quorumOutcome === 'reject-majority') {
+    clearQuorumVotes(interruptId);
+    // Fail the gate. Mark interrupt resolved with the rejection,
+    // then mark the run failed. We don't resume execution.
+    await storage.resolveInterrupt(interruptId, { action: 'reject', reason: 'quorum-majority-reject' }, new Date().toISOString());
+    await getEventLog().append({
+      runId: interrupt.runId,
+      nodeId: interrupt.nodeId,
+      type: 'run.failed',
+      payload: {
+        error: { code: 'approval_rejected', message: 'Quorum gate failed: majority rejected.' },
+      },
+    });
+    await storage.updateRun(interrupt.runId, {
+      status: 'failed',
+      completedAt: new Date().toISOString(),
+      error: { code: 'approval_rejected', message: 'Quorum gate failed: majority rejected.' },
+    });
+    return;
+  }
+  if (quorumOutcome === 'accept-quorum-met') {
+    clearQuorumVotes(interruptId);
+    // Fall through to the normal resume path below.
+  }
 
   await getSuspendManager().resolve(interruptId, resumeValue);
   await getEventLog().append({

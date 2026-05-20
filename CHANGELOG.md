@@ -11,6 +11,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Workflow-engine sample — quorum-aware approval gate (2026-05-20)
+
+Implements `interrupt-profiles.md §openwop-interrupt-quorum` end-to-end. Suite delta: 1231 → 1233 passing / 16 → 14 failing.
+
+- **`apps/workflow-engine/backend/typescript/src/bootstrap/nodes.ts`** — `core.approvalGate` forwards `requiredApprovals` + `rejectionPolicy` + `approversList` from `config` into `interrupt.data` so the resolve handler sees the quorum policy.
+- **`apps/workflow-engine/backend/typescript/src/routes/interrupts.ts`** — `recordQuorumVote(...)` maintains an in-memory per-interrupt vote ledger (`{accepts: voter[], rejects: voter[]}`). On each `POST /v1/runs/:runId/interrupts/:nodeId`:
+  - Single-approver gate (`requiredApprovals` ≤ 1): null return → fall through to normal resume.
+  - Quorum gate, accept count < threshold: emits `interrupt.vote.recorded` event with ledger snapshot, returns 200 WITHOUT resuming.
+  - Quorum met (accepts ≥ requiredApprovals): clear ledger, resume normally.
+  - Majority-reject (rejects ≥ ⌊requiredApprovals/2⌋ + 1): clear ledger, mark interrupt resolved, fail run with `error.code: 'approval_rejected'`.
+  Ledger is in-memory by design — votes are ephemeral per suspend cycle.
+
+Closes 2 conformance tests: `interrupt-quorum-resolution > three accepts resume to completed` + `> majority reject fails the gate`. Compatibility: implementation-only.
+
 ### Workflow-engine sample — streams.ts validation-before-content-negotiation (2026-05-20)
 
 Fixed an ordering regression introduced by `0b8d010` (JSON content negotiation on `/events`). The negotiation branch was running BEFORE `parseModes(...)`, so an invalid `streamMode` value combined with `Accept: application/json` returned 200 JSON instead of 400. Now mode + bufferMs validation runs first; the JSON branch only intercepts well-formed requests.
