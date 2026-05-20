@@ -110,6 +110,83 @@
   opacity: 1 !important;
 }
 
+/* ─── Markdown rendering inside chat assistant bubbles ────────────────
+ * `.chat-md` wraps the ReactMarkdown tree rendered by MessageRenderer
+ * for assistant turns. Selectors target the descendants so headings /
+ * lists / blockquotes / tables / links / inline-code all pick up the
+ * app's CSS-variable theme. User-turn text bypasses this (renders as
+ * <span style={whiteSpace:pre-wrap}>) so the literal text doesn't get
+ * reformatted by a markdown pass over user input. */
+.chat-md > *:first-child { margin-top: 0; }
+.chat-md > *:last-child { margin-bottom: 0; }
+.chat-md p { margin: 0 0 8px; line-height: 1.55; white-space: pre-wrap; }
+.chat-md h1, .chat-md h2, .chat-md h3, .chat-md h4, .chat-md h5, .chat-md h6 {
+  margin: 12px 0 6px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--ink);
+}
+.chat-md h1 { font-size: 1.4em; }
+.chat-md h2 { font-size: 1.25em; }
+.chat-md h3 { font-size: 1.1em; }
+.chat-md h4, .chat-md h5, .chat-md h6 { font-size: 1em; }
+.chat-md ul, .chat-md ol { margin: 0 0 8px; padding-left: 1.5em; }
+.chat-md li { margin: 2px 0; }
+.chat-md li > p { margin: 0; }
+.chat-md a {
+  color: var(--color-clay, var(--ink));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.chat-md a:hover { text-decoration-thickness: 2px; }
+.chat-md strong { font-weight: 600; }
+.chat-md em { font-style: italic; }
+.chat-md code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: color-mix(in oklch, var(--ink) 7%, transparent);
+  border: 1px solid color-mix(in oklch, var(--ink) 12%, transparent);
+  word-break: break-word;
+}
+.chat-md blockquote {
+  margin: 8px 0;
+  padding: 4px 12px;
+  border-left: 3px solid var(--color-border);
+  color: var(--color-text-muted, var(--ink));
+  font-style: italic;
+}
+.chat-md hr {
+  margin: 12px 0;
+  border: 0;
+  border-top: 1px solid var(--color-border);
+}
+.chat-md table {
+  border-collapse: collapse;
+  margin: 8px 0;
+  font-size: 0.95em;
+}
+.chat-md th, .chat-md td {
+  border: 1px solid var(--color-border);
+  padding: 4px 8px;
+  text-align: left;
+}
+.chat-md th {
+  background: color-mix(in oklch, var(--ink) 4%, transparent);
+  font-weight: 600;
+}
+/* Task lists (GFM `- [ ]` / `- [x]`). Hide the default bullet so the
+ * checkbox aligns flush with surrounding text. */
+.chat-md li:has(> input[type="checkbox"]) {
+  list-style: none;
+  margin-left: -1.2em;
+}
+.chat-md input[type="checkbox"] {
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
 /* ─── Reduced motion ──────────────────────────────────────────────────
  * Honor prefers-reduced-motion: reduce. Mirrors the canonical block in
  * public/styles.css per DESIGN.md §11 / DESIGN.app.md §6 invariant 1.
