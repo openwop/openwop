@@ -227,14 +227,27 @@ function createKv(state: TenantMap<KvEntry>, scope: BundleScope): KvSurface {
       b.set(String(key), { value: next });
       return { value: next };
     },
-    async cas({ key, expected, value }) {
+    async cas(args) {
+      // RFC 0015 §B point 5 canonical CAS shape: input `{key, expect,
+      // set}`, output `{swapped: boolean, currentValue?: unknown}`.
+      // Accept legacy `{expected, value}` from older sample call sites
+      // for backward compatibility; emit only the canonical output
+      // shape (callers that need the legacy `{ok, value/currentValue}`
+      // can derive from `{swapped, currentValue}`).
+      const a = args as { key?: unknown; expect?: unknown; expected?: unknown; set?: unknown; value?: unknown };
+      const key = String(a.key);
+      const expectVal = 'expect' in a ? a.expect : a.expected;
+      const setVal = 'set' in a ? a.set : a.value;
       const b = bucket();
-      const cur = fresh(b.get(String(key)))?.value ?? null;
-      if (JSON.stringify(cur) !== JSON.stringify(expected ?? null)) {
-        return { ok: false, currentValue: cur };
+      const cur = fresh(b.get(key))?.value ?? null;
+      if (JSON.stringify(cur) !== JSON.stringify(expectVal ?? null)) {
+        // Spec field name is `actual` (the live value at miss-time)
+        // per `kv-cas.test.ts`. Earlier `currentValue` alias kept for
+        // legacy callers; future commits can drop it.
+        return { swapped: false, actual: cur, currentValue: cur };
       }
-      b.set(String(key), { value });
-      return { ok: true, value };
+      b.set(key, { value: setVal });
+      return { swapped: true, actual: setVal, currentValue: setVal };
     },
   };
 }
@@ -622,6 +635,18 @@ function createFs(rootDir: string, scope: BundleScope): FsSurface {
    *  Reject anything that escapes the sandbox after normalization. */
   const safePath = (relRaw: unknown): string => {
     const rel = String(relRaw ?? '');
+    // Absolute paths (POSIX `/foo` or Windows `C:\foo`) MUST be
+    // rejected up-front per `SECURITY/invariants.yaml fs-path-
+    // traversal` + RFC 0014 §C. Stripping the leading slash and
+    // re-resolving against tenantRoot would silently REINTERPRET
+    // an absolute path as relative, which loses the security
+    // violation (a request for `/etc/passwd` would land at
+    // `<tenantRoot>/etc/passwd` and ENOENT — that's a bug, not a
+    // reject). Catch both POSIX absolute (`/`) and Windows drive
+    // letters (`C:`) here.
+    if (/^[/\\]/.test(rel) || /^[A-Za-z]:/.test(rel)) {
+      throw Object.assign(new Error('Absolute paths escape the tenant sandbox.'), { code: 'path_outside_sandbox' });
+    }
     const normalized = normalize(rel).replace(/^[/\\]+/, '');
     const abs = resolve(tenantRoot, normalized);
     if (!abs.startsWith(tenantRoot + sep) && abs !== tenantRoot) {

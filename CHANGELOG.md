@@ -11,6 +11,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Workflow-engine sample — fs absolute-path rejection + kv.cas canonical shape (2026-05-19)
+
+Two surface-level fixes in the in-memory host surfaces. Suite delta: 1212 → 1214 passing / 35 → 33 failing.
+
+- **`apps/workflow-engine/backend/typescript/src/host/inMemorySurfaces.ts`** — fs sandbox: absolute paths (POSIX `/foo`, Windows `C:\foo`) now reject up-front with `path_outside_sandbox` per `SECURITY/invariants.yaml fs-path-traversal` + RFC 0014 §C. The prior strip-leading-slash + re-resolve approach silently reinterpreted `/etc/passwd` as `<tenantRoot>/etc/passwd` and failed with ENOENT instead of a sandbox violation — that's a security-relevant ENOENT, not a correct reject.
+- **`apps/workflow-engine/backend/typescript/src/host/inMemorySurfaces.ts`** — kv.cas: canonical RFC 0015 §B point 5 shape — input `{key, expect, set}`, output `{swapped: boolean, actual: unknown}`. Legacy `{expected, value}` input + `{ok, value/currentValue}` output paths still accepted for backward compat (legacy aliases preserved on the response too). Conformance `kv-cas` now passes.
+
+Compatibility: **implementation-only**. fs change tightens a path-validation check that should have already rejected absolute paths. kv.cas keeps legacy aliases on both input and output sides.
+
 ### Workflow-engine sample — MCP discovery shape + approval resume validation (2026-05-19)
 
 Two surgical wire-shape fixes. Suite delta: 1210 → 1212 passing / 37 → 35 failing.
