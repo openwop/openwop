@@ -230,6 +230,23 @@ export interface NodeModule {
   requires?: readonly string[];
   /** Secret requirements — node manifest declares these; resolver fetches at execute time. */
   requiresSecrets?: readonly { id: string; provider: string; scope: string }[];
+  /** RFC 0031 §B. Model capabilities this NodeModule requires the active
+   *  model to advertise. Distinct from `requires`, which gates on HOST
+   *  capabilities — this field gates on MODEL capabilities. Spec-reserved
+   *  identifiers: `structured-output`, `discriminator-enum`, `long-context`,
+   *  `reasoning` (model-native thinking-tokens), `function-calling`.
+   *  Host-private extensions MUST prefix with `x-host-<host>-<key>`.
+   *  Empty array (or absent field) means no model-capability requirements. */
+  requiredModelCapabilities?: readonly string[];
+  /** RFC 0031 §B. Substitute model coordinates the host MAY use if the
+   *  active model lacks the declared `requiredModelCapabilities`. When
+   *  the host advertises `capabilities.modelCapabilities.substitutionSupported: true`
+   *  AND can authenticate to `fallbackModel.provider`, the host substitutes
+   *  and emits `model.capability.substituted`. When `substitutionSupported`
+   *  is false (the reference host's current posture) OR the field is
+   *  absent, the host refuses on any unmet capability. Recursive substitution
+   *  is NOT permitted (RFC 0031 §"Unresolved questions" #3). */
+  fallbackModel?: { provider: string; model: string };
   execute(ctx: NodeContext): Promise<NodeOutcome>;
 }
 
