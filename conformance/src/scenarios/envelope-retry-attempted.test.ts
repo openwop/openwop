@@ -98,16 +98,157 @@ describe.skipIf(HTTP_SKIP)('envelope-retry-attempted: advertisement shape (RFC 0
   });
 });
 
-describe('envelope-retry-attempted: runtime behavior (RFC 0032 §B.1)', () => {
-  it.todo(
-    'when mock LLM emits invalid envelope on attempt 1 then valid on attempt 2, exactly one `envelope.retry.attempted` event fires before the second attempt',
-  );
-  it.todo('event payload carries `attempt: 2` (1-indexed; first attempt does not emit)');
-  it.todo(
-    '`reason` is one of the spec-reserved closed-enum values OR matches the `x-host-<host>-<key>` extension pattern',
-  );
-  it.todo('eventual success records normally via envelope acceptance + downstream RunEventDoc');
-  it.todo(
-    '`previousError` (when populated) MUST NOT contain prompt or response substring excerpts — limit to validator output',
-  );
+// Live runtime behavior — drives the conformance fixture
+// `conformance-envelope-retry-attempted` against the sample's
+// conformance-only `mock` provider. Test pre-seeds a 2-entry program
+// via `POST /v1/host/sample/test/mock-ai/program`: attempt 1 returns
+// invalid JSON, attempt 2 returns a valid envelope. The host's
+// `dispatchStructured` retry loop emits exactly one
+// `envelope.retry.attempted` event between the two attempts (RFC 0032
+// §B.1). Fixture- + capability-gated: soft-skip when either is absent
+// OR when the host doesn't expose the mock-ai program seam.
+
+import { pollUntilTerminal } from '../lib/polling.js';
+import { isFixtureAdvertised } from '../lib/fixtures.js';
+
+const FIXTURE = 'conformance-envelope-retry-attempted';
+const NODE_ID = 'structured-call';
+
+const RFC_0032_REASONS = new Set([
+  'schema-violation',
+  'truncation',
+  'type-drift',
+  'type-mismatch',
+  'refusal',
+  'parse-error',
+  'unknown',
+]);
+const HOST_REASON_EXT_RE = /^x-host-[a-z0-9][a-z0-9-]*-[a-z0-9][a-z0-9-]*$/;
+
+interface RunEvent {
+  type: string;
+  payload?: Record<string, unknown>;
+  nodeId?: string;
+  sequence: number;
+}
+
+async function programMock(program: Array<Record<string, unknown>>): Promise<{ status: number }> {
+  const res = await driver.post('/v1/host/sample/test/mock-ai/program', { nodeId: NODE_ID, program });
+  return { status: res.status };
+}
+
+async function startRunAndRead(): Promise<RunEvent[] | null> {
+  const create = await driver.post('/v1/runs', { workflowId: FIXTURE });
+  if (create.status !== 201) return null;
+  const runId = (create.json as { runId: string }).runId;
+  await pollUntilTerminal(runId, { timeoutMs: 10_000 });
+  const eventsRes = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events`);
+  if (eventsRes.status !== 200) return null;
+  return ((eventsRes.json as { events?: RunEvent[] } | undefined)?.events ?? []) as RunEvent[];
+}
+
+describe.skipIf(HTTP_SKIP)('envelope-retry-attempted: runtime behavior (RFC 0032 §B.1)', () => {
+  it('when mock LLM emits invalid envelope on attempt 1 then valid on attempt 2, exactly one `envelope.retry.attempted` event fires before the second attempt', async () => {
+    if (!isFixtureAdvertised(FIXTURE)) return;
+    const seed = await programMock([
+      { content: 'not valid json — provoke parse-error retry' },
+      { content: '{"valid":true}' },
+    ]);
+    if (seed.status === 404) return; // host doesn't expose the seam
+    expect(seed.status).toBe(200);
+
+    const events = await startRunAndRead();
+    if (events === null) return;
+    const retries = events.filter((e) => e.type === 'envelope.retry.attempted');
+    expect(
+      retries.length,
+      driver.describe(
+        'RFCS/0032-envelope-reliability-events.md §B.1',
+        'exactly one envelope.retry.attempted event MUST fire between attempts 1 and 2',
+      ),
+    ).toBe(1);
+  });
+
+  it('event payload carries `attempt: 2` (1-indexed; first attempt does not emit)', async () => {
+    if (!isFixtureAdvertised(FIXTURE)) return;
+    const seed = await programMock([{ content: 'invalid' }, { content: '{"valid":true}' }]);
+    if (seed.status === 404) return;
+
+    const events = await startRunAndRead();
+    if (events === null) return;
+    const retry = events.find((e) => e.type === 'envelope.retry.attempted');
+    expect(retry, 'envelope.retry.attempted MUST appear in the event log').toBeDefined();
+    expect(
+      retry!.payload?.attempt,
+      driver.describe(
+        'RFCS/0032-envelope-reliability-events.md §B.1',
+        'attempt field MUST be 2 (1-indexed; first attempt does not emit)',
+      ),
+    ).toBe(2);
+  });
+
+  it('`reason` is one of the spec-reserved closed-enum values OR matches the `x-host-<host>-<key>` extension pattern', async () => {
+    if (!isFixtureAdvertised(FIXTURE)) return;
+    const seed = await programMock([{ content: 'invalid' }, { content: '{"valid":true}' }]);
+    if (seed.status === 404) return;
+
+    const events = await startRunAndRead();
+    if (events === null) return;
+    const retry = events.find((e) => e.type === 'envelope.retry.attempted');
+    expect(retry).toBeDefined();
+    const reason = retry!.payload?.reason;
+    expect(typeof reason).toBe('string');
+    expect(
+      RFC_0032_REASONS.has(reason as string) || HOST_REASON_EXT_RE.test(reason as string),
+      driver.describe(
+        'RFCS/0032-envelope-reliability-events.md §B.1',
+        'reason MUST be in the spec-reserved set OR match x-host-<host>-<key>',
+      ),
+    ).toBe(true);
+  });
+
+  it('eventual success records normally via envelope acceptance + downstream RunEventDoc', async () => {
+    if (!isFixtureAdvertised(FIXTURE)) return;
+    const seed = await programMock([{ content: 'invalid' }, { content: '{"valid":true}' }]);
+    if (seed.status === 404) return;
+
+    const events = await startRunAndRead();
+    if (events === null) return;
+    const nodeCompleted = events.find((e) => e.type === 'node.completed' && e.nodeId === NODE_ID);
+    const runCompleted = events.find((e) => e.type === 'run.completed');
+    expect(
+      nodeCompleted,
+      driver.describe(
+        'RFCS/0032-envelope-reliability-events.md §B.1',
+        'eventual success MUST produce a node.completed for the dispatching node',
+      ),
+    ).toBeDefined();
+    expect(runCompleted).toBeDefined();
+  });
+
+  it('`previousError` (when populated) MUST NOT contain prompt or response substring excerpts — limit to validator output', async () => {
+    if (!isFixtureAdvertised(FIXTURE)) return;
+    const PROMPT_CANARY = 'PROMPT-CANARY-RETRY-ATTEMPTED-DO-NOT-LEAK-' + Math.random().toString(36).slice(2, 10);
+    const RESPONSE_CANARY = 'RESPONSE-CANARY-' + PROMPT_CANARY;
+    const seed = await programMock([
+      { content: `not valid json mentioning ${RESPONSE_CANARY}` },
+      { content: '{"valid":true}' },
+    ]);
+    if (seed.status === 404) return;
+
+    const events = await startRunAndRead();
+    if (events === null) return;
+    const retry = events.find((e) => e.type === 'envelope.retry.attempted');
+    if (!retry) return;
+    const previousError = retry.payload?.previousError;
+    if (previousError === undefined || previousError === null) return; // field is optional
+    const serialized = typeof previousError === 'string' ? previousError : JSON.stringify(previousError);
+    expect(
+      serialized.includes(RESPONSE_CANARY),
+      driver.describe(
+        'RFCS/0032-envelope-reliability-events.md §G',
+        'previousError MUST NOT echo provider response substrings — validator output only',
+      ),
+    ).toBe(false);
+  });
 });

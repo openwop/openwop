@@ -822,24 +822,21 @@ export function registerTestSeamRoutes(app: Express, deps: { storage: Storage })
   // RFC 0032 / 0033 — mock-AI provider program seam.
   //
   //   POST /v1/host/sample/test/mock-ai/program
-  //   Body: { runId, nodeId, program: MockBehavior[] }
+  //   Body: { nodeId, program: MockBehavior[] }
   //
   // Pre-seeds the conformance-only `dispatchMock` provider with a
-  // deterministic per-attempt response queue keyed by (runId, nodeId).
-  // Subsequent calls to the mock provider during `runId`'s execution
-  // consume one entry per attempt; the queue feeds the
-  // `dispatchStructured` retry classifier in `aiProvidersHost.ts`.
+  // deterministic per-attempt response queue keyed by `nodeId`. The
+  // seam is callable BEFORE the run is created — each conformance
+  // scenario uses a unique fixture (and therefore unique nodeId), and
+  // the suite runs with `--no-file-parallelism`, so cross-test
+  // collisions don't happen.
   //
   // Pairs with `GET /v1/host/sample/test/mock-ai/last-dispatch-budget`
   // below — that seam reports the most-recent `maxTokens` value the
   // mock saw, so RFC 0033 §B truncation-budget-multiplication
   // assertions can verify the increased budget on retry.
   app.post('/v1/host/sample/test/mock-ai/program', async (req, res) => {
-    const body = (req.body ?? {}) as { runId?: unknown; nodeId?: unknown; program?: unknown };
-    if (typeof body.runId !== 'string' || body.runId.length === 0) {
-      res.status(400).json({ error: { code: 'invalid_argument', message: 'runId required' } });
-      return;
-    }
+    const body = (req.body ?? {}) as { nodeId?: unknown; program?: unknown };
     if (typeof body.nodeId !== 'string' || body.nodeId.length === 0) {
       res.status(400).json({ error: { code: 'invalid_argument', message: 'nodeId required' } });
       return;
@@ -849,26 +846,22 @@ export function registerTestSeamRoutes(app: Express, deps: { storage: Storage })
       return;
     }
     const { programMock } = await import('../providers/dispatchMock.js');
-    programMock(body.runId, body.nodeId, body.program as Array<Record<string, unknown>>);
+    programMock(body.nodeId, body.program as Array<Record<string, unknown>>);
     res.status(200).json({ ok: true, count: body.program.length });
   });
 
   // RFC 0033 §B — last-dispatch-budget introspection seam. Returns the
-  // `maxTokens` value the most recent mock call received for the given
-  // (runId, nodeId). Conformance scenarios verify the truncation-retry
-  // budget multiplication landed by comparing the budget across attempts.
+  // `maxTokens` value the most recent mock call received for `nodeId`.
+  // Conformance scenarios verify the truncation-retry budget
+  // multiplication landed by comparing the budget across attempts.
   app.get('/v1/host/sample/test/mock-ai/last-dispatch-budget', async (req, res) => {
     const q = req.query as Record<string, string | undefined>;
-    if (typeof q.runId !== 'string' || q.runId.length === 0) {
-      res.status(400).json({ error: { code: 'invalid_argument', message: 'runId query param required' } });
-      return;
-    }
     if (typeof q.nodeId !== 'string' || q.nodeId.length === 0) {
       res.status(400).json({ error: { code: 'invalid_argument', message: 'nodeId query param required' } });
       return;
     }
     const { lastReceivedMaxTokens } = await import('../providers/dispatchMock.js');
-    res.status(200).json({ maxTokens: lastReceivedMaxTokens(q.runId, q.nodeId) });
+    res.status(200).json({ maxTokens: lastReceivedMaxTokens(q.nodeId) });
   });
 
   // RFC 0027 §E — prompt-compose test seam. Drives the conformance

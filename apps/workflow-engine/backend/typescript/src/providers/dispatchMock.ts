@@ -54,14 +54,13 @@ interface ProgramState {
 
 const programs = new Map<string, ProgramState>();
 
-function key(runId: string, nodeId: string): string {
-  return `${runId}\x00${nodeId}`;
-}
-
-/** Seed a program before a run starts. Subsequent `dispatchMock` calls
- *  with the matching `(runId, nodeId)` consume one entry per call. */
-export function programMock(runId: string, nodeId: string, program: MockProgram): void {
-  programs.set(key(runId, nodeId), { program, cursor: 0, lastReceivedMaxTokens: null });
+/** Seed a program BEFORE a run starts. Keyed by `nodeId` so the
+ *  conformance test can program without knowing the runId in advance.
+ *  Conformance scenarios run with `--no-file-parallelism` so each
+ *  fixture's unique nodeId is sufficient to avoid cross-test
+ *  collisions. Each new program seed REPLACES the previous queue. */
+export function programMock(nodeId: string, program: MockProgram): void {
+  programs.set(nodeId, { program, cursor: 0, lastReceivedMaxTokens: null });
 }
 
 /** Wipe all programs. Called between conformance scenarios. */
@@ -69,26 +68,24 @@ export function resetMockPrograms(): void {
   programs.clear();
 }
 
-/** Return the most-recent `maxTokens` passed to a mock dispatch for the
- *  given `(runId, nodeId)`. Returns `null` when no call has fired or
- *  the program isn't seeded. */
-export function lastReceivedMaxTokens(runId: string, nodeId: string): number | null {
-  return programs.get(key(runId, nodeId))?.lastReceivedMaxTokens ?? null;
+/** Return the most-recent `maxTokens` passed to a mock dispatch for
+ *  `nodeId`. Returns `null` when no call has fired or the program
+ *  isn't seeded. */
+export function lastReceivedMaxTokens(nodeId: string): number | null {
+  return programs.get(nodeId)?.lastReceivedMaxTokens ?? null;
 }
 
 /** Dispatch entry point. Returns a `DispatchResult`-shaped value built
  *  from the next program entry. When the program is exhausted, returns
  *  an empty-stop completion (so a misaligned test surfaces as "expected
  *  N calls, got N+1" rather than a hang). */
-export async function dispatchMock(req: DispatchRequest & { runId?: string; nodeId?: string }): Promise<DispatchResult> {
-  // The runId / nodeId are not on the canonical DispatchRequest shape
-  // today — `aiProvidersHost.ts` carries them on the AdapterScope and
-  // we extend the dispatch request with them inline at the call site
-  // when the provider is 'mock'. A real-provider adapter wouldn't see
-  // these fields.
-  const runId = req.runId ?? '';
+export async function dispatchMock(req: DispatchRequest & { nodeId?: string }): Promise<DispatchResult> {
+  // The nodeId is not on the canonical DispatchRequest shape today —
+  // `aiProvidersHost.ts` carries it on the AdapterScope and we extend
+  // the dispatch request with it inline at the call site when the
+  // provider is 'mock'. A real-provider adapter wouldn't see this.
   const nodeId = req.nodeId ?? '';
-  const state = programs.get(key(runId, nodeId));
+  const state = programs.get(nodeId);
   // Record the maxTokens for the §B truncation-budget assertion.
   if (state) {
     state.lastReceivedMaxTokens = req.maxTokens ?? null;
