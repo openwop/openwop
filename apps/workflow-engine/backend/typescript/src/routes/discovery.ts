@@ -297,6 +297,37 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
           return { supported: cfg.supported, promptDirective: cfg.promptDirective };
         })(),
         tierOneSubsetCompliance: 'warn',
+        // RFC 0032 §C envelope-reliability event vocabulary. The reference
+        // host exposes the six-event surface via the
+        // `POST /v1/host/sample/test/emit-envelope-reliability` test seam
+        // for conformance assertions. End-to-end emission from the
+        // envelope-validation pipeline (real retry/refusal/truncation
+        // paths in `aiProvidersHost.dispatchStructured()`) is deferred
+        // to a focused refactor; the seam is the honest minimum-viable
+        // surface for the wire-shape contract. `events[]` lists the four
+        // events the host has a clear emission path for (the two MUST-tier
+        // events per RFC 0032 §C plus retry.attempted + truncated, the
+        // events the dispatchStructured retry-loop can drive). NL-to-Format
+        // and recovery.applied are omitted from `events[]` since the
+        // sample doesn't yet implement those recovery strategies.
+        reliability: {
+          supported: true,
+          events: ['envelope.retry.attempted', 'envelope.retry.exhausted', 'envelope.refusal', 'envelope.truncated'],
+          maxRetryAttempts: 3,
+          // RFC 0033 §E envelope-completion contract. The sample
+          // distinguishes truncation (stop_reason: max_tokens) from
+          // schema-violation in its retry routing — the existing
+          // `dispatchStructured()` retry loop applies schema-correction
+          // fragments per spec but does NOT yet inspect `stop_reason` to
+          // route truncation through a budget-doubling path. Honest:
+          // `distinguishesTruncation: false` until the
+          // stop-reason-inspection refinement lands; conformance scenarios
+          // gated on this flag soft-skip.
+          completion: {
+            distinguishesTruncation: false,
+            truncationBudgetMultiplier: 2,
+          },
+        },
       },
       // RFC 0031 §E. The executor evaluates `NodeModule.requiredModelCapabilities`
       // at dispatch-time against the host's configured default provider AND

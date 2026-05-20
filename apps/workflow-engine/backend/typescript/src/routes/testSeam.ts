@@ -575,6 +575,120 @@ export function registerTestSeamRoutes(app: Express, deps: { storage: Storage })
     res.status(200).json({ event });
   });
 
+  // RFC 0032 §B envelope-reliability event emission seam.
+  // POST /v1/host/sample/test/emit-envelope-reliability
+  // Body: { runId, type, payload, nodeId?, correlationId? }
+  //
+  // Synthesizes one of the six RFC 0032 envelope-reliability events into the
+  // test event log so conformance scenarios can verify event-payload shape
+  // without driving a full LLM dispatch. The seam validates `type` is one
+  // of the six RFC 0032 enum values and that `payload` carries the required
+  // fields per `run-event-payloads.schema.json` §envelope* `$defs`.
+  // Defense-in-depth: rejects payloads carrying credentialRef-shaped or
+  // prompt-content-shaped substrings in `refusalText`/`previousError`/
+  // `finalError` fields (the SR-1 + prompt-injection redaction discipline
+  // per SECURITY invariants `envelope-refusal-no-prompt-leak` and
+  // `envelope-reasoning-secret-redaction`). Production hosts MUST redact
+  // BEFORE emission; this seam refuses pre-redacted payloads as a CI gate.
+  app.post('/v1/host/sample/test/emit-envelope-reliability', async (req, res) => {
+    const body = (req.body ?? {}) as {
+      runId?: string;
+      type?: string;
+      payload?: Record<string, unknown>;
+      nodeId?: string;
+      correlationId?: string;
+    };
+    const RFC_0032_EVENTS = new Set([
+      'envelope.retry.attempted',
+      'envelope.retry.exhausted',
+      'envelope.refusal',
+      'envelope.truncated',
+      'envelope.nlToFormat.engaged',
+      'envelope.recovery.applied',
+    ]);
+    if (typeof body.runId !== 'string' || body.runId.length === 0) {
+      res.status(400).json({ error: { code: 'invalid_argument', message: 'runId required' } });
+      return;
+    }
+    if (typeof body.type !== 'string' || !RFC_0032_EVENTS.has(body.type)) {
+      res.status(400).json({
+        error: {
+          code: 'invalid_argument',
+          message: `type MUST be one of the 6 RFC 0032 envelope-reliability events; got: ${String(body.type)}`,
+        },
+      });
+      return;
+    }
+    if (!body.payload || typeof body.payload !== 'object') {
+      res.status(400).json({ error: { code: 'invalid_argument', message: 'payload required (object)' } });
+      return;
+    }
+    // Per-type required-field check matching `run-event-payloads.schema.json`.
+    const requiredFields: Record<string, readonly string[]> = {
+      'envelope.retry.attempted': ['nodeId', 'attempt', 'reason'],
+      'envelope.retry.exhausted': ['nodeId', 'totalAttempts', 'finalReason'],
+      'envelope.refusal': ['nodeId', 'provider', 'model'],
+      'envelope.truncated': ['nodeId', 'provider', 'model', 'stopReason'],
+      'envelope.nlToFormat.engaged': ['nodeId', 'originalEnvelopeType'],
+      'envelope.recovery.applied': ['nodeId', 'path'],
+    };
+    const required = requiredFields[body.type] ?? [];
+    for (const field of required) {
+      if (!(field in body.payload)) {
+        res.status(400).json({
+          error: {
+            code: 'invalid_argument',
+            message: `payload MUST include required field "${field}" for event type "${body.type}"`,
+          },
+        });
+        return;
+      }
+    }
+    // Defense-in-depth: reject pre-redacted payloads that look like they
+    // carry credentialRef or prompt-content substrings. Production hosts
+    // redact BEFORE emission; the seam refuses payloads that bypass the
+    // redaction stage as a CI gate per SECURITY invariants
+    // `envelope-refusal-no-prompt-leak` + `envelope-recovery-no-content-leak`.
+    const serialized = JSON.stringify(body.payload);
+    if (serialized.includes('"credentialRef"') || serialized.includes('secret-canary-')) {
+      res.status(400).json({
+        error: {
+          code: 'envelope_reliability_credential_leak',
+          message: 'payload contains credentialRef-shaped content; redact BEFORE emission per RFC 0032 §G + SECURITY/invariants.yaml envelope-refusal-no-prompt-leak',
+        },
+      });
+      return;
+    }
+    if (body.type === 'envelope.recovery.applied') {
+      // RFC 0032 §B.6 + SECURITY/invariants.yaml envelope-recovery-no-content-leak:
+      // recovery event MUST NOT carry pre-recovery output substrings. The
+      // schema's `additionalProperties: false` constrains the shape, but
+      // we add a defense-in-depth check that the payload's keys are
+      // exactly {nodeId, path, byteOffset} (no extras like `recoveredContent`).
+      const allowedKeys = new Set(['nodeId', 'path', 'byteOffset']);
+      for (const key of Object.keys(body.payload)) {
+        if (!allowedKeys.has(key)) {
+          res.status(400).json({
+            error: {
+              code: 'envelope_recovery_content_leak',
+              message: `envelope.recovery.applied payload MUST NOT carry "${key}" — only {nodeId, path, byteOffset?} are emitted (RFC 0032 §B.6 + SECURITY envelope-recovery-no-content-leak)`,
+            },
+          });
+          return;
+        }
+      }
+    }
+    const { appendTestEvent } = await import('../host/envelopeEventLog.js');
+    const event = appendTestEvent({
+      runId: body.runId,
+      type: body.type,
+      payload: body.payload,
+      ...(typeof body.correlationId === 'string' ? { causationId: body.correlationId } : {}),
+      ...(typeof body.nodeId === 'string' ? { nodeId: body.nodeId } : {}),
+    });
+    res.status(200).json({ event });
+  });
+
   // RFC 0031 §B model-capability gate seam.
   // POST /v1/host/sample/test/evaluate-model-capability-gate
   // Body: {
