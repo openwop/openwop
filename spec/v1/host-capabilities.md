@@ -208,6 +208,50 @@ ctx.aiEnvelope.await({
 
 ---
 
+## Model-capability declarations
+
+> Added by RFC 0031 (`Active` 2026-05-20). Normates how hosts dispatch envelope-emitting NodeModules whose execution depends on specific model capabilities (`structured-output`, `discriminator-enum`, `long-context`, `reasoning`, `function-calling`, or `x-host-<host>-*` extensions).
+
+NodeModules MAY declare model-capability requirements via `NodeModule.requiredModelCapabilities[]` + an optional `NodeModule.fallbackModel` per `node-packs.md` §"Model-capability declarations on NodeModules." This is a parallel surface to `NodeModule.requires[]` — `requires` gates on HOST capabilities (e.g., `chat.sendPrompt`, `secrets.byok`); `requiredModelCapabilities` gates on MODEL capabilities advertised at `capabilities.modelCapabilities.advertised[]`.
+
+### Dispatch flow (normative)
+
+When dispatching a NodeModule that declares `requiredModelCapabilities`, a host that advertises `capabilities.modelCapabilities.supported: true` SHALL:
+
+1. Check the active model's advertised capabilities against the NodeModule's `requiredModelCapabilities[]`.
+2. **All required capabilities met** → dispatch normally.
+3. **Unmet AND `fallbackModel` declared AND host can authenticate to the fallback provider** (i.e., the fallback's `provider` is in `capabilities.aiProviders.supported[]` AND a credential is resolvable AND the host advertises `capabilities.modelCapabilities.substitutionSupported: true`):
+    - Substitute the active model with the fallback.
+    - Emit `model.capability.substituted` per the payload contract in `schemas/run-event-payloads.schema.json` §`modelCapabilitySubstituted`.
+    - Dispatch with the fallback model.
+4. **Unmet AND (no `fallbackModel` declared, OR substitution not supported, OR host cannot authenticate to the fallback)**:
+    - Emit `model.capability.insufficient` per `modelCapabilityInsufficient` payload.
+    - Refuse to dispatch the node; terminate the run with `RunSnapshot.error.code = "capability_not_provided"` per `capabilities.md` §"Unsupported capability — refusal contract."
+
+The ordering MUST be: **capability check → optional substitution → emit telemetry → dispatch or refuse.** Hosts MUST NOT substitute silently (no event emission); hosts MUST NOT dispatch with an unsuitable model and hope for the best (the model's runtime failure is a worse signal than refusing up-front).
+
+**Recursive substitution is NOT permitted** (RFC 0031 §"Unresolved questions" #3). A host that substitutes from model A to fallback model B MUST evaluate B's full capability set before dispatching; if B also fails the check, the host MUST emit `model.capability.insufficient` with `fallbackAttempted: true` and refuse — it MUST NOT chain to another fallback.
+
+### Capability identifier registry
+
+Spec-reserved identifiers (RFC 0031 §C):
+
+| Identifier | Meaning |
+|---|---|
+| `structured-output` | Vendor strict-mode JSON Schema support (Anthropic strict tool use `strict: true`, OpenAI strict mode `response_format.json_schema.strict: true`, Gemini `responseSchema` on `generateContent`). |
+| `discriminator-enum` | Single-string `enum: ["literal"]` discriminator support in `anyOf` branches per `ai-envelope.md` §"Variant payload discrimination (normative)." All three Tier-1 vendors support this when their respective strict modes are engaged. |
+| `long-context` | Context window ≥ 200k tokens. |
+| `reasoning` | Native reasoning / thinking-tokens (Anthropic extended thinking, Gemini `thinkingBudget`, OpenAI o-series reasoning). **Sibling concept** to the RFC 0030 envelope-payload `reasoning` field — this identifier means *model-native* thinking-tokens, NOT envelope-payload chain-of-thought. |
+| `function-calling` | Multi-turn function-calling / tool-use loop support. |
+
+Host-private extensions MUST prefix with `x-host-<host>-<key>` per `host-extensions.md` §"Canonical-prefix table." A future RFC MAY add new spec-reserved identifiers.
+
+### Interaction with prompt resolution (RFC 0029)
+
+`requiredModelCapabilities` and the four-layer prompt-resolution chain (RFC 0029) are orthogonal axes. When a host implements both, the recommended ordering is: **capability check first, then prompt resolution.** Rationale: substitution may swap models with different prompt-tuning expectations; resolving prompts against the *original* model when dispatch ends up using the *fallback* is incorrect. The `model.capability.substituted` event (this RFC) and `agent.promptResolved` (RFC 0029) MAY both fire for the same node execution; no precedence rule applies between them at the protocol level.
+
+---
+
 ## §host.promptLibrary
 
 **Capability flag:** `host.promptLibrary: supported`

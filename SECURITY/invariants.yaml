@@ -95,6 +95,95 @@ invariants:
       promotes top-level `contentTrust` to `"untrusted"` if ANY
       binding carries the flag.
 
+  - id: envelope-reasoning-secret-redaction
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/envelope-reasoning-secret-redaction.test.ts
+    note: |
+      RFC 0030 §A + §E. When a host advertises
+      `capabilities.envelopes.reasoning.supported: true` AND processes
+      an envelope whose `reasoning` field contains a known
+      `secret:`-prefixed substring, the substring MUST NOT appear in:
+        - The emitted envelope's `reasoning` field as persisted in
+          `RunEventDoc.payload`.
+        - OTel span attributes (`openwop.envelope.*`).
+        - The debug-bundle export.
+      The reasoning field is subject to the same SR-1 redaction harness
+      applied to other envelope payload fields per `ai-envelope.md`
+      §"Redaction (SR-1 carry-forward)". The model can hallucinate
+      secret-shaped substrings from in-context examples, tool results,
+      or prior turns; if `reasoning` is persisted without scrubbing,
+      BYOK keys leak. Gate timing: lands alongside reference-host
+      emission per the RFC 0027 §G staging precedent.
+
+  - id: model-capability-substituted-no-credential-disclosure
+    tier: protocol
+    severity: medium
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/model-capability-substituted.test.ts
+    note: |
+      RFC 0031 §F. Hosts emitting `model.capability.substituted` MAY
+      redact the `fallbackProvider` and `fallbackModel` fields when
+      workspace policy treats multi-vendor posture as confidential.
+      Redaction MUST be all-or-nothing for the pair (both fields
+      redacted as `"[REDACTED]"`) so consumers can detect redaction
+      without ambiguity. `nodeId`, `originalProvider`, `originalModel`,
+      and `missingCapabilities` MUST NOT be redacted — they carry no
+      provider-possession information beyond what the run-creation
+      request already disclosed via `RunOptions.configurable.ai.provider`.
+      Severity is `medium` (not `high`) because: (a) the `originalProvider`
+      is already public via `RunOptions.configurable`; (b) the fact
+      that a host has *some* fallback configured is conventionally
+      public via `capabilities.modelCapabilities.substitutionSupported:
+      true`. The hidden bit is which specific fallback fired for a given
+      dispatch — workspace-internal info that some operators prefer to
+      keep private. Gate timing: lands alongside reference-host emission.
+
+  - id: envelope-refusal-no-prompt-leak
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/envelope-refusal-shape.test.ts
+    note: |
+      RFC 0032 §B.3 + §D + §G. `envelope.refusal.refusalText` MUST be
+      passed through the host's BYOK redaction harness AND the
+      prompt-content redaction pipeline before emission. Provider
+      safety-refusal messages can echo offending prompt substrings;
+      emitting them verbatim would create a side channel for
+      prompt-injection-attack telemetry exfiltration AND for SR-1
+      secret-leak. Hosts SHOULD also exclude `refusalText` from the
+      OTel projection by default (operators who want refusal text in
+      dashboards plumb through their own pipeline where they own the
+      redaction policy). Replay consumers MUST tolerate
+      `refusalText: null` even when the original was non-null. Gate
+      timing: lands alongside reference-host emission per the RFC 0027
+      §G staging precedent.
+
+  - id: envelope-recovery-no-content-leak
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/envelope-recovery-applied.test.ts
+    note: |
+      RFC 0032 §B.6 + §G. `envelope.recovery.applied` payloads MUST NOT
+      carry the recovered envelope content or any substring from the
+      model's pre-recovery output. Only the recovery path identifier
+      (`direct`, `jsonrepair`, `markdown-fence`, `brace-walker`,
+      `custom`) and the optional `byteOffset` are emitted. The recovered
+      content rides on the subsequent envelope acceptance + downstream
+      `RunEventDoc`, NOT on the recovery event itself. The pre-recovery
+      output can contain secret-shaped substrings the model emitted
+      before lenient parsing fixed the wrapping; including any of that
+      text in the event would create a secret-leak side channel that
+      bypasses the normal SR-1 redaction harness (which runs on
+      envelope payloads, not on parsing-error diagnostics). Gate
+      timing: lands alongside reference-host emission.
+
   - id: secret-leakage-eventlog-variable
     tier: reference-impl
     severity: high

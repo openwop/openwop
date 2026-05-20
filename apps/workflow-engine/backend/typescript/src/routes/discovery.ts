@@ -299,6 +299,23 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
         maxTemplateBytes: 65536,
         observability: 'full',
       },
+      // RFC 0030 envelope-track advertisement. The universal-kind payload
+      // schemas (`schemas/envelopes/*.schema.json`) carry the OPTIONAL
+      // `reasoning` field per RFC 0030 §A. The reference host does NOT yet
+      // inject the prompt-directive instructing the model to populate it —
+      // that wiring is the path to RFC 0030 `Active → Accepted`. Until that
+      // helper ships, advertise `promptDirective: "off"` (honest about the
+      // current posture: schemas accept the field, host doesn't prompt for
+      // it). `tierOneSubsetCompliance: "warn"` is also honest — the universal-
+      // kind schemas use OpenAI-strict-incompatible constraints (minLength /
+      // maxLength / minItems) that pre-date RFC 0030; the strict-mode static
+      // scenario will surface violations under `"strict"` advertisement but
+      // soft-skips under `"warn"`. A future RFC may bring the universal-kind
+      // schemas into Tier-1 strict compliance.
+      envelopes: {
+        reasoning: { supported: true, promptDirective: 'off' },
+        tierOneSubsetCompliance: 'warn',
+      },
       memory: { supported: false },
       // RFC 0023 §B.2 — capabilities.conformance.mockAgent. Reference
       // host registers core.conformance.mock-agent unconditionally

@@ -160,6 +160,34 @@
           "type": "array",
           "items": { "$ref": "#/$defs/SecretRequirement" },
           "description": "Secrets the node needs to execute. Resolved by the host's secret-resolution adapter at dispatch time. Hosts that don't advertise `Capabilities.secrets.supported` MUST refuse to dispatch a node with non-empty `requiresSecrets` and return `credential_unavailable`."
+        },
+        "requiredModelCapabilities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^([a-z][a-z0-9-]*|x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*)$"
+          },
+          "uniqueItems": true,
+          "maxItems": 32,
+          "description": "RFC 0031 §B. Model capabilities this NodeModule requires the active model to advertise in `capabilities.modelCapabilities.advertised[]`. Distinct from `requires`, which gates on HOST capabilities (`capabilities.runtimeCapabilities[]`) — this field gates on MODEL capabilities. Spec-reserved identifiers: `structured-output`, `discriminator-enum`, `long-context`, `reasoning` (model-native thinking-tokens), `function-calling`. Host-private extensions MUST prefix with `x-host-<host>-` per `host-extensions.md` §\"Canonical-prefix table\". Empty array (or absent field) means no model-capability requirements. When the active model does not satisfy the declared set, the host MUST follow the dispatch flow in RFC 0031 §B: substitute to `fallbackModel` (emit `model.capability.substituted`) or refuse (emit `model.capability.insufficient` + terminate with `capability_not_provided`)."
+        },
+        "fallbackModel": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["provider", "model"],
+          "description": "RFC 0031 §B. Substitute model coordinates the host MAY use if the active model lacks the declared `requiredModelCapabilities`. When the host substitutes, it MUST emit `model.capability.substituted` per RFC 0031 §D. Absent means no substitution permitted; the host MUST refuse to dispatch with `capability_not_provided` when capabilities are unmet. The fallback is single-shot — if the fallback itself fails capability checks or authentication, the host emits `model.capability.insufficient` with `fallbackAttempted: true` and refuses (no recursive fallback chains per RFC 0031 §\"Unresolved questions\" #3).",
+          "properties": {
+            "provider": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]*$",
+              "description": "Provider id per `capabilities.aiProviders.supported` (e.g., `anthropic`, `openai`, `gemini`). MUST be in the host's `capabilities.aiProviders.supported[]` for the substitution to fire; otherwise the host emits `model.capability.insufficient` with `fallbackAttempted: true`."
+            },
+            "model": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Provider-stamped model id (e.g., `claude-opus-4-7`, `gpt-5`, `gemini-2.5-pro`)."
+            }
+          }
         }
       },
       "additionalProperties": false

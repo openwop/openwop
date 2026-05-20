@@ -7,11 +7,11 @@
 
 | Surface | Current value | Source |
 |---|---:|---|
-| Spec prose documents | 36 | `spec/v1/*.md` |
+| Spec prose documents | 37 | `spec/v1/*.md` |
 | JSON Schemas | 31 | `schemas/*.schema.json` |
 | OpenAPI operations | 25 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 166 | `conformance/src/scenarios/*.test.ts` |
+| Conformance scenario files | 186 | `conformance/src/scenarios/*.test.ts` |
 | RFCs tracked | 33 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## OpenAPI Operations
@@ -23,14 +23,15 @@
 | Status | Count |
 |---|---:|
 | Accepted | 25 |
-| Draft | 8 |
+| Active | 4 |
+| Draft | 4 |
 
 | Latest RFC | Title | Status |
 |---|---|---|
-| RFC 0033 | Envelope-completion criteria; distinguishing truncation from schema-violation in retry routing; truncation-retry cap | Draft |
-| RFC 0032 | Six envelope-reliability `RunEventType` entries; scope clarification of `ai-envelope.md` section"Run event log integration" line 448 MUST NOT | Draft |
-| RFC 0031 | Discriminated-union pattern for envelope variant payloads (normative); `NodeModule.requiredModelCapabilities` + `NodeModule.fallbackModel`; `model.capability.substituted` + `model.capability.insufficient` events | Draft |
-| RFC 0030 | Optional `reasoning` field on envelope payload schemas; informative Tier-1 cross-vendor structured-output compatibility subset | Draft |
+| RFC 0033 | Envelope-completion criteria; distinguishing truncation from schema-violation in retry routing; truncation-retry cap | Active |
+| RFC 0032 | Six envelope-reliability `RunEventType` entries; scope clarification of `ai-envelope.md` section"Run event log integration" line 448 MUST NOT | Active |
+| RFC 0031 | Discriminated-union pattern for envelope variant payloads (normative); `NodeModule.requiredModelCapabilities` + `NodeModule.fallbackModel`; `model.capability.substituted` + `model.capability.insufficient` events | Active |
+| RFC 0030 | Optional `reasoning` field on envelope payload schemas; informative Tier-1 cross-vendor structured-output compatibility subset | Active |
 | RFC 0029 | Prompt resolution chain across node / agent / workflow / host layers; `agent.promptResolved` observability event; `AgentManifest.promptOverrides` + `promptLibraryRef` extension | Draft |
 
 ## SDK Helper Coverage

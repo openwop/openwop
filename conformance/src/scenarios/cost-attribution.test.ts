@@ -41,9 +41,11 @@ const SKIP_NO_COST_EMIT = !isFixtureAdvertised(COST_EMIT_WORKFLOW_ID);
 
 /** Canonical attribute allowlist mirroring
  *  `spec/v1/observability.md §"Cost attribution attributes"`. Kept
- *  in-suite (not imported from the host) so the assertion is a
- *  cross-host wire contract rather than a sanity check on the sample's
- *  own constant. */
+ *  in-suite (not imported from the SDK) so the assertion is a
+ *  cross-host wire contract rather than a sanity check on the host's
+ *  own constant. Hosts SHOULD use `sanitizeCostAttributes` from
+ *  `@openwop/openwop` at emit time; the suite asserts against the
+ *  wire-side projection independently. */
 const OPENWOP_COST_ATTRIBUTE_NAMES: readonly string[] = [
   'openwop.cost.tokens.input',
   'openwop.cost.tokens.output',

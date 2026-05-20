@@ -103,6 +103,16 @@ export type {
   RunError,
 } from './run-helpers.js';
 
+// Cost-attribution allowlist + sanitizer helpers
+// (`spec/v1/observability.md §"Cost attribution attributes"`). Single
+// source of truth for the canonical attribute names so independent
+// hosts share one list instead of each re-deriving it.
+export {
+  OPENWOP_COST_ATTRIBUTE_NAMES,
+  sanitizeCostAttributes,
+} from './cost-attribution.js';
+export type { OpenwopCostAttributeName } from './cost-attribution.js';
+
 // Webhook-delivery verification helpers (SDK-3 close-out 2026-05-15).
 // HMAC-SHA256 + timestamp freshness window verification per
 // spec/v1/webhooks.md §"Signature recipe". Receivers MUST verify both

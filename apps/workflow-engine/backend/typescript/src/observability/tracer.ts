@@ -38,9 +38,16 @@ export function createTracer(init: TracerInit): Tracer {
   // OTLP HTTP exporter — wired when OTEL_EXPORTER_OTLP_ENDPOINT is set.
   // Used by the conformance suite's in-suite OTel collector
   // (`OPENWOP_OTEL_COLLECTOR=true`) and by production deployers
-  // forwarding to their own collector. SimpleSpanProcessor (not Batch)
-  // so the conformance suite sees spans without flush latency; real
-  // deployers should swap to `BatchSpanProcessor` for throughput.
+  // forwarding to their own collector.
+  //
+  // !!! Production deployers MUST swap `SimpleSpanProcessor` for
+  // `BatchSpanProcessor` !!! Simple flushes synchronously per span; a
+  // 10ms collector roundtrip × hundreds of node spans per run will
+  // dominate request-tail latency. We pick `Simple` here so the
+  // conformance suite sees spans without flush-batch delay in 1-2 span
+  // fixtures — that posture does NOT scale to real workflows.
+  // (`@opentelemetry/sdk-trace-node` exports `BatchSpanProcessor`;
+  // swap by replacing the wrapper class — same exporter underneath.)
   if (process.env.OTEL_EXPORTER_OTLP_ENDPOINT) {
     provider.addSpanProcessor(new SimpleSpanProcessor(new OTLPTraceExporter()));
   }

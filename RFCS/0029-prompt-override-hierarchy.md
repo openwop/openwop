@@ -239,6 +239,8 @@ Add the new event type to the enum and define the payload:
 - `chain[].source` SHOULD replay identically; if a host has rotated host-built-in defaults between original and replay, the `host-defaults` entry's `source` MAY differ — replay tooling MUST tolerate this and surface the rotation explicitly rather than treating it as an integrity failure.
 - `chain[].applied` MUST replay identically when `resolved` matches.
 
+The `replayDiverged.divergencePoint` field this section references is the new optional string field added to the `replayDiverged` `$def` by RFC 0027 §F. The value is verbatim the `RunEventType` enum string for the event whose payload diverged. This RFC does NOT redefine the field; it consumes it. The schema diff lands once in RFC 0027 (and is cited by RFCs 0029 and 0032).
+
 Capability gating: emission is conditional on `capabilities.prompts.supported: true`. Hosts that advertise `prompts.observability: "off"` MUST still emit `agent.promptResolved` (the event carries refs, not bodies — no secret-leakage concern) unless they also advertise a new fine-grained flag (see §"Unresolved questions" #2).
 
 ### §D — Authoring + tooling integration
@@ -361,7 +363,7 @@ Promotion from `Active` → `Accepted`:
 - `RFCS/0002-agent-identity-and-reasoning-events.md` — AgentRef + `agent.*` event family precedent for `agent.promptResolved`.
 - `RFCS/0024-agent-reasoning-streaming.md` — `agent.reasoned` + `agent.reasoning.delta` model for adding new optional `agent.*` events as additive surface.
 - `RFCS/0026-provider-usage-event.md` — durable per-invocation event precedent; replay-determinism posture.
-- `spec/v1/replay.md` — replay invariants this RFC extends with one new `divergencePoint`.
+- `spec/v1/replay.md` — replay invariants this RFC consumes. The `replayDiverged.divergencePoint` field referenced in §C is added by RFC 0027 §F; this RFC adds one new reserved value for that field (`"agent.promptResolved"`).
 - `spec/v1/workflow-definition.md` — schema this RFC extends with `defaults`.
 - External: MyndHyve `WorkflowPromptService.resolveForExecution()` reference impl at `src/core/workflow/services/WorkflowPromptService.ts` — closest single-host prior-art for four-layer resolution; this RFC ports its semantics into protocol-level normative text.
 - `RFCS/0031-envelope-variants-and-model-capabilities.md` (forthcoming, parallel track) — `NodeModule.requiredModelCapabilities` + `NodeModule.fallbackModel` + `model.capability.{substituted,insufficient}` events. Orthogonal axis to this RFC's prompt-resolution chain; see §F above.

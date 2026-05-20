@@ -214,6 +214,80 @@ The `error` envelope is the **LLM's** error report (the model said "I couldn't d
 
 ---
 
+## Reasoning field (normative)
+
+> Added by RFC 0030 (`Active` 2026-05-20). Closes the empirical reasoning-collapse finding from Tam et al., *"Let Me Speak Freely?"* (arXiv 2408.02442): when models are forced into strict-JSON output WITHOUT a free reasoning field, reasoning quality collapses materially across multi-step tasks. The mitigation is to give the model an in-schema reasoning slot.
+
+Every envelope payload schema defined by this specification SHALL support an OPTIONAL `reasoning` field of type `string`. The field SHOULD appear as the first property in `propertyOrdering` when the underlying schema dialect supports ordering hints (e.g., Gemini's `responseSchema`).
+
+When emitting an envelope whose payload schema permits `reasoning`, a host SHOULD include a model instruction directing the model to populate `reasoning` with its analytical process before emitting the structured fields. Hosts MUST NOT reject envelopes where `reasoning` is absent — the field is OPTIONAL.
+
+Hosts MAY surface `reasoning` contents to end users via debug panels, audit logs, or run telemetry; hosts MAY persist `reasoning` alongside the canonical envelope payload. Hosts SHALL NOT route on `reasoning` contents — the field is informational, not control-flow-bearing.
+
+The reasoning field is subject to the same SR-1 redaction harness as other envelope payload fields per §"Redaction (SR-1 carry-forward)". A known `secret:`-prefixed substring present in input MUST NOT appear verbatim in the emitted envelope's `reasoning`, in derived `RunEventDoc`s, in OTel span attributes, or in the debug-bundle export. The corresponding invariant is `envelope-reasoning-secret-redaction` (gate timing: lands alongside the reference-host implementation, matching the RFC 0021 staging precedent).
+
+### Universal-kind payload schemas
+
+The published universal-kind payload schemas under `schemas/envelopes/` are extended as follows:
+
+| Schema | `reasoning` posture |
+|---|---|
+| `clarification.request.schema.json` | OPTIONAL property — useful when the model wants to explain why it's asking |
+| `schema.request.schema.json` | OPTIONAL property — useful when the model is asking the host to verify a kind it's uncertain about |
+| `schema.response.schema.json` | NOT present — side-channel ack; no reasoning needed |
+| `error.schema.json` | OPTIONAL property — useful when the model is explaining why it could not produce the requested envelope |
+
+The field is NOT in `required` on these schemas — absence of `reasoning` is a valid envelope shape (preserves v1.1 backward compatibility for emitters that pre-date RFC 0030).
+
+### Vendor-namespaced reasoning kinds (recommendation)
+
+For vendor-namespaced kinds (`vendor.<host>.<kind>`), the RFC 0030 §A normative SHALL applies: a vendor-kind payload schema that requires multi-step reasoning to populate SHOULD include `reasoning` as an OPTIONAL first property. Examples where reasoning materially improves output quality: PRD generation, plan generation, design-system synthesis, persona derivation, brand competitive analysis, component-library composition, feature-dependency breakdown.
+
+Vendor kinds that are low-reasoning signal/data envelopes (`screen.emit`, `status.progress`, `chunk.emit`) MAY omit `reasoning`.
+
+### Strict-mode optional-field emulation (informative)
+
+OpenAI strict mode requires every property to appear in `required`. Vendor-kind authors who want OpenAI strict mode portability for their payload schemas (without breaking backward compat) MAY express the optionality via the union-with-null pattern documented in `spec/v1/structured-output-subset.md` §"Strict-mode optional-field emulation":
+
+```jsonschema
+{
+  "properties": {
+    "reasoning": { "type": ["string", "null"] }
+  },
+  "required": ["reasoning"]
+}
+```
+
+Hosts MUST treat `null` and absence equivalently when reading payloads. The universal-kind schemas in this spec do NOT use this pattern — they take the simpler "OPTIONAL property" approach (omit from `required`) — because OpenAI-strict portability is a vendor-kind authoring concern, not a universal-kind contract.
+
+### Capability handshake (reasoning)
+
+Hosts that opt into the convention advertise:
+
+```json
+{
+  "envelopes": {
+    "reasoning": {
+      "supported": true,
+      "promptDirective": "advisory"
+    }
+  }
+}
+```
+
+See `capabilities.schema.json` for the full field set. `promptDirective: "mandatory"` is a prompt-injection posture (the host instructs the model firmly), NOT a wire-level refusal contract — hosts MUST NOT reject envelopes where `reasoning` is absent regardless of the advertised directive strength.
+
+### Relationship to other reasoning surfaces
+
+The `reasoning` field on envelope payloads is **complementary** to two adjacent surfaces, not redundant with them:
+
+- `prompt.composed.systemPrompt|userPrompt` (RFC 0027) — host-composed prompt body BEFORE dispatch.
+- `agent.reasoning.delta` / `agent.reasoned` (RFC 0024) — model's thinking-tokens stream (Anthropic extended thinking, Gemini `thinkingBudget`, OpenAI o-series reasoning).
+
+A debugger should render all three when present. The `reasoning` field captures **what the model emitted as part of structured output**; the other two capture **what the host sent** and **the model's interleaved reasoning trace** respectively.
+
+---
+
 ## Vendor-namespaced kinds
 
 All non-universal kinds MUST be vendor-namespaced per `host-extensions.md` §"Canonical-prefix table." Core v1 does **not** specify domain-specific kinds (`prd.create`, `theme.create`, `tasks.create`, etc.). A host that wishes to advertise these kinds MUST namespace them — e.g., `vendor.myndhyve.prd.create`, `vendor.myndhyve.theme.create` — and supply the per-kind JSON Schema at the canonical schema location (see §Schema discipline).
@@ -269,6 +343,66 @@ When the LLM emits an envelope with `schemaVersion` lower than the advertised fl
 | All checks pass | Outcome `accepted`; engine emits `RunEventDoc`(s) per §Production flow. |
 
 The per-kind schema check is **warning-only** when `Capabilities.schemaVersions` does not list the kind. Hosts that want strict-only behavior advertise `envelopeStrictness: 'strict'` on the capability surface (see §Capability handshake integration).
+
+---
+
+## Variant payload discrimination (normative)
+
+> Added by RFC 0031 (`Active` 2026-05-20). Codifies the de-facto `anyOf` + single-string-enum discriminator pattern as normative for variant envelope payloads. Prevents future schema authors from accidentally using `oneOf` (cross-vendor incompatible — Gemini silently drops the keyword per `structured-output-subset.md`).
+
+When an envelope payload schema accepts variant shapes (a sum type), the schema SHALL express the variants as an `anyOf` composition where every branch:
+
+1. Includes a discriminator property of type `string` with `enum` containing **exactly one value** (the discriminator literal for that branch).
+2. Includes the discriminator property in `required`.
+3. Independently satisfies the Tier-1 Compatibility Subset (per `spec/v1/structured-output-subset.md` — RFC 0030 §B).
+
+Hosts MUST be able to identify the active variant by single-field equality check on the discriminator. Hosts MUST NOT depend on field-presence inference or value-shape heuristics for variant discrimination — those approaches silently misroute when a vendor (notably Gemini) drops or ignores an unsupported keyword.
+
+Discriminator field names are conventionally `kind`, `variant`, or `type`. Specs MAY use other names but MUST document the chosen name in each envelope-type definition.
+
+**Schema authors MUST NOT use `oneOf` for variant payloads.** `oneOf` is unsupported across all three Tier-1 strict-output vendors (OpenAI strict rejects; Anthropic strict rejects; Gemini silently drops — producing a looser-than-declared schema, a silent correctness bug). Use `anyOf` with a single-string-enum discriminator instead.
+
+### Example (illustrative)
+
+A hypothetical `vendor.acme.tasks.create` envelope with variant task shapes:
+
+```jsonschema
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["steps"],
+  "properties": {
+    "reasoning": { "type": ["string", "null"] },
+    "steps": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          { "$ref": "#/$defs/DesignTask" },
+          { "$ref": "#/$defs/PlanningTask" },
+          { "$ref": "#/$defs/ActionTask" }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "DesignTask": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "title"],
+      "properties": {
+        "kind":  { "type": "string", "enum": ["design"] },
+        "title": { "type": "string" }
+      }
+    },
+    "PlanningTask": { "...": "..." },
+    "ActionTask":   { "...": "..." }
+  }
+}
+```
+
+### Backward compatibility
+
+The four universal-kind payload schemas (`clarification.request`, `schema.request`, `schema.response`, `error`) do not have variants today and remain conformant. Vendor-namespaced kinds that already use `anyOf` + single-string-enum discriminators (the MyndHyve `vendor.myndhyve.*` family) remain conformant. Vendor-namespaced kinds (if any exist) that use `oneOf` or field-presence-based discrimination remain conformant for v1.x — this RFC normates the pattern forward-looking only. A future RFC MAY tighten the requirement to existing schemas.
 
 ---
 
@@ -360,6 +494,80 @@ The handler-registry layer is not normative — hosts MAY implement it as a swit
 
 ---
 
+## Envelope-completion criteria
+
+> Added by RFC 0033 (`Active` 2026-05-20). Closes spec gap E5 — refusal-mode interaction with retry policies — by normating the **truncation-vs-schema-violation retry-routing distinction** that hosts must honor when emitting structured envelopes via LLM calls.
+
+A host SHALL treat an envelope as **complete** only when BOTH of the following hold:
+
+1. The underlying LLM call reached a **clean stop** condition (`stop_reason: "stop"` per OpenAI, `stop_reason: "end_turn"` per Anthropic, `finish_reason: "STOP"` per Gemini, or vendor equivalent indicating model self-determined completion).
+2. The emitted payload **parses as JSON** and **validates against the envelope's per-kind payload schema** (per §"Schema discipline"), after applying the host's normalization pass (if any).
+
+If condition 1 fails (truncation), the host SHALL emit `envelope.truncated` (RFC 0032 §B.4) and MAY retry per the **truncation retry path** below. Hosts MUST NOT apply schema-correction system fragments to truncation failures — truncation is an output-size problem, not a schema problem.
+
+If condition 2 fails (schema violation, truncation-clean stop but invalid payload), the host MAY retry per the **schema-violation retry path** below with a corrective system fragment.
+
+Hosts SHALL distinguish truncation from schema violation in their retry routing AND in emitted telemetry. Conflating the two paths in the event stream (e.g., emitting `envelope.retry.attempted { reason: "schema-violation" }` when the actual failure was truncation) is non-conformant. Hosts that don't distinguish at all are non-conformant under `capabilities.envelopes.reliability.completion.distinguishesTruncation: true`; they MAY omit the advertisement and remain conformant against the rest of v1.x.
+
+If conditions 1 and 2 both fail in the same response (e.g., the response is truncated AND the partial payload doesn't even satisfy syntactic-JSON — common when truncation occurs mid-string), the host SHALL treat the failure as **truncation** for routing purposes, since the underlying cause is output budget. Emit `envelope.truncated`, NOT `envelope.retry.attempted { reason: "schema-violation" }`. This priority matches the principle that the retry strategy should address the upstream cause.
+
+### Truncation retry path (normative)
+
+A host MAY retry an emission whose `envelope.truncated` fires by re-issuing the LLM call with an **increased output budget**. The new budget SHOULD be greater than the previous budget; a 2× multiplier is RECOMMENDED but not normative — hosts advertise their multiplier via `capabilities.envelopes.reliability.completion.truncationBudgetMultiplier` (default 2; range 1..8).
+
+Truncation retries SHALL NOT include any corrective system fragment that describes a schema problem — the previous attempt's payload shape (as far as it was emitted before truncation) was correct; the only failure mode is incomplete output.
+
+Truncation retries count against `Capabilities.limits.schemaRounds` (the existing per-emission retry budget). When the retry budget is exhausted while the failure mode remains truncation, the host SHALL:
+
+- Emit `envelope.retry.exhausted` with `finalReason: "truncation"` (RFC 0032 §B.2).
+- Emit `cap.breached` with `kind: "schema"` (existing per-emission breach signal).
+- Fail the node with `error.code: "envelope_truncation_unrecoverable"` (NEW code, see `spec/v1/rest-endpoints.md` §"Common error codes").
+
+Each truncation retry past the first MUST emit `envelope.retry.attempted { reason: "truncation" }` (RFC 0032 §B.1).
+
+### Schema-violation retry path (normative)
+
+A host MAY retry an emission whose payload-validation step fails by re-issuing the LLM call with a **corrective system fragment** describing the validation error. The fragment SHOULD reproduce the validator's failure description (e.g., "required field 'steps' missing") but MUST NOT contain prompt-injection content extracted from the model's previous output — the corrective fragment is host-authored from validator output, not from model-emitted text.
+
+Reasonable corrective-fragment shape (host-implementation-defined):
+
+> "Your previous emission did not validate against the required envelope schema. Validator output: `<validator-summary>`. Please re-emit your structured response with the correction applied."
+
+Schema-violation retries SHALL NOT include an increased output budget — schema violations don't fail for size reasons; doubling the budget on a tractable shape problem is wasted tokens.
+
+Schema-violation retries count against `Capabilities.limits.schemaRounds`. When exhausted, the host SHALL emit `envelope.retry.exhausted` with `finalReason: "schema-violation"` + `cap.breached { kind: "schema" }`. The node fails with `error.code: "envelope_payload_invalid"` (existing code per §"Validation outcomes").
+
+Each retry past the first MUST emit `envelope.retry.attempted { reason: "schema-violation" }` (RFC 0032 §B.1).
+
+### Refusal path (normative)
+
+The provider returned an explicit refusal (safety stop, content policy block). Per RFC 0032 §B.3 + this RFC §D: **the host MUST NOT retry on refusal.** No retry attempt; no `envelope.retry.attempted` event; the node fails with `error.code: "envelope_refused_by_provider"` (NEW code, see §"Common error codes"). Retrying refusal with prompt mutation creates a circumvention concern (the host automatically searches for a prompt the model will accept, evading the safety filter's intent).
+
+### Recovery path (normative)
+
+Lenient parsing recovered a malformed envelope (e.g., markdown-fence stripping). Recovery is **internal to the parsing step**, before validation; recovery does NOT consume a retry attempt and does NOT emit `envelope.retry.attempted`. The downstream validation either succeeds (envelope is accepted normally) or fails (proceeds to the schema-violation retry path above). The `envelope.recovery.applied` event (RFC 0032 §B.6) fires once per recovery, carrying only the path identifier + optional byte offset (never pre-recovery substrings — see SECURITY invariant `envelope-recovery-no-content-leak`).
+
+### Capability advertisement
+
+Hosts that distinguish truncation from schema-violation advertise:
+
+```json
+{
+  "envelopes": {
+    "reliability": {
+      "completion": {
+        "distinguishesTruncation": true,
+        "truncationBudgetMultiplier": 2
+      }
+    }
+  }
+}
+```
+
+See `capabilities.schema.json` `envelopes.reliability.completion` for the full field set. Hosts that don't advertise retain their legacy retry-routing behavior; conformance scenarios for the distinction soft-skip.
+
+---
+
 ## Replay determinism
 
 An OpenWOP-compliant engine MUST treat `correlationId` as the deterministic key for envelope dedup and replay. Specifically:
@@ -445,7 +653,40 @@ The specific `RunEventDoc.type` emitted depends on the envelope kind. The recomm
 | `schema.response` | `log.appended` (level `debug`) |
 | `error` | `log.appended` (level `error`); SHOULD NOT emit `node.failed` (the LLM said the failure was deliberate) |
 
-For vendor-namespaced kinds (e.g., `vendor.myndhyve.prd.create`), the host's handler chooses the appropriate `RunEventDoc.type` from the existing 48-variant enum. Hosts MUST NOT extend the `RunEventType` enum to add envelope-specific events; the envelope's identity rides on `causationId`, not on a parallel event-type surface.
+For vendor-namespaced kinds (e.g., `vendor.myndhyve.prd.create`), the host's handler chooses the appropriate `RunEventDoc.type` from the existing `RunEventType` enum. Hosts MUST NOT extend the `RunEventType` enum to add **per-envelope-kind routing events** — i.e., one event mirroring each envelope kind, which would create a parallel routing surface (the envelope's identity rides on `causationId`, not on a parallel event-type surface, so per-kind events are unnecessary). Hosts MAY emit **cross-kind operational events** that fire across many envelope kinds for shared operational concerns (retry, refusal, truncation, capability substitution, prompt composition, provider usage); these MAY extend `RunEventType` via the RFC process. Events introduced under this clarification: RFC 0026 (`provider.usage`), RFC 0027 (`prompt.composed`), RFC 0029 (`agent.promptResolved`), RFC 0031 (`model.capability.{substituted,insufficient}`), RFC 0032 (six envelope-reliability events — `envelope.retry.{attempted,exhausted}`, `envelope.refusal`, `envelope.truncated`, `envelope.nlToFormat.engaged`, `envelope.recovery.applied`).
+
+> **Scope clarification by RFC 0032 (§A).** The MUST NOT above preserves its original intent — per-envelope-kind events remain forbidden. RFC 0032 narrows the literal reading of "envelope-specific events" to match the original intent: per-kind events are forbidden; cross-kind operational events are permitted. Classified as `additive` per `COMPATIBILITY.md §4` (scope clarification of a previously-undefined behavior, not a MUST relaxation). The cross-kind operational allowance was always implicit in existing precedent (RFCs 0026, 0027 shipped under the same interpretation); RFC 0032 makes the precedent explicit.
+
+---
+
+## Envelope-reliability events
+
+> Added by RFC 0032 (`Active` 2026-05-20). Six new cross-kind operational `RunEventType` entries that standardize the protocol vocabulary for envelope-emission reliability behavior — retry attempts, retry exhaustion, refusals, truncations, NL-to-Format fallback engagement, and lenient-parsing recovery. Conformance suites use this vocabulary to assert correct host behavior on adverse paths; observability tools dashboard against it.
+
+| Event | Tier | When emitted | Schema |
+|---|---|---|---|
+| `envelope.retry.attempted` | SHOULD | Host retries an envelope emission after a parse/validation failure (emitted before each retry past the first) | `run-event-payloads.schema.json` §`envelopeRetryAttempted` |
+| `envelope.retry.exhausted` | **MUST** | Host has exhausted its retry budget and is about to surface a terminal envelope failure | `envelopeRetryExhausted` |
+| `envelope.refusal` | **MUST** | Provider returned an explicit refusal (OpenAI `message.refusal`, Anthropic safety-stop, Gemini safety-block). Host MUST NOT retry. | `envelopeRefusal` |
+| `envelope.truncated` | SHOULD | LLM emission was cut off mid-envelope (`stop_reason: "max_tokens"` or equivalent) | `envelopeTruncated` |
+| `envelope.nlToFormat.engaged` | MAY | Host escalated to two-call NL-to-Format fallback after retry exhaustion (Tam et al. mitigation pattern) | `envelopeNlToFormatEngaged` |
+| `envelope.recovery.applied` | MAY | Lenient parsing recovered a malformed envelope (JSON repair, markdown fence stripping, brace walker) | `envelopeRecoveryApplied` |
+
+Hosts opt into the family via `capabilities.envelopes.reliability.supported: true` with an explicit `events[]` listing which events the host actually emits. Hosts that advertise `supported: true` MUST include `envelope.retry.exhausted` and `envelope.refusal` in `events[]` (the two MUST tier events); the other four are optional per the SHOULD/MAY tiering.
+
+The `reason` enum on `envelope.retry.attempted` (and the parallel `finalReason` on `envelope.retry.exhausted`) is `anyOf [closed enum, x-host-* pattern]` — closed values are `schema-violation`, `truncation`, `type-drift`, `type-mismatch`, `refusal`, `parse-error`, `unknown`; host-private extensions prefix with `x-host-<host>-` per `host-extensions.md` §"Canonical-prefix table" (matches the RFC 0031 §B `requiredModelCapabilities` precedent).
+
+### Trust boundary + redaction (carry-forward)
+
+Event payloads that carry diagnostic strings (`previousError`, `finalError`, `refusalText`) MUST be passed through the same SR-1 redaction harness applied to envelope payloads per §"Redaction (SR-1 carry-forward)". The `envelope.refusal.refusalText` field is particularly load-bearing: provider safety-refusal messages can echo back the offending prompt content. Hosts MUST redact `refusalText` against the BYOK secret set AND apply prompt-content redaction if the host's policy is to not leak the offending prompt material. SECURITY invariants `envelope-refusal-no-prompt-leak` and `envelope-recovery-no-content-leak` (gate timing: lands with reference-host implementation, per RFC 0027 §G staging precedent) enforce this.
+
+### Replay determinism
+
+All six events are durable and participate in replay per `spec/v1/replay.md`. `envelope.retry.exhausted.totalAttempts` MUST replay identically. `envelope.truncated.outputTokenCount` MUST replay identically. `envelope.recovery.applied.path` MUST replay identically. `envelope.refusal.refusalText` MAY replay differently if the host's redaction policy changed between runs — replay consumers MUST tolerate `refusalText: null` even when the original was non-null. Divergence MUST emit `replay.diverged` with `divergencePoint` set verbatim to the diverging event's `RunEventType` string per RFC 0027 §F.
+
+### OTel projection (RECOMMENDED)
+
+Hosts SHOULD project the events into the existing OTel attribute group per `observability.md` §"Envelope-reliability events" (which documents the `openwop.envelope.{retry,refusal,truncated,nl_to_format,recovery}.*` attribute mapping). The event log is the load-bearing surface (for replay determinism + subscribers); OTel is supplementary. `envelope.refusal.refusalText` is omitted from the OTel projection by default — operators who want refusal text in dashboards plumb it through their own pipeline where they own the redaction policy.
 
 ---
 

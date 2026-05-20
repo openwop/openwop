@@ -8,7 +8,7 @@
 | **Author(s)** | OpenWOP Working Group |
 | **Created** | 2026-05-19 |
 | **Updated** | 2026-05-19 |
-| **Affects** | `spec/v1/prompts.md` (NEW) · `schemas/prompt-template.schema.json` (NEW) · `schemas/prompt-ref.schema.json` (NEW) · `schemas/prompt-kind.schema.json` (NEW — shared enum $def) · `schemas/capabilities.schema.json` (additive `prompts` block) · `schemas/run-event.schema.json` (new `prompt.composed` enum entry) · `schemas/run-event-payloads.schema.json` (new `promptComposed` `$def`) · `spec/v1/workflow-definition.md` (note `WorkflowNode.config.promptRef` convention) · `SECURITY/invariants.yaml` (new `prompt-composed-secret-redaction`, `prompt-composed-trust-marker`) · 3 new conformance scenarios · CHANGELOG |
+| **Affects** | `spec/v1/prompts.md` (NEW) · `schemas/prompt-template.schema.json` (NEW) · `schemas/prompt-ref.schema.json` (NEW) · `schemas/prompt-kind.schema.json` (NEW — shared enum $def) · `schemas/capabilities.schema.json` (additive `prompts` block) · `schemas/run-event.schema.json` (new `prompt.composed` enum entry) · `schemas/run-event-payloads.schema.json` (new `promptComposed` `$def` + additive `divergencePoint` field on the existing `replayDiverged` `$def` per §F — the shared field is consumed by RFCs 0029 and 0032 as well) · `spec/v1/workflow-definition.md` (note `WorkflowNode.config.promptRef` convention) · `SECURITY/invariants.yaml` (new `prompt-composed-secret-redaction`, `prompt-composed-trust-marker`) · 3 new conformance scenarios · CHANGELOG |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
 
@@ -326,6 +326,32 @@ Trust-boundary propagation mirrors RFC 0021 §E: when any contributing input arr
 - `refs` MUST replay identically.
 
 Divergence of `hash` MUST emit a `replay.diverged` event per existing replay.md semantics with `divergencePoint: "prompt.composed"`.
+
+#### `replayDiverged` schema extension (additive, shared across RFCs 0027 / 0029 / 0032)
+
+The existing `replayDiverged` `$def` in `schemas/run-event-payloads.schema.json` (line ~548) carries `divergenceKind: "output" | "missing" | "extra" | "type-mismatch"` describing the *shape* of the divergence. This RFC adds an optional `divergencePoint: string` field describing *which event type* the divergence was detected on. The two fields are complementary:
+
+```diff
+   "replayDiverged": {
+     "type": "object",
+     "description": "Emitted by `:fork` when a replay re-execution produces a different output than the original at a given sequence. See replay.md §divergence detection.",
+     "required": ["sourceRunId", "atSequence"],
+     "properties": {
+       "sourceRunId":     { "type": "string", "minLength": 1 },
+       "atSequence":      { "type": "integer", "minimum": 0 },
+       "originalEventId": { "type": "string" },
+-      "divergenceKind":  { "type": "string", "enum": ["output", "missing", "extra", "type-mismatch"] }
++      "divergenceKind":  { "type": "string", "enum": ["output", "missing", "extra", "type-mismatch"] },
++      "divergencePoint": {
++        "type": "string",
++        "description": "Verbatim `RunEventType` enum string identifying which event-emission the replay diverged at (e.g., `\"prompt.composed\"`, `\"agent.promptResolved\"`, `\"envelope.retry.exhausted\"`, `\"envelope.recovery.applied\"`). Set when divergence is detected on a specific cross-kind operational event's payload. When divergence is purely structural (output/missing/extra at the event-array level rather than within a typed payload), `divergenceKind` carries the shape and `divergencePoint` MAY be omitted. The two fields are complementary, not mutually exclusive: a single `replay.diverged` event MAY carry both (e.g., `{ divergenceKind: \"output\", divergencePoint: \"prompt.composed\" }` reads as \"the `prompt.composed` event at sequence N had a different output on replay than the original\")."
++      }
+     },
+     "additionalProperties": true
+   }
+```
+
+The schema diff lands once in this RFC; RFCs 0029 §C and 0032 §D reference this section rather than redefining the field. Compatibility: additive — existing replay consumers that read `divergenceKind` alone continue to work; consumers that want to filter by event type can opt into reading `divergencePoint`. The existing `additionalProperties: true` on `replayDiverged` already accepts arbitrary fields, so emitters MAY have been carrying `divergencePoint`-shaped data without breakage — this RFC normates the field name and value convention.
 
 ### §G — Security invariants
 

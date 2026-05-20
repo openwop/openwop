@@ -331,6 +331,35 @@ The host's `SecretResolver.resolveSecret(ctx)` returns an opaque `ResolvedSecret
 
 ---
 
+### Model-capability declarations on NodeModules
+
+> Added by RFC 0031 (`Active` 2026-05-20). Parallel surface to `requiresSecrets[]` — declares MODEL capability requirements for envelope-emitting NodeModules. The host's dispatch contract is normated in `host-capabilities.md` §"Model-capability declarations"; this section documents the per-pack authoring surface.
+
+A NodeModule whose execution involves emitting a structured envelope via an LLM call MAY declare two optional fields:
+
+```jsonc
+{
+  "typeId": "core.ai.callPrompt",
+  "version": "1.0.0",
+  "category": "ai",
+  "role": "callable",
+  "requires": ["chat.sendPrompt"],
+  "requiresSecrets": [ /* ... */ ],
+  "requiredModelCapabilities": ["structured-output", "discriminator-enum"],
+  "fallbackModel": { "provider": "anthropic", "model": "claude-opus-4-7" }
+}
+```
+
+**`requiredModelCapabilities: string[]`** — capability identifiers the active model MUST advertise in `capabilities.modelCapabilities.advertised[]` for the node to dispatch. Spec-reserved: `structured-output`, `discriminator-enum`, `long-context`, `reasoning` (model-native thinking-tokens), `function-calling`. Host-private extensions: `x-host-<host>-<key>`. Empty array (or absent field) means no model-capability requirements.
+
+**`fallbackModel: { provider, model }`** — substitute model coordinates the host MAY use if the active model lacks the declared capabilities. `provider` MUST be in `capabilities.aiProviders.supported[]` for substitution to fire. When absent, the host refuses to dispatch on any unmet capability (no fallback attempt). When the fallback ITSELF fails capability checks, recursive substitution is NOT permitted — the host emits `model.capability.insufficient` with `fallbackAttempted: true` and refuses (RFC 0031 §"Unresolved questions" #3).
+
+**Conformance.** A NodeModule that declares `requiredModelCapabilities` but is loaded by a host that does NOT advertise `capabilities.modelCapabilities.supported: true` is treated as opaque metadata — the host dispatches normally without checking. Hosts that advertise `supported: true` MUST honor the dispatch flow normated in `host-capabilities.md` §"Model-capability declarations" + §"Dispatch flow (normative)" + emit the appropriate `model.capability.*` events per `run-event-payloads.schema.json` §`modelCapabilitySubstituted` / §`modelCapabilityInsufficient`.
+
+**Engine semantics.** Before dispatching a node with `requiredModelCapabilities`, the engine MUST follow the four-step dispatch flow in `host-capabilities.md` §"Model-capability declarations." Failures terminate the run with `error.code = capability_not_provided` (existing error code; reused for model-capability gating per RFC 0031 §F).
+
+---
+
 ## Runtime formats
 
 The `runtime.language` field declares how the engine loads the pack:

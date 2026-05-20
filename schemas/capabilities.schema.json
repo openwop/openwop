@@ -66,6 +66,87 @@
       },
       "additionalProperties": false
     },
+    "envelopes": {
+      "type": "object",
+      "description": "Envelope LLM-contract advertisement container introduced by the RFC 0030–0033 envelope-hardening track. Each sub-block is independently opt-in; hosts that adopt a subset advertise only the sub-blocks they implement. `additionalProperties: true` reserved for future RFCs that extend the track; host-private extensions go under `x-host-<host>-<key>` per `host-extensions.md` §\"Canonical-prefix table\".",
+      "additionalProperties": true,
+      "properties": {
+        "reasoning": {
+          "type": "object",
+          "description": "RFC 0030 §A + §C. Host's envelope payload schemas support the OPTIONAL `reasoning` field on kinds where multi-step reasoning materially improves output quality; the host's system-prompt-injection helper instructs the model to populate it. Absent block = no advertisement (the field MAY still appear on envelope schemas; this advertisement signals the host's prompt-injection posture).",
+          "additionalProperties": false,
+          "required": ["supported"],
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "Host's envelope payload schemas carry `reasoning` (OPTIONAL) on kinds where reasoning materially improves output quality, per RFC 0030 §A. Hosts SHOULD prompt the model to populate the field; hosts MUST NOT reject envelopes where `reasoning` is absent (the field is OPTIONAL by spec); hosts SHALL NOT route on `reasoning` contents."
+            },
+            "promptDirective": {
+              "type": "string",
+              "enum": ["mandatory", "advisory", "off"],
+              "description": "Strength of the host's system-prompt instruction to populate `reasoning`. `mandatory`: the directive is firmly worded (the host instructs the model very forcefully to emit `reasoning`). `advisory` (default when absent): the directive is suggestive. `off`: the host emits no directive — applications that want `reasoning` populated must inject the instruction themselves. Note: `mandatory` is a prompt-injection posture, NOT a wire-level refusal contract — hosts MUST NOT reject envelopes where `reasoning` is absent regardless of this value."
+            }
+          }
+        },
+        "tierOneSubsetCompliance": {
+          "type": "string",
+          "enum": ["strict", "warn", "off"],
+          "description": "RFC 0030 §B + §C. Host's self-attested compliance posture for the Tier-1 cross-vendor structured-output subset documented in `spec/v1/structured-output-subset.md`. `strict`: every host-served envelope schema passes the static subset-compliance check (object-root, `additionalProperties: false` everywhere, every property in `required`, no `oneOf`/`allOf`/`not`/`prefixItems`/`propertyNames`, no string format/pattern/length constraints, no number bounds, no array bounds, ≤5 nesting depth, ≤100 property count). `warn`: host serves non-compliant schemas but logs the violations. `off` (default when absent): no self-attestation. The conformance-suite static-subset scenario gates on this flag."
+        },
+        "reliability": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["supported"],
+          "description": "RFC 0032 §C. Host emits the envelope-reliability event family on documented adverse paths. Hosts opt into the family via `supported: true` AND explicitly list the events they emit via `events[]`. Hosts that advertise `supported: true` MUST include at least `envelope.retry.exhausted` and `envelope.refusal` in `events[]` (the two MUST-tier events). The other four (`envelope.retry.attempted`, `envelope.truncated`, `envelope.nlToFormat.engaged`, `envelope.recovery.applied`) are SHOULD/MAY-tier per RFC 0032 §B and may be omitted.",
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "Host emits the RFC 0032 envelope-reliability event family on the documented adverse paths. When `false` or absent, conformance scenarios for the family soft-skip."
+            },
+            "events": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "envelope.retry.attempted",
+                  "envelope.retry.exhausted",
+                  "envelope.refusal",
+                  "envelope.truncated",
+                  "envelope.nlToFormat.engaged",
+                  "envelope.recovery.applied"
+                ]
+              },
+              "uniqueItems": true,
+              "description": "Subset of the six reliability events the host actually emits. Hosts that advertise `supported: true` MUST include `envelope.retry.exhausted` and `envelope.refusal`. Conformance scenarios soft-skip for events absent from this list (the event-emission assertion is skipped; other host behavior assertions remain in force)."
+            },
+            "maxRetryAttempts": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 16,
+              "description": "Host's retry budget per envelope emission. Conformance scenarios use this to construct fixtures that exercise the retry-exhausted path. Independent of `capabilities.limits.schemaRounds` (which is the engine-side per-emission cap) — `maxRetryAttempts` reports the host's actual configured value, not the spec's upper bound."
+            },
+            "completion": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["distinguishesTruncation"],
+              "description": "RFC 0033 §E. Host's self-attested envelope-completion contract posture — does the host distinguish truncation from schema-violation in its retry routing per RFC 0033 §A + §B + §C?",
+              "properties": {
+                "distinguishesTruncation": {
+                  "type": "boolean",
+                  "description": "Host implements RFC 0033's truncation-vs-schema-violation retry-routing distinction: truncation → increased output budget (NO corrective fragment); schema-violation → corrective system fragment (NO budget increase). When `false` or absent, the host conflates the two paths (legacy behavior); RFC 0033 conformance scenarios soft-skip."
+                },
+                "truncationBudgetMultiplier": {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 8,
+                  "description": "Host's per-attempt output-budget multiplier on truncation retries. Informational; clients MAY surface this in cost-estimation UIs. Defaults to 2 when absent and `distinguishesTruncation: true`. Spec recommendation is 2× per RFC 0033 §B."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "prompts": {
       "type": "object",
       "description": "RFC 0027 + RFC 0028 prompt-template support advertisement. The `supported` flag gates **node-execution resolution** of PromptRef values per RFC 0027 (Phase A); the separate `endpointsSupported` flag gates the **REST surface** at `/v1/prompts*` per RFC 0028 (Phase B). The two axes are independent — a host MAY implement Phase A composition without exposing the REST surface, and vice versa. Absent block = no support; consumers passing PromptRef values to such a host MUST tolerate the keys being treated as opaque strings.",
@@ -292,6 +373,31 @@
       "items": { "type": "string", "minLength": 1 },
       "uniqueItems": true,
       "description": "Optional v1 host-advertised opaque capability ids that NodeModules may declare in `NodeModule.requires`. Naming convention: dotted, domain-scoped (`chat.sendPrompt`, `canvas.write`, `secrets.byok`). Provider value shapes are documented per-capability alongside consumers, NOT in the protocol package — the protocol owns the *check*, not domain provider contracts. A client that submits a workflow whose nodes declare a `requires` entry SHOULD first verify the host advertises that capability; a host that lacks a capability MUST refuse to dispatch nodes that declare it, terminating the run with `RunSnapshot.error.code = 'capability_not_provided'`. See `capabilities.md` §\"Runtime capabilities\"."
+    },
+    "modelCapabilities": {
+      "type": "object",
+      "description": "RFC 0031. Host implements model-capability gating + (optional) substitution per `NodeModule.requiredModelCapabilities` + `NodeModule.fallbackModel`. Distinct from `runtimeCapabilities` which gates on HOST capabilities — `modelCapabilities` gates on MODEL capabilities (structured-output support, discriminator-enum support, long-context, native reasoning, function-calling). Absent block = no advertisement; NodeModules' `requiredModelCapabilities` are treated as opaque metadata and dispatch proceeds without checks.",
+      "additionalProperties": false,
+      "required": ["supported"],
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "Host honors `NodeModule.requiredModelCapabilities` and emits `model.capability.substituted` / `model.capability.insufficient` events per RFC 0031 §B + §D. When `false` or absent, the fields are treated as opaque metadata and dispatch proceeds without capability checks."
+        },
+        "advertised": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^([a-z][a-z0-9-]*|x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*)$"
+          },
+          "uniqueItems": true,
+          "description": "Capability identifiers the host's active model advertises. Clients MAY introspect this at install time to determine whether their NodeModules' `requiredModelCapabilities` are satisfiable without fallback. Spec-reserved identifiers per RFC 0031 §C: `structured-output`, `discriminator-enum`, `long-context`, `reasoning` (model-native thinking-tokens), `function-calling`. Host-private extensions MUST prefix with `x-host-<host>-`."
+        },
+        "substitutionSupported": {
+          "type": "boolean",
+          "description": "Host honors `NodeModule.fallbackModel` substitution per RFC 0031 §B step 3. When `false` or absent, hosts MUST refuse to dispatch (step 4) on any unmet capability — they MUST NOT attempt fallback even when the field is declared on the NodeModule. Recursive fallback is NOT permitted (RFC 0031 §\"Unresolved questions\" #3)."
+        }
+      }
     },
     "providerUsage": {
       "type": "object",

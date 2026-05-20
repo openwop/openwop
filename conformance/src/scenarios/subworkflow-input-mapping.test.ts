@@ -20,7 +20,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
-import { pollUntilTerminal } from '../lib/polling.js';
+import { pollUntilTerminal, pollUntilStatus } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { setHostCapability, resetHostCapabilities, isToggleAvailable } from '../lib/host-toggle.js';
 
@@ -149,7 +149,6 @@ describe.skipIf(SKIP)('subworkflow-input-mapping: parent → child variable seed
     // suspended kind via the dispatcher's parent-suspends-while-child-
     // suspends contract (interrupt-profiles.md §openwop-interrupt-
     // cascade-cancel).
-    const { pollUntilStatus } = await import('../lib/polling.js');
     await pollUntilStatus(parentRunId, 'waiting-approval', { timeoutMs: 15_000 });
 
     // Find the child runId via the parent snapshot's `childRuns[]`

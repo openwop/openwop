@@ -30,7 +30,7 @@
  * @see scheduler.ts for the trigger-rule + condition evaluation.
  */
 
-import { trace, SpanStatusCode } from '@opentelemetry/api';
+import { trace, context as otelContext, SpanStatusCode } from '@opentelemetry/api';
 import { getNodeRegistry } from './nodeRegistry.js';
 import { getEventLog } from './eventLog.js';
 import { getSuspendManager } from './suspendManager.js';
@@ -341,6 +341,12 @@ async function runOneNode(input: {
   };
 
   let outcome: NodeOutcome;
+  // `observability.md §"Node-level attributes"`: `openwop.node_attempt`
+  // is a zero-based retry counter. Sample tier doesn't track retries
+  // yet (ctx.attempt is the 1-based one-shot stub at line 302); derive
+  // the spec-correct zero-based value from it so the two surfaces stay
+  // in sync once real retries land — bumping ctx.attempt will move the
+  // span attribute up automatically.
   const span = tracer.startSpan(`openwop.node.${nodeRef.typeId}`, {
     attributes: {
       'openwop.run_id': run.runId,
@@ -349,7 +355,7 @@ async function runOneNode(input: {
       'openwop.workflow_id': run.workflowId,
       'openwop.node_id': nodeRef.nodeId,
       'openwop.node_type': nodeRef.typeId,
-      'openwop.node_attempt': 0,
+      'openwop.node_attempt': Math.max(0, (ctx.attempt ?? 1) - 1),
     },
   });
   try {
@@ -393,19 +399,21 @@ async function runOneNode(input: {
   return { kind: 'suspended', interrupt: outcome.interrupt };
 }
 
+export interface ExecuteRunOptions {
+  resumeFromNodeIndex?: number;
+  /** New-style resume: hydrate the snapshot from these completed nodes. */
+  resumeSnapshot?: SerializedSnapshot;
+  resumeValue?: unknown;
+  /** When resuming, the nodeId whose suspension just resolved. */
+  resumeNodeId?: string;
+  policyResolver?: ProviderPolicyResolver;
+}
+
 export async function executeRun(
   storage: Storage,
   run: RunRecord,
   rawDefinition: WorkflowDefinition,
-  options: {
-    resumeFromNodeIndex?: number;
-    /** New-style resume: hydrate the snapshot from these completed nodes. */
-    resumeSnapshot?: SerializedSnapshot;
-    resumeValue?: unknown;
-    /** When resuming, the nodeId whose suspension just resolved. */
-    resumeNodeId?: string;
-    policyResolver?: ProviderPolicyResolver;
-  } = {},
+  options: ExecuteRunOptions = {},
 ): Promise<ExecuteRunResult> {
   const eventLog = getEventLog();
   const suspend = getSuspendManager();
@@ -425,13 +433,12 @@ export async function executeRun(
     await storage.updateRun(run.runId, { status: 'running' });
   }
 
-  // Emit the run-lifecycle span per `observability.md §"Span naming"`
-  // (`openwop.run` or `openwop.run.<phase>`). Lightweight marker span:
-  // opened-and-closed at run-start so observers can find one
-  // `openwop.run` span carrying every required run-level attribute
-  // (`observability.md §"Run-level attributes"`). The node spans below
-  // are NOT nested under this — full causal context propagation is a
-  // follow-up; the test only requires presence + attributes.
+  // Open the run-lifecycle span per `observability.md §"Span naming"`
+  // (`openwop.run` or `openwop.run.<phase>`). Carries every required
+  // run-level attribute (`observability.md §"Run-level attributes"`)
+  // AND is kept active through `context.with` so node spans created
+  // downstream (in `runOneNode`) nest under it — trace viewers see
+  // the canonical run → node hierarchy without operator-side stitching.
   const runSpan = tracer.startSpan('openwop.run', {
     attributes: {
       'openwop.run_id': run.runId,
@@ -441,8 +448,28 @@ export async function executeRun(
       ...(run.scopeId ? { 'openwop.scope_id': run.scopeId } : {}),
     },
   });
-  runSpan.end();
+  try {
+    return await otelContext.with(
+      trace.setSpan(otelContext.active(), runSpan),
+      () => executeRunBody({ storage, run, definition, options, eventLog, suspend }),
+    );
+  } finally {
+    runSpan.end();
+  }
+}
 
+interface ExecuteRunBodyInput {
+  storage: Storage;
+  run: RunRecord;
+  definition: WorkflowDefinition;
+  options: ExecuteRunOptions;
+  eventLog: ReturnType<typeof getEventLog>;
+  suspend: ReturnType<typeof getSuspendManager>;
+}
+
+async function executeRunBody(input: ExecuteRunBodyInput): Promise<ExecuteRunResult> {
+  const { storage, run, definition, options, eventLog, suspend } = input;
+  const isResume = options.resumeSnapshot !== undefined || options.resumeFromNodeIndex !== undefined;
   // Cycle detection + snapshot construction.
   let graph: SchedulerGraph;
   let snapshot: SchedulerSnapshot;

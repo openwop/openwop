@@ -17,44 +17,22 @@
  */
 
 import { trace } from '@opentelemetry/api';
+import {
+  OPENWOP_COST_ATTRIBUTE_NAMES as SDK_OPENWOP_COST_ATTRIBUTE_NAMES,
+  sanitizeCostAttributes,
+} from '@openwop/openwop';
 
 /** Canonical allowlist of cost-attribute names per
  *  `spec/v1/observability.md §"Cost attribution attributes"`.
- *  Mutating this list is a wire-shape change — bump the schema's
- *  `additionalProperties` posture if a new attribute is added. */
-export const OPENWOP_COST_ATTRIBUTE_NAMES: readonly string[] = [
-  'openwop.cost.tokens.input',
-  'openwop.cost.tokens.output',
-  'openwop.cost.tokens.total',
-  'openwop.cost.usd',
-  'openwop.cost.currency',
-  'openwop.cost.estimated',
-  'openwop.cost.provider',
-];
+ *  Re-exported from the published SDK (`@openwop/openwop`) so the
+ *  host runtime + the conformance suite + downstream packs share one
+ *  source of truth. Mutating this list is a wire-shape change — needs
+ *  an RFC. */
+export const OPENWOP_COST_ATTRIBUTE_NAMES: readonly string[] = SDK_OPENWOP_COST_ATTRIBUTE_NAMES;
 
-const ALLOWLIST = new Set<string>(OPENWOP_COST_ATTRIBUTE_NAMES);
-
-/** Pure-function sanitizer. Returns a NEW object containing only
- *  allowlisted keys with primitive-typed values (number / string /
- *  boolean). Drops anything else — non-allowlisted keys, nested
- *  objects, arrays, functions, symbols, null/undefined — without
- *  modifying the input. Used by `emitCost` and exercised directly by
- *  the conformance suite's `conformance.cost.emit` fixture node. */
-export function sanitizeCostForOtel(
-  input: Record<string, unknown>,
-): Record<string, number | string | boolean> {
-  const out: Record<string, number | string | boolean> = {};
-  for (const [key, value] of Object.entries(input)) {
-    if (!ALLOWLIST.has(key)) continue;
-    if (typeof value === 'number' || typeof value === 'string' || typeof value === 'boolean') {
-      out[key] = value;
-    }
-    // Drop anything not primitive (objects, arrays, null, undefined,
-    // symbols, functions). Cost attributes are flat primitives by
-    // spec; structured payloads belong on the `provider.usage` event.
-  }
-  return out;
-}
+/** Pure-function sanitizer. Thin re-export of the SDK helper so host
+ *  code keeps its existing import surface stable. */
+export const sanitizeCostForOtel = sanitizeCostAttributes;
 
 interface CostRecord {
   promptTokens?: number;
@@ -119,7 +97,21 @@ const runCostRollups = new Map<string, CostRollup>();
 
 /** Apply a sanitized cost-attr map to the per-run rollup. Accumulates
  *  numeric tokens / usd / duration; overwrites string `provider` /
- *  `model` (last-write-wins per the schema's `description`). */
+ *  `model` (last-write-wins per the schema's `description`).
+ *
+ *  Folds only the SUBSET of allowlisted keys that
+ *  `run-snapshot.schema.json §metrics.openwopCost` declares: `usd`,
+ *  `tokens.{input,output}`, `provider`, `model`, `duration_ms`.
+ *  Deliberate omissions:
+ *    - `openwop.cost.tokens.total` — derivable from input+output; the
+ *      schema's `tokens` object only carries the two primitives.
+ *    - `openwop.cost.currency` / `openwop.cost.estimated` — span-only
+ *      attributes; the snapshot rollup omits them (clients that need
+ *      them read OTel spans directly per the schema's `description`).
+ *
+ *  The sanitizer (`sanitizeCostForOtel`) accepts all seven allowlisted
+ *  keys for span emission; the rollup folds the documented subset.
+ *  The two surfaces are intentionally not 1:1. */
 export function applyCostRollup(runId: string, sanitized: Record<string, number | string | boolean>): void {
   if (!runId) return;
   const cur = runCostRollups.get(runId) ?? {};
@@ -135,6 +127,8 @@ export function applyCostRollup(runId: string, sanitized: Record<string, number 
     } else if (k === 'openwop.cost.provider' && typeof v === 'string') {
       cur.provider = v;
     }
+    // tokens.total / currency / estimated intentionally not folded —
+    // see header docblock for the snapshot-vs-span surface split.
   }
   runCostRollups.set(runId, cur);
 }
