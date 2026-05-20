@@ -451,3 +451,4 @@ Promotion from `Active` → `Accepted`:
 - `spec/v1/rest-endpoints.md` — REST URL conventions (`:render`, `:bulk-*` operation-style verbs).
 - `api/openapi.yaml` — operation definitions this RFC extends.
 - `RFCS/0029-prompt-override-hierarchy.md` (forthcoming) — Phase C agent-scoped override hierarchy that consumes this RFC's endpoints.
+- `RFCS/0030-envelope-reasoning-and-tier-one-subset.md` (forthcoming, parallel track) — Tier-1 structured-output compatibility subset (informative) — non-binding portability guidance authors of `PromptTemplate.modelHints.envelopeType` MAY cross-check when picking envelope kinds for cross-vendor portability.

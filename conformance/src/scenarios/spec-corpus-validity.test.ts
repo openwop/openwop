@@ -452,6 +452,21 @@ describe('spec-corpus: JSON Schemas compile under Ajv2020', () => {
   const ajv = new Ajv2020({ allErrors: true, strict: false });
   addFormats(ajv);
 
+  // Pre-register every schema with the Ajv instance so cross-file `$ref`s
+  // resolve regardless of compile order. Without this, a cross-ref from
+  // an alphabetically-earlier file (e.g. capabilities.schema.json) to a
+  // later one (e.g. prompt-kind.schema.json) fails with "can't resolve
+  // reference." `addSchema` only registers — it doesn't compile — so
+  // per-file compilation errors still surface in their own `it()` below.
+  for (const file of schemaFiles) {
+    try {
+      ajv.addSchema(readJson(join(SCHEMAS_DIR, file)) as Record<string, unknown>);
+    } catch {
+      // Bad schemas surface in the per-file `compile()` below; swallow
+      // here so registration order doesn't short-circuit reporting.
+    }
+  }
+
   it('finds at least three schemas (workflow-definition, run-event, suspend-request)', () => {
     expect(schemaFiles.length).toBeGreaterThanOrEqual(3);
     expect(schemaFiles).toContain('workflow-definition.schema.json');
@@ -467,8 +482,9 @@ describe('spec-corpus: JSON Schemas compile under Ajv2020', () => {
         `https://openwop.dev/spec/v1/${file}`,
       );
       expect(typeof schema['title']).toBe('string');
-      // Compile — throws on structural issues.
-      const validate = ajv.compile(schema);
+      // `compile` uses the schemas registered by `addSchema` above to
+      // resolve cross-file `$ref`s — throws on structural issues.
+      const validate = ajv.getSchema(schema['$id'] as string) ?? ajv.compile(schema);
       expect(typeof validate).toBe('function');
     });
   }

@@ -111,7 +111,7 @@
         },
         "config": {
           "type": "object",
-          "description": "Node configuration (pre-execution constants)."
+          "description": "Node configuration (pre-execution constants). The shape is per-typeId — node-pack manifests declare each typeId's `configSchema` for install-time validation. By convention, the keys `systemPromptRef`, `userPromptRef`, and `additionalPromptRefs` MAY hold PromptRef values per `spec/v1/prompts.md` §\"PromptRef\" (RFC 0027). Hosts advertising `capabilities.prompts.supported: true` MUST resolve these keys; hosts without the capability MAY treat them as opaque strings. When both an inline body (e.g., `config.systemPrompt`) and a `*PromptRef` are present, the ref wins and the host MUST emit a `log.appended` warning with `code: \"prompt_ref_supersedes_inline\"` per RFC 0027 §C."
         },
         "inputs": {
           "type": "object",

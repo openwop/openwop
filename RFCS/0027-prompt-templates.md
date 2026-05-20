@@ -394,7 +394,7 @@ The `behaviorGate` helper in `conformance/src/lib/behavior-gate.ts` gains a `req
 
 1. **Should `PromptTemplate.text` allow nested refs (`{{include:prompt:other-template@1.0.0}}`)?** The myndhyve impl has a single-level `additionalPrompt` field but no nested-include syntax. Including it now risks complicating the substitution semantics (recursion depth, cycle detection, version pinning across includes); excluding it forces the additive `additionalPromptRefs` array workaround. Recommendation: defer to a future minor RFC if demand emerges.
 
-2. **Should `modelHints.envelopeType` cross-reference RFC 0021's envelope catalog?** Right now it's an opaque string; an Ajv-compileable cross-schema reference would catch typos at install time but adds tooling burden. Leave opaque in v1.1; tighten if/when registry-side cross-validation lands.
+2. **Should `modelHints.envelopeType` cross-reference RFC 0021's envelope catalog?** Right now it's an opaque string; an Ajv-compileable cross-schema reference would catch typos at install time but adds tooling burden. Leave opaque in v1.1; tighten if/when registry-side cross-validation lands. The parallel RFC 0030 (envelope `reasoning` field + Tier-1 subset) provides additional authoring guidance for envelope payload schemas — `modelHints.envelopeType` consumers MAY check the referenced envelope against the Tier-1 subset for portability.
 
 3. **Variable-source `context`: enumerate the allowed context keys, or leave open?** The myndhyve impl uses `context` for things like `currentUserId`, `runId`, `workflowName`. Standardizing the names would help portability but constrains future host additions. Leave open in v1.1; document the canonical names in `spec/v1/prompts.md` as non-normative recommendations.
 
@@ -406,6 +406,7 @@ The `behaviorGate` helper in `conformance/src/lib/behavior-gate.ts` gains a `req
 - The React example app at `apps/workflow-engine/frontend/react` MUST gain a new `kind: "prompt-picker"` `ConfigField` per `src/builder/inspector/Inspector.tsx:86–142` and a new `/prompts` route. Detailed plan in the analysis document accompanying this RFC; component changes are not normative.
 - Estimated effort: schemas + spec text ~1 day; reference-host emission wiring ~1 day; three conformance scenarios ~1 day; CHANGELOG ~30min. Total ~3 days plus the standard 7-day Active window unless the bootstrap-phase waiver applies.
 - The MyndHyve reference impl uses Mustache-compatible `{{var}}` syntax with `onUnresolved: 'empty'` for optional variables. This RFC's §A "Unresolved required variables MUST fail" + "Unresolved optional variables render as empty string" mirrors that semantics exactly.
+- **Relation to the envelope-track RFCs 0030–0033 (filed in parallel 2026-05-20).** `prompt.composed.systemPrompt|userPrompt` here records the **host's** composed prompt body before dispatch. The envelope-track RFC 0030 introduces an optional `reasoning` field inside **LLM-emitted** envelope payloads (chain-of-thought inside the structured output). RFC 0024's `agent.reasoning.delta` is the third sibling — the **model's** thinking-tokens stream. The three surfaces are complementary: one captures what the host sent, one captures what the model emitted as part of structured output, and one captures the model's interleaved reasoning trace. None replaces the others; multi-agent observability tools render all three for a full picture.
 
 ## Acceptance criteria
 
@@ -438,4 +439,5 @@ Checklist the maintainers will use to flip `Status` from `Active` to `Accepted`:
 - `SECURITY/threat-model-secret-leakage.md` SR-1 — `[REDACTED:<id>]` marker discipline.
 - `RFCS/0028-prompt-library-endpoints.md` (forthcoming) — `/v1/prompts/*` REST surface + `kind: "prompt"` registry pack.
 - `RFCS/0029-prompt-override-hierarchy.md` (forthcoming) — agent-scoped resolution chain + `agent.promptResolved` event.
+- `RFCS/0030-envelope-reasoning-and-tier-one-subset.md` (forthcoming, parallel track) — envelope-payload `reasoning` field (LLM-emitted CoT inside structured output) — sibling to `prompt.composed.systemPrompt` (host-composed prompt) and `agent.reasoning.delta` (model thinking-tokens). The three are complementary, not redundant.
 - External: MyndHyve `PromptEntry`/`PromptLibrary` reference impl (`src/core/canvas/types/index.ts`, `src/core/canvas/stores/promptLibraryStore.ts`, `src/core/workflow/services/WorkflowPromptService.ts`).

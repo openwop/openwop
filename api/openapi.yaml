@@ -200,7 +200,7 @@ paths:
                   runId: { type: string }
                   status:
                     type: string
-                    enum: [pending, running, waiting-approval, waiting-input]
+                    enum: [pending, running, waiting-approval, waiting-input, waiting-external]
                   eventsUrl: { type: string, format: uri }
                   statusUrl: { type: string, format: uri }
         '400': { $ref: '#/components/responses/ValidationError' }
@@ -879,6 +879,20 @@ components:
 
     Capabilities:
       $ref: '../schemas/capabilities.schema.json'
+
+    # Pre-loaded so redocly's $ref resolver registers them at lint time.
+    # capabilities.schema.json `$ref`s prompt-kind.schema.json by its
+    # canonical openwop.dev URL — redocly resolves absolute URIs against
+    # already-loaded `$id`s, so the schema must be pulled in here even
+    # though no operation references it directly. See RFC 0027 §A.
+    PromptKind:
+      $ref: '../schemas/prompt-kind.schema.json'
+
+    PromptTemplate:
+      $ref: '../schemas/prompt-template.schema.json'
+
+    PromptRef:
+      $ref: '../schemas/prompt-ref.schema.json'
 
     RunSnapshot:
       $ref: '../schemas/run-snapshot.schema.json'

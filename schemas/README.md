@@ -24,6 +24,9 @@
 | `memory-list-options.schema.json` | memory-layer RFC | Query options for listing agent memory entries |
 | `node-pack-manifest.schema.json` | `node-packs.md` | Pack manifest (`pack.json`) — name, version, engines, nodes[], runtime, signing |
 | `pack-lockfile.schema.json` | `node-packs.md` §"Dependency resolution + lockfile" | Reproducible-build lockfile pinning resolved pack versions + SHA-256 integrity + Ed25519 signature for the entire workspace dependency graph |
+| `prompt-kind.schema.json` | `prompts.md` + RFC 0027 | Shared `string` enum (`system` / `user` / `few-shot` / `schema-hint`) `$ref`-ed by every schema that names a prompt kind. Single edit point when introducing a new kind. |
+| `prompt-ref.schema.json` | `prompts.md` + RFC 0027 | Reference to a PromptTemplate. `oneOf` accepts the stringy form (`prompt:templateId@version`) or a structured object with `libraryId` / `templateId` / `version` / `variableOverrides`. |
+| `prompt-template.schema.json` | `prompts.md` + RFC 0027 | Named, versioned, variable-bound prompt body. Carries `templateId` + SemVer `version` + `kind` (via `prompt-kind.schema.json`) + Mustache `text` + typed `variables[]` + optional `modelHints` + `meta` provenance. |
 | `registry-version-manifest.schema.json` | `registry-operations.md` | Registry-augmented version manifest served at `GET /v1/packs/{name}/-/{version}.json`. Extends the bare pack-manifest contract with registry-side metadata (integrity hash, signing-block polymorphism, lifecycle flags). Enforced by the `Validate version manifests against registry-version-manifest schema` step in `.github/workflows/registry-publish.yml`. |
 | `orchestrator-decision.schema.json` | `node-packs.md` + orchestrator RFC | Decision output shape for orchestrator routing nodes |
 | `run-event-payloads.schema.json` | `run-event.schema.json` §RunEventType | Per-RunEventType payload contracts, indexed by `$defs.<typeId>` for opt-in strict validation |

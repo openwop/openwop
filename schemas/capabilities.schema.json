@@ -66,6 +66,41 @@
       },
       "additionalProperties": false
     },
+    "prompts": {
+      "type": "object",
+      "description": "RFC 0027 prompt-template support advertisement. When `supported: true`, the host resolves PromptRef values in `WorkflowNode.config.systemPromptRef`/`userPromptRef`/`additionalPromptRefs` and emits `prompt.composed` run events per `spec/v1/prompts.md`. Absent block = no support; consumers passing PromptRef values to such a host MUST tolerate the keys being treated as opaque strings.",
+      "required": ["supported"],
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "Host implements RFC 0027 prompt-template resolution end-to-end. False or absent = the keys `systemPromptRef`, `userPromptRef`, etc. on `WorkflowNode.config` are treated as opaque strings and never composed."
+        },
+        "templateKinds": {
+          "type": "array",
+          "items": { "$ref": "./prompt-kind.schema.json" },
+          "uniqueItems": true,
+          "description": "Subset of PromptKind values the host accepts. Defaults to all four (`system`, `user`, `few-shot`, `schema-hint`) when omitted. The $ref resolves to the shared `prompt-kind.schema.json` `$def` per RFC 0027 §A — uses a relative URI so redocly's lint walker resolves it against the local file rather than fetching the openwop.dev URL."
+        },
+        "variableSources": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["input", "variable", "secret", "context"] },
+          "uniqueItems": true,
+          "description": "Subset of PromptVariable.source values the host supports. `secret` SHOULD only appear when `capabilities.secrets.supported` is also true."
+        },
+        "maxTemplateBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65536,
+          "description": "Host limit on PromptTemplate.text length. MUST NOT exceed the schema cap (65536). When advertised, the host MUST reject larger bodies on install + on `POST /v1/prompts` (RFC 0028)."
+        },
+        "observability": {
+          "type": "string",
+          "enum": ["off", "hashed", "full"],
+          "description": "How `prompt.composed` events expose resolved bodies. `off`: event not emitted. `hashed`: payload carries only sha256 + per-variable-binding hashes (no plaintext). `full`: payload carries the composed body with secret-sourced values redacted to `[REDACTED:<secretId>]` markers and untrusted segments wrapped in `<UNTRUSTED>` markers. Default when absent: `hashed`."
+        }
+      },
+      "additionalProperties": false
+    },
     "extensions": {
       "type": "object",
       "description": "Optional per-canvas-type or per-workflow extensions (additional envelope types, override limits)."

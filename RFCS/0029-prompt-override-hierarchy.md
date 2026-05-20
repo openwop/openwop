@@ -266,6 +266,15 @@ For workflow editors, the `chain[].source` field enables a "Why this prompt?" to
 - Trust-boundary propagation (`meta.contentTrust`) is not surfaced on `agent.promptResolved` because resolution happens before content is bound to variables. The trust marker first appears on `prompt.composed` per RFC 0027 §E.
 - `AgentManifest.promptLibraryRef` resolves against the same library namespace as `PromptRef.libraryId` per RFC 0028 §B "Conflict resolution". When the agent manifest references a library that isn't installed on the host, the host MUST emit `log.appended` at `level: "warn"` with `code: "agent_library_unresolvable"` and continue with layer-2 skip.
 
+### §F — Orthogonality with the envelope-track RFCs (non-normative)
+
+The parallel envelope-track RFCs 0030–0033 (filed 2026-05-20) extend `NodeModule` and the envelope payload surface independently of this RFC's prompt-resolution chain. Specifically, RFC 0031 introduces `NodeModule.requiredModelCapabilities` and `NodeModule.fallbackModel` for model-capability gating. The two surfaces are orthogonal axes:
+
+- **Prompt resolution (this RFC)** answers "which PromptRef applies at `(nodeId, kind)`?" — it does not influence model selection.
+- **Model-capability gating (RFC 0031)** answers "which model can dispatch this node?" — it does not influence prompt selection.
+
+A node MAY carry both surfaces independently. The `agent.promptResolved` event emitted by this RFC and the `model.capability.substituted` / `model.capability.insufficient` events emitted by RFC 0031 are distinct observability surfaces and MAY both fire for the same node execution. No precedence rule applies between them.
+
 ## Compatibility
 
 **Additive per `COMPATIBILITY.md §2.1`.** All claims:
@@ -355,3 +364,4 @@ Promotion from `Active` → `Accepted`:
 - `spec/v1/replay.md` — replay invariants this RFC extends with one new `divergencePoint`.
 - `spec/v1/workflow-definition.md` — schema this RFC extends with `defaults`.
 - External: MyndHyve `WorkflowPromptService.resolveForExecution()` reference impl at `src/core/workflow/services/WorkflowPromptService.ts` — closest single-host prior-art for four-layer resolution; this RFC ports its semantics into protocol-level normative text.
+- `RFCS/0031-envelope-variants-and-model-capabilities.md` (forthcoming, parallel track) — `NodeModule.requiredModelCapabilities` + `NodeModule.fallbackModel` + `model.capability.{substituted,insufficient}` events. Orthogonal axis to this RFC's prompt-resolution chain; see §F above.
