@@ -76,7 +76,7 @@
     "meta": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Provenance + lifecycle metadata. Optional; hosts SHOULD populate it for any persistent storage.",
+      "description": "Provenance + lifecycle metadata. Optional; hosts SHOULD populate it for any persistent storage. When `source: \"pack\"`, the host MUST populate `packName` + `packVersion` so clients can disambiguate templates that share a `templateId` across multiple installed packs (per RFC 0028 §B \"Conflict resolution\").",
       "properties": {
         "author": { "type": "string", "description": "Free-form author identifier (handle, email, etc.)." },
         "createdAt": { "type": "string", "format": "date-time", "description": "ISO 8601 UTC timestamp of initial creation." },
@@ -84,9 +84,25 @@
         "source": {
           "type": "string",
           "enum": ["host", "pack", "user"],
-          "description": "Provenance discriminator. `host`: ships with the host's built-in library; immutable. `pack`: installed via RFC 0028 prompt pack; immutable; carries `packName` + `packVersion`. `user`: created at run time via mutating endpoints; mutable iff `capabilities.prompts.mutableLibrary: true`."
+          "description": "Provenance discriminator. `host`: ships with the host's built-in library; immutable. `pack`: installed via RFC 0028 prompt pack; immutable; MUST carry `packName` + `packVersion`. `user`: created at run time via mutating endpoints; mutable iff `capabilities.prompts.mutableLibrary: true`."
+        },
+        "packName": {
+          "type": "string",
+          "pattern": "^(core|vendor|community|private)\\.[a-z][a-z0-9_-]*(\\.[a-z][a-zA-Z0-9_-]*)+$",
+          "description": "RFC 0028 §C. When `source: \"pack\"`, the installed pack's `name` (matches `PromptPackManifest.name`). Required when `source: \"pack\"`; absent otherwise. Lets clients pass a structured `PromptRef` with `libraryId` set to this value to disambiguate templates that share a `templateId` across packs."
+        },
+        "packVersion": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$",
+          "description": "RFC 0028 §C. When `source: \"pack\"`, the installed pack's `version`. Required when `source: \"pack\"`; absent otherwise."
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "source": { "const": "pack" } }, "required": ["source"] },
+          "then": { "required": ["source", "packName", "packVersion"] }
+        }
+      ]
     }
   },
   "$defs": {

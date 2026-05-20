@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/prompt-pack-manifest.schema.json",
+  "title": "PromptPackManifest",
+  "description": "Manifest for a published OpenWOP prompt pack — `pack.json` at the pack root with `kind: \"prompt\"`. Peer to `node-pack-manifest.schema.json` (RFC 0003) and `workflow-chain-pack-manifest.schema.json` (RFC 0013); disjoint from both via the `kind` discriminator. See `spec/v1/prompts.md` §\"Discovery & distribution\" for the canonical contract and RFC 0028 §B for the rationale.\n\nPrompt packs distribute curated PromptTemplate collections via the same signed-tarball + Ed25519 + SRI pipeline that already serves node and workflow-chain packs. When a host installs a prompt pack and advertises `capabilities.prompts.packsSupported: true`, the templates appear in `GET /v1/prompts` with `meta.source: \"pack\"` + `meta.packName` + `meta.packVersion`.",
+  "type": "object",
+  "required": ["name", "version", "kind", "engines", "prompts"],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Reverse-DNS pack name per `node-packs.md` §Naming. Reserved scopes are identical (`core.*` / `vendor.<org>.*` / `community.<author>.*` / `private.<host>.*`). Mirror of `workflow-chain-pack-manifest.schema.json#/properties/name`.",
+      "pattern": "^(core|vendor|community|private)\\.[a-z][a-z0-9_-]*(\\.[a-z][a-zA-Z0-9_-]*)+$",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "version": {
+      "type": "string",
+      "description": "Pack-level SemVer 2.0.0.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+    },
+    "kind": {
+      "type": "string",
+      "const": "prompt",
+      "description": "Pack kind discriminator. MUST be the literal string `\"prompt\"` for this schema. Manifests carrying `kind: \"node\"` validate against `node-pack-manifest.schema.json`; `kind: \"workflow-chain\"` against `workflow-chain-pack-manifest.schema.json`."
+    },
+    "description": { "type": "string", "maxLength": 1024 },
+    "author": { "type": "string" },
+    "license": { "type": "string", "description": "SPDX license identifier (e.g., `Apache-2.0`)." },
+    "homepage": { "type": "string", "format": "uri" },
+    "repository": { "type": "string", "format": "uri" },
+    "keywords": {
+      "type": "array",
+      "items": { "type": "string", "maxLength": 64 },
+      "maxItems": 50
+    },
+    "engines": {
+      "type": "object",
+      "required": ["openwop"],
+      "properties": {
+        "openwop": {
+          "type": "string",
+          "description": "SemVer range — which openwop protocol versions this pack works against (e.g., `>=1.1.0 <2.0.0`)."
+        }
+      },
+      "additionalProperties": true,
+      "$comment": "Open by design — packs MAY advertise extra engine constraints (`node`, `python`, etc.) that consumer hosts ignore but operator tooling consumes. Mirrors workflow-chain-pack-manifest."
+    },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Other packs whose templates this pack's templates reference (e.g., via cross-pack `PromptRef.libraryId` lookups, or via a future `extends:` inheritance syntax). Map of pack name → SemVer range. Install-time validation MUST resolve every entry before accepting the install; an unresolvable entry rejects with `prompt_pack_dependency_unresolvable`. The *semantics* of cross-pack composition (template inheritance, transitive `dependencies` closure) are out of scope for RFC 0028 and defer to a follow-up RFC; this RFC ships the field + the install-time resolve MUST only. Shape mirrors `workflow-chain-pack-manifest.schema.json#/properties/dependencies` (RFC 0013)."
+    },
+    "prompts": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "./prompt-template.schema.json" },
+      "description": "PromptTemplate entries per RFC 0027 §A. Each MUST have a unique `(templateId, version)` pair within the pack. Hosts installing this pack expose the templates at `GET /v1/prompts` with `meta.source: \"pack\"` + `meta.packName: <this pack's name>` + `meta.packVersion: <this pack's version>` populated automatically (RFC 0028 §C)."
+    },
+    "signing": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional signing metadata. Reuses the Ed25519 + SRI flow from `node-packs.md §Signing` unchanged. Hosts installing this pack MUST verify the signature before accepting any of `prompts[]` per `registry-operations.md §\"Signature verification\"`.",
+      "properties": {
+        "publicKeyRef": {
+          "type": "string",
+          "description": "Path inside the tarball to the Ed25519 public key (PEM-encoded)."
+        },
+        "signatureRef": {
+          "type": "string",
+          "description": "Path to the detached signature over `pack.json`."
+        },
+        "method": {
+          "type": "string",
+          "enum": ["manual", "sigstore"]
+        }
+      }
+    }
+  }
+}

@@ -65,10 +65,19 @@ function loadSchema(rel: string): Record<string, unknown> {
 function makeAjv(): Ajv2020 {
   const ajv = new Ajv2020({ allErrors: true, strict: false });
   addFormats(ajv);
-  ajv.addSchema(loadSchema('prompt-kind.schema.json'), 'prompt-kind.schema.json');
-  ajv.addSchema(loadSchema('prompt-kind.schema.json'), './prompt-kind.schema.json');
-  ajv.addSchema(loadSchema('prompt-template.schema.json'), 'prompt-template.schema.json');
-  ajv.addSchema(loadSchema('prompt-ref.schema.json'), 'prompt-ref.schema.json');
+  // Parse prompt-kind once so the second alias key shares the same
+  // object reference — Ajv's `_checkUnique` allows duplicate registration
+  // of the same schema instance but throws when two distinct objects
+  // declare the same `$id` (see fixtures-valid.test.ts §"prompt-kind via
+  // ./ relative URI" for the canonical pattern).
+  const promptKindSchema = loadSchema('prompt-kind.schema.json');
+  ajv.addSchema(promptKindSchema, 'prompt-kind.schema.json');
+  ajv.addSchema(promptKindSchema, './prompt-kind.schema.json');
+  // Do NOT pre-register prompt-template / prompt-ref here. Each
+  // describe block calls `ajv.compile(loadSchema(...))` with a freshly
+  // parsed object; pre-registering causes `_checkUnique` to throw on
+  // the duplicate `$id`. prompt-kind stays pre-registered because
+  // prompt-template `$ref`s it relatively and needs it resolvable.
   return ajv;
 }
 
@@ -79,7 +88,9 @@ describe('prompt-template-shape: schema compile (RFC 0027 §A)', () => {
 
   it('prompt-kind.schema.json compiles and is a string enum of the four canonical kinds', () => {
     const schema = loadSchema('prompt-kind.schema.json');
-    const validate = ajv.compile(schema);
+    // Reuse the already-registered validator when present — Ajv refuses
+    // to re-`compile` a schema whose `$id` it already knows.
+    const validate = ajv.getSchema(schema['$id'] as string) ?? ajv.compile(schema);
     expect(validate, 'RFC 0027 §A: prompt-kind.schema.json MUST compile').toBeTypeOf('function');
     expect(schema.type, 'prompt-kind MUST be type: string').toBe('string');
     expect(

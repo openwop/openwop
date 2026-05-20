@@ -97,6 +97,35 @@
           "type": "string",
           "enum": ["off", "hashed", "full"],
           "description": "How `prompt.composed` events expose resolved bodies. `off`: event not emitted. `hashed`: payload carries only sha256 + per-variable-binding hashes (no plaintext). `full`: payload carries the composed body with secret-sourced values redacted to `[REDACTED:<secretId>]` markers and untrusted segments wrapped in `<UNTRUSTED>` markers. Default when absent: `hashed`."
+        },
+        "packsSupported": {
+          "type": "boolean",
+          "description": "RFC 0028 §C. When `true`, the host installs `kind: \"prompt\"` registry packs and exposes their templates at `GET /v1/prompts` with `meta.source: \"pack\"` + `meta.packName` + `meta.packVersion`. When `false` or absent, packs are not loaded; only host built-ins and (when `mutableLibrary: true`) user-created templates are visible."
+        },
+        "mutableLibrary": {
+          "type": "boolean",
+          "description": "RFC 0028 §C. When `true`, the host honors the mutating endpoints `POST /v1/prompts`, `PUT /v1/prompts/{templateId}`, `DELETE /v1/prompts/{templateId}`. When `false` or absent, those endpoints return 501. Pack-sourced and host-built-in templates remain read-only even under `mutableLibrary: true` — deletion of those returns 403 per RFC 0028 §A."
+        },
+        "library": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "RFC 0028 §C. Per-library configuration knobs that influence how clients call the prompt surface.",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Host's library identifier exposed at `GET /v1/prompts` (filterable via the structured `PromptRef.libraryId` field). Single-library hosts MAY omit this."
+            },
+            "renderEndpoint": {
+              "type": "string",
+              "format": "uri-reference",
+              "description": "Absolute or relative URI of the `:render` endpoint. Defaults to `/v1/prompts:render`. Useful for hosts mounting the surface under a prefix."
+            },
+            "maxRenderRequestBytes": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Hard cap on `POST /v1/prompts:render` request body size."
+            }
+          }
         }
       },
       "additionalProperties": false

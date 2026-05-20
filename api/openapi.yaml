@@ -59,6 +59,8 @@ tags:
     description: Subscribe to run events via outbound HTTP.
   - name: audit
     description: Audit-log integrity verification (gated on the `openwop-audit-log-integrity` profile).
+  - name: prompts
+    description: Prompt-template library — list, fetch, render, mutate (RFC 0028; gated on `capabilities.prompts.*`).
 
 # ─────────────────────────────────────────────────────────────────────────────
 # PATHS
@@ -785,6 +787,328 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404':
           description: Host does not advertise the audit-log-integrity profile.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+
+  # ── Prompt library (RFC 0028) ────────────────────────────────────────
+  # Surface gated on `capabilities.prompts.supported: true`. Mutating
+  # endpoints (POST / PUT / DELETE) are additionally gated on
+  # `capabilities.prompts.mutableLibrary: true`. Hosts without the
+  # advertised capability return `501 capability_not_provided`.
+  /v1/prompts:
+    get:
+      tags: [prompts]
+      summary: List prompt templates available to the caller.
+      operationId: listPromptTemplates
+      parameters:
+        - in: query
+          name: kind
+          schema: { type: string, enum: [system, user, few-shot, schema-hint] }
+          description: Filter by `PromptTemplate.kind`.
+        - in: query
+          name: tag
+          schema: { type: string }
+          description: |
+            Filter to templates whose `tags[]` contains this exact tag.
+            Hosts MAY accept the parameter multiple times; the semantic
+            when repeated is AND (every named tag must be present).
+        - in: query
+          name: modelClass
+          schema: { type: string }
+          description: Filter to templates whose `modelHints.modelClass` matches.
+        - in: query
+          name: source
+          schema: { type: string, enum: [host, pack, user] }
+          description: Filter by `meta.source` provenance.
+        - in: query
+          name: cursor
+          schema: { type: string }
+          description: Opaque pagination cursor.
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+          description: Maximum entries per page.
+      responses:
+        '200':
+          description: Paginated list of templates.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '../schemas/prompt-template.schema.json'
+                  nextCursor:
+                    type: string
+                    description: Opaque cursor; absent on the final page.
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '501':
+          description: 'Host does not advertise capabilities.prompts.supported.'
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+    post:
+      tags: [prompts]
+      summary: Create a new prompt template (mutable libraries only).
+      operationId: createPromptTemplate
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/prompt-template.schema.json'
+      responses:
+        '201':
+          description: Template created. `Location` header carries the canonical URI.
+          headers:
+            Location:
+              schema: { type: string }
+              description: 'Canonical URI of the new template.'
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: A template with this `(templateId, version)` pair already exists.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+        '501':
+          description: 'Host does not advertise capabilities.prompts.mutableLibrary.'
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+
+  /v1/prompts/{templateId}:
+    parameters:
+      - in: path
+        name: templateId
+        required: true
+        schema:
+          type: string
+          pattern: '^[a-z0-9][a-z0-9._-]{0,127}$'
+        description: PromptTemplate.templateId per RFC 0027.
+      - in: query
+        name: version
+        schema:
+          type: string
+          pattern: '^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$'
+        description: Pin to a specific SemVer version; latest when omitted.
+      - in: query
+        name: libraryId
+        schema:
+          type: string
+          pattern: '^[a-z0-9][a-z0-9._-]{0,127}$'
+        description: |
+          Disambiguate when multiple installed packs ship the same
+          templateId. Hosts MUST return `prompt_ref_ambiguous` if
+          ambiguous and libraryId is omitted.
+    get:
+      tags: [prompts]
+      summary: Fetch a single prompt template.
+      operationId: getPromptTemplate
+      responses:
+        '200':
+          description: The PromptTemplate.
+          headers:
+            ETag:
+              schema: { type: string }
+              description: SHA-256 of the canonical body.
+            Cache-Control:
+              schema: { type: string }
+              description: Honors immutable semantics when version was pinned.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/prompt-template.schema.json'
+        '304':
+          description: Conditional revalidation succeeded.
+        '400':
+          description: '`prompt_ref_ambiguous` when libraryId disambiguation is required.'
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: No such template (or version).
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+        '501':
+          description: 'Host does not advertise capabilities.prompts.supported.'
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+    put:
+      tags: [prompts]
+      summary: Replace a prompt template (mutable libraries; user-source only).
+      operationId: updatePromptTemplate
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/prompt-template.schema.json'
+      responses:
+        '200':
+          description: Template updated.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/prompt-template.schema.json'
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403':
+          description: Template is pack-sourced or host-built-in (read-only).
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+        '404':
+          description: No such template.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+        '409':
+          description: Submitted version does not exceed stored version (SemVer).
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+        '501':
+          description: 'Host does not advertise capabilities.prompts.mutableLibrary.'
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+    delete:
+      tags: [prompts]
+      summary: Delete a prompt template (mutable libraries; user-source only).
+      operationId: deletePromptTemplate
+      responses:
+        '204':
+          description: Template deleted.
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403':
+          description: Template is pack-sourced or host-built-in (read-only).
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+        '404':
+          description: No such template.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+        '501':
+          description: 'Host does not advertise capabilities.prompts.mutableLibrary.'
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+
+  /v1/prompts:render:
+    post:
+      tags: [prompts]
+      summary: Render a prompt template with supplied variable bindings.
+      description: |
+        Returns the composed body + sha256 hash + per-variable hashes.
+        The response's `hash` MUST equal the `hash` that a matching
+        `prompt.composed` event would carry at dispatch time for the
+        same `(ref, variables, contentTrust)` inputs (RFC 0028 §A
+        deterministic-render invariant; RFC 0027 §F replay invariant).
+        Does NOT dispatch an LLM call. Secret-source variable values
+        MUST be supplied as `[REDACTED:<credentialRef>]` markers; the
+        host resolves the plaintext internally and never echoes it in
+        the `composed` response field per SR-1.
+      operationId: renderPromptTemplate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ref, variables]
+              properties:
+                ref:
+                  $ref: '../schemas/prompt-ref.schema.json'
+                variables:
+                  type: object
+                  description: |
+                    Variable bindings keyed by `PromptVariable.name`.
+                    Secret-source bindings carry `[REDACTED:<credentialRef>]`
+                    markers; the host resolves the real value internally.
+                  additionalProperties: true
+                contentTrust:
+                  type: string
+                  enum: [trusted, untrusted]
+                  description: |
+                    Aggregate trust marker for the supplied bindings,
+                    propagated through composition per RFC 0027 §E.
+      responses:
+        '200':
+          description: Composed result.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [hash, refs, variableHashes]
+                properties:
+                  composed:
+                    type: string
+                    description: Full composed body. Present only when observability is `full`.
+                  hash:
+                    type: string
+                    pattern: '^sha256:[0-9a-f]{64}$'
+                  refs:
+                    type: array
+                    items:
+                      type: string
+                  variableHashes:
+                    type: object
+                    additionalProperties:
+                      type: string
+                      pattern: '^sha256:[0-9a-f]{64}$'
+                  contentTrust:
+                    type: string
+                    enum: [trusted, untrusted]
+        '400':
+          description: |
+            `prompt_variable_unresolved` (required variable missing),
+            `prompt_variable_type_mismatch` (bound type vs. declared type),
+            or `prompt_ref_invalid` (malformed PromptRef).
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: Referenced template does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+        '501':
+          description: 'Host does not advertise capabilities.prompts.supported.'
           content:
             application/json:
               schema:

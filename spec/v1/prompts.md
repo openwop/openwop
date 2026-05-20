@@ -243,17 +243,102 @@ Both invariants live in `SECURITY/invariants.yaml` once a reference host emits t
 
 ---
 
+## Discovery & distribution (RFC 0028)
+
+Phase B of the prompt-library track adds two complementary surfaces:
+
+### REST endpoints
+
+Six operations under `/v1/prompts*`, all gated on `capabilities.prompts.supported: true`. The mutating three (`POST` / `PUT` / `DELETE`) are additionally gated on `capabilities.prompts.mutableLibrary: true`. Hosts that don't advertise the relevant capability return `501 capability_not_provided`.
+
+| Method | Path | OperationId | Purpose |
+|---|---|---|---|
+| `GET` | `/v1/prompts` | `listPromptTemplates` | Paginated list with `?kind`, `?tag`, `?modelClass`, `?source` filters + opaque `cursor` + `limit`. |
+| `POST` | `/v1/prompts` | `createPromptTemplate` | Create a user-source template (mutable libraries only). Returns `201` with a `Location` header. |
+| `GET` | `/v1/prompts/{templateId}` | `getPromptTemplate` | Fetch a single template, optionally pinned via `?version`. `ETag` + `If-None-Match` revalidation. `?libraryId` disambiguates when packs collide. |
+| `PUT` | `/v1/prompts/{templateId}` | `updatePromptTemplate` | Replace a user-source template; submitted SemVer MUST be strictly greater than stored. |
+| `DELETE` | `/v1/prompts/{templateId}` | `deletePromptTemplate` | Delete a user-source template; `403` on host-built-in or pack-sourced. |
+| `POST` | `/v1/prompts:render` | `renderPromptTemplate` | Render with supplied bindings; returns composed body + sha256 hash + per-variable hashes. Does NOT dispatch an LLM call. |
+
+**Deterministic-render invariant.** The `:render` response's `hash` MUST equal the `hash` that a matching `prompt.composed` event would carry at dispatch time for the same `(ref, variables, contentTrust)` inputs. This is the same determinism contract `prompt.composed` participates in for replay (per §"Replay determinism" above) — the `:render` endpoint is the preview surface that lets clients validate hashes before dispatch.
+
+**Cache semantics.** `GET /v1/prompts/{templateId}` responses SHOULD set `ETag: "<sha256-of-body>"` and `Cache-Control: max-age=60`. When the request pinned `?version`, hosts SHOULD upgrade to `Cache-Control: public, max-age=31536000, immutable` (mirrors `node-packs.md` §"Immutable artifact" semantics).
+
+**Authorization.** Mutating endpoints MUST require authentication per `auth.md`. Hosts SHOULD scope by writer role; the spec defers role-mapping to host policy.
+
+### Prompt-pack distribution
+
+A third pack kind alongside node packs (RFC 0003) and workflow-chain packs (RFC 0013). Distinguished by `kind: "prompt"` in the manifest:
+
+```json
+{
+  "name": "vendor.acme.editorial-prompts",
+  "version": "1.0.0",
+  "kind": "prompt",
+  "engines": { "openwop": ">=1.1.0 <2.0.0" },
+  "prompts": [
+    {
+      "templateId": "writer-system",
+      "version": "1.0.0",
+      "kind": "system",
+      "text": "You are a careful editorial writer.",
+      "tags": ["editorial"]
+    }
+  ]
+}
+```
+
+See `schemas/prompt-pack-manifest.schema.json` for the full shape.
+
+**Install-time validation.** When a host installs a prompt pack:
+
+1. Verify the Ed25519 signature per `registry-operations.md` §"Signature verification" — same flow as node and chain packs.
+2. Verify SRI integrity per `registry-operations.md` §"Subresource Integrity" — unchanged.
+3. Compile each `prompts[].text` against `prompt-template.schema.json` and assert variable-reference closure (every `{{varName}}` in `text` either appears in `variables[]` or matches a canonical context key).
+4. Resolve every entry in the manifest's `dependencies` block; an unresolvable entry rejects the install with `prompt_pack_dependency_unresolvable`.
+5. Reject install with `prompt_template_invalid` on any of the above.
+
+**Pack-kind discriminator invariant.** A manifest with `kind: "prompt"` MUST NOT also carry `nodes[]` or `chains[]` arrays. Same posture as RFC 0013's "negative example."
+
+**Conflict resolution (cross-pack `templateId` collision).** When two installed prompt packs ship the same `templateId`:
+
+- Both surface in `GET /v1/prompts` with distinct `meta.source: "pack"` + `meta.packName` + `meta.packVersion` discriminators.
+- A stringy `PromptRef` (`prompt:writer-system@1.0.0`) without `libraryId` is rejected with `prompt_ref_ambiguous` when more than one match exists.
+- Clients disambiguate by using the structured object form: `{ libraryId: "vendor.acme.editorial-prompts", templateId: "writer-system", version: "1.0.0" }`.
+
+### Capability advertisement extensions
+
+Phase B extends `capabilities.prompts` with three additional optional fields:
+
+| Field | Semantics |
+|---|---|
+| `packsSupported: boolean` | Host installs `kind: "prompt"` packs and exposes their templates at `GET /v1/prompts` with `meta.source: "pack"`. False or absent = no pack support. |
+| `mutableLibrary: boolean` | Host honors `POST` / `PUT` / `DELETE /v1/prompts*`. False or absent → 501 on those endpoints. Pack-sourced + host-built-in templates remain read-only regardless. |
+| `library.{id, renderEndpoint, maxRenderRequestBytes}` | Per-library configuration knobs. `id` enables structured-PromptRef `libraryId` lookup. `renderEndpoint` overrides the default `/v1/prompts:render` path. `maxRenderRequestBytes` caps `:render` request body size. |
+
+### Provenance fields on `PromptTemplate.meta`
+
+When a template is pack-sourced, the host MUST populate two additional `meta` fields:
+
+- `meta.packName` — matches the installed pack's `name`. Required when `meta.source: "pack"`.
+- `meta.packVersion` — matches the installed pack's `version`. Required when `meta.source: "pack"`.
+
+A JSON-Schema `if/then` conditional in `prompt-template.schema.json` enforces this at install time.
+
+---
+
 ## Open spec gaps
 
 | # | Gap | Owner / RFC |
 |---|---|---|
-| P1 | Registry surface — `/v1/prompts/*` REST endpoints + `kind: "prompt"` pack manifest + install flow | RFC 0028 (Draft) |
-| P2 | Four-layer resolution chain + `agent.promptResolved` event + `AgentManifest.promptOverrides` | RFC 0029 (Draft) |
-| P3 | Reference-host emission of `prompt.composed` from `core.ai.callPrompt` in the workflow-engine sample | Acceptance-gate item per RFC 0027 |
-| P4 | First non-steward host advertises `capabilities.prompts.supported: true` | Acceptance-gate item per RFC 0027 |
+| P1 | Four-layer resolution chain + `agent.promptResolved` event + `AgentManifest.promptOverrides` | RFC 0029 (Draft) |
+| P2 | Reference-host emission of `prompt.composed` from `core.ai.callPrompt` in the workflow-engine sample | Acceptance-gate item per RFC 0027 |
+| P3 | First non-steward host advertises `capabilities.prompts.supported: true` | Acceptance-gate item per RFC 0027 |
+| P4 | Reference-host implementation of `/v1/prompts*` REST endpoints + prompt-pack install flow | Acceptance-gate item per RFC 0028 |
 | P5 | Nested template includes (`{{include:prompt:other@1.0.0}}`) — deferred to a future RFC if demand emerges | (open) |
 | P6 | Canonical enumeration of `context` source variable names — currently non-normative recommendations | (open) |
 | P7 | Cross-validation of `modelHints.envelopeType` against `capabilities.supportedEnvelopes` and the Tier-1 portability subset (RFC 0030) | RFC 0030 (Draft, parallel track) |
+| P8 | Cross-pack `dependencies` semantics — `extends:` template inheritance, transitive closure resolution | RFC follow-up to 0028 (deferred) |
 
 ---
 

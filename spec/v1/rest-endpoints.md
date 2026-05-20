@@ -205,6 +205,19 @@ Hosts that advertise the `openwop-audit-log-integrity` profile per `auth-profile
 |---|---|---|---|---|
 | `GET` | `/v1/audit/verify` | API key | `audit:read` | Re-walk the audit-log hash chain over `[fromSeq, toSeq]` and return chain-validity verdict + signed checkpoints + anomalies. See `auth-profiles.md` §`openwop-audit-log-integrity` §4 and `schemas/audit-verify-result.schema.json`. |
 
+### Prompt library (RFC 0028; gated on `capabilities.prompts.*`)
+
+Hosts that advertise `capabilities.prompts.supported: true` per `prompts.md` §"Discovery & distribution" expose the read endpoints. The mutating endpoints additionally require `capabilities.prompts.mutableLibrary: true`. Hosts without the relevant capability return `501 capability_not_provided`.
+
+| Method | Path | Auth | Scope | Purpose |
+|---|---|---|---|---|
+| `GET` | `/v1/prompts` | API key | `prompts:read` | Paginated list with `?kind`, `?tag`, `?modelClass`, `?source` filters + opaque `cursor` + `limit`. |
+| `POST` | `/v1/prompts` | API key | `prompts:write` | Create a user-source PromptTemplate (mutable libraries only). `Idempotency-Key` supported. Returns `201` with `Location`. |
+| `GET` | `/v1/prompts/{templateId}` | API key | `prompts:read` | Fetch a template; optional `?version` SemVer pin + optional `?libraryId` for cross-pack disambiguation. `ETag` + `If-None-Match` revalidation. |
+| `PUT` | `/v1/prompts/{templateId}` | API key | `prompts:write` | Replace a user-source template; submitted SemVer MUST be strictly greater than stored. Mutable libraries only. |
+| `DELETE` | `/v1/prompts/{templateId}` | API key | `prompts:write` | Delete a user-source template; `403` on host-built-in or pack-sourced. Mutable libraries only. |
+| `POST` | `/v1/prompts:render` | API key | `prompts:read` | Render a template against supplied variable bindings; returns composed body + sha256 hash + per-variable hashes. Deterministic-hash invariant per RFC 0027 §F. Does NOT dispatch an LLM call. |
+
 ## Optional endpoints (transports)
 
 An OpenWOP-compliant server MAY expose additional transports. If exposed, they MUST follow these contracts:
