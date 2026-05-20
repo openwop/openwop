@@ -1,0 +1,14 @@
+{
+  "templateId": "conformance.prompt.few-shot",
+  "version": "1.0.0",
+  "kind": "few-shot",
+  "text": "Example 1:\nQ: Summarize a paragraph about coffee in two sentences.\nA: Coffee is brewed from roasted seeds of the Coffea plant. It is one of the world's most-traded commodities by value.\n\nExample 2:\nQ: Summarize a paragraph about tea in two sentences.\nA: Tea is brewed from cured leaves of the Camellia sinensis plant. It is consumed in more countries than coffee but produces less global trade value.",
+  "name": "Conformance: Few-shot exemplars (Q/A pairs)",
+  "description": "few-shot-kind PromptTemplate used by the prompt-end-to-end-events conformance scenario to assert all four kinds dispatch end-to-end. Variable-free; renders verbatim. Two Q/A exemplars in the conventional shape — real provider dispatchers route each exemplar to a separate assistant/user message pair; the mock LLM here just concatenates them into the composed body.",
+  "tags": ["conformance", "few-shot"],
+  "meta": {
+    "author": "openwop-conformance-suite",
+    "createdAt": "2026-05-20T00:00:00Z",
+    "source": "host"
+  }
+}

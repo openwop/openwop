@@ -1,0 +1,38 @@
+{
+  "id": "conformance-prompt-all-four-kinds",
+  "name": "Conformance: Prompt-Library All Four Kinds End-to-End",
+  "version": "1.0",
+  "description": "RFC 0027 §A end-to-end coverage of all four `PromptKind` values (system, user, schema-hint, few-shot). Single mock-ai node configured with one ref per kind; when the node executes, the host MUST resolve each ref via the four-layer chain (RFC 0029 §A), emit one `agent.promptResolved` event per kind, compose the body (RFC 0027 §E), emit one `prompt.composed` event per composition, and complete the run successfully. Few-shot is exercised as a single-entry list to keep the assertion count tractable. Capability-gated: host MUST advertise `capabilities.prompts.supported: true`. See conformance/src/scenarios/prompt-all-four-kinds-events.test.ts.",
+  "nodes": [
+    {
+      "id": "all-kinds",
+      "typeId": "local.sample.demo.mock-ai",
+      "name": "All-kinds (mock AI)",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "systemPromptRef": "prompt:conformance.prompt.writer-system@1.0.0",
+        "userPromptRef": "prompt:conformance.prompt.writer-system@1.0.0",
+        "schemaHintPromptRef": "prompt:conformance.prompt.schema-hint@1.0.0",
+        "fewShotPromptRefs": [
+          "prompt:conformance.prompt.few-shot@1.0.0"
+        ]
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    {
+      "name": "prompt",
+      "type": "string",
+      "description": "Optional inline prompt content. The mock-ai node prefers the composed bodies (concatenated in system → schema-hint → few-shot → user order) when refs are present; this variable is the fallback baseline if no ref resolves.",
+      "required": false,
+      "defaultValue": "conformance baseline prompt"
+    }
+  ],
+  "metadata": { "tags": ["conformance", "prompts", "all-four-kinds"] },
+  "settings": { "timeout": 10000 }
+}

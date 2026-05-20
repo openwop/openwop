@@ -11,6 +11,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Host + Conformance — RFC 0027 §A four-kind dispatch wiring + coverage scenario (2026-05-20)
+
+Closes the credibility gap where the reference workflow-engine sample advertised `capabilities.prompts.templateKinds: ["system", "user", "few-shot", "schema-hint"]` but `bootstrap/nodes.ts` only routed `system` + `user` refs into the mock LLM. A third-party host claiming the same advertisement now has a wire-side check covering all four kinds.
+
+- `apps/workflow-engine/backend/typescript/src/bootstrap/nodes.ts` — `sampleMockAiNode` execute() refactored from an inline 2-kind loop to a `composeRef(kind, refValue)` helper invoked for each of the four kinds (system, user, schema-hint, few-shot). `fewShotPromptRefs[]` iterates entry-by-entry — one `agent.promptResolved` + one `prompt.composed` event per entry. Concatenation order matches the conventional dispatch convention (per myndhyve precedent + RFC 0027 §A prose): `system → schema-hint → few-shot exemplars → user`. Real provider dispatchers (e.g., `core.openwop.ai`) route each kind to its provider-specific slot rather than concatenating; the mock LLM only needs to verify the dispatch reaches each composed body.
+- `apps/workflow-engine/conformance-fixtures/prompt-templates/` — two new host-resident templates (`conformance.prompt.schema-hint@1.0.0` + `conformance.prompt.few-shot@1.0.0`); both variable-free + `meta.source: "host"`. Mirrored to `conformance/fixtures/prompt-templates/`.
+- `conformance/fixtures/conformance-prompt-all-four-kinds.json` (NEW) — single mock-ai node with one ref per kind. Mirrored to `apps/workflow-engine/conformance-fixtures/`. Catalog row added to `conformance/fixtures.md`.
+- `conformance/src/scenarios/prompt-all-four-kinds-events.test.ts` (NEW) — two sub-tests, both gated on `behaviorGate('prompts-supported', ...)`: (a) emits `agent.promptResolved` for each of the four kinds AND ≥ 4 `prompt.composed` events; (b) resolution events precede composition events globally. The scenario is the templateKinds-coverage regression pin — if a future refactor drops a kind from the dispatch path, this scenario fails first.
+- Conformance scenario count: 186 → 187. CHANGELOG entry pairs with the `prompt-end-to-end-events.test.ts` system-only regression pin from commit `f2bd5b6`.
+
+Compatibility: **additive** — sample-host implementation only. No spec / schema / wire-shape changes. Gate: `tsc --noEmit` clean across workflow-engine backend + conformance suite; 56/56 protocol-tier SECURITY invariants verified.
+
 ### RFCs 0027 / 0028 / 0029 promoted Draft → Active (2026-05-20)
 
 All three prompt-library track RFCs flip `Status: Draft → Active` under the bootstrap-phase steward waiver per `CONTRIBUTING.md` §"Bootstrap-phase notes" + `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". Same posture RFCs 0021–0026 and 0030 used in this release. Each RFC gains a `## Status history` section detailing evidence at promotion. Path from `Active → Accepted` is unblocked for all three; the standard third-party non-steward host advertisement gate is the only remaining criterion.

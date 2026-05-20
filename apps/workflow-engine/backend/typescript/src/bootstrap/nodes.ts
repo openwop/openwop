@@ -455,13 +455,15 @@ const interruptNode: NodeModule = {
 // deployers wire core.openwop.ai (published pack) which calls actual
 // providers and records real token counts + USD via emitCost().
 //
-// RFC 0027 + RFC 0029 integration: when `config.systemPromptRef` or
-// `config.userPromptRef` is set, the node walks the four-layer
-// resolution chain (per `spec/v1/prompts.md` §"Resolution chain
-// (normative)"), emits one `agent.promptResolved` event per kind
-// resolved, then composes the body via the host's composition
-// pipeline and emits one `prompt.composed` event per composition.
-// The composed body becomes the actual prompt sent to the mock LLM.
+// RFC 0027 + RFC 0029 integration: when any of the four PromptRef
+// kinds is set on `config` (`systemPromptRef`, `userPromptRef`,
+// `schemaHintPromptRef`, `fewShotPromptRefs[]`), the node walks the
+// four-layer resolution chain (per `spec/v1/prompts.md` §"Resolution
+// chain (normative)"), emits one `agent.promptResolved` event per
+// kind+slot resolved, then composes the body via the host's
+// composition pipeline and emits one `prompt.composed` event per
+// composition. The composed bodies are concatenated into the prompt
+// the mock LLM responds to.
 const sampleMockAiNode: NodeModule = {
   typeId: 'local.sample.demo.mock-ai',
   version: '0.1.0',
@@ -476,31 +478,43 @@ const sampleMockAiNode: NodeModule = {
     };
 
     // ── Prompt-library integration ────────────────────────────────
-    // For each kind whose ref is set, walk the resolution chain,
-    // emit agent.promptResolved, then (if resolved) compose + emit
-    // prompt.composed. The composed body for the `user` kind (or
-    // `system` if no user ref) becomes the prompt sent to the mock
-    // LLM downstream. The discovery-advertised capability values
-    // (observability + agentBindings) are read from the shared
-    // `getPromptsHostConfig()` so a deployer who tightens the
+    // For each kind whose ref(s) is/are set, walk the resolution
+    // chain, emit `agent.promptResolved`, then (if resolved) compose
+    // + emit `prompt.composed`. The discovery-advertised capability
+    // values (observability + agentBindings) are read from the
+    // shared `getPromptsHostConfig()` so a deployer who tightens the
     // advertisement can't end up with a dispatch path that emits
     // looser data than the host claims to expose.
     //
-    // TODO: schema-hint + few-shot dispatch wiring (RFC 0027 §A).
-    // The cast surfaces `schemaHintPromptRef` + `fewShotPromptRefs`
-    // for forward-compat, but only system + user kinds drive the
-    // mock LLM in this Phase A slice.
+    // All four kinds defined in `schemas/prompt-kind.schema.json` are
+    // wired (RFC 0027 §A):
+    //   - `system` / `user` / `schema-hint` — singular ref fields.
+    //   - `few-shot` — plural `fewShotPromptRefs[]` (each entry
+    //     resolves + composes independently; one event pair per
+    //     entry).
+    //
+    // The mock LLM "prompt" is the concatenation of composed bodies
+    // in the conventional dispatch order (per myndhyve precedent +
+    // RFC 0027 prose): system → schema-hint → few-shot exemplars →
+    // user. Real provider dispatchers (e.g., `core.openwop.ai`)
+    // route each kind to its provider-specific slot (system message,
+    // response_format hint, assistant/user exemplar pairs, user
+    // message) rather than concatenating; the mock LLM here only
+    // needs to verify the dispatch reaches each composed body.
     const promptsConfig = getPromptsHostConfig();
-    const refKinds: readonly PromptKind[] = ['system', 'user'];
-    const composedByKind: Partial<Record<PromptKind, string>> = {};
-    for (const kind of refKinds) {
-      const refField = kind === 'system' ? cfg.systemPromptRef : cfg.userPromptRef;
-      if (refField === undefined || refField === null || refField === '') continue;
 
-      // Layer-1 ref present → walk the chain. The reference host
-      // doesn't carry agent manifests or workflow defaults at the
-      // node-execution boundary in this sample, so the chain only
-      // exercises Layer 1 + Layer 4 (host defaults are also empty).
+    /** Compose one template by ref, emit the chain + composed events,
+     *  and return the composed body (or null on miss). The kind is
+     *  passed through to the resolver + composer so observability
+     *  events carry accurate per-kind attribution. The slotIndex
+     *  argument lets the caller disambiguate few-shot entries when
+     *  multiple refs share the same kind. */
+    const composeRef = async (
+      kind: PromptKind,
+      refValue: unknown,
+    ): Promise<string | null> => {
+      if (refValue === undefined || refValue === null || refValue === '') return null;
+
       const resolution = resolvePromptRef({
         kind,
         node: { nodeId: ctx.nodeId, config: cfg },
@@ -512,17 +526,17 @@ const sampleMockAiNode: NodeModule = {
       // is safe regardless of observability mode.
       await ctx.emit('agent.promptResolved', resolution);
 
-      if (resolution.resolved === null) continue;
+      if (resolution.resolved === null) return null;
 
       // Parse the winning ref to look up the template. Stringy form
       // `prompt:templateId[@version]` is canonical for the resolver's
       // output.
       const refMatch = /^prompt:([a-z0-9][a-z0-9._-]{0,127})(?:@(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?))?$/.exec(resolution.resolved);
-      if (!refMatch) continue;
+      if (!refMatch) return null;
       const templateId = refMatch[1]!;
       const version = refMatch[2];
       const found = getTemplate(templateId, version !== undefined ? { version } : {});
-      if (!found || found === 'ambiguous') continue;
+      if (!found || found === 'ambiguous') return null;
 
       // Compose with ctx.inputs as the variable-binding source. The
       // composer respects PromptVariable.source declarations on the
@@ -539,14 +553,31 @@ const sampleMockAiNode: NodeModule = {
         nodeId: ctx.nodeId,
       });
       await ctx.emit('prompt.composed', composed);
-      if (composed.composed !== undefined) composedByKind[kind] = composed.composed;
-    }
+      return composed.composed ?? null;
+    };
 
-    // The mock LLM "prompt" is the composed user body when set,
-    // else the composed system body, else inputs.prompt (back-compat).
-    const prompt = composedByKind.user
-      ?? composedByKind.system
-      ?? (typeof inputs.prompt === 'string' ? inputs.prompt : '');
+    const systemBody = await composeRef('system', cfg.systemPromptRef);
+    const schemaHintBody = await composeRef('schema-hint', cfg.schemaHintPromptRef);
+    const fewShotBodies: string[] = [];
+    if (Array.isArray(cfg.fewShotPromptRefs)) {
+      for (const fewShotRef of cfg.fewShotPromptRefs) {
+        const body = await composeRef('few-shot', fewShotRef);
+        if (body !== null) fewShotBodies.push(body);
+      }
+    }
+    const userBody = await composeRef('user', cfg.userPromptRef);
+
+    // Concatenate composed bodies in the conventional dispatch order.
+    // Falls back to `inputs.prompt` (back-compat) when no ref at all
+    // resolved.
+    const parts: string[] = [];
+    if (systemBody !== null) parts.push(systemBody);
+    if (schemaHintBody !== null) parts.push(schemaHintBody);
+    for (const f of fewShotBodies) parts.push(f);
+    if (userBody !== null) parts.push(userBody);
+    const prompt = parts.length > 0
+      ? parts.join('\n\n')
+      : (typeof inputs.prompt === 'string' ? inputs.prompt : '');
 
     // Simulated token accounting — real impls read from the provider response.
     const promptTokens = Math.ceil(prompt.length / 4);

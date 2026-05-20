@@ -1,0 +1,14 @@
+{
+  "templateId": "conformance.prompt.schema-hint",
+  "version": "1.0.0",
+  "kind": "schema-hint",
+  "text": "Respond as a JSON object with exactly these keys: `topic` (string), `tone` (string), `outline` (array of three strings).",
+  "name": "Conformance: Schema hint (structured-output directive)",
+  "description": "schema-hint-kind PromptTemplate used by the prompt-end-to-end-events conformance scenario to assert all four kinds dispatch end-to-end. Variable-free; renders verbatim. Conventional dispatch slot per RFC 0027 §A is the structured-output directive a vendor SDK injects as `response_format` / `responseSchema` adjacent to the system message.",
+  "tags": ["conformance", "schema-hint"],
+  "meta": {
+    "author": "openwop-conformance-suite",
+    "createdAt": "2026-05-20T00:00:00Z",
+    "source": "host"
+  }
+}
