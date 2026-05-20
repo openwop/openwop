@@ -18,7 +18,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RunEventDoc } from '@openwop/openwop';
 import { cancelRun, createRun, getRun } from '../../client/runsClient.js';
 import { subscribeToRun, type Subscription } from '../../client/streamsClient.js';
-import { listOpenInterrupts, type OpenInterrupt } from '../../client/interruptsClient.js';
+import { listOpenInterrupts } from '../../client/interruptsClient.js';
+import { listChatSessionMessages } from '../../client/chatSessionsClient.js';
 import type { BYOKActiveConfig } from '../../byok/lib/useBYOKConfig.js';
 import { useApplyAnimation } from './useApplyAnimation.js';
 import { getSavedWorkflow } from '../../builder/persistence/localStore.js';
@@ -26,157 +27,33 @@ import { serializeWorkflow } from '../../builder/schema/serialize.js';
 import { registerWorkflow } from '../../builder/persistence/registerClient.js';
 import type { WorkflowMentionEntry } from '../lib/workflowMentions.js';
 
-/** A single piece of content within a message. Models that support
- *  multi-modal input (audio, image) accept multiple parts; a pure-text
- *  message has a single text part — equivalent to `content: string`. */
-export type ContentPart =
-  | { type: 'text'; text: string }
-  | { type: 'audio'; mimeType: string; dataBase64: string; durationSeconds?: number };
+// Phase 2D — types extracted to `../types.js` so this hook can focus
+// on lifecycle. Re-exported here for back-compat with existing callers
+// (MessageBubble, MessageRenderer, etc. import these from this module).
+export type {
+  AgentDecision,
+  AgentHandoff,
+  AgentToolCall,
+  ChatMessage,
+  ChatMessageThoughts,
+  ChatSession,
+  Citation,
+  ContentPart,
+  SendOptions,
+  WorkflowRunState,
+} from '../types.js';
+export { messageText } from '../types.js';
 
-/** A normalized citation surfaced from a provider's web-search tool result. */
-export interface Citation {
-  title?: string;
-  url: string;
-  snippet?: string;
-}
-
-/** State attached to a `workflow_run` chat message. Tracks the
- *  workflow execution lifecycle for direct `@mention` dispatch
- *  (bypassing the LLM tool-calling path). */
-export interface WorkflowRunState {
-  slug: string;
-  workflowName: string;
-  workflowId: string;
-  /** Null while POST /v1/runs is in flight, then set. */
-  runId: string | null;
-  status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
-  totalNodes: number;
-  /** Deduped node ids whose `node.completed` event has been seen. */
-  completedNodeIds: string[];
-  /** Deduped node ids whose `node.failed` event has been seen. The
-   *  executor may keep running other branches after a failure (error-
-   *  routing trigger rules); the bubble surfaces failures via the
-   *  terminal `run.failed` event but tracks per-node failures here for
-   *  future UI use and progress-bar accuracy. */
-  failedNodeIds: string[];
-  /** Friendly name of the most recently started node. */
-  currentNodeName: string | null;
-  /** Map of backend nodeId → friendly name from the builder graph.
-   *  Empty for sample workflows where we don't have the SavedWorkflow. */
-  nodeNames: Record<string, string>;
-  startedAt: string;
-  outputs?: Record<string, unknown>;
-  error?: { code: string; message: string };
-}
-
-/** A tool the assistant agent invoked during this turn — built from a
- *  `agent.toolCalled` + matching `agent.toolReturned` pair (RFC 0002 §B).
- *  Rendered as an inline card under the assistant bubble. */
-export interface AgentToolCall {
-  callId: string;
-  toolName: string;
-  agentId: string;
-  inputs?: unknown;
-  outcome?: unknown;
-  error?: { code: string; message: string };
-  startedAt: string;
-  /** When set, the toolReturned event has arrived. Card collapses from
-   *  "Running…" to a duration badge. */
-  finishedAt?: string;
-}
-
-/** Control transfer between agents within this turn (RFC 0002 §B,
- *  `agent.handoff`). Rendered as a chevron-separated chip under the
- *  bubble owned by the receiving agent. */
-export interface AgentHandoff {
-  fromAgentId: string;
-  toAgentId: string;
-  reason?: string;
-  at: string;
-}
-
-/** Typed decision the agent produced (RFC 0002 §B, `agent.decided`). */
-export interface AgentDecision {
-  agentId: string;
-  decision: unknown;
-  confidence?: number;
-  at: string;
-}
-
-/** Reasoning trace surfaced from `agent.reasoned` events (RFC 0002).
- *  Rendered above the assistant bubble as a collapsible "Thoughts"
- *  disclosure — Claude.ai / o1 style. The reasoning content is
- *  authoritative once `finishedAt` is set; before that, the disclosure
- *  shows a "Thinking…" pulse. */
-export interface ChatMessageThoughts {
-  /** Accumulated reasoning text. For Phase 1, set once on
-   *  `agent.reasoned`. For Phase 2 streaming, grows incrementally via
-   *  `agent.reasoning.delta`. */
-  content: string;
-  /** Verbosity mode this reasoning was produced under. */
-  verbosity?: 'summary' | 'full' | 'off';
-  /** AgentRef.agentId of the reasoning agent. */
-  agentId?: string;
-  /** Wall-clock when the first reasoning chunk arrived. */
-  startedAt: string;
-  /** Wall-clock when the reasoning block closed. Unset while
-   *  in-flight; the disclosure shows a pulsing "Thinking…" state. */
-  finishedAt?: string;
-  /** Convenience: elapsed time in ms, computed on finalize. */
-  durationMs?: number;
-}
-
-export interface ChatMessage {
-  id: string;
-  role: 'user' | 'assistant' | 'system' | 'workflow_run';
-  /** Message content. `string` is the common case for text-only.
-   *  `ContentPart[]` is for multi-modal user turns (audio + text)
-   *  or future assistant turns that include non-text artifacts.
-   *  For role `workflow_run` this carries a short status summary
-   *  ("@slug — running step N of M"); the structured state lives
-   *  in `workflowRun` below. */
-  content: string | readonly ContentPart[];
-  /** When true, the bubble is receiving streaming deltas. */
-  isStreaming?: boolean;
-  /** Optional reasoning trace from `agent.reasoned` / Phase 2
-   *  streaming deltas. Rendered as a collapsible Thoughts disclosure
-   *  above the assistant bubble. */
-  thoughts?: ChatMessageThoughts;
-  /** Optional agent-event timeline for this turn — tool calls, handoffs,
-   *  decisions surfaced from the `agent.*` event family (RFC 0002 §B).
-   *  Rendered as a sequence of inline cards below the message content. */
-  agentEvents?: {
-    toolCalls: AgentToolCall[];
-    handoffs: AgentHandoff[];
-    decisions: AgentDecision[];
-  };
-  /** When set, render an interrupt card inline beneath this bubble. */
-  activeInterrupt?: OpenInterrupt | null;
-  /** Final-turn metadata for the assistant bubble. */
-  meta?: {
-    runId?: string;
-    provider?: string;
-    model?: string;
-    inputTokens?: number;
-    outputTokens?: number;
-    error?: { code: string; message: string };
-    /** Citations from a web-search-enabled turn. */
-    citations?: readonly Citation[];
-  };
-  /** Structured state for `role: 'workflow_run'` messages. */
-  workflowRun?: WorkflowRunState;
-  /** User thumbs-up / thumbs-down feedback recorded via the message-actions
-   *  toolbar. Persisted to localStorage with the rest of the session; no
-   *  backend wiring yet (signal-only). Absent = no rating given. */
-  feedback?: 'positive' | 'negative';
-  createdAt: string;
-}
-
-/** Helpers: extract the text portion (for cost calc / history history reconstruction). */
-export function messageText(m: ChatMessage): string {
-  if (typeof m.content === 'string') return m.content;
-  return m.content.filter((p): p is { type: 'text'; text: string } => p.type === 'text').map((p) => p.text).join('');
-}
+import type {
+  ChatMessage,
+  ChatMessageThoughts,
+  ChatSession,
+  Citation,
+  ContentPart,
+  SendOptions,
+  WorkflowRunState,
+} from '../types.js';
+import { messageText } from '../types.js';
 
 /** Functional state-update helper for a single message in the session.
  *  Encapsulates the spread-map-spread dance so callers can express the
@@ -206,28 +83,9 @@ function updateAgentEvents(
   }));
 }
 
-export interface ChatSession {
-  id: string;
-  title: string;
-  messages: ChatMessage[];
-  createdAt: string;
-}
-
-/** Per-turn options for send(). */
-export interface SendOptions {
-  /** Audio / image / file attachments. Bundled into the user message as
-   *  ContentPart[]; provider dispatchers convert per-provider. */
-  attachments?: readonly ContentPart[];
-  /** Enable provider-native web search for this turn (anthropic / openai
-   *  / google all support; gated per-model via providers.json `webSearch`). */
-  webSearch?: boolean;
-  /** Workflow-bound tools the chat node can dispatch via the Anthropic
-   *  tools API (anthropic provider only — gated upstream). Each entry
-   *  is { workflowId, name, description }; the chat responder node
-   *  turns these into Anthropic tool definitions and dispatches the
-   *  named workflow on tool_use. */
-  tools?: ReadonlyArray<{ workflowId: string; name: string; description: string }>;
-}
+// `ChatSession` + `SendOptions` now live in `../types.js`; see the
+// re-export above. Inlined imports are sufficient for the rest of this
+// file.
 
 const LS_KEY = 'openwop.sample.chat.session';
 const SYSTEM_PROMPT =
@@ -289,6 +147,9 @@ export interface UseChatSessionResult {
   regenerate: (messageId: string, config: BYOKActiveConfig) => Promise<void>;
   /** Toggle 👍/👎 feedback on an assistant bubble. Pass `null` to clear. */
   setFeedback: (messageId: string, feedback: 'positive' | 'negative' | null) => void;
+  /** Switch the active chat to a persisted session — cancels the in-flight
+   *  subscription, loads messages from the BE, replaces local state. */
+  loadSessionFromBackend: (sessionId: string) => Promise<void>;
 }
 
 export function useChatSession(): UseChatSessionResult {
@@ -789,6 +650,44 @@ export function useChatSession(): UseChatSessionResult {
     }));
   }, []);
 
+  const loadSessionFromBackend = useCallback(async (sessionId: string) => {
+    // Cancel anything in flight on the current session before switching.
+    subRef.current?.close();
+    subRef.current = null;
+    inFlightRunIdRef.current = null;
+    inFlightAssistantIdRef.current = null;
+    setIsSending(false);
+    setError(null);
+    try {
+      const persisted = await listChatSessionMessages(sessionId);
+      // Each persisted row carries a JSON-encoded ChatMessage minus
+      // the id (the id is the row's messageId) — round-trip via the
+      // same envelope shape that `send` writes through.
+      const messages: ChatMessage[] = persisted
+        .map((p): ChatMessage | null => {
+          try {
+            const stripped = JSON.parse(p.content) as Omit<ChatMessage, 'id'>;
+            return { ...stripped, id: p.messageId };
+          } catch {
+            return null;
+          }
+        })
+        .filter((m): m is ChatMessage => m !== null);
+      const next: ChatSession = {
+        id: sessionId,
+        // The drawer holds the authoritative title; on reload we use a
+        // placeholder until the next persistSession() picks it up.
+        title: 'Saved chat',
+        messages,
+        createdAt: persisted[0]?.createdAt ?? new Date().toISOString(),
+      };
+      persistSession(next);
+      setSession(next);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  }, []);
+
   const setFeedback = useCallback((messageId: string, feedback: 'positive' | 'negative' | null) => {
     setSession((s) => ({
       ...s,
@@ -1065,5 +964,6 @@ export function useChatSession(): UseChatSessionResult {
     cancelWorkflowRun,
     regenerate,
     setFeedback,
+    loadSessionFromBackend,
   };
 }
