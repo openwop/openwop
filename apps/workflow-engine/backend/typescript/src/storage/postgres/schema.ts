@@ -32,7 +32,7 @@ export interface Queryable {
   ): Promise<{ rows: R[] }>;
 }
 
-export const LATEST_SCHEMA_VERSION = 4;
+export const LATEST_SCHEMA_VERSION = 5;
 
 const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
   1: async (client) => {
@@ -189,6 +189,35 @@ const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_envelope_correlations_run
         ON envelope_correlations (run_id);
+    `);
+  },
+  5: async (client) => {
+    // Sample-extension chat-session history backing the new
+    // `/v1/host/sample/chat/sessions/*` routes (chat improvements
+    // plan §2C.1). Mirrors `sqlite/schema.ts` v7 — two tables,
+    // tenant-scoped index, cascade-on-delete from sessions to
+    // messages. TIMESTAMPTZ columns round-trip ISO-8601-Z strings.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS chat_sessions (
+        session_id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL,
+        updated_at TIMESTAMPTZ NOT NULL,
+        message_count INTEGER NOT NULL DEFAULT 0
+      );
+      CREATE INDEX IF NOT EXISTS idx_chat_sessions_tenant
+        ON chat_sessions (tenant_id, updated_at DESC);
+      CREATE TABLE IF NOT EXISTS chat_messages (
+        message_id TEXT PRIMARY KEY,
+        session_id TEXT NOT NULL REFERENCES chat_sessions(session_id) ON DELETE CASCADE,
+        role TEXT NOT NULL,
+        content TEXT NOT NULL,
+        meta TEXT,
+        created_at TIMESTAMPTZ NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_chat_messages_session
+        ON chat_messages (session_id, created_at);
     `);
   },
 };

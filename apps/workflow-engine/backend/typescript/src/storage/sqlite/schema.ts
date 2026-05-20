@@ -8,7 +8,7 @@
 
 import type { Database } from 'better-sqlite3';
 
-export const LATEST_SCHEMA_VERSION = 6;
+export const LATEST_SCHEMA_VERSION = 7;
 
 const MIGRATIONS: Record<number, (db: Database) => void> = {
   1: (db) => {
@@ -205,6 +205,38 @@ const MIGRATIONS: Record<number, (db: Database) => void> = {
     db.exec(`
       CREATE INDEX IF NOT EXISTS idx_envelope_correlations_run
         ON envelope_correlations (run_id);
+    `);
+  },
+  7: (db) => {
+    // Sample-extension chat-session history backing the new
+    // `/v1/host/sample/chat/sessions/*` routes (chat improvements
+    // plan §2C.1). Two tables: per-session headers (`chat_sessions`)
+    // and per-session messages (`chat_messages`) with cascade delete.
+    // `tenant_id` lets the routes scope listings per tenant; `meta`
+    // is opaque JSON carrying the FE's ChatMessage.meta block
+    // (provider/model/tokens/error/citations/etc.) so message-shape
+    // evolution doesn't force a new migration.
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS chat_sessions (
+        session_id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        message_count INTEGER NOT NULL DEFAULT 0
+      );
+      CREATE INDEX IF NOT EXISTS idx_chat_sessions_tenant
+        ON chat_sessions (tenant_id, updated_at DESC);
+      CREATE TABLE IF NOT EXISTS chat_messages (
+        message_id TEXT PRIMARY KEY,
+        session_id TEXT NOT NULL REFERENCES chat_sessions(session_id) ON DELETE CASCADE,
+        role TEXT NOT NULL,
+        content TEXT NOT NULL,
+        meta TEXT,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_chat_messages_session
+        ON chat_messages (session_id, created_at);
     `);
   },
 };

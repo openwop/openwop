@@ -12,6 +12,8 @@ import { mkdirSync } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type {
+  ChatMessageRecord,
+  ChatSessionRecord,
   EventRecord,
   IdempotencyRecord,
   InterruptRecord,
@@ -162,6 +164,46 @@ export function openSqliteStorage(dbPath: string): Storage {
     INSERT OR REPLACE INTO envelope_correlations
       (run_id, correlation_id, outcome, envelope_type, recorded_at)
     VALUES (?, ?, ?, ?, ?)
+  `);
+
+  // ── chat sessions (Phase 2C.1) ─────────────────────────────────────
+  const listChatSessionsStmt = db.prepare(`
+    SELECT session_id, tenant_id, title, created_at, updated_at, message_count
+    FROM chat_sessions
+    WHERE tenant_id = ?
+    ORDER BY updated_at DESC
+    LIMIT ?
+  `);
+  const createChatSessionStmt = db.prepare(`
+    INSERT INTO chat_sessions (session_id, tenant_id, title, created_at, updated_at, message_count)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+  const getChatSessionStmt = db.prepare(`
+    SELECT session_id, tenant_id, title, created_at, updated_at, message_count
+    FROM chat_sessions
+    WHERE tenant_id = ? AND session_id = ?
+  `);
+  // Patch-update: COALESCE keeps unchanged columns at their existing value
+  // so callers don't have to read-then-write to update just one field.
+  const updateChatSessionStmt = db.prepare(`
+    UPDATE chat_sessions
+       SET title = COALESCE(?, title),
+           updated_at = COALESCE(?, updated_at),
+           message_count = COALESCE(?, message_count)
+     WHERE tenant_id = ? AND session_id = ?
+  `);
+  const deleteChatSessionStmt = db.prepare(`
+    DELETE FROM chat_sessions WHERE tenant_id = ? AND session_id = ?
+  `);
+  const listChatMessagesStmt = db.prepare(`
+    SELECT message_id, session_id, role, content, meta, created_at
+    FROM chat_messages
+    WHERE session_id = ?
+    ORDER BY created_at ASC, message_id ASC
+  `);
+  const appendChatMessageStmt = db.prepare(`
+    INSERT INTO chat_messages (message_id, session_id, role, content, meta, created_at)
+    VALUES (?, ?, ?, ?, ?, ?)
   `);
 
   const insertAuditStmt = db.prepare(`
@@ -605,6 +647,104 @@ export function openSqliteStorage(dbPath: string): Storage {
         JSON.stringify(outcome),
         envelopeType,
         recordedAt,
+      );
+    },
+
+    // ── chat sessions (Phase 2C.1) ────────────────────────────────────
+    async listChatSessions(tenantId, limit) {
+      const rows = listChatSessionsStmt.all(tenantId, limit ?? 200) as Array<{
+        session_id: string;
+        tenant_id: string;
+        title: string;
+        created_at: string;
+        updated_at: string;
+        message_count: number;
+      }>;
+      return rows.map((r): ChatSessionRecord => ({
+        sessionId: r.session_id,
+        tenantId: r.tenant_id,
+        title: r.title,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+        messageCount: r.message_count,
+      }));
+    },
+
+    async createChatSession(record) {
+      createChatSessionStmt.run(
+        record.sessionId,
+        record.tenantId,
+        record.title,
+        record.createdAt,
+        record.updatedAt,
+        record.messageCount,
+      );
+    },
+
+    async getChatSession(tenantId, sessionId) {
+      const row = getChatSessionStmt.get(tenantId, sessionId) as
+        | {
+            session_id: string;
+            tenant_id: string;
+            title: string;
+            created_at: string;
+            updated_at: string;
+            message_count: number;
+          }
+        | undefined;
+      if (!row) return null;
+      return {
+        sessionId: row.session_id,
+        tenantId: row.tenant_id,
+        title: row.title,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+        messageCount: row.message_count,
+      };
+    },
+
+    async updateChatSession(tenantId, sessionId, patch) {
+      updateChatSessionStmt.run(
+        patch.title ?? null,
+        patch.updatedAt ?? null,
+        patch.messageCount ?? null,
+        tenantId,
+        sessionId,
+      );
+    },
+
+    async deleteChatSession(tenantId, sessionId) {
+      const info = deleteChatSessionStmt.run(tenantId, sessionId);
+      return info.changes > 0;
+    },
+
+    async listChatSessionMessages(sessionId) {
+      const rows = listChatMessagesStmt.all(sessionId) as Array<{
+        message_id: string;
+        session_id: string;
+        role: string;
+        content: string;
+        meta: string | null;
+        created_at: string;
+      }>;
+      return rows.map((r): ChatMessageRecord => ({
+        messageId: r.message_id,
+        sessionId: r.session_id,
+        role: r.role as ChatMessageRecord['role'],
+        content: r.content,
+        meta: r.meta,
+        createdAt: r.created_at,
+      }));
+    },
+
+    async appendChatMessage(record) {
+      appendChatMessageStmt.run(
+        record.messageId,
+        record.sessionId,
+        record.role,
+        record.content,
+        record.meta,
+        record.createdAt,
       );
     },
 

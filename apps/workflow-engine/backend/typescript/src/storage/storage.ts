@@ -14,6 +14,8 @@
  */
 
 import type {
+  ChatMessageRecord,
+  ChatSessionRecord,
   EventRecord,
   IdempotencyRecord,
   InterruptRecord,
@@ -199,6 +201,37 @@ export interface Storage {
     envelopeType: string,
     recordedAt: string,
   ): Promise<void>;
+
+  // ── chat sessions (Phase 2C.1) ──
+  /**
+   * Sample-namespaced chat-session history backing the new
+   * `/v1/host/sample/chat/sessions/*` routes. Two tables: session
+   * headers (this method family) + per-session messages (below).
+   * Sessions are tenant-scoped; the in-memory adapter holds them in
+   * a Map keyed by tenantId; sqlite/postgres back them with the
+   * `chat_sessions` + `chat_messages` tables added in their next
+   * migration.
+   */
+  listChatSessions(tenantId: string, limit?: number): Promise<readonly ChatSessionRecord[]>;
+  /** Insert-or-throw (caller picks the sessionId; collision is a
+   *  programming error, not a wire-level conflict). */
+  createChatSession(record: ChatSessionRecord): Promise<void>;
+  getChatSession(tenantId: string, sessionId: string): Promise<ChatSessionRecord | null>;
+  /** Patch the mutable fields (title, updatedAt, messageCount).
+   *  `sessionId`/`tenantId`/`createdAt` are immutable. */
+  updateChatSession(
+    tenantId: string,
+    sessionId: string,
+    patch: Partial<Pick<ChatSessionRecord, 'title' | 'updatedAt' | 'messageCount'>>,
+  ): Promise<void>;
+  /** Cascade-delete: drops both the session header AND all messages.
+   *  Returns true if a row was removed, false if absent (idempotent). */
+  deleteChatSession(tenantId: string, sessionId: string): Promise<boolean>;
+  /** Load every message for a session in insertion order. */
+  listChatSessionMessages(sessionId: string): Promise<readonly ChatMessageRecord[]>;
+  /** Append a single message. Caller updates `chat_sessions.message_count`
+   *  via `updateChatSession()` in the same logical operation. */
+  appendChatMessage(record: ChatMessageRecord): Promise<void>;
 
   // ── lifecycle ──
   close(): Promise<void>;

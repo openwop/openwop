@@ -100,6 +100,37 @@ export interface IdempotencyRecord {
   createdAt: string;
 }
 
+/** Persisted chat-session header. Mirrors the FE `ChatSession` minus
+ *  the messages array (kept in a separate table for unbounded growth +
+ *  paged loads). Tied to a tenantId so the sample-extension routes
+ *  can scope listings by tenant. Sample-grade: no per-user concept;
+ *  all sessions for a tenant are visible to that tenant's principal. */
+export interface ChatSessionRecord {
+  sessionId: string;
+  tenantId: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  /** Cached count; updated on append/reset. Sample-grade — caller-
+   *  authoritative count is `listChatSessionMessages(sessionId).length`. */
+  messageCount: number;
+}
+
+/** One message inside a chat session. Content is a JSON string (the
+ *  FE's ChatMessage shape carries multimodal content, thoughts, agent
+ *  events, citations, etc. — we don't shred them into columns). */
+export interface ChatMessageRecord {
+  messageId: string;
+  sessionId: string;
+  role: 'user' | 'assistant' | 'system' | 'workflow_run';
+  /** Serialized ChatMessage minus the id (the id is on this row). */
+  content: string;
+  /** Serialized meta (provider, model, tokens, error, citations, etc.)
+   *  — null when the bubble has no meta (user turns, system banners). */
+  meta: string | null;
+  createdAt: string;
+}
+
 /** Run-create request augmented with the resolved principal. */
 export interface InternalCreateRunRequest extends CreateRunRequest {
   workflowId: string;

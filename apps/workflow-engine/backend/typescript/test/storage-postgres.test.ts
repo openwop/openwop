@@ -172,6 +172,13 @@ async function makeStorage(): Promise<Storage> {
     getManagedUsage: async () => ({ inputTokens: 0, outputTokens: 0 }),
     getEnvelopeCorrelation: async () => null,
     putEnvelopeCorrelation: async () => {},
+    listChatSessions: async () => [],
+    createChatSession: async () => { throw new Error('not exercised'); },
+    getChatSession: async () => null,
+    updateChatSession: async () => { throw new Error('not exercised'); },
+    deleteChatSession: async () => false,
+    listChatSessionMessages: async () => [],
+    appendChatMessage: async () => { throw new Error('not exercised'); },
     close: async () => { await pool.end(); },
   };
 }

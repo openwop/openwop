@@ -67,6 +67,19 @@ export function registerDiscoveryRoutes(app: Express, _deps: Deps): void {
         '/v1/host/sample/runs/{runId}/interrupts': {
           get: { summary: 'List open interrupts for a run (authed; returns tokens)', tags: ['sample-extension'] },
         },
+        '/v1/host/sample/chat/sessions': {
+          get: { summary: 'List chat sessions for the calling tenant', tags: ['sample-extension'] },
+          post: { summary: 'Create a new chat session', tags: ['sample-extension'] },
+        },
+        '/v1/host/sample/chat/sessions/{sessionId}': {
+          get: { summary: 'Fetch a chat session header', tags: ['sample-extension'] },
+          patch: { summary: 'Rename a chat session', tags: ['sample-extension'] },
+          delete: { summary: 'Delete a chat session (cascades to messages)', tags: ['sample-extension'] },
+        },
+        '/v1/host/sample/chat/sessions/{sessionId}/messages': {
+          get: { summary: 'Load every message in a chat session', tags: ['sample-extension'] },
+          post: { summary: 'Append a message to a chat session', tags: ['sample-extension'] },
+        },
       },
       tags: [
         { name: 'sample-extension', description: 'Sample-only routes outside the canonical OpenWOP v1 wire contract. Vendor-prefixed under /v1/host/sample/* per spec/v1/host-extensions.md.' },

@@ -29,6 +29,8 @@
 import { Pool, type PoolConfig } from 'pg';
 import { randomUUID } from 'node:crypto';
 import type {
+  ChatMessageRecord,
+  ChatSessionRecord,
   EventRecord,
   InterruptRecord,
   RunRecord,
@@ -599,6 +601,139 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
            envelope_type = EXCLUDED.envelope_type,
            recorded_at   = EXCLUDED.recorded_at`,
         [runId, correlationId, JSON.stringify(outcome), envelopeType, recordedAt],
+      );
+    },
+
+    // ── chat sessions (Phase 2C.1) ────────────────────────────────────
+    async listChatSessions(tenantId, limit) {
+      const r = await pool.query<{
+        session_id: string;
+        tenant_id: string;
+        title: string;
+        created_at: Date;
+        updated_at: Date;
+        message_count: number;
+      }>(
+        `SELECT session_id, tenant_id, title, created_at, updated_at, message_count
+         FROM chat_sessions
+         WHERE tenant_id = $1
+         ORDER BY updated_at DESC
+         LIMIT $2`,
+        [tenantId, limit ?? 200],
+      );
+      return r.rows.map((row): ChatSessionRecord => ({
+        sessionId: row.session_id,
+        tenantId: row.tenant_id,
+        title: row.title,
+        createdAt: row.created_at.toISOString(),
+        updatedAt: row.updated_at.toISOString(),
+        messageCount: row.message_count,
+      }));
+    },
+
+    async createChatSession(record) {
+      await pool.query(
+        `INSERT INTO chat_sessions (session_id, tenant_id, title, created_at, updated_at, message_count)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          record.sessionId,
+          record.tenantId,
+          record.title,
+          record.createdAt,
+          record.updatedAt,
+          record.messageCount,
+        ],
+      );
+    },
+
+    async getChatSession(tenantId, sessionId) {
+      const r = await pool.query<{
+        session_id: string;
+        tenant_id: string;
+        title: string;
+        created_at: Date;
+        updated_at: Date;
+        message_count: number;
+      }>(
+        `SELECT session_id, tenant_id, title, created_at, updated_at, message_count
+         FROM chat_sessions
+         WHERE tenant_id = $1 AND session_id = $2`,
+        [tenantId, sessionId],
+      );
+      const row = r.rows[0];
+      if (!row) return null;
+      return {
+        sessionId: row.session_id,
+        tenantId: row.tenant_id,
+        title: row.title,
+        createdAt: row.created_at.toISOString(),
+        updatedAt: row.updated_at.toISOString(),
+        messageCount: row.message_count,
+      };
+    },
+
+    async updateChatSession(tenantId, sessionId, patch) {
+      await pool.query(
+        `UPDATE chat_sessions
+            SET title         = COALESCE($3, title),
+                updated_at    = COALESCE($4, updated_at),
+                message_count = COALESCE($5, message_count)
+          WHERE tenant_id = $1 AND session_id = $2`,
+        [
+          tenantId,
+          sessionId,
+          patch.title ?? null,
+          patch.updatedAt ?? null,
+          patch.messageCount ?? null,
+        ],
+      );
+    },
+
+    async deleteChatSession(tenantId, sessionId) {
+      const r = await pool.query(
+        `DELETE FROM chat_sessions WHERE tenant_id = $1 AND session_id = $2`,
+        [tenantId, sessionId],
+      );
+      return (r.rowCount ?? 0) > 0;
+    },
+
+    async listChatSessionMessages(sessionId) {
+      const r = await pool.query<{
+        message_id: string;
+        session_id: string;
+        role: string;
+        content: string;
+        meta: string | null;
+        created_at: Date;
+      }>(
+        `SELECT message_id, session_id, role, content, meta, created_at
+         FROM chat_messages
+         WHERE session_id = $1
+         ORDER BY created_at ASC, message_id ASC`,
+        [sessionId],
+      );
+      return r.rows.map((row): ChatMessageRecord => ({
+        messageId: row.message_id,
+        sessionId: row.session_id,
+        role: row.role as ChatMessageRecord['role'],
+        content: row.content,
+        meta: row.meta,
+        createdAt: row.created_at.toISOString(),
+      }));
+    },
+
+    async appendChatMessage(record) {
+      await pool.query(
+        `INSERT INTO chat_messages (message_id, session_id, role, content, meta, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          record.messageId,
+          record.sessionId,
+          record.role,
+          record.content,
+          record.meta,
+          record.createdAt,
+        ],
       );
     },
 
