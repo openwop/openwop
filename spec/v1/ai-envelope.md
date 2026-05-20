@@ -387,7 +387,7 @@ Hosts MUST NOT advance HITL approval gates (`kind: "approval"` interrupts) on th
 
 AI Envelopes MUST be routed through the same BYOK redaction harness applied to a fresh `MemoryEntry.put` per `agent-memory.md` §"SR-1 secret-redaction invariant." The fact that the LLM has been instructed not to emit secrets is **not** evidence to skip the redaction pass — the model can hallucinate secret-shaped substrings from prompt context, in-context examples, or tool results.
 
-The redaction pass runs **after** validation and **before** dedup/handler routing in the §Production flow ordering. Redacted material MUST NOT appear in:
+The redaction pass runs **after** validation and **before** dedup/handler routing in the §Production flow ordering. The scrub MUST walk the entire payload object graph recursively — every string-valued leaf, every nested object property (including open-shape metadata bags like `clarification.request §questions[].context`), and every array element. Host implementations MUST NOT short-circuit the walk at a known-shape boundary; payload schemas that declare `additionalProperties: true` (or open-shape children) are still in scope. Redacted material MUST NOT appear in:
 
 - The `RunEventDoc`s emitted as the envelope's outcome.
 - The OTel span attributes (`openwop.envelope_kind`, `openwop.envelope_id`, etc.).

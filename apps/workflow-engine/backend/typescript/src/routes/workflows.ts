@@ -47,6 +47,40 @@ function checkMappingCapability(
           { nodeId: node.nodeId, requiredCapability: 'agents.dispatchMapping' },
         );
       }
+      // RFC 0007 §B / `dispatch-config.schema.json` — `fanOutPolicy`,
+      // `workerDispatchModel`, `askUserRouting` are part of the
+      // canonical config surface. The sample only implements the
+      // sequential / child-run / auto path today; refuse other values
+      // at register time rather than silently treating them as the
+      // implemented defaults. Production hosts that DO support these
+      // surfaces SHOULD remove this refusal.
+      const fanOutPolicy = (cfg.fanOutPolicy ?? 'sequential') as unknown;
+      if (typeof fanOutPolicy === 'string' && fanOutPolicy !== 'sequential') {
+        throw new OpenwopError(
+          'capability_not_provided',
+          `Node '${node.nodeId}' (core.dispatch) requests fanOutPolicy='${fanOutPolicy}' but this host only implements 'sequential'.`,
+          400,
+          { nodeId: node.nodeId, requiredCapability: 'dispatch.fanOut' },
+        );
+      }
+      const workerDispatchModel = (cfg.workerDispatchModel ?? 'child-run') as unknown;
+      if (typeof workerDispatchModel === 'string' && workerDispatchModel !== 'child-run') {
+        throw new OpenwopError(
+          'capability_not_provided',
+          `Node '${node.nodeId}' (core.dispatch) requests workerDispatchModel='${workerDispatchModel}' but this host only implements 'child-run'.`,
+          400,
+          { nodeId: node.nodeId, requiredCapability: 'dispatch.workerDispatchModel' },
+        );
+      }
+      const askUserRouting = (cfg.askUserRouting ?? 'auto') as unknown;
+      if (typeof askUserRouting === 'string' && askUserRouting !== 'auto') {
+        throw new OpenwopError(
+          'capability_not_provided',
+          `Node '${node.nodeId}' (core.dispatch) requests askUserRouting='${askUserRouting}' but this host only implements 'auto'.`,
+          400,
+          { nodeId: node.nodeId, requiredCapability: 'dispatch.askUserRouting' },
+        );
+      }
     }
     if (node.typeId === 'core.subWorkflow') {
       const hasMapping = hasNonEmptyMapping(cfg, ['inputMapping']);

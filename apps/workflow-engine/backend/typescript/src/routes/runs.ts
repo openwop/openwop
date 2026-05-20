@@ -480,7 +480,7 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
       });
       notifyRunTerminal(run.runId);
 
-      // Cascade per `interrupt-profiles.md §openwop-interrupt-parent-child`:
+      // Cascade per `interrupt-profiles.md §openwop-interrupt-cascade-cancel`:
       // any non-terminal child runs (rows with parentRunId === this run)
       // MUST also transition to cancelled with reason `parent-cancelled`,
       // and their open interrupts MUST be invalidated so subsequent
@@ -490,6 +490,16 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
       // on parentRunId in-process. The sample tier's run population
       // stays small enough that an O(N) scan per cancel is fine; a
       // production deployer SHOULD index on parent_run_id.
+      //
+      // Partial-failure posture (sample tier): each storage write here
+      // is independent — if `updateRun(child)` succeeds but a later
+      // `resolveInterrupt` fails, the child is cancelled with stale
+      // open interrupts, and `terminal.includes(run.status)` at the
+      // top of this handler will short-circuit on the next attempt.
+      // Production deployers wanting auto-recovery should wrap the
+      // cascade in a single transaction OR add an idempotent cancel-
+      // finalizer that scans `runs WHERE status = 'cancelled' AND
+      // EXISTS (open interrupts)` and re-runs the cascade.
       const siblings = await storage.listRuns({ tenantId: run.tenantId });
       const childCandidates = siblings.filter((r) => r.parentRunId === run.runId && !terminal.includes(r.status));
       for (const child of childCandidates) {

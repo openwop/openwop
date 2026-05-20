@@ -111,6 +111,7 @@
         "agent.handoff",
         "agent.decided",
         "runOrchestrator.decided",
+        "node.dispatched",
         "conversation.opened",
         "conversation.exchanged",
         "conversation.closed",

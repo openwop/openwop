@@ -83,6 +83,7 @@ channels:
       nodeFailed:        { $ref: '#/components/messages/NodeFailed' }
       nodeSkipped:       { $ref: '#/components/messages/NodeSkipped' }
       nodeSuspended:     { $ref: '#/components/messages/NodeSuspended' }
+      nodeDispatched:    { $ref: '#/components/messages/NodeDispatched' }
       approvalRequested: { $ref: '#/components/messages/ApprovalRequested' }
       approvalReceived:  { $ref: '#/components/messages/ApprovalReceived' }
       clarificationRequested: { $ref: '#/components/messages/ClarificationRequested' }
@@ -334,6 +335,13 @@ components:
     NodeSuspended:
       name: node.suspended
       title: Node suspended (HITL or external-event wait)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    NodeDispatched:
+      name: node.dispatched
+      title: core.dispatch spawned a child workflow (RFC 0007 §D + RFC 0022 §A)
       contentType: application/json
       payload:
         $ref: '#/components/schemas/RunEventDoc'

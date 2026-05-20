@@ -62,6 +62,8 @@ The host propagates cancellation between parent and child runs created through s
 - Cancelling a parent either cancels active child runs or documents a deliberate detach policy.
 - Cancelling a child surfaces a deterministic parent outcome.
 - Parent/child cancellation events preserve `parentRunId` and `parentNodeId` linkage.
+- A cascaded-cancel `run.cancelled` event MUST carry `payload.reason = "parent-cancelled"` AND `payload.parentRunId` set to the run id that initiated the cascade (see `run-event-payloads.schema.json $defs.runCancelled.parentRunId`). Direct cancellations MUST NOT set `parentRunId`, so consumers can distinguish "I cancelled this run" from "the parent cascaded into this run."
+- Open child interrupts at cancellation time MUST be invalidated. A subsequent `POST /v1/runs/{childRunId}/interrupts/{nodeId}` (or `POST /v1/interrupts/{token}`) call against an invalidated interrupt MUST return `410 Gone` with `error: "interrupt_gone"` (preferred), or `409 Conflict` with `error: "interrupt_already_resolved"` (acceptable back-compat for hosts that don't distinguish the two states).
 - Cancellation remains idempotent and terminal-state safe.
 
 **Conformance gaps to close:** add parent/child cancellation fixtures building on `subworkflow.test.ts`.

@@ -11,6 +11,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Code-review follow-ups to dispatch + cascade clusters (2026-05-20)
+
+Six findings from the senior protocol review of commits `0c79082` + `6bcaf85`:
+
+- **HIGH #1 — `node.dispatched` event type landed in the normative corpus.** `schemas/run-event.schema.json`'s `RunEventType` enum gains `"node.dispatched"`; `schemas/run-event-payloads.schema.json` gains `$defs.nodeDispatched` (required `childRunId` + `childWorkflowId`; optional `childStatus`); `api/asyncapi.yaml` adds the `NodeDispatched` message + channel binding under `runEventsUpdates`. `RFCS/0007-dispatch.md §D` now names the event explicitly as part of the `next-worker` decision contract. Closes the corpus-consistency gap where `dispatch-cross-worker-handoff.test.ts` + `dispatch-input-mapping.test.ts` were asserting on an undeclared event. Compatibility: additive (new enum variant; new optional payload schema).
+- **MEDIUM #2 — SR-1 redaction-walk made normative across nested + open-shape payloads.** `spec/v1/ai-envelope.md §"Redaction (SR-1 carry-forward)"` adds an explicit MUST that the recursive scrub walks every string-leaf / object-property / array-element including open-shape children (`additionalProperties: true` regions); cannot short-circuit at known-shape boundaries. `schemas/envelopes/clarification.request.schema.json` drops the MUST from the `context` property's description (JSON Schema descriptions are non-enforcing prose) and reframes it as a behavioral guarantee inherited from the spec text.
+- **MEDIUM #3 — sample host now advertises the cascade-cancel + external-event interrupt profiles.** `apps/workflow-engine/backend/typescript/src/routes/discovery.ts` adds `interrupts.profiles: ['openwop-interrupt-cascade-cancel', 'openwop-interrupt-external-event']` so the `/.well-known/openwop` document honestly reflects the implementation. Quorum + auth-required profiles deliberately NOT claimed (partial implementations).
+- **MEDIUM #4 — `core.dispatch` config keys validated at registration.** `routes/workflows.ts §checkMappingCapability` now refuses workflows that set `fanOutPolicy != 'sequential'`, `workerDispatchModel != 'child-run'`, or `askUserRouting != 'auto'` with `capability_not_provided` + `requiredCapability` details, instead of silently treating them as the implemented defaults. Production hosts that DO support these surfaces SHOULD remove the refusal.
+- **MEDIUM #5 — `parentRunId` on cascaded `run.cancelled` is now contracted.** `schemas/run-event-payloads.schema.json $defs.runCancelled` gains optional `parentRunId`; `spec/v1/interrupt-profiles.md §"openwop-interrupt-cascade-cancel"` documents the `reason: 'parent-cancelled'` + `parentRunId` pairing as a MUST and the `410 interrupt_gone` (preferred) / `409 interrupt_already_resolved` (back-compat) resolve-after-cascade contract.
+- **MEDIUM #6 — partial-failure posture documented on the cancel-cascade walker.** `routes/runs.ts` cancel handler now carries an explicit comment on what happens when a mid-walk storage write fails (parent + already-processed children stay cancelled; subsequent re-cancel attempts short-circuit on the terminal-status guard); flags the transaction-or-finalizer upgrade path for production deployers.
+
+Conformance: 1303 / 0 failing (no regressions).
+
+Compatibility: **additive** across all six. No required-field changes, no existing-event-shape changes, no MUST relaxations. New enum variants, new optional payload fields, new advisory advertisements.
+
 ### Sample chat improvements — Phases 2A.5 / 2A.6 / 2B / 2C / 2D (2026-05-19 → 2026-05-20)
 
 Implementation-only follow-through on `plans/openwop-sample-chat-improvements-plan.md`. Sample-grade only — no protocol surface touched. Adds eight visible / robustness / persistence / refactor items across the React FE and the workflow-engine sample BE.

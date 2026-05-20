@@ -47,6 +47,7 @@ import { registerWebhookRoutes } from './routes/webhooks.js';
 import { registerPackRoutes } from './routes/packs.js';
 import { registerByokRoutes } from './routes/byok.js';
 import { registerSampleChatRoutes } from './routes/sampleChat.js';
+import { registerPromptRoutes } from './routes/prompts.js';
 import { registerTestSeamRoutes } from './routes/testSeam.js';
 import { registerMcpServerRoutes } from './routes/mcp.js';
 import { registerAdminRoutes } from './routes/admin.js';
@@ -234,6 +235,9 @@ export async function createApp(config: AppConfig): Promise<Express> {
   registerPackRoutes(app, { storage });
   registerByokRoutes(app);
   registerSampleChatRoutes(app, { storage });
+  registerPromptRoutes(app, {
+    capability: { endpointsSupported: true, mutableLibrary: true },
+  });
   registerMigrateRoute(app, { storage });
   registerAccountRoutes(app, { storage });
   registerTestSeamRoutes(app, { storage });

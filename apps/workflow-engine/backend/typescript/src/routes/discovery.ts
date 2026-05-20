@@ -55,25 +55,24 @@ export function registerDiscoveryRoutes(app: Express, _deps: Deps): void {
         '/v1/webhooks/{subscriptionId}': { delete: { summary: 'Delete a webhook subscription' } },
         '/v1/packs': { get: { summary: 'List installed packs' } },
 
-        // RFC 0028 — prompt library. Listed here for the self-describing
-        // stub's API surface map. Gated on
-        // `capabilities.prompts.endpointsSupported: true`; this sample
-        // host advertises `endpointsSupported: false` (Phase A
-        // composition only), so every request below returns
-        // `501 capability_not_provided` per spec/v1/prompts.md
-        // §"Discovery & distribution". When the routes land, this
-        // sample's `endpointsSupported` flips to `true`.
+        // RFC 0028 — prompt library. The reference host serves all
+        // six routes via `routes/prompts.ts`. capabilities.prompts.
+        // endpointsSupported is advertised as true; mutableLibrary as
+        // true. Read endpoints (GET /v1/prompts, GET /v1/prompts/{id},
+        // POST /v1/prompts:render) are gated on endpointsSupported;
+        // mutating endpoints (POST/PUT/DELETE) are additionally gated
+        // on mutableLibrary.
         '/v1/prompts': {
-          get: { summary: 'List prompt templates (RFC 0028; capability-gated)' },
-          post: { summary: 'Create a user-source prompt template (capability-gated)' },
+          get: { summary: 'List prompt templates (RFC 0028 §A)' },
+          post: { summary: 'Create a user-source prompt template (RFC 0028 §A; requires mutableLibrary)' },
         },
         '/v1/prompts/{templateId}': {
-          get: { summary: 'Fetch a prompt template (RFC 0028; capability-gated)' },
-          put: { summary: 'Replace a user-source prompt template (capability-gated)' },
-          delete: { summary: 'Delete a user-source prompt template (capability-gated)' },
+          get: { summary: 'Fetch a prompt template (RFC 0028 §A)' },
+          put: { summary: 'Replace a user-source prompt template (RFC 0028 §A; requires mutableLibrary)' },
+          delete: { summary: 'Delete a user-source prompt template (RFC 0028 §A; requires mutableLibrary)' },
         },
         '/v1/prompts:render': {
-          post: { summary: 'Render a prompt template with supplied variable bindings (RFC 0028; capability-gated)' },
+          post: { summary: 'Render a prompt template with supplied variable bindings (RFC 0028 §A)' },
         },
 
         // ── Sample-extension routes (NOT part of the OpenWOP wire
@@ -272,16 +271,20 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
         // by the conformance scenarios `prompt-composed-secret-redaction`
         // and `prompt-composed-trust-marker`. Honest about Phase A.
         supported: true,
-        // RFC 0028 Phase B — the spec'd `/v1/prompts*` REST surface
-        // (listPromptTemplates / getPromptTemplate / renderPromptTemplate
-        // / createPromptTemplate / updatePromptTemplate /
-        // deletePromptTemplate). The sample host does NOT serve those
-        // routes yet — implementation is deferred to a follow-up slice.
-        // Explicit `false` here keeps the advertisement honest and
-        // prevents a spec-following client from getting a 404 (route
-        // missing) instead of the spec'd 501 (capability not provided).
-        // When the routes land, flip to true.
-        endpointsSupported: false,
+        // RFC 0028 Phase B — the spec'd `/v1/prompts*` REST surface.
+        // The reference host serves all six routes via
+        // `routes/prompts.ts` against an in-memory PromptStore
+        // (`host/promptStore.ts`) that loads host-built-in templates
+        // from `conformance-fixtures/prompt-templates/` at boot and
+        // accepts user-source mutations at run time. The pack-install
+        // path (RFC 0028 §B install flow with Ed25519 + SRI) is a
+        // separate slice; the store has an `installPackTemplates()`
+        // seam waiting for it.
+        endpointsSupported: true,
+        // RFC 0028 §C — the host honors the mutating endpoints
+        // (POST / PUT / DELETE). User-source templates only; pack and
+        // host built-ins return 403 on mutation attempts.
+        mutableLibrary: true,
         // RFC 0029 §B — four-layer resolution chain at node-execution
         // time. The reference host implements the resolver
         // (`host/promptResolve.ts`) and exercises it via the

@@ -30,7 +30,7 @@
             "type": "object"
           },
           "context": {
-            "description": "Optional open-shape metadata bag the LLM MAY use to surface per-question UI hints, trace pointers, or related context. Host-defined; the engine treats this as opaque and MUST run the same SR-1 redaction scrub over it as the rest of the payload (see `ai-envelope.md` §\"Redaction (SR-1 carry-forward)\").",
+            "description": "Optional open-shape metadata bag the LLM MAY use to surface per-question UI hints, trace pointers, or related context. Host-defined. The engine treats this as opaque; SR-1 redaction (`ai-envelope.md` §\"Redaction (SR-1 carry-forward)\") walks every payload field recursively, so any BYOK material that ends up here is scrubbed before persistence.",
             "type": "object",
             "additionalProperties": true
           }

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v1/run-event-payloads.schema.json",
   "title": "RunEventPayloads",
-  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n52 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
+  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n53 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
   "type": "object",
   "$defs": {
     "_typeIndex": {
@@ -58,6 +58,7 @@
         "agent.handoff":             { "$ref": "#/$defs/agentHandoff" },
         "agent.decided":             { "$ref": "#/$defs/agentDecided" },
         "runOrchestrator.decided":   { "$ref": "#/$defs/runOrchestratorDecided" },
+        "node.dispatched":           { "$ref": "#/$defs/nodeDispatched" },
         "conversation.opened":       { "$ref": "#/$defs/conversationOpened" },
         "conversation.exchanged":    { "$ref": "#/$defs/conversationExchanged" },
         "conversation.closed":       { "$ref": "#/$defs/conversationClosed" },
@@ -128,7 +129,8 @@
       "properties": {
         "reason":       { "type": "string" },
         "cancelledBy":  { "type": "string", "description": "Caller identity (uid / API key fingerprint / `system`)." },
-        "durationMs":   { "type": "integer", "minimum": 0 }
+        "durationMs":   { "type": "integer", "minimum": 0 },
+        "parentRunId":  { "type": "string", "minLength": 1, "description": "When this cancellation was triggered by a parent-cancel cascade (`interrupt-profiles.md §openwop-interrupt-cascade-cancel`), the parent runId that initiated it. Pairs with `reason: 'parent-cancelled'`. Absent for direct cancellations." }
       },
       "additionalProperties": true
     },
@@ -759,6 +761,18 @@
       "properties": {
         "agentId":  { "type": "string", "minLength": 3, "maxLength": 256, "description": "AgentRef.agentId of the orchestrator. MUST equal `RunSnapshot.runOrchestrator.agentId` for the run's lifetime — orchestrator identity is set at first decision and does not change." },
         "decision": { "$ref": "orchestrator-decision.schema.json" }
+      },
+      "additionalProperties": false
+    },
+
+    "nodeDispatched": {
+      "type": "object",
+      "description": "Emitted by `core.dispatch` (RFC 0007 §D + RFC 0022 §A) for each child workflow spawned by a `next-worker` OrchestratorDecision. The envelope's top-level `nodeId` carries the dispatching `core.dispatch` node's id; the payload names the spawned child run + its terminal status at the moment of emission. Lets observers reconstruct the parent → child linkage without scanning the runs table.",
+      "required": ["childRunId", "childWorkflowId"],
+      "properties": {
+        "childRunId":       { "type": "string", "minLength": 1, "description": "RunId of the spawned child run." },
+        "childWorkflowId":  { "type": "string", "minLength": 1, "description": "WorkflowId of the spawned child." },
+        "childStatus":      { "type": "string", "description": "Status of the child run at the moment the dispatch step returned (typically `completed`, `failed`, `cancelled`, or one of the `waiting-*` states when the child suspended)." }
       },
       "additionalProperties": false
     },

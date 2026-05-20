@@ -105,6 +105,7 @@ Hosts MAY surface a more specific error envelope when the decision is found but 
 2. Engine constructs a child run via the normal `core.subWorkflow` flow for the first ID (or all IDs sequentially per `fanOutPolicy`).
 3. Dispatch node's output: `{ childRunId, childStatus }` for the last child.
 4. On any child failure, dispatch node propagates failure to the parent run (default subWorkflow propagation semantics).
+5. For each spawned child, the host MUST emit a `node.dispatched` `RunEvent` carrying `{ childRunId, childWorkflowId, childStatus }` (see `schemas/run-event-payloads.schema.json $defs.nodeDispatched`). The envelope's `nodeId` carries the dispatching `core.dispatch` node-id; the payload does NOT duplicate it. Observers MAY rely on this event to reconstruct the parent → child linkage without scanning the runs table.
 
 #### `ask-user`
 
