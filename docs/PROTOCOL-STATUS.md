@@ -12,7 +12,7 @@
 | OpenAPI operations | 19 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 160 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 26 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 29 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## OpenAPI Operations
 
@@ -23,15 +23,15 @@
 | Status | Count |
 |---|---:|
 | Accepted | 25 |
-| Draft | 1 |
+| Draft | 4 |
 
 | Latest RFC | Title | Status |
 |---|---|---|
+| RFC 0029 | Prompt resolution chain across node / agent / workflow / host layers; `agent.promptResolved` observability event; `AgentManifest.promptOverrides` + `promptLibraryRef` extension | Draft |
+| RFC 0028 | Prompt Library Endpoints (`/v1/prompts/*`) and Prompt Pack Kind (`kind: "prompt"`) | Draft |
+| RFC 0027 | Prompt Templates - wire shape for portable, versioned, variable-bound prompts; `capabilities.prompts` block; `prompt.composed` run event | Draft |
 | RFC 0026 | `provider.usage` event - per-call durable usage record for LLM provider invocations | Accepted |
 | RFC 0025 | Test-mode registry namespace for conformance publish-error catalog | Draft |
-| RFC 0024 | Streaming `agent.reasoned` Deltas | Accepted |
-| RFC 0023 | Conformance Agent-Event Emitters | Accepted |
-| RFC 0022 | `core.dispatch` + `core.subWorkflow` runtime variable mapping | Accepted |
 
 ## SDK Helper Coverage
 
