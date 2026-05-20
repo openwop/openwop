@@ -42,6 +42,7 @@ import { acceptEnvelope, type AcceptOptions } from '../host/envelopeAcceptor.js'
 import type { Storage } from '../storage/storage.js';
 import type { EnvelopeOutcome } from '../host/envelopeAcceptor.js';
 import { wrapForLLMPrompt, type PromptWrapInput } from '../host/promptInjectionGuard.js';
+import { setRunVariable, snapshotRunVariables } from '../host/variablesRuntime.js';
 import { projectOutcome } from '../host/envelopeProjection.js';
 import { listTestEvents, resetTestEventLog } from '../host/envelopeEventLog.js';
 import { listTestSpans, resetTestSpanBuffer } from '../observability/spanBuffer.js';
@@ -386,6 +387,44 @@ export function registerTestSeamRoutes(app: Express, deps: { storage: Storage })
     if (typeof q.causationId === 'string') filter.causationId = q.causationId;
     if (typeof q.nodeId === 'string') filter.nodeId = q.nodeId;
     res.status(200).json({ events: listTestEvents(runId, filter) });
+  });
+
+  // Variable mutation seam — mutates a run's variable bag mid-run.
+  // Per `host/variablesRuntime.ts`: future scope (HVMAP-2 mid-run-no-
+  // propagation conformance assertion). The conformance test creates
+  // a parent run with a subWorkflow that suspends on a clarification
+  // gate, then mutates the parent's variable bag via this endpoint,
+  // resolves the clarification, and asserts the child's view of the
+  // variable remained at its dispatch-time seed (not the mutated
+  // value) — proving RFC 0022 §B's one-shot fold semantic.
+  //
+  // Endpoint: POST /v1/host/sample/test/runs/:runId/variables
+  // Body shape: { variables: Record<string, unknown> } — each entry
+  // sets the named variable in the run's bag.
+  // GET variant returns the current bag for assertions.
+  app.post('/v1/host/sample/test/runs/:runId/variables', (req, res) => {
+    const runId = req.params.runId;
+    if (!runId) {
+      res.status(400).json({ error: { code: 'invalid_argument', message: 'runId required' } });
+      return;
+    }
+    const body = (req.body ?? {}) as { variables?: unknown };
+    if (!body.variables || typeof body.variables !== 'object' || Array.isArray(body.variables)) {
+      res.status(400).json({ error: { code: 'invalid_argument', message: 'variables MUST be an object' } });
+      return;
+    }
+    for (const [name, value] of Object.entries(body.variables as Record<string, unknown>)) {
+      if (typeof name === 'string' && name.length > 0) setRunVariable(runId, name, value);
+    }
+    res.status(200).json({ variables: snapshotRunVariables(runId) ?? {} });
+  });
+  app.get('/v1/host/sample/test/runs/:runId/variables', (req, res) => {
+    const runId = req.params.runId;
+    if (!runId) {
+      res.status(400).json({ error: { code: 'invalid_argument', message: 'runId required' } });
+      return;
+    }
+    res.status(200).json({ variables: snapshotRunVariables(runId) ?? {} });
   });
 
   // Prompt-injection wrap seam — exposes the host's `<UNTRUSTED ...>`

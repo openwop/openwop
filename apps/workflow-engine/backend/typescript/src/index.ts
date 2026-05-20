@@ -130,6 +130,14 @@ export async function createApp(config: AppConfig): Promise<Express> {
   initInMemorySurfaces({ dataDir });
 
   ensureNodesRegistered();
+  // Wire the subWorkflow dispatcher dependency injection. The node
+  // registered above is a thin shim; the actual spawn-and-wait logic
+  // calls back into executeRun (recursive child run). The dispatcher
+  // module holds the late-bound deps so the node doesn't need direct
+  // access to storage or the catalog.
+  const { setSubWorkflowDispatcher } = await import('./executor/subWorkflowDispatcher.js');
+  const { executeRun } = await import('./executor/executor.js');
+  setSubWorkflowDispatcher({ storage, hostSuite, executeRun: executeRun as never });
   ensureSuspendManagerInstalled(storage);
   ensureEventLogInstalled(storage);
   ensureInvocationLogInstalled(storage);

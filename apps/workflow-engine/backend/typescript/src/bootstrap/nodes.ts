@@ -50,6 +50,75 @@ const identityNode: NodeModule = {
   },
 };
 
+/** RFC 0022 §A+§B — sub-workflow dispatch primitive. Spawns a child
+ *  run, applies inputMapping at dispatch + outputMapping on terminal,
+ *  returns childRunId + childStatus. The actual spawn-and-wait logic
+ *  lives in `executor/subWorkflowDispatcher.ts` so the node module
+ *  doesn't need direct access to RunRecord storage. */
+const subWorkflowNode: NodeModule = {
+  typeId: 'core.subWorkflow',
+  version: '1.0.0',
+  async execute(ctx) {
+    const cfg = (ctx.config ?? {}) as {
+      workflowId?: unknown;
+      inputMapping?: unknown;
+      outputMapping?: unknown;
+      waitForCompletion?: unknown;
+      onChildFailure?: unknown;
+    };
+    const childWorkflowId = typeof cfg.workflowId === 'string' ? cfg.workflowId : '';
+    if (!childWorkflowId) {
+      return { status: 'failure', error: { code: 'invalid_request', message: 'core.subWorkflow requires config.workflowId' } };
+    }
+    const inputMapping = (cfg.inputMapping && typeof cfg.inputMapping === 'object' && !Array.isArray(cfg.inputMapping))
+      ? (cfg.inputMapping as Record<string, string>)
+      : undefined;
+    const outputMapping = (cfg.outputMapping && typeof cfg.outputMapping === 'object' && !Array.isArray(cfg.outputMapping))
+      ? (cfg.outputMapping as Record<string, string>)
+      : undefined;
+    const onChildFailure = cfg.onChildFailure === 'continue' ? 'continue' : 'fail-parent';
+
+    const { dispatchSubWorkflow } = await import('../executor/subWorkflowDispatcher.js');
+    try {
+      const result = await dispatchSubWorkflow({
+        parentRunId: ctx.runId,
+        parentTenantId: ctx.tenantId,
+        ...(ctx.scopeId ? { parentScopeId: ctx.scopeId } : {}),
+        parentNodeId: ctx.nodeId,
+        childWorkflowId,
+        ...(inputMapping ? { inputMapping } : {}),
+        ...(outputMapping ? { outputMapping } : {}),
+        onChildFailure,
+      });
+      if (result.childStatus !== 'completed' && onChildFailure === 'fail-parent') {
+        return {
+          status: 'failure',
+          error: {
+            code: 'subworkflow_child_failed',
+            message: `child run ${result.childRunId} terminated ${result.childStatus}`,
+          },
+        };
+      }
+      return {
+        status: 'success',
+        outputs: {
+          childRunId: result.childRunId,
+          childStatus: result.childStatus,
+          outputMappingSkipped: result.outputMappingSkipped,
+        },
+      };
+    } catch (err) {
+      return {
+        status: 'failure',
+        error: {
+          code: 'internal_error',
+          message: err instanceof Error ? err.message : String(err),
+        },
+      };
+    }
+  },
+};
+
 const delayNode: NodeModule = {
   typeId: 'core.delay',
   version: '1.0.0',
@@ -543,6 +612,7 @@ export function ensureNodesRegistered(): void {
   const registry = getNodeRegistry();
   registry.register(noopNode);
   registry.register(identityNode);
+  registry.register(subWorkflowNode);
   registry.register(delayNode);
   registry.register(failNode);
   registry.register(approvalGateNode);

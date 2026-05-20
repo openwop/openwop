@@ -34,6 +34,21 @@ export function registerStreamRoutes(app: Express, deps: Deps): void {
       const run = await storage.getRun(req.params.runId);
       if (!run) throw new OpenwopError('run_not_found', `run ${req.params.runId} not found`, 404);
 
+      // Content negotiation per `rest-endpoints.md §"GET /v1/runs/{runId}
+      // /events"`: when the client asks for JSON (Accept: application/
+      // json), return the event log as a single JSON envelope
+      // `{events: RunEventDoc[]}`. Default behavior (or
+      // Accept: text/event-stream) returns SSE. The JSON path is the
+      // "I just want the current state" sibling of the SSE path's
+      // "give me live updates."
+      const acceptHeader = req.header('accept') ?? '';
+      if (acceptHeader.includes('application/json') && !acceptHeader.includes('text/event-stream')) {
+        const allEvents = await storage.listEvents(run.runId, { fromSeq: 0, limit: 100_000 });
+        const isComplete = ['completed', 'failed', 'cancelled'].includes(run.status);
+        res.status(200).json({ events: allEvents, isComplete });
+        return;
+      }
+
       const modes = parseModes(
         (req.query.streamMode ?? req.query.mode) as string | undefined,
       );

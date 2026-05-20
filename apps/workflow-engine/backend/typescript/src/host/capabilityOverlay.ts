@@ -36,8 +36,14 @@ const overlay = new Map<string, boolean>();
  *  test soft-skips against the workflow-engine until the dispatch
  *  executor lands. */
 const DEFAULTS: Readonly<Record<string, boolean>> = {
-  'agents.dispatchMapping': false,
-  'subWorkflow.inputMapping': false,
+  // RFC 0022 §A — core.dispatch perWorker variable projection. Now
+  // executed by core.dispatch node + dispatcher engine code, so flip
+  // from false → true. Conformance opt-out scenarios re-toggle to
+  // false via the capability-toggle seam.
+  'agents.dispatchMapping': true,
+  // RFC 0022 §B — core.subWorkflow input/output mapping. Executed by
+  // executor/subWorkflowDispatcher.ts. Flip default to true.
+  'subWorkflow.inputMapping': true,
   // ai-envelope.md §"Capability handshake integration" + capabilities.md
   // §"Unsupported capability — refusal contract": a node whose typeId
   // requires `host.aiEnvelope: supported` MUST be refused if the host

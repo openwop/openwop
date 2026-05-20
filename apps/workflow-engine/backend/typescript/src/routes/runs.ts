@@ -23,6 +23,7 @@ import type { Storage } from '../storage/storage.js';
 import type { HostAdapterSuite } from '../host/index.js';
 import { OpenwopError, type RunRecord } from '../types.js';
 import { seedRunVariables, snapshotRunVariables } from '../host/variablesRuntime.js';
+import { getChildParentNodeId } from '../executor/subWorkflowDispatcher.js';
 import { executeRun } from '../executor/executor.js';
 import { getEventLog } from '../executor/eventLog.js';
 import { createLogger } from '../observability/logger.js';
@@ -513,6 +514,7 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
 
 function projectRunSnapshot(run: RunRecord) {
   const variables = snapshotRunVariables(run.runId);
+  const parentNodeId = getChildParentNodeId(run.runId);
   return {
     runId: run.runId,
     workflowId: run.workflowId,
@@ -524,6 +526,7 @@ function projectRunSnapshot(run: RunRecord) {
     parentRunId: run.parentRunId,
     parentSeq: run.parentSeq,
     forkMode: run.forkMode,
+    ...(parentNodeId !== undefined ? { parentNodeId } : {}),
     // RFC 0022 §B / `workflow-definition.schema.json §variables` —
     // the per-run variable bag (seeded at run-create from
     // `workflow.variables[].defaultValue` + `request.inputs`). Absent
