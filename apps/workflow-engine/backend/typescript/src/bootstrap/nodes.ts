@@ -119,6 +119,42 @@ const subWorkflowNode: NodeModule = {
   },
 };
 
+/** Per `channels-and-reducers.md §append + §TTL`: append a
+ *  `{value, _ts}` entry to the named channel (modeled as a workflow
+ *  variable storing an array). When `ttlMs > 0`, drop existing
+ *  entries whose `_ts < now - ttlMs` BEFORE appending — the TTL is
+ *  a write-time filter, not a read-time one. */
+const channelWriteNode: NodeModule = {
+  typeId: 'core.channelWrite',
+  version: '1.0.0',
+  async execute(ctx) {
+    const cfg = (ctx.config ?? {}) as { channelName?: unknown; reducer?: unknown; ttlMs?: unknown; value?: unknown };
+    const channelName = typeof cfg.channelName === 'string' ? cfg.channelName : '';
+    if (!channelName) {
+      return { status: 'failure', error: { code: 'invalid_request', message: 'core.channelWrite requires config.channelName' } };
+    }
+    const reducer = typeof cfg.reducer === 'string' ? cfg.reducer : 'append';
+    const ttlMs = typeof cfg.ttlMs === 'number' && cfg.ttlMs > 0 ? cfg.ttlMs : 0;
+    const now = Date.now();
+    // Dynamic import to avoid bootstrap import cycle.
+    const { snapshotRunVariables, setRunVariable } = await import('../host/variablesRuntime.js');
+    const bag = snapshotRunVariables(ctx.runId) ?? {};
+    const existing = Array.isArray(bag[channelName]) ? (bag[channelName] as Array<{ value: unknown; _ts: number }>) : [];
+    let kept = existing;
+    if (ttlMs > 0) {
+      const cutoff = now - ttlMs;
+      kept = existing.filter((e) => typeof e?._ts === 'number' && e._ts >= cutoff);
+    }
+    if (reducer === 'append') {
+      kept = [...kept, { value: cfg.value, _ts: now }];
+    } else if (reducer === 'replace') {
+      kept = [{ value: cfg.value, _ts: now }];
+    }
+    setRunVariable(ctx.runId, channelName, kept);
+    return { status: 'success', outputs: { channelName, size: kept.length } };
+  },
+};
+
 const delayNode: NodeModule = {
   typeId: 'core.delay',
   version: '1.0.0',
@@ -136,7 +172,10 @@ const delayNode: NodeModule = {
     const inputs = (ctx.inputs ?? {}) as Record<string, unknown>;
     const fromInput = typeof inputs.delayMs === 'number' ? inputs.delayMs : Number(inputs.delayMs);
     const fromConfig = Number(ctx.config?.durationMs);
-    const raw = Number.isFinite(fromInput) ? fromInput : (Number.isFinite(fromConfig) ? fromConfig : 0);
+    const fromConfigShort = Number((ctx.config as { ms?: unknown } | undefined)?.ms);
+    const raw = Number.isFinite(fromInput) ? fromInput
+      : (Number.isFinite(fromConfig) ? fromConfig
+      : (Number.isFinite(fromConfigShort) ? fromConfigShort : 0));
     const ms = Math.max(0, Math.min(60_000, raw));
     await new Promise((r) => setTimeout(r, ms));
     return { status: 'success', outputs: { waitedMs: ms } };
@@ -645,6 +684,7 @@ export function ensureNodesRegistered(): void {
       return { status: 'success', outputs: {} };
     },
   });
+  registry.register(channelWriteNode);
   registry.register(delayNode);
   registry.register(failNode);
   registry.register(approvalGateNode);

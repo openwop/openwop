@@ -11,6 +11,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Workflow-engine sample — core.channelWrite + append-with-TTL reducer (2026-05-20)
+
+Suite delta: 1235 → 1236 passing / 12 → 11 failing.
+
+- **`apps/workflow-engine/backend/typescript/src/bootstrap/nodes.ts`** — registers `core.channelWrite` per `channels-and-reducers.md §append + §TTL`. Channels modeled as workflow variables storing `Array<{value, _ts}>`. On write: when `config.ttlMs > 0`, drop existing entries with `_ts < now - ttlMs` BEFORE appending — TTL is a write-time filter, not read-time. Supports `reducer: 'append' | 'replace'`. Also adds `ms` alias to `core.delay` config (some fixtures use `config.ms` instead of `config.durationMs`).
+
+Closes `channel-ttl > drops entries older than ttlMs at write time`.
+
 ### Workflow-engine sample — capability_not_provided refusal contract (2026-05-20)
 
 Suite delta: 1234 → 1235 passing / 13 → 12 failing.
