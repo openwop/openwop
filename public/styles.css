@@ -85,21 +85,46 @@
     justify-content: space-between;
     height: 64px;
   }
+  /* Topbar brand mark — mirrors the registry's <h1 class="brand-mark"> and
+   * the app's .app-header h1.brand-mark register: SVG icon + Instrument
+   * Serif "Open<em>WOP</em>" with italic-clay "WOP" + mono uppercase
+   * sub-label. Sized down (28px icon, 20px serif) to fit the 64px-tall
+   * sticky topbar without crowding the nav. */
   .brand {
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    font-family: var(--mono);
-    font-size: 13px;
-    letter-spacing: 0.02em;
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 1;
+    letter-spacing: -0.01em;
+    color: var(--ink);
   }
   .brand-mark {
-    width: 33px !important; 
-    height: 33px !important;
+    width: 28px !important;
+    height: 28px !important;
     display: block;
+    flex-shrink: 0;
   }
-  .brand b { font-weight: 600; color: var(--ink); }
-  .brand span { color: var(--ink-3); }
+  .brand em {
+    font-style: italic;
+    color: var(--clay);
+  }
+  .brand-sub {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-style: normal;
+    color: var(--ink-3);
+    margin-left: 4px;
+  }
+  @media (max-width: 480px) {
+    /* On very narrow viewports the sub-label crowds the GitHub pill;
+     * drop it and keep just the icon + brand. */
+    .brand-sub { display: none; }
+  }
 
   .topnav {
     display: flex;
