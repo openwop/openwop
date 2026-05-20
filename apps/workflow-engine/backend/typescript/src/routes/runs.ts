@@ -98,7 +98,16 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
         if (!claim.claimed) {
           const existing = claim.existing;
           if (existing && existing.responseBody !== '__pending__') {
-            res.status(existing.responseStatus).type('application/json').send(existing.responseBody);
+            // Per `rest-endpoints.md` POST /v1/runs response headers:
+            // cache-served responses MUST carry `openwop-Idempotent-Replay:
+            // true` so the client distinguishes a replayed response from
+            // a fresh one (same runId, same status — header is the only
+            // observable signal).
+            res
+              .status(existing.responseStatus)
+              .set('openwop-Idempotent-Replay', 'true')
+              .type('application/json')
+              .send(existing.responseBody);
             return;
           }
           // Concurrent request still in flight. Per `idempotency.md` we
@@ -266,6 +275,72 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
       error: 'not_found',
       message: `artifact '${decodeURIComponent(m[2] ?? '')}' not found on run '${decodeURIComponent(m[1] ?? '')}'`,
     });
+  });
+
+  // Bulk-cancel per `rest-endpoints.md §"POST /v1/runs:bulk-cancel"`.
+  // Top-level 200 when the request reached the host (per-id outcomes
+  // carry partial failure); 400 on empty / oversized runIds. The
+  // canonical URL uses the `:bulk-cancel` action segment, which
+  // Express 4 doesn't accept directly in a path string (path-to-regexp
+  // treats `:` as a param prefix) — use a literal regex to match.
+  const MAX_RUN_IDS = 100;
+  app.post(/^\/v1\/runs:bulk-cancel$/, async (req, res, next) => {
+    try {
+      const body = (req.body ?? {}) as { runIds?: unknown; reason?: unknown };
+      if (!Array.isArray(body.runIds) || body.runIds.length === 0) {
+        throw new OpenwopError(
+          'validation_error',
+          'runIds MUST be a non-empty array of run-id strings.',
+          400,
+          { maxRunIds: MAX_RUN_IDS },
+        );
+      }
+      if (body.runIds.length > MAX_RUN_IDS) {
+        throw new OpenwopError(
+          'validation_error',
+          `runIds length ${body.runIds.length} exceeds maxRunIds ${MAX_RUN_IDS}.`,
+          400,
+          { maxRunIds: MAX_RUN_IDS },
+        );
+      }
+      const reason = (typeof body.reason === 'string' ? body.reason : 'bulk cancel');
+      const terminal = ['completed', 'failed', 'cancelled'];
+      const results: Array<{ runId: string; ok: boolean; status?: string; error?: { code: string; message: string } }> = [];
+      for (const rawId of body.runIds) {
+        if (typeof rawId !== 'string' || rawId.length === 0) {
+          results.push({ runId: String(rawId), ok: false, error: { code: 'invalid_request', message: 'runId MUST be a non-empty string' } });
+          continue;
+        }
+        const run = await storage.getRun(rawId);
+        if (!run) {
+          results.push({ runId: rawId, ok: false, error: { code: 'not_found', message: `run ${rawId} not found` } });
+          continue;
+        }
+        if (terminal.includes(run.status)) {
+          // Idempotent: re-cancelling an already-terminal run returns
+          // ok with the existing terminal status. Conformance asserts
+          // this directly per the "re-bulk-cancel after first cancel"
+          // subtest.
+          results.push({ runId: rawId, ok: true, status: run.status });
+          continue;
+        }
+        try {
+          await storage.updateRun(rawId, {
+            status: 'cancelled',
+            completedAt: new Date().toISOString(),
+            error: { code: 'cancelled', message: reason },
+          });
+          await getEventLog().append({ runId: rawId, type: 'run.cancelled', payload: { reason } });
+          notifyRunTerminal(rawId);
+          results.push({ runId: rawId, ok: true, status: 'cancelled' });
+        } catch (err) {
+          results.push({ runId: rawId, ok: false, error: { code: 'internal_error', message: err instanceof Error ? err.message : String(err) } });
+        }
+      }
+      res.status(200).json({ results });
+    } catch (err) {
+      next(err);
+    }
   });
 
   app.post('/v1/runs/:runId/cancel', async (req, res, next) => {

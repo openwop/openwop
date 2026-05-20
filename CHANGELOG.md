@@ -11,6 +11,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Workflow-engine sample — bulk-cancel endpoint + idempotency replay header (2026-05-19)
+
+Two surgical wire-shape gaps. Suite delta: 1200 → 1206 passing / 47 → 41 failing.
+
+- **`apps/workflow-engine/backend/typescript/src/routes/runs.ts`** — new `POST /v1/runs:bulk-cancel` per `rest-endpoints.md §"POST /v1/runs:bulk-cancel"`. Returns 200 + `{results: [{runId, ok, status?, error?}]}` with per-id outcomes preserving request order. Validates `runIds` array (non-empty, ≤100 entries — `details.maxRunIds` on over-cap). Idempotent: re-bulk-cancelling already-terminal runs returns `ok: true` with the existing terminal status. Uses an Express regex path because `:` in a route string is path-to-regexp's parameter marker.
+- **`apps/workflow-engine/backend/typescript/src/routes/runs.ts`** — `openwop-Idempotent-Replay: true` header now set on cache-served `POST /v1/runs` responses per `rest-endpoints.md` POST /v1/runs response-headers. Clients distinguish replayed responses from fresh ones (same runId + status — header is the only observable signal).
+
+Two related conformance failures stay deferred: (1) `bulk-cancel > mixed-outcome` needs node-input variable resolution (delay node receives 0ms instead of the seeded 30s, so the run completes before cancel hits); (2) `idempotency > same key + different body returns 409` needs request-body-hash on `IdempotencyRecord` for replay-mismatch detection. Both are their own session units.
+
+Compatibility: **implementation-only**. New endpoint + new optional response header on existing endpoint. No wire-shape, schema, or other reference-host changes.
+
 ### Workflow-engine sample — getWorkflow endpoint + strict streamMode validation (2026-05-19)
 
 Two surgical wire-shape gaps closed against the workflow-engine sample. Suite delta: 1198 → 1200 passing / 49 → 47 failing.
