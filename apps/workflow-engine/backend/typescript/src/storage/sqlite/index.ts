@@ -205,6 +205,16 @@ export function openSqliteStorage(dbPath: string): Storage {
     INSERT INTO chat_messages (message_id, session_id, role, content, meta, created_at)
     VALUES (?, ?, ?, ?, ?, ?)
   `);
+  // Atomic counter bump — paired with appendChatMessageStmt in a single
+  // transaction so concurrent appends don't lose increments. The route
+  // previously did read-then-write on `session.messageCount`, which
+  // collapsed parallel appends.
+  const bumpChatSessionStmt = db.prepare(`
+    UPDATE chat_sessions
+       SET message_count = message_count + 1,
+           updated_at = ?
+     WHERE session_id = ?
+  `);
 
   const insertAuditStmt = db.prepare(`
     INSERT INTO audit_log (audit_id, timestamp, principal_id, action, resource, outcome, payload)
@@ -738,14 +748,23 @@ export function openSqliteStorage(dbPath: string): Storage {
     },
 
     async appendChatMessage(record) {
-      appendChatMessageStmt.run(
-        record.messageId,
-        record.sessionId,
-        record.role,
-        record.content,
-        record.meta,
-        record.createdAt,
-      );
+      // Atomic: insert the message AND bump the parent session's
+      // message_count + updated_at in one transaction. The previous
+      // pattern (route reads session.messageCount, route increments,
+      // route writes back) lost increments under concurrent appends.
+      // better-sqlite3 transactions are synchronous — wrap into the
+      // async signature with a thin Promise resolve.
+      db.transaction(() => {
+        appendChatMessageStmt.run(
+          record.messageId,
+          record.sessionId,
+          record.role,
+          record.content,
+          record.meta,
+          record.createdAt,
+        );
+        bumpChatSessionStmt.run(record.createdAt, record.sessionId);
+      })();
     },
 
     async close() {

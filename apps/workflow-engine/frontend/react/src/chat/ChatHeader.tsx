@@ -21,6 +21,9 @@ interface Props {
   /** When non-null, render a tools toggle button. Anthropic only for v1. */
   onToggleTools: (() => void) | null;
   toolsEnabled: boolean;
+  /** When set, render a hamburger-style history toggle in the header. */
+  onToggleHistory?: () => void;
+  historyOpen?: boolean;
 }
 
 export function ChatHeader({
@@ -33,6 +36,8 @@ export function ChatHeader({
   webSearchEnabled,
   onToggleTools,
   toolsEnabled,
+  onToggleHistory,
+  historyOpen,
 }: Props): JSX.Element {
   const totalCost = sessionCostUsd(session);
   const messageCount = session.messages.length;
@@ -43,7 +48,22 @@ export function ChatHeader({
       borderBottom: '1px solid var(--color-border)',
       gap: 8,
     }}>
-      <ConfiguredProviderCard config={config} onChange={onOpenSettings} onRemoved={onRemoveKey} compact />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+        {onToggleHistory && (
+          <button
+            type="button"
+            className="secondary"
+            onClick={onToggleHistory}
+            aria-label={historyOpen ? 'Close chat history' : 'Open chat history'}
+            aria-pressed={historyOpen}
+            title="Saved chats"
+            style={{ padding: '2px 8px', fontSize: 11, minHeight: 0, height: 24 }}
+          >
+            ☰
+          </button>
+        )}
+        <ConfiguredProviderCard config={config} onChange={onOpenSettings} onRemoved={onRemoveKey} compact />
+      </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         {onToggleWebSearch && (
           <button

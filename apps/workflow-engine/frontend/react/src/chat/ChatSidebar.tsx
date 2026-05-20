@@ -8,7 +8,9 @@ import { ChatHeader } from './ChatHeader.js';
 import { ChatInput } from './ChatInput.js';
 import { MessageFeed } from './MessageFeed.js';
 import { WelcomeCard } from './WelcomeCard.js';
+import { SessionHistoryDrawer } from './SessionHistoryDrawer.js';
 import { useChatSession } from './hooks/useChatSession.js';
+import { useChatSessions } from './hooks/useChatSessions.js';
 import { findCommand } from './registry/CommandRegistry.js';
 import { registerDefaultCommands } from './registry/defaultCommands.js';
 import { getProvider } from '../byok/lib/providers.js';
@@ -28,9 +30,11 @@ interface Props {
 }
 
 export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'demo' }: Props): JSX.Element {
-  const { session, isSending, error, send, cancel, emitSystem, reset, resolveInterrupt, runWorkflowMention, cancelWorkflowRun, regenerate, setFeedback } = useChatSession();
+  const { session, isSending, error, send, cancel, emitSystem, reset, resolveInterrupt, runWorkflowMention, cancelWorkflowRun, regenerate, setFeedback, loadSessionFromBackend } = useChatSession();
+  const sessionsCollection = useChatSessions();
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [toolsEnabled, setToolsEnabled] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   // Per-turn capability hints sourced from providers.json for the active model.
   const activeModel = (() => {
@@ -87,55 +91,83 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
 
   return (
     <div style={{
-      display: 'flex', flexDirection: 'column',
+      display: 'flex',
       height: 'calc(100vh - 100px)',
       maxHeight: 900,
       border: '1px solid var(--color-border)',
       borderRadius: 'var(--radius)',
       background: 'var(--color-surface)',
       overflow: 'hidden',
+      position: 'relative',
     }}>
-      <ChatHeader
-        config={config}
-        onOpenSettings={onOpenSettings}
-        onRemoveKey={onRemoveKey}
-        onNewChat={reset}
-        session={session}
-        webSearchEnabled={webSearchEnabled}
-        onToggleWebSearch={supportsWebSearch ? () => setWebSearchEnabled((v) => !v) : null}
-        toolsEnabled={toolsEnabled}
-        onToggleTools={supportsTools ? () => setToolsEnabled((v) => !v) : null}
-      />
+      {historyOpen && (
+        <SessionHistoryDrawer
+          sessions={sessionsCollection.sessions}
+          isLoading={sessionsCollection.isLoading}
+          error={sessionsCollection.error}
+          activeSessionId={session.id}
+          onRefresh={sessionsCollection.refresh}
+          onSelect={(id) => { void loadSessionFromBackend(id); setHistoryOpen(false); }}
+          onRename={sessionsCollection.rename}
+          onDelete={async (id) => {
+            await sessionsCollection.remove(id);
+            // If the deleted session is the active one, fall back to a
+            // fresh local chat so the message feed isn't orphaned.
+            if (id === session.id) reset();
+          }}
+          onClose={() => setHistoryOpen(false)}
+        />
+      )}
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        minWidth: 0,
+      }}>
+        <ChatHeader
+          config={config}
+          onOpenSettings={onOpenSettings}
+          onRemoveKey={onRemoveKey}
+          onNewChat={reset}
+          session={session}
+          webSearchEnabled={webSearchEnabled}
+          onToggleWebSearch={supportsWebSearch ? () => setWebSearchEnabled((v) => !v) : null}
+          toolsEnabled={toolsEnabled}
+          onToggleTools={supportsTools ? () => setToolsEnabled((v) => !v) : null}
+          historyOpen={historyOpen}
+          onToggleHistory={() => setHistoryOpen((v) => !v)}
+        />
 
-      {session.messages.length === 0 ? (
-        <div style={{ flex: 1, overflowY: 'auto' }}>
-          <WelcomeCard onPickSuggestion={(text) => onUserSubmit(text)} />
+        {session.messages.length === 0 ? (
+          <div style={{ flex: 1, overflowY: 'auto' }}>
+            <WelcomeCard onPickSuggestion={(text) => onUserSubmit(text)} />
+          </div>
+        ) : (
+          <MessageFeed
+            messages={session.messages}
+            tenantId={tenantId}
+            onResolveInterrupt={resolveInterrupt}
+            onCancelWorkflowRun={cancelWorkflowRun}
+            onRegenerate={(id) => { void regenerate(id, config); }}
+            onFeedback={setFeedback}
+            onReconfigureBYOK={onOpenSettings}
+          />
+        )}
+
+        {error && (
+          <div className="alert error" style={{ margin: 8, fontSize: 12 }}>{error}</div>
+        )}
+
+        <div style={{ padding: 12, borderTop: '1px solid var(--color-border)' }}>
+          <ChatInput
+            onSend={onUserSubmit}
+            onCancel={cancel}
+            disabled={isSending}
+            disabledReason={disabledReason}
+            placeholder={isSending ? 'Generating… (Esc to stop)' : 'Ask anything… (/ for commands)'}
+            supportsAudioInput={supportsAudioInput}
+          />
         </div>
-      ) : (
-        <MessageFeed
-          messages={session.messages}
-          tenantId={tenantId}
-          onResolveInterrupt={resolveInterrupt}
-          onCancelWorkflowRun={cancelWorkflowRun}
-          onRegenerate={(id) => { void regenerate(id, config); }}
-          onFeedback={setFeedback}
-          onReconfigureBYOK={onOpenSettings}
-        />
-      )}
-
-      {error && (
-        <div className="alert error" style={{ margin: 8, fontSize: 12 }}>{error}</div>
-      )}
-
-      <div style={{ padding: 12, borderTop: '1px solid var(--color-border)' }}>
-        <ChatInput
-          onSend={onUserSubmit}
-          onCancel={cancel}
-          disabled={isSending}
-          disabledReason={disabledReason}
-          placeholder={isSending ? 'Generating… (Esc to stop)' : 'Ask anything… (/ for commands)'}
-          supportsAudioInput={supportsAudioInput}
-        />
       </div>
     </div>
   );

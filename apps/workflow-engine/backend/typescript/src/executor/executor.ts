@@ -53,7 +53,8 @@ import type {
 } from './types.js';
 import type { RunRecord } from '../types.js';
 import type { ProviderPolicyResolver } from '../host/index.js';
-import { createAiProvidersAdapter, AiProviderError } from '../aiProviders/aiProvidersHost.js';
+import { createAiProvidersAdapter, AiProviderError, type AiProviderErrorCode } from '../aiProviders/aiProvidersHost.js';
+import { classifyDispatchError } from '../observability/errorRecovery.js';
 import { buildHostSurfaceBundle } from '../host/inMemorySurfaces.js';
 import { notifyRunTerminal } from './runLifecycle.js';
 import { snapshotRunVariables } from '../host/variablesRuntime.js';
@@ -95,7 +96,24 @@ async function emitTerminalFailure(input: {
   error: { code: string; message: string };
 }): Promise<void> {
   const eventLog = getEventLog();
-  const errorPayload = stripSecretsFromPersisted({ error: input.error });
+  // Enrich the canonical {code, message} pair with the BE's recovery
+  // classifier output so consumers (e.g., the sample chat UI's
+  // ErrorCard) can render a user-safe `userMessage` + a recommended
+  // `action` without re-classifying on the FE. Additive per
+  // `_errorObject` schema (`additionalProperties: true`); old consumers
+  // ignore the new fields. See `observability/errorRecovery.ts` for the
+  // classifier authoritative source.
+  const classified = classifyDispatchError(
+    new AiProviderError(input.error.code as AiProviderErrorCode, input.error.message),
+  );
+  const enrichedError = {
+    ...input.error,
+    category: classified.category,
+    action: classified.action,
+    userMessage: classified.userMessage,
+    ...(classified.retryAfterMs !== undefined ? { retryAfterMs: classified.retryAfterMs } : {}),
+  };
+  const errorPayload = stripSecretsFromPersisted({ error: enrichedError });
   if (input.nodeId) {
     await eventLog.append({
       runId: input.runId,

@@ -259,6 +259,11 @@ export function registerSampleChatRoutes(app: Express, deps: { storage: Storage 
 
       const now = new Date().toISOString();
       try {
+        // `appendChatMessage` atomically bumps the parent session's
+        // `message_count` + `updated_at` in the same transaction so
+        // concurrent appends don't lose increments. Previously the
+        // route did read-then-write on `session.messageCount`, which
+        // raced under load.
         await storage.appendChatMessage({
           messageId: body.messageId,
           sessionId: req.params.sessionId,
@@ -278,12 +283,6 @@ export function registerSampleChatRoutes(app: Express, deps: { storage: Storage 
         }
         throw err;
       }
-
-      // Bump the session header so listings sort by latest activity.
-      await storage.updateChatSession(tenantId, req.params.sessionId, {
-        updatedAt: now,
-        messageCount: session.messageCount + 1,
-      });
 
       res.status(201).json({
         messageId: body.messageId,

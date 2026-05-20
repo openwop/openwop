@@ -102,6 +102,14 @@
   opacity: 1 !important;
 }
 
+/* ─── Session-history row actions hover reveal ────────────────────────
+ * `.session-row-actions` is the per-row Rename/Delete toolbar in
+ * SessionHistoryDrawer; same visibility pattern as `.message-actions`. */
+.session-row:hover > .session-row-actions,
+.session-row:focus-within > .session-row-actions {
+  opacity: 1 !important;
+}
+
 /* ─── Reduced motion ──────────────────────────────────────────────────
  * Honor prefers-reduced-motion: reduce. Mirrors the canonical block in
  * public/styles.css per DESIGN.md §11 / DESIGN.app.md §6 invariant 1.

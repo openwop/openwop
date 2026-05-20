@@ -189,6 +189,40 @@ describe('sample chat sessions — messages sub-collection + cascade', () => {
     expect(r.body.error).toBe('validation_error');
   });
 
+  it('atomic message_count under concurrent appends — no lost increments', async () => {
+    const fresh = await jsonFetch<SessionRecord>('/v1/host/sample/chat/sessions', {
+      method: 'POST',
+      body: JSON.stringify({ title: 'concurrent-bump' }),
+    });
+    const id = fresh.body.sessionId;
+
+    // Fire 10 concurrent appends. Under the previous read-then-write
+    // pattern these would all read messageCount=0, all write 1, and
+    // the final count would be 1 instead of 10. The atomic SQL
+    // increment in `appendChatMessage` makes the final count exact.
+    const N = 10;
+    await Promise.all(
+      Array.from({ length: N }, (_, i) =>
+        jsonFetch(`/v1/host/sample/chat/sessions/${id}/messages`, {
+          method: 'POST',
+          body: JSON.stringify({
+            messageId: `parallel-msg-${i}`,
+            role: 'user',
+            content: `m${i}`,
+          }),
+        }),
+      ),
+    );
+
+    const after = await jsonFetch<SessionRecord>(`/v1/host/sample/chat/sessions/${id}`);
+    expect(after.body.messageCount, 'every concurrent append MUST be reflected in messageCount').toBe(N);
+
+    const list = await jsonFetch<{ messages: unknown[] }>(
+      `/v1/host/sample/chat/sessions/${id}/messages`,
+    );
+    expect(list.body.messages.length, 'every message row MUST persist').toBe(N);
+  });
+
   it('cascade-deletes messages when the session is removed', async () => {
     const fresh = await jsonFetch<SessionRecord>('/v1/host/sample/chat/sessions', {
       method: 'POST',

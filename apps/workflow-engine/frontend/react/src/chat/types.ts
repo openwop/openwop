@@ -143,7 +143,23 @@ export interface ChatMessage {
     model?: string;
     inputTokens?: number;
     outputTokens?: number;
-    error?: { code: string; message: string };
+    /** Error envelope. The required `code` + `message` pair matches
+     *  the BE's serialized error shape; the optional `category` /
+     *  `action` / `userMessage` fields mirror the BE's
+     *  `classifyDispatchError()` output and are populated when the BE
+     *  attaches its classifier result to the error envelope or
+     *  run-event payload. When absent, `ErrorCard` falls back to
+     *  `chat/lib/errorClassify.ts:classifyChatError()`. See the
+     *  cross-reference in `errorClassify.ts` for the FE/BE drift
+     *  discipline. */
+    error?: {
+      code: string;
+      message: string;
+      category?: 'network' | 'auth' | 'rate_limit' | 'quota' | 'timeout' | 'safety' | 'config' | 'unknown';
+      action?: 'retry' | 'regenerate' | 'reconfigure' | 'abort' | 'wait';
+      userMessage?: string;
+      retryAfterMs?: number;
+    };
     /** Citations from a web-search-enabled turn. */
     citations?: readonly Citation[];
   };

@@ -19,7 +19,11 @@ import type { RunEventDoc } from '@openwop/openwop';
 import { cancelRun, createRun, getRun } from '../../client/runsClient.js';
 import { subscribeToRun, type Subscription } from '../../client/streamsClient.js';
 import { listOpenInterrupts } from '../../client/interruptsClient.js';
-import { listChatSessionMessages } from '../../client/chatSessionsClient.js';
+import {
+  appendChatMessage,
+  createChatSession,
+  listChatSessionMessages,
+} from '../../client/chatSessionsClient.js';
 import type { BYOKActiveConfig } from '../../byok/lib/useBYOKConfig.js';
 import { useApplyAnimation } from './useApplyAnimation.js';
 import { getSavedWorkflow } from '../../builder/persistence/localStore.js';
@@ -167,6 +171,17 @@ export function useChatSession(): UseChatSessionResult {
    *  can run concurrently and outlive any single chat turn, so they
    *  need their own ref. Cleared on terminal events + unmount. */
   const workflowSubsRef = useRef<Map<string, Subscription>>(new Map());
+  /** Session-ids known to exist in the BE. Populated by
+   *  `ensureSessionInBackend()` (lazy POST on first persist), by
+   *  `reset()` (eager POST), and by `loadSessionFromBackend()` (mark
+   *  loaded). Sample-grade: lives for the hook's lifetime; a page
+   *  reload re-discovers via the idempotent create-or-409 path. */
+  const backendSessionsRef = useRef<Set<string>>(new Set());
+  /** Message-ids already persisted to BE. Prevents double-persist when
+   *  React re-fires terminal handlers (e.g., StrictMode dev double-
+   *  invoke) and when the SSE stream emits a stale terminal event on
+   *  reconnect. */
+  const persistedIdsRef = useRef<Set<string>>(new Set());
 
   // Apply-animation: batches token deltas into ~one update per
   // animation frame. The flush callback appends the accumulated tail
@@ -192,6 +207,61 @@ export function useChatSession(): UseChatSessionResult {
   useEffect(() => {
     persistSession(session);
   }, [session]);
+
+  /** Lazily create a session in the BE if we haven't already. Idempotent
+   *  against 409 conflicts so a page reload that re-uses a previously-
+   *  created sessionId silently no-ops. Errors are logged but never
+   *  surface to the UI — write-through is best-effort. */
+  const ensureSessionInBackend = useCallback(async (sessionId: string, title: string): Promise<void> => {
+    if (backendSessionsRef.current.has(sessionId)) return;
+    try {
+      await createChatSession({ sessionId, title });
+      backendSessionsRef.current.add(sessionId);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '';
+      // 409 = the session already exists (e.g., we created it on a
+      // previous page load). Treat as success for the dedup cache so
+      // subsequent persists don't retry the create.
+      if (msg.includes('idempotency_key_conflict')) {
+        backendSessionsRef.current.add(sessionId);
+      } else {
+        // Network down or BE unreachable — leave dedup empty; we'll
+        // retry on the next persist. The UI continues to work via
+        // localStorage; the drawer just won't reflect this session
+        // until connectivity returns.
+        // eslint-disable-next-line no-console
+        console.warn('chat-session BE create failed (write-through degraded)', err);
+      }
+    }
+  }, []);
+
+  /** Fire-and-forget persist a finalized chat message to BE. Calling
+   *  again with the same `msg.id` is a no-op (dedup via
+   *  `persistedIdsRef`). Ensures the parent session exists first. */
+  const persistMessage = useCallback(async (sessionId: string, title: string, msg: ChatMessage): Promise<void> => {
+    if (persistedIdsRef.current.has(msg.id)) return;
+    persistedIdsRef.current.add(msg.id); // claim immediately to dedup concurrent calls
+    try {
+      await ensureSessionInBackend(sessionId, title);
+      const { id: _id, meta, ...rest } = msg;
+      const contentJson = JSON.stringify(rest);
+      const args: Parameters<typeof appendChatMessage>[1] = {
+        messageId: msg.id,
+        role: msg.role,
+        content: contentJson,
+      };
+      if (meta) args.meta = JSON.stringify(meta);
+      await appendChatMessage(sessionId, args);
+    } catch (err) {
+      // Roll back the dedup claim so a future retry has a chance.
+      // The user's session keeps streaming through localStorage; the
+      // drawer just won't show this message until the next persist
+      // succeeds.
+      persistedIdsRef.current.delete(msg.id);
+      // eslint-disable-next-line no-console
+      console.warn('chat-message BE persist failed (write-through degraded)', err);
+    }
+  }, [ensureSessionInBackend]);
 
   useEffect(() => () => {
     subRef.current?.close();
@@ -296,11 +366,20 @@ export function useChatSession(): UseChatSessionResult {
       { role: 'user', content: userContent },
     ];
 
+    // Snapshot the next title before setSession so the BE-write-through
+    // sees the same value the local state lands on. Avoids reading the
+    // stale closure-captured `session.title` inside the persist call.
+    const nextTitle = session.messages.length === 0 ? text.slice(0, 60) : session.title;
     setSession((s) => ({
       ...s,
       title: s.messages.length === 0 ? text.slice(0, 60) : s.title,
       messages: [...s.messages, userMsg, assistantMsg],
     }));
+
+    // Write-through: persist the user message NOW (it's complete at
+    // append time). The assistant message persists later, at terminal.
+    // Fire-and-forget — the SSE turn doesn't block on the round-trip.
+    void persistMessage(session.id, nextTitle, userMsg);
 
     inFlightAssistantIdRef.current = assistantId;
     let runId: string;
@@ -347,13 +426,17 @@ export function useChatSession(): UseChatSessionResult {
       }));
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
+      const finalized: ChatMessage = {
+        ...assistantMsg,
+        isStreaming: false,
+        content: '',
+        meta: { error: { code: 'dispatch_failed', message: msg } },
+      };
       setSession((s) => ({
         ...s,
-        messages: s.messages.map((m) => m.id === assistantId
-          ? { ...m, isStreaming: false, content: '', meta: { error: { code: 'dispatch_failed', message: msg } } }
-          : m,
-        ),
+        messages: s.messages.map((m) => m.id === assistantId ? finalized : m),
       }));
+      void persistMessage(session.id, nextTitle, finalized);
       setError(msg);
       setIsSending(false);
       return;
@@ -472,22 +555,29 @@ export function useChatSession(): UseChatSessionResult {
           const completion = typeof outputs.completion === 'string' ? outputs.completion : accumulated;
           const usage = outputs.usage as Record<string, number> | undefined;
           const citations = Array.isArray(outputs.citations) ? outputs.citations as Citation[] : undefined;
-          setSession((s) => ({
-            ...s,
-            messages: s.messages.map((m) => m.id === assistantId ? {
-              ...m,
-              isStreaming: false,
-              content: completion,
-              meta: {
-                runId,
-                provider: outputs.provider as string | undefined,
-                model: outputs.model as string | undefined,
-                inputTokens: usage?.inputTokens,
-                outputTokens: usage?.outputTokens,
-                ...(citations && citations.length > 0 ? { citations } : {}),
-              },
-            } : m),
-          }));
+          let finalized: ChatMessage | null = null;
+          setSession((s) => {
+            const next = s.messages.map((m) => {
+              if (m.id !== assistantId) return m;
+              const updated: ChatMessage = {
+                ...m,
+                isStreaming: false,
+                content: completion,
+                meta: {
+                  runId,
+                  provider: outputs.provider as string | undefined,
+                  model: outputs.model as string | undefined,
+                  inputTokens: usage?.inputTokens,
+                  outputTokens: usage?.outputTokens,
+                  ...(citations && citations.length > 0 ? { citations } : {}),
+                },
+              };
+              finalized = updated;
+              return updated;
+            });
+            return { ...s, messages: next };
+          });
+          if (finalized) void persistMessage(session.id, session.title, finalized);
         } else if (ev.type === 'node.suspended') {
           // An interrupt fired mid-turn — fetch the open interrupts and
           // attach the latest to the assistant bubble so the card host
@@ -510,15 +600,22 @@ export function useChatSession(): UseChatSessionResult {
         } else if (ev.type === 'run.failed') {
           animation.flush();
           const err = (payload.error as Record<string, string>) ?? { code: 'unknown', message: 'unknown failure' };
-          setSession((s) => ({
-            ...s,
-            messages: s.messages.map((m) => m.id === assistantId ? {
-              ...m,
-              isStreaming: false,
-              content: accumulated,
-              meta: { runId, error: { code: err.code ?? 'unknown', message: err.message ?? 'unknown' } },
-            } : m),
-          }));
+          let finalized: ChatMessage | null = null;
+          setSession((s) => {
+            const next = s.messages.map((m) => {
+              if (m.id !== assistantId) return m;
+              const updated: ChatMessage = {
+                ...m,
+                isStreaming: false,
+                content: accumulated,
+                meta: { runId, error: { code: err.code ?? 'unknown', message: err.message ?? 'unknown' } },
+              };
+              finalized = updated;
+              return updated;
+            });
+            return { ...s, messages: next };
+          });
+          if (finalized) void persistMessage(session.id, session.title, finalized);
           setIsSending(false);
           inFlightRunIdRef.current = null;
           inFlightAssistantIdRef.current = null;
@@ -533,15 +630,22 @@ export function useChatSession(): UseChatSessionResult {
           // User-initiated stop. Mark the in-flight bubble as cancelled
           // with whatever content we accumulated so far.
           animation.flush();
-          setSession((s) => ({
-            ...s,
-            messages: s.messages.map((m) => m.id === assistantId ? {
-              ...m,
-              isStreaming: false,
-              content: accumulated || '',
-              meta: { runId, error: { code: 'cancelled', message: 'Stopped by user.' } },
-            } : m),
-          }));
+          let finalized: ChatMessage | null = null;
+          setSession((s) => {
+            const next = s.messages.map((m) => {
+              if (m.id !== assistantId) return m;
+              const updated: ChatMessage = {
+                ...m,
+                isStreaming: false,
+                content: accumulated || '',
+                meta: { runId, error: { code: 'cancelled', message: 'Stopped by user.' } },
+              };
+              finalized = updated;
+              return updated;
+            });
+            return { ...s, messages: next };
+          });
+          if (finalized) void persistMessage(session.id, session.title, finalized);
           setIsSending(false);
           inFlightRunIdRef.current = null;
           inFlightAssistantIdRef.current = null;
@@ -560,23 +664,30 @@ export function useChatSession(): UseChatSessionResult {
       },
       onTimeout: (kind) => {
         animation.flush();
-        setSession((s) => ({
-          ...s,
-          messages: s.messages.map((m) => m.id === assistantId ? {
-            ...m,
-            isStreaming: false,
-            content: accumulated,
-            meta: {
-              runId,
-              error: {
-                code: 'stream_timeout',
-                message: kind === 'idle'
-                  ? 'No tokens received for 30s — the stream appears stuck. The bubble shows whatever arrived before the timeout.'
-                  : 'Stream exceeded the absolute deadline (120s). The bubble shows whatever arrived before the timeout.',
+        let finalized: ChatMessage | null = null;
+        setSession((s) => {
+          const next = s.messages.map((m) => {
+            if (m.id !== assistantId) return m;
+            const updated: ChatMessage = {
+              ...m,
+              isStreaming: false,
+              content: accumulated,
+              meta: {
+                runId,
+                error: {
+                  code: 'stream_timeout',
+                  message: kind === 'idle'
+                    ? 'No tokens received for 30s — the stream appears stuck. The bubble shows whatever arrived before the timeout.'
+                    : 'Stream exceeded the absolute deadline (120s). The bubble shows whatever arrived before the timeout.',
+                },
               },
-            },
-          } : m),
-        }));
+            };
+            finalized = updated;
+            return updated;
+          });
+          return { ...s, messages: next };
+        });
+        if (finalized) void persistMessage(session.id, session.title, finalized);
         setIsSending(false);
         inFlightRunIdRef.current = null;
         inFlightAssistantIdRef.current = null;
@@ -635,11 +746,19 @@ export function useChatSession(): UseChatSessionResult {
       messages: [],
       createdAt: new Date().toISOString(),
     };
+    // Clear write-through dedup state. The fresh sessionId has no
+    // messages persisted yet; the new title belongs to a session that
+    // doesn't exist in BE yet (ensureSessionInBackend will create it
+    // on the first send).
+    persistedIdsRef.current = new Set();
     persistSession(fresh);
     setSession(fresh);
     setError(null);
     setIsSending(false);
-  }, []);
+    // Eagerly create the session in BE so it appears in the drawer
+    // even before the user sends anything. Idempotent against 409s.
+    void ensureSessionInBackend(fresh.id, fresh.title);
+  }, [ensureSessionInBackend]);
 
   const resolveInterrupt = useCallback(async (messageId: string, _value: unknown) => {
     // Optimistically clear the active interrupt on the bubble; the SSE
@@ -681,6 +800,11 @@ export function useChatSession(): UseChatSessionResult {
         messages,
         createdAt: persisted[0]?.createdAt ?? new Date().toISOString(),
       };
+      // Mark every loaded id as already-persisted so subsequent appends
+      // dedup correctly. The session itself is known to exist in BE
+      // since we just listed its messages.
+      persistedIdsRef.current = new Set(messages.map((m) => m.id));
+      backendSessionsRef.current.add(sessionId);
       persistSession(next);
       setSession(next);
     } catch (err) {

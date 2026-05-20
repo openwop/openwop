@@ -723,18 +723,39 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
     },
 
     async appendChatMessage(record) {
-      await pool.query(
-        `INSERT INTO chat_messages (message_id, session_id, role, content, meta, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [
-          record.messageId,
-          record.sessionId,
-          record.role,
-          record.content,
-          record.meta,
-          record.createdAt,
-        ],
-      );
+      // Atomic insert + counter bump in one transaction — see the
+      // sqlite mirror in `../sqlite/index.ts` for the rationale. Pool
+      // checkout + BEGIN/COMMIT so concurrent appends serialize at the
+      // row level instead of racing on read-then-write.
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query(
+          `INSERT INTO chat_messages (message_id, session_id, role, content, meta, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [
+            record.messageId,
+            record.sessionId,
+            record.role,
+            record.content,
+            record.meta,
+            record.createdAt,
+          ],
+        );
+        await client.query(
+          `UPDATE chat_sessions
+              SET message_count = message_count + 1,
+                  updated_at = $1
+            WHERE session_id = $2`,
+          [record.createdAt, record.sessionId],
+        );
+        await client.query('COMMIT');
+      } catch (err) {
+        await client.query('ROLLBACK').catch(() => { /* */ });
+        throw err;
+      } finally {
+        client.release();
+      }
     },
 
     async close() {
