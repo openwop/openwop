@@ -130,6 +130,21 @@
               "description": "Hard cap on `POST /v1/prompts:render` request body size."
             }
           }
+        },
+        "defaults": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "RFC 0029 §B. Per-kind host-default PromptRefs that apply at resolution chain layer 4 (`host-defaults`) per `spec/v1/prompts.md` §\"Resolution chain (normative)\". Advertised so clients can preview the full chain at edit time without dispatching a node. Hosts MAY ship per-kind defaults; the openwop spec ships none.",
+          "properties": {
+            "system": { "$ref": "./prompt-ref.schema.json" },
+            "user": { "$ref": "./prompt-ref.schema.json" },
+            "few-shot": { "$ref": "./prompt-ref.schema.json" },
+            "schema-hint": { "$ref": "./prompt-ref.schema.json" }
+          }
+        },
+        "agentBindings": {
+          "type": "boolean",
+          "description": "RFC 0029 §B. When `true`, the host honors `AgentManifest.promptOverrides[kind]` and `AgentManifest.promptLibraryRef` at resolution chain layer 2 (`agent-overrides` / `agent-library-default`) per `spec/v1/prompts.md` §\"Resolution chain (normative)\". When `false` or absent, layer 2 is skipped — the host applies only layers 1, 3, 4. Conformance scenarios for agent-binding resolution are gated on this flag."
         }
       },
       "additionalProperties": false

@@ -329,11 +329,79 @@ A JSON-Schema `if/then` conditional in `prompt-template.schema.json` enforces th
 
 ---
 
+## Resolution chain (normative)
+
+When a host advertises `capabilities.prompts.supported: true` and a workflow node carries one or more `*PromptRef` keys (per §"Composition + observability" above), the host MUST resolve **each** `(nodeId, kind)` pair to a single `PromptRef` (or `null`) by walking the four ordered layers below and selecting the first non-`null` result. Lower-numbered layers take precedence over higher-numbered layers. The traversal order is the same for all four kinds (`system`, `user`, `few-shot`, `schema-hint`); per-kind branches are noted inline.
+
+For every `(nodeId, kind)` pair the host attempts to resolve, the host MUST emit one `agent.promptResolved` `RunEventDoc` (per `schemas/run-event-payloads.schema.json` `agentPromptResolved`) **before** the corresponding `prompt.composed` event (when emitted). The event's `chain[]` array carries one entry per layer attempted with `applied: true` on the winning layer.
+
+### Layer 1 — Node config (highest precedence)
+
+The host first consults the executing `WorkflowNode.config`:
+
+| Kind | Field consulted |
+|---|---|
+| `system` | `WorkflowNode.config.systemPromptRef` |
+| `user` | `WorkflowNode.config.userPromptRef` |
+| `few-shot` | `WorkflowNode.config.fewShotPromptRefs[]` (first non-empty entry; further entries surface as `additionalPromptRefs` for composition) |
+| `schema-hint` | `WorkflowNode.config.schemaHintPromptRef` |
+
+If the field is set, the resolved ref is that value and resolution halts. When the node carries an *inline* string body in the corresponding sibling field (e.g., `config.systemPrompt`) AND a `PromptRef`, the ref wins and the warn-log rule from RFC 0027 §C applies (`prompt_ref_supersedes_inline`).
+
+### Layer 2 — Agent binding
+
+Layer 2 is consulted only when `capabilities.prompts.agentBindings: true` is advertised AND the node carries `config.agentId` referencing a known `AgentManifest`. Resolution depends on the kind:
+
+- **`system` kind:**
+  - If `AgentManifest.systemPrompt | systemPromptRef` is set (the RFC 0003 intrinsic surface), the resolved ref is **the agent's intrinsic prompt** — a synthetic `PromptRef` projected from the manifest's tarball-relative path or inline body. Hosts MUST tag this chain entry as `layer: "agent-intrinsic"`.
+  - Else if `AgentManifest.promptOverrides.system` is set, that ref applies. Chain entry: `layer: "agent-overrides"`.
+  - Else if `AgentManifest.promptLibraryRef` is set, hosts MAY look up a same-kind default template from that library. Chain entry: `layer: "agent-library-default"`. (The lookup convention — e.g., `prompt:<libraryId>.default-<kind>` — is host policy in v1.x.)
+  - Else fall through to layer 3.
+- **Other kinds (`user`, `few-shot`, `schema-hint`):**
+  - If `AgentManifest.promptOverrides[kind]` is set, that ref applies. Chain entry: `layer: "agent-overrides"`.
+  - Else if `AgentManifest.promptLibraryRef` is set, host MAY apply library-default per above.
+  - Else fall through to layer 3.
+
+If `config.agentId` is unset, layer 2 is **skipped** entirely; resolution proceeds to layer 3. If `config.agentId` references an unknown agent, hosts MUST emit a `log.appended` warning with `code: "agent_binding_unresolvable"` and skip layer 2.
+
+### Layer 3 — Workflow defaults
+
+If `WorkflowDefinition.defaults.promptRefs[kind]` is set, that ref applies. Chain entry: `layer: "workflow-defaults"`. Else fall through to layer 4.
+
+### Layer 4 — Host built-ins (lowest precedence)
+
+If the host's `capabilities.prompts.defaults[kind]` advertises a `PromptRef`, that ref applies. Chain entry: `layer: "host-defaults"`. Hosts MAY ship per-kind defaults; the openwop spec ships none.
+
+If all four layers yield `null`, the resolved ref for that `(nodeId, kind)` is `null` and the emitted `agent.promptResolved.resolved` is `null`. The node MAY still execute — for example, a `core.ai.callPrompt` node with `userPrompt` provided as a direct inline string in `config` doesn't need a `user`-kind ref. Whether a `null` resolution is fatal is per-node-type semantics, not protocol policy.
+
+### Run-configurable extension layer (optional, non-normative)
+
+Hosts MAY honor `RunOptions.configurable.promptOverrides` as the **highest-precedence layer** — applied *before* layer 1 in the traversal, taking precedence over node-config refs. When a host implements this extension, it MUST emit a chain entry with `layer: "run-configurable"` ahead of the `node` entry so cross-host debuggers render the additional step. This extension is non-normative in v1.x; a future RFC may promote it to a normative layer.
+
+### Replay determinism
+
+`agent.promptResolved` events are durable and participate in replay. Invariants:
+
+- `resolved` MUST replay identically. Divergence MUST emit `replay.diverged` with `divergencePoint: "agent.promptResolved"`.
+- `chain[].applied` MUST replay identically when `resolved` matches.
+- `chain[].source` SHOULD replay identically; if a host has rotated host-built-in defaults between original and replay, the `host-defaults` entry's `source` MAY differ. Replay tooling MUST tolerate this and surface the rotation explicitly rather than treating it as an integrity failure.
+
+### Orthogonality with model-capability gating (non-normative)
+
+Per the envelope-track RFC 0031 (Draft), `NodeModule.requiredModelCapabilities` and `NodeModule.fallbackModel` answer a different question — *which model can dispatch this node?* — and emit `model.capability.substituted` / `model.capability.insufficient` events. The two surfaces are orthogonal axes:
+
+- **Prompt resolution (this section)** answers "which PromptRef applies at `(nodeId, kind)`?" — does not influence model selection.
+- **Model-capability gating (RFC 0031)** answers "which model can dispatch this node?" — does not influence prompt selection.
+
+A node MAY carry both surfaces independently. The `agent.promptResolved` event emitted by this section and the `model.capability.*` events emitted by RFC 0031 are distinct observability surfaces and MAY both fire for the same node execution. No precedence rule applies between them.
+
+---
+
 ## Open spec gaps
 
 | # | Gap | Owner / RFC |
 |---|---|---|
-| P1 | Four-layer resolution chain + `agent.promptResolved` event + `AgentManifest.promptOverrides` | RFC 0029 (Draft) |
+| P1 | Reference-host implementation of the four-layer resolution chain + `agent.promptResolved` emission in `core.ai.callPrompt` | Acceptance-gate item per RFC 0029 (wire shape landed in this document §"Resolution chain (normative)") |
 | P2 | Reference-host emission of `prompt.composed` from `core.ai.callPrompt` in the workflow-engine sample | Acceptance-gate item per RFC 0027 |
 | P3 | First non-steward host advertises `capabilities.prompts.supported: true` | Acceptance-gate item per RFC 0027 |
 | P4 | Reference-host implementation of `/v1/prompts*` REST endpoints + prompt-pack install flow | Acceptance-gate item per RFC 0028 |

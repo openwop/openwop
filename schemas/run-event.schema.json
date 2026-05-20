@@ -105,6 +105,7 @@
         "agent.reasoning.delta",
         "provider.usage",
         "prompt.composed",
+        "agent.promptResolved",
         "agent.toolCalled",
         "agent.toolReturned",
         "agent.handoff",

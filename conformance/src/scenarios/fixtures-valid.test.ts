@@ -24,14 +24,22 @@ const PROMPT_TEMPLATE_SCHEMA_PATH = join(SCHEMAS_DIR, 'prompt-template.schema.js
 describe('fixtures: workflow-definition schema validity', () => {
   const ajv = new Ajv2020({ allErrors: true, strict: false });
   addFormats(ajv);
-  // Pre-load the agent-ref peer schema so cross-schema `$ref` in
-  // workflow-definition (Phase 1 — `WorkflowNode.agent`) resolves.
-  // The relative file-name `agent-ref.schema.json` is how
-  // workflow-definition references it; register under that name so
-  // Ajv's $ref resolver finds it.
-  const agentRefPath = join(SCHEMAS_DIR, 'agent-ref.schema.json');
-  const agentRefSchema = JSON.parse(readFileSync(agentRefPath, 'utf8'));
+  // Pre-load peer schemas that workflow-definition cross-`$ref`s:
+  //   - agent-ref.schema.json — `WorkflowNode.agent` (Phase 1 multi-agent)
+  //   - prompt-ref.schema.json — `WorkflowDefinition.defaults.promptRefs.*`
+  //     (RFC 0029 §B resolution-chain layer 3)
+  //   - prompt-kind.schema.json — transitively referenced by prompt-ref's
+  //     object form when validating PromptRef variants
+  // Register each under both the canonical $id and the relative file
+  // name so Ajv resolves either way the host schema spelled the ref.
+  const agentRefSchema = JSON.parse(readFileSync(join(SCHEMAS_DIR, 'agent-ref.schema.json'), 'utf8'));
+  const promptRefSchema = JSON.parse(readFileSync(join(SCHEMAS_DIR, 'prompt-ref.schema.json'), 'utf8'));
+  const promptKindSchema = JSON.parse(readFileSync(join(SCHEMAS_DIR, 'prompt-kind.schema.json'), 'utf8'));
   ajv.addSchema(agentRefSchema, 'agent-ref.schema.json');
+  ajv.addSchema(promptRefSchema, 'prompt-ref.schema.json');
+  ajv.addSchema(promptRefSchema, './prompt-ref.schema.json');
+  ajv.addSchema(promptKindSchema, 'prompt-kind.schema.json');
+  ajv.addSchema(promptKindSchema, './prompt-kind.schema.json');
   const schema = JSON.parse(readFileSync(SCHEMA_PATH, 'utf8'));
   const validate = ajv.compile(schema);
 
@@ -87,14 +95,19 @@ describe('fixtures: node-pack-manifest schema validity', () => {
   // `private.<host>.*` scope is accepted by the canonical schema).
   const ajv = new Ajv2020({ allErrors: true, strict: false });
   addFormats(ajv);
-  // Pre-load the agent-manifest peer schema so the Phase 2 `agents[]`
-  // $ref in node-pack-manifest resolves under the same name the
-  // manifest schema uses.
-  const agentManifestPath = join(SCHEMAS_DIR, 'agent-manifest.schema.json');
-  ajv.addSchema(
-    JSON.parse(readFileSync(agentManifestPath, 'utf8')),
-    'agent-manifest.schema.json',
-  );
+  // Pre-load peer schemas. agent-manifest references prompt-ref (RFC 0029
+  // §B `AgentManifest.promptOverrides[kind]` + `promptLibraryRef`); prompt-ref
+  // transitively references prompt-kind. Register each under both the
+  // canonical $id and the relative file name so Ajv resolves either way
+  // the consumer schema spelled the ref.
+  const agentManifestSchema = JSON.parse(readFileSync(join(SCHEMAS_DIR, 'agent-manifest.schema.json'), 'utf8'));
+  const promptRefSchema = JSON.parse(readFileSync(join(SCHEMAS_DIR, 'prompt-ref.schema.json'), 'utf8'));
+  const promptKindSchema = JSON.parse(readFileSync(join(SCHEMAS_DIR, 'prompt-kind.schema.json'), 'utf8'));
+  ajv.addSchema(agentManifestSchema, 'agent-manifest.schema.json');
+  ajv.addSchema(promptRefSchema, 'prompt-ref.schema.json');
+  ajv.addSchema(promptRefSchema, './prompt-ref.schema.json');
+  ajv.addSchema(promptKindSchema, 'prompt-kind.schema.json');
+  ajv.addSchema(promptKindSchema, './prompt-kind.schema.json');
   const schema = JSON.parse(readFileSync(PACK_MANIFEST_SCHEMA_PATH, 'utf8'));
   const validate = ajv.compile(schema);
 

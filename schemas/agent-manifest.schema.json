@@ -97,6 +97,22 @@
       "type": "string",
       "description": "Optional one-line summary for UI / catalog surfaces.",
       "maxLength": 500
+    },
+    "promptLibraryRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$",
+      "description": "RFC 0029 §B. Optional library identifier (per RFC 0028 §C) the agent draws fallback prompts from. When set AND `promptOverrides[kind]` is unset for a given kind, the host MAY look up a same-kind default template from this library at resolution time (layer-2 `agent-library-default` per the resolution chain in `spec/v1/prompts.md` §\"Resolution chain (normative)\"). NOT a replacement for `systemPrompt | systemPromptRef` — those remain the agent's intrinsic system-prompt declaration."
+    },
+    "promptOverrides": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0029 §B. Per-kind preferred PromptRefs that apply at resolution chain layer 2 (`agent-overrides`) per `spec/v1/prompts.md` §\"Resolution chain (normative)\". For `system` kind, applies ONLY when the manifest has no intrinsic `systemPrompt | systemPromptRef` (the intrinsic surface wins). For other kinds, applies whenever the node doesn't carry a layer-1 explicit override.",
+      "properties": {
+        "system": { "$ref": "./prompt-ref.schema.json" },
+        "user": { "$ref": "./prompt-ref.schema.json" },
+        "few-shot": { "$ref": "./prompt-ref.schema.json" },
+        "schema-hint": { "$ref": "./prompt-ref.schema.json" }
+      }
     }
   },
   "additionalProperties": false,

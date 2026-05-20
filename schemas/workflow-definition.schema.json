@@ -77,6 +77,24 @@
       "description": "Optional JSON Schema 2020-12 declaring which RunOptions.configurable keys this workflow accepts. When present, hosts MUST validate POST /v1/runs `configurable` payloads against this schema and reject mismatches with `validation_error`. Hosts MUST surface this schema on GET /v1/workflows/{workflowId} so clients can pre-flight-validate. See run-options.md §'Per-workflow configurableSchema'. Additive in v1.1.",
       "type": "object"
     },
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0029 §B. Workflow-author-controlled per-kind fallback values that apply at resolution chain layer 3 (`workflow-defaults`) per `spec/v1/prompts.md` §\"Resolution chain (normative)\". Applied when neither the node (layer 1) nor the node's bound agent (layer 2) specifies a value for the kind. Future RFCs MAY add sibling defaults (e.g., `defaults.temperature`, `defaults.modelClass`) without colliding.",
+      "properties": {
+        "promptRefs": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Per-kind PromptRef fallbacks for layer 3 of the resolution chain.",
+          "properties": {
+            "system": { "$ref": "./prompt-ref.schema.json" },
+            "user": { "$ref": "./prompt-ref.schema.json" },
+            "few-shot": { "$ref": "./prompt-ref.schema.json" },
+            "schema-hint": { "$ref": "./prompt-ref.schema.json" }
+          }
+        }
+      }
+    },
     "metadata": { "$ref": "#/$defs/WorkflowMetadata" },
     "settings": { "$ref": "#/$defs/WorkflowSettings" },
     "acceptsInheritedArtifacts": {
