@@ -11,6 +11,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Workflow-engine conformance harness — wire required env vars (2026-05-19)
+
+`npm run test:conformance` (the sample's in-process conformance bootstrap at `apps/workflow-engine/backend/typescript/conformance/run.ts`) now sets two env vars that the suite needs against this sample:
+- `OPENWOP_RATELIMIT_DISABLED=true` — the suite issues 1200+ requests in a short window; the 60-req/min per-IP rate limiter would otherwise 429-cascade and mask real failures.
+- `OPENWOP_AUTH_DISABLE_COOKIES=true` — the suite asserts 401 on missing credentials per `auth.md §3`. Default behavior auto-issues an anon session cookie which silently grants access and shifts the 401 to 200/201.
+- `OPENWOP_TEST_SEAM_ENABLED=true` — already needed for envelope/accept and the wrap/capability seams the suite drives.
+
+Both flags are spec-aligned for a black-box conformance run; the comment on each call site warns production deploys NEVER to set them. Closes the `auth: missing credential > returns 401` failure plus prevents the rate-limit cascade that was masking ~30 unrelated tests at the start of a full-suite run.
+
 ### Workflow-engine sample — bulk-cancel endpoint + idempotency replay header (2026-05-19)
 
 Two surgical wire-shape gaps. Suite delta: 1200 → 1206 passing / 47 → 41 failing.

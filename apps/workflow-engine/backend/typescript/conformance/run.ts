@@ -29,6 +29,20 @@ async function main(): Promise<void> {
   process.env.OPENWOP_STORAGE_DSN = 'memory://';
   process.env.PORT = String(PORT);
   process.env.OPENWOP_API_KEY = API_KEY;
+  // Conformance-only env. Both flags are spec-aligned for a black-box
+  // suite run; production deploys NEVER set these.
+  // - RATELIMIT_DISABLED: the suite issues 1200+ requests in a short
+  //   window. The sample's per-IP rate limiter (60 req/min default)
+  //   would otherwise 429-cascade and mask real failures.
+  // - AUTH_DISABLE_COOKIES: the suite asserts 401 on missing
+  //   credentials per `auth.md §3`. Default behavior auto-issues an
+  //   anon session cookie, which silently grants access and shifts
+  //   the 401 to a 200/201.
+  process.env.OPENWOP_RATELIMIT_DISABLED = 'true';
+  process.env.OPENWOP_AUTH_DISABLE_COOKIES = 'true';
+  // Test seam needs enabling for envelope/accept, capability-toggle,
+  // llm-prompt-wrap, and the variables mutation seam.
+  process.env.OPENWOP_TEST_SEAM_ENABLED = 'true';
 
   const app = await createApp({
     ...loadConfigFromEnv(),
