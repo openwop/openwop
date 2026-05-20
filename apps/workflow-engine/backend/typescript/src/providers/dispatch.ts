@@ -104,6 +104,80 @@ export async function dispatchChat(req: DispatchRequest): Promise<DispatchResult
   }
 }
 
+/** Cap on per-call retry attempts under 429 rate-limit responses. Three
+ *  total attempts (one initial + up to two retries) matches the chat-
+ *  improvements plan §2B.3 — high enough to clear the transient bucket-
+ *  refill spikes most providers exhibit, low enough that a hard-blocked
+ *  caller doesn't sit in a backoff loop for tens of seconds. */
+const RATE_LIMIT_MAX_ATTEMPTS = 3;
+
+/** Parse `Retry-After` (seconds OR HTTP-date per RFC 9110 §10.2.3).
+ *  Returns ms when known; null on bad/missing headers so callers fall
+ *  back to exponential backoff. */
+function parseRetryAfterMs(header: string | null): number | null {
+  if (!header) return null;
+  const trimmed = header.trim();
+  if (/^\d+$/.test(trimmed)) {
+    const seconds = Number(trimmed);
+    if (!Number.isFinite(seconds) || seconds < 0) return null;
+    // Clamp so a buggy provider that emits Retry-After: 999999 can't
+    // hang the whole turn beyond the dispatcher's outer 120s timeout.
+    return Math.min(seconds * 1000, 60_000);
+  }
+  const epoch = Date.parse(trimmed);
+  if (!Number.isFinite(epoch)) return null;
+  return Math.max(0, Math.min(epoch - Date.now(), 60_000));
+}
+
+/** Cancellable sleep that aborts on the upstream signal so the per-call
+ *  AbortController can still terminate the turn mid-backoff. */
+async function delayAbortable(ms: number, signal: AbortSignal | undefined): Promise<void> {
+  if (ms <= 0) return;
+  if (signal?.aborted) return;
+  return new Promise<void>((resolve, reject) => {
+    const t = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    function onAbort(): void {
+      clearTimeout(t);
+      reject(new DOMException('Aborted', 'AbortError'));
+    }
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
+}
+
+/** Wrap a fetch thunk with 429 backoff. Returns the FIRST non-429
+ *  response, OR the last 429 response after the attempt cap is hit
+ *  (the caller's `res.ok` check then throws the canonical
+ *  `<provider>_429: <body>` error). Honors the upstream `Retry-After`
+ *  header when present; falls back to exponential backoff (1s → 2s).
+ *
+ *  Per chat-improvements plan §2B.3 — caps retries at 3 attempts so a
+ *  hard-blocked caller surfaces the failure promptly instead of
+ *  silently absorbing the limit. */
+async function fetchWith429Retry(
+  thunk: () => Promise<Response>,
+  signal: AbortSignal | undefined,
+): Promise<Response> {
+  let lastRes: Response | null = null;
+  for (let attempt = 0; attempt < RATE_LIMIT_MAX_ATTEMPTS; attempt++) {
+    const res = await thunk();
+    if (res.status !== 429) return res;
+    lastRes = res;
+    if (attempt === RATE_LIMIT_MAX_ATTEMPTS - 1) break;
+    const headerMs = parseRetryAfterMs(res.headers.get('Retry-After'));
+    const backoffMs = headerMs ?? 1000 * Math.pow(2, attempt);
+    // Drain the body before sleeping so the underlying socket can be
+    // reused on retry (Undici/Node fetch otherwise holds the chunk).
+    try { await res.body?.cancel(); } catch { /* */ }
+    await delayAbortable(backoffMs, signal);
+  }
+  // Unreachable in practice — the loop always either returns a non-429
+  // or breaks with `lastRes` set on the final attempt.
+  return lastRes ?? new Response(null, { status: 429 });
+}
+
 // ── Anthropic Messages API ────────────────────────────────────────────
 // https://docs.anthropic.com/en/api/messages-streaming
 
@@ -130,7 +204,7 @@ async function dispatchAnthropic(req: DispatchRequest): Promise<DispatchResult> 
     (req.reasoningVerbosity ?? 'off') !== 'off' && /^claude-(?:opus|sonnet|haiku)-[4-9]/.test(req.model);
   const thinkingBudget = 4000;
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const res = await fetchWith429Retry(() => fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
@@ -148,7 +222,7 @@ async function dispatchAnthropic(req: DispatchRequest): Promise<DispatchResult> 
       ...(thinkingEnabled ? { thinking: { type: 'enabled', budget_tokens: thinkingBudget } } : {}),
     }),
     ...(req.signal ? { signal: req.signal } : {}),
-  });
+  }), req.signal);
   if (!res.ok) {
     const errBody = await res.text();
     throw new Error(`anthropic_${res.status}: ${errBody.slice(0, 300)}`);
@@ -239,7 +313,7 @@ async function dispatchAnthropic(req: DispatchRequest): Promise<DispatchResult> 
 // https://platform.openai.com/docs/api-reference/chat/streaming
 
 async function dispatchOpenAI(req: DispatchRequest): Promise<DispatchResult> {
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+  const res = await fetchWith429Retry(() => fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
@@ -253,7 +327,7 @@ async function dispatchOpenAI(req: DispatchRequest): Promise<DispatchResult> {
       messages: req.messages.map((m) => ({ role: m.role, content: contentToText(m.content, 'OpenAI') })),
     }),
     ...(req.signal ? { signal: req.signal } : {}),
-  });
+  }), req.signal);
   if (!res.ok) {
     const errBody = await res.text();
     throw new Error(`openai_${res.status}: ${errBody.slice(0, 300)}`);
@@ -332,7 +406,7 @@ const MINIMAX_DEFAULT_BASE_URL = 'https://api.minimax.io/v1';
 
 async function dispatchMiniMax(req: DispatchRequest): Promise<DispatchResult> {
   const baseUrl = (process.env.MINIMAX_API_BASE_URL ?? MINIMAX_DEFAULT_BASE_URL).replace(/\/$/, '');
-  const res = await fetch(`${baseUrl}/chat/completions`, {
+  const res = await fetchWith429Retry(() => fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
@@ -346,7 +420,7 @@ async function dispatchMiniMax(req: DispatchRequest): Promise<DispatchResult> {
       messages: req.messages.map((m) => ({ role: m.role, content: contentToText(m.content, 'MiniMax') })),
     }),
     ...(req.signal ? { signal: req.signal } : {}),
-  });
+  }), req.signal);
   if (!res.ok) {
     const errBody = await res.text();
     throw new Error(`minimax_${res.status}: ${errBody.slice(0, 300)}`);
@@ -432,7 +506,7 @@ async function dispatchGoogle(req: DispatchRequest): Promise<DispatchResult> {
     req.model.includes('2.5-') && !req.model.includes('-lite');
   const thinkingEnabled = isReasoningModel && (req.reasoningVerbosity ?? 'off') !== 'off';
 
-  const res = await fetch(url, {
+  const res = await fetchWith429Retry(() => fetch(url, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
@@ -455,7 +529,7 @@ async function dispatchGoogle(req: DispatchRequest): Promise<DispatchResult> {
       },
     }),
     ...(req.signal ? { signal: req.signal } : {}),
-  });
+  }), req.signal);
   if (!res.ok) {
     const errBody = await res.text();
     throw new Error(`google_${res.status}: ${errBody.slice(0, 500)}`);
