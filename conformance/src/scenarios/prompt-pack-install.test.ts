@@ -20,10 +20,16 @@
  * any pack installed (a fresh production host with no pack
  * subscriptions is conformant); when zero pack-source templates
  * are listed, the structural assertions on sub-tests 2-3 still run
- * but the existence claim is treated as a soft skip. The reference
- * workflow-engine sample sets
- * `OPENWOP_TEST_PROMPT_PACK_INSTALLED=true` so the existence path
- * IS exercised against the in-tree `vendor.openwop.prompt-sample`.
+ * but the existence claim is treated as a soft skip.
+ *
+ * `OPENWOP_TEST_PROMPT_PACK_INSTALLED=true` is a conformance-runner
+ * (client-side) flag — the operator running the suite sets it when
+ * they know the target host has at least one prompt pack installed,
+ * which promotes the existence claim from soft-skip to hard
+ * assertion. The flag is NOT set by the host itself. When running
+ * against the in-tree workflow-engine sample (which auto-installs
+ * `vendor.openwop.prompt-sample` via `promptPackLoader`), the
+ * operator should set it so the existence path IS exercised.
  *
  * Capability-gated: skips when the host doesn't advertise
  * `capabilities.prompts.endpointsSupported: true`. Under

@@ -85,6 +85,7 @@ Run `npm run test` for normal CI cadence; `npm run test:strict` when claiming fu
 | `OPENWOP_A2A_FAKE_PEER=true` | Boots the synthetic A2A peer for `a2a-task-roundtrip.test.ts`. |
 | `OPENWOP_A2A_REAL_PEER_URL=<base-url>` | Points the A2A AgentCard + task-lifecycle probe at a real reference A2A peer. Drift-point subtests (AUTH_REQUIRED / REJECTED) stay fake-peer-only — real peers don't expose a state-forcing API. Phase 3 T3.4 interop-evidence path. |
 | `OPENWOP_FORCE_RATE_LIMIT=true` | Signals the host (test-only key) to fabricate a 429 so `rate-limit-envelope.test.ts` can exercise envelope shape deterministically. |
+| `OPENWOP_TEST_PROMPT_PACK_INSTALLED=true` | Promotes the `prompt-pack-install.test.ts` existence claim from soft-skip to hard assertion (RFC 0028 §B). Set when the target host is known to have at least one prompt pack installed at boot — RFC 0028 §B does NOT require any host with `endpointsSupported: true` to have packs installed, so the suite stays conformant against a fresh production host with no pack subscriptions when the flag is unset. The in-tree workflow-engine sample auto-installs `vendor.openwop.prompt-sample` via `promptPackLoader.ts`, so operators running against it should set the flag. |
 
 Exit code is non-zero on any failed assertion.
 
