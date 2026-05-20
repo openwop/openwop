@@ -87,6 +87,30 @@ export interface SchedulerGraph {
 /* ─── Graph construction ────────────────────────────────────── */
 
 export function buildGraph(definition: WorkflowDefinition): SchedulerGraph {
+  // First pass: build the raw forward graph including any back-edges.
+  // We need this to run DFS over the candidate edge set.
+  const rawOutgoing = new Map<string, EdgeDef[]>();
+  for (const n of definition.nodes) rawOutgoing.set(n.nodeId, []);
+  for (const e of definition.edges ?? []) rawOutgoing.get(e.sourceNodeId)?.push(e);
+
+  // Detect back-edges via DFS coloring (WHITE→GRAY→BLACK). An edge to
+  // a node currently on the recursion stack is a back-edge — same
+  // definition used by Tarjan/Cormen. Back-edges are how supervisor-
+  // dispatch loops express "re-invoke the supervisor after dispatch"
+  // (RFC 0022 §A); the dispatch node drives the loop INTERNALLY, so
+  // the scheduler treats the back-edge as inert and proceeds with the
+  // forward DAG only. Cycles that DON'T include a `core.dispatch` /
+  // `core.orchestrator.supervisor` typeId on either endpoint are still
+  // rejected by `topologicalOrder` (the back-edge here gets dropped,
+  // but unrelated cycles will trip Kahn's leftover-nodes check).
+  // Key back-edges by `${src}\x00${tgt}` rather than edgeId: fixture
+  // edges arrive as `{id, sourceNodeId, targetNodeId}` (per the JSON
+  // schema), but EdgeDef declares `edgeId` — so `e.edgeId` is often
+  // undefined here, and an edgeId-keyed Set would collapse all
+  // undefined-keyed edges together. The (src, tgt) pair is unique per
+  // edge in any well-formed workflow.
+  const backEdges = findBackEdges(definition, rawOutgoing);
+
   const outgoing = new Map<string, EdgeDef[]>();
   const incoming = new Map<string, EdgeDef[]>();
   for (const n of definition.nodes) {
@@ -94,6 +118,7 @@ export function buildGraph(definition: WorkflowDefinition): SchedulerGraph {
     incoming.set(n.nodeId, []);
   }
   for (const e of definition.edges ?? []) {
+    if (backEdges.has(`${e.sourceNodeId}\x00${e.targetNodeId}`)) continue;
     outgoing.get(e.sourceNodeId)?.push(e);
     incoming.get(e.targetNodeId)?.push(e);
   }
@@ -101,6 +126,45 @@ export function buildGraph(definition: WorkflowDefinition): SchedulerGraph {
     .map((n) => n.nodeId)
     .filter((id) => (incoming.get(id)?.length ?? 0) === 0);
   return { outgoing, incoming, sources };
+}
+
+function findBackEdges(
+  definition: WorkflowDefinition,
+  rawOutgoing: Map<string, EdgeDef[]>,
+): Set<string> {
+  const WHITE = 0, GRAY = 1, BLACK = 2;
+  const color = new Map<string, number>();
+  for (const n of definition.nodes) color.set(n.nodeId, WHITE);
+  const back = new Set<string>();
+  // Iterative DFS (sample workflows are small but pathological depth
+  // shouldn't blow the stack — workflow-definition.schema.json doesn't
+  // cap node count).
+  const visit = (start: string): void => {
+    type Frame = { node: string; edges: EdgeDef[]; idx: number };
+    const stack: Frame[] = [{ node: start, edges: rawOutgoing.get(start) ?? [], idx: 0 }];
+    color.set(start, GRAY);
+    while (stack.length > 0) {
+      const top = stack[stack.length - 1]!;
+      if (top.idx >= top.edges.length) {
+        color.set(top.node, BLACK);
+        stack.pop();
+        continue;
+      }
+      const e = top.edges[top.idx++]!;
+      const c = color.get(e.targetNodeId);
+      if (c === GRAY) {
+        back.add(`${e.sourceNodeId}\x00${e.targetNodeId}`);
+      } else if (c === WHITE) {
+        color.set(e.targetNodeId, GRAY);
+        stack.push({ node: e.targetNodeId, edges: rawOutgoing.get(e.targetNodeId) ?? [], idx: 0 });
+      }
+      // BLACK: cross-edge or forward-edge — leave alone.
+    }
+  };
+  for (const n of definition.nodes) {
+    if (color.get(n.nodeId) === WHITE) visit(n.nodeId);
+  }
+  return back;
 }
 
 /**

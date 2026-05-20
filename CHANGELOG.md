@@ -11,6 +11,46 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### RFC 0027 Phase A wire shape — landed (2026-05-20, commit `3e7a0d8`)
+
+Ships the wire-shape contract for prompt templates per RFC 0027. Three new schemas (`prompt-kind.schema.json` — shared enum referenced by every schema that names a prompt kind; `prompt-template.schema.json` — canonical named-versioned-variable-bound prompt body with Mustache `{{var}}` substitution; `prompt-ref.schema.json` — stringy `prompt:templateId@version` form OR structured object form with `libraryId`/`templateId`/`version`/`variableOverrides`). New `capabilities.prompts` block with `supported`/`templateKinds`/`variableSources`/`maxTemplateBytes`/`observability` (off/hashed/full). New `prompt.composed` `RunEventType` with full payload covering composed body + sha256 hash + per-variable hashes + content-trust marker, gated on the host's advertised `observability` mode. Conformance Ajv pre-load fix in `spec-corpus-validity.test.ts` to handle cross-schema `$ref`s independent of alphabetical compile order. Companion spec doc `spec/v1/prompts.md` (DRAFT v1.x) covers PromptKind / PromptTemplate / PromptRef / capability advertisement / composition + observability / replay determinism / security invariants / three-surface taxonomy (host-composed prompt vs. LLM-emitted reasoning per RFC 0030 vs. thinking-token stream per RFC 0024). RFC linter cross-references to RFCs 0030–0033 (envelope track) landed in the same commit. Compatibility: additive.
+
+### RFC 0027 conformance scenarios — landed (2026-05-20, commit `808b6fa`)
+
+Three new conformance scenarios + three canonical fixtures + catalog updates. `prompt-template-shape.test.ts` (server-free, always runs) asserts Ajv compileability + positive/negative round-trip across PromptTemplate / PromptRef / PromptKind. `prompt-composed-secret-redaction.test.ts` + `prompt-composed-trust-marker.test.ts` (HTTP-driven, capability-gated on `prompts.supported: true` + `observability: "full"`) drive the host's compose seam with secret-source and untrusted-content fixtures. Fixtures live under `conformance/fixtures/prompt-templates/` with a `secret-redaction` tag invariant enforced by `fixtures-valid.test.ts`. `conformance/fixtures.md` + `conformance/coverage.md` + `conformance/README.md` updated; suite scenario count 160 → 163. Compatibility: additive.
+
+### RFC 0027 reference-host implementation — landed (2026-05-20, commit `eb404db`)
+
+Reference workflow-engine sample now advertises `capabilities.prompts.supported: true` + `observability: "full"` and serves the composition seam at `POST /v1/host/sample/prompt/compose`. New module `host/promptCompose.ts` implements the §E composition pipeline with secret redaction via `[REDACTED:<credentialRef>]` markers, untrusted-segment wrapping via `<UNTRUSTED>...</UNTRUSTED>` markers, and sha256-hashed deterministic-replay-safe hashes. Two new protocol-tier SECURITY invariants land in `SECURITY/invariants.yaml`: `prompt-composed-secret-redaction` + `prompt-composed-trust-marker`. Protocol-tier invariant count 49 → 51 (both new rows have public tests via the prompt-composed-* scenarios). Compatibility: implementation-only (sample host).
+
+### RFC 0028 Phase B wire shape — landed (2026-05-20, commit `397585b`)
+
+Phase B of the prompt-library track. New schema `prompt-pack-manifest.schema.json` — the third pack kind (`kind: "prompt"`) alongside `kind: "node"` (RFC 0003) and `kind: "workflow-chain"` (RFC 0013), with `dependencies` cross-pack resolution + Ed25519 signing reuse. Extends `capabilities.prompts` with `packsSupported`, `mutableLibrary`, `library.{id, renderEndpoint, maxRenderRequestBytes}`. Extends `PromptTemplate.meta` with `packName` + `packVersion` (enforced via JSON-Schema `if/then` when `meta.source: "pack"`). Six new OpenAPI operations (`listPromptTemplates`, `getPromptTemplate`, `renderPromptTemplate`, `createPromptTemplate`, `updatePromptTemplate`, `deletePromptTemplate`) under `/v1/prompts*` with `:render` carrying the deterministic-hash invariant matching `prompt.composed`. Spec prose lands in `spec/v1/prompts.md` §"Discovery & distribution"; REST catalog in `spec/v1/rest-endpoints.md`; coverage tracking in `conformance/coverage.md`. Compatibility: additive.
+
+### RFC 0027 / 0028 code-review follow-ups (2026-05-20)
+
+Closes the issues flagged in this session's `/code-review` pass:
+
+- **Capability gate split** (`spec/v1/prompts.md` §"Capability advertisement" + `schemas/capabilities.schema.json` `prompts.endpointsSupported`). Previously `capabilities.prompts.supported: true` was double-loaded as both the Phase A node-execution gate AND the Phase B REST-surface gate. The reference workflow-engine sample advertised `supported: true` without implementing the REST endpoints, leaving a contract gap where spec-compliant clients would get a 404 (route missing) instead of the spec'd 501 (capability not provided). New `endpointsSupported` gate cleanly separates the two axes. Reference host now honestly advertises `supported: true, endpointsSupported: false`; `api/openapi.yaml` 501 descriptions updated to cite `endpointsSupported`.
+- **`promptCompose.ts` resolveSecret null check** — host now throws `prompt_secret_unresolvable` when `resolveSecret()` returns null (credentialRef not provisioned in BYOK store). Prior behavior silently dispatched the redaction marker even when the underlying secret didn't exist.
+- **SDK contract** — `OpenwopClient.prompts.{list, get, render, create, update, delete}` lands in `sdk/typescript/src/client.ts` with matching `PromptTemplate`/`PromptRef`/`PromptKind`/`PromptVariable`/`ListPromptsRequest`/`ListPromptsResponse`/`GetPromptRequest`/`RenderPromptRequest`/`RenderPromptResponse` types in `sdk/typescript/src/types.ts` (re-exported from `src/index.ts`). Mutating endpoints honor the standard `MutationOptions.idempotencyKey` pattern.
+- **Conformance scenario citations** — `driver.describe('RFC 0027 §X', ...)` rewritten to `driver.describe('spec/v1/prompts.md §Section', ...)` across all three new scenarios. RFCs document the change; the spec doc is the contract.
+- **INTEROP-MATRIX.md** — new §"Capability adoption — RFC 0027 + RFC 0028 prompt library" cataloguing adoption status of `prompts.supported` and `prompts.endpointsSupported` axes across tracked hosts.
+
+Compatibility: additive (the new `endpointsSupported` field is optional; absent = `false`).
+
+### Sample — RFC 0022 dispatch cluster (2026-05-20)
+
+Drains the four remaining `dispatch-*` conformance failures (`dispatch-input-mapping`, `dispatch-output-mapping`, `dispatch-cross-worker-handoff`, `dispatchLoop`) by wiring `core.dispatch` + `core.orchestrator.supervisor` end-to-end in the workflow-engine sample. Implementation-only — no normative changes:
+
+- **`apps/workflow-engine/backend/typescript/src/executor/scheduler.ts`** — `buildGraph` now detects back-edges via DFS coloring (WHITE/GRAY/BLACK, Cormen-canonical) and drops them from the working graph before Kahn's topological sort. Back-edges are keyed by `${src}\x00${tgt}` (not `edgeId` — fixture edges arrive as `{id, sourceNodeId, targetNodeId}` per the schema, so `edgeId` is often undefined and an edgeId-keyed Set would collapse). Lets the `supervisor → dispatch → supervisor` cycle in RFC 0022 fixtures parse without `cycle_detected`; the dispatch node drives the loop internally. Forward cycles unrelated to dispatch still trip the topological-sort leftover check.
+- **`apps/workflow-engine/backend/typescript/src/bootstrap/nodes.ts`** — adds two node modules:
+  - **`core.orchestrator.supervisor`** (RFC 0022 §A): conformance-mock form. Reads `mockDispatchPlan` from config (array of `{kind: 'next-worker' | 'terminate', ...}` decisions) and emits the full plan as `outputs.decisions[]`. Defaults to `[next-worker (empty workers), terminate]` when no plan is configured so `conformance-dispatch-loop` works without fixture-side decisions.
+  - **`core.dispatch`** (RFC 0022 §A + RFC 0007 §D): consumes the upstream supervisor's `decisions` array and drives the per-decision loop internally. For each `next-worker` decision spawns the named child workflow via `dispatchSubWorkflow` with `inputMapping` / `outputMapping` (or `perWorkerInputMappings` / `perWorkerOutputMappings` per RFC 0022 §D for cross-worker handoff). Each spawn emits a `node.dispatched` event carrying `childRunId` + `childWorkflowId`; each consumed decision emits a `runOrchestrator.decided` event.
+- **`apps/workflow-engine/backend/typescript/src/routes/runs.ts`** — `projectRunSnapshot` now surfaces `inputs` (when non-null) so the conformance suite can read `child.inputs.<key>` to assert the parent→child variable projection from RFC 0022 §A.
+
+Net conformance: 4 → 0 failing. **1298 passed / 0 failed / 48 skipped / 3 todo** — the dispatch cluster is the last cluster the conformance suite was waiting on.
+
 ### Schema + sample — parent/child cancel-cascade interrupt profile (2026-05-20)
 
 Drains the remaining cluster of `openwop-interrupt-parent-child` conformance failures by wiring the cascade end-to-end in the workflow-engine sample, plus one additive schema relaxation for the redaction-shape test:

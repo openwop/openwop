@@ -679,6 +679,10 @@ function projectRunSnapshot(run: RunRecord): RunSnapshot & {
     parentRunId: run.parentRunId,
     parentSeq: run.parentSeq,
     forkMode: run.forkMode,
+    // RFC 0022 §A inputMapping projects parent variables onto child
+    // inputs — the conformance suite reads `inputs.<key>` off the
+    // child snapshot to assert the projection landed.
+    ...(run.inputs !== null && run.inputs !== undefined ? { inputs: run.inputs } : {}),
     ...(parentNodeId !== undefined ? { parentNodeId } : {}),
     // RFC 0022 §B / `workflow-definition.schema.json §variables` —
     // the per-run variable bag (seeded at run-create from

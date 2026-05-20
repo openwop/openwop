@@ -50,6 +50,169 @@ const identityNode: NodeModule = {
   },
 };
 
+/** RFC 0022 §A — `core.orchestrator.supervisor` (conformance-mock form).
+ *  Reads `mockDispatchPlan` from config (an ordered list of
+ *  OrchestratorDecision records) and emits the entire plan as
+ *  `outputs.decisions[]`. The downstream `core.dispatch` node consumes
+ *  the plan and drives the per-decision dispatch loop internally.
+ *
+ *  The fixture-catalog hosts this supervisor at the head of a 2-node
+ *  supervisor → dispatch → supervisor cycle. The back-edge from
+ *  dispatch back to supervisor is detected + dropped by
+ *  scheduler.ts findBackEdges() — the cycle is documentation-only;
+ *  dispatch loops over the decisions internally without re-firing
+ *  the supervisor in the DAG. Real (non-mock) supervisors would emit
+ *  one decision per invocation; future spec work (RFC 0022 §"Unresolved
+ *  questions" #6) will normate that contract. */
+const orchestratorSupervisorNode: NodeModule = {
+  typeId: 'core.orchestrator.supervisor',
+  version: '1.0.0',
+  async execute(ctx) {
+    const cfg = (ctx.config ?? {}) as { mockDispatchPlan?: unknown };
+    // Default plan when no mockDispatchPlan is configured: a single
+    // pass through the dispatch loop (one no-op next-worker decision +
+    // terminate). Lets the `conformance-dispatch-loop` fixture
+    // exercise the supervisor→dispatch round-trip without a fixture-
+    // declared plan. Fixtures that want richer behavior (specific
+    // child workflow ids, multi-pass dispatching) carry the plan
+    // explicitly in their config.
+    const plan = Array.isArray(cfg.mockDispatchPlan) && cfg.mockDispatchPlan.length > 0
+      ? cfg.mockDispatchPlan
+      : [
+          { kind: 'next-worker', nextWorkerIds: [] },
+          { kind: 'terminate', reason: 'goal-reached' },
+        ];
+    return { status: 'success', outputs: { decisions: plan } };
+  },
+};
+
+/** RFC 0022 §A + RFC 0007 §D — `core.dispatch`.
+ *  Consumes an OrchestratorDecision sequence (from the upstream
+ *  supervisor's `decisions` output) and drives the dispatch loop
+ *  internally: for each `next-worker` decision spawn the named
+ *  child workflow via the subWorkflow dispatcher with inputMapping/
+ *  outputMapping applied; for `terminate` break the loop. Each spawn
+ *  emits a `node.dispatched` event carrying `childRunId` +
+ *  `childWorkflowId` so the conformance suite can locate spawned
+ *  children via the parent's event log.
+ *
+ *  Capability gating: `inputMapping` / `outputMapping` keys are only
+ *  honored when `capabilities.agents.dispatchMapping` is advertised
+ *  (validated at workflow registration via routes/workflows.ts
+ *  §checkMappingCapability); the runtime side here trusts that the
+ *  registration check already refused non-conformant workflows. */
+const dispatchNode: NodeModule = {
+  typeId: 'core.dispatch',
+  version: '1.0.0',
+  async execute(ctx) {
+    const cfg = (ctx.config ?? {}) as {
+      inputMapping?: unknown;
+      outputMapping?: unknown;
+      perWorkerInputMappings?: unknown;
+      perWorkerOutputMappings?: unknown;
+      fanOutPolicy?: unknown;
+    };
+    const defaultInputMapping = (cfg.inputMapping && typeof cfg.inputMapping === 'object' && !Array.isArray(cfg.inputMapping))
+      ? (cfg.inputMapping as Record<string, string>)
+      : undefined;
+    const defaultOutputMapping = (cfg.outputMapping && typeof cfg.outputMapping === 'object' && !Array.isArray(cfg.outputMapping))
+      ? (cfg.outputMapping as Record<string, string>)
+      : undefined;
+    // RFC 0022 §D — per-worker overrides (keyed by child workflowId).
+    // Used by `dispatch-cross-worker-handoff` to direct different
+    // mappings at child-a vs child-b in the same parent run.
+    const perWorkerInputMappings = (cfg.perWorkerInputMappings && typeof cfg.perWorkerInputMappings === 'object' && !Array.isArray(cfg.perWorkerInputMappings))
+      ? (cfg.perWorkerInputMappings as Record<string, Record<string, string>>)
+      : undefined;
+    const perWorkerOutputMappings = (cfg.perWorkerOutputMappings && typeof cfg.perWorkerOutputMappings === 'object' && !Array.isArray(cfg.perWorkerOutputMappings))
+      ? (cfg.perWorkerOutputMappings as Record<string, Record<string, string>>)
+      : undefined;
+
+    // Pull the supervisor's decisions list off ctx.inputs. The executor
+    // unwraps a single-port `{input: X}` to X for back-compat with the
+    // legacy linear executor (executor.ts:271). Accept both shapes.
+    const rawInputs = (ctx.inputs && typeof ctx.inputs === 'object' && !Array.isArray(ctx.inputs))
+      ? (ctx.inputs as Record<string, unknown>)
+      : {};
+    const supervisorPayload = (rawInputs.input && typeof rawInputs.input === 'object')
+      ? (rawInputs.input as Record<string, unknown>)
+      : rawInputs;
+    const decisions = Array.isArray(supervisorPayload.decisions) ? (supervisorPayload.decisions as Array<Record<string, unknown>>) : [];
+
+    if (decisions.length === 0) {
+      return { status: 'failure', error: { code: 'invalid_request', message: 'core.dispatch requires supervisor `decisions` input' } };
+    }
+
+    const { dispatchSubWorkflow } = await import('../executor/subWorkflowDispatcher.js');
+    const { getEventLog } = await import('../executor/eventLog.js');
+    const eventLog = getEventLog();
+
+    const dispatchedChildren: Array<{ childRunId: string; childWorkflowId: string; childStatus: string }> = [];
+    let terminateReason: string | null = null;
+
+    for (const decision of decisions) {
+      const kind = decision.kind;
+      // RFC 0007 §D / `run-orchestrator-decided-event.schema.json` —
+      // surface each consumed decision on the event log so observers
+      // (and the conformance dispatch-loop test) can see the loop's
+      // decision sequence.
+      await eventLog.append({
+        runId: ctx.runId,
+        nodeId: ctx.nodeId,
+        type: 'runOrchestrator.decided',
+        payload: { decision },
+      });
+      if (kind === 'terminate') {
+        terminateReason = typeof decision.reason === 'string' ? decision.reason : 'terminate';
+        break;
+      }
+      if (kind !== 'next-worker') continue; // ignore unknown kinds for forward-compat
+      const nextWorkerIds = Array.isArray(decision.nextWorkerIds) ? (decision.nextWorkerIds as string[]) : [];
+      for (const childWorkflowId of nextWorkerIds) {
+        if (typeof childWorkflowId !== 'string' || childWorkflowId.length === 0) continue;
+        const inputMapping = perWorkerInputMappings?.[childWorkflowId] ?? defaultInputMapping;
+        const outputMapping = perWorkerOutputMappings?.[childWorkflowId] ?? defaultOutputMapping;
+        try {
+          const result = await dispatchSubWorkflow({
+            parentRunId: ctx.runId,
+            parentTenantId: ctx.tenantId,
+            ...(ctx.scopeId ? { parentScopeId: ctx.scopeId } : {}),
+            parentNodeId: ctx.nodeId,
+            childWorkflowId,
+            ...(inputMapping ? { inputMapping } : {}),
+            ...(outputMapping ? { outputMapping } : {}),
+            onChildFailure: 'continue', // dispatch loop doesn't fail-parent on a single worker miss
+          });
+          // RFC 0007 §D — emit `node.dispatched` for each spawned child
+          // so the parent event log carries the linkage. The conformance
+          // suite reads this event to locate the child run id.
+          await eventLog.append({
+            runId: ctx.runId,
+            nodeId: ctx.nodeId,
+            type: 'node.dispatched',
+            payload: { childRunId: result.childRunId, childWorkflowId, childStatus: result.childStatus },
+          });
+          dispatchedChildren.push({ childRunId: result.childRunId, childWorkflowId, childStatus: result.childStatus });
+        } catch (err) {
+          return {
+            status: 'failure',
+            error: { code: 'internal_error', message: err instanceof Error ? err.message : String(err) },
+          };
+        }
+      }
+    }
+
+    return {
+      status: 'success',
+      outputs: {
+        dispatched: dispatchedChildren,
+        terminated: terminateReason !== null,
+        ...(terminateReason !== null ? { reason: terminateReason } : {}),
+      },
+    };
+  },
+};
+
 /** RFC 0022 §A+§B — sub-workflow dispatch primitive. Spawns a child
  *  run, applies inputMapping at dispatch + outputMapping on terminal,
  *  returns childRunId + childStatus. The actual spawn-and-wait logic
@@ -689,6 +852,8 @@ export function ensureNodesRegistered(): void {
   registry.register(noopNode);
   registry.register(identityNode);
   registry.register(subWorkflowNode);
+  registry.register(orchestratorSupervisorNode);
+  registry.register(dispatchNode);
   // RFC: conformance-only typeId for runtime-capability refusal test.
   // Declares `requires` pointing at a capability the host never
   // provides. The executor's pre-execute capability check refuses
