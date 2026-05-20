@@ -110,6 +110,72 @@ export interface ChatMessageThoughts {
   durationMs?: number;
 }
 
+/** Envelope-reliability + capability-substitution event records, grouped per
+ *  assistant turn. Surfaces RFC 0030 / 0031 / 0032 / 0033 events as inline
+ *  chips in the assistant bubble. Each row preserves the minimum payload
+ *  the corresponding card needs to render; the underlying RunEventDoc is
+ *  still available via the live event stream for power users. */
+export interface EnvelopeRetryAttempt {
+  nodeId: string;
+  attempt: number;
+  reason: 'schema-violation' | 'truncation' | 'refusal' | string;
+  previousError?: string;
+  at: string;
+}
+export interface EnvelopeRetryExhausted {
+  nodeId: string;
+  totalAttempts: number;
+  finalReason: string;
+  finalError?: string;
+  at: string;
+}
+export interface EnvelopeRefusal {
+  nodeId: string;
+  provider: string;
+  model: string;
+  refusalText?: string;
+  safetyCategory?: string;
+  at: string;
+}
+export interface EnvelopeTruncation {
+  nodeId: string;
+  provider: string;
+  model: string;
+  stopReason: 'max_tokens' | 'length' | 'stop_sequence' | 'unknown' | string;
+  partialPayloadAvailable?: boolean;
+  outputTokenCount?: number;
+  at: string;
+}
+export interface EnvelopeNLCoercion {
+  nodeId: string;
+  originalEnvelopeType: string;
+  fallbackCalls?: number;
+  at: string;
+}
+export interface EnvelopeRecovery {
+  nodeId: string;
+  path: string;
+  byteOffset?: number;
+  at: string;
+}
+export interface ModelCapabilitySubstitution {
+  nodeId: string;
+  originalProvider: string;
+  originalModel: string;
+  fallbackProvider: string;
+  fallbackModel: string;
+  missingCapabilities: string[];
+  at: string;
+}
+export interface ModelCapabilityInsufficient {
+  nodeId: string;
+  provider: string;
+  model: string;
+  missingCapabilities: string[];
+  fallbackAttempted?: boolean;
+  at: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'system' | 'workflow_run';
@@ -134,6 +200,25 @@ export interface ChatMessage {
     handoffs: AgentHandoff[];
     decisions: AgentDecision[];
   };
+  /** Envelope-reliability + capability-substitution events grouped per turn.
+   *  RFC 0030 / 0031 / 0032 / 0033. Rendered by EnvelopeEventsTimeline as
+   *  a stack of inline chips between the answer and the agent-events block.
+   *  Optional carryReasoning is the RFC 0030 §A reasoning string when the
+   *  assistant turn ships one; surfaced as a separate "Why" disclosure. */
+  envelopeEvents?: {
+    retries: EnvelopeRetryAttempt[];
+    retriesExhausted: EnvelopeRetryExhausted[];
+    refusals: EnvelopeRefusal[];
+    truncations: EnvelopeTruncation[];
+    nlCoercions: EnvelopeNLCoercion[];
+    recoveries: EnvelopeRecovery[];
+    capabilitySubstitutions: ModelCapabilitySubstitution[];
+    capabilitiesInsufficient: ModelCapabilityInsufficient[];
+  };
+  /** RFC 0030 §A envelope.payload.reasoning — a post-hoc explanation the
+   *  model ships *with* its structured answer. Distinct from `thoughts`,
+   *  which is the thinking-token stream. */
+  reasoning?: string;
   /** When set, render an interrupt card inline beneath this bubble. */
   activeInterrupt?: OpenInterrupt | null;
   /** Final-turn metadata for the assistant bubble. */

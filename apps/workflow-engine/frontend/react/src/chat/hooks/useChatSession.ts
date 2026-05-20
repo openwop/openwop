@@ -87,6 +87,31 @@ function updateAgentEvents(
   }));
 }
 
+const EMPTY_ENVELOPE_EVENTS: NonNullable<ChatMessage['envelopeEvents']> = {
+  retries: [],
+  retriesExhausted: [],
+  refusals: [],
+  truncations: [],
+  nlCoercions: [],
+  recoveries: [],
+  capabilitySubstitutions: [],
+  capabilitiesInsufficient: [],
+};
+
+/** Specialization of {@link updateMessage} for the `envelopeEvents` field.
+ *  Surfaces RFC 0030 / 0031 / 0032 / 0033 events grouped per assistant
+ *  turn for the EnvelopeEventsTimeline chat card. */
+function updateEnvelopeEvents(
+  setSession: React.Dispatch<React.SetStateAction<ChatSession>>,
+  messageId: string,
+  appender: (prev: NonNullable<ChatMessage['envelopeEvents']>) => NonNullable<ChatMessage['envelopeEvents']>,
+): void {
+  updateMessage(setSession, messageId, (m) => ({
+    ...m,
+    envelopeEvents: appender(m.envelopeEvents ?? EMPTY_ENVELOPE_EVENTS),
+  }));
+}
+
 // `ChatSession` + `SendOptions` now live in `../types.js`; see the
 // re-export above. Inlined imports are sufficient for the rest of this
 // file.
@@ -546,6 +571,107 @@ export function useChatSession(): UseChatSessionResult {
               },
             };
           });
+        } else if (ev.type === 'envelope.retry.attempted' && typeof payload.nodeId === 'string') {
+          const nodeId = payload.nodeId;
+          const attempt = typeof payload.attempt === 'number' ? payload.attempt : 0;
+          const reason = typeof payload.reason === 'string' ? payload.reason : 'unknown';
+          const previousError = typeof payload.previousError === 'string' ? payload.previousError : undefined;
+          const now = new Date().toISOString();
+          updateEnvelopeEvents(setSession, assistantId, (prev) => ({
+            ...prev,
+            retries: [...prev.retries, { nodeId, attempt, reason, at: now, ...(previousError ? { previousError } : {}) }],
+          }));
+        } else if (ev.type === 'envelope.retry.exhausted' && typeof payload.nodeId === 'string') {
+          const nodeId = payload.nodeId;
+          const totalAttempts = typeof payload.totalAttempts === 'number' ? payload.totalAttempts : 0;
+          const finalReason = typeof payload.finalReason === 'string' ? payload.finalReason : 'unknown';
+          const finalError = typeof payload.finalError === 'string' ? payload.finalError : undefined;
+          const now = new Date().toISOString();
+          updateEnvelopeEvents(setSession, assistantId, (prev) => ({
+            ...prev,
+            retriesExhausted: [...prev.retriesExhausted, { nodeId, totalAttempts, finalReason, at: now, ...(finalError ? { finalError } : {}) }],
+          }));
+        } else if (ev.type === 'envelope.refusal' && typeof payload.nodeId === 'string') {
+          const nodeId = payload.nodeId;
+          const provider = String(payload.provider ?? '');
+          const model = String(payload.model ?? '');
+          const refusalText = typeof payload.refusalText === 'string' ? payload.refusalText : undefined;
+          const safetyCategory = typeof payload.safetyCategory === 'string' ? payload.safetyCategory : undefined;
+          const now = new Date().toISOString();
+          updateEnvelopeEvents(setSession, assistantId, (prev) => ({
+            ...prev,
+            refusals: [...prev.refusals, {
+              nodeId, provider, model, at: now,
+              ...(refusalText ? { refusalText } : {}),
+              ...(safetyCategory ? { safetyCategory } : {}),
+            }],
+          }));
+        } else if (ev.type === 'envelope.truncated' && typeof payload.nodeId === 'string') {
+          const nodeId = payload.nodeId;
+          const provider = String(payload.provider ?? '');
+          const model = String(payload.model ?? '');
+          const stopReason = typeof payload.stopReason === 'string' ? payload.stopReason : 'unknown';
+          const partialPayloadAvailable = typeof payload.partialPayloadAvailable === 'boolean' ? payload.partialPayloadAvailable : undefined;
+          const outputTokenCount = typeof payload.outputTokenCount === 'number' ? payload.outputTokenCount : undefined;
+          const now = new Date().toISOString();
+          updateEnvelopeEvents(setSession, assistantId, (prev) => ({
+            ...prev,
+            truncations: [...prev.truncations, {
+              nodeId, provider, model, stopReason, at: now,
+              ...(partialPayloadAvailable !== undefined ? { partialPayloadAvailable } : {}),
+              ...(outputTokenCount !== undefined ? { outputTokenCount } : {}),
+            }],
+          }));
+        } else if (ev.type === 'envelope.nlToFormat.engaged' && typeof payload.nodeId === 'string') {
+          const nodeId = payload.nodeId;
+          const originalEnvelopeType = typeof payload.originalEnvelopeType === 'string' ? payload.originalEnvelopeType : '';
+          const fallbackCalls = typeof payload.fallbackCalls === 'number' ? payload.fallbackCalls : undefined;
+          const now = new Date().toISOString();
+          updateEnvelopeEvents(setSession, assistantId, (prev) => ({
+            ...prev,
+            nlCoercions: [...prev.nlCoercions, { nodeId, originalEnvelopeType, at: now, ...(fallbackCalls !== undefined ? { fallbackCalls } : {}) }],
+          }));
+        } else if (ev.type === 'envelope.recovery.applied' && typeof payload.nodeId === 'string') {
+          const nodeId = payload.nodeId;
+          const path = typeof payload.path === 'string' ? payload.path : '';
+          const byteOffset = typeof payload.byteOffset === 'number' ? payload.byteOffset : undefined;
+          const now = new Date().toISOString();
+          updateEnvelopeEvents(setSession, assistantId, (prev) => ({
+            ...prev,
+            recoveries: [...prev.recoveries, { nodeId, path, at: now, ...(byteOffset !== undefined ? { byteOffset } : {}) }],
+          }));
+        } else if (ev.type === 'model.capability.substituted' && typeof payload.nodeId === 'string') {
+          const nodeId = payload.nodeId;
+          const originalProvider = String(payload.originalProvider ?? '');
+          const originalModel = String(payload.originalModel ?? '');
+          const fallbackProvider = String(payload.fallbackProvider ?? '');
+          const fallbackModel = String(payload.fallbackModel ?? '');
+          const missingCapabilities = Array.isArray(payload.missingCapabilities)
+            ? (payload.missingCapabilities as unknown[]).filter((c): c is string => typeof c === 'string')
+            : [];
+          const now = new Date().toISOString();
+          updateEnvelopeEvents(setSession, assistantId, (prev) => ({
+            ...prev,
+            capabilitySubstitutions: [...prev.capabilitySubstitutions, {
+              nodeId, originalProvider, originalModel, fallbackProvider, fallbackModel, missingCapabilities, at: now,
+            }],
+          }));
+        } else if (ev.type === 'model.capability.insufficient' && typeof payload.nodeId === 'string') {
+          const nodeId = payload.nodeId;
+          const provider = String(payload.provider ?? '');
+          const model = String(payload.model ?? '');
+          const missingCapabilities = Array.isArray(payload.missingCapabilities)
+            ? (payload.missingCapabilities as unknown[]).filter((c): c is string => typeof c === 'string')
+            : [];
+          const fallbackAttempted = typeof payload.fallbackAttempted === 'boolean' ? payload.fallbackAttempted : undefined;
+          const now = new Date().toISOString();
+          updateEnvelopeEvents(setSession, assistantId, (prev) => ({
+            ...prev,
+            capabilitiesInsufficient: [...prev.capabilitiesInsufficient, {
+              nodeId, provider, model, missingCapabilities, at: now,
+              ...(fallbackAttempted !== undefined ? { fallbackAttempted } : {}),
+            }],
+          }));
         } else if (ev.type === 'node.completed') {
           // Flush any buffered animation tail so the bubble has the
           // full streamed content before we overwrite with the final
@@ -555,6 +681,20 @@ export function useChatSession(): UseChatSessionResult {
           const completion = typeof outputs.completion === 'string' ? outputs.completion : accumulated;
           const usage = outputs.usage as Record<string, number> | undefined;
           const citations = Array.isArray(outputs.citations) ? outputs.citations as Citation[] : undefined;
+          // RFC 0030 §A — the model may ship a `reasoning` string alongside
+          // its structured envelope payload. Check both the top-level
+          // `outputs.reasoning` and a nested `outputs.envelope.reasoning`
+          // shape, since universal-kind envelopes carry it on payload.
+          const envelopeReasoning = (() => {
+            if (typeof outputs.reasoning === 'string' && outputs.reasoning.length > 0) return outputs.reasoning;
+            const envelope = outputs.envelope as Record<string, unknown> | undefined;
+            if (!envelope) return undefined;
+            const payloadField = envelope.payload as Record<string, unknown> | undefined;
+            if (payloadField && typeof payloadField.reasoning === 'string' && payloadField.reasoning.length > 0) {
+              return payloadField.reasoning;
+            }
+            return undefined;
+          })();
           let finalized: ChatMessage | null = null;
           setSession((s) => {
             const next = s.messages.map((m) => {
@@ -563,6 +703,7 @@ export function useChatSession(): UseChatSessionResult {
                 ...m,
                 isStreaming: false,
                 content: completion,
+                ...(envelopeReasoning ? { reasoning: envelopeReasoning } : {}),
                 meta: {
                   runId,
                   provider: outputs.provider as string | undefined,

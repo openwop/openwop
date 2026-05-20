@@ -5,17 +5,45 @@
  *   3. Nothing selected → workflow-level fields (name + default inputs JSON)
  */
 
+import { useEffect, useState } from 'react';
 import { useBuilderStore } from '../store/builderStore.js';
 import { catalogEntry } from '../palette/catalogRegistry.js';
 import { type ConfigField } from '../palette/nodeCatalog.js';
 import { PromptPickerInput } from '../../prompts/PromptPickerInput.js';
+import { getCapabilities } from '../../client/runsClient.js';
 import type { BuilderEdge, EdgeCondition, EdgeTriggerRule } from '../schema/workflow.js';
+
+/** Capabilities the host advertises across its installed models. Computed
+ *  union for the gap check; `null` while discovery is in flight or absent. */
+function useHostAdvertisedModelCapabilities(): Set<string> | null {
+  const [caps, setCaps] = useState<Set<string> | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    getCapabilities()
+      .then((c) => {
+        if (cancelled) return;
+        const advertised = (c as { capabilities?: { modelCapabilities?: { advertised?: Array<{ capabilities?: string[] }> } } })
+          .capabilities?.modelCapabilities?.advertised;
+        if (Array.isArray(advertised)) {
+          const union = new Set<string>();
+          for (const row of advertised) {
+            for (const c of row.capabilities ?? []) union.add(c);
+          }
+          setCaps(union);
+        }
+      })
+      .catch(() => { /* best-effort */ });
+    return () => { cancelled = true; };
+  }, []);
+  return caps;
+}
 
 export function Inspector() {
   const selectedNodeId = useBuilderStore((s) => s.selectedNodeId);
   const selectedEdgeId = useBuilderStore((s) => s.selectedEdgeId);
   const node = useBuilderStore((s) => s.nodes.find((n) => n.id === selectedNodeId) ?? null);
   const edge = useBuilderStore((s) => s.edges.find((e) => e.id === selectedEdgeId) ?? null);
+  const advertised = useHostAdvertisedModelCapabilities();
 
   if (edge) return <EdgeInspector edge={edge} />;
   if (!node) return <WorkflowInspector />;
@@ -28,6 +56,12 @@ export function Inspector() {
     );
   }
   const missing = entry.missingHostSurfaces ?? [];
+  // RFC 0031 gap: what does this node need that the host's modelCapabilities
+  // advertisement doesn't (yet) cover?
+  const requiredCaps = entry.requiredModelCapabilities ?? [];
+  const missingModelCaps = advertised
+    ? requiredCaps.filter((c) => !advertised.has(c))
+    : [];
   return (
     <aside className="builder-inspector">
       <h3 className="builder-inspector-title">{entry.label}</h3>
@@ -46,6 +80,43 @@ export function Inspector() {
             <code> HOST_CAPABILITY_MISSING</code>. Wire the surface in your host,
             or run <code>examples/hosts/postgres</code> for a host that advertises
             every surface.
+          </div>
+        </div>
+      ) : null}
+
+      {requiredCaps.length > 0 ? (
+        <div
+          className={missingModelCaps.length > 0 ? 'alert warning' : 'alert info'}
+          role="status"
+          aria-label="Model capability requirements"
+          style={{ marginTop: missing.length > 0 ? 8 : 0 }}
+        >
+          <strong>Requires model capabilities:</strong>{' '}
+          {requiredCaps.map((c, i) => (
+            <span key={c}>
+              <code style={{
+                background: missingModelCaps.includes(c)
+                  ? 'color-mix(in oklch, var(--color-warning) 14%, transparent)'
+                  : undefined,
+              }}>{c}</code>
+              {i < requiredCaps.length - 1 ? ' · ' : ''}
+            </span>
+          ))}
+          .
+          <div className="muted builder-inspector-help" style={{ marginTop: 4 }}>
+            {advertised === null ? (
+              <>Discovering host's <code>modelCapabilities</code> advertisement…</>
+            ) : missingModelCaps.length === 0 ? (
+              <>The host advertises every required capability; this node will dispatch directly.</>
+            ) : (
+              <>
+                The host's <code>modelCapabilities.advertised[]</code> doesn't cover{' '}
+                <code>{missingModelCaps.join(', ')}</code>. At dispatch time the host will
+                either substitute a fallback model
+                (<code>model.capability.substituted</code>) or refuse with
+                <code> capability_not_provided</code> per RFC 0031 §B.
+              </>
+            )}
           </div>
         </div>
       ) : null}

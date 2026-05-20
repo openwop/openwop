@@ -14,6 +14,8 @@ import { messageText } from './hooks/useChatSession.js';
 import { MessageRenderer } from './MessageRenderer.js';
 import { ThoughtsDisclosure } from './ThoughtsDisclosure.js';
 import { ToolCallCard, HandoffIndicator, DecisionBadge } from './AgentEventCards.js';
+import { EnvelopeEventsTimeline, hasEnvelopeEvents } from './EnvelopeEventsTimeline.js';
+import { ReasoningDisclosure } from './ReasoningDisclosure.js';
 import { ErrorCard } from './ErrorCard.js';
 import { formatUsd, turnCostUsd } from './lib/cost.js';
 import { GlobeIcon } from './icons/index.js';
@@ -199,6 +201,12 @@ export function MessageBubble({ message, onRegenerate, onFeedback, onReconfigure
             {...(onReconfigureBYOK ? { onReconfigure: onReconfigureBYOK } : {})}
             {...(onRegenerate ? { onRetry: () => onRegenerate(message.id) } : {})}
           />
+        )}
+        {!isUser && message.reasoning && (
+          <ReasoningDisclosure reasoning={message.reasoning} />
+        )}
+        {!isUser && hasEnvelopeEvents(message.envelopeEvents) && message.envelopeEvents && (
+          <EnvelopeEventsTimeline envelopeEvents={message.envelopeEvents} />
         )}
         {!isUser && message.agentEvents && (
           <div style={{ marginTop: 8 }}>

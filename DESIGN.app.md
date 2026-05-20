@@ -93,6 +93,10 @@ Cross-surface components (`.btn`, `.marker`, etc.) live in `DESIGN.md §6`. The 
 | `.byok-wizard` | BYOK step-through | progressive disclosure; `<abbr>`-expand acronyms per step per DESIGN.md §2 |
 | `.signin-button` (Google / GitHub variants) | auth chrome | wraps vendor brand SVG marks; container is ink-on-paper; **brand marks themselves are never re-colored** (DESIGN.md §13) |
 | `.demo-host-banner` | "you're on the demo host" banner | clay-wash background, mono marker, dismissible |
+| `.env-chip` + `.env-chip-{info,warning,danger,muted}` | envelope-events timeline chip (RFC 0030/0031/0032/0033) | left rule-rail tinted with the variant's functional token; mono `.env-chip-tag` color matches; body in ink-2; pill / quote / detail sub-elements stay paper-on-paper to keep the bubble calm when chips stack |
+| `.envelope-events` | the in-bubble timeline wrapper holding stacked `.env-chip` rows | column flex with 6px gap; sits between `MessageRenderer` and `AgentEventCards` inside `MessageBubble` |
+| `.reasoning-disclosure` | RFC 0030 §A `<details>` for the `envelope.payload.reasoning` string | distinct from `ThoughtsDisclosure` — uses an `ⓘ` info glyph (vs `…` ellipsis), dashed top divider, AI-coloured left-bar on the open body |
+| `.prompt-tier-one-chip` | Tier-1 subset finding on a schema-hint prompt (RFC 0030 §B) | warning-tinted mono chip; appears on the prompt-list-item card; pairs with a banner above the list when `capabilities.envelopes.tierOneSubsetCompliance` is `strict` / `warn` |
 
 When adding a new app-specific component:
 

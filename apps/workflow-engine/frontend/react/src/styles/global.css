@@ -195,6 +195,154 @@
   vertical-align: middle;
 }
 
+/* ─── Envelope-events timeline chips ───────────────────────────────────
+ * RFC 0030 / 0031 / 0032 / 0033 surface. The 8 card components share the
+ * .env-chip family — a compact horizontal strip with a mono tag, body
+ * text, optional pill chips, optional collapsible detail, and an
+ * optional action button. Variants (.env-chip-info / -warning / -danger
+ * / -muted) tint the left rail and the tag color; everything else stays
+ * paper-on-paper to keep the chat bubble calm even when multiple chips
+ * stack. Tag colors are functional tokens (not clay) so the events
+ * differentiate from agent-event chips which use clay accents. */
+.env-chip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--rule);
+  border-left-width: 3px;
+  border-radius: 2px;
+  background: var(--paper);
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+.env-chip-info    { border-left-color: var(--color-ai); }
+.env-chip-warning { border-left-color: var(--color-warning); }
+.env-chip-danger  { border-left-color: var(--color-danger); }
+.env-chip-muted   { border-left-color: var(--ink-3); }
+
+.env-chip-tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.env-chip-info    .env-chip-tag { color: var(--color-ai); }
+.env-chip-warning .env-chip-tag { color: var(--color-warning); }
+.env-chip-danger  .env-chip-tag { color: var(--color-danger); }
+.env-chip-muted   .env-chip-tag { color: var(--ink-3); }
+
+.env-chip-text { color: var(--ink); flex: 1; min-width: 0; }
+.env-chip-mono {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  background: var(--paper-2);
+  padding: 1px 5px;
+  border-radius: 2px;
+  color: var(--ink);
+}
+.env-chip-pill {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 2px;
+  background: var(--paper-2);
+  color: var(--ink-3);
+  border: 1px solid var(--rule);
+}
+.env-chip-toggle {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: transparent;
+  border: none;
+  color: var(--ink-3);
+  cursor: pointer;
+  padding: 0;
+}
+.env-chip-toggle:hover { color: var(--clay); }
+.env-chip-action {
+  font-family: var(--sans);
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 4px 10px;
+  background: var(--ink);
+  color: var(--paper);
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  cursor: pointer;
+  margin-left: auto;
+}
+.env-chip-action:hover { background: var(--clay); border-color: var(--clay); }
+.env-chip-detail {
+  flex-basis: 100%;
+  margin: 4px 0 0;
+  padding: 6px 8px;
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-2);
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+.env-chip-quote {
+  flex-basis: 100%;
+  margin: 4px 0 0;
+  padding: 4px 10px;
+  border-left: 2px solid var(--rule-2);
+  color: var(--ink-2);
+  font-style: italic;
+  font-size: 12.5px;
+}
+.env-chip-quote .env-chip-toggle { margin-left: 6px; font-style: normal; }
+
+/* ─── Reasoning disclosure (RFC 0030 §A) ─────────────────────────────── */
+.reasoning-disclosure {
+  margin-top: 6px;
+  border-top: 1px dashed var(--rule);
+  padding-top: 6px;
+}
+.reasoning-disclosure summary {
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.reasoning-disclosure summary::-webkit-details-marker { display: none; }
+.reasoning-disclosure summary::before {
+  content: 'ⓘ';
+  font-style: normal;
+  font-size: 12px;
+  color: var(--color-ai);
+}
+.reasoning-disclosure summary:hover { color: var(--clay); }
+.reasoning-disclosure[open] summary { color: var(--ink); margin-bottom: 6px; }
+.reasoning-disclosure-body {
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-2);
+  white-space: pre-wrap;
+  padding-left: 18px;
+  border-left: 2px solid var(--color-ai);
+}
+
 /* ─── Reduced motion ──────────────────────────────────────────────────
  * Honor prefers-reduced-motion: reduce. Mirrors the canonical block in
  * public/styles.css per DESIGN.md §11 / DESIGN.app.md §6 invariant 1.
@@ -1671,6 +1819,28 @@ pre {
 .prompt-kind-user { border-color: var(--color-ai, var(--ink-2)); color: var(--color-ai, var(--ink-2)); }
 .prompt-kind-few-shot { border-color: var(--color-success, var(--ink-2)); color: var(--color-success, var(--ink-2)); }
 .prompt-kind-schema-hint { border-color: var(--color-warning, var(--ink-2)); color: var(--color-warning, var(--ink-2)); }
+
+/* RFC 0030 §B Tier-1 lint chip — appears on a schema-hint prompt when
+ * the host advertises tierOneSubsetCompliance and the prompt text trips
+ * a Tier-1 rule. Warning-tinted, single-line, non-clickable; links to
+ * the spec via the banner above the list. */
+.prompt-list-item-lint {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.prompt-tier-one-chip {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  padding: 2px 8px;
+  border-radius: 2px;
+  background: color-mix(in oklch, var(--color-warning) 12%, transparent);
+  color: var(--color-warning);
+  border: 1px solid color-mix(in oklch, var(--color-warning) 35%, transparent);
+}
 
 .prompt-preview {
   white-space: pre-wrap;

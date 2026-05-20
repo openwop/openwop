@@ -2,6 +2,14 @@ import { useEffect, useState } from 'react';
 import { getCapabilities } from '../client/runsClient.js';
 import { authedHeaders, config, fetchOpts } from '../client/config.js';
 
+/** Render an advertised boolean as a tri-state glyph. `undefined` means the
+ *  host hasn't declared the field; that's distinct from `false` (declared off). */
+function boolGlyph(v: boolean | undefined): JSX.Element {
+  if (v === true) return <span style={{ color: 'var(--color-success)' }}>✓</span>;
+  if (v === false) return <span style={{ color: 'var(--ink-3)' }}>○</span>;
+  return <span className="muted">—</span>;
+}
+
 interface HostSurfaceAd {
   name: string;
   supported: boolean;
@@ -17,9 +25,38 @@ interface CatalogNode {
   missingHostSurfaces?: string[];
 }
 
+interface EnvelopeReasoningAd {
+  supported?: boolean;
+  promptDirective?: 'mandatory' | 'advisory' | 'off';
+}
+interface EnvelopeReliabilityAd {
+  supported?: boolean;
+  events?: string[];
+  completion?: {
+    distinguishesTruncation?: boolean;
+    truncationBudgetMultiplier?: number;
+  };
+}
+interface ModelCapabilityRow {
+  provider: string;
+  model: string;
+  capabilities: string[];
+}
+interface ModelCapabilitiesAd {
+  supported?: boolean;
+  substitutionSupported?: boolean;
+  advertised?: ModelCapabilityRow[];
+}
+
 interface Caps {
   capabilities?: {
     hostSurfaces?: HostSurfaceAd[];
+    envelopes?: {
+      reasoning?: EnvelopeReasoningAd;
+      reliability?: EnvelopeReliabilityAd;
+      tierOneSubsetCompliance?: 'strict' | 'warn' | 'off';
+    };
+    modelCapabilities?: ModelCapabilitiesAd;
   };
 }
 
@@ -132,6 +169,109 @@ export function CapabilitiesPanel() {
           </table>
         ) : (
           !error && <div className="muted">Loading…</div>
+        )}
+      </div>
+
+      <div className="card">
+        <h2>Envelope discipline</h2>
+        <p className="muted">
+          What this host promises about LLM-emission envelopes — the inbound
+          payload shape every AI node serves into the run. Three sub-surfaces
+          per <a href="https://github.com/openwop/openwop/blob/main/RFCS/0030-envelope-reasoning-and-tier-one-subset.md">RFC 0030</a>,
+          {' '}<a href="https://github.com/openwop/openwop/blob/main/RFCS/0032-envelope-reliability-events.md">0032</a>,
+          {' '}<a href="https://github.com/openwop/openwop/blob/main/RFCS/0033-envelope-completion-contract.md">0033</a>.
+          When a row reads <code>—</code>, the host hasn't advertised that surface yet.
+        </p>
+        {caps ? (
+          <table className="cap-table">
+            <thead>
+              <tr><th>Surface</th><th>Value</th><th>Note</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>envelopes.reasoning.supported</code></td>
+                <td>{boolGlyph(caps.capabilities?.envelopes?.reasoning?.supported)}</td>
+                <td className="muted">RFC 0030 §A — optional <code>reasoning</code> string on envelope payloads</td>
+              </tr>
+              <tr>
+                <td><code>envelopes.reasoning.promptDirective</code></td>
+                <td>{caps.capabilities?.envelopes?.reasoning?.promptDirective
+                  ? <code>{caps.capabilities.envelopes.reasoning.promptDirective}</code>
+                  : <span className="muted">—</span>}</td>
+                <td className="muted">how aggressively the host prompts the model to populate it</td>
+              </tr>
+              <tr>
+                <td><code>envelopes.tierOneSubsetCompliance</code></td>
+                <td>{caps.capabilities?.envelopes?.tierOneSubsetCompliance
+                  ? <code>{caps.capabilities.envelopes.tierOneSubsetCompliance}</code>
+                  : <span className="muted">—</span>}</td>
+                <td className="muted">RFC 0030 §B — host's posture on the OpenAI ∩ Anthropic ∩ Gemini schema subset</td>
+              </tr>
+              <tr>
+                <td><code>envelopes.reliability.supported</code></td>
+                <td>{boolGlyph(caps.capabilities?.envelopes?.reliability?.supported)}</td>
+                <td className="muted">RFC 0032 — host emits retry / refusal / truncation events</td>
+              </tr>
+              <tr>
+                <td><code>envelopes.reliability.events</code></td>
+                <td>{caps.capabilities?.envelopes?.reliability?.events?.length
+                  ? <span style={{ fontFamily: 'var(--mono)', fontSize: 11 }}>{caps.capabilities.envelopes.reliability.events.join(', ')}</span>
+                  : <span className="muted">—</span>}</td>
+                <td className="muted">which reliability event types this host actually emits</td>
+              </tr>
+              <tr>
+                <td><code>envelopes.reliability.completion.distinguishesTruncation</code></td>
+                <td>{boolGlyph(caps.capabilities?.envelopes?.reliability?.completion?.distinguishesTruncation)}</td>
+                <td className="muted">RFC 0033 — host branches retry strategy on truncation vs schema-violation</td>
+              </tr>
+              <tr>
+                <td><code>envelopes.reliability.completion.truncationBudgetMultiplier</code></td>
+                <td>{typeof caps.capabilities?.envelopes?.reliability?.completion?.truncationBudgetMultiplier === 'number'
+                  ? <code>×{caps.capabilities.envelopes.reliability.completion.truncationBudgetMultiplier}</code>
+                  : <span className="muted">—</span>}</td>
+                <td className="muted">how much extra output budget the host gives on a truncation retry</td>
+              </tr>
+            </tbody>
+          </table>
+        ) : (
+          !error && <div className="muted">Loading…</div>
+        )}
+      </div>
+
+      <div className="card">
+        <h2>Model capabilities</h2>
+        <p className="muted">
+          Per <a href="https://github.com/openwop/openwop/blob/main/RFCS/0031-envelope-variants-and-model-capabilities.md">RFC 0031</a> — what each
+          installed provider/model can do (function-calling, vision, streaming, etc.), and whether
+          this host will silently substitute a fallback model when the workflow asks for a capability
+          the configured model lacks. Substitution is observable via the <code>model.capability.substituted</code> event.
+        </p>
+        {caps?.capabilities?.modelCapabilities ? (
+          <>
+            <p>
+              <strong>{caps.capabilities.modelCapabilities.supported ? 'Advertised' : 'Not advertised'}</strong>
+              {' · '}substitution {caps.capabilities.modelCapabilities.substitutionSupported ? 'on' : 'off'}
+              {' · '}{caps.capabilities.modelCapabilities.advertised?.length ?? 0} models declared
+            </p>
+            {caps.capabilities.modelCapabilities.advertised?.length ? (
+              <table className="cap-table">
+                <thead>
+                  <tr><th>Provider</th><th>Model</th><th>Capabilities</th></tr>
+                </thead>
+                <tbody>
+                  {caps.capabilities.modelCapabilities.advertised.map((row) => (
+                    <tr key={`${row.provider}/${row.model}`}>
+                      <td><code>{row.provider}</code></td>
+                      <td><code>{row.model}</code></td>
+                      <td style={{ fontFamily: 'var(--mono)', fontSize: 11 }}>{row.capabilities.join(', ')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : null}
+          </>
+        ) : (
+          !error && <div className="muted">Host doesn't advertise <code>modelCapabilities</code> yet.</div>
         )}
       </div>
 

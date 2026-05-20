@@ -10,6 +10,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { listPrompts, renderLocal } from './promptsClient.js';
 import type { PromptKind, PromptTemplate } from './types.js';
 import { refToString } from './types.js';
+import { lintPromptForTierOne, tierOneFindingsCount } from './tierOneLint.js';
+import { getCapabilities } from '../client/runsClient.js';
+
+type TierOneCompliance = 'strict' | 'warn' | 'off' | undefined;
 
 const KINDS: { value: PromptKind | 'all'; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -25,6 +29,11 @@ export function PromptLibraryPage() {
   const [kindFilter, setKindFilter] = useState<PromptKind | 'all'>('all');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<PromptTemplate | null>(null);
+  // RFC 0030 §B — host's posture on the OpenAI ∩ Anthropic ∩ Gemini
+  // schema subset. When `strict`, schema-hint prompts get a Tier-1 lint
+  // chip; when `warn`, the lint runs but the banner copy is softer;
+  // when `off` or absent, the lint stays silent.
+  const [tierOneCompliance, setTierOneCompliance] = useState<TierOneCompliance>(undefined);
 
   useEffect(() => {
     let cancelled = false;
@@ -35,10 +44,29 @@ export function PromptLibraryPage() {
       .catch((err) => {
         if (!cancelled) setError(err instanceof Error ? err.message : String(err));
       });
+    // Capability discovery in parallel — don't gate the prompt list on it.
+    getCapabilities()
+      .then((c) => {
+        if (cancelled) return;
+        const caps = (c as { capabilities?: { envelopes?: { tierOneSubsetCompliance?: unknown } } }).capabilities;
+        const v = caps?.envelopes?.tierOneSubsetCompliance;
+        if (v === 'strict' || v === 'warn' || v === 'off') setTierOneCompliance(v);
+      })
+      .catch(() => { /* best-effort; absence is fine */ });
     return () => {
       cancelled = true;
     };
   }, []);
+
+  // Run the Tier-1 lint once per prompt-list change, regardless of host
+  // advertisement (so we can show a banner even when off). The banner
+  // copy adapts to the compliance posture; per-row chips show in both
+  // strict and warn modes.
+  const tierOneActive = tierOneCompliance === 'strict' || tierOneCompliance === 'warn';
+  const flaggedCount = useMemo(() => {
+    if (!prompts) return 0;
+    return tierOneFindingsCount(prompts);
+  }, [prompts]);
 
   const filtered = useMemo(() => {
     if (!prompts) return [];
@@ -63,6 +91,15 @@ export function PromptLibraryPage() {
         </p>
 
         {error && <div className="alert error">{error}</div>}
+
+        {tierOneActive && flaggedCount > 0 && (
+          <div className={tierOneCompliance === 'strict' ? 'alert warning' : 'alert info'} style={{ marginBottom: 12 }}>
+            <strong>Tier-1 subset</strong> ({tierOneCompliance}):{' '}
+            <strong>{flaggedCount}</strong> schema-hint prompt{flaggedCount === 1 ? '' : 's'} flagged against{' '}
+            <a href="https://github.com/openwop/openwop/blob/main/spec/v1/structured-output-subset.md" target="_blank" rel="noopener">structured-output-subset.md</a>.
+            Inline chips on each offender point to the specific finding.
+          </div>
+        )}
 
         <div className="form-row" style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end' }}>
           <div style={{ flex: '0 0 auto' }}>
@@ -89,25 +126,37 @@ export function PromptLibraryPage() {
           <p className="muted">No prompts match the current filter.</p>
         ) : (
           <ul className="prompt-list">
-            {filtered.map((p) => (
-              <li key={`${p.templateId}@${p.version}`}>
-                <button className="prompt-list-item" onClick={() => setSelected(p)}>
-                  <div className="prompt-list-item-header">
-                    <code className="prompt-list-item-id">{refToString(p)}</code>
-                    <span className={`prompt-kind prompt-kind-${p.kind}`}>{p.kind}</span>
-                  </div>
-                  {p.name && <div className="prompt-list-item-name">{p.name}</div>}
-                  {p.description && <div className="muted prompt-list-item-desc">{p.description}</div>}
-                  {p.tags && p.tags.length > 0 && (
-                    <div className="prompt-list-item-tags">
-                      {p.tags.map((t) => (
-                        <span key={t} className="prompt-tag">{t}</span>
-                      ))}
+            {filtered.map((p) => {
+              const findings = tierOneActive ? lintPromptForTierOne(p) : [];
+              return (
+                <li key={`${p.templateId}@${p.version}`}>
+                  <button className="prompt-list-item" onClick={() => setSelected(p)}>
+                    <div className="prompt-list-item-header">
+                      <code className="prompt-list-item-id">{refToString(p)}</code>
+                      <span className={`prompt-kind prompt-kind-${p.kind}`}>{p.kind}</span>
                     </div>
-                  )}
-                </button>
-              </li>
-            ))}
+                    {p.name && <div className="prompt-list-item-name">{p.name}</div>}
+                    {p.description && <div className="muted prompt-list-item-desc">{p.description}</div>}
+                    {p.tags && p.tags.length > 0 && (
+                      <div className="prompt-list-item-tags">
+                        {p.tags.map((t) => (
+                          <span key={t} className="prompt-tag">{t}</span>
+                        ))}
+                      </div>
+                    )}
+                    {findings.length > 0 && (
+                      <div className="prompt-list-item-lint">
+                        {findings.map((f) => (
+                          <span key={f.rule} className="prompt-tier-one-chip" title="Tier-1 subset finding — see structured-output-subset.md">
+                            {f.label}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

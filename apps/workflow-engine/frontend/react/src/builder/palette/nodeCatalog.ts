@@ -57,6 +57,14 @@ export interface NodeCatalogEntry {
    *  but executing it will fail with HOST_CAPABILITY_MISSING. Server-
    *  computed so the client doesn't have to cross-reference advertising. */
   missingHostSurfaces?: readonly string[];
+  /** RFC 0031 §B. MODEL capabilities this node needs the active model to
+   *  advertise in `capabilities.modelCapabilities.advertised[]`. Empty /
+   *  absent = no model-capability requirements. Used by the Inspector
+   *  to surface a gap chip when the host's modelCapabilities advertisement
+   *  doesn't cover the required set; the host's runtime dispatch will
+   *  either substitute (RFC 0031 §B step 3) or refuse with
+   *  `model.capability.insufficient` (step 4). */
+  requiredModelCapabilities?: readonly string[];
 }
 
 export const NODE_CATALOG: readonly NodeCatalogEntry[] = [
@@ -161,6 +169,7 @@ export const NODE_CATALOG: readonly NodeCatalogEntry[] = [
     inputs: [{ name: 'messages', type: 'object' }],
     outputs: [{ name: 'completion', type: 'string' }],
     configFields: [],
+    requiredModelCapabilities: ['structured-output'],
   },
 ];
 
