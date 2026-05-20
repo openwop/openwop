@@ -1,0 +1,39 @@
+{
+  "id": "conformance-envelope-retry-attempted",
+  "name": "Conformance: envelope.retry.attempted (RFC 0032 §B.1)",
+  "version": "1.0",
+  "description": "Drives `core.ai.structuredOutput` against the conformance-only `mock` provider. The conformance scenario POSTs a 2-entry program to `/v1/host/sample/test/mock-ai/program` (keyed by `nodeId: 'structured-call'`) BEFORE starting the run: attempt 1 returns invalid JSON, attempt 2 returns a valid envelope. The host's `dispatchStructured` retry loop MUST emit exactly one `envelope.retry.attempted` event with `attempt: 2` between the two provider calls (RFC 0032 §B.1). The run terminates `completed` after the second attempt succeeds.",
+  "nodes": [
+    {
+      "id": "structured-call",
+      "typeId": "core.ai.structuredOutput",
+      "name": "Structured output via mock provider",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "provider": "mock",
+        "model": "mock-mini",
+        "outputSchema": {
+          "type": "object",
+          "required": ["valid"],
+          "properties": { "valid": { "type": "boolean" } }
+        },
+        "retryOnInvalidJson": 0
+      },
+      "inputs": {
+        "messages": {
+          "type": "static",
+          "value": [{ "role": "user", "content": "Please emit a valid envelope." }]
+        }
+      }
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": {
+    "tags": ["conformance", "rfc-0032", "envelope-reliability", "retry-attempted"]
+  },
+  "settings": { "timeout": 30000 }
+}

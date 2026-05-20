@@ -1,0 +1,39 @@
+{
+  "id": "conformance-envelope-truncated",
+  "name": "Conformance: envelope.truncated (RFC 0032 §B.4 + RFC 0033 §B)",
+  "version": "1.0",
+  "description": "Drives `core.ai.structuredOutput` against the conformance `mock` provider with a program: attempt 1 returns `stopReason: 'max_tokens'` (truncation); attempt 2 returns a valid envelope. The host's `dispatchStructured` retry loop MUST: (a) emit exactly one `envelope.truncated` event with `stopReason: 'max_tokens'`; (b) retry with an INCREASED output budget per RFC 0033 §B (the host's `truncationBudgetMultiplier` — default 2×); (c) NOT inject the corrective schema fragment on the truncation retry (truncation is an output-size problem, not a schema problem). Eventually completes after attempt 2 succeeds. Pairs with `envelope-truncated.test.ts`.",
+  "nodes": [
+    {
+      "id": "structured-call",
+      "typeId": "core.ai.structuredOutput",
+      "name": "Structured output (truncation then success)",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "provider": "mock",
+        "model": "mock-mini",
+        "maxTokens": 50,
+        "outputSchema": {
+          "type": "object",
+          "required": ["valid"],
+          "properties": { "valid": { "type": "boolean" } }
+        }
+      },
+      "inputs": {
+        "messages": {
+          "type": "static",
+          "value": [{ "role": "user", "content": "Please emit a valid envelope." }]
+        }
+      }
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": {
+    "tags": ["conformance", "rfc-0032", "rfc-0033", "envelope-reliability", "truncated"]
+  },
+  "settings": { "timeout": 30000 }
+}

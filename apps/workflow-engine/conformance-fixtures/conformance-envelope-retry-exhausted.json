@@ -1,0 +1,38 @@
+{
+  "id": "conformance-envelope-retry-exhausted",
+  "name": "Conformance: envelope.retry.exhausted (RFC 0032 §B.2)",
+  "version": "1.0",
+  "description": "Drives `core.ai.structuredOutput` against the conformance `mock` provider with a program that returns invalid JSON on EVERY attempt. The host's `dispatchStructured` retry loop MUST exhaust its budget and emit exactly one `envelope.retry.exhausted` event with `finalReason: 'schema-violation'` (or `'parse-error'` per RFC 0032 §B.1 reason enum). The node MUST fail with `error.code: 'envelope_payload_invalid'` (existing RFC 0021 code per RFC 0033 §C). Pairs with `envelope-retry-exhausted.test.ts`.",
+  "nodes": [
+    {
+      "id": "structured-call",
+      "typeId": "core.ai.structuredOutput",
+      "name": "Structured output via mock provider (always invalid)",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "provider": "mock",
+        "model": "mock-mini",
+        "outputSchema": {
+          "type": "object",
+          "required": ["valid"],
+          "properties": { "valid": { "type": "boolean" } }
+        }
+      },
+      "inputs": {
+        "messages": {
+          "type": "static",
+          "value": [{ "role": "user", "content": "Please emit a valid envelope." }]
+        }
+      }
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": {
+    "tags": ["conformance", "rfc-0032", "envelope-reliability", "retry-exhausted"]
+  },
+  "settings": { "timeout": 30000 }
+}
