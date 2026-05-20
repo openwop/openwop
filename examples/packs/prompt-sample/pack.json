@@ -1,0 +1,41 @@
+{
+  "name": "vendor.openwop.prompt-sample",
+  "version": "1.0.0",
+  "kind": "prompt",
+  "description": "Reference prompt pack proving the RFC 0028 §B manifest format works end-to-end across schema validation, registry indexing, and the in-memory PromptStore's installPackTemplates() seam. Two templates: a writer-system prompt and a critic-system prompt — the minimal pair that lets a multi-agent workflow author point a `writer` + `critic` node pair at vendor-published prompts via `prompt:writer-system@1.0.0` / `prompt:critic-system@1.0.0` refs. In-tree only (NOT published to packs.openwop.dev); the canonical proof that the prompt-pack contract is implementable with real-world-shaped content.",
+  "author": "openwop project",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/spec/v1/prompts.md",
+  "repository": "https://github.com/openwop/openwop",
+  "engines": {
+    "openwop": ">=1.1 <2.0.0"
+  },
+  "prompts": [
+    {
+      "templateId": "writer-system",
+      "version": "1.0.0",
+      "kind": "system",
+      "text": "You are a careful editorial writer. Match the requested tone exactly. Keep paragraphs tight. Do not invent facts. When the user supplies a topic, write a single coherent piece — never bullet lists unless the source itself was list-shaped.",
+      "name": "Writer (system)",
+      "description": "House-style system prompt for editorial writing. Pair with a `user`-kind template that supplies {{topic}} + {{tone}} variables.",
+      "tags": ["editorial", "writing"],
+      "modelHints": {
+        "modelClass": "writing",
+        "temperature": 0.7
+      }
+    },
+    {
+      "templateId": "critic-system",
+      "version": "1.0.0",
+      "kind": "system",
+      "text": "You are a sharp editor. Read the draft and list the three weakest claims with one-line rationales each. Be terse. Do not rewrite. If the draft has fewer than three weak claims, report fewer rows rather than padding.",
+      "name": "Critic (system)",
+      "description": "Adversarial editor system prompt — surfaces weak claims for revision without rewriting the draft itself.",
+      "tags": ["editorial", "review"],
+      "modelHints": {
+        "modelClass": "reasoning",
+        "temperature": 0.2
+      }
+    }
+  ]
+}
