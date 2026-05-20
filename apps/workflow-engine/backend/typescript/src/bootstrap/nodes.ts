@@ -15,6 +15,7 @@ import { emitCost } from '../observability/costEmitter.js';
 import { composePromptTemplate } from '../host/promptCompose.js';
 import { resolvePromptRef, type PromptKind } from '../host/promptResolve.js';
 import { getTemplate } from '../host/promptStore.js';
+import { getPromptsHostConfig } from '../host/promptHostConfig.js';
 import { dispatchChat, type ChatMessage, type DispatchResult, type ProviderId } from '../providers/dispatch.js';
 import { dispatchAnthropicWithTools, type ToolDef } from '../providers/dispatchAnthropicTools.js';
 import { getDefaultModel } from '../providers/catalog.js';
@@ -479,7 +480,17 @@ const sampleMockAiNode: NodeModule = {
     // emit agent.promptResolved, then (if resolved) compose + emit
     // prompt.composed. The composed body for the `user` kind (or
     // `system` if no user ref) becomes the prompt sent to the mock
-    // LLM downstream.
+    // LLM downstream. The discovery-advertised capability values
+    // (observability + agentBindings) are read from the shared
+    // `getPromptsHostConfig()` so a deployer who tightens the
+    // advertisement can't end up with a dispatch path that emits
+    // looser data than the host claims to expose.
+    //
+    // TODO: schema-hint + few-shot dispatch wiring (RFC 0027 §A).
+    // The cast surfaces `schemaHintPromptRef` + `fewShotPromptRefs`
+    // for forward-compat, but only system + user kinds drive the
+    // mock LLM in this Phase A slice.
+    const promptsConfig = getPromptsHostConfig();
     const refKinds: readonly PromptKind[] = ['system', 'user'];
     const composedByKind: Partial<Record<PromptKind, string>> = {};
     for (const kind of refKinds) {
@@ -493,7 +504,7 @@ const sampleMockAiNode: NodeModule = {
       const resolution = resolvePromptRef({
         kind,
         node: { nodeId: ctx.nodeId, config: cfg },
-        agentBindingsSupported: true,
+        agentBindingsSupported: promptsConfig.agentBindings,
       });
       // agent.promptResolved emits before any composition so cross-
       // host debuggers see the chain trace whether or not composition
@@ -517,16 +528,17 @@ const sampleMockAiNode: NodeModule = {
       // composer respects PromptVariable.source declarations on the
       // template (secret-source → BYOK lookup, etc.) and emits the
       // composed body with redaction + trust-marker preservation.
+      // observability is read from the shared host config so the
+      // emitted payload matches what the host advertised — a
+      // deployer who tightens to "hashed" or "off" gets the strict
+      // emission without further dispatch-path changes.
       const composed = await composePromptTemplate({
         templateId,
         bindings: inputs,
-        observability: 'full',
+        observability: promptsConfig.observability,
         nodeId: ctx.nodeId,
       });
       await ctx.emit('prompt.composed', composed);
-      // `composed` is always populated under observability: 'full'
-      // (RFC 0028 fix landed in 5cdbb2c) — surface it for downstream
-      // dispatch regardless of template kind.
       if (composed.composed !== undefined) composedByKind[kind] = composed.composed;
     }
 

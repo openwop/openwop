@@ -21,10 +21,6 @@
  * Capability-gated: skips when the host doesn't advertise
  * `capabilities.prompts.supported: true`.
  *
- * Under `OPENWOP_REQUIRE_BEHAVIOR=true` the capability gate hardens
- * from SKIP to FAIL — a host that advertises `prompts.supported` but
- * doesn't emit the two events during dispatch fails the scenario.
- *
  * @see spec/v1/prompts.md §"Composition + observability"
  * @see spec/v1/prompts.md §"Resolution chain (normative)"
  * @see RFCS/0027-prompt-templates.md §E

@@ -15,6 +15,7 @@ import { listHostSurfaces } from '../bootstrap/hostSurfaceRegistry.js';
 import { universalEnvelopeKinds } from '../host/envelopeAcceptor.js';
 import { getFsSandboxRoot } from '../host/inMemorySurfaces.js';
 import { listLoadedConformanceFixtures } from '../host/index.js';
+import { getPromptsHostConfig } from '../host/promptHostConfig.js';
 
 interface Deps {
   storage: Storage;
@@ -263,42 +264,12 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       // SECURITY invariants `prompt-composed-secret-redaction` and
       // `prompt-composed-trust-marker` in `SECURITY/invariants.yaml`
       // gate the conformance assertions.
-      prompts: {
-        // RFC 0027 Phase A — node-execution PromptRef resolution +
-        // prompt.composed emission. The reference host implements the
-        // composition pipeline (`host/promptCompose.ts`) and exercises
-        // it via the `/v1/host/sample/prompt/compose` test seam used
-        // by the conformance scenarios `prompt-composed-secret-redaction`
-        // and `prompt-composed-trust-marker`. Honest about Phase A.
-        supported: true,
-        // RFC 0028 Phase B — the spec'd `/v1/prompts*` REST surface.
-        // The reference host serves all six routes via
-        // `routes/prompts.ts` against an in-memory PromptStore
-        // (`host/promptStore.ts`) that loads host-built-in templates
-        // from `conformance-fixtures/prompt-templates/` at boot and
-        // accepts user-source mutations at run time. The pack-install
-        // path (RFC 0028 §B install flow with Ed25519 + SRI) is a
-        // separate slice; the store has an `installPackTemplates()`
-        // seam waiting for it.
-        endpointsSupported: true,
-        // RFC 0028 §C — the host honors the mutating endpoints
-        // (POST / PUT / DELETE). User-source templates only; pack and
-        // host built-ins return 403 on mutation attempts.
-        mutableLibrary: true,
-        // RFC 0029 §B — four-layer resolution chain at node-execution
-        // time. The reference host implements the resolver
-        // (`host/promptResolve.ts`) and exercises it via the
-        // `/v1/host/sample/prompt/resolve` test seam used by the three
-        // `prompt-resolution-chain-*` conformance scenarios.
-        // Advertising `agentBindings: true` activates layer 2 (the
-        // `agent-intrinsic` / `agent-overrides` / `agent-library-default`
-        // sub-layers) when a node carries `config.agentId`.
-        agentBindings: true,
-        templateKinds: ['system', 'user', 'few-shot', 'schema-hint'],
-        variableSources: ['input', 'variable', 'secret', 'context'],
-        maxTemplateBytes: 65536,
-        observability: 'full',
-      },
+      // Sourced from `host/promptHostConfig.ts` so the discovery
+      // advertisement and the dispatch-time compose+resolve calls in
+      // `bootstrap/nodes.ts` can't drift apart. Production hosts
+      // override the single config module rather than editing two
+      // call sites.
+      prompts: { ...getPromptsHostConfig() },
       // RFC 0030 envelope-track advertisement. The universal-kind payload
       // schemas (`schemas/envelopes/*.schema.json`) carry the OPTIONAL
       // `reasoning` field per RFC 0030 §A. The reference host does NOT yet

@@ -15,18 +15,18 @@
  * downstream scenario notices missing templates.
  *
  * The scenario does NOT mutate state — it relies on the host having
- * installed the in-tree pack at startup. Hosts that wire a different
- * pack-discovery path (e.g., production hosts pulling signed packs
- * from `packs.openwop.dev`) can still pass by ensuring at least one
- * `meta.source: "pack"` template surfaces under
- * `GET /v1/prompts?source=pack`.
+ * installed at least one prompt pack at startup. RFC 0028 §B does
+ * NOT require a host advertising `endpointsSupported: true` to have
+ * any pack installed (a fresh production host with no pack
+ * subscriptions is conformant); when zero pack-source templates
+ * are listed, the structural assertions on sub-tests 2-3 still run
+ * but the existence claim is treated as a soft skip. The reference
+ * workflow-engine sample sets
+ * `OPENWOP_TEST_PROMPT_PACK_INSTALLED=true` so the existence path
+ * IS exercised against the in-tree `vendor.openwop.prompt-sample`.
  *
  * Capability-gated: skips when the host doesn't advertise
  * `capabilities.prompts.endpointsSupported: true`.
- *
- * Under `OPENWOP_REQUIRE_BEHAVIOR=true` the capability gate hardens
- * from SKIP to FAIL — a host that advertises endpointsSupported but
- * serves zero pack-source templates fails the scenario.
  *
  * HTTP-driven: skips when no `OPENWOP_BASE_URL` is configured.
  *
@@ -74,9 +74,10 @@ function endpointsSupported(d: DiscoveryDoc | null): boolean {
 }
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
+const REQUIRE_PACK_INSTALLED = process.env.OPENWOP_TEST_PROMPT_PACK_INSTALLED === 'true';
 
 describe.skipIf(HTTP_SKIP)('prompt-pack-install: boot-time loader surfaces pack templates (RFC 0028 §B)', () => {
-  it('GET /v1/prompts?source=pack surfaces at least one pack-source template when endpointsSupported is advertised', async () => {
+  it('GET /v1/prompts?source=pack returns 200 + an array of PromptTemplate objects when endpointsSupported is advertised', async () => {
     const d = await readDiscovery();
     if (!endpointsSupported(d)) return;
 
@@ -98,14 +99,20 @@ describe.skipIf(HTTP_SKIP)('prompt-pack-install: boot-time loader surfaces pack 
       ),
     ).toBe(true);
 
-    const packItems = body.items.filter((t) => t.meta?.source === 'pack');
-    expect(
-      packItems.length,
-      driver.describe(
-        'RFCS/0028-prompt-library-endpoints.md §B',
-        'a host that advertises endpointsSupported AND ran the boot-time pack loader MUST surface at least one pack-source template',
-      ),
-    ).toBeGreaterThan(0);
+    // Existence claim — only fail when the host explicitly opts in
+    // via OPENWOP_TEST_PROMPT_PACK_INSTALLED. RFC 0028 §B treats
+    // "zero installed packs" as a conformant state for any host that
+    // hasn't subscribed to a pack source.
+    if (REQUIRE_PACK_INSTALLED) {
+      const packItems = body.items.filter((t) => t.meta?.source === 'pack');
+      expect(
+        packItems.length,
+        driver.describe(
+          'RFCS/0028-prompt-library-endpoints.md §B',
+          'OPENWOP_TEST_PROMPT_PACK_INSTALLED=true asserts the boot-time loader installed at least one pack',
+        ),
+      ).toBeGreaterThan(0);
+    }
   });
 
   it('each pack-source template carries meta.source/packName/packVersion stamps per RFC 0028 §B', async () => {

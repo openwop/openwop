@@ -27,12 +27,44 @@
  */
 
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { join } from 'node:path';
+import { createPublicKey, verify } from 'node:crypto';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import Ajv2020, { type ValidateFunction } from 'ajv/dist/2020.js';
+import addFormats from 'ajv-formats';
 import { installPackTemplates, type PromptTemplate } from './promptStore.js';
 import { createLogger } from '../observability/logger.js';
 
 const log = createLogger('prompt-pack-loader');
+
+// __dirname-equivalent for ESM. Used to anchor schema lookups.
+const __dirname = dirname(fileURLToPath(import.meta.url));
+// host/ → src → typescript → backend → workflow-engine → apps → repo-root
+const SCHEMAS_DIR = resolve(__dirname, '..', '..', '..', '..', '..', '..', 'schemas');
+
+// Lazily compiled. Cross-refs to `prompt-kind.schema.json` +
+// `prompt-template.schema.json` are pre-loaded so the manifest
+// schema's $refs resolve without per-pack disk hits.
+let _manifestValidator: ValidateFunction | null = null;
+
+function loadManifestValidator(): ValidateFunction {
+  if (_manifestValidator) return _manifestValidator;
+  const ajv = new Ajv2020({ allErrors: true, strict: false });
+  addFormats(ajv);
+  // Pre-load every prompt-* schema so the manifest schema's relative
+  // $refs (`./prompt-kind.schema.json`, `./prompt-template.schema.json`)
+  // resolve. Order doesn't matter — Ajv resolves at compile time.
+  for (const name of ['prompt-kind.schema.json', 'prompt-template.schema.json', 'prompt-ref.schema.json']) {
+    const schema = JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
+    ajv.addSchema(schema, name);
+    ajv.addSchema(schema, `./${name}`);
+  }
+  const manifestSchema = JSON.parse(
+    readFileSync(join(SCHEMAS_DIR, 'prompt-pack-manifest.schema.json'), 'utf8'),
+  ) as Record<string, unknown>;
+  _manifestValidator = ajv.compile(manifestSchema);
+  return _manifestValidator;
+}
 
 interface PromptPackManifest {
   name: string;
@@ -53,12 +85,15 @@ export interface LoadResult {
   packVersion: string;
   templatesInstalled: number;
   rejected: string[];
-  signatureVerified: boolean;
-  /** True when the pack carried no `signing` block — installed with
-   *  a warning under the lighter in-tree-dev posture. Production
-   *  hosts SHOULD set `OPENWOP_PROMPT_PACK_REQUIRE_SIGNATURE=true`
-   *  to reject unsigned packs. */
-  unsignedAccepted: boolean;
+  /** Signature-verification outcome for the manifest:
+   *   - `"verified"`: the pack carried a `signing` block and the
+   *     Ed25519 verify call returned true.
+   *   - `"skipped"`: the pack carried no `signing` block (accepted
+   *     under the in-tree-dev posture; rejected when
+   *     `OPENWOP_PROMPT_PACK_REQUIRE_SIGNATURE=true`).
+   *   - `"failed"`: the pack carried a `signing` block but verify
+   *     returned false / threw — the pack was NOT installed. */
+  signatureCheck: 'verified' | 'skipped' | 'failed';
 }
 
 /** Boot-time entry point. Scans the configured pack roots and
@@ -105,9 +140,24 @@ export function loadPromptPacks(opts: {
       }
       if (manifest.kind !== 'prompt') continue; // skip node + workflow-chain packs
 
-      const signatureVerified = verifySignatureIfPresent(packDir, manifest);
-      const unsignedAccepted = manifest.signing === undefined;
-      if (unsignedAccepted && requireSig) {
+      // Install-time validation step 2 per RFC 0028 §B: validate the
+      // manifest against `prompt-pack-manifest.schema.json` before
+      // calling installPackTemplates(). A malformed pack that slips
+      // through here would otherwise surface garbage through
+      // `GET /v1/prompts`, breaking the RFC 0028 §A response contract.
+      const validate = loadManifestValidator();
+      const isValid = validate(manifest);
+      if (!isValid) {
+        log.warn('prompt_pack_manifest_invalid', {
+          packName: manifest.name,
+          packVersion: manifest.version,
+          errors: (validate.errors ?? []).slice(0, 8).map((e) => `${e.instancePath} ${e.message}`),
+        });
+        continue;
+      }
+
+      const signatureCheck = verifyManifestSignature(packDir, manifest);
+      if (signatureCheck === 'skipped' && requireSig) {
         log.warn('prompt_pack_signature_required', {
           packName: manifest.name,
           packVersion: manifest.version,
@@ -115,7 +165,7 @@ export function loadPromptPacks(opts: {
         });
         continue;
       }
-      if (manifest.signing !== undefined && !signatureVerified) {
+      if (signatureCheck === 'failed') {
         log.warn('prompt_pack_signature_invalid', {
           packName: manifest.name,
           packVersion: manifest.version,
@@ -133,52 +183,53 @@ export function loadPromptPacks(opts: {
         packVersion: manifest.version,
         templatesInstalled: install.installed,
         rejected: install.rejected.length,
-        signatureVerified,
-        unsignedAccepted,
+        signatureCheck,
       });
       results.push({
         packName: manifest.name,
         packVersion: manifest.version,
         templatesInstalled: install.installed,
         rejected: install.rejected,
-        signatureVerified,
-        unsignedAccepted,
+        signatureCheck,
       });
     }
   }
   return results;
 }
 
-/** Verify a detached Ed25519 signature over `pack.json` bytes when
- *  the manifest's `signing` block points at tarball-relative
- *  `publicKeyRef` + `signatureRef` files. Returns true when no
- *  `signing` block is present (caller decides whether to accept).
+/** Verify a detached Ed25519 signature over `pack.json` bytes.
+ *  Returns one of:
+ *   - `"skipped"`: no `signing` block — nothing to verify.
+ *   - `"verified"`: signing block present + verify returned true.
+ *   - `"failed"`: signing block present but verify returned false,
+ *     key/sig file missing, or the verify call threw.
  *
  *  Implementation aligns with `registry-operations.md` §"Signature
  *  verification" — same recipe as node + workflow-chain packs.
  *  Uses `node:crypto` Ed25519 verify (Node 16+ stdlib). */
-function verifySignatureIfPresent(packDir: string, manifest: PromptPackManifest): boolean {
-  if (!manifest.signing) return true; // no block to verify
+function verifyManifestSignature(
+  packDir: string,
+  manifest: PromptPackManifest,
+): 'verified' | 'skipped' | 'failed' {
+  if (!manifest.signing) return 'skipped';
   const { publicKeyRef, signatureRef } = manifest.signing;
-  if (!publicKeyRef || !signatureRef) return false;
+  if (!publicKeyRef || !signatureRef) return 'failed';
   const pubKeyPath = join(packDir, publicKeyRef);
   const sigPath = join(packDir, signatureRef);
-  if (!existsSync(pubKeyPath) || !existsSync(sigPath)) return false;
+  if (!existsSync(pubKeyPath) || !existsSync(sigPath)) return 'failed';
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { createPublicKey, verify } = require('node:crypto') as typeof import('node:crypto');
     const pubKeyPem = readFileSync(pubKeyPath, 'utf8');
     const signature = readFileSync(sigPath);
     const manifestBytes = readFileSync(join(packDir, 'pack.json'));
     const publicKey = createPublicKey({ key: pubKeyPem, format: 'pem' });
-    return verify(null, manifestBytes, publicKey, signature);
+    return verify(null, manifestBytes, publicKey, signature) ? 'verified' : 'failed';
   } catch (err) {
     log.warn('prompt_pack_signature_verify_error', {
       packName: manifest.name,
       err: err instanceof Error ? err.message : String(err),
     });
-    return false;
+    return 'failed';
   }
 }
 
@@ -189,8 +240,10 @@ function verifySignatureIfPresent(packDir: string, manifest: PromptPackManifest)
  *  `roots: [...]` arg. */
 export function defaultPromptPackRoots(): readonly string[] {
   const __filename = fileURLToPath(import.meta.url);
-  // host/promptPackLoader.ts → ../../../ (apps/workflow-engine/) → ../../ (repo root) → examples/packs/
-  const repoRoot = join(__filename, '..', '..', '..', '..', '..', '..');
+  // Walk seven `..` segments from this file to reach the repo root:
+  //   promptPackLoader.ts → host → src → typescript → backend →
+  //   workflow-engine → apps → <repo-root>.
+  const repoRoot = join(__filename, '..', '..', '..', '..', '..', '..', '..');
   return [
     // In-tree examples (workflow-engine sample reads these directly).
     join(repoRoot, 'examples', 'packs'),
