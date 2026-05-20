@@ -372,7 +372,15 @@ function createCache(state: TenantMap<KvEntry>, scope: BundleScope): CacheSurfac
   // Cache shares the KV shape but is a separate namespace per tenant.
   const kv = createKv(state, scope);
   return {
-    get: kv.get,
+    // Cache `get` wraps kv.get's `{value, found, ttlRemainingMs}`
+    // shape into the canonical `{hit, value, ttlRemainingMs}` per
+    // RFC 0019 §B point 2 — `hit` is the cache-semantic flag the
+    // conformance suite gates on (a miss MUST surface `hit: false`,
+    // not just an absent value).
+    get: async (args) => {
+      const out = await kv.get(args) as { value: unknown; found?: boolean; ttlRemainingMs?: number | null };
+      return { hit: !!out.found, value: out.value, ttlRemainingMs: out.ttlRemainingMs ?? null, found: !!out.found };
+    },
     put: async (args) => kv.set({ key: args.key, value: args.value, ttlSeconds: args.ttlSeconds ?? 60 }),
     evict: kv.delete,
   };

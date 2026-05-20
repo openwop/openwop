@@ -473,6 +473,34 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
       next(err);
     }
   });
+
+  // Debug-bundle export per `spec/v1/debug-bundle.md`. Returns the full
+  // event log for a run plus run metadata + truncation metadata. The
+  // optional `?maxEvents=N` query forces truncation (implementation-
+  // defined per spec: "Hosts MAY raise the cap via implementation-
+  // defined configuration") so conformance can drive the truncation
+  // contract deterministically.
+  app.get('/v1/runs/:runId/debug-bundle', async (req, res, next) => {
+    try {
+      const run = await storage.getRun(req.params.runId);
+      if (!run) throw new OpenwopError('run_not_found', `run ${req.params.runId} not found`, 404);
+      const allEvents = await storage.listEvents(run.runId, { fromSeq: 0, limit: 100_000 });
+      const cap = req.query.maxEvents !== undefined ? Number(req.query.maxEvents) : Number.POSITIVE_INFINITY;
+      const events = Number.isFinite(cap) && cap >= 0 ? allEvents.slice(0, cap) : allEvents;
+      const truncated = events.length < allEvents.length;
+      respondJson(res, 200, {
+        runId: run.runId,
+        workflowId: run.workflowId,
+        status: run.status,
+        events,
+        truncated,
+        ...(truncated ? { truncatedReason: `Bundle capped at maxEvents=${cap} (configured via query param).` } : {}),
+        metrics: { eventCount: allEvents.length },
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
 }
 
 function projectRunSnapshot(run: RunRecord) {

@@ -11,6 +11,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Workflow-engine sample — cache hit semantics + debug-bundle endpoint (2026-05-19)
+
+Two more wire-shape fixes. Suite delta: 1214 → 1216 passing / 33 → 31 failing.
+
+- **`apps/workflow-engine/backend/typescript/src/host/inMemorySurfaces.ts`** — `cache.get` now wraps kv-style `{value, found, ttlRemainingMs}` into the canonical `{hit, value, ttlRemainingMs, found}` shape per RFC 0019 §B point 2. The `hit` flag is the cache-semantic signal the suite gates on (a miss MUST surface `hit: false`, not just an absent value). Closes `cache-cross-tenant-isolation > put under tenant A → get under tenant B returns miss`.
+- **`apps/workflow-engine/backend/typescript/src/routes/runs.ts`** — new `GET /v1/runs/{runId}/debug-bundle` per `spec/v1/debug-bundle.md`. Returns the full event log + run metadata + truncation metadata; honors optional `?maxEvents=N` to deterministically force truncation (implementation-defined per spec — "Hosts MAY raise the cap via implementation-defined configuration"). Closes `debug-bundle-truncation > truncated: true contract`.
+
+Compatibility: **implementation-only**. Cache surface keeps the legacy `found` alias on top of the new canonical `hit`. New debug-bundle endpoint is additive.
+
 ### Workflow-engine sample — fs absolute-path rejection + kv.cas canonical shape (2026-05-19)
 
 Two surface-level fixes in the in-memory host surfaces. Suite delta: 1212 → 1214 passing / 35 → 33 failing.
