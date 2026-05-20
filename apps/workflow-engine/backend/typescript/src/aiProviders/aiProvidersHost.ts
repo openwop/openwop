@@ -67,7 +67,13 @@ import {
 const log = createLogger('aiProviders.host');
 
 /** Providers the sample's `providers/dispatch.ts` knows how to dispatch. */
-const SUPPORTED_PROVIDERS: readonly ProviderId[] = ['anthropic', 'openai', 'google'];
+// `mock` is conformance-only — present unconditionally so RFC 0032/0033
+// test fixtures can route `provider: 'mock'` through dispatchStructured.
+// Production deployments are unaffected; the mock provider returns only
+// what the test seam pre-programs via `POST /v1/host/sample/test/mock-ai/
+// program` keyed by (runId, nodeId), so a tenant that hasn't seeded a
+// program for its run gets empty completions.
+const SUPPORTED_PROVIDERS: readonly ProviderId[] = ['anthropic', 'openai', 'google', 'mock'];
 
 /** Anthropic is the only provider with a wired tool-calling path
  *  (`providers/dispatchAnthropicTools.ts`). Advertised via
@@ -503,6 +509,13 @@ function resolveCredential(
   provider: string,
   credentialRef: string | undefined,
 ): { cleartext: string; refUsed: string } {
+  // Conformance-only `mock` provider does not consult real BYOK — it
+  // reads its program from an in-memory queue keyed by (runId, nodeId).
+  // Return a sentinel so the BYOK check passes; the value is never
+  // surfaced to the mock dispatcher (`dispatchMock` ignores apiKey).
+  if (provider === 'mock') {
+    return { cleartext: 'mock-no-credential', refUsed: 'mock' };
+  }
   if (credentialRef) {
     const direct = scope.secrets[credentialRef];
     if (!direct) {
@@ -548,10 +561,10 @@ async function dispatchPlain(
         messages: toChatMessages(req),
         ...(req.maxTokens != null ? { maxTokens: req.maxTokens } : {}),
         signal,
-        // RFC 0032/0033 — the conformance-only `mock` provider reads its
-        // pre-programmed response queue keyed by (runId, nodeId). Real
-        // providers ignore these extension fields. See `dispatchMock.ts`.
-        ...(req.provider === 'mock' ? { runId: scope.runId, nodeId: scope.nodeId } : {}),
+        // RFC 0032/0033 — the conformance-only `mock` provider reads
+        // its pre-programmed response queue keyed by `nodeId`. Real
+        // providers ignore this extension field. See `dispatchMock.ts`.
+        ...(req.provider === 'mock' ? { nodeId: scope.nodeId } : {}),
       } as Parameters<typeof dispatchChat>[0]);
       return {
         content: raw.completion,
