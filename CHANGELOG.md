@@ -11,6 +11,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Workflow-engine sample — streams.ts validation-before-content-negotiation (2026-05-20)
+
+Fixed an ordering regression introduced by `0b8d010` (JSON content negotiation on `/events`). The negotiation branch was running BEFORE `parseModes(...)`, so an invalid `streamMode` value combined with `Accept: application/json` returned 200 JSON instead of 400. Now mode + bufferMs validation runs first; the JSON branch only intercepts well-formed requests.
+
+Closes 3 regressions: `stream-modes > invalid streamMode is rejected`, `stream-modes-mixed > rejects streamMode=updates,bogus`, `stream-modes-mixed > rejects streamMode=values,updates`. Suite delta: 1228 → 1231 passing / 19 → 16 failing.
+
 ### Workflow-engine sample — recursionLimit + conversationPrimitive refusal + configurableSchema (2026-05-20)
 
 Session B: three discrete engine features. Suite delta: 1224 → 1228 passing / 23 → 19 failing.

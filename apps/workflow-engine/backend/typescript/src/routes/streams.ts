@@ -34,6 +34,15 @@ export function registerStreamRoutes(app: Express, deps: Deps): void {
       const run = await storage.getRun(req.params.runId);
       if (!run) throw new OpenwopError('run_not_found', `run ${req.params.runId} not found`, 404);
 
+      // Stream-mode validation runs BEFORE content negotiation so that
+      // bad streamMode values 400 regardless of Accept header. Otherwise
+      // a client requesting JSON with an invalid streamMode would get
+      // 200 JSON (the negotiation branch ignores the bad param), which
+      // breaks the strict `stream-modes.md §Mode selection` contract.
+      const modes = parseModes(
+        (req.query.streamMode ?? req.query.mode) as string | undefined,
+      );
+
       // Content negotiation per `rest-endpoints.md §"GET /v1/runs/{runId}
       // /events"`: when the client asks for JSON (Accept: application/
       // json), return the event log as a single JSON envelope
@@ -48,10 +57,6 @@ export function registerStreamRoutes(app: Express, deps: Deps): void {
         res.status(200).json({ events: allEvents, isComplete });
         return;
       }
-
-      const modes = parseModes(
-        (req.query.streamMode ?? req.query.mode) as string | undefined,
-      );
 
       // Aggregation-hint per `stream-modes.md §Aggregation hint`. Valid
       // range is 1..5000 ms. Out-of-range surfaces as 400; absent →
