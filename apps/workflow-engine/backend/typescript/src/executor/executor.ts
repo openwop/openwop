@@ -176,11 +176,16 @@ async function runOneNode(input: {
   }
 
   // Capability gating per spec/v1/host-capabilities.md §"Refuse on missing".
+  // Error code per `rest-endpoints.md §"Common error codes"` +
+  // `capabilities.md §"Runtime capabilities"`: a node with unsatisfied
+  // requires MUST terminate the run with `error.code: 'capability_not_provided'`
+  // (the canonical code). Earlier this file used `host_capability_missing`;
+  // that's the legacy alias still in OpenwopErrorCode for back-compat.
   if (module.requires) {
     for (const cap of module.requires) {
       if (!hasCapability(cap)) {
         const error = {
-          code: 'host_capability_missing',
+          code: 'capability_not_provided',
           message: `capability ${cap} not provided by host`,
         };
         await eventLog.append({

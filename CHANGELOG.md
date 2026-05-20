@@ -11,6 +11,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Workflow-engine sample — capability_not_provided refusal contract (2026-05-20)
+
+Suite delta: 1234 → 1235 passing / 13 → 12 failing.
+
+- **`apps/workflow-engine/backend/typescript/src/executor/executor.ts`** — capability-refusal error code aligned to spec: `error.code: 'capability_not_provided'` per `rest-endpoints.md §"Common error codes"` + `capabilities.md §"Runtime capabilities"`. Was `host_capability_missing` (a legacy alias still in `OpenwopErrorCode` for back-compat).
+- **`apps/workflow-engine/backend/typescript/src/bootstrap/nodes.ts`** — registers conformance-only `conformance.requiresMissing` typeId that declares `requires: ['conformance.never-provided']`. The conformance `runtime-capabilities` scenario uses this stub to verify the refusal contract. Production deployments SHOULD skip the registration (same posture as `core.conformance.mock-agent`).
+
+Closes `runtime-capabilities > dispatch refusal on unsatisfied requires > terminates the run with error.code = capability_not_provided`.
+
 ### Workflow-engine sample — idempotency body-hash mismatch (2026-05-20)
 
 Per `idempotency.md §Layer 1`: same `Idempotency-Key` + different request body MUST return 409. Suite delta: 1233 → 1234 passing / 14 → 13 failing.

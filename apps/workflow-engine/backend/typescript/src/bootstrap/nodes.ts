@@ -631,6 +631,20 @@ export function ensureNodesRegistered(): void {
   registry.register(noopNode);
   registry.register(identityNode);
   registry.register(subWorkflowNode);
+  // RFC: conformance-only typeId for runtime-capability refusal test.
+  // Declares `requires` pointing at a capability the host never
+  // provides. The executor's pre-execute capability check refuses
+  // with `capability_not_provided`. Production deployments SHOULD
+  // skip this registration (same posture as core.conformance.mock-agent).
+  registry.register({
+    typeId: 'conformance.requiresMissing',
+    version: '1.0.0',
+    requires: ['conformance.never-provided'],
+    async execute() {
+      // Unreachable: the host's capability check fails before this runs.
+      return { status: 'success', outputs: {} };
+    },
+  });
   registry.register(delayNode);
   registry.register(failNode);
   registry.register(approvalGateNode);
