@@ -1,0 +1,38 @@
+{
+  "id": "conformance-envelope-refusal",
+  "name": "Conformance: envelope.refusal end-to-end (RFC 0032 §B.3 + RFC 0033 §D + §F)",
+  "version": "1.0",
+  "description": "Single `core.ai.structuredOutput` node against the conformance `mock` provider with a pre-seeded program returning `stopReason: 'safety'` + `refusalText: '...'` on attempt 1. Host's `dispatchStructured()` MUST: (a) emit exactly one `envelope.refusal` event with the canonical payload shape; (b) NOT retry (RFC 0032 §B.3 + RFC 0033 §D — refusal is terminal); (c) fail the node with `error.code: 'envelope_refused_by_provider'` per RFC 0033 §F; (d) NOT echo the refusal text in `RunSnapshot.error.message` (SECURITY invariant `envelope-refusal-no-prompt-leak` — refusal text lives only on the event-log entry, scrubbed via the existing SR-1 redaction harness).",
+  "nodes": [
+    {
+      "id": "structured-call",
+      "typeId": "core.ai.structuredOutput",
+      "name": "Structured output via mock provider (refusal)",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "provider": "mock",
+        "model": "mock-mini",
+        "outputSchema": {
+          "type": "object",
+          "required": ["valid"],
+          "properties": { "valid": { "type": "boolean" } }
+        }
+      },
+      "inputs": {
+        "messages": {
+          "type": "static",
+          "value": [{ "role": "user", "content": "Please emit a valid envelope." }]
+        }
+      }
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": {
+    "tags": ["conformance", "rfc-0032", "rfc-0033", "envelope-reliability", "refusal"]
+  },
+  "settings": { "timeout": 30000 }
+}

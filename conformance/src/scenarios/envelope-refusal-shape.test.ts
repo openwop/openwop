@@ -179,14 +179,111 @@ describe.skipIf(HTTP_SKIP)('envelope-refusal-shape: advertisement contract (RFC 
   });
 });
 
-describe('envelope-refusal-shape: end-to-end refusal through dispatchStructured', () => {
-  it.todo(
-    'when an LLM provider returns an explicit refusal (mock provider mockRefusal: true), the host emits exactly one envelope.refusal event AND does NOT retry — promoted when dispatchStructured() wires the safety-stop detection',
-  );
-  it.todo(
-    'node fails with RunSnapshot.error.code = "envelope_refused_by_provider" per RFC 0033 §F',
-  );
-  it.todo(
-    'RunSnapshot.error.message MUST NOT echo the provider\'s refusal text (that surface lives only on the event field, redacted)',
-  );
+// End-to-end refusal through dispatchStructured. Drives the conformance
+// `mock` provider with a program returning `stopReason: 'safety'` +
+// `refusalText: '...'`; the host's failure-mode-aware retry router
+// classifies this as refusal (RFC 0032 §B.3), emits exactly one
+// envelope.refusal event, throws envelope_refused_by_provider WITHOUT
+// retrying (RFC 0033 §D), and the executor surfaces the error code on
+// the RunSnapshot. SECURITY invariant envelope-refusal-no-prompt-leak
+// asserts that RunSnapshot.error.message does NOT echo the refusalText.
+
+import { pollUntilTerminal } from '../lib/polling.js';
+import { isFixtureAdvertised } from '../lib/fixtures.js';
+
+const E2E_FIXTURE = 'conformance-envelope-refusal';
+const E2E_NODE_ID = 'structured-call';
+
+interface E2eEvent {
+  type: string;
+  payload?: Record<string, unknown>;
+  nodeId?: string;
+  sequence: number;
+}
+
+async function programMockRefusal(refusalText: string): Promise<{ status: number }> {
+  const res = await driver.post('/v1/host/sample/test/mock-ai/program', {
+    nodeId: E2E_NODE_ID,
+    program: [{ stopReason: 'safety', refusalText }],
+  });
+  return { status: res.status };
+}
+
+async function runE2eAndRead(): Promise<{ events: E2eEvent[]; terminal: unknown } | null> {
+  const create = await driver.post('/v1/runs', { workflowId: E2E_FIXTURE });
+  if (create.status !== 201) return null;
+  const runId = (create.json as { runId: string }).runId;
+  const terminal = await pollUntilTerminal(runId, { timeoutMs: 10_000 });
+  const eventsRes = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events`);
+  if (eventsRes.status !== 200) return null;
+  const events = ((eventsRes.json as { events?: E2eEvent[] } | undefined)?.events ?? []) as E2eEvent[];
+  return { events, terminal };
+}
+
+describe.skipIf(HTTP_SKIP)('envelope-refusal-shape: end-to-end refusal through dispatchStructured', () => {
+  it('when mock provider returns stopReason: "safety" with refusalText, host emits exactly one envelope.refusal event AND does NOT retry', async () => {
+    if (!isFixtureAdvertised(E2E_FIXTURE)) return;
+    const seed = await programMockRefusal('I cannot help with that — safety filter triggered.');
+    if (seed.status === 404) return;
+    expect(seed.status).toBe(200);
+
+    const result = await runE2eAndRead();
+    if (result === null) return;
+    const refusals = result.events.filter((e) => e.type === 'envelope.refusal');
+    expect(
+      refusals.length,
+      driver.describe(
+        'RFCS/0032-envelope-reliability-events.md §B.3',
+        'exactly one envelope.refusal event MUST fire on provider safety-stop',
+      ),
+    ).toBe(1);
+    // RFC 0033 §D normative: refusal MUST NOT retry (circumvention concern).
+    const retries = result.events.filter((e) => e.type === 'envelope.retry.attempted');
+    expect(
+      retries.length,
+      driver.describe(
+        'RFCS/0033-envelope-completion-contract.md §D',
+        'host MUST NOT retry after envelope.refusal (refusal is terminal — retrying with prompt mutation creates a circumvention concern)',
+      ),
+    ).toBe(0);
+  });
+
+  it('node fails with RunSnapshot.error.code = "envelope_refused_by_provider" per RFC 0033 §F', async () => {
+    if (!isFixtureAdvertised(E2E_FIXTURE)) return;
+    const seed = await programMockRefusal('Refusal text for terminal-error-code assertion.');
+    if (seed.status === 404) return;
+
+    const result = await runE2eAndRead();
+    if (result === null) return;
+    const code = (result.terminal as { error?: { code?: string } }).error?.code;
+    expect(
+      code,
+      driver.describe(
+        'RFCS/0033-envelope-completion-contract.md §F',
+        'refusal-driven failure MUST surface as RunSnapshot.error.code = envelope_refused_by_provider',
+      ),
+    ).toBe('envelope_refused_by_provider');
+  });
+
+  it('RunSnapshot.error.message MUST NOT echo the providers refusal text (SECURITY invariant envelope-refusal-no-prompt-leak)', async () => {
+    if (!isFixtureAdvertised(E2E_FIXTURE)) return;
+    // A distinctive refusal text so the message-no-echo assertion has
+    // a unique substring to scan for. Production refusal texts may
+    // contain prompt content; the host MUST keep it off the error
+    // message surface (event log only, scrubbed via SR-1).
+    const REFUSAL_TEXT = 'REFUSAL-CANARY-A8F3-do-not-echo-this-substring-into-RunSnapshot.error.message';
+    const seed = await programMockRefusal(REFUSAL_TEXT);
+    if (seed.status === 404) return;
+
+    const result = await runE2eAndRead();
+    if (result === null) return;
+    const message = (result.terminal as { error?: { message?: string } }).error?.message ?? '';
+    expect(
+      message.includes(REFUSAL_TEXT),
+      driver.describe(
+        'SECURITY/invariants.yaml §envelope-refusal-no-prompt-leak',
+        'RunSnapshot.error.message MUST NOT echo refusalText — the safety-filter text may contain prompt content; spec-compliant emission carries it only on the envelope.refusal event payload (subject to SR-1 redaction at the eventLog.append boundary)',
+      ),
+    ).toBe(false);
+  });
 });
