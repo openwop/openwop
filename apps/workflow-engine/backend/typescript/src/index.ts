@@ -216,7 +216,7 @@ export async function createApp(config: AppConfig): Promise<Express> {
   registerTestSeamRoutes(app, { storage });
   registerMcpServerRoutes(app, { storage, hostSuite });
   registerAdminRoutes(app);
-  registerWorkflowRoutes(app);
+  registerWorkflowRoutes(app, { hostSuite });
   registerNodeCatalogRoute(app);
 
   // Express 4 catch-all (no path string — avoids path-to-regexp v6 issue).

@@ -11,6 +11,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Workflow-engine sample — getWorkflow endpoint + strict streamMode validation (2026-05-19)
+
+Two surgical wire-shape gaps closed against the workflow-engine sample. Suite delta: 1198 → 1200 passing / 49 → 47 failing.
+
+- **`apps/workflow-engine/backend/typescript/src/routes/workflows.ts`** — new `GET /v1/workflows/{workflowId}` per `api/openapi.yaml operationId=getWorkflow`. Looks up via `workflowCatalog.getWorkflow(id)` so both runtime-registered workflows and auto-loaded conformance fixtures resolve. Returns 200 + the workflow definition; 404 `workflow_not_found` on unknown ids. `registerWorkflowRoutes(...)` now takes `hostSuite` for catalog access.
+- **`apps/workflow-engine/backend/typescript/src/routes/streams.ts`** — `parseModes(...)` now reads `streamMode` (per spec) in addition to legacy `mode`; refuses unknown modes with 400 + `unsupported_stream_mode` instead of silently falling back to `['updates']`. Adds the `values`-is-exclusive rule per `stream-modes.md §Mixed mode` — `values` MUST NOT be combined with other modes (the engine would emit the more permissive set, so the constraint adds nothing; refuse so clients catch the mistake early).
+- **`apps/workflow-engine/backend/typescript/src/types.ts`** — `OpenwopErrorCode` gains `unsupported_stream_mode` per the canonical error envelope.
+
+Closes 3 conformance failures: `route-coverage > GET /v1/workflows/{workflowId}`, `stream-modes > invalid streamMode is rejected`, `stream-modes-mixed > rejects streamMode=values,updates with 400`.
+
+Compatibility: **implementation-only**. The legacy `?mode=` query parameter still works; `?streamMode=` is preferred per spec. No wire-shape, schema, or other reference-host changes.
+
 ### Workflow-engine sample — artifact-route auth stub (2026-05-19)
 
 Closes the `artifact-auth` conformance gap on the workflow-engine sample. Port of the SQLite host fix (`3c2b5d6` earlier this session): `GET /v1/runs/{runId}/artifacts/{artifactId}` requires an explicit Bearer token; the auto-issued anon session cookie is not sufficient. Closes the info-leak surface for every HTTP method (401 → 405 → 404 stack, in that order). Suite delta: 1194 → 1198 passing / 52 → 49 failing.

@@ -34,7 +34,9 @@ export function registerStreamRoutes(app: Express, deps: Deps): void {
       const run = await storage.getRun(req.params.runId);
       if (!run) throw new OpenwopError('run_not_found', `run ${req.params.runId} not found`, 404);
 
-      const modes = parseModes(req.query.mode as string | undefined);
+      const modes = parseModes(
+        (req.query.streamMode ?? req.query.mode) as string | undefined,
+      );
 
       // Last-Event-ID resume: SSE clients send the header with the last
       // sequence they saw. Replay anything > that, then attach live.
@@ -109,9 +111,36 @@ const TERMINAL_EVENT_TYPES = new Set(['run.completed', 'run.failed', 'run.cancel
 
 function parseModes(raw: string | undefined): readonly StreamMode[] {
   if (!raw) return ['updates'];
-  const parts = raw.split(',').map((s) => s.trim()) as StreamMode[];
-  const valid = parts.filter((m): m is StreamMode => VALID_MODES.includes(m));
-  return valid.length > 0 ? valid : ['updates'];
+  const parts = raw.split(',').map((s) => s.trim()).filter((s) => s.length > 0);
+  // Strict validation per `stream-modes.md §Mode selection`: an
+  // unsupported mode in the comma-separated list MUST surface as a
+  // 400 with `unsupported_stream_mode` (not silently dropped to
+  // `updates`). The conformance suite asserts this directly via
+  // `streamMode=does-not-exist` and the `streamMode=values,updates`
+  // ordering check.
+  const invalid = parts.filter((m) => !(VALID_MODES as readonly string[]).includes(m));
+  if (invalid.length > 0) {
+    throw new OpenwopError(
+      'unsupported_stream_mode',
+      `streamMode value(s) not supported: ${invalid.join(', ')}`,
+      400,
+      { supported: [...VALID_MODES], unsupported: invalid },
+    );
+  }
+  // `values` is exclusive per `stream-modes.md §Mixed mode` — it
+  // represents a strict subset of `updates` and combining it with
+  // another mode is meaningless (the engine would emit the more
+  // permissive set, so the `values` constraint adds nothing). Refuse
+  // the combination so clients catch the mistake early.
+  if (parts.length > 1 && parts.includes('values')) {
+    throw new OpenwopError(
+      'unsupported_stream_mode',
+      "streamMode=values is exclusive and MUST NOT be combined with other modes",
+      400,
+      { supported: [...VALID_MODES], conflict: parts },
+    );
+  }
+  return parts as StreamMode[];
 }
 
 function passesModeFilter(ev: EventRecord, modes: readonly StreamMode[]): boolean {

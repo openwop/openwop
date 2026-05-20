@@ -22,6 +22,7 @@ import {
   registerWorkflow,
 } from '../host/workflowsRegistry.js';
 import { resolveCapabilityFlag } from '../host/capabilityOverlay.js';
+import type { HostAdapterSuite } from '../host/index.js';
 
 const WORKFLOW_ID_PATTERN = /^[a-zA-Z0-9_.\-:]{1,128}$/;
 const NODE_ID_PATTERN = /^[a-zA-Z0-9_\-]{1,64}$/;
@@ -75,9 +76,33 @@ function hasNonEmptyMapping(cfg: Record<string, unknown>, fields: readonly strin
   return false;
 }
 
-export function registerWorkflowRoutes(app: Express): void {
+export function registerWorkflowRoutes(app: Express, deps: { hostSuite: HostAdapterSuite }): void {
   app.get('/v1/host/sample/workflows', (_req, res) => {
     res.json({ workflows: listRegisteredWorkflows() });
+  });
+
+  // Spec endpoint: GET /v1/workflows/{workflowId} per
+  // `api/openapi.yaml operationId=getWorkflow`. Returns the workflow
+  // definition (including `id` and `nodes`) for any advertised
+  // workflowId — both runtime-registered workflows (via POST
+  // /v1/host/sample/workflows) and conformance fixtures auto-loaded
+  // from `conformance/fixtures/`. 404 on unknown ids per `rest-
+  // endpoints.md §"Error envelope"`.
+  app.get('/v1/workflows/:workflowId', async (req, res, next) => {
+    try {
+      const wf = await deps.hostSuite.workflowCatalog.getWorkflow(req.params.workflowId);
+      if (!wf) {
+        throw new OpenwopError(
+          'workflow_not_found',
+          'workflow not found',
+          404,
+          { workflowId: req.params.workflowId },
+        );
+      }
+      res.json(wf.definition);
+    } catch (err) {
+      next(err);
+    }
   });
 
   app.post('/v1/host/sample/workflows', (req, res, next) => {

@@ -134,6 +134,7 @@ export type OpenwopErrorCode =
   | 'fork_invalid_seq'
   | 'fork_unsupported_mode'
   | 'rate_limited'
+  | 'unsupported_stream_mode'
   | 'internal_error'
   // Pack-registry codes per spec/v1/node-packs.md §"Registry HTTP API"
   | 'invalid_pack_name'
