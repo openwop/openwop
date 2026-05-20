@@ -8,6 +8,7 @@
 import { useBuilderStore } from '../store/builderStore.js';
 import { catalogEntry } from '../palette/catalogRegistry.js';
 import { type ConfigField } from '../palette/nodeCatalog.js';
+import { PromptPickerInput } from '../../prompts/PromptPickerInput.js';
 import type { BuilderEdge, EdgeCondition, EdgeTriggerRule } from '../schema/workflow.js';
 
 export function Inspector() {
@@ -111,6 +112,13 @@ function ConfigInput({
           required={field.required}
           onChange={(e) => onChange(e.target.checked)}
           style={{ width: 'auto' }}
+        />
+      ) : field.kind === 'prompt-picker' ? (
+        <PromptPickerInput
+          value={typeof value === 'string' ? value : undefined}
+          onChange={(next) => onChange(next)}
+          promptKind={field.promptKind}
+          required={field.required}
         />
       ) : field.kind === 'textarea' ? (
         <textarea

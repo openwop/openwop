@@ -1494,3 +1494,139 @@ pre {
   cursor: pointer; border-radius: 4px;
 }
 .account-menu-item:hover { background: var(--color-surface-2); }
+
+/* ---------------------------------------------------------------------
+   Prompt library (RFC 0027 / 0028 wire shapes; surface still Draft).
+   --------------------------------------------------------------------- */
+.prompt-list {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-3) 0 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-2);
+}
+.prompt-list-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: var(--space-3);
+  cursor: pointer;
+  font-family: inherit;
+}
+.prompt-list-item:hover {
+  border-color: var(--ink);
+  background: var(--color-surface-2);
+}
+.prompt-list-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: 4px;
+}
+.prompt-list-item-id {
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.prompt-list-item-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--ink);
+}
+.prompt-list-item-desc {
+  font-size: 13px;
+  margin-top: 2px;
+}
+.prompt-list-item-tags {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.prompt-tag {
+  font-size: 11px;
+  background: var(--color-surface-2);
+  color: var(--ink-2);
+  padding: 2px 6px;
+  border-radius: 2px;
+  border: 1px solid var(--rule);
+}
+.prompt-kind {
+  font-size: 11px;
+  font-family: var(--mono, monospace);
+  padding: 2px 6px;
+  border-radius: 2px;
+  border: 1px solid var(--rule);
+  color: var(--ink-2);
+  background: var(--paper);
+}
+.prompt-kind-system { border-color: var(--clay); color: var(--clay); }
+.prompt-kind-user { border-color: var(--color-ai, var(--ink-2)); color: var(--color-ai, var(--ink-2)); }
+.prompt-kind-few-shot { border-color: var(--color-success, var(--ink-2)); color: var(--color-success, var(--ink-2)); }
+.prompt-kind-schema-hint { border-color: var(--color-warning, var(--ink-2)); color: var(--color-warning, var(--ink-2)); }
+
+.prompt-preview {
+  white-space: pre-wrap;
+  font-family: var(--mono, monospace);
+  font-size: 12.5px;
+  line-height: 1.5;
+  background: var(--color-surface-2);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: var(--space-2);
+  max-height: 320px;
+  overflow-y: auto;
+  color: var(--ink);
+}
+
+.prompt-picker-preview {
+  margin-top: 6px;
+}
+.prompt-picker-preview-vars {
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: var(--scrim);
+  z-index: 1000;
+  display: flex; align-items: start; justify-content: center;
+  padding: var(--space-4);
+  padding-top: max(var(--space-4), 8vh);
+  overflow-y: auto;
+}
+.modal {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: var(--space-5);
+  width: 100%; max-width: 640px;
+  max-height: calc(100vh - 2 * var(--space-4));
+  overflow-y: auto;
+  display: flex; flex-direction: column;
+  gap: var(--space-3);
+  box-shadow: 0 8px 24px var(--ink-shadow);
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.modal-header h3 {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 22px;
+  color: var(--ink);
+}
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}

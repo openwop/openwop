@@ -12,8 +12,10 @@ export interface ConfigField {
   label: string;
   /** Renders as the matching HTML control. 'textarea' is used for
    *  free-form text + any object/array JSON the user has to
-   *  hand-author. 'checkbox' renders a boolean toggle. */
-  kind: 'text' | 'number' | 'textarea' | 'checkbox';
+   *  hand-author. 'checkbox' renders a boolean toggle.
+   *  'prompt-picker' stores a stringy PromptRef (`prompt:templateId@version`)
+   *  per RFC 0027 and renders a dropdown sourced from the prompt library. */
+  kind: 'text' | 'number' | 'textarea' | 'checkbox' | 'prompt-picker';
   placeholder?: string;
   /** Default value used when a node of this kind is created. */
   defaultValue?: string | number | boolean;
@@ -21,6 +23,10 @@ export interface ConfigField {
   help?: string;
   /** When true, the inspector marks the field as required. */
   required?: boolean;
+  /** For `kind: 'prompt-picker'`, constrains the picker to a single
+   *  PromptTemplate kind (`system` / `user` / `few-shot` / `schema-hint`).
+   *  Omitted = no filter. */
+  promptKind?: 'system' | 'user' | 'few-shot' | 'schema-hint';
 }
 
 export interface NodeCatalogEntry {
@@ -127,7 +133,22 @@ export const NODE_CATALOG: readonly NodeCatalogEntry[] = [
     accent: 'var(--color-ai)',
     inputs: [{ name: 'prompt', type: 'string' }],
     outputs: [{ name: 'completion', type: 'string' }],
-    configFields: [],
+    configFields: [
+      {
+        key: 'systemPromptRef',
+        label: 'System prompt',
+        kind: 'prompt-picker',
+        promptKind: 'system',
+        help: 'Optional PromptRef per RFC 0027. The mock node ignores it at dispatch (no LLM call), but the field demonstrates the wire-shape integration end-to-end and stays compatible with real AI nodes that resolve refs server-side.',
+      },
+      {
+        key: 'userPromptRef',
+        label: 'User prompt template',
+        kind: 'prompt-picker',
+        promptKind: 'user',
+        help: 'Optional. Variables interpolate from inputs at dispatch time once a host advertises capabilities.prompts.supported.',
+      },
+    ],
   },
   {
     kind: 'chat',
