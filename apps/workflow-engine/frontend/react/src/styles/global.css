@@ -141,7 +141,15 @@
 .chat-md a:hover { text-decoration-thickness: 2px; }
 .chat-md strong { font-weight: 600; }
 .chat-md em { font-style: italic; }
-.chat-md code {
+/* Inline-code only — scoped via `:not(pre) > code` so a 4-space-indented
+ * markdown block code (which react-markdown renders as <pre><code>...
+ * </code></pre>) doesn't inherit the inline-pill background + border.
+ * Fenced code blocks go through our own CodeBlock component upstream
+ * and never reach the markdown renderer; this selector covers the
+ * remaining inline-code case (single backticks) AND the indented-block
+ * case (the inner <code> matches `:not(pre) > code` only when its
+ * parent is NOT <pre>). */
+.chat-md :not(pre) > code {
   font-family: var(--mono);
   font-size: 0.9em;
   padding: 1px 4px;
@@ -251,8 +259,8 @@ a:visited {
 }
 
 .app-header {
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
   padding: var(--space-3) var(--space-5);
   display: flex;
   align-items: center;
@@ -260,14 +268,13 @@ a:visited {
   /* Sticky so the header stays visible while the main pane scrolls.
    * z-index keeps it above content (especially the SSE event-stream
    * code blocks which have their own absolute-positioned copy buttons).
-   * backdrop-filter softens the seam between header and content when
-   * content scrolls under it. */
+   * Background is FULLY OPAQUE — the previous translucent + backdrop-
+   * blur treatment let chat / scrollable content bleed through behind
+   * the brand + nav. Across all five tabs the editorial intent is a
+   * clean, solid header. */
   position: sticky;
   top: 0;
   z-index: 50;
-  backdrop-filter: saturate(180%) blur(8px);
-  -webkit-backdrop-filter: saturate(180%) blur(8px);
-  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
 }
 
 /* Brand mark in the header — mirrors public/styles.css .foot-mark per
