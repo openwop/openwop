@@ -28,6 +28,11 @@
           "schema": {
             "description": "Optional JSON Schema constraining the answer shape (choices, free-text length, etc.). When present, the host's resolve endpoint SHOULD validate the answer against this schema before returning it to the engine.",
             "type": "object"
+          },
+          "context": {
+            "description": "Optional open-shape metadata bag the LLM MAY use to surface per-question UI hints, trace pointers, or related context. Host-defined; the engine treats this as opaque and MUST run the same SR-1 redaction scrub over it as the rest of the payload (see `ai-envelope.md` §\"Redaction (SR-1 carry-forward)\").",
+            "type": "object",
+            "additionalProperties": true
           }
         },
         "additionalProperties": false

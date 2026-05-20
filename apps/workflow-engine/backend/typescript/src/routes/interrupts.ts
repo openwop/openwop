@@ -37,6 +37,16 @@ export function registerInterruptRoutes(app: Express, deps: Deps): void {
       const { runId, nodeId } = req.params;
       const interrupt = await storage.getInterruptByNode(runId, nodeId);
       if (!interrupt) throw new OpenwopError('interrupt_not_found', 'no open interrupt for this node', 404);
+      // Cascaded-cancel detection per `interrupt-profiles.md
+      // §openwop-interrupt-parent-child`: when the run is cancelled,
+      // the interrupt is invalidated. Prefer 410 Gone over 409 so the
+      // contract distinguishes "resource removed by external state"
+      // from "resource already resolved by you" — the conformance suite
+      // accepts both, but Gone is the more honest answer.
+      const currentRun = await storage.getRun(runId);
+      if (currentRun && currentRun.status === 'cancelled') {
+        throw new OpenwopError('interrupt_gone', 'interrupt invalidated — run was cancelled', 410);
+      }
       if (interrupt.resolvedAt) throw new OpenwopError('interrupt_already_resolved', 'interrupt already resolved', 409);
       const body = req.body as ResolveInterruptRequest;
       validateResumeValue(interrupt, body?.resumeValue);

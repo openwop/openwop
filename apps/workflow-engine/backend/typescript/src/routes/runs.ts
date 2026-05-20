@@ -322,6 +322,18 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
       // observable handle clients use to resolve via
       // POST /v1/interrupts/{token}. `RunSnapshot.interrupt` is the
       // canonical shape (sdk/typescript/src/types.ts:RunSnapshot).
+      // Surface spawned children per `interrupt-profiles.md
+      // §openwop-interrupt-parent-child` so callers can reach the
+      // child run for resolve / inspection. Same tenant + parentRunId
+      // matching as the cancel-cascade walker. O(N) scan is acceptable
+      // for the sample tier; a production deployer SHOULD index on
+      // parent_run_id.
+      const tenantSiblings = await storage.listRuns({ tenantId: run.tenantId });
+      const children = tenantSiblings.filter((r) => r.parentRunId === run.runId);
+      if (children.length > 0) {
+        (snapshot as RunSnapshot & { childRuns?: Array<{ runId: string; status: string }> }).childRuns =
+          children.map((c) => ({ runId: c.runId, status: c.status }));
+      }
       if (run.status.startsWith('waiting-')) {
         const openInterrupts = await storage.listOpenInterrupts(run.runId);
         if (openInterrupts.length > 0) {
@@ -455,9 +467,10 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
         return;
       }
       const reason = (req.body?.reason as string) ?? 'cancelled by request';
+      const now = new Date().toISOString();
       await storage.updateRun(run.runId, {
         status: 'cancelled',
-        completedAt: new Date().toISOString(),
+        completedAt: now,
         error: { code: 'cancelled', message: reason },
       });
       await getEventLog().append({
@@ -466,6 +479,42 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
         payload: { reason },
       });
       notifyRunTerminal(run.runId);
+
+      // Cascade per `interrupt-profiles.md §openwop-interrupt-parent-child`:
+      // any non-terminal child runs (rows with parentRunId === this run)
+      // MUST also transition to cancelled with reason `parent-cancelled`,
+      // and their open interrupts MUST be invalidated so subsequent
+      // resolve attempts return 410/409. Walk by tenantId (the listRuns
+      // surface filters by tenant; the parent/child pair always shares
+      // a tenant by construction in subWorkflowDispatcher.ts) and match
+      // on parentRunId in-process. The sample tier's run population
+      // stays small enough that an O(N) scan per cancel is fine; a
+      // production deployer SHOULD index on parent_run_id.
+      const siblings = await storage.listRuns({ tenantId: run.tenantId });
+      const childCandidates = siblings.filter((r) => r.parentRunId === run.runId && !terminal.includes(r.status));
+      for (const child of childCandidates) {
+        await storage.updateRun(child.runId, {
+          status: 'cancelled',
+          completedAt: now,
+          error: { code: 'cancelled', message: 'parent-cancelled' },
+        });
+        await getEventLog().append({
+          runId: child.runId,
+          type: 'run.cancelled',
+          payload: { reason: 'parent-cancelled', parentRunId: run.runId },
+        });
+        notifyRunTerminal(child.runId);
+        // Mark any open child interrupts as resolved with a cascade
+        // marker so later resolve attempts return 409/410 via the
+        // already-resolved guard in routes/interrupts.ts. The resolve
+        // path additionally checks run.status === 'cancelled' to upgrade
+        // the response to 410 Gone (interrupt-profiles.md preference).
+        const open = await storage.listOpenInterrupts(child.runId);
+        for (const itr of open) {
+          await storage.resolveInterrupt(itr.interruptId, { cascadedFromParent: run.runId }, now);
+        }
+      }
+
       res.json({ runId: run.runId, status: 'cancelled' });
     } catch (err) {
       next(err);

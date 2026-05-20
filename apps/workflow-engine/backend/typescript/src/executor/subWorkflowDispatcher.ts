@@ -97,11 +97,23 @@ export function getChildParentNodeId(childRunId: string): string | undefined {
 
 export interface SubWorkflowResult {
   childRunId: string;
-  childStatus: 'completed' | 'failed' | 'cancelled';
+  /** Includes non-terminal `waiting-*` / `paused` so callers can map a
+   *  child suspension to a parent-side suspension per the
+   *  `openwop-interrupt-parent-child` profile (interrupt-profiles.md).
+   *  Callers MUST handle non-terminal child status: typically by
+   *  returning `NodeOutcome.suspended` from the parent's subWorkflow
+   *  node so the cascade contract holds (parent cancel → child cancel,
+   *  child resolve → parent resume). */
+  childStatus: string;
   childVariables: Record<string, unknown>;
   /** Per RFC 0022 §B HVMAP-1b — `true` when outputMapping was
    *  skipped because the child terminated non-completed. */
   outputMappingSkipped: boolean;
+  /** When the child is in a `waiting-*` state (not terminal), this
+   *  carries the open child-side interrupt the parent's subWorkflow
+   *  node SHOULD echo into its own NodeOutcome.suspended payload. */
+  childInterruptKind?: 'approval' | 'clarification' | 'refinement' | 'cancellation' | 'external-event';
+  childInterruptNodeId?: string;
 }
 
 /** Maximum sub-workflow nesting depth. A workflow A whose subWorkflow
@@ -201,8 +213,28 @@ export async function dispatchSubWorkflow(
 
   // Read final child state.
   const finalChild = await storage.getRun(childRunId);
-  const childStatus = (finalChild?.status ?? 'failed') as 'completed' | 'failed' | 'cancelled';
+  const childStatus = finalChild?.status ?? 'failed';
   const childVariables = snapshotRunVariables(childRunId) ?? {};
+
+  // Non-terminal child status (waiting-approval / waiting-external /
+  // paused / waiting-input) means the child suspended on an interrupt.
+  // Per `interrupt-profiles.md §openwop-interrupt-parent-child` the
+  // parent's subWorkflow node MUST suspend too so cancel/resume
+  // cascades. Surface the open child-side interrupt so the node module
+  // can echo it into NodeOutcome.suspended.
+  const TERMINAL: readonly string[] = ['completed', 'failed', 'cancelled'];
+  if (!TERMINAL.includes(childStatus)) {
+    const open = await storage.listOpenInterrupts(childRunId);
+    const first = open[0];
+    return {
+      childRunId,
+      childStatus,
+      childVariables,
+      outputMappingSkipped: false,
+      ...(first ? { childInterruptKind: first.kind as SubWorkflowResult['childInterruptKind'] } : {}),
+      ...(first ? { childInterruptNodeId: first.nodeId } : {}),
+    };
+  }
 
   // Apply outputMapping per RFC 0022 §A. SKIPPED when child terminates
   // non-completed per HVMAP-1b.

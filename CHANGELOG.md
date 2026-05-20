@@ -11,6 +11,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Schema + sample — parent/child cancel-cascade interrupt profile (2026-05-20)
+
+Drains the remaining cluster of `openwop-interrupt-parent-child` conformance failures by wiring the cascade end-to-end in the workflow-engine sample, plus one additive schema relaxation for the redaction-shape test:
+
+- **`schemas/envelopes/clarification.request.schema.json`** — adds OPTIONAL `context` open-shape object to `questions[].items`. Surfaces an LLM-provided per-question metadata bag; the engine treats it as opaque and MUST run the same SR-1 redaction scrub over it as the rest of the payload (`ai-envelope.md §"Redaction (SR-1 carry-forward)"`). Closes the redaction-recursion conformance test that asserted three canary substitutions across `questions[0].question` + `questions[1].context.trace`.
+- **`apps/workflow-engine/backend/typescript/src/executor/subWorkflowDispatcher.ts`** — when the child reaches a non-terminal `waiting-*` state, the dispatcher returns the open child-side interrupt instead of treating the suspended status as a terminal failure. Lets the parent's `core.subWorkflow` node surface the suspension instead of dying with `subworkflow_child_failed`.
+- **`apps/workflow-engine/backend/typescript/src/bootstrap/nodes.ts`** — `core.subWorkflow` returns `NodeOutcome.suspended` with the child's interrupt kind when the child suspended, so the parent run reaches the matching `waiting-*` status (per `inferWaitingKind` in executor.ts:659).
+- **`apps/workflow-engine/backend/typescript/src/routes/runs.ts`** — `POST /v1/runs/{runId}/cancel` cascades: walks runs by `parentRunId` and cancels them with reason `parent-cancelled`, resolves any open child interrupts with a cascade marker, and emits `run.cancelled` events. `GET /v1/runs/{runId}` snapshot now surfaces a `childRuns[]` projection so callers can discover spawned children.
+- **`apps/workflow-engine/backend/typescript/src/routes/interrupts.ts`** — interrupt resolve returns `410 interrupt_gone` when the underlying run is cancelled, distinguishing "resource invalidated by external state" from the existing `409 interrupt_already_resolved`. New `interrupt_gone` code added to `OpenwopErrorCode`.
+- **`conformance/src/scenarios/prompt-template-shape.test.ts`** — fix Ajv `_checkUnique` collision when the same `$id` is registered under multiple alias keys; parse prompt-kind once and use `ajv.getSchema(...) ?? ajv.compile(...)` for the schema-compile assertions.
+
+Compatibility: **additive** for the schema change (new optional property; no required changes; no MUST relaxations). The sample-side changes are implementation-only — no wire-shape break for hosts that already implement the `openwop-interrupt-parent-child` profile differently. Net conformance: 7 → 4 failing (the remaining 4 are the RFC 0022 §A dispatch-loop cluster, multi-hour engine work).
+
 ### Code-review pass on the 33-commit gap-closure batch (2026-05-20)
 
 Addresses 6 findings from the senior protocol review of commits `aed7c60..2ce21df`:

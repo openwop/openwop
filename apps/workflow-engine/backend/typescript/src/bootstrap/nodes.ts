@@ -90,6 +90,25 @@ const subWorkflowNode: NodeModule = {
         ...(outputMapping ? { outputMapping } : {}),
         onChildFailure,
       });
+      // Non-terminal child status → parent suspends with the matching
+      // kind. The cancel cascade (routes/runs.ts) walks parentRunId
+      // links to invalidate the child interrupt when the parent is
+      // cancelled, satisfying the `openwop-interrupt-parent-child`
+      // profile in interrupt-profiles.md.
+      const TERMINAL: readonly string[] = ['completed', 'failed', 'cancelled'];
+      if (!TERMINAL.includes(result.childStatus)) {
+        return {
+          status: 'suspended',
+          interrupt: {
+            kind: result.childInterruptKind ?? 'approval',
+            data: {
+              childRunId: result.childRunId,
+              childInterruptNodeId: result.childInterruptNodeId,
+              childStatus: result.childStatus,
+            },
+          },
+        };
+      }
       if (result.childStatus !== 'completed' && onChildFailure === 'fail-parent') {
         return {
           status: 'failure',

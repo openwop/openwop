@@ -154,6 +154,7 @@ export type OpenwopErrorCode =
   | 'run_not_found'
   | 'interrupt_not_found'
   | 'interrupt_already_resolved'
+  | 'interrupt_gone'
   | 'invalid_interrupt_token'
   | 'idempotency_key_conflict'
   | 'idempotency_key_replay_mismatch'
