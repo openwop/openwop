@@ -17,6 +17,13 @@
  *
  * HTTP-driven: skips when no `OPENWOP_BASE_URL` is configured.
  *
+ *
+ * Under `OPENWOP_REQUIRE_BEHAVIOR=true` the capability gate hardens
+ * from SKIP to FAIL — a host that advertises the gating capability
+ * but doesn't emit the asserted contract fails the scenario instead
+ * of silently skipping. See `conformance/coverage.md` §"Capability-
+ * gated scenarios."
+ *
  * @see RFCS/0027-prompt-templates.md §E + §G
  * @see RFCS/0020-host-mcp-server-composition.md §D
  * @see SECURITY/threat-model-prompt-injection.md

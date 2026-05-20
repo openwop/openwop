@@ -24,7 +24,12 @@ import {
 import { composePromptTemplate } from '../host/promptCompose.js';
 
 function sendError(res: import('express').Response, status: number, code: string, message: string): void {
-  res.status(status).json({ error: { code, message } });
+  // Canonical ErrorEnvelope shape per schemas/error-envelope.schema.json:
+  // FLAT `{ error: <code-string>, message: <human-readable>, details?: object }`.
+  // (NOT nested `{ error: { code, message } }` — that's a common
+  // off-the-shelf REST mistake the openwop spec specifically rules out
+  // via `additionalProperties: false` on the envelope.)
+  res.status(status).json({ error: code, message });
 }
 
 /** Parse a stringy PromptRef `prompt:templateId[@version]` into its
@@ -247,9 +252,14 @@ export function registerPromptRoutes(app: Express, deps: { capability: PromptsCa
         bindingTrust: undefined,
         observability: 'full',
       });
-      const isSystem = found.template.kind === 'system';
-      const isUser = found.template.kind === 'user';
-      const composedBody = isSystem ? composed.systemPrompt : isUser ? composed.userPrompt : '';
+      // Read the generic `composed` body field — populated for all
+      // four PromptKind values under `observability: 'full'` per
+      // promptCompose.ts. The kind-specific systemPrompt/userPrompt
+      // fields stay around for prompt.composed event-payload
+      // classification; the :render response surfaces the substituted
+      // text via the generic field so few-shot + schema-hint
+      // templates aren't silently empty (per RFC 0028 §A — `composed`
+      // carries the full composed body under observability: full).
       const response: {
         composed?: string;
         hash: string;
@@ -261,11 +271,10 @@ export function registerPromptRoutes(app: Express, deps: { capability: PromptsCa
         refs: composed.refs,
         variableHashes: composed.variableHashes ?? {},
       };
-      if (composedBody !== undefined) response.composed = composedBody;
+      if (composed.composed !== undefined) response.composed = composed.composed;
       if (composed.contentTrust !== undefined) response.contentTrust = composed.contentTrust;
-      // contentTrust echo: when caller supplies untrusted and the
-      // body is empty, we still surface the marker.
-      if (body.contentTrust === 'untrusted' && response.contentTrust === undefined) {
+      // contentTrust echo: caller-supplied untrusted always surfaces.
+      if (body.contentTrust === 'untrusted' && response.contentTrust !== 'untrusted') {
         response.contentTrust = 'untrusted';
       }
       res.status(200).json(response);

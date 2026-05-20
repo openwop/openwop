@@ -18,6 +18,13 @@
  * server-free subset of the gate can't exercise this — it requires a
  * live reference-host emission seam).
  *
+ *
+ * Under `OPENWOP_REQUIRE_BEHAVIOR=true` the capability gate hardens
+ * from SKIP to FAIL — a host that advertises the gating capability
+ * but doesn't emit the asserted contract fails the scenario instead
+ * of silently skipping. See `conformance/coverage.md` §"Capability-
+ * gated scenarios."
+ *
  * @see RFCS/0027-prompt-templates.md §E + §G
  * @see spec/v1/prompts.md §"Composition + observability"
  * @see SECURITY/threat-model-secret-leakage.md §SR-1

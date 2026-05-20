@@ -15,6 +15,13 @@
  * server-free subset of the gate can't exercise this — it requires a
  * live reference-host resolution seam).
  *
+ *
+ * Under `OPENWOP_REQUIRE_BEHAVIOR=true` the capability gate hardens
+ * from SKIP to FAIL — a host that advertises the gating capability
+ * but doesn't emit the asserted contract fails the scenario instead
+ * of silently skipping. See `conformance/coverage.md` §"Capability-
+ * gated scenarios."
+ *
  * @see spec/v1/prompts.md §"Resolution chain (normative)" — Layer 1
  * @see RFCS/0029-prompt-override-hierarchy.md §A
  */

@@ -63,22 +63,25 @@ The prompt-library track introduces two independent capability axes on `capabili
 
 Adoption status across tracked hosts (2026-05-20):
 
-| Host | `prompts.supported` | `prompts.endpointsSupported` | `prompts.observability` | Notes |
-|---|---|---|---|---|
-| In-memory reference | — | — | — | Not yet wired. |
-| SQLite reference | — | — | — | Not yet wired. |
-| Postgres reference | — | — | — | Not yet wired. |
-| Python reference | — | — | — | Not yet wired. |
-| Workflow-engine sample (`apps/workflow-engine/`) | **true** | false | **full** | RFC 0027 Phase A: implements composition pipeline (`host/promptCompose.ts`) + exercises it via the `/v1/host/sample/prompt/compose` test seam that drives the conformance scenarios `prompt-composed-secret-redaction` + `prompt-composed-trust-marker`. RFC 0028 Phase B endpoints not yet implemented — `endpointsSupported: false` honestly advertised. |
-| MyndHyve workflow-runtime | — | — | — | Not yet adopted. |
+| Host | `prompts.supported` | `prompts.endpointsSupported` | `prompts.mutableLibrary` | `prompts.agentBindings` | `prompts.observability` | Notes |
+|---|---|---|---|---|---|---|
+| In-memory reference | — | — | — | — | — | Not yet wired. |
+| SQLite reference | — | — | — | — | — | Not yet wired. |
+| Postgres reference | — | — | — | — | — | Not yet wired. |
+| Python reference | — | — | — | — | — | Not yet wired. |
+| Workflow-engine sample (`apps/workflow-engine/`) | **true** | **true** | **true** | **true** | **full** | RFC 0027 Phase A: composition pipeline (`host/promptCompose.ts`) + `/v1/host/sample/prompt/compose` test seam driving `prompt-composed-secret-redaction` + `prompt-composed-trust-marker` conformance. RFC 0028 Phase B: all six `/v1/prompts*` REST routes wired via `routes/prompts.ts` against the in-memory PromptStore (`host/promptStore.ts`); host-built-in templates loaded from `conformance-fixtures/prompt-templates/` at boot; user-source mutations accepted at run time. RFC 0029 Phase C: four-layer resolver (`host/promptResolve.ts`) + `/v1/host/sample/prompt/resolve` test seam driving the three `prompt-resolution-chain-*` scenarios. **Open gap:** RFC 0028 §B pack-install flow (Ed25519 signature + SRI integrity + dependency-resolve) still deferred — `installPackTemplates()` seam exists but no install path invokes it. |
+| MyndHyve workflow-runtime | — | — | — | — | — | Not yet adopted. |
 
 Conformance gates:
 
 - `prompt-template-shape.test.ts` — always runs (server-free schema-shape proof).
 - `prompt-composed-secret-redaction.test.ts` — gated on `supported: true` + `observability: "full"`. Skips cleanly for hosts that advertise less.
 - `prompt-composed-trust-marker.test.ts` — same gates.
+- `prompt-resolution-chain-node-wins.test.ts` — gated on `supported: true`. RFC 0029 §A layer-1 precedence.
+- `prompt-resolution-chain-agent-intrinsic.test.ts` — gated on `supported: true` + `agentBindings: true`. RFC 0029 §A layer-2 (system intrinsic).
+- `prompt-resolution-chain-fallback-cascade.test.ts` — gated on `supported: true`. RFC 0029 §A layer-3/4 cascade.
 
-SECURITY invariants `prompt-composed-secret-redaction` + `prompt-composed-trust-marker` are tracked in `SECURITY/invariants.yaml` (protocol-tier; verified via the above conformance scenarios).
+SECURITY invariants `prompt-composed-secret-redaction` + `prompt-composed-trust-marker` are tracked in `SECURITY/invariants.yaml` (protocol-tier; verified via the above conformance scenarios). Under `OPENWOP_REQUIRE_BEHAVIOR=true`, the capability-gated scenarios FAIL instead of skip when the host advertises the gating capability but doesn't emit the asserted contract (per `conformance/coverage.md` §"Capability-gated scenarios").
 
 ## Reading Rows
 

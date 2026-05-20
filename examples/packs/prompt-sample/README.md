@@ -51,7 +51,23 @@ When two installed packs ship the same `templateId`, the stringy form is rejecte
 
 ## What this pack does NOT demonstrate
 
-- **Pack signing.** The manifest carries no `signing` block — production prompt packs SHOULD ship a `signing.publicKeyRef` + `signing.signatureRef` per `registry-operations.md` §"Signature verification" (same flow as node and chain packs).
+- **Pack signing.** The manifest carries no `signing` block — production prompt packs SHOULD ship a `signing.publicKeyRef` + `signing.signatureRef` per `registry-operations.md` §"Signature verification" (same flow as node and chain packs). The shape an in-the-wild signed pack manifest would carry:
+
+  ```jsonc
+  {
+    "name": "vendor.acme.editorial-prompts",
+    "version": "1.0.0",
+    "kind": "prompt",
+    // ... engines, prompts, ...
+    "signing": {
+      "publicKeyRef": "keys/vendor.acme.editorial-prompts.pub",  // tarball-relative
+      "signatureRef": "signatures/pack.json.sig",                 // detached Ed25519 over pack.json bytes
+      "method": "manual"                                          // OR "sigstore" once that's wired
+    }
+  }
+  ```
+
+  The keys + signature would live as additional files inside the same tarball alongside `pack.json` + the JSON template files. The host's `installPackTemplates()` seam (in `apps/workflow-engine/backend/typescript/src/host/promptStore.ts`) is the integration point — once the install flow lands, it will reuse the same Ed25519 verification path as `node-packs.md` §Signing.
 - **`dependencies` block.** Cross-pack composition is left to a follow-up RFC; this pack stands alone.
 - **Install path.** The host's `installPackTemplates()` seam in [`promptStore.ts`](../../../apps/workflow-engine/backend/typescript/src/host/promptStore.ts) accepts pack-shaped templates but the full install flow (download tarball + verify signature + extract + register) is part of the deferred RFC 0028 §B install slice.
 

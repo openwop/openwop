@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v1/run-event-payloads.schema.json",
   "title": "RunEventPayloads",
-  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n53 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
+  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n61 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
   "type": "object",
   "$defs": {
     "_typeIndex": {
@@ -53,6 +53,14 @@
         "provider.usage":            { "$ref": "#/$defs/providerUsage" },
         "prompt.composed":           { "$ref": "#/$defs/promptComposed" },
         "agent.promptResolved":      { "$ref": "#/$defs/agentPromptResolved" },
+        "model.capability.substituted":  { "$ref": "#/$defs/modelCapabilitySubstituted" },
+        "model.capability.insufficient": { "$ref": "#/$defs/modelCapabilityInsufficient" },
+        "envelope.retry.attempted":      { "$ref": "#/$defs/envelopeRetryAttempted" },
+        "envelope.retry.exhausted":      { "$ref": "#/$defs/envelopeRetryExhausted" },
+        "envelope.refusal":              { "$ref": "#/$defs/envelopeRefusal" },
+        "envelope.truncated":            { "$ref": "#/$defs/envelopeTruncated" },
+        "envelope.nlToFormat.engaged":   { "$ref": "#/$defs/envelopeNlToFormatEngaged" },
+        "envelope.recovery.applied":     { "$ref": "#/$defs/envelopeRecoveryApplied" },
         "agent.toolCalled":          { "$ref": "#/$defs/agentToolCalled" },
         "agent.toolReturned":        { "$ref": "#/$defs/agentToolReturned" },
         "agent.handoff":             { "$ref": "#/$defs/agentHandoff" },
@@ -630,9 +638,13 @@
           "pattern": "^sha256:[0-9a-f]{64}$",
           "description": "SHA-256 of the composed body (post-substitution, post-redaction). Stable across replay. Always present, including under observability=hashed."
         },
+        "composed": {
+          "type": "string",
+          "description": "Generic composed-body field. Present only when `capabilities.prompts.observability` is `full`. Populated for ALL four PromptKind values (system / user / few-shot / schema-hint) so consumers have a single body field to read — necessary for few-shot + schema-hint templates that don't fit the system/user split below. Same secret-redaction + trust-marker invariants apply as for the kind-specific fields. The kind-specific `systemPrompt` + `userPrompt` fields below remain populated for system/user kinds so existing consumers that key off them continue to work; both fields carry identical content for those kinds."
+        },
         "systemPrompt": {
           "type": "string",
-          "description": "Composed system prompt body. Present only when `capabilities.prompts.observability` is `full`. Secret-sourced variable values MUST be replaced with `[REDACTED:<secretId>]` markers. Untrusted-content `<UNTRUSTED>...</UNTRUSTED>` markers MUST be preserved verbatim."
+          "description": "Composed system prompt body. Present only when `capabilities.prompts.observability` is `full` AND template `kind: \"system\"`. Secret-sourced variable values MUST be replaced with `[REDACTED:<secretId>]` markers. Untrusted-content `<UNTRUSTED>...</UNTRUSTED>` markers MUST be preserved verbatim. Identical to `composed` when present."
         },
         "userPrompt": {
           "type": "string",
@@ -705,6 +717,184 @@
         }
       },
       "additionalProperties": false
+    },
+
+    "modelCapabilitySubstituted": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0031 §D. Emitted when a host substitutes the active model with a NodeModule's declared `fallbackModel` because the active model lacks one or more of the `requiredModelCapabilities`. MUST event per RFC 0031 §B step 3. The `fallbackProvider` + `fallbackModel` pair MAY be redacted as all-or-nothing `\"[REDACTED]\"` when workspace policy treats multi-vendor posture as confidential per SECURITY invariant `model-capability-substituted-no-credential-disclosure`. The other fields are not redactable — `originalProvider` is already public via `RunOptions.configurable.ai.provider`, and `nodeId` / `missingCapabilities` carry no provider-possession information.",
+      "required": ["nodeId", "originalProvider", "originalModel", "fallbackProvider", "fallbackModel", "missingCapabilities"],
+      "properties": {
+        "nodeId":            { "type": "string", "description": "The node whose dispatch triggered the substitution." },
+        "originalProvider":  { "type": "string", "description": "Provider id of the active model the host was about to use." },
+        "originalModel":     { "type": "string", "description": "Model id of the active model." },
+        "fallbackProvider":  { "type": "string", "description": "Provider id of the substitute model from `NodeModule.fallbackModel.provider`, or `\"[REDACTED]\"` when the host's workspace policy redacts multi-vendor posture." },
+        "fallbackModel":     { "type": "string", "description": "Model id of the substitute model from `NodeModule.fallbackModel.model`, or `\"[REDACTED]\"` when redacted (always paired all-or-nothing with `fallbackProvider`)." },
+        "missingCapabilities": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true,
+          "description": "Subset of `NodeModule.requiredModelCapabilities` that the active model did not satisfy."
+        }
+      }
+    },
+
+    "modelCapabilityInsufficient": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0031 §D. Emitted when a host refuses to dispatch a NodeModule because the active model lacks declared `requiredModelCapabilities` AND no viable fallback is available (no `fallbackModel` declared, OR the host cannot authenticate to the fallback provider). MUST event per RFC 0031 §B step 4. Pairs with `RunSnapshot.error.code = \"capability_not_provided\"` per `capabilities.md` §\"Unsupported capability — refusal contract\". Recursive fallback is NOT permitted (RFC 0031 §\"Unresolved questions\" #3): if a host attempts substitution and the fallback itself fails, the host MUST emit this event with `fallbackAttempted: true` and refuse, not chain to another fallback.",
+      "required": ["nodeId", "provider", "model", "missingCapabilities"],
+      "properties": {
+        "nodeId":              { "type": "string", "description": "The node whose dispatch was refused." },
+        "provider":            { "type": "string", "description": "Provider id of the active model the host attempted to use." },
+        "model":               { "type": "string", "description": "Model id of the active model." },
+        "missingCapabilities": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true,
+          "description": "Subset of `NodeModule.requiredModelCapabilities` that the active model did not satisfy."
+        },
+        "fallbackAttempted": {
+          "type": "boolean",
+          "default": false,
+          "description": "True if the host attempted to authenticate to a declared `fallbackModel` and that attempt failed (e.g., no credential resolvable, or the fallback provider was outside `capabilities.aiProviders.supported`). False if no `fallbackModel` was declared on the NodeModule."
+        }
+      }
+    },
+
+    "envelopeRetryAttempted": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0032 §B.1. Emitted when a host retries an envelope emission after a parse or validation failure on a prior attempt. The first attempt does NOT emit this event; the second attempt emits with `attempt: 2`, etc. SHOULD-tier — hosts that don't implement retry don't emit; hosts that DO retry on validation failure SHOULD emit per attempt past the first.",
+      "required": ["nodeId", "attempt", "reason"],
+      "properties": {
+        "nodeId":  { "type": "string", "description": "The node whose envelope emission is being retried." },
+        "attempt": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16,
+          "description": "1-indexed attempt counter. The first attempt does NOT emit this event; the second attempt emits with `attempt: 2`, etc."
+        },
+        "reason": {
+          "type": "string",
+          "anyOf": [
+            { "enum": ["schema-violation", "truncation", "type-drift", "type-mismatch", "refusal", "parse-error", "unknown"] },
+            { "pattern": "^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*$" }
+          ],
+          "description": "Why the prior attempt failed. Spec-reserved values: `schema-violation` (model emitted wrong-shape JSON; corrective fragment + retry per RFC 0033 §C), `truncation` (stop_reason: max_tokens; budget-double + retry per RFC 0033 §B), `type-drift` (envelope `type` discriminator drifted from what was advertised mid-run), `type-mismatch` (a typed payload field was emitted with the wrong runtime type — e.g., string where number was declared), `refusal` (provider safety-stop; NO retry per RFC 0032 §B.3), `parse-error` (response was not extractable as JSON even after lenient parsing), `unknown` (host could not classify). Host-private extensions MUST prefix with `x-host-<host>-` per `host-extensions.md` §\"Canonical-prefix table\"; matches the RFC 0031 §B `requiredModelCapabilities` precedent."
+        },
+        "previousError": {
+          "type": ["string", "null"],
+          "description": "Diagnostic text from the failing attempt. MUST NOT contain prompt or response substring excerpts; hosts SHOULD limit to validator output (e.g., \"required field 'steps' missing\"). Subject to SR-1 redaction per `ai-envelope.md` §\"Redaction (SR-1 carry-forward)\"."
+        }
+      }
+    },
+
+    "envelopeRetryExhausted": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0032 §B.2. Emitted when a host has exhausted its retry budget and is about to surface a terminal envelope failure to the node. MUST-tier — alternative is silent terminal failure with no event surface, leaving conformance suites unable to assert correct give-up behavior. Hosts that don't retry MUST still emit this event when an envelope attempt terminally fails (with `totalAttempts: 1`). Pairs with `cap.breached` when the failure mode is schema-violation or truncation per RFC 0033 §B + §C.",
+      "required": ["nodeId", "totalAttempts", "finalReason"],
+      "properties": {
+        "nodeId":        { "type": "string" },
+        "totalAttempts": { "type": "integer", "minimum": 1 },
+        "finalReason": {
+          "type": "string",
+          "anyOf": [
+            { "enum": ["schema-violation", "truncation", "type-drift", "type-mismatch", "refusal", "parse-error", "unknown"] },
+            { "pattern": "^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*$" }
+          ],
+          "description": "Same value set as `envelope.retry.attempted.reason` (§B.1). Spec-reserved closed enum plus `x-host-<host>-` extensions."
+        },
+        "finalError": {
+          "type": ["string", "null"],
+          "description": "Diagnostic text from the final attempt. Same redaction discipline as `envelope.retry.attempted.previousError`."
+        }
+      }
+    },
+
+    "envelopeRefusal": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0032 §B.3. Emitted when the underlying LLM provider returns an explicit refusal (e.g., OpenAI `message.refusal`, Anthropic safety-stop, Gemini safety-block). MUST-tier. Hosts MUST NOT retry on refusal — retrying refusal with prompt mutation creates a circumvention concern (the host automatically searches for a prompt the model will accept, evading the safety filter's intent) per RFC 0032 §B.3 + RFC 0033 §D. The node MUST fail with `error.code = \"envelope_refused_by_provider\"` per RFC 0033 §F.",
+      "required": ["nodeId", "provider", "model"],
+      "properties": {
+        "nodeId":   { "type": "string" },
+        "provider": { "type": "string" },
+        "model":    { "type": "string" },
+        "refusalText": {
+          "type": ["string", "null"],
+          "description": "Provider-returned refusal message, if any. MUST be passed through the host's BYOK redaction harness AND prompt-content redaction pipeline before emission (per SECURITY invariant `envelope-refusal-no-prompt-leak`). Provider safety-refusal messages can echo offending prompt substrings; emitting them verbatim would create a side channel for prompt-injection-attack telemetry exfiltration AND for SR-1 secret-leak. Replay consumers MUST tolerate `null` even when the original was non-null (host redaction policies legitimately tighten over time)."
+        },
+        "safetyCategory": {
+          "type": ["string", "null"],
+          "description": "Provider-specific safety category if available (e.g., Anthropic `harmful-content`, Gemini `SAFETY_BLOCK_HARASSMENT`, OpenAI `policy_violation`). Verbatim from provider; no normalization."
+        }
+      }
+    },
+
+    "envelopeTruncated": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0032 §B.4. Emitted when the LLM emission was cut off before the envelope was complete (typically `stop_reason: \"max_tokens\"`). SHOULD-tier — hosts that distinguish truncation from schema-violation per RFC 0033 §A MUST emit this event when truncation occurs. Hosts that conflate truncation with schema-violation (legacy behavior) MAY omit; they then fail RFC 0033 conformance.",
+      "required": ["nodeId", "provider", "model", "stopReason"],
+      "properties": {
+        "nodeId":   { "type": "string" },
+        "provider": { "type": "string" },
+        "model":    { "type": "string" },
+        "stopReason": {
+          "type": "string",
+          "enum": ["max_tokens", "length", "stop_sequence", "unknown"],
+          "description": "Provider-normalized stop reason. `max_tokens` covers OpenAI `length` + Anthropic `max_tokens`; `length` preserved as a separate value for hosts that distinguish provider-side `length` (model self-determined length cap) from `max_tokens` (host-side budget cap)."
+        },
+        "partialPayloadAvailable": {
+          "type": "boolean",
+          "default": false,
+          "description": "True if the host recovered a partial envelope before truncation. Hosts MAY use this signal to route to a recovery path (e.g., budget-doubled retry per RFC 0033 §B)."
+        },
+        "outputTokenCount": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Tokens emitted before truncation. Sourced from the provider response's usage block. MUST replay identically."
+        }
+      }
+    },
+
+    "envelopeNlToFormatEngaged": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0032 §B.5. Emitted when the host has escalated to a two-call NL-to-Format fallback after retry exhaustion (per Tam et al., arXiv 2408.02442 mitigation strategy: free-form reasoning in the first call → schema coercion in the second call). MAY-tier — NL-to-Format is one of many possible recovery strategies; hosts that don't implement it don't advertise it.",
+      "required": ["nodeId", "originalEnvelopeType"],
+      "properties": {
+        "nodeId":              { "type": "string" },
+        "originalEnvelopeType": { "type": "string", "description": "The envelope kind the original attempt was trying to emit." },
+        "fallbackCalls": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1,
+          "description": "Number of secondary LLM calls used to reformat free-form output into the envelope's schema."
+        }
+      }
+    },
+
+    "envelopeRecoveryApplied": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0032 §B.6. Emitted when lenient parsing recovered a malformed envelope (e.g., JSON repair via `jsonrepair`, markdown fence stripping, last-balanced-object extraction). Recovery is internal to the parsing step, BEFORE validation; recovery does NOT consume a retry attempt per RFC 0033 §D. MAY-tier — lenient parsing is a host-discretion recovery path. The event payload MUST NOT carry the recovered envelope content or any substring from the model's pre-recovery output per SECURITY invariant `envelope-recovery-no-content-leak`; only the recovery path identifier and the optional `byteOffset` are emitted. The recovered content rides on the subsequent envelope acceptance + downstream `RunEventDoc`, NOT on this event.",
+      "required": ["nodeId", "path"],
+      "properties": {
+        "nodeId": { "type": "string" },
+        "path": {
+          "type": "string",
+          "enum": ["direct", "jsonrepair", "markdown-fence", "brace-walker", "custom"],
+          "description": "Which recovery path succeeded. `direct` is reserved for the no-recovery-needed path and is informational; hosts MAY omit emission when `path: \"direct\"`. MUST replay identically (deterministic parsing → deterministic recovery outcome)."
+        },
+        "byteOffset": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Byte position where recovery succeeded. Useful for debugging which fraction of the model's output was salvageable."
+        }
+      }
     },
 
     "agentToolCalled": {

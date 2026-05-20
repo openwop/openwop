@@ -219,14 +219,23 @@ export function resolvePromptRef(req: ResolveRequest): ResolveResult {
       }
       // 2c — agent library default
       if (resolved === null && typeof agentManifest.promptLibraryRef === 'string' && agentManifest.promptLibraryRef !== '') {
-        // The lookup convention is host policy in v1.x. This reference
-        // impl uses `prompt:<libraryId>.default-<kind>` so debuggers
-        // see what the resolver looked for; a future RFC may normate
-        // the convention. We surface the *attempted* lookup as the
-        // chain entry but mark applied: false unless the host has a
-        // hook to actually fetch it (out of scope for the seam).
+        // The lookup convention is host policy in v1.x per
+        // spec/v1/prompts.md §"Resolution chain (normative)" Layer 2.
+        // This reference host advertises a deterministic-but-no-op
+        // attempt: the chain entry surfaces the canonical lookup ref
+        // `prompt:<libraryId>.default-<kind>` so debuggers see what
+        // the resolver looked for, but the lookup itself is deferred
+        // pending convention normalization in a follow-up RFC. Marked
+        // applied: false; the resolver falls through to layer 3.
+        // When this host's PromptStore gains library-keyed default
+        // lookup (or when the spec normates a different convention),
+        // this branch flips to recordApplied with the resolved ref.
         const lookupRef = `prompt:${agentManifest.promptLibraryRef}.default-${kind}`;
-        recordSkipped('agent-library-default', lookupRef, 'library default lookup not implemented in v1.x (host policy)');
+        recordSkipped(
+          'agent-library-default',
+          lookupRef,
+          'agent-library-default convention not yet normated in v1.x; this reference host advertises the attempted lookup ref but defers actual resolution to a follow-up RFC. Layer falls through to workflow-defaults.',
+        );
       }
     }
   } else if (resolved === null && (typeof agentId !== 'string' || agentId === '')) {

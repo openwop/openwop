@@ -91,6 +91,15 @@ export interface PromptComposedPayload {
   refs: string[];
   kind: 'system+user' | 'system-only' | 'user-only' | 'agent-reasoning';
   hash: string;
+  /** Generic composed-body field. Always populated under
+   *  `observability: 'full'` regardless of the template kind, so the
+   *  `:render` endpoint and `prompt.composed` consumers have a single
+   *  body field to read for `few-shot` + `schema-hint` templates that
+   *  don't fit the system/user dichotomy. The kind-specific
+   *  `systemPrompt` + `userPrompt` fields below still classify the
+   *  body for `prompt.composed` event-payload routing; this generic
+   *  field carries the substituted text. */
+  composed?: string;
   systemPrompt?: string;
   userPrompt?: string;
   variableBindings?: Record<string, unknown>;
@@ -253,6 +262,11 @@ export async function composePromptTemplate(req: ComposeRequest): Promise<Prompt
   payload.variableHashes = variableHashes;
 
   if (observability === 'full') {
+    // Generic body field — always populated under `full`, regardless
+    // of kind, so consumers (the :render endpoint, prompt.composed
+    // event readers) can read the substituted text for few-shot and
+    // schema-hint templates that don't fit the system/user split.
+    payload.composed = composedBody;
     if (isSystem) payload.systemPrompt = composedBody;
     if (isUser) payload.userPrompt = composedBody;
     const variableBindings: Record<string, unknown> = {};
