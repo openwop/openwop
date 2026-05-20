@@ -409,7 +409,11 @@ function stripFencedCodeBlocks(markdown: string): string {
 }
 
 function stripInlineCodeSpans(markdown: string): string {
-  return markdown.replace(/`[^`\n]*`/g, '');
+  // Strip double-backtick spans first so the inner segment of a span
+  // containing a literal backtick (``foo `bar` baz``) doesn't get
+  // mis-stripped by the single-backtick pass, leaving stray openers
+  // that could pair with later backticks elsewhere in the file.
+  return markdown.replace(/``[^`\n]+``/g, '').replace(/`[^`\n]*`/g, '');
 }
 
 function extractLocalMarkdownLinks(markdown: string): string[] {
