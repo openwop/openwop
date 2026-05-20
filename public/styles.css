@@ -1016,8 +1016,7 @@
   .star-strip {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: clamp(24px, 4vw, 48px);
+    gap: clamp(20px, 3vw, 32px);
   }
   .star-strip-text {
     margin: 0;
