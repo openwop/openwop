@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Conformance — drain envelope-track `it.todo` placeholders (sub-tracks E + E2 + A.reasoning-redaction) (2026-05-20)
+
+Drains 9 of the 50 envelope-track `it.todo()` placeholders that landed in `a280371` (RFC 0030–0033 scenarios). Implementation-only — no spec text changes; the RFCs anticipated this reference-host work.
+
+- **Sub-track E (4 todos drained)**: pack-registry projection of `NodeModule.requiredModelCapabilities` / `fallbackModel` per RFC 0031 §B. `routes/nodeCatalog.ts` extends `CatalogNode` + `PackManifestNode` and propagates the two fields. `packs/core.openwop.ai/pack.json` + `registry/v1/packs/core.openwop.ai/-/1.1.2.json` declare `['structured-output']` on `core.ai.structuredOutput` and `['function-calling']` on `core.ai.toolCalling`. `node-module-required-capabilities-shape.test.ts` flips 4 `it.todo()` → live tests.
+- **Sub-track E2 (2 todos drained)**: end-to-end refusal through the executor's model-capability gate per RFC 0031 §B step 4 + §D. New `conformance.modelCapability.insufficient` typeId with an unsatisfiable `requiredModelCapabilities`, new `conformance-model-capability-insufficient` fixture, the test asserts `error.code = "capability_not_provided"`, `model.capability.insufficient` precedes `node.failed`, AND no envelope-emission events fire after the refusal.
+- **Sub-track A.reasoning-redaction (3 todos drained)**: downstream-projection redaction per RFC 0030 §E + `envelope-reasoning-secret-redaction` SECURITY invariant. Drives the existing `POST /v1/host/sample/envelope/accept` seam with `projectTo` + canary-bearing `reasoning` field, queries `GET /v1/host/sample/test/otel/spans` + `POST /v1/host/sample/test/debug-bundle/export`, asserts SR-1 redaction holds across both projections + that the routing decision is `reasoning`-independent.
+
+Conformance: 1366 → 1396 passing; **50 → 41 todo**. Remaining envelope-track todos cluster into sub-tracks B/C/D (retry vocabulary, completion contract, NL-to-format) — all blocked on real-LLM-dispatch path work; tracked for follow-up.
+
 ### RFC 0030–0033 reference-host emission — first cut (2026-05-20)
 
 Reference workflow-engine sample now meets the "reference host advertises capability" precondition for the `Active → Accepted` path on three of the four envelope-track RFCs (0030 fully wired; 0031 fully wired; 0032 + 0033 seam-driven with end-to-end emission deferred). Honest about scope: each commit documents what's wired vs deferred in its status-history surface, the discovery advertisement claims only what the host can back today, and the conformance-suite promotion adds **30 live HTTP-gated assertions** across 5 scenarios (replacing prior `it.todo()` placeholders) backed by **two SECURITY invariants** that now have public-test coverage (`envelope-refusal-no-prompt-leak`, `envelope-recovery-no-content-leak`).

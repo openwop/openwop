@@ -1020,6 +1020,22 @@ export function ensureNodesRegistered(): void {
       return { status: 'success', outputs: { emittedKeyCount: Object.keys(attrs).length } };
     },
   });
+  // Conformance-only typeId for the RFC 0031 §B step 4 refusal path
+  // (`model-capability-insufficient.test.ts` end-to-end branch). Declares
+  // `requiredModelCapabilities: ['nonexistent-capability-9b3f']` —
+  // intentionally outside the spec-reserved set so the executor's gate
+  // check at executor.ts:230-289 ALWAYS refuses, emitting
+  // `model.capability.insufficient` before `node.failed` per §D.
+  // Production deployments SHOULD skip this registration.
+  registry.register({
+    typeId: 'conformance.modelCapability.insufficient',
+    version: '1.0.0',
+    requiredModelCapabilities: ['nonexistent-capability-9b3f'],
+    async execute() {
+      // Unreachable — gate refuses before this runs.
+      return { status: 'success', outputs: {} };
+    },
+  });
   registry.register(delayNode);
   registry.register(failNode);
   registry.register(approvalGateNode);

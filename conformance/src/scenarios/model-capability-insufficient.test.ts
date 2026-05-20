@@ -142,17 +142,80 @@ describe.skipIf(HTTP_SKIP)('model-capability-insufficient: dispatch refusal (RFC
   });
 });
 
-// The end-to-end pipeline — NodeModule registered with `requiredModelCapabilities`
-// → executor refuses with `capability_not_provided` + emits `model.capability.insufficient`
-// into the run event log — remains an `it.todo()` placeholder until the
-// conformance harness has a NodeModule-registration test seam that can
-// register a synthetic node with declared capabilities.
+// End-to-end pipeline: a fixture-declared workflow whose only node carries a
+// NodeModule with `requiredModelCapabilities: ['nonexistent-capability-9b3f']`
+// (registered as `conformance.modelCapability.insufficient` on the reference
+// host). The executor's model-capability gate at dispatch time refuses with
+// `capability_not_provided` AND emits `model.capability.insufficient` into
+// the run event log per RFC 0031 §D. Capability-gated AND fixture-gated:
+// soft-skips when either is absent.
 
-describe('model-capability-insufficient: end-to-end refusal through executor', () => {
-  it.todo(
-    'workflow with a node declaring requiredModelCapabilities the active provider does not satisfy fails with RunSnapshot.error.code = "capability_not_provided" AND emits model.capability.insufficient into the run event log BEFORE node.failed',
-  );
-  it.todo(
-    'NO envelope emission occurs after the refusal (no node.completed, provider.usage, or envelope-reliability events)',
-  );
+import { pollUntilTerminal } from '../lib/polling.js';
+import { isFixtureAdvertised } from '../lib/fixtures.js';
+
+const E2E_FIXTURE = 'conformance-model-capability-insufficient';
+
+describe.skipIf(HTTP_SKIP)('model-capability-insufficient: end-to-end refusal through executor', () => {
+  it('workflow with a node declaring requiredModelCapabilities the active provider does not satisfy fails with RunSnapshot.error.code = "capability_not_provided" AND emits model.capability.insufficient into the run event log BEFORE node.failed', async () => {
+    if (!isFixtureAdvertised(E2E_FIXTURE)) return; // fixture not seeded — soft-skip
+
+    const create = await driver.post('/v1/runs', { workflowId: E2E_FIXTURE });
+    expect(create.status).toBe(201);
+    const runId = (create.json as { runId: string }).runId;
+
+    const terminal = await pollUntilTerminal(runId, { timeoutMs: 10_000 });
+    expect(terminal.status).toBe('failed');
+    expect(
+      (terminal as { error?: { code?: string } }).error?.code,
+      driver.describe(
+        'RFCS/0031-envelope-variants-and-model-capabilities.md §B step 4',
+        'unmet capability without viable fallback MUST fail with error.code = "capability_not_provided"',
+      ),
+    ).toBe('capability_not_provided');
+
+    const eventsRes = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events`);
+    expect(eventsRes.status).toBe(200);
+    const events = ((eventsRes.json as { events?: Array<{ type: string }> } | undefined)?.events ?? []);
+    const insufficientIdx = events.findIndex((e) => e.type === 'model.capability.insufficient');
+    const nodeFailedIdx = events.findIndex((e) => e.type === 'node.failed');
+    expect(insufficientIdx, 'model.capability.insufficient MUST appear in the event log').toBeGreaterThanOrEqual(0);
+    expect(nodeFailedIdx, 'node.failed MUST appear in the event log').toBeGreaterThanOrEqual(0);
+    expect(
+      insufficientIdx < nodeFailedIdx,
+      driver.describe(
+        'RFCS/0031-envelope-variants-and-model-capabilities.md §D',
+        'model.capability.insufficient MUST be emitted BEFORE node.failed (cause precedes effect)',
+      ),
+    ).toBe(true);
+  });
+
+  it('NO envelope emission occurs after the refusal (no node.completed, provider.usage, or envelope-reliability events)', async () => {
+    if (!isFixtureAdvertised(E2E_FIXTURE)) return; // fixture not seeded — soft-skip
+
+    const create = await driver.post('/v1/runs', { workflowId: E2E_FIXTURE });
+    expect(create.status).toBe(201);
+    const runId = (create.json as { runId: string }).runId;
+    await pollUntilTerminal(runId, { timeoutMs: 10_000 });
+
+    const eventsRes = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events`);
+    const events = ((eventsRes.json as { events?: Array<{ type: string }> } | undefined)?.events ?? []);
+    const forbidden = [
+      'node.completed',
+      'provider.usage',
+      'envelope.retry.attempted',
+      'envelope.retry.exhausted',
+      'envelope.refusal',
+      'envelope.truncated',
+      'envelope.nlToFormat.engaged',
+      'envelope.recovery.applied',
+    ];
+    const leaked = events.filter((e) => forbidden.includes(e.type)).map((e) => e.type);
+    expect(
+      leaked,
+      driver.describe(
+        'RFCS/0031-envelope-variants-and-model-capabilities.md §B step 4',
+        'a refused dispatch MUST NOT emit any downstream envelope-emission events — the node never ran',
+      ),
+    ).toEqual([]);
+  });
 });

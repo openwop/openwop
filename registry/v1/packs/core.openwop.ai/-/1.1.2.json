@@ -47,6 +47,7 @@
         "cacheable",
         "side-effectful"
       ],
+      "requiredModelCapabilities": ["structured-output"],
       "configSchemaRef": "schemas/structured-output.config.json",
       "inputSchemaRef": "schemas/structured-output.input.json",
       "outputSchemaRef": "schemas/structured-output.output.json"
@@ -62,6 +63,7 @@
         "cacheable",
         "side-effectful"
       ],
+      "requiredModelCapabilities": ["function-calling"],
       "configSchemaRef": "schemas/tool-calling.config.json",
       "inputSchemaRef": "schemas/tool-calling.input.json",
       "outputSchemaRef": "schemas/tool-calling.output.json"

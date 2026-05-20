@@ -49,6 +49,15 @@ interface CatalogNode {
    *  Empty array means the node is runnable here. Populated server-side
    *  so the client doesn't have to cross-reference advertisement. */
   missingHostSurfaces: string[];
+  /** RFC 0031 §B — model-capability identifiers this NodeModule depends
+   *  on. Empty / absent for nodes that don't dispatch to an LLM (the
+   *  field is OPTIONAL; SHOULD-tier for `core.ai.*` nodes per the same
+   *  RFC's authoring guidance). */
+  requiredModelCapabilities?: string[];
+  /** RFC 0031 §B — host-substitution coordinates the host MAY use when
+   *  the active model can't satisfy `requiredModelCapabilities`. Pack
+   *  authors who omit this opt into refusal-only posture. */
+  fallbackModel?: { provider: string; model: string };
 }
 
 interface PackManifestNode {
@@ -59,6 +68,9 @@ interface PackManifestNode {
   category?: string;
   role?: string;
   capabilities?: string[];
+  /** RFC 0031 §B — see CatalogNode. */
+  requiredModelCapabilities?: string[];
+  fallbackModel?: { provider: string; model: string };
   configSchemaRef?: string;
   inputSchemaRef?: string;
   outputSchemaRef?: string;
@@ -133,6 +145,15 @@ export function registerNodeCatalogRoute(app: Express): void {
               outputSchema: readSchemaInline(packDir, entry, n.outputSchemaRef),
               requiresHostSurfaces: [...required],
               missingHostSurfaces: required.filter((s) => !supported.has(s)),
+              // RFC 0031 §B — propagate model-capability declarations from
+              // the pack manifest. Absent for nodes whose author hasn't
+              // declared the field; SHOULD-tier conformance for
+              // `core.ai.*` nodes is asserted in
+              // `node-module-required-capabilities-shape.test.ts`.
+              ...(Array.isArray(n.requiredModelCapabilities)
+                ? { requiredModelCapabilities: n.requiredModelCapabilities }
+                : {}),
+              ...(n.fallbackModel ? { fallbackModel: n.fallbackModel } : {}),
             });
           }
         }

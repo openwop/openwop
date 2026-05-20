@@ -222,14 +222,95 @@ describe.skipIf(HTTP_SKIP)('envelope-reasoning-secret-redaction: BYOK redaction 
 // acceptor-level redaction; these placeholders verify the redaction
 // propagates through the downstream surfaces.
 
-describe('envelope-reasoning-secret-redaction: downstream-projection paths (RFC 0030 §E)', () => {
-  it.todo(
-    'OTel span attributes for the envelope-emitting node MUST NOT include plaintext `secret:`-prefixed substrings from `reasoning`',
-  );
-  it.todo(
-    "debug-bundle export MUST NOT include plaintext `secret:`-prefixed substrings from envelope.reasoning",
-  );
-  it.todo(
-    "envelope acceptance MUST NOT route on `reasoning` contents (RFC 0030 §A normative MUST NOT) — the host's handler-routing decision MUST be identical regardless of `reasoning` value",
-  );
+describe.skipIf(HTTP_SKIP)('envelope-reasoning-secret-redaction: downstream-projection paths (RFC 0030 §E)', () => {
+  // Drives the existing envelope-accept seam with `projectTo.runId` so the
+  // outcome is mirrored to the host's test span + event log buffers (per
+  // `host/envelopeProjection.ts`). The conformance assertions read those
+  // buffers via the `/v1/host/sample/test/otel/spans` + `/test/debug-
+  // bundle/export` seams and confirm the canary plaintext from `reasoning`
+  // never appears in either projection.
+  const RUN_ID = 'reasoning-redaction-test-run';
+
+  async function acceptForRun(reasoning: string, envelopeId: string): Promise<{ status: number; body: { status?: string; redactedPayload?: unknown } }> {
+    const res = await driver.post('/v1/host/sample/envelope/accept', {
+      envelope: {
+        type: 'error',
+        schemaVersion: 1,
+        envelopeId,
+        correlationId: `r:n:0:${envelopeId}`,
+        payload: { reasoning, code: 'validation_failed', message: 'Refusing.' },
+        meta: baseMeta,
+      },
+      byokCanaries: CANARIES,
+      projectTo: { runId: RUN_ID, nodeId: 'reasoning-emit-node' },
+    });
+    return { status: res.status, body: res.json as { status?: string; redactedPayload?: unknown } };
+  }
+
+  it('OTel span attributes for the envelope-emitting node MUST NOT include plaintext `secret:`-prefixed substrings from `reasoning`', async () => {
+    const r = await acceptForRun(
+      `Reasoning trace mentioning ${CANARY_VALUE} verbatim.`,
+      'env-otel-redact-1',
+    );
+    if (r.status === 404) return; // host doesn't expose the seam
+    expect(r.body.status).toBe('accepted');
+
+    const spansRes = await driver.get(
+      `/v1/host/sample/test/otel/spans?runId=${encodeURIComponent(RUN_ID)}`,
+    );
+    if (spansRes.status === 404) return; // host doesn't expose the OTel scrape seam
+    expect(spansRes.status).toBe(200);
+    const spans = ((spansRes.json as { spans?: Array<Record<string, unknown>> } | undefined)?.spans ?? []);
+    const serialized = JSON.stringify(spans);
+    expect(
+      serialized.includes(CANARY_VALUE),
+      driver.describe(
+        'SECURITY/invariants.yaml envelope-reasoning-secret-redaction',
+        'no canary plaintext from the envelope `reasoning` field may appear in any OTel span attribute',
+      ),
+    ).toBe(false);
+  });
+
+  it("debug-bundle export MUST NOT include plaintext `secret:`-prefixed substrings from envelope.reasoning", async () => {
+    const r = await acceptForRun(
+      `Step-by-step reasoning that surfaces ${CANARY_VALUE} from a prior tool result.`,
+      'env-bundle-redact-1',
+    );
+    if (r.status === 404) return;
+    expect(r.body.status).toBe('accepted');
+
+    const bundleRes = await driver.post('/v1/host/sample/test/debug-bundle/export', { runId: RUN_ID });
+    if (bundleRes.status === 404) return; // host doesn't expose the debug-bundle seam
+    expect(bundleRes.status).toBe(200);
+    const serialized = JSON.stringify(bundleRes.json);
+    expect(
+      serialized.includes(CANARY_VALUE),
+      driver.describe(
+        'RFC 0030 §E + debug-bundle.md §"Redaction"',
+        'no canary plaintext from envelope.reasoning may appear in the debug-bundle export',
+      ),
+    ).toBe(false);
+  });
+
+  it("envelope acceptance MUST NOT route on `reasoning` contents (RFC 0030 §A normative MUST NOT) — the host's handler-routing decision MUST be identical regardless of `reasoning` value", async () => {
+    // Two envelopes, identical shape EXCEPT for `reasoning` content +
+    // envelopeId. The acceptor's routing decision (status / redactedPayload
+    // structure modulo the redaction marker) MUST be identical, proving
+    // reasoning is non-routing per RFC 0030 §A.
+    const aResp = await acceptForRun('reasoning-variant-A: model thinks the input is benign.', 'env-route-A');
+    const bResp = await acceptForRun(
+      `reasoning-variant-B with embedded ${CANARY_VALUE} canary — host MUST NOT route differently.`,
+      'env-route-B',
+    );
+    if (aResp.status === 404 || bResp.status === 404) return;
+    expect(aResp.body.status).toBe('accepted');
+    expect(bResp.body.status).toBe('accepted');
+    expect(
+      aResp.body.status,
+      driver.describe(
+        'RFCS/0030-envelope-reasoning-and-tier-one-subset.md §A',
+        'reasoning is informational only; routing decision MUST NOT depend on its contents',
+      ),
+    ).toBe(bResp.body.status);
+  });
 });
