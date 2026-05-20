@@ -252,16 +252,29 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       // exposes workflows as MCP tools/resources/prompts when
       // OPENWOP_MCP_SERVER_ENABLED=true. Endpoint:
       // POST /v1/host/sample/mcp (sample-vendor-namespaced).
-      mcp: {
-        serverMount: process.env.OPENWOP_MCP_SERVER_ENABLED === 'true'
-          ? {
+      //
+      // Wire shape (per spec/v1/mcp-integration.md §"Conformance +
+      // interop"): a top-level `mcp` slot with `supported: boolean`
+      // and (when supported) `serverUrls: string[]`. Sample-specific
+      // detail (transports, sampling/elicitation bridges) lives
+      // under `mcp.serverMount` so it's namespaced without breaking
+      // the canonical discoverability contract.
+      mcp: process.env.OPENWOP_MCP_SERVER_ENABLED === 'true'
+        ? {
+            supported: true,
+            serverUrls: ['/v1/host/sample/mcp'],
+            serverMount: {
               supported: true,
               transports: ['streamable-http'] as const,
               samplingBridge: true,
               elicitationBridge: true,
-            }
-          : { supported: false },
-      },
+            },
+          }
+        : {
+            supported: false,
+            serverUrls: [],
+            serverMount: { supported: false },
+          },
     },
     extensions: {
       // Sample-namespace extensions block. Clients tolerate absence.

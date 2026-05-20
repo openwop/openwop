@@ -39,6 +39,7 @@ export function registerInterruptRoutes(app: Express, deps: Deps): void {
       if (!interrupt) throw new OpenwopError('interrupt_not_found', 'no open interrupt for this node', 404);
       if (interrupt.resolvedAt) throw new OpenwopError('interrupt_already_resolved', 'interrupt already resolved', 409);
       const body = req.body as ResolveInterruptRequest;
+      validateResumeValue(interrupt, body?.resumeValue);
       await resolveAndResume(storage, hostSuite, interrupt.interruptId, body?.resumeValue);
       const run = await storage.getRun(runId);
       res.json({ runId, nodeId, status: run?.status ?? 'running' });
@@ -107,6 +108,37 @@ export function registerInterruptRoutes(app: Express, deps: Deps): void {
       next(err);
     }
   });
+}
+
+/**
+ * Validate `resumeValue` against the interrupt's declared shape.
+ * Per `interrupt.md §"resumeSchema"`: a resolve payload that
+ * violates the schema MUST be rejected with 400 (validation_error)
+ * or 422. Today we cover the common-case approval-gate enum check
+ * (data.actions must contain resumeValue.action) without pulling
+ * Ajv into the route layer; richer JSON-Schema validation can stack
+ * later as resume contracts grow.
+ */
+function validateResumeValue(
+  interrupt: { kind: string; data: unknown; resumeSchema?: unknown },
+  resumeValue: unknown,
+): void {
+  if (interrupt.kind !== 'approval') return;
+  const data = (interrupt.data ?? {}) as { actions?: unknown };
+  if (!Array.isArray(data.actions)) return;
+  const allowed = data.actions.filter((a): a is string => typeof a === 'string');
+  if (allowed.length === 0) return;
+  const action = (resumeValue && typeof resumeValue === 'object'
+    ? (resumeValue as { action?: unknown }).action
+    : undefined);
+  if (typeof action !== 'string' || !allowed.includes(action)) {
+    throw new OpenwopError(
+      'validation_error',
+      `resumeValue.action MUST be one of [${allowed.join(', ')}]; received ${JSON.stringify(action)}.`,
+      400,
+      { allowed, received: action },
+    );
+  }
 }
 
 async function resolveAndResume(

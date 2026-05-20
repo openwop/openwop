@@ -11,6 +11,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Workflow-engine sample — MCP discovery shape + approval resume validation (2026-05-19)
+
+Two surgical wire-shape fixes. Suite delta: 1210 → 1212 passing / 37 → 35 failing.
+
+- **`apps/workflow-engine/backend/typescript/src/routes/discovery.ts`** — `mcp` discovery slot restructured to expose `supported: boolean` + `serverUrls: string[]` at the top level per `spec/v1/mcp-integration.md §"Conformance + interop"`. Sample-specific detail (transports, sampling/elicitation bridges) moves to `mcp.serverMount` so it's namespaced without breaking the canonical discoverability contract. Closes `mcp-discoverability > any advertised MCP capability has well-formed shape`.
+- **`apps/workflow-engine/backend/typescript/src/routes/interrupts.ts`** — new `validateResumeValue(...)` helper called before `resolveAndResume` on `POST /v1/runs/:runId/interrupts/:nodeId`. For approval-kind interrupts, checks `resumeValue.action` against `interrupt.data.actions[]`; rejects mismatches with 400 + `validation_error` + `details.{allowed, received}` per `interrupt.md §resumeSchema`. Closes `interrupt-approval > invalid resolve payload rejected per resumeSchema`. Lightweight enum check today; richer JSON-Schema validation can stack later.
+
+Compatibility: **implementation-only**. Discovery shape change is backward-compatible (sample-specific `mcp.serverMount` is preserved). Resume validation tightens the existing endpoint's contract per spec — previously-accepted invalid payloads now correctly 400.
+
 ### Workflow-engine sample — fixture input-port → variable resolution (2026-05-19)
 
 Closes the executor gap where fixture-shape input declarations (`nodes[].inputs.portName = {type: 'variable', variableName: 'X'}`) were silently dropped. The executor now resolves these references against the run's variable bag before invoking nodes; literal-shape inputs pass through unchanged. Combined with the `core.delay` node's new fallback to `ctx.inputs.delayMs`, this unblocks the cancellation + bulk-cancel mixed-outcome paths. Suite delta: 1206 → 1210 passing / 41 → 37 failing.
