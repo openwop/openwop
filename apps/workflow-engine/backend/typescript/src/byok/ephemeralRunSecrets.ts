@@ -85,7 +85,13 @@ export function nonEnumerableSecretsView(secrets: Record<string, string>): Recor
  *
  * Returns the redaction marker for matching substrings.
  */
-const CREDENTIAL_SHAPE_RE = /\b(?:sk-(?:ant-|proj-)?[A-Za-z0-9_-]{20,}|Bearer\s+[A-Za-z0-9._~+/=-]{20,}|ghp_[A-Za-z0-9]{20,}|gho_[A-Za-z0-9]{20,})\b|CANARY-openwop-CONFORMANCE-NEVER-SECRET[A-Za-z0-9_-]*/g;
+// Negative lookbehind/lookahead boundaries instead of `\b` because the
+// token classes include `_` and `-`, which `\b` treats inconsistently
+// (`_` is a word char; `-` isn't). A `_`/`-` adjacent to a credential
+// shape would skip detection via `\b`. The lookarounds anchor to
+// alphanumerics + underscore explicitly, so a token followed by `_xyz`
+// (snake_case context) still matches.
+const CREDENTIAL_SHAPE_RE = /(?<![A-Za-z0-9_])(?:sk-(?:ant-|proj-)?[A-Za-z0-9_-]{20,}|Bearer\s+[A-Za-z0-9._~+/=-]{20,}|ghp_[A-Za-z0-9]{20,}|gho_[A-Za-z0-9]{20,})(?![A-Za-z0-9])|CANARY-openwop-CONFORMANCE-NEVER-SECRET[A-Za-z0-9_-]*/g;
 
 function scrubCredentialShapes(s: string): string {
   return s.replace(CREDENTIAL_SHAPE_RE, '<<redacted:credential-shape>>');

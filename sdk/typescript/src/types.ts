@@ -55,6 +55,24 @@ export interface RunSnapshot {
   variables?: Record<string, unknown>;
   channels?: Record<string, unknown>;
   error?: { code?: string; message?: string };
+  /** Linkage back to the parent run when this run was spawned via
+   *  `core.subWorkflow`. Per `interrupt-profiles.md §openwop-interrupt-
+   *  cascade-cancel`: child runs preserve `parentRunId` + `parentNodeId`
+   *  so cancellation can cascade. Absent for top-level runs. */
+  parentRunId?: string;
+  parentNodeId?: string;
+  /** Surfaced for `waiting-*` runs per `interrupt.md §"Signed-token
+   *  callback"`. Carries the open interrupt's metadata so clients can
+   *  resolve via `POST /v1/interrupts/{token}` without consulting a
+   *  separate endpoint. Hosts MAY omit `data` to keep payloads small;
+   *  the token + callbackUrl are the load-bearing fields. */
+  interrupt?: {
+    kind: string;
+    nodeId: string;
+    interruptToken?: string;
+    callbackUrl?: string;
+    data?: unknown;
+  };
 }
 
 /**

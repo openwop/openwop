@@ -51,8 +51,7 @@ The host can suspend until an external event arrives and can correlate that even
 - External event ingestion is idempotent by `(correlationId, eventId)` or an equivalent documented key.
 - Unknown, expired, or already-resolved correlations return canonical error envelopes.
 - The resumed run records the external event payload in the event log or run state with redaction applied.
-
-**Conformance gaps to close:** add a synthetic external-event fixture that posts the event twice and verifies one resume.
+- While suspended, the run's `RunSnapshot.status` is `"waiting-external"` (added to the enum in `schemas/run-snapshot.schema.json` 2026-05-20). Hosts that pre-date the enum addition MAY surface `"waiting-input"` instead — readers MUST treat both as observably-equivalent for this profile.
 
 ### `openwop-interrupt-cascade-cancel`
 

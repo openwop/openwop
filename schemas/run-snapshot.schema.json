@@ -25,15 +25,16 @@
         "paused",
         "waiting-approval",
         "waiting-input",
+        "waiting-external",
         "completed",
         "failed",
         "cancelled"
       ],
-      "description": "Current run state. Forward-compat: future statuses MAY be added; readers SHOULD treat unknown values as terminal-unknown rather than throw."
+      "description": "Current run state. `waiting-external` MUST be used when the suspended interrupt's `kind` is `external-event` per `interrupt-profiles.md §openwop-interrupt-external-event` — distinguishes external-event waits from HITL waits at the wire level. Forward-compat: future statuses MAY be added; readers SHOULD treat unknown values as terminal-unknown rather than throw."
     },
     "currentNodeId": {
       "type": "string",
-      "description": "Set when the run is suspended at a specific node (`waiting-approval` / `waiting-input`) — identifies which node holds the interrupt."
+      "description": "Set when the run is suspended at a specific node (`waiting-approval` / `waiting-input` / `waiting-external`) — identifies which node holds the interrupt."
     },
     "startedAt": { "type": "string", "format": "date-time" },
     "completedAt": { "type": "string", "format": "date-time" },

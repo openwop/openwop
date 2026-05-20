@@ -18,6 +18,7 @@ import type {
   CreateRunResponse,
   ForkRunRequest,
   ForkRunResponse,
+  RunSnapshot,
 } from '@openwop/openwop';
 import type { Storage } from '../storage/storage.js';
 import type { HostAdapterSuite } from '../host/index.js';
@@ -43,17 +44,24 @@ const log = createLogger('routes.runs');
 const idempotencyBodyHashes = new Map<string, string>();
 
 function hashRequestBody(body: unknown): string {
-  // Stable JSON stringify for the body. Object key ordering matters
-  // for hash equality — JSON.stringify isn't stable, but for the
-  // run-create payload shapes (workflowId, inputs, metadata,
-  // configurable, etc.) the request body almost always has the same
-  // key order from a given client. The conformance test exercises
-  // the "same key + different body" path explicitly so canonical
-  // ordering isn't required for it to pass; production deployers
-  // who need canonical hashing should swap this for fast-stable-
-  // stringify or similar.
+  // Sort object keys at every level before serializing so two
+  // equivalent requests whose clients varied key order between
+  // retries hash identically (no false 409 replay-mismatch). Not
+  // RFC-8785 canonical (no number canonicalization, no NFC string
+  // normalization) — sufficient for the common case. Production
+  // deployers needing stricter cross-platform guarantees should swap
+  // this for `@noble/canonical-json` or `json-stable-stringify`.
+  function sortDeep(v: unknown): unknown {
+    if (v === null || typeof v !== 'object') return v;
+    if (Array.isArray(v)) return v.map(sortDeep);
+    const out: Record<string, unknown> = {};
+    for (const k of Object.keys(v as Record<string, unknown>).sort()) {
+      out[k] = sortDeep((v as Record<string, unknown>)[k]);
+    }
+    return out;
+  }
   try {
-    return createHash('sha256').update(JSON.stringify(body ?? null)).digest('hex');
+    return createHash('sha256').update(JSON.stringify(sortDeep(body ?? null))).digest('hex');
   } catch {
     return '';
   }
@@ -312,12 +320,13 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
       // runs per `interrupt.md §Signed-token callback`. The first
       // open interrupt's token + callbackUrl is the externally-
       // observable handle clients use to resolve via
-      // POST /v1/interrupts/{token}.
+      // POST /v1/interrupts/{token}. `RunSnapshot.interrupt` is the
+      // canonical shape (sdk/typescript/src/types.ts:RunSnapshot).
       if (run.status.startsWith('waiting-')) {
         const openInterrupts = await storage.listOpenInterrupts(run.runId);
         if (openInterrupts.length > 0) {
           const first = openInterrupts[0]!;
-          (snapshot as Record<string, unknown>).interrupt = {
+          snapshot.interrupt = {
             kind: first.kind,
             nodeId: first.nodeId,
             interruptToken: first.token,
@@ -604,7 +613,10 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
   });
 }
 
-function projectRunSnapshot(run: RunRecord) {
+function projectRunSnapshot(run: RunRecord): RunSnapshot & {
+  parentSeq?: number;
+  forkMode?: 'replay' | 'branch';
+} {
   const variables = snapshotRunVariables(run.runId);
   const parentNodeId = getChildParentNodeId(run.runId);
   return {

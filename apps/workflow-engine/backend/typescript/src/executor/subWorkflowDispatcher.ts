@@ -104,9 +104,21 @@ export interface SubWorkflowResult {
   outputMappingSkipped: boolean;
 }
 
+/** Maximum sub-workflow nesting depth. A workflow A whose subWorkflow
+ *  targets B which subWorkflows back to A (or self → self) would
+ *  recurse infinitely without a bound; each spawn is a separate run
+ *  so the per-run `recursionLimit` cap doesn't catch the
+ *  cross-workflow case. 32 is generous for legitimate fan-out
+ *  patterns and tight enough to stop a hand-crafted DoS fixture
+ *  before it exhausts memory/CPU. Override via env if a real
+ *  deployment needs deeper nesting. */
+const MAX_SUBWORKFLOW_DEPTH = Number(process.env.OPENWOP_MAX_SUBWORKFLOW_DEPTH) || 32;
+
 /** Spawn a child run, wait for terminal, apply output mapping back to
  *  parent's variable bag, return child snapshot. Throws if the
- *  dispatcher isn't initialized or the child workflow isn't found. */
+ *  dispatcher isn't initialized, the child workflow isn't found, the
+ *  ancestor chain exceeds MAX_SUBWORKFLOW_DEPTH, or the same
+ *  workflowId appears more than once in the ancestor chain (cycle). */
 export async function dispatchSubWorkflow(
   opts: SubWorkflowOpts,
 ): Promise<SubWorkflowResult> {
@@ -114,6 +126,31 @@ export async function dispatchSubWorkflow(
     throw new Error('subWorkflow dispatcher not initialized — bootstrap path missing setSubWorkflowDispatcher() call');
   }
   const { storage, hostSuite, executeRun } = deps;
+
+  // Walk the parent chain to enforce depth + cycle invariants
+  // BEFORE allocating the child run. Reading parent → ancestor →
+  // root via storage; bounded by MAX_SUBWORKFLOW_DEPTH so even a
+  // hand-crafted chain can't pathologically slow this check.
+  const ancestorWorkflowIds: string[] = [];
+  let cursorRunId: string | undefined = opts.parentRunId;
+  while (cursorRunId && ancestorWorkflowIds.length < MAX_SUBWORKFLOW_DEPTH) {
+    const ancestor = await storage.getRun(cursorRunId);
+    if (!ancestor) break;
+    ancestorWorkflowIds.push(ancestor.workflowId);
+    cursorRunId = ancestor.parentRunId;
+  }
+  if (ancestorWorkflowIds.length >= MAX_SUBWORKFLOW_DEPTH) {
+    throw Object.assign(
+      new Error(`subWorkflow: ancestor chain depth ${ancestorWorkflowIds.length} exceeds MAX_SUBWORKFLOW_DEPTH=${MAX_SUBWORKFLOW_DEPTH}`),
+      { code: 'subworkflow_depth_exceeded' },
+    );
+  }
+  if (ancestorWorkflowIds.includes(opts.childWorkflowId)) {
+    throw Object.assign(
+      new Error(`subWorkflow: cycle detected — child workflow '${opts.childWorkflowId}' already in ancestor chain (${ancestorWorkflowIds.join(' → ')})`),
+      { code: 'subworkflow_cycle_detected' },
+    );
+  }
 
   // Look up the child workflow definition.
   const wf = await hostSuite.workflowCatalog.getWorkflow(opts.childWorkflowId);
