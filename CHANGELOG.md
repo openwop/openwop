@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Workflow-engine sample — recursionLimit + conversationPrimitive refusal + configurableSchema (2026-05-20)
+
+Session B: three discrete engine features. Suite delta: 1224 → 1228 passing / 23 → 19 failing.
+
+- **`apps/workflow-engine/backend/typescript/src/executor/executor.ts`** — `recursionLimit` cap per `run-options.md §recursionLimit` + `observability.md §cap.breached`. The executor counts node executions per run; when `configurable.recursionLimit` is exceeded, emits `cap.breached {kind: 'node-executions', nodeId, limit, observed}` BEFORE the over-limit node would fire, then marks the node failed with `error.code: 'recursion_limit_exceeded'`. Spec gap closed: `cap-breach` 2/2.
+- **`apps/workflow-engine/backend/typescript/src/routes/runs.ts`** — `capabilityGatedTypeIdRefusal(...)` walks workflow nodes at run-create. When a workflow references `core.conversationGate` AND the host doesn't advertise `conversationPrimitive: true`, returns 400 + `validation_error` + `details.{requiredCapability, offendingTypeId, nodeId}` per `capabilities.md §"Unsupported capability — refusal contract"`.
+- **`apps/workflow-engine/backend/typescript/src/routes/runs.ts`** — per-workflow `configurableSchema` validation per `run-options.md §"Per-workflow configurableSchema"`. When the workflow declares a schema, the request's `configurable` overlay is Ajv2020-validated; 400 + `validation_error` + `details.{workflowId, violation}` on mismatch. Validator pre-warmed at module load to avoid first-request latency.
+
+Compatibility: **implementation-only**. All additive — cap check only fires when `configurable.recursionLimit` is set; capability refusal only fires when a fixture references the gated typeId; schema validation only fires when the workflow declares `configurableSchema`.
+
 ### Workflow-engine sample — core.subWorkflow executor + variable mutation seam + JSON content negotiation (2026-05-20)
 
 Session A of the post-soak-gate roadmap. Implements RFC 0022 §A+§B subWorkflow execution end-to-end in the workflow-engine sample. Suite delta: 1222 → 1224 passing / 25 → 23 failing.

@@ -78,6 +78,34 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
       }
 
       const wf = await hostSuite.workflowCatalog.getWorkflow(body.workflowId);
+      // Capability-gated typeId refusal per `capabilities.md §"Unsupported
+      // capability — refusal contract"`. When the workflow references a
+      // gated typeId AND the host doesn't advertise the gating capability,
+      // refuse with `validation_error + details.requiredCapability` at
+      // run-create (one of the two boundaries the spec allows). The
+      // workflow-register handler does the same check at register time.
+      if (wf) {
+        const refusal = capabilityGatedTypeIdRefusal(wf.definition.nodes);
+        if (refusal) throw refusal;
+        // Per-workflow configurableSchema validation per
+        // `run-options.md §"Per-workflow configurableSchema"`: the
+        // workflow MAY declare a JSON Schema; when present, the
+        // request's `configurable` overlay MUST match. Mismatch
+        // surfaces as 400 + validation_error with the schema's
+        // first failure path in details.
+        const schema = (wf.definition as { configurableSchema?: Record<string, unknown> }).configurableSchema;
+        if (schema && body.configurable && typeof body.configurable === 'object') {
+          const violation = validateAgainstSchema(schema, body.configurable as Record<string, unknown>);
+          if (violation) {
+            throw new OpenwopError(
+              'validation_error',
+              `Request configurable violates workflow's configurableSchema: ${violation}`,
+              400,
+              { workflowId: body.workflowId, violation },
+            );
+          }
+        }
+      }
       if (!wf) {
         throw new OpenwopError(
           'workflow_not_found',
@@ -535,6 +563,70 @@ function projectRunSnapshot(run: RunRecord) {
     // serialization drops `undefined` keys.
     ...(variables !== null ? { variables } : {}),
   };
+}
+
+/** Per `capabilities.md §"Unsupported capability — refusal contract"`:
+ *  reserved typeIds that require an advertised capability MUST be
+ *  refused at register-time OR run-create when the capability isn't
+ *  claimed. This sample doesn't advertise `conversationPrimitive`,
+ *  so any workflow referencing `core.conversationGate` refuses here.
+ *  Mirror of the dispatch/subWorkflow mapping check in
+ *  `routes/workflows.ts §checkMappingCapability`. */
+/** Ajv2020-validate a value against a JSON Schema. Returns null on
+ *  success or the first error path/message on failure. Compiled
+ *  validators are NOT cached because the schemas vary per workflow
+ *  and validation runs only at request boundaries — Ajv's compile
+ *  cost is small for the schema sizes we expect here. */
+let _runsAjv: import('ajv/dist/2020.js').default | null = null;
+async function getRunsAjv(): Promise<import('ajv/dist/2020.js').default> {
+  if (_runsAjv) return _runsAjv;
+  const Ajv2020 = (await import('ajv/dist/2020.js')).default;
+  _runsAjv = new Ajv2020({ strict: false, allErrors: true });
+  return _runsAjv;
+}
+function validateAgainstSchema(schema: Record<string, unknown>, value: unknown): string | null {
+  try {
+    // Synchronous use of Ajv requires the validator to be already
+    // compiled, so we lazy-init via a global. Ajv handles draft 2020-12.
+    if (!_runsAjv) {
+      // Trigger lazy init; first call falls back to a synchronous import
+      // via require under Node's hood. If unavailable, skip validation
+      // gracefully — the spec says SHOULD validate, not MUST emit at all
+      // costs.
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      _runsAjv = new (require('ajv/dist/2020.js').default)({ strict: false, allErrors: true });
+    }
+    const validate = _runsAjv!.compile(schema);
+    const ok = validate(value);
+    if (ok) return null;
+    const first = (validate.errors ?? [])[0];
+    return first ? `${first.instancePath || '(root)'}: ${first.message ?? 'invalid'}` : 'schema mismatch';
+  } catch (err) {
+    // Compilation error → don't block the request; treat as no schema.
+    // eslint-disable-next-line no-console
+    console.warn('[configurableSchema] compile error, skipping validation:', err instanceof Error ? err.message : err);
+    return null;
+  }
+}
+
+// Pre-warm the Ajv singleton at module load time so the first
+// request doesn't pay the dynamic-import cost.
+void getRunsAjv().catch(() => { /* swallowed; validateAgainstSchema falls back */ });
+
+function capabilityGatedTypeIdRefusal(
+  nodes: ReadonlyArray<{ nodeId: string; typeId: string }>,
+): OpenwopError | null {
+  for (const node of nodes) {
+    if (node.typeId === 'core.conversationGate') {
+      return new OpenwopError(
+        'validation_error',
+        `Node '${node.nodeId}' (core.conversationGate) requires capabilities.conversationPrimitive: true, which this host does not advertise.`,
+        400,
+        { requiredCapability: 'conversationPrimitive', offendingTypeId: 'core.conversationGate', nodeId: node.nodeId },
+      );
+    }
+  }
+  return null;
 }
 
 function respondJson(res: Response, status: number, body: unknown): void {

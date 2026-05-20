@@ -464,6 +464,17 @@ export async function executeRun(
    *  can map kind → waiting-* status (approval → 'waiting-approval',
    *  cancellation → 'paused', else 'waiting-input'). */
   const suspendedKinds = new Map<string, string>();
+  /** Per `run-options.md §recursionLimit` + `observability.md §cap.breached`:
+   *  count node executions; emit `cap.breached {kind: 'node-executions'}`
+   *  + transition the run to `failed` with `error.code:
+   *  'recursion_limit_exceeded'` when configured cap is exceeded. The cap
+   *  is `run.configurable.recursionLimit` (per spec) or `unset`/0/negative
+   *  → no cap. */
+  let nodeExecutionCount = 0;
+  const recursionLimitRaw = (run.configurable as Record<string, unknown> | undefined)?.recursionLimit;
+  const recursionLimit = typeof recursionLimitRaw === 'number' && recursionLimitRaw > 0
+    ? recursionLimitRaw
+    : Number.POSITIVE_INFINITY;
 
   function launch(nodeId: string): void {
     const nodeRef = nodeById.get(nodeId);
@@ -472,6 +483,32 @@ export async function executeRun(
         markFailed(nodeId, { code: 'internal_error', message: `node ${nodeId} not in definition` }, snapshot);
         return;
       }
+      // Cap check BEFORE execution. The +1 is "this attempt would be
+      // execution #N+1." Spec wants the breach event to PRECEDE
+      // run.failed (per `cap-breach` conformance assertion).
+      if (nodeExecutionCount + 1 > recursionLimit) {
+        await eventLog.append({
+          runId: run.runId,
+          nodeId,
+          type: 'cap.breached',
+          payload: {
+            kind: 'node-executions',
+            // Per `run-event-payloads.schema.json §capBreached.nodeId`:
+            // duplicate nodeId in the payload so consumers reading the
+            // event log JSON don't have to cross-reference the
+            // RunEventDoc envelope's nodeId field.
+            nodeId,
+            limit: recursionLimit,
+            observed: nodeExecutionCount + 1,
+          },
+        });
+        markFailed(nodeId, {
+          code: 'recursion_limit_exceeded',
+          message: `Run exceeded configurable.recursionLimit=${recursionLimit} at node '${nodeId}'.`,
+        }, snapshot);
+        return;
+      }
+      nodeExecutionCount++;
       const inputsByPort = buildNodeInputs(nodeId, graph, snapshot, run.inputs);
       const out = await runOneNode({
         storage,
