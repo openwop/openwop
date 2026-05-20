@@ -53,6 +53,16 @@ import { getInvocationLog } from '../executor/invocationLog.js';
 import { createLogger } from '../observability/logger.js';
 import { buildReasoningDirective } from '../host/envelopeDirective.js';
 import { getEnvelopeReasoningConfig } from '../host/envelopeReasoningConfig.js';
+import { getEnvelopeReliabilityConfig } from '../host/envelopeReliabilityConfig.js';
+import {
+  buildRetryAttemptedPayload,
+  buildRetryExhaustedPayload,
+  buildRefusalPayload,
+  buildTruncatedPayload,
+  classifyTruncationStopReason,
+  isRefusalFinishReason,
+  type RetryReason,
+} from '../host/envelopeReliabilityEmit.js';
 
 const log = createLogger('aiProviders.host');
 
@@ -154,7 +164,14 @@ export type AiProviderErrorCode =
   | 'structured_output_invalid'
   | 'invalid_request'
   | 'host_capability_missing'
-  | 'internal_error';
+  | 'internal_error'
+  // RFC 0033 §F — envelope-completion contract error codes.
+  // `envelope_payload_invalid` (existing RFC 0021 code) covers schema-
+  // violation-retry exhaustion; these two cover the new truncation +
+  // refusal paths introduced by the RFC 0033 retry-routing distinction.
+  | 'envelope_payload_invalid'
+  | 'envelope_truncation_unrecoverable'
+  | 'envelope_refused_by_provider';
 
 /** Factory: build a per-call adapter for one node dispatch. */
 export function createAiProvidersAdapter(scope: AdapterScope): {
@@ -531,7 +548,11 @@ async function dispatchPlain(
         messages: toChatMessages(req),
         ...(req.maxTokens != null ? { maxTokens: req.maxTokens } : {}),
         signal,
-      });
+        // RFC 0032/0033 — the conformance-only `mock` provider reads its
+        // pre-programmed response queue keyed by (runId, nodeId). Real
+        // providers ignore these extension fields. See `dispatchMock.ts`.
+        ...(req.provider === 'mock' ? { runId: scope.runId, nodeId: scope.nodeId } : {}),
+      } as Parameters<typeof dispatchChat>[0]);
       return {
         content: raw.completion,
         usage: {
@@ -579,8 +600,225 @@ async function dispatchStructured(
   const augmentedSystem = [req.systemPrompt, schemaHint, reasoningDirective]
     .filter((s): s is string => Boolean(s))
     .join('\n\n');
-  const enrichedReq: AiCallRequest = { ...req, systemPrompt: augmentedSystem };
 
+  // RFC 0032 §B + RFC 0033 §A — envelope-reliability emission + truncation-
+  // vs-schema-violation retry routing. When `endToEndEnabled` is false the
+  // host reverts to the legacy undifferentiated retry loop (no event emit,
+  // no truncation-budget-doubling). Operator circuit-breaker.
+  const reliabilityCfg = getEnvelopeReliabilityConfig();
+  if (!reliabilityCfg.endToEndEnabled) {
+    return dispatchStructuredLegacy(scope, req, apiKey, augmentedSystem);
+  }
+
+  // Per-attempt state. `lastFailure` tracks the prior attempt's classified
+  // failure mode so the NEXT iteration can:
+  //   (a) emit envelope.retry.attempted with the right `reason`
+  //   (b) route truncation through the budget-doubling path WITHOUT a
+  //       corrective fragment (RFC 0033 §B), OR keep the corrective fragment
+  //       on schema-violation WITHOUT a budget change (RFC 0033 §C).
+  let lastError: unknown = null;
+  let lastFailureReason: RetryReason | null = null;
+  let lastFailureMessage: string | undefined;
+  // Mutate per-attempt: truncation retries DOUBLE maxTokens; schema-violation
+  // retries keep the original budget. Starting maxTokens defaults to the
+  // request value (provider-default behavior preserves prior semantics
+  // when undefined). The dispatch helper's request shape uses `maxTokens`
+  // as an optional field — see ChatRequest in providers/dispatch.ts.
+  let currentMaxTokens: number | undefined = req.maxTokens;
+  // Schema hint is suppressed on truncation retries — RFC 0033 §B forbids
+  // applying a schema-correction fragment to truncation failures (the
+  // shape was right; only the output was incomplete).
+  let suppressSchemaHint = false;
+
+  for (let attempt = 1; attempt <= reliabilityCfg.maxRetryAttempts; attempt++) {
+    // Emit envelope.retry.attempted BEFORE the second-and-subsequent calls
+    // per RFC 0032 §B.1 normative text. The first attempt does NOT emit.
+    if (attempt > 1 && lastFailureReason !== null) {
+      await scope.emit?.('envelope.retry.attempted',
+        buildRetryAttemptedPayload(scope.nodeId, attempt, lastFailureReason, lastFailureMessage),
+      ).catch((err) => {
+        log.warn('envelope.retry.attempted emit failed', {
+          err: err instanceof Error ? err.message : String(err),
+        });
+      });
+    }
+
+    // Compose this attempt's system prompt. Truncation retries skip the
+    // schema-shape hint (the previous attempt's shape was correct; only
+    // the budget was insufficient).
+    const systemForAttempt = suppressSchemaHint
+      ? [req.systemPrompt, reasoningDirective].filter((s): s is string => Boolean(s)).join('\n\n')
+      : augmentedSystem;
+    const enrichedReq: AiCallRequest = {
+      ...req,
+      systemPrompt: systemForAttempt,
+      ...(currentMaxTokens !== undefined ? { maxTokens: currentMaxTokens } : {}),
+    };
+
+    let raw: AiCallResult;
+    try {
+      raw = await dispatchPlain(scope, enrichedReq, apiKey);
+    } catch (err) {
+      lastError = err;
+      lastFailureReason = 'parse-error';
+      lastFailureMessage = err instanceof Error ? err.message : String(err);
+      // Reset the truncation-suppression state for the next attempt —
+      // a dispatch-layer error isn't truncation.
+      suppressSchemaHint = false;
+      continue;
+    }
+
+    // Per-attempt failure-mode classification. Refusal is checked first
+    // (it's terminal — no retry); truncation second (drives budget-doubling
+    // on next attempt); schema-violation last (drives corrective-fragment
+    // retry per the existing path).
+    const refusalDetected = isRefusalFinishReason(raw.finishReason);
+    const truncationStopReason = classifyTruncationStopReason(raw.finishReason);
+
+    if (refusalDetected) {
+      // RFC 0032 §B.3 — emit envelope.refusal AND break the loop. Hosts
+      // MUST NOT retry on refusal (circumvention concern per RFC 0033 §D).
+      await scope.emit?.('envelope.refusal',
+        buildRefusalPayload(
+          scope.nodeId,
+          req.provider,
+          req.model,
+          // `refusalText` is the provider's safety message when surfaced.
+          // The mock provider populates raw.content with the refusal text;
+          // production hosts extract from the provider response shape.
+          // SR-1 redaction runs at the eventLog.append boundary in executor.ts
+          // (stripSecretsFromPersisted), so canary substrings get scrubbed
+          // before the payload lands in the durable event log.
+          raw.content ?? null,
+          // safetyCategory is provider-specific; the sample doesn't extract
+          // it from the response. Production hosts populate from the
+          // provider's safety-categories metadata block.
+          null,
+        ),
+      ).catch((err) => {
+        log.warn('envelope.refusal emit failed', { err: err instanceof Error ? err.message : String(err) });
+      });
+      throw new AiProviderError(
+        'envelope_refused_by_provider',
+        // Error message MUST NOT echo the refusal text per RFC 0033 §F +
+        // SECURITY invariant envelope-refusal-no-prompt-leak. The refusal
+        // text lives only on the event-log entry (redacted).
+        `LLM provider returned an explicit refusal for ${req.provider}/${req.model}.`,
+        { provider: req.provider, model: req.model },
+      );
+    }
+
+    if (truncationStopReason !== null) {
+      // RFC 0032 §B.4 — emit envelope.truncated. Compute partialPayload
+      // signal by attempting parse on the truncated content; success here
+      // is unusual but a model could emit valid partial JSON.
+      let partialPayloadAvailable = false;
+      try {
+        if (raw.content && raw.content.length > 0) {
+          JSON.parse(raw.content);
+          partialPayloadAvailable = true;
+        }
+      } catch {
+        partialPayloadAvailable = false;
+      }
+      await scope.emit?.('envelope.truncated',
+        buildTruncatedPayload(
+          scope.nodeId,
+          req.provider,
+          req.model,
+          truncationStopReason,
+          partialPayloadAvailable,
+          raw.usage?.outputTokens ?? null,
+        ),
+      ).catch((err) => {
+        log.warn('envelope.truncated emit failed', { err: err instanceof Error ? err.message : String(err) });
+      });
+      // RFC 0033 §B truncation retry path. Double the budget for the next
+      // attempt; skip the schema-correction fragment (the shape was right).
+      // Combined truncation + parse-failure is routed as truncation per
+      // RFC 0033 §A priority rule — output budget is the upstream cause.
+      lastError = new Error(`response truncated at finish_reason=${raw.finishReason}`);
+      lastFailureReason = 'truncation';
+      lastFailureMessage = `finish_reason=${raw.finishReason}; tokens=${raw.usage?.outputTokens ?? 'unknown'}`;
+      const newBudget =
+        currentMaxTokens !== undefined
+          ? Math.min(currentMaxTokens * reliabilityCfg.truncationBudgetMultiplier, 64_000)
+          : 4_000;
+      currentMaxTokens = newBudget;
+      suppressSchemaHint = true;
+      continue;
+    }
+
+    // Clean-stop branch: parse + schema-validate. Schema-violation drives
+    // the corrective-fragment retry per RFC 0033 §C (already in the
+    // existing schemaHint composition).
+    const text = raw.content ?? '';
+    try {
+      const data = JSON.parse(text);
+      if (validateAgainstSchema(data, req.responseSchema)) {
+        return {
+          ...raw,
+          content: undefined,
+          data,
+        };
+      }
+      lastError = new Error('structured output did not match required-key check');
+      lastFailureReason = 'schema-violation';
+      lastFailureMessage = 'required-key check failed';
+      // RFC 0033 §C — keep the corrective schema hint; don't change budget.
+      suppressSchemaHint = false;
+    } catch (parseErr) {
+      lastError = parseErr;
+      lastFailureReason = 'parse-error';
+      lastFailureMessage = parseErr instanceof Error ? parseErr.message : String(parseErr);
+      // Parse-error also drives the corrective-fragment retry — the model
+      // emitted text that wasn't valid JSON, which is a schema-shape problem
+      // in spirit even when JSON.parse threw before the validator ran.
+      suppressSchemaHint = false;
+    }
+  }
+
+  // Retry budget exhausted. RFC 0032 §B.2 — emit envelope.retry.exhausted
+  // BEFORE throwing. The error code distinguishes truncation-exhaustion
+  // (envelope_truncation_unrecoverable per RFC 0033 §F) from schema-
+  // violation-exhaustion (envelope_payload_invalid, the existing RFC 0021
+  // code). Refusal path threw above and doesn't reach here.
+  const finalReason: RetryReason = lastFailureReason ?? 'unknown';
+  await scope.emit?.('envelope.retry.exhausted',
+    buildRetryExhaustedPayload(scope.nodeId, reliabilityCfg.maxRetryAttempts, finalReason, lastFailureMessage),
+  ).catch((err) => {
+    log.warn('envelope.retry.exhausted emit failed', { err: err instanceof Error ? err.message : String(err) });
+  });
+
+  const errorCode =
+    finalReason === 'truncation'
+      ? 'envelope_truncation_unrecoverable'
+      : 'envelope_payload_invalid';
+  const errorMessage =
+    finalReason === 'truncation'
+      ? `Provider truncated the structured-output emission across ${reliabilityCfg.maxRetryAttempts} attempts; truncation-retry budget exhausted (RFC 0033 §B + §F).`
+      : `Provider did not emit valid JSON matching the response schema after ${reliabilityCfg.maxRetryAttempts} attempts.`;
+  throw new AiProviderError(errorCode, errorMessage, {
+    lastError: lastError instanceof Error ? lastError.message : String(lastError),
+    finalReason,
+  });
+}
+
+/**
+ * Legacy undifferentiated retry loop preserved for operators that set
+ * `OPENWOP_ENVELOPE_RELIABILITY_END_TO_END=false`. No envelope-reliability
+ * emission; no truncation-vs-schema-violation routing. Mirrors the pre-
+ * RFC-0032 dispatchStructured behavior verbatim so a future regression
+ * can't silently change semantics for hosts that opted out of the new
+ * code path.
+ */
+async function dispatchStructuredLegacy(
+  scope: AdapterScope,
+  req: AiCallRequest,
+  apiKey: string,
+  augmentedSystem: string,
+): Promise<AiCallResult> {
+  const enrichedReq: AiCallRequest = { ...req, systemPrompt: augmentedSystem };
   let lastError: unknown = null;
   for (let attempt = 0; attempt <= STRUCTURED_OUTPUT_RETRIES; attempt++) {
     let raw: AiCallResult;
@@ -594,11 +832,7 @@ async function dispatchStructured(
     try {
       const data = JSON.parse(text);
       if (validateAgainstSchema(data, req.responseSchema)) {
-        return {
-          ...raw,
-          content: undefined,
-          data,
-        };
+        return { ...raw, content: undefined, data };
       }
       lastError = new Error('structured output did not match required-key check');
     } catch (parseErr) {
@@ -606,7 +840,7 @@ async function dispatchStructured(
     }
   }
   throw new AiProviderError(
-    'structured_output_invalid',
+    'envelope_payload_invalid',
     `Provider did not emit valid JSON matching the response schema after ${STRUCTURED_OUTPUT_RETRIES + 1} attempts.`,
     { lastError: lastError instanceof Error ? lastError.message : String(lastError) },
   );

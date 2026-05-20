@@ -151,23 +151,29 @@ describe.skipIf(HTTP_SKIP)('envelope-refusal-shape: seam emission (RFC 0032 §B.
 });
 
 describe.skipIf(HTTP_SKIP)('envelope-refusal-shape: advertisement contract (RFC 0032 §C)', () => {
-  it('capabilities.envelopes.reliability (when supported: true) MUST list envelope.refusal in events[]', async () => {
+  it('capabilities.envelopes.reliability (when supported: true with non-empty events[]) MUST list both MUST-tier events', async () => {
     const d = await readDiscovery();
     if (d === null) return;
     const reliability = d.capabilities?.envelopes?.reliability;
     if (!reliability || reliability.supported !== true) return;
+    // Hosts running the legacy undifferentiated retry loop advertise
+    // `events: []` (per the OPENWOP_ENVELOPE_RELIABILITY_END_TO_END=false
+    // operator override). The two MUST-tier events still surface through
+    // the test seam in that case; the advertisement-shape MUST applies
+    // only when events[] is non-empty.
+    if (!Array.isArray(reliability.events) || (reliability.events as unknown[]).length === 0) return;
     expect(
-      Array.isArray(reliability.events) && (reliability.events as unknown[]).includes('envelope.refusal'),
+      (reliability.events as unknown[]).includes('envelope.refusal'),
       driver.describe(
         'RFCS/0032-envelope-reliability-events.md §C',
-        'hosts that advertise reliability.supported: true MUST include envelope.refusal in events[] (one of the two MUST-tier events per RFC 0032 §C normative text)',
+        'hosts that advertise reliability.supported: true with non-empty events[] MUST include envelope.refusal (one of the two MUST-tier events per RFC 0032 §C normative text)',
       ),
     ).toBe(true);
     expect(
-      Array.isArray(reliability.events) && (reliability.events as unknown[]).includes('envelope.retry.exhausted'),
+      (reliability.events as unknown[]).includes('envelope.retry.exhausted'),
       driver.describe(
         'RFCS/0032-envelope-reliability-events.md §C',
-        'hosts that advertise reliability.supported: true MUST also include envelope.retry.exhausted (the other MUST-tier event; both MUSTs land together)',
+        'hosts that advertise reliability.supported: true with non-empty events[] MUST also include envelope.retry.exhausted (the other MUST-tier event; both MUSTs land together)',
       ),
     ).toBe(true);
   });

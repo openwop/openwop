@@ -18,6 +18,7 @@ import { listLoadedConformanceFixtures } from '../host/index.js';
 import { getPromptsHostConfig } from '../host/promptHostConfig.js';
 import { getEnvelopeReasoningConfig } from '../host/envelopeReasoningConfig.js';
 import { getModelCapabilityGateConfig } from '../host/modelCapabilityGateConfig.js';
+import { getEnvelopeReliabilityConfig } from '../host/envelopeReliabilityConfig.js';
 
 interface Deps {
   storage: Storage;
@@ -310,39 +311,58 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
         })(),
         tierOneSubsetCompliance: 'warn',
         // RFC 0032 §C envelope-reliability event vocabulary. The reference
-        // host exposes the six-event surface via the
-        // `POST /v1/host/sample/test/emit-envelope-reliability` test seam,
-        // which writes to the same durable event log
-        // (`host/envelopeEventLog.ts`) that real-dispatch emission would.
-        // Per RFC 0032 §C: when `supported: true`, `events[]` MUST include
-        // `envelope.retry.exhausted` AND `envelope.refusal` (the two MUST-
-        // tier events). The reference host emits BOTH per the canonical
-        // payload shapes through the seam — production hosts wire the
-        // same shapes through their `dispatchStructured()` retry loop.
-        // The four optional events (retry.attempted, truncated,
-        // nlToFormat.engaged, recovery.applied) are honestly OMITTED
-        // until end-to-end emission from the envelope-validation pipeline
-        // lands; the seam still accepts them for conformance shape
-        // assertions, but they're not advertised as production-grade
-        // emission paths yet.
-        reliability: {
-          supported: true,
-          events: ['envelope.retry.exhausted', 'envelope.refusal'],
-          maxRetryAttempts: 3,
-          // RFC 0033 §E envelope-completion contract. The sample
-          // distinguishes truncation (stop_reason: max_tokens) from
-          // schema-violation in its retry routing — the existing
-          // `dispatchStructured()` retry loop applies schema-correction
-          // fragments per spec but does NOT yet inspect `stop_reason` to
-          // route truncation through a budget-doubling path. Honest:
-          // `distinguishesTruncation: false` until the
-          // stop-reason-inspection refinement lands; conformance scenarios
-          // gated on this flag soft-skip.
-          completion: {
-            distinguishesTruncation: false,
-            truncationBudgetMultiplier: 2,
-          },
-        },
+        // host emits four events end-to-end from `dispatchStructured()`'s
+        // retry loop (per-attempt failure classification → emit →
+        // truncation-routing-aware retry per RFC 0033 §A/§B/§C):
+        //   - envelope.retry.attempted (per RFC 0032 §B.1, on attempt ≥ 2)
+        //   - envelope.retry.exhausted (MUST-tier per RFC 0032 §C)
+        //   - envelope.refusal (MUST-tier per RFC 0032 §C)
+        //   - envelope.truncated (SHOULD-tier per RFC 0032 §B.4)
+        // The two MAY-tier events (envelope.nlToFormat.engaged,
+        // envelope.recovery.applied) are honestly OMITTED until NL-to-
+        // Format fallback + lenient parsing land — they're recovery
+        // strategies the sample doesn't yet implement. The seam still
+        // accepts them for conformance shape assertions, but they're not
+        // advertised as production-grade emission paths.
+        //
+        // RFC 0033 §E `distinguishesTruncation: true` — the retry loop
+        // inspects `finishReason: 'length'` and routes truncation through
+        // a budget-multiplied retry per `OPENWOP_ENVELOPE_RELIABILITY_
+        // TRUNCATION_MULTIPLIER` (default 2) WITHOUT applying the schema-
+        // correction fragment. Schema-violation continues to retry with
+        // the corrective fragment + unchanged budget per RFC 0033 §C.
+        //
+        // Operator circuit-breaker: `OPENWOP_ENVELOPE_RELIABILITY_END_TO_END
+        // =false` falls back to legacy undifferentiated retry (no events,
+        // no truncation routing) — the advertisement honors the toggle.
+        reliability: (() => {
+          const rel = getEnvelopeReliabilityConfig();
+          if (!rel.endToEndEnabled) {
+            return {
+              supported: true,
+              events: [],
+              maxRetryAttempts: rel.maxRetryAttempts,
+              completion: {
+                distinguishesTruncation: false,
+                truncationBudgetMultiplier: rel.truncationBudgetMultiplier,
+              },
+            };
+          }
+          return {
+            supported: true,
+            events: [
+              'envelope.retry.attempted',
+              'envelope.retry.exhausted',
+              'envelope.refusal',
+              'envelope.truncated',
+            ],
+            maxRetryAttempts: rel.maxRetryAttempts,
+            completion: {
+              distinguishesTruncation: true,
+              truncationBudgetMultiplier: rel.truncationBudgetMultiplier,
+            },
+          };
+        })(),
       },
       // RFC 0031 §E. The executor evaluates `NodeModule.requiredModelCapabilities`
       // at dispatch-time against the host's configured default provider AND

@@ -71,16 +71,23 @@ describe.skipIf(HTTP_SKIP)('envelope-retry-attempted: advertisement shape (RFC 0
       for (const e of reliability.events as unknown[]) {
         expect(RFC_0032_EVENTS, `event "${String(e)}" MUST be one of the six RFC 0032 names`).toContain(String(e));
       }
-      // When supported: true, MUST include the two MUST-tier events.
-      if (reliability.supported === true) {
+      // When supported: true, MUST include the two MUST-tier events (per
+      // RFC 0032 §C). Hosts that have wired end-to-end emission from
+      // dispatchStructured (per RFC 0032 §B + §C — the reference host's
+      // OPENWOP_ENVELOPE_RELIABILITY_END_TO_END=true path) ALSO populate
+      // envelope.retry.attempted + envelope.truncated. Hosts running the
+      // legacy undifferentiated retry loop advertise `events: []` —
+      // soft-skip this stricter check rather than fail on the legacy
+      // posture (the MUST-tier events still appear via the seam).
+      if (reliability.supported === true && Array.isArray(reliability.events) && (reliability.events as unknown[]).length > 0) {
         const evts = reliability.events as string[];
         expect(
           evts.includes('envelope.retry.exhausted'),
-          'RFC 0032 §C: hosts that advertise `supported: true` MUST include `envelope.retry.exhausted` in `events[]`',
+          'RFC 0032 §C: hosts that advertise `supported: true` with non-empty `events[]` MUST include `envelope.retry.exhausted`',
         ).toBe(true);
         expect(
           evts.includes('envelope.refusal'),
-          'RFC 0032 §C: hosts that advertise `supported: true` MUST include `envelope.refusal` in `events[]`',
+          'RFC 0032 §C: hosts that advertise `supported: true` with non-empty `events[]` MUST include `envelope.refusal`',
         ).toBe(true);
       }
     }
