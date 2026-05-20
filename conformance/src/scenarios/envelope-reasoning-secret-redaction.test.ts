@@ -5,8 +5,10 @@
  * per RFC 0027 §G precedent — lands alongside reference-host emission).
  *
  * Asserts that the envelope-acceptor's BYOK redaction harness walks the
- * `reasoning` field — known `secret:`-prefixed substrings in the payload's
- * `reasoning` MUST be substituted with `[REDACTED:<secretId>]` markers
+ * `reasoning` field — known credential canaries (the `byokCanaries[]`
+ * shape from RFC 0021 §"Redaction (SR-1 carry-forward)", supplied as
+ * `{ value, secretId }` pairs) found inside `reasoning` MUST be
+ * substituted with `[REDACTED:<secretId>]` markers
  * before the envelope is persisted to `RunEventDoc.payload`. The acceptor's
  * recursive walk per `ai-envelope.md` §"Redaction (SR-1 carry-forward)"
  * covers `reasoning` automatically because it's just another payload

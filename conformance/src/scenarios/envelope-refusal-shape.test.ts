@@ -81,7 +81,13 @@ describe.skipIf(HTTP_SKIP)('envelope-refusal-shape: seam emission (RFC 0032 §B.
       nodeId: 'writer',
     });
     if (r.status === 404) return;
-    expect(r.status, 'seam MUST accept a well-formed envelope.refusal payload').toBe(200);
+    expect(
+      r.status,
+      driver.describe(
+        'schemas/run-event-payloads.schema.json §envelopeRefusal',
+        'a payload with the required {nodeId, provider, model} fields MUST be accepted by the seam',
+      ),
+    ).toBe(200);
     expect(r.body.event?.type).toBe('envelope.refusal');
     const payload = r.body.event?.payload ?? {};
     expect(payload.nodeId).toBe('writer');
@@ -104,7 +110,10 @@ describe.skipIf(HTTP_SKIP)('envelope-refusal-shape: seam emission (RFC 0032 §B.
     if (r.status === 404) return;
     expect(
       r.status,
-      'SECURITY invariant envelope-refusal-no-prompt-leak: seam MUST refuse payloads with credential-shaped substrings',
+      driver.describe(
+        'SECURITY/invariants.yaml §envelope-refusal-no-prompt-leak',
+        'envelope.refusal.refusalText MUST be passed through the host BYOK redaction harness; seam refuses payloads carrying secret-canary-* substrings (defense-in-depth CI gate per RFC 0032 §B.3 + §G)',
+      ),
     ).toBe(400);
     expect(r.body.error?.code).toBe('envelope_reliability_credential_leak');
   });
@@ -149,11 +158,17 @@ describe.skipIf(HTTP_SKIP)('envelope-refusal-shape: advertisement contract (RFC 
     if (!reliability || reliability.supported !== true) return;
     expect(
       Array.isArray(reliability.events) && (reliability.events as unknown[]).includes('envelope.refusal'),
-      'RFC 0032 §C: hosts that advertise reliability.supported: true MUST include envelope.refusal in events[] (one of the two MUST-tier events)',
+      driver.describe(
+        'RFCS/0032-envelope-reliability-events.md §C',
+        'hosts that advertise reliability.supported: true MUST include envelope.refusal in events[] (one of the two MUST-tier events per RFC 0032 §C normative text)',
+      ),
     ).toBe(true);
     expect(
       Array.isArray(reliability.events) && (reliability.events as unknown[]).includes('envelope.retry.exhausted'),
-      'RFC 0032 §C: hosts that advertise reliability.supported: true MUST also include envelope.retry.exhausted (the other MUST-tier event)',
+      driver.describe(
+        'RFCS/0032-envelope-reliability-events.md §C',
+        'hosts that advertise reliability.supported: true MUST also include envelope.retry.exhausted (the other MUST-tier event; both MUSTs land together)',
+      ),
     ).toBe(true);
   });
 });

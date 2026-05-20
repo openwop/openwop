@@ -40,9 +40,27 @@ describe.skipIf(HTTP_SKIP)('model-capability-insufficient: dispatch refusal (RFC
       nodeId: 'editor-node',
     });
     if (r.status === 404) return;
-    expect(r.body.outcome?.route).toBe('refuse');
-    expect(r.body.outcome?.fallbackAttempted).toBe(false);
-    expect(r.body.event?.type).toBe('model.capability.insufficient');
+    expect(
+      r.body.outcome?.route,
+      driver.describe(
+        'RFCS/0031-envelope-variants-and-model-capabilities.md §B step 4',
+        'unmet capability + no fallbackModel declared → host MUST refuse',
+      ),
+    ).toBe('refuse');
+    expect(
+      r.body.outcome?.fallbackAttempted,
+      driver.describe(
+        'schemas/run-event-payloads.schema.json §modelCapabilityInsufficient',
+        'fallbackAttempted MUST be false when no fallbackModel was declared on the NodeModule',
+      ),
+    ).toBe(false);
+    expect(
+      r.body.event?.type,
+      driver.describe(
+        'RFCS/0031-envelope-variants-and-model-capabilities.md §D',
+        'refuse path MUST emit `model.capability.insufficient` BEFORE the node failure',
+      ),
+    ).toBe('model.capability.insufficient');
     const payload = (r.body.event?.payload ?? {}) as Record<string, unknown>;
     expect(payload.nodeId).toBe('editor-node');
     expect(payload.provider).toBe('unknown-vendor');
@@ -67,7 +85,10 @@ describe.skipIf(HTTP_SKIP)('model-capability-insufficient: dispatch refusal (RFC
     expect(r.body.outcome?.route).toBe('refuse');
     expect(
       r.body.outcome?.fallbackAttempted,
-      'RFC 0031 §B step 4: fallbackAttempted: true when fallback.provider is not in supportedProviders',
+      driver.describe(
+        'RFCS/0031-envelope-variants-and-model-capabilities.md §B step 3',
+        'fallback provider NOT in capabilities.aiProviders.supported[] → host cannot authenticate → fallbackAttempted MUST be true (the attempt failed at credential resolution)',
+      ),
     ).toBe(true);
     expect(r.body.event?.type).toBe('model.capability.insufficient');
   });
@@ -87,7 +108,10 @@ describe.skipIf(HTTP_SKIP)('model-capability-insufficient: dispatch refusal (RFC
     expect(r.body.outcome?.route).toBe('refuse');
     expect(
       r.body.outcome?.fallbackAttempted,
-      'substitutionSupported: false means the host MUST NOT attempt fallback per RFC 0031 §E',
+      driver.describe(
+        'RFCS/0031-envelope-variants-and-model-capabilities.md §E',
+        'capabilities.modelCapabilities.substitutionSupported: false → host MUST NOT attempt fallback even when NodeModule.fallbackModel is declared → fallbackAttempted MUST be false (no attempt was made)',
+      ),
     ).toBe(false);
   });
 
@@ -110,7 +134,10 @@ describe.skipIf(HTTP_SKIP)('model-capability-insufficient: dispatch refusal (RFC
     expect(r.body.outcome?.route).toBe('refuse');
     expect(
       r.body.outcome?.fallbackAttempted,
-      'RFC 0031 §"Unresolved questions" #3: no recursive fallback — fallbackAttempted: true when the declared fallback itself fails',
+      driver.describe(
+        'RFCS/0031-envelope-variants-and-model-capabilities.md §"Unresolved questions" #3',
+        'recursive fallback NOT permitted — when the declared fallback model itself fails the capability check, host MUST refuse with fallbackAttempted: true (NOT chain to another fallback)',
+      ),
     ).toBe(true);
   });
 });

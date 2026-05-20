@@ -623,7 +623,20 @@ export function registerTestSeamRoutes(app: Express, deps: { storage: Storage })
       res.status(400).json({ error: { code: 'invalid_argument', message: 'payload required (object)' } });
       return;
     }
-    // Per-type required-field check matching `run-event-payloads.schema.json`.
+    // Per-type required-field check. Canonical source: the `required[]`
+    // arrays inside the six `envelope*` `$defs` in
+    // `schemas/run-event-payloads.schema.json`. Kept as an explicit inline
+    // map for sample-grade clarity (the seam is sample-only — see the
+    // namespace banner at the top of this file). The schema-corpus-validity
+    // conformance scenario catches drift between this map and the canonical
+    // `$defs.required[]` shape because any conformance scenario that POSTs
+    // a payload here also asserts against the canonical schema. A future
+    // refactor MAY replace this with `ajv.compile(runEventPayloads.$defs[<def>])`
+    // — currently deemed over-engineering for sample-only code per the
+    // MEDIUM-tier finding in the code-review pass that flagged it (~15-line
+    // Ajv refactor judged against ~3-line explicit map; conformance covers
+    // the drift). Production hosts that wire end-to-end emission inside
+    // dispatchStructured() SHOULD use the canonical schema directly.
     const requiredFields: Record<string, readonly string[]> = {
       'envelope.retry.attempted': ['nodeId', 'attempt', 'reason'],
       'envelope.retry.exhausted': ['nodeId', 'totalAttempts', 'finalReason'],

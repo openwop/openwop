@@ -78,7 +78,10 @@ describe.skipIf(HTTP_SKIP)('envelope-recovery-applied: SECURITY invariant envelo
     if (r.status === 404) return;
     expect(
       r.status,
-      'SECURITY invariant envelope-recovery-no-content-leak: seam MUST refuse payloads carrying pre-recovery output substrings',
+      driver.describe(
+        'SECURITY/invariants.yaml §envelope-recovery-no-content-leak',
+        'envelope.recovery.applied payload MUST NOT carry pre-recovery output substrings; only the canonical {nodeId, path, byteOffset?} keys per RFC 0032 §B.6 + §G — the recovered content rides on downstream RunEventDoc, not on the recovery event',
+      ),
     ).toBe(400);
     expect(r.body.error?.code).toBe('envelope_recovery_content_leak');
   });
@@ -94,7 +97,13 @@ describe.skipIf(HTTP_SKIP)('envelope-recovery-applied: SECURITY invariant envelo
       },
     });
     if (r.status === 404) return;
-    expect(r.status).toBe(400);
+    expect(
+      r.status,
+      driver.describe(
+        'schemas/run-event-payloads.schema.json §envelopeRecoveryApplied',
+        'envelope.recovery.applied has additionalProperties: false on the payload — any extra field MUST be rejected to prevent regression carriers for pre-recovery output (defense-in-depth on top of envelope-recovery-no-content-leak)',
+      ),
+    ).toBe(400);
     expect(r.body.error?.code).toBe('envelope_recovery_content_leak');
   });
 });

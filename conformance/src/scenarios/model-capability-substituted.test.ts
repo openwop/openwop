@@ -66,9 +66,18 @@ describe.skipIf(HTTP_SKIP)('model-capability-substituted: advertisement shape (R
     if (d === null) return;
     const mc = d.capabilities?.modelCapabilities;
     if (mc === undefined) return;
-    expect(typeof mc.supported, 'modelCapabilities.supported MUST be boolean').toBe('boolean');
+    expect(
+      typeof mc.supported,
+      driver.describe(
+        'schemas/capabilities.schema.json §modelCapabilities',
+        'capabilities.modelCapabilities.supported MUST be boolean when the block is advertised',
+      ),
+    ).toBe('boolean');
     if (mc.advertised !== undefined) {
-      expect(Array.isArray(mc.advertised), 'modelCapabilities.advertised MUST be an array').toBe(true);
+      expect(
+        Array.isArray(mc.advertised),
+        driver.describe('RFCS/0031-envelope-variants-and-model-capabilities.md §E', 'modelCapabilities.advertised MUST be an array of capability identifiers'),
+      ).toBe(true);
       const SPEC_RESERVED = ['structured-output', 'discriminator-enum', 'long-context', 'reasoning', 'function-calling'];
       for (const id of mc.advertised as unknown[]) {
         expect(typeof id, 'each advertised identifier MUST be a string').toBe('string');
@@ -77,7 +86,10 @@ describe.skipIf(HTTP_SKIP)('model-capability-substituted: advertisement shape (R
         const isHostExt = /^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*$/.test(idStr);
         expect(
           isReserved || isHostExt,
-          `advertised identifier "${idStr}" MUST be spec-reserved or match x-host-<host>-<key> pattern (RFC 0031 §C)`,
+          driver.describe(
+            'RFCS/0031-envelope-variants-and-model-capabilities.md §C',
+            `advertised identifier "${idStr}" MUST be spec-reserved (structured-output, discriminator-enum, long-context, reasoning, function-calling) or match the x-host-<host>-<key> extension pattern`,
+          ),
         ).toBe(true);
       }
     }
@@ -97,7 +109,13 @@ describe.skipIf(HTTP_SKIP)('model-capability-substituted: dispatch behavior (RFC
       supportedProviders: ['anthropic', 'openai'],
     });
     if (r.status === 404) return; // host doesn't expose the seam
-    expect(r.body.outcome?.route, 'RFC 0031 §B step 2: all met → dispatch').toBe('dispatch');
+    expect(
+      r.body.outcome?.route,
+      driver.describe(
+        'RFCS/0031-envelope-variants-and-model-capabilities.md §B step 2',
+        'all required model capabilities met → route MUST be "dispatch" (gate is a no-op)',
+      ),
+    ).toBe('dispatch');
     expect(r.body.event, 'no event emitted when gate is a no-op').toBeNull();
   });
 
@@ -122,8 +140,20 @@ describe.skipIf(HTTP_SKIP)('model-capability-substituted: dispatch behavior (RFC
       nodeId: 'writer-node',
     });
     if (r.status === 404) return;
-    expect(r.body.outcome?.route, 'RFC 0031 §B step 3: unmet + fallback + auth → substitute').toBe('substitute');
-    expect(r.body.event?.type).toBe('model.capability.substituted');
+    expect(
+      r.body.outcome?.route,
+      driver.describe(
+        'RFCS/0031-envelope-variants-and-model-capabilities.md §B step 3',
+        'unmet capability + declared fallback + fallback provider authenticatable → route MUST be "substitute"',
+      ),
+    ).toBe('substitute');
+    expect(
+      r.body.event?.type,
+      driver.describe(
+        'RFCS/0031-envelope-variants-and-model-capabilities.md §D',
+        'substitute path MUST emit `model.capability.substituted`',
+      ),
+    ).toBe('model.capability.substituted');
     const payload = (r.body.event?.payload ?? {}) as Record<string, unknown>;
     expect(payload.nodeId, 'payload.nodeId MUST mirror the request').toBe('writer-node');
     expect(payload.originalProvider).toBe('unknown-vendor');
@@ -133,7 +163,10 @@ describe.skipIf(HTTP_SKIP)('model-capability-substituted: dispatch behavior (RFC
     expect(
       Array.isArray(payload.missingCapabilities) &&
         (payload.missingCapabilities as string[]).includes('structured-output'),
-      'missingCapabilities MUST include the subset of required caps the active model did not satisfy',
+      driver.describe(
+        'schemas/run-event-payloads.schema.json §modelCapabilitySubstituted',
+        'missingCapabilities[] MUST include the subset of required capabilities the active model did not satisfy',
+      ),
     ).toBe(true);
   });
 
@@ -151,8 +184,20 @@ describe.skipIf(HTTP_SKIP)('model-capability-substituted: dispatch behavior (RFC
       supportedProviders: ['anthropic', 'unknown-vendor'],
     });
     if (r.status === 404) return;
-    expect(r.body.outcome?.route, "substitutionSupported: false MUST refuse even with fallback declared").toBe('refuse');
+    expect(
+      r.body.outcome?.route,
+      driver.describe(
+        'RFCS/0031-envelope-variants-and-model-capabilities.md §E',
+        'capabilities.modelCapabilities.substitutionSupported: false → host MUST refuse on any unmet capability even when NodeModule.fallbackModel is declared',
+      ),
+    ).toBe('refuse');
     expect(r.body.event?.type).toBe('model.capability.insufficient');
-    expect((r.body.event?.payload as { fallbackAttempted?: boolean }).fallbackAttempted).toBe(false);
+    expect(
+      (r.body.event?.payload as { fallbackAttempted?: boolean }).fallbackAttempted,
+      driver.describe(
+        'schemas/run-event-payloads.schema.json §modelCapabilityInsufficient',
+        'fallbackAttempted MUST be false when the refusal is driven by substitutionSupported: false (host posture, not fallback failure)',
+      ),
+    ).toBe(false);
   });
 });

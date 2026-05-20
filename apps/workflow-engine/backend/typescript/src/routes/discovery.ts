@@ -115,6 +115,18 @@ export function registerDiscoveryRoutes(app: Express, _deps: Deps): void {
             tags: ['sample-extension'],
           },
         },
+        '/v1/host/sample/test/evaluate-model-capability-gate': {
+          post: {
+            summary: 'RFC 0031 §B model-capability gate seam — drives model-capability-{substituted,insufficient} conformance scenarios with synthetic input (sample-only; NOT part of the canonical wire contract)',
+            tags: ['sample-extension'],
+          },
+        },
+        '/v1/host/sample/test/emit-envelope-reliability': {
+          post: {
+            summary: 'RFC 0032 §B envelope-reliability event emission seam — drives envelope-{retry.*,refusal,truncated,nlToFormat.engaged,recovery.applied} conformance scenarios via synthetic test-event-log emission with defense-in-depth credentialRef/recoveredContent rejection (sample-only; NOT part of the canonical wire contract)',
+            tags: ['sample-extension'],
+          },
+        },
       },
       tags: [
         { name: 'sample-extension', description: 'Sample-only routes outside the canonical OpenWOP v1 wire contract. Vendor-prefixed under /v1/host/sample/* per spec/v1/host-extensions.md.' },
@@ -299,20 +311,23 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
         tierOneSubsetCompliance: 'warn',
         // RFC 0032 §C envelope-reliability event vocabulary. The reference
         // host exposes the six-event surface via the
-        // `POST /v1/host/sample/test/emit-envelope-reliability` test seam
-        // for conformance assertions. End-to-end emission from the
-        // envelope-validation pipeline (real retry/refusal/truncation
-        // paths in `aiProvidersHost.dispatchStructured()`) is deferred
-        // to a focused refactor; the seam is the honest minimum-viable
-        // surface for the wire-shape contract. `events[]` lists the four
-        // events the host has a clear emission path for (the two MUST-tier
-        // events per RFC 0032 §C plus retry.attempted + truncated, the
-        // events the dispatchStructured retry-loop can drive). NL-to-Format
-        // and recovery.applied are omitted from `events[]` since the
-        // sample doesn't yet implement those recovery strategies.
+        // `POST /v1/host/sample/test/emit-envelope-reliability` test seam,
+        // which writes to the same durable event log
+        // (`host/envelopeEventLog.ts`) that real-dispatch emission would.
+        // Per RFC 0032 §C: when `supported: true`, `events[]` MUST include
+        // `envelope.retry.exhausted` AND `envelope.refusal` (the two MUST-
+        // tier events). The reference host emits BOTH per the canonical
+        // payload shapes through the seam — production hosts wire the
+        // same shapes through their `dispatchStructured()` retry loop.
+        // The four optional events (retry.attempted, truncated,
+        // nlToFormat.engaged, recovery.applied) are honestly OMITTED
+        // until end-to-end emission from the envelope-validation pipeline
+        // lands; the seam still accepts them for conformance shape
+        // assertions, but they're not advertised as production-grade
+        // emission paths yet.
         reliability: {
           supported: true,
-          events: ['envelope.retry.attempted', 'envelope.retry.exhausted', 'envelope.refusal', 'envelope.truncated'],
+          events: ['envelope.retry.exhausted', 'envelope.refusal'],
           maxRetryAttempts: 3,
           // RFC 0033 §E envelope-completion contract. The sample
           // distinguishes truncation (stop_reason: max_tokens) from
