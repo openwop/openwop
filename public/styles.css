@@ -1001,6 +1001,52 @@
     .btn-star { justify-self: start; }
   }
 
+  /* ─── Hero star strip — Option A: compact row below the hero grid.
+   * Reads as a continuation of .meta-row rather than a callout card.
+   * Top hairline rule separates it from the grid above. No card chrome,
+   * no background tint. The .btn-star button (defined above) is reused
+   * unchanged — only the surrounding layout differs from .star-cta. */
+  .hero-star {
+    margin-top: clamp(28px, 4vw, 48px);
+    padding-top: clamp(20px, 3vw, 32px);
+    border-top: 1px solid var(--rule);
+  }
+  .star-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: clamp(24px, 4vw, 48px);
+  }
+  .star-strip-text {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+  .star-strip-text .marker { flex-shrink: 0; }
+  .star-strip-text p {
+    margin: 0;
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: var(--ink-2);
+    max-width: 64ch;
+  }
+  .star-strip-text p em {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--clay);
+    font-size: 1.06em;
+  }
+  @media (max-width: 760px) {
+    .star-strip { flex-direction: column; align-items: flex-start; }
+  }
+  @media (max-width: 640px) {
+    /* At narrowest widths, drop the explanatory copy and keep just
+     * the marker + button so the hero doesn't run away vertically. */
+    .star-strip-text p { display: none; }
+  }
+
   /* ─── Compare ──────────────────────────────────────────────────────── */
   .compare {
     display: grid;
