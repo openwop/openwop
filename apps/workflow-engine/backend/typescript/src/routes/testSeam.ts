@@ -575,6 +575,81 @@ export function registerTestSeamRoutes(app: Express, deps: { storage: Storage })
     res.status(200).json({ event });
   });
 
+  // RFC 0031 §B model-capability gate seam.
+  // POST /v1/host/sample/test/evaluate-model-capability-gate
+  // Body: {
+  //   module: { requiredModelCapabilities: string[], fallbackModel?: { provider, model } },
+  //   activeProvider: string,
+  //   activeModel: string,
+  //   substitutionSupported: boolean,
+  //   supportedProviders: string[]
+  // }
+  // Response: { outcome, event? }
+  //
+  // Drives `evaluateModelCapabilityGate()` with synthetic input and returns
+  // the routing outcome + the event the host would emit. Conformance scenarios
+  // use this to assert the gate's substitute/refuse/dispatch decision matrix
+  // + the event payload shapes per RFC 0031 §D without needing a full run.
+  // The seam does NOT emit into a real event log — it's a pure-function
+  // exerciser for the gate's decision logic.
+  app.post('/v1/host/sample/test/evaluate-model-capability-gate', async (req, res) => {
+    const body = (req.body ?? {}) as {
+      module?: { requiredModelCapabilities?: unknown; fallbackModel?: unknown };
+      activeProvider?: string;
+      activeModel?: string;
+      substitutionSupported?: boolean;
+      supportedProviders?: string[];
+      nodeId?: string;
+    };
+    if (typeof body.activeProvider !== 'string' || typeof body.activeModel !== 'string') {
+      res.status(400).json({ error: { code: 'invalid_argument', message: 'activeProvider + activeModel required' } });
+      return;
+    }
+    const requiredCaps = Array.isArray(body.module?.requiredModelCapabilities)
+      ? (body.module.requiredModelCapabilities as unknown[]).filter((c): c is string => typeof c === 'string')
+      : [];
+    const fallbackRaw = body.module?.fallbackModel;
+    const fallback =
+      fallbackRaw &&
+      typeof fallbackRaw === 'object' &&
+      typeof (fallbackRaw as { provider?: unknown }).provider === 'string' &&
+      typeof (fallbackRaw as { model?: unknown }).model === 'string'
+        ? {
+            provider: (fallbackRaw as { provider: string }).provider,
+            model: (fallbackRaw as { model: string }).model,
+          }
+        : undefined;
+    const { evaluateModelCapabilityGate, buildSubstitutedPayload, buildInsufficientPayload } = await import(
+      '../executor/modelCapabilityGate.js'
+    );
+    const outcome = evaluateModelCapabilityGate({
+      module: {
+        requiredModelCapabilities: requiredCaps,
+        ...(fallback ? { fallbackModel: fallback } : {}),
+      },
+      activeProvider: body.activeProvider,
+      activeModel: body.activeModel,
+      substitutionSupported: body.substitutionSupported === true,
+      supportedProviders: Array.isArray(body.supportedProviders)
+        ? body.supportedProviders.filter((p): p is string => typeof p === 'string')
+        : [],
+    });
+    const nodeId = typeof body.nodeId === 'string' && body.nodeId.length > 0 ? body.nodeId : 'test-node';
+    let event: { type: string; payload: Record<string, unknown> } | null = null;
+    if (outcome.route === 'substitute') {
+      event = {
+        type: 'model.capability.substituted',
+        payload: buildSubstitutedPayload(outcome, nodeId),
+      };
+    } else if (outcome.route === 'refuse') {
+      event = {
+        type: 'model.capability.insufficient',
+        payload: buildInsufficientPayload(outcome, nodeId, body.activeProvider, body.activeModel),
+      };
+    }
+    res.status(200).json({ outcome, event });
+  });
+
   // LLM cache-key recipe seam — replay.md §"LLM cache-key recipe".
   // POST /v1/host/sample/test/llm-cache-key
   // Body: an LLMCacheKeyInput-shaped object (extra fields ignored per §A).

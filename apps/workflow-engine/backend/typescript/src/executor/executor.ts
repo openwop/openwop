@@ -36,6 +36,12 @@ import { getEventLog } from './eventLog.js';
 import { getSuspendManager } from './suspendManager.js';
 import { hasCapability } from './runtimeCapabilities.js';
 import {
+  evaluateModelCapabilityGate,
+  buildInsufficientPayload,
+  buildSubstitutedPayload,
+} from './modelCapabilityGate.js';
+import { getModelCapabilityGateConfig } from '../host/modelCapabilityGateConfig.js';
+import {
   setRunSecrets,
   getRunSecrets,
   clearRunSecrets,
@@ -215,6 +221,75 @@ async function runOneNode(input: {
         return { kind: 'failure', error };
       }
     }
+  }
+
+  // RFC 0031 §B model-capability dispatch gate. Parallel surface to the
+  // host-capability `requires` check above — `requires` gates on host
+  // facilities (per `capabilities.runtimeCapabilities[]`); this gate gates
+  // on MODEL capabilities (per `capabilities.modelCapabilities.advertised[]`).
+  // Evaluated at execute-time against the host's configured default
+  // provider; per-call provider mismatch (a node that calls
+  // `ctx.callAI({provider: 'openai', ...})` from a host where the default
+  // is 'anthropic') is a future refinement requiring `dispatchPlain()`
+  // interception. The sample-grade gate is honest about its scope:
+  // `substitutionSupported: false` by default, so the gate refuses on
+  // any unmet capability rather than attempting fallback. Operators that
+  // wire the interception flip OPENWOP_MODEL_CAPABILITY_SUBSTITUTION=true.
+  // Empty `requiredModelCapabilities` (the common case for non-AI nodes)
+  // makes the gate a no-op via the early-return inside evaluateModelCapabilityGate.
+  if (module.requiredModelCapabilities && module.requiredModelCapabilities.length > 0) {
+    const gateConfig = getModelCapabilityGateConfig();
+    const gateInput: Parameters<typeof evaluateModelCapabilityGate>[0] = {
+      module: {
+        ...(module.requiredModelCapabilities !== undefined ? { requiredModelCapabilities: module.requiredModelCapabilities } : {}),
+        ...(module.fallbackModel !== undefined ? { fallbackModel: module.fallbackModel } : {}),
+      },
+      activeProvider: gateConfig.defaultProvider,
+      activeModel: gateConfig.defaultModel,
+      substitutionSupported: gateConfig.substitutionSupported,
+      supportedProviders: gateConfig.supportedProviders,
+    };
+    const outcome = evaluateModelCapabilityGate(gateInput);
+    if (outcome.route === 'substitute') {
+      // Emit the substitution event per RFC 0031 §D + §B step 3. The
+      // sample's dispatch path does NOT yet honor the fallback at the
+      // per-call boundary (operators set OPENWOP_MODEL_CAPABILITY_SUBSTITUTION
+      // = true only when they've wired the interception). The event
+      // emission is the wire-contract surface; downstream consumers
+      // (conformance, replay, observability) read the durable event log
+      // regardless of whether the dispatcher physically swapped models.
+      await eventLog.append({
+        runId: run.runId,
+        nodeId: nodeRef.nodeId,
+        type: 'model.capability.substituted',
+        payload: stripSecretsFromPersisted(buildSubstitutedPayload(outcome, nodeRef.nodeId)),
+      });
+      // Dispatch proceeds — the node's execute() runs normally.
+    } else if (outcome.route === 'refuse') {
+      // Emit the insufficient event per RFC 0031 §D + §B step 4 BEFORE
+      // failing the node so observability sees the cause-of-refusal
+      // ahead of the node.failed event.
+      await eventLog.append({
+        runId: run.runId,
+        nodeId: nodeRef.nodeId,
+        type: 'model.capability.insufficient',
+        payload: stripSecretsFromPersisted(
+          buildInsufficientPayload(outcome, nodeRef.nodeId, gateConfig.defaultProvider, gateConfig.defaultModel),
+        ),
+      });
+      const error = {
+        code: 'capability_not_provided',
+        message: `model capabilities not satisfied by active provider (${gateConfig.defaultProvider}): missing ${outcome.missingCapabilities.join(', ')}`,
+      };
+      await eventLog.append({
+        runId: run.runId,
+        nodeId: nodeRef.nodeId,
+        type: 'node.failed',
+        payload: stripSecretsFromPersisted({ error }),
+      });
+      return { kind: 'failure', error };
+    }
+    // outcome.route === 'dispatch' — gate satisfied; fall through.
   }
 
   await storage.updateRun(run.runId, { currentNodeId: nodeRef.nodeId });

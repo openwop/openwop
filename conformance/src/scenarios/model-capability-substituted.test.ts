@@ -1,22 +1,14 @@
 /**
  * model-capability-substituted — RFC 0031 §B step 3 + §D + §F runtime behavior.
  *
- * Capability-gated on `capabilities.modelCapabilities.supported: true` AND
- * `capabilities.modelCapabilities.substitutionSupported: true` AND the host's
- * test seam `POST /v1/host/sample/test/synthesize-model-capability-event`.
+ * Capability-gated on `capabilities.modelCapabilities.supported: true`.
  *
- * Asserts:
- *   1. When a NodeModule declares `requiredModelCapabilities` that the active
- *      model does NOT advertise AND `fallbackModel` is reachable, the host
- *      emits exactly one `model.capability.substituted` event with the missing
- *      capability set populated and the fallback coordinates (or `[REDACTED]`
- *      when the host's workspace policy redacts the multi-vendor posture per
- *      SECURITY invariant `model-capability-substituted-no-credential-disclosure`).
- *   2. Dispatch proceeds with the fallback model (no `model.capability.insufficient`
- *      fires; the node executes normally).
- *
- * Behavioral assertions are `it.todo()` until a reference workflow-engine
- * advertises the capability + ships the dispatch gate.
+ * Drives the host's `POST /v1/host/sample/test/evaluate-model-capability-gate`
+ * seam with synthetic inputs that hit each branch of the §B 4-step dispatch
+ * flow. The seam runs the pure `evaluateModelCapabilityGate()` evaluator
+ * and returns both the routing outcome AND the event payload the host
+ * would emit. Conformance asserts the decision-matrix + the event payload
+ * shape per RFC 0031 §D `modelCapabilitySubstituted`.
  *
  * @see RFCS/0031-envelope-variants-and-model-capabilities.md §B + §D + §F
  * @see spec/v1/host-capabilities.md §"Model-capability declarations"
@@ -38,6 +30,21 @@ interface DiscoveryDoc {
   };
 }
 
+interface GateOutcome {
+  route?: 'dispatch' | 'substitute' | 'refuse';
+  originalProvider?: string;
+  originalModel?: string;
+  fallbackProvider?: string;
+  fallbackModel?: string;
+  missingCapabilities?: string[];
+  fallbackAttempted?: boolean;
+}
+
+interface GateResponse {
+  outcome?: GateOutcome;
+  event?: { type?: string; payload?: Record<string, unknown> } | null;
+}
+
 async function readDiscovery(): Promise<DiscoveryDoc | null> {
   try {
     const res = await driver.get('/.well-known/openwop');
@@ -46,6 +53,11 @@ async function readDiscovery(): Promise<DiscoveryDoc | null> {
   } catch {
     return null;
   }
+}
+
+async function evaluateGate(input: Record<string, unknown>): Promise<{ status: number; body: GateResponse }> {
+  const res = await driver.post('/v1/host/sample/test/evaluate-model-capability-gate', input);
+  return { status: res.status, body: res.json as GateResponse };
 }
 
 describe.skipIf(HTTP_SKIP)('model-capability-substituted: advertisement shape (RFC 0031 §E)', () => {
@@ -57,10 +69,10 @@ describe.skipIf(HTTP_SKIP)('model-capability-substituted: advertisement shape (R
     expect(typeof mc.supported, 'modelCapabilities.supported MUST be boolean').toBe('boolean');
     if (mc.advertised !== undefined) {
       expect(Array.isArray(mc.advertised), 'modelCapabilities.advertised MUST be an array').toBe(true);
+      const SPEC_RESERVED = ['structured-output', 'discriminator-enum', 'long-context', 'reasoning', 'function-calling'];
       for (const id of mc.advertised as unknown[]) {
         expect(typeof id, 'each advertised identifier MUST be a string').toBe('string');
         const idStr = String(id);
-        const SPEC_RESERVED = ['structured-output', 'discriminator-enum', 'long-context', 'reasoning', 'function-calling'];
         const isReserved = SPEC_RESERVED.includes(idStr);
         const isHostExt = /^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*$/.test(idStr);
         expect(
@@ -75,24 +87,72 @@ describe.skipIf(HTTP_SKIP)('model-capability-substituted: advertisement shape (R
   });
 });
 
-// Behavioral assertions through the host's `synthesize-model-capability-event`
-// test seam. Promote from `it.todo()` to live assertions when the reference
-// workflow-engine implements the dispatch gate + event emission.
+describe.skipIf(HTTP_SKIP)('model-capability-substituted: dispatch behavior (RFC 0031 §B step 3 + §D)', () => {
+  it('all required capabilities met → outcome: dispatch (no event emitted)', async () => {
+    const r = await evaluateGate({
+      module: { requiredModelCapabilities: ['structured-output', 'function-calling'] },
+      activeProvider: 'anthropic',
+      activeModel: 'claude-3-5-sonnet',
+      substitutionSupported: true,
+      supportedProviders: ['anthropic', 'openai'],
+    });
+    if (r.status === 404) return; // host doesn't expose the seam
+    expect(r.body.outcome?.route, 'RFC 0031 §B step 2: all met → dispatch').toBe('dispatch');
+    expect(r.body.event, 'no event emitted when gate is a no-op').toBeNull();
+  });
 
-describe('model-capability-substituted: dispatch behavior (RFC 0031 §B step 3 + §D)', () => {
-  it.todo(
-    'when active model lacks a required capability AND fallbackModel is declared AND fallback authentication succeeds, the host emits exactly one `model.capability.substituted` event',
-  );
-  it.todo(
-    '`missingCapabilities[]` MUST list the subset of `NodeModule.requiredModelCapabilities` the active model did not satisfy',
-  );
-  it.todo(
-    'dispatch proceeds with the fallback model — node executes normally, no `model.capability.insufficient` fires',
-  );
-  it.todo(
-    'event emission ordering MUST be: capability check → substitution → emit telemetry → dispatch (RFC 0031 §B)',
-  );
-  it.todo(
-    "when the host's workspace policy redacts multi-vendor posture, `fallbackProvider` + `fallbackModel` both appear as `\"[REDACTED]\"` (all-or-nothing per SECURITY invariant `model-capability-substituted-no-credential-disclosure`)",
-  );
+  it('unmet + fallback declared + authenticatable → outcome: substitute + event with originalProvider/originalModel/fallbackProvider/fallbackModel/missingCapabilities', async () => {
+    const r = await evaluateGate({
+      module: {
+        requiredModelCapabilities: ['structured-output', 'long-context'],
+        fallbackModel: { provider: 'anthropic', model: 'claude-opus-4-7' },
+      },
+      // Simulate an active provider that doesn't advertise long-context.
+      // The seam's probe map returns the spec-known capability set for
+      // known providers; we use an unknown provider id here so the gate
+      // sees an empty advertised set and refuses to substitute (no — wait,
+      // we declare a fallback that IS in supportedProviders, so the gate
+      // substitutes). Use 'unknown-vendor' as the original provider and
+      // 'anthropic' as the fallback (which IS in the host's known
+      // providers and advertises structured-output + long-context).
+      activeProvider: 'unknown-vendor',
+      activeModel: 'unknown-model',
+      substitutionSupported: true,
+      supportedProviders: ['anthropic', 'openai', 'unknown-vendor'],
+      nodeId: 'writer-node',
+    });
+    if (r.status === 404) return;
+    expect(r.body.outcome?.route, 'RFC 0031 §B step 3: unmet + fallback + auth → substitute').toBe('substitute');
+    expect(r.body.event?.type).toBe('model.capability.substituted');
+    const payload = (r.body.event?.payload ?? {}) as Record<string, unknown>;
+    expect(payload.nodeId, 'payload.nodeId MUST mirror the request').toBe('writer-node');
+    expect(payload.originalProvider).toBe('unknown-vendor');
+    expect(payload.originalModel).toBe('unknown-model');
+    expect(payload.fallbackProvider).toBe('anthropic');
+    expect(payload.fallbackModel).toBe('claude-opus-4-7');
+    expect(
+      Array.isArray(payload.missingCapabilities) &&
+        (payload.missingCapabilities as string[]).includes('structured-output'),
+      'missingCapabilities MUST include the subset of required caps the active model did not satisfy',
+    ).toBe(true);
+  });
+
+  it('unmet + substitutionSupported: false → outcome: refuse with fallbackAttempted: false (host posture override)', async () => {
+    const r = await evaluateGate({
+      module: {
+        requiredModelCapabilities: ['structured-output'],
+        // Fallback declared but the gate refuses BEFORE attempting because the
+        // host's posture is "no substitution" per RFC 0031 §E.
+        fallbackModel: { provider: 'anthropic', model: 'claude-opus-4-7' },
+      },
+      activeProvider: 'unknown-vendor',
+      activeModel: 'unknown-model',
+      substitutionSupported: false,
+      supportedProviders: ['anthropic', 'unknown-vendor'],
+    });
+    if (r.status === 404) return;
+    expect(r.body.outcome?.route, "substitutionSupported: false MUST refuse even with fallback declared").toBe('refuse');
+    expect(r.body.event?.type).toBe('model.capability.insufficient');
+    expect((r.body.event?.payload as { fallbackAttempted?: boolean }).fallbackAttempted).toBe(false);
+  });
 });

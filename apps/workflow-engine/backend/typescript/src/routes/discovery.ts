@@ -17,6 +17,7 @@ import { getFsSandboxRoot } from '../host/inMemorySurfaces.js';
 import { listLoadedConformanceFixtures } from '../host/index.js';
 import { getPromptsHostConfig } from '../host/promptHostConfig.js';
 import { getEnvelopeReasoningConfig } from '../host/envelopeReasoningConfig.js';
+import { getModelCapabilityGateConfig } from '../host/modelCapabilityGateConfig.js';
 
 interface Deps {
   storage: Storage;
@@ -297,6 +298,23 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
         })(),
         tierOneSubsetCompliance: 'warn',
       },
+      // RFC 0031 §E. The executor evaluates `NodeModule.requiredModelCapabilities`
+      // at dispatch-time against the host's configured default provider AND
+      // emits `model.capability.{substituted,insufficient}` events per
+      // RFC 0031 §D. `substitutionSupported: false` by default — the
+      // sample's `dispatchPlain()` doesn't yet intercept per-call provider
+      // selection; operators that wire the interception set
+      // OPENWOP_MODEL_CAPABILITY_SUBSTITUTION=true. `advertised[]` is the
+      // union of capabilities the host knows each provider in
+      // `aiProviders.supported[]` offers (per `host/modelCapabilityProbe.ts`).
+      modelCapabilities: (() => {
+        const cfg = getModelCapabilityGateConfig();
+        return {
+          supported: cfg.supported,
+          advertised: cfg.advertised,
+          substitutionSupported: cfg.substitutionSupported,
+        };
+      })(),
       memory: { supported: false },
       // RFC 0023 §B.2 — capabilities.conformance.mockAgent. Reference
       // host registers core.conformance.mock-agent unconditionally
