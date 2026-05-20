@@ -128,13 +128,29 @@ export function buildGraph(definition: WorkflowDefinition): SchedulerGraph {
   return { outgoing, incoming, sources };
 }
 
+/** TypeIds whose presence on either endpoint of a DFS back-edge marks
+ *  the cycle as a legitimate RFC 0022 dispatch-supervisor loop — the
+ *  dispatch step owns iteration internally, so the scheduler treats the
+ *  back-edge as inert and proceeds with the forward DAG only. Any
+ *  back-edge whose endpoints are NEITHER of these typeIds is left in
+ *  place so Kahn's algorithm in `topologicalOrder()` trips with
+ *  `cycle_detected`. */
+const DISPATCH_LOOP_TYPEIDS = new Set<string>([
+  'core.dispatch',
+  'core.orchestrator.supervisor',
+]);
+
 function findBackEdges(
   definition: WorkflowDefinition,
   rawOutgoing: Map<string, EdgeDef[]>,
 ): Set<string> {
   const WHITE = 0, GRAY = 1, BLACK = 2;
   const color = new Map<string, number>();
-  for (const n of definition.nodes) color.set(n.nodeId, WHITE);
+  const typeIdByNode = new Map<string, string>();
+  for (const n of definition.nodes) {
+    color.set(n.nodeId, WHITE);
+    typeIdByNode.set(n.nodeId, n.typeId);
+  }
   const back = new Set<string>();
   // Iterative DFS (sample workflows are small but pathological depth
   // shouldn't blow the stack — workflow-definition.schema.json doesn't
@@ -153,7 +169,17 @@ function findBackEdges(
       const e = top.edges[top.idx++]!;
       const c = color.get(e.targetNodeId);
       if (c === GRAY) {
-        back.add(`${e.sourceNodeId}\x00${e.targetNodeId}`);
+        // Only treat as inert when at least one endpoint is a known
+        // dispatch-loop typeId. Otherwise leave the back-edge in the
+        // graph so `topologicalOrder()` rejects the cycle.
+        const srcTypeId = typeIdByNode.get(e.sourceNodeId);
+        const tgtTypeId = typeIdByNode.get(e.targetNodeId);
+        const isDispatchLoop =
+          (srcTypeId !== undefined && DISPATCH_LOOP_TYPEIDS.has(srcTypeId)) ||
+          (tgtTypeId !== undefined && DISPATCH_LOOP_TYPEIDS.has(tgtTypeId));
+        if (isDispatchLoop) {
+          back.add(`${e.sourceNodeId}\x00${e.targetNodeId}`);
+        }
       } else if (c === WHITE) {
         color.set(e.targetNodeId, GRAY);
         stack.push({ node: e.targetNodeId, edges: rawOutgoing.get(e.targetNodeId) ?? [], idx: 0 });

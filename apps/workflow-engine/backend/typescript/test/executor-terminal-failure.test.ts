@@ -7,9 +7,15 @@
  *   3. storage.updateRun({ status: 'failed', error, completedAt })
  *
  * Two paths were previously emitting only `run.failed` and skipping
- * `node.failed` (workflow_not_found / host_capability_missing). The
+ * `node.failed` (workflow_not_found / capability_not_provided). The
  * `emitTerminalFailure` helper in executor.ts normalizes them; this
  * test pins the ordering so future refactors don't regress.
+ *
+ * The canonical error code for unsatisfied node `requires` is
+ * `capability_not_provided` per `spec/v1/capabilities.md §"Runtime
+ * capabilities"`. `host_capability_missing` is a legacy alias still
+ * in OpenwopErrorCode for back-compat with older `aiProviders`
+ * dispatch surfaces; the executor emits the canonical name.
  */
 
 import { describe, expect, it, beforeEach } from 'vitest';
@@ -117,12 +123,12 @@ describe('executor terminal-failure event sequence', () => {
     const nodeFailed = events.find((e) => e.type === 'node.failed')!;
     const runFailed = events.find((e) => e.type === 'run.failed')!;
     expect(nodeFailed.nodeId).toBe('n1');
-    expect((nodeFailed.payload as { error: { code: string } }).error.code).toBe('host_capability_missing');
-    expect((runFailed.payload as { error: { code: string } }).error.code).toBe('host_capability_missing');
+    expect((nodeFailed.payload as { error: { code: string } }).error.code).toBe('capability_not_provided');
+    expect((runFailed.payload as { error: { code: string } }).error.code).toBe('capability_not_provided');
     expect(nodeFailed.sequence).toBeLessThan(runFailed.sequence);
 
     const stored = (await storage.getRun(run.runId))!;
     expect(stored.status).toBe('failed');
-    expect(stored.error?.code).toBe('host_capability_missing');
+    expect(stored.error?.code).toBe('capability_not_provided');
   });
 });

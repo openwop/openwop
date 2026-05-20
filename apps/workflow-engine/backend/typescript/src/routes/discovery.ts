@@ -107,6 +107,12 @@ export function registerDiscoveryRoutes(app: Express, _deps: Deps): void {
             tags: ['sample-extension'],
           },
         },
+        '/v1/host/sample/prompt/resolve': {
+          post: {
+            summary: 'RFC 0029 §A four-layer resolve seam — drives prompt-resolution-chain-* conformance scenarios (sample-only; NOT part of the canonical wire contract)',
+            tags: ['sample-extension'],
+          },
+        },
       },
       tags: [
         { name: 'sample-extension', description: 'Sample-only routes outside the canonical OpenWOP v1 wire contract. Vendor-prefixed under /v1/host/sample/* per spec/v1/host-extensions.md.' },
@@ -187,7 +193,38 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       },
       interrupts: {
         supported: true,
-        kinds: ['approval', 'clarification', 'refinement', 'cancellation'],
+        kinds: ['approval', 'clarification', 'refinement', 'cancellation', 'external-event'],
+        // `interrupt-profiles.md` (FINAL v1) catalogs optional
+        // interrupt profiles. Sample claims only the profiles its
+        // implementation actually backs end-to-end today:
+        //
+        //   - `openwop-interrupt-parent-child` — cancel cascade is
+        //     wired in `routes/runs.ts` (walks `parentRunId`, cancels
+        //     children + invalidates their open interrupts) and the
+        //     `core.subWorkflow` node surfaces the child's open
+        //     interrupt as a parent-side suspension. Conformance
+        //     scenario `interrupt-parent-child-cascade.test.ts`
+        //     passes; INTEROP-MATRIX row updated to match.
+        //   - `openwop-interrupt-external-event` — `core.externalEvent`
+        //     typeId + `interrupts/{token}` correlation matching are
+        //     implemented; the `interrupt-external-event-correlation`
+        //     scenario passes.
+        //
+        // Profiles NOT claimed (despite partial implementation):
+        // `openwop-interrupt-quorum` (vote ledger exists but no
+        // multi-tenant identity story), `openwop-interrupt-auth-required`
+        // (auth path bears it via Bearer enforcement but no signed-
+        // callback-token scoping yet).
+        //
+        // NOTE: the spec profile id for parent-cancel cascade is
+        // `openwop-interrupt-cascade-cancel` (per `interrupt-profiles.md
+        // §"openwop-interrupt-cascade-cancel"`). The conformance fixture
+        // happens to use a `parent-child-cancel` slug but the canonical
+        // profile id is the cascade-cancel one.
+        profiles: [
+          'openwop-interrupt-cascade-cancel',
+          'openwop-interrupt-external-event',
+        ],
       },
       // Sample stubs fork: the route accepts the request and copies
       // events 0..fromSeq, but doesn't reconstruct the executor's
@@ -245,6 +282,15 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
         // missing) instead of the spec'd 501 (capability not provided).
         // When the routes land, flip to true.
         endpointsSupported: false,
+        // RFC 0029 §B — four-layer resolution chain at node-execution
+        // time. The reference host implements the resolver
+        // (`host/promptResolve.ts`) and exercises it via the
+        // `/v1/host/sample/prompt/resolve` test seam used by the three
+        // `prompt-resolution-chain-*` conformance scenarios.
+        // Advertising `agentBindings: true` activates layer 2 (the
+        // `agent-intrinsic` / `agent-overrides` / `agent-library-default`
+        // sub-layers) when a node carries `config.agentId`.
+        agentBindings: true,
         templateKinds: ['system', 'user', 'few-shot', 'schema-hint'],
         variableSources: ['input', 'variable', 'secret', 'context'],
         maxTemplateBytes: 65536,

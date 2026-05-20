@@ -40,6 +40,7 @@ import { buildHostSurfaceBundle, resolvePresignToken } from '../host/inMemorySur
 import type { HostSurfaceBundle, SurfaceArgs, SurfaceFn } from '../host/inMemorySurfaces.js';
 import { acceptEnvelope, type AcceptOptions } from '../host/envelopeAcceptor.js';
 import { composePromptTemplate } from '../host/promptCompose.js';
+import { resolvePromptRef, type PromptKind } from '../host/promptResolve.js';
 import type { Storage } from '../storage/storage.js';
 import type { EnvelopeOutcome } from '../host/envelopeAcceptor.js';
 import { wrapForLLMPrompt, type PromptWrapInput } from '../host/promptInjectionGuard.js';
@@ -660,6 +661,98 @@ export function registerTestSeamRoutes(app: Express, deps: { storage: Storage })
       const code = message.split(':')[0]?.trim() || 'internal_error';
       const status = code === 'template_not_found' ? 404 : 400;
       res.status(status).json({ error: { code, message } });
+    }
+  });
+
+  // RFC 0029 §A — four-layer prompt-resolution test seam. Drives the
+  // conformance scenarios `prompt-resolution-chain-{node-wins,
+  // agent-intrinsic, fallback-cascade}` against the host's
+  // `resolvePromptRef()` helper. Returns the `agent.promptResolved`
+  // event payload shape (per
+  // `schemas/run-event-payloads.schema.json#/$defs/agentPromptResolved`)
+  // synchronously so the scenario can assert without subscribing to
+  // the run event log.
+  //
+  // The seam accepts injected `agentManifest` / `workflowDefaults` /
+  // `hostDefaults` blocks so the conformance suite can exercise every
+  // layer without depending on the live workflow registry, agent-pack
+  // catalog, or `capabilities.prompts.defaults` advertisement.
+  // Gated implicitly by `capabilities.prompts.supported: true` (which
+  // the host advertises whenever this seam is registered). The seam
+  // honors per-request `agentBindingsSupported: false` to let
+  // scenarios assert the layer-2-skipped behavior even when the host
+  // advertises `agentBindings: true`.
+  app.post('/v1/host/sample/prompt/resolve', (req, res) => {
+    const body = (req.body ?? {}) as {
+      kind?: string;
+      node?: {
+        nodeId?: string;
+        config?: {
+          systemPromptRef?: unknown;
+          userPromptRef?: unknown;
+          schemaHintPromptRef?: unknown;
+          fewShotPromptRefs?: unknown[];
+          agentId?: string;
+        };
+      };
+      agentManifest?: {
+        agentId?: string;
+        systemPrompt?: string;
+        systemPromptRef?: string;
+        promptOverrides?: Partial<Record<PromptKind, unknown>>;
+        promptLibraryRef?: string;
+      };
+      workflowDefaults?: { promptRefs?: Partial<Record<PromptKind, unknown>> };
+      hostDefaults?: Partial<Record<PromptKind, unknown>>;
+      agentBindingsSupported?: boolean;
+    };
+    const kinds: readonly PromptKind[] = ['system', 'user', 'few-shot', 'schema-hint'];
+    if (typeof body.kind !== 'string' || !(kinds as readonly string[]).includes(body.kind)) {
+      res.status(400).json({
+        error: { code: 'invalid_argument', message: 'kind MUST be one of system|user|few-shot|schema-hint' },
+      });
+      return;
+    }
+    if (!body.node || typeof body.node.nodeId !== 'string' || body.node.nodeId === '') {
+      res.status(400).json({
+        error: { code: 'invalid_argument', message: 'node.nodeId required' },
+      });
+      return;
+    }
+    try {
+      const result = resolvePromptRef({
+        kind: body.kind as PromptKind,
+        node: { nodeId: body.node.nodeId, config: body.node.config },
+        ...(body.agentManifest && body.agentManifest.agentId
+          ? {
+              agentManifest: {
+                agentId: body.agentManifest.agentId,
+                ...(body.agentManifest.systemPrompt !== undefined
+                  ? { systemPrompt: body.agentManifest.systemPrompt }
+                  : {}),
+                ...(body.agentManifest.systemPromptRef !== undefined
+                  ? { systemPromptRef: body.agentManifest.systemPromptRef }
+                  : {}),
+                ...(body.agentManifest.promptOverrides !== undefined
+                  ? { promptOverrides: body.agentManifest.promptOverrides }
+                  : {}),
+                ...(body.agentManifest.promptLibraryRef !== undefined
+                  ? { promptLibraryRef: body.agentManifest.promptLibraryRef }
+                  : {}),
+              },
+            }
+          : {}),
+        ...(body.workflowDefaults ? { workflowDefaults: body.workflowDefaults } : {}),
+        ...(body.hostDefaults ? { hostDefaults: body.hostDefaults } : {}),
+        ...(typeof body.agentBindingsSupported === 'boolean'
+          ? { agentBindingsSupported: body.agentBindingsSupported }
+          : {}),
+      });
+      res.status(200).json(result);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      const code = message.split(':')[0]?.trim() || 'internal_error';
+      res.status(400).json({ error: { code, message } });
     }
   });
 }
