@@ -62,6 +62,19 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: 'dist',
       sourcemap: true,
+      rollupOptions: {
+        output: {
+          // Code-split the markdown stack into its own chunk. The chat
+          // surface is the only consumer of react-markdown + remark-gfm
+          // + their transitive unified/mdast/micromark deps (~250KB
+          // minified, ~70KB gzip). Splitting keeps the main bundle
+          // under the vite 500KB warning threshold and lets browsers
+          // cache the markdown chunk independently of UI churn.
+          manualChunks: {
+            markdown: ['react-markdown', 'remark-gfm'],
+          },
+        },
+      },
     },
   };
 });

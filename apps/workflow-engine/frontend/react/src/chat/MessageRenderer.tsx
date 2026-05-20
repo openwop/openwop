@@ -20,10 +20,36 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { ContentPart } from './hooks/useChatSession.js';
 import { MicIcon } from './icons/MicIcon.js';
+
+/** Overrides applied to ReactMarkdown's element renderers. Two
+ *  behaviors we want different from the defaults:
+ *
+ *  - `a` — always open assistant-output links in a new tab with
+ *    `rel="noopener noreferrer"`. The chat surface is the long-lived
+ *    workspace; clicking a link should NOT navigate it away from the
+ *    in-flight conversation. URL sanitization (defaultUrlTransform)
+ *    already strips `javascript:` + other unsafe protocols upstream.
+ *
+ *  - `input` — GFM task-list checkboxes (`- [ ]` / `- [x]`) render
+ *    interactive by default but have no handler wired, so clicks
+ *    toggle visually then snap back on re-render. Force `disabled`
+ *    so the checkbox reads as read-only state. */
+const CHAT_MD_COMPONENTS: Components = {
+  a: ({ href, children, ...rest }) => (
+    <a href={href} target="_blank" rel="noopener noreferrer" {...rest}>
+      {children}
+    </a>
+  ),
+  input: (props) => (
+    props.type === 'checkbox'
+      ? <input {...props} disabled style={{ cursor: 'default' }} />
+      : <input {...props} />
+  ),
+};
 
 interface TextSegment { kind: 'text'; content: string }
 interface CodeSegment { kind: 'code'; content: string; language?: string }
@@ -115,7 +141,9 @@ function TextWithCodeBlocks({ content, markdown }: { content: string; markdown: 
 function MarkdownText({ content }: { content: string }): JSX.Element {
   return (
     <div className="chat-md" style={{ wordBreak: 'break-word' }}>
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={CHAT_MD_COMPONENTS}>
+        {content}
+      </ReactMarkdown>
     </div>
   );
 }

@@ -11,6 +11,37 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Sample chat — assistant markdown rendering + code-review follow-ups (2026-05-20)
+
+Implementation-only — sample-grade React FE work. Adds GFM markdown rendering to assistant chat output and closes the senior code-review follow-up findings on commits `2d31dd4` (markdown) and `af87b06` (scheduler back-edge gate).
+
+- **chat/MessageRenderer.tsx (commit `2d31dd4`)** — text segments between fenced code blocks now route through `react-markdown@^10.1.0` + `remark-gfm@^4.0.1` when `markdown={!isUser}` (assistant turns only; user turns render literal so typing `**foo**` doesn't bold). Code-block fence parsing + existing CodeBlock copy-button stay upstream of react-markdown. URL sanitization via `defaultUrlTransform` blocks `javascript:` / non-safe protocols; no `rehype-raw` / no `dangerouslySetInnerHTML`. Components overrides: `a` opens in new tab with `rel="noopener noreferrer"`; `input[type="checkbox"]` (GFM task lists) rendered disabled so the no-op-click toggle illusion is removed.
+- **styles/global.css (commit `2d31dd4`)** — `.chat-md` selectors theme the markdown tree against the CSS-variable palette (headings, lists, blockquotes, GFM tables, links, inline code, `[ ]` task lists). Inline-code styling scoped via `.chat-md :not(pre) > code` so the rare 4-space-indented markdown block code doesn't inherit the inline-pill styling.
+- **vite.config.ts** — `build.rollupOptions.output.manualChunks` splits `react-markdown` + `remark-gfm` + transitive deps into a separate `markdown` chunk. Main bundle dropped 872KB → 708KB minified (164KB markdown chunk loads on the chat surface only).
+
+Backend fixes (commit `af87b06`, swept into the parallel agent's RFC 0029 commit):
+
+- **executor/scheduler.ts** — `findBackEdges` now only drops a DFS back-edge when at least one endpoint's typeId is in `DISPATCH_LOOP_TYPEIDS = {core.dispatch, core.orchestrator.supervisor}`. Previously every back-edge was dropped blindly for RFC 0022 dispatch-loop support, which let user-authored arbitrary cycles silently succeed through `topologicalOrder()`. Restores the documented invariant from the `buildGraph` comment.
+- **test/scheduler.test.ts** — three new positive/negative cases pin the gate: cycle of `t`/`t`/`t` typeIds rejects (existing); cycle of `core.orchestrator.supervisor` + `core.dispatch` resolves; cycle of `vendor.example.work` + `vendor.example.work` rejects (belt-and-suspenders against future refactors that might drop the predicate).
+- **test/executor-terminal-failure.test.ts** — assertions now expect the canonical `capability_not_provided` error code per `spec/v1/capabilities.md §"Runtime capabilities"`. Legacy alias `host_capability_missing` remains in `OpenwopErrorCode` for back-compat with older aiProviders dispatch surfaces.
+
+Compatibility: **additive**. No protocol-tier schema diff, no canonical REST endpoint touched. Markdown rendering is FE application-layer only. Scheduler back-edge gating tightens enforcement back to the documented contract (strictly more conservative; not a wire-shape change). Test-code updates align with the spec rename.
+
+### RFC 0030 (Draft → Active) — envelope `reasoning` field + Tier-1 structured-output subset (2026-05-20)
+
+Spec text + wire-shape work for the lowest-risk additive entry in the envelope LLM-contract-hardening track (RFCs 0030–0033). Promotion under the bootstrap-phase steward waiver per the RFC 0021–0029 precedent. Remaining acceptance criteria (conformance scenarios, SECURITY invariant, INTEROP-MATRIX rows, reference-host emission) define the path to `Accepted`.
+
+- **`spec/v1/ai-envelope.md`** — extended with §"Reasoning field (normative)" between §"Universal kinds (normative)" and §"Vendor-namespaced kinds". Normative SHALL: every envelope payload schema defined by this spec SHALL support an OPTIONAL `reasoning` field of type `string`. Hosts SHOULD prompt the model to populate it on multi-step-reasoning kinds; hosts MUST NOT reject envelopes where `reasoning` is absent; hosts SHALL NOT route on `reasoning` contents. Per-schema posture table for the four universal kinds (`schema.response` deliberately omits). Strict-mode optional-field emulation pattern documented for vendor-kind authors who want OpenAI-strict portability. Three-surface reasoning-relationship paragraph distinguishes envelope `reasoning` from `prompt.composed.systemPrompt|userPrompt` (RFC 0027 host-composed prompt) and `agent.reasoning.delta` (RFC 0024 model thinking-tokens) — complementary, not redundant.
+- **`spec/v1/structured-output-subset.md` (NEW, informative)** — Tier-1 cross-vendor JSON-Schema intersection table (OpenAI strict ∩ Anthropic strict ∩ Gemini `responseSchema`) with per-row "last verified: 2026-05" annotations. Documents `additionalProperties: false` REQUIRED, every property in `required`, `anyOf` SUPPORTED, `oneOf` UNSUPPORTED (Gemini silently drops — silent correctness bug), nesting depth ≤5, property count ≤100, etc. Carries the strict-mode optional-field emulation pattern + per-vendor primary-source citations. Maintenance posture: routine "last verified" date refresh is non-RFC; substantive row support-status changes require follow-up RFC.
+- **`schemas/envelopes/clarification.request.schema.json`** — `reasoning: string` added as OPTIONAL property (NOT in `required`, preserving v1.1 backward compat for emitters that pre-date RFC 0030).
+- **`schemas/envelopes/schema.request.schema.json`** — same.
+- **`schemas/envelopes/error.schema.json`** — same.
+- **`schemas/envelopes/schema.response.schema.json`** — INTENTIONALLY UNMODIFIED (side-channel ack; no reasoning needed per RFC §A).
+- **`schemas/capabilities.schema.json`** — new optional top-level `envelopes` block with `reasoning.{supported, promptDirective: "mandatory" | "advisory" | "off"}` and `tierOneSubsetCompliance: "strict" | "warn" | "off"`. `additionalProperties: true` on the `envelopes` block reserved for future RFC 0032 (`reliability`) and RFC 0033 (`reliability.completion`) extensions. Independent of the RFC 0031 `modelCapabilities` block (sibling top-level key, no collision).
+- **`RFCS/0030-envelope-reasoning-and-tier-one-subset.md`** — status `Draft` → `Active`; status-history block records the promotion + the remaining `Active → Accepted` path.
+
+Compatibility: **additive** per `COMPATIBILITY.md §2.1`. No existing required fields changed; no existing optional fields changed type; no existing event types touched; no existing endpoints touched; no existing MUSTs relaxed. The new `reasoning` field is OPTIONAL on every schema it appears on. Hosts that don't advertise the new capability blocks see zero behavioral change.
+
 ### Code-review follow-ups to dispatch + cascade clusters (2026-05-20)
 
 Six findings from the senior protocol review of commits `0c79082` + `6bcaf85`:

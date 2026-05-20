@@ -77,6 +77,49 @@ describe('topologicalOrder', () => {
     );
     expect(() => topologicalOrder(d, buildGraph(d))).toThrow(/cycle/i);
   });
+
+  it('back-edge from core.dispatch / core.orchestrator.supervisor pair is treated as inert', () => {
+    // RFC 0022 §A — supervisor dispatches into a worker pool; the
+    // back-edge from `core.dispatch` to the supervisor expresses the
+    // re-invocation pattern. `findBackEdges` drops it only when at
+    // least one endpoint's typeId is in DISPATCH_LOOP_TYPEIDS;
+    // topologicalOrder then walks the forward DAG cleanly.
+    const d = defOf(
+      [
+        { nodeId: 's', typeId: 'core.orchestrator.supervisor' },
+        { nodeId: 'd', typeId: 'core.dispatch' },
+      ],
+      [
+        { from: 's', to: 'd' },
+        { from: 'd', to: 's' },
+      ],
+    );
+    expect(() => topologicalOrder(d, buildGraph(d))).not.toThrow();
+    const order = topologicalOrder(d, buildGraph(d));
+    // Supervisor comes first (sole source after the d→s back-edge is
+    // dropped); dispatch follows once supervisor is consumed.
+    expect(order).toEqual(['s', 'd']);
+  });
+
+  it('back-edge between non-dispatch typeIds is still treated as a cycle', () => {
+    // Belt-and-suspenders for the gate: a back-edge whose endpoints
+    // are neither `core.dispatch` nor `core.orchestrator.supervisor`
+    // MUST trip Kahn's leftover-nodes check. This pins the gate so a
+    // future refactor that drops the typeId predicate (or renames the
+    // constants) regresses loudly instead of silently swallowing
+    // user-authored arbitrary cycles.
+    const d = defOf(
+      [
+        { nodeId: 'a', typeId: 'vendor.example.work' },
+        { nodeId: 'b', typeId: 'vendor.example.work' },
+      ],
+      [
+        { from: 'a', to: 'b' },
+        { from: 'b', to: 'a' },
+      ],
+    );
+    expect(() => topologicalOrder(d, buildGraph(d))).toThrow(/cycle/i);
+  });
 });
 
 describe('evaluateTrigger — all 5 rules', () => {
