@@ -27,6 +27,7 @@ import { ensureRuntimeCapabilityRegistryInstalled } from './bootstrap/runtimeCap
 import { ensureNodePackResolverInstalled } from './bootstrap/nodePackResolver.js';
 import { ensureRegistryPacksInstalled } from './bootstrap/installRegistryPacks.js';
 import { ensureLocalPacksMounted } from './bootstrap/mountLocalPacks.js';
+import { loadPromptPacks, defaultPromptPackRoots } from './host/promptPackLoader.js';
 import { seedDefaultHostSurfaces } from './bootstrap/hostSurfaceRegistry.js';
 import { initInMemorySurfaces } from './host/inMemorySurfaces.js';
 import { openStorage } from './storage/index.js';
@@ -184,6 +185,24 @@ export async function createApp(config: AppConfig): Promise<Express> {
     process.env.OPENWOP_INSTALL_PACKS = 'none';
   }
   await ensureRegistryPacksInstalled();
+
+  // RFC 0028 §B prompt-pack boot-time loader. Scans the in-tree
+  // `examples/packs/` plus any operator-managed dir
+  // (`OPENWOP_PROMPT_PACKS_DIR`) for `kind: "prompt"` packs and
+  // registers each pack's templates with the PromptStore. The
+  // in-tree `vendor.openwop.prompt-sample` pack auto-installs when
+  // the backend boots inside the workspace.
+  const promptPackResults = loadPromptPacks({ roots: defaultPromptPackRoots() });
+  if (promptPackResults.length > 0) {
+    log.info('prompt_packs_loaded', {
+      count: promptPackResults.length,
+      packs: promptPackResults.map((r) => ({
+        name: r.packName,
+        version: r.packVersion,
+        templates: r.templatesInstalled,
+      })),
+    });
+  }
 
   const app = express();
 

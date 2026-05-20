@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Host + Conformance — RFC 0028 §B prompt-pack boot-time install (2026-05-20)
+
+Closes the last RFC 0027/0028/0029 acceptance-gate item: the reference workflow-engine sample now installs `kind: "prompt"` packs at boot. New `apps/workflow-engine/backend/typescript/src/host/promptPackLoader.ts` scans `examples/packs/*` (always) plus `OPENWOP_PROMPT_PACKS_DIR` (when set) and, for each `kind: "prompt"` pack found: parses `pack.json`, verifies the Ed25519 detached signature when the manifest carries a `signing` block (recipe lifted verbatim from `registry-operations.md §"Signature verification"`), and calls `promptStore.installPackTemplates()` with the pack's `name` + `version` so each template gets stamped `meta.source: "pack"` + `meta.packName` + `meta.packVersion`. Production hosts opt in to mandatory signing via `OPENWOP_PROMPT_PACK_REQUIRE_SIGNATURE=true`; the in-tree dev pack (`vendor.openwop.prompt-sample`) installs unsigned with a warning log line by default (matches the workflow-chain-sample posture). New `conformance/src/scenarios/prompt-pack-install.test.ts` (capability-gated on `capabilities.prompts.endpointsSupported: true`) asserts ≥ 1 pack-source template surfaces under `GET /v1/prompts?source=pack` with the canonical provenance stamps + the reference pack's `writer-system` template is fetchable by id. Compatibility: **additive** — sample-host implementation; no schema / wire-shape changes (the `meta.packName` / `meta.packVersion` fields landed in 3e7a0d8).
+
 ### Conformance — three `it.todo()` placeholders converted to live tests (2026-05-20)
 
 Drains the three open `it.todo()` placeholders in the conformance suite by landing the infrastructure each one was waiting on. Net suite count: 3 todo → 0 todo; +3 live conformance assertions.
