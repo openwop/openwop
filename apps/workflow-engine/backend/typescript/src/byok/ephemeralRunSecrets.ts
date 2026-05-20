@@ -69,6 +69,28 @@ export function nonEnumerableSecretsView(secrets: Record<string, string>): Recor
  * Called by the storage adapter immediately before persistence and by
  * the event-log adapter immediately before append.
  */
+/**
+ * Vendor-pattern detector for credential-shaped strings the host
+ * SHOULD scrub from event payloads even without an explicit BYOK
+ * registration. Per `capabilities.md §"Secrets" + NFR-7`: arbitrary
+ * credential-shaped inputs MUST NOT leak verbatim into observable
+ * surfaces (event log, OTel spans, debug bundle, etc.).
+ *
+ * Patterns: prefix + 20+ allowed chars (covers OpenAI `sk-`,
+ * Anthropic `sk-ant-`, OpenAI project keys `sk-proj-`, generic
+ * Bearer tokens, GitHub `ghp_`/`gho_`). Conservative — these prefixes
+ * rarely false-positive against normal text. Plus the conformance
+ * suite's `CANARY-openwop-CONFORMANCE-NEVER-SECRET` marker for
+ * explicit-canary test fixtures.
+ *
+ * Returns the redaction marker for matching substrings.
+ */
+const CREDENTIAL_SHAPE_RE = /\b(?:sk-(?:ant-|proj-)?[A-Za-z0-9_-]{20,}|Bearer\s+[A-Za-z0-9._~+/=-]{20,}|ghp_[A-Za-z0-9]{20,}|gho_[A-Za-z0-9]{20,})\b|CANARY-openwop-CONFORMANCE-NEVER-SECRET[A-Za-z0-9_-]*/g;
+
+function scrubCredentialShapes(s: string): string {
+  return s.replace(CREDENTIAL_SHAPE_RE, '<<redacted:credential-shape>>');
+}
+
 export function stripSecretsFromPersisted<T>(payload: T): T {
   const allSecrets = new Map<string, string>();
   for (const [_runId, perRun] of ephemeralByRun) {
@@ -76,12 +98,17 @@ export function stripSecretsFromPersisted<T>(payload: T): T {
       if (val) allSecrets.set(val, ref);
     }
   }
-  if (allSecrets.size === 0) return payload;
 
   function walk(value: unknown): unknown {
     if (typeof value === 'string') {
+      // Tier 1: known BYOK-resolved secrets get a labeled redaction
+      // (preserves credentialRef → marker mapping for audit trails).
       const ref = allSecrets.get(value);
-      return ref ? `<<redacted:${ref}>>` : value;
+      if (ref) return `<<redacted:${ref}>>`;
+      // Tier 2: credential-shaped strings AND conformance canaries
+      // get a generic shape-based scrub. Defense-in-depth against
+      // canaries the BYOK layer never saw.
+      return scrubCredentialShapes(value);
     }
     if (Array.isArray(value)) {
       return value.map(walk);

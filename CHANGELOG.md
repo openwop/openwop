@@ -11,6 +11,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Workflow-engine sample — credential-shape redaction on event payloads (2026-05-19)
+
+Suite delta: 1216 → 1218 passing / 31 → 29 failing. The existing `stripSecretsFromPersisted` only scrubbed values that were RESOLVED secrets known to the BYOK ephemeral store; arbitrary credential-shaped strings (canaries the host never saw, hostile user inputs, etc.) passed through verbatim into the event log. Per `capabilities.md §"Secrets" + NFR-7`, observable surfaces MUST NOT carry raw key material regardless of provenance.
+
+- **`apps/workflow-engine/backend/typescript/src/byok/ephemeralRunSecrets.ts`** — added a tier-2 vendor-pattern scrubber that runs AFTER the known-secret lookup. Matches OpenAI `sk-`, Anthropic `sk-ant-`, OpenAI project `sk-proj-`, generic `Bearer <token>`, GitHub `ghp_`/`gho_`, and the conformance suite's `CANARY-openwop-CONFORMANCE-NEVER-SECRET` marker. Conservative prefix-anchored patterns to minimize false positives on normal text. Replaces matching substrings with `<<redacted:credential-shape>>`.
+
+Closes `redaction-adversarial` (workflow input canaries + bearer-shaped strings round-trip — both directions). Compatibility: implementation-only.
+
 ### Workflow-engine sample — cache hit semantics + debug-bundle endpoint (2026-05-19)
 
 Two more wire-shape fixes. Suite delta: 1214 → 1216 passing / 33 → 31 failing.
