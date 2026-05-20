@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0027 |
 | **Title** | Prompt Templates — wire shape for portable, versioned, variable-bound prompts; `capabilities.prompts` block; `prompt.composed` run event |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | OpenWOP Working Group |
 | **Created** | 2026-05-19 |
-| **Updated** | 2026-05-19 |
+| **Updated** | 2026-05-20 (Draft → Active — see [Status history](#status-history) below). |
 | **Affects** | `spec/v1/prompts.md` (NEW) · `schemas/prompt-template.schema.json` (NEW) · `schemas/prompt-ref.schema.json` (NEW) · `schemas/prompt-kind.schema.json` (NEW — shared enum $def) · `schemas/capabilities.schema.json` (additive `prompts` block) · `schemas/run-event.schema.json` (new `prompt.composed` enum entry) · `schemas/run-event-payloads.schema.json` (new `promptComposed` `$def` + additive `divergencePoint` field on the existing `replayDiverged` `$def` per §F — the shared field is consumed by RFCs 0029 and 0032 as well) · `spec/v1/workflow-definition.md` (note `WorkflowNode.config.promptRef` convention) · `SECURITY/invariants.yaml` (new `prompt-composed-secret-redaction`, `prompt-composed-trust-marker`) · 3 new conformance scenarios · CHANGELOG |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -467,3 +467,22 @@ Checklist the maintainers will use to flip `Status` from `Active` to `Accepted`:
 - `RFCS/0029-prompt-override-hierarchy.md` (forthcoming) — agent-scoped resolution chain + `agent.promptResolved` event.
 - `RFCS/0030-envelope-reasoning-and-tier-one-subset.md` (forthcoming, parallel track) — envelope-payload `reasoning` field (LLM-emitted CoT inside structured output) — sibling to `prompt.composed.systemPrompt` (host-composed prompt) and `agent.reasoning.delta` (model thinking-tokens). The three are complementary, not redundant.
 - External: MyndHyve `PromptEntry`/`PromptLibrary` reference impl (`src/core/canvas/types/index.ts`, `src/core/canvas/stores/promptLibraryStore.ts`, `src/core/workflow/services/WorkflowPromptService.ts`).
+
+## Status history
+
+### Draft → Active (2026-05-20)
+
+Promoted under the bootstrap-phase steward waiver per `CONTRIBUTING.md` §"Bootstrap-phase notes" + `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". Same posture RFCs 0021–0026 and 0030 used in this release. The 7-day comment window would only serve as a delay against zero external reviewers; the waiver is recorded here for the running list in `MAINTAINERS.md`.
+
+Evidence at promotion (spec text + wire shape locked; reference-host emission + conformance suite operational; remaining acceptance criterion — first non-steward host advertisement — defined as the path to `Accepted`):
+
+- **RFC text:** follows `RFCS/0000-template.md` — header table, Summary, Motivation, Proposal (§A wire shape, §B PromptRef + variable schema, §C config conventions, §D capabilities block, §E composition algorithm, §F replay determinism + `divergencePoint` field, §G SECURITY invariants), Compatibility (additive justification), Conformance (3 describe blocks), Alternatives, Unresolved questions, Acceptance criteria, References.
+- **Spec text:** `spec/v1/prompts.md` shipped at status DRAFT v1.x carrying §"Why this exists", §"PromptKind", §"PromptTemplate", §"PromptRef", §"Capability advertisement", §"Composition + observability", §"Resolution chain (normative)" (RFC 0029 contribution), §"Discovery & distribution" (RFC 0028 contribution). `spec/v1/workflow-definition.md` gained the §"Prompt references on nodes" subsection.
+- **Schemas additive (no MUST relaxed):** `prompt-template.schema.json`, `prompt-ref.schema.json`, `prompt-kind.schema.json` (shared enum `$def`), `capabilities.schema.json` (`prompts` block), `run-event.schema.json` (`prompt.composed` enum entry), `run-event-payloads.schema.json` (`promptComposed` `$def` + `divergencePoint` on `replayDiverged`).
+- **Reference host (`apps/workflow-engine/backend/typescript`):** advertises `capabilities.prompts.supported: true` with `observability: "full"`. `bootstrap/nodes.ts` `sampleMockAiNode` walks the resolution chain via `resolvePromptRef()`, emits `agent.promptResolved`, composes via `composePromptTemplate()`, emits `prompt.composed` — pipeline exercised during real workflow dispatch (commit `f2bd5b6`). Composition pipeline enforces SR-1 carry-forward + untrusted-content marker per `SECURITY/threat-model-secret-leakage.md §SR-1` + `threat-model-prompt-injection.md`.
+- **SECURITY invariants:** `prompt-composed-secret-redaction` + `prompt-composed-trust-marker` in `SECURITY/invariants.yaml` with public-test pointers at `prompt-composed-secret-redaction.test.ts` + `prompt-composed-trust-marker.test.ts`. Pass `scripts/check-security-invariants.sh` (56/56 protocol-tier rows).
+- **Conformance:** `prompt-template-shape.test.ts` (always-on schema validation), `prompt-composed-secret-redaction.test.ts`, `prompt-composed-trust-marker.test.ts`, `prompt-end-to-end-events.test.ts` (real-dispatch regression pin). All capability-gated scenarios wired through `behaviorGate('prompts-observability-full', ...)` / `behaviorGate('prompts-supported', ...)` per the strict-mode runner contract.
+- **INTEROP-MATRIX.md:** `capabilities.prompts.*` rows enumerated alongside the existing `capabilities.agents.*` row family.
+- **CHANGELOG.md:** `[1.1.2 — unreleased]` entries cover spec text, schemas, reference host, conformance scenarios, SECURITY invariants, INTEROP-MATRIX update.
+
+Path to `Active → Accepted`: first non-steward host advertises `capabilities.prompts.supported: true` (third-party validation gate per RFC 0001 §"Promotion to Accepted") — MAY be waived under the bootstrap-phase waiver if the steward provides a public conformance run pointing at the advertised endpoint. All other acceptance-criteria boxes ticked.

@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0028 |
 | **Title** | Prompt Library Endpoints (`/v1/prompts/*`) and Prompt Pack Kind (`kind: "prompt"`) |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | OpenWOP Working Group |
 | **Created** | 2026-05-19 |
-| **Updated** | 2026-05-19 |
+| **Updated** | 2026-05-20 (Draft → Active — see [Status history](#status-history) below). |
 | **Affects** | `spec/v1/prompts.md` (extends §"Discovery & distribution") · `spec/v1/registry-operations.md` (adds prompt-pack flow) · `api/openapi.yaml` (adds 6 operations under `/v1/prompts*`) · `schemas/prompt-pack-manifest.schema.json` (NEW) · `schemas/capabilities.schema.json` (extends `prompts` block with `packsSupported`, `mutableLibrary`, `library`) · 5 new conformance scenarios · CHANGELOG |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -452,3 +452,20 @@ Promotion from `Active` → `Accepted`:
 - `api/openapi.yaml` — operation definitions this RFC extends.
 - `RFCS/0029-prompt-override-hierarchy.md` (forthcoming) — Phase C agent-scoped override hierarchy that consumes this RFC's endpoints.
 - `RFCS/0030-envelope-reasoning-and-tier-one-subset.md` (forthcoming, parallel track) — Tier-1 structured-output compatibility subset (informative) — non-binding portability guidance authors of `PromptTemplate.modelHints.envelopeType` MAY cross-check when picking envelope kinds for cross-vendor portability.
+
+## Status history
+
+### Draft → Active (2026-05-20)
+
+Promoted under the bootstrap-phase steward waiver per `CONTRIBUTING.md` §"Bootstrap-phase notes" + `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". Same posture RFCs 0021–0027 and 0030 used in this release.
+
+Evidence at promotion (spec text + wire shape + reference-host endpoints all locked; remaining acceptance criterion — first non-steward host advertisement — defined as the path to `Accepted`):
+
+- **RFC text:** §A (REST surface — 6 operations), §B (prompt-pack kind + signing + install-time validation), §C (mutating endpoints + 403/501 semantics).
+- **Spec text:** `spec/v1/prompts.md §"Discovery & distribution"` extended with the routing table; `spec/v1/registry-operations.md` extended with the prompt-pack install flow.
+- **OpenAPI / schemas:** 6 new operations under `/v1/prompts*` (`listPromptTemplates`, `createPromptTemplate`, `getPromptTemplate`, `updatePromptTemplate`, `deletePromptTemplate`, `renderPromptTemplate`) in `api/openapi.yaml`. `schemas/prompt-pack-manifest.schema.json` (NEW). `schemas/capabilities.schema.json` `prompts` block extended with `endpointsSupported`, `mutableLibrary`, `library`. All under `additionalProperties: false`.
+- **Reference host:** `routes/prompts.ts` serves all 6 routes against the in-memory `PromptStore` (`host/promptStore.ts`). `host/promptPackLoader.ts` (commit `4c2fe40`, hardened in `f70cfb6`) scans `examples/packs/*` + `OPENWOP_PROMPT_PACKS_DIR`, validates manifests against `prompt-pack-manifest.schema.json` via Ajv2020, verifies Ed25519 signatures when the manifest carries a `signing` block, and installs templates via `promptStore.installPackTemplates()` with the canonical `meta.source: "pack"` + `meta.packName` + `meta.packVersion` provenance stamps. In-tree `vendor.openwop.prompt-sample` reference pack auto-installs at boot.
+- **Conformance:** `prompt-list-and-fetch.test.ts`, `prompt-render-deterministic.test.ts`, `prompt-mutable-lifecycle.test.ts`, `prompt-pack-install.test.ts` cover the REST surface + pack-source provenance + CRUD lifecycle. All capability-gated via `behaviorGate('prompts-endpoints', ...)` / `behaviorGate('prompts-mutable', ...)`.
+- **CHANGELOG.md:** `[1.1.2 — unreleased]` entries cover the REST surface, pack-install flow, conformance scenarios.
+
+Path to `Active → Accepted`: first non-steward host advertises `capabilities.prompts.endpointsSupported: true` AND `mutableLibrary: true` AND serves the six routes. MAY be waived under the bootstrap-phase waiver if the steward provides a public conformance run pointing at the advertised endpoint.

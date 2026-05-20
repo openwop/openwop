@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0029 |
 | **Title** | Prompt resolution chain across node / agent / workflow / host layers; `agent.promptResolved` observability event; `AgentManifest.promptOverrides` + `promptLibraryRef` extension |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | OpenWOP Working Group |
 | **Created** | 2026-05-19 |
-| **Updated** | 2026-05-19 |
+| **Updated** | 2026-05-20 (Draft → Active — see [Status history](#status-history) below). |
 | **Affects** | `spec/v1/prompts.md` (adds §"Resolution chain (normative)") · `schemas/agent-manifest.schema.json` (adds `promptLibraryRef`, `promptOverrides`) · `schemas/workflow-definition.schema.json` (adds optional `defaults.promptRefs`) · `schemas/capabilities.schema.json` (extends `prompts` block with `defaults`, `agentBindings`) · `schemas/run-event.schema.json` (new `agent.promptResolved` enum entry) · `schemas/run-event-payloads.schema.json` (new `agentPromptResolved` `$def`) · `spec/v1/host-capabilities.md` (notes resolution-chain implementation point) · 3 new conformance scenarios · CHANGELOG |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -367,3 +367,20 @@ Promotion from `Active` → `Accepted`:
 - `spec/v1/workflow-definition.md` — schema this RFC extends with `defaults`.
 - External: MyndHyve `WorkflowPromptService.resolveForExecution()` reference impl at `src/core/workflow/services/WorkflowPromptService.ts` — closest single-host prior-art for four-layer resolution; this RFC ports its semantics into protocol-level normative text.
 - `RFCS/0031-envelope-variants-and-model-capabilities.md` (forthcoming, parallel track) — `NodeModule.requiredModelCapabilities` + `NodeModule.fallbackModel` + `model.capability.{substituted,insufficient}` events. Orthogonal axis to this RFC's prompt-resolution chain; see §F above.
+
+## Status history
+
+### Draft → Active (2026-05-20)
+
+Promoted under the bootstrap-phase steward waiver per `CONTRIBUTING.md` §"Bootstrap-phase notes" + `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". Same posture RFCs 0021–0028 and 0030 used in this release.
+
+Evidence at promotion (spec text + wire shape + reference-host resolver + `agent.promptResolved` emission all locked; remaining acceptance criterion — first non-steward host advertisement — defined as the path to `Accepted`):
+
+- **RFC text:** §A (four-layer resolution chain — node / agent-* / workflow-defaults / host-defaults), §B (capability advertisement — `agentBindings` + `defaults`), §C (replay + observability — `agent.promptResolved` reserved as a new `divergencePoint` value).
+- **Spec text:** `spec/v1/prompts.md §"Resolution chain (normative)"` carries the normative chain order + per-layer source attribution.
+- **Schemas additive (no MUST relaxed):** `agent-manifest.schema.json` (`promptLibraryRef`, `promptOverrides`), `workflow-definition.schema.json` (`defaults.promptRefs`), `capabilities.schema.json` (`prompts.{defaults, agentBindings}`), `run-event.schema.json` (`agent.promptResolved` enum entry), `run-event-payloads.schema.json` (`agentPromptResolved` `$def`).
+- **Reference host:** `host/promptResolve.ts` implements the four-layer chain pure-functionally; `bootstrap/nodes.ts` walks the chain at dispatch time and emits one `agent.promptResolved` event per kind resolved. `agentBindingsSupported` is plumbed from `host/promptHostConfig.ts` so the advertisement + the dispatch path share a single source of truth. Dispatch-time integration regression-pinned by `prompt-end-to-end-events.test.ts`.
+- **Conformance:** `prompt-resolution-chain-node-wins.test.ts`, `prompt-resolution-chain-agent-intrinsic.test.ts`, `prompt-resolution-chain-fallback-cascade.test.ts` cover Layers 1, 2, 3+4. All capability-gated via `behaviorGate('prompts-supported', ...)` / `behaviorGate('prompts-agent-bindings', ...)`.
+- **CHANGELOG.md:** `[1.1.2 — unreleased]` entries cover the resolver, the `agent.promptResolved` event, the resolution-chain scenarios.
+
+Path to `Active → Accepted`: first non-steward host advertises `capabilities.prompts.supported: true` (and, where the host supports agent bindings, `agentBindings: true`) AND emits `agent.promptResolved` events during dispatch. MAY be waived under the bootstrap-phase waiver if the steward provides a public conformance run pointing at the advertised endpoint.

@@ -23,8 +23,8 @@
 | Status | Count |
 |---|---:|
 | Accepted | 25 |
-| Active | 4 |
-| Draft | 4 |
+| Active | 7 |
+| Draft | 1 |
 
 | Latest RFC | Title | Status |
 |---|---|---|
@@ -32,7 +32,7 @@
 | RFC 0032 | Six envelope-reliability `RunEventType` entries; scope clarification of `ai-envelope.md` section"Run event log integration" line 448 MUST NOT | Active |
 | RFC 0031 | Discriminated-union pattern for envelope variant payloads (normative); `NodeModule.requiredModelCapabilities` + `NodeModule.fallbackModel`; `model.capability.substituted` + `model.capability.insufficient` events | Active |
 | RFC 0030 | Optional `reasoning` field on envelope payload schemas; informative Tier-1 cross-vendor structured-output compatibility subset | Active |
-| RFC 0029 | Prompt resolution chain across node / agent / workflow / host layers; `agent.promptResolved` observability event; `AgentManifest.promptOverrides` + `promptLibraryRef` extension | Draft |
+| RFC 0029 | Prompt resolution chain across node / agent / workflow / host layers; `agent.promptResolved` observability event; `AgentManifest.promptOverrides` + `promptLibraryRef` extension | Active |
 
 ## SDK Helper Coverage
 
