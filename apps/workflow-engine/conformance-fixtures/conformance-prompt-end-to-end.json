@@ -1,0 +1,33 @@
+{
+  "id": "conformance-prompt-end-to-end",
+  "name": "Conformance: Prompt-Library End-to-End",
+  "version": "1.0",
+  "description": "RFC 0027 + RFC 0029 end-to-end. Single mock-ai node configured with `config.systemPromptRef` pointing at a host-built-in template (`conformance.prompt.writer-system`); when the node executes, the host MUST resolve the ref via the four-layer chain (RFC 0029 §A), emit one `agent.promptResolved` event with the chain trace, compose the body (RFC 0027 §E), emit one `prompt.composed` event, and complete the run successfully. Capability-gated: host MUST advertise `capabilities.prompts.supported: true`. See conformance/src/scenarios/prompt-end-to-end-events.test.ts.",
+  "nodes": [
+    {
+      "id": "writer",
+      "typeId": "local.sample.demo.mock-ai",
+      "name": "Writer (mock AI)",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "systemPromptRef": "prompt:conformance.prompt.writer-system@1.0.0"
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    {
+      "name": "prompt",
+      "type": "string",
+      "description": "Optional inline prompt content. The mock-ai node prefers the composed body from `config.systemPromptRef` when present; this variable is the fallback baseline if no ref resolves.",
+      "required": false,
+      "defaultValue": "conformance baseline prompt"
+    }
+  ],
+  "metadata": { "tags": ["conformance", "prompts", "end-to-end"] },
+  "settings": { "timeout": 10000 }
+}

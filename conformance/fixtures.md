@@ -52,6 +52,7 @@ All fixtures MUST advertise:
 | Idempotent | `conformance-idempotent` | Verifies `Idempotency-Key` cache | `completed` | ≤ 5s |
 | Cancellable | `conformance-cancellable` | Verifies `:cancel` endpoint mid-run | `cancelled` after cancel | ≤ 60s (input-controlled) |
 | Capability Missing | `conformance-capability-missing` | Verifies dispatch refusal on unsatisfied `requires` | `failed` (`error.code='capability_not_provided'`) | ≤ 5s |
+| Prompt End-to-End | `conformance-prompt-end-to-end` | RFC 0027 + RFC 0029 end-to-end. Single `mock-ai` node with `config.systemPromptRef` set; host MUST emit `agent.promptResolved` + `prompt.composed` events during dispatch, then complete. Capability-gated on `capabilities.prompts.supported`. | `completed` | ≤ 10s |
 | Dispatch Loop | `conformance-dispatch-loop` | Verifies `core.dispatch` loop mechanism | `completed` | ≤ 30s |
 | Interrupt — Quorum | `conformance-interrupt-quorum` | Verifies `openwop-interrupt-quorum` profile (multi-approver, majority rejection) | `completed` after 3 accepts, `failed` after quorum reject | unbounded (suspends) |
 | Interrupt — External Event | `conformance-interrupt-external-event` | Verifies `openwop-interrupt-external-event` profile (correlation-matched callback) | `completed` after matching POST, `failed` on timeout | ≤ 60s (timeoutMs configured) |

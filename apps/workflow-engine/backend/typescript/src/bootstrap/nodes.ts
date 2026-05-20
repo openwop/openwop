@@ -12,6 +12,9 @@
 import { getNodeRegistry } from '../executor/nodeRegistry.js';
 import type { NodeContext, NodeModule } from '../executor/types.js';
 import { emitCost } from '../observability/costEmitter.js';
+import { composePromptTemplate } from '../host/promptCompose.js';
+import { resolvePromptRef, type PromptKind } from '../host/promptResolve.js';
+import { getTemplate } from '../host/promptStore.js';
 import { dispatchChat, type ChatMessage, type DispatchResult, type ProviderId } from '../providers/dispatch.js';
 import { dispatchAnthropicWithTools, type ToolDef } from '../providers/dispatchAnthropicTools.js';
 import { getDefaultModel } from '../providers/catalog.js';
@@ -450,12 +453,89 @@ const interruptNode: NodeModule = {
 // Mock AI node — demonstrates the cost-attribution pattern. Real
 // deployers wire core.openwop.ai (published pack) which calls actual
 // providers and records real token counts + USD via emitCost().
+//
+// RFC 0027 + RFC 0029 integration: when `config.systemPromptRef` or
+// `config.userPromptRef` is set, the node walks the four-layer
+// resolution chain (per `spec/v1/prompts.md` §"Resolution chain
+// (normative)"), emits one `agent.promptResolved` event per kind
+// resolved, then composes the body via the host's composition
+// pipeline and emits one `prompt.composed` event per composition.
+// The composed body becomes the actual prompt sent to the mock LLM.
 const sampleMockAiNode: NodeModule = {
   typeId: 'local.sample.demo.mock-ai',
   version: '0.1.0',
   async execute(ctx) {
     const inputs = (ctx.inputs && typeof ctx.inputs === 'object') ? (ctx.inputs as Record<string, unknown>) : {};
-    const prompt = typeof inputs.prompt === 'string' ? inputs.prompt : '';
+    const cfg = (ctx.config ?? {}) as {
+      systemPromptRef?: unknown;
+      userPromptRef?: unknown;
+      schemaHintPromptRef?: unknown;
+      fewShotPromptRefs?: unknown[];
+      agentId?: string;
+    };
+
+    // ── Prompt-library integration ────────────────────────────────
+    // For each kind whose ref is set, walk the resolution chain,
+    // emit agent.promptResolved, then (if resolved) compose + emit
+    // prompt.composed. The composed body for the `user` kind (or
+    // `system` if no user ref) becomes the prompt sent to the mock
+    // LLM downstream.
+    const refKinds: readonly PromptKind[] = ['system', 'user'];
+    const composedByKind: Partial<Record<PromptKind, string>> = {};
+    for (const kind of refKinds) {
+      const refField = kind === 'system' ? cfg.systemPromptRef : cfg.userPromptRef;
+      if (refField === undefined || refField === null || refField === '') continue;
+
+      // Layer-1 ref present → walk the chain. The reference host
+      // doesn't carry agent manifests or workflow defaults at the
+      // node-execution boundary in this sample, so the chain only
+      // exercises Layer 1 + Layer 4 (host defaults are also empty).
+      const resolution = resolvePromptRef({
+        kind,
+        node: { nodeId: ctx.nodeId, config: cfg },
+        agentBindingsSupported: true,
+      });
+      // agent.promptResolved emits before any composition so cross-
+      // host debuggers see the chain trace whether or not composition
+      // succeeds. The event carries refs (not bodies), so emission
+      // is safe regardless of observability mode.
+      await ctx.emit('agent.promptResolved', resolution);
+
+      if (resolution.resolved === null) continue;
+
+      // Parse the winning ref to look up the template. Stringy form
+      // `prompt:templateId[@version]` is canonical for the resolver's
+      // output.
+      const refMatch = /^prompt:([a-z0-9][a-z0-9._-]{0,127})(?:@(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?))?$/.exec(resolution.resolved);
+      if (!refMatch) continue;
+      const templateId = refMatch[1]!;
+      const version = refMatch[2];
+      const found = getTemplate(templateId, version !== undefined ? { version } : {});
+      if (!found || found === 'ambiguous') continue;
+
+      // Compose with ctx.inputs as the variable-binding source. The
+      // composer respects PromptVariable.source declarations on the
+      // template (secret-source → BYOK lookup, etc.) and emits the
+      // composed body with redaction + trust-marker preservation.
+      const composed = await composePromptTemplate({
+        templateId,
+        bindings: inputs,
+        observability: 'full',
+        nodeId: ctx.nodeId,
+      });
+      await ctx.emit('prompt.composed', composed);
+      // `composed` is always populated under observability: 'full'
+      // (RFC 0028 fix landed in 5cdbb2c) — surface it for downstream
+      // dispatch regardless of template kind.
+      if (composed.composed !== undefined) composedByKind[kind] = composed.composed;
+    }
+
+    // The mock LLM "prompt" is the composed user body when set,
+    // else the composed system body, else inputs.prompt (back-compat).
+    const prompt = composedByKind.user
+      ?? composedByKind.system
+      ?? (typeof inputs.prompt === 'string' ? inputs.prompt : '');
+
     // Simulated token accounting — real impls read from the provider response.
     const promptTokens = Math.ceil(prompt.length / 4);
     const completionTokens = Math.max(8, Math.floor(promptTokens / 2));
