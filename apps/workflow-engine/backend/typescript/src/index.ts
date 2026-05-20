@@ -93,6 +93,19 @@ export async function createApp(config: AppConfig): Promise<Express> {
     ? dirname(resolvePath(config.storageDsn.slice('sqlite://'.length)))
     : resolvePath('./data');
   configureSecretResolver({ storage, dataDir });
+  // Conformance-only canary secret. When OPENWOP_TEST_SEAM_ENABLED is
+  // set (we're running the conformance suite, not production), pre-
+  // provision the canary used by `byok-roundtrip.test.ts` via
+  // `conformance.secret.echo`. Production deployments NEVER hit this
+  // path. Skipped if a real secret with the same id already exists.
+  if (process.env.OPENWOP_TEST_SEAM_ENABLED === 'true') {
+    void (async () => {
+      try {
+        const { setSecret } = await import('./byok/secretResolver.js');
+        await setSecret('openwop-conformance-canary-secret', 'canary-value-CANARY-openwop-CONFORMANCE-NEVER-SECRET-' + Math.random().toString(36).slice(2, 8));
+      } catch { /* swallow — best-effort */ }
+    })();
+  }
 
   // KMS envelope encryption for signed-in (`user:*`) tenants. When
   // OPENWOP_BYOK_KMS_KEY is set, every signed-in tenant secret gets

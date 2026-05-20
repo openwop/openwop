@@ -11,6 +11,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Workflow-engine sample — BYOK canary echo node + canary provisioning (2026-05-20)
+
+Suite delta: 1236 → 1238 passing / 11 → 9 failing.
+
+- **`apps/workflow-engine/backend/typescript/src/bootstrap/nodes.ts`** — registers `conformance.secret.echo` typeId. Reads `config.secretId`, resolves via `secretResolver.resolveSecret(...)`, emits SHA-256 hex + byte length to variables. NEVER emits the raw value (defense-in-depth on top of the credential-shape redactor). Production deployments SHOULD skip this registration.
+- **`apps/workflow-engine/backend/typescript/src/index.ts`** — pre-provisions `openwop-conformance-canary-secret` when `OPENWOP_TEST_SEAM_ENABLED=true`. Skipped in production (no conformance run, no test seam, no canary).
+
+Closes `byok-roundtrip` 3/3.
+
 ### Workflow-engine sample — core.channelWrite + append-with-TTL reducer (2026-05-20)
 
 Suite delta: 1235 → 1236 passing / 12 → 11 failing.

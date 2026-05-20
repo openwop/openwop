@@ -685,6 +685,38 @@ export function ensureNodesRegistered(): void {
     },
   });
   registry.register(channelWriteNode);
+  // Conformance-only typeId for BYOK end-to-end. Resolves the
+  // host-provisioned canary secret via the SecretResolver, emits
+  // SHA-256 hex + byte length to variables. NEVER emits the raw
+  // value. Production deployments SHOULD skip this registration.
+  registry.register({
+    typeId: 'conformance.secret.echo',
+    version: '1.0.0',
+    async execute(ctx) {
+      const cfg = (ctx.config ?? {}) as { secretId?: unknown };
+      const secretId = typeof cfg.secretId === 'string' ? cfg.secretId : '';
+      if (!secretId) {
+        return { status: 'failure', error: { code: 'invalid_request', message: 'conformance.secret.echo requires config.secretId' } };
+      }
+      const { resolveSecret } = await import('../byok/secretResolver.js');
+      const value = await resolveSecret(secretId, { tenantId: ctx.tenantId });
+      if (!value) {
+        return {
+          status: 'failure',
+          error: { code: 'credential_unavailable', message: `Canary secret '${secretId}' not provisioned by host` },
+        };
+      }
+      const { createHash } = await import('node:crypto');
+      const sha256 = createHash('sha256').update(value).digest('hex');
+      const { setRunVariable } = await import('../host/variablesRuntime.js');
+      setRunVariable(ctx.runId, 'sha256', sha256);
+      setRunVariable(ctx.runId, 'byteLength', value.length);
+      return {
+        status: 'success',
+        outputs: { sha256, byteLength: value.length },
+      };
+    },
+  });
   registry.register(delayNode);
   registry.register(failNode);
   registry.register(approvalGateNode);
