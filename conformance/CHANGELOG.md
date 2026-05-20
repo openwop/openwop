@@ -88,7 +88,7 @@ Strictly additive at the scenario level; the causationId tightening is a behavio
 ### Notes
 
 - `@openwop/openwop@1.1.x` SDK + spec corpus surface are unchanged by this conformance bump — only the conformance package re-publishes per the `openwop-conformance/v*` tag → `publish-conformance` job in `PUBLISHING.md` §"Tag conventions."
-- A handful of `it.todo()` cases remain in the dispatch + subWorkflow scenarios (unset-variable projection, capability-refusal, child-failed/cancelled outputMapping skip, per-worker override precedence, mid-run no-propagation). These are tracked as future work and require conformance-harness extensions (capability-toggle hook, deterministic-fail child fixture, cancellable child fixture, fixture variants omitting defaultValues) outside the scope of this release.
+- A handful of `it.todo()` cases remain in the dispatch + subWorkflow scenarios (unset-variable projection, capability-refusal, child-failed/cancelled outputMapping skip, per-worker override precedence, mid-run no-propagation). These are tracked as future work and require conformance-harness extensions (capability-toggle hook, deterministic-fail child fixture, cancellable child fixture, fixture variants omitting defaultValues) outside the scope of this release. (**Closed in 1.3.0 (2026-05-19)** — all deferred cases promoted to live behavioral tests; see the 1.3.0 entries for "RFC 0022 §C variable-mapping refusal contract", "Thread C: child-lifecycle fixtures", and "Driver helpers + opt-out axes" above.)
 
 ## [1.0.0] — 2026-05-10
 
