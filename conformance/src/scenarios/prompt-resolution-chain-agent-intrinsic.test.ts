@@ -70,7 +70,7 @@ const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 describe.skipIf(HTTP_SKIP)('prompt-resolution-chain-agent-intrinsic: layer-2 agent intrinsic wins when node has no override (RFC 0029 §A)', () => {
   it('agent intrinsic systemPromptRef wins over workflow defaults + host defaults when node has no layer-1 ref', async () => {
     const d = await readDiscovery();
-    if (!promptsAgentBindings(d)) return;
+    if (!behaviorGate('prompts-agent-bindings', promptsAgentBindings(d))) return;
 
     const res = await driver.post('/v1/host/sample/prompt/resolve', {
       kind: 'system',

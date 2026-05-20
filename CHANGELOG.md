@@ -11,6 +11,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Conformance — `OPENWOP_REQUIRE_BEHAVIOR` wired across the prompt-* scenario family (2026-05-20)
+
+10 of the 11 `prompt-*.test.ts` scenarios documented `OPENWOP_REQUIRE_BEHAVIOR=true` strict-mode hardening but the gate was unimplemented — every per-test guard was a silent `return` regardless of the env var. Closes the docs-vs-impl drift by routing each capability check through `lib/behavior-gate.ts`, the same helper that hosts every other strict-mode-gated profile in the suite. Profile-name mapping (mirrors `capabilities.prompts.*` field names):
+
+| Profile | Gates on | Scenarios |
+|---|---|---|
+| `prompts-supported` | `capabilities.prompts.supported` | `prompt-end-to-end-events`, `prompt-resolution-chain-node-wins`, `prompt-resolution-chain-fallback-cascade` |
+| `prompts-endpoints` | `capabilities.prompts.endpointsSupported` | `prompt-pack-install`, `prompt-list-and-fetch`, `prompt-render-deterministic` |
+| `prompts-mutable` | `capabilities.prompts.mutableLibrary` | `prompt-mutable-lifecycle` |
+| `prompts-agent-bindings` | `capabilities.prompts.agentBindings` | `prompt-resolution-chain-agent-intrinsic` |
+| `prompts-observability-full` | `prompts.supported + observability: "full"` | `prompt-composed-secret-redaction`, `prompt-composed-trust-marker` |
+
+Default mode (no flag): scenarios skip cleanly when the capability isn't advertised — unchanged from before. Strict mode (`OPENWOP_REQUIRE_BEHAVIOR=true`): each scenario now fails with a citation-bearing error message instead of silently passing. Honest opt-out: a host that deliberately doesn't implement a profile can list it in `OPENWOP_OPTED_OUT_PROFILES=prompts-agent-bindings,prompts-mutable,...` to skip even in strict mode.
+
+`prompt-template-shape.test.ts` (always-on schema-validation) needs no change. Compatibility: **additive** — conformance-suite only; no protocol changes. All 9 corpus-gate steps remain green; the 10 touched scenarios still skip cleanly when `OPENWOP_BASE_URL` is unset.
+
 ### Host + Conformance — RFC 0028 §B prompt-pack loader hardening + reference-host config seam (2026-05-20)
 
 Code-review follow-ups on the slice 1 (commit `f2bd5b6`) + slice 2 (commit `4c2fe40`) prompt-library end-to-end work. Three CRITICAL fixes + four supporting tightenings, all sample-host implementation only.

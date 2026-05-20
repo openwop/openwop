@@ -28,6 +28,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { behaviorGate } from '../lib/behavior-gate.js';
 
 interface DiscoveryDoc {
   capabilities?: {
@@ -65,7 +66,7 @@ const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 describe.skipIf(HTTP_SKIP)('prompt-resolution-chain-node-wins: layer-1 node-config supersedes lower layers (RFC 0029 §A)', () => {
   it('node-level systemPromptRef wins over agent intrinsic + workflow defaults + host defaults', async () => {
     const d = await readDiscovery();
-    if (!promptsSupported(d)) return;
+    if (!behaviorGate('prompts-supported', promptsSupported(d))) return;
 
     // Driver test-seam endpoint: instructs the reference host to resolve
     // a PromptRef for a (nodeId, kind) pair against a fixture inputs

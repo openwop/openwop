@@ -30,6 +30,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { behaviorGate } from '../lib/behavior-gate.js';
 
 interface DiscoveryDoc {
   capabilities?: {
@@ -67,7 +68,7 @@ const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 describe.skipIf(HTTP_SKIP)('prompt-resolution-chain-fallback-cascade: layers 3 + 4 fallback when node + agent yield null (RFC 0029 §A)', () => {
   it('workflow defaults win over host defaults when both are set', async () => {
     const d = await readDiscovery();
-    if (!promptsSupported(d)) return;
+    if (!behaviorGate('prompts-supported', promptsSupported(d))) return;
 
     const res = await driver.post('/v1/host/sample/prompt/resolve', {
       kind: 'system',
@@ -103,7 +104,7 @@ describe.skipIf(HTTP_SKIP)('prompt-resolution-chain-fallback-cascade: layers 3 +
 
   it('host defaults win when workflow defaults are also absent', async () => {
     const d = await readDiscovery();
-    if (!promptsSupported(d)) return;
+    if (!behaviorGate('prompts-supported', promptsSupported(d))) return;
 
     const res = await driver.post('/v1/host/sample/prompt/resolve', {
       kind: 'system',
@@ -130,7 +131,7 @@ describe.skipIf(HTTP_SKIP)('prompt-resolution-chain-fallback-cascade: layers 3 +
 
   it('resolved is null and chain[] still lists every attempted layer when all four yield null', async () => {
     const d = await readDiscovery();
-    if (!promptsSupported(d)) return;
+    if (!behaviorGate('prompts-supported', promptsSupported(d))) return;
 
     const res = await driver.post('/v1/host/sample/prompt/resolve', {
       kind: 'system',
