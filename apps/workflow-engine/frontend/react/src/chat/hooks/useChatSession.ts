@@ -165,6 +165,10 @@ export interface ChatMessage {
   };
   /** Structured state for `role: 'workflow_run'` messages. */
   workflowRun?: WorkflowRunState;
+  /** User thumbs-up / thumbs-down feedback recorded via the message-actions
+   *  toolbar. Persisted to localStorage with the rest of the session; no
+   *  backend wiring yet (signal-only). Absent = no rating given. */
+  feedback?: 'positive' | 'negative';
   createdAt: string;
 }
 
@@ -277,6 +281,14 @@ export interface UseChatSessionResult {
   reset: () => void;
   /** Resolve an active interrupt belonging to the most recent assistant bubble. */
   resolveInterrupt: (messageId: string, value: unknown) => Promise<void>;
+  /** Drop the assistant bubble at `messageId` and re-send the preceding
+   *  user message. No-op if the message is not an assistant turn, has
+   *  no preceding user message, or a turn is already in flight. The
+   *  prior user turn's text is replayed; attachments / web-search /
+   *  tool flags are not preserved (caller passes the current config). */
+  regenerate: (messageId: string, config: BYOKActiveConfig) => Promise<void>;
+  /** Toggle 👍/👎 feedback on an assistant bubble. Pass `null` to clear. */
+  setFeedback: (messageId: string, feedback: 'positive' | 'negative' | null) => void;
 }
 
 export function useChatSession(): UseChatSessionResult {
@@ -777,6 +789,40 @@ export function useChatSession(): UseChatSessionResult {
     }));
   }, []);
 
+  const setFeedback = useCallback((messageId: string, feedback: 'positive' | 'negative' | null) => {
+    setSession((s) => ({
+      ...s,
+      messages: s.messages.map((m) => {
+        if (m.id !== messageId) return m;
+        if (feedback === null) {
+          const { feedback: _drop, ...rest } = m;
+          return rest;
+        }
+        return { ...m, feedback };
+      }),
+    }));
+  }, []);
+
+  // `send` is declared above but referenced in the regenerate closure;
+  // keep this useCallback inside the hook so it picks up the latest
+  // `session`/`send` bindings on each render.
+  const regenerate = useCallback(async (messageId: string, config: BYOKActiveConfig) => {
+    if (isSending) return; // a turn is already in flight
+    const idx = session.messages.findIndex((m) => m.id === messageId);
+    if (idx < 1) return;
+    const assistant = session.messages[idx];
+    const prior = session.messages[idx - 1];
+    if (!assistant || assistant.role !== 'assistant') return;
+    if (!prior || prior.role !== 'user') return;
+    const priorText = messageText(prior);
+    if (!priorText) return;
+    // Drop the assistant bubble (and the user message we're about to
+    // re-emit through send()) so the regenerated turn appears in the
+    // same conversational slot rather than after the original.
+    setSession((s) => ({ ...s, messages: s.messages.slice(0, idx - 1) }));
+    await send(priorText, config);
+  }, [isSending, session.messages, send]);
+
   /** Update a single `workflow_run` message's `workflowRun` state. */
   const updateWorkflowRun = useCallback((
     messageId: string,
@@ -1017,5 +1063,7 @@ export function useChatSession(): UseChatSessionResult {
     resolveInterrupt,
     runWorkflowMention,
     cancelWorkflowRun,
+    regenerate,
+    setFeedback,
   };
 }

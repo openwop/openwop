@@ -8,10 +8,13 @@
  * Bubbles with `meta.error` render in a warn-tinted state.
  */
 
+import { useState } from 'react';
 import type { ChatMessage } from './hooks/useChatSession.js';
+import { messageText } from './hooks/useChatSession.js';
 import { MessageRenderer } from './MessageRenderer.js';
 import { ThoughtsDisclosure } from './ThoughtsDisclosure.js';
 import { ToolCallCard, HandoffIndicator, DecisionBadge } from './AgentEventCards.js';
+import { ErrorCard } from './ErrorCard.js';
 import { formatUsd, turnCostUsd } from './lib/cost.js';
 import { GlobeIcon } from './icons/index.js';
 
@@ -22,9 +25,116 @@ function hasContent(content: ChatMessage['content']): boolean {
 
 interface Props {
   message: ChatMessage;
+  /** Drop this assistant bubble + re-send the prior user message.
+   *  Wired from useChatSession via MessageFeed. */
+  onRegenerate?: (messageId: string) => void;
+  /** Record / clear 👍 / 👎 on this assistant bubble. */
+  onFeedback?: (messageId: string, feedback: 'positive' | 'negative' | null) => void;
+  /** Open the BYOK settings wizard (called from the error card's
+   *  "Open BYOK settings" CTA when credentials are missing/expired). */
+  onReconfigureBYOK?: () => void;
 }
 
-export function MessageBubble({ message }: Props): JSX.Element {
+/** Hover-revealed toolbar at the bottom of a settled assistant bubble.
+ *  Copy writes the message text to the clipboard with a 2-second
+ *  "Copied!" confirmation. Regenerate calls back into useChatSession.
+ *  Thumbs toggle a feedback state persisted with the session — pressing
+ *  the same direction twice clears it. */
+function MessageActions({
+  message,
+  onRegenerate,
+  onFeedback,
+}: {
+  message: ChatMessage;
+  onRegenerate?: (id: string) => void;
+  onFeedback?: (id: string, fb: 'positive' | 'negative' | null) => void;
+}): JSX.Element {
+  const [copied, setCopied] = useState(false);
+
+  async function copy(): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(messageText(message));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard unavailable; silently ignore */
+    }
+  }
+
+  const btn: React.CSSProperties = {
+    padding: '2px 6px',
+    fontSize: 11,
+    minHeight: 0,
+    height: 22,
+    lineHeight: 1,
+    background: 'transparent',
+    border: '1px solid transparent',
+    color: 'var(--color-text-muted)',
+    cursor: 'pointer',
+    borderRadius: 6,
+  };
+  const pressed: React.CSSProperties = {
+    background: 'var(--color-surface-2, var(--color-bg))',
+    border: '1px solid var(--color-border)',
+    color: 'var(--ink)',
+  };
+
+  return (
+    <div
+      className="message-actions"
+      style={{
+        display: 'flex',
+        gap: 2,
+        marginTop: 4,
+        opacity: 0,
+        transition: 'opacity 120ms ease',
+      }}
+    >
+      <button type="button" style={btn} onClick={copy} aria-label="Copy message">
+        {copied ? '✓ Copied' : 'Copy'}
+      </button>
+      {onRegenerate && (
+        <button
+          type="button"
+          style={btn}
+          onClick={() => onRegenerate(message.id)}
+          aria-label="Regenerate response"
+          title="Re-run the prior user message"
+        >
+          ↻ Regenerate
+        </button>
+      )}
+      {onFeedback && (
+        <>
+          <button
+            type="button"
+            style={{ ...btn, ...(message.feedback === 'positive' ? pressed : {}) }}
+            onClick={() =>
+              onFeedback(message.id, message.feedback === 'positive' ? null : 'positive')
+            }
+            aria-label="Good response"
+            aria-pressed={message.feedback === 'positive'}
+          >
+            👍
+          </button>
+          <button
+            type="button"
+            style={{ ...btn, ...(message.feedback === 'negative' ? pressed : {}) }}
+            onClick={() =>
+              onFeedback(message.id, message.feedback === 'negative' ? null : 'negative')
+            }
+            aria-label="Bad response"
+            aria-pressed={message.feedback === 'negative'}
+          >
+            👎
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+export function MessageBubble({ message, onRegenerate, onFeedback, onReconfigureBYOK }: Props): JSX.Element {
   const isUser = message.role === 'user';
   const isSystem = message.role === 'system';
   const isError = !!message.meta?.error;
@@ -84,9 +194,11 @@ export function MessageBubble({ message }: Props): JSX.Element {
           }} />
         )}
         {message.meta?.error && (
-          <div style={{ marginTop: 6, fontSize: 11, opacity: 0.8 }}>
-            <strong>{message.meta.error.code}:</strong> {message.meta.error.message}
-          </div>
+          <ErrorCard
+            error={message.meta.error}
+            {...(onReconfigureBYOK ? { onReconfigure: onReconfigureBYOK } : {})}
+            {...(onRegenerate ? { onRetry: () => onRegenerate(message.id) } : {})}
+          />
         )}
         {!isUser && message.agentEvents && (
           <div style={{ marginTop: 8 }}>
@@ -122,6 +234,9 @@ export function MessageBubble({ message }: Props): JSX.Element {
               </span>
             )}
           </div>
+        )}
+        {!isUser && !message.isStreaming && !isError && hasContent(message.content) && (onRegenerate || onFeedback) && (
+          <MessageActions message={message} {...(onRegenerate ? { onRegenerate } : {})} {...(onFeedback ? { onFeedback } : {})} />
         )}
         {!isUser && !message.isStreaming && message.meta?.citations && message.meta.citations.length > 0 && (
           <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 6 }}>

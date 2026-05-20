@@ -24,9 +24,23 @@ interface Props {
   onResolveInterrupt: (messageId: string, value: unknown) => Promise<void>;
   /** Cancel an in-flight workflow_run by chat-message id. */
   onCancelWorkflowRun: (messageId: string) => Promise<void>;
+  /** Re-run the prior user message for this assistant bubble. */
+  onRegenerate?: (messageId: string) => void;
+  /** Record / clear 👍 / 👎 on an assistant bubble. */
+  onFeedback?: (messageId: string, feedback: 'positive' | 'negative' | null) => void;
+  /** Open the BYOK settings wizard (from the error-card CTA). */
+  onReconfigureBYOK?: () => void;
 }
 
-export function MessageFeed({ messages, tenantId, onResolveInterrupt, onCancelWorkflowRun }: Props): JSX.Element {
+export function MessageFeed({
+  messages,
+  tenantId,
+  onResolveInterrupt,
+  onCancelWorkflowRun,
+  onRegenerate,
+  onFeedback,
+  onReconfigureBYOK,
+}: Props): JSX.Element {
   const endRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll on new messages OR content change (streaming deltas).
@@ -43,7 +57,12 @@ export function MessageFeed({ messages, tenantId, onResolveInterrupt, onCancelWo
         <div key={m.id}>
           {m.role === 'workflow_run'
             ? <WorkflowRunBubble message={m} onCancel={() => onCancelWorkflowRun(m.id)} />
-            : <MessageBubble message={m} />}
+            : <MessageBubble
+                message={m}
+                {...(onRegenerate ? { onRegenerate } : {})}
+                {...(onFeedback ? { onFeedback } : {})}
+                {...(onReconfigureBYOK ? { onReconfigureBYOK } : {})}
+              />}
           {m.activeInterrupt && (
             <div style={{ marginLeft: 12, marginRight: 'max(0px, calc(100% - var(--max-bubble-width, 75ch) - 12px))' }}>
               <CardHost

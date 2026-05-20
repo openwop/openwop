@@ -91,6 +91,17 @@
   50%      { box-shadow: 0 0 0 6px color-mix(in oklch, var(--color-danger)  0%, transparent); }
 }
 
+/* ─── Message-actions hover reveal ────────────────────────────────────
+ * `.message-actions` lives inside each assistant bubble; hidden by
+ * default (opacity:0 in inline styles) and revealed when the user
+ * hovers / focuses anywhere within the bubble. Persists on focus so
+ * keyboard users can tab to Copy/Regenerate/👍/👎 without grabbing
+ * the mouse. */
+:hover > .message-actions,
+:focus-within > .message-actions {
+  opacity: 1 !important;
+}
+
 /* ─── Reduced motion ──────────────────────────────────────────────────
  * Honor prefers-reduced-motion: reduce. Mirrors the canonical block in
  * public/styles.css per DESIGN.md §11 / DESIGN.app.md §6 invariant 1.
