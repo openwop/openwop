@@ -289,7 +289,7 @@ And a discriminator entry in `_typeIndex`:
 
 The invariant is `medium` (not `high`) because: (a) the `originalProvider` is already public via `RunOptions.configurable`; (b) the fact that a host has *some* fallback configured is conventionally public via `capabilities.modelCapabilities.substitutionSupported: true`. The hidden bit is which specific fallback fired for a given dispatch — workspace-internal info that some operators prefer to keep private.
 
-Hosts that don't redact (the default) are conformant; hosts that redact must do so per the all-or-nothing rule above to keep the event shape predictable.
+Hosts that don't redact (the default) are conformant; hosts that redact MUST do so per the all-or-nothing rule above to keep the event shape predictable.
 
 ### §G — Trust boundary (carry-forward)
 

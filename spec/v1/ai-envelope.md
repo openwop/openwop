@@ -1,6 +1,6 @@
 # openwop Spec v1 — AI Envelope Primitive
 
-> **Status: FINAL v1.1 (promoted via [RFC 0021](../../RFCS/0021-ai-envelope-primitive.md), 2026-05-18; first cut 2026-05-17).** Closes the long-standing gap where `Capabilities.supportedEnvelopes`, `Capabilities.schemaVersions`, `Capabilities.limits.envelopesPerTurn`, `Capabilities.limits.schemaRounds`, `Capabilities.limits.clarificationRounds`, `host.aiEnvelope.generate`, the `envelopeType` field on workflow-chain pack manifests, and the `openwop-interrupts` profile's `supportedEnvelopes.includes('clarification.request')` check all reference a wire concept whose own shape is not specified anywhere in v1 prose. This document specifies that shape, the universal kinds, the per-kind schema discipline, and the per-node "Envelope Contract" gate. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend. Fields marked **(stable)** lock; fields marked **(in-flight)** may shift compatibly within v1.x.
+> **Status: FINAL v1.1 (promoted via [RFC 0021](../../RFCS/0021-ai-envelope-primitive.md), 2026-05-18; first cut 2026-05-17). Extended additively by [RFC 0030](../../RFCS/0030-envelope-reasoning-and-tier-one-subset.md) (§"Reasoning field"), [RFC 0031](../../RFCS/0031-envelope-variants-and-model-capabilities.md) (§"Variant payload discrimination"), [RFC 0032](../../RFCS/0032-envelope-reliability-events.md) (line-448 scope clarification + §"Envelope-reliability events"), and [RFC 0033](../../RFCS/0033-envelope-completion-contract.md) (§"Envelope-completion criteria"), all `Active` 2026-05-20.** Closes the long-standing gap where `Capabilities.supportedEnvelopes`, `Capabilities.schemaVersions`, `Capabilities.limits.envelopesPerTurn`, `Capabilities.limits.schemaRounds`, `Capabilities.limits.clarificationRounds`, `host.aiEnvelope.generate`, the `envelopeType` field on workflow-chain pack manifests, and the `openwop-interrupts` profile's `supportedEnvelopes.includes('clarification.request')` check all reference a wire concept whose own shape is not specified anywhere in v1 prose. This document specifies that shape, the universal kinds, the per-kind schema discipline, and the per-node "Envelope Contract" gate. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend. Fields marked **(stable)** lock; fields marked **(in-flight)** may shift compatibly within v1.x.
 
 ---
 
@@ -31,7 +31,7 @@ An AI Envelope is **distinct from `RunEventDoc`** (`schemas/run-event.schema.jso
 |---|---|---|
 | Direction | **Outbound** — host → client | **Inbound** — LLM → engine |
 | Source of truth | Append-only run event log | Single emission, persisted by reference via `RunEventDoc.causationId` |
-| Type discriminator | Fixed 48-variant enum, FINAL v1 | Open-ended kind catalog, host-advertised |
+| Type discriminator | Fixed `RunEventType` enum, FINAL v1 | Open-ended kind catalog, host-advertised |
 | Schema versioning | Per-event `schemaVersion` integer | Per-kind `schemaVersion` integer (advertised via `Capabilities.schemaVersions[kind]`) |
 | Audience | Clients, observability tooling, replay | Engine, node dispatcher, artifact handlers |
 | Lifecycle | Immutable after `appendAtomic` | Validated → gated → routed → recorded as `RunEventDoc` |
@@ -496,7 +496,7 @@ The handler-registry layer is not normative — hosts MAY implement it as a swit
 
 ## Envelope-completion criteria
 
-> Added by RFC 0033 (`Active` 2026-05-20). Closes spec gap E5 — refusal-mode interaction with retry policies — by normating the **truncation-vs-schema-violation retry-routing distinction** that hosts must honor when emitting structured envelopes via LLM calls.
+> Added by RFC 0033 (`Active` 2026-05-20). Closes spec gap E5 — refusal-mode interaction with retry policies — by normating the **truncation-vs-schema-violation retry-routing distinction** that hosts MUST honor when emitting structured envelopes via LLM calls.
 
 A host SHALL treat an envelope as **complete** only when BOTH of the following hold:
 
