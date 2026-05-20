@@ -1264,14 +1264,18 @@ describe.skipIf(FIXTURES_DOC_PATH === null)('spec-corpus: fixtures.json catalog 
   // FIXTURES_DOC_PATH is non-null here — assertion narrows for TS.
   const fixturesDocPath = FIXTURES_DOC_PATH as string;
   const PACK_MANIFEST_FIXTURES_DIR = join(FIXTURES_DIR, 'pack-manifests');
-  // Top-level workflow fixtures + pack-manifest fixtures from the
-  // sub-directory. Both are documented in fixtures.md so the regex scan
-  // below MUST cover both.
+  const PROMPT_TEMPLATE_FIXTURES_DIR = join(FIXTURES_DIR, 'prompt-templates');
+  // Top-level workflow fixtures + pack-manifest fixtures + prompt-
+  // template fixtures from their respective sub-directories. All are
+  // documented in fixtures.md so the regex scan below MUST cover them.
   const fixtureJsonFiles = [
     ...readdirSync(FIXTURES_DIR)
       .filter((f) => f.endsWith('.json'))
       .map((f) => f.replace(/\.json$/, '')),
     ...readdirSync(PACK_MANIFEST_FIXTURES_DIR)
+      .filter((f) => f.endsWith('.json'))
+      .map((f) => f.replace(/\.json$/, '')),
+    ...readdirSync(PROMPT_TEMPLATE_FIXTURES_DIR)
       .filter((f) => f.endsWith('.json'))
       .map((f) => f.replace(/\.json$/, '')),
   ].sort();

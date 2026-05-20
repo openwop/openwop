@@ -432,6 +432,25 @@ Pack-manifest fixtures are exercised by the server-free `fixtures-valid.test.ts`
 
 ---
 
+## Prompt-template fixtures
+
+The `fixtures/prompt-templates/` sub-directory holds canonical PromptTemplate documents (per RFC 0027 §A) used as schema-level proof points (validated server-free against `../schemas/prompt-template.schema.json`). They are NOT seeded into a workflow store. They exist so the `prompt-template-shape` scenario has stable positive fixtures, the secret-redaction + trust-marker conformance scenarios have known fixture templateIds to compose against (when a host advertises `capabilities.prompts.supported: true` + `observability: "full"`), and follow-up RFCs (RFC 0028 prompt packs, RFC 0029 resolution chain) can reference a stable shared fixture set.
+
+| Fixture | `templateId` | Purpose |
+|---|---|---|
+| `conformance-prompt-writer-system` | `conformance.prompt.writer-system` | Minimal `kind: "system"` template with no variables. Asserts positive round-trip against the canonical schema. |
+| `conformance-prompt-secret-redaction` | `conformance.prompt.secret-redaction` | `kind: "user"` template carrying a `source: "secret"` variable. Drives `prompt-composed-secret-redaction` scenario; the host's compose seam binds `apiKey` to a canary-marker secret and the scenario asserts the `[REDACTED:<secretId>]` marker appears in `prompt.composed` payload. |
+| `conformance-prompt-trust-marker` | `conformance.prompt.trust-marker` | `kind: "user"` template with a `source: "input"` variable. The conformance compose seam tags the binding `meta.contentTrust: "untrusted"` so the `prompt-composed-trust-marker` scenario asserts `<UNTRUSTED>...</UNTRUSTED>` wrapping + `contentTrust: "untrusted"` propagation. |
+
+Fixture invariants enforced by `fixtures-valid.test.ts`:
+1. Every file under `prompt-templates/` validates against `prompt-template.schema.json`.
+2. Every file declares a non-empty `templateId`.
+3. Any fixture declaring a `source: "secret"` variable MUST carry the `secret-redaction` tag — the prompt-composed-secret-redaction scenario discovers fixtures by tag, so an untagged fixture would silently bypass redaction assertions.
+
+Prompt-template fixtures are exercised by the server-free `fixtures-valid.test.ts` scenarios — adding one runs the schema validator against it automatically. Capability-gated behavioral scenarios (`prompt-composed-secret-redaction`, `prompt-composed-trust-marker`) skip cleanly when the host doesn't advertise `capabilities.prompts.supported: true` + `observability: "full"`.
+
+---
+
 ## References
 
 - `README.md` — conformance suite operator docs

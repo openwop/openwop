@@ -1,0 +1,23 @@
+{
+  "templateId": "conformance.prompt.trust-marker",
+  "version": "1.0.0",
+  "kind": "user",
+  "text": "Process the following user payload: {{userPayload}}\nRespond carefully.",
+  "name": "Conformance: Trust-Marker Probe",
+  "description": "Prompt template used by prompt-composed-trust-marker conformance. The `userPayload` variable's source: input is tagged untrusted by the test seam to verify <UNTRUSTED>...</UNTRUSTED> wrapping + contentTrust propagation per RFC 0027 §E + RFC 0020 §D.",
+  "tags": ["conformance", "security", "trust-marker"],
+  "variables": [
+    {
+      "name": "userPayload",
+      "type": "string",
+      "required": true,
+      "source": "input",
+      "description": "User-supplied content; tagged untrusted by the conformance test seam to verify trust-boundary propagation."
+    }
+  ],
+  "meta": {
+    "author": "openwop-conformance-suite",
+    "createdAt": "2026-05-20T00:00:00Z",
+    "source": "host"
+  }
+}

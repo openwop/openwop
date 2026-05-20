@@ -1,0 +1,15 @@
+{
+  "templateId": "conformance.prompt.writer-system",
+  "version": "1.0.0",
+  "kind": "system",
+  "text": "You are a careful editorial writer. Match the requested tone exactly. Keep paragraphs tight. Do not invent facts.",
+  "name": "Conformance: Writer (system)",
+  "description": "Minimal system-kind PromptTemplate used by prompt-template-shape conformance to assert positive-fixture round-trip. Variable-free; renders verbatim.",
+  "tags": ["conformance", "system"],
+  "modelHints": { "modelClass": "writing", "temperature": 0.7 },
+  "meta": {
+    "author": "openwop-conformance-suite",
+    "createdAt": "2026-05-20T00:00:00Z",
+    "source": "host"
+  }
+}
