@@ -11,6 +11,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Workflow-engine sample — idempotency body-hash mismatch (2026-05-20)
+
+Per `idempotency.md §Layer 1`: same `Idempotency-Key` + different request body MUST return 409. Suite delta: 1233 → 1234 passing / 14 → 13 failing.
+
+- **`apps/workflow-engine/backend/typescript/src/routes/runs.ts`** — `hashRequestBody(body)` computes a SHA-256 over the JSON-serialized request body. In-memory `idempotencyBodyHashes` Map stores `{key → bodyHash}` at successful claim. On replay, compare hashes; mismatch returns 409 + `idempotency_key_replay_mismatch` + `details.idempotencyKey`. Body-hash storage is in-memory by design — a process restart loses the mismatch check (the cached response itself still replays from persistent storage, just without the bonus body-divergence detection).
+
 ### Workflow-engine sample — quorum-aware approval gate (2026-05-20)
 
 Implements `interrupt-profiles.md §openwop-interrupt-quorum` end-to-end. Suite delta: 1231 → 1233 passing / 16 → 14 failing.

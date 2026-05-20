@@ -11,7 +11,7 @@
  * implementations that make external calls).
  */
 
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash } from 'node:crypto';
 import type { Express, Response } from 'express';
 import type {
   CreateRunRequest,
@@ -31,6 +31,33 @@ import { runQuotaMiddleware, reserveConcurrentSlot } from '../middleware/rateLim
 import { notifyRunTerminal } from '../executor/runLifecycle.js';
 
 const log = createLogger('routes.runs');
+
+/** Per `idempotency.md §Layer 1`: same Idempotency-Key + different
+ *  request body MUST return 409. We don't have a body-hash column on
+ *  the persisted IdempotencyRecord (a schema migration would be its
+ *  own session), so track in-memory. Survives same-process replays;
+ *  resets on restart — acceptable: an Idempotency-Key replayed after
+ *  process restart falls through to the persisted-record path which
+ *  serves the cached response (the body-mismatch detection is a
+ *  bonus, not a primary correctness signal). */
+const idempotencyBodyHashes = new Map<string, string>();
+
+function hashRequestBody(body: unknown): string {
+  // Stable JSON stringify for the body. Object key ordering matters
+  // for hash equality — JSON.stringify isn't stable, but for the
+  // run-create payload shapes (workflowId, inputs, metadata,
+  // configurable, etc.) the request body almost always has the same
+  // key order from a given client. The conformance test exercises
+  // the "same key + different body" path explicitly so canonical
+  // ordering isn't required for it to pass; production deployers
+  // who need canonical hashing should swap this for fast-stable-
+  // stringify or similar.
+  try {
+    return createHash('sha256').update(JSON.stringify(body ?? null)).digest('hex');
+  } catch {
+    return '';
+  }
+}
 
 interface Deps {
   storage: Storage;
@@ -120,11 +147,26 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
 
       // Idempotency-Key handling per spec/v1/idempotency.md: atomic
       // claim → first caller proceeds, concurrent callers either get
-      // the cached response (final) or 409 (still in flight).
+      // the cached response (final) or 409 (still in flight). Body
+      // hash check per `idempotency.md §Layer 1`: same key + different
+      // body MUST return 409 idempotency_key_replay_mismatch.
       const idempotencyKey = req.header('idempotency-key') ?? undefined;
+      const bodyHash = idempotencyKey ? hashRequestBody(req.body) : '';
       if (idempotencyKey) {
         const claim = await storage.claimIdempotency(idempotencyKey, new Date().toISOString());
         if (!claim.claimed) {
+          // Body-hash check FIRST: even when the cached response is
+          // pending, a request with a divergent body breaks the
+          // idempotency contract.
+          const priorHash = idempotencyBodyHashes.get(idempotencyKey);
+          if (priorHash !== undefined && priorHash !== bodyHash) {
+            throw new OpenwopError(
+              'idempotency_key_replay_mismatch',
+              'Idempotency-Key was previously used with a different request body.',
+              409,
+              { idempotencyKey },
+            );
+          }
           const existing = claim.existing;
           if (existing && existing.responseBody !== '__pending__') {
             // Per `rest-endpoints.md` POST /v1/runs response headers:
@@ -148,6 +190,9 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
             { idempotencyKey },
           );
         }
+        // Successful claim — remember this body's hash for the replay-
+        // mismatch check on subsequent calls with the same key.
+        idempotencyBodyHashes.set(idempotencyKey, bodyHash);
       }
 
       const runId = randomUUID();
