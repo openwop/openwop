@@ -173,6 +173,27 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
         costEstimates: true,
         currency: 'USD',
       },
+      // RFC 0027 — prompt-template resolution. Reference host loads
+      // host-resident PromptTemplate fixtures from
+      // `conformance-fixtures/prompt-templates/` (vendored from
+      // `conformance/fixtures/prompt-templates/` by `sync-fixtures.sh`)
+      // and exposes a `POST /v1/host/sample/prompt/compose` test seam
+      // that drives the conformance suite's `prompt.composed`
+      // assertions. observability: 'full' is advertised so the
+      // capability-gated scenarios `prompt-composed-secret-redaction`
+      // and `prompt-composed-trust-marker` activate. The composed body
+      // redaction + trust-marker invariants are enforced by
+      // `composePromptTemplate()` in `host/promptCompose.ts`; the
+      // SECURITY invariants `prompt-composed-secret-redaction` and
+      // `prompt-composed-trust-marker` in `SECURITY/invariants.yaml`
+      // gate the conformance assertions.
+      prompts: {
+        supported: true,
+        templateKinds: ['system', 'user', 'few-shot', 'schema-hint'],
+        variableSources: ['input', 'variable', 'secret', 'context'],
+        maxTemplateBytes: 65536,
+        observability: 'full',
+      },
       memory: { supported: false },
       // RFC 0023 §B.2 — capabilities.conformance.mockAgent. Reference
       // host registers core.conformance.mock-agent unconditionally

@@ -39,6 +39,7 @@ import type { Express } from 'express';
 import { buildHostSurfaceBundle, resolvePresignToken } from '../host/inMemorySurfaces.js';
 import type { HostSurfaceBundle, SurfaceArgs, SurfaceFn } from '../host/inMemorySurfaces.js';
 import { acceptEnvelope, type AcceptOptions } from '../host/envelopeAcceptor.js';
+import { composePromptTemplate } from '../host/promptCompose.js';
 import type { Storage } from '../storage/storage.js';
 import type { EnvelopeOutcome } from '../host/envelopeAcceptor.js';
 import { wrapForLLMPrompt, type PromptWrapInput } from '../host/promptInjectionGuard.js';
@@ -613,5 +614,52 @@ export function registerTestSeamRoutes(app: Express, deps: { storage: Storage })
     }
     setCapabilityOverlay(body.name, value);
     res.status(200).json({ overlay: snapshotCapabilityOverlay(), set: { name: body.name, value: value ?? null } });
+  });
+
+  // RFC 0027 §E — prompt-compose test seam. Drives the conformance
+  // scenarios `prompt-composed-secret-redaction` and
+  // `prompt-composed-trust-marker` against a host-resident
+  // PromptTemplate fixture. Returns the `prompt.composed` payload
+  // shape (per
+  // `schemas/run-event-payloads.schema.json#/$defs/promptComposed`)
+  // synchronously so the scenario can assert without subscribing to
+  // the run event log. Gated on
+  // `capabilities.prompts.supported: true` + the host's advertised
+  // `observability` mode (the seam accepts a per-request override but
+  // a host that advertises `observability: 'off'` is the source of
+  // truth at the discovery layer; the seam doesn't pretend
+  // otherwise).
+  app.post('/v1/host/sample/prompt/compose', async (req, res) => {
+    const body = (req.body ?? {}) as {
+      templateId?: string;
+      bindings?: Record<string, unknown>;
+      bindingTrust?: Record<string, 'trusted' | 'untrusted'>;
+      observability?: 'off' | 'hashed' | 'full';
+      nodeId?: string;
+    };
+    if (typeof body.templateId !== 'string' || body.templateId.length === 0) {
+      res.status(400).json({
+        error: { code: 'invalid_argument', message: 'templateId required' },
+      });
+      return;
+    }
+    try {
+      const payload = await composePromptTemplate({
+        templateId: body.templateId,
+        bindings: body.bindings ?? {},
+        bindingTrust: body.bindingTrust,
+        observability: body.observability,
+        nodeId: body.nodeId,
+      });
+      res.status(200).json(payload);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      // Surface the error code as the prefix of the message so the
+      // conformance suite can distinguish `template_not_found` /
+      // `prompt_variable_unresolved` / generic faults.
+      const code = message.split(':')[0]?.trim() || 'internal_error';
+      const status = code === 'template_not_found' ? 404 : 400;
+      res.status(status).json({ error: { code, message } });
+    }
   });
 }

@@ -51,6 +51,50 @@ invariants:
       wrapped at `executor.ts:emit`). Conformance scenario drives canaries
       through every persistence surface and asserts no leak.
 
+  - id: prompt-composed-secret-redaction
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/prompt-composed-secret-redaction.test.ts
+    note: |
+      RFC 0027 §E. When a host advertises
+      `capabilities.prompts.supported: true` AND
+      `capabilities.prompts.observability: "full"`, any variable whose
+      declared `source` is `secret` MUST appear as
+      `[REDACTED:<credentialRef>]` in the emitted `prompt.composed`
+      event's `systemPrompt`, `userPrompt`, and `variableBindings`
+      fields — never as the plaintext secret value. The reference impl
+      enforces this in
+      `apps/workflow-engine/backend/typescript/src/host/promptCompose.ts`
+      `resolveBinding()`: for secret-source bindings, the resolver
+      asserts the secret exists in the BYOK store (via `resolveSecret`)
+      but emits ONLY the `[REDACTED:<id>]` marker into the
+      observability projection. The plaintext value MAY be inlined
+      into the dispatched body at LLM-call time, but MUST NOT appear
+      in any `prompt.composed` event-log entry.
+
+  - id: prompt-composed-trust-marker
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/prompt-composed-trust-marker.test.ts
+    note: |
+      RFC 0027 §E + RFC 0020 §D. When ANY binding contributing to a
+      composed PromptTemplate carries `meta.contentTrust: "untrusted"`,
+      the emitted `prompt.composed` payload MUST set
+      `contentTrust: "untrusted"` AND wrap the untrusted segments
+      within `systemPrompt` / `userPrompt` in
+      `<UNTRUSTED>...</UNTRUSTED>` markers per
+      `SECURITY/threat-model-prompt-injection.md`. The marker
+      preservation is what lets downstream LLM-system prompts
+      distinguish trusted vs. untrusted segments at dispatch time.
+      Reference impl wraps in `promptCompose.ts` `resolveBinding()`;
+      aggregation logic at the top of `composePromptTemplate()`
+      promotes top-level `contentTrust` to `"untrusted"` if ANY
+      binding carries the flag.
+
   - id: secret-leakage-eventlog-variable
     tier: reference-impl
     severity: high
