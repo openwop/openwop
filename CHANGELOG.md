@@ -11,6 +11,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Spec + sample — external-event interrupt support (2026-05-20)
+
+Closes `openwop-interrupt-external-event` profile. Adds `'waiting-external'` to `RunStatus` enum (additive per `COMPATIBILITY.md §2.1`) + `'external-event'` to the interrupt kind union. The reference workflow-engine sample surfaces signed-token + correlation matching end-to-end. Suite delta: 1238 → 1240 passing / 9 → 7 failing.
+
+- **`sdk/typescript/src/types.ts`** — `RunStatus` gains `'waiting-external'` per `interrupt-profiles.md §openwop-interrupt-external-event`. Forward-compat readers tolerate unknown statuses per `COMPATIBILITY.md §2.1`.
+- **`apps/workflow-engine/backend/typescript/src/types.ts`** — `InterruptRecord.kind` union extends with `'external-event'`.
+- **`apps/workflow-engine/backend/typescript/src/bootstrap/nodes.ts`** — `VALID_KINDS` accepts `external-event`. `core.interrupt` node already passes `config.kind` through, so the existing typeId composes with the new kind.
+- **`apps/workflow-engine/backend/typescript/src/executor/executor.ts`** — kind → status mapping: `external-event` → `waiting-external`.
+- **`apps/workflow-engine/backend/typescript/src/routes/runs.ts`** — `GET /v1/runs/{runId}` snapshot now embeds the first open interrupt's `{kind, nodeId, interruptToken, callbackUrl, data}` block for `waiting-*` runs per `interrupt.md §"Signed-token callback"`. Clients can resolve via `POST /v1/interrupts/{token}` without consulting a separate endpoint.
+- **`apps/workflow-engine/backend/typescript/src/routes/interrupts.ts`** — `checkExternalEventCorrelation(interruptData, resumeValue)` validates the resume payload against `interrupt.data.correlation` field-by-field. Mismatched correlation returns 422 + `validation_error` per `interrupt-profiles.md §openwop-interrupt-external-event`.
+
+Closes `interrupt-external-event-correlation > matching correlation resumes` + `> mismatched correlation rejected`.
+
 ### Workflow-engine sample — BYOK canary echo node + canary provisioning (2026-05-20)
 
 Suite delta: 1236 → 1238 passing / 11 → 9 failing.

@@ -307,7 +307,26 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
     try {
       const run = await storage.getRun(req.params.runId);
       if (!run) throw new OpenwopError('run_not_found', `run ${req.params.runId} not found`, 404);
-      res.json(projectRunSnapshot(run));
+      const snapshot = projectRunSnapshot(run);
+      // Surface the current open interrupt (if any) for waiting-*
+      // runs per `interrupt.md §Signed-token callback`. The first
+      // open interrupt's token + callbackUrl is the externally-
+      // observable handle clients use to resolve via
+      // POST /v1/interrupts/{token}.
+      if (run.status.startsWith('waiting-')) {
+        const openInterrupts = await storage.listOpenInterrupts(run.runId);
+        if (openInterrupts.length > 0) {
+          const first = openInterrupts[0]!;
+          (snapshot as Record<string, unknown>).interrupt = {
+            kind: first.kind,
+            nodeId: first.nodeId,
+            interruptToken: first.token,
+            callbackUrl: `${req.protocol}://${req.get('host')}/v1/interrupts/${encodeURIComponent(first.token)}`,
+            data: first.data,
+          };
+        }
+      }
+      res.json(snapshot);
     } catch (err) {
       next(err);
     }

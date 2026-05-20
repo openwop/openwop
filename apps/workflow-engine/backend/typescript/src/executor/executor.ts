@@ -663,6 +663,7 @@ function inferWaitingKind(
   const kind = suspendedKinds.get(nodeId);
   if (kind === 'approval') return 'waiting-approval';
   if (kind === 'cancellation') return 'paused';
+  if (kind === 'external-event') return 'waiting-external';
   return 'waiting-input';
 }
 

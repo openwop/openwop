@@ -55,6 +55,22 @@ export function registerInterruptRoutes(app: Express, deps: Deps): void {
       if (!interrupt) throw new OpenwopError('invalid_interrupt_token', 'unknown interrupt token', 404);
       if (interrupt.resolvedAt) throw new OpenwopError('interrupt_already_resolved', 'interrupt already resolved', 409);
       const body = req.body as { resumeValue?: unknown };
+      // External-event interrupts validate correlation per
+      // `interrupt-profiles.md §openwop-interrupt-external-event`:
+      // the resume payload MUST match every field in
+      // `interrupt.data.correlation`. Mismatched correlation
+      // returns 422 without resuming.
+      if (interrupt.kind === 'external-event') {
+        const violation = checkExternalEventCorrelation(interrupt.data, body?.resumeValue);
+        if (violation) {
+          throw new OpenwopError(
+            'validation_error',
+            `External event correlation mismatch: ${violation}`,
+            422,
+            { mismatch: violation },
+          );
+        }
+      }
       await resolveAndResume(storage, hostSuite, interrupt.interruptId, body?.resumeValue);
       const run = await storage.getRun(interrupt.runId);
       res.json({ runId: interrupt.runId, nodeId: interrupt.nodeId, status: run?.status });
@@ -139,6 +155,34 @@ function validateResumeValue(
       { allowed, received: action },
     );
   }
+}
+
+/** Per `interrupt-profiles.md §openwop-interrupt-external-event`:
+ *  the resume payload's fields MUST match every field in the
+ *  interrupt's `data.correlation` object. Returns null on match, or
+ *  a description of the first mismatch on miss.
+ *
+ *  Match semantics are deep-equal on each correlation key. Extra
+ *  fields in the resume payload (e.g., the test's
+ *  `externalReference`) are ignored — only the correlation keys
+ *  declared by the suspended node need to match. */
+function checkExternalEventCorrelation(
+  interruptData: unknown,
+  resumeValue: unknown,
+): string | null {
+  const data = (interruptData ?? {}) as { correlation?: unknown };
+  const correlation = data.correlation;
+  if (!correlation || typeof correlation !== 'object') return null;
+  if (!resumeValue || typeof resumeValue !== 'object') {
+    return 'resumeValue MUST be an object when interrupt declares correlation';
+  }
+  const rv = resumeValue as Record<string, unknown>;
+  for (const [key, expected] of Object.entries(correlation as Record<string, unknown>)) {
+    if (JSON.stringify(rv[key]) !== JSON.stringify(expected)) {
+      return `correlation.${key} expected ${JSON.stringify(expected)}, got ${JSON.stringify(rv[key])}`;
+    }
+  }
+  return null;
 }
 
 /** Per-interrupt vote ledger for quorum gates per

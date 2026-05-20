@@ -70,7 +70,7 @@ export interface InterruptRecord {
   interruptId: string;
   runId: string;
   nodeId: string;
-  kind: 'approval' | 'clarification' | 'refinement' | 'cancellation';
+  kind: 'approval' | 'clarification' | 'refinement' | 'cancellation' | 'external-event';
   /** Signed token usable via POST /v1/interrupts/{token}. */
   token: string;
   data: unknown;

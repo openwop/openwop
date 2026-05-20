@@ -248,7 +248,7 @@ const clarificationGateNode: NodeModule = {
   },
 };
 
-const VALID_KINDS = ['approval', 'clarification', 'refinement', 'cancellation'] as const;
+const VALID_KINDS = ['approval', 'clarification', 'refinement', 'cancellation', 'external-event'] as const;
 type InterruptKind = (typeof VALID_KINDS)[number];
 function coerceKind(raw: unknown): InterruptKind {
   return VALID_KINDS.includes(raw as InterruptKind) ? (raw as InterruptKind) : 'approval';

@@ -18,6 +18,7 @@ export type RunStatus =
   | 'paused'
   | 'waiting-approval'
   | 'waiting-input'
+  | 'waiting-external'
   | 'completed'
   | 'failed'
   | 'cancelled';
