@@ -111,3 +111,48 @@ document.querySelectorAll('.block, .pillar, .compare-card, .ana-list li, .spec .
     if (mm) activate(mm[1]);
   });
 })();
+
+// Homepage in-page sub-nav active-section highlighter.
+// Watches each section linked from .subnav-link[data-target] and toggles
+// .is-active on the link whose section is currently in the viewport.
+// Also keeps the active link visible by scrolling it into view inside the
+// horizontal .subnav-scroll container on narrow screens.
+(() => {
+  const links = Array.from(document.querySelectorAll('.subnav-link[data-target]'));
+  if (!links.length || !('IntersectionObserver' in window)) return;
+
+  const linkByTarget = new Map(links.map((a) => [a.dataset.target, a]));
+  const scrollContainer = document.querySelector('.subnav-scroll');
+
+  function setActive(id) {
+    let any = false;
+    links.forEach((a) => {
+      const active = a.dataset.target === id;
+      a.classList.toggle('is-active', active);
+      if (active) any = true;
+    });
+    if (any && scrollContainer) {
+      const activeLink = linkByTarget.get(id);
+      if (activeLink) {
+        const linkRect = activeLink.getBoundingClientRect();
+        const containerRect = scrollContainer.getBoundingClientRect();
+        if (linkRect.left < containerRect.left || linkRect.right > containerRect.right) {
+          activeLink.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+        }
+      }
+    }
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    // Pick the entry whose top is closest to (but past) the sticky chrome.
+    const visible = entries
+      .filter((e) => e.isIntersecting)
+      .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+    if (visible.length) setActive(visible[0].target.id);
+  }, { rootMargin: '-116px 0px -55% 0px' });
+
+  for (const id of linkByTarget.keys()) {
+    const el = document.getElementById(id);
+    if (el) observer.observe(el);
+  }
+})();

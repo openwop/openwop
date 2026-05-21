@@ -345,6 +345,9 @@
   section.block {
     padding: clamp(64px, 8vw, 120px) 0;
     border-top: 1px solid var(--rule);
+    /* Anchor links from the sticky subnav land above the topbar (64px) +
+     * subnav (~44px) chrome instead of being hidden under them. */
+    scroll-margin-top: 116px;
   }
   .block-head {
     display: block;
@@ -1693,4 +1696,58 @@
   .ana-block-cta a:hover .arrow {
     color: var(--clay);
     transform: translateX(2px);
+  }
+
+  /* ─── Homepage in-page sub-nav (sticky below the topbar) ──────────── */
+  .subnav {
+    position: sticky;
+    top: 64px;
+    z-index: 40;
+    background: color-mix(in srgb, var(--paper) 92%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .subnav-inner {
+    /* Fluid horizontal padding; no vertical margin since the bar itself
+     * defines the row height. */
+    padding-block: 0;
+  }
+  .subnav-scroll {
+    display: flex;
+    align-items: stretch;
+    gap: 4px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--rule-2) transparent;
+  }
+  .subnav-scroll::-webkit-scrollbar { height: 4px; }
+  .subnav-scroll::-webkit-scrollbar-thumb { background: var(--rule-2); border-radius: 4px; }
+  .subnav-link {
+    flex: 0 0 auto;
+    padding: 14px 14px 12px;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-3);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;          /* overlap the .subnav border-bottom */
+    transition: color .15s ease, border-color .15s ease;
+    white-space: nowrap;
+    scroll-snap-align: start;
+  }
+  .subnav-link:hover {
+    color: var(--ink);
+  }
+  .subnav-link.is-active {
+    color: var(--ink);
+    border-bottom-color: var(--clay);
+  }
+  @media (max-width: 480px) {
+    .subnav-link {
+      padding: 12px 10px 10px;
+      font-size: 12.5px;
+    }
   }
