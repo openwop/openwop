@@ -70,7 +70,19 @@ export function BYOKWizard({ onComplete, onCancel }: Props): JSX.Element {
   }
 
   return (
-    <div className="card">
+    <div className="card byok-wizard">
+      {/* "Try it free" is the no-key on-ramp — render it ABOVE the
+       * BYOK stepper since the stepper's three steps (Provider / Model
+       * / API key) don't apply to the managed path. Only visible on
+       * the first step; once the user commits to BYOK we hide it to
+       * keep the flow focused. */}
+      {step === 'provider' && (
+        <TryItFreeCard
+          isAuthed={user !== null}
+          onPick={(p) => { void activateManaged(p); }}
+        />
+      )}
+
       <BYOKStepper current={step} />
 
       {step === 'provider' && (
@@ -126,19 +138,14 @@ function BYOKStepper({ current }: { current: 'provider' | 'model' | 'key' }): JS
   ] as const, []);
   const currentIdx = steps.findIndex((s) => s.id === current);
   return (
-    <ol style={{ display: 'flex', gap: 8, listStyle: 'none', padding: 0, margin: '0 0 var(--space-4)' }}>
+    <ol className="byok-stepper">
       {steps.map((s, i) => {
         const done = i < currentIdx;
         const active = i === currentIdx;
         return (
-          <li key={s.id} style={{ flex: 1, textAlign: 'center', fontSize: 11 }}>
-            <div style={{
-              height: 4,
-              background: done || active ? 'var(--color-accent)' : 'var(--color-border)',
-              borderRadius: 2,
-              marginBottom: 4,
-            }} />
-            <span style={{ color: active ? 'var(--color-text)' : 'var(--color-text-muted)' }}>{s.label}</span>
+          <li key={s.id} className={`byok-stepper-step${active ? ' is-active' : done ? ' is-done' : ''}`}>
+            <div className="byok-stepper-bar" />
+            <span className="byok-stepper-label">{s.label}</span>
           </li>
         );
       })}
@@ -148,131 +155,121 @@ function BYOKStepper({ current }: { current: 'provider' | 'model' | 'key' }): JS
 
 // ── Step 1: provider grid ──────────────────────────────────────────────
 
+/**
+ * The no-key on-ramp. Rendered above the BYOK stepper so newcomers see
+ * the easiest path first. Visually styled as a prominent recommended
+ * panel — clay-soft tint, "recommended" pill, right-arrow affordance —
+ * to distinguish it from the BYOK provider tiles below.
+ */
+function TryItFreeCard({
+  onPick,
+  isAuthed,
+}: {
+  onPick: (p: ProviderConfig) => void;
+  isAuthed: boolean;
+}): JSX.Element | null {
+  const managed = PROVIDERS.filter((p) => p.managed);
+  if (managed.length === 0) return null;
+  // The reference app ships a single managed provider. If a future fork
+  // adds more, this renders them all in a vertical stack.
+  return (
+    <div className="byok-try-free" style={{ marginBottom: 24 }}>
+      {managed.map((p) => (
+        <button
+          key={p.id}
+          type="button"
+          onClick={() => onPick(p)}
+          className="byok-try-free-card"
+        >
+          <ProviderBadge provider={p} />
+          <div className="byok-try-free-body">
+            <div className="byok-try-free-headline">
+              <span className="byok-try-free-title">Try it free</span>
+              <span className="byok-try-free-pill">recommended</span>
+            </div>
+            <div className="byok-try-free-desc">
+              No API key needed. Sign in and start chatting — the sample
+              server uses a host-managed key with reasonable per-account
+              limits.
+            </div>
+            {!isAuthed && p.signedInHint && (
+              <div className="byok-try-free-hint">{p.signedInHint} →</div>
+            )}
+          </div>
+          <span className="byok-try-free-arrow" aria-hidden="true">→</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function ProviderGrid({
   onPick,
   onCancel,
-  isAuthed,
 }: {
   onPick: (p: ProviderConfig) => void;
   onCancel?: () => void;
   isAuthed: boolean;
 }): JSX.Element {
-  const managed = PROVIDERS.filter((p) => p.managed);
+  // BYOK-only — the managed "Try it free" path renders above the
+  // stepper in BYOKWizard via <TryItFreeCard>.
   const byok = PROVIDERS.filter((p) => !p.managed);
 
   return (
-    <div>
-      {/* ── Section 1: managed / try-it-free ──────────────────────────────
-       * Rendered ABOVE the BYOK grid because it's the easiest on-ramp for
-       * a newcomer — no credit card or key needed. Visually distinct via
-       * its own section header, accent-tinted background panel, and full-
-       * width tile (vs. the 3-column BYOK grid). */}
-      {managed.length > 0 && (
-        <section style={{ marginBottom: 24 }}>
-          <h2 style={{ margin: 0, fontSize: 14 }}>Try it free</h2>
-          <p className="muted" style={{ marginTop: 4, marginBottom: 12, fontSize: 12, lineHeight: 1.5 }}>
-            No API key needed. Sign in and start chatting — the sample server uses a host-managed
-            key with reasonable per-account limits.
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {managed.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                className="secondary"
-                onClick={() => onPick(p)}
-                style={{
-                  display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 12,
-                  padding: 14, textAlign: 'left',
-                  border: '1px solid var(--clay-rule, var(--color-border))',
-                  background: 'var(--clay-wash, transparent)',
-                  width: '100%',
-                }}
+    <div className="byok-section">
+      <h2 className="byok-section-title">Pick a provider</h2>
+      <p className="byok-section-lede">
+        <abbr title="Bring Your Own Key"><strong>BYOK</strong></abbr> means
+        you supply the API key for the model provider you pick below. The
+        provider bills you directly for your usage; OpenWOP doesn't bill you
+        or take a cut. The sample server forwards each request to the
+        provider using your key, then streams the response back.
+      </p>
+      <p className="byok-section-fineprint">
+        Your key is stored on the sample server (sqlite-backed, AES-256-GCM
+        encrypted at rest) and sent only to the provider you picked. Set
+        <code style={{ margin: '0 4px' }}>OPENWOP_BYOK_EPHEMERAL=true</code> on
+        the server to switch to in-memory-only mode that wipes on restart.
+        Production hosts swap this storage for a managed key-management
+        service (KMS) like AWS KMS, GCP KMS, or HashiCorp Vault — see
+        <code style={{ margin: '0 4px' }}>src/byok/secretResolver.ts</code> for
+        the adapter pattern.
+      </p>
+      <div
+        className="byok-grid"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${Math.min(byok.length, 3)}, minmax(0, 1fr))`,
+          gap: 12,
+          marginTop: 16,
+        }}
+      >
+        {byok.map((p) => (
+          <div key={p.id} className="byok-tile">
+            <button
+              type="button"
+              className="secondary byok-tile-btn"
+              onClick={() => onPick(p)}
+            >
+              <ProviderBadge provider={p} />
+              <div>
+                <div className="byok-tile-label">{p.label}</div>
+                <div className="byok-tile-desc muted">{p.description}</div>
+              </div>
+            </button>
+            {p.apiKeyConsoleUrl && (
+              <a
+                className="byok-tile-link"
+                href={p.apiKeyConsoleUrl}
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                <ProviderBadge provider={p} />
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: 13 }}>{p.label}</div>
-                  <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>{p.description}</div>
-                  {!isAuthed && p.signedInHint && (
-                    <div style={{
-                      fontSize: 11, marginTop: 6, fontWeight: 600,
-                      color: 'var(--color-accent)',
-                    }}>
-                      {p.signedInHint} →
-                    </div>
-                  )}
-                </div>
-              </button>
-            ))}
+                Get a {p.label} API key →
+              </a>
+            )}
           </div>
-        </section>
-      )}
-
-      {/* ── Section 2: BYOK provider grid ────────────────────────────────
-       * Three BYOK providers (Anthropic / OpenAI / Google) in a 3-column
-       * row. The explanatory copy about how keys are stored stays in this
-       * section since it only applies here. */}
-      <section>
-        <h2 style={{ margin: 0, fontSize: 14 }}>Or bring your own provider key</h2>
-        <p style={{ marginTop: 8, marginBottom: 8, fontSize: 12, lineHeight: 1.5 }}>
-          <abbr title="Bring Your Own Key"><strong>BYOK</strong></abbr> means
-          you supply the API key for the model provider you pick below. The
-          provider bills you directly for your usage; OpenWOP doesn't bill you
-          or take a cut. The sample server forwards each request to the
-          provider using your key, then streams the response back.
-        </p>
-        <p className="muted" style={{ marginTop: 0, marginBottom: 4, fontSize: 12, lineHeight: 1.5 }}>
-          Your key is stored on the sample server (sqlite-backed, AES-256-GCM
-          encrypted at rest) and sent only to the provider you picked. Set
-          <code style={{ margin: '0 4px' }}>OPENWOP_BYOK_EPHEMERAL=true</code> on
-          the server to switch to in-memory-only mode that wipes on restart.
-          Production hosts swap this storage for a managed key-management
-          service (KMS) like AWS KMS, GCP KMS, or HashiCorp Vault — see
-          <code style={{ margin: '0 4px' }}>src/byok/secretResolver.ts</code> for
-          the adapter pattern.
-        </p>
-        <div
-          className="byok-grid"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: `repeat(${Math.min(byok.length, 3)}, minmax(0, 1fr))`,
-            gap: 12,
-            marginTop: 16,
-          }}
-        >
-          {byok.map((p) => (
-            <div key={p.id} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <button
-                type="button"
-                className="secondary"
-                onClick={() => onPick(p)}
-                style={{
-                  display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 12,
-                  padding: 12, textAlign: 'left',
-                  border: '1px solid var(--color-border)',
-                  height: '100%',
-                }}
-              >
-                <ProviderBadge provider={p} />
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: 13 }}>{p.label}</div>
-                  <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>{p.description}</div>
-                </div>
-              </button>
-              {p.apiKeyConsoleUrl && (
-                <a
-                  href={p.apiKeyConsoleUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ fontSize: 11, paddingLeft: 4 }}
-                >
-                  Get a {p.label} API key →
-                </a>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
+        ))}
+      </div>
 
       {onCancel && (
         <div className="button-row">
