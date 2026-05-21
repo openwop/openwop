@@ -124,6 +124,11 @@ echo "[7/9] Generated protocol status..."
 node "$SPEC_ROOT/scripts/generate-protocol-status.mjs" --check
 node "$SPEC_ROOT/scripts/check-workflow-chain-expansion-sync.mjs"
 node "$SPEC_ROOT/scripts/check-required-properties-defined.mjs"
+# Backend dep-graph sanity — every external import in apps/workflow-engine/
+# backend/typescript/src/ MUST be declared in its package.json. Catches the
+# class of bug where local hoisting masks a missing dep that breaks Cloud
+# Run's `npm ci`-isolated install (cf. ajv-formats / 2026-05-21 deploy thrash).
+node "$SPEC_ROOT/scripts/check-backend-dep-graph.mjs"
 # Workflow-engine sample bundles a vendored copy of conformance/fixtures/
 # into its Docker image (apps/workflow-engine/conformance-fixtures/, per
 # the Dockerfile + scripts/sync-fixtures.sh). Catch silent drift: if the

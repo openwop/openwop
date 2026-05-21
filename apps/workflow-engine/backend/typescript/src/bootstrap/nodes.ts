@@ -702,7 +702,7 @@ async function emitChatEnvelopeSignals(
     fr === 'content_filter' ||
     fr === 'safety' ||
     fr === 'recitation' ||
-    typeof blockReason === 'string' && blockReason.length > 0;
+    (typeof blockReason === 'string' && blockReason.length > 0);
   if (isRefusal) {
     try {
       await ctx.emit(
@@ -711,9 +711,12 @@ async function emitChatEnvelopeSignals(
           ctx.nodeId,
           result.provider,
           result.model,
-          // refusalText omitted per SECURITY invariant envelope-refusal-no-prompt-leak
+          // refusalText omitted per SECURITY invariant envelope-refusal-no-prompt-leak.
+          // safetyCategory passed through verbatim — pass `undefined` (not `null`) on
+          // absence so the helper's `!== undefined` guard omits the field cleanly,
+          // matching the structured-output emission convention in aiProvidersHost.ts.
           undefined,
-          safetyCategory ?? null,
+          safetyCategory,
         ),
       );
     } catch { /* best-effort emission — never block the response */ }
@@ -722,15 +725,24 @@ async function emitChatEnvelopeSignals(
   const isTruncated = fr === 'max_tokens' || fr === 'length';
   if (isTruncated) {
     try {
+      // Preserve OpenAI's `length` distinction per RFC 0032 §B.4 schema description
+      // (`length preserved as a separate value for hosts that distinguish provider-
+      // side length cap from host-side budget cap`). The chat-responder sees the
+      // raw provider string, so we can keep the fidelity the reference
+      // classifyTruncationStopReason() helper has to collapse upstream.
+      const stopReason = fr === 'length' ? 'length' : 'max_tokens';
       await ctx.emit(
         'envelope.truncated',
         buildTruncatedPayload(
           ctx.nodeId,
           result.provider,
           result.model,
-          'max_tokens',
+          stopReason,
           result.completion.length > 0,
-          result.usage?.outputTokens ?? null,
+          // outputTokens: pass `undefined` on absence so the helper omits the field
+          // (`!== undefined` guard). The wire shape accepts both null and absent,
+          // but absent matches the structured-output emission convention.
+          result.usage?.outputTokens,
         ),
       );
     } catch { /* best-effort */ }
