@@ -27,7 +27,7 @@
     "@opentelemetry/sdk-node": "^0.55.0",
     "@opentelemetry/sdk-trace-node": "^1.28.0",
     "@opentelemetry/semantic-conventions": "^1.28.0",
-    "@openwop/openwop": "^1.1.1",
+    "@openwop/openwop": "^1.1.2",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
     "better-sqlite3": "^11.5.0",
