@@ -85,3 +85,61 @@ describe('multi-region-idempotency: capability shape', () => {
     }
   });
 });
+
+// RFC 0036 — granular `multiRegion` sub-block advertisement shape. Hosts that
+// opt into the granular advertisement (separate from the categorical `crossRegion`
+// claim) MUST conform to the shape below: supported is boolean (required); when
+// supported is true, replicationLagBoundMs is integer [0, 60000] and
+// partitionRecoveryStrategy is either the categorical enum or an x-host-<host>-<key>
+// extension namespace string. Hosts that don't advertise multiRegion stay on the
+// categorical crossRegion claim (above); both forms are compatible.
+
+interface MultiRegionCaps {
+  supported?: unknown;
+  replicationLagBoundMs?: unknown;
+  partitionRecoveryStrategy?: unknown;
+}
+
+describe('multi-region-idempotency: granular multiRegion advertisement shape (RFC 0036 §A)', () => {
+  it('capabilities.idempotency.multiRegion (when present) conforms to RFC 0036 §A', async () => {
+    const disco = await driver.get('/.well-known/openwop');
+    const idem =
+      (disco.json as { capabilities?: { idempotency?: IdempotencyCaps & { multiRegion?: MultiRegionCaps } } })
+        .capabilities?.idempotency;
+    const mr = idem?.multiRegion;
+    if (mr === undefined) return; // host doesn't advertise the granular block — soft-skip
+
+    expect(
+      typeof mr.supported,
+      driver.describe(
+        'RFCS/0036-multi-region-and-cross-engine-guarantees.md §A',
+        'capabilities.idempotency.multiRegion.supported MUST be boolean when present',
+      ),
+    ).toBe('boolean');
+
+    if (mr.supported === true) {
+      if (mr.replicationLagBoundMs !== undefined) {
+        const n = mr.replicationLagBoundMs as number;
+        expect(
+          Number.isInteger(n) && n >= 0 && n <= 60000,
+          driver.describe(
+            'RFCS/0036-multi-region-and-cross-engine-guarantees.md §A',
+            'replicationLagBoundMs MUST be integer in [0, 60000] when supported is true',
+          ),
+        ).toBe(true);
+      }
+      if (mr.partitionRecoveryStrategy !== undefined) {
+        const s = mr.partitionRecoveryStrategy as string;
+        const isCategorical = s === 'last-writer-wins' || s === 'first-writer-wins';
+        const isExtension = /^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*$/.test(s);
+        expect(
+          isCategorical || isExtension,
+          driver.describe(
+            'RFCS/0036-multi-region-and-cross-engine-guarantees.md §A',
+            'partitionRecoveryStrategy MUST be one of {last-writer-wins, first-writer-wins} OR match ^x-host-<host>-<key>$',
+          ),
+        ).toBe(true);
+      }
+    }
+  });
+});

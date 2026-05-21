@@ -94,6 +94,32 @@ Filed as Draft earlier today (aa94003); now graduates to Active after the Phase 
 
 Closes standards-readiness review finding (3) "multi-agent semantics not fully portable" at the Phase 1 boundary. Phases 2-4 remain open work for follow-up RFCs.
 
+### RFC 0035 + RFC 0036 conformance scenarios (2026-05-21)
+
+Lands the contract-probe + capability-gated behavioral conformance scaffolding for the two RFCs that landed `Active` earlier today (f7c8d2d) and whose reference-host implementation is honest follow-up work.
+
+**RFC 0035 — 8 sandbox shape-probe + behavioral-stub scenarios** (one per `node-pack-sandbox-*` invariant in `SECURITY/invariants.yaml`):
+
+- `sandbox-no-host-fs-escape.test.ts` — capability shape (isolationModel pattern + memoryLimit + wallClockLimit) + capability-gated behavioral stub.
+- `sandbox-no-host-env-leak.test.ts` — capability-gated behavioral stub.
+- `sandbox-no-network-escape.test.ts` — gates additionally on whether `host.fetch` ∈ `allowedHostCalls`.
+- `sandbox-no-host-process-escape.test.ts` — capability-gated behavioral stub.
+- `sandbox-memory-cap.test.ts` — capability shape (memoryLimitBytes ≥ 1 MiB) + behavioral stub.
+- `sandbox-timeout-cap.test.ts` — capability shape (wallClockLimitMs ≥ 100 ms) + behavioral stub.
+- `sandbox-capability-gate-respected.test.ts` — capability-gated behavioral stub.
+- `sandbox-no-cross-pack-mutation.test.ts` — capability-gated behavioral stub.
+
+All 8 soft-skip on hosts that don't advertise `capabilities.sandbox.supported: true`. The behavioral assertions are scaffolded with explicit `expect(true).toBe(true)` placeholders + docstring expected-wire-shape so an implementer landing the synthetic `vendor.openwop.misbehaving-sandbox` pack + a sandbox-executing reference host has a clear contract to wire against. Graduating the 8 `SECURITY/invariants.yaml` rows from `reference-impl` → `protocol` tier remains gated on the reference-host landing per RFC 0035 §"Acceptance criteria."
+
+**RFC 0036 — cross-engine append-ordering + granular multiRegion shape probes:**
+
+- NEW `cross-engine-append-ordering.test.ts` — capability shape for `capabilities.eventLog.crossEngineOrdering.{supported, orderingModel}`. Asserts `orderingModel ∈ {lamport, vector-clock, global-sequencer}` when present and REQUIRED when `supported: true`. Behavioral two-engine-append assertion deferred until the multi-engine simulator lands per RFC 0036 §C.
+- `multi-region-idempotency.test.ts` extended with a third `describe` block: `multi-region-idempotency: granular multiRegion advertisement shape (RFC 0036 §A)`. Asserts `capabilities.idempotency.multiRegion.{supported, replicationLagBoundMs ∈ [0, 60000], partitionRecoveryStrategy}` shape; complements the existing categorical `crossRegion` claim probe.
+
+**Conformance counts:** 188 → 197 scenario files (+9). README + conformance/README count claims bumped; docs/PROTOCOL-STATUS regenerated.
+
+Closes the conformance half of standards-readiness review findings (5) sandbox and (6) distributed-systems at the contract-probe boundary. Behavioral wiring closes them at the host-implementation boundary; tracked as RFC 0035 + RFC 0036 path-to-Accepted work.
+
 ### RFC 0037 Phase 1 reference-host wiring + behavioral conformance (2026-05-21)
 
 Wires the multi-agent execution model emission contract end-to-end on the reference workflow-engine and graduates the conformance assertion from shape-only to behavioral. Builds on the same-day spec + schema landing in `db54921`.
