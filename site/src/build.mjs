@@ -891,7 +891,7 @@ function buildVersioning() {
   buildMarkdownDoc({
     srcAbsPath: join(ROOT, 'COMPATIBILITY.md'),
     destPath: join(DIST, 'versioning', 'index.html'),
-    pageTitle: 'Versioning &amp; compatibility',
+    pageTitle: 'Versioning & compatibility',
     lede: 'How openwop changes between releases. Additive-only within v1.x; safety-fixes follow the 90-day window; breaking changes only land in major versions.',
     navActive: '',
     canonicalPath: '/versioning/',
