@@ -1,6 +1,8 @@
 # External Pack Author Recruitment
 
 > **Status: framework + outreach template ready (2026-05-11; freshness re-confirmed 2026-05-21).** Distinct from the host-recruitment work in `external-host.md` — packs are smaller, easier-to-commit-to surfaces than a full host. The blocker remains identifying 3–5 specific Tier 1 / Tier 2 candidates and customizing the template per recipient. 2026-05-21 update: registry pack count grew from 3 → 62, but every published pack is still steward-published — the broader pack inventory does not change the recruitment objective (a non-steward pack author).
+>
+> **Standards-review urgency note (2026-05-21).** A non-steward pack author is the smallest-surface, lowest-cost path to firing the vendor-neutral-org tripwire. Per Google-acceptance reviewer findings, the project needs at least one external composition partner to move from "incubating protocol" to "credible open standard." A pack is the cheapest such commitment.
 
 ## Why this matters
 

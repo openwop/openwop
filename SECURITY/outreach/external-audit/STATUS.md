@@ -1,8 +1,10 @@
 # External Audit — Outreach Status
 
-> **Last updated: 2026-05-11.** Tracker for the outreach round defined in `README.md`. Update each row as replies come in. The authoritative engagement-state-machine lives in `SECURITY/external-audit-engagement.md` §8 — this file is the per-vendor detail that doesn't belong in the master scope doc.
+> **Last updated: 2026-05-21.** Tracker for the outreach round defined in `README.md`. Update each row as replies come in. The authoritative engagement-state-machine lives in `SECURITY/external-audit-engagement.md` §8 — this file is the per-vendor detail that doesn't belong in the master scope doc.
 >
-> **Drafts freshness re-confirmed 2026-05-12** — all five per-vendor outreach drafts (`trail-of-bits.md`, `ncc-group.md`, `doyensec.md`, `cure53.md`, `latacora.md`) re-read against current `SECURITY/external-audit-engagement.md` scope; no content drift detected. Drafts remain send-ready; the only blocker is the steward sending them. After send, mark the "Outreach sent" column on each row with the send date.
+> **Drafts freshness re-confirmed 2026-05-21.** Five per-vendor drafts (`trail-of-bits.md`, `ncc-group.md`, `doyensec.md`, `cure53.md`, `latacora.md`) re-read against current `SECURITY/external-audit-engagement.md` scope. Scope is current per the 2026-05-21 refresh (RFCs 0014–0024+0026 added to in-scope list; RFCs 0027–0033 in scope as gated extensions; RFC 0013 in scope post-Acceptance). Drafts remain send-ready; **the only blocker is the steward sending them.** External-action gate SEC-1 per `docs/KNOWN-LIMITS.md:73` cannot close until send.
+>
+> **Standards-review urgency note (2026-05-21).** External review engagement is the single highest-leverage move for credibility per the recent Google-acceptance review. Until at least three vendor quotes are in hand, the project's security posture is reviewer-flagged as insufficient regardless of how many invariants the suite enforces.
 
 **Maintenance convention:** update this file in the **same git commit** that responds to or acknowledges a vendor reply. Co-located updates prevent silent staleness — 5 vendors × ~4 status transitions = ~20 edits over a 2-month window; without the commit-with-the-reply rule the file decays.
 

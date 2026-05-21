@@ -1,6 +1,8 @@
 # External Host Recruitment — Outreach Drafts
 
-> **Status: drafts ready, not yet sent (2026-05-11; freshness re-confirmed 2026-05-12).** Send all four in week 1 of the recruitment round in parallel. First positive reply gets the steward's full attention; the rest stay warm. 2026-05-12 re-read: 4-tier list (LangGraph / Restate / DBOS / Inngest) still matches the current durable-execution / agent-orchestration landscape; no content drift requiring rewrite. Send-ready.
+> **Status: drafts ready, not yet sent (2026-05-11; freshness re-confirmed 2026-05-21).** Send all four in week 1 of the recruitment round in parallel. First positive reply gets the steward's full attention; the rest stay warm. 2026-05-21 re-read: 4-tier list (LangGraph / Restate / DBOS / Inngest) still matches the current durable-execution / agent-orchestration landscape; no content drift requiring rewrite. Send-ready.
+>
+> **Standards-review urgency note (2026-05-21).** External host recruitment unblocks the vendor-neutral-org migration tripwire AND the Google-acceptance reviewer's gap (3) (multi-agent semantics fully portable — needs cross-host evidence). Both gates close on the same first non-steward implementation. SEC-1 (audit) and GOV-1 (this doc) are the two highest-leverage external-action items.
 
 The vendor-neutral-org migration tripwire in `MAINTAINERS.md` activates when ≥1 maintainer is not affiliated with OpenWOP. The most credible path to that is recruiting one non-steward host implementation: a different team running their own OpenWOP-compliant server, ideally on top of a different durable-execution runtime.
 
