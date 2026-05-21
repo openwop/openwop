@@ -74,6 +74,8 @@ function MessageActions({
     color: 'var(--color-text-muted)',
     cursor: 'pointer',
     borderRadius: 6,
+    display: 'inline-flex',
+    alignItems: 'center',
   };
   const pressed: React.CSSProperties = {
     background: 'var(--color-surface-2, var(--color-bg))',
@@ -110,7 +112,7 @@ function MessageActions({
         <>
           <button
             type="button"
-            style={{ ...btn, ...(message.feedback === 'positive' ? pressed : {}), display: 'inline-flex', alignItems: 'center' }}
+            style={{ ...btn, ...(message.feedback === 'positive' ? pressed : {}) }}
             onClick={() =>
               onFeedback(message.id, message.feedback === 'positive' ? null : 'positive')
             }
@@ -121,7 +123,7 @@ function MessageActions({
           </button>
           <button
             type="button"
-            style={{ ...btn, ...(message.feedback === 'negative' ? pressed : {}), display: 'inline-flex', alignItems: 'center' }}
+            style={{ ...btn, ...(message.feedback === 'negative' ? pressed : {}) }}
             onClick={() =>
               onFeedback(message.id, message.feedback === 'negative' ? null : 'negative')
             }
