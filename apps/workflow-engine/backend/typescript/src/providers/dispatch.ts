@@ -8,6 +8,7 @@
  * envelopes, etc.) — see `core.openwop.ai/index.mjs`.
  */
 
+import { parseRefusal, type RefusalSignal } from '@openwop/openwop';
 import { ThinkBlockSplitter } from './thinkBlockSplitter.js';
 import { dispatchMock } from './dispatchMock.js';
 
@@ -84,17 +85,14 @@ export interface DispatchResult {
   blockReason?: string;
   /** Safety category that tripped (Gemini's `safetyRatings[].category` of any blocked rating). */
   safetyCategory?: string;
-  /** Provider-surfaced refusal text — distinct from `completion`. Populated for:
-   *   - OpenAI: `choices[0].message.refusal` (streamed via `delta.refusal`) when the
-   *     structured-output safety filter triggers. Can co-occur with `finish_reason:
-   *     "stop"`, so a non-empty value is a stronger refusal signal than finishReason
-   *     alone (per the @openwop/openwop `parseRefusal` helper's docstring).
-   *   - Anthropic: text extracted from `content[]` text blocks when
-   *     `stop_reason === 'refusal'`.
-   *   - Gemini: not populated (the safety filter is opaque to the model).
-   *  Callers MUST route through BYOK / prompt-content redaction before persistence
-   *  per SECURITY/invariants.yaml §envelope-refusal-no-prompt-leak. */
-  refusalText?: string;
+  /** Normalized refusal signal per RFC 0032 §B.3, computed by routing a synthetic
+   *  provider-shape response through `@openwop/openwop`'s `parseRefusal()` helper
+   *  at the end of streaming. `undefined` means no refusal detected; a non-null
+   *  signal means the caller MUST route through `envelope.refusal` emission +
+   *  fail the node with `error.code = "envelope_refusal"` per RFC 0033 §F.
+   *  refusalText (when set) MUST be passed through BYOK / prompt-content redaction
+   *  before persistence per SECURITY/invariants.yaml §envelope-refusal-no-prompt-leak. */
+  refusal?: RefusalSignal;
   /** Normalized citations from a web-search-enabled turn. Empty when search wasn't used. */
   citations?: readonly Citation[];
 }
@@ -319,12 +317,22 @@ async function dispatchAnthropic(req: DispatchRequest): Promise<DispatchResult> 
     }
   }
 
+  // Route through @openwop/openwop's parseRefusal() with a synthetic
+  // Anthropic Messages shape. The helper catches stop_reason: 'refusal'
+  // (their 2025 release) and extracts inline refusal text from
+  // content[].text blocks when present.
+  const refusal = parseRefusal({
+    stop_reason: finishReason,
+    content: completion.length > 0 ? [{ type: 'text', text: completion }] : [],
+  }) ?? undefined;
+
   return {
     provider: 'anthropic',
     model: req.model,
     completion,
     usage: { inputTokens, outputTokens },
     ...(finishReason ? { finishReason } : {}),
+    ...(refusal ? { refusal } : {}),
   };
 }
 
@@ -408,13 +416,30 @@ async function dispatchOpenAI(req: DispatchRequest): Promise<DispatchResult> {
     await req.onDelta?.(tail.visible);
   }
 
+  // Route through @openwop/openwop's parseRefusal() — build a synthetic
+  // post-stream OpenAI response shape from accumulated state. The helper
+  // catches:
+  //   - choices[0].message.refusal (modern structured-output safety filter,
+  //     accumulated above into `refusalText`).
+  //   - choices[0].finish_reason: 'content_filter' (legacy).
+  // Either signal yields a typed RefusalSignal { refusalText, safetyCategory?, provider }.
+  const refusal = parseRefusal({
+    choices: [{
+      message: {
+        refusal: refusalText.length > 0 ? refusalText : undefined,
+        content: completion,
+      },
+      finish_reason: finishReason,
+    }],
+  }) ?? undefined;
+
   return {
     provider: 'openai',
     model: req.model,
     completion,
     usage: { inputTokens, outputTokens },
     ...(finishReason ? { finishReason } : {}),
-    ...(refusalText.length > 0 ? { refusalText } : {}),
+    ...(refusal ? { refusal } : {}),
   };
 }
 
@@ -501,12 +526,24 @@ async function dispatchMiniMax(req: DispatchRequest): Promise<DispatchResult> {
     await req.onDelta?.(tail.visible);
   }
 
+  // MiniMax is OpenAI-compatible — same parseRefusal route as dispatchOpenAI.
+  // (MiniMax doesn't surface `message.refusal` today; this catches the
+  // finish_reason: 'content_filter' branch + future-proofs against the
+  // refusal field if they add it.)
+  const refusal = parseRefusal({
+    choices: [{
+      message: { content: completion },
+      finish_reason: finishReason,
+    }],
+  }) ?? undefined;
+
   return {
     provider: 'minimax',
     model: req.model,
     completion,
     usage: { inputTokens, outputTokens },
     ...(finishReason ? { finishReason } : {}),
+    ...(refusal ? { refusal } : {}),
   };
 }
 
@@ -690,6 +727,15 @@ async function dispatchGoogle(req: DispatchRequest): Promise<DispatchResult> {
   }
 
   const citations = Array.from(citationsByUrl.values());
+  // Route through parseRefusal() with a synthetic Gemini-shape response.
+  // The helper catches candidates[0].finishReason: 'SAFETY' | 'RECITATION'
+  // and promptFeedback.blockReason. safetyCategory propagates onto the
+  // RefusalSignal when surfaced.
+  const refusal = parseRefusal({
+    candidates: [{ finishReason }],
+    promptFeedback: blockReason ? { blockReason, safetyRatings: safetyCategory ? [{ category: safetyCategory, blocked: true }] : [] } : undefined,
+  }) ?? undefined;
+
   return {
     provider: 'google',
     model: req.model,
@@ -699,6 +745,7 @@ async function dispatchGoogle(req: DispatchRequest): Promise<DispatchResult> {
     ...(blockReason ? { blockReason } : {}),
     ...(safetyCategory ? { safetyCategory } : {}),
     ...(citations.length > 0 ? { citations } : {}),
+    ...(refusal ? { refusal } : {}),
   };
 }
 

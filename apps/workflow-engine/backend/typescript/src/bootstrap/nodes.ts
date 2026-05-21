@@ -694,26 +694,14 @@ async function emitChatEnvelopeSignals(
   result: DispatchResult | ManagedDispatchResult,
 ): Promise<void> {
   const fr = (result.finishReason ?? '').toLowerCase();
-  const blockReason = 'blockReason' in result ? result.blockReason : undefined;
-  const safetyCategory = 'safetyCategory' in result ? result.safetyCategory : undefined;
-  // OpenAI's structured-output safety-filter surfaces refusals via
-  // choices[0].message.refusal — accumulated as DispatchResult.refusalText
-  // by dispatchOpenAI. This field is the STRONGEST refusal signal on the
-  // modern OpenAI API (per the @openwop/openwop parseRefusal helper's
-  // docstring) and CAN co-occur with finish_reason: 'stop'. So flagging
-  // on it independently of finishReason catches the case the older
-  // content_filter check misses.
-  const refusalText = 'refusalText' in result ? result.refusalText : undefined;
-  const hasRefusalText = typeof refusalText === 'string' && refusalText.length > 0;
-
-  const isRefusal =
-    fr === 'refusal' ||
-    fr === 'content_filter' ||
-    fr === 'safety' ||
-    fr === 'recitation' ||
-    (typeof blockReason === 'string' && blockReason.length > 0) ||
-    hasRefusalText;
-  if (isRefusal) {
+  // RFC 0032 §B.3 — refusal detection lifted to @openwop/openwop's parseRefusal()
+  // helper, called by each dispatcher in providers/dispatch.ts and surfaced
+  // here as a typed RefusalSignal. ManagedDispatchResult doesn't carry the
+  // signal (managed-provider path goes through a different pipeline), so the
+  // narrowing `'refusal' in result` keeps the union safe under
+  // exactOptionalPropertyTypes.
+  const refusal = 'refusal' in result ? result.refusal : undefined;
+  if (refusal) {
     try {
       await ctx.emit(
         'envelope.refusal',
@@ -721,12 +709,13 @@ async function emitChatEnvelopeSignals(
           ctx.nodeId,
           result.provider,
           result.model,
-          // refusalText omitted per SECURITY invariant envelope-refusal-no-prompt-leak.
-          // safetyCategory passed through verbatim — pass `undefined` (not `null`) on
-          // absence so the helper's `!== undefined` guard omits the field cleanly,
-          // matching the structured-output emission convention in aiProvidersHost.ts.
+          // refusalText omitted from the wire per SECURITY/invariants.yaml
+          // §envelope-refusal-no-prompt-leak — provider refusal messages CAN
+          // echo prompt content, and the chat-responder has no redaction
+          // harness wired yet. The signal's presence is enough to fire the chip;
+          // the FE doesn't need the text.
           undefined,
-          safetyCategory,
+          refusal.safetyCategory,
         ),
       );
     } catch { /* best-effort emission — never block the response */ }
