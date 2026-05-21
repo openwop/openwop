@@ -161,15 +161,16 @@ These are MUST-have for every surface.
 
 ## 8. Mobile breakpoints
 
-The site uses **four canonical breakpoints**. Do not invent new ones.
+The site uses **six canonical breakpoints**. Do not invent new ones.
 
 | Token | Width | What collapses |
 |---|---|---|
 | `--bp-wide` | `≤ 1080px` | `.packs` 4 → 2 cols |
-| `--bp-md` | `≤ 920px` | `.hero-grid` 2 → 1 col; `.start` 2 → 1 col |
+| `--bp-md` | `≤ 920px` | `.hero-grid` 2 → 1 col; `.start` 2 → 1 col; `.foot-grid` 5 → 3 cols |
 | `--bp-sm` | `≤ 820px` | `.pillars` 3 → 1 col |
-| `--bp-mobile` | `≤ 760px` | `.spec` 2 → 1 col; `.foot-grid` 4 → 2 cols; **diagram-card hidden, `.diagram-mobile-summary` shown** |
-| `--bp-xs` | `≤ 640px` | `.packs` 2 → 1 col |
+| `--bp-mobile` | `≤ 760px` | `.spec` 2 → 1 col; **diagram-card hidden, `.diagram-mobile-summary` shown**; `.topnav .hide-sm` items hidden |
+| `--bp-xs` | `≤ 640px` | `.packs` 2 → 1 col; `.foot-grid` 3 → 2 cols |
+| `--bp-xxs` | `≤ 480px` | iPhone-SE-class micro-mobile: `.brand-sub` hidden so the GitHub pill clears the brand mark; `.hero h1` drops one type step |
 
 (These are documentation tokens — the CSS today inlines the literal values. Future refactor: hoist to `:root` so they can be changed in one place.)
 
@@ -292,6 +293,14 @@ The site is English-only today. Future i18n MUST observe:
 - **Person glyph.** iOS `person.circle` style — outer container circle, head circle inside, body circle clipped by the container via `clipPath`. Stroke `2`, `var(--ink)`.
 - **Inline arrows.** `↗` for off-site, `→` for in-page, `↺` reserved for the orchestrator loop indicator. No emoji.
 - **Glyph SVGs in pillars.** `viewBox="0 0 44 44"`, `stroke="currentColor"`, one optional clay accent stroke per glyph.
+
+### 13.1 Diagram-label inlining exception
+
+Per-label `style="font-size:…"` is permitted on `<text>` elements inside the FIG. 01 hero diagram (and any future diagram following the same pattern). Diagram legibility tuning routinely requires fractional sizes (`8.5px`, `9.5px`) that don't map cleanly to the §3 type scale. The label color, however, MUST resolve to a token: `style="fill:var(--ink)"`, `var(--ink-3)`, `var(--clay)`, never a literal `#hex` or `oklch(…)` value. Class-based label sizing is acceptable too; the inline-style carve-out is the practical default.
+
+### 13.2 OG-share asset exception
+
+`public/assets/og-*.svg` (Open Graph / Twitter Card share images) MAY inline literal `#hex` and `oklch(…)` colors. These assets are rendered by external link-preview services (Twitter / LinkedIn / Slack / Discord) outside our CSS context, so token-based `var(…)` references would not resolve. Update the literal values in the same release whenever the canonical palette in `public/styles.css :root` changes — keep the SVG and the token block in lockstep so the social preview matches the live site.
 
 ---
 

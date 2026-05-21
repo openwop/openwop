@@ -1199,7 +1199,7 @@
     .foot-grid { grid-template-columns: 2fr 1fr 1fr; gap: 32px; }
     .foot-grid > div:first-child { grid-column: 1 / -1; max-width: 48ch; }
   }
-  @media (max-width: 600px) {
+  @media (max-width: 640px) {
     .foot-grid { grid-template-columns: 1fr 1fr; }
   }
 
