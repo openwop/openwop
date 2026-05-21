@@ -645,21 +645,25 @@ function buildSpecDocs() {
 </section>`;
   }).join('\n');
 
-  const tocLinks = GROUPS.filter((g) => g.slugs.some((s) => itemBySlug.has(s)))
-    .map((g) => `<li><a href="#${g.key}">${g.title}</a></li>`).join('\n      ');
+  // Build a ToC that matches the standard `wrapWithToc()` shape so the
+  // /spec/v1/ index page uses the same sticky left-rail "On this page"
+  // sidebar pattern as every other long-form page. Each thematic group
+  // header is an <h2 id="${g.key}"> in groupsHtml, so the slug aligns
+  // with the heading anchor.
+  const indexToc = GROUPS
+    .filter((g) => g.slugs.some((s) => itemBySlug.has(s)))
+    .map((g) => ({ level: 2, text: g.title, slug: g.key }));
 
-  const indexContent = `<header class="page-header">
-    <h1>OpenWOP v1 spec corpus</h1>
-    <p class="lede">${items.length} prose specs governing the v1 wire contract. Each section below groups specs by what they do; click through for the normative text.</p>
-    <p class="meta">Status legend: <strong>FINAL</strong> · STUB · DRAFT · OUTLINE. A spec is FINAL when its wire shape is locked under v1.x compatibility rules.</p>
-  </header>
-  <nav class="spec-index-toc" aria-label="Spec sections">
-    <h3>Jump to</h3>
-    <ul>
-      ${tocLinks}
-    </ul>
-  </nav>
-  ${groupsHtml}`;
+  const indexArticleHtml = `<article class="spec-doc">
+    <header class="page-header">
+      <h1>OpenWOP v1 spec corpus</h1>
+      <p class="lede">${items.length} prose specs governing the v1 wire contract. Each section below groups specs by what they do; click through for the normative text.</p>
+      <p class="meta">Status legend: <strong>FINAL</strong> · STUB · DRAFT · OUTLINE. A spec is FINAL when its wire shape is locked under v1.x compatibility rules.</p>
+    </header>
+    ${groupsHtml}
+  </article>`;
+  const indexContent = wrapWithToc(indexArticleHtml, indexToc);
+
   writeFileSync(
     join(DIST, 'spec', 'v1', 'index.html'),
     templatePage({

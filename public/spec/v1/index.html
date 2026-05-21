@@ -67,26 +67,26 @@
 
 <main class="site-main">
   <div class="wrap">
-    <header class="page-header">
-    <h1>OpenWOP v1 spec corpus</h1>
-    <p class="lede">38 prose specs governing the v1 wire contract. Each section below groups specs by what they do; click through for the normative text.</p>
-    <p class="meta">Status legend: <strong>FINAL</strong> · STUB · DRAFT · OUTLINE. A spec is FINAL when its wire shape is locked under v1.x compatibility rules.</p>
-  </header>
-  <nav class="spec-index-toc" aria-label="Spec sections">
-    <h3>Jump to</h3>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
     <ul>
-      <li><a href="#foundation">Foundation</a></li>
-      <li><a href="#runtime">Run lifecycle &amp; state</a></li>
-      <li><a href="#agents">Agents &amp; multi-agent execution</a></li>
-      <li><a href="#humans">Humans in the loop</a></li>
-      <li><a href="#transports">Wire transports</a></li>
-      <li><a href="#security">Auth &amp; security</a></li>
-      <li><a href="#ecosystem">Node packs &amp; registry</a></li>
-      <li><a href="#production">Production posture &amp; operations</a></li>
-      <li><a href="#integration">Integration with adjacent protocols</a></li>
+      <li class="toc-top"><a href="#foundation">Foundation</a></li>
+      <li class="toc-top"><a href="#runtime">Run lifecycle &amp;amp; state</a></li>
+      <li class="toc-top"><a href="#agents">Agents &amp;amp; multi-agent execution</a></li>
+      <li class="toc-top"><a href="#humans">Humans in the loop</a></li>
+      <li class="toc-top"><a href="#transports">Wire transports</a></li>
+      <li class="toc-top"><a href="#security">Auth &amp;amp; security</a></li>
+      <li class="toc-top"><a href="#ecosystem">Node packs &amp;amp; registry</a></li>
+      <li class="toc-top"><a href="#production">Production posture &amp;amp; operations</a></li>
+      <li class="toc-top"><a href="#integration">Integration with adjacent protocols</a></li>
     </ul>
-  </nav>
-  <section class="spec-group">
+  </aside><article class="spec-doc">
+    <header class="page-header">
+      <h1>OpenWOP v1 spec corpus</h1>
+      <p class="lede">38 prose specs governing the v1 wire contract. Each section below groups specs by what they do; click through for the normative text.</p>
+      <p class="meta">Status legend: <strong>FINAL</strong> · STUB · DRAFT · OUTLINE. A spec is FINAL when its wire shape is locked under v1.x compatibility rules.</p>
+    </header>
+    <section class="spec-group">
   <h2 id="foundation">Foundation</h2>
   <p class="spec-group-lede">What OpenWOP is, what it isn't, and how a host advertises its surface.</p>
   <ul class="spec-group-list">
@@ -330,6 +330,27 @@
     </li>
   </ul>
 </section>
+  </article></div><script>
+(function () {
+  var links = document.querySelectorAll('.spec-toc a');
+  if (!links.length || !('IntersectionObserver' in window)) return;
+  var byId = new Map();
+  links.forEach(function (a) { byId.set(a.getAttribute('href').slice(1), a); });
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        links.forEach(function (a) { a.classList.remove('is-active'); });
+        var link = byId.get(e.target.id);
+        if (link) link.classList.add('is-active');
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  byId.forEach(function (_, id) {
+    var el = document.getElementById(id);
+    if (el) observer.observe(el);
+  });
+})();
+</script>
   </div>
 </main>
 
