@@ -11,6 +11,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### RFC 0034 (OTel collector test seam) promoted Draft → Active same-day (2026-05-21)
+
+Filed as Draft earlier today (aa94003); now graduates to Active after the protocol-layer surface landed atomically:
+
+- `schemas/capabilities.schema.json` gains `capabilities.observability.testSeams.{otelScrape, debugBundleExport}` — both optional booleans; hosts that omit advertise no claim.
+- `spec/v1/observability.md` gains §"OTel collector test seam (RFC 0034)" defining the two `/v1/host/sample/test/*` endpoints' wire contracts.
+- `SECURITY/invariants.yaml` graduates `secret-leakage-otel-attribute` and `secret-leakage-debug-bundle-otel` from `tier: reference-impl` → `tier: protocol`. The `non_testability_rationale` field is dropped on both rows; `tests:` now points at `conformance/src/scenarios/envelope-reasoning-secret-redaction.test.ts` per the existing canonical field shape (95 occurrences across protocol-tier and reference-impl-tier rows).
+- `conformance/src/scenarios/envelope-reasoning-secret-redaction.test.ts` — the two OTel + debug-bundle `it()` blocks tighten from "soft-skip on 404" to "soft-skip when capability not advertised; MUST serve 200 when advertised."
+- `README.md` updated: 58 protocol-tier (was 56) / 30 reference-impl-tier (was 32) / 4 Active RFCs / 5 Draft RFCs.
+
+`check-security-invariants` gate still green: both newly-graduated rows have non-empty `tests:` globs as required. Path to `Accepted`: reference workflow-engine advertises the two seams + the scenario passes against it. The reference-host wiring lands in a follow-up commit owned by the workflow-engine maintainer.
+
 ### RFC 0030 / 0031 / 0032 / 0033 promoted Active → Accepted (2026-05-21)
 
 The four envelope LLM-contract-hardening RFCs reach `Accepted` status under the bootstrap-phase steward waiver per `CONTRIBUTING.md` §"Bootstrap-phase notes" + `MAINTAINERS.md` §"Bootstrap-phase RFC waivers" — same path RFCs 0021–0029 used. The 7-day comment window opened 2026-05-20 was empirically waivable: zero external reviewers (single-steward bootstrap repo); all four acceptance criteria from `RFCS/0001-rfc-process.md` §"Promotion to Accepted" empirically met by Day 2 (cross-host validation closed at the 62-pass + 4-honest-skip threshold against MyndHyve; reference workflow-engine emitting end-to-end; adoption-feedback folded).

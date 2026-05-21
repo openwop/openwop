@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0034 |
 | **Title** | OTel collector test seam + secret-leakage invariant promotion |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-21 |
-| **Updated** | 2026-05-21 |
+| **Updated** | 2026-05-21 (Draft → Active same-day: schema additions to `capabilities.observability.testSeams` landed; spec/v1/observability.md §"OTel collector test seam" added; SECURITY/invariants.yaml graduates `secret-leakage-otel-attribute` + `secret-leakage-debug-bundle-otel` from `reference-impl` to `protocol` tier; conformance scenario `envelope-reasoning-secret-redaction.test.ts` tightens soft-skip to capability-gating. Path to `Accepted`: reference workflow-engine advertises the two seams + the scenario passes against it. The two SECURITY rows' `tests:` field now points at the live scenario; `check-security-invariants.sh` enforces non-empty test coverage on every protocol-tier row.) |
 | **Affects** | `spec/v1/observability.md` (adds §"OTel collector test seam") · `schemas/capabilities.schema.json` (adds `capabilities.observability.testSeams`) · `SECURITY/invariants.yaml` (promotes `secret-leakage-otel-attribute` + `secret-leakage-debug-bundle-otel` from `reference-impl` to `protocol` tier) · `conformance/src/scenarios/envelope-reasoning-secret-redaction.test.ts` (drops soft-skip on HTTP 404; gates on the new capability instead) · reference hosts (`examples/hosts/postgres/`) · `INTEROP-MATRIX.md` · CHANGELOG |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |

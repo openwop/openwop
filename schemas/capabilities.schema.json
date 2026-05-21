@@ -334,6 +334,21 @@
             }
           },
           "additionalProperties": true
+        },
+        "testSeams": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "RFC 0034 — Conformance-only test seams under the host-extension namespace. Hosts that opt in expose introspection endpoints so cross-host conformance scenarios can verify BYOK canaries do not leak into OTel span attributes or debug-bundle exports. Production hosts SHOULD return 404 or 403 from these seams unless an env-gate (e.g., `OPENWOP_TEST_OTEL_SCRAPE=true`) is set.",
+          "properties": {
+            "otelScrape": {
+              "type": "boolean",
+              "description": "Host exposes `POST /v1/host/sample/test/otel/spans?runId=<id>` returning `{ spans: Array<{ name, attributes, events }> }` scoped to the run. Conformance verifies span attributes don't carry BYOK canaries. When advertised true, the host MUST serve a 200 response with the documented shape."
+            },
+            "debugBundleExport": {
+              "type": "boolean",
+              "description": "Host exposes `POST /v1/host/sample/test/debug-bundle/export` returning the same payload shape as `GET /v1/runs/{runId}/debug-bundle` per `spec/v1/debug-bundle.md`. Conformance verifies the serialized bundle doesn't carry BYOK canaries. When advertised true, the host MUST serve a 200 response with the documented shape."
+            }
+          }
         }
       },
       "additionalProperties": true

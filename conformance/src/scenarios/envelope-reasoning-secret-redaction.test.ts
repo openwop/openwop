@@ -42,6 +42,12 @@ interface DiscoveryDoc {
   capabilities?: {
     envelopes?: { reasoning?: { supported?: unknown } };
     secrets?: { supported?: unknown };
+    observability?: {
+      testSeams?: {
+        otelScrape?: unknown;
+        debugBundleExport?: unknown;
+      };
+    };
   };
 }
 
@@ -248,45 +254,66 @@ describe.skipIf(HTTP_SKIP)('envelope-reasoning-secret-redaction: downstream-proj
   }
 
   it('OTel span attributes for the envelope-emitting node MUST NOT include plaintext `secret:`-prefixed substrings from `reasoning`', async () => {
+    // RFC 0034 §B: gate on capabilities.observability.testSeams.otelScrape.
+    // Hosts that don't advertise it soft-skip; hosts that DO advertise MUST serve a valid response.
+    const d = await readDiscovery();
+    const otelScrapeAdvertised = d?.capabilities?.observability?.testSeams?.otelScrape === true;
+    if (!otelScrapeAdvertised) return; // soft-skip — host honest about not implementing per RFC 0034 §A
+
     const r = await acceptForRun(
       `Reasoning trace mentioning ${CANARY_VALUE} verbatim.`,
       'env-otel-redact-1',
     );
-    if (r.status === 404) return; // host doesn't expose the seam
+    if (r.status === 404) return; // envelope-accept seam itself not exposed — separate gate
     expect(r.body.status).toBe('accepted');
 
     const spansRes = await driver.get(
       `/v1/host/sample/test/otel/spans?runId=${encodeURIComponent(RUN_ID)}`,
     );
-    if (spansRes.status === 404) return; // host doesn't expose the OTel scrape seam
-    expect(spansRes.status).toBe(200);
+    expect(
+      spansRes.status,
+      driver.describe(
+        'RFCS/0034-otel-collector-test-seam.md §B',
+        'host advertising capabilities.observability.testSeams.otelScrape MUST serve the seam (200) — 404 is non-conformant',
+      ),
+    ).toBe(200);
     const spans = ((spansRes.json as { spans?: Array<Record<string, unknown>> } | undefined)?.spans ?? []);
     const serialized = JSON.stringify(spans);
     expect(
       serialized.includes(CANARY_VALUE),
       driver.describe(
-        'SECURITY/invariants.yaml envelope-reasoning-secret-redaction',
+        'SECURITY/invariants.yaml secret-leakage-otel-attribute',
         'no canary plaintext from the envelope `reasoning` field may appear in any OTel span attribute',
       ),
     ).toBe(false);
   });
 
   it("debug-bundle export MUST NOT include plaintext `secret:`-prefixed substrings from envelope.reasoning", async () => {
+    // RFC 0034 §B: gate on capabilities.observability.testSeams.debugBundleExport.
+    const d = await readDiscovery();
+    const debugBundleAdvertised = d?.capabilities?.observability?.testSeams?.debugBundleExport === true;
+    if (!debugBundleAdvertised) return; // soft-skip — host honest about not implementing per RFC 0034 §A
+
     const r = await acceptForRun(
       `Step-by-step reasoning that surfaces ${CANARY_VALUE} from a prior tool result.`,
       'env-bundle-redact-1',
     );
-    if (r.status === 404) return;
+    if (r.status === 404) return; // envelope-accept seam itself not exposed — separate gate
     expect(r.body.status).toBe('accepted');
 
     const bundleRes = await driver.post('/v1/host/sample/test/debug-bundle/export', { runId: RUN_ID });
-    if (bundleRes.status === 404) return; // host doesn't expose the debug-bundle seam
-    expect(bundleRes.status).toBe(200);
+    expect(
+      bundleRes.status,
+      driver.describe(
+        'RFCS/0034-otel-collector-test-seam.md §B',
+        'host advertising capabilities.observability.testSeams.debugBundleExport MUST serve the seam (200) — 404 is non-conformant',
+      ),
+    ).toBe(200);
     const serialized = JSON.stringify(bundleRes.json);
     expect(
       serialized.includes(CANARY_VALUE),
       driver.describe(
-        'RFC 0030 §E + debug-bundle.md §"Redaction"',
+        'SECURITY/invariants.yaml secret-leakage-debug-bundle-otel',
         'no canary plaintext from envelope.reasoning may appear in the debug-bundle export',
       ),
     ).toBe(false);

@@ -786,6 +786,41 @@ See `spec/v1/rest-endpoints.md` §"Common error codes" for the two new codes; `a
 
 ---
 
+## OTel collector test seam (RFC 0034)
+
+Per [RFC 0034](../../RFCS/0034-otel-collector-test-seam.md) (`Active` 2026-05-21).
+
+Cross-host conformance scenarios need an introspection endpoint to verify that BYOK canaries do not leak into OTel span attributes or debug-bundle exports. The two protocol-tier SECURITY invariants `secret-leakage-otel-attribute` and `secret-leakage-debug-bundle-otel` (SECURITY/invariants.yaml) graduate from `reference-impl` to `protocol` tier on the strength of this test seam.
+
+The seams live under the `host-extensions.md` §"Canonical prefixes" namespace `/v1/host/sample/test/*` and are NOT part of the v1 wire surface. Production hosts SHOULD return 404 or 403 from the seam unless an env-gate (e.g., `OPENWOP_TEST_OTEL_SCRAPE=true`) is set.
+
+### `POST /v1/host/sample/test/otel/spans?runId=<id>`
+
+When `capabilities.observability.testSeams.otelScrape: true`, the host MUST return `200 OK` with body `{ spans: Array<{ name, attributes, events }> }`. The spans array MUST include every OTel span produced by the host's instrumentation for the named run, including any `openwop.*`-prefixed attributes added to span context. Hosts MAY redact span content using the canonical `[REDACTED:<secretId>]` marker per `agent-memory.md` §"SR-1 secret-redaction invariant" — that's the contract being tested.
+
+### `POST /v1/host/sample/test/debug-bundle/export`
+
+When `capabilities.observability.testSeams.debugBundleExport: true`, the host MUST return `200 OK` with the same payload shape as `GET /v1/runs/{runId}/debug-bundle` per `spec/v1/debug-bundle.md`. The seam exists to give conformance scenarios a synchronous endpoint they can hit without first triggering an interrupt → debug bundle workflow.
+
+### Capability advertisement (normative)
+
+Hosts that implement either seam advertise it under `/.well-known/openwop`:
+
+```jsonc
+{
+  "capabilities": {
+    "observability": {
+      "testSeams": {
+        "otelScrape": true,
+        "debugBundleExport": true
+      }
+    }
+  }
+}
+```
+
+A host that advertises `testSeams.otelScrape: true` but returns 404 / 5xx from the seam is non-conformant. Hosts that do NOT implement the seam MUST omit the field (or set it to `false`); conformance scenarios skip cleanly when the capability is absent.
+
 ## Open spec gaps
 
 | # | Gap | Owner |

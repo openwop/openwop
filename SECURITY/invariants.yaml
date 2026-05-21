@@ -208,21 +208,19 @@ invariants:
       telemetry exporters.
 
   - id: secret-leakage-otel-attribute
-    tier: reference-impl
+    tier: protocol
     severity: high
     threat_model: SECURITY/threat-model-secret-leakage.md
-    tests: []
-    non_testability_rationale: |
-      OTel attribute allowlist is enforced inside the host's telemetry
-      layer; verifying it in conformance would require a live OTel
-      collector + a host that emits BYOK-relevant spans + an
-      adversarial workflow. Closer-to-host coverage lives in
-      examples/hosts/postgres/test/byok-roundtrip.test.ts (host-side
-      audit). Promote to a conformance scenario when the OTel
-      collector seam at conformance/src/lib/otel-collector.ts grows
-      a deeper attribute inspector.
+    tests:
+      - conformance/src/scenarios/envelope-reasoning-secret-redaction.test.ts
     note: |
-      OTel allowlist enforced by host-specific telemetry tests.
+      Graduated reference-impl → protocol on 2026-05-21 via RFC 0034 §C:
+      conformance gates on capabilities.observability.testSeams.otelScrape;
+      advertising hosts MUST serve POST /v1/host/sample/test/otel/spans
+      returning span attributes that do not echo the BYOK canary. The
+      Postgres reference host's byok-roundtrip.test.ts continues to cover
+      the host-internal allowlist; this row now also has cross-host
+      conformance coverage on hosts that advertise the test seam.
 
   - id: secret-leakage-error-envelope
     tier: protocol
@@ -256,18 +254,17 @@ invariants:
       appear verbatim in the bundle response.
 
   - id: secret-leakage-debug-bundle-otel
-    tier: reference-impl
+    tier: protocol
     severity: high
     threat_model: SECURITY/threat-model-secret-leakage.md
-    tests: []
-    non_testability_rationale: |
-      Debug-bundle OTel span export pairs the host's debug-bundle
-      assembly with the OTel allowlist — same testability story as
-      secret-leakage-otel-attribute. Promote to a conformance
-      scenario once the OTel collector seam grows attribute
-      inspection.
+    tests:
+      - conformance/src/scenarios/envelope-reasoning-secret-redaction.test.ts
     note: |
-      Debug-bundle export of OTel spans must apply allowlist.
+      Graduated reference-impl → protocol on 2026-05-21 via RFC 0034 §C:
+      conformance gates on capabilities.observability.testSeams.debugBundleExport;
+      advertising hosts MUST serve POST /v1/host/sample/test/debug-bundle/export
+      returning a bundle that does not echo the BYOK canary across any
+      serialized field (spans, events, variables, OTel span exports).
 
   - id: secret-leakage-artifact-content
     tier: reference-impl
