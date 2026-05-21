@@ -164,7 +164,7 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
             onCancel={cancel}
             disabled={isSending}
             disabledReason={disabledReason}
-            placeholder={isSending ? 'Generating… (Esc to stop)' : 'Ask anything… (/ for commands)'}
+            placeholder={isSending ? 'Generating… (Esc to stop)' : 'Ask anything… (/ for commands, @ for workflows)'}
             supportsAudioInput={supportsAudioInput}
           />
         </div>
