@@ -1,11 +1,15 @@
 # Runbook: Promote RFCs 0030/0031/0032/0033 from `Active` → `Accepted`
 
-> **Scheduled for:** 2026-05-27 (comment-window close).
+> **Status: EXECUTED EARLY 2026-05-21 (commits `1105dc2` + `dea32bc`).** The steward exercised the bootstrap-phase waiver per `CONTRIBUTING.md` §"Bootstrap-phase notes" + `MAINTAINERS.md` §"Bootstrap-phase RFC waivers" — same path RFCs 0021–0029 used. The 7-day comment window was empirically waivable: single-steward bootstrap repo with zero external reviewers; all four acceptance criteria empirically met by Day 2 (cross-host validation closed at the 62-pass + 4-honest-skip threshold against MyndHyve; reference workflow-engine emitting end-to-end; adoption-feedback folded across `9da6281` + `8d3c1c0`).
+>
+> **Originally scheduled for:** 2026-05-27 (comment-window close).
+> **Actual execution:** 2026-05-21.
 > **Owner:** OpenWOP steward.
 > **Spec lane:** Non-normative (status-line bump + CHANGELOG + INTEROP-MATRIX timestamp).
-> **Estimated effort:** ~30 minutes (verification + commit + push).
 >
-> **If you are an agent reading this on 2026-05-27 because a `/schedule` job fired this runbook as your prompt:** follow Phase 1 verification BEFORE any spec edits. If any verification step fails, halt and surface the failure to the user — do NOT land the promotion commit until every checklist item is green.
+> **This runbook is preserved as a reusable pattern for future RFC-family `Active → Accepted` promotions.** The phase structure (verification → status bump → CHANGELOG/INTEROP refresh → commit + push) generalizes — adapt the SHA references, file paths, and acceptance criteria per the RFC being promoted. The "if something goes wrong" halt conditions remain valid.
+>
+> **If you are an agent reading this because a `/schedule` job fired the runbook as your prompt for a DIFFERENT RFC promotion:** follow Phase 1 verification BEFORE any spec edits. If any verification step fails, halt and surface the failure to the user — do NOT land the promotion commit until every checklist item is green.
 
 ---
 
