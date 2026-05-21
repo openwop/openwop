@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0030 |
 | **Title** | Optional `reasoning` field on envelope payload schemas; informative Tier-1 cross-vendor structured-output compatibility subset |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | OpenWOP Working Group |
 | **Created** | 2026-05-20 |
-| **Updated** | 2026-05-20 (Draft → Active — see [Status history](#status-history) below). |
+| **Updated** | 2026-05-21 (Active → Accepted — see [Status history](#status-history) below). |
 | **Affects** | `spec/v1/ai-envelope.md` (adds §"Reasoning field (normative)" + §"Tier 1 Structured-Output Compatibility Subset (informative)") · `spec/v1/structured-output-subset.md` (NEW, informative) · `schemas/capabilities.schema.json` (adds optional `envelopes.reasoning` and `envelopes.tierOneSubsetCompliance` fields) · `SECURITY/invariants.yaml` (adds `envelope-reasoning-secret-redaction`) · 3 new conformance scenarios · CHANGELOG |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -286,6 +286,19 @@ Promotion from `Active` → `Accepted`:
 - `RFCS/0033-envelope-completion-contract.md` (forthcoming) — sibling RFC normating retry routing; depends on this RFC's `reasoning` field design for the truncation-budget recommendation note.
 
 ## Status history
+
+### Active → Accepted (2026-05-21)
+
+Promoted to `Accepted` under the bootstrap-phase steward waiver per `CONTRIBUTING.md` §"Bootstrap-phase notes" + `MAINTAINERS.md` §"Bootstrap-phase RFC waivers" — same path RFCs 0021–0029 used. The 7-day comment window opened 2026-05-20 was empirically waivable: zero external reviewers (single-steward bootstrap repo), all four acceptance criteria from `RFCS/0001-rfc-process.md` §"Promotion to Accepted" empirically met by Day 2.
+
+**Acceptance evidence:**
+
+1. **Reference workflow-engine implementation.** Host advertises `capabilities.envelopes.reasoning.{supported: true, promptDirective: "advisory"}` + `tierOneSubsetCompliance` per §C. Directive injection wired through `dispatchStructured()` (commit `88beb31`); discovery wiring per `routes/discovery.ts`.
+2. **Conformance suite coverage.** `envelope-reasoning-shape.test.ts` + `envelope-reasoning-secret-redaction.test.ts` + `envelope-tier-one-subset-static.test.ts` cover the §A reasoning-field shape + §B Tier-1 subset + §E SR-1 redaction. 12 + 8 + 5 live HTTP-gated assertions; SECURITY invariant `envelope-reasoning-secret-redaction` has backing tests across redaction + downstream-projection paths.
+3. **Third-party host adoption.** MyndHyve workflow-runtime at `https://api.myndhyve.ai/.well-known/openwop` (commit `85834ccf`, Cloud Run revision `workflow-runtime-00327-kah`) advertises `envelopes.reasoning.{supported: true, promptDirective: "advisory"}`. See `INTEROP-MATRIX.md` §"Third-party host adoption — RFC 0030/0031/0032/0033."
+4. **Adoption feedback folded.** §A gained the `promptDirective: "mandatory"` provider-side refusal risk operational note (amendment 2026-05-21, commit `9da6281`).
+
+Compatibility: ratification is **non-normative** — no wire surface, schema, or behavior changes. The spec contract has been stable since `a280371`; subsequent hosts adopt against the same wire contract.
 
 ### Active amendment (2026-05-21) — MyndHyve adoption feedback
 

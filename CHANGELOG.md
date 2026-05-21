@@ -11,6 +11,29 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### RFC 0030 / 0031 / 0032 / 0033 promoted Active → Accepted (2026-05-21)
+
+The four envelope LLM-contract-hardening RFCs reach `Accepted` status under the bootstrap-phase steward waiver per `CONTRIBUTING.md` §"Bootstrap-phase notes" + `MAINTAINERS.md` §"Bootstrap-phase RFC waivers" — same path RFCs 0021–0029 used. The 7-day comment window opened 2026-05-20 was empirically waivable: zero external reviewers (single-steward bootstrap repo); all four acceptance criteria from `RFCS/0001-rfc-process.md` §"Promotion to Accepted" empirically met by Day 2 (cross-host validation closed at the 62-pass + 4-honest-skip threshold against MyndHyve; reference workflow-engine emitting end-to-end; adoption-feedback folded).
+
+- **RFC 0030** — Envelope `reasoning` field + Tier-1 structured-output subset
+- **RFC 0031** — Envelope variant discrimination + model-capability declarations
+- **RFC 0032** — Envelope-reliability run-event vocabulary
+- **RFC 0033** — Envelope-completion contract (truncation vs schema-violation retry routing)
+
+**Evidence chain that earned the promotion:**
+
+- *Spec text + schemas + RunEventType enum + SECURITY invariants:* commit `a280371` (Draft → Active, 2026-05-20).
+- *Reference workflow-engine emission:* `88beb31` (dispatchStructured failure-mode-aware retry router) + `f5148cf` (conformance-only mock-AI provider + program seam) + `b6ac272` (`mock` in SUPPORTED_PROVIDERS allowlist) + earlier directive-injection + model-capability gate commits in the chain.
+- *Conformance promotion:* `5817523` + `4dcd16b` + `9f2f29b` — 38+ live HTTP-gated assertions across 14 scenario files.
+- *Cross-host adoption:* MyndHyve workflow-runtime at `https://api.myndhyve.ai/.well-known/openwop` (commit `85834ccf`, Cloud Run revision `workflow-runtime-00327-kah`). See `INTEROP-MATRIX.md` §"Third-party host adoption — RFC 0030/0031/0032/0033."
+- *Adoption-feedback amendments:* `9da6281` (8 normative-text clarifications) + `8d3c1c0` (2 error-code renames: `envelope_payload_invalid` → `envelope_invalid`; `envelope_refused_by_provider` → `envelope_refusal`).
+
+Compatibility: ratification is **non-normative** per `COMPATIBILITY.md` — no wire surface changes, no schema changes, no behavior changes. The spec contract has been stable since `a280371`; subsequent hosts adopt against an `Accepted`-tier surface with the same wire contract.
+
+Soak waiver: the 7-day comment window's procedural purpose (give external reviewers a chance to surface concerns before promotion) doesn't bind a single-steward bootstrap-phase repo with no external review channel open. RFC 0021–0029 each used the same waiver; this batch extends the precedent to RFC 0030/0031/0032/0033 with identical structural justification.
+
+**Deferred (post-Accepted slice):** three SDK helper publishes surfaced by MyndHyve's §B.3 adoption feedback — `parseRefusal(providerResponse): RefusalSignal | null` (per-provider safety-stop normalizer), `buildReasoningDirective` export from `sdk/typescript/`, and `@openwop/conformance-sdk/mint-test-key`. Tracked in `docs/handoffs/MYNDHYVE-RFC-0030-0033-ADOPTION-FEEDBACK-2026-05-20.md` §"Summary of resolutions" rows #10–#12.
+
 ### 5 new Draft RFCs filed against the Google-acceptance review findings (2026-05-21)
 
 Lands 5 RFCs at `Status: Draft` covering the structural gaps the standards-review pass flagged. None affects v1 wire shapes; all are additive within v1.x. Each RFC has its own 7-day comment window (30-day for the governance RFC) after the steward marks it ready for review.

@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0031 |
 | **Title** | Discriminated-union pattern for envelope variant payloads (normative); `NodeModule.requiredModelCapabilities` + `NodeModule.fallbackModel`; `model.capability.substituted` + `model.capability.insufficient` events |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | OpenWOP Working Group |
 | **Created** | 2026-05-20 |
-| **Updated** | 2026-05-20 (Draft → Active — see [Status history](#status-history) below). |
+| **Updated** | 2026-05-21 (Active → Accepted — see [Status history](#status-history) below). |
 | **Affects** | `spec/v1/ai-envelope.md` (adds §"Variant payload discrimination (normative)") · `spec/v1/host-capabilities.md` (adds §"Model-capability declarations") · `spec/v1/node-packs.md` (notes `NodeModule.requiredModelCapabilities` + `NodeModule.fallbackModel`) · `schemas/node-pack-manifest.schema.json` (adds `requiredModelCapabilities` + `fallbackModel` to the NodeModule shape) · `schemas/capabilities.schema.json` (adds optional `modelCapabilities` block) · `schemas/run-event.schema.json` (adds `model.capability.substituted` + `model.capability.insufficient` enum entries) · `schemas/run-event-payloads.schema.json` (adds `modelCapabilitySubstituted` + `modelCapabilityInsufficient` `$defs`) · `SECURITY/invariants.yaml` (adds `model-capability-substituted-no-credential-disclosure`) · 4 new conformance scenarios · CHANGELOG |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -392,6 +392,19 @@ Promotion from `Active` → `Accepted`:
 - Pydantic AI output taxonomy — https://pydantic.dev/docs/ai/core-concepts/output/
 
 ## Status history
+
+### Active → Accepted (2026-05-21)
+
+Promoted to `Accepted` under the bootstrap-phase steward waiver per `CONTRIBUTING.md` §"Bootstrap-phase notes" + `MAINTAINERS.md` §"Bootstrap-phase RFC waivers" — same path RFCs 0021–0029 + RFC 0030 used. Zero external reviewers (single-steward bootstrap repo); all four acceptance criteria from `RFCS/0001-rfc-process.md` §"Promotion to Accepted" empirically met by Day 2.
+
+**Acceptance evidence:**
+
+1. **Reference workflow-engine implementation.** Host advertises `capabilities.modelCapabilities.{supported: true, advertised: [5 reserved ids], substitutionSupported: false}`. Execute-time model-capability gate in `executor/executor.ts` emits `model.capability.{substituted,insufficient}` and refuses with `capability_not_provided`. `host/modelCapabilityProbe.ts` + `executor/modelCapabilityGate.ts` (commits `903e8b6` + `d65c49f`).
+2. **Conformance suite coverage.** `model-capability-substituted.test.ts` + `model-capability-insufficient.test.ts` + `node-module-required-capabilities-shape.test.ts` cover the §B 4-step dispatch flow + §C identifier registry + §D event emission. 13 live HTTP-gated assertions across the 3 files; end-to-end fixture-driven refusal verified via `conformance-model-capability-insufficient`.
+3. **Third-party host adoption.** MyndHyve workflow-runtime at `https://api.myndhyve.ai/.well-known/openwop` advertises `modelCapabilities.{supported: true, advertised: ["structured-output", "discriminator-enum"]}` — the truthful subset per the §C 2026-05-21 amendment.
+4. **Adoption feedback folded.** §C truthful-advertisement normation + §E `substitutionSupported` per-NodeModule scope clarification (amendments 2026-05-21, commit `9da6281`).
+
+Compatibility: ratification is **non-normative** — no wire surface, schema, or behavior changes.
 
 ### Active amendment (2026-05-21) — MyndHyve adoption feedback
 

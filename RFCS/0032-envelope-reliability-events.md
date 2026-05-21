@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0032 |
 | **Title** | Six envelope-reliability `RunEventType` entries; scope clarification of `ai-envelope.md` §"Run event log integration" line 448 MUST NOT |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | OpenWOP Working Group |
 | **Created** | 2026-05-20 |
-| **Updated** | 2026-05-20 (Draft → Active — see [Status history](#status-history) below). |
+| **Updated** | 2026-05-21 (Active → Accepted — see [Status history](#status-history) below). |
 | **Affects** | `spec/v1/ai-envelope.md` (clarifies §"Run event log integration" line 448; adds §"Envelope-reliability events") · `schemas/run-event.schema.json` (adds 6 new enum entries) · `schemas/run-event-payloads.schema.json` (adds 6 new `$defs` + `_typeIndex` entries) · `schemas/capabilities.schema.json` (adds optional `envelopes.reliability` block) · `spec/v1/observability.md` (adds §"Envelope-reliability events") · `api/asyncapi.yaml` (adds 6 channels) · `SECURITY/invariants.yaml` (adds `envelope-refusal-no-prompt-leak` + `envelope-recovery-no-content-leak`) · 6 new conformance scenarios · CHANGELOG |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -493,6 +493,19 @@ Promotion from `Active` → `Accepted`:
 - jsonrepair (JavaScript) — https://github.com/josdejong/jsonrepair (`envelope.recovery.applied.path: "jsonrepair"`)
 
 ## Status history
+
+### Active → Accepted (2026-05-21)
+
+Promoted to `Accepted` under the bootstrap-phase steward waiver per `CONTRIBUTING.md` §"Bootstrap-phase notes" + `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". Zero external reviewers; all four acceptance criteria empirically met by Day 2.
+
+**Acceptance evidence:**
+
+1. **Reference workflow-engine implementation.** Host advertises `capabilities.envelopes.reliability.{supported: true, events: [4 events], maxRetryAttempts: 3}`. `dispatchStructured()` refactored into a failure-mode-aware retry router emitting `envelope.retry.attempted` + `envelope.retry.exhausted` + `envelope.refusal` + `envelope.truncated` end-to-end (commit `88beb31`). `host/envelopeReliabilityEmit.ts` payload builders + `host/envelopeReliabilityConfig.ts` runtime accessor land alongside.
+2. **Conformance suite coverage.** Six scenarios cover §B emission shapes + §C advertisement contract end-to-end: `envelope-retry-attempted` (5 live) + `envelope-retry-exhausted` (5 live) + `envelope-refusal-shape` (8 live: 4 seam-emission shape + 1 advertisement + 3 end-to-end through dispatchStructured) + `envelope-truncated` (4 live) + `envelope-truncation-cap-exhaustion` (4 live) + `envelope-recovery-applied` (7 live: seam-emission shape + SECURITY invariant). The two MAY-tier paths (`envelope-nl-to-format-engaged` + `envelope-recovery-applied`'s end-to-end deferred portions) stay `it.todo()` until NL-to-Format + lenient parsing recovery strategies land.
+3. **Third-party host adoption.** MyndHyve workflow-runtime advertises `envelopes.reliability.{events: true (boolean drift per §C 2026-05-21 amendment), maxRetryAttempts: 2}` — the array-shape amendment makes future MyndHyve advertisement honest by requiring `string[]`; their 1-line emitter change is tracked in `docs/handoffs/MYNDHYVE-RFC-0030-0033-ADOPTION-FEEDBACK-2026-05-20.md` §C.
+4. **Adoption feedback folded.** §C `events` MUST be `string[]` (boolean form rejected) + §B.6 `byteOffset` MAY-omit per recovery path normation (amendments 2026-05-21, commit `9da6281`).
+
+Compatibility: ratification is **non-normative** — no wire surface, schema, or behavior changes.
 
 ### Active amendment (2026-05-21) — MyndHyve adoption feedback
 

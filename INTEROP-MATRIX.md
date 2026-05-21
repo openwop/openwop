@@ -1,6 +1,6 @@
 # openwop Interop Matrix
 
-> **Last updated:** 2026-05-15 (gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md` — closes CF-5/6/8/10/11/12 + OPS-1/2/5 + PACK-1/2/3/4/5 + SDK-3/5 + SEC-3/6 + STD-3/5/6 + DOC-4/5 + MA-1/6/7 alongside Postgres host test-suite wiring fix; prior Phase I.3 + I.4 close-out — OAuth2-CC + OIDC user-bearer JWT validators — remains in effect)
+> **Last updated:** 2026-05-21 (RFC 0030/0031/0032/0033 envelope LLM-contract-hardening track promoted Active → Accepted under bootstrap-phase steward waiver; cross-host validation closed by MyndHyve workflow-runtime adoption + reference workflow-engine emission. Prior 2026-05-15 gap-closure batch closes CF-5/6/8/10/11/12 + OPS-1/2/5 + PACK-1/2/3/4/5 + SDK-3/5 + SEC-3/6 + STD-3/5/6 + DOC-4/5 + MA-1/6/7 alongside Postgres host test-suite wiring fix; prior Phase I.3 + I.4 close-out — OAuth2-CC + OIDC user-bearer JWT validators — remains in effect)
 > **Conformance suite:** `@openwop/openwop-conformance`
 
 This matrix records public, reproducible compatibility evidence for openwop-compatible hosts. A row is a claim plus evidence: the host advertises a profile set, runs the conformance suite, and links to a result that another implementer can inspect.

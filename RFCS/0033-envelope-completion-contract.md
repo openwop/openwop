@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0033 |
 | **Title** | Envelope-completion criteria; distinguishing truncation from schema-violation in retry routing; truncation-retry cap |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | OpenWOP Working Group |
 | **Created** | 2026-05-20 |
-| **Updated** | 2026-05-20 (Draft → Active — see [Status history](#status-history) below). |
+| **Updated** | 2026-05-21 (Active → Accepted — see [Status history](#status-history) below). |
 | **Affects** | `spec/v1/ai-envelope.md` (adds §"Envelope-completion criteria"; amends §"Production flow" with the retry-routing distinction) · `schemas/capabilities.schema.json` (extends `envelopes.reliability` block from RFC 0032 with `completion` sub-fields) · `spec/v1/observability.md` (adds §"Envelope-completion retry routing") · 2 new conformance scenarios · CHANGELOG |
 | **Compatibility** | `additive` (new MUSTs in previously-undefined behavior space) |
 | **Supersedes** | — |
@@ -278,6 +278,19 @@ Promotion from `Active` → `Accepted`:
 - Tam et al., "Let Me Speak Freely?" — https://arxiv.org/pdf/2408.02442 (informs the "truncation needs budget, not corrective fragment" recommendation: truncation typically reflects model running out of room mid-reasoning, not model emitting wrong shape).
 
 ## Status history
+
+### Active → Accepted (2026-05-21)
+
+Promoted to `Accepted` under the bootstrap-phase steward waiver per `CONTRIBUTING.md` §"Bootstrap-phase notes" + `MAINTAINERS.md` §"Bootstrap-phase RFC waivers". Zero external reviewers; all four acceptance criteria empirically met by Day 2.
+
+**Acceptance evidence:**
+
+1. **Reference workflow-engine implementation.** Host advertises `capabilities.envelopes.reliability.completion.{distinguishesTruncation: true, truncationBudgetMultiplier: 2}`. `dispatchStructured()`'s retry router routes truncation (doubled budget, no schema fragment) vs schema-violation (corrective fragment, unchanged budget) per §A/§B/§C; new error codes surface via `AiProviderErrorCode` union (commit `88beb31`).
+2. **Conformance suite coverage.** `envelope-completion-distinguishes-truncation.test.ts` (5 live) verifies the two retry paths diverge through `lastReceivedMaxTokens` introspection seam. `envelope-truncation-cap-exhaustion.test.ts` (4 live) verifies the §B DoS-bound + §F `envelope_truncation_unrecoverable` error code. `envelope-refusal-shape.test.ts` end-to-end (3 live) verifies §D refusal-MUST-NOT-retry + §F `envelope_refusal` error code.
+3. **Third-party host adoption.** MyndHyve workflow-runtime advertises `envelopes.reliability.completion.{distinguishesTruncation: true, truncationRetryMultiplier: 2}` (`truncationRetryMultiplier` is a MyndHyve drift from spec's `truncationBudgetMultiplier`; 1-line rename tracked in adoption-feedback record). The three RFC 0033 §F error codes flow through `RunSnapshot.error.code` cleanly post-2026-05-21 rename: `envelope_invalid` + `envelope_truncation_unrecoverable` + `envelope_refusal`.
+4. **Adoption feedback folded.** §B provider-ceiling guidance (when doubled budget exceeds provider per-call max, host MAY further reduce) + §F error-code rename (`envelope_payload_invalid` → `envelope_invalid`; `envelope_refused_by_provider` → `envelope_refusal`) — amendments 2026-05-21, commits `9da6281` + `8d3c1c0`.
+
+Compatibility: ratification is **non-normative** — no wire surface, schema, or behavior changes.
 
 ### Active amendment (2026-05-21) — MyndHyve adoption feedback
 
