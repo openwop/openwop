@@ -146,6 +146,16 @@
 <li>conformance/README.md scenario count bumped 187 → 188 (in two places).</li>
 </ul>
 <p>Closes standards-readiness review finding (3) "multi-agent semantics not fully portable" at the Phase 1 boundary. Phases 2-4 remain open work for follow-up RFCs.</p>
+<h3 id="rfc-0037-phase-1-reference-host-wiring-behavioral-conformance-2026-05-21">RFC 0037 Phase 1 reference-host wiring + behavioral conformance (2026-05-21)</h3>
+<p>Wires the multi-agent execution model emission contract end-to-end on the reference workflow-engine and graduates the conformance assertion from shape-only to behavioral. Builds on the same-day spec + schema landing in <code>db54921</code>.</p>
+<ul>
+<li><strong><code>apps/workflow-engine/backend/typescript/src/bootstrap/nodes.ts</code> <code>core.dispatch</code> execute()</strong> — emits the 7 handoff state-machine transition events as <code>core.workflowChain.event</code> records when the env-flag <code>OPENWOP_MULTI_AGENT_EXECUTION_MODEL=true</code> is set. Each transition's <code>causationId</code> chains back through the prior transition's <code>eventId</code> per spec/v1/multi-agent-execution.md §"Transition events": <code>dispatch.began.causationId → runOrchestrator.decided.eventId</code>, then <code>dispatch.succeeded</code>, <code>child.{completed|failed|cancelled}</code>, and (when outputMapping non-empty + child completed) <code>output.harvested</code> each chain through their prior event. The <code>dispatch.failed</code> transition fires on dispatcher exception (child-creation failure path).</li>
+<li><strong><code>apps/workflow-engine/backend/typescript/src/routes/discovery.ts</code></strong> — advertises <code>capabilities.multiAgent.executionModel.{supported: true, version: 1}</code> under the same env-flag gate. Hosts that don't set the flag advertise <code>supported: false</code>, preserving the pre-RFC-0037 wire surface (no <code>core.workflowChain.event</code> records emitted).</li>
+<li><strong><code>conformance/fixtures/conformance-multi-agent-handoff.json</code> + <code>…-child.json</code></strong> (NEW) — parent + child fixture pair driving the happy-path supervisor → next-worker → child completed flow with outputMapping non-empty. Catalog rows added to <code>conformance/fixtures.md</code>.</li>
+<li><strong><code>conformance/src/scenarios/multi-agent-handoff-state-machine.test.ts</code></strong> — behavioral assertion landed. Reads the parent's event log, asserts exactly 4 <code>core.workflowChain.event</code> records in phase sequence (<code>dispatch.began → dispatch.succeeded → child.completed → output.harvested</code>) with each event's <code>causationId === prior.eventId</code>, plus <code>dispatch.began.causationId === runOrchestrator.decided.eventId</code>, plus <code>output.harvested.harvestedKeys === [&#39;parentResult&#39;]</code>.</li>
+<li><strong><code>conformance/coverage.md</code></strong> — RFC 0037 row added with grade B.</li>
+</ul>
+<p>Closes the implementation half of standards-readiness review finding (3) "multi-agent semantics not fully portable" — non-steward host advertisement is now the only remaining gate to RFC 0037 Phase 1 promotion to <code>Accepted</code>.</p>
 <h3 id="rfc-0034-otel-collector-test-seam-promoted-draft-active-same-day-2026-05-21">RFC 0034 (OTel collector test seam) promoted Draft → Active same-day (2026-05-21)</h3>
 <p>Filed as Draft earlier today (aa94003); now graduates to Active after the protocol-layer surface landed atomically:</p>
 <ul>
@@ -1580,6 +1590,7 @@
       <li class="toc-sub"><a href="#marketing-site-multi-page-spec-corpus-shipped-to-openwop-dev-2026-05-21">Marketing site + multi-page spec corpus shipped to openwop.dev (2026-05-21)</a></li>
       <li class="toc-sub"><a href="#rfc-0035-sandbox-execution-contract-rfc-0036-multi-region-cross-engine-promoted-draft-active-same-day-2026-05-21">RFC 0035 (sandbox execution contract) + RFC 0036 (multi-region + cross-engine) promoted Draft → Active same-day (2026-05-21)</a></li>
       <li class="toc-sub"><a href="#rfc-0037-multi-agent-execution-model-phase-1-promoted-draft-active-same-day-2026-05-21">RFC 0037 (multi-agent execution model) Phase 1 promoted Draft → Active same-day (2026-05-21)</a></li>
+      <li class="toc-sub"><a href="#rfc-0037-phase-1-reference-host-wiring-behavioral-conformance-2026-05-21">RFC 0037 Phase 1 reference-host wiring + behavioral conformance (2026-05-21)</a></li>
       <li class="toc-sub"><a href="#rfc-0034-otel-collector-test-seam-promoted-draft-active-same-day-2026-05-21">RFC 0034 (OTel collector test seam) promoted Draft → Active same-day (2026-05-21)</a></li>
       <li class="toc-sub"><a href="#rfc-0030-0031-0032-0033-promoted-active-accepted-2026-05-21">RFC 0030 / 0031 / 0032 / 0033 promoted Active → Accepted (2026-05-21)</a></li>
       <li class="toc-sub"><a href="#5-new-draft-rfcs-filed-against-the-external-standards-readiness-review-findings-2026-05-21">5 new Draft RFCs filed against the external standards-readiness review findings (2026-05-21)</a></li>
@@ -1768,6 +1779,8 @@
           <li><a href="/spec/v1/">v1.x Core</a></li>
           <li><a href="/rfcs/">RFCs</a></li>
           <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/errors/">Error codes</a></li>
+          <li><a href="/scenarios/">Scenario walkthroughs</a></li>
           <li><a href="/profiles/">Profiles</a></li>
           <li><a href="/conformance/">Conformance</a></li>
           <li><a href="/versioning/">Versioning policy</a></li>

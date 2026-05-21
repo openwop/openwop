@@ -110,8 +110,8 @@
 +    }
    }</code></pre>
 <h3 id="b-seam-contract-normative">§B — Seam contract (normative)</h3>
-<p><code>POST /v1/host/sample/test/otel/spans?runId=&amp;lt;id&amp;gt;</code> MUST return <code>200 OK</code> with a JSON body <code>{ spans: Array&amp;lt;{ name, attributes, events }&amp;gt; }</code>. The spans array MUST include every OTel span produced by the host's instrumentation for the named run, including any <code>openwop.*</code>-prefixed attributes added to span context. Hosts MAY redact span content using the canonical <code>[REDACTED:&amp;lt;secretId&amp;gt;]</code> marker per <code>agent-memory.md</code> §SR-1 — that's the contract being tested.</p>
-<p><code>POST /v1/host/sample/test/debug-bundle/export</code> MUST return <code>200 OK</code> with the same payload shape as <code>GET /v1/runs/{runId}/debug-bundle</code> per <code>spec/v1/debug-bundle.md</code>. The seam exists to give conformance scenarios a synchronous endpoint they can hit without first triggering an interrupt → debug bundle workflow.</p>
+<p><code>GET /v1/host/sample/test/otel/spans?runId=&amp;lt;id&amp;gt;</code> MUST return <code>200 OK</code> with a JSON body <code>{ spans: Array&amp;lt;{ name, attributes, events }&amp;gt; }</code>. The spans array MUST include every OTel span produced by the host's instrumentation for the named run, including any <code>openwop.*</code>-prefixed attributes added to span context. Hosts MAY redact span content using the canonical <code>[REDACTED:&amp;lt;secretId&amp;gt;]</code> marker per <code>agent-memory.md</code> §SR-1 — that's the contract being tested. The seam additionally accepts optional <code>envelopeId</code> and <code>name</code> query parameters for narrower introspection; hosts that implement the seam MAY honor these filters but MUST honor the <code>runId</code> scope at minimum.</p>
+<p><code>POST /v1/host/sample/test/debug-bundle/export</code> MUST return <code>200 OK</code> with body <code>{ bundle: { runId, events, spans, exportedAt } }</code> mirroring the payload of <code>GET /v1/runs/{runId}/debug-bundle</code> per <code>spec/v1/debug-bundle.md</code> (the wrapping <code>bundle</code> envelope makes the seam-versus-real-endpoint origin explicit). The request body MUST be <code>{ runId: string }</code>; the seam returns <code>400 invalid_argument</code> when <code>runId</code> is absent or empty. The seam exists to give conformance scenarios a synchronous endpoint they can hit without first triggering an interrupt → debug bundle workflow.</p>
 <p>Both seams live under the <code>host-extensions.md</code> canonical-prefix <code>/v1/host/sample/test/*</code> and are NOT part of the v1 wire surface. Production hosts SHOULD return 404 or 403 from the seam unless <code>OPENWOP_TEST_OTEL_SCRAPE=true</code> (or equivalent env-gate) is set.</p>
 <h3 id="c-security-invariant-promotion">§C — SECURITY invariant promotion</h3>
 <p><code>SECURITY/invariants.yaml</code> flips two rows from <code>tier: reference-impl</code> to <code>tier: protocol</code>:</p>
@@ -222,6 +222,8 @@
           <li><a href="/spec/v1/">v1.x Core</a></li>
           <li><a href="/rfcs/">RFCs</a></li>
           <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/errors/">Error codes</a></li>
+          <li><a href="/scenarios/">Scenario walkthroughs</a></li>
           <li><a href="/profiles/">Profiles</a></li>
           <li><a href="/conformance/">Conformance</a></li>
           <li><a href="/versioning/">Versioning policy</a></li>
