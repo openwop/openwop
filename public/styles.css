@@ -187,8 +187,8 @@
   h1.headline {
     font-family: var(--serif);
     font-weight: 400;
-    font-size: clamp(54px, 8vw, 108px);
-    line-height: 0.96;
+    font-size: clamp(40px, 6vw, 80px);
+    line-height: 0.98;
     letter-spacing: -0.015em;
     margin: 0 0 28px;
     color: var(--ink);
