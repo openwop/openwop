@@ -704,11 +704,14 @@ pre {
 /* ── AI chat page ────────────────────────────────────────────────── */
 
 /* The chat surface is viewport-locked: the page itself must not scroll,
- * the MessageFeed inside ChatSidebar owns the scroll. Locking the shell
- * to exactly 100vh + overflow: hidden prevents the chat (and its sticky
- * header / composer) from pushing the page taller than the viewport. */
+ * the MessageFeed inside ChatSidebar owns the scroll. Lock the shell to
+ * exactly the dynamic viewport height (100dvh — accounts for mobile URL
+ * bar collapse) + overflow: hidden prevents the chat (and its sticky
+ * header / composer) from pushing the page taller than the viewport.
+ * Fallback to 100vh for browsers that don't support dvh. */
 .app-shell.app-shell--ai {
   height: 100vh;
+  height: 100dvh;
   min-height: 0;
   overflow: hidden;
 }
@@ -716,15 +719,20 @@ pre {
 /* Flex-fill the main column so ChatSidebar can claim what's left after
  * the banner + header + footer. Keeps the centered max-width + padding
  * (unlike --fullbleed) so the chat panel sits in the same column as
- * other routes. overflow-y: auto is a safety net for the BYOKWizard
- * fallback that ChatTab renders on the same `/` route — chat itself
- * fills exactly and never triggers it. */
+ * other routes.
+ *
+ * `overflow: hidden` (NOT overflow-y: auto) — the previous "auto" let
+ * the entire chat column (header + feed + composer) scroll up behind
+ * the sticky .app-header whenever ChatSidebar's intrinsic height
+ * exceeded the column. MessageFeed already owns its internal scroll
+ * via `overflowY: 'auto'`; this layer should clip, not double-scroll.
+ * BYOKWizard fallback uses its own scroll container when rendered. */
 .app-main--ai {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 /* ── Workflow Builder ────────────────────────────────────────────── */

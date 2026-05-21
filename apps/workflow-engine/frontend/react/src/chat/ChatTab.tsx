@@ -51,14 +51,20 @@ export function ChatTab(): JSX.Element {
   const needsWizard = !config || !isValid || forceWizard;
 
   if (needsWizard) {
+    // .app-main--ai is now `overflow: hidden` so the chat surface
+    // doesn't double-scroll past the sticky header. The wizard takes
+    // its place here, so wrap it in its own scroll container so its
+    // content stays reachable on short viewports.
     return (
-      <BYOKWizard
-        onComplete={async (cfg) => {
-          await setConfig(cfg);
-          setForceWizard(false);
-        }}
-        onCancel={forceWizard ? () => setForceWizard(false) : undefined}
-      />
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+        <BYOKWizard
+          onComplete={async (cfg) => {
+            await setConfig(cfg);
+            setForceWizard(false);
+          }}
+          onCancel={forceWizard ? () => setForceWizard(false) : undefined}
+        />
+      </div>
     );
   }
 
