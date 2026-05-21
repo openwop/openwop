@@ -193,22 +193,66 @@ function registryStats() {
 }
 
 function staleStatusFindings(rfcs) {
-  const rules = [
-    {
-      rel: 'README.md',
-      pattern: /Current state:\s*26 prose specs FINAL v1\s*.\s*19 JSON Schemas/,
-      message: 'README current-state counts are stale.',
-    },
-    {
-      rel: 'README.md',
-      pattern: /RFCs Active 2026-05-10/,
-      message: 'README labels accepted multi-agent RFCs as Active.',
-    },
-    {
-      rel: 'README.md',
-      pattern: /v1\.x Capability Profiles \(Draft\)/,
-      message: 'README labels accepted v1.x profiles as Draft.',
-    },
+  // Recompute the same corpus state generateStatus() uses, so we can structurally
+  // compare README claims to actual counts rather than relying on grep patterns
+  // that themselves go stale.
+  const specDocs = listFiles('spec/v1', (rel) => rel.endsWith('.md'));
+  const schemas = listFiles('schemas', (rel) => rel.endsWith('.schema.json'));
+  const operations = openApiOperationIds();
+  const scenarios = listFiles('conformance/src/scenarios', (rel) => rel.endsWith('.test.ts'));
+  const findings = [];
+
+  // Structural drift checks: compare README's stated counts against the actual corpus.
+  // These catch drift introduced when the corpus grows but the README isn't updated.
+  const readmeText = read('README.md');
+
+  // (1) Spec FINAL/DRAFT honesty: walk every spec/v1/*.md and classify by the Status line.
+  const draftSpecs = [];
+  for (const rel of specDocs) {
+    const text = read(rel);
+    const header = text.slice(0, 4000);
+    if (/^>?\s*\*?\*?Status:?\*?\*?\s*[:`]?\s*`?DRAFT/im.test(header)) {
+      draftSpecs.push(path.basename(rel));
+    }
+  }
+  if (draftSpecs.length > 0 && /every\s+`spec\/v1\/\*\.md`\s+at\s+`FINAL/.test(readmeText)) {
+    findings.push(`README.md: claims "every spec/v1/*.md at FINAL" but ${draftSpecs.length} spec(s) are DRAFT (${draftSpecs.join(', ')}).`);
+  }
+
+  // (2) Numeric drift in the corpus counts that get embedded in README prose.
+  const numericChecks = [
+    { label: 'prose specs', re: /(\d+)\s+prose\s+specs\b/, actual: specDocs.length },
+    { label: 'JSON Schemas', re: /(\d+)\s+JSON\s+Schemas\b/, actual: schemas.length },
+    { label: 'OpenAPI operations', re: /(\d+)\s+OpenAPI\s+operations\b/, actual: operations.length },
+    { label: 'conformance scenario files', re: /(\d+)\s+conformance\s+scenario\s+files\b/, actual: scenarios.length },
+  ];
+  for (const check of numericChecks) {
+    const m = readmeText.match(check.re);
+    if (m && Number(m[1]) !== check.actual) {
+      findings.push(`README.md: claims "${m[1]} ${check.label}" but actual is ${check.actual}.`);
+    }
+  }
+
+  // (3) SECURITY invariant counts: parse the YAML and compare to README claims.
+  const invariantsText = read('SECURITY/invariants.yaml');
+  const protocolCount = (invariantsText.match(/^\s+tier:\s*protocol\b/gm) ?? []).length;
+  const referenceImplCount = (invariantsText.match(/^\s+tier:\s*reference-impl\b/gm) ?? []).length;
+  const advisoryCount = (invariantsText.match(/^\s+tier:\s*advisory\b/gm) ?? []).length;
+  const totalInvariants = protocolCount + referenceImplCount + advisoryCount;
+  const invariantChecks = [
+    { label: 'protocol-tier', re: /(\d+)\s+protocol-tier\b/, actual: protocolCount },
+    { label: 'reference-impl-tier', re: /(\d+)\s+reference-impl-tier\b/, actual: referenceImplCount },
+    { label: 'invariants in', re: /(\d+)\s+invariants\s+in\b/, actual: totalInvariants },
+  ];
+  for (const check of invariantChecks) {
+    const m = readmeText.match(check.re);
+    if (m && Number(m[1]) !== check.actual) {
+      findings.push(`README.md: claims "${m[1]} ${check.label}" invariants but actual is ${check.actual}.`);
+    }
+  }
+
+  // (4) Legacy known-bad-string rules for the files that haven't been refactored yet.
+  const legacyRules = [
     {
       rel: 'ROADMAP.md',
       pattern: /26 prose specs at FINAL v1|19 first-class JSON Schemas|728\/797|\*\*RFC 0012[^|\n]*\|[^|\n]*\| `Draft`|Memory compaction \| `Draft`|mTLS\*\* remains spec-FINAL|reasoning-event emission wiring/,
@@ -230,15 +274,14 @@ function staleStatusFindings(rfcs) {
       message: 'external audit scope treats RFC 0008 as draft.',
     },
   ];
-
-  const findings = [];
-  for (const rule of rules) {
+  for (const rule of legacyRules) {
     const text = read(rule.rel);
     if (rule.pattern.test(text)) {
       findings.push(`${rule.rel}: ${rule.message}`);
     }
   }
 
+  // (5) MAINTAINERS waiver table cross-reference.
   const rfc0012Accepted = rfcs.some((rfc) => rfc.id === '0012' && rfc.status === 'Accepted');
   if (rfc0012Accepted && !/\|\s*0012\s*\|/.test(read('MAINTAINERS.md'))) {
     findings.push('MAINTAINERS.md: RFC 0012 used the bootstrap waiver but is missing from the waiver table.');
@@ -331,7 +374,16 @@ function generateStatus() {
   lines.push('');
   lines.push('## Active Follow-Ups');
   lines.push('');
-  lines.push('- RFC 0013 remains Draft and should either advance with schema/conformance proof or be deferred.');
+  const draftRfcs = rfcs.filter((rfc) => rfc.status === 'Draft');
+  const activeRfcs = rfcs.filter((rfc) => rfc.status === 'Active');
+  if (draftRfcs.length > 0) {
+    const list = draftRfcs.map((rfc) => `RFC ${rfc.id}`).join(', ');
+    lines.push(`- ${draftRfcs.length} RFC${draftRfcs.length === 1 ? '' : 's'} still \`Draft\` (${list}) — advance with schema/conformance proof or defer.`);
+  }
+  if (activeRfcs.length > 0) {
+    const list = activeRfcs.map((rfc) => `RFC ${rfc.id}`).join(', ');
+    lines.push(`- ${activeRfcs.length} RFC${activeRfcs.length === 1 ? '' : 's'} \`Active\` (${list}) — wire-shape MAY shift compatibly within v1.x until promotion to \`Accepted\`.`);
+  }
   lines.push('- SDK parity still shows raw-only rows for several stable v1.x helper surfaces.');
   lines.push('- External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.');
   lines.push('- Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.');
