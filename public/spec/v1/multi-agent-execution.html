@@ -117,7 +117,7 @@
 <li><strong>RFC 0024</strong> (reasoning streaming) — the wire shape for <code>agent.reasoning.delta</code> events.</li>
 <li><strong>RFC 0026</strong> (provider usage events) — the cost-attribution surface.</li>
 </ul>
-<p>This document <strong>integrates</strong> those slices into a single normative execution loop + a 4-state handoff state machine. Two non-steward hosts implementing this Phase 1 should produce bit-equivalent state transitions for the same supervisor-driven workflow input.</p>
+<p>This document <strong>integrates</strong> those slices into a single normative execution loop + a 4-state handoff state machine. The design goal is portability: two non-steward hosts implementing this Phase 1 against the same supervisor-driven workflow input produce identical transition-event sequences (same phases, same causation chain) — the §"Cross-region replay" claim in <code>replay.md</code> extends this guarantee across regions on hosts that also advertise the RFC 0036 capabilities.</p>
 <h2 id="execution-loop-normative">Execution loop (normative)</h2>
 <p>A host that advertises <code>capabilities.multiAgent.executionModel.version &gt;= 1</code> MUST implement the following loop on any workflow whose graph contains a <code>core.orchestrator.supervisor</code> node feeding into a <code>core.dispatch</code> node:</p>
 <pre class="lang-"><code>LOOP:

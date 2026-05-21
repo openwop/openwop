@@ -67,32 +67,59 @@
 
 <main class="site-main">
   <div class="wrap">
-    <header class="page-header">
-    <h1>REST API reference</h1>
-    <p class="lede">Live rendering of <code>api/openapi.yaml</code> — every endpoint, request shape, response shape, and error code in one scrollable view. Source of truth is the YAML; this page is the readable mirror.</p>
-    <p class="meta">Spec URL: <a href="/api/openapi.yaml"><code>/api/openapi.yaml</code></a> · Schema corpus: <a href="/spec/v1/">/spec/v1/</a></p>
-  </header>
-  <div id="redoc-container" style="min-height: 80vh;"></div>
-  <script src="/assets/redoc.standalone.js"></script>
-  <script>
-    if (typeof Redoc !== 'undefined' && Redoc.init) {
-      Redoc.init('/api/openapi.yaml', {
-        scrollYOffset: 64,
-        hideDownloadButton: false,
-        theme: {
-          colors: { primary: { main: '#b05a3b' } },
-          typography: {
-            fontFamily: 'Geist, ui-sans-serif, system-ui, sans-serif',
-            headings: { fontFamily: 'Instrument Serif, Georgia, serif' },
-          },
-          rightPanel: { backgroundColor: '#1a1a17' },
-        },
-      }, document.getElementById('redoc-container'));
-    } else {
-      document.getElementById('redoc-container').innerHTML =
-        '<p>Redoc bundle did not load. Raw spec: <a href="/api/openapi.yaml">/api/openapi.yaml</a>.</p>';
-    }
-  </script>
+    <div class="api-explorer">
+    <header class="api-explorer-head">
+      <div class="api-explorer-title">
+        <span class="api-explorer-kicker">REST API</span>
+        <h1>OpenWOP wire reference</h1>
+      </div>
+      <div class="api-explorer-meta">
+        <button class="api-explorer-base" type="button" data-copy="/v1" title="Copy base path">
+          <span class="api-explorer-base-label">base</span>
+          <code>/v1</code>
+          <span class="api-explorer-base-hint" aria-hidden="true">copy</span>
+        </button>
+        <a class="api-explorer-download" href="/api/openapi.yaml" download="openwop-openapi.yaml">
+          <span>Download OpenAPI</span>
+          <span aria-hidden="true">↓</span>
+        </a>
+      </div>
+    </header>
+    <div id="redoc-container"></div>
+    <script src="/assets/redoc.standalone.js"></script>
+    <script>
+      (function () {
+        var copyBtn = document.querySelector('.api-explorer-base');
+        if (copyBtn) {
+          copyBtn.addEventListener('click', function () {
+            var v = copyBtn.getAttribute('data-copy') || '';
+            if (navigator.clipboard) navigator.clipboard.writeText(v);
+            var hint = copyBtn.querySelector('.api-explorer-base-hint');
+            if (hint) { var prev = hint.textContent; hint.textContent = 'copied'; setTimeout(function () { hint.textContent = prev; }, 1400); }
+          });
+        }
+        if (typeof Redoc !== 'undefined' && Redoc.init) {
+          Redoc.init('/api/openapi.yaml', {
+            scrollYOffset: 56,
+            hideDownloadButton: true,
+            disableSearch: false,
+            theme: {
+              colors: { primary: { main: '#b05a3b' } },
+              typography: {
+                fontFamily: 'Geist, ui-sans-serif, system-ui, sans-serif',
+                headings: { fontFamily: 'Instrument Serif, Georgia, serif' },
+              },
+              sidebar: { backgroundColor: '#f4f1ea', width: '260px' },
+              rightPanel: { backgroundColor: '#1a1a17', width: '38%' },
+            },
+          }, document.getElementById('redoc-container'));
+        } else {
+          document.getElementById('redoc-container').innerHTML =
+            '<div style="padding: 48px; text-align: center;">Redoc bundle did not load. Raw spec: <a href="/api/openapi.yaml">/api/openapi.yaml</a>.</div>';
+        }
+      })();
+    </script>
+  </div>
   </div>
 </main>
 

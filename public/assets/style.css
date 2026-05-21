@@ -21,6 +21,11 @@
 .site-main {
   padding: clamp(32px, 5vw, 56px) 0 clamp(48px, 6vw, 80px);
 }
+/* The API explorer needs to start immediately below the topbar; the
+ * default .site-main padding pushes Redoc down for no good reason. */
+.site-main:has(.api-explorer) {
+  padding: 0;
+}
 /* Subpage prose lives inside a max-width column so long-form text stays
  * readable even though the marketing .wrap goes to 1240px. */
 .site-main .wrap > * {
@@ -33,10 +38,102 @@
 .site-main .wrap > .hero {
   max-width: 1040px;
 }
-/* The Redoc explorer (/api/rest/) needs the full container width for
- * its three-column layout to breathe; opt it out of the prose clamp. */
-.site-main .wrap > #redoc-container {
+/* The Redoc explorer (/api/rest/) needs the FULL viewport width for
+ * its three-column layout to breathe. Use a negative-margin trick to
+ * escape the .wrap padding + .site-main max-width without touching
+ * the template. The compact .api-explorer-head sits above the Redoc
+ * container; both go full-bleed. */
+.site-main .wrap > .api-explorer {
   max-width: none;
+  margin-inline: calc(50% - 50vw);
+  width: 100vw;
+}
+.api-explorer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 16px clamp(20px, 4vw, 40px);
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper);
+  flex-wrap: wrap;
+}
+.api-explorer-title { display: flex; align-items: baseline; gap: 14px; }
+.api-explorer-kicker {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--clay);
+}
+.api-explorer-title h1 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: clamp(20px, 2.4vw, 28px);
+  font-weight: 400;
+  line-height: 1;
+  color: var(--ink);
+}
+.api-explorer-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.api-explorer-base {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+  color: var(--ink);
+}
+.api-explorer-base:hover { border-color: var(--clay); }
+.api-explorer-base-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.api-explorer-base code {
+  font-family: var(--mono);
+  font-size: 13px;
+  background: none;
+  padding: 0;
+  border: 0;
+}
+.api-explorer-base-hint {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  transition: color .15s ease;
+}
+.api-explorer-base:hover .api-explorer-base-hint { color: var(--clay); }
+.api-explorer-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 999px;
+  text-decoration: none;
+  font-size: 13px;
+}
+.api-explorer-download:hover { background: var(--clay); }
+#redoc-container {
+  /* Fill the viewport below the topbar (56px) + the compact head bar. */
+  min-height: calc(100vh - 56px - 64px);
+}
+@media (max-width: 760px) {
+  .api-explorer-head { gap: 12px; }
+  .api-explorer-meta { width: 100%; justify-content: flex-end; }
 }
 /* Spec/RFC pages render a sticky left-rail ToC inside .spec-page-grid;
  * give the grid more room than pure prose so sidebar + article both fit. */
