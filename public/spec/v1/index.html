@@ -49,51 +49,267 @@
   <main class="site-main">
     <header class="page-header">
     <h1>openwop v1 spec corpus</h1>
-    <p class="lede">38 prose specs governing the v1 wire contract. Status legend: STUB · DRAFT · OUTLINE · FINAL.</p>
+    <p class="lede">38 prose specs governing the v1 wire contract. Each section below groups specs by what they do; click through for the normative text.</p>
+    <p class="meta">Status legend: <strong>FINAL</strong> · STUB · DRAFT · OUTLINE. A spec is FINAL when its wire shape is locked under v1.x compatibility rules.</p>
   </header>
-  <table class="spec-index">
-    <thead><tr><th>Doc</th><th>Status</th></tr></thead>
-    <tbody>
-    <tr><td><a href="./a2a-integration.html">A2A Integration</a></td><td>FINAL v1 (2026-05-05)</td></tr>
-<tr><td><a href="./agent-memory.html">Agent Memory</a></td><td>FINAL v1 (2026-05-10)</td></tr>
-<tr><td><a href="./agent-ref-positioning.html">`AgentRef` Positioning</a></td><td>FINAL v1 (2026-05-10)</td></tr>
-<tr><td><a href="./ai-envelope.html">AI Envelope Primitive</a></td><td>FINAL v1</td></tr>
-<tr><td><a href="./auth-profiles.html">Auth Profiles</a></td><td>FINAL v1 (2026-05-10)</td></tr>
-<tr><td><a href="./auth.html">Authentication and Authorization</a></td><td>FINAL v1 (2026-04-27)</td></tr>
-<tr><td><a href="./capabilities-change-detection.html">Capability Change Detection</a></td><td>FINAL v1 (2026-05-10)</td></tr>
-<tr><td><a href="./capabilities.html">Capability Declaration (`/.well-known/openwop`)</a></td><td>FINAL v1 (2026-04-27; hygiene pass 2026-05-10)</td></tr>
-<tr><td><a href="./channels-and-reducers.html">Typed State Channels and Reducers</a></td><td>FINAL v1 (2026-04-27)</td></tr>
-<tr><td><a href="./cloudevents-mapping.html">OpenWOP → CloudEvents Mapping (non-normative)</a></td><td>DRAFT (non-normative addendum, 2026-05-15)</td></tr>
-<tr><td><a href="./compliance.html">Compliance Vocabulary</a></td><td>FINAL v1 (2026-05-12)</td></tr>
-<tr><td><a href="./debug-bundle.html">Run Debug Bundle</a></td><td>FINAL v1 (2026-05-05)</td></tr>
-<tr><td><a href="./grpc-transport.html">gRPC Transport Profile</a></td><td>FINAL v1 (2026-05-12)</td></tr>
-<tr><td><a href="./host-capabilities.html">Host Capability Surfaces</a></td><td>FINAL v1 (2026-05-12)</td></tr>
-<tr><td><a href="./host-extensions.html">Host Extensions</a></td><td>FINAL v1 (2026-05-05)</td></tr>
-<tr><td><a href="./i18n.html">Internationalization (i18n) and Locale</a></td><td>FINAL v1 (2026-05-12)</td></tr>
-<tr><td><a href="./idempotency.html">Idempotency</a></td><td>FINAL v1 (2026-04-27)</td></tr>
-<tr><td><a href="./interrupt-profiles.html">Interrupt Profiles</a></td><td>FINAL v1 (2026-05-10)</td></tr>
-<tr><td><a href="./interrupt.html">HITL Interrupt Primitive</a></td><td>FINAL v1 (2026-04-27)</td></tr>
-<tr><td><a href="./mcp-integration.html">MCP Integration</a></td><td>FINAL v1 (2026-05-05)</td></tr>
-<tr><td><a href="./multi-agent-execution.html">Multi-Agent Execution Model</a></td><td>DRAFT v1</td></tr>
-<tr><td><a href="./node-packs.html">Node Packs and the Public Registry</a></td><td>FINAL v1 (2026-04-27)</td></tr>
-<tr><td><a href="./observability.html">Observability and OpenTelemetry Taxonomy</a></td><td>FINAL v1 (2026-04-27)</td></tr>
-<tr><td><a href="./positioning.html">Positioning</a></td><td>FINAL v1 (2026-05-05)</td></tr>
-<tr><td><a href="./production-profile.html">Production Profile</a></td><td>FINAL v1 (2026-05-11; was PROVISIONAL 2026-05-11 → was FINAL 2026-05-10)</td></tr>
-<tr><td><a href="./profiles.html">Compatibility Profiles</a></td><td>FINAL v1 (2026-05-05; `openwop-fixtures` added 2026-05-07 via RFC 0003)</td></tr>
-<tr><td><a href="./prompts.html">Prompt Templates</a></td><td>DRAFT v1</td></tr>
-<tr><td><a href="./registry-operations.html">Node-Pack Registry Operations</a></td><td>FINAL v1 (2026-04-29)</td></tr>
-<tr><td><a href="./replay.html">Replay and Time-Travel Debugging</a></td><td>FINAL v1 (2026-04-27)</td></tr>
-<tr><td><a href="./rest-endpoints.html">REST Endpoint Catalog</a></td><td>FINAL v1 (2026-04-27; hygiene pass 2026-05-10)</td></tr>
-<tr><td><a href="./run-options.html">Per-Run Options Overlay</a></td><td>FINAL v1 (2026-04-27)</td></tr>
-<tr><td><a href="./scale-profiles.html">Scale Profiles</a></td><td>FINAL v1 (2026-05-05)</td></tr>
-<tr><td><a href="./storage-adapters.html">Storage Adapters</a></td><td>FINAL v1 (2026-04-29)</td></tr>
-<tr><td><a href="./stream-modes.html">SSE Stream Modes</a></td><td>FINAL v1 (2026-04-27)</td></tr>
-<tr><td><a href="./structured-output-subset.html">Tier 1 Structured-Output Compatibility Subset (informative)</a></td><td>FINAL v1</td></tr>
-<tr><td><a href="./version-negotiation.html">Version Negotiation and Deploy-Skew Safety</a></td><td>FINAL v1 (2026-04-27)</td></tr>
-<tr><td><a href="./webhooks.html">Webhook Subscriptions</a></td><td>FINAL v1 (2026-04-29)</td></tr>
-<tr><td><a href="./workflow-chain-packs.html">Workflow-Chain Packs</a></td><td>DRAFT (2026-05-17)</td></tr>
-    </tbody>
-  </table>
+  <nav class="spec-index-toc" aria-label="Spec sections">
+    <h3>Jump to</h3>
+    <ul>
+      <li><a href="#foundation">Foundation</a></li>
+      <li><a href="#runtime">Run lifecycle &amp; state</a></li>
+      <li><a href="#agents">Agents &amp; multi-agent execution</a></li>
+      <li><a href="#humans">Humans in the loop</a></li>
+      <li><a href="#transports">Wire transports</a></li>
+      <li><a href="#security">Auth &amp; security</a></li>
+      <li><a href="#ecosystem">Node packs &amp; registry</a></li>
+      <li><a href="#production">Production posture &amp; operations</a></li>
+      <li><a href="#integration">Integration with adjacent protocols</a></li>
+    </ul>
+  </nav>
+  <section class="spec-group">
+  <h2 id="foundation">Foundation</h2>
+  <p class="spec-group-lede">What openwop is, what it isn't, and how a host advertises its surface.</p>
+  <ul class="spec-group-list">
+    <li>
+      <a href="./positioning.html"><strong>Positioning</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-05-05)</span>
+      <p class="spec-item-desc">openwop is an open protocol for portable, durable, AI-native workflow execution across hosts.</p>
+    </li>
+    <li>
+      <a href="./capabilities.html"><strong>Capability Declaration (`/.well-known/openwop`)</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-04-27; hygiene pass 2026-05-10)</span>
+      <p class="spec-item-desc">External clients (CLIs, SDKs, agents from other ecosystems) need a deterministic way to discover what an OpenWOP-compliant server can do before they issue requests. Specifically:</p>
+    </li>
+    <li>
+      <a href="./host-capabilities.html"><strong>Host Capability Surfaces</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-05-12)</span>
+      <p class="spec-item-desc">node-packs.md §&quot;Manifest format&quot; allows packs to declare peerDependencies against engine-supplied capabilities. host-extensions.md documents the namespace rule that host.* is…</p>
+    </li>
+    <li>
+      <a href="./profiles.html"><strong>Compatibility Profiles</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-05-05; `openwop-fixtures` added 2026-05-07 via RFC 0003)</span>
+      <p class="spec-item-desc">&quot;openwop-compatible&quot; today means &quot;passes some subset of @openwop/openwop-conformance.&quot; That&#39;s accurate but not actionable: a host advertising secrets.supported: true and a host…</p>
+    </li>
+    <li>
+      <a href="./capabilities-change-detection.html"><strong>Capability Change Detection</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-05-10)</span>
+      <p class="spec-item-desc">Clients negotiate against GET /.well-known/openwop before creating runs. That payload can change when a host enables a node pack, changes optional profile support, rotates…</p>
+    </li>
+  </ul>
+</section>
+<section class="spec-group">
+  <h2 id="runtime">Run lifecycle &amp; state</h2>
+  <p class="spec-group-lede">How a run starts, streams, suspends, resumes, replays, and ends.</p>
+  <ul class="spec-group-list">
+    <li>
+      <a href="./run-options.html"><strong>Per-Run Options Overlay</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-04-27)</span>
+      <p class="spec-item-desc">A workflow definition (DAG of nodes + edges) is the shape of the work. Operationally, two runs of the same workflow often need different parameters: a different LLM model, a…</p>
+    </li>
+    <li>
+      <a href="./replay.html"><strong>Replay and Time-Travel Debugging</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-04-27)</span>
+      <p class="spec-item-desc">The durable event log makes time-travel debugging nearly free: every meaningful state transition is persisted with a sequence number, so the run state at any point in history can…</p>
+    </li>
+    <li>
+      <a href="./idempotency.html"><strong>Idempotency</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-04-27)</span>
+      <p class="spec-item-desc">Workflow execution is full of operations that can be retried — externally (caller retries on 503, 408, network blip) and internally (engine retry policy on a node, sub-workflow…</p>
+    </li>
+    <li>
+      <a href="./channels-and-reducers.html"><strong>Typed State Channels and Reducers</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-04-27)</span>
+      <p class="spec-item-desc">A workflow run carries state beyond the inputs and outputs of individual nodes: approval votes, refine-loop feedback history, loopback counters, artifact mirrors, multi-turn Q&amp;A…</p>
+    </li>
+    <li>
+      <a href="./version-negotiation.html"><strong>Version Negotiation and Deploy-Skew Safety</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-04-27)</span>
+      <p class="spec-item-desc">Long-running workflows persist state. State written by engine version N may be read by engine version N+1 (forward) or — in a botched deploy — by engine version N-1 (backward /…</p>
+    </li>
+    <li>
+      <a href="./stream-modes.html"><strong>SSE Stream Modes</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-04-27)</span>
+      <p class="spec-item-desc">Without stream modes, an SSE endpoint emits every engine event undifferentiated — UI, debugger, automation, and agent consumers all see the same stream and have to filter…</p>
+    </li>
+  </ul>
+</section>
+<section class="spec-group">
+  <h2 id="agents">Agents &amp; multi-agent execution</h2>
+  <p class="spec-group-lede">Agent identity, memory, multi-agent execution model, envelope shapes.</p>
+  <ul class="spec-group-list">
+    <li>
+      <a href="./agent-memory.html"><strong>Agent Memory</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-05-10)</span>
+      <p class="spec-item-desc">Multi-agent workflows persist context across runs. A pack-installed customer-support agent that resolved a refund last week should still know the customer&#39;s preference for email…</p>
+    </li>
+    <li>
+      <a href="./agent-ref-positioning.html"><strong>`AgentRef` Positioning</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-05-10)</span>
+      <p class="spec-item-desc">RFC 0002 introduces AgentRef as the wire shape for &quot;which agent took which turn inside a run.&quot; Three external ecosystems also propose agent-identity shapes:</p>
+    </li>
+    <li>
+      <a href="./multi-agent-execution.html"><strong>Multi-Agent Execution Model</strong></a>
+      <span class="spec-item-status">DRAFT v1</span>
+      <p class="spec-item-desc">Per the external standards-readiness review of 2026-05-21, finding (3): &quot;OpenWOP defines identities, dispatch, memory, reasoning events, envelopes, prompts, MCP/A2A composition,…</p>
+    </li>
+    <li>
+      <a href="./ai-envelope.html"><strong>AI Envelope Primitive</strong></a>
+      <span class="spec-item-status">FINAL v1</span>
+      <p class="spec-item-desc">Eight v1 surfaces already reference &quot;envelopes&quot; as a distinct wire concept:</p>
+    </li>
+    <li>
+      <a href="./structured-output-subset.html"><strong>Tier 1 Structured-Output Compatibility Subset (informative)</strong></a>
+      <span class="spec-item-status">FINAL v1</span>
+      <p class="spec-item-desc">Each LLM vendor enforces a different JSON-Schema subset for native structured output. The intersection of all vendor-strict modes is what an envelope payload schema MUST satisfy…</p>
+    </li>
+    <li>
+      <a href="./prompts.html"><strong>Prompt Templates</strong></a>
+      <span class="spec-item-status">DRAFT v1</span>
+      <p class="spec-item-desc">Two v1 surfaces already accept prompt bodies, but neither establishes prompt-as-a-resource:</p>
+    </li>
+  </ul>
+</section>
+<section class="spec-group">
+  <h2 id="humans">Humans in the loop</h2>
+  <p class="spec-group-lede">Interrupt the run for a human; resume when the answer arrives.</p>
+  <ul class="spec-group-list">
+    <li>
+      <a href="./interrupt.html"><strong>HITL Interrupt Primitive</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-04-27)</span>
+      <p class="spec-item-desc">Workflow execution often needs to pause for input from outside the engine: human approval, AI clarification, an external event (webhook, scheduled time, message arrival). Without…</p>
+    </li>
+    <li>
+      <a href="./interrupt-profiles.html"><strong>Interrupt Profiles</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-05-10)</span>
+      <p class="spec-item-desc">interrupt.md standardizes durable suspend/resume for approvals, clarifications, edits, and external events. Production workflows often need richer policies: more than one…</p>
+    </li>
+  </ul>
+</section>
+<section class="spec-group">
+  <h2 id="transports">Wire transports</h2>
+  <p class="spec-group-lede">REST, signed webhooks, gRPC, CloudEvents — the wire shapes carrying the protocol.</p>
+  <ul class="spec-group-list">
+    <li>
+      <a href="./rest-endpoints.html"><strong>REST Endpoint Catalog</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-04-27; hygiene pass 2026-05-10)</span>
+      <p class="spec-item-desc">This document catalogs the REST surface an OpenWOP-compliant server MUST expose, plus optional surfaces (MCP, A2A) that a server MAY expose. Path templates use {paramName} for…</p>
+    </li>
+    <li>
+      <a href="./webhooks.html"><strong>Webhook Subscriptions</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-04-29)</span>
+      <p class="spec-item-desc">Polling GET /v1/runs/{runId} to learn about run progress is inefficient — clients pay round-trip cost on every check, and the runtime serves identical state until the next event.…</p>
+    </li>
+    <li>
+      <a href="./grpc-transport.html"><strong>gRPC Transport Profile</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-05-12)</span>
+      <p class="spec-item-desc">Some deployment classes prefer gRPC over REST for protocol-level reasons:</p>
+    </li>
+    <li>
+      <a href="./cloudevents-mapping.html"><strong>OpenWOP → CloudEvents Mapping (non-normative)</strong></a>
+      <span class="spec-item-status">DRAFT (non-normative addendum, 2026-05-15)</span>
+      <p class="spec-item-desc">This document does NOT change the native OpenWOP event log shape (schemas/run-event.schema.json + schemas/run-event-payloads.schema.json). It defines a one-way projection from…</p>
+    </li>
+  </ul>
+</section>
+<section class="spec-group">
+  <h2 id="security">Auth &amp; security</h2>
+  <p class="spec-group-lede">API keys, OAuth2, OIDC, mTLS, BYOK secret resolution, redaction.</p>
+  <ul class="spec-group-list">
+    <li>
+      <a href="./auth.html"><strong>Authentication and Authorization</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-04-27)</span>
+      <p class="spec-item-desc">This document specifies how OpenWOP-compliant servers authenticate and authorize callers of the protocol&#39;s wire-level surfaces (REST, MCP, A2A, SSE). It does NOT prescribe…</p>
+    </li>
+    <li>
+      <a href="./auth-profiles.html"><strong>Auth Profiles</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-05-10)</span>
+      <p class="spec-item-desc">auth.md defines the minimum interoperable contract: bearer API keys, canonical error envelopes, tenant isolation, scopes, and audit expectations. Production deployments often need…</p>
+    </li>
+  </ul>
+</section>
+<section class="spec-group">
+  <h2 id="ecosystem">Node packs &amp; registry</h2>
+  <p class="spec-group-lede">Signed packs of reusable nodes + the registry that serves them.</p>
+  <ul class="spec-group-list">
+    <li>
+      <a href="./node-packs.html"><strong>Node Packs and the Public Registry</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-04-27)</span>
+      <p class="spec-item-desc">Workflows in v1 are written against a fixed set of core.* node typeIds. Every implementation re-implements the same nodes (AI prompt calls, approval gates, HTTP fetches) because…</p>
+    </li>
+    <li>
+      <a href="./workflow-chain-packs.html"><strong>Workflow-Chain Packs</strong></a>
+      <span class="spec-item-status">DRAFT (2026-05-17)</span>
+      <p class="spec-item-desc">Node packs (node-packs.md) distribute executable typeIds — each pack contributes one or more defineNode() implementations the engine dispatches at run time. A parallel class of…</p>
+    </li>
+    <li>
+      <a href="./registry-operations.html"><strong>Node-Pack Registry Operations</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-04-29)</span>
+      <p class="spec-item-desc">node-packs.md defines the pack manifest shape, the registry HTTP API, and the trust-model layers an engine consumer SHOULD support. What it doesn&#39;t specify is the operator side of…</p>
+    </li>
+  </ul>
+</section>
+<section class="spec-group">
+  <h2 id="production">Production posture &amp; operations</h2>
+  <p class="spec-group-lede">The production profile, scale profiles, debug bundles, observability.</p>
+  <ul class="spec-group-list">
+    <li>
+      <a href="./production-profile.html"><strong>Production Profile</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-05-11; was PROVISIONAL 2026-05-11 → was FINAL 2026-05-10)</span>
+      <p class="spec-item-desc">Passing the base protocol proves that a host speaks OpenWOP. Running a public service also requires operational guarantees: durable retries, observable failures, event retention,…</p>
+    </li>
+    <li>
+      <a href="./scale-profiles.html"><strong>Scale Profiles</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-05-05)</span>
+      <p class="spec-item-desc">openwop doesn&#39;t standardize how a host scales — implementation-internal queueing, sharding, and worker-pool design are out of scope. But clients need to be able to choose a host…</p>
+    </li>
+    <li>
+      <a href="./debug-bundle.html"><strong>Run Debug Bundle</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-05-05)</span>
+      <p class="spec-item-desc">When a run misbehaves and an operator needs to file a bug, send context to the host vendor, or reproduce the failure on a different host, today&#39;s options are:</p>
+    </li>
+    <li>
+      <a href="./observability.html"><strong>Observability and OpenTelemetry Taxonomy</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-04-27)</span>
+      <p class="spec-item-desc">External implementers and operators need a shared vocabulary for tracing and metrics so that:</p>
+    </li>
+    <li>
+      <a href="./storage-adapters.html"><strong>Storage Adapters</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-04-29)</span>
+      <p class="spec-item-desc">The openwop runtime needs durable storage for two state surfaces:</p>
+    </li>
+    <li>
+      <a href="./host-extensions.html"><strong>Host Extensions</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-05-05)</span>
+      <p class="spec-item-desc">A host implementing openwop often needs to expose product-specific concepts that aren&#39;t part of the protocol — workspaces, projects, canvases, custom node types, vendor analytics.…</p>
+    </li>
+  </ul>
+</section>
+<section class="spec-group">
+  <h2 id="integration">Integration with adjacent protocols</h2>
+  <p class="spec-group-lede">How openwop composes with MCP, A2A, and the surrounding ecosystem.</p>
+  <ul class="spec-group-list">
+    <li>
+      <a href="./mcp-integration.html"><strong>MCP Integration</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-05-05)</span>
+      <p class="spec-item-desc">OpenWOP runs the workflow. MCP exposes tools to the LLM nodes inside that workflow. The two protocols compose; they don&#39;t compete.</p>
+    </li>
+    <li>
+      <a href="./a2a-integration.html"><strong>A2A Integration</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-05-05)</span>
+      <p class="spec-item-desc">openwop is not in the agent-to-agent message-exchange business. A2A is. The two protocols compose along orthogonal axes:</p>
+    </li>
+    <li>
+      <a href="./compliance.html"><strong>Compliance Vocabulary</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-05-12)</span>
+      <p class="spec-item-desc">Operators in regulated industries (financial services, healthcare, public sector, EU-resident services) evaluate every infrastructure choice through compliance lenses. &quot;Does…</p>
+    </li>
+    <li>
+      <a href="./i18n.html"><strong>Internationalization (i18n) and Locale</strong></a>
+      <span class="spec-item-status">FINAL v1 (2026-05-12)</span>
+      <p class="spec-item-desc">openwop is increasingly deployed in workspaces with non-English-speaking end users:</p>
+    </li>
+  </ul>
+</section>
   </main>
   <footer class="site-footer">
     <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>

@@ -460,25 +460,124 @@ function buildSpecDocs() {
       }),
     );
   }
-  // Index page for /spec/v1/
+  // Index page for /spec/v1/ — thematically grouped landing, not a flat table.
+  // Each doc carries a one-line description extracted from its first paragraph.
   const items = files.map((f) => {
     const md = readFile(join(specDir, f));
     const titleMatch = /^#\s+(.+)$/m.exec(md);
     const title = titleMatch ? titleMatch[1].replace(/^openwop Spec v1 — /, '') : f;
     const slug = f.replace(/\.md$/, '');
     const status = /^>\s*\*\*Status:\s*([^.]+)/m.exec(md);
-    return { slug, title, status: status ? status[1].trim() : '?' };
+    const desc = extractFirstParagraph(md) ?? '';
+    const shortDesc = desc.length > 180 ? desc.slice(0, 180).replace(/\s+\S*$/, '') + '…' : desc;
+    return { slug, title, status: status ? status[1].trim() : '?', desc: shortDesc };
   });
+
+  // Conceptual grouping. Order is intentional: foundation → runtime → agents →
+  // humans → transports → security → ecosystem → operations → integration.
+  // Docs not enumerated below fall into an "Other" bucket at the end so
+  // nothing is silently dropped when a new doc lands.
+  const GROUPS = [
+    {
+      key: 'foundation',
+      title: 'Foundation',
+      lede: 'What openwop is, what it isn\'t, and how a host advertises its surface.',
+      slugs: ['positioning', 'capabilities', 'host-capabilities', 'profiles', 'capabilities-change-detection'],
+    },
+    {
+      key: 'runtime',
+      title: 'Run lifecycle &amp; state',
+      lede: 'How a run starts, streams, suspends, resumes, replays, and ends.',
+      slugs: ['run-options', 'replay', 'idempotency', 'channels-and-reducers', 'version-negotiation', 'stream-modes'],
+    },
+    {
+      key: 'agents',
+      title: 'Agents &amp; multi-agent execution',
+      lede: 'Agent identity, memory, multi-agent execution model, envelope shapes.',
+      slugs: ['agent-memory', 'agent-ref-positioning', 'multi-agent-execution', 'ai-envelope', 'structured-output-subset', 'prompts'],
+    },
+    {
+      key: 'humans',
+      title: 'Humans in the loop',
+      lede: 'Interrupt the run for a human; resume when the answer arrives.',
+      slugs: ['interrupt', 'interrupt-profiles'],
+    },
+    {
+      key: 'transports',
+      title: 'Wire transports',
+      lede: 'REST, signed webhooks, gRPC, CloudEvents — the wire shapes carrying the protocol.',
+      slugs: ['rest-endpoints', 'webhooks', 'grpc-transport', 'cloudevents-mapping'],
+    },
+    {
+      key: 'security',
+      title: 'Auth &amp; security',
+      lede: 'API keys, OAuth2, OIDC, mTLS, BYOK secret resolution, redaction.',
+      slugs: ['auth', 'auth-profiles'],
+    },
+    {
+      key: 'ecosystem',
+      title: 'Node packs &amp; registry',
+      lede: 'Signed packs of reusable nodes + the registry that serves them.',
+      slugs: ['node-packs', 'workflow-chain-packs', 'registry-operations'],
+    },
+    {
+      key: 'production',
+      title: 'Production posture &amp; operations',
+      lede: 'The production profile, scale profiles, debug bundles, observability.',
+      slugs: ['production-profile', 'scale-profiles', 'debug-bundle', 'observability', 'storage-adapters', 'host-extensions'],
+    },
+    {
+      key: 'integration',
+      title: 'Integration with adjacent protocols',
+      lede: 'How openwop composes with MCP, A2A, and the surrounding ecosystem.',
+      slugs: ['mcp-integration', 'a2a-integration', 'compliance', 'i18n'],
+    },
+  ];
+
+  const claimedSlugs = new Set(GROUPS.flatMap((g) => g.slugs));
+  const ungrouped = items.filter((i) => !claimedSlugs.has(i.slug));
+  if (ungrouped.length) {
+    GROUPS.push({
+      key: 'other',
+      title: 'Other reference material',
+      lede: 'Specs not grouped elsewhere. New additions land here until categorized.',
+      slugs: ungrouped.map((i) => i.slug),
+    });
+  }
+
+  const itemBySlug = new Map(items.map((i) => [i.slug, i]));
+
+  const groupsHtml = GROUPS.map((g) => {
+    const groupItems = g.slugs.map((s) => itemBySlug.get(s)).filter(Boolean);
+    if (!groupItems.length) return '';
+    return `<section class="spec-group">
+  <h2 id="${g.key}">${g.title}</h2>
+  <p class="spec-group-lede">${g.lede}</p>
+  <ul class="spec-group-list">
+    ${groupItems.map((i) => `<li>
+      <a href="./${i.slug}.html"><strong>${escapeHtml(i.title)}</strong></a>
+      <span class="spec-item-status">${escapeHtml(i.status)}</span>
+      ${i.desc ? `<p class="spec-item-desc">${escapeHtml(i.desc)}</p>` : ''}
+    </li>`).join('\n    ')}
+  </ul>
+</section>`;
+  }).join('\n');
+
+  const tocLinks = GROUPS.filter((g) => g.slugs.some((s) => itemBySlug.has(s)))
+    .map((g) => `<li><a href="#${g.key}">${g.title}</a></li>`).join('\n      ');
+
   const indexContent = `<header class="page-header">
     <h1>openwop v1 spec corpus</h1>
-    <p class="lede">${items.length} prose specs governing the v1 wire contract. Status legend: STUB · DRAFT · OUTLINE · FINAL.</p>
+    <p class="lede">${items.length} prose specs governing the v1 wire contract. Each section below groups specs by what they do; click through for the normative text.</p>
+    <p class="meta">Status legend: <strong>FINAL</strong> · STUB · DRAFT · OUTLINE. A spec is FINAL when its wire shape is locked under v1.x compatibility rules.</p>
   </header>
-  <table class="spec-index">
-    <thead><tr><th>Doc</th><th>Status</th></tr></thead>
-    <tbody>
-    ${items.map((i) => `<tr><td><a href="./${i.slug}.html">${escapeHtml(i.title)}</a></td><td>${escapeHtml(i.status)}</td></tr>`).join('\n')}
-    </tbody>
-  </table>`;
+  <nav class="spec-index-toc" aria-label="Spec sections">
+    <h3>Jump to</h3>
+    <ul>
+      ${tocLinks}
+    </ul>
+  </nav>
+  ${groupsHtml}`;
   writeFileSync(
     join(DIST, 'spec', 'v1', 'index.html'),
     templatePage({
