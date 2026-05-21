@@ -196,13 +196,30 @@ Strict cross-region idempotency requires synchronous replication on every reques
       "supported": true,
       "layer1RetentionSeconds": 86400,
       "layer2RetentionSeconds": 1209600,
-      "crossRegion": "single-region" | "best-effort" | "strict"
+      "crossRegion": "single-region" | "best-effort" | "strict",
+      "multiRegion": {
+        "supported": true,
+        "replicationLagBoundMs": 5000,
+        "partitionRecoveryStrategy": "last-writer-wins"
+      }
     }
   }
 }
 ```
 
 Clients SHOULD inspect `capabilities.idempotency.crossRegion` before relying on multi-region guarantees.
+
+### `multiRegion` sub-block (RFC 0036, normative when `multiRegion.supported: true`)
+
+Per [RFC 0036](../../RFCS/0036-multi-region-and-cross-engine-guarantees.md) (`Active` 2026-05-21). The `multiRegion` sub-block is a **granular advertisement** that complements the categorical `crossRegion` claim. A host that advertises `crossRegion: "strict"` SHOULD also advertise `multiRegion.supported: true` with `replicationLagBoundMs: 0` (synchronous replication). A host that advertises `crossRegion: "best-effort"` MAY advertise `multiRegion.supported: true` with a non-zero bound.
+
+When `multiRegion.supported: true`:
+
+- An Idempotency-Key write succeeding in region A MUST be read-visible in region B after waiting `replicationLagBoundMs + safetyMargin`.
+- After a partition healed leaves two regions with conflicting idempotency-key records for the same key, the host MUST resolve the conflict deterministically using the advertised `partitionRecoveryStrategy`. The resolution rule MUST be observable: re-running the same conflict input MUST produce the same survivor.
+- Conformance asserts both contracts via `multi-region-idempotency.test.ts` against the host's multi-region test simulator (per RFC 0036 §C).
+
+Hosts that do NOT advertise the `multiRegion` block retain the existing best-effort posture documented above.
 
 ## Open spec gaps
 

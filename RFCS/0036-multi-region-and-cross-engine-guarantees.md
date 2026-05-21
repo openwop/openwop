@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0036 |
 | **Title** | Multi-region idempotency + cross-engine append-ordering guarantees |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-21 |
-| **Updated** | 2026-05-21 |
+| **Updated** | 2026-05-21 (Draft → Active same-day: `capabilities.idempotency.multiRegion.{supported, replicationLagBoundMs, partitionRecoveryStrategy}` block + `capabilities.eventLog.crossEngineOrdering.{supported, orderingModel}` block landed in `schemas/capabilities.schema.json`; `spec/v1/idempotency.md` §"`multiRegion` sub-block" added as the normative tighten-when-advertised clause; `spec/v1/replay.md` §"Cross-region replay (RFC 0036)" added with the byte-equivalent-on-projection contract. The multi-region simulator at `examples/hosts/postgres/test/multi-region-simulator.ts` + the cross-engine fixture + the behavioral conformance scenarios per §D remain deferred to a follow-up commit (the protocol-layer surface stands on its own; reference-host wiring graduates RFC 0036 to `Accepted`). Path to `Accepted`: Postgres reference host implements the simulator + advertises both capability blocks + the conformance scenarios pass.) |
 | **Affects** | `spec/v1/idempotency.md` §"Multi-region reconciliation" (promote prose from "lower-confidence" to normative MUST when capability advertised) · `spec/v1/replay.md` (cross-region recovery test path) · `schemas/capabilities.schema.json` (adds `capabilities.idempotency.multiRegion` + `capabilities.eventLog.crossEngineOrdering`) · `conformance/src/scenarios/multi-region-idempotency.test.ts` (graduates from shape-only) · NEW `conformance/src/scenarios/cross-engine-append-ordering.test.ts` · multi-region simulator in reference host · `INTEROP-MATRIX.md` · CHANGELOG |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |

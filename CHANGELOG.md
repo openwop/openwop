@@ -11,6 +11,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### RFC 0035 (sandbox execution contract) + RFC 0036 (multi-region + cross-engine) promoted Draft → Active same-day (2026-05-21)
+
+Both filed as Draft earlier today (aa94003); promoted Active after their protocol-layer surface landed atomically. Reference-host implementation (sandbox host for 0035; multi-region simulator for 0036) deferred to follow-up commits; that wiring graduates each to `Accepted`.
+
+**RFC 0035 — Sandbox execution contract:**
+- `schemas/capabilities.schema.json` gains the `capabilities.sandbox` block with 5 fields: `supported` + `isolationModel` (anyOf categorical-enum-or-`x-host-…` pattern) + `allowedHostCalls[]` + `memoryLimitBytes ≥ 1 MiB` + `wallClockLimitMs ≥ 100 ms`.
+- `spec/v1/host-capabilities.md` gains §"Sandbox execution contract (RFC 0035)" — capability advertisement + 8-row failure-mode invariant table + error-code summary.
+- `spec/v1/rest-endpoints.md` §"Common error codes" gains 4 new codes: `sandbox_memory_exceeded`, `sandbox_timeout`, `sandbox_capability_denied`, `sandbox_escape_attempt`.
+- 8 `node-pack-sandbox-*` SECURITY rows stay at `tier: reference-impl` for now; graduation to `tier: protocol` is gated on a sandbox-executing reference host + the 8 matching conformance scenarios.
+
+**RFC 0036 — Multi-region idempotency + cross-engine append-ordering:**
+- `schemas/capabilities.schema.json` gains the `capabilities.idempotency.multiRegion.{supported, replicationLagBoundMs (≤ 60s), partitionRecoveryStrategy}` block + the `capabilities.eventLog.crossEngineOrdering.{supported, orderingModel ∈ [lamport, vector-clock, global-sequencer]}` block.
+- `spec/v1/idempotency.md` §"`multiRegion` sub-block" added as the normative tighten-when-advertised clause complementing the existing `crossRegion: 'best-effort'|'strict'|'single-region'` categorical claim.
+- `spec/v1/replay.md` §"Cross-region replay (RFC 0036)" added — when both capabilities are advertised, fork served by a different region produces byte-equivalent `RunSnapshot.status` + `variables` + projected event log up to `forkAtEventLogIdx`. Per-region clock fields legitimately differ.
+- The multi-region simulator + cross-engine fixture + behavioral conformance scenarios per RFC §D remain deferred to a follow-up commit.
+
+README.md updated: 7 Active RFCs (was 5), 2 Draft RFCs (was 4). All caught by the structural drift detector. docs/PROTOCOL-STATUS.md auto-regenerated.
+
+Closes Google-acceptance review findings (5) "sandbox proof" and (6) "distributed-systems guarantees" at the protocol-layer-spec boundary. Reference-host wiring closes them at the cross-host-conformance boundary.
+
 ### RFC 0037 (multi-agent execution model) Phase 1 promoted Draft → Active same-day (2026-05-21)
 
 Filed as Draft earlier today (aa94003); now graduates to Active after the Phase 1 protocol-layer surface landed atomically:

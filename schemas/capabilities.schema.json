@@ -876,6 +876,96 @@
       },
       "additionalProperties": false
     },
+    "sandbox": {
+      "type": "object",
+      "description": "RFC 0035 — Sandbox execution contract for pack-loaded typeIds. Hosts that advertise execute pack-loaded code inside an isolation boundary meeting the 8 failure-mode invariants in spec/v1/host-capabilities.md §'Sandbox execution contract'. Absent block = host does NOT sandbox pack-loaded code and MUST refuse to load any pack whose manifest declares `peerDependencies.host.sandbox: required`.",
+      "additionalProperties": false,
+      "required": ["supported", "isolationModel"],
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "Host enforces the 8 sandbox failure-mode invariants per spec/v1/host-capabilities.md §'Sandbox execution contract'. When false, host MUST refuse to load packs declaring required sandbox isolation."
+        },
+        "isolationModel": {
+          "type": "string",
+          "anyOf": [
+            { "enum": ["wasm", "process", "container", "vm"] },
+            { "pattern": "^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*$" }
+          ],
+          "description": "Categorical isolation model. `wasm` = WebAssembly sandbox with explicit host imports (e.g., Wasmtime, Wasmer). `process` = OS process boundary with restricted syscalls (e.g., gVisor, seccomp, Landlock). `container` = container runtime boundary (e.g., Firecracker microVM). `vm` = full VM. Vendor-specific isolation models advertise `^x-host-<host>-<key>$` per spec/v1/host-extensions.md §'Canonical prefixes'; documentation lives at the host's discovery doc."
+        },
+        "allowedHostCalls": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Whitelist of host-call surfaces sandboxed code MAY invoke. Identifiers from the spec-reserved `host.*` capability set or `^x-host-<host>-<key>$` extension namespace. Empty array = pure compute only (no host I/O). Conformance verifies the sandbox refuses unlisted calls (`sandbox_capability_denied`)."
+        },
+        "memoryLimitBytes": {
+          "type": "integer",
+          "minimum": 1048576,
+          "description": "Per-invocation memory cap (≥ 1 MiB). Host MUST enforce; exceeding fails the node with `sandbox_memory_exceeded`."
+        },
+        "wallClockLimitMs": {
+          "type": "integer",
+          "minimum": 100,
+          "description": "Per-invocation wall-clock cap (≥ 100 ms). Host MUST enforce; exceeding fails the node with `sandbox_timeout`."
+        }
+      }
+    },
+    "idempotency": {
+      "type": "object",
+      "description": "RFC 0036 — Multi-region idempotency contract. Optional v1 advertisement. The existing `crossRegion: 'single-region'|'best-effort'|'strict'` categorical claim lives under `capabilities.idempotency.crossRegion` per spec/v1/idempotency.md §'Multi-region idempotency (annex)'. The `multiRegion` sub-block here gives a granular advertisement that hosts SHOULD pair with the categorical `crossRegion` claim.",
+      "additionalProperties": true,
+      "properties": {
+        "multiRegion": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["supported"],
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "Host implements cross-region idempotency reconciliation per spec/v1/idempotency.md §'Multi-region reconciliation'. When `true`, an Idempotency-Key write succeeding in region A is read-visible in region B within `replicationLagBoundMs + safetyMargin`."
+            },
+            "replicationLagBoundMs": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 60000,
+              "description": "Conservative upper bound on cross-region replication lag (≤ 60s ceiling chosen to keep operator advertisement honest; production cross-region deployments typically run < 10s). Conformance asserts read-visibility after the bound."
+            },
+            "partitionRecoveryStrategy": {
+              "type": "string",
+              "anyOf": [
+                { "enum": ["last-writer-wins", "first-writer-wins"] },
+                { "pattern": "^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*$" }
+              ],
+              "description": "Deterministic resolution rule for conflicting idempotency-key records when a partition healed. `last-writer-wins` / `first-writer-wins` are spec-reserved categorical rules; vendor strategies use `^x-host-<host>-<key>$`. Conformance asserts deterministic resolution actually applies; it does NOT prescribe which strategy a host picks."
+            }
+          }
+        }
+      }
+    },
+    "eventLog": {
+      "type": "object",
+      "description": "RFC 0036 — Event-log multi-engine advertisement. Optional v1.",
+      "additionalProperties": false,
+      "properties": {
+        "crossEngineOrdering": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["supported"],
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "Host implements append-ordering guarantees across multiple engine instances writing to the same run's event log. When `true`, two engines appending concurrently converge on a total order any reader observes consistently."
+            },
+            "orderingModel": {
+              "type": "string",
+              "enum": ["lamport", "vector-clock", "global-sequencer"],
+              "description": "Mechanism the host uses to derive the total order. `lamport` = Lamport timestamps on each append. `vector-clock` = per-engine vector counters merged at read. `global-sequencer` = single sequencer assigns monotonic seq numbers (the Postgres reference host's posture)."
+            }
+          }
+        }
+      }
+    },
     "compliance": {
       "type": "object",
       "description": "Privacy / compliance behavior advertised to clients (closes O5). Lets consumers know what masking mode is in effect so a `\"[REDACTED]\"` value in event log payloads is recognizable as a server-side mask vs an upstream null.",

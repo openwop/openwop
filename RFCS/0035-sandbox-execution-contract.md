@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0035 |
 | **Title** | Sandbox execution contract for pack-loaded typeIds |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-21 |
-| **Updated** | 2026-05-21 |
+| **Updated** | 2026-05-21 (Draft → Active same-day: `capabilities.sandbox` block landed in `schemas/capabilities.schema.json` with the 5 fields (supported + isolationModel anyOf + allowedHostCalls + memoryLimitBytes + wallClockLimitMs); `spec/v1/host-capabilities.md` §"Sandbox execution contract (RFC 0035)" added with the 8-row failure-mode invariant table + capability advertisement + error-code table; `spec/v1/rest-endpoints.md` §"Common error codes" gains the 4 new codes (`sandbox_memory_exceeded`, `sandbox_timeout`, `sandbox_capability_denied`, `sandbox_escape_attempt`). The 8 `node-pack-sandbox-*` rows in `SECURITY/invariants.yaml` stay at `tier: reference-impl` for now; graduation to `tier: protocol` is gated on a sandbox-executing reference host advertising + the 8 matching conformance scenarios per §D. Path to `Accepted`: first non-steward host advertises + passes the 8 scenarios.) |
 | **Affects** | `spec/v1/host-capabilities.md` (adds §"Sandbox execution contract") · `schemas/capabilities.schema.json` (adds `capabilities.sandbox` block) · `SECURITY/invariants.yaml` (graduates 8 `node-pack-sandbox-*` rows from `reference-impl` to `protocol` tier) · 8 new conformance scenarios · reference hosts (NEW: `examples/hosts/wasm-sandbox/` OR Postgres extension) · `INTEROP-MATRIX.md` · CHANGELOG |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |

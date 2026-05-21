@@ -1634,6 +1634,54 @@ ctx.storage.cache.delete({ key: string }) → Promise<{ deleted: boolean }>
 
 ---
 
+## Sandbox execution contract (RFC 0035)
+
+Per [RFC 0035](../../RFCS/0035-sandbox-execution-contract.md) (`Active` 2026-05-21).
+
+Sandbox is a **meta-capability**: it governs how OTHER host capabilities (`host.fs`, `host.kvStorage`, `host.sql`, et al.) are exposed to pack-loaded code. It lives at the top-level `capabilities.sandbox` block (NOT under `host.*` — sandbox isn't itself a pack-consumable surface; it's the runtime envelope around them).
+
+### Capability advertisement (normative)
+
+```jsonc
+{
+  "capabilities": {
+    "sandbox": {
+      "supported": true,
+      "isolationModel": "wasm",            // or "process" | "container" | "vm" | "x-host-<host>-<key>"
+      "allowedHostCalls": ["host.fs", "host.kvStorage"],
+      "memoryLimitBytes": 67108864,         // 64 MiB
+      "wallClockLimitMs": 10000             // 10 s
+    }
+  }
+}
+```
+
+A host that advertises `capabilities.sandbox.supported: true` MUST enforce all 8 failure-mode invariants below. A host that does NOT advertise (omits the block OR sets `supported: false`) MUST refuse to load any pack whose manifest declares `peerDependencies.host.sandbox: required` with refusal code `capability_not_provided` per `capabilities.md` §"Runtime capabilities."
+
+### Failure-mode invariants (normative)
+
+| Invariant id | MUST contract |
+|---|---|
+| `node-pack-sandbox-no-host-fs-escape` | Sandbox code MUST NOT read or write files outside the host-advertised sandbox root. Attempting to escape MUST fail closed with `sandbox_escape_attempt`. |
+| `node-pack-sandbox-no-host-env-leak` | Host environment variables MUST NOT be visible to sandbox code unless the host has explicitly forwarded them via an `allowedHostCalls` entry that exposes env-resolution. |
+| `node-pack-sandbox-no-network-escape` | Sandbox code MUST NOT initiate network requests unless `host.fetch` (or equivalent) is in `allowedHostCalls`. |
+| `node-pack-sandbox-no-host-process-escape` | Sandbox code MUST NOT spawn host processes, fork, or call exec-family syscalls. |
+| `node-pack-sandbox-memory-cap` | Exceeding `memoryLimitBytes` MUST fail the node with `error.code: "sandbox_memory_exceeded"`. |
+| `node-pack-sandbox-timeout-cap` | Exceeding `wallClockLimitMs` MUST fail the node with `error.code: "sandbox_timeout"`. |
+| `node-pack-sandbox-capability-gate-respected` | Sandbox code MUST NOT bypass the host's capability-advertisement check; calls to undeclared host capabilities MUST fail closed with `sandbox_capability_denied`. |
+| `node-pack-sandbox-no-cross-pack-mutation` | Sandbox code from pack A MUST NOT mutate state visible to pack B inside the same host process. |
+
+`SECURITY/invariants.yaml` carries the 8 matching rows. The graduation from `reference-impl` to `protocol` tier is gated on a reference host implementing the sandbox AND passing the 8 conformance scenarios named in [RFC 0035 §D](../../RFCS/0035-sandbox-execution-contract.md).
+
+### Error codes (additive to `rest-endpoints.md` §"Common error codes")
+
+- `sandbox_memory_exceeded` — Sandbox invocation exceeded `memoryLimitBytes`. `details.requestedBytes` MAY be present.
+- `sandbox_timeout` — Sandbox invocation exceeded `wallClockLimitMs`.
+- `sandbox_capability_denied` — Sandbox code called a host capability not in `allowedHostCalls`. `details.requestedCapability` MUST be set.
+- `sandbox_escape_attempt` — Sandbox detected an explicit escape attempt (a syscall from a forbidden list). `details.escapeKind` SHOULD be set.
+
+---
+
 ## Reserved-but-undocumented surfaces
 
 The following `host.*` capability slots are reserved for future surfaces. Hosts MUST NOT advertise them until this spec defines the contract.
