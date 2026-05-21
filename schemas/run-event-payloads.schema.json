@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v1/run-event-payloads.schema.json",
   "title": "RunEventPayloads",
-  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n61 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
+  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n62 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
   "type": "object",
   "$defs": {
     "_typeIndex": {
@@ -70,7 +70,54 @@
         "conversation.opened":       { "$ref": "#/$defs/conversationOpened" },
         "conversation.exchanged":    { "$ref": "#/$defs/conversationExchanged" },
         "conversation.closed":       { "$ref": "#/$defs/conversationClosed" },
-        "memory.compacted":          { "$ref": "#/$defs/memoryCompacted" }
+        "memory.compacted":          { "$ref": "#/$defs/memoryCompacted" },
+        "core.workflowChain.event":  { "$ref": "#/$defs/coreWorkflowChainEvent" }
+      }
+    },
+
+    "coreWorkflowChainEvent": {
+      "description": "RFC 0037 — emitted on every planner→worker handoff state-machine transition. Required when `capabilities.multiAgent.executionModel.supported: true`; MUST NOT be emitted otherwise.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["phase", "workerId", "parentRunId"],
+      "properties": {
+        "phase": {
+          "type": "string",
+          "enum": [
+            "dispatch.began",
+            "dispatch.succeeded",
+            "dispatch.failed",
+            "child.completed",
+            "child.failed",
+            "child.cancelled",
+            "output.harvested"
+          ],
+          "description": "Which handoff-state-machine transition this event records. See spec/v1/multi-agent-execution.md §'Handoff state machine'."
+        },
+        "workerId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The dispatched worker's workflowId — matches the entry in the supervisor's OrchestratorDecision.nextWorkerIds[]."
+        },
+        "parentRunId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The orchestrator-driven parent run's runId."
+        },
+        "childRunId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The dispatched child run's runId. REQUIRED on phases `dispatch.succeeded` and beyond; absent on `dispatch.began` and `dispatch.failed`."
+        },
+        "harvestedKeys": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "On phase `output.harvested`: which parent-variable keys were populated by the dispatch config's outputMapping per RFC 0022 §A. SHOULD be present; conformance asserts presence when outputMapping is non-empty."
+        },
+        "error": {
+          "$ref": "#/$defs/_errorObject",
+          "description": "On phases `dispatch.failed` / `child.failed` / `child.cancelled`: the canonical error envelope."
+        }
       }
     },
 

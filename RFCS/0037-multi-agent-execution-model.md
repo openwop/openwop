@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0037 |
 | **Title** | Multi-agent execution model + replay determinism under nondeterministic models |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-21 |
-| **Updated** | 2026-05-21 |
+| **Updated** | 2026-05-21 (Draft → Active same-day: Phase 1 spec text landed as `spec/v1/multi-agent-execution.md`; `capabilities.multiAgent.executionModel` block added to `schemas/capabilities.schema.json`; `core.workflowChain.event` added to `schemas/run-event.schema.json` `RunEventType` enum + `schemas/run-event-payloads.schema.json` `coreWorkflowChainEvent` payload schema; advertisement-shape conformance scenario `multi-agent-handoff-state-machine.test.ts` landed. Behavioral 4-event causation-chain assertion deferred to a follow-up commit that lands the `conformance-multi-agent-handoff` parent+child fixture pair — same staging pattern RFC 0022 used. Path to `Accepted`: reference workflow-engine advertises the capability + emits the 4 transition events end-to-end + a non-steward host advertises the same.) |
 | **Affects** | NEW `spec/v1/multi-agent-execution.md` (normative) · `schemas/capabilities.schema.json` (adds `capabilities.multiAgent.executionModel`) · `schemas/run-event-payloads.schema.json` (tightens existing `agent.*` payload shapes; may add cross-host causation fields) · multiple new conformance scenarios · all 3 reference hosts · `INTEROP-MATRIX.md` · CHANGELOG |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |

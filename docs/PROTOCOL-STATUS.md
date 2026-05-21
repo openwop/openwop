@@ -7,11 +7,11 @@
 
 | Surface | Current value | Source |
 |---|---:|---|
-| Spec prose documents | 37 | `spec/v1/*.md` |
+| Spec prose documents | 38 | `spec/v1/*.md` |
 | JSON Schemas | 31 | `schemas/*.schema.json` |
 | OpenAPI operations | 25 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 187 | `conformance/src/scenarios/*.test.ts` |
+| Conformance scenario files | 188 | `conformance/src/scenarios/*.test.ts` |
 | RFCs tracked | 38 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## OpenAPI Operations
@@ -23,13 +23,13 @@
 | Status | Count |
 |---|---:|
 | Accepted | 29 |
-| Active | 4 |
-| Draft | 5 |
+| Active | 5 |
+| Draft | 4 |
 
 | Latest RFC | Title | Status |
 |---|---|---|
 | RFC 0038 | OpenWOP Working Group charter | Draft |
-| RFC 0037 | Multi-agent execution model + replay determinism under nondeterministic models | Draft |
+| RFC 0037 | Multi-agent execution model + replay determinism under nondeterministic models | Active |
 | RFC 0036 | Multi-region idempotency + cross-engine append-ordering guarantees | Draft |
 | RFC 0035 | Sandbox execution contract for pack-loaded typeIds | Draft |
 | RFC 0034 | OTel collector test seam + secret-leakage invariant promotion | Active |
@@ -71,8 +71,8 @@
 
 ## Active Follow-Ups
 
-- 5 RFCs still `Draft` (RFC 0025, RFC 0035, RFC 0036, RFC 0037, RFC 0038) — advance with schema/conformance proof or defer.
-- 4 RFCs `Active` (RFC 0027, RFC 0028, RFC 0029, RFC 0034) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 4 RFCs still `Draft` (RFC 0025, RFC 0035, RFC 0036, RFC 0038) — advance with schema/conformance proof or defer.
+- 5 RFCs `Active` (RFC 0027, RFC 0028, RFC 0029, RFC 0034, RFC 0037) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - SDK parity still shows raw-only rows for several stable v1.x helper surfaces.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.

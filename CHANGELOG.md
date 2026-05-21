@@ -11,6 +11,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### RFC 0037 (multi-agent execution model) Phase 1 promoted Draft → Active same-day (2026-05-21)
+
+Filed as Draft earlier today (aa94003); now graduates to Active after the Phase 1 protocol-layer surface landed atomically:
+
+- NEW `spec/v1/multi-agent-execution.md` (DRAFT v1.x) — Phase 1 of the formal multi-agent execution model. Defines (a) the **execution loop** every advertising host MUST implement (`supervisor turn → decision routing → handoff state machine → repeat`) and (b) the **planner→worker handoff state machine** with 4 states (`pending` / `dispatching` / `running` / `harvested`) and 7 transition events. Phases 2-4 (confidence semantics + agent-memory lifecycle + cross-host causation + replay-under-nondeterminism) are explicit follow-up RFCs tracked as MAE-1..9 in `## Open spec gaps`.
+- `schemas/capabilities.schema.json` gains the `capabilities.multiAgent.executionModel.{supported, version}` block with `version: integer in [1, 4]` (Phase 1 = `version: 1`).
+- `schemas/run-event.schema.json` `RunEventType` enum gains `core.workflowChain.event` (62 variants total, up from 61).
+- `schemas/run-event-payloads.schema.json` gains the matching `coreWorkflowChainEvent` payload schema with `phase` enum, `workerId`, `parentRunId`, optional `childRunId` / `harvestedKeys` / `error`. Hosts NOT advertising `multiAgent.executionModel.supported: true` MUST NOT emit the event.
+- NEW `conformance/src/scenarios/multi-agent-handoff-state-machine.test.ts` — advertisement-shape probe gating on the capability block. Behavioral 4-event causation-chain assertion deferred to a follow-up commit that lands the `conformance-multi-agent-handoff` parent+child fixture pair (same staging pattern RFC 0022 used).
+- README.md spec table gains `multi-agent-execution.md` row + "Total: 38 docs"; corpus counts bumped (`37 → 38 prose specs`, `187 → 188 scenarios`); RFC enumeration updated (`Active` 4 → 5; `Draft` 5 → 4).
+- conformance/README.md scenario count bumped 187 → 188 (in two places).
+
+Closes Google-acceptance review finding (3) "multi-agent semantics not fully portable" at the Phase 1 boundary. Phases 2-4 remain open work for follow-up RFCs.
+
 ### RFC 0034 (OTel collector test seam) promoted Draft → Active same-day (2026-05-21)
 
 Filed as Draft earlier today (aa94003); now graduates to Active after the protocol-layer surface landed atomically:

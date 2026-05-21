@@ -389,6 +389,30 @@
       "uniqueItems": true,
       "description": "Optional v1 host-advertised opaque capability ids that NodeModules may declare in `NodeModule.requires`. Naming convention: dotted, domain-scoped (`chat.sendPrompt`, `canvas.write`, `secrets.byok`). Provider value shapes are documented per-capability alongside consumers, NOT in the protocol package — the protocol owns the *check*, not domain provider contracts. A client that submits a workflow whose nodes declare a `requires` entry SHOULD first verify the host advertises that capability; a host that lacks a capability MUST refuse to dispatch nodes that declare it, terminating the run with `RunSnapshot.error.code = 'capability_not_provided'`. See `capabilities.md` §\"Runtime capabilities\"."
     },
+    "multiAgent": {
+      "type": "object",
+      "description": "RFC 0037 — Multi-agent execution model + handoff state machine. Hosts that advertise implement the supervisor→dispatch→harvest loop + the 4-state handoff state machine + the `core.workflowChain.event` emission contract per spec/v1/multi-agent-execution.md. Absent block = host implements RFCs 0006/0007/0022 individually with implementation flexibility on integration semantics; conformance scenarios gating on this flag soft-skip on absence.",
+      "additionalProperties": false,
+      "properties": {
+        "executionModel": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["supported", "version"],
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "Host implements the execution loop + handoff state machine per spec/v1/multi-agent-execution.md §\"Execution loop\" + §\"Handoff state machine\". When true, the host MUST emit `core.workflowChain.event` records on every handoff transition per the §\"Transition events\" table."
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 4,
+              "description": "Profile version. 1 = Phase 1 (execution-loop framework + planner→worker handoff). 2 = Phase 2 (confidence + agent-memory lifecycle, follow-up RFC). 3 = Phase 3 (cross-host causation, follow-up RFC). 4 = Phase 4 (replay determinism under nondeterministic models, follow-up RFC). A host advertising `version: N` MUST implement all phases 1..N. v1.x ships with Phase 1 only; Phases 2-4 lift the ceiling additively."
+            }
+          }
+        }
+      }
+    },
     "modelCapabilities": {
       "type": "object",
       "description": "RFC 0031. Host implements model-capability gating + (optional) substitution per `NodeModule.requiredModelCapabilities` + `NodeModule.fallbackModel`. Distinct from `runtimeCapabilities` which gates on HOST capabilities — `modelCapabilities` gates on MODEL capabilities (structured-output support, discriminator-enum support, long-context, native reasoning, function-calling). Absent block = no advertisement; NodeModules' `requiredModelCapabilities` are treated as opaque metadata and dispatch proceeds without checks.",
