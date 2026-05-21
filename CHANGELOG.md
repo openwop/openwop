@@ -11,6 +11,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Marketing site + multi-page spec corpus shipped to openwop.dev (2026-05-21)
+
+The `site/`-built docs are now folded into the Firebase docs target so a single `firebase deploy --only hosting:docs` ships both the marketing one-pager and the 37-doc spec corpus. `scripts/build-site.sh` (+ `npm run site:build` / `npm run site:deploy`) makes the merge reproducible.
+
+- **openwop.dev/spec/v1/** — 37 rendered spec docs + index, replacing the GitHub-tree fallback that the homepage previously linked to.
+- **openwop.dev/conformance/** — live leaderboard rendered from `INTEROP-MATRIX.md`.
+- **openwop.dev/profiles/** — compatibility-profile catalog.
+- **openwop.dev/badge/{host}.svg** — 6 per-host conformance badges.
+- **openwop.dev/sitemap.xml** — 1 URL → 42 URLs.
+- **openwop.dev/404.html** — custom 404; replaces the previous catch-all SPA rewrite that returned `200` + marketing page for any unknown path. `firebase.json` docs-target rewrite removed.
+- **Hero copy** — "OpenWOP adds a thinking layer to your software" (was "A common language for agents that work together"). `public/assets/og-cover.svg` + `.png` regenerated to match (PNG 688 KB → 263 KB via `scripts/generate-og-cover.mjs`).
+- **New homepage sections** — *Running today* stat strip (5 hosts in the leaderboard / 3 SDKs / 37 spec docs / v1.1 FINAL), *Pick your path* audience-routing block (workflow author / host implementer / pack author / production evaluator), tabbed *Anatomy* (7 panels A-G, keyboard nav, hash deep-linking `#ana-{A..G}`), at-a-glance competitive table (OpenWOP vs. MCP / LangGraph / Temporal / Step Functions), sectional "View the spec →" CTAs on each Anatomy panel, tightened Prologue (6 paragraphs → 3).
+- **`.github/workflows/site.yml`** renamed to "Site (build verification)" — workflow now builds for verification only; production deploys are via Firebase, not GitHub Pages.
+- **`apps/workflow-engine/frontend/react/src/discovery/CapabilitiesPanel.tsx` + `builder/inspector/Inspector.tsx`** — fixed a production crash in the Discovery page's "Model capabilities" table. The component had declared `advertised: Array<{provider, model, capabilities}>` but the canonical schema `capabilities.schema.json §modelCapabilities.advertised` (and the reference backend's `modelCapabilityGateConfig.ts`) emit `string[]`. The table is now rendered as a comma-separated list of capability identifiers per the schema.
+
+Implementation-only (no spec text, schemas, OpenAPI/AsyncAPI, conformance scenarios, or SDK contracts touched). `npm run openwop:check` 9/9 green.
+
 ### RFC 0035 (sandbox execution contract) + RFC 0036 (multi-region + cross-engine) promoted Draft → Active same-day (2026-05-21)
 
 Both filed as Draft earlier today (aa94003); promoted Active after their protocol-layer surface landed atomically. Reference-host implementation (sandbox host for 0035; multi-region simulator for 0036) deferred to follow-up commits; that wiring graduates each to `Accepted`.
