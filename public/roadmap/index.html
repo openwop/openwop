@@ -9,7 +9,7 @@
 
   <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
   <meta property="og:type" content="website"/>
-  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
   <meta property="og:title" content="openwop — Roadmap"/>
   <meta property="og:description" content="This roadmap distinguishes stable v1 (locked contract), v1.X minor work (additive, conformance-only), and post-v1 ecosystem (extension profiles, infrastructure, governance)."/>
   <meta property="og:url" content="https://openwop.dev/roadmap/"/>
@@ -21,36 +21,56 @@
   <meta name="twitter:description" content="This roadmap distinguishes stable v1 (locked contract), v1.X minor work (additive, conformance-only), and post-v1 ecosystem (extension profiles, infrastructure, governance)."/>
   <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
 
-  <!-- Favicon -->
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
 
-  
-  
-  
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
 
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
   <link rel="stylesheet" href="/assets/style.css"/>
+
+  
+  
+  
 </head>
 <body>
-  <header class="site-header">
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
     <a class="brand" href="/">
-      <span class="brand-mark">openwop</span>
-      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
     </a>
-    <nav class="site-nav">
-      <a class="" href="/">Overview</a>
-      <a class="" href="/spec/v1/">Spec</a>
-      <a class="" href="/rfcs/">RFCs</a>
-      <a class="" href="/conformance/">Conformance</a>
-      <a class="" href="/changelog/">Changelog</a>
-      <a class="" href="/faq/">FAQ</a>
-      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    <nav class="topnav">
+      <a class="hide-sm " href="/spec/v1/">Spec</a>
+      <a class="hide-sm " href="/rfcs/">RFCs</a>
+      <a class="hide-sm " href="/conformance/">Conformance</a>
+      <a class="hide-sm " href="/changelog/">Changelog</a>
+      <a class="hide-sm " href="/faq/">FAQ</a>
+      <a class="pill" href="https://github.com/openwop/openwop">GitHub →</a>
     </nav>
-  </header>
-  <main class="site-main">
+  </div>
+</header>
+
+<main class="site-main">
+  <div class="wrap">
     <header class="page-header">
     <h1>Roadmap</h1>
     <p class="lede">Gap-closure tracks the steward maintains in the open. No dates committed beyond the windows that have a CHANGELOG entry; the roadmap is direction, not promise.</p>
-  </header><article class="spec-doc"><h1 id="openwop-roadmap">openwop Roadmap</h1>
+  </header><div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-roadmap">openwop Roadmap</h1>
 <blockquote><p><strong>Status:</strong> Living document. Updated as milestones land.</p><p><strong>Last reviewed:</strong> 2026-05-19 (post-<code>@openwop/openwop-conformance@1.3.0</code> publish refresh). The generated protocol snapshot lives at <code>docs/PROTOCOL-STATUS.md</code>: 35 prose specs, 27 JSON Schemas, 19 OpenAPI operations, AsyncAPI 3.1, 160 conformance scenario files, 26 RFCs tracked, and 48 indexed registry packs. RFC status: 25 Accepted / 1 Draft (RFC 0025 — test-mode registry namespace — remains the only Draft; RFCs 0012, 0022, 0023, 0024, and 0026 have all landed as Accepted in the 2026-05-12 → 2026-05-19 window). Postgres reference conformance evidence holds at 781/850 default-mode pass count (91.9% total; 96.4% applicable) with one documented webhook flake.</p></blockquote>
 <p>This roadmap distinguishes <strong>stable v1</strong> (locked contract), <strong>v1.X minor work</strong> (additive, conformance-only), and <strong>post-v1 ecosystem</strong> (extension profiles, infrastructure, governance).</p>
 <p>The v1 protocol contract is <strong>frozen</strong>. Implementations validate themselves against <code>@openwop/openwop-conformance</code> <code>1.0</code> (or any later <code>1.X.0</code>) at their own cadence. New scenarios ship as suite minors against the unchanged contract.</p>
@@ -166,11 +186,104 @@
 <li><strong>File an issue</strong> with the <code>roadmap</code> label. Include the use case, not just the feature request.</li>
 <li><strong>Open a conformance report</strong> if your implementation needs a scenario that doesn't exist yet.</li>
 <li><strong>Author an RFC</strong> for a new capability profile. Profile RFCs follow the spec change process in <code>GOVERNANCE.md</code>.</li>
-</ul></article>
-  </main>
-  <footer class="site-footer">
-    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
-    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
-  </footer>
+</ul></article><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#stable-v1-released-2026-04-27">Stable: v1 (released 2026-04-27)</a></li>
+      <li class="toc-top"><a href="#v1-x-minor-conformance-suite-expansion">v1.X minor: conformance suite expansion</a></li>
+      <li class="toc-top"><a href="#v1-x-minor-protocol-gap-closure-queue">v1.X minor: protocol gap closure queue</a></li>
+      <li class="toc-sub"><a href="#phases-h-i-close-out-2026-05-12-myndhyve-ai-launch-readiness">Phases H + I close-out (2026-05-12 — myndhyve.ai launch-readiness)</a></li>
+      <li class="toc-top"><a href="#v1-2-outlook-projected">v1.2 outlook (projected)</a></li>
+      <li class="toc-top"><a href="#post-v1-ecosystem">Post-v1 ecosystem</a></li>
+      <li class="toc-sub"><a href="#optional-capability-profiles">Optional capability profiles</a></li>
+      <li class="toc-sub"><a href="#hosted-infrastructure">Hosted infrastructure</a></li>
+      <li class="toc-sub"><a href="#sdk-expansion">SDK expansion</a></li>
+      <li class="toc-sub"><a href="#implementation-ecosystem">Implementation ecosystem</a></li>
+      <li class="toc-sub"><a href="#canonical-domain">Canonical Domain</a></li>
+      <li class="toc-sub"><a href="#vendor-neutral-org-migration">Vendor-neutral org migration</a></li>
+      <li class="toc-top"><a href="#what-this-roadmap-does-not-commit-to">What this roadmap does not commit to</a></li>
+      <li class="toc-top"><a href="#how-to-influence-the-roadmap">How to influence the roadmap</a></li>
+    </ul>
+  </aside></div><script>
+(function () {
+  var links = document.querySelectorAll('.spec-toc a');
+  if (!links.length || !('IntersectionObserver' in window)) return;
+  var byId = new Map();
+  links.forEach(function (a) { byId.set(a.getAttribute('href').slice(1), a); });
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        links.forEach(function (a) { a.classList.remove('is-active'); });
+        var link = byId.get(e.target.id);
+        if (link) link.classList.add('is-active');
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  byId.forEach(function (_, id) {
+    var el = document.getElementById(id);
+    if (el) observer.observe(el);
+  });
+})();
+</script>
+  </div>
+</main>
+
+<!-- ─────────────────────── FOOTER (mirrors marketing) ─────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-mark">
+          <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+          Open<em>WOP</em>
+        </div>
+        <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
+          The Workflow Orchestration Protocol — an open, conformance-tested
+          contract for durable, observable AI workflows across hosts.
+        </p>
+      </div>
+      <div>
+        <h5>Specification</h5>
+        <ul>
+          <li><a href="/spec/v1/">v1.x Core</a></li>
+          <li><a href="/rfcs/">RFCs</a></li>
+          <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/profiles/">Profiles</a></li>
+          <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/versioning/">Versioning policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Ecosystem</h5>
+        <ul>
+          <li><a href="https://packs.openwop.dev/">Pack registry ↗</a></li>
+          <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts ↗</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix ↗</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite ↗</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="/changelog/">Changelog</a></li>
+          <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/faq/">FAQ</a></li>
+          <li><a href="/security/">Security posture</a></li>
+          <li><a href="/governance/">Governance</a></li>
+          <li><a href="/contributing/">Contributing</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases ↗</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct ↗</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 OpenWOP contributors</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+      <span>Built with Claude Code</span>
+    </div>
+  </div>
+</footer>
+
 </body>
 </html>

@@ -9,7 +9,7 @@
 
   <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
   <meta property="og:type" content="website"/>
-  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
   <meta property="og:title" content="openwop — Changelog"/>
   <meta property="og:description" content="All notable changes to the openwop v1 spec, schemas, OpenAPI/AsyncAPI, conformance suite, and reference SDKs."/>
   <meta property="og:url" content="https://openwop.dev/changelog/"/>
@@ -21,41 +21,73 @@
   <meta name="twitter:description" content="All notable changes to the openwop v1 spec, schemas, OpenAPI/AsyncAPI, conformance suite, and reference SDKs."/>
   <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
 
-  <!-- Favicon -->
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
 
-  
-  
-  
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
 
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
   <link rel="stylesheet" href="/assets/style.css"/>
+
+  
+  
+  
 </head>
 <body>
-  <header class="site-header">
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
     <a class="brand" href="/">
-      <span class="brand-mark">openwop</span>
-      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
     </a>
-    <nav class="site-nav">
-      <a class="" href="/">Overview</a>
-      <a class="" href="/spec/v1/">Spec</a>
-      <a class="" href="/rfcs/">RFCs</a>
-      <a class="" href="/conformance/">Conformance</a>
-      <a class="active" href="/changelog/">Changelog</a>
-      <a class="" href="/faq/">FAQ</a>
-      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    <nav class="topnav">
+      <a class="hide-sm " href="/spec/v1/">Spec</a>
+      <a class="hide-sm " href="/rfcs/">RFCs</a>
+      <a class="hide-sm " href="/conformance/">Conformance</a>
+      <a class="hide-sm active" href="/changelog/">Changelog</a>
+      <a class="hide-sm " href="/faq/">FAQ</a>
+      <a class="pill" href="https://github.com/openwop/openwop">GitHub →</a>
     </nav>
-  </header>
-  <main class="site-main">
+  </div>
+</header>
+
+<main class="site-main">
+  <div class="wrap">
     <header class="page-header">
     <h1>Changelog</h1>
     <p class="lede">Versioned record of every change to the openwop spec corpus, schemas, SDKs, and reference hosts. Additive evolution only within v1.x per COMPATIBILITY.md.</p>
-  </header><article class="spec-doc"><h1 id="openwop-spec-v1-changelog">openwop Spec v1 — Changelog</h1>
+  </header><div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-changelog">openwop Spec v1 — Changelog</h1>
 <p>All notable changes to the openwop v1 spec, schemas, OpenAPI/AsyncAPI, conformance suite, and reference SDKs.</p>
 <p>Format follows <a href="https://keepachangelog.com/en/1/">Keep a Changelog</a> loosely. Versions are spec-corpus-wide (one date, multiple artifact updates per row); per-artifact versions live in their respective <code>package.json</code> / schema <code>$id</code> fields.</p>
 <blockquote><p><strong>Status legend</strong> (per <code>auth.md</code> §status legend):</p><p>STUB · DRAFT · OUTLINE · FINAL — see individual doc headers for current state.</p></blockquote>
 <hr/>
 <h2 id="1-1-3-unreleased-coordinated-sdk-release-for-myndhyve-adoption-feedback-slices">[1.1.3 — unreleased] — coordinated SDK release for MyndHyve adoption-feedback slices</h2>
+<h3 id="site-13-new-pages-rest-api-explorer-json-ld-on-every-spec-doc-2026-05-21">Site: 13 new pages + REST API explorer + JSON-LD on every spec doc (2026-05-21)</h3>
+<p>Comprehensive upgrade to openwop.dev. The <code>site/src/build.mjs</code> generator now renders nine additional page types beyond the existing spec corpus, conformance leaderboard, and profiles catalog:</p>
+<ul>
+<li><strong>Markdown surfacing</strong> — six repo-root docs become first-class site pages: <code>/changelog/</code>, <code>/roadmap/</code>, <code>/versioning/</code> (from <code>COMPATIBILITY.md</code>), <code>/security/</code>, <code>/contributing/</code>, <code>/governance/</code>. One <code>buildMarkdownDoc()</code> helper does the template wrapping.</li>
+<li><strong>RFC corpus</strong> — <code>/rfcs/</code> index + per-RFC pages at <code>/rfcs/{NNNN-slug}.html</code> for all 39 RFCs under <code>RFCS/</code>. Builder walks the directory and renders each with its H1 + Status header parsed out.</li>
+<li><strong>FAQ at <code>/faq/</code></strong> — 8 entries answering predictable objections (LangGraph/LangChain, Temporal/Step Functions, conformance cost, registry choice, v1 EOL, BYOK, non-AI scope, security advisories). Each answer cites the spec section that carries the authoritative rule.</li>
+<li><strong>Four audience landing pages</strong> at <code>/for/{workflow-authors,host-implementers,pack-authors,production-evaluators}/</code>. Each is ~500 words of role-specific narrative with concrete next-step links. Homepage "Pick your path" cards now route to these.</li>
+<li><strong><code>/api/rest/</code></strong> — interactive REST API explorer rendering <code>api/openapi.yaml</code> via a SELF-HOSTED Redoc bundle (<code>public/assets/redoc.standalone.js</code>, 918 KB). No CDN dep. Theme tuned to the marketing-site brand tokens.</li>
+<li><strong>JSON-LD <code>TechArticle</code></strong> entities on every <code>/spec/v1/*.html</code> page — schema.org metadata for SEO + rich-results eligibility.</li>
+</ul>
+<p>Sitemap grows 43 URLs → 95 URLs. Topnav adds RFCs / Changelog / FAQ alongside the existing Overview / Spec / Conformance. Homepage footer reorganized into Specification / Ecosystem / Project columns with the new on-site routes + "Watch releases ↗" GitHub-releases link.</p>
+<p>Implementation-only. No spec text, schemas, OpenAPI/AsyncAPI, conformance, or SDK contracts touched. The Redoc bundle is the only third-party JS shipped; it stays self-hosted to honor <code>site/README.md</code>'s no-CDN policy.</p>
 <h3 id="ts-sdk-1-1-3-parserefusal-buildreasoningdirective-exported-2026-05-21">TS SDK 1.1.3 — <code>parseRefusal</code> + <code>buildReasoningDirective</code> exported (2026-05-21)</h3>
 <p>Second coordinated release in the 1.1.x SDK series. Bumps the TypeScript + Python SDKs (and the lockstep examples + reference hosts) to <code>1.1.3</code>. The substance is the two TS SDK helper exports that landed in commits <code>8ab30fc</code> (<code>buildReasoningDirective</code>) and <code>ec6625a</code> (<code>parseRefusal</code>) post the 1.1.2 publish, queued for the next release window per the RFC 0030/0031/0032/0033 Active → Accepted runbook's "post-Accepted slice work" section.</p>
 <ul>
@@ -1538,11 +1570,240 @@
 <li>Canonical domain: <code>openwop.dev</code></li>
 <li>Registry: <code>packs.openwop.dev</code></li>
 <li>Package names: <code>@openwop/openwop</code>, <code>@openwop/openwop-conformance</code>, <code>openwop-client</code>, <code>openwopclient</code></li>
-</ul></article>
-  </main>
-  <footer class="site-footer">
-    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
-    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
-  </footer>
+</ul></article><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#1-1-3-unreleased-coordinated-sdk-release-for-myndhyve-adoption-feedback-slices">[1.1.3 — unreleased] — coordinated SDK release for MyndHyve adoption-feedback slices</a></li>
+      <li class="toc-sub"><a href="#site-13-new-pages-rest-api-explorer-json-ld-on-every-spec-doc-2026-05-21">Site: 13 new pages + REST API explorer + JSON-LD on every spec doc (2026-05-21)</a></li>
+      <li class="toc-sub"><a href="#ts-sdk-1-1-3-parserefusal-buildreasoningdirective-exported-2026-05-21">TS SDK 1.1.3 — parseRefusal + buildReasoningDirective exported (2026-05-21)</a></li>
+      <li class="toc-top"><a href="#1-1-2-unreleased-gap-closure-batch-from-plans-openwop-protocol-gap-closure-plan-md">[1.1.2 — unreleased] — gap-closure batch from plans/openwop-protocol-gap-closure-plan.md</a></li>
+      <li class="toc-sub"><a href="#marketing-site-multi-page-spec-corpus-shipped-to-openwop-dev-2026-05-21">Marketing site + multi-page spec corpus shipped to openwop.dev (2026-05-21)</a></li>
+      <li class="toc-sub"><a href="#rfc-0035-sandbox-execution-contract-rfc-0036-multi-region-cross-engine-promoted-draft-active-same-day-2026-05-21">RFC 0035 (sandbox execution contract) + RFC 0036 (multi-region + cross-engine) promoted Draft → Active same-day (2026-05-21)</a></li>
+      <li class="toc-sub"><a href="#rfc-0037-multi-agent-execution-model-phase-1-promoted-draft-active-same-day-2026-05-21">RFC 0037 (multi-agent execution model) Phase 1 promoted Draft → Active same-day (2026-05-21)</a></li>
+      <li class="toc-sub"><a href="#rfc-0034-otel-collector-test-seam-promoted-draft-active-same-day-2026-05-21">RFC 0034 (OTel collector test seam) promoted Draft → Active same-day (2026-05-21)</a></li>
+      <li class="toc-sub"><a href="#rfc-0030-0031-0032-0033-promoted-active-accepted-2026-05-21">RFC 0030 / 0031 / 0032 / 0033 promoted Active → Accepted (2026-05-21)</a></li>
+      <li class="toc-sub"><a href="#5-new-draft-rfcs-filed-against-the-external-standards-readiness-review-findings-2026-05-21">5 new Draft RFCs filed against the external standards-readiness review findings (2026-05-21)</a></li>
+      <li class="toc-sub"><a href="#rfc-0030-0031-0032-0033-amendments-from-myndhyve-adoption-feedback-2026-05-21">RFC 0030/0031/0032/0033 amendments from MyndHyve adoption feedback (2026-05-21)</a></li>
+      <li class="toc-sub"><a href="#host-conformance-drain-final-6-prompt-stack-envelope-redaction-failures-2026-05-21">Host + Conformance — drain final 6 prompt-stack + envelope-redaction failures (2026-05-21)</a></li>
+      <li class="toc-sub"><a href="#host-conformance-rfc-0027-a-few-shot-slotindex-correctness-fix-multi-entry-coverage-2026-05-21">Host + Conformance — RFC 0027 §A few-shot slotIndex correctness fix + multi-entry coverage (2026-05-21)</a></li>
+      <li class="toc-sub"><a href="#host-conformance-rfc-0032-b-5-b-6-recovery-strategies-wired-end-to-end-2026-05-20">Host + Conformance — RFC 0032 §B.5 + §B.6 recovery strategies wired end-to-end (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#host-conformance-rfc-0027-a-four-kind-dispatch-wiring-coverage-scenario-2026-05-20">Host + Conformance — RFC 0027 §A four-kind dispatch wiring + coverage scenario (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#rfcs-0027-0028-0029-promoted-draft-active-2026-05-20">RFCs 0027 / 0028 / 0029 promoted Draft → Active (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#rfc-0032-b-rfc-0033-a-b-c-dispatchstructured-end-to-end-envelope-reliability-emission-truncation-routing-2026-05-20">RFC 0032 §B + RFC 0033 §A/§B/§C — dispatchStructured() end-to-end envelope-reliability emission + truncation-routing (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#conformance-drain-envelope-track-it-todo-placeholders-sub-tracks-e-e2-a-reasoning-redaction-2026-05-20">Conformance — drain envelope-track it.todo placeholders (sub-tracks E + E2 + A.reasoning-redaction) (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#rfc-0030-0033-reference-host-emission-first-cut-2026-05-20">RFC 0030–0033 reference-host emission — first cut (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#conformance-openwop-require-behavior-wired-across-the-prompt-scenario-family-2026-05-20">Conformance — OPENWOP_REQUIRE_BEHAVIOR wired across the prompt-* scenario family (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#host-conformance-rfc-0028-b-prompt-pack-loader-hardening-reference-host-config-seam-2026-05-20">Host + Conformance — RFC 0028 §B prompt-pack loader hardening + reference-host config seam (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#host-conformance-rfc-0028-b-prompt-pack-boot-time-install-2026-05-20">Host + Conformance — RFC 0028 §B prompt-pack boot-time install (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#conformance-three-it-todo-placeholders-converted-to-live-tests-2026-05-20">Conformance — three it.todo() placeholders converted to live tests (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#rfc-0027-f-shared-divergencepoint-schema-diff-landed-2026-05-20-commit-b3e23b2">RFC 0027 §F shared divergencePoint schema diff — landed (2026-05-20, commit b3e23b2)</a></li>
+      <li class="toc-sub"><a href="#rfc-0028-example-prompt-pack-landed-2026-05-20-commit-b29acc1">RFC 0028 example prompt pack — landed (2026-05-20, commit b29acc1)</a></li>
+      <li class="toc-sub"><a href="#rfc-0028-reference-host-v1-prompts-endpoints-promptstore-landed-2026-05-20-commit-b27b8a7">RFC 0028 reference-host /v1/prompts* endpoints + PromptStore — landed (2026-05-20, commit b27b8a7)</a></li>
+      <li class="toc-sub"><a href="#rfc-0029-reference-host-four-layer-resolver-v1-host-sample-prompt-resolve-seam-landed-2026-05-20-commit-af87b06">RFC 0029 reference-host four-layer resolver + /v1/host/sample/prompt/resolve seam — landed (2026-05-20, commit af87b06)</a></li>
+      <li class="toc-sub"><a href="#rfc-0029-phase-c-wire-shape-landed-2026-05-20-commit-f585ee7">RFC 0029 Phase C wire shape — landed (2026-05-20, commit f585ee7)</a></li>
+      <li class="toc-sub"><a href="#sample-chat-assistant-markdown-rendering-code-review-follow-ups-2026-05-20">Sample chat — assistant markdown rendering + code-review follow-ups (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#rfc-0033-draft-active-envelope-completion-contract-truncation-vs-schema-violation-retry-routing-2026-05-20">RFC 0033 (Draft → Active) — envelope-completion contract (truncation vs schema-violation retry routing) (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#rfc-0032-draft-active-envelope-reliability-run-event-vocabulary-line-448-scope-clarification-2026-05-20">RFC 0032 (Draft → Active) — envelope-reliability run-event vocabulary + line-448 scope clarification (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#rfc-0031-draft-active-envelope-variant-discrimination-model-capability-declarations-2026-05-20">RFC 0031 (Draft → Active) — envelope variant discrimination + model-capability declarations (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#rfc-0030-draft-active-envelope-reasoning-field-tier-1-structured-output-subset-2026-05-20">RFC 0030 (Draft → Active) — envelope reasoning field + Tier-1 structured-output subset (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#code-review-follow-ups-to-dispatch-cascade-clusters-2026-05-20">Code-review follow-ups to dispatch + cascade clusters (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#sample-chat-improvements-phases-2a-5-2a-6-2b-2c-2d-2026-05-19-2026-05-20">Sample chat improvements — Phases 2A.5 / 2A.6 / 2B / 2C / 2D (2026-05-19 → 2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#rfc-0027-phase-a-wire-shape-landed-2026-05-20-commit-3e7a0d8">RFC 0027 Phase A wire shape — landed (2026-05-20, commit 3e7a0d8)</a></li>
+      <li class="toc-sub"><a href="#rfc-0027-conformance-scenarios-landed-2026-05-20-commit-808b6fa">RFC 0027 conformance scenarios — landed (2026-05-20, commit 808b6fa)</a></li>
+      <li class="toc-sub"><a href="#rfc-0027-reference-host-implementation-landed-2026-05-20-commit-eb404db">RFC 0027 reference-host implementation — landed (2026-05-20, commit eb404db)</a></li>
+      <li class="toc-sub"><a href="#rfc-0028-phase-b-wire-shape-landed-2026-05-20-commit-397585b">RFC 0028 Phase B wire shape — landed (2026-05-20, commit 397585b)</a></li>
+      <li class="toc-sub"><a href="#rfc-0027-0028-code-review-follow-ups-2026-05-20">RFC 0027 / 0028 code-review follow-ups (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#sample-rfc-0022-dispatch-cluster-2026-05-20">Sample — RFC 0022 dispatch cluster (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#schema-sample-parent-child-cancel-cascade-interrupt-profile-2026-05-20">Schema + sample — parent/child cancel-cascade interrupt profile (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#code-review-pass-on-the-33-commit-gap-closure-batch-2026-05-20">Code-review pass on the 33-commit gap-closure batch (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#rfc-0030-0031-0032-0033-filed-2026-05-20-draft-envelope-llm-contract-hardening-track-2026-05-20">RFC 0030 / 0031 / 0032 / 0033 (filed 2026-05-20, Draft) — envelope LLM-contract-hardening track (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#spec-sample-external-event-interrupt-support-2026-05-20">Spec + sample — external-event interrupt support (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-byok-canary-echo-node-canary-provisioning-2026-05-20">Workflow-engine sample — BYOK canary echo node + canary provisioning (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-core-channelwrite-append-with-ttl-reducer-2026-05-20">Workflow-engine sample — core.channelWrite + append-with-TTL reducer (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-capability-not-provided-refusal-contract-2026-05-20">Workflow-engine sample — capability_not_provided refusal contract (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-idempotency-body-hash-mismatch-2026-05-20">Workflow-engine sample — idempotency body-hash mismatch (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-quorum-aware-approval-gate-2026-05-20">Workflow-engine sample — quorum-aware approval gate (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-streams-ts-validation-before-content-negotiation-2026-05-20">Workflow-engine sample — streams.ts validation-before-content-negotiation (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-recursionlimit-conversationprimitive-refusal-configurableschema-2026-05-20">Workflow-engine sample — recursionLimit + conversationPrimitive refusal + configurableSchema (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-core-subworkflow-executor-variable-mutation-seam-json-content-negotiation-2026-05-20">Workflow-engine sample — core.subWorkflow executor + variable mutation seam + JSON content negotiation (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#rfc-0027-0028-0029-filed-2026-05-19-draft-prompt-library-track-2026-05-19">RFC 0027 / 0028 / 0029 (filed 2026-05-19, Draft) — prompt-library track (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-prompt-library-ui-staging-2026-05-19">Workflow-engine sample — prompt-library UI staging (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-events-poll-lastsequence-sse-bufferms-aggregation-2026-05-19">Workflow-engine sample — events/poll lastSequence + SSE bufferMs aggregation (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-credential-shape-redaction-on-event-payloads-2026-05-19">Workflow-engine sample — credential-shape redaction on event payloads (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-cache-hit-semantics-debug-bundle-endpoint-2026-05-19">Workflow-engine sample — cache hit semantics + debug-bundle endpoint (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-fs-absolute-path-rejection-kv-cas-canonical-shape-2026-05-19">Workflow-engine sample — fs absolute-path rejection + kv.cas canonical shape (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-mcp-discovery-shape-approval-resume-validation-2026-05-19">Workflow-engine sample — MCP discovery shape + approval resume validation (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-fixture-input-port-variable-resolution-2026-05-19">Workflow-engine sample — fixture input-port → variable resolution (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-conformance-harness-wire-required-env-vars-2026-05-19">Workflow-engine conformance harness — wire required env vars (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-bulk-cancel-endpoint-idempotency-replay-header-2026-05-19">Workflow-engine sample — bulk-cancel endpoint + idempotency replay header (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-getworkflow-endpoint-strict-streammode-validation-2026-05-19">Workflow-engine sample — getWorkflow endpoint + strict streamMode validation (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-artifact-route-auth-stub-2026-05-19">Workflow-engine sample — artifact-route auth stub (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-variables-runtime-core-identity-2026-05-19">Workflow-engine sample — variables runtime + core.identity (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-post-v1-runs-returns-201-spec-aligned-2026-05-19">Workflow-engine sample — POST /v1/runs returns 201 (spec-aligned) (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#rfc-0026-follow-ups-missing-await-bug-in-callai-invocation-log-lookup-2026-05-19">RFC 0026 follow-ups + missing-await bug in callAI invocation-log lookup (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-fixture-loader-foundational-fixes-2026-05-19">Workflow-engine sample — fixture-loader foundational fixes (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#downstream-llm-untrusted-content-wrap-2026-05-19">Downstream-LLM untrusted-content wrap (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#envelope-contract-capability-stacking-refusal-2026-05-19">Envelope-contract capability stacking refusal (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#approval-gate-trust-boundary-refusal-2026-05-19">Approval-gate trust-boundary refusal (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#reference-app-visual-coherence-with-marketing-site-2026-05-19">Reference app — visual coherence with marketing site (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#marketing-site-demo-card-star-on-github-cta-on-openwop-dev-2026-05-19">Marketing site — demo card + Star-on-GitHub CTA on openwop.dev (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#persisted-envelope-correlation-dedup-seam-2026-05-19">Persisted envelope-correlation dedup seam (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#conformance-soak-gate-close-out-opt-out-axes-sqlite-artifact-stub-2026-05-19">Conformance soak-gate close-out — opt-out axes + SQLite artifact stub (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#marketing-site-demo-card-star-on-github-cta-on-openwop-dev-2026-05-19">Marketing site — demo card + Star-on-GitHub CTA on openwop.dev (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#rfc-0024-sdk-typed-helper-rollout-2026-05-19">RFC 0024 SDK typed-helper rollout (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#rfc-0026-status-active-accepted-2026-05-19">RFC 0026 — Status: Active → Accepted (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#rfc-0026-status-draft-active-2026-05-19">RFC 0026 — Status: Draft → Active (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#rfc-0026-filed-2026-05-19-original-draft-entry-provider-usage-event">RFC 0026 (filed 2026-05-19, original Draft entry) — provider.usage event</a></li>
+      <li class="toc-sub"><a href="#test-coverage-debt-threads-b-c-d-2-f-phase-3-4-partials-2026-05-18-2026-05-19">Test-coverage debt — Threads B + C + D.2 + F + Phase 3/4 partials (2026-05-18 → 2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#rfc-0024-status-draft-active-2026-05-18">RFC 0024 — Status: Draft → Active (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#rfc-0013-workflow-chain-packs-status-draft-active-accepted-2026-05-18">RFC 0013 (Workflow-chain packs) — Status: Draft → Active → Accepted (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#rfc-0014-0021-graduation-cohort-status-active-accepted-2026-05-18">RFC 0014–0021 graduation cohort — Status: Active → Accepted (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#rfc-0024-draft-streaming-agent-reasoned-deltas-2026-05-18">RFC 0024 (Draft) — Streaming agent.reasoned deltas (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#openwop-openwop-conformance-1-1-1-1-2-0-2026-05-18">@openwop/openwop-conformance 1.1.1 → 1.2.0 (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#conformance-tighten-agent-toolreturned-causationid-pairing-2026-05-18">Conformance: tighten agent.toolReturned causationId pairing (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#rfc-0022-rfc-0023-active-accepted-2026-05-18">RFC 0022 + RFC 0023 Active → Accepted (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#sample-host-managed-try-it-free-provider-tile-2026-05-18">Sample-host: managed &quot;Try it free&quot; provider tile (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#rfc-0023-draft-active-reference-host-implementation-2026-05-18">RFC 0023 Draft → Active + reference-host implementation (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#rfc-0023-draft-conformance-agent-event-emitters-2026-05-18">RFC 0023 (Draft) — Conformance agent-event emitters (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#7-aienvelope-conformance-scenarios-graduated-to-behavioral-2026-05-18">7 aiEnvelope.* conformance scenarios graduated to behavioral (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#storage-adapter-parity-real-postgres-via-testcontainers-postgresql-2026-05-18">Storage adapter parity — real Postgres via @testcontainers/postgresql (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#rfc-0022-promotion-active-accepted-dispatch-trio-graduation-2026-05-18">RFC 0022 promotion Active → Accepted + dispatch trio graduation (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#rfc-0022-postgres-reference-host-implementation-2026-05-18">RFC 0022 — Postgres reference host implementation (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#rfc-0022-promotion-draft-active-2026-05-18">RFC 0022 promotion Draft → Active (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#rfc-0022-draft-core-dispatch-core-subworkflow-runtime-variable-mapping-2026-05-18">RFC 0022 (Draft) — core.dispatch + core.subWorkflow runtime variable mapping (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#rfc-0021-a-acceptenvelope-reference-implementation-2026-05-18-post-commit-d84d3a8">RFC 0021 §A acceptEnvelope reference implementation (2026-05-18, post-commit d84d3a8)</a></li>
+      <li class="toc-sub"><a href="#storage-adapter-parity-harness-sqlite-vs-postgres-via-pg-mem-2026-05-18-post-commit-d84d3a8">Storage adapter parity harness — SQLite vs Postgres via pg-mem (2026-05-18, post-commit d84d3a8)</a></li>
+      <li class="toc-sub"><a href="#rfc-0021-spec-v1-ai-envelope-md-draft-v1-x-final-v1-1-2026-05-18">RFC 0021 — spec/v1/ai-envelope.md DRAFT v1.x → FINAL v1.1 (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#core-openwop-ai-1-1-1-core-openwop-mcp-1-1-0-marked-deprecated-2026-05-18">core.openwop.ai@1.1.1 + core.openwop.mcp@1.1.0 marked deprecated (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#three-reference-agent-pack-conformance-scenarios-2026-05-18">Three reference agent-pack conformance scenarios (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#spec-v1-ai-envelope-md-closes-the-ai-envelope-specification-gap-2026-05-17">spec/v1/ai-envelope.md — closes the AI Envelope specification gap (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#agent-pack-catalog-phase-4-tier-4-crews-skills-bridge-4-packs-2026-05-17">Agent pack catalog — Phase 4 (Tier 4 crews + skills-bridge, 4 packs) (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#agent-pack-catalog-phase-3-tier-3-vertical-agents-10-packs-2026-05-17">Agent pack catalog — Phase 3 (Tier 3 vertical agents, 10 packs) (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#agent-pack-catalog-phase-2-tier-2-productivity-skills-5-packs-2026-05-17">Agent pack catalog — Phase 2 (Tier 2 productivity skills, 5 packs) (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#agent-pack-catalog-phase-1-tier-0-tier-1-9-packs-2026-05-17">Agent pack catalog — Phase 1 (Tier 0 + Tier 1, 9 packs) (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#apps-workflow-engine-p3-firebase-auth-signup-cloud-sql-persistence-kms-encrypted-byok-2026-05-17">apps/workflow-engine@P3 — Firebase Auth signup + Cloud SQL persistence + KMS-encrypted BYOK (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#apps-workflow-engine-p3-production-rollout-fixes-post-mortem-2026-05-18">apps/workflow-engine@P3 — production-rollout fixes (post-mortem) (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#core-openwop-agents-1-0-1-closes-openwop-audit-2026-003-raw-js-tool-handler-2026-05-17">core.openwop.agents@1.0.1 — closes OPENWOP-AUDIT-2026-003 (raw-JS tool handler) (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#core-openwop-ai-1-1-2-core-openwop-mcp-1-1-1-untrusted-marker-discipline-on-ctx-trustboundary-untrusted-runs-2026-05-17">core.openwop.ai@1.1.2 + core.openwop.mcp@1.1.1 — UNTRUSTED-marker discipline on ctx.trustBoundary=&#39;untrusted&#39; runs (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#core-openwop-ai-1-1-1-core-openwop-crypto-1-0-3-defensive-parsing-of-model-output-jwt-shapes-2026-05-17">core.openwop.ai@1.1.1 + core.openwop.crypto@1.0.3 — defensive parsing of model output + JWT shapes (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#core-openwop-data-1-2-1-core-openwop-crypto-1-0-2-correctness-fix-for-nodes-mis-declared-as-pure-2026-05-17">core.openwop.data@1.2.1 + core.openwop.crypto@1.0.2 — correctness fix for nodes mis-declared as pure (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#core-openwop-http-1-1-2-idempotency-key-generator-made-deterministic-2026-05-17">core.openwop.http@1.1.2 — idempotency-key generator made deterministic (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#rfc-0020-host-side-mcp-server-mount-behavioral-conformance-live-2026-05-17">RFC 0020 host-side MCP server mount — behavioral conformance live (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#rfc-0015-0019-behavioral-conformance-via-opt-in-test-seam-2026-05-17-post-commit-8b3bf43">RFC 0015-0019 behavioral conformance via opt-in test seam (2026-05-17, post-commit 8b3bf43)</a></li>
+      <li class="toc-sub"><a href="#all-7-capability-rfcs-0014-0020-promoted-draft-active-2026-05-17">All 7 capability RFCs (0014-0020) promoted Draft → Active (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#examples-branching-workflow-2026-05-17">examples/branching-workflow/ (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-local-pack-mount-precedence-2026-05-17">Workflow-engine sample: local-pack mount precedence (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#pack-patches-ssrf-jwt-alg-confusion-fixes-p0-1-2026-05-17">Pack patches: SSRF + JWT alg-confusion fixes (P0.1) (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#steward-internal-pre-audit-triage-of-the-17-published-packs-2026-05-17">Steward-internal pre-audit triage of the 17 published packs (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#workflow-chain-packs-rfc-0013-phase-4-in-tree-example-2026-05-17">Workflow-chain packs — RFC 0013 Phase 4 in-tree example (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#workflow-chain-packs-rfc-0013-phase-3-2026-05-17">Workflow-chain packs — RFC 0013 Phase 3 (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#workflow-chain-packs-rfc-0013-phase-2-2026-05-17">Workflow-chain packs — RFC 0013 Phase 2 (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#steward-pre-audit-publication-of-17-core-openwop-packs-to-packs-openwop-dev-2026-05-17">Steward pre-audit publication of 17 core.openwop.* packs to packs.openwop.dev (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-builder-palette-full-core-pack-coverage-2026-05-17">workflow-engine builder palette — full core-pack coverage (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#workflow-chain-packs-rfc-0013-phase-1-2026-05-17">Workflow-chain packs — RFC 0013 Phase 1 (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#node-pack-catalog-expansion-2026-05-17">Node-pack catalog expansion (2026-05-17)</a></li>
+      <li class="toc-top"><a href="#1-1-1-2026-05-15-post-1-1-0-additive-cleanup-rfc-0012">[1.1.1] — 2026-05-15 — post-1.1.0 additive cleanup + RFC 0012</a></li>
+      <li class="toc-top"><a href="#1-1-0-2026-05-12-openwop-v1-0-close-out-additive-features">[1.1.0] — 2026-05-12 — openwop v1.0 close-out + additive features</a></li>
+      <li class="toc-sub"><a href="#spec-corpus-state">Spec corpus state</a></li>
+      <li class="toc-sub"><a href="#rfcs-landed">RFCs landed</a></li>
+      <li class="toc-sub"><a href="#multi-agent-shift-rfcs-0002-0007-rfc-0008">Multi-Agent Shift (RFCs 0002–0007 + RFC 0008)</a></li>
+      <li class="toc-sub"><a href="#capability-surfaces">Capability surfaces</a></li>
+      <li class="toc-sub"><a href="#reference-sdks-at-1-1-0">Reference SDKs at 1.1.0</a></li>
+      <li class="toc-sub"><a href="#reference-hosts">Reference hosts</a></li>
+      <li class="toc-sub"><a href="#conformance-suite-at-1-1-0">Conformance suite at 1.1.0</a></li>
+      <li class="toc-sub"><a href="#security-invariants">SECURITY invariants</a></li>
+      <li class="toc-sub"><a href="#wire-shape-stability">Wire-shape stability</a></li>
+      <li class="toc-sub"><a href="#domain-and-package-naming">Domain and package naming</a></li>
+      <li class="toc-sub"><a href="#verification">Verification</a></li>
+      <li class="toc-top"><a href="#1-0-0-2026-05-11-openwop-v1-0-first-publish">[1.0.0] — 2026-05-11 — openwop v1.0 first publish</a></li>
+      <li class="toc-sub"><a href="#published-artifacts">Published artifacts</a></li>
+      <li class="toc-sub"><a href="#scope-at-1-0-0">Scope at 1.0.0</a></li>
+      <li class="toc-sub"><a href="#known-gaps-at-1-0-0-closed-in-1-1-0">Known gaps at 1.0.0 (closed in 1.1.0)</a></li>
+      <li class="toc-top"><a href="#1-0-2026-05-08-openwop-v1-spec-freeze">[1.0] — 2026-05-08 — openwop v1 spec freeze</a></li>
+      <li class="toc-sub"><a href="#what-s-locked-at-freeze">What&#39;s locked at freeze</a></li>
+      <li class="toc-sub"><a href="#multi-agent-shift-phases-1-6-landed-by-freeze">Multi-Agent Shift (Phases 1-6 landed by freeze)</a></li>
+      <li class="toc-sub"><a href="#domain-and-package-naming">Domain and package naming</a></li>
+    </ul>
+  </aside></div><script>
+(function () {
+  var links = document.querySelectorAll('.spec-toc a');
+  if (!links.length || !('IntersectionObserver' in window)) return;
+  var byId = new Map();
+  links.forEach(function (a) { byId.set(a.getAttribute('href').slice(1), a); });
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        links.forEach(function (a) { a.classList.remove('is-active'); });
+        var link = byId.get(e.target.id);
+        if (link) link.classList.add('is-active');
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  byId.forEach(function (_, id) {
+    var el = document.getElementById(id);
+    if (el) observer.observe(el);
+  });
+})();
+</script>
+  </div>
+</main>
+
+<!-- ─────────────────────── FOOTER (mirrors marketing) ─────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-mark">
+          <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+          Open<em>WOP</em>
+        </div>
+        <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
+          The Workflow Orchestration Protocol — an open, conformance-tested
+          contract for durable, observable AI workflows across hosts.
+        </p>
+      </div>
+      <div>
+        <h5>Specification</h5>
+        <ul>
+          <li><a href="/spec/v1/">v1.x Core</a></li>
+          <li><a href="/rfcs/">RFCs</a></li>
+          <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/profiles/">Profiles</a></li>
+          <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/versioning/">Versioning policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Ecosystem</h5>
+        <ul>
+          <li><a href="https://packs.openwop.dev/">Pack registry ↗</a></li>
+          <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts ↗</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix ↗</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite ↗</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="/changelog/">Changelog</a></li>
+          <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/faq/">FAQ</a></li>
+          <li><a href="/security/">Security posture</a></li>
+          <li><a href="/governance/">Governance</a></li>
+          <li><a href="/contributing/">Contributing</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases ↗</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct ↗</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 OpenWOP contributors</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+      <span>Built with Claude Code</span>
+    </div>
+  </div>
+</footer>
+
 </body>
 </html>

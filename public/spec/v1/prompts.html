@@ -9,7 +9,7 @@
 
   <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
   <meta property="og:type" content="website"/>
-  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
   <meta property="og:title" content="openwop — openwop Spec v1 — Prompt Templates"/>
   <meta property="og:description" content="Two v1 surfaces already accept prompt bodies, but neither establishes prompt-as-a-resource:"/>
   <meta property="og:url" content="https://openwop.dev/spec/v1/prompts.html"/>
@@ -21,8 +21,25 @@
   <meta name="twitter:description" content="Two v1 surfaces already accept prompt bodies, but neither establishes prompt-as-a-resource:"/>
   <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
 
-  <!-- Favicon -->
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
+
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
+
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="stylesheet" href="/assets/style.css"/>
 
   <script type="application/ld+json">{
   "@context": "https://schema.org",
@@ -52,27 +69,30 @@
 }</script>
   
   
-
-  <link rel="stylesheet" href="/assets/style.css"/>
 </head>
 <body>
-  <header class="site-header">
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
     <a class="brand" href="/">
-      <span class="brand-mark">openwop</span>
-      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
     </a>
-    <nav class="site-nav">
-      <a class="" href="/">Overview</a>
-      <a class="active" href="/spec/v1/">Spec</a>
-      <a class="" href="/rfcs/">RFCs</a>
-      <a class="" href="/conformance/">Conformance</a>
-      <a class="" href="/changelog/">Changelog</a>
-      <a class="" href="/faq/">FAQ</a>
-      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    <nav class="topnav">
+      <a class="hide-sm active" href="/spec/v1/">Spec</a>
+      <a class="hide-sm " href="/rfcs/">RFCs</a>
+      <a class="hide-sm " href="/conformance/">Conformance</a>
+      <a class="hide-sm " href="/changelog/">Changelog</a>
+      <a class="hide-sm " href="/faq/">FAQ</a>
+      <a class="pill" href="https://github.com/openwop/openwop">GitHub →</a>
     </nav>
-  </header>
-  <main class="site-main">
-    <article class="spec-doc"><h1 id="openwop-spec-v1-prompt-templates">openwop Spec v1 — Prompt Templates</h1>
+  </div>
+</header>
+
+<main class="site-main">
+  <div class="wrap">
+    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-prompt-templates">openwop Spec v1 — Prompt Templates</h1>
 <blockquote><p><strong>Status: DRAFT v1.x (filed via <a href="../../RFCS/0027-prompt-templates.md">RFC 0027</a>, 2026-05-19; first cut 2026-05-20).</strong> Lands the wire shape for portable, versioned, variable-bound prompts referenced by workflow nodes and agent manifests. Closes the gap where <code>core.ai.callPrompt</code> config (<code>workflow-chain-packs.md</code> line 62, <code>host-capabilities.md</code> line 347) and <code>AgentManifest.systemPrompt | systemPromptRef</code> (<code>agent-manifest.schema.json</code> lines 34–41) accept inline prompt bodies but offer no shared addressing, library distribution, variable schema, or observability of the composed result. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend. Fields marked <strong>(stable)</strong> lock; fields marked <strong>(in-flight)</strong> may shift compatibly within v1.x.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>
@@ -384,11 +404,118 @@ prompt:critic-system</code></pre>
 <li><code>SECURITY/threat-model-secret-leakage.md</code> SR-1 — <code>[REDACTED:&amp;lt;id&amp;gt;]</code> marker discipline.</li>
 <li><code>SECURITY/threat-model-prompt-injection.md</code> — <code>&amp;lt;UNTRUSTED&amp;gt;...&amp;lt;/UNTRUSTED&amp;gt;</code> marker discipline.</li>
 <li>External: MyndHyve <code>PromptEntry</code> / <code>PromptLibrary</code> / <code>WorkflowPromptService.resolveForExecution()</code> reference impl — closest single-host prior-art for the resolution-chain pattern RFC 0029 normates.</li>
-</ul></article>
-  </main>
-  <footer class="site-footer">
-    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
-    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
-  </footer>
+</ul></article><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
+      <li class="toc-top"><a href="#what-a-prompt-template-is-and-is-not">What a Prompt Template is (and is not)</a></li>
+      <li class="toc-top"><a href="#promptkind">PromptKind</a></li>
+      <li class="toc-top"><a href="#prompttemplate">PromptTemplate</a></li>
+      <li class="toc-sub"><a href="#variable-interpolation">Variable interpolation</a></li>
+      <li class="toc-sub"><a href="#promptvariable">PromptVariable</a></li>
+      <li class="toc-top"><a href="#promptref">PromptRef</a></li>
+      <li class="toc-sub"><a href="#conflict-resolution">Conflict resolution</a></li>
+      <li class="toc-top"><a href="#capability-advertisement">Capability advertisement</a></li>
+      <li class="toc-top"><a href="#composition-observability">Composition + observability</a></li>
+      <li class="toc-sub"><a href="#replay-determinism">Replay determinism</a></li>
+      <li class="toc-sub"><a href="#three-surface-taxonomy-non-normative">Three-surface taxonomy (non-normative)</a></li>
+      <li class="toc-top"><a href="#security-invariants">Security invariants</a></li>
+      <li class="toc-top"><a href="#discovery-distribution-rfc-0028">Discovery &amp; distribution (RFC 0028)</a></li>
+      <li class="toc-sub"><a href="#rest-endpoints">REST endpoints</a></li>
+      <li class="toc-sub"><a href="#prompt-pack-distribution">Prompt-pack distribution</a></li>
+      <li class="toc-sub"><a href="#capability-advertisement-extensions">Capability advertisement extensions</a></li>
+      <li class="toc-sub"><a href="#provenance-fields-on-prompttemplate-meta">Provenance fields on PromptTemplate.meta</a></li>
+      <li class="toc-top"><a href="#resolution-chain-normative">Resolution chain (normative)</a></li>
+      <li class="toc-sub"><a href="#layer-1-node-config-highest-precedence">Layer 1 — Node config (highest precedence)</a></li>
+      <li class="toc-sub"><a href="#layer-2-agent-binding">Layer 2 — Agent binding</a></li>
+      <li class="toc-sub"><a href="#layer-3-workflow-defaults">Layer 3 — Workflow defaults</a></li>
+      <li class="toc-sub"><a href="#layer-4-host-built-ins-lowest-precedence">Layer 4 — Host built-ins (lowest precedence)</a></li>
+      <li class="toc-sub"><a href="#run-configurable-extension-layer-optional-non-normative">Run-configurable extension layer (optional, non-normative)</a></li>
+      <li class="toc-sub"><a href="#replay-determinism">Replay determinism</a></li>
+      <li class="toc-sub"><a href="#orthogonality-with-model-capability-gating-non-normative">Orthogonality with model-capability gating (non-normative)</a></li>
+      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
+      <li class="toc-top"><a href="#cross-reference">Cross-reference</a></li>
+    </ul>
+  </aside></div><script>
+(function () {
+  var links = document.querySelectorAll('.spec-toc a');
+  if (!links.length || !('IntersectionObserver' in window)) return;
+  var byId = new Map();
+  links.forEach(function (a) { byId.set(a.getAttribute('href').slice(1), a); });
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        links.forEach(function (a) { a.classList.remove('is-active'); });
+        var link = byId.get(e.target.id);
+        if (link) link.classList.add('is-active');
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  byId.forEach(function (_, id) {
+    var el = document.getElementById(id);
+    if (el) observer.observe(el);
+  });
+})();
+</script>
+  </div>
+</main>
+
+<!-- ─────────────────────── FOOTER (mirrors marketing) ─────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-mark">
+          <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+          Open<em>WOP</em>
+        </div>
+        <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
+          The Workflow Orchestration Protocol — an open, conformance-tested
+          contract for durable, observable AI workflows across hosts.
+        </p>
+      </div>
+      <div>
+        <h5>Specification</h5>
+        <ul>
+          <li><a href="/spec/v1/">v1.x Core</a></li>
+          <li><a href="/rfcs/">RFCs</a></li>
+          <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/profiles/">Profiles</a></li>
+          <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/versioning/">Versioning policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Ecosystem</h5>
+        <ul>
+          <li><a href="https://packs.openwop.dev/">Pack registry ↗</a></li>
+          <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts ↗</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix ↗</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite ↗</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="/changelog/">Changelog</a></li>
+          <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/faq/">FAQ</a></li>
+          <li><a href="/security/">Security posture</a></li>
+          <li><a href="/governance/">Governance</a></li>
+          <li><a href="/contributing/">Contributing</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases ↗</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct ↗</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 OpenWOP contributors</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+      <span>Built with Claude Code</span>
+    </div>
+  </div>
+</footer>
+
 </body>
 </html>

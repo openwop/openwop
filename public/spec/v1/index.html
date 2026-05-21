@@ -9,7 +9,7 @@
 
   <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
   <meta property="og:type" content="website"/>
-  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
   <meta property="og:title" content="OpenWOP — v1 spec corpus"/>
   <meta property="og:description" content="38 normative prose specs governing the OpenWOP v1 wire contract. Each doc is independently citable via /spec/v1/{name}.html."/>
   <meta property="og:url" content="https://openwop.dev/spec/v1/"/>
@@ -21,32 +21,52 @@
   <meta name="twitter:description" content="38 normative prose specs governing the OpenWOP v1 wire contract. Each doc is independently citable via /spec/v1/{name}.html."/>
   <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
 
-  <!-- Favicon -->
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
 
-  
-  
-  
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
 
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
   <link rel="stylesheet" href="/assets/style.css"/>
+
+  
+  
+  
 </head>
 <body>
-  <header class="site-header">
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
     <a class="brand" href="/">
-      <span class="brand-mark">openwop</span>
-      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
     </a>
-    <nav class="site-nav">
-      <a class="" href="/">Overview</a>
-      <a class="active" href="/spec/v1/">Spec</a>
-      <a class="" href="/rfcs/">RFCs</a>
-      <a class="" href="/conformance/">Conformance</a>
-      <a class="" href="/changelog/">Changelog</a>
-      <a class="" href="/faq/">FAQ</a>
-      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    <nav class="topnav">
+      <a class="hide-sm active" href="/spec/v1/">Spec</a>
+      <a class="hide-sm " href="/rfcs/">RFCs</a>
+      <a class="hide-sm " href="/conformance/">Conformance</a>
+      <a class="hide-sm " href="/changelog/">Changelog</a>
+      <a class="hide-sm " href="/faq/">FAQ</a>
+      <a class="pill" href="https://github.com/openwop/openwop">GitHub →</a>
     </nav>
-  </header>
-  <main class="site-main">
+  </div>
+</header>
+
+<main class="site-main">
+  <div class="wrap">
     <header class="page-header">
     <h1>openwop v1 spec corpus</h1>
     <p class="lede">38 prose specs governing the v1 wire contract. Each section below groups specs by what they do; click through for the normative text.</p>
@@ -310,10 +330,65 @@
     </li>
   </ul>
 </section>
-  </main>
-  <footer class="site-footer">
-    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
-    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
-  </footer>
+  </div>
+</main>
+
+<!-- ─────────────────────── FOOTER (mirrors marketing) ─────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-mark">
+          <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+          Open<em>WOP</em>
+        </div>
+        <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
+          The Workflow Orchestration Protocol — an open, conformance-tested
+          contract for durable, observable AI workflows across hosts.
+        </p>
+      </div>
+      <div>
+        <h5>Specification</h5>
+        <ul>
+          <li><a href="/spec/v1/">v1.x Core</a></li>
+          <li><a href="/rfcs/">RFCs</a></li>
+          <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/profiles/">Profiles</a></li>
+          <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/versioning/">Versioning policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Ecosystem</h5>
+        <ul>
+          <li><a href="https://packs.openwop.dev/">Pack registry ↗</a></li>
+          <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts ↗</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix ↗</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite ↗</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="/changelog/">Changelog</a></li>
+          <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/faq/">FAQ</a></li>
+          <li><a href="/security/">Security posture</a></li>
+          <li><a href="/governance/">Governance</a></li>
+          <li><a href="/contributing/">Contributing</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases ↗</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct ↗</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 OpenWOP contributors</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+      <span>Built with Claude Code</span>
+    </div>
+  </div>
+</footer>
+
 </body>
 </html>

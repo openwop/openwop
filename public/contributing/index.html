@@ -9,7 +9,7 @@
 
   <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
   <meta property="og:type" content="website"/>
-  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
   <meta property="og:title" content="openwop — Contributing"/>
   <meta property="og:description" content="Thanks for considering a contribution. The OpenWOP v1.0 spec is small, mechanical, and intentionally focused — small PRs land fastest."/>
   <meta property="og:url" content="https://openwop.dev/contributing/"/>
@@ -21,36 +21,56 @@
   <meta name="twitter:description" content="Thanks for considering a contribution. The OpenWOP v1.0 spec is small, mechanical, and intentionally focused — small PRs land fastest."/>
   <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
 
-  <!-- Favicon -->
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
 
-  
-  
-  
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
 
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
   <link rel="stylesheet" href="/assets/style.css"/>
+
+  
+  
+  
 </head>
 <body>
-  <header class="site-header">
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
     <a class="brand" href="/">
-      <span class="brand-mark">openwop</span>
-      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
     </a>
-    <nav class="site-nav">
-      <a class="" href="/">Overview</a>
-      <a class="" href="/spec/v1/">Spec</a>
-      <a class="" href="/rfcs/">RFCs</a>
-      <a class="" href="/conformance/">Conformance</a>
-      <a class="" href="/changelog/">Changelog</a>
-      <a class="" href="/faq/">FAQ</a>
-      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    <nav class="topnav">
+      <a class="hide-sm " href="/spec/v1/">Spec</a>
+      <a class="hide-sm " href="/rfcs/">RFCs</a>
+      <a class="hide-sm " href="/conformance/">Conformance</a>
+      <a class="hide-sm " href="/changelog/">Changelog</a>
+      <a class="hide-sm " href="/faq/">FAQ</a>
+      <a class="pill" href="https://github.com/openwop/openwop">GitHub →</a>
     </nav>
-  </header>
-  <main class="site-main">
+  </div>
+</header>
+
+<main class="site-main">
+  <div class="wrap">
     <header class="page-header">
     <h1>Contributing</h1>
     <p class="lede">Per-artifact change rules for the openwop corpus — what counts as editorial, additive, safety-fix, or breaking; the eight-step pre-merge gate; the DCO requirement.</p>
-  </header><article class="spec-doc"><h1 id="contributing-to-openwop-v1">Contributing to openwop v1</h1>
+  </header><div class="spec-page-grid"><article class="spec-doc"><h1 id="contributing-to-openwop-v1">Contributing to openwop v1</h1>
 <p>Thanks for considering a contribution. The OpenWOP v1.0 spec is small, mechanical, and intentionally focused — small PRs land fastest.</p>
 <p>This guide covers:</p>
 <p>1. What's in scope. 2. Status legend + when to bump status. 3. Per-artifact change rules (prose specs, JSON Schemas, OpenAPI, AsyncAPI, conformance, SDK). 4. The CI gate. 5. Coordination with the impl plan.</p>
@@ -210,11 +230,107 @@ npx -y @asyncapi/cli@latest validate api/asyncapi.yaml
 (cd sdk/typescript &amp;&amp; npm install &amp;&amp; npm run build)
 
 # Find every prose doc that&#39;s still STUB-tier (candidates for promotion)
-grep -l &quot;Status:.*STUB&quot; *.md</code></pre></article>
-  </main>
-  <footer class="site-footer">
-    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
-    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
-  </footer>
+grep -l &quot;Status:.*STUB&quot; *.md</code></pre></article><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#what-s-in-scope">What&#39;s in scope</a></li>
+      <li class="toc-top"><a href="#status-legend">Status legend</a></li>
+      <li class="toc-top"><a href="#per-artifact-change-rules">Per-artifact change rules</a></li>
+      <li class="toc-sub"><a href="#prose-specs-md">Prose specs (*.md)</a></li>
+      <li class="toc-sub"><a href="#json-schemas-schemas-schema-json">JSON Schemas (schemas/*.schema.json)</a></li>
+      <li class="toc-sub"><a href="#pack-internal-json-schemas-packs-name-schemas-schema-json">Pack-internal JSON Schemas (packs/&lt;name&gt;/schemas/*.schema.json)</a></li>
+      <li class="toc-sub"><a href="#openapi-asyncapi">OpenAPI / AsyncAPI</a></li>
+      <li class="toc-sub"><a href="#conformance-suite-conformance">Conformance suite (conformance/)</a></li>
+      <li class="toc-sub"><a href="#typescript-reference-sdk-sdk-typescript">TypeScript reference SDK (sdk/typescript/)</a></li>
+      <li class="toc-sub"><a href="#reference-applications-apps">Reference applications (apps/)</a></li>
+      <li class="toc-top"><a href="#the-ci-gate">The CI gate</a></li>
+      <li class="toc-top"><a href="#coordination-with-the-impl-plan">Coordination with the impl plan</a></li>
+      <li class="toc-top"><a href="#process">Process</a></li>
+      <li class="toc-top"><a href="#sign-your-commits-dco">Sign your commits (DCO)</a></li>
+      <li class="toc-top"><a href="#triage-sla">Triage SLA</a></li>
+      <li class="toc-top"><a href="#bootstrap-phase-notes-2026-05-05">Bootstrap-phase notes (2026-05-05)</a></li>
+      <li class="toc-top"><a href="#useful-one-liners">Useful one-liners</a></li>
+    </ul>
+  </aside></div><script>
+(function () {
+  var links = document.querySelectorAll('.spec-toc a');
+  if (!links.length || !('IntersectionObserver' in window)) return;
+  var byId = new Map();
+  links.forEach(function (a) { byId.set(a.getAttribute('href').slice(1), a); });
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        links.forEach(function (a) { a.classList.remove('is-active'); });
+        var link = byId.get(e.target.id);
+        if (link) link.classList.add('is-active');
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  byId.forEach(function (_, id) {
+    var el = document.getElementById(id);
+    if (el) observer.observe(el);
+  });
+})();
+</script>
+  </div>
+</main>
+
+<!-- ─────────────────────── FOOTER (mirrors marketing) ─────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-mark">
+          <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+          Open<em>WOP</em>
+        </div>
+        <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
+          The Workflow Orchestration Protocol — an open, conformance-tested
+          contract for durable, observable AI workflows across hosts.
+        </p>
+      </div>
+      <div>
+        <h5>Specification</h5>
+        <ul>
+          <li><a href="/spec/v1/">v1.x Core</a></li>
+          <li><a href="/rfcs/">RFCs</a></li>
+          <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/profiles/">Profiles</a></li>
+          <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/versioning/">Versioning policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Ecosystem</h5>
+        <ul>
+          <li><a href="https://packs.openwop.dev/">Pack registry ↗</a></li>
+          <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts ↗</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix ↗</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite ↗</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="/changelog/">Changelog</a></li>
+          <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/faq/">FAQ</a></li>
+          <li><a href="/security/">Security posture</a></li>
+          <li><a href="/governance/">Governance</a></li>
+          <li><a href="/contributing/">Contributing</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases ↗</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct ↗</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 OpenWOP contributors</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+      <span>Built with Claude Code</span>
+    </div>
+  </div>
+</footer>
+
 </body>
 </html>

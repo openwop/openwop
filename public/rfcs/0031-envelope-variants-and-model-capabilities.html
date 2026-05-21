@@ -9,7 +9,7 @@
 
   <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
   <meta property="og:type" content="website"/>
-  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
   <meta property="og:title" content="openwop — RFC 0031: Envelope variant discrimination + model-capability declarations"/>
   <meta property="og:description" content="Two complementary additive changes that together close the &quot;envelope dispatch routing is opaque&quot; gap. First, codifies the de-facto discriminated-union pattern (anyOf + single-string-enum discriminator per branch) as normative for any envelope…"/>
   <meta property="og:url" content="https://openwop.dev/rfcs/0031-envelope-variants-and-model-capabilities.html"/>
@@ -21,33 +21,53 @@
   <meta name="twitter:description" content="Two complementary additive changes that together close the &quot;envelope dispatch routing is opaque&quot; gap. First, codifies the de-facto discriminated-union pattern (anyOf + single-string-enum discriminator per branch) as normative for any envelope…"/>
   <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
 
-  <!-- Favicon -->
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
 
-  
-  
-  
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
 
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
   <link rel="stylesheet" href="/assets/style.css"/>
+
+  
+  
+  
 </head>
 <body>
-  <header class="site-header">
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
     <a class="brand" href="/">
-      <span class="brand-mark">openwop</span>
-      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
     </a>
-    <nav class="site-nav">
-      <a class="" href="/">Overview</a>
-      <a class="" href="/spec/v1/">Spec</a>
-      <a class="active" href="/rfcs/">RFCs</a>
-      <a class="" href="/conformance/">Conformance</a>
-      <a class="" href="/changelog/">Changelog</a>
-      <a class="" href="/faq/">FAQ</a>
-      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    <nav class="topnav">
+      <a class="hide-sm " href="/spec/v1/">Spec</a>
+      <a class="hide-sm active" href="/rfcs/">RFCs</a>
+      <a class="hide-sm " href="/conformance/">Conformance</a>
+      <a class="hide-sm " href="/changelog/">Changelog</a>
+      <a class="hide-sm " href="/faq/">FAQ</a>
+      <a class="pill" href="https://github.com/openwop/openwop">GitHub →</a>
     </nav>
-  </header>
-  <main class="site-main">
-    <article class="spec-doc"><h1 id="rfc-0031-envelope-variant-discrimination-model-capability-declarations">RFC 0031: Envelope variant discrimination + model-capability declarations</h1>
+  </div>
+</header>
+
+<main class="site-main">
+  <div class="wrap">
+    <div class="spec-page-grid"><article class="spec-doc"><h1 id="rfc-0031-envelope-variant-discrimination-model-capability-declarations">RFC 0031: Envelope variant discrimination + model-capability declarations</h1>
 <table>
 <thead><tr><th>Field</th><th>Value</th></tr></thead>
 <tbody>
@@ -376,11 +396,114 @@
 <li><strong>Schemas additive (no MUST relaxed):</strong></li>
 </ul>
 <p>  - <code>schemas/node-pack-manifest.schema.json</code> — NodeModule shape gains optional <code>requiredModelCapabilities: string[]</code> (pattern restricts to spec-reserved or <code>x-host-*</code> identifiers, ≤32 entries, uniqueItems) + optional <code>fallbackModel: { provider, model }</code> with provider lowercase-ASCII pattern + model min-length-1.   - <code>schemas/capabilities.schema.json</code> — new optional top-level <code>modelCapabilities</code> block with <code>supported: boolean</code> (required), <code>advertised: string[]</code>, <code>substitutionSupported: boolean</code>. Sibling to the existing <code>runtimeCapabilities</code> array (host capabilities) — semantic distinction documented in both descriptions.   - <code>schemas/run-event.schema.json</code> — <code>RunEventType</code> enum gains <code>&quot;model.capability.substituted&quot;</code> and <code>&quot;model.capability.insufficient&quot;</code> after <code>agent.promptResolved</code> (cross-kind operational cluster).   - <code>schemas/run-event-payloads.schema.json</code> — <code>_typeIndex</code> gets two new entries; two new <code>$defs</code> (<code>modelCapabilitySubstituted</code> + <code>modelCapabilityInsufficient</code>) carry the payload contracts. Substitution event documents the all-or-nothing <code>&quot;[REDACTED]&quot;</code> redaction option for <code>fallbackProvider</code>/<code>fallbackModel</code> per SECURITY invariant <code>model-capability-substituted-no-credential-disclosure</code>. Insufficient event documents the no-recursive-fallback constraint (<code>fallbackAttempted: true</code> when the declared fallback itself failed, no chaining).</p>
-<p>Path to <code>Active → Accepted</code>: requires the reference workflow-engine to (a) advertise <code>capabilities.modelCapabilities.supported: true</code> + <code>advertised[]</code> populated by a capability-probe over <code>aiProviders.supported[]</code>, (b) implement the dispatch gate in <code>executor/executor.ts</code> (or <code>executor/modelCapabilityGate.ts</code> sibling) that consults the active model's advertised capabilities + emits <code>model.capability.{substituted,insufficient}</code>, (c) ship the four conformance scenarios from §"Conformance" (including the discriminator-static and substitution/insufficient/declaration shape assertions), and (d) ship the <code>model-capability-substituted-no-credential-disclosure</code> SECURITY invariant alongside the matching conformance scenario. Alternatively, a non-steward host advertising the capability closes the third-party validation gate per the RFC 0021 / RFC 0026 precedent.</p></article>
-  </main>
-  <footer class="site-footer">
-    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
-    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
-  </footer>
+<p>Path to <code>Active → Accepted</code>: requires the reference workflow-engine to (a) advertise <code>capabilities.modelCapabilities.supported: true</code> + <code>advertised[]</code> populated by a capability-probe over <code>aiProviders.supported[]</code>, (b) implement the dispatch gate in <code>executor/executor.ts</code> (or <code>executor/modelCapabilityGate.ts</code> sibling) that consults the active model's advertised capabilities + emits <code>model.capability.{substituted,insufficient}</code>, (c) ship the four conformance scenarios from §"Conformance" (including the discriminator-static and substitution/insufficient/declaration shape assertions), and (d) ship the <code>model-capability-substituted-no-credential-disclosure</code> SECURITY invariant alongside the matching conformance scenario. Alternatively, a non-steward host advertising the capability closes the third-party validation gate per the RFC 0021 / RFC 0026 precedent.</p></article><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-sub"><a href="#2-1-variant-envelopes-silently-break-on-gemini-and-anthropic-when-authored-with-oneof">2.1 Variant envelopes silently break on Gemini and Anthropic when authored with oneOf</a></li>
+      <li class="toc-sub"><a href="#2-2-envelope-emitting-nodes-have-implicit-model-dependencies-the-protocol-can-t-see">2.2 Envelope-emitting nodes have implicit model dependencies the protocol can&#39;t see</a></li>
+      <li class="toc-sub"><a href="#2-3-substitution-and-insufficient-capability-dispatches-need-protocol-visible-telemetry">2.3 Substitution and insufficient-capability dispatches need protocol-visible telemetry</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-discriminated-union-pattern-for-variant-envelopes-normative">§A — Discriminated-union pattern for variant envelopes (normative)</a></li>
+      <li class="toc-sub"><a href="#b-nodemodule-requiredmodelcapabilities-nodemodule-fallbackmodel">§B — NodeModule.requiredModelCapabilities + NodeModule.fallbackModel</a></li>
+      <li class="toc-sub"><a href="#c-capability-identifier-registry">§C — Capability identifier registry</a></li>
+      <li class="toc-sub"><a href="#d-two-new-runeventtype-entries">§D — Two new RunEventType entries</a></li>
+      <li class="toc-sub"><a href="#e-capability-advertisement">§E — Capability advertisement</a></li>
+      <li class="toc-sub"><a href="#f-security-carry-forward">§F — Security carry-forward</a></li>
+      <li class="toc-sub"><a href="#g-trust-boundary-carry-forward">§G — Trust boundary (carry-forward)</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+      <li class="toc-top"><a href="#status-history">Status history</a></li>
+      <li class="toc-sub"><a href="#active-accepted-2026-05-21">Active → Accepted (2026-05-21)</a></li>
+      <li class="toc-sub"><a href="#active-amendment-2026-05-21-myndhyve-adoption-feedback">Active amendment (2026-05-21) — MyndHyve adoption feedback</a></li>
+      <li class="toc-sub"><a href="#draft-active-2026-05-20">Draft → Active (2026-05-20)</a></li>
+    </ul>
+  </aside></div><script>
+(function () {
+  var links = document.querySelectorAll('.spec-toc a');
+  if (!links.length || !('IntersectionObserver' in window)) return;
+  var byId = new Map();
+  links.forEach(function (a) { byId.set(a.getAttribute('href').slice(1), a); });
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        links.forEach(function (a) { a.classList.remove('is-active'); });
+        var link = byId.get(e.target.id);
+        if (link) link.classList.add('is-active');
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  byId.forEach(function (_, id) {
+    var el = document.getElementById(id);
+    if (el) observer.observe(el);
+  });
+})();
+</script>
+  </div>
+</main>
+
+<!-- ─────────────────────── FOOTER (mirrors marketing) ─────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-mark">
+          <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+          Open<em>WOP</em>
+        </div>
+        <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
+          The Workflow Orchestration Protocol — an open, conformance-tested
+          contract for durable, observable AI workflows across hosts.
+        </p>
+      </div>
+      <div>
+        <h5>Specification</h5>
+        <ul>
+          <li><a href="/spec/v1/">v1.x Core</a></li>
+          <li><a href="/rfcs/">RFCs</a></li>
+          <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/profiles/">Profiles</a></li>
+          <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/versioning/">Versioning policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Ecosystem</h5>
+        <ul>
+          <li><a href="https://packs.openwop.dev/">Pack registry ↗</a></li>
+          <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts ↗</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix ↗</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite ↗</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="/changelog/">Changelog</a></li>
+          <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/faq/">FAQ</a></li>
+          <li><a href="/security/">Security posture</a></li>
+          <li><a href="/governance/">Governance</a></li>
+          <li><a href="/contributing/">Contributing</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases ↗</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct ↗</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 OpenWOP contributors</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+      <span>Built with Claude Code</span>
+    </div>
+  </div>
+</footer>
+
 </body>
 </html>
