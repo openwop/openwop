@@ -157,3 +157,12 @@ export type {
   SchemaResponsePayload,
   ValidationDetail,
 } from './types.js';
+
+// RFC 0030 §A `reasoning` field prompt-directive helper. Hosts that
+// advertise `capabilities.envelopes.reasoning.supported: true` use this
+// to synthesize the system-prompt fragment that instructs the model to
+// populate the OPTIONAL `reasoning` field. See `envelope-directive.ts`
+// for the operational note on `"mandatory"` strength (provider-side
+// refusal risk per the 2026-05-21 RFC 0030 amendment).
+export { buildReasoningDirective } from './envelope-directive.js';
+export type { ReasoningDirectiveStrength } from './envelope-directive.js';
