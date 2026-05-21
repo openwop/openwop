@@ -185,7 +185,7 @@ function TryItFreeCard({
           <div className="byok-try-free-body">
             <div className="byok-try-free-headline">
               <span className="byok-try-free-title">Try it free</span>
-              <span className="byok-try-free-pill">recommended</span>
+              <span className="byok-try-free-suffix">by creating an account</span>
             </div>
             <div className="byok-try-free-desc">
               No API key needed. Sign in and start chatting — the sample

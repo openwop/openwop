@@ -1995,18 +1995,15 @@ pre {
   letter-spacing: -0.01em;
   color: var(--ink);
 }
-.byok-try-free-pill {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--clay);
-  padding: 3px 9px;
-  border: 1px solid var(--clay-rule);
-  border-radius: 999px;
-  background: var(--paper);
-  white-space: nowrap;
-  align-self: center;
+.byok-try-free-suffix {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--ink-3);
+  line-height: 1.2;
+  letter-spacing: -0.005em;
+  align-self: baseline;
 }
 .byok-try-free-desc {
   font-family: var(--sans);
