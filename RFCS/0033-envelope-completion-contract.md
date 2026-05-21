@@ -69,6 +69,8 @@ Add a new §"Envelope-completion criteria" to `spec/v1/ai-envelope.md` after §"
 
 > A host MAY retry an emission whose `envelope.truncated` event fires by re-issuing the LLM call with an **increased output budget**. The new budget SHOULD be greater than the previous budget; a 2× multiplier is RECOMMENDED but not normative.
 >
+> **Provider-ceiling guidance (clarified by amendment 2026-05-21).** When the doubled (or otherwise increased) output budget would exceed the active provider's per-call maximum (e.g., Anthropic's `max_tokens` ceiling, OpenAI's response-length cap, Gemini's `maxOutputTokens`), the host MAY further reduce the requested budget to the provider's ceiling AND continue the retry. Hosts SHOULD NOT silently truncate the request to the ceiling without emitting `envelope.retry.attempted { reason: "truncation" }` for the retry attempt — the retry IS a retry regardless of budget-clamping. Hosts SHOULD treat a budget-clamped retry that also fails with truncation as terminal (no further retries with the same ceiling), failing the node with `envelope_truncation_unrecoverable` per §F.
+>
 > Truncation retries SHALL NOT include any corrective system fragment that describes a schema problem — the previous attempt's payload shape (as far as it was emitted before truncation) was correct; the only failure mode is incomplete output.
 >
 > Truncation retries count against `limits.schemaRounds` (the existing per-emission retry budget per `capabilities.md` §"Engine-enforced limits"). When the retry budget is exhausted while the failure mode remains truncation, the host SHALL emit `envelope.retry.exhausted` (per RFC 0032 §B.2) with `finalReason: "truncation"` AND `cap.breached` (per `observability.md`) with `kind: "schema"`. The node MUST fail with `error.code: "envelope_truncation_unrecoverable"` (NEW error code; see §F).
@@ -273,6 +275,16 @@ Promotion from `Active` → `Accepted`:
 - Tam et al., "Let Me Speak Freely?" — https://arxiv.org/pdf/2408.02442 (informs the "truncation needs budget, not corrective fragment" recommendation: truncation typically reflects model running out of room mid-reasoning, not model emitting wrong shape).
 
 ## Status history
+
+### Active amendment (2026-05-21) — MyndHyve adoption feedback
+
+Additive normative-text clarification per the filled adoption feedback at `docs/handoffs/MYNDHYVE-RFC-0030-0033-ADOPTION-FEEDBACK-2026-05-20.md` §A.4. **No wire-shape change; no schema change.**
+
+- §B — Added provider-ceiling guidance for the truncation-budget multiplication path: when the doubled (or otherwise increased) output budget would exceed the active provider's per-call max, hosts MAY further reduce to the provider's ceiling AND continue the retry. Budget-clamped retries that ALSO fail with truncation SHOULD be treated as terminal (no further retries with the same ceiling). Surfaced by MyndHyve's default `max_tokens: 8192` not yet hitting the ceiling (16384 retry budget is well under every Tier-1 vendor's per-call max) — the guidance preempts the failure mode at higher base budgets.
+
+A separate forthcoming amendment (filed in commit alongside this one) renames §F error codes per the same adoption feedback round (`envelope_payload_invalid → envelope_invalid`; `envelope_refused_by_provider → envelope_refusal`). See the commit immediately following for the rename rationale + reference-host + conformance updates.
+
+Compatibility: **additive** per `COMPATIBILITY.md §2.1`. The §B clarification is operator guidance — hosts already implementing budget-clamping behavior remain compliant; the new text gives explicit normative cover for the pattern.
 
 ### Draft → Active (2026-05-20)
 

@@ -60,6 +60,8 @@ Add a new §"Reasoning field (normative)" to `spec/v1/ai-envelope.md` between §
 >
 > Hosts that opt in to advertise the convention via `capabilities.envelopes.reasoning.supported: true` (see §C) signal to clients that envelope schemas served by the host follow this convention; clients MAY skip the schema-check for the field's presence on such hosts.
 
+**Operational note on `promptDirective: "mandatory"`** (amendment 2026-05-21 from RFC adoption feedback). The normative MUST NOT in the preceding paragraph binds the **host** — hosts MUST NOT reject absent-`reasoning` envelopes regardless of directive strength. However, the **model** itself is not the host. Strict-output models that honor the mandatory directive wording literally MAY refuse mid-emission when they cannot generate analytical content (e.g., trivially-cached inputs, no-op transformations, or content whose reasoning step would be vacuous). Hosts SHOULD prefer `promptDirective: "advisory"` unless empirical testing against the host's model class confirms `"mandatory"` does not trigger refusals; the canonical advisory wording (per Tam et al., arXiv 2408.02442) is sufficient to recover the reasoning-collapse mitigation without the brittleness of a hard mandatory.
+
 #### Universal-kind schemas
 
 The four universal-kind payload schemas published under `schemas/envelopes/` gain `reasoning` as an OPTIONAL property:
@@ -284,6 +286,14 @@ Promotion from `Active` → `Accepted`:
 - `RFCS/0033-envelope-completion-contract.md` (forthcoming) — sibling RFC normating retry routing; depends on this RFC's `reasoning` field design for the truncation-budget recommendation note.
 
 ## Status history
+
+### Active amendment (2026-05-21) — MyndHyve adoption feedback
+
+Additive normative-text clarification per the filled adoption feedback at `docs/handoffs/MYNDHYVE-RFC-0030-0033-ADOPTION-FEEDBACK-2026-05-20.md` §A.1. **No wire-shape change; no schema change; no behavior change for compliant hosts.**
+
+- §A — Operational note added on `promptDirective: "mandatory"` provider-side refusal risk. The MUST NOT in §A binds the host (hosts MUST accept absent-`reasoning` envelopes regardless of strength); the new paragraph documents the orthogonal risk that strict-output models may honor the mandatory directive literally and refuse mid-emission. Operator guidance: prefer `"advisory"` unless empirical testing confirms `"mandatory"` doesn't trigger refusals on the active model class.
+
+Compatibility: **additive** per `COMPATIBILITY.md §2.1`. Hosts that advertised `"mandatory"` before this clarification remain compliant; the new text is operator guidance, not a new MUST.
 
 ### Draft → Active (2026-05-20)
 

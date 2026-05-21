@@ -240,7 +240,7 @@ Emitted when lenient parsing recovered a malformed envelope (e.g., JSON repair v
     "byteOffset": {
       "type": ["integer", "null"],
       "minimum": 0,
-      "description": "Byte position where recovery succeeded. Useful for debugging which fraction of the model's output was salvageable."
+      "description": "Byte position where recovery succeeded. Useful for debugging which fraction of the model's output was salvageable. **MAY-omit semantics (clarified by amendment 2026-05-21):** `byteOffset` is OPTIONAL and population is path-dependent. Hosts SHOULD populate it for recovery paths whose implementation naturally exposes a byte position (e.g., `brace-walker` tracks the position of the last balanced object; `markdown-fence` knows where the fence opened). Hosts MAY omit it (or emit `null`) for paths whose implementation does NOT expose a position (e.g., `jsonrepair` is a black-box transform with no per-character state). Conformance scenarios MUST tolerate absent `byteOffset` for path values `jsonrepair` and `double-encoded`; presence is assertable for `markdown-fence`, `brace-walker`, and `direct`."
     }
   }
 }
@@ -280,7 +280,7 @@ MAY because lenient parsing is a host-discretion recovery path; some hosts delib
 +              ]
 +            },
 +            "uniqueItems": true,
-+            "description": "Subset of the six reliability events the host actually emits. Hosts that advertise `supported: true` MUST include `envelope.retry.exhausted` and `envelope.refusal` (the two MUST events per §B). Conformance scenarios soft-skip for events absent from this list (assertions that the host emits the event are skipped; assertions about other host behavior remain in force)."
++            "description": "**Normative (clarified by amendment 2026-05-21):** Subset of the six reliability events the host actually emits, advertised as a JSON ARRAY of event-name strings. A boolean form is NOT permitted — clients introspect the array to gate on specific events (e.g., 'does host emit envelope.refusal?') without firing them. Hosts that advertise `supported: true` MUST include `envelope.retry.exhausted` and `envelope.refusal` (the two MUST events per §B); the array form is the canonical advertisement shape. Conformance scenarios soft-skip for events absent from this list (assertions that the host emits the event are skipped; assertions about other host behavior remain in force)."
 +          },
 +          "maxRetryAttempts": {
 +            "type": "integer",
@@ -493,6 +493,15 @@ Promotion from `Active` → `Accepted`:
 - jsonrepair (JavaScript) — https://github.com/josdejong/jsonrepair (`envelope.recovery.applied.path: "jsonrepair"`)
 
 ## Status history
+
+### Active amendment (2026-05-21) — MyndHyve adoption feedback
+
+Additive normative-text clarification per the filled adoption feedback at `docs/handoffs/MYNDHYVE-RFC-0030-0033-ADOPTION-FEEDBACK-2026-05-20.md` §A.3 + §B.1. **Schema validation tightens (boolean `events` is now explicitly non-conformant); compatible hosts that already emit the array form are unaffected.**
+
+- §C — `capabilities.envelopes.reliability.events` MUST be a JSON `array` of event-name strings. The boolean form (`events: true`) is now explicitly non-conformant — clients need to introspect the array to gate on specific events (e.g., "does host emit `envelope.refusal`?") without firing them. Surfaced by MyndHyve emitting `events: true` while the spec template + reference host emit the array form; conformance suites assume the array form. The schema already declared `"type": "array"`; the amendment makes this an explicit normative MUST in the description.
+- §B.6 — `envelope.recovery.applied.byteOffset` MAY-omit semantics are now path-dependent: hosts SHOULD populate it for recovery paths that naturally expose a byte position (`brace-walker`, `markdown-fence`) and MAY omit it for paths that don't (`jsonrepair` is a black-box transform; `double-encoded` is a structural transform). Conformance scenarios MUST tolerate absent `byteOffset` for the latter set. Surfaced by MyndHyve's parser never populating it because their `parseLenientJsonEnvelope` uses jsonrepair as the primary recovery path.
+
+Compatibility: the `events` shape tightening is **technically a constraint addition** but practically additive — no compliant host emits the boolean form (the schema's `"type": "array"` already rejected it; only hosts that didn't validate against the schema emitted boolean). The `byteOffset` clarification is **additive** — hosts already emitting per-path are compliant; hosts omitting were ambiguously compliant and are now explicitly compliant on jsonrepair/double-encoded paths.
 
 ### Draft → Active (2026-05-20)
 

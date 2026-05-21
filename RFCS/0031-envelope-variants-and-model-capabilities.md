@@ -170,6 +170,8 @@ Defined initial capability identifiers (extensible by host registration):
 
 **Host advertisement.** A host's advertised model-capability set lives at `capabilities.modelCapabilities.advertised` per §E. The host's dispatcher is the authoritative source of truth for which active model satisfies which identifier; the protocol does not normate how the host derives the mapping (vendor-API probes, static lookup tables, configuration files — all valid).
 
+**Truthful advertisement (normative; amendment 2026-05-21 from RFC adoption feedback).** `capabilities.modelCapabilities.advertised[]` MUST reflect only the capability identifiers the host actually gates on at dispatch (i.e., identifiers some `NodeModule.requiredModelCapabilities[]` in the host's registered pack set references AND that the host's dispatcher evaluates). Pasting the full spec-reserved set as boilerplate is dishonest per `capabilities.md` §"Truthful advertisement" and is non-conformant. Hosts whose pack registry only references a subset of the spec-reserved identifiers MUST advertise only that subset; adding identifiers later (when new NodeModules declare them) is an additive bump.
+
 ### §D — Two new RunEventType entries
 
 `schemas/run-event.schema.json` `RunEventType` enum gains two new entries:
@@ -258,7 +260,7 @@ And a discriminator entry in `_typeIndex`:
 +        },
 +        "substitutionSupported": {
 +          "type": "boolean",
-+          "description": "Host honors `NodeModule.fallbackModel` substitution per RFC 0031 §B step 3. When false or absent, hosts MUST refuse to dispatch (step 4) on any unmet capability — they MUST NOT attempt fallback even when the field is declared."
++          "description": "Host honors `NodeModule.fallbackModel` substitution per RFC 0031 §B step 3. **Scope (normative; clarified by amendment 2026-05-21):** substitution is per-NodeModule, NOT host-wide. When `true`, the host evaluates `requiredModelCapabilities` + `fallbackModel` per dispatch of an envelope-emitting NodeModule (the unit at which the NodeModule schema declares the fields). Hosts that do not implement a per-call provider-swap facility (i.e., they cannot rewrite `ctx.callAI({provider: ...})` mid-dispatch to use the fallback model) MUST advertise `false` — emitting `model.capability.substituted` without actually substituting is wire-contract-dishonest. When false or absent, hosts MUST refuse to dispatch (step 4) on any unmet capability even when `NodeModule.fallbackModel` is declared."
 +        }
 +      },
 +      "description": "Advertisement that the host implements RFC 0031 model-capability gating + substitution. Absent block = no capability gating; NodeModules' `requiredModelCapabilities` are ignored."
@@ -390,6 +392,15 @@ Promotion from `Active` → `Accepted`:
 - Pydantic AI output taxonomy — https://pydantic.dev/docs/ai/core-concepts/output/
 
 ## Status history
+
+### Active amendment (2026-05-21) — MyndHyve adoption feedback
+
+Additive normative-text clarification per the filled adoption feedback at `docs/handoffs/MYNDHYVE-RFC-0030-0033-ADOPTION-FEEDBACK-2026-05-20.md` §A.2. **No wire-shape change; no schema change.**
+
+- §C — New normative paragraph on truthful advertisement: `capabilities.modelCapabilities.advertised[]` MUST reflect only the capability identifiers the host actually gates on (referenced by some registered `NodeModule.requiredModelCapabilities[]`). Boilerplate-paste of the full spec-reserved set is now explicitly non-conformant per `capabilities.md` §"Truthful advertisement." Surfaced by MyndHyve advertising only the 2 of 5 identifiers their pack registry references.
+- §E — Clarified `substitutionSupported` scope: substitution is **per-NodeModule, not host-wide.** Evaluated per dispatch of an envelope-emitting NodeModule (the unit at which the schema declares `requiredModelCapabilities` + `fallbackModel`). Hosts without a per-call provider-swap facility MUST advertise `false` — emitting `model.capability.substituted` without actually substituting is wire-contract-dishonest. Surfaced by MyndHyve's substitution emission being node-config-scoped rather than host-dispatch-scoped.
+
+Compatibility: **additive** per `COMPATIBILITY.md §2.1`. Hosts already advertising honestly (only the capabilities they gate on; only `substitutionSupported: true` when they actually substitute) remain compliant. The two clarifications make those existing best practices normative.
 
 ### Draft → Active (2026-05-20)
 
