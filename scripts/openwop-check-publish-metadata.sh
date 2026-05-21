@@ -17,7 +17,7 @@ SPEC_ROOT="."
 EXPECTED_REPO="github.com/openwop/openwop"
 EXPECTED_GO_MODULE="${EXPECTED_REPO}/sdk/go"
 EXPECTED_NPM_SCOPE="@openwop"
-EXPECTED_V1_VERSION="1.1.2"
+EXPECTED_V1_VERSION="1.1.3"
 # `@openwop/openwop-conformance` independently bumps minors as conformance
 # scenarios are added/removed, per `PUBLISHING.md` §"Versioning alignment"
 # ("Conformance scenario addition | @openwop/openwop-conformance minor

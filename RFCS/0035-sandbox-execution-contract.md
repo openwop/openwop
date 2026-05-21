@@ -19,7 +19,7 @@ Define a normative contract for what isolation guarantees a host makes when it l
 
 ## Motivation
 
-Per `docs/KNOWN-LIMITS.md:32` and the Google-acceptance review 2026-05-21 finding (5): "no reference host executes pack-loaded typeIds in a sandbox. Before endorsement, I'd require sandbox proof, telemetry/debug-bundle secret-leakage conformance, and external review." The 8 `node-pack-sandbox-*` invariants exist as protocol claims (loaded packs MUST NOT escape the host's process context, MUST NOT access the host filesystem outside an advertised root, MUST NOT exfiltrate env vars, MUST NOT bypass capability gates, etc.) — but they're verified host-internally only on the Postgres pack-consumer's install-time security checks (PACK-1/PACK-2), which are necessary but not sufficient for runtime claims.
+Per `docs/KNOWN-LIMITS.md:32` and the external standards-readiness review 2026-05-21 finding (5): "no reference host executes pack-loaded typeIds in a sandbox. Before endorsement, I'd require sandbox proof, telemetry/debug-bundle secret-leakage conformance, and external review." The 8 `node-pack-sandbox-*` invariants exist as protocol claims (loaded packs MUST NOT escape the host's process context, MUST NOT access the host filesystem outside an advertised root, MUST NOT exfiltrate env vars, MUST NOT bypass capability gates, etc.) — but they're verified host-internally only on the Postgres pack-consumer's install-time security checks (PACK-1/PACK-2), which are necessary but not sufficient for runtime claims.
 
 This is the highest-leverage SECURITY gap in the corpus: every published pack the host loads runs with full host process privileges today, with the protocol's invariants depending on a sandbox that doesn't exist. Closing this requires both (a) a spec contract that defines what a compliant sandbox looks like and (b) at least one reference implementation.
 
@@ -135,4 +135,4 @@ Path to `Active → Accepted`: at least one non-steward host advertises the capa
 - `spec/v1/node-packs.md` §"Manifest format" (where `peerDependencies.host.sandbox` would be declared)
 - `RFCS/0008-wasm-abi.md` (WASM ABI version negotiation; pairs with `isolationModel: "wasm"`)
 - `spec/v1/host-extensions.md` §"Canonical prefixes" (test fixture namespace)
-- Google-acceptance review 2026-05-21 — finding (5)
+- External standards-readiness review 2026-05-21 — finding (5)

@@ -19,7 +19,7 @@ Define the OpenWOP Working Group's charter, voting rules, term limits, and succe
 
 ## Motivation
 
-Per Google-acceptance review 2026-05-21 finding (7): "Governance is not yet standard-body neutral. This is technical, not popularity: the spec still has a lead-maintainer tiebreaker and future working-group conditions. A company can implement it experimentally, but accepting it as an open standard would require neutral change control and a registry policy for profiles, event types, envelope kinds, and capability names."
+Per external standards-readiness review 2026-05-21 finding (7): "Governance is not yet standard-body neutral. This is technical, not popularity: the spec still has a lead-maintainer tiebreaker and future working-group conditions. A company can implement it experimentally, but accepting it as an open standard would require neutral change control and a registry policy for profiles, event types, envelope kinds, and capability names."
 
 The reviewer is correct. The fix is to LAND the charter now so the migration path is mechanical when the tripwire fires (≥3 organizations + ≥2 non-steward hosts passing conformance — per `GOVERNANCE.md:76`).
 
@@ -103,7 +103,7 @@ N/A — governance RFC, not a wire-shape change. No conformance scenarios needed
 
 ## Alternatives considered
 
-1. **Defer until the tripwire fires.** Rejected — that's the current posture, and the absence of the charter is itself a credibility gap per the Google-acceptance review. The charter being ready-to-ratify is better than waiting.
+1. **Defer until the tripwire fires.** Rejected — that's the current posture, and the absence of the charter is itself a credibility gap per the external standards-readiness review. The charter being ready-to-ratify is better than waiting.
 2. **Adopt an existing standards-body charter (e.g., W3C WG, IETF WG, OpenJS Foundation TSC).** Considered — likely the right move for the post-tripwire WG, but each external body's framework requires migration onto their infrastructure (mailing lists, vote tooling, IPR policy). This RFC documents a minimal viable WG that can later move to an external body without changing the in-repo governance docs.
 3. **Larger Steering Committee (7+).** Rejected for the first WG cohort — 3-5 is the minimum-viable size; can expand once the WG matures.
 
@@ -131,4 +131,4 @@ Path to `Accepted`: 6 months of WG operation with no major procedural objection.
 - `MAINTAINERS.md` (current maintainer state + bootstrap-phase notes)
 - `docs/recruitment/external-host.md`, `docs/recruitment/external-pack-author.md`, `docs/recruitment/external-reviewer.md` (the recruitment work that fills the tripwire conditions)
 - `docs/KNOWN-LIMITS.md:81` (GOV-8 vendor-neutral org migration)
-- Google-acceptance review 2026-05-21 — finding (7)
+- External standards-readiness review 2026-05-21 — finding (7)

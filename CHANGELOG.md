@@ -9,6 +9,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ---
 
+## [1.1.3 — unreleased] — coordinated SDK release for MyndHyve adoption-feedback slices
+
+### TS SDK 1.1.3 — `parseRefusal` + `buildReasoningDirective` exported (2026-05-21)
+
+Second coordinated release in the 1.1.x SDK series. Bumps the TypeScript + Python SDKs (and the lockstep examples + reference hosts) to `1.1.3`. The substance is the two TS SDK helper exports that landed in commits `8ab30fc` (`buildReasoningDirective`) and `ec6625a` (`parseRefusal`) post the 1.1.2 publish, queued for the next release window per the RFC 0030/0031/0032/0033 Active → Accepted runbook's "post-Accepted slice work" section.
+
+- **`@openwop/openwop` 1.1.2 → 1.1.3** — exports `parseRefusal(providerResponse): RefusalSignal | null` (cross-vendor safety-stop normalizer for Anthropic / OpenAI / Gemini per RFC 0032 §B.3) and `buildReasoningDirective()` (system-prompt fragment for RFC 0024 reasoning emission).
+- **`openwop-client` (Python SDK) 1.1.2 → 1.1.3** — no source change; version bumped to honor the publish-metadata gate's `EXPECTED_V1_VERSION` alignment constraint (the gate locks TS + Python in lockstep until the next coordinated release window).
+- **`@openwop/openwop-conformance` 1.3.0** — unchanged; the conformance package's minor cadence floats independently per PUBLISHING.md §"Versioning alignment".
+- **12 example packages + 3 reference hosts + site** — alignment-gate bumps; no behavior change.
+- **`scripts/openwop-check-publish-metadata.sh`** — `EXPECTED_V1_VERSION` bumped 1.1.2 → 1.1.3.
+- **`scripts/check-npm-pack-contents.sh` + `check-python-go-release-surface.sh`** — inline version pins bumped 1.1.2 → 1.1.3.
+
+Triggers: `openwop/v1.1.3` (TS publish), `openwop-client/v1.1.3` (Python publish). Workflows run via OIDC trusted publishers (no token secret); see `.github/workflows/openwop-publish.yml`.
+
+Consumer impact: the demo `apps/workflow-engine/backend/` will adopt `parseRefusal` post-publish, lifting the chat-responder's hand-rolled refusal detection to the SDK contract (today's coverage already lands all three Tier-1 vendor refusal shapes per commit `4a1513c`; the SDK helper consolidates the matrix in one place for cross-host consistency).
+
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
 ### Marketing site + multi-page spec corpus shipped to openwop.dev (2026-05-21)
@@ -46,7 +63,7 @@ Both filed as Draft earlier today (aa94003); promoted Active after their protoco
 
 README.md updated: 7 Active RFCs (was 5), 2 Draft RFCs (was 4). All caught by the structural drift detector. docs/PROTOCOL-STATUS.md auto-regenerated.
 
-Closes Google-acceptance review findings (5) "sandbox proof" and (6) "distributed-systems guarantees" at the protocol-layer-spec boundary. Reference-host wiring closes them at the cross-host-conformance boundary.
+Closes standards-readiness review findings (5) "sandbox proof" and (6) "distributed-systems guarantees" at the protocol-layer-spec boundary. Reference-host wiring closes them at the cross-host-conformance boundary.
 
 ### RFC 0037 (multi-agent execution model) Phase 1 promoted Draft → Active same-day (2026-05-21)
 
@@ -60,7 +77,7 @@ Filed as Draft earlier today (aa94003); now graduates to Active after the Phase 
 - README.md spec table gains `multi-agent-execution.md` row + "Total: 38 docs"; corpus counts bumped (`37 → 38 prose specs`, `187 → 188 scenarios`); RFC enumeration updated (`Active` 4 → 5; `Draft` 5 → 4).
 - conformance/README.md scenario count bumped 187 → 188 (in two places).
 
-Closes Google-acceptance review finding (3) "multi-agent semantics not fully portable" at the Phase 1 boundary. Phases 2-4 remain open work for follow-up RFCs.
+Closes standards-readiness review finding (3) "multi-agent semantics not fully portable" at the Phase 1 boundary. Phases 2-4 remain open work for follow-up RFCs.
 
 ### RFC 0034 (OTel collector test seam) promoted Draft → Active same-day (2026-05-21)
 
@@ -97,7 +114,7 @@ Soak waiver: the 7-day comment window's procedural purpose (give external review
 
 **Deferred (post-Accepted slice):** three SDK helper publishes surfaced by MyndHyve's §B.3 adoption feedback — `parseRefusal(providerResponse): RefusalSignal | null` (per-provider safety-stop normalizer), `buildReasoningDirective` export from `sdk/typescript/`, and `@openwop/conformance-sdk/mint-test-key`. Tracked in `docs/handoffs/MYNDHYVE-RFC-0030-0033-ADOPTION-FEEDBACK-2026-05-20.md` §"Summary of resolutions" rows #10–#12.
 
-### 5 new Draft RFCs filed against the Google-acceptance review findings (2026-05-21)
+### 5 new Draft RFCs filed against the external standards-readiness review findings (2026-05-21)
 
 Lands 5 RFCs at `Status: Draft` covering the structural gaps the standards-review pass flagged. None affects v1 wire shapes; all are additive within v1.x. Each RFC has its own 7-day comment window (30-day for the governance RFC) after the steward marks it ready for review.
 

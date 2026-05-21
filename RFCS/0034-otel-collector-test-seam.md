@@ -19,7 +19,7 @@ Define a normative host-extension test seam — `POST /v1/host/sample/test/otel/
 
 ## Motivation
 
-Per `docs/KNOWN-LIMITS.md:30-31` and the Google-acceptance review of 2026-05-21, "the conformance OTel collector seam doesn't yet inspect span attributes; a host could pass conformance while leaking BYOK material on telemetry exports." This is a real Google-scale credibility gap — every production deployment ships OTel telemetry, and the spec's `SR-1 secret-redaction invariant` (`agent-memory.md` §"SR-1") + `envelope-reasoning-secret-redaction` invariant cannot be cross-host verified without an introspection seam.
+Per `docs/KNOWN-LIMITS.md:30-31` and the external standards-readiness review of 2026-05-21, "the conformance OTel collector seam doesn't yet inspect span attributes; a host could pass conformance while leaking BYOK material on telemetry exports." This is a real production-scale credibility gap — every production deployment ships OTel telemetry, and the spec's `SR-1 secret-redaction invariant` (`agent-memory.md` §"SR-1") + `envelope-reasoning-secret-redaction` invariant cannot be cross-host verified without an introspection seam.
 
 The envelope-reasoning-secret-redaction conformance scenario already exists (`conformance/src/scenarios/envelope-reasoning-secret-redaction.test.ts`) with live behavioral OTel + debug-bundle assertions — but they soft-skip on HTTP 404 because the seams are not normatively specified. This RFC formalizes the seams so the soft-skip becomes capability-gated (hosts that advertise opt in; hosts that don't are honest about not implementing).
 
@@ -95,7 +95,7 @@ The SECURITY invariant tier-promotion is technically a strengthening of conforma
 
 ## Alternatives considered
 
-1. **Don't promote the invariants.** Rejected — leaves the Google-acceptance gap open. The reviewer's specific framing was "a host could pass conformance while leaking BYOK material on telemetry exports."
+1. **Don't promote the invariants.** Rejected — leaves the standards-readiness gap open. The reviewer's specific framing was "a host could pass conformance while leaking BYOK material on telemetry exports."
 2. **Add a generic `/v1/test/otel` seam at the v1 wire surface.** Rejected — test seams don't belong in the protocol wire surface per `host-extensions.md` §"Canonical prefixes." The `host-extension` namespace is the right home.
 3. **Standardize OTel collector configuration (e.g., a normative `OPENWOP_OTEL_EXPORTER_*` env-var set).** Rejected — overlaps OpenTelemetry's own spec authority; OpenWOP shouldn't normate how hosts wire their collector.
 
@@ -125,4 +125,4 @@ Path to `Active → Accepted`: a non-steward host advertises the new capability 
 - `spec/v1/observability.md` (the doc this RFC extends)
 - `spec/v1/host-extensions.md` §"Canonical prefixes" (the namespace home for the new seams)
 - `spec/v1/debug-bundle.md` (the parent shape of the debug-bundle export)
-- Google-acceptance review 2026-05-21 — finding (5) "Security posture insufficient — no telemetry redaction conformance"
+- External standards-readiness review 2026-05-21 — finding (5) "Security posture insufficient — no telemetry redaction conformance"

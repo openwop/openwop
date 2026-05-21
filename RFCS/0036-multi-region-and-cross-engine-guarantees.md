@@ -19,7 +19,7 @@ Promote the multi-region idempotency contract and the cross-engine append-orderi
 
 ## Motivation
 
-Per `docs/KNOWN-LIMITS.md:17,33` + `spec/v1/idempotency.md:163` + the Google-acceptance review 2026-05-21 finding (6): "Idempotency, replay, event ordering, and versioning are well documented, but multi-region behavior is explicitly best-effort and lower-confidence... For Google-scale workflow orchestration, cross-region reconciliation, event-log ordering, replay determinism, and failure recovery need stronger executable proof."
+Per `docs/KNOWN-LIMITS.md:17,33` + `spec/v1/idempotency.md:163` + the external standards-readiness review 2026-05-21 finding (6): "Idempotency, replay, event ordering, and versioning are well documented, but multi-region behavior is explicitly best-effort and lower-confidence... For production-scale workflow orchestration, cross-region reconciliation, event-log ordering, replay determinism, and failure recovery need stronger executable proof."
 
 Today the relevant scenarios are:
 - `multi-region-idempotency.test.ts` — capability-shape only; behavioral assertion needs cross-region partition simulation.
@@ -142,5 +142,5 @@ Path to `Active → Accepted`: Postgres reference host implements + passes; non-
 - `spec/v1/idempotency.md` §"Multi-region reconciliation" (line 163)
 - `spec/v1/replay.md`
 - `RFCS/0001-rfc-process.md` §"Promotion to Accepted"
-- Google-acceptance review 2026-05-21 — finding (6)
+- External standards-readiness review 2026-05-21 — finding (6)
 - `examples/hosts/postgres/src/multi-region.ts` (existing canonical resolver, 6-path unit test — the algorithm itself; this RFC adds the cross-host conformance gate)

@@ -8,7 +8,7 @@ The bootstrap-phase rule in `CONTRIBUTING.md` is one-approval-merge until `MAINT
 
 GOV-5 closes the gap **before** any maintainer promotion: invite an external reviewer to be the second pair of eyes on the next 2–3 normative RFCs. The reviewer is not a maintainer (no merge rights, no governance vote) — they are a **named approving reviewer** in the RFC `## Reviewers` section. Their public approval is the artifact.
 
-The Google-acceptance review explicitly flagged governance neutrality (GOVERNANCE.md §"Path to working group") as a blocker. An external reviewer on record is the cheapest non-trivial move toward that neutrality without requiring a full maintainer promotion or vendor-neutral-org migration.
+The external standards-readiness review explicitly flagged governance neutrality (GOVERNANCE.md §"Path to working group") as a blocker. An external reviewer on record is the cheapest non-trivial move toward that neutrality without requiring a full maintainer promotion or vendor-neutral-org migration.
 
 ## Candidate profile
 

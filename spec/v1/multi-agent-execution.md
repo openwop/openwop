@@ -4,7 +4,7 @@
 
 ## Why this exists
 
-Per the Google-acceptance review of 2026-05-21, finding (3): *"OpenWOP defines identities, dispatch, memory, reasoning events, envelopes, prompts, MCP/A2A composition, and host capabilities, but it does not yet give a sufficiently formal interoperable execution model for planner/worker handoff, confidence semantics, agent memory lifecycle, cross-host causality, and replay under nondeterministic model behavior."*
+Per the external standards-readiness review of 2026-05-21, finding (3): *"OpenWOP defines identities, dispatch, memory, reasoning events, envelopes, prompts, MCP/A2A composition, and host capabilities, but it does not yet give a sufficiently formal interoperable execution model for planner/worker handoff, confidence semantics, agent memory lifecycle, cross-host causality, and replay under nondeterministic model behavior."*
 
 The existing RFCs cover slices but no single doc states the **execution model** as a portable contract:
 
@@ -173,4 +173,4 @@ Hosts that do NOT advertise `capabilities.multiAgent.executionModel.supported: t
 - [`RFCS/0026-provider-usage-event.md`](../../RFCS/0026-provider-usage-event.md) — cost-attribution surface.
 - [`spec/v1/replay.md`](./replay.md) §"Determinism with non-deterministic agents" — the replay contract this execution model preserves.
 - [`spec/v1/positioning.md`](./positioning.md) — "we don't standardize orchestration topology" — the principle this RFC's `executionModel.version` flag respects (the framework is opt-in; non-advertising hosts retain full implementation flexibility).
-- Google-acceptance review 2026-05-21 — finding (3).
+- External standards-readiness review 2026-05-21 — finding (3).

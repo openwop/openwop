@@ -19,7 +19,7 @@ Specify the **formal interoperable execution model** for multi-agent workflows: 
 
 ## Motivation
 
-Per Google-acceptance review 2026-05-21 finding (3): "OpenWOP defines identities, dispatch, memory, reasoning events, envelopes, prompts, MCP/A2A composition, and host capabilities, but it does not yet give a sufficiently formal interoperable execution model for planner/worker handoff, confidence semantics, agent memory lifecycle, cross-host causality, and replay under nondeterministic model behavior."
+Per external standards-readiness review 2026-05-21 finding (3): "OpenWOP defines identities, dispatch, memory, reasoning events, envelopes, prompts, MCP/A2A composition, and host capabilities, but it does not yet give a sufficiently formal interoperable execution model for planner/worker handoff, confidence semantics, agent memory lifecycle, cross-host causality, and replay under nondeterministic model behavior."
 
 The reviewer is correct that the existing RFCs cover slices but no doc states the full execution semantics in one normative place. This RFC is the integration layer.
 
@@ -149,4 +149,4 @@ Path to `Active → Accepted`: cross-host advertisement evidence per RFCs/0001 �
 - `spec/v1/replay.md` §"Determinism with non-deterministic agents"
 - `spec/v1/positioning.md` (the "we don't standardize orchestration topology" claim this RFC must respect)
 - `docs/KNOWN-LIMITS.md:18` (LLM cache-key shape-only — Phase 4 input)
-- Google-acceptance review 2026-05-21 — finding (3)
+- External standards-readiness review 2026-05-21 — finding (3)
