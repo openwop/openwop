@@ -37,15 +37,13 @@ interface EnvelopeReliabilityAd {
     truncationBudgetMultiplier?: number;
   };
 }
-interface ModelCapabilityRow {
-  provider: string;
-  model: string;
-  capabilities: string[];
-}
 interface ModelCapabilitiesAd {
   supported?: boolean;
   substitutionSupported?: boolean;
-  advertised?: ModelCapabilityRow[];
+  // Per schemas/capabilities.schema.json §modelCapabilities.advertised:
+  // flat list of capability identifiers (`structured-output`, `reasoning`, …),
+  // not per-model rows.
+  advertised?: string[];
 }
 
 interface Caps {
@@ -256,23 +254,12 @@ export function CapabilitiesPanel() {
             <p>
               <strong>{caps.capabilities.modelCapabilities.supported ? 'Advertised' : 'Not advertised'}</strong>
               {' · '}substitution {caps.capabilities.modelCapabilities.substitutionSupported ? 'on' : 'off'}
-              {' · '}{caps.capabilities.modelCapabilities.advertised?.length ?? 0} models declared
+              {' · '}{caps.capabilities.modelCapabilities.advertised?.length ?? 0} capabilities declared
             </p>
             {caps.capabilities.modelCapabilities.advertised?.length ? (
-              <table className="cap-table">
-                <thead>
-                  <tr><th>Provider</th><th>Model</th><th>Capabilities</th></tr>
-                </thead>
-                <tbody>
-                  {caps.capabilities.modelCapabilities.advertised.map((row) => (
-                    <tr key={`${row.provider}/${row.model}`}>
-                      <td><code>{row.provider}</code></td>
-                      <td><code>{row.model}</code></td>
-                      <td style={{ fontFamily: 'var(--mono)', fontSize: 11 }}>{row.capabilities.join(', ')}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <p style={{ fontFamily: 'var(--mono)', fontSize: 12 }}>
+                {caps.capabilities.modelCapabilities.advertised.map((c) => <code key={c} style={{ marginRight: 8 }}>{c}</code>)}
+              </p>
             ) : null}
           </>
         ) : (

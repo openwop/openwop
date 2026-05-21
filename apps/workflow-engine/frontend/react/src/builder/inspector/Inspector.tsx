@@ -22,14 +22,12 @@ function useHostAdvertisedModelCapabilities(): Set<string> | null {
     getCapabilities()
       .then((c) => {
         if (cancelled) return;
-        const advertised = (c as { capabilities?: { modelCapabilities?: { advertised?: Array<{ capabilities?: string[] }> } } })
+        // Per schemas/capabilities.schema.json §modelCapabilities.advertised:
+        // a flat list of capability identifiers.
+        const advertised = (c as { capabilities?: { modelCapabilities?: { advertised?: string[] } } })
           .capabilities?.modelCapabilities?.advertised;
         if (Array.isArray(advertised)) {
-          const union = new Set<string>();
-          for (const row of advertised) {
-            for (const c of row.capabilities ?? []) union.add(c);
-          }
-          setCaps(union);
+          setCaps(new Set(advertised));
         }
       })
       .catch(() => { /* best-effort */ });
