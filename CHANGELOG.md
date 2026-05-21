@@ -11,6 +11,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### 5 new Draft RFCs filed against the Google-acceptance review findings (2026-05-21)
+
+Lands 5 RFCs at `Status: Draft` covering the structural gaps the standards-review pass flagged. None affects v1 wire shapes; all are additive within v1.x. Each RFC has its own 7-day comment window (30-day for the governance RFC) after the steward marks it ready for review.
+
+- **`RFCS/0034-otel-collector-test-seam.md`** — graduates `secret-leakage-otel-attribute` + `secret-leakage-debug-bundle-otel` SECURITY invariants from `reference-impl` to `protocol` tier via a normative `/v1/host/sample/test/otel/spans` + `.../debug-bundle/export` seam. Closes the BYOK-telemetry-leakage gap the reviewer flagged at finding (5).
+- **`RFCS/0035-sandbox-execution-contract.md`** — defines the `capabilities.sandbox` block (isolationModel + 8 failure-mode invariants), graduates 8 `node-pack-sandbox-*` rows from `reference-impl` to `protocol` tier, and identifies the path to a first sandbox-executing reference host. Closes finding (5)'s "no sandbox proof."
+- **`RFCS/0036-multi-region-and-cross-engine-guarantees.md`** — promotes `multi-region-idempotency` from shape-only to behavioral via the new `capabilities.idempotency.multiRegion` block + the cross-engine append-ordering scenario. Closes finding (6).
+- **`RFCS/0037-multi-agent-execution-model.md`** — formalizes the planner→worker handoff state machine (Phase 1) + defers confidence semantics, cross-host causation, and replay-under-nondeterminism to follow-up RFCs. Closes finding (3).
+- **`RFCS/0038-working-group-charter.md`** — files the working-group charter at `Draft`, ready to ratify when the existing `GOVERNANCE.md` §"Path to working group" tripwire fires. Closes finding (7).
+
+`GOVERNANCE.md:27` extended with a forward-pointer to RFC 0038.
+
 ### RFC 0030/0031/0032/0033 amendments from MyndHyve adoption feedback (2026-05-21)
 
 Lands 9 spec amendments surfaced by MyndHyve's adoption of the four envelope LLM-contract-hardening RFCs. All amendments are **additive** per `COMPATIBILITY.md §2.1` — compatible hosts that already followed the implicit best practices remain compliant. See `docs/handoffs/MYNDHYVE-RFC-0030-0033-ADOPTION-FEEDBACK-2026-05-20.md` for the full feedback record.

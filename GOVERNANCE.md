@@ -34,7 +34,7 @@ The default decision rule is **lazy consensus**: a proposal is adopted if no mai
 
 For decisions that require explicit signoff (see "Spec change process"), the rule is **two maintainer approvals** with no outstanding objections.
 
-Tiebreaker for unresolved disagreement: the lead maintainer (the first entry in the maintainer list) holds final authority. This is a transitional rule and is expected to be replaced by a steering committee vote once the maintainer set has at least three independent organizations represented.
+Tiebreaker for unresolved disagreement: the lead maintainer (the first entry in the maintainer list) holds final authority. This is a transitional rule and is expected to be replaced by a steering committee vote once the maintainer set has at least three independent organizations represented. **The replacement working-group charter is filed as [`RFCS/0038-working-group-charter.md`](./RFCS/0038-working-group-charter.md) at `Status: Draft`** — it ratifies and replaces this section the moment the tripwire defined at §"Path to working group" below fires.
 
 ## Spec change process
 

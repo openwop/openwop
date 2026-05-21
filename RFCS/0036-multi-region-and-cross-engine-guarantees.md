@@ -1,0 +1,139 @@
+# RFC 0036: Multi-region idempotency + cross-engine append-ordering guarantees
+
+| Field | Value |
+|---|---|
+| **RFC** | 0036 |
+| **Title** | Multi-region idempotency + cross-engine append-ordering guarantees |
+| **Status** | `Draft` |
+| **Author(s)** | David Tufts (@davidscotttufts) |
+| **Created** | 2026-05-21 |
+| **Updated** | 2026-05-21 |
+| **Affects** | `spec/v1/idempotency.md` §"Multi-region reconciliation" (promote prose from "lower-confidence" to normative MUST when capability advertised) · `spec/v1/replay.md` (cross-region recovery test path) · `schemas/capabilities.schema.json` (adds `capabilities.idempotency.multiRegion` + `capabilities.eventLog.crossEngineOrdering`) · `conformance/src/scenarios/multi-region-idempotency.test.ts` (graduates from shape-only) · NEW `conformance/src/scenarios/cross-engine-append-ordering.test.ts` · multi-region simulator in reference host · `INTEROP-MATRIX.md` · CHANGELOG |
+| **Compatibility** | `additive` |
+| **Supersedes** | — |
+| **Superseded by** | — |
+
+## Summary
+
+Promote the multi-region idempotency contract and the cross-engine append-ordering contract from "lower-confidence shape-only" to normative MUST when a host advertises the matching capability. Adds the wire-level capability flags, the simulator harness, and the two behavioral conformance scenarios that close `docs/KNOWN-LIMITS.md` §"Shape-only conformance coverage" row 17 (`multi-region-idempotency.test.ts`) and §"Behavior tests too coarse" row 33 (cross-engine append ordering).
+
+## Motivation
+
+Per `docs/KNOWN-LIMITS.md:17,33` + `spec/v1/idempotency.md:163` + the Google-acceptance review 2026-05-21 finding (6): "Idempotency, replay, event ordering, and versioning are well documented, but multi-region behavior is explicitly best-effort and lower-confidence... For Google-scale workflow orchestration, cross-region reconciliation, event-log ordering, replay determinism, and failure recovery need stronger executable proof."
+
+Today the relevant scenarios are:
+- `multi-region-idempotency.test.ts` — capability-shape only; behavioral assertion needs cross-region partition simulation.
+- `append-ordering.test.ts` — single-engine only; cross-engine fixture would catch race conditions hidden by intra-engine sequence ordering.
+
+Both gaps are honest in KNOWN-LIMITS but undermine standardization credibility — a reviewer cannot mechanically distinguish "the spec normates X" from "the spec aspires to X."
+
+## Proposal
+
+### §A — `capabilities.idempotency.multiRegion` (normative)
+
+```diff
+   "idempotency": {
++    "multiRegion": {
++      "type": "object",
++      "additionalProperties": false,
++      "required": ["supported"],
++      "properties": {
++        "supported": { "type": "boolean", "description": "Host implements cross-region idempotency reconciliation per spec/v1/idempotency.md §'Multi-region reconciliation'. When supported: true, an Idempotency-Key write that succeeds in one region is observable in another region within `replicationLagBoundMs`." },
++        "replicationLagBoundMs": { "type": "integer", "minimum": 0, "maximum": 60000, "description": "Conservative upper bound on cross-region replication lag for idempotency-key records. Conformance asserts that an Idempotency-Key write in region A is read-visible in region B after waiting `replicationLagBoundMs + safetyMargin`." },
++        "partitionRecoveryStrategy": { "type": "string", "enum": ["last-writer-wins", "first-writer-wins", "ulid-tiebreaker"], "description": "Host's deterministic resolution rule when a partition healed with conflicting idempotency-key records. Conformance asserts the chosen rule actually applies." }
++      }
++    }
+   }
+```
+
+When `supported: true`, `spec/v1/idempotency.md` §"Multi-region reconciliation" prose flips from informational to normative MUST: the host MUST converge to a single committed outcome for any Idempotency-Key value across regions within `replicationLagBoundMs + safetyMargin`; the host MUST resolve conflicts via the advertised `partitionRecoveryStrategy`.
+
+### §B — `capabilities.eventLog.crossEngineOrdering` (normative)
+
+```diff
++  "eventLog": {
++    "type": "object",
++    "additionalProperties": false,
++    "properties": {
++      "crossEngineOrdering": {
++        "type": "object",
++        "additionalProperties": false,
++        "required": ["supported"],
++        "properties": {
++          "supported": { "type": "boolean", "description": "Host implements append-ordering guarantees ACROSS multiple engine instances writing to the same run's event log. When supported: true, two engines appending to the same runId converge on a total order that any reader observes consistently." },
++          "orderingModel": { "type": "string", "enum": ["lamport", "vector-clock", "global-sequencer"], "description": "Mechanism the host uses to derive the total order." }
++        }
++      }
++    }
++  }
+```
+
+### §C — Multi-region simulator (host-side)
+
+Add `examples/hosts/postgres/test/multi-region-simulator.ts` — a programmable two-region Postgres harness with:
+- Logical replication delay knob (`setReplicationLagMs(ms: number)`).
+- Partition injection (`partitionRegions(): () => unhealRegions()`).
+- Idempotency-Key write probes (`writeIdempotencyKey(region, key, value)`) and read probes (`readIdempotencyKey(region, key)`).
+- Convergence check (`expectKeyEventuallyConvergent(key, expectedValue, maxWaitMs)`).
+
+The simulator is opt-in via `OPENWOP_TEST_MULTI_REGION=1`. Scenarios that need it gate cleanly when the env-var is absent.
+
+### §D — Conformance scenarios
+
+`conformance/src/scenarios/multi-region-idempotency.test.ts` — graduate from shape-only to behavioral. New assertions:
+1. Cross-region read-after-write: write Idempotency-Key in region A; after `replicationLagBoundMs + safety`, read in region B returns the same record.
+2. Partition-then-heal: inject partition; concurrent writes to the same key in both regions; heal partition; verify the advertised `partitionRecoveryStrategy` actually applied.
+3. Replication-lag bound: write in A; assert read in B fails (or returns stale) before `replicationLagBoundMs`; succeeds after.
+
+NEW `conformance/src/scenarios/cross-engine-append-ordering.test.ts` — two-engine fixture:
+1. Two engines append concurrently to the same runId's event log; verify both engines observe a consistent total order on read.
+2. Engine-A-only sequence in interrupt-resume path; verify the resumption engine sees A's appends in order.
+
+### §E — Replay-determinism cross-region (additive prose to `spec/v1/replay.md`)
+
+When `capabilities.idempotency.multiRegion.supported: true` AND `capabilities.eventLog.crossEngineOrdering.supported: true`, a `POST /v1/runs/{runId}:fork` invocation served by a different region MUST produce a fork run whose state matches a fork served by the original region (bit-equivalent against the same forkAtEventLogIdx).
+
+## Compatibility
+
+**Additive.** Hosts that don't advertise stay at today's "lower-confidence" posture; the existing prose in `idempotency.md` and `replay.md` continues to apply informationally. Hosts that DO advertise opt into the normative MUSTs.
+
+## Conformance
+
+3 behavioral assertions added to existing `multi-region-idempotency.test.ts` per §D.1-3. NEW `cross-engine-append-ordering.test.ts` per §D.4-5. Both gate on the relevant capability flag + the `OPENWOP_TEST_MULTI_REGION=1` env-var.
+
+## Alternatives considered
+
+1. **Mandate multi-region support in the production-profile.** Rejected — many production deployments are single-region by intentional architectural choice (lower complexity, lower cost, regulatory data-residency constraints). The capability-advertisement pattern lets honest hosts claim what they actually do.
+2. **Standardize on a specific replication technology (Postgres logical replication, CockroachDB transactions, Spanner TrueTime).** Rejected — the contract is observable behavior (read-after-write convergence within `replicationLagBoundMs`), not technology.
+3. **Cross-engine ordering as a top-level MUST.** Rejected — single-engine deployments are common and shouldn't be forced to advertise multi-engine support.
+
+## Unresolved questions
+
+1. **What is the right `replicationLagBoundMs` ceiling?** 60s feels conservative; production cross-region deployments typically run < 10s. Defer to operator advertisement; the schema validates the upper bound.
+2. **Three-region scenarios.** Should the conformance scenario support N > 2 regions? Recommend N=2 for the first cut; expand later if a 3+ region host adopts.
+3. **Cross-engine ordering + interrupt-resume interaction.** The interrupt-resume model already requires engine handoff; this RFC's §D.5 covers it but doesn't address split-brain scenarios.
+
+## Acceptance criteria
+
+- [ ] Spec text merged (this file).
+- [ ] `schemas/capabilities.schema.json` extended per §A + §B.
+- [ ] `spec/v1/idempotency.md` §"Multi-region reconciliation" prose tightened per §A's normative MUST.
+- [ ] `spec/v1/replay.md` extended per §E.
+- [ ] Multi-region simulator landed in `examples/hosts/postgres/test/` per §C.
+- [ ] `conformance/src/scenarios/multi-region-idempotency.test.ts` graduated per §D.1-3.
+- [ ] NEW `conformance/src/scenarios/cross-engine-append-ordering.test.ts` per §D.4-5.
+- [ ] Postgres reference host advertises both capability blocks; passes all scenarios under `OPENWOP_TEST_MULTI_REGION=1`.
+- [ ] `INTEROP-MATRIX.md` row updated.
+- [ ] CHANGELOG entry under `[Unreleased]`.
+- [ ] `docs/KNOWN-LIMITS.md` rows 17 + 33 dropped from §"Shape-only" and §"Behavior tests too coarse."
+
+Path to `Active → Accepted`: Postgres reference host implements + passes; non-steward host's advertisement closes the cross-host validation criterion.
+
+## References
+
+- `docs/KNOWN-LIMITS.md:17,33`
+- `spec/v1/idempotency.md` §"Multi-region reconciliation" (line 163)
+- `spec/v1/replay.md`
+- `RFCS/0001-rfc-process.md` §"Promotion to Accepted"
+- Google-acceptance review 2026-05-21 — finding (6)
+- `examples/hosts/postgres/src/multi-region.ts` (existing canonical resolver, 6-path unit test — the algorithm itself; this RFC adds the cross-host conformance gate)
