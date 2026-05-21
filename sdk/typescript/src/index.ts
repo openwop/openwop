@@ -166,3 +166,15 @@ export type {
 // refusal risk per the 2026-05-21 RFC 0030 amendment).
 export { buildReasoningDirective } from './envelope-directive.js';
 export type { ReasoningDirectiveStrength } from './envelope-directive.js';
+
+// RFC 0032 §B.3 + RFC 0033 §D refusal detection helper. Normalizes
+// per-provider safety-stop signals (Anthropic `stop_reason: "refusal"`,
+// OpenAI `message.refusal` + `finish_reason: "content_filter"`, Gemini
+// `finishReason: "SAFETY"` + `promptFeedback.blockReason: "SAFETY"`)
+// to a canonical `{ refusalText, safetyCategory?, provider }` shape.
+// Hosts route the non-null return through `envelope.refusal` emission
+// + the `envelope_refusal` terminal error code (RFC 0033 §F).
+// **SECURITY:** Pass `refusalText` through the BYOK redaction harness
+// BEFORE persistence — this helper does NOT redact.
+export { parseRefusal } from './parse-refusal.js';
+export type { RefusalProvider, RefusalSignal } from './parse-refusal.js';
