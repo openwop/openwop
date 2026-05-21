@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — For pack authors</title>
+  <meta name="description" content="You&#39;re packaging reusable workflow components — node implementations, agent definitions, or chained workflow templates — for other OpenWOP users to consume. This page covers the manifest shape, the signing recipe, the namespace tiers, and how to…"/>
+  <link rel="canonical" href="https://openwop.dev/for/pack-authors/"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — For pack authors"/>
+  <meta property="og:description" content="You&#39;re packaging reusable workflow components — node implementations, agent definitions, or chained workflow templates — for other OpenWOP users to consume. This page covers the manifest shape, the signing recipe, the namespace tiers, and how to…"/>
+  <meta property="og:url" content="https://openwop.dev/for/pack-authors/"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — For pack authors"/>
+  <meta name="twitter:description" content="You&#39;re packaging reusable workflow components — node implementations, agent definitions, or chained workflow templates — for other OpenWOP users to consume. This page covers the manifest shape, the signing recipe, the namespace tiers, and how to…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="" href="/spec/v1/">Spec</a>
+      <a class="" href="/rfcs/">RFCs</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/changelog/">Changelog</a>
+      <a class="" href="/faq/">FAQ</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="for-pack-authors">For pack authors</h1>
+<p>You're packaging reusable workflow components — node implementations, agent definitions, or chained workflow templates — for other OpenWOP users to consume. This page covers the manifest shape, the signing recipe, the namespace tiers, and how to publish to the canonical registry.</p>
+<h2 id="what-a-pack-is">What a pack is</h2>
+<p>An OpenWOP pack is a signed tarball containing:</p>
+<ul>
+<li>A <code>pack.json</code> manifest declaring the pack name, version, and the types it exports.</li>
+<li>One or more node implementations (TypeScript, Python, Go, or pre-compiled WASM).</li>
+<li>Optional agent manifests (per <a href="/rfcs/0003-agent-packs.html">RFC 0003</a>).</li>
+<li>A detached Ed25519 signature over the tarball bytes.</li>
+</ul>
+<p>Hosts consume packs at install time, verify the signature against the publisher's public key, and register the declared types in their node catalog. The host's pack-consumer reference implementation is at <a href="https://github.com/openwop/openwop/tree/main/examples/hosts/postgres/src/pack-consumer.ts"><code>examples/hosts/postgres/src/pack-consumer.ts</code></a> — it's the canonical install-time security check (lockfile parse, SRI integrity, version-drift detection, Ed25519 signature verification).</p>
+<h2 id="read-these-first">Read these first</h2>
+<ul>
+<li><a href="/spec/v1/node-packs.html">Node packs</a> — pack format, manifest schema, dependency resolution, lockfile semantics, signing recipe.</li>
+<li><a href="/spec/v1/workflow-chain-packs.html">Workflow chain packs</a> — composing reusable multi-step workflow templates (RFC 0013).</li>
+<li><a href="/spec/v1/registry-operations.html">Registry operations</a> — submission, signing, deprecation, yank, key rotation.</li>
+<li><a href="https://github.com/openwop/openwop/blob/main/schemas/agent-manifest.schema.json"><code>agent-manifest.schema.json</code></a> — agent pack manifest shape (RFC 0003).</li>
+</ul>
+<h2 id="namespace-tiers">Namespace tiers</h2>
+<p>Packs are partitioned into three tiers. The tier is part of the pack identifier; there's no implicit promotion.</p>
+<table>
+<thead><tr><th>Tier</th><th>Publishing rule</th><th>Signing root</th><th>Example</th></tr></thead>
+<tbody>
+<tr><td><code>core.*</code></td><td>OpenWOP-maintained; canonical baseline</td><td><code>openwop-registry-root</code></td><td><code>core.openwop.http</code></td></tr>
+<tr><td><code>vendor.*</code></td><td>Named vendor; signed against the registry root with a vendor subkey</td><td><code>openwop-registry-root</code> → vendor subkey</td><td><code>vendor.myndhyve.canvas</code></td></tr>
+<tr><td><code>community.*</code></td><td>Open publishing via PR; maintainer-controlled signing keys</td><td>per-publisher Ed25519 keypair</td><td><code>community.openwop-team.demo</code></td></tr>
+</tbody></table>
+<p>Host-private deployments can additionally use <code>private.*</code> — these never enter the public registry.</p>
+<h2 id="sign-your-tarball">Sign your tarball</h2>
+<p>The canonical signing recipe (per <a href="/spec/v1/node-packs.html"><code>node-packs.md</code></a> §"Signing recipe") is:</p>
+<p>1. Pack the tarball bytes (<code>npm pack</code> or equivalent). 2. Compute the SRI integrity (<code>sha512-…</code>) of the tarball. 3. Sign the tarball bytes with an Ed25519 private key. 4. Submit the <code>.tgz</code> + the <code>.sig</code> + a manifest referencing both, with the SRI integrity matching the tarball.</p>
+<p>A reference workflow lives at <a href="https://github.com/openwop/openwop/blob/main/scripts/build-pack-tarball.mjs"><code>scripts/build-pack-tarball.mjs</code></a> — you can mine it for the canonical command sequence.</p>
+<h2 id="publish-to-the-canonical-registry">Publish to the canonical registry</h2>
+<p>The reference registry at <a href="https://packs.openwop.dev/"><code>packs.openwop.dev</code></a> has no write API by design. Publishing is via PR against <a href="https://github.com/openwop/openwop"><code>openwop/openwop</code></a>:</p>
+<p>1. Fork the repo. 2. Add your pack tarball + signature + manifest under the appropriate namespace tier. 3. Add a row to the registry index (<code>registry/v1/index.json</code>) via the canonical generator script. 4. Open a PR with the conventional commit prefix <code>feat(registry):</code>.</p>
+<p>The registry rebuilds on merge. Your pack URL resolves under <code>/v1/packs/{name}/-/{version}.tgz</code> immediately.</p>
+<h2 id="publish-to-a-private-registry">Publish to a private registry</h2>
+<p>You can stand up your own OpenWOP registry by serving the discovery doc + the pack URLs over HTTPS. The discovery shape is defined at <a href="/spec/v1/registry-operations.html"><code>registry-operations.md</code></a> §"Discovery document." Hosts that point at your registry will consume your packs identically to the canonical one.</p>
+<p>Use cases: tenant-scoped private packs, air-gapped deployments, enterprise compliance ("our packs never leave our network").</p>
+<h2 id="common-pitfalls">Common pitfalls</h2>
+<ul>
+<li><strong>Don't reuse a signing key across publishers.</strong> Each <code>community.&amp;lt;publisher&amp;gt;.*</code> pack should use a publisher-scoped Ed25519 keypair.</li>
+<li><strong>Pin your dependencies.</strong> Pack-to-pack dependencies are resolved via lockfile; install-time integrity checks fail closed on version drift.</li>
+<li><strong>Honor SR-1.</strong> If your nodes touch secrets, follow the <a href="https://github.com/openwop/openwop/blob/main/SECURITY/invariants.yaml">secret-redaction invariant</a> — never put raw secrets in node outputs or event payloads.</li>
+<li><strong>Bump majors honestly.</strong> A pack version bump that changes node input/output shapes is a breaking change; downstream workflows must be able to pin to the prior major.</li>
+</ul>
+<h2 id="next-steps">Next steps</h2>
+<table>
+<thead><tr><th>Action</th><th>Where</th></tr></thead>
+<tbody>
+<tr><td>Read the node-pack spec</td><td><a href="/spec/v1/node-packs.html">/spec/v1/node-packs.html</a></td></tr>
+<tr><td>Browse the registry</td><td><a href="https://packs.openwop.dev/">packs.openwop.dev ↗</a></td></tr>
+<tr><td>See an example pack</td><td><a href="https://github.com/openwop/openwop/tree/main/registry/v1/packs/core.openwop.examples"><code>registry/v1/packs/core.openwop.examples/</code> ↗</a></td></tr>
+<tr><td>Open a publishing PR</td><td><a href="/spec/v1/registry-operations.html"><code>registry-operations.md</code> ↗</a></td></tr>
+</tbody></table></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

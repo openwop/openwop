@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — RFC 0034: OTel collector test seam + secret-leakage invariant promotion</title>
+  <meta name="description" content="Define a normative host-extension test seam — POST /v1/host/sample/test/otel/spans and POST /v1/host/sample/test/debug-bundle/export — so cross-host conformance scenarios can mechanically verify that BYOK canaries don&#39;t leak into OTel span…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0034-otel-collector-test-seam.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — RFC 0034: OTel collector test seam + secret-leakage invariant promotion"/>
+  <meta property="og:description" content="Define a normative host-extension test seam — POST /v1/host/sample/test/otel/spans and POST /v1/host/sample/test/debug-bundle/export — so cross-host conformance scenarios can mechanically verify that BYOK canaries don&#39;t leak into OTel span…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0034-otel-collector-test-seam.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — RFC 0034: OTel collector test seam + secret-leakage invariant promotion"/>
+  <meta name="twitter:description" content="Define a normative host-extension test seam — POST /v1/host/sample/test/otel/spans and POST /v1/host/sample/test/debug-bundle/export — so cross-host conformance scenarios can mechanically verify that BYOK canaries don&#39;t leak into OTel span…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="" href="/spec/v1/">Spec</a>
+      <a class="active" href="/rfcs/">RFCs</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/changelog/">Changelog</a>
+      <a class="" href="/faq/">FAQ</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="rfc-0034-otel-collector-test-seam-secret-leakage-invariant-promotion">RFC 0034: OTel collector test seam + secret-leakage invariant promotion</h1>
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0034</td></tr>
+<tr><td><strong>Title</strong></td><td>OTel collector test seam + secret-leakage invariant promotion</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Active</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-21</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-21 (Draft → Active same-day: schema additions to <code>capabilities.observability.testSeams</code> landed; spec/v1/observability.md §"OTel collector test seam" added; SECURITY/invariants.yaml graduates <code>secret-leakage-otel-attribute</code> + <code>secret-leakage-debug-bundle-otel</code> from <code>reference-impl</code> to <code>protocol</code> tier; conformance scenario <code>envelope-reasoning-secret-redaction.test.ts</code> tightens soft-skip to capability-gating. Path to <code>Accepted</code>: reference workflow-engine advertises the two seams + the scenario passes against it. The two SECURITY rows' <code>tests:</code> field now points at the live scenario; <code>check-security-invariants.sh</code> enforces non-empty test coverage on every protocol-tier row.)</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>spec/v1/observability.md</code> (adds §"OTel collector test seam") · <code>schemas/capabilities.schema.json</code> (adds <code>capabilities.observability.testSeams</code>) · <code>SECURITY/invariants.yaml</code> (promotes <code>secret-leakage-otel-attribute</code> + <code>secret-leakage-debug-bundle-otel</code> from <code>reference-impl</code> to <code>protocol</code> tier) · <code>conformance/src/scenarios/envelope-reasoning-secret-redaction.test.ts</code> (drops soft-skip on HTTP 404; gates on the new capability instead) · reference hosts (<code>examples/hosts/postgres/</code>) · <code>INTEROP-MATRIX.md</code> · CHANGELOG</td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
+<tr><td><strong>Supersedes</strong></td><td>—</td></tr>
+<tr><td><strong>Superseded by</strong></td><td>—</td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>Define a normative host-extension test seam — <code>POST /v1/host/sample/test/otel/spans</code> and <code>POST /v1/host/sample/test/debug-bundle/export</code> — so cross-host conformance scenarios can mechanically verify that BYOK canaries don't leak into OTel span attributes or debug-bundle exports. Today the two corresponding <code>SECURITY/invariants.yaml</code> rows (<code>secret-leakage-otel-attribute</code>, <code>secret-leakage-debug-bundle-otel</code>) carry <code>tier: reference-impl</code> with <code>non_testability_rationale</code> because no cross-host seam exists; this RFC closes that gap and graduates both invariants to <code>tier: protocol</code>.</p>
+<h2 id="motivation">Motivation</h2>
+<p>Per <code>docs/KNOWN-LIMITS.md:30-31</code> and the external standards-readiness review of 2026-05-21, "the conformance OTel collector seam doesn't yet inspect span attributes; a host could pass conformance while leaking BYOK material on telemetry exports." This is a real production-scale credibility gap — every production deployment ships OTel telemetry, and the spec's <code>SR-1 secret-redaction invariant</code> (<code>agent-memory.md</code> §"SR-1") + <code>envelope-reasoning-secret-redaction</code> invariant cannot be cross-host verified without an introspection seam.</p>
+<p>The envelope-reasoning-secret-redaction conformance scenario already exists (<code>conformance/src/scenarios/envelope-reasoning-secret-redaction.test.ts</code>) with live behavioral OTel + debug-bundle assertions — but they soft-skip on HTTP 404 because the seams are not normatively specified. This RFC formalizes the seams so the soft-skip becomes capability-gated (hosts that advertise opt in; hosts that don't are honest about not implementing).</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-capabilities-observability-testseams-block-normative">§A — <code>capabilities.observability.testSeams</code> block (normative)</h3>
+<p>Add to <code>schemas/capabilities.schema.json</code> under <code>capabilities.observability</code>:</p>
+<pre class="lang-diff"><code>   &quot;observability&quot;: {
+     &quot;type&quot;: &quot;object&quot;,
++    &quot;properties&quot;: {
++      &quot;testSeams&quot;: {
++        &quot;type&quot;: &quot;object&quot;,
++        &quot;additionalProperties&quot;: false,
++        &quot;properties&quot;: {
++          &quot;otelScrape&quot;: {
++            &quot;type&quot;: &quot;boolean&quot;,
++            &quot;description&quot;: &quot;Host exposes POST /v1/host/sample/test/otel/spans returning the host&#39;s accumulated OTel span buffer scoped to a runId. Conformance scenarios use this to verify span attributes don&#39;t carry BYOK canaries. The endpoint is conformance-only (host-extension namespace); production deployments SHOULD return 404 or 403.&quot;
++          },
++          &quot;debugBundleExport&quot;: {
++            &quot;type&quot;: &quot;boolean&quot;,
++            &quot;description&quot;: &quot;Host exposes POST /v1/host/sample/test/debug-bundle/export returning the host&#39;s debug-bundle for a runId. Conformance scenarios use this to verify the bundle&#39;s serialized form doesn&#39;t carry BYOK canaries. Conformance-only.&quot;
++          }
++        }
++      }
++    }
+   }</code></pre>
+<h3 id="b-seam-contract-normative">§B — Seam contract (normative)</h3>
+<p><code>POST /v1/host/sample/test/otel/spans?runId=&amp;lt;id&amp;gt;</code> MUST return <code>200 OK</code> with a JSON body <code>{ spans: Array&amp;lt;{ name, attributes, events }&amp;gt; }</code>. The spans array MUST include every OTel span produced by the host's instrumentation for the named run, including any <code>openwop.*</code>-prefixed attributes added to span context. Hosts MAY redact span content using the canonical <code>[REDACTED:&amp;lt;secretId&amp;gt;]</code> marker per <code>agent-memory.md</code> §SR-1 — that's the contract being tested.</p>
+<p><code>POST /v1/host/sample/test/debug-bundle/export</code> MUST return <code>200 OK</code> with the same payload shape as <code>GET /v1/runs/{runId}/debug-bundle</code> per <code>spec/v1/debug-bundle.md</code>. The seam exists to give conformance scenarios a synchronous endpoint they can hit without first triggering an interrupt → debug bundle workflow.</p>
+<p>Both seams live under the <code>host-extensions.md</code> canonical-prefix <code>/v1/host/sample/test/*</code> and are NOT part of the v1 wire surface. Production hosts SHOULD return 404 or 403 from the seam unless <code>OPENWOP_TEST_OTEL_SCRAPE=true</code> (or equivalent env-gate) is set.</p>
+<h3 id="c-security-invariant-promotion">§C — SECURITY invariant promotion</h3>
+<p><code>SECURITY/invariants.yaml</code> flips two rows from <code>tier: reference-impl</code> to <code>tier: protocol</code>:</p>
+<ul>
+<li><code>secret-leakage-otel-attribute</code> — paired with <code>envelope-reasoning-secret-redaction.test.ts</code> §"OTel-attribute scrape" assertion. Public test glob: <code>conformance/src/scenarios/envelope-reasoning-secret-redaction.test.ts</code>.</li>
+<li><code>secret-leakage-debug-bundle-otel</code> — paired with the same scenario's §"debug-bundle export" assertion.</li>
+</ul>
+<p>Remove the <code>non_testability_rationale</code> field from both rows; populate the existing <code>tests:</code> field with the scenario file path glob (the <code>tests:</code> key is the canonical home for public-test references per <code>SECURITY/invariants.yaml</code>'s schema — 95 existing occurrences across protocol-tier and reference-impl-tier rows).</p>
+<h3 id="d-conformance-scenario-tightening">§D — Conformance scenario tightening</h3>
+<p><code>conformance/src/scenarios/envelope-reasoning-secret-redaction.test.ts</code> — the two <code>it()</code> blocks inside the <code>describe(&#39;envelope-reasoning-secret-redaction: downstream-projection paths (RFC 0030 §E)&#39;, …)</code> block (the OTel-attribute scrape assertion and the debug-bundle-export assertion) currently soft-skip on <code>spansRes.status === 404</code> / <code>bundleRes.status === 404</code>. With this RFC, the soft-skip becomes capability-gated:</p>
+<pre class="lang-diff"><code>-    if (spansRes.status === 404) return; // host doesn&#39;t expose the OTel scrape seam
++    // Gate on capability — if host advertises otelScrape but the seam returns 404, that&#39;s a failure.
++    if (!capabilities.observability?.testSeams?.otelScrape) return;
++    expect(spansRes.status, &#39;host advertising otelScrape MUST serve the seam&#39;).toBe(200);</code></pre>
+<p>Hosts that don't advertise the seam continue to soft-skip honestly (the existing posture). Hosts that DO advertise it MUST serve a valid response.</p>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive.</strong> No existing endpoint changes; no required fields added to any existing schema. The new <code>capabilities.observability.testSeams</code> block is optional; hosts that omit it advertise no test-seam claim and conformance scenarios soft-skip exactly as today.</p>
+<p>The SECURITY invariant tier-promotion is technically a strengthening of conformance requirements — but only for hosts that advertise the new capability. Hosts that don't advertise remain in their current "reference-impl-tier passes via host CI" posture.</p>
+<h2 id="conformance">Conformance</h2>
+<ul>
+<li>Existing scenario <code>envelope-reasoning-secret-redaction.test.ts</code> graduates 2 soft-skip blocks to capability-gated assertions.</li>
+<li>No new scenarios needed.</li>
+<li><code>npm run openwop:check</code>'s <code>check-security-invariants</code> step continues to enforce the public-test-glob requirement for every protocol-tier invariant; the two newly-promoted rows must include the glob.</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<p>1. <strong>Don't promote the invariants.</strong> Rejected — leaves the standards-readiness gap open. The reviewer's specific framing was "a host could pass conformance while leaking BYOK material on telemetry exports." 2. <strong>Add a generic <code>/v1/test/otel</code> seam at the v1 wire surface.</strong> Rejected — test seams don't belong in the protocol wire surface per <code>host-extensions.md</code> §"Canonical prefixes." The <code>host-extension</code> namespace is the right home. 3. **Standardize OTel collector configuration (e.g., a normative <code>OPENWOP_OTEL_EXPORTER_*</code> env-var set).** Rejected — overlaps OpenTelemetry's own spec authority; OpenWOP shouldn't normate how hosts wire their collector.</p>
+<h2 id="unresolved-questions">Unresolved questions</h2>
+<p>1. <strong>Should the seams support <code>streamId</code>-scoped queries?</strong> Per-stream isolation would let conformance scenarios verify cross-stream isolation. Deferred — the runId scope is sufficient for SR-1; cross-stream isolation belongs in a separate <code>STD-X</code> track. 2. <strong>Should debug-bundle export carry a freshness gate?</strong> A host that returns stale buffers could mask leakage windows. Recommend an <code>as-of: &amp;lt;ISO 8601 ts&amp;gt;</code> field; deferred until reference-host implementation exposes a natural freshness signal.</p>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<ul>
+<li>[ ] Spec text merged (this file).</li>
+<li>[ ] <code>schemas/capabilities.schema.json</code> updated with the <code>observability.testSeams</code> block per §A.</li>
+<li>[ ] <code>spec/v1/observability.md</code> updated with a new §"OTel collector test seam" section citing this RFC.</li>
+<li>[ ] <code>SECURITY/invariants.yaml</code> updated per §C; both rows pass the <code>check-security-invariants</code> glob check.</li>
+<li>[ ] <code>conformance/src/scenarios/envelope-reasoning-secret-redaction.test.ts</code> tightened per §D.</li>
+<li>[ ] At least one reference host (Postgres, in-memory, or new) implements both seams + advertises the capability.</li>
+<li>[ ] <code>INTEROP-MATRIX.md</code> updated with the new advertisement on that host's row.</li>
+<li>[ ] CHANGELOG entry under <code>[Unreleased]</code>.</li>
+</ul>
+<p>Path to <code>Active → Accepted</code>: a non-steward host advertises the new capability and the scenario passes against it. Per RFCs/0001 §"Promotion to Accepted."</p>
+<h2 id="references">References</h2>
+<ul>
+<li><code>docs/KNOWN-LIMITS.md</code> §"Behavior tests too coarse to fully prove an invariant" (the two invariants this RFC graduates)</li>
+<li><code>spec/v1/agent-memory.md</code> §"SR-1 secret-redaction invariant"</li>
+<li><code>RFCS/0030-envelope-reasoning-and-tier-one-subset.md</code> §E (envelope-reasoning-secret-redaction invariant)</li>
+<li><code>spec/v1/observability.md</code> (the doc this RFC extends)</li>
+<li><code>spec/v1/host-extensions.md</code> §"Canonical prefixes" (the namespace home for the new seams)</li>
+<li><code>spec/v1/debug-bundle.md</code> (the parent shape of the debug-bundle export)</li>
+<li>External standards-readiness review 2026-05-21 — finding (5) "Security posture insufficient — no telemetry redaction conformance"</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

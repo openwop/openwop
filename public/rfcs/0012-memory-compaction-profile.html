@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — RFC 0012: Memory Compaction Profile</title>
+  <meta name="description" content="Define an optional capability profile that lets a host advertise it runs background memory compaction — periodic distillation of many short-lived MemoryEntry rows into fewer long-lived ones — and emit a canonical memory.compacted audit event when it…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0012-memory-compaction-profile.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — RFC 0012: Memory Compaction Profile"/>
+  <meta property="og:description" content="Define an optional capability profile that lets a host advertise it runs background memory compaction — periodic distillation of many short-lived MemoryEntry rows into fewer long-lived ones — and emit a canonical memory.compacted audit event when it…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0012-memory-compaction-profile.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — RFC 0012: Memory Compaction Profile"/>
+  <meta name="twitter:description" content="Define an optional capability profile that lets a host advertise it runs background memory compaction — periodic distillation of many short-lived MemoryEntry rows into fewer long-lived ones — and emit a canonical memory.compacted audit event when it…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="" href="/spec/v1/">Spec</a>
+      <a class="active" href="/rfcs/">RFCs</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/changelog/">Changelog</a>
+      <a class="" href="/faq/">FAQ</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="rfc-0012-memory-compaction-profile">RFC 0012: Memory Compaction Profile</h1>
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0012</td></tr>
+<tr><td><strong>Title</strong></td><td>Memory Compaction Profile</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-13</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-15 (Active → Accepted; see §"Comment window note" below)</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>spec/v1/capabilities.md</code> (new optional <code>capabilities.memory.compaction</code> block), <code>spec/v1/observability.md</code> (new optional event type <code>memory.compacted</code>), <code>SECURITY/invariants.yaml</code> (SR-1 carry-forward through compaction outputs), <code>schemas/memory-entry.schema.json</code> (no shape change; new tag-prefix convention)</td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
+<tr><td><strong>Supersedes</strong></td><td>—</td></tr>
+<tr><td><strong>Superseded by</strong></td><td>—</td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>Define an optional capability profile that lets a host advertise it runs background <strong>memory compaction</strong> — periodic distillation of many short-lived <code>MemoryEntry</code> rows into fewer long-lived ones — and emit a canonical <code>memory.compacted</code> audit event when it does so. The profile standardizes only the wire surface: capability shape, event vocabulary, and an SR-1 carry-forward invariant. The compaction algorithm (summarization model, embedding scheme, token budgets, scheduling cadence) remains a host implementation choice.</p>
+<h2 id="motivation">Motivation</h2>
+<p>RFC 0004 (<code>MemoryAdapter</code>) already gives hosts everything they need to <em>implement</em> compaction: <code>list</code> reads candidates, <code>put</code> writes the distilled entry, <code>delete</code> evicts the originals. Three concrete pain points motivate adding a thin protocol surface on top:</p>
+<p>1. <strong>Cross-host observability.</strong> An operator running multiple OpenWOP hosts (e.g., a dev SQLite host plus a prod Postgres host) today has no portable way to ask "did each host's compaction run last night?" Each host invents its own log shape. A canonical <code>memory.compacted</code> event in the <code>openwop.<em></code> namespace gives one query across hosts. 2. <strong>Replay attribution.</strong> When <code>list</code> returns a </em>compacted<em> entry instead of the original raw entries, replay debugging is opaque — there's no protocol-visible link from "this distilled entry" back to "these source entries that no longer exist." A standard <code>tags: [&quot;compacted-from:&amp;lt;runId&amp;gt;&quot;]</code> convention plus a <code>sourceIds[]</code> field on the event gives the audit trail without requiring the source entries to still exist. 3. <strong>Redaction-invariant carry-forward.</strong> SR-1 (RFC 0004 §D) is enforced at <code>put</code> time over the </em>direct<em> content. When a host summarizes ten entries into one, the summarization step is a </em>new* <code>put</code> whose content is derived from the originals. Without an explicit normative carry-forward, a naive host implementation could route summarized content around the BYOK redaction harness. This RFC tightens that.</p>
+<p><strong>Honest scope check.</strong> Items (1) and (2) are observability conveniences; (3) is the only one that's strictly normative — a host that ignores it can leak secrets. The RFC is justified primarily by (3), with (1) and (2) as additive benefits that ride along.</p>
+<p>Driven by the 2026-05-13 evaluation of an autonomous-agent-runtime feature set ("dreams" / background memory distillation) against the OpenWOP roadmap. Most of that feature set is application-runtime work that doesn't belong in the protocol; the compaction surface is the one slice that has a defensible protocol footprint.</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-capability-advertisement">§A Capability advertisement</h3>
+<p>Hosts that perform memory compaction MAY advertise it under the existing <code>capabilities.memory</code> block from RFC 0004:</p>
+<pre class="lang-json"><code>&quot;memory&quot;: {
+  &quot;supported&quot;: true,
+  &quot;maxEntrySizeBytes&quot;: 65536,
+  &quot;ttlSupported&quot;: true,
+  &quot;compaction&quot;: {
+    &quot;supported&quot;: true,
+    &quot;trigger&quot;: &quot;host-managed&quot;,
+    &quot;maxInputEntries&quot;: 1000,
+    &quot;maxOutputBytes&quot;: 65536
+  }
+}</code></pre>
+<p>Fields:</p>
+<ul>
+<li><code>supported</code> (boolean, required when the block is present) — when <code>true</code>, the host performs compaction over <code>longTerm</code> memory and emits the <code>memory.compacted</code> event defined in §B.</li>
+<li><code>trigger</code> (closed enum: <code>&quot;host-managed&quot;</code> | <code>&quot;client-requested&quot;</code> | <code>&quot;both&quot;</code>, required when <code>supported: true</code>) — <code>host-managed</code> means compaction runs on a host-internal schedule that clients do not control. <code>client-requested</code> means clients may invoke compaction via an API surface (deferred — see §Unresolved questions #1). <code>both</code> means either path is supported. v1.x normates only <code>host-managed</code>; <code>client-requested</code> and <code>both</code> are reserved.</li>
+<li><code>maxInputEntries</code> (integer, optional) — informational ceiling on how many source entries a single compaction call collapses. Clients MAY use this to set their own expectations; not enforced at the wire layer.</li>
+<li><code>maxOutputBytes</code> (integer, optional) — informational ceiling on the size of the resulting distilled entry. SHOULD be <code>≤ memory.maxEntrySizeBytes</code>.</li>
+</ul>
+<p>Hosts that don't advertise <code>capabilities.memory.compaction</code> are assumed not to perform compaction. Clients MUST NOT assume compaction has happened based on entry counts alone.</p>
+<h3 id="b-memory-compacted-event">§B <code>memory.compacted</code> event</h3>
+<p>Hosts that advertise <code>capabilities.memory.compaction.supported: true</code> MUST emit a <code>memory.compacted</code> event in the <code>openwop.*</code> observability namespace each time a compaction run completes, regardless of trigger.</p>
+<p>Event shape (additive to <code>observability.md</code> §"Canonical event vocabulary"):</p>
+<pre class="lang-json"><code>{
+  &quot;type&quot;: &quot;memory.compacted&quot;,
+  &quot;ts&quot;: &quot;2026-05-13T03:00:00.000Z&quot;,
+  &quot;memoryRef&quot;: &quot;mem_&amp;lt;tenantId&amp;gt;_&amp;lt;agentId&amp;gt;_longTerm&quot;,
+  &quot;outputId&quot;: &quot;mem_&amp;lt;id&amp;gt;&quot;,
+  &quot;sourceIds&quot;: [&quot;mem_&amp;lt;id1&amp;gt;&quot;, &quot;mem_&amp;lt;id2&amp;gt;&quot;, &quot;...&quot;],
+  &quot;sourceCount&quot;: 47,
+  &quot;trigger&quot;: &quot;host-managed&quot;,
+  &quot;byteSize&quot;: 12044
+}</code></pre>
+<p>Field semantics:</p>
+<ul>
+<li><code>memoryRef</code> (string, required) — same opaque handle from RFC 0004 §C. Bounds the compaction to a single memory scope.</li>
+<li><code>outputId</code> (string, required) — the id of the new <code>MemoryEntry</code> created by compaction. MUST be readable via <code>MemoryAdapter.get(memoryRef, outputId)</code> until normal TTL eviction.</li>
+<li><code>sourceIds</code> (array of strings, optional) — ids of entries that were collapsed into <code>outputId</code>. Hosts MAY omit this array when <code>sourceCount &gt; 100</code> and instead rely on the <code>compacted-from:&amp;lt;runId&amp;gt;</code> tag convention (§C). Hosts that <em>do</em> include <code>sourceIds</code> MUST be exhaustive within the array (no "and N more" semantics).</li>
+<li><code>sourceCount</code> (integer, required) — total count of source entries collapsed, including any not enumerated in <code>sourceIds</code>.</li>
+<li><code>trigger</code> (string, required) — matches <code>capabilities.memory.compaction.trigger</code>. Indicates which trigger path drove this run.</li>
+<li><code>byteSize</code> (integer, required) — byte size of the resulting <code>MemoryEntry.content</code>.</li>
+</ul>
+<p>Consumers (observability dashboards, audit log aggregators) that don't recognize <code>memory.compacted</code> MUST ignore it without error. This is consistent with the additive-event-type pattern in <code>observability.md</code>.</p>
+<h3 id="c-provenance-tag-convention">§C Provenance tag convention</h3>
+<p>The distilled entry SHOULD carry a tag of the form <code>compacted-from:&amp;lt;compactionRunId&amp;gt;</code> where <code>&amp;lt;compactionRunId&amp;gt;</code> is a host-issued identifier (any opaque string the host can correlate to its compaction log). This lets <code>MemoryAdapter.list</code> consumers detect compacted entries without needing access to the <code>memory.compacted</code> event stream.</p>
+<p>This is a SHOULD, not a MUST: a host whose tag-space is structurally constrained (legacy tag-prefix discipline, fixed-vocabulary tagging) MAY omit this. The <code>memory.compacted</code> event remains the canonical provenance signal.</p>
+<h3 id="d-sr-1-carry-forward-normative">§D SR-1 carry-forward (normative)</h3>
+<p>The Secret Redaction invariant <strong>SR-1</strong> (RFC 0004 §D) applies transitively through compaction:</p>
+<blockquote><p><strong>SR-1 (compaction extension).</strong> When a host produces a compacted <code>MemoryEntry</code> whose content is derived from one or more source entries, the host MUST route the derived content through the same BYOK redaction harness it would apply to a fresh <code>put</code> from a workflow node. The fact that the source entries were already SR-1-compliant at their original <code>put</code> time MUST NOT be used as evidence to skip redaction on the derived content. Summarization models in particular MAY introduce secret-shaped substrings (hallucinated tokens, format-leaks from in-context examples) that were not present in any source entry; the redaction harness is the only protocol-level defense.</p></blockquote>
+<p>This extension is the load-bearing normative claim in this RFC. Hosts that advertise <code>capabilities.memory.compaction.supported: true</code> but do not honor SR-1 carry-forward fail the conformance scenario in §Conformance.</p>
+<h3 id="e-out-of-scope">§E Out of scope</h3>
+<p>The following are explicitly NOT in this RFC:</p>
+<ul>
+<li><strong>Compaction scheduling.</strong> Cron expressions, intervals, "at" times — purely host concerns. The protocol's only schedule visibility is <code>trigger</code>.</li>
+<li><strong>The compaction algorithm.</strong> Summarization models, embedding schemes, token budgets, retrieval ranking — all host choices.</li>
+<li><strong>Client-requested compaction API surface.</strong> Reserved by the <code>trigger: &quot;client-requested&quot;</code> enum value but not normated. A future RFC may add the API surface if implementer demand materializes.</li>
+<li><strong>Cross-tenant or cross-host compaction.</strong> Same tenant-isolation rules as RFC 0004 §F apply; compaction MUST NOT cross tenant boundaries.</li>
+<li><strong>Lossy-vs-lossless distinction.</strong> All compaction in this profile is assumed lossy (otherwise it's not compaction, it's archival). Hosts that want lossless archival have a different shape and should not advertise this profile.</li>
+</ul>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive.</strong></p>
+<ul>
+<li><code>capabilities.memory.compaction</code> is a new optional sub-block of an existing optional block. Hosts that don't advertise it are unaffected.</li>
+<li><code>memory.compacted</code> is a new event type. The canonical <code>observability.md</code> rule is that consumers ignore unknown event types; this rule covers backward compatibility for existing observability consumers.</li>
+<li>The SR-1 carry-forward extension applies only at the boundary where compaction occurs. Hosts that don't perform compaction never encounter it. Hosts that <em>do</em> perform compaction without advertising the profile are NOT bound by this RFC, but SHOULD migrate to either (a) advertising the profile and honoring SR-1 carry-forward, or (b) ceasing compaction — silent compaction with no audit event is a protocol smell.</li>
+<li>No schema diffs to existing <code>MemoryEntry</code> or <code>MemoryListOptions</code> shapes. The provenance-tag convention (§C) lives entirely in the existing free-form <code>tags</code> array.</li>
+</ul>
+<p>Lands in a v1.x minor as part of <code>@openwop/openwop-conformance</code> <code>1.X.0</code>. No SDK wire-type additions are strictly required (the event is JSON-shape, dashboard-facing); SDK error catalogs SHOULD add <code>compaction_redaction_failed</code> if a host wants to surface SR-1 violations via the normal error envelope, but the wire surface stands without it.</p>
+<h2 id="conformance">Conformance</h2>
+<p>Existing scenarios that touch the surface:</p>
+<ul>
+<li><code>conformance/src/scenarios/memory-put-redaction.test.ts</code> (RFC 0004 §D, MR-2) — base SR-1 enforcement at <code>put</code> time.</li>
+<li><code>conformance/src/scenarios/redactionAdversarial.test.ts</code> — adversarial redaction inputs.</li>
+</ul>
+<p>New scenarios required for <code>Active</code> → <code>Accepted</code> transition:</p>
+<ul>
+<li><code>memory-compaction-event-emitted.test.ts</code> — gated on <code>capabilities.memory.compaction.supported: true</code>. Triggers a host-managed compaction (via env var or test hook), asserts a <code>memory.compacted</code> event surfaces with the documented shape, and asserts <code>outputId</code> is readable via <code>MemoryAdapter.get</code>.</li>
+<li><code>memory-compaction-sr1-carry-forward.test.ts</code> — gated on <code>capabilities.memory.compaction.supported: true</code>. Plants source entries containing post-redaction <code>&amp;lt;REDACTED:...&amp;gt;</code> markers and adversarial near-secret strings, triggers compaction, asserts the resulting <code>outputId</code>'s content passes the redaction harness (no plaintext secrets, no <code>[BYOK:...]</code> form-leaks). This is the load-bearing SR-1 carry-forward test.</li>
+<li><code>memory-compaction-provenance-tag.test.ts</code> — gated; asserts the <code>compacted-from:&amp;lt;id&amp;gt;</code> tag convention from §C when the host SHOULD-follows it. Soft assertion: log-and-warn if absent, fail only if the tag is malformed.</li>
+</ul>
+<p>All three scenarios skip cleanly when the capability is absent. Suite-version bump: <code>@openwop/openwop-conformance</code> <code>1.X.0</code> minor.</p>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<p>1. <strong>Do nothing — leave compaction to vendor extensions.</strong> Each host invents its own <code>vendor.&amp;lt;host&amp;gt;.memory.compaction</code> capability and its own <code>vendor.&amp;lt;host&amp;gt;.memory.compacted</code> event. Trade-off: the multi-host observability story stays broken, but the protocol surface stays smaller. <strong>Rejected because</strong> the SR-1 carry-forward invariant (§D) is a real security gap that doesn't have a non-protocol home — a vendor extension can't normate cross-host security behavior. 2. <strong>Make compaction a first-class <code>MemoryAdapter</code> operation (<code>compact(memoryRef, options): MemoryEntry</code>).</strong> Adds a fifth verb to RFC 0004's four. Trade-off: clean API surface, but forces every memory-capable host to either implement compaction or explicitly reject the call. <strong>Rejected because</strong> the compaction trigger is fundamentally a host concern in the dominant use case (nightly background work); exposing it as a client-callable verb pulls in scheduling concerns the protocol doesn't want. 3. <strong>Make this RFC purely about the SR-1 carry-forward invariant and drop §A/§B/§C.</strong> Smallest possible footprint. Trade-off: loses the cross-host observability win (motivation #1 and #2). <strong>Rejected because</strong> if a host is doing compaction at all, the cost of emitting a canonical event is trivial relative to the cost of running the compaction. The capability advertisement is what enables conformance gating, and without that, SR-1 carry-forward is hard to test mechanically. 4. <strong>Defer entirely until a third-party host requests it.</strong> The 2026-05-12 architecture review pattern: gate work on external demand. Trade-off: avoids speculative protocol surface. <strong>Rejected because</strong> the SR-1 gap exists in any host that does compaction today, including hosts not yet on the conformance trajectory — closing it after a leak is more expensive than closing it before. <strong>However</strong>, this remains a live option if no implementer adoption signal arrives within the comment window — the RFC may close <code>Withdrawn</code> honestly.</p>
+<h2 id="unresolved-questions">Unresolved questions</h2>
+<p>1. <strong>Is there a concrete client use case for <code>trigger: &quot;client-requested&quot;</code>?</strong> None has been articulated as of 2026-05-13. If none surfaces, the enum value should be dropped from §A in <code>Active</code> status to avoid reserving wire surface that no one uses. 2. <strong>Should <code>memory.compacted.sourceIds</code> be required, optional, or capped?</strong> Current proposal: optional with a soft 100-id ceiling and <code>sourceCount</code> as the always-present count. A future revision may tighten this once real-world compaction batch sizes are known from the first reference-host implementation. 3. <strong>Does this RFC need a SECURITY invariant entry?</strong> The §D SR-1 carry-forward is normative. Strong candidate for a new <code>SECURITY/invariants.yaml</code> row (<code>memory-compaction-sr-1-carry-forward</code>) so it's enforced by the same machinery as the existing 35 protocol-tier invariants. Decision deferred to <code>Active</code>. 4. <strong>Does this RFC even need to exist?</strong> Honest open question. RFC 0004's existing <code>put</code>/<code>delete</code> is <em>functionally</em> sufficient for any host that wants to compact. This RFC's defense is the SR-1 carry-forward invariant (§D) plus the cross-host observability convenience. If maintainer review concludes (3) belongs in RFC 0004 as a clarifying revision and (1)+(2) don't clear the value-vs-protocol-surface bar, this RFC closes <code>Withdrawn</code> and the SR-1 carry-forward language folds into a <code>Accepted</code> revision of RFC 0004 §D.</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<ul>
+<li>Reference TypeScript host (<code>examples/hosts/postgres/</code>) is the natural first implementation target; nightly compaction at the host level is the dominant deployment shape and the SR-1 carry-forward harness already exists via the BYOK redaction code path shared with <code>MemoryAdapter.put</code> and <code>debug-bundle</code> redaction.</li>
+<li>The compaction algorithm itself (which model to call, what prompts to use) is out of scope. The reference implementation likely uses the same <code>core.llm.chat</code> surface that nodes use, with the host as the caller. This is consistent with the "OpenWOP runs the workflow; the LLM call is whatever the node implementor wants" pattern from <code>README.md:53-60</code>.</li>
+<li>A2A composition: compaction is per-host. A2A peers do not see each other's <code>memory.compacted</code> events unless explicitly federated, which is out of scope for v1.x.</li>
+<li>No anticipated SDK code generation impact. The event type lives in observability, not in the request/response surface.</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<ul>
+<li>[x] Spec text merged (this RFC + <code>capabilities.md</code> annex + <code>observability.md</code> event-vocabulary row). — Landed 2026-05-13 in <code>c30a284</code> (Phase 2).</li>
+<li>[x] <code>SECURITY/invariants.yaml</code> entry for <code>memory-compaction-sr-1-carry-forward</code> (or explicit decision to fold into RFC 0004's existing SR-1 row). — Landed 2026-05-13 in <code>c30a284</code>; new protocol-tier row (severity: critical) referenced by <code>memory-compaction-sr1-carry-forward.test.ts</code>. Protocol-tier invariants 35 → 36.</li>
+<li>[x] At least one reference host (in-memory or Postgres) implements §A advertisement + §B event emission + §D carry-forward. — Postgres reference host, landed 2026-05-14 in <code>2bf082a</code>. Conditional advertisement gated on <code>OPENWOP_MEMORY_COMPACTION=true</code>; <code>runCompaction</code> + <code>applyCompactionRedaction</code> enforce SR-1 §D end-to-end; host smoke verifies 7 paths.</li>
+<li>[x] Three conformance scenarios from §Conformance, all capability-gated. — <code>memory-compaction-{event-emitted,sr1-carry-forward,provenance-tag}.test.ts</code>, all gated on <code>capabilities.memory.compaction.supported</code>. 3/3 pass live against the Postgres reference host.</li>
+<li>[x] CHANGELOG entry under the v1.X version that ships the suite minor. — <code>[1.1.1 — unreleased]</code> block carries the Phase 1, Phase 2, and Phase 3 prep bullets.</li>
+<li>[x] <code>INTEROP-MATRIX.md</code> row updated for any reference host that advertises the profile, with a one-line evidence claim. — Postgres row's Phase I.7 / I.2 / RFC 0012 evidence paragraph names the conditional env vars + the host smoke file.</li>
+</ul>
+<h2 id="comment-window-note">Comment window note</h2>
+<p>The canonical 7-day public comment window opened on 2026-05-13 (<code>Draft → Active</code>) and was scheduled to close on 2026-05-20. Promotion to <code>Accepted</code> landed on 2026-05-15 — five days early — under the comment-window waiver in <code>CONTRIBUTING.md</code> §"Bootstrap-phase notes":</p>
+<ul>
+<li><code>MAINTAINERS.md</code> lists no non-steward maintainer of record.</li>
+<li>No external comments were filed during the 48h the window was open.</li>
+<li>All 6 acceptance criteria are satisfied at promotion time (spec text + SECURITY invariant + Postgres reference impl + 3 conformance scenarios + CHANGELOG + INTEROP-MATRIX).</li>
+</ul>
+<p>Future RFCs revert to the canonical 7-day window once <code>MAINTAINERS.md</code> lists a non-steward maintainer. The waiver applies only when both conditions hold (sole-steward repo AND zero external commenters); reviewers may revoke it for any specific RFC by filing a single comment in the window.</p>
+<h2 id="references">References</h2>
+<ul>
+<li>RFC 0004 (Memory Layer — <code>MemoryAdapter</code>, SR-1)</li>
+<li>RFC 0002 (Agent Identity — <code>AgentRef.memoryRef</code>)</li>
+<li><code>spec/v1/capabilities.md</code> §"memory (RFC 0004)"</li>
+<li><code>spec/v1/observability.md</code> §"Canonical event vocabulary"</li>
+<li><code>SECURITY/invariants.yaml</code> (SR-1)</li>
+<li><code>schemas/memory-entry.schema.json</code></li>
+<li>2026-05-13 OpenWOP roadmap evaluation of the autonomous-agent-runtime feature set (this RFC is the one slice of that proposal with a defensible protocol footprint)</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

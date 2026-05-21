@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — RFC 0005: Multi-Turn Conversation</title>
+  <meta name="description" content="Generalize the v1 single-shot interrupt(payload) primitive into a multi-turn conversation so orchestrator-driven HITL flows can exchange many messages with a human (or A2A peer) without re-entering the workflow on each turn. The new kind:…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0005-conversation.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — RFC 0005: Multi-Turn Conversation"/>
+  <meta property="og:description" content="Generalize the v1 single-shot interrupt(payload) primitive into a multi-turn conversation so orchestrator-driven HITL flows can exchange many messages with a human (or A2A peer) without re-entering the workflow on each turn. The new kind:…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0005-conversation.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — RFC 0005: Multi-Turn Conversation"/>
+  <meta name="twitter:description" content="Generalize the v1 single-shot interrupt(payload) primitive into a multi-turn conversation so orchestrator-driven HITL flows can exchange many messages with a human (or A2A peer) without re-entering the workflow on each turn. The new kind:…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="" href="/spec/v1/">Spec</a>
+      <a class="active" href="/rfcs/">RFCs</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/changelog/">Changelog</a>
+      <a class="" href="/faq/">FAQ</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="rfc-0005-multi-turn-conversation">RFC 0005: Multi-Turn Conversation</h1>
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0005</td></tr>
+<tr><td><strong>Title</strong></td><td>Multi-Turn Conversation</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-01</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-11 (Active → Accepted: integration-seams audit closed via <code>docs/MULTI-AGENT-INTEGRATION-GAPS.md</code> archive; conformance scenarios pass against SQLite reference host)</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>schemas/conversation-event.schema.json</code>, <code>schemas/conversation-turn.schema.json</code>, <code>schemas/suspend-request.schema.json</code>, <code>schemas/run-event.schema.json</code>, <code>spec/v1/interrupt.md</code>, <code>spec/v1/capabilities.md</code></td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
+<tr><td><strong>Supersedes</strong></td><td>—</td></tr>
+<tr><td><strong>Superseded by</strong></td><td>—</td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>Generalize the v1 single-shot <code>interrupt(payload)</code> primitive into a multi-turn <code>conversation</code> so orchestrator-driven HITL flows can exchange many messages with a human (or A2A peer) without re-entering the workflow on each turn. The new <code>kind: &#39;conversation&#39;</code> interrupt drives three operations — <code>start</code>, <code>exchange</code>, <code>close</code> — and emits three new run events: <code>conversation.opened</code>, <code>conversation.exchanged</code>, <code>conversation.closed</code>.</p>
+<h2 id="motivation">Motivation</h2>
+<p>The v1 baseline <code>interrupt(payload)</code> short-circuits on a deterministic resume key: one suspend, one resume. This is the right primitive for approval, clarification, and external-event flows, where the host gathers a single resolved value and continues.</p>
+<p>Real orchestrator-driven flows are different. A supervisor agent asks a question, the human responds, the supervisor follows up, the human responds again, and so on. Modeling this with one interrupt-per-turn:</p>
+<ul>
+<li>Re-enters the workflow on every turn, paying full suspend/resume cost.</li>
+<li>Creates <code>N</code> <code>approval.requested</code> / <code>clarification.requested</code> events instead of a coherent conversation history.</li>
+<li>Loses turn ordering (each interrupt is its own resume key, not a sequenced exchange).</li>
+<li>Confuses replay: re-folding <code>N</code> independent interrupts loses the conversation envelope.</li>
+</ul>
+<p>A conversation primitive — one suspend that exchanges many turns before closing — addresses all four.</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-kind-conversation-interrupt">§A <code>kind: &#39;conversation&#39;</code> interrupt</h3>
+<p>Extend the <code>kind</code> enum in <code>suspend-request.schema.json</code>:</p>
+<pre class="lang-diff"><code>   &quot;kind&quot;: {
+     &quot;type&quot;: &quot;string&quot;,
+-    &quot;enum&quot;: [&quot;approval&quot;, &quot;clarification&quot;, &quot;external-event&quot;, &quot;custom&quot;]
++    &quot;enum&quot;: [&quot;approval&quot;, &quot;clarification&quot;, &quot;external-event&quot;, &quot;custom&quot;, &quot;conversation&quot;]
+   }</code></pre>
+<p>Add a <code>ConversationData</code> variant to the <code>data</code> <code>oneOf</code>:</p>
+<pre class="lang-json"><code>{
+  &quot;ConversationData&quot;: {
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;required&quot;: [&quot;operation&quot;],
+    &quot;properties&quot;: {
+      &quot;operation&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;enum&quot;: [&quot;start&quot;, &quot;exchange&quot;, &quot;close&quot;]
+      },
+      &quot;conversationId&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;minLength&quot;: 1, &quot;maxLength&quot;: 256 },
+      &quot;agentId&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;minLength&quot;: 1, &quot;maxLength&quot;: 256 },
+      &quot;initialTurn&quot;: { &quot;$ref&quot;: &quot;https://openwop.dev/spec/v1/conversation-turn.schema.json&quot; },
+      &quot;schema&quot;: { &quot;type&quot;: &quot;object&quot; },
+      &quot;capabilities&quot;: {
+        &quot;type&quot;: &quot;array&quot;,
+        &quot;items&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [&quot;multi-turn&quot;, &quot;streaming&quot;] }
+      }
+    }
+  }
+}</code></pre>
+<h3 id="b-run-events">§B Run events</h3>
+<p>Three new <code>RunEventType</code> values, already present in <code>run-event.schema.json</code>:</p>
+<ul>
+<li><code>conversation.opened</code> — emitted when <code>operation: &#39;start&#39;</code> is processed.</li>
+<li><code>conversation.exchanged</code> — emitted on each <code>operation: &#39;exchange&#39;</code> round-trip.</li>
+<li><code>conversation.closed</code> — emitted on <code>operation: &#39;close&#39;</code>; terminates the conversation.</li>
+</ul>
+<p>Payload shapes are defined in <code>conversation-event.schema.json</code>. The <code>conversationId</code> is host-assigned, deterministic for replay (typically <code>${runId}:${nodeId}:${attempt}</code>), and persists across all turns.</p>
+<p><strong>Causation rule.</strong> The <code>conversation.opened</code> event's <code>causationId</code> MUST equal the <code>eventId</code> of the accompanying <code>node.suspended</code>. Subsequent <code>conversation.exchanged</code> events' <code>causationId</code> MAY reference the prior <code>conversation.exchanged</code> (or the <code>conversation.opened</code>); hosts SHOULD chain them.</p>
+<h3 id="c-conversationturn-shape">§C <code>ConversationTurn</code> shape</h3>
+<p>Already defined in <code>conversation-turn.schema.json</code>. Required fields:</p>
+<ul>
+<li><code>messageId</code> — deterministic dedup key. Recommended encoding: <code>${conversationId}:${turnIndex}:${role}</code>.</li>
+<li><code>from</code> — sender (agent ID or <code>&#39;user&#39;</code>).</li>
+<li><code>content</code> — opaque JSON value.</li>
+<li><code>ts</code> — caller's clock timestamp (ms epoch).</li>
+<li><code>role</code> — <code>&#39;user&#39; | &#39;agent&#39; | &#39;system&#39;</code>.</li>
+<li><code>turnIndex</code> — 0-based monotonic index within the conversation.</li>
+</ul>
+<p><code>turnIndex: 0</code> is the <code>initialTurn</code> carried on <code>conversation.opened</code>. The first <code>conversation.exchanged</code> is <code>turnIndex: 1</code>. The closing turn carries the highest index.</p>
+<h3 id="d-lifecycle">§D Lifecycle</h3>
+<pre class="lang-"><code>node.suspended ─┐
+                ├─→ conversation.opened (turnIndex: 0)
+                │     │
+                │     ├─→ conversation.exchanged (turnIndex: 1)
+                │     │
+                │     ├─→ conversation.exchanged (turnIndex: 2)
+                │     │
+                │     ├─→ ... (many turns)
+                │     │
+                │     └─→ conversation.closed (final turnIndex)
+                │
+                └─→ node.resumed (carries final outcome)</code></pre>
+<p>Between <code>conversation.opened</code> and <code>conversation.closed</code>, the node is in the <code>suspended</code> state. Each <code>exchange</code> turn round-trips through the host's resume endpoint (<code>POST /v1/runs/{runId}:resolveInterrupt</code> with a <code>ConversationResolve</code> payload) but does <em>not</em> transition the node out of <code>suspended</code>. Only <code>operation: &#39;close&#39;</code> resumes the node.</p>
+<h3 id="e-resume-payload-shape">§E Resume payload shape</h3>
+<p>The interrupt resume endpoint accepts a <code>ConversationResolve</code> payload during a conversation:</p>
+<pre class="lang-json"><code>{
+  &quot;operation&quot;: &quot;exchange&quot; | &quot;close&quot;,
+  &quot;turn&quot;: &quot;&amp;lt;ConversationTurn&amp;gt;&quot;,
+  &quot;outcome&quot;: &quot;&amp;lt;host-defined, only on close&amp;gt;&quot;
+}</code></pre>
+<p>Hosts validate <code>turn</code> against the <code>schema</code> provided on <code>conversation.opened</code>. Servers SHOULD reject <code>exchange</code> operations after <code>close</code> with <code>validation_error</code>.</p>
+<h3 id="f-channel-integration">§F Channel integration</h3>
+<p>Conversation turns fold through the existing <code>applyMessage</code> reducer (channel kind: <code>messages</code>). The conversation's group identity (<code>groupId</code> per <code>conversation-turn.schema.json</code>) maps to the <code>shared:&amp;lt;groupId&amp;gt;</code> agent context per RFC 0002 §A8 when set.</p>
+<p>This means: a conversation between two agents and a user can write its full turn history into a shared <code>messages</code> channel that downstream nodes can read. Replay carries the channel content through unchanged.</p>
+<h3 id="g-replay-determinism">§G Replay determinism</h3>
+<p>Replays re-fold the conversation event stream verbatim. Hosts MUST NOT re-prompt the user during a replay; cached resume turns are returned from the event log. Replay divergence (e.g., user provided different input on replay) MUST emit <code>replay.diverged</code> and either abort the replay or continue per the host's configured divergence policy (<code>spec/v1/replay.md</code> §Divergence handling).</p>
+<h3 id="h-capability-advertisement">§H Capability advertisement</h3>
+<pre class="lang-json"><code>{
+  &quot;capabilities&quot;: {
+    &quot;conversationPrimitive&quot;: true,
+    &quot;interrupts&quot;: {
+      &quot;kinds&quot;: [&quot;approval&quot;, &quot;clarification&quot;, &quot;external-event&quot;, &quot;custom&quot;, &quot;conversation&quot;]
+    }
+  }
+}</code></pre>
+<p>Hosts that do not advertise <code>capabilities.conversationPrimitive: true</code> MUST reject <code>kind: &#39;conversation&#39;</code> interrupts at workflow registration with <code>validation_error</code>. RFC 0007's <code>core.dispatch</code> node consults this capability when routing <code>&#39;ask-user&#39;</code> orchestrator decisions (RFC 0007 §B).</p>
+<h3 id="i-timeout">§I Timeout</h3>
+<p>Conversations MAY carry <code>timeoutMs</code> (per <code>InterruptPayload.timeoutMs</code>). The timeout applies to the <em>full</em> conversation, measured from <code>conversation.opened</code>. On timeout, the host MUST emit a <code>conversation.closed</code> with <code>outcome: null</code> and a <code>system</code>-role <code>finalTurn</code> indicating the timeout reason, then proceed with the node's normal timeout handling.</p>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive.</strong></p>
+<ul>
+<li>The new <code>kind: &#39;conversation&#39;</code> extends the kind enum; pre-RFC clients see it as unknown and SHOULD reject only if they don't advertise the capability.</li>
+<li>Three new event types extend the <code>RunEventType</code> enum; consumers MUST fold unknown types best-effort per the v1 envelope contract.</li>
+<li>The interrupt resume endpoint accepts an extended payload variant; the existing approval/clarification/external-event variants are unchanged.</li>
+<li>No changes to required fields on existing payloads.</li>
+</ul>
+<h2 id="conformance">Conformance</h2>
+<p>Existing scenarios that exercise multi-turn behavior partially:</p>
+<ul>
+<li><code>conformance/src/scenarios/interrupt-clarification.test.ts</code> — verifies single-turn clarification.</li>
+<li><code>conformance/src/scenarios/interrupt-approval.test.ts</code> — verifies single-turn approval.</li>
+</ul>
+<p>New scenarios required for <code>Accepted</code>:</p>
+<ul>
+<li><code>conversation-lifecycle.test.ts</code> — start → 3 exchanges → close round-trip; turnIndex monotonicity verified.</li>
+<li><code>conversation-timeout.test.ts</code> — timeout fires conversation.closed with system finalTurn.</li>
+<li><code>conversation-replay.test.ts</code> — replay re-folds the conversation without re-prompting; resume turns come from cache.</li>
+<li><code>conversation-schema-rejection.test.ts</code> — exchange with content violating the declared schema is rejected.</li>
+</ul>
+<p>All gated on <code>capabilities.conversationPrimitive: true</code> advertisement.</p>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<p>1. <strong>Loop of single-shot interrupts.</strong> Rejected as the motivation describes. Loses turn ordering, event volume, and replay coherence. 2. <strong>Open-ended streaming SSE for conversation.</strong> Considered. Rejected because conversation turns are persisted events (replay-relevant), not transient stream chunks. Conversations MAY <em>also</em> stream chunked content within a single turn via <code>output.chunk</code> events; that surface is unchanged. 3. <strong>Reuse <code>clarification</code> with multiple questions.</strong> Considered. Rejected because <code>clarification</code> is one-shot ("here are 5 questions, give me 5 answers, resume"); a conversation is bidirectional turn-taking. 4. <strong>Treat conversation as A2A messaging.</strong> Considered. Rejected because A2A is <em>between</em> runs across organizations; conversation is <em>within</em> a single run. RFC 0005's conversation can transport A2A turns by mapping <code>from</code> to an A2A <code>AgentCard</code> URN, but the protocol surface is one host's primitive.</p>
+<h2 id="unresolved-questions">Unresolved questions</h2>
+<p>1. Should <code>outcome</code> on <code>conversation.closed</code> carry a structured shape, or remain opaque? Current: opaque, host-policy. 2. Should <code>agent</code> reference be required on <code>agent</code>-role turns? Current: optional; convention is to set it but pre-RFC-0002 agents may omit. 3. Should conversations support branching (one initial turn, multiple parallel exchange threads)? Rejected for v1.x; cleanly handled by multiple sibling conversations in a parent node.</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<ul>
+<li>The TypeScript reference host implements conversation by extending the existing <code>SuspendIO</code> lease machinery to accept multiple resume payloads against the same suspend token; <code>operation</code> discriminates.</li>
+<li>Cache key for replay: <code>${conversationId}:${turnIndex}</code> resolves to the cached turn content. Turns are cached at first execution and replayed bit-identically.</li>
+<li>The <code>conversation</code> interrupt kind composes with <code>auth-required</code> interrupt profile (<code>interrupt-profiles.md</code>) — the resume call enforces the same auth scope as the initial suspend.</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<ul>
+<li>[ ] Spec text merged.</li>
+<li>[x] <code>conversation-event.schema.json</code> published.</li>
+<li>[x] <code>conversation-turn.schema.json</code> published.</li>
+<li>[x] <code>run-event.schema.json</code> includes the three event types.</li>
+<li>[ ] <code>suspend-request.schema.json</code> adds <code>&#39;conversation&#39;</code> to kind enum + <code>ConversationData</code> variant.</li>
+<li>[ ] <code>capabilities.md</code> adds <code>capabilities.conversationPrimitive</code>.</li>
+<li>[ ] Four conformance scenarios.</li>
+<li>[ ] CHANGELOG entry.</li>
+<li>[ ] Reference host implements the lifecycle and passes the scenarios.</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li><code>schemas/conversation-event.schema.json</code></li>
+<li><code>schemas/conversation-turn.schema.json</code></li>
+<li><code>schemas/suspend-request.schema.json</code></li>
+<li><code>spec/v1/interrupt.md</code> (single-shot interrupt baseline)</li>
+<li>RFC 0002 §G (ConversationMessage shape — structural subset of ConversationTurn)</li>
+<li>RFC 0006 §C (orchestrator <code>ask-user</code> decision routes here when conversationPrimitive advertised)</li>
+<li>RFC 0007 §B (core.dispatch routes ask-user through conversation when capability is advertised)</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

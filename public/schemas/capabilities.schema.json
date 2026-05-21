@@ -1,0 +1,1210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/capabilities.schema.json",
+  "title": "Capabilities",
+  "description": "openwop capability declaration returned from `GET /.well-known/openwop`. Required v1 fields identify the protocol version, envelope catalog, schema versions, and base limits. Optional v1 fields have stable shapes but MAY be omitted when unsupported.",
+  "type": "object",
+  "required": ["protocolVersion", "supportedEnvelopes", "schemaVersions", "limits"],
+  "properties": {
+    "protocolVersion": {
+      "type": "string",
+      "description": "openwop protocol version the server speaks (e.g., `1.0`). Independent of `engineVersion` (which gates persisted-doc compatibility per version-negotiation.md).",
+      "minLength": 1
+    },
+    "supportedEnvelopes": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Envelope `type` strings the engine recognizes (e.g., `prd.create`, `theme.create`, `tasks.create`, `clarification.request`)."
+    },
+    "schemaVersions": {
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 0 },
+      "description": "Active schema version per envelope type (e.g., `{ \"prd.create\": 2 }`)."
+    },
+    "limits": {
+      "type": "object",
+      "required": ["clarificationRounds", "schemaRounds", "envelopesPerTurn"],
+      "properties": {
+        "clarificationRounds": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum total clarification envelopes per task before the engine forces the LLM to proceed."
+        },
+        "schemaRounds": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum total schema-validation rounds per envelope before the node fails."
+        },
+        "envelopesPerTurn": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum total envelopes the LLM may emit in a single chat turn."
+        },
+        "maxNodeExecutions": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Engine-side ceiling on total node executions per run. Acts as the upper bound for `RunOptions.configurable.recursionLimit`. Optional in v1; hosts that advertise it MUST enforce it."
+        }
+      },
+      "additionalProperties": false,
+      "description": "Hard limits enforced by the engine. See capabilities.md §3."
+    },
+    "envelopeStrictness": {
+      "type": "string",
+      "enum": ["warn", "strict"],
+      "description": "AI Envelope schema-version drift handling per `spec/v1/ai-envelope.md` §\"Capability handshake integration\" (DRAFT v1.x). Optional in v1.x; default when absent is `warn`. Under `warn`, the engine MUST attempt validation against the advertised version of a kind and log `envelope_schema_version_drift` when the emitted `schemaVersion` is lower than advertised. Under `strict`, the same condition MUST cause refusal with `unknown_schema_version`. Emitted `schemaVersion` higher than advertised MUST refuse regardless of strictness."
+    },
+    "envelopeContracts": {
+      "type": "object",
+      "description": "AI Envelope contract-gating advertisement per `spec/v1/ai-envelope.md` §\"Capability handshake integration\" (DRAFT v1.x). Optional in v1.x. When `advertised: true`, the host's node-pack manifests carry `EnvelopeContract` blocks per `ai-envelope.md` §\"Envelope Contract\"; tooling and conformance scenarios gate on this flag. When `advertised: false` or the block is absent, hosts MAY accept envelopes without per-typeId `accepts[]` enforcement.",
+      "required": ["advertised"],
+      "properties": {
+        "advertised": {
+          "type": "boolean",
+          "description": "Host's node-pack manifests carry `EnvelopeContract` blocks."
+        }
+      },
+      "additionalProperties": false
+    },
+    "envelopes": {
+      "type": "object",
+      "description": "Envelope LLM-contract advertisement container introduced by the RFC 0030–0033 envelope-hardening track. Each sub-block is independently opt-in; hosts that adopt a subset advertise only the sub-blocks they implement. `additionalProperties: true` reserved for future RFCs that extend the track; host-private extensions go under `x-host-<host>-<key>` per `host-extensions.md` §\"Canonical-prefix table\".",
+      "additionalProperties": true,
+      "properties": {
+        "reasoning": {
+          "type": "object",
+          "description": "RFC 0030 §A + §C. Host's envelope payload schemas support the OPTIONAL `reasoning` field on kinds where multi-step reasoning materially improves output quality; the host's system-prompt-injection helper instructs the model to populate it. Absent block = no advertisement (the field MAY still appear on envelope schemas; this advertisement signals the host's prompt-injection posture).",
+          "additionalProperties": false,
+          "required": ["supported"],
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "Host's envelope payload schemas carry `reasoning` (OPTIONAL) on kinds where reasoning materially improves output quality, per RFC 0030 §A. Hosts SHOULD prompt the model to populate the field; hosts MUST NOT reject envelopes where `reasoning` is absent (the field is OPTIONAL by spec); hosts SHALL NOT route on `reasoning` contents."
+            },
+            "promptDirective": {
+              "type": "string",
+              "enum": ["mandatory", "advisory", "off"],
+              "description": "Strength of the host's system-prompt instruction to populate `reasoning`. `mandatory`: the directive is firmly worded (the host instructs the model very forcefully to emit `reasoning`). `advisory` (default when absent): the directive is suggestive. `off`: the host emits no directive — applications that want `reasoning` populated must inject the instruction themselves. Note: `mandatory` is a prompt-injection posture, NOT a wire-level refusal contract — hosts MUST NOT reject envelopes where `reasoning` is absent regardless of this value."
+            }
+          }
+        },
+        "tierOneSubsetCompliance": {
+          "type": "string",
+          "enum": ["strict", "warn", "off"],
+          "description": "RFC 0030 §B + §C. Host's self-attested compliance posture for the Tier-1 cross-vendor structured-output subset documented in `spec/v1/structured-output-subset.md`. `strict`: every host-served envelope schema passes the static subset-compliance check (object-root, `additionalProperties: false` everywhere, every property in `required`, no `oneOf`/`allOf`/`not`/`prefixItems`/`propertyNames`, no string format/pattern/length constraints, no number bounds, no array bounds, ≤5 nesting depth, ≤100 property count). `warn`: host serves non-compliant schemas but logs the violations. `off` (default when absent): no self-attestation. The conformance-suite static-subset scenario gates on this flag."
+        },
+        "reliability": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["supported"],
+          "description": "RFC 0032 §C. Host emits the envelope-reliability event family on documented adverse paths. Hosts opt into the family via `supported: true` AND explicitly list the events they emit via `events[]`. Hosts that advertise `supported: true` MUST include at least `envelope.retry.exhausted` and `envelope.refusal` in `events[]` (the two MUST-tier events). The other four (`envelope.retry.attempted`, `envelope.truncated`, `envelope.nlToFormat.engaged`, `envelope.recovery.applied`) are SHOULD/MAY-tier per RFC 0032 §B and may be omitted.",
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "Host emits the RFC 0032 envelope-reliability event family on the documented adverse paths. When `false` or absent, conformance scenarios for the family soft-skip."
+            },
+            "events": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "envelope.retry.attempted",
+                  "envelope.retry.exhausted",
+                  "envelope.refusal",
+                  "envelope.truncated",
+                  "envelope.nlToFormat.engaged",
+                  "envelope.recovery.applied"
+                ]
+              },
+              "uniqueItems": true,
+              "description": "Subset of the six reliability events the host actually emits. Hosts that advertise `supported: true` MUST include `envelope.retry.exhausted` and `envelope.refusal`. Conformance scenarios soft-skip for events absent from this list (the event-emission assertion is skipped; other host behavior assertions remain in force)."
+            },
+            "maxRetryAttempts": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 16,
+              "description": "Host's retry budget per envelope emission. Conformance scenarios use this to construct fixtures that exercise the retry-exhausted path. Independent of `capabilities.limits.schemaRounds` (which is the engine-side per-emission cap) — `maxRetryAttempts` reports the host's actual configured value, not the spec's upper bound."
+            },
+            "completion": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["distinguishesTruncation"],
+              "description": "RFC 0033 §E. Host's self-attested envelope-completion contract posture — does the host distinguish truncation from schema-violation in its retry routing per RFC 0033 §A + §B + §C?",
+              "properties": {
+                "distinguishesTruncation": {
+                  "type": "boolean",
+                  "description": "Host implements RFC 0033's truncation-vs-schema-violation retry-routing distinction: truncation → increased output budget (NO corrective fragment); schema-violation → corrective system fragment (NO budget increase). When `false` or absent, the host conflates the two paths (legacy behavior); RFC 0033 conformance scenarios soft-skip."
+                },
+                "truncationBudgetMultiplier": {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 8,
+                  "description": "Host's per-attempt output-budget multiplier on truncation retries. Informational; clients MAY surface this in cost-estimation UIs. Defaults to 2 when absent and `distinguishesTruncation: true`. Spec recommendation is 2× per RFC 0033 §B."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "prompts": {
+      "type": "object",
+      "description": "RFC 0027 + RFC 0028 prompt-template support advertisement. The `supported` flag gates **node-execution resolution** of PromptRef values per RFC 0027 (Phase A); the separate `endpointsSupported` flag gates the **REST surface** at `/v1/prompts*` per RFC 0028 (Phase B). The two axes are independent — a host MAY implement Phase A composition without exposing the REST surface, and vice versa. Absent block = no support; consumers passing PromptRef values to such a host MUST tolerate the keys being treated as opaque strings.",
+      "required": ["supported"],
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "RFC 0027 Phase A. When `true`, the host resolves PromptRef values in `WorkflowNode.config.{systemPromptRef, userPromptRef, additionalPromptRefs}` at node-execution time AND emits `prompt.composed` run events per spec/v1/prompts.md §\"Composition + observability\". Does NOT imply the `/v1/prompts*` REST surface is available — see `endpointsSupported` for that. False or absent = the PromptRef keys on `WorkflowNode.config` are treated as opaque strings and never composed."
+        },
+        "endpointsSupported": {
+          "type": "boolean",
+          "description": "RFC 0028 §A. When `true`, the host serves the `/v1/prompts*` REST surface — at minimum the read endpoints (`listPromptTemplates`, `getPromptTemplate`, `renderPromptTemplate`). The mutating endpoints additionally require `mutableLibrary: true`; the pack-install path additionally requires `packsSupported: true`. False or absent = every `/v1/prompts*` request returns `501 capability_not_provided`. Independent of `supported` — a host MAY advertise `supported: true, endpointsSupported: false` (composition without library REST) or `supported: false, endpointsSupported: true` (library REST against an external resolver, e.g., a façade host)."
+        },
+        "templateKinds": {
+          "type": "array",
+          "items": { "$ref": "./prompt-kind.schema.json" },
+          "uniqueItems": true,
+          "description": "Subset of PromptKind values the host accepts. Defaults to all four (`system`, `user`, `few-shot`, `schema-hint`) when omitted. The $ref resolves to the shared `prompt-kind.schema.json` `$def` per RFC 0027 §A — uses a relative URI so redocly's lint walker resolves it against the local file rather than fetching the openwop.dev URL."
+        },
+        "variableSources": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["input", "variable", "secret", "context"] },
+          "uniqueItems": true,
+          "description": "Subset of PromptVariable.source values the host supports. `secret` SHOULD only appear when `capabilities.secrets.supported` is also true."
+        },
+        "maxTemplateBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65536,
+          "description": "Host limit on PromptTemplate.text length. MUST NOT exceed the schema cap (65536). When advertised, the host MUST reject larger bodies on install + on `POST /v1/prompts` (RFC 0028)."
+        },
+        "observability": {
+          "type": "string",
+          "enum": ["off", "hashed", "full"],
+          "description": "How `prompt.composed` events expose resolved bodies. `off`: event not emitted. `hashed`: payload carries only sha256 + per-variable-binding hashes (no plaintext). `full`: payload carries the composed body with secret-sourced values redacted to `[REDACTED:<secretId>]` markers and untrusted segments wrapped in `<UNTRUSTED>` markers. Default when absent: `hashed`."
+        },
+        "packsSupported": {
+          "type": "boolean",
+          "description": "RFC 0028 §C. When `true`, the host installs `kind: \"prompt\"` registry packs and exposes their templates at `GET /v1/prompts` with `meta.source: \"pack\"` + `meta.packName` + `meta.packVersion`. When `false` or absent, packs are not loaded; only host built-ins and (when `mutableLibrary: true`) user-created templates are visible."
+        },
+        "mutableLibrary": {
+          "type": "boolean",
+          "description": "RFC 0028 §C. When `true`, the host honors the mutating endpoints `POST /v1/prompts`, `PUT /v1/prompts/{templateId}`, `DELETE /v1/prompts/{templateId}`. When `false` or absent, those endpoints return 501. Pack-sourced and host-built-in templates remain read-only even under `mutableLibrary: true` — deletion of those returns 403 per RFC 0028 §A."
+        },
+        "library": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "RFC 0028 §C. Per-library configuration knobs that influence how clients call the prompt surface.",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Host's library identifier exposed at `GET /v1/prompts` (filterable via the structured `PromptRef.libraryId` field). Single-library hosts MAY omit this."
+            },
+            "renderEndpoint": {
+              "type": "string",
+              "format": "uri-reference",
+              "description": "Absolute or relative URI of the `:render` endpoint. Defaults to `/v1/prompts:render`. Useful for hosts mounting the surface under a prefix."
+            },
+            "maxRenderRequestBytes": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Hard cap on `POST /v1/prompts:render` request body size."
+            }
+          }
+        },
+        "defaults": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "RFC 0029 §B. Per-kind host-default PromptRefs that apply at resolution chain layer 4 (`host-defaults`) per `spec/v1/prompts.md` §\"Resolution chain (normative)\". Advertised so clients can preview the full chain at edit time without dispatching a node. Hosts MAY ship per-kind defaults; the openwop spec ships none.",
+          "properties": {
+            "system": { "$ref": "./prompt-ref.schema.json" },
+            "user": { "$ref": "./prompt-ref.schema.json" },
+            "few-shot": { "$ref": "./prompt-ref.schema.json" },
+            "schema-hint": { "$ref": "./prompt-ref.schema.json" }
+          }
+        },
+        "agentBindings": {
+          "type": "boolean",
+          "description": "RFC 0029 §B. When `true`, the host honors `AgentManifest.promptOverrides[kind]` and `AgentManifest.promptLibraryRef` at resolution chain layer 2 (`agent-overrides` / `agent-library-default`) per `spec/v1/prompts.md` §\"Resolution chain (normative)\". When `false` or absent, layer 2 is skipped — the host applies only layers 1, 3, 4. Conformance scenarios for agent-binding resolution are gated on this flag."
+        }
+      },
+      "additionalProperties": false
+    },
+    "extensions": {
+      "type": "object",
+      "description": "Optional per-canvas-type or per-workflow extensions (additional envelope types, override limits)."
+    },
+    "implementation": {
+      "type": "object",
+      "description": "Optional v1 server identity (name + version + vendor).",
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string" },
+        "vendor": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "engineVersion": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Optional v1 server engineVersion (see version-negotiation.md). Independent of `protocolVersion`."
+    },
+    "eventLogSchemaVersion": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Optional v1 server eventLogSchemaVersion (per-run subcollection contract)."
+    },
+    "supportedTransports": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["rest", "mcp", "a2a", "grpc"] },
+      "description": "Optional v1 transport advertisement. REST is required whether or not this field is present."
+    },
+    "configurable": {
+      "type": "object",
+      "description": "Optional v1 per-run overlay schema — what `RunOptions.configurable` keys this server honors."
+    },
+    "nodePackRuntimes": {
+      "type": "object",
+      "description": "Optional v1 advertisement of node-pack runtimes the host loads. See `node-packs.md` §runtime formats and RFC 0008 (WASM ABI). Hosts that don't load packs MAY omit this block entirely. NOTE: this block intentionally uses `additionalProperties: true` (here and on the nested runtime objects) so a future RFC may add a runtime type (e.g., `python-wasm`, `js-wasm`) without a breaking-change rev of this schema; the trade is that a strict-mode validator will accept arbitrary extra keys under these objects. A future RFC that promotes the open-set fields to first-class SHOULD tighten them to `additionalProperties: false` in the same RFC.",
+      "properties": {
+        "wasm": {
+          "type": "object",
+          "description": "WASM core-module runtime per RFC 0008. Hosts that load `runtime.language: \"wasm\"` packs MUST advertise `supported: true` and at least one entry in `abiVersions[]`. `additionalProperties: true` preserved for future RFC 0008 amendments (e.g., per-pack memory accounting fields).",
+          "required": ["supported"],
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "Host loads RFC 0008 WASM packs."
+            },
+            "abiVersions": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "uniqueItems": true,
+              "minItems": 1,
+              "description": "ABI versions the loader accepts. v1.1 hosts MUST include `1`. Packs declaring `openwop_abi_version()` outside this list MUST be rejected at load time per RFC 0008 §H."
+            },
+            "maxMemoryBytes": {
+              "type": "integer",
+              "minimum": 1048576,
+              "maximum": 8589934592,
+              "description": "Per-pack memory ceiling enforced by the host loader. Range: 1 MiB ≤ value ≤ 8 GiB. RFC 0008 §K — when a pack exceeds this, the host MUST emit `cap.breached` with `kind: \"wasm-memory\"`."
+            },
+            "loadedPacks": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true,
+              "description": "Pack names that passed instantiation (ABI check + load). Packs rejected per RFC 0008 §H MUST NOT appear here. Hosts MAY advertise this for observability; conformance asserts rejection by absence (Track 7)."
+            }
+          },
+          "additionalProperties": true
+        },
+        "wasmComponent": {
+          "type": "object",
+          "description": "WASM Component Model variant (WIT-defined interfaces). Reserved for hosts that load `runtime.language: \"wasm-component\"` packs. `additionalProperties: true` preserved until the Component Model spec stabilises in the v1.x line; tighten in the RFC that promotes wasm-component to a first-class runtime alongside `wasm`.",
+          "properties": {
+            "supported": { "type": "boolean" }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "observability": {
+      "type": "object",
+      "description": "Optional v1 hints about emitted spans/metrics/logs. See observability.md.",
+      "properties": {
+        "otel": {
+          "type": "object",
+          "description": "OTel-specific advertisement. Hosts that emit OTLP traces/metrics MAY advertise the transport protocols they support so collectors can configure exporters accordingly. Track 11 follow-up.",
+          "properties": {
+            "exportProtocols": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["http/json", "http/protobuf", "grpc"]
+              },
+              "uniqueItems": true,
+              "description": "OTLP export protocols the host supports emitting. `http/json` and `http/protobuf` are mandatory for hosts advertising OTel emission; `grpc` is opt-in per Track 11."
+            }
+          },
+          "additionalProperties": true
+        },
+        "testSeams": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "RFC 0034 — Conformance-only test seams under the host-extension namespace. Hosts that opt in expose introspection endpoints so cross-host conformance scenarios can verify BYOK canaries do not leak into OTel span attributes or debug-bundle exports. Production hosts SHOULD return 404 or 403 from these seams unless an env-gate (e.g., `OPENWOP_TEST_OTEL_SCRAPE=true`) is set.",
+          "properties": {
+            "otelScrape": {
+              "type": "boolean",
+              "description": "Host exposes `POST /v1/host/sample/test/otel/spans?runId=<id>` returning `{ spans: Array<{ name, attributes, events }> }` scoped to the run. Conformance verifies span attributes don't carry BYOK canaries. When advertised true, the host MUST serve a 200 response with the documented shape."
+            },
+            "debugBundleExport": {
+              "type": "boolean",
+              "description": "Host exposes `POST /v1/host/sample/test/debug-bundle/export` returning the same payload shape as `GET /v1/runs/{runId}/debug-bundle` per `spec/v1/debug-bundle.md`. Conformance verifies the serialized bundle doesn't carry BYOK canaries. When advertised true, the host MUST serve a 200 response with the documented shape."
+            }
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "minClientVersion": {
+      "type": "string",
+      "description": "Optional v1 minimum client SDK version the server interops with."
+    },
+    "secrets": {
+      "type": "object",
+      "description": "Optional v1 secret/credential resolution advertisement. Clients gate BYOK flows on this. Hosts that don't store credentials return `supported: false`.",
+      "required": ["supported"],
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "Host has any secret-resolution at all."
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["tenant", "user", "run"]
+          },
+          "uniqueItems": true,
+          "description": "Subset of scopes the host implements. Tenant-scoped secrets are workspace-shared; user-scoped are per-end-user; run-scoped are ephemeral per-run."
+        },
+        "resolution": {
+          "type": "string",
+          "enum": ["host-managed"],
+          "description": "Resolution mode. v1.x supports only `host-managed` (clients reference stored secrets via opaque ids); reserved for future modes."
+        }
+      },
+      "additionalProperties": false
+    },
+    "runtimeCapabilities": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true,
+      "description": "Optional v1 host-advertised opaque capability ids that NodeModules may declare in `NodeModule.requires`. Naming convention: dotted, domain-scoped (`chat.sendPrompt`, `canvas.write`, `secrets.byok`). Provider value shapes are documented per-capability alongside consumers, NOT in the protocol package — the protocol owns the *check*, not domain provider contracts. A client that submits a workflow whose nodes declare a `requires` entry SHOULD first verify the host advertises that capability; a host that lacks a capability MUST refuse to dispatch nodes that declare it, terminating the run with `RunSnapshot.error.code = 'capability_not_provided'`. See `capabilities.md` §\"Runtime capabilities\"."
+    },
+    "multiAgent": {
+      "type": "object",
+      "description": "RFC 0037 — Multi-agent execution model + handoff state machine. Hosts that advertise implement the supervisor→dispatch→harvest loop + the 4-state handoff state machine + the `core.workflowChain.event` emission contract per spec/v1/multi-agent-execution.md. Absent block = host implements RFCs 0006/0007/0022 individually with implementation flexibility on integration semantics; conformance scenarios gating on this flag soft-skip on absence.",
+      "additionalProperties": false,
+      "properties": {
+        "executionModel": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["supported", "version"],
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "Host implements the execution loop + handoff state machine per spec/v1/multi-agent-execution.md §\"Execution loop\" + §\"Handoff state machine\". When true, the host MUST emit `core.workflowChain.event` records on every handoff transition per the §\"Transition events\" table."
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 4,
+              "description": "Profile version. 1 = Phase 1 (execution-loop framework + planner→worker handoff). 2 = Phase 2 (confidence + agent-memory lifecycle, follow-up RFC). 3 = Phase 3 (cross-host causation, follow-up RFC). 4 = Phase 4 (replay determinism under nondeterministic models, follow-up RFC). A host advertising `version: N` MUST implement all phases 1..N. v1.x ships with Phase 1 only; Phases 2-4 lift the ceiling additively."
+            }
+          }
+        }
+      }
+    },
+    "modelCapabilities": {
+      "type": "object",
+      "description": "RFC 0031. Host implements model-capability gating + (optional) substitution per `NodeModule.requiredModelCapabilities` + `NodeModule.fallbackModel`. Distinct from `runtimeCapabilities` which gates on HOST capabilities — `modelCapabilities` gates on MODEL capabilities (structured-output support, discriminator-enum support, long-context, native reasoning, function-calling). Absent block = no advertisement; NodeModules' `requiredModelCapabilities` are treated as opaque metadata and dispatch proceeds without checks.",
+      "additionalProperties": false,
+      "required": ["supported"],
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "Host honors `NodeModule.requiredModelCapabilities` and emits `model.capability.substituted` / `model.capability.insufficient` events per RFC 0031 §B + §D. When `false` or absent, the fields are treated as opaque metadata and dispatch proceeds without capability checks."
+        },
+        "advertised": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^([a-z][a-z0-9-]*|x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*)$"
+          },
+          "uniqueItems": true,
+          "description": "Capability identifiers the host's active model advertises. Clients MAY introspect this at install time to determine whether their NodeModules' `requiredModelCapabilities` are satisfiable without fallback. Spec-reserved identifiers per RFC 0031 §C: `structured-output`, `discriminator-enum`, `long-context`, `reasoning` (model-native thinking-tokens), `function-calling`. Host-private extensions MUST prefix with `x-host-<host>-`."
+        },
+        "substitutionSupported": {
+          "type": "boolean",
+          "description": "Host honors `NodeModule.fallbackModel` substitution per RFC 0031 §B step 3. When `false` or absent, hosts MUST refuse to dispatch (step 4) on any unmet capability — they MUST NOT attempt fallback even when the field is declared on the NodeModule. Recursive fallback is NOT permitted (RFC 0031 §\"Unresolved questions\" #3)."
+        }
+      }
+    },
+    "providerUsage": {
+      "type": "object",
+      "description": "RFC 0026. Hosts that emit `provider.usage` events after every LLM provider invocation per RFC 0026 §B. The event carries per-call token counts in the durable event log; cost rollup remains in `RunSnapshot.metrics.openwopCost`. Old hosts ignore.",
+      "properties": {
+        "supported": { "type": "boolean", "description": "Host emits one `provider.usage` event per LLM provider call." },
+        "costEstimates": { "type": "boolean", "description": "When true, the host includes `costEstimateUsd` on `provider.usage` events using its internal rate table. When false/absent, only token counts are emitted." },
+        "currency": { "type": "string", "pattern": "^[A-Z]{3}$", "description": "Default ISO 4217 currency for `costEstimateUsd` values. When absent, USD is assumed." }
+      },
+      "required": ["supported"],
+      "additionalProperties": false
+    },
+    "aiProviders": {
+      "type": "object",
+      "description": "Optional v1 companion to `secrets`. Advertises which AI providers the host's AI-proxy can route to and which permit BYOK.",
+      "properties": {
+        "supported": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true,
+          "description": "Provider ids the host's AI-proxy can route to. Conventional ids: `anthropic`, `openai`, `gemini`, `mistral`, `cohere`, `vertex`, `bedrock`. Hosts MAY add vendor-prefixed extensions."
+        },
+        "byok": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true,
+          "description": "Subset of `supported` for which BYOK is permitted. Empty array → all calls use platform-managed keys; non-empty → clients MAY pass `ai.credentialRef` in `RunOptions.configurable` for matching providers."
+        },
+        "policies": {
+          "type": "object",
+          "description": "Optional v1 host-side policy enforcement modes for per-provider gating. Omitted → no enforcement; clients see only `optional` semantics. When present, MUST declare `modes` — an empty `{}` is not a valid third state. See `capabilities.md` §`aiProviders.policies`.",
+          "required": ["modes"],
+          "properties": {
+            "modes": {
+              "type": "array",
+              "items": { "type": "string", "enum": ["disabled", "optional", "required", "restricted"] },
+              "uniqueItems": true,
+              "description": "Subset of policy modes this host can enforce. `disabled` = provider may not be used; `optional` = no restriction (default); `required` = BYOK required; `restricted` = model must match the policy's `allowedModels` glob list. Hosts MAY support a subset; clients MUST tolerate any subset."
+            },
+            "scopes": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 },
+              "uniqueItems": true,
+              "description": "Resolution layers the host evaluates. Conventional ids: `workspace`, `project`, `canvas-type`. Precedence is host-defined and SHOULD be documented per-deployment."
+            },
+            "errorCode": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Wire-format error code returned on denial. Defaults to `provider_policy_denied`. Reserved for hosts that need a vendor-prefixed alias."
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "testing": {
+      "type": "object",
+      "description": "Testing-mode capabilities advertised to clients (closes F1). Lets conformance suites + dev clients discover which mock providers the server supports and which API-key prefix denotes test keys (since mock providers are test-keys-only).",
+      "properties": {
+        "mockProviders": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true,
+          "description": "Mock-provider IDs this server recognizes via `RunOptions.configurable.mockProvider.id`. Servers claiming OpenWOP v1.0 conformance MUST include `stream-text`. Other canonical providers (`tool-calls`, `error`, `usage-only`) are recommended. Implementations MAY add their own (vendor-prefixed)."
+        },
+        "testKeyPrefix": {
+          "type": "string",
+          "description": "API-key prefix that marks a key as test-mode. Mock providers and other test-only surfaces gate on this prefix.",
+          "minLength": 1,
+          "maxLength": 32
+        },
+        "forceEngineVersionRange": {
+          "type": "object",
+          "description": "Range of engine versions the server can be forced into via the `X-Force-Engine-Version` request header (test-keys-only). Used by the conformance suite to verify forward-compat fold-best-effort across the version-negotiation matrix. Closes F5.",
+          "required": ["min", "max"],
+          "properties": {
+            "min": { "type": "integer", "minimum": 0, "description": "Lowest forceable engine version. Typically (current - 1) so back-compat is exercised." },
+            "max": { "type": "integer", "minimum": 0, "description": "Highest forceable engine version. Typically (current + 1) so forward-compat is exercised." }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": true
+    },
+    "conformance": {
+      "type": "object",
+      "description": "Conformance-only capability block (RFC 0023). Advertises which conformance-only typeIds (`core.conformance.*`) the host has registered. Hosts that don't ship conformance-only typeIds omit this block entirely. Production deployments SHOULD omit this block; conformance-only typeIds carry test hooks (e.g., `mockReasoning`, `mockConfidence`) that MUST NOT be reachable from production tenants.",
+      "properties": {
+        "mockAgent": {
+          "type": "boolean",
+          "description": "RFC 0023 §B.2. When `true`, the host has registered the `core.conformance.mock-agent` typeId. The scenarios `agentReasoningEvents.test.ts` and `agentConfidenceEscalation.test.ts` rely on the typeId being reachable. Hosts that register the typeId only for workflow ids matching the conformance fixture prefix (`conformance-*`) and refuse it for other tenants MAY still advertise `true` — the advertisement says only that the typeId is reachable from the conformance suite, not that it is reachable from arbitrary workflows."
+        }
+      },
+      "additionalProperties": false
+    },
+    "fixtures": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true,
+      "description": "Optional v1 fixture workflow IDs the host has seeded. The conformance suite uses this list to decide which fixture-dependent scenarios run vs. skip. Each ID matches a stub at `node_modules/@openwop/openwop-conformance/fixtures/{id}.json`. Hosts MAY advertise vendor-prefixed IDs; clients MUST tolerate unknown IDs. Empty array or absent means the host advertises no fixtures."
+    },
+    "agents": {
+      "type": "object",
+      "description": "Multi-Agent Shift capability block (Phases 1-6). Hosts that implement any multi-agent surface declare it here; pre-MAS hosts omit the block entirely (consumers treat as 'no agent support'). Each field gates a specific conformance scenario class; conformance scenarios skip honestly when the host's advertisement doesn't claim the capability.",
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "Master switch for agent identity (Phase 1). When `true`, host accepts run-level `RunSnapshot.agent` / `runOrchestrator` fields, emits `agent.*` events, and honors the confidence-escalation contract."
+        },
+        "profile": {
+          "type": "string",
+          "description": "Optional named capability profile (e.g., `wop-agents-phase-1-skeleton` for identity-only, `wop-agents-full` for orchestrator+dispatch+memory+conversation). Clients pattern-match on profile to gate feature usage."
+        },
+        "modelClasses": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["reasoning", "tool-using", "chat", "code", "vision", "multimodal", "embedding", "classification", "retrieval"]
+          },
+          "uniqueItems": true,
+          "description": "Optional list of `AgentRef.modelClass` values this host supports for hosted agents (Phase 2). Pack manifests whose `modelClass` is not in this list MUST refuse install with `unsupported_model_class`."
+        },
+        "orchestratorPattern": {
+          "type": "string",
+          "description": "Optional orchestration pattern (Phase 2). Canonical: `single`, `delegate`, `delegate.smart`. Vendor extensions ship under `vendor.<host>.<pattern>`."
+        },
+        "memoryBackends": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["long-term"] },
+          "uniqueItems": true,
+          "description": "Optional list of memory backends (Phase 3). `long-term` means the host implements `ExecutionHost.memory` against a durable store with the SR-1 redaction invariant intact end-to-end. Hosts that don't wire `MemoryAdapter` omit this field."
+        },
+        "orchestrator": {
+          "type": "boolean",
+          "description": "Phase 5. When `true`, host advertises that it implements the `core.orchestrator.supervisor` node typeId AND honors the conservative-path suspend semantics (CP-1: low-confidence suspend via `node.suspended { reason: 'low-confidence' }`)."
+        },
+        "dispatch": {
+          "type": "boolean",
+          "description": "Phase 6. When `true`, host advertises that it implements the `core.dispatch` Core typeId AND honors the conservative-path commitment CP-2 (`core.dispatch` MUST NOT mutate the run's DAG mid-run). Implies (but does NOT require) `agents.orchestrator: true`."
+        },
+        "dispatchMapping": {
+          "type": "boolean",
+          "default": false,
+          "description": "Phase 6.1 (RFC 0022 §A). When `true`, host honors `inputMapping` / `outputMapping` / `perWorkerInputMappings` / `perWorkerOutputMappings` on `DispatchConfig` — building child inputs from parent variables before dispatch and harvesting child variables into parent variables on completion. Implies (but does NOT require) `agents.dispatch: true`. Hosts that set `agents.dispatch: true` but omit / `false` this flag MUST refuse workflows that carry non-empty mapping fields at registration with `validation_error` + `details.requiredCapability: 'agents.dispatchMapping'`."
+        },
+        "reasoning": {
+          "type": "object",
+          "description": "Phase 1 reasoning-event verbosity configuration.",
+          "properties": {
+            "verbosity": {
+              "type": "string",
+              "enum": ["summary", "full", "off"],
+              "description": "Default reasoning verbosity for `agent.reasoned` events when the run does not override via `RunOptions.configurable.reasoningVerbosity`."
+            },
+            "tokenLimit": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Effective cap on reasoning trace length when verbosity is `summary`. Default 512 tokens."
+            },
+            "streaming": {
+              "type": "boolean",
+              "default": false,
+              "description": "RFC 0024. When `true`, the host MAY emit `agent.reasoning.delta` events while a reasoning block is still open, in addition to the final `agent.reasoned`. Hosts that omit / `false` this flag emit only the final `agent.reasoned`. Consumers MUST tolerate both modes."
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": true
+    },
+    "memory": {
+      "type": "object",
+      "description": "MemoryAdapter capability block per RFC 0004 + the optional compaction profile per RFC 0012. Hosts that don't wire any memory surface omit the entire block.",
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "When `true`, host implements the four-operation MemoryAdapter contract (`list`, `get`, `put`, `delete`) per RFC 0004 §A."
+        },
+        "maxEntrySizeBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Upper bound on `MemoryEntry.content` size. Hosts SHOULD reject `put` exceeding this with `validation_error`."
+        },
+        "ttlSupported": {
+          "type": "boolean",
+          "description": "When `true`, host honors `expiresAt` per RFC 0004 §E."
+        },
+        "compaction": {
+          "type": "object",
+          "description": "RFC 0012 Memory Compaction Profile (Accepted 2026-05-15). Hosts that distill many short-lived MemoryEntry rows into fewer long-lived ones MAY advertise here; advertising implies the SR-1 carry-forward invariant (`SECURITY/invariants.yaml` row `memory-compaction-sr-1-carry-forward`).",
+          "required": ["supported"],
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "REQUIRED when the sub-block is present. When `true`, host performs compaction over `longTerm` memory and emits the `memory.compacted` event per `observability.md` §Canonical event vocabulary."
+            },
+            "trigger": {
+              "type": "string",
+              "enum": ["host-managed", "client-requested", "both"],
+              "description": "REQUIRED when `supported: true` per RFC 0012 §A (enforced via the `if/then` clause). `host-managed` runs on a host-internal schedule clients do not control. `client-requested` and `both` are reserved enum values; v1.x normates only `host-managed`."
+            },
+            "maxInputEntries": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Informational ceiling on how many source entries one compaction call collapses. Not wire-enforced."
+            },
+            "maxOutputBytes": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Informational ceiling on the distilled entry size. SHOULD be ≤ `memory.maxEntrySizeBytes`."
+            }
+          },
+          "additionalProperties": false,
+          "if": { "properties": { "supported": { "const": true } }, "required": ["supported"] },
+          "then": { "required": ["supported", "trigger"] }
+        }
+      },
+      "additionalProperties": true
+    },
+    "conversationPrimitive": {
+      "type": "boolean",
+      "description": "Multi-Agent Shift Phase 4. When `true`, host advertises that it implements the `core.conversationGate` typeId AND honors the `conversation.start` / `conversation.exchange` / `conversation.close` suspend variants. Hosts that don't claim this fall back to `clarification.requested` interrupts for multi-turn user interjections."
+    },
+    "subWorkflow": {
+      "type": "object",
+      "description": "Capability surface for `core.subWorkflow` extensions. The baseline `core.subWorkflow` contract (RFC 0007 + `node-packs.md` §contract) is unconditional and does NOT require a capability flag; this object carries the additive extensions a host MAY support. Added by RFC 0022 §B + §C.",
+      "properties": {
+        "inputMapping": {
+          "type": "boolean",
+          "default": false,
+          "description": "RFC 0022 §B. When `true`, host honors the `inputMapping` field on `core.subWorkflow` configs — seeding the child workflow's initial variable bag from `parentVariables[parentKey]` projections, overriding any matching `variables[].defaultValue` declaration on the child. When `false` or absent, hosts MUST refuse workflows that carry a non-empty `inputMapping` at registration with `validation_error` + `details.requiredCapability: 'subWorkflow.inputMapping'`. Silent ignore is NOT conformant."
+        }
+      },
+      "additionalProperties": false
+    },
+    "fs": {
+      "type": "object",
+      "description": "RFC 0014 (`Active`). Filesystem capability — read/write/list/stat/delete inside a sandbox root. Required by the `core.openwop.files` pack. Hosts MUST resolve every input path relative to `sandboxRoot`, reject any path that escapes via `..` segments or symlinks, and enforce `maxFileSizeBytes` on write. Path-traversal rejection is normative — see `SECURITY/invariants.yaml` row `fs-path-traversal`.",
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "Host advertises `ctx.fs.{read,write,delete,stat,list}`. `false` (or omission) signals the host does NOT expose a filesystem surface; `core.openwop.files` registration MUST refuse on such hosts."
+        },
+        "sandboxRoot": {
+          "type": "string",
+          "description": "Absolute path. Every fs operation is resolved relative to this root. MUST be set when `supported: true`."
+        },
+        "maxFileSizeBytes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Per-file size cap enforced on write. 0 = unlimited (NOT recommended). Reads of files larger than this MAY return `file_too_large`."
+        },
+        "image": {
+          "type": "object",
+          "description": "Image-processing sub-capability. Optional.",
+          "properties": {
+            "supported": { "type": "boolean" },
+            "formats": {
+              "type": "array",
+              "items": { "type": "string", "enum": ["jpeg", "png", "webp", "avif", "gif"] }
+            }
+          },
+          "additionalProperties": false
+        },
+        "pdf": {
+          "type": "object",
+          "description": "PDF-processing sub-capability. Optional.",
+          "properties": {
+            "supported": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "transport": {
+          "type": "object",
+          "description": "Network file-transport sub-capabilities. Optional.",
+          "properties": {
+            "ftp": { "type": "boolean" },
+            "sftp": { "type": "boolean" },
+            "ssh": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "if": { "properties": { "supported": { "const": true } }, "required": ["supported"] },
+      "then": { "required": ["supported", "sandboxRoot"] },
+      "additionalProperties": false
+    },
+    "kvStorage": {
+      "type": "object",
+      "description": "RFC 0015 (`Active`). TTL-aware key-value store with atomic increment + compare-and-swap. Required by `core.openwop.storage` kv-* nodes. Hosts MUST partition values by tenant (`kv-cross-tenant-isolation` invariant) and atomically apply increments + CAS when those flags are advertised.",
+      "properties": {
+        "supported": { "type": "boolean" },
+        "maxKeyBytes": { "type": "integer", "minimum": 0 },
+        "maxValueBytes": { "type": "integer", "minimum": 0 },
+        "maxTtlSeconds": { "type": "integer", "minimum": 0 },
+        "atomicIncrement": { "type": "boolean" },
+        "compareAndSwap": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "tableStorage": {
+      "type": "object",
+      "description": "RFC 0016 (`Active`). Structured-record store with user-defined schemas. Sibling to kvStorage. Cross-tenant isolation enforced (mirrors RFC 0015 invariant).",
+      "properties": {
+        "supported": { "type": "boolean" },
+        "maxRowsPerTable": { "type": "integer", "minimum": 0 },
+        "maxColumnsPerRow": { "type": "integer", "minimum": 0 },
+        "indexable": { "type": "boolean" },
+        "fullTextSearch": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "queueBus": {
+      "type": "object",
+      "description": "RFC 0017 (`Active`). Inbound queue + stream capability — publish, consume (trigger), ack/nack/dead-letter. Cross-tenant message isolation invariant (`queue-cross-tenant-isolation`). Sibling to host.messaging (which is outbound-egress-only).",
+      "properties": {
+        "supported": { "type": "boolean" },
+        "backends": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["rabbitmq", "kafka", "sqs", "sns", "pubsub", "mqtt", "nats", "redis-streams", "in-memory"] }
+        },
+        "deadLetterSupported": { "type": "boolean" },
+        "stream": {
+          "type": "object",
+          "properties": {
+            "supported": { "type": "boolean" },
+            "fromBeginning": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "sql": {
+      "type": "object",
+      "description": "RFC 0018 (`Active`). SQL database adapter with parametric-only enforcement. Hosts MUST reject non-parametric queries that inline user input (`sql-parametric-only` invariant — guards against SQL injection across every workflow).",
+      "properties": {
+        "supported": { "type": "boolean" },
+        "datasources": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+        "transactions": { "type": "boolean" },
+        "drivers": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["postgres", "mysql", "mariadb", "sqlite", "mssql", "clickhouse", "snowflake", "bigquery", "duckdb"] }
+        }
+      },
+      "additionalProperties": false
+    },
+    "nosql": {
+      "type": "object",
+      "description": "RFC 0018 (`Active`). MongoDB-shape document store adapter.",
+      "properties": {
+        "supported": { "type": "boolean" },
+        "datasources": { "type": "array" },
+        "drivers": { "type": "array", "items": { "type": "string", "enum": ["mongodb", "dynamodb", "cosmosdb", "firestore"] } }
+      },
+      "additionalProperties": false
+    },
+    "vectorStore": {
+      "type": "object",
+      "description": "RFC 0018 (`Active`). Vector-DB capability for k-NN search.",
+      "properties": {
+        "supported": { "type": "boolean" },
+        "collections": { "type": "array" },
+        "backends": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["pinecone", "qdrant", "weaviate", "milvus", "pgvector", "redis", "mongodb-atlas", "chroma", "azure-ai-search", "in-memory"] }
+        }
+      },
+      "additionalProperties": false
+    },
+    "searchIndex": {
+      "type": "object",
+      "description": "RFC 0018 (`Active`). Full-text search index adapter.",
+      "properties": {
+        "supported": { "type": "boolean" },
+        "indexes": { "type": "array" },
+        "backends": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["elasticsearch", "opensearch", "meilisearch", "typesense", "algolia"] }
+        }
+      },
+      "additionalProperties": false
+    },
+    "blobStorage": {
+      "type": "object",
+      "description": "RFC 0019 (`Active`). Binary artifact store with presigned URLs. Per-bucket tenant isolation. Presigned URLs MUST expire at the advertised TTL.",
+      "properties": {
+        "supported": { "type": "boolean" },
+        "buckets": { "type": "array" },
+        "presignSupported": { "type": "boolean" },
+        "maxObjectBytes": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "cache": {
+      "type": "object",
+      "description": "RFC 0019 (`Active`). TTL cache for HTTP / AI response memoization. Per-tenant scoping; TTL drift ≤ 1s.",
+      "properties": {
+        "supported": { "type": "boolean" },
+        "maxValueBytes": { "type": "integer", "minimum": 0 },
+        "maxTtlSeconds": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "workflowChainPacks": {
+      "type": "object",
+      "description": "RFC 0013 (Phase 1, `Draft`). When `supported: true`, the host's workflow editor implements workflow-chain pack expansion per `workflow-chain-packs.md` — author drops a chain tile, host resolves the pack, prompts for `parameters`, substitutes `{{params.<name>}}` placeholders, rewrites node ids, splices the resulting DAG into the parent workflow. Hosts that don't implement expansion omit this block (or set `supported: false`); conformance scenarios under `conformance/src/scenarios/workflow-chain-*.test.ts` skip cleanly against those hosts.",
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "Whether the host's workflow editor implements chain expansion at author time. `false` (or omission) signals the host does NOT consume workflow-chain packs."
+        }
+      },
+      "required": ["supported"],
+      "additionalProperties": false
+    },
+    "mcp": {
+      "type": "object",
+      "description": "RFC 0020 (`Active`). MCP (Model Context Protocol) composition surface. The client half is consumed implicitly via `host.mcp` host-surface; this block adds the optional server half — workflow exposed AS an MCP server with bidirectional sampling/elicitation bridges.",
+      "properties": {
+        "supported": { "type": "boolean", "description": "Host advertises a client-side MCP surface (ctx.mcp.*). See spec/v1/mcp-integration.md." },
+        "serverMount": {
+          "type": "object",
+          "description": "Server-side MCP composition (workflow IS an MCP server). When supported, the host mounts an MCP endpoint and routes inbound tools/call, resources/read, prompts/get into workflows. Inbound MUST be treated as `trustBoundary: 'untrusted'`.",
+          "properties": {
+            "supported": { "type": "boolean" },
+            "transports": {
+              "type": "array",
+              "items": { "type": "string", "enum": ["stdio", "streamable-http"] }
+            },
+            "samplingBridge": { "type": "boolean", "description": "Inbound sampling/createMessage bridges to the workflow's ctx.callAI." },
+            "elicitationBridge": { "type": "boolean", "description": "Inbound elicitation/create bridges to ctx.suspend." }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "sandbox": {
+      "type": "object",
+      "description": "RFC 0035 — Sandbox execution contract for pack-loaded typeIds. Hosts that advertise execute pack-loaded code inside an isolation boundary meeting the 8 failure-mode invariants in spec/v1/host-capabilities.md §'Sandbox execution contract'. Absent block = host does NOT sandbox pack-loaded code and MUST refuse to load any pack whose manifest declares `peerDependencies.host.sandbox: required`.",
+      "additionalProperties": false,
+      "required": ["supported", "isolationModel"],
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "Host enforces the 8 sandbox failure-mode invariants per spec/v1/host-capabilities.md §'Sandbox execution contract'. When false, host MUST refuse to load packs declaring required sandbox isolation."
+        },
+        "isolationModel": {
+          "type": "string",
+          "anyOf": [
+            { "enum": ["wasm", "process", "container", "vm"] },
+            { "pattern": "^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*$" }
+          ],
+          "description": "Categorical isolation model. `wasm` = WebAssembly sandbox with explicit host imports (e.g., Wasmtime, Wasmer). `process` = OS process boundary with restricted syscalls (e.g., gVisor, seccomp, Landlock). `container` = container runtime boundary (e.g., Firecracker microVM). `vm` = full VM. Vendor-specific isolation models advertise `^x-host-<host>-<key>$` per spec/v1/host-extensions.md §'Canonical prefixes'; documentation lives at the host's discovery doc."
+        },
+        "allowedHostCalls": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Whitelist of host-call surfaces sandboxed code MAY invoke. Identifiers from the spec-reserved `host.*` capability set or `^x-host-<host>-<key>$` extension namespace. Empty array = pure compute only (no host I/O). Conformance verifies the sandbox refuses unlisted calls (`sandbox_capability_denied`)."
+        },
+        "memoryLimitBytes": {
+          "type": "integer",
+          "minimum": 1048576,
+          "description": "Per-invocation memory cap (≥ 1 MiB). Host MUST enforce; exceeding fails the node with `sandbox_memory_exceeded`."
+        },
+        "wallClockLimitMs": {
+          "type": "integer",
+          "minimum": 100,
+          "description": "Per-invocation wall-clock cap (≥ 100 ms). Host MUST enforce; exceeding fails the node with `sandbox_timeout`."
+        }
+      }
+    },
+    "idempotency": {
+      "type": "object",
+      "description": "RFC 0036 — Multi-region idempotency contract. Optional v1 advertisement. The existing `crossRegion: 'single-region'|'best-effort'|'strict'` categorical claim lives under `capabilities.idempotency.crossRegion` per spec/v1/idempotency.md §'Multi-region idempotency (annex)'. The `multiRegion` sub-block here gives a granular advertisement that hosts SHOULD pair with the categorical `crossRegion` claim.",
+      "additionalProperties": true,
+      "properties": {
+        "multiRegion": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["supported"],
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "Host implements cross-region idempotency reconciliation per spec/v1/idempotency.md §'Multi-region reconciliation'. When `true`, an Idempotency-Key write succeeding in region A is read-visible in region B within `replicationLagBoundMs + safetyMargin`."
+            },
+            "replicationLagBoundMs": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 60000,
+              "description": "Conservative upper bound on cross-region replication lag (≤ 60s ceiling chosen to keep operator advertisement honest; production cross-region deployments typically run < 10s). Conformance asserts read-visibility after the bound."
+            },
+            "partitionRecoveryStrategy": {
+              "type": "string",
+              "anyOf": [
+                { "enum": ["last-writer-wins", "first-writer-wins"] },
+                { "pattern": "^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*$" }
+              ],
+              "description": "Deterministic resolution rule for conflicting idempotency-key records when a partition healed. `last-writer-wins` / `first-writer-wins` are spec-reserved categorical rules; vendor strategies use `^x-host-<host>-<key>$`. Conformance asserts deterministic resolution actually applies; it does NOT prescribe which strategy a host picks."
+            }
+          }
+        }
+      }
+    },
+    "eventLog": {
+      "type": "object",
+      "description": "RFC 0036 — Event-log multi-engine advertisement. Optional v1.",
+      "additionalProperties": false,
+      "properties": {
+        "crossEngineOrdering": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["supported"],
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "Host implements append-ordering guarantees across multiple engine instances writing to the same run's event log. When `true`, two engines appending concurrently converge on a total order any reader observes consistently."
+            },
+            "orderingModel": {
+              "type": "string",
+              "enum": ["lamport", "vector-clock", "global-sequencer"],
+              "description": "Mechanism the host uses to derive the total order. `lamport` = Lamport timestamps on each append. `vector-clock` = per-engine vector counters merged at read. `global-sequencer` = single sequencer assigns monotonic seq numbers (the Postgres reference host's posture)."
+            }
+          }
+        }
+      }
+    },
+    "compliance": {
+      "type": "object",
+      "description": "Privacy / compliance behavior advertised to clients (closes O5). Lets consumers know what masking mode is in effect so a `\"[REDACTED]\"` value in event log payloads is recognizable as a server-side mask vs an upstream null.",
+      "properties": {
+        "defaultMode": {
+          "type": "string",
+          "enum": ["mask", "omit", "hash", "passthrough"],
+          "description": "Server's default masking mode for fields marked sensitive. `mask` (default): replace with `\"[REDACTED]\"`. `omit`: drop the field entirely. `hash`: replace with `\"sha256:<hex>\"` for audit-only equality. `passthrough`: record as-is (NOT recommended for production). Workflow authors MAY override per-workflow via `metadata.complianceConfig.maskingMode`. See observability.md §Privacy classification."
+        },
+        "supportedClasses": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["public", "pii", "phi", "pci", "regulated"] },
+          "uniqueItems": true,
+          "description": "Compliance classes this server applies special handling for. A server MAY accept all five classes but only enforce stricter retention on a subset; this field declares the operational reality so workflow authors can choose a server appropriately."
+        }
+      },
+      "additionalProperties": true
+    },
+    "production": {
+      "type": "object",
+      "description": "Production-profile advertisement (see production-profile.md). Optional in v1; absence means the host does not claim the openwop-production profile. When `supported: true`, the host claims every MUST in production-profile.md and conformance scenarios gated on this block MUST run. Landed by RFC 0009.",
+      "required": ["supported"],
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "Host claims the openwop-production profile end-to-end (production-profile.md)."
+        },
+        "backpressure": {
+          "type": "object",
+          "description": "Backpressure envelope advertisement (production-profile.md §Backpressure).",
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "Host returns 503 + Retry-After + canonical envelope under load per production-profile.md §Backpressure."
+            },
+            "inflightCap": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Optional host-side concurrent-inflight cap the conformance suite can saturate. When advertised, the production-backpressure scenario issues `inflightCap + 1` concurrent long-lived requests to deterministically force a 503. When absent, the scenario soft-skips the saturation step (envelope assertion still runs if a 503 happens to fire)."
+            },
+            "retryAfterSeconds": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 86400,
+              "description": "Optional advertised Retry-After value in seconds the host returns on 503. When present, MUST equal both the `Retry-After` header and the `details.retryAfter` body field per production-profile.md. Upper bound 86400 (24h) — values beyond that are operationally indistinguishable from 'permanently denied'. Hosts needing longer holds SHOULD omit `Retry-After` entirely (RFC 0009 Q#2)."
+            }
+          },
+          "additionalProperties": false
+        },
+        "retention": {
+          "type": "object",
+          "description": "Event-retention advertisement (production-profile.md §\"Event retention\").",
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "Host enforces event-log retention with a documented minimum window."
+            },
+            "minWindowSeconds": {
+              "type": "integer",
+              "minimum": 604800,
+              "description": "Documented minimum retention window in seconds. Per production-profile.md §\"Event retention\", MUST be ≥ 604800 (7 days) for public hosts; development-only hosts MAY advertise a smaller window but MUST NOT claim `supported: true` while doing so."
+            },
+            "testForceExpire": {
+              "type": "boolean",
+              "description": "Host exposes a test-only force-expire hook the conformance suite can call (URL/method supplied via `OPENWOP_TEST_FORCE_EXPIRE_URL` / `OPENWOP_TEST_FORCE_EXPIRE_METHOD` env vars). When `false`, the production-retention-expiry scenario asserts only the 410/404 envelope shape on an operator-supplied already-expired run id (via `OPENWOP_TEST_EXPIRED_RUN_ID`); otherwise it soft-skips. RFC 0009 unresolved question #1 — endpoint normation is deferred."
+            }
+          },
+          "additionalProperties": false
+        },
+        "debugBundle": {
+          "type": "object",
+          "description": "Debug-bundle truncation advertisement (production-profile.md §\"Debug bundle behavior\"). Stricter than the existing `capabilities.debugBundle.supported` advertised per debug-bundle.md — this block adds the production-profile MUSTs (truncation metadata, redaction).",
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "Host claims production-profile debug-bundle behavior end-to-end."
+            },
+            "truncationMetadata": {
+              "type": "boolean",
+              "description": "When `true`, host surfaces `truncated: true` + non-empty `truncatedReason` per debug-bundle.md §\"Bundle size limits\" when caps are reached."
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "auth": {
+      "type": "object",
+      "description": "Auth-profile advertisement (auth-profiles.md). Optional in v1; absence preserves the baseline bearer-token contract from auth.md. RFC 0010 formalized this block; `additionalProperties: true` permits existing informal usages (`auth.auditLogIntegrity` from the audit-log-integrity profile) to continue alongside the formal sub-blocks defined here.",
+      "properties": {
+        "profiles": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true,
+          "description": "Auth profiles the host claims. Canonical ids: `openwop-audit-log-integrity` (auth-profiles.md §Audit-log integrity), `openwop-auth-api-key-rotation`, `openwop-auth-oauth2-client-credentials`, `openwop-auth-oidc-user-bearer`, `openwop-auth-mtls`. Clients SHOULD tolerate unknown profile ids."
+        },
+        "rotation": {
+          "type": "object",
+          "description": "API-key rotation advertisement (auth-profiles.md §`openwop-auth-api-key-rotation`).",
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "Host claims the openwop-auth-api-key-rotation profile (old+new key overlap during a documented grace window)."
+            },
+            "minGraceSeconds": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Minimum rotation grace window in seconds. auth-profiles.md SHOULDs production-profile hosts to ≥ 86400 (24h). The conformance scenario tolerates any non-negative value but warns in behavior mode when < 86400."
+            }
+          },
+          "additionalProperties": false
+        },
+        "oauth2": {
+          "type": "object",
+          "description": "OAuth2 client-credentials advertisement (auth-profiles.md §`openwop-auth-oauth2-client-credentials`).",
+          "properties": {
+            "supported": { "type": "boolean" },
+            "issuer": {
+              "type": "string",
+              "format": "uri",
+              "description": "Token issuer URL the host trusts. Tokens MUST carry a matching `iss` claim."
+            },
+            "audience": {
+              "type": "string",
+              "description": "Audience the host requires. Tokens MUST carry a matching `aud` claim."
+            },
+            "supportedAlgorithms": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 },
+              "uniqueItems": true,
+              "description": "JWS signing algorithms the host accepts (canonical: RS256, ES256). Hosts MUST reject tokens signed with algorithms outside this list."
+            }
+          },
+          "additionalProperties": false
+        },
+        "oidc": {
+          "type": "object",
+          "description": "OIDC user-bearer advertisement (auth-profiles.md §`openwop-auth-oidc-user-bearer`).",
+          "properties": {
+            "supported": { "type": "boolean" },
+            "issuers": {
+              "type": "array",
+              "items": { "type": "string", "format": "uri" },
+              "minItems": 1,
+              "uniqueItems": true,
+              "description": "Trusted OIDC issuer URLs. The host accepts tokens whose `iss` claim matches any entry."
+            },
+            "audience": {
+              "type": "string",
+              "description": "Audience identifier the host requires in OIDC tokens."
+            },
+            "supportedScopeMapping": {
+              "type": "string",
+              "enum": ["group-claim", "scope-claim", "host-acl"],
+              "description": "How the host derives openwop scopes from the OIDC token. `group-claim`: from `groups` claim via host config. `scope-claim`: from `scope` claim directly. `host-acl`: from a host-side mapping table (sub → scope)."
+            },
+            "introspectionIntervalSeconds": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Maximum interval at which the host SHOULD re-introspect a cached token to detect IdP revocation. auth-profiles.md recommends `min(exp - now, 300)`."
+            }
+          },
+          "additionalProperties": false
+        },
+        "mtls": {
+          "type": "object",
+          "description": "mTLS advertisement (auth-profiles.md §`openwop-auth-mtls`).",
+          "properties": {
+            "supported": { "type": "boolean" },
+            "required": {
+              "type": "boolean",
+              "description": "When `true`, the host rejects bearer-only requests (mTLS required for all authenticated calls). When `false`, mTLS is optional and complements bearer auth."
+            },
+            "subjectMapping": {
+              "type": "string",
+              "enum": ["cn", "san-dns", "san-uri"],
+              "description": "How the host derives the transport principal from the client certificate. `cn`: subject CN. `san-dns`: subjectAltName DNS entry. `san-uri`: subjectAltName URI entry."
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": true
+    },
+    "discovery": {
+      "type": "object",
+      "description": "Discovery advertisement (capabilities-change-detection.md). Optional in v1; absence means the host serves only the public unauthenticated payload at /.well-known/openwop. Landed by RFC 0011.",
+      "properties": {
+        "authScoped": {
+          "type": "object",
+          "description": "Auth-scoped discovery advertisement (capabilities-change-detection.md §\"Scoped capability views\"). Hosts that return a different payload when called with Authorization than when called anonymously declare it here. The authenticated view MUST still satisfy the base capabilities.schema.json shape per the spec annex.",
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "Host returns an authenticated/tenant-scoped capability view when the discovery endpoint is called with valid bearer credentials."
+            },
+            "mode": {
+              "type": "string",
+              "enum": ["same-endpoint", "extension-endpoint"],
+              "description": "How the host exposes the auth-scoped view. `same-endpoint`: the canonical /.well-known/openwop returns a narrowed/enriched view when authenticated. `extension-endpoint`: a separate host route carries the scoped view (path advertised via `endpointPath`). Hosts using the third pattern from the spec annex (documentation pointer in the public payload) MAY omit this field."
+            },
+            "endpointPath": {
+              "type": "string",
+              "pattern": "^/",
+              "description": "When `mode: \"extension-endpoint\"` is advertised, the leading-slash relative path the host serves the scoped view from. The conformance scenario hits this path with bearer credentials. Absolute URLs are rejected at the schema level."
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "i18n": {
+      "type": "object",
+      "description": "Locale-negotiation advertisement per spec/v1/i18n.md. Optional in v1; absence means the host serves a single locale always (typically `en`). When `supported: true`, the host honors `Accept-Language` on every protected route and emits `Content-Language` on responses carrying localized text.",
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "Host honors `Accept-Language` and returns localized human-facing text when negotiable."
+        },
+        "defaultLocale": {
+          "type": "string",
+          "pattern": "^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{2,8}){0,3}$",
+          "description": "BCP 47 language tag the host falls back to when no `Accept-Language` matches `supportedLocales`. Default: `\"en\"` when omitted."
+        },
+        "supportedLocales": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{2,8}){0,3}$"
+          },
+          "description": "BCP 47 tags of locales the host has validated end-to-end for human-facing text. MUST contain `defaultLocale` when both are present."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": true
+}

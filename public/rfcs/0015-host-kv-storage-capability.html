@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — RFC 0015: host.kvStorage capability</title>
+  <meta name="description" content="Adds an optional host.kvStorage capability — a TTL-aware key-value store with atomic increment + compare-and-swap primitives. Required by core.openwop.storage&#39;s kv-* nodes. The Make-Data-Store equivalent for openwop."/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0015-host-kv-storage-capability.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — RFC 0015: host.kvStorage capability"/>
+  <meta property="og:description" content="Adds an optional host.kvStorage capability — a TTL-aware key-value store with atomic increment + compare-and-swap primitives. Required by core.openwop.storage&#39;s kv-* nodes. The Make-Data-Store equivalent for openwop."/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0015-host-kv-storage-capability.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — RFC 0015: host.kvStorage capability"/>
+  <meta name="twitter:description" content="Adds an optional host.kvStorage capability — a TTL-aware key-value store with atomic increment + compare-and-swap primitives. Required by core.openwop.storage&#39;s kv-* nodes. The Make-Data-Store equivalent for openwop."/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="" href="/spec/v1/">Spec</a>
+      <a class="active" href="/rfcs/">RFCs</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/changelog/">Changelog</a>
+      <a class="" href="/faq/">FAQ</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="rfc-0015-host-kvstorage-capability">RFC 0015: host.kvStorage capability</h1>
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0015</td></tr>
+<tr><td><strong>Title</strong></td><td>host.kvStorage key-value capability</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>OpenWOP Working Group</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-17</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-18 (Active → Accepted: all 5 acceptance-criteria items satisfied. <code>capabilities.kvStorage</code> block in schema; <code>spec/v1/host-capabilities.md §host.kvStorage</code> landed at commit c5831fe; invariant <code>kv-cross-tenant-isolation</code> + 4 scenarios (<code>kv-cross-tenant-isolation</code>, <code>kv-atomic-increment</code>, <code>kv-cas</code>, <code>kv-ttl-expiry</code>) all behavioral; reference impl advertised in <code>routes/discovery.ts</code> lines 176–184; CHANGELOG entry under <code>[Unreleased]</code>.)</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>spec/v1/host-capabilities.md</code> · <code>schemas/capabilities.schema.json</code> · <code>SECURITY/invariants.yaml</code> (cross-tenant) · new conformance scenarios</td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>Adds an optional <code>host.kvStorage</code> capability — a TTL-aware key-value store with atomic increment + compare-and-swap primitives. Required by <code>core.openwop.storage</code>'s kv-* nodes. The Make-Data-Store equivalent for openwop.</p>
+<h2 id="motivation">Motivation</h2>
+<p>Workflows need cross-run state. Today every pack invents its own external store (Redis client, Postgres table, S3 prefix), each with a different cross-tenant isolation bug. A single capability with a single SECURITY invariant for cross-tenant isolation is the leverage point.</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-capability-schema-addition">§A Capability schema addition</h3>
+<pre class="lang-json"><code>{
+  &quot;kvStorage&quot;: {
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;description&quot;: &quot;Key-value store with TTL + atomic ops. Per-tenant isolation enforced by the host.&quot;,
+    &quot;properties&quot;: {
+      &quot;supported&quot;: { &quot;type&quot;: &quot;boolean&quot; },
+      &quot;maxKeyBytes&quot;: { &quot;type&quot;: &quot;integer&quot;, &quot;minimum&quot;: 0 },
+      &quot;maxValueBytes&quot;: { &quot;type&quot;: &quot;integer&quot;, &quot;minimum&quot;: 0 },
+      &quot;maxTtlSeconds&quot;: { &quot;type&quot;: &quot;integer&quot;, &quot;minimum&quot;: 0 },
+      &quot;atomicIncrement&quot;: { &quot;type&quot;: &quot;boolean&quot; },
+      &quot;compareAndSwap&quot;: { &quot;type&quot;: &quot;boolean&quot; }
+    },
+    &quot;additionalProperties&quot;: false
+  }
+}</code></pre>
+<h3 id="b-host-contract-musts">§B Host-contract MUSTs</h3>
+<p>A host advertising <code>kvStorage.supported: true</code> MUST:</p>
+<p>1. Partition values by tenant. A <code>get</code> for one tenant MUST NOT return values from another tenant, even with identical keys. 2. Enforce <code>maxKeyBytes</code> and <code>maxValueBytes</code> advertised values. 3. Honor TTL with at most a 1-second drift on expiry visibility. 4. If <code>atomicIncrement: true</code> is advertised, increments MUST be atomic across concurrent callers. 5. If <code>compareAndSwap: true</code> is advertised, CAS MUST be atomic (no read-modify-write races).</p>
+<h3 id="c-security-invariant">§C SECURITY invariant</h3>
+<pre class="lang-yaml"><code>- id: kv-cross-tenant-isolation
+  tier: protocol
+  summary: &quot;host.kvStorage MUST partition values by tenant. Cross-tenant reads MUST return not-found.&quot;
+  conformance_test: &quot;kv-cross-tenant-isolation.test.ts&quot;</code></pre>
+<p>Mirrors the existing <code>agentMemoryCrossTenantIsolation</code> invariant.</p>
+<h3 id="d-conformance">§D Conformance</h3>
+<ul>
+<li><code>kv-cross-tenant-isolation.test.ts</code>: set under tenant A, get under tenant B → not found.</li>
+<li><code>kv-atomic-increment.test.ts</code>: 1000 concurrent +1s → final value is 1000.</li>
+<li><code>kv-cas.test.ts</code>: stale expect rejected.</li>
+<li><code>kv-ttl-expiry.test.ts</code>: TTL honored within 1s drift.</li>
+</ul>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive</strong>. Optional capability; <code>core.openwop.storage</code> kv-* nodes refuse registration on hosts that don't advertise it.</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<ul>
+<li>Schema diff in §A lands in <code>schemas/capabilities.schema.json</code> on Active promotion, not at Draft.</li>
+<li>SECURITY invariant <code>kv-cross-tenant-isolation</code> lands in <code>SECURITY/invariants.yaml</code> alongside the matching scenario; mirrors the existing <code>agent-memory-cti-1</code> pattern.</li>
+<li>Reference impl candidate: in-memory Map per tenant in <code>examples/hosts/in-memory/</code>.</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<ul>
+<li>[x] Capability block.</li>
+<li>[x] <code>host-capabilities.md</code> §host.kvStorage section. (Landed at commit c5831fe.)</li>
+<li>[x] Invariant + 4 scenarios.</li>
+<li>[x] In-memory reference host implementation.</li>
+<li>[x] CHANGELOG entry.</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li>Make Data Store (prior art).</li>
+<li><code>agentMemoryCrossTenantIsolation</code> (existing isolation pattern).</li>
+<li><code>core.openwop.storage</code> pack.</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

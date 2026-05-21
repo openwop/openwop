@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — RFC 0017: host.queueBus capability</title>
+  <meta name="description" content="Adds an optional host.queueBus capability covering publish + inbound-consume + ack/nack/dead-letter, plus stream subscribe/publish. Required by core.openwop.messaging. Sibling to existing host.messaging (which is outbound-egress-only) —…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0017-host-queue-bus-capability.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — RFC 0017: host.queueBus capability"/>
+  <meta property="og:description" content="Adds an optional host.queueBus capability covering publish + inbound-consume + ack/nack/dead-letter, plus stream subscribe/publish. Required by core.openwop.messaging. Sibling to existing host.messaging (which is outbound-egress-only) —…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0017-host-queue-bus-capability.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — RFC 0017: host.queueBus capability"/>
+  <meta name="twitter:description" content="Adds an optional host.queueBus capability covering publish + inbound-consume + ack/nack/dead-letter, plus stream subscribe/publish. Required by core.openwop.messaging. Sibling to existing host.messaging (which is outbound-egress-only) —…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="" href="/spec/v1/">Spec</a>
+      <a class="active" href="/rfcs/">RFCs</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/changelog/">Changelog</a>
+      <a class="" href="/faq/">FAQ</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="rfc-0017-host-queuebus-capability">RFC 0017: host.queueBus capability</h1>
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0017</td></tr>
+<tr><td><strong>Title</strong></td><td>host.queueBus inbound queue + stream capability</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>OpenWOP Working Group</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-17</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-18 (Active → Accepted: all 5 acceptance-criteria items satisfied. <code>capabilities.queueBus</code> block in schema; <code>spec/v1/host-capabilities.md §host.queueBus</code> landed at commit c5831fe; invariant <code>queue-cross-tenant-isolation</code> + 3 mandatory scenarios (<code>queue-publish-consume-roundtrip</code>, <code>queue-cross-tenant-isolation</code>, <code>queue-ack-nack-dlq</code>) + 1 gated (<code>stream-subscribe-from-beginning</code>); reference impl advertised in <code>routes/discovery.ts</code> lines 193–199; CHANGELOG entry under <code>[Unreleased]</code>.)</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>spec/v1/host-capabilities.md</code> · <code>schemas/capabilities.schema.json</code> · <code>SECURITY/invariants.yaml</code></td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>Adds an optional <code>host.queueBus</code> capability covering publish + inbound-consume + ack/nack/dead-letter, plus stream subscribe/publish. Required by <code>core.openwop.messaging</code>. Sibling to existing <code>host.messaging</code> (which is outbound-egress-only) — <code>host.queueBus</code> covers full message-queue semantics including delivery acknowledgement.</p>
+<h2 id="motivation">Motivation</h2>
+<p>n8n RabbitMQ/Kafka/SQS/NATS/MQTT/Pub-Sub nodes all expose the same pattern: a trigger fires on inbound, an action publishes outbound, plus ack/nack on the trigger side. openwop currently has no inbound-queue surface at all. <code>host.messaging</code> only handles outbound chat egress.</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-capability-schema">§A Capability schema</h3>
+<pre class="lang-json"><code>{
+  &quot;queueBus&quot;: {
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;properties&quot;: {
+      &quot;supported&quot;: { &quot;type&quot;: &quot;boolean&quot; },
+      &quot;backends&quot;: { &quot;type&quot;: &quot;array&quot;, &quot;items&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [&quot;rabbitmq&quot;,&quot;kafka&quot;,&quot;sqs&quot;,&quot;sns&quot;,&quot;pubsub&quot;,&quot;mqtt&quot;,&quot;nats&quot;,&quot;redis-streams&quot;,&quot;in-memory&quot;] } },
+      &quot;deadLetterSupported&quot;: { &quot;type&quot;: &quot;boolean&quot; },
+      &quot;stream&quot;: {
+        &quot;type&quot;: &quot;object&quot;,
+        &quot;properties&quot;: {
+          &quot;supported&quot;: { &quot;type&quot;: &quot;boolean&quot; },
+          &quot;fromBeginning&quot;: { &quot;type&quot;: &quot;boolean&quot; }
+        }
+      }
+    },
+    &quot;additionalProperties&quot;: false
+  }
+}</code></pre>
+<h3 id="b-host-contract-musts">§B Host-contract MUSTs</h3>
+<p>1. Cross-tenant message isolation. A consumer for tenant A MUST NOT receive messages published by tenant B, even on the same logical topic. 2. Ack semantics: <code>ack</code> removes the message from the queue; <code>nack</code> returns it for redelivery; <code>deadLetter</code> routes it to the configured dead-letter queue. 3. Trigger-mode delivery: when a workflow registers <code>core.messaging.consume</code> as a trigger, the host MUST deliver one workflow run per message.</p>
+<h3 id="c-security-invariant">§C SECURITY invariant</h3>
+<pre class="lang-yaml"><code>- id: queue-cross-tenant-isolation
+  tier: protocol
+  summary: &quot;host.queueBus MUST partition messages by tenant. Cross-tenant consumption MUST NOT occur.&quot;
+  conformance_test: &quot;queue-cross-tenant-isolation.test.ts&quot;</code></pre>
+<h3 id="d-conformance">§D Conformance</h3>
+<ul>
+<li><code>queue-publish-consume-roundtrip.test.ts</code>.</li>
+<li><code>queue-cross-tenant-isolation.test.ts</code>.</li>
+<li><code>queue-ack-nack-dlq.test.ts</code>.</li>
+<li><code>stream-subscribe-from-beginning.test.ts</code> (gated on <code>stream.fromBeginning</code>).</li>
+</ul>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive</strong>. New capability. <code>host.messaging</code> (existing, outbound-egress-only) remains unchanged.</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<ul>
+<li>Schema diff in §A lands in <code>schemas/capabilities.schema.json</code> on Active promotion, not at Draft.</li>
+<li>SECURITY invariant <code>queue-cross-tenant-isolation</code> lands in <code>SECURITY/invariants.yaml</code> alongside the matching scenario.</li>
+<li>Reference impl candidate: in-memory pub/sub bus per tenant in <code>examples/hosts/in-memory/</code>.</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<ul>
+<li>[x] Capability block.</li>
+<li>[x] Prose section. (Landed at commit c5831fe.)</li>
+<li>[x] Invariant + 3 mandatory scenarios + 1 gated.</li>
+<li>[x] In-memory reference impl.</li>
+<li>[x] CHANGELOG entry.</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li>n8n RabbitMQ/Kafka/SQS/NATS/MQTT triggers (prior art).</li>
+<li>Existing <code>host.messaging</code> (sibling, outbound-only).</li>
+<li><code>core.openwop.messaging</code> pack.</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

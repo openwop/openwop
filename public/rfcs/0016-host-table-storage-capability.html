@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — RFC 0016: host.tableStorage capability</title>
+  <meta name="description" content="Adds an optional host.tableStorage capability — a structured-record store with user-defined schemas, query, and count. Sibling to host.kvStorage (RFC 0015) for cases where workflows want column-typed records (Make Data Store with a Data Structure)."/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0016-host-table-storage-capability.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — RFC 0016: host.tableStorage capability"/>
+  <meta property="og:description" content="Adds an optional host.tableStorage capability — a structured-record store with user-defined schemas, query, and count. Sibling to host.kvStorage (RFC 0015) for cases where workflows want column-typed records (Make Data Store with a Data Structure)."/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0016-host-table-storage-capability.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — RFC 0016: host.tableStorage capability"/>
+  <meta name="twitter:description" content="Adds an optional host.tableStorage capability — a structured-record store with user-defined schemas, query, and count. Sibling to host.kvStorage (RFC 0015) for cases where workflows want column-typed records (Make Data Store with a Data Structure)."/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="" href="/spec/v1/">Spec</a>
+      <a class="active" href="/rfcs/">RFCs</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/changelog/">Changelog</a>
+      <a class="" href="/faq/">FAQ</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="rfc-0016-host-tablestorage-capability">RFC 0016: host.tableStorage capability</h1>
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0016</td></tr>
+<tr><td><strong>Title</strong></td><td>host.tableStorage structured record store</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>OpenWOP Working Group</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-17</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-18 (Active → Accepted: all 4 acceptance-criteria items satisfied. <code>capabilities.tableStorage</code> block in schema; <code>spec/v1/host-capabilities.md §host.tableStorage</code> landed at commit c5831fe; SECURITY invariant <code>table-cross-tenant-isolation</code> added at commit c5831fe; 3 scenarios (<code>table-cross-tenant-isolation</code>, <code>table-cursor-pagination</code>, <code>table-schema-enforcement</code>) all behavioral; reference impl advertised in <code>routes/discovery.ts</code> lines 185–192; CHANGELOG entry under <code>[Unreleased]</code>.)</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>spec/v1/host-capabilities.md</code> · <code>schemas/capabilities.schema.json</code> · <code>SECURITY/invariants.yaml</code></td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>Adds an optional <code>host.tableStorage</code> capability — a structured-record store with user-defined schemas, query, and count. Sibling to <code>host.kvStorage</code> (RFC 0015) for cases where workflows want column-typed records (Make Data Store with a Data Structure).</p>
+<h2 id="motivation">Motivation</h2>
+<p><code>host.kvStorage</code> covers opaque-value cases. Many workflows need typed columns (e.g., logging conversation turns, persisting form submissions, cross-run dedupe by a primary key). Building this as a sibling capability keeps both surfaces simple and lets hosts back them with different stores (Redis for kv, Postgres/SQLite for table).</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-capability-schema">§A Capability schema</h3>
+<pre class="lang-json"><code>{
+  &quot;tableStorage&quot;: {
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;properties&quot;: {
+      &quot;supported&quot;: { &quot;type&quot;: &quot;boolean&quot; },
+      &quot;maxRowsPerTable&quot;: { &quot;type&quot;: &quot;integer&quot; },
+      &quot;maxColumnsPerRow&quot;: { &quot;type&quot;: &quot;integer&quot; },
+      &quot;indexable&quot;: { &quot;type&quot;: &quot;boolean&quot;, &quot;description&quot;: &quot;Host supports declarative indexes on columns.&quot; },
+      &quot;fullTextSearch&quot;: { &quot;type&quot;: &quot;boolean&quot; }
+    },
+    &quot;additionalProperties&quot;: false
+  }
+}</code></pre>
+<h3 id="b-host-contract-musts">§B Host-contract MUSTs</h3>
+<p>1. Cross-tenant isolation (mirrors RFC 0015 invariant). 2. Schema declaration on first <code>insert</code> to a table; subsequent rows MUST conform. 3. <code>query</code> MUST support filter + cursor pagination.</p>
+<h3 id="c-conformance">§C Conformance</h3>
+<ul>
+<li><code>table-cross-tenant-isolation.test.ts</code>.</li>
+<li><code>table-cursor-pagination.test.ts</code>.</li>
+<li><code>table-schema-enforcement.test.ts</code> (wrong-type insert rejected).</li>
+</ul>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive</strong>. Optional. <code>core.openwop.storage</code> table-* nodes refuse registration without advertisement.</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<ul>
+<li>Schema diff in §A lands in <code>schemas/capabilities.schema.json</code> on Active promotion, not at Draft.</li>
+<li>Cross-tenant invariant row lands in <code>SECURITY/invariants.yaml</code> alongside <code>table-cross-tenant-isolation.test.ts</code>.</li>
+<li>Reference impl candidate: sqlite-backed table store in <code>examples/hosts/sqlite/</code>.</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<ul>
+<li>[x] Capability block.</li>
+<li>[x] Prose section. (Landed at commit c5831fe.)</li>
+<li>[x] 3 conformance scenarios.</li>
+<li>[x] CHANGELOG entry.</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li>Make Data Store + Data Structure (prior art).</li>
+<li>RFC 0015 host.kvStorage (sibling).</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

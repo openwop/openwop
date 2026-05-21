@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — RFC 0018: host.sql + host.vectorStore + host.searchIndex capabilities</title>
+  <meta name="description" content="Adds three sibling capabilities: host.sql (parametric SQL only), host.vectorStore (vector-DB ops), and host.searchIndex (full-text). Required by core.openwop.db + core.openwop.rag packs. SQL injection prevention is enforced at the host (the pack…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0018-host-sql-vector-search-capability.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — RFC 0018: host.sql + host.vectorStore + host.searchIndex capabilities"/>
+  <meta property="og:description" content="Adds three sibling capabilities: host.sql (parametric SQL only), host.vectorStore (vector-DB ops), and host.searchIndex (full-text). Required by core.openwop.db + core.openwop.rag packs. SQL injection prevention is enforced at the host (the pack…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0018-host-sql-vector-search-capability.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — RFC 0018: host.sql + host.vectorStore + host.searchIndex capabilities"/>
+  <meta name="twitter:description" content="Adds three sibling capabilities: host.sql (parametric SQL only), host.vectorStore (vector-DB ops), and host.searchIndex (full-text). Required by core.openwop.db + core.openwop.rag packs. SQL injection prevention is enforced at the host (the pack…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="" href="/spec/v1/">Spec</a>
+      <a class="active" href="/rfcs/">RFCs</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/changelog/">Changelog</a>
+      <a class="" href="/faq/">FAQ</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="rfc-0018-host-sql-host-vectorstore-host-searchindex-capabilities">RFC 0018: host.sql + host.vectorStore + host.searchIndex capabilities</h1>
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0018</td></tr>
+<tr><td><strong>Title</strong></td><td>Database adapter capabilities (SQL, vector, search)</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>OpenWOP Working Group</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-17</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-18 (Active → Accepted: all 6 acceptance-criteria items satisfied. 4 capability blocks (<code>sql</code>, <code>nosql</code>, <code>vectorStore</code>, <code>searchIndex</code>) in schema; 4 prose sections in <code>spec/v1/host-capabilities.md</code> (§host.sql / §host.nosql / §host.vectorStore / §host.searchIndex) landed at commit c5831fe; invariant <code>sql-parametric-only</code>; 4 scenarios (<code>sql-injection-rejection</code>, <code>sql-transaction-atomicity</code>, <code>vector-knn-roundtrip</code>, <code>search-bm25-roundtrip</code>) all behavioral; reference impls advertised in <code>routes/discovery.ts</code> lines 200–210 (sqlite for SQL, in-memory cosine-similarity for vector, linear scan for search); CHANGELOG entry under <code>[Unreleased]</code>.)</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>spec/v1/host-capabilities.md</code> · <code>schemas/capabilities.schema.json</code> · <code>SECURITY/invariants.yaml</code></td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>Adds three sibling capabilities: <code>host.sql</code> (parametric SQL only), <code>host.vectorStore</code> (vector-DB ops), and <code>host.searchIndex</code> (full-text). Required by <code>core.openwop.db</code> + <code>core.openwop.rag</code> packs. SQL injection prevention is enforced at the host (the pack MUST NOT concatenate user input into SQL).</p>
+<h2 id="motivation">Motivation</h2>
+<p>n8n's database family (Postgres / MySQL / MongoDB / ClickHouse / Snowflake / BigQuery / Elasticsearch / Pinecone / Qdrant / Weaviate) is uniformly the same shape — a typed connection identifier + parametric query API. openwop should expose the <em>shape</em> as host capabilities, with concrete drivers as vendor packs or host adapters.</p>
+<p>The SQL injection invariant is the load-bearing one: every concatenation-style "raw SQL" path eventually shoots itself.</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-capability-schemas">§A Capability schemas</h3>
+<pre class="lang-json"><code>{
+  &quot;sql&quot;: {
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;properties&quot;: {
+      &quot;supported&quot;: { &quot;type&quot;: &quot;boolean&quot; },
+      &quot;datasources&quot;: { &quot;type&quot;: &quot;array&quot;, &quot;items&quot;: { &quot;type&quot;: &quot;object&quot;, &quot;additionalProperties&quot;: true } },
+      &quot;transactions&quot;: { &quot;type&quot;: &quot;boolean&quot; },
+      &quot;drivers&quot;: { &quot;type&quot;: &quot;array&quot;, &quot;items&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [&quot;postgres&quot;,&quot;mysql&quot;,&quot;mariadb&quot;,&quot;sqlite&quot;,&quot;mssql&quot;,&quot;clickhouse&quot;,&quot;snowflake&quot;,&quot;bigquery&quot;,&quot;duckdb&quot;] } }
+    },
+    &quot;additionalProperties&quot;: false
+  },
+  &quot;nosql&quot;: {
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;properties&quot;: {
+      &quot;supported&quot;: { &quot;type&quot;: &quot;boolean&quot; },
+      &quot;datasources&quot;: { &quot;type&quot;: &quot;array&quot; },
+      &quot;drivers&quot;: { &quot;type&quot;: &quot;array&quot;, &quot;items&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [&quot;mongodb&quot;,&quot;dynamodb&quot;,&quot;cosmosdb&quot;,&quot;firestore&quot;] } }
+    },
+    &quot;additionalProperties&quot;: false
+  },
+  &quot;vectorStore&quot;: {
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;properties&quot;: {
+      &quot;supported&quot;: { &quot;type&quot;: &quot;boolean&quot; },
+      &quot;collections&quot;: { &quot;type&quot;: &quot;array&quot; },
+      &quot;backends&quot;: { &quot;type&quot;: &quot;array&quot;, &quot;items&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [&quot;pinecone&quot;,&quot;qdrant&quot;,&quot;weaviate&quot;,&quot;milvus&quot;,&quot;pgvector&quot;,&quot;redis&quot;,&quot;mongodb-atlas&quot;,&quot;chroma&quot;,&quot;azure-ai-search&quot;,&quot;in-memory&quot;] } }
+    },
+    &quot;additionalProperties&quot;: false
+  },
+  &quot;searchIndex&quot;: {
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;properties&quot;: {
+      &quot;supported&quot;: { &quot;type&quot;: &quot;boolean&quot; },
+      &quot;indexes&quot;: { &quot;type&quot;: &quot;array&quot; },
+      &quot;backends&quot;: { &quot;type&quot;: &quot;array&quot;, &quot;items&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [&quot;elasticsearch&quot;,&quot;opensearch&quot;,&quot;meilisearch&quot;,&quot;typesense&quot;,&quot;algolia&quot;] } }
+    },
+    &quot;additionalProperties&quot;: false
+  }
+}</code></pre>
+<h3 id="b-host-contract-musts">§B Host-contract MUSTs</h3>
+<p>1. <strong>SQL injection invariant</strong>: <code>ctx.db.sql.query({ sql, params })</code> MUST treat the <code>sql</code> string as a parametric template. Hosts MUST reject calls where <code>params</code> is empty and <code>sql</code> contains naked literal placeholders that look like user input (<code>&#39;</code>, <code>;</code>, <code>--</code>). Stricter implementations MAY require the SQL parser to confirm parameter binding before execution. 2. Cross-tenant isolation across datasources (mirrors RFC 0015 / 0017 invariants). 3. <code>transaction</code> MUST be atomic when <code>transactions: true</code> is advertised.</p>
+<h3 id="c-security-invariant">§C SECURITY invariant</h3>
+<pre class="lang-yaml"><code>- id: sql-parametric-only
+  tier: protocol
+  summary: &quot;host.sql MUST reject non-parametric queries that inline user input.&quot;
+  conformance_test: &quot;sql-injection-rejection.test.ts&quot;</code></pre>
+<h3 id="d-conformance">§D Conformance</h3>
+<ul>
+<li><code>sql-injection-rejection.test.ts</code>: <code>query({sql: \&quot;SELECT * FROM users WHERE id = &#39;\&quot; + userInput + \&quot;&#39;\&quot;, params: []})</code> rejected.</li>
+<li><code>sql-transaction-atomicity.test.ts</code>: partial failure rolls back.</li>
+<li><code>vector-knn-roundtrip.test.ts</code>: upsert then query returns same vectors.</li>
+<li><code>search-bm25-roundtrip.test.ts</code>.</li>
+</ul>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive</strong>. All four sub-capabilities optional. Packs refuse registration without advertisement.</p>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<ul>
+<li>[x] Four capability blocks.</li>
+<li>[x] Prose section per block in <code>host-capabilities.md</code>. (Landed at commit c5831fe.)</li>
+<li>[x] Invariant <code>sql-parametric-only</code>.</li>
+<li>[x] 4 conformance scenarios.</li>
+<li>[x] In-memory reference for sql (sqlite) + vector (cosine-similarity in-memory) + search (linear scan).</li>
+<li>[x] CHANGELOG entry.</li>
+</ul>
+<h2 id="unresolved-questions">Unresolved questions</h2>
+<p>1. Should <code>host.nosql</code> be a separate RFC? Folded in here because the pack groups them and the contract MUSTs are mostly parallel. <strong>Tentative resolution:</strong> split into 4 sibling RFCs (0018-sql, 0018-nosql, 0018-vector, 0018-search) before promoting any to Active; smaller surfaces unblock independently of one another. 2. SQL injection detection heuristic. The proposed naked-literal regex (<code>&#39;</code>, <code>;</code>, <code>--</code>) is conservative but blunt — it MAY reject legitimate dynamic SQL that quote-escapes correctly. The looser alternative (require explicit <code>parametric: true</code> on the call) shifts the burden to callers. Decide before Active.</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<ul>
+<li>Schema diffs in §A land in <code>schemas/capabilities.schema.json</code> on Active promotion, not at Draft.</li>
+<li>SECURITY invariant <code>sql-parametric-only</code> lands in <code>SECURITY/invariants.yaml</code> alongside <code>sql-injection-rejection.test.ts</code>.</li>
+<li>Reference impl candidates: sqlite for SQL, in-memory cosine-similarity for vector, linear scan for search — all under <code>examples/hosts/in-memory/</code>.</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li>n8n database family (prior art).</li>
+<li><code>core.openwop.db</code> + <code>core.openwop.rag</code> packs.</li>
+<li>RFC 0015 host.kvStorage (sibling).</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

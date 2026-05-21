@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — RFC 0007: Dispatch (`core.dispatch` Node Pattern)</title>
+  <meta name="description" content="Introduce a new reserved node typeId, core.dispatch, that translates the latest OrchestratorDecision (RFC 0006) into a concrete runtime action — dispatching a worker via core.subWorkflow, asking the user via conversation.exchange or…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0007-dispatch.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — RFC 0007: Dispatch (`core.dispatch` Node Pattern)"/>
+  <meta property="og:description" content="Introduce a new reserved node typeId, core.dispatch, that translates the latest OrchestratorDecision (RFC 0006) into a concrete runtime action — dispatching a worker via core.subWorkflow, asking the user via conversation.exchange or…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0007-dispatch.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — RFC 0007: Dispatch (`core.dispatch` Node Pattern)"/>
+  <meta name="twitter:description" content="Introduce a new reserved node typeId, core.dispatch, that translates the latest OrchestratorDecision (RFC 0006) into a concrete runtime action — dispatching a worker via core.subWorkflow, asking the user via conversation.exchange or…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="" href="/spec/v1/">Spec</a>
+      <a class="active" href="/rfcs/">RFCs</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/changelog/">Changelog</a>
+      <a class="" href="/faq/">FAQ</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="rfc-0007-dispatch-core-dispatch-node-pattern">RFC 0007: Dispatch (<code>core.dispatch</code> Node Pattern)</h1>
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0007</td></tr>
+<tr><td><strong>Title</strong></td><td>Dispatch (<code>core.dispatch</code> Node Pattern)</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-01</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-11 (Active → Accepted: integration-seams audit closed via <code>docs/MULTI-AGENT-INTEGRATION-GAPS.md</code> archive; conformance scenarios pass against SQLite reference host)</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>schemas/dispatch-config.schema.json</code>, <code>schemas/workflow-definition.schema.json</code>, <code>spec/v1/node-packs.md</code> (reserved typeIds), <code>spec/v1/capabilities.md</code></td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
+<tr><td><strong>Supersedes</strong></td><td>—</td></tr>
+<tr><td><strong>Superseded by</strong></td><td>—</td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>Introduce a new reserved node <code>typeId</code>, <code>core.dispatch</code>, that translates the latest <code>OrchestratorDecision</code> (RFC 0006) into a concrete runtime action — dispatching a worker via <code>core.subWorkflow</code>, asking the user via <code>conversation.exchange</code> or <code>clarification.requested</code>, or terminating the run. Configuration is pinned at workflow definition time via <code>DispatchConfig</code> (<code>dispatch-config.schema.json</code>).</p>
+<h2 id="motivation">Motivation</h2>
+<p>RFC 0006 defines <em>what</em> the orchestrator decides; it does not define <em>how</em> a decision becomes runtime work. Without a normative dispatch node, hosts will invent their own conventions: which subsystem fires the worker, which interrupt routes the user prompt, how fan-out behaves, whether iteration is capped. That divergence breaks cross-host workflow portability — a workflow built against one host's dispatch convention fails to run on another.</p>
+<p><code>core.dispatch</code> is the canonical translator. It consumes the run's latest <code>runOrchestrator.decided</code> event and emits the corresponding side effect. Workflow authors place a <code>core.dispatch</code> node after an orchestrator-supervisor node; the dispatch node's per-kind behavior is pinned by <code>DispatchConfig</code>.</p>
+<p>This is symmetrical to how <code>core.subWorkflow</code> translates a sub-workflow reference into a child run — a reserved typeId with a normated config schema.</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-core-dispatch-typeid">§A <code>core.dispatch</code> typeId</h3>
+<p>Reserve <code>core.dispatch</code> as a canonical node typeId per <code>node-packs.md</code> §"Reserved core typeIds". Hosts that advertise <code>capabilities.orchestrator.supported: true</code> (RFC 0006) MUST implement <code>core.dispatch</code>.</p>
+<p>Workflow definition shape:</p>
+<pre class="lang-json"><code>{
+  &quot;nodeId&quot;: &quot;dispatch-1&quot;,
+  &quot;typeId&quot;: &quot;core.dispatch&quot;,
+  &quot;config&quot;: &quot;&amp;lt;DispatchConfig&amp;gt;&quot;
+}</code></pre>
+<h3 id="b-dispatchconfig-shape">§B <code>DispatchConfig</code> shape</h3>
+<p>Defined in <code>dispatch-config.schema.json</code>. Four fields, all optional:</p>
+<pre class="lang-json"><code>{
+  &quot;askUserRouting&quot;: &quot;conversation&quot; | &quot;clarification&quot; | &quot;auto&quot;,
+  &quot;workerDispatchModel&quot;: &quot;child-run&quot;,
+  &quot;fanOutPolicy&quot;: &quot;sequential&quot; | &quot;reject&quot;,
+  &quot;iterationCap&quot;: 25
+}</code></pre>
+<h4 id="askuserrouting"><code>askUserRouting</code></h4>
+<p>Routing surface for <code>kind: &#39;ask-user&#39;</code> decisions:</p>
+<ul>
+<li><code>&#39;conversation&#39;</code> — uses <code>conversation.exchange</code> (RFC 0005). REQUIRES <code>capabilities.conversationPrimitive: true</code>.</li>
+<li><code>&#39;clarification&#39;</code> — uses <code>clarification.requested</code> interrupt (pre-RFC-0005 path).</li>
+<li><code>&#39;auto&#39;</code> (default) — selects <code>conversation</code> when the host advertises the capability, <code>clarification</code> otherwise.</li>
+</ul>
+<p>Hosts that select <code>&#39;conversation&#39;</code> without advertising the capability MUST surface <code>validation_error</code> at workflow registration time.</p>
+<h4 id="workerdispatchmodel"><code>workerDispatchModel</code></h4>
+<p>How <code>kind: &#39;next-worker&#39;</code> is dispatched:</p>
+<ul>
+<li><code>&#39;child-run&#39;</code> (default and only v1.x value) — each <code>nextWorkerIds[i]</code> resolves to a workflow id and is dispatched as a child run via the existing <code>core.subWorkflow</code> machinery.</li>
+</ul>
+<p>Same-run DAG navigation (resolving worker IDs against the parent run's node graph) is out of scope for v1.x and deferred to a future RFC. Hosts MAY add vendor-extension dispatch models under <code>vendor.&amp;lt;host&amp;gt;.&amp;lt;model&amp;gt;</code>; conformance scenarios validate <code>&#39;child-run&#39;</code> only.</p>
+<h4 id="fanoutpolicy"><code>fanOutPolicy</code></h4>
+<p>Behavior when <code>nextWorkerIds.length &gt; 1</code>:</p>
+<ul>
+<li><code>&#39;sequential&#39;</code> (default) — dispatches each in array order, blocking on each child terminal before starting the next. The dispatch node's output reports the LAST child's <code>(childRunId, childStatus)</code>; intermediate child-run identifiers surface in the run's event log via standard <code>node.*</code> events.</li>
+<li><code>&#39;reject&#39;</code> — fails the dispatch with a structured <code>&#39;fan_out_unsupported&#39;</code> error envelope.</li>
+</ul>
+<p>Parallel fan-out is out of scope for v1.x (see §K3).</p>
+<h4 id="iterationcap"><code>iterationCap</code></h4>
+<p>Optional hard cap on dispatch-node executions per run, across all dispatch nodes. When set:</p>
+<ul>
+<li>Engine MUST emit <code>cap.breached</code> with <code>kind: &#39;dispatch-iterations&#39;</code> once exceeded.</li>
+<li>Run transitions to <code>&#39;failed&#39;</code>.</li>
+<li>Cap is independent of <code>RunOptions.configurable.recursionLimit</code> and <code>Capabilities.limits.maxNodeExecutions</code>.</li>
+</ul>
+<p>When absent, the run-level <code>recursionLimit</code> cap applies normally (each dispatch counts as one node execution against the run total).</p>
+<h3 id="c-reading-the-latest-decision">§C Reading the latest decision</h3>
+<p><code>core.dispatch</code> reads the latest <code>runOrchestrator.decided</code> event from the run's projection at execution time. If no such event exists, the dispatch node MUST fail with <code>&#39;no_pending_decision&#39;</code> and the run transitions to <code>failed</code> (with <code>cap.breached</code> not applicable — this is a workflow-authoring error).</p>
+<p>Hosts MAY surface a more specific error envelope when the decision is found but its <code>kind</code> is not yet supported by the dispatch model. Currently, only the three RFC 0006 §B kinds are supported.</p>
+<h3 id="d-per-kind-semantics">§D Per-kind semantics</h3>
+<h4 id="next-worker"><code>next-worker</code></h4>
+<p>1. Engine validates each <code>nextWorkerIds[i]</code> resolves to a workflow id (per <code>workerDispatchModel: child-run</code>). 2. Engine constructs a child run via the normal <code>core.subWorkflow</code> flow for the first ID (or all IDs sequentially per <code>fanOutPolicy</code>). 3. Dispatch node's output: <code>{ childRunId, childStatus }</code> for the last child. 4. On any child failure, dispatch node propagates failure to the parent run (default subWorkflow propagation semantics). 5. For each spawned child, the host MUST emit a <code>node.dispatched</code> <code>RunEvent</code> carrying <code>{ childRunId, childWorkflowId, childStatus }</code> (see <code>schemas/run-event-payloads.schema.json $defs.nodeDispatched</code>). The envelope's <code>nodeId</code> carries the dispatching <code>core.dispatch</code> node-id; the payload does NOT duplicate it. Observers MAY rely on this event to reconstruct the parent → child linkage without scanning the runs table.</p>
+<h4 id="ask-user"><code>ask-user</code></h4>
+<p>1. Engine consults <code>askUserRouting</code> config + advertised capability. 2. Engine emits the appropriate interrupt (<code>conversation.opened</code> with <code>initialTurn</code> containing the decision's <code>prompt</code>, OR <code>clarification.requested</code> with a single question). 3. Engine suspends the dispatch node until resume. 4. Dispatch node's output: the user-provided answer (last turn for conversation; <code>clarificationResolved.answers[0]</code> for clarification).</p>
+<h4 id="terminate"><code>terminate</code></h4>
+<p>1. Engine emits <code>run.completed</code> with optional <code>reason</code> from the decision. 2. Dispatch node's output is the run's terminal outcome. 3. Any sibling nodes still in flight are cancelled per existing cancellation cascade rules (<code>interrupt-profiles.md</code> §Parent-child cascade).</p>
+<h3 id="e-causation-chain">§E Causation chain</h3>
+<p><code>core.dispatch</code>'s emitted events MUST set <code>causationId</code> to the <code>eventId</code> of the consumed <code>runOrchestrator.decided</code> event. This lets replay reconstruct the decision-to-effect chain even when events from concurrent runs interleave.</p>
+<h3 id="f-replay-determinism">§F Replay determinism</h3>
+<p><code>core.dispatch</code> is deterministic given the cached decision: same decision in → same dispatch action out. The non-determinism is upstream (in the orchestrator); RFC 0006 §F covers that. Replays re-fold the dispatch node's outputs from the event log without re-invoking subworkflows or re-asking users.</p>
+<h3 id="g-capability-advertisement">§G Capability advertisement</h3>
+<pre class="lang-json"><code>{
+  &quot;capabilities&quot;: {
+    &quot;dispatch&quot;: {
+      &quot;supported&quot;: true,
+      &quot;models&quot;: [&quot;child-run&quot;],
+      &quot;fanOutSupported&quot;: false,
+      &quot;askUserRoutings&quot;: [&quot;conversation&quot;, &quot;clarification&quot;, &quot;auto&quot;]
+    }
+  }
+}</code></pre>
+<p>Hosts that advertise <code>capabilities.orchestrator.supported: true</code> MUST also advertise <code>capabilities.dispatch.supported: true</code>.</p>
+<h3 id="h-workflow-validation">§H Workflow validation</h3>
+<p>At workflow registration time, hosts MUST validate:</p>
+<p>1. The workflow contains at least one orchestrator-supervisor node (RFC 0006) if it contains a <code>core.dispatch</code> node. 2. The <code>core.dispatch</code> node's <code>config</code> validates against <code>dispatch-config.schema.json</code>. 3. The chosen <code>askUserRouting</code> is supported by the host's capabilities. 4. The chosen <code>workerDispatchModel</code> is in <code>capabilities.dispatch.models</code>.</p>
+<p>Validation failures surface as <code>validation_error</code> envelopes at the <code>POST /v1/workflows</code> endpoint.</p>
+<h3 id="k-unresolved-questions">§K Unresolved questions</h3>
+<h4 id="k1-same-run-dag-navigation">§K1 Same-run DAG navigation</h4>
+<p>Should <code>workerDispatchModel: &#39;same-run-node&#39;</code> be supported, where <code>nextWorkerIds[i]</code> references a node in the same run's DAG? Pro: lower-latency dispatch (no child-run boot cost). Con: re-entrancy and state-sharing rules across dispatched siblings are non-trivial. Deferred to a future RFC (probably v1.3).</p>
+<h4 id="k2-streaming-dispatch-outputs">§K2 Streaming dispatch outputs</h4>
+<p>Should <code>core.dispatch</code> emit partial outputs (e.g., <code>output.chunk</code> events while child runs progress) for SSE consumers? Currently no — dispatch outputs are atomic per child terminal. Could change in v1.2.</p>
+<h4 id="k3-parallel-fan-out">§K3 Parallel fan-out</h4>
+<p>Should <code>fanOutPolicy: &#39;parallel&#39;</code> be supported, dispatching all <code>nextWorkerIds[i]</code> concurrently and joining on all terminals? Pro: throughput. Con: error-aggregation semantics (does one child fail = all-fail, or quorum, or wait-all-then-report?). Deferred to v1.2 with a join-policy field.</p>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive.</strong></p>
+<ul>
+<li><code>core.dispatch</code> is a new reserved typeId; pre-RFC workflows that don't reference it are unaffected.</li>
+<li><code>dispatch-config.schema.json</code> is a new schema.</li>
+<li>Capability advertisement is opt-in.</li>
+<li>No changes to required fields on existing schemas.</li>
+</ul>
+<h2 id="conformance">Conformance</h2>
+<p>Existing scenarios touching the area:</p>
+<ul>
+<li><code>conformance/src/scenarios/subworkflow.test.ts</code> — covers child-run dispatch baseline; <code>core.dispatch</code> reuses this machinery.</li>
+<li><code>conformance/src/scenarios/dispatchLoop.test.ts</code> — covers the orchestrator-to-dispatch loop end-to-end.</li>
+</ul>
+<p>New scenarios required for <code>Accepted</code>:</p>
+<ul>
+<li><code>dispatch-next-worker-sequential.test.ts</code> — fan-out length 2, sequential policy, second child starts after first terminal.</li>
+<li><code>dispatch-next-worker-reject.test.ts</code> — fan-out length 2, reject policy, fails with <code>fan_out_unsupported</code>.</li>
+<li><code>dispatch-ask-user-auto.test.ts</code> — auto routing selects <code>conversation</code> when capability advertised, <code>clarification</code> otherwise.</li>
+<li><code>dispatch-terminate.test.ts</code> — terminate decision emits <code>run.completed</code>.</li>
+<li><code>dispatch-iteration-cap.test.ts</code> — <code>iterationCap</code> breach fires <code>cap.breached</code> + failure.</li>
+<li><code>dispatch-no-decision.test.ts</code> — no <code>runOrchestrator.decided</code> upstream → fail with <code>no_pending_decision</code>.</li>
+<li><code>dispatch-causation.test.ts</code> — emitted events carry <code>causationId</code> of the consumed decision.</li>
+</ul>
+<p>All gated on <code>capabilities.dispatch.supported: true</code>.</p>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<p>1. <strong>Implicit dispatch (engine consumes decisions automatically).</strong> Rejected: implicit side-effects are non-observable. An explicit dispatch node appears in the workflow graph, in the event log, and in tracing; implicit dispatch hides behavior. 2. <strong>Per-decision-kind separate node types</strong> (<code>core.dispatchNextWorker</code>, <code>core.dispatchAskUser</code>, <code>core.terminate</code>). Rejected: a single node consuming the latest decision is simpler and matches the "decision-then-effect" CO-1 invariant from RFC 0006. Three nodes also bloat workflow definitions. 3. <strong>Configuration via capability discovery rather than per-node config.</strong> Rejected: per-node config lets the same host run two workflows with different <code>askUserRouting</code> choices, useful for migration. 4. <strong>Skip the dispatch node entirely; orchestrator emits the runtime action.</strong> Rejected: violates the RFC 0006 design (orchestrator decides; engine acts). Co-locating them mixes agent-side reasoning with engine-side dispatch logic.</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<ul>
+<li>The reference TypeScript host implements <code>core.dispatch</code> as a thin executor that reads <code>runOrchestrator.decided</code>, switches on <code>decision.kind</code>, and delegates to existing primitives (<code>core.subWorkflow</code> for <code>next-worker</code>, the interrupt machinery for <code>ask-user</code>, <code>run.completed</code> for <code>terminate</code>).</li>
+<li>For <code>fanOutPolicy: &#39;sequential&#39;</code>, the host stores the per-child outputs in a transient channel until all are complete, then writes the last child's terminal to the node's output channel.</li>
+<li>Iteration counting uses a run-scoped counter persisted on <code>RunSnapshot.runOrchestrator.decisionsTaken</code> (incremented by RFC 0006 on each decision; dispatch reads it).</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<ul>
+<li>[ ] Spec text merged.</li>
+<li>[x] <code>dispatch-config.schema.json</code> published.</li>
+<li>[ ] <code>node-packs.md</code> updates reserved-typeIds list to include <code>core.dispatch</code>.</li>
+<li>[ ] <code>capabilities.md</code> updates with <code>capabilities.dispatch.*</code>.</li>
+<li>[ ] Seven new conformance scenarios.</li>
+<li>[ ] CHANGELOG entry.</li>
+<li>[ ] Reference host implements <code>core.dispatch</code> and passes scenarios.</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li><code>schemas/dispatch-config.schema.json</code></li>
+<li>RFC 0006 (Orchestrator — produces the decisions dispatch consumes)</li>
+<li>RFC 0005 (Conversation — <code>ask-user</code> routing target)</li>
+<li>RFC 0022 (Dispatch + subWorkflow runtime variable mapping — additive amendment that adds <code>inputMapping</code> / <code>outputMapping</code> / <code>perWorker*</code> fields to <code>DispatchConfig</code>; capability-gated on <code>capabilities.agents.dispatchMapping</code>)</li>
+<li><code>spec/v1/interrupt-profiles.md</code> (parent-child cancellation cascade interacts with <code>terminate</code>)</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

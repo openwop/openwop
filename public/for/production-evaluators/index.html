@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — For production evaluators</title>
+  <meta name="description" content="You&#39;re deciding whether OpenWOP fits your durability, security, interop, and operational requirements before you bet a production system on it. This page is the honest summary of what the protocol guarantees, what the reference hosts demonstrate,…"/>
+  <link rel="canonical" href="https://openwop.dev/for/production-evaluators/"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — For production evaluators"/>
+  <meta property="og:description" content="You&#39;re deciding whether OpenWOP fits your durability, security, interop, and operational requirements before you bet a production system on it. This page is the honest summary of what the protocol guarantees, what the reference hosts demonstrate,…"/>
+  <meta property="og:url" content="https://openwop.dev/for/production-evaluators/"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — For production evaluators"/>
+  <meta name="twitter:description" content="You&#39;re deciding whether OpenWOP fits your durability, security, interop, and operational requirements before you bet a production system on it. This page is the honest summary of what the protocol guarantees, what the reference hosts demonstrate,…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="" href="/spec/v1/">Spec</a>
+      <a class="" href="/rfcs/">RFCs</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/changelog/">Changelog</a>
+      <a class="" href="/faq/">FAQ</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="for-production-evaluators">For production evaluators</h1>
+<p>You're deciding whether OpenWOP fits your durability, security, interop, and operational requirements before you bet a production system on it. This page is the honest summary of what the protocol guarantees, what the reference hosts demonstrate, and what's explicitly out of scope.</p>
+<h2 id="the-shortest-honest-pitch">The shortest honest pitch</h2>
+<p>OpenWOP is an open wire-level protocol for multi-agent workflow orchestration. The spec is FINAL v1; the evolution policy is additive-only within v1.x; five host implementations exist in the public conformance leaderboard; the protocol is licensed Apache 2.0 with no patent or field-of-use restrictions.</p>
+<p>If your evaluation criteria are "is this real, is it stable, can my team take it over if the steward disappears, and is it defensible against an audit" — this page is for you.</p>
+<h2 id="read-these-first">Read these first</h2>
+<ul>
+<li><a href="/spec/v1/production-profile.html">Production profile</a> — the canonical predicate set for hosts that claim production posture. Operational-readiness, NOT throughput.</li>
+<li><a href="/spec/v1/positioning.html">Positioning &amp; non-goals</a> — what OpenWOP is and explicitly isn't.</li>
+<li><a href="/versioning/">Versioning &amp; compatibility</a> — the four versioning axes and the rules they enforce.</li>
+<li><a href="/security/">Security posture</a> — threat model, disclosure policy, public invariants.</li>
+<li><a href="/governance/">Governance</a> — how decisions get made, the bootstrap-phase amendment, the path to a cross-vendor working group.</li>
+</ul>
+<h2 id="what-v1-guarantees">What v1 guarantees</h2>
+<table>
+<thead><tr><th>Guarantee</th><th>Source</th><th>How it's verified</th></tr></thead>
+<tbody>
+<tr><td>Additive-only evolution within v1.x</td><td><a href="/versioning/"><code>COMPATIBILITY.md</code></a> §2</td><td>RFC review window; CI gate <code>npm run openwop:check</code></td></tr>
+<tr><td>Safety-fix disclosure window</td><td><a href="/versioning/"><code>COMPATIBILITY.md</code></a> §3, <a href="/security/"><code>SECURITY.md</code></a></td><td>90-day public window OR embargoed advisory per disclosure policy</td></tr>
+<tr><td>Cross-host portability</td><td><a href="/profiles/">Profiles</a> + <a href="/conformance/">Conformance</a></td><td>Black-box scenario suite runs against every claimed host</td></tr>
+<tr><td>BYOK secret non-leakage</td><td><a href="/security/"><code>SECURITY/invariants.yaml</code></a> SR-1</td><td>Public conformance test on every protocol-tier host</td></tr>
+<tr><td>Cross-tenant memory isolation</td><td><a href="/spec/v1/agent-memory.html"><code>agent-memory.md</code></a> + CTI-1 invariant</td><td>Public test; mechanically verified on the Postgres reference host</td></tr>
+<tr><td>Replay determinism</td><td><a href="/spec/v1/replay.html"><code>replay.md</code></a></td><td>Fork-from-checkpoint scenarios in the conformance suite</td></tr>
+<tr><td>Signed webhook delivery</td><td><a href="/spec/v1/webhooks.html"><code>webhooks.md</code></a></td><td>HMAC-SHA256({ts}.{body}); replay-attack-resistant verification recipe</td></tr>
+</tbody></table>
+<h2 id="what-s-explicitly-out-of-scope">What's explicitly out of scope</h2>
+<ul>
+<li><strong>Runtime SLA.</strong> OpenWOP defines the protocol, not the host's uptime. Your host vendor (or your own host) owns that.</li>
+<li><strong>Throughput claims.</strong> The <code>openwop-production</code> profile is operational-readiness (backpressure, retention, claim acquisition) — NOT a throughput floor. A single-<code>pg.Client</code> Postgres host can pass production-profile while serializing writes.</li>
+<li><strong>A managed service from the OpenWOP project.</strong> The protocol is open; the reference hosts are reference implementations. There is no hosted, paid offering from the steward at this time. See <a href="/roadmap/">Roadmap</a>.</li>
+<li><strong>Lock-in protection across major versions.</strong> v1.x is additive; v2 is unscheduled and may break. If your evaluation requires guaranteed forward compatibility past v1, that's a custom commitment your vendor would need to make.</li>
+</ul>
+<h2 id="the-leaderboard">The leaderboard</h2>
+<p><a href="/conformance/">/conformance/</a> is the public record of which hosts implement which profiles, with the pass/fail/skip counts against the conformance suite. Read it cynically. Specifically:</p>
+<ul>
+<li><strong>Postgres reference</strong>: claims the production profile end-to-end with mechanical proof. Recent measurement: 781/850 (91.9% total, 96.4% applicable).</li>
+<li><strong>Python reference</strong>: 700/788 = 100% of applicable scenarios pass. Honest about NOT claiming <code>openwop-audit-log-integrity</code> (stdlib lacks Ed25519).</li>
+<li><strong>SQLite reference</strong>: 669/731, zero failures, claims interrupt + audit-log + auth-rotation profiles.</li>
+<li><strong>In-memory reference</strong>: dev-tier; passes the core profile.</li>
+<li><strong>MyndHyve (third-party)</strong>: passes the <code>ai-envelope-shape</code> scenario class (18/18). NOT the full suite — this is partial third-party coverage and the leaderboard reflects it honestly.</li>
+</ul>
+<h2 id="security-posture-in-one-paragraph">Security posture in one paragraph</h2>
+<p>Every protocol-tier MUST-NOT in <a href="/security/"><code>SECURITY/invariants.yaml</code></a> has a corresponding public conformance test, enforced at merge time by <a href="https://github.com/openwop/openwop/blob/main/scripts/check-security-invariants.sh"><code>scripts/check-security-invariants.sh</code></a>. 56 protocol-tier invariants tracked at the time of this writing. New invariants land alongside the RFC that introduces them. The threat models for secret leakage, prompt injection, node-pack supply chain, provider policy, and auth profiles are all public under <a href="https://github.com/openwop/openwop/tree/main/SECURITY"><code>SECURITY/</code></a> on GitHub.</p>
+<h2 id="governance-posture">Governance posture</h2>
+<p>OpenWOP is a single-steward project today, with the bootstrap-phase amendment (<code>GOVERNANCE.md</code>) explicitly documenting one-approval review until a non-steward maintainer is named. The roadmap commits to a cross-vendor working group as v1 matures; that's an open governance question, not a closed one. If your evaluation requires multi-vendor governance today, that's worth raising as a deal-breaker now rather than later — see <a href="/governance/">Governance</a> for the current state.</p>
+<h2 id="questions-worth-raising-in-your-eval">Questions worth raising in your eval</h2>
+<p>These are the questions a careful evaluator should ask. They're easier to answer up front than after the contract is signed.</p>
+<p>1. Which OpenWOP host will we run? Are we self-hosting, paying a vendor, or both? 2. Which profiles does that host claim, and does the leaderboard back the claim? 3. What's our migration path if the host vendor stops supporting OpenWOP? 4. How do we get notified about safety-fix advisories? (Answer: <a href="https://github.com/openwop/openwop/releases">GitHub releases on openwop/openwop</a>.) 5. What's our policy if a v2 lands and v1 is deprecated?</p>
+<h2 id="next-steps">Next steps</h2>
+<table>
+<thead><tr><th>Action</th><th>Where</th></tr></thead>
+<tbody>
+<tr><td>Read the production profile</td><td><a href="/spec/v1/production-profile.html">/spec/v1/production-profile.html</a></td></tr>
+<tr><td>Audit the leaderboard</td><td><a href="/conformance/">/conformance/</a></td></tr>
+<tr><td>Review the security posture</td><td><a href="/security/">/security/</a></td></tr>
+<tr><td>Review the versioning policy</td><td><a href="/versioning/">/versioning/</a></td></tr>
+<tr><td>Open a question</td><td><a href="https://github.com/openwop/openwop/issues">GitHub Issues ↗</a></td></tr>
+</tbody></table></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

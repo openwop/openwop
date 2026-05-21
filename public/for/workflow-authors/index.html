@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — For workflow authors</title>
+  <meta name="description" content="You&#39;re building a product that runs multi-agent workflows. You want the durable, replayable, resumable parts handled by something other than your application code, and you don&#39;t want to be locked to one runtime. This page is the shortest path from…"/>
+  <link rel="canonical" href="https://openwop.dev/for/workflow-authors/"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — For workflow authors"/>
+  <meta property="og:description" content="You&#39;re building a product that runs multi-agent workflows. You want the durable, replayable, resumable parts handled by something other than your application code, and you don&#39;t want to be locked to one runtime. This page is the shortest path from…"/>
+  <meta property="og:url" content="https://openwop.dev/for/workflow-authors/"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — For workflow authors"/>
+  <meta name="twitter:description" content="You&#39;re building a product that runs multi-agent workflows. You want the durable, replayable, resumable parts handled by something other than your application code, and you don&#39;t want to be locked to one runtime. This page is the shortest path from…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="" href="/spec/v1/">Spec</a>
+      <a class="" href="/rfcs/">RFCs</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/changelog/">Changelog</a>
+      <a class="" href="/faq/">FAQ</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="for-workflow-authors">For workflow authors</h1>
+<p>You're building a product that runs multi-agent workflows. You want the durable, replayable, resumable parts handled by something other than your application code, and you don't want to be locked to one runtime. This page is the shortest path from here to a running workflow on an OpenWOP-compatible host.</p>
+<h2 id="what-you-actually-need-to-know">What you actually need to know</h2>
+<p>OpenWOP gives you a wire contract — REST endpoints to start runs, SSE streams to consume events, signed webhooks for durable delivery, and a typed run lifecycle that survives restarts. You write workflows declaratively (nodes + edges + typed channels + reducers) and submit them to any conformance-tested host. The host owns the runtime; your code owns the workflow shape.</p>
+<p>You don't need to know how the host stores its event log, how it routes provider calls, or how it implements suspend/resume. Those are host concerns gated behind capability flags you can read from <code>GET /.well-known/openwop</code>.</p>
+<h2 id="read-these-four-spec-docs-first">Read these four spec docs first</h2>
+<ul>
+<li><a href="/spec/v1/run-options.html">Run options &amp; lifecycle</a> — what a run actually is, the per-run policy inputs, and the state machine.</li>
+<li><a href="/spec/v1/rest-endpoints.html">REST endpoints</a> — the canonical endpoint catalog (create, get, stream, interrupt, fork, etc.).</li>
+<li><a href="/spec/v1/stream-modes.html">Stream modes</a> — <code>values</code> / <code>updates</code> / <code>messages</code> / <code>debug</code> and how to pick the right one for your UI.</li>
+<li><a href="/spec/v1/channels-and-reducers.html">Channels &amp; reducers</a> — how typed shared state moves between nodes and how concurrent writes resolve at fan-in points.</li>
+</ul>
+<p>That's the minimum surface to author and submit a non-trivial workflow.</p>
+<h2 id="reach-for-these-when-you-hit-them">Reach for these when you hit them</h2>
+<ul>
+<li><a href="/spec/v1/interrupt.html">Interrupts</a> — when your workflow needs to pause for a human (clarification, approval, quorum, external event).</li>
+<li><a href="/spec/v1/webhooks.html">Webhooks</a> — when you need durable, signed delivery of run events to your backend.</li>
+<li><a href="/spec/v1/replay.html">Replay</a> — when you need to fork a run from a historical checkpoint (debugging, "what if" exploration, retroactive policy change).</li>
+<li><a href="/spec/v1/agent-memory.html">Agent memory</a> — when your supervisor agent needs to carry context across runs without leaking secrets or crossing tenant boundaries.</li>
+</ul>
+<h2 id="get-to-a-running-workflow">Get to a running workflow</h2>
+<p>The fastest path: clone the repo, start the in-memory reference host (Node, ~2 minutes), submit a fixture run over HTTP, watch the events stream back over SSE. The <a href="https://github.com/openwop/openwop/blob/main/QUICKSTART-10MIN.md">ten-minute quickstart</a> walks the whole thing.</p>
+<p>When you're ready to move past the in-memory host, the <a href="https://github.com/openwop/openwop/tree/main/examples/hosts/sqlite">SQLite</a> and <a href="https://github.com/openwop/openwop/tree/main/examples/hosts/postgres">Postgres</a> reference hosts add durability tiers; the <a href="https://github.com/openwop/openwop/tree/main/examples/hosts/python">Python host</a> is the cross-language portability proof.</p>
+<h2 id="what-you-ll-write-yourself">What you'll write yourself</h2>
+<ul>
+<li>The workflow definition (graph + channels + reducers + nodes — declarative).</li>
+<li>The node implementations OR a manifest pointing at pre-published <a href="/spec/v1/node-packs.html">node packs</a>.</li>
+<li>Your client code — a thin wrapper over the REST endpoints; the <a href="https://github.com/openwop/openwop/tree/main/sdk/typescript">TypeScript SDK</a> and <a href="https://github.com/openwop/openwop/tree/main/sdk/python">Python SDK</a> cover the canonical methods.</li>
+</ul>
+<h2 id="what-you-don-t-write">What you don't write</h2>
+<ul>
+<li>A durable event log.</li>
+<li>A suspend/resume mechanism.</li>
+<li>A replay engine.</li>
+<li>An interrupt state machine.</li>
+<li>Provider routing and BYOK secret resolution.</li>
+<li>HMAC-signed webhook delivery.</li>
+</ul>
+<p>Those are host responsibilities, defined normatively in the spec corpus and verified by the conformance suite.</p>
+<h2 id="next-steps">Next steps</h2>
+<table>
+<thead><tr><th>Action</th><th>Where</th></tr></thead>
+<tbody>
+<tr><td>Run the quickstart</td><td><a href="https://github.com/openwop/openwop/blob/main/QUICKSTART-10MIN.md">QUICKSTART-10MIN.md ↗</a></td></tr>
+<tr><td>Try the live host</td><td><a href="https://app.openwop.dev/">app.openwop.dev ↗</a></td></tr>
+<tr><td>Read the run lifecycle spec</td><td><a href="/spec/v1/run-options.html">/spec/v1/run-options.html</a></td></tr>
+<tr><td>Compare host implementations</td><td><a href="/conformance/">/conformance/</a></td></tr>
+<tr><td>Ask a question</td><td><a href="https://github.com/openwop/openwop/issues">GitHub Issues ↗</a></td></tr>
+</tbody></table></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

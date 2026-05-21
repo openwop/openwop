@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/envelopes/error.schema.json",
+  "title": "ErrorEnvelopePayload",
+  "description": "Payload for the universal `error` AI Envelope kind. The LLM's error report — the model said `I couldn't do that`. Distinct from the HTTP-level `ErrorEnvelope` in `error-envelope.schema.json`, which is the host's error report. Hosts MUST NOT collapse these two surfaces — an `error` envelope is a successful turn whose payload happens to be an error report, and the recommended `RunEventDoc.type` is `log.appended` (level `error`), NOT `node.failed`. The model deliberately surfaced the failure rather than guessing; treating it as a node failure penalizes correct behavior.",
+  "type": "object",
+  "required": ["code", "message"],
+  "properties": {
+    "reasoning": {
+      "type": "string",
+      "description": "OPTIONAL chain-of-thought field per RFC 0030 §A — useful when the model is explaining why it could not produce the requested envelope (the analytical process behind a `validation_failed` or `tool_call_refused` decision). Informational only; hosts SHALL NOT route on contents. Hosts MUST NOT reject envelopes where `reasoning` is absent. Subject to SR-1 redaction per `ai-envelope.md` §\"Redaction\" and the `envelope-reasoning-secret-redaction` invariant."
+    },
+    "code": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "Namespaced machine-readable error code. SHOULD use snake_case. Recommended codes: `validation_failed` (LLM tried but couldn't satisfy the requested contract), `tool_call_refused` (LLM declined to invoke a tool per a safety guideline), `context_exhausted` (LLM ran out of context window mid-emission), `ambiguous_intent` (LLM couldn't disambiguate the user's request). Vendor codes MAY be namespaced as `<vendor>.<code>` per `host-extensions.md`."
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable error description from the LLM's perspective. Surfaces to users when the host's UI renders error envelopes."
+    },
+    "details": {
+      "type": "object",
+      "description": "Optional structured context. Schema varies by `code` — consumers MUST tolerate missing/unknown fields. Examples: `{requestedKind, requiredFields}` for `validation_failed`, `{toolName, refusalReason}` for `tool_call_refused`."
+    }
+  },
+  "additionalProperties": false
+}

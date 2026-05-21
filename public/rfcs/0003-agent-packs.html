@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — RFC 0003: Agent Packs</title>
+  <meta name="description" content="Extend the existing pack.json node-pack manifest with an optional agents[] array, each entry conforming to agent-manifest.schema.json. Packs MAY ship nodes only (status quo), agents only (new), or both. Agent packs reuse the existing node-pack…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0003-agent-packs.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — RFC 0003: Agent Packs"/>
+  <meta property="og:description" content="Extend the existing pack.json node-pack manifest with an optional agents[] array, each entry conforming to agent-manifest.schema.json. Packs MAY ship nodes only (status quo), agents only (new), or both. Agent packs reuse the existing node-pack…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0003-agent-packs.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — RFC 0003: Agent Packs"/>
+  <meta name="twitter:description" content="Extend the existing pack.json node-pack manifest with an optional agents[] array, each entry conforming to agent-manifest.schema.json. Packs MAY ship nodes only (status quo), agents only (new), or both. Agent packs reuse the existing node-pack…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="" href="/spec/v1/">Spec</a>
+      <a class="active" href="/rfcs/">RFCs</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/changelog/">Changelog</a>
+      <a class="" href="/faq/">FAQ</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="rfc-0003-agent-packs">RFC 0003: Agent Packs</h1>
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0003</td></tr>
+<tr><td><strong>Title</strong></td><td>Agent Packs</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-01</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-11 (Active → Accepted: integration-seams audit closed via <code>docs/MULTI-AGENT-INTEGRATION-GAPS.md</code> archive; conformance scenarios pass against SQLite reference host)</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>schemas/node-pack-manifest.schema.json</code>, <code>schemas/agent-manifest.schema.json</code>, <code>spec/v1/node-packs.md</code>, <code>spec/v1/registry-operations.md</code>, <code>spec/v1/capabilities.md</code></td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
+<tr><td><strong>Supersedes</strong></td><td>—</td></tr>
+<tr><td><strong>Superseded by</strong></td><td>—</td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>Extend the existing <code>pack.json</code> node-pack manifest with an optional <code>agents[]</code> array, each entry conforming to <code>agent-manifest.schema.json</code>. Packs MAY ship nodes only (status quo), agents only (new), or both. Agent packs reuse the existing node-pack distribution, signing, and registry machinery without protocol changes elsewhere.</p>
+<h2 id="motivation">Motivation</h2>
+<p>RFC 0002 introduces <code>AgentRef</code> as the wire shape for agent identity, but does not specify how agent manifests are distributed. Today a host that wants to ship a reusable agent must:</p>
+<ul>
+<li>Embed the manifest in source, or</li>
+<li>Reinvent a parallel package format, or</li>
+<li>Couple the agent to a specific node type and ship it as a node pack.</li>
+</ul>
+<p>All three break composition. The right answer is to use the existing node-pack delivery vehicle: signed, semver'd, fetched from a registry, validated by manifest schema. RFC 0003 declares that an "agent pack" is just a node pack whose manifest happens to populate <code>agents[]</code>.</p>
+<p>This decision keeps three things stable:</p>
+<ul>
+<li><strong>Registry operations</strong> (<code>registry-operations.md</code>): submission, validation, deprecation, yank, and signing-key rotation flows are unchanged.</li>
+<li><strong>Node-pack signing</strong> (<code>node-packs.md</code> §Signing): the same Ed25519 signature covers the whole tarball, including agent manifests.</li>
+<li><strong>Host install path</strong>: hosts validate <code>pack.json</code> against <code>node-pack-manifest.schema.json</code> and <code>agents[]</code> against <code>agent-manifest.schema.json</code>; one extra schema check.</li>
+</ul>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-agents-field-on-nodepackmanifest">§A <code>agents[]</code> field on <code>NodePackManifest</code></h3>
+<p>Add an optional array to the manifest:</p>
+<pre class="lang-diff"><code>   &quot;properties&quot;: {
+     &quot;name&quot;: { ... },
+     &quot;version&quot;: { ... },
+     &quot;nodes&quot;: { &quot;type&quot;: &quot;array&quot;, &quot;minItems&quot;: 1, &quot;items&quot;: { &quot;$ref&quot;: &quot;#/$defs/PackNode&quot; } },
++    &quot;agents&quot;: {
++      &quot;type&quot;: &quot;array&quot;,
++      &quot;items&quot;: { &quot;$ref&quot;: &quot;https://openwop.dev/spec/v1/agent-manifest.schema.json&quot; },
++      &quot;description&quot;: &quot;Optional agent manifests shipped by this pack. Each entry MUST validate against agent-manifest.schema.json. Agents are scoped to the pack&#39;s namespace tier (see §B). Packs that ship only agents MAY have an empty nodes array.&quot;,
++      &quot;default&quot;: []
++    },
+     ...
+   },
+   &quot;required&quot;: [&quot;name&quot;, &quot;version&quot;, &quot;engines&quot;, &quot;nodes&quot;, &quot;runtime&quot;]</code></pre>
+<p><code>nodes</code> remains required (minItems unchanged) for backward compatibility. Packs that ship only agents MUST still declare <code>&quot;nodes&quot;: []</code>. A future minor MAY relax <code>minItems</code> on <code>nodes</code> once Phase 4 conformance proves agents-only packs work end-to-end.</p>
+<h3 id="b-namespace-scoping">§B Namespace scoping</h3>
+<p>Agent <code>agentId</code> values inside a pack MUST share the pack's namespace tier. Validation rule:</p>
+<ul>
+<li>A pack with <code>&quot;name&quot;: &quot;vendor.acme.research-agents&quot;</code> ships agents whose <code>agentId</code> matches <code>^vendor\.acme\.research-agents\.[a-z][a-zA-Z0-9_-]*$</code>.</li>
+<li>A pack with <code>&quot;name&quot;: &quot;core.openwop-agents&quot;</code> ships agents whose <code>agentId</code> matches <code>^core\.openwop-agents\.[a-z][a-zA-Z0-9_-]*$</code>.</li>
+</ul>
+<p>Registries MUST reject submissions where any agent's <code>agentId</code> violates this rule.</p>
+<p>Cross-pack agent references are valid (a workflow MAY use <code>vendor.acme.research-agents.summarizer</code> and <code>vendor.beta.tools.fetch</code> in the same run); namespace scoping is only enforced <em>within</em> a single pack.</p>
+<h3 id="c-system-prompt-resolution">§C System-prompt resolution</h3>
+<p>Per <code>agent-manifest.schema.json</code>, each agent has <code>systemPrompt</code> (inline) XOR <code>systemPromptRef</code> (tarball-relative path). Hosts MUST resolve <code>systemPromptRef</code> against the pack tarball at install time and verify:</p>
+<p>1. The referenced file exists in the tarball. 2. The referenced file is UTF-8. 3. The referenced file's path does not escape the tarball root (no <code>../</code>, no absolute paths).</p>
+<p>A <code>systemPromptRef</code> that fails any of these checks MUST cause manifest validation to fail at registry submission and at host install.</p>
+<h3 id="d-handoff-schema-resolution">§D Handoff schema resolution</h3>
+<p>The same rules apply to <code>handoff.taskSchemaRef</code> and <code>handoff.returnSchemaRef</code>. Referenced JSON Schema files MUST be valid JSON Schema 2020-12 documents; hosts MAY pre-compile them at install for runtime validation of dispatch payloads.</p>
+<h3 id="e-pack-level-capability-advertisement">§E Pack-level capability advertisement</h3>
+<p>Packs that ship agents SHOULD declare which memory backends their agents require via <code>peerDependencies</code> matching <code>Capabilities.agents.memoryBackends</code>:</p>
+<pre class="lang-json"><code>&quot;peerDependencies&quot;: {
+  &quot;openwop.agents.memoryBackends&quot;: &quot;&gt;=longTerm&quot;
+}</code></pre>
+<p>Hosts that do not advertise the required backend MUST refuse to install the pack and SHOULD surface the missing capability in the install error envelope.</p>
+<h3 id="f-discovery-shape">§F Discovery shape</h3>
+<p>The pack's registry index entry SHOULD expose <code>agentCount</code> alongside <code>nodeCount</code> so catalog UIs can filter:</p>
+<pre class="lang-json"><code>{
+  &quot;name&quot;: &quot;vendor.acme.research-agents&quot;,
+  &quot;version&quot;: &quot;1.2.0&quot;,
+  &quot;nodeCount&quot;: 0,
+  &quot;agentCount&quot;: 3,
+  &quot;categories&quot;: [&quot;agents.research&quot;]
+}</code></pre>
+<p>This is non-normative; registries MAY surface additional metadata.</p>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive.</strong></p>
+<ul>
+<li><code>agents</code> is optional with default <code>[]</code>; pre-RFC-0003 packs validate unchanged.</li>
+<li><code>nodes</code> minItems is unchanged (still <code>1</code>); pre-RFC packs continue to validate.</li>
+<li>No new required field on the existing <code>PackNode</code> shape.</li>
+<li>Registries and hosts that don't understand <code>agents[]</code> MAY ignore it; they continue to install the pack's nodes correctly.</li>
+</ul>
+<p>Packs that publish under RFC 0003 SHOULD bump their <code>engines.openwop</code> floor to <code>&gt;=1.1.0</code> so hosts on stricter pre-RFC engines fail-fast rather than silently dropping the agents.</p>
+<h2 id="conformance">Conformance</h2>
+<p>Existing scenarios that exercise the pack surface:</p>
+<ul>
+<li><code>conformance/src/scenarios/pack-registry.test.ts</code> — verifies registry submission/lookup round-trip.</li>
+<li><code>conformance/src/scenarios/pack-registry-publish.test.ts</code> — verifies signing and verification.</li>
+<li><code>conformance/src/scenarios/maliciousManifest.test.ts</code> — verifies hostile manifests are rejected.</li>
+</ul>
+<p>New scenarios required to upgrade from <code>Active</code> to <code>Accepted</code>:</p>
+<ul>
+<li><code>agent-pack-install.test.ts</code> — pack with <code>agents[]</code> is fetched, verified, validated, and the agents become resolvable via <code>AgentRef.agentId</code>.</li>
+<li><code>agent-pack-namespace-scoping.test.ts</code> — manifest with cross-namespace agent IDs is rejected.</li>
+<li><code>agent-pack-prompt-traversal.test.ts</code> — <code>systemPromptRef</code> with path traversal (<code>../</code>) is rejected at install time.</li>
+</ul>
+<p>Additive scenarios added post-Acceptance:</p>
+<ul>
+<li><code>agentPackHandoffSchemaValidation.test.ts</code> (HV-1, added 2026-05-17 alongside the agent-pack catalog rollout) — verifies §D handoff-schema enforcement end-to-end. The host MUST validate dispatch payloads against <code>handoff.taskSchemaRef</code> before invoking the agent AND validate return payloads against <code>handoff.returnSchemaRef</code> before persistence. Three branches: valid task (→ <code>completed</code>), invalid task missing required field (→ <code>failed</code> with structured violation), mock return-schema violation (→ violation surfaced before persistence). Fixture: <code>conformance-agent-pack-handoff-schema-validation</code>. Capability-gated on <code>capabilities.agents.{supported,dispatch}</code>.</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<p>1. <strong>Separate <code>agent-pack.json</code> file.</strong> Rejected: two file formats, two signing surfaces, two registry submission flows. The whole point of reusing node packs is that agents-only packs are operationally indistinguishable from node-only packs. 2. <strong>Inline agents in workflow definitions.</strong> Rejected: agents are reusable across workflows; embedding them in <code>WorkflowDefinition</code> prevents reuse, duplicates manifests, and bloats the workflow. 3. <strong>OCI artifacts as the distribution format.</strong> Considered for future; OCI integration is a post-v1 ecosystem item per <code>ROADMAP.md</code>. RFC 0003 ships the simpler JSON-manifest-in-tarball form first; OCI compatibility is an additive layer if needed. 4. <strong>Ship agents as MCP servers.</strong> Rejected: MCP exposes tools to LLM nodes; agents themselves are the LLM nodes. Conflating the two would muddle the trust boundary in <code>mcp-integration.md</code>.</p>
+<h2 id="unresolved-questions">Unresolved questions</h2>
+<p>1. Should <code>nodes.minItems</code> relax from <code>1</code> to <code>0</code> once agents-only packs are proven? Defer to v1.2 minor. 2. Should <code>peerDependencies</code> keys follow a reserved <code>openwop.*</code> prefix? Current: yes for protocol-defined capabilities, vendor-prefix for vendor capabilities (matches <code>host-extensions.md</code> convention). 3. Should agent packs be discoverable through <code>/.well-known/openwop</code>? Probably no — that's a registry concern, not a host concern.</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<ul>
+<li>Reference host install path: <code>hostsRegistry.fetchPack(name, version) → verifySignature → validateManifest → installNodes → installAgents</code>. The <code>installAgents</code> step is an append-only operation on the host's <code>AgentRegistry</code>.</li>
+<li>Hosts MAY hot-reload agent packs (no run termination required for newly installed agents). In-flight runs continue with the manifest version pinned at run start; new runs see the new manifest.</li>
+<li>Registries that wish to support OCI distribution may add an OCI digest field to the index entry; this is non-normative.</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<ul>
+<li>[ ] Spec text merged (this file).</li>
+<li>[ ] <code>agents[]</code> added to <code>node-pack-manifest.schema.json</code>.</li>
+<li>[ ] <code>node-packs.md</code> updated with §"Agents (RFC 0003)" subsection.</li>
+<li>[ ] <code>registry-operations.md</code> updated with namespace-scoping validation requirement.</li>
+<li>[ ] Three new conformance scenarios.</li>
+<li>[ ] CHANGELOG entry under v1.0.</li>
+<li>[ ] Reference host installs and resolves at least one agent pack.</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li><code>schemas/node-pack-manifest.schema.json</code></li>
+<li><code>schemas/agent-manifest.schema.json</code></li>
+<li><code>spec/v1/node-packs.md</code></li>
+<li><code>spec/v1/registry-operations.md</code></li>
+<li>RFC 0002 (Agent Identity), RFC 0004 (Memory Layer)</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

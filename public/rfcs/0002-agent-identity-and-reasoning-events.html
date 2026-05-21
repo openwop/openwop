@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — RFC 0002: Agent Identity and Reasoning Events</title>
+  <meta name="description" content="Introduce a protocol-level AgentRef wire shape and a closed set of five agent.* reasoning events (agent.reasoned, agent.toolCalled, agent.toolReturned, agent.handoff, agent.decided). AgentRef identifies which agent took which turn inside a run; the…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0002-agent-identity-and-reasoning-events.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — RFC 0002: Agent Identity and Reasoning Events"/>
+  <meta property="og:description" content="Introduce a protocol-level AgentRef wire shape and a closed set of five agent.* reasoning events (agent.reasoned, agent.toolCalled, agent.toolReturned, agent.handoff, agent.decided). AgentRef identifies which agent took which turn inside a run; the…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0002-agent-identity-and-reasoning-events.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — RFC 0002: Agent Identity and Reasoning Events"/>
+  <meta name="twitter:description" content="Introduce a protocol-level AgentRef wire shape and a closed set of five agent.* reasoning events (agent.reasoned, agent.toolCalled, agent.toolReturned, agent.handoff, agent.decided). AgentRef identifies which agent took which turn inside a run; the…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="" href="/spec/v1/">Spec</a>
+      <a class="active" href="/rfcs/">RFCs</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/changelog/">Changelog</a>
+      <a class="" href="/faq/">FAQ</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="rfc-0002-agent-identity-and-reasoning-events">RFC 0002: Agent Identity and Reasoning Events</h1>
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0002</td></tr>
+<tr><td><strong>Title</strong></td><td>Agent Identity and Reasoning Events</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-01</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-11 (Active → Accepted: integration-seams audit closed via <code>docs/MULTI-AGENT-INTEGRATION-GAPS.md</code> archive; conformance scenarios pass against SQLite reference host)</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>schemas/agent-manifest.schema.json</code>, <code>schemas/run-event.schema.json</code>, <code>schemas/run-event-payloads.schema.json</code>, <code>schemas/run-snapshot.schema.json</code>, <code>spec/v1/observability.md</code>, <code>spec/v1/replay.md</code>, <code>spec/v1/capabilities.md</code></td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
+<tr><td><strong>Supersedes</strong></td><td>—</td></tr>
+<tr><td><strong>Superseded by</strong></td><td>—</td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>Introduce a protocol-level <code>AgentRef</code> wire shape and a closed set of five <code>agent.*</code> reasoning events (<code>agent.reasoned</code>, <code>agent.toolCalled</code>, <code>agent.toolReturned</code>, <code>agent.handoff</code>, <code>agent.decided</code>). <code>AgentRef</code> identifies which agent took which turn inside a run; the five events expose agent decision-making to observers, debuggers, and replay without prescribing the agent runtime. The shape is additive to v1: pre-RFC-0002 runs simply omit the agent fields and continue to fold correctly.</p>
+<h2 id="motivation">Motivation</h2>
+<p>The v1 baseline (<code>run-event.schema.json</code>, <code>run-snapshot.schema.json</code>) is agent-agnostic: a node's <code>started</code> and <code>completed</code> events carry no record of <em>which</em> agent the node delegated to. For single-agent or single-model deployments this is sufficient. As soon as a host adopts orchestrator-driven topologies (RFC 0006) or shared-context multi-agent patterns, several gaps appear:</p>
+<p>1. <strong>Provenance.</strong> Audit and replay can't answer "which agent reasoned about this state?" 2. <strong>Tool-call attribution.</strong> When a node calls multiple tools across multiple sub-agents, observers can't disambiguate which agent's reasoning produced each call. 3. <strong>Cross-host portability.</strong> A2A composition (<code>spec/v1/a2a-integration.md</code>) needs a stable identity for the external agent; without an <code>AgentRef</code> shape, every host invents its own. 4. <strong>Handoff observability.</strong> Supervisor-worker handoffs are common in practice but invisible at the wire layer.</p>
+<p>The fix lives in the protocol because hosts and clients on both ends of a run need to agree on the wire shape. Moving it to a host extension creates <code>openwop.<em></code> vs <code>vendor.</em></code> drift across implementations.</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-agentref-wire-shape">§A AgentRef wire shape</h3>
+<p><code>AgentRef</code> is the canonical identity record for an agent acting inside a run. Where present, it MUST conform to:</p>
+<pre class="lang-json"><code>{
+  &quot;agentId&quot;: &quot;string (required) — manifest agentId or host-local id&quot;,
+  &quot;agentSharing&quot;: &quot;isolated | shared | shared:%shared% (optional)&quot;,
+  &quot;memoryRef&quot;: &quot;string (optional, opaque) — host-resolvable handle for cross-run memory&quot;,
+  &quot;modelClass&quot;: &quot;reasoning | writing | coding | research | classification | general (optional)&quot;
+}</code></pre>
+<h4 id="a1-agentid">§A1 <code>agentId</code></h4>
+<p>Globally unique within the issuing host. Two namespace tiers are normative:</p>
+<ul>
+<li><strong>Manifest agents.</strong> Names follow <code>agent-manifest.schema.json</code> (<code>&amp;lt;tier&amp;gt;.&amp;lt;org&amp;gt;.&amp;lt;pack&amp;gt;.&amp;lt;agent&amp;gt;</code> for <code>vendor</code> / <code>community</code> / <code>private</code> / <code>local</code>, or <code>core.&amp;lt;name&amp;gt;</code> for spec-canonical agents).</li>
+<li><strong>Host-local agents.</strong> <code>host:&amp;lt;id&amp;gt;</code> is reserved for agents instantiated by the host without a pack manifest (e.g., a built-in orchestrator). Hosts MUST NOT accept <code>host:</code> IDs in pack manifests.</li>
+</ul>
+<p>Clients MUST treat <code>agentId</code> as opaque; only the issuing host resolves it to a manifest or runtime.</p>
+<h4 id="a8-agentsharing">§A8 <code>agentSharing</code></h4>
+<p>Three values, closed enum:</p>
+<ul>
+<li><code>&#39;isolated&#39;</code> — the agent runs with a fresh context per node (default).</li>
+<li><code>&#39;shared&#39;</code> — the agent's context is shared across all nodes in the run.</li>
+<li><code>&#39;shared:&amp;lt;groupId&amp;gt;&#39;</code> — the agent's context is shared across nodes with the same <code>groupId</code> discriminator. <code>groupId</code> is opaque.</li>
+</ul>
+<p><code>shared:&amp;lt;groupId&amp;gt;</code> requires a <code>groupId</code> field on accompanying messages (see RFC 0005 §C).</p>
+<h4 id="a14-tool-permission-mapping">§A14 Tool permission mapping</h4>
+<p>When <code>toolAllowlist</code> is declared on the manifest (<code>agent-manifest.schema.json</code>), hosts MUST filter the agent's tool surface to the allowlist before dispatch. The canonical filter receives the agent's <code>harnessRole</code> (host-defined) and returns the allowed tool set. Reference implementations expose this as <code>ToolPermissionService.filterTools(harnessRole)</code>; the protocol does not constrain the name, only the result.</p>
+<h3 id="f-confidence-and-escalation">§F Confidence and escalation</h3>
+<p>Agents MAY emit a <code>confidence</code> field on <code>agent.decided</code> (range <code>[0.0, 1.0]</code>). Hosts compare confidence against a threshold to decide whether to escalate (e.g., raise an <code>&#39;ask-user&#39;</code> orchestrator decision, RFC 0006 §C):</p>
+<ul>
+<li><strong>Default threshold.</strong> <code>0.7</code>.</li>
+<li><strong>Per-agent threshold.</strong> <code>confidence.defaultThreshold</code> on the agent manifest overrides.</li>
+<li><strong>Per-run threshold.</strong> <code>RunOptions.configurable.escalationThreshold</code> overrides both.</li>
+</ul>
+<p>When <code>confidence &amp;lt; threshold</code>, the host MUST take exactly one action: emit an <code>&amp;#39;ask-user&amp;#39;</code> <code>OrchestratorDecision</code> (if a <code>runOrchestrator</code> is configured), surface a <code>&amp;#39;clarification&amp;#39;</code> interrupt (if not), or emit a <code>cap.breached</code> event with <code>kind: &amp;#39;confidence-escalation-suppressed&amp;#39;</code> if the host has explicitly opted out of escalation via configuration.</p>
+<h3 id="g-conversationmessage-shape-referenced-by-rfcs-0005-and-0007">§G ConversationMessage shape (referenced by RFCs 0005 and 0007)</h3>
+<p><code>ConversationMessage</code> is the append-only message record for multi-agent communication:</p>
+<pre class="lang-json"><code>{
+  &amp;quot;messageId&amp;quot;: &amp;quot;string (required, dedup key, deterministic for replay)&amp;quot;,
+  &amp;quot;from&amp;quot;: &amp;quot;string (agentId or &amp;#39;user&amp;#39;)&amp;quot;,
+  &amp;quot;to&amp;quot;: &amp;quot;string (optional addressee)&amp;quot;,
+  &amp;quot;groupId&amp;quot;: &amp;quot;string (optional, for shared-agent scoping)&amp;quot;,
+  &amp;quot;content&amp;quot;: &amp;quot;any JSON value&amp;quot;,
+  &amp;quot;ts&amp;quot;: &amp;quot;integer (ms epoch)&amp;quot;
+}</code></pre>
+<p>Messages fold through the <code>applyMessage</code> reducer (channel kind: <code>messages</code>). Replays MUST be deterministic: re-folding the same <code>messageId</code> twice MUST be a no-op.</p>
+<p><code>ConversationTurn</code> (RFC 0005 §C) is a structural superset that adds <code>role</code>, <code>turnIndex</code>, and an optional <code>agent</code> reference.</p>
+<h3 id="b-reasoning-events">§B Reasoning events</h3>
+<p>Five new <code>RunEventType</code> values. All are additive (no v1 reader changes required — readers fold unknown types best-effort per the run-event schema).</p>
+<h4 id="agent-reasoned"><code>agent.reasoned</code></h4>
+<p>Emitted when an agent produces a private reasoning trace before acting. Payload:</p>
+<pre class="lang-json"><code>{
+  &amp;quot;agentId&amp;quot;: &amp;quot;string&amp;quot;,
+  &amp;quot;reasoning&amp;quot;: &amp;quot;string — the trace itself (summary or full per resolved verbosity)&amp;quot;,
+  &amp;quot;verbosity&amp;quot;: &amp;quot;summary | full | off (optional)&amp;quot;
+}</code></pre>
+<p>Hosts MUST redact secret material from <code>reasoning</code> before persistence per SR-1 in <code>SECURITY/threat-model-secret-leakage.md</code>. The trace&#39;s length is bounded by <code>capabilities.agents.reasoning.tokenLimit</code> (default 512 tokens) when the resolved verbosity is <code>summary</code>. RFC 0024 (separate proposal) adds the optional <code>agent.reasoning.delta</code> sibling event for live-streaming UX while a reasoning block is still open; consumers MAY ignore deltas and read only the closing <code>agent.reasoned</code> for the authoritative content.</p>
+<p>&gt; <strong>Schema-evolution note (2026-05-18).</strong> This RFC's prose originally proposed <code>{summary, trace, tokenCount}</code> payload fields. The schema finalized in <code>schemas/run-event-payloads.schema.json</code> (<code>$defs.agentReasoned</code>) uses <code>{reasoning, verbosity}</code> — a tighter, single-field shape that lets a per-run override (<code>RunOptions.configurable.reasoningVerbosity</code>) choose summary vs full vs off at dispatch time. The schema is the normative wire contract; this section was updated to match. Hosts implementing against the original prose MUST migrate to the schema's field names.</p>
+<h4 id="agent-toolcalled"><code>agent.toolCalled</code></h4>
+<p>Emitted before a tool invocation. Payload:</p>
+<pre class="lang-json"><code>{
+  &quot;agentId&quot;: &quot;string&quot;,
+  &quot;toolId&quot;: &quot;string — &#39;&amp;lt;scope&amp;gt;:&amp;lt;tool-id&amp;gt;&#39;&quot;,
+  &quot;callId&quot;: &quot;string — caller-correlated id&quot;,
+  &quot;arguments&quot;: &quot;any JSON value&quot;
+}</code></pre>
+<h4 id="agent-toolreturned"><code>agent.toolReturned</code></h4>
+<p>Emitted after a tool invocation completes. <code>causationId</code> MUST equal the <code>eventId</code> of the corresponding <code>agent.toolCalled</code>. Payload:</p>
+<pre class="lang-json"><code>{
+  &quot;agentId&quot;: &quot;string&quot;,
+  &quot;toolId&quot;: &quot;string&quot;,
+  &quot;callId&quot;: &quot;string — matches the .toolCalled callId&quot;,
+  &quot;result&quot;: &quot;any JSON value (optional, present on success)&quot;,
+  &quot;error&quot;: &quot;ErrorEnvelope (optional, present on failure)&quot;,
+  &quot;durationMs&quot;: &quot;integer (optional)&quot;
+}</code></pre>
+<h4 id="agent-handoff"><code>agent.handoff</code></h4>
+<p>Emitted when one agent transfers control to another within the same node. Payload:</p>
+<pre class="lang-json"><code>{
+  &quot;from&quot;: &quot;AgentRef&quot;,
+  &quot;to&quot;: &quot;AgentRef&quot;,
+  &quot;reason&quot;: &quot;string (optional, free-form)&quot;,
+  &quot;context&quot;: &quot;any JSON value (optional, the handoff payload)&quot;
+}</code></pre>
+<h4 id="agent-decided"><code>agent.decided</code></h4>
+<p>Emitted when an agent reaches an actionable decision. Distinct from <code>runOrchestrator.decided</code> (RFC 0006), which is supervisor-level. Payload:</p>
+<pre class="lang-json"><code>{
+  &quot;agentId&quot;: &quot;string&quot;,
+  &quot;decision&quot;: &quot;any JSON value (host-defined)&quot;,
+  &quot;confidence&quot;: &quot;number 0..1 (optional)&quot;,
+  &quot;reasoning&quot;: &quot;string (optional)&quot;
+}</code></pre>
+<p>When <code>confidence</code> is present, hosts MUST apply the §F escalation rules.</p>
+<h3 id="c-agentref-placement-on-existing-event-payloads">§C <code>AgentRef</code> placement on existing event payloads</h3>
+<p>Three existing payloads gain an optional <code>agent: AgentRef</code> field:</p>
+<ul>
+<li><code>node.started.payload.agent</code> — the agent the node delegated to.</li>
+<li><code>node.completed.payload.agent</code> — same, for symmetry.</li>
+<li><code>RunSnapshot.agent</code> — the run's primary agent (when a single agent owns the run).</li>
+</ul>
+<p>All three fields are optional; pre-RFC-0002 events omit them and remain valid against v1 schema.</p>
+<h3 id="d-capability-advertisement">§D Capability advertisement</h3>
+<p>Hosts advertise agent-event support via <code>/.well-known/openwop</code>:</p>
+<pre class="lang-json"><code>{
+  &quot;capabilities&quot;: {
+    &quot;agents&quot;: {
+      &quot;reasoningEvents&quot;: true,
+      &quot;toolEvents&quot;: true,
+      &quot;handoffEvents&quot;: true,
+      &quot;decisionEvents&quot;: true,
+      &quot;memoryBackends&quot;: [&quot;scratchpad&quot;, &quot;conversation&quot;, &quot;longTerm&quot;]
+    }
+  }
+}</code></pre>
+<p>Clients that consume agent events SHOULD pre-flight via the discovery handshake. Hosts that do not advertise the relevant capability MUST NOT emit the corresponding event type.</p>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive.</strong> Specifically:</p>
+<ul>
+<li>All five new event types extend the <code>RunEventType</code> union; readers MUST fold unknowns best-effort, so pre-RFC consumers continue to project state correctly.</li>
+<li>All <code>agent</code> fields on existing payloads are optional with no default; absence preserves pre-RFC-0002 behavior.</li>
+<li>The <code>AgentRef</code> shape does not modify any existing required field.</li>
+<li>Capability advertisement is opt-in; hosts that omit <code>capabilities.agents.*</code> are still v1-conformant.</li>
+</ul>
+<p>No migration tooling is required.</p>
+<h2 id="conformance">Conformance</h2>
+<p>Existing scenarios that exercise the surface today:</p>
+<ul>
+<li><code>conformance/src/scenarios/identity-passthrough.test.ts</code> — verifies <code>agent</code> field round-trips intact.</li>
+<li><code>conformance/src/scenarios/multi-node-ordering.test.ts</code> — verifies reasoning event ordering against <code>node.*</code> envelopes.</li>
+<li><code>conformance/src/scenarios/replayDeterminism.test.ts</code> — verifies replay reproduces <code>agent.reasoned</code> and <code>agent.decided</code> payloads bit-identically (when the host claims <code>replay.cached</code>).</li>
+</ul>
+<p>New scenarios required to upgrade from <code>Active</code> to <code>Accepted</code>:</p>
+<ul>
+<li><code>agent-reasoning-events.test.ts</code> — exercise all five new types against a reference host that advertises <code>capabilities.agents.*</code>.</li>
+<li><code>agent-confidence-escalation.test.ts</code> — verify the §F escalation contract triggers at the configured threshold.</li>
+</ul>
+<p>Both new scenarios MUST gate on capability advertisement (per <code>capabilities-change-detection.md</code> §"Optional capability discovery").</p>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<p>1. <strong>Embed reasoning in <code>node.completed.payload</code>.</strong> Rejected: opacity. A single node may call many tools across many sub-agents; collapsing them all into the node's completion payload loses provenance and breaks per-tool causation chains. 2. **Treat reasoning as a host extension (<code>vendor.openwop.agent.*</code>).<strong> Rejected: every multi-agent host would invent the same shape under a different prefix, fracturing tooling. 3. </strong>Borrow LangGraph's <code>messages</code> reducer wholesale.<strong> Partially adopted (§G + RFC 0005). Rejected as a sole mechanism because <code>messages</code> is conversation-oriented; reasoning, tool calls, and handoffs need distinct event types for selective subscription via <code>stream-modes.md</code> <code>updates</code> mode. 4. </strong>Use A2A <code>AgentCard</code> directly.** Rejected: A2A's <code>AgentCard</code> is a <em>discovery</em> shape (capabilities, transport), not a <em>per-event provenance</em> shape. The two surfaces compose (<code>AgentRef</code> references manifest agents that A2A peers can resolve to <code>AgentCard</code>s) but are not the same record.</p>
+<h2 id="unresolved-questions">Unresolved questions</h2>
+<p>1. Should <code>agent.toolReturned.error</code> reuse <code>ErrorEnvelope</code> (current proposal) or a tool-specific variant? Decision: ErrorEnvelope wins for consistency unless tool ecosystems push back. 2. Should <code>agent.reasoned.trace</code> have a normative size cap, or leave that to host policy? Current default: host policy. 3. Should <code>confidence</code> calibration be a closed enum (<code>low</code>/<code>medium</code>/<code>high</code>) instead of <code>[0.0, 1.0]</code>? Closed enum is more portable but loses scoring granularity. Current: numeric range.</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<p>The reference TypeScript host implements <code>AgentRef</code> resolution via a small <code>AgentRegistry</code> populated at workflow registration time. The registry maps <code>agentId</code> → <code>(AgentManifest | HostLocalAgent)</code>. Hosts MAY skip the registry and resolve inline at dispatch time; the contract is the wire shape, not the resolver.</p>
+<p>Replay determinism: <code>agent.reasoned.trace</code> and <code>agent.toolCalled.arguments</code> MUST be cached at first execution and replayed bit-identically; otherwise replay diverges. See <code>spec/v1/replay.md</code> §"Determinism with non-deterministic agents".</p>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<ul>
+<li>[x] Spec text merged (this file).</li>
+<li>[x] Schema updated (<code>run-event.schema.json</code> <code>RunEventType</code> enum includes all five <code>agent.*</code> types as of 2026-05-08).</li>
+<li>[x] <code>agent-manifest.schema.json</code> published.</li>
+<li>[ ] At least one conformance scenario covering reasoning-event round-trip.</li>
+<li>[ ] At least one conformance scenario covering §F escalation.</li>
+<li>[ ] CHANGELOG entry under <code>v1.0</code>.</li>
+<li>[ ] Reference host emits all five event types when <code>capabilities.agents.*</code> is advertised.</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li><code>schemas/agent-manifest.schema.json</code></li>
+<li><code>schemas/run-event.schema.json</code> (RunEventType enum)</li>
+<li><code>schemas/conversation-event.schema.json</code> (consumes §G ConversationMessage shape)</li>
+<li><code>schemas/conversation-turn.schema.json</code> (structural superset of §G)</li>
+<li><code>schemas/orchestrator-decision.schema.json</code> (RFC 0006 — consumes §F escalation contract)</li>
+<li><code>spec/v1/a2a-integration.md</code> (composition with A2A <code>AgentCard</code>)</li>
+<li>RFC 0003 (Agent Packs), RFC 0004 (Memory Layer), RFC 0005 (Conversation), RFC 0006 (Orchestrator), RFC 0007 (Dispatch)</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

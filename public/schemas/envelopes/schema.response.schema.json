@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/envelopes/schema.response.schema.json",
+  "title": "SchemaResponsePayload",
+  "description": "Payload for the universal `schema.response` AI Envelope kind. Side-channel acknowledgement that the LLM received a `schema.request` reply. Never surfaces to users. Engines MAY count this against `Capabilities.limits.envelopesPerTurn` or exempt it; conformance does not lock this choice (see `ai-envelope.md` §\"Universal kinds\").",
+  "type": "object",
+  "required": ["envelopeType", "ack"],
+  "properties": {
+    "envelopeType": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "description": "Envelope kind whose schema delivery the LLM is acknowledging. SHOULD match the `envelopeType` from the preceding `schema.request`. Engines MAY refuse mismatches with `envelope_invalid` but are not required to (the LLM's acknowledgement is advisory)."
+    },
+    "ack": {
+      "type": "boolean",
+      "const": true,
+      "description": "Always `true`. The field exists so the payload validates structurally; an `ack: false` is meaningless (the LLM would simply not emit this envelope)."
+    }
+  },
+  "additionalProperties": false
+}

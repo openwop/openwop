@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — For host implementers</title>
+  <meta name="description" content="You&#39;re implementing OpenWOP against a runtime — your own engine, a customer&#39;s stack, a managed service you&#39;re building. This page tells you what the conformance suite expects, what the advertise-honestly principle costs you, and which reference…"/>
+  <link rel="canonical" href="https://openwop.dev/for/host-implementers/"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — For host implementers"/>
+  <meta property="og:description" content="You&#39;re implementing OpenWOP against a runtime — your own engine, a customer&#39;s stack, a managed service you&#39;re building. This page tells you what the conformance suite expects, what the advertise-honestly principle costs you, and which reference…"/>
+  <meta property="og:url" content="https://openwop.dev/for/host-implementers/"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — For host implementers"/>
+  <meta name="twitter:description" content="You&#39;re implementing OpenWOP against a runtime — your own engine, a customer&#39;s stack, a managed service you&#39;re building. This page tells you what the conformance suite expects, what the advertise-honestly principle costs you, and which reference…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="" href="/spec/v1/">Spec</a>
+      <a class="" href="/rfcs/">RFCs</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/changelog/">Changelog</a>
+      <a class="" href="/faq/">FAQ</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="for-host-implementers">For host implementers</h1>
+<p>You're implementing OpenWOP against a runtime — your own engine, a customer's stack, a managed service you're building. This page tells you what the conformance suite expects, what the advertise-honestly principle costs you, and which reference implementation to mine first.</p>
+<h2 id="the-contract-in-one-sentence">The contract in one sentence</h2>
+<p>A host advertises a set of capabilities at <code>GET /.well-known/openwop</code>, implements the REST endpoints + SSE streams + signed webhooks for the capabilities it claims, and passes the conformance scenarios gated on those capabilities. Anything you don't claim, you don't have to implement.</p>
+<h2 id="read-these-first">Read these first</h2>
+<ul>
+<li><a href="/spec/v1/host-capabilities.html">Host capabilities</a> — the canonical advertisement shape. Every capability has a <code>supported: boolean</code> and additional fields documenting the host's posture (BYOK policy modes, signing algorithms, scale claims, etc.).</li>
+<li><a href="/spec/v1/capabilities.html">Capabilities</a> — how clients should treat absent vs. <code>false</code> vs. <code>true</code> advertisements, ETag semantics, and the discovery → handshake flow.</li>
+<li><a href="/profiles/">Profiles</a> — the named capability bundles a host can claim. Each profile is a predicate over <code>/.well-known/openwop</code> plus a set of conformance scenarios.</li>
+<li><a href="/spec/v1/rest-endpoints.html">REST endpoints</a> — every endpoint with request/response shapes and the canonical error codes.</li>
+</ul>
+<h2 id="the-advertise-honestly-principle">The advertise-honestly principle</h2>
+<p>If you advertise <code>capabilities.X.supported: true</code>, the conformance scenarios under <code>openwop-X</code> will run against your host, and you must pass them. If you advertise <code>false</code> or omit the block, those scenarios are skipped, and you owe nothing.</p>
+<p>Do <strong>not</strong> advertise capabilities you don't actually behave correctly under. The Python reference host explicitly does NOT claim <code>openwop-audit-log-integrity</code> because Python's stdlib has no Ed25519 — that omission is the correct posture per the principle. The Postgres host claims <code>openwop-production</code> only because the <a href="/spec/v1/production-profile.html">production-profile</a> predicates (backpressure, retention, claim acquisition, orphan recovery) have all been mechanically proven.</p>
+<p>The leaderboard at <a href="/conformance/">/conformance/</a> is the public record. A host that overclaims will fail in someone else's CI before it fails for an end user.</p>
+<h2 id="start-from-a-reference-host">Start from a reference host</h2>
+<p>The four reference hosts are all under <a href="https://github.com/openwop/openwop/tree/main/examples/hosts"><code>examples/hosts/</code></a> on GitHub. Pick the one closest to your storage tier:</p>
+<table>
+<thead><tr><th>Reference</th><th>Language</th><th>Storage</th><th>Use case</th></tr></thead>
+<tbody>
+<tr><td><code>in-memory</code></td><td>Node TypeScript</td><td>RAM</td><td>Local dev / fastest boot / read the wire shape end-to-end</td></tr>
+<tr><td><code>sqlite</code></td><td>Node TypeScript</td><td>SQLite</td><td>Single-machine durability + audit-log integrity demo</td></tr>
+<tr><td><code>postgres</code></td><td>Node TypeScript</td><td>Postgres</td><td>Production-shaped — backpressure, retention sweeper, OAuth2/OIDC/mTLS, claim acquisition</td></tr>
+<tr><td><code>python</code></td><td>Python (stdlib-only)</td><td>RAM</td><td>Cross-language portability proof — no third-party packages</td></tr>
+</tbody></table>
+<p>Each has a <code>conformance.md</code> documenting which profiles it claims, the pass/fail/skip counts against the conformance suite, and the host-private invariants it's been hardened against.</p>
+<h2 id="run-the-conformance-suite">Run the conformance suite</h2>
+<p>The conformance suite is published as <code>@openwop/openwop-conformance</code> on npm. Point it at your host:</p>
+<pre class="lang-bash"><code>OPENWOP_BASE_URL=https://my-host.example.com \
+OPENWOP_API_KEY=… \
+npx @openwop/openwop-conformance</code></pre>
+<p>Scenarios are gated on the capabilities your host advertises. You'll see PASS / FAIL / SKIP per scenario. The leaderboard wants the full run output committed to your repo as <code>conformance.md</code>.</p>
+<h2 id="common-implementation-surfaces">Common implementation surfaces</h2>
+<ul>
+<li>Event log + suspend/resume: see <a href="/spec/v1/storage-adapters.html">Storage adapters</a>.</li>
+<li>BYOK secret resolution: see <a href="/spec/v1/auth.html">Auth</a> and the <a href="https://github.com/openwop/openwop/blob/main/SECURITY/threat-model-secret-leakage.md">secret-leakage threat model</a>.</li>
+<li>Signed webhooks: see <a href="/spec/v1/webhooks.html">Webhooks</a>; the HMAC recipe is <code>HMAC-SHA256({timestamp}.{rawBody})</code>.</li>
+<li>Interrupts: see <a href="/spec/v1/interrupt.html">Interrupts</a> for the 4 kinds and the shared resume contract.</li>
+</ul>
+<h2 id="what-you-owe-the-matrix">What you owe the matrix</h2>
+<p>When you ship an OpenWOP host (your own or for a customer), open a PR that:</p>
+<p>1. Adds a row to <a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md"><code>INTEROP-MATRIX.md</code></a>. 2. Includes a <code>conformance.md</code> with the suite version, command line, target URL class, and pass/fail/skip counts. 3. Lists the profiles you claim and the ones you explicitly don't.</p>
+<p>The leaderboard rebuilds automatically. Honesty is enforced socially, not algorithmically — but the conformance scenarios catch most over-claims for you.</p>
+<h2 id="next-steps">Next steps</h2>
+<table>
+<thead><tr><th>Action</th><th>Where</th></tr></thead>
+<tbody>
+<tr><td>Read the host capabilities spec</td><td><a href="/spec/v1/host-capabilities.html">/spec/v1/host-capabilities.html</a></td></tr>
+<tr><td>Browse profile predicates</td><td><a href="/profiles/">/profiles/</a></td></tr>
+<tr><td>Check the leaderboard</td><td><a href="/conformance/">/conformance/</a></td></tr>
+<tr><td>Clone a reference host</td><td><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">examples/hosts ↗</a></td></tr>
+<tr><td>Run the conformance suite</td><td><code>npx @openwop/openwop-conformance</code></td></tr>
+</tbody></table></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

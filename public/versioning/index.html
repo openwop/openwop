@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — Versioning &amp;amp; compatibility</title>
+  <meta name="description" content="This document defines what openwop guarantees about backward compatibility, when those guarantees can be relaxed, and how implementers should pin against the spec."/>
+  <link rel="canonical" href="https://openwop.dev/versioning/"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — Versioning &amp;amp; compatibility"/>
+  <meta property="og:description" content="This document defines what openwop guarantees about backward compatibility, when those guarantees can be relaxed, and how implementers should pin against the spec."/>
+  <meta property="og:url" content="https://openwop.dev/versioning/"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — Versioning &amp;amp; compatibility"/>
+  <meta name="twitter:description" content="This document defines what openwop guarantees about backward compatibility, when those guarantees can be relaxed, and how implementers should pin against the spec."/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="" href="/spec/v1/">Spec</a>
+      <a class="" href="/rfcs/">RFCs</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/changelog/">Changelog</a>
+      <a class="" href="/faq/">FAQ</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <header class="page-header">
+    <h1>Versioning &amp;amp; compatibility</h1>
+    <p class="lede">How openwop changes between releases. Additive-only within v1.x; safety-fixes follow the 90-day window; breaking changes only land in major versions.</p>
+  </header><article class="spec-doc"><h1 id="openwop-compatibility-commitment">openwop Compatibility Commitment</h1>
+<blockquote><p><strong>Status:</strong> v1 — applies to the locked v1 contract and all subsequent v1.x releases.</p></blockquote>
+<p>This document defines what openwop guarantees about backward compatibility, when those guarantees can be relaxed, and how implementers should pin against the spec.</p>
+<p>The TL;DR: <strong>v1.x is additive-only, with one explicit exception for safety and security fixes.</strong> Everything else that would break a v1 conformance pass goes to v2.</p>
+<h2 id="1-versioning-model">1. Versioning model</h2>
+<p>openwop uses three independent version axes:</p>
+<table>
+<thead><tr><th>Axis</th><th>Range</th><th>Bump rule</th></tr></thead>
+<tbody>
+<tr><td><strong>Spec corpus version</strong> (e.g. <code>v1</code>, <code>v1.1</code>)</td><td>Major.Minor</td><td>Major = breaking; Minor = additive</td></tr>
+<tr><td><strong>Conformance suite version</strong> (<code>@openwop/openwop-conformance</code>)</td><td>Major.Minor.Patch</td><td>Major tracks spec major; Minor adds scenarios for the same spec major; Patch yanks/fixes scenarios</td></tr>
+<tr><td><strong>SDK versions</strong> (<code>@openwop/openwop</code>, <code>openwop-client</code>, Go SDK)</td><td>Major.Minor.Patch</td><td>Major tracks spec major; Minor adds methods or fixes types; Patch is bug fixes</td></tr>
+</tbody></table>
+<p>A host advertises:</p>
+<ul>
+<li>The spec major it implements (via <code>protocolVersion</code> in <code>/.well-known/openwop</code>).</li>
+<li>The conformance suite version it passes (per <code>ROADMAP.md</code>'s suite-expansion record).</li>
+<li>Optionally, the profile set it advertises (per <code>RFCS/</code>-bound profile definitions; see §3 of <code>spec/v1/profiles.md</code> once that lands).</li>
+</ul>
+<p>Clients and SDKs pin to the spec major. Within a spec major, clients are guaranteed forward compatibility per §2.</p>
+<h2 id="2-v1-x-compatibility-guarantees">2. v1.x compatibility guarantees</h2>
+<p>For any release <code>v1.x</code> (where <code>x ≥ 0</code>):</p>
+<h3 id="2-1-additive-only">2.1 Additive only</h3>
+<ul>
+<li>New optional fields MAY appear in request and response bodies, event payloads, and the discovery document.</li>
+<li>New event types MAY appear in event streams. Clients MUST ignore unknown event types.</li>
+<li>New <code>SHOULD</code> recommendations MAY be introduced. Hosts that don't follow new <code>SHOULD</code>s remain conformant against the suite version they pass; later suite versions may not pass.</li>
+<li>New optional capabilities MAY be added to <code>/.well-known/openwop</code>. Hosts that don't advertise them remain v1-compliant.</li>
+<li>New endpoints MAY be added under <code>/v1/</code>. Existing endpoints MUST continue to work as documented.</li>
+<li>New conformance scenarios MAY be added in suite minor releases. Hosts that pass <code>1.0</code> are not required to pass <code>1.x.0</code>; they advertise the suite version they pass.</li>
+</ul>
+<h3 id="2-2-never-within-v1-x">2.2 Never within v1.x</h3>
+<ul>
+<li>Existing required fields MUST NOT become optional, MUST NOT be removed, MUST NOT change type.</li>
+<li>Existing optional fields MUST NOT change type.</li>
+<li>Existing event types MUST NOT change shape.</li>
+<li>Existing endpoints MUST NOT change request or response contracts (additive optional fields aside).</li>
+<li>Existing <code>MUST</code> requirements MUST NOT be relaxed.</li>
+<li>Existing error codes and HTTP status codes MUST NOT change meaning.</li>
+</ul>
+<h3 id="2-3-suite-vs-spec-compatibility">2.3 Suite vs. spec compatibility</h3>
+<p>A new conformance scenario that fails on a host previously passing <code>1.x.0</code> does NOT mean the spec broke. It means the suite found a previously-untested gap. The host's <code>1.x.0</code> pass is preserved; the host has the option to fix and pass <code>1.(x+1).0</code>.</p>
+<p>The suite is the test instrument; the spec is the contract. Suite changes MAY be more strict than spec text about edge cases, but MUST NOT be more strict about wire shape than the spec defines.</p>
+<h2 id="3-the-safety-fix-exception">3. The safety-fix exception</h2>
+<p>The §2.2 list above has one explicit exception: <strong>safety and security fixes.</strong></p>
+<p>A change MAY break v1.x if all of:</p>
+<ul>
+<li>It is necessary to fix a CVE-class vulnerability or a correctness bug that prevents the protocol from being used safely.</li>
+<li>The fix cannot be expressed as additive (e.g., a new optional field) without leaving the original surface insecure or incorrect.</li>
+<li>The fix is published with one of:</li>
+</ul>
+<p>  - <strong>A 90-day public RFC window</strong> (per <code>RFCS/0001-rfc-process.md</code>) before merge; OR   - <strong>An embargoed coordinated-disclosure window</strong> per <code>SECURITY.md</code>. The RFC is published when the embargo lifts. Embargo MUST NOT exceed 90 days unless implementers operating production deployments need more time and explicitly request the extension.</p>
+<p>Safety-fix breaks ship with:</p>
+<ul>
+<li>An RFC documenting the change, the threat model, and the migration path.</li>
+<li>A <code>version-negotiation.md</code> runbook section describing how implementers detect the change and migrate.</li>
+<li>Migration tooling where mechanically possible (codemods, schema migrators, conformance scenarios that detect the old surface).</li>
+<li>A <code>CHANGELOG.md</code> entry under a <code>### Security</code> heading citing the advisory ID per <code>SECURITY.md</code>.</li>
+</ul>
+<p>The spec major does <strong>not</strong> bump for safety-fix changes. The spec minor bumps. The suite minor bumps with new scenarios that detect both the vulnerable shape and the fixed shape.</p>
+<p>A safety-fix change is the only category that can break v1.x. Everything else goes to v2.</p>
+<h2 id="4-behavior-only-changes">4. Behavior-only changes</h2>
+<p>Some changes don't touch wire shapes but change observable behavior:</p>
+<table>
+<thead><tr><th>Change</th><th>Allowed in v1.x?</th></tr></thead>
+<tbody>
+<tr><td>New optional capability advertised, off by default</td><td>Yes — additive</td></tr>
+<tr><td>Existing optional capability becomes default-on (changes observed behavior on hosts that didn't advertise it)</td><td>Only via safety-fix process</td></tr>
+<tr><td>Performance improvement that changes observed timing</td><td>Yes — outside the scope of compatibility (timing is not a normative wire surface unless <code>scale-profiles.md</code> documents it)</td></tr>
+<tr><td>Stricter validation rejecting input that previously succeeded</td><td>Only via safety-fix process</td></tr>
+<tr><td>Looser validation accepting input that previously failed</td><td>Yes — additive (clients that sent invalid input were already broken)</td></tr>
+<tr><td>New normative requirement on a previously-undefined behavior</td><td>Yes — additive (the spec was previously silent)</td></tr>
+</tbody></table>
+<p>When in doubt, file an RFC and let the comment window surface compatibility concerns.</p>
+<h2 id="5-v2-plan">5. v2 plan</h2>
+<p>The v1 contract is locked. Any change that:</p>
+<ul>
+<li>Removes or renames an existing required field; or</li>
+<li>Changes an existing field's type, semantics, or required/optional status; or</li>
+<li>Changes an existing event type's shape; or</li>
+<li>Removes or changes an existing endpoint's contract beyond additive fields; or</li>
+<li>Deprecates an existing capability such that clients pinned to v1.x cannot continue to operate</li>
+</ul>
+<p>ships as part of the v2 spec major. A v2 RFC must include:</p>
+<ul>
+<li>A migration plan for v1.x implementers.</li>
+<li>A coexistence plan: how v1 and v2 servers/openwops interoperate during the transition (typically a discovery field that advertises support for both).</li>
+<li>A deprecation timeline for v1 (typically 18–24 months from v2 release).</li>
+<li>An updated conformance suite major (<code>@openwop/openwop-conformance@2.0.0</code>).</li>
+</ul>
+<p>v1.x and v2 ship as parallel tracks. v1.x continues to receive additive and safety-fix releases until the v1 deprecation date.</p>
+<h2 id="6-pinning-recommendations">6. Pinning recommendations</h2>
+<h3 id="for-host-implementers">For host implementers</h3>
+<ul>
+<li>Advertise the highest spec minor your host passes. Don't hide additive capabilities to "stay compatible" — additive capabilities ARE the compatibility model.</li>
+<li>Pin the conformance suite version you pass in your README. Re-run the suite per release; if a suite minor breaks your host, decide whether to fix or to keep pinning to the older suite version.</li>
+<li>Subscribe to <code>RFCS/</code> for normative additions before they ship.</li>
+</ul>
+<h3 id="for-client-implementers">For client implementers</h3>
+<ul>
+<li>Pin SDK to the spec major you target (<code>@openwop/openwop@^1.0</code> for v1.x).</li>
+<li>Treat unknown fields and unknown event types as forward-compat extensions (ignore them).</li>
+<li>Read <code>CHANGELOG.md</code> between SDK upgrades for any safety-fix advisories.</li>
+</ul>
+<h3 id="for-application-authors-building-on-a-host">For application authors building on a host</h3>
+<ul>
+<li>Pin to the host's advertised conformance suite version, not to the spec version directly. The host knows what it implements.</li>
+<li>Use the host's discovery document (<code>/.well-known/openwop</code>) to detect optional capabilities. Don't assume capabilities the host hasn't advertised.</li>
+</ul>
+<h2 id="7-deprecation-policy">7. Deprecation policy</h2>
+<p>The §2.2 prohibitions apply to deprecation as well: an existing surface MAY be marked <code>deprecated</code> in spec text and SDK output, but MUST continue to behave as documented through the v1 lifecycle. Deprecation flags signal "this will be gone in v2"; they don't trigger v1.x removal.</p>
+<p>A deprecation in v1.x requires:</p>
+<ul>
+<li>An RFC explaining the planned v2 replacement.</li>
+<li>A spec annotation (<code>&gt; Deprecated: …</code>) that points to the RFC.</li>
+<li>An SDK warning (where the SDK can detect use of the deprecated surface).</li>
+<li>A <code>CHANGELOG.md</code> entry under <code>### Deprecated</code>.</li>
+</ul>
+<p>Deprecated surfaces continue to pass conformance. The <code>Deprecated:</code> annotation is informational, not normative.</p>
+<h2 id="8-what-this-document-doesn-t-cover">8. What this document doesn't cover</h2>
+<ul>
+<li><strong>Implementation-internal contracts.</strong> A host's storage format, internal API, or RPC shape is the host's call. Compatibility within a host's implementation is the host's responsibility.</li>
+<li><strong>Non-normative spec text.</strong> "Why this exists," examples, reference notes — these may change freely. Compatibility applies only to normative requirements (<code>MUST</code>/<code>SHOULD</code>/<code>MAY</code>).</li>
+<li><strong>Conformance fixture wording.</strong> Fixture names and human-readable descriptions are not part of the wire contract.</li>
+</ul>
+<h2 id="9-references">9. References</h2>
+<ul>
+<li><code>GOVERNANCE.md</code> — decision rules; this document tells maintainers what counts as additive vs. breaking.</li>
+<li><code>RFCS/0001-rfc-process.md</code> — the RFC mechanism through which compatibility-affecting changes ship.</li>
+<li><code>SECURITY.md</code> — embargoed disclosure process referenced by the §3 safety-fix exception.</li>
+<li><code>ROADMAP.md</code> — what's planned for v1.x and post-v1; references this document for the change-class definitions.</li>
+<li><code>MAINTAINERS.md</code> — who has authority to merge changes that affect this commitment.</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

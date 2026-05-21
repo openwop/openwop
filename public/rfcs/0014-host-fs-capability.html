@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — RFC 0014: host.fs capability</title>
+  <meta name="description" content="Adds an optional host.fs capability so workflows can read, write, list, stat, and delete files via the host. Required by core.openwop.files. Hosts MUST enforce a configured sandbox root + path-traversal protection per a new SECURITY invariant…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0014-host-fs-capability.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — RFC 0014: host.fs capability"/>
+  <meta property="og:description" content="Adds an optional host.fs capability so workflows can read, write, list, stat, and delete files via the host. Required by core.openwop.files. Hosts MUST enforce a configured sandbox root + path-traversal protection per a new SECURITY invariant…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0014-host-fs-capability.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — RFC 0014: host.fs capability"/>
+  <meta name="twitter:description" content="Adds an optional host.fs capability so workflows can read, write, list, stat, and delete files via the host. Required by core.openwop.files. Hosts MUST enforce a configured sandbox root + path-traversal protection per a new SECURITY invariant…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="" href="/spec/v1/">Spec</a>
+      <a class="active" href="/rfcs/">RFCs</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/changelog/">Changelog</a>
+      <a class="" href="/faq/">FAQ</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="rfc-0014-host-fs-capability">RFC 0014: host.fs capability</h1>
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0014</td></tr>
+<tr><td><strong>Title</strong></td><td>host.fs filesystem capability</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>OpenWOP Working Group</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-17</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-18 (Active → Accepted: all 6 acceptance-criteria items satisfied. <code>capabilities.fs</code> block in <code>schemas/capabilities.schema.json</code>; <code>spec/v1/host-capabilities.md §host.fs</code> landed at commit c5831fe; SECURITY invariant <code>fs-path-traversal</code> in <code>SECURITY/invariants.yaml</code> line 878; <code>conformance/src/scenarios/fs-path-traversal.test.ts</code> (3 assertions, behavioral); reference impl in <code>apps/workflow-engine/backend/typescript/src/host/inMemorySurfaces.ts</code> advertised in <code>routes/discovery.ts</code> lines 162–174; CHANGELOG entry under <code>[Unreleased]</code>.)</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>spec/v1/host-capabilities.md</code> · <code>schemas/capabilities.schema.json</code> · <code>SECURITY/invariants.yaml</code> · new conformance scenarios for path-traversal and sandbox-root</td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>Adds an optional <code>host.fs</code> capability so workflows can read, write, list, stat, and delete files via the host. Required by <code>core.openwop.files</code>. Hosts MUST enforce a configured sandbox root + path-traversal protection per a new SECURITY invariant (<code>fs-path-traversal</code>).</p>
+<h2 id="motivation">Motivation</h2>
+<p>Make.com Data Store + n8n Read/Write Binary File are first-class primitives in every comparable workflow editor. openwop today provides no filesystem surface at all, forcing pack authors to roll their own — which means every pack has a different bug surface for <code>../</code> escapes, symlink races, and permission misconfiguration. Hoisting this to the host puts a single SECURITY invariant on it.</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-capabilities-schema-json-additions">§A <code>capabilities.schema.json</code> additions</h3>
+<pre class="lang-diff"><code>   &quot;properties&quot;: {
++    &quot;fs&quot;: {
++      &quot;type&quot;: &quot;object&quot;,
++      &quot;description&quot;: &quot;Filesystem capability — read/write/list/stat/delete inside a sandbox root.&quot;,
++      &quot;properties&quot;: {
++        &quot;supported&quot;: { &quot;type&quot;: &quot;boolean&quot;, &quot;description&quot;: &quot;Host advertises ctx.fs.{read,write,delete,stat,list}.&quot; },
++        &quot;sandboxRoot&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;Absolute path; all operations resolved relative to this root.&quot; },
++        &quot;maxFileSizeBytes&quot;: { &quot;type&quot;: &quot;integer&quot;, &quot;minimum&quot;: 0 },
++        &quot;image&quot;: { &quot;type&quot;: &quot;object&quot;, &quot;properties&quot;: { &quot;supported&quot;: { &quot;type&quot;: &quot;boolean&quot; }, &quot;formats&quot;: { &quot;type&quot;: &quot;array&quot;, &quot;items&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [&quot;jpeg&quot;,&quot;png&quot;,&quot;webp&quot;,&quot;avif&quot;,&quot;gif&quot;] } } } },
++        &quot;pdf&quot;: { &quot;type&quot;: &quot;object&quot;, &quot;properties&quot;: { &quot;supported&quot;: { &quot;type&quot;: &quot;boolean&quot; } } },
++        &quot;transport&quot;: { &quot;type&quot;: &quot;object&quot;, &quot;properties&quot;: { &quot;ftp&quot;: { &quot;type&quot;: &quot;boolean&quot; }, &quot;sftp&quot;: { &quot;type&quot;: &quot;boolean&quot; }, &quot;ssh&quot;: { &quot;type&quot;: &quot;boolean&quot; } } }
++      },
++      &quot;additionalProperties&quot;: false
++    }
+   }</code></pre>
+<h3 id="b-host-contract-musts-added-to-host-capabilities-md">§B Host-contract MUSTs (added to <code>host-capabilities.md</code>)</h3>
+<p>A host advertising <code>fs.supported: true</code> MUST:</p>
+<p>1. Resolve every <code>path</code> input relative to <code>sandboxRoot</code>. Absolute paths outside the root MUST return <code>path_outside_sandbox</code> error. 2. Reject any path that, after normalization, contains a <code>..</code> segment that escapes the root. Symlinks that point outside MUST be rejected. 3. Enforce <code>maxFileSizeBytes</code> on write. Reads of larger files MAY return <code>file_too_large</code> rather than streaming. 4. Return a typed error envelope on permission denial (<code>fs_permission_denied</code>).</p>
+<h3 id="c-security-invariant">§C SECURITY invariant</h3>
+<pre class="lang-yaml"><code>- id: fs-path-traversal
+  tier: protocol
+  summary: &quot;host.fs MUST reject path traversal (`../`) and symlink-escape attempts.&quot;
+  conformance_test: &quot;fs-path-traversal.test.ts&quot;</code></pre>
+<h3 id="d-conformance">§D Conformance</h3>
+<p>New scenario <code>fs-path-traversal.test.ts</code> asserts:</p>
+<ul>
+<li><code>read(&quot;../etc/passwd&quot;)</code> returns <code>path_outside_sandbox</code>.</li>
+<li><code>read(symlink-to-outside)</code> returns <code>path_outside_sandbox</code>.</li>
+<li><code>write(huge-file)</code> returns <code>file_too_large</code> when <code>maxFileSizeBytes</code> is advertised.</li>
+</ul>
+<p>Gated on <code>capabilities.fs.supported</code>.</p>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive</strong>. New optional capability block. Existing hosts without <code>fs.supported</code> ignore the block; <code>core.openwop.files</code> refuses to register on them (peerDependency <code>fs: &#39;supported&#39;</code>).</p>
+<h2 id="conformance">Conformance</h2>
+<ul>
+<li>New scenario: <code>fs-path-traversal.test.ts</code> (capability-gated).</li>
+<li>Existing <code>http-client-ssrf.test.ts</code> is the model.</li>
+<li>Reference host: <code>examples/hosts/in-memory/</code> adds an in-memory virtual filesystem so the scenario can run without touching the real disk.</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<p>1. <strong>Defer fs to vendor packs.</strong> Rejected: every pack inventing its own sandboxing reproduces the same bugs. A single SECURITY invariant on <code>host.fs</code> is the leverage point. 2. <strong>Bake fs into the engine baseline.</strong> Rejected: many hosts (especially edge-deployed ones) deliberately have no fs surface. Capability-gating preserves that posture.</p>
+<h2 id="unresolved-questions">Unresolved questions</h2>
+<p>1. Should <code>sandboxRoot</code> support multiple roots (per-tenant)? Defer to v1.2 if real demand surfaces.</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<ul>
+<li>Schema diff in §A lands in <code>schemas/capabilities.schema.json</code> on Active promotion, not at Draft.</li>
+<li>SECURITY invariant row in §C lands in <code>SECURITY/invariants.yaml</code> alongside the matching <code>fs-path-traversal.test.ts</code>; <code>scripts/check-security-invariants.sh</code> would fail otherwise.</li>
+<li>Reference impl candidate: extend <code>examples/hosts/in-memory/</code> with a virtual-fs adapter so the scenarios run without touching the real disk.</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<ul>
+<li>[x] Capability block in <code>capabilities.schema.json</code>.</li>
+<li>[x] <code>host-capabilities.md</code> §host.fs section. (Landed at commit c5831fe.)</li>
+<li>[x] SECURITY invariant <code>fs-path-traversal</code> in <code>SECURITY/invariants.yaml</code>.</li>
+<li>[x] <code>fs-path-traversal.test.ts</code> conformance scenario.</li>
+<li>[x] Reference host in-memory fs implementation.</li>
+<li>[x] CHANGELOG entry under <code>[Unreleased]</code>.</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li><code>core.openwop.files</code> pack (this RFC unblocks public publication).</li>
+<li><code>http-client-ssrf.test.ts</code> (template for path-traversal scenario).</li>
+<li>Make Data Store, n8n Read/Write Files (prior art).</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

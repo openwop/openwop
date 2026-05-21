@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — RFC 0026: `provider.usage` Event</title>
+  <meta name="description" content="Adds a new optional event type provider.usage that hosts MUST emit after every LLM provider invocation, carrying per-call token counts plus optional cost-estimate fields. Pairs with the existing openwop.cost.* OTel attribute group (anticipated by…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0026-provider-usage-event.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — RFC 0026: `provider.usage` Event"/>
+  <meta property="og:description" content="Adds a new optional event type provider.usage that hosts MUST emit after every LLM provider invocation, carrying per-call token counts plus optional cost-estimate fields. Pairs with the existing openwop.cost.* OTel attribute group (anticipated by…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0026-provider-usage-event.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — RFC 0026: `provider.usage` Event"/>
+  <meta name="twitter:description" content="Adds a new optional event type provider.usage that hosts MUST emit after every LLM provider invocation, carrying per-call token counts plus optional cost-estimate fields. Pairs with the existing openwop.cost.* OTel attribute group (anticipated by…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="" href="/spec/v1/">Spec</a>
+      <a class="active" href="/rfcs/">RFCs</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/changelog/">Changelog</a>
+      <a class="" href="/faq/">FAQ</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="rfc-0026-provider-usage-event">RFC 0026: <code>provider.usage</code> Event</h1>
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0026</td></tr>
+<tr><td><strong>Title</strong></td><td><code>provider.usage</code> event — per-call durable usage record for LLM provider invocations</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-19</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-19 (Draft → Active → Accepted — see <a href="#status-history">Status history</a> below).</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>schemas/run-event.schema.json</code>, <code>schemas/run-event-payloads.schema.json</code>, <code>schemas/capabilities.schema.json</code>, <code>api/asyncapi.yaml</code>, <code>spec/v1/observability.md</code> §"Provider usage events", <code>conformance/src/scenarios/provider-usage.test.ts</code>, <code>apps/workflow-engine/</code>, <code>CHANGELOG.md</code></td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code> per <code>COMPATIBILITY.md §2.1</code></td></tr>
+<tr><td><strong>Supersedes</strong></td><td>—</td></tr>
+<tr><td><strong>Superseded by</strong></td><td>—</td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>Adds a new optional event type <code>provider.usage</code> that hosts MUST emit after every LLM provider invocation, carrying per-call token counts plus optional cost-estimate fields. Pairs with the existing <code>openwop.cost.*</code> OTel attribute group (anticipated by <code>docs/PROTOCOL-GAP-CLOSURE-PLAN.md:265</code>, landed for O4) but lives in the durable run event log — so replay reads it back deterministically, webhook subscribers receive it live, and external billing reconciliation has a fine-grained audit trail. Old consumers ignore the new event type per <code>COMPATIBILITY.md §2.1</code> forward-compat; hosts that don't emit it advertise nothing.</p>
+<h2 id="motivation">Motivation</h2>
+<p><code>spec/v1/observability.md</code> already specifies three cost-related surfaces:</p>
+<p>1. <code>RunSnapshot.metrics.openwopCost</code> — coarse rollup at the run's terminal state. One value per run; loses node/turn-level granularity. 2. OTel span attributes <code>openwop.cost.tokens.*</code> + <code>openwop.cost.usd</code> — fine-grained, but observability-only. Not durably persisted; replay can't reconstruct them; webhook subscribers don't see them. 3. <code>ctx.recordCost()</code> — in-node helper that writes to (1) and feeds (2). Doesn't itself emit an event.</p>
+<p>Three load-bearing use cases the existing surface doesn't cover:</p>
+<ul>
+<li><strong>Per-call replay determinism.</strong> <code>replay.md §&quot;LLM cache-key recipe&quot;</code> (FINAL) lets replay deduplicate the same provider call. But there's no event-log record of the usage that resulted — replay can reconstruct the cache hit but not the cost. Per-run rollup loses the per-call shape.</li>
+<li><strong>Live cost dashboards.</strong> SSE / webhook subscribers want to react when token counts cross a threshold. Today they read OTel — which the workflow-engine doesn't fan out to subscribers.</li>
+<li><strong>External billing reconciliation.</strong> An auditor verifying a tenant's monthly bill needs per-call records. The rollup is too lossy; OTel exports aren't part of the protocol contract.</li>
+</ul>
+<p>The fix: emit a durable <code>provider.usage</code> event after each provider call. The event-log replay machinery preserves per-call records deterministically; subscribers receive them through existing SSE / webhook surfaces.</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-new-event-type-provider-usage">§A New event type — <code>provider.usage</code></h3>
+<p>Added to <code>schemas/run-event-payloads.schema.json</code> alongside <code>agentReasoningDelta</code>:</p>
+<pre class="lang-diff"><code>+    &quot;providerUsage&quot;: {
++      &quot;type&quot;: &quot;object&quot;,
++      &quot;description&quot;: &quot;Per-call usage record emitted after every LLM provider invocation. Durably persisted in the run event log; consumed by replay, webhook subscribers, billing reconciliation. The OTel `openwop.cost.*` attribute group (per `observability.md §\&quot;Cost attribution attributes\&quot;`) is the observability sibling — this event type is the durable record.&quot;,
++      &quot;required&quot;: [&quot;provider&quot;, &quot;model&quot;, &quot;inputTokens&quot;, &quot;outputTokens&quot;],
++      &quot;properties&quot;: {
++        &quot;provider&quot;:         { &quot;type&quot;: &quot;string&quot;, &quot;minLength&quot;: 1, &quot;description&quot;: &quot;Canonical provider id (lowercase ASCII, e.g. \&quot;anthropic\&quot;, \&quot;openai\&quot;, \&quot;google\&quot;). Same value as the `openwop.cost.provider` OTel attribute.&quot; },
++        &quot;model&quot;:            { &quot;type&quot;: &quot;string&quot;, &quot;minLength&quot;: 1, &quot;description&quot;: &quot;Provider-stamped model id as the model expects it. Same value used in the LLM cache-key recipe (per `replay.md §A`).&quot; },
++        &quot;inputTokens&quot;:      { &quot;type&quot;: &quot;integer&quot;, &quot;minimum&quot;: 0, &quot;description&quot;: &quot;Input/prompt tokens billed for this call. Matches the provider response&#39;s input-token count verbatim.&quot; },
++        &quot;outputTokens&quot;:     { &quot;type&quot;: &quot;integer&quot;, &quot;minimum&quot;: 0, &quot;description&quot;: &quot;Output/completion tokens billed for this call. Matches the provider response&#39;s output-token count verbatim.&quot; },
++        &quot;totalTokens&quot;:      { &quot;type&quot;: &quot;integer&quot;, &quot;minimum&quot;: 0, &quot;description&quot;: &quot;Convenience sum (inputTokens + outputTokens). Consumers MAY compute themselves; emitters MAY include for readability.&quot; },
++        &quot;costEstimateUsd&quot;:  { &quot;type&quot;: &quot;number&quot;, &quot;minimum&quot;: 0, &quot;description&quot;: &quot;ADVISORY estimate in USD computed by the host&#39;s static rate table. MUST NOT be used for billing — real billing is external. Hosts SHOULD omit when no rate is known rather than emit 0.&quot; },
++        &quot;currency&quot;:         { &quot;type&quot;: &quot;string&quot;, &quot;pattern&quot;: &quot;^[A-Z]{3}${content}quot;, &quot;description&quot;: &quot;ISO 4217 code when `costEstimateUsd` is non-USD; the field name stays `costEstimateUsd` for back-compat but `currency` overrides the implied denomination.&quot; },
++        &quot;cacheHit&quot;:         { &quot;type&quot;: &quot;boolean&quot;, &quot;description&quot;: &quot;True iff this call was served from the LLM response cache (per `replay.md §\&quot;LLM cache-key recipe\&quot;`). When true, inputTokens/outputTokens reflect the ORIGINAL call&#39;s billed values; the cached invocation incurred zero new provider cost.&quot; },
++        &quot;nodeId&quot;:           { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;The node id that initiated the provider call. Required for per-node cost attribution dashboards.&quot; },
++        &quot;traceId&quot;:          { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;OTel trace id linking this event to the matching `openwop.cost.*` span. Lets observability backends correlate event-log entries with traces.&quot; }
++      },
++      &quot;additionalProperties&quot;: false
++    },</code></pre>
+<p>Registered as a <code>RunEventType</code> enum value in <code>schemas/run-event.schema.json</code>:</p>
+<pre class="lang-diff"><code>   &quot;agent.reasoned&quot;,
+   &quot;agent.reasoning.delta&quot;,
++  &quot;provider.usage&quot;,</code></pre>
+<p>Mapped in the <code>eventPayloads</code> discriminator (same pattern as RFC 0024):</p>
+<pre class="lang-diff"><code>+  { &quot;if&quot;: { &quot;properties&quot;: { &quot;type&quot;: { &quot;const&quot;: &quot;provider.usage&quot; } } },
++    &quot;then&quot;: { &quot;properties&quot;: { &quot;payload&quot;: { &quot;$ref&quot;: &quot;#/$defs/providerUsage&quot; } } } },</code></pre>
+<h3 id="b-emission-timing-normative">§B Emission timing (normative)</h3>
+<p>Hosts that advertise <code>capabilities.providerUsage.supported: true</code> MUST emit exactly ONE <code>provider.usage</code> event per LLM provider invocation. The event MUST be emitted BEFORE the corresponding <code>node.completed</code> event for the calling node — this ordering preserves causal correlation: subscribers can read the usage record and immediately know which node it attributes to via the <code>nodeId</code> field + the causationId chain.</p>
+<p>When the call was served from the LLM response cache (<code>cacheHit: true</code> per <code>replay.md §&quot;LLM cache-key recipe&quot;</code>), the event MUST still fire, but <code>inputTokens</code> and <code>outputTokens</code> MUST reflect the ORIGINAL cached call's billed values. This preserves per-call replay determinism: replaying the same workflow yields the same <code>provider.usage</code> events at the same sequence positions.</p>
+<p><code>costEstimateUsd</code> MAY be omitted on replay even when the original emission included it — the rate table is local to the host and may have changed between runs. Token counts MUST replay identically.</p>
+<h3 id="c-otel-projection">§C OTel projection</h3>
+<p>Hosts that emit <code>provider.usage</code> SHOULD ALSO project the same data into the existing <code>openwop.cost.*</code> OTel attribute group per <code>observability.md §&quot;Cost attribution attributes&quot;</code> (closes O4). The mapping:</p>
+<table>
+<thead><tr><th>Event field</th><th>OTel attribute</th></tr></thead>
+<tbody>
+<tr><td><code>provider</code></td><td><code>openwop.cost.provider</code></td></tr>
+<tr><td><code>inputTokens</code></td><td><code>openwop.cost.tokens.input</code></td></tr>
+<tr><td><code>outputTokens</code></td><td><code>openwop.cost.tokens.output</code></td></tr>
+<tr><td><code>totalTokens</code></td><td><code>openwop.cost.tokens.total</code></td></tr>
+<tr><td><code>costEstimateUsd</code></td><td><code>openwop.cost.usd</code></td></tr>
+<tr><td><code>currency</code></td><td><code>openwop.cost.currency</code></td></tr>
+</tbody></table>
+<p>The OTel projection is RECOMMENDED, not REQUIRED — hosts MAY emit only the event (for example, hosts that don't run an OTel exporter). The event is the load-bearing surface for replay determinism + subscribers; OTel is supplementary.</p>
+<h3 id="d-trust-boundary-security">§D Trust boundary (security)</h3>
+<p>The <code>provider.usage</code> payload MUST NOT carry:</p>
+<ul>
+<li>BYOK <code>credentialRef</code> strings (the cleartext key never appeared here; the <code>ref</code> MUST NOT leak either)</li>
+<li>Hashed credential identifiers</li>
+<li>Prompt or response substring excerpts</li>
+<li>Tool call arguments or results</li>
+<li>Any field outside the schema's declared shape (<code>additionalProperties: false</code> enforces this)</li>
+</ul>
+<p>Per <code>SECURITY/threat-model-secret-leakage.md</code> §SR-1 + the existing redaction harness across event payloads, hosts MUST sanitize provider responses before emission. This is consistent with the existing OTel <code>openwop.cost.*</code> invariant in <code>observability.md §&quot;Cost attribution attributes&quot;</code> ("cost attributes MUST NOT include the prompt/response text") — RFC 0026 carries the same invariant into the event-log surface.</p>
+<p>A new SECURITY invariant row tracks this:</p>
+<pre class="lang-yaml"><code>- id: provider-usage-no-credential-leak
+  tier: protocol
+  severity: high
+  threat_model: SECURITY/threat-model-secret-leakage.md
+  tests:
+    - conformance/src/scenarios/provider-usage.test.ts
+  note: |
+    RFC 0026 §D: hosts advertising `capabilities.providerUsage.supported`
+    MUST NOT include credentialRef strings, hashed credential identifiers,
+    or prompt/response substrings in the `provider.usage` event payload.
+    The payload schema&#39;s `additionalProperties: false` enforces shape;
+    this invariant adds the semantic constraint.</code></pre>
+<h3 id="e-capability-handshake">§E Capability handshake</h3>
+<p>A new optional capability block:</p>
+<pre class="lang-diff"><code>+    &quot;providerUsage&quot;: {
++      &quot;type&quot;: &quot;object&quot;,
++      &quot;description&quot;: &quot;Hosts that emit `provider.usage` events after every LLM provider invocation per RFC 0026.&quot;,
++      &quot;properties&quot;: {
++        &quot;supported&quot;: { &quot;type&quot;: &quot;boolean&quot; },
++        &quot;costEstimates&quot;: { &quot;type&quot;: &quot;boolean&quot;, &quot;description&quot;: &quot;When true, the host includes `costEstimateUsd` on `provider.usage` events using its internal rate table. When false/absent, only token counts are emitted.&quot; },
++        &quot;currency&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;pattern&quot;: &quot;^[A-Z]{3}${content}quot;, &quot;description&quot;: &quot;Default ISO 4217 currency for `costEstimateUsd` values. When absent, USD is assumed.&quot; }
++      },
++      &quot;required&quot;: [&quot;supported&quot;],
++      &quot;additionalProperties&quot;: false
++    }</code></pre>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive</strong> per <code>COMPATIBILITY.md §2.1</code>:</p>
+<ul>
+<li>Existing required fields: unchanged (RFC 0026 adds optional fields to optional payload variants)</li>
+<li>Existing optional fields: unchanged</li>
+<li>Existing event types: shape unchanged (<code>provider.usage</code> is a NEW type added to the enum; existing types' schemas are untouched)</li>
+<li>Existing endpoints: contract unchanged</li>
+<li>Existing <code>MUST</code> requirements: not relaxed — RFC 0026 introduces new MUSTs scoped to the new event type and its emitters</li>
+<li>Existing error codes: unchanged</li>
+</ul>
+<p>Forward-compat guarantee per <code>COMPATIBILITY.md §2.1</code>: SDK event-loop consumers iterating by event-type string handle unknown types gracefully (tolerate-and-forward). The reference TypeScript / Python / Go SDKs already do this — the new event type slots into the existing dispatch without code changes for old SDK consumers.</p>
+<h2 id="conformance">Conformance</h2>
+<p>New scenario <code>conformance/src/scenarios/provider-usage.test.ts</code> with three describe blocks:</p>
+<p>1. <strong>Advertisement shape (<code>capabilities.providerUsage</code>):</strong> when present, <code>supported</code> is boolean; <code>currency</code> (when present) is a 3-letter uppercase ISO code. 2. <strong>Schema compile + round-trip:</strong> the new <code>providerUsage</code> <code>$def</code> compiles under Ajv2020 (covered by existing <code>spec-corpus-validity.test.ts</code>); positive and negative payload fixtures roundtrip. 3. <strong>Event presence + shape:</strong> when the host exposes the test seam <code>POST /v1/host/sample/test/emit-provider-usage</code>, the suite triggers a synthetic emission and verifies via Thread E.1's <code>queryTestEvents</code> helper that exactly one <code>provider.usage</code> event appears with the required fields populated and credentialRef-shaped fields ABSENT.</p>
+<p>Soft-skips on capability-absent OR seam-absent so non-supporting hosts keep advertisement-shape coverage.</p>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<p>1. <strong>OTel-only (do nothing).</strong> Rejected — observability is not part of the durable run state. Replay loses cost; webhook subscribers don't see it; external billing has no audit trail. The <code>metrics.openwopCost</code> rollup is too coarse (one value per run). 2. <strong><code>log.appended</code> events with structured fields.</strong> Rejected — <code>log.appended</code> is debug-stream-only per <code>observability.md §&quot;Structured-log metric records&quot;</code> and not durably persisted for replay. Misuses the event's semantic. 3. <strong>Embed in <code>node.completed.payload</code>.</strong> Rejected — couples cost to node lifecycle. Multi-call nodes (an LLM that retries, or a chat node that makes multiple calls in one execution) lose per-call granularity. The per-call event is the right level. 4. <strong>New top-level RunSnapshot field <code>costEvents[]</code>.</strong> Rejected — duplicates the event log. The event log already has replay determinism, ordering, causationId chains; reinventing those in a snapshot field is strictly worse.</p>
+<h2 id="unresolved-questions">Unresolved questions</h2>
+<p>1. Should <code>cacheHit: true</code> events count against the <code>provider.usage</code> event budget if a per-run budget cap exists in the future? Suggest yes (they describe a real provider call's billed values, even if served from cache) but the cache hit was free for THIS run. Defer to a future <code>capabilities.providerUsage.budget</code> field if needed. 2. Should <code>currency</code> default to USD silently or require explicit emission when <code>costEstimateUsd</code> is present? Current proposal: silent default. Spec gap acknowledgment if a host's billing is multi-currency. 3. Should the OTel projection be REQUIRED (MUST) rather than RECOMMENDED (SHOULD)? Current proposal: SHOULD. Hosts without OTel exporters shouldn't be excluded.</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<ul>
+<li>Reference impl candidate: <code>apps/workflow-engine/backend/typescript/src/providers/usageEmitter.ts</code> (NEW) — pure function <code>extractUsage(providerResponse, providerId, model): ProviderUsagePayload</code> + a small static rate table for Anthropic / OpenAI / Gemini.</li>
+<li>Emit site: <code>providers/dispatch.ts</code> after each <code>provider.invoke()</code> call, via <code>ctx.emit(&#39;provider.usage&#39;, payload)</code>.</li>
+<li>Test seam: <code>apps/workflow-engine/.../routes/testSeam.ts</code> — new <code>POST /v1/host/sample/test/emit-provider-usage { runId, payload }</code> that synthesizes the event into the existing test event log (Thread E.1's <code>envelopeEventLog</code>). Lets conformance verify shape without driving a real LLM call.</li>
+<li>Advertise via <code>routes/discovery.ts</code>: <code>capabilities.providerUsage: { supported: true, costEstimates: true, currency: &#39;USD&#39; }</code>.</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<ul>
+<li>[ ] RFC follows <code>RFCS/0000-template.md</code></li>
+<li>[ ] 7-day comment window: opens with PR; eligible for bootstrap-phase waiver per <code>MAINTAINERS.md</code> §"Bootstrap-phase RFC waivers" (pattern from RFCs 0021–0025 in the same release)</li>
+<li>[ ] <code>provider.usage</code> added to <code>RunEventType</code> enum + <code>eventPayloads</code> discriminator</li>
+<li>[ ] <code>providerUsage</code> payload schema with required + optional fields; <code>additionalProperties: false</code></li>
+<li>[ ] <code>capabilities.providerUsage</code> capability block lands</li>
+<li>[ ] AsyncAPI channel for the new event</li>
+<li>[ ] <code>provider-usage-no-credential-leak</code> SECURITY invariant row + matching public test</li>
+<li>[ ] <code>spec/v1/observability.md</code> gains §"Provider usage events" prose section</li>
+<li>[ ] Reference impl at <code>apps/workflow-engine/.../providers/usageEmitter.ts</code></li>
+<li>[ ] Conformance scenario at <code>conformance/src/scenarios/provider-usage.test.ts</code></li>
+<li>[ ] CHANGELOG entry under <code>[Unreleased]</code></li>
+<li>[ ] <code>npm run openwop:check</code> 9/9 green</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li><code>spec/v1/observability.md §&quot;Cost attribution attributes&quot;</code> — the existing OTel-only surface this complements</li>
+<li><code>spec/v1/replay.md §&quot;LLM cache-key recipe&quot;</code> — the deterministic key + cacheHit semantics this depends on</li>
+<li><code>docs/PROTOCOL-GAP-CLOSURE-PLAN.md:265</code> — anticipated <code>openwop.cost.*</code> OTel taxonomy</li>
+<li><code>SECURITY/threat-model-secret-leakage.md §SR-1</code> — the redaction harness <code>provider.usage</code> plugs into</li>
+<li><code>RFCS/0024-agent-reasoning-streaming.md</code> — the precedent template for additive new event types</li>
+<li><code>RFCS/0025-test-mode-registry-namespace.md</code> — the precedent for the bootstrap-phase waiver flow</li>
+</ul>
+<h2 id="status-history">Status history</h2>
+<h3 id="draft-active-2026-05-19">Draft → Active (2026-05-19)</h3>
+<p>Promoted under the bootstrap-phase steward waiver per <code>CONTRIBUTING.md</code> §"Bootstrap-phase notes" + <code>MAINTAINERS.md</code> §"Bootstrap-phase RFC waivers". Same path RFCs 0021 / 0022 / 0023 / 0024 / 0025 used in this release. The 7-day comment window would only serve as a delay against zero external reviewers; the waiver is recorded here for the running list in <code>MAINTAINERS.md</code>.</p>
+<p>Evidence at promotion (every acceptance-criteria item from §"Acceptance criteria" verified by <code>npm run openwop:check</code> running 9/9 green):</p>
+<ul>
+<li><strong>RFC text:</strong> follows <code>RFCS/0000-template.md</code> — header table, Summary (≤5 sentences), Motivation (3 load-bearing use cases), Proposal (§A–§E covering shape / timing / OTel projection / trust boundary / capability handshake), Compatibility (additive justification), Conformance (3 describe blocks), 4 Alternatives, 3 Unresolved questions, Acceptance criteria, References.</li>
+<li><strong>Schemas additive (no MUST relaxed):</strong></li>
+</ul>
+<p>  - <code>schemas/run-event.schema.json</code> — <code>&quot;provider.usage&quot;</code> added to <code>RunEventType</code> enum (now 50 variants).   - <code>schemas/run-event-payloads.schema.json</code> — <code>providerUsage</code> <code>$def</code> with required <code>{provider, model, inputTokens, outputTokens}</code> + optional <code>{totalTokens, costEstimateUsd, currency, cacheHit, nodeId, traceId}</code>; <code>additionalProperties: false</code>. Discriminator entry maps <code>provider.usage → providerUsage</code>.   - <code>schemas/capabilities.schema.json</code> — optional <code>providerUsage: { supported, costEstimates?, currency? }</code> block (<code>required: [&quot;supported&quot;]</code>, <code>additionalProperties: false</code>).   - <code>api/asyncapi.yaml</code> — <code>ProviderUsage</code> message bound to the payload via cross-file <code>$ref</code>.</p>
+<ul>
+<li><strong>SECURITY invariant:</strong> <code>provider-usage-no-credential-leak</code> row (protocol-tier, severity high) added to <code>SECURITY/invariants.yaml</code>; verified by <code>conformance/src/scenarios/provider-usage.test.ts</code>. The new conformance scenario covers the schema's <code>additionalProperties: false</code> enforcement for credentialRef-shaped fields PLUS the seam's defense-in-depth refusal of <code>secret:</code>-prefixed values. <code>scripts/check-security-invariants.sh</code> 49/49 protocol-tier rows have public test coverage.</li>
+<li><strong>Spec prose:</strong> <code>spec/v1/observability.md</code> gained §"Provider usage events (RFC 0026)" between §"Cost attribution attributes" and §"Open spec gaps". Cross-references the OTel projection + BYOK trust-boundary invariant.</li>
+<li><strong>Reference impl:</strong> <code>apps/workflow-engine/backend/typescript/src/providers/usageEmitter.ts</code> (NEW) ships <code>buildProviderUsagePayload()</code> plus dedicated extractors for Anthropic / OpenAI / Gemini response shapes. Static rate table snapshot for advisory <code>costEstimateUsd</code> (USD per 1M tokens). The function reads ONLY from each provider's <code>usage</code>/<code>usageMetadata</code> block — credentialRef and prompt/response text are never referenced, satisfying §D at the impl layer.</li>
+<li><strong>Test seam:</strong> <code>apps/workflow-engine/backend/typescript/src/routes/testSeam.ts</code> extended with <code>POST /v1/host/sample/test/emit-provider-usage</code> (env-gated on <code>OPENWOP_TEST_SEAM_ENABLED=true</code>); refuses payloads containing <code>credentialRef</code> field literally OR strings starting with <code>secret:</code> (the openwop credential-ref prefix). Conformance verifies both the positive emit path and the credential-leak refusal.</li>
+<li><strong>Conformance:</strong> <code>conformance/src/scenarios/provider-usage.test.ts</code> ships 3 describe blocks — capability advertisement shape, schema round-trip (1 positive + 3 negative fixtures), event presence + shape via emit seam + Thread E.1's <code>queryTestEvents</code> helper. Suite count 160 → 161. All scenarios pass server-free + with the seam exposed.</li>
+<li><strong>CHANGELOG:</strong> RFC-0026 block under <code>[1.1.2 — unreleased]</code> records all 11 touched artifacts + the additive compatibility classification.</li>
+<li><strong>Site re-render:</strong> automatic via <code>site/src/build.mjs</code>'s spec-corpus walk — no manual update needed.</li>
+</ul>
+<p>Acceptance criteria checkboxes from the RFC's §"Acceptance criteria" all verifiable:</p>
+<ul>
+<li>[x] RFC follows <code>RFCS/0000-template.md</code></li>
+<li>[x] Bootstrap-phase waiver invoked + recorded here (waivers list in <code>MAINTAINERS.md</code> updated separately if/when that index is regenerated)</li>
+<li>[x] <code>provider.usage</code> in <code>RunEventType</code> enum + <code>eventPayloads</code> discriminator</li>
+<li>[x] <code>providerUsage</code> payload schema; <code>additionalProperties: false</code></li>
+<li>[x] <code>capabilities.providerUsage</code> capability block</li>
+<li>[x] AsyncAPI channel</li>
+<li>[x] <code>provider-usage-no-credential-leak</code> SECURITY invariant + matching test</li>
+<li>[x] <code>observability.md</code> §"Provider usage events" prose section</li>
+<li>[x] Reference impl at <code>apps/workflow-engine/.../providers/usageEmitter.ts</code></li>
+<li>[x] Conformance scenario at <code>conformance/src/scenarios/provider-usage.test.ts</code></li>
+<li>[x] CHANGELOG entry under <code>[Unreleased]</code></li>
+<li>[x] <code>npm run openwop:check</code> 9/9 green</li>
+</ul>
+<p>Path to <code>Active → Accepted</code>: requires either (a) the reference workflow-engine to wire <code>usageEmitter.ts</code> into <code>providers/dispatch.ts</code> end-to-end so a real LLM-calling workflow emits the event observably + advertises <code>capabilities.providerUsage.supported: true</code> in <code>routes/discovery.ts</code>, OR (b) a non-steward host advertisement (similar to the MyndHyve adoption that closed RFC 0021's external gate). The reference seam-driven scenario already proves the wire shape; the remaining <code>Accepted</code> gate is real-world emission evidence.</p>
+<h3 id="active-accepted-2026-05-19">Active → Accepted (2026-05-19)</h3>
+<p>Path (a) closed: the reference workflow-engine now emits <code>provider.usage</code> events on every real LLM dispatch AND advertises the capability at <code>/.well-known/openwop</code>.</p>
+<p>Reference-host wire-up (this commit):</p>
+<ul>
+<li><strong><code>apps/workflow-engine/backend/typescript/src/aiProviders/aiProvidersHost.ts</code></strong> — <code>AdapterScope</code> gained an optional <code>emit</code> callback (typed <code>(type, payload) =&gt; Promise&amp;lt;{eventId, sequence}&amp;gt;</code>). New private helper <code>emitProviderUsage(scope, provider, model, inputTokens, outputTokens)</code> calls <code>buildProviderUsagePayloadFromTokens()</code> (new export from <code>usageEmitter.ts</code>) with the normalized token counts that <code>dispatchChat</code> / <code>dispatchAnthropicToolsRound</code> / <code>dispatchManagedChat</code> already return — credentialRef and prompt/response text are never read. Hooked at the per-invocation boundary: inside <code>dispatchPlain</code> (so <code>dispatchStructured</code>'s parse-retry loop emits one event per attempt rather than collapsing N attempts into 1), and at the tail of <code>callAIWithTools</code> / <code>callAIManaged</code> (single-call paths with no internal retry). Best-effort emit: a failing event-log append logs a warning but does not fail the LLM call.</li>
+<li><strong><code>apps/workflow-engine/backend/typescript/src/providers/usageEmitter.ts</code></strong> — added <code>buildProviderUsagePayloadFromTokens(providerId, model, inputTokens, outputTokens, opts)</code>. Wraps the same rate-table cost computation as <code>buildProviderUsagePayload()</code>; differs only in the input shape (normalized counts vs raw provider response). <code>buildProviderUsagePayload()</code> itself now delegates to the tokens helper after running its extractors. Both helpers honour §D — they never read credentialRef or prompt/response substrings.</li>
+<li><strong><code>apps/workflow-engine/backend/typescript/src/executor/executor.ts</code></strong> — <code>createAiProvidersAdapter</code> is now invoked with <code>emit: async (type, payload) =&gt; eventLog.append({runId, nodeId, type, payload: stripSecretsFromPersisted(payload)})</code>, threading the run's event log into the AI adapter so <code>provider.usage</code> events land in the same event stream as <code>node.started</code> / <code>node.completed</code> with matching <code>runId</code> + <code>nodeId</code> correlation. SR-1 redaction (<code>stripSecretsFromPersisted</code>) runs on every payload.</li>
+<li><strong><code>apps/workflow-engine/backend/typescript/src/routes/discovery.ts</code></strong> — <code>capabilities.providerUsage</code> block advertises <code>{ supported: true, costEstimates: true, currency: &#39;USD&#39; }</code>, matching the spec shape in <code>schemas/capabilities.schema.json</code> and the values stamped by <code>usageEmitter.ts</code> for models in the rate table.</li>
+<li><strong><code>apps/workflow-engine/backend/typescript/test/provider-usage-emit.test.ts</code></strong> (NEW) — three vitest scenarios cover (1) plain <code>callAI</code> emits exactly 1 event; (2) structured <code>callAI</code> with parse-fail-then-succeed emits 3 events with correct per-attempt token correlation; (3) the emitted payload contains neither the cleartext API key nor the prompt content (§D trust boundary). Mocks <code>globalThis.fetch</code> with synthesized OpenAI-style SSE streams so the dispatcher runs end-to-end without a real provider.</li>
+</ul>
+<p>Emission timing satisfies §B "MUST emit exactly ONE per LLM provider invocation": <code>dispatchPlain</code> fires <code>emitProviderUsage</code> immediately after the upstream provider call returns. <code>dispatchStructured</code>'s parse-retry loop calls <code>dispatchPlain</code> up to <code>STRUCTURED_OUTPUT_RETRIES + 1 = 3</code> times — each call emits its own event, so a structured-output validation that fails twice and succeeds on the third attempt produces 3 events (verified by the new test). The single emit at the <code>callAI</code> boundary that the original wire-up used has been removed because it collapsed N retry attempts into 1 event, violating §B. The <code>callAIWithTools</code> and <code>callAIManaged</code> paths retain their per-function emits — those functions have no internal retry, so one emit per function-call equals one emit per upstream provider invocation.</p>
+<p>Trust-boundary verification (§D):</p>
+<ul>
+<li>The new <code>buildProviderUsagePayloadFromTokens</code> accepts only <code>(provider, model, inputTokens, outputTokens, opts)</code> — no raw response, no credentialRef parameter.</li>
+<li><code>emitProviderUsage</code> extracts <code>traceId</code> from the OTel active span (already in scope from <code>wrapInSpan</code>) but never reads <code>scope.secrets</code> or any cleartext credential.</li>
+<li>The executor's <code>emit</code> wrapper runs <code>stripSecretsFromPersisted(payload)</code> defensively even though the payload is constructed from typed integers + canonical provider/model strings.</li>
+<li>Existing conformance scenario <code>conformance/src/scenarios/provider-usage.test.ts §&quot;event presence + shape&quot;</code> continues to pass through the test seam, AND the credential-leak defense-in-depth <code>describe</code> block continues to reject <code>secret:</code>-prefixed values.</li>
+</ul>
+<p>Acceptance criteria (final pass):</p>
+<ul>
+<li>[x] All §"Draft → Active" criteria still satisfied.</li>
+<li>[x] <code>capabilities.providerUsage.supported: true</code> advertised at <code>/.well-known/openwop</code>.</li>
+<li>[x] <code>aiProvidersHost.ts</code> emits <code>provider.usage</code> after every real provider dispatch (<code>callAI</code>, <code>callAIWithTools</code>, <code>callAIManaged</code>).</li>
+<li>[x] <code>executor.ts</code> threads the run event log's <code>append()</code> into the AI adapter so events correlate by <code>runId</code> + <code>nodeId</code>.</li>
+<li>[x] <code>npm run openwop:check</code> 9/9 green.</li>
+<li>[x] <code>bash scripts/check-security-invariants.sh</code> 49/49 protocol-tier rows covered; the new emission path's credential-leak protection is verified by the existing <code>provider-usage-no-credential-leak</code> invariant test.</li>
+</ul>
+<p>With path (a) closed, RFC 0026 graduates to <code>Accepted</code>. Future hosts adopting the event for their own advertisement do not change the protocol's acceptance status — they extend the <code>INTEROP-MATRIX.md</code> row set, which is reviewed independently.</p></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — REST API reference</title>
+  <meta name="description" content="Live REST API reference rendered from api/openapi.yaml. Every openwop endpoint with request, response, and error codes — claim is the spec, this is the readable view."/>
+  <link rel="canonical" href="https://openwop.dev/api/rest/"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — REST API reference"/>
+  <meta property="og:description" content="Live REST API reference rendered from api/openapi.yaml. Every openwop endpoint with request, response, and error codes — claim is the spec, this is the readable view."/>
+  <meta property="og:url" content="https://openwop.dev/api/rest/"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — REST API reference"/>
+  <meta name="twitter:description" content="Live REST API reference rendered from api/openapi.yaml. Every openwop endpoint with request, response, and error codes — claim is the spec, this is the readable view."/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="active" href="/spec/v1/">Spec</a>
+      <a class="" href="/rfcs/">RFCs</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/changelog/">Changelog</a>
+      <a class="" href="/faq/">FAQ</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <header class="page-header">
+    <h1>REST API reference</h1>
+    <p class="lede">Live rendering of <code>api/openapi.yaml</code> — every endpoint, request shape, response shape, and error code in one scrollable view. Source of truth is the YAML; this page is the readable mirror.</p>
+    <p class="meta">Spec URL: <a href="/api/openapi.yaml"><code>/api/openapi.yaml</code></a> · Schema corpus: <a href="/spec/v1/">/spec/v1/</a></p>
+  </header>
+  <div id="redoc-container" style="min-height: 80vh;"></div>
+  <script src="/assets/redoc.standalone.js"></script>
+  <script>
+    if (typeof Redoc !== 'undefined' && Redoc.init) {
+      Redoc.init('/api/openapi.yaml', {
+        scrollYOffset: 64,
+        hideDownloadButton: false,
+        theme: {
+          colors: { primary: { main: '#b05a3b' } },
+          typography: {
+            fontFamily: 'Geist, ui-sans-serif, system-ui, sans-serif',
+            headings: { fontFamily: 'Instrument Serif, Georgia, serif' },
+          },
+          rightPanel: { backgroundColor: '#1a1a17' },
+        },
+      }, document.getElementById('redoc-container'));
+    } else {
+      document.getElementById('redoc-container').innerHTML =
+        '<p>Redoc bundle did not load. Raw spec: <a href="/api/openapi.yaml">/api/openapi.yaml</a>.</p>';
+    }
+  </script>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

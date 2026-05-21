@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — RFC 0035: Sandbox execution contract for pack-loaded typeIds</title>
+  <meta name="description" content="Define a normative contract for what isolation guarantees a host makes when it loads a pack-published typeId (per node-packs.md) and executes its handler logic. Today, SECURITY/invariants.yaml has 8 node-pack-sandbox-* rows at tier: reference-impl…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0035-sandbox-execution-contract.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — RFC 0035: Sandbox execution contract for pack-loaded typeIds"/>
+  <meta property="og:description" content="Define a normative contract for what isolation guarantees a host makes when it loads a pack-published typeId (per node-packs.md) and executes its handler logic. Today, SECURITY/invariants.yaml has 8 node-pack-sandbox-* rows at tier: reference-impl…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0035-sandbox-execution-contract.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — RFC 0035: Sandbox execution contract for pack-loaded typeIds"/>
+  <meta name="twitter:description" content="Define a normative contract for what isolation guarantees a host makes when it loads a pack-published typeId (per node-packs.md) and executes its handler logic. Today, SECURITY/invariants.yaml has 8 node-pack-sandbox-* rows at tier: reference-impl…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="" href="/spec/v1/">Spec</a>
+      <a class="active" href="/rfcs/">RFCs</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/changelog/">Changelog</a>
+      <a class="" href="/faq/">FAQ</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="rfc-0035-sandbox-execution-contract-for-pack-loaded-typeids">RFC 0035: Sandbox execution contract for pack-loaded typeIds</h1>
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0035</td></tr>
+<tr><td><strong>Title</strong></td><td>Sandbox execution contract for pack-loaded typeIds</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Active</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-21</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-21 (Draft → Active same-day: <code>capabilities.sandbox</code> block landed in <code>schemas/capabilities.schema.json</code> with the 5 fields (supported + isolationModel anyOf + allowedHostCalls + memoryLimitBytes + wallClockLimitMs); <code>spec/v1/host-capabilities.md</code> §"Sandbox execution contract (RFC 0035)" added with the 8-row failure-mode invariant table + capability advertisement + error-code table; <code>spec/v1/rest-endpoints.md</code> §"Common error codes" gains the 4 new codes (<code>sandbox_memory_exceeded</code>, <code>sandbox_timeout</code>, <code>sandbox_capability_denied</code>, <code>sandbox_escape_attempt</code>). The 8 <code>node-pack-sandbox-*</code> rows in <code>SECURITY/invariants.yaml</code> stay at <code>tier: reference-impl</code> for now; graduation to <code>tier: protocol</code> is gated on a sandbox-executing reference host advertising + the 8 matching conformance scenarios per §D. Path to <code>Accepted</code>: first non-steward host advertises + passes the 8 scenarios.)</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>spec/v1/host-capabilities.md</code> (adds §"Sandbox execution contract") · <code>schemas/capabilities.schema.json</code> (adds <code>capabilities.sandbox</code> block) · <code>SECURITY/invariants.yaml</code> (graduates 8 <code>node-pack-sandbox-*</code> rows from <code>reference-impl</code> to <code>protocol</code> tier) · 8 new conformance scenarios · reference hosts (NEW: <code>examples/hosts/wasm-sandbox/</code> OR Postgres extension) · <code>INTEROP-MATRIX.md</code> · CHANGELOG</td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
+<tr><td><strong>Supersedes</strong></td><td>—</td></tr>
+<tr><td><strong>Superseded by</strong></td><td>—</td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>Define a normative contract for what isolation guarantees a host makes when it loads a pack-published typeId (per <code>node-packs.md</code>) and executes its handler logic. Today, <code>SECURITY/invariants.yaml</code> has 8 <code>node-pack-sandbox-*</code> rows at <code>tier: reference-impl</code> with a <code>non_testability_rationale: &quot;no reference host executes pack-loaded typeIds in a sandbox&quot;</code> — meaning <strong>the protocol formally requires sandbox semantics that no implementation actually provides.</strong> This RFC defines the wire-shape advertisement, the isolation model, and the failure-mode invariants so a host that wires sandbox execution can mechanically demonstrate compliance.</p>
+<h2 id="motivation">Motivation</h2>
+<p>Per <code>docs/KNOWN-LIMITS.md:32</code> and the external standards-readiness review 2026-05-21 finding (5): "no reference host executes pack-loaded typeIds in a sandbox. Before endorsement, I'd require sandbox proof, telemetry/debug-bundle secret-leakage conformance, and external review." The 8 <code>node-pack-sandbox-*</code> invariants exist as protocol claims (loaded packs MUST NOT escape the host's process context, MUST NOT access the host filesystem outside an advertised root, MUST NOT exfiltrate env vars, MUST NOT bypass capability gates, etc.) — but they're verified host-internally only on the Postgres pack-consumer's install-time security checks (PACK-1/PACK-2), which are necessary but not sufficient for runtime claims.</p>
+<p>This is the highest-leverage SECURITY gap in the corpus: every published pack the host loads runs with full host process privileges today, with the protocol's invariants depending on a sandbox that doesn't exist. Closing this requires both (a) a spec contract that defines what a compliant sandbox looks like and (b) at least one reference implementation.</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-capabilities-sandbox-block-normative">§A — <code>capabilities.sandbox</code> block (normative)</h3>
+<p>Add to <code>schemas/capabilities.schema.json</code>:</p>
+<pre class="lang-diff"><code>+  &quot;sandbox&quot;: {
++    &quot;type&quot;: &quot;object&quot;,
++    &quot;additionalProperties&quot;: false,
++    &quot;required&quot;: [&quot;supported&quot;, &quot;isolationModel&quot;],
++    &quot;properties&quot;: {
++      &quot;supported&quot;: {
++        &quot;type&quot;: &quot;boolean&quot;,
++        &quot;description&quot;: &quot;Host advertises that pack-loaded typeIds execute inside an isolation boundary that meets the contract in spec/v1/host-capabilities.md §&#39;Sandbox execution contract&#39;. Defaults to false — a host that does NOT sandbox MUST advertise false (or omit) and MUST refuse to load any pack whose manifest declares peerDependencies.host.sandbox: required.&quot;
++      },
++      &quot;isolationModel&quot;: {
++        &quot;type&quot;: &quot;string&quot;,
++        &quot;anyOf&quot;: [
++          { &quot;enum&quot;: [&quot;wasm&quot;, &quot;process&quot;, &quot;container&quot;, &quot;vm&quot;] },
++          { &quot;pattern&quot;: &quot;^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*${content}quot; }
++        ],
++        &quot;description&quot;: &quot;Categorical isolation model. &#39;wasm&#39; = WebAssembly sandbox with explicit host imports (e.g., Wasmtime, Wasmer). &#39;process&#39; = OS process boundary with restricted syscalls (e.g., gVisor, seccomp, Landlock). &#39;container&#39; = container runtime boundary (e.g., Firecracker microVM). &#39;vm&#39; = full VM. Vendor-specific isolation models advertise a host-extension namespace string matching `^x-host-&amp;lt;host&amp;gt;-&amp;lt;key&amp;gt;<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — RFC 0035: Sandbox execution contract for pack-loaded typeIds</title>
+  <meta name="description" content="Define a normative contract for what isolation guarantees a host makes when it loads a pack-published typeId (per node-packs.md) and executes its handler logic. Today, SECURITY/invariants.yaml has 8 node-pack-sandbox-* rows at tier: reference-impl…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0035-sandbox-execution-contract.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — RFC 0035: Sandbox execution contract for pack-loaded typeIds"/>
+  <meta property="og:description" content="Define a normative contract for what isolation guarantees a host makes when it loads a pack-published typeId (per node-packs.md) and executes its handler logic. Today, SECURITY/invariants.yaml has 8 node-pack-sandbox-* rows at tier: reference-impl…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0035-sandbox-execution-contract.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — RFC 0035: Sandbox execution contract for pack-loaded typeIds"/>
+  <meta name="twitter:description" content="Define a normative contract for what isolation guarantees a host makes when it loads a pack-published typeId (per node-packs.md) and executes its handler logic. Today, SECURITY/invariants.yaml has 8 node-pack-sandbox-* rows at tier: reference-impl…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="" href="/spec/v1/">Spec</a>
+      <a class="active" href="/rfcs/">RFCs</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/changelog/">Changelog</a>
+      <a class="" href="/faq/">FAQ</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+     per `spec/v1/host-extensions.md` §&#39;Canonical prefixes&#39; (e.g., `x-host-myndhyve-cloud-run-gvisor`); the matching documentation MUST live at the host&#39;s discovery doc.&quot;
++      },
++      &quot;allowedHostCalls&quot;: {
++        &quot;type&quot;: &quot;array&quot;,
++        &quot;items&quot;: { &quot;type&quot;: &quot;string&quot; },
++        &quot;description&quot;: &quot;Whitelist of host-call surfaces that sandboxed code MAY invoke. Identifiers from the spec-reserved host.* capability set or x-host-&amp;lt;host&amp;gt;-&amp;lt;key&amp;gt;. Empty array = pure compute only (no I/O). Used by conformance to verify the sandbox refuses unlisted calls.&quot;
++      },
++      &quot;memoryLimitBytes&quot;: {
++        &quot;type&quot;: &quot;integer&quot;,
++        &quot;minimum&quot;: 1048576,
++        &quot;description&quot;: &quot;Per-invocation memory cap. Host MUST enforce; exceeding fails the node with sandbox_memory_exceeded.&quot;
++      },
++      &quot;wallClockLimitMs&quot;: {
++        &quot;type&quot;: &quot;integer&quot;,
++        &quot;minimum&quot;: 100,
++        &quot;description&quot;: &quot;Per-invocation wall-clock cap. Host MUST enforce; exceeding fails the node with sandbox_timeout.&quot;
++      }
++    }
++  }</code></pre>
+<h3 id="b-failure-mode-invariants-normative">§B — Failure-mode invariants (normative)</h3>
+<p>When <code>capabilities.sandbox.supported: true</code>, the host MUST enforce the 8 invariants currently at <code>SECURITY/invariants.yaml</code> <code>node-pack-sandbox-*</code>:</p>
+<p>1. <code>node-pack-sandbox-no-host-fs-escape</code> — sandbox code MUST NOT read or write files outside the host-advertised sandbox root. 2. <code>node-pack-sandbox-no-host-env-leak</code> — host environment variables MUST NOT be visible to sandbox code unless the host has explicitly forwarded them via an <code>allowedHostCalls</code> entry. 3. <code>node-pack-sandbox-no-network-escape</code> — sandbox code MUST NOT initiate network requests unless <code>host.fetch</code> (or equivalent) is in <code>allowedHostCalls</code>. 4. <code>node-pack-sandbox-no-host-process-escape</code> — sandbox code MUST NOT spawn host processes, fork, or call exec-family syscalls. 5. <code>node-pack-sandbox-memory-cap</code> — exceeding <code>memoryLimitBytes</code> MUST fail the node with <code>error.code: &quot;sandbox_memory_exceeded&quot;</code>. 6. <code>node-pack-sandbox-timeout-cap</code> — exceeding <code>wallClockLimitMs</code> MUST fail the node with <code>error.code: &quot;sandbox_timeout&quot;</code>. 7. <code>node-pack-sandbox-capability-gate-respected</code> — sandbox code MUST NOT bypass the host's capability-advertisement check; calls to undeclared host capabilities MUST fail closed. 8. <code>node-pack-sandbox-no-cross-pack-mutation</code> — sandbox code from pack A MUST NOT mutate state visible to pack B inside the same host process.</p>
+<h3 id="c-error-codes-additive-to-rest-endpoints-md-common-error-codes">§C — Error codes (additive to <code>rest-endpoints.md</code> §"Common error codes")</h3>
+<ul>
+<li><code>sandbox_memory_exceeded</code> — Sandbox invocation exceeded <code>memoryLimitBytes</code>. <code>details.requestedBytes</code> MAY be present.</li>
+<li><code>sandbox_timeout</code> — Sandbox invocation exceeded <code>wallClockLimitMs</code>.</li>
+<li><code>sandbox_capability_denied</code> — Sandbox code called a host capability not in <code>allowedHostCalls</code>. <code>details.requestedCapability</code> MUST be set.</li>
+<li><code>sandbox_escape_attempt</code> — Sandbox detected an explicit escape attempt (a system call from a forbidden list). <code>details.escapeKind</code> SHOULD be set.</li>
+</ul>
+<h3 id="d-conformance-scenarios-new">§D — Conformance scenarios (NEW)</h3>
+<p><code>conformance/src/scenarios/sandbox-*.test.ts</code> — 8 new behavioral scenarios, one per invariant. Each is capability-gated on <code>capabilities.sandbox.supported: true</code> AND uses a deliberately-malicious test fixture published under the <code>vendor.openwop.misbehaving-sandbox</code> pack scope (synthetic; not for production registry).</p>
+<p>Test approach: register a workflow that invokes the misbehaving typeId, expect terminal <code>failed</code> with the matching <code>sandbox_*</code> error code, verify no escape-attempt artifact survived on the host filesystem / env / process tree.</p>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive.</strong> Hosts that don't advertise <code>capabilities.sandbox</code> continue exactly as today; the 8 invariants stay at <code>tier: reference-impl</code> with the existing <code>non_testability_rationale</code>. Hosts that DO advertise opt into the contract + the conformance gate.</p>
+<p>The promotion from <code>reference-impl</code> to <code>protocol</code> tier in <code>SECURITY/invariants.yaml</code> is gated on this RFC reaching <code>Accepted</code> AND at least one reference host advertising — per the RFC 0001 promotion criterion.</p>
+<h2 id="conformance">Conformance</h2>
+<p>8 new scenarios per §D. Each is capability-gated; each requires the <code>vendor.openwop.misbehaving-sandbox</code> synthetic fixture to be loaded into the host's pack registry. Hosts that don't advertise sandbox soft-skip cleanly.</p>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<p>1. <strong>Mandate a specific isolation model (e.g., WASM).</strong> Rejected — different hosts have different deployment constraints (a Postgres-extension host benefits from process isolation; a serverless host benefits from container isolation). The <code>isolationModel</code> enum allows honest advertisement without dictating the implementation. 2. <strong>Treat sandbox as a <code>host.sandbox</code> capability under <code>host-capabilities.md</code>.</strong> Rejected — sandbox is a meta-capability (it governs how OTHER host capabilities are exposed to pack code), so it lives at the top-level <code>capabilities.sandbox</code> block rather than as a sibling of <code>host.fs</code> / <code>host.kvStorage</code> / etc. 3. <strong>Defer to runtime-specific sandboxing (Lambda's process model, Cloud Run's gVisor).</strong> Rejected — those provide some of the invariants but not all (cross-pack mutation isn't addressed by Lambda's isolation; capability-gate enforcement isn't addressed by gVisor). The protocol-level claims need protocol-level testing.</p>
+<h2 id="unresolved-questions">Unresolved questions</h2>
+<p>1. <strong>Sandbox introspection seam for debug-bundle.</strong> Should a debug-bundle export include sandbox-allocation traces? Recommend deferring to a follow-up RFC; the core 8 invariants don't require it. 2. <strong>Per-tenant sandbox boundary.</strong> Cross-tenant invariant CTI-1 already exists in <code>agent-memory.md</code>; should this RFC restate it for sandbox boundary? Likely yes — defer the prose decision to spec review. 3. <strong>WASM ABI version pinning.</strong> RFC 0008 already specifies WASM ABI version negotiation. This RFC's <code>isolationModel: &quot;wasm&quot;</code> should cross-reference; deferred to implementation.</p>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<ul>
+<li>[ ] Spec text merged (this file).</li>
+<li>[ ] <code>schemas/capabilities.schema.json</code> extended per §A.</li>
+<li>[ ] <code>spec/v1/host-capabilities.md</code> extended with §"Sandbox execution contract" per §B + §C.</li>
+<li>[ ] <code>spec/v1/rest-endpoints.md</code> §"Common error codes" gains 4 new codes per §C.</li>
+<li>[ ] 8 new conformance scenarios per §D land in <code>conformance/src/scenarios/</code>.</li>
+<li>[ ] At least one reference host implements + advertises <code>capabilities.sandbox</code>. Two viable paths: (a) NEW <code>examples/hosts/wasm-sandbox/</code> directory; (b) Postgres reference host extension using <code>wasmtime-postgres</code>. Either passes the 8 new scenarios end-to-end.</li>
+<li>[ ] <code>SECURITY/invariants.yaml</code> 8 <code>node-pack-sandbox-*</code> rows graduate to <code>tier: protocol</code> with <code>public_tests</code> globs.</li>
+<li>[ ] <code>INTEROP-MATRIX.md</code> row updated for the advertising host.</li>
+<li>[ ] CHANGELOG entry under <code>[Unreleased]</code>.</li>
+</ul>
+<p>Path to <code>Active → Accepted</code>: at least one non-steward host advertises the capability AND passes the 8 scenarios.</p>
+<h2 id="references">References</h2>
+<ul>
+<li><code>docs/KNOWN-LIMITS.md:32</code> (the row this RFC closes)</li>
+<li><code>SECURITY/invariants.yaml</code> <code>node-pack-sandbox-*</code> rows (8 rows, currently <code>tier: reference-impl</code>)</li>
+<li><code>spec/v1/node-packs.md</code> §"Manifest format" (where <code>peerDependencies.host.sandbox</code> would be declared)</li>
+<li><code>RFCS/0008-wasm-abi.md</code> (WASM ABI version negotiation; pairs with <code>isolationModel: &quot;wasm&quot;</code>)</li>
+<li><code>spec/v1/host-extensions.md</code> §"Canonical prefixes" (test fixture namespace)</li>
+<li>External standards-readiness review 2026-05-21 — finding (5)</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

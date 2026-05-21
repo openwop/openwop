@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — RFC 0008: WASM ABI for Cross-Language Node Packs</title>
+  <meta name="description" content="Specify the WebAssembly (WASM) Application Binary Interface (ABI) that language: wasm node packs implement, enabling cross-language node packs (Rust, Zig, C, Go via TinyGo, AssemblyScript, etc.) to run portably across every OpenWOP host without…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0008-wasm-abi.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — RFC 0008: WASM ABI for Cross-Language Node Packs"/>
+  <meta property="og:description" content="Specify the WebAssembly (WASM) Application Binary Interface (ABI) that language: wasm node packs implement, enabling cross-language node packs (Rust, Zig, C, Go via TinyGo, AssemblyScript, etc.) to run portably across every OpenWOP host without…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0008-wasm-abi.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — RFC 0008: WASM ABI for Cross-Language Node Packs"/>
+  <meta name="twitter:description" content="Specify the WebAssembly (WASM) Application Binary Interface (ABI) that language: wasm node packs implement, enabling cross-language node packs (Rust, Zig, C, Go via TinyGo, AssemblyScript, etc.) to run portably across every OpenWOP host without…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="" href="/spec/v1/">Spec</a>
+      <a class="active" href="/rfcs/">RFCs</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/changelog/">Changelog</a>
+      <a class="" href="/faq/">FAQ</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="rfc-0008-wasm-abi-for-cross-language-node-packs">RFC 0008: WASM ABI for Cross-Language Node Packs</h1>
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0008</td></tr>
+<tr><td><strong>Title</strong></td><td>WASM ABI for Cross-Language Node Packs</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-10</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-13 (Active → Accepted: all 8 acceptance-criteria items satisfied — spec text merged; <code>node-pack-manifest.schema.json</code> carries <code>wasm</code> + <code>wasm-component</code> in <code>runtime.language</code> enum (line 195) and <code>format</code> enum (line 204); <code>spec/v1/node-packs.md</code> §"WASM runtime" subsection landed 2026-05-13 cross-linking to this RFC with the 6-scenario coverage table; <code>schemas/capabilities.schema.json</code> declares <code>nodePackRuntimes.wasm.{supported, abiVersions, maxMemoryBytes, loadedPacks}</code> since 2026-05-13; six conformance scenarios all capability-gated under <code>capabilities.nodePackRuntimes.wasm.supported</code> — load, invoke-completed, invoke-suspended, replay-determinism, memory-cap, abi-version-rejection — plus the two deliberately-misbehaving Rust packs (<code>rust-misbehaving-memory</code> for §K, <code>rust-misbehaving-abi</code> for §H) that drive the positive paths; in-memory reference host at <code>examples/hosts/in-memory/src/wasm-loader.ts</code> implements the loader zero-dep over Node's native <code>WebAssembly</code>; CHANGELOG records the RFC in the v1.1.0 entry; example Rust pack at <code>examples/packs/rust-hello/</code> published live to <code>packs.openwop.dev</code> since 2026-05-11. The Component Model variant (<code>language: wasm-component</code>) remains reserved for an additive sub-RFC.)</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>schemas/node-pack-manifest.schema.json</code>, <code>spec/v1/node-packs.md</code>, <code>spec/v1/registry-operations.md</code>, <code>spec/v1/capabilities.md</code></td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
+<tr><td><strong>Supersedes</strong></td><td>—</td></tr>
+<tr><td><strong>Superseded by</strong></td><td>—</td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>Specify the WebAssembly (WASM) Application Binary Interface (ABI) that <code>language: wasm</code> node packs implement, enabling cross-language node packs (Rust, Zig, C, Go via TinyGo, AssemblyScript, etc.) to run portably across every OpenWOP host without per-language runtime support in each host. The ABI is deliberately minimal — a small set of exports the module provides + a small set of imports the host provides — with JSON-encoded payloads passed over the module's linear memory. Component Model migration is left as a future additive extension.</p>
+<h2 id="motivation">Motivation</h2>
+<p>Today, every OpenWOP host that loads node packs needs runtime support for each language the pack uses. The <code>node-pack-manifest.schema.json</code> declares <code>language: &quot;javascript&quot; | &quot;python&quot; | &quot;go&quot; | &quot;wasm&quot; | &quot;remote&quot;</code>, but only JavaScript node packs are routinely tested. Three problems compound:</p>
+<p>1. <strong>Practical TypeScript lock-in.</strong> Every reference host is Node.js; non-JS authors must either ship <code>language: remote</code> packs (HTTP-over-the-wire, with all the latency and dependency tradeoffs) or wait for each host to add Python/Go runtime support individually. 2. <strong>No portable performance path.</strong> Even when a host adds Python support, the workflow author can't pre-compile to a host-neutral artifact. Every host re-interprets. 3. <strong>Sandboxing without consensus.</strong> Hosts that load native node packs face a sandbox-or-trust tradeoff. WASM is the consensus sandbox of the 2020s; standardizing on it means the trust boundary is the same everywhere.</p>
+<p>The right answer is the existing <code>language: wasm</code> slot in <code>node-pack-manifest.schema.json</code>: ship pre-compiled WASM modules with a documented ABI, and every host that has a WASM runtime (Wasmtime, Wasmer, V8, browser, etc.) loads them identically. Native performance, language-neutral packaging, consensus sandbox.</p>
+<p>This is post-v1 ecosystem work — high-leverage but not blocking v1 conformance. RFC 0008 ships as <code>Draft</code> to gather feedback before promotion to <code>Active</code>.</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-wire-format-choice-wasm-core-custom-imports-not-component-model-yet">§A Wire format choice: WASM core + custom imports (not Component Model — yet)</h3>
+<p>Two viable foundations:</p>
+<ul>
+<li><strong>WASM core (Stage 5 W3C spec)</strong> with custom imports under a namespace. Tooling is mature (every WASM runtime supports it); the ABI is hand-rolled but small.</li>
+<li><strong>WASM Component Model (Preview 3)</strong> with WIT-defined interfaces. Cleaner ergonomics, evolving tooling, requires Component Model support in every host runtime.</li>
+</ul>
+<p>RFC 0008 selects <strong>WASM core</strong> for v1.x. Rationale: every Wasmtime / Wasmer / wasm-pack toolchain handles core modules today; Component Model support is uneven across runtimes as of 2026-05. Future migration to a Component Model variant (RFC 0009 candidate) lands as an additive <code>format: &quot;wasm-component&quot;</code> enum value alongside the existing <code>format: &quot;wasm&quot;</code>.</p>
+<h3 id="b-required-exports">§B Required exports</h3>
+<p>Every conformant WASM node-pack module MUST export the following functions. Names are case-sensitive.</p>
+<pre class="lang-"><code>;; Module identification
+(func $openwop_abi_version (result i32))      ;; returns ABI version; this RFC defines version 1
+(func $openwop_pack_name (result i32 i32))    ;; returns (ptr, len) of UTF-8 pack name
+(func $openwop_node_count (result i32))       ;; number of node typeIds exported
+(func $openwop_node_id_at
+  (param $index i32)                          ;; 0..node_count-1
+  (result i32 i32))                           ;; returns (ptr, len) of UTF-8 typeId
+
+;; Memory management — host calls these to manage strings/buffers in linear memory
+(func $openwop_alloc (param $size i32) (result i32))   ;; returns ptr
+(func $openwop_free (param $ptr i32) (param $size i32))
+
+;; Node execution entry point
+(func $openwop_node_invoke
+  (param $node_index i32)         ;; index from openwop_node_id_at
+  (param $request_ptr i32)        ;; pointer to JSON-encoded request
+  (param $request_len i32)
+  (result i32 i32))               ;; returns (response_ptr, response_len) — JSON-encoded</code></pre>
+<p><strong>Multi-value vs packed-i64 encoding.</strong> WebAssembly multi-value returns are first-class in the spec but require the <code>multivalue</code> target feature, which is not enabled by default on stable Rust's <code>wasm32-unknown-unknown</code> toolchain (as of 2026-05). Conformant modules MAY satisfy any <code>(result i32 i32)</code> signature in this RFC using <em>either</em> native multi-value OR a packed <code>i64</code> encoding: low 32 bits = ptr, high 32 bits = len. Hosts MUST support both:</p>
+<pre class="lang-"><code>;; Equivalent module-side signature (packed i64):
+(func $openwop_node_invoke
+  (param $node_index i32) (param $request_ptr i32) (param $request_len i32)
+  (result i64))   ;; (high u32: response_len) | (low u32: response_ptr)</code></pre>
+<p>The reference Rust pack (<code>examples/packs/rust-hello/</code>) uses packed i64 for stable-toolchain compatibility. Loaders detect the encoding by inspecting the exported function's signature at instantiation.</p>
+<p>The request and response JSON shapes are defined in §D.</p>
+<h3 id="c-required-imports">§C Required imports</h3>
+<p>The host MUST provide these imports under the <code>openwop</code> namespace.</p>
+<pre class="lang-"><code>;; Channel I/O — bridge to channels-and-reducers.md
+(func $openwop_channel_read
+  (param $name_ptr i32) (param $name_len i32)
+  (result i32 i32))                      ;; (ptr, len) of JSON value, or (0, 0) on miss
+(func $openwop_channel_write
+  (param $name_ptr i32) (param $name_len i32)
+  (param $value_ptr i32) (param $value_len i32)
+  (result i32))                          ;; returns status; 0 = ok, non-zero per §F
+
+;; Variables (legacy untyped state)
+(func $openwop_variable_get
+  (param $key_ptr i32) (param $key_len i32)
+  (result i32 i32))
+(func $openwop_variable_set
+  (param $key_ptr i32) (param $key_len i32)
+  (param $value_ptr i32) (param $value_len i32)
+  (result i32))
+
+;; Interrupt — host runs the suspend flow
+(func $openwop_interrupt
+  (param $payload_ptr i32) (param $payload_len i32)  ;; JSON-encoded InterruptPayload
+  (result i32 i32))                                  ;; (ptr, len) of JSON-encoded resume value
+
+;; Diagnostic / logging
+(func $openwop_log
+  (param $level i32)                     ;; 0=trace 1=debug 2=info 3=warn 4=error
+  (param $msg_ptr i32) (param $msg_len i32))
+
+;; Time (host-controlled for replay determinism)
+(func $openwop_now_ms (result i64))      ;; ms since Unix epoch
+
+;; Random (host-controlled for replay determinism; modules MUST NOT use
+;; WASI random_get directly)
+(func $openwop_random
+  (param $out_ptr i32) (param $len i32))</code></pre>
+<p>WASI imports (e.g., <code>wasi_snapshot_preview1.fd_write</code>) are NOT part of the OpenWOP ABI. Modules that link WASI imports MAY still load if the host provides a WASI shim (recommended: stub <code>fd_write</code> for stdout/stderr capture), but their behavior under that shim is not normated by this RFC.</p>
+<h3 id="d-json-envelope-shapes">§D JSON envelope shapes</h3>
+<h4 id="request-to-openwop-node-invoke">Request to <code>openwop_node_invoke</code></h4>
+<pre class="lang-json"><code>{
+  &quot;abiVersion&quot;: 1,
+  &quot;nodeContext&quot;: {
+    &quot;runId&quot;: &quot;string&quot;,
+    &quot;nodeId&quot;: &quot;string&quot;,
+    &quot;tenantId&quot;: &quot;string&quot;,
+    &quot;attempt&quot;: 0,
+    &quot;configurable&quot;: {},
+    &quot;agent&quot;: &quot;&amp;lt;AgentRef or null&amp;gt;&quot;
+  },
+  &quot;inputs&quot;: {}
+}</code></pre>
+<h4 id="response-from-openwop-node-invoke">Response from <code>openwop_node_invoke</code></h4>
+<p>Discriminated by <code>outcome</code>:</p>
+<pre class="lang-json"><code>{ &quot;outcome&quot;: &quot;completed&quot;, &quot;output&quot;: &amp;lt;any&amp;gt; }</code></pre>
+<pre class="lang-json"><code>{ &quot;outcome&quot;: &quot;suspended&quot;, &quot;interrupt&quot;: &quot;&amp;lt;InterruptPayload&amp;gt;&quot; }</code></pre>
+<pre class="lang-json"><code>{
+  &quot;outcome&quot;: &quot;failed&quot;,
+  &quot;error&quot;: {
+    &quot;code&quot;: &quot;string&quot;,
+    &quot;message&quot;: &quot;string&quot;,
+    &quot;details&quot;: {}
+  }
+}</code></pre>
+<p>Modules that need to call <code>openwop_interrupt</code> mid-execution use the import (suspends through the host); modules that wish to return without calling the import set <code>outcome: &quot;suspended&quot;</code> and let the host invoke the interrupt flow afterward. Hosts MUST support both patterns.</p>
+<h3 id="e-memory-ownership-rules">§E Memory ownership rules</h3>
+<p>The ABI uses <strong>caller-owned allocation</strong>: the side that produces a buffer allocates it; the side that consumes it reads but does not free.</p>
+<p>Concretely:</p>
+<p>1. <strong>Module-to-host returns</strong> (e.g., <code>openwop_node_invoke</code> result): module allocates via <code>openwop_alloc</code>. Host reads. After reading, host calls <code>openwop_free</code> to release. 2. <strong>Host-to-module passes</strong> (e.g., <code>request_ptr</code> on <code>openwop_node_invoke</code>): host allocates via <code>openwop_alloc</code> (callable into module memory). Module reads. Module calls <code>openwop_free</code> when done OR ignores (host MAY garbage-collect on next invocation). 3. <strong>Returned <code>(ptr, len)</code> pairs from imports</strong> (e.g., <code>openwop_channel_read</code>): host allocates via <code>openwop_alloc</code>. Module reads. Module calls <code>openwop_free</code>.</p>
+<p>Modules that fail to call <code>openwop_free</code> leak memory inside their own linear-memory instance; hosts are not required to detect this beyond reasonable diagnostics. Hosts SHOULD restart the module after a configured per-invocation memory ceiling.</p>
+<h3 id="f-error-and-status-codes">§F Error and status codes</h3>
+<p>Status integers returned by host imports (zero = success):</p>
+<table>
+<thead><tr><th>Status</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td>0</td><td>Success</td></tr>
+<tr><td>1</td><td><code>channel_access_denied</code> — see <code>channels-and-reducers.md</code> §"Channel access control"</td></tr>
+<tr><td>2</td><td><code>channel_schema_breaking_change</code></td></tr>
+<tr><td>3</td><td><code>channel_cross_engine_write_forbidden</code></td></tr>
+<tr><td>10</td><td><code>validation_error</code> — JSON payload didn't conform to schema</td></tr>
+<tr><td>11</td><td><code>not_found</code> — referenced channel / variable / interrupt doesn't exist</td></tr>
+<tr><td>20</td><td><code>capability_breach</code> — call would exceed engine-enforced cap</td></tr>
+<tr><td>99</td><td><code>host_error</code> — unexpected host-side failure; module SHOULD propagate as <code>failed</code></td></tr>
+</tbody></table>
+<p>Modules MUST tolerate unknown nonzero codes (forward-compatibility): treat as a generic failure and surface as <code>outcome: &quot;failed&quot;</code>.</p>
+<h3 id="g-replay-determinism">§G Replay determinism</h3>
+<p>Modules MUST be deterministic given the same:</p>
+<ul>
+<li><code>request</code> to <code>openwop_node_invoke</code>,</li>
+<li>Sequence of import results from <code>openwop_channel_read</code>, <code>openwop_variable_get</code>, <code>openwop_interrupt</code>, <code>openwop_now_ms</code>, and <code>openwop_random</code>.</li>
+</ul>
+<p>Hosts MUST cache import results during the original execution and replay them verbatim during fork/replay. Modules that call <code>openwop_now_ms</code> twice during one invocation will see the same ms value on replay; modules that call WASI clock primitives directly break replay and are non-conformant.</p>
+<p><code>openwop_random</code> is the canonical source of entropy: hosts MUST seed it deterministically per <code>(runId, nodeId, attempt)</code> so replay produces identical bytes.</p>
+<h3 id="h-capability-advertisement">§H Capability advertisement</h3>
+<p>Hosts that load WASM packs advertise:</p>
+<pre class="lang-json"><code>{
+  &quot;capabilities&quot;: {
+    &quot;nodePackRuntimes&quot;: {
+      &quot;wasm&quot;: {
+        &quot;supported&quot;: true,
+        &quot;abiVersions&quot;: [1],
+        &quot;engine&quot;: &quot;wasmtime&quot;,
+        &quot;engineVersion&quot;: &quot;21.0.0&quot;,
+        &quot;maxMemoryBytes&quot;: 134217728,
+        &quot;maxExecutionMs&quot;: 30000
+      }
+    }
+  }
+}</code></pre>
+<p>Hosts MUST include at least one supported <code>abiVersion</code> in <code>abiVersions[]</code>. Future ABI revisions extend the array.</p>
+<h3 id="i-manifest-extension">§I Manifest extension</h3>
+<p>The existing <code>node-pack-manifest.schema.json</code> already accepts <code>language: &quot;wasm&quot;</code>. RFC 0008 narrows the additional fields for the <code>wasm</code> runtime block:</p>
+<pre class="lang-json"><code>&quot;runtime&quot;: {
+  &quot;language&quot;: &quot;wasm&quot;,
+  &quot;entry&quot;: &quot;dist/pack.wasm&quot;,
+  &quot;format&quot;: &quot;wasm&quot;,
+  &quot;minRuntimeVersion&quot;: &quot;1&quot;,
+  &quot;wasm&quot;: {
+    &quot;abiVersion&quot;: 1,
+    &quot;memoryPagesInitial&quot;: 16,
+    &quot;memoryPagesMax&quot;: 1024
+  }
+}</code></pre>
+<p>The <code>wasm</code> sub-block:</p>
+<ul>
+<li><code>abiVersion</code> — REQUIRED. The ABI version this module targets. Hosts MUST refuse to load modules whose <code>abiVersion</code> is not in <code>capabilities.nodePackRuntimes.wasm.abiVersions</code>.</li>
+<li><code>memoryPagesInitial</code> / <code>memoryPagesMax</code> — pre-declare memory needs so hosts can size the instance up-front. 1 page = 64 KiB.</li>
+</ul>
+<h3 id="j-signing-and-integrity">§J Signing and integrity</h3>
+<p>WASM modules are signed identically to other pack artifacts (Ed25519 signature over the tarball; see <code>node-packs.md</code> §Signing). The signature covers the <code>.wasm</code> binary contents byte-for-byte. Hosts MUST verify the signature before instantiation.</p>
+<h3 id="k-resource-limits">§K Resource limits</h3>
+<p>Hosts MUST enforce the following limits per node invocation:</p>
+<ul>
+<li><strong>Memory ceiling</strong> — <code>capabilities.nodePackRuntimes.wasm.maxMemoryBytes</code> (default 128 MiB). Exceeded → kill the instance, emit <code>cap.breached</code> with <code>kind: &quot;wasm-memory&quot;</code>.</li>
+<li><strong>Wall-clock ceiling</strong> — <code>maxExecutionMs</code> (default 30 s). Exceeded → trap the instance, emit <code>cap.breached</code> with <code>kind: &quot;wasm-execution-time&quot;</code>.</li>
+<li><strong>Fuel / instruction count</strong> — hosts MAY use Wasmtime's fuel mechanism or equivalent to bound CPU; this is host policy, not normated.</li>
+</ul>
+<h3 id="l-reserved-exports-for-future-use">§L Reserved exports for future use</h3>
+<p>The following export names are RESERVED and MUST NOT be used for application purposes:</p>
+<ul>
+<li><code>openwop_abi_*</code> — ABI metadata (this RFC defines <code>openwop_abi_version</code>; future RFCs may add <code>openwop_abi_features</code>, <code>openwop_abi_capabilities</code>).</li>
+<li><code>openwop_node_*</code> — Node lifecycle (this RFC defines <code>openwop_node_count</code>, <code>openwop_node_id_at</code>, <code>openwop_node_invoke</code>; future RFCs may add <code>openwop_node_describe</code>, <code>openwop_node_validate_inputs</code>).</li>
+<li><code>openwop_agent_*</code> — Reserved for future agent-implementing WASM modules (RFC 0009 candidate).</li>
+</ul>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive.</strong></p>
+<ul>
+<li><code>language: &quot;wasm&quot;</code> already exists in the manifest enum; this RFC binds it to a contract.</li>
+<li>The <code>wasm</code> sub-block on <code>Runtime</code> is new and optional.</li>
+<li>Capability advertisement is opt-in.</li>
+<li>No changes to existing required fields.</li>
+</ul>
+<p>Pre-RFC-0008 hosts that don't support WASM packs continue to be v1-conformant; they simply refuse to install WASM packs at registry-fetch time with <code>unsupported_pack_runtime</code>.</p>
+<h2 id="conformance">Conformance</h2>
+<p>New scenarios required for <code>Active → Accepted</code>:</p>
+<ul>
+<li><code>wasm-pack-load.test.ts</code> — load a signed WASM pack against a host that advertises <code>nodePackRuntimes.wasm.supported: true</code>; verify pack-name, node-typeId, and ABI-version exports.</li>
+<li><code>wasm-pack-invoke-completed.test.ts</code> — invoke a node that returns <code>outcome: &quot;completed&quot;</code>; verify output round-trip.</li>
+<li><code>wasm-pack-invoke-suspended.test.ts</code> — invoke a node that returns <code>outcome: &quot;suspended&quot;</code>; verify host runs the interrupt and re-invokes with the resume value.</li>
+<li><code>wasm-pack-replay-determinism.test.ts</code> — re-run a fork against a WASM pack; verify <code>openwop_now_ms</code> and <code>openwop_random</code> produce identical bytes.</li>
+<li><code>wasm-pack-memory-cap.test.ts</code> — verify the host kills a module exceeding <code>maxMemoryBytes</code> and emits <code>cap.breached</code>.</li>
+<li><code>wasm-pack-abi-version-rejection.test.ts</code> — verify a module with an unsupported <code>abiVersion</code> is rejected with <code>unsupported_abi_version</code>.</li>
+</ul>
+<p>All gated on <code>capabilities.nodePackRuntimes.wasm.supported: true</code>.</p>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<p>1. <strong>WASI Preview 2 / Component Model from day one.</strong> Cleaner WIT-based interface; runtime support is uneven in 2026-05 and the spec is still being polished. <strong>Resolved 2026-05-12 (Phase B):</strong> Promoted to an additive enum value <code>language: &quot;wasm-component&quot;</code> + <code>format: &quot;wasm-component&quot;</code> on <code>node-pack-manifest.schema.json</code> per <code>node-packs.md</code> §"Runtime formats". The core-module <code>language: &quot;wasm&quot;</code> path remains the v1 baseline (no host MUST support Component Model yet); hosts opt in via <code>capabilities.nodePackRuntimes.wasmComponent.supported: true</code>. The ABI envelope (<code>openwop_node_invoke</code> semantics + JSON-over-linear-memory) is shared between the two variants; the Component Model variant simply replaces the hand-rolled imports/exports with WIT-defined interfaces. Specifics of the WIT interface definitions ship as an additive amendment to this RFC when the first Component-Model host lands. 2. <strong>Embed Lua / JS interpreters per language.</strong> Rejected: defeats the "consensus sandbox" goal. WASM is the lowest common denominator. 3. <strong>Native dynamic libraries</strong> (<code>.so</code>, <code>.dylib</code>, <code>.dll</code>). Rejected: no sandbox, ABI varies per OS, security model is the host's reputation. 4. <strong>Treat all non-JS packs as <code>language: remote</code>.</strong> Status quo. Works but pays HTTP latency on every node invocation and creates a deployment dependency. 5. <strong>Use ProtoBuf / FlatBuffers / Cap'n Proto for the wire format instead of JSON.</strong> Faster but adds toolchain overhead in every language. JSON-over-linear-memory is good enough for v1.x; a binary fast-path is a future additive.</p>
+<h2 id="unresolved-questions">Unresolved questions</h2>
+<p>1. Should the ABI specify a fuel-based CPU limit normatively, or leave it as host policy? Current: host policy. May tighten in v1.2. 2. How should WASM packs that ship multiple node typeIds share state across invocations within the same module? Current: ephemeral per-invocation (instance reused but no global state guarantees). Open question for stateful nodes. 3. Should <code>openwop_log</code> honor the run's privacy-classification settings (<code>metadata.complianceClass</code>)? Current: yes, modules' logged content is treated as untrusted output and subject to standard redaction per <code>observability.md</code> §"Privacy classification". 4. Should we expose a <code>Module → Host</code> cancellation signal so long-running modules can react to <code>:cancel</code>? Current: hosts trap the module when cancellation arrives, which is forceful. A cooperative <code>openwop_should_cancel() → bool</code> import is a future extension.</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<ul>
+<li>Reference TypeScript host plans to use Wasmtime via the official <code>wasmtime</code> Node binding. Initial memory cap 128 MiB; execution time cap 30 s.</li>
+<li>An example Rust pack ships under <code>examples/packs/rust-hello/</code> once the RFC reaches <code>Active</code>. The example wires <code>openwop_node_invoke</code> to a simple state-transformation node.</li>
+<li>A <code>wasm-bindgen</code>-style helper crate (<code>openwop-wasm-sdk</code>) for Rust authors is post-RFC ecosystem work; not part of this proposal.</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<ul>
+<li>[ ] Spec text merged (this file).</li>
+<li>[ ] <code>node-pack-manifest.schema.json</code> adds the <code>wasm</code> sub-block on <code>Runtime</code>.</li>
+<li>[ ] <code>node-packs.md</code> adds a §"WASM runtime" subsection cross-linking to this RFC.</li>
+<li>[ ] <code>capabilities.md</code> adds <code>nodePackRuntimes.wasm</code> advertisement.</li>
+<li>[ ] Six conformance scenarios (listed above).</li>
+<li>[ ] Reference host implements WASM loader and passes the scenarios.</li>
+<li>[ ] CHANGELOG entry under v1.2.</li>
+<li>[ ] Example Rust pack under <code>examples/packs/rust-hello/</code>.</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li>W3C WebAssembly Core Specification 2.0: &lt;https://www.w3.org/TR/wasm-core-2/&gt;</li>
+<li>WASI Preview 2 / Component Model (informative, future migration target): &lt;https://component-model.bytecodealliance.org/&gt;</li>
+<li>Wasmtime documentation: &lt;https://docs.wasmtime.dev/&gt;</li>
+<li><code>schemas/node-pack-manifest.schema.json</code> (existing <code>language: wasm</code> declaration)</li>
+<li><code>spec/v1/node-packs.md</code> §Signing</li>
+<li>RFC 0003 (Agent Packs — analogous pack-extension shape)</li>
+<li><code>spec/v1/replay.md</code> §Determinism (constraints on <code>openwop_now_ms</code> / <code>openwop_random</code>)</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

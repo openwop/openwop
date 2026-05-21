@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — RFC 0010: Auth-Profile Conformance</title>
+  <meta name="description" content="Convert the four production-auth profiles in spec/v1/auth-profiles.md (openwop-auth-api-key-rotation, openwop-auth-oauth2-client-credentials, openwop-auth-oidc-user-bearer, openwop-auth-mtls) from prose-only claims into mechanically verified…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0010-auth-profile-conformance.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — RFC 0010: Auth-Profile Conformance"/>
+  <meta property="og:description" content="Convert the four production-auth profiles in spec/v1/auth-profiles.md (openwop-auth-api-key-rotation, openwop-auth-oauth2-client-credentials, openwop-auth-oidc-user-bearer, openwop-auth-mtls) from prose-only claims into mechanically verified…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0010-auth-profile-conformance.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — RFC 0010: Auth-Profile Conformance"/>
+  <meta name="twitter:description" content="Convert the four production-auth profiles in spec/v1/auth-profiles.md (openwop-auth-api-key-rotation, openwop-auth-oauth2-client-credentials, openwop-auth-oidc-user-bearer, openwop-auth-mtls) from prose-only claims into mechanically verified…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="" href="/spec/v1/">Spec</a>
+      <a class="active" href="/rfcs/">RFCs</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/changelog/">Changelog</a>
+      <a class="" href="/faq/">FAQ</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="rfc-0010-auth-profile-conformance">RFC 0010: Auth-Profile Conformance</h1>
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0010</td></tr>
+<tr><td><strong>Title</strong></td><td>Auth-Profile Conformance</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-11</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-12 (Active → Accepted: all acceptance-criteria items satisfied — <code>capabilities.auth</code> block landed in <code>schemas/capabilities.schema.json</code>, four conformance scenarios shipped (<code>auth-api-key-rotation</code> + <code>auth-oauth2-client-credentials</code> + <code>auth-oidc-user-bearer</code> capability-gated, <code>auth-mtls</code> opt-in via <code>OPENWOP_TEST_MTLS=1</code>), <code>conformance/src/lib/oidc-issuer.ts</code> synthetic harness landed (RS256 + ES256 via <code>node:crypto</code> stdlib), <code>conformance/coverage.md</code> §"Capability-gated scenarios" enumerates the four scenarios under per-profile gating, <code>spec/v1/auth-profiles.md</code> cross-references the new <code>capabilities.auth.<em></code> discovery path while keeping <code>extensions.auth.</em></code> valid for compatibility, <code>SECURITY/threat-model-auth-profiles.md</code> §3 adds A3 (scope confusion) + A4 (mTLS downgrade) adversaries with scenario bindings and §4 STRIDE rows per profile, SQLite reference host implements <code>openwop-auth-api-key-rotation</code> end-to-end with constant-time dual-candidate <code>checkAuth</code> per <code>INTEROP-MATRIX.md</code>, and CHANGELOG records both the Draft drop and Active landing. The four unresolved questions remain open as documented and may be revisited as additive sub-RFCs without breaking v1 wire compatibility — OAuth2-CC + OIDC + mTLS profile bodies are capability-shaped on the reference host and ready for adopter wiring, which is the documented stance, not a blocker.)</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>spec/v1/auth-profiles.md</code>, <code>schemas/capabilities.schema.json</code>, <code>conformance/src/scenarios/</code> (3 new + 1 opt-in), <code>conformance/src/lib/oidc-issuer.ts</code> (new harness), <code>conformance/coverage.md</code>, <code>INTEROP-MATRIX.md</code>, <code>SECURITY/threat-model-auth-profiles.md</code>, optionally <code>examples/hosts/sqlite/</code> or <code>postgres/</code> (reference implementation)</td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
+<tr><td><strong>Supersedes</strong></td><td>—</td></tr>
+<tr><td><strong>Superseded by</strong></td><td>—</td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>Convert the four production-auth profiles in <code>spec/v1/auth-profiles.md</code> (<code>openwop-auth-api-key-rotation</code>, <code>openwop-auth-oauth2-client-credentials</code>, <code>openwop-auth-oidc-user-bearer</code>, <code>openwop-auth-mtls</code>) from prose-only claims into mechanically verified capability advertisements + conformance scenarios. Formalize <code>capabilities.auth</code> as a top-level schema block with <code>profiles[]</code> and per-profile metadata sub-blocks. Add three new conformance scenarios for the routinely-tested profiles plus one opt-in scenario for mTLS where cert provisioning is operator-environmental. Ship a synthetic OIDC issuer harness under <code>conformance/src/lib/oidc-issuer.ts</code> so OIDC validation can be exercised without depending on a real IdP.</p>
+<h2 id="motivation">Motivation</h2>
+<p><code>auth-profiles.md</code> defines four profiles for hosts that need stronger authentication than the baseline API-key bearer contract in <code>auth.md</code>. As of 2026-05-11:</p>
+<ul>
+<li>The profile prose is FINAL v1 and every profile has a "Conformance gaps to close" line. None of those gaps are closed.</li>
+<li><code>conformance/src/scenarios/auth.test.ts</code> exercises only the baseline (missing credential → 401; invalid credential → 401). It does not cover rotation grace windows, OAuth2 token shapes, OIDC issuer validation, or mTLS.</li>
+<li>The Postgres reference host advertises <code>openwop-audit-log-integrity</code> (which lives under the same <code>capabilities.auth</code> namespace these new profiles will occupy) but no host advertises any of the four production-auth profiles, because there is no published conformance evidence to point at.</li>
+<li>The external security review tracked in <code>SECURITY/external-audit-engagement.md</code> (per <code>docs/PROTOCOL-GAP-CLOSURE-PLAN.md</code> Track 9) needs mechanically-verified auth surface before vendor outreach is credible — "we have prose for auth profiles" is weaker than "the conformance suite asserts rotation grace, OAuth shapes, OIDC issuer validation, and mTLS handling."</li>
+</ul>
+<p>This RFC ships four artifacts as one coherent additive landing because the profiles share infrastructure (the <code>capabilities.auth</code> namespace, the canonical-envelope assertion pattern, threat-model overlap, and INTEROP-MATRIX advertisement). One consolidated RFC keeps the comment window shared; splitting into four parallel RFCs would multiply maintainer overhead without adding review fidelity. If a specific profile turns out to need a follow-up wire-shape decision, additive sub-RFCs remain possible.</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-capability-shape">§A Capability shape</h3>
+<p>Add a top-level <code>capabilities.auth</code> block to <code>schemas/capabilities.schema.json</code>. The block is optional in v1; absence preserves the baseline auth contract. <code>additionalProperties: true</code> is preserved so the existing informal <code>auth.profiles[]</code> + <code>auth.auditLogIntegrity</code> shape (used by <code>audit-log-integrity.test.ts</code>) continues to work and is not blocked by this RFC.</p>
+<p>Schema diff (relative to <code>schemas/capabilities.schema.json</code>):</p>
+<pre class="lang-diff"><code>   &quot;properties&quot;: {
+     ...
+     &quot;production&quot;: { ... },          // RFC 0009
++    &quot;auth&quot;: {
++      &quot;type&quot;: &quot;object&quot;,
++      &quot;description&quot;: &quot;Auth-profile advertisement (auth-profiles.md). Optional in v1; absence preserves the baseline bearer-token contract from auth.md. RFC 0010 formalized this block; `additionalProperties: true` permits existing informal usages (auth.profiles[], auth.auditLogIntegrity from the audit-log-integrity profile) to continue alongside the formal sub-blocks.&quot;,
++      &quot;properties&quot;: {
++        &quot;profiles&quot;: {
++          &quot;type&quot;: &quot;array&quot;,
++          &quot;items&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;minLength&quot;: 1 },
++          &quot;uniqueItems&quot;: true,
++          &quot;description&quot;: &quot;Auth profiles the host claims. Canonical ids: `openwop-audit-log-integrity` (auth-profiles.md §Audit-log integrity), `openwop-auth-api-key-rotation`, `openwop-auth-oauth2-client-credentials`, `openwop-auth-oidc-user-bearer`, `openwop-auth-mtls`. Clients SHOULD tolerate unknown profile ids.&quot;
++        },
++        &quot;rotation&quot;: {
++          &quot;type&quot;: &quot;object&quot;,
++          &quot;description&quot;: &quot;API-key rotation advertisement (auth-profiles.md §`openwop-auth-api-key-rotation`).&quot;,
++          &quot;properties&quot;: {
++            &quot;supported&quot;: { &quot;type&quot;: &quot;boolean&quot; },
++            &quot;minGraceSeconds&quot;: {
++              &quot;type&quot;: &quot;integer&quot;,
++              &quot;minimum&quot;: 0,
++              &quot;description&quot;: &quot;Minimum rotation grace window in seconds. auth-profiles.md SHOULDs production-profile hosts to ≥ 86400 (24h). The scenario tolerates any non-negative value but flags &amp;lt; 86400 in behavior mode.&amp;quot;
++            }
++          },
++          &amp;quot;additionalProperties&amp;quot;: false
++        },
++        &amp;quot;oauth2&amp;quot;: {
++          &amp;quot;type&amp;quot;: &amp;quot;object&amp;quot;,
++          &amp;quot;description&amp;quot;: &amp;quot;OAuth2 client-credentials advertisement (auth-profiles.md §`openwop-auth-oauth2-client-credentials`).&amp;quot;,
++          &amp;quot;properties&amp;quot;: {
++            &amp;quot;supported&amp;quot;: { &amp;quot;type&amp;quot;: &amp;quot;boolean&amp;quot; },
++            &amp;quot;issuer&amp;quot;: {
++              &amp;quot;type&amp;quot;: &amp;quot;string&amp;quot;,
++              &amp;quot;format&amp;quot;: &amp;quot;uri&amp;quot;,
++              &amp;quot;description&amp;quot;: &amp;quot;Token issuer URL the host trusts. Tokens MUST carry a matching `iss` claim.&amp;quot;
++            },
++            &amp;quot;audience&amp;quot;: {
++              &amp;quot;type&amp;quot;: &amp;quot;string&amp;quot;,
++              &amp;quot;description&amp;quot;: &amp;quot;Audience the host requires. Tokens MUST carry a matching `aud` claim.&amp;quot;
++            },
++            &amp;quot;supportedAlgorithms&amp;quot;: {
++              &amp;quot;type&amp;quot;: &amp;quot;array&amp;quot;,
++              &amp;quot;items&amp;quot;: { &amp;quot;type&amp;quot;: &amp;quot;string&amp;quot;, &amp;quot;minLength&amp;quot;: 1 },
++              &amp;quot;uniqueItems&amp;quot;: true,
++              &amp;quot;description&amp;quot;: &amp;quot;JWS signing algorithms the host accepts (canonical: RS256, ES256). Hosts MUST reject tokens signed with algorithms outside this list.&amp;quot;
++            }
++          },
++          &amp;quot;additionalProperties&amp;quot;: false
++        },
++        &amp;quot;oidc&amp;quot;: {
++          &amp;quot;type&amp;quot;: &amp;quot;object&amp;quot;,
++          &amp;quot;description&amp;quot;: &amp;quot;OIDC user-bearer advertisement (auth-profiles.md §`openwop-auth-oidc-user-bearer`).&amp;quot;,
++          &amp;quot;properties&amp;quot;: {
++            &amp;quot;supported&amp;quot;: { &amp;quot;type&amp;quot;: &amp;quot;boolean&amp;quot; },
++            &amp;quot;issuers&amp;quot;: {
++              &amp;quot;type&amp;quot;: &amp;quot;array&amp;quot;,
++              &amp;quot;items&amp;quot;: { &amp;quot;type&amp;quot;: &amp;quot;string&amp;quot;, &amp;quot;format&amp;quot;: &amp;quot;uri&amp;quot; },
++              &amp;quot;minItems&amp;quot;: 1,
++              &amp;quot;uniqueItems&amp;quot;: true,
++              &amp;quot;description&amp;quot;: &amp;quot;Trusted OIDC issuer URLs. The host accepts tokens whose `iss` claim matches any entry.&amp;quot;
++            },
++            &amp;quot;audience&amp;quot;: {
++              &amp;quot;type&amp;quot;: &amp;quot;string&amp;quot;,
++              &amp;quot;description&amp;quot;: &amp;quot;Audience identifier the host requires in OIDC tokens.&amp;quot;
++            },
++            &amp;quot;supportedScopeMapping&amp;quot;: {
++              &amp;quot;type&amp;quot;: &amp;quot;string&amp;quot;,
++              &amp;quot;enum&amp;quot;: [&amp;quot;group-claim&amp;quot;, &amp;quot;scope-claim&amp;quot;, &amp;quot;host-acl&amp;quot;],
++              &amp;quot;description&amp;quot;: &amp;quot;How the host derives openwop scopes from the OIDC token. `group-claim`: from `groups` claim via host config. `scope-claim`: from `scope` claim directly. `host-acl`: from a host-side mapping table (sub → scope).&amp;quot;
++            },
++            &amp;quot;introspectionIntervalSeconds&amp;quot;: {
++              &amp;quot;type&amp;quot;: &amp;quot;integer&amp;quot;,
++              &amp;quot;minimum&amp;quot;: 0,
++              &amp;quot;description&amp;quot;: &amp;quot;Maximum interval at which the host SHOULD re-introspect a cached token to detect IdP revocation. auth-profiles.md recommends `min(exp - now, 300)`.&amp;quot;
++            }
++          },
++          &amp;quot;additionalProperties&amp;quot;: false
++        },
++        &amp;quot;mtls&amp;quot;: {
++          &amp;quot;type&amp;quot;: &amp;quot;object&amp;quot;,
++          &amp;quot;description&amp;quot;: &amp;quot;mTLS advertisement (auth-profiles.md §`openwop-auth-mtls`).&amp;quot;,
++          &amp;quot;properties&amp;quot;: {
++            &amp;quot;supported&amp;quot;: { &amp;quot;type&amp;quot;: &amp;quot;boolean&amp;quot; },
++            &amp;quot;required&amp;quot;: {
++              &amp;quot;type&amp;quot;: &amp;quot;boolean&amp;quot;,
++              &amp;quot;description&amp;quot;: &amp;quot;When `true`, the host rejects bearer-only requests. When `false`, mTLS is optional and complements bearer auth.&amp;quot;
++            },
++            &amp;quot;subjectMapping&amp;quot;: {
++              &amp;quot;type&amp;quot;: &amp;quot;string&amp;quot;,
++              &amp;quot;enum&amp;quot;: [&amp;quot;cn&amp;quot;, &amp;quot;san-dns&amp;quot;, &amp;quot;san-uri&amp;quot;],
++              &amp;quot;description&amp;quot;: &amp;quot;How the host derives the transport principal from the client certificate. `cn`: subject CN. `san-dns`: subjectAltName DNS entry. `san-uri`: subjectAltName URI entry.&amp;quot;
++            }
++          },
++          &amp;quot;additionalProperties&amp;quot;: false
++        }
++      },
++      &amp;quot;additionalProperties&amp;quot;: true
++    }
+   }</code></pre>
+<p><code>auth-profiles.md</code> §&quot;Discovery guidance&quot; currently advertises this metadata under <code>extensions.auth.<em></code>. RFC 0010 promotes it to <code>capabilities.auth.</em></code> (matching the audit-log-integrity precedent). The <code>extensions.auth.<em></code> location remains valid for hosts that haven&#39;t migrated; clients SHOULD prefer <code>capabilities.auth.</em></code> when both are present. This is a non-breaking documentation update to <code>auth-profiles.md</code>.</p>
+<h3 id="b-scenario-auth-api-key-rotation-test-ts">§B Scenario: <code>auth-api-key-rotation.test.ts</code></h3>
+<p>Asserts the rotation contract from <code>auth-profiles.md</code> §<code>openwop-auth-api-key-rotation</code>.</p>
+<ul>
+<li><strong>Gating:</strong> <code>behaviorGate(&amp;#39;openwop-auth-api-key-rotation&amp;#39;, capabilities.auth.profiles.includes(&amp;#39;openwop-auth-api-key-rotation&amp;#39;) &amp;amp;&amp;amp; capabilities.auth.rotation?.supported === true)</code>.</li>
+<li><strong>Setup:</strong> operator supplies a primary API key via <code>OPENWOP_API_KEY</code> (already required for the suite) and a secondary key via <code>OPENWOP_TEST_SECONDARY_API_KEY</code>. The two keys MUST map to the same principal + tenant (the rotation invariant).</li>
+<li><strong>Assertions:</strong></li>
+</ul>
+<p>  1. Both keys authenticate <code>POST /v1/runs</code> with the same fixture (<code>conformance-noop</code>); both return 201; both run-snapshots show the same <code>tenant</code> and <code>principal</code> (when audit surface is present).   2. When <code>capabilities.auth.rotation.minGraceSeconds</code> is advertised, it is an integer ≥ 0; behavior-mode warns if &lt; 86400 per <code>auth-profiles.md</code> SHOULD.   3. An invalid bearer (synthetic canary, not either real key) returns <code>401 invalid_token</code> per the canonical envelope; the response body does NOT echo the canary in any field (redaction MUST hold even on rotation-profile hosts).</p>
+<ul>
+<li><strong>Soft-skip:</strong> when <code>OPENWOP_TEST_SECONDARY_API_KEY</code> is unset, the overlap assertion soft-skips; capability shape still asserts.</li>
+</ul>
+<h3 id="c-scenario-auth-oauth2-client-credentials-test-ts">§C Scenario: <code>auth-oauth2-client-credentials.test.ts</code></h3>
+<p>Asserts the OAuth2-CC contract from <code>auth-profiles.md</code> §<code>openwop-auth-oauth2-client-credentials</code>.</p>
+<ul>
+<li><strong>Gating:</strong> <code>behaviorGate(&amp;#39;openwop-auth-oauth2-client-credentials&amp;#39;, capabilities.auth.profiles.includes(&amp;#39;openwop-auth-oauth2-client-credentials&amp;#39;) &amp;amp;&amp;amp; capabilities.auth.oauth2?.supported === true)</code>.</li>
+<li><strong>Positive case:</strong> operator supplies a valid token via <code>OPENWOP_TEST_OAUTH_TOKEN</code>. The scenario submits <code>Authorization: Bearer &amp;lt;token&amp;gt;</code> to <code>POST /v1/runs</code>; expects 201 + canonical RunSnapshot.</li>
+<li><strong>Negative cases (no operator setup required):</strong></li>
+</ul>
+<p>  1. Malformed JWT (e.g., <code>Bearer not.a.real.jwt</code>) → 401 <code>invalid_token</code>.   2. Token signed with HS256 (or any algorithm NOT in <code>supportedAlgorithms</code>) → 401.   3. Token with wrong <code>aud</code> claim (synthetic via the OIDC issuer harness from §E) → 401 with <code>details.reason</code> SHOULD indicate audience mismatch.   4. Token with valid signature but expired <code>exp</code> → 401.</p>
+<ul>
+<li><strong>Capability shape:</strong> when <code>oauth2.issuer</code> is advertised, it MUST be a valid URI; <code>audience</code> MUST be a non-empty string; <code>supportedAlgorithms</code> MUST be a non-empty array.</li>
+<li><strong>Soft-skip:</strong> when <code>OPENWOP_TEST_OAUTH_TOKEN</code> is unset, positive case soft-skips; negative cases still run.</li>
+</ul>
+<h3 id="d-scenario-auth-oidc-user-bearer-test-ts">§D Scenario: <code>auth-oidc-user-bearer.test.ts</code></h3>
+<p>Asserts the OIDC contract from <code>auth-profiles.md</code> §<code>openwop-auth-oidc-user-bearer</code>. Uses the synthetic OIDC issuer harness from §E so the suite can mint and present tokens with controlled claims.</p>
+<ul>
+<li><strong>Gating:</strong> <code>behaviorGate(&#39;openwop-auth-oidc-user-bearer&#39;, capabilities.auth.profiles.includes(&#39;openwop-auth-oidc-user-bearer&#39;) &amp;&amp; capabilities.auth.oidc?.supported === true)</code>.</li>
+<li><strong>Harness boot:</strong> scenario boots a <code>SyntheticOIDCIssuer</code> in-process (per §E), publishes JWKS, mints tokens. The host MUST be pre-configured to trust the harness's issuer URL — operator wires this via <code>OPENWOP_TEST_OIDC_ISSUER_URL</code> and the host's config.</li>
+<li><strong>Assertions:</strong></li>
+</ul>
+<p>  1. Token with valid signature + matching <code>iss</code>/<code>aud</code>/<code>exp</code>/<code>sub</code> → host returns 201 on <code>POST /v1/runs</code>; <code>sub</code> claim threads into the run's audit/principal surface (when discoverable).   2. Token with valid signature + wrong <code>iss</code> → 401.   3. Token with valid signature + wrong <code>aud</code> → 401 with <code>details.reason</code> indicating audience mismatch.   4. Expired token (<code>exp</code> &lt; now) → 401.   5. Token signed with an unknown JWKS key (key id not published by the harness) → 401.   6. Token-valid-but-scope-insufficient (e.g., minted with empty <code>groups</code> claim against a <code>group-claim</code> mapping host) → 403 <code>forbidden</code>.</p>
+<ul>
+<li><strong>Soft-skip:</strong> when <code>OPENWOP_TEST_OIDC_ISSUER_URL</code> is unset, the scenario asserts only capability shape.</li>
+</ul>
+<h3 id="e-synthetic-oidc-issuer-harness-conformance-src-lib-oidc-issuer-ts">§E Synthetic OIDC issuer harness — <code>conformance/src/lib/oidc-issuer.ts</code></h3>
+<p>A minimal in-process OIDC issuer the conformance suite mints tokens against. Server-free; no external dependencies beyond <code>node:crypto</code>.</p>
+<p>Interface:</p>
+<pre class="lang-typescript"><code>export interface SyntheticOIDCIssuerOptions {
+  issuer: string;                      // base URL (caller supplies; not bound)
+  audience: string;
+  algorithm: &amp;#39;RS256&amp;#39; | &amp;#39;ES256&amp;#39;;        // default RS256
+  keyId?: string;                      // default &amp;#39;openwop-conformance-key-1&amp;#39;
+}
+
+export interface MintedToken {
+  token: string;                       // signed JWT
+  claims: Record&amp;lt;string, unknown&amp;gt;;
+}
+
+export interface SyntheticOIDCIssuer {
+  readonly issuer: string;
+  readonly audience: string;
+  readonly algorithm: &#39;RS256&#39; | &#39;ES256&#39;;
+  readonly jwksJson: string;           // serve at $issuer/.well-known/jwks.json
+  readonly discoveryJson: string;      // serve at $issuer/.well-known/openid-configuration
+
+  mint(claims: Record&amp;lt;string, unknown&amp;gt;, opts?: { expiresInSeconds?: number; keyId?: string }): MintedToken;
+  rotateKey(): void;                   // generate a new signing key; jwksJson updates
+}
+
+export function createSyntheticOIDCIssuer(opts: SyntheticOIDCIssuerOptions): SyntheticOIDCIssuer;</code></pre>
+<p>The harness:</p>
+<ul>
+<li>Generates an RSA or EC keypair on construction via <code>node:crypto.generateKeyPairSync</code>.</li>
+<li>Serializes the public key as JWKS (<code>kty</code>, <code>kid</code>, <code>alg</code>, <code>n</code>+<code>e</code> for RSA, <code>crv</code>+<code>x</code>+<code>y</code> for EC).</li>
+<li>Mints tokens by signing the JWT header + payload with <code>node:crypto.sign</code>.</li>
+<li>The discovery + JWKS JSON strings are caller-served — the harness does NOT bind a port itself. Scenarios stand up a minimal HTTP server (via <code>node:http</code>) to publish them, or the host can be pre-configured with the harness's discovery document fed via env.</li>
+</ul>
+<p>This is server-free: the harness runs inside the vitest worker process. Tokens are minted synchronously.</p>
+<h3 id="f-scenario-auth-mtls-test-ts-opt-in">§F Scenario: <code>auth-mtls.test.ts</code> (opt-in)</h3>
+<p>mTLS is environmental (cert provisioning, server config); the conformance scenario is opt-in following the <code>restart-during-run.test.ts</code> precedent.</p>
+<ul>
+<li><strong>Gating:</strong> <code>RUN_THIS_SCENARIO = process.env.OPENWOP_TEST_MTLS === &#39;1&#39;</code>. When unset, scenario skips entirely (vitest <code>describe.skipIf</code>).</li>
+<li><strong>Operator setup:</strong></li>
+</ul>
+<p>  - <code>OPENWOP_TEST_MTLS_CLIENT_CERT_PATH</code> — path to PEM-encoded client cert.   - <code>OPENWOP_TEST_MTLS_CLIENT_KEY_PATH</code> — path to PEM-encoded client key.   - <code>OPENWOP_TEST_MTLS_CA_PATH</code> — optional path to CA bundle for server-cert validation.</p>
+<ul>
+<li><strong>Assertions:</strong></li>
+</ul>
+<p>  1. Request with valid client cert + valid bearer → 201 on <code>POST /v1/runs</code>.   2. Request with invalid client cert → either 401 <code>invalid_token</code> envelope OR a transport-layer TLS failure (both are conformant per <code>auth-profiles.md</code> §<code>openwop-auth-mtls</code>; the scenario MAY assert either).   3. When <code>capabilities.auth.mtls.required === true</code>, a bearer-only request (no client cert) MUST fail; the scenario submits a no-cert request and asserts non-2xx.</p>
+<ul>
+<li><strong>Capability shape:</strong> the shape check runs unconditionally (cheap discovery probe); the behavior portion runs only under <code>OPENWOP_TEST_MTLS=1</code>.</li>
+</ul>
+<h3 id="g-security-threat-model-auth-profiles-md-updates">§G <code>SECURITY/threat-model-auth-profiles.md</code> updates</h3>
+<p>Add the rotation/OAuth/OIDC scenario-specific failure modes to the existing threat model:</p>
+<ul>
+<li><strong>A1 (Stolen old API key holder):</strong> scenario coverage = rotation revocation assertion in §B (revoked-old-key returns 401, not a partial pass).</li>
+<li><strong>A2 (Token substitution attacker):</strong> scenario coverage = <code>wrong-aud</code> + <code>wrong-iss</code> negative cases in §C + §D.</li>
+<li><strong>A3 (new): OIDC IdP impersonation via key spoofing.</strong> Adversary presents a token signed with a key whose <code>kid</code> is not in the published JWKS. Scenario coverage = §D #5.</li>
+<li><strong>A4 (new): mTLS downgrade via missing-cert.</strong> Adversary connects without a client cert to a host claiming <code>mtls.required: true</code>. Scenario coverage = §F #3.</li>
+</ul>
+<p>The existing threat-model document already enumerates A1 + A2; this RFC adds the scenario-binding line for each and introduces A3 + A4.</p>
+<h3 id="h-interop-matrix-guidance">§H INTEROP-MATRIX guidance</h3>
+<p><code>INTEROP-MATRIX.md</code> "Compatibility profile claim" column gains entries for each auth profile a host advertises. A host claiming <code>openwop-auth-oidc-user-bearer</code> lists it alongside <code>openwop-core</code> (or wherever profile order makes sense). The conformance link column records which auth-profile scenarios passed under <code>OPENWOP_REQUIRE_BEHAVIOR=true</code>.</p>
+<p>Hosts that don't claim any production-auth profile remain v1-conformant via baseline auth.md — no advertisement needed.</p>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive</strong> per <code>COMPATIBILITY.md</code> §2.1:</p>
+<ul>
+<li>New <code>capabilities.auth</code> block is optional; absence preserves v1.0 behavior.</li>
+<li>Sub-blocks each have their own <code>supported: boolean</code>; absence on a specific sub-block means the host doesn't claim that profile.</li>
+<li><code>additionalProperties: true</code> on the <code>auth</code> block preserves the existing informal <code>auditLogIntegrity</code> advertisement (used by <code>audit-log-integrity.test.ts</code>).</li>
+<li>New scenarios are capability-gated; v1.0 hosts that don't advertise any auth profile skip cleanly.</li>
+<li>No new error codes; the canonical <code>401</code>/<code>403</code> envelopes are already-normated v1 wire shapes (<code>auth.md</code> §3).</li>
+<li>mTLS scenario is opt-in via env var, matching the <code>restart-during-run.test.ts</code> precedent.</li>
+</ul>
+<h2 id="conformance">Conformance</h2>
+<p>Existing scenarios that cover this surface (de facto baseline): <code>auth.test.ts</code> (missing/invalid credential).</p>
+<p>New scenarios required by this RFC:</p>
+<p>1. <code>conformance/src/scenarios/auth-api-key-rotation.test.ts</code> — §B. 2. <code>conformance/src/scenarios/auth-oauth2-client-credentials.test.ts</code> — §C. 3. <code>conformance/src/scenarios/auth-oidc-user-bearer.test.ts</code> — §D. 4. <code>conformance/src/scenarios/auth-mtls.test.ts</code> — §F, opt-in. 5. <code>conformance/src/lib/oidc-issuer.ts</code> — §E (library, not a scenario).</p>
+<p>All four scenarios use <code>behaviorGate(profileName, advertised)</code>; <code>OPENWOP_REQUIRE_BEHAVIOR=true</code> converts capability-shape-only skips into hard failures, matching the audit-log-integrity precedent.</p>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<p>1. <strong>Four separate RFCs (0010 rotation, 0011 OAuth2, 0012 OIDC, 0013 mTLS).</strong> Rejected: the profiles share infrastructure (capability namespace, envelope assertion pattern, threat-model categories, INTEROP-MATRIX column) and one consolidated RFC keeps the comment window shared. Splitting multiplies maintainer overhead without adding review fidelity. If a specific profile turns out to need a wire-shape decision, an additive sub-RFC remains possible.</p>
+<p>2. <strong>Skip the synthetic OIDC issuer harness; require operators to wire a real IdP.</strong> Rejected: the negative-case tokens (wrong aud, wrong iss, expired, unknown key) cannot be minted against a real IdP without IdP-admin tooling that varies per vendor. The synthetic harness keeps CI hermetic; real-IdP interop remains a separate (post-Active) operator step.</p>
+<p>3. **Bake the auth advertisement into <code>extensions.auth.*</code> as <code>auth-profiles.md</code> currently shows.** Rejected: <code>extensions</code> is the catch-all for unschema'd metadata, but rotation/OAuth/OIDC/mTLS metadata is now stable enough to formalize. Promoting to <code>capabilities.auth.<em></code> matches the audit-log-integrity precedent and gives the conformance scenarios a typed schema to gate against. The <code>extensions.auth.</em></code> path remains valid (<code>additionalProperties: true</code> on the top-level capabilities object); clients SHOULD prefer <code>capabilities.auth.*</code> when both are present.</p>
+<p>4. <strong>Do nothing.</strong> Rejected: <code>auth-profiles.md</code> has shipped four profiles for over six weeks (FINAL v1 since 2026-05-10) with zero conformance coverage and zero advertising hosts. Each day this gap stays open, the protocol's production-auth story is "trust the spec text" rather than "trust the suite."</p>
+<h2 id="unresolved-questions">Unresolved questions</h2>
+<p>1. <strong>Rotation overlap assertion granularity.</strong> §B asserts both keys authenticate. Should the suite also assert audit-log-event distinguishability (<code>key.created</code> / <code>key.used</code> / <code>key.revoked</code> events per <code>auth-profiles.md</code>)? That requires audit-log surface a host MAY or MAY NOT expose; it could land as a §B addendum if the audit-log-integrity profile is co-advertised. Out of scope by default.</p>
+<p>2. <strong>OIDC harness key-rotation testing.</strong> §E exposes <code>rotateKey()</code> but §D doesn't assert host-side behavior on rotation. Adding a "key rotated mid-flight; old tokens continue working through grace; new tokens use new key" scenario is valuable but doubles the harness setup. Defer to a sub-RFC.</p>
+<p>3. <strong>mTLS subject-mapping ambiguity.</strong> §A advertises <code>subjectMapping: cn|san-dns|san-uri</code>. Real-world deployments often combine these (e.g., fall back from SAN to CN). Should the schema support an array of fallback rules, or stay single-valued? Out of scope; the schema is single-valued for now and hosts with complex mapping use <code>extensions.auth.*</code> for documentation.</p>
+<p>4. <strong>OAuth2-CC vs OIDC overlap.</strong> A host accepting OIDC user-bearer tokens with the <code>client_credentials</code> grant flow is technically conformant to both profiles. Should <code>auth.profiles[]</code> allow simultaneous advertisement, and should §C + §D handle overlap explicitly? Current draft permits both advertisements; scenarios run independently. Worth a sentence in <code>auth-profiles.md</code> clarification but not blocking.</p>
+<p>5. <strong>Tighten <code>capabilities.auth.additionalProperties</code> to <code>false</code>.</strong> The schema landed in §A intentionally uses <code>additionalProperties: true</code> on the <code>auth</code> block so the existing informal <code>auth.auditLogIntegrity</code> advertisement (from the audit-log-integrity profile, predating RFC 0010) continues to validate alongside the four formal sub-blocks defined here. A follow-up additive RFC SHOULD formalize <code>auditLogIntegrity</code> as a fifth sub-block schema (with <code>additionalProperties: false</code>) and tighten the parent <code>auth</code> block to <code>additionalProperties: false</code> at the same time. Until that lands, hosts MAY add arbitrary keys under <code>capabilities.auth.*</code> — that's a documentation surface for unenumerated future-profile metadata, not an extension point clients should depend on.</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<ul>
+<li>Suite version bump: <code>@openwop/openwop-conformance</code> <code>1.X.0</code> (next available minor after the RFC 0009 wave). Per <code>ROADMAP.md</code> line 24, conformance minors don't modify the wire contract.</li>
+<li>No SDK changes required — none of the wire shapes are SDK-side; the schema diff is server-advertised.</li>
+<li>The OIDC issuer harness (§E) uses <code>node:crypto</code> and stdlib JWT signing; no new npm dependencies. The existing <code>audit-log-integrity</code> scenario uses Ed25519 from <code>node:crypto</code> so the precedent is established.</li>
+<li>Reference-host implementation: SQLite or Postgres can adopt one rotation profile end-to-end as the worked example (per <code>docs/PROTOCOL-GAP-CLOSURE-PLAN.md</code> Track 3 §"Conformance gaps to close"). Most realistic: SQLite advertises <code>openwop-auth-api-key-rotation</code> since it has a smaller surface than OIDC.</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<ul>
+<li>[ ] <code>RFCS/0010-auth-profile-conformance.md</code> merged at <code>Status: Active</code> after the 7-day comment window (or waived per bootstrap-phase rule).</li>
+<li>[ ] <code>schemas/capabilities.schema.json</code> includes the <code>auth</code> block per §A.</li>
+<li>[ ] <code>conformance/src/scenarios/auth-api-key-rotation.test.ts</code> lands capability-gated.</li>
+<li>[ ] <code>conformance/src/scenarios/auth-oauth2-client-credentials.test.ts</code> lands capability-gated.</li>
+<li>[ ] <code>conformance/src/scenarios/auth-oidc-user-bearer.test.ts</code> lands capability-gated.</li>
+<li>[ ] <code>conformance/src/scenarios/auth-mtls.test.ts</code> lands opt-in via <code>OPENWOP_TEST_MTLS=1</code>.</li>
+<li>[ ] <code>conformance/src/lib/oidc-issuer.ts</code> lands as the synthetic harness per §E.</li>
+<li>[ ] <code>conformance/coverage.md</code> §"Capability-gated scenarios" lists the four scenarios under per-profile gating.</li>
+<li>[ ] <code>auth-profiles.md</code> updated to cross-reference the new <code>capabilities.auth.<em></code> discovery path (additive note; <code>extensions.auth.</em></code> remains valid).</li>
+<li>[ ] <code>SECURITY/threat-model-auth-profiles.md</code> adds A3 + A4 plus scenario-binding lines for A1 + A2.</li>
+<li>[ ] One reference host (SQLite or Postgres) implements at least <code>openwop-auth-api-key-rotation</code> and passes the scenario under <code>OPENWOP_REQUIRE_BEHAVIOR=true</code>.</li>
+<li>[ ] <code>INTEROP-MATRIX.md</code> reflects the host's profile claim.</li>
+<li>[ ] <code>CHANGELOG.md</code> entries for the Draft drop and the post-Active landing.</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li><code>spec/v1/auth-profiles.md</code> — the prose this RFC mechanizes.</li>
+<li><code>spec/v1/auth.md</code> §3 — canonical 401/403 error envelope.</li>
+<li><code>RFCS/0009-production-profile-conformance.md</code> — same-pattern precedent (profile advertisement + capability shape + scenarios + behavior-mode gate).</li>
+<li><code>conformance/src/scenarios/audit-log-integrity.test.ts</code> — the existing <code>capabilities.auth.profiles[]</code> consumer; informs the schema shape.</li>
+<li><code>SECURITY/threat-model-auth-profiles.md</code> — companion threat-model surface.</li>
+<li><code>SECURITY/external-audit-engagement.md</code> — downstream consumer of this RFC's evidence.</li>
+<li><code>docs/PROTOCOL-GAP-CLOSURE-PLAN.md</code> Track 3 — the planning context.</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

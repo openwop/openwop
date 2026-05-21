@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — Roadmap</title>
+  <meta name="description" content="This roadmap distinguishes stable v1 (locked contract), v1.X minor work (additive, conformance-only), and post-v1 ecosystem (extension profiles, infrastructure, governance)."/>
+  <link rel="canonical" href="https://openwop.dev/roadmap/"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — Roadmap"/>
+  <meta property="og:description" content="This roadmap distinguishes stable v1 (locked contract), v1.X minor work (additive, conformance-only), and post-v1 ecosystem (extension profiles, infrastructure, governance)."/>
+  <meta property="og:url" content="https://openwop.dev/roadmap/"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — Roadmap"/>
+  <meta name="twitter:description" content="This roadmap distinguishes stable v1 (locked contract), v1.X minor work (additive, conformance-only), and post-v1 ecosystem (extension profiles, infrastructure, governance)."/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="" href="/spec/v1/">Spec</a>
+      <a class="" href="/rfcs/">RFCs</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/changelog/">Changelog</a>
+      <a class="" href="/faq/">FAQ</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <header class="page-header">
+    <h1>Roadmap</h1>
+    <p class="lede">Gap-closure tracks the steward maintains in the open. No dates committed beyond the windows that have a CHANGELOG entry; the roadmap is direction, not promise.</p>
+  </header><article class="spec-doc"><h1 id="openwop-roadmap">openwop Roadmap</h1>
+<blockquote><p><strong>Status:</strong> Living document. Updated as milestones land.</p><p><strong>Last reviewed:</strong> 2026-05-19 (post-<code>@openwop/openwop-conformance@1.3.0</code> publish refresh). The generated protocol snapshot lives at <code>docs/PROTOCOL-STATUS.md</code>: 35 prose specs, 27 JSON Schemas, 19 OpenAPI operations, AsyncAPI 3.1, 160 conformance scenario files, 26 RFCs tracked, and 48 indexed registry packs. RFC status: 25 Accepted / 1 Draft (RFC 0025 — test-mode registry namespace — remains the only Draft; RFCs 0012, 0022, 0023, 0024, and 0026 have all landed as Accepted in the 2026-05-12 → 2026-05-19 window). Postgres reference conformance evidence holds at 781/850 default-mode pass count (91.9% total; 96.4% applicable) with one documented webhook flake.</p></blockquote>
+<p>This roadmap distinguishes <strong>stable v1</strong> (locked contract), <strong>v1.X minor work</strong> (additive, conformance-only), and <strong>post-v1 ecosystem</strong> (extension profiles, infrastructure, governance).</p>
+<p>The v1 protocol contract is <strong>frozen</strong>. Implementations validate themselves against <code>@openwop/openwop-conformance</code> <code>1.0</code> (or any later <code>1.X.0</code>) at their own cadence. New scenarios ship as suite minors against the unchanged contract.</p>
+<h2 id="stable-v1-released-2026-04-27">Stable: v1 (released 2026-04-27)</h2>
+<p>Released and locked:</p>
+<ul>
+<li>32 prose specs under <code>spec/v1/</code> (see <code>docs/PROTOCOL-STATUS.md</code>)</li>
+<li>24 first-class JSON Schemas (compile clean under Ajv2020)</li>
+<li>OpenAPI 3.1 + AsyncAPI 3.1</li>
+<li>3 reference SDKs: <code>@openwop/openwop</code> (TS), <code>openwop-client</code> (Python), <code>github.com/openwop/openwop/sdk/go</code> (Go)</li>
+<li><code>@openwop/openwop-conformance</code> 1.0 with server-free and server-required scenario groups</li>
+</ul>
+<p>See <a href="./CHANGELOG.md"><code>CHANGELOG.md</code></a> for the release record.</p>
+<h2 id="v1-x-minor-conformance-suite-expansion">v1.X minor: conformance suite expansion</h2>
+<p>These ship as <code>@openwop/openwop-conformance</code> minor releases (<code>1.X.0</code>) against the unchanged v1 protocol. They do not modify the wire contract. Each line is a tracked trigger; status reflects the most recent suite release.</p>
+<table>
+<thead><tr><th>Trigger</th><th>Closes</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>SSE buffering scenarios</td><td>S3</td><td>Included in the v1.0 conformance baseline</td></tr>
+<tr><td>Mixed-mode SSE scenarios</td><td>S4</td><td>Included in the v1.0 conformance baseline</td></tr>
+<tr><td>Sub-workflow node module fixture</td><td>F2</td><td>Included in the v1.0 conformance baseline (<code>subworkflow.test.ts</code> exercises <code>core.subWorkflow</code> parent/child round-trip)</td></tr>
+<tr><td>Recursion-limit enforcement scenarios</td><td>F4 + CC-1</td><td>Included in the v1.0 conformance baseline (<code>cap-breach.test.ts</code> asserts <code>cap.breached</code> precedes <code>run.failed</code>; <code>RunOptions.configurable.recursionLimit</code> is the per-run override)</td></tr>
+<tr><td>Channel TTL reducer fold scenarios</td><td>C3</td><td>Included in the v1.0 conformance baseline (<code>channel-ttl.test.ts</code> exercises post-TTL writes evicting prior entries)</td></tr>
+<tr><td>AI cost attribution scenarios</td><td>O4</td><td>Included in the v1.0 conformance baseline (e2e content scenario via <code>conformance.cost.emit</code> fixture node + <code>openwop-smoke-cost-emit</code> fixture workflow; gated on <code>OPENWOP_CONFORMANCE_FIXTURES=1</code>)</td></tr>
+</tbody></table>
+<h2 id="v1-x-minor-protocol-gap-closure-queue">v1.X minor: protocol gap closure queue</h2>
+<p>These are additive profiles, conformance expansions, or clarifying annexes that close the remaining gaps identified in the 2026-05-10 deep-dive review. They MUST NOT break v1 wire compatibility.</p>
+<h3 id="phases-h-i-close-out-2026-05-12-myndhyve-ai-launch-readiness">Phases H + I close-out (2026-05-12 — myndhyve.ai launch-readiness)</h3>
+<p>The 2026-05-12 architect review framed the remaining gap-closure work as <strong>myndhyve.ai launch-readiness</strong> on the Postgres reference host. Two phased batches landed:</p>
+<ul>
+<li><strong>Phase H — launch-blockers (9/9 closed):</strong> BYOK / <code>aiProviders</code> with 4-mode policy enforcement (<code>disabled</code> / <code>optional</code> / <code>required</code> / <code>restricted</code>) + <code>core.llm.chat</code> + <code>core.llm.completion</code>; MCP client (<code>core.mcp.toolCall</code> over HTTP/JSON-RPC, <code>trustBoundary: &quot;untrusted&quot;</code> per <code>threat-model-prompt-injection.md</code> §UNTRUSTED); HTTP client (<code>core.http.request</code> with SSRF guard + 1 MiB response cap); cap-breach + configurable-schema enforcement; SECURITY invariants <code>mcp-toolcall-payload-redaction</code> + <code>http-client-ssrf-guard</code>; SDK wire-type + error-code catalog additions (TS/Python/Go).</li>
+<li><strong>Phase I — enterprise-blockers (11/11 closed):</strong> MemoryAdapter (RFC 0004) read-side <code>list</code> + <code>get</code> with CTI-1 cross-tenant isolation + TTL enforcement; <code>capabilities.agents</code> advertisement (Phase 1–6) + reasoning verbosity governance helpers; API-key rotation (two-key overlap + canary-redaction; conditional advertisement); auth-scoped discovery (tenant2 narrowed view, strict subset); <strong>OAuth2-CC + OIDC user-bearer JWT validators</strong> (RS256 + ES256 via <code>node:crypto</code>; JWKS fetch + 10-minute cache with re-fetch on <code>kid</code> miss; <code>alg: &quot;none&quot;</code> rejected; canary-redaction; 10-path smoke); mTLS termination; reasoning-event emission; subworkflow outputMapping + parent linkage (G3); protocol-tier SECURITY invariants for agent memory, auth rotation, MCP redaction, HTTP SSRF, and memory compaction. <strong>Pack-registry consumption landed 2026-05-15</strong> via <code>examples/hosts/postgres/src/pack-consumer.ts</code> — canonical SRI + Ed25519 + version-drift + lockfile-schema validation with typed fail-closed errors; 9-path host smoke against <code>core.openwop.examples@1.0.0</code> — closing the 11th line and the Phase I batch as a whole.</li>
+</ul>
+<p><strong>Postgres host conformance pass rate: 781/850 (91.9%)</strong> — 96.4% of applicable scenarios, measured against suite v1.1.0 with conditional profiles advertised. The single recorded failure (<code>webhook-signed-delivery</code>) is documented as a full-suite timing collision that passes in isolation. See <code>INTEROP-MATRIX.md</code> for the full evidence claim.</p>
+<table>
+<thead><tr><th>Track</th><th>Gap closed</th><th>Deliverable</th></tr></thead>
+<tbody>
+<tr><td>Capability handshake hardening</td><td><code>Capabilities-Etag</code>, non-HTTP negotiation, per-tenant capability views</td><td>Spec annex shipped in <code>capabilities-change-detection.md</code>; <code>discovery.test.ts</code> covers optional <code>Capabilities-Etag</code>. <strong>Auth-scoped discovery (RFC 0011 §A "Scoped capability views") verified end-to-end</strong> on the Postgres host (2026-05-12 Phase I.5) — <code>OPENWOP_TENANT2_API_KEY</code> activates a narrowed view (orchestrator + dispatch omitted, strict subset per the spec annex line 69) alongside the existing SQLite host implementation.</td></tr>
+<tr><td>Auth profile</td><td>OAuth2 client credentials, API-key rotation/grace period, OIDC user-bearer, optional mTLS</td><td>Spec annex shipped in <code>auth-profiles.md</code>. <strong>API-key rotation verified end-to-end</strong> on the Postgres host (2026-05-12 Phase I.6). <strong>OAuth2-CC + OIDC user-bearer verified end-to-end</strong> on the Postgres host (2026-05-12 Phase I.3 + I.4) via <code>examples/hosts/postgres/src/jwt-validator.ts</code> — JWKS fetch + RS256/ES256 verification with <code>node:crypto</code>, 10-minute cache with re-fetch on <code>kid</code> miss, explicit <code>alg: &quot;none&quot;</code> rejection, canary-redaction in 401 envelope; 10-path smoke (<code>test/oauth2-oidc.test.ts</code>) covers positive + 6 negative + canary paths. Conditional advertisement when issuer/audience env vars are set. <strong>mTLS is verified end-to-end</strong> on Postgres when <code>OPENWOP_MTLS_CERT_PATH</code> + <code>OPENWOP_MTLS_KEY_PATH</code> are configured.</td></tr>
+<tr><td>Interrupt profile</td><td>Multi-approver quorum, parent/child cancellation, external-event matching, <code>auth-required</code></td><td>Spec annex shipped in <code>interrupt-profiles.md</code>; four fixtures shipped 2026-05-10 (<code>conformance-interrupt-{quorum,external-event,auth-required,parent-child-cancel}.json</code>) + matching conformance scenarios (<code>interrupt-{quorum-resolution,external-event-correlation,auth-required-resume,parent-child-cascade}.test.ts</code>). Track closed.</td></tr>
+<tr><td>Replay profile</td><td>Fork from arbitrary event types, retention/GC, PII replay policy, determinism scoring</td><td>Retention, privacy, and scoring semantics added to <code>replay.md</code>; arbitrary-event fork shipped (<code>replay-fork-arbitrary.test.ts</code>) + deterministic replay shipped (<code>replayDeterminism.test.ts</code>) + retention-expiry shipped (<code>replay-retention-expiry.test.ts</code>) — graded B in <code>coverage.md:63</code> (capability-shape always; 410/422 envelope assertions gated on <code>OPENWOP_TEST_EXPIRED_REPLAY_RUN_ID</code>). Remaining work is host-side: RFC 0009 Q#1 (force-expire endpoint normation) gates the path from B to A. The new LLM cache-key recipe scenario (<code>replay-llm-cache-key.test.ts</code>, replay.md §"LLM cache-key recipe" §B) also shipped in <code>@openwop/openwop-conformance@1.3.0</code>.</td></tr>
+<tr><td>MCP/A2A roundtrip</td><td>Integration docs are strong but roundtrip proof is thin</td><td><code>mcp-tool-roundtrip.test.ts</code> + <code>a2a-task-roundtrip.test.ts</code> shipped with synthetic peer fixtures; real-impl interop env vars (<code>OPENWOP_MCP_REAL_SERVER_URL</code>, <code>OPENWOP_A2A_REAL_PEER_URL</code>) wired 2026-05-11; next publish cross-impl evidence as a "Composition partners" subsection in <code>INTEROP-MATRIX.md</code> (out-of-band operator step).</td></tr>
+<tr><td>Endpoint coverage manifest</td><td>Ensure every OpenAPI operation has positive + negative conformance evidence</td><td>Manual map shipped in <code>conformance/coverage.md</code>; <code>route-coverage.test.ts</code> adds direct workflow/artifact/webhook probes; <code>spec-corpus-validity.test.ts</code> now verifies every OpenAPI <code>operationId</code> appears in the map.</td></tr>
+<tr><td>Production profile</td><td>Queueing/backpressure, retry durability, event retention, high-volume debug bundle behavior</td><td>Spec annex shipped in <code>production-profile.md</code>; <code>INTEROP-MATRIX.md</code> records production-profile claims separately. <strong>7 production-profile scenarios shipped</strong> (<code>production-backpressure</code>, <code>production-retention-expiry</code>, <code>restart-during-run</code>, <code>staleClaim</code>, <code>debug-bundle-truncation</code>, <code>idempotency</code>, <code>idempotencyRetry</code>); Postgres reference host advertises <code>capabilities.production.supported: true</code> since 2026-05-11 and passes all 11 assertions across the 5 non-opt-in scenarios per <code>coverage.md:58</code>. Track is substantively closed at B+; path to A gated on RFC 0009 Q#1 + Q#3.</td></tr>
+</tbody></table>
+<p>Hosts publish which suite version they pass; non-pass on a later suite is <strong>not</strong> a v1 conformance regression.</p>
+<h2 id="v1-2-outlook-projected">v1.2 outlook (projected)</h2>
+<p>A projection of what would land in a v1.2 minor — each item carries a <strong>gate condition</strong> that determines whether it ships. The list is descriptive, not a commitment: surfaces only ship when their gate condition is met. Items can move to "Withdrawn" if no implementer adoption signal arrives within the RFC comment window.</p>
+<table>
+<thead><tr><th>Candidate</th><th>Gate</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC 0012 — Memory compaction profile</strong></td><td>Accepted 2026-05-15 after the bootstrap-phase waiver; Postgres advertises and verifies §A advertisement + §B <code>memory.compacted</code> event + §D SR-1 carry-forward when memory compaction is enabled</td><td><code>Accepted</code>. Keep monitoring implementation uptake outside the Postgres reference host and add cross-host provenance evidence when a second host advertises the profile.</td></tr>
+<tr><td><strong>WASM Component Model sub-RFC</strong></td><td>First adopter requests <code>runtime.language: &quot;wasm-component&quot;</code> packs; manifest enum already reserved in <code>node-pack-manifest.schema.json</code>; capability already declared in <code>capabilities.schema.json</code> <code>nodePackRuntimes.wasmComponent</code></td><td>Reserved. The hand-rolled imports/exports of <a href="./RFCS/0008-wasm-abi.md">RFC 0008 §C</a> get replaced by WIT-defined interfaces. Loader implementation gated on Wasmtime ≥ 14 (Component Model GA).</td></tr>
+<tr><td><strong>Rust SDK v0.1</strong></td><td>Concrete adopter asks for it OR a non-steward host implementation lands in Rust</td><td><code>Demand-gated</code>. The conformance suite is language-agnostic, so a Rust client tests against the same wire contract; the question is whether anyone is writing one. No flip without adopter pull.</td></tr>
+<tr><td>**4 audit-gated <code>core.openwop.*</code> packs**</td><td>External security audit completes per <code>SECURITY/external-audit-engagement.md</code>; the <code>community-openwop-team-demo-1</code>-style namespace-scoped per-tier key for the steward team is operational</td><td>Built + signed in-tree at <code>registry/v1/packs/core.openwop.{ai,http,mcp,triggers}/-/1.0.0.{tgz,sig,sbom.json,json}</code>. Publication to <code>packs.openwop.dev</code> is the only blocked step. Audit outreach drafts ready at <code>SECURITY/outreach/external-audit/</code> for Trail of Bits / NCC Group / Doyensec / Cure53 / Latacora.</td></tr>
+<tr><td><strong>Cross-host SSE replay verification</strong></td><td><code>core.subWorkflow</code> advertised + capability-gated trace-propagation scenario added</td><td><strong>Closed 2026-05-13.</strong> Shipped as <code>otel-trace-propagation-subworkflow.test.ts</code> (Track 11 close-out) — asserts parent + child runs share the inbound traceparent's traceId across the <code>core.subWorkflow</code> dispatch boundary. <code>conformance/coverage.md:56</code> records it as A-grade with <code>full</code> scope. Now consumer-installable via <code>@openwop/openwop-conformance@1.3.0</code> (published 2026-05-19) — downstream hosts pick up the assertion on their next suite-version pin.</td></tr>
+<tr><td><strong>mTLS certificate-matrix hardening</strong></td><td>Operators need documented CA/server/client-cert recipes and optional reverse-proxy deployment guidance beyond the Postgres direct-listener smoke</td><td>Postgres now verifies <code>openwop-auth-mtls</code> end-to-end when configured. Remaining work is operator documentation and broader certificate-matrix coverage.</td></tr>
+<tr><td><strong>Multi-region idempotency end-to-end fixture</strong></td><td>Host advertises <code>capabilities.idempotency.crossRegion: &quot;best-effort&quot;</code> (or <code>&quot;strict&quot;</code>)</td><td>Spec is in <code>idempotency.md</code> §"Multi-region idempotency (annex)"; existing scenario <code>multi-region-idempotency.test.ts</code> covers capability-shape only. ~half-day to add behavior assertion against the documented MUSTs.</td></tr>
+</tbody></table>
+<p>v1.2 ships when 1-2 of these mature; the rest move to the next minor or to <code>Withdrawn</code>. No fixed calendar.</p>
+<h2 id="post-v1-ecosystem">Post-v1 ecosystem</h2>
+<p>These are larger initiatives that expand the openwop ecosystem without modifying the v1 contract.</p>
+<h3 id="optional-capability-profiles">Optional capability profiles</h3>
+<p>Capability profiles are clusters of optional behaviors a host can advertise via <code>/.well-known/openwop</code>. They are documented as separate spec annexes. Each profile has its own conformance scenarios shipped as part of <code>@openwop/openwop-conformance</code> and run only when the profile is advertised.</p>
+<table>
+<thead><tr><th>Profile</th><th>Status</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td>BYOK / secret resolution</td><td>Spec landed (<code>run-options.md</code> §"Credential references"); conformance coverage includes capability-shape, redaction, adversarial redaction, and positive-path resolve roundtrip via <code>conformance.secret.echo</code> fixture node</td><td>Optional. Hosts that don't advertise <code>capabilities.secrets.supported = true</code> skip these scenarios.</td></tr>
+<tr><td>Replay / fork</td><td>Spec landed (<code>replay.md</code>); conformance partial — <code>replay-fork.test.ts</code> + <code>replayDeterminism.test.ts</code> cover replay-cache hit / divergence-event / receipt-required; fork-from-arbitrary-event-types coverage incomplete</td><td>Optional.</td></tr>
+<tr><td>Channel TTL</td><td>Spec landed (<code>channels-and-reducers.md</code>); included in the v1.0 conformance baseline (<code>channel-ttl.test.ts</code>)</td><td>Optional.</td></tr>
+<tr><td>Cost attribution</td><td>Spec landed (<code>observability.md</code> §"AI cost"); included in the v1.0 conformance baseline (e2e via <code>conformance.cost.emit</code> fixture node)</td><td>Optional.</td></tr>
+<tr><td>Memory compaction</td><td><code>Accepted</code> — RFC 0012 (<code>RFCS/0012-memory-compaction-profile.md</code>, accepted 2026-05-15). Defines optional <code>capabilities.memory.compaction</code> advertisement, <code>memory.compacted</code> event, and the SR-1 carry-forward invariant that extends RFC 0004 §D through host-side memory distillation. Postgres implements the profile when <code>OPENWOP_MEMORY_COMPACTION=true</code>; conformance scenarios cover event emission, SR-1 carry-forward, and provenance tag shape.</td><td>Optional. Drives no v1 contract change; implementation remains host-advertised.</td></tr>
+</tbody></table>
+<h3 id="hosted-infrastructure">Hosted infrastructure</h3>
+<table>
+<thead><tr><th>Item</th><th>Status</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td>Hosted node-pack registry (<code>packs.openwop.dev</code>)</td><td>Live</td><td>Discovery + index + per-pack manifest + tarball endpoints serve from <code>packs.openwop.dev</code> per <code>registry-operations.md</code>. <strong>62 packs published as of 2026-05-21</strong> across four trust tiers: 22 <code>core.openwop.<em></code> (framework primitives), 1 <code>community.openwop-team.</em></code> (community demo), 1 <code>vendor.openwop.<em></code> (rust-hello WASM reference), 38 <code>vendor.myndhyve.</em></code> (canvas-vertical reference packs). Categorized inventory: <a href="./docs/PACK-CATALOG.md"><code>docs/PACK-CATALOG.md</code></a>. Reference compositions: <a href="./examples/market-intel-pipeline/"><code>examples/market-intel-pipeline/</code></a> (9 packs) + <a href="./examples/ads-publish-pipeline/"><code>examples/ads-publish-pipeline/</code></a> (8 packs × 3 platform variants). Stage 1–4 (operational maturity) shipped 2026-05-12: WIF auto-deploy, CycloneDX SBOMs, registry CVE feed + OSV scanning, Cloud Monitoring uptime check. Write API and lifecycle ops (yank / deprecate / key rotation) ship via pull-request publishing on GitHub. Public healthcheck: <code>conformance/src/scenarios/registry-public.test.ts</code>.</td></tr>
+<tr><td>Hosted docs + conformance leaderboard site (<code>openwop.dev</code>)</td><td>Started in <code>site/</code></td><td>Static site builds rendered spec docs, conformance page, profiles, sitemap, OG assets, and per-host badges. Remaining work: publish hosting + live leaderboard updates.</td></tr>
+<tr><td>Public CI for community contributions</td><td>In source tree</td><td>Workflows exist in <code>.github/workflows/</code>; remaining work is public runner validation after repository publication.</td></tr>
+</tbody></table>
+<h3 id="sdk-expansion">SDK expansion</h3>
+<p>Additional SDKs ship only when there is concrete demand. The current set (TS, Python, Go) covers the most common host implementation languages. Candidates if requested: Rust, Java/Kotlin, Ruby, .NET.</p>
+<h3 id="implementation-ecosystem">Implementation ecosystem</h3>
+<table>
+<thead><tr><th>Item</th><th>Status</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td>Production-host conformance certification</td><td>In progress</td><td>Two reference hosts under <code>examples/hosts/</code> (in-memory + SQLite) demonstrate the protocol cross-implements; production-host certifications are tracked via public conformance evidence in <code>INTEROP-MATRIX.md</code>.</td></tr>
+<tr><td>Second independent host implementation (non-steward maintainer)</td><td>Not started</td><td>Needed to graduate to working-group governance per <code>GOVERNANCE.md</code>. The two example reference hosts prove the protocol works cross-implementation; the graduation step is a non-steward org adopting and passing conformance.</td></tr>
+<tr><td>Third-party node-pack catalog</td><td>Not started</td><td>Depends on hosted registry.</td></tr>
+</tbody></table>
+<h3 id="canonical-domain">Canonical Domain</h3>
+<p>Forward-looking domain references in the spec corpus and roadmap use <code>openwop.dev</code>.</p>
+<p>Three rules for domain usage:</p>
+<p>1. <strong>All forward-looking public URLs</strong> (<code>packs.openwop.dev</code>, <code>openwop.dev/openwop-conformance</code>, etc.) use <code>openwop.dev</code>. 2. <strong>Existing GitHub URLs and package names stay verbatim</strong> (<code>github.com/openwop/openwop</code>, <code>@openwop/openwop</code>, <code>openwop-client</code>, <code>github.com/openwop/openwop/sdk/go</code>). These are the canonical artifact identifiers and are guaranteed stable through any v1.x release per <code>PUBLISHING.md</code>. The Go module path in particular cannot be redirected without a forced rewrite for every importer; the migration plan documents the cost honestly rather than minimizing it. 3. <strong>Internal references in steward-private docs</strong> are not normative and may use any name; this convention applies only to the public spec corpus, this ROADMAP, and the conformance suite.</p>
+<h3 id="vendor-neutral-org-migration">Vendor-neutral org migration</h3>
+<p>The repository is currently at <code>github.com/openwop/openwop</code>. Migration to a vendor-neutral org (target name: <code>openwop-spec/openwop</code>) is planned but <strong>not on a calendar schedule</strong>. The migration has a single tripwire:</p>
+<blockquote><p><strong>Migration to <code>openwop-spec/openwop</code> is initiated when <code>MAINTAINERS.md</code> lists at least one maintainer not affiliated with the original steward (OpenWOP).</strong></p></blockquote>
+<p>When the tripwire fires, the migration plan is:</p>
+<p>1. Open an RFC per <code>RFCS/0001-rfc-process.md</code> proposing the new org name and the mechanics (redirect, DNS, package owner transfer, CHANGELOG entry). 2. Ratify by maintainer lazy consensus (per <code>GOVERNANCE.md</code>). 3. Move the repository; configure <code>github.com/openwop/openwop</code> as a permanent redirect. 4. Transfer ownership of npm scopes and PyPI/Go module names; old names continue resolving via metadata redirects where the package registry supports it. 5. Update all in-spec links to the new canonical URL in the next minor release.</p>
+<p>Until the tripwire fires, the canonical URL remains <code>github.com/openwop/openwop</code>. External implementers can rely on this URL through any v1.x release; migration will be announced via CHANGELOG, README banner, and direct outreach to known third-party implementers (per <code>MAINTAINERS.md</code> if the maintainer set has expanded).</p>
+<p>Recruiting external maintainers is <strong>out of band</strong>. <code>MAINTAINERS.md</code> documents the criteria and process; this roadmap does not commit to a recruitment timeline.</p>
+<h2 id="what-this-roadmap-does-not-commit-to">What this roadmap does not commit to</h2>
+<ul>
+<li>A specific date for v1 or v2.0.</li>
+<li>Any breaking change to the v1 wire contract.</li>
+<li>Adoption by any specific vendor or platform.</li>
+<li>Hosting infrastructure on any specific cloud. Forward-looking spec/registry/leaderboard URLs use <code>openwop.dev</code>; the deployment substrate (cloud provider, runtime) is similarly undecided.</li>
+<li>Migration of the repository to a different organization on a specific timeline (planned but not scheduled — gated on the tripwire described above and in <code>MAINTAINERS.md</code>).</li>
+</ul>
+<h2 id="how-to-influence-the-roadmap">How to influence the roadmap</h2>
+<ul>
+<li><strong>File an issue</strong> with the <code>roadmap</code> label. Include the use case, not just the feature request.</li>
+<li><strong>Open a conformance report</strong> if your implementation needs a scenario that doesn't exist yet.</li>
+<li><strong>Author an RFC</strong> for a new capability profile. Profile RFCs follow the spec change process in <code>GOVERNANCE.md</code>.</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

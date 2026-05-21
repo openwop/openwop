@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — RFC 0013: Workflow-chain packs</title>
+  <meta name="description" content="OpenWOP today publishes node packs at packs.openwop.dev — each pack contributes one or more typeIds with executable defineNode() implementations. A separate class of pack-like artifact exists in the wild but has no normative home: pre-configured DAG…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0013-workflow-chain-packs.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — RFC 0013: Workflow-chain packs"/>
+  <meta property="og:description" content="OpenWOP today publishes node packs at packs.openwop.dev — each pack contributes one or more typeIds with executable defineNode() implementations. A separate class of pack-like artifact exists in the wild but has no normative home: pre-configured DAG…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0013-workflow-chain-packs.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — RFC 0013: Workflow-chain packs"/>
+  <meta name="twitter:description" content="OpenWOP today publishes node packs at packs.openwop.dev — each pack contributes one or more typeIds with executable defineNode() implementations. A separate class of pack-like artifact exists in the wild but has no normative home: pre-configured DAG…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="" href="/spec/v1/">Spec</a>
+      <a class="active" href="/rfcs/">RFCs</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/changelog/">Changelog</a>
+      <a class="" href="/faq/">FAQ</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="rfc-0013-workflow-chain-packs">RFC 0013: Workflow-chain packs</h1>
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0013</td></tr>
+<tr><td><strong>Title</strong></td><td>Workflow-chain packs (pre-configured DAG fragments published as registry artifacts)</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>David Tufts (@dtuftsg)</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-13</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-18 (Active → Accepted: reference-host expansion landed)</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>spec/v1/node-packs.md</code>, new <code>spec/v1/workflow-chain-packs.md</code>, <code>schemas/pack-manifest.schema.json</code>, registry HTTP API</td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code> — introduces a new pack kind alongside the existing node-pack format; no existing surface changes</td></tr>
+<tr><td><strong>Supersedes</strong></td><td>—</td></tr>
+<tr><td><strong>Superseded by</strong></td><td>—</td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>OpenWOP today publishes <strong>node packs</strong> at <code>packs.openwop.dev</code> — each pack contributes one or more <code>typeId</code>s with executable <code>defineNode()</code> implementations. A separate class of pack-like artifact exists in the wild but has no normative home: <strong>pre-configured DAG fragments</strong> that workflow authors use as a single drag-tile abstraction (a "Generate PRD" tile that expands into a <code>core.ai.callPrompt</code> with specific systemPrompt + envelope type + config). This RFC proposes <strong>workflow-chain packs</strong> as a first-class additive pack kind — registry-published sub-DAG fragments that expand at workflow-author time into concrete <code>core.*</code> typeId graphs. Node packs and workflow-chain packs coexist; consumers (registry, authors, hosts) distinguish them by manifest field.</p>
+<h2 id="motivation">Motivation</h2>
+<p>The CANVAS-PACKS-INVENTORY audit (<a href="../docs/CANVAS-PACKS-INVENTORY.md"><code>docs/CANVAS-PACKS-INVENTORY.md</code></a>, v2 revision 2026-05-12) cataloged <strong>30 real <code>defineNode()</code> executors</strong> that became node packs through Phases A+B+C. The same audit identified <strong>55 additional typeIds</strong> that exist in canvas authoring surfaces (App Builder palette, Campaign Studio drag-tile catalog, Landing Page step library) but have <strong>no executor</strong>. These are "editor presets" — labeled tiles in a canvas UI that, when dropped, expand into pre-configured <code>core.ai.callPrompt</code> or other framework nodes.</p>
+<p>Today the 55 presets live in host-internal canvas registries (MyndHyve's <code>src/canvas-types/*/nodes/index.ts</code> <code>NodeTypeDefinition</code> declarations). They can't be published to <code>packs.openwop.dev</code> because:</p>
+<p>1. Publishing them as node packs is a category error — they have no runtime executor. A consumer host fetching one would crash at dispatch with <code>unknown_typeid</code>. 2. Embedding their config inside the workflow JSON every time the author drops the tile defeats the abstraction (re-typing the same prompt + envelope + variables across every workflow). 3. Sharing them across hosts (e.g., the openwop reference postgres host adopting App Builder) requires re-authoring the canvas-internal preset library from scratch per host — wasteful and divergence-prone.</p>
+<p>Workflow-chain packs solve all three: a pack manifest declares a DAG fragment + parameter schema, the registry signs + verifies it, and host workflow editors expand it inline when the author selects the tile. The DAG fragment uses only existing <code>core.*</code> (or other published vendor) typeIds — preserving the spec's "every dispatched typeId has a runtime executor" invariant.</p>
+<p><strong>Implementer pain.</strong> MyndHyve carries 55 preset typeIds in its canvas registry. Three openwop hosts have expressed interest in adopting App Builder + Campaign Studio canvases but none have the cycles to re-author the preset library. The audit's v2 conclusion: "Phase D opens an RFC for workflow-chain packs as the principled long-term home for these 55 abstractions."</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="manifest-distinguishes-pack-kind">Manifest distinguishes pack kind</h3>
+<p>Extend <code>pack.json</code> with a top-level <code>kind</code> field. <code>kind: &quot;node&quot;</code> is the existing behavior (default when omitted, preserving backward-compat with all existing manifests). <code>kind: &quot;workflow-chain&quot;</code> is the new pack kind specified below.</p>
+<pre class="lang-diff"><code> {
+   &quot;name&quot;: &quot;vendor.myndhyve.app-builder-presets&quot;,
+   &quot;version&quot;: &quot;1.0.0&quot;,
++  &quot;kind&quot;: &quot;workflow-chain&quot;,
+   &quot;description&quot;: &quot;...&quot;,
+   &quot;engines&quot;: { &quot;openwop&quot;: &quot;&gt;=1.0.0 &amp;lt;2.0.0&amp;quot; },
+-  &amp;quot;nodes&amp;quot;: [...]
++  &amp;quot;chains&amp;quot;: [
++    {
++      &amp;quot;chainId&amp;quot;: &amp;quot;app-builder.generatePRD&amp;quot;,
++      &amp;quot;version&amp;quot;: &amp;quot;1.0.0&amp;quot;,
++      &amp;quot;label&amp;quot;: &amp;quot;Generate PRD&amp;quot;,
++      &amp;quot;description&amp;quot;: &amp;quot;Drag-tile that expands to a core.ai.callPrompt with the PRD authoring system prompt + envelope binding.&amp;quot;,
++      &amp;quot;parameters&amp;quot;: { /* JSON Schema for chain parameters */ },
++      &amp;quot;dag&amp;quot;: { /* inline WorkflowDefinition fragment */ }
++    }
++  ]
+ }</code></pre>
+<p>A pack MUST have exactly one of <code>nodes[]</code> (kind=node) OR <code>chains[]</code> (kind=workflow-chain). Mixing is rejected at manifest validation with <code>pack_kind_invalid</code>.</p>
+<h3 id="workflow-chain-pack-json-schema">Workflow-chain pack JSON Schema</h3>
+<p>New schema file <code>schemas/pack-manifest-workflow-chain.schema.json</code> (peer to the existing <code>pack-manifest.schema.json</code>). Each chain entry:</p>
+<pre class="lang-typescript"><code>interface WorkflowChain {
+  chainId: string;                  // e.g., &amp;quot;app-builder.generatePRD&amp;quot; — namespaced like node typeIds
+  version: string;                  // semver; independent of pack-level version
+  label: string;                    // UI display
+  description: string;
+  parameters: object;               // JSON Schema for parameters the host editor collects
+  dag: WorkflowDefinitionFragment;  // see below
+  outputs?: {                       // declared chain outputs surfaced to the parent workflow
+    [name: string]: { type: string, description: string };
+  };
+  capabilities?: string[];          // forwarded [&amp;quot;side-effectful&amp;quot; / &amp;quot;idempotent&amp;quot;] — propagated to expanded nodes
+}</code></pre>
+<h3 id="workflowdefinitionfragment">WorkflowDefinitionFragment</h3>
+<p>A subset of the existing <code>schemas/workflow-definition.schema.json</code>. Differences from a top-level workflow:</p>
+<table>
+<thead><tr><th>Field</th><th>Behavior in fragment</th></tr></thead>
+<tbody>
+<tr><td><code>id</code> / <code>name</code> / <code>version</code></td><td>Omitted; the host generates per-expansion (e.g., <code>${parentWorkflow.id}::${chainId}::${expansionId}</code>)</td></tr>
+<tr><td><code>triggers</code> / <code>settings</code> / <code>metadata</code></td><td>Omitted; inherited from parent workflow</td></tr>
+<tr><td><code>variables</code></td><td>Replaced by <code>parameters</code> — the chain author declares parameter names + JSON-Schema types; host editor collects values at author-time</td></tr>
+<tr><td><code>nodes[]</code></td><td>Required. Each node&#39;s <code>typeId</code> MUST reference an already-published node-pack typeId OR a <code>core.*</code> framework typeId. Forward-references to other chain packs MAY be allowed in a future RFC.</td></tr>
+<tr><td><code>edges[]</code></td><td>Required if nodes &gt; 1.</td></tr>
+</tbody></table>
+<p>Inside the fragment, parameter substitution syntax: <code>{{params.&amp;lt;name&amp;gt;}}</code> in any string field. Hosts MUST resolve these at expansion time (not at dispatch time) — substitution is a workflow-edit-time concern.</p>
+<h3 id="expansion-semantics-host-side-normative">Expansion semantics (host-side, normative)</h3>
+<p>When a workflow author drops a workflow-chain tile (<code>chainId</code>), the host workflow editor MUST:</p>
+<p>1. Resolve the chain via the published registry: <code>GET /v1/packs/&amp;lt;packName&amp;gt;/-/&amp;lt;version&amp;gt;.tgz</code> → extract pack manifest → find matching <code>chainId</code>. 2. Verify the pack signature per <code>registry-operations.md</code> §Signature-verification (same flow as node packs). 3. Prompt the author for <code>parameters</code> values per the chain's JSON Schema. 4. Substitute <code>{{params.&amp;lt;name&amp;gt;}}</code> placeholders throughout the chain's <code>dag.nodes[].config / inputs</code> (recursively into any nested string values). 5. Rename node ids to avoid collision with the parent workflow (e.g., prefix with <code>${chainId-slug}_${expansionId}_</code>). 6. Splice the resulting nodes + edges into the parent workflow's DAG, connecting the chain's entry/exit nodes to the parent's adjacent nodes. 7. Persist the expanded result in the parent workflow's JSON. <strong>The chain reference is NOT preserved at runtime</strong> — dispatching hosts see only the concrete <code>core.*</code> typeIds. The chain pack acts purely as an author-time abstraction.</p>
+<h3 id="what-hosts-dispatch">What hosts dispatch</h3>
+<p>Dispatching hosts see normal <code>core.*</code> (or vendor node-pack) typeIds. No new dispatch surface is needed — the workflow that reaches the runtime is already fully expanded. This is the key invariant that preserves backward-compat: <strong>a workflow author can switch hosts without their workflows breaking, because the expanded JSON references only typeIds the destination host's pack registry can resolve via existing node-pack discovery</strong>.</p>
+<h3 id="capability-propagation">Capability propagation</h3>
+<p>When a chain declares <code>capabilities: [&quot;side-effectful&quot;]</code>, every expanded node inherits that capability annotation (the host editor adds <code>capabilities</code> to each expanded <code>WorkflowNode</code>). This preserves the runtime's ability to gate side-effectful nodes via existing capability checks.</p>
+<h3 id="registry-distinguishes-by-kind-in-index">Registry distinguishes by kind in index</h3>
+<p>The registry's <code>/v1/index.json</code> already lists packs by name. Each pack entry MUST surface the <code>kind</code> field for filter/discovery:</p>
+<pre class="lang-json"><code>{
+  &quot;packs&quot;: [
+    {
+      &quot;name&quot;: &quot;vendor.myndhyve.app-builder-presets&quot;,
+      &quot;kind&quot;: &quot;workflow-chain&quot;,
+      &quot;latest&quot;: &quot;1.0.0&quot;,
+      &quot;typeIds&quot;: [&quot;app-builder.generatePRD&quot;, &quot;app-builder.generateDesignSystem&quot;, ...]
+    }
+  ]
+}</code></pre>
+<p><code>typeIds</code> in the index refers to <code>chainId</code>s for workflow-chain packs (parallel to <code>typeId</code>s for node packs). Consumer tooling (workflow editors, conformance scenarios) MUST inspect <code>kind</code> before assuming dispatch semantics.</p>
+<h3 id="positive-example">Positive example</h3>
+<p><code>vendor.myndhyve.app-builder-presets</code> ships a chain <code>app-builder.generatePRD</code>:</p>
+<pre class="lang-json"><code>{
+  &quot;chainId&quot;: &quot;app-builder.generatePRD&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;label&quot;: &quot;Generate PRD&quot;,
+  &quot;description&quot;: &quot;Generate a Product Requirements Document via a single AI call with the PRD-authoring system prompt.&quot;,
+  &quot;parameters&quot;: {
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;required&quot;: [&quot;productIdea&quot;],
+    &quot;properties&quot;: {
+      &quot;productIdea&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;One-paragraph product description.&quot; },
+      &quot;targetAudience&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;default&quot;: &quot;&quot; }
+    }
+  },
+  &quot;dag&quot;: {
+    &quot;nodes&quot;: [
+      {
+        &quot;id&quot;: &quot;prd-call&quot;,
+        &quot;typeId&quot;: &quot;core.ai.callPrompt&quot;,
+        &quot;name&quot;: &quot;Generate PRD&quot;,
+        &quot;position&quot;: { &quot;x&quot;: 0, &quot;y&quot;: 0 },
+        &quot;config&quot;: {
+          &quot;systemPrompt&quot;: &quot;You are a senior product manager. Write a PRD for:\n\nProduct: {{params.productIdea}}\nAudience: {{params.targetAudience}}&quot;,
+          &quot;envelopeType&quot;: &quot;prd.create&quot;,
+          &quot;provider&quot;: &quot;anthropic&quot;
+        },
+        &quot;inputs&quot;: {}
+      }
+    ],
+    &quot;edges&quot;: []
+  },
+  &quot;outputs&quot;: {
+    &quot;prdId&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;PRD artifact id from the envelope payload&quot; }
+  }
+}</code></pre>
+<p>When an author drops this tile on a workflow, the host editor: 1. Asks for <code>productIdea</code> + <code>targetAudience</code> via a parameter form 2. Expands node <code>prd-call</code> with placeholders substituted into the <code>systemPrompt</code> 3. Renames node id to <code>appbuilder_generatePRD_a8f3_prd-call</code> (collision-free) 4. Splices into the parent workflow</p>
+<p>The dispatched workflow contains a normal <code>core.ai.callPrompt</code> node — no new dispatch surface.</p>
+<h3 id="negative-example-rejected-at-manifest-validation">Negative example (rejected at manifest validation)</h3>
+<p>A pack manifest with both <code>nodes[]</code> and <code>chains[]</code>:</p>
+<pre class="lang-json"><code>{
+  &quot;name&quot;: &quot;vendor.acme.mixed&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;kind&quot;: &quot;workflow-chain&quot;,
+  &quot;nodes&quot;: [{ &quot;typeId&quot;: &quot;acme.foo&quot;, ... }],
+  &quot;chains&quot;: [{ &quot;chainId&quot;: &quot;acme.bar&quot;, ... }]
+}</code></pre>
+<p>→ <code>pack_kind_invalid</code>: "manifests MUST have exactly one of <code>nodes[]</code> or <code>chains[]</code>, not both."</p>
+<p>A chain referencing an unpublished typeId:</p>
+<pre class="lang-json"><code>{
+  &quot;chainId&quot;: &quot;vendor.acme.someChain&quot;,
+  &quot;dag&quot;: {
+    &quot;nodes&quot;: [{ &quot;typeId&quot;: &quot;made.up.foo&quot;, ... }],
+    ...
+  }
+}</code></pre>
+<p>→ At workflow-edit time when an author tries to use this chain, the host editor MUST reject expansion with <code>chain_unresolvable_typeid: &#39;made.up.foo&#39;</code>. The pack's manifest validation does NOT cross-check published typeId existence (cycle issues + registry-availability concerns); only the host-editor-time expansion step verifies.</p>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive.</strong> This RFC introduces a new pack kind alongside the existing node-pack format. Specifically:</p>
+<ul>
+<li>New top-level <code>kind</code> field — optional with default <code>&quot;node&quot;</code>, preserving every existing manifest's semantics</li>
+<li>New <code>chains[]</code> array — only present when <code>kind: &quot;workflow-chain&quot;</code>; ignored by node-pack consumers</li>
+<li>Existing node-pack consumers (hosts, conformance scenarios, the registry's HTTP API) require zero changes to keep working</li>
+<li>Workflow editors that don't implement chain expansion can ignore workflow-chain packs entirely (they appear in the registry catalog but won't be drag-tile-presented in the editor); the author can still author the equivalent expanded DAG manually</li>
+</ul>
+<p>No existing pack manifest is invalidated. No existing workflow JSON shape changes (the expanded result uses the existing <code>WorkflowDefinition</code> schema).</p>
+<h2 id="conformance">Conformance</h2>
+<p><strong>Existing scenarios that cover this surface:</strong> none directly. <code>node-pack-publishing</code> conformance scenarios cover node-pack manifest validation + signature verification + dispatch. Workflow-chain packs reuse the signature-verification path but add new validation rules.</p>
+<p><strong>New scenarios needed (proposed):</strong></p>
+<p>1. <code>workflow-chain-pack-manifest-validation.test.ts</code>    - Positive: valid <code>kind: &quot;workflow-chain&quot;</code> manifest with <code>chains[]</code> parses + indexes    - Negative: manifest with both <code>nodes[]</code> and <code>chains[]</code> → <code>pack_kind_invalid</code>    - Negative: chain with <code>chainId</code> not matching <code>&amp;lt;namespace&amp;gt;.&amp;lt;name&amp;gt;</code> pattern → <code>chain_id_invalid</code></p>
+<p>2. <code>workflow-chain-pack-signature-verification.test.ts</code>    - Reuses node-pack-signature-verification fixtures; only the manifest content differs</p>
+<p>3. <code>workflow-chain-expansion.test.ts</code>    - Author submits a workflow referencing a chain at edit-time → host editor expands inline → dispatched workflow contains only <code>core.*</code>/published-vendor typeIds    - Parameter substitution: <code>{{params.foo}}</code> placeholders resolved correctly in <code>config</code> + <code>inputs</code> (recursive into nested strings)    - Node id collision avoidance: same chain expanded twice in one workflow produces non-colliding ids</p>
+<p>4. <code>workflow-chain-unresolvable-typeid.test.ts</code>    - Author drops a chain whose <code>dag.nodes[].typeId</code> references an unpublished pack → expansion rejected with <code>chain_unresolvable_typeid</code></p>
+<p>Each scenario runs only when the host advertises <code>Capabilities.workflowChainPacks: supported</code> (new capability flag).</p>
+<p>A new capability flag <code>workflowChainPacks: supported</code> (boolean) is added to <code>Capabilities</code>. Hosts that don't implement expansion advertise <code>false</code> (or omit), and the conformance suite skips chain-specific scenarios against those hosts.</p>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<h3 id="alt-1-workflow-templates-as-a-separate-registry-surface-not-packs">Alt 1: Workflow templates as a separate registry surface (not packs)</h3>
+<p>Stand up a parallel registry endpoint at <code>templates.openwop.dev</code> for workflow fragments, with its own manifest format. Hosts fetch templates separately from packs.</p>
+<p><strong>Rejected because:</strong> duplicates the signature + namespace + version infrastructure that <code>packs.openwop.dev</code> already operates. Doubles the surface area maintainers must keep synchronized. Workflow authors and host operators get two different registry concepts to reason about, when both serve the same need (publish a reusable workflow contribution under a vendor namespace).</p>
+<h3 id="alt-2-keep-presets-as-host-internal-abstractions">Alt 2: Keep presets as host-internal abstractions</h3>
+<p>Don't publish them at all. Each host implements its own canvas-internal preset library (MyndHyve's current state).</p>
+<p><strong>Rejected because:</strong> the inventory audit's core motivation was cross-host portability. Three hosts have expressed interest in adopting App Builder; doing nothing means each rewrites the preset library independently or copies the source by hand. The whole point of <code>packs.openwop.dev</code> is to avoid that.</p>
+<h3 id="alt-3-sub-workflow-runtime-dispatch-not-expansion">Alt 3: "Sub-workflow" runtime dispatch (not expansion)</h3>
+<p>Instead of expanding at author-time, treat chains as runtime sub-DAG dispatch: the dispatching host sees a <code>vendor.foo.bar</code> typeId and recursively dispatches the inlined sub-DAG.</p>
+<p><strong>Rejected because:</strong> introduces a new runtime dispatch surface (every host MUST implement chain-resolution + sub-DAG dispatch). The author-time expansion approach is purely host-editor-side; runtime hosts see only <code>core.*</code> typeIds they already implement. Lower coordination cost, no runtime spec changes.</p>
+<p>Also: runtime sub-DAG dispatch makes it impossible to debug an expanded chain without round-tripping back to the chain manifest; expansion-at-edit produces flat workflow JSON that's debuggable in the workflow editor.</p>
+<h2 id="unresolved-questions">Unresolved questions</h2>
+<p>1. <strong>Chain-to-chain composition.</strong> Can <code>dag.nodes[].typeId</code> reference another chain pack? The current proposal restricts to node-pack typeIds. If chain-to-chain is allowed: at what depth does expansion recurse? How are circular references detected? Recommended: <strong>disallow in v1</strong> — chain packs can only reference node packs. Revisit in a follow-up RFC.</p>
+<p>2. <strong>Versioning across chain references.</strong> When a chain references <code>core.ai.callPrompt@1.0.0</code>, what happens if a future <code>core.ai.callPrompt@2.0.0</code> ships with a breaking config-schema change? Should the chain pack pin a version, or accept whatever the host's pack registry resolves? Recommended: <strong>chain MUST pin to a specific version per node</strong> (config snapshot at chain author-time), with a <code>min</code> / <code>max</code> range as future enhancement.</p>
+<p>3. <strong>Parameter type system.</strong> The proposal uses JSON Schema for parameters. Should we also support inline templating (Jinja-like control flow) inside the substituted strings, or keep substitution purely literal (<code>{{params.foo}}</code> becomes the raw value)? Recommended: <strong>literal substitution only</strong> in v1; templating is a separate RFC.</p>
+<p>4. <strong>Visual editor UX guidance.</strong> This RFC defines wire shape. Should it also normatively recommend UX conventions (e.g., "drag-tile color matches namespace prefix"; "parameter form generates from JSON Schema annotations")? Recommended: <strong>leave UX to host implementations</strong>; track UX best-practices in a non-normative companion doc.</p>
+<p>5. <strong>Chain dispatch idempotency.</strong> When a chain has <code>capabilities: [&quot;idempotent&quot;]</code>, does that apply to the chain-as-a-whole or to each expanded node? Recommended: <strong>each expanded node inherits the capability annotation</strong>; host MAY further restrict at the run-claim layer per existing dedup rules.</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<p><strong>Phasing recommendation:</strong></p>
+<ul>
+<li><strong>Phase 1 — spec text + schemas</strong> (this RFC).</li>
+</ul>
+<p>  - Land <code>spec/v1/workflow-chain-packs.md</code> with the normative content from this RFC.   - Add <code>schemas/pack-manifest-workflow-chain.schema.json</code>.   - Extend <code>schemas/pack-manifest.schema.json</code> with the <code>kind</code> field.   - Add <code>Capabilities.workflowChainPacks</code> boolean.</p>
+<ul>
+<li><strong>Phase 2 — registry support.</strong></li>
+</ul>
+<p>  - Build-index script (<code>registry/scripts/build-index.mjs</code>) recognizes the new manifest kind, lists <code>chainId</code>s in <code>typeIds[]</code>, emits per-pack <code>kind</code> field.   - Conformance check (<code>registry/scripts/conformance-check.mjs</code>) validates <code>dag</code> fragments against <code>workflow-definition.schema.json</code> (relaxed: optional <code>id</code>/<code>name</code>/etc.).</p>
+<ul>
+<li><strong>Phase 3 — reference host implementation.</strong></li>
+</ul>
+<p>  - One openwop reference host (the in-memory host is the natural fit) implements expansion in its workflow editor.   - Conformance scenarios merged.</p>
+<ul>
+<li><strong>Phase 4 — first chain pack publish.</strong></li>
+</ul>
+<p>  - Publish <code>vendor.myndhyve.app-builder-presets</code> covering the 10 App Builder editor presets from the inventory audit.   - Then <code>vendor.myndhyve.campaign-studio-presets</code> (~30 typeIds in the audit), <code>vendor.myndhyve.landing-page-presets</code> (~10), <code>vendor.myndhyve.slides-presets</code> (~5).</p>
+<p><strong>Estimated effort:</strong></p>
+<ul>
+<li>Phase 1: ~2 days (spec writing).</li>
+<li>Phase 2: ~3 days (build-index + conformance-check + registry indexing).</li>
+<li>Phase 3: ~5 days (reference host editor work — UI for parameter prompting, expansion, id-rewriting).</li>
+<li>Phase 4: ~5 days per vendor (3 vendors × 5 days = ~3 weeks).</li>
+</ul>
+<p><strong>Total</strong>: ~6 weeks elapsed to fully ship the 55 unpublished presets.</p>
+<p><strong>Cross-references:</strong></p>
+<ul>
+<li><a href="../docs/CANVAS-PACKS-INVENTORY.md"><code>docs/CANVAS-PACKS-INVENTORY.md</code></a> — the audit that motivates this RFC; v3 closure documents the 55 unpublished typeIds.</li>
+<li><a href="../spec/v1/node-packs.md"><code>spec/v1/node-packs.md</code></a> — companion spec for node packs (the existing pack kind).</li>
+<li><a href="../schemas/workflow-definition.schema.json"><code>spec/v1/workflow-definition.schema.json</code></a> — the schema that <code>WorkflowDefinitionFragment</code> references.</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<p>Promotion to <code>Active</code> (2026-05-18 — spec + tooling + tests merged, reference host pending):</p>
+<ul>
+<li>[x] Spec text merged: new <code>spec/v1/workflow-chain-packs.md</code> document + diff to <code>node-packs.md</code> cross-referencing.</li>
+<li>[x] Schema files merged: <code>workflow-chain-pack-manifest.schema.json</code> (peer to <code>node-pack-manifest.schema.json</code>; kind=workflow-chain manifests validate against this schema, kind=node manifests against the existing node-pack schema — see <code>node-packs.md</code> §"Pack kinds" for the discriminator).</li>
+<li>[x] <code>Capabilities.workflowChainPacks</code> documented in <code>capabilities.md</code> + advertised via <code>capabilities.schema.json</code>.</li>
+<li>[x] Build-index + conformance-check scripts updated to recognize <code>kind: &quot;workflow-chain&quot;</code> manifests.</li>
+<li>[x] All four conformance scenarios merged: <code>workflow-chain-pack-manifest-validation.test.ts</code>, <code>workflow-chain-pack-signature-verification.test.ts</code>, <code>workflow-chain-expansion.test.ts</code>, <code>workflow-chain-unresolvable-typeid.test.ts</code>.</li>
+<li>[x] In-tree example pack <code>examples/packs/workflow-chain-sample/</code> (two chains: 1-node + multi-node) — proves the manifest format is implementable end-to-end.</li>
+<li>[x] CHANGELOG entries under <code>[1.1.2 — unreleased]</code> covering the spec/tooling/conformance merges + the Phase 4 example pack.</li>
+</ul>
+<p>Promotion to <code>Accepted</code> (2026-05-18 — reference-host expansion landed):</p>
+<ul>
+<li>[x] Reference host expansion implementation. The in-memory reference host now advertises <code>capabilities.workflowChainPacks.supported: true</code> and serves the vendor-prefixed <code>POST /v1/host/sample/workflow-chain:expand</code> endpoint, which wraps the spec-authoritative <code>expandChain()</code> algorithm with filesystem registry resolution + Ed25519 signature verification. Per-host pure-function smoke at <code>examples/hosts/in-memory/test/workflow-chain-expansion.test.ts</code> (5 cases) + live-host conformance scenario at <code>conformance/src/scenarios/workflow-chain-host-expansion.test.ts</code> (6 cases, gated on <code>OPENWOP_REQUIRE_BEHAVIOR=true</code>) both pass. Closes the wire-shape contract end-to-end against a deployed host.</li>
+</ul>
+<p>  <strong>Reference-host implementation:</strong> <code>examples/hosts/in-memory/src/workflow-chain-expansion.ts</code> (~330 LOC). Pure <code>node:crypto</code> + <code>node:fs</code> + <code>node:url</code>. The pure expansion algorithm is a verbatim copy of <code>conformance/src/lib/workflow-chain-expansion.ts</code> (the spec-authoritative version exercised by the server-free scenarios); the live-host scenario asserts the two implementations stay in sync by black-box comparison of their outputs on the same fixture inputs.</p>
+<h2 id="references">References</h2>
+<ul>
+<li><strong>Inventory motivating this RFC:</strong> <a href="../docs/CANVAS-PACKS-INVENTORY.md"><code>docs/CANVAS-PACKS-INVENTORY.md</code></a> v3 closure (2026-05-13). The 55 editor presets dropped from Phase B–C scope are the concrete population this RFC addresses.</li>
+<li><strong>Prior art:</strong></li>
+</ul>
+<p>  - Temporal Workflows declare <code>@workflow.defn</code>-decorated entry functions that internally call <code>workflow.execute_activity</code> — equivalent to a chain pack expanding to activity-dispatched nodes.   - BPMN sub-processes (call activities) expand a referenced sub-process inline at design time. The "design-time vs runtime expansion" distinction is exactly the alternative-1-vs-this-proposal trade-off.   - n8n templates / community workflows — JSON workflow fragments shared via a public registry, conceptually similar but lacking signature + namespace claims.</p>
+<ul>
+<li><strong>Related RFCs:</strong></li>
+</ul>
+<p>  - RFC 0001 (RFC process)   - RFC 0003 (Agent packs — separate concept; agent packs declare AgentRef objects, not workflow fragments)   - RFC 0009 (Production-profile conformance — <code>workflowChainPacks: supported</code> capability fits naturally as a profile flag)</p>
+<ul>
+<li><strong>Spec docs touched:</strong> <code>spec/v1/node-packs.md</code>, new <code>spec/v1/workflow-chain-packs.md</code>, <code>spec/v1/capabilities.md</code>.</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

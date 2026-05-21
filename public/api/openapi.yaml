@@ -1,0 +1,1274 @@
+openapi: 3.1.0
+
+info:
+  title: Workflow Orchestration Protocol (openwop) API
+  version: "1.0"
+  summary: REST surface for declaring, executing, suspending, resuming, and observing multi-step workflows.
+  description: |
+    Canonical OpenAPI 3.1 specification for openwop-compliant servers. Generated from `rest-endpoints.md` and references the JSON Schemas in `schemas/`.
+
+    See spec docs for semantics:
+    - `auth.md` — API key + scope vocabulary
+    - `idempotency.md` — `Idempotency-Key` header contract
+    - `version-negotiation.md` — `engineVersion` + `eventLogSchemaVersion`
+    - `capabilities.md` — `/.well-known/openwop` handshake
+    - `stream-modes.md` — SSE consumption modes
+    - `run-options.md` — `configurable`/`tags`/`metadata`
+    - `interrupt.md` — HITL primitive
+    - `replay.md` — `:fork` endpoint
+  contact:
+    name: openwop spec working group
+    url: https://openwop.dev/spec/v1/
+  license:
+    name: Apache-2.0
+    identifier: Apache-2.0
+
+externalDocs:
+  description: openwop spec v1 corpus
+  url: https://openwop.dev/spec/v1/
+
+servers:
+  - url: https://{host}/v1
+    description: openwop-compliant server
+    variables:
+      host:
+        default: api.example.com
+        description: Replace with your server's hostname.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SECURITY
+# ─────────────────────────────────────────────────────────────────────────────
+security:
+  - ApiKeyAuth: []
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TAGS
+# ─────────────────────────────────────────────────────────────────────────────
+tags:
+  - name: discovery
+    description: Public capability + spec discovery (no auth required).
+  - name: workflows
+    description: Workflow definition manifest.
+  - name: runs
+    description: Run lifecycle — create, read, stream, cancel, fork.
+  - name: hitl
+    description: Human-in-the-loop interrupts and approvals.
+  - name: artifacts
+    description: Run-produced artifacts.
+  - name: webhooks
+    description: Subscribe to run events via outbound HTTP.
+  - name: audit
+    description: Audit-log integrity verification (gated on the `openwop-audit-log-integrity` profile).
+  - name: prompts
+    description: Prompt-template library — list, fetch, render, mutate (RFC 0028; gated on `capabilities.prompts.*`).
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PATHS
+# ─────────────────────────────────────────────────────────────────────────────
+paths:
+
+  # ── Discovery (unauthenticated) ─────────────────────────────────────────
+  /.well-known/openwop:
+    get:
+      tags: [discovery]
+      summary: Capability declaration handshake.
+      operationId: getCapabilities
+      security: []
+      responses:
+        '200':
+          description: Capabilities object — see `capabilities.md`.
+          headers:
+            Cache-Control:
+              schema: { type: string }
+              example: 'public, max-age=300'
+            Capabilities-Etag:
+              schema: { type: string }
+              description: Optional probe handle for mid-session capability change detection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Capabilities'
+        '503':
+          description: Server unable to compute capabilities (transient).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /v1/openapi.json:
+    get:
+      tags: [discovery]
+      summary: Self-describing OpenAPI 3.1 spec.
+      operationId: getOpenApiSpec
+      security: []
+      responses:
+        '200':
+          description: This document.
+          content:
+            application/json:
+              schema:
+                type: object
+        '503':
+          description: Server unable to serve spec (transient).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  # ── Workflows ───────────────────────────────────────────────────────────
+  /v1/workflows/{workflowId}:
+    get:
+      tags: [workflows]
+      summary: Read a workflow definition.
+      operationId: getWorkflow
+      parameters:
+        - $ref: '#/components/parameters/WorkflowId'
+      responses:
+        '200':
+          description: Workflow definition.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/workflow-definition.schema.json'
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # ── Runs ────────────────────────────────────────────────────────────────
+  /v1/runs:
+    post:
+      tags: [runs]
+      summary: Create a new run.
+      operationId: createRun
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - in: header
+          name: X-Dedup
+          schema:
+            type: string
+            enum: [enforce]
+          description: When set, server cross-host claim system rejects duplicate `(tenantId, scopeId)` pairs with `409 Conflict`.
+        - in: header
+          name: X-Force-Engine-Version
+          schema: { type: integer, minimum: 0 }
+          description: |
+            **Test-keys-only.** When set, the server emits events for this run AS IF it
+            were running the specified engine version (must be within the server's
+            advertised `Capabilities.testing.forceEngineVersionRange`). Used by the
+            conformance suite to verify version-negotiation fold-best-effort tolerance
+            across the spec's forward-compat matrix. Servers MUST reject on production
+            API keys with `403 force_engine_version_forbidden`. Closes F5.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              # The body is the WorkflowId + inputs + transport-specific
+              # routing fields, plus the openwop RunOptions overlay (configurable,
+              # tags, metadata) hoisted into a first-class JSON Schema at
+              # ../schemas/run-options.schema.json. allOf composes the two
+              # so callers see one unified body shape.
+              allOf:
+                - type: object
+                  required: [workflowId]
+                  properties:
+                    workflowId: { type: string, minLength: 1 }
+                    inputs:
+                      type: object
+                      description: Workflow inputs (consumed by triggers/nodes).
+                    tenantId:
+                      type: string
+                      description: Tenant scoping. Server typically defaults from API key.
+                    scopeId:
+                      type: string
+                      description: Opaque correlation ID for `X-Dedup` semantics.
+                    callbackUrl:
+                      type: string
+                      format: uri
+                      description: Signed-token HITL callback URL (see `interrupt.md`).
+                  additionalProperties: false
+                - $ref: '../schemas/run-options.schema.json'
+      responses:
+        '201':
+          description: Run accepted.
+          headers:
+            openwop-Idempotent-Replay:
+              schema: { type: boolean }
+              description: Set when the response was served from the idempotency cache.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [runId, status, eventsUrl]
+                properties:
+                  runId: { type: string }
+                  status:
+                    type: string
+                    enum: [pending, running, waiting-approval, waiting-input, waiting-external]
+                  eventsUrl: { type: string, format: uri }
+                  statusUrl: { type: string, format: uri }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: '`X-Dedup` collision OR concurrent `Idempotency-Key` collision.'
+          headers:
+            Retry-After:
+              schema: { type: integer }
+              description: Seconds until the active claim is stale-eligible.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunClaimConflict'
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /v1/runs/{runId}:
+    get:
+      tags: [runs]
+      summary: Read run state (cached projection).
+      operationId: getRun
+      parameters:
+        - $ref: '#/components/parameters/RunId'
+      responses:
+        '200':
+          description: Projected run state.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunSnapshot'
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /v1/runs/{runId}/events:
+    get:
+      tags: [runs]
+      summary: SSE stream of run events.
+      operationId: streamRunEvents
+      parameters:
+        - $ref: '#/components/parameters/RunId'
+        - in: query
+          name: streamMode
+          schema:
+            type: string
+            default: updates
+            pattern: '^(values|updates|messages|debug)(,(values|updates|messages|debug))*$'
+          description: |
+            Single mode: `values` / `updates` / `messages` / `debug`.
+            Mixed mode: comma-separated combination (e.g., `updates,messages`)
+            per S4 closure — server emits union-of-filters with per-event
+            `event:` field labeling which mode admitted each event.
+            `values` MUST NOT combine with other modes (state.snapshot semantics
+            need exclusive ownership). See `stream-modes.md`. Default `updates`.
+        - in: query
+          name: bufferMs
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 5000
+          description: |
+            Optional batching hint per S3 closure. When set, the server
+            accumulates events for up to N ms (or until a forced-flush
+            trigger fires — terminal events, suspensions, connection close)
+            and emits a single SSE event with `event: batch` and `data:` as
+            a JSON array of `RunEventDoc`. Range 0..5000; `0` = no buffering.
+            See `stream-modes.md` §Aggregation hint.
+        - in: header
+          name: Last-Event-ID
+          schema: { type: string }
+          description: Resume from sequence after this ID.
+      responses:
+        '200':
+          description: SSE stream. Auto-closes on terminal event. Keep-alive comments every 30s.
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: SSE events. Each event has `id:`, `event:`, `data:` per RFC 8895.
+        '400':
+          description: Unsupported `streamMode`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnsupportedStreamMode'
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /v1/runs/{runId}/events/poll:
+    get:
+      tags: [runs]
+      summary: Long-poll fallback for non-SSE clients.
+      operationId: pollRunEvents
+      parameters:
+        - $ref: '#/components/parameters/RunId'
+        - in: query
+          name: lastSequence
+          schema: { type: integer, minimum: 0 }
+        - in: query
+          name: timeout
+          schema: { type: integer, minimum: 1, maximum: 60, default: 30 }
+          description: Seconds to wait for new events. Max 60.
+      responses:
+        '200':
+          description: Events since `lastSequence`.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [events, isComplete]
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '../schemas/run-event.schema.json'
+                  isComplete: { type: boolean }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /v1/runs/{runId}/cancel:
+    post:
+      tags: [runs]
+      summary: Cancel an in-flight run.
+      operationId: cancelRun
+      parameters:
+        - $ref: '#/components/parameters/RunId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string }
+      responses:
+        '200':
+          description: Run cancellation accepted (cascade may be async).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  runId: { type: string }
+                  status: { type: string, enum: [cancelled, cancelling] }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /v1/runs:bulk-cancel:
+    post:
+      tags: [runs]
+      summary: Cancel a set of in-flight runs in a single request.
+      description: |
+        Per `spec/v1/rest-endpoints.md` §"POST /v1/runs:bulk-cancel". Accepts
+        a non-empty array of runIds and processes each cancellation
+        independently. Returns `200` with a per-id results array even when
+        some individual cancellations fail; the top-level operation succeeds
+        when the request reached the host, regardless of per-id outcomes.
+        Hosts enforce a host-defined cap on the array length (RECOMMENDED
+        100); over-cap requests return `400 validation_error`.
+      operationId: bulkCancelRuns
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [runIds]
+              properties:
+                runIds:
+                  type: array
+                  minItems: 1
+                  maxItems: 100
+                  items: { type: string, minLength: 1, maxLength: 128 }
+                reason: { type: string, maxLength: 512 }
+              additionalProperties: false
+      responses:
+        '200':
+          description: Per-id cancel results.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [results]
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      required: [runId, ok]
+                      properties:
+                        runId: { type: string, minLength: 1 }
+                        ok: { type: boolean }
+                        status: { type: string, enum: [cancelled, cancelling] }
+                        error:
+                          $ref: '../schemas/error-envelope.schema.json'
+                      additionalProperties: false
+                additionalProperties: false
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /v1/runs/{runId}:fork:
+    post:
+      tags: [runs]
+      summary: Fork the run for replay or branch (see `replay.md`).
+      operationId: forkRun
+      parameters:
+        - $ref: '#/components/parameters/RunId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mode]
+              properties:
+                fromSeq:
+                  type: integer
+                  minimum: 0
+                  description: |
+                    Inclusive — events `< fromSeq` are fixed history; `>= fromSeq` are re-executed.
+                    Required for `branch` (the branch point). Optional for `replay`; when omitted,
+                    defaults to `0` (full re-execution from source-run start) per `replay.md`
+                    §"Replay-mode defaults".
+                mode:
+                  type: string
+                  enum: [replay, branch]
+                runOptionsOverlay:
+                  type: object
+                  description: For `branch` mode only — caller-supplied `RunOptions` to overlay.
+              additionalProperties: false
+      responses:
+        '201':
+          description: Fork accepted, new run started.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [runId, sourceRunId, mode, status, eventsUrl]
+                properties:
+                  runId: { type: string }
+                  sourceRunId: { type: string }
+                  fromSeq: { type: integer }
+                  mode: { type: string, enum: [replay, branch] }
+                  status: { type: string }
+                  eventsUrl: { type: string, format: uri }
+        '400':
+          description: Invalid `fromSeq`, `replay` with non-empty `runOptionsOverlay`, etc.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422':
+          description: "`fromSeq` references a sequence number that doesn't exist in the source run's event log."
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /v1/runs/{runId}:pause:
+    post:
+      tags: [runs]
+      summary: Administratively pause an in-flight run (RFC Track 13).
+      description: |
+        Operator-driven pause distinct from cancel (terminal) and HITL suspend (workflow-driven).
+        Emits a `run.paused` event when the pause takes effect; exit only via `:resume` or `:cancel`.
+      operationId: pauseRun
+      parameters:
+        - $ref: '#/components/parameters/RunId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Free-form rationale, persisted on the `run.paused` event payload.
+                drainPolicy:
+                  type: string
+                  enum: [immediate, drain-current-node]
+                  default: drain-current-node
+                  description: |
+                    `immediate` snapshots between events; `drain-current-node` lets the running node
+                    reach a terminal before transitioning to `paused`.
+              additionalProperties: false
+      responses:
+        '202':
+          description: Pause requested; transition emits `run.paused` when complete.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [runId, status]
+                properties:
+                  runId: { type: string }
+                  status: { type: string, enum: [paused] }
+                  pausedAt: { type: string, format: date-time }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: Run is already paused, terminal, or in a state that cannot be paused.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /v1/runs/{runId}:resume:
+    post:
+      tags: [runs]
+      summary: Resume a paused run (RFC Track 13).
+      description: |
+        Reverses a prior `:pause`. Run transitions from `paused` to `running` and emits `run.resumed`.
+      operationId: resumeRun
+      parameters:
+        - $ref: '#/components/parameters/RunId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string }
+              additionalProperties: false
+      responses:
+        '202':
+          description: Resume requested.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [runId, status]
+                properties:
+                  runId: { type: string }
+                  status: { type: string, enum: [running] }
+                  resumedAt: { type: string, format: date-time }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: Run is not currently paused.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  # ── HITL ────────────────────────────────────────────────────────────────
+  /v1/runs/{runId}/interrupts/{nodeId}:
+    post:
+      tags: [hitl]
+      summary: Resolve an interrupt via the run-scoped surface.
+      operationId: resolveInterruptByRun
+      parameters:
+        - $ref: '#/components/parameters/RunId'
+        - in: path
+          name: nodeId
+          required: true
+          schema: { type: string, minLength: 1 }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [resumeValue]
+              properties:
+                resumeValue:
+                  description: Validated against the interrupt's `resumeSchema` if declared.
+              additionalProperties: false
+      responses:
+        '200':
+          description: Interrupt resolved; executor unblocks.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  runId: { type: string }
+                  nodeId: { type: string }
+                  status: { type: string }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: Interrupt not found or already resolved.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '409':
+          description: Concurrent resolve — only one wins.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '422':
+          description: Run was cancelled while interrupt was pending.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /v1/interrupts/{token}:
+    parameters:
+      - in: path
+        name: token
+        required: true
+        schema: { type: string }
+        description: HMAC-signed token issued by the server at suspension time. Format `base64url(payload).hmac_sha256(secret, payload)`.
+    get:
+      tags: [hitl]
+      summary: Inspect an interrupt without resolving (signed-token surface).
+      operationId: inspectInterruptByToken
+      security: []  # token is the auth
+      responses:
+        '200':
+          description: Interrupt details.
+          content:
+            application/json:
+              schema: { $ref: '../schemas/suspend-request.schema.json' }
+        '410':
+          description: Token expired.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+    post:
+      tags: [hitl]
+      summary: Resolve an interrupt via signed token (asynchronous callback).
+      operationId: resolveInterruptByToken
+      security: []  # token is the auth
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [resumeValue]
+              properties:
+                resumeValue: {}
+              additionalProperties: false
+      responses:
+        '200':
+          description: Resolution accepted.
+          content:
+            application/json:
+              schema: { type: object }
+        '410':
+          description: Token expired.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  # ── Artifacts ───────────────────────────────────────────────────────────
+  /v1/runs/{runId}/artifacts/{artifactId}:
+    get:
+      tags: [artifacts]
+      summary: Read a run-produced artifact.
+      operationId: getArtifact
+      parameters:
+        - $ref: '#/components/parameters/RunId'
+        - in: path
+          name: artifactId
+          required: true
+          schema: { type: string, minLength: 1 }
+      responses:
+        '200':
+          description: Artifact payload.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Implementation-defined artifact shape.
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # ── Webhooks ────────────────────────────────────────────────────────────
+  /v1/webhooks:
+    post:
+      tags: [webhooks]
+      summary: Register a webhook subscription.
+      operationId: registerWebhook
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url, events]
+              properties:
+                url: { type: string, format: uri }
+                events:
+                  type: array
+                  items: { type: string }
+                  description: Event types to subscribe to (see `run-event.schema.json` enum).
+                secret:
+                  type: string
+                  description: Server signs payloads with this secret using HMAC-SHA256.
+                tags:
+                  type: array
+                  items: { type: string }
+                  description: Filter to runs carrying these tags (see `run-options.md`).
+              additionalProperties: false
+      responses:
+        '201':
+          description: Webhook registered.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [webhookId]
+                properties:
+                  webhookId: { type: string }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /v1/webhooks/{webhookId}:
+    delete:
+      tags: [webhooks]
+      summary: Unregister a webhook.
+      operationId: unregisterWebhook
+      parameters:
+        - in: path
+          name: webhookId
+          required: true
+          schema: { type: string, minLength: 1 }
+      responses:
+        '204':
+          description: Unregistered.
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # ── Audit-log integrity verification (gated on profile) ────────────────
+  /v1/audit/verify:
+    get:
+      tags: [audit]
+      summary: Verify the audit-log hash chain over [fromSeq, toSeq].
+      description: |
+        Per `spec/v1/auth-profiles.md` §`openwop-audit-log-integrity` §4. The
+        verifier re-walks audit-log entries in the requested range,
+        re-computes each entry's `prevHash` from the canonical RFC 8785 JCS
+        serialization of the prior entry, verifies signed checkpoints
+        against the host's advertised `auditLogIntegrity.checkpointPublicKey`,
+        and returns `chainValid` + an enumeration of any anomalies.
+        Hosts MUST require the `audit:read` scope. Hosts that do NOT
+        advertise the `openwop-audit-log-integrity` profile MAY omit this
+        endpoint entirely (clients SHOULD pre-flight via `/.well-known/openwop`).
+      operationId: verifyAuditLog
+      parameters:
+        - in: query
+          name: fromSeq
+          required: true
+          schema: { type: integer, minimum: 0 }
+          description: First audit-log sequence to include (inclusive).
+        - in: query
+          name: toSeq
+          required: true
+          schema: { type: integer, minimum: 0 }
+          description: Last audit-log sequence to include (inclusive). MUST be >= fromSeq.
+      responses:
+        '200':
+          description: Verification result.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/audit-verify-result.schema.json'
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: Host does not advertise the audit-log-integrity profile.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+
+  # ── Prompt library (RFC 0028) ────────────────────────────────────────
+  # Surface gated on `capabilities.prompts.supported: true`. Mutating
+  # endpoints (POST / PUT / DELETE) are additionally gated on
+  # `capabilities.prompts.mutableLibrary: true`. Hosts without the
+  # advertised capability return `501 capability_not_provided`.
+  /v1/prompts:
+    get:
+      tags: [prompts]
+      summary: List prompt templates available to the caller.
+      operationId: listPromptTemplates
+      parameters:
+        - in: query
+          name: kind
+          schema: { type: string, enum: [system, user, few-shot, schema-hint] }
+          description: Filter by `PromptTemplate.kind`.
+        - in: query
+          name: tag
+          schema: { type: string }
+          description: |
+            Filter to templates whose `tags[]` contains this exact tag.
+            Hosts MAY accept the parameter multiple times; the semantic
+            when repeated is AND (every named tag must be present).
+        - in: query
+          name: modelClass
+          schema: { type: string }
+          description: Filter to templates whose `modelHints.modelClass` matches.
+        - in: query
+          name: source
+          schema: { type: string, enum: [host, pack, user] }
+          description: Filter by `meta.source` provenance.
+        - in: query
+          name: cursor
+          schema: { type: string }
+          description: Opaque pagination cursor.
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+          description: Maximum entries per page.
+      responses:
+        '200':
+          description: Paginated list of templates.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '../schemas/prompt-template.schema.json'
+                  nextCursor:
+                    type: string
+                    description: Opaque cursor; absent on the final page.
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '501':
+          description: 'Host does not advertise capabilities.prompts.endpointsSupported. (RFC 0028 §A — supported gates Phase A node-execution composition; endpointsSupported gates this REST surface independently.)'
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+    post:
+      tags: [prompts]
+      summary: Create a new prompt template (mutable libraries only).
+      operationId: createPromptTemplate
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/prompt-template.schema.json'
+      responses:
+        '201':
+          description: Template created. `Location` header carries the canonical URI.
+          headers:
+            Location:
+              schema: { type: string }
+              description: 'Canonical URI of the new template.'
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: A template with this `(templateId, version)` pair already exists.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+        '501':
+          description: 'Host does not advertise capabilities.prompts.mutableLibrary.'
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+
+  /v1/prompts/{templateId}:
+    parameters:
+      - in: path
+        name: templateId
+        required: true
+        schema:
+          type: string
+          pattern: '^[a-z0-9][a-z0-9._-]{0,127}$'
+        description: PromptTemplate.templateId per RFC 0027.
+      - in: query
+        name: version
+        schema:
+          type: string
+          pattern: '^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$'
+        description: Pin to a specific SemVer version; latest when omitted.
+      - in: query
+        name: libraryId
+        schema:
+          type: string
+          pattern: '^[a-z0-9][a-z0-9._-]{0,127}$'
+        description: |
+          Disambiguate when multiple installed packs ship the same
+          templateId. Hosts MUST return `prompt_ref_ambiguous` if
+          ambiguous and libraryId is omitted.
+    get:
+      tags: [prompts]
+      summary: Fetch a single prompt template.
+      operationId: getPromptTemplate
+      responses:
+        '200':
+          description: The PromptTemplate.
+          headers:
+            ETag:
+              schema: { type: string }
+              description: SHA-256 of the canonical body.
+            Cache-Control:
+              schema: { type: string }
+              description: Honors immutable semantics when version was pinned.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/prompt-template.schema.json'
+        '304':
+          description: Conditional revalidation succeeded.
+        '400':
+          description: '`prompt_ref_ambiguous` when libraryId disambiguation is required.'
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: No such template (or version).
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+        '501':
+          description: 'Host does not advertise capabilities.prompts.endpointsSupported. (RFC 0028 §A — supported gates Phase A node-execution composition; endpointsSupported gates this REST surface independently.)'
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+    put:
+      tags: [prompts]
+      summary: Replace a prompt template (mutable libraries; user-source only).
+      operationId: updatePromptTemplate
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/prompt-template.schema.json'
+      responses:
+        '200':
+          description: Template updated.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/prompt-template.schema.json'
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403':
+          description: Template is pack-sourced or host-built-in (read-only).
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+        '404':
+          description: No such template.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+        '409':
+          description: Submitted version does not exceed stored version (SemVer).
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+        '501':
+          description: 'Host does not advertise capabilities.prompts.mutableLibrary.'
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+    delete:
+      tags: [prompts]
+      summary: Delete a prompt template (mutable libraries; user-source only).
+      operationId: deletePromptTemplate
+      responses:
+        '204':
+          description: Template deleted.
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403':
+          description: Template is pack-sourced or host-built-in (read-only).
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+        '404':
+          description: No such template.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+        '501':
+          description: 'Host does not advertise capabilities.prompts.mutableLibrary.'
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+
+  /v1/prompts:render:
+    post:
+      tags: [prompts]
+      summary: Render a prompt template with supplied variable bindings.
+      description: |
+        Returns the composed body + sha256 hash + per-variable hashes.
+        The response's `hash` MUST equal the `hash` that a matching
+        `prompt.composed` event would carry at dispatch time for the
+        same `(ref, variables, contentTrust)` inputs (RFC 0028 §A
+        deterministic-render invariant; RFC 0027 §F replay invariant).
+        Does NOT dispatch an LLM call. Secret-source variable values
+        MUST be supplied as `[REDACTED:<credentialRef>]` markers; the
+        host resolves the plaintext internally and never echoes it in
+        the `composed` response field per SR-1.
+      operationId: renderPromptTemplate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ref, variables]
+              properties:
+                ref:
+                  $ref: '../schemas/prompt-ref.schema.json'
+                variables:
+                  type: object
+                  description: |
+                    Variable bindings keyed by `PromptVariable.name`.
+                    Secret-source bindings carry `[REDACTED:<credentialRef>]`
+                    markers; the host resolves the real value internally.
+                  additionalProperties: true
+                contentTrust:
+                  type: string
+                  enum: [trusted, untrusted]
+                  description: |
+                    Aggregate trust marker for the supplied bindings,
+                    propagated through composition per RFC 0027 §E.
+      responses:
+        '200':
+          description: Composed result.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [hash, refs, variableHashes]
+                properties:
+                  composed:
+                    type: string
+                    description: Full composed body. Present only when observability is `full`.
+                  hash:
+                    type: string
+                    pattern: '^sha256:[0-9a-f]{64}$'
+                  refs:
+                    type: array
+                    items:
+                      type: string
+                  variableHashes:
+                    type: object
+                    additionalProperties:
+                      type: string
+                      pattern: '^sha256:[0-9a-f]{64}$'
+                  contentTrust:
+                    type: string
+                    enum: [trusted, untrusted]
+        '400':
+          description: |
+            `prompt_variable_unresolved` (required variable missing),
+            `prompt_variable_type_mismatch` (bound type vs. declared type),
+            or `prompt_ref_invalid` (malformed PromptRef).
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: Referenced template does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+        '501':
+          description: 'Host does not advertise capabilities.prompts.endpointsSupported. (RFC 0028 §A — supported gates Phase A node-execution composition; endpointsSupported gates this REST surface independently.)'
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# COMPONENTS
+# ─────────────────────────────────────────────────────────────────────────────
+components:
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: API key
+      description: |
+        openwop API key. Format implementation-defined; reference impl uses `hk_`/`hk_test_` prefixes.
+        Each key carries one or more scopes from the canonical vocabulary
+        (`manifest:read`, `runs:create`, `runs:read`, `runs:cancel`,
+        `artifacts:read`, `webhooks:manage`, `approvals:respond`, `audit:read`).
+        See `auth.md`.
+
+  parameters:
+    WorkflowId:
+      in: path
+      name: workflowId
+      required: true
+      schema: { type: string, minLength: 1, maxLength: 128 }
+
+    RunId:
+      in: path
+      name: runId
+      required: true
+      schema: { type: string, minLength: 1, maxLength: 128 }
+
+    IdempotencyKey:
+      in: header
+      name: Idempotency-Key
+      required: false
+      schema:
+        type: string
+        maxLength: 255
+      description: |
+        Per-mutation idempotency token (see `idempotency.md` Layer 1).
+        Server caches `(tenantId, endpoint, key)` → response for ≥24h.
+        Duplicate requests return the cached response with header
+        `openwop-Idempotent-Replay: true`.
+
+  responses:
+    Unauthenticated:
+      description: Missing or invalid credential.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+    Forbidden:
+      description: Credential valid but lacks required scope or fails resource binding.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+    NotFound:
+      description: Resource doesn't exist or caller can't see it (do not leak existence).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+    ValidationError:
+      description: Request body or parameters malformed.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+    RateLimited:
+      description: Too many requests.
+      headers:
+        Retry-After:
+          schema: { type: integer }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+  schemas:
+
+    # Hoisted to first-class JSON Schemas in ../schemas/ so the SDK and
+    # conformance suite can validate against the same source. The
+    # in-line aliases below pull them via $ref so existing
+    # `#/components/schemas/Error` references keep working.
+
+    Error:
+      $ref: '../schemas/error-envelope.schema.json'
+
+    Capabilities:
+      $ref: '../schemas/capabilities.schema.json'
+
+    # Pre-loaded so redocly's $ref resolver registers them at lint time.
+    # capabilities.schema.json `$ref`s prompt-kind.schema.json by its
+    # canonical openwop.dev URL — redocly resolves absolute URIs against
+    # already-loaded `$id`s, so the schema must be pulled in here even
+    # though no operation references it directly. See RFC 0027 §A.
+    PromptKind:
+      $ref: '../schemas/prompt-kind.schema.json'
+
+    PromptTemplate:
+      $ref: '../schemas/prompt-template.schema.json'
+
+    PromptRef:
+      $ref: '../schemas/prompt-ref.schema.json'
+
+    RunSnapshot:
+      $ref: '../schemas/run-snapshot.schema.json'
+
+    RunClaimConflict:
+      description: |
+        Specialization of the canonical `ErrorEnvelope` shape for
+        `run_already_active`. Conflict metadata lives under `details`
+        so the top-level error shape remains `{error, message, details?}`.
+      allOf:
+        - $ref: '#/components/schemas/Error'
+        - type: object
+          required: [error, message, details]
+          properties:
+            error:
+              type: string
+              enum: [run_already_active]
+            message: { type: string }
+            details:
+              type: object
+              required: [activeRunId, activeHost]
+              properties:
+                activeRunId: { type: string }
+                activeHost:
+                  type: string
+                  enum: [browser, cloud]
+                retryAfter:
+                  type: integer
+                  description: 'Seconds. Mirrors the `Retry-After` header.'
+
+    UnsupportedStreamMode:
+      description: |
+        Specialization of the canonical `ErrorEnvelope` shape (see
+        `error-envelope.schema.json`) for the `unsupported_stream_mode`
+        case. The `supported` array lives in `details` per the canonical
+        envelope's contextual-data slot, NOT at the top level. SDK
+        consumers using a generic ErrorEnvelope parser will find the
+        list under `details.supported` regardless of which validator
+        fired.
+      allOf:
+        - $ref: '#/components/schemas/Error'
+        - type: object
+          required: [error, message, details]
+          properties:
+            error:
+              type: string
+              enum: [unsupported_stream_mode]
+            message: { type: string }
+            details:
+              type: object
+              required: [supported]
+              properties:
+                supported:
+                  type: array
+                  items: { type: string, enum: [values, updates, messages, debug] }

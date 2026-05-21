@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — RFC 0019: host.blobStorage + host.cache capabilities</title>
+  <meta name="description" content="Adds two sibling capabilities: host.blobStorage (binary artifact store with presigned URLs) and host.cache (TTL cache for HTTP / AI response memoization). Required by core.openwop.storage&#39;s blob- and cache- nodes."/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0019-host-blob-cache-capability.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — RFC 0019: host.blobStorage + host.cache capabilities"/>
+  <meta property="og:description" content="Adds two sibling capabilities: host.blobStorage (binary artifact store with presigned URLs) and host.cache (TTL cache for HTTP / AI response memoization). Required by core.openwop.storage&#39;s blob- and cache- nodes."/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0019-host-blob-cache-capability.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — RFC 0019: host.blobStorage + host.cache capabilities"/>
+  <meta name="twitter:description" content="Adds two sibling capabilities: host.blobStorage (binary artifact store with presigned URLs) and host.cache (TTL cache for HTTP / AI response memoization). Required by core.openwop.storage&#39;s blob- and cache- nodes."/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="" href="/spec/v1/">Spec</a>
+      <a class="active" href="/rfcs/">RFCs</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/changelog/">Changelog</a>
+      <a class="" href="/faq/">FAQ</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="rfc-0019-host-blobstorage-host-cache-capabilities">RFC 0019: host.blobStorage + host.cache capabilities</h1>
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0019</td></tr>
+<tr><td><strong>Title</strong></td><td>Blob storage + TTL cache capabilities</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>OpenWOP Working Group</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-17</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-18 (Active → Accepted: all 5 acceptance-criteria items satisfied. 2 capability blocks (<code>blobStorage</code>, <code>cache</code>) in schema; 2 prose sections (§host.blobStorage / §host.cache) in <code>spec/v1/host-capabilities.md</code> landed at commit c5831fe; 2 SECURITY invariants (<code>blob-cross-tenant-isolation</code>, <code>cache-cross-tenant-isolation</code>) added at commit c5831fe; 5 scenarios (<code>blob-roundtrip</code>, <code>blob-presign-expiry</code>, <code>blob-cross-tenant-isolation</code>, <code>cache-ttl-expiry</code>, <code>cache-cross-tenant-isolation</code>) all behavioral; reference impls advertised in <code>routes/discovery.ts</code> lines 211–222; CHANGELOG entry under <code>[Unreleased]</code>.)</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>spec/v1/host-capabilities.md</code> · <code>schemas/capabilities.schema.json</code> · <code>SECURITY/invariants.yaml</code></td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>Adds two sibling capabilities: <code>host.blobStorage</code> (binary artifact store with presigned URLs) and <code>host.cache</code> (TTL cache for HTTP / AI response memoization). Required by <code>core.openwop.storage</code>'s blob-<em> and cache-</em> nodes.</p>
+<h2 id="motivation">Motivation</h2>
+<p>Workflow editors universally surface object storage (S3 / GCS / Azure Blob) and HTTP response caching as discoverable primitives. The two are small enough and similar enough in shape to share an RFC. <code>host.cache</code> is what lets idempotency-key based replay deduplicate identical AI calls across runs without engaging the heavier Layer-2 invocation log.</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-capability-schemas">§A Capability schemas</h3>
+<pre class="lang-json"><code>{
+  &quot;blobStorage&quot;: {
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;properties&quot;: {
+      &quot;supported&quot;: { &quot;type&quot;: &quot;boolean&quot; },
+      &quot;buckets&quot;: { &quot;type&quot;: &quot;array&quot; },
+      &quot;presignSupported&quot;: { &quot;type&quot;: &quot;boolean&quot; },
+      &quot;maxObjectBytes&quot;: { &quot;type&quot;: &quot;integer&quot; }
+    },
+    &quot;additionalProperties&quot;: false
+  },
+  &quot;cache&quot;: {
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;properties&quot;: {
+      &quot;supported&quot;: { &quot;type&quot;: &quot;boolean&quot; },
+      &quot;maxValueBytes&quot;: { &quot;type&quot;: &quot;integer&quot; },
+      &quot;maxTtlSeconds&quot;: { &quot;type&quot;: &quot;integer&quot; }
+    },
+    &quot;additionalProperties&quot;: false
+  }
+}</code></pre>
+<h3 id="b-host-contract-musts">§B Host-contract MUSTs</h3>
+<p>1. <strong>Blob</strong>: cross-tenant isolation per bucket. Presigned URLs MUST expire at the advertised TTL. 2. <strong>Cache</strong>: TTL drift ≤ 1s on expiry visibility; entries scoped per tenant.</p>
+<h3 id="c-conformance">§C Conformance</h3>
+<ul>
+<li><code>blob-roundtrip.test.ts</code>.</li>
+<li><code>blob-presign-expiry.test.ts</code>.</li>
+<li><code>blob-cross-tenant-isolation.test.ts</code>.</li>
+<li><code>cache-ttl-expiry.test.ts</code>.</li>
+<li><code>cache-cross-tenant-isolation.test.ts</code>.</li>
+</ul>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive</strong>. Two optional blocks. Packs refuse registration without advertisement.</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<ul>
+<li>Schema diffs in §A land in <code>schemas/capabilities.schema.json</code> on Active promotion, not at Draft.</li>
+<li>Cross-tenant invariants for <code>blob-cross-tenant-isolation</code> + <code>cache-cross-tenant-isolation</code> land in <code>SECURITY/invariants.yaml</code> alongside the matching scenarios.</li>
+<li>Reference impl candidate: per-tenant Map for cache; per-tenant Map&lt;bucket, Map&lt;key,buffer&gt;> for blob — both under <code>examples/hosts/in-memory/</code>.</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<ul>
+<li>[x] Two capability blocks.</li>
+<li>[x] Prose section per block. (Landed at commit c5831fe.)</li>
+<li>[x] 5 conformance scenarios.</li>
+<li>[x] In-memory reference (per-tenant Map for cache; per-tenant Map&lt;bucket, Map&lt;key,buffer&gt;> for blob).</li>
+<li>[x] CHANGELOG entry.</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li>AWS S3 / GCS / Azure Blob (prior art for blob).</li>
+<li>HTTP <code>Cache-Control</code> / <code>ETag</code> semantics (prior art for cache).</li>
+<li><code>core.openwop.storage</code> pack.</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

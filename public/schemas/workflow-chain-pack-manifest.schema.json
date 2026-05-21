@@ -1,0 +1,226 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/workflow-chain-pack-manifest.schema.json",
+  "title": "WorkflowChainPackManifest",
+  "description": "Manifest for a published OpenWOP workflow-chain pack — `pack.json` at the pack root with `kind: \"workflow-chain\"`. Distinct from node-pack-manifest.schema.json. See workflow-chain-packs.md for the canonical contract and RFC 0013 for the rationale. Chain packs are workflow-edit-time abstractions: a host editor expands each declared chain inline into the parent workflow at author time, so the dispatching runtime sees only concrete `core.*` (or published-vendor) typeIds.",
+  "type": "object",
+  "required": ["name", "version", "kind", "engines", "chains"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Reverse-DNS pack name per node-packs.md §Naming. Reserved scopes are identical (`core.*` / `vendor.<org>.*` / `community.<author>.*` / `private.<host>.*` / `local.*`).",
+      "pattern": "^(core|vendor|community|private)\\.[a-z][a-z0-9_-]*(\\.[a-z][a-zA-Z0-9_-]*)+$",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "version": {
+      "type": "string",
+      "description": "Pack-level version per Semantic Versioning 2.0.0.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+    },
+    "kind": {
+      "type": "string",
+      "const": "workflow-chain",
+      "description": "Pack kind discriminator. MUST be the literal string `\"workflow-chain\"` for this schema. Manifests carrying `kind: \"node\"` (or omitting `kind`) validate against `node-pack-manifest.schema.json` instead."
+    },
+    "description": { "type": "string", "maxLength": 1024 },
+    "author": { "type": "string" },
+    "license": { "type": "string", "description": "SPDX license identifier (e.g., `Apache-2.0`)." },
+    "homepage": { "type": "string", "format": "uri" },
+    "repository": { "type": "string", "format": "uri" },
+    "keywords": {
+      "type": "array",
+      "items": { "type": "string", "maxLength": 64 },
+      "maxItems": 50
+    },
+    "engines": {
+      "type": "object",
+      "required": ["openwop"],
+      "properties": {
+        "openwop": {
+          "type": "string",
+          "description": "Semver range — which openwop protocol versions this pack works against."
+        }
+      },
+      "additionalProperties": true,
+      "$comment": "Open by design — packs MAY advertise extra engine constraints (`node`, `python`, etc.) that consumer hosts ignore but operator tooling consumes. Mirrors the shape used in node-pack-manifest.schema.json."
+    },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Other node packs whose typeIds this pack's chains reference. Map of pack name → semver range. The host editor uses this map at expansion time to verify referenced typeIds resolve."
+    },
+    "chains": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/WorkflowChain" },
+      "description": "Chains the pack contributes. Each MUST have a unique `chainId` within the pack."
+    },
+    "signing": { "$ref": "#/$defs/Signing" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "WorkflowChain": {
+      "type": "object",
+      "required": ["chainId", "version", "label", "description", "parameters", "dag"],
+      "description": "A single workflow-chain entry — a pre-configured DAG fragment + parameter schema that the host editor expands inline at author time. See workflow-chain-packs.md §Chain entry shape.",
+      "properties": {
+        "chainId": {
+          "type": "string",
+          "description": "Canonical chain id — namespaced like a node typeId (reverse-DNS pattern). The pack's `name` prefix is recommended (e.g., pack `vendor.acme.editor-presets` exposing `vendor.acme.generatePRD`).",
+          "pattern": "^[a-z][a-zA-Z0-9._-]*$",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "version": {
+          "type": "string",
+          "description": "Per-chain semver. MAY differ from the pack's overall version so a single pack can ship multiple chains that evolve independently.",
+          "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable display label for the host editor's drag-tile catalog."
+        },
+        "description": {
+          "type": "string",
+          "description": "One-paragraph description of what the chain produces. Surfaced in host editor tile hover-text."
+        },
+        "parameters": {
+          "type": "object",
+          "description": "JSON Schema 2020-12 fragment describing the parameter values the host editor MUST collect from the author at drop time. Authors-supplied values are validated against this schema before expansion proceeds; invalid input MUST be rejected with `chain_parameter_invalid`.",
+          "additionalProperties": true,
+          "$comment": "Open by design — this field IS a JSON Schema document, so it must accept any of the 30+ JSON Schema 2020-12 keywords (`type`, `properties`, `required`, `oneOf`, `allOf`, etc.). Strict closure would require importing the JSON Schema meta-schema."
+        },
+        "dag": { "$ref": "#/$defs/WorkflowDefinitionFragment" },
+        "outputs": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/ChainOutput" },
+          "description": "Declared outputs the chain surfaces to the parent workflow. Keys are output names; values declare type + description."
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["streamable", "cacheable", "side-effectful", "mcp-exportable"]
+          },
+          "uniqueItems": true,
+          "description": "Capability traits to propagate to every expanded node. Hosts MUST copy this array into each expanded `WorkflowNode.capabilities` so existing capability gates apply uniformly."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ChainOutput": {
+      "type": "object",
+      "required": ["type", "description"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "JSON Schema type token (`string` / `number` / `boolean` / `object` / `array`)."
+        },
+        "description": {
+          "type": "string",
+          "description": "One-line description of the output's meaning."
+        }
+      },
+      "additionalProperties": false
+    },
+    "WorkflowDefinitionFragment": {
+      "type": "object",
+      "required": ["nodes"],
+      "description": "Subset of workflow-definition.schema.json. `id`/`name`/`version`/`triggers`/`settings`/`metadata` MUST be omitted (host generates per-expansion); `variables` is replaced by the chain's top-level `parameters`. See workflow-chain-packs.md §WorkflowDefinitionFragment.",
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/FragmentNode" },
+          "description": "Nodes in the fragment. Every node's `typeId` MUST reference a published node-pack typeId or a reserved `core.*` typeId."
+        },
+        "edges": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/FragmentEdge" },
+          "description": "Edges between fragment nodes. Required when `nodes.length > 1`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "FragmentNode": {
+      "type": "object",
+      "description": "Mirror of `workflow-definition.schema.json#/$defs/WorkflowNode` with relaxed `required[]` (chain authors MAY omit `name`/`position`/`config`/`inputs` for trivial pass-through nodes). Maintenance note: when fields are added to `WorkflowNode` in `workflow-definition.schema.json`, mirror the addition here so chain packs can express the same shapes. Drift here means chain-pack authors can't use new node features.",
+      "required": ["id", "typeId"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Node id, unique within the fragment. Hosts MUST rewrite these to globally-unique ids at expansion time."
+        },
+        "typeId": {
+          "type": "string",
+          "pattern": "^[a-z][a-zA-Z0-9._-]*$",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "name": { "type": "string" },
+        "position": {
+          "type": "object",
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" }
+          },
+          "additionalProperties": false
+        },
+        "config": {
+          "type": "object",
+          "description": "Node config — host-validated against the referenced typeId's config schema. String fields MAY contain `{{params.<name>}}` placeholders that the host MUST substitute at expansion time.",
+          "additionalProperties": true,
+          "$comment": "Open by design — node config shapes are per-typeId and only known to the host at expansion time when the referenced typeId's config schema is resolved. Cross-typeId enforcement happens at the expansion step, not at manifest-validation time."
+        },
+        "inputs": {
+          "type": "object",
+          "description": "Per-port input wiring. String values MAY contain `{{params.<name>}}` placeholders.",
+          "additionalProperties": true,
+          "$comment": "Open by design — port shapes are per-typeId, same reasoning as `config` above."
+        }
+      },
+      "additionalProperties": false
+    },
+    "FragmentEdge": {
+      "type": "object",
+      "required": ["from", "to"],
+      "properties": {
+        "from": {
+          "type": "string",
+          "description": "Source node id (must reference a node in `nodes[]`). MAY use `nodeId.outputPort` syntax to bind a specific output port."
+        },
+        "to": {
+          "type": "string",
+          "description": "Target node id (must reference a node in `nodes[]`). MAY use `nodeId.inputPort` syntax."
+        },
+        "condition": {
+          "type": "string",
+          "description": "Optional edge condition expression — same shape as a top-level workflow edge's condition."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Signing": {
+      "type": "object",
+      "description": "Optional signing metadata. Reuses node-packs.md §signing unchanged.",
+      "properties": {
+        "publicKeyRef": {
+          "type": "string",
+          "description": "Path inside the tarball to the Ed25519 public key (PEM-encoded)."
+        },
+        "signatureRef": {
+          "type": "string",
+          "description": "Path to the detached signature over `pack.json`."
+        },
+        "method": {
+          "type": "string",
+          "enum": ["manual", "sigstore"]
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

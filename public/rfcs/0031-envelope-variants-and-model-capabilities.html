@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — RFC 0031: Envelope variant discrimination + model-capability declarations</title>
+  <meta name="description" content="Two complementary additive changes that together close the &quot;envelope dispatch routing is opaque&quot; gap. First, codifies the de-facto discriminated-union pattern (anyOf + single-string-enum discriminator per branch) as normative for any envelope…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0031-envelope-variants-and-model-capabilities.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — RFC 0031: Envelope variant discrimination + model-capability declarations"/>
+  <meta property="og:description" content="Two complementary additive changes that together close the &quot;envelope dispatch routing is opaque&quot; gap. First, codifies the de-facto discriminated-union pattern (anyOf + single-string-enum discriminator per branch) as normative for any envelope…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0031-envelope-variants-and-model-capabilities.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — RFC 0031: Envelope variant discrimination + model-capability declarations"/>
+  <meta name="twitter:description" content="Two complementary additive changes that together close the &quot;envelope dispatch routing is opaque&quot; gap. First, codifies the de-facto discriminated-union pattern (anyOf + single-string-enum discriminator per branch) as normative for any envelope…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="" href="/spec/v1/">Spec</a>
+      <a class="active" href="/rfcs/">RFCs</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/changelog/">Changelog</a>
+      <a class="" href="/faq/">FAQ</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="rfc-0031-envelope-variant-discrimination-model-capability-declarations">RFC 0031: Envelope variant discrimination + model-capability declarations</h1>
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0031</td></tr>
+<tr><td><strong>Title</strong></td><td>Discriminated-union pattern for envelope variant payloads (normative); <code>NodeModule.requiredModelCapabilities</code> + <code>NodeModule.fallbackModel</code>; <code>model.capability.substituted</code> + <code>model.capability.insufficient</code> events</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>OpenWOP Working Group</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-20</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-21 (Active → Accepted — see <a href="#status-history">Status history</a> below).</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>spec/v1/ai-envelope.md</code> (adds §"Variant payload discrimination (normative)") · <code>spec/v1/host-capabilities.md</code> (adds §"Model-capability declarations") · <code>spec/v1/node-packs.md</code> (notes <code>NodeModule.requiredModelCapabilities</code> + <code>NodeModule.fallbackModel</code>) · <code>schemas/node-pack-manifest.schema.json</code> (adds <code>requiredModelCapabilities</code> + <code>fallbackModel</code> to the NodeModule shape) · <code>schemas/capabilities.schema.json</code> (adds optional <code>modelCapabilities</code> block) · <code>schemas/run-event.schema.json</code> (adds <code>model.capability.substituted</code> + <code>model.capability.insufficient</code> enum entries) · <code>schemas/run-event-payloads.schema.json</code> (adds <code>modelCapabilitySubstituted</code> + <code>modelCapabilityInsufficient</code> <code>$defs</code>) · <code>SECURITY/invariants.yaml</code> (adds <code>model-capability-substituted-no-credential-disclosure</code>) · 4 new conformance scenarios · CHANGELOG</td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
+<tr><td><strong>Supersedes</strong></td><td>—</td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>Two complementary additive changes that together close the "envelope dispatch routing is opaque" gap. First, codifies the de-facto discriminated-union pattern (<code>anyOf</code> + single-string-enum discriminator per branch) as normative for any envelope payload schema that accepts variant shapes — preventing future authors from accidentally using <code>oneOf</code> (cross-vendor incompatible per RFC 0030 §B). Second, adds two optional fields to the <code>NodeModule</code> shape — <code>requiredModelCapabilities: string[]</code> and <code>fallbackModel: { provider, model }</code> — so envelope-emitting NodeModules can declare which model capabilities they need (e.g., <code>structured-output</code>, <code>discriminator-enum</code>, <code>long-context</code>, <code>reasoning</code>, <code>function-calling</code>) and which model the host MAY substitute when the active model can't satisfy them. Hosts emit two new <code>RunEventType</code> entries (<code>model.capability.substituted</code>, <code>model.capability.insufficient</code>) so conformance suites and observability tools can assert capability-gated dispatch behavior. The two <code>model.capability.*</code> events are <strong>cross-kind operational</strong> events about model dispatch — they do NOT extend the per-envelope-kind event surface that <code>ai-envelope.md</code> line 448 forbids; see the same-scope analysis in RFC 0032 §A.</p>
+<h2 id="motivation">Motivation</h2>
+<h3 id="2-1-variant-envelopes-silently-break-on-gemini-and-anthropic-when-authored-with-oneof">2.1 Variant envelopes silently break on Gemini and Anthropic when authored with <code>oneOf</code></h3>
+<p>The de-facto pattern in existing universal-kind and vendor-namespaced envelope payloads is <code>anyOf</code> with a single-string-enum discriminator (<code>kind: &quot;design&quot; | &quot;planning&quot; | &quot;action&quot;</code>, etc.). But the spec's §"Schema discipline" doesn't normate this — a future canvas-type author writing a new variant envelope can pick <code>oneOf</code> and produce a schema that:</p>
+<ul>
+<li>OpenAI strict mode rejects with a 400.</li>
+<li>Anthropic strict tool use rejects with a 400.</li>
+<li>Gemini <code>responseSchema</code> <em>silently drops</em> the <code>oneOf</code> keyword (per <code>docs.cloud.google.com/vertex-ai/...</code> — "Vertex AI can still handle your request but ignores the field"), producing a schema looser than the author intended.</li>
+</ul>
+<p>The fix is structural: spec text that says "variant envelopes SHALL use <code>anyOf</code> with a single-string-enum discriminator per branch." This is a forward-looking normative requirement; existing universal-kind schemas already comply because they don't have variants. The vendor-namespaced kinds the reference MyndHyve host ships (<code>vendor.myndhyve.prd.create</code>, <code>vendor.myndhyve.theme.create</code>, <code>vendor.myndhyve.tasks.create</code>) already use this pattern; codifying it prevents drift.</p>
+<h3 id="2-2-envelope-emitting-nodes-have-implicit-model-dependencies-the-protocol-can-t-see">2.2 Envelope-emitting nodes have implicit model dependencies the protocol can't see</h3>
+<p>A NodeModule like <code>core.ai.callPrompt</code> (or any vendor-namespaced envelope-emitting node) has implicit dependencies on model capabilities:</p>
+<ul>
+<li>It needs <code>structured-output</code> support (Anthropic strict tool use, OpenAI strict mode, Gemini <code>responseSchema</code>) to emit a payload matching the envelope's JSON Schema.</li>
+<li>It needs <code>discriminator-enum</code> support (the single-string <code>enum: [&quot;literal&quot;]</code> pattern per §A) if the envelope has variants.</li>
+<li>It might need <code>long-context</code> (≥ 200k tokens) for envelope types that consume large prior context.</li>
+<li>It might need <code>reasoning</code> (Anthropic extended thinking, Gemini <code>thinkingBudget</code>, OpenAI o-series) for envelope types where chain-of-thought materially improves output quality (per RFC 0030 §A).</li>
+<li>It might need <code>function-calling</code> for tool-using envelope flows.</li>
+</ul>
+<p>Today, hosts each invent their own dispatch-routing for this. Pack-distributed NodeModules (RFC 0003 node packs, RFC 0013 workflow-chain packs) can't declare requirements portably — a pack authored against an <code>anthropic/claude-opus-4-7</code> deployment may silently misbehave when run against a <code>gemini/flash</code> deployment that lacks the same structured-output guarantees. The protocol's existing <code>NodeModule.requires: string[]</code> (per <code>schemas/capabilities.schema.json</code> lines 211, <code>runtime.*</code> namespace) covers <strong>host</strong> capabilities (e.g., <code>secrets.byok</code>, <code>chat.sendPrompt</code>, <code>canvas.write</code>) — it does not cover <strong>model</strong> capabilities (which model the host's dispatcher routes to).</p>
+<p>This RFC adds a parallel <code>requiredModelCapabilities</code> field and a <code>fallbackModel</code> substitution mechanism so envelope-emitting nodes can declare their model dependencies portably. Hosts honor the declaration: substitute to the fallback when the active model is unsuitable, or refuse to dispatch with an explicit <code>capability_not_provided</code> (per <code>capabilities.md</code> §"Unsupported capability — refusal contract").</p>
+<h3 id="2-3-substitution-and-insufficient-capability-dispatches-need-protocol-visible-telemetry">2.3 Substitution and insufficient-capability dispatches need protocol-visible telemetry</h3>
+<p>When a host substitutes to a fallback model or refuses to dispatch, downstream observability tools and conformance suites need a stable event surface to assert behavior. The existing <code>capability_not_provided</code> error code surfaces <em>host</em>-capability refusals on <code>RunSnapshot.error</code>; <em>model</em>-capability events need their own observable signal. Two new RunEvent types (one for substitution, one for refusal) parallel the precedent set by RFC 0026 (<code>provider.usage</code>) and RFC 0027 (<code>prompt.composed</code>).</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-discriminated-union-pattern-for-variant-envelopes-normative">§A — Discriminated-union pattern for variant envelopes (normative)</h3>
+<p>Add a new §"Variant payload discrimination (normative)" to <code>spec/v1/ai-envelope.md</code> between §"Schema discipline" and §"Envelope Contract":</p>
+<blockquote><p>When an envelope payload schema accepts variant shapes (a sum type), the schema SHALL express the variants as an <code>anyOf</code> composition where every branch:</p><p></p><p>1. Includes a discriminator property of type <code>string</code> with <code>enum</code> containing exactly one value (the discriminator literal for that branch).</p><p>2. Includes the discriminator property in <code>required</code>.</p><p>3. Independently satisfies the Tier-1 Compatibility Subset (per <code>spec/v1/structured-output-subset.md</code> / RFC 0030 §B).</p><p></p><p>Hosts MUST be able to identify the active variant by single-field equality check on the discriminator. Hosts MUST NOT depend on field-presence inference or value-shape heuristics for variant discrimination.</p><p></p><p>Discriminator field names are conventionally <code>kind</code>, <code>variant</code>, or <code>type</code>. Specs MAY use other names but MUST document the chosen name in each envelope-type definition.</p><p></p><p>Schema authors MUST NOT use <code>oneOf</code> for variant payloads — it is unsupported across all three Tier-1 strict-output vendors (OpenAI strict, Anthropic strict, Gemini <code>responseSchema</code>). Schema authors MUST NOT use field-presence-based discrimination — Gemini silently drops the discriminating keyword, and hosts targeting it would route to the wrong handler.</p></blockquote>
+<p>Example (illustrative, for a hypothetical <code>vendor.acme.tasks.create</code> envelope):</p>
+<pre class="lang-jsonschema"><code>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;required&quot;: [&quot;steps&quot;],
+  &quot;properties&quot;: {
+    &quot;reasoning&quot;: { &quot;type&quot;: [&quot;string&quot;, &quot;null&quot;] },
+    &quot;steps&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;anyOf&quot;: [
+          { &quot;$ref&quot;: &quot;#/$defs/DesignTask&quot; },
+          { &quot;$ref&quot;: &quot;#/$defs/PlanningTask&quot; },
+          { &quot;$ref&quot;: &quot;#/$defs/ActionTask&quot; }
+        ]
+      }
+    }
+  },
+  &quot;$defs&quot;: {
+    &quot;DesignTask&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;additionalProperties&quot;: false,
+      &quot;required&quot;: [&quot;kind&quot;, &quot;title&quot;],
+      &quot;properties&quot;: {
+        &quot;kind&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [&quot;design&quot;] },
+        &quot;title&quot;: { &quot;type&quot;: &quot;string&quot; }
+      }
+    },
+    &quot;PlanningTask&quot;: { &quot;...&quot;: &quot;...&quot; },
+    &quot;ActionTask&quot;:   { &quot;...&quot;: &quot;...&quot; }
+  }
+}</code></pre>
+<h4 id="backward-compatibility-for-existing-envelopes">Backward compatibility for existing envelopes</h4>
+<p>The four universal-kind payload schemas (<code>clarification.request</code>, <code>schema.request</code>, <code>schema.response</code>, <code>error</code>) do not have variants today and remain conformant. Vendor-namespaced kinds that already use <code>anyOf</code> + single-string-enum discriminators (the MyndHyve <code>vendor.myndhyve.*</code> family) remain conformant. Vendor-namespaced kinds (if any exist) that use <code>oneOf</code> or field-presence-based discrimination remain conformant for v1.x — this RFC normates the pattern forward-looking only. A future RFC MAY tighten the requirement to existing schemas.</p>
+<h3 id="b-nodemodule-requiredmodelcapabilities-nodemodule-fallbackmodel">§B — <code>NodeModule.requiredModelCapabilities</code> + <code>NodeModule.fallbackModel</code></h3>
+<p>Add two optional fields to the NodeModule shape in <code>schemas/node-pack-manifest.schema.json</code>:</p>
+<pre class="lang-diff"><code>   &quot;properties&quot;: {
+     &quot;typeId&quot;: { ... },
+     &quot;schemaVersion&quot;: { ... },
+     &quot;title&quot;: { ... },
+     &quot;description&quot;: { ... },
+     &quot;configSchema&quot;: { ... },
+     &quot;inputSchema&quot;: { ... },
+     &quot;outputSchema&quot;: { ... },
+     &quot;requires&quot;: { ... },
++    &quot;requiredModelCapabilities&quot;: {
++      &quot;type&quot;: &quot;array&quot;,
++      &quot;items&quot;: {
++        &quot;type&quot;: &quot;string&quot;,
++        &quot;pattern&quot;: &quot;^([a-z][a-z0-9-]*|x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*)${content}quot;,
++        &quot;description&quot;: &quot;Capability identifier per RFC 0031 §C. Spec-defined identifiers are reserved (`structured-output`, `discriminator-enum`, `long-context`, `reasoning`, `function-calling`); host-private extensions MUST prefix with `x-host-&amp;lt;host&amp;gt;-`.&quot;
++      },
++      &quot;uniqueItems&quot;: true,
++      &quot;maxItems&quot;: 32,
++      &quot;description&quot;: &quot;Model capabilities this NodeModule requires the active model to advertise. The host MUST check the active model&#39;s advertised capabilities against this list before dispatching. Distinct from `requires`, which gates on host capabilities (per `capabilities.runtime`). Empty array (or absent field) means no model-capability requirements.&quot;
++    },
++    &quot;fallbackModel&quot;: {
++      &quot;type&quot;: &quot;object&quot;,
++      &quot;additionalProperties&quot;: false,
++      &quot;required&quot;: [&quot;provider&quot;, &quot;model&quot;],
++      &quot;properties&quot;: {
++        &quot;provider&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;pattern&quot;: &quot;^[a-z][a-z0-9-]*${content}quot;, &quot;description&quot;: &quot;Provider id per `capabilities.aiProviders.supported` (e.g., `anthropic`, `openai`, `gemini`).&quot; },
++        &quot;model&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;minLength&quot;: 1, &quot;description&quot;: &quot;Provider-stamped model id (e.g., `claude-opus-4-7`, `gpt-5`, `gemini-2.5-pro`).&quot; }
++      },
++      &quot;description&quot;: &quot;Substitute model coordinates the host MAY use if the active model lacks the declared `requiredModelCapabilities`. When the host substitutes, it MUST emit `model.capability.substituted` (§D). Absent means no substitution permitted; the host MUST refuse to dispatch with `capability_not_provided` when capabilities are unmet.&quot;
++    },
+     &quot;...&quot;: &quot;...&quot;
+   }</code></pre>
+<h4 id="dispatch-flow-normative">Dispatch flow (normative)</h4>
+<p>When dispatching a NodeModule that declares <code>requiredModelCapabilities</code>, a host SHALL:</p>
+<p>1. Check the active model's advertised capabilities against <code>requiredModelCapabilities</code>. 2. If all required capabilities are met: dispatch normally. 3. If unmet AND <code>fallbackModel</code> is declared AND the host can authenticate to the fallback provider (i.e., the fallback's <code>provider</code> is in <code>capabilities.aiProviders.supported</code> AND a credential is resolvable): substitute and emit <code>model.capability.substituted</code> (§D); dispatch with the fallback model. 4. If unmet AND (no <code>fallbackModel</code> declared, OR the host cannot authenticate to the fallback): emit <code>model.capability.insufficient</code> (§D) and refuse to dispatch the node with <code>error.code = &quot;capability_not_provided&quot;</code> per <code>capabilities.md</code> §"Unsupported capability — refusal contract". The run transitions to <code>failed</code> unless the run's retry policy intervenes.</p>
+<p>The order MUST be: capability check → optional substitution → emit telemetry → dispatch or refuse. Hosts MUST NOT substitute silently (no event emission); hosts MUST NOT dispatch with an unsuitable model and hope for the best (the model's runtime failure is a worse signal than refusing up-front).</p>
+<h3 id="c-capability-identifier-registry">§C — Capability identifier registry</h3>
+<p>Defined initial capability identifiers (extensible by host registration):</p>
+<table>
+<thead><tr><th>Identifier</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>structured-output</code></td><td>Vendor strict-mode JSON Schema support (Anthropic strict tool use <code>strict: true</code>, OpenAI strict mode <code>response_format.json_schema.strict: true</code>, Gemini <code>responseSchema</code> on <code>generateContent</code>). Per <code>spec/v1/structured-output-subset.md</code> (RFC 0030 §B).</td></tr>
+<tr><td><code>discriminator-enum</code></td><td>Single-string <code>enum: [&quot;literal&quot;]</code> discriminator support in <code>anyOf</code> branches per §A. All three Tier-1 vendors support this when their respective strict modes are engaged.</td></tr>
+<tr><td><code>long-context</code></td><td>Context window ≥ 200k tokens.</td></tr>
+<tr><td><code>reasoning</code></td><td>Native reasoning / thinking tokens (Anthropic extended thinking, Gemini <code>thinkingBudget</code>, OpenAI o-series reasoning). Sibling concept to RFC 0030's envelope-payload <code>reasoning</code> field — <code>reasoning</code> here means <em>model-native</em> thinking-tokens, NOT envelope-payload chain-of-thought.</td></tr>
+<tr><td><code>function-calling</code></td><td>Multi-turn function-calling / tool-use loop support.</td></tr>
+</tbody></table>
+<p><strong>Reservation policy.</strong> Identifiers in the table above are spec-reserved. Hosts MAY add private extensions via the <code>x-host-&amp;lt;host&amp;gt;-&amp;lt;key&amp;gt;</code> prefix per <code>host-extensions.md</code> §"Canonical-prefix table." A future RFC MAY add new spec-reserved identifiers as new model capabilities materialize.</p>
+<p><strong>Host advertisement.</strong> A host's advertised model-capability set lives at <code>capabilities.modelCapabilities.advertised</code> per §E. The host's dispatcher is the authoritative source of truth for which active model satisfies which identifier; the protocol does not normate how the host derives the mapping (vendor-API probes, static lookup tables, configuration files — all valid).</p>
+<p><strong>Truthful advertisement (normative; amendment 2026-05-21 from RFC adoption feedback).</strong> <code>capabilities.modelCapabilities.advertised[]</code> MUST reflect only the capability identifiers the host actually gates on at dispatch (i.e., identifiers some <code>NodeModule.requiredModelCapabilities[]</code> in the host's registered pack set references AND that the host's dispatcher evaluates). Pasting the full spec-reserved set as boilerplate is dishonest per <code>capabilities.md</code> §"Truthful advertisement" and is non-conformant. Hosts whose pack registry only references a subset of the spec-reserved identifiers MUST advertise only that subset; adding identifiers later (when new NodeModules declare them) is an additive bump.</p>
+<h3 id="d-two-new-runeventtype-entries">§D — Two new RunEventType entries</h3>
+<p><code>schemas/run-event.schema.json</code> <code>RunEventType</code> enum gains two new entries:</p>
+<pre class="lang-diff"><code>   &quot;agent.reasoned&quot;,
+   &quot;agent.reasoning.delta&quot;,
++  &quot;model.capability.substituted&quot;,
++  &quot;model.capability.insufficient&quot;,
+   &quot;prompt.composed&quot;,
+   &quot;provider.usage&quot;,</code></pre>
+<p><code>schemas/run-event-payloads.schema.json</code> gains two new <code>$defs</code>:</p>
+<pre class="lang-json"><code>&quot;modelCapabilitySubstituted&quot;: {
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;required&quot;: [&quot;nodeId&quot;, &quot;originalProvider&quot;, &quot;originalModel&quot;, &quot;fallbackProvider&quot;, &quot;fallbackModel&quot;, &quot;missingCapabilities&quot;],
+  &quot;description&quot;: &quot;Emitted when a host substitutes the active model with a NodeModule&#39;s declared `fallbackModel` because the active model lacks one or more of the `requiredModelCapabilities`. MUST event per RFC 0031 §B step 3.&quot;,
+  &quot;properties&quot;: {
+    &quot;nodeId&quot;:            { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;The node whose dispatch triggered the substitution.&quot; },
+    &quot;originalProvider&quot;:  { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;Provider id of the active model the host was about to use.&quot; },
+    &quot;originalModel&quot;:     { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;Model id of the active model.&quot; },
+    &quot;fallbackProvider&quot;:  { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;Provider id of the substitute model from `NodeModule.fallbackModel.provider`.&quot; },
+    &quot;fallbackModel&quot;:     { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;Model id of the substitute model from `NodeModule.fallbackModel.model`.&quot; },
+    &quot;missingCapabilities&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: { &quot;type&quot;: &quot;string&quot; },
+      &quot;description&quot;: &quot;Subset of `NodeModule.requiredModelCapabilities` that the active model did not satisfy.&quot;
+    }
+  }
+},
+&quot;modelCapabilityInsufficient&quot;: {
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;required&quot;: [&quot;nodeId&quot;, &quot;provider&quot;, &quot;model&quot;, &quot;missingCapabilities&quot;],
+  &quot;description&quot;: &quot;Emitted when a host refuses to dispatch a NodeModule because the active model lacks declared `requiredModelCapabilities` AND no viable fallback is available (no `fallbackModel` declared, OR the host cannot authenticate to the fallback provider). MUST event per RFC 0031 §B step 4. Pairs with `RunSnapshot.error.code = \&quot;capability_not_provided\&quot;`.&quot;,
+  &quot;properties&quot;: {
+    &quot;nodeId&quot;:              { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;The node whose dispatch was refused.&quot; },
+    &quot;provider&quot;:            { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;Provider id of the active model the host attempted to use.&quot; },
+    &quot;model&quot;:               { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;Model id of the active model.&quot; },
+    &quot;missingCapabilities&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: { &quot;type&quot;: &quot;string&quot; },
+      &quot;description&quot;: &quot;Subset of `NodeModule.requiredModelCapabilities` that the active model did not satisfy.&quot;
+    },
+    &quot;fallbackAttempted&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;default&quot;: false,
+      &quot;description&quot;: &quot;True if the host attempted to authenticate to a declared fallback and failed. False if no `fallbackModel` was declared (or the fallback provider was outside `capabilities.aiProviders.supported`).&quot;
+    }
+  }
+}</code></pre>
+<p>And a discriminator entry in <code>_typeIndex</code>:</p>
+<pre class="lang-diff"><code>+  &quot;model.capability.substituted&quot;: { &quot;$ref&quot;: &quot;#/$defs/modelCapabilitySubstituted&quot; },
++  &quot;model.capability.insufficient&quot;: { &quot;$ref&quot;: &quot;#/$defs/modelCapabilityInsufficient&quot; },</code></pre>
+<p><strong>Scope clarification re: <code>ai-envelope.md</code> line 448.</strong> The line-448 MUST NOT prohibits hosts from extending <code>RunEventType</code> to add <em>envelope-kind-specific</em> events (one event per envelope kind, e.g., a <code>clarification.requested</code> mirroring <code>clarification.request</code> payload). The two events introduced here — <code>model.capability.substituted</code> and <code>model.capability.insufficient</code> — are <strong>cross-kind operational</strong> events: they fire during model dispatch, before any envelope is emitted, and apply uniformly regardless of which envelope kind the node ends up emitting. Same posture as RFC 0026's <code>provider.usage</code> and RFC 0027's <code>prompt.composed</code>; both extended <code>RunEventType</code> without conflict. The formal carve-out for cross-kind operational envelope-track events is normated by RFC 0032 §A; RFC 0031 cites that carve-out by reference but does not depend on it (these events fire before envelope emission, not as part of envelope handling).</p>
+<h3 id="e-capability-advertisement">§E — Capability advertisement</h3>
+<p><code>schemas/capabilities.schema.json</code> gains one new optional top-level block:</p>
+<pre class="lang-diff"><code>+    &quot;modelCapabilities&quot;: {
++      &quot;type&quot;: &quot;object&quot;,
++      &quot;additionalProperties&quot;: false,
++      &quot;required&quot;: [&quot;supported&quot;],
++      &quot;properties&quot;: {
++        &quot;supported&quot;: {
++          &quot;type&quot;: &quot;boolean&quot;,
++          &quot;description&quot;: &quot;Host honors `NodeModule.requiredModelCapabilities` and emits `model.capability.{substituted,insufficient}` per RFC 0031. When false or absent, the fields are treated as opaque metadata and dispatch proceeds without capability checks.&quot;
++        },
++        &quot;advertised&quot;: {
++          &quot;type&quot;: &quot;array&quot;,
++          &quot;items&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;pattern&quot;: &quot;^([a-z][a-z0-9-]*|x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*)${content}quot; },
++          &quot;uniqueItems&quot;: true,
++          &quot;description&quot;: &quot;Capability identifiers the host&#39;s active model advertises. Clients MAY introspect this at install time to determine whether their NodeModules&#39; `requiredModelCapabilities` are satisfiable without fallback.&quot;
++        },
++        &quot;substitutionSupported&quot;: {
++          &quot;type&quot;: &quot;boolean&quot;,
++          &quot;description&quot;: &quot;Host honors `NodeModule.fallbackModel` substitution per RFC 0031 §B step 3. **Scope (normative; clarified by amendment 2026-05-21):** substitution is per-NodeModule, NOT host-wide. When `true`, the host evaluates `requiredModelCapabilities` + `fallbackModel` per dispatch of an envelope-emitting NodeModule (the unit at which the NodeModule schema declares the fields). Hosts that do not implement a per-call provider-swap facility (i.e., they cannot rewrite `ctx.callAI({provider: ...})` mid-dispatch to use the fallback model) MUST advertise `false` — emitting `model.capability.substituted` without actually substituting is wire-contract-dishonest. When false or absent, hosts MUST refuse to dispatch (step 4) on any unmet capability even when `NodeModule.fallbackModel` is declared.&quot;
++        }
++      },
++      &quot;description&quot;: &quot;Advertisement that the host implements RFC 0031 model-capability gating + substitution. Absent block = no capability gating; NodeModules&#39; `requiredModelCapabilities` are ignored.&quot;
++    }</code></pre>
+<h3 id="f-security-carry-forward">§F — Security carry-forward</h3>
+<p><code>model.capability.substituted</code> reveals which alternate provider/model the host has credentials for. Some hosts treat this as private (a workspace might not want to disclose its multi-vendor posture). A new SECURITY invariant lands:</p>
+<pre class="lang-yaml"><code>- id: model-capability-substituted-no-credential-disclosure
+  tier: protocol
+  severity: medium
+  threat_model: SECURITY/threat-model-secret-leakage.md
+  tests:
+    - conformance/src/scenarios/model-capability-substituted.test.ts
+  note: |
+    RFC 0031 §F: hosts emitting `model.capability.substituted` MAY redact the
+    `fallbackProvider` and `fallbackModel` fields when workspace policy treats
+    multi-vendor posture as confidential. Redaction MUST be all-or-nothing for
+    the pair (both fields redacted as `&quot;[REDACTED]&quot;`) so consumers can detect
+    redaction without ambiguity. `nodeId`, `originalProvider`, `originalModel`,
+    and `missingCapabilities` MUST NOT be redacted — they carry no provider-
+    possession information beyond what the run-creation request already
+    disclosed via `RunOptions.configurable.ai.provider`.</code></pre>
+<p>The invariant is <code>medium</code> (not <code>high</code>) because: (a) the <code>originalProvider</code> is already public via <code>RunOptions.configurable</code>; (b) the fact that a host has <em>some</em> fallback configured is conventionally public via <code>capabilities.modelCapabilities.substitutionSupported: true</code>. The hidden bit is which specific fallback fired for a given dispatch — workspace-internal info that some operators prefer to keep private.</p>
+<p>Hosts that don't redact (the default) are conformant; hosts that redact MUST do so per the all-or-nothing rule above to keep the event shape predictable.</p>
+<h3 id="g-trust-boundary-carry-forward">§G — Trust boundary (carry-forward)</h3>
+<p>Substitution and insufficient-capability events fire <strong>before</strong> envelope emission, so <code>meta.contentTrust</code> propagation per <code>ai-envelope.md</code> §"Trust boundary" doesn't apply directly. The two events carry no payload content from upstream sources; trust marking is unnecessary.</p>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive per <code>COMPATIBILITY.md §2.1</code>.</strong> All claims:</p>
+<ul>
+<li>Existing required fields: unchanged. The two new <code>NodeModule</code> fields are optional; existing node packs validate unchanged.</li>
+<li>Existing optional fields: unchanged.</li>
+<li>Existing event types: unchanged (<code>model.capability.*</code> are NEW enum entries; consumers MUST tolerate unknown event types per existing forward-compat).</li>
+<li>Existing endpoints: unchanged.</li>
+<li>Existing MUST requirements: not relaxed. The §A normative rule applies to <em>new</em> variant payload schemas; existing schemas with variants remain conformant for v1.x.</li>
+<li>Existing error codes: unchanged. <code>capability_not_provided</code> is reused for the §B step 4 refusal.</li>
+</ul>
+<p>Hosts that don't advertise <code>capabilities.modelCapabilities</code> see no behavioral change; <code>requiredModelCapabilities</code> is opaque metadata and dispatch proceeds without checks. NodeModules without <code>requiredModelCapabilities</code> see no behavioral change on any host.</p>
+<h2 id="conformance">Conformance</h2>
+<p>Four new scenarios under <code>conformance/src/scenarios/</code>. All gated as noted.</p>
+<ul>
+<li><code>envelope-variant-discriminator-static.test.ts</code> — always runs. For every kind in the host's <code>supportedEnvelopes</code> advertisement, statically asserts: (1) if the payload schema contains an <code>anyOf</code>, every branch declares a single-string-enum discriminator per §A; (2) the payload schema MUST NOT contain <code>oneOf</code> at any nesting depth. No LLM in the loop.</li>
+</ul>
+<ul>
+<li><code>model-capability-substituted.test.ts</code> — gated on <code>capabilities.modelCapabilities.supported: true</code> AND <code>substitutionSupported: true</code> AND the test seam <code>POST /v1/host/sample/test/synthesize-model-capability-event</code>. Drives a synthetic dispatch where the active model is configured to lack <code>structured-output</code>; the NodeModule declares <code>fallbackModel</code>. Asserts exactly one <code>model.capability.substituted</code> event fires with <code>missingCapabilities: [&quot;structured-output&quot;]</code> and the expected fallback coordinates (or <code>[REDACTED]</code> when the host opts to redact per §F).</li>
+</ul>
+<ul>
+<li><code>model-capability-insufficient.test.ts</code> — gated on <code>capabilities.modelCapabilities.supported: true</code> AND the test seam. Drives a synthetic dispatch where the active model lacks a required capability AND the NodeModule declares no <code>fallbackModel</code>. Asserts: (1) exactly one <code>model.capability.insufficient</code> event fires with <code>fallbackAttempted: false</code>; (2) the run terminates with <code>RunSnapshot.error.code = &quot;capability_not_provided&quot;</code>; (3) no envelope emission occurs.</li>
+</ul>
+<ul>
+<li><code>node-module-required-capabilities-shape.test.ts</code> — gated on <code>capabilities.modelCapabilities.supported: true</code>. Statically validates that every NodeModule in the host's pack registry whose <code>typeId</code> is in the <code>core.ai.*</code> namespace declares <code>requiredModelCapabilities</code> (host-policy assertion) — OR skips with a clear failure message if the host advertises capabilities but the spec doesn't yet have a host-policy gate. Treat as a SHOULD-tier scenario; conformance runs flag SHOULD-tier soft-fails separately from MUST-tier hard-fails.</li>
+</ul>
+<p>The <code>behaviorGate</code> helper gains predicates: <code>requireModelCapabilities()</code> and <code>requireModelCapabilitySubstitution()</code>.</p>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<p>1. **Reuse the existing <code>NodeModule.requires: string[]</code> field with a <code>model.*</code> namespace (e.g., <code>model.structured-output</code>).** Rejected — <code>requires</code> is keyed off <code>capabilities.runtime.*</code> per <code>capabilities.md</code> §"Runtime capabilities" and refuses on <code>capability_not_provided</code> without any substitution semantics. Overloading it with model capabilities would mean: (a) the refusal contract has to grow a substitution path on the runtime-capability surface, which the existing spec rules out; (b) the namespace becomes muddier — operators reading a manifest see <code>requires: [&quot;secrets.byok&quot;, &quot;model.structured-output&quot;]</code> and have to know which strings gate on which capability surface. A dedicated <code>requiredModelCapabilities</code> field with its own dispatch flow is structurally cleaner.</p>
+<p>2. <strong>Drop the substitution mechanism; refuse on every missing capability.</strong> Rejected — the substitution path is the load-bearing value of the RFC. Without it, pack authors have to gate their packs on <code>capabilities.aiProviders.supported.includes(&quot;anthropic&quot;)</code> and force operators to provision specific providers. The <code>fallbackModel</code> pattern lets a pack declare "I need <code>structured-output</code>; if your active model doesn't have it, here's a model that does." This is the cross-host portability story.</p>
+<p>3. <strong>Make <code>fallbackModel</code> a per-run override instead of a per-NodeModule declaration.</strong> Rejected — per-NodeModule is correct because the capability requirement is intrinsic to the NodeModule's semantics. A node that emits a discriminated-union envelope needs <code>discriminator-enum</code>-capable model dispatch; that requirement doesn't change run-by-run. Per-run overrides would put the responsibility on every workflow author to know each node's intrinsic requirements — exactly the gap this RFC closes.</p>
+<p>4. <strong>Use an existing event type (e.g., <code>log.appended</code> with <code>code: &quot;model.capability.substituted&quot;</code>) instead of new <code>RunEventType</code> entries.</strong> Considered as an Option A fallback for the same MUST-NOT concern RFC 0032 addresses. Rejected here because: (a) the two events are cross-kind operational (not envelope-kind-specific) — they don't trigger the line-448 MUST NOT; (b) the precedent of RFC 0026 (<code>provider.usage</code>) and RFC 0027 (<code>prompt.composed</code>) already establishes that operational events extend <code>RunEventType</code> cleanly; (c) conformance assertions on dedicated event types are more precise than string-match on a <code>log.appended.code</code>.</p>
+<p>5. <strong>Defer the <code>discriminated-union</code> codification to a future RFC; ship only the model-capability surface.</strong> Rejected — both halves are forward-looking schema/dispatch discipline that the protocol should ratify in the same release. Slicing them creates ceremony without spec-text benefit. The two halves do connect via the <code>discriminator-enum</code> capability identifier (§C), which references the §A pattern.</p>
+<h2 id="unresolved-questions">Unresolved questions</h2>
+<p>1. <strong>Capability identifier vocabulary growth.</strong> §C defines five initial identifiers. As new model capabilities materialize (e.g., <code>vision-input</code>, <code>audio-output</code>, <code>code-execution</code>), should they go through a full RFC process or via a lightweight registry-update mechanism? Recommendation: full RFC for now (single-steward bootstrap); revisit when the maintainer set grows.</p>
+<p>2. <strong>Per-vendor capability mapping.</strong> A host's mapping from "active model = <code>gpt-5</code>" → "advertised capabilities = [structured-output, discriminator-enum, function-calling, reasoning]" is host-internal. Should the spec recommend a canonical mapping (e.g., "all OpenAI o-series advertise <code>reasoning</code>")? Recommendation: no — vendor model rosters change too fast; canonical mappings would be stale-by-design. Hosts MAY publish their mapping as documentation; the protocol surface is the advertised result.</p>
+<p>3. <strong>Substitution recursion.</strong> A host substitutes from active model A to fallback model B because A lacks <code>structured-output</code>. What if B also lacks one of the <em>other</em> required capabilities (e.g., <code>reasoning</code>)? Recommendation: NO recursive substitution — the host MUST evaluate the fallback model's full capability set before substituting; if the fallback also fails, the host MUST emit <code>model.capability.insufficient</code> with <code>fallbackAttempted: true</code> and refuse. Spec text in §B will need explicit clarification.</p>
+<p>4. <strong><code>fallbackModel</code> cost-attribution.</strong> When substitution fires, the <code>provider.usage</code> event (RFC 0026) attributes the cost to the fallback provider, not the original. Is this transparent enough for billing reconciliation? Recommendation: yes — <code>provider.usage.provider</code> already carries the actual provider that was charged. The <code>model.capability.substituted</code> event fires <em>before</em> <code>provider.usage</code>, providing the causal chain.</p>
+<p>5. <strong>Interaction with RFC 0027/0028/0029 prompt-resolution chain.</strong> A <code>core.ai.callPrompt</code> node with both <code>requiredModelCapabilities</code> (this RFC) and <code>systemPromptRef</code> (RFC 0027) needs both checked. Resolution order: capability check FIRST, then prompt resolution. Rationale: substitution may swap models with different prompt-tuning expectations; resolving prompt against the <em>original</em> model when the dispatch ends up using the <em>fallback</em> is incorrect. Document this ordering as non-normative implementation guidance.</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<ul>
+<li>Reference host <code>apps/workflow-engine/backend/typescript</code>: extend <code>executor/executor.ts</code> <code>dispatchNode(...)</code> to (1) read <code>NodeModule.requiredModelCapabilities</code>, (2) cross-check against the active provider's <code>capabilities.modelCapabilities.advertised</code>, (3) substitute to <code>NodeModule.fallbackModel</code> when unmet, (4) emit the appropriate <code>model.capability.*</code> event via <code>eventLog.append(...)</code>. The dispatch helper lives in a new <code>executor/modelCapabilityGate.ts</code> module to keep <code>executor.ts</code> from sprawling.</li>
+<li>The capability-advertisement source of truth: <code>routes/discovery.ts</code>'s <code>capabilities.modelCapabilities.advertised</code> is populated by a new <code>aiProviders/capabilityProbe.ts</code> that statically maps the configured <code>aiProviders.supported[]</code> rows to a per-provider capability set. The probe is configured by a static table; future iterations could probe at startup.</li>
+<li>Conformance fixture engineering: ~0.5 day per scenario × 4 = ~2 days. The static-discriminator scenario reuses the existing schema-walker from RFC 0030's Tier-1-subset scenario.</li>
+<li>Estimated total effort: schemas + spec text ~1 day; reference-host dispatch wiring ~1.5 days; four conformance scenarios ~2 days; CHANGELOG + INTEROP-MATRIX ~30 min. Total ~5 days plus the standard Active window unless the bootstrap-phase waiver applies.</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<p>Promotion from <code>Active</code> → <code>Accepted</code>:</p>
+<ul>
+<li>[ ] <code>spec/v1/ai-envelope.md</code> extended with §"Variant payload discrimination (normative)" per §A.</li>
+<li>[ ] <code>spec/v1/host-capabilities.md</code> extended with §"Model-capability declarations" describing the dispatch flow from §B.</li>
+<li>[ ] <code>spec/v1/node-packs.md</code> extended with §"Model-capability declarations on NodeModules" referencing the schema additions in §B.</li>
+<li>[ ] <code>schemas/node-pack-manifest.schema.json</code> gains <code>requiredModelCapabilities</code> + <code>fallbackModel</code> per §B.</li>
+<li>[ ] <code>schemas/capabilities.schema.json</code> gains the <code>modelCapabilities</code> block per §E.</li>
+<li>[ ] <code>schemas/run-event.schema.json</code> adds <code>model.capability.substituted</code> + <code>model.capability.insufficient</code> to the <code>RunEventType</code> enum.</li>
+<li>[ ] <code>schemas/run-event-payloads.schema.json</code> adds <code>modelCapabilitySubstituted</code> + <code>modelCapabilityInsufficient</code> <code>$defs</code> and <code>_typeIndex</code> entries per §D.</li>
+<li>[ ] <code>SECURITY/invariants.yaml</code> gains the <code>model-capability-substituted-no-credential-disclosure</code> entry per §F (gate timing: lands alongside reference-host implementation, matching RFC 0027 §G precedent).</li>
+<li>[ ] Four new conformance scenarios per §"Conformance" land in <code>@openwop/openwop-conformance</code>; suite minor-version bumps.</li>
+<li>[ ] CHANGELOG entry under <code>[Unreleased]</code>.</li>
+<li>[ ] <code>INTEROP-MATRIX.md</code> extended with rows for <code>capabilities.modelCapabilities.supported</code>, <code>substitutionSupported</code>, and <code>advertised[]</code>.</li>
+<li>[ ] Reference host (<code>apps/workflow-engine/backend/typescript</code>) advertises <code>capabilities.modelCapabilities.supported: true</code>, implements the dispatch gate, emits both new events, passes all four new conformance scenarios.</li>
+<li>[ ] First non-steward host advertises <code>capabilities.modelCapabilities.supported: true</code> (third-party validation gate per RFC 0001). MAY be waived under bootstrap-phase waiver.</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li><code>RFCS/0021-ai-envelope-primitive.md</code> — schema-discipline section this RFC tightens; vendor-namespaced-kind precedent for §A.</li>
+<li><code>RFCS/0030-envelope-reasoning-and-tier-one-subset.md</code> — Tier-1 Compatibility Subset that §A's <code>anyOf</code> + discriminator pattern is a subset member of.</li>
+<li><code>RFCS/0032-envelope-reliability-events.md</code> (forthcoming) — formally normates the line-448 MUST-NOT carve-out for cross-kind operational events; cited by reference from §D scope clarification.</li>
+<li><code>RFCS/0033-envelope-completion-contract.md</code> (forthcoming) — depends on this RFC's <code>model.capability.*</code> events as part of the dispatch-time observability surface.</li>
+<li><code>RFCS/0026-provider-usage-event.md</code> — precedent for adding cross-kind operational events to <code>RunEventType</code> without conflicting with line 448.</li>
+<li><code>RFCS/0027-prompt-templates.md</code> — <code>prompt.composed</code> precedent for additive event-payload <code>$defs</code>.</li>
+<li><code>RFCS/0029-prompt-override-hierarchy.md</code> §F — orthogonality note describing how this RFC's <code>requiredModelCapabilities</code> interacts with that RFC's prompt-resolution chain.</li>
+<li><code>spec/v1/capabilities.md</code> §"Runtime capabilities" — the existing <code>NodeModule.requires</code> surface this RFC complements with a parallel <code>requiredModelCapabilities</code>.</li>
+<li><code>spec/v1/capabilities.md</code> §<code>aiProviders</code> — provider/credential advertisement that <code>fallbackModel.provider</code> must match.</li>
+<li><code>SECURITY/threat-model-secret-leakage.md</code> SR-1 — redaction harness referenced by §F.</li>
+<li>OpenAI Structured Outputs — https://developers.openai.com/api/docs/guides/structured-outputs</li>
+<li>Anthropic Strict Tool Use — https://platform.claude.com/docs/en/agents-and-tools/tool-use/strict-tool-use</li>
+<li>Google Gemini Structured Output — https://ai.google.dev/gemini-api/docs/structured-output</li>
+<li>Instructor (discriminated-union retry pattern) — https://github.com/jxnl/instructor</li>
+<li>Pydantic AI output taxonomy — https://pydantic.dev/docs/ai/core-concepts/output/</li>
+</ul>
+<h2 id="status-history">Status history</h2>
+<h3 id="active-accepted-2026-05-21">Active → Accepted (2026-05-21)</h3>
+<p>Promoted to <code>Accepted</code> under the bootstrap-phase steward waiver per <code>CONTRIBUTING.md</code> §"Bootstrap-phase notes" + <code>MAINTAINERS.md</code> §"Bootstrap-phase RFC waivers" — same path RFCs 0021–0029 + RFC 0030 used. Zero external reviewers (single-steward bootstrap repo); all four acceptance criteria from <code>RFCS/0001-rfc-process.md</code> §"Promotion to Accepted" empirically met by Day 2.</p>
+<p><strong>Acceptance evidence:</strong></p>
+<p>1. <strong>Reference workflow-engine implementation.</strong> Host advertises <code>capabilities.modelCapabilities.{supported: true, advertised: [5 reserved ids], substitutionSupported: false}</code>. Execute-time model-capability gate in <code>executor/executor.ts</code> emits <code>model.capability.{substituted,insufficient}</code> and refuses with <code>capability_not_provided</code>. <code>host/modelCapabilityProbe.ts</code> + <code>executor/modelCapabilityGate.ts</code> (commits <code>903e8b6</code> + <code>d65c49f</code>). 2. <strong>Conformance suite coverage.</strong> <code>model-capability-substituted.test.ts</code> + <code>model-capability-insufficient.test.ts</code> + <code>node-module-required-capabilities-shape.test.ts</code> cover the §B 4-step dispatch flow + §C identifier registry + §D event emission. 13 live HTTP-gated assertions across the 3 files; end-to-end fixture-driven refusal verified via <code>conformance-model-capability-insufficient</code>. 3. <strong>Third-party host adoption.</strong> MyndHyve workflow-runtime at <code>https://api.myndhyve.ai/.well-known/openwop</code> advertises <code>modelCapabilities.{supported: true, advertised: [&quot;structured-output&quot;, &quot;discriminator-enum&quot;]}</code> — the truthful subset per the §C 2026-05-21 amendment. 4. <strong>Adoption feedback folded.</strong> §C truthful-advertisement normation + §E <code>substitutionSupported</code> per-NodeModule scope clarification (amendments 2026-05-21, commit <code>9da6281</code>).</p>
+<p>Compatibility: ratification is <strong>non-normative</strong> — no wire surface, schema, or behavior changes.</p>
+<h3 id="active-amendment-2026-05-21-myndhyve-adoption-feedback">Active amendment (2026-05-21) — MyndHyve adoption feedback</h3>
+<p>Additive normative-text clarification per the filled adoption feedback at <code>docs/handoffs/MYNDHYVE-RFC-0030-0033-ADOPTION-FEEDBACK-2026-05-20.md</code> §A.2. <strong>No wire-shape change; no schema change.</strong></p>
+<ul>
+<li>§C — New normative paragraph on truthful advertisement: <code>capabilities.modelCapabilities.advertised[]</code> MUST reflect only the capability identifiers the host actually gates on (referenced by some registered <code>NodeModule.requiredModelCapabilities[]</code>). Boilerplate-paste of the full spec-reserved set is now explicitly non-conformant per <code>capabilities.md</code> §"Truthful advertisement." Surfaced by MyndHyve advertising only the 2 of 5 identifiers their pack registry references.</li>
+<li>§E — Clarified <code>substitutionSupported</code> scope: substitution is <strong>per-NodeModule, not host-wide.</strong> Evaluated per dispatch of an envelope-emitting NodeModule (the unit at which the schema declares <code>requiredModelCapabilities</code> + <code>fallbackModel</code>). Hosts without a per-call provider-swap facility MUST advertise <code>false</code> — emitting <code>model.capability.substituted</code> without actually substituting is wire-contract-dishonest. Surfaced by MyndHyve's substitution emission being node-config-scoped rather than host-dispatch-scoped.</li>
+</ul>
+<p>Compatibility: <strong>additive</strong> per <code>COMPATIBILITY.md §2.1</code>. Hosts already advertising honestly (only the capabilities they gate on; only <code>substitutionSupported: true</code> when they actually substitute) remain compliant. The two clarifications make those existing best practices normative.</p>
+<h3 id="draft-active-2026-05-20">Draft → Active (2026-05-20)</h3>
+<p>Promoted under the bootstrap-phase steward waiver per the RFC 0021–0030 precedent. Spec text + wire-shape locked; conformance scenarios + SECURITY invariant + reference-host emission remain as the path to <code>Accepted</code>.</p>
+<p>Evidence at promotion:</p>
+<ul>
+<li><strong>Spec text:</strong></li>
+</ul>
+<p>  - <code>spec/v1/ai-envelope.md</code> extended with §"Variant payload discrimination (normative)" between §"Schema discipline" and §"Envelope Contract". Normative SHALL: variant envelope payloads use <code>anyOf</code> + single-string-<code>enum</code> discriminator per branch; <code>oneOf</code> forbidden (cross-vendor incompatible — Gemini silently drops). Backward-compatibility paragraph preserves existing v1.x schemas that already use the pattern or that use <code>oneOf</code>/field-presence (no retroactive failure; forward-looking only).   - <code>spec/v1/host-capabilities.md</code> extended with §"Model-capability declarations" between §host.aiEnvelope and §host.promptLibrary. Documents the 4-step dispatch flow (capability check → optional substitution → emit telemetry → dispatch or refuse), the 5-identifier spec-reserved capability registry (<code>structured-output</code>, <code>discriminator-enum</code>, <code>long-context</code>, <code>reasoning</code>, <code>function-calling</code>) + <code>x-host-&amp;lt;host&amp;gt;-&amp;lt;key&amp;gt;</code> extension prefix, and the orthogonality note with RFC 0029 prompt-resolution chain (capability check first, then prompt resolution — substitution can swap models with different prompt-tuning expectations).   - <code>spec/v1/node-packs.md</code> extended with §"Model-capability declarations on NodeModules" between §"Per-node <code>requiresSecrets[]</code>" and §"Runtime formats." Author-side surface paralleling <code>requiresSecrets[]</code>. Cross-references the dispatch contract in <code>host-capabilities.md</code>.</p>
+<ul>
+<li><strong>Schemas additive (no MUST relaxed):</strong></li>
+</ul>
+<p>  - <code>schemas/node-pack-manifest.schema.json</code> — NodeModule shape gains optional <code>requiredModelCapabilities: string[]</code> (pattern restricts to spec-reserved or <code>x-host-*</code> identifiers, ≤32 entries, uniqueItems) + optional <code>fallbackModel: { provider, model }</code> with provider lowercase-ASCII pattern + model min-length-1.   - <code>schemas/capabilities.schema.json</code> — new optional top-level <code>modelCapabilities</code> block with <code>supported: boolean</code> (required), <code>advertised: string[]</code>, <code>substitutionSupported: boolean</code>. Sibling to the existing <code>runtimeCapabilities</code> array (host capabilities) — semantic distinction documented in both descriptions.   - <code>schemas/run-event.schema.json</code> — <code>RunEventType</code> enum gains <code>&quot;model.capability.substituted&quot;</code> and <code>&quot;model.capability.insufficient&quot;</code> after <code>agent.promptResolved</code> (cross-kind operational cluster).   - <code>schemas/run-event-payloads.schema.json</code> — <code>_typeIndex</code> gets two new entries; two new <code>$defs</code> (<code>modelCapabilitySubstituted</code> + <code>modelCapabilityInsufficient</code>) carry the payload contracts. Substitution event documents the all-or-nothing <code>&quot;[REDACTED]&quot;</code> redaction option for <code>fallbackProvider</code>/<code>fallbackModel</code> per SECURITY invariant <code>model-capability-substituted-no-credential-disclosure</code>. Insufficient event documents the no-recursive-fallback constraint (<code>fallbackAttempted: true</code> when the declared fallback itself failed, no chaining).</p>
+<p>Path to <code>Active → Accepted</code>: requires the reference workflow-engine to (a) advertise <code>capabilities.modelCapabilities.supported: true</code> + <code>advertised[]</code> populated by a capability-probe over <code>aiProviders.supported[]</code>, (b) implement the dispatch gate in <code>executor/executor.ts</code> (or <code>executor/modelCapabilityGate.ts</code> sibling) that consults the active model's advertised capabilities + emits <code>model.capability.{substituted,insufficient}</code>, (c) ship the four conformance scenarios from §"Conformance" (including the discriminator-static and substitution/insufficient/declaration shape assertions), and (d) ship the <code>model-capability-substituted-no-credential-disclosure</code> SECURITY invariant alongside the matching conformance scenario. Alternatively, a non-steward host advertising the capability closes the third-party validation gate per the RFC 0021 / RFC 0026 precedent.</p></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — RFC 0037: Multi-agent execution model + replay determinism under nondeterministic models</title>
+  <meta name="description" content="Specify the formal interoperable execution model for multi-agent workflows: planner→worker handoff state machine, confidence-threshold semantics, agent memory lifecycle across sub-runs, cross-host causation linking, and replay determinism under…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0037-multi-agent-execution-model.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — RFC 0037: Multi-agent execution model + replay determinism under nondeterministic models"/>
+  <meta property="og:description" content="Specify the formal interoperable execution model for multi-agent workflows: planner→worker handoff state machine, confidence-threshold semantics, agent memory lifecycle across sub-runs, cross-host causation linking, and replay determinism under…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0037-multi-agent-execution-model.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — RFC 0037: Multi-agent execution model + replay determinism under nondeterministic models"/>
+  <meta name="twitter:description" content="Specify the formal interoperable execution model for multi-agent workflows: planner→worker handoff state machine, confidence-threshold semantics, agent memory lifecycle across sub-runs, cross-host causation linking, and replay determinism under…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="" href="/spec/v1/">Spec</a>
+      <a class="active" href="/rfcs/">RFCs</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/changelog/">Changelog</a>
+      <a class="" href="/faq/">FAQ</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="rfc-0037-multi-agent-execution-model-replay-determinism-under-nondeterministic-models">RFC 0037: Multi-agent execution model + replay determinism under nondeterministic models</h1>
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0037</td></tr>
+<tr><td><strong>Title</strong></td><td>Multi-agent execution model + replay determinism under nondeterministic models</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Active</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-21</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-21 (Draft → Active same-day: Phase 1 spec text landed as <code>spec/v1/multi-agent-execution.md</code>; <code>capabilities.multiAgent.executionModel</code> block added to <code>schemas/capabilities.schema.json</code>; <code>core.workflowChain.event</code> added to <code>schemas/run-event.schema.json</code> <code>RunEventType</code> enum + <code>schemas/run-event-payloads.schema.json</code> <code>coreWorkflowChainEvent</code> payload schema; advertisement-shape conformance scenario <code>multi-agent-handoff-state-machine.test.ts</code> landed. Behavioral 4-event causation-chain assertion deferred to a follow-up commit that lands the <code>conformance-multi-agent-handoff</code> parent+child fixture pair — same staging pattern RFC 0022 used. Path to <code>Accepted</code>: reference workflow-engine advertises the capability + emits the 4 transition events end-to-end + a non-steward host advertises the same.)</td></tr>
+<tr><td><strong>Affects</strong></td><td>NEW <code>spec/v1/multi-agent-execution.md</code> (normative) · <code>schemas/capabilities.schema.json</code> (adds <code>capabilities.multiAgent.executionModel</code>) · <code>schemas/run-event-payloads.schema.json</code> (tightens existing <code>agent.*</code> payload shapes; may add cross-host causation fields) · multiple new conformance scenarios · all 3 reference hosts · <code>INTEROP-MATRIX.md</code> · CHANGELOG</td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
+<tr><td><strong>Supersedes</strong></td><td>—</td></tr>
+<tr><td><strong>Superseded by</strong></td><td>—</td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>Specify the <strong>formal interoperable execution model</strong> for multi-agent workflows: planner→worker handoff state machine, confidence-threshold semantics, agent memory lifecycle across sub-runs, cross-host causation linking, and replay determinism under nondeterministic model emissions. Today these surfaces are partially covered by RFCs 0002 (identities/reasoning events), 0006 (orchestrator/supervisor), 0007 (dispatch), 0022 (input/output mapping), 0024 (reasoning streaming), and 0026 (provider usage) — but no single doc gives the <strong>execution model</strong> as a portable contract. This is the largest single open RFC at standardization scale.</p>
+<h2 id="motivation">Motivation</h2>
+<p>Per external standards-readiness review 2026-05-21 finding (3): "OpenWOP defines identities, dispatch, memory, reasoning events, envelopes, prompts, MCP/A2A composition, and host capabilities, but it does not yet give a sufficiently formal interoperable execution model for planner/worker handoff, confidence semantics, agent memory lifecycle, cross-host causality, and replay under nondeterministic model behavior."</p>
+<p>The reviewer is correct that the existing RFCs cover slices but no doc states the full execution semantics in one normative place. This RFC is the integration layer.</p>
+<h2 id="proposal-phased">Proposal — Phased</h2>
+<p>This RFC is intentionally phased because the full execution model is too large for a single 7-day comment window. Each phase lands as a follow-up RFC that depends on this one.</p>
+<h3 id="phase-1-this-rfc-execution-model-framework-planner-worker-handoff">Phase 1 (this RFC) — Execution model framework + planner→worker handoff</h3>
+<h4 id="a-execution-model-framework-normative">§A — Execution model framework (normative)</h4>
+<p>Define the canonical execution loop a multi-agent host MUST follow:</p>
+<pre class="lang-"><code>1. Orchestrator/Supervisor (RFC 0006) emits a Decision (next-worker | terminate | clarify | escalate).
+2. Dispatcher (RFC 0007) materializes the Decision: creates a child run (`core.dispatch`) or a sub-workflow (`core.subWorkflow`).
+3. Child run executes; on terminal status, the input/output mapping (RFC 0022) projects results back into the parent run&#39;s variables.
+4. Parent run&#39;s next supervisor turn observes the new state and emits the next Decision.</code></pre>
+<p>A host that advertises <code>capabilities.multiAgent.executionModel.version &gt;= 1</code> MUST implement this loop. Existing primitives (RFCs 0006/0007/0022) are the implementation; this RFC formalizes their composition.</p>
+<h4 id="b-planner-worker-handoff-state-machine-normative">§B — Planner→worker handoff state machine (normative)</h4>
+<p>Define the handoff state machine with 4 states + 6 transitions:</p>
+<table>
+<thead><tr><th>State</th><th>Description</th><th>Allowed exits</th></tr></thead>
+<tbody>
+<tr><td><code>pending</code></td><td>Planner has decided on the worker but dispatch hasn't fired</td><td>→ <code>dispatching</code></td></tr>
+<tr><td><code>dispatching</code></td><td>Child run is being created</td><td>→ <code>running</code> (success), <code>failed</code> (creation failed)</td></tr>
+<tr><td><code>running</code></td><td>Child run is in progress</td><td>→ <code>completed</code>, <code>failed</code>, <code>cancelled</code></td></tr>
+<tr><td><code>harvested</code></td><td>outputMapping has run (RFC 0022 §A) — parent has observed child's outputs</td><td>(terminal)</td></tr>
+</tbody></table>
+<p>The transition <code>running → harvested</code> MUST happen exactly when the child reaches a terminal <code>completed</code> AND outputMapping is non-empty. Failed/cancelled children skip the harvest per RFC 0022 §B.</p>
+<p>Each transition MUST emit a <code>core.workflowChain.event</code> with <code>causationId</code> linking to the prior transition's <code>eventId</code> (per the existing event-log identity chain in <code>replay.md</code>).</p>
+<h4 id="c-capability-advertisement">§C — Capability advertisement</h4>
+<pre class="lang-diff"><code>+  &quot;multiAgent&quot;: {
++    &quot;type&quot;: &quot;object&quot;,
++    &quot;properties&quot;: {
++      &quot;executionModel&quot;: {
++        &quot;type&quot;: &quot;object&quot;,
++        &quot;additionalProperties&quot;: false,
++        &quot;required&quot;: [&quot;supported&quot;, &quot;version&quot;],
++        &quot;properties&quot;: {
++          &quot;supported&quot;: { &quot;type&quot;: &quot;boolean&quot; },
++          &quot;version&quot;: { &quot;type&quot;: &quot;integer&quot;, &quot;minimum&quot;: 1, &quot;description&quot;: &quot;Profile version. 1 = Phase 1 (this RFC: framework + planner→worker handoff). Future phases bump.&quot; }
++        }
++      }
++    }
++  }</code></pre>
+<h3 id="phase-2-follow-up-rfc-confidence-threshold-semantics-agent-memory-lifecycle">Phase 2 (follow-up RFC) — Confidence-threshold semantics + agent memory lifecycle</h3>
+<p>Deferred — needs MyndHyve adoption feedback on <code>mockConfidence</code> + <code>MemoryAdapter</code> cross-run lifecycle. Open spec gaps:</p>
+<ul>
+<li>Confidence threshold below which the supervisor MUST escalate vs MAY escalate (today: host policy).</li>
+<li><code>MemoryEntry.ttl</code> semantics across sub-run boundaries (today: implicit; needs normative MUST).</li>
+<li>Memory carry-forward when a sub-run is replayed from past event-log index.</li>
+</ul>
+<h3 id="phase-3-follow-up-rfc-cross-host-causation-linking">Phase 3 (follow-up RFC) — Cross-host causation linking</h3>
+<p>Deferred — needs at least 2 cross-host implementations to validate. Open spec gaps:</p>
+<ul>
+<li>Extending <code>causationId</code> to span hosts (currently single-host scope).</li>
+<li>W3C tracecontext propagation across MCP/A2A composition boundaries (already partially specced in <code>RFCS/0023-conformance-agent-event-emitters.md</code> for OTel; this would normate the cross-host case).</li>
+<li>Cross-host run ID resolution: when host A's run dispatches to host B, what's the discoverable identifier chain?</li>
+</ul>
+<h3 id="phase-4-follow-up-rfc-replay-determinism-under-nondeterministic-models">Phase 4 (follow-up RFC) — Replay determinism under nondeterministic models</h3>
+<p>Deferred — substantively the hardest piece. Per <code>replay.md</code> §"Determinism with non-deterministic agents," replay is determined by the event-log identity chain (causationId → eventId). RFC 0024 streams reasoning deltas with monotone sequence numbers. The open question: when a replay re-issues an LLM call and the model emits a <em>different</em> envelope, is replay still "deterministic" in the user-observable sense?</p>
+<p>Open spec gaps:</p>
+<ul>
+<li>LLM cache-key recipe (per <code>replay.md</code> §"LLM cache-key recipe" — already exists but <code>replay-llm-cache-key.test.ts</code> is shape-only per <code>docs/KNOWN-LIMITS.md:18</code>).</li>
+<li>Recovery from envelope refusal in replay context (the original run got envelope, replay gets refusal).</li>
+<li>Determinism vs idempotency: replay produces the same observable output sequence, even if underlying tool calls differ.</li>
+</ul>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive (Phase 1).</strong> No existing wire shapes change; the <code>multiAgent.executionModel</code> capability is opt-in. Hosts that don't advertise continue using RFCs 0006/0007/0022 as today, with implementation flexibility on the integration semantics.</p>
+<p>Phases 2-4 will each be additive within v1.x by the same logic.</p>
+<h2 id="conformance-phase-1">Conformance (Phase 1)</h2>
+<p>NEW <code>conformance/src/scenarios/multi-agent-handoff-state-machine.test.ts</code> — gated on <code>capabilities.multiAgent.executionModel.supported: true</code>. Asserts: 1. The 4 handoff states emit a <code>core.workflowChain.event</code> per transition. 2. The <code>causationId</code> on each transition chains back to the prior transition's <code>eventId</code>. 3. The <code>dispatching → running</code> failure path emits a single <code>core.dispatch.failed</code> (not chained transitions). 4. The <code>running → harvested</code> transition fires only on terminal <code>completed</code> with non-empty outputMapping.</p>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<p>1. <strong>Skip the framework doc; cite RFCs 0002+0006+0007+0022+0024+0026 as the implicit execution model.</strong> Rejected — that's the current posture and it's what the reviewer flagged as insufficient. A standards-grade execution model needs a single normative doc that integrates the slices. 2. <strong>Mandate a specific orchestrator implementation pattern (e.g., n8n-style supervisor root).</strong> Rejected — <code>positioning.md</code> is clear that OpenWOP does not standardize orchestration topology; this RFC stays at the protocol contract level. 3. <strong>Land all 4 phases in one mega-RFC.</strong> Rejected — would take months and would never converge. Phased delivery with clear deferrals is the credible move.</p>
+<h2 id="unresolved-questions">Unresolved questions</h2>
+<p>1. <strong>Where does <code>core.workflowChain.event</code> live?</strong> Likely a new event type in <code>schemas/run-event-payloads.schema.json</code>; defer to the schema-design pass. 2. <strong>Should the executionModel profile gate replay across handoff boundaries?</strong> Probably yes — but the gate needs Phase 4's LLM cache-key work to be coherent. 3. <strong>MCP/A2A interaction.</strong> The state machine assumes intra-host handoff; cross-host (via MCP/A2A composition) likely needs a sibling state machine. Defer to Phase 3.</p>
+<h2 id="acceptance-criteria-phase-1-only">Acceptance criteria (Phase 1 only)</h2>
+<ul>
+<li>[ ] Spec text merged (this file).</li>
+<li>[ ] NEW <code>spec/v1/multi-agent-execution.md</code> with §A + §B + reference to Phases 2-4 as open spec gaps.</li>
+<li>[ ] <code>schemas/capabilities.schema.json</code> extended per §C.</li>
+<li>[ ] NEW <code>conformance/src/scenarios/multi-agent-handoff-state-machine.test.ts</code> per §Conformance.</li>
+<li>[ ] At least 1 reference host advertises + passes the new scenario.</li>
+<li>[ ] <code>INTEROP-MATRIX.md</code> updated.</li>
+<li>[ ] CHANGELOG entry under <code>[Unreleased]</code>.</li>
+<li>[ ] Follow-up RFCs filed (as Draft) for Phases 2-4: confidence semantics, cross-host causation, replay-under-nondeterminism.</li>
+</ul>
+<p>Path to <code>Active → Accepted</code>: cross-host advertisement evidence per RFCs/0001 §"Promotion to Accepted."</p>
+<h2 id="references">References</h2>
+<ul>
+<li><code>RFCS/0002-agent-identity-and-reasoning-events.md</code></li>
+<li><code>RFCS/0006-orchestrator.md</code></li>
+<li><code>RFCS/0007-dispatch.md</code></li>
+<li><code>RFCS/0022-dispatch-input-output-mapping.md</code></li>
+<li><code>RFCS/0024-agent-reasoning-streaming.md</code></li>
+<li><code>RFCS/0026-provider-usage-event.md</code></li>
+<li><code>spec/v1/replay.md</code> §"Determinism with non-deterministic agents"</li>
+<li><code>spec/v1/positioning.md</code> (the "we don't standardize orchestration topology" claim this RFC must respect)</li>
+<li><code>docs/KNOWN-LIMITS.md:18</code> (LLM cache-key shape-only — Phase 4 input)</li>
+<li>External standards-readiness review 2026-05-21 — finding (3)</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

@@ -4,27 +4,52 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>openwop — openwop Spec v1 — Multi-Agent Execution Model</title>
-  <meta name="description" content="Per the Google-acceptance review of 2026-05-21, finding (3): &quot;OpenWOP defines identities, dispatch, memory, reasoning events, envelopes, prompts, MCP/A2A composition, and host capabilities, but it does not yet give a sufficiently formal…"/>
+  <meta name="description" content="Per the external standards-readiness review of 2026-05-21, finding (3): &quot;OpenWOP defines identities, dispatch, memory, reasoning events, envelopes, prompts, MCP/A2A composition, and host capabilities, but it does not yet give a sufficiently formal…"/>
   <link rel="canonical" href="https://openwop.dev/spec/v1/multi-agent-execution.html"/>
 
   <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
   <meta property="og:type" content="website"/>
   <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
   <meta property="og:title" content="openwop — openwop Spec v1 — Multi-Agent Execution Model"/>
-  <meta property="og:description" content="Per the Google-acceptance review of 2026-05-21, finding (3): &quot;OpenWOP defines identities, dispatch, memory, reasoning events, envelopes, prompts, MCP/A2A composition, and host capabilities, but it does not yet give a sufficiently formal…"/>
+  <meta property="og:description" content="Per the external standards-readiness review of 2026-05-21, finding (3): &quot;OpenWOP defines identities, dispatch, memory, reasoning events, envelopes, prompts, MCP/A2A composition, and host capabilities, but it does not yet give a sufficiently formal…"/>
   <meta property="og:url" content="https://openwop.dev/spec/v1/multi-agent-execution.html"/>
   <meta property="og:image" content="https://openwop.dev/og-default.png"/>
 
   <!-- Twitter card -->
   <meta name="twitter:card" content="summary_large_image"/>
   <meta name="twitter:title" content="openwop — openwop Spec v1 — Multi-Agent Execution Model"/>
-  <meta name="twitter:description" content="Per the Google-acceptance review of 2026-05-21, finding (3): &quot;OpenWOP defines identities, dispatch, memory, reasoning events, envelopes, prompts, MCP/A2A composition, and host capabilities, but it does not yet give a sufficiently formal…"/>
+  <meta name="twitter:description" content="Per the external standards-readiness review of 2026-05-21, finding (3): &quot;OpenWOP defines identities, dispatch, memory, reasoning events, envelopes, prompts, MCP/A2A composition, and host capabilities, but it does not yet give a sufficiently formal…"/>
   <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
 
   <!-- Favicon -->
   <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
 
-  
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "openwop Spec v1 — Multi-Agent Execution Model",
+  "description": "Per the external standards-readiness review of 2026-05-21, finding (3): \"OpenWOP defines identities, dispatch, memory, reasoning events, envelopes, prompts, MCP/A2A composition, and host capabilities, but it does not yet give a sufficiently formal…",
+  "url": "https://openwop.dev/spec/v1/multi-agent-execution.html",
+  "inLanguage": "en-US",
+  "isPartOf": {
+    "@type": "WebSite",
+    "@id": "https://openwop.dev/#website",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "about": {
+    "@type": "SoftwareSourceCode",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev",
+    "codeRepository": "https://github.com/openwop/openwop"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "dependencies": "JSON Schema 2020-12, REST + SSE + signed webhooks"
+}</script>
   
   
 
@@ -39,8 +64,10 @@
     <nav class="site-nav">
       <a class="" href="/">Overview</a>
       <a class="active" href="/spec/v1/">Spec</a>
+      <a class="" href="/rfcs/">RFCs</a>
       <a class="" href="/conformance/">Conformance</a>
-      <a class="" href="/profiles/">Profiles</a>
+      <a class="" href="/changelog/">Changelog</a>
+      <a class="" href="/faq/">FAQ</a>
       <a href="https://github.com/openwop/openwop">GitHub →</a>
     </nav>
   </header>
@@ -48,7 +75,7 @@
     <article class="spec-doc"><h1 id="openwop-spec-v1-multi-agent-execution-model">openwop Spec v1 — Multi-Agent Execution Model</h1>
 <blockquote><p><strong>Status: DRAFT v1.x (filed via <a href="../../RFCS/0037-multi-agent-execution-model.md">RFC 0037</a>, 2026-05-21).</strong> Phase 1 of a four-phase execution-model formalization. Phase 1 (this document) lands the <strong>execution-loop framework + planner→worker handoff state machine</strong>. Phases 2 (confidence + agent-memory lifecycle), 3 (cross-host causation), and 4 (replay determinism under nondeterministic models) are explicit follow-ups tracked in <code>## Open spec gaps</code>. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
 <h2 id="why-this-exists">Why this exists</h2>
-<p>Per the Google-acceptance review of 2026-05-21, finding (3): <em>"OpenWOP defines identities, dispatch, memory, reasoning events, envelopes, prompts, MCP/A2A composition, and host capabilities, but it does not yet give a sufficiently formal interoperable execution model for planner/worker handoff, confidence semantics, agent memory lifecycle, cross-host causality, and replay under nondeterministic model behavior."</em></p>
+<p>Per the external standards-readiness review of 2026-05-21, finding (3): <em>"OpenWOP defines identities, dispatch, memory, reasoning events, envelopes, prompts, MCP/A2A composition, and host capabilities, but it does not yet give a sufficiently formal interoperable execution model for planner/worker handoff, confidence semantics, agent memory lifecycle, cross-host causality, and replay under nondeterministic model behavior."</em></p>
 <p>The existing RFCs cover slices but no single doc states the <strong>execution model</strong> as a portable contract:</p>
 <ul>
 <li><strong>RFC 0002</strong> (<code>AgentRef</code> + reasoning events) — the identity vocabulary.</li>
@@ -196,7 +223,7 @@
 <li><a href="../../RFCS/0026-provider-usage-event.md"><code>RFCS/0026-provider-usage-event.md</code></a> — cost-attribution surface.</li>
 <li><a href="./replay.md"><code>spec/v1/replay.md</code></a> §"Determinism with non-deterministic agents" — the replay contract this execution model preserves.</li>
 <li><a href="./positioning.md"><code>spec/v1/positioning.md</code></a> — "we don't standardize orchestration topology" — the principle this RFC's <code>executionModel.version</code> flag respects (the framework is opt-in; non-advertising hosts retain full implementation flexibility).</li>
-<li>Google-acceptance review 2026-05-21 — finding (3).</li>
+<li>External standards-readiness review 2026-05-21 — finding (3).</li>
 </ul></article>
   </main>
   <footer class="site-footer">
