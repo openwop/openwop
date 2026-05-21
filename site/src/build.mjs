@@ -973,8 +973,15 @@ function buildRfcs() {
     const md = readFile(join(rfcDir, f));
     const titleMatch = /^#\s+(.+)$/m.exec(md);
     const title = titleMatch ? titleMatch[1] : f.replace(/\.md$/, '');
-    // RFCs use a "**Status: <state>**" or "Status: <state>" header in their preamble.
-    const status = /\*\*?Status:?\*?\*?\s*([A-Za-z][A-Za-z -]+)/m.exec(md);
+    // RFCs declare status in one of three formats:
+    //   1. Front-matter table row:   `| **Status** | \`Accepted\` |`
+    //   2. Bold-prefixed heading:    `**Status:** Accepted` / `**Status:** \`Accepted\``
+    //   3. Plain heading:            `Status: Accepted`
+    // Try each pattern in order; first match wins.
+    const status =
+      /\|\s*\*\*Status\*\*\s*\|\s*`?([A-Za-z][A-Za-z0-9 -]*?)`?\s*\|/m.exec(md) ||
+      /\*\*Status:\*\*\s*`?([A-Za-z][A-Za-z0-9 -]*?)`?(?:\s|$)/m.exec(md) ||
+      /^Status:\s*`?([A-Za-z][A-Za-z0-9 -]*?)`?\s*$/m.exec(md);
     const slug = f.replace(/\.md$/, '');
     const description = extractFirstParagraph(md) ?? CANONICAL_DESCRIPTION;
     const articleHtml = `<article class="spec-doc">${markdownToHtml(md)}</article>`;
