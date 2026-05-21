@@ -190,13 +190,18 @@ describe.skipIf(HTTP_SKIP)('prompt-list-and-fetch: REST surface shape (RFC 0028 
     if (!behaviorGate('prompts-endpoints', endpointsSupported(d))) return;
     const res = await driver.get('/v1/prompts/conformance-unknown-template-deadbeef');
     expect(res.status).toBe(404);
-    const body = res.json as { error?: { code?: string; message?: string } };
+    // Canonical ErrorEnvelope per `schemas/error-envelope.schema.json`:
+    // FLAT `{ error: <code-string>, message: <human> }`. NOT the nested
+    // `{ error: { code, message } }` shape — the schema's
+    // `additionalProperties: false` rules that out.
+    const body = res.json as { error?: unknown; message?: unknown };
     expect(
-      typeof body.error?.code,
+      typeof body.error,
       driver.describe(
-        'spec/v1/error-envelope.schema.json',
-        '404 response MUST carry the canonical ErrorEnvelope shape with `error.code`',
+        'schemas/error-envelope.schema.json',
+        '404 response MUST carry canonical ErrorEnvelope: `error` is a machine-readable code STRING (flat shape per the schema, not nested)',
       ),
     ).toBe('string');
+    expect(typeof body.message).toBe('string');
   });
 });

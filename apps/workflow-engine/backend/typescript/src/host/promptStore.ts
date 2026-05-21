@@ -71,8 +71,11 @@ interface StoredTemplate {
 }
 
 const __filename = fileURLToPath(import.meta.url);
-// host/promptStore.ts → ../../../conformance-fixtures/prompt-templates/
-const FIXTURES_DIR = join(__filename, '..', '..', '..', '..', 'conformance-fixtures', 'prompt-templates');
+// host/promptStore.ts (under apps/workflow-engine/backend/typescript/src/host/)
+// → apps/workflow-engine/conformance-fixtures/prompt-templates/
+//
+// 5 `..` segments climb: host → src → typescript → backend → workflow-engine.
+const FIXTURES_DIR = join(__filename, '..', '..', '..', '..', '..', 'conformance-fixtures', 'prompt-templates');
 
 // Layered storage. Lookup precedence: user → pack → host (mutating
 // endpoints only see `user`; reads collapse all three).

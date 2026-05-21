@@ -88,10 +88,11 @@ describe.skipIf(HTTP_SKIP)('prompt-composed-secret-redaction: composed body reda
     const res = await driver.post('/v1/host/sample/prompt/compose', {
       templateId: 'conformance.prompt.secret-redaction',
       bindings: {
-        // declared variable `apiKey` with source: 'secret' resolves
-        // against a host-pre-provisioned canary secret containing
-        // CANARY_FRAGMENT.
-        secretRef: 'openwop-conformance-canary-secret',
+        // Declared variable `apiKey` has `source: 'secret'`. The binding
+        // value is the credentialRef the host resolves via BYOK at
+        // dispatch time; the composed-event payload carries
+        // `[REDACTED:<credentialRef>]` instead of the plaintext.
+        apiKey: 'openwop-conformance-canary-secret',
       },
       observability: 'full',
     });
@@ -153,7 +154,7 @@ describe.skipIf(HTTP_SKIP)('prompt-composed-secret-redaction: composed body reda
     if (!behaviorGate('prompts-observability-full', promptsSupportFull(d))) return;
     const res = await driver.post('/v1/host/sample/prompt/compose', {
       templateId: 'conformance.prompt.secret-redaction',
-      bindings: { secretRef: 'openwop-conformance-canary-secret' },
+      bindings: { apiKey: 'openwop-conformance-canary-secret' },
       observability: 'full',
     });
     if (res.status === 404) return;

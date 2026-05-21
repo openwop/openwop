@@ -108,8 +108,11 @@ export interface PromptComposedPayload {
 }
 
 const __filename = fileURLToPath(import.meta.url);
-// host/promptCompose.ts → ../../../conformance-fixtures/prompt-templates/
-const FIXTURES_DIR = join(__filename, '..', '..', '..', '..', 'conformance-fixtures', 'prompt-templates');
+// host/promptCompose.ts (under apps/workflow-engine/backend/typescript/src/host/)
+// → apps/workflow-engine/conformance-fixtures/prompt-templates/
+//
+// 5 `..` segments: host → src → typescript → backend → workflow-engine.
+const FIXTURES_DIR = join(__filename, '..', '..', '..', '..', '..', 'conformance-fixtures', 'prompt-templates');
 
 // Loaded lazily on first call so unit tests that don't exercise the
 // compose seam don't pay the disk cost.

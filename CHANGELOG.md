@@ -11,6 +11,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Host + Conformance — drain final 6 prompt-stack + envelope-redaction failures (2026-05-21)
+
+Closes the last six failing conformance scenarios. After this commit the suite is 1447 passing / 0 failing / 46 skipped / 0 todo. Most failures were 1-character-class wrong paths or test-assertion mistakes that shipped under the parallel RFC 0027/0028 work; one closes a real semantic gap on the envelope acceptor.
+
+- **`apps/workflow-engine/backend/typescript/src/host/promptStore.ts`** — corrects `FIXTURES_DIR` resolution: 5 `..` segments to climb from `host/promptStore.ts` (under `backend/typescript/src/host/`) up to `apps/workflow-engine/` before joining `conformance-fixtures/prompt-templates/`. Was 4 segments, landing at `apps/workflow-engine/backend/conformance-fixtures/` which doesn't exist. Result: `hostTemplates` was empty after boot, every `getTemplate()` returned `null`, every `prompt:` ref failed to compose.
+- **`apps/workflow-engine/backend/typescript/src/host/promptCompose.ts`** — same `FIXTURES_DIR` correction (5 segments not 4). `composePromptTemplate()` was reading templates from the same nonexistent directory.
+- **`apps/workflow-engine/backend/typescript/src/index.ts`** — wires `ensurePromptStoreInitialized()` into the boot sequence. The function existed but was never called, so even with the path fix the store wouldn't have been seeded until first `getTemplate()` call.
+- **`apps/workflow-engine/backend/typescript/src/host/envelopeAcceptor.ts`** — when `opts.byokCanaries` is supplied, the acceptor now always reports `redactionCount` (even when 0) AND always carries `redactedPayload` (equal to the inbound payload on count 0). Lets callers distinguish "walked, found none" from "no canaries supplied" without inferring from field-presence.
+- **`conformance/src/scenarios/prompt-list-and-fetch.test.ts`** — fixes a test that expected the non-canonical nested `{ error: { code, message } }` shape on 404. The canonical `schemas/error-envelope.schema.json` shape is flat `{ error: <string>, message: <string> }` with `additionalProperties: false`; the host was already correct.
+- **`conformance/src/scenarios/prompt-composed-secret-redaction.test.ts`** — fixes both seam calls to pass the bind under the variable name the template declares (`apiKey`, not `secretRef`). The template's `apiKey` variable has `source: 'secret'`; the binding value is the credentialRef.
+
+Compatibility: implementation-only. No spec text, schema, OpenAPI, or AsyncAPI changes; `envelopeAcceptor.ts`'s richer outcome shape is additive (consumers that ignored the field continue to; the test that was failing now passes).
+
 ### Host + Conformance — RFC 0027 §A few-shot `slotIndex` correctness fix + multi-entry coverage (2026-05-21)
 
 Code-review follow-ups on commits `c8c898a` (four-kind dispatch) + `ceda12e` (RFC promotions). One CRITICAL correctness fix + four supporting tightenings.

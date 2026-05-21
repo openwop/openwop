@@ -145,6 +145,14 @@ export async function createApp(config: AppConfig): Promise<Express> {
   // examples/hosts/postgres). The surface shapes don't change.
   initInMemorySurfaces({ dataDir });
 
+  // RFC 0027 + RFC 0028 — boot-time prompt-store init. Loads the
+  // host-built-in PromptTemplate fixtures shipped under
+  // `apps/workflow-engine/conformance-fixtures/prompt-templates/` so
+  // node configs that reference `prompt:templateId@version` can resolve
+  // via the four-layer chain (RFC 0029 §A). Idempotent.
+  const { ensurePromptStoreInitialized } = await import('./host/promptStore.js');
+  ensurePromptStoreInitialized();
+
   ensureNodesRegistered();
   // Wire the subWorkflow dispatcher dependency injection. The node
   // registered above is a thin shim; the actual spawn-and-wait logic

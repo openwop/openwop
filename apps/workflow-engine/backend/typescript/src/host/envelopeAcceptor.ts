@@ -432,14 +432,20 @@ export function acceptEnvelope(envelope: unknown, opts: AcceptOptions = {}): Env
   // contain `[REDACTED:...]` markers are unaffected.
   if (opts.byokCanaries && opts.byokCanaries.length > 0) {
     const redaction = redactCanaries(env.payload, opts.byokCanaries);
+    // When canaries were supplied, ALWAYS report the redaction count —
+    // even when it's 0 — so callers can distinguish "walked, found
+    // none" (count: 0) from "no canaries supplied" (field absent). The
+    // `redactedPayload` is omitted on count: 0 because it equals the
+    // input payload; callers should fall back to the inbound shape.
     return {
       status: 'accepted',
       recordedEventIds: [],
       envelopeId,
       normalizedMeta: { contentTrust: normalizedContentTrust },
+      redactionCount: redaction.count,
       ...(redaction.count > 0
-        ? { redactedPayload: redaction.value, redactionCount: redaction.count }
-        : {}),
+        ? { redactedPayload: redaction.value }
+        : { redactedPayload: env.payload }),
     };
   }
 
