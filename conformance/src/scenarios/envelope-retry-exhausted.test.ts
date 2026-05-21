@@ -13,7 +13,7 @@
  *   2. `finalReason` is one of the spec-reserved closed-enum values OR
  *      matches `x-host-<host>-<key>` (RFC 0032 §B.2 + §B.1 share the
  *      reason enum).
- *   3. `RunSnapshot.error.code` is `envelope_payload_invalid` per
+ *   3. `RunSnapshot.error.code` is `envelope_invalid` per
  *      RFC 0033 §C (schema-violation-exhaustion → existing RFC 0021 code).
  *   4. `node.failed` event appears after `envelope.retry.exhausted`
  *      (cause precedes effect per RFC 0032 §B.2 "emitted ... about to
@@ -129,7 +129,7 @@ describe.skipIf(HTTP_SKIP)('envelope-retry-exhausted: runtime behavior (RFC 0032
     ).toBe(true);
   });
 
-  it('RunSnapshot.error.code is envelope_payload_invalid for schema-violation exhaustion (RFC 0033 §C)', async () => {
+  it('RunSnapshot.error.code is envelope_invalid for schema-violation exhaustion (RFC 0033 §C)', async () => {
     if (!isFixtureAdvertised(FIXTURE)) return;
     const seed = await programMock([{ content: 'x' }, { content: 'y' }, { content: 'z' }, { content: 'w' }]);
     if (seed.status === 404) return;
@@ -141,9 +141,9 @@ describe.skipIf(HTTP_SKIP)('envelope-retry-exhausted: runtime behavior (RFC 0032
       code,
       driver.describe(
         'RFCS/0033-envelope-completion-contract.md §C',
-        'schema-violation-exhaustion MUST surface as RunSnapshot.error.code = envelope_payload_invalid',
+        'schema-violation-exhaustion MUST surface as RunSnapshot.error.code = envelope_invalid',
       ),
-    ).toBe('envelope_payload_invalid');
+    ).toBe('envelope_invalid');
   });
 
   it('envelope.retry.exhausted is emitted BEFORE node.failed (cause precedes effect)', async () => {

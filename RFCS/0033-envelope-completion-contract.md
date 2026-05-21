@@ -87,7 +87,7 @@ Add a new §"Envelope-completion criteria" to `spec/v1/ai-envelope.md` after §"
 >
 > Schema-violation retries SHALL NOT include an increased output budget — schema violations don't fail for size reasons; doubling the budget on a tractable shape problem is wasted tokens.
 >
-> Schema-violation retries count against `limits.schemaRounds`. When exhausted, the host SHALL emit `envelope.retry.exhausted` with `finalReason: "schema-violation"` AND `cap.breached` with `kind: "schema"`. The node fails with `error.code: "envelope_payload_invalid"` (existing error code per RFC 0021 §"Validation outcomes").
+> Schema-violation retries count against `limits.schemaRounds`. When exhausted, the host SHALL emit `envelope.retry.exhausted` with `finalReason: "schema-violation"` AND `cap.breached` with `kind: "schema"`. The node fails with `error.code: "envelope_invalid"` (existing error code per RFC 0021 §"Validation outcomes").
 >
 > Each retry MUST emit `envelope.retry.attempted` with `reason: "schema-violation"` per RFC 0032 §B.1.
 
@@ -95,7 +95,7 @@ Add a new §"Envelope-completion criteria" to `spec/v1/ai-envelope.md` after §"
 
 The two RFC 0032 events `envelope.refusal` and `envelope.recovery.applied` fire on **distinct** paths from truncation/schema-violation. This RFC normates how they interact with retry budgets:
 
-- **Refusal.** The provider returned an explicit refusal (safety stop, content policy block). Per RFC 0032 §"Unresolved questions" #1 + the RFC 0032 §B.3 normative text: **the host MUST NOT retry on refusal.** No retry attempt; no `envelope.retry.attempted` event; the node fails with `error.code: "envelope_refused_by_provider"` (NEW error code, §F).
+- **Refusal.** The provider returned an explicit refusal (safety stop, content policy block). Per RFC 0032 §"Unresolved questions" #1 + the RFC 0032 §B.3 normative text: **the host MUST NOT retry on refusal.** No retry attempt; no `envelope.retry.attempted` event; the node fails with `error.code: "envelope_refusal"` (NEW error code, §F).
 
 - **Recovery.** Lenient parsing recovered a malformed envelope (e.g., markdown-fence stripping). Recovery is **internal to the parsing step**, before validation; recovery does NOT consume a retry attempt and does NOT emit `envelope.retry.attempted`. The downstream validation either succeeds (envelope is accepted normally) or fails (proceeds to §C schema-violation retry path).
 
@@ -144,9 +144,10 @@ Two new error codes for the terminal failure paths:
 | Code | When |
 |---|---|
 | `envelope_truncation_unrecoverable` | Truncation-retry budget exhausted while failure mode remained truncation. Pairs with `envelope.retry.exhausted { finalReason: "truncation" }` and `cap.breached { kind: "schema" }`. |
-| `envelope_refused_by_provider` | Provider returned an explicit refusal; the host (per §D) did not retry. Pairs with `envelope.refusal`. |
+| `envelope_refusal` | Provider returned an explicit refusal; the host (per §D) did not retry. Pairs with `envelope.refusal`. Renamed from `envelope_refusal` per the 2026-05-21 amendment to mirror the `envelope.refusal` RunEvent type name. |
+| `envelope_invalid` | Schema-violation-retry-exhaustion (or single emission failed payload validation with retries disabled). Pairs with `envelope.retry.exhausted { finalReason: "schema-violation" }`. Renamed from `envelope_invalid` (RFC 0021) per the 2026-05-21 amendment for naming consistency with the other envelope-track codes (`envelope_<short-failure-mode>`). |
 
-Both codes are added to the canonical error-code table in `spec/v1/rest-endpoints.md` §"Common error codes." Existing `envelope_payload_invalid` (RFC 0021) remains the code for schema-violation-retry-exhausted; this RFC does not introduce a separate code for that path (the existing code already correctly characterizes the failure).
+All three codes are documented in the canonical error-code table at `spec/v1/rest-endpoints.md` §"Common error codes." The rename from `envelope_invalid` → `envelope_invalid` and `envelope_refusal` → `envelope_refusal` lands as the same 2026-05-21 amendment — see the Status history block at the end of this RFC. Compatibility: additive per `COMPATIBILITY.md §2.1` because the codes were only canonized 2026-05-20 (Active commit `a280371`) and the rename predates any third-party host adoption of the longer-form names — MyndHyve, the first non-steward adopter, was already emitting the short-form names (`envelope_refusal` natively; `envelope_schema_violation` mapped to the new `envelope_invalid`).
 
 ### §G — Production flow amendment
 
@@ -174,7 +175,7 @@ Shape validation
   ▼
 Kind / payload / contract / limits / redaction / trust / dedup / handler (per RFC 0021 §"Production flow")
   │
-  ├── provider refusal at any point → emit envelope.refusal; fail node with envelope_refused_by_provider (§D)
+  ├── provider refusal at any point → emit envelope.refusal; fail node with envelope_refusal (§D)
   ▼
 Per-kind payload validation
   │   ├── fail → §C schema-violation retry path (corrective fragment, NO budget increase)
@@ -196,7 +197,7 @@ This RFC's normative additions ride entirely on RFC 0032's event surface; no new
 - Existing event types: unchanged. This RFC introduces no new `RunEventType` entries; it normates the *retry-routing semantics* using RFC 0032's existing event vocabulary.
 - Existing endpoints: unchanged.
 - Existing MUST requirements: **not relaxed.** RFC 0033 introduces NEW MUSTs in a previously-silent area (the retry-routing distinction was not normated in v1.1). Per `COMPATIBILITY.md §4` row "New normative requirement on a previously-undefined behavior" — additive.
-- Existing error codes: unchanged. Two NEW error codes (`envelope_truncation_unrecoverable`, `envelope_refused_by_provider`) added; existing codes remain.
+- Existing error codes: unchanged. Two NEW error codes (`envelope_truncation_unrecoverable`, `envelope_refusal`) added; existing codes remain.
 
 Hosts that don't advertise `capabilities.envelopes.reliability.completion.distinguishesTruncation: true` retain their legacy retry-routing behavior; conformance scenarios for the distinction soft-skip. Hosts that DO advertise commit to the new MUSTs; conformance gates accordingly.
 
@@ -253,7 +254,7 @@ Promotion from `Active` → `Accepted`:
 
 - [ ] `spec/v1/ai-envelope.md` extended with §"Envelope-completion criteria" per §A; §"Production flow" annotated with the retry-routing branches per §G.
 - [ ] `spec/v1/observability.md` extended with §"Envelope-completion retry routing" cross-referencing RFC 0032's event family and this RFC's routing semantics.
-- [ ] `spec/v1/rest-endpoints.md` §"Common error codes" gains `envelope_truncation_unrecoverable` and `envelope_refused_by_provider` per §F.
+- [ ] `spec/v1/rest-endpoints.md` §"Common error codes" gains `envelope_truncation_unrecoverable` and `envelope_refusal` per §F.
 - [ ] `schemas/capabilities.schema.json` `envelopes.reliability` block extended with `completion` per §E.
 - [ ] Two new conformance scenarios per §"Conformance" land in `@openwop/openwop-conformance`; suite minor-version bumps.
 - [ ] CHANGELOG entry under `[Unreleased]`.
@@ -282,7 +283,7 @@ Additive normative-text clarification per the filled adoption feedback at `docs/
 
 - §B — Added provider-ceiling guidance for the truncation-budget multiplication path: when the doubled (or otherwise increased) output budget would exceed the active provider's per-call max, hosts MAY further reduce to the provider's ceiling AND continue the retry. Budget-clamped retries that ALSO fail with truncation SHOULD be treated as terminal (no further retries with the same ceiling). Surfaced by MyndHyve's default `max_tokens: 8192` not yet hitting the ceiling (16384 retry budget is well under every Tier-1 vendor's per-call max) — the guidance preempts the failure mode at higher base budgets.
 
-A separate forthcoming amendment (filed in commit alongside this one) renames §F error codes per the same adoption feedback round (`envelope_payload_invalid → envelope_invalid`; `envelope_refused_by_provider → envelope_refusal`). See the commit immediately following for the rename rationale + reference-host + conformance updates.
+A separate forthcoming amendment (filed in commit alongside this one) renames §F error codes per the same adoption feedback round (`envelope_invalid → envelope_invalid`; `envelope_refusal → envelope_refusal`). See the commit immediately following for the rename rationale + reference-host + conformance updates.
 
 Compatibility: **additive** per `COMPATIBILITY.md §2.1`. The §B clarification is operator guidance — hosts already implementing budget-clamping behavior remain compliant; the new text gives explicit normative cover for the pattern.
 
@@ -295,7 +296,7 @@ Evidence at promotion:
 - **Spec text:**
   - `spec/v1/ai-envelope.md` extended with §"Envelope-completion criteria" between §"Production flow" and §"Replay determinism". Carries the normative completion criteria (clean stop AND payload validates) + the four retry paths (truncation: increased budget, no corrective fragment; schema-violation: corrective fragment, no budget increase; refusal: terminal, no retry; recovery: internal to parsing, no retry consumed). Documents the priority rule when conditions 1 and 2 both fail (treat as truncation since output budget is the upstream cause). Cross-references the capability advertisement (`capabilities.envelopes.reliability.completion` — landed by the RFC 0032 batch) and the two new error codes.
   - `spec/v1/observability.md` extended with §"Envelope-completion retry routing (RFC 0033)" — landed in the RFC 0032 batch as part of the cross-track observability documentation. Summarizes the routing distinction; cross-references this RFC's §F error codes.
-  - `spec/v1/rest-endpoints.md` §"Common error codes" gains two new codes per §F: `envelope_truncation_unrecoverable` (paired with `envelope.retry.exhausted { finalReason: "truncation" }` + `cap.breached`) and `envelope_refused_by_provider` (paired with `envelope.refusal`; MUST NOT echo refusal text in the error message per SECURITY invariant `envelope-refusal-no-prompt-leak`).
+  - `spec/v1/rest-endpoints.md` §"Common error codes" gains two new codes per §F: `envelope_truncation_unrecoverable` (paired with `envelope.retry.exhausted { finalReason: "truncation" }` + `cap.breached`) and `envelope_refusal` (paired with `envelope.refusal`; MUST NOT echo refusal text in the error message per SECURITY invariant `envelope-refusal-no-prompt-leak`).
 - **Schemas additive (no MUST relaxed):**
   - `schemas/capabilities.schema.json` — `envelopes.reliability.completion` sub-block landed in the RFC 0032 batch (since 0033 depends on 0032's event vocabulary, the sub-block lives under the `reliability` parent). Required `distinguishesTruncation: boolean`; optional `truncationBudgetMultiplier: 1..8` (default 2; informational for cost-estimation UIs). Hosts that don't advertise `distinguishesTruncation: true` retain legacy retry-routing behavior; conformance scenarios soft-skip.
   - `schemas/run-event.schema.json` — REUSES the six RFC 0032 envelope-reliability event types; this RFC introduces NO new event types. The retry-routing semantics layered on top of the existing event vocabulary.

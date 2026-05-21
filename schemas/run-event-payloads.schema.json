@@ -816,7 +816,7 @@
     "envelopeRefusal": {
       "type": "object",
       "additionalProperties": false,
-      "description": "RFC 0032 §B.3. Emitted when the underlying LLM provider returns an explicit refusal (e.g., OpenAI `message.refusal`, Anthropic safety-stop, Gemini safety-block). MUST-tier. Hosts MUST NOT retry on refusal — retrying refusal with prompt mutation creates a circumvention concern (the host automatically searches for a prompt the model will accept, evading the safety filter's intent) per RFC 0032 §B.3 + RFC 0033 §D. The node MUST fail with `error.code = \"envelope_refused_by_provider\"` per RFC 0033 §F.",
+      "description": "RFC 0032 §B.3. Emitted when the underlying LLM provider returns an explicit refusal (e.g., OpenAI `message.refusal`, Anthropic safety-stop, Gemini safety-block). MUST-tier. Hosts MUST NOT retry on refusal — retrying refusal with prompt mutation creates a circumvention concern (the host automatically searches for a prompt the model will accept, evading the safety filter's intent) per RFC 0032 §B.3 + RFC 0033 §D. The node MUST fail with `error.code = \"envelope_refusal\"` per RFC 0033 §F (renamed from `envelope_refused_by_provider` per the 2026-05-21 RFC adoption-feedback amendment).",
       "required": ["nodeId", "provider", "model"],
       "properties": {
         "nodeId":   { "type": "string" },

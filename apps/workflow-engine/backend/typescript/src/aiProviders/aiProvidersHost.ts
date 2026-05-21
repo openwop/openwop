@@ -174,12 +174,15 @@ export type AiProviderErrorCode =
   | 'host_capability_missing'
   | 'internal_error'
   // RFC 0033 §F — envelope-completion contract error codes.
-  // `envelope_payload_invalid` (existing RFC 0021 code) covers schema-
-  // violation-retry exhaustion; these two cover the new truncation +
-  // refusal paths introduced by the RFC 0033 retry-routing distinction.
-  | 'envelope_payload_invalid'
+  // `envelope_invalid` covers schema-violation-retry-exhaustion (renamed
+  // 2026-05-21 from `envelope_payload_invalid` per MyndHyve adoption
+  // feedback); `envelope_refusal` is the safety-stop terminal (renamed
+  // from `envelope_refused_by_provider` to mirror the `envelope.refusal`
+  // RunEvent type name); `envelope_truncation_unrecoverable` is the
+  // truncation-retry-exhaustion terminal (unchanged).
+  | 'envelope_invalid'
   | 'envelope_truncation_unrecoverable'
-  | 'envelope_refused_by_provider';
+  | 'envelope_refusal';
 
 /** Factory: build a per-call adapter for one node dispatch. */
 export function createAiProvidersAdapter(scope: AdapterScope): {
@@ -720,7 +723,7 @@ async function dispatchStructured(
         log.warn('envelope.refusal emit failed', { err: err instanceof Error ? err.message : String(err) });
       });
       throw new AiProviderError(
-        'envelope_refused_by_provider',
+        'envelope_refusal',
         // Error message MUST NOT echo the refusal text per RFC 0033 §F +
         // SECURITY invariant envelope-refusal-no-prompt-leak. The refusal
         // text lives only on the event-log entry (redacted).
@@ -856,8 +859,9 @@ async function dispatchStructured(
   // Retry budget exhausted. RFC 0032 §B.2 — emit envelope.retry.exhausted
   // BEFORE throwing. The error code distinguishes truncation-exhaustion
   // (envelope_truncation_unrecoverable per RFC 0033 §F) from schema-
-  // violation-exhaustion (envelope_payload_invalid, the existing RFC 0021
-  // code). Refusal path threw above and doesn't reach here.
+  // violation-exhaustion (envelope_invalid per RFC 0033 §F, renamed
+  // 2026-05-21 from envelope_payload_invalid). Refusal path threw above
+  // and doesn't reach here.
   const finalReason: RetryReason = lastFailureReason ?? 'unknown';
   await scope.emit?.('envelope.retry.exhausted',
     buildRetryExhaustedPayload(scope.nodeId, reliabilityCfg.maxRetryAttempts, finalReason, lastFailureMessage),
@@ -868,7 +872,7 @@ async function dispatchStructured(
   const errorCode =
     finalReason === 'truncation'
       ? 'envelope_truncation_unrecoverable'
-      : 'envelope_payload_invalid';
+      : 'envelope_invalid';
   const errorMessage =
     finalReason === 'truncation'
       ? `Provider truncated the structured-output emission across ${reliabilityCfg.maxRetryAttempts} attempts; truncation-retry budget exhausted (RFC 0033 §B + §F).`
@@ -915,7 +919,7 @@ async function dispatchStructuredLegacy(
     }
   }
   throw new AiProviderError(
-    'envelope_payload_invalid',
+    'envelope_invalid',
     `Provider did not emit valid JSON matching the response schema after ${STRUCTURED_OUTPUT_RETRIES + 1} attempts.`,
     { lastError: lastError instanceof Error ? lastError.message : String(lastError) },
   );

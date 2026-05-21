@@ -93,7 +93,7 @@ describe.skipIf(HTTP_SKIP)('envelope-truncation-cap-exhaustion: DoS-bound retry 
       code,
       driver.describe(
         'RFCS/0033-envelope-completion-contract.md §F',
-        'truncation-retry-exhaustion MUST surface as RunSnapshot.error.code = envelope_truncation_unrecoverable (distinct from envelope_payload_invalid which surfaces schema-violation-exhaustion)',
+        'truncation-retry-exhaustion MUST surface as RunSnapshot.error.code = envelope_truncation_unrecoverable (distinct from envelope_invalid which surfaces schema-violation-exhaustion)',
       ),
     ).toBe('envelope_truncation_unrecoverable');
   });

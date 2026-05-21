@@ -11,6 +11,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### RFC 0030/0031/0032/0033 amendments from MyndHyve adoption feedback (2026-05-21)
+
+Lands 9 spec amendments surfaced by MyndHyve's adoption of the four envelope LLM-contract-hardening RFCs. All amendments are **additive** per `COMPATIBILITY.md §2.1` — compatible hosts that already followed the implicit best practices remain compliant. See `docs/handoffs/MYNDHYVE-RFC-0030-0033-ADOPTION-FEEDBACK-2026-05-20.md` for the full feedback record.
+
+**Eight normative-text clarifications:**
+
+- **RFC 0030 §A** — operational note on `promptDirective: "mandatory"` provider-side refusal risk. Surfaced because strict-output models may honor the mandatory wording literally and refuse mid-emission when reasoning would be vacuous.
+- **RFC 0031 §C** — new normative paragraph requiring truthful advertisement of `capabilities.modelCapabilities.advertised[]` (only identifiers the host actually gates on; boilerplate-paste is now explicitly non-conformant).
+- **RFC 0031 §E** — clarified `substitutionSupported` scope: per-NodeModule, not host-wide. Hosts without a per-call provider-swap facility MUST advertise `false`.
+- **RFC 0032 §C** — `capabilities.envelopes.reliability.events` MUST be a JSON array of event-name strings; boolean form is now explicitly non-conformant.
+- **RFC 0032 §B.6** — `envelope.recovery.applied.byteOffset` MAY-omit semantics are path-dependent (SHOULD populate for `brace-walker`/`markdown-fence`; MAY omit for `jsonrepair`/`double-encoded`).
+- **RFC 0033 §B** — provider-ceiling guidance for the truncation-budget multiplication path: hosts MAY reduce a doubled budget to the provider's per-call max.
+
+**Two error-code renames (RFC 0033 §F + `spec/v1/rest-endpoints.md` §"Common error codes"):**
+
+- `envelope_payload_invalid` → **`envelope_invalid`** (renamed for naming consistency with the `envelope_<short-failure-mode>` pattern; the longer form was speculative and predates real adoption).
+- `envelope_refused_by_provider` → **`envelope_refusal`** (renamed to mirror the `envelope.refusal` RunEvent type name — discoverable pattern emerged from MyndHyve adoption).
+
+The codes were only canonized on 2026-05-20 (commit `a280371`) and MyndHyve, the first non-steward adopter, was already emitting short-form names natively — the rename has zero migration cost against existing adoption. Reference workflow-engine sample (`aiProviders/aiProvidersHost.ts`) + 3 conformance scenarios (`envelope-retry-exhausted.test.ts`, `envelope-refusal-shape.test.ts`, `envelope-truncation-cap-exhaustion.test.ts`) updated to assert against the new names. Existing `envelope_truncation_unrecoverable` is unchanged (MyndHyve matched the spec on this code).
+
+`npm run openwop:check` 9/9 green. Path to 2026-05-27 Active → Accepted: cross-host validation criterion met (MyndHyve 62 live + 21 expected-pass-post-auth-mint = 83/87 = 95.4% MUST-tier coverage); these 9 amendments fold the adoption feedback into the spec text; the formal Status: bump on each RFC + `ai-envelope.md` lands at the comment-window close.
+
 ### Host + Conformance — drain final 6 prompt-stack + envelope-redaction failures (2026-05-21)
 
 Closes the last six failing conformance scenarios. After this commit the suite is 1447 passing / 0 failing / 46 skipped / 0 todo. Most failures were 1-character-class wrong paths or test-assertion mistakes that shipped under the parallel RFC 0027/0028 work; one closes a real semantic gap on the envelope acceptor.

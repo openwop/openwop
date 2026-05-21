@@ -10,7 +10,7 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 256,
-      "description": "Envelope kind whose schema delivery the LLM is acknowledging. SHOULD match the `envelopeType` from the preceding `schema.request`. Engines MAY refuse mismatches with `envelope_payload_invalid` but are not required to (the LLM's acknowledgement is advisory)."
+      "description": "Envelope kind whose schema delivery the LLM is acknowledging. SHOULD match the `envelopeType` from the preceding `schema.request`. Engines MAY refuse mismatches with `envelope_invalid` but are not required to (the LLM's acknowledgement is advisory)."
     },
     "ack": {
       "type": "boolean",

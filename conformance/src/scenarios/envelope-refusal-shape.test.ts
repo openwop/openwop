@@ -183,7 +183,7 @@ describe.skipIf(HTTP_SKIP)('envelope-refusal-shape: advertisement contract (RFC 
 // `mock` provider with a program returning `stopReason: 'safety'` +
 // `refusalText: '...'`; the host's failure-mode-aware retry router
 // classifies this as refusal (RFC 0032 §B.3), emits exactly one
-// envelope.refusal event, throws envelope_refused_by_provider WITHOUT
+// envelope.refusal event, throws envelope_refusal WITHOUT
 // retrying (RFC 0033 §D), and the executor surfaces the error code on
 // the RunSnapshot. SECURITY invariant envelope-refusal-no-prompt-leak
 // asserts that RunSnapshot.error.message does NOT echo the refusalText.
@@ -248,7 +248,7 @@ describe.skipIf(HTTP_SKIP)('envelope-refusal-shape: end-to-end refusal through d
     ).toBe(0);
   });
 
-  it('node fails with RunSnapshot.error.code = "envelope_refused_by_provider" per RFC 0033 §F', async () => {
+  it('node fails with RunSnapshot.error.code = "envelope_refusal" per RFC 0033 §F', async () => {
     if (!isFixtureAdvertised(E2E_FIXTURE)) return;
     const seed = await programMockRefusal('Refusal text for terminal-error-code assertion.');
     if (seed.status === 404) return;
@@ -260,9 +260,9 @@ describe.skipIf(HTTP_SKIP)('envelope-refusal-shape: end-to-end refusal through d
       code,
       driver.describe(
         'RFCS/0033-envelope-completion-contract.md §F',
-        'refusal-driven failure MUST surface as RunSnapshot.error.code = envelope_refused_by_provider',
+        'refusal-driven failure MUST surface as RunSnapshot.error.code = envelope_refusal (renamed 2026-05-21 from envelope_refused_by_provider per the MyndHyve adoption-feedback amendment)',
       ),
-    ).toBe('envelope_refused_by_provider');
+    ).toBe('envelope_refusal');
   });
 
   it('RunSnapshot.error.message MUST NOT echo the providers refusal text (SECURITY invariant envelope-refusal-no-prompt-leak)', async () => {

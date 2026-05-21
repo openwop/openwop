@@ -337,7 +337,7 @@ When the LLM emits an envelope with `schemaVersion` lower than the advertised fl
 |---|---|
 | Top-level shape mismatch (`type` missing, malformed JSON, `meta.source` absent) | Refuse synchronously with `invalid_envelope_shape`; emit `node.failed` if no retry budget remains. |
 | Unknown `type` (not in `supportedEnvelopes`) | Refuse with `unknown_envelope_kind`; counts against `limits.schemaRounds` if retryable. |
-| Top-level shape OK, but payload fails per-kind schema | Refuse with `envelope_payload_invalid`; counts against `limits.schemaRounds`. The engine SHOULD return the validation details to the LLM as a follow-up system message and allow re-emission. |
+| Top-level shape OK, but payload fails per-kind schema | Refuse with `envelope_invalid`; counts against `limits.schemaRounds`. The engine SHOULD return the validation details to the LLM as a follow-up system message and allow re-emission. |
 | `correlationId` already seen in this run with a different `type` | Refuse with `envelope_correlation_conflict`. |
 | `correlationId` already seen with the same `type` and an `accepted` outcome | Return the cached `accepted` outcome (replay short-circuit; see §Replay determinism). |
 | All checks pass | Outcome `accepted`; engine emits `RunEventDoc`(s) per §Production flow. |
@@ -460,7 +460,7 @@ Kind known? (`supportedEnvelopes.includes(type)`)
   │   └── yes
   ▼
 Per-kind payload validation (`schemas/envelopes/{type}.schema.json`)
-  │   ├── fail → refuse `envelope_payload_invalid`; increment schemaRounds; allow retry
+  │   ├── fail → refuse `envelope_invalid`; increment schemaRounds; allow retry
   │   └── ok
   ▼
 Envelope Contract gate (node's `accepts` list)
@@ -535,13 +535,13 @@ Reasonable corrective-fragment shape (host-implementation-defined):
 
 Schema-violation retries SHALL NOT include an increased output budget — schema violations don't fail for size reasons; doubling the budget on a tractable shape problem is wasted tokens.
 
-Schema-violation retries count against `Capabilities.limits.schemaRounds`. When exhausted, the host SHALL emit `envelope.retry.exhausted` with `finalReason: "schema-violation"` + `cap.breached { kind: "schema" }`. The node fails with `error.code: "envelope_payload_invalid"` (existing code per §"Validation outcomes").
+Schema-violation retries count against `Capabilities.limits.schemaRounds`. When exhausted, the host SHALL emit `envelope.retry.exhausted` with `finalReason: "schema-violation"` + `cap.breached { kind: "schema" }`. The node fails with `error.code: "envelope_invalid"` (existing code per §"Validation outcomes").
 
 Each retry past the first MUST emit `envelope.retry.attempted { reason: "schema-violation" }` (RFC 0032 §B.1).
 
 ### Refusal path (normative)
 
-The provider returned an explicit refusal (safety stop, content policy block). Per RFC 0032 §B.3 + this RFC §D: **the host MUST NOT retry on refusal.** No retry attempt; no `envelope.retry.attempted` event; the node fails with `error.code: "envelope_refused_by_provider"` (NEW code, see §"Common error codes"). Retrying refusal with prompt mutation creates a circumvention concern (the host automatically searches for a prompt the model will accept, evading the safety filter's intent).
+The provider returned an explicit refusal (safety stop, content policy block). Per RFC 0032 §B.3 + this RFC §D: **the host MUST NOT retry on refusal.** No retry attempt; no `envelope.retry.attempted` event; the node fails with `error.code: "envelope_refusal"` (NEW code, see §"Common error codes"). Retrying refusal with prompt mutation creates a circumvention concern (the host automatically searches for a prompt the model will accept, evading the safety filter's intent).
 
 ### Recovery path (normative)
 
@@ -705,7 +705,7 @@ Engines MUST tolerate multiple envelopes per turn (subject to `limits.envelopesP
 
 The TS conformance suite (`conformance/src/scenarios/`) is the canonical authority for what conformance asserts. This document anticipates the following scenarios; each MUST be addable without an `eventLogSchemaVersion` bump since the envelope surface is additive over existing handshake fields:
 
-- `aiEnvelope.universalKinds.test.ts` — host advertises all four universals; engine accepts each with valid payload; refuses invalid payloads with `envelope_payload_invalid`.
+- `aiEnvelope.universalKinds.test.ts` — host advertises all four universals; engine accepts each with valid payload; refuses invalid payloads with `envelope_invalid`.
 - `aiEnvelope.schemaDrift.test.ts` — emit envelope with `schemaVersion` below advertised → warn-and-continue under `envelopeStrictness: "warn"`; refuse under `envelopeStrictness: "strict"`.
 - `aiEnvelope.correlationReplay.test.ts` — emit same envelope twice across process restart; second returns cached outcome; no duplicate `RunEventDoc`s.
 - `aiEnvelope.contractRefusal.test.ts` — node typeId with `accepts: ['vendor.x.foo.create']`; emit `vendor.x.bar.create` → `node.failed` with `envelope_contract_violation`.
