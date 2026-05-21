@@ -53,7 +53,7 @@ cp -R "$ROOT/schemas" "$PUBLIC/schemas"
 # `robots.txt`, and `404.html` are preserved (we don't copy site/dist/index.html
 # or site/dist/robots.txt; the rendered marketing site wins root).
 echo "[build-site] copying site-generated directories → public/"
-for dir in spec conformance profiles badge changelog roadmap versioning security contributing governance rfcs faq for; do
+for dir in spec conformance profiles badge changelog roadmap versioning security contributing governance rfcs faq errors scenarios for; do
   if [[ -d "$SITE/dist/$dir" ]]; then
     rm -rf "$PUBLIC/$dir"
     cp -R "$SITE/dist/$dir" "$PUBLIC/$dir"

@@ -82,6 +82,77 @@ function escapeHtml(s) {
  * the leaderboard MVP. Use `marked` or `markdown-it` if richer rendering
  * is needed (would break the zero-runtime-dep policy).
  */
+/**
+ * Extract a flat ToC from markdown — every H2 and H3 with its slug.
+ * Skips H1 (the page title is the H1) and deeper headings (noise in a sidebar).
+ * Returns [{level, text, slug}, …] in document order.
+ */
+function extractToc(md) {
+  const lines = md.split('\n');
+  const headings = [];
+  let inFence = false;
+  for (const line of lines) {
+    if (line.startsWith('```')) { inFence = !inFence; continue; }
+    if (inFence) continue;
+    const m = /^(#{2,3})\s+(.+)$/.exec(line);
+    if (!m) continue;
+    const text = m[2]
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/\*([^*]+)\*/g, '$1')
+      .replace(/`([^`]+)`/g, '$1')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .trim();
+    const slug = m[2].toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    headings.push({ level: m[1].length, text, slug });
+  }
+  return headings;
+}
+
+/**
+ * Render an extracted ToC as a sticky right-rail aside. Wraps the supplied
+ * article HTML in a 2-column grid so spec docs and RFCs get a navigable
+ * sidebar without the template having to know about it. Includes a tiny
+ * inline IntersectionObserver that highlights the currently-scrolled section.
+ */
+function wrapWithToc(articleHtml, toc, { tocTitle = 'On this page' } = {}) {
+  if (!toc || toc.length < 3) {
+    // Too few headings to justify the sidebar overhead.
+    return articleHtml;
+  }
+  const items = toc.map((h) => {
+    const cls = h.level === 3 ? 'toc-sub' : 'toc-top';
+    return `<li class="${cls}"><a href="#${escapeHtml(h.slug)}">${escapeHtml(h.text)}</a></li>`;
+  }).join('\n      ');
+  const tocHtml = `<aside class="spec-toc" aria-label="On this page">
+    <h4>${escapeHtml(tocTitle)}</h4>
+    <ul>
+      ${items}
+    </ul>
+  </aside>`;
+  const script = `<script>
+(function () {
+  var links = document.querySelectorAll('.spec-toc a');
+  if (!links.length || !('IntersectionObserver' in window)) return;
+  var byId = new Map();
+  links.forEach(function (a) { byId.set(a.getAttribute('href').slice(1), a); });
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        links.forEach(function (a) { a.classList.remove('is-active'); });
+        var link = byId.get(e.target.id);
+        if (link) link.classList.add('is-active');
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  byId.forEach(function (_, id) {
+    var el = document.getElementById(id);
+    if (el) observer.observe(el);
+  });
+})();
+</script>`;
+  return `<div class="spec-page-grid">${articleHtml}${tocHtml}</div>${script}`;
+}
+
 function markdownToHtml(md) {
   // Strip raw HTML for sanitization
   md = md.replace(/<[^>]+>/g, (m) => escapeHtml(m));
@@ -433,7 +504,8 @@ function buildSpecDocs() {
     // Falls back to canonical description for surfacing the protocol when the
     // doc-specific intro is missing or too short.
     const docDescription = extractFirstParagraph(md) ?? CANONICAL_DESCRIPTION;
-    const content = `<article class="spec-doc">${markdownToHtml(md)}</article>`;
+    const articleHtml = `<article class="spec-doc">${markdownToHtml(md)}</article>`;
+    const content = wrapWithToc(articleHtml, extractToc(md));
     const slug = f.replace(/\.md$/, '');
     const canonicalPath = `/spec/v1/${slug}.html`;
     const jsonLd = {
@@ -775,7 +847,8 @@ function buildMarkdownDoc({ srcAbsPath, destPath, pageTitle, lede, navActive, ca
     <h1>${escapeHtml(pageTitle)}</h1>
     <p class="lede">${escapeHtml(lede)}</p>
   </header>`;
-  const content = intro + `<article class="spec-doc">${markdownToHtml(md)}</article>`;
+  const articleHtml = `<article class="spec-doc">${markdownToHtml(md)}</article>`;
+  const content = intro + wrapWithToc(articleHtml, extractToc(md));
   ensureDir(dirname(destPath));
   writeFileSync(
     destPath,
@@ -882,7 +955,8 @@ function buildRfcs() {
     const status = /\*\*?Status:?\*?\*?\s*([A-Za-z][A-Za-z -]+)/m.exec(md);
     const slug = f.replace(/\.md$/, '');
     const description = extractFirstParagraph(md) ?? CANONICAL_DESCRIPTION;
-    const content = `<article class="spec-doc">${markdownToHtml(md)}</article>`;
+    const articleHtml = `<article class="spec-doc">${markdownToHtml(md)}</article>`;
+    const content = wrapWithToc(articleHtml, extractToc(md));
     writeFileSync(
       join(DIST, 'rfcs', `${slug}.html`),
       templatePage({
@@ -933,6 +1007,8 @@ function buildContentDir() {
   // Each file MUST start with an H1 (title) followed by a paragraph (lede).
   const ROUTES = [
     { src: 'faq.md',                          dest: ['faq'],                          nav: 'faq', label: 'FAQ' },
+    { src: 'errors.md',                       dest: ['errors'],                       nav: '',    label: 'Error codes' },
+    { src: 'scenarios.md',                    dest: ['scenarios'],                    nav: '',    label: 'Scenario walkthroughs' },
     { src: 'for/workflow-authors.md',         dest: ['for', 'workflow-authors'],      nav: '',    label: 'For workflow authors' },
     { src: 'for/host-implementers.md',        dest: ['for', 'host-implementers'],     nav: '',    label: 'For host implementers' },
     { src: 'for/pack-authors.md',             dest: ['for', 'pack-authors'],          nav: '',    label: 'For pack authors' },
@@ -945,7 +1021,8 @@ function buildContentDir() {
     const titleMatch = /^#\s+(.+)$/m.exec(md);
     const title = titleMatch ? titleMatch[1] : r.label;
     const description = extractFirstParagraph(md) ?? CANONICAL_DESCRIPTION;
-    const content = `<article class="spec-doc">${markdownToHtml(md)}</article>`;
+    const articleHtml = `<article class="spec-doc">${markdownToHtml(md)}</article>`;
+    const content = wrapWithToc(articleHtml, extractToc(md));
     const destDir = join(DIST, ...r.dest);
     ensureDir(destDir);
     const canonicalPath = `/${r.dest.join('/')}/`;
