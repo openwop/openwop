@@ -12,7 +12,7 @@
 | OpenAPI operations | 25 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 187 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 33 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 38 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## OpenAPI Operations
 
@@ -24,15 +24,15 @@
 |---|---:|
 | Accepted | 25 |
 | Active | 7 |
-| Draft | 1 |
+| Draft | 6 |
 
 | Latest RFC | Title | Status |
 |---|---|---|
-| RFC 0033 | Envelope-completion criteria; distinguishing truncation from schema-violation in retry routing; truncation-retry cap | Active |
-| RFC 0032 | Six envelope-reliability `RunEventType` entries; scope clarification of `ai-envelope.md` section"Run event log integration" line 448 MUST NOT | Active |
-| RFC 0031 | Discriminated-union pattern for envelope variant payloads (normative); `NodeModule.requiredModelCapabilities` + `NodeModule.fallbackModel`; `model.capability.substituted` + `model.capability.insufficient` events | Active |
-| RFC 0030 | Optional `reasoning` field on envelope payload schemas; informative Tier-1 cross-vendor structured-output compatibility subset | Active |
-| RFC 0029 | Prompt resolution chain across node / agent / workflow / host layers; `agent.promptResolved` observability event; `AgentManifest.promptOverrides` + `promptLibraryRef` extension | Active |
+| RFC 0038 | OpenWOP Working Group charter | Draft |
+| RFC 0037 | Multi-agent execution model + replay determinism under nondeterministic models | Draft |
+| RFC 0036 | Multi-region idempotency + cross-engine append-ordering guarantees | Draft |
+| RFC 0035 | Sandbox execution contract for pack-loaded typeIds | Draft |
+| RFC 0034 | OTel collector test seam + secret-leakage invariant promotion | Draft |
 
 ## SDK Helper Coverage
 
@@ -71,7 +71,7 @@
 
 ## Active Follow-Ups
 
-- 1 RFC still `Draft` (RFC 0025) — advance with schema/conformance proof or defer.
+- 6 RFCs still `Draft` (RFC 0025, RFC 0034, RFC 0035, RFC 0036, RFC 0037, RFC 0038) — advance with schema/conformance proof or defer.
 - 7 RFCs `Active` (RFC 0027, RFC 0028, RFC 0029, RFC 0030, RFC 0031, RFC 0032, RFC 0033) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - SDK parity still shows raw-only rows for several stable v1.x helper surfaces.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
