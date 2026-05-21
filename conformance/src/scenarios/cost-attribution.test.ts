@@ -17,10 +17,12 @@
  *      error envelope and skips trivially-pass when absent. When present,
  *      asserts the canary cost shape lands in `metrics.openwopCost` end-to-end.
  *
- * Two scenarios remain `it.todo` because they need observable-span
- * access — the conformance suite is black-box and can only see what the
- * REST + event-log surfaces expose. Hosts should cover runtime-side
- * enforcement in host-specific observability tests.
+ * Two runtime-side enforcement claims (raw-OTel-span allowlist + per-attribute
+ * type validation at emission) are intentionally out of scope here — the
+ * conformance suite is black-box and can only see what the REST + event-log
+ * surfaces expose. Hosts cover those enforcement paths in host-specific
+ * observability tests (e.g., `apps/workflow-engine/backend/typescript/test/`
+ * costEmitter unit suites).
  *
  * Spec references:
  *   - https://github.com/openwop/openwop/blob/main/spec/v1/observability.md §"AI cost"
