@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.3 — unreleased] — coordinated SDK release for MyndHyve adoption-feedback slices
 
+### INTEROP-MATRIX: cross-host validation closed on MyndHyve workflow-runtime (2026-05-21)
+
+Three new evidence sections + wire-shape drift closures recording MyndHyve's adoption of the envelope LLM-contract-hardening track end-to-end against `https://api.myndhyve.ai`:
+
+- **§"Capability adoption — RFC 0002 §B `agent.toolReturned` `causationId` pairing"** — new H2 section. MyndHyve's executor returns `EventLog.append() → Promise<RunEventDoc>` synchronously, threads the returned `eventId` into both payload-level and event-record-level `causationId`. Strict pairing chain verified end-to-end against MyndHyve's prod target: `agent.toolReturned.causationId === agent.toolCalled.eventId` across both fixture invocations. Closes the cross-host validation criterion for RFC 0002 §B.
+- **§"Capability adoption — RFC 0022 §D `node.dispatched` event + shared-bag cross-worker handoff"** — new H2 section. MyndHyve emits `node.dispatched` after each `core.dispatch` child invocation and honors `perWorkerInputMappings` / `perWorkerOutputMappings` precedence over default mappings. `dispatch-cross-worker-handoff.test.ts` HVMAP-1c + HVMAP-1c-override (2/2) pass end-to-end — **first cross-host validation of RFC 0022 §D** (Postgres reference still has these subtests as `it.todo()` host-side pending a supervisor-mock seam extension).
+- **§"Third-party host adoption — RFC 0030/0031/0032/0033"** — row advanced from 62 pass / 21 auth-blocked / 4 honest-skip to **87/87 pass on revision `workflow-runtime-00180-v8j`**. All five wire-shape drifts (a)/(b)/(c)/(d)/(e) RESOLVED 2026-05-21 — drift (e) was the discovery-location mismatch (top-level `modelCapabilities` vs spec-canonical `capabilities.modelCapabilities`); MyndHyve migrated to the nested form rather than via dual-emit spec amendment. 4 honest-skips remain on the `node-module-required-capabilities-shape` SHOULD-tier check because MyndHyve does not expose `GET /v1/host/sample/node-catalog`; not MUST-blocking.
+
+No spec amendments needed beyond the (a)/(b)/(c)/(d) renames already landed in the RFC 0030/0031/0032/0033 promotion batch. Drift (e) closed host-side; the spec language was unambiguous about the nested location.
+
 ### Site: 13 new pages + REST API explorer + JSON-LD on every spec doc (2026-05-21)
 
 Comprehensive upgrade to openwop.dev. The `site/src/build.mjs` generator now renders nine additional page types beyond the existing spec corpus, conformance leaderboard, and profiles catalog:
@@ -25,6 +35,23 @@ Comprehensive upgrade to openwop.dev. The `site/src/build.mjs` generator now ren
 Sitemap grows 43 URLs → 95 URLs. Topnav adds RFCs / Changelog / FAQ alongside the existing Overview / Spec / Conformance. Homepage footer reorganized into Specification / Ecosystem / Project columns with the new on-site routes + "Watch releases ↗" GitHub-releases link.
 
 Implementation-only. No spec text, schemas, OpenAPI/AsyncAPI, conformance, or SDK contracts touched. The Redoc bundle is the only third-party JS shipped; it stays self-hosted to honor `site/README.md`'s no-CDN policy.
+
+### Site polish: /versioning/ H1 unescape + Redoc/spec-ToC layouts widened (2026-05-21)
+
+Three small fixes on top of the multi-page corpus that landed earlier in the day:
+
+- **`/versioning/` H1 double-escape fix** — `buildVersioning.pageTitle` in `site/src/build.mjs` was `'Versioning &amp; compatibility'`, which `escapeHtml` re-escaped to `&amp;amp;`, rendering as literal `Versioning &amp; compatibility` in the H1, `<title>`, and OG meta. Dropped to bare `&` so escapeHtml does its job once. Added a comment next to the `GROUPS` array in the same file documenting that group titles are raw-HTML-interpolated and therefore *do* need pre-escaped `&amp;` — distinguishing the two conventions for future contributors.
+- **Redoc explorer (`/api/rest/`) widened to full container** — the new `.site-main .wrap > *` 920px prose clamp was squeezing Redoc's three-column layout. Added `.site-main .wrap > #redoc-container { max-width: none; }` so the explorer breathes.
+- **Spec-page sticky-ToC layout widened to 1180px** — the same prose clamp was crushing the `.spec-page-grid` (article column + 240px sticky ToC + gap). Added `.site-main .wrap > .spec-page-grid { max-width: 1180px; }` so the article column lands ~900px and the ToC reads cleanly.
+
+Implementation-only. No spec text or wire surface touched.
+
+### Workflow-engine sample (`app.openwop.dev`): AI chat viewport-lock + Lucide thumbs icons (2026-05-21)
+
+UI polish in the reference workflow-engine sample app — not part of the openwop wire contract:
+
+- **AI chat page no longer scrolls the whole window.** The `/` route shell is locked to `height: 100vh; overflow: hidden`; `ChatSidebar` flex-fills the main column (`flex: 1; minHeight: 0`) instead of hard-coding `height: calc(100vh - 100px); maxHeight: 900`. The MessageFeed inside owns the scroll. On tall monitors (>900px) the chat now uses the full vertical space rather than capping at 900px.
+- **Thumbs-up / thumbs-down feedback icons switched from emoji to Lucide-style inline SVG** — two new components under `apps/workflow-engine/frontend/react/src/chat/icons/` (`ThumbsUpIcon`, `ThumbsDownIcon`) following the same pattern as Globe / Send / Shield / Sparkles / Stop / Mic, so the feedback row sits in the same icon register as the rest of the chat affordances.
 
 ### TS SDK 1.1.3 — `parseRefusal` + `buildReasoningDirective` exported (2026-05-21)
 
