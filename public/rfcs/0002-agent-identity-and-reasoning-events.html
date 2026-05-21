@@ -67,7 +67,27 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="rfc-0002-agent-identity-and-reasoning-events">RFC 0002: Agent Identity and Reasoning Events</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-agentref-wire-shape">§A AgentRef wire shape</a></li>
+      <li class="toc-sub"><a href="#f-confidence-and-escalation">§F Confidence and escalation</a></li>
+      <li class="toc-sub"><a href="#g-conversationmessage-shape-referenced-by-rfcs-0005-and-0007">§G ConversationMessage shape (referenced by RFCs 0005 and 0007)</a></li>
+      <li class="toc-sub"><a href="#b-reasoning-events">§B Reasoning events</a></li>
+      <li class="toc-sub"><a href="#c-agentref-placement-on-existing-event-payloads">§C AgentRef placement on existing event payloads</a></li>
+      <li class="toc-sub"><a href="#d-capability-advertisement">§D Capability advertisement</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="rfc-0002-agent-identity-and-reasoning-events">RFC 0002: Agent Identity and Reasoning Events</h1>
 <table>
 <thead><tr><th>Field</th><th>Value</th></tr></thead>
 <tbody>
@@ -250,27 +270,7 @@
 <li><code>schemas/orchestrator-decision.schema.json</code> (RFC 0006 — consumes §F escalation contract)</li>
 <li><code>spec/v1/a2a-integration.md</code> (composition with A2A <code>AgentCard</code>)</li>
 <li>RFC 0003 (Agent Packs), RFC 0004 (Memory Layer), RFC 0005 (Conversation), RFC 0006 (Orchestrator), RFC 0007 (Dispatch)</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#summary">Summary</a></li>
-      <li class="toc-top"><a href="#motivation">Motivation</a></li>
-      <li class="toc-top"><a href="#proposal">Proposal</a></li>
-      <li class="toc-sub"><a href="#a-agentref-wire-shape">§A AgentRef wire shape</a></li>
-      <li class="toc-sub"><a href="#f-confidence-and-escalation">§F Confidence and escalation</a></li>
-      <li class="toc-sub"><a href="#g-conversationmessage-shape-referenced-by-rfcs-0005-and-0007">§G ConversationMessage shape (referenced by RFCs 0005 and 0007)</a></li>
-      <li class="toc-sub"><a href="#b-reasoning-events">§B Reasoning events</a></li>
-      <li class="toc-sub"><a href="#c-agentref-placement-on-existing-event-payloads">§C AgentRef placement on existing event payloads</a></li>
-      <li class="toc-sub"><a href="#d-capability-advertisement">§D Capability advertisement</a></li>
-      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
-      <li class="toc-top"><a href="#conformance">Conformance</a></li>
-      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
-      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
-      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
-      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

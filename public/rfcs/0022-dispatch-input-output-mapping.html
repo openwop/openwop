@@ -67,7 +67,34 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="rfc-0022-core-dispatch-core-subworkflow-runtime-variable-mapping">RFC 0022: <code>core.dispatch</code> + <code>core.subWorkflow</code> runtime variable mapping</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-sub"><a href="#what-this-forces-today">What this forces today</a></li>
+      <li class="toc-sub"><a href="#concrete-production-motivation">Concrete production motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-core-dispatch-add-four-optional-mapping-fields">A. core.dispatch — add four optional mapping fields</a></li>
+      <li class="toc-sub"><a href="#b-core-subworkflow-add-inputmapping">B. core.subWorkflow — add inputMapping</a></li>
+      <li class="toc-sub"><a href="#c-capability-advertisements">C. Capability advertisements</a></li>
+      <li class="toc-sub"><a href="#d-fan-out-interaction-core-dispatch-only">D. Fan-out interaction (core.dispatch only)</a></li>
+      <li class="toc-sub"><a href="#e-positive-negative-examples">E. Positive + negative examples</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-sub"><a href="#a-pass-mappings-through-orchestratordecision">A. Pass mappings through OrchestratorDecision</a></li>
+      <li class="toc-sub"><a href="#b-generalize-core-subworkflow-to-take-a-list-of-workflowids">B. Generalize core.subWorkflow to take a list of workflowIds</a></li>
+      <li class="toc-sub"><a href="#c-new-core-dispatchwithmapping-typeid-and-core-subworkflowwithinputs">C. New core.dispatchWithMapping typeId (and core.subWorkflowWithInputs)</a></li>
+      <li class="toc-sub"><a href="#d-compose-at-the-host-level-vendor-wrappers">D. Compose at the host level (vendor wrappers)</a></li>
+      <li class="toc-sub"><a href="#e-do-nothing">E. Do nothing</a></li>
+      <li class="toc-sub"><a href="#f-couple-both-nodes-behind-one-capability-flag">F. Couple both nodes behind ONE capability flag</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="rfc-0022-core-dispatch-core-subworkflow-runtime-variable-mapping">RFC 0022: <code>core.dispatch</code> + <code>core.subWorkflow</code> runtime variable mapping</h1>
 <table>
 <thead><tr><th>Field</th><th>Value</th></tr></thead>
 <tbody>
@@ -305,34 +332,7 @@ effectiveOutputMapping = perWorkerOutputMappings[workerId] ?? outputMapping ?? {
 <li><code>spec/v1/node-packs.md</code> §"<code>core.subWorkflow</code> contract" — prose extended in §B.</li>
 <li><code>COMPATIBILITY.md</code> §2.1 — additive-change rules.</li>
 <li>Production motivation: <code>vendor.myndhyve.launchStudioSupervisor</code> adaptive root (MyndHyve host implementation) — internal RFC at <code>docs/rfcs/openwop-dispatch-input-output-mapping.md</code>.</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#summary">Summary</a></li>
-      <li class="toc-top"><a href="#motivation">Motivation</a></li>
-      <li class="toc-sub"><a href="#what-this-forces-today">What this forces today</a></li>
-      <li class="toc-sub"><a href="#concrete-production-motivation">Concrete production motivation</a></li>
-      <li class="toc-top"><a href="#proposal">Proposal</a></li>
-      <li class="toc-sub"><a href="#a-core-dispatch-add-four-optional-mapping-fields">A. core.dispatch — add four optional mapping fields</a></li>
-      <li class="toc-sub"><a href="#b-core-subworkflow-add-inputmapping">B. core.subWorkflow — add inputMapping</a></li>
-      <li class="toc-sub"><a href="#c-capability-advertisements">C. Capability advertisements</a></li>
-      <li class="toc-sub"><a href="#d-fan-out-interaction-core-dispatch-only">D. Fan-out interaction (core.dispatch only)</a></li>
-      <li class="toc-sub"><a href="#e-positive-negative-examples">E. Positive + negative examples</a></li>
-      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
-      <li class="toc-top"><a href="#conformance">Conformance</a></li>
-      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
-      <li class="toc-sub"><a href="#a-pass-mappings-through-orchestratordecision">A. Pass mappings through OrchestratorDecision</a></li>
-      <li class="toc-sub"><a href="#b-generalize-core-subworkflow-to-take-a-list-of-workflowids">B. Generalize core.subWorkflow to take a list of workflowIds</a></li>
-      <li class="toc-sub"><a href="#c-new-core-dispatchwithmapping-typeid-and-core-subworkflowwithinputs">C. New core.dispatchWithMapping typeId (and core.subWorkflowWithInputs)</a></li>
-      <li class="toc-sub"><a href="#d-compose-at-the-host-level-vendor-wrappers">D. Compose at the host level (vendor wrappers)</a></li>
-      <li class="toc-sub"><a href="#e-do-nothing">E. Do nothing</a></li>
-      <li class="toc-sub"><a href="#f-couple-both-nodes-behind-one-capability-flag">F. Couple both nodes behind ONE capability flag</a></li>
-      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
-      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
-      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

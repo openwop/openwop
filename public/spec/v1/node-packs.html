@@ -92,7 +92,45 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-node-packs-and-the-public-registry">OpenWOP Spec v1 — Node Packs and the Public Registry</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
+      <li class="toc-top"><a href="#pack-identity">Pack identity</a></li>
+      <li class="toc-sub"><a href="#naming">Naming</a></li>
+      <li class="toc-sub"><a href="#reserved-core-openwop-node-typeids">Reserved Core OpenWOP node typeIds</a></li>
+      <li class="toc-sub"><a href="#authorized-emitters-for-agent-events">Authorized emitters for agent.* events</a></li>
+      <li class="toc-sub"><a href="#core-subworkflow-contract">core.subWorkflow contract</a></li>
+      <li class="toc-sub"><a href="#versioning">Versioning</a></li>
+      <li class="toc-sub"><a href="#dependency-resolution-lockfile">Dependency resolution + lockfile</a></li>
+      <li class="toc-sub"><a href="#transitive-dependency-resolution">Transitive dependency resolution</a></li>
+      <li class="toc-top"><a href="#manifest-format">Manifest format</a></li>
+      <li class="toc-sub"><a href="#required-fields">Required fields</a></li>
+      <li class="toc-sub"><a href="#optional-fields">Optional fields</a></li>
+      <li class="toc-sub"><a href="#per-node-requiressecrets">Per-node requiresSecrets[]</a></li>
+      <li class="toc-sub"><a href="#model-capability-declarations-on-nodemodules">Model-capability declarations on NodeModules</a></li>
+      <li class="toc-top"><a href="#runtime-formats">Runtime formats</a></li>
+      <li class="toc-sub"><a href="#wasm-runtime">WASM runtime</a></li>
+      <li class="toc-top"><a href="#distribution">Distribution</a></li>
+      <li class="toc-sub"><a href="#pack-archive">Pack archive</a></li>
+      <li class="toc-sub"><a href="#content-addressing">Content addressing</a></li>
+      <li class="toc-sub"><a href="#signing">Signing</a></li>
+      <li class="toc-top"><a href="#registry-http-api">Registry HTTP API</a></li>
+      <li class="toc-sub"><a href="#get-v1-packs-name">GET /v1/packs/{name}</a></li>
+      <li class="toc-sub"><a href="#schema-id-resolution">Schema $id resolution</a></li>
+      <li class="toc-sub"><a href="#get-v1-packs-name-version-tgz">GET /v1/packs/{name}/-/{version}.tgz</a></li>
+      <li class="toc-sub"><a href="#get-v1-packs-name-version-json">GET /v1/packs/{name}/-/{version}.json</a></li>
+      <li class="toc-sub"><a href="#get-v1-packs-name-version-sig">GET /v1/packs/{name}/-/{version}.sig</a></li>
+      <li class="toc-sub"><a href="#put-v1-packs-name-version-tgz">PUT /v1/packs/{name}/-/{version}.tgz</a></li>
+      <li class="toc-sub"><a href="#delete-v1-packs-name-version">DELETE /v1/packs/{name}/-/{version}</a></li>
+      <li class="toc-sub"><a href="#get-v1-packs-search-q-term">GET /v1/packs/-/search?q=&lt;term&gt;</a></li>
+      <li class="toc-sub"><a href="#optional-registry-endpoints">Optional registry endpoints</a></li>
+      <li class="toc-top"><a href="#trust-model">Trust model</a></li>
+      <li class="toc-top"><a href="#engine-integration">Engine integration</a></li>
+      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-node-packs-and-the-public-registry">OpenWOP Spec v1 — Node Packs and the Public Registry</h1>
 <blockquote><p><strong>Status: FINAL v1 (2026-04-27).</strong> Comprehensive coverage of the pack manifest format, distribution, signing, and registry HTTP API. Language-neutral stable surface for external review. The hosted reference registry is live at <code>https://packs.openwop.dev/</code>; local registry contents are summarized in <code>docs/PROTOCOL-STATUS.md</code>. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>
@@ -545,45 +583,7 @@ pack.json.sig              (detached signature over pack.json)</code></pre>
 <li>npm registry API: &lt;https://docs.npmjs.com/cli/v10/configuring-npm/package-json&gt; (idiom source — not a normative dependency).</li>
 <li>Sigstore: &lt;https://www.sigstore.dev/&gt; (signing reference).</li>
 <li>Reference registry: planned at <code>https://packs.openwop.dev/</code>.</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
-      <li class="toc-top"><a href="#pack-identity">Pack identity</a></li>
-      <li class="toc-sub"><a href="#naming">Naming</a></li>
-      <li class="toc-sub"><a href="#reserved-core-openwop-node-typeids">Reserved Core OpenWOP node typeIds</a></li>
-      <li class="toc-sub"><a href="#authorized-emitters-for-agent-events">Authorized emitters for agent.* events</a></li>
-      <li class="toc-sub"><a href="#core-subworkflow-contract">core.subWorkflow contract</a></li>
-      <li class="toc-sub"><a href="#versioning">Versioning</a></li>
-      <li class="toc-sub"><a href="#dependency-resolution-lockfile">Dependency resolution + lockfile</a></li>
-      <li class="toc-sub"><a href="#transitive-dependency-resolution">Transitive dependency resolution</a></li>
-      <li class="toc-top"><a href="#manifest-format">Manifest format</a></li>
-      <li class="toc-sub"><a href="#required-fields">Required fields</a></li>
-      <li class="toc-sub"><a href="#optional-fields">Optional fields</a></li>
-      <li class="toc-sub"><a href="#per-node-requiressecrets">Per-node requiresSecrets[]</a></li>
-      <li class="toc-sub"><a href="#model-capability-declarations-on-nodemodules">Model-capability declarations on NodeModules</a></li>
-      <li class="toc-top"><a href="#runtime-formats">Runtime formats</a></li>
-      <li class="toc-sub"><a href="#wasm-runtime">WASM runtime</a></li>
-      <li class="toc-top"><a href="#distribution">Distribution</a></li>
-      <li class="toc-sub"><a href="#pack-archive">Pack archive</a></li>
-      <li class="toc-sub"><a href="#content-addressing">Content addressing</a></li>
-      <li class="toc-sub"><a href="#signing">Signing</a></li>
-      <li class="toc-top"><a href="#registry-http-api">Registry HTTP API</a></li>
-      <li class="toc-sub"><a href="#get-v1-packs-name">GET /v1/packs/{name}</a></li>
-      <li class="toc-sub"><a href="#schema-id-resolution">Schema $id resolution</a></li>
-      <li class="toc-sub"><a href="#get-v1-packs-name-version-tgz">GET /v1/packs/{name}/-/{version}.tgz</a></li>
-      <li class="toc-sub"><a href="#get-v1-packs-name-version-json">GET /v1/packs/{name}/-/{version}.json</a></li>
-      <li class="toc-sub"><a href="#get-v1-packs-name-version-sig">GET /v1/packs/{name}/-/{version}.sig</a></li>
-      <li class="toc-sub"><a href="#put-v1-packs-name-version-tgz">PUT /v1/packs/{name}/-/{version}.tgz</a></li>
-      <li class="toc-sub"><a href="#delete-v1-packs-name-version">DELETE /v1/packs/{name}/-/{version}</a></li>
-      <li class="toc-sub"><a href="#get-v1-packs-search-q-term">GET /v1/packs/-/search?q=&lt;term&gt;</a></li>
-      <li class="toc-sub"><a href="#optional-registry-endpoints">Optional registry endpoints</a></li>
-      <li class="toc-top"><a href="#trust-model">Trust model</a></li>
-      <li class="toc-top"><a href="#engine-integration">Engine integration</a></li>
-      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

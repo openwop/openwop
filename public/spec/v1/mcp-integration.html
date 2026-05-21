@@ -92,7 +92,26 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-mcp-integration">OpenWOP Spec v1 — MCP Integration</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#tl-dr">TL;DR</a></li>
+      <li class="toc-top"><a href="#why-this-composition">Why this composition</a></li>
+      <li class="toc-top"><a href="#concrete-example">Concrete example</a></li>
+      <li class="toc-top"><a href="#trust-boundary">Trust boundary</a></li>
+      <li class="toc-top"><a href="#conformance-interop">Conformance + interop</a></li>
+      <li class="toc-top"><a href="#openwop-host-as-mcp-server">OpenWOP host as MCP server</a></li>
+      <li class="toc-sub"><a href="#1-mount">1. Mount</a></li>
+      <li class="toc-sub"><a href="#2-state-projection-workflow-mcp-tool">2. State projection: workflow → MCP tool</a></li>
+      <li class="toc-sub"><a href="#3-bidirectional-callbacks">3. Bidirectional callbacks</a></li>
+      <li class="toc-sub"><a href="#4-trust-boundary">4. Trust boundary</a></li>
+      <li class="toc-sub"><a href="#5-capability-advertisement">5. Capability advertisement</a></li>
+      <li class="toc-sub"><a href="#6-conformance">6. Conformance</a></li>
+      <li class="toc-top"><a href="#what-openwop-does-not-specify-about-mcp">What openwop does NOT specify about MCP</a></li>
+      <li class="toc-top"><a href="#future-work">Future work</a></li>
+      <li class="toc-top"><a href="#see-also">See also</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-mcp-integration">OpenWOP Spec v1 — MCP Integration</h1>
 <blockquote><p><strong>Status: FINAL v1 (2026-05-05).</strong> Worked example of how OpenWOP and the Model Context Protocol (MCP) compose. Non-normative composition pattern; the §"Trust boundary" rules restate normative invariants from <code>SECURITY/threat-model-prompt-injection.md</code> (3 RFC 2119 keywords, all citing pre-existing invariants). Graduated DRAFT → FINAL via RFC 0006. See <code>auth.md</code> for the status legend.</p></blockquote>
 <hr/>
 <h2 id="tl-dr">TL;DR</h2>
@@ -270,26 +289,7 @@ edges:
 <li><code>SECURITY/threat-model-prompt-injection.md</code> — invariants on MCP tool responses.</li>
 <li><code>SECURITY/threat-model-node-packs.md</code> — sandbox + trust model that MCP servers fit into.</li>
 <li>Model Context Protocol: https://modelcontextprotocol.io — the canonical MCP source.</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#tl-dr">TL;DR</a></li>
-      <li class="toc-top"><a href="#why-this-composition">Why this composition</a></li>
-      <li class="toc-top"><a href="#concrete-example">Concrete example</a></li>
-      <li class="toc-top"><a href="#trust-boundary">Trust boundary</a></li>
-      <li class="toc-top"><a href="#conformance-interop">Conformance + interop</a></li>
-      <li class="toc-top"><a href="#openwop-host-as-mcp-server">OpenWOP host as MCP server</a></li>
-      <li class="toc-sub"><a href="#1-mount">1. Mount</a></li>
-      <li class="toc-sub"><a href="#2-state-projection-workflow-mcp-tool">2. State projection: workflow → MCP tool</a></li>
-      <li class="toc-sub"><a href="#3-bidirectional-callbacks">3. Bidirectional callbacks</a></li>
-      <li class="toc-sub"><a href="#4-trust-boundary">4. Trust boundary</a></li>
-      <li class="toc-sub"><a href="#5-capability-advertisement">5. Capability advertisement</a></li>
-      <li class="toc-sub"><a href="#6-conformance">6. Conformance</a></li>
-      <li class="toc-top"><a href="#what-openwop-does-not-specify-about-mcp">What openwop does NOT specify about MCP</a></li>
-      <li class="toc-top"><a href="#future-work">Future work</a></li>
-      <li class="toc-top"><a href="#see-also">See also</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

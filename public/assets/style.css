@@ -38,8 +38,8 @@
 .site-main .wrap > #redoc-container {
   max-width: none;
 }
-/* Spec/RFC pages render a sticky right-rail ToC inside .spec-page-grid;
- * give the grid more room than pure prose so article + sidebar both fit. */
+/* Spec/RFC pages render a sticky left-rail ToC inside .spec-page-grid;
+ * give the grid more room than pure prose so sidebar + article both fit. */
 .site-main .wrap > .spec-page-grid {
   max-width: 1180px;
 }
@@ -433,10 +433,10 @@
   }
 }
 
-/* ─── Sticky right-rail ToC for spec docs + RFCs + markdown surfaces ── */
+/* ─── Sticky left-rail ToC for spec docs + RFCs + markdown surfaces ── */
 .spec-page-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 240px;
+  grid-template-columns: 240px minmax(0, 1fr);
   gap: 2.5rem;
   align-items: start;
 }
@@ -446,8 +446,8 @@
   align-self: start;
   max-height: calc(100vh - 100px);
   overflow-y: auto;
-  padding-left: 1rem;
-  border-left: 1px solid var(--rule, #d9d4c5);
+  padding-right: 1rem;
+  border-right: 1px solid var(--rule, #d9d4c5);
   font-size: 0.85rem;
   line-height: 1.5;
 }
@@ -468,17 +468,19 @@
 .spec-toc li.toc-sub { padding-left: 1rem; }
 .spec-toc a {
   display: block;
-  padding: 4px 0 4px 8px;
-  margin-left: -10px;
+  /* Active indicator sits on the RIGHT edge of each link so it points
+   * toward the article on the right side of the page. */
+  padding: 4px 8px 4px 0;
+  margin-right: -10px;
   color: var(--ink-2, #4a4842);
   text-decoration: none;
-  border-left: 2px solid transparent;
+  border-right: 2px solid transparent;
   transition: color .15s ease, border-color .15s ease;
 }
 .spec-toc a:hover { color: var(--clay, #b05a3b); }
 .spec-toc a.is-active {
   color: var(--ink, #1a1a17);
-  border-left-color: var(--clay, #b05a3b);
+  border-right-color: var(--clay, #b05a3b);
   font-weight: 500;
 }
 @media (max-width: 920px) {
@@ -486,11 +488,13 @@
   .spec-toc {
     position: static;
     max-height: none;
-    border-left: none;
+    border-right: none;
     border-top: 1px solid var(--rule, #d9d4c5);
-    padding-left: 0;
+    padding-right: 0;
     padding-top: 1.5rem;
     margin-top: 2rem;
+    /* Source order is ToC first (for desktop left rail); push ToC
+     * below the article on mobile so primary content reads first. */
     order: 2;
   }
 }

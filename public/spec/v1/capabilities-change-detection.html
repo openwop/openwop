@@ -92,7 +92,18 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-capability-change-detection">OpenWOP Spec v1 — Capability Change Detection</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
+      <li class="toc-top"><a href="#capabilities-etag">Capabilities-Etag</a></li>
+      <li class="toc-top"><a href="#cache-validators">Cache validators</a></li>
+      <li class="toc-top"><a href="#scoped-capability-views">Scoped capability views</a></li>
+      <li class="toc-top"><a href="#non-http-composition">Non-HTTP composition</a></li>
+      <li class="toc-top"><a href="#client-behavior">Client behavior</a></li>
+      <li class="toc-top"><a href="#conformance-expectations">Conformance expectations</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-capability-change-detection">OpenWOP Spec v1 — Capability Change Detection</h1>
 <blockquote><p><strong>Status: FINAL v1 (2026-05-10).</strong> Additive discovery annex for detecting changes to <code>/.well-known/openwop</code> and for documenting scoped capability views. This document does not change the required v1 capability payload. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>
@@ -152,18 +163,7 @@ Content-Type: application/json</code></pre>
 <li>Repeated discovery calls without host changes return the same value within the cache window.</li>
 <li>Public discovery never requires authentication.</li>
 <li>Auth-scoped discovery, when advertised, returns a valid capability shape and does not expose capabilities outside the caller's authorization.</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
-      <li class="toc-top"><a href="#capabilities-etag">Capabilities-Etag</a></li>
-      <li class="toc-top"><a href="#cache-validators">Cache validators</a></li>
-      <li class="toc-top"><a href="#scoped-capability-views">Scoped capability views</a></li>
-      <li class="toc-top"><a href="#non-http-composition">Non-HTTP composition</a></li>
-      <li class="toc-top"><a href="#client-behavior">Client behavior</a></li>
-      <li class="toc-top"><a href="#conformance-expectations">Conformance expectations</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

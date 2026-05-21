@@ -67,7 +67,27 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="rfc-0009-production-profile-conformance">RFC 0009: Production-Profile Conformance</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-capability-advertisement">§A Capability advertisement</a></li>
+      <li class="toc-sub"><a href="#b-new-scenario-production-backpressure-test-ts">§B New scenario: production-backpressure.test.ts</a></li>
+      <li class="toc-sub"><a href="#c-new-scenario-production-retention-expiry-test-ts">§C New scenario: production-retention-expiry.test.ts</a></li>
+      <li class="toc-sub"><a href="#d-re-labeling-existing-scenarios-cite-production-profile-md">§D Re-labeling: existing scenarios cite production-profile.md</a></li>
+      <li class="toc-sub"><a href="#e-coverage-table">§E Coverage table</a></li>
+      <li class="toc-sub"><a href="#f-interop-matrix-claim">§F INTEROP-MATRIX claim</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="rfc-0009-production-profile-conformance">RFC 0009: Production-Profile Conformance</h1>
 <table>
 <thead><tr><th>Field</th><th>Value</th></tr></thead>
 <tbody>
@@ -260,27 +280,7 @@
 <li><code>examples/hosts/postgres/test/backpressure.test.ts</code> — host-internal precedent for the 503 envelope.</li>
 <li><code>docs/PROTOCOL-GAP-CLOSURE-PLAN.md</code> Track 8 — the planning context.</li>
 <li><code>ROADMAP.md</code> v1.X protocol gap closure queue — the delivery context.</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#summary">Summary</a></li>
-      <li class="toc-top"><a href="#motivation">Motivation</a></li>
-      <li class="toc-top"><a href="#proposal">Proposal</a></li>
-      <li class="toc-sub"><a href="#a-capability-advertisement">§A Capability advertisement</a></li>
-      <li class="toc-sub"><a href="#b-new-scenario-production-backpressure-test-ts">§B New scenario: production-backpressure.test.ts</a></li>
-      <li class="toc-sub"><a href="#c-new-scenario-production-retention-expiry-test-ts">§C New scenario: production-retention-expiry.test.ts</a></li>
-      <li class="toc-sub"><a href="#d-re-labeling-existing-scenarios-cite-production-profile-md">§D Re-labeling: existing scenarios cite production-profile.md</a></li>
-      <li class="toc-sub"><a href="#e-coverage-table">§E Coverage table</a></li>
-      <li class="toc-sub"><a href="#f-interop-matrix-claim">§F INTEROP-MATRIX claim</a></li>
-      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
-      <li class="toc-top"><a href="#conformance">Conformance</a></li>
-      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
-      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
-      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
-      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

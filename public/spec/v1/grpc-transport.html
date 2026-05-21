@@ -92,7 +92,21 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-grpc-transport-profile">OpenWOP Spec v1 — gRPC Transport Profile</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
+      <li class="toc-top"><a href="#scope">Scope</a></li>
+      <li class="toc-top"><a href="#service-definition">Service definition</a></li>
+      <li class="toc-top"><a href="#auth">Auth</a></li>
+      <li class="toc-top"><a href="#error-mapping">Error mapping</a></li>
+      <li class="toc-top"><a href="#streaming-semantics">Streaming semantics</a></li>
+      <li class="toc-top"><a href="#capability-advertisement">Capability advertisement</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#see-also">See also</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-grpc-transport-profile">OpenWOP Spec v1 — gRPC Transport Profile</h1>
 <blockquote><p><strong>Status: FINAL v1 (2026-05-12).</strong> Optional alternative transport profile. REST + SSE remains the REQUIRED wire surface for every v1-conforming host (per <code>rest-endpoints.md</code>); a host MAY ALSO expose the gRPC surface defined here under <code>capabilities.supportedTransports: [&quot;grpc&quot;]</code>. The two surfaces describe the same protocol semantics; gRPC clients can produce byte-equivalent runs against a dual-surface host. Closes R3 in <code>rest-endpoints.md</code> §"Open spec gaps". Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>
@@ -266,21 +280,7 @@ import &quot;google/rpc/error_details.proto&quot;;
 <li><code>observability.md</code> §"Trace context propagation" — W3C trace context applies identically over gRPC metadata</li>
 <li><code>error-envelope.schema.json</code> — error wire-shape (carried in <code>Status.details[]</code>)</li>
 <li><code>api/grpc/openwop.proto</code> — canonical service definition (ships with the spec corpus)</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
-      <li class="toc-top"><a href="#scope">Scope</a></li>
-      <li class="toc-top"><a href="#service-definition">Service definition</a></li>
-      <li class="toc-top"><a href="#auth">Auth</a></li>
-      <li class="toc-top"><a href="#error-mapping">Error mapping</a></li>
-      <li class="toc-top"><a href="#streaming-semantics">Streaming semantics</a></li>
-      <li class="toc-top"><a href="#capability-advertisement">Capability advertisement</a></li>
-      <li class="toc-top"><a href="#conformance">Conformance</a></li>
-      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
-      <li class="toc-top"><a href="#see-also">See also</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

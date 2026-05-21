@@ -92,7 +92,33 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-idempotency">OpenWOP Spec v1 — Idempotency</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
+      <li class="toc-top"><a href="#layer-1-http-idempotency-key">Layer 1: HTTP Idempotency-Key</a></li>
+      <li class="toc-sub"><a href="#endpoints-affected">Endpoints affected</a></li>
+      <li class="toc-sub"><a href="#caller-responsibilities">Caller responsibilities</a></li>
+      <li class="toc-sub"><a href="#server-responsibilities">Server responsibilities</a></li>
+      <li class="toc-sub"><a href="#concurrent-duplicates">Concurrent duplicates</a></li>
+      <li class="toc-sub"><a href="#cache-key-composition">Cache key composition</a></li>
+      <li class="toc-sub"><a href="#response">Response</a></li>
+      <li class="toc-top"><a href="#layer-2-activity-level-idempotency">Layer 2: Activity-level idempotency</a></li>
+      <li class="toc-sub"><a href="#idempotency-key-composition">Idempotency key composition</a></li>
+      <li class="toc-sub"><a href="#engine-guarantees">Engine guarantees</a></li>
+      <li class="toc-sub"><a href="#provider-header-injection">Provider header injection</a></li>
+      <li class="toc-sub"><a href="#streaming-responses">Streaming responses</a></li>
+      <li class="toc-top"><a href="#composition-how-the-layers-compose">Composition: how the layers compose</a></li>
+      <li class="toc-top"><a href="#multi-region-idempotency-annex">Multi-region idempotency (annex)</a></li>
+      <li class="toc-sub"><a href="#guarantees-under-partition">Guarantees under partition</a></li>
+      <li class="toc-sub"><a href="#operator-surface">Operator surface</a></li>
+      <li class="toc-sub"><a href="#why-best-effort-under-partition">Why &quot;best-effort under partition&quot;</a></li>
+      <li class="toc-sub"><a href="#capability-advertisement">Capability advertisement</a></li>
+      <li class="toc-sub"><a href="#multiregion-sub-block-rfc-0036-normative-when-multiregion-supported-true">multiRegion sub-block (RFC 0036, normative when multiRegion.supported: true)</a></li>
+      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-idempotency">OpenWOP Spec v1 — Idempotency</h1>
 <blockquote><p><strong>Status: FINAL v1 (2026-04-27).</strong> Comprehensive coverage of both layers: HTTP <code>Idempotency-Key</code> (Layer 1) + engine <code>invocationId</code> (Layer 2). Stable surface for external review. Open gaps in cross-region replication + entropy floor only. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>
@@ -246,33 +272,7 @@ Server  — Persist response in Layer 1 idempotency cache, return to caller</cod
 <li><code>auth.md</code> — auth model</li>
 <li><code>rest-endpoints.md</code> — endpoint catalog (<code>Idempotency-Key</code> applies to every mutating endpoint)</li>
 <li>Host implementation notes: Layer 1 belongs at the HTTP/request-store boundary; Layer 2 belongs inside the engine's side-effect wrapper before any external provider call.</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
-      <li class="toc-top"><a href="#layer-1-http-idempotency-key">Layer 1: HTTP Idempotency-Key</a></li>
-      <li class="toc-sub"><a href="#endpoints-affected">Endpoints affected</a></li>
-      <li class="toc-sub"><a href="#caller-responsibilities">Caller responsibilities</a></li>
-      <li class="toc-sub"><a href="#server-responsibilities">Server responsibilities</a></li>
-      <li class="toc-sub"><a href="#concurrent-duplicates">Concurrent duplicates</a></li>
-      <li class="toc-sub"><a href="#cache-key-composition">Cache key composition</a></li>
-      <li class="toc-sub"><a href="#response">Response</a></li>
-      <li class="toc-top"><a href="#layer-2-activity-level-idempotency">Layer 2: Activity-level idempotency</a></li>
-      <li class="toc-sub"><a href="#idempotency-key-composition">Idempotency key composition</a></li>
-      <li class="toc-sub"><a href="#engine-guarantees">Engine guarantees</a></li>
-      <li class="toc-sub"><a href="#provider-header-injection">Provider header injection</a></li>
-      <li class="toc-sub"><a href="#streaming-responses">Streaming responses</a></li>
-      <li class="toc-top"><a href="#composition-how-the-layers-compose">Composition: how the layers compose</a></li>
-      <li class="toc-top"><a href="#multi-region-idempotency-annex">Multi-region idempotency (annex)</a></li>
-      <li class="toc-sub"><a href="#guarantees-under-partition">Guarantees under partition</a></li>
-      <li class="toc-sub"><a href="#operator-surface">Operator surface</a></li>
-      <li class="toc-sub"><a href="#why-best-effort-under-partition">Why &quot;best-effort under partition&quot;</a></li>
-      <li class="toc-sub"><a href="#capability-advertisement">Capability advertisement</a></li>
-      <li class="toc-sub"><a href="#multiregion-sub-block-rfc-0036-normative-when-multiregion-supported-true">multiRegion sub-block (RFC 0036, normative when multiRegion.supported: true)</a></li>
-      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

@@ -67,7 +67,25 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="rfc-0014-host-fs-capability">RFC 0014: host.fs capability</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-capabilities-schema-json-additions">§A capabilities.schema.json additions</a></li>
+      <li class="toc-sub"><a href="#b-host-contract-musts-added-to-host-capabilities-md">§B Host-contract MUSTs (added to host-capabilities.md)</a></li>
+      <li class="toc-sub"><a href="#c-security-invariant">§C SECURITY invariant</a></li>
+      <li class="toc-sub"><a href="#d-conformance">§D Conformance</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="rfc-0014-host-fs-capability">RFC 0014: host.fs capability</h1>
 <table>
 <thead><tr><th>Field</th><th>Value</th></tr></thead>
 <tbody>
@@ -149,25 +167,7 @@
 <li><code>core.openwop.files</code> pack (this RFC unblocks public publication).</li>
 <li><code>http-client-ssrf.test.ts</code> (template for path-traversal scenario).</li>
 <li>Make Data Store, n8n Read/Write Files (prior art).</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#summary">Summary</a></li>
-      <li class="toc-top"><a href="#motivation">Motivation</a></li>
-      <li class="toc-top"><a href="#proposal">Proposal</a></li>
-      <li class="toc-sub"><a href="#a-capabilities-schema-json-additions">§A capabilities.schema.json additions</a></li>
-      <li class="toc-sub"><a href="#b-host-contract-musts-added-to-host-capabilities-md">§B Host-contract MUSTs (added to host-capabilities.md)</a></li>
-      <li class="toc-sub"><a href="#c-security-invariant">§C SECURITY invariant</a></li>
-      <li class="toc-sub"><a href="#d-conformance">§D Conformance</a></li>
-      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
-      <li class="toc-top"><a href="#conformance">Conformance</a></li>
-      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
-      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
-      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
-      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

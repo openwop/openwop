@@ -70,7 +70,26 @@
     <header class="page-header">
     <h1>Versioning &amp; compatibility</h1>
     <p class="lede">How OpenWOP changes between releases. Additive-only within v1.x; safety-fixes follow the 90-day window; breaking changes only land in major versions.</p>
-  </header><div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-compatibility-commitment">OpenWOP Compatibility Commitment</h1>
+  </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#1-versioning-model">1. Versioning model</a></li>
+      <li class="toc-top"><a href="#2-v1-x-compatibility-guarantees">2. v1.x compatibility guarantees</a></li>
+      <li class="toc-sub"><a href="#2-1-additive-only">2.1 Additive only</a></li>
+      <li class="toc-sub"><a href="#2-2-never-within-v1-x">2.2 Never within v1.x</a></li>
+      <li class="toc-sub"><a href="#2-3-suite-vs-spec-compatibility">2.3 Suite vs. spec compatibility</a></li>
+      <li class="toc-top"><a href="#3-the-safety-fix-exception">3. The safety-fix exception</a></li>
+      <li class="toc-top"><a href="#4-behavior-only-changes">4. Behavior-only changes</a></li>
+      <li class="toc-top"><a href="#5-v2-plan">5. v2 plan</a></li>
+      <li class="toc-top"><a href="#6-pinning-recommendations">6. Pinning recommendations</a></li>
+      <li class="toc-sub"><a href="#for-host-implementers">For host implementers</a></li>
+      <li class="toc-sub"><a href="#for-client-implementers">For client implementers</a></li>
+      <li class="toc-sub"><a href="#for-application-authors-building-on-a-host">For application authors building on a host</a></li>
+      <li class="toc-top"><a href="#7-deprecation-policy">7. Deprecation policy</a></li>
+      <li class="toc-top"><a href="#8-what-this-document-doesn-t-cover">8. What this document doesn&#39;t cover</a></li>
+      <li class="toc-top"><a href="#9-references">9. References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="openwop-compatibility-commitment">OpenWOP Compatibility Commitment</h1>
 <blockquote><p><strong>Status:</strong> v1 — applies to the locked v1 contract and all subsequent v1.x releases.</p></blockquote>
 <p>This document defines what openwop guarantees about backward compatibility, when those guarantees can be relaxed, and how implementers should pin against the spec.</p>
 <p>The TL;DR: <strong>v1.x is additive-only, with one explicit exception for safety and security fixes.</strong> Everything else that would break a v1 conformance pass goes to v2.</p>
@@ -202,26 +221,7 @@
 <li><code>SECURITY.md</code> — embargoed disclosure process referenced by the §3 safety-fix exception.</li>
 <li><code>ROADMAP.md</code> — what's planned for v1.x and post-v1; references this document for the change-class definitions.</li>
 <li><code>MAINTAINERS.md</code> — who has authority to merge changes that affect this commitment.</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#1-versioning-model">1. Versioning model</a></li>
-      <li class="toc-top"><a href="#2-v1-x-compatibility-guarantees">2. v1.x compatibility guarantees</a></li>
-      <li class="toc-sub"><a href="#2-1-additive-only">2.1 Additive only</a></li>
-      <li class="toc-sub"><a href="#2-2-never-within-v1-x">2.2 Never within v1.x</a></li>
-      <li class="toc-sub"><a href="#2-3-suite-vs-spec-compatibility">2.3 Suite vs. spec compatibility</a></li>
-      <li class="toc-top"><a href="#3-the-safety-fix-exception">3. The safety-fix exception</a></li>
-      <li class="toc-top"><a href="#4-behavior-only-changes">4. Behavior-only changes</a></li>
-      <li class="toc-top"><a href="#5-v2-plan">5. v2 plan</a></li>
-      <li class="toc-top"><a href="#6-pinning-recommendations">6. Pinning recommendations</a></li>
-      <li class="toc-sub"><a href="#for-host-implementers">For host implementers</a></li>
-      <li class="toc-sub"><a href="#for-client-implementers">For client implementers</a></li>
-      <li class="toc-sub"><a href="#for-application-authors-building-on-a-host">For application authors building on a host</a></li>
-      <li class="toc-top"><a href="#7-deprecation-policy">7. Deprecation policy</a></li>
-      <li class="toc-top"><a href="#8-what-this-document-doesn-t-cover">8. What this document doesn&#39;t cover</a></li>
-      <li class="toc-top"><a href="#9-references">9. References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

@@ -92,7 +92,27 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-host-extensions">OpenWOP Spec v1 — Host Extensions</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
+      <li class="toc-top"><a href="#the-rule">The rule</a></li>
+      <li class="toc-sub"><a href="#canonical-prefixes-protocol-owned">Canonical prefixes (protocol-owned)</a></li>
+      <li class="toc-sub"><a href="#vendor-prefixed-namespaces-host-extensions">Vendor-prefixed namespaces (host extensions)</a></li>
+      <li class="toc-top"><a href="#what-stays-in-the-protocol">What stays in the protocol</a></li>
+      <li class="toc-top"><a href="#what-hosts-own">What hosts own</a></li>
+      <li class="toc-top"><a href="#how-extensions-appear-on-the-wire">How extensions appear on the wire</a></li>
+      <li class="toc-sub"><a href="#run-metadata">Run metadata</a></li>
+      <li class="toc-sub"><a href="#discovery-payload-extensions">Discovery payload extensions</a></li>
+      <li class="toc-sub"><a href="#run-snapshot-extensions">Run snapshot extensions</a></li>
+      <li class="toc-sub"><a href="#event-payloads">Event payloads</a></li>
+      <li class="toc-sub"><a href="#span-attributes">Span attributes</a></li>
+      <li class="toc-top"><a href="#what-hosts-must-not-do">What hosts MUST NOT do</a></li>
+      <li class="toc-top"><a href="#extension-lifecycle">Extension lifecycle</a></li>
+      <li class="toc-top"><a href="#host-capability-surfaces">host.* capability surfaces</a></li>
+      <li class="toc-top"><a href="#see-also">See also</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-host-extensions">OpenWOP Spec v1 — Host Extensions</h1>
 <blockquote><p><strong>Status: FINAL v1 (2026-05-05).</strong> Distinguishes the protocol's normative core from host-specific extensions. This document is the canonical reference cited from any spec doc that mentions a vendor-prefixed namespace (e.g., <code>openwop.*</code>). Graduated DRAFT → FINAL via RFC 0006. See <code>auth.md</code> for the status legend. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>
@@ -226,27 +246,7 @@
 <li><code>spec/v1/node-packs.md</code> §"Naming" — pack-name scope conventions.</li>
 <li><code>RFCS/0001-rfc-process.md</code> — RFC mechanism for promoting an extension to the protocol.</li>
 <li><code>COMPATIBILITY.md</code> — additive-change discipline that gates extension stability.</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
-      <li class="toc-top"><a href="#the-rule">The rule</a></li>
-      <li class="toc-sub"><a href="#canonical-prefixes-protocol-owned">Canonical prefixes (protocol-owned)</a></li>
-      <li class="toc-sub"><a href="#vendor-prefixed-namespaces-host-extensions">Vendor-prefixed namespaces (host extensions)</a></li>
-      <li class="toc-top"><a href="#what-stays-in-the-protocol">What stays in the protocol</a></li>
-      <li class="toc-top"><a href="#what-hosts-own">What hosts own</a></li>
-      <li class="toc-top"><a href="#how-extensions-appear-on-the-wire">How extensions appear on the wire</a></li>
-      <li class="toc-sub"><a href="#run-metadata">Run metadata</a></li>
-      <li class="toc-sub"><a href="#discovery-payload-extensions">Discovery payload extensions</a></li>
-      <li class="toc-sub"><a href="#run-snapshot-extensions">Run snapshot extensions</a></li>
-      <li class="toc-sub"><a href="#event-payloads">Event payloads</a></li>
-      <li class="toc-sub"><a href="#span-attributes">Span attributes</a></li>
-      <li class="toc-top"><a href="#what-hosts-must-not-do">What hosts MUST NOT do</a></li>
-      <li class="toc-top"><a href="#extension-lifecycle">Extension lifecycle</a></li>
-      <li class="toc-top"><a href="#host-capability-surfaces">host.* capability surfaces</a></li>
-      <li class="toc-top"><a href="#see-also">See also</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

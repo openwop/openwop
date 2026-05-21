@@ -67,7 +67,19 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="frequently-asked-questions">Frequently asked questions</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#why-not-just-use-langgraph-or-langchain">Why not just use LangGraph or LangChain?</a></li>
+      <li class="toc-top"><a href="#why-not-temporal-or-aws-step-functions">Why not Temporal or AWS Step Functions?</a></li>
+      <li class="toc-top"><a href="#what-does-it-actually-cost-a-host-to-implement-openwop">What does it actually cost a host to implement OpenWOP?</a></li>
+      <li class="toc-top"><a href="#why-publish-packs-to-packs-openwop-dev-instead-of-npm-or-pypi">Why publish packs to packs.openwop.dev instead of npm or PyPI?</a></li>
+      <li class="toc-top"><a href="#when-does-openwop-v1-reach-end-of-life">When does OpenWOP v1 reach end of life?</a></li>
+      <li class="toc-top"><a href="#how-does-byok-work">How does BYOK work?</a></li>
+      <li class="toc-top"><a href="#is-openwop-suitable-for-non-ai-workflows">Is OpenWOP suitable for non-AI workflows?</a></li>
+      <li class="toc-top"><a href="#how-do-i-get-notified-about-security-advisories">How do I get notified about security advisories?</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="frequently-asked-questions">Frequently asked questions</h1>
 <p>OpenWOP is a wire-level protocol, not a library or runtime. The questions below are the ones that come up first when someone evaluates whether the protocol fits their work. Every answer cites the spec doc, RFC, or repo file that carries the authoritative version of the rule.</p>
 <p>Last reviewed: 2026-05-21.</p>
 <h2 id="why-not-just-use-langgraph-or-langchain">Why not just use LangGraph or LangChain?</h2>
@@ -91,19 +103,7 @@
 <p>Yes. The protocol is structured around durable workflow orchestration; the AI-specific surfaces (provider routing, model capabilities, agent memory, reasoning events) are optional capability gates. A host can implement <code>openwop-core</code> + <code>openwop-interrupts</code> + <code>openwop-stream-sse</code> without ever exposing an AI provider. The terminology leans toward multi-agent execution because that's the dominant use case today, but the wire shape doesn't require it.</p>
 <h2 id="how-do-i-get-notified-about-security-advisories">How do I get notified about security advisories?</h2>
 <p>Watch the <a href="https://github.com/openwop/openwop">openwop/openwop repository on GitHub</a> for releases — that's the canonical channel. Every advisory is published as a tagged release with a <code>### Security</code> heading in CHANGELOG.md citing the advisory ID, the affected versions, and the migration path. Pre-disclosure embargo follows <a href="/security/"><code>SECURITY.md</code></a> §"Disclosure window."</p>
-<p>The <a href="/changelog/"><code>/changelog/</code></a> page on this site mirrors the CHANGELOG.md content. RSS feed and email notification aren't on the roadmap; the GitHub release watch is the supported subscription path.</p></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#why-not-just-use-langgraph-or-langchain">Why not just use LangGraph or LangChain?</a></li>
-      <li class="toc-top"><a href="#why-not-temporal-or-aws-step-functions">Why not Temporal or AWS Step Functions?</a></li>
-      <li class="toc-top"><a href="#what-does-it-actually-cost-a-host-to-implement-openwop">What does it actually cost a host to implement OpenWOP?</a></li>
-      <li class="toc-top"><a href="#why-publish-packs-to-packs-openwop-dev-instead-of-npm-or-pypi">Why publish packs to packs.openwop.dev instead of npm or PyPI?</a></li>
-      <li class="toc-top"><a href="#when-does-openwop-v1-reach-end-of-life">When does OpenWOP v1 reach end of life?</a></li>
-      <li class="toc-top"><a href="#how-does-byok-work">How does BYOK work?</a></li>
-      <li class="toc-top"><a href="#is-openwop-suitable-for-non-ai-workflows">Is OpenWOP suitable for non-AI workflows?</a></li>
-      <li class="toc-top"><a href="#how-do-i-get-notified-about-security-advisories">How do I get notified about security advisories?</a></li>
-    </ul>
-  </aside></div><script>
+<p>The <a href="/changelog/"><code>/changelog/</code></a> page on this site mirrors the CHANGELOG.md content. RSS feed and email notification aren't on the roadmap; the GitHub release watch is the supported subscription path.</p></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

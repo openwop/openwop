@@ -92,7 +92,17 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-cloudevents-mapping-non-normative">OpenWOP → CloudEvents Mapping (non-normative)</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#mapping">Mapping</a></li>
+      <li class="toc-sub"><a href="#optional-extension-attributes">Optional extension attributes</a></li>
+      <li class="toc-top"><a href="#worked-example">Worked example</a></li>
+      <li class="toc-top"><a href="#round-trip-note">Round-trip note</a></li>
+      <li class="toc-top"><a href="#why-non-normative">Why non-normative</a></li>
+      <li class="toc-top"><a href="#see-also">See also</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="openwop-cloudevents-mapping-non-normative">OpenWOP → CloudEvents Mapping (non-normative)</h1>
 <blockquote><p><strong>Status: DRAFT (non-normative addendum, 2026-05-15).</strong> STD-2 from <code>plans/openwop-protocol-gap-closure-plan.md</code>. Maps OpenWOP <code>RunEvent</code> records onto the <a href="https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md">CloudEvents 1.0</a> envelope so hosts that export events to message brokers (Pub/Sub, Kafka, EventBridge, NATS) can do so under a wire-portable contract. <strong>Non-normative</strong> — OpenWOP hosts MAY but are NOT required to support CloudEvents export. Promote to a normative profile once a reference host ships one.</p></blockquote>
 <p>This document does NOT change the native OpenWOP event log shape (<code>schemas/run-event.schema.json</code> + <code>schemas/run-event-payloads.schema.json</code>). It defines a one-way projection from that shape onto CloudEvents 1.0 attributes for hosts that want to bridge run events into a CloudEvents-aware message bus.</p>
 <hr/>
@@ -179,17 +189,7 @@
 <li><a href="../../schemas/run-event-payloads.schema.json"><code>run-event-payloads.schema.json</code></a> — per-event payload contracts.</li>
 <li><a href="./positioning.md"><code>positioning.md</code></a> §"Standards composition matrix" — broader stance on CloudEvents composition.</li>
 <li><a href="https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md">CloudEvents 1.0 specification</a></li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#mapping">Mapping</a></li>
-      <li class="toc-sub"><a href="#optional-extension-attributes">Optional extension attributes</a></li>
-      <li class="toc-top"><a href="#worked-example">Worked example</a></li>
-      <li class="toc-top"><a href="#round-trip-note">Round-trip note</a></li>
-      <li class="toc-top"><a href="#why-non-normative">Why non-normative</a></li>
-      <li class="toc-top"><a href="#see-also">See also</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

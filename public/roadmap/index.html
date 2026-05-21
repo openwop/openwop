@@ -70,7 +70,25 @@
     <header class="page-header">
     <h1>Roadmap</h1>
     <p class="lede">Gap-closure tracks the steward maintains in the open. No dates committed beyond the windows that have a CHANGELOG entry; the roadmap is direction, not promise.</p>
-  </header><div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-roadmap">OpenWOP Roadmap</h1>
+  </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#stable-v1-released-2026-04-27">Stable: v1 (released 2026-04-27)</a></li>
+      <li class="toc-top"><a href="#v1-x-minor-conformance-suite-expansion">v1.X minor: conformance suite expansion</a></li>
+      <li class="toc-top"><a href="#v1-x-minor-protocol-gap-closure-queue">v1.X minor: protocol gap closure queue</a></li>
+      <li class="toc-sub"><a href="#phases-h-i-close-out-2026-05-12-myndhyve-ai-launch-readiness">Phases H + I close-out (2026-05-12 — myndhyve.ai launch-readiness)</a></li>
+      <li class="toc-top"><a href="#v1-2-outlook-projected">v1.2 outlook (projected)</a></li>
+      <li class="toc-top"><a href="#post-v1-ecosystem">Post-v1 ecosystem</a></li>
+      <li class="toc-sub"><a href="#optional-capability-profiles">Optional capability profiles</a></li>
+      <li class="toc-sub"><a href="#hosted-infrastructure">Hosted infrastructure</a></li>
+      <li class="toc-sub"><a href="#sdk-expansion">SDK expansion</a></li>
+      <li class="toc-sub"><a href="#implementation-ecosystem">Implementation ecosystem</a></li>
+      <li class="toc-sub"><a href="#canonical-domain">Canonical Domain</a></li>
+      <li class="toc-sub"><a href="#vendor-neutral-org-migration">Vendor-neutral org migration</a></li>
+      <li class="toc-top"><a href="#what-this-roadmap-does-not-commit-to">What this roadmap does not commit to</a></li>
+      <li class="toc-top"><a href="#how-to-influence-the-roadmap">How to influence the roadmap</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="openwop-roadmap">OpenWOP Roadmap</h1>
 <blockquote><p><strong>Status:</strong> Living document. Updated as milestones land.</p><p><strong>Last reviewed:</strong> 2026-05-19 (post-<code>@openwop/openwop-conformance@1.3.0</code> publish refresh). The generated protocol snapshot lives at <code>docs/PROTOCOL-STATUS.md</code>: 35 prose specs, 27 JSON Schemas, 19 OpenAPI operations, AsyncAPI 3.1, 160 conformance scenario files, 26 RFCs tracked, and 48 indexed registry packs. RFC status: 25 Accepted / 1 Draft (RFC 0025 — test-mode registry namespace — remains the only Draft; RFCs 0012, 0022, 0023, 0024, and 0026 have all landed as Accepted in the 2026-05-12 → 2026-05-19 window). Postgres reference conformance evidence holds at 781/850 default-mode pass count (91.9% total; 96.4% applicable) with one documented webhook flake.</p></blockquote>
 <p>This roadmap distinguishes <strong>stable v1</strong> (locked contract), <strong>v1.X minor work</strong> (additive, conformance-only), and <strong>post-v1 ecosystem</strong> (extension profiles, infrastructure, governance).</p>
 <p>The v1 protocol contract is <strong>frozen</strong>. Implementations validate themselves against <code>@openwop/openwop-conformance</code> <code>1.0</code> (or any later <code>1.X.0</code>) at their own cadence. New scenarios ship as suite minors against the unchanged contract.</p>
@@ -186,25 +204,7 @@
 <li><strong>File an issue</strong> with the <code>roadmap</code> label. Include the use case, not just the feature request.</li>
 <li><strong>Open a conformance report</strong> if your implementation needs a scenario that doesn't exist yet.</li>
 <li><strong>Author an RFC</strong> for a new capability profile. Profile RFCs follow the spec change process in <code>GOVERNANCE.md</code>.</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#stable-v1-released-2026-04-27">Stable: v1 (released 2026-04-27)</a></li>
-      <li class="toc-top"><a href="#v1-x-minor-conformance-suite-expansion">v1.X minor: conformance suite expansion</a></li>
-      <li class="toc-top"><a href="#v1-x-minor-protocol-gap-closure-queue">v1.X minor: protocol gap closure queue</a></li>
-      <li class="toc-sub"><a href="#phases-h-i-close-out-2026-05-12-myndhyve-ai-launch-readiness">Phases H + I close-out (2026-05-12 — myndhyve.ai launch-readiness)</a></li>
-      <li class="toc-top"><a href="#v1-2-outlook-projected">v1.2 outlook (projected)</a></li>
-      <li class="toc-top"><a href="#post-v1-ecosystem">Post-v1 ecosystem</a></li>
-      <li class="toc-sub"><a href="#optional-capability-profiles">Optional capability profiles</a></li>
-      <li class="toc-sub"><a href="#hosted-infrastructure">Hosted infrastructure</a></li>
-      <li class="toc-sub"><a href="#sdk-expansion">SDK expansion</a></li>
-      <li class="toc-sub"><a href="#implementation-ecosystem">Implementation ecosystem</a></li>
-      <li class="toc-sub"><a href="#canonical-domain">Canonical Domain</a></li>
-      <li class="toc-sub"><a href="#vendor-neutral-org-migration">Vendor-neutral org migration</a></li>
-      <li class="toc-top"><a href="#what-this-roadmap-does-not-commit-to">What this roadmap does not commit to</a></li>
-      <li class="toc-top"><a href="#how-to-influence-the-roadmap">How to influence the roadmap</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

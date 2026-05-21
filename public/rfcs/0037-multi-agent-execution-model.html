@@ -67,7 +67,24 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="rfc-0037-multi-agent-execution-model-replay-determinism-under-nondeterministic-models">RFC 0037: Multi-agent execution model + replay determinism under nondeterministic models</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal-phased">Proposal — Phased</a></li>
+      <li class="toc-sub"><a href="#phase-1-this-rfc-execution-model-framework-planner-worker-handoff">Phase 1 (this RFC) — Execution model framework + planner→worker handoff</a></li>
+      <li class="toc-sub"><a href="#phase-2-follow-up-rfc-confidence-threshold-semantics-agent-memory-lifecycle">Phase 2 (follow-up RFC) — Confidence-threshold semantics + agent memory lifecycle</a></li>
+      <li class="toc-sub"><a href="#phase-3-follow-up-rfc-cross-host-causation-linking">Phase 3 (follow-up RFC) — Cross-host causation linking</a></li>
+      <li class="toc-sub"><a href="#phase-4-follow-up-rfc-replay-determinism-under-nondeterministic-models">Phase 4 (follow-up RFC) — Replay determinism under nondeterministic models</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance-phase-1">Conformance (Phase 1)</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria-phase-1-only">Acceptance criteria (Phase 1 only)</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="rfc-0037-multi-agent-execution-model-replay-determinism-under-nondeterministic-models">RFC 0037: Multi-agent execution model + replay determinism under nondeterministic models</h1>
 <table>
 <thead><tr><th>Field</th><th>Value</th></tr></thead>
 <tbody>
@@ -179,24 +196,7 @@
 <li><code>spec/v1/positioning.md</code> (the "we don't standardize orchestration topology" claim this RFC must respect)</li>
 <li><code>docs/KNOWN-LIMITS.md:18</code> (LLM cache-key shape-only — Phase 4 input)</li>
 <li>External standards-readiness review 2026-05-21 — finding (3)</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#summary">Summary</a></li>
-      <li class="toc-top"><a href="#motivation">Motivation</a></li>
-      <li class="toc-top"><a href="#proposal-phased">Proposal — Phased</a></li>
-      <li class="toc-sub"><a href="#phase-1-this-rfc-execution-model-framework-planner-worker-handoff">Phase 1 (this RFC) — Execution model framework + planner→worker handoff</a></li>
-      <li class="toc-sub"><a href="#phase-2-follow-up-rfc-confidence-threshold-semantics-agent-memory-lifecycle">Phase 2 (follow-up RFC) — Confidence-threshold semantics + agent memory lifecycle</a></li>
-      <li class="toc-sub"><a href="#phase-3-follow-up-rfc-cross-host-causation-linking">Phase 3 (follow-up RFC) — Cross-host causation linking</a></li>
-      <li class="toc-sub"><a href="#phase-4-follow-up-rfc-replay-determinism-under-nondeterministic-models">Phase 4 (follow-up RFC) — Replay determinism under nondeterministic models</a></li>
-      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
-      <li class="toc-top"><a href="#conformance-phase-1">Conformance (Phase 1)</a></li>
-      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
-      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
-      <li class="toc-top"><a href="#acceptance-criteria-phase-1-only">Acceptance criteria (Phase 1 only)</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

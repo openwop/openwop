@@ -67,7 +67,19 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="for-pack-authors">For pack authors</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#what-a-pack-is">What a pack is</a></li>
+      <li class="toc-top"><a href="#read-these-first">Read these first</a></li>
+      <li class="toc-top"><a href="#namespace-tiers">Namespace tiers</a></li>
+      <li class="toc-top"><a href="#sign-your-tarball">Sign your tarball</a></li>
+      <li class="toc-top"><a href="#publish-to-the-canonical-registry">Publish to the canonical registry</a></li>
+      <li class="toc-top"><a href="#publish-to-a-private-registry">Publish to a private registry</a></li>
+      <li class="toc-top"><a href="#common-pitfalls">Common pitfalls</a></li>
+      <li class="toc-top"><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="for-pack-authors">For pack authors</h1>
 <p>You're packaging reusable workflow components — node implementations, agent definitions, or chained workflow templates — for other OpenWOP users to consume. This page covers the manifest shape, the signing recipe, the namespace tiers, and how to publish to the canonical registry.</p>
 <h2 id="what-a-pack-is">What a pack is</h2>
 <p>An OpenWOP pack is a signed tarball containing:</p>
@@ -121,19 +133,7 @@
 <tr><td>Browse the registry</td><td><a href="https://packs.openwop.dev/">packs.openwop.dev ↗</a></td></tr>
 <tr><td>See an example pack</td><td><a href="https://github.com/openwop/openwop/tree/main/registry/v1/packs/core.openwop.examples"><code>registry/v1/packs/core.openwop.examples/</code> ↗</a></td></tr>
 <tr><td>Open a publishing PR</td><td><a href="/spec/v1/registry-operations.html"><code>registry-operations.md</code> ↗</a></td></tr>
-</tbody></table></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#what-a-pack-is">What a pack is</a></li>
-      <li class="toc-top"><a href="#read-these-first">Read these first</a></li>
-      <li class="toc-top"><a href="#namespace-tiers">Namespace tiers</a></li>
-      <li class="toc-top"><a href="#sign-your-tarball">Sign your tarball</a></li>
-      <li class="toc-top"><a href="#publish-to-the-canonical-registry">Publish to the canonical registry</a></li>
-      <li class="toc-top"><a href="#publish-to-a-private-registry">Publish to a private registry</a></li>
-      <li class="toc-top"><a href="#common-pitfalls">Common pitfalls</a></li>
-      <li class="toc-top"><a href="#next-steps">Next steps</a></li>
-    </ul>
-  </aside></div><script>
+</tbody></table></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

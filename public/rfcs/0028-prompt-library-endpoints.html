@@ -67,7 +67,28 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="rfc-0028-prompt-library-endpoints-prompt-pack-kind">RFC 0028: Prompt Library Endpoints + Prompt Pack Kind</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-rest-surface">§A — REST surface</a></li>
+      <li class="toc-sub"><a href="#b-pack-kind-prompt">§B — Pack kind: prompt</a></li>
+      <li class="toc-sub"><a href="#c-capability-extension">§C — Capability extension</a></li>
+      <li class="toc-sub"><a href="#d-registry-index-entry">§D — Registry index entry</a></li>
+      <li class="toc-sub"><a href="#e-security-carry-forward">§E — Security carry-forward</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+      <li class="toc-top"><a href="#status-history">Status history</a></li>
+      <li class="toc-sub"><a href="#draft-active-2026-05-20">Draft → Active (2026-05-20)</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="rfc-0028-prompt-library-endpoints-prompt-pack-kind">RFC 0028: Prompt Library Endpoints + Prompt Pack Kind</h1>
 <table>
 <thead><tr><th>Field</th><th>Value</th></tr></thead>
 <tbody>
@@ -469,28 +490,7 @@
 <li><strong>Conformance:</strong> <code>prompt-list-and-fetch.test.ts</code>, <code>prompt-render-deterministic.test.ts</code>, <code>prompt-mutable-lifecycle.test.ts</code>, <code>prompt-pack-install.test.ts</code> cover the REST surface + pack-source provenance + CRUD lifecycle. All capability-gated via <code>behaviorGate(&#39;prompts-endpoints&#39;, ...)</code> / <code>behaviorGate(&#39;prompts-mutable&#39;, ...)</code>.</li>
 <li><strong>CHANGELOG.md:</strong> <code>[1.1.2 — unreleased]</code> entries cover the REST surface, pack-install flow, conformance scenarios.</li>
 </ul>
-<p>Path to <code>Active → Accepted</code>: first non-steward host advertises <code>capabilities.prompts.endpointsSupported: true</code> AND <code>mutableLibrary: true</code> AND serves the six routes. MAY be waived under the bootstrap-phase waiver if the steward provides a public conformance run pointing at the advertised endpoint.</p></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#summary">Summary</a></li>
-      <li class="toc-top"><a href="#motivation">Motivation</a></li>
-      <li class="toc-top"><a href="#proposal">Proposal</a></li>
-      <li class="toc-sub"><a href="#a-rest-surface">§A — REST surface</a></li>
-      <li class="toc-sub"><a href="#b-pack-kind-prompt">§B — Pack kind: prompt</a></li>
-      <li class="toc-sub"><a href="#c-capability-extension">§C — Capability extension</a></li>
-      <li class="toc-sub"><a href="#d-registry-index-entry">§D — Registry index entry</a></li>
-      <li class="toc-sub"><a href="#e-security-carry-forward">§E — Security carry-forward</a></li>
-      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
-      <li class="toc-top"><a href="#conformance">Conformance</a></li>
-      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
-      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
-      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
-      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-      <li class="toc-top"><a href="#status-history">Status history</a></li>
-      <li class="toc-sub"><a href="#draft-active-2026-05-20">Draft → Active (2026-05-20)</a></li>
-    </ul>
-  </aside></div><script>
+<p>Path to <code>Active → Accepted</code>: first non-steward host advertises <code>capabilities.prompts.endpointsSupported: true</code> AND <code>mutableLibrary: true</code> AND serves the six routes. MAY be waived under the bootstrap-phase waiver if the steward provides a public conformance run pointing at the advertised endpoint.</p></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

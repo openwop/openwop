@@ -92,7 +92,34 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-workflow-chain-packs">OpenWOP Spec v1 — Workflow-Chain Packs</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
+      <li class="toc-top"><a href="#pack-kind-discriminator">Pack kind discriminator</a></li>
+      <li class="toc-top"><a href="#pack-identity">Pack identity</a></li>
+      <li class="toc-top"><a href="#manifest-format">Manifest format</a></li>
+      <li class="toc-sub"><a href="#required-top-level-fields">Required top-level fields</a></li>
+      <li class="toc-sub"><a href="#chain-entry-shape">Chain entry shape</a></li>
+      <li class="toc-top"><a href="#workflowdefinitionfragment">WorkflowDefinitionFragment</a></li>
+      <li class="toc-sub"><a href="#parameter-substitution">Parameter substitution</a></li>
+      <li class="toc-sub"><a href="#typed-output-references">Typed-output references</a></li>
+      <li class="toc-top"><a href="#expansion-semantics-normative">Expansion semantics (normative)</a></li>
+      <li class="toc-sub"><a href="#what-hosts-dispatch">What hosts dispatch</a></li>
+      <li class="toc-sub"><a href="#round-trip-note">Round-trip note</a></li>
+      <li class="toc-top"><a href="#capability-gating">Capability gating</a></li>
+      <li class="toc-top"><a href="#registry-integration">Registry integration</a></li>
+      <li class="toc-top"><a href="#examples">Examples</a></li>
+      <li class="toc-sub"><a href="#positive-1-node-chain">Positive: 1-node chain</a></li>
+      <li class="toc-sub"><a href="#negative-kind-contents-mismatch">Negative: kind/contents mismatch</a></li>
+      <li class="toc-sub"><a href="#negative-chain-references-unpublished-typeid">Negative: chain references unpublished typeId</a></li>
+      <li class="toc-top"><a href="#error-codes">Error codes</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-workflow-chain-packs">OpenWOP Spec v1 — Workflow-Chain Packs</h1>
 <blockquote><p><strong>Status: DRAFT (2026-05-17).</strong> Closes Phase 1 of <a href="../../RFCS/0013-workflow-chain-packs.md">RFC 0013 — Workflow-chain packs</a>. Specifies a new pack kind that publishes pre-configured DAG fragments — registry-distributed sub-workflows that hosts expand inline at workflow-author time. Promotes to FINAL when (a) the reference host implements expansion and (b) at least the manifest-validation + expansion conformance scenarios both pass. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. Status legend per <code>auth.md</code>.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>
@@ -348,34 +375,7 @@
 <li><a href="../../schemas/workflow-definition.schema.json"><code>schemas/workflow-definition.schema.json</code></a> — the schema that <code>WorkflowDefinitionFragment</code> references.</li>
 <li><a href="./capabilities.md"><code>capabilities.md</code></a> §<code>workflowChainPacks</code> — capability advertisement.</li>
 <li><a href="./registry-operations.md"><code>registry-operations.md</code></a> — operator-side registry surfaces (deprecation, yank, signing-key rotation) that workflow-chain packs reuse unchanged from node packs.</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
-      <li class="toc-top"><a href="#pack-kind-discriminator">Pack kind discriminator</a></li>
-      <li class="toc-top"><a href="#pack-identity">Pack identity</a></li>
-      <li class="toc-top"><a href="#manifest-format">Manifest format</a></li>
-      <li class="toc-sub"><a href="#required-top-level-fields">Required top-level fields</a></li>
-      <li class="toc-sub"><a href="#chain-entry-shape">Chain entry shape</a></li>
-      <li class="toc-top"><a href="#workflowdefinitionfragment">WorkflowDefinitionFragment</a></li>
-      <li class="toc-sub"><a href="#parameter-substitution">Parameter substitution</a></li>
-      <li class="toc-sub"><a href="#typed-output-references">Typed-output references</a></li>
-      <li class="toc-top"><a href="#expansion-semantics-normative">Expansion semantics (normative)</a></li>
-      <li class="toc-sub"><a href="#what-hosts-dispatch">What hosts dispatch</a></li>
-      <li class="toc-sub"><a href="#round-trip-note">Round-trip note</a></li>
-      <li class="toc-top"><a href="#capability-gating">Capability gating</a></li>
-      <li class="toc-top"><a href="#registry-integration">Registry integration</a></li>
-      <li class="toc-top"><a href="#examples">Examples</a></li>
-      <li class="toc-sub"><a href="#positive-1-node-chain">Positive: 1-node chain</a></li>
-      <li class="toc-sub"><a href="#negative-kind-contents-mismatch">Negative: kind/contents mismatch</a></li>
-      <li class="toc-sub"><a href="#negative-chain-references-unpublished-typeid">Negative: chain references unpublished typeId</a></li>
-      <li class="toc-top"><a href="#error-codes">Error codes</a></li>
-      <li class="toc-top"><a href="#conformance">Conformance</a></li>
-      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
-      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

@@ -67,7 +67,27 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="scenario-walkthroughs">Scenario walkthroughs</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#scenario-a-single-agent-with-human-approval">Scenario A — Single agent with human approval</a></li>
+      <li class="toc-sub"><a href="#workflow-definition">Workflow definition</a></li>
+      <li class="toc-sub"><a href="#wire-trace">Wire trace</a></li>
+      <li class="toc-sub"><a href="#human-answers-run-resumes">Human answers, run resumes</a></li>
+      <li class="toc-sub"><a href="#what-just-happened-normatively">What just happened, normatively</a></li>
+      <li class="toc-top"><a href="#scenario-b-multi-agent-fan-out-with-envelope-retries">Scenario B — Multi-agent fan-out with envelope retries</a></li>
+      <li class="toc-sub"><a href="#workflow-definition">Workflow definition</a></li>
+      <li class="toc-sub"><a href="#wire-trace">Wire trace</a></li>
+      <li class="toc-sub"><a href="#what-just-happened-normatively">What just happened, normatively</a></li>
+      <li class="toc-top"><a href="#scenario-c-suspend-restart-replay-fork-from-checkpoint">Scenario C — Suspend, restart, replay-fork from checkpoint</a></li>
+      <li class="toc-sub"><a href="#setup">Setup</a></li>
+      <li class="toc-sub"><a href="#host-comes-back-up">Host comes back up</a></li>
+      <li class="toc-sub"><a href="#operator-forks-from-a-historical-checkpoint">Operator forks from a historical checkpoint</a></li>
+      <li class="toc-sub"><a href="#what-just-happened-normatively">What just happened, normatively</a></li>
+      <li class="toc-top"><a href="#what-these-scenarios-skip">What these scenarios skip</a></li>
+      <li class="toc-top"><a href="#where-to-go-next">Where to go next</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="scenario-walkthroughs">Scenario walkthroughs</h1>
 <p>Three end-to-end examples of OpenWOP runs, showing the workflow definition, the wire-level events the host emits, and what the client sees. Each scenario links back to the normative spec sections that govern its surface.</p>
 <p>Reading time: ~15 minutes total. Each scenario is independent — skim the one that matches what you're building.</p>
 <h2 id="scenario-a-single-agent-with-human-approval">Scenario A — Single agent with human approval</h2>
@@ -209,27 +229,7 @@ event: run.completed      { &quot;result&quot;: &quot;ok&quot; }</code></pre>
 <tr><td>Walk through the full REST endpoint catalog</td><td><a href="/api/rest/"><code>/api/rest/</code></a></td></tr>
 <tr><td>See the production-shaped host that does all this end-to-end</td><td><a href="https://github.com/openwop/openwop/tree/main/examples/hosts/postgres">Postgres reference host ↗</a></td></tr>
 <tr><td>Run scenario A against the live demo</td><td><a href="https://app.openwop.dev/">app.openwop.dev ↗</a></td></tr>
-</tbody></table></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#scenario-a-single-agent-with-human-approval">Scenario A — Single agent with human approval</a></li>
-      <li class="toc-sub"><a href="#workflow-definition">Workflow definition</a></li>
-      <li class="toc-sub"><a href="#wire-trace">Wire trace</a></li>
-      <li class="toc-sub"><a href="#human-answers-run-resumes">Human answers, run resumes</a></li>
-      <li class="toc-sub"><a href="#what-just-happened-normatively">What just happened, normatively</a></li>
-      <li class="toc-top"><a href="#scenario-b-multi-agent-fan-out-with-envelope-retries">Scenario B — Multi-agent fan-out with envelope retries</a></li>
-      <li class="toc-sub"><a href="#workflow-definition">Workflow definition</a></li>
-      <li class="toc-sub"><a href="#wire-trace">Wire trace</a></li>
-      <li class="toc-sub"><a href="#what-just-happened-normatively">What just happened, normatively</a></li>
-      <li class="toc-top"><a href="#scenario-c-suspend-restart-replay-fork-from-checkpoint">Scenario C — Suspend, restart, replay-fork from checkpoint</a></li>
-      <li class="toc-sub"><a href="#setup">Setup</a></li>
-      <li class="toc-sub"><a href="#host-comes-back-up">Host comes back up</a></li>
-      <li class="toc-sub"><a href="#operator-forks-from-a-historical-checkpoint">Operator forks from a historical checkpoint</a></li>
-      <li class="toc-sub"><a href="#what-just-happened-normatively">What just happened, normatively</a></li>
-      <li class="toc-top"><a href="#what-these-scenarios-skip">What these scenarios skip</a></li>
-      <li class="toc-top"><a href="#where-to-go-next">Where to go next</a></li>
-    </ul>
-  </aside></div><script>
+</tbody></table></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

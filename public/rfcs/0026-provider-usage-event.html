@@ -67,7 +67,29 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="rfc-0026-provider-usage-event">RFC 0026: <code>provider.usage</code> Event</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-new-event-type-provider-usage">§A New event type — provider.usage</a></li>
+      <li class="toc-sub"><a href="#b-emission-timing-normative">§B Emission timing (normative)</a></li>
+      <li class="toc-sub"><a href="#c-otel-projection">§C OTel projection</a></li>
+      <li class="toc-sub"><a href="#d-trust-boundary-security">§D Trust boundary (security)</a></li>
+      <li class="toc-sub"><a href="#e-capability-handshake">§E Capability handshake</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+      <li class="toc-top"><a href="#status-history">Status history</a></li>
+      <li class="toc-sub"><a href="#draft-active-2026-05-19">Draft → Active (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#active-accepted-2026-05-19">Active → Accepted (2026-05-19)</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="rfc-0026-provider-usage-event">RFC 0026: <code>provider.usage</code> Event</h1>
 <table>
 <thead><tr><th>Field</th><th>Value</th></tr></thead>
 <tbody>
@@ -286,29 +308,7 @@
 <li>[x] <code>npm run openwop:check</code> 9/9 green.</li>
 <li>[x] <code>bash scripts/check-security-invariants.sh</code> 49/49 protocol-tier rows covered; the new emission path's credential-leak protection is verified by the existing <code>provider-usage-no-credential-leak</code> invariant test.</li>
 </ul>
-<p>With path (a) closed, RFC 0026 graduates to <code>Accepted</code>. Future hosts adopting the event for their own advertisement do not change the protocol's acceptance status — they extend the <code>INTEROP-MATRIX.md</code> row set, which is reviewed independently.</p></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#summary">Summary</a></li>
-      <li class="toc-top"><a href="#motivation">Motivation</a></li>
-      <li class="toc-top"><a href="#proposal">Proposal</a></li>
-      <li class="toc-sub"><a href="#a-new-event-type-provider-usage">§A New event type — provider.usage</a></li>
-      <li class="toc-sub"><a href="#b-emission-timing-normative">§B Emission timing (normative)</a></li>
-      <li class="toc-sub"><a href="#c-otel-projection">§C OTel projection</a></li>
-      <li class="toc-sub"><a href="#d-trust-boundary-security">§D Trust boundary (security)</a></li>
-      <li class="toc-sub"><a href="#e-capability-handshake">§E Capability handshake</a></li>
-      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
-      <li class="toc-top"><a href="#conformance">Conformance</a></li>
-      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
-      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
-      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
-      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-      <li class="toc-top"><a href="#status-history">Status history</a></li>
-      <li class="toc-sub"><a href="#draft-active-2026-05-19">Draft → Active (2026-05-19)</a></li>
-      <li class="toc-sub"><a href="#active-accepted-2026-05-19">Active → Accepted (2026-05-19)</a></li>
-    </ul>
-  </aside></div><script>
+<p>With path (a) closed, RFC 0026 graduates to <code>Accepted</code>. Future hosts adopting the event for their own advertisement do not change the protocol's acceptance status — they extend the <code>INTEROP-MATRIX.md</code> row set, which is reviewed independently.</p></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

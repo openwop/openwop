@@ -67,7 +67,24 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="rfc-0034-otel-collector-test-seam-secret-leakage-invariant-promotion">RFC 0034: OTel collector test seam + secret-leakage invariant promotion</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-capabilities-observability-testseams-block-normative">§A — capabilities.observability.testSeams block (normative)</a></li>
+      <li class="toc-sub"><a href="#b-seam-contract-normative">§B — Seam contract (normative)</a></li>
+      <li class="toc-sub"><a href="#c-security-invariant-promotion">§C — SECURITY invariant promotion</a></li>
+      <li class="toc-sub"><a href="#d-conformance-scenario-tightening">§D — Conformance scenario tightening</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="rfc-0034-otel-collector-test-seam-secret-leakage-invariant-promotion">RFC 0034: OTel collector test seam + secret-leakage invariant promotion</h1>
 <table>
 <thead><tr><th>Field</th><th>Value</th></tr></thead>
 <tbody>
@@ -161,24 +178,7 @@
 <li><code>spec/v1/host-extensions.md</code> §"Canonical prefixes" (the namespace home for the new seams)</li>
 <li><code>spec/v1/debug-bundle.md</code> (the parent shape of the debug-bundle export)</li>
 <li>External standards-readiness review 2026-05-21 — finding (5) "Security posture insufficient — no telemetry redaction conformance"</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#summary">Summary</a></li>
-      <li class="toc-top"><a href="#motivation">Motivation</a></li>
-      <li class="toc-top"><a href="#proposal">Proposal</a></li>
-      <li class="toc-sub"><a href="#a-capabilities-observability-testseams-block-normative">§A — capabilities.observability.testSeams block (normative)</a></li>
-      <li class="toc-sub"><a href="#b-seam-contract-normative">§B — Seam contract (normative)</a></li>
-      <li class="toc-sub"><a href="#c-security-invariant-promotion">§C — SECURITY invariant promotion</a></li>
-      <li class="toc-sub"><a href="#d-conformance-scenario-tightening">§D — Conformance scenario tightening</a></li>
-      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
-      <li class="toc-top"><a href="#conformance">Conformance</a></li>
-      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
-      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
-      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

@@ -92,7 +92,19 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-tier-1-structured-output-compatibility-subset-informative">OpenWOP Spec v1 — Tier 1 Structured-Output Compatibility Subset (informative)</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
+      <li class="toc-top"><a href="#the-intersection-table">The intersection table</a></li>
+      <li class="toc-top"><a href="#strict-mode-optional-field-emulation">Strict-mode optional-field emulation</a></li>
+      <li class="toc-top"><a href="#what-this-document-does-not-do">What this document does NOT do</a></li>
+      <li class="toc-top"><a href="#maintenance">Maintenance</a></li>
+      <li class="toc-top"><a href="#primary-sources">Primary sources</a></li>
+      <li class="toc-top"><a href="#related-research">Related research</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-tier-1-structured-output-compatibility-subset-informative">OpenWOP Spec v1 — Tier 1 Structured-Output Compatibility Subset (informative)</h1>
 <blockquote><p><strong>Status: FINAL v1.1 (informative — non-normative companion to <code>ai-envelope.md</code>, not a contract).</strong> Introduced by <a href="../../RFCS/0030-envelope-reasoning-and-tier-one-subset.md">RFC 0030</a> (<code>Active</code> 2026-05-20). Companion to <code>spec/v1/ai-envelope.md</code> §"Reasoning field (normative)" and §"Schema discipline." This document is <strong>informative</strong>, not normative — the OpenWOP protocol cannot mandate vendor behavior, only document the intersection of vendor capabilities as of this document's last-verified date. See <code>auth.md</code> for the status legend; the <code>FINAL</code> tag denotes that the document's structure is stable, not that its contents are normative.</p></blockquote>
 <h2 id="why-this-exists">Why this exists</h2>
 <p>Each LLM vendor enforces a different JSON-Schema subset for native structured output. The intersection of all vendor-strict modes is what an envelope payload schema MUST satisfy to be portable across hosts. Vendor docs don't enumerate this intersection; every host re-discovers it through production 400 responses. Worse, some vendors silently drop unsupported keywords rather than rejecting them, producing schemas that are looser at the vendor than the author intended (a silent correctness bug).</p>
@@ -180,19 +192,7 @@
 <li><code>RFCS/0030-envelope-reasoning-and-tier-one-subset.md</code> — RFC that introduced this document.</li>
 <li><code>RFCS/0031-envelope-variants-and-model-capabilities.md</code> — codifies the <code>anyOf</code> + single-string-enum discriminator pattern that complements the Tier-1 subset.</li>
 <li><code>schemas/capabilities.schema.json</code> §<code>envelopes.tierOneSubsetCompliance</code> — the self-attestation flag this document supports.</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
-      <li class="toc-top"><a href="#the-intersection-table">The intersection table</a></li>
-      <li class="toc-top"><a href="#strict-mode-optional-field-emulation">Strict-mode optional-field emulation</a></li>
-      <li class="toc-top"><a href="#what-this-document-does-not-do">What this document does NOT do</a></li>
-      <li class="toc-top"><a href="#maintenance">Maintenance</a></li>
-      <li class="toc-top"><a href="#primary-sources">Primary sources</a></li>
-      <li class="toc-top"><a href="#related-research">Related research</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

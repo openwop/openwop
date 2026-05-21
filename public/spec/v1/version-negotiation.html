@@ -92,7 +92,39 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-version-negotiation-and-deploy-skew-safety">OpenWOP Spec v1 — Version Negotiation and Deploy-Skew Safety</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
+      <li class="toc-top"><a href="#engine-version">Engine version</a></li>
+      <li class="toc-sub"><a href="#stamping">Stamping</a></li>
+      <li class="toc-sub"><a href="#reader-safety-check">Reader safety check</a></li>
+      <li class="toc-sub"><a href="#error-surface">Error surface</a></li>
+      <li class="toc-sub"><a href="#bumping-protocol">Bumping protocol</a></li>
+      <li class="toc-top"><a href="#event-log-schema-version">Event-log schema version</a></li>
+      <li class="toc-sub"><a href="#stamping">Stamping</a></li>
+      <li class="toc-sub"><a href="#legacy-detection">Legacy detection</a></li>
+      <li class="toc-sub"><a href="#bumping">Bumping</a></li>
+      <li class="toc-top"><a href="#per-event-schema-version">Per-event schema version</a></li>
+      <li class="toc-sub"><a href="#stamping">Stamping</a></li>
+      <li class="toc-sub"><a href="#reader-behavior">Reader behavior</a></li>
+      <li class="toc-sub"><a href="#bumping">Bumping</a></li>
+      <li class="toc-top"><a href="#pinned-change-versions-temporal-style">Pinned change versions (Temporal-style)</a></li>
+      <li class="toc-sub"><a href="#why">Why</a></li>
+      <li class="toc-sub"><a href="#api">API</a></li>
+      <li class="toc-sub"><a href="#version-pinned-event">version.pinned event</a></li>
+      <li class="toc-sub"><a href="#bumping-min-removing-a-branch">Bumping min (removing a branch)</a></li>
+      <li class="toc-sub"><a href="#default-version">Default version</a></li>
+      <li class="toc-top"><a href="#capability-handshake-forward-reference">Capability handshake (forward reference)</a></li>
+      <li class="toc-top"><a href="#cross-version-interop-matrix">Cross-version interop matrix</a></li>
+      <li class="toc-sub"><a href="#conformance-via-x-force-engine-version-closes-f5">Conformance via X-Force-Engine-Version (closes F5)</a></li>
+      <li class="toc-sub"><a href="#events-poll-forward-compat-tolerance-normative">events/poll forward-compat tolerance (normative)</a></li>
+      <li class="toc-top"><a href="#deploy-ordering-decision-matrix">Deploy ordering decision matrix</a></li>
+      <li class="toc-top"><a href="#deploy-ordering-decision-matrix">Deploy ordering decision matrix</a></li>
+      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-version-negotiation-and-deploy-skew-safety">OpenWOP Spec v1 — Version Negotiation and Deploy-Skew Safety</h1>
 <blockquote><p><strong>Status: FINAL v1 (2026-04-27).</strong> Comprehensive coverage of all four version axes (engine, per-run event-log, per-event, runtime pinning). Stable surface for external review. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>
@@ -291,39 +323,7 @@ if (v === 1) {
 <li><code>rest-endpoints.md</code> — endpoint catalog</li>
 <li><code>capabilities.md</code> — <code>/.well-known/openwop</code> capability declaration</li>
 </ul>
-<p>Hosts implementing version-negotiation should also publish their own deploy-ordering matrix (engine version vs event-log schema vs API surface) and operational migration runbook for skew transitions.</p></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
-      <li class="toc-top"><a href="#engine-version">Engine version</a></li>
-      <li class="toc-sub"><a href="#stamping">Stamping</a></li>
-      <li class="toc-sub"><a href="#reader-safety-check">Reader safety check</a></li>
-      <li class="toc-sub"><a href="#error-surface">Error surface</a></li>
-      <li class="toc-sub"><a href="#bumping-protocol">Bumping protocol</a></li>
-      <li class="toc-top"><a href="#event-log-schema-version">Event-log schema version</a></li>
-      <li class="toc-sub"><a href="#stamping">Stamping</a></li>
-      <li class="toc-sub"><a href="#legacy-detection">Legacy detection</a></li>
-      <li class="toc-sub"><a href="#bumping">Bumping</a></li>
-      <li class="toc-top"><a href="#per-event-schema-version">Per-event schema version</a></li>
-      <li class="toc-sub"><a href="#stamping">Stamping</a></li>
-      <li class="toc-sub"><a href="#reader-behavior">Reader behavior</a></li>
-      <li class="toc-sub"><a href="#bumping">Bumping</a></li>
-      <li class="toc-top"><a href="#pinned-change-versions-temporal-style">Pinned change versions (Temporal-style)</a></li>
-      <li class="toc-sub"><a href="#why">Why</a></li>
-      <li class="toc-sub"><a href="#api">API</a></li>
-      <li class="toc-sub"><a href="#version-pinned-event">version.pinned event</a></li>
-      <li class="toc-sub"><a href="#bumping-min-removing-a-branch">Bumping min (removing a branch)</a></li>
-      <li class="toc-sub"><a href="#default-version">Default version</a></li>
-      <li class="toc-top"><a href="#capability-handshake-forward-reference">Capability handshake (forward reference)</a></li>
-      <li class="toc-top"><a href="#cross-version-interop-matrix">Cross-version interop matrix</a></li>
-      <li class="toc-sub"><a href="#conformance-via-x-force-engine-version-closes-f5">Conformance via X-Force-Engine-Version (closes F5)</a></li>
-      <li class="toc-sub"><a href="#events-poll-forward-compat-tolerance-normative">events/poll forward-compat tolerance (normative)</a></li>
-      <li class="toc-top"><a href="#deploy-ordering-decision-matrix">Deploy ordering decision matrix</a></li>
-      <li class="toc-top"><a href="#deploy-ordering-decision-matrix">Deploy ordering decision matrix</a></li>
-      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+<p>Hosts implementing version-negotiation should also publish their own deploy-ordering matrix (engine version vs event-log schema vs API surface) and operational migration runbook for skew transitions.</p></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

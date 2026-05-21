@@ -67,7 +67,26 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="rfc-0021-ai-envelope-primitive">RFC 0021: AI Envelope Primitive</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-top-level-aienvelope-schema">§A — Top-level AIEnvelope schema</a></li>
+      <li class="toc-sub"><a href="#b-4-universal-kind-payload-schemas">§B — 4 universal-kind payload schemas</a></li>
+      <li class="toc-sub"><a href="#c-capability-schema-clarification">§C — Capability schema clarification</a></li>
+      <li class="toc-sub"><a href="#d-conformance">§D — Conformance</a></li>
+      <li class="toc-sub"><a href="#e-trust-boundary">§E — Trust boundary</a></li>
+      <li class="toc-sub"><a href="#f-redaction">§F — Redaction</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="rfc-0021-ai-envelope-primitive">RFC 0021: AI Envelope Primitive</h1>
 <table>
 <thead><tr><th>Field</th><th>Value</th></tr></thead>
 <tbody>
@@ -164,26 +183,7 @@
 <li><code>spec/v1/capabilities.md</code> §<code>supportedEnvelopes</code>, §<code>schemaVersions</code>, §<code>limits.{envelopesPerTurn, schemaRounds, clarificationRounds}</code> (existing surfaces that RFC 0021 closes the wire-shape gap for).</li>
 <li><code>spec/v1/host-capabilities.md</code> §host.aiEnvelope (existing host contract).</li>
 <li><code>spec/v1/host-extensions.md</code> §"Canonical-prefix table" (vendor-namespace discipline for non-universal kinds).</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#summary">Summary</a></li>
-      <li class="toc-top"><a href="#motivation">Motivation</a></li>
-      <li class="toc-top"><a href="#proposal">Proposal</a></li>
-      <li class="toc-sub"><a href="#a-top-level-aienvelope-schema">§A — Top-level AIEnvelope schema</a></li>
-      <li class="toc-sub"><a href="#b-4-universal-kind-payload-schemas">§B — 4 universal-kind payload schemas</a></li>
-      <li class="toc-sub"><a href="#c-capability-schema-clarification">§C — Capability schema clarification</a></li>
-      <li class="toc-sub"><a href="#d-conformance">§D — Conformance</a></li>
-      <li class="toc-sub"><a href="#e-trust-boundary">§E — Trust boundary</a></li>
-      <li class="toc-sub"><a href="#f-redaction">§F — Redaction</a></li>
-      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
-      <li class="toc-top"><a href="#conformance">Conformance</a></li>
-      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
-      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
-      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

@@ -67,7 +67,29 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="rfc-0007-dispatch-core-dispatch-node-pattern">RFC 0007: Dispatch (<code>core.dispatch</code> Node Pattern)</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-core-dispatch-typeid">§A core.dispatch typeId</a></li>
+      <li class="toc-sub"><a href="#b-dispatchconfig-shape">§B DispatchConfig shape</a></li>
+      <li class="toc-sub"><a href="#c-reading-the-latest-decision">§C Reading the latest decision</a></li>
+      <li class="toc-sub"><a href="#d-per-kind-semantics">§D Per-kind semantics</a></li>
+      <li class="toc-sub"><a href="#e-causation-chain">§E Causation chain</a></li>
+      <li class="toc-sub"><a href="#f-replay-determinism">§F Replay determinism</a></li>
+      <li class="toc-sub"><a href="#g-capability-advertisement">§G Capability advertisement</a></li>
+      <li class="toc-sub"><a href="#h-workflow-validation">§H Workflow validation</a></li>
+      <li class="toc-sub"><a href="#k-unresolved-questions">§K Unresolved questions</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="rfc-0007-dispatch-core-dispatch-node-pattern">RFC 0007: Dispatch (<code>core.dispatch</code> Node Pattern)</h1>
 <table>
 <thead><tr><th>Field</th><th>Value</th></tr></thead>
 <tbody>
@@ -221,29 +243,7 @@
 <li>RFC 0005 (Conversation — <code>ask-user</code> routing target)</li>
 <li>RFC 0022 (Dispatch + subWorkflow runtime variable mapping — additive amendment that adds <code>inputMapping</code> / <code>outputMapping</code> / <code>perWorker*</code> fields to <code>DispatchConfig</code>; capability-gated on <code>capabilities.agents.dispatchMapping</code>)</li>
 <li><code>spec/v1/interrupt-profiles.md</code> (parent-child cancellation cascade interacts with <code>terminate</code>)</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#summary">Summary</a></li>
-      <li class="toc-top"><a href="#motivation">Motivation</a></li>
-      <li class="toc-top"><a href="#proposal">Proposal</a></li>
-      <li class="toc-sub"><a href="#a-core-dispatch-typeid">§A core.dispatch typeId</a></li>
-      <li class="toc-sub"><a href="#b-dispatchconfig-shape">§B DispatchConfig shape</a></li>
-      <li class="toc-sub"><a href="#c-reading-the-latest-decision">§C Reading the latest decision</a></li>
-      <li class="toc-sub"><a href="#d-per-kind-semantics">§D Per-kind semantics</a></li>
-      <li class="toc-sub"><a href="#e-causation-chain">§E Causation chain</a></li>
-      <li class="toc-sub"><a href="#f-replay-determinism">§F Replay determinism</a></li>
-      <li class="toc-sub"><a href="#g-capability-advertisement">§G Capability advertisement</a></li>
-      <li class="toc-sub"><a href="#h-workflow-validation">§H Workflow validation</a></li>
-      <li class="toc-sub"><a href="#k-unresolved-questions">§K Unresolved questions</a></li>
-      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
-      <li class="toc-top"><a href="#conformance">Conformance</a></li>
-      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
-      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
-      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

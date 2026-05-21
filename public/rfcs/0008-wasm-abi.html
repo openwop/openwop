@@ -67,7 +67,33 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="rfc-0008-wasm-abi-for-cross-language-node-packs">RFC 0008: WASM ABI for Cross-Language Node Packs</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-wire-format-choice-wasm-core-custom-imports-not-component-model-yet">§A Wire format choice: WASM core + custom imports (not Component Model — yet)</a></li>
+      <li class="toc-sub"><a href="#b-required-exports">§B Required exports</a></li>
+      <li class="toc-sub"><a href="#c-required-imports">§C Required imports</a></li>
+      <li class="toc-sub"><a href="#d-json-envelope-shapes">§D JSON envelope shapes</a></li>
+      <li class="toc-sub"><a href="#e-memory-ownership-rules">§E Memory ownership rules</a></li>
+      <li class="toc-sub"><a href="#f-error-and-status-codes">§F Error and status codes</a></li>
+      <li class="toc-sub"><a href="#g-replay-determinism">§G Replay determinism</a></li>
+      <li class="toc-sub"><a href="#h-capability-advertisement">§H Capability advertisement</a></li>
+      <li class="toc-sub"><a href="#i-manifest-extension">§I Manifest extension</a></li>
+      <li class="toc-sub"><a href="#j-signing-and-integrity">§J Signing and integrity</a></li>
+      <li class="toc-sub"><a href="#k-resource-limits">§K Resource limits</a></li>
+      <li class="toc-sub"><a href="#l-reserved-exports-for-future-use">§L Reserved exports for future use</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="rfc-0008-wasm-abi-for-cross-language-node-packs">RFC 0008: WASM ABI for Cross-Language Node Packs</h1>
 <table>
 <thead><tr><th>Field</th><th>Value</th></tr></thead>
 <tbody>
@@ -318,33 +344,7 @@
 <li><code>spec/v1/node-packs.md</code> §Signing</li>
 <li>RFC 0003 (Agent Packs — analogous pack-extension shape)</li>
 <li><code>spec/v1/replay.md</code> §Determinism (constraints on <code>openwop_now_ms</code> / <code>openwop_random</code>)</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#summary">Summary</a></li>
-      <li class="toc-top"><a href="#motivation">Motivation</a></li>
-      <li class="toc-top"><a href="#proposal">Proposal</a></li>
-      <li class="toc-sub"><a href="#a-wire-format-choice-wasm-core-custom-imports-not-component-model-yet">§A Wire format choice: WASM core + custom imports (not Component Model — yet)</a></li>
-      <li class="toc-sub"><a href="#b-required-exports">§B Required exports</a></li>
-      <li class="toc-sub"><a href="#c-required-imports">§C Required imports</a></li>
-      <li class="toc-sub"><a href="#d-json-envelope-shapes">§D JSON envelope shapes</a></li>
-      <li class="toc-sub"><a href="#e-memory-ownership-rules">§E Memory ownership rules</a></li>
-      <li class="toc-sub"><a href="#f-error-and-status-codes">§F Error and status codes</a></li>
-      <li class="toc-sub"><a href="#g-replay-determinism">§G Replay determinism</a></li>
-      <li class="toc-sub"><a href="#h-capability-advertisement">§H Capability advertisement</a></li>
-      <li class="toc-sub"><a href="#i-manifest-extension">§I Manifest extension</a></li>
-      <li class="toc-sub"><a href="#j-signing-and-integrity">§J Signing and integrity</a></li>
-      <li class="toc-sub"><a href="#k-resource-limits">§K Resource limits</a></li>
-      <li class="toc-sub"><a href="#l-reserved-exports-for-future-use">§L Reserved exports for future use</a></li>
-      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
-      <li class="toc-top"><a href="#conformance">Conformance</a></li>
-      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
-      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
-      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
-      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

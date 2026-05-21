@@ -67,7 +67,23 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="rfc-0018-host-sql-host-vectorstore-host-searchindex-capabilities">RFC 0018: host.sql + host.vectorStore + host.searchIndex capabilities</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-capability-schemas">§A Capability schemas</a></li>
+      <li class="toc-sub"><a href="#b-host-contract-musts">§B Host-contract MUSTs</a></li>
+      <li class="toc-sub"><a href="#c-security-invariant">§C SECURITY invariant</a></li>
+      <li class="toc-sub"><a href="#d-conformance">§D Conformance</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="rfc-0018-host-sql-host-vectorstore-host-searchindex-capabilities">RFC 0018: host.sql + host.vectorStore + host.searchIndex capabilities</h1>
 <table>
 <thead><tr><th>Field</th><th>Value</th></tr></thead>
 <tbody>
@@ -164,23 +180,7 @@
 <li>n8n database family (prior art).</li>
 <li><code>core.openwop.db</code> + <code>core.openwop.rag</code> packs.</li>
 <li>RFC 0015 host.kvStorage (sibling).</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#summary">Summary</a></li>
-      <li class="toc-top"><a href="#motivation">Motivation</a></li>
-      <li class="toc-top"><a href="#proposal">Proposal</a></li>
-      <li class="toc-sub"><a href="#a-capability-schemas">§A Capability schemas</a></li>
-      <li class="toc-sub"><a href="#b-host-contract-musts">§B Host-contract MUSTs</a></li>
-      <li class="toc-sub"><a href="#c-security-invariant">§C SECURITY invariant</a></li>
-      <li class="toc-sub"><a href="#d-conformance">§D Conformance</a></li>
-      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
-      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
-      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
-      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

@@ -67,7 +67,28 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="rfc-0004-memory-layer">RFC 0004: Memory Layer</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-memoryadapter-interface">§A MemoryAdapter interface</a></li>
+      <li class="toc-sub"><a href="#b-capability-advertisement">§B Capability advertisement</a></li>
+      <li class="toc-sub"><a href="#c-memoryref-opaque-handle">§C memoryRef opaque handle</a></li>
+      <li class="toc-sub"><a href="#d-redaction-invariant-sr-1">§D Redaction invariant (SR-1)</a></li>
+      <li class="toc-sub"><a href="#e-ttl-semantics">§E TTL semantics</a></li>
+      <li class="toc-sub"><a href="#f-authorization">§F Authorization</a></li>
+      <li class="toc-sub"><a href="#g-tag-conventions">§G Tag conventions</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="rfc-0004-memory-layer">RFC 0004: Memory Layer</h1>
 <table>
 <thead><tr><th>Field</th><th>Value</th></tr></thead>
 <tbody>
@@ -210,28 +231,7 @@
 <li><code>SECURITY/threat-model-secret-leakage.md</code></li>
 <li><code>SECURITY/invariants.yaml</code> (SR-1)</li>
 <li>RFC 0002 (Agent Identity — <code>AgentRef.memoryRef</code>), RFC 0003 (Agent Packs — pack-level capability advertisement)</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#summary">Summary</a></li>
-      <li class="toc-top"><a href="#motivation">Motivation</a></li>
-      <li class="toc-top"><a href="#proposal">Proposal</a></li>
-      <li class="toc-sub"><a href="#a-memoryadapter-interface">§A MemoryAdapter interface</a></li>
-      <li class="toc-sub"><a href="#b-capability-advertisement">§B Capability advertisement</a></li>
-      <li class="toc-sub"><a href="#c-memoryref-opaque-handle">§C memoryRef opaque handle</a></li>
-      <li class="toc-sub"><a href="#d-redaction-invariant-sr-1">§D Redaction invariant (SR-1)</a></li>
-      <li class="toc-sub"><a href="#e-ttl-semantics">§E TTL semantics</a></li>
-      <li class="toc-sub"><a href="#f-authorization">§F Authorization</a></li>
-      <li class="toc-sub"><a href="#g-tag-conventions">§G Tag conventions</a></li>
-      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
-      <li class="toc-top"><a href="#conformance">Conformance</a></li>
-      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
-      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
-      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
-      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

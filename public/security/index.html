@@ -70,7 +70,29 @@
     <header class="page-header">
     <h1>Security posture</h1>
     <p class="lede">Threat model, disclosure policy, and the public invariants every conformance-tested host must satisfy. Embargoed advisories go through the documented private channel before this page reflects them.</p>
-  </header><div class="spec-page-grid"><article class="spec-doc"><h1 id="security">SECURITY</h1>
+  </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#1-scope">1. Scope</a></li>
+      <li class="toc-top"><a href="#2-reporting-channels">2. Reporting channels</a></li>
+      <li class="toc-sub"><a href="#2-1-preferred-github-security-advisories">2.1 Preferred — GitHub Security Advisories</a></li>
+      <li class="toc-sub"><a href="#2-2-email-fallback-security-openwop-ai">2.2 Email fallback — security@openwop.ai</a></li>
+      <li class="toc-sub"><a href="#2-3-active-exploitation">2.3 Active exploitation</a></li>
+      <li class="toc-sub"><a href="#2-4-do-not-file-public-issues">2.4 Do not file public issues</a></li>
+      <li class="toc-top"><a href="#3-response-sla">3. Response SLA</a></li>
+      <li class="toc-top"><a href="#4-coordinated-disclosure">4. Coordinated disclosure</a></li>
+      <li class="toc-top"><a href="#5-cve-coordination">5. CVE coordination</a></li>
+      <li class="toc-top"><a href="#6-advisory-tracking">6. Advisory tracking</a></li>
+      <li class="toc-sub"><a href="#6-1-identifiers">6.1 Identifiers</a></li>
+      <li class="toc-sub"><a href="#6-2-public-record">6.2 Public record</a></li>
+      <li class="toc-sub"><a href="#6-3-what-s-published">6.3 What&#39;s published</a></li>
+      <li class="toc-top"><a href="#7-safe-harbor">7. Safe harbor</a></li>
+      <li class="toc-top"><a href="#8-threat-model-references">8. Threat model references</a></li>
+      <li class="toc-top"><a href="#9-external-audit">9. External audit</a></li>
+      <li class="toc-top"><a href="#10-amendments">10. Amendments</a></li>
+      <li class="toc-top"><a href="#11-references">11. References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="security">SECURITY</h1>
 <blockquote><p><strong>Status: v1 (2026-05-01).</strong> Vulnerability-disclosure policy for the openwop protocol, reference implementations, conformance suite, and machine-readable contracts. The protocol's normative security requirements are specified in <code>auth.md</code>, <code>idempotency.md</code>, <code>webhooks.md</code>, and per-capability spec docs; this file covers the disclosure process, response SLA, embargo terms, and advisory tracking.</p></blockquote>
 <p>Profile-specific threat models live under <code>SECURITY/</code>, including <code>threat-model-auth-profiles.md</code>, <code>threat-model-secret-leakage.md</code>, <code>threat-model-provider-policy.md</code>, <code>threat-model-node-packs.md</code>, and <code>threat-model-prompt-injection.md</code>.</p>
 <h2 id="1-scope">1. Scope</h2>
@@ -188,29 +210,7 @@
 <li><code>RFCS/0001-rfc-process.md</code> — formal RFC mechanism used for substantive amendments.</li>
 <li><code>MAINTAINERS.md</code> — maintainer set who receive disclosures.</li>
 <li><code>GOVERNANCE.md</code> — broader governance context.</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#1-scope">1. Scope</a></li>
-      <li class="toc-top"><a href="#2-reporting-channels">2. Reporting channels</a></li>
-      <li class="toc-sub"><a href="#2-1-preferred-github-security-advisories">2.1 Preferred — GitHub Security Advisories</a></li>
-      <li class="toc-sub"><a href="#2-2-email-fallback-security-openwop-ai">2.2 Email fallback — security@openwop.ai</a></li>
-      <li class="toc-sub"><a href="#2-3-active-exploitation">2.3 Active exploitation</a></li>
-      <li class="toc-sub"><a href="#2-4-do-not-file-public-issues">2.4 Do not file public issues</a></li>
-      <li class="toc-top"><a href="#3-response-sla">3. Response SLA</a></li>
-      <li class="toc-top"><a href="#4-coordinated-disclosure">4. Coordinated disclosure</a></li>
-      <li class="toc-top"><a href="#5-cve-coordination">5. CVE coordination</a></li>
-      <li class="toc-top"><a href="#6-advisory-tracking">6. Advisory tracking</a></li>
-      <li class="toc-sub"><a href="#6-1-identifiers">6.1 Identifiers</a></li>
-      <li class="toc-sub"><a href="#6-2-public-record">6.2 Public record</a></li>
-      <li class="toc-sub"><a href="#6-3-what-s-published">6.3 What&#39;s published</a></li>
-      <li class="toc-top"><a href="#7-safe-harbor">7. Safe harbor</a></li>
-      <li class="toc-top"><a href="#8-threat-model-references">8. Threat model references</a></li>
-      <li class="toc-top"><a href="#9-external-audit">9. External audit</a></li>
-      <li class="toc-top"><a href="#10-amendments">10. Amendments</a></li>
-      <li class="toc-top"><a href="#11-references">11. References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

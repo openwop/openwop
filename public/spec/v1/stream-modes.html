@@ -92,7 +92,27 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-sse-stream-modes">OpenWOP Spec v1 — SSE Stream Modes</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
+      <li class="toc-top"><a href="#mode-selection">Mode selection</a></li>
+      <li class="toc-sub"><a href="#content-negotiation-additive-opt-in">Content negotiation (additive opt-in)</a></li>
+      <li class="toc-top"><a href="#the-four-modes">The four modes</a></li>
+      <li class="toc-sub"><a href="#updates-default">updates (default)</a></li>
+      <li class="toc-sub"><a href="#values">values</a></li>
+      <li class="toc-sub"><a href="#messages">messages</a></li>
+      <li class="toc-sub"><a href="#debug">debug</a></li>
+      <li class="toc-top"><a href="#mode-to-event-mapping">Mode-to-event mapping</a></li>
+      <li class="toc-top"><a href="#resumption">Resumption</a></li>
+      <li class="toc-top"><a href="#multiple-subscribers">Multiple subscribers</a></li>
+      <li class="toc-top"><a href="#aggregation-hint-bufferms-closes-s3">Aggregation hint: ?bufferMs= (closes S3)</a></li>
+      <li class="toc-top"><a href="#mixed-mode-streammode-a-b-closes-s4">Mixed mode: ?streamMode=A,B (closes S4)</a></li>
+      <li class="toc-top"><a href="#cli-integration">CLI integration</a></li>
+      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-sse-stream-modes">OpenWOP Spec v1 — SSE Stream Modes</h1>
 <blockquote><p><strong>Status: FINAL v1 (2026-04-27).</strong> Comprehensive coverage of the four canonical stream consumption modes (values, updates, messages, debug), the <code>?streamMode=</code> query parameter, event-type-to-mode mapping, and CLI default. Stable surface for external review. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>
@@ -247,27 +267,7 @@
 <li><code>observability.md</code> — <code>openwop.event.*</code> attributes apply to all stream events regardless of mode</li>
 <li>LangGraph streaming: &lt;https://langchain-ai.github.io/langgraph/concepts/streaming/&gt; (idiom source — not a normative dependency)</li>
 <li>Reference implementations SHOULD document whether <code>?streamMode=</code> is fully filtered, partially projected, or treated as an all-events fallback. Hosts that advertise stream-mode support in capabilities are expected to honor the mode-specific semantics above.</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
-      <li class="toc-top"><a href="#mode-selection">Mode selection</a></li>
-      <li class="toc-sub"><a href="#content-negotiation-additive-opt-in">Content negotiation (additive opt-in)</a></li>
-      <li class="toc-top"><a href="#the-four-modes">The four modes</a></li>
-      <li class="toc-sub"><a href="#updates-default">updates (default)</a></li>
-      <li class="toc-sub"><a href="#values">values</a></li>
-      <li class="toc-sub"><a href="#messages">messages</a></li>
-      <li class="toc-sub"><a href="#debug">debug</a></li>
-      <li class="toc-top"><a href="#mode-to-event-mapping">Mode-to-event mapping</a></li>
-      <li class="toc-top"><a href="#resumption">Resumption</a></li>
-      <li class="toc-top"><a href="#multiple-subscribers">Multiple subscribers</a></li>
-      <li class="toc-top"><a href="#aggregation-hint-bufferms-closes-s3">Aggregation hint: ?bufferMs= (closes S3)</a></li>
-      <li class="toc-top"><a href="#mixed-mode-streammode-a-b-closes-s4">Mixed mode: ?streamMode=A,B (closes S4)</a></li>
-      <li class="toc-top"><a href="#cli-integration">CLI integration</a></li>
-      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

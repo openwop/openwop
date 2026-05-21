@@ -92,7 +92,50 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-capability-declaration-well-known-openwop">OpenWOP Spec v1 — Capability Declaration (<code>/.well-known/openwop</code>)</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
+      <li class="toc-top"><a href="#endpoint">Endpoint</a></li>
+      <li class="toc-top"><a href="#two-surfaces">Two surfaces</a></li>
+      <li class="toc-top"><a href="#in-package-shape-internal-non-normative">In-package shape (internal, non-normative)</a></li>
+      <li class="toc-top"><a href="#network-handshake-shape">Network-handshake shape</a></li>
+      <li class="toc-sub"><a href="#field-reference">Field reference</a></li>
+      <li class="toc-sub"><a href="#configurable">configurable</a></li>
+      <li class="toc-sub"><a href="#runtime-capabilities">Runtime capabilities</a></li>
+      <li class="toc-sub"><a href="#secrets">secrets</a></li>
+      <li class="toc-sub"><a href="#aiproviders">aiProviders</a></li>
+      <li class="toc-sub"><a href="#aiproviders-policies">aiProviders.policies</a></li>
+      <li class="toc-sub"><a href="#fixtures">fixtures</a></li>
+      <li class="toc-sub"><a href="#agents">agents</a></li>
+      <li class="toc-sub"><a href="#conversationprimitive">conversationPrimitive</a></li>
+      <li class="toc-sub"><a href="#workflowchainpacks">workflowChainPacks</a></li>
+      <li class="toc-sub"><a href="#observability">observability</a></li>
+      <li class="toc-top"><a href="#post-launch-v1-0-capability-additions">Post-launch v1.0 capability additions</a></li>
+      <li class="toc-sub"><a href="#orchestrator-rfc-0006">orchestrator (RFC 0006)</a></li>
+      <li class="toc-sub"><a href="#dispatch-rfc-0007">dispatch (RFC 0007)</a></li>
+      <li class="toc-sub"><a href="#memory-rfc-0004">memory (RFC 0004)</a></li>
+      <li class="toc-sub"><a href="#runs-pauseresume-track-13">runs.pauseResume (Track 13)</a></li>
+      <li class="toc-sub"><a href="#idempotency-track-13-multi-region-annex">idempotency (Track 13 multi-region annex)</a></li>
+      <li class="toc-sub"><a href="#webhooks-signaturealgorithms-track-13">webhooks.signatureAlgorithms (Track 13)</a></li>
+      <li class="toc-sub"><a href="#auth-profiles-and-auth-auditlogintegrity-track-13">auth.profiles and auth.auditLogIntegrity (Track 13)</a></li>
+      <li class="toc-top"><a href="#unsupported-capability-refusal-contract">Unsupported capability — refusal contract</a></li>
+      <li class="toc-sub"><a href="#wire-envelope">Wire envelope</a></li>
+      <li class="toc-sub"><a href="#capability-gated-typeid-map-normative">Capability-gated typeId map (normative)</a></li>
+      <li class="toc-sub"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#engine-enforced-limits-and-the-cap-breached-event-closes-cc-1-spec-side">Engine-enforced limits and the cap.breached event (closes CC-1 spec-side)</a></li>
+      <li class="toc-sub"><a href="#cap-breached-payload">cap.breached payload</a></li>
+      <li class="toc-sub"><a href="#resolution-recursionlimit-maxnodeexecutions">Resolution: recursionLimit + maxNodeExecutions</a></li>
+      <li class="toc-sub"><a href="#what-this-closes">What this closes</a></li>
+      <li class="toc-sub"><a href="#industry-standard-alignment">Industry-standard alignment</a></li>
+      <li class="toc-sub"><a href="#conformance-fixture">Conformance fixture</a></li>
+      <li class="toc-top"><a href="#status-legend">Status legend</a></li>
+      <li class="toc-top"><a href="#capability-negotiation-flow">Capability negotiation flow</a></li>
+      <li class="toc-top"><a href="#backward-compatibility">Backward compatibility</a></li>
+      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-capability-declaration-well-known-openwop">OpenWOP Spec v1 — Capability Declaration (<code>/.well-known/openwop</code>)</h1>
 <blockquote><p><strong>Status: FINAL v1 (2026-04-27; hygiene pass 2026-05-10).</strong> Formalized as <code>schemas/capabilities.schema.json</code>. The public network handshake at <code>GET /.well-known/openwop</code> is the canonical v1 capability declaration. Fields marked <strong>required v1</strong> are required for conformance; fields marked <strong>optional v1</strong> have stable wire shapes but MAY be omitted by hosts that do not support the capability. Conformance suite scenarios verify the required surface end-to-end and gate optional profile scenarios from this document. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>
@@ -597,50 +640,7 @@ interface CapabilityLimits {
 <li><code>auth.md</code> — <code>/.well-known/openwop</code> is unauthenticated by design</li>
 <li><code>run-options.md</code> — <code>configurable</code> field semantics</li>
 <li><code>observability.md</code> — <code>openwop.*</code> OTel taxonomy</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
-      <li class="toc-top"><a href="#endpoint">Endpoint</a></li>
-      <li class="toc-top"><a href="#two-surfaces">Two surfaces</a></li>
-      <li class="toc-top"><a href="#in-package-shape-internal-non-normative">In-package shape (internal, non-normative)</a></li>
-      <li class="toc-top"><a href="#network-handshake-shape">Network-handshake shape</a></li>
-      <li class="toc-sub"><a href="#field-reference">Field reference</a></li>
-      <li class="toc-sub"><a href="#configurable">configurable</a></li>
-      <li class="toc-sub"><a href="#runtime-capabilities">Runtime capabilities</a></li>
-      <li class="toc-sub"><a href="#secrets">secrets</a></li>
-      <li class="toc-sub"><a href="#aiproviders">aiProviders</a></li>
-      <li class="toc-sub"><a href="#aiproviders-policies">aiProviders.policies</a></li>
-      <li class="toc-sub"><a href="#fixtures">fixtures</a></li>
-      <li class="toc-sub"><a href="#agents">agents</a></li>
-      <li class="toc-sub"><a href="#conversationprimitive">conversationPrimitive</a></li>
-      <li class="toc-sub"><a href="#workflowchainpacks">workflowChainPacks</a></li>
-      <li class="toc-sub"><a href="#observability">observability</a></li>
-      <li class="toc-top"><a href="#post-launch-v1-0-capability-additions">Post-launch v1.0 capability additions</a></li>
-      <li class="toc-sub"><a href="#orchestrator-rfc-0006">orchestrator (RFC 0006)</a></li>
-      <li class="toc-sub"><a href="#dispatch-rfc-0007">dispatch (RFC 0007)</a></li>
-      <li class="toc-sub"><a href="#memory-rfc-0004">memory (RFC 0004)</a></li>
-      <li class="toc-sub"><a href="#runs-pauseresume-track-13">runs.pauseResume (Track 13)</a></li>
-      <li class="toc-sub"><a href="#idempotency-track-13-multi-region-annex">idempotency (Track 13 multi-region annex)</a></li>
-      <li class="toc-sub"><a href="#webhooks-signaturealgorithms-track-13">webhooks.signatureAlgorithms (Track 13)</a></li>
-      <li class="toc-sub"><a href="#auth-profiles-and-auth-auditlogintegrity-track-13">auth.profiles and auth.auditLogIntegrity (Track 13)</a></li>
-      <li class="toc-top"><a href="#unsupported-capability-refusal-contract">Unsupported capability — refusal contract</a></li>
-      <li class="toc-sub"><a href="#wire-envelope">Wire envelope</a></li>
-      <li class="toc-sub"><a href="#capability-gated-typeid-map-normative">Capability-gated typeId map (normative)</a></li>
-      <li class="toc-sub"><a href="#conformance">Conformance</a></li>
-      <li class="toc-top"><a href="#engine-enforced-limits-and-the-cap-breached-event-closes-cc-1-spec-side">Engine-enforced limits and the cap.breached event (closes CC-1 spec-side)</a></li>
-      <li class="toc-sub"><a href="#cap-breached-payload">cap.breached payload</a></li>
-      <li class="toc-sub"><a href="#resolution-recursionlimit-maxnodeexecutions">Resolution: recursionLimit + maxNodeExecutions</a></li>
-      <li class="toc-sub"><a href="#what-this-closes">What this closes</a></li>
-      <li class="toc-sub"><a href="#industry-standard-alignment">Industry-standard alignment</a></li>
-      <li class="toc-sub"><a href="#conformance-fixture">Conformance fixture</a></li>
-      <li class="toc-top"><a href="#status-legend">Status legend</a></li>
-      <li class="toc-top"><a href="#capability-negotiation-flow">Capability negotiation flow</a></li>
-      <li class="toc-top"><a href="#backward-compatibility">Backward compatibility</a></li>
-      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

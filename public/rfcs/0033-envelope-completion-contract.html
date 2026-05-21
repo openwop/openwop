@@ -67,7 +67,36 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="rfc-0033-envelope-completion-contract-truncation-vs-schema-violation-distinction">RFC 0033: Envelope-completion contract (truncation vs schema-violation distinction)</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-sub"><a href="#2-1-hosts-handle-envelope-completion-ad-hoc-today">2.1 Hosts handle envelope completion ad-hoc today</a></li>
+      <li class="toc-sub"><a href="#2-2-spec-gap-e5-closure">2.2 Spec gap E5 closure</a></li>
+      <li class="toc-sub"><a href="#2-3-truncation-retry-dos-opening">2.3 Truncation-retry DoS opening</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-envelope-completion-criteria-normative">§A — Envelope-completion criteria (normative)</a></li>
+      <li class="toc-sub"><a href="#b-truncation-retry-path-normative">§B — Truncation retry path (normative)</a></li>
+      <li class="toc-sub"><a href="#c-schema-violation-retry-path-normative">§C — Schema-violation retry path (normative)</a></li>
+      <li class="toc-sub"><a href="#d-refusal-and-recovery-paths-cross-reference">§D — Refusal and recovery paths (cross-reference)</a></li>
+      <li class="toc-sub"><a href="#e-capability-advertisement">§E — Capability advertisement</a></li>
+      <li class="toc-sub"><a href="#f-error-codes">§F — Error codes</a></li>
+      <li class="toc-sub"><a href="#g-production-flow-amendment">§G — Production flow amendment</a></li>
+      <li class="toc-sub"><a href="#h-trust-boundary-security-carry-forward">§H — Trust boundary + SECURITY (carry-forward)</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+      <li class="toc-top"><a href="#status-history">Status history</a></li>
+      <li class="toc-sub"><a href="#active-accepted-2026-05-21">Active → Accepted (2026-05-21)</a></li>
+      <li class="toc-sub"><a href="#active-amendment-2026-05-21-myndhyve-adoption-feedback">Active amendment (2026-05-21) — MyndHyve adoption feedback</a></li>
+      <li class="toc-sub"><a href="#draft-active-2026-05-20">Draft → Active (2026-05-20)</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="rfc-0033-envelope-completion-contract-truncation-vs-schema-violation-distinction">RFC 0033: Envelope-completion contract (truncation vs schema-violation distinction)</h1>
 <table>
 <thead><tr><th>Field</th><th>Value</th></tr></thead>
 <tbody>
@@ -290,36 +319,7 @@ Per-kind payload validation
 <li><strong>Schemas additive (no MUST relaxed):</strong></li>
 </ul>
 <p>  - <code>schemas/capabilities.schema.json</code> — <code>envelopes.reliability.completion</code> sub-block landed in the RFC 0032 batch (since 0033 depends on 0032's event vocabulary, the sub-block lives under the <code>reliability</code> parent). Required <code>distinguishesTruncation: boolean</code>; optional <code>truncationBudgetMultiplier: 1..8</code> (default 2; informational for cost-estimation UIs). Hosts that don't advertise <code>distinguishesTruncation: true</code> retain legacy retry-routing behavior; conformance scenarios soft-skip.   - <code>schemas/run-event.schema.json</code> — REUSES the six RFC 0032 envelope-reliability event types; this RFC introduces NO new event types. The retry-routing semantics layered on top of the existing event vocabulary.   - <code>schemas/run-event-payloads.schema.json</code> — same; no schema changes (the <code>reason</code>/<code>finalReason</code> enum values <code>truncation</code> and <code>schema-violation</code> are already in the RFC 0032 enum).</p>
-<p>Path to <code>Active → Accepted</code>: requires the reference workflow-engine to (a) advertise <code>capabilities.envelopes.reliability.completion.distinguishesTruncation: true</code> + <code>truncationBudgetMultiplier: 2</code>, (b) implement the truncation-vs-schema-violation retry-routing branch in <code>executor/envelopeReliability.ts</code> (or equivalent) — extending the retry loop to accept a <code>budgetMultiplier</code> parameter (defaulting to 1 for schema-violation, 2 for truncation) and the corrective-fragment helper to synthesize human-readable instructions from Ajv validator output, (c) ship the two conformance scenarios from §"Conformance" (envelope-completion-distinguishes-truncation; envelope-truncation-cap-exhaustion), and (d) mark spec gap E5 closed in a follow-up doc-prose pass to <code>ai-envelope.md</code> §"Open spec gaps." Alternatively, a non-steward host advertising the capability closes the third-party validation gate per the RFC 0021 / RFC 0026 precedent.</p></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#summary">Summary</a></li>
-      <li class="toc-top"><a href="#motivation">Motivation</a></li>
-      <li class="toc-sub"><a href="#2-1-hosts-handle-envelope-completion-ad-hoc-today">2.1 Hosts handle envelope completion ad-hoc today</a></li>
-      <li class="toc-sub"><a href="#2-2-spec-gap-e5-closure">2.2 Spec gap E5 closure</a></li>
-      <li class="toc-sub"><a href="#2-3-truncation-retry-dos-opening">2.3 Truncation-retry DoS opening</a></li>
-      <li class="toc-top"><a href="#proposal">Proposal</a></li>
-      <li class="toc-sub"><a href="#a-envelope-completion-criteria-normative">§A — Envelope-completion criteria (normative)</a></li>
-      <li class="toc-sub"><a href="#b-truncation-retry-path-normative">§B — Truncation retry path (normative)</a></li>
-      <li class="toc-sub"><a href="#c-schema-violation-retry-path-normative">§C — Schema-violation retry path (normative)</a></li>
-      <li class="toc-sub"><a href="#d-refusal-and-recovery-paths-cross-reference">§D — Refusal and recovery paths (cross-reference)</a></li>
-      <li class="toc-sub"><a href="#e-capability-advertisement">§E — Capability advertisement</a></li>
-      <li class="toc-sub"><a href="#f-error-codes">§F — Error codes</a></li>
-      <li class="toc-sub"><a href="#g-production-flow-amendment">§G — Production flow amendment</a></li>
-      <li class="toc-sub"><a href="#h-trust-boundary-security-carry-forward">§H — Trust boundary + SECURITY (carry-forward)</a></li>
-      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
-      <li class="toc-top"><a href="#conformance">Conformance</a></li>
-      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
-      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
-      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
-      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-      <li class="toc-top"><a href="#status-history">Status history</a></li>
-      <li class="toc-sub"><a href="#active-accepted-2026-05-21">Active → Accepted (2026-05-21)</a></li>
-      <li class="toc-sub"><a href="#active-amendment-2026-05-21-myndhyve-adoption-feedback">Active amendment (2026-05-21) — MyndHyve adoption feedback</a></li>
-      <li class="toc-sub"><a href="#draft-active-2026-05-20">Draft → Active (2026-05-20)</a></li>
-    </ul>
-  </aside></div><script>
+<p>Path to <code>Active → Accepted</code>: requires the reference workflow-engine to (a) advertise <code>capabilities.envelopes.reliability.completion.distinguishesTruncation: true</code> + <code>truncationBudgetMultiplier: 2</code>, (b) implement the truncation-vs-schema-violation retry-routing branch in <code>executor/envelopeReliability.ts</code> (or equivalent) — extending the retry loop to accept a <code>budgetMultiplier</code> parameter (defaulting to 1 for schema-violation, 2 for truncation) and the corrective-fragment helper to synthesize human-readable instructions from Ajv validator output, (c) ship the two conformance scenarios from §"Conformance" (envelope-completion-distinguishes-truncation; envelope-truncation-cap-exhaustion), and (d) mark spec gap E5 closed in a follow-up doc-prose pass to <code>ai-envelope.md</code> §"Open spec gaps." Alternatively, a non-steward host advertising the capability closes the third-party validation gate per the RFC 0021 / RFC 0026 precedent.</p></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

@@ -67,7 +67,29 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="rfc-0029-prompt-override-hierarchy-agent-promptresolved-event">RFC 0029: Prompt Override Hierarchy + <code>agent.promptResolved</code> event</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-resolution-chain-normative">§A — Resolution chain (normative)</a></li>
+      <li class="toc-sub"><a href="#b-schema-diffs">§B — Schema diffs</a></li>
+      <li class="toc-sub"><a href="#c-replay-observability">§C — Replay + observability</a></li>
+      <li class="toc-sub"><a href="#d-authoring-tooling-integration">§D — Authoring + tooling integration</a></li>
+      <li class="toc-sub"><a href="#e-security-carry-forward">§E — Security carry-forward</a></li>
+      <li class="toc-sub"><a href="#f-orthogonality-with-the-envelope-track-rfcs-non-normative">§F — Orthogonality with the envelope-track RFCs (non-normative)</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+      <li class="toc-top"><a href="#status-history">Status history</a></li>
+      <li class="toc-sub"><a href="#draft-active-2026-05-20">Draft → Active (2026-05-20)</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="rfc-0029-prompt-override-hierarchy-agent-promptresolved-event">RFC 0029: Prompt Override Hierarchy + <code>agent.promptResolved</code> event</h1>
 <table>
 <thead><tr><th>Field</th><th>Value</th></tr></thead>
 <tbody>
@@ -374,29 +396,7 @@
 <li><strong>Conformance:</strong> <code>prompt-resolution-chain-node-wins.test.ts</code>, <code>prompt-resolution-chain-agent-intrinsic.test.ts</code>, <code>prompt-resolution-chain-fallback-cascade.test.ts</code> cover Layers 1, 2, 3+4. All capability-gated via <code>behaviorGate(&#39;prompts-supported&#39;, ...)</code> / <code>behaviorGate(&#39;prompts-agent-bindings&#39;, ...)</code>.</li>
 <li><strong>CHANGELOG.md:</strong> <code>[1.1.2 — unreleased]</code> entries cover the resolver, the <code>agent.promptResolved</code> event, the resolution-chain scenarios.</li>
 </ul>
-<p>Path to <code>Active → Accepted</code>: first non-steward host advertises <code>capabilities.prompts.supported: true</code> (and, where the host supports agent bindings, <code>agentBindings: true</code>) AND emits <code>agent.promptResolved</code> events during dispatch. MAY be waived under the bootstrap-phase waiver if the steward provides a public conformance run pointing at the advertised endpoint.</p></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#summary">Summary</a></li>
-      <li class="toc-top"><a href="#motivation">Motivation</a></li>
-      <li class="toc-top"><a href="#proposal">Proposal</a></li>
-      <li class="toc-sub"><a href="#a-resolution-chain-normative">§A — Resolution chain (normative)</a></li>
-      <li class="toc-sub"><a href="#b-schema-diffs">§B — Schema diffs</a></li>
-      <li class="toc-sub"><a href="#c-replay-observability">§C — Replay + observability</a></li>
-      <li class="toc-sub"><a href="#d-authoring-tooling-integration">§D — Authoring + tooling integration</a></li>
-      <li class="toc-sub"><a href="#e-security-carry-forward">§E — Security carry-forward</a></li>
-      <li class="toc-sub"><a href="#f-orthogonality-with-the-envelope-track-rfcs-non-normative">§F — Orthogonality with the envelope-track RFCs (non-normative)</a></li>
-      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
-      <li class="toc-top"><a href="#conformance">Conformance</a></li>
-      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
-      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
-      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
-      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-      <li class="toc-top"><a href="#status-history">Status history</a></li>
-      <li class="toc-sub"><a href="#draft-active-2026-05-20">Draft → Active (2026-05-20)</a></li>
-    </ul>
-  </aside></div><script>
+<p>Path to <code>Active → Accepted</code>: first non-steward host advertises <code>capabilities.prompts.supported: true</code> (and, where the host supports agent bindings, <code>agentBindings: true</code>) AND emits <code>agent.promptResolved</code> events during dispatch. MAY be waived under the bootstrap-phase waiver if the steward provides a public conformance run pointing at the advertised endpoint.</p></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

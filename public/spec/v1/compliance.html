@@ -92,7 +92,20 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-compliance-vocabulary">OpenWOP Spec v1 — Compliance Vocabulary</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
+      <li class="toc-top"><a href="#scope-and-non-claims">Scope and non-claims</a></li>
+      <li class="toc-top"><a href="#trust-services-criteria-soc-2">Trust Services Criteria (SOC 2)</a></li>
+      <li class="toc-top"><a href="#gdpr-eu-2016-679">GDPR (EU 2016/679)</a></li>
+      <li class="toc-top"><a href="#hipaa-security-rule-45-cfr-part-164">HIPAA Security Rule (45 CFR Part 164)</a></li>
+      <li class="toc-top"><a href="#iso-iec-27001-2022-annex-a">ISO/IEC 27001:2022 Annex A</a></li>
+      <li class="toc-top"><a href="#compliance-relevant-protocol-primitives">Compliance-relevant protocol primitives</a></li>
+      <li class="toc-top"><a href="#how-to-use-this-document">How to use this document</a></li>
+      <li class="toc-top"><a href="#see-also">See also</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-compliance-vocabulary">OpenWOP Spec v1 — Compliance Vocabulary</h1>
 <blockquote><p><strong>Status: FINAL v1 (2026-05-12).</strong> Non-normative — this document doesn't constrain any conforming openwop implementation. The few MUST / SHOULD keywords in this file are advisory to operators evaluating openwop in a regulated deployment, NOT requirements on conforming hosts; the protocol-level conformance contract lives in <code>spec/v1/*.md</code> + <code>RFCS/</code> + the conformance suite. Maps openwop's existing protocol-level guarantees onto common compliance vocabularies (SOC 2, GDPR, HIPAA, ISO 27001) so operators have a shared reference. See <code>auth.md</code> for the status legend.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>
@@ -209,20 +222,7 @@
 <li><code>SECURITY.md</code> — coordinated disclosure process</li>
 <li><code>SECURITY/threat-model-*.md</code> — five published threat models (auth, packs, prompt-injection, provider-policy, secret-leakage)</li>
 <li><code>INTEROP-MATRIX.md</code> — per-host conformance evidence</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
-      <li class="toc-top"><a href="#scope-and-non-claims">Scope and non-claims</a></li>
-      <li class="toc-top"><a href="#trust-services-criteria-soc-2">Trust Services Criteria (SOC 2)</a></li>
-      <li class="toc-top"><a href="#gdpr-eu-2016-679">GDPR (EU 2016/679)</a></li>
-      <li class="toc-top"><a href="#hipaa-security-rule-45-cfr-part-164">HIPAA Security Rule (45 CFR Part 164)</a></li>
-      <li class="toc-top"><a href="#iso-iec-27001-2022-annex-a">ISO/IEC 27001:2022 Annex A</a></li>
-      <li class="toc-top"><a href="#compliance-relevant-protocol-primitives">Compliance-relevant protocol primitives</a></li>
-      <li class="toc-top"><a href="#how-to-use-this-document">How to use this document</a></li>
-      <li class="toc-top"><a href="#see-also">See also</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

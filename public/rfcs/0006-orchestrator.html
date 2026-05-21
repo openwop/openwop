@@ -67,7 +67,28 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="rfc-0006-run-orchestrator">RFC 0006: Run Orchestrator</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-runorchestrator-field-on-runsnapshot">§A runOrchestrator field on RunSnapshot</a></li>
+      <li class="toc-sub"><a href="#b-orchestratordecision-shape">§B OrchestratorDecision shape</a></li>
+      <li class="toc-sub"><a href="#c-runorchestrator-decided-event">§C runOrchestrator.decided event</a></li>
+      <li class="toc-sub"><a href="#e-ordering-invariants-co-1-co-2-co-3">§E Ordering invariants (CO-1 / CO-2 / CO-3)</a></li>
+      <li class="toc-sub"><a href="#f-replay-determinism-cache-only">§F Replay determinism (cache-only)</a></li>
+      <li class="toc-sub"><a href="#g-capability-advertisement">§G Capability advertisement</a></li>
+      <li class="toc-sub"><a href="#h-termination-state-matrix">§H Termination state matrix</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="rfc-0006-run-orchestrator">RFC 0006: Run Orchestrator</h1>
 <table>
 <thead><tr><th>Field</th><th>Value</th></tr></thead>
 <tbody>
@@ -227,28 +248,7 @@
 <li><code>schemas/run-orchestrator-decided-event.schema.json</code></li>
 <li><code>spec/v1/replay.md</code> (cache-only replay rule for non-deterministic orchestrators)</li>
 <li>RFC 0002 (Agent Identity), RFC 0005 (Conversation — <code>ask-user</code> routing), RFC 0007 (Dispatch — translates decisions into runtime actions)</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#summary">Summary</a></li>
-      <li class="toc-top"><a href="#motivation">Motivation</a></li>
-      <li class="toc-top"><a href="#proposal">Proposal</a></li>
-      <li class="toc-sub"><a href="#a-runorchestrator-field-on-runsnapshot">§A runOrchestrator field on RunSnapshot</a></li>
-      <li class="toc-sub"><a href="#b-orchestratordecision-shape">§B OrchestratorDecision shape</a></li>
-      <li class="toc-sub"><a href="#c-runorchestrator-decided-event">§C runOrchestrator.decided event</a></li>
-      <li class="toc-sub"><a href="#e-ordering-invariants-co-1-co-2-co-3">§E Ordering invariants (CO-1 / CO-2 / CO-3)</a></li>
-      <li class="toc-sub"><a href="#f-replay-determinism-cache-only">§F Replay determinism (cache-only)</a></li>
-      <li class="toc-sub"><a href="#g-capability-advertisement">§G Capability advertisement</a></li>
-      <li class="toc-sub"><a href="#h-termination-state-matrix">§H Termination state matrix</a></li>
-      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
-      <li class="toc-top"><a href="#conformance">Conformance</a></li>
-      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
-      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
-      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
-      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

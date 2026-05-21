@@ -92,7 +92,36 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-replay-and-time-travel-debugging">OpenWOP Spec v1 — Replay and Time-Travel Debugging</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
+      <li class="toc-top"><a href="#two-modes">Two modes</a></li>
+      <li class="toc-sub"><a href="#replay">replay</a></li>
+      <li class="toc-sub"><a href="#branch">branch</a></li>
+      <li class="toc-top"><a href="#endpoint">Endpoint</a></li>
+      <li class="toc-sub"><a href="#response">Response</a></li>
+      <li class="toc-top"><a href="#determinism-guarantees">Determinism guarantees</a></li>
+      <li class="toc-sub"><a href="#replay-mode">replay mode</a></li>
+      <li class="toc-sub"><a href="#branch-mode">branch mode</a></li>
+      <li class="toc-sub"><a href="#failure-surfaces">Failure surfaces</a></li>
+      <li class="toc-top"><a href="#llm-cache-key-recipe">LLM cache-key recipe</a></li>
+      <li class="toc-sub"><a href="#a-domain">§A Domain</a></li>
+      <li class="toc-sub"><a href="#b-computation">§B Computation</a></li>
+      <li class="toc-sub"><a href="#c-layering-with-idempotency-md">§C Layering with idempotency.md</a></li>
+      <li class="toc-sub"><a href="#d-determinism-property">§D Determinism property</a></li>
+      <li class="toc-sub"><a href="#e-migration">§E Migration</a></li>
+      <li class="toc-top"><a href="#replay-from-event-log-internals">Replay-from-event-log internals</a></li>
+      <li class="toc-top"><a href="#run-timeline-view-admin-panel">Run Timeline View (admin panel)</a></li>
+      <li class="toc-top"><a href="#use-cases">Use cases</a></li>
+      <li class="toc-top"><a href="#retention-and-garbage-collection">Retention and garbage collection</a></li>
+      <li class="toc-top"><a href="#privacy-and-replay">Privacy and replay</a></li>
+      <li class="toc-top"><a href="#determinism-scoring">Determinism scoring</a></li>
+      <li class="toc-top"><a href="#cross-region-replay-rfc-0036">Cross-region replay (RFC 0036)</a></li>
+      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-replay-and-time-travel-debugging">OpenWOP Spec v1 — Replay and Time-Travel Debugging</h1>
 <blockquote><p><strong>Status: FINAL v1 (2026-04-27).</strong> Comprehensive coverage of <code>POST /v1/runs/{runId}:fork</code> for replay and branch-from-past, idempotency requirements on side-effecting nodes, determinism guarantees, and the admin Run Timeline View. Stable surface for external review. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>
@@ -307,36 +336,7 @@ Idempotency-Key: &amp;lt;UUID&amp;gt;  (RECOMMENDED)</code></pre>
 <li><code>stream-modes.md</code> — <code>replay.diverged</code> event in <code>debug</code> mode</li>
 <li>LangGraph state history: &lt;https://langchain-ai.github.io/langgraph/concepts/persistence/#get-state-history&gt;</li>
 <li>Host implementation notes: replay typically needs an event-log range query primitive plus a recovery path that can rebuild run state from persisted events.</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
-      <li class="toc-top"><a href="#two-modes">Two modes</a></li>
-      <li class="toc-sub"><a href="#replay">replay</a></li>
-      <li class="toc-sub"><a href="#branch">branch</a></li>
-      <li class="toc-top"><a href="#endpoint">Endpoint</a></li>
-      <li class="toc-sub"><a href="#response">Response</a></li>
-      <li class="toc-top"><a href="#determinism-guarantees">Determinism guarantees</a></li>
-      <li class="toc-sub"><a href="#replay-mode">replay mode</a></li>
-      <li class="toc-sub"><a href="#branch-mode">branch mode</a></li>
-      <li class="toc-sub"><a href="#failure-surfaces">Failure surfaces</a></li>
-      <li class="toc-top"><a href="#llm-cache-key-recipe">LLM cache-key recipe</a></li>
-      <li class="toc-sub"><a href="#a-domain">§A Domain</a></li>
-      <li class="toc-sub"><a href="#b-computation">§B Computation</a></li>
-      <li class="toc-sub"><a href="#c-layering-with-idempotency-md">§C Layering with idempotency.md</a></li>
-      <li class="toc-sub"><a href="#d-determinism-property">§D Determinism property</a></li>
-      <li class="toc-sub"><a href="#e-migration">§E Migration</a></li>
-      <li class="toc-top"><a href="#replay-from-event-log-internals">Replay-from-event-log internals</a></li>
-      <li class="toc-top"><a href="#run-timeline-view-admin-panel">Run Timeline View (admin panel)</a></li>
-      <li class="toc-top"><a href="#use-cases">Use cases</a></li>
-      <li class="toc-top"><a href="#retention-and-garbage-collection">Retention and garbage collection</a></li>
-      <li class="toc-top"><a href="#privacy-and-replay">Privacy and replay</a></li>
-      <li class="toc-top"><a href="#determinism-scoring">Determinism scoring</a></li>
-      <li class="toc-top"><a href="#cross-region-replay-rfc-0036">Cross-region replay (RFC 0036)</a></li>
-      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

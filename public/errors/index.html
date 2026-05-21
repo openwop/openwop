@@ -67,7 +67,23 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="error-codes">Error codes</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#envelope-shape">Envelope shape</a></li>
+      <li class="toc-top"><a href="#codes-by-category">Codes by category</a></li>
+      <li class="toc-sub"><a href="#authentication-amp-authorization-4xx">Authentication &amp;amp; authorization (4xx)</a></li>
+      <li class="toc-sub"><a href="#request-validity-4xx">Request validity (4xx)</a></li>
+      <li class="toc-sub"><a href="#capability-gating-4xx">Capability gating (4xx)</a></li>
+      <li class="toc-sub"><a href="#byok-credentials-4xx">BYOK + credentials (4xx)</a></li>
+      <li class="toc-sub"><a href="#envelope-validation-4xx-rfc-0032-0033">Envelope validation (4xx) — RFC 0032/0033</a></li>
+      <li class="toc-sub"><a href="#sandbox-execution-4xx-rfc-0035">Sandbox execution (4xx) — RFC 0035</a></li>
+      <li class="toc-sub"><a href="#rate-limiting-backpressure-429-503">Rate limiting + backpressure (429 / 503)</a></li>
+      <li class="toc-sub"><a href="#server-side-failures-5xx">Server-side failures (5xx)</a></li>
+      <li class="toc-top"><a href="#stability-guarantees">Stability guarantees</a></li>
+      <li class="toc-top"><a href="#what-this-page-is-not">What this page is not</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="error-codes">Error codes</h1>
 <p>The canonical OpenWOP error envelope is <code>{ code, message, details? }</code> returned with the appropriate HTTP status. This page lists every code defined in the v1 spec corpus with its HTTP status, a one-line meaning, and the spec section that carries the normative definition.</p>
 <p>Last reviewed: 2026-05-21. Source of truth: <a href="/spec/v1/rest-endpoints.html#common-error-codes"><code>rest-endpoints.md</code> §"Common error codes"</a>.</p>
 <h2 id="envelope-shape">Envelope shape</h2>
@@ -158,23 +174,7 @@
 </ul>
 <h2 id="what-this-page-is-not">What this page is not</h2>
 <p>This is not the normative source. The error envelope shape is defined in <a href="/spec/v1/rest-endpoints.html"><code>rest-endpoints.md</code></a>; each code's preconditions, the events it pairs with (<code>envelope.retry.exhausted</code>, <code>cap.breached</code>, etc.), and any SR-1 redaction rules are documented in the spec section linked above. When this page disagrees with the spec, the spec wins.</p>
-<p>This page exists as a reference card for client implementers — one place to grep when wiring error handling.</p></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#envelope-shape">Envelope shape</a></li>
-      <li class="toc-top"><a href="#codes-by-category">Codes by category</a></li>
-      <li class="toc-sub"><a href="#authentication-amp-authorization-4xx">Authentication &amp;amp; authorization (4xx)</a></li>
-      <li class="toc-sub"><a href="#request-validity-4xx">Request validity (4xx)</a></li>
-      <li class="toc-sub"><a href="#capability-gating-4xx">Capability gating (4xx)</a></li>
-      <li class="toc-sub"><a href="#byok-credentials-4xx">BYOK + credentials (4xx)</a></li>
-      <li class="toc-sub"><a href="#envelope-validation-4xx-rfc-0032-0033">Envelope validation (4xx) — RFC 0032/0033</a></li>
-      <li class="toc-sub"><a href="#sandbox-execution-4xx-rfc-0035">Sandbox execution (4xx) — RFC 0035</a></li>
-      <li class="toc-sub"><a href="#rate-limiting-backpressure-429-503">Rate limiting + backpressure (429 / 503)</a></li>
-      <li class="toc-sub"><a href="#server-side-failures-5xx">Server-side failures (5xx)</a></li>
-      <li class="toc-top"><a href="#stability-guarantees">Stability guarantees</a></li>
-      <li class="toc-top"><a href="#what-this-page-is-not">What this page is not</a></li>
-    </ul>
-  </aside></div><script>
+<p>This page exists as a reference card for client implementers — one place to grep when wiring error handling.</p></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

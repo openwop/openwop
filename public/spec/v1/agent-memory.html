@@ -92,7 +92,20 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-agent-memory">OpenWOP Spec v1 — Agent Memory</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
+      <li class="toc-top"><a href="#memoryref-resolution">memoryRef resolution</a></li>
+      <li class="toc-top"><a href="#memoryadapter-interface">MemoryAdapter interface</a></li>
+      <li class="toc-top"><a href="#cti-1-cross-tenant-isolation-invariant-normative">CTI-1 — Cross-Tenant Isolation Invariant (normative)</a></li>
+      <li class="toc-top"><a href="#sr-1-secret-redaction-invariant-normative">SR-1 — Secret-Redaction Invariant (normative)</a></li>
+      <li class="toc-top"><a href="#ttl-semantics">TTL semantics</a></li>
+      <li class="toc-top"><a href="#capability-advertisement">Capability advertisement</a></li>
+      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-agent-memory">OpenWOP Spec v1 — Agent Memory</h1>
 <blockquote><p><strong>Status: FINAL v1 (2026-05-10).</strong> Normative spec for cross-run agent memory — <code>memoryRef</code> resolution, <code>MemoryAdapter</code> host-interface contract, cross-tenant isolation invariant (CTI-1), and BYOK secret-redaction invariant (SR-1). Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
 <h2 id="why-this-exists">Why this exists</h2>
 <p>Multi-agent workflows persist context across runs. A pack-installed customer-support agent that resolved a refund last week should still know the customer's preference for email follow-up this week. Without cross-run memory, every run starts from zero — agents lose continuity, users repeat themselves, and orchestrators can't learn from past dispatches.</p>
@@ -172,20 +185,7 @@ interface MemoryListOptions {
 <li><code>conformance/src/scenarios/agentMemoryCrossTenantIsolation.test.ts</code></li>
 <li><code>conformance/src/scenarios/agentMemoryRedactionContract.test.ts</code></li>
 <li><code>conformance/src/scenarios/agentMemoryTtlExpiry.test.ts</code></li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
-      <li class="toc-top"><a href="#memoryref-resolution">memoryRef resolution</a></li>
-      <li class="toc-top"><a href="#memoryadapter-interface">MemoryAdapter interface</a></li>
-      <li class="toc-top"><a href="#cti-1-cross-tenant-isolation-invariant-normative">CTI-1 — Cross-Tenant Isolation Invariant (normative)</a></li>
-      <li class="toc-top"><a href="#sr-1-secret-redaction-invariant-normative">SR-1 — Secret-Redaction Invariant (normative)</a></li>
-      <li class="toc-top"><a href="#ttl-semantics">TTL semantics</a></li>
-      <li class="toc-top"><a href="#capability-advertisement">Capability advertisement</a></li>
-      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

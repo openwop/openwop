@@ -70,7 +70,164 @@
     <header class="page-header">
     <h1>Changelog</h1>
     <p class="lede">Versioned record of every change to the OpenWOP spec corpus, schemas, SDKs, and reference hosts. Additive evolution only within v1.x per COMPATIBILITY.md.</p>
-  </header><div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-changelog">OpenWOP Spec v1 — Changelog</h1>
+  </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#1-1-3-unreleased-coordinated-sdk-release-for-myndhyve-adoption-feedback-slices">[1.1.3 — unreleased] — coordinated SDK release for MyndHyve adoption-feedback slices</a></li>
+      <li class="toc-sub"><a href="#site-13-new-pages-rest-api-explorer-json-ld-on-every-spec-doc-2026-05-21">Site: 13 new pages + REST API explorer + JSON-LD on every spec doc (2026-05-21)</a></li>
+      <li class="toc-sub"><a href="#ts-sdk-1-1-3-parserefusal-buildreasoningdirective-exported-2026-05-21">TS SDK 1.1.3 — parseRefusal + buildReasoningDirective exported (2026-05-21)</a></li>
+      <li class="toc-top"><a href="#1-1-2-unreleased-gap-closure-batch-from-plans-openwop-protocol-gap-closure-plan-md">[1.1.2 — unreleased] — gap-closure batch from plans/openwop-protocol-gap-closure-plan.md</a></li>
+      <li class="toc-sub"><a href="#marketing-site-multi-page-spec-corpus-shipped-to-openwop-dev-2026-05-21">Marketing site + multi-page spec corpus shipped to openwop.dev (2026-05-21)</a></li>
+      <li class="toc-sub"><a href="#rfc-0035-sandbox-execution-contract-rfc-0036-multi-region-cross-engine-promoted-draft-active-same-day-2026-05-21">RFC 0035 (sandbox execution contract) + RFC 0036 (multi-region + cross-engine) promoted Draft → Active same-day (2026-05-21)</a></li>
+      <li class="toc-sub"><a href="#rfc-0037-multi-agent-execution-model-phase-1-promoted-draft-active-same-day-2026-05-21">RFC 0037 (multi-agent execution model) Phase 1 promoted Draft → Active same-day (2026-05-21)</a></li>
+      <li class="toc-sub"><a href="#rfc-0039-multi-agent-phase-2-filed-draft-2026-05-21">RFC 0039 — multi-agent Phase 2 filed Draft (2026-05-21)</a></li>
+      <li class="toc-sub"><a href="#rfc-0035-rfc-0036-conformance-scenarios-2026-05-21">RFC 0035 + RFC 0036 conformance scenarios (2026-05-21)</a></li>
+      <li class="toc-sub"><a href="#rfc-0037-phase-1-reference-host-wiring-behavioral-conformance-2026-05-21">RFC 0037 Phase 1 reference-host wiring + behavioral conformance (2026-05-21)</a></li>
+      <li class="toc-sub"><a href="#rfc-0034-otel-collector-test-seam-promoted-draft-active-same-day-2026-05-21">RFC 0034 (OTel collector test seam) promoted Draft → Active same-day (2026-05-21)</a></li>
+      <li class="toc-sub"><a href="#rfc-0030-0031-0032-0033-promoted-active-accepted-2026-05-21">RFC 0030 / 0031 / 0032 / 0033 promoted Active → Accepted (2026-05-21)</a></li>
+      <li class="toc-sub"><a href="#5-new-draft-rfcs-filed-against-the-external-standards-readiness-review-findings-2026-05-21">5 new Draft RFCs filed against the external standards-readiness review findings (2026-05-21)</a></li>
+      <li class="toc-sub"><a href="#rfc-0030-0031-0032-0033-amendments-from-myndhyve-adoption-feedback-2026-05-21">RFC 0030/0031/0032/0033 amendments from MyndHyve adoption feedback (2026-05-21)</a></li>
+      <li class="toc-sub"><a href="#host-conformance-drain-final-6-prompt-stack-envelope-redaction-failures-2026-05-21">Host + Conformance — drain final 6 prompt-stack + envelope-redaction failures (2026-05-21)</a></li>
+      <li class="toc-sub"><a href="#host-conformance-rfc-0027-a-few-shot-slotindex-correctness-fix-multi-entry-coverage-2026-05-21">Host + Conformance — RFC 0027 §A few-shot slotIndex correctness fix + multi-entry coverage (2026-05-21)</a></li>
+      <li class="toc-sub"><a href="#host-conformance-rfc-0032-b-5-b-6-recovery-strategies-wired-end-to-end-2026-05-20">Host + Conformance — RFC 0032 §B.5 + §B.6 recovery strategies wired end-to-end (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#host-conformance-rfc-0027-a-four-kind-dispatch-wiring-coverage-scenario-2026-05-20">Host + Conformance — RFC 0027 §A four-kind dispatch wiring + coverage scenario (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#rfcs-0027-0028-0029-promoted-draft-active-2026-05-20">RFCs 0027 / 0028 / 0029 promoted Draft → Active (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#rfc-0032-b-rfc-0033-a-b-c-dispatchstructured-end-to-end-envelope-reliability-emission-truncation-routing-2026-05-20">RFC 0032 §B + RFC 0033 §A/§B/§C — dispatchStructured() end-to-end envelope-reliability emission + truncation-routing (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#conformance-drain-envelope-track-it-todo-placeholders-sub-tracks-e-e2-a-reasoning-redaction-2026-05-20">Conformance — drain envelope-track it.todo placeholders (sub-tracks E + E2 + A.reasoning-redaction) (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#rfc-0030-0033-reference-host-emission-first-cut-2026-05-20">RFC 0030–0033 reference-host emission — first cut (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#conformance-openwop-require-behavior-wired-across-the-prompt-scenario-family-2026-05-20">Conformance — OPENWOP_REQUIRE_BEHAVIOR wired across the prompt-* scenario family (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#host-conformance-rfc-0028-b-prompt-pack-loader-hardening-reference-host-config-seam-2026-05-20">Host + Conformance — RFC 0028 §B prompt-pack loader hardening + reference-host config seam (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#host-conformance-rfc-0028-b-prompt-pack-boot-time-install-2026-05-20">Host + Conformance — RFC 0028 §B prompt-pack boot-time install (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#conformance-three-it-todo-placeholders-converted-to-live-tests-2026-05-20">Conformance — three it.todo() placeholders converted to live tests (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#rfc-0027-f-shared-divergencepoint-schema-diff-landed-2026-05-20-commit-b3e23b2">RFC 0027 §F shared divergencePoint schema diff — landed (2026-05-20, commit b3e23b2)</a></li>
+      <li class="toc-sub"><a href="#rfc-0028-example-prompt-pack-landed-2026-05-20-commit-b29acc1">RFC 0028 example prompt pack — landed (2026-05-20, commit b29acc1)</a></li>
+      <li class="toc-sub"><a href="#rfc-0028-reference-host-v1-prompts-endpoints-promptstore-landed-2026-05-20-commit-b27b8a7">RFC 0028 reference-host /v1/prompts* endpoints + PromptStore — landed (2026-05-20, commit b27b8a7)</a></li>
+      <li class="toc-sub"><a href="#rfc-0029-reference-host-four-layer-resolver-v1-host-sample-prompt-resolve-seam-landed-2026-05-20-commit-af87b06">RFC 0029 reference-host four-layer resolver + /v1/host/sample/prompt/resolve seam — landed (2026-05-20, commit af87b06)</a></li>
+      <li class="toc-sub"><a href="#rfc-0029-phase-c-wire-shape-landed-2026-05-20-commit-f585ee7">RFC 0029 Phase C wire shape — landed (2026-05-20, commit f585ee7)</a></li>
+      <li class="toc-sub"><a href="#sample-chat-assistant-markdown-rendering-code-review-follow-ups-2026-05-20">Sample chat — assistant markdown rendering + code-review follow-ups (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#rfc-0033-draft-active-envelope-completion-contract-truncation-vs-schema-violation-retry-routing-2026-05-20">RFC 0033 (Draft → Active) — envelope-completion contract (truncation vs schema-violation retry routing) (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#rfc-0032-draft-active-envelope-reliability-run-event-vocabulary-line-448-scope-clarification-2026-05-20">RFC 0032 (Draft → Active) — envelope-reliability run-event vocabulary + line-448 scope clarification (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#rfc-0031-draft-active-envelope-variant-discrimination-model-capability-declarations-2026-05-20">RFC 0031 (Draft → Active) — envelope variant discrimination + model-capability declarations (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#rfc-0030-draft-active-envelope-reasoning-field-tier-1-structured-output-subset-2026-05-20">RFC 0030 (Draft → Active) — envelope reasoning field + Tier-1 structured-output subset (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#code-review-follow-ups-to-dispatch-cascade-clusters-2026-05-20">Code-review follow-ups to dispatch + cascade clusters (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#sample-chat-improvements-phases-2a-5-2a-6-2b-2c-2d-2026-05-19-2026-05-20">Sample chat improvements — Phases 2A.5 / 2A.6 / 2B / 2C / 2D (2026-05-19 → 2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#rfc-0027-phase-a-wire-shape-landed-2026-05-20-commit-3e7a0d8">RFC 0027 Phase A wire shape — landed (2026-05-20, commit 3e7a0d8)</a></li>
+      <li class="toc-sub"><a href="#rfc-0027-conformance-scenarios-landed-2026-05-20-commit-808b6fa">RFC 0027 conformance scenarios — landed (2026-05-20, commit 808b6fa)</a></li>
+      <li class="toc-sub"><a href="#rfc-0027-reference-host-implementation-landed-2026-05-20-commit-eb404db">RFC 0027 reference-host implementation — landed (2026-05-20, commit eb404db)</a></li>
+      <li class="toc-sub"><a href="#rfc-0028-phase-b-wire-shape-landed-2026-05-20-commit-397585b">RFC 0028 Phase B wire shape — landed (2026-05-20, commit 397585b)</a></li>
+      <li class="toc-sub"><a href="#rfc-0027-0028-code-review-follow-ups-2026-05-20">RFC 0027 / 0028 code-review follow-ups (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#sample-rfc-0022-dispatch-cluster-2026-05-20">Sample — RFC 0022 dispatch cluster (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#schema-sample-parent-child-cancel-cascade-interrupt-profile-2026-05-20">Schema + sample — parent/child cancel-cascade interrupt profile (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#code-review-pass-on-the-33-commit-gap-closure-batch-2026-05-20">Code-review pass on the 33-commit gap-closure batch (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#rfc-0030-0031-0032-0033-filed-2026-05-20-draft-envelope-llm-contract-hardening-track-2026-05-20">RFC 0030 / 0031 / 0032 / 0033 (filed 2026-05-20, Draft) — envelope LLM-contract-hardening track (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#spec-sample-external-event-interrupt-support-2026-05-20">Spec + sample — external-event interrupt support (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-byok-canary-echo-node-canary-provisioning-2026-05-20">Workflow-engine sample — BYOK canary echo node + canary provisioning (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-core-channelwrite-append-with-ttl-reducer-2026-05-20">Workflow-engine sample — core.channelWrite + append-with-TTL reducer (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-capability-not-provided-refusal-contract-2026-05-20">Workflow-engine sample — capability_not_provided refusal contract (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-idempotency-body-hash-mismatch-2026-05-20">Workflow-engine sample — idempotency body-hash mismatch (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-quorum-aware-approval-gate-2026-05-20">Workflow-engine sample — quorum-aware approval gate (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-streams-ts-validation-before-content-negotiation-2026-05-20">Workflow-engine sample — streams.ts validation-before-content-negotiation (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-recursionlimit-conversationprimitive-refusal-configurableschema-2026-05-20">Workflow-engine sample — recursionLimit + conversationPrimitive refusal + configurableSchema (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-core-subworkflow-executor-variable-mutation-seam-json-content-negotiation-2026-05-20">Workflow-engine sample — core.subWorkflow executor + variable mutation seam + JSON content negotiation (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#rfc-0027-0028-0029-filed-2026-05-19-draft-prompt-library-track-2026-05-19">RFC 0027 / 0028 / 0029 (filed 2026-05-19, Draft) — prompt-library track (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-prompt-library-ui-staging-2026-05-19">Workflow-engine sample — prompt-library UI staging (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-events-poll-lastsequence-sse-bufferms-aggregation-2026-05-19">Workflow-engine sample — events/poll lastSequence + SSE bufferMs aggregation (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-credential-shape-redaction-on-event-payloads-2026-05-19">Workflow-engine sample — credential-shape redaction on event payloads (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-cache-hit-semantics-debug-bundle-endpoint-2026-05-19">Workflow-engine sample — cache hit semantics + debug-bundle endpoint (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-fs-absolute-path-rejection-kv-cas-canonical-shape-2026-05-19">Workflow-engine sample — fs absolute-path rejection + kv.cas canonical shape (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-mcp-discovery-shape-approval-resume-validation-2026-05-19">Workflow-engine sample — MCP discovery shape + approval resume validation (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-fixture-input-port-variable-resolution-2026-05-19">Workflow-engine sample — fixture input-port → variable resolution (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-conformance-harness-wire-required-env-vars-2026-05-19">Workflow-engine conformance harness — wire required env vars (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-bulk-cancel-endpoint-idempotency-replay-header-2026-05-19">Workflow-engine sample — bulk-cancel endpoint + idempotency replay header (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-getworkflow-endpoint-strict-streammode-validation-2026-05-19">Workflow-engine sample — getWorkflow endpoint + strict streamMode validation (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-artifact-route-auth-stub-2026-05-19">Workflow-engine sample — artifact-route auth stub (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-variables-runtime-core-identity-2026-05-19">Workflow-engine sample — variables runtime + core.identity (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-post-v1-runs-returns-201-spec-aligned-2026-05-19">Workflow-engine sample — POST /v1/runs returns 201 (spec-aligned) (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#rfc-0026-follow-ups-missing-await-bug-in-callai-invocation-log-lookup-2026-05-19">RFC 0026 follow-ups + missing-await bug in callAI invocation-log lookup (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-fixture-loader-foundational-fixes-2026-05-19">Workflow-engine sample — fixture-loader foundational fixes (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#downstream-llm-untrusted-content-wrap-2026-05-19">Downstream-LLM untrusted-content wrap (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#envelope-contract-capability-stacking-refusal-2026-05-19">Envelope-contract capability stacking refusal (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#approval-gate-trust-boundary-refusal-2026-05-19">Approval-gate trust-boundary refusal (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#reference-app-visual-coherence-with-marketing-site-2026-05-19">Reference app — visual coherence with marketing site (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#marketing-site-demo-card-star-on-github-cta-on-openwop-dev-2026-05-19">Marketing site — demo card + Star-on-GitHub CTA on openwop.dev (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#persisted-envelope-correlation-dedup-seam-2026-05-19">Persisted envelope-correlation dedup seam (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#conformance-soak-gate-close-out-opt-out-axes-sqlite-artifact-stub-2026-05-19">Conformance soak-gate close-out — opt-out axes + SQLite artifact stub (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#marketing-site-demo-card-star-on-github-cta-on-openwop-dev-2026-05-19">Marketing site — demo card + Star-on-GitHub CTA on openwop.dev (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#rfc-0024-sdk-typed-helper-rollout-2026-05-19">RFC 0024 SDK typed-helper rollout (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#rfc-0026-status-active-accepted-2026-05-19">RFC 0026 — Status: Active → Accepted (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#rfc-0026-status-draft-active-2026-05-19">RFC 0026 — Status: Draft → Active (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#rfc-0026-filed-2026-05-19-original-draft-entry-provider-usage-event">RFC 0026 (filed 2026-05-19, original Draft entry) — provider.usage event</a></li>
+      <li class="toc-sub"><a href="#test-coverage-debt-threads-b-c-d-2-f-phase-3-4-partials-2026-05-18-2026-05-19">Test-coverage debt — Threads B + C + D.2 + F + Phase 3/4 partials (2026-05-18 → 2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#rfc-0024-status-draft-active-2026-05-18">RFC 0024 — Status: Draft → Active (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#rfc-0013-workflow-chain-packs-status-draft-active-accepted-2026-05-18">RFC 0013 (Workflow-chain packs) — Status: Draft → Active → Accepted (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#rfc-0014-0021-graduation-cohort-status-active-accepted-2026-05-18">RFC 0014–0021 graduation cohort — Status: Active → Accepted (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#rfc-0024-draft-streaming-agent-reasoned-deltas-2026-05-18">RFC 0024 (Draft) — Streaming agent.reasoned deltas (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#openwop-openwop-conformance-1-1-1-1-2-0-2026-05-18">@openwop/openwop-conformance 1.1.1 → 1.2.0 (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#conformance-tighten-agent-toolreturned-causationid-pairing-2026-05-18">Conformance: tighten agent.toolReturned causationId pairing (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#rfc-0022-rfc-0023-active-accepted-2026-05-18">RFC 0022 + RFC 0023 Active → Accepted (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#sample-host-managed-try-it-free-provider-tile-2026-05-18">Sample-host: managed &quot;Try it free&quot; provider tile (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#rfc-0023-draft-active-reference-host-implementation-2026-05-18">RFC 0023 Draft → Active + reference-host implementation (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#rfc-0023-draft-conformance-agent-event-emitters-2026-05-18">RFC 0023 (Draft) — Conformance agent-event emitters (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#7-aienvelope-conformance-scenarios-graduated-to-behavioral-2026-05-18">7 aiEnvelope.* conformance scenarios graduated to behavioral (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#storage-adapter-parity-real-postgres-via-testcontainers-postgresql-2026-05-18">Storage adapter parity — real Postgres via @testcontainers/postgresql (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#rfc-0022-promotion-active-accepted-dispatch-trio-graduation-2026-05-18">RFC 0022 promotion Active → Accepted + dispatch trio graduation (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#rfc-0022-postgres-reference-host-implementation-2026-05-18">RFC 0022 — Postgres reference host implementation (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#rfc-0022-promotion-draft-active-2026-05-18">RFC 0022 promotion Draft → Active (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#rfc-0022-draft-core-dispatch-core-subworkflow-runtime-variable-mapping-2026-05-18">RFC 0022 (Draft) — core.dispatch + core.subWorkflow runtime variable mapping (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#rfc-0021-a-acceptenvelope-reference-implementation-2026-05-18-post-commit-d84d3a8">RFC 0021 §A acceptEnvelope reference implementation (2026-05-18, post-commit d84d3a8)</a></li>
+      <li class="toc-sub"><a href="#storage-adapter-parity-harness-sqlite-vs-postgres-via-pg-mem-2026-05-18-post-commit-d84d3a8">Storage adapter parity harness — SQLite vs Postgres via pg-mem (2026-05-18, post-commit d84d3a8)</a></li>
+      <li class="toc-sub"><a href="#rfc-0021-spec-v1-ai-envelope-md-draft-v1-x-final-v1-1-2026-05-18">RFC 0021 — spec/v1/ai-envelope.md DRAFT v1.x → FINAL v1.1 (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#core-openwop-ai-1-1-1-core-openwop-mcp-1-1-0-marked-deprecated-2026-05-18">core.openwop.ai@1.1.1 + core.openwop.mcp@1.1.0 marked deprecated (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#three-reference-agent-pack-conformance-scenarios-2026-05-18">Three reference agent-pack conformance scenarios (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#spec-v1-ai-envelope-md-closes-the-ai-envelope-specification-gap-2026-05-17">spec/v1/ai-envelope.md — closes the AI Envelope specification gap (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#agent-pack-catalog-phase-4-tier-4-crews-skills-bridge-4-packs-2026-05-17">Agent pack catalog — Phase 4 (Tier 4 crews + skills-bridge, 4 packs) (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#agent-pack-catalog-phase-3-tier-3-vertical-agents-10-packs-2026-05-17">Agent pack catalog — Phase 3 (Tier 3 vertical agents, 10 packs) (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#agent-pack-catalog-phase-2-tier-2-productivity-skills-5-packs-2026-05-17">Agent pack catalog — Phase 2 (Tier 2 productivity skills, 5 packs) (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#agent-pack-catalog-phase-1-tier-0-tier-1-9-packs-2026-05-17">Agent pack catalog — Phase 1 (Tier 0 + Tier 1, 9 packs) (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#apps-workflow-engine-p3-firebase-auth-signup-cloud-sql-persistence-kms-encrypted-byok-2026-05-17">apps/workflow-engine@P3 — Firebase Auth signup + Cloud SQL persistence + KMS-encrypted BYOK (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#apps-workflow-engine-p3-production-rollout-fixes-post-mortem-2026-05-18">apps/workflow-engine@P3 — production-rollout fixes (post-mortem) (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#core-openwop-agents-1-0-1-closes-openwop-audit-2026-003-raw-js-tool-handler-2026-05-17">core.openwop.agents@1.0.1 — closes OPENWOP-AUDIT-2026-003 (raw-JS tool handler) (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#core-openwop-ai-1-1-2-core-openwop-mcp-1-1-1-untrusted-marker-discipline-on-ctx-trustboundary-untrusted-runs-2026-05-17">core.openwop.ai@1.1.2 + core.openwop.mcp@1.1.1 — UNTRUSTED-marker discipline on ctx.trustBoundary=&#39;untrusted&#39; runs (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#core-openwop-ai-1-1-1-core-openwop-crypto-1-0-3-defensive-parsing-of-model-output-jwt-shapes-2026-05-17">core.openwop.ai@1.1.1 + core.openwop.crypto@1.0.3 — defensive parsing of model output + JWT shapes (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#core-openwop-data-1-2-1-core-openwop-crypto-1-0-2-correctness-fix-for-nodes-mis-declared-as-pure-2026-05-17">core.openwop.data@1.2.1 + core.openwop.crypto@1.0.2 — correctness fix for nodes mis-declared as pure (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#core-openwop-http-1-1-2-idempotency-key-generator-made-deterministic-2026-05-17">core.openwop.http@1.1.2 — idempotency-key generator made deterministic (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#rfc-0020-host-side-mcp-server-mount-behavioral-conformance-live-2026-05-17">RFC 0020 host-side MCP server mount — behavioral conformance live (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#rfc-0015-0019-behavioral-conformance-via-opt-in-test-seam-2026-05-17-post-commit-8b3bf43">RFC 0015-0019 behavioral conformance via opt-in test seam (2026-05-17, post-commit 8b3bf43)</a></li>
+      <li class="toc-sub"><a href="#all-7-capability-rfcs-0014-0020-promoted-draft-active-2026-05-17">All 7 capability RFCs (0014-0020) promoted Draft → Active (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#examples-branching-workflow-2026-05-17">examples/branching-workflow/ (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-sample-local-pack-mount-precedence-2026-05-17">Workflow-engine sample: local-pack mount precedence (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#pack-patches-ssrf-jwt-alg-confusion-fixes-p0-1-2026-05-17">Pack patches: SSRF + JWT alg-confusion fixes (P0.1) (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#steward-internal-pre-audit-triage-of-the-17-published-packs-2026-05-17">Steward-internal pre-audit triage of the 17 published packs (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#workflow-chain-packs-rfc-0013-phase-4-in-tree-example-2026-05-17">Workflow-chain packs — RFC 0013 Phase 4 in-tree example (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#workflow-chain-packs-rfc-0013-phase-3-2026-05-17">Workflow-chain packs — RFC 0013 Phase 3 (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#workflow-chain-packs-rfc-0013-phase-2-2026-05-17">Workflow-chain packs — RFC 0013 Phase 2 (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#steward-pre-audit-publication-of-17-core-openwop-packs-to-packs-openwop-dev-2026-05-17">Steward pre-audit publication of 17 core.openwop.* packs to packs.openwop.dev (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#workflow-engine-builder-palette-full-core-pack-coverage-2026-05-17">workflow-engine builder palette — full core-pack coverage (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#workflow-chain-packs-rfc-0013-phase-1-2026-05-17">Workflow-chain packs — RFC 0013 Phase 1 (2026-05-17)</a></li>
+      <li class="toc-sub"><a href="#node-pack-catalog-expansion-2026-05-17">Node-pack catalog expansion (2026-05-17)</a></li>
+      <li class="toc-top"><a href="#1-1-1-2026-05-15-post-1-1-0-additive-cleanup-rfc-0012">[1.1.1] — 2026-05-15 — post-1.1.0 additive cleanup + RFC 0012</a></li>
+      <li class="toc-top"><a href="#1-1-0-2026-05-12-openwop-v1-0-close-out-additive-features">[1.1.0] — 2026-05-12 — openwop v1.0 close-out + additive features</a></li>
+      <li class="toc-sub"><a href="#spec-corpus-state">Spec corpus state</a></li>
+      <li class="toc-sub"><a href="#rfcs-landed">RFCs landed</a></li>
+      <li class="toc-sub"><a href="#multi-agent-shift-rfcs-0002-0007-rfc-0008">Multi-Agent Shift (RFCs 0002–0007 + RFC 0008)</a></li>
+      <li class="toc-sub"><a href="#capability-surfaces">Capability surfaces</a></li>
+      <li class="toc-sub"><a href="#reference-sdks-at-1-1-0">Reference SDKs at 1.1.0</a></li>
+      <li class="toc-sub"><a href="#reference-hosts">Reference hosts</a></li>
+      <li class="toc-sub"><a href="#conformance-suite-at-1-1-0">Conformance suite at 1.1.0</a></li>
+      <li class="toc-sub"><a href="#security-invariants">SECURITY invariants</a></li>
+      <li class="toc-sub"><a href="#wire-shape-stability">Wire-shape stability</a></li>
+      <li class="toc-sub"><a href="#domain-and-package-naming">Domain and package naming</a></li>
+      <li class="toc-sub"><a href="#verification">Verification</a></li>
+      <li class="toc-top"><a href="#1-0-0-2026-05-11-openwop-v1-0-first-publish">[1.0.0] — 2026-05-11 — openwop v1.0 first publish</a></li>
+      <li class="toc-sub"><a href="#published-artifacts">Published artifacts</a></li>
+      <li class="toc-sub"><a href="#scope-at-1-0-0">Scope at 1.0.0</a></li>
+      <li class="toc-sub"><a href="#known-gaps-at-1-0-0-closed-in-1-1-0">Known gaps at 1.0.0 (closed in 1.1.0)</a></li>
+      <li class="toc-top"><a href="#1-0-2026-05-08-openwop-v1-spec-freeze">[1.0] — 2026-05-08 — openwop v1 spec freeze</a></li>
+      <li class="toc-sub"><a href="#what-s-locked-at-freeze">What&#39;s locked at freeze</a></li>
+      <li class="toc-sub"><a href="#multi-agent-shift-phases-1-6-landed-by-freeze">Multi-Agent Shift (Phases 1-6 landed by freeze)</a></li>
+      <li class="toc-sub"><a href="#domain-and-package-naming">Domain and package naming</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-changelog">OpenWOP Spec v1 — Changelog</h1>
 <p>All notable changes to the openwop v1 spec, schemas, OpenAPI/AsyncAPI, conformance suite, and reference SDKs.</p>
 <p>Format follows <a href="https://keepachangelog.com/en/1/">Keep a Changelog</a> loosely. Versions are spec-corpus-wide (one date, multiple artifact updates per row); per-artifact versions live in their respective <code>package.json</code> / schema <code>$id</code> fields.</p>
 <blockquote><p><strong>Status legend</strong> (per <code>auth.md</code> §status legend):</p><p>STUB · DRAFT · OUTLINE · FINAL — see individual doc headers for current state.</p></blockquote>
@@ -146,6 +303,15 @@
 <li>conformance/README.md scenario count bumped 187 → 188 (in two places).</li>
 </ul>
 <p>Closes standards-readiness review finding (3) "multi-agent semantics not fully portable" at the Phase 1 boundary. Phases 2-4 remain open work for follow-up RFCs.</p>
+<h3 id="rfc-0039-multi-agent-phase-2-filed-draft-2026-05-21">RFC 0039 — multi-agent Phase 2 filed Draft (2026-05-21)</h3>
+<p>NEW <code>RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md</code> (Draft). Closes the 3 open spec gaps RFC 0037 §"Open spec gaps" deferred to Phase 2:</p>
+<ul>
+<li><strong>MAE-1 confidence-threshold escalation.</strong> Adds a fixed 0.5 spec floor on <code>OrchestratorDecision.confidence</code> below which the host MUST escalate via <code>clarify</code> or <code>escalate</code> interrupt. New optional <code>capabilities.multiAgent.executionModel.confidenceEscalationFloor</code> lets operators advertise stricter policy (≥ 0.5). New <code>core.workflowChain.confidence-escalated</code> RunEventType records the escalation point in the event log.</li>
+<li><strong>MAE-2 agent memory lifecycle across sub-runs.</strong> Cross-run inheritance defaults to shared scopeId; opt-in isolation via dispatch config's <code>memoryScopeIsolation: &quot;isolated&quot;</code>. <code>MemoryEntry.ttl</code> is computed from child write time, not parent start. Cross-child concurrency MUST serialize unless host advertises <code>crossChildMemoryConcurrency: &quot;advisory&quot;</code>.</li>
+<li><strong>MAE-3 memory carry-forward in replay.</strong> Forks from a past event-log index MUST return memory state as-of that index, not current state. NEW error code <code>replay_memory_snapshot_unavailable</code> when the host advertises <code>version: 2</code> but cannot serve a snapshot at the requested index.</li>
+</ul>
+<p>Bumps the executionModel profile from <code>version: 1</code> (Phase 1) to <code>version: 2</code> (Phase 2) when implemented. Phase 1 hosts continue to advertise <code>version: 1</code> unchanged. Phases 3 (cross-host causation) and 4 (replay-under-nondeterminism) remain explicit follow-up RFCs.</p>
+<p>README updated: 38 → 39 RFCs tracked; 2 → 3 Draft RFCs (caught by structural drift detector). docs/PROTOCOL-STATUS regenerated.</p>
 <h3 id="rfc-0035-rfc-0036-conformance-scenarios-2026-05-21">RFC 0035 + RFC 0036 conformance scenarios (2026-05-21)</h3>
 <p>Lands the contract-probe + capability-gated behavioral conformance scaffolding for the two RFCs that landed <code>Active</code> earlier today (f7c8d2d) and whose reference-host implementation is honest follow-up work.</p>
 <p><strong>RFC 0035 — 8 sandbox shape-probe + behavioral-stub scenarios</strong> (one per <code>node-pack-sandbox-*</code> invariant in <code>SECURITY/invariants.yaml</code>):</p>
@@ -1601,163 +1767,7 @@
 <li>Canonical domain: <code>openwop.dev</code></li>
 <li>Registry: <code>packs.openwop.dev</code></li>
 <li>Package names: <code>@openwop/openwop</code>, <code>@openwop/openwop-conformance</code>, <code>openwop-client</code>, <code>openwopclient</code></li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#1-1-3-unreleased-coordinated-sdk-release-for-myndhyve-adoption-feedback-slices">[1.1.3 — unreleased] — coordinated SDK release for MyndHyve adoption-feedback slices</a></li>
-      <li class="toc-sub"><a href="#site-13-new-pages-rest-api-explorer-json-ld-on-every-spec-doc-2026-05-21">Site: 13 new pages + REST API explorer + JSON-LD on every spec doc (2026-05-21)</a></li>
-      <li class="toc-sub"><a href="#ts-sdk-1-1-3-parserefusal-buildreasoningdirective-exported-2026-05-21">TS SDK 1.1.3 — parseRefusal + buildReasoningDirective exported (2026-05-21)</a></li>
-      <li class="toc-top"><a href="#1-1-2-unreleased-gap-closure-batch-from-plans-openwop-protocol-gap-closure-plan-md">[1.1.2 — unreleased] — gap-closure batch from plans/openwop-protocol-gap-closure-plan.md</a></li>
-      <li class="toc-sub"><a href="#marketing-site-multi-page-spec-corpus-shipped-to-openwop-dev-2026-05-21">Marketing site + multi-page spec corpus shipped to openwop.dev (2026-05-21)</a></li>
-      <li class="toc-sub"><a href="#rfc-0035-sandbox-execution-contract-rfc-0036-multi-region-cross-engine-promoted-draft-active-same-day-2026-05-21">RFC 0035 (sandbox execution contract) + RFC 0036 (multi-region + cross-engine) promoted Draft → Active same-day (2026-05-21)</a></li>
-      <li class="toc-sub"><a href="#rfc-0037-multi-agent-execution-model-phase-1-promoted-draft-active-same-day-2026-05-21">RFC 0037 (multi-agent execution model) Phase 1 promoted Draft → Active same-day (2026-05-21)</a></li>
-      <li class="toc-sub"><a href="#rfc-0035-rfc-0036-conformance-scenarios-2026-05-21">RFC 0035 + RFC 0036 conformance scenarios (2026-05-21)</a></li>
-      <li class="toc-sub"><a href="#rfc-0037-phase-1-reference-host-wiring-behavioral-conformance-2026-05-21">RFC 0037 Phase 1 reference-host wiring + behavioral conformance (2026-05-21)</a></li>
-      <li class="toc-sub"><a href="#rfc-0034-otel-collector-test-seam-promoted-draft-active-same-day-2026-05-21">RFC 0034 (OTel collector test seam) promoted Draft → Active same-day (2026-05-21)</a></li>
-      <li class="toc-sub"><a href="#rfc-0030-0031-0032-0033-promoted-active-accepted-2026-05-21">RFC 0030 / 0031 / 0032 / 0033 promoted Active → Accepted (2026-05-21)</a></li>
-      <li class="toc-sub"><a href="#5-new-draft-rfcs-filed-against-the-external-standards-readiness-review-findings-2026-05-21">5 new Draft RFCs filed against the external standards-readiness review findings (2026-05-21)</a></li>
-      <li class="toc-sub"><a href="#rfc-0030-0031-0032-0033-amendments-from-myndhyve-adoption-feedback-2026-05-21">RFC 0030/0031/0032/0033 amendments from MyndHyve adoption feedback (2026-05-21)</a></li>
-      <li class="toc-sub"><a href="#host-conformance-drain-final-6-prompt-stack-envelope-redaction-failures-2026-05-21">Host + Conformance — drain final 6 prompt-stack + envelope-redaction failures (2026-05-21)</a></li>
-      <li class="toc-sub"><a href="#host-conformance-rfc-0027-a-few-shot-slotindex-correctness-fix-multi-entry-coverage-2026-05-21">Host + Conformance — RFC 0027 §A few-shot slotIndex correctness fix + multi-entry coverage (2026-05-21)</a></li>
-      <li class="toc-sub"><a href="#host-conformance-rfc-0032-b-5-b-6-recovery-strategies-wired-end-to-end-2026-05-20">Host + Conformance — RFC 0032 §B.5 + §B.6 recovery strategies wired end-to-end (2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#host-conformance-rfc-0027-a-four-kind-dispatch-wiring-coverage-scenario-2026-05-20">Host + Conformance — RFC 0027 §A four-kind dispatch wiring + coverage scenario (2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#rfcs-0027-0028-0029-promoted-draft-active-2026-05-20">RFCs 0027 / 0028 / 0029 promoted Draft → Active (2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#rfc-0032-b-rfc-0033-a-b-c-dispatchstructured-end-to-end-envelope-reliability-emission-truncation-routing-2026-05-20">RFC 0032 §B + RFC 0033 §A/§B/§C — dispatchStructured() end-to-end envelope-reliability emission + truncation-routing (2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#conformance-drain-envelope-track-it-todo-placeholders-sub-tracks-e-e2-a-reasoning-redaction-2026-05-20">Conformance — drain envelope-track it.todo placeholders (sub-tracks E + E2 + A.reasoning-redaction) (2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#rfc-0030-0033-reference-host-emission-first-cut-2026-05-20">RFC 0030–0033 reference-host emission — first cut (2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#conformance-openwop-require-behavior-wired-across-the-prompt-scenario-family-2026-05-20">Conformance — OPENWOP_REQUIRE_BEHAVIOR wired across the prompt-* scenario family (2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#host-conformance-rfc-0028-b-prompt-pack-loader-hardening-reference-host-config-seam-2026-05-20">Host + Conformance — RFC 0028 §B prompt-pack loader hardening + reference-host config seam (2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#host-conformance-rfc-0028-b-prompt-pack-boot-time-install-2026-05-20">Host + Conformance — RFC 0028 §B prompt-pack boot-time install (2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#conformance-three-it-todo-placeholders-converted-to-live-tests-2026-05-20">Conformance — three it.todo() placeholders converted to live tests (2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#rfc-0027-f-shared-divergencepoint-schema-diff-landed-2026-05-20-commit-b3e23b2">RFC 0027 §F shared divergencePoint schema diff — landed (2026-05-20, commit b3e23b2)</a></li>
-      <li class="toc-sub"><a href="#rfc-0028-example-prompt-pack-landed-2026-05-20-commit-b29acc1">RFC 0028 example prompt pack — landed (2026-05-20, commit b29acc1)</a></li>
-      <li class="toc-sub"><a href="#rfc-0028-reference-host-v1-prompts-endpoints-promptstore-landed-2026-05-20-commit-b27b8a7">RFC 0028 reference-host /v1/prompts* endpoints + PromptStore — landed (2026-05-20, commit b27b8a7)</a></li>
-      <li class="toc-sub"><a href="#rfc-0029-reference-host-four-layer-resolver-v1-host-sample-prompt-resolve-seam-landed-2026-05-20-commit-af87b06">RFC 0029 reference-host four-layer resolver + /v1/host/sample/prompt/resolve seam — landed (2026-05-20, commit af87b06)</a></li>
-      <li class="toc-sub"><a href="#rfc-0029-phase-c-wire-shape-landed-2026-05-20-commit-f585ee7">RFC 0029 Phase C wire shape — landed (2026-05-20, commit f585ee7)</a></li>
-      <li class="toc-sub"><a href="#sample-chat-assistant-markdown-rendering-code-review-follow-ups-2026-05-20">Sample chat — assistant markdown rendering + code-review follow-ups (2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#rfc-0033-draft-active-envelope-completion-contract-truncation-vs-schema-violation-retry-routing-2026-05-20">RFC 0033 (Draft → Active) — envelope-completion contract (truncation vs schema-violation retry routing) (2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#rfc-0032-draft-active-envelope-reliability-run-event-vocabulary-line-448-scope-clarification-2026-05-20">RFC 0032 (Draft → Active) — envelope-reliability run-event vocabulary + line-448 scope clarification (2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#rfc-0031-draft-active-envelope-variant-discrimination-model-capability-declarations-2026-05-20">RFC 0031 (Draft → Active) — envelope variant discrimination + model-capability declarations (2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#rfc-0030-draft-active-envelope-reasoning-field-tier-1-structured-output-subset-2026-05-20">RFC 0030 (Draft → Active) — envelope reasoning field + Tier-1 structured-output subset (2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#code-review-follow-ups-to-dispatch-cascade-clusters-2026-05-20">Code-review follow-ups to dispatch + cascade clusters (2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#sample-chat-improvements-phases-2a-5-2a-6-2b-2c-2d-2026-05-19-2026-05-20">Sample chat improvements — Phases 2A.5 / 2A.6 / 2B / 2C / 2D (2026-05-19 → 2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#rfc-0027-phase-a-wire-shape-landed-2026-05-20-commit-3e7a0d8">RFC 0027 Phase A wire shape — landed (2026-05-20, commit 3e7a0d8)</a></li>
-      <li class="toc-sub"><a href="#rfc-0027-conformance-scenarios-landed-2026-05-20-commit-808b6fa">RFC 0027 conformance scenarios — landed (2026-05-20, commit 808b6fa)</a></li>
-      <li class="toc-sub"><a href="#rfc-0027-reference-host-implementation-landed-2026-05-20-commit-eb404db">RFC 0027 reference-host implementation — landed (2026-05-20, commit eb404db)</a></li>
-      <li class="toc-sub"><a href="#rfc-0028-phase-b-wire-shape-landed-2026-05-20-commit-397585b">RFC 0028 Phase B wire shape — landed (2026-05-20, commit 397585b)</a></li>
-      <li class="toc-sub"><a href="#rfc-0027-0028-code-review-follow-ups-2026-05-20">RFC 0027 / 0028 code-review follow-ups (2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#sample-rfc-0022-dispatch-cluster-2026-05-20">Sample — RFC 0022 dispatch cluster (2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#schema-sample-parent-child-cancel-cascade-interrupt-profile-2026-05-20">Schema + sample — parent/child cancel-cascade interrupt profile (2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#code-review-pass-on-the-33-commit-gap-closure-batch-2026-05-20">Code-review pass on the 33-commit gap-closure batch (2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#rfc-0030-0031-0032-0033-filed-2026-05-20-draft-envelope-llm-contract-hardening-track-2026-05-20">RFC 0030 / 0031 / 0032 / 0033 (filed 2026-05-20, Draft) — envelope LLM-contract-hardening track (2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#spec-sample-external-event-interrupt-support-2026-05-20">Spec + sample — external-event interrupt support (2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#workflow-engine-sample-byok-canary-echo-node-canary-provisioning-2026-05-20">Workflow-engine sample — BYOK canary echo node + canary provisioning (2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#workflow-engine-sample-core-channelwrite-append-with-ttl-reducer-2026-05-20">Workflow-engine sample — core.channelWrite + append-with-TTL reducer (2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#workflow-engine-sample-capability-not-provided-refusal-contract-2026-05-20">Workflow-engine sample — capability_not_provided refusal contract (2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#workflow-engine-sample-idempotency-body-hash-mismatch-2026-05-20">Workflow-engine sample — idempotency body-hash mismatch (2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#workflow-engine-sample-quorum-aware-approval-gate-2026-05-20">Workflow-engine sample — quorum-aware approval gate (2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#workflow-engine-sample-streams-ts-validation-before-content-negotiation-2026-05-20">Workflow-engine sample — streams.ts validation-before-content-negotiation (2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#workflow-engine-sample-recursionlimit-conversationprimitive-refusal-configurableschema-2026-05-20">Workflow-engine sample — recursionLimit + conversationPrimitive refusal + configurableSchema (2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#workflow-engine-sample-core-subworkflow-executor-variable-mutation-seam-json-content-negotiation-2026-05-20">Workflow-engine sample — core.subWorkflow executor + variable mutation seam + JSON content negotiation (2026-05-20)</a></li>
-      <li class="toc-sub"><a href="#rfc-0027-0028-0029-filed-2026-05-19-draft-prompt-library-track-2026-05-19">RFC 0027 / 0028 / 0029 (filed 2026-05-19, Draft) — prompt-library track (2026-05-19)</a></li>
-      <li class="toc-sub"><a href="#workflow-engine-sample-prompt-library-ui-staging-2026-05-19">Workflow-engine sample — prompt-library UI staging (2026-05-19)</a></li>
-      <li class="toc-sub"><a href="#workflow-engine-sample-events-poll-lastsequence-sse-bufferms-aggregation-2026-05-19">Workflow-engine sample — events/poll lastSequence + SSE bufferMs aggregation (2026-05-19)</a></li>
-      <li class="toc-sub"><a href="#workflow-engine-sample-credential-shape-redaction-on-event-payloads-2026-05-19">Workflow-engine sample — credential-shape redaction on event payloads (2026-05-19)</a></li>
-      <li class="toc-sub"><a href="#workflow-engine-sample-cache-hit-semantics-debug-bundle-endpoint-2026-05-19">Workflow-engine sample — cache hit semantics + debug-bundle endpoint (2026-05-19)</a></li>
-      <li class="toc-sub"><a href="#workflow-engine-sample-fs-absolute-path-rejection-kv-cas-canonical-shape-2026-05-19">Workflow-engine sample — fs absolute-path rejection + kv.cas canonical shape (2026-05-19)</a></li>
-      <li class="toc-sub"><a href="#workflow-engine-sample-mcp-discovery-shape-approval-resume-validation-2026-05-19">Workflow-engine sample — MCP discovery shape + approval resume validation (2026-05-19)</a></li>
-      <li class="toc-sub"><a href="#workflow-engine-sample-fixture-input-port-variable-resolution-2026-05-19">Workflow-engine sample — fixture input-port → variable resolution (2026-05-19)</a></li>
-      <li class="toc-sub"><a href="#workflow-engine-conformance-harness-wire-required-env-vars-2026-05-19">Workflow-engine conformance harness — wire required env vars (2026-05-19)</a></li>
-      <li class="toc-sub"><a href="#workflow-engine-sample-bulk-cancel-endpoint-idempotency-replay-header-2026-05-19">Workflow-engine sample — bulk-cancel endpoint + idempotency replay header (2026-05-19)</a></li>
-      <li class="toc-sub"><a href="#workflow-engine-sample-getworkflow-endpoint-strict-streammode-validation-2026-05-19">Workflow-engine sample — getWorkflow endpoint + strict streamMode validation (2026-05-19)</a></li>
-      <li class="toc-sub"><a href="#workflow-engine-sample-artifact-route-auth-stub-2026-05-19">Workflow-engine sample — artifact-route auth stub (2026-05-19)</a></li>
-      <li class="toc-sub"><a href="#workflow-engine-sample-variables-runtime-core-identity-2026-05-19">Workflow-engine sample — variables runtime + core.identity (2026-05-19)</a></li>
-      <li class="toc-sub"><a href="#workflow-engine-sample-post-v1-runs-returns-201-spec-aligned-2026-05-19">Workflow-engine sample — POST /v1/runs returns 201 (spec-aligned) (2026-05-19)</a></li>
-      <li class="toc-sub"><a href="#rfc-0026-follow-ups-missing-await-bug-in-callai-invocation-log-lookup-2026-05-19">RFC 0026 follow-ups + missing-await bug in callAI invocation-log lookup (2026-05-19)</a></li>
-      <li class="toc-sub"><a href="#workflow-engine-sample-fixture-loader-foundational-fixes-2026-05-19">Workflow-engine sample — fixture-loader foundational fixes (2026-05-19)</a></li>
-      <li class="toc-sub"><a href="#downstream-llm-untrusted-content-wrap-2026-05-19">Downstream-LLM untrusted-content wrap (2026-05-19)</a></li>
-      <li class="toc-sub"><a href="#envelope-contract-capability-stacking-refusal-2026-05-19">Envelope-contract capability stacking refusal (2026-05-19)</a></li>
-      <li class="toc-sub"><a href="#approval-gate-trust-boundary-refusal-2026-05-19">Approval-gate trust-boundary refusal (2026-05-19)</a></li>
-      <li class="toc-sub"><a href="#reference-app-visual-coherence-with-marketing-site-2026-05-19">Reference app — visual coherence with marketing site (2026-05-19)</a></li>
-      <li class="toc-sub"><a href="#marketing-site-demo-card-star-on-github-cta-on-openwop-dev-2026-05-19">Marketing site — demo card + Star-on-GitHub CTA on openwop.dev (2026-05-19)</a></li>
-      <li class="toc-sub"><a href="#persisted-envelope-correlation-dedup-seam-2026-05-19">Persisted envelope-correlation dedup seam (2026-05-19)</a></li>
-      <li class="toc-sub"><a href="#conformance-soak-gate-close-out-opt-out-axes-sqlite-artifact-stub-2026-05-19">Conformance soak-gate close-out — opt-out axes + SQLite artifact stub (2026-05-19)</a></li>
-      <li class="toc-sub"><a href="#marketing-site-demo-card-star-on-github-cta-on-openwop-dev-2026-05-19">Marketing site — demo card + Star-on-GitHub CTA on openwop.dev (2026-05-19)</a></li>
-      <li class="toc-sub"><a href="#rfc-0024-sdk-typed-helper-rollout-2026-05-19">RFC 0024 SDK typed-helper rollout (2026-05-19)</a></li>
-      <li class="toc-sub"><a href="#rfc-0026-status-active-accepted-2026-05-19">RFC 0026 — Status: Active → Accepted (2026-05-19)</a></li>
-      <li class="toc-sub"><a href="#rfc-0026-status-draft-active-2026-05-19">RFC 0026 — Status: Draft → Active (2026-05-19)</a></li>
-      <li class="toc-sub"><a href="#rfc-0026-filed-2026-05-19-original-draft-entry-provider-usage-event">RFC 0026 (filed 2026-05-19, original Draft entry) — provider.usage event</a></li>
-      <li class="toc-sub"><a href="#test-coverage-debt-threads-b-c-d-2-f-phase-3-4-partials-2026-05-18-2026-05-19">Test-coverage debt — Threads B + C + D.2 + F + Phase 3/4 partials (2026-05-18 → 2026-05-19)</a></li>
-      <li class="toc-sub"><a href="#rfc-0024-status-draft-active-2026-05-18">RFC 0024 — Status: Draft → Active (2026-05-18)</a></li>
-      <li class="toc-sub"><a href="#rfc-0013-workflow-chain-packs-status-draft-active-accepted-2026-05-18">RFC 0013 (Workflow-chain packs) — Status: Draft → Active → Accepted (2026-05-18)</a></li>
-      <li class="toc-sub"><a href="#rfc-0014-0021-graduation-cohort-status-active-accepted-2026-05-18">RFC 0014–0021 graduation cohort — Status: Active → Accepted (2026-05-18)</a></li>
-      <li class="toc-sub"><a href="#rfc-0024-draft-streaming-agent-reasoned-deltas-2026-05-18">RFC 0024 (Draft) — Streaming agent.reasoned deltas (2026-05-18)</a></li>
-      <li class="toc-sub"><a href="#openwop-openwop-conformance-1-1-1-1-2-0-2026-05-18">@openwop/openwop-conformance 1.1.1 → 1.2.0 (2026-05-18)</a></li>
-      <li class="toc-sub"><a href="#conformance-tighten-agent-toolreturned-causationid-pairing-2026-05-18">Conformance: tighten agent.toolReturned causationId pairing (2026-05-18)</a></li>
-      <li class="toc-sub"><a href="#rfc-0022-rfc-0023-active-accepted-2026-05-18">RFC 0022 + RFC 0023 Active → Accepted (2026-05-18)</a></li>
-      <li class="toc-sub"><a href="#sample-host-managed-try-it-free-provider-tile-2026-05-18">Sample-host: managed &quot;Try it free&quot; provider tile (2026-05-18)</a></li>
-      <li class="toc-sub"><a href="#rfc-0023-draft-active-reference-host-implementation-2026-05-18">RFC 0023 Draft → Active + reference-host implementation (2026-05-18)</a></li>
-      <li class="toc-sub"><a href="#rfc-0023-draft-conformance-agent-event-emitters-2026-05-18">RFC 0023 (Draft) — Conformance agent-event emitters (2026-05-18)</a></li>
-      <li class="toc-sub"><a href="#7-aienvelope-conformance-scenarios-graduated-to-behavioral-2026-05-18">7 aiEnvelope.* conformance scenarios graduated to behavioral (2026-05-18)</a></li>
-      <li class="toc-sub"><a href="#storage-adapter-parity-real-postgres-via-testcontainers-postgresql-2026-05-18">Storage adapter parity — real Postgres via @testcontainers/postgresql (2026-05-18)</a></li>
-      <li class="toc-sub"><a href="#rfc-0022-promotion-active-accepted-dispatch-trio-graduation-2026-05-18">RFC 0022 promotion Active → Accepted + dispatch trio graduation (2026-05-18)</a></li>
-      <li class="toc-sub"><a href="#rfc-0022-postgres-reference-host-implementation-2026-05-18">RFC 0022 — Postgres reference host implementation (2026-05-18)</a></li>
-      <li class="toc-sub"><a href="#rfc-0022-promotion-draft-active-2026-05-18">RFC 0022 promotion Draft → Active (2026-05-18)</a></li>
-      <li class="toc-sub"><a href="#rfc-0022-draft-core-dispatch-core-subworkflow-runtime-variable-mapping-2026-05-18">RFC 0022 (Draft) — core.dispatch + core.subWorkflow runtime variable mapping (2026-05-18)</a></li>
-      <li class="toc-sub"><a href="#rfc-0021-a-acceptenvelope-reference-implementation-2026-05-18-post-commit-d84d3a8">RFC 0021 §A acceptEnvelope reference implementation (2026-05-18, post-commit d84d3a8)</a></li>
-      <li class="toc-sub"><a href="#storage-adapter-parity-harness-sqlite-vs-postgres-via-pg-mem-2026-05-18-post-commit-d84d3a8">Storage adapter parity harness — SQLite vs Postgres via pg-mem (2026-05-18, post-commit d84d3a8)</a></li>
-      <li class="toc-sub"><a href="#rfc-0021-spec-v1-ai-envelope-md-draft-v1-x-final-v1-1-2026-05-18">RFC 0021 — spec/v1/ai-envelope.md DRAFT v1.x → FINAL v1.1 (2026-05-18)</a></li>
-      <li class="toc-sub"><a href="#core-openwop-ai-1-1-1-core-openwop-mcp-1-1-0-marked-deprecated-2026-05-18">core.openwop.ai@1.1.1 + core.openwop.mcp@1.1.0 marked deprecated (2026-05-18)</a></li>
-      <li class="toc-sub"><a href="#three-reference-agent-pack-conformance-scenarios-2026-05-18">Three reference agent-pack conformance scenarios (2026-05-18)</a></li>
-      <li class="toc-sub"><a href="#spec-v1-ai-envelope-md-closes-the-ai-envelope-specification-gap-2026-05-17">spec/v1/ai-envelope.md — closes the AI Envelope specification gap (2026-05-17)</a></li>
-      <li class="toc-sub"><a href="#agent-pack-catalog-phase-4-tier-4-crews-skills-bridge-4-packs-2026-05-17">Agent pack catalog — Phase 4 (Tier 4 crews + skills-bridge, 4 packs) (2026-05-17)</a></li>
-      <li class="toc-sub"><a href="#agent-pack-catalog-phase-3-tier-3-vertical-agents-10-packs-2026-05-17">Agent pack catalog — Phase 3 (Tier 3 vertical agents, 10 packs) (2026-05-17)</a></li>
-      <li class="toc-sub"><a href="#agent-pack-catalog-phase-2-tier-2-productivity-skills-5-packs-2026-05-17">Agent pack catalog — Phase 2 (Tier 2 productivity skills, 5 packs) (2026-05-17)</a></li>
-      <li class="toc-sub"><a href="#agent-pack-catalog-phase-1-tier-0-tier-1-9-packs-2026-05-17">Agent pack catalog — Phase 1 (Tier 0 + Tier 1, 9 packs) (2026-05-17)</a></li>
-      <li class="toc-sub"><a href="#apps-workflow-engine-p3-firebase-auth-signup-cloud-sql-persistence-kms-encrypted-byok-2026-05-17">apps/workflow-engine@P3 — Firebase Auth signup + Cloud SQL persistence + KMS-encrypted BYOK (2026-05-17)</a></li>
-      <li class="toc-sub"><a href="#apps-workflow-engine-p3-production-rollout-fixes-post-mortem-2026-05-18">apps/workflow-engine@P3 — production-rollout fixes (post-mortem) (2026-05-18)</a></li>
-      <li class="toc-sub"><a href="#core-openwop-agents-1-0-1-closes-openwop-audit-2026-003-raw-js-tool-handler-2026-05-17">core.openwop.agents@1.0.1 — closes OPENWOP-AUDIT-2026-003 (raw-JS tool handler) (2026-05-17)</a></li>
-      <li class="toc-sub"><a href="#core-openwop-ai-1-1-2-core-openwop-mcp-1-1-1-untrusted-marker-discipline-on-ctx-trustboundary-untrusted-runs-2026-05-17">core.openwop.ai@1.1.2 + core.openwop.mcp@1.1.1 — UNTRUSTED-marker discipline on ctx.trustBoundary=&#39;untrusted&#39; runs (2026-05-17)</a></li>
-      <li class="toc-sub"><a href="#core-openwop-ai-1-1-1-core-openwop-crypto-1-0-3-defensive-parsing-of-model-output-jwt-shapes-2026-05-17">core.openwop.ai@1.1.1 + core.openwop.crypto@1.0.3 — defensive parsing of model output + JWT shapes (2026-05-17)</a></li>
-      <li class="toc-sub"><a href="#core-openwop-data-1-2-1-core-openwop-crypto-1-0-2-correctness-fix-for-nodes-mis-declared-as-pure-2026-05-17">core.openwop.data@1.2.1 + core.openwop.crypto@1.0.2 — correctness fix for nodes mis-declared as pure (2026-05-17)</a></li>
-      <li class="toc-sub"><a href="#core-openwop-http-1-1-2-idempotency-key-generator-made-deterministic-2026-05-17">core.openwop.http@1.1.2 — idempotency-key generator made deterministic (2026-05-17)</a></li>
-      <li class="toc-sub"><a href="#rfc-0020-host-side-mcp-server-mount-behavioral-conformance-live-2026-05-17">RFC 0020 host-side MCP server mount — behavioral conformance live (2026-05-17)</a></li>
-      <li class="toc-sub"><a href="#rfc-0015-0019-behavioral-conformance-via-opt-in-test-seam-2026-05-17-post-commit-8b3bf43">RFC 0015-0019 behavioral conformance via opt-in test seam (2026-05-17, post-commit 8b3bf43)</a></li>
-      <li class="toc-sub"><a href="#all-7-capability-rfcs-0014-0020-promoted-draft-active-2026-05-17">All 7 capability RFCs (0014-0020) promoted Draft → Active (2026-05-17)</a></li>
-      <li class="toc-sub"><a href="#examples-branching-workflow-2026-05-17">examples/branching-workflow/ (2026-05-17)</a></li>
-      <li class="toc-sub"><a href="#workflow-engine-sample-local-pack-mount-precedence-2026-05-17">Workflow-engine sample: local-pack mount precedence (2026-05-17)</a></li>
-      <li class="toc-sub"><a href="#pack-patches-ssrf-jwt-alg-confusion-fixes-p0-1-2026-05-17">Pack patches: SSRF + JWT alg-confusion fixes (P0.1) (2026-05-17)</a></li>
-      <li class="toc-sub"><a href="#steward-internal-pre-audit-triage-of-the-17-published-packs-2026-05-17">Steward-internal pre-audit triage of the 17 published packs (2026-05-17)</a></li>
-      <li class="toc-sub"><a href="#workflow-chain-packs-rfc-0013-phase-4-in-tree-example-2026-05-17">Workflow-chain packs — RFC 0013 Phase 4 in-tree example (2026-05-17)</a></li>
-      <li class="toc-sub"><a href="#workflow-chain-packs-rfc-0013-phase-3-2026-05-17">Workflow-chain packs — RFC 0013 Phase 3 (2026-05-17)</a></li>
-      <li class="toc-sub"><a href="#workflow-chain-packs-rfc-0013-phase-2-2026-05-17">Workflow-chain packs — RFC 0013 Phase 2 (2026-05-17)</a></li>
-      <li class="toc-sub"><a href="#steward-pre-audit-publication-of-17-core-openwop-packs-to-packs-openwop-dev-2026-05-17">Steward pre-audit publication of 17 core.openwop.* packs to packs.openwop.dev (2026-05-17)</a></li>
-      <li class="toc-sub"><a href="#workflow-engine-builder-palette-full-core-pack-coverage-2026-05-17">workflow-engine builder palette — full core-pack coverage (2026-05-17)</a></li>
-      <li class="toc-sub"><a href="#workflow-chain-packs-rfc-0013-phase-1-2026-05-17">Workflow-chain packs — RFC 0013 Phase 1 (2026-05-17)</a></li>
-      <li class="toc-sub"><a href="#node-pack-catalog-expansion-2026-05-17">Node-pack catalog expansion (2026-05-17)</a></li>
-      <li class="toc-top"><a href="#1-1-1-2026-05-15-post-1-1-0-additive-cleanup-rfc-0012">[1.1.1] — 2026-05-15 — post-1.1.0 additive cleanup + RFC 0012</a></li>
-      <li class="toc-top"><a href="#1-1-0-2026-05-12-openwop-v1-0-close-out-additive-features">[1.1.0] — 2026-05-12 — openwop v1.0 close-out + additive features</a></li>
-      <li class="toc-sub"><a href="#spec-corpus-state">Spec corpus state</a></li>
-      <li class="toc-sub"><a href="#rfcs-landed">RFCs landed</a></li>
-      <li class="toc-sub"><a href="#multi-agent-shift-rfcs-0002-0007-rfc-0008">Multi-Agent Shift (RFCs 0002–0007 + RFC 0008)</a></li>
-      <li class="toc-sub"><a href="#capability-surfaces">Capability surfaces</a></li>
-      <li class="toc-sub"><a href="#reference-sdks-at-1-1-0">Reference SDKs at 1.1.0</a></li>
-      <li class="toc-sub"><a href="#reference-hosts">Reference hosts</a></li>
-      <li class="toc-sub"><a href="#conformance-suite-at-1-1-0">Conformance suite at 1.1.0</a></li>
-      <li class="toc-sub"><a href="#security-invariants">SECURITY invariants</a></li>
-      <li class="toc-sub"><a href="#wire-shape-stability">Wire-shape stability</a></li>
-      <li class="toc-sub"><a href="#domain-and-package-naming">Domain and package naming</a></li>
-      <li class="toc-sub"><a href="#verification">Verification</a></li>
-      <li class="toc-top"><a href="#1-0-0-2026-05-11-openwop-v1-0-first-publish">[1.0.0] — 2026-05-11 — openwop v1.0 first publish</a></li>
-      <li class="toc-sub"><a href="#published-artifacts">Published artifacts</a></li>
-      <li class="toc-sub"><a href="#scope-at-1-0-0">Scope at 1.0.0</a></li>
-      <li class="toc-sub"><a href="#known-gaps-at-1-0-0-closed-in-1-1-0">Known gaps at 1.0.0 (closed in 1.1.0)</a></li>
-      <li class="toc-top"><a href="#1-0-2026-05-08-openwop-v1-spec-freeze">[1.0] — 2026-05-08 — openwop v1 spec freeze</a></li>
-      <li class="toc-sub"><a href="#what-s-locked-at-freeze">What&#39;s locked at freeze</a></li>
-      <li class="toc-sub"><a href="#multi-agent-shift-phases-1-6-landed-by-freeze">Multi-Agent Shift (Phases 1-6 landed by freeze)</a></li>
-      <li class="toc-sub"><a href="#domain-and-package-naming">Domain and package naming</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

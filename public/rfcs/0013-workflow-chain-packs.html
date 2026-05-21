@@ -67,7 +67,33 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="rfc-0013-workflow-chain-packs">RFC 0013: Workflow-chain packs</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#manifest-distinguishes-pack-kind">Manifest distinguishes pack kind</a></li>
+      <li class="toc-sub"><a href="#workflow-chain-pack-json-schema">Workflow-chain pack JSON Schema</a></li>
+      <li class="toc-sub"><a href="#workflowdefinitionfragment">WorkflowDefinitionFragment</a></li>
+      <li class="toc-sub"><a href="#expansion-semantics-host-side-normative">Expansion semantics (host-side, normative)</a></li>
+      <li class="toc-sub"><a href="#what-hosts-dispatch">What hosts dispatch</a></li>
+      <li class="toc-sub"><a href="#capability-propagation">Capability propagation</a></li>
+      <li class="toc-sub"><a href="#registry-distinguishes-by-kind-in-index">Registry distinguishes by kind in index</a></li>
+      <li class="toc-sub"><a href="#positive-example">Positive example</a></li>
+      <li class="toc-sub"><a href="#negative-example-rejected-at-manifest-validation">Negative example (rejected at manifest validation)</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-sub"><a href="#alt-1-workflow-templates-as-a-separate-registry-surface-not-packs">Alt 1: Workflow templates as a separate registry surface (not packs)</a></li>
+      <li class="toc-sub"><a href="#alt-2-keep-presets-as-host-internal-abstractions">Alt 2: Keep presets as host-internal abstractions</a></li>
+      <li class="toc-sub"><a href="#alt-3-sub-workflow-runtime-dispatch-not-expansion">Alt 3: &quot;Sub-workflow&quot; runtime dispatch (not expansion)</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="rfc-0013-workflow-chain-packs">RFC 0013: Workflow-chain packs</h1>
 <table>
 <thead><tr><th>Field</th><th>Value</th></tr></thead>
 <tbody>
@@ -310,33 +336,7 @@
 <p>  - RFC 0001 (RFC process)   - RFC 0003 (Agent packs — separate concept; agent packs declare AgentRef objects, not workflow fragments)   - RFC 0009 (Production-profile conformance — <code>workflowChainPacks: supported</code> capability fits naturally as a profile flag)</p>
 <ul>
 <li><strong>Spec docs touched:</strong> <code>spec/v1/node-packs.md</code>, new <code>spec/v1/workflow-chain-packs.md</code>, <code>spec/v1/capabilities.md</code>.</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#summary">Summary</a></li>
-      <li class="toc-top"><a href="#motivation">Motivation</a></li>
-      <li class="toc-top"><a href="#proposal">Proposal</a></li>
-      <li class="toc-sub"><a href="#manifest-distinguishes-pack-kind">Manifest distinguishes pack kind</a></li>
-      <li class="toc-sub"><a href="#workflow-chain-pack-json-schema">Workflow-chain pack JSON Schema</a></li>
-      <li class="toc-sub"><a href="#workflowdefinitionfragment">WorkflowDefinitionFragment</a></li>
-      <li class="toc-sub"><a href="#expansion-semantics-host-side-normative">Expansion semantics (host-side, normative)</a></li>
-      <li class="toc-sub"><a href="#what-hosts-dispatch">What hosts dispatch</a></li>
-      <li class="toc-sub"><a href="#capability-propagation">Capability propagation</a></li>
-      <li class="toc-sub"><a href="#registry-distinguishes-by-kind-in-index">Registry distinguishes by kind in index</a></li>
-      <li class="toc-sub"><a href="#positive-example">Positive example</a></li>
-      <li class="toc-sub"><a href="#negative-example-rejected-at-manifest-validation">Negative example (rejected at manifest validation)</a></li>
-      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
-      <li class="toc-top"><a href="#conformance">Conformance</a></li>
-      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
-      <li class="toc-sub"><a href="#alt-1-workflow-templates-as-a-separate-registry-surface-not-packs">Alt 1: Workflow templates as a separate registry surface (not packs)</a></li>
-      <li class="toc-sub"><a href="#alt-2-keep-presets-as-host-internal-abstractions">Alt 2: Keep presets as host-internal abstractions</a></li>
-      <li class="toc-sub"><a href="#alt-3-sub-workflow-runtime-dispatch-not-expansion">Alt 3: &quot;Sub-workflow&quot; runtime dispatch (not expansion)</a></li>
-      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
-      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
-      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

@@ -92,7 +92,28 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-positioning">OpenWOP Spec v1 — Positioning</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#what-openwop-is">What openwop is</a></li>
+      <li class="toc-top"><a href="#what-openwop-is-not">What openwop is not</a></li>
+      <li class="toc-top"><a href="#why-this-doc-exists">Why this doc exists</a></li>
+      <li class="toc-top"><a href="#standards-composition-matrix">Standards composition matrix</a></li>
+      <li class="toc-top"><a href="#comparison-table">Comparison table</a></li>
+      <li class="toc-top"><a href="#when-to-choose-openwop">When to choose openwop</a></li>
+      <li class="toc-top"><a href="#when-not-to-choose-openwop">When NOT to choose openwop</a></li>
+      <li class="toc-top"><a href="#how-openwop-integrates-with-the-alternatives">How openwop integrates with the alternatives</a></li>
+      <li class="toc-sub"><a href="#with-mcp-model-context-protocol">With MCP (Model Context Protocol)</a></li>
+      <li class="toc-sub"><a href="#with-temporal-durable-execution-runtimes">With Temporal / durable-execution runtimes</a></li>
+      <li class="toc-sub"><a href="#with-langgraph">With LangGraph</a></li>
+      <li class="toc-sub"><a href="#with-bpmn">With BPMN</a></li>
+      <li class="toc-sub"><a href="#with-step-functions-cloud-vendor-orchestrators">With Step Functions / cloud-vendor orchestrators</a></li>
+      <li class="toc-top"><a href="#what-openwop-solves-especially-well">What openwop solves especially well</a></li>
+      <li class="toc-top"><a href="#what-openwop-is-underdeveloped-at">What openwop is underdeveloped at</a></li>
+      <li class="toc-top"><a href="#recommended-public-message">Recommended public message</a></li>
+      <li class="toc-top"><a href="#see-also">See also</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-positioning">OpenWOP Spec v1 — Positioning</h1>
 <blockquote><p><strong>Status: FINAL v1 (2026-05-05).</strong> Honest comparison of openwop against adjacent workflow / orchestration ecosystems. Non-normative — this document doesn't constrain any conforming implementation (zero RFC 2119 keywords by design). Graduated DRAFT → FINAL per GOVERNANCE.md "non-normative addition" rule (one-maintainer-approval direct merge); the doc has no MUST/SHOULD/MAY claims to lock. See <code>auth.md</code> for the status legend.</p></blockquote>
 <hr/>
 <h2 id="what-openwop-is">What openwop is</h2>
@@ -211,28 +232,7 @@ Step Functions.</code></pre>
 <li><code>spec/v1/host-extensions.md</code> — protocol core vs host-specific extensions distinction.</li>
 <li><code>INTEROP-MATRIX.md</code> — cross-host conformance pass record.</li>
 <li><code>ROADMAP.md</code> — v1.x and post-v1 ecosystem roadmap.</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#what-openwop-is">What openwop is</a></li>
-      <li class="toc-top"><a href="#what-openwop-is-not">What openwop is not</a></li>
-      <li class="toc-top"><a href="#why-this-doc-exists">Why this doc exists</a></li>
-      <li class="toc-top"><a href="#standards-composition-matrix">Standards composition matrix</a></li>
-      <li class="toc-top"><a href="#comparison-table">Comparison table</a></li>
-      <li class="toc-top"><a href="#when-to-choose-openwop">When to choose openwop</a></li>
-      <li class="toc-top"><a href="#when-not-to-choose-openwop">When NOT to choose openwop</a></li>
-      <li class="toc-top"><a href="#how-openwop-integrates-with-the-alternatives">How openwop integrates with the alternatives</a></li>
-      <li class="toc-sub"><a href="#with-mcp-model-context-protocol">With MCP (Model Context Protocol)</a></li>
-      <li class="toc-sub"><a href="#with-temporal-durable-execution-runtimes">With Temporal / durable-execution runtimes</a></li>
-      <li class="toc-sub"><a href="#with-langgraph">With LangGraph</a></li>
-      <li class="toc-sub"><a href="#with-bpmn">With BPMN</a></li>
-      <li class="toc-sub"><a href="#with-step-functions-cloud-vendor-orchestrators">With Step Functions / cloud-vendor orchestrators</a></li>
-      <li class="toc-top"><a href="#what-openwop-solves-especially-well">What openwop solves especially well</a></li>
-      <li class="toc-top"><a href="#what-openwop-is-underdeveloped-at">What openwop is underdeveloped at</a></li>
-      <li class="toc-top"><a href="#recommended-public-message">Recommended public message</a></li>
-      <li class="toc-top"><a href="#see-also">See also</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

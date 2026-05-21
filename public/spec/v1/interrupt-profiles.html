@@ -92,7 +92,18 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-interrupt-profiles">OpenWOP Spec v1 — Interrupt Profiles</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
+      <li class="toc-top"><a href="#profile-catalog">Profile catalog</a></li>
+      <li class="toc-sub"><a href="#openwop-interrupt-quorum">openwop-interrupt-quorum</a></li>
+      <li class="toc-sub"><a href="#openwop-interrupt-auth-required">openwop-interrupt-auth-required</a></li>
+      <li class="toc-sub"><a href="#openwop-interrupt-external-event">openwop-interrupt-external-event</a></li>
+      <li class="toc-sub"><a href="#openwop-interrupt-cascade-cancel">openwop-interrupt-cascade-cancel</a></li>
+      <li class="toc-top"><a href="#discovery-guidance">Discovery guidance</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-interrupt-profiles">OpenWOP Spec v1 — Interrupt Profiles</h1>
 <blockquote><p><strong>Status: FINAL v1 (2026-05-10).</strong> Optional interrupt-profile annex for hosts that implement stronger human-in-the-loop and external-event flows than the base <code>interrupt.md</code> contract. This document is additive and does not change required v1 interrupt wire shapes. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>
@@ -155,18 +166,7 @@
     }
   }
 }</code></pre>
-<p>The extension is advisory. Profile pass/fail status is determined by runtime conformance scenarios and host documentation, not by the presence of this extension alone.</p></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
-      <li class="toc-top"><a href="#profile-catalog">Profile catalog</a></li>
-      <li class="toc-sub"><a href="#openwop-interrupt-quorum">openwop-interrupt-quorum</a></li>
-      <li class="toc-sub"><a href="#openwop-interrupt-auth-required">openwop-interrupt-auth-required</a></li>
-      <li class="toc-sub"><a href="#openwop-interrupt-external-event">openwop-interrupt-external-event</a></li>
-      <li class="toc-sub"><a href="#openwop-interrupt-cascade-cancel">openwop-interrupt-cascade-cancel</a></li>
-      <li class="toc-top"><a href="#discovery-guidance">Discovery guidance</a></li>
-    </ul>
-  </aside></div><script>
+<p>The extension is advisory. Profile pass/fail status is determined by runtime conformance scenarios and host documentation, not by the presence of this extension alone.</p></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

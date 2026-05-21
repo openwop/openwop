@@ -92,7 +92,21 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-authentication-and-authorization">OpenWOP Spec v1 — Authentication and Authorization</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#scope">Scope</a></li>
+      <li class="toc-top"><a href="#authentication-models">Authentication models</a></li>
+      <li class="toc-sub"><a href="#1-api-keys-machine-callers">1. API keys (machine callers)</a></li>
+      <li class="toc-sub"><a href="#2-user-bearer-tokens-human-callers">2. User-bearer tokens (human callers)</a></li>
+      <li class="toc-top"><a href="#authorization">Authorization</a></li>
+      <li class="toc-top"><a href="#error-response-shape">Error response shape</a></li>
+      <li class="toc-top"><a href="#rate-limiting">Rate limiting</a></li>
+      <li class="toc-top"><a href="#audit">Audit</a></li>
+      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-authentication-and-authorization">OpenWOP Spec v1 — Authentication and Authorization</h1>
 <blockquote><p><strong>Status: FINAL v1 (2026-04-27).</strong> Comprehensive coverage of the bearer-token auth model, scope vocabulary, and the canonical 401/403 error envelope (now backed by <code>schemas/error-envelope.schema.json</code> per JS5). Not yet final: OAuth 2.0, mTLS, key rotation, and webhook HMAC remain in "Open spec gaps" — but the stable surface (API key + scopes + error envelope) is comprehensive enough for SDK + conformance authoring. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>.</p><p></p><p><strong>Status legend</strong> (used across all spec/v1/*.md):</p><p>- <strong>STUB</strong> — minimal coverage, only stable surfaces. Implementers SHOULD pin only to what's written; assume gaps.</p><p>- <strong>DRAFT</strong> — comprehensive coverage of stable + in-flight surfaces, but not yet reviewed by spec committee.</p><p>- <strong>OUTLINE</strong> — sketched but not detailed. Section headings lock; field schemas may shift.</p><p>- <strong>FINAL</strong> — frozen. Breaking changes go to v2.</p></blockquote>
 <hr/>
 <h2 id="scope">Scope</h2>
@@ -192,21 +206,7 @@
 <li><code>rest-endpoints.md</code> — endpoint catalog with per-route scope requirements</li>
 <li><code>auth-profiles.md</code> — optional production auth profiles for rotation, OAuth2, and mTLS</li>
 <li><code>SECURITY/threat-model-auth-profiles.md</code> — auth-profile threat model</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#scope">Scope</a></li>
-      <li class="toc-top"><a href="#authentication-models">Authentication models</a></li>
-      <li class="toc-sub"><a href="#1-api-keys-machine-callers">1. API keys (machine callers)</a></li>
-      <li class="toc-sub"><a href="#2-user-bearer-tokens-human-callers">2. User-bearer tokens (human callers)</a></li>
-      <li class="toc-top"><a href="#authorization">Authorization</a></li>
-      <li class="toc-top"><a href="#error-response-shape">Error response shape</a></li>
-      <li class="toc-top"><a href="#rate-limiting">Rate limiting</a></li>
-      <li class="toc-top"><a href="#audit">Audit</a></li>
-      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

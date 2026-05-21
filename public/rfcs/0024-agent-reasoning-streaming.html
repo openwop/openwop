@@ -67,7 +67,36 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="rfc-0024-streaming-agent-reasoned-deltas">RFC 0024: Streaming <code>agent.reasoned</code> Deltas</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#new-event-type-agent-reasoning-delta">New event type: agent.reasoning.delta</a></li>
+      <li class="toc-sub"><a href="#new-capability-flag-capabilities-agents-reasoning-streaming">New capability flag: capabilities.agents.reasoning.streaming</a></li>
+      <li class="toc-sub"><a href="#normative-semantics">Normative semantics</a></li>
+      <li class="toc-sub"><a href="#replay-determinism">Replay determinism</a></li>
+      <li class="toc-sub"><a href="#examples">Examples</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-sub"><a href="#existing-scenarios-covering-this-surface">Existing scenarios covering this surface</a></li>
+      <li class="toc-sub"><a href="#new-scenarios">New scenarios</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-sub"><a href="#a1-overload-agent-reasoned-with-optional-delta-done-fields-architect-review-issue-3-option-b">A1. Overload agent.reasoned with optional delta / done fields (architect review Issue 3, option B)</a></li>
+      <li class="toc-sub"><a href="#a2-new-event-type-per-phase-of-multi-agent-shift-e-g-agent-thought-agent-thinking">A2. New event type per phase of multi-agent shift (e.g. agent.thought, agent.thinking)</a></li>
+      <li class="toc-sub"><a href="#a3-out-of-band-streaming-separate-websocket-sse-channel-for-reasoning">A3. Out-of-band streaming (separate WebSocket / SSE channel for reasoning)</a></li>
+      <li class="toc-sub"><a href="#a4-do-nothing">A4. Do nothing</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#status-history">Status history</a></li>
+      <li class="toc-sub"><a href="#draft-active-2026-05-18">Draft → Active (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#sdk-typed-helper-rollout-2026-05-19">SDK typed-helper rollout (2026-05-19)</a></li>
+      <li class="toc-sub"><a href="#active-accepted-2026-05-19">Active → Accepted (2026-05-19)</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="rfc-0024-streaming-agent-reasoned-deltas">RFC 0024: Streaming <code>agent.reasoned</code> Deltas</h1>
 <table>
 <thead><tr><th>Field</th><th>Value</th></tr></thead>
 <tbody>
@@ -232,36 +261,7 @@ agent.reasoned         { agentId: &quot;asst-1&quot;, reasoning: &quot;Let me th
 <li><strong><code>SECURITY/threat-model-secret-leakage.md</code></strong> SR-1 — Reasoning content goes through host-internal redaction before persistence (applies equally to deltas and the closing event).</li>
 <li><strong><code>COMPATIBILITY.md §2.1</code></strong> — Additive-change criteria for v1.x.</li>
 <li><strong>Prior art:</strong> Claude.ai extended thinking disclosure; ChatGPT o1 "thoughts" stream; Cursor inline action cards.</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#summary">Summary</a></li>
-      <li class="toc-top"><a href="#motivation">Motivation</a></li>
-      <li class="toc-top"><a href="#proposal">Proposal</a></li>
-      <li class="toc-sub"><a href="#new-event-type-agent-reasoning-delta">New event type: agent.reasoning.delta</a></li>
-      <li class="toc-sub"><a href="#new-capability-flag-capabilities-agents-reasoning-streaming">New capability flag: capabilities.agents.reasoning.streaming</a></li>
-      <li class="toc-sub"><a href="#normative-semantics">Normative semantics</a></li>
-      <li class="toc-sub"><a href="#replay-determinism">Replay determinism</a></li>
-      <li class="toc-sub"><a href="#examples">Examples</a></li>
-      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
-      <li class="toc-top"><a href="#conformance">Conformance</a></li>
-      <li class="toc-sub"><a href="#existing-scenarios-covering-this-surface">Existing scenarios covering this surface</a></li>
-      <li class="toc-sub"><a href="#new-scenarios">New scenarios</a></li>
-      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
-      <li class="toc-sub"><a href="#a1-overload-agent-reasoned-with-optional-delta-done-fields-architect-review-issue-3-option-b">A1. Overload agent.reasoned with optional delta / done fields (architect review Issue 3, option B)</a></li>
-      <li class="toc-sub"><a href="#a2-new-event-type-per-phase-of-multi-agent-shift-e-g-agent-thought-agent-thinking">A2. New event type per phase of multi-agent shift (e.g. agent.thought, agent.thinking)</a></li>
-      <li class="toc-sub"><a href="#a3-out-of-band-streaming-separate-websocket-sse-channel-for-reasoning">A3. Out-of-band streaming (separate WebSocket / SSE channel for reasoning)</a></li>
-      <li class="toc-sub"><a href="#a4-do-nothing">A4. Do nothing</a></li>
-      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
-      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
-      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
-      <li class="toc-top"><a href="#status-history">Status history</a></li>
-      <li class="toc-sub"><a href="#draft-active-2026-05-18">Draft → Active (2026-05-18)</a></li>
-      <li class="toc-sub"><a href="#sdk-typed-helper-rollout-2026-05-19">SDK typed-helper rollout (2026-05-19)</a></li>
-      <li class="toc-sub"><a href="#active-accepted-2026-05-19">Active → Accepted (2026-05-19)</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

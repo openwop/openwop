@@ -70,7 +70,28 @@
     <header class="page-header">
     <h1>Contributing</h1>
     <p class="lede">Per-artifact change rules for the OpenWOP corpus — what counts as editorial, additive, safety-fix, or breaking; the eight-step pre-merge gate; the DCO requirement.</p>
-  </header><div class="spec-page-grid"><article class="spec-doc"><h1 id="contributing-to-openwop-v1">Contributing to openwop v1</h1>
+  </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#what-s-in-scope">What&#39;s in scope</a></li>
+      <li class="toc-top"><a href="#status-legend">Status legend</a></li>
+      <li class="toc-top"><a href="#per-artifact-change-rules">Per-artifact change rules</a></li>
+      <li class="toc-sub"><a href="#prose-specs-md">Prose specs (*.md)</a></li>
+      <li class="toc-sub"><a href="#json-schemas-schemas-schema-json">JSON Schemas (schemas/*.schema.json)</a></li>
+      <li class="toc-sub"><a href="#pack-internal-json-schemas-packs-name-schemas-schema-json">Pack-internal JSON Schemas (packs/&lt;name&gt;/schemas/*.schema.json)</a></li>
+      <li class="toc-sub"><a href="#openapi-asyncapi">OpenAPI / AsyncAPI</a></li>
+      <li class="toc-sub"><a href="#conformance-suite-conformance">Conformance suite (conformance/)</a></li>
+      <li class="toc-sub"><a href="#typescript-reference-sdk-sdk-typescript">TypeScript reference SDK (sdk/typescript/)</a></li>
+      <li class="toc-sub"><a href="#reference-applications-apps">Reference applications (apps/)</a></li>
+      <li class="toc-top"><a href="#the-ci-gate">The CI gate</a></li>
+      <li class="toc-top"><a href="#coordination-with-the-impl-plan">Coordination with the impl plan</a></li>
+      <li class="toc-top"><a href="#process">Process</a></li>
+      <li class="toc-top"><a href="#sign-your-commits-dco">Sign your commits (DCO)</a></li>
+      <li class="toc-top"><a href="#triage-sla">Triage SLA</a></li>
+      <li class="toc-top"><a href="#bootstrap-phase-notes-2026-05-05">Bootstrap-phase notes (2026-05-05)</a></li>
+      <li class="toc-top"><a href="#useful-one-liners">Useful one-liners</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="contributing-to-openwop-v1">Contributing to openwop v1</h1>
 <p>Thanks for considering a contribution. The OpenWOP v1.0 spec is small, mechanical, and intentionally focused — small PRs land fastest.</p>
 <p>This guide covers:</p>
 <p>1. What's in scope. 2. Status legend + when to bump status. 3. Per-artifact change rules (prose specs, JSON Schemas, OpenAPI, AsyncAPI, conformance, SDK). 4. The CI gate. 5. Coordination with the impl plan.</p>
@@ -230,28 +251,7 @@ npx -y @asyncapi/cli@latest validate api/asyncapi.yaml
 (cd sdk/typescript &amp;&amp; npm install &amp;&amp; npm run build)
 
 # Find every prose doc that&#39;s still STUB-tier (candidates for promotion)
-grep -l &quot;Status:.*STUB&quot; *.md</code></pre></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#what-s-in-scope">What&#39;s in scope</a></li>
-      <li class="toc-top"><a href="#status-legend">Status legend</a></li>
-      <li class="toc-top"><a href="#per-artifact-change-rules">Per-artifact change rules</a></li>
-      <li class="toc-sub"><a href="#prose-specs-md">Prose specs (*.md)</a></li>
-      <li class="toc-sub"><a href="#json-schemas-schemas-schema-json">JSON Schemas (schemas/*.schema.json)</a></li>
-      <li class="toc-sub"><a href="#pack-internal-json-schemas-packs-name-schemas-schema-json">Pack-internal JSON Schemas (packs/&lt;name&gt;/schemas/*.schema.json)</a></li>
-      <li class="toc-sub"><a href="#openapi-asyncapi">OpenAPI / AsyncAPI</a></li>
-      <li class="toc-sub"><a href="#conformance-suite-conformance">Conformance suite (conformance/)</a></li>
-      <li class="toc-sub"><a href="#typescript-reference-sdk-sdk-typescript">TypeScript reference SDK (sdk/typescript/)</a></li>
-      <li class="toc-sub"><a href="#reference-applications-apps">Reference applications (apps/)</a></li>
-      <li class="toc-top"><a href="#the-ci-gate">The CI gate</a></li>
-      <li class="toc-top"><a href="#coordination-with-the-impl-plan">Coordination with the impl plan</a></li>
-      <li class="toc-top"><a href="#process">Process</a></li>
-      <li class="toc-top"><a href="#sign-your-commits-dco">Sign your commits (DCO)</a></li>
-      <li class="toc-top"><a href="#triage-sla">Triage SLA</a></li>
-      <li class="toc-top"><a href="#bootstrap-phase-notes-2026-05-05">Bootstrap-phase notes (2026-05-05)</a></li>
-      <li class="toc-top"><a href="#useful-one-liners">Useful one-liners</a></li>
-    </ul>
-  </aside></div><script>
+grep -l &quot;Status:.*STUB&quot; *.md</code></pre></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

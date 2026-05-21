@@ -92,7 +92,38 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-typed-state-channels-and-reducers">OpenWOP Spec v1 — Typed State Channels and Reducers</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
+      <li class="toc-top"><a href="#channel-declaration">Channel declaration</a></li>
+      <li class="toc-sub"><a href="#channel-naming">Channel naming</a></li>
+      <li class="toc-sub"><a href="#channel-access-control-closes-c1">Channel access control (closes C1)</a></li>
+      <li class="toc-sub"><a href="#channel-schema-migration-closes-c4">Channel schema migration (closes C4)</a></li>
+      <li class="toc-sub"><a href="#distributed-reducers-and-cross-engine-writes-closes-c2">Distributed reducers and cross-engine writes (closes C2)</a></li>
+      <li class="toc-top"><a href="#canonical-reducers">Canonical reducers</a></li>
+      <li class="toc-sub"><a href="#replace">replace</a></li>
+      <li class="toc-sub"><a href="#append">append</a></li>
+      <li class="toc-sub"><a href="#merge">merge</a></li>
+      <li class="toc-sub"><a href="#counter">counter</a></li>
+      <li class="toc-sub"><a href="#votes">votes</a></li>
+      <li class="toc-sub"><a href="#feedback">feedback</a></li>
+      <li class="toc-sub"><a href="#message-multi-agent-shift-phase-1">message (Multi-Agent Shift Phase 1)</a></li>
+      <li class="toc-sub"><a href="#custom-reducers">Custom reducers</a></li>
+      <li class="toc-top"><a href="#wire-surface">Wire surface</a></li>
+      <li class="toc-sub"><a href="#channel-write-event">Channel write event</a></li>
+      <li class="toc-sub"><a href="#channel-read">Channel read</a></li>
+      <li class="toc-top"><a href="#migration-from-variable-prefix-conventions">Migration from variable-prefix conventions</a></li>
+      <li class="toc-sub"><a href="#legacy-mode-default-for-v1">Legacy mode (default for v1)</a></li>
+      <li class="toc-sub"><a href="#channel-aware-mode-opt-in-via-workflowdefinition-channels">Channel-aware mode (opt-in via WorkflowDefinition.channels)</a></li>
+      <li class="toc-sub"><a href="#codemod-path">Codemod path</a></li>
+      <li class="toc-top"><a href="#replay-determinism">Replay determinism</a></li>
+      <li class="toc-top"><a href="#channel-snapshot-in-values-stream-mode">Channel snapshot in values stream mode</a></li>
+      <li class="toc-top"><a href="#channel-ttl-ttlms-closes-c3">Channel TTL: ttlMs (closes C3)</a></li>
+      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-typed-state-channels-and-reducers">OpenWOP Spec v1 — Typed State Channels and Reducers</h1>
 <blockquote><p><strong>Status: FINAL v1 (2026-04-27).</strong> Comprehensive coverage of channel declarations, six canonical reducers, the migration path from variable-prefix conventions, and the back-compat layer. Stable surface for external review. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>
@@ -540,38 +571,7 @@ function message(
 <li><code>replay.md</code> — reducer-at-write-time guarantees replay determinism</li>
 <li><code>observability.md</code> — <code>openwop.channel.&amp;lt;name&amp;gt;</code> attribute on channel-write spans</li>
 <li>LangGraph state model: &lt;https://langchain-ai.github.io/langgraph/concepts/low_level/#state&gt;</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
-      <li class="toc-top"><a href="#channel-declaration">Channel declaration</a></li>
-      <li class="toc-sub"><a href="#channel-naming">Channel naming</a></li>
-      <li class="toc-sub"><a href="#channel-access-control-closes-c1">Channel access control (closes C1)</a></li>
-      <li class="toc-sub"><a href="#channel-schema-migration-closes-c4">Channel schema migration (closes C4)</a></li>
-      <li class="toc-sub"><a href="#distributed-reducers-and-cross-engine-writes-closes-c2">Distributed reducers and cross-engine writes (closes C2)</a></li>
-      <li class="toc-top"><a href="#canonical-reducers">Canonical reducers</a></li>
-      <li class="toc-sub"><a href="#replace">replace</a></li>
-      <li class="toc-sub"><a href="#append">append</a></li>
-      <li class="toc-sub"><a href="#merge">merge</a></li>
-      <li class="toc-sub"><a href="#counter">counter</a></li>
-      <li class="toc-sub"><a href="#votes">votes</a></li>
-      <li class="toc-sub"><a href="#feedback">feedback</a></li>
-      <li class="toc-sub"><a href="#message-multi-agent-shift-phase-1">message (Multi-Agent Shift Phase 1)</a></li>
-      <li class="toc-sub"><a href="#custom-reducers">Custom reducers</a></li>
-      <li class="toc-top"><a href="#wire-surface">Wire surface</a></li>
-      <li class="toc-sub"><a href="#channel-write-event">Channel write event</a></li>
-      <li class="toc-sub"><a href="#channel-read">Channel read</a></li>
-      <li class="toc-top"><a href="#migration-from-variable-prefix-conventions">Migration from variable-prefix conventions</a></li>
-      <li class="toc-sub"><a href="#legacy-mode-default-for-v1">Legacy mode (default for v1)</a></li>
-      <li class="toc-sub"><a href="#channel-aware-mode-opt-in-via-workflowdefinition-channels">Channel-aware mode (opt-in via WorkflowDefinition.channels)</a></li>
-      <li class="toc-sub"><a href="#codemod-path">Codemod path</a></li>
-      <li class="toc-top"><a href="#replay-determinism">Replay determinism</a></li>
-      <li class="toc-top"><a href="#channel-snapshot-in-values-stream-mode">Channel snapshot in values stream mode</a></li>
-      <li class="toc-top"><a href="#channel-ttl-ttlms-closes-c3">Channel TTL: ttlMs (closes C3)</a></li>
-      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

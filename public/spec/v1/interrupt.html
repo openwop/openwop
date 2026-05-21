@@ -92,7 +92,33 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-hitl-interrupt-primitive">OpenWOP Spec v1 — HITL Interrupt Primitive</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
+      <li class="toc-top"><a href="#primitive">Primitive</a></li>
+      <li class="toc-sub"><a href="#interruptpayload">InterruptPayload</a></li>
+      <li class="toc-sub"><a href="#resume-value">Resume value</a></li>
+      <li class="toc-top"><a href="#per-kind-payloads">Per-kind payloads</a></li>
+      <li class="toc-sub"><a href="#kind-approval">kind: &quot;approval&quot;</a></li>
+      <li class="toc-sub"><a href="#kind-clarification">kind: &quot;clarification&quot;</a></li>
+      <li class="toc-sub"><a href="#kind-external-event">kind: &quot;external-event&quot;</a></li>
+      <li class="toc-sub"><a href="#kind-custom">kind: &quot;custom&quot;</a></li>
+      <li class="toc-sub"><a href="#kind-conversation-start-multi-agent-shift-phase-4">kind: &quot;conversation.start&quot; (Multi-Agent Shift Phase 4)</a></li>
+      <li class="toc-sub"><a href="#kind-conversation-exchange-multi-agent-shift-phase-4">kind: &quot;conversation.exchange&quot; (Multi-Agent Shift Phase 4)</a></li>
+      <li class="toc-sub"><a href="#kind-conversation-close-multi-agent-shift-phase-4">kind: &quot;conversation.close&quot; (Multi-Agent Shift Phase 4)</a></li>
+      <li class="toc-sub"><a href="#kind-low-confidence-multi-agent-shift-phase-1">kind: &quot;low-confidence&quot; (Multi-Agent Shift Phase 1)</a></li>
+      <li class="toc-top"><a href="#wire-surface">Wire surface</a></li>
+      <li class="toc-sub"><a href="#interrupt-requested-event">Interrupt requested (event)</a></li>
+      <li class="toc-sub"><a href="#interrupt-resolved-event">Interrupt resolved (event)</a></li>
+      <li class="toc-sub"><a href="#resolution-endpoints">Resolution endpoints</a></li>
+      <li class="toc-sub"><a href="#error-responses">Error responses</a></li>
+      <li class="toc-top"><a href="#replay-determinism">Replay determinism</a></li>
+      <li class="toc-top"><a href="#admin-panel-observability">Admin panel + observability</a></li>
+      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-hitl-interrupt-primitive">OpenWOP Spec v1 — HITL Interrupt Primitive</h1>
 <blockquote><p><strong>Status: FINAL v1 (2026-04-27).</strong> Comprehensive coverage of the canonical <code>interrupt(payload)</code> primitive, deterministic resume keys, the four <code>kind</code> discriminators (<code>approval</code>, <code>clarification</code>, <code>external-event</code>, <code>custom</code>), the 5-action approval vocabulary, and the signed-token callback URL surface. Stable surface for external review. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>
@@ -373,33 +399,7 @@ payload = JSON({ runId, nodeId, interruptId, expiresAt, intent: &#39;resolve&#39
 <li><code>observability.md</code> — <code>openwop.interrupt_*</code> attributes</li>
 <li><code>stream-modes.md</code> — <code>interrupt.requested</code> / <code>interrupt.resolved</code> events in <code>updates</code> and <code>debug</code> modes</li>
 <li>LangGraph HITL: &lt;https://langchain-ai.github.io/langgraph/concepts/human_in_the_loop/&gt;</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
-      <li class="toc-top"><a href="#primitive">Primitive</a></li>
-      <li class="toc-sub"><a href="#interruptpayload">InterruptPayload</a></li>
-      <li class="toc-sub"><a href="#resume-value">Resume value</a></li>
-      <li class="toc-top"><a href="#per-kind-payloads">Per-kind payloads</a></li>
-      <li class="toc-sub"><a href="#kind-approval">kind: &quot;approval&quot;</a></li>
-      <li class="toc-sub"><a href="#kind-clarification">kind: &quot;clarification&quot;</a></li>
-      <li class="toc-sub"><a href="#kind-external-event">kind: &quot;external-event&quot;</a></li>
-      <li class="toc-sub"><a href="#kind-custom">kind: &quot;custom&quot;</a></li>
-      <li class="toc-sub"><a href="#kind-conversation-start-multi-agent-shift-phase-4">kind: &quot;conversation.start&quot; (Multi-Agent Shift Phase 4)</a></li>
-      <li class="toc-sub"><a href="#kind-conversation-exchange-multi-agent-shift-phase-4">kind: &quot;conversation.exchange&quot; (Multi-Agent Shift Phase 4)</a></li>
-      <li class="toc-sub"><a href="#kind-conversation-close-multi-agent-shift-phase-4">kind: &quot;conversation.close&quot; (Multi-Agent Shift Phase 4)</a></li>
-      <li class="toc-sub"><a href="#kind-low-confidence-multi-agent-shift-phase-1">kind: &quot;low-confidence&quot; (Multi-Agent Shift Phase 1)</a></li>
-      <li class="toc-top"><a href="#wire-surface">Wire surface</a></li>
-      <li class="toc-sub"><a href="#interrupt-requested-event">Interrupt requested (event)</a></li>
-      <li class="toc-sub"><a href="#interrupt-resolved-event">Interrupt resolved (event)</a></li>
-      <li class="toc-sub"><a href="#resolution-endpoints">Resolution endpoints</a></li>
-      <li class="toc-sub"><a href="#error-responses">Error responses</a></li>
-      <li class="toc-top"><a href="#replay-determinism">Replay determinism</a></li>
-      <li class="toc-top"><a href="#admin-panel-observability">Admin panel + observability</a></li>
-      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

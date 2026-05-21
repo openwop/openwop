@@ -92,7 +92,34 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-per-run-options-overlay">OpenWOP Spec v1 — Per-Run Options Overlay</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
+      <li class="toc-top"><a href="#runoptions-schema">RunOptions schema</a></li>
+      <li class="toc-top"><a href="#configurable">configurable</a></li>
+      <li class="toc-sub"><a href="#validation">Validation</a></li>
+      <li class="toc-sub"><a href="#per-workflow-configurableschema">Per-workflow configurableSchema</a></li>
+      <li class="toc-sub"><a href="#reserved-keys">Reserved keys</a></li>
+      <li class="toc-sub"><a href="#example">Example</a></li>
+      <li class="toc-top"><a href="#mock-provider-extension-closes-f1">Mock provider extension (closes F1)</a></li>
+      <li class="toc-sub"><a href="#wire-shape">Wire shape</a></li>
+      <li class="toc-sub"><a href="#authorization">Authorization</a></li>
+      <li class="toc-sub"><a href="#canonical-mock-provider-catalog">Canonical mock provider catalog</a></li>
+      <li class="toc-sub"><a href="#replay-determinism">Replay determinism</a></li>
+      <li class="toc-sub"><a href="#capabilities-advertisement">Capabilities advertisement</a></li>
+      <li class="toc-sub"><a href="#what-this-is-not">What this is NOT</a></li>
+      <li class="toc-top"><a href="#tags">tags</a></li>
+      <li class="toc-sub"><a href="#tag-format-conventions">Tag format conventions</a></li>
+      <li class="toc-sub"><a href="#limits">Limits</a></li>
+      <li class="toc-top"><a href="#metadata">metadata</a></li>
+      <li class="toc-sub"><a href="#limits">Limits</a></li>
+      <li class="toc-top"><a href="#nodemodule-access">NodeModule access</a></li>
+      <li class="toc-top"><a href="#persistence">Persistence</a></li>
+      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-per-run-options-overlay">OpenWOP Spec v1 — Per-Run Options Overlay</h1>
 <blockquote><p><strong>Status: FINAL v1 (2026-04-27).</strong> Comprehensive coverage of <code>RunOptions</code> schema covering <code>configurable</code>, <code>tags</code>, <code>metadata</code>, and <code>recursionLimit</code> overrides. Stable surface for external review. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>
@@ -355,34 +382,7 @@ configurableSchema:
 <li><code>version-negotiation.md</code> — distinct from workflow versioning (<code>ctx.getVersion</code>)</li>
 <li><code>observability.md</code> — <code>openwop.run.tag.<em></code> + <code>openwop.run.metadata.</em></code> span attributes</li>
 <li>LangChain idiom: &lt;https://python.langchain.com/docs/concepts/runnables/#configurable-runnables&gt;</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
-      <li class="toc-top"><a href="#runoptions-schema">RunOptions schema</a></li>
-      <li class="toc-top"><a href="#configurable">configurable</a></li>
-      <li class="toc-sub"><a href="#validation">Validation</a></li>
-      <li class="toc-sub"><a href="#per-workflow-configurableschema">Per-workflow configurableSchema</a></li>
-      <li class="toc-sub"><a href="#reserved-keys">Reserved keys</a></li>
-      <li class="toc-sub"><a href="#example">Example</a></li>
-      <li class="toc-top"><a href="#mock-provider-extension-closes-f1">Mock provider extension (closes F1)</a></li>
-      <li class="toc-sub"><a href="#wire-shape">Wire shape</a></li>
-      <li class="toc-sub"><a href="#authorization">Authorization</a></li>
-      <li class="toc-sub"><a href="#canonical-mock-provider-catalog">Canonical mock provider catalog</a></li>
-      <li class="toc-sub"><a href="#replay-determinism">Replay determinism</a></li>
-      <li class="toc-sub"><a href="#capabilities-advertisement">Capabilities advertisement</a></li>
-      <li class="toc-sub"><a href="#what-this-is-not">What this is NOT</a></li>
-      <li class="toc-top"><a href="#tags">tags</a></li>
-      <li class="toc-sub"><a href="#tag-format-conventions">Tag format conventions</a></li>
-      <li class="toc-sub"><a href="#limits">Limits</a></li>
-      <li class="toc-top"><a href="#metadata">metadata</a></li>
-      <li class="toc-sub"><a href="#limits">Limits</a></li>
-      <li class="toc-top"><a href="#nodemodule-access">NodeModule access</a></li>
-      <li class="toc-top"><a href="#persistence">Persistence</a></li>
-      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

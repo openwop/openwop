@@ -92,7 +92,23 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-storage-adapters">OpenWOP Spec v1 — Storage Adapters</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
+      <li class="toc-top"><a href="#contract-1-runeventlogio">Contract 1 — RunEventLogIO</a></li>
+      <li class="toc-sub"><a href="#methods">Methods</a></li>
+      <li class="toc-sub"><a href="#reference-implementations-non-normative">Reference implementations (non-normative)</a></li>
+      <li class="toc-top"><a href="#contract-2-suspendio">Contract 2 — SuspendIO</a></li>
+      <li class="toc-sub"><a href="#methods">Methods</a></li>
+      <li class="toc-sub"><a href="#doc-shape">Doc shape</a></li>
+      <li class="toc-sub"><a href="#reference-implementations-non-normative">Reference implementations (non-normative)</a></li>
+      <li class="toc-top"><a href="#naming-and-back-compat">Naming and back-compat</a></li>
+      <li class="toc-top"><a href="#compliance-checklist">Compliance checklist</a></li>
+      <li class="toc-top"><a href="#future-work">Future work</a></li>
+      <li class="toc-top"><a href="#see-also">See also</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-storage-adapters">OpenWOP Spec v1 — Storage Adapters</h1>
 <blockquote><p><strong>Status: FINAL v1 (2026-04-29).</strong> Comprehensive coverage of the two normative storage-adapter contracts (<code>RunEventLogIO</code> and <code>SuspendIO</code>) that any OpenWOP-compliant engine implementation MUST satisfy. Stable surface for external review. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>
@@ -271,23 +287,7 @@
 <li><code>version-negotiation.md</code> — <code>RunEventDoc.engineVersion</code> is part of the contract</li>
 <li><code>examples/hosts/in-memory/</code> — no-durability reference host.</li>
 <li><code>examples/hosts/sqlite/</code> — durable single-node reference host.</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
-      <li class="toc-top"><a href="#contract-1-runeventlogio">Contract 1 — RunEventLogIO</a></li>
-      <li class="toc-sub"><a href="#methods">Methods</a></li>
-      <li class="toc-sub"><a href="#reference-implementations-non-normative">Reference implementations (non-normative)</a></li>
-      <li class="toc-top"><a href="#contract-2-suspendio">Contract 2 — SuspendIO</a></li>
-      <li class="toc-sub"><a href="#methods">Methods</a></li>
-      <li class="toc-sub"><a href="#doc-shape">Doc shape</a></li>
-      <li class="toc-sub"><a href="#reference-implementations-non-normative">Reference implementations (non-normative)</a></li>
-      <li class="toc-top"><a href="#naming-and-back-compat">Naming and back-compat</a></li>
-      <li class="toc-top"><a href="#compliance-checklist">Compliance checklist</a></li>
-      <li class="toc-top"><a href="#future-work">Future work</a></li>
-      <li class="toc-top"><a href="#see-also">See also</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

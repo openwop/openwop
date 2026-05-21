@@ -92,7 +92,39 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-prompt-templates">OpenWOP Spec v1 — Prompt Templates</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
+      <li class="toc-top"><a href="#what-a-prompt-template-is-and-is-not">What a Prompt Template is (and is not)</a></li>
+      <li class="toc-top"><a href="#promptkind">PromptKind</a></li>
+      <li class="toc-top"><a href="#prompttemplate">PromptTemplate</a></li>
+      <li class="toc-sub"><a href="#variable-interpolation">Variable interpolation</a></li>
+      <li class="toc-sub"><a href="#promptvariable">PromptVariable</a></li>
+      <li class="toc-top"><a href="#promptref">PromptRef</a></li>
+      <li class="toc-sub"><a href="#conflict-resolution">Conflict resolution</a></li>
+      <li class="toc-top"><a href="#capability-advertisement">Capability advertisement</a></li>
+      <li class="toc-top"><a href="#composition-observability">Composition + observability</a></li>
+      <li class="toc-sub"><a href="#replay-determinism">Replay determinism</a></li>
+      <li class="toc-sub"><a href="#three-surface-taxonomy-non-normative">Three-surface taxonomy (non-normative)</a></li>
+      <li class="toc-top"><a href="#security-invariants">Security invariants</a></li>
+      <li class="toc-top"><a href="#discovery-distribution-rfc-0028">Discovery &amp; distribution (RFC 0028)</a></li>
+      <li class="toc-sub"><a href="#rest-endpoints">REST endpoints</a></li>
+      <li class="toc-sub"><a href="#prompt-pack-distribution">Prompt-pack distribution</a></li>
+      <li class="toc-sub"><a href="#capability-advertisement-extensions">Capability advertisement extensions</a></li>
+      <li class="toc-sub"><a href="#provenance-fields-on-prompttemplate-meta">Provenance fields on PromptTemplate.meta</a></li>
+      <li class="toc-top"><a href="#resolution-chain-normative">Resolution chain (normative)</a></li>
+      <li class="toc-sub"><a href="#layer-1-node-config-highest-precedence">Layer 1 — Node config (highest precedence)</a></li>
+      <li class="toc-sub"><a href="#layer-2-agent-binding">Layer 2 — Agent binding</a></li>
+      <li class="toc-sub"><a href="#layer-3-workflow-defaults">Layer 3 — Workflow defaults</a></li>
+      <li class="toc-sub"><a href="#layer-4-host-built-ins-lowest-precedence">Layer 4 — Host built-ins (lowest precedence)</a></li>
+      <li class="toc-sub"><a href="#run-configurable-extension-layer-optional-non-normative">Run-configurable extension layer (optional, non-normative)</a></li>
+      <li class="toc-sub"><a href="#replay-determinism">Replay determinism</a></li>
+      <li class="toc-sub"><a href="#orthogonality-with-model-capability-gating-non-normative">Orthogonality with model-capability gating (non-normative)</a></li>
+      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
+      <li class="toc-top"><a href="#cross-reference">Cross-reference</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-prompt-templates">OpenWOP Spec v1 — Prompt Templates</h1>
 <blockquote><p><strong>Status: DRAFT v1.x (filed via <a href="../../RFCS/0027-prompt-templates.md">RFC 0027</a>, 2026-05-19; first cut 2026-05-20).</strong> Lands the wire shape for portable, versioned, variable-bound prompts referenced by workflow nodes and agent manifests. Closes the gap where <code>core.ai.callPrompt</code> config (<code>workflow-chain-packs.md</code> line 62, <code>host-capabilities.md</code> line 347) and <code>AgentManifest.systemPrompt | systemPromptRef</code> (<code>agent-manifest.schema.json</code> lines 34–41) accept inline prompt bodies but offer no shared addressing, library distribution, variable schema, or observability of the composed result. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend. Fields marked <strong>(stable)</strong> lock; fields marked <strong>(in-flight)</strong> may shift compatibly within v1.x.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>
@@ -404,39 +436,7 @@ prompt:critic-system</code></pre>
 <li><code>SECURITY/threat-model-secret-leakage.md</code> SR-1 — <code>[REDACTED:&amp;lt;id&amp;gt;]</code> marker discipline.</li>
 <li><code>SECURITY/threat-model-prompt-injection.md</code> — <code>&amp;lt;UNTRUSTED&amp;gt;...&amp;lt;/UNTRUSTED&amp;gt;</code> marker discipline.</li>
 <li>External: MyndHyve <code>PromptEntry</code> / <code>PromptLibrary</code> / <code>WorkflowPromptService.resolveForExecution()</code> reference impl — closest single-host prior-art for the resolution-chain pattern RFC 0029 normates.</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
-      <li class="toc-top"><a href="#what-a-prompt-template-is-and-is-not">What a Prompt Template is (and is not)</a></li>
-      <li class="toc-top"><a href="#promptkind">PromptKind</a></li>
-      <li class="toc-top"><a href="#prompttemplate">PromptTemplate</a></li>
-      <li class="toc-sub"><a href="#variable-interpolation">Variable interpolation</a></li>
-      <li class="toc-sub"><a href="#promptvariable">PromptVariable</a></li>
-      <li class="toc-top"><a href="#promptref">PromptRef</a></li>
-      <li class="toc-sub"><a href="#conflict-resolution">Conflict resolution</a></li>
-      <li class="toc-top"><a href="#capability-advertisement">Capability advertisement</a></li>
-      <li class="toc-top"><a href="#composition-observability">Composition + observability</a></li>
-      <li class="toc-sub"><a href="#replay-determinism">Replay determinism</a></li>
-      <li class="toc-sub"><a href="#three-surface-taxonomy-non-normative">Three-surface taxonomy (non-normative)</a></li>
-      <li class="toc-top"><a href="#security-invariants">Security invariants</a></li>
-      <li class="toc-top"><a href="#discovery-distribution-rfc-0028">Discovery &amp; distribution (RFC 0028)</a></li>
-      <li class="toc-sub"><a href="#rest-endpoints">REST endpoints</a></li>
-      <li class="toc-sub"><a href="#prompt-pack-distribution">Prompt-pack distribution</a></li>
-      <li class="toc-sub"><a href="#capability-advertisement-extensions">Capability advertisement extensions</a></li>
-      <li class="toc-sub"><a href="#provenance-fields-on-prompttemplate-meta">Provenance fields on PromptTemplate.meta</a></li>
-      <li class="toc-top"><a href="#resolution-chain-normative">Resolution chain (normative)</a></li>
-      <li class="toc-sub"><a href="#layer-1-node-config-highest-precedence">Layer 1 — Node config (highest precedence)</a></li>
-      <li class="toc-sub"><a href="#layer-2-agent-binding">Layer 2 — Agent binding</a></li>
-      <li class="toc-sub"><a href="#layer-3-workflow-defaults">Layer 3 — Workflow defaults</a></li>
-      <li class="toc-sub"><a href="#layer-4-host-built-ins-lowest-precedence">Layer 4 — Host built-ins (lowest precedence)</a></li>
-      <li class="toc-sub"><a href="#run-configurable-extension-layer-optional-non-normative">Run-configurable extension layer (optional, non-normative)</a></li>
-      <li class="toc-sub"><a href="#replay-determinism">Replay determinism</a></li>
-      <li class="toc-sub"><a href="#orthogonality-with-model-capability-gating-non-normative">Orthogonality with model-capability gating (non-normative)</a></li>
-      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
-      <li class="toc-top"><a href="#cross-reference">Cross-reference</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

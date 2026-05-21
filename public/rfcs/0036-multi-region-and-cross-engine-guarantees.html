@@ -67,7 +67,25 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="rfc-0036-multi-region-idempotency-cross-engine-append-ordering-guarantees">RFC 0036: Multi-region idempotency + cross-engine append-ordering guarantees</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-capabilities-idempotency-multiregion-normative">§A — capabilities.idempotency.multiRegion (normative)</a></li>
+      <li class="toc-sub"><a href="#b-capabilities-eventlog-crossengineordering-normative">§B — capabilities.eventLog.crossEngineOrdering (normative)</a></li>
+      <li class="toc-sub"><a href="#c-multi-region-simulator-host-side">§C — Multi-region simulator (host-side)</a></li>
+      <li class="toc-sub"><a href="#d-conformance-scenarios">§D — Conformance scenarios</a></li>
+      <li class="toc-sub"><a href="#e-replay-determinism-cross-region-additive-prose-to-spec-v1-replay-md">§E — Replay-determinism cross-region (additive prose to spec/v1/replay.md)</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="rfc-0036-multi-region-idempotency-cross-engine-append-ordering-guarantees">RFC 0036: Multi-region idempotency + cross-engine append-ordering guarantees</h1>
 <table>
 <thead><tr><th>Field</th><th>Value</th></tr></thead>
 <tbody>
@@ -244,25 +262,7 @@
 <li><code>RFCS/0001-rfc-process.md</code> §"Promotion to Accepted"</li>
 <li>External standards-readiness review 2026-05-21 — finding (6)</li>
 <li><code>examples/hosts/postgres/src/multi-region.ts</code> (existing canonical resolver, 6-path unit test — the algorithm itself; this RFC adds the cross-host conformance gate)</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#summary">Summary</a></li>
-      <li class="toc-top"><a href="#motivation">Motivation</a></li>
-      <li class="toc-top"><a href="#proposal">Proposal</a></li>
-      <li class="toc-sub"><a href="#a-capabilities-idempotency-multiregion-normative">§A — capabilities.idempotency.multiRegion (normative)</a></li>
-      <li class="toc-sub"><a href="#b-capabilities-eventlog-crossengineordering-normative">§B — capabilities.eventLog.crossEngineOrdering (normative)</a></li>
-      <li class="toc-sub"><a href="#c-multi-region-simulator-host-side">§C — Multi-region simulator (host-side)</a></li>
-      <li class="toc-sub"><a href="#d-conformance-scenarios">§D — Conformance scenarios</a></li>
-      <li class="toc-sub"><a href="#e-replay-determinism-cross-region-additive-prose-to-spec-v1-replay-md">§E — Replay-determinism cross-region (additive prose to spec/v1/replay.md)</a></li>
-      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
-      <li class="toc-top"><a href="#conformance">Conformance</a></li>
-      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
-      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
-      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

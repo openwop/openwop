@@ -67,7 +67,26 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="rfc-0020-host-side-mcp-server-composition">RFC 0020: host-side MCP server composition</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-new-section-in-mcp-integration-md-openwop-host-as-mcp-server">§A New section in mcp-integration.md: &quot;OpenWOP host as MCP server&quot;</a></li>
+      <li class="toc-sub"><a href="#b-capability-schema-additions">§B Capability schema additions</a></li>
+      <li class="toc-sub"><a href="#c-state-projection-table">§C State projection table</a></li>
+      <li class="toc-sub"><a href="#d-trust-boundary">§D Trust boundary</a></li>
+      <li class="toc-sub"><a href="#e-what-openwop-does-not-specify">§E What openwop does NOT specify</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="rfc-0020-host-side-mcp-server-composition">RFC 0020: host-side MCP server composition</h1>
 <table>
 <thead><tr><th>Field</th><th>Value</th></tr></thead>
 <tbody>
@@ -172,26 +191,7 @@
 <li>modelcontextprotocol.io 2025-06-18 spec (canonical wire reference).</li>
 <li><code>SECURITY/threat-model-prompt-injection.md</code> (untrusted-boundary invariants).</li>
 <li><code>core.openwop.ai@1.1.2</code> + <code>core.openwop.mcp@1.1.1</code> packs (2026-05-17) — honor §D downstream by wrapping user-role content in <code>&amp;lt;UNTRUSTED&amp;gt;...&amp;lt;/UNTRUSTED&amp;gt;</code> markers when <code>ctx.trustBoundary === &#39;untrusted&#39;</code>. See <code>CHANGELOG.md [Unreleased]</code> §"UNTRUSTED-marker discipline" and <code>apps/workflow-engine/backend/typescript/test/untrusted-marker.test.ts</code> (14 in-tree tests covering both packs' delegate behavior).</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#summary">Summary</a></li>
-      <li class="toc-top"><a href="#motivation">Motivation</a></li>
-      <li class="toc-top"><a href="#proposal">Proposal</a></li>
-      <li class="toc-sub"><a href="#a-new-section-in-mcp-integration-md-openwop-host-as-mcp-server">§A New section in mcp-integration.md: &quot;OpenWOP host as MCP server&quot;</a></li>
-      <li class="toc-sub"><a href="#b-capability-schema-additions">§B Capability schema additions</a></li>
-      <li class="toc-sub"><a href="#c-state-projection-table">§C State projection table</a></li>
-      <li class="toc-sub"><a href="#d-trust-boundary">§D Trust boundary</a></li>
-      <li class="toc-sub"><a href="#e-what-openwop-does-not-specify">§E What openwop does NOT specify</a></li>
-      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
-      <li class="toc-top"><a href="#conformance">Conformance</a></li>
-      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
-      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
-      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
-      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

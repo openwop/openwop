@@ -92,7 +92,51 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-host-capability-surfaces">OpenWOP Spec v1 — Host Capability Surfaces</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
+      <li class="toc-top"><a href="#the-contract-pattern">The contract pattern</a></li>
+      <li class="toc-top"><a href="#host-aiproviders">§host.aiProviders</a></li>
+      <li class="toc-top"><a href="#host-aienvelope">§host.aiEnvelope</a></li>
+      <li class="toc-top"><a href="#model-capability-declarations">Model-capability declarations</a></li>
+      <li class="toc-sub"><a href="#dispatch-flow-normative">Dispatch flow (normative)</a></li>
+      <li class="toc-sub"><a href="#capability-identifier-registry">Capability identifier registry</a></li>
+      <li class="toc-sub"><a href="#interaction-with-prompt-resolution-rfc-0029">Interaction with prompt resolution (RFC 0029)</a></li>
+      <li class="toc-top"><a href="#host-promptlibrary">§host.promptLibrary</a></li>
+      <li class="toc-top"><a href="#host-canvas">§host.canvas</a></li>
+      <li class="toc-top"><a href="#host-chat">§host.chat</a></li>
+      <li class="toc-top"><a href="#host-brand">§host.brand</a></li>
+      <li class="toc-top"><a href="#host-kanban">§host.kanban</a></li>
+      <li class="toc-top"><a href="#host-webresearch">§host.webResearch</a></li>
+      <li class="toc-top"><a href="#host-agentruntime">§host.agentRuntime</a></li>
+      <li class="toc-top"><a href="#host-coordination">§host.coordination</a></li>
+      <li class="toc-top"><a href="#host-dataintegration">§host.dataIntegration</a></li>
+      <li class="toc-top"><a href="#host-launchstudio">§host.launchStudio</a></li>
+      <li class="toc-top"><a href="#host-entities">§host.entities</a></li>
+      <li class="toc-top"><a href="#host-messaging">§host.messaging</a></li>
+      <li class="toc-top"><a href="#host-mcp">§host.mcp</a></li>
+      <li class="toc-top"><a href="#host-knowledge">§host.knowledge</a></li>
+      <li class="toc-top"><a href="#host-secrets">§host.secrets</a></li>
+      <li class="toc-top"><a href="#host-fs">§host.fs</a></li>
+      <li class="toc-top"><a href="#host-kvstorage">§host.kvStorage</a></li>
+      <li class="toc-top"><a href="#host-tablestorage">§host.tableStorage</a></li>
+      <li class="toc-top"><a href="#host-queuebus">§host.queueBus</a></li>
+      <li class="toc-top"><a href="#host-sql">§host.sql</a></li>
+      <li class="toc-top"><a href="#host-nosql">§host.nosql</a></li>
+      <li class="toc-top"><a href="#host-vectorstore">§host.vectorStore</a></li>
+      <li class="toc-top"><a href="#host-searchindex">§host.searchIndex</a></li>
+      <li class="toc-top"><a href="#host-blobstorage">§host.blobStorage</a></li>
+      <li class="toc-top"><a href="#host-cache">§host.cache</a></li>
+      <li class="toc-top"><a href="#sandbox-execution-contract-rfc-0035">Sandbox execution contract (RFC 0035)</a></li>
+      <li class="toc-sub"><a href="#capability-advertisement-normative">Capability advertisement (normative)</a></li>
+      <li class="toc-sub"><a href="#failure-mode-invariants-normative">Failure-mode invariants (normative)</a></li>
+      <li class="toc-sub"><a href="#error-codes-additive-to-rest-endpoints-md-common-error-codes">Error codes (additive to rest-endpoints.md §&quot;Common error codes&quot;)</a></li>
+      <li class="toc-top"><a href="#reserved-but-undocumented-surfaces">Reserved-but-undocumented surfaces</a></li>
+      <li class="toc-top"><a href="#capability-negotiation">Capability negotiation</a></li>
+      <li class="toc-top"><a href="#see-also">See also</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-host-capability-surfaces">OpenWOP Spec v1 — Host Capability Surfaces</h1>
 <blockquote><p><strong>Status: FINAL v1 (2026-05-12).</strong> Promoted DRAFT → FINAL after Phase B audit confirmed all 14 <code>host.<em></code> capability sections are internally consistent + RFC 2119-clean + cross-linked to <code>capabilities.md</code> §"runtimeCapabilities" + <code>node-packs.md</code> §"Manifest format" <code>peerDependencies</code>. Normative contracts for the <code>host.</em></code> capabilities that node-pack <code>peerDependencies</code> may declare. A pack that declares <code>peerDependencies: { &quot;host.canvas&quot;: &quot;supported&quot; }</code> consumes the canvas surface defined here; the host that advertises <code>host.canvas: supported</code> in <code>/.well-known/openwop</code> MUST expose the contract specified in §host.canvas. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>
@@ -1455,51 +1499,7 @@ ctx.storage.cache.delete({ key: string }) → Promise&amp;lt;{ deleted: boolean 
 <li><code>spec/v1/capabilities.md</code> — <code>/.well-known/openwop</code> shape; the host advertises its supported capabilities there</li>
 <li><code>spec/v1/node-packs.md</code> §"Manifest format" — <code>peerDependencies</code> syntax</li>
 <li><code>spec/v1/agent-memory.md</code> — <code>host.agentRuntime</code> complements the <code>agents.memoryBackends</code> capability for stateful agents</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
-      <li class="toc-top"><a href="#the-contract-pattern">The contract pattern</a></li>
-      <li class="toc-top"><a href="#host-aiproviders">§host.aiProviders</a></li>
-      <li class="toc-top"><a href="#host-aienvelope">§host.aiEnvelope</a></li>
-      <li class="toc-top"><a href="#model-capability-declarations">Model-capability declarations</a></li>
-      <li class="toc-sub"><a href="#dispatch-flow-normative">Dispatch flow (normative)</a></li>
-      <li class="toc-sub"><a href="#capability-identifier-registry">Capability identifier registry</a></li>
-      <li class="toc-sub"><a href="#interaction-with-prompt-resolution-rfc-0029">Interaction with prompt resolution (RFC 0029)</a></li>
-      <li class="toc-top"><a href="#host-promptlibrary">§host.promptLibrary</a></li>
-      <li class="toc-top"><a href="#host-canvas">§host.canvas</a></li>
-      <li class="toc-top"><a href="#host-chat">§host.chat</a></li>
-      <li class="toc-top"><a href="#host-brand">§host.brand</a></li>
-      <li class="toc-top"><a href="#host-kanban">§host.kanban</a></li>
-      <li class="toc-top"><a href="#host-webresearch">§host.webResearch</a></li>
-      <li class="toc-top"><a href="#host-agentruntime">§host.agentRuntime</a></li>
-      <li class="toc-top"><a href="#host-coordination">§host.coordination</a></li>
-      <li class="toc-top"><a href="#host-dataintegration">§host.dataIntegration</a></li>
-      <li class="toc-top"><a href="#host-launchstudio">§host.launchStudio</a></li>
-      <li class="toc-top"><a href="#host-entities">§host.entities</a></li>
-      <li class="toc-top"><a href="#host-messaging">§host.messaging</a></li>
-      <li class="toc-top"><a href="#host-mcp">§host.mcp</a></li>
-      <li class="toc-top"><a href="#host-knowledge">§host.knowledge</a></li>
-      <li class="toc-top"><a href="#host-secrets">§host.secrets</a></li>
-      <li class="toc-top"><a href="#host-fs">§host.fs</a></li>
-      <li class="toc-top"><a href="#host-kvstorage">§host.kvStorage</a></li>
-      <li class="toc-top"><a href="#host-tablestorage">§host.tableStorage</a></li>
-      <li class="toc-top"><a href="#host-queuebus">§host.queueBus</a></li>
-      <li class="toc-top"><a href="#host-sql">§host.sql</a></li>
-      <li class="toc-top"><a href="#host-nosql">§host.nosql</a></li>
-      <li class="toc-top"><a href="#host-vectorstore">§host.vectorStore</a></li>
-      <li class="toc-top"><a href="#host-searchindex">§host.searchIndex</a></li>
-      <li class="toc-top"><a href="#host-blobstorage">§host.blobStorage</a></li>
-      <li class="toc-top"><a href="#host-cache">§host.cache</a></li>
-      <li class="toc-top"><a href="#sandbox-execution-contract-rfc-0035">Sandbox execution contract (RFC 0035)</a></li>
-      <li class="toc-sub"><a href="#capability-advertisement-normative">Capability advertisement (normative)</a></li>
-      <li class="toc-sub"><a href="#failure-mode-invariants-normative">Failure-mode invariants (normative)</a></li>
-      <li class="toc-sub"><a href="#error-codes-additive-to-rest-endpoints-md-common-error-codes">Error codes (additive to rest-endpoints.md §&quot;Common error codes&quot;)</a></li>
-      <li class="toc-top"><a href="#reserved-but-undocumented-surfaces">Reserved-but-undocumented surfaces</a></li>
-      <li class="toc-top"><a href="#capability-negotiation">Capability negotiation</a></li>
-      <li class="toc-top"><a href="#see-also">See also</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

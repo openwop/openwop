@@ -67,7 +67,19 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="for-host-implementers">For host implementers</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#the-contract-in-one-sentence">The contract in one sentence</a></li>
+      <li class="toc-top"><a href="#read-these-first">Read these first</a></li>
+      <li class="toc-top"><a href="#the-advertise-honestly-principle">The advertise-honestly principle</a></li>
+      <li class="toc-top"><a href="#start-from-a-reference-host">Start from a reference host</a></li>
+      <li class="toc-top"><a href="#run-the-conformance-suite">Run the conformance suite</a></li>
+      <li class="toc-top"><a href="#common-implementation-surfaces">Common implementation surfaces</a></li>
+      <li class="toc-top"><a href="#what-you-owe-the-matrix">What you owe the matrix</a></li>
+      <li class="toc-top"><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="for-host-implementers">For host implementers</h1>
 <p>You're implementing OpenWOP against a runtime — your own engine, a customer's stack, a managed service you're building. This page tells you what the conformance suite expects, what the advertise-honestly principle costs you, and which reference implementation to mine first.</p>
 <h2 id="the-contract-in-one-sentence">The contract in one sentence</h2>
 <p>A host advertises a set of capabilities at <code>GET /.well-known/openwop</code>, implements the REST endpoints + SSE streams + signed webhooks for the capabilities it claims, and passes the conformance scenarios gated on those capabilities. Anything you don't claim, you don't have to implement.</p>
@@ -119,19 +131,7 @@ npx @openwop/openwop-conformance</code></pre>
 <tr><td>Check the leaderboard</td><td><a href="/conformance/">/conformance/</a></td></tr>
 <tr><td>Clone a reference host</td><td><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">examples/hosts ↗</a></td></tr>
 <tr><td>Run the conformance suite</td><td><code>npx @openwop/openwop-conformance</code></td></tr>
-</tbody></table></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#the-contract-in-one-sentence">The contract in one sentence</a></li>
-      <li class="toc-top"><a href="#read-these-first">Read these first</a></li>
-      <li class="toc-top"><a href="#the-advertise-honestly-principle">The advertise-honestly principle</a></li>
-      <li class="toc-top"><a href="#start-from-a-reference-host">Start from a reference host</a></li>
-      <li class="toc-top"><a href="#run-the-conformance-suite">Run the conformance suite</a></li>
-      <li class="toc-top"><a href="#common-implementation-surfaces">Common implementation surfaces</a></li>
-      <li class="toc-top"><a href="#what-you-owe-the-matrix">What you owe the matrix</a></li>
-      <li class="toc-top"><a href="#next-steps">Next steps</a></li>
-    </ul>
-  </aside></div><script>
+</tbody></table></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

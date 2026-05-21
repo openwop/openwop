@@ -92,7 +92,21 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-agentref-positioning">OpenWOP Spec v1 — <code>AgentRef</code> Positioning</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
+      <li class="toc-top"><a href="#shape-comparison-at-a-glance">Shape comparison at a glance</a></li>
+      <li class="toc-top"><a href="#composition-rules">Composition rules</a></li>
+      <li class="toc-sub"><a href="#agentref-w3c-did">AgentRef + W3C DID</a></li>
+      <li class="toc-sub"><a href="#agentref-a2a-agentcard">AgentRef + A2A AgentCard</a></li>
+      <li class="toc-sub"><a href="#agentref-agntcy">AgentRef + AGNTCY</a></li>
+      <li class="toc-top"><a href="#why-agentref-is-small">Why AgentRef is small</a></li>
+      <li class="toc-top"><a href="#translation-table">Translation table</a></li>
+      <li class="toc-top"><a href="#what-s-out-of-scope">What&#39;s out of scope</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-agentref-positioning">OpenWOP Spec v1 — <code>AgentRef</code> Positioning</h1>
 <blockquote><p><strong>Status: FINAL v1 (2026-05-10).</strong> Non-normative addendum to RFC 0002. Compares the <code>AgentRef</code> shape introduced by RFC 0002 to three adjacent agent-identity ecosystems: W3C DIDs, A2A <code>AgentCard</code>, and AGNTCY agent identity. Goal is to make composition choices concrete so implementers don't reinvent translations every time. This is positioning, not requirements. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a> where used.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>
@@ -183,21 +197,7 @@
 <li>AGNTCY working notes (informative, evolving)</li>
 <li><code>spec/v1/a2a-integration.md</code> — full A2A composition spec</li>
 <li><code>spec/v1/host-extensions.md</code> — <code>vendor.*</code> namespace conventions</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
-      <li class="toc-top"><a href="#shape-comparison-at-a-glance">Shape comparison at a glance</a></li>
-      <li class="toc-top"><a href="#composition-rules">Composition rules</a></li>
-      <li class="toc-sub"><a href="#agentref-w3c-did">AgentRef + W3C DID</a></li>
-      <li class="toc-sub"><a href="#agentref-a2a-agentcard">AgentRef + A2A AgentCard</a></li>
-      <li class="toc-sub"><a href="#agentref-agntcy">AgentRef + AGNTCY</a></li>
-      <li class="toc-top"><a href="#why-agentref-is-small">Why AgentRef is small</a></li>
-      <li class="toc-top"><a href="#translation-table">Translation table</a></li>
-      <li class="toc-top"><a href="#what-s-out-of-scope">What&#39;s out of scope</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

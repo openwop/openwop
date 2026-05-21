@@ -67,7 +67,26 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="rfc-0023-conformance-agent-event-emitters">RFC 0023: Conformance Agent-Event Emitters</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-authorized-emitters-table-additive-amendment-to-rfc-0002-b">§A Authorized-Emitters table (additive amendment to RFC 0002 §B)</a></li>
+      <li class="toc-sub"><a href="#b-core-conformance-mock-agent-typeid">§B core.conformance.mock-agent typeId</a></li>
+      <li class="toc-sub"><a href="#c-retroactive-documentation-of-core-orchestrator-supervisor-hooks">§C Retroactive documentation of core.orchestrator.supervisor hooks</a></li>
+      <li class="toc-sub"><a href="#d-schema-diff-schemas-core-conformance-mock-agent-config-schema-json-new">§D Schema diff: schemas/core-conformance-mock-agent-config.schema.json (NEW)</a></li>
+      <li class="toc-sub"><a href="#e-fixture-rewrites">§E Fixture rewrites</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="rfc-0023-conformance-agent-event-emitters">RFC 0023: Conformance Agent-Event Emitters</h1>
 <table>
 <thead><tr><th>Field</th><th>Value</th></tr></thead>
 <tbody>
@@ -281,26 +300,7 @@
 <li><code>schemas/workflow-definition.schema.json</code> <code>nodes[].agent.description</code> (AgentRef pin → RunSnapshot.agent projection)</li>
 <li><code>examples/hosts/postgres/src/server.ts:1085-1101</code> (de-facto <code>agent.reasoned</code>/<code>agent.decided</code> emission on <code>core.llm.chat</code>)</li>
 <li><code>conformance/fixtures/conformance-orchestrator-low-confidence.json</code> (de-facto <code>mockConfidence</code> hook on <code>core.orchestrator.supervisor</code>)</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#summary">Summary</a></li>
-      <li class="toc-top"><a href="#motivation">Motivation</a></li>
-      <li class="toc-top"><a href="#proposal">Proposal</a></li>
-      <li class="toc-sub"><a href="#a-authorized-emitters-table-additive-amendment-to-rfc-0002-b">§A Authorized-Emitters table (additive amendment to RFC 0002 §B)</a></li>
-      <li class="toc-sub"><a href="#b-core-conformance-mock-agent-typeid">§B core.conformance.mock-agent typeId</a></li>
-      <li class="toc-sub"><a href="#c-retroactive-documentation-of-core-orchestrator-supervisor-hooks">§C Retroactive documentation of core.orchestrator.supervisor hooks</a></li>
-      <li class="toc-sub"><a href="#d-schema-diff-schemas-core-conformance-mock-agent-config-schema-json-new">§D Schema diff: schemas/core-conformance-mock-agent-config.schema.json (NEW)</a></li>
-      <li class="toc-sub"><a href="#e-fixture-rewrites">§E Fixture rewrites</a></li>
-      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
-      <li class="toc-top"><a href="#conformance">Conformance</a></li>
-      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
-      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
-      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
-      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

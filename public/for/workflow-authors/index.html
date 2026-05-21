@@ -67,7 +67,18 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="for-workflow-authors">For workflow authors</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#what-you-actually-need-to-know">What you actually need to know</a></li>
+      <li class="toc-top"><a href="#read-these-four-spec-docs-first">Read these four spec docs first</a></li>
+      <li class="toc-top"><a href="#reach-for-these-when-you-hit-them">Reach for these when you hit them</a></li>
+      <li class="toc-top"><a href="#get-to-a-running-workflow">Get to a running workflow</a></li>
+      <li class="toc-top"><a href="#what-you-ll-write-yourself">What you&#39;ll write yourself</a></li>
+      <li class="toc-top"><a href="#what-you-don-t-write">What you don&#39;t write</a></li>
+      <li class="toc-top"><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="for-workflow-authors">For workflow authors</h1>
 <p>You're building a product that runs multi-agent workflows. You want the durable, replayable, resumable parts handled by something other than your application code, and you don't want to be locked to one runtime. This page is the shortest path from here to a running workflow on an OpenWOP-compatible host.</p>
 <h2 id="what-you-actually-need-to-know">What you actually need to know</h2>
 <p>OpenWOP gives you a wire contract — REST endpoints to start runs, SSE streams to consume events, signed webhooks for durable delivery, and a typed run lifecycle that survives restarts. You write workflows declaratively (nodes + edges + typed channels + reducers) and submit them to any conformance-tested host. The host owns the runtime; your code owns the workflow shape.</p>
@@ -115,18 +126,7 @@
 <tr><td>Read the run lifecycle spec</td><td><a href="/spec/v1/run-options.html">/spec/v1/run-options.html</a></td></tr>
 <tr><td>Compare host implementations</td><td><a href="/conformance/">/conformance/</a></td></tr>
 <tr><td>Ask a question</td><td><a href="https://github.com/openwop/openwop/issues">GitHub Issues ↗</a></td></tr>
-</tbody></table></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#what-you-actually-need-to-know">What you actually need to know</a></li>
-      <li class="toc-top"><a href="#read-these-four-spec-docs-first">Read these four spec docs first</a></li>
-      <li class="toc-top"><a href="#reach-for-these-when-you-hit-them">Reach for these when you hit them</a></li>
-      <li class="toc-top"><a href="#get-to-a-running-workflow">Get to a running workflow</a></li>
-      <li class="toc-top"><a href="#what-you-ll-write-yourself">What you&#39;ll write yourself</a></li>
-      <li class="toc-top"><a href="#what-you-don-t-write">What you don&#39;t write</a></li>
-      <li class="toc-top"><a href="#next-steps">Next steps</a></li>
-    </ul>
-  </aside></div><script>
+</tbody></table></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;

@@ -150,7 +150,10 @@ function wrapWithToc(articleHtml, toc, { tocTitle = 'On this page' } = {}) {
   });
 })();
 </script>`;
-  return `<div class="spec-page-grid">${articleHtml}${tocHtml}</div>${script}`;
+  // ToC first in source order so it lands in the left grid column on
+  // desktop; on mobile the grid collapses and `order: 2` on .spec-toc
+  // pushes it below the article so the primary content reads first.
+  return `<div class="spec-page-grid">${tocHtml}${articleHtml}</div>${script}`;
 }
 
 function markdownToHtml(md) {

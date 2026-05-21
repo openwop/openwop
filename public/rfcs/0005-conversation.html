@@ -67,7 +67,30 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="rfc-0005-multi-turn-conversation">RFC 0005: Multi-Turn Conversation</h1>
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-kind-conversation-interrupt">§A kind: &#39;conversation&#39; interrupt</a></li>
+      <li class="toc-sub"><a href="#b-run-events">§B Run events</a></li>
+      <li class="toc-sub"><a href="#c-conversationturn-shape">§C ConversationTurn shape</a></li>
+      <li class="toc-sub"><a href="#d-lifecycle">§D Lifecycle</a></li>
+      <li class="toc-sub"><a href="#e-resume-payload-shape">§E Resume payload shape</a></li>
+      <li class="toc-sub"><a href="#f-channel-integration">§F Channel integration</a></li>
+      <li class="toc-sub"><a href="#g-replay-determinism">§G Replay determinism</a></li>
+      <li class="toc-sub"><a href="#h-capability-advertisement">§H Capability advertisement</a></li>
+      <li class="toc-sub"><a href="#i-timeout">§I Timeout</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="rfc-0005-multi-turn-conversation">RFC 0005: Multi-Turn Conversation</h1>
 <table>
 <thead><tr><th>Field</th><th>Value</th></tr></thead>
 <tbody>
@@ -235,30 +258,7 @@
 <li>RFC 0002 §G (ConversationMessage shape — structural subset of ConversationTurn)</li>
 <li>RFC 0006 §C (orchestrator <code>ask-user</code> decision routes here when conversationPrimitive advertised)</li>
 <li>RFC 0007 §B (core.dispatch routes ask-user through conversation when capability is advertised)</li>
-</ul></article><aside class="spec-toc" aria-label="On this page">
-    <h4>On this page</h4>
-    <ul>
-      <li class="toc-top"><a href="#summary">Summary</a></li>
-      <li class="toc-top"><a href="#motivation">Motivation</a></li>
-      <li class="toc-top"><a href="#proposal">Proposal</a></li>
-      <li class="toc-sub"><a href="#a-kind-conversation-interrupt">§A kind: &#39;conversation&#39; interrupt</a></li>
-      <li class="toc-sub"><a href="#b-run-events">§B Run events</a></li>
-      <li class="toc-sub"><a href="#c-conversationturn-shape">§C ConversationTurn shape</a></li>
-      <li class="toc-sub"><a href="#d-lifecycle">§D Lifecycle</a></li>
-      <li class="toc-sub"><a href="#e-resume-payload-shape">§E Resume payload shape</a></li>
-      <li class="toc-sub"><a href="#f-channel-integration">§F Channel integration</a></li>
-      <li class="toc-sub"><a href="#g-replay-determinism">§G Replay determinism</a></li>
-      <li class="toc-sub"><a href="#h-capability-advertisement">§H Capability advertisement</a></li>
-      <li class="toc-sub"><a href="#i-timeout">§I Timeout</a></li>
-      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
-      <li class="toc-top"><a href="#conformance">Conformance</a></li>
-      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
-      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
-      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
-      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
-    </ul>
-  </aside></div><script>
+</ul></article></div><script>
 (function () {
   var links = document.querySelectorAll('.spec-toc a');
   if (!links.length || !('IntersectionObserver' in window)) return;
