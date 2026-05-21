@@ -3,21 +3,21 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>openwop — openwop Spec v1 — Capability Declaration (`/.well-known/openwop`)</title>
+  <title>OpenWOP — openwop Spec v1 — Capability Declaration (`/.well-known/openwop`)</title>
   <meta name="description" content="External clients (CLIs, SDKs, agents from other ecosystems) need a deterministic way to discover what an OpenWOP-compliant server can do before they issue requests. Specifically:"/>
   <link rel="canonical" href="https://openwop.dev/spec/v1/capabilities.html"/>
 
   <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
   <meta property="og:type" content="website"/>
   <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
-  <meta property="og:title" content="openwop — openwop Spec v1 — Capability Declaration (`/.well-known/openwop`)"/>
+  <meta property="og:title" content="OpenWOP — openwop Spec v1 — Capability Declaration (`/.well-known/openwop`)"/>
   <meta property="og:description" content="External clients (CLIs, SDKs, agents from other ecosystems) need a deterministic way to discover what an OpenWOP-compliant server can do before they issue requests. Specifically:"/>
   <meta property="og:url" content="https://openwop.dev/spec/v1/capabilities.html"/>
   <meta property="og:image" content="https://openwop.dev/og-default.png"/>
 
   <!-- Twitter card -->
   <meta name="twitter:card" content="summary_large_image"/>
-  <meta name="twitter:title" content="openwop — openwop Spec v1 — Capability Declaration (`/.well-known/openwop`)"/>
+  <meta name="twitter:title" content="OpenWOP — openwop Spec v1 — Capability Declaration (`/.well-known/openwop`)"/>
   <meta name="twitter:description" content="External clients (CLIs, SDKs, agents from other ecosystems) need a deterministic way to discover what an OpenWOP-compliant server can do before they issue requests. Specifically:"/>
   <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
 
@@ -92,7 +92,7 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-capability-declaration-well-known-openwop">openwop Spec v1 — Capability Declaration (<code>/.well-known/openwop</code>)</h1>
+    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-capability-declaration-well-known-openwop">OpenWOP Spec v1 — Capability Declaration (<code>/.well-known/openwop</code>)</h1>
 <blockquote><p><strong>Status: FINAL v1 (2026-04-27; hygiene pass 2026-05-10).</strong> Formalized as <code>schemas/capabilities.schema.json</code>. The public network handshake at <code>GET /.well-known/openwop</code> is the canonical v1 capability declaration. Fields marked <strong>required v1</strong> are required for conformance; fields marked <strong>optional v1</strong> have stable wire shapes but MAY be omitted by hosts that do not support the capability. Conformance suite scenarios verify the required surface end-to-end and gate optional profile scenarios from this document. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>

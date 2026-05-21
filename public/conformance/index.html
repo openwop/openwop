@@ -3,22 +3,22 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>openwop — Conformance leaderboard</title>
-  <meta name="description" content="Live leaderboard of openwop-compatible hosts. Each row pairs a host&#39;s advertised compatibility profile with its conformance evidence — claim plus result, no marketing."/>
+  <title>OpenWOP — Conformance leaderboard</title>
+  <meta name="description" content="Live leaderboard of OpenWOP-compatible hosts. Each row pairs a host&#39;s advertised compatibility profile with its conformance evidence — claim plus result, no marketing."/>
   <link rel="canonical" href="https://openwop.dev/conformance/"/>
 
   <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
   <meta property="og:type" content="website"/>
   <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
-  <meta property="og:title" content="openwop — Conformance leaderboard"/>
-  <meta property="og:description" content="Live leaderboard of openwop-compatible hosts. Each row pairs a host&#39;s advertised compatibility profile with its conformance evidence — claim plus result, no marketing."/>
+  <meta property="og:title" content="OpenWOP — Conformance leaderboard"/>
+  <meta property="og:description" content="Live leaderboard of OpenWOP-compatible hosts. Each row pairs a host&#39;s advertised compatibility profile with its conformance evidence — claim plus result, no marketing."/>
   <meta property="og:url" content="https://openwop.dev/conformance/"/>
   <meta property="og:image" content="https://openwop.dev/og-default.png"/>
 
   <!-- Twitter card -->
   <meta name="twitter:card" content="summary_large_image"/>
-  <meta name="twitter:title" content="openwop — Conformance leaderboard"/>
-  <meta name="twitter:description" content="Live leaderboard of openwop-compatible hosts. Each row pairs a host&#39;s advertised compatibility profile with its conformance evidence — claim plus result, no marketing."/>
+  <meta name="twitter:title" content="OpenWOP — Conformance leaderboard"/>
+  <meta name="twitter:description" content="Live leaderboard of OpenWOP-compatible hosts. Each row pairs a host&#39;s advertised compatibility profile with its conformance evidence — claim plus result, no marketing."/>
   <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
 
   <!-- Icons / theme -->
@@ -69,9 +69,9 @@
   <div class="wrap">
     <header class="page-header">
     <h1>Conformance leaderboard</h1>
-    <p class="lede">Live record of openwop-compatible hosts, their advertised compatibility profiles, and which conformance scenarios pass against them.</p>
+    <p class="lede">Live record of OpenWOP-compatible hosts, their advertised compatibility profiles, and which conformance scenarios pass against them.</p>
     <p class="meta">A host's place in this matrix is a <strong>claim plus evidence</strong>. The claim is the host's advertised profile. The evidence is the conformance result published alongside the host's repo (or under <code>examples/hosts/&lt;name&gt;/conformance.md</code>).</p>
-  </header><h1 id="openwop-interop-matrix">openwop Interop Matrix</h1>
+  </header><h1 id="openwop-interop-matrix">OpenWOP Interop Matrix</h1>
 <blockquote><p><strong>Last updated:</strong> 2026-05-21 (RFC 0030/0031/0032/0033 envelope LLM-contract-hardening track promoted Active → Accepted under bootstrap-phase steward waiver; cross-host validation closed by MyndHyve workflow-runtime adoption + reference workflow-engine emission. Prior 2026-05-15 gap-closure batch closes CF-5/6/8/10/11/12 + OPS-1/2/5 + PACK-1/2/3/4/5 + SDK-3/5 + SEC-3/6 + STD-3/5/6 + DOC-4/5 + MA-1/6/7 alongside Postgres host test-suite wiring fix; prior Phase I.3 + I.4 close-out — OAuth2-CC + OIDC user-bearer JWT validators — remains in effect)</p><p><strong>Conformance suite:</strong> <code>@openwop/openwop-conformance</code></p></blockquote>
 <p>This matrix records public, reproducible compatibility evidence for openwop-compatible hosts. A row is a claim plus evidence: the host advertises a profile set, runs the conformance suite, and links to a result that another implementer can inspect.</p>
 <blockquote><p><strong>How to read "Not claimed":</strong> the reference hosts in <code>examples/hosts/</code> are minimal demos of the wire shape, not production-grade servers. A "Not claimed" profile means <em>this reference host doesn't wire it up</em> — not that the protocol surface is incomplete. Every profile listed in <code>spec/v1/profiles.md</code> has a normative RFC, capability schema, conformance scenario, and behavior gate; an adopter wiring the profile in their own host can validate end-to-end against <code>@openwop/openwop-conformance</code> by setting the scenario's documented env vars (e.g., <code>OPENWOP_TEST_OIDC_ISSUER_URL</code>, <code>OPENWOP_TEST_MTLS=1</code>). Profile coverage on the reference hosts is a product-of-scope decision, not a protocol-readiness signal.</p></blockquote>

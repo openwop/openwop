@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * openwop site generator. Reads:
+ * OpenWOP site generator. Reads:
  *   - INTEROP-MATRIX.md (the per-host claim+evidence matrix)
  *   - examples/hosts/{host}/conformance.md (per-host run logs)
  *   - spec/v1/*.md (spec corpus, for /spec/v1/ rendering)
@@ -184,8 +184,15 @@ function markdownToHtml(md) {
     const heading = /^(#{1,6})\s+(.+)$/.exec(line);
     if (heading) {
       const level = heading[1].length;
+      // Brand-name normalization: when a heading STARTS with lowercase
+      // "openwop " as a brand-prose mention (not an identifier inside
+      // backticks or a URL), render it as "OpenWOP". Slug stays lowercase.
+      // This is intentionally narrow — only word-boundary `openwop` at the
+      // very start of a heading. Identifiers like `core.openwop.*` and
+      // profile names like `openwop-core` are not affected.
+      const displayText = heading[2].replace(/^openwop\b/, 'OpenWOP');
       const slug = heading[2].toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-      out.push(`<h${level} id="${slug}">${inline(heading[2])}</h${level}>`);
+      out.push(`<h${level} id="${slug}">${inline(displayText)}</h${level}>`);
       i++;
       continue;
     }
@@ -417,7 +424,7 @@ function buildIndex() {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
-    name: 'openwop — Multi-Agent Workflow Orchestration Protocol',
+    name: 'OpenWOP — Multi-Agent Workflow Orchestration Protocol',
     description: CANONICAL_DESCRIPTION,
     url: `${SITE_ORIGIN}/`,
     applicationCategory: 'DeveloperApplication',
@@ -433,8 +440,8 @@ function buildIndex() {
   writeFileSync(
     join(DIST, 'index.html'),
     templatePage({
-      title: 'openwop — Multi-Agent Workflow Orchestration Protocol',
-      ogTitle: 'openwop — Multi-Agent Workflow Orchestration Protocol',
+      title: 'OpenWOP — Multi-Agent Workflow Orchestration Protocol',
+      ogTitle: 'OpenWOP — Multi-Agent Workflow Orchestration Protocol',
       content,
       navActive: 'index',
       description: CANONICAL_DESCRIPTION,
@@ -449,7 +456,7 @@ function buildConformance() {
   const interop = readFile(join(ROOT, 'INTEROP-MATRIX.md'));
   const intro = `<header class="page-header">
     <h1>Conformance leaderboard</h1>
-    <p class="lede">Live record of openwop-compatible hosts, their advertised compatibility profiles, and which conformance scenarios pass against them.</p>
+    <p class="lede">Live record of OpenWOP-compatible hosts, their advertised compatibility profiles, and which conformance scenarios pass against them.</p>
     <p class="meta">A host's place in this matrix is a <strong>claim plus evidence</strong>. The claim is the host's advertised profile. The evidence is the conformance result published alongside the host's repo (or under <code>examples/hosts/&lt;name&gt;/conformance.md</code>).</p>
   </header>`;
   const content = intro + markdownToHtml(interop);
@@ -457,10 +464,10 @@ function buildConformance() {
   writeFileSync(
     join(DIST, 'conformance', 'index.html'),
     templatePage({
-      title: 'openwop — Conformance leaderboard',
+      title: 'OpenWOP — Conformance leaderboard',
       content,
       navActive: 'conformance',
-      description: 'Live leaderboard of openwop-compatible hosts. Each row pairs a host\'s advertised compatibility profile with its conformance evidence — claim plus result, no marketing.',
+      description: 'Live leaderboard of OpenWOP-compatible hosts. Each row pairs a host\'s advertised compatibility profile with its conformance evidence — claim plus result, no marketing.',
       canonicalPath: '/conformance/',
     }),
   );
@@ -478,7 +485,7 @@ function buildProfiles() {
   writeFileSync(
     join(DIST, 'profiles', 'index.html'),
     templatePage({
-      title: 'openwop — Compatibility profiles',
+      title: 'OpenWOP — Compatibility profiles',
       content,
       navActive: 'profiles',
       description: 'Compatibility profiles for the Multi-Agent Workflow Orchestration Protocol. Each profile names a coherent slice of capability surface a host can claim and prove (openwop-core, openwop-interrupts, openwop-stream-sse, openwop-secrets, openwop-provider-policy, openwop-node-packs).',
@@ -523,7 +530,7 @@ function buildSpecDocs() {
     writeFileSync(
       join(DIST, 'spec', 'v1', `${slug}.html`),
       templatePage({
-        title: `openwop — ${title}`,
+        title: `OpenWOP — ${title}`,
         content,
         navActive: 'spec',
         description: docDescription,
@@ -553,7 +560,7 @@ function buildSpecDocs() {
     {
       key: 'foundation',
       title: 'Foundation',
-      lede: 'What openwop is, what it isn\'t, and how a host advertises its surface.',
+      lede: 'What OpenWOP is, what it isn\'t, and how a host advertises its surface.',
       slugs: ['positioning', 'capabilities', 'host-capabilities', 'profiles', 'capabilities-change-detection'],
     },
     {
@@ -601,7 +608,7 @@ function buildSpecDocs() {
     {
       key: 'integration',
       title: 'Integration with adjacent protocols',
-      lede: 'How openwop composes with MCP, A2A, and the surrounding ecosystem.',
+      lede: 'How OpenWOP composes with MCP, A2A, and the surrounding ecosystem.',
       slugs: ['mcp-integration', 'a2a-integration', 'compliance', 'i18n'],
     },
   ];
@@ -639,7 +646,7 @@ function buildSpecDocs() {
     .map((g) => `<li><a href="#${g.key}">${g.title}</a></li>`).join('\n      ');
 
   const indexContent = `<header class="page-header">
-    <h1>openwop v1 spec corpus</h1>
+    <h1>OpenWOP v1 spec corpus</h1>
     <p class="lede">${items.length} prose specs governing the v1 wire contract. Each section below groups specs by what they do; click through for the normative text.</p>
     <p class="meta">Status legend: <strong>FINAL</strong> · STUB · DRAFT · OUTLINE. A spec is FINAL when its wire shape is locked under v1.x compatibility rules.</p>
   </header>
@@ -853,7 +860,7 @@ function buildMarkdownDoc({ srcAbsPath, destPath, pageTitle, lede, navActive, ca
   writeFileSync(
     destPath,
     templatePage({
-      title: `openwop — ${pageTitle}`,
+      title: `OpenWOP — ${pageTitle}`,
       content,
       navActive,
       description,
@@ -868,7 +875,7 @@ function buildChangelog() {
     srcAbsPath: join(ROOT, 'CHANGELOG.md'),
     destPath: join(DIST, 'changelog', 'index.html'),
     pageTitle: 'Changelog',
-    lede: 'Versioned record of every change to the openwop spec corpus, schemas, SDKs, and reference hosts. Additive evolution only within v1.x per COMPATIBILITY.md.',
+    lede: 'Versioned record of every change to the OpenWOP spec corpus, schemas, SDKs, and reference hosts. Additive evolution only within v1.x per COMPATIBILITY.md.',
     navActive: 'changelog',
     canonicalPath: '/changelog/',
     slugLabel: 'changelog/index.html',
@@ -892,7 +899,7 @@ function buildVersioning() {
     srcAbsPath: join(ROOT, 'COMPATIBILITY.md'),
     destPath: join(DIST, 'versioning', 'index.html'),
     pageTitle: 'Versioning & compatibility',
-    lede: 'How openwop changes between releases. Additive-only within v1.x; safety-fixes follow the 90-day window; breaking changes only land in major versions.',
+    lede: 'How OpenWOP changes between releases. Additive-only within v1.x; safety-fixes follow the 90-day window; breaking changes only land in major versions.',
     navActive: '',
     canonicalPath: '/versioning/',
     slugLabel: 'versioning/index.html',
@@ -916,7 +923,7 @@ function buildContributingPage() {
     srcAbsPath: join(ROOT, 'CONTRIBUTING.md'),
     destPath: join(DIST, 'contributing', 'index.html'),
     pageTitle: 'Contributing',
-    lede: 'Per-artifact change rules for the openwop corpus — what counts as editorial, additive, safety-fix, or breaking; the eight-step pre-merge gate; the DCO requirement.',
+    lede: 'Per-artifact change rules for the OpenWOP corpus — what counts as editorial, additive, safety-fix, or breaking; the eight-step pre-merge gate; the DCO requirement.',
     navActive: '',
     canonicalPath: '/contributing/',
     slugLabel: 'contributing/index.html',
@@ -960,7 +967,7 @@ function buildRfcs() {
     writeFileSync(
       join(DIST, 'rfcs', `${slug}.html`),
       templatePage({
-        title: `openwop — ${title}`,
+        title: `OpenWOP — ${title}`,
         content,
         navActive: 'rfcs',
         description,
@@ -971,7 +978,7 @@ function buildRfcs() {
   }
 
   const indexContent = `<header class="page-header">
-    <h1>openwop RFCs</h1>
+    <h1>OpenWOP RFCs</h1>
     <p class="lede">${items.length} RFCs governing additive evolution of the v1 protocol. Status legend: Draft (open comment window) → Active (accepted; impl follows) → Accepted (in-tree reference impl + conformance scenarios) → Withdrawn / Superseded.</p>
   </header>
   <table class="spec-index">
@@ -983,10 +990,10 @@ function buildRfcs() {
   writeFileSync(
     join(DIST, 'rfcs', 'index.html'),
     templatePage({
-      title: 'openwop — RFCs',
+      title: 'OpenWOP — RFCs',
       content: indexContent,
       navActive: 'rfcs',
-      description: `${items.length} numbered RFCs covering the additive evolution of the openwop v1 protocol. Each RFC documents motivation, proposed wire surface, compatibility classification, conformance plan, and acceptance gate.`,
+      description: `${items.length} numbered RFCs covering the additive evolution of the OpenWOP v1 protocol. Each RFC documents motivation, proposed wire surface, compatibility classification, conformance plan, and acceptance gate.`,
       canonicalPath: '/rfcs/',
     }),
   );
@@ -1029,7 +1036,7 @@ function buildContentDir() {
     writeFileSync(
       join(destDir, 'index.html'),
       templatePage({
-        title: `openwop — ${title}`,
+        title: `OpenWOP — ${title}`,
         content,
         navActive: r.nav,
         description,
@@ -1077,10 +1084,10 @@ function buildApiExplorer() {
   writeFileSync(
     join(DIST, 'api', 'rest', 'index.html'),
     templatePage({
-      title: 'openwop — REST API reference',
+      title: 'OpenWOP — REST API reference',
       content: intro,
       navActive: 'spec',
-      description: 'Live REST API reference rendered from api/openapi.yaml. Every openwop endpoint with request, response, and error codes — claim is the spec, this is the readable view.',
+      description: 'Live REST API reference rendered from api/openapi.yaml. Every OpenWOP endpoint with request, response, and error codes — claim is the spec, this is the readable view.',
       canonicalPath: '/api/rest/',
     }),
   );

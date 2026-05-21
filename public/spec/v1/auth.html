@@ -3,21 +3,21 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>openwop — openwop Spec v1 — Authentication and Authorization</title>
+  <title>OpenWOP — openwop Spec v1 — Authentication and Authorization</title>
   <meta name="description" content="This document specifies how OpenWOP-compliant servers authenticate and authorize callers of the protocol&#39;s wire-level surfaces (REST, MCP, A2A, SSE). It does NOT prescribe identity-provider semantics; an implementation MAY use any identity provider…"/>
   <link rel="canonical" href="https://openwop.dev/spec/v1/auth.html"/>
 
   <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
   <meta property="og:type" content="website"/>
   <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
-  <meta property="og:title" content="openwop — openwop Spec v1 — Authentication and Authorization"/>
+  <meta property="og:title" content="OpenWOP — openwop Spec v1 — Authentication and Authorization"/>
   <meta property="og:description" content="This document specifies how OpenWOP-compliant servers authenticate and authorize callers of the protocol&#39;s wire-level surfaces (REST, MCP, A2A, SSE). It does NOT prescribe identity-provider semantics; an implementation MAY use any identity provider…"/>
   <meta property="og:url" content="https://openwop.dev/spec/v1/auth.html"/>
   <meta property="og:image" content="https://openwop.dev/og-default.png"/>
 
   <!-- Twitter card -->
   <meta name="twitter:card" content="summary_large_image"/>
-  <meta name="twitter:title" content="openwop — openwop Spec v1 — Authentication and Authorization"/>
+  <meta name="twitter:title" content="OpenWOP — openwop Spec v1 — Authentication and Authorization"/>
   <meta name="twitter:description" content="This document specifies how OpenWOP-compliant servers authenticate and authorize callers of the protocol&#39;s wire-level surfaces (REST, MCP, A2A, SSE). It does NOT prescribe identity-provider semantics; an implementation MAY use any identity provider…"/>
   <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
 
@@ -92,7 +92,7 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-authentication-and-authorization">openwop Spec v1 — Authentication and Authorization</h1>
+    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-authentication-and-authorization">OpenWOP Spec v1 — Authentication and Authorization</h1>
 <blockquote><p><strong>Status: FINAL v1 (2026-04-27).</strong> Comprehensive coverage of the bearer-token auth model, scope vocabulary, and the canonical 401/403 error envelope (now backed by <code>schemas/error-envelope.schema.json</code> per JS5). Not yet final: OAuth 2.0, mTLS, key rotation, and webhook HMAC remain in "Open spec gaps" — but the stable surface (API key + scopes + error envelope) is comprehensive enough for SDK + conformance authoring. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>.</p><p></p><p><strong>Status legend</strong> (used across all spec/v1/*.md):</p><p>- <strong>STUB</strong> — minimal coverage, only stable surfaces. Implementers SHOULD pin only to what's written; assume gaps.</p><p>- <strong>DRAFT</strong> — comprehensive coverage of stable + in-flight surfaces, but not yet reviewed by spec committee.</p><p>- <strong>OUTLINE</strong> — sketched but not detailed. Section headings lock; field schemas may shift.</p><p>- <strong>FINAL</strong> — frozen. Breaking changes go to v2.</p></blockquote>
 <hr/>
 <h2 id="scope">Scope</h2>

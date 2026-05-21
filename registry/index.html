@@ -3,17 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>openwop registry — packs.openwop.dev</title>
-<meta name="description" content="The canonical signed node-pack registry for the openwop workflow orchestration protocol. 62 pack(s), 82 version(s) published.">
+<title>OpenWOP registry — packs.openwop.dev</title>
+<meta name="description" content="The canonical signed node-pack registry for the OpenWOP workflow orchestration protocol. 62 pack(s), 82 version(s) published.">
 <meta name="robots" content="index, follow">
 
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://packs.openwop.dev/">
-<meta property="og:title" content="openwop registry">
-<meta property="og:description" content="Canonical signed node-pack registry for the openwop workflow orchestration protocol.">
+<meta property="og:title" content="OpenWOP registry">
+<meta property="og:description" content="Canonical signed node-pack registry for the OpenWOP workflow orchestration protocol.">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="openwop registry">
-<meta name="twitter:description" content="Canonical signed node-pack registry for the openwop workflow orchestration protocol.">
+<meta name="twitter:title" content="OpenWOP registry">
+<meta name="twitter:description" content="Canonical signed node-pack registry for the OpenWOP workflow orchestration protocol.">
 
 <link rel="alternate" type="application/json" title="Discovery" href="/.well-known/openwop-registry">
 <link rel="alternate" type="application/json" title="Registry index" href="/v1/index.json">
@@ -839,7 +839,7 @@
           <td class="name"><code>vendor.myndhyve.campaign-sequence</code> </td>
           <td class="version">1.0.0</td>
           <td class="count" title="nodes in latest manifest">3</td>
-          <td class="desc">MyndHyve campaign-sequence step executors — three pure-control nodes (wait, tag, condition) lifted from src/canvas-types/campaign-studio/sequences/sequenceStepModules.ts. Self-contained: only ctx.inputs + ctx.log; no host capabilities required beyond core NodeContext. The integration siblings (email, sms, webhook) ship in a follow-up pack once openwop NodeContext extensions for host.email / host.sms / host.http land.</td>
+          <td class="desc">MyndHyve campaign-sequence step executors — three pure-control nodes (wait, tag, condition) lifted from src/canvas-types/campaign-studio/sequences/sequenceStepModules.ts. Self-contained: only ctx.inputs + ctx.log; no host capabilities required beyond core NodeContext. The integration siblings (email, sms, webhook) ship in a follow-up pack once OpenWOP NodeContext extensions for host.email / host.sms / host.http land.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
             <a href="/v1/packs/vendor.myndhyve.campaign-sequence/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
@@ -1159,7 +1159,7 @@
           <td class="name"><code>core.openwop.agents.react</code> </td>
           <td class="version">1.0.0</td>
           <td class="count" title="agents in latest manifest">1</td>
-          <td class="desc">Canonical ReAct (Reason + Act) loop agent. Pure-agent pack — ships one agent manifest with a configurable toolAllowlist. Composes via RFC 0007 dispatch and consumes host.aiProviders + host.agentRuntime. The &#39;hello world&#39; of openwop agents.</td>
+          <td class="desc">Canonical ReAct (Reason + Act) loop agent. Pure-agent pack — ships one agent manifest with a configurable toolAllowlist. Composes via RFC 0007 dispatch and consumes host.aiProviders + host.agentRuntime. The &#39;hello world&#39; of OpenWOP agents.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
             <a href="/v1/packs/core.openwop.agents.react/-/1.0.0.json" title="version manifest (JSON)">manifest</a>
@@ -1222,7 +1222,7 @@ const ok = verify(null, readFileSync('pack.tgz'), pub, readFileSync('pack.sig'))
   <section id="namespaces">
     <h2>Namespaces</h2>
     <ul>
-      <li><code>core.*</code> — reserved for the openwop working group; spec-canonical packs only.</li>
+      <li><code>core.*</code> — reserved for the OpenWOP working group; spec-canonical packs only.</li>
       <li><code>vendor.&lt;org&gt;.*</code> — under control of a specific vendor organization.</li>
       <li><code>community.&lt;author&gt;.*</code> — open-publish; first-claim wins per name.</li>
     </ul>

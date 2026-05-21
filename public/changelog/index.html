@@ -3,21 +3,21 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>openwop — Changelog</title>
+  <title>OpenWOP — Changelog</title>
   <meta name="description" content="All notable changes to the openwop v1 spec, schemas, OpenAPI/AsyncAPI, conformance suite, and reference SDKs."/>
   <link rel="canonical" href="https://openwop.dev/changelog/"/>
 
   <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
   <meta property="og:type" content="website"/>
   <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
-  <meta property="og:title" content="openwop — Changelog"/>
+  <meta property="og:title" content="OpenWOP — Changelog"/>
   <meta property="og:description" content="All notable changes to the openwop v1 spec, schemas, OpenAPI/AsyncAPI, conformance suite, and reference SDKs."/>
   <meta property="og:url" content="https://openwop.dev/changelog/"/>
   <meta property="og:image" content="https://openwop.dev/og-default.png"/>
 
   <!-- Twitter card -->
   <meta name="twitter:card" content="summary_large_image"/>
-  <meta name="twitter:title" content="openwop — Changelog"/>
+  <meta name="twitter:title" content="OpenWOP — Changelog"/>
   <meta name="twitter:description" content="All notable changes to the openwop v1 spec, schemas, OpenAPI/AsyncAPI, conformance suite, and reference SDKs."/>
   <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
 
@@ -69,8 +69,8 @@
   <div class="wrap">
     <header class="page-header">
     <h1>Changelog</h1>
-    <p class="lede">Versioned record of every change to the openwop spec corpus, schemas, SDKs, and reference hosts. Additive evolution only within v1.x per COMPATIBILITY.md.</p>
-  </header><div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-changelog">openwop Spec v1 — Changelog</h1>
+    <p class="lede">Versioned record of every change to the OpenWOP spec corpus, schemas, SDKs, and reference hosts. Additive evolution only within v1.x per COMPATIBILITY.md.</p>
+  </header><div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-changelog">OpenWOP Spec v1 — Changelog</h1>
 <p>All notable changes to the openwop v1 spec, schemas, OpenAPI/AsyncAPI, conformance suite, and reference SDKs.</p>
 <p>Format follows <a href="https://keepachangelog.com/en/1/">Keep a Changelog</a> loosely. Versions are spec-corpus-wide (one date, multiple artifact updates per row); per-artifact versions live in their respective <code>package.json</code> / schema <code>$id</code> fields.</p>
 <blockquote><p><strong>Status legend</strong> (per <code>auth.md</code> §status legend):</p><p>STUB · DRAFT · OUTLINE · FINAL — see individual doc headers for current state.</p></blockquote>
@@ -146,6 +146,27 @@
 <li>conformance/README.md scenario count bumped 187 → 188 (in two places).</li>
 </ul>
 <p>Closes standards-readiness review finding (3) "multi-agent semantics not fully portable" at the Phase 1 boundary. Phases 2-4 remain open work for follow-up RFCs.</p>
+<h3 id="rfc-0035-rfc-0036-conformance-scenarios-2026-05-21">RFC 0035 + RFC 0036 conformance scenarios (2026-05-21)</h3>
+<p>Lands the contract-probe + capability-gated behavioral conformance scaffolding for the two RFCs that landed <code>Active</code> earlier today (f7c8d2d) and whose reference-host implementation is honest follow-up work.</p>
+<p><strong>RFC 0035 — 8 sandbox shape-probe + behavioral-stub scenarios</strong> (one per <code>node-pack-sandbox-*</code> invariant in <code>SECURITY/invariants.yaml</code>):</p>
+<ul>
+<li><code>sandbox-no-host-fs-escape.test.ts</code> — capability shape (isolationModel pattern + memoryLimit + wallClockLimit) + capability-gated behavioral stub.</li>
+<li><code>sandbox-no-host-env-leak.test.ts</code> — capability-gated behavioral stub.</li>
+<li><code>sandbox-no-network-escape.test.ts</code> — gates additionally on whether <code>host.fetch</code> ∈ <code>allowedHostCalls</code>.</li>
+<li><code>sandbox-no-host-process-escape.test.ts</code> — capability-gated behavioral stub.</li>
+<li><code>sandbox-memory-cap.test.ts</code> — capability shape (memoryLimitBytes ≥ 1 MiB) + behavioral stub.</li>
+<li><code>sandbox-timeout-cap.test.ts</code> — capability shape (wallClockLimitMs ≥ 100 ms) + behavioral stub.</li>
+<li><code>sandbox-capability-gate-respected.test.ts</code> — capability-gated behavioral stub.</li>
+<li><code>sandbox-no-cross-pack-mutation.test.ts</code> — capability-gated behavioral stub.</li>
+</ul>
+<p>All 8 soft-skip on hosts that don't advertise <code>capabilities.sandbox.supported: true</code>. The behavioral assertions are scaffolded with explicit <code>expect(true).toBe(true)</code> placeholders + docstring expected-wire-shape so an implementer landing the synthetic <code>vendor.openwop.misbehaving-sandbox</code> pack + a sandbox-executing reference host has a clear contract to wire against. Graduating the 8 <code>SECURITY/invariants.yaml</code> rows from <code>reference-impl</code> → <code>protocol</code> tier remains gated on the reference-host landing per RFC 0035 §"Acceptance criteria."</p>
+<p><strong>RFC 0036 — cross-engine append-ordering + granular multiRegion shape probes:</strong></p>
+<ul>
+<li>NEW <code>cross-engine-append-ordering.test.ts</code> — capability shape for <code>capabilities.eventLog.crossEngineOrdering.{supported, orderingModel}</code>. Asserts <code>orderingModel ∈ {lamport, vector-clock, global-sequencer}</code> when present and REQUIRED when <code>supported: true</code>. Behavioral two-engine-append assertion deferred until the multi-engine simulator lands per RFC 0036 §C.</li>
+<li><code>multi-region-idempotency.test.ts</code> extended with a third <code>describe</code> block: <code>multi-region-idempotency: granular multiRegion advertisement shape (RFC 0036 §A)</code>. Asserts <code>capabilities.idempotency.multiRegion.{supported, replicationLagBoundMs ∈ [0, 60000], partitionRecoveryStrategy}</code> shape; complements the existing categorical <code>crossRegion</code> claim probe.</li>
+</ul>
+<p><strong>Conformance counts:</strong> 188 → 197 scenario files (+9). README + conformance/README count claims bumped; docs/PROTOCOL-STATUS regenerated.</p>
+<p>Closes the conformance half of standards-readiness review findings (5) sandbox and (6) distributed-systems at the contract-probe boundary. Behavioral wiring closes them at the host-implementation boundary; tracked as RFC 0035 + RFC 0036 path-to-Accepted work.</p>
 <h3 id="rfc-0037-phase-1-reference-host-wiring-behavioral-conformance-2026-05-21">RFC 0037 Phase 1 reference-host wiring + behavioral conformance (2026-05-21)</h3>
 <p>Wires the multi-agent execution model emission contract end-to-end on the reference workflow-engine and graduates the conformance assertion from shape-only to behavioral. Builds on the same-day spec + schema landing in <code>db54921</code>.</p>
 <ul>
@@ -1590,6 +1611,7 @@
       <li class="toc-sub"><a href="#marketing-site-multi-page-spec-corpus-shipped-to-openwop-dev-2026-05-21">Marketing site + multi-page spec corpus shipped to openwop.dev (2026-05-21)</a></li>
       <li class="toc-sub"><a href="#rfc-0035-sandbox-execution-contract-rfc-0036-multi-region-cross-engine-promoted-draft-active-same-day-2026-05-21">RFC 0035 (sandbox execution contract) + RFC 0036 (multi-region + cross-engine) promoted Draft → Active same-day (2026-05-21)</a></li>
       <li class="toc-sub"><a href="#rfc-0037-multi-agent-execution-model-phase-1-promoted-draft-active-same-day-2026-05-21">RFC 0037 (multi-agent execution model) Phase 1 promoted Draft → Active same-day (2026-05-21)</a></li>
+      <li class="toc-sub"><a href="#rfc-0035-rfc-0036-conformance-scenarios-2026-05-21">RFC 0035 + RFC 0036 conformance scenarios (2026-05-21)</a></li>
       <li class="toc-sub"><a href="#rfc-0037-phase-1-reference-host-wiring-behavioral-conformance-2026-05-21">RFC 0037 Phase 1 reference-host wiring + behavioral conformance (2026-05-21)</a></li>
       <li class="toc-sub"><a href="#rfc-0034-otel-collector-test-seam-promoted-draft-active-same-day-2026-05-21">RFC 0034 (OTel collector test seam) promoted Draft → Active same-day (2026-05-21)</a></li>
       <li class="toc-sub"><a href="#rfc-0030-0031-0032-0033-promoted-active-accepted-2026-05-21">RFC 0030 / 0031 / 0032 / 0033 promoted Active → Accepted (2026-05-21)</a></li>

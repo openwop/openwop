@@ -3,21 +3,21 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>openwop — openwop Spec v1 — AI Envelope Primitive</title>
+  <title>OpenWOP — openwop Spec v1 — AI Envelope Primitive</title>
   <meta name="description" content="Eight v1 surfaces already reference &quot;envelopes&quot; as a distinct wire concept:"/>
   <link rel="canonical" href="https://openwop.dev/spec/v1/ai-envelope.html"/>
 
   <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
   <meta property="og:type" content="website"/>
   <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
-  <meta property="og:title" content="openwop — openwop Spec v1 — AI Envelope Primitive"/>
+  <meta property="og:title" content="OpenWOP — openwop Spec v1 — AI Envelope Primitive"/>
   <meta property="og:description" content="Eight v1 surfaces already reference &quot;envelopes&quot; as a distinct wire concept:"/>
   <meta property="og:url" content="https://openwop.dev/spec/v1/ai-envelope.html"/>
   <meta property="og:image" content="https://openwop.dev/og-default.png"/>
 
   <!-- Twitter card -->
   <meta name="twitter:card" content="summary_large_image"/>
-  <meta name="twitter:title" content="openwop — openwop Spec v1 — AI Envelope Primitive"/>
+  <meta name="twitter:title" content="OpenWOP — openwop Spec v1 — AI Envelope Primitive"/>
   <meta name="twitter:description" content="Eight v1 surfaces already reference &quot;envelopes&quot; as a distinct wire concept:"/>
   <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
 
@@ -92,7 +92,7 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-ai-envelope-primitive">openwop Spec v1 — AI Envelope Primitive</h1>
+    <div class="spec-page-grid"><article class="spec-doc"><h1 id="openwop-spec-v1-ai-envelope-primitive">OpenWOP Spec v1 — AI Envelope Primitive</h1>
 <blockquote><p><strong>Status: FINAL v1.1 (promoted via <a href="../../RFCS/0021-ai-envelope-primitive.md">RFC 0021</a>, 2026-05-18; first cut 2026-05-17). Extended additively by <a href="../../RFCS/0030-envelope-reasoning-and-tier-one-subset.md">RFC 0030</a> (§"Reasoning field"), <a href="../../RFCS/0031-envelope-variants-and-model-capabilities.md">RFC 0031</a> (§"Variant payload discrimination"), <a href="../../RFCS/0032-envelope-reliability-events.md">RFC 0032</a> (line-448 scope clarification + §"Envelope-reliability events"), and <a href="../../RFCS/0033-envelope-completion-contract.md">RFC 0033</a> (§"Envelope-completion criteria"), all <code>Accepted</code> 2026-05-21.</strong> Closes the long-standing gap where <code>Capabilities.supportedEnvelopes</code>, <code>Capabilities.schemaVersions</code>, <code>Capabilities.limits.envelopesPerTurn</code>, <code>Capabilities.limits.schemaRounds</code>, <code>Capabilities.limits.clarificationRounds</code>, <code>host.aiEnvelope.generate</code>, the <code>envelopeType</code> field on workflow-chain pack manifests, and the <code>openwop-interrupts</code> profile's <code>supportedEnvelopes.includes(&#39;clarification.request&#39;)</code> check all reference a wire concept whose own shape is not specified anywhere in v1 prose. This document specifies that shape, the universal kinds, the per-kind schema discipline, and the per-node "Envelope Contract" gate. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend. Fields marked <strong>(stable)</strong> lock; fields marked <strong>(in-flight)</strong> may shift compatibly within v1.x.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>
