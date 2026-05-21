@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — openwop Spec v1 — MCP Integration</title>
+  <meta name="description" content="OpenWOP runs the workflow. MCP exposes tools to the LLM nodes inside that workflow. The two protocols compose; they don&#39;t compete."/>
+  <link rel="canonical" href="https://openwop.dev/spec/v1/mcp-integration.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — openwop Spec v1 — MCP Integration"/>
+  <meta property="og:description" content="OpenWOP runs the workflow. MCP exposes tools to the LLM nodes inside that workflow. The two protocols compose; they don&#39;t compete."/>
+  <meta property="og:url" content="https://openwop.dev/spec/v1/mcp-integration.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — openwop Spec v1 — MCP Integration"/>
+  <meta name="twitter:description" content="OpenWOP runs the workflow. MCP exposes tools to the LLM nodes inside that workflow. The two protocols compose; they don&#39;t compete."/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="active" href="/spec/v1/">Spec</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/profiles/">Profiles</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="openwop-spec-v1-mcp-integration">openwop Spec v1 — MCP Integration</h1>
+<blockquote><p><strong>Status: FINAL v1 (2026-05-05).</strong> Worked example of how OpenWOP and the Model Context Protocol (MCP) compose. Non-normative composition pattern; the §"Trust boundary" rules restate normative invariants from <code>SECURITY/threat-model-prompt-injection.md</code> (3 RFC 2119 keywords, all citing pre-existing invariants). Graduated DRAFT → FINAL via RFC 0006. See <code>auth.md</code> for the status legend.</p></blockquote>
+<hr/>
+<h2 id="tl-dr">TL;DR</h2>
+<p><strong>OpenWOP runs the workflow. MCP exposes tools to the LLM nodes inside that workflow.</strong> The two protocols compose; they don't compete.</p>
+<p>An OpenWOP node that calls an LLM gets its tools from registered MCP servers. The LLM, when it wants to use a tool, emits a tool-call envelope; the OpenWOP host dispatches that to the MCP server; the MCP server returns a result; the host feeds the result back into the next LLM turn.</p>
+<pre class="lang-"><code>[OpenWOP host] ── runs ──&gt; [Workflow]
+                         │
+                         │  per node:
+                         ▼
+                       [LLM node]
+                         │
+                         │  LLM may emit tool-call envelopes
+                         ▼
+                       [OpenWOP host&#39;s MCP client] ── calls ──&gt; [MCP server]
+                                                              │ (e.g. file system, search,
+                                                              │  vector DB, host-vendor tools)
+                                                              ▼
+                                                            [Tool result]
+                         ◄───── result ───────────────────────┘
+                         │
+                         ▼
+                       [Next LLM turn]</code></pre>
+<hr/>
+<h2 id="why-this-composition">Why this composition</h2>
+<p>openwop standardizes the <strong>execution semantics</strong>: what does it mean to "run" a workflow, "interrupt" it, "stream" its events, "replay" it from the event log? openwop doesn't prescribe what tools an LLM has access to.</p>
+<p>MCP standardizes the <strong>tool/resource access</strong>: how does an LLM-app discover and invoke tools, read resources, fetch prompts? MCP doesn't prescribe what runs the LLM-app or what to do with multi-step state.</p>
+<p>The two layer naturally:</p>
+<table>
+<thead><tr><th>Layer</th><th>Owner</th><th>Concerns</th></tr></thead>
+<tbody>
+<tr><td>Workflow execution + state</td><td>openwop</td><td>Run lifecycle, events, interrupts, replay, observability, conformance</td></tr>
+<tr><td>Tool/resource access</td><td>MCP</td><td>Tool catalog, schema, invocation, result shape</td></tr>
+</tbody></table>
+<p>An OpenWOP host announces MCP-compatibility via <code>/.well-known/openwop</code> — either at the top-level <code>mcp</code> slot or under a vendor namespace like <code>&amp;lt;vendor&amp;gt;.mcp</code>. Both are host-implementation-defined; not normative openwop fields. The discovery body itself is the capabilities object (there is no <code>capabilities</code> envelope — <code>replay</code>, <code>secrets</code>, <code>extensions</code>, etc. all live at the top level). Workflow authors who depend on MCP tools select hosts that advertise the capability.</p>
+<hr/>
+<h2 id="concrete-example">Concrete example</h2>
+<p>A workflow that searches the web and summarizes the results:</p>
+<pre class="lang-yaml"><code># Conceptual workflow definition
+nodes:
+  - id: search
+    typeId: core.ai.callPrompt
+    config:
+      systemPrompt: &quot;Search the web for the user&#39;s query and summarize.&quot;
+      mcpServers: [&quot;web-search&quot;]    # host-extension field
+  - id: summarize
+    typeId: core.noop
+edges:
+  - from: search
+    to: summarize</code></pre>
+<p>When this runs:</p>
+<p>1. <strong>OpenWOP host</strong> dispatches the <code>search</code> node. 2. The node invokes the LLM with the system prompt + the user input from <code>inputs.query</code>. 3. <strong>LLM emits a tool-call envelope</strong> asking for the <code>web-search.search</code> tool. 4. OpenWOP host's MCP client connects to the <code>web-search</code> MCP server, invokes the <code>search(query)</code> tool. 5. <strong>MCP server</strong> returns search results. 6. OpenWOP host feeds the result back into the LLM as the next turn's input. 7. LLM returns its summary as a workflow envelope (<code>summary.create</code> or similar). 8. OpenWOP host stores the summary as an artifact, advances to the <code>summarize</code> node.</p>
+<p>The LLM's tool-call envelope follows MCP's tool-call shape; the <code>summary.create</code> envelope follows openwop's envelope vocabulary. Each side owns its layer.</p>
+<hr/>
+<h2 id="trust-boundary">Trust boundary</h2>
+<p>A registered MCP server is <strong>trusted to behave per its manifest</strong> (per <code>SECURITY/threat-model-node-packs.md</code> §"Sandbox execution" — the same trust model applies). A compromised MCP server can:</p>
+<ul>
+<li>Return malicious content that prompt-injects the LLM.</li>
+<li>Exfiltrate workflow inputs by returning them in the next tool result.</li>
+<li>Refuse to respect tool-allowlist restrictions.</li>
+</ul>
+<p>openwop's response to these risks (per <code>SECURITY/threat-model-prompt-injection.md</code>):</p>
+<ul>
+<li>MCP tool responses MUST be wrapped in <code>&amp;lt;UNTRUSTED tool=&amp;quot;...&amp;quot;&amp;gt;</code> markers in the next LLM turn (<code>prompt-injection-mcp-marker</code> invariant).</li>
+<li>MCP tool responses MUST NOT advance HITL approval gates (<code>prompt-injection-mcp-no-approval</code> invariant).</li>
+<li>LLM-emitted tool-call envelopes MUST be validated against the workflow's declared tool allowlist (<code>prompt-injection-tool-allowlist</code> invariant).</li>
+</ul>
+<p>These invariants are enforced by the OpenWOP host; the MCP protocol doesn't have to know about them.</p>
+<hr/>
+<h2 id="conformance-interop">Conformance + interop</h2>
+<p>An OpenWOP host that supports MCP advertises the capability and (per the host's choice) lists supported MCP servers. An OpenWOP client that depends on MCP looks at the discovery payload and confirms the host can execute the workflow.</p>
+<p><strong>Interop today:</strong></p>
+<ul>
+<li>The <strong>in-memory reference host</strong> does NOT support MCP — its <code>core.noop</code> and <code>core.delay</code> nodes don't invoke LLMs at all. A workflow that requires MCP tools fails with <code>unsupported_node_type</code> against the in-memory host.</li>
+<li>A <strong>third-party host</strong> can implement MCP-compatibility independently; the openwop wire contract is unaffected.</li>
+</ul>
+<p>The v1.0 conformance baseline includes <code>mcp-discoverability.test.ts</code>, which asserts the shape of any advertised MCP capability: <code>{supported: boolean, serverUrls: string[]}</code>. Hosts that don't advertise MCP skip-equivalent. The test accepts both the standard top-level <code>mcp</code> slot and vendor-namespaced slots like <code>&amp;lt;vendor&amp;gt;.mcp</code> (read from the discovery body root, since there is no <code>capabilities</code> envelope).</p>
+<p><code>mcp-tool-roundtrip.test.ts</code> extends the discoverability check with an end-to-end tool-call round-trip. Two modes, controlled by env vars:</p>
+<ul>
+<li><strong>Synthetic peer</strong> (<code>OPENWOP_MCP_FAKE_SERVER=true</code>): boots an in-process minimal MCP server (the <code>mcp-fake-server.ts</code> library at <code>conformance/src/lib/</code>). Asserts deterministic shape — <code>initialize</code> + <code>tools/list</code> returning an <code>echo</code> tool + <code>tools/call</code> echoing the input.</li>
+<li><strong>Real reference impl</strong> (<code>OPENWOP_MCP_REAL_SERVER_URL=&amp;lt;base-url&amp;gt;</code>): points the same probe at a real MCP server. Auto-detects the wire shape from the server's <code>Content-Type</code> response header:</li>
+</ul>
+<p>  - <code>application/json</code> — single-JSON response per request (MCP streamable-http transport in single-response mode).   - <code>text/event-stream</code> — SSE stream of JSON-RPC frames; the probe reads frames until it finds one whose <code>data:</code> payload matches its request <code>id</code>, then returns that frame.</p>
+<p>  The stdio transport — the default for <a href="https://github.com/modelcontextprotocol/servers"><code>modelcontextprotocol/servers</code></a> reference servers — is HTTP-incompatible by design (those servers speak JSON-RPC over stdin/stdout, not HTTP). The openwop tree ships a documented HTTP-to-stdio bridge at <code>examples/mcp-stdio-bridge/</code> that wraps any newline-delimited-JSON-RPC stdio server and exposes it as HTTP for the probe. End-to-end verified 2026-05-13 (probe → bridge → bundled <code>echo-stdio-server.mjs</code>, 2/2 pass). Operator workflow: boot the bridge with <code>OPENWOP_MCP_STDIO_CMD=&amp;lt;exe&amp;gt;</code> + <code>OPENWOP_MCP_STDIO_ARGS=&amp;lt;json-array&amp;gt;</code>, then point <code>OPENWOP_MCP_REAL_SERVER_URL</code> at the bridge's port (default 4021).</p>
+<p>  Assertions in this mode are shape-only: <code>tools/list</code> returns ≥ 1 tool, <code>tools/call</code> against the first listed tool returns a <code>result.content</code> array (valid OR <code>isError: true</code>-marked — both spec-conformant).</p>
+<p>The real-impl path is the <strong>Phase 3 T3.4 interop-evidence</strong> for <code>docs/PROTOCOL-GAP-CLOSURE-PLAN.md</code>. The test logs the tool name + <code>isError</code> marker so the interop evidence is visible in the CI output.</p>
+<hr/>
+<h2 id="openwop-host-as-mcp-server">OpenWOP host as MCP server</h2>
+<p>The §"Concrete example" above covers the <em>client</em> direction — an OpenWOP workflow calling out to a remote MCP server via <code>ctx.mcp.<em></code>. This section covers the </em>server* direction — an OpenWOP host advertising its workflows as MCP tools, resources, and prompts, callable by external MCP-aware LLM clients (Claude Desktop, Cursor, ChatGPT, etc.). It parallels <code>a2a-integration.md</code> §"OpenWOP host as A2A agent". Source: <a href="../../RFCS/0020-host-mcp-server-composition.md">RFC 0020</a>.</p>
+<h3 id="1-mount">1. Mount</h3>
+<p>A host MAY expose an MCP-server endpoint over <strong>stdio</strong> (subprocess transport) and/or <strong>streamable-HTTP</strong> (JSON-RPC over HTTP with <code>Content-Type: application/json</code> or <code>text/event-stream</code> per the connection). When a host advertises <code>capabilities.mcp.serverMount.supported: true</code>, it MUST serve the following methods per modelcontextprotocol.io 2025-06-18:</p>
+<table>
+<thead><tr><th>Method</th><th>Required</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td><code>tools/list</code>, <code>tools/call</code></td><td>Required</td><td>Workflows registered via <code>core.openwop.mcp.expose-tool</code> appear here.</td></tr>
+<tr><td><code>resources/list</code>, <code>resources/templates/list</code>, <code>resources/read</code></td><td>Required</td><td>Workflows registered via <code>core.openwop.mcp.expose-resource</code> appear here.</td></tr>
+<tr><td><code>resources/subscribe</code>, <code>resources/unsubscribe</code></td><td>Optional</td><td>For live-update notifications.</td></tr>
+<tr><td><code>prompts/list</code>, <code>prompts/get</code></td><td>Required</td><td>Workflows registered via <code>core.openwop.mcp.expose-prompt</code> appear here.</td></tr>
+<tr><td><code>completion/complete</code></td><td>Optional</td><td>For prompt completion hints.</td></tr>
+<tr><td><code>ping</code>, <code>logging/setLevel</code></td><td>Required</td><td>Standard MCP lifecycle.</td></tr>
+<tr><td><code>notifications/tools/list_changed</code>, <code>notifications/resources/list_changed</code>, <code>notifications/resources/updated</code>, <code>notifications/prompts/list_changed</code>, <code>notifications/message</code>, <code>notifications/progress</code>, <code>notifications/cancelled</code></td><td>Required when applicable</td><td>Emitted as workflow / run state changes.</td></tr>
+</tbody></table>
+<p>The reference <code>apps/workflow-engine</code> sample ships a JSON-RPC over streamable-HTTP server at <code>routes/mcp.ts</code>, env-gated on <code>OPENWOP_MCP_SERVER_ENABLED=true</code>.</p>
+<h3 id="2-state-projection-workflow-mcp-tool">2. State projection: workflow → MCP tool</h3>
+<p>A workflow exposed via <code>core.openwop.mcp.expose-tool</code> (or the host's declarative equivalent) is advertised in the host's <code>tools/list</code> response. Each <code>tools/call</code> invocation starts a new openwop run with:</p>
+<ul>
+<li><code>inputs</code> derived from <code>params.arguments</code>, validated against the tool's declared <code>inputSchema</code> <em>before</em> the run starts.</li>
+<li><code>runOptions.trustBoundary: &#39;untrusted&#39;</code> (tool arguments arrive from an external LLM; the same trust posture as inbound <code>host.mcp</code> tool results).</li>
+<li>The MCP server response shape follows this projection:</li>
+</ul>
+<table>
+<thead><tr><th>OpenWOP run state</th><th>MCP server response</th></tr></thead>
+<tbody>
+<tr><td><code>pending</code> / <code>running</code></td><td>Request blocks; subscribed clients receive <code>notifications/progress</code> SSE frames.</td></tr>
+<tr><td><code>completed</code></td><td><code>CallToolResult { content: [...], isError: false }</code></td></tr>
+<tr><td><code>failed</code></td><td><code>CallToolResult { content: [error message], isError: true }</code></td></tr>
+<tr><td><code>awaiting-input</code> (clarification)</td><td>Out-of-band: bridged via <code>elicitation/create</code> callback to the inbound MCP client, NOT a <code>tools/call</code> response.</td></tr>
+<tr><td><code>awaiting-input</code> (approval)</td><td>Same out-of-band path; the client's <code>elicitation/create</code> response maps to the openwop interrupt resume payload (<code>accept</code> / <code>decline</code> / <code>cancel</code>).</td></tr>
+<tr><td><code>canceled</code></td><td><code>CallToolResult { content: [...], isError: true }</code> with <code>tool_canceled</code> error tag.</td></tr>
+</tbody></table>
+<h3 id="3-bidirectional-callbacks">3. Bidirectional callbacks</h3>
+<p>The openwop ↔ MCP composition is <strong>bidirectional</strong>: an inbound MCP request can drive a workflow that itself calls <em>out</em> through the MCP client surface, or that asks the <em>original caller</em> for additional input. Two bridges power this:</p>
+<ul>
+<li><strong><code>sampling/createMessage</code> → <code>ctx.callAI</code>.</strong> When a workflow uses <code>core.openwop.mcp.handle-sampling</code>, the host MUST bridge inbound <code>sampling/createMessage</code> requests into the workflow's <code>ctx.callAI</code>. This preserves user consent and BYOK semantics: the <em>user's</em> model runs under the <em>user's</em> key, never the server's. Gated on <code>capabilities.mcp.serverMount.samplingBridge: true</code>.</li>
+<li><strong><code>elicitation/create</code> → <code>ctx.suspend</code>.</strong> When a workflow uses <code>core.openwop.mcp.handle-elicitation</code>, the host MUST bridge inbound <code>elicitation/create</code> requests into <code>ctx.suspend({kind: &#39;clarification&#39;, profile: &#39;openwop-mcp-elicitation&#39;})</code>. The MCP client's response maps to the resume payload along the <code>accept</code> / <code>decline</code> / <code>cancel</code> axis required by MCP's flat-schema constraint. Gated on <code>capabilities.mcp.serverMount.elicitationBridge: true</code>.</li>
+</ul>
+<p>Conformance: <code>conformance/src/scenarios/mcp-server-sampling-bridge.test.ts</code> and <code>mcp-server-elicitation-bridge.test.ts</code>.</p>
+<h3 id="4-trust-boundary">4. Trust boundary</h3>
+<p>All inbound MCP requests cross an <code>untrusted</code> trust boundary, regardless of transport. Hosts MUST:</p>
+<p>1. Validate every <code>tools/call.arguments</code> against the tool's declared <code>inputSchema</code> <em>before</em> starting the workflow run. Malformed or missing-required-field arguments MUST be rejected as a JSON-RPC error (<code>-32602 invalid params</code>) OR as a <code>CallToolResult { isError: true, content: [...] }</code> — both shapes are spec-conformant. The reference workflow-engine sample uses <code>-32602</code> (envelope-correct for pre-workflow validation). 2. Normalize and sandbox resource URIs returned by <code>resources/read</code> (no path traversal, no schemes outside the advertised allowlist). 3. Render prompt arguments to text <em>without</em> template-evaluation; arguments MUST NOT be <code>eval</code>'d or used to construct shell commands. 4. Propagate <code>ctx.trustBoundary: &#39;untrusted&#39;</code> to every downstream LLM call inside the run. Pack-level UNTRUSTED-marker discipline (per <code>SECURITY/threat-model-prompt-injection.md</code> §"UNTRUSTED-marker convention") wraps tool-arg-sourced user content in <code>&amp;lt;UNTRUSTED&amp;gt;…&amp;lt;/UNTRUSTED&amp;gt;</code> markers when forwarded to <code>ctx.callAI</code>.</p>
+<p>The existing <code>prompt-injection-mcp-marker</code> invariant (<code>SECURITY/threat-model-prompt-injection.md</code>) applies symmetrically: outputs from an MCP tool feeding into an LLM downstream remain <code>untrusted</code>. The new <code>mcp-server-untrusted-args</code> invariant (<code>SECURITY/invariants.yaml</code>) verifies argument-schema validation; reference test: <code>conformance/src/scenarios/mcp-server-untrusted-args.test.ts</code>.</p>
+<h3 id="5-capability-advertisement">5. Capability advertisement</h3>
+<pre class="lang-json"><code>{
+  &quot;mcp&quot;: {
+    &quot;supported&quot;: true,
+    &quot;serverMount&quot;: {
+      &quot;supported&quot;: true,
+      &quot;transports&quot;: [&quot;stdio&quot;, &quot;streamable-http&quot;],
+      &quot;samplingBridge&quot;: true,
+      &quot;elicitationBridge&quot;: true
+    }
+  }
+}</code></pre>
+<p>Hosts that don't advertise <code>serverMount.supported: true</code> MUST refuse registration of any pack declaring <code>peerDependencies: { &quot;mcp.serverMount&quot;: &quot;supported&quot; }</code> (e.g., <code>core.openwop.mcp@1.1.0</code>'s <code>server-trigger</code> + <code>expose-tool</code> + <code>handle-*</code> nodes) — registration MUST fail with <code>pack_peer_dependency_missing</code>.</p>
+<h3 id="6-conformance">6. Conformance</h3>
+<p>Six scenarios (all gated on <code>capabilities.mcp.serverMount.supported</code>):</p>
+<ul>
+<li><code>mcp-server-tool-roundtrip.test.ts</code> — <code>tools/list</code> then <code>tools/call</code> against a workflow exposed via <code>core.openwop.mcp.expose-tool</code>.</li>
+<li><code>mcp-server-resource-roundtrip.test.ts</code> — <code>resources/list</code> then <code>resources/read</code>.</li>
+<li><code>mcp-server-prompt-roundtrip.test.ts</code> — <code>prompts/list</code> then <code>prompts/get</code>.</li>
+<li><code>mcp-server-sampling-bridge.test.ts</code> — inbound <code>sampling/createMessage</code> bridges to workflow's <code>ctx.callAI</code> (further gated on <code>samplingBridge: true</code>).</li>
+<li><code>mcp-server-elicitation-bridge.test.ts</code> — inbound <code>elicitation/create</code> bridges to <code>ctx.suspend</code> and the accept / decline / cancel path round-trips (further gated on <code>elicitationBridge: true</code>).</li>
+<li><code>mcp-server-untrusted-args.test.ts</code> — malformed <code>arguments</code> rejected per <code>inputSchema</code> before any node executes.</li>
+</ul>
+<p>13/13 assertions pass against the reference <code>apps/workflow-engine</code> host as of 2026-05-17.</p>
+<hr/>
+<h2 id="what-openwop-does-not-specify-about-mcp">What openwop does NOT specify about MCP</h2>
+<ul>
+<li><strong>Which MCP servers to load.</strong> Host-implementation choice. Some hosts ship a curated set; some allow operator config.</li>
+<li><strong>MCP transport mechanics.</strong> MCP itself is documented at <code>https://modelcontextprotocol.io</code>; openwop doesn't re-specify it.</li>
+<li><strong>Tool-discovery format.</strong> MCP defines tool schemas; openwop doesn't override.</li>
+<li><strong>Result-redaction rules.</strong> Hosts apply their redaction harness to MCP results before persisting them in event payloads (per <code>SECURITY/threat-model-secret-leakage.md</code>); the harness shape is host-defined.</li>
+</ul>
+<hr/>
+<h2 id="future-work">Future work</h2>
+<ul>
+<li>A vendor-neutral way for a host to advertise its supported MCP servers in <code>/.well-known/openwop</code>. Currently <code>capabilities.mcp</code> is host-implementation-defined; an additive field would let clients query before sending workflows.</li>
+<li>A conformance scenario that drives an MCP round-trip without depending on a specific MCP server, using a synthetic MCP-server fixture.</li>
+<li>A worked node-pack example showing an LLM-using-tools node that integrates MCP.</li>
+</ul>
+<hr/>
+<h2 id="see-also">See also</h2>
+<ul>
+<li><code>spec/v1/positioning.md</code> — why MCP is complementary, not competing.</li>
+<li><code>spec/v1/host-extensions.md</code> — what's in the openwop wire contract vs what's a host extension.</li>
+<li><code>SECURITY/threat-model-prompt-injection.md</code> — invariants on MCP tool responses.</li>
+<li><code>SECURITY/threat-model-node-packs.md</code> — sandbox + trust model that MCP servers fit into.</li>
+<li>Model Context Protocol: https://modelcontextprotocol.io — the canonical MCP source.</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

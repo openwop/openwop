@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — openwop Spec v1 — Host Extensions</title>
+  <meta name="description" content="A host implementing openwop often needs to expose product-specific concepts that aren&#39;t part of the protocol — workspaces, projects, canvases, custom node types, vendor analytics. The spec mentions some of these in passing (e.g.,…"/>
+  <link rel="canonical" href="https://openwop.dev/spec/v1/host-extensions.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — openwop Spec v1 — Host Extensions"/>
+  <meta property="og:description" content="A host implementing openwop often needs to expose product-specific concepts that aren&#39;t part of the protocol — workspaces, projects, canvases, custom node types, vendor analytics. The spec mentions some of these in passing (e.g.,…"/>
+  <meta property="og:url" content="https://openwop.dev/spec/v1/host-extensions.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — openwop Spec v1 — Host Extensions"/>
+  <meta name="twitter:description" content="A host implementing openwop often needs to expose product-specific concepts that aren&#39;t part of the protocol — workspaces, projects, canvases, custom node types, vendor analytics. The spec mentions some of these in passing (e.g.,…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="active" href="/spec/v1/">Spec</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/profiles/">Profiles</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="openwop-spec-v1-host-extensions">openwop Spec v1 — Host Extensions</h1>
+<blockquote><p><strong>Status: FINAL v1 (2026-05-05).</strong> Distinguishes the protocol's normative core from host-specific extensions. This document is the canonical reference cited from any spec doc that mentions a vendor-prefixed namespace (e.g., <code>openwop.*</code>). Graduated DRAFT → FINAL via RFC 0006. See <code>auth.md</code> for the status legend. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>.</p></blockquote>
+<hr/>
+<h2 id="why-this-exists">Why this exists</h2>
+<p>A host implementing openwop often needs to expose product-specific concepts that aren't part of the protocol — workspaces, projects, canvases, custom node types, vendor analytics. The spec mentions some of these in passing (e.g., <code>openwop.canvasTypeId</code> in the <code>metadata</code> field of <code>POST /v1/runs</code>).</p>
+<p>External implementers reading the spec need to know <strong>which fields are normative</strong> (every conforming host MUST honor them) <strong>vs which are host-specific</strong> (a host MAY add them; clients MUST tolerate their absence).</p>
+<p>This document is the answer.</p>
+<hr/>
+<h2 id="the-rule">The rule</h2>
+<p>Any field, event type, span name, or capability that doesn't match one of the canonical prefixes below is a <strong>host extension</strong>. Hosts MAY add them. Clients MUST tolerate them being missing or unrecognized.</p>
+<h3 id="canonical-prefixes-protocol-owned">Canonical prefixes (protocol-owned)</h3>
+<table>
+<thead><tr><th>Prefix</th><th>Owner</th><th>Examples</th></tr></thead>
+<tbody>
+<tr><td><code>openwop.*</code></td><td>Protocol</td><td><code>openwop.run_id</code>, <code>openwop.node.&amp;lt;typeId&amp;gt;</code>, <code>openwop.event.append</code></td></tr>
+<tr><td><code>core.*</code></td><td>Protocol</td><td><code>core.noop</code>, <code>core.delay</code>, <code>core.ai.callPrompt</code> (in node-pack scope)</td></tr>
+<tr><td><code>community.*</code></td><td>Public registry</td><td><code>community.john.image-tools</code> (per <code>node-packs.md</code> §Naming)</td></tr>
+<tr><td><code>vendor.&amp;lt;org&amp;gt;.*</code></td><td>Public registry, org-authorized</td><td><code>vendor.acme.search-tools</code></td></tr>
+<tr><td><code>private.&amp;lt;host&amp;gt;.*</code></td><td>Host-internal pack registry</td><td><code>private.openwop.canvas-tools</code> (per <code>openwop/openwop@0f2f7ff</code>)</td></tr>
+<tr><td><code>local.*</code></td><td>In-repo / dev-time / unpublished packs</td><td><code>local.dev-test</code></td></tr>
+</tbody></table>
+<h3 id="vendor-prefixed-namespaces-host-extensions">Vendor-prefixed namespaces (host extensions)</h3>
+<p>A host MAY use any vendor-prefixed namespace for fields not covered above. Recommended convention: use the vendor's reverse-DNS or short identifier as the prefix.</p>
+<table>
+<thead><tr><th>Prefix</th><th>Used by</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td><code>openwop.*</code></td><td>The reference host shipped with this repo</td><td>Workspace, project, canvas, persona, brand, etc. — example of how a host carves out a vendor namespace.</td></tr>
+<tr><td><code>&amp;lt;your-vendor&amp;gt;.*</code></td><td>Your host</td><td>Anything openwop doesn't define</td></tr>
+</tbody></table>
+<p>A client receiving an unknown vendor-prefixed field MUST treat it as opaque. Hosts MUST NOT depend on clients understanding their extension namespace.</p>
+<hr/>
+<h2 id="what-stays-in-the-protocol">What stays in the protocol</h2>
+<p>openwop normatively owns:</p>
+<table>
+<thead><tr><th>Concept</th><th>Spec doc</th></tr></thead>
+<tbody>
+<tr><td>Workflow definitions</td><td><code>rest-endpoints.md</code>, <code>schemas/workflow-definition.schema.json</code></td></tr>
+<tr><td>Run lifecycle (create / get / cancel / fork / interrupt)</td><td><code>rest-endpoints.md</code></td></tr>
+<tr><td>Run events (closed event-name vocabulary)</td><td><code>observability.md</code> §"Canonical run lifecycle event names"</td></tr>
+<tr><td>Stream modes (SSE + polling)</td><td><code>stream-modes.md</code></td></tr>
+<tr><td>Interrupts (HITL approval + clarification)</td><td><code>interrupt.md</code></td></tr>
+<tr><td>Idempotency (Layer 1 + Layer 2)</td><td><code>idempotency.md</code></td></tr>
+<tr><td>Version negotiation</td><td><code>version-negotiation.md</code></td></tr>
+<tr><td>Capability discovery</td><td><code>capabilities.md</code></td></tr>
+<tr><td>Node-pack manifest shape</td><td><code>node-packs.md</code></td></tr>
+<tr><td>Compatibility profiles (derived from capabilities)</td><td><code>profiles.md</code></td></tr>
+<tr><td>Scale profiles</td><td><code>scale-profiles.md</code></td></tr>
+<tr><td>Conformance contracts</td><td>the <code>@openwop/openwop-conformance</code> suite</td></tr>
+</tbody></table>
+<p>Anything else is a host concern.</p>
+<hr/>
+<h2 id="what-hosts-own">What hosts own</h2>
+<p>A host owns:</p>
+<ul>
+<li><strong>Authentication.</strong> openwop defines the bearer-token error envelope; how the token is provisioned, rotated, scoped, etc., is a host concern.</li>
+<li><strong>Authorization.</strong> openwop doesn't define RBAC. Hosts wire their own per-resource permissions.</li>
+<li><strong>Tenant / workspace / project scoping.</strong> openwop receives <code>metadata</code> with whatever scoping fields the host needs; the protocol only requires that runs are isolated per the host's documented scoping rules.</li>
+<li><strong>Storage adapters.</strong> The host's choice of database, key-value store, blob storage, vector index. openwop defines the <code>RunEventLogIO</code> and <code>SuspendIO</code> interfaces (see <code>storage-adapters.md</code>); how a host implements them is local.</li>
+<li><strong>Secret resolution.</strong> Hosts that advertise <code>capabilities.secrets.supported: true</code> MUST follow the credential-reference contract; how secrets are stored (KMS, Vault, env vars) is a host choice.</li>
+<li><strong>Billing / quotas.</strong> openwop doesn't bill. Hosts apply their own billing per workspace/tenant.</li>
+<li><strong>Audit / observability sinks.</strong> Hosts wire their own log shipping, metrics export, OTel collectors.</li>
+<li><strong>Product-specific UI.</strong> openwop doesn't ship UI. Hosts build whatever UI fits their product.</li>
+<li><strong>Domain extensions.</strong> Workspace, project, canvas, persona, brand, knowledge base, agent personas — these are vendor-specific domain concepts (the namespaces in the example tables above carry one such vocabulary). Other hosts may have entirely different domain models.</li>
+</ul>
+<p>A host's domain extensions live in that host's own repo, not in this spec corpus.</p>
+<hr/>
+<h2 id="how-extensions-appear-on-the-wire">How extensions appear on the wire</h2>
+<h3 id="run-metadata">Run metadata</h3>
+<p><code>POST /v1/runs</code> accepts a <code>metadata</code> object. openwop doesn't constrain its shape beyond "MUST be a JSON object." Hosts use it for vendor-prefixed fields:</p>
+<pre class="lang-json"><code>{
+  &quot;workflowId&quot;: &quot;conformance-noop&quot;,
+  &quot;metadata&quot;: {
+    &quot;openwop.canvasTypeId&quot;: &quot;campaign-studio&quot;,
+    &quot;openwop.canvasId&quot;: &quot;doc_abc123&quot;,
+    &quot;openwop.projectId&quot;: &quot;proj_xyz&quot;
+  }
+}</code></pre>
+<p>An OpenWOP-conforming host MUST NOT reject the request because it doesn't recognize the <code>openwop.*</code> fields. A host MAY ignore them entirely. The host that owns the namespace honors the fields it understands; other hosts pass them through opaquely.</p>
+<h3 id="discovery-payload-extensions">Discovery payload extensions</h3>
+<p><code>/.well-known/openwop</code> returns an object. Hosts MAY add vendor-prefixed top-level fields:</p>
+<pre class="lang-json"><code>{
+  &quot;protocolVersion&quot;: &quot;1.0&quot;,
+  &quot;supportedEnvelopes&quot;: [...],
+  &quot;openwop&quot;: {
+    &quot;workspaceId&quot;: &quot;ws_default&quot;,
+    &quot;billingTier&quot;: &quot;production&quot;
+  }
+}</code></pre>
+<p>Per <code>capabilities.schema.json</code>, <code>additionalProperties: true</code> makes this additive. Clients MUST ignore unrecognized top-level fields.</p>
+<h3 id="run-snapshot-extensions">Run snapshot extensions</h3>
+<p><code>GET /v1/runs/{runId}</code> returns a <code>RunSnapshot</code>. The schema's <code>additionalProperties: true</code> allows host fields. Conventional pattern:</p>
+<pre class="lang-json"><code>{
+  &quot;runId&quot;: &quot;run-...&quot;,
+  &quot;workflowId&quot;: &quot;...&quot;,
+  &quot;status&quot;: &quot;completed&quot;,
+  &quot;openwop&quot;: {
+    &quot;workspaceRole&quot;: &quot;editor&quot;,
+    &quot;auditUrl&quot;: &quot;...&quot;
+  }
+}</code></pre>
+<h3 id="event-payloads">Event payloads</h3>
+<p>Run events have a <code>data</code> field that's free-form. Hosts MAY include vendor-prefixed sub-fields. Clients MUST ignore unrecognized event types entirely (per <code>observability.md</code> §"Forward-compat").</p>
+<h3 id="span-attributes">Span attributes</h3>
+<p>Span attributes outside the <code>openwop.<em></code> namespace are host extensions. The OTel allowlist enforced by the host's redaction harness covers <code>openwop.</em></code> plus any vendor-prefixed attributes the host has explicitly allowlisted.</p>
+<hr/>
+<h2 id="what-hosts-must-not-do">What hosts MUST NOT do</h2>
+<ul>
+<li>**MUST NOT redefine <code>openwop.*</code> semantics.** A host that emits <code>openwop.run.completed</code> with a non-canonical payload shape is non-conformant. Hosts wanting different semantics use a vendor-prefixed event type.</li>
+<li>**MUST NOT add fields under <code>core.*</code> or other registry-reserved scopes.** These are protocol-managed namespaces.</li>
+<li><strong>MUST NOT make the protocol's normative requirements optional via extension.</strong> A host that advertises <code>openwop-secrets</code> but doesn't honor <code>credentialRef</code> redaction is non-conformant regardless of any extension fields.</li>
+<li><strong>MUST NOT depend on clients honoring host-extension fields.</strong> Host extensions are opaque to clients by default.</li>
+</ul>
+<hr/>
+<h2 id="extension-lifecycle">Extension lifecycle</h2>
+<p>A host extension MAY be:</p>
+<p>1. <strong>Promoted to the protocol</strong> via an RFC per <code>RFCS/0001-rfc-process.md</code>, if multiple hosts converge on the same extension shape and an external implementer would benefit from a normative definition. 2. <strong>Deprecated</strong> in favor of a different extension or a protocol field. Hosts SHOULD document deprecation per <code>COMPATIBILITY.md</code> §7. 3. <strong>Replaced</strong> by a different vendor-prefixed namespace. The host updates its docs; clients pin to the new prefix.</p>
+<p>Extension promotion is rare. Most host extensions stay host-specific forever; that's fine.</p>
+<hr/>
+<h2 id="host-capability-surfaces"><code>host.*</code> capability surfaces</h2>
+<p>The <code>host.*</code> namespace is reserved for <strong>capability surfaces</strong> that node packs consume via their manifest's <code>peerDependencies</code> (per <code>node-packs.md</code> §"Manifest format"). The per-surface normative contracts live in:</p>
+<ul>
+<li><strong><code>spec/v1/host-capabilities.md</code></strong> — canonical reference for every <code>host.&amp;lt;name&amp;gt;</code> capability: methods, signatures, required vs optional, failure modes.</li>
+</ul>
+<p>A host advertising <code>host.&amp;lt;name&amp;gt;: supported</code> in <code>/.well-known/openwop</code> MUST honor that contract. A pack declaring <code>peerDependencies: { &quot;host.&amp;lt;name&amp;gt;&quot;: &quot;supported&quot; }</code> consumes it. The pack registry validates the relationship at workflow-register time.</p>
+<p>The 14 surfaces specified in v1: <code>host.aiEnvelope</code>, <code>host.promptLibrary</code>, <code>host.canvas</code>, <code>host.chat</code>, <code>host.brand</code>, <code>host.kanban</code>, <code>host.webResearch</code>, <code>host.agentRuntime</code>, <code>host.coordination</code>, <code>host.dataIntegration</code>, <code>host.launchStudio</code>, <code>host.entities</code>, <code>host.messaging</code>, <code>host.mcp</code>.</p>
+<hr/>
+<h2 id="see-also">See also</h2>
+<ul>
+<li><code>spec/v1/host-capabilities.md</code> — per-surface contracts for <code>host.*</code> capabilities</li>
+<li><code>spec/v1/capabilities.md</code> §"Network-handshake shape" — required and optional v1 fields are protocol-managed; fields outside that table are host extensions.</li>
+<li><code>spec/v1/positioning.md</code> — what's in the protocol vs what's in adjacent ecosystems.</li>
+<li><code>spec/v1/node-packs.md</code> §"Naming" — pack-name scope conventions.</li>
+<li><code>RFCS/0001-rfc-process.md</code> — RFC mechanism for promoting an extension to the protocol.</li>
+<li><code>COMPATIBILITY.md</code> — additive-change discipline that gates extension stability.</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

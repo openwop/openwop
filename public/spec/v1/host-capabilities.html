@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — openwop Spec v1 — Host Capability Surfaces</title>
+  <meta name="description" content="node-packs.md §&quot;Manifest format&quot; allows packs to declare peerDependencies against engine-supplied capabilities. host-extensions.md documents the namespace rule that host.* is reserved for host-extension capabilities. Neither document specifies the…"/>
+  <link rel="canonical" href="https://openwop.dev/spec/v1/host-capabilities.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — openwop Spec v1 — Host Capability Surfaces"/>
+  <meta property="og:description" content="node-packs.md §&quot;Manifest format&quot; allows packs to declare peerDependencies against engine-supplied capabilities. host-extensions.md documents the namespace rule that host.* is reserved for host-extension capabilities. Neither document specifies the…"/>
+  <meta property="og:url" content="https://openwop.dev/spec/v1/host-capabilities.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — openwop Spec v1 — Host Capability Surfaces"/>
+  <meta name="twitter:description" content="node-packs.md §&quot;Manifest format&quot; allows packs to declare peerDependencies against engine-supplied capabilities. host-extensions.md documents the namespace rule that host.* is reserved for host-extension capabilities. Neither document specifies the…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="active" href="/spec/v1/">Spec</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/profiles/">Profiles</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="openwop-spec-v1-host-capability-surfaces">openwop Spec v1 — Host Capability Surfaces</h1>
+<blockquote><p><strong>Status: FINAL v1 (2026-05-12).</strong> Promoted DRAFT → FINAL after Phase B audit confirmed all 14 <code>host.<em></code> capability sections are internally consistent + RFC 2119-clean + cross-linked to <code>capabilities.md</code> §"runtimeCapabilities" + <code>node-packs.md</code> §"Manifest format" <code>peerDependencies</code>. Normative contracts for the <code>host.</em></code> capabilities that node-pack <code>peerDependencies</code> may declare. A pack that declares <code>peerDependencies: { &quot;host.canvas&quot;: &quot;supported&quot; }</code> consumes the canvas surface defined here; the host that advertises <code>host.canvas: supported</code> in <code>/.well-known/openwop</code> MUST expose the contract specified in §host.canvas. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
+<hr/>
+<h2 id="why-this-exists">Why this exists</h2>
+<p><code>node-packs.md</code> §"Manifest format" allows packs to declare <code>peerDependencies</code> against engine-supplied capabilities. <code>host-extensions.md</code> documents the namespace rule that <code>host.*</code> is reserved for host-extension capabilities. Neither document specifies the <strong>contracts</strong> those capabilities expose.</p>
+<p>This document does. Each <code>§host.&amp;lt;name&amp;gt;</code> section below defines a normative ctx surface — the methods, signatures, return shapes, and failure modes that any host advertising the capability MUST implement.</p>
+<p>External hosts implementing openwop use this document to know exactly what to wire up. Pack authors use it to know what's safe to call. The conformance suite tests against it (gated per-capability via the corresponding profile).</p>
+<hr/>
+<h2 id="the-contract-pattern">The contract pattern</h2>
+<p>Every <code>host.*</code> capability follows the same wire pattern:</p>
+<p>1. <strong>Discovery.</strong> The host advertises <code>host.&amp;lt;name&amp;gt;: { supported: true, ... }</code> in <code>/.well-known/openwop</code>'s <code>agents</code> block or top-level (per <code>capabilities.md</code> §"Network-handshake shape" extension rules). 2. <strong>Registration.</strong> The pack registry refuses to register a pack at <code>workflow-register</code> time if the host doesn't advertise the pack's declared <code>peerDependencies</code> capabilities. 3. <strong>Dispatch.</strong> At node execution, the executor reads from <code>ctx.&amp;lt;name&amp;gt;.&amp;lt;method&amp;gt;(...)</code>. The host has wired the named property to a method that satisfies this spec. 4. <strong>Failure.</strong> If <code>ctx.&amp;lt;name&amp;gt;</code> is absent (host advertised but didn't wire), or the named method is missing, executors MUST throw with <code>error.code = &quot;host_capability_missing&quot;</code> and <code>error.capability = &quot;host.&amp;lt;name&amp;gt;&quot;</code> (or <code>&quot;host.&amp;lt;name&amp;gt;.&amp;lt;method&amp;gt;&quot;</code> for granular misses).</p>
+<p>Method signatures use TypeScript-flavor shapes; concrete hosts MAY return additional fields (additive). The required field set is what's listed below.</p>
+<hr/>
+<h2 id="host-aiproviders">§host.aiProviders</h2>
+<p><strong>Capability flag:</strong> <code>aiProviders: supported</code> <em>(advertised via top-level <code>Capabilities.aiProviders.supported[]</code>; see <a href="capabilities.md#aiproviders">capabilities.md §aiProviders</a>)</em></p>
+<p><strong>Used by:</strong> <code>core.openwop.ai</code>, <code>vendor.myndhyve.ai</code>, <code>vendor.myndhyve.ads-copy-generate</code>, <code>vendor.myndhyve.landing-page</code>, <code>vendor.myndhyve.market-intel-*</code> (all single-AI-call packs).</p>
+<p>The lower-level escape hatch for AI invocation. Packs that need raw model output (untyped text + optional structured-output schema) call <code>ctx.callAI</code> directly. The typed-envelope companion is <code>§host.aiEnvelope</code>.</p>
+<pre class="lang-typescript"><code>ctx.callAI({
+  provider?: string,             // anthropic | openai | google | gemini | ...; defaults to host&#39;s preferred routing
+  model?: string,                // model id; host-default when omitted
+  systemPrompt?: string,
+  messages: Array&amp;lt;{ role: &amp;#39;user&amp;#39; | &amp;#39;assistant&amp;#39; | &amp;#39;system&amp;#39;, content: string }&amp;gt;,
+  temperature?: number,          // 0..2
+  maxTokens?: number,            // upper bound; host MAY cap further
+  stopSequences?: string[],
+  responseSchema?: object,       // JSON Schema for structured-output mode (host routes to a provider that supports it)
+}) → Promise&amp;lt;{
+  content?: string,              // primary text output (omit when only `data` is set)
+  data?: object,                 // parsed structured output when `responseSchema` was supplied
+  usage?: {
+    inputTokens?: number,        // also accepted as `promptTokens` for back-compat with provider conventions
+    outputTokens?: number,       // also accepted as `completionTokens`
+    totalTokens?: number,
+  },
+  finishReason?: string,         // &amp;#39;stop&amp;#39; | &amp;#39;length&amp;#39; | &amp;#39;content_filter&amp;#39; | &amp;#39;tool_calls&amp;#39; | ...
+  model?: string,                // model id the host actually routed to (may differ from `model` request when host applies a fallback)
+}&amp;gt;</code></pre>
+<p><strong>Required methods:</strong> <code>callAI</code>.</p>
+<p><strong>Optional sub-capabilities:</strong></p>
+<table>
+<thead><tr><th>Flag</th><th>Adds</th><th>Used by</th></tr></thead>
+<tbody>
+<tr><td><code>aiProviders.toolCalling: supported</code></td><td><code>ctx.callAIWithTools(...)</code> — model may emit <code>tool_call</code> entries</td><td><code>core.openwop.ai</code> (<code>core.ai.toolCalling</code>)</td></tr>
+<tr><td><code>aiProviders.embeddings: supported</code></td><td><code>ctx.callAI({ embeddingMode: true, dimensions?: number })</code> returns <code>{ embedding: number[], dimensions, model }</code></td><td><code>core.openwop.ai</code> (<code>core.openwop.ai.embeddings</code>)</td></tr>
+<tr><td><code>aiProviders.imageGeneration: supported</code></td><td><code>ctx.callImageGenerator(...)</code> — generates binary image asset (returns URL or base64 data); see optional method block below</td><td><code>vendor.myndhyve.ads-image-generate</code></td></tr>
+<tr><td><code>aiProviders.videoGeneration: supported</code></td><td><code>ctx.callVideoGenerator(...)</code> — generates binary video asset (returns URL); see optional method block below. Long-running (typical 30-120s); host hides polling internally.</td><td><code>vendor.myndhyve.ads-video-generate</code></td></tr>
+</tbody></table>
+<pre class="lang-typescript"><code>// Available when host advertises `aiProviders.imageGeneration: supported`.
+ctx.callImageGenerator({
+  provider?: string,             // gemini | openai (dall-e) | stability | ...
+  model?: string,                // &#39;imagen-3&#39; | &#39;dall-e-3&#39; | ...
+  prompt: string,
+  negativePrompt?: string,
+  width: number,                 // pixels; host MAY cap (typical max 2048)
+  height: number,
+  count?: number,                // default 1; host MAY cap
+  seed?: number,                 // deterministic seed (host-supplied or pack-supplied)
+  brandColors?: string[],        // optional hint forwarded to providers that accept brand-color guidance
+}) → Promise&amp;lt;{
+  images: Array&amp;lt;{
+    url?: string,                // host-served URL (preferred for large assets)
+    base64?: string,             // inline base64 (smaller assets; host&amp;#39;s choice)
+    mimeType: string,            // &amp;#39;image/png&amp;#39; | &amp;#39;image/jpeg&amp;#39; | &amp;#39;image/webp&amp;#39;
+    width: number,
+    height: number,
+    seed?: number,
+    safetyFiltered: boolean,
+    metadata?: { model?: string, generationTimeMs?: number },
+  }&amp;gt;,
+  filteredCount: number,         // count of images dropped by safety filter
+  totalTimeMs?: number,
+  usage?: { totalCost?: number },
+}&gt;</code></pre>
+<pre class="lang-typescript"><code>// Available when host advertises `aiProviders.videoGeneration: supported`.
+// Host hides async polling internally — the Promise resolves only when
+// the video is finalized OR rejects on terminal failure. Typical
+// latency 30-120 seconds; packs MUST honor ctx.signal for abort.
+ctx.callVideoGenerator({
+  provider?: string,             // google (veo) | runway | pika | ...
+  model?: string,                // &#39;veo-2&#39; | &#39;gen-3&#39; | ...
+  prompt: string,
+  negativePrompt?: string,
+  width: number,                 // pixels; host MAY cap
+  height: number,
+  durationSeconds: number,       // target duration; host MAY round to provider&#39;s allowed lengths
+  includeAudio?: boolean,        // default false
+  seed?: number,
+  brandColors?: string[],
+}) → Promise&amp;lt;{
+  video: {
+    url: string,                 // host-served URL (videos are too large for inline base64)
+    durationSeconds: number,
+    width: number,
+    height: number,
+    mimeType: string,            // &amp;#39;video/mp4&amp;#39; | &amp;#39;video/webm&amp;#39;
+    fileSizeBytes?: number,
+    thumbnailUrl?: string,
+    seed?: number,
+    safetyFiltered: boolean,
+    metadata?: {
+      model?: string,
+      generationTimeMs?: number,
+      frameCount?: number,
+      fps?: number,
+      codec?: string,
+    },
+  },
+  totalTimeMs?: number,
+  usage?: { totalCost?: number },
+}&amp;gt;</code></pre>
+<p><strong>Failure modes:</strong></p>
+<ul>
+<li><code>host_capability_missing</code> — <code>ctx.callAI</code> absent (workflow-register-time refusal via <code>peerDependencies: { aiProviders: &quot;supported&quot; }</code> is the correct path; runtime check is defense-in-depth)</li>
+<li><code>provider_unavailable</code> — provider rejected the call or is unreachable</li>
+<li><code>provider_quota_exhausted</code> — BYOK quota / host-side rate limit</li>
+<li><code>provider_not_supported</code> — caller requested a <code>provider</code> not in <code>Capabilities.aiProviders.supported[]</code></li>
+<li><code>model_not_supported</code> — model id not allowed for the chosen provider</li>
+<li><code>response_schema_invalid</code> — <code>responseSchema</code> malformed (caller fault)</li>
+<li><code>content_too_long</code> — request exceeds the model's context window (host SHOULD reject pre-flight when possible)</li>
+<li><code>image_generation_failed</code> — sub-capability-specific (<code>ctx.callImageGenerator</code>)</li>
+<li><code>image_safety_filtered_all</code> — every requested image was safety-filtered (all → <code>filteredCount: count</code>, <code>images: []</code>)</li>
+<li><code>video_generation_failed</code> — sub-capability-specific (<code>ctx.callVideoGenerator</code>)</li>
+<li><code>video_safety_filtered</code> — video was safety-filtered (resolves with <code>video.safetyFiltered: true</code> AND a placeholder thumbnail; never throws — packs decide how to surface)</li>
+<li><code>video_generation_timeout</code> — long-running job exceeded the host's max wait window (host-configured, typical 5 min). Pack should treat as retryable.</li>
+<li><code>video_generation_cancelled</code> — <code>ctx.signal.aborted</code> fired during the polling loop OR the underlying job was cancelled host-side. Not retryable from the pack's perspective.</li>
+</ul>
+<p><strong>Determinism note.</strong> <code>ctx.callAI</code> is not deterministic in general (temperature > 0, provider-side seed drift). Replay-aware hosts MAY snapshot the AI response in the run event log and replay deterministically; the contract here doesn't require it. See <a href="replay.md">replay.md §"AI determinism"</a>.</p>
+<hr/>
+<h2 id="host-aienvelope">§host.aiEnvelope</h2>
+<p><strong>Capability flag:</strong> <code>host.aiEnvelope: supported</code></p>
+<p><strong>Used by:</strong> <code>vendor.myndhyve.ai</code>, <code>vendor.myndhyve.brand</code>, <code>vendor.myndhyve.web-research</code></p>
+<p>Generates a typed envelope from an LLM call. Routes the call through the host's BYOK provider layer (see <code>host.aiEnvelope</code> vs the lower-level <code>aiProviders</code> capability — this surface is opinionated about envelope shape, that one returns raw model output).</p>
+<pre class="lang-typescript"><code>ctx.aiEnvelope.generate({
+  systemPrompt: string,
+  envelopeType: string,        // e.g., &quot;prd.create&quot;, &quot;theme.create&quot;
+  provider?: string,           // anthropic | openai | google | ...
+  model?: string,
+  temperature?: number,
+  maxTokens?: number,
+  userMessage?: string,
+  variables?: Record&amp;lt;string, unknown&amp;gt;,
+  context?: Record&amp;lt;string, unknown&amp;gt;,
+  idempotencyKey: string,
+}) → Promise&amp;lt;{
+  envelopeType: string,
+  payload: Record&amp;lt;string, unknown&amp;gt;,     // envelope-typed payload
+  envelopeId: string,
+  usage?: { inputTokens: number, outputTokens: number },
+  model?: string,
+}&gt;
+
+ctx.aiEnvelope.await({
+  envelopeType: string,
+  timeoutMs: number,
+}) → Promise&amp;lt;{
+  envelopeType: string,
+  payload?: Record&amp;lt;string, unknown&amp;gt;,
+  envelopeId?: string,
+  timedOut?: boolean,
+}&gt;</code></pre>
+<p><strong>Required methods:</strong> <code>generate</code>. <code>await</code> is required only when the host advertises <code>host.aiEnvelope.await: supported</code>.</p>
+<p><strong>Failure modes:</strong></p>
+<ul>
+<li><code>host_capability_missing</code> — <code>ctx.aiEnvelope</code> absent</li>
+<li><code>provider_unavailable</code> — provider rejected or unreachable</li>
+<li><code>provider_quota_exhausted</code> — BYOK quota / rate limit</li>
+<li><code>envelope_validation_failed</code> — provider returned non-matching shape after retries</li>
+</ul>
+<p><strong>Relationship to <code>spec/v1/ai-envelope.md</code> (DRAFT v1.x).</strong> The <code>generate()</code> return shape above is a <strong>projection</strong> of the full <code>AIEnvelope</code> document defined in <code>ai-envelope.md</code> — it surfaces the fields a node pack typically consumes (<code>envelopeType</code>, <code>payload</code>, <code>envelopeId</code>, <code>usage</code>, <code>model</code>) without obliging packs to handle every envelope-level concern (<code>correlationId</code>, <code>meta.source</code>, <code>meta.contentTrust</code>, <code>partial</code>). When the host accepts the emission for engine processing per <code>ai-envelope.md</code> §"Production flow," it wraps the projection back into a full envelope before applying validation, contract gating, redaction, and dedup. A future v1.x evolution MAY widen the projection to surface additional envelope-level fields to packs that opt in; the current narrow shape is preserved for backward compatibility with packs written against pre-DRAFT-v1.x hosts.</p>
+<hr/>
+<h2 id="model-capability-declarations">Model-capability declarations</h2>
+<blockquote><p>Added by RFC 0031 (<code>Active</code> 2026-05-20). Normates how hosts dispatch envelope-emitting NodeModules whose execution depends on specific model capabilities (<code>structured-output</code>, <code>discriminator-enum</code>, <code>long-context</code>, <code>reasoning</code>, <code>function-calling</code>, or <code>x-host-&amp;lt;host&amp;gt;-*</code> extensions).</p></blockquote>
+<p>NodeModules MAY declare model-capability requirements via <code>NodeModule.requiredModelCapabilities[]</code> + an optional <code>NodeModule.fallbackModel</code> per <code>node-packs.md</code> §"Model-capability declarations on NodeModules." This is a parallel surface to <code>NodeModule.requires[]</code> — <code>requires</code> gates on HOST capabilities (e.g., <code>chat.sendPrompt</code>, <code>secrets.byok</code>); <code>requiredModelCapabilities</code> gates on MODEL capabilities advertised at <code>capabilities.modelCapabilities.advertised[]</code>.</p>
+<h3 id="dispatch-flow-normative">Dispatch flow (normative)</h3>
+<p>When dispatching a NodeModule that declares <code>requiredModelCapabilities</code>, a host that advertises <code>capabilities.modelCapabilities.supported: true</code> SHALL:</p>
+<p>1. Check the active model's advertised capabilities against the NodeModule's <code>requiredModelCapabilities[]</code>. 2. <strong>All required capabilities met</strong> → dispatch normally. 3. <strong>Unmet AND <code>fallbackModel</code> declared AND host can authenticate to the fallback provider</strong> (i.e., the fallback's <code>provider</code> is in <code>capabilities.aiProviders.supported[]</code> AND a credential is resolvable AND the host advertises <code>capabilities.modelCapabilities.substitutionSupported: true</code>):     - Substitute the active model with the fallback.     - Emit <code>model.capability.substituted</code> per the payload contract in <code>schemas/run-event-payloads.schema.json</code> §<code>modelCapabilitySubstituted</code>.     - Dispatch with the fallback model. 4. <strong>Unmet AND (no <code>fallbackModel</code> declared, OR substitution not supported, OR host cannot authenticate to the fallback)</strong>:     - Emit <code>model.capability.insufficient</code> per <code>modelCapabilityInsufficient</code> payload.     - Refuse to dispatch the node; terminate the run with <code>RunSnapshot.error.code = &quot;capability_not_provided&quot;</code> per <code>capabilities.md</code> §"Unsupported capability — refusal contract."</p>
+<p>The ordering MUST be: <strong>capability check → optional substitution → emit telemetry → dispatch or refuse.</strong> Hosts MUST NOT substitute silently (no event emission); hosts MUST NOT dispatch with an unsuitable model and hope for the best (the model's runtime failure is a worse signal than refusing up-front).</p>
+<p><strong>Recursive substitution is NOT permitted</strong> (RFC 0031 §"Unresolved questions" #3). A host that substitutes from model A to fallback model B MUST evaluate B's full capability set before dispatching; if B also fails the check, the host MUST emit <code>model.capability.insufficient</code> with <code>fallbackAttempted: true</code> and refuse — it MUST NOT chain to another fallback.</p>
+<h3 id="capability-identifier-registry">Capability identifier registry</h3>
+<p>Spec-reserved identifiers (RFC 0031 §C):</p>
+<table>
+<thead><tr><th>Identifier</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>structured-output</code></td><td>Vendor strict-mode JSON Schema support (Anthropic strict tool use <code>strict: true</code>, OpenAI strict mode <code>response_format.json_schema.strict: true</code>, Gemini <code>responseSchema</code> on <code>generateContent</code>).</td></tr>
+<tr><td><code>discriminator-enum</code></td><td>Single-string <code>enum: [&quot;literal&quot;]</code> discriminator support in <code>anyOf</code> branches per <code>ai-envelope.md</code> §"Variant payload discrimination (normative)." All three Tier-1 vendors support this when their respective strict modes are engaged.</td></tr>
+<tr><td><code>long-context</code></td><td>Context window ≥ 200k tokens.</td></tr>
+<tr><td><code>reasoning</code></td><td>Native reasoning / thinking-tokens (Anthropic extended thinking, Gemini <code>thinkingBudget</code>, OpenAI o-series reasoning). <strong>Sibling concept</strong> to the RFC 0030 envelope-payload <code>reasoning</code> field — this identifier means <em>model-native</em> thinking-tokens, NOT envelope-payload chain-of-thought.</td></tr>
+<tr><td><code>function-calling</code></td><td>Multi-turn function-calling / tool-use loop support.</td></tr>
+</tbody></table>
+<p>Host-private extensions MUST prefix with <code>x-host-&amp;lt;host&amp;gt;-&amp;lt;key&amp;gt;</code> per <code>host-extensions.md</code> §"Canonical-prefix table." A future RFC MAY add new spec-reserved identifiers.</p>
+<h3 id="interaction-with-prompt-resolution-rfc-0029">Interaction with prompt resolution (RFC 0029)</h3>
+<p><code>requiredModelCapabilities</code> and the four-layer prompt-resolution chain (RFC 0029) are orthogonal axes. When a host implements both, the recommended ordering is: <strong>capability check first, then prompt resolution.</strong> Rationale: substitution may swap models with different prompt-tuning expectations; resolving prompts against the <em>original</em> model when dispatch ends up using the <em>fallback</em> is incorrect. The <code>model.capability.substituted</code> event (this RFC) and <code>agent.promptResolved</code> (RFC 0029) MAY both fire for the same node execution; no precedence rule applies between them at the protocol level.</p>
+<hr/>
+<h2 id="host-promptlibrary">§host.promptLibrary</h2>
+<p><strong>Capability flag:</strong> <code>host.promptLibrary: supported</code></p>
+<p><strong>Used by:</strong> <code>vendor.myndhyve.ai</code> (specifically <code>core.ai.callPrompt</code>)</p>
+<p>Looks up a prompt by ID. Pin to a specific version for replay determinism.</p>
+<pre class="lang-typescript"><code>ctx.promptLibrary.get(promptId: string) → Promise&amp;lt;{
+  promptId: string,
+  systemPrompt: string,
+  version: string,
+  envelopeType?: string,        // when the prompt is bound to a specific envelope
+}&amp;gt;</code></pre>
+<p><strong>Required methods:</strong> <code>get</code>.</p>
+<p><strong>Failure modes:</strong></p>
+<ul>
+<li><code>host_capability_missing</code> — <code>ctx.promptLibrary</code> absent</li>
+<li><code>prompt_not_found</code> — promptId doesn't resolve</li>
+<li><code>prompt_version_pinned</code> — pin requested but not retrievable</li>
+</ul>
+<hr/>
+<h2 id="host-canvas">§host.canvas</h2>
+<p><strong>Capability flag:</strong> <code>host.canvas: supported</code></p>
+<p><strong>Used by:</strong> <code>vendor.myndhyve.canvas</code></p>
+<p>Reads + writes canvas state. Routes through host's canvas store (typically Firestore on MyndHyve; arbitrary on other hosts).</p>
+<pre class="lang-typescript"><code>ctx.canvas.read({
+  canvasId: string,
+  paths?: string[],             // optional jsonpath-like field selection
+}) → Promise&amp;lt;{
+  canvasId: string,
+  canvasTypeId: string,
+  state: Record&amp;lt;string, unknown&amp;gt;,
+  version: string,
+}&gt;
+
+ctx.canvas.write({
+  canvasId: string,
+  patch: Record&amp;lt;string, unknown&amp;gt;,
+  patchType: &#39;merge&#39; | &#39;replace&#39;,
+  idempotencyKey: string,
+}) → Promise&amp;lt;{
+  canvasId: string,
+  version: string,
+  appliedAt: string,            // ISO 8601
+}&amp;gt;
+
+ctx.canvas.create({
+  canvasTypeId: string,
+  workspaceId: string,
+  projectId?: string,
+  initialState?: Record&amp;lt;string, unknown&amp;gt;,
+  idempotencyKey: string,
+}) → Promise&amp;lt;{
+  canvasId: string,
+  canvasTypeId: string,
+  createdAt: string,
+}&amp;gt;
+
+ctx.canvas.crossInvoke({
+  sourceCanvasId: string,
+  targetCanvasTypeId: string,
+  message: Record&amp;lt;string, unknown&amp;gt;,
+  idempotencyKey: string,
+}) → Promise&amp;lt;{
+  invocationId: string,
+  targetCanvasId?: string,       // when target is single-canvas
+  acceptedAt: string,
+}&amp;gt;</code></pre>
+<p><strong>Required methods:</strong> <code>read</code>, <code>write</code>. <code>create</code> and <code>crossInvoke</code> are required only when the host advertises <code>host.canvas.create: supported</code> / <code>host.canvas.crossInvoke: supported</code>.</p>
+<p><strong>Failure modes:</strong></p>
+<ul>
+<li><code>host_capability_missing</code> — <code>ctx.canvas</code> absent</li>
+<li><code>canvas_not_found</code> — canvasId doesn't resolve</li>
+<li><code>canvas_permission_denied</code> — caller lacks read/write permission</li>
+<li><code>canvas_version_conflict</code> — optimistic-concurrency conflict</li>
+<li><code>cross_canvas_circuit_open</code> — target canvas type circuit-broken</li>
+</ul>
+<hr/>
+<h2 id="host-chat">§host.chat</h2>
+<p><strong>Capability flag:</strong> <code>host.chat: supported</code></p>
+<p><strong>Used by:</strong> <code>vendor.myndhyve.chat</code></p>
+<p>Posts messages + cards into a chat session. The session is established by the host; the pack receives <code>ctx.chat.sessionId</code> (or scopes via config).</p>
+<pre class="lang-typescript"><code>ctx.chat.sendMessage({
+  role: &#39;agent&#39; | &#39;user&#39; | &#39;system&#39;,
+  content: string,
+  citations?: Array&amp;lt;{ url: string, title?: string }&amp;gt;,
+  sessionId?: string,
+  idempotencyKey: string,
+}) → Promise&amp;lt;{
+  messageId: string,
+  sentAt: string,
+}&amp;gt;
+
+ctx.chat.emitCard({
+  cardId: string,
+  cardType: string,             // e.g., &#39;progress&#39; | &#39;approval&#39; | &#39;clarification&#39; | &#39;phase-input&#39;
+  payload: Record&amp;lt;string, unknown&amp;gt;,
+  idempotencyKey: string,
+}) → Promise&amp;lt;{
+  cardId: string,
+  emittedAt: string,
+}&amp;gt;
+
+ctx.chat.updateCard({
+  cardId: string,
+  patch: Record&amp;lt;string, unknown&amp;gt;,
+  patchType: &#39;merge&#39; | &#39;replace&#39;,
+  idempotencyKey: string,
+}) → Promise&amp;lt;{
+  cardId: string,
+  updatedAt: string,
+  found: boolean,
+}&amp;gt;</code></pre>
+<p><strong>Required methods:</strong> <code>sendMessage</code>. <code>emitCard</code> + <code>updateCard</code> required when the host advertises <code>host.chat.cards: supported</code>.</p>
+<p><strong>Failure modes:</strong></p>
+<ul>
+<li><code>host_capability_missing</code> — <code>ctx.chat</code> absent</li>
+<li><code>chat_session_not_found</code> — sessionId doesn't resolve</li>
+<li><code>card_not_found</code> — updateCard targets a non-existent cardId (returns <code>found: false</code> instead of throwing)</li>
+</ul>
+<hr/>
+<h2 id="host-brand">§host.brand</h2>
+<p><strong>Capability flag:</strong> <code>host.brand: supported</code></p>
+<p><strong>Used by:</strong> <code>vendor.myndhyve.brand</code></p>
+<p>State mutation + validation for brand artifacts (themes + personas).</p>
+<pre class="lang-typescript"><code>ctx.brand.implementTheme({
+  brandId: string,
+  payload: Record&amp;lt;string, unknown&amp;gt;,    // theme spec
+  targetCanvasId?: string,
+  force?: boolean,
+  idempotencyKey: string,
+}) → Promise&amp;lt;{
+  artifactId: string,
+  appliedAt?: string,
+}&amp;gt;
+
+ctx.brand.publishTheme({
+  brandId: string,
+  payload: Record&amp;lt;string, unknown&amp;gt;,
+  idempotencyKey: string,
+}) → Promise&amp;lt;{
+  artifactId: string,
+  appliedAt?: string,
+}&amp;gt;
+
+ctx.brand.publishPersona({
+  brandId: string,
+  payload: Record&amp;lt;string, unknown&amp;gt;,
+  idempotencyKey: string,
+}) → Promise&amp;lt;{
+  artifactId: string,
+  appliedAt?: string,
+}&amp;gt;
+
+ctx.brand.validateTheme({
+  artifactId: string,
+  ruleSet?: string,
+  failOnWarning?: boolean,
+}) → Promise&amp;lt;{
+  rulesRun: number,
+  violations: Array&amp;lt;{
+    ruleId: string,
+    severity: &amp;#39;error&amp;#39; | &amp;#39;warning&amp;#39; | &amp;#39;info&amp;#39;,
+    message: string,
+  }&amp;gt;,
+}&gt;
+
+ctx.brand.validatePersona(/* same shape as validateTheme */)
+  → Promise&amp;lt;{ rulesRun, violations }&amp;gt;</code></pre>
+<p><strong>Required methods:</strong> all five.</p>
+<p><strong>Failure modes:</strong></p>
+<ul>
+<li><code>host_capability_missing</code> — <code>ctx.brand</code> absent</li>
+<li><code>brand_not_found</code> — brandId doesn't resolve</li>
+<li><code>theme_invalid_shape</code> — payload fails server-side schema validation</li>
+</ul>
+<hr/>
+<h2 id="host-kanban">§host.kanban</h2>
+<p><strong>Capability flag:</strong> <code>host.kanban: supported</code></p>
+<p><strong>Used by:</strong> <code>vendor.myndhyve.kanban</code>, <code>vendor.myndhyve.launch-studio</code> (shares <code>getReadyTasks</code> + <code>moveTask</code>)</p>
+<p>Board + task + timeline + automation operations.</p>
+<pre class="lang-typescript"><code>ctx.kanban.boardCreate({
+  name: string,
+  columns: Array&amp;lt;{ id: string, label: string, ... }&amp;gt;,
+  description?: string,
+  projectId?: string,
+  idempotencyKey: string,
+}) → Promise&amp;lt;{ boardId: string, createdAt: string }&amp;gt;
+
+ctx.kanban.boardReview({
+  boardId: string,
+  includeArchived?: boolean,
+  atRiskThresholdDays?: number,
+}) → Promise&amp;lt;{
+  boardName?: string,
+  totalTasks: number,
+  columnCounts: Record&amp;lt;string, number&amp;gt;,
+  atRiskTasks: Array&amp;lt;{ taskId: string, ... }&amp;gt;,
+  reviewedAt?: string,
+}&gt;
+
+ctx.kanban.taskAssign({
+  taskId: string,
+  assigneeId: string,
+  notifyAssignee?: boolean,
+  comment?: string,
+  idempotencyKey: string,
+}) → Promise&amp;lt;{
+  previousAssigneeId?: string,
+  assignedAt?: string,
+}&amp;gt;
+
+ctx.kanban.taskGet(taskId: string) → Promise&amp;lt;TaskDetail&amp;gt;         // optional
+
+ctx.kanban.taskCreateBatch({
+  parentTaskId: string,
+  subtasks: Array&amp;lt;{ title: string, ... }&amp;gt;,
+  idempotencyKey: string,
+}) → Promise&amp;lt;{ subtaskIds: string[] }&amp;gt;                            // optional
+
+ctx.kanban.timelinePlan({
+  boardId: string,
+  scheduler: &#39;critical-path&#39; | &#39;earliest-start&#39; | string,
+  ...
+}) → Promise&amp;lt;{
+  schedule: Array&amp;lt;{ taskId: string, startAt: string, endAt: string }&amp;gt;,
+  criticalPath: string[],
+  projectEndDate?: string,
+}&gt;
+
+ctx.kanban.automateRules({
+  boardId: string,
+  rules: Array&amp;lt;{
+    trigger: &amp;#39;column-transition&amp;#39; | &amp;#39;due-date-approaching&amp;#39; | &amp;#39;label-changed&amp;#39; | &amp;#39;assignee-changed&amp;#39;,
+    action: &amp;#39;assign&amp;#39; | &amp;#39;move-column&amp;#39; | &amp;#39;set-label&amp;#39; | &amp;#39;send-notification&amp;#39; | &amp;#39;invoke-workflow&amp;#39;,
+    config: Record&amp;lt;string, unknown&amp;gt;,
+  }&gt;,
+  replaceExisting?: boolean,
+  idempotencyKey: string,
+}) → Promise&amp;lt;{
+  activeRules: number,
+  added: number,
+  appliedAt?: string,
+}&amp;gt;
+
+ctx.kanban.resourceMonitor({
+  boardId: string,
+  maxConcurrentPerAssignee?: number,
+  includeAgents?: boolean,
+}) → Promise&amp;lt;{
+  assigneeLoad: Record&amp;lt;string, number&amp;gt;,
+  wipBreaches: Array&amp;lt;{ assigneeId: string, current: number, max: number }&amp;gt;,
+  overdueTasks: Array&amp;lt;{ taskId: string, dueAt: string }&amp;gt;,
+  monitoredAt?: string,
+}&gt;
+
+// Shared with vendor.myndhyve.launch-studio:
+ctx.kanban.getReadyTasks(boardId: string) → Promise&amp;lt;Array&amp;lt;{ id: string, ... }&amp;gt;&gt;
+ctx.kanban.moveTask(taskId: string, toColumn: string) → Promise&amp;lt;void&amp;gt;</code></pre>
+<p><strong>Required methods:</strong> <code>boardCreate</code>, <code>boardReview</code>, <code>taskAssign</code>, <code>timelinePlan</code>, <code>automateRules</code>, <code>resourceMonitor</code>, <code>getReadyTasks</code>, <code>moveTask</code>. <code>taskGet</code>, <code>taskCreateBatch</code> are optional.</p>
+<p><strong>Failure modes:</strong></p>
+<ul>
+<li><code>host_capability_missing</code></li>
+<li><code>board_not_found</code></li>
+<li><code>task_not_found</code></li>
+<li><code>task_transition_invalid</code> — column not in the board's column set</li>
+</ul>
+<hr/>
+<h2 id="host-webresearch">§host.webResearch</h2>
+<p><strong>Capability flag:</strong> <code>host.webResearch: supported</code></p>
+<p><strong>Used by:</strong> <code>vendor.myndhyve.web-research</code></p>
+<p>Search + fetch + research orchestration. Routes through host's search adapter (Google CSE, Bing, Brave, Perplexity, Kagi, etc.).</p>
+<pre class="lang-typescript"><code>ctx.webResearch.search({
+  query: string,
+  maxResults?: number,
+  engine?: string,
+  language?: string,
+  region?: string,
+  safeSearch?: boolean,
+  siteFilter?: string,
+}) → Promise&amp;lt;{
+  results: Array&amp;lt;{ url: string, title: string, snippet?: string, rank?: number }&amp;gt;,
+  engine: string,
+  totalResults?: number,
+}&gt;
+
+ctx.webResearch.fetchBatch({
+  urls: string[],
+  concurrency?: number,
+  perRequestTimeoutMs?: number,
+  respectRobotsTxt?: boolean,
+  maxBodyBytes?: number,
+  extractReadable?: boolean,
+}) → Promise&amp;lt;{
+  pages: Array&amp;lt;{
+    url: string,
+    status: number,
+    contentType?: string,
+    title?: string,
+    extractedText?: string,
+    rawBody?: string,
+    truncated?: boolean,
+    fetchedAt?: string,
+    error?: string,
+  }&amp;gt;,
+}&gt;
+
+ctx.webResearch.research({
+  query: string,
+  maxResults: number,
+  ...filters
+}) → Promise&amp;lt;{
+  citations: Array&amp;lt;{
+    url: string,
+    title: string,
+    snippet?: string,
+    content: string,
+    rank?: number,
+    fetchedAt?: string,
+  }&amp;gt;,
+  engine?: string,
+  totalResults?: number,
+}&gt;</code></pre>
+<p><strong>Required methods:</strong> <code>search</code>. <code>fetchBatch</code> and <code>research</code> required when host advertises <code>host.webResearch.scraping: supported</code>.</p>
+<p><strong>Failure modes:</strong></p>
+<ul>
+<li><code>host_capability_missing</code></li>
+<li><code>search_quota_exhausted</code></li>
+<li><code>fetch_blocked_by_robots</code></li>
+<li><code>fetch_timeout</code></li>
+</ul>
+<hr/>
+<h2 id="host-agentruntime">§host.agentRuntime</h2>
+<p><strong>Capability flag:</strong> <code>host.agentRuntime: supported</code></p>
+<p><strong>Used by:</strong> <code>vendor.myndhyve.agent-orchestration</code> (the <code>agent.*</code> typeIds)</p>
+<p>Operates on RFC 0007 / 0008 / 0011 protocol primitives — spawn, delegate, consensus, message-send, skill-invoke, swarm-execute.</p>
+<pre class="lang-typescript"><code>ctx.agentRuntime.spawn({
+  manifestId?: string,           // RFC 0008 AgentManifest reference
+  agentRef?: AgentRef,           // RFC 0007 inline definition
+  config?: Record&amp;lt;string, unknown&amp;gt;,
+  idempotencyKey: string,
+}) → Promise&amp;lt;{ agentInstanceId: string, spawnedAt: string }&amp;gt;
+
+ctx.agentRuntime.delegate({
+  task: string,
+  agents: AgentRef[],
+  strategy?: &#39;best-match&#39; | &#39;load-balanced&#39;,
+  escalationThreshold?: number,  // RFC 0007 §F low-confidence threshold
+  ...
+}) → Promise&amp;lt;{
+  selectedAgentId: string,
+  delegationId: string,
+  escalated?: boolean,
+}&amp;gt;
+
+ctx.agentRuntime.consensus({
+  proposal: Record&amp;lt;string, unknown&amp;gt;,
+  participants: AgentRef[],
+  threshold?: number,
+  maxRounds?: number,
+  ...
+}) → Promise&amp;lt;{ converged: boolean, rounds: number, agreement?: unknown }&amp;gt;
+
+ctx.agentRuntime.messageSend({
+  fromAgentId: string,
+  toAgentId: string,
+  channel: &#39;message&#39; | string,
+  content: unknown,
+  idempotencyKey: string,
+}) → Promise&amp;lt;{ messageId: string, sentAt: string }&amp;gt;
+
+ctx.agentRuntime.skillInvoke({
+  agentId: string,
+  skillName: string,
+  inputs: Record&amp;lt;string, unknown&amp;gt;,
+  idempotencyKey: string,
+}) → Promise&amp;lt;{ outputs: Record&amp;lt;string, unknown&amp;gt; }&gt;
+
+ctx.agentRuntime.swarmExecute({
+  swarmId?: string,
+  pattern: &#39;map&#39; | &#39;map-reduce&#39; | &#39;competitive&#39;,
+  task: Record&amp;lt;string, unknown&amp;gt;,
+  agentIds?: string[],
+  ...
+}) → Promise&amp;lt;{
+  results?: Array&amp;lt;unknown&amp;gt;,
+  reduced?: unknown,
+  winner?: { agentId: string, result: unknown },
+  succeeded: number,
+  failed: number,
+  durationMs: number,
+}&gt;</code></pre>
+<p><strong>Required methods:</strong> all six.</p>
+<p><strong>Failure modes:</strong></p>
+<ul>
+<li><code>host_capability_missing</code></li>
+<li><code>agent_not_found</code></li>
+<li><code>agent_spawn_quota_exhausted</code></li>
+<li><code>agent_skill_not_found</code></li>
+</ul>
+<hr/>
+<h2 id="host-coordination">§host.coordination</h2>
+<p><strong>Capability flag:</strong> <code>host.coordination: supported</code></p>
+<p><strong>Used by:</strong> <code>vendor.myndhyve.agent-orchestration</code> (the <code>coordination.*</code> typeIds)</p>
+<p>Multi-participant coordination primitives. Distinct from <code>host.agentRuntime</code> — coordination operates on <em>roles</em> (voters, competitors), not individual agent identities. A host MAY implement both surfaces; typical hosts that do implement <code>agentRuntime</code> by delegating to <code>coordination</code> internally.</p>
+<pre class="lang-typescript"><code>ctx.coordination.vote({
+  question: string,
+  options: Array&amp;lt;{ id: string, label: string, value?: unknown } | string&amp;gt;,
+  participantIds: string[],
+  strategy: &#39;majority&#39; | &#39;supermajority&#39; | &#39;unanimous&#39; | &#39;plurality&#39; | &#39;ranked-choice&#39; | &#39;weighted&#39;,
+  quorum?: number,           // 0-1
+  timeoutMs?: number,
+}) → Promise&amp;lt;{
+  winningOptionId: string,
+  winningValue?: unknown,
+  voteCounts: Record&amp;lt;string, number&amp;gt;,
+  quorumMet: boolean,
+  margin: number,
+  voteCount: number,
+  success: boolean,
+  error?: string,
+}&gt;
+
+ctx.coordination.consensus({...}) → Promise&amp;lt;{
+  agreement?: unknown,
+  converged: boolean,
+  rounds: number,
+  success: boolean,
+}&amp;gt;
+
+ctx.coordination.compete({...}) → Promise&amp;lt;{
+  winnerId: string,
+  winnerResult: unknown,
+  durationMs: number,
+  success: boolean,
+}&amp;gt;
+
+ctx.coordination.mapReduce({...}) → Promise&amp;lt;{
+  results: unknown[],
+  reduced?: unknown,
+  success: boolean,
+}&amp;gt;
+
+ctx.coordination.delegate({...}) → Promise&amp;lt;{
+  assigneeId: string,
+  matchScore: number,
+  success: boolean,
+}&amp;gt;
+
+ctx.coordination.roundRobin({
+  cursor: number,
+  ...
+}) → Promise&amp;lt;{
+  assigneeId: string,
+  cursor: number,
+  nextCursor: number,
+  success: boolean,
+}&amp;gt;</code></pre>
+<p><strong>Required methods:</strong> <code>vote</code> is required when the capability is advertised. The others are required individually when the host advertises e.g. <code>host.coordination.consensus: supported</code>.</p>
+<p><strong>Failure modes:</strong></p>
+<ul>
+<li><code>host_capability_missing</code></li>
+<li><code>quorum_not_met</code> — when input requires quorum and vote returned <code>quorumMet: false</code></li>
+<li><code>consensus_max_rounds_exceeded</code></li>
+</ul>
+<hr/>
+<h2 id="host-dataintegration">§host.dataIntegration</h2>
+<p><strong>Capability flag:</strong> <code>host.dataIntegration: supported</code></p>
+<p><strong>Used by:</strong> <code>vendor.myndhyve.data-integration</code></p>
+<p>Typed data-source operations. Fetches from configured external sources (REST, GraphQL, A2A peers, MCP), runs transforms, manages run-scoped variables.</p>
+<pre class="lang-typescript"><code>ctx.dataIntegration.fetchRest({
+  sourceId: string,
+  method: &#39;GET&#39; | &#39;POST&#39; | &#39;PUT&#39; | &#39;DELETE&#39; | &#39;PATCH&#39;,
+  path?: string,
+  params?: Record&amp;lt;string, unknown&amp;gt;,
+  body?: unknown,
+  paginate?: boolean,
+  idempotencyKey: string,
+}) → Promise&amp;lt;{
+  data: unknown,
+  status: number,
+  pageCount?: number,
+}&amp;gt;
+
+ctx.dataIntegration.fetchGraphql({
+  sourceId: string,
+  query: string,
+  variables?: Record&amp;lt;string, unknown&amp;gt;,
+  idempotencyKey: string,
+}) → Promise&amp;lt;{
+  data?: unknown,
+  errors?: Array&amp;lt;{ message: string, path?: string[] }&amp;gt;,
+}&gt;
+
+ctx.dataIntegration.fetchA2A({
+  sourceId: string,
+  task: Record&amp;lt;string, unknown&amp;gt;,
+  idempotencyKey: string,
+}) → Promise&amp;lt;{ result: unknown }&amp;gt;
+
+ctx.dataIntegration.fetchMCP({
+  sourceId: string,
+  operation: {
+    kind: &#39;tool&#39; | &#39;resource&#39;,
+    name: string,
+    args?: Record&amp;lt;string, unknown&amp;gt;,
+  },
+  idempotencyKey: string,
+}) → Promise&amp;lt;{ data: unknown, isError?: boolean, mimeType?: string }&amp;gt;
+
+ctx.dataIntegration.transform({
+  expression: string,
+  language: &#39;jsonata&#39; | &#39;jq&#39; | string,
+  data: unknown,
+}) → Promise&amp;lt;{ result: unknown }&amp;gt;
+
+ctx.dataIntegration.computeVariable({
+  variableName: string,
+  expression: string,
+  language?: string,
+  context?: Record&amp;lt;string, unknown&amp;gt;,
+}) → Promise&amp;lt;{ value: unknown }&amp;gt;
+
+ctx.dataIntegration.fetchVariable({
+  variableName: string,
+}) → Promise&amp;lt;{ value?: unknown, found: boolean }&amp;gt;
+
+ctx.dataIntegration.applyBinding({
+  targetType: string,
+  targetPath: string,
+  value: unknown,
+  transform?: string,
+  fallback?: unknown,
+  canvasId?: string,
+  updateMode: &#39;immediate&#39; | &#39;batched&#39;,
+  preserveUndo: boolean,
+}) → Promise&amp;lt;{
+  applied: boolean,
+  previousValue?: unknown,
+  resolvedValue?: unknown,
+}&amp;gt;</code></pre>
+<p><strong>Required methods:</strong> depends on which sub-capabilities the host advertises. The minimal surface for <code>host.dataIntegration: supported</code> is <code>transform</code> + <code>applyBinding</code>. REST/GraphQL/A2A/MCP fetch methods require the respective sub-capabilities (<code>host.dataIntegration.rest: supported</code>, etc.).</p>
+<p><strong>Failure modes:</strong></p>
+<ul>
+<li><code>host_capability_missing</code></li>
+<li><code>source_not_found</code> — sourceId doesn't resolve</li>
+<li><code>transform_expression_invalid</code></li>
+<li><code>binding_target_not_found</code></li>
+</ul>
+<hr/>
+<h2 id="host-launchstudio">§host.launchStudio</h2>
+<p><strong>Capability flag:</strong> <code>host.launchStudio: supported</code></p>
+<p><strong>Used by:</strong> <code>vendor.myndhyve.launch-studio</code></p>
+<p>Launch-studio specific operations. Backbone for the multi-canvas LS workflow.</p>
+<pre class="lang-typescript"><code>ctx.launchStudio.getStudio(studioId: string) → Promise&amp;lt;{
+  studioId: string,
+  brandId?: string,
+  designSystemId?: string,
+  prdId?: string,
+  sharedArtifactRefs: Array&amp;lt;{ artifactId: string, artifactTypeId: string }&amp;gt;,
+  steps: Array&amp;lt;{ stepId: string, canvasTypeId: string, projectId?: string }&amp;gt;,
+} | null&gt;
+
+ctx.launchStudio.buildProjectContext({
+  studio: Studio,
+  userId: string,
+  canvasTypeId: string,
+}) → Promise&amp;lt;Record&amp;lt;string, unknown&amp;gt;&gt;
+
+ctx.launchStudio.resolveLinkedArtifacts({
+  studio: Studio,
+  userId: string,
+  sourceCanvasTypeId: string,
+}) → Promise&amp;lt;Record&amp;lt;string, unknown&amp;gt;&gt;</code></pre>
+<p><strong>Required methods:</strong> all three.</p>
+<p><strong>Failure modes:</strong></p>
+<ul>
+<li><code>host_capability_missing</code></li>
+<li><code>studio_not_found</code> — getStudio returns null on miss (NOT thrown — convention)</li>
+<li><code>studio_permission_denied</code></li>
+</ul>
+<hr/>
+<h2 id="host-entities">§host.entities</h2>
+<p><strong>Capability flag:</strong> <code>host.entities: supported</code></p>
+<p><strong>Used by:</strong> <code>vendor.myndhyve.entities</code></p>
+<p>Generic entity CRUD operations. Projects + workspace assets (brand, persona, knowledge bases).</p>
+<pre class="lang-typescript"><code>ctx.entities.createProject({
+  userId: string,
+  name: string,
+  canvasTypeId: string,
+  type: string,
+  status: string,
+  settings: Record&amp;lt;string, unknown&amp;gt;,
+  idempotencyKey: string,
+}) → Promise&amp;lt;{ id: string }&amp;gt;
+
+ctx.entities.listAssets({
+  assetType: &#39;brand&#39; | &#39;persona&#39; | &#39;knowledgeBase&#39;,
+  filterConfig?: Record&amp;lt;string, unknown&amp;gt;,
+}) → Promise&amp;lt;Array&amp;lt;{
+  id: string,
+  name: string,
+  description?: string,
+  status?: string,
+}&amp;gt;&gt;
+
+ctx.entities.getAsset({
+  assetType: &#39;brand&#39; | &#39;persona&#39; | &#39;knowledgeBase&#39;,
+  assetId: string,
+}) → Promise&amp;lt;Record&amp;lt;string, unknown&amp;gt; | null&gt;</code></pre>
+<p><strong>Required methods:</strong> all three.</p>
+<p><strong>Failure modes:</strong></p>
+<ul>
+<li><code>host_capability_missing</code></li>
+<li><code>entity_permission_denied</code></li>
+<li><code>entity_quota_exceeded</code></li>
+</ul>
+<hr/>
+<h2 id="host-messaging">§host.messaging</h2>
+<p><strong>Capability flag:</strong> <code>host.messaging: supported</code></p>
+<p><strong>Used by:</strong> <code>vendor.myndhyve.entities</code></p>
+<p>Outbound chat-egress dispatch. The host owns the connector layer (Slack, WhatsApp, SMS, email, etc.); the pack hands off envelopes for dispatch.</p>
+<pre class="lang-typescript"><code>ctx.messaging.dispatchEgressEnvelope({
+  envelope: {
+    type: &#39;chat.egress&#39;,
+    version: string,
+    channel: string,
+    accountId: string,
+    delivery: {
+      conversationId: string,
+      threadId?: string,
+      inReplyTo?: string,
+    },
+    content: {
+      text?: string,
+      media?: Array&amp;lt;{ kind: string, ref: string }&amp;gt;,
+    },
+    idempotencyKey: string,
+    mode: { typing: boolean, draftStreaming: boolean },
+  },
+  connectorInstanceId: string,
+  nodeId: string,
+}) → Promise&amp;lt;{
+  success: boolean,
+  deliveryId?: string,
+  platformMessageId?: string,
+  durationMs?: number,
+  error?: string,
+}&amp;gt;</code></pre>
+<p><strong>Required methods:</strong> <code>dispatchEgressEnvelope</code>.</p>
+<p><strong>Failure modes:</strong></p>
+<ul>
+<li><code>host_capability_missing</code></li>
+<li><code>connector_not_found</code></li>
+<li><code>connector_disconnected</code></li>
+<li><code>channel_unsupported</code></li>
+</ul>
+<hr/>
+<h2 id="host-mcp">§host.mcp</h2>
+<p><strong>Capability flag:</strong> <code>host.mcp: supported</code></p>
+<p><strong>Used by:</strong> <code>core.openwop.mcp</code></p>
+<p>Workflow-author MCP operations. Distinct from <code>host.dataIntegration.fetchMCP</code> — that's MCP-as-data-source; this is MCP-as-tool-runtime.</p>
+<pre class="lang-typescript"><code>ctx.mcp.invokeTool({
+  serverId: string,
+  toolName: string,
+  args?: Record&amp;lt;string, unknown&amp;gt;,
+  idempotencyKey: string,
+}) → Promise&amp;lt;{ result: unknown, isError?: boolean }&amp;gt;
+
+ctx.mcp.listTools({
+  serverId: string,
+}) → Promise&amp;lt;{
+  tools: Array&amp;lt;{ name: string, description?: string, inputSchema: object }&amp;gt;,
+}&gt;
+
+ctx.mcp.readResource({
+  serverId: string,
+  uri: string,
+}) → Promise&amp;lt;{
+  contents: Array&amp;lt;{ uri: string, mimeType?: string, text?: string, blob?: string }&amp;gt;,
+}&gt;
+
+ctx.mcp.serverStatus({
+  serverId: string,
+}) → Promise&amp;lt;{
+  serverId: string,
+  status: &amp;#39;connected&amp;#39; | &amp;#39;disconnected&amp;#39; | &amp;#39;error&amp;#39;,
+  protocolVersion?: string,
+  serverInfo?: { name: string, version: string },
+}&amp;gt;</code></pre>
+<p><strong>Required methods:</strong> all four.</p>
+<p><strong>Failure modes:</strong></p>
+<ul>
+<li><code>host_capability_missing</code></li>
+<li><code>mcp_server_not_found</code></li>
+<li><code>mcp_server_disconnected</code></li>
+<li><code>mcp_tool_not_found</code></li>
+<li><code>mcp_tool_invocation_failed</code></li>
+</ul>
+<p><strong>See also — server direction (RFC 0020).</strong> The surface above covers workflows that <em>call out</em> to remote MCP servers. Hosts MAY also advertise the <em>server-mount</em> direction via <code>capabilities.mcp.serverMount: { supported: true, transports, samplingBridge, elicitationBridge }</code> — exposing their workflows as MCP tools, resources, and prompts callable by external MCP-aware LLM clients. See <a href="mcp-integration.md"><code>mcp-integration.md</code> §"OpenWOP host as MCP server"</a> for the state-projection table, bidirectional <code>sampling/createMessage</code> and <code>elicitation/create</code> callbacks, trust-boundary discipline, and 6 capability-gated conformance scenarios.</p>
+<hr/>
+<h2 id="host-knowledge">§host.knowledge</h2>
+<p><strong>Capability flag:</strong> <code>host.knowledge: supported</code></p>
+<p><strong>Used by:</strong> market-intelligence packs, RAG-grounded copy packs, brief-enrichment packs.</p>
+<p>Knowledge-base retrieval. Routes queries through the host's RAG pipeline (embedding → vector search → optional re-rank). The host owns the corpus, the embedding model, and the access-control boundary; the pack supplies the query.</p>
+<pre class="lang-typescript"><code>ctx.knowledge.retrieve({
+  query: string,
+  workspaceId?: string,       // omit to use the run&#39;s workspace
+  collectionIds?: string[],   // scope to specific knowledge collections
+  category?: string,          // optional category facet
+  candidateLimit?: number,    // pre-rank candidate pool size; host caps the upper bound
+  resultLimit?: number,       // post-rank returned chunks; host caps the upper bound
+  scoreThreshold?: number,    // minimum relevanceScore (0..1) for inclusion
+}) → Promise&amp;lt;{
+  chunks: Array&amp;lt;{
+    chunkId: string,
+    content: string,                // prepared/cleaned chunk text suitable for prompt insertion
+    rawContent?: string,            // optional verbatim source text (when distinct from content)
+    headingPath: string[],          // section heading trail from the source document
+    pageNumber: number | null,
+    documentTitle: string,
+    assetId: string,                // host-internal id for the source media asset
+    collectionId: string,
+    relevanceScore: number,         // 0..1 — host-normalized post-rank score
+    vectorDistance?: number,        // pre-rank distance; informational only
+  }&amp;gt;,
+  sources: Array&amp;lt;{
+    sourceId: string,               // stable id for citation (de-duplicated across chunks)
+    assetId: string,
+    title: string,
+    headingPath: string[],
+    pageNumber: number | null,
+  }&amp;gt;,
+  latencyMs?: number,
+  hasResults: boolean,
+}&gt;</code></pre>
+<p><strong>Required methods:</strong> <code>retrieve</code>.</p>
+<p><strong>Optional methods (host MAY advertise <code>host.knowledge.embed: supported</code> to expose them):</strong></p>
+<pre class="lang-typescript"><code>ctx.knowledge.embed({
+  texts: string[],
+  model?: string,                   // host-allowed embedding model alias
+}) → Promise&amp;lt;{
+  vectors: number[][],              // one row per input; dimension is host-defined and stable per model
+  model: string,
+  dimension: number,
+}&amp;gt;</code></pre>
+<p><strong>RBAC:</strong></p>
+<ul>
+<li>The host MUST enforce that <code>workspaceId</code> is one the calling run has read access to. Cross-workspace retrieval MUST return <code>403 knowledge_workspace_forbidden</code>.</li>
+<li><code>collectionIds[]</code> MUST be filtered to those visible to the caller; chunks from collections the caller cannot read MUST be omitted, NOT errored on.</li>
+</ul>
+<p><strong>Determinism:</strong></p>
+<ul>
+<li><code>retrieve</code> is NOT pure — corpus and embeddings change over time. Packs SHOULD treat results as an input snapshot for the current run.</li>
+<li>Hosts SHOULD include enough metadata (chunkId, assetId, headingPath, pageNumber) for packs to render citations stably.</li>
+</ul>
+<p><strong>Failure modes:</strong></p>
+<ul>
+<li><code>host_capability_missing</code></li>
+<li><code>knowledge_workspace_forbidden</code> — caller cannot read the workspace</li>
+<li><code>knowledge_query_too_long</code> — query exceeds host's embedding-model token limit</li>
+<li><code>knowledge_quota_exhausted</code> — workspace-level retrieval quota tripped</li>
+<li><code>knowledge_collection_not_found</code> — explicit <code>collectionIds[]</code> includes an id that does not exist for this workspace (vs. a no-access filter, which silently skips)</li>
+</ul>
+<hr/>
+<h2 id="host-secrets">§host.secrets</h2>
+<p><strong>Capability flag:</strong> <code>secrets.resolveInPack: supported</code> <em>(advertised via top-level <code>Capabilities.secrets</code>; see <a href="capabilities.md#secrets">capabilities.md §secrets</a>)</em></p>
+<p><strong>Used by:</strong> packs that must call external HTTP APIs requiring stored credentials (e.g., ad-platform APIs, third-party analytics endpoints, vendor-specific SaaS integrations). Current consumers: <code>vendor.myndhyve.ads-publish-meta</code>, <code>vendor.myndhyve.ads-publish-google</code>, <code>vendor.myndhyve.ads-publish-tiktok</code> (the 3 platform-publish packs; the <code>ads.publish.platform</code> umbrella decomposed into platform-specific packs during publish).</p>
+<p>Resolves an opaque, host-issued secret reference into plaintext <strong>inside the pack process</strong>, for the narrow case where a pack needs raw credentials to call an external service that the host doesn't proxy. <strong>This is the highest-risk host capability in the spec</strong> — every related rule below is a hard requirement, not a recommendation.</p>
+<pre class="lang-typescript"><code>ctx.secrets.resolve({
+  ref: string,                       // opaque host-issued credential reference (e.g., &quot;secret:tenant:meta-ads-api-token:v3&quot;)
+  purpose: string,                   // free-form audit string — required (logged by host, NOT by pack)
+}) → Promise&amp;lt;{
+  plaintext: string,                 // raw credential value; consumed and discarded by the pack — NEVER re-emitted
+  expiresAt?: string,                // ISO 8601; pack SHOULD treat as advisory and re-resolve before expiry on long-running calls
+  rotatedAt?: string,                // ISO 8601 of last rotation (advisory; for caches that key on rotation epoch)
+}&amp;gt;</code></pre>
+<p><strong>Required methods:</strong> <code>resolve</code>. Hosts that advertise <code>secrets.resolveInPack: supported</code> MUST implement this method AND comply with the redaction invariants below.</p>
+<p><strong>Hard rules (extending NFR-7 — Sensitive Data Redaction):</strong></p>
+<p>The plaintext returned by <code>ctx.secrets.resolve(...)</code> is the most sensitive value flowing through the pack runtime. Hosts AND packs MUST jointly enforce:</p>
+<table>
+<thead><tr><th>Rule</th><th>Owner</th><th>Detail</th></tr></thead>
+<tbody>
+<tr><td>Plaintext MUST NOT appear in <code>RunEvent</code> payloads</td><td>Host</td><td>Event emitter MUST redact <code>secrets.resolve</code> outputs from every serialized event (including <code>node.input</code> / <code>node.output</code> / <code>node.error</code>).</td></tr>
+<tr><td>Plaintext MUST NOT appear in OTel spans, log lines, or trace exports</td><td>Host</td><td>Tracing adapter MUST scrub. Pack runtime MUST NOT log resolved plaintext via <code>ctx.log</code>.</td></tr>
+<tr><td>Plaintext MUST NOT appear in <code>RunSnapshot</code> exports or replay snapshots</td><td>Host</td><td>Snapshot serializer MUST redact. Replay determinism is preserved by replaying the <em>resolve call</em>, not by snapshotting the plaintext (host resolves freshly from the credential store on replay).</td></tr>
+<tr><td>Plaintext MUST NOT be persisted in pack-side caches across run boundaries</td><td>Pack</td><td>Pack MAY cache within a single <code>ctx.callImageGenerator</code> / <code>fetch()</code> call site for that one invocation. After the call, the plaintext reference MUST be discarded.</td></tr>
+<tr><td>Plaintext MUST NOT be sent to any <code>ctx.*</code> method other than the consuming call (e.g., <code>fetch</code>)</td><td>Pack</td><td>Specifically: never pass to <code>ctx.callAI</code>, <code>ctx.chat.sendMessage</code>, <code>ctx.canvas.write</code>, or any other host method. The resolution is for direct external HTTP only.</td></tr>
+<tr><td><code>purpose</code> field MUST be present and non-empty</td><td>Pack</td><td>Host audit log records <code>{ref, purpose, runId, packName, packVersion, ts}</code> — <code>purpose</code> is the required audit breadcrumb.</td></tr>
+<tr><td>Lint + redaction unit tests</td><td>Host</td><td>Hosts that advertise this capability MUST add CI checks verifying plaintext never appears in serialized output across the surfaces above.</td></tr>
+</tbody></table>
+<p><strong>Determinism note.</strong> <code>ctx.secrets.resolve</code> is non-deterministic by design — the host MAY rotate secrets between runs, MAY return different plaintext on the same <code>ref</code> across runs (rotation), AND MUST NOT snapshot plaintext for replay. Replay-aware hosts SHOULD record only the resolve <em>call site</em> (ref + purpose + ts) and re-resolve from the credential store at replay time. Packs that change behavior based on plaintext content (e.g., parsing a JWT to extract a tenant id) MUST treat the resolved value as run-input that may differ across runs.</p>
+<p><strong>RBAC.</strong> The host MUST enforce that <code>ref</code> resolves only to credentials the calling run has access to. Refs from another workspace's secret namespace MUST fail with <code>secret_access_denied</code>. Hosts MUST NOT silently substitute a different credential if the requested <code>ref</code> is unavailable.</p>
+<p><strong>Failure modes:</strong></p>
+<ul>
+<li><code>host_capability_missing</code> — <code>ctx.secrets.resolve</code> absent (workflow-register-time refusal via <code>peerDependencies: { &quot;secrets.resolveInPack&quot;: &quot;supported&quot; }</code> is the correct path; runtime check is defense-in-depth)</li>
+<li><code>secret_not_found</code> — <code>ref</code> doesn't resolve in the host's credential store</li>
+<li><code>secret_access_denied</code> — caller lacks read permission on <code>ref</code> (RBAC denied)</li>
+<li><code>secret_revoked</code> — credential was revoked since last successful resolution (advisory: the host MAY surface this as <code>secret_not_found</code> to avoid leaking lifecycle metadata)</li>
+<li><code>secret_expired</code> — credential is past its expiry and rotation is required</li>
+<li><code>secret_quota_exhausted</code> — host-side rate limit on resolution calls (defense against bulk-leak attacks)</li>
+</ul>
+<p><strong>Capability advertisement shape:</strong></p>
+<pre class="lang-json"><code>{
+  &quot;secrets&quot;: {
+    &quot;supported&quot;: true,
+    &quot;scopes&quot;: [&quot;tenant&quot;, &quot;user&quot;],
+    &quot;resolution&quot;: &quot;host-managed&quot;,
+    &quot;resolveInPack&quot;: &quot;supported&quot;
+  }
+}</code></pre>
+<p><code>resolveInPack</code> is additive — hosts that omit it advertise only the proxy-flow path (clients pass <code>ai.credentialRef</code> to <code>ctx.callAI</code>; pack-side resolution is unavailable). Hosts that advertise it MUST implement all hard rules above.</p>
+<hr/>
+<h2 id="host-fs">§host.fs</h2>
+<p><strong>Capability flag:</strong> <code>fs.supported: true</code> <em>(advertised via top-level <code>Capabilities.fs</code>; see <a href="capabilities.md">capabilities.md</a>)</em></p>
+<p><strong>Used by:</strong> <code>core.openwop.files</code> (read / write / delete / stat / list nodes); transport sub-surfaces (FTP / SFTP / SSH) gate the corresponding <code>core.openwop.files.transport.*</code> nodes.</p>
+<p>A sandboxed filesystem surface. Every path-bearing call is resolved relative to the host-configured <code>sandboxRoot</code>; path-traversal and symlink-escape MUST be rejected.</p>
+<pre class="lang-typescript"><code>ctx.fs.read({ path: string }) → Promise&amp;lt;{ bytes: Uint8Array, contentType?: string }&amp;gt;
+ctx.fs.write({ path: string, bytes: Uint8Array, contentType?: string }) → Promise&amp;lt;{ path: string, sizeBytes: number }&amp;gt;
+ctx.fs.delete({ path: string }) → Promise&amp;lt;{ deleted: boolean }&amp;gt;
+ctx.fs.stat({ path: string }) → Promise&amp;lt;{ sizeBytes: number, modifiedAt: string, contentType?: string }&amp;gt;
+ctx.fs.list({ prefix?: string, cursor?: string, limit?: number }) → Promise&amp;lt;{ entries: Array&amp;lt;{ path: string, sizeBytes: number }&amp;gt;, nextCursor?: string }&gt;</code></pre>
+<p><strong>Required methods:</strong> <code>read</code>, <code>write</code>, <code>delete</code>, <code>stat</code>, <code>list</code>. The <code>image</code>, <code>pdf</code>, and <code>transport.{ftp,sftp,ssh}</code> sub-surfaces are optional and gate the corresponding pack delegates.</p>
+<p><strong>Hard rules:</strong></p>
+<table>
+<thead><tr><th>Rule</th><th>Detail</th></tr></thead>
+<tbody>
+<tr><td>Path resolution</td><td>Every <code>path</code> MUST be normalized and resolved relative to <code>sandboxRoot</code>. Absolute paths outside the root MUST return <code>path_outside_sandbox</code>.</td></tr>
+<tr><td>Path traversal</td><td>Paths containing <code>..</code> segments that escape the root MUST return <code>path_outside_sandbox</code>.</td></tr>
+<tr><td>Symlink escape</td><td>Symlinks that resolve outside the sandbox root MUST return <code>path_outside_sandbox</code>. The host MUST NOT follow such links partially.</td></tr>
+<tr><td>Size enforcement</td><td>Writes exceeding <code>maxFileSizeBytes</code> MUST return <code>file_too_large</code>. Reads of larger files MAY return <code>file_too_large</code> rather than streaming.</td></tr>
+<tr><td>Permission errors</td><td>Permission denial MUST return <code>fs_permission_denied</code>, not silently fail or fall through.</td></tr>
+</tbody></table>
+<p><strong>Capability advertisement shape:</strong></p>
+<pre class="lang-json"><code>{
+  &quot;fs&quot;: {
+    &quot;supported&quot;: true,
+    &quot;sandboxRoot&quot;: &quot;/var/openwop/fs&quot;,
+    &quot;maxFileSizeBytes&quot;: 104857600,
+    &quot;image&quot;: { &quot;supported&quot;: true, &quot;formats&quot;: [&quot;jpeg&quot;,&quot;png&quot;,&quot;webp&quot;] },
+    &quot;pdf&quot;:   { &quot;supported&quot;: true },
+    &quot;transport&quot;: { &quot;ftp&quot;: false, &quot;sftp&quot;: true, &quot;ssh&quot;: false }
+  }
+}</code></pre>
+<p><strong>Failure modes:</strong> <code>host_capability_missing</code> · <code>path_outside_sandbox</code> · <code>file_too_large</code> · <code>fs_permission_denied</code> · <code>file_not_found</code>.</p>
+<p><strong>SECURITY invariant:</strong> <code>fs-path-traversal</code> (<code>SECURITY/invariants.yaml</code>) — verified by <code>conformance/src/scenarios/fs-path-traversal.test.ts</code>. Source: <a href="../../RFCS/0014-host-fs-capability.md">RFC 0014</a> §B–C.</p>
+<hr/>
+<h2 id="host-kvstorage">§host.kvStorage</h2>
+<p><strong>Capability flag:</strong> <code>kvStorage.supported: true</code></p>
+<p><strong>Used by:</strong> <code>core.openwop.storage</code> kv-* nodes (get / put / delete / cas / atomic-increment / ttl).</p>
+<p>TTL-aware key-value store with atomic primitives. Per-tenant isolation is non-negotiable.</p>
+<pre class="lang-typescript"><code>ctx.storage.kv.get({ key: string }) → Promise&amp;lt;{ value?: unknown, expiresAt?: string }&amp;gt;
+ctx.storage.kv.put({ key: string, value: unknown, ttlSeconds?: number }) → Promise&amp;lt;{ ok: true }&amp;gt;
+ctx.storage.kv.delete({ key: string }) → Promise&amp;lt;{ deleted: boolean }&amp;gt;
+ctx.storage.kv.atomicIncrement({ key: string, delta?: number }) → Promise&amp;lt;{ value: number }&amp;gt;
+ctx.storage.kv.compareAndSwap({ key: string, expectedValue: unknown, newValue: unknown }) → Promise&amp;lt;{ swapped: boolean }&amp;gt;
+ctx.storage.kv.list({ prefix?: string, cursor?: string, limit?: number }) → Promise&amp;lt;{ entries: Array&amp;lt;{ key: string }&amp;gt;, nextCursor?: string }&gt;</code></pre>
+<p><strong>Required methods:</strong> <code>get</code>, <code>put</code>, <code>delete</code>, <code>list</code>. <code>atomicIncrement</code> and <code>compareAndSwap</code> are conditionally required when the corresponding capability flag is advertised.</p>
+<p><strong>Hard rules:</strong></p>
+<table>
+<thead><tr><th>Rule</th><th>Detail</th></tr></thead>
+<tbody>
+<tr><td>Cross-tenant isolation</td><td>A <code>get</code> for tenant A MUST NOT return values written by tenant B, even with identical keys. Same applies to <code>list</code> enumeration. Mirrors <code>agent-memory-cti-1</code>.</td></tr>
+<tr><td>Size limits</td><td>Keys exceeding <code>maxKeyBytes</code> MUST be rejected; values exceeding <code>maxValueBytes</code> MUST be rejected.</td></tr>
+<tr><td>TTL drift</td><td>Expiry visibility MUST be honored with at most 1-second drift.</td></tr>
+<tr><td>Atomic increment</td><td>When <code>atomicIncrement: true</code> is advertised, increments MUST be atomic across concurrent callers.</td></tr>
+<tr><td>Compare-and-swap</td><td>When <code>compareAndSwap: true</code> is advertised, CAS MUST be atomic (no read-modify-write races). Stale <code>expectedValue</code> returns <code>{swapped: false}</code> without mutation.</td></tr>
+</tbody></table>
+<p><strong>Capability advertisement shape:</strong></p>
+<pre class="lang-json"><code>{
+  &quot;kvStorage&quot;: {
+    &quot;supported&quot;: true,
+    &quot;maxKeyBytes&quot;: 256,
+    &quot;maxValueBytes&quot;: 1048576,
+    &quot;maxTtlSeconds&quot;: 2592000,
+    &quot;atomicIncrement&quot;: true,
+    &quot;compareAndSwap&quot;: true
+  }
+}</code></pre>
+<p><strong>Failure modes:</strong> <code>host_capability_missing</code> · <code>kv_key_too_large</code> · <code>kv_value_too_large</code> · <code>kv_ttl_exceeds_max</code> · <code>kv_quota_exhausted</code>.</p>
+<p><strong>SECURITY invariant:</strong> <code>kv-cross-tenant-isolation</code> — verified by <code>conformance/src/scenarios/kv-cross-tenant-isolation.test.ts</code> + <code>kv-atomic-increment.test.ts</code> + <code>kv-cas.test.ts</code> + <code>kv-ttl-expiry.test.ts</code>. Source: <a href="../../RFCS/0015-host-kv-storage-capability.md">RFC 0015</a> §B–C.</p>
+<hr/>
+<h2 id="host-tablestorage">§host.tableStorage</h2>
+<p><strong>Capability flag:</strong> <code>tableStorage.supported: true</code></p>
+<p><strong>Used by:</strong> <code>core.openwop.storage</code> table-* nodes (row CRUD + cursor pagination + schema enforcement).</p>
+<p>Structured-record store. Sibling of <code>host.kvStorage</code> for workflows that need typed columns rather than opaque values. Schema is declared on first insert; subsequent rows MUST conform.</p>
+<pre class="lang-typescript"><code>ctx.storage.table.createTable({ name: string, schema: Record&amp;lt;string, &amp;#39;string&amp;#39;|&amp;#39;number&amp;#39;|&amp;#39;boolean&amp;#39;|&amp;#39;json&amp;#39;&amp;gt; }) → Promise&amp;lt;{ ok: true }&amp;gt;
+ctx.storage.table.insert({ table: string, row: Record&amp;lt;string, unknown&amp;gt; }) → Promise&amp;lt;{ rowId: string }&amp;gt;
+ctx.storage.table.get({ table: string, rowId: string }) → Promise&amp;lt;{ row?: Record&amp;lt;string, unknown&amp;gt; }&gt;
+ctx.storage.table.query({ table: string, filter?: Record&amp;lt;string, unknown&amp;gt;, cursor?: string, limit?: number }) → Promise&amp;lt;{ rows: Array&amp;lt;Record&amp;lt;string, unknown&amp;gt;&gt;, nextCursor?: string }&gt;
+ctx.storage.table.update({ table: string, rowId: string, patch: Record&amp;lt;string, unknown&amp;gt; }) → Promise&amp;lt;{ ok: true }&amp;gt;
+ctx.storage.table.delete({ table: string, rowId: string }) → Promise&amp;lt;{ deleted: boolean }&amp;gt;</code></pre>
+<p><strong>Required methods:</strong> all six.</p>
+<p><strong>Hard rules:</strong></p>
+<table>
+<thead><tr><th>Rule</th><th>Detail</th></tr></thead>
+<tbody>
+<tr><td>Cross-tenant isolation</td><td>A <code>query</code> for tenant A MUST NOT return rows written by tenant B. Same applies to direct <code>get</code> by rowId. Mirrors <code>kv-cross-tenant-isolation</code>.</td></tr>
+<tr><td>Schema enforcement</td><td>Insert / update MUST reject rows whose column types diverge from the declared schema, returning <code>table_schema_violation</code>.</td></tr>
+<tr><td>Cursor pagination</td><td><code>query</code> MUST support cursor-based pagination; <code>nextCursor</code> MUST be opaque and stable across calls.</td></tr>
+<tr><td>Row count limit</td><td>Insert MUST be rejected when <code>maxRowsPerTable</code> is reached, returning <code>table_row_limit_reached</code>.</td></tr>
+</tbody></table>
+<p><strong>Capability advertisement shape:</strong></p>
+<pre class="lang-json"><code>{
+  &quot;tableStorage&quot;: {
+    &quot;supported&quot;: true,
+    &quot;maxRowsPerTable&quot;: 1000000,
+    &quot;maxColumnsPerRow&quot;: 64,
+    &quot;indexable&quot;: true,
+    &quot;fullTextSearch&quot;: false
+  }
+}</code></pre>
+<p><strong>Failure modes:</strong> <code>host_capability_missing</code> · <code>table_schema_violation</code> · <code>table_row_limit_reached</code> · <code>table_not_found</code>.</p>
+<p><strong>SECURITY invariant:</strong> <code>table-cross-tenant-isolation</code> — verified by <code>conformance/src/scenarios/table-cross-tenant-isolation.test.ts</code> + <code>table-cursor-pagination.test.ts</code> + <code>table-schema-enforcement.test.ts</code>. Source: <a href="../../RFCS/0016-host-table-storage-capability.md">RFC 0016</a> §B–C.</p>
+<hr/>
+<h2 id="host-queuebus">§host.queueBus</h2>
+<p><strong>Capability flag:</strong> <code>queueBus.supported: true</code></p>
+<p><strong>Used by:</strong> <code>core.openwop.messaging</code> consume / publish / ack / nack / DLQ / stream-subscribe nodes. Sibling of (existing) <code>host.messaging</code> — that surface is outbound-egress-only; <code>host.queueBus</code> covers full message-queue semantics including delivery acknowledgement and inbound triggers.</p>
+<pre class="lang-typescript"><code>ctx.queueBus.publish({ topic: string, payload: unknown, headers?: Record&amp;lt;string,string&amp;gt; }) → Promise&amp;lt;{ messageId: string }&amp;gt;
+ctx.queueBus.consume({ topic: string, consumerGroup?: string, maxMessages?: number }) → Promise&amp;lt;{ messages: Array&amp;lt;{ messageId: string, payload: unknown, deliveryToken: string }&amp;gt; }&gt;
+ctx.queueBus.ack({ deliveryToken: string }) → Promise&amp;lt;{ ok: true }&amp;gt;
+ctx.queueBus.nack({ deliveryToken: string, requeue?: boolean }) → Promise&amp;lt;{ ok: true }&amp;gt;
+ctx.queueBus.deadLetter({ deliveryToken: string, reason: string }) → Promise&amp;lt;{ ok: true }&amp;gt;
+ctx.queueBus.streamSubscribe({ topic: string, fromBeginning?: boolean }) → AsyncIterable&amp;lt;{ messageId: string, payload: unknown }&amp;gt;</code></pre>
+<p><strong>Required methods:</strong> <code>publish</code>, <code>consume</code>, <code>ack</code>, <code>nack</code>. <code>deadLetter</code> is required when <code>deadLetterSupported: true</code> is advertised. <code>streamSubscribe</code> is required when <code>stream.supported: true</code> is advertised; <code>fromBeginning: true</code> is gated on <code>stream.fromBeginning: true</code>.</p>
+<p><strong>Hard rules:</strong></p>
+<table>
+<thead><tr><th>Rule</th><th>Detail</th></tr></thead>
+<tbody>
+<tr><td>Cross-tenant isolation</td><td>A consumer for tenant A MUST NOT receive messages published by tenant B, even on the same logical topic.</td></tr>
+<tr><td>Ack semantics</td><td><code>ack</code> MUST remove the message from the queue; <code>nack</code> MUST return it for redelivery; <code>deadLetter</code> MUST route it to the configured DLQ.</td></tr>
+<tr><td>Trigger delivery</td><td>When a workflow registers <code>core.messaging.consume</code> as a trigger, the host MUST deliver one workflow run per inbound message — no batching, no skipping.</td></tr>
+<tr><td>Backend transparency</td><td>Hosts MAY back the surface with any advertised backend (<code>rabbitmq</code>, <code>kafka</code>, <code>sqs</code>, etc.); wire shape MUST be backend-invariant.</td></tr>
+</tbody></table>
+<p><strong>Capability advertisement shape:</strong></p>
+<pre class="lang-json"><code>{
+  &quot;queueBus&quot;: {
+    &quot;supported&quot;: true,
+    &quot;backends&quot;: [&quot;rabbitmq&quot;, &quot;sqs&quot;, &quot;in-memory&quot;],
+    &quot;deadLetterSupported&quot;: true,
+    &quot;stream&quot;: { &quot;supported&quot;: true, &quot;fromBeginning&quot;: true }
+  }
+}</code></pre>
+<p><strong>Failure modes:</strong> <code>host_capability_missing</code> · <code>queue_topic_not_found</code> · <code>queue_delivery_token_expired</code> · <code>queue_backend_unavailable</code>.</p>
+<p><strong>SECURITY invariant:</strong> <code>queue-cross-tenant-isolation</code> — verified by <code>conformance/src/scenarios/queue-cross-tenant-isolation.test.ts</code> + <code>queue-publish-consume-roundtrip.test.ts</code> + <code>queue-ack-nack-dlq.test.ts</code> + <code>stream-subscribe-from-beginning.test.ts</code>. Source: <a href="../../RFCS/0017-host-queue-bus-capability.md">RFC 0017</a> §B–C.</p>
+<hr/>
+<h2 id="host-sql">§host.sql</h2>
+<p><strong>Capability flag:</strong> <code>sql.supported: true</code></p>
+<p><strong>Used by:</strong> <code>core.openwop.db</code> sql-* nodes. SQL injection prevention is enforced at the host — the pack MUST NOT concatenate user input into SQL.</p>
+<pre class="lang-typescript"><code>ctx.db.sql.query({ datasourceId: string, sql: string, params: ReadonlyArray&amp;lt;unknown&amp;gt; }) → Promise&amp;lt;{ rows: Array&amp;lt;Record&amp;lt;string, unknown&amp;gt;&gt;, rowCount: number }&gt;
+ctx.db.sql.execute({ datasourceId: string, sql: string, params: ReadonlyArray&amp;lt;unknown&amp;gt; }) → Promise&amp;lt;{ rowsAffected: number }&amp;gt;
+ctx.db.sql.transaction({ datasourceId: string, operations: Array&amp;lt;{ sql: string, params: ReadonlyArray&amp;lt;unknown&amp;gt; }&gt; }) → Promise&amp;lt;{ committed: boolean }&amp;gt;</code></pre>
+<p><strong>Required methods:</strong> <code>query</code>, <code>execute</code>. <code>transaction</code> is required when <code>transactions: true</code> is advertised.</p>
+<p><strong>Hard rules:</strong></p>
+<table>
+<thead><tr><th>Rule</th><th>Detail</th></tr></thead>
+<tbody>
+<tr><td>Parametric-only</td><td><code>sql</code> MUST be treated as a parametric template; bound values MUST flow through <code>params[]</code>, never via string interpolation. Hosts SHOULD verify parameter binding before execution.</td></tr>
+<tr><td>Cross-datasource isolation</td><td>Datasources are scoped per tenant; cross-tenant access MUST return <code>datasource_access_denied</code>.</td></tr>
+<tr><td>Transaction atomicity</td><td>When <code>transactions: true</code> is advertised, partial failure inside <code>transaction</code> MUST roll back the entire batch.</td></tr>
+<tr><td>Driver transparency</td><td>Hosts MAY back the surface with any advertised driver (<code>postgres</code>, <code>mysql</code>, <code>sqlite</code>, etc.); wire shape MUST be driver-invariant.</td></tr>
+</tbody></table>
+<p><strong>Capability advertisement shape:</strong></p>
+<pre class="lang-json"><code>{
+  &quot;sql&quot;: {
+    &quot;supported&quot;: true,
+    &quot;datasources&quot;: [{ &quot;id&quot;: &quot;primary&quot;, &quot;driver&quot;: &quot;postgres&quot; }],
+    &quot;transactions&quot;: true,
+    &quot;drivers&quot;: [&quot;postgres&quot;, &quot;sqlite&quot;]
+  }
+}</code></pre>
+<p><strong>Failure modes:</strong> <code>host_capability_missing</code> · <code>sql_non_parametric</code> · <code>datasource_not_found</code> · <code>datasource_access_denied</code> · <code>sql_syntax_error</code> · <code>sql_transaction_aborted</code>.</p>
+<p><strong>SECURITY invariant:</strong> <code>sql-parametric-only</code> — verified by <code>conformance/src/scenarios/sql-injection-rejection.test.ts</code> + <code>sql-transaction-atomicity.test.ts</code>. Source: <a href="../../RFCS/0018-host-sql-vector-search-capability.md">RFC 0018</a> §B–C.</p>
+<hr/>
+<h2 id="host-nosql">§host.nosql</h2>
+<p><strong>Capability flag:</strong> <code>nosql.supported: true</code></p>
+<p><strong>Used by:</strong> <code>core.openwop.db</code> nosql-* nodes (document-store CRUD).</p>
+<p>Document-store sibling of <code>host.sql</code>. Driver-invariant document API; backends include MongoDB, DynamoDB, CosmosDB, Firestore.</p>
+<pre class="lang-typescript"><code>ctx.db.nosql.insert({ datasourceId: string, collection: string, doc: Record&amp;lt;string, unknown&amp;gt; }) → Promise&amp;lt;{ id: string }&amp;gt;
+ctx.db.nosql.get({ datasourceId: string, collection: string, id: string }) → Promise&amp;lt;{ doc?: Record&amp;lt;string, unknown&amp;gt; }&gt;
+ctx.db.nosql.query({ datasourceId: string, collection: string, filter: Record&amp;lt;string, unknown&amp;gt;, cursor?: string, limit?: number }) → Promise&amp;lt;{ docs: Array&amp;lt;Record&amp;lt;string, unknown&amp;gt;&gt;, nextCursor?: string }&gt;
+ctx.db.nosql.update({ datasourceId: string, collection: string, id: string, patch: Record&amp;lt;string, unknown&amp;gt; }) → Promise&amp;lt;{ ok: true }&amp;gt;
+ctx.db.nosql.delete({ datasourceId: string, collection: string, id: string }) → Promise&amp;lt;{ deleted: boolean }&amp;gt;</code></pre>
+<p><strong>Required methods:</strong> <code>insert</code>, <code>get</code>, <code>query</code>, <code>update</code>, <code>delete</code>.</p>
+<p><strong>Hard rules:</strong></p>
+<table>
+<thead><tr><th>Rule</th><th>Detail</th></tr></thead>
+<tbody>
+<tr><td>Cross-tenant isolation</td><td>Datasources are scoped per tenant; cross-tenant access MUST return <code>datasource_access_denied</code>.</td></tr>
+<tr><td>Filter sanitization</td><td><code>filter</code> operators MUST NOT permit injection (e.g., <code>$where</code> JavaScript evaluation in MongoDB MUST be rejected unless an explicit allowlist is configured).</td></tr>
+<tr><td>Driver transparency</td><td>Wire shape MUST be driver-invariant across advertised backends.</td></tr>
+</tbody></table>
+<p><strong>Capability advertisement shape:</strong></p>
+<pre class="lang-json"><code>{
+  &quot;nosql&quot;: {
+    &quot;supported&quot;: true,
+    &quot;datasources&quot;: [{ &quot;id&quot;: &quot;primary&quot;, &quot;driver&quot;: &quot;mongodb&quot; }],
+    &quot;drivers&quot;: [&quot;mongodb&quot;, &quot;dynamodb&quot;, &quot;cosmosdb&quot;, &quot;firestore&quot;]
+  }
+}</code></pre>
+<p><strong>Failure modes:</strong> <code>host_capability_missing</code> · <code>datasource_not_found</code> · <code>datasource_access_denied</code> · <code>nosql_filter_rejected</code>.</p>
+<p>Source: <a href="../../RFCS/0018-host-sql-vector-search-capability.md">RFC 0018</a> §A–B.</p>
+<hr/>
+<h2 id="host-vectorstore">§host.vectorStore</h2>
+<p><strong>Capability flag:</strong> <code>vectorStore.supported: true</code></p>
+<p><strong>Used by:</strong> <code>core.openwop.rag</code> vector-* nodes (upsert + KNN query + delete). Required by RAG packs that need similarity search.</p>
+<pre class="lang-typescript"><code>ctx.db.vector.upsert({ collection: string, vectors: Array&amp;lt;{ id: string, embedding: ReadonlyArray&amp;lt;number&amp;gt;, metadata?: Record&amp;lt;string, unknown&amp;gt; }&gt; }) → Promise&amp;lt;{ upserted: number }&amp;gt;
+ctx.db.vector.query({ collection: string, embedding: ReadonlyArray&amp;lt;number&amp;gt;, k: number, filter?: Record&amp;lt;string, unknown&amp;gt; }) → Promise&amp;lt;{ matches: Array&amp;lt;{ id: string, score: number, metadata?: Record&amp;lt;string, unknown&amp;gt; }&gt; }&gt;
+ctx.db.vector.delete({ collection: string, ids: ReadonlyArray&amp;lt;string&amp;gt; }) → Promise&amp;lt;{ deleted: number }&amp;gt;</code></pre>
+<p><strong>Required methods:</strong> <code>upsert</code>, <code>query</code>, <code>delete</code>.</p>
+<p><strong>Hard rules:</strong></p>
+<table>
+<thead><tr><th>Rule</th><th>Detail</th></tr></thead>
+<tbody>
+<tr><td>Cross-tenant isolation</td><td>A <code>query</code> for tenant A MUST NOT return vectors written by tenant B, even within the same collection name.</td></tr>
+<tr><td>KNN roundtrip</td><td>An <code>upsert</code> followed by <code>query</code> with the same embedding MUST return the inserted ids in the top-k matches when k ≥</td></tr>
+<tr><td>Backend transparency</td><td>Wire shape MUST be backend-invariant across advertised backends (<code>pinecone</code>, <code>qdrant</code>, <code>pgvector</code>, <code>in-memory</code>, etc.).</td></tr>
+</tbody></table>
+<p><strong>Capability advertisement shape:</strong></p>
+<pre class="lang-json"><code>{
+  &quot;vectorStore&quot;: {
+    &quot;supported&quot;: true,
+    &quot;collections&quot;: [{ &quot;name&quot;: &quot;documents&quot;, &quot;dimensions&quot;: 1536 }],
+    &quot;backends&quot;: [&quot;pgvector&quot;, &quot;in-memory&quot;]
+  }
+}</code></pre>
+<p><strong>Failure modes:</strong> <code>host_capability_missing</code> · <code>vector_collection_not_found</code> · <code>vector_dimension_mismatch</code>.</p>
+<p><strong>Conformance:</strong> <code>conformance/src/scenarios/vector-knn-roundtrip.test.ts</code>. Source: <a href="../../RFCS/0018-host-sql-vector-search-capability.md">RFC 0018</a> §A–B.</p>
+<hr/>
+<h2 id="host-searchindex">§host.searchIndex</h2>
+<p><strong>Capability flag:</strong> <code>searchIndex.supported: true</code></p>
+<p><strong>Used by:</strong> <code>core.openwop.rag</code> search-* nodes (full-text / BM25 ranking). Sibling of <code>host.vectorStore</code> for lexical-rather-than-semantic retrieval.</p>
+<pre class="lang-typescript"><code>ctx.db.search.index({ index: string, docs: Array&amp;lt;{ id: string, fields: Record&amp;lt;string, string|number|boolean&amp;gt; }&gt; }) → Promise&amp;lt;{ indexed: number }&amp;gt;
+ctx.db.search.query({ index: string, q: string, k?: number, filter?: Record&amp;lt;string, unknown&amp;gt; }) → Promise&amp;lt;{ hits: Array&amp;lt;{ id: string, score: number, fields?: Record&amp;lt;string, unknown&amp;gt; }&gt; }&gt;
+ctx.db.search.delete({ index: string, ids: ReadonlyArray&amp;lt;string&amp;gt; }) → Promise&amp;lt;{ deleted: number }&amp;gt;</code></pre>
+<p><strong>Required methods:</strong> <code>index</code>, <code>query</code>, <code>delete</code>.</p>
+<p><strong>Hard rules:</strong></p>
+<table>
+<thead><tr><th>Rule</th><th>Detail</th></tr></thead>
+<tbody>
+<tr><td>Cross-tenant isolation</td><td>A <code>query</code> for tenant A MUST NOT return hits indexed by tenant B.</td></tr>
+<tr><td>BM25 roundtrip</td><td>An <code>index</code> followed by <code>query</code> with a substring of an indexed field MUST return the indexed id with score > 0.</td></tr>
+<tr><td>Backend transparency</td><td>Wire shape MUST be backend-invariant (<code>elasticsearch</code>, <code>opensearch</code>, <code>meilisearch</code>, <code>typesense</code>, <code>algolia</code>, in-memory linear scan).</td></tr>
+</tbody></table>
+<p><strong>Capability advertisement shape:</strong></p>
+<pre class="lang-json"><code>{
+  &quot;searchIndex&quot;: {
+    &quot;supported&quot;: true,
+    &quot;indexes&quot;: [{ &quot;name&quot;: &quot;docs&quot; }],
+    &quot;backends&quot;: [&quot;meilisearch&quot;, &quot;in-memory&quot;]
+  }
+}</code></pre>
+<p><strong>Failure modes:</strong> <code>host_capability_missing</code> · <code>search_index_not_found</code> · <code>search_query_syntax_error</code>.</p>
+<p><strong>Conformance:</strong> <code>conformance/src/scenarios/search-bm25-roundtrip.test.ts</code>. Source: <a href="../../RFCS/0018-host-sql-vector-search-capability.md">RFC 0018</a> §A–B.</p>
+<hr/>
+<h2 id="host-blobstorage">§host.blobStorage</h2>
+<p><strong>Capability flag:</strong> <code>blobStorage.supported: true</code></p>
+<p><strong>Used by:</strong> <code>core.openwop.storage</code> blob-* nodes (binary artifact store with presigned URLs). S3 / GCS / Azure Blob equivalent.</p>
+<pre class="lang-typescript"><code>ctx.storage.blob.put({ bucket: string, key: string, bytes: Uint8Array, contentType?: string }) → Promise&amp;lt;{ url: string, sizeBytes: number }&amp;gt;
+ctx.storage.blob.get({ bucket: string, key: string }) → Promise&amp;lt;{ bytes: Uint8Array, contentType?: string }&amp;gt;
+ctx.storage.blob.delete({ bucket: string, key: string }) → Promise&amp;lt;{ deleted: boolean }&amp;gt;
+ctx.storage.blob.presign({ bucket: string, key: string, expiresInSeconds: number, method: &#39;GET&#39;|&#39;PUT&#39; }) → Promise&amp;lt;{ url: string, expiresAt: string }&amp;gt;
+ctx.storage.blob.list({ bucket: string, prefix?: string, cursor?: string }) → Promise&amp;lt;{ entries: Array&amp;lt;{ key: string, sizeBytes: number }&amp;gt;, nextCursor?: string }&gt;</code></pre>
+<p><strong>Required methods:</strong> <code>put</code>, <code>get</code>, <code>delete</code>, <code>list</code>. <code>presign</code> is required when <code>presignSupported: true</code> is advertised.</p>
+<p><strong>Hard rules:</strong></p>
+<table>
+<thead><tr><th>Rule</th><th>Detail</th></tr></thead>
+<tbody>
+<tr><td>Cross-tenant isolation</td><td>A <code>get</code> for tenant A MUST NOT return blobs written by tenant B, even with identical <code>bucket</code>/<code>key</code>.</td></tr>
+<tr><td>Presigned URL expiry</td><td>Presigned URLs MUST expire at the advertised TTL; presigned requests after expiry MUST fail at the storage layer, not after auth-skip.</td></tr>
+<tr><td>Object size limit</td><td>Writes exceeding <code>maxObjectBytes</code> MUST return <code>blob_object_too_large</code>.</td></tr>
+</tbody></table>
+<p><strong>Capability advertisement shape:</strong></p>
+<pre class="lang-json"><code>{
+  &quot;blobStorage&quot;: {
+    &quot;supported&quot;: true,
+    &quot;buckets&quot;: [{ &quot;name&quot;: &quot;artifacts&quot;, &quot;region&quot;: &quot;us-central1&quot; }],
+    &quot;presignSupported&quot;: true,
+    &quot;maxObjectBytes&quot;: 5368709120
+  }
+}</code></pre>
+<p><strong>Failure modes:</strong> <code>host_capability_missing</code> · <code>blob_bucket_not_found</code> · <code>blob_object_not_found</code> · <code>blob_object_too_large</code> · <code>blob_presign_expired</code>.</p>
+<p><strong>SECURITY invariant:</strong> <code>blob-cross-tenant-isolation</code> — verified by <code>conformance/src/scenarios/blob-cross-tenant-isolation.test.ts</code> + <code>blob-roundtrip.test.ts</code> + <code>blob-presign-expiry.test.ts</code>. Source: <a href="../../RFCS/0019-host-blob-cache-capability.md">RFC 0019</a> §B–C.</p>
+<hr/>
+<h2 id="host-cache">§host.cache</h2>
+<p><strong>Capability flag:</strong> <code>cache.supported: true</code></p>
+<p><strong>Used by:</strong> <code>core.openwop.storage</code> cache-* nodes (TTL cache for HTTP / AI response memoization). Lets idempotency-key replay deduplicate identical AI calls across runs without engaging the heavier Layer-2 invocation log.</p>
+<pre class="lang-typescript"><code>ctx.storage.cache.get({ key: string }) → Promise&amp;lt;{ value?: unknown, expiresAt?: string }&amp;gt;
+ctx.storage.cache.put({ key: string, value: unknown, ttlSeconds: number }) → Promise&amp;lt;{ ok: true }&amp;gt;
+ctx.storage.cache.delete({ key: string }) → Promise&amp;lt;{ deleted: boolean }&amp;gt;</code></pre>
+<p><strong>Required methods:</strong> <code>get</code>, <code>put</code>, <code>delete</code>.</p>
+<p><strong>Hard rules:</strong></p>
+<table>
+<thead><tr><th>Rule</th><th>Detail</th></tr></thead>
+<tbody>
+<tr><td>Cross-tenant isolation</td><td>A <code>get</code> for tenant A MUST NOT return values written by tenant B, even with identical keys.</td></tr>
+<tr><td>TTL drift</td><td>Expiry visibility MUST be honored with at most 1-second drift on read.</td></tr>
+<tr><td>Value size limit</td><td>Writes exceeding <code>maxValueBytes</code> MUST return <code>cache_value_too_large</code>.</td></tr>
+</tbody></table>
+<p><strong>Capability advertisement shape:</strong></p>
+<pre class="lang-json"><code>{
+  &quot;cache&quot;: {
+    &quot;supported&quot;: true,
+    &quot;maxValueBytes&quot;: 1048576,
+    &quot;maxTtlSeconds&quot;: 86400
+  }
+}</code></pre>
+<p><strong>Failure modes:</strong> <code>host_capability_missing</code> · <code>cache_value_too_large</code> · <code>cache_ttl_exceeds_max</code>.</p>
+<p><strong>SECURITY invariant:</strong> <code>cache-cross-tenant-isolation</code> — verified by <code>conformance/src/scenarios/cache-cross-tenant-isolation.test.ts</code> + <code>cache-ttl-expiry.test.ts</code>. Source: <a href="../../RFCS/0019-host-blob-cache-capability.md">RFC 0019</a> §B–C.</p>
+<hr/>
+<h2 id="sandbox-execution-contract-rfc-0035">Sandbox execution contract (RFC 0035)</h2>
+<p>Per <a href="../../RFCS/0035-sandbox-execution-contract.md">RFC 0035</a> (<code>Active</code> 2026-05-21).</p>
+<p>Sandbox is a <strong>meta-capability</strong>: it governs how OTHER host capabilities (<code>host.fs</code>, <code>host.kvStorage</code>, <code>host.sql</code>, et al.) are exposed to pack-loaded code. It lives at the top-level <code>capabilities.sandbox</code> block (NOT under <code>host.*</code> — sandbox isn't itself a pack-consumable surface; it's the runtime envelope around them).</p>
+<h3 id="capability-advertisement-normative">Capability advertisement (normative)</h3>
+<pre class="lang-jsonc"><code>{
+  &quot;capabilities&quot;: {
+    &quot;sandbox&quot;: {
+      &quot;supported&quot;: true,
+      &quot;isolationModel&quot;: &quot;wasm&quot;,            // or &quot;process&quot; | &quot;container&quot; | &quot;vm&quot; | &quot;x-host-&amp;lt;host&amp;gt;-&amp;lt;key&amp;gt;&quot;
+      &quot;allowedHostCalls&quot;: [&quot;host.fs&quot;, &quot;host.kvStorage&quot;],
+      &quot;memoryLimitBytes&quot;: 67108864,         // 64 MiB
+      &quot;wallClockLimitMs&quot;: 10000             // 10 s
+    }
+  }
+}</code></pre>
+<p>A host that advertises <code>capabilities.sandbox.supported: true</code> MUST enforce all 8 failure-mode invariants below. A host that does NOT advertise (omits the block OR sets <code>supported: false</code>) MUST refuse to load any pack whose manifest declares <code>peerDependencies.host.sandbox: required</code> with refusal code <code>capability_not_provided</code> per <code>capabilities.md</code> §"Runtime capabilities."</p>
+<h3 id="failure-mode-invariants-normative">Failure-mode invariants (normative)</h3>
+<table>
+<thead><tr><th>Invariant id</th><th>MUST contract</th></tr></thead>
+<tbody>
+<tr><td><code>node-pack-sandbox-no-host-fs-escape</code></td><td>Sandbox code MUST NOT read or write files outside the host-advertised sandbox root. Attempting to escape MUST fail closed with <code>sandbox_escape_attempt</code>.</td></tr>
+<tr><td><code>node-pack-sandbox-no-host-env-leak</code></td><td>Host environment variables MUST NOT be visible to sandbox code unless the host has explicitly forwarded them via an <code>allowedHostCalls</code> entry that exposes env-resolution.</td></tr>
+<tr><td><code>node-pack-sandbox-no-network-escape</code></td><td>Sandbox code MUST NOT initiate network requests unless <code>host.fetch</code> (or equivalent) is in <code>allowedHostCalls</code>.</td></tr>
+<tr><td><code>node-pack-sandbox-no-host-process-escape</code></td><td>Sandbox code MUST NOT spawn host processes, fork, or call exec-family syscalls.</td></tr>
+<tr><td><code>node-pack-sandbox-memory-cap</code></td><td>Exceeding <code>memoryLimitBytes</code> MUST fail the node with <code>error.code: &quot;sandbox_memory_exceeded&quot;</code>.</td></tr>
+<tr><td><code>node-pack-sandbox-timeout-cap</code></td><td>Exceeding <code>wallClockLimitMs</code> MUST fail the node with <code>error.code: &quot;sandbox_timeout&quot;</code>.</td></tr>
+<tr><td><code>node-pack-sandbox-capability-gate-respected</code></td><td>Sandbox code MUST NOT bypass the host's capability-advertisement check; calls to undeclared host capabilities MUST fail closed with <code>sandbox_capability_denied</code>.</td></tr>
+<tr><td><code>node-pack-sandbox-no-cross-pack-mutation</code></td><td>Sandbox code from pack A MUST NOT mutate state visible to pack B inside the same host process.</td></tr>
+</tbody></table>
+<p><code>SECURITY/invariants.yaml</code> carries the 8 matching rows. The graduation from <code>reference-impl</code> to <code>protocol</code> tier is gated on a reference host implementing the sandbox AND passing the 8 conformance scenarios named in <a href="../../RFCS/0035-sandbox-execution-contract.md">RFC 0035 §D</a>.</p>
+<h3 id="error-codes-additive-to-rest-endpoints-md-common-error-codes">Error codes (additive to <code>rest-endpoints.md</code> §"Common error codes")</h3>
+<ul>
+<li><code>sandbox_memory_exceeded</code> — Sandbox invocation exceeded <code>memoryLimitBytes</code>. <code>details.requestedBytes</code> MAY be present.</li>
+<li><code>sandbox_timeout</code> — Sandbox invocation exceeded <code>wallClockLimitMs</code>.</li>
+<li><code>sandbox_capability_denied</code> — Sandbox code called a host capability not in <code>allowedHostCalls</code>. <code>details.requestedCapability</code> MUST be set.</li>
+<li><code>sandbox_escape_attempt</code> — Sandbox detected an explicit escape attempt (a syscall from a forbidden list). <code>details.escapeKind</code> SHOULD be set.</li>
+</ul>
+<hr/>
+<h2 id="reserved-but-undocumented-surfaces">Reserved-but-undocumented surfaces</h2>
+<p>The following <code>host.*</code> capability slots are reserved for future surfaces. Hosts MUST NOT advertise them until this spec defines the contract.</p>
+<ul>
+<li><code>host.media</code> — media asset CRUD (drafted in plans, not yet specified)</li>
+<li><code>host.collaboration</code> — multi-user presence + comments</li>
+<li><code>host.workspace</code> — workspace metadata + RBAC primitives</li>
+</ul>
+<p>A pack that requires a reserved-but-undocumented surface in <code>peerDependencies</code> MUST be rejected at workflow-register time with <code>pack_peer_dependency_undefined</code>.</p>
+<hr/>
+<h2 id="capability-negotiation">Capability negotiation</h2>
+<p>The pack registry's workflow-register handler MUST verify that the host advertises every capability in a pack's <code>peerDependencies</code> block. Specifically:</p>
+<p>1. Pack manifest declares <code>peerDependencies: { &quot;host.canvas&quot;: &quot;supported&quot;, &quot;host.aiEnvelope&quot;: &quot;supported&quot; }</code>. 2. Registry fetches the host's <code>/.well-known/openwop</code> (cached per <code>Cache-Control</code>). 3. For each declared <code>peerDependency</code>, the registry checks the capability declaration exists with the required value. 4. If any are missing, register returns <code>400 pack_peer_dependency_missing</code> with the missing capability list. The pack does NOT register.</p>
+<p>Hosts that want to add a new capability surface after publishing a pack MAY:</p>
+<ul>
+<li>Re-publish the pack manifest with adjusted peerDependencies (creating a new pack version), OR</li>
+<li>Add the capability declaration to <code>/.well-known/openwop</code> and re-register the existing version.</li>
+</ul>
+<p>The wire-shape is additive: removing a declared capability is a breaking change for already-registered packs and SHOULD trigger a major-version bump in the pack.</p>
+<hr/>
+<h2 id="see-also">See also</h2>
+<ul>
+<li><code>spec/v1/host-extensions.md</code> — namespace rules; this doc is the per-surface contract</li>
+<li><code>spec/v1/capabilities.md</code> — <code>/.well-known/openwop</code> shape; the host advertises its supported capabilities there</li>
+<li><code>spec/v1/node-packs.md</code> §"Manifest format" — <code>peerDependencies</code> syntax</li>
+<li><code>spec/v1/agent-memory.md</code> — <code>host.agentRuntime</code> complements the <code>agents.memoryBackends</code> capability for stateful agents</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

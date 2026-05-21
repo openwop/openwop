@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — openwop Spec v1 — Version Negotiation and Deploy-Skew Safety</title>
+  <meta name="description" content="Long-running workflows persist state. State written by engine version N may be read by engine version N+1 (forward) or — in a botched deploy — by engine version N-1 (backward / &quot;deploy skew&quot;). Without a version contract, a backward read can silently…"/>
+  <link rel="canonical" href="https://openwop.dev/spec/v1/version-negotiation.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — openwop Spec v1 — Version Negotiation and Deploy-Skew Safety"/>
+  <meta property="og:description" content="Long-running workflows persist state. State written by engine version N may be read by engine version N+1 (forward) or — in a botched deploy — by engine version N-1 (backward / &quot;deploy skew&quot;). Without a version contract, a backward read can silently…"/>
+  <meta property="og:url" content="https://openwop.dev/spec/v1/version-negotiation.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — openwop Spec v1 — Version Negotiation and Deploy-Skew Safety"/>
+  <meta name="twitter:description" content="Long-running workflows persist state. State written by engine version N may be read by engine version N+1 (forward) or — in a botched deploy — by engine version N-1 (backward / &quot;deploy skew&quot;). Without a version contract, a backward read can silently…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="active" href="/spec/v1/">Spec</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/profiles/">Profiles</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="openwop-spec-v1-version-negotiation-and-deploy-skew-safety">openwop Spec v1 — Version Negotiation and Deploy-Skew Safety</h1>
+<blockquote><p><strong>Status: FINAL v1 (2026-04-27).</strong> Comprehensive coverage of all four version axes (engine, per-run event-log, per-event, runtime pinning). Stable surface for external review. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
+<hr/>
+<h2 id="why-this-exists">Why this exists</h2>
+<p>Long-running workflows persist state. State written by engine version N may be read by engine version N+1 (forward) or — in a botched deploy — by engine version N-1 (backward / "deploy skew"). Without a version contract, a backward read can silently lose state added in N+1; a forward read can crash on unfamiliar fields. Separately, workflows that have been <em>running</em> for hours or days may need to evolve their behavior without invalidating the runs already in flight.</p>
+<p>openwop defines <strong>four independent versioning axes</strong> that callers and servers MUST track. Three are <em>schema</em> axes (writer/reader compatibility); one is a <em>runtime branching</em> axis (in-flight run determinism):</p>
+<p>1. <strong>Engine version</strong> (<code>engineVersion</code>) — semantic version of the engine code that wrote a run's persisted state. Bumped when run-doc shape changes (renamed/added/removed required field, semantic change). 2. <strong>Event-log schema version, per-run</strong> (<code>eventLogSchemaVersion</code>) — version of the event-log <em>subcollection</em> format. Bumped on breaking changes to <code>RunEventDoc</code> envelope shape or path semantics. 3. <strong>Event-log schema version, per-event</strong> (<code>schemaVersion</code> on each <code>RunEventDoc</code>) — version of an <em>individual</em> event-payload contract. Bumped when a specific event type's payload changes shape. 4. <strong>Pinned change versions</strong> (<code>version.pinned</code> events) — Temporal-style per-(run, changeId) branch pins. Bumped by node authors via <code>ctx.getVersion(changeId, min, max)</code> to evolve workflow behavior without breaking in-flight runs.</p>
+<p>The four are decoupled because they evolve at different rates and have different correctness guarantees. The three schema axes are deploy-coordinated; the pinning axis is runtime-pinned per-run.</p>
+<hr/>
+<h2 id="engine-version">Engine version</h2>
+<h3 id="stamping">Stamping</h3>
+<p>Every persisted run document MUST carry an <code>engineVersion: number</code> field set to the writer engine's <code>CURRENT_ENGINE_VERSION</code> constant at write time. Servers MAY omit this field on legacy runs that predate the contract; readers MUST treat absent values as "compatible" (best-effort backward read).</p>
+<p>Host implementations SHOULD define a single <code>CURRENT_ENGINE_VERSION</code> constant and stamp every write through the run persistence layer.</p>
+<h3 id="reader-safety-check">Reader safety check</h3>
+<p>When a reader fetches a persisted run, it MUST call an equivalent of <code>assertEngineVersionCompatible(runId, persistedVersion)</code>:</p>
+<table>
+<thead><tr><th>Persisted version</th><th>Action</th></tr></thead>
+<tbody>
+<tr><td><code>undefined</code></td><td>Treat as compatible (legacy doc)</td></tr>
+<tr><td><code>≤ CURRENT_ENGINE_VERSION</code></td><td>Safe to read</td></tr>
+<tr><td><code>&gt; CURRENT_ENGINE_VERSION</code></td><td><strong>Refuse</strong> — throw <code>EngineVersionMismatchError</code> (<code>code: &quot;engine_version_mismatch&quot;</code>)</td></tr>
+</tbody></table>
+<p>The third case represents a deploy skew: the doc was written by a newer engine the current reader doesn't understand. The reader MUST refuse rather than fall through, because silent best-effort reads will:</p>
+<ul>
+<li>Lose fields the reader doesn't know exist</li>
+<li>Misinterpret reused field names with new semantics</li>
+<li>Corrupt the doc on the next write-back (since the reader will re-stamp with its own lower <code>CURRENT_ENGINE_VERSION</code>)</li>
+</ul>
+<h3 id="error-surface">Error surface</h3>
+<pre class="lang-json"><code>{
+  &quot;error&quot;: &quot;engine_version_mismatch&quot;,
+  &quot;message&quot;: &quot;Run R was persisted by engine version 3; current engine is version 2. Refusing to resume.&quot;,
+  &quot;details&quot;: {
+    &quot;runId&quot;: &quot;string&quot;,
+    &quot;persistedVersion&quot;: 3,
+    &quot;currentVersion&quot;: 2
+  }
+}</code></pre>
+<p>An OpenWOP-compliant server MUST surface this through <code>ResumeRunResult</code>-style return shapes (not swallowed) so the caller's UI can render a "system is upgrading, please retry" banner. The CLI/SDK SHOULD surface it as a recognizable distinct error rather than a generic 5xx.</p>
+<h3 id="bumping-protocol">Bumping protocol</h3>
+<p>Implementers SHOULD follow this sequence when changing persistence shape:</p>
+<p>1. Land the new persistence shape behind a feature gate or in a way that's optional on read. 2. Bump <code>CURRENT_ENGINE_VERSION</code> after the writer change is deployed. 3. Register a forward migration ("schema codemod") that converts older docs to the new shape on read OR on a background backfill. Until the migration ships, the bump is a deploy-skew safety net only. 4. Document the change in the implementation's CHANGELOG and bump SDK versions that pin to a particular <code>engineVersion</code> floor.</p>
+<hr/>
+<h2 id="event-log-schema-version">Event-log schema version</h2>
+<h3 id="stamping">Stamping</h3>
+<p>Every persisted run document MUST carry an <code>eventLogSchemaVersion: number</code> field. The current v1 value is <code>2</code>.</p>
+<p>Distinct from <code>engineVersion</code> because event-log evolution is more frequent. Adding a new optional event type (e.g., <code>node.retried</code>) doesn't break readers that ignore unknown event types; renaming or repurposing an existing type does.</p>
+<h3 id="legacy-detection">Legacy detection</h3>
+<p>Hosts identify an older run document as legacy when <code>eventLogSchemaVersion</code> is undefined or <code>&amp;lt; 2</code>. An OpenWOP-compliant server MUST treat legacy runs differently in two regards:</p>
+<p>1. <strong>No event subcollection.</strong> Legacy runs were persisted as snapshot-only; <code>runs/{runId}/events/{seq}</code> doesn&#39;t exist. Readers MUST fall back to the snapshot for state. 2. <strong>No projection cache write-through.</strong> Legacy runs predate <code>EventLog.onAppend</code>-driven projection caching.</p>
+<p>An OpenWOP-compliant server MAY surface a banner inviting the operator to complete or cancel legacy runs to migrate to the v2 path. Hosts MAY provide their own batch-cancellation or migration tooling as an operational convenience.</p>
+<h3 id="bumping">Bumping</h3>
+<p>Bump <code>eventLogSchemaVersion</code> when any of:</p>
+<ul>
+<li>An event type is renamed or repurposed</li>
+<li>An event payload&#39;s required fields change shape in a non-backward-compatible way</li>
+<li>Sequence semantics change (e.g., gap-fill rules)</li>
+<li>The run-doc <em>path</em> changes (e.g., the v1 → v2 move from <code>users/{u}/canvases/...</code> to top-level <code>runs/{runId}</code>)</li>
+</ul>
+<p>Adding new optional event types or new optional payload fields does NOT require a bump (current readers ignore them).</p>
+<hr/>
+<h2 id="per-event-schema-version">Per-event schema version</h2>
+<h3 id="stamping">Stamping</h3>
+<p>Each individual event document inside <code>runs/{runId}/events/{seq}</code> carries its own <code>schemaVersion: number</code> field, stamped at append time by <code>EventLog.appendAtomic</code>. This is <strong>distinct</strong> from the per-run <code>eventLogSchemaVersion</code>:</p>
+<ul>
+<li>Per-run <code>eventLogSchemaVersion</code> describes the <em>subcollection contract</em> (does this run even have an event subcollection? what path?).</li>
+<li>Per-event <code>schemaVersion</code> describes the <em>individual event payload contract</em>.</li>
+</ul>
+<p>The current v1 per-event schema version is <code>1</code>.</p>
+<h3 id="reader-behavior">Reader behavior</h3>
+<p>Per-event readers MUST be tolerant. The compatibility table:</p>
+<table>
+<thead><tr><th>Reader version</th><th>Event-stamped version</th><th>Behavior</th></tr></thead>
+<tbody>
+<tr><td>N</td><td>unset</td><td>Legacy event from pre-EventLog days. Reader folds best-effort.</td></tr>
+<tr><td>N</td><td>≤ N</td><td>Compatible — current shape contract</td></tr>
+<tr><td>N</td><td>&gt; N</td><td>Future shape — reader folds what it recognizes, ignores unknown fields. <strong>MUST NOT throw.</strong></td></tr>
+</tbody></table>
+<p>Tolerance is intentional: the projection's job is to produce best-possible state from whatever events exist. A future event with extra fields shouldn't break replay of earlier events with the older shape.</p>
+<h3 id="bumping">Bumping</h3>
+<p>Bump <code>EVENT_LOG_SCHEMA_VERSION</code> when an <em>individual</em> event type's payload contract changes in a non-additive way. Additive changes (new optional fields) don't require a bump.</p>
+<hr/>
+<h2 id="pinned-change-versions-temporal-style">Pinned change versions (Temporal-style)</h2>
+<h3 id="why">Why</h3>
+<p>Schema versioning protects readers from writers; it doesn't help an <em>in-flight run</em> whose code branch was changed mid-execution. A workflow started under code that says "capture payment, then notify" cannot safely switch mid-stream to "notify first, then capture" — the run has already done the first half under the old branch.</p>
+<p>This is the <a href="https://docs.temporal.io/dev-guide/typescript/versioning">Temporal versioning</a> idiom: per-(run, changeId) version pinning at first encounter, replayed deterministically on resume.</p>
+<h3 id="api">API</h3>
+<pre class="lang-typescript"><code>const v = await ctx.getVersion(&#39;payment-capture-flow&#39;, 1, 2);
+if (v === 1) {
+  // legacy: capture before notifying
+} else {
+  // v === 2: notify before capture
+}</code></pre>
+<p>An OpenWOP-compliant engine MUST expose <code>ctx.getVersion(changeId: string, min: number, max: number): Promise&amp;lt;number&amp;gt;</code> on <code>NodeContext</code>.</p>
+<p>Semantics:</p>
+<ul>
+<li>The <strong>first</strong> call for <code>(runId, changeId)</code> returns <code>max</code> and persists a <code>version.pinned</code> event with <code>{ changeId, version: max }</code>.</li>
+<li><strong>Subsequent</strong> calls (same run, including after replay or recovery) return the pinned value — guaranteeing in-flight runs follow the branch they started on.</li>
+<li>Reading the pin uses <code>findPinnedVersion(events, changeId)</code> — a pure helper that scans the event stream.</li>
+<li><code>min</code> and <code>max</code> MUST be integers with <code>max &gt;= min</code>. Implementations MUST throw on invalid input (validation error, not a runtime version mismatch).</li>
+</ul>
+<h3 id="version-pinned-event"><code>version.pinned</code> event</h3>
+<p>An OpenWOP-compliant engine MUST emit a <code>version.pinned</code> <code>RunEventType</code> on first encounter:</p>
+<pre class="lang-json"><code>{
+  &quot;type&quot;: &quot;version.pinned&quot;,
+  &quot;payload&quot;: { &quot;changeId&quot;: &quot;string&quot;, &quot;version&quot;: &quot;number&quot; }
+}</code></pre>
+<p>The fold doesn't track versions specially — they're consulted by the executor via <code>findPinnedVersion</code>. Replay-determinism is automatic because pinned values are durable events.</p>
+<h3 id="bumping-min-removing-a-branch">Bumping <code>min</code> (removing a branch)</h3>
+<p>Removing an old branch is signaled by raising <code>min</code> above a previously-supported value. A run that pinned the deprecated value MUST receive <code>VersionOutOfRangeError</code> on the next <code>ctx.getVersion</code> call:</p>
+<pre class="lang-typescript"><code>class VersionOutOfRangeError extends Error {
+  readonly code = &#39;version_out_of_range&#39;;
+  readonly runId: string;
+  readonly changeId: string;
+  readonly pinnedVersion: number;
+  readonly currentMin: number;
+  readonly currentMax: number;
+}</code></pre>
+<p>This is intentional: silent "follow nonexistent code" behavior is a worse failure mode than a loud error pointing at the deprecated pin. The runbook MUST instruct operators to drain or migrate runs holding deprecated pins before raising <code>min</code>.</p>
+<h3 id="default-version">Default version</h3>
+<p>An OpenWOP-compliant engine MAY define a <code>DEFAULT_VERSION = -1</code> sentinel (Temporal compatibility). The <code>min</code> parameter MAY be <code>-1</code> to capture pre-versioning behavior; readers MUST handle this without throwing.</p>
+<hr/>
+<h2 id="capability-handshake-forward-reference">Capability handshake (forward reference)</h2>
+<p>An OpenWOP-compliant server MUST expose <code>GET /.well-known/openwop</code> returning a <code>Capabilities</code> object that includes both versions plus a richer compatibility surface. See <code>capabilities.md</code> for the required and optional v1 discovery fields.</p>
+<p>Minimum required <code>Capabilities</code> fields for version negotiation:</p>
+<pre class="lang-json"><code>{
+  &quot;protocolVersion&quot;: &quot;1.0&quot;,
+  &quot;engineVersion&quot;: 1,
+  &quot;eventLogSchemaVersion&quot;: 2,
+  &quot;minClientVersion&quot;: &quot;1.0&quot;
+}</code></pre>
+<p>A client MAY pre-flight <code>/.well-known/openwop</code> and compare against its own pinned floor before issuing requests. A server MAY reject requests from clients reporting <code>User-Agent: openwop-sdk/&amp;lt;v&amp;gt;</code> below <code>minClientVersion</code> with HTTP <code>426 Upgrade Required</code>.</p>
+<hr/>
+<h2 id="cross-version-interop-matrix">Cross-version interop matrix</h2>
+<table>
+<thead><tr><th>Reader engine</th><th>Writer engine</th><th>Behavior</th></tr></thead>
+<tbody>
+<tr><td>N</td><td>N</td><td>Normal operation</td></tr>
+<tr><td>N</td><td>N-1 (older)</td><td>Reader reads, MAY upgrade-on-write if migration registered. Without migration, reader writes back at N (older fields preserved as opaque)</td></tr>
+<tr><td>N</td><td>N+1 (newer)</td><td>Reader refuses (<code>engine_version_mismatch</code>). Caller must wait for fleet to roll forward.</td></tr>
+<tr><td>N (no version)</td><td>N</td><td>Reader treats as legacy. Reads succeed; no migration needed.</td></tr>
+</tbody></table>
+<h3 id="conformance-via-x-force-engine-version-closes-f5">Conformance via <code>X-Force-Engine-Version</code> (closes F5)</h3>
+<p>The conformance suite verifies the matrix above without requiring multiple deployed engine versions. A test-keys-only request header <code>X-Force-Engine-Version: &amp;lt;integer&amp;gt;</code> instructs the server to emit events for that run AS IF it were running the named engine version.</p>
+<ul>
+<li>Servers MUST reject on production keys with <code>403 force_engine_version_forbidden</code>.</li>
+<li>Servers advertise the supported range via <code>Capabilities.testing.forceEngineVersionRange = { min, max }</code> (closes F5). Range typically spans <code>[current-1, current+1]</code> so back-compat AND forward-compat are exercisable from the same fixture.</li>
+<li>Outside the advertised range → <code>400 unsupported_force_engine_version</code> with the supported range in the body.</li>
+</ul>
+<p>The conformance fixture <code>conformance-version-fold</code> (see <code>conformance/fixtures.md</code>) exercises the matrix by running a single noop workflow once per supported version and asserting that:</p>
+<p>1. Each run reaches terminal <code>completed</code>. 2. <code>GET /v1/runs/{runId}</code> returns a valid <code>RunSnapshot</code> for each (forward-compat fold-best-effort tolerates the version mismatch). 3. The event log is readable via <code>GET /v1/runs/{runId}/events/poll</code> for each run.</p>
+<h3 id="events-poll-forward-compat-tolerance-normative"><code>events/poll</code> forward-compat tolerance (normative)</h3>
+<p><code>GET /v1/runs/{runId}/events/poll</code> accepts an optional cursor parameter naming the highest sequence number the caller has already observed. The canonical parameter name is <code>lastSequence</code>; hosts MAY also accept <code>since</code> for back-compat with pre-v1.0 deployments, but <code>lastSequence</code> is authoritative.</p>
+<p>A request with <code>lastSequence</code> strictly greater than the run's current highest event sequence MUST return <code>200 OK</code> with the canonical response envelope and an empty <code>events</code> array. Hosts MUST NOT return <code>400</code>, <code>404</code>, <code>416</code>, or any other status for the "past-end" case — that pattern is the forward-compat recovery path used by clients that recover from a deploy that renumbered the sequence space, and MUST be benign.</p>
+<p>The response shape for past-end requests:</p>
+<pre class="lang-json"><code>{
+  &quot;runId&quot;: &quot;&amp;lt;runId&amp;gt;&quot;,
+  &quot;events&quot;: [],
+  &quot;lastEventSeq&quot;: &amp;lt;integer&amp;gt;,
+  &quot;runStatus&quot;: &quot;&amp;lt;RunStatus&amp;gt;&quot;,
+  &quot;isTerminal&quot;: true | false
+}</code></pre>
+<p><code>lastEventSeq</code> echoes the caller's <code>lastSequence</code> when nothing newer exists, OR the run's highest emitted sequence when the host can determine it; either is acceptable. <code>isTerminal</code> reflects the run's current status.</p>
+<hr/>
+<h2 id="deploy-ordering-decision-matrix">Deploy ordering decision matrix</h2>
+<hr/>
+<h2 id="deploy-ordering-decision-matrix">Deploy ordering decision matrix</h2>
+<p>The interaction between the four version axes determines deploy ordering. An OpenWOP-compliant deployment SHOULD adopt a "server-first" rollout convention so the writer is always at-or-ahead-of every reader (browser, CLI, SDK):</p>
+<table>
+<thead><tr><th>Change</th><th>Bumps</th><th>Drain in-flight?</th><th>Deploy order</th></tr></thead>
+<tbody>
+<tr><td>Add optional field to run doc</td><td>None (additive)</td><td>No</td><td>Server first</td></tr>
+<tr><td>Add required field to run doc</td><td><code>engineVersion</code></td><td>Drain ⚠️ (clean state simplifies debug)</td><td>Server first, with codemod that defaults the field</td></tr>
+<tr><td>Rename run doc field</td><td><code>engineVersion</code></td><td>Drain ⚠️</td><td>Server first, with codemod</td></tr>
+<tr><td>Add new RunEventType</td><td>None (readers ignore unknown)</td><td>No</td><td>Server first</td></tr>
+<tr><td>Remove a RunEventType</td><td><code>eventLogSchemaVersion</code></td><td><strong>Drain ✗</strong> (already-emitted events become unreadable)</td><td>Server first</td></tr>
+<tr><td>Change existing event payload contract</td><td>per-event <code>schemaVersion</code></td><td>Drain ⚠️</td><td>Server first</td></tr>
+<tr><td>Change run-doc <em>path</em></td><td><code>eventLogSchemaVersion</code></td><td><strong>Drain ✗</strong></td><td>Server first</td></tr>
+<tr><td>Add new branch via <code>ctx.getVersion(id, min, M)</code></td><td><code>max</code> (M+1)</td><td>No (in-flight runs stay on old <code>M</code>)</td><td>Either order — pinning is per-run</td></tr>
+<tr><td>Remove old branch via <code>ctx.getVersion(id, M+1, ...)</code></td><td><code>min</code> (M+1)</td><td><strong>Drain or migrate</strong> runs holding pinned ≤ M, else they error</td><td>Server first</td></tr>
+</tbody></table>
+<p>⚠️ = optional but recommended   ✗ = mandatory (otherwise data is stranded)</p>
+<hr/>
+<h2 id="open-spec-gaps">Open spec gaps</h2>
+<table>
+<thead><tr><th>#</th><th>Gap</th><th>Owner</th></tr></thead>
+<tbody>
+<tr><td>V1</td><td>Schema codemod registry (<code>WorkflowSchemaMigrator</code>) — auto-upgrade older runs on read</td><td>future</td></tr>
+<tr><td>V2</td><td>Concrete <code>protocolVersion</code> semver semantics — what counts as a major bump vs minor</td><td>future</td></tr>
+<tr><td>V3</td><td><code>minClientVersion</code> enforcement — currently advisory in spec; may become MUST</td><td>future v1.x</td></tr>
+<tr><td>V4</td><td>Multi-region replication and split-brain version skew (region A on N, region B on N-1)</td><td>future</td></tr>
+<tr><td>V5</td><td>Pinned-version migration tooling — currently the only path is "drain runs holding the deprecated pin". A registered codemod surface (e.g., "rewrite the <code>version.pinned</code> event in place when reading") would let <code>min</code> bumps proceed without drains</td><td>future v1.x</td></tr>
+</tbody></table>
+<h2 id="references">References</h2>
+<ul>
+<li><code>auth.md</code> — auth model</li>
+<li><code>rest-endpoints.md</code> — endpoint catalog</li>
+<li><code>capabilities.md</code> — <code>/.well-known/openwop</code> capability declaration</li>
+</ul>
+<p>Hosts implementing version-negotiation should also publish their own deploy-ordering matrix (engine version vs event-log schema vs API surface) and operational migration runbook for skew transitions.</p></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

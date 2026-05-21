@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — openwop Spec v1 — Storage Adapters</title>
+  <meta name="description" content="The openwop runtime needs durable storage for two state surfaces:"/>
+  <link rel="canonical" href="https://openwop.dev/spec/v1/storage-adapters.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — openwop Spec v1 — Storage Adapters"/>
+  <meta property="og:description" content="The openwop runtime needs durable storage for two state surfaces:"/>
+  <meta property="og:url" content="https://openwop.dev/spec/v1/storage-adapters.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — openwop Spec v1 — Storage Adapters"/>
+  <meta name="twitter:description" content="The openwop runtime needs durable storage for two state surfaces:"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="active" href="/spec/v1/">Spec</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/profiles/">Profiles</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="openwop-spec-v1-storage-adapters">openwop Spec v1 — Storage Adapters</h1>
+<blockquote><p><strong>Status: FINAL v1 (2026-04-29).</strong> Comprehensive coverage of the two normative storage-adapter contracts (<code>RunEventLogIO</code> and <code>SuspendIO</code>) that any OpenWOP-compliant engine implementation MUST satisfy. Stable surface for external review. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
+<hr/>
+<h2 id="why-this-exists">Why this exists</h2>
+<p>The openwop runtime needs durable storage for two state surfaces:</p>
+<p>1. <strong>Event log</strong> — append-only sequence of <code>RunEventDoc</code> per run. Source of truth for the projected <code>RunSnapshot</code>. Consumers (UI, CLI, conformance suite) subscribe to the live tail; replay tools fold history. 2. <strong>Suspension state</strong> — durable per-suspension records that survive process restarts so HITL approvals + external-event waits can resume cross-session.</p>
+<p>Concrete deployments choose their own backing store. Worked examples include in-memory storage for tests, SQLite for portable single-node deployments, Postgres for self-hosted distributed runtimes, and cloud-native document stores for managed hosts. The spec specifies the contracts that any such backend MUST satisfy so engines stay storage-agnostic. This document defines the two contracts and points at illustrative reference-host patterns.</p>
+<hr/>
+<h2 id="contract-1-runeventlogio">Contract 1 — <code>RunEventLogIO</code></h2>
+<p>The event-log persistence contract. Implementations MUST persist append-only events keyed on <code>(runId, sequence)</code> with monotonic sequence assignment per run.</p>
+<h3 id="methods">Methods</h3>
+<pre class="lang-typescript"><code>interface RunEventLogIO {
+  /**
+   * Atomically append an event to a run&#39;s log. Implementation MUST:
+   *   1. Read the current max sequence (per-run scoped).
+   *   2. Assign sequence = max + 1 (or 0 if log is empty).
+   *   3. Persist the event with the assigned sequence.
+   *   4. Return the persisted doc.
+   *
+   * Concurrent appends to the same run MUST yield distinct sequences.
+   * On Firestore: wrap in `runTransaction`. On Postgres: serializable
+   * transaction OR `INSERT ... RETURNING sequence` over a per-run sequence.
+   */
+  appendAtomic(runId: string, event: RunEventDocInput): Promise&amp;lt;RunEventDoc&amp;gt;;
+
+  /**
+   * Read events in sequence order. `fromSequence` is INCLUSIVE
+   * (default 0). `limit` defaults to 100; implementations MAY clamp
+   * higher limits.
+   */
+  read(
+    runId: string,
+    opts?: { fromSequence?: number; limit?: number },
+  ): Promise&amp;lt;RunEventDoc[]&amp;gt;;
+
+  /**
+   * Get the most-recently-appended event for a run. Returns null if no
+   * events exist. Used by replay tools for `fromSeq` bounds checks.
+   */
+  getLatest(runId: string): Promise&amp;lt;RunEventDoc | null&amp;gt;;
+
+  /**
+   * Subscribe to events from `fromSequence` (inclusive). Returns an
+   * unsubscribe function. Backends use Firestore `onSnapshot`,
+   * Postgres LISTEN/NOTIFY, or polling — the contract surface is
+   * agnostic. Implementation MUST normalize timestamps to JS `Date`
+   * before invoking `onEvent`.
+   *
+   * Backfill: subscribers MUST receive events at or after
+   * `fromSequence` already in the log BEFORE any live appends. Mirrors
+   * Firestore&#39;s onSnapshot initial-snapshot behavior.
+   */
+  subscribe(
+    runId: string,
+    fromSequence: number,
+    onEvent: (event: RunEventDoc) =&gt; void,
+    onError: (err: Error) =&gt; void,
+  ): () =&gt; void;
+}</code></pre>
+<h3 id="reference-implementations-non-normative">Reference implementations (non-normative)</h3>
+<p>The example hosts ship two reference implementations (in-memory + SQLite). Both are illustrative — third-party hosts MAY ship their own.</p>
+<table>
+<thead><tr><th>Implementation</th><th>Use</th><th>Module</th></tr></thead>
+<tbody>
+<tr><td><code>InMemoryEventLogIO</code></td><td>Tests + reference deployments without durability</td><td>Reference-host implementation pattern</td></tr>
+<tr><td><code>SqliteEventLogIO</code></td><td>Durable single-node reference impl; zero-install on Node 22.5+ via <code>node:sqlite</code></td><td>Reference-host implementation pattern</td></tr>
+</tbody></table>
+<p>The contract surface above is the normative part and is reusable for any backend. The SQLite adapter is <strong>Node-only</strong> (browser bundlers cannot resolve <code>node:sqlite</code>) and should live under a dedicated sub-path so it does not pollute browser-safe surfaces.</p>
+<hr/>
+<h2 id="contract-2-suspendio">Contract 2 — <code>SuspendIO</code></h2>
+<p>The suspension-state persistence contract. Implementations MUST persist pending suspensions keyed on <code>suspensionId</code> and surface them for cross-process resume.</p>
+<h3 id="methods">Methods</h3>
+<pre class="lang-typescript"><code>interface SuspendIO {
+  /** Create a new pending suspension doc. */
+  createPending(doc: PendingDoc): Promise&amp;lt;void&amp;gt;;
+
+  /** Read the current state of a suspension. Returns null if missing. */
+  read(suspensionId: string): Promise&amp;lt;PendingDoc | null&amp;gt;;
+
+  /** Patch a suspension to resumed/rejected/timed-out status. */
+  update(suspensionId: string, patch: Partial&amp;lt;PendingDoc&amp;gt;): Promise&amp;lt;void&amp;gt;;
+
+  /**
+   * Subscribe to changes on a suspension doc. Callback fires whenever
+   * the doc updates. Returns an unsubscribe fn. Implementation MUST
+   * deliver the current state as the initial snapshot, then live
+   * updates as they arrive. Mirrors Firestore&#39;s onSnapshot.
+   */
+  watch(
+    suspensionId: string,
+    cb: (doc: PendingDoc | null) =&gt; void,
+  ): () =&gt; void;
+
+  /**
+   * Return pending suspensions matching the filter. Used by the
+   * SuspendManager&#39;s rehydration on startup. Implementations MUST
+   * apply `status == &#39;pending&#39;` automatically and honor `cardTypes`,
+   * `runIds`, `ownerUserId`, `limit` filters at the storage layer
+   * rather than post-filtering in JS (cost + perf).
+   */
+  query(filter: SuspendQueryFilter): Promise&amp;lt;PendingDoc[]&amp;gt;;
+}</code></pre>
+<h3 id="doc-shape">Doc shape</h3>
+<p><code>PendingDoc</code> (alias for <code>FirestorePendingDoc</code> for back-compat):</p>
+<pre class="lang-typescript"><code>interface PendingDoc {
+  suspensionId: string;
+  runId: string;
+  nodeId: string;
+  reason: PendingSuspension[&#39;reason&#39;];
+  status: &#39;pending&#39; | &#39;resumed&#39; | &#39;rejected&#39; | &#39;timed-out&#39;;
+  createdAt: string;          // ISO 8601
+  expiresAt?: string;
+  resumedAt?: string;
+  resumeValue?: unknown;
+  rejectReason?: unknown;
+  prompt?: PendingSuspension[&#39;prompt&#39;];
+  cardType?: string;
+  timeoutMs?: number;
+  ownerUserId?: string;       // Optional; rehydration filter
+  projectId?: string;         // Optional; surface filter
+}</code></pre>
+<h3 id="reference-implementations-non-normative">Reference implementations (non-normative)</h3>
+<table>
+<thead><tr><th>Implementation</th><th>Use</th><th>Module</th></tr></thead>
+<tbody>
+<tr><td><code>InMemorySuspendIO</code></td><td>Tests + reference deployments without durability</td><td>Reference-host implementation pattern</td></tr>
+<tr><td><code>SqliteSuspendIO</code></td><td>Durable single-node reference impl; zero-install on Node 22.5+ via <code>node:sqlite</code>; polling-based <code>watch()</code> (100ms default)</td><td>Reference-host implementation pattern</td></tr>
+</tbody></table>
+<hr/>
+<h2 id="naming-and-back-compat">Naming and back-compat</h2>
+<p>The original v1 type + class names carried a <code>Firestore-</code> prefix because Firestore was the only initial implementation:</p>
+<ul>
+<li><code>FirestoreSuspendIO</code> (interface)</li>
+<li><code>FirestorePendingDoc</code> (doc shape)</li>
+<li><code>FirestoreSuspendManager</code> (durable manager class)</li>
+</ul>
+<p>Post-v1 adopts host-agnostic names:</p>
+<ul>
+<li><code>SuspendIO</code></li>
+<li><code>PendingDoc</code></li>
+<li><code>DurableSuspendManager</code></li>
+</ul>
+<p>The original prefixed names remain exported as type aliases (and a class alias for <code>FirestoreSuspendManager</code> → <code>DurableSuspendManager</code>) for back-compat. New consumer code SHOULD prefer the unprefixed names; existing imports of the prefixed names continue to resolve to the same types/class.</p>
+<p>The event-log contract <code>RunEventLogIO</code> was already host-agnostic in v1 — no rename needed.</p>
+<hr/>
+<h2 id="compliance-checklist">Compliance checklist</h2>
+<p>A storage adapter implementation MUST:</p>
+<ul>
+<li>[ ] Yield distinct sequences for concurrent <code>appendAtomic</code> calls within the same run (event log).</li>
+<li>[ ] Apply per-run sequence isolation (different runs have independent counters).</li>
+<li>[ ] Filter by <code>fromSequence</code> inclusively in <code>read</code> and <code>subscribe</code>.</li>
+<li>[ ] Default <code>read</code> limit to 100 events.</li>
+<li>[ ] Deliver the historical tail before live appends in <code>subscribe</code> (event log) and the current state as the first watch callback (suspend).</li>
+<li>[ ] Honor <code>query</code> filter combinations at the storage layer (suspend).</li>
+<li>[ ] Apply <code>status == &#39;pending&#39;</code> filter automatically in <code>query</code> (suspend).</li>
+</ul>
+<p>A storage adapter SHOULD:</p>
+<ul>
+<li>[ ] Provide a <code>clear()</code> test helper.</li>
+<li>[ ] Provide a <code>size()</code> test helper.</li>
+<li>[ ] Tolerate subscriber-callback exceptions without crashing the storage layer.</li>
+</ul>
+<hr/>
+<h2 id="future-work">Future work</h2>
+<ul>
+<li><strong>Postgres reference implementation</strong> — <code>pg</code>-backed adapter as a durable example for distributed deployments. SQLite covers self-hosted single-instance deployments; Postgres adds the distributed-write story (LISTEN/NOTIFY for change feeds, multi-writer concurrency).</li>
+<li><strong>SQLite reference implementation</strong> — <code>SqliteEventLogIO</code> + <code>SqliteSuspendIO</code> demonstrate the single-node durable pattern. Zero-install on Node 22.5+ via the built-in <code>node:sqlite</code> module.</li>
+<li><strong>Adapter compliance suite</strong> — shared vitest test suite that any third-party adapter can run to verify spec compliance. The in-memory adapter tests</li>
+</ul>
+<p>  (<code>InMemoryEventLogIO.test.ts</code>, <code>InMemorySuspendIO.test.ts</code>) are the prototypes for this; extracting them into a parameterized harness is post-v1 ecosystem work.</p>
+<hr/>
+<h2 id="see-also">See also</h2>
+<ul>
+<li><code>auth.md</code> — API key + scope vocabulary</li>
+<li><code>replay.md</code> — uses <code>RunEventLogIO.read({fromSequence, limit})</code> for fork-fold</li>
+<li><code>interrupt.md</code> — uses <code>SuspendIO</code> for HITL persistence</li>
+<li><code>version-negotiation.md</code> — <code>RunEventDoc.engineVersion</code> is part of the contract</li>
+<li><code>examples/hosts/in-memory/</code> — no-durability reference host.</li>
+<li><code>examples/hosts/sqlite/</code> — durable single-node reference host.</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

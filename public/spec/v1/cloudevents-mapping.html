@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — OpenWOP → CloudEvents Mapping (non-normative)</title>
+  <meta name="description" content="This document does NOT change the native OpenWOP event log shape (schemas/run-event.schema.json + schemas/run-event-payloads.schema.json). It defines a one-way projection from that shape onto CloudEvents 1.0 attributes for hosts that want to bridge…"/>
+  <link rel="canonical" href="https://openwop.dev/spec/v1/cloudevents-mapping.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — OpenWOP → CloudEvents Mapping (non-normative)"/>
+  <meta property="og:description" content="This document does NOT change the native OpenWOP event log shape (schemas/run-event.schema.json + schemas/run-event-payloads.schema.json). It defines a one-way projection from that shape onto CloudEvents 1.0 attributes for hosts that want to bridge…"/>
+  <meta property="og:url" content="https://openwop.dev/spec/v1/cloudevents-mapping.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — OpenWOP → CloudEvents Mapping (non-normative)"/>
+  <meta name="twitter:description" content="This document does NOT change the native OpenWOP event log shape (schemas/run-event.schema.json + schemas/run-event-payloads.schema.json). It defines a one-way projection from that shape onto CloudEvents 1.0 attributes for hosts that want to bridge…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="active" href="/spec/v1/">Spec</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/profiles/">Profiles</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="openwop-cloudevents-mapping-non-normative">OpenWOP → CloudEvents Mapping (non-normative)</h1>
+<blockquote><p><strong>Status: DRAFT (non-normative addendum, 2026-05-15).</strong> STD-2 from <code>plans/openwop-protocol-gap-closure-plan.md</code>. Maps OpenWOP <code>RunEvent</code> records onto the <a href="https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md">CloudEvents 1.0</a> envelope so hosts that export events to message brokers (Pub/Sub, Kafka, EventBridge, NATS) can do so under a wire-portable contract. <strong>Non-normative</strong> — OpenWOP hosts MAY but are NOT required to support CloudEvents export. Promote to a normative profile once a reference host ships one.</p></blockquote>
+<p>This document does NOT change the native OpenWOP event log shape (<code>schemas/run-event.schema.json</code> + <code>schemas/run-event-payloads.schema.json</code>). It defines a one-way projection from that shape onto CloudEvents 1.0 attributes for hosts that want to bridge run events into a CloudEvents-aware message bus.</p>
+<hr/>
+<h2 id="mapping">Mapping</h2>
+<table>
+<thead><tr><th>CloudEvents attribute</th><th>Source on OpenWOP <code>RunEvent</code></th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td><code>specversion</code></td><td>Literal <code>&quot;1.0&quot;</code></td><td>CloudEvents 1.0 envelope version.</td></tr>
+<tr><td><code>id</code></td><td><code>event.eventId</code> (when present) OR <code>evt-${runId}-${seq}</code> synthesized</td><td>MUST be unique within the producer per CloudEvents §3.1.1. Reference hosts already use the <code>evt-</code> synthetic shape; reuse it.</td></tr>
+<tr><td><code>source</code></td><td>URI identifying the host + the run, e.g., <code>https://api.example.com/v1/runs/{runId}</code></td><td>MUST be a non-empty URI-reference per CloudEvents §3.1.2. Hosts that don't expose a public base URL MAY use a URN form (<code>urn:openwop:host:&amp;lt;hostId&amp;gt;:run:&amp;lt;runId&amp;gt;</code>).</td></tr>
+<tr><td><code>type</code></td><td>OpenWOP event type prefixed with <code>dev.openwop.event.</code>, e.g., <code>dev.openwop.event.run.started</code></td><td>Reverse-DNS-style per CloudEvents §3.1.3. The <code>dev.openwop.event.</code> prefix avoids collision with consumers that already use <code>run.*</code> for their own domain.</td></tr>
+<tr><td><code>time</code></td><td><code>event.timestamp</code> (ISO 8601)</td><td>CloudEvents accepts RFC 3339 / ISO 8601 directly.</td></tr>
+<tr><td><code>datacontenttype</code></td><td>Literal <code>&quot;application/json&quot;</code></td><td>OpenWOP event payloads are JSON.</td></tr>
+<tr><td><code>subject</code></td><td><code>event.nodeId</code> (when present), otherwise the <code>runId</code></td><td>Optional in CloudEvents but recommended for routing.</td></tr>
+<tr><td><code>data</code></td><td>The native OpenWOP <code>RunEvent</code> document (the whole event, including <code>seq</code>, <code>runId</code>, <code>type</code>, <code>nodeId</code>, <code>data</code>, <code>timestamp</code>, optional <code>causationId</code>)</td><td>Consumers can re-derive the canonical OpenWOP shape from <code>data</code> alone.</td></tr>
+</tbody></table>
+<h3 id="optional-extension-attributes">Optional extension attributes</h3>
+<p>OpenWOP hosts MAY emit these CloudEvents extension attributes (per CloudEvents §"Extension Context Attributes" naming rules — all-lowercase, no separators):</p>
+<table>
+<thead><tr><th>Extension</th><th>Source</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td><code>openwoprunid</code></td><td><code>event.runId</code></td><td>Lets routers shard by run without parsing <code>data</code>.</td></tr>
+<tr><td><code>openwopseq</code></td><td><code>event.seq</code> as integer</td><td>Ordering hint; consumers MUST still rely on <code>causationId</code> for true causal order.</td></tr>
+<tr><td><code>openwopcausationid</code></td><td><code>event.causationId</code> (when present)</td><td>Causal-chain anchor.</td></tr>
+<tr><td><code>openwoptenantid</code></td><td>Host-derived tenant scope</td><td>Auth + multi-tenancy routing. MUST NOT carry credential material.</td></tr>
+</tbody></table>
+<p>Hosts SHOULD NOT add other extensions without an RFC.</p>
+<hr/>
+<h2 id="worked-example">Worked example</h2>
+<p>OpenWOP wire-level <code>RunEvent</code>:</p>
+<pre class="lang-json"><code>{
+  &quot;seq&quot;: 7,
+  &quot;runId&quot;: &quot;run-abc-123&quot;,
+  &quot;type&quot;: &quot;agent.toolCalled&quot;,
+  &quot;nodeId&quot;: &quot;tool-node-2&quot;,
+  &quot;data&quot;: {
+    &quot;agentId&quot;: &quot;agent:openai/gpt-4o&quot;,
+    &quot;toolName&quot;: &quot;search&quot;,
+    &quot;callId&quot;: &quot;mcp-tool-node-2-mfkb1q3z&quot;,
+    &quot;argumentsSha256&quot;: &quot;deadbeef...&quot;
+  },
+  &quot;timestamp&quot;: &quot;2026-05-15T17:00:00.000Z&quot;
+}</code></pre>
+<p>Projected onto CloudEvents 1.0 (JSON format per <a href="https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/formats/json-format.md"><code>cloudevents/spec/json-format.md</code></a>):</p>
+<pre class="lang-json"><code>{
+  &quot;specversion&quot;: &quot;1.0&quot;,
+  &quot;id&quot;: &quot;evt-run-abc-123-7&quot;,
+  &quot;source&quot;: &quot;https://api.example.com/v1/runs/run-abc-123&quot;,
+  &quot;type&quot;: &quot;dev.openwop.event.agent.toolCalled&quot;,
+  &quot;time&quot;: &quot;2026-05-15T17:00:00.000Z&quot;,
+  &quot;datacontenttype&quot;: &quot;application/json&quot;,
+  &quot;subject&quot;: &quot;tool-node-2&quot;,
+  &quot;openwoprunid&quot;: &quot;run-abc-123&quot;,
+  &quot;openwopseq&quot;: 7,
+  &quot;data&quot;: {
+    &quot;seq&quot;: 7,
+    &quot;runId&quot;: &quot;run-abc-123&quot;,
+    &quot;type&quot;: &quot;agent.toolCalled&quot;,
+    &quot;nodeId&quot;: &quot;tool-node-2&quot;,
+    &quot;data&quot;: {
+      &quot;agentId&quot;: &quot;agent:openai/gpt-4o&quot;,
+      &quot;toolName&quot;: &quot;search&quot;,
+      &quot;callId&quot;: &quot;mcp-tool-node-2-mfkb1q3z&quot;,
+      &quot;argumentsSha256&quot;: &quot;deadbeef...&quot;
+    },
+    &quot;timestamp&quot;: &quot;2026-05-15T17:00:00.000Z&quot;
+  }
+}</code></pre>
+<hr/>
+<h2 id="round-trip-note">Round-trip note</h2>
+<p>This mapping is <strong>export-only by design</strong>. Going from a CloudEvents envelope BACK to a native OpenWOP <code>RunEvent</code> is lossless as long as the envelope's <code>data</code> field carries the full original event. Hosts that re-ingest CloudEvents from a bus and want to project them back to native shape MUST NOT trust the envelope-level <code>id</code> / <code>source</code> / <code>time</code> — those are CloudEvents-layer fields and may have been rewritten by a router. The authoritative OpenWOP fields are inside <code>data</code>.</p>
+<p>Hosts that want a tighter binding (e.g., signed CloudEvents bridging tenant boundaries) SHOULD layer their own envelope authenticity check; OpenWOP's webhook HMAC recipe per <code>webhooks.md</code> §"Signature recipe" is the recommended pattern.</p>
+<hr/>
+<h2 id="why-non-normative">Why non-normative</h2>
+<p>OpenWOP doesn't currently require CloudEvents export — most hosts pump events directly into their own observability stack. The mapping exists so adopters with CloudEvents-based downstreams (Knative Eventing, AWS EventBridge with CloudEvents binding, OpenTelemetry's experimental CloudEvents semantic conventions) don't have to invent their own projection.</p>
+<p>Promote to normative once:</p>
+<p>1. At least one reference host ships a CloudEvents exporter. 2. A second adopter independently produces a compatible mapping using this doc as input. 3. Versioning / extension semantics survive a real deploy-skew test.</p>
+<p>Until then, this doc captures the intended shape so adopters don't fragment on per-host conventions.</p>
+<hr/>
+<h2 id="see-also">See also</h2>
+<ul>
+<li><a href="./observability.md"><code>observability.md</code></a> — canonical event vocabulary + <code>openwop.*</code> OTel namespace.</li>
+<li><a href="../../schemas/run-event.schema.json"><code>run-event.schema.json</code></a> — wire shape for <code>RunEvent</code>.</li>
+<li><a href="../../schemas/run-event-payloads.schema.json"><code>run-event-payloads.schema.json</code></a> — per-event payload contracts.</li>
+<li><a href="./positioning.md"><code>positioning.md</code></a> §"Standards composition matrix" — broader stance on CloudEvents composition.</li>
+<li><a href="https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md">CloudEvents 1.0 specification</a></li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

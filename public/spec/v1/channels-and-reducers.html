@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — openwop Spec v1 — Typed State Channels and Reducers</title>
+  <meta name="description" content="A workflow run carries state beyond the inputs and outputs of individual nodes: approval votes, refine-loop feedback history, loopback counters, artifact mirrors, multi-turn Q&amp;A exchanges. The reference implementation persists this state in an…"/>
+  <link rel="canonical" href="https://openwop.dev/spec/v1/channels-and-reducers.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — openwop Spec v1 — Typed State Channels and Reducers"/>
+  <meta property="og:description" content="A workflow run carries state beyond the inputs and outputs of individual nodes: approval votes, refine-loop feedback history, loopback counters, artifact mirrors, multi-turn Q&amp;A exchanges. The reference implementation persists this state in an…"/>
+  <meta property="og:url" content="https://openwop.dev/spec/v1/channels-and-reducers.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — openwop Spec v1 — Typed State Channels and Reducers"/>
+  <meta name="twitter:description" content="A workflow run carries state beyond the inputs and outputs of individual nodes: approval votes, refine-loop feedback history, loopback counters, artifact mirrors, multi-turn Q&amp;A exchanges. The reference implementation persists this state in an…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="active" href="/spec/v1/">Spec</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/profiles/">Profiles</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="openwop-spec-v1-typed-state-channels-and-reducers">openwop Spec v1 — Typed State Channels and Reducers</h1>
+<blockquote><p><strong>Status: FINAL v1 (2026-04-27).</strong> Comprehensive coverage of channel declarations, six canonical reducers, the migration path from variable-prefix conventions, and the back-compat layer. Stable surface for external review. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
+<hr/>
+<h2 id="why-this-exists">Why this exists</h2>
+<p>A workflow run carries state beyond the inputs and outputs of individual nodes: approval votes, refine-loop feedback history, loopback counters, artifact mirrors, multi-turn Q&A exchanges. The reference implementation persists this state in an <strong>untyped variables map</strong> with <strong>prefix conventions</strong>:</p>
+<table>
+<thead><tr><th>Prefix</th><th>Purpose</th><th>Reducer (implicit)</th></tr></thead>
+<tbody>
+<tr><td><code>_approvalVotes:{nodeId}</code></td><td>Multi-approver vote tally</td><td>append</td></tr>
+<tr><td><code>_askExchanges:{nodeId}</code></td><td>Q&A exchanges during approval</td><td>append + cap</td></tr>
+<tr><td><code>_clarificationAnswers:{nodeId}</code></td><td>Clarification answers</td><td>merge</td></tr>
+<tr><td><code>_feedbackHistory:{nodeId}</code></td><td>Refine-loop feedback log</td><td>append</td></tr>
+<tr><td><code>_loopbackCount:{nodeId}</code></td><td>Loopback iteration counter</td><td>counter</td></tr>
+<tr><td><code>_loopbackIteration:{nodeId}</code></td><td>Current iteration index</td><td>replace (counter-like)</td></tr>
+<tr><td><code>_previousArtifact:{nodeId}</code></td><td>Pre-refine artifact snapshot</td><td>replace</td></tr>
+<tr><td><code>wfArtifactData_{nodeId}</code></td><td>Artifact mirror surviving doc-strip</td><td>replace</td></tr>
+<tr><td><code>_activeClarification</code></td><td>Active clarification descriptor</td><td>replace</td></tr>
+</tbody></table>
+<p><strong>Why this is a problem:</strong></p>
+<p>1. <strong>Prefix-as-namespace is fragile.</strong> A typo in the prefix string silently writes to a different namespace; nothing surfaces the error. 2. <strong>Implicit reducers.</strong> Each callsite reimplements its own append/merge/counter logic. Drift between writer and reader is the most common bug class. 3. <strong>No type safety.</strong> <code>run.variables[</code>_approvalVotes:${nodeId}<code>]</code> is <code>unknown</code>; every reader casts and hopes. 4. <strong>No external visibility.</strong> External tools can't introspect the namespace structure — they see one giant <code>Record&amp;lt;string, unknown&amp;gt;</code>.</p>
+<p>openwop defines <strong>typed channels with explicit reducers</strong> as the replacement. Each channel is a first-class declaration with a typed value and a named reducer; the prefix conventions become a back-compat layer that the spec deprecates over time.</p>
+<p>The channel/reducer idiom parallels [LangGraph's <code>Annotated[T, reducer]</code>](https://langchain-ai.github.io/langgraph/concepts/low_level/#state) — chosen for ecosystem familiarity.</p>
+<hr/>
+<h2 id="channel-declaration">Channel declaration</h2>
+<p>An OpenWOP-compliant workflow definition MAY declare typed channels:</p>
+<pre class="lang-typescript"><code>interface WorkflowDefinition {
+  // ... existing fields (id, nodes, edges, etc) ...
+
+  /** Typed state channels for this workflow. Optional — workflows without
+   *  declared channels fall back to the legacy untyped variables map. */
+  channels?: Record&amp;lt;string, ChannelDeclaration&amp;gt;;
+}
+
+interface ChannelDeclaration {
+  /** Reducer name. Servers MUST recognize all canonical reducers (see below);
+   *  MAY accept implementation-defined custom reducer names. */
+  reducer: &#39;replace&#39; | &#39;append&#39; | &#39;merge&#39; | &#39;counter&#39; | &#39;votes&#39; | &#39;feedback&#39; | string;
+
+  /** Optional JSON Schema for the channel value. Servers SHOULD validate
+   *  every write against this schema; servers MAY skip validation in
+   *  production for performance. */
+  schema?: JSONSchema;
+
+  /** Integer version of the current `schema`. Defaults to 1. Increments
+   *  whenever the channel author edits `schema`. Each `channel.written`
+   *  event records the version that was live at write time. (closes C4) */
+  schemaVersion?: number;
+
+  /** Older schema versions whose persisted writes are forward-readable
+   *  under the CURRENT schema. The engine validates each old write
+   *  against the current schema during fold; pass = include, fail =
+   *  `channel_schema_breaking_change` error. Empty/omitted means &quot;no
+   *  backward compatibility&quot; — any older-version writes trip the
+   *  breaking-change error. (closes C4) */
+  compatibleWith?: number[];
+
+  /** Optional default value when no events have written to this channel. */
+  default?: unknown;
+
+  /** Optional max size — for `append`/`votes`/`feedback` reducers, oldest
+   *  entries are dropped when this is exceeded. For other reducers, writes
+   *  beyond this size are rejected with `validation_error`. */
+  maxSize?: number;
+
+  /** Optional entry-age TTL in milliseconds (closes C3). Applies to
+   *  `append` / `votes` / `feedback` reducers; ignored on others. Engine
+   *  drops entries older than this age (lazy: on read or next write).
+   *  Range 1..(365*24*60*60*1000). `0` means &quot;no TTL&quot; (same as omitting). */
+  ttlMs?: number;
+
+  /** Optional reducer-specific options. */
+  options?: Record&amp;lt;string, unknown&amp;gt;;
+
+  /** Optional access control (closes C1). Three forms:
+   *    &#39;public&#39;  — explicit no-restriction (same as omitting access; default).
+   *    &#39;private&#39; — shorthand: locks down. Equivalent to `{readers: [], writers: []}`.
+   *                Authors fill in node lists incrementally to grant access.
+   *    {readers?, writers?} — explicit allowlists. Each side is independently
+   *                scoped: side omitted = open; side present = strict allowlist. */
+  access?: &#39;public&#39; | &#39;private&#39; | {
+    readers?: string[];
+    writers?: string[];
+  };
+}</code></pre>
+<h3 id="channel-naming">Channel naming</h3>
+<p>Channel names are arbitrary strings, but spec-aware tooling expects:</p>
+<ul>
+<li>Workflow-level channels (one value per run): <code>&amp;lt;short-camelCase-name&amp;gt;</code> — e.g., <code>kernelArtifact</code>, <code>currentBranch</code>.</li>
+<li>Node-scoped channels (one value per (run, nodeId) pair): <code>&amp;lt;name&amp;gt;:{nodeId}</code> — e.g., <code>approvalVotes:{nodeId}</code>, <code>feedbackHistory:{nodeId}</code>. The <code>:{nodeId}</code> suffix is parsed by tooling to scope rendering.</li>
+</ul>
+<p>Servers MUST accept any string as a channel name; the suffix convention is for tooling only.</p>
+<h3 id="channel-access-control-closes-c1">Channel access control (closes C1)</h3>
+<p>Channels default to <strong>any-to-any</strong> within a workflow. For workflows with sensitive data (PII in a <code>feedback</code> channel, ranking scores in a <code>votes</code> channel, etc.), the <code>access</code> field on <code>ChannelDeclaration</code> declares per-channel allowlists.</p>
+<p>Three forms:</p>
+<pre class="lang-yaml"><code># 1) Default — no access field (or &#39;public&#39;): any node can read + write.
+votes:
+  reducer: votes
+
+# 2) Lockdown shorthand — &#39;private&#39; is equivalent to { readers: [], writers: [] }.
+#    All access denied. Authors fill in lists to grant.
+secret-feedback:
+  reducer: feedback
+  access: &#39;private&#39;
+
+# 3) Explicit allowlists — each side independently scoped. Side omitted = open;
+#    side present = strict allowlist.
+votes-2:
+  reducer: votes
+  access:
+    writers: [&#39;vote-collector&#39;]            # only this nodeId can write
+    readers: [&#39;vote-tally&#39;, &#39;vote-display&#39;] # only these can read
+
+#    Mixing instance-level (nodeId) and category-level (typeId wildcard):
+ai-feedback:
+  reducer: feedback
+  access:
+    writers: [&#39;core.ai.*&#39;, &#39;feedback-curator&#39;]  # any AI node OR a specific curator</code></pre>
+<p><strong>Allowlist entries</strong> are matched against the requesting node in two passes:</p>
+<p>1. Exact match against the node's <code>nodeId</code> (workflow-instance-specific, e.g., <code>vote-collector-1</code>). 2. Wildcard match against the node's <code>typeId</code> (workflow-stable, e.g., <code>core.ai.callPrompt</code>). Wildcards use <code><em></code> suffix on a dotted prefix (<code>core.ai.</em></code> matches <code>core.ai.callPrompt</code> and <code>core.ai.generateFromPrompt</code>; <code>*</code> alone matches all).</p>
+<p>A node passes if EITHER pass matches.</p>
+<p><strong>Engine enforcement.</strong> When a node calls <code>ctx.channels.read(&#39;X&#39;)</code> or <code>ctx.channels.write(&#39;X&#39;, value)</code>:</p>
+<ul>
+<li>If <code>access</code> is omitted or <code>&#39;public&#39;</code>: allow.</li>
+<li>If <code>access === &#39;private&#39;</code>: deny (return <code>400 channel_access_denied</code>).</li>
+<li>If <code>access</code> is the object form: check the relevant list (<code>readers</code> for read, <code>writers</code> for write). If the list is omitted, allow. If the list is present, deny unless the node matches an entry.</li>
+</ul>
+<p>Error envelope:</p>
+<pre class="lang-json"><code>{
+  &quot;error&quot;: &quot;channel_access_denied&quot;,
+  &quot;message&quot;: &quot;Node &#39;vote-tally&#39; may not write to channel &#39;votes&#39;.&quot;,
+  &quot;details&quot;: {
+    &quot;channel&quot;: &quot;votes&quot;,
+    &quot;requestedBy&quot;: { &quot;nodeId&quot;: &quot;vote-tally&quot;, &quot;typeId&quot;: &quot;vendor.acme.tally&quot; },
+    &quot;allowed&quot;: &quot;writers&quot;
+  }
+}</code></pre>
+<p><strong>Forward-compat.</strong> Workflows that don't use <code>access</code> are unchanged. Tooling SHOULD warn when a sensitive-looking channel name (e.g., contains "secret", "password", "private") has no access restriction — but the engine MUST NOT enforce on naming convention alone.</p>
+<h3 id="channel-schema-migration-closes-c4">Channel schema migration (closes C4)</h3>
+<p>When a channel's <code>schema</code> evolves, prior persisted writes don't auto-revalidate against the new shape. openwop's migration model is <strong>versioned schemas + auto-detect compatibility + fail-loud on breaking</strong>:</p>
+<ul>
+<li><code>ChannelDeclaration.schemaVersion</code> — integer, defaults to 1. Authors increment when editing <code>schema</code>.</li>
+<li><code>ChannelDeclaration.compatibleWith</code> — list of older versions whose persisted writes are forward-readable under the <em>current</em> schema.</li>
+<li>Each <code>channel.written</code> event records its <code>schemaVersion</code> at write time (carried in the event payload — see <code>channel-written-payload.schema.json</code>).</li>
+</ul>
+<p><strong>Engine fold semantics on read:</strong></p>
+<table>
+<thead><tr><th>Event's <code>schemaVersion</code></th><th><code>compatibleWith</code> includes it?</th><th>Behavior</th></tr></thead>
+<tbody>
+<tr><td><code>=== current</code></td><td>n/a</td><td>Fold normally. Validate against current <code>schema</code> if declared.</td></tr>
+<tr><td><code>&amp;lt; current</code></td><td>Yes</td><td>Validate the old write against the <em>current</em> schema. Pass → fold; fail → hard error <code>channel_schema_breaking_change</code>.</td></tr>
+<tr><td><code>&amp;lt; current</code></td><td>No</td><td>Hard error <code>channel_schema_breaking_change</code> with migration hint.</td></tr>
+<tr><td><code>&amp;gt; current</code></td><td>n/a</td><td>Forward-compat tolerant: fold permissively (<code>additionalProperties: true</code> semantics). Happens during deploy roll-back.</td></tr>
+</tbody></table>
+<p><strong>Why automatic detection works.</strong> The engine doesn't need to <em>understand</em> what changed between v1 and v2 — it just runs old data through the new schema. If it validates, the change is non-breaking. If not, it's breaking and the engine fails loud rather than silently corrupting state.</p>
+<p><strong>Author workflow for non-breaking edits</strong> (the common case — adding optional fields, widening enums):</p>
+<pre class="lang-yaml"><code>channels:
+  feedback:
+    reducer: feedback
+    schema: { ... v2 shape with new optional field ... }
+    schemaVersion: 2
+    compatibleWith: [1]   # explicit declaration that v1 writes are OK</code></pre>
+<p>Old v1 writes auto-fold under v2 (the new optional field is absent — still valid). No migration code; no new channel name.</p>
+<p><strong>Author workflow for breaking edits</strong> (rare — removing a field, adding a required field, narrowing a type):</p>
+<p>The engine refuses to fold v1 writes under a strict v2 schema. Authors MUST create a new channel name and copy via a one-shot node:</p>
+<pre class="lang-yaml"><code>channels:
+  feedback:           # v1 — unchanged, kept for back-compat reads
+    reducer: feedback
+    schema: { ... }
+    schemaVersion: 1
+  feedbackV2:         # new channel with the breaking schema
+    reducer: feedback
+    schema: { ... v2 with new required field ... }
+    schemaVersion: 1  # this is v2&#39;s first version</code></pre>
+<p>A copy node reads <code>feedback</code>, transforms each entry, writes to <code>feedbackV2</code>. Old runs see only <code>feedback</code>; new runs read from <code>feedbackV2</code>. Both can coexist.</p>
+<p><strong>Replay determinism.</strong> Every <code>channel.written</code> event carries its own <code>schemaVersion</code>. Replays fold identically to live reads — old runs replay against the schema that was live at the time of the original write, and breaking-change errors surface at the same sequence in both replay and original.</p>
+<p><strong>Error envelope:</strong></p>
+<pre class="lang-json"><code>{
+  &quot;error&quot;: &quot;channel_schema_breaking_change&quot;,
+  &quot;message&quot;: &quot;Channel &#39;feedback&#39; has a breaking schema change between v1 and v3.&quot;,
+  &quot;details&quot;: {
+    &quot;channel&quot;: &quot;feedback&quot;,
+    &quot;currentSchemaVersion&quot;: 3,
+    &quot;incompatibleEventVersion&quot;: 1,
+    &quot;incompatibleEventId&quot;: &quot;evt_abc...&quot;,
+    &quot;migrationHint&quot;: &quot;Create a new channel name and copy via a one-shot node.&quot;
+  }
+}</code></pre>
+<p><strong>What this is NOT.</strong> openwop does NOT spec author-supplied migration functions (<code>v1 → v2</code> transformer code). That sort of code is genuinely product-design territory and varies wildly across implementations — keep it out-of-spec, in vendor packs or workflow author tooling.</p>
+<h3 id="distributed-reducers-and-cross-engine-writes-closes-c2">Distributed reducers and cross-engine writes (closes C2)</h3>
+<p>Channel reducers run engine-host-locally. When a sub-workflow (a parent invokes a child) or cross-canvas invoke runs on a different engine instance than the parent, the spec specifies which writes are allowed across engine boundaries and how parents combine cross-engine inputs into authoritative state.</p>
+<h4 id="cross-engine-write-rules">Cross-engine write rules</h4>
+<table>
+<thead><tr><th>Reducer</th><th>Cross-engine write?</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td><code>append</code></td><td>✅ Allowed</td><td>Commutative + associative — concurrent appends just produce more entries. Cross-engine order is engine-determined per §"Append ordering".</td></tr>
+<tr><td><code>votes</code></td><td>✅ Allowed</td><td>Per-voter latest-wins de-dup makes concurrent writes safe.</td></tr>
+<tr><td><code>feedback</code></td><td>✅ Allowed</td><td>Append-with-bound; same as <code>append</code>.</td></tr>
+<tr><td><code>counter</code></td><td>✅ Allowed</td><td>Addition is commutative + associative.</td></tr>
+<tr><td><code>replace</code></td><td>❌ Forbidden</td><td>Last-write-wins with concurrent cross-engine writes is a workflow-design bug, not a silent race.</td></tr>
+<tr><td><code>merge</code></td><td>❌ Forbidden</td><td>Shallow-merge order matters for overlapping keys; concurrent cross-engine writes produce non-deterministic state.</td></tr>
+<tr><td><code>vendor.*</code></td><td>Server's call</td><td>Custom reducers declare their own cross-engine policy. Servers SHOULD reject cross-engine writes by default and require the pack to opt in.</td></tr>
+</tbody></table>
+<p>When a non-owner engine attempts a cross-engine write to a forbidden reducer, the server MUST return <code>400 channel_cross_engine_write_forbidden</code>:</p>
+<pre class="lang-json"><code>{
+  &quot;error&quot;: &quot;channel_cross_engine_write_forbidden&quot;,
+  &quot;message&quot;: &quot;Channel &#39;currentDecision&#39; uses reducer &#39;replace&#39; which forbids cross-engine writes. Use the channel-write trigger pattern to combine child contributions in the parent.&quot;,
+  &quot;details&quot;: {
+    &quot;channel&quot;: &quot;currentDecision&quot;,
+    &quot;reducer&quot;: &quot;replace&quot;,
+    &quot;sourceEngineId&quot;: &quot;child-engine-7&quot;,
+    &quot;sourceRunId&quot;: &quot;run_xyz&quot;
+  }
+}</code></pre>
+<p>Each <code>channel.written</code> event from a non-owning engine carries <code>sourceEngineId</code> + <code>sourceRunId</code> (see <code>channel-written-payload.schema.json</code>). The fold side uses these to disambiguate origins.</p>
+<h4 id="append-ordering-normative">Append ordering (normative)</h4>
+<p>For the <code>append</code> reducer (and its bounded variants <code>votes</code> / <code>feedback</code>), the engine MUST fold concurrent writes deterministically so replay reproduces the same projected channel state.</p>
+<p><strong>Within a single engine</strong> (intra-host):</p>
+<p>1. Writes are ordered by the <code>sequence</code> field on their backing <code>channel.written</code> event (<code>run-event.schema.json</code> §sequence). Because <code>sequence</code> is monotonic per run and assigned atomically by <code>appendAtomic</code>, intra-engine concurrent writes have a total order. 2. The folded array MUST reflect that order: entry <code>i</code> in the projected array corresponds to the <code>i</code>-th <code>channel.written</code> event for that channel in event-log order.</p>
+<p><strong>Across engines</strong> (cross-host):</p>
+<p>1. Each <code>channel.written</code> event carries <code>sourceEngineId</code> + <code>sourceRunId</code> + per-engine <code>sequence</code>. The owner engine receives these as inbound writes. 2. The owner engine MUST assign each inbound write a new per-run <code>sequence</code> value at the moment it is appended to the owning run's event log. That assigned sequence is the durable order. 3. Consumers MUST NOT rely on the original <code>sourceEngineId</code> <code>sequence</code> for ordering — only the owner-assigned sequence is replay-deterministic.</p>
+<p><strong>Tie-breaking when sequences collide</strong> (e.g., during recovery from a split-brain claim handoff): the owner engine MUST use <code>(sequence, eventId)</code> as the composite sort key. <code>eventId</code> is opaque but globally unique, so this is a total order.</p>
+<p><strong>Replay determinism.</strong> Re-folding the channel from the event log MUST produce the identical array contents AND identical array ordering as the original execution. Hosts MUST NOT reorder events during replay.</p>
+<h4 id="reactive-parent-computation-channel-write-trigger">Reactive parent computation: <code>channel-write</code> trigger</h4>
+<p>For workflows that need authoritative state derived from many child contributions (a parent decision built from child votes; a tally built from child counters), the spec adds a <code>channel-write</code> trigger type. It fires a parent-engine node when a named channel receives a write — including cross-engine writes from children. The triggered node runs in the parent's context and can do <code>replace</code> / <code>merge</code> / <code>counter</code> on OTHER channels with single-writer guarantees.</p>
+<pre class="lang-yaml"><code>channels:
+  childVotes:                   # children append-write here, cross-engine OK
+    reducer: votes
+  finalDecision:                 # parent owns; single-writer replace
+    reducer: replace
+
+triggers:
+  - id: tally-when-child-votes
+    type: channel-write
+    config:
+      channel: childVotes
+      onlyFrom: child            # &#39;child&#39; | &#39;parent&#39; | &#39;any&#39; (default &#39;any&#39;)
+      debounceMs: 1000           # optional — coalesce a burst of child writes
+    nodeId: tally-and-decide
+
+nodes:
+  - id: tally-and-decide
+    typeId: core.aggregator.tally
+    # reads childVotes via ctx.channels; writes finalDecision via ctx.channels.</code></pre>
+<p>Trigger config fields:</p>
+<table>
+<thead><tr><th>Field</th><th>Required</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td><code>channel</code></td><td>Required</td><td>Name of the channel to watch. MUST match a key declared under <code>WorkflowDefinition.channels</code>.</td></tr>
+<tr><td><code>onlyFrom</code></td><td>Optional</td><td><code>&#39;child&#39;</code> (only cross-engine writes), <code>&#39;parent&#39;</code> (only own-engine writes), <code>&#39;any&#39;</code> (default — all writes). Use <code>&#39;child&#39;</code> for the typical aggregation pattern.</td></tr>
+<tr><td><code>debounceMs</code></td><td>Optional</td><td>When children write in bursts, wait for a quiet period of this many ms before firing. Recommended for <code>votes</code> / <code>feedback</code> aggregation; omit for low-frequency channels. Range: 0..60000.</td></tr>
+</tbody></table>
+<h4 id="loop-protection">Loop protection</h4>
+<p>A <code>channel-write</code> trigger MUST NOT fire on writes performed by the node it just dispatched (or that node's downstream lineage within a single trigger execution). Without this guard, "trigger fires → triggered node writes → trigger fires again" would loop forever.</p>
+<p>The existing <code>WorkflowSettings.maxLoopbackIterations</code> cap covers anything the per-trigger guard misses (e.g., transitive writes that hop through multiple channels back to the original).</p>
+<h4 id="replay-determinism">Replay determinism</h4>
+<p>The <code>channel.written</code> event log is the source of truth. During replay, the engine re-fires <code>channel-write</code> triggers in event order — same writes, same trigger sequence, same parent-side decisions. Replays produce identical fold output to the original run, modulo external API determinism (covered separately by <code>idempotency.md</code> Layer 2).</p>
+<h4 id="what-this-is-not">What this is NOT</h4>
+<ul>
+<li>It's NOT a CRDT-everywhere model. <code>replace</code> / <code>merge</code> are still single-writer; the <code>channel-write</code> trigger is the <em>escape hatch</em> to combine cross-engine inputs into a single-writer decision.</li>
+<li>It's NOT a generic pub/sub system. Triggers fire within a single workflow run; cross-run reactivity is out of scope (use webhooks per <code>rest-endpoints.md</code>).</li>
+<li>The spec does NOT define which engine-pair combinations are "child" vs "parent" — that's an implementation concern (sub-workflow ownership, cross-canvas-invoke topology, etc.). The <code>sourceEngineId</code> field is opaque to the spec.</li>
+</ul>
+<hr/>
+<h2 id="canonical-reducers">Canonical reducers</h2>
+<p>Every OpenWOP-compliant server MUST recognize the following reducer names. Servers MAY add implementation-defined names (e.g., <code>vendor.acme.dedupe</code>).</p>
+<h3 id="replace"><code>replace</code></h3>
+<pre class="lang-typescript"><code>function replace&amp;lt;T&amp;gt;(_current: T | undefined, next: T): T {
+  return next;
+}</code></pre>
+<p>Latest write wins. The default reducer when none is specified.</p>
+<p><strong>Use cases</strong>: artifact mirrors, current-branch markers, single-value snapshots.</p>
+<p><strong>Maps from existing prefixes</strong>: <code>_previousArtifact:</code>, <code>wfArtifactData_</code>, <code>_activeClarification</code>, <code>_loopbackIteration:</code>.</p>
+<h3 id="append"><code>append</code></h3>
+<pre class="lang-typescript"><code>function append&amp;lt;T&amp;gt;(current: T[] = [], next: T): T[] {
+  return [...current, next];
+}</code></pre>
+<p>Each write appends to an array. With <code>maxSize</code> set, oldest entries drop.</p>
+<p><strong>Use cases</strong>: log-like channels where order matters and history is preserved.</p>
+<p><strong>Maps from existing prefixes</strong>: <code>_askExchanges:</code> (with <code>maxSize</code> cap).</p>
+<h3 id="merge"><code>merge</code></h3>
+<pre class="lang-typescript"><code>function merge&amp;lt;T extends object&amp;gt;(current: T = {} as T, next: Partial&amp;lt;T&amp;gt;): T {
+  return { ...current, ...next };
+}</code></pre>
+<p>Shallow object merge. Subsequent writes overwrite prior keys; unspecified keys preserve.</p>
+<p><strong>Use cases</strong>: structured state like clarification answers, key-keyed metadata.</p>
+<p><strong>Maps from existing prefixes</strong>: <code>_clarificationAnswers:</code>.</p>
+<h3 id="counter"><code>counter</code></h3>
+<pre class="lang-typescript"><code>function counter(current: number = 0, increment: number): number {
+  return current + increment;
+}</code></pre>
+<p>Each write adds to the running total. Negative increments allowed.</p>
+<p><strong>Use cases</strong>: loopback iteration counters, retry counters, per-run cost accumulators.</p>
+<p><strong>Maps from existing prefixes</strong>: <code>_loopbackCount:</code>.</p>
+<h3 id="votes"><code>votes</code></h3>
+<pre class="lang-typescript"><code>type Vote = { userId: string; action: string; timestamp: string; reason?: string };
+
+function votes(current: Vote[] = [], next: Vote): Vote[] {
+  // Replace by userId if exists (revote), else append.
+  const without = current.filter(v =&gt; v.userId !== next.userId);
+  return [...without, next];
+}</code></pre>
+<p>Multi-approver vote tally. A user re-voting replaces their prior vote rather than appending.</p>
+<p><strong>Use cases</strong>: multi-approver gates with revote support.</p>
+<p><strong>Maps from existing prefixes</strong>: <code>_approvalVotes:</code>.</p>
+<h3 id="feedback"><code>feedback</code></h3>
+<pre class="lang-typescript"><code>type FeedbackEntry = { feedback: string; timestamp: string; iteration: number };
+
+function feedback(current: FeedbackEntry[] = [], next: FeedbackEntry): FeedbackEntry[] {
+  return [...current, next];
+}</code></pre>
+<p>Refine-loop feedback log. Append-only with iteration tracking.</p>
+<p><strong>Use cases</strong>: request-changes feedback history across loopback iterations.</p>
+<p><strong>Maps from existing prefixes</strong>: <code>_feedbackHistory:</code>.</p>
+<h3 id="message-multi-agent-shift-phase-1"><code>message</code> (Multi-Agent Shift Phase 1)</h3>
+<pre class="lang-typescript"><code>type ConversationMessage = {
+  messageId: string;                              // idempotency key
+  role: &#39;system&#39; | &#39;user&#39; | &#39;assistant&#39; | &#39;tool&#39;;
+  content: string | Array&amp;lt;{ type: string; [k: string]: unknown }&amp;gt;;
+  agentId?: string;                               // AgentRef.agentId of the producer
+  timestamp: string;
+  toolName?: string;                              // when role === &#39;tool&#39;
+  toolCallId?: string;                            // pairs with agent.toolCalled
+};
+
+function message(
+  current: ConversationMessage[] = [],
+  next: ConversationMessage
+): ConversationMessage[] {
+  // Idempotent on messageId: a duplicate emission folds to a single entry.
+  if (current.some(m =&gt; m.messageId === next.messageId)) return current;
+  return [...current, next];
+}</code></pre>
+<p>Append-only, <strong>idempotent on <code>messageId</code></strong>, replay-deterministic. The canonical reducer for conversation logs across single-turn <code>clarification.requested</code>, multi-turn <code>conversation.exchange</code> (Phase 4), and orchestrator-driven worker handoffs (Phase 5). Replaces ad-hoc chat-log accumulation in pre-MAS workflows.</p>
+<p><strong>Idempotency invariant.</strong> A duplicate <code>messageId</code> lands in the log exactly once. Hosts MUST guarantee unique <code>messageId</code> per logical turn; consumers SHOULD treat re-emission as a non-event (covers retry / replay-fork scenarios without log corruption).</p>
+<p><strong>Use cases</strong>:</p>
+<ul>
+<li>Multi-agent conversation logs (Phase 1 + Phase 4)</li>
+<li>Tool-call trace alongside <code>agent.toolCalled</code> / <code>agent.toolReturned</code> events</li>
+<li>Orchestrator-supervisor context projection (<code>messageLog?</code> input to <code>core.orchestrator.supervisor</code>)</li>
+</ul>
+<p><strong>Maps from existing prefixes</strong>: none — this reducer ships with the Multi-Agent Shift; pre-MAS workflows that need conversation logs upgrade explicitly via channel declaration.</p>
+<h3 id="custom-reducers">Custom reducers</h3>
+<p>An OpenWOP-compliant server MAY accept reducer names outside the canonical set. Names MUST be vendor-prefixed (<code>vendor.&amp;lt;org&amp;gt;.&amp;lt;name&amp;gt;</code>). External clients consuming workflows with custom reducers MUST treat unknown names as <code>replace</code> semantically and warn the operator.</p>
+<hr/>
+<h2 id="wire-surface">Wire surface</h2>
+<h3 id="channel-write-event">Channel write event</h3>
+<p>Channel writes are persisted as durable events. An OpenWOP-compliant engine MUST emit:</p>
+<pre class="lang-typescript"><code>{
+  type: &#39;channel.written&#39;,
+  payload: {
+    channel: string;       // channel name
+    value: unknown;        // the write payload (NOT the post-reduction value)
+    reducer: string;       // the reducer name (for replay determinism if reducer changes)
+    nodeId?: string;       // optional — node that wrote
+    writtenAt: string;     // ISO 8601
+  }
+}</code></pre>
+<p>The payload carries the <em>write input</em>, not the post-reduction state. Replay reconstructs the post-reduction state by folding all <code>channel.written</code> events through the declared reducer.</p>
+<h3 id="channel-read">Channel read</h3>
+<p>NodeModules read channels via <code>ctx.channels</code>:</p>
+<pre class="lang-typescript"><code>interface NodeContext {
+  channels: {
+    /** Get the current reduced value of a channel. */
+    get&amp;lt;T = unknown&amp;gt;(name: string): T | undefined;
+
+    /** Write a value through the channel&#39;s reducer. */
+    write&amp;lt;T = unknown&amp;gt;(name: string, value: T): Promise&amp;lt;void&amp;gt;;
+
+    /** Subscribe to changes (for executors that need to react). */
+    subscribe&amp;lt;T = unknown&amp;gt;(name: string, cb: (value: T) =&gt; void): () =&gt; void;
+  };
+}</code></pre>
+<p>Reads are synchronous (the engine maintains a folded cache). Writes are async because they emit a durable event.</p>
+<hr/>
+<h2 id="migration-from-variable-prefix-conventions">Migration from variable-prefix conventions</h2>
+<p>An OpenWOP-compliant server MAY continue accepting writes to the legacy <code>run.variables</code> map. The spec defines a back-compat layer:</p>
+<h3 id="legacy-mode-default-for-v1">Legacy mode (default for v1)</h3>
+<p><code>run.variables</code> reads/writes work as before. The reference implementation's recovery-internal-variable allowlist (per <code>WorkflowRunPersistenceService.ts:113</code>) continues to apply:</p>
+<ul>
+<li><code>_activeClarification</code></li>
+<li>Prefixes: <code>_approvalVotes:</code>, <code>_askExchanges:</code>, <code>_clarificationAnswers:</code>, <code>_feedbackHistory:</code>, <code>_loopbackCount:</code>, <code>_loopbackIteration:</code>, <code>_previousArtifact:</code></li>
+</ul>
+<p>Writes to the legacy map MUST emit <code>channel.written</code> events with the prefix-derived channel name and inferred reducer (per the mapping table at the top of this doc).</p>
+<h3 id="channel-aware-mode-opt-in-via-workflowdefinition-channels">Channel-aware mode (opt-in via <code>WorkflowDefinition.channels</code>)</h3>
+<p>When a workflow declares <code>channels</code>, the engine MUST:</p>
+<p>1. Refuse writes to <code>run.variables[k]</code> if <code>k</code> matches a declared channel name. Surface as <code>validation_error</code>. 2. Surface <code>ctx.channels.{get,write,subscribe}</code> for declared channels. 3. Continue accepting writes to <code>run.variables[k]</code> for keys NOT in <code>channels</code> — back-compat for incremental adoption.</p>
+<h3 id="codemod-path">Codemod path</h3>
+<p>Workflows migrating from prefix conventions to declared channels:</p>
+<p>1. Audit <code>run.variables[&amp;lt;prefix&amp;gt;:*]</code> writes in NodeModules consumed by the workflow. 2. Add <code>channels</code> block to <code>WorkflowDefinition</code> declaring each prefix family with the appropriate reducer. 3. Switch NodeModule callsites from <code>ctx.setVariable(</code>_approvalVotes:${nodeId}<code>, ...)</code> to <code>ctx.channels.write(</code>approvalVotes:${nodeId}<code>, ...)</code>. 4. Optionally, remove the prefix from the channel name (<code>approvalVotes:${nodeId}</code> instead of <code>_approvalVotes:${nodeId}</code>) — the underscore was a "framework-internal" marker no longer needed once channels are first-class.</p>
+<p>An OpenWOP-compliant server SHOULD ship a codemod tool that does steps 2–3 mechanically.</p>
+<hr/>
+<h2 id="replay-determinism">Replay determinism</h2>
+<p>When the reducer for an existing channel changes (e.g., upgrading <code>append</code> to <code>append</code> with <code>maxSize</code> enforcement), replay reconstruction uses the <strong>reducer-at-write-time</strong> stored on each <code>channel.written</code> event. This guarantees that a replay produces the same post-reduction state the original run had, even if the workflow definition's declared reducer has since changed.</p>
+<p>If a workflow author needs to change reducer semantics retroactively (rare — usually requires a fork-and-rewrite anyway), <code>replay.md</code> <code>branch</code> mode is the supported escape hatch.</p>
+<hr/>
+<h2 id="channel-snapshot-in-values-stream-mode">Channel snapshot in <code>values</code> stream mode</h2>
+<p>The <code>values</code> stream mode (<code>stream-modes.md</code>) emits <code>state.snapshot</code> events after each step. The snapshot payload includes the <strong>post-reduction</strong> value of every declared channel:</p>
+<pre class="lang-json"><code>{
+  &quot;type&quot;: &quot;state.snapshot&quot;,
+  &quot;payload&quot;: {
+    &quot;runId&quot;: &quot;...&quot;,
+    &quot;atSeq&quot;: 42,
+    &quot;channels&quot;: {
+      &quot;approvalVotes:approval-1&quot;: [{ &quot;userId&quot;: &quot;u1&quot;, &quot;action&quot;: &quot;approve&quot;, &quot;timestamp&quot;: &quot;...&quot; }],
+      &quot;feedbackHistory:approval-1&quot;: [],
+      &quot;kernelArtifact&quot;: { /* ... */ }
+    },
+    &quot;variables&quot;: { /* legacy untyped variables */ }
+  }
+}</code></pre>
+<p>External tooling can render channels separately from raw variables — by name, with type schemas pulled from <code>ChannelDeclaration.schema</code>.</p>
+<hr/>
+<h2 id="channel-ttl-ttlms-closes-c3">Channel TTL: <code>ttlMs</code> (closes C3)</h2>
+<p><code>maxSize</code> bounds a channel by entry count, but for long-running runs (multi-day workflows, perpetual orchestration) even bounded entry counts can hold stale data forever. <code>ttlMs</code> is an optional <code>ChannelDeclaration</code> field that drops entries older than the declared age:</p>
+<pre class="lang-typescript"><code>&quot;feedback&quot;: {
+  reducer: &#39;feedback&#39;,
+  ttlMs: 86_400_000,  // 24h — older entries are dropped on next read
+}</code></pre>
+<p>Semantics:</p>
+<ul>
+<li>Applies to reducers with monotonic-append semantics: <code>append</code>, <code>votes</code>, <code>feedback</code>. SHOULD be ignored for <code>replace</code> / <code>merge</code> / <code>counter</code> (those have no entry-age concept).</li>
+<li><strong>Entry shape (normative).</strong> On a channel that declares <code>ttlMs</code>, each entry stored under the channel's state MUST be wrapped in <code>{ value: T, _ts: number }</code>, where <code>_ts</code> is the write-time wall-clock in milliseconds since the Unix epoch as observed by the engine at append time. Hosts MUST NOT strip <code>_ts</code> from the entry between write and read. The wrap applies to the channel state surface (<code>RunSnapshot.variables.&amp;lt;channelName&amp;gt;</code>, <code>RunSnapshot.channels.&amp;lt;channelName&amp;gt;</code>, <code>channel.written</code> event payloads); raw <code>T</code> values are reserved for channels that omit <code>ttlMs</code>.</li>
+<li><strong>Pruning timing (normative).</strong> Pruning MUST happen at write time: before appending the new entry, the engine MUST remove every prior entry whose <code>_ts &amp;lt; (now - ttlMs)</code>. Engines MAY also prune opportunistically on read (e.g., to serve a fresher snapshot if wall-clock has advanced between writes), but write-time pruning is mandatory so any subsequent <code>RunSnapshot.variables</code> projection reflects the pruned state without depending on read-side fold timing. Servers MUST NOT surface entries with <code>_ts &amp;lt; (now - ttlMs)</code> on <code>GET /v1/runs/{runId}</code> once the next write has landed.</li>
+<li>Per-entry timestamps come from the <code>RunEventDoc.timestamp</code> field on the <code>channel.written</code> event AND from the embedded <code>_ts</code> on each entry; both MUST agree at fold time. The reducer compares <code>_ts</code> against <code>now()</code> at fold time.</li>
+<li>Combines with <code>maxSize</code>: both apply. Whichever bound trips first wins; <code>ttlMs</code> is applied first (per the write-time pruning rule), then <code>maxSize</code> enforces the entry-count ceiling on the remainder.</li>
+<li>Replay-safe: TTL drop is deterministic given the event log + <code>now()</code> at replay time. Replays MUST use the original event timestamps (not replay-wall-clock) for the comparison so the resulting state matches the original run modulo TTL drift.</li>
+<li>An OpenWOP-compliant server MAY refuse <code>ttlMs</code> declarations on reducers that don&#39;t support it (<code>400 Bad Request</code> on workflow registration).</li>
+</ul>
+<p>Range: <code>1 ≤ ttlMs ≤ 365 <em> 24 </em> 60 <em> 60 </em> 1000</code> (1 ms to 1 year). <code>0</code> means &quot;no TTL&quot; (same as omitting).</p>
+<hr/>
+<h2 id="open-spec-gaps">Open spec gaps</h2>
+<table>
+<thead><tr><th>#</th><th>Gap</th><th>Owner</th></tr></thead>
+<tbody>
+<tr><td>C1</td><td>Channel access control — done (2026-04-27: per-channel <code>access</code> field on <code>ChannelDeclaration</code>. Three forms: <code>&amp;#39;public&amp;#39;</code> / <code>&amp;#39;private&amp;#39;</code> shorthand / <code>{readers?, writers?}</code> explicit allowlists with nodeId + typeId-wildcard matching. Engine returns <code>400 channel_access_denied</code> on violation. See &quot;Channel access control&quot; §).</td><td>✅</td></tr>
+<tr><td>C2</td><td>Distributed reducers — done (2026-04-27: cross-engine writes allowed for monotonic-add reducers (<code>append</code>/<code>votes</code>/<code>feedback</code>/<code>counter</code>); forbidden for <code>replace</code>/<code>merge</code> with <code>400 channel_cross_engine_write_forbidden</code>. New <code>channel-write</code> trigger type lets parents reactively derive authoritative state from child contributions. Events carry <code>sourceEngineId</code> + <code>sourceRunId</code>. See &quot;Distributed reducers and cross-engine writes&quot; §).</td><td>✅</td></tr>
+<tr><td>C3</td><td>Channel TTL — done (2026-04-27: <code>ttlMs</code> field on <code>ChannelDeclaration</code>; lazy drop policy; replay-safe via original event timestamps. See &quot;Channel TTL&quot; §).</td><td>✅</td></tr>
+<tr><td>C4</td><td>Schema migration — done (2026-04-27: versioned schemas + auto-detect compatibility + fail-loud on breaking. <code>ChannelDeclaration.schemaVersion</code> + <code>compatibleWith</code>; <code>channel.written</code> events carry <code>schemaVersion</code> at write time. See &quot;Channel schema migration&quot; §).</td><td>✅</td></tr>
+<tr><td>C5</td><td>Cross-host channel coherence — reads from a stale projection cache could return pre-reduction state during the gap between event append and cache write. Currently the engine guarantees write-through, but the spec should formalize.</td><td>future v1.x</td></tr>
+</tbody></table>
+<h2 id="references">References</h2>
+<ul>
+<li><code>auth.md</code> — auth model + status legend</li>
+<li><code>version-negotiation.md</code> — <code>eventLogSchemaVersion</code> bumps when channel event shape changes</li>
+<li><code>stream-modes.md</code> — <code>state.snapshot</code> payload includes post-reduction channel values</li>
+<li><code>replay.md</code> — reducer-at-write-time guarantees replay determinism</li>
+<li><code>observability.md</code> — <code>openwop.channel.&amp;lt;name&amp;gt;</code> attribute on channel-write spans</li>
+<li>LangGraph state model: &lt;https://langchain-ai.github.io/langgraph/concepts/low_level/#state&gt;</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

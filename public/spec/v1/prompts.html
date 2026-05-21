@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — openwop Spec v1 — Prompt Templates</title>
+  <meta name="description" content="Two v1 surfaces already accept prompt bodies, but neither establishes prompt-as-a-resource:"/>
+  <link rel="canonical" href="https://openwop.dev/spec/v1/prompts.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — openwop Spec v1 — Prompt Templates"/>
+  <meta property="og:description" content="Two v1 surfaces already accept prompt bodies, but neither establishes prompt-as-a-resource:"/>
+  <meta property="og:url" content="https://openwop.dev/spec/v1/prompts.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — openwop Spec v1 — Prompt Templates"/>
+  <meta name="twitter:description" content="Two v1 surfaces already accept prompt bodies, but neither establishes prompt-as-a-resource:"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="active" href="/spec/v1/">Spec</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/profiles/">Profiles</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="openwop-spec-v1-prompt-templates">openwop Spec v1 — Prompt Templates</h1>
+<blockquote><p><strong>Status: DRAFT v1.x (filed via <a href="../../RFCS/0027-prompt-templates.md">RFC 0027</a>, 2026-05-19; first cut 2026-05-20).</strong> Lands the wire shape for portable, versioned, variable-bound prompts referenced by workflow nodes and agent manifests. Closes the gap where <code>core.ai.callPrompt</code> config (<code>workflow-chain-packs.md</code> line 62, <code>host-capabilities.md</code> line 347) and <code>AgentManifest.systemPrompt | systemPromptRef</code> (<code>agent-manifest.schema.json</code> lines 34–41) accept inline prompt bodies but offer no shared addressing, library distribution, variable schema, or observability of the composed result. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend. Fields marked <strong>(stable)</strong> lock; fields marked <strong>(in-flight)</strong> may shift compatibly within v1.x.</p></blockquote>
+<hr/>
+<h2 id="why-this-exists">Why this exists</h2>
+<p>Two v1 surfaces already accept prompt bodies, but neither establishes prompt-as-a-resource:</p>
+<ul>
+<li><code>workflow-chain-packs.md</code> line 71 demonstrates <code>core.ai.callPrompt</code> config carrying <code>&quot;systemPrompt&quot;: &quot;You are a senior PM. Write a PRD for: {{params.productIdea}}\nAudience: {{params.targetAudience}}&quot;</code>. The <code>{{params.X}}</code> substitution is convention-only — no spec'd variable schema, no enumeration of allowed sources, no observability of the composed result.</li>
+<li><code>schemas/agent-manifest.schema.json</code> lines 34–41 + 104–105 lock <code>systemPrompt XOR systemPromptRef</code>. Both are tarball-resident; neither can be referenced across packs or replaced at run time.</li>
+</ul>
+<p>Authors who want canvas-editor patterns of (a) maintain a named, versioned prompt library, (b) reuse the same prompt across multiple nodes or workflows, (c) preview the composed body before dispatch, or (d) audit what every agent actually saw in a multi-agent run have no protocol-level surface for any of these. Host-internal libraries exist (the reference <code>myndhyve</code> impl persists <code>PromptEntry</code>/<code>PromptLibrary</code> documents in Firestore at <code>workspaces/{workspaceId}/prompt-libraries/{canvasTypeId}</code> with built-in/override/version semantics), but the values they hold cross the wire as opaque interpolated strings — losing the ID, the version, the variable schema, and the resolution chain.</p>
+<p>This document closes the wire-shape gap. Phase A only — the <strong>shape</strong>, the <strong>capability flag</strong>, and the <strong>observability event</strong>. RFC 0028 lands the registry surface (<code>/v1/prompts/*</code> endpoints + <code>kind: &quot;prompt&quot;</code> pack distribution); RFC 0029 lands the agent-scoped resolution hierarchy + <code>agent.promptResolved</code> event.</p>
+<hr/>
+<h2 id="what-a-prompt-template-is-and-is-not">What a Prompt Template is (and is not)</h2>
+<p>A <strong>PromptTemplate</strong> is openwop's canonical wire format for a named, versioned, variable-bound prompt body. A PromptTemplate is a single JSON document whose top-level shape is fixed by <code>schemas/prompt-template.schema.json</code>, whose <code>kind</code> is selected from the shared <code>prompt-kind.schema.json</code> enum, whose <code>text</code> field MAY contain Mustache-compatible <code>{{varName}}</code> placeholders, and whose <code>variables[]</code> array typed-declares each placeholder.</p>
+<p>A PromptTemplate is <strong>distinct from <code>AIEnvelope</code></strong> (<code>ai-envelope.md</code>) and <strong>distinct from <code>RunEventDoc</code></strong> (<code>run-event.schema.json</code>):</p>
+<table>
+<thead><tr><th>Concern</th><th><code>PromptTemplate</code></th><th><code>AIEnvelope</code></th><th><code>RunEventDoc</code></th></tr></thead>
+<tbody>
+<tr><td>Direction</td><td><strong>Authored</strong> — host library, pack-distributed</td><td><strong>Inbound</strong> — LLM → engine</td><td><strong>Outbound</strong> — host → client</td></tr>
+<tr><td>Source of truth</td><td>Host library (built-in + installed packs + user)</td><td>Single emission, recorded as <code>RunEventDoc</code></td><td>Append-only run event log</td></tr>
+<tr><td>Type discriminator</td><td><code>kind</code> ∈ {system, user, few-shot, schema-hint}</td><td>Open-ended kind catalog, host-advertised</td><td>Fixed 51-variant enum, FINAL v1</td></tr>
+<tr><td>Lifecycle</td><td>Authored once; resolved at every node execution</td><td>Validated → gated → routed → recorded</td><td>Immutable after <code>appendAtomic</code></td></tr>
+<tr><td>Audience</td><td>Workflow editors, node dispatcher</td><td>Engine, node dispatcher</td><td>Clients, observability, replay</td></tr>
+</tbody></table>
+<p>In short: <strong>PromptTemplates are what the host sends to the LLM. AIEnvelopes are what the LLM sends back. RunEventDocs are what the engine reports to clients.</strong></p>
+<p>When a host composes a PromptTemplate for an LLM call (per the resolution chain in RFC 0029), it MAY emit a <code>prompt.composed</code> RunEventDoc capturing the composed bodies, refs, variable bindings, and content-trust marker — see §"Composition + observability" below.</p>
+<hr/>
+<h2 id="promptkind">PromptKind</h2>
+<p><code>schemas/prompt-kind.schema.json</code> (NEW) holds the shared <code>kind</code> enum referenced by every schema that names a prompt kind. The enum has four values:</p>
+<table>
+<thead><tr><th>Kind</th><th>Composed as</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td><code>system</code></td><td>LLM system message</td><td>Carries behavior + output discipline. Composed once per call.</td></tr>
+<tr><td><code>user</code></td><td>LLM user message</td><td>The variable-substitution surface — per-call task content.</td></tr>
+<tr><td><code>few-shot</code></td><td>User-message prefix (or alternating user/assistant turns per host policy)</td><td>Example bodies. Hosts MAY support multiple <code>few-shot</code> templates per node via <code>additionalPromptRefs</code>.</td></tr>
+<tr><td><code>schema-hint</code></td><td>Injected into system or user message at compose time (per host policy)</td><td>Structured-output schema description (e.g., the JSON Schema the LLM is asked to populate).</td></tr>
+</tbody></table>
+<p>A node MAY reference one template of each kind via the convention in <code>workflow-definition.md</code> §"Prompt references on nodes."</p>
+<p>Adding a new kind in a future RFC is a single edit to <code>prompt-kind.schema.json</code>; consumers automatically pick it up. Hosts MAY narrow the accepted kinds via <code>capabilities.prompts.templateKinds[]</code>.</p>
+<hr/>
+<h2 id="prompttemplate">PromptTemplate</h2>
+<p>The canonical wire shape — see <code>schemas/prompt-template.schema.json</code> for the full schema. Required fields:</p>
+<pre class="lang-typescript"><code>interface PromptTemplate {
+  templateId: string;     // ^[a-z0-9][a-z0-9._-]{0,127}$
+  version: string;        // SemVer 2.0.0
+  kind: PromptKind;       // shared enum, see above
+  text: string;           // &amp;lt;= 65536 bytes
+}</code></pre>
+<p>Optional fields: <code>name</code>, <code>description</code>, <code>variables</code>, <code>modelHints</code>, <code>tags</code>, <code>meta</code>.</p>
+<h3 id="variable-interpolation">Variable interpolation</h3>
+<p>The <code>text</code> body uses <strong>Mustache-compatible <code>{{varName}}</code> placeholders</strong>. No control-flow logic — substitution is purely literal. Hosts MUST:</p>
+<ul>
+<li>Resolve each <code>{{varName}}</code> against the bound value (from <code>variables[].source</code>).</li>
+<li>Fail the node with <code>prompt_variable_unresolved</code> when a required variable has no binding.</li>
+<li>Render unresolved optional variables as the empty string (the <code>onUnresolved: &amp;#39;empty&amp;#39;</code> semantics from the myndhyve reference impl).</li>
+</ul>
+<p>A <code>{{varName}}</code> placeholder that has no matching entry in <code>variables[]</code> MAY appear (treated as an optional variable with source <code>input</code> and no default). Hosts SHOULD warn at install time when a placeholder lacks a corresponding declaration.</p>
+<h3 id="promptvariable">PromptVariable</h3>
+<pre class="lang-typescript"><code>interface PromptVariable {
+  name: string;           // ^[a-zA-Z_][a-zA-Z0-9_]{0,63}$
+  type: &amp;#39;string&amp;#39; | &amp;#39;number&amp;#39; | &amp;#39;boolean&amp;#39; | &amp;#39;array&amp;#39; | &amp;#39;object&amp;#39;;
+  required: boolean;
+  source?: &amp;#39;input&amp;#39; | &amp;#39;variable&amp;#39; | &amp;#39;secret&amp;#39; | &amp;#39;context&amp;#39;;  // default: &amp;#39;input&amp;#39;
+  extractPath?: string;   // JSONPath into the source
+  defaultValue?: unknown; // used when required: false and source resolves to undefined
+  description?: string;
+}</code></pre>
+<p>The <code>source</code> value determines where the binding comes from:</p>
+<ul>
+<li><strong><code>input</code></strong> (default) — the node&#39;s input port whose name matches <code>name</code>.</li>
+<li><strong><code>variable</code></strong> — a run-scoped variable resolved via <code>ctx.variables.get(name)</code> (or <code>extractPath</code>).</li>
+<li><strong><code>secret</code></strong> — a BYOK secret reference. MUST be redacted to <code>[REDACTED:&amp;lt;secretId&amp;gt;]</code> markers in any observability output (<code>prompt.composed</code> events, debug bundles) per SECURITY/threat-model-secret-leakage.md §SR-1.</li>
+<li><strong><code>context</code></strong> — a host-provided implicit context value (canonical names recommended below; hosts MAY define vendor-specific keys).</li>
+</ul>
+<h4 id="recommended-context-variable-names-non-normative">Recommended <code>context</code> variable names (non-normative)</h4>
+<p>To improve cross-host portability of templates that use the <code>context</code> source, hosts SHOULD recognize these canonical names where the underlying value exists:</p>
+<ul>
+<li><code>currentUserId</code> — the authenticated user dispatching the run.</li>
+<li><code>runId</code> — the current run identifier.</li>
+<li><code>workflowId</code> — the workflow being executed.</li>
+<li><code>workflowName</code> — the human-readable workflow name.</li>
+<li><code>tenantId</code> — the tenant scope (when the host supports multi-tenancy).</li>
+<li><code>nodeId</code> — the executing node's id.</li>
+<li><code>now</code> — ISO 8601 UTC timestamp at composition time.</li>
+</ul>
+<p>Hosts MAY surface additional context keys; templates that depend on host-specific keys lose cross-host portability.</p>
+<hr/>
+<h2 id="promptref">PromptRef</h2>
+<p>A <strong>PromptRef</strong> is the reference type that workflow-node config and agent-manifest fields carry to point at a PromptTemplate. Two equivalent forms (see <code>schemas/prompt-ref.schema.json</code>):</p>
+<p><strong>Stringy form</strong> — canonical for inline use in <code>WorkflowNode.config</code>:</p>
+<pre class="lang-"><code>prompt:writer-system@1.0.0
+prompt:vendor.acme.writer.v2
+prompt:critic-system</code></pre>
+<p>Pattern: <code>^prompt:&amp;lt;templateId&amp;gt;(@&amp;lt;version&amp;gt;)?$</code>. When <code>version</code> is omitted, the host resolves the <strong>latest</strong> version available.</p>
+<p><strong>Object form</strong> — canonical when <code>libraryId</code> disambiguation, per-reference variable overrides, or version pinning need to be explicit:</p>
+<pre class="lang-json"><code>{
+  &quot;libraryId&quot;: &quot;vendor.acme.editorial-prompts&quot;,
+  &quot;templateId&quot;: &quot;writer-system&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;variableOverrides&quot;: { &quot;tone&quot;: &quot;formal&quot; }
+}</code></pre>
+<p><code>variableOverrides</code> apply at composition time and take precedence over node-input bindings (matching the resolution chain in RFC 0029 §A).</p>
+<h3 id="conflict-resolution">Conflict resolution</h3>
+<p>When two installed packs ship the same <code>templateId</code>, the stringy form is rejected with <code>prompt_ref_ambiguous</code> and consumers MUST use the object form with explicit <code>libraryId</code> to disambiguate (per RFC 0028 §B).</p>
+<hr/>
+<h2 id="capability-advertisement">Capability advertisement</h2>
+<p>A host advertises its prompt-resolution support via <code>capabilities.prompts</code> (per <code>capabilities.schema.json</code>). The block carries two <strong>independent</strong> axes — node-execution PromptRef resolution (Phase A) and the <code>/v1/prompts*</code> REST surface (Phase B) — each gated by its own flag so a host can implement either without the other.</p>
+<pre class="lang-json"><code>{
+  &quot;prompts&quot;: {
+    &quot;supported&quot;: true,
+    &quot;endpointsSupported&quot;: false,
+    &quot;templateKinds&quot;: [&quot;system&quot;, &quot;user&quot;, &quot;schema-hint&quot;],
+    &quot;variableSources&quot;: [&quot;input&quot;, &quot;variable&quot;, &quot;context&quot;],
+    &quot;maxTemplateBytes&quot;: 16384,
+    &quot;observability&quot;: &quot;full&quot;
+  }
+}</code></pre>
+<p>Field semantics:</p>
+<table>
+<thead><tr><th>Field</th><th>Required</th><th>Semantics</th></tr></thead>
+<tbody>
+<tr><td><code>supported</code></td><td>yes</td><td>RFC 0027 Phase A gate. When <code>true</code>, the host resolves PromptRef values on <code>WorkflowNode.config.{systemPromptRef, userPromptRef, additionalPromptRefs}</code> at node-execution time and emits <code>prompt.composed</code> events. When <code>false</code> or absent, those keys are treated as opaque strings and never composed. **Does NOT imply the <code>/v1/prompts*</code> REST surface is available** — see <code>endpointsSupported</code>.</td></tr>
+<tr><td><code>endpointsSupported</code></td><td>no</td><td>RFC 0028 Phase B gate. When <code>true</code>, the host serves the <code>/v1/prompts<em></code> REST surface (at minimum the read endpoints). When <code>false</code> or absent, every <code>/v1/prompts</em></code> request returns <code>501 capability_not_provided</code>. Independent of <code>supported</code>.</td></tr>
+<tr><td><code>templateKinds</code></td><td>no</td><td>Subset of <code>PromptKind</code> values the host accepts. Default: all four.</td></tr>
+<tr><td><code>variableSources</code></td><td>no</td><td>Subset of <code>PromptVariable.source</code> values supported. <code>secret</code> SHOULD only appear when <code>capabilities.secrets.supported: true</code>.</td></tr>
+<tr><td><code>maxTemplateBytes</code></td><td>no</td><td>Host cap on <code>text</code> length. MUST NOT exceed the schema cap (65536).</td></tr>
+<tr><td><code>observability</code></td><td>no</td><td><code>off</code> / <code>hashed</code> / <code>full</code> — controls <code>prompt.composed</code> emission per §"Composition + observability" below. Default: <code>hashed</code>.</td></tr>
+</tbody></table>
+<p>Phase B (RFC 0028) extends this block with <code>packsSupported</code> (pack-install path; requires <code>endpointsSupported: true</code> to be meaningful), <code>mutableLibrary</code> (write endpoints; requires <code>endpointsSupported: true</code>), and <code>library</code> (per-library knobs). Phase C (RFC 0029) extends it with <code>defaults</code> and <code>agentBindings</code>. This document covers Phase A; the Phase B fields are documented in §"Discovery & distribution" below.</p>
+<hr/>
+<h2 id="composition-observability">Composition + observability</h2>
+<p>When a node executes and the host has resolved a PromptRef (per the resolution chain in RFC 0029), the host <strong>composes</strong> the prompt body by:</p>
+<p>1. Substituting <code>{{varName}}</code> placeholders against the resolved variable bindings. 2. Wrapping any input flagged <code>meta.contentTrust: &quot;untrusted&quot;</code> (per <code>mcp-integration.md</code> §"Trust boundary" + RFC 0020 §D) in <code>&amp;lt;UNTRUSTED&amp;gt;...&amp;lt;/UNTRUSTED&amp;gt;</code> markers — the markers MUST be preserved verbatim into the composed body per <code>SECURITY/threat-model-prompt-injection.md</code>. 3. Replacing any <code>secret</code>-sourced variable values with <code>[REDACTED:&amp;lt;secretId&amp;gt;]</code> markers in any observability projection (the markers do NOT appear in the actual dispatched body — the host resolves real values via <code>capabilities.secrets</code> after redaction-projection).</p>
+<p>When the host advertises <code>capabilities.prompts.observability !== &quot;off&quot;</code>, the host MUST emit a <code>prompt.composed</code> RunEventDoc per node composition:</p>
+<pre class="lang-typescript"><code>interface PromptComposedPayload {
+  nodeId: string;
+  refs: string[];              // [&quot;prompt:writer-system@1.0.0&quot;, &quot;prompt:writer-user@1.0.0&quot;]
+  kind: &#39;system+user&#39; | &#39;system-only&#39; | &#39;user-only&#39; | &#39;agent-reasoning&#39;;
+  hash: string;                // sha256:... of composed body
+  // observability: &#39;full&#39; only
+  systemPrompt?: string;
+  userPrompt?: string;
+  variableBindings?: Record&amp;lt;string, unknown&amp;gt;;
+  // observability: &#39;hashed&#39; or &#39;full&#39;
+  variableHashes?: Record&amp;lt;string, string&amp;gt;;  // name → sha256:...
+  contentTrust?: &#39;trusted&#39; | &#39;untrusted&#39;;
+}</code></pre>
+<p>Under <code>observability: &quot;hashed&quot;</code> (default), only <code>hash</code> + <code>variableHashes</code> are populated — the bodies stay out of the event log. Under <code>observability: &quot;full&quot;</code>, the composed bodies appear with secret redaction and trust-marker preservation.</p>
+<h3 id="replay-determinism">Replay determinism</h3>
+<p><code>prompt.composed</code> events participate in replay. Invariants:</p>
+<ul>
+<li><code>hash</code> MUST replay identically.</li>
+<li><code>variableHashes[name]</code> MUST replay identically.</li>
+<li><code>refs</code> MUST replay identically.</li>
+<li><code>systemPrompt</code> / <code>userPrompt</code> / <code>variableBindings</code> MAY be omitted on replay even when present in the original run (the host's <code>observability</code> setting may differ between original and replay); replay consumers MUST tolerate omission.</li>
+</ul>
+<p>Divergence of <code>hash</code> MUST emit a <code>replay.diverged</code> event with <code>divergencePoint: &quot;prompt.composed&quot;</code> per <code>replay.md</code>.</p>
+<h3 id="three-surface-taxonomy-non-normative">Three-surface taxonomy (non-normative)</h3>
+<p>OpenWOP distinguishes <strong>three orthogonal observability surfaces</strong> for LLM-call inspection. Multi-agent debugging tools render all three to reconstruct what an agent saw + thought + emitted:</p>
+<table>
+<thead><tr><th>Surface</th><th>What it captures</th><th>Source</th></tr></thead>
+<tbody>
+<tr><td><code>prompt.composed.systemPrompt</code> / <code>userPrompt</code></td><td>The body <strong>the host sent</strong> to the LLM, post-substitution + post-redaction</td><td>This document</td></tr>
+<tr><td><code>AIEnvelope.payload.reasoning</code></td><td>Chain-of-thought <strong>the LLM emitted as part of structured output</strong></td><td>RFC 0030 (parallel track, Draft)</td></tr>
+<tr><td><code>agent.reasoning.delta</code> + <code>agent.reasoned</code></td><td>The LLM's interleaved <strong>thinking-tokens stream</strong></td><td>RFC 0024 (Accepted)</td></tr>
+</tbody></table>
+<p>None of these replaces the others. A complete multi-agent visualization renders all three streams in temporal order so an operator can see what the host instructed, what the model thought through, and what the model returned as structured output.</p>
+<hr/>
+<h2 id="security-invariants">Security invariants</h2>
+<p>The <code>prompt.composed</code> event MUST carry two SECURITY invariants once a host actually emits the event (per the staging precedent in RFC 0021):</p>
+<ul>
+<li><strong><code>prompt-composed-secret-redaction</code></strong> — Any variable whose <code>source</code> is <code>secret</code> MUST appear as <code>[REDACTED:&amp;lt;secretId&amp;gt;]</code> in <code>systemPrompt</code>, <code>userPrompt</code>, and <code>variableBindings</code>. Never as plaintext.</li>
+<li><strong><code>prompt-composed-trust-marker</code></strong> — When ANY contributing input was tagged <code>meta.contentTrust: &quot;untrusted&quot;</code> (per RFC 0020 §D), the composed bodies MUST wrap the untrusted segments in <code>&amp;lt;UNTRUSTED&amp;gt;...&amp;lt;/UNTRUSTED&amp;gt;</code> markers AND the payload's <code>contentTrust</code> MUST be <code>&quot;untrusted&quot;</code>.</li>
+</ul>
+<p>Both invariants live in <code>SECURITY/invariants.yaml</code> once a reference host emits the event. Until then, the rows are RFC-tracked but not gate-enforced — matching the RFC 0021 envelope-shape staging precedent (the invariants land alongside the reference impl that emits the event, not at Draft merge).</p>
+<hr/>
+<h2 id="discovery-distribution-rfc-0028">Discovery & distribution (RFC 0028)</h2>
+<p>Phase B of the prompt-library track adds two complementary surfaces:</p>
+<h3 id="rest-endpoints">REST endpoints</h3>
+<p>Six operations under <code>/v1/prompts*</code>, all gated on <code>capabilities.prompts.endpointsSupported: true</code> (NOT <code>supported</code>; see §"Capability advertisement" above for the two-axis split — <code>supported</code> gates node-execution PromptRef resolution, <code>endpointsSupported</code> gates this REST surface). The mutating three (<code>POST</code> / <code>PUT</code> / <code>DELETE</code>) are additionally gated on <code>capabilities.prompts.mutableLibrary: true</code>. Hosts that don't advertise the relevant capability return <code>501 capability_not_provided</code>.</p>
+<table>
+<thead><tr><th>Method</th><th>Path</th><th>OperationId</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td><code>GET</code></td><td><code>/v1/prompts</code></td><td><code>listPromptTemplates</code></td><td>Paginated list with <code>?kind</code>, <code>?tag</code>, <code>?modelClass</code>, <code>?source</code> filters + opaque <code>cursor</code> + <code>limit</code>.</td></tr>
+<tr><td><code>POST</code></td><td><code>/v1/prompts</code></td><td><code>createPromptTemplate</code></td><td>Create a user-source template (mutable libraries only). Returns <code>201</code> with a <code>Location</code> header.</td></tr>
+<tr><td><code>GET</code></td><td><code>/v1/prompts/{templateId}</code></td><td><code>getPromptTemplate</code></td><td>Fetch a single template, optionally pinned via <code>?version</code>. <code>ETag</code> + <code>If-None-Match</code> revalidation. <code>?libraryId</code> disambiguates when packs collide.</td></tr>
+<tr><td><code>PUT</code></td><td><code>/v1/prompts/{templateId}</code></td><td><code>updatePromptTemplate</code></td><td>Replace a user-source template; submitted SemVer MUST be strictly greater than stored.</td></tr>
+<tr><td><code>DELETE</code></td><td><code>/v1/prompts/{templateId}</code></td><td><code>deletePromptTemplate</code></td><td>Delete a user-source template; <code>403</code> on host-built-in or pack-sourced.</td></tr>
+<tr><td><code>POST</code></td><td><code>/v1/prompts:render</code></td><td><code>renderPromptTemplate</code></td><td>Render with supplied bindings; returns composed body + sha256 hash + per-variable hashes. Does NOT dispatch an LLM call.</td></tr>
+</tbody></table>
+<p><strong>Deterministic-render invariant.</strong> The <code>:render</code> response's <code>hash</code> MUST equal the <code>hash</code> that a matching <code>prompt.composed</code> event would carry at dispatch time for the same <code>(ref, variables, contentTrust)</code> inputs. This is the same determinism contract <code>prompt.composed</code> participates in for replay (per §"Replay determinism" above) — the <code>:render</code> endpoint is the preview surface that lets clients validate hashes before dispatch.</p>
+<p><strong>Cache semantics.</strong> <code>GET /v1/prompts/{templateId}</code> responses SHOULD set <code>ETag: &quot;&amp;lt;sha256-of-body&amp;gt;&quot;</code> and <code>Cache-Control: max-age=60</code>. When the request pinned <code>?version</code>, hosts SHOULD upgrade to <code>Cache-Control: public, max-age=31536000, immutable</code> (mirrors <code>node-packs.md</code> §"Immutable artifact" semantics).</p>
+<p><strong>Authorization.</strong> Mutating endpoints MUST require authentication per <code>auth.md</code>. Hosts SHOULD scope by writer role; the spec defers role-mapping to host policy.</p>
+<h3 id="prompt-pack-distribution">Prompt-pack distribution</h3>
+<p>A third pack kind alongside node packs (RFC 0003) and workflow-chain packs (RFC 0013). Distinguished by <code>kind: &quot;prompt&quot;</code> in the manifest:</p>
+<pre class="lang-json"><code>{
+  &quot;name&quot;: &quot;vendor.acme.editorial-prompts&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;kind&quot;: &quot;prompt&quot;,
+  &quot;engines&quot;: { &quot;openwop&quot;: &quot;&gt;=1.1.0 &amp;lt;2.0.0&amp;quot; },
+  &amp;quot;prompts&amp;quot;: [
+    {
+      &amp;quot;templateId&amp;quot;: &amp;quot;writer-system&amp;quot;,
+      &amp;quot;version&amp;quot;: &amp;quot;1.0.0&amp;quot;,
+      &amp;quot;kind&amp;quot;: &amp;quot;system&amp;quot;,
+      &amp;quot;text&amp;quot;: &amp;quot;You are a careful editorial writer.&amp;quot;,
+      &amp;quot;tags&amp;quot;: [&amp;quot;editorial&amp;quot;]
+    }
+  ]
+}</code></pre>
+<p>See <code>schemas/prompt-pack-manifest.schema.json</code> for the full shape.</p>
+<p><strong>Install-time validation.</strong> When a host installs a prompt pack:</p>
+<p>1. Verify the Ed25519 signature per <code>registry-operations.md</code> §&quot;Signature verification&quot; — same flow as node and chain packs. 2. Verify SRI integrity per <code>registry-operations.md</code> §&quot;Subresource Integrity&quot; — unchanged. 3. Compile each <code>prompts[].text</code> against <code>prompt-template.schema.json</code> and assert variable-reference closure (every <code>{{varName}}</code> in <code>text</code> either appears in <code>variables[]</code> or matches a canonical context key). 4. Resolve every entry in the manifest&#39;s <code>dependencies</code> block; an unresolvable entry rejects the install with <code>prompt_pack_dependency_unresolvable</code>. 5. Reject install with <code>prompt_template_invalid</code> on any of the above.</p>
+<p><strong>Pack-kind discriminator invariant.</strong> A manifest with <code>kind: &amp;quot;prompt&amp;quot;</code> MUST NOT also carry <code>nodes[]</code> or <code>chains[]</code> arrays. Same posture as RFC 0013&#39;s &quot;negative example.&quot;</p>
+<p><strong>Conflict resolution (cross-pack <code>templateId</code> collision).</strong> When two installed prompt packs ship the same <code>templateId</code>:</p>
+<ul>
+<li>Both surface in <code>GET /v1/prompts</code> with distinct <code>meta.source: &amp;quot;pack&amp;quot;</code> + <code>meta.packName</code> + <code>meta.packVersion</code> discriminators.</li>
+<li>A stringy <code>PromptRef</code> (<code>prompt:writer-system@1.0.0</code>) without <code>libraryId</code> is rejected with <code>prompt_ref_ambiguous</code> when more than one match exists.</li>
+<li>Clients disambiguate by using the structured object form: <code>{ libraryId: &amp;quot;vendor.acme.editorial-prompts&amp;quot;, templateId: &amp;quot;writer-system&amp;quot;, version: &amp;quot;1.0.0&amp;quot; }</code>.</li>
+</ul>
+<h3 id="capability-advertisement-extensions">Capability advertisement extensions</h3>
+<p>Phase B extends <code>capabilities.prompts</code> with three additional optional fields:</p>
+<table>
+<thead><tr><th>Field</th><th>Semantics</th></tr></thead>
+<tbody>
+<tr><td><code>packsSupported: boolean</code></td><td>Host installs <code>kind: &amp;quot;prompt&amp;quot;</code> packs and exposes their templates at <code>GET /v1/prompts</code> with <code>meta.source: &amp;quot;pack&amp;quot;</code>. False or absent = no pack support.</td></tr>
+<tr><td><code>mutableLibrary: boolean</code></td><td>Host honors <code>POST</code> / <code>PUT</code> / <code>DELETE /v1/prompts*</code>. False or absent → 501 on those endpoints. Pack-sourced + host-built-in templates remain read-only regardless.</td></tr>
+<tr><td><code>library.{id, renderEndpoint, maxRenderRequestBytes}</code></td><td>Per-library configuration knobs. <code>id</code> enables structured-PromptRef <code>libraryId</code> lookup. <code>renderEndpoint</code> overrides the default <code>/v1/prompts:render</code> path. <code>maxRenderRequestBytes</code> caps <code>:render</code> request body size.</td></tr>
+</tbody></table>
+<h3 id="provenance-fields-on-prompttemplate-meta">Provenance fields on <code>PromptTemplate.meta</code></h3>
+<p>When a template is pack-sourced, the host MUST populate two additional <code>meta</code> fields:</p>
+<ul>
+<li><code>meta.packName</code> — matches the installed pack&#39;s <code>name</code>. Required when <code>meta.source: &amp;quot;pack&amp;quot;</code>.</li>
+<li><code>meta.packVersion</code> — matches the installed pack&#39;s <code>version</code>. Required when <code>meta.source: &amp;quot;pack&amp;quot;</code>.</li>
+</ul>
+<p>A JSON-Schema <code>if/then</code> conditional in <code>prompt-template.schema.json</code> enforces this at install time.</p>
+<hr/>
+<h2 id="resolution-chain-normative">Resolution chain (normative)</h2>
+<p>When a host advertises <code>capabilities.prompts.supported: true</code> and a workflow node carries one or more <code>*PromptRef</code> keys (per §&quot;Composition + observability&quot; above), the host MUST resolve <strong>each</strong> <code>(nodeId, kind)</code> pair to a single <code>PromptRef</code> (or <code>null</code>) by walking the four ordered layers below and selecting the first non-<code>null</code> result. Lower-numbered layers take precedence over higher-numbered layers. The traversal order is the same for all four kinds (<code>system</code>, <code>user</code>, <code>few-shot</code>, <code>schema-hint</code>); per-kind branches are noted inline.</p>
+<p>For every <code>(nodeId, kind)</code> pair the host attempts to resolve, the host MUST emit one <code>agent.promptResolved</code> <code>RunEventDoc</code> (per <code>schemas/run-event-payloads.schema.json</code> <code>agentPromptResolved</code>) <strong>before</strong> the corresponding <code>prompt.composed</code> event (when emitted). The event&#39;s <code>chain[]</code> array carries one entry per layer attempted with <code>applied: true</code> on the winning layer.</p>
+<h3 id="layer-1-node-config-highest-precedence">Layer 1 — Node config (highest precedence)</h3>
+<p>The host first consults the executing <code>WorkflowNode.config</code>:</p>
+<table>
+<thead><tr><th>Kind</th><th>Field consulted</th></tr></thead>
+<tbody>
+<tr><td><code>system</code></td><td><code>WorkflowNode.config.systemPromptRef</code></td></tr>
+<tr><td><code>user</code></td><td><code>WorkflowNode.config.userPromptRef</code></td></tr>
+<tr><td><code>few-shot</code></td><td><code>WorkflowNode.config.fewShotPromptRefs[]</code> (first non-empty entry; further entries surface as <code>additionalPromptRefs</code> for composition)</td></tr>
+<tr><td><code>schema-hint</code></td><td><code>WorkflowNode.config.schemaHintPromptRef</code></td></tr>
+</tbody></table>
+<p>If the field is set, the resolved ref is that value and resolution halts. When the node carries an <em>inline</em> string body in the corresponding sibling field (e.g., <code>config.systemPrompt</code>) AND a <code>PromptRef</code>, the ref wins and the warn-log rule from RFC 0027 §C applies (<code>prompt_ref_supersedes_inline</code>).</p>
+<h3 id="layer-2-agent-binding">Layer 2 — Agent binding</h3>
+<p>Layer 2 is consulted only when <code>capabilities.prompts.agentBindings: true</code> is advertised AND the node carries <code>config.agentId</code> referencing a known <code>AgentManifest</code>. Resolution depends on the kind:</p>
+<ul>
+<li><strong><code>system</code> kind:</strong></li>
+</ul>
+<p>  - If <code>AgentManifest.systemPrompt | systemPromptRef</code> is set (the RFC 0003 intrinsic surface), the resolved ref is <strong>the agent&#39;s intrinsic prompt</strong> — a synthetic <code>PromptRef</code> projected from the manifest&#39;s tarball-relative path or inline body. Hosts MUST tag this chain entry as <code>layer: &amp;quot;agent-intrinsic&amp;quot;</code>.   - Else if <code>AgentManifest.promptOverrides.system</code> is set, that ref applies. Chain entry: <code>layer: &amp;quot;agent-overrides&amp;quot;</code>.   - Else if <code>AgentManifest.promptLibraryRef</code> is set, hosts MAY look up a same-kind default template from that library. Chain entry: <code>layer: &amp;quot;agent-library-default&amp;quot;</code>. (The lookup convention — e.g., <code>prompt:&amp;lt;libraryId&amp;gt;.default-&amp;lt;kind&amp;gt;</code> — is host policy in v1.x.)   - Else fall through to layer 3.</p>
+<ul>
+<li><strong>Other kinds (<code>user</code>, <code>few-shot</code>, <code>schema-hint</code>):</strong></li>
+</ul>
+<p>  - If <code>AgentManifest.promptOverrides[kind]</code> is set, that ref applies. Chain entry: <code>layer: &quot;agent-overrides&quot;</code>.   - Else if <code>AgentManifest.promptLibraryRef</code> is set, host MAY apply library-default per above.   - Else fall through to layer 3.</p>
+<p>If <code>config.agentId</code> is unset, layer 2 is <strong>skipped</strong> entirely; resolution proceeds to layer 3. If <code>config.agentId</code> references an unknown agent, hosts MUST emit a <code>log.appended</code> warning with <code>code: &quot;agent_binding_unresolvable&quot;</code> and skip layer 2.</p>
+<h3 id="layer-3-workflow-defaults">Layer 3 — Workflow defaults</h3>
+<p>If <code>WorkflowDefinition.defaults.promptRefs[kind]</code> is set, that ref applies. Chain entry: <code>layer: &quot;workflow-defaults&quot;</code>. Else fall through to layer 4.</p>
+<h3 id="layer-4-host-built-ins-lowest-precedence">Layer 4 — Host built-ins (lowest precedence)</h3>
+<p>If the host's <code>capabilities.prompts.defaults[kind]</code> advertises a <code>PromptRef</code>, that ref applies. Chain entry: <code>layer: &quot;host-defaults&quot;</code>. Hosts MAY ship per-kind defaults; the openwop spec ships none.</p>
+<p>If all four layers yield <code>null</code>, the resolved ref for that <code>(nodeId, kind)</code> is <code>null</code> and the emitted <code>agent.promptResolved.resolved</code> is <code>null</code>. The node MAY still execute — for example, a <code>core.ai.callPrompt</code> node with <code>userPrompt</code> provided as a direct inline string in <code>config</code> doesn't need a <code>user</code>-kind ref. Whether a <code>null</code> resolution is fatal is per-node-type semantics, not protocol policy.</p>
+<h3 id="run-configurable-extension-layer-optional-non-normative">Run-configurable extension layer (optional, non-normative)</h3>
+<p>Hosts MAY honor <code>RunOptions.configurable.promptOverrides</code> as the <strong>highest-precedence layer</strong> — applied <em>before</em> layer 1 in the traversal, taking precedence over node-config refs. When a host implements this extension, it MUST emit a chain entry with <code>layer: &quot;run-configurable&quot;</code> ahead of the <code>node</code> entry so cross-host debuggers render the additional step. This extension is non-normative in v1.x; a future RFC may promote it to a normative layer.</p>
+<h3 id="replay-determinism">Replay determinism</h3>
+<p><code>agent.promptResolved</code> events are durable and participate in replay. Invariants:</p>
+<ul>
+<li><code>resolved</code> MUST replay identically. Divergence MUST emit <code>replay.diverged</code> with <code>divergencePoint: &quot;agent.promptResolved&quot;</code>.</li>
+<li><code>chain[].applied</code> MUST replay identically when <code>resolved</code> matches.</li>
+<li><code>chain[].source</code> SHOULD replay identically; if a host has rotated host-built-in defaults between original and replay, the <code>host-defaults</code> entry's <code>source</code> MAY differ. Replay tooling MUST tolerate this and surface the rotation explicitly rather than treating it as an integrity failure.</li>
+</ul>
+<h3 id="orthogonality-with-model-capability-gating-non-normative">Orthogonality with model-capability gating (non-normative)</h3>
+<p>Per the envelope-track RFC 0031 (Draft), <code>NodeModule.requiredModelCapabilities</code> and <code>NodeModule.fallbackModel</code> answer a different question — <em>which model can dispatch this node?</em> — and emit <code>model.capability.substituted</code> / <code>model.capability.insufficient</code> events. The two surfaces are orthogonal axes:</p>
+<ul>
+<li><strong>Prompt resolution (this section)</strong> answers "which PromptRef applies at <code>(nodeId, kind)</code>?" — does not influence model selection.</li>
+<li><strong>Model-capability gating (RFC 0031)</strong> answers "which model can dispatch this node?" — does not influence prompt selection.</li>
+</ul>
+<p>A node MAY carry both surfaces independently. The <code>agent.promptResolved</code> event emitted by this section and the <code>model.capability.*</code> events emitted by RFC 0031 are distinct observability surfaces and MAY both fire for the same node execution. No precedence rule applies between them.</p>
+<hr/>
+<h2 id="open-spec-gaps">Open spec gaps</h2>
+<table>
+<thead><tr><th>#</th><th>Gap</th><th>Owner / RFC</th></tr></thead>
+<tbody>
+<tr><td>P1</td><td>Reference-host implementation of the four-layer resolution chain + <code>agent.promptResolved</code> emission in <code>core.ai.callPrompt</code></td><td>Acceptance-gate item per RFC 0029 (wire shape landed in this document §"Resolution chain (normative)")</td></tr>
+<tr><td>P2</td><td>Reference-host emission of <code>prompt.composed</code> from <code>core.ai.callPrompt</code> in the workflow-engine sample</td><td>Acceptance-gate item per RFC 0027</td></tr>
+<tr><td>P3</td><td>First non-steward host advertises <code>capabilities.prompts.supported: true</code></td><td>Acceptance-gate item per RFC 0027</td></tr>
+<tr><td>P4</td><td>Reference-host implementation of <code>/v1/prompts*</code> REST endpoints + prompt-pack install flow</td><td>Acceptance-gate item per RFC 0028</td></tr>
+<tr><td>P5</td><td>Nested template includes (<code>{{include:prompt:other@1.0.0}}</code>) — deferred to a future RFC if demand emerges</td><td>(open)</td></tr>
+<tr><td>P6</td><td>Canonical enumeration of <code>context</code> source variable names — currently non-normative recommendations</td><td>(open)</td></tr>
+<tr><td>P7</td><td>Cross-validation of <code>modelHints.envelopeType</code> against <code>capabilities.supportedEnvelopes</code> and the Tier-1 portability subset (RFC 0030)</td><td>RFC 0030 (Draft, parallel track)</td></tr>
+<tr><td>P8</td><td>Cross-pack <code>dependencies</code> semantics — <code>extends:</code> template inheritance, transitive closure resolution</td><td>RFC follow-up to 0028 (deferred)</td></tr>
+</tbody></table>
+<hr/>
+<h2 id="cross-reference">Cross-reference</h2>
+<ul>
+<li><code>workflow-definition.md</code> §"Prompt references on nodes" — the convention by which <code>WorkflowNode.config</code> carries PromptRef values.</li>
+<li><code>capabilities.md</code> — discovery handshake (this document extends the <code>prompts</code> block).</li>
+<li><code>host-capabilities.md</code> §host.aiEnvelope — the existing LLM-call surface that prompt resolution feeds.</li>
+<li><code>mcp-integration.md</code> §"Trust boundary" + RFC 0020 §D — <code>meta.contentTrust</code> propagation that <code>prompt.composed.contentTrust</code> mirrors.</li>
+<li><code>replay.md</code> — replay invariants this document extends with <code>prompt.composed</code>.</li>
+<li><code>RFCS/0027-prompt-templates.md</code> — Phase A wire-shape RFC (this document's source).</li>
+<li><code>RFCS/0028-prompt-library-endpoints.md</code> — Phase B registry + endpoint surface.</li>
+<li><code>RFCS/0029-prompt-override-hierarchy.md</code> — Phase C resolution chain + <code>agent.promptResolved</code>.</li>
+<li><code>RFCS/0030-envelope-reasoning-and-tier-one-subset.md</code> — parallel-track sibling for the LLM-emission side of the three-surface taxonomy.</li>
+<li><code>SECURITY/threat-model-secret-leakage.md</code> SR-1 — <code>[REDACTED:&amp;lt;id&amp;gt;]</code> marker discipline.</li>
+<li><code>SECURITY/threat-model-prompt-injection.md</code> — <code>&amp;lt;UNTRUSTED&amp;gt;...&amp;lt;/UNTRUSTED&amp;gt;</code> marker discipline.</li>
+<li>External: MyndHyve <code>PromptEntry</code> / <code>PromptLibrary</code> / <code>WorkflowPromptService.resolveForExecution()</code> reference impl — closest single-host prior-art for the resolution-chain pattern RFC 0029 normates.</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

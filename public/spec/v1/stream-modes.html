@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — openwop Spec v1 — SSE Stream Modes</title>
+  <meta name="description" content="Without stream modes, an SSE endpoint emits every engine event undifferentiated — UI, debugger, automation, and agent consumers all see the same stream and have to filter client-side. This is wasteful (every consumer pays bandwidth + parsing cost…"/>
+  <link rel="canonical" href="https://openwop.dev/spec/v1/stream-modes.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — openwop Spec v1 — SSE Stream Modes"/>
+  <meta property="og:description" content="Without stream modes, an SSE endpoint emits every engine event undifferentiated — UI, debugger, automation, and agent consumers all see the same stream and have to filter client-side. This is wasteful (every consumer pays bandwidth + parsing cost…"/>
+  <meta property="og:url" content="https://openwop.dev/spec/v1/stream-modes.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — openwop Spec v1 — SSE Stream Modes"/>
+  <meta name="twitter:description" content="Without stream modes, an SSE endpoint emits every engine event undifferentiated — UI, debugger, automation, and agent consumers all see the same stream and have to filter client-side. This is wasteful (every consumer pays bandwidth + parsing cost…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="active" href="/spec/v1/">Spec</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/profiles/">Profiles</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="openwop-spec-v1-sse-stream-modes">openwop Spec v1 — SSE Stream Modes</h1>
+<blockquote><p><strong>Status: FINAL v1 (2026-04-27).</strong> Comprehensive coverage of the four canonical stream consumption modes (values, updates, messages, debug), the <code>?streamMode=</code> query parameter, event-type-to-mode mapping, and CLI default. Stable surface for external review. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
+<hr/>
+<h2 id="why-this-exists">Why this exists</h2>
+<p>Without stream modes, an SSE endpoint emits every engine event undifferentiated — UI, debugger, automation, and agent consumers all see the same stream and have to filter client-side. This is wasteful (every consumer pays bandwidth + parsing cost for events they ignore) and ambiguous (no canonical contract for "what does a UI need vs what does a debugger need").</p>
+<p>openwop defines four canonical stream modes that consumers select via a query parameter. Each mode is a documented filter over the underlying event log; servers MUST implement at minimum the <code>updates</code> mode and SHOULD implement all four.</p>
+<p>The four modes parallel <a href="https://langchain-ai.github.io/langgraph/concepts/streaming/">LangGraph's stream_mode taxonomy</a> — chosen for ecosystem familiarity, not vendor lock-in.</p>
+<hr/>
+<h2 id="mode-selection">Mode selection</h2>
+<p>Clients select a mode via the <code>streamMode</code> query parameter on <code>GET /v1/runs/{runId}/events</code>:</p>
+<pre class="lang-"><code>GET /v1/runs/{runId}/events?streamMode=updates</code></pre>
+<p>Allowed values: <code>values | updates | messages | debug</code>. If omitted, the server MUST default to <code>updates</code>.</p>
+<p>If a client requests a mode the server doesn't implement, the server MUST respond with HTTP <code>400 Bad Request</code> and body:</p>
+<pre class="lang-json"><code>{
+  &quot;error&quot;: &quot;unsupported_stream_mode&quot;,
+  &quot;message&quot;: &quot;Server does not implement streamMode=&#39;messages&#39;&quot;,
+  &quot;supported&quot;: [&quot;values&quot;, &quot;updates&quot;, &quot;debug&quot;]
+}</code></pre>
+<p>Servers MAY advertise their supported modes in <code>/.well-known/openwop</code> (see <code>capabilities.md</code>).</p>
+<h3 id="content-negotiation-additive-opt-in">Content negotiation (additive opt-in)</h3>
+<p>Hosts MAY content-negotiate the response shape on <code>GET /v1/runs/{runId}/events</code> via the request <code>Accept</code> header:</p>
+<ul>
+<li><code>Accept: text/event-stream</code> (or no Accept) — SSE response with <code>Content-Type: text/event-stream</code> and <code>event:</code> / <code>data:</code> / <code>id:</code> framing per <code>eventsource</code> spec. This is the canonical wire shape for this endpoint and what <code>EventSource</code> clients receive by default.</li>
+<li><code>Accept: application/json</code> — JSON envelope with the same <code>events</code> array shape as <code>GET /v1/runs/{runId}/events/poll</code>. Useful when the caller is a generic HTTP client without an SSE parser (curl, conformance probes, browser fetch without EventSource).</li>
+</ul>
+<p>Content negotiation is OPTIONAL. Hosts that serve SSE only and ignore Accept remain spec-conformant. Hosts that implement negotiation MUST ensure validation gates (<code>streamMode</code>, <code>bufferMs</code>) run BEFORE the content-shape branch — an invalid <code>streamMode</code> MUST return <code>400</code> regardless of the requested response format.</p>
+<p>The <code>Postgres</code> reference host at <code>examples/hosts/postgres/</code> implements this negotiation; the <code>SQLite</code> reference host serves SSE only.</p>
+<hr/>
+<h2 id="the-four-modes">The four modes</h2>
+<h3 id="updates-default"><code>updates</code> (default)</h3>
+<p><strong>Purpose</strong>: minimal state-change stream. UI consumers and CLI watchers want to render progress without buffering full state on every event.</p>
+<p><strong>Emits</strong>: an event for each <em>terminal node transition</em> (completed/failed/skipped/cancelled), each <em>suspension transition</em> (waiting-approval/waiting-input/resumed), each <em>run transition</em> (running/paused/completed/failed/cancelled), and each <em>artifact production</em>. NOT individual log lines, NOT internal projection cache writes, NOT every variable mutation.</p>
+<p><strong>Wire shape</strong>: SSE events with type per <code>RunEventType</code>. Each event payload is a <em>delta</em> — the change since the last event, not a full snapshot.</p>
+<p><strong>Termination</strong>: server closes the connection when the run reaches a terminal status.</p>
+<h3 id="values"><code>values</code></h3>
+<p><strong>Purpose</strong>: full state snapshots after each step. Used by external systems that don't maintain their own state machine and want to see "what does the run look like now?" after every meaningful change.</p>
+<p><strong>Emits</strong>: a single <code>state.snapshot</code> event after each <code>updates</code>-tier transition. Payload is the canonical <code>RunSnapshot</code> shape — the same JSON returned by <code>GET /v1/runs/{runId}</code>. Schema: <a href="../../schemas/run-snapshot.schema.json"><code>schemas/run-snapshot.schema.json</code></a>. Reusing the projection type means consumers can swap polling for <code>values</code>-mode SSE without re-modeling state.</p>
+<p><strong>Wire shape</strong>: same as <code>updates</code> but with synthesized snapshot events instead of deltas. Higher bandwidth.</p>
+<p><strong>Termination</strong>: server closes after final snapshot.</p>
+<h3 id="messages"><code>messages</code></h3>
+<p><strong>Purpose</strong>: LLM token stream for chat-style UIs that render assistant text incrementally.</p>
+<p><strong>Emits</strong>: per-token chunks from any <code>core.ai.callPrompt</code> / <code>core.ai.generateFromPrompt</code> node currently streaming. Other event types are filtered out — consumers pair this stream with an <code>updates</code> stream if they also need state transitions.</p>
+<p><strong>Wire shape</strong>: SSE events with type <code>ai.message.chunk</code>. Schema: <code>run-event-payloads.schema.json#$defs.outputChunk</code> (the canonical <code>outputChunk</code> payload doubles as the <code>ai.message.chunk</code> payload). Tiered shape:</p>
+<pre class="lang-jsonc"><code>{
+  &quot;nodeId&quot;:  &quot;n_42&quot;,
+  &quot;runId&quot;:   &quot;run_abc&quot;,
+  &quot;chunk&quot;:   &quot;Hello&quot;,
+  &quot;isLast&quot;:  false,
+  &quot;meta&quot;: {
+    // Tier 1 — typed / normalized (consumers MAY branch on these without provider awareness)
+    &quot;finishReason&quot;: &quot;stop&quot;,                              // &quot;stop&quot; | &quot;length&quot; | &quot;tool_calls&quot; | &quot;content_filter&quot;
+    &quot;logprobs&quot;: [...],
+    &quot;toolCalls&quot;: [...],
+    &quot;model&quot;: &quot;claude-opus-4-7&quot;,
+    &quot;usage&quot;: { &quot;promptTokens&quot;: 12, &quot;completionTokens&quot;: 4, &quot;totalTokens&quot;: 16 },
+
+    // Tier 2 — provider pass-through (raw provider chunk; for advanced consumers only)
+    &quot;provider&quot;: &quot;anthropic&quot;,
+    &quot;providerExtensions&quot;: { /* raw provider-specific blob */ }
+  }
+}</code></pre>
+<p>The <code>meta</code> object is optional. The bare <code>{nodeId, runId, chunk, isLast}</code> shape is the minimum compliant payload — UIs rendering streamed text MAY ignore <code>meta</code> entirely.</p>
+<p><strong>Tier rules</strong> (per S2 closure):</p>
+<ul>
+<li>When the server has data AND a Tier 1 slot exists, the server MUST populate the Tier 1 slot (so spec-compliant consumers can read normalized fields without provider knowledge).</li>
+<li>The server MAY ALSO populate <code>providerExtensions</code> with the raw chunk for fidelity.</li>
+<li>Provider-specific fields that have no Tier 1 slot SHOULD live in <code>providerExtensions</code>, NOT at the top level.</li>
+<li>Forward-compat: as the spec adds Tier 1 slots over time, fields migrate from <code>providerExtensions</code> into typed slots. Consumers using <code>providerExtensions</code> already opted into per-provider knowledge — Tier 1 promotion is additive (no breakage; typed slot wins).</li>
+</ul>
+<p>The <code>meta.usage.{promptTokens, completionTokens}</code> field is the per-chunk source for the <code>openwop.cost.tokens.*</code> rollup attributes specified in <code>observability.md</code> §Cost attribution attributes (O4). Same numbers, different aggregation level.</p>
+<p><strong>Termination</strong>: server closes when the run reaches terminal status. If no AI nodes execute, the stream is empty until termination.</p>
+<h3 id="debug"><code>debug</code></h3>
+<p><strong>Purpose</strong>: every event the engine emits, internal or external. Used by replay tools, debuggers, and conformance tests.</p>
+<p><strong>Emits</strong>: every <code>RunEventDoc</code> from the durable event log including <code>log.appended</code>, internal projection writes, lease lifecycle events, version pin events, and any vendor-extension events.</p>
+<p><strong>Wire shape</strong>: same as <code>updates</code> but with no filtering. Highest bandwidth.</p>
+<p><strong>Termination</strong>: server closes after the run's terminal event.</p>
+<hr/>
+<h2 id="mode-to-event-mapping">Mode-to-event mapping</h2>
+<p>The exact event types each mode emits:</p>
+<table>
+<thead><tr><th>RunEventType</th><th><code>updates</code></th><th><code>values</code> (synthesized)</th><th><code>messages</code></th><th><code>debug</code></th></tr></thead>
+<tbody>
+<tr><td><code>run.started</code></td><td>✅</td><td>✅ snapshot</td><td>—</td><td>✅</td></tr>
+<tr><td><code>run.completed</code> / <code>run.failed</code> / <code>run.cancelled</code></td><td>✅</td><td>✅ snapshot</td><td>—</td><td>✅</td></tr>
+<tr><td><code>run.paused</code> / <code>run.resumed</code></td><td>✅</td><td>✅ snapshot</td><td>—</td><td>✅</td></tr>
+<tr><td><code>node.started</code></td><td>—</td><td>✅ snapshot</td><td>—</td><td>✅</td></tr>
+<tr><td><code>node.completed</code> / <code>node.failed</code> / <code>node.skipped</code></td><td>✅</td><td>✅ snapshot</td><td>—</td><td>✅</td></tr>
+<tr><td><code>node.suspended</code></td><td>✅</td><td>✅ snapshot</td><td>—</td><td>✅</td></tr>
+<tr><td><code>node.retried</code></td><td>—</td><td>—</td><td>—</td><td>✅</td></tr>
+<tr><td><code>approval.requested</code></td><td>✅</td><td>✅ snapshot</td><td>—</td><td>✅</td></tr>
+<tr><td><code>approval.received</code></td><td>✅</td><td>✅ snapshot</td><td>—</td><td>✅</td></tr>
+<tr><td><code>clarification.requested</code> / <code>clarification.resolved</code></td><td>✅</td><td>✅ snapshot</td><td>—</td><td>✅</td></tr>
+<tr><td><code>variable.changed</code></td><td>—</td><td>—</td><td>—</td><td>✅</td></tr>
+<tr><td><code>version.pinned</code></td><td>—</td><td>—</td><td>—</td><td>✅</td></tr>
+<tr><td><code>lease.acquired</code> / <code>lease.renewed</code> / <code>lease.lost</code></td><td>—</td><td>—</td><td>—</td><td>✅</td></tr>
+<tr><td><code>log.appended</code></td><td>—</td><td>—</td><td>—</td><td>✅</td></tr>
+<tr><td><code>ai.message.chunk</code> (synthesized from streaming AI calls)</td><td>—</td><td>—</td><td>✅</td><td>✅</td></tr>
+</tbody></table>
+<p>✅ = emitted in this mode; — = filtered out</p>
+<hr/>
+<h2 id="resumption">Resumption</h2>
+<p>All four modes MUST honor the <code>Last-Event-ID</code> request header for resumption. The server MUST:</p>
+<p>1. Look up the event with that ID. 2. Begin streaming from the next sequence after that event. 3. Not re-emit the resumption point itself.</p>
+<p>For the <code>values</code> mode, resumption MUST emit a <code>state.snapshot</code> first (so the resuming client gets a baseline) before continuing with subsequent updates.</p>
+<hr/>
+<h2 id="multiple-subscribers">Multiple subscribers</h2>
+<p>Multiple clients MAY subscribe to the same run with different modes simultaneously. The server's event log is the single source of truth; per-subscriber filtering is the only difference.</p>
+<p>Servers MUST NOT throttle or limit the number of subscribers per run except for resource-protection reasons (in which case <code>429 Too Many Requests</code> with <code>Retry-After</code> is the correct response, not silent dropping).</p>
+<hr/>
+<h2 id="aggregation-hint-bufferms-closes-s3">Aggregation hint: <code>?bufferMs=</code> (closes S3)</h2>
+<p>For high-volume runs (large multi-node DAGs, fan-out subworkflows), per-event SSE delivery can saturate consumer queues and produce visible jitter on UIs that re-render per event. <code>?bufferMs=N</code> is an optional query parameter that requests batched delivery — the server accumulates events for up to N ms (or until a forced-flush trigger fires) and emits a single SSE event whose <code>data:</code> is a <strong>JSON array</strong> of <code>RunEventDoc</code>.</p>
+<pre class="lang-"><code>GET /v1/runs/{runId}/events?streamMode=updates&amp;bufferMs=100</code></pre>
+<p>Constraints:</p>
+<ul>
+<li>Range: <code>0 ≤ bufferMs ≤ 5000</code>. <code>0</code> means "no buffering" (same as omitting). Larger values are clamped to 5000.</li>
+<li>Forced-flush triggers (server MUST flush regardless of <code>bufferMs</code> accumulation): terminal run events (<code>run.completed</code> / <code>run.failed</code> / <code>run.cancelled</code>), suspension transitions (<code>node.suspended</code>), and connection close.</li>
+<li>Wire shape: <code>event: batch</code> SSE event with <code>data: [&amp;lt;RunEventDoc&amp;gt;, &amp;lt;RunEventDoc&amp;gt;, ...]</code>. Single-event windows MAY still emit a 1-element array; consumers MUST tolerate both single-element arrays and unbatched single-object events.</li>
+<li>Resumption: <code>Last-Event-ID</code> MUST honor the SSE <code>id:</code> of the BATCH, not individual events within it. Servers SHOULD use the highest <code>sequence</code> in the batch as the SSE ID.</li>
+</ul>
+<p>An OpenWOP-compliant server MAY ignore the parameter (responding with the unbuffered stream); consumers detecting unbuffered behavior should treat that as fully spec-compliant.</p>
+<hr/>
+<h2 id="mixed-mode-streammode-a-b-closes-s4">Mixed mode: <code>?streamMode=A,B</code> (closes S4)</h2>
+<p>A subscriber that needs both progress events AND LLM token chunks currently has to open two SSE connections (one in <code>updates</code> mode, one in <code>messages</code>). Mixed-mode subscriptions allow a comma-separated list:</p>
+<pre class="lang-"><code>GET /v1/runs/{runId}/events?streamMode=updates,messages</code></pre>
+<p>Semantics:</p>
+<ul>
+<li>Comma-separated list of canonical mode names. Order is informative; servers MUST emit events as they happen and MUST NOT reorder for canonical-list-ordering reasons.</li>
+<li>Event filtering: the union of each named mode's filter. An event passes if ANY listed mode would emit it.</li>
+<li>Termination: same rule as the single-mode case — server closes the connection on the run's terminal event.</li>
+<li>Per-event labeling: each emitted SSE event SHOULD carry an <code>event:</code> field naming the mode that admitted it (e.g., <code>event: updates</code> or <code>event: messages</code>). When an event qualifies under multiple modes, the server MAY pick any one consistently. Consumers MUST tolerate this overlap.</li>
+<li><code>values</code> MUST NOT be combined with another mode (state.snapshot semantics need exclusive ownership of the stream).</li>
+<li>Unsupported combinations return <code>400 Bad Request</code> with <code>error: &quot;unsupported_stream_mode&quot;</code>. The error body's <code>supported</code> array MUST include each individual mode name; mixed combinations are NOT advertised in <code>supported</code>.</li>
+</ul>
+<hr/>
+<h2 id="cli-integration">CLI integration</h2>
+<p>An OpenWOP-compliant CLI (e.g., a host's workflow-run command with <code>--watch</code>) SHOULD:</p>
+<p>1. Default to <code>--stream-mode=updates</code>. 2. Support all four modes via the flag. 3. Render <code>updates</code> as a node-by-node progress bar. 4. Render <code>messages</code> as inline streamed text. 5. Render <code>debug</code> as a JSON-per-line firehose suitable for <code>| jq</code>. 6. Render <code>values</code> as an updated full-state TUI panel (or fall back to <code>updates</code> if no TUI available).</p>
+<hr/>
+<h2 id="open-spec-gaps">Open spec gaps</h2>
+<table>
+<thead><tr><th>#</th><th>Gap</th><th>Owner</th></tr></thead>
+<tbody>
+<tr><td>S1</td><td><code>state.snapshot</code> payload schema — done (2026-04-27: reuses <code>schemas/run-snapshot.schema.json</code> verbatim — same shape as <code>GET /v1/runs/{runId}</code> projection).</td><td>✅</td></tr>
+<tr><td>S2</td><td><code>ai.message.chunk</code> payload — done (2026-04-27: tiered shape — Tier 1 typed slots <code>finishReason / logprobs / toolCalls / model / usage</code>, Tier 2 <code>providerExtensions</code> escape hatch. Bare <code>{chunk, isLast}</code> remains the minimum compliant payload). Schema lives at <code>run-event-payloads.schema.json#$defs.outputChunk</code>.</td><td>✅</td></tr>
+<tr><td>S3</td><td>Subscriber-side aggregation hints — done (2026-04-27: <code>?bufferMs=N</code> query param accepts 0..5000; batched SSE events use <code>event: batch</code> with array <code>data:</code>. Forced-flush on terminal events + suspensions. See "Aggregation hint" §).</td><td>✅</td></tr>
+<tr><td>S4</td><td>Mixing modes — done (2026-04-27: comma-separated <code>?streamMode=A,B</code> accepted; union-of-filters semantics; per-event <code>event:</code> field labels which mode admitted it; <code>values</code> exclusive. See "Mixed mode" §).</td><td>✅</td></tr>
+</tbody></table>
+<h2 id="references">References</h2>
+<ul>
+<li><code>auth.md</code> — auth model + status legend</li>
+<li><code>rest-endpoints.md</code> — <code>GET /v1/runs/{runId}/events</code> endpoint surface</li>
+<li><code>capabilities.md</code> — optional discovery fields and host extensions can advertise supported stream modes</li>
+<li><code>observability.md</code> — <code>openwop.event.*</code> attributes apply to all stream events regardless of mode</li>
+<li>LangGraph streaming: &lt;https://langchain-ai.github.io/langgraph/concepts/streaming/&gt; (idiom source — not a normative dependency)</li>
+<li>Reference implementations SHOULD document whether <code>?streamMode=</code> is fully filtered, partially projected, or treated as an all-events fallback. Hosts that advertise stream-mode support in capabilities are expected to honor the mode-specific semantics above.</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

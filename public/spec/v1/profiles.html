@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — openwop Spec v1 — Compatibility Profiles</title>
+  <meta name="description" content="&quot;openwop-compatible&quot; today means &quot;passes some subset of @openwop/openwop-conformance.&quot; That&#39;s accurate but not actionable: a host advertising secrets.supported: true and a host advertising aiProviders.policies aren&#39;t doing the same thing, and a…"/>
+  <link rel="canonical" href="https://openwop.dev/spec/v1/profiles.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — openwop Spec v1 — Compatibility Profiles"/>
+  <meta property="og:description" content="&quot;openwop-compatible&quot; today means &quot;passes some subset of @openwop/openwop-conformance.&quot; That&#39;s accurate but not actionable: a host advertising secrets.supported: true and a host advertising aiProviders.policies aren&#39;t doing the same thing, and a…"/>
+  <meta property="og:url" content="https://openwop.dev/spec/v1/profiles.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — openwop Spec v1 — Compatibility Profiles"/>
+  <meta name="twitter:description" content="&quot;openwop-compatible&quot; today means &quot;passes some subset of @openwop/openwop-conformance.&quot; That&#39;s accurate but not actionable: a host advertising secrets.supported: true and a host advertising aiProviders.policies aren&#39;t doing the same thing, and a…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="active" href="/spec/v1/">Spec</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/profiles/">Profiles</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="openwop-spec-v1-compatibility-profiles">openwop Spec v1 — Compatibility Profiles</h1>
+<blockquote><p><strong>Status: FINAL v1 (2026-05-05; <code>openwop-fixtures</code> added 2026-05-07 via RFC 0003).</strong> Profiles are an additive layer over v1 capabilities. They MUST be derivable from existing <code>/.well-known/openwop</code> fields without a wire-shape change. Graduated DRAFT → FINAL via RFC 0003. See <code>auth.md</code> for the status legend. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>.</p></blockquote>
+<hr/>
+<h2 id="why-this-exists">Why this exists</h2>
+<p>"openwop-compatible" today means "passes some subset of <code>@openwop/openwop-conformance</code>." That's accurate but not actionable: a host advertising <code>secrets.supported: true</code> and a host advertising <code>aiProviders.policies</code> aren't doing the same thing, and a client that depends on one doesn't necessarily work against the other.</p>
+<p>A <strong>compatibility profile</strong> is a named set of capability requirements. A host that satisfies the requirements is in the profile. Clients pick the profile their workload depends on; hosts pick the profiles they implement; conformance matches the two.</p>
+<p>Profiles are <strong>derived from existing capability fields</strong>, not declared as a new wire field. Two reasons:</p>
+<p>1. <strong>One source of truth.</strong> A host that advertises <code>secrets.supported: true</code> but is "not in <code>openwop-secrets</code>" would be a contradiction. Derivation makes it impossible. 2. <strong>No protocol deploy.</strong> Adding a <code>profiles[]</code> array to <code>/.well-known/openwop</code> would touch every host's discovery payload and require a coordinated deploy. Derivation runs in the conformance suite and in client SDKs against the existing payload.</p>
+<p>Per <code>COMPATIBILITY.md</code>, this document is additive — no v1 host implementation needs to change to be evaluated against profiles. Hosts that already satisfy a profile's requirements are already in it as of v1.</p>
+<hr/>
+<h2 id="profile-catalog">Profile catalog</h2>
+<p>Nine v1.x compatibility profiles. The catalog is closed: new compatibility profiles require an RFC per <code>RFCS/0001-rfc-process.md</code>.</p>
+<h3 id="openwop-core"><code>openwop-core</code></h3>
+<p>The minimum any conforming host MUST satisfy.</p>
+<p><strong>Requirements:</strong></p>
+<ul>
+<li><code>protocolVersion</code> is set to a <code>1.x.x</code> semver string.</li>
+<li><code>supportedEnvelopes</code> is an array (MAY be empty for engine-only hosts that don't expose LLM-emitting nodes).</li>
+<li><code>schemaVersions</code> is an object with non-negative integer values.</li>
+<li><code>limits.clarificationRounds</code>, <code>limits.schemaRounds</code>, <code>limits.envelopesPerTurn</code> are all non-negative integers.</li>
+</ul>
+<p><strong>Predicate:</strong></p>
+<pre class="lang-"><code>openwop-core(c) :=
+     typeof c.protocolVersion == &#39;string&#39;
+  &amp;&amp; c.protocolVersion.startsWith(&#39;1.&#39;)
+  &amp;&amp; Array.isArray(c.supportedEnvelopes)
+  &amp;&amp; typeof c.schemaVersions == &#39;object&#39;
+  &amp;&amp; typeof c.limits == &#39;object&#39;
+  &amp;&amp; Number.isInteger(c.limits.clarificationRounds) &amp;&amp; c.limits.clarificationRounds &gt;= 0
+  &amp;&amp; Number.isInteger(c.limits.schemaRounds)         &amp;&amp; c.limits.schemaRounds &gt;= 0
+  &amp;&amp; Number.isInteger(c.limits.envelopesPerTurn)     &amp;&amp; c.limits.envelopesPerTurn &gt;= 0</code></pre>
+<p>A host that fails <code>openwop-core</code> is not openwop-compatible. Every other profile implies <code>openwop-core</code>.</p>
+<h3 id="openwop-interrupts"><code>openwop-interrupts</code></h3>
+<p>The host implements the interrupt/resume protocol per <code>interrupt.md</code>.</p>
+<p><strong>Requirements:</strong> This profile is satisfied by every conforming v1 host (interrupts are non-optional in v1 per <code>interrupt.md</code> §"Why this exists"). The profile exists so that downstream tooling can declare a dependency on interrupt-resume semantics explicitly.</p>
+<p><strong>Predicate:</strong></p>
+<pre class="lang-"><code>openwop-interrupts(c) :=
+     openwop-core(c)
+  &amp;&amp; c.supportedEnvelopes.includes(&#39;clarification.request&#39;)</code></pre>
+<p>The <code>clarification.request</code> envelope is the canonical interrupt envelope per <code>interrupt.md</code>. Approval-gate interrupts use a different mechanism (suspend/resume) but a host that supports clarifications MUST also support the suspend mechanism.</p>
+<p>A host that genuinely doesn't expose any interrupt path (e.g., a fire-and-forget batch host) MAY publish without <code>clarification.request</code> in <code>supportedEnvelopes</code> and fail the <code>openwop-interrupts</code> profile. Such hosts are still <code>openwop-core</code>.</p>
+<h3 id="openwop-stream-sse"><code>openwop-stream-sse</code></h3>
+<p>The host accepts SSE streaming on the events endpoint per <code>stream-modes.md</code>.</p>
+<p><strong>Requirements:</strong> SSE is the default streaming transport in v1. A host advertising <code>supportedTransports</code> either omits the field (REST-only is REQUIRED, SSE is RECOMMENDED) or includes <code>rest</code>. The conformance suite verifies SSE behavior at runtime.</p>
+<p><strong>Predicate:</strong></p>
+<pre class="lang-"><code>openwop-stream-sse(c) :=
+     openwop-core(c)
+  &amp;&amp; (c.supportedTransports == null || c.supportedTransports.includes(&#39;rest&#39;))</code></pre>
+<p>This is a runtime profile: discovery-payload alone can't fully validate SSE behavior. Conformance scenarios in <code>stream-modes.test.ts</code>, <code>stream-modes-buffer.test.ts</code>, and <code>stream-modes-mixed.test.ts</code> exercise the wire behavior. A host passes <code>openwop-stream-sse</code> when discovery passes the predicate AND those scenarios pass.</p>
+<h3 id="openwop-stream-poll"><code>openwop-stream-poll</code></h3>
+<p>The host accepts polling on the events endpoint per <code>stream-modes.md</code> §"Polling mode."</p>
+<p><strong>Requirements:</strong> Polling is the fallback transport for clients that can't hold long-lived connections. A host advertises support implicitly by serving <code>GET /v1/runs/{runId}/events/poll</code> per <code>rest-endpoints.md</code>.</p>
+<p><strong>Predicate:</strong> Same shape as <code>openwop-stream-sse</code> — runtime validated. Conformance scenarios in <code>stream-modes.test.ts</code> exercise polling.</p>
+<pre class="lang-"><code>openwop-stream-poll(c) :=
+     openwop-core(c)
+  &amp;&amp; (c.supportedTransports == null || c.supportedTransports.includes(&#39;rest&#39;))</code></pre>
+<p>A host MAY satisfy both <code>openwop-stream-sse</code> and <code>openwop-stream-poll</code>; in v1 most reference hosts do.</p>
+<h3 id="openwop-secrets"><code>openwop-secrets</code></h3>
+<p>The host implements credential resolution per <code>run-options.md</code> §"Credential references" + <code>capabilities.md</code> §"Secrets."</p>
+<p><strong>Requirements:</strong> <code>secrets.supported: true</code> and <code>secrets.scopes</code> includes at least <code>user</code>. Hosts that advertise additional scopes (<code>tenant</code>, <code>run</code>) satisfy a richer subset; the predicate gates on the minimum.</p>
+<p><strong>Predicate:</strong></p>
+<pre class="lang-"><code>openwop-secrets(c) :=
+     openwop-core(c)
+  &amp;&amp; c.secrets != null
+  &amp;&amp; c.secrets.supported === true
+  &amp;&amp; Array.isArray(c.secrets.scopes)
+  &amp;&amp; c.secrets.scopes.includes(&#39;user&#39;)</code></pre>
+<p><code>tenant</code>-scoped secrets are an OPTIONAL add-on; the conformance suite reports <code>openwop-secrets</code> + advertised scope set separately.</p>
+<h3 id="openwop-provider-policy"><code>openwop-provider-policy</code></h3>
+<p>The host enforces AI provider policy modes per <code>capabilities.md</code> §<code>aiProviders.policies</code>.</p>
+<p><strong>Requirements:</strong> <code>aiProviders.policies.modes</code> is present and non-empty. The reference impl supports all four modes (<code>disabled</code>, <code>optional</code>, <code>required</code>, <code>restricted</code>). The predicate gates on at least <code>optional</code> being present (which every conforming policy host supports as the default no-restriction mode).</p>
+<p><strong>Predicate:</strong></p>
+<pre class="lang-"><code>openwop-provider-policy(c) :=
+     openwop-core(c)
+  &amp;&amp; c.aiProviders != null
+  &amp;&amp; c.aiProviders.policies != null
+  &amp;&amp; Array.isArray(c.aiProviders.policies.modes)
+  &amp;&amp; c.aiProviders.policies.modes.length &gt; 0
+  &amp;&amp; c.aiProviders.policies.modes.includes(&#39;optional&#39;)</code></pre>
+<p>The conformance suite verifies enforcement against the runtime; discovery-payload predicates prove the host advertises the contract.</p>
+<h3 id="openwop-replay-fork"><code>openwop-replay-fork</code></h3>
+<p>The host implements <code>POST /v1/runs/{runId}:fork</code> per <code>replay.md</code>.</p>
+<p><strong>Requirements:</strong> <code>replay.supported: true</code> AND <code>replay.modes</code> is a non-empty array. Conventional values for <code>replay.modes</code>: <code>&#39;replay&#39;</code> (deterministic re-execution from <code>fromSeq</code>), <code>&#39;branch&#39;</code> (divergent execution with optional <code>runOptionsOverlay</code>). A host that supports only <code>branch</code> mode satisfies the discovery predicate; <code>replayDeterminism.test.ts</code> skip-equivalents at runtime if <code>&#39;replay&#39;</code> mode is absent or stubbed.</p>
+<p><strong>Predicate:</strong></p>
+<pre class="lang-"><code>openwop-replay-fork(c) :=
+     openwop-core(c)
+  &amp;&amp; c.replay != null
+  &amp;&amp; c.replay.supported === true
+  &amp;&amp; Array.isArray(c.replay.modes)
+  &amp;&amp; c.replay.modes.length &gt; 0</code></pre>
+<p>This profile gates <code>replayDeterminism.test.ts</code> and <code>replay-fork.test.ts</code> scenarios. Hosts MAY support either or both modes; the conformance scenarios pass on whichever mode the host advertises.</p>
+<h3 id="openwop-fixtures"><code>openwop-fixtures</code></h3>
+<p>The host advertises one or more conformance fixture workflows in the discovery payload's <code>fixtures</code> array per <code>capabilities.md</code> §<code>fixtures</code>. Added by RFC 0003.</p>
+<p><strong>Requirements:</strong> <code>fixtures</code> is a non-empty array of non-empty strings. Each entry is a fixture-workflow ID resolvable by <code>POST /v1/runs</code> <code>workflowId</code> on the host. Hosts that ship vendor-prefixed fixture IDs satisfy the profile; the conformance suite ignores IDs it doesn't recognize.</p>
+<p><strong>Predicate:</strong></p>
+<pre class="lang-"><code>openwop-fixtures(c) :=
+     openwop-core(c)
+  &amp;&amp; Array.isArray(c.fixtures)
+  &amp;&amp; c.fixtures.length &gt; 0
+  &amp;&amp; c.fixtures.every(id =&gt; typeof id === &#39;string&#39; &amp;&amp; id.length &gt; 0)</code></pre>
+<p>A host that omits <code>fixtures</code> (pre-RFC 0003 hosts, or hosts that opted out) does not satisfy this profile and ~30 fixture-dependent conformance scenarios skip cleanly. The profile is discovery-payload-only — it confirms the host claims SOME fixture, not that any specific fixture is wired. Per-fixture skip decisions are made by the suite using the advertised list.</p>
+<p>The v1.0 conformance baseline refuses to fail a fixture-dependent scenario unless the corresponding ID is advertised here. Older pre-reset suite artifacts are historical and not part of the OpenWOP v1.0 release line.</p>
+<h3 id="openwop-node-packs"><code>openwop-node-packs</code></h3>
+<p>The host serves a node-pack registry per <code>node-packs.md</code> §"Registry HTTP API."</p>
+<p><strong>Requirements:</strong> The host responds 200 to <code>GET /v1/packs</code> with a list-shaped body. The discovery-payload predicate is structural; the runtime predicate is HTTP behavior.</p>
+<p><strong>Predicate (discovery-payload only — runtime check separate):</strong></p>
+<pre class="lang-"><code>openwop-node-packs-discovery(c) := openwop-core(c)</code></pre>
+<p>Discovery alone can't tell whether the registry endpoints are wired. The conformance scenarios in <code>pack-registry.test.ts</code> and <code>pack-registry-publish.test.ts</code> exercise the runtime; a host passes <code>openwop-node-packs</code> when it passes those scenarios.</p>
+<p>A host MAY support read-only pack distribution (GET routes only — <code>openwop-node-packs-readonly</code>) or read/write (GET + PUT/POST/DELETE — <code>openwop-node-packs-publish</code>). The split sub-profiles are derivable from which scenarios pass; they don't appear in the discovery payload.</p>
+<h3 id="openwop-discovery-auth-scoped"><code>openwop-discovery-auth-scoped</code></h3>
+<p>The host serves an authenticated capability view alongside the public unauthenticated payload per <code>capabilities-change-detection.md</code> §"Scoped capability views" (formalized as a capability flag by <code>RFCS/0011-auth-scoped-discovery.md</code>).</p>
+<p><strong>Requirements:</strong> When <code>Authorization: Bearer &amp;lt;key&amp;gt;</code> is presented to <code>/.well-known/openwop</code> (or to a host-advertised <code>endpointPath</code>), the host MAY return a narrowed or enriched capability view scoped to the caller. The authenticated view MUST still satisfy <code>capabilities.schema.json</code> (required fields preserved) and MUST NOT expose capabilities outside the caller's authorization — the unauthorized view's capability keyset MUST be a strict subset of an authorized caller's keyset.</p>
+<p><strong>Predicate (discovery-payload only — runtime check separate):</strong></p>
+<pre class="lang-"><code>openwop-discovery-auth-scoped(c) :=
+    c.capabilities.discovery.authScoped.supported === true
+  ∧ c.capabilities.discovery.authScoped.mode ∈ { &#39;same-endpoint&#39;, &#39;extension-endpoint&#39;, undefined }
+  ∧ (c.capabilities.discovery.authScoped.mode === &#39;extension-endpoint&#39;
+        ⇒ c.capabilities.discovery.authScoped.endpointPath matches /^\//)</code></pre>
+<p>Three subtests in <code>conformance/src/scenarios/discovery.test.ts</code> validate the runtime behavior: capability shape, authenticated view satisfies the base schema, and the authorization-oracle probe (gated on <code>OPENWOP_TEST_UNAUTHORIZED_API_KEY</code>). A host passes <code>openwop-discovery-auth-scoped</code> when discovery passes the predicate AND those scenarios pass.</p>
+<hr/>
+<h2 id="derivation">Derivation</h2>
+<p>The reference derivation for any conforming v1.x discovery payload <code>c</code> is:</p>
+<pre class="lang-"><code>profiles(c) := {
+  &#39;openwop-core&#39;                       if openwop-core(c),
+  &#39;openwop-interrupts&#39;                 if openwop-interrupts(c),
+  &#39;openwop-stream-sse&#39;                 if openwop-stream-sse(c),
+  &#39;openwop-stream-poll&#39;                if openwop-stream-poll(c),
+  &#39;openwop-secrets&#39;                    if openwop-secrets(c),
+  &#39;openwop-provider-policy&#39;            if openwop-provider-policy(c),
+  &#39;openwop-discovery-auth-scoped&#39;      if openwop-discovery-auth-scoped(c),
+  &#39;openwop-node-packs&#39;     if openwop-node-packs-discovery(c),
+  &#39;openwop-replay-fork&#39;    if openwop-replay-fork(c),
+  &#39;openwop-fixtures&#39;       if openwop-fixtures(c),
+}</code></pre>
+<p>A reference TypeScript implementation lives in <code>@openwop/openwop-conformance</code> at <code>src/lib/profiles.ts</code>. SDKs MAY include a derivation helper; the spec doesn't require it.</p>
+<p>The derivation is <strong>deterministic and pure</strong> — same input, same profile set. It MUST NOT depend on host-specific state, time-of-day, or fields outside the discovery payload.</p>
+<hr/>
+<h2 id="profile-semantics">Profile semantics</h2>
+<p>A host <strong>claims</strong> a profile by satisfying its predicate AND passing the conformance scenarios labelled with the profile tag. A host <strong>passes</strong> a profile when both conditions hold against the suite version it reports.</p>
+<p>Profile claims are reported in:</p>
+<ul>
+<li>The host's README or compatibility documentation.</li>
+<li>The <code>INTEROP-MATRIX.md</code> row for the host.</li>
+<li>The host's response to clients that query for profile membership (no protocol-defined endpoint; runtime-derived in the SDK).</li>
+</ul>
+<p>A profile is NOT something a host advertises in the discovery payload. The discovery payload advertises capabilities; the profile is what conformance derives from those capabilities.</p>
+<p>Operational annexes such as <code>auth-profiles.md</code>, <code>interrupt-profiles.md</code>, and <code>production-profile.md</code> define optional public-release claims. They are separate from this compatibility catalog because they combine runtime behavior, documentation, and conformance evidence rather than pure discovery-payload predicates.</p>
+<hr/>
+<h2 id="adding-a-profile">Adding a profile</h2>
+<p>New profiles are an additive change per <code>COMPATIBILITY.md</code> §2.1. The process:</p>
+<p>1. File an RFC per <code>RFCS/0001-rfc-process.md</code> proposing the profile name, its predicate over capabilities, and the runtime conformance scenarios required to pass it. 2. The RFC ships with a same-PR update to <code>conformance/src/lib/profiles.ts</code> adding the derivation. 3. New conformance scenarios that gate on the profile use the profile tag in their <code>describe()</code> block.</p>
+<p>Profiles MAY be deprecated via the <code>COMPATIBILITY.md</code> §7 deprecation policy (annotation + RFC; surface continues to behave through v1.x).</p>
+<p>A new profile MUST NOT cause a previously-passing host to fail an existing profile. Profile predicates are append-only within v1.x.</p>
+<hr/>
+<h2 id="why-this-is-not-a-wire-field">Why this is not a wire field</h2>
+<p>An earlier draft of this document proposed <code>capabilities.profiles: string[]</code> advertised in <code>/.well-known/openwop</code>. Reasons it was rejected:</p>
+<p>1. <strong>Two answers to one question.</strong> A host could advertise <code>profiles: [&quot;openwop-secrets&quot;]</code> while <code>capabilities.secrets.supported = false</code> because two code paths set them. Derivation makes this impossible. 2. <strong>Host redeploy.</strong> Adding a wire field forces every host to redeploy. Derivation runs in the suite, no redeploy. 3. <strong>Fragmentation risk.</strong> With a wire field, hosts could advertise nonexistent profiles. With derivation, the closed catalog is enforced by the suite.</p>
+<p>The derivation library is the single canonical implementation of profile membership.</p>
+<hr/>
+<h2 id="open-spec-gaps">Open spec gaps</h2>
+<table>
+<thead><tr><th>ID</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td>PROFILE-1</td><td>Sub-profiles (<code>openwop-node-packs-readonly</code>, <code>openwop-node-packs-publish</code>) — deferred candidate. Derivable today from which scenarios pass; will be formalized via a successor RFC if a third-party host needs the split.</td></tr>
+<tr><td>PROFILE-2</td><td>✅ Closed in the v1.0 conformance baseline. Profile-gated scenarios use <code>describe.runIf(profile)</code>; the conformance runner exposes <code>--profile=&amp;lt;name&amp;gt;</code> to filter.</td></tr>
+</tbody></table>
+<hr/>
+<h2 id="references">References</h2>
+<ul>
+<li><code>capabilities.md</code> — discovery-payload shape that profiles derive from.</li>
+<li><code>interrupt.md</code> — interrupt protocol that <code>openwop-interrupts</code> references.</li>
+<li><code>stream-modes.md</code> — streaming transports that <code>openwop-stream-sse</code> and <code>openwop-stream-poll</code> reference.</li>
+<li><code>run-options.md</code> — credential references that <code>openwop-secrets</code> references.</li>
+<li><code>node-packs.md</code> — registry HTTP API that <code>openwop-node-packs</code> references.</li>
+<li><code>COMPATIBILITY.md</code> — additive-change discipline that gates new profiles.</li>
+<li><code>RFCS/0001-rfc-process.md</code> — RFC mechanism for adding profiles.</li>
+<li><code>INTEROP-MATRIX.md</code> — per-host profile pass/skip table.</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

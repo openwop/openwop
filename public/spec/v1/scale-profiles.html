@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — openwop Spec v1 — Scale Profiles</title>
+  <meta name="description" content="openwop doesn&#39;t standardize how a host scales — implementation-internal queueing, sharding, and worker-pool design are out of scope. But clients need to be able to choose a host that matches their workload, and hosts need a vocabulary for describing…"/>
+  <link rel="canonical" href="https://openwop.dev/spec/v1/scale-profiles.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — openwop Spec v1 — Scale Profiles"/>
+  <meta property="og:description" content="openwop doesn&#39;t standardize how a host scales — implementation-internal queueing, sharding, and worker-pool design are out of scope. But clients need to be able to choose a host that matches their workload, and hosts need a vocabulary for describing…"/>
+  <meta property="og:url" content="https://openwop.dev/spec/v1/scale-profiles.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — openwop Spec v1 — Scale Profiles"/>
+  <meta name="twitter:description" content="openwop doesn&#39;t standardize how a host scales — implementation-internal queueing, sharding, and worker-pool design are out of scope. But clients need to be able to choose a host that matches their workload, and hosts need a vocabulary for describing…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="active" href="/spec/v1/">Spec</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/profiles/">Profiles</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="openwop-spec-v1-scale-profiles">openwop Spec v1 — Scale Profiles</h1>
+<blockquote><p><strong>Status: FINAL v1 (2026-05-05).</strong> Defines three scale tiers a host MAY claim. Scale claims are advertised in host documentation and verified at runtime by <code>@openwop/openwop-conformance</code> scenarios. No discovery-payload schema change. Graduated DRAFT → FINAL via RFC 0004. See <code>auth.md</code> for the status legend. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>.</p></blockquote>
+<hr/>
+<h2 id="why-this-exists">Why this exists</h2>
+<p>openwop doesn't standardize how a host scales — implementation-internal queueing, sharding, and worker-pool design are out of scope. But clients need to be able to choose a host that matches their workload, and hosts need a vocabulary for describing what they can sustain.</p>
+<p>A <strong>scale profile</strong> is a named tier of operational guarantees: concurrency floor, queue depth, fan-out cap, retry behavior, and expected latency for canonical scenarios. Three tiers:</p>
+<ul>
+<li><strong><code>minimal</code></strong> — appropriate for a development host or a reference example. Single-process, no horizontal scaling.</li>
+<li><strong><code>production</code></strong> — appropriate for a small-to-medium-sized production deployment serving real users.</li>
+<li><strong><code>high-throughput</code></strong> — appropriate for a deployment that prioritizes sustained throughput over latency.</li>
+</ul>
+<p>Scale profiles are independent of compatibility profiles (<code>profiles.md</code>). A host MAY satisfy <code>openwop-core</code> + <code>openwop-secrets</code> at any scale tier; the two axes don't constrain each other.</p>
+<hr/>
+<h2 id="profile-definitions">Profile definitions</h2>
+<table>
+<thead><tr><th>Property</th><th><code>minimal</code></th><th><code>production</code></th><th><code>high-throughput</code></th></tr></thead>
+<tbody>
+<tr><td>Concurrent runs in flight (per tenant)</td><td>≥ 1</td><td>≥ 50</td><td>≥ 500</td></tr>
+<tr><td>Concurrent runs in flight (global)</td><td>≥ 1</td><td>≥ 500</td><td>≥ 5000</td></tr>
+<tr><td><code>POST /v1/runs</code> p50 latency</td><td>≤ 1000 ms</td><td>≤ 250 ms</td><td>≤ 100 ms</td></tr>
+<tr><td><code>POST /v1/runs</code> p99 latency</td><td>≤ 5000 ms</td><td>≤ 1000 ms</td><td>≤ 500 ms</td></tr>
+<tr><td>Event-stream delivery delay (p99)</td><td>≤ 5000 ms</td><td>≤ 500 ms</td><td>≤ 200 ms</td></tr>
+<tr><td>Idempotency cache retention</td><td>≥ 24 h</td><td>≥ 24 h</td><td>≥ 24 h</td></tr>
+<tr><td>Backpressure mechanism</td><td>503 + Retry-After</td><td>503 + Retry-After + queue</td><td>503 + Retry-After + queue + admission control</td></tr>
+<tr><td>Fan-out cap (parallel sub-workflows)</td><td>≥ 1</td><td>≥ 10</td><td>≥ 100</td></tr>
+<tr><td>Run replay (cold-cache)</td><td>≤ 30 s</td><td>≤ 5 s</td><td>≤ 2 s</td></tr>
+</tbody></table>
+<p>The numbers are <strong>floors a host MUST sustain to claim the tier</strong>, not suggested defaults. A host that sustains <code>production</code>-tier numbers under typical load but not under sustained burst SHOULD claim <code>production</code> and document its burst behavior in its README.</p>
+<hr/>
+<h2 id="conformance-scenarios">Conformance scenarios</h2>
+<p><code>@openwop/openwop-conformance</code> includes scenarios that exercise these guarantees against a live host. Scenarios are tagged with the scale profile they target:</p>
+<ul>
+<li><code>highConcurrency.test.ts</code> — covers concurrent-runs-in-flight, p99 latency under load, idempotency under retry storm.</li>
+<li><code>streamReconnect.test.ts</code> — covers event-stream delivery delay during reconnect.</li>
+<li><code>staleClaim.test.ts</code> — covers replay-on-claim-release behavior.</li>
+</ul>
+<p>Hosts run the conformance suite and report which scale profile they pass against. The pass record lives in:</p>
+<ul>
+<li>The host's README or compatibility documentation.</li>
+<li>The <code>INTEROP-MATRIX.md</code> row for the host.</li>
+</ul>
+<p>The scale profile is <strong>not</strong> advertised in <code>/.well-known/openwop</code>. There's no protocol-defined endpoint for "what scale profile do you pass." It's a documentation-and-conformance claim, not a wire-level handshake.</p>
+<hr/>
+<h2 id="backpressure-semantics">Backpressure semantics</h2>
+<p>A host SHOULD return <code>503 Service Unavailable</code> with a <code>Retry-After</code> header when the server is at capacity for the current request. The body MUST be the standard error envelope per <code>auth.md</code>:</p>
+<pre class="lang-json"><code>{
+  &quot;error&quot;: &quot;service_unavailable&quot;,
+  &quot;message&quot;: &quot;Server at capacity. Retry after 5s.&quot;,
+  &quot;details&quot;: {
+    &quot;retryAfter&quot;: 5
+  }
+}</code></pre>
+<p>The <code>details.retryAfter</code> value (in seconds), when present, MUST equal the <code>Retry-After</code> header value. Clients MAY compute their own backoff but SHOULD respect <code>Retry-After</code> as a floor.</p>
+<p>A host claiming <code>production</code> or <code>high-throughput</code> SHOULD additionally implement an in-process queue that absorbs short bursts before returning 503. The queue depth is implementation-defined; the host MAY document the depth in its README.</p>
+<p>A host claiming <code>high-throughput</code> SHOULD implement admission control: when the queue is at capacity, the host MAY pre-emptively reject low-priority requests (e.g., requests without an <code>Idempotency-Key</code> from non-priority tenants) before they enter the queue. Admission control is implementation-defined; the host MUST document the policy if any client could observe a different rejection rate by varying request shape.</p>
+<hr/>
+<h2 id="retry-semantics">Retry semantics</h2>
+<p>Per <code>idempotency.md</code> §"Caller responsibilities," a caller SHOULD retry a transient failure (<code>503</code>, <code>429</code>, <code>5xx</code>, network error) with the same <code>Idempotency-Key</code>. This document layers normative retry semantics on top:</p>
+<ul>
+<li><strong>Floor on retry count.</strong> A host MUST handle at least <code>5</code> retries with the same <code>Idempotency-Key</code> within the cache-retention window without losing the cached response. A host that retains the cache longer (per its scale profile) accepts more retries by extension.</li>
+<li><strong>Floor on retry interval.</strong> A host MUST tolerate retries arriving as fast as <code>100 ms</code> apart. A host that returns <code>429</code> for fast retries MUST set <code>Retry-After</code> and MUST NOT reject the request after the indicated wait.</li>
+<li><strong>Cache-miss on stale retry.</strong> Per <code>idempotency.md</code> §"Server responsibilities" #4, a host that has evicted the cache entry MAY treat the next retry as a fresh request. Hosts SHOULD document their cache-eviction policy if it's stricter than the 24-hour minimum.</li>
+</ul>
+<p>Hosts claiming <code>high-throughput</code> SHOULD support at least <code>20</code> retries within the cache-retention window — burst retry storms are common in that tier and clients MUST be able to drive them safely.</p>
+<hr/>
+<h2 id="fan-out-semantics">Fan-out semantics</h2>
+<p>A workflow that spawns sub-workflows (per <code>replay.md</code> §"Sub-workflows") creates fan-out. The cap on parallel sub-workflows from a single parent is implementation-defined; this document sets minimum floors per profile (see table above).</p>
+<p>A host that throttles fan-out below the floor is not in the claimed profile. A host that exceeds the floor is permitted; clients SHOULD NOT depend on parallelism beyond the floor unless the host's documentation guarantees a higher cap.</p>
+<p>When fan-out is throttled, the host MUST emit a standard run event that clients can observe and MUST continue the run with sequential execution of the throttled siblings. Hosts MAY use <code>workflow.stalled</code>, <code>node.failed</code> with a retryable error, or a host-extension event such as <code>host.fan_out.throttled</code>; they MUST NOT use <code>cap.breached</code> unless the schema has a registered <code>kind</code> for that limit. A host MUST NOT silently drop sub-workflow spawns.</p>
+<hr/>
+<h2 id="replay-semantics">Replay semantics</h2>
+<p>Per <code>replay.md</code>, a host MAY support cold-cache replay (re-construct run state from event log on a host that hasn't seen the run before). Replay is OPTIONAL in v1 (advertised via the conformance scenarios for the profile); the scale profile sets a latency floor for hosts that DO support it.</p>
+<p>A host claiming <code>high-throughput</code> SHOULD implement event-log indexing such that cold-cache replay completes within the floor in the table above. Hosts that don't implement replay MUST either fail the <code>replayDeterminism.test.ts</code> scenario explicitly (with a documented out-of-scope marker) or reject <code>POST /v1/runs:fork</code> requests with <code>501 Not Implemented</code>.</p>
+<hr/>
+<h2 id="conformance-expectations">Conformance expectations</h2>
+<p>A host claims a scale profile by:</p>
+<p>1. Running <code>@openwop/openwop-conformance</code> with an advertised scale profile and publishing the command/result summary. 2. Passing every scenario tagged with that profile. 3. Documenting the pass result in the host's README + <code>INTEROP-MATRIX.md</code> row.</p>
+<p>Profile pass results are <strong>per-conformance-suite-version</strong>. A host claiming <code>production</code> against suite <code>1.0.0</code> MAY fail <code>production</code> against suite <code>1.1.0</code> if new scenarios were added that the host doesn't yet pass; the suite minor bump doesn't invalidate the earlier pass.</p>
+<hr/>
+<h2 id="why-these-specific-numbers">Why these specific numbers</h2>
+<p>The numbers above derive from observed practice at small-to-medium production OpenWOP deployments and similar workflow-host deployments:</p>
+<ul>
+<li><code>minimal</code>: numbers a development laptop or a single-process reference example sustains without specific tuning.</li>
+<li><code>production</code>: numbers a single managed-container or platform-as-a-service deployment with default autoscaling sustains.</li>
+<li><code>high-throughput</code>: numbers that require deliberate horizontal scaling, sharded queues, or admission control.</li>
+</ul>
+<p>Hosts whose workloads don't fit these tiers MAY define their own profile in a follow-up RFC. The closed catalog of three is the v1.x default; profiles MAY be added per <code>RFCS/0001-rfc-process.md</code>.</p>
+<hr/>
+<h2 id="open-spec-gaps">Open spec gaps</h2>
+<table>
+<thead><tr><th>ID</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td>SCALE-1</td><td>✅ Closed in the v1.0 conformance baseline. <code>--scale-profile=&amp;lt;name&amp;gt;</code> filters scenarios by their profile tag.</td></tr>
+<tr><td>SCALE-2</td><td>Latency-percentile measurement methodology (warm-up time, sample size, environment) is not specified here. Each scenario file documents its own. The <code>highConcurrency.test.ts</code> scenario seeds the methodology.</td></tr>
+<tr><td>SCALE-3</td><td>Cross-region replication semantics (a single run originating in one region with replay served from another) is out of scope for v1.x.</td></tr>
+</tbody></table>
+<hr/>
+<h2 id="references">References</h2>
+<ul>
+<li><code>idempotency.md</code> — Layer 1 idempotency contract that retry semantics build on.</li>
+<li><code>replay.md</code> — replay/fork mechanism that the replay-latency floor measures.</li>
+<li><code>capabilities.md</code> §"Engine-enforced limits" — <code>cap.breached</code> event for registered engine-enforced limits.</li>
+<li><code>profiles.md</code> — compatibility profiles (independent axis from scale profiles).</li>
+<li><code>COMPATIBILITY.md</code> — additive-change discipline that gates new scale profiles.</li>
+<li><code>RFCS/0001-rfc-process.md</code> — RFC mechanism for adding scale profiles.</li>
+<li><code>spec/v1/idempotency.md</code> — companion spec nailing down idempotency+retry semantics for <code>POST /v1/runs</code>.</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

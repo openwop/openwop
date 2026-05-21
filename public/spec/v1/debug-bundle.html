@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — openwop Spec v1 — Run Debug Bundle</title>
+  <meta name="description" content="When a run misbehaves and an operator needs to file a bug, send context to the host vendor, or reproduce the failure on a different host, today&#39;s options are:"/>
+  <link rel="canonical" href="https://openwop.dev/spec/v1/debug-bundle.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — openwop Spec v1 — Run Debug Bundle"/>
+  <meta property="og:description" content="When a run misbehaves and an operator needs to file a bug, send context to the host vendor, or reproduce the failure on a different host, today&#39;s options are:"/>
+  <meta property="og:url" content="https://openwop.dev/spec/v1/debug-bundle.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — openwop Spec v1 — Run Debug Bundle"/>
+  <meta name="twitter:description" content="When a run misbehaves and an operator needs to file a bug, send context to the host vendor, or reproduce the failure on a different host, today&#39;s options are:"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="active" href="/spec/v1/">Spec</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/profiles/">Profiles</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="openwop-spec-v1-run-debug-bundle">openwop Spec v1 — Run Debug Bundle</h1>
+<blockquote><p><strong>Status: FINAL v1 (2026-05-05).</strong> Defines <code>GET /v1/runs/{runId}/debug-bundle</code> — a portable JSON export of a single run's diagnostic state. Additive over v1 per <code>COMPATIBILITY.md</code> §2.1: optional endpoint; hosts MAY omit. Graduated DRAFT → FINAL via RFC 0004. See <code>auth.md</code> for the status legend. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>.</p></blockquote>
+<hr/>
+<h2 id="why-this-exists">Why this exists</h2>
+<p>When a run misbehaves and an operator needs to file a bug, send context to the host vendor, or reproduce the failure on a different host, today's options are:</p>
+<ul>
+<li>Screenshot the UI (lossy, not machine-readable, leaks secrets).</li>
+<li><code>curl</code> every endpoint and concatenate (incomplete, schema-uncertain).</li>
+<li>Hand the host vendor RAW database access (secret-exposing, not portable).</li>
+</ul>
+<p>openwop defines a <strong>portable JSON debug bundle</strong> that captures every diagnostic surface relevant to a single run in one verifiable shape. Two hosts running this contract produce comparable bundles for the same run; vendor-neutral tooling can ingest them; redaction is uniform.</p>
+<p>This isn't an audit log (those are host-internal compliance artifacts) or a metric export (those are observability-pipeline concerns). It's the <strong>portable equivalent of a Chrome <code>chrome://crash</code> bundle</strong> — what a developer hands a maintainer to debug a specific run.</p>
+<hr/>
+<h2 id="endpoint">Endpoint</h2>
+<pre class="lang-"><code>GET /v1/runs/{runId}/debug-bundle</code></pre>
+<table>
+<thead><tr><th>Auth</th><th>Cache</th><th>Profile gating</th></tr></thead>
+<tbody>
+<tr><td>Required (Bearer)</td><td><code>Cache-Control: no-store</code></td><td><code>openwop-debug-bundle</code> (advertised in <code>capabilities.debugBundle.supported: true</code>)</td></tr>
+</tbody></table>
+<p>A host that doesn't advertise <code>capabilities.debugBundle.supported: true</code> returns <code>404 Not Found</code> on this endpoint. Hosts that advertise <code>true</code> MUST return a bundle that schema-validates against <code>schemas/debug-bundle.schema.json</code>.</p>
+<p>The endpoint is intentionally separate from <code>GET /v1/runs/{runId}</code> (snapshot) and <code>GET /v1/runs/{runId}/events*</code> (event stream). The bundle aggregates both plus diagnostic metadata into a single response.</p>
+<hr/>
+<h2 id="response-shape">Response shape</h2>
+<pre class="lang-json"><code>{
+  &quot;bundleVersion&quot;: &quot;1&quot;,
+  &quot;generatedAt&quot;: &quot;2026-05-01T12:34:56.000Z&quot;,
+  &quot;host&quot;: {
+    &quot;name&quot;: &quot;string&quot;,
+    &quot;version&quot;: &quot;string&quot;,
+    &quot;vendor&quot;: &quot;string&quot;
+  },
+  &quot;run&quot;: {
+    &quot;runId&quot;: &quot;string&quot;,
+    &quot;workflowId&quot;: &quot;string&quot;,
+    &quot;status&quot;: &quot;completed | failed | cancelled | running | ...&quot;,
+    &quot;startedAt&quot;: &quot;ISO 8601&quot;,
+    &quot;endedAt&quot;: &quot;ISO 8601 | null&quot;,
+    &quot;error&quot;: { &quot;code&quot;: &quot;string&quot;, &quot;message&quot;: &quot;string&quot; } | null,
+    &quot;inputs&quot;: { },
+    &quot;variables&quot;: { }
+  },
+  &quot;events&quot;: [
+    {
+      &quot;sequence&quot;: 0,
+      &quot;type&quot;: &quot;run.started&quot;,
+      &quot;timestamp&quot;: &quot;ISO 8601&quot;,
+      &quot;nodeId&quot;: &quot;string | null&quot;,
+      &quot;data&quot;: { } | null
+    }
+  ],
+  &quot;spans&quot;: [
+    {
+      &quot;name&quot;: &quot;openwop.run&quot;,
+      &quot;spanId&quot;: &quot;string&quot;,
+      &quot;parentSpanId&quot;: &quot;string | null&quot;,
+      &quot;startedAt&quot;: &quot;ISO 8601&quot;,
+      &quot;endedAt&quot;: &quot;ISO 8601 | null&quot;,
+      &quot;attributes&quot;: { &quot;openwop.run_id&quot;: &quot;...&quot;, &quot;openwop.workflow_id&quot;: &quot;...&quot; }
+    }
+  ],
+  &quot;metrics&quot;: {
+    &quot;openwopCost&quot;: {
+      &quot;usd&quot;: 0.0,
+      &quot;tokens&quot;: { &quot;input&quot;: 0, &quot;output&quot;: 0 },
+      &quot;model&quot;: &quot;string&quot;,
+      &quot;provider&quot;: &quot;string&quot;,
+      &quot;duration_ms&quot;: 0
+    } | null,
+    &quot;nodeCount&quot;: 0,
+    &quot;eventCount&quot;: 0
+  },
+  &quot;redactionApplied&quot;: true,
+  &quot;redactionMode&quot;: &quot;mask | omit | hash | passthrough&quot;
+}</code></pre>
+<hr/>
+<h2 id="field-reference">Field reference</h2>
+<h3 id="top-level">Top-level</h3>
+<table>
+<thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td><code>bundleVersion</code></td><td>string</td><td>MUST</td><td>Schema version of the bundle. v1.x bundles are <code>&quot;1&quot;</code>; future shape changes bump this independently of the run's own data.</td></tr>
+<tr><td><code>generatedAt</code></td><td>string</td><td>MUST</td><td>ISO 8601 timestamp when the host generated this response.</td></tr>
+<tr><td><code>host</code></td><td>object</td><td>MUST</td><td>Identifies the host that produced the bundle. Mirrors <code>capabilities.implementation</code> shape.</td></tr>
+<tr><td><code>run</code></td><td>object</td><td>MUST</td><td>The run snapshot — same shape as <code>GET /v1/runs/{runId}</code>.</td></tr>
+<tr><td><code>events</code></td><td>array</td><td>MUST</td><td>The full event log for this run, in order. Same shape as <code>GET /v1/runs/{runId}/events/poll</code>'s <code>events</code>.</td></tr>
+<tr><td><code>spans</code></td><td>array</td><td>SHOULD</td><td>OTel-style spans emitted during the run, if the host instruments them. Empty array if the host doesn't emit spans.</td></tr>
+<tr><td><code>metrics</code></td><td>object</td><td>SHOULD</td><td>Aggregate metrics for the run.</td></tr>
+<tr><td><code>redactionApplied</code></td><td>boolean</td><td>MUST</td><td><code>true</code> if any field in this bundle was masked/omitted/hashed by the host's redaction harness.</td></tr>
+<tr><td><code>redactionMode</code></td><td>string</td><td>MUST</td><td>The masking mode in effect per <code>capabilities.compliance.defaultMode</code>. One of <code>mask</code> / <code>omit</code> / <code>hash</code> / <code>passthrough</code>.</td></tr>
+</tbody></table>
+<h3 id="run-field"><code>run</code> field</h3>
+<p>Mirrors the response shape of <code>GET /v1/runs/{runId}</code> exactly. Hosts MUST NOT include fields beyond what <code>run-snapshot.schema.json</code> defines.</p>
+<h3 id="events-field"><code>events</code> field</h3>
+<p>Mirrors the response shape of <code>GET /v1/runs/{runId}/events/poll</code>'s <code>events</code> array exactly. Each entry follows <code>run-event.schema.json</code>.</p>
+<h3 id="spans-field"><code>spans</code> field</h3>
+<p>OTel-format spans per <code>spec/v1/observability.md</code> §"Span attributes" + §"Span naming." Hosts that emit spans into a tracer (Honeycomb, Datadog, Cloud Trace) re-serialize them into this array. Hosts that don't emit spans return <code>[]</code>.</p>
+<p>Each span includes:</p>
+<ul>
+<li><code>name</code> (canonical <code>openwop.*</code> per observability.md)</li>
+<li><code>spanId</code> (16-byte hex string)</li>
+<li><code>parentSpanId</code> (16-byte hex string or null)</li>
+<li><code>startedAt</code> / <code>endedAt</code> (ISO 8601)</li>
+<li><code>attributes</code> (record of attribute key → value)</li>
+</ul>
+<p>Attribute redaction follows the same rules as event payloads (see §"Redaction guarantees" below).</p>
+<h3 id="metrics-field"><code>metrics</code> field</h3>
+<p>Aggregate metrics. The optional <code>openwopCost</code> matches <code>RunSnapshot.metrics.openwopCost</code> per <code>run-snapshot.schema.json</code>. <code>nodeCount</code> and <code>eventCount</code> are bookkeeping for verification:</p>
+<ul>
+<li><code>nodeCount</code> SHOULD equal the number of distinct <code>nodeId</code> values across all events.</li>
+<li><code>eventCount</code> MUST equal <code>events.length</code>. The conformance scenario asserts this.</li>
+</ul>
+<hr/>
+<h2 id="redaction-guarantees">Redaction guarantees</h2>
+<p>The bundle MUST inherit the host's redaction harness:</p>
+<ul>
+<li><strong>Sensitive fields</strong> (per <code>spec/v1/observability.md</code> §"Privacy classification") are masked according to <code>redactionMode</code>.</li>
+<li><strong>Workflow inputs and variables</strong> marked <code>sensitive: true</code> apply their masking.</li>
+<li><strong>Bearer tokens, BYOK credentials, and provider API keys</strong> that may have appeared in event payloads, error messages, or span attributes MUST be sanitized before bundle assembly.</li>
+<li><strong>Span attributes</strong> outside the canonical <code>openwop.*</code> allowlist MUST be either filtered or sanitized (host's choice; the redaction harness covers either path).</li>
+</ul>
+<p>The <code>redactionApplied: true</code> flag signals that the host applied redaction; <code>redactionApplied: false</code> is permitted only when no sensitive data was present and <code>redactionMode</code> is <code>passthrough</code>.</p>
+<p>A host that returns <code>redactionApplied: true</code> AND <code>redactionMode: passthrough</code> is MALFORMED — pick one or the other. The conformance scenario <code>debugBundle.test.ts</code> checks this.</p>
+<hr/>
+<h2 id="authorization-and-scoping">Authorization and scoping</h2>
+<p>A bundle response MUST NOT reveal:</p>
+<ul>
+<li>Other tenants' data (cross-tenant leakage).</li>
+<li>Other runs' events or spans (cross-run leakage).</li>
+<li>Host-internal infrastructure details (machine names, internal IP addresses, database connection strings).</li>
+</ul>
+<p>Bundles are issued under the same auth principal as the run-creation request. Hosts MAY require an additional capability grant (e.g., <code>debug-bundle.read</code>) per their RBAC; that's host-implementation choice.</p>
+<p>A 401 / 403 response on this endpoint follows the canonical <code>auth.md</code> error envelope.</p>
+<hr/>
+<h2 id="bundle-size-limits">Bundle size limits</h2>
+<p>A bundle for a typical run is &lt; 1 MB. Hosts MUST cap bundle size at <strong>8 MB</strong> by default; if the run&#39;s events / spans would exceed the cap, the host returns the bundle truncated and sets <code>truncated: true</code> plus a <code>truncatedReason</code> field:</p>
+<pre class="lang-json"><code>{
+  &amp;quot;bundleVersion&amp;quot;: &amp;quot;1&amp;quot;,
+  &amp;quot;...&amp;quot;: &amp;quot;...&amp;quot;,
+  &amp;quot;truncated&amp;quot;: true,
+  &amp;quot;truncatedReason&amp;quot;: &amp;quot;events_truncated_to_size_cap&amp;quot;,
+  &amp;quot;events&amp;quot;: [ /* prefix only */ ]
+}</code></pre>
+<p>Hosts MAY raise the cap via implementation-defined configuration. Clients MUST handle <code>truncated: true</code> by either rendering a &quot;this bundle is partial&quot; indicator or fetching the full event stream separately.</p>
+<p>Hosts MAY also accept implementation-defined query parameters to lower the cap on a per-request basis (e.g., for conformance tests that need to force the truncation path without driving the bundle past the 8 MB ceiling). The SQLite reference host accepts <code>?maxEvents=N</code>; the conformance scenario at <code>conformance/src/scenarios/debug-bundle-truncation.test.ts</code> soft-skips against hosts that don&#39;t honor it. Any such query parameter MUST be <code>host.*</code> namespaced if the host wants to claim spec-canonical compatibility — <code>maxEvents</code> works as an undocumented host-implementation extension because it doesn&#39;t conflict with any reserved name and the spec leaves &quot;lower the cap&quot; as host choice. Future-spec implementers SHOULD prefer <code>host.&amp;lt;vendor&amp;gt;.&amp;lt;query&amp;gt;</code> to avoid this naming collision.</p>
+<hr/>
+<h2 id="why-this-isn-t-compressed-by-the-protocol">Why this isn't compressed by the protocol</h2>
+<p>A bundle is JSON. Hosts MAY use HTTP-level compression (<code>Content-Encoding: gzip</code>) per standard HTTP. The protocol doesn't mandate it; the JSON itself is verifiable plain-text.</p>
+<hr/>
+<h2 id="open-spec-gaps">Open spec gaps</h2>
+<table>
+<thead><tr><th>ID</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td>DEBUG-BUNDLE-1</td><td>✅ Closed in the v1.0 conformance baseline. <code>capabilities.debugBundle.supported: true</code> is represented in <code>schemas/capabilities.schema.json</code> as an additive optional property.</td></tr>
+<tr><td>DEBUG-BUNDLE-2</td><td>OTel-span-id format conventions when the bundle is consumed cross-trace are non-normative here — assume W3C trace context per observability.md §"Trace context propagation."</td></tr>
+<tr><td>DEBUG-BUNDLE-3</td><td>The 8 MB default cap is conservative. A high-throughput host serving long-running runs may need a higher cap or a streaming variant; out of scope for v1.x.</td></tr>
+</tbody></table>
+<hr/>
+<h2 id="references">References</h2>
+<ul>
+<li><code>spec/v1/observability.md</code> — span naming, attribute taxonomy, privacy classification.</li>
+<li><code>spec/v1/observability.md</code> §"Canonical run lifecycle event names" — closed event vocabulary.</li>
+<li><code>schemas/debug-bundle.schema.json</code> — wire-shape contract.</li>
+<li><code>schemas/run-snapshot.schema.json</code> — <code>run</code> field reuses this.</li>
+<li><code>schemas/run-event.schema.json</code> — <code>events</code> field entries reuse this.</li>
+<li><code>SECURITY/threat-model-secret-leakage.md</code> — debug-bundle invariants <code>secret-leakage-debug-bundle</code> + <code>secret-leakage-debug-bundle-otel</code>.</li>
+<li><code>conformance/src/scenarios/debugBundle.test.ts</code> — conformance contract.</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

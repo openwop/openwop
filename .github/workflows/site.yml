@@ -1,4 +1,12 @@
-name: Site (build + deploy to Pages)
+name: Site (build verification)
+
+# Production deploys of openwop.dev are served from Firebase Hosting via
+# `scripts/build-site.sh` + `firebase deploy --only hosting:docs`, NOT
+# GitHub Pages. This workflow only runs the build to verify that the
+# generator + templates still render cleanly when the spec corpus changes.
+# The Pages deploy job below is left in place for emergency
+# fallback / preview-domain use; it will not run unless a release manager
+# explicitly triggers a workflow_dispatch with ALLOW_DEPLOY=1.
 
 on:
   push:
@@ -82,7 +90,7 @@ jobs:
   # Until then, deploys must be run manually via workflow_dispatch with
   # ALLOW_DEPLOY=1 secret/var set.
   deploy:
-    name: Deploy to GitHub Pages
+    name: Deploy to GitHub Pages (fallback only — production is Firebase)
     needs: build
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' && vars.ALLOW_DEPLOY == '1'

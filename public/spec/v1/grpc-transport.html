@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — openwop Spec v1 — gRPC Transport Profile</title>
+  <meta name="description" content="Some deployment classes prefer gRPC over REST for protocol-level reasons:"/>
+  <link rel="canonical" href="https://openwop.dev/spec/v1/grpc-transport.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — openwop Spec v1 — gRPC Transport Profile"/>
+  <meta property="og:description" content="Some deployment classes prefer gRPC over REST for protocol-level reasons:"/>
+  <meta property="og:url" content="https://openwop.dev/spec/v1/grpc-transport.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — openwop Spec v1 — gRPC Transport Profile"/>
+  <meta name="twitter:description" content="Some deployment classes prefer gRPC over REST for protocol-level reasons:"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="active" href="/spec/v1/">Spec</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/profiles/">Profiles</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="openwop-spec-v1-grpc-transport-profile">openwop Spec v1 — gRPC Transport Profile</h1>
+<blockquote><p><strong>Status: FINAL v1 (2026-05-12).</strong> Optional alternative transport profile. REST + SSE remains the REQUIRED wire surface for every v1-conforming host (per <code>rest-endpoints.md</code>); a host MAY ALSO expose the gRPC surface defined here under <code>capabilities.supportedTransports: [&quot;grpc&quot;]</code>. The two surfaces describe the same protocol semantics; gRPC clients can produce byte-equivalent runs against a dual-surface host. Closes R3 in <code>rest-endpoints.md</code> §"Open spec gaps". Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
+<hr/>
+<h2 id="why-this-exists">Why this exists</h2>
+<p>Some deployment classes prefer gRPC over REST for protocol-level reasons:</p>
+<ul>
+<li><strong>Internal microservice networks</strong> that already standardize on gRPC + Protobuf wire format.</li>
+<li><strong>Multi-language clients</strong> that benefit from a single <code>.proto</code> definition rather than per-language OpenAPI generators.</li>
+<li><strong>Bidirectional streaming</strong> for the events surface — REST + SSE works but gRPC's native bidi-stream is more ergonomic in some clients.</li>
+<li><strong>Lower per-request overhead</strong> vs HTTP/1.1 + JSON for high-volume orchestration paths.</li>
+</ul>
+<p>The protocol's REST + SSE surface remains the v1 canonical contract. A host that adds gRPC does NOT drop REST; it exposes BOTH surfaces over the same engine. The conformance suite continues to validate REST; gRPC conformance is gated on an additional scenario set that compares per-operation outcomes against the REST surface.</p>
+<hr/>
+<h2 id="scope">Scope</h2>
+<p><strong>In scope:</strong></p>
+<ul>
+<li>Wire-format canonical: Protobuf 3 over gRPC over HTTP/2.</li>
+<li>Service-name canonical: <code>openwop.v1.Engine</code> (one service per protocol version).</li>
+<li>Method names: 1:1 with <code>api/openapi.yaml</code> <code>operationId</code> values, normalized to PascalCase.</li>
+<li>Error-envelope mapping: <code>error-envelope.schema.json</code> → gRPC <code>Status</code> proto with <code>details[]</code> carrying the <code>error-envelope</code> JSON.</li>
+<li>Bidirectional event-stream method (<code>StreamRunEvents</code>) replacing SSE.</li>
+<li>Auth: same bearer-token + scope vocabulary, passed via the gRPC <code>authorization</code> metadata key.</li>
+</ul>
+<p><strong>Out of scope:</strong></p>
+<ul>
+<li>Replacing REST. REST + SSE remains the v1-required surface.</li>
+<li>Re-spec'ing semantics. Every gRPC method's behavior is identical to its REST counterpart per <code>rest-endpoints.md</code>.</li>
+<li>Streaming primitives beyond <code>StreamRunEvents</code> — no bidi for run-create or interrupt-resolve.</li>
+<li>gRPC-Web. Hosts MAY expose gRPC-Web alongside; the conformance scenario validates the canonical gRPC-over-HTTP/2 path.</li>
+</ul>
+<hr/>
+<h2 id="service-definition">Service definition</h2>
+<p>The canonical <code>.proto</code> file lives at <code>api/grpc/openwop.proto</code> and ships alongside <code>api/openapi.yaml</code>. Hosts MAY embed the file or fetch it from the conformance suite distribution at install time.</p>
+<pre class="lang-protobuf"><code>syntax = &quot;proto3&quot;;
+
+package openwop.v1;
+
+// One service per protocol major version. v2 would introduce
+// `openwop.v2.Engine` alongside, similar to /v1/ ↔ /v2/ in REST.
+service Engine {
+  // Discovery — 1:1 with REST `GET /.well-known/openwop`.
+  rpc GetCapabilities(GetCapabilitiesRequest) returns (GetCapabilitiesResponse);
+
+  // Workflow + Run lifecycle.
+  rpc GetWorkflow(GetWorkflowRequest) returns (GetWorkflowResponse);
+  rpc CreateRun(CreateRunRequest) returns (CreateRunResponse);
+  rpc GetRun(GetRunRequest) returns (GetRunResponse);
+  rpc CancelRun(CancelRunRequest) returns (CancelRunResponse);
+  rpc BulkCancelRuns(BulkCancelRunsRequest) returns (BulkCancelRunsResponse);
+  rpc ForkRun(ForkRunRequest) returns (ForkRunResponse);
+  rpc PauseRun(PauseRunRequest) returns (PauseRunResponse);
+  rpc ResumeRun(ResumeRunRequest) returns (ResumeRunResponse);
+
+  // Events — server-streaming replaces SSE.
+  // Client cancels by tearing down the stream; host respects.
+  rpc StreamRunEvents(StreamRunEventsRequest) returns (stream RunEventEnvelope);
+
+  // HITL — interrupt resolution.
+  rpc ResolveInterruptByRun(ResolveInterruptByRunRequest) returns (ResolveInterruptResponse);
+  rpc ResolveInterruptByToken(ResolveInterruptByTokenRequest) returns (ResolveInterruptResponse);
+  rpc InspectInterruptByToken(InspectInterruptByTokenRequest) returns (InspectInterruptResponse);
+
+  // Artifacts + Webhooks + Audit verify.
+  rpc GetArtifact(GetArtifactRequest) returns (GetArtifactResponse);
+  rpc RegisterWebhook(RegisterWebhookRequest) returns (RegisterWebhookResponse);
+  rpc UnregisterWebhook(UnregisterWebhookRequest) returns (google.protobuf.Empty);
+  rpc VerifyAuditLog(VerifyAuditLogRequest) returns (VerifyAuditLogResponse);
+}</code></pre>
+<p>Message shapes mirror the JSON Schemas. Field names are snake_case per Protobuf convention; the wire-format JSON⇆Protobuf field-name translation follows the Protobuf canonical JSON mapping (proto3 JSON Mapping). Implementations MAY use <code>json_name</code> field options to preserve REST-style camelCase across the JSON surface.</p>
+<hr/>
+<h2 id="auth">Auth</h2>
+<p>Bearer tokens travel in the gRPC <code>authorization</code> metadata key per the standard convention:</p>
+<pre class="lang-"><code>authorization: Bearer &amp;lt;token&amp;gt;</code></pre>
+<p>Same scope vocabulary as REST per <code>auth.md</code>. The host validates the bearer token + scope against the gRPC method exactly as it would the REST operation (the method ↔ scope map below is normative).</p>
+<p><strong>Method ↔ required scope:</strong></p>
+<table>
+<thead><tr><th>gRPC method</th><th>Scope</th></tr></thead>
+<tbody>
+<tr><td><code>GetCapabilities</code></td><td>none (unauthenticated)</td></tr>
+<tr><td><code>GetWorkflow</code></td><td><code>manifest:read</code></td></tr>
+<tr><td><code>CreateRun</code></td><td><code>runs:create</code></td></tr>
+<tr><td><code>GetRun</code> / <code>StreamRunEvents</code></td><td><code>runs:read</code></td></tr>
+<tr><td><code>CancelRun</code> / <code>BulkCancelRuns</code> / <code>PauseRun</code> / <code>ResumeRun</code></td><td><code>runs:cancel</code></td></tr>
+<tr><td><code>ForkRun</code></td><td><code>runs:create</code> + <code>runs:read</code></td></tr>
+<tr><td><code>ResolveInterruptByRun</code></td><td><code>approvals:respond</code></td></tr>
+<tr><td><code>ResolveInterruptByToken</code> / <code>InspectInterruptByToken</code></td><td>none (signed-token; auth is the token itself)</td></tr>
+<tr><td><code>GetArtifact</code></td><td><code>artifacts:read</code></td></tr>
+<tr><td><code>RegisterWebhook</code> / <code>UnregisterWebhook</code></td><td><code>webhooks:manage</code></td></tr>
+<tr><td><code>VerifyAuditLog</code></td><td><code>audit:read</code></td></tr>
+</tbody></table>
+<p>Hosts MAY ALSO accept mTLS (per <code>auth-profiles.md</code> §<code>openwop-auth-mtls</code>) on the gRPC listener. mTLS is the recommended posture for internal-only gRPC deployments where bearer tokens are operationally expensive.</p>
+<hr/>
+<h2 id="error-mapping">Error mapping</h2>
+<p>REST <code>ErrorEnvelope</code> ↔ gRPC <code>Status</code>:</p>
+<table>
+<thead><tr><th>REST envelope <code>error</code> code</th><th>gRPC <code>code</code> (<code>google.rpc.Code</code>)</th></tr></thead>
+<tbody>
+<tr><td><code>unauthenticated</code>, <code>key_expired</code>, <code>key_revoked</code></td><td><code>UNAUTHENTICATED</code> (16)</td></tr>
+<tr><td><code>forbidden</code></td><td><code>PERMISSION_DENIED</code> (7)</td></tr>
+<tr><td><code>validation_error</code></td><td><code>INVALID_ARGUMENT</code> (3)</td></tr>
+<tr><td><code>not_found</code>, <code>run_not_found</code>, <code>workflow_not_found</code></td><td><code>NOT_FOUND</code> (5)</td></tr>
+<tr><td><code>run_already_active</code>, <code>idempotency_key_conflict</code>, <code>idempotency_key_mismatch</code></td><td><code>ALREADY_EXISTS</code> (6) — for run dedup; <code>ABORTED</code> (10) — for idempotency conflicts</td></tr>
+<tr><td><code>recursion_limit_exceeded</code></td><td><code>RESOURCE_EXHAUSTED</code> (8)</td></tr>
+<tr><td><code>rate_limited</code></td><td><code>RESOURCE_EXHAUSTED</code> (8) — gRPC has no native <code>429</code>; use this code + <code>retry-after</code> in metadata</td></tr>
+<tr><td><code>capability_not_provided</code>, <code>capability_required</code></td><td><code>FAILED_PRECONDITION</code> (9)</td></tr>
+<tr><td><code>credential_required</code>, <code>credential_forbidden</code>, <code>credential_unavailable</code></td><td><code>FAILED_PRECONDITION</code> (9)</td></tr>
+<tr><td><code>internal_error</code></td><td><code>INTERNAL</code> (13)</td></tr>
+</tbody></table>
+<p>Hosts MUST attach the full canonical <code>ErrorEnvelope</code> JSON as a <code>details[]</code> entry on the gRPC <code>Status</code> proto so clients can recover the structured <code>details.*</code> fields (e.g., <code>details.retryAfterMs</code>, <code>details.requiredCapability</code>):</p>
+<pre class="lang-protobuf"><code>import &quot;google/rpc/status.proto&quot;;
+import &quot;google/rpc/error_details.proto&quot;;
+
+// status.details[].type_url = &quot;openwop.dev/spec/v1/ErrorEnvelope&quot;
+// status.details[].value     = &amp;lt;JSON-serialized ErrorEnvelope bytes&amp;gt;</code></pre>
+<p>Clients SHOULD prefer the structured <code>details[]</code> for branching; the textual <code>message</code> is for human display only.</p>
+<hr/>
+<h2 id="streaming-semantics">Streaming semantics</h2>
+<p><code>StreamRunEvents</code> replaces REST's <code>GET /v1/runs/{runId}/events</code> (SSE) + <code>/events/poll</code> (long-poll) with a single server-streaming method:</p>
+<pre class="lang-protobuf"><code>message StreamRunEventsRequest {
+  string run_id = 1;
+  // Resume cursor — gRPC equivalent of SSE Last-Event-ID / poll lastSequence.
+  int64 last_sequence = 2;
+  // Subset of streaming modes per stream-modes.md.
+  repeated string stream_modes = 3;
+  // Optional buffer hint per S3 in stream-modes.md.
+  int32 buffer_ms = 4;
+}</code></pre>
+<p>Hosts MUST emit <code>RunEventEnvelope</code> messages in monotonic-sequence order. When the run reaches a terminal status (<code>completed</code> / <code>failed</code> / <code>cancelled</code>), the host closes the stream with <code>OK</code> after the terminal event has been delivered. Mid-stream cancellation by the client tears down the gRPC channel; the host treats this as a passive disconnect and does NOT cancel the run.</p>
+<p>W3C Trace Context propagation works via the gRPC standard convention: the client passes <code>traceparent</code> + <code>tracestate</code> in metadata; the host MUST honor them per <code>observability.md</code> §"Trace context propagation."</p>
+<hr/>
+<h2 id="capability-advertisement">Capability advertisement</h2>
+<p>A host that exposes the gRPC surface advertises:</p>
+<pre class="lang-json"><code>{
+  &quot;supportedTransports&quot;: [&quot;rest&quot;, &quot;grpc&quot;],
+  &quot;capabilities&quot;: {
+    &quot;grpc&quot;: {
+      &quot;supported&quot;: true,
+      &quot;endpoint&quot;: &quot;grpc://api.example.com:50051&quot;,
+      &quot;service&quot;: &quot;openwop.v1.Engine&quot;,
+      &quot;tls&quot;: &quot;required&quot;
+    }
+  }
+}</code></pre>
+<p><strong>Field semantics:</strong></p>
+<ul>
+<li><code>supportedTransports: [&quot;grpc&quot;]</code>: presence required when gRPC is exposed.</li>
+<li><code>capabilities.grpc.supported</code>: boolean toggle (true when the surface is live).</li>
+<li><code>capabilities.grpc.endpoint</code>: full URI <code>grpc://</code> (cleartext, intra-trusted-network only) OR <code>grpcs://</code> (TLS). Hosts SHOULD require TLS in production.</li>
+<li><code>capabilities.grpc.service</code>: canonical service name. v1 hosts MUST use <code>openwop.v1.Engine</code>.</li>
+<li><code>capabilities.grpc.tls</code>: <code>&quot;required&quot;</code> / <code>&quot;optional&quot;</code> / <code>&quot;disabled&quot;</code>. Production hosts MUST set <code>&quot;required&quot;</code>.</li>
+</ul>
+<p>REST + SSE remains exposed at the host's HTTP endpoint regardless of whether gRPC is advertised. Clients that pre-flight via the REST <code>/.well-known/openwop</code> discover the gRPC surface and switch.</p>
+<hr/>
+<h2 id="conformance">Conformance</h2>
+<p>Hosts that advertise <code>capabilities.grpc.supported: true</code> are expected to pass <code>conformance/src/scenarios/grpc-transport.test.ts</code> (capability-gated) when that scenario lands. The scenario verifies:</p>
+<p>1. <code>GetCapabilities</code> returns a payload byte-equivalent to the REST <code>/.well-known/openwop</code> response (after Protobuf↔JSON normalization). 2. <code>CreateRun</code> + <code>GetRun</code> + <code>StreamRunEvents</code> round-trip a workflow run with the same event sequence the REST surface produces. 3. Error envelope mapping per the table above — <code>ErrorEnvelope</code> JSON attached to <code>Status.details[]</code> matches the REST 4xx/5xx body. 4. Auth metadata: missing <code>authorization</code> → <code>UNAUTHENTICATED</code>; invalid bearer → <code>UNAUTHENTICATED</code>; valid bearer w/o scope → <code>PERMISSION_DENIED</code>.</p>
+<p>Hosts that don't advertise the capability skip-equivalent.</p>
+<hr/>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<ul>
+<li>The reference TypeScript SDK does NOT yet ship a gRPC client. gRPC clients are SDK-implementation work and follow each language's idiomatic gRPC tooling (<code>grpc-js</code> / <code>@grpc/grpc-js</code> for Node, <code>grpcio</code> for Python, <code>google.golang.org/grpc</code> for Go).</li>
+<li>Code-generation: hosts and clients use <code>protoc</code> + the official <code>grpc_tools</code> per their language. The <code>.proto</code> file is hand-maintained alongside <code>api/openapi.yaml</code>; future tooling MAY auto-derive one from the other.</li>
+<li>The protocol does NOT specify a gRPC reflection-service requirement. Hosts MAY enable <code>grpc.reflection.v1.ServerReflection</code> for tooling ergonomics; the conformance suite does not depend on it.</li>
+<li>Production-profile claimants: gRPC's HTTP/2 framing allows finer-grained backpressure than HTTP/1.1; production hosts SHOULD apply the same <code>production.backpressure.inflightCap</code> semantics to the gRPC listener (concurrent in-flight RPCs).</li>
+</ul>
+<hr/>
+<h2 id="see-also">See also</h2>
+<ul>
+<li><code>rest-endpoints.md</code> — the canonical REST + SSE surface</li>
+<li><code>capabilities.md</code> §<code>supportedTransports</code> — transport advertisement</li>
+<li><code>auth.md</code> — bearer-token authentication and scope vocabulary</li>
+<li><code>observability.md</code> §"Trace context propagation" — W3C trace context applies identically over gRPC metadata</li>
+<li><code>error-envelope.schema.json</code> — error wire-shape (carried in <code>Status.details[]</code>)</li>
+<li><code>api/grpc/openwop.proto</code> — canonical service definition (ships with the spec corpus)</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

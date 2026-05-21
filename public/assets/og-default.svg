@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#0c0d10"/>
+
+  <!-- Subtle gradient overlay for depth -->
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1c20" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#0c0d10" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="accentBar" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#5b3df6"/>
+      <stop offset="50%" stop-color="#7c5cff"/>
+      <stop offset="100%" stop-color="#5b3df6"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bgGrad)"/>
+
+  <!-- Accent stripe top -->
+  <rect x="0" y="0" width="1200" height="6" fill="url(#accentBar)"/>
+
+  <!-- Brand badge top-left -->
+  <g transform="translate(80, 80)">
+    <rect x="0" y="0" width="64" height="64" rx="12" fill="#5b3df6"/>
+    <text x="32" y="46" font-size="36" font-weight="700" text-anchor="middle" fill="#ffffff">W</text>
+    <text x="84" y="42" font-size="22" font-weight="700" fill="#e6e8eb" letter-spacing="2">openwop</text>
+    <text x="84" y="64" font-size="14" font-weight="500" fill="#a3a8af" letter-spacing="1">v1.0 FINAL · OPEN PROTOCOL</text>
+  </g>
+
+  <!-- Hero text -->
+  <g transform="translate(80, 240)">
+    <!-- Eyebrow -->
+    <text x="0" y="0" font-size="22" font-weight="600" fill="#7c5cff" letter-spacing="2">MULTI-AGENT</text>
+
+    <!-- H1 — split for line breaks; sharp's libvips doesn't auto-wrap -->
+    <text x="0" y="64" font-size="68" font-weight="800" fill="#ffffff">Workflow Orchestration</text>
+    <text x="0" y="142" font-size="68" font-weight="800" fill="#ffffff">Protocol</text>
+
+    <!-- Subhead -->
+    <text x="0" y="210" font-size="26" font-weight="400" fill="#a3a8af">An open REST + SSE protocol for running, streaming,</text>
+    <text x="0" y="244" font-size="26" font-weight="400" fill="#a3a8af">interrupting, replaying, and validating durable AI workflows.</text>
+  </g>
+
+  <!-- Footer URL + tagline pills -->
+  <g transform="translate(80, 540)">
+    <text x="0" y="0" font-size="20" font-weight="600" fill="#e6e8eb">github.com/openwop/openwop</text>
+    <text x="0" y="32" font-size="16" font-weight="400" fill="#a3a8af">OpenAPI 3.1 · AsyncAPI 3.1 · JSON Schema · conformance suite</text>
+  </g>
+
+  <!-- Decorative agent-graph dots, top-right -->
+  <g transform="translate(960, 100)" opacity="0.85">
+    <!-- Three nodes connected by lines, suggesting multi-agent orchestration -->
+    <line x1="40" y1="40" x2="120" y2="20" stroke="#5b3df6" stroke-width="2" opacity="0.5"/>
+    <line x1="40" y1="40" x2="160" y2="100" stroke="#5b3df6" stroke-width="2" opacity="0.5"/>
+    <line x1="120" y1="20" x2="160" y2="100" stroke="#5b3df6" stroke-width="2" opacity="0.5"/>
+    <line x1="40" y1="40" x2="40" y2="160" stroke="#5b3df6" stroke-width="2" opacity="0.5"/>
+    <line x1="160" y1="100" x2="120" y2="180" stroke="#5b3df6" stroke-width="2" opacity="0.5"/>
+    <line x1="40" y1="160" x2="120" y2="180" stroke="#5b3df6" stroke-width="2" opacity="0.5"/>
+
+    <circle cx="40" cy="40" r="14" fill="#7c5cff"/>
+    <circle cx="120" cy="20" r="14" fill="#5b3df6"/>
+    <circle cx="160" cy="100" r="14" fill="#5b3df6"/>
+    <circle cx="40" cy="160" r="14" fill="#5b3df6"/>
+    <circle cx="120" cy="180" r="14" fill="#7c5cff"/>
+  </g>
+</svg>

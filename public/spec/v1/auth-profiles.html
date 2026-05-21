@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — openwop Spec v1 — Auth Profiles</title>
+  <meta name="description" content="auth.md defines the minimum interoperable contract: bearer API keys, canonical error envelopes, tenant isolation, scopes, and audit expectations. Production deployments often need OAuth2, key rotation, or mTLS, but those choices should not fragment…"/>
+  <link rel="canonical" href="https://openwop.dev/spec/v1/auth-profiles.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — openwop Spec v1 — Auth Profiles"/>
+  <meta property="og:description" content="auth.md defines the minimum interoperable contract: bearer API keys, canonical error envelopes, tenant isolation, scopes, and audit expectations. Production deployments often need OAuth2, key rotation, or mTLS, but those choices should not fragment…"/>
+  <meta property="og:url" content="https://openwop.dev/spec/v1/auth-profiles.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — openwop Spec v1 — Auth Profiles"/>
+  <meta name="twitter:description" content="auth.md defines the minimum interoperable contract: bearer API keys, canonical error envelopes, tenant isolation, scopes, and audit expectations. Production deployments often need OAuth2, key rotation, or mTLS, but those choices should not fragment…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="active" href="/spec/v1/">Spec</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/profiles/">Profiles</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="openwop-spec-v1-auth-profiles">openwop Spec v1 — Auth Profiles</h1>
+<blockquote><p><strong>Status: FINAL v1 (2026-05-10).</strong> Optional production-auth annex for hosts that need stronger authentication than the baseline API-key contract in <code>auth.md</code>. This document is additive: it defines profile claims and conformance expectations without changing any required v1 endpoint, header, or error shape. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
+<hr/>
+<h2 id="why-this-exists">Why this exists</h2>
+<p><code>auth.md</code> defines the minimum interoperable contract: bearer API keys, canonical error envelopes, tenant isolation, scopes, and audit expectations. Production deployments often need OAuth2, key rotation, or mTLS, but those choices should not fragment the base protocol.</p>
+<p>Auth profiles give operators a shared vocabulary for those stronger modes. A client can say "I need <code>openwop-auth-oauth2</code>" while a smaller host can remain v1-conformant with the baseline API-key flow.</p>
+<p>Auth profiles are <strong>documentation and conformance claims</strong>. They are not new required discovery fields. A host MAY advertise supporting details in <code>/.well-known/openwop</code> under <code>extensions.auth</code> or host documentation; clients MUST tolerate absence.</p>
+<hr/>
+<h2 id="profile-catalog">Profile catalog</h2>
+<h3 id="openwop-auth-api-key-rotation"><code>openwop-auth-api-key-rotation</code></h3>
+<p>The host supports rolling API keys without interrupting in-flight runs.</p>
+<p><strong>Requirements:</strong></p>
+<ul>
+<li>A new key can be issued before the old key is revoked.</li>
+<li>During the rotation grace window, both keys authenticate the same principal and tenant.</li>
+<li>The host documents the minimum grace window. Production-profile hosts SHOULD support at least 24 hours.</li>
+<li>Revoked keys return the canonical <code>401 invalid_token</code> or <code>403 insufficient_scope</code> envelope from <code>auth.md</code>.</li>
+<li>Audit logs distinguish <code>key.created</code>, <code>key.used</code>, and <code>key.revoked</code> events without storing raw key material.</li>
+</ul>
+<p><strong>Conformance gaps to close:</strong> add rotation fixtures that verify old+new key overlap, revocation, and redaction in error bodies.</p>
+<h3 id="openwop-auth-oauth2-client-credentials"><code>openwop-auth-oauth2-client-credentials</code></h3>
+<p>The host accepts OAuth2 client-credentials access tokens for machine-to-machine clients.</p>
+<p><strong>Requirements:</strong></p>
+<ul>
+<li>The token issuer, audience, and accepted signing algorithms are documented.</li>
+<li>The token maps to the same <code>tenant</code>, <code>principal</code>, and <code>scopes</code> concepts defined in <code>auth.md</code>.</li>
+<li>Missing, expired, malformed, wrong-audience, and insufficient-scope tokens use the canonical error envelope.</li>
+<li>Token introspection, if used, is an implementation detail; clients only depend on bearer-token semantics.</li>
+<li>Scope strings for OpenWOP operations remain the operation scopes in <code>auth.md</code>, even when encoded inside OAuth claims.</li>
+</ul>
+<p><strong>Conformance gaps to close:</strong> add negative token-shape cases and a positive token fixture for hosts that publish test issuer metadata.</p>
+<h3 id="openwop-auth-mtls"><code>openwop-auth-mtls</code></h3>
+<p>The host requires mutual TLS in addition to bearer authentication.</p>
+<p><strong>Requirements:</strong></p>
+<ul>
+<li>Client certificates authenticate a transport principal, not a replacement for operation scopes.</li>
+<li>Certificate subject or SAN mapping to tenants is documented.</li>
+<li>Failed client-certificate validation is surfaced as <code>401 invalid_token</code> or a transport-layer TLS failure. Hosts SHOULD document which behavior clients will observe.</li>
+<li>Certificate rotation follows the same overlap principle as API-key rotation.</li>
+</ul>
+<p><strong>Conformance gaps to close:</strong> add a harness-level mTLS mode for deployments that expose test certificates.</p>
+<h3 id="openwop-auth-oidc-user-bearer"><code>openwop-auth-oidc-user-bearer</code></h3>
+<p>The host accepts OpenID Connect (OIDC) user-bearer tokens as an alternative to API keys for endpoints scoped to a human caller. Used in deployments that front the OpenWOP host with an SSO IdP (Okta, Auth0, Entra ID, Google Workspace, etc.) and want end-user attribution on <code>runs:create</code> / <code>approvals:respond</code> calls.</p>
+<p>This is distinct from <code>openwop-auth-oauth2-client-credentials</code> (which authenticates a <em>service</em>, not a user): the OIDC flow surfaces a verified human identity to the host, suitable for audit and HITL attribution.</p>
+<p><strong>Requirements:</strong></p>
+<ul>
+<li>The host MUST accept <code>Authorization: Bearer &amp;lt;id-token-or-access-token&amp;gt;</code> and verify it against the configured OIDC issuer(s).</li>
+<li>The host MUST verify the standard OIDC ID-token claims: <code>iss</code>, <code>aud</code>, <code>exp</code>, <code>iat</code>, and signature against the issuer's JWKS.</li>
+<li>The host MUST map the verified <code>sub</code> (subject) claim to an internal user identity, then resolve that identity to a tenant per the host's user-to-tenant policy.</li>
+<li>The host MUST enforce openwop scopes (<code>runs:create</code>, <code>approvals:respond</code>, etc.) on top of the OIDC identity — bearing a valid token is not sufficient; the principal must also hold the relevant scope (via group claims, role mapping, or host-side ACL).</li>
+<li>The host SHOULD respect <code>aud</code> restrictions and reject tokens whose audience does not include the host's configured audience identifier.</li>
+<li>The host MUST surface OIDC-specific failure modes via the canonical envelope: <code>unauthenticated</code> for invalid signature / expired token / wrong issuer; <code>forbidden</code> for token-valid-but-scope-insufficient; <code>key_revoked</code> for tokens whose <code>sub</code> has been disabled in the IdP.</li>
+<li>Token caching: hosts SHOULD honor the IdP's <code>exp</code> claim and MAY re-introspect the token at intervals not exceeding <code>min(exp - now, 5 minutes)</code> to detect IdP-side revocation.</li>
+</ul>
+<p><strong>Optional features hosts MAY support:</strong></p>
+<ul>
+<li><strong>PKCE-protected authorization code flow</strong> for browser-based clients fetching the bearer token client-side.</li>
+<li><strong>Refresh-token rotation</strong> at the IdP — opaque to openwop; openwop only sees the current valid bearer.</li>
+<li><strong>Group → scope mapping</strong> declared in host configuration (e.g., <code>groups: [&quot;openwop:approvers&quot;] → scopes: [&quot;approvals:respond&quot;]</code>).</li>
+</ul>
+<p><strong>Discovery shape:</strong></p>
+<pre class="lang-json"><code>{
+  &quot;extensions&quot;: {
+    &quot;auth&quot;: {
+      &quot;profiles&quot;: [&quot;openwop-auth-oidc-user-bearer&quot;, ...],
+      &quot;oidc&quot;: {
+        &quot;issuers&quot;: [&quot;https://accounts.example.com/&quot;],
+        &quot;audience&quot;: &quot;https://openwop.example.com&quot;,
+        &quot;supportedScopeMapping&quot;: &quot;group-claim&quot;,
+        &quot;introspectionIntervalSeconds&quot;: 300
+      }
+    }
+  }
+}</code></pre>
+<p><strong>Threat model considerations</strong> (see <code>SECURITY/threat-model-auth-profiles.md</code>):</p>
+<ul>
+<li>Token theft via XSS or compromised client storage — OpenWOP hosts MUST NOT log bearer tokens; redaction harness covers <code>Authorization</code> header.</li>
+<li>IdP compromise — the host is at the IdP's mercy for identity assertions; hosts SHOULD support multiple issuers so an emergency cutover doesn't require code changes.</li>
+<li>Long-lived <code>sub</code> impersonation after employee departure — hosts SHOULD honor IdP revocation within the <code>introspectionIntervalSeconds</code> window.</li>
+</ul>
+<p><strong>Conformance gaps to close:</strong> add a harness that exercises a synthetic OIDC issuer (e.g., <code>mockoon</code> or local JWT signer) so the suite can verify token-validation behavior without depending on a real IdP. Suite version 1.18.0+ candidate.</p>
+<hr/>
+<h2 id="discovery-guidance">Discovery guidance</h2>
+<p>As of RFC 0010 (2026-05-11), auth-profile metadata has a <strong>formal schema location</strong> at <code>capabilities.auth.<em></code> in <code>schemas/capabilities.schema.json</code>. Hosts SHOULD advertise auth-profile claims and metadata here. The <code>extensions.auth.</em></code> location below remains valid for historical reasons; clients MUST prefer <code>capabilities.auth.*</code> when both are present.</p>
+<p><strong>Preferred (RFC 0010, formal schema):</strong></p>
+<pre class="lang-json"><code>{
+  &quot;capabilities&quot;: {
+    &quot;auth&quot;: {
+      &quot;profiles&quot;: [&quot;openwop-auth-api-key-rotation&quot;, &quot;openwop-auth-oauth2-client-credentials&quot;, &quot;openwop-auth-oidc-user-bearer&quot;],
+      &quot;rotation&quot;: { &quot;supported&quot;: true, &quot;minGraceSeconds&quot;: 86400 },
+      &quot;oauth2&quot;: {
+        &quot;supported&quot;: true,
+        &quot;issuer&quot;: &quot;https://issuer.example.com/&quot;,
+        &quot;audience&quot;: &quot;https://api.example.com/openwop&quot;,
+        &quot;supportedAlgorithms&quot;: [&quot;RS256&quot;, &quot;ES256&quot;]
+      }
+    }
+  }
+}</code></pre>
+<p><strong>Legacy (extension namespace; still valid):</strong></p>
+<pre class="lang-json"><code>{
+  &quot;extensions&quot;: {
+    &quot;auth&quot;: {
+      &quot;profiles&quot;: [&quot;openwop-auth-api-key-rotation&quot;, &quot;openwop-auth-oauth2-client-credentials&quot;, &quot;openwop-auth-oidc-user-bearer&quot;],
+      &quot;oauth2&quot;: {
+        &quot;issuer&quot;: &quot;https://issuer.example.com/&quot;,
+        &quot;audience&quot;: &quot;https://api.example.com/openwop&quot;
+      },
+      &quot;rotation&quot;: {
+        &quot;minGraceSeconds&quot;: 86400
+      }
+    }
+  }
+}</code></pre>
+<p>This advertisement is advisory. A host passes an auth profile only by satisfying the documented behavior and the corresponding conformance scenarios (<code>auth-api-key-rotation.test.ts</code>, <code>auth-oauth2-client-credentials.test.ts</code>, <code>auth-oidc-user-bearer.test.ts</code>, <code>auth-mtls.test.ts</code>).</p>
+<hr/>
+<h2 id="audit-log-integrity-annex">Audit-log integrity (annex)</h2>
+<p>For hosts that must defend their audit log against tampering by privileged insiders or post-compromise attackers, this annex defines an optional integrity profile: <strong><code>openwop-audit-log-integrity</code></strong>.</p>
+<h3 id="threat-model">Threat model</h3>
+<p>The protocol's existing <code>auth.md</code> defines how hosts authenticate callers and authorize operations. It does NOT define what guarantees the host gives that the recorded audit history (who called what, when) cannot be silently rewritten after the fact. A compromised admin, a buggy migration, or a malicious operator could quietly mutate the log; without integrity protection, the rewrite is undetectable.</p>
+<p>Real customers (regulated industries, public-sector deployments) require provable append-only logs.</p>
+<h3 id="profile-shape">Profile shape</h3>
+<p>A host advertising the profile MUST:</p>
+<p>1. <strong>Append-only storage.</strong> The audit-log backend MUST reject in-place updates and deletes of past entries. New events MAY be appended; existing events MUST NOT be mutated. Hosts SHOULD enforce this at the storage layer (e.g., immutable object-store buckets, append-only tables) rather than only at the application layer.</p>
+<p>2. <strong>Hash chain.</strong> Each audit-log entry MUST carry a <code>prevHash</code> field that is the SHA-256 of the prior entry's canonical JSON serialization (RFC 8785 JCS). The genesis entry has <code>prevHash: null</code>. Verifiers re-compute the chain and detect any mid-history mutation.</p>
+<p>3. <strong>Periodic anchoring.</strong> At intervals declared by the host (RECOMMENDED: every 1000 entries or every 5 minutes, whichever is sooner), the host MUST emit a signed checkpoint:</p>
+<p>   ``<code>json    {      &quot;checkpoint&quot;: &quot;string (host-issued id)&quot;,      &quot;atSequence&quot;: &quot;integer (audit-log sequence at checkpoint)&quot;,      &quot;merkleRoot&quot;: &quot;string (hex, SHA-256 of all entries up to atSequence)&quot;,      &quot;signature&quot;: &quot;string (Ed25519 signature over the merkleRoot, by the host&#39;s audit-signing key)&quot;,      &quot;ts&quot;: &quot;ISO 8601 timestamp&quot;    }    </code>``</p>
+<p>   Checkpoints SHOULD be exported to an out-of-band store (operator-managed, separate trust boundary). Verifiers compare the live chain against the last anchored checkpoint to detect rewinds.</p>
+<p>4. <strong>Verification endpoint.</strong> Hosts MUST expose <code>GET /v1/audit/verify?fromSeq=&amp;toSeq=</code> (auth: <code>audit:read</code> scope, REQUIRED-when-profile-claimed) that returns:</p>
+<p>   ``<code>json    {      &quot;fromSeq&quot;: 0,      &quot;toSeq&quot;: 12000,      &quot;chainValid&quot;: true,      &quot;checkpoints&quot;: [{ &quot;checkpoint&quot;: &quot;...&quot;, &quot;atSequence&quot;: 1000, &quot;merkleRoot&quot;: &quot;...&quot;, &quot;signature&quot;: &quot;...&quot; }],      &quot;anomalies&quot;: []    }    </code>``</p>
+<p>   When <code>chainValid: false</code>, <code>anomalies</code> carries one entry per detected break (<code>{ atSeq, expectedPrevHash, actualPrevHash }</code>).</p>
+<h3 id="key-management">Key management</h3>
+<p>The audit-signing Ed25519 key:</p>
+<ul>
+<li>MUST be distinct from any signing key used for other surfaces (webhooks, node packs).</li>
+<li>SHOULD be hardware-backed (HSM, KMS) where regulatory requirements demand it.</li>
+<li>Rotation: hosts MAY rotate by issuing a new key and dual-signing checkpoints during a grace period. Old checkpoints remain verifiable under the retired key.</li>
+</ul>
+<h3 id="capability-advertisement">Capability advertisement</h3>
+<pre class="lang-json"><code>{
+  &quot;capabilities&quot;: {
+    &quot;auth&quot;: {
+      &quot;profiles&quot;: [&quot;openwop-audit-log-integrity&quot;, ...],
+      &quot;auditLogIntegrity&quot;: {
+        &quot;hashChain&quot;: true,
+        &quot;checkpointSignatureAlgorithm&quot;: &quot;ed25519&quot;,
+        &quot;checkpointPublicKey&quot;: &quot;MCowBQYDK2VwAyEA...&quot;,
+        &quot;checkpointIntervalEntries&quot;: 1000,
+        &quot;checkpointIntervalSeconds&quot;: 300
+      }
+    }
+  }
+}</code></pre>
+<h3 id="conformance">Conformance</h3>
+<p>A host claims the profile by:</p>
+<ul>
+<li>Advertising <code>capabilities.auth.profiles</code> includes <code>openwop-audit-log-integrity</code>.</li>
+<li>Passing the suite scenarios <code>audit-log-chain.test.ts</code>, <code>audit-log-tamper-detection.test.ts</code>, <code>audit-log-checkpoint-signature.test.ts</code> (suite version 1.17.0+).</li>
+</ul>
+<p>The profile is <strong>strongly RECOMMENDED</strong> as a precondition for any host commissioning an external security review (Track 9 in <code>docs/PROTOCOL-GAP-CLOSURE-PLAN.md</code>): the review's value depends on the log being trustworthy.</p>
+<h2 id="public-release-checklist">Public-release checklist</h2>
+<ul>
+<li>Publish supported auth profiles in the host README or compatibility page.</li>
+<li>Document token/key issuance, revocation, and emergency disable procedures.</li>
+<li>Verify all auth failures use the canonical error envelope and never echo credentials.</li>
+<li>Run the conformance suite with auth-profile scenarios enabled for each claimed profile.</li>
+<li>Include the suite version and profile pass result in <code>INTEROP-MATRIX.md</code>.</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

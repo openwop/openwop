@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — openwop Spec v1 — Multi-Agent Execution Model</title>
+  <meta name="description" content="Per the Google-acceptance review of 2026-05-21, finding (3): &quot;OpenWOP defines identities, dispatch, memory, reasoning events, envelopes, prompts, MCP/A2A composition, and host capabilities, but it does not yet give a sufficiently formal…"/>
+  <link rel="canonical" href="https://openwop.dev/spec/v1/multi-agent-execution.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — openwop Spec v1 — Multi-Agent Execution Model"/>
+  <meta property="og:description" content="Per the Google-acceptance review of 2026-05-21, finding (3): &quot;OpenWOP defines identities, dispatch, memory, reasoning events, envelopes, prompts, MCP/A2A composition, and host capabilities, but it does not yet give a sufficiently formal…"/>
+  <meta property="og:url" content="https://openwop.dev/spec/v1/multi-agent-execution.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — openwop Spec v1 — Multi-Agent Execution Model"/>
+  <meta name="twitter:description" content="Per the Google-acceptance review of 2026-05-21, finding (3): &quot;OpenWOP defines identities, dispatch, memory, reasoning events, envelopes, prompts, MCP/A2A composition, and host capabilities, but it does not yet give a sufficiently formal…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="active" href="/spec/v1/">Spec</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/profiles/">Profiles</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="openwop-spec-v1-multi-agent-execution-model">openwop Spec v1 — Multi-Agent Execution Model</h1>
+<blockquote><p><strong>Status: DRAFT v1.x (filed via <a href="../../RFCS/0037-multi-agent-execution-model.md">RFC 0037</a>, 2026-05-21).</strong> Phase 1 of a four-phase execution-model formalization. Phase 1 (this document) lands the <strong>execution-loop framework + planner→worker handoff state machine</strong>. Phases 2 (confidence + agent-memory lifecycle), 3 (cross-host causation), and 4 (replay determinism under nondeterministic models) are explicit follow-ups tracked in <code>## Open spec gaps</code>. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
+<h2 id="why-this-exists">Why this exists</h2>
+<p>Per the Google-acceptance review of 2026-05-21, finding (3): <em>"OpenWOP defines identities, dispatch, memory, reasoning events, envelopes, prompts, MCP/A2A composition, and host capabilities, but it does not yet give a sufficiently formal interoperable execution model for planner/worker handoff, confidence semantics, agent memory lifecycle, cross-host causality, and replay under nondeterministic model behavior."</em></p>
+<p>The existing RFCs cover slices but no single doc states the <strong>execution model</strong> as a portable contract:</p>
+<ul>
+<li><strong>RFC 0002</strong> (<code>AgentRef</code> + reasoning events) — the identity vocabulary.</li>
+<li><strong>RFC 0006</strong> (<code>core.orchestrator.supervisor</code>) — the supervisor primitive that emits <code>OrchestratorDecision</code>.</li>
+<li><strong>RFC 0007</strong> (<code>core.dispatch</code>) — the dispatcher primitive that materializes the decision as a child run.</li>
+<li><strong>RFC 0022</strong> (<code>inputMapping</code> / <code>outputMapping</code>) — the variable-projection contract across the parent/child boundary.</li>
+<li><strong>RFC 0024</strong> (reasoning streaming) — the wire shape for <code>agent.reasoning.delta</code> events.</li>
+<li><strong>RFC 0026</strong> (provider usage events) — the cost-attribution surface.</li>
+</ul>
+<p>This document <strong>integrates</strong> those slices into a single normative execution loop + a 4-state handoff state machine. Two non-steward hosts implementing this Phase 1 should produce bit-equivalent state transitions for the same supervisor-driven workflow input.</p>
+<h2 id="execution-loop-normative">Execution loop (normative)</h2>
+<p>A host that advertises <code>capabilities.multiAgent.executionModel.version &gt;= 1</code> MUST implement the following loop on any workflow whose graph contains a <code>core.orchestrator.supervisor</code> node feeding into a <code>core.dispatch</code> node:</p>
+<pre class="lang-"><code>LOOP:
+  1. Orchestrator turn:
+     - Run the supervisor node per its config (`mockDispatchPlan` in conformance,
+       `prompt` + `model` in production).
+     - The supervisor emits exactly one `OrchestratorDecision` per turn:
+         next-worker  | terminate | clarify | escalate
+     - Engine appends `runOrchestrator.decided` event with the decision payload.
+
+  2. Decision routing:
+     - `terminate` → exit LOOP; engine emits `run.completed` per spec/v1/replay.md.
+     - `clarify` → emit `interrupt` per spec/v1/interrupt.md `kind: &quot;clarification&quot;`;
+       LOOP suspends until resume.
+     - `escalate` → emit `interrupt` per spec/v1/interrupt.md `kind: &quot;approval&quot;`;
+       LOOP suspends until resume.
+     - `next-worker` → enter HANDOFF STATE MACHINE below for each worker
+       in `decision.nextWorkerIds[]`.
+
+  3. After all dispatched workers reach `harvested` (or `failed` / `cancelled`),
+     return to step 1.</code></pre>
+<p>The loop MUST be re-entrant per <code>spec/v1/replay.md</code> §"Determinism with non-deterministic agents" — replaying from <code>forkAtEventLogIdx</code> after the Nth iteration MUST produce identical state at that index regardless of cross-region engine handoff (when <code>capabilities.eventLog.crossEngineOrdering.supported: true</code> per RFC 0036) or worker dispatch timing (when <code>capabilities.agents.dispatchMapping: true</code> per RFC 0022).</p>
+<h2 id="handoff-state-machine-normative">Handoff state machine (normative)</h2>
+<p>When a supervisor's decision is <code>next-worker</code> and the engine begins dispatching, each dispatched worker MUST traverse the following 4-state machine:</p>
+<table>
+<thead><tr><th>State</th><th>Trigger</th><th>Allowed exits</th></tr></thead>
+<tbody>
+<tr><td><code>pending</code></td><td>Supervisor's <code>OrchestratorDecision</code> named the worker; dispatch hasn't yet fired the child-run create</td><td>→ <code>dispatching</code> (engine begins child-run creation)</td></tr>
+<tr><td><code>dispatching</code></td><td>Engine called <code>POST /v1/runs</code> (or sub-workflow equivalent) for the child</td><td>→ <code>running</code> (<code>201 Created</code> returned + <code>inputMapping</code> projection emitted) &lt;br&gt; → <code>failed</code> (creation failed before child ran any node)</td></tr>
+<tr><td><code>running</code></td><td>Child run is in progress</td><td>→ <code>completed</code> (terminal status) &lt;br&gt; → <code>failed</code> (terminal status) &lt;br&gt; → <code>cancelled</code> (terminal status)</td></tr>
+<tr><td><code>harvested</code></td><td>Child reached terminal <code>completed</code> AND non-empty <code>outputMapping</code> projection completed back into parent variables</td><td>(terminal — parent's next supervisor turn observes the new state)</td></tr>
+</tbody></table>
+<h3 id="transition-events-normative">Transition events (normative)</h3>
+<p>Each transition MUST emit a <code>core.workflowChain.event</code> (NEW event type — see §"Event-payload addition" below) with <code>causationId</code> linking to the prior transition's <code>eventId</code>. The chain is REQUIRED so replay-determinism gates per <code>spec/v1/replay.md</code> §"Determinism with non-deterministic agents" can walk the causation chain backward through handoff sequences.</p>
+<table>
+<thead><tr><th>Transition</th><th>Event payload <code>phase</code></th><th><code>causationId</code></th></tr></thead>
+<tbody>
+<tr><td><code>pending → dispatching</code></td><td><code>&quot;dispatch.began&quot;</code></td><td>The <code>runOrchestrator.decided</code> event's <code>eventId</code></td></tr>
+<tr><td><code>dispatching → running</code></td><td><code>&quot;dispatch.succeeded&quot;</code></td><td>The <code>dispatch.began</code> <code>eventId</code></td></tr>
+<tr><td><code>dispatching → failed</code></td><td><code>&quot;dispatch.failed&quot;</code></td><td>The <code>dispatch.began</code> <code>eventId</code></td></tr>
+<tr><td><code>running → completed</code></td><td><code>&quot;child.completed&quot;</code></td><td>The <code>dispatch.succeeded</code> <code>eventId</code></td></tr>
+<tr><td><code>running → failed</code></td><td><code>&quot;child.failed&quot;</code></td><td>The <code>dispatch.succeeded</code> <code>eventId</code></td></tr>
+<tr><td><code>running → cancelled</code></td><td><code>&quot;child.cancelled&quot;</code></td><td>The <code>dispatch.succeeded</code> <code>eventId</code></td></tr>
+<tr><td><code>completed → harvested</code></td><td><code>&quot;output.harvested&quot;</code></td><td>The <code>child.completed</code> <code>eventId</code>; payload SHOULD include the <code>outputMapping</code> keys harvested</td></tr>
+</tbody></table>
+<p>The transition <code>running → harvested</code> MUST happen exactly when the child reaches a terminal <code>completed</code> AND the dispatch config's <code>outputMapping</code> is non-empty. Failed/cancelled children MUST skip the harvest per RFC 0022 §B (the <code>output.harvested</code> event MUST NOT fire for those terminal states).</p>
+<h2 id="capability-advertisement-normative">Capability advertisement (normative)</h2>
+<pre class="lang-jsonc"><code>{
+  &quot;capabilities&quot;: {
+    &quot;multiAgent&quot;: {
+      &quot;executionModel&quot;: {
+        &quot;supported&quot;: true,
+        &quot;version&quot;: 1
+      }
+    }
+  }
+}</code></pre>
+<table>
+<thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>supported</code></td><td><code>boolean</code></td><td>When <code>true</code>, the host implements the execution loop + handoff state machine above. Conformance scenarios gating on this flag run unconditionally on advertising hosts.</td></tr>
+<tr><td><code>version</code></td><td><code>integer ≥ 1</code></td><td>Profile version. <code>1</code> = Phase 1 (this document — execution-loop framework + planner→worker handoff). Future phases bump (2 = confidence + agent-memory lifecycle; 3 = cross-host causation; 4 = replay-under-nondeterminism). A host advertising <code>version: N</code> MUST implement all phases 1..N.</td></tr>
+</tbody></table>
+<p>Hosts that do NOT advertise this capability MAY implement RFCs 0006/0007/0022 individually with implementation flexibility on the integration semantics; conformance scenarios gating on this flag soft-skip on absence per the existing capability-gating convention.</p>
+<h2 id="event-payload-addition">Event-payload addition</h2>
+<p><code>schemas/run-event-payloads.schema.json</code> gains a new event type entry <code>core.workflowChain.event</code> with payload shape:</p>
+<pre class="lang-jsonc"><code>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;required&quot;: [&quot;phase&quot;, &quot;workerId&quot;, &quot;parentRunId&quot;],
+  &quot;properties&quot;: {
+    &quot;phase&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;dispatch.began&quot;,
+        &quot;dispatch.succeeded&quot;,
+        &quot;dispatch.failed&quot;,
+        &quot;child.completed&quot;,
+        &quot;child.failed&quot;,
+        &quot;child.cancelled&quot;,
+        &quot;output.harvested&quot;
+      ],
+      &quot;description&quot;: &quot;Which handoff-state-machine transition this event records. See spec/v1/multi-agent-execution.md §&#39;Handoff state machine&#39;.&quot;
+    },
+    &quot;workerId&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;description&quot;: &quot;The dispatched worker&#39;s workflowId — matches the entry in the supervisor&#39;s OrchestratorDecision.nextWorkerIds[].&quot;
+    },
+    &quot;parentRunId&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;description&quot;: &quot;The orchestrator-driven parent run&#39;s runId.&quot;
+    },
+    &quot;childRunId&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;description&quot;: &quot;The dispatched child run&#39;s runId. REQUIRED on phases `dispatch.succeeded` and beyond; absent on `dispatch.began` and `dispatch.failed` (child wasn&#39;t created).&quot;
+    },
+    &quot;harvestedKeys&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: { &quot;type&quot;: &quot;string&quot; },
+      &quot;description&quot;: &quot;On phase `output.harvested`: which parent-variable keys were populated by the dispatch config&#39;s outputMapping per RFC 0022 §A. SHOULD be present; conformance asserts presence when outputMapping is non-empty.&quot;
+    },
+    &quot;error&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;On phases `dispatch.failed` / `child.failed` / `child.cancelled`: the canonical error envelope per spec/v1/auth.md §&#39;Canonical error envelope&#39;.&quot;,
+      &quot;additionalProperties&quot;: true
+    }
+  }
+}</code></pre>
+<p>Hosts that do NOT advertise <code>capabilities.multiAgent.executionModel.supported: true</code> MUST NOT emit this event (the event is the wire signature of the contract being advertised).</p>
+<h2 id="open-spec-gaps">Open spec gaps</h2>
+<table>
+<thead><tr><th>#</th><th>Gap</th><th>Phase</th><th>Owner</th></tr></thead>
+<tbody>
+<tr><td>MAE-1</td><td><strong>Phase 2:</strong> Confidence-threshold semantics — at what <code>OrchestratorDecision.confidence</code> value MUST the supervisor escalate to clarification or approval, versus MAY escalate? Today: host policy.</td><td>Phase 2 follow-up</td><td>OpenWOP WG</td></tr>
+<tr><td>MAE-2</td><td><strong>Phase 2:</strong> Agent memory lifecycle across sub-runs — <code>MemoryEntry.ttl</code> semantics when a parent run dispatches a child whose memory operations the parent inherits. Today: implicit; needs normative MUST.</td><td>Phase 2 follow-up</td><td>OpenWOP WG</td></tr>
+<tr><td>MAE-3</td><td><strong>Phase 2:</strong> Memory carry-forward when a sub-run is replayed from past event-log index — does the replay re-read the original memory snapshot, or the current memory state?</td><td>Phase 2 follow-up</td><td>OpenWOP WG</td></tr>
+<tr><td>MAE-4</td><td><strong>Phase 3:</strong> Extending <code>causationId</code> to span hosts (currently single-host scope per <code>spec/v1/replay.md</code> §"Determinism with non-deterministic agents").</td><td>Phase 3 follow-up</td><td>OpenWOP WG</td></tr>
+<tr><td>MAE-5</td><td><strong>Phase 3:</strong> W3C tracecontext propagation across MCP/A2A composition boundaries — partial coverage in <code>RFC 0023</code> for OTel; needs normative cross-host case.</td><td>Phase 3 follow-up</td><td>OpenWOP WG</td></tr>
+<tr><td>MAE-6</td><td><strong>Phase 3:</strong> Cross-host run-ID resolution — when host A's run dispatches to host B, what's the discoverable identifier chain?</td><td>Phase 3 follow-up</td><td>OpenWOP WG</td></tr>
+<tr><td>MAE-7</td><td><strong>Phase 4:</strong> LLM cache-key recipe — <code>replay.md</code> §"LLM cache-key recipe" already exists but <code>replay-llm-cache-key.test.ts</code> is shape-only per <code>docs/KNOWN-LIMITS.md:18</code>.</td><td>Phase 4 follow-up</td><td>OpenWOP WG</td></tr>
+<tr><td>MAE-8</td><td><strong>Phase 4:</strong> Recovery from envelope refusal in replay context — original run got envelope, replay gets refusal.</td><td>Phase 4 follow-up</td><td>OpenWOP WG</td></tr>
+<tr><td>MAE-9</td><td><strong>Phase 4:</strong> Determinism vs idempotency — replay produces the same observable output sequence even when underlying tool calls differ.</td><td>Phase 4 follow-up</td><td>OpenWOP WG</td></tr>
+</tbody></table>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="../../RFCS/0037-multi-agent-execution-model.md"><code>RFCS/0037-multi-agent-execution-model.md</code></a> — the source RFC.</li>
+<li><a href="../../RFCS/0002-agent-identity-and-reasoning-events.md"><code>RFCS/0002-agent-identity-and-reasoning-events.md</code></a> — <code>AgentRef</code> + reasoning event vocabulary.</li>
+<li><a href="../../RFCS/0006-orchestrator.md"><code>RFCS/0006-orchestrator.md</code></a> — <code>core.orchestrator.supervisor</code> primitive.</li>
+<li><a href="../../RFCS/0007-dispatch.md"><code>RFCS/0007-dispatch.md</code></a> — <code>core.dispatch</code> primitive.</li>
+<li><a href="../../RFCS/0022-dispatch-input-output-mapping.md"><code>RFCS/0022-dispatch-input-output-mapping.md</code></a> — <code>inputMapping</code> / <code>outputMapping</code> contract.</li>
+<li><a href="../../RFCS/0024-agent-reasoning-streaming.md"><code>RFCS/0024-agent-reasoning-streaming.md</code></a> — <code>agent.reasoning.delta</code> event vocabulary.</li>
+<li><a href="../../RFCS/0026-provider-usage-event.md"><code>RFCS/0026-provider-usage-event.md</code></a> — cost-attribution surface.</li>
+<li><a href="./replay.md"><code>spec/v1/replay.md</code></a> §"Determinism with non-deterministic agents" — the replay contract this execution model preserves.</li>
+<li><a href="./positioning.md"><code>spec/v1/positioning.md</code></a> — "we don't standardize orchestration topology" — the principle this RFC's <code>executionModel.version</code> flag respects (the framework is opt-in; non-advertising hosts retain full implementation flexibility).</li>
+<li>Google-acceptance review 2026-05-21 — finding (3).</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

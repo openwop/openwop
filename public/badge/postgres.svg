@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="158" height="20">
+  <linearGradient id="b" x2="0" y2="100%">
+    <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+    <stop offset="1" stop-opacity=".1"/>
+  </linearGradient>
+  <mask id="a">
+    <rect width="158" height="20" rx="3" fill="#fff"/>
+  </mask>
+  <g mask="url(#a)">
+    <path fill="#555" d="M0 0h88v20H0z"/>
+    <path fill="#3aaf3a" d="M88 0h70v20H88z"/>
+    <path fill="url(#b)" d="M0 0h158v20H0z"/>
+  </g>
+  <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11">
+    <text x="44" y="14">openwop 1.0.0</text>
+    <text x="123" y="14">1 profiles</text>
+  </g>
+</svg>

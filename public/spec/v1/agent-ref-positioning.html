@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — openwop Spec v1 — `AgentRef` Positioning</title>
+  <meta name="description" content="RFC 0002 introduces AgentRef as the wire shape for &quot;which agent took which turn inside a run.&quot; Three external ecosystems also propose agent-identity shapes:"/>
+  <link rel="canonical" href="https://openwop.dev/spec/v1/agent-ref-positioning.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — openwop Spec v1 — `AgentRef` Positioning"/>
+  <meta property="og:description" content="RFC 0002 introduces AgentRef as the wire shape for &quot;which agent took which turn inside a run.&quot; Three external ecosystems also propose agent-identity shapes:"/>
+  <meta property="og:url" content="https://openwop.dev/spec/v1/agent-ref-positioning.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — openwop Spec v1 — `AgentRef` Positioning"/>
+  <meta name="twitter:description" content="RFC 0002 introduces AgentRef as the wire shape for &quot;which agent took which turn inside a run.&quot; Three external ecosystems also propose agent-identity shapes:"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="active" href="/spec/v1/">Spec</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/profiles/">Profiles</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="openwop-spec-v1-agentref-positioning">openwop Spec v1 — <code>AgentRef</code> Positioning</h1>
+<blockquote><p><strong>Status: FINAL v1 (2026-05-10).</strong> Non-normative addendum to RFC 0002. Compares the <code>AgentRef</code> shape introduced by RFC 0002 to three adjacent agent-identity ecosystems: W3C DIDs, A2A <code>AgentCard</code>, and AGNTCY agent identity. Goal is to make composition choices concrete so implementers don't reinvent translations every time. This is positioning, not requirements. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a> where used.</p></blockquote>
+<hr/>
+<h2 id="why-this-exists">Why this exists</h2>
+<p>RFC 0002 introduces <code>AgentRef</code> as the wire shape for "which agent took which turn inside a run." Three external ecosystems also propose agent-identity shapes:</p>
+<ul>
+<li><strong>W3C Decentralized Identifiers (DIDs)</strong> — a general identity primitive for any digital subject, including non-human actors.</li>
+<li><strong>A2A <code>AgentCard</code></strong> — Google-led inter-agent protocol's discovery + capability descriptor.</li>
+<li><strong>AGNTCY (Cisco Agent Gateway) agent identity</strong> — emerging proposal for cross-organization agent routing.</li>
+</ul>
+<p>Implementers asking "is <code>AgentRef</code> the same thing?" deserve a clear answer. The TL;DR: <strong><code>AgentRef</code> is the per-event provenance record inside a run; the others are discovery, capability, or transport-binding shapes that compose with it.</strong> They don't compete; they don't substitute. This document explains where each shape applies and how they translate.</p>
+<hr/>
+<h2 id="shape-comparison-at-a-glance">Shape comparison at a glance</h2>
+<table>
+<thead><tr><th>Concern</th><th><code>AgentRef</code> (openwop RFC 0002)</th><th>W3C DID</th><th>A2A <code>AgentCard</code></th><th>AGNTCY agent identity</th></tr></thead>
+<tbody>
+<tr><td><strong>Layer</strong></td><td>Per-event provenance inside a run</td><td>General identifier for any subject</td><td>Inter-agent discovery + capability descriptor</td><td>Cross-org routing + auth</td></tr>
+<tr><td><strong>Scope</strong></td><td>Single openwop run</td><td>Cross-system, cross-domain</td><td>Cross-organization (between A2A peers)</td><td>Cross-organization (gateway-mediated)</td></tr>
+<tr><td><strong>Canonical id field</strong></td><td><code>agentId</code> (opaque, host-resolvable)</td><td><code>id</code> (DID URI: <code>did:method:specific-id</code>)</td><td><code>name</code>/<code>id</code> (per-peer convention)</td><td>Gateway-issued identifier</td></tr>
+<tr><td><strong>Capability claims</strong></td><td>Out of scope (host-side <code>agent-manifest.schema.json</code>)</td><td>Out of scope (DIDs are identifiers only)</td><td><code>skills</code>, <code>inputModes</code>, <code>outputModes</code> baked in</td><td>Gateway-mediated</td></tr>
+<tr><td><strong>Resolution</strong></td><td>Host <code>AgentRegistry</code> lookup</td><td>DID resolver (per method)</td><td>HTTP GET of agent card URL</td><td>Gateway routing tables</td></tr>
+<tr><td><strong>Mutability</strong></td><td>Stable per run (<code>runOrchestrator.agentId</code> is set-once per RFC 0006 CO-2)</td><td>Resolvable to mutable DID Document</td><td>Card may evolve; consumers re-fetch</td><td>Gateway-issued, lifecycle managed</td></tr>
+<tr><td><strong>Cryptographic identity</strong></td><td>None (host-side trust)</td><td>Verification methods + proofs</td><td>Optional <code>securitySchemes</code></td><td>Gateway-bound credentials</td></tr>
+<tr><td><strong>Wire footprint</strong></td><td>4 optional fields (~50–200 bytes)</td><td>URI + DID Document (variable)</td><td>JSON object (~1–10 KB)</td><td>Gateway-defined</td></tr>
+</tbody></table>
+<p>The shapes target genuinely different concerns. <code>AgentRef</code> is small and per-event for a reason: it appears thousands of times in a single run's event log.</p>
+<hr/>
+<h2 id="composition-rules">Composition rules</h2>
+<h3 id="agentref-w3c-did"><code>AgentRef</code> + W3C DID</h3>
+<p>When an <code>AgentRef</code> resolves to an agent whose canonical identity is a DID:</p>
+<ul>
+<li>The host's <code>AgentRegistry</code> MAY map <code>AgentRef.agentId</code> → DID (one-way; clients still see only the opaque <code>agentId</code>).</li>
+<li>The DID is the cross-system anchor; <code>AgentRef.agentId</code> is the per-host shortcut.</li>
+<li>For audit and inter-org provenance, hosts SHOULD record the DID alongside the run's event log (typically via <code>agent-manifest.schema.json</code> metadata fields under a vendor prefix, e.g., <code>vendor.openwop.did</code>).</li>
+</ul>
+<p><strong>Why not put the DID directly on <code>AgentRef</code>?</strong> Two reasons:</p>
+<p>1. <strong>Wire footprint.</strong> DIDs are URIs with method-specific suffixes; embedding them on every event payload bloats the log without per-event value. 2. <strong>Resolvability assumptions.</strong> Many openwop deployments (single-org, single-host) have no DID resolver. Forcing DIDs into the protocol creates a hard dependency for everyone to pay for a few users' benefit.</p>
+<h3 id="agentref-a2a-agentcard"><code>AgentRef</code> + A2A <code>AgentCard</code></h3>
+<p>When an OpenWOP host invokes a remote A2A peer:</p>
+<ul>
+<li>The remote peer is identified by its <code>AgentCard</code> (URL + capabilities).</li>
+<li>The local representation inside the run is an <code>AgentRef</code> with <code>agentId</code> like <code>host:a2a:&amp;lt;peerHostname&amp;gt;:&amp;lt;remoteAgentName&amp;gt;</code> (per RFC 0002 §A1's <code>host:</code> namespace).</li>
+<li>The A2A composition layer (per <code>a2a-integration.md</code>) records the source <code>AgentCard</code> URL in the run's metadata.</li>
+</ul>
+<p><strong>Direction of mapping:</strong> <code>AgentCard</code> is the discovery shape; <code>AgentRef</code> is the in-run reference. One A2A <code>AgentCard</code> may surface as multiple <code>AgentRef</code>s across different runs.</p>
+<p><strong>State projection:</strong> A2A <code>Task.status</code> projects to openwop's run state per the <code>a2a-integration.md</code> table. Agents on both sides are referenced by the local shape (<code>AgentRef</code> in openwop's event log; <code>AgentCard</code> URL in A2A's task envelope).</p>
+<h3 id="agentref-agntcy"><code>AgentRef</code> + AGNTCY</h3>
+<p>AGNTCY's agent-identity proposals (as of 2026-05) center on gateway-mediated routing: agents register with a gateway, receive a gateway-issued identifier, and route inter-org traffic through the gateway's policy layer.</p>
+<p>The composition picture mirrors A2A:</p>
+<ul>
+<li>The gateway-issued identifier is the cross-org anchor.</li>
+<li>The OpenWOP host maps each remote agent to an <code>AgentRef</code> with <code>agentId</code> like <code>host:agntcy:&amp;lt;gatewayId&amp;gt;:&amp;lt;remoteAgentId&amp;gt;</code>.</li>
+<li>Policy enforcement (rate limits, auth) is done at the gateway; openwop's tool-allowlist mechanism (<code>agent-manifest.schema.json</code> <code>toolAllowlist</code>) remains the in-run permission gate.</li>
+</ul>
+<p>AGNTCY's spec is still evolving; OpenWOP hosts that integrate SHOULD treat the gateway-issued identifier as opaque and record it as metadata, not as the primary <code>agentId</code>.</p>
+<hr/>
+<h2 id="why-agentref-is-small">Why <code>AgentRef</code> is small</h2>
+<p>The four-field <code>AgentRef</code> (<code>agentId</code>, <code>agentSharing</code>, <code>memoryRef</code>, <code>modelClass</code>) is deliberately minimal. Three forces pushed toward this shape:</p>
+<p>1. <strong>Per-event footprint.</strong> Every <code>agent.toolCalled</code> and <code>agent.toolReturned</code> carries an <code>AgentRef</code>. A single run with 50 reasoning steps emits 100+ agent events. Bytes compound. 2. <strong>Replay determinism.</strong> <code>AgentRef</code> must be reproducible at replay time from the cached event payload. Larger shapes (full capability listings, certificate chains) drift across replays. 3. <strong>No coupling to identity ceremony.</strong> Hosts that don't care about DIDs, A2A, or AGNTCY can populate <code>AgentRef</code> with simple opaque IDs and not pay for ecosystems they don't use.</p>
+<p>When richer identity is needed, the <em>adjacent</em> shape (DID Document, <code>AgentCard</code>, gateway record) carries it. <code>AgentRef</code> points at one of those when present; it doesn't try to be one.</p>
+<hr/>
+<h2 id="translation-table">Translation table</h2>
+<p>For implementers building bridges:</p>
+<table>
+<thead><tr><th>Source</th><th><code>AgentRef.agentId</code> recipe</th><th>Where the source lives in metadata</th></tr></thead>
+<tbody>
+<tr><td>Manifest agent (RFC 0003)</td><td><code>&amp;lt;tier&amp;gt;.&amp;lt;org&amp;gt;.&amp;lt;pack&amp;gt;.&amp;lt;agent&amp;gt;</code> directly</td><td>Pack manifest; no extra metadata needed</td></tr>
+<tr><td>Host-local agent</td><td><code>host:&amp;lt;id&amp;gt;</code> per RFC 0002 §A1</td><td>Host's <code>AgentRegistry</code></td></tr>
+<tr><td>W3C DID</td><td>Stable hash of DID (e.g., <code>host:did:&amp;lt;did-hash&amp;gt;</code>)</td><td>Run metadata under <code>vendor.openwop.did</code></td></tr>
+<tr><td>A2A peer</td><td><code>host:a2a:&amp;lt;peerHostname&amp;gt;:&amp;lt;remoteAgentName&amp;gt;</code></td><td>Run metadata: <code>vendor.openwop.a2a.agentCardUrl</code></td></tr>
+<tr><td>AGNTCY gateway-routed</td><td><code>host:agntcy:&amp;lt;gatewayId&amp;gt;:&amp;lt;remoteAgentId&amp;gt;</code></td><td>Run metadata: <code>vendor.openwop.agntcy.gatewayId</code></td></tr>
+</tbody></table>
+<p>The <code>host:</code> namespace from RFC 0002 §A1 is the catch-all for non-manifest agents. The <code>agentId</code> stays opaque; resolution detail lives in metadata.</p>
+<hr/>
+<h2 id="what-s-out-of-scope">What's out of scope</h2>
+<p>This addendum does NOT:</p>
+<ul>
+<li>Define a normative DID method for openwop. Hosts that use DIDs SHOULD use existing standardized methods (<code>did:web</code>, <code>did:key</code>, etc.).</li>
+<li>Define cross-org auth handshakes. Those are A2A's, AGNTCY's, or the host's responsibility.</li>
+<li>Mandate any one shape. Hosts MAY ignore DIDs, A2A, and AGNTCY entirely and remain v1-conformant.</li>
+</ul>
+<hr/>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="../../RFCS/0002-agent-identity-and-reasoning-events.md">RFC 0002 — Agent Identity and Reasoning Events</a></li>
+<li><a href="../../RFCS/0003-agent-packs.md">RFC 0003 — Agent Packs</a> (manifest namespace)</li>
+<li><a href="https://www.w3.org/TR/did-core/">W3C Decentralized Identifiers (DIDs) v1.0</a> — informative</li>
+<li>A2A <code>AgentCard</code> (see <code>a2a-integration.md</code>)</li>
+<li>AGNTCY working notes (informative, evolving)</li>
+<li><code>spec/v1/a2a-integration.md</code> — full A2A composition spec</li>
+<li><code>spec/v1/host-extensions.md</code> — <code>vendor.*</code> namespace conventions</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

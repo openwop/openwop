@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — openwop Spec v1 — Compliance Vocabulary</title>
+  <meta name="description" content="Operators in regulated industries (financial services, healthcare, public sector, EU-resident services) evaluate every infrastructure choice through compliance lenses. &quot;Does openwop support audit-log retention?&quot; is the wrong question — openwop is a…"/>
+  <link rel="canonical" href="https://openwop.dev/spec/v1/compliance.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — openwop Spec v1 — Compliance Vocabulary"/>
+  <meta property="og:description" content="Operators in regulated industries (financial services, healthcare, public sector, EU-resident services) evaluate every infrastructure choice through compliance lenses. &quot;Does openwop support audit-log retention?&quot; is the wrong question — openwop is a…"/>
+  <meta property="og:url" content="https://openwop.dev/spec/v1/compliance.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — openwop Spec v1 — Compliance Vocabulary"/>
+  <meta name="twitter:description" content="Operators in regulated industries (financial services, healthcare, public sector, EU-resident services) evaluate every infrastructure choice through compliance lenses. &quot;Does openwop support audit-log retention?&quot; is the wrong question — openwop is a…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="active" href="/spec/v1/">Spec</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/profiles/">Profiles</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="openwop-spec-v1-compliance-vocabulary">openwop Spec v1 — Compliance Vocabulary</h1>
+<blockquote><p><strong>Status: FINAL v1 (2026-05-12).</strong> Non-normative — this document doesn't constrain any conforming openwop implementation. The few MUST / SHOULD keywords in this file are advisory to operators evaluating openwop in a regulated deployment, NOT requirements on conforming hosts; the protocol-level conformance contract lives in <code>spec/v1/*.md</code> + <code>RFCS/</code> + the conformance suite. Maps openwop's existing protocol-level guarantees onto common compliance vocabularies (SOC 2, GDPR, HIPAA, ISO 27001) so operators have a shared reference. See <code>auth.md</code> for the status legend.</p></blockquote>
+<hr/>
+<h2 id="why-this-exists">Why this exists</h2>
+<p>Operators in regulated industries (financial services, healthcare, public sector, EU-resident services) evaluate every infrastructure choice through compliance lenses. "Does openwop support audit-log retention?" is the wrong question — openwop is a protocol, not a deployed service. The right question: "What guarantees does the protocol surface, and which compliance controls do those guarantees satisfy when an operator runs a host that passes the openwop conformance suite inside their certified perimeter?"</p>
+<p>This document maps protocol-level surfaces onto common control vocabularies. It does NOT prescribe certification (certification is the deployer's responsibility) and does NOT make legal claims about regulatory adequacy (compliance is a context-specific judgment that requires a qualified auditor + counsel). It does describe what the protocol gives an operator to work with.</p>
+<hr/>
+<h2 id="scope-and-non-claims">Scope and non-claims</h2>
+<p><strong>In scope:</strong></p>
+<ul>
+<li>Mapping protocol-level guarantees (in <code>auth.md</code>, <code>auth-profiles.md</code>, <code>replay.md</code>, <code>webhooks.md</code>, <code>observability.md</code>, <code>production-profile.md</code>, <code>SECURITY/</code>) onto control families in SOC 2 Trust Services Criteria, GDPR articles, HIPAA Security Rule safeguards, and ISO 27001:2022 Annex A.</li>
+<li>Identifying which protocol surfaces an auditor would inspect to verify a given control.</li>
+</ul>
+<p><strong>Out of scope:</strong></p>
+<ul>
+<li>Deployment-specific posture (key management, employee access, physical security, data-residency arrangements). These are the operator's responsibility.</li>
+<li>Certification or attestation. The protocol can be used inside a certified environment; the protocol itself is not certified.</li>
+<li>Legal advice. This document is technical reference, not regulatory guidance.</li>
+</ul>
+<p><strong>Non-claims:</strong></p>
+<ul>
+<li>openwop does NOT claim to be "SOC 2 compliant," "HIPAA compliant," or "GDPR compliant." A protocol cannot hold those certifications. Deployments hold them; the protocol is one input.</li>
+<li>Operators MUST consult qualified legal and compliance professionals before claiming any regulatory status based on protocol surfaces.</li>
+</ul>
+<hr/>
+<h2 id="trust-services-criteria-soc-2">Trust Services Criteria (SOC 2)</h2>
+<table>
+<thead><tr><th>Criterion</th><th>Protocol surface</th><th>Inspection target</th></tr></thead>
+<tbody>
+<tr><td><strong>CC6.1</strong> — Logical access controls</td><td><code>auth.md</code> §Bearer tokens + scopes; <code>auth-profiles.md</code> §OAuth2-CC / OIDC / mTLS</td><td>Auditor inspects: <code>/.well-known/openwop</code> <code>auth.profiles[]</code> advertisement, scope vocabulary, scope-to-route mapping table in <code>rest-endpoints.md</code>.</td></tr>
+<tr><td><strong>CC6.6</strong> — Boundary protections</td><td><code>auth.md</code> §Tenant isolation; <code>agent-memory.md</code> §CTI-1 cross-tenant invariant</td><td>Auditor inspects: tenant scoping on <code>RunOptions</code>, cross-tenant memory probe scenario <code>agentMemoryCrossTenantIsolation.test.ts</code>.</td></tr>
+<tr><td><strong>CC6.7</strong> — Data classification + handling</td><td><code>SECURITY/threat-model-secret-leakage.md</code> §SR-1; <code>observability.md</code> §Redaction; <code>auth-profiles.md</code> §<code>openwop-audit-log-integrity</code></td><td>Auditor inspects: <code>redaction.test.ts</code> / <code>redactionAdversarial.test.ts</code> / <code>byok-roundtrip.test.ts</code>; canary leak detector in <code>lib/canaries.ts</code>.</td></tr>
+<tr><td><strong>CC7.1</strong> — System operations monitoring</td><td><code>observability.md</code> §Spans + metrics; <code>production-profile.md</code> §Observability</td><td>Auditor inspects: OTel span/metric vocabulary, <code>otel-emission.test.ts</code>, host-emitted span attributes per <code>openwop.*</code> namespace.</td></tr>
+<tr><td><strong>CC7.2</strong> — Anomaly detection</td><td><code>auth-profiles.md</code> §<code>openwop-audit-log-integrity</code> §4 verification endpoint</td><td>Auditor inspects: <code>audit-log-integrity.test.ts</code>, <code>/v1/audit/verify</code> chain re-walk + checkpoint signature verification.</td></tr>
+<tr><td><strong>CC7.3</strong> — Evaluation of security events</td><td><code>webhooks.md</code> §HMAC signing + replay-attack-resistant verification</td><td>Auditor inspects: webhook signing recipe + circuit-breaker semantics.</td></tr>
+<tr><td><strong>A1.2</strong> — Availability</td><td><code>production-profile.md</code> §Backpressure + §Event retention; <code>idempotency.md</code></td><td>Auditor inspects: backpressure 503 envelope + Retry-After bound (≤24h per RFC 0009 Q#2 resolution), event-retention minimum (7d), idempotency-record retention (≥24h).</td></tr>
+<tr><td><strong>A1.3</strong> — Recovery from incidents</td><td><code>replay.md</code> §Retention and garbage collection; <code>storage-adapters.md</code> §Stale-claim recovery</td><td>Auditor inspects: <code>restart-during-run.test.ts</code>, <code>staleClaim.test.ts</code>, <code>replay-fork.test.ts</code>.</td></tr>
+</tbody></table>
+<hr/>
+<h2 id="gdpr-eu-2016-679">GDPR (EU 2016/679)</h2>
+<table>
+<thead><tr><th>Article</th><th>Protocol surface</th><th>Inspection target</th></tr></thead>
+<tbody>
+<tr><td><strong>Art. 5(1)(c)</strong> — Data minimization</td><td><code>agent-memory.md</code> §SR-1 redaction; <code>debug-bundle.md</code> §Redaction guarantees</td><td>Auditor inspects: memory entries surface as <code>[REDACTED:&amp;lt;id&amp;gt;]</code> for BYOK plaintext; debug-bundle export excludes raw secrets per the redaction harness.</td></tr>
+<tr><td><strong>Art. 5(1)(e)</strong> — Storage limitation</td><td><code>replay.md</code> §Retention; <code>production-profile.md</code> §Event retention</td><td>Auditor inspects: retention-window advertisement (<code>capabilities.production.retention.minWindowSeconds</code>), expired-run 410/404 envelope.</td></tr>
+<tr><td><strong>Art. 5(2)</strong> — Accountability</td><td><code>auth-profiles.md</code> §<code>openwop-audit-log-integrity</code></td><td>Auditor inspects: append-only audit log + hash chain + signed checkpoints; <code>/v1/audit/verify</code> makes the log inspectable by data-protection officers.</td></tr>
+<tr><td><strong>Art. 17</strong> — Right to erasure</td><td><code>replay.md</code> §Privacy rules for replaying cached LLM responses</td><td>Auditor inspects: deletion semantics across the run + event log + cached provider responses. <strong>Protocol does NOT mandate erasure UX</strong> — operators expose erasure to data subjects through host-specific tooling.</td></tr>
+<tr><td><strong>Art. 25</strong> — Data protection by design</td><td><code>SECURITY/threat-model-secret-leakage.md</code>; <code>SECURITY/threat-model-prompt-injection.md</code></td><td>Auditor inspects: threat models published as part of the protocol; conformance scenarios that exercise the documented invariants.</td></tr>
+<tr><td><strong>Art. 30</strong> — Records of processing</td><td><code>observability.md</code> §Trace context propagation; canonical <code>openwop.tenant_id</code> / <code>openwop.scope_id</code> span attributes</td><td>Auditor inspects: every run carries tenant + scope identifiers; OTel propagation makes downstream processing traceable.</td></tr>
+<tr><td><strong>Art. 32</strong> — Security of processing</td><td><code>auth.md</code> §Bearer tokens; <code>auth-profiles.md</code> §OAuth2-CC / OIDC / mTLS; <code>webhooks.md</code> §HMAC</td><td>Auditor inspects: advertised auth profiles + the host's actual implementation per <code>INTEROP-MATRIX.md</code>.</td></tr>
+<tr><td><strong>Art. 33</strong> — Personal data breach notification</td><td><code>SECURITY.md</code> §Coordinated disclosure</td><td>Auditor inspects: protocol-level disclosure SLA; operator wraps with deployment-specific notification process.</td></tr>
+<tr><td><strong>Art. 44–49</strong> — Cross-border transfers</td><td><code>auth.md</code> §Tenant isolation; host-deployment surface (out of protocol scope)</td><td>Auditor inspects: tenant scoping primitives; cross-border posture is deployment-level, not protocol-level.</td></tr>
+</tbody></table>
+<hr/>
+<h2 id="hipaa-security-rule-45-cfr-part-164">HIPAA Security Rule (45 CFR Part 164)</h2>
+<table>
+<thead><tr><th>Safeguard</th><th>Protocol surface</th><th>Inspection target</th></tr></thead>
+<tbody>
+<tr><td><strong>§164.308(a)(1)(ii)(D)</strong> — Information system activity review</td><td><code>auth-profiles.md</code> §<code>openwop-audit-log-integrity</code></td><td>Auditor inspects: audit log + verify endpoint; chain-validity proof.</td></tr>
+<tr><td><strong>§164.308(a)(3)(ii)(A)</strong> — Authorization and supervision</td><td><code>auth.md</code> §Scopes; <code>auth-profiles.md</code> §<code>openwop-auth-api-key-rotation</code></td><td>Auditor inspects: scope vocabulary + rotation grace-window advertisement.</td></tr>
+<tr><td><strong>§164.308(a)(5)(ii)(C)</strong> — Login monitoring</td><td><code>observability.md</code> §Trace context; per-request <code>traceparent</code></td><td>Auditor inspects: login attempts traceable via host-side audit-log entries (host-specific implementation; protocol surfaces the trace primitive).</td></tr>
+<tr><td><strong>§164.310(b)</strong> — Workstation use</td><td>Out of protocol scope — deployment concern</td><td>n/a</td></tr>
+<tr><td><strong>§164.312(a)(1)</strong> — Access control</td><td><code>auth.md</code> §Bearer tokens + scopes</td><td>Auditor inspects: authorization gating on every protected route.</td></tr>
+<tr><td><strong>§164.312(b)</strong> — Audit controls</td><td><code>auth-profiles.md</code> §<code>openwop-audit-log-integrity</code></td><td>Auditor inspects: append-only audit storage, hash chain, signed checkpoints, verification endpoint.</td></tr>
+<tr><td><strong>§164.312(c)(1)</strong> — Integrity</td><td>Same as §164.312(b)</td><td>Same as above.</td></tr>
+<tr><td><strong>§164.312(d)</strong> — Person or entity authentication</td><td><code>auth-profiles.md</code> §<code>openwop-auth-oidc-user-bearer</code></td><td>Auditor inspects: end-user OIDC bearer when host claims the profile.</td></tr>
+<tr><td><strong>§164.312(e)(1)</strong> — Transmission security</td><td><code>auth-profiles.md</code> §<code>openwop-auth-mtls</code>; deployment TLS (out of protocol scope)</td><td>Auditor inspects: mTLS advertisement + deployment TLS posture (front-end terminator).</td></tr>
+</tbody></table>
+<p><strong>Note on PHI (Protected Health Information):</strong> The protocol does not define a "PHI" data class. Operators that route PHI through openwop SHOULD use the <code>[REDACTED:&amp;lt;id&amp;gt;]</code> pattern in <code>agent-memory.md</code> §SR-1 to keep PHI out of observable channels, plus deployment-specific encryption-at-rest controls.</p>
+<hr/>
+<h2 id="iso-iec-27001-2022-annex-a">ISO/IEC 27001:2022 Annex A</h2>
+<table>
+<thead><tr><th>Control family</th><th>Protocol surface</th><th>Inspection target</th></tr></thead>
+<tbody>
+<tr><td><strong>A.5.1</strong> — Policies for information security</td><td>This document + <code>SECURITY.md</code> + threat models</td><td>Auditor inspects: published threat models, disclosure policy.</td></tr>
+<tr><td><strong>A.5.7</strong> — Threat intelligence</td><td><code>SECURITY/threat-model-*.md</code> (5 published models)</td><td>Auditor inspects: documented adversary classes + invariants.</td></tr>
+<tr><td><strong>A.5.15</strong> — Access control</td><td><code>auth.md</code> §Scopes</td><td>Auditor inspects: route-to-scope mapping.</td></tr>
+<tr><td><strong>A.8.2</strong> — Privileged access rights</td><td><code>auth-profiles.md</code> §<code>openwop-auth-api-key-rotation</code></td><td>Auditor inspects: dual-key rotation grace window.</td></tr>
+<tr><td><strong>A.8.3</strong> — Information access restriction</td><td><code>auth.md</code> §Tenant isolation; CTI-1 cross-tenant invariant</td><td>Auditor inspects: cross-tenant probe scenario.</td></tr>
+<tr><td><strong>A.8.6</strong> — Capacity management</td><td><code>production-profile.md</code> §Backpressure</td><td>Auditor inspects: <code>inflightCap</code> advertisement + saturation envelope.</td></tr>
+<tr><td><strong>A.8.7</strong> — Protection against malware</td><td><code>node-packs.md</code> §Pack signing (Ed25519); <code>SECURITY/threat-model-node-packs.md</code></td><td>Auditor inspects: pack signature verification + signing-key rotation policy.</td></tr>
+<tr><td><strong>A.8.10</strong> — Information deletion</td><td><code>replay.md</code> §Retention; <code>production-profile.md</code> §Event retention</td><td>Auditor inspects: retention-window advertisement + expired-run envelope.</td></tr>
+<tr><td><strong>A.8.11</strong> — Data masking</td><td><code>agent-memory.md</code> §SR-1; <code>observability.md</code> §Redaction</td><td>Auditor inspects: redaction harness + canary leak detector.</td></tr>
+<tr><td><strong>A.8.15</strong> — Logging</td><td><code>auth-profiles.md</code> §<code>openwop-audit-log-integrity</code>; <code>observability.md</code></td><td>Auditor inspects: hash-chained audit log + OTel span/metric vocabulary.</td></tr>
+<tr><td><strong>A.8.16</strong> — Monitoring activities</td><td><code>observability.md</code> §Spans + metrics</td><td>Auditor inspects: OTel emission scenarios.</td></tr>
+<tr><td><strong>A.8.24</strong> — Use of cryptography</td><td><code>webhooks.md</code> §HMAC signing; <code>node-packs.md</code> §Ed25519; <code>auth-profiles.md</code> §audit-log integrity (Ed25519 checkpoints)</td><td>Auditor inspects: documented algorithms (HMAC-SHA-256 webhooks, Ed25519 signatures) — all are standard and FIPS-acceptable.</td></tr>
+</tbody></table>
+<hr/>
+<h2 id="compliance-relevant-protocol-primitives">Compliance-relevant protocol primitives</h2>
+<p>The following surfaces are most often cited in compliance reviews. They are normative parts of the openwop spec; this doc is the cross-reference.</p>
+<ul>
+<li><strong>Authentication / authorization.</strong> <code>auth.md</code>, <code>auth-profiles.md</code>.</li>
+<li><strong>Audit log + integrity verification.</strong> <code>auth-profiles.md</code> §<code>openwop-audit-log-integrity</code>, <code>/v1/audit/verify</code>.</li>
+<li><strong>Secret redaction.</strong> <code>SECURITY/threat-model-secret-leakage.md</code> §SR-1, <code>agent-memory.md</code>, <code>observability.md</code> §Redaction.</li>
+<li><strong>Tenant isolation.</strong> <code>auth.md</code> §Tenant isolation, <code>agent-memory.md</code> §CTI-1.</li>
+<li><strong>Retention + expiry.</strong> <code>production-profile.md</code> §Event retention, <code>replay.md</code> §Retention and garbage collection.</li>
+<li><strong>Encryption-in-transit.</strong> <code>auth-profiles.md</code> §<code>openwop-auth-mtls</code> for client→host; webhooks use TLS to subscriber endpoints per <code>webhooks.md</code>.</li>
+<li><strong>Encryption-at-rest.</strong> Out of protocol scope — deployment concern. Operators wire to KMS / database TDE / object-store SSE.</li>
+<li><strong>Observability + traceability.</strong> <code>observability.md</code> (W3C Trace Context + <code>openwop.*</code> OTel namespace).</li>
+<li><strong>Provenance.</strong> <code>auth-profiles.md</code> §<code>openwop-audit-log-integrity</code> audit log records actor + action + target.</li>
+</ul>
+<hr/>
+<h2 id="how-to-use-this-document">How to use this document</h2>
+<p>1. <strong>Pick a compliance framework</strong> (SOC 2, GDPR, HIPAA, ISO 27001) that applies to your deployment. 2. <strong>Identify the controls</strong> your auditor cares about — your compliance team can produce this list. 3. <strong>Cross-reference here</strong> to find which protocol surface each control inspects. 4. <strong>Verify the host you're using actually implements that surface</strong> by consulting <code>INTEROP-MATRIX.md</code> — claim ≠ conformance evidence; the matrix records what each host has actually demonstrated. 5. <strong>Layer the deployment-specific controls</strong> (key management, employee access, data residency) that the protocol cannot provide.</p>
+<p>If a compliance control you need isn't reflected here, file an issue. The intent is that this document grows with every new compliance framework that openwop deployments encounter.</p>
+<hr/>
+<h2 id="see-also">See also</h2>
+<ul>
+<li><code>auth.md</code> — bearer-token authentication and scope vocabulary</li>
+<li><code>auth-profiles.md</code> — optional production-auth profiles (rotation, OAuth2-CC, OIDC, mTLS, audit-log integrity)</li>
+<li><code>agent-memory.md</code> — memory layer + SR-1 secret redaction + CTI-1 cross-tenant isolation</li>
+<li><code>production-profile.md</code> — public-release operational profile (durability, backpressure, retention)</li>
+<li><code>replay.md</code> §Retention and garbage collection — replay history retention semantics</li>
+<li><code>observability.md</code> — <code>openwop.*</code> OTel namespace, W3C Trace Context propagation</li>
+<li><code>SECURITY.md</code> — coordinated disclosure process</li>
+<li><code>SECURITY/threat-model-*.md</code> — five published threat models (auth, packs, prompt-injection, provider-policy, secret-leakage)</li>
+<li><code>INTEROP-MATRIX.md</code> — per-host conformance evidence</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

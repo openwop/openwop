@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — openwop Spec v1 — Per-Run Options Overlay</title>
+  <meta name="description" content="A workflow definition (DAG of nodes + edges) is the shape of the work. Operationally, two runs of the same workflow often need different parameters: a different LLM model, a different temperature, a different prompt variant for A/B testing, a…"/>
+  <link rel="canonical" href="https://openwop.dev/spec/v1/run-options.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — openwop Spec v1 — Per-Run Options Overlay"/>
+  <meta property="og:description" content="A workflow definition (DAG of nodes + edges) is the shape of the work. Operationally, two runs of the same workflow often need different parameters: a different LLM model, a different temperature, a different prompt variant for A/B testing, a…"/>
+  <meta property="og:url" content="https://openwop.dev/spec/v1/run-options.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — openwop Spec v1 — Per-Run Options Overlay"/>
+  <meta name="twitter:description" content="A workflow definition (DAG of nodes + edges) is the shape of the work. Operationally, two runs of the same workflow often need different parameters: a different LLM model, a different temperature, a different prompt variant for A/B testing, a…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="active" href="/spec/v1/">Spec</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/profiles/">Profiles</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="openwop-spec-v1-per-run-options-overlay">openwop Spec v1 — Per-Run Options Overlay</h1>
+<blockquote><p><strong>Status: FINAL v1 (2026-04-27).</strong> Comprehensive coverage of <code>RunOptions</code> schema covering <code>configurable</code>, <code>tags</code>, <code>metadata</code>, and <code>recursionLimit</code> overrides. Stable surface for external review. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
+<hr/>
+<h2 id="why-this-exists">Why this exists</h2>
+<p>A workflow definition (DAG of nodes + edges) is the <em>shape</em> of the work. Operationally, two runs of the same workflow often need different <em>parameters</em>: a different LLM model, a different temperature, a different prompt variant for A/B testing, a tighter recursion cap for safety, or a tenant-scoped tag for filtering observability. Today, the only way to vary parameters is to fork the workflow definition itself — which inflates the workflow catalog with duplicates that differ only in a single config field.</p>
+<p>openwop defines a <strong>per-run options overlay</strong> that decouples parameter overrides from workflow versioning. <code>WorkflowDefinition</code> describes shape; <code>RunOptions.configurable</code> overlays parameters at run start without changing shape.</p>
+<p>This is distinct from versioning (see <code>version-negotiation.md</code>):</p>
+<ul>
+<li><strong>Workflow versioning</strong> (<code>ctx.getVersion</code>) — branches the <em>code path</em> an in-flight run follows. Required when behavior diverges.</li>
+<li><strong>Configurable overlay</strong> — overrides <em>opaque parameters</em> the existing code path consumes. Sufficient when only values differ.</li>
+</ul>
+<p>The <code>configurable</code> mechanism parallels <a href="https://python.langchain.com/docs/concepts/runnables/#configurable-runnables">LangChain's <code>RunnableConfig.configurable</code></a> idiom — chosen for ecosystem familiarity.</p>
+<hr/>
+<h2 id="runoptions-schema"><code>RunOptions</code> schema</h2>
+<p>An OpenWOP-compliant server MUST accept a <code>RunOptions</code> object on <code>POST /v1/runs</code> (top-level, alongside <code>workflowId</code> and <code>inputs</code>):</p>
+<pre class="lang-typescript"><code>interface RunOptions {
+  /** Per-run parameter overlay. Opaque to the engine; surfaced to NodeModules
+   *  via `ctx.config.configurable`. */
+  configurable?: Record&amp;lt;string, unknown&amp;gt;;
+
+  /** Free-form tags for observability filtering. Commonly used for tenant
+   *  isolation in dashboards (e.g., `tenant:acme`), feature-flag attribution
+   *  (e.g., `experiment:new-prompt`), and cost categorization. */
+  tags?: string[];
+
+  /** Free-form metadata for observability (logs, traces, metrics). Distinct
+   *  from `inputs` which feed nodes; metadata never affects execution. */
+  metadata?: Record&amp;lt;string, unknown&amp;gt;;
+}</code></pre>
+<p>All three fields are OPTIONAL. A <code>POST /v1/runs</code> body without <code>RunOptions</code> MUST be accepted as if <code>RunOptions</code> were <code>{}</code>.</p>
+<hr/>
+<h2 id="configurable"><code>configurable</code></h2>
+<p>The <code>configurable</code> field is opaque to the engine. NodeModules MAY consume keys via <code>ctx.config.configurable</code>. The server MUST surface every key/value the caller supplied without modification.</p>
+<h3 id="validation">Validation</h3>
+<p>An OpenWOP-compliant server SHOULD validate <code>configurable</code> against the schema declared in <code>Capabilities.configurable</code> when the host advertises that optional v1 capability. If a key is unknown or a value is out of declared bounds, the server SHOULD reject the request with HTTP <code>400 Bad Request</code>:</p>
+<pre class="lang-json"><code>{
+  &quot;error&quot;: &quot;validation_error&quot;,
+  &quot;message&quot;: &quot;configurable.temperature must be between 0 and 2 (got 3.5)&quot;,
+  &quot;details&quot;: { &quot;key&quot;: &quot;temperature&quot;, &quot;value&quot;: 3.5, &quot;min&quot;: 0, &quot;max&quot;: 2 }
+}</code></pre>
+<p>If the server doesn't yet declare <code>Capabilities.configurable</code>, it MAY accept any key/value (forward-compatibility for early adopters) but SHOULD log a warning when unknown keys are submitted.</p>
+<h3 id="per-workflow-configurableschema">Per-workflow <code>configurableSchema</code></h3>
+<p>Workflow definitions MAY carry a <code>configurableSchema</code> field declaring which <code>configurable</code> keys the workflow accepts at run start. The field is a JSON Schema 2020-12 object that constrains the shape of <code>RunOptions.configurable</code> on <code>POST /v1/runs</code>:</p>
+<pre class="lang-yaml"><code># WorkflowDefinition (excerpt)
+id: campaign-orchestration
+version: 3
+configurableSchema:
+  type: object
+  properties:
+    temperature: { type: number, minimum: 0, maximum: 1 }
+    model: { type: string, enum: [claude-sonnet-4-6, claude-haiku-4-5] }
+    promptOverrides:
+      type: object
+      additionalProperties: { type: string }
+  required: []
+  additionalProperties: false</code></pre>
+<p>When <code>configurableSchema</code> is present, hosts:</p>
+<p>1. MUST validate <code>RunOptions.configurable</code> against this schema at <code>POST /v1/runs</code> time and reject with <code>validation_error</code> on failure. 2. MUST surface <code>configurableSchema</code> on <code>GET /v1/workflows/{workflowId}</code> so clients can pre-flight-validate before submitting a run. 3. MUST validate <code>configurableSchema</code> against host-level <code>Capabilities.configurable</code> at workflow registration time — a workflow cannot accept a key the host doesn't recognize.</p>
+<p>When <code>configurableSchema</code> is absent, fall back to host-level <code>Capabilities.configurable</code> validation (§"Validation" above).</p>
+<p>This is <strong>additive</strong>: workflows authored before this field landed omit <code>configurableSchema</code> and continue to validate against host-level rules only.</p>
+<h3 id="reserved-keys">Reserved keys</h3>
+<p>The following keys are RESERVED. Servers MUST handle them per the spec and MUST NOT permit NodeModules to redefine them:</p>
+<table>
+<thead><tr><th>Key</th><th>Type</th><th>Semantics</th></tr></thead>
+<tbody>
+<tr><td><code>recursionLimit</code></td><td><code>number</code></td><td>Override the per-run node-execution ceiling. Clamped to the server's <code>Capabilities.limits.maxNodeExecutions</code>.</td></tr>
+<tr><td><code>model</code></td><td><code>string</code></td><td>Override the AI model for nodes that consume <code>ctx.config.configurable.model</code>.</td></tr>
+<tr><td><code>temperature</code></td><td><code>number</code></td><td>Override AI temperature. Range 0-2 (server SHOULD enforce).</td></tr>
+<tr><td><code>maxTokens</code></td><td><code>number</code></td><td>Override AI max-tokens cap.</td></tr>
+<tr><td><code>promptOverrides</code></td><td><code>Record&amp;lt;string, string&amp;gt;</code></td><td>Per-prompt-ID variant override. Map of canonical prompt ID → override text.</td></tr>
+<tr><td><code>mockProvider</code></td><td><code>{ id: string, config?: object }</code></td><td>Route AI activity calls through a deterministic mock provider instead of real LLM APIs. Test-keys-only (servers MUST refuse on production keys with <code>403 mock_provider_forbidden</code>). See "Mock provider extension" §below — closes F1.</td></tr>
+<tr><td><code>ai.provider</code></td><td><code>string</code></td><td>Override the AI provider for the run. MUST be in <code>Capabilities.aiProviders.supported</code>. Servers reject unknown providers with <code>validation_error</code>.</td></tr>
+<tr><td><code>ai.model</code></td><td><code>string</code></td><td>Override the AI model for the run. Distinct from the unprefixed <code>model</code> key — <code>ai.model</code> is BYOK-aware (resolves against the chosen provider's catalog); <code>model</code> is the legacy unscoped override. New code SHOULD prefer <code>ai.model</code>.</td></tr>
+<tr><td><code>ai.credentialRef</code></td><td><code>string</code></td><td>Opaque host-issued reference to a stored credential (e.g., <code>secret_a3b9c2</code>). MUST reference a credential of a provider in <code>Capabilities.aiProviders.byok</code>; servers reject mismatched-provider refs with <code>credential_forbidden</code>. NEVER carries raw key material — the host's <code>SecretResolver</code> dereferences the ref internally. Required when a node's <code>requiresSecrets[]</code> declares an <code>ai-provider</code> kind on a BYOK provider; absent for platform-managed-key runs.</td></tr>
+<tr><td><code>escalationThreshold</code></td><td><code>number</code> (0–1)</td><td>Multi-Agent Shift Phase 1. Per-run override of the confidence-escalation threshold used by the <code>low-confidence</code> suspend contract. When an <code>agent.decided.confidence</code> value is below this threshold, the host MUST suspend via <code>node.suspended { reason: &#39;low-confidence&#39; }</code> per <code>interrupt.md</code>. Default <code>0.7</code> per the Phase-1 disposition (industry-typical floor for LLM judgement). Servers MAY refuse values outside <code>[0, 1]</code> with <code>validation_error</code>. Hosts that don't advertise <code>capabilities.agents.supported: true</code> ignore the key.</td></tr>
+<tr><td><code>reasoningVerbosity</code></td><td>`"summary" \</td><td>"full" \</td></tr>
+</tbody></table>
+<p>NodeModules consuming these keys MUST NOT crash if they're absent — the <code>configurable</code> field is OPTIONAL.</p>
+<p>Vendor extensions MUST use a vendor-prefixed namespace (e.g., <code>acme.feature_x</code>) to avoid collisions with future spec-reserved keys.</p>
+<p>The <code>ai.*</code> namespace is RESERVED for spec-defined BYOK + provider-routing keys; vendor extensions to AI routing MUST use a vendor prefix instead.</p>
+<h3 id="example">Example</h3>
+<pre class="lang-json"><code>POST /v1/runs
+{
+  &quot;workflowId&quot;: &quot;campaign-orchestration&quot;,
+  &quot;inputs&quot;: { &quot;briefId&quot;: &quot;brief_42&quot; },
+  &quot;configurable&quot;: {
+    &quot;model&quot;: &quot;claude-sonnet-4-6&quot;,
+    &quot;temperature&quot;: 0.3,
+    &quot;recursionLimit&quot;: 50,
+    &quot;promptOverrides&quot;: {
+      &quot;campaign-strategy.system&quot;: &quot;Use a more formal tone.&quot;
+    }
+  },
+  &quot;tags&quot;: [&quot;tenant:acme&quot;, &quot;experiment:formal-voice&quot;],
+  &quot;metadata&quot;: {
+    &quot;submittedBy&quot;: &quot;ci-pipeline&quot;,
+    &quot;buildId&quot;: &quot;abc123&quot;
+  }
+}</code></pre>
+<hr/>
+<h2 id="mock-provider-extension-closes-f1">Mock provider extension (closes F1)</h2>
+<p>For conformance testing + development workflows that exercise AI nodes without consuming real-API budget, the spec defines a <code>configurable.mockProvider</code> extension. When set, the engine routes ALL AI activity calls through the named mock provider instead of dispatching to a real LLM. The mock returns deterministic chunks per its config — fully replay-deterministic by construction.</p>
+<h3 id="wire-shape">Wire shape</h3>
+<pre class="lang-jsonc"><code>{
+  &quot;configurable&quot;: {
+    &quot;mockProvider&quot;: {
+      &quot;id&quot;: &quot;stream-text&quot;,
+      &quot;config&quot;: {
+        &quot;tokens&quot;: [&quot;Hello&quot;, &quot; &quot;, &quot;world&quot;],
+        &quot;delayMsPerToken&quot;: 50,
+        &quot;finishReason&quot;: &quot;stop&quot;,
+        &quot;usage&quot;: { &quot;promptTokens&quot;: 12, &quot;completionTokens&quot;: 3, &quot;totalTokens&quot;: 15 }
+      }
+    }
+  }
+}</code></pre>
+<p><code>id</code> selects a mock provider from the server's catalog (advertised via <code>Capabilities.testing.mockProviders</code>). <code>config</code> is the per-provider parameter shape; each provider documents its own keys.</p>
+<h3 id="authorization">Authorization</h3>
+<p>Mock providers MUST be guarded — anyone with API access could otherwise skip real billing by always opting in.</p>
+<ul>
+<li>An OpenWOP-compliant server MUST refuse <code>configurable.mockProvider</code> from production API keys with <code>403 mock_provider_forbidden</code>.</li>
+<li>Test API keys (advertised via <code>Capabilities.testing.testKeyPrefix</code> — typically <code>hk_test_</code>) pass.</li>
+<li>Servers MAY additionally gate on per-tenant policy or feature flags.</li>
+</ul>
+<pre class="lang-json"><code>{
+  &quot;error&quot;: &quot;mock_provider_forbidden&quot;,
+  &quot;message&quot;: &quot;Mock providers are not enabled for this API key. Use a test key (prefix &#39;hk_test_&#39;).&quot;,
+  &quot;details&quot;: {
+    &quot;requestedProvider&quot;: &quot;stream-text&quot;,
+    &quot;supportedProviders&quot;: [&quot;stream-text&quot;, &quot;tool-calls&quot;, &quot;error&quot;, &quot;usage-only&quot;]
+  }
+}</code></pre>
+<h3 id="canonical-mock-provider-catalog">Canonical mock provider catalog</h3>
+<p>An OpenWOP-compliant server claiming v1.0 conformance MUST recognize the <code>stream-text</code> provider (the spec-canonical baseline that unblocks <code>messages</code>-mode testing). Other providers below are RECOMMENDED but not required for conformance.</p>
+<h4 id="stream-text-required"><code>stream-text</code> (REQUIRED)</h4>
+<p>Emits <code>output.chunk</code> events one at a time with the configured cadence, then completes the AI activity with a normal terminal chunk (<code>isLast: true</code>).</p>
+<table>
+<thead><tr><th>Config field</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td><code>tokens</code></td><td><code>string[]</code></td><td><code>[&quot;mock&quot;, &quot; response&quot;]</code></td><td>Sequence of strings emitted as individual <code>output.chunk</code> events. Each becomes one chunk's <code>chunk</code> field.</td></tr>
+<tr><td><code>delayMsPerToken</code></td><td><code>integer</code></td><td><code>0</code></td><td>Wall-clock delay between successive chunks. Range 0..5000. Useful for testing client-side incremental rendering.</td></tr>
+<tr><td><code>finishReason</code></td><td><code>string</code></td><td><code>&quot;stop&quot;</code></td><td>Set on the final chunk's <code>meta.finishReason</code>. Must be one of the canonical values (<code>stop</code>/<code>length</code>/<code>tool_calls</code>/<code>content_filter</code>).</td></tr>
+<tr><td><code>usage</code></td><td><code>object</code></td><td>(computed)</td><td>Token-billing metadata for the final chunk's <code>meta.usage</code>. When omitted, the server computes <code>completionTokens = tokens.length</code> and <code>promptTokens = 1</code> (placeholder).</td></tr>
+<tr><td><code>model</code></td><td><code>string</code></td><td><code>&quot;mock-stream-text-v1&quot;</code></td><td>Set on every chunk's <code>meta.model</code>.</td></tr>
+</tbody></table>
+<h4 id="tool-calls-recommended"><code>tool-calls</code> (RECOMMENDED)</h4>
+<p>Emits a sequence of structured tool-call chunks. Useful for testing function-calling pipelines without a real LLM.</p>
+<table>
+<thead><tr><th>Config field</th><th>Type</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td><code>toolCalls</code></td><td><code>array</code></td><td>Each item is <code>{id, name, arguments}</code> per the S2 <code>meta.toolCalls</code> shape. Emitted in order.</td></tr>
+<tr><td><code>delayMsPerToken</code></td><td><code>integer</code></td><td>Same as <code>stream-text</code>.</td></tr>
+</tbody></table>
+<h4 id="error-recommended"><code>error</code> (RECOMMENDED)</h4>
+<p>Fails the AI activity immediately with a configured error. Useful for testing failure paths in retry logic + idempotency.</p>
+<table>
+<thead><tr><th>Config field</th><th>Type</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td><code>code</code></td><td><code>string</code></td><td>Sets <code>RunSnapshot.error.code</code>.</td></tr>
+<tr><td><code>message</code></td><td><code>string</code></td><td>Sets <code>RunSnapshot.error.message</code>.</td></tr>
+<tr><td><code>retryable</code></td><td><code>boolean</code></td><td>When <code>true</code>, the engine treats this as a transient failure and retries per the node's retry budget.</td></tr>
+<tr><td><code>failAfterMs</code></td><td><code>integer</code></td><td>Optional delay before failing — exercises mid-call cancellation.</td></tr>
+</tbody></table>
+<h4 id="usage-only-recommended"><code>usage-only</code> (RECOMMENDED)</h4>
+<p>Returns no content but reports <code>meta.usage</code>. Useful for testing cost-attribution rollup (O4 attributes) without consuming tokens.</p>
+<table>
+<thead><tr><th>Config field</th><th>Type</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td><code>usage</code></td><td><code>object</code></td><td><code>{promptTokens, completionTokens, totalTokens}</code>. Reported in the single emitted chunk's <code>meta.usage</code>.</td></tr>
+</tbody></table>
+<h3 id="replay-determinism">Replay determinism</h3>
+<p>Mock providers are inherently replay-safe: their entire behavior is determined by <code>configurable.mockProvider.config</code>, which is persisted on the run doc and re-applied at replay time. Replays through real LLMs need the Layer-2 invocation log (<code>idempotency.md</code> §Layer 2) to maintain determinism; mock providers do not — they're a closed-form deterministic function of their config.</p>
+<p>This makes mock providers especially suitable for <code>:fork</code> testing: a forked run with <code>mode: replay</code> and a mock provider produces byte-identical event logs to the source run, every time.</p>
+<h3 id="capabilities-advertisement">Capabilities advertisement</h3>
+<p>Servers advertise mock-provider support via <code>Capabilities.testing</code>:</p>
+<pre class="lang-jsonc"><code>{
+  &quot;testing&quot;: {
+    &quot;mockProviders&quot;: [&quot;stream-text&quot;, &quot;tool-calls&quot;, &quot;error&quot;, &quot;usage-only&quot;],
+    &quot;testKeyPrefix&quot;: &quot;hk_test_&quot;
+  }
+}</code></pre>
+<p>Consumers requesting a mock-provider that's not in the server's <code>mockProviders</code> array get <code>400 unsupported_mock_provider</code>.</p>
+<h3 id="what-this-is-not">What this is NOT</h3>
+<ul>
+<li>The mock-provider extension is NOT for production traffic. Routing real user requests through mocks is a billing-bypass vulnerability; the test-key gating prevents this at the auth layer.</li>
+<li>It is NOT a replacement for unit tests of NodeModule code. NodeModule unit tests run in-process with stubs; mock providers exercise the engine + activity + event-log path end-to-end.</li>
+<li>It does NOT define a way to mock non-AI activities (HTTP webhook, Stripe payment, etc.). Those are handled by per-activity test-mode patterns (e.g., Stripe's <code>tok_visa</code> test cards) that are inherently provider-specific. Future spec work MAY extend the mock-provider catalog to cover them.</li>
+</ul>
+<hr/>
+<h2 id="tags"><code>tags</code></h2>
+<p>An OpenWOP-compliant server MUST treat <code>tags</code> as an opaque string array attached to the run for observability purposes. Servers MUST:</p>
+<p>1. Persist tags on the run document. 2. Include tags in OTel span attributes as <code>openwop.run.tag.&amp;lt;index&amp;gt;</code> or as a single <code>openwop.run.tags</code> array attribute (implementation choice). 3. Surface tags in dashboard / admin-panel run listings for filtering.</p>
+<p>Servers MAY index tags for query (e.g., <code>GET /v1/runs?tag=tenant:acme</code>); this is RECOMMENDED for production deployments but not REQUIRED for spec compliance.</p>
+<h3 id="tag-format-conventions">Tag format conventions</h3>
+<p>openwop doesn't prescribe tag syntax. The following CONVENTIONS are widely used:</p>
+<ul>
+<li><code>tenant:&amp;lt;id&amp;gt;</code> — tenant/workspace scoping</li>
+<li><code>experiment:&amp;lt;name&amp;gt;</code> — feature-flag or A/B variant attribution</li>
+<li><code>cost-center:&amp;lt;id&amp;gt;</code> — billing categorization</li>
+<li><code>caller:&amp;lt;system&amp;gt;</code> — origin system (e.g., <code>caller:ci</code>, <code>caller:cli</code>, <code>caller:web</code>)</li>
+<li><code>env:&amp;lt;environment&amp;gt;</code> — <code>env:prod</code>, <code>env:staging</code></li>
+</ul>
+<p>Servers MUST NOT reject tags based on format (other than non-string entries or excessive length).</p>
+<h3 id="limits">Limits</h3>
+<p>An OpenWOP-compliant server SHOULD enforce these limits on tags:</p>
+<ul>
+<li>Maximum tag count per run: <code>100</code></li>
+<li>Maximum tag length: <code>256</code> characters</li>
+<li>Tags MUST be valid UTF-8</li>
+</ul>
+<p>Exceeding limits MUST produce <code>400 validation_error</code>.</p>
+<hr/>
+<h2 id="metadata"><code>metadata</code></h2>
+<p>Free-form key/value object attached to the run. Engine MUST NOT consume metadata for any execution decision. Used for:</p>
+<ul>
+<li>Tracing correlation IDs from the caller's system</li>
+<li>Audit trail context (who/why/when)</li>
+<li>Cost tracking metadata</li>
+<li>Custom observability fields beyond what <code>tags</code> express</li>
+</ul>
+<p>Servers MUST persist metadata and MAY include it in OTel span attributes as <code>openwop.run.metadata.&amp;lt;key&amp;gt;</code>.</p>
+<h3 id="limits">Limits</h3>
+<p>An OpenWOP-compliant server SHOULD enforce:</p>
+<ul>
+<li>Maximum metadata depth: <code>4</code> levels of nesting</li>
+<li>Maximum total serialized size: <code>8192</code> bytes</li>
+<li>All values MUST be JSON-serializable (no functions, no <code>undefined</code>, no circular references)</li>
+</ul>
+<hr/>
+<h2 id="nodemodule-access">NodeModule access</h2>
+<p>NodeModules access run options via <code>ctx.config</code>:</p>
+<pre class="lang-typescript"><code>async function* myNode(ctx: NodeContext): AsyncIterable&amp;lt;NodeEvent&amp;gt; {
+  const model = ctx.config.configurable?.model ?? &#39;claude-haiku-4-5&#39;;
+  const temperature = ctx.config.configurable?.temperature ?? 0.7;
+
+  yield {
+    kind: &#39;output&#39;,
+    output: { /* ... */ },
+  };
+}</code></pre>
+<p><code>tags</code> and <code>metadata</code> are NOT exposed to NodeModules — they're observability-only. Exposing them would invite executors to branch on tag values, defeating the "tags don't affect execution" invariant.</p>
+<hr/>
+<h2 id="persistence">Persistence</h2>
+<p>An OpenWOP-compliant server MUST persist <code>RunOptions</code> on the run document at creation time. Resume / replay paths MUST surface the original options to NodeModules via <code>ctx.config</code> — NodeModules SHOULD see the same <code>configurable</code> values across all attempts of a node execution.</p>
+<p>A server MAY allow caller modification of <code>tags</code> and <code>metadata</code> after creation via a host extension or future <code>PATCH /v1/runs/{runId}</code> endpoint. It MUST NOT allow modification of <code>configurable</code> after run creation — that breaks replay determinism.</p>
+<hr/>
+<h2 id="open-spec-gaps">Open spec gaps</h2>
+<table>
+<thead><tr><th>#</th><th>Gap</th><th>Owner</th></tr></thead>
+<tbody>
+<tr><td>RO1</td><td>Positive/negative conformance coverage for advertised <code>Capabilities.configurable</code> bounds</td><td>conformance minor</td></tr>
+<tr><td>RO2</td><td><code>PATCH /v1/runs/{runId}</code> for tag/metadata updates post-creation</td><td>future v1.x</td></tr>
+<tr><td>RO3</td><td>Default <code>tags</code> / <code>metadata</code> injection from API key (e.g., key carries <code>tenant:acme</code> automatically)</td><td>future v1.x</td></tr>
+<tr><td>RO4</td><td>Tag indexing + query syntax (<code>?tag=tenant:acme</code>)</td><td>future</td></tr>
+</tbody></table>
+<h2 id="references">References</h2>
+<ul>
+<li><code>auth.md</code> — auth model + status legend</li>
+<li><code>rest-endpoints.md</code> — <code>POST /v1/runs</code> endpoint</li>
+<li><code>capabilities.md</code> — <code>Capabilities.configurable</code> schema declaration</li>
+<li><code>version-negotiation.md</code> — distinct from workflow versioning (<code>ctx.getVersion</code>)</li>
+<li><code>observability.md</code> — <code>openwop.run.tag.<em></code> + <code>openwop.run.metadata.</em></code> span attributes</li>
+<li>LangChain idiom: &lt;https://python.langchain.com/docs/concepts/runnables/#configurable-runnables&gt;</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>

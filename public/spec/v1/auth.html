@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>openwop — openwop Spec v1 — Authentication and Authorization</title>
+  <meta name="description" content="This document specifies how OpenWOP-compliant servers authenticate and authorize callers of the protocol&#39;s wire-level surfaces (REST, MCP, A2A, SSE). It does NOT prescribe identity-provider semantics; an implementation MAY use any identity provider…"/>
+  <link rel="canonical" href="https://openwop.dev/spec/v1/auth.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="openwop — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="openwop — openwop Spec v1 — Authentication and Authorization"/>
+  <meta property="og:description" content="This document specifies how OpenWOP-compliant servers authenticate and authorize callers of the protocol&#39;s wire-level surfaces (REST, MCP, A2A, SSE). It does NOT prescribe identity-provider semantics; an implementation MAY use any identity provider…"/>
+  <meta property="og:url" content="https://openwop.dev/spec/v1/auth.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="openwop — openwop Spec v1 — Authentication and Authorization"/>
+  <meta name="twitter:description" content="This document specifies how OpenWOP-compliant servers authenticate and authorize callers of the protocol&#39;s wire-level surfaces (REST, MCP, A2A, SSE). It does NOT prescribe identity-provider semantics; an implementation MAY use any identity provider…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">openwop</span>
+      <span class="brand-tagline">Multi-Agent Workflow Orchestration Protocol</span>
+    </a>
+    <nav class="site-nav">
+      <a class="" href="/">Overview</a>
+      <a class="active" href="/spec/v1/">Spec</a>
+      <a class="" href="/conformance/">Conformance</a>
+      <a class="" href="/profiles/">Profiles</a>
+      <a href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </header>
+  <main class="site-main">
+    <article class="spec-doc"><h1 id="openwop-spec-v1-authentication-and-authorization">openwop Spec v1 — Authentication and Authorization</h1>
+<blockquote><p><strong>Status: FINAL v1 (2026-04-27).</strong> Comprehensive coverage of the bearer-token auth model, scope vocabulary, and the canonical 401/403 error envelope (now backed by <code>schemas/error-envelope.schema.json</code> per JS5). Not yet final: OAuth 2.0, mTLS, key rotation, and webhook HMAC remain in "Open spec gaps" — but the stable surface (API key + scopes + error envelope) is comprehensive enough for SDK + conformance authoring. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>.</p><p></p><p><strong>Status legend</strong> (used across all spec/v1/*.md):</p><p>- <strong>STUB</strong> — minimal coverage, only stable surfaces. Implementers SHOULD pin only to what's written; assume gaps.</p><p>- <strong>DRAFT</strong> — comprehensive coverage of stable + in-flight surfaces, but not yet reviewed by spec committee.</p><p>- <strong>OUTLINE</strong> — sketched but not detailed. Section headings lock; field schemas may shift.</p><p>- <strong>FINAL</strong> — frozen. Breaking changes go to v2.</p></blockquote>
+<hr/>
+<h2 id="scope">Scope</h2>
+<p>This document specifies how OpenWOP-compliant servers authenticate and authorize callers of the protocol's wire-level surfaces (REST, MCP, A2A, SSE). It does NOT prescribe identity-provider semantics; an implementation MAY use any identity provider (Firebase Auth, OAuth 2.0, mTLS, etc.) for human callers, and MUST use the API-key surface defined here for machine callers.</p>
+<h2 id="authentication-models">Authentication models</h2>
+<p>An OpenWOP-compliant server MUST support <strong>at least one</strong> of the following authentication models. It MAY support multiple in parallel.</p>
+<h3 id="1-api-keys-machine-callers">1. API keys (machine callers)</h3>
+<p>REQUIRED for any server that exposes the openwop wire surface to non-human callers.</p>
+<ul>
+<li>The server MUST accept the API key in the <code>Authorization</code> HTTP header using the <code>Bearer</code> scheme: <code>Authorization: Bearer &amp;lt;key&amp;gt;</code>.</li>
+<li>The server MUST reject requests missing or malformed <code>Authorization</code> headers with HTTP <code>401 Unauthorized</code>.</li>
+<li>The server MUST validate the key against persisted records and reject unknown, revoked, or expired keys with HTTP <code>401 Unauthorized</code>.</li>
+<li>The server MUST verify the key carries the scope required for the requested operation (see "Scopes" below) and reject scope-insufficient requests with HTTP <code>403 Forbidden</code>.</li>
+<li>API keys MUST be stored hashed at rest; comparison MUST use a constant-time function (e.g., bcrypt). Plaintext storage is FORBIDDEN.</li>
+</ul>
+<h4 id="key-format">Key format</h4>
+<p>The spec does not prescribe the visible prefix; reference implementations are encouraged to use a short, recognizable prefix that distinguishes:</p>
+<ul>
+<li>Live keys from sandbox/test keys (e.g., <code>live_</code> vs <code>test_</code>)</li>
+<li>The implementation's own keys from those of other systems (e.g., a vendor identifier)</li>
+</ul>
+<p>Example schemes from real and hypothetical hosts:</p>
+<ul>
+<li><strong>Steward's reference host</strong> — two-prefix scheme distinguishing live and sandbox keys, bcrypt-hashed, stored under a host-private collection.</li>
+<li><strong>Hypothetical <code>acme.example</code> host</strong> — single <code>acme_</code> prefix with embedded environment hint (<code>acme_prod_</code>, <code>acme_staging_</code>), Argon2id-hashed, stored in a managed secrets vault.</li>
+</ul>
+<p>Hosts MAY use any scheme they prefer; the prefix is purely operational.</p>
+<h4 id="scopes">Scopes</h4>
+<p>An OpenWOP-compliant server MUST support the following scope vocabulary at minimum:</p>
+<table>
+<thead><tr><th>Scope</th><th>Allows</th></tr></thead>
+<tbody>
+<tr><td><code>manifest:read</code></td><td>Read workflow / canvas-type / endpoint manifests</td></tr>
+<tr><td><code>runs:create</code></td><td>Create new runs</td></tr>
+<tr><td><code>runs:read</code></td><td>Read run state and event stream</td></tr>
+<tr><td><code>runs:cancel</code></td><td>Cancel an in-flight run</td></tr>
+<tr><td><code>artifacts:read</code></td><td>Read artifacts produced by runs</td></tr>
+<tr><td><code>webhooks:manage</code></td><td>Register/unregister webhook subscriptions</td></tr>
+<tr><td><code>approvals:respond</code></td><td>Respond to HITL approval gates</td></tr>
+<tr><td><code>packs:publish</code></td><td>Publish new versions of node-packs to the registry (see <code>registry-operations.md</code>)</td></tr>
+<tr><td><code>packs:yank</code></td><td>Mark a published node-pack version yanked (advisory; existing pins keep resolving)</td></tr>
+<tr><td><code>packs:yank-revert</code></td><td>Reinstate a yanked node-pack version (super-admin)</td></tr>
+<tr><td><code>audit:read</code></td><td>Verify audit-log integrity via <code>GET /v1/audit/verify</code>. Gated on the <code>openwop-audit-log-integrity</code> profile per <code>auth-profiles.md</code>.</td></tr>
+</tbody></table>
+<p>A server MAY define additional scopes for non-protocol surfaces (e.g., <code>canvas-types:list</code>, <code>projects:list</code> for platform-level keys). Such extensions MUST NOT shadow the names above.</p>
+<p>A key MAY hold any subset of scopes. The server MUST enforce scope checks at the endpoint level, not at the resource level — i.e., <code>runs:cancel</code> does not imply <code>runs:read</code>.</p>
+<h3 id="2-user-bearer-tokens-human-callers">2. User-bearer tokens (human callers)</h3>
+<p>OPTIONAL. Servers that expose admin/management surfaces (CLIs, dashboards) typically accept user-bearer tokens issued by an identity provider.</p>
+<ul>
+<li>The server MUST validate the token against the issuing provider before authorizing any operation.</li>
+<li>User tokens MAY map to a richer permission model than API keys (e.g., role-based access control over multiple scope dimensions).</li>
+<li>User tokens MUST NOT bypass workspace/tenant isolation.</li>
+</ul>
+<p>Implementation examples include OAuth/OIDC identity providers, managed identity platforms, or mTLS front doors that map the authenticated principal to workspace memberships and role flags.</p>
+<h2 id="authorization">Authorization</h2>
+<p>Beyond scope checks on API keys, an OpenWOP-compliant server MUST enforce:</p>
+<p>1. <strong>Tenant isolation.</strong> A caller authenticated for tenant A MUST NOT be able to read or mutate any resource scoped to tenant B. The server MUST verify resource-tenant binding inside the same transaction or query that fetches the resource. (See <code>idempotency.md</code> for the run-claim transactional check.)</p>
+<p>2. <strong>Scope-resource match.</strong> Even if a key carries <code>runs:read</code>, the server MUST verify that the specific run the caller is requesting belongs to a tenant the key is authorized for.</p>
+<p>3. <strong>Test-mode segregation.</strong> If the server distinguishes live and test keys (recommended), it MUST NOT permit a test key to read or mutate live data, and vice versa. Resources created by test keys MUST be marked as such.</p>
+<h2 id="error-response-shape">Error response shape</h2>
+<p>Auth failures use the standard JSON-RPC 2.0 error shape on JSON-RPC transports, and the following on REST:</p>
+<pre class="lang-json"><code>{
+  &quot;error&quot;: &quot;&amp;lt;short_code&amp;gt;&quot;,
+  &quot;message&quot;: &quot;&amp;lt;human-readable&amp;gt;&quot;,
+  &quot;scopeRequired&quot;: &quot;&amp;lt;scope&amp;gt;&quot;  // present on 403 only
+}</code></pre>
+<p>Codes:</p>
+<ul>
+<li><code>unauthenticated</code> (401) — no credential or invalid credential</li>
+<li><code>forbidden</code> (403) — credential valid but lacks required scope or fails resource binding</li>
+<li><code>key_expired</code> (401)</li>
+<li><code>key_revoked</code> (401)</li>
+</ul>
+<h2 id="rate-limiting">Rate limiting</h2>
+<p>An OpenWOP-compliant server SHOULD apply per-key rate limits and SHOULD return:</p>
+<ul>
+<li>HTTP <code>429 Too Many Requests</code></li>
+<li><code>Retry-After</code> header (seconds)</li>
+<li>Body: <code>{ error: &quot;rate_limited&quot;, message, details: { window, limit, current, retryAfterSeconds } }</code></li>
+</ul>
+<p>Rate-limit decisions MUST be made before scope checks (so a flooded key can be throttled even on endpoints it lacks scope for).</p>
+<h2 id="audit">Audit</h2>
+<p>An OpenWOP-compliant server SHOULD log every authenticated request with at minimum: keyId, scope used, request method+path, timestamp, response status, latency. Logs MUST NOT include the API key value or any credential material.</p>
+<hr/>
+<h2 id="open-spec-gaps">Open spec gaps</h2>
+<table>
+<thead><tr><th>#</th><th>Gap</th><th>Owner</th></tr></thead>
+<tbody>
+<tr><td>A1</td><td>✅ Closed as optional profile in <code>auth-profiles.md</code>: OAuth2 client-credentials flow.</td><td>conformance minor</td></tr>
+<tr><td>A2</td><td>✅ Closed as optional profile in <code>auth-profiles.md</code>: mTLS deployment profile.</td><td>conformance minor</td></tr>
+<tr><td>A3</td><td>✅ Closed as optional profile in <code>auth-profiles.md</code>: API-key rotation/grace-period semantics.</td><td>conformance minor</td></tr>
+<tr><td>A4</td><td>Webhook HMAC is now specified in <code>webhooks.md</code>; remaining work is shared auth-profile conformance across REST and webhook verification examples</td><td>conformance minor</td></tr>
+</tbody></table>
+<h2 id="references">References</h2>
+<ul>
+<li><code>idempotency.md</code> — idempotency contract for mutating operations</li>
+<li><code>rest-endpoints.md</code> — endpoint catalog with per-route scope requirements</li>
+<li><code>auth-profiles.md</code> — optional production auth profiles for rotation, OAuth2, and mTLS</li>
+<li><code>SECURITY/threat-model-auth-profiles.md</code> — auth-profile threat model</li>
+</ul></article>
+  </main>
+  <footer class="site-footer">
+    <p>openwop v1.0 FINAL · spec at <a href="https://github.com/openwop/openwop">github.com/openwop/openwop</a> · Apache 2.0</p>
+    <p class="site-meta">This site lives at <code>openwop.dev</code>. Repository governance details live in <a href="https://github.com/openwop/openwop/blob/main/ROADMAP.md">ROADMAP</a>.</p>
+  </footer>
+</body>
+</html>
