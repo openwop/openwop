@@ -21,8 +21,9 @@
  * type validation at emission) are intentionally out of scope here — the
  * conformance suite is black-box and can only see what the REST + event-log
  * surfaces expose. Hosts cover those enforcement paths in host-specific
- * observability tests (e.g., `apps/workflow-engine/backend/typescript/test/`
- * costEmitter unit suites).
+ * unit tests against their own observability module (the reference
+ * workflow-engine ships them alongside the implementation, separately from
+ * this black-box suite).
  *
  * Spec references:
  *   - https://github.com/openwop/openwop/blob/main/spec/v1/observability.md §"AI cost"
