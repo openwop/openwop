@@ -56,3 +56,58 @@ document.querySelectorAll('.block, .pillar, .compare-card, .ana-list li, .spec .
     })
     .catch(() => { /* leave the em-dash placeholder; never break the layout */ });
 })();
+
+// Anatomy tabs — single-panel-visible with hash deep-linking + keyboard nav.
+(() => {
+  const tabs = Array.from(document.querySelectorAll('.ana-tab[role="tab"]'));
+  if (!tabs.length) return;
+  const panels = tabs.map((tab) => document.getElementById(tab.getAttribute('aria-controls')));
+
+  function activate(key, opts = {}) {
+    const idx = tabs.findIndex((t) => t.dataset.tab === key);
+    if (idx < 0) return;
+    tabs.forEach((t, i) => {
+      const active = i === idx;
+      t.classList.toggle('is-active', active);
+      t.setAttribute('aria-selected', active ? 'true' : 'false');
+      t.setAttribute('tabindex', active ? '0' : '-1');
+      const panel = panels[i];
+      if (panel) {
+        if (active) panel.removeAttribute('hidden');
+        else panel.setAttribute('hidden', '');
+      }
+    });
+    if (opts.focus) tabs[idx].focus();
+    if (opts.updateHash) {
+      try {
+        history.replaceState(null, '', `#ana-${key}`);
+      } catch { /* ignore */ }
+    }
+  }
+
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => activate(tab.dataset.tab, { updateHash: true }));
+    tab.addEventListener('keydown', (e) => {
+      const idx = tabs.indexOf(tab);
+      let nextIdx = null;
+      if (e.key === 'ArrowRight') nextIdx = (idx + 1) % tabs.length;
+      else if (e.key === 'ArrowLeft') nextIdx = (idx - 1 + tabs.length) % tabs.length;
+      else if (e.key === 'Home') nextIdx = 0;
+      else if (e.key === 'End') nextIdx = tabs.length - 1;
+      if (nextIdx !== null) {
+        e.preventDefault();
+        activate(tabs[nextIdx].dataset.tab, { focus: true, updateHash: true });
+      }
+    });
+  });
+
+  // Honor a deep link like /#ana-D on initial load.
+  const m = location.hash.match(/^#ana-([A-G])$/);
+  if (m) activate(m[1]);
+
+  // Listen for hash changes (e.g. user clicks a #ana-X link elsewhere on the page).
+  window.addEventListener('hashchange', () => {
+    const mm = location.hash.match(/^#ana-([A-G])$/);
+    if (mm) activate(mm[1]);
+  });
+})();
