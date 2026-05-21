@@ -119,7 +119,18 @@ jobs:
           # soak gate fails on every push even when no regression
           # occurred — the suite has more capability-gated scenarios
           # than this reference host claims.
-          OPENWOP_OPTED_OUT_PROFILES: 'openwop-production,openwop-auth-oauth2-client-credentials,openwop-auth-oidc-user-bearer,openwop-auth-mtls,openwop-replay-fork,workflowChainPacks'
+          #
+          # RFC 0027/0028/0029 `prompts-*` profiles (5 entries) — the
+          # SQLite reference host has no prompts implementation
+          # (`examples/hosts/sqlite/src/` ships audit/interrupts/
+          # observability/server/webhooks only — no `promptStore.ts` or
+          # `promptCompose.ts`). The reference workflow-engine host is
+          # the only one that wires the RFC 0027/0028/0029 surface end-
+          # to-end; SQLite honestly doesn't advertise it. Listed here so
+          # strict-mode skip messages cite the right spec section
+          # rather than firing a false-positive failure under
+          # OPENWOP_REQUIRE_BEHAVIOR.
+          OPENWOP_OPTED_OUT_PROFILES: 'openwop-production,openwop-auth-oauth2-client-credentials,openwop-auth-oidc-user-bearer,openwop-auth-mtls,openwop-replay-fork,workflowChainPacks,prompts-supported,prompts-endpoints,prompts-mutable,prompts-agent-bindings,prompts-observability-full'
           # Fixture-id opt-outs — the SQLite host auto-loads every
           # `conformance-*.json` fixture on disk (so the fixture IS
           # advertised in `/.well-known/openwop`) but does not implement
@@ -131,13 +142,26 @@ jobs:
           #   - conformance-subworkflow-input-mapping*                  → RFC 0022 §B input
           #     seeding into a `core.subWorkflow` child is not
           #     implemented in the reference SQLite executor.
+          #   - openwop-smoke-cost-emit                                 → the SQLite host loads
+          #     the fixture workflow but doesn't implement the
+          #     `conformance.cost.emit` fixture node, so runs terminate
+          #     `failed` instead of `completed`. Cost-emission lives in
+          #     the workflow-engine reference; SQLite hasn't picked up
+          #     the G6 / O4 cost-attribution path.
+          #   - conformance-model-capability-insufficient               → fixture references the
+          #     `core.ai.*` node family with RFC 0031
+          #     `requiredModelCapabilities` declarations. SQLite's
+          #     executor doesn't register these node types so runs fail
+          #     with `unsupported_node_type` rather than
+          #     `capability_not_provided`. Model-capability gating
+          #     lives in the workflow-engine reference.
           # Per `conformance/src/lib/fixtures.ts`, these ids are
           # subtracted from the advertised-fixture cache at suite init
           # so `isFixtureAdvertised(...)` skips the gated scenarios.
           # NOTE: `conformance-subworkflow-parent` stays advertised
           # because the non-OTel `subworkflow.test.ts` passes on SQLite;
           # the OTel-specific opt-out is below.
-          OPENWOP_OPTED_OUT_FIXTURES: 'conformance-dispatch-input-mapping*,conformance-dispatch-output-mapping*,conformance-dispatch-cross-worker-handoff*,conformance-subworkflow-input-mapping*'
+          OPENWOP_OPTED_OUT_FIXTURES: 'conformance-dispatch-input-mapping*,conformance-dispatch-output-mapping*,conformance-dispatch-cross-worker-handoff*,conformance-subworkflow-input-mapping*,openwop-smoke-cost-emit,conformance-model-capability-insufficient'
           # Scenario-id opt-outs — finer-grained than fixture or
           # profile opt-out. Used when the host correctly advertises
           # the prerequisite fixture + capability, but the specific
