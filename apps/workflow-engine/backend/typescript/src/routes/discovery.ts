@@ -395,6 +395,18 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       conformance: { mockAgent: true },
       webhooks: { supported: true, signed: true, durable: false },
       observability: { otel: { namespace: 'openwop' } },
+      // RFC 0037 Phase 1 — multi-agent execution model + handoff state
+      // machine. Env-gated so the reference workflow-engine advertises
+      // the capability only when the operator opts in; otherwise the
+      // existing RFC 0007/0022 dispatch loop runs without emitting
+      // `core.workflowChain.event` records (preserving the
+      // pre-RFC-0037 wire surface for back-compat). When advertised,
+      // every supervisor-driven `core.dispatch` invocation emits the
+      // 7 handoff state-machine transition events per
+      // `spec/v1/multi-agent-execution.md` §"Handoff state machine".
+      multiAgent: process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL === 'true'
+        ? { executionModel: { supported: true, version: 1 } }
+        : { executionModel: { supported: false, version: 1 } },
       runtimeCapabilities: listCapabilities(),
       // Host surface registry — what `ctx.*` surfaces this host wires.
       // The catalog endpoint cross-references this to mark each node

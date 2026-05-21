@@ -94,6 +94,18 @@ Filed as Draft earlier today (aa94003); now graduates to Active after the Phase 
 
 Closes standards-readiness review finding (3) "multi-agent semantics not fully portable" at the Phase 1 boundary. Phases 2-4 remain open work for follow-up RFCs.
 
+### RFC 0037 Phase 1 reference-host wiring + behavioral conformance (2026-05-21)
+
+Wires the multi-agent execution model emission contract end-to-end on the reference workflow-engine and graduates the conformance assertion from shape-only to behavioral. Builds on the same-day spec + schema landing in `db54921`.
+
+- **`apps/workflow-engine/backend/typescript/src/bootstrap/nodes.ts` `core.dispatch` execute()** — emits the 7 handoff state-machine transition events as `core.workflowChain.event` records when the env-flag `OPENWOP_MULTI_AGENT_EXECUTION_MODEL=true` is set. Each transition's `causationId` chains back through the prior transition's `eventId` per spec/v1/multi-agent-execution.md §"Transition events": `dispatch.began.causationId → runOrchestrator.decided.eventId`, then `dispatch.succeeded`, `child.{completed|failed|cancelled}`, and (when outputMapping non-empty + child completed) `output.harvested` each chain through their prior event. The `dispatch.failed` transition fires on dispatcher exception (child-creation failure path).
+- **`apps/workflow-engine/backend/typescript/src/routes/discovery.ts`** — advertises `capabilities.multiAgent.executionModel.{supported: true, version: 1}` under the same env-flag gate. Hosts that don't set the flag advertise `supported: false`, preserving the pre-RFC-0037 wire surface (no `core.workflowChain.event` records emitted).
+- **`conformance/fixtures/conformance-multi-agent-handoff.json` + `…-child.json`** (NEW) — parent + child fixture pair driving the happy-path supervisor → next-worker → child completed flow with outputMapping non-empty. Catalog rows added to `conformance/fixtures.md`.
+- **`conformance/src/scenarios/multi-agent-handoff-state-machine.test.ts`** — behavioral assertion landed. Reads the parent's event log, asserts exactly 4 `core.workflowChain.event` records in phase sequence (`dispatch.began → dispatch.succeeded → child.completed → output.harvested`) with each event's `causationId === prior.eventId`, plus `dispatch.began.causationId === runOrchestrator.decided.eventId`, plus `output.harvested.harvestedKeys === ['parentResult']`.
+- **`conformance/coverage.md`** — RFC 0037 row added with grade B.
+
+Closes the implementation half of standards-readiness review finding (3) "multi-agent semantics not fully portable" — non-steward host advertisement is now the only remaining gate to RFC 0037 Phase 1 promotion to `Accepted`.
+
 ### RFC 0034 (OTel collector test seam) promoted Draft → Active same-day (2026-05-21)
 
 Filed as Draft earlier today (aa94003); now graduates to Active after the protocol-layer surface landed atomically:

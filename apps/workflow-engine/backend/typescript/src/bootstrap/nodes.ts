@@ -156,6 +156,17 @@ const dispatchNode: NodeModule = {
     const { getEventLog } = await import('../executor/eventLog.js');
     const eventLog = getEventLog();
 
+    // RFC 0037 Phase 1 — emit `core.workflowChain.event` transition records
+    // alongside the existing `node.dispatched` event when the host opts in
+    // via `OPENWOP_MULTI_AGENT_EXECUTION_MODEL=true`. The flag must agree
+    // with the discovery doc's advertisement (`routes/discovery.ts`); the
+    // RFC's normative wire contract is "do not emit unless advertised."
+    const multiAgentEnabled = process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL === 'true';
+    const hasOutputMapping = (childWorkflowId: string): boolean => {
+      const m = perWorkerOutputMappings?.[childWorkflowId] ?? defaultOutputMapping;
+      return !!m && Object.keys(m).length > 0;
+    };
+
     const dispatchedChildren: Array<{ childRunId: string; childWorkflowId: string; childStatus: string }> = [];
     let terminateReason: string | null = null;
 
@@ -165,7 +176,7 @@ const dispatchNode: NodeModule = {
       // surface each consumed decision on the event log so observers
       // (and the conformance dispatch-loop test) can see the loop's
       // decision sequence.
-      await eventLog.append({
+      const decidedRec = await eventLog.append({
         runId: ctx.runId,
         nodeId: ctx.nodeId,
         type: 'runOrchestrator.decided',
@@ -181,6 +192,21 @@ const dispatchNode: NodeModule = {
         if (typeof childWorkflowId !== 'string' || childWorkflowId.length === 0) continue;
         const inputMapping = perWorkerInputMappings?.[childWorkflowId] ?? defaultInputMapping;
         const outputMapping = perWorkerOutputMappings?.[childWorkflowId] ?? defaultOutputMapping;
+
+        // RFC 0037 §"Handoff state machine" — transition 1/7: pending → dispatching.
+        // Chains causationId back to the runOrchestrator.decided that named this worker.
+        let dispatchBeganId: string | undefined;
+        if (multiAgentEnabled) {
+          const beganRec = await eventLog.append({
+            runId: ctx.runId,
+            nodeId: ctx.nodeId,
+            type: 'core.workflowChain.event',
+            causationId: decidedRec.eventId,
+            payload: { phase: 'dispatch.began', workerId: childWorkflowId, parentRunId: ctx.runId },
+          });
+          dispatchBeganId = beganRec.eventId;
+        }
+
         try {
           const result = await dispatchSubWorkflow({
             parentRunId: ctx.runId,
@@ -202,7 +228,87 @@ const dispatchNode: NodeModule = {
             payload: { childRunId: result.childRunId, childWorkflowId, childStatus: result.childStatus },
           });
           dispatchedChildren.push({ childRunId: result.childRunId, childWorkflowId, childStatus: result.childStatus });
+
+          // RFC 0037 — transitions 2..N: dispatching → running → terminal → (harvested?).
+          if (multiAgentEnabled) {
+            // Transition 2/7: dispatching → running. (Phase 1 collapses
+            // "dispatching" and "running" — dispatchSubWorkflow blocks until
+            // terminal — so dispatch.succeeded fires after the child has
+            // already terminated. The state-machine semantics still hold:
+            // a `dispatch.succeeded` event always precedes the child.*
+            // event in the log.)
+            const succeededRec = await eventLog.append({
+              runId: ctx.runId,
+              nodeId: ctx.nodeId,
+              type: 'core.workflowChain.event',
+              ...(dispatchBeganId ? { causationId: dispatchBeganId } : {}),
+              payload: {
+                phase: 'dispatch.succeeded',
+                workerId: childWorkflowId,
+                parentRunId: ctx.runId,
+                childRunId: result.childRunId,
+              },
+            });
+
+            // Transitions 3-5 (one fires): child.completed / child.failed / child.cancelled.
+            const terminalPhase =
+              result.childStatus === 'completed' ? 'child.completed' :
+              result.childStatus === 'failed'    ? 'child.failed'    :
+              result.childStatus === 'cancelled' ? 'child.cancelled' :
+              null;
+            let terminalEventId: string | undefined;
+            if (terminalPhase) {
+              const termRec = await eventLog.append({
+                runId: ctx.runId,
+                nodeId: ctx.nodeId,
+                type: 'core.workflowChain.event',
+                causationId: succeededRec.eventId,
+                payload: {
+                  phase: terminalPhase,
+                  workerId: childWorkflowId,
+                  parentRunId: ctx.runId,
+                  childRunId: result.childRunId,
+                },
+              });
+              terminalEventId = termRec.eventId;
+            }
+
+            // Transition 6/7 — output.harvested fires ONLY when child terminated
+            // `completed` AND outputMapping is non-empty (per RFC 0022 §B + RFC 0037
+            // §"Handoff state machine" terminal-row constraint).
+            if (terminalPhase === 'child.completed' && hasOutputMapping(childWorkflowId) && terminalEventId) {
+              const harvestedKeys = Object.keys(perWorkerOutputMappings?.[childWorkflowId] ?? defaultOutputMapping ?? {});
+              await eventLog.append({
+                runId: ctx.runId,
+                nodeId: ctx.nodeId,
+                type: 'core.workflowChain.event',
+                causationId: terminalEventId,
+                payload: {
+                  phase: 'output.harvested',
+                  workerId: childWorkflowId,
+                  parentRunId: ctx.runId,
+                  childRunId: result.childRunId,
+                  harvestedKeys,
+                },
+              });
+            }
+          }
         } catch (err) {
+          // Transition 7/7: dispatching → failed (creation failed before the child ran).
+          if (multiAgentEnabled) {
+            await eventLog.append({
+              runId: ctx.runId,
+              nodeId: ctx.nodeId,
+              type: 'core.workflowChain.event',
+              ...(dispatchBeganId ? { causationId: dispatchBeganId } : {}),
+              payload: {
+                phase: 'dispatch.failed',
+                workerId: childWorkflowId,
+                parentRunId: ctx.runId,
+                error: { code: 'internal_error', message: err instanceof Error ? err.message : String(err) },
+              },
+            });
+          }
           return {
             status: 'failure',
             error: { code: 'internal_error', message: err instanceof Error ? err.message : String(err) },

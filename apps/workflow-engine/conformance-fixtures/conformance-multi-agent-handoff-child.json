@@ -1,0 +1,27 @@
+{
+  "id": "conformance-multi-agent-handoff-child",
+  "name": "Conformance: Multi-Agent Handoff State Machine (RFC 0037 Phase 1) — child",
+  "version": "1.0",
+  "description": "Child fixture for `conformance-multi-agent-handoff`. Declares `childOutcome.defaultValue='handoff-complete'`; the variable is folded into the child's initial `variables_json` at run-create time. On terminal `completed`, the parent's `outputMapping` harvests `childOutcome` onto `parentResult`, which triggers the `output.harvested` transition event per RFC 0037 §\"Handoff state machine\".",
+  "nodes": [
+    {
+      "id": "noop",
+      "typeId": "core.identity",
+      "name": "Noop (childOutcome seeded by defaultValue)",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {}
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "childOutcome", "type": "string", "defaultValue": "handoff-complete" }
+  ],
+  "metadata": {
+    "tags": ["conformance", "rfc-0037", "multi-agent", "handoff", "child"]
+  },
+  "settings": { "timeout": 5000 }
+}

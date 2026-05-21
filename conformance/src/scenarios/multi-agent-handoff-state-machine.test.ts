@@ -87,13 +87,82 @@ describe.skipIf(HTTP_SKIP)('multi-agent-handoff-state-machine: advertisement sha
   });
 });
 
-// Behavioral assertions land when the conformance-multi-agent-handoff fixtures land in
-// a follow-up commit + when a reference host advertises the capability. The shape probe
-// above is the today-landable contract surface; the 4-event causation chain assertion
-// in the docstring requires fixture infrastructure (a 2-node supervisor + dispatch parent
-// + a deterministic child fixture pair) that is the same pattern RFC 0022 used and that
-// we know works against the reference workflow-engine.
-//
-// Cross-host promotion path per RFCs/0001 §"Promotion to Accepted": once the reference
-// host advertises capabilities.multiAgent.executionModel + the fixture lands + a
-// non-steward host advertises, RFC 0037 Phase 1 graduates Draft → Active → Accepted.
+// Behavioral assertion: when a host advertises capabilities.multiAgent.executionModel.supported,
+// it MUST emit the 7-state handoff state machine's transition events as `core.workflowChain.event`
+// records with causationId chained per the spec §"Transition events" table. The happy-path
+// fixture (supervisor → next-worker → child completed with outputMapping non-empty) drives 4
+// of the 7 transitions: dispatch.began → dispatch.succeeded → child.completed → output.harvested.
+
+import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { pollUntilTerminal } from '../lib/polling.js';
+
+interface RunEvent { type: string; eventId?: string; causationId?: string; payload?: Record<string, unknown>; }
+
+const PARENT_FIXTURE = 'conformance-multi-agent-handoff';
+const CHILD_FIXTURE = 'conformance-multi-agent-handoff-child';
+const BEHAVIORAL_SKIP = HTTP_SKIP || !isFixtureAdvertised(PARENT_FIXTURE) || !isFixtureAdvertised(CHILD_FIXTURE);
+
+describe.skipIf(BEHAVIORAL_SKIP)('multi-agent-handoff-state-machine: behavioral 4-event causation chain (RFC 0037 §"Handoff state machine")', () => {
+  it('happy-path: dispatch.began → dispatch.succeeded → child.completed → output.harvested fire in causation order', async () => {
+    const d = await readDiscovery();
+    const advertised = d?.capabilities?.multiAgent?.executionModel?.supported === true;
+    if (!advertised) return; // soft-skip — host honest about not implementing
+
+    const create = await driver.post('/v1/runs', { workflowId: PARENT_FIXTURE });
+    expect(create.status).toBe(201);
+    const runId = (create.json as { runId: string }).runId;
+
+    const terminal = await pollUntilTerminal(runId);
+    expect(terminal.status, driver.describe(
+      'spec/v1/multi-agent-execution.md §"Execution loop"',
+      'parent run with supervisor → next-worker → terminate MUST reach terminal `completed`',
+    )).toBe('completed');
+
+    const eventsRes = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events`);
+    expect(eventsRes.status).toBe(200);
+    const events = ((eventsRes.json as { events?: RunEvent[] } | undefined)?.events ?? []);
+    const chainEvents = events.filter((e) => e.type === 'core.workflowChain.event');
+
+    expect(chainEvents.length, driver.describe(
+      'RFCS/0037-multi-agent-execution-model.md §"Conformance"',
+      'happy-path fixture MUST produce 4 core.workflowChain.event records (dispatch.began, dispatch.succeeded, child.completed, output.harvested)',
+    )).toBe(4);
+
+    const phases = chainEvents.map((e) => (e.payload as { phase?: string } | undefined)?.phase);
+    expect(phases, driver.describe(
+      'spec/v1/multi-agent-execution.md §"Transition events"',
+      'phase order MUST be dispatch.began → dispatch.succeeded → child.completed → output.harvested',
+    )).toEqual(['dispatch.began', 'dispatch.succeeded', 'child.completed', 'output.harvested']);
+
+    // Causation chain: each transition's causationId MUST equal the prior transition's eventId.
+    // dispatch.began causes back to a runOrchestrator.decided; the inner 3 chain through each other.
+    for (let i = 1; i < chainEvents.length; i++) {
+      const prior = chainEvents[i - 1];
+      const cur = chainEvents[i];
+      expect(cur?.causationId, driver.describe(
+        'spec/v1/multi-agent-execution.md §"Transition events"',
+        `core.workflowChain.event #${i} (${phases[i]}) MUST have causationId === prior event's eventId`,
+      )).toBe(prior?.eventId);
+    }
+
+    // dispatch.began causationId MUST chain back to a runOrchestrator.decided event.
+    const dispatchBegan = chainEvents[0];
+    expect(dispatchBegan?.causationId).toBeDefined();
+    const decidedEvent = events.find((e) => e.eventId === dispatchBegan?.causationId);
+    expect(decidedEvent?.type, driver.describe(
+      'spec/v1/multi-agent-execution.md §"Transition events"',
+      'dispatch.began causationId MUST point at the runOrchestrator.decided event that named this worker',
+    )).toBe('runOrchestrator.decided');
+
+    // output.harvested.harvestedKeys MUST list the outputMapping keys harvested.
+    const harvested = chainEvents[3]?.payload as { harvestedKeys?: string[] } | undefined;
+    expect(harvested?.harvestedKeys, driver.describe(
+      'spec/v1/multi-agent-execution.md §"Transition events"',
+      'output.harvested payload MUST list harvested parent-variable keys (the fixture\'s outputMapping is { parentResult: \'childOutcome\' })',
+    )).toEqual(['parentResult']);
+  });
+});
+
+// Cross-host promotion path per RFCs/0001 §"Promotion to Accepted": once a non-steward host
+// advertises capabilities.multiAgent.executionModel.supported + the behavioral assertion above
+// passes against it, RFC 0037 Phase 1 graduates Active → Accepted.

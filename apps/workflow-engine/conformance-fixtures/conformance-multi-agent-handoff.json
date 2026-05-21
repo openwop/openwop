@@ -1,0 +1,49 @@
+{
+  "id": "conformance-multi-agent-handoff",
+  "name": "Conformance: Multi-Agent Handoff State Machine (RFC 0037 Phase 1)",
+  "version": "1.0",
+  "description": "RFC 0037 Phase 1 — exercises the planner→worker handoff state machine. Supervisor plan: `next-worker: ['conformance-multi-agent-handoff-child']` → `terminate`. The dispatch consumes one decision, spawns the child, harvests `childOutcome` into `parentResult` (outputMapping is non-empty so the `output.harvested` transition fires per RFC 0022 §A + RFC 0037 §\"Handoff state machine\" terminal-row constraint). Conformance reads the parent's event log and asserts 4 `core.workflowChain.event` records appear in causation-chained order: dispatch.began → dispatch.succeeded → child.completed → output.harvested. Gated on `capabilities.multiAgent.executionModel.supported: true`. See multi-agent-handoff-state-machine.test.ts.",
+  "nodes": [
+    {
+      "id": "supervisor",
+      "typeId": "core.orchestrator.supervisor",
+      "name": "Supervisor (mock plan)",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "mockDispatchPlan": [
+          { "kind": "next-worker", "nextWorkerIds": ["conformance-multi-agent-handoff-child"] },
+          { "kind": "terminate", "reason": "goal-reached" }
+        ]
+      },
+      "inputs": {}
+    },
+    {
+      "id": "dispatch",
+      "typeId": "core.dispatch",
+      "name": "Dispatch with outputMapping (drives output.harvested)",
+      "position": { "x": 200, "y": 0 },
+      "config": {
+        "askUserRouting": "auto",
+        "workerDispatchModel": "child-run",
+        "fanOutPolicy": "sequential",
+        "outputMapping": { "parentResult": "childOutcome" }
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [
+    { "id": "e1", "sourceNodeId": "supervisor", "targetNodeId": "dispatch" },
+    { "id": "e2", "sourceNodeId": "dispatch", "targetNodeId": "supervisor" }
+  ],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "parentResult", "type": "string", "defaultValue": "" }
+  ],
+  "metadata": {
+    "tags": ["conformance", "rfc-0037", "multi-agent", "handoff"],
+    "requiresCapability": "capabilities.multiAgent.executionModel.supported"
+  },
+  "settings": { "timeout": 30000 }
+}
