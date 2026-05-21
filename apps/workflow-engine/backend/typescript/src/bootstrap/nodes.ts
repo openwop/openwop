@@ -24,7 +24,12 @@ import {
   isManagedCredentialRef,
   managedProviderIdFromRef,
   ManagedProviderError,
+  type ManagedDispatchResult,
 } from '../providers/managedProvider.js';
+import {
+  buildRefusalPayload,
+  buildTruncatedPayload,
+} from '../host/envelopeReliabilityEmit.js';
 import { dispatchSubRun, type SubRunResult } from '../subruns/subRunDispatcher.js';
 import { registerMockAgentNode } from './conformanceMockAgent.js';
 
@@ -666,6 +671,73 @@ function buildReasoningCallbacks(
 }
 
 /**
+ * RFC 0032 §B.3 + §B.4 — emit `envelope.refusal` / `envelope.truncated` from
+ * the chat-responder dispatch path so the live AI chat surfaces these signals
+ * the same way `aiProvidersHost.dispatchStructured()` does for structured-
+ * output paths. The chat-responder doesn't have retry, NL→format coercion,
+ * or recovery loops (those are structured-output features), so only refusal
+ * and truncation apply here.
+ *
+ * Refusal detection: each provider returns a vendor-native finishReason on
+ * safety stop:
+ *   - Anthropic: 'refusal' (2025 stop_reason) | 'end_turn' with empty body
+ *   - OpenAI:    'content_filter'
+ *   - Gemini:    'SAFETY' | 'RECITATION' OR a non-empty `blockReason`
+ * Truncation detection: vendor-native `length` / `max_tokens` / `MAX_TOKENS`.
+ *
+ * Refusal text is intentionally NOT included on the wire to honor the
+ * SECURITY invariant `envelope-refusal-no-prompt-leak` — the partial
+ * completion would echo prompt content.
+ */
+async function emitChatEnvelopeSignals(
+  ctx: NodeContext,
+  result: DispatchResult | ManagedDispatchResult,
+): Promise<void> {
+  const fr = (result.finishReason ?? '').toLowerCase();
+  const blockReason = 'blockReason' in result ? result.blockReason : undefined;
+  const safetyCategory = 'safetyCategory' in result ? result.safetyCategory : undefined;
+
+  const isRefusal =
+    fr === 'refusal' ||
+    fr === 'content_filter' ||
+    fr === 'safety' ||
+    fr === 'recitation' ||
+    typeof blockReason === 'string' && blockReason.length > 0;
+  if (isRefusal) {
+    try {
+      await ctx.emit(
+        'envelope.refusal',
+        buildRefusalPayload(
+          ctx.nodeId,
+          result.provider,
+          result.model,
+          // refusalText omitted per SECURITY invariant envelope-refusal-no-prompt-leak
+          undefined,
+          safetyCategory ?? null,
+        ),
+      );
+    } catch { /* best-effort emission — never block the response */ }
+  }
+
+  const isTruncated = fr === 'max_tokens' || fr === 'length';
+  if (isTruncated) {
+    try {
+      await ctx.emit(
+        'envelope.truncated',
+        buildTruncatedPayload(
+          ctx.nodeId,
+          result.provider,
+          result.model,
+          'max_tokens',
+          result.completion.length > 0,
+          result.usage?.outputTokens ?? null,
+        ),
+      );
+    } catch { /* best-effort */ }
+  }
+}
+
+/**
  * Sample chat-responder. Sits in the `vendor.openwop-sample.*` namespace
  * per `spec/v1/node-packs.md` §"Reserved-typeIds" (the unrestricted
  * carve-out), which puts it inside RFC 0023 §A's authorized-emitter
@@ -716,6 +788,7 @@ const sampleChatResponderNode: NodeModule = {
           ...(onReasoningDelta ? { onReasoningDelta } : {}),
           ...(onReasoningBlock ? { onReasoningBlock } : {}),
         });
+        await emitChatEnvelopeSignals(ctx, managed);
         emitCost({
           provider: managed.provider,
           model: managed.model,
@@ -841,6 +914,7 @@ const sampleChatResponderNode: NodeModule = {
           ...(byokOnReasoningBlock ? { onReasoningBlock: byokOnReasoningBlock } : {}),
         });
       }
+      await emitChatEnvelopeSignals(ctx, result);
       emitCost({
         provider: result.provider,
         model: result.model,
