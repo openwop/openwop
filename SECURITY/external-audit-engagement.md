@@ -2,7 +2,7 @@
 
 > **Status: DRAFT, scope-pinned 2026-05-15.** Vendor-neutral scoping document for the external security review referenced in `SECURITY.md` §9. Solicit quotes against this scope; finalize after vendor selection. Embargo terms align with the disclosure SLA in `SECURITY.md` §6.
 >
-> **Scope-pin note (SEC-2 close-out, 2026-05-15).** Repo state has advanced since the 2026-05-10 draft: RFC ladder 0001–0012 all `Accepted` (with `Updated:` annotations on each), 0013 remains `Draft`; the Postgres reference host has joined the implementation list and claims `openwop-production` end-to-end; mTLS termination + reasoning-event emission + memory compaction + host-side pack consumption are now mechanically verified on Postgres; high-stakes `core.openwop.{ai,http,mcp,triggers}` packs are built + signed in-tree but remain audit-gated for public publication. The audit engages against the commit pinned in §3 at kickoff.
+> **Scope-pin note (SEC-2 close-out, 2026-05-15; refreshed 2026-05-21).** Repo state has advanced since the 2026-05-10 draft: RFC ladder 0001–0024 + 0026 all `Accepted` (25 RFCs); RFC 0025 remains `Draft`; RFCs 0027–0033 are `Active` (extensions in flight, gated behind capability advertisements — see INTEROP-MATRIX.md); the Postgres reference host has joined the implementation list and claims `openwop-production` end-to-end; mTLS termination + reasoning-event emission + memory compaction + host-side pack consumption + workflow-chain expansion + envelope-accept pipeline are now mechanically verified on Postgres; high-stakes `core.openwop.{ai,http,mcp,triggers}` packs are built + signed in-tree but remain audit-gated for public publication. The audit engages against the commit pinned in §3 at kickoff.
 >
 > **Steward pre-audit publication decision (2026-05-17).** The single steward has elected to publish `core.openwop.*` packs to `packs.openwop.dev` **prior to** the external review reaching `Completed`. The list of publications and the rationale are recorded in §2.1.1 below. This decision does **not** retract the audit requirement — the engagement remains live and the post-audit obligations (§2.1.1, last paragraph) bind every published pack listed.
 
@@ -86,7 +86,10 @@ Publication condition: each pack listed above moves from "in-tree" to "published
 - RFC 0010 (Auth-Profile Conformance) — `Accepted`; review the four production-auth profile claims (OAuth2-CC, OIDC, mTLS, API-key rotation) and the canary-redaction discipline.
 - RFC 0011 (Auth-Scoped Discovery Advertisement) — `Accepted`; review the strict-subset projection logic that prevents the discovery payload from leaking capabilities into a less-privileged principal.
 - RFC 0012 (Memory Compaction Profile) — `Accepted` 2026-05-15; review the SR-1 carry-forward invariant (§D) end-to-end (the host's `applyCompactionRedaction` re-applies the BYOK redaction harness to summarization output before persistence; failure mode is silent leakage of secrets the summarizer hallucinated).
-- RFC 0013 (Workflow-chain packs) — `Draft`; out of scope unless the RFC advances to `Active` before kickoff.
+- RFC 0013 (Workflow-chain packs) — `Accepted` 2026-05-18; in scope. Review the signed-pack expansion semantics + cross-tenant pack-loading isolation.
+- RFCs 0014–0024 + 0026 — all `Accepted`; capability-surface RFCs (host.fs / host.kvStorage / host.tableStorage / host.queueBus / host.sql / host.blobStorage / host.mcp.serverMount / AI envelope primitive / dispatch input-output mapping / conformance agent-event emitters / reasoning streaming / provider-usage events) are in scope per the post-2026-05-15 expansion.
+- RFC 0025 (Test-mode registry namespace) — `Draft`; conformance-only, out of scope.
+- RFCs 0027–0033 (prompt templates / library endpoints / override hierarchy / envelope reasoning / envelope variants + model capabilities / envelope reliability events / envelope completion contract) — `Active`; in scope as gated extensions. Review the BYOK redaction carry-forward across reasoning field + envelope acceptor + downstream projections.
 
 ### 2.1.1 Steward pre-audit publication decision (2026-05-17)
 

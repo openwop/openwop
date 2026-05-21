@@ -366,7 +366,7 @@ Multi-Agent Shift Phase 4 capability. When `true`, host advertises that it imple
 
 ### `workflowChainPacks`
 
-RFC 0013 (Phase 1, `Draft`). When `supported: true`, the host's workflow editor implements **workflow-chain pack expansion** per [`workflow-chain-packs.md`](./workflow-chain-packs.md) — the author drops a chain tile, the host resolves the pack (verifying signature), prompts for `parameters`, substitutes `{{params.<name>}}` placeholders throughout the chain's DAG, rewrites node ids for collision avoidance, and splices the resulting nodes into the parent workflow. Dispatching runtimes see only the expanded `core.*`/published-vendor typeIds — the chain reference is NOT preserved at runtime, so this capability is a workflow-edit-time concern only.
+RFC 0013 (`Accepted` 2026-05-18; the matching spec doc [`workflow-chain-packs.md`](./workflow-chain-packs.md) remains at `DRAFT v1.x` pending Phase B/C closure). When `supported: true`, the host's workflow editor implements **workflow-chain pack expansion** — the author drops a chain tile, the host resolves the pack (verifying signature), prompts for `parameters`, substitutes `{{params.<name>}}` placeholders throughout the chain's DAG, rewrites node ids for collision avoidance, and splices the resulting nodes into the parent workflow. Dispatching runtimes see only the expanded `core.*`/published-vendor typeIds — the chain reference is NOT preserved at runtime, so this capability is a workflow-edit-time concern only.
 
 ```json
 "workflowChainPacks": { "supported": true }

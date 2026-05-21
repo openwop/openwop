@@ -86,7 +86,9 @@ The plan calls these out explicitly — none can be moved by repo-side mechanica
 
 | RFC | Status | Why open |
 |---|---|---|
-| 0013 (Workflow-chain packs) | `Draft` | Pending schema + conformance proof + editor implementation. PACK-7 close-out: either advance or `Withdrawn`. |
+| 0025 (Test-mode registry namespace) | `Draft` | Conformance-only typeId namespace; non-production. Pending non-steward adoption signal before promotion. |
+| 0027, 0028, 0029 (Prompt templates / library endpoints / override hierarchy) | `Active` | 7-day comment window closed 2026-05-27; awaiting cross-host advertisement evidence per RFCS/0001 §"Promotion to Accepted." |
+| 0030, 0031, 0032, 0033 (Envelope reasoning / variants + model capabilities / reliability events / completion contract) | `Active` | MyndHyve cross-host evidence landed 2026-05-21 (see INTEROP-MATRIX); wire-shape drift amendments need to land before 2026-05-27 promotion. |
 
 ---
 

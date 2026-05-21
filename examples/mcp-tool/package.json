@@ -1,6 +1,6 @@
 {
   "name": "@openwop/openwop-example-mcp-tool",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "private": true,
   "description": "OpenWOP + MCP composition probe. Demonstrates discovery and observation for a workflow that calls MCP tools without requiring a live MCP server.",
   "type": "module",

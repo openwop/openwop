@@ -1575,7 +1575,7 @@ function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
     protocolVersion: '1.0',
     implementation: {
       name: 'openwop-host-sqlite',
-      version: '1.1.1',
+      version: '1.1.2',
       vendor: 'openwop-spec (reference example)',
     },
     supportedEnvelopes: [],
@@ -1713,7 +1713,7 @@ function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
 function handleOpenApi(_req: IncomingMessage, res: ServerResponse): void {
   sendJSON(res, 200, {
     openapi: '3.1',
-    info: { title: 'openwop SQLite reference host', version: '1.1.1' },
+    info: { title: 'openwop SQLite reference host', version: '1.1.2' },
     paths: {
       '/.well-known/openwop': { get: { responses: { '200': { description: 'OK' } } } },
       '/v1/runs': { post: { responses: { '201': { description: 'Created' } } } },
@@ -2788,7 +2788,7 @@ function handleDebugBundle(req: IncomingMessage, res: ServerResponse, runId: str
   const baseBundle: Record<string, unknown> = {
     bundleVersion: '1',
     generatedAt: new Date().toISOString(),
-    host: { name: 'openwop-host-sqlite', version: '1.1.1', vendor: 'openwop-spec (reference example)' },
+    host: { name: 'openwop-host-sqlite', version: '1.1.2', vendor: 'openwop-spec (reference example)' },
     run: {
       runId: row.run_id,
       workflowId: row.workflow_id,
