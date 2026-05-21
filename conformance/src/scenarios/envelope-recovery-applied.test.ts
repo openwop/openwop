@@ -108,14 +108,122 @@ describe.skipIf(HTTP_SKIP)('envelope-recovery-applied: SECURITY invariant envelo
   });
 });
 
-describe('envelope-recovery-applied: end-to-end through the envelope-validation pipeline', () => {
-  it.todo(
-    'when mock LLM emits envelope wrapped in markdown fence, exactly one `envelope.recovery.applied` event fires with `path: "markdown-fence"` — promoted when the parsing path in dispatchStructured() implements lenient parsing',
-  );
-  it.todo(
-    'recovery does NOT consume a retry attempt — `envelope.retry.attempted` does NOT fire as a consequence of recovery (RFC 0033 §D)',
-  );
-  it.todo(
-    'recovered envelope is subsequently accepted normally; downstream RunEventDoc carries the recovered content',
-  );
+// Live end-to-end through dispatchStructured()'s lenient-parse fallback.
+// Drives the mock provider with a markdown-fenced JSON response on the
+// FIRST attempt; the host's `tryLenientParse()` strips the fence,
+// returns the parsed payload, and emits `envelope.recovery.applied`
+// without consuming a retry slot per RFC 0032 §B.6 + RFC 0033 §D.
+//
+// Reuses the existing `conformance-envelope-recovery-applied`
+// fixture + mock-program seam established by the keystone work
+// (`f5148cf`, `5817523`). Fixture- + capability- + seam-gated:
+// soft-skip when any layer is absent.
+
+import { pollUntilTerminal } from '../lib/polling.js';
+import { isFixtureAdvertised } from '../lib/fixtures.js';
+
+const RECOVERY_FIXTURE = 'conformance-envelope-recovery-applied';
+const RECOVERY_NODE_ID = 'structured-call';
+
+interface ProgrammedRunEvent {
+  type: string;
+  payload?: Record<string, unknown>;
+  nodeId?: string;
+  sequence: number;
+}
+
+async function programRecovery(program: Array<Record<string, unknown>>): Promise<{ status: number }> {
+  const res = await driver.post('/v1/host/sample/test/mock-ai/program', { nodeId: RECOVERY_NODE_ID, program });
+  return { status: res.status };
+}
+
+async function runAndReadEvents(): Promise<ProgrammedRunEvent[] | null> {
+  const create = await driver.post('/v1/runs', { workflowId: RECOVERY_FIXTURE });
+  if (create.status !== 201) return null;
+  const runId = (create.json as { runId: string }).runId;
+  await pollUntilTerminal(runId, { timeoutMs: 10_000 });
+  const eventsRes = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events`);
+  if (eventsRes.status !== 200) return null;
+  return ((eventsRes.json as { events?: ProgrammedRunEvent[] } | undefined)?.events ?? []) as ProgrammedRunEvent[];
+}
+
+describe.skipIf(HTTP_SKIP)('envelope-recovery-applied: end-to-end through the envelope-validation pipeline', () => {
+  it('when mock LLM emits envelope wrapped in markdown fence, exactly one `envelope.recovery.applied` event fires with `path: "markdown-fence"`', async () => {
+    if (!isFixtureAdvertised(RECOVERY_FIXTURE)) return;
+    const seed = await programRecovery([
+      // Markdown-fenced JSON — dispatchStructured's strict parse fails,
+      // tryLenientParse() strips the fence + succeeds via the
+      // 'markdown-fence' path.
+      { content: '```json\n{"result":"ok"}\n```' },
+    ]);
+    if (seed.status === 404) return;
+    expect(seed.status).toBe(200);
+
+    const events = await runAndReadEvents();
+    if (events === null) return;
+    const recoveries = events.filter((e) => e.type === 'envelope.recovery.applied');
+    expect(
+      recoveries.length,
+      driver.describe(
+        'RFCS/0032-envelope-reliability-events.md §B.6',
+        'exactly one envelope.recovery.applied event MUST fire when lenient parsing strips a markdown fence',
+      ),
+    ).toBe(1);
+    expect(
+      recoveries[0]?.payload?.path,
+      driver.describe(
+        'RFCS/0032-envelope-reliability-events.md §B.6',
+        'path MUST identify the recovery strategy that engaged (markdown-fence here)',
+      ),
+    ).toBe('markdown-fence');
+  });
+
+  it('recovery does NOT consume a retry attempt — `envelope.retry.attempted` does NOT fire as a consequence of recovery (RFC 0033 §D)', async () => {
+    if (!isFixtureAdvertised(RECOVERY_FIXTURE)) return;
+    const seed = await programRecovery([
+      { content: '```json\n{"result":"ok"}\n```' },
+    ]);
+    if (seed.status === 404) return;
+
+    const events = await runAndReadEvents();
+    if (events === null) return;
+    const retries = events.filter((e) => e.type === 'envelope.retry.attempted');
+    expect(
+      retries.length,
+      driver.describe(
+        'RFCS/0033-envelope-completion-contract.md §D',
+        'recovery (parse fix-up) MUST NOT count against the retry budget — no envelope.retry.attempted may fire',
+      ),
+    ).toBe(0);
+  });
+
+  it('recovered envelope is subsequently accepted normally; downstream RunEventDoc carries the recovered content', async () => {
+    if (!isFixtureAdvertised(RECOVERY_FIXTURE)) return;
+    const seed = await programRecovery([
+      { content: '```json\n{"result":"recovered-ok"}\n```' },
+    ]);
+    if (seed.status === 404) return;
+
+    const events = await runAndReadEvents();
+    if (events === null) return;
+    const nodeCompleted = events.find((e) => e.type === 'node.completed' && e.nodeId === RECOVERY_NODE_ID);
+    expect(
+      nodeCompleted,
+      driver.describe(
+        'RFCS/0032-envelope-reliability-events.md §B.6',
+        'recovered envelope MUST reach node.completed — recovery does not block downstream acceptance',
+      ),
+    ).toBeDefined();
+    // The dispatching node's output carries the recovered structured
+    // data — serialized for substring assertion since the exact shape
+    // depends on how the fixture node wraps the dispatch result.
+    const completedPayload = JSON.stringify(nodeCompleted?.payload ?? {});
+    expect(
+      completedPayload.includes('recovered-ok'),
+      driver.describe(
+        'RFCS/0032-envelope-reliability-events.md §B.6',
+        'recovered structured data MUST flow to the downstream RunEventDoc unchanged',
+      ),
+    ).toBe(true);
+  });
 });

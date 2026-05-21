@@ -59,8 +59,10 @@ import {
   buildRetryExhaustedPayload,
   buildRefusalPayload,
   buildTruncatedPayload,
+  buildRecoveryAppliedPayload,
   classifyTruncationStopReason,
   isRefusalFinishReason,
+  tryLenientParse,
   type RetryReason,
 } from '../host/envelopeReliabilityEmit.js';
 
@@ -642,6 +644,12 @@ async function dispatchStructured(
   // applying a schema-correction fragment to truncation failures (the
   // shape was right; only the output was incomplete).
   let suppressSchemaHint = false;
+  // RFC 0032 §B.5 NL-to-Format fallback. After the retry loop exhausts
+  // on parse-error / schema-violation, if the last response was clearly
+  // natural-language (no JSON sigil in the first 16 bytes), fire ONE
+  // extra dispatch with a strong coercion fragment. Tracks the last
+  // raw text so the post-loop fallback decision has context.
+  let lastResponseText = '';
 
   for (let attempt = 1; attempt <= reliabilityCfg.maxRetryAttempts; attempt++) {
     // Emit envelope.retry.attempted BEFORE the second-and-subsequent calls
@@ -766,28 +774,82 @@ async function dispatchStructured(
     // the corrective-fragment retry per RFC 0033 §C (already in the
     // existing schemaHint composition).
     const text = raw.content ?? '';
-    try {
-      const data = JSON.parse(text);
-      if (validateAgainstSchema(data, req.responseSchema)) {
+    lastResponseText = text;
+    // RFC 0032 §B.6 — lenient parsing. Try strict JSON.parse first; on
+    // failure walk a small set of recovery paths (markdown-fence,
+    // balanced-brace). Each path that succeeds emits
+    // `envelope.recovery.applied` with the canonical
+    // `{nodeId, path, byteOffset?}` shape and DOES NOT count against
+    // the retry budget (per RFC 0033 §D: recovery is a parse-fixup, not
+    // a retry — the model's emission was usable, just wrapped).
+    const lenientParse = tryLenientParse(text);
+    if (lenientParse !== null) {
+      if (lenientParse.path !== 'direct') {
+        await scope.emit?.('envelope.recovery.applied',
+          buildRecoveryAppliedPayload(scope.nodeId, lenientParse.path, lenientParse.byteOffset),
+        ).catch((err) => {
+          log.warn('envelope.recovery.applied emit failed', { err: err instanceof Error ? err.message : String(err) });
+        });
+      }
+      if (validateAgainstSchema(lenientParse.data, req.responseSchema)) {
         return {
           ...raw,
           content: undefined,
-          data,
+          data: lenientParse.data,
         };
       }
       lastError = new Error('structured output did not match required-key check');
       lastFailureReason = 'schema-violation';
       lastFailureMessage = 'required-key check failed';
-      // RFC 0033 §C — keep the corrective schema hint; don't change budget.
       suppressSchemaHint = false;
-    } catch (parseErr) {
-      lastError = parseErr;
+    } else {
+      lastError = new Error('structured output did not parse as JSON (even with lenient fallbacks)');
       lastFailureReason = 'parse-error';
-      lastFailureMessage = parseErr instanceof Error ? parseErr.message : String(parseErr);
-      // Parse-error also drives the corrective-fragment retry — the model
-      // emitted text that wasn't valid JSON, which is a schema-shape problem
-      // in spirit even when JSON.parse threw before the validator ran.
+      lastFailureMessage = 'JSON.parse failed + lenient recovery paths exhausted';
       suppressSchemaHint = false;
+    }
+  }
+
+  // RFC 0032 §B.5 — NL-to-Format fallback. After retry exhaustion, if the
+  // last response was clearly natural-language (no `{` / `[` sigil in the
+  // first 16 bytes) AND the failure was parse/schema-violation (NOT
+  // truncation — truncated NL is still truncated), fire ONE extra
+  // dispatch with a strong coercion fragment. Per Tam et al. ("Let Me
+  // Speak Freely?") this captures the common pattern where models emit
+  // free-form prose when they should have emitted structured output;
+  // the reformat call coerces the prose into the schema. Conformance-
+  // detectable via `envelope.nlToFormat.engaged { originalEnvelopeType,
+  // fallbackCalls }`.
+  const isNlResponse = (text: string): boolean => {
+    const head = text.trimStart().slice(0, 16);
+    return head.length > 0 && !head.startsWith('{') && !head.startsWith('[') && !head.startsWith('```');
+  };
+  if (
+    lastFailureReason !== null
+    && lastFailureReason !== 'truncation'
+    && lastFailureReason !== 'refusal'
+    && isNlResponse(lastResponseText)
+  ) {
+    const originalEnvelopeType = inferEnvelopeType(req.responseSchema) ?? 'structured-output';
+    await scope.emit?.('envelope.nlToFormat.engaged',
+      { nodeId: scope.nodeId, originalEnvelopeType, fallbackCalls: 1 },
+    ).catch((err) => {
+      log.warn('envelope.nlToFormat.engaged emit failed', { err: err instanceof Error ? err.message : String(err) });
+    });
+    const coercionFragment =
+      'Your previous response was natural language; you MUST emit a JSON object that exactly matches the response schema, with no preamble or trailing prose. Return only the JSON.';
+    const coercedSystem = [req.systemPrompt, augmentedSystem, coercionFragment]
+      .filter((s): s is string => Boolean(s))
+      .join('\n\n');
+    try {
+      const raw = await dispatchPlain(scope, { ...req, systemPrompt: coercedSystem }, apiKey);
+      const text = raw.content ?? '';
+      const parsed = tryLenientParse(text);
+      if (parsed !== null && validateAgainstSchema(parsed.data, req.responseSchema)) {
+        return { ...raw, content: undefined, data: parsed.data };
+      }
+    } catch {
+      /* fall through to exhaustion path */
     }
   }
 
@@ -870,6 +932,24 @@ function validateAgainstSchema(data: unknown, schema: unknown): boolean {
     if (!(key in (data as Record<string, unknown>))) return false;
   }
   return true;
+}
+
+/** RFC 0032 §B.5 — derive the envelope's `originalEnvelopeType` from
+ *  the response-schema for `envelope.nlToFormat.engaged` event payload.
+ *  Sample heuristics: prefer the schema's `$id` last-segment, fall back
+ *  to `title`, otherwise return null (caller substitutes `'structured-
+ *  output'`). Production hosts that emit named envelope kinds (e.g.
+ *  `prd.create`) typically carry the kind on a wrapping metadata layer;
+ *  this sample-grade derivation is best-effort. */
+function inferEnvelopeType(schema: unknown): string | null {
+  if (!schema || typeof schema !== 'object') return null;
+  const s = schema as Record<string, unknown>;
+  if (typeof s.$id === 'string') {
+    const last = s.$id.split('/').pop();
+    if (last && last.length > 0) return last.replace(/\.schema\.json$/, '');
+  }
+  if (typeof s.title === 'string' && s.title.length > 0) return s.title;
+  return null;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────

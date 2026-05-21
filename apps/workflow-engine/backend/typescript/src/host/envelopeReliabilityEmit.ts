@@ -139,6 +139,97 @@ export function buildTruncatedPayload(
 }
 
 /**
+ * RFC 0032 §B.6 — `envelope.recovery.applied` payload (MAY tier).
+ * Carries ONLY `{nodeId, path, byteOffset?}` per the SECURITY invariant
+ * `envelope-recovery-no-content-leak`. The recovered content itself
+ * rides on the downstream RunEventDoc; the recovery event documents
+ * only that a recovery path engaged + which one.
+ *
+ * Closed enum on `path` per the spec:
+ *   - 'direct' — strict JSON.parse succeeded. (NOT emitted — direct
+ *     parse means no recovery applied; included here for completeness
+ *     of the enum the seam validates against.)
+ *   - 'jsonrepair' — host applied jsonrepair-style fix-ups
+ *   - 'markdown-fence' — stripped ```json ... ``` wrapper
+ *   - 'brace-walker' — extracted first balanced {...} substring
+ *   - 'custom' — host-specific recovery (vendor-namespaced details NOT
+ *     surfaced in the event payload per §G)
+ */
+export type RecoveryPath = 'direct' | 'jsonrepair' | 'markdown-fence' | 'brace-walker' | 'custom';
+
+export function buildRecoveryAppliedPayload(
+  nodeId: string,
+  path: RecoveryPath,
+  byteOffset?: number,
+): Record<string, unknown> {
+  const payload: Record<string, unknown> = { nodeId, path };
+  if (typeof byteOffset === 'number' && Number.isFinite(byteOffset) && byteOffset >= 0) {
+    payload.byteOffset = byteOffset;
+  }
+  return payload;
+}
+
+/**
+ * Try strict JSON.parse, then a small set of recovery paths. Returns
+ * `{ data, path, byteOffset }` on success, `null` when every path
+ * failed. Used by `aiProvidersHost.dispatchStructured()` between the
+ * provider's `content` and the schema-validate step per RFC 0032 §B.6.
+ *
+ * Recovery paths are tried in declaration order; the first one that
+ * yields a JSON value wins. `'direct'` is the no-recovery baseline —
+ * callers MUST NOT emit `envelope.recovery.applied` for that path.
+ */
+export function tryLenientParse(text: string): { data: unknown; path: RecoveryPath; byteOffset?: number } | null {
+  // Strict parse — the baseline. No recovery emit.
+  try {
+    return { data: JSON.parse(text), path: 'direct' };
+  } catch {
+    /* fall through */
+  }
+  // Markdown-fence: ```json\n...\n``` or ```\n...\n```. The fence is
+  // a common LLM verbatim-output pattern. byteOffset reports where
+  // the actual JSON started inside the raw text.
+  const fenceMatch = /```(?:json)?\s*\n([\s\S]*?)\n```/.exec(text);
+  if (fenceMatch && fenceMatch[1] !== undefined) {
+    try {
+      return {
+        data: JSON.parse(fenceMatch[1]),
+        path: 'markdown-fence',
+        byteOffset: fenceMatch.index + (fenceMatch[0].indexOf(fenceMatch[1])),
+      };
+    } catch {
+      /* fall through */
+    }
+  }
+  // Brace-walker: extract first balanced {...} block. Naive walker
+  // tracks brace depth; doesn't handle string-escaped braces (rare in
+  // LLM output and outside this fallback's scope).
+  const firstBrace = text.indexOf('{');
+  if (firstBrace !== -1) {
+    let depth = 0;
+    for (let i = firstBrace; i < text.length; i++) {
+      const c = text[i];
+      if (c === '{') depth++;
+      else if (c === '}') {
+        depth--;
+        if (depth === 0) {
+          try {
+            return {
+              data: JSON.parse(text.slice(firstBrace, i + 1)),
+              path: 'brace-walker',
+              byteOffset: firstBrace,
+            };
+          } catch {
+            break;
+          }
+        }
+      }
+    }
+  }
+  return null;
+}
+
+/**
  * The reference host normalizes provider-specific finish-reason strings
  * into a closed 5-value enum at the dispatch boundary (per
  * `executor/types.ts §AiCallResult.finishReason`):

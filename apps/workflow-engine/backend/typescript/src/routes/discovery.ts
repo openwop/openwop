@@ -318,12 +318,15 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
         //   - envelope.retry.exhausted (MUST-tier per RFC 0032 §C)
         //   - envelope.refusal (MUST-tier per RFC 0032 §C)
         //   - envelope.truncated (SHOULD-tier per RFC 0032 §B.4)
-        // The two MAY-tier events (envelope.nlToFormat.engaged,
-        // envelope.recovery.applied) are honestly OMITTED until NL-to-
-        // Format fallback + lenient parsing land — they're recovery
-        // strategies the sample doesn't yet implement. The seam still
-        // accepts them for conformance shape assertions, but they're not
-        // advertised as production-grade emission paths.
+        // The MAY-tier `envelope.recovery.applied` event IS advertised:
+        // dispatchStructured tries lenient parsing (markdown-fence
+        // strip, balanced-brace walker) before declaring a parse-error
+        // and emits the event when a recovery path engages (RFC 0032
+        // §B.6 + `envelopeReliabilityEmit.ts:tryLenientParse`). The
+        // remaining MAY-tier event (`envelope.nlToFormat.engaged`) is
+        // OMITTED until NL-to-Format fallback lands — that recovery
+        // strategy isn't implemented yet. The seam still accepts both
+        // for conformance shape assertions.
         //
         // RFC 0033 §E `distinguishesTruncation: true` — the retry loop
         // inspects `finishReason: 'length'` and routes truncation through
@@ -355,6 +358,8 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
               'envelope.retry.exhausted',
               'envelope.refusal',
               'envelope.truncated',
+              'envelope.recovery.applied',
+              'envelope.nlToFormat.engaged',
             ],
             maxRetryAttempts: rel.maxRetryAttempts,
             completion: {

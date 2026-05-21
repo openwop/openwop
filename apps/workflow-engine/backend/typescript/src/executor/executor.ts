@@ -343,7 +343,11 @@ async function runOneNode(input: {
           resolvedFixtureInputs[port] = variableBag?.[ref.variableName];
           continue;
         }
-        if (ref.type === 'literal') {
+        // `'static'` is the canonical schema-compliant tag per
+        // `workflow-definition.schema.json §PortValue`. `'literal'` is
+        // a back-compat alias accepted by the executor since pre-schema
+        // fixtures used it. Both unwrap the `value` field.
+        if (ref.type === 'static' || ref.type === 'literal') {
           resolvedFixtureInputs[port] = ref.value;
           continue;
         }

@@ -1,0 +1,39 @@
+{
+  "id": "conformance-envelope-recovery-applied",
+  "name": "Conformance: envelope.recovery.applied (RFC 0032 §B.6)",
+  "version": "1.0",
+  "description": "Drives `core.ai.structuredOutput` against the conformance-only `mock` provider. The conformance scenario POSTs a 1-entry program to `/v1/host/sample/test/mock-ai/program` (keyed by `nodeId: 'structured-call'`) BEFORE starting the run: the mock returns a markdown-fenced JSON envelope (e.g., ```json\\n{\"result\":\"ok\"}\\n```). The host's `dispatchStructured` lenient-parse fallback strips the fence via `tryLenientParse(text)`, emits exactly one `envelope.recovery.applied` with `path: 'markdown-fence'`, and accepts the parsed value WITHOUT counting against the retry budget per RFC 0033 §D. Run terminates `completed`.",
+  "nodes": [
+    {
+      "id": "structured-call",
+      "typeId": "core.ai.structuredOutput",
+      "name": "Structured output via mock provider (markdown-fenced)",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "provider": "mock",
+        "model": "mock-mini",
+        "outputSchema": {
+          "type": "object",
+          "required": ["result"],
+          "properties": { "result": { "type": "string" } }
+        },
+        "retryOnInvalidJson": 0
+      },
+      "inputs": {
+        "messages": {
+          "type": "static",
+          "value": [{ "role": "user", "content": "Please emit a markdown-fenced envelope." }]
+        }
+      }
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": {
+    "tags": ["conformance", "rfc-0032", "envelope-reliability", "recovery-applied"]
+  },
+  "settings": { "timeout": 30000 }
+}

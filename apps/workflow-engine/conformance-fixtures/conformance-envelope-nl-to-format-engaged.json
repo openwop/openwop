@@ -1,0 +1,41 @@
+{
+  "id": "conformance-envelope-nl-to-format-engaged",
+  "name": "Conformance: envelope.nlToFormat.engaged (RFC 0032 §B.5)",
+  "version": "1.0",
+  "description": "Drives `core.ai.structuredOutput` against the conformance-only `mock` provider. The conformance scenario POSTs a 3-entry program: all three attempts return natural-language prose (no JSON sigil at the start). The host's `dispatchStructured` retry loop exhausts on parse-error, detects the NL shape, and fires ONE additional dispatch with a corrective coercion fragment — emitting `envelope.nlToFormat.engaged { originalEnvelopeType, fallbackCalls: 1 }` BEFORE the secondary call. The pre-seeded 4th program entry returns valid JSON, the schema validates, and the run terminates `completed`.",
+  "nodes": [
+    {
+      "id": "structured-call",
+      "typeId": "core.ai.structuredOutput",
+      "name": "Structured output via mock provider (NL responses)",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "provider": "mock",
+        "model": "mock-mini",
+        "outputSchema": {
+          "$id": "https://example.test/spec/v1/conformance-envelope.schema.json",
+          "title": "TestEnvelope",
+          "type": "object",
+          "required": ["result"],
+          "properties": { "result": { "type": "string" } }
+        },
+        "retryOnInvalidJson": 0
+      },
+      "inputs": {
+        "messages": {
+          "type": "static",
+          "value": [{ "role": "user", "content": "Please emit a structured envelope." }]
+        }
+      }
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": {
+    "tags": ["conformance", "rfc-0032", "envelope-reliability", "nl-to-format-engaged"]
+  },
+  "settings": { "timeout": 30000 }
+}
