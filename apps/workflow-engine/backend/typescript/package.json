@@ -29,6 +29,7 @@
     "@opentelemetry/semantic-conventions": "^1.28.0",
     "@openwop/openwop": "^1.1.1",
     "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
     "better-sqlite3": "^11.5.0",
     "express": "^4.21.0",
     "pg": "^8.20.0",
