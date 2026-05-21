@@ -38,13 +38,34 @@ fi
 echo "[build-site] running site/ generator…"
 ( cd "$SITE" && npm run --silent build )
 
-# Spec corpus + conformance + profiles + per-host badges.
-echo "[build-site] copying spec/ conformance/ profiles/ badge/ → public/"
-rm -rf "$PUBLIC/spec" "$PUBLIC/conformance" "$PUBLIC/profiles" "$PUBLIC/badge"
-cp -R "$SITE/dist/spec"        "$PUBLIC/spec"
-cp -R "$SITE/dist/conformance" "$PUBLIC/conformance"
-cp -R "$SITE/dist/profiles"    "$PUBLIC/profiles"
-cp -R "$SITE/dist/badge"       "$PUBLIC/badge"
+# OpenAPI + schemas — copy into public/ so the /api/rest/ Redoc viewer
+# can fetch them at /api/openapi.yaml + /schemas/*.schema.json. The
+# OpenAPI spec uses relative $refs (../schemas/...) so both have to
+# sit at predictable URLs.
+echo "[build-site] syncing api/ and schemas/ into public/"
+mkdir -p "$PUBLIC/api"
+cp "$ROOT/api/openapi.yaml" "$PUBLIC/api/openapi.yaml"
+rm -rf "$PUBLIC/schemas"
+cp -R "$ROOT/schemas" "$PUBLIC/schemas"
+
+# Site-generated directories — copy each into public/. The marketing
+# one-pager's `index.html`, `main.js`, `styles.css`, `manifest.webmanifest`,
+# `robots.txt`, and `404.html` are preserved (we don't copy site/dist/index.html
+# or site/dist/robots.txt; the rendered marketing site wins root).
+echo "[build-site] copying site-generated directories → public/"
+for dir in spec conformance profiles badge changelog roadmap versioning security contributing governance rfcs faq for; do
+  if [[ -d "$SITE/dist/$dir" ]]; then
+    rm -rf "$PUBLIC/$dir"
+    cp -R "$SITE/dist/$dir" "$PUBLIC/$dir"
+  fi
+done
+
+# REST API explorer directory is built by site/ generator; if present, copy.
+if [[ -d "$SITE/dist/api/rest" ]]; then
+  rm -rf "$PUBLIC/api/rest"
+  mkdir -p "$PUBLIC/api"
+  cp -R "$SITE/dist/api/rest" "$PUBLIC/api/rest"
+fi
 
 # Shared asset stylesheet for the rendered spec pages.
 mkdir -p "$PUBLIC/assets"

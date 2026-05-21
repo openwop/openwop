@@ -250,7 +250,10 @@ function templatePage({ title, content, navActive, description, canonicalPath, j
     .replace(/\$\{analyticsScript\}/g, ANALYTICS_SCRIPT)
     .replace(/\$\{nav_index\}/g, navActive === 'index' ? 'active' : '')
     .replace(/\$\{nav_spec\}/g, navActive === 'spec' ? 'active' : '')
+    .replace(/\$\{nav_rfcs\}/g, navActive === 'rfcs' ? 'active' : '')
     .replace(/\$\{nav_conformance\}/g, navActive === 'conformance' ? 'active' : '')
+    .replace(/\$\{nav_changelog\}/g, navActive === 'changelog' ? 'active' : '')
+    .replace(/\$\{nav_faq\}/g, navActive === 'faq' ? 'active' : '')
     .replace(/\$\{nav_profiles\}/g, navActive === 'profiles' ? 'active' : '');
 }
 
@@ -432,6 +435,19 @@ function buildSpecDocs() {
     const docDescription = extractFirstParagraph(md) ?? CANONICAL_DESCRIPTION;
     const content = `<article class="spec-doc">${markdownToHtml(md)}</article>`;
     const slug = f.replace(/\.md$/, '');
+    const canonicalPath = `/spec/v1/${slug}.html`;
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'TechArticle',
+      headline: title,
+      description: docDescription,
+      url: `${SITE_ORIGIN}${canonicalPath}`,
+      inLanguage: 'en-US',
+      isPartOf: { '@type': 'WebSite', '@id': `${SITE_ORIGIN}/#website`, name: 'OpenWOP', url: SITE_ORIGIN },
+      about: { '@type': 'SoftwareSourceCode', name: 'OpenWOP', url: SITE_ORIGIN, codeRepository: REPO_URL },
+      author: { '@type': 'Organization', name: 'OpenWOP', url: SITE_ORIGIN },
+      dependencies: 'JSON Schema 2020-12, REST + SSE + signed webhooks',
+    };
     writeFileSync(
       join(DIST, 'spec', 'v1', `${slug}.html`),
       templatePage({
@@ -439,7 +455,8 @@ function buildSpecDocs() {
         content,
         navActive: 'spec',
         description: docDescription,
-        canonicalPath: `/spec/v1/${slug}.html`,
+        canonicalPath,
+        jsonLd,
       }),
     );
   }
@@ -637,6 +654,263 @@ ${urls.map((u) => `  <url><loc>${escapeHtml(u.loc)}</loc><lastmod>${u.lastmod}</
   console.log(`[openwop-site] wrote sitemap.xml (${urls.length} urls)`);
 }
 
+// ── Markdown-surfacing helpers ────────────────────────────────────────
+//
+// Most repo-root markdown docs (CHANGELOG, ROADMAP, COMPATIBILITY, SECURITY,
+// CONTRIBUTING, GOVERNANCE) are well-formed enough to render directly via
+// `markdownToHtml` and need only a route + a description + a nav-active key.
+// `buildMarkdownDoc` exists so we don't repeat the same template wrapping
+// once per generator.
+//
+// Note: every doc rendered this way must pass through the same sanitizing
+// markdown renderer that the spec corpus uses — no raw HTML in source files.
+
+function buildMarkdownDoc({ srcAbsPath, destPath, pageTitle, lede, navActive, canonicalPath, slugLabel }) {
+  if (!existsSync(srcAbsPath)) {
+    console.log(`[openwop-site] skip ${slugLabel} — ${srcAbsPath} not found`);
+    return;
+  }
+  const md = readFile(srcAbsPath);
+  const description = extractFirstParagraph(md) ?? CANONICAL_DESCRIPTION;
+  const intro = `<header class="page-header">
+    <h1>${escapeHtml(pageTitle)}</h1>
+    <p class="lede">${escapeHtml(lede)}</p>
+  </header>`;
+  const content = intro + `<article class="spec-doc">${markdownToHtml(md)}</article>`;
+  ensureDir(dirname(destPath));
+  writeFileSync(
+    destPath,
+    templatePage({
+      title: `openwop — ${pageTitle}`,
+      content,
+      navActive,
+      description,
+      canonicalPath,
+    }),
+  );
+  console.log(`[openwop-site] wrote ${slugLabel}`);
+}
+
+function buildChangelog() {
+  buildMarkdownDoc({
+    srcAbsPath: join(ROOT, 'CHANGELOG.md'),
+    destPath: join(DIST, 'changelog', 'index.html'),
+    pageTitle: 'Changelog',
+    lede: 'Versioned record of every change to the openwop spec corpus, schemas, SDKs, and reference hosts. Additive evolution only within v1.x per COMPATIBILITY.md.',
+    navActive: 'changelog',
+    canonicalPath: '/changelog/',
+    slugLabel: 'changelog/index.html',
+  });
+}
+
+function buildRoadmap() {
+  buildMarkdownDoc({
+    srcAbsPath: join(ROOT, 'ROADMAP.md'),
+    destPath: join(DIST, 'roadmap', 'index.html'),
+    pageTitle: 'Roadmap',
+    lede: 'Gap-closure tracks the steward maintains in the open. No dates committed beyond the windows that have a CHANGELOG entry; the roadmap is direction, not promise.',
+    navActive: '',
+    canonicalPath: '/roadmap/',
+    slugLabel: 'roadmap/index.html',
+  });
+}
+
+function buildVersioning() {
+  buildMarkdownDoc({
+    srcAbsPath: join(ROOT, 'COMPATIBILITY.md'),
+    destPath: join(DIST, 'versioning', 'index.html'),
+    pageTitle: 'Versioning &amp; compatibility',
+    lede: 'How openwop changes between releases. Additive-only within v1.x; safety-fixes follow the 90-day window; breaking changes only land in major versions.',
+    navActive: '',
+    canonicalPath: '/versioning/',
+    slugLabel: 'versioning/index.html',
+  });
+}
+
+function buildSecurityPage() {
+  buildMarkdownDoc({
+    srcAbsPath: join(ROOT, 'SECURITY.md'),
+    destPath: join(DIST, 'security', 'index.html'),
+    pageTitle: 'Security posture',
+    lede: 'Threat model, disclosure policy, and the public invariants every conformance-tested host must satisfy. Embargoed advisories go through the documented private channel before this page reflects them.',
+    navActive: '',
+    canonicalPath: '/security/',
+    slugLabel: 'security/index.html',
+  });
+}
+
+function buildContributingPage() {
+  buildMarkdownDoc({
+    srcAbsPath: join(ROOT, 'CONTRIBUTING.md'),
+    destPath: join(DIST, 'contributing', 'index.html'),
+    pageTitle: 'Contributing',
+    lede: 'Per-artifact change rules for the openwop corpus — what counts as editorial, additive, safety-fix, or breaking; the eight-step pre-merge gate; the DCO requirement.',
+    navActive: '',
+    canonicalPath: '/contributing/',
+    slugLabel: 'contributing/index.html',
+  });
+}
+
+function buildGovernancePage() {
+  buildMarkdownDoc({
+    srcAbsPath: join(ROOT, 'GOVERNANCE.md'),
+    destPath: join(DIST, 'governance', 'index.html'),
+    pageTitle: 'Governance',
+    lede: 'How decisions get made. The bootstrap-phase amendment, maintainer-track expectations, and the cross-vendor working-group charter for v2.',
+    navActive: '',
+    canonicalPath: '/governance/',
+    slugLabel: 'governance/index.html',
+  });
+}
+
+// ── RFC corpus ─────────────────────────────────────────────────────────
+
+function buildRfcs() {
+  const rfcDir = join(ROOT, 'RFCS');
+  if (!existsSync(rfcDir)) {
+    console.log('[openwop-site] no RFCS/ — skipping');
+    return;
+  }
+  const files = readdirSync(rfcDir).filter((f) => /^\d{4}-.+\.md$/.test(f)).sort();
+  ensureDir(join(DIST, 'rfcs'));
+
+  const items = [];
+  for (const f of files) {
+    const md = readFile(join(rfcDir, f));
+    const titleMatch = /^#\s+(.+)$/m.exec(md);
+    const title = titleMatch ? titleMatch[1] : f.replace(/\.md$/, '');
+    // RFCs use a "**Status: <state>**" or "Status: <state>" header in their preamble.
+    const status = /\*\*?Status:?\*?\*?\s*([A-Za-z][A-Za-z -]+)/m.exec(md);
+    const slug = f.replace(/\.md$/, '');
+    const description = extractFirstParagraph(md) ?? CANONICAL_DESCRIPTION;
+    const content = `<article class="spec-doc">${markdownToHtml(md)}</article>`;
+    writeFileSync(
+      join(DIST, 'rfcs', `${slug}.html`),
+      templatePage({
+        title: `openwop — ${title}`,
+        content,
+        navActive: 'rfcs',
+        description,
+        canonicalPath: `/rfcs/${slug}.html`,
+      }),
+    );
+    items.push({ slug, title, status: status ? status[1].trim() : '?' });
+  }
+
+  const indexContent = `<header class="page-header">
+    <h1>openwop RFCs</h1>
+    <p class="lede">${items.length} RFCs governing additive evolution of the v1 protocol. Status legend: Draft (open comment window) → Active (accepted; impl follows) → Accepted (in-tree reference impl + conformance scenarios) → Withdrawn / Superseded.</p>
+  </header>
+  <table class="spec-index">
+    <thead><tr><th>RFC</th><th>Status</th></tr></thead>
+    <tbody>
+    ${items.map((i) => `<tr><td><a href="./${i.slug}.html">${escapeHtml(i.title)}</a></td><td>${escapeHtml(i.status)}</td></tr>`).join('\n')}
+    </tbody>
+  </table>`;
+  writeFileSync(
+    join(DIST, 'rfcs', 'index.html'),
+    templatePage({
+      title: 'openwop — RFCs',
+      content: indexContent,
+      navActive: 'rfcs',
+      description: `${items.length} numbered RFCs covering the additive evolution of the openwop v1 protocol. Each RFC documents motivation, proposed wire surface, compatibility classification, conformance plan, and acceptance gate.`,
+      canonicalPath: '/rfcs/',
+    }),
+  );
+  console.log(`[openwop-site] wrote rfcs/ (${items.length} RFCs + index)`);
+}
+
+// ── Site content (FAQ + audience landing pages) ────────────────────────
+
+function buildContentDir() {
+  const contentDir = join(SITE_DIR, 'content');
+  if (!existsSync(contentDir)) {
+    console.log('[openwop-site] no site/content/ — skipping');
+    return;
+  }
+  // Conventions:
+  //   site/content/{slug}.md           → /{slug}/index.html
+  //   site/content/for/{role}.md       → /for/{role}/index.html
+  // Each file MUST start with an H1 (title) followed by a paragraph (lede).
+  const ROUTES = [
+    { src: 'faq.md',                          dest: ['faq'],                          nav: 'faq', label: 'FAQ' },
+    { src: 'for/workflow-authors.md',         dest: ['for', 'workflow-authors'],      nav: '',    label: 'For workflow authors' },
+    { src: 'for/host-implementers.md',        dest: ['for', 'host-implementers'],     nav: '',    label: 'For host implementers' },
+    { src: 'for/pack-authors.md',             dest: ['for', 'pack-authors'],          nav: '',    label: 'For pack authors' },
+    { src: 'for/production-evaluators.md',    dest: ['for', 'production-evaluators'], nav: '',    label: 'For production evaluators' },
+  ];
+  for (const r of ROUTES) {
+    const srcAbsPath = join(contentDir, ...r.src.split('/'));
+    if (!existsSync(srcAbsPath)) continue;
+    const md = readFile(srcAbsPath);
+    const titleMatch = /^#\s+(.+)$/m.exec(md);
+    const title = titleMatch ? titleMatch[1] : r.label;
+    const description = extractFirstParagraph(md) ?? CANONICAL_DESCRIPTION;
+    const content = `<article class="spec-doc">${markdownToHtml(md)}</article>`;
+    const destDir = join(DIST, ...r.dest);
+    ensureDir(destDir);
+    const canonicalPath = `/${r.dest.join('/')}/`;
+    writeFileSync(
+      join(destDir, 'index.html'),
+      templatePage({
+        title: `openwop — ${title}`,
+        content,
+        navActive: r.nav,
+        description,
+        canonicalPath,
+      }),
+    );
+    console.log(`[openwop-site] wrote ${r.dest.join('/')}/index.html`);
+  }
+}
+
+// ── REST API explorer (Redoc, self-hosted bundle) ─────────────────────
+
+function buildApiExplorer() {
+  // Self-hosted Redoc bundle: copied into public/assets/redoc.standalone.js
+  // by the build script (see scripts/build-site.sh). The page itself is a
+  // simple Redoc <redoc> custom element bound to the deployed openapi.yaml.
+  // No CDN dependency once the bundle is in place.
+  ensureDir(join(DIST, 'api', 'rest'));
+  const intro = `<header class="page-header">
+    <h1>REST API reference</h1>
+    <p class="lede">Live rendering of <code>api/openapi.yaml</code> — every endpoint, request shape, response shape, and error code in one scrollable view. Source of truth is the YAML; this page is the readable mirror.</p>
+    <p class="meta">Spec URL: <a href="/api/openapi.yaml"><code>/api/openapi.yaml</code></a> · Schema corpus: <a href="/spec/v1/">/spec/v1/</a></p>
+  </header>
+  <div id="redoc-container" style="min-height: 80vh;"></div>
+  <script src="/assets/redoc.standalone.js"></script>
+  <script>
+    if (typeof Redoc !== 'undefined' && Redoc.init) {
+      Redoc.init('/api/openapi.yaml', {
+        scrollYOffset: 64,
+        hideDownloadButton: false,
+        theme: {
+          colors: { primary: { main: '#b05a3b' } },
+          typography: {
+            fontFamily: 'Geist, ui-sans-serif, system-ui, sans-serif',
+            headings: { fontFamily: 'Instrument Serif, Georgia, serif' },
+          },
+          rightPanel: { backgroundColor: '#1a1a17' },
+        },
+      }, document.getElementById('redoc-container'));
+    } else {
+      document.getElementById('redoc-container').innerHTML =
+        '<p>Redoc bundle did not load. Raw spec: <a href="/api/openapi.yaml">/api/openapi.yaml</a>.</p>';
+    }
+  </script>`;
+  writeFileSync(
+    join(DIST, 'api', 'rest', 'index.html'),
+    templatePage({
+      title: 'openwop — REST API reference',
+      content: intro,
+      navActive: 'spec',
+      description: 'Live REST API reference rendered from api/openapi.yaml. Every openwop endpoint with request, response, and error codes — claim is the spec, this is the readable view.',
+      canonicalPath: '/api/rest/',
+    }),
+  );
+  console.log('[openwop-site] wrote api/rest/index.html');
+}
+
 function ensureDistFresh() {
   // Allow incremental builds; just make sure dist exists
   ensureDir(DIST);
@@ -652,6 +926,19 @@ function buildAll() {
   buildConformance();
   buildProfiles();
   buildBadges();
+  // Repo-root markdown surfaced as site pages (one-line credibility wins).
+  buildChangelog();
+  buildRoadmap();
+  buildVersioning();
+  buildSecurityPage();
+  buildContributingPage();
+  buildGovernancePage();
+  // RFC corpus — index + per-RFC pages.
+  buildRfcs();
+  // Net-new content authored under site/content/ (FAQ + audience pages).
+  buildContentDir();
+  // REST API explorer (Redoc, self-hosted bundle).
+  buildApiExplorer();
   // Sitemap last — walks dist/ to enumerate generated HTML pages.
   buildSitemap();
   buildRobots();
