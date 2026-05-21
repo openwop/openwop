@@ -1188,13 +1188,16 @@
   }
   .foot-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
     gap: 40px;
   }
   .foot-grid > div:first-child { max-width: 36ch; }
-  @media (max-width: 760px) {
-    .foot-grid { grid-template-columns: 1fr 1fr; }
+  @media (max-width: 920px) {
+    .foot-grid { grid-template-columns: 2fr 1fr 1fr; gap: 32px; }
     .foot-grid > div:first-child { grid-column: 1 / -1; max-width: 48ch; }
+  }
+  @media (max-width: 600px) {
+    .foot-grid { grid-template-columns: 1fr 1fr; }
   }
 
   .foot-grid h5 {
