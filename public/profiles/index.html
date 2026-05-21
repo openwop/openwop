@@ -67,7 +67,29 @@
 
 <main class="site-main">
   <div class="wrap">
-    <header class="page-header">
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
+      <li class="toc-top"><a href="#profile-catalog">Profile catalog</a></li>
+      <li class="toc-sub"><a href="#openwop-core">openwop-core</a></li>
+      <li class="toc-sub"><a href="#openwop-interrupts">openwop-interrupts</a></li>
+      <li class="toc-sub"><a href="#openwop-stream-sse">openwop-stream-sse</a></li>
+      <li class="toc-sub"><a href="#openwop-stream-poll">openwop-stream-poll</a></li>
+      <li class="toc-sub"><a href="#openwop-secrets">openwop-secrets</a></li>
+      <li class="toc-sub"><a href="#openwop-provider-policy">openwop-provider-policy</a></li>
+      <li class="toc-sub"><a href="#openwop-replay-fork">openwop-replay-fork</a></li>
+      <li class="toc-sub"><a href="#openwop-fixtures">openwop-fixtures</a></li>
+      <li class="toc-sub"><a href="#openwop-node-packs">openwop-node-packs</a></li>
+      <li class="toc-sub"><a href="#openwop-discovery-auth-scoped">openwop-discovery-auth-scoped</a></li>
+      <li class="toc-top"><a href="#derivation">Derivation</a></li>
+      <li class="toc-top"><a href="#profile-semantics">Profile semantics</a></li>
+      <li class="toc-top"><a href="#adding-a-profile">Adding a profile</a></li>
+      <li class="toc-top"><a href="#why-this-is-not-a-wire-field">Why this is not a wire field</a></li>
+      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><header class="page-header">
     <h1>Compatibility profiles</h1>
     <p class="lede">A host's profile claims summarize what surfaces it implements. Each profile is derived from the host's <code>/.well-known/openwop</code> capability advertisement plus runtime conformance scenarios.</p>
   </header><h1 id="openwop-spec-v1-compatibility-profiles">OpenWOP Spec v1 — Compatibility Profiles</h1>
@@ -247,7 +269,27 @@
 <li><code>COMPATIBILITY.md</code> — additive-change discipline that gates new profiles.</li>
 <li><code>RFCS/0001-rfc-process.md</code> — RFC mechanism for adding profiles.</li>
 <li><code>INTEROP-MATRIX.md</code> — per-host profile pass/skip table.</li>
-</ul>
+</ul></article></div><script>
+(function () {
+  var links = document.querySelectorAll('.spec-toc a');
+  if (!links.length || !('IntersectionObserver' in window)) return;
+  var byId = new Map();
+  links.forEach(function (a) { byId.set(a.getAttribute('href').slice(1), a); });
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        links.forEach(function (a) { a.classList.remove('is-active'); });
+        var link = byId.get(e.target.id);
+        if (link) link.classList.add('is-active');
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  byId.forEach(function (_, id) {
+    var el = document.getElementById(id);
+    if (el) observer.observe(el);
+  });
+})();
+</script>
   </div>
 </main>
 

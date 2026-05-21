@@ -109,7 +109,7 @@ function extractToc(md) {
 }
 
 /**
- * Render an extracted ToC as a sticky right-rail aside. Wraps the supplied
+ * Render an extracted ToC as a sticky left-rail aside. Wraps the supplied
  * article HTML in a 2-column grid so spec docs and RFCs get a navigable
  * sidebar without the template having to know about it. Includes a tiny
  * inline IntersectionObserver that highlights the currently-scrolled section.
@@ -462,7 +462,8 @@ function buildConformance() {
     <p class="lede">Live record of OpenWOP-compatible hosts, their advertised compatibility profiles, and which conformance scenarios pass against them.</p>
     <p class="meta">A host's place in this matrix is a <strong>claim plus evidence</strong>. The claim is the host's advertised profile. The evidence is the conformance result published alongside the host's repo (or under <code>examples/hosts/&lt;name&gt;/conformance.md</code>).</p>
   </header>`;
-  const content = intro + markdownToHtml(interop);
+  const articleHtml = `<article class="spec-doc">${intro}${markdownToHtml(interop)}</article>`;
+  const content = wrapWithToc(articleHtml, extractToc(interop));
   ensureDir(join(DIST, 'conformance'));
   writeFileSync(
     join(DIST, 'conformance', 'index.html'),
@@ -483,7 +484,8 @@ function buildProfiles() {
     <h1>Compatibility profiles</h1>
     <p class="lede">A host's profile claims summarize what surfaces it implements. Each profile is derived from the host's <code>/.well-known/openwop</code> capability advertisement plus runtime conformance scenarios.</p>
   </header>`;
-  const content = intro + markdownToHtml(profiles);
+  const articleHtml = `<article class="spec-doc">${intro}${markdownToHtml(profiles)}</article>`;
+  const content = wrapWithToc(articleHtml, extractToc(profiles));
   ensureDir(join(DIST, 'profiles'));
   writeFileSync(
     join(DIST, 'profiles', 'index.html'),
@@ -559,6 +561,12 @@ function buildSpecDocs() {
   // humans → transports → security → ecosystem → operations → integration.
   // Docs not enumerated below fall into an "Other" bucket at the end so
   // nothing is silently dropped when a new doc lands.
+  //
+  // Convention: GROUPS.title is interpolated as raw HTML into the rendered
+  // <h2> (see the `groupsHtml` template below — no escapeHtml on `${g.title}`),
+  // so HTML entities like `&amp;` MUST be pre-escaped here. Plain markdown-doc
+  // titles emitted via `buildMarkdownDoc({ pageTitle })` go through escapeHtml
+  // at render time and must use a bare `&` — do NOT pre-escape those.
   const GROUPS = [
     {
       key: 'foundation',

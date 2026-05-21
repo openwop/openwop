@@ -67,7 +67,22 @@
 
 <main class="site-main">
   <div class="wrap">
-    <header class="page-header">
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#hosts">Hosts</a></li>
+      <li class="toc-sub"><a href="#external-conformance-suite-pass-rates-2026-05-12">External conformance suite — pass rates (2026-05-12)</a></li>
+      <li class="toc-sub"><a href="#third-party-host-adoption-rfc-0021-external-validation-gate-2026-05-18">Third-party host adoption — RFC 0021 external-validation gate (2026-05-18)</a></li>
+      <li class="toc-sub"><a href="#third-party-host-adoption-rfc-0030-0031-0032-0033-envelope-llm-contract-hardening-external-validation-gate-2026-05-20">Third-party host adoption — RFC 0030/0031/0032/0033 envelope LLM-contract-hardening external-validation gate (2026-05-20)</a></li>
+      <li class="toc-sub"><a href="#composition-partners-real-impl-interop-evidence-2026-05-12">Composition partners — real-impl interop evidence (2026-05-12)</a></li>
+      <li class="toc-top"><a href="#capability-adoption-rfc-0027-rfc-0028-prompt-library">Capability adoption — RFC 0027 + RFC 0028 prompt library</a></li>
+      <li class="toc-top"><a href="#capability-adoption-rfc-0002-b-agent-toolreturned-causationid-pairing">Capability adoption — RFC 0002 §B agent.toolReturned causationId pairing</a></li>
+      <li class="toc-top"><a href="#capability-adoption-rfc-0022-d-node-dispatched-event-shared-bag-cross-worker-handoff">Capability adoption — RFC 0022 §D node.dispatched event + shared-bag cross-worker handoff</a></li>
+      <li class="toc-top"><a href="#reading-rows">Reading Rows</a></li>
+      <li class="toc-top"><a href="#add-a-host">Add A Host</a></li>
+      <li class="toc-top"><a href="#see-also">See Also</a></li>
+    </ul>
+  </aside><article class="spec-doc"><header class="page-header">
     <h1>Conformance leaderboard</h1>
     <p class="lede">Live record of OpenWOP-compatible hosts, their advertised compatibility profiles, and which conformance scenarios pass against them.</p>
     <p class="meta">A host's place in this matrix is a <strong>claim plus evidence</strong>. The claim is the host's advertised profile. The evidence is the conformance result published alongside the host's repo (or under <code>examples/hosts/&lt;name&gt;/conformance.md</code>).</p>
@@ -187,7 +202,27 @@
 <li><code>spec/v1/profiles.md</code> — compatibility profile predicates.</li>
 <li><code>spec/v1/scale-profiles.md</code> — scale tier definitions.</li>
 <li><code>spec/v1/production-profile.md</code> — public-release operational profile.</li>
-</ul>
+</ul></article></div><script>
+(function () {
+  var links = document.querySelectorAll('.spec-toc a');
+  if (!links.length || !('IntersectionObserver' in window)) return;
+  var byId = new Map();
+  links.forEach(function (a) { byId.set(a.getAttribute('href').slice(1), a); });
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        links.forEach(function (a) { a.classList.remove('is-active'); });
+        var link = byId.get(e.target.id);
+        if (link) link.classList.add('is-active');
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  byId.forEach(function (_, id) {
+    var el = document.getElementById(id);
+    if (el) observer.observe(el);
+  });
+})();
+</script>
   </div>
 </main>
 
