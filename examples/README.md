@@ -96,4 +96,4 @@ See [`docs/PACK-CATALOG.md`](../docs/PACK-CATALOG.md) for the full pack inventor
 - [`hosts/sqlite/`](./hosts/sqlite/) — durable reference host; "build your own host" walkthrough.
 - [`../QUICKSTART-10MIN.md`](../QUICKSTART-10MIN.md) — fastest "hello world" path.
 - [`../spec/v1/profiles.md`](../spec/v1/profiles.md) — closed catalog of compatibility profiles examples gate on.
-- [`../docs/PACK-CATALOG.md`](../docs/PACK-CATALOG.md) — registry of all 48 published packs grouped by domain.
+- [`../docs/PACK-CATALOG.md`](../docs/PACK-CATALOG.md) — registry of all 62 published packs grouped by domain.

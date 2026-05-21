@@ -82,7 +82,7 @@ If `knowledge.augment-prompt` returns `hasResults: false`, the augmented user me
 
 ## See also
 
-- [`docs/PACK-CATALOG.md`](../../docs/PACK-CATALOG.md) — categorized inventory of all 48 published packs
+- [`docs/PACK-CATALOG.md`](../../docs/PACK-CATALOG.md) — categorized inventory of all 62 published packs
 - [`spec/v1/host-capabilities.md#host-knowledge`](../../spec/v1/host-capabilities.md#host-knowledge) — the `host.knowledge` capability contract
 - [`packs/vendor.myndhyve.knowledge-tools/README.md`](../../packs/vendor.myndhyve.knowledge-tools/README.md) — node-level details + score-filtering knobs
 - [`examples/market-intel-pipeline/`](../market-intel-pipeline/) — multi-pack composition reference

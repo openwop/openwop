@@ -1,10 +1,10 @@
 # External Pack Author Recruitment
 
-> **Status: framework + outreach template ready (2026-05-11; freshness re-confirmed 2026-05-13).** Distinct from the host-recruitment work in `external-host.md` — packs are smaller, easier-to-commit-to surfaces than a full host. The blocker remains identifying 3–5 specific Tier 1 / Tier 2 candidates and customizing the template per recipient. 2026-05-13 update: registry pack count grew from 3 → 48, but every published pack is still steward-published — the broader pack inventory does not change the recruitment objective (a non-steward pack author).
+> **Status: framework + outreach template ready (2026-05-11; freshness re-confirmed 2026-05-21).** Distinct from the host-recruitment work in `external-host.md` — packs are smaller, easier-to-commit-to surfaces than a full host. The blocker remains identifying 3–5 specific Tier 1 / Tier 2 candidates and customizing the template per recipient. 2026-05-21 update: registry pack count grew from 3 → 62, but every published pack is still steward-published — the broader pack inventory does not change the recruitment objective (a non-steward pack author).
 
 ## Why this matters
 
-The hosted node-pack registry at `packs.openwop.dev` is live with **48 steward-published packs** as of 2026-05-13: 8 `core.openwop.*` framework primitives, 1 `community.openwop-team.demo`, 1 `vendor.openwop.rust-hello` WASM reference, 38 `vendor.myndhyve.*` canvas-vertical packs. The steward operates the myndhyve.ai reference host that owns the `vendor.myndhyve` namespace claim, so every pack on the registry today traces back to the single steward maintainer. The pack-ecosystem claim in the project's positioning is "third parties can extend OpenWOP without a host commitment" — but no non-steward third party has done that yet.
+The hosted node-pack registry at `packs.openwop.dev` is live with **62 steward-published packs** as of 2026-05-21: 22 `core.openwop.*` framework primitives, 1 `community.openwop-team.demo`, 1 `vendor.openwop.rust-hello` WASM reference, 38 `vendor.myndhyve.*` canvas-vertical packs. The steward operates the myndhyve.ai reference host that owns the `vendor.myndhyve` namespace claim, so every pack on the registry today traces back to the single steward maintainer. The pack-ecosystem claim in the project's positioning is "third parties can extend OpenWOP without a host commitment" — but no non-steward third party has done that yet.
 
 Recruiting the first external pack author:
 
