@@ -84,6 +84,17 @@ export interface DispatchResult {
   blockReason?: string;
   /** Safety category that tripped (Gemini's `safetyRatings[].category` of any blocked rating). */
   safetyCategory?: string;
+  /** Provider-surfaced refusal text — distinct from `completion`. Populated for:
+   *   - OpenAI: `choices[0].message.refusal` (streamed via `delta.refusal`) when the
+   *     structured-output safety filter triggers. Can co-occur with `finish_reason:
+   *     "stop"`, so a non-empty value is a stronger refusal signal than finishReason
+   *     alone (per the @openwop/openwop `parseRefusal` helper's docstring).
+   *   - Anthropic: text extracted from `content[]` text blocks when
+   *     `stop_reason === 'refusal'`.
+   *   - Gemini: not populated (the safety filter is opaque to the model).
+   *  Callers MUST route through BYOK / prompt-content redaction before persistence
+   *  per SECURITY/invariants.yaml §envelope-refusal-no-prompt-leak. */
+  refusalText?: string;
   /** Normalized citations from a web-search-enabled turn. Empty when search wasn't used. */
   citations?: readonly Citation[];
 }
@@ -346,6 +357,13 @@ async function dispatchOpenAI(req: DispatchRequest): Promise<DispatchResult> {
   let inputTokens: number | undefined;
   let outputTokens: number | undefined;
   let finishReason: string | undefined;
+  // OpenAI's structured-output safety-filter surfaces refusals via
+  // `choices[0].message.refusal` (streamed as `delta.refusal` chunks).
+  // Accumulating these here so DispatchResult can carry the signal —
+  // a non-empty refusalText is a stronger refusal indicator than
+  // finish_reason: 'content_filter' alone, and the two CAN co-occur
+  // with finish_reason: 'stop' on the modern API.
+  let refusalText = '';
   // OpenAI-compatible endpoints (BYOK against DeepSeek-R1, qwen-think,
   // GLM-4-think, MiniMax) emit reasoning inline as `<think>...</think>`
   // in the content delta. The splitter is a no-op for models that
@@ -357,7 +375,7 @@ async function dispatchOpenAI(req: DispatchRequest): Promise<DispatchResult> {
     if (event.data === '[DONE]') break;
     try {
       const data = JSON.parse(event.data) as {
-        choices?: Array<{ delta?: { content?: string }; finish_reason?: string | null }>;
+        choices?: Array<{ delta?: { content?: string; refusal?: string }; finish_reason?: string | null }>;
         usage?: { prompt_tokens?: number; completion_tokens?: number };
       };
       const choice = data.choices?.[0];
@@ -370,6 +388,10 @@ async function dispatchOpenAI(req: DispatchRequest): Promise<DispatchResult> {
         }
         if (reasoningDelta) await req.onReasoningDelta?.(reasoningDelta);
         for (const block of closedBlocks) await req.onReasoningBlock?.(block);
+      }
+      const refusalDelta = choice?.delta?.refusal;
+      if (typeof refusalDelta === 'string' && refusalDelta.length > 0) {
+        refusalText += refusalDelta;
       }
       if (choice?.finish_reason) finishReason = choice.finish_reason;
       if (data.usage) {
@@ -392,6 +414,7 @@ async function dispatchOpenAI(req: DispatchRequest): Promise<DispatchResult> {
     completion,
     usage: { inputTokens, outputTokens },
     ...(finishReason ? { finishReason } : {}),
+    ...(refusalText.length > 0 ? { refusalText } : {}),
   };
 }
 

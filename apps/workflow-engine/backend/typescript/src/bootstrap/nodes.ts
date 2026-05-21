@@ -696,13 +696,23 @@ async function emitChatEnvelopeSignals(
   const fr = (result.finishReason ?? '').toLowerCase();
   const blockReason = 'blockReason' in result ? result.blockReason : undefined;
   const safetyCategory = 'safetyCategory' in result ? result.safetyCategory : undefined;
+  // OpenAI's structured-output safety-filter surfaces refusals via
+  // choices[0].message.refusal — accumulated as DispatchResult.refusalText
+  // by dispatchOpenAI. This field is the STRONGEST refusal signal on the
+  // modern OpenAI API (per the @openwop/openwop parseRefusal helper's
+  // docstring) and CAN co-occur with finish_reason: 'stop'. So flagging
+  // on it independently of finishReason catches the case the older
+  // content_filter check misses.
+  const refusalText = 'refusalText' in result ? result.refusalText : undefined;
+  const hasRefusalText = typeof refusalText === 'string' && refusalText.length > 0;
 
   const isRefusal =
     fr === 'refusal' ||
     fr === 'content_filter' ||
     fr === 'safety' ||
     fr === 'recitation' ||
-    (typeof blockReason === 'string' && blockReason.length > 0);
+    (typeof blockReason === 'string' && blockReason.length > 0) ||
+    hasRefusalText;
   if (isRefusal) {
     try {
       await ctx.emit(
