@@ -41,8 +41,11 @@ Add to `schemas/capabilities.schema.json`:
 +      },
 +      "isolationModel": {
 +        "type": "string",
-+        "enum": ["wasm", "process", "container", "vm", "x-host"],
-+        "description": "Categorical isolation model. 'wasm' = WebAssembly sandbox with explicit host imports (e.g., Wasmtime, Wasmer). 'process' = OS process boundary with restricted syscalls (e.g., gVisor, seccomp, Landlock). 'container' = container runtime boundary (e.g., Firecracker microVM). 'vm' = full VM. 'x-host' = vendor-specific model documented at the host's discovery doc."
++        "anyOf": [
++          { "enum": ["wasm", "process", "container", "vm"] },
++          { "pattern": "^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*$" }
++        ],
++        "description": "Categorical isolation model. 'wasm' = WebAssembly sandbox with explicit host imports (e.g., Wasmtime, Wasmer). 'process' = OS process boundary with restricted syscalls (e.g., gVisor, seccomp, Landlock). 'container' = container runtime boundary (e.g., Firecracker microVM). 'vm' = full VM. Vendor-specific isolation models advertise a host-extension namespace string matching `^x-host-<host>-<key>$` per `spec/v1/host-extensions.md` §'Canonical prefixes' (e.g., `x-host-myndhyve-cloud-run-gvisor`); the matching documentation MUST live at the host's discovery doc."
 +      },
 +      "allowedHostCalls": {
 +        "type": "array",

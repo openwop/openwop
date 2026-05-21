@@ -40,7 +40,7 @@ The WG replaces the GOVERNANCE.md "lead-maintainer tiebreaker" rule.
 1. **Steering Committee election cadence:** annual.
 2. **Eligibility:** any WG member who has authored OR reviewed (with merge-influencing approval) at least 2 RFCs in the prior 12 months.
 3. **Election mechanism:** approval voting. Each WG member approves N candidates; top 3-5 by approval count win seats.
-4. **Independence requirement:** no more than 50% of Steering Committee members may share an employer/affiliation. If election produces a non-compliant Committee, the highest-approval candidates from underrepresented orgs replace the excess until balance is reached.
+4. **Independence requirement:** no more than **1/3** of Steering Committee members may share an employer/affiliation (rounded down — e.g., a 3-seat Committee permits no shared affiliation; a 5-seat permits at most 1 pair; a 7-seat permits at most 2). This aligns with W3C TAG + IETF IESG diversity norms; a single org cannot block 2/3 votes. **Bootstrap exception:** for the first elected Committee (3 seats) the independence requirement is relaxed to "at least 1 member is independent of the original steward" — recognizing that the recruitment process per `docs/recruitment/external-host.md` is still in flight. The bootstrap exception lapses at the second election cycle. If election produces a non-compliant Committee, the highest-approval candidates from underrepresented orgs replace the excess until balance is reached.
 
 ### §C — Voting rules on RFCs
 
@@ -129,6 +129,6 @@ Path to `Accepted`: 6 months of WG operation with no major procedural objection.
 - `GOVERNANCE.md:27` (the lead-maintainer-tiebreaker section this RFC will eventually replace)
 - `GOVERNANCE.md:76` (the path-to-working-group conditions / tripwire)
 - `MAINTAINERS.md` (current maintainer state + bootstrap-phase notes)
-- `docs/recruitment/external-host.md`, `external-pack-author.md`, `external-reviewer.md` (the recruitment work that fills the tripwire conditions)
+- `docs/recruitment/external-host.md`, `docs/recruitment/external-pack-author.md`, `docs/recruitment/external-reviewer.md` (the recruitment work that fills the tripwire conditions)
 - `docs/KNOWN-LIMITS.md:81` (GOV-8 vendor-neutral org migration)
 - Google-acceptance review 2026-05-21 — finding (7)

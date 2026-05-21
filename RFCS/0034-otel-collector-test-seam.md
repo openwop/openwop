@@ -66,11 +66,11 @@ Both seams live under the `host-extensions.md` canonical-prefix `/v1/host/sample
 - `secret-leakage-otel-attribute` — paired with `envelope-reasoning-secret-redaction.test.ts` §"OTel-attribute scrape" assertion. Public test glob: `conformance/src/scenarios/envelope-reasoning-secret-redaction.test.ts`.
 - `secret-leakage-debug-bundle-otel` — paired with the same scenario's §"debug-bundle export" assertion.
 
-Remove the `non_testability_rationale` field from both rows; replace with a `public_tests` field pointing at the scenario file path.
+Remove the `non_testability_rationale` field from both rows; populate the existing `tests:` field with the scenario file path glob (the `tests:` key is the canonical home for public-test references per `SECURITY/invariants.yaml`'s schema — 95 existing occurrences across protocol-tier and reference-impl-tier rows).
 
 ### §D — Conformance scenario tightening
 
-`conformance/src/scenarios/envelope-reasoning-secret-redaction.test.ts` lines 250-272 + 274-293 currently soft-skip on `spansRes.status === 404` / `bundleRes.status === 404`. With this RFC, the soft-skip becomes capability-gated:
+`conformance/src/scenarios/envelope-reasoning-secret-redaction.test.ts` — the two `it()` blocks inside the `describe('envelope-reasoning-secret-redaction: downstream-projection paths (RFC 0030 §E)', …)` block (the OTel-attribute scrape assertion and the debug-bundle-export assertion) currently soft-skip on `spansRes.status === 404` / `bundleRes.status === 404`. With this RFC, the soft-skip becomes capability-gated:
 
 ```diff
 -    if (spansRes.status === 404) return; // host doesn't expose the OTel scrape seam
@@ -79,7 +79,7 @@ Remove the `non_testability_rationale` field from both rows; replace with a `pub
 +    expect(spansRes.status, 'host advertising otelScrape MUST serve the seam').toBe(200);
 ```
 
-Hosts that don't advertise the seam continue to soft-skip honestly (the existing posture). Hosts that DO advertise it must serve a valid response.
+Hosts that don't advertise the seam continue to soft-skip honestly (the existing posture). Hosts that DO advertise it MUST serve a valid response.
 
 ## Compatibility
 

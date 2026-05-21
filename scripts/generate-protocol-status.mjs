@@ -251,6 +251,23 @@ function staleStatusFindings(rfcs) {
     }
   }
 
+  // (4a) RFC status counts: cross-check README's per-status claims against parsed rfcs metadata.
+  const acceptedCount = rfcs.filter((r) => r.status === 'Accepted').length;
+  const activeCount = rfcs.filter((r) => r.status === 'Active').length;
+  const draftCount = rfcs.filter((r) => r.status === 'Draft').length;
+  const rfcChecks = [
+    { label: 'RFCs excluding template', re: /\((\d+)\s+RFCs\s+excluding\s+template\)/, actual: rfcs.length },
+    { label: 'Accepted RFCs', re: /are\s+`Accepted`\s+\((\d+)\)/, actual: acceptedCount },
+    { label: 'Active RFCs', re: /are\s+`Active`\s+\((\d+)\)/, actual: activeCount },
+    { label: 'Draft RFCs', re: /are\s+`Draft`\s+\((\d+)\)/, actual: draftCount },
+  ];
+  for (const check of rfcChecks) {
+    const m = readmeText.match(check.re);
+    if (m && Number(m[1]) !== check.actual) {
+      findings.push(`README.md: claims "${m[1]}" ${check.label} but actual is ${check.actual}.`);
+    }
+  }
+
   // (4) Legacy known-bad-string rules for the files that haven't been refactored yet.
   const legacyRules = [
     {

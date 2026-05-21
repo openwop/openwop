@@ -40,7 +40,14 @@ Both gaps are honest in KNOWN-LIMITS but undermine standardization credibility �
 +      "properties": {
 +        "supported": { "type": "boolean", "description": "Host implements cross-region idempotency reconciliation per spec/v1/idempotency.md §'Multi-region reconciliation'. When supported: true, an Idempotency-Key write that succeeds in one region is observable in another region within `replicationLagBoundMs`." },
 +        "replicationLagBoundMs": { "type": "integer", "minimum": 0, "maximum": 60000, "description": "Conservative upper bound on cross-region replication lag for idempotency-key records. Conformance asserts that an Idempotency-Key write in region A is read-visible in region B after waiting `replicationLagBoundMs + safetyMargin`." },
-+        "partitionRecoveryStrategy": { "type": "string", "enum": ["last-writer-wins", "first-writer-wins", "ulid-tiebreaker"], "description": "Host's deterministic resolution rule when a partition healed with conflicting idempotency-key records. Conformance asserts the chosen rule actually applies." }
++        "partitionRecoveryStrategy": {
++          "type": "string",
++          "anyOf": [
++            { "enum": ["last-writer-wins", "first-writer-wins"] },
++            { "pattern": "^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*$" }
++          ],
++          "description": "Host's deterministic resolution rule when a partition healed with conflicting idempotency-key records. `last-writer-wins`: the record whose write commit timestamp is greatest survives. `first-writer-wins`: the record with the earliest commit timestamp survives. Vendor-specific strategies advertise a host-extension namespace string matching `^x-host-<host>-<key>$` per `spec/v1/host-extensions.md` §'Canonical prefixes'; the matching algorithm MUST be documented at the host's discovery doc. Conformance asserts the chosen rule's deterministic resolution actually applies (a given conflict input produces a deterministic survivor); conformance does NOT prescribe which strategy a host picks."
++        }
 +      }
 +    }
    }
@@ -91,7 +98,7 @@ NEW `conformance/src/scenarios/cross-engine-append-ordering.test.ts` — two-eng
 
 ### §E — Replay-determinism cross-region (additive prose to `spec/v1/replay.md`)
 
-When `capabilities.idempotency.multiRegion.supported: true` AND `capabilities.eventLog.crossEngineOrdering.supported: true`, a `POST /v1/runs/{runId}:fork` invocation served by a different region MUST produce a fork run whose state matches a fork served by the original region (bit-equivalent against the same forkAtEventLogIdx).
+When `capabilities.idempotency.multiRegion.supported: true` AND `capabilities.eventLog.crossEngineOrdering.supported: true`, a `POST /v1/runs/{runId}:fork` invocation served by a different region MUST produce a fork run whose **observable state at the `forkAtEventLogIdx` boundary** matches a fork served by the original region. Specifically: the fork's `RunSnapshot.status`, `RunSnapshot.variables`, and the projected event log up to `forkAtEventLogIdx` MUST be byte-equivalent across regions. Per-region wall-clock fields in subsequent events MAY differ (e.g., timestamps embedded in `RunEventDoc.observedAt`, ULID component-T entropy in newly-generated event IDs); a bit-equivalent total comparison is NOT required and is not implementable in the presence of per-region clocks.
 
 ## Compatibility
 
