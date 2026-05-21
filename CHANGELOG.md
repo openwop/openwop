@@ -11,6 +11,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.3 — unreleased] — coordinated SDK release for MyndHyve adoption-feedback slices
 
+### Site: 13 new pages + REST API explorer + JSON-LD on every spec doc (2026-05-21)
+
+Comprehensive upgrade to openwop.dev. The `site/src/build.mjs` generator now renders nine additional page types beyond the existing spec corpus, conformance leaderboard, and profiles catalog:
+
+- **Markdown surfacing** — six repo-root docs become first-class site pages: `/changelog/`, `/roadmap/`, `/versioning/` (from `COMPATIBILITY.md`), `/security/`, `/contributing/`, `/governance/`. One `buildMarkdownDoc()` helper does the template wrapping.
+- **RFC corpus** — `/rfcs/` index + per-RFC pages at `/rfcs/{NNNN-slug}.html` for all 39 RFCs under `RFCS/`. Builder walks the directory and renders each with its H1 + Status header parsed out.
+- **FAQ at `/faq/`** — 8 entries answering predictable objections (LangGraph/LangChain, Temporal/Step Functions, conformance cost, registry choice, v1 EOL, BYOK, non-AI scope, security advisories). Each answer cites the spec section that carries the authoritative rule.
+- **Four audience landing pages** at `/for/{workflow-authors,host-implementers,pack-authors,production-evaluators}/`. Each is ~500 words of role-specific narrative with concrete next-step links. Homepage "Pick your path" cards now route to these.
+- **`/api/rest/`** — interactive REST API explorer rendering `api/openapi.yaml` via a SELF-HOSTED Redoc bundle (`public/assets/redoc.standalone.js`, 918 KB). No CDN dep. Theme tuned to the marketing-site brand tokens.
+- **JSON-LD `TechArticle`** entities on every `/spec/v1/*.html` page — schema.org metadata for SEO + rich-results eligibility.
+
+Sitemap grows 43 URLs → 95 URLs. Topnav adds RFCs / Changelog / FAQ alongside the existing Overview / Spec / Conformance. Homepage footer reorganized into Specification / Ecosystem / Project columns with the new on-site routes + "Watch releases ↗" GitHub-releases link.
+
+Implementation-only. No spec text, schemas, OpenAPI/AsyncAPI, conformance, or SDK contracts touched. The Redoc bundle is the only third-party JS shipped; it stays self-hosted to honor `site/README.md`'s no-CDN policy.
+
 ### TS SDK 1.1.3 — `parseRefusal` + `buildReasoningDirective` exported (2026-05-21)
 
 Second coordinated release in the 1.1.x SDK series. Bumps the TypeScript + Python SDKs (and the lockstep examples + reference hosts) to `1.1.3`. The substance is the two TS SDK helper exports that landed in commits `8ab30fc` (`buildReasoningDirective`) and `ec6625a` (`parseRefusal`) post the 1.1.2 publish, queued for the next release window per the RFC 0030/0031/0032/0033 Active → Accepted runbook's "post-Accepted slice work" section.
