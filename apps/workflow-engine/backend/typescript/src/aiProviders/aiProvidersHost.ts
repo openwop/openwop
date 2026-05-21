@@ -51,7 +51,12 @@ import { emitCost } from '../observability/costEmitter.js';
 import { buildProviderUsagePayloadFromTokens } from '../providers/usageEmitter.js';
 import { getInvocationLog } from '../executor/invocationLog.js';
 import { createLogger } from '../observability/logger.js';
-import { buildReasoningDirective } from '../host/envelopeDirective.js';
+// RFC 0030 §A reasoning-directive synthesis lifted to @openwop/openwop@^1.1.3.
+// The byte-identical helper at host/envelopeDirective.ts is now a type-only
+// re-export shim — see that file for the rationale (envelopeReasoningConfig.ts
+// still imports `ReasoningDirectiveStrength` from it; lifting that is a
+// follow-up commit).
+import { buildReasoningDirective } from '@openwop/openwop';
 import { getEnvelopeReasoningConfig } from '../host/envelopeReasoningConfig.js';
 import { getEnvelopeReliabilityConfig } from '../host/envelopeReliabilityConfig.js';
 import {

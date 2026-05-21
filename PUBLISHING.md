@@ -143,6 +143,19 @@ For each subsequent release:
 
 Always: bump the version in the corresponding `package.json` / `pyproject.toml` BEFORE pushing the tag, and run `bash scripts/openwop-check.sh` locally to surface any pre-publish issues that the workflow's preflight would catch.
 
+### Post-publish lockfile bump (automated)
+
+After `openwop-publish.yml/publish-ts-client` succeeds, `.github/workflows/openwop-post-publish-bump.yml` fires automatically and opens a PR bumping the `@openwop/openwop` pin in every in-repo consumer:
+
+- `apps/workflow-engine/backend/typescript/package.json` + lockfile (Cloud Run image)
+- `apps/workflow-engine/frontend/react/package.json` + lockfile (Firebase Hosting bundle)
+
+The PR title is `chore: bump @openwop/openwop to ^X.Y.Z (post-publish)`; the body includes the gcloud / firebase commands to redeploy each surface once merged. The bot is idempotent — if the lockfiles are already at the latest published version (manual bump, prior run), no PR opens.
+
+**One-time repo setup** (only needed before the first auto-PR): in *Settings → Actions → General → Workflow permissions*, enable **"Allow GitHub Actions to create and approve pull requests"**. Without this, the bot's `gh pr create` call returns 403 and the workflow logs a clear error.
+
+Why this exists: every TS SDK release historically required a manual lockfile-bump step before the demo Cloud Run + Firebase Hosting deploys could pull the new SDK. Cloud Run's `npm ci` runs in lockfile-isolated mode, so an outdated lockfile silently pinned the old SDK even when npm carried a newer one. The 2026-05-21 1.1.2 → 1.1.3 release burned three Cloud Run revisions before the manual bump caught up; this workflow closes that loop.
+
 ---
 
 ## `@openwop/protocol` decision

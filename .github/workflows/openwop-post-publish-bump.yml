@@ -1,0 +1,159 @@
+# openwop — post-publish lockfile bump
+#
+# Fires after `openwop-publish.yml` ("openwop — Publish") completes, checks
+# whether @openwop/openwop's latest npm dist-tag drifted from the in-repo
+# consumer lockfiles, and (if it did) opens a PR bumping every consumer.
+#
+# Why: every TS SDK publish historically required a manual lockfile bump in
+# `apps/workflow-engine/backend/typescript/` + `apps/workflow-engine/frontend/react/`
+# before the demo Cloud Run + Firebase Hosting deploys could pull the new
+# SDK. The bump itself is mechanical (run `npm install @openwop/openwop@^X.Y.Z`,
+# commit, push). Automating it shaves ~30 min of toil per release window
+# (cf. the 2026-05-21 1.1.2 → 1.1.3 release where this dance burned three
+# Cloud Run revisions before the lockfile caught up).
+#
+# Trigger: any successful completion of the upstream `openwop-publish.yml`.
+# That workflow's job conclusions matrix:
+#   - `vX.Y.Z` tag           → all 4 publish jobs run
+#   - `openwop/vX.Y.Z` tag       → only publish-ts-client; others skip
+#   - `openwop-conformance/v*` → only publish-conformance; others skip
+#   - etc.
+# `github.event.workflow_run.conclusion == 'success'` covers all of those
+# (skipped jobs don't propagate to a workflow-level failure). The downstream
+# behavior here is idempotent — if the lockfile is already at the latest
+# published version (e.g., someone bumped manually before tagging), the job
+# short-circuits and opens no PR.
+#
+# Requires (one-time repo setup):
+#   - Settings → Actions → General → Workflow permissions:
+#       ☑  "Allow GitHub Actions to create and approve pull requests"
+#   - The default GITHUB_TOKEN has the rest (`contents: write`,
+#     `pull-requests: write` granted below).
+
+name: openwop — Post-publish lockfile bump
+
+on:
+  workflow_run:
+    workflows: ["openwop — Publish"]
+    types: [completed]
+
+jobs:
+  bump-consumers:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Discover latest @openwop/openwop on npm
+        id: sdk
+        run: |
+          LATEST=$(npm view @openwop/openwop version)
+          echo "latest=$LATEST" >> "$GITHUB_OUTPUT"
+          echo "Latest @openwop/openwop on npm: $LATEST"
+
+      - name: Diff lockfile against latest
+        id: diff
+        run: |
+          BACKEND_LOCK="apps/workflow-engine/backend/typescript/package-lock.json"
+          FRONTEND_LOCK="apps/workflow-engine/frontend/react/package-lock.json"
+          BACKEND_CURRENT=$(node -e "console.log(require('./$BACKEND_LOCK').packages['node_modules/@openwop/openwop']?.version || 'absent')")
+          FRONTEND_CURRENT=$(node -e "console.log(require('./$FRONTEND_LOCK').packages['node_modules/@openwop/openwop']?.version || 'absent')")
+          echo "Backend lockfile:  $BACKEND_CURRENT"
+          echo "Frontend lockfile: $FRONTEND_CURRENT"
+          NEEDS_BUMP="false"
+          if [[ "$BACKEND_CURRENT" != "${{ steps.sdk.outputs.latest }}" && "$BACKEND_CURRENT" != "absent" ]]; then
+            NEEDS_BUMP="true"
+          fi
+          if [[ "$FRONTEND_CURRENT" != "${{ steps.sdk.outputs.latest }}" && "$FRONTEND_CURRENT" != "absent" ]]; then
+            NEEDS_BUMP="true"
+          fi
+          echo "needs_bump=$NEEDS_BUMP" >> "$GITHUB_OUTPUT"
+          echo "backend_current=$BACKEND_CURRENT" >> "$GITHUB_OUTPUT"
+          echo "frontend_current=$FRONTEND_CURRENT" >> "$GITHUB_OUTPUT"
+
+      - name: Bump backend lockfile
+        if: ${{ steps.diff.outputs.needs_bump == 'true' }}
+        run: |
+          cd apps/workflow-engine/backend/typescript
+          npm install "@openwop/openwop@^${{ steps.sdk.outputs.latest }}" --save --ignore-scripts
+
+      - name: Bump frontend lockfile
+        if: ${{ steps.diff.outputs.needs_bump == 'true' }}
+        run: |
+          cd apps/workflow-engine/frontend/react
+          npm install "@openwop/openwop@^${{ steps.sdk.outputs.latest }}" --save --ignore-scripts
+
+      - name: Open PR
+        if: ${{ steps.diff.outputs.needs_bump == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="chore/post-publish-bump-openwop-${{ steps.sdk.outputs.latest }}"
+          git config user.name "openwop-bot"
+          git config user.email "noreply@openwop.dev"
+          # If a prior run already opened this PR (re-fire on the same tag),
+          # close out gracefully — the existing PR carries the same content.
+          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+            echo "Branch $BRANCH already exists on origin; assuming prior run opened the PR."
+            exit 0
+          fi
+          git checkout -b "$BRANCH"
+          git add \
+            apps/workflow-engine/backend/typescript/package.json \
+            apps/workflow-engine/backend/typescript/package-lock.json \
+            apps/workflow-engine/frontend/react/package.json \
+            apps/workflow-engine/frontend/react/package-lock.json
+          if git diff --cached --quiet; then
+            echo "Nothing to commit — backend + frontend were already at ${{ steps.sdk.outputs.latest }}."
+            exit 0
+          fi
+          git commit -s -m "chore(host): bump @openwop/openwop to ^${{ steps.sdk.outputs.latest }} post-publish
+
+Auto-generated by .github/workflows/openwop-post-publish-bump.yml after
+@openwop/openwop@${{ steps.sdk.outputs.latest }} published successfully
+via openwop-publish.yml.
+
+Backend was at ${{ steps.diff.outputs.backend_current }}; frontend at
+${{ steps.diff.outputs.frontend_current }}. Lockfiles now resolve to
+${{ steps.sdk.outputs.latest }}.
+
+Merge before the next demo deploy; the backend Cloud Run image won't
+pick up the new SDK until \`gcloud run deploy openwop-app-backend
+--source apps/workflow-engine\` (or the equivalent Firebase deploy for
+the frontend) runs against this branch.
+
+Co-Authored-By: openwop-bot <noreply@openwop.dev>"
+          git push -u origin "$BRANCH"
+          gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title "chore: bump @openwop/openwop to ^${{ steps.sdk.outputs.latest }} (post-publish)" \
+            --body "$(cat <<EOF
+          Auto-opened after \`@openwop/openwop@${{ steps.sdk.outputs.latest }}\` published successfully via \`.github/workflows/openwop-publish.yml\`.
+
+          ## Bumps
+          - \`apps/workflow-engine/backend/typescript\` (backend Cloud Run image): \`${{ steps.diff.outputs.backend_current }}\` → \`${{ steps.sdk.outputs.latest }}\`
+          - \`apps/workflow-engine/frontend/react\` (frontend Firebase Hosting bundle): \`${{ steps.diff.outputs.frontend_current }}\` → \`${{ steps.sdk.outputs.latest }}\`
+
+          ## Why this exists
+          Cloud Run's \`npm ci\` runs in isolation; without an updated lockfile, the backend container resolves the old SDK version even though npm has a newer one. Every prior SDK release required a manual bump (\`npm install @openwop/openwop@^X.Y.Z\`) before deploys could pull the new code. This PR closes that loop automatically.
+
+          ## To merge + deploy
+          1. Review the lockfile diff (mostly mechanical version-string changes).
+          2. Merge to main.
+          3. Run \`gcloud run deploy openwop-app-backend --source apps/workflow-engine --region us-central1 --project openwop-dev\` (or \`firebase deploy --only hosting:app --project openwop-dev\` for the frontend) to pick up the new SDK in production.
+
+          Generated by \`.github/workflows/openwop-post-publish-bump.yml\`.
+          EOF
+          )" \
+            --label "chore" \
+            --label "post-publish-bump"
