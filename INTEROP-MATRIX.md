@@ -93,6 +93,20 @@ Conformance gates:
 
 SECURITY invariants `prompt-composed-secret-redaction` + `prompt-composed-trust-marker` are tracked in `SECURITY/invariants.yaml` (protocol-tier; verified via the above conformance scenarios). Under `OPENWOP_REQUIRE_BEHAVIOR=true`, the capability-gated scenarios FAIL instead of skip when the host advertises the gating capability but doesn't emit the asserted contract (per `conformance/coverage.md` §"Capability-gated scenarios").
 
+## Capability adoption — RFC 0002 §B `agent.toolReturned` `causationId` pairing
+
+`RFCS/0002-agent-identity-and-reasoning-events.md` §B requires every `agent.toolReturned` to carry `causationId === eventId` of the corresponding `agent.toolCalled`. The `agentReasoningEvents.test.ts` scenario was tightened on 2026-05-18 to assert this strict pairing (previously the scenario validated `callId` correlation only, which masked deviations on the event-log identity chain that `spec/v1/replay.md` §"Determinism with non-deterministic agents" depends on). The check is gated on hosts surfacing `eventId` in their `/events` projection — hosts that omit `eventId` from the projection soft-skip the assertion (and SHOULD add it).
+
+Adoption status (2026-05-21):
+
+| Host | `causationId` pairing | `eventId` surfaced on `/events` | Notes |
+|---|---|---|---|
+| Workflow-engine sample (`apps/workflow-engine/`) | **shipped** | **yes** | Reference impl; `conformance/src/scenarios/agentReasoningEvents.test.ts` is the regression coverage. |
+| MyndHyve workflow-runtime | **shipped 2026-05-18** | **yes** | MyndHyve commit `a4270444` ("feat(mock-agent): full RFC 0023 §B impl + strict causationId pairing"). `EventLog.append()` returns `Promise<RunEventDoc>` synchronously (`packages/workflow-engine/src/protocol/EventLog.ts:189`); `core.conformance.mock-agent` threads the returned `eventId` into BOTH payload-level `causationId` (RFC 0002 §B) AND event-record-level `causationId`. `/v1/runs/{runId}/events` surfaces `eventId` so the strict assertion is NOT soft-skipped. Host-side regression: `mockAgent.node.test.ts:116-132`. **Latent non-conformance follow-up MyndHyve identified and tracked themselves:** `src/core/agents/services/agentTelemetry.ts` (real-agent telemetry scaffolding, currently uncalled in production) routes through a fire-and-forget `teeToEventLog` (`WorkflowEngine.ts:2536-2538`) that doesn't surface `eventId` back; will be extended before the first real producer wires up. Not gating today's conformance posture. |
+| In-memory / SQLite / Postgres / Python reference hosts | — | — | Not yet tracked here; assertion soft-skips on hosts that don't surface `eventId` on `/events`. |
+
+**End-to-end coverage caveat (2026-05-21).** The seeded `conformance-agent-reasoning` fixture (`scripts/seed-conformance-fixtures.cjs`) currently drives `mockReasoning: true` only and does not include a `mockToolCalls` entry — so against MyndHyve, `agentReasoningEvents.test.ts`'s pairing loop iterates an empty `agent.toolReturned[]` array and the strict assertion has nothing to validate. MyndHyve's executor is compliant when exercised (host-side regression coverage above); end-to-end coverage via the openwop conformance suite is **pending a fixture extension** (a `mockToolCalls` block on the existing fixture) that MyndHyve has offered to land.
+
 ## Reading Rows
 
 - **Compatibility profile claim** is derived from `/.well-known/openwop` according to `spec/v1/profiles.md`.
