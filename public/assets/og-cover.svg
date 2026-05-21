@@ -74,7 +74,7 @@
 
   <line x1="64" y1="560" x2="1136" y2="560" stroke="#c4bfae" stroke-width="1"/>
   <g font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-size="14" fill="#837f72" letter-spacing="2">
-    <text x="64" y="590">A common language for agents that work together.</text>
+    <text x="64" y="590">OpenWOP adds a thinking layer to your software.</text>
     <text x="1136" y="590" text-anchor="end">Apache 2.0</text>
   </g>
 </svg>

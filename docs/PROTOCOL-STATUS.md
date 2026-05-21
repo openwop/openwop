@@ -22,8 +22,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 25 |
-| Active | 7 |
+| Accepted | 29 |
+| Active | 3 |
 | Draft | 6 |
 
 | Latest RFC | Title | Status |
@@ -72,7 +72,7 @@
 ## Active Follow-Ups
 
 - 6 RFCs still `Draft` (RFC 0025, RFC 0034, RFC 0035, RFC 0036, RFC 0037, RFC 0038) — advance with schema/conformance proof or defer.
-- 7 RFCs `Active` (RFC 0027, RFC 0028, RFC 0029, RFC 0030, RFC 0031, RFC 0032, RFC 0033) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 3 RFCs `Active` (RFC 0027, RFC 0028, RFC 0029) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - SDK parity still shows raw-only rows for several stable v1.x helper surfaces.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
