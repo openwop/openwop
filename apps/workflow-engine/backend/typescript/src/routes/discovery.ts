@@ -394,7 +394,22 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       // this to false.
       conformance: { mockAgent: true },
       webhooks: { supported: true, signed: true, durable: false },
-      observability: { otel: { namespace: 'openwop' } },
+      observability: {
+        otel: { namespace: 'openwop' },
+        // RFC 0034 — OTel collector test seam advertisement. The two test
+        // endpoints (GET /v1/host/sample/test/otel/spans and POST
+        // /v1/host/sample/test/debug-bundle/export) live in routes/testSeam.ts
+        // and only mount when OPENWOP_TEST_SEAM_ENABLED=true. We advertise the
+        // capability only when the seam is mounted, so a conformance suite
+        // that finds the advertisement is guaranteed to find serving endpoints.
+        // Hosts that don't enable the seam advertise nothing here; the
+        // envelope-reasoning-secret-redaction scenario's downstream-projection
+        // assertions then soft-skip per spec/v1/observability.md §"OTel
+        // collector test seam (RFC 0034)".
+        ...(process.env.OPENWOP_TEST_SEAM_ENABLED === 'true'
+          ? { testSeams: { otelScrape: true, debugBundleExport: true } }
+          : {}),
+      },
       // RFC 0037 Phase 1 — multi-agent execution model + handoff state
       // machine. Env-gated so the reference workflow-engine advertises
       // the capability only when the operator opts in; otherwise the
