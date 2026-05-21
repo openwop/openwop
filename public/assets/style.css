@@ -321,43 +321,6 @@
 }
 
 /* ─── /spec/v1/ thematically grouped index ──────────────────────────── */
-.spec-index-toc {
-  margin: 2em 0 3em;
-  padding: 20px 24px;
-  border: 1px solid var(--rule);
-  border-radius: 6px;
-  background: var(--paper-2);
-}
-.spec-index-toc h3 {
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  margin: 0 0 12px;
-  color: var(--ink-3);
-  font-weight: 500;
-}
-.spec-index-toc ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 8px 24px;
-}
-.spec-index-toc a {
-  font-family: var(--sans);
-  font-size: 14px;
-  color: var(--ink);
-  text-decoration: none;
-  border-bottom: 1px solid transparent;
-  transition: border-color .15s ease;
-}
-.spec-index-toc a:hover {
-  border-bottom-color: var(--clay);
-  color: var(--clay);
-}
-
 .spec-group {
   margin: 3em 0;
   padding-top: 1.5em;
