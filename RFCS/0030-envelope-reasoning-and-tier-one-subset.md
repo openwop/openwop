@@ -146,7 +146,7 @@ The document body contains the intersection table from §2.2 above plus the stri
 +        "tierOneSubsetCompliance": {
 +          "type": "string",
 +          "enum": ["strict", "warn", "off"],
-+          "description": "Host's self-attested compliance posture for the Tier-1 cross-vendor structured-output subset per RFC 0030 §B. `strict`: every host-served envelope schema passes the static subset-compliance check; `warn`: host logs non-compliant schemas but serves them anyway; `off` (default): no self-attestation. The conformance suite's static subset-compliance scenario gates on this flag."
++          "description": "Host's self-attested compliance posture for the Tier-1 cross-vendor structured-output subset per RFC 0030 §B. `strict`: every host-served envelope schema passes the static subset-compliance check; `warn`: host logs non-compliant schemas but serves them anyway; `off` (default): no self-attestation. The conformance suite's static subset-compliance scenario gates on this flag. **Tri-state normative (clarified by amendment 2026-05-21):** `tierOneSubsetCompliance` MUST be one of the three enum strings. A boolean form (e.g., `true` / `false`) is NOT permitted — conformance scenarios introspect the enforcement level to decide whether to assert the static-subset check (strict) vs log expectations (warn) vs soft-skip (off). Hosts that currently emit boolean MUST migrate to the tri-state form before promotion of RFC 0030 to `Accepted`; the rename is a 1-line wire change (`true` → `\"strict\"` or `\"warn\"` per the host's actual compliance posture)."
 +        }
 +      }
 +    }

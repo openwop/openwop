@@ -152,15 +152,17 @@ Aggregate:                                               62    21     4
 
 | # | Finding | Lane | Disposition |
 |---|---|---|---|
-| 1 | `events: boolean` vs `string[]` drift | RFC 0032 §C amendment | _TBD — see steward synthesis_ |
-| 2 | `truncationRetryMultiplier` vs `truncationBudgetMultiplier` drift | RFC 0033 §E amendment OR MyndHyve rename | _TBD_ |
-| 3 | `tierOneSubsetCompliance` boolean vs tri-state drift | RFC 0030 §B amendment OR MyndHyve rename | _TBD_ |
-| 4 | Error code names (`envelope_schema_violation` / `envelope_refusal` vs spec) | RFC 0033 §F amendment OR MyndHyve rename | _TBD — policy call_ |
-| 5 | `modelCapabilities.advertised` truthful-only normation | RFC 0031 §C amendment | _TBD_ |
-| 6 | `substitutionSupported` host-wide vs per-node ambiguity | RFC 0031 §E amendment | _TBD_ |
-| 7 | `recovery.applied.byteOffset` MAY-omit normation | RFC 0032 §B.6 amendment | _TBD_ |
-| 8 | `reasoning: "mandatory"` provider-refusal risk | RFC 0030 §C amendment | _TBD_ |
-| 9 | Doubled budget exceeds provider per-call max | RFC 0033 §B amendment | _TBD_ |
+| 1 | `events: boolean` vs `string[]` drift | RFC 0032 §C amendment | ✅ **Resolved 2026-05-21** — RFC 0032 §C amendment landed (`a264b3a`). Spec normates `events[]` as JSON array of event names; boolean form NOT permitted. MyndHyve renames `true` → explicit `["envelope.retry.exhausted", "envelope.refusal"]` array before promotion. |
+| 2 | `truncationRetryMultiplier` vs `truncationBudgetMultiplier` drift | RFC 0033 §B amendment | ✅ **Resolved 2026-05-21** — RFC 0033 §B amendment landed (this commit). Canonical name `truncationBudgetMultiplier` retained; the multiplier applies to output budget (not retry count), and the semantic distinction matters. MyndHyve renames `truncationRetryMultiplier` → `truncationBudgetMultiplier`. |
+| 3 | `tierOneSubsetCompliance` boolean vs tri-state drift | RFC 0030 §C amendment | ✅ **Resolved 2026-05-21** — RFC 0030 §C amendment landed (this commit). Canonical form is tri-state `"strict" \| "warn" \| "off"`; boolean form NOT permitted. MyndHyve migrates `true` → `"strict"` or `"warn"` per actual posture. |
+| 4 | Error code names (`envelope_schema_violation` / `envelope_refusal` vs spec) | RFC 0033 §F amendment | ✅ **Resolved 2026-05-21** — RFC 0033 §F + `spec/v1/rest-endpoints.md` §"Common error codes" amendment landed (`a264b3a`). Spec accepts MyndHyve's shorter forms: renamed `envelope_payload_invalid` → `envelope_invalid` and `envelope_refused_by_provider` → `envelope_refusal`. MyndHyve still renames `envelope_schema_violation` → `envelope_invalid`. |
+| 5 | `modelCapabilities.advertised` truthful-only normation | RFC 0031 §C amendment | ✅ **Resolved 2026-05-21** — RFC 0031 §C amendment landed (`a264b3a`). Spec normates: `advertised[]` MUST reflect only identifiers the host actually gates on at dispatch. Boilerplate-paste is non-conformant. MyndHyve's posture (advertising 2 of 5 spec-reserved identifiers) is the canonical pattern. |
+| 6 | `substitutionSupported` host-wide vs per-node ambiguity | RFC 0031 §E amendment | ✅ **Resolved 2026-05-21** — RFC 0031 §E amendment landed (`a264b3a`). Scope clarified: substitution is per-NodeModule, NOT host-wide. Hosts without per-call provider-swap MUST advertise `false`. MyndHyve's non-advertisement is honest given their `model.capability.substituted` emission is per-envelope-node only. |
+| 7 | `recovery.applied.byteOffset` MAY-omit normation | RFC 0032 §B.6 amendment | ✅ **Resolved 2026-05-21** — RFC 0032 §B.6 amendment landed (`a264b3a`). `byteOffset` is OPTIONAL and path-dependent: MAY-omit for `jsonrepair` + `double-encoded`; SHOULD-populate for `markdown-fence` + `brace-walker` + `direct`. |
+| 8 | `reasoning: "mandatory"` provider-refusal risk | RFC 0030 §C amendment | ✅ **Resolved 2026-05-21** — RFC 0030 §C amendment landed (`a264b3a`). Operator guidance added: hosts SHOULD prefer `"advisory"` unless empirical testing against the host's model class confirms `"mandatory"` does not trigger refusals. |
+| 9 | Doubled budget exceeds provider per-call max | RFC 0033 §B amendment | ✅ **Resolved 2026-05-21** — RFC 0033 §B amendment landed (`a264b3a`). Provider-ceiling guidance added: host MAY reduce to ceiling AND continue retry; budget-clamped retry that also fails with truncation is terminal. |
 | 10 | Reference `parseRefusal` helper | `sdk/typescript/` follow-up | Deferred (post-Accepted) |
 | 11 | Reference `buildReasoningDirective` export | `sdk/typescript/` follow-up | Deferred (post-Accepted) |
 | 12 | `@openwop/conformance-sdk/mint-test-key` helper | `sdk/typescript/` follow-up | Deferred (post-Accepted) |
+
+**Track C summary (2026-05-21):** 9 of 12 findings resolved by in-spec amendments; 3 deferred to `sdk/typescript/` follow-up post-Accepted. All RFC 0030/0031/0032/0033 wire-shape drifts are addressed before the 2026-05-27 promotion-comment-window close. MyndHyve has 4 minor wire renames to deploy before re-running the conformance suite for the third-party-advertisement-evidence criterion per RFCs/0001 §"Promotion to Accepted."

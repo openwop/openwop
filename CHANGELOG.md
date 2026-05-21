@@ -15,14 +15,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 Lands 9 spec amendments surfaced by MyndHyve's adoption of the four envelope LLM-contract-hardening RFCs. All amendments are **additive** per `COMPATIBILITY.md §2.1` — compatible hosts that already followed the implicit best practices remain compliant. See `docs/handoffs/MYNDHYVE-RFC-0030-0033-ADOPTION-FEEDBACK-2026-05-20.md` for the full feedback record.
 
-**Eight normative-text clarifications:**
+**Ten normative-text clarifications:**
 
 - **RFC 0030 §A** — operational note on `promptDirective: "mandatory"` provider-side refusal risk. Surfaced because strict-output models may honor the mandatory wording literally and refuse mid-emission when reasoning would be vacuous.
+- **RFC 0030 §C** — `tierOneSubsetCompliance` MUST be the tri-state string `"strict" | "warn" | "off"`; boolean form NOT permitted. Conformance scenarios introspect the enforcement level. (Track C 2026-05-21 closeout)
 - **RFC 0031 §C** — new normative paragraph requiring truthful advertisement of `capabilities.modelCapabilities.advertised[]` (only identifiers the host actually gates on; boilerplate-paste is now explicitly non-conformant).
 - **RFC 0031 §E** — clarified `substitutionSupported` scope: per-NodeModule, not host-wide. Hosts without a per-call provider-swap facility MUST advertise `false`.
 - **RFC 0032 §C** — `capabilities.envelopes.reliability.events` MUST be a JSON array of event-name strings; boolean form is now explicitly non-conformant.
 - **RFC 0032 §B.6** — `envelope.recovery.applied.byteOffset` MAY-omit semantics are path-dependent (SHOULD populate for `brace-walker`/`markdown-fence`; MAY omit for `jsonrepair`/`double-encoded`).
-- **RFC 0033 §B** — provider-ceiling guidance for the truncation-budget multiplication path: hosts MAY reduce a doubled budget to the provider's per-call max.
+- **RFC 0033 §B (provider-ceiling)** — hosts MAY reduce a doubled budget to the provider's per-call max while continuing the retry; budget-clamped retry that also fails with truncation is terminal.
+- **RFC 0033 §B (canonical field name)** — canonical advertised multiplier is `truncationBudgetMultiplier`. The name `truncationRetryMultiplier` is NOT permitted — the multiplier governs per-retry budget growth, not retry count (which is governed by `limits.schemaRounds`). (Track C 2026-05-21 closeout)
 
 **Two error-code renames (RFC 0033 §F + `spec/v1/rest-endpoints.md` §"Common error codes"):**
 
