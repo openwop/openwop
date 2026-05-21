@@ -94,6 +94,18 @@ Filed as Draft earlier today (aa94003); now graduates to Active after the Phase 
 
 Closes standards-readiness review finding (3) "multi-agent semantics not fully portable" at the Phase 1 boundary. Phases 2-4 remain open work for follow-up RFCs.
 
+### RFC 0039 — multi-agent Phase 2 filed Draft (2026-05-21)
+
+NEW `RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md` (Draft). Closes the 3 open spec gaps RFC 0037 §"Open spec gaps" deferred to Phase 2:
+
+- **MAE-1 confidence-threshold escalation.** Adds a fixed 0.5 spec floor on `OrchestratorDecision.confidence` below which the host MUST escalate via `clarify` or `escalate` interrupt. New optional `capabilities.multiAgent.executionModel.confidenceEscalationFloor` lets operators advertise stricter policy (≥ 0.5). New `core.workflowChain.confidence-escalated` RunEventType records the escalation point in the event log.
+- **MAE-2 agent memory lifecycle across sub-runs.** Cross-run inheritance defaults to shared scopeId; opt-in isolation via dispatch config's `memoryScopeIsolation: "isolated"`. `MemoryEntry.ttl` is computed from child write time, not parent start. Cross-child concurrency MUST serialize unless host advertises `crossChildMemoryConcurrency: "advisory"`.
+- **MAE-3 memory carry-forward in replay.** Forks from a past event-log index MUST return memory state as-of that index, not current state. NEW error code `replay_memory_snapshot_unavailable` when the host advertises `version: 2` but cannot serve a snapshot at the requested index.
+
+Bumps the executionModel profile from `version: 1` (Phase 1) to `version: 2` (Phase 2) when implemented. Phase 1 hosts continue to advertise `version: 1` unchanged. Phases 3 (cross-host causation) and 4 (replay-under-nondeterminism) remain explicit follow-up RFCs.
+
+README updated: 38 → 39 RFCs tracked; 2 → 3 Draft RFCs (caught by structural drift detector). docs/PROTOCOL-STATUS regenerated.
+
 ### RFC 0035 + RFC 0036 conformance scenarios (2026-05-21)
 
 Lands the contract-probe + capability-gated behavioral conformance scaffolding for the two RFCs that landed `Active` earlier today (f7c8d2d) and whose reference-host implementation is honest follow-up work.
