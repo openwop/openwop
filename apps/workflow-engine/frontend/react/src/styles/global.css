@@ -701,6 +701,32 @@ pre {
   color: var(--color-text-muted);
 }
 
+/* ── AI chat page ────────────────────────────────────────────────── */
+
+/* The chat surface is viewport-locked: the page itself must not scroll,
+ * the MessageFeed inside ChatSidebar owns the scroll. Locking the shell
+ * to exactly 100vh + overflow: hidden prevents the chat (and its sticky
+ * header / composer) from pushing the page taller than the viewport. */
+.app-shell.app-shell--ai {
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Flex-fill the main column so ChatSidebar can claim what's left after
+ * the banner + header + footer. Keeps the centered max-width + padding
+ * (unlike --fullbleed) so the chat panel sits in the same column as
+ * other routes. overflow-y: auto is a safety net for the BYOKWizard
+ * fallback that ChatTab renders on the same `/` route — chat itself
+ * fills exactly and never triggers it. */
+.app-main--ai {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
 /* ── Workflow Builder ────────────────────────────────────────────── */
 
 .app-main-fullbleed {

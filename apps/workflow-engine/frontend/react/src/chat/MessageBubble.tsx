@@ -18,7 +18,7 @@ import { EnvelopeEventsTimeline, hasEnvelopeEvents } from './EnvelopeEventsTimel
 import { ReasoningDisclosure } from './ReasoningDisclosure.js';
 import { ErrorCard } from './ErrorCard.js';
 import { formatUsd, turnCostUsd } from './lib/cost.js';
-import { GlobeIcon } from './icons/index.js';
+import { GlobeIcon, ThumbsDownIcon, ThumbsUpIcon } from './icons/index.js';
 
 function hasContent(content: ChatMessage['content']): boolean {
   if (typeof content === 'string') return content.length > 0;
@@ -30,7 +30,7 @@ interface Props {
   /** Drop this assistant bubble + re-send the prior user message.
    *  Wired from useChatSession via MessageFeed. */
   onRegenerate?: (messageId: string) => void;
-  /** Record / clear 👍 / 👎 on this assistant bubble. */
+  /** Record / clear positive / negative feedback on this assistant bubble. */
   onFeedback?: (messageId: string, feedback: 'positive' | 'negative' | null) => void;
   /** Open the BYOK settings wizard (called from the error card's
    *  "Open BYOK settings" CTA when credentials are missing/expired). */
@@ -110,25 +110,25 @@ function MessageActions({
         <>
           <button
             type="button"
-            style={{ ...btn, ...(message.feedback === 'positive' ? pressed : {}) }}
+            style={{ ...btn, ...(message.feedback === 'positive' ? pressed : {}), display: 'inline-flex', alignItems: 'center' }}
             onClick={() =>
               onFeedback(message.id, message.feedback === 'positive' ? null : 'positive')
             }
             aria-label="Good response"
             aria-pressed={message.feedback === 'positive'}
           >
-            👍
+            <ThumbsUpIcon size={13} strokeWidth={1.75} />
           </button>
           <button
             type="button"
-            style={{ ...btn, ...(message.feedback === 'negative' ? pressed : {}) }}
+            style={{ ...btn, ...(message.feedback === 'negative' ? pressed : {}), display: 'inline-flex', alignItems: 'center' }}
             onClick={() =>
               onFeedback(message.id, message.feedback === 'negative' ? null : 'negative')
             }
             aria-label="Bad response"
             aria-pressed={message.feedback === 'negative'}
           >
-            👎
+            <ThumbsDownIcon size={13} strokeWidth={1.75} />
           </button>
         </>
       )}

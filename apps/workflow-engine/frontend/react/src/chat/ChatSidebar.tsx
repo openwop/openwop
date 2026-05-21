@@ -92,8 +92,8 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
   return (
     <div style={{
       display: 'flex',
-      height: 'calc(100vh - 100px)',
-      maxHeight: 900,
+      flex: 1,
+      minHeight: 0,
       border: '1px solid var(--color-border)',
       borderRadius: 'var(--radius)',
       background: 'var(--color-surface)',

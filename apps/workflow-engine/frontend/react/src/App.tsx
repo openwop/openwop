@@ -18,8 +18,13 @@ export function App() {
   // Full-bleed only for the canvas (`/builder/:workflowId`), not the
   // dashboard list at `/builder`, which uses the centered main column.
   const fullBleed = /^\/builder\/[^/]+/.test(location.pathname);
+  // The AI chat page is a fixed-height app surface: page itself must
+  // not scroll, the message feed inside owns the scroll. Lock the shell
+  // to 100vh and let .app-main flex-fill so ChatSidebar can take what
+  // remains after header + banner + footer.
+  const isChatPage = location.pathname === '/';
   return (
-    <div className="app-shell">
+    <div className={isChatPage ? 'app-shell app-shell--ai' : 'app-shell'}>
       <DemoHostBanner />
       <header className="app-header">
         <h1 className="brand-mark">
@@ -36,7 +41,15 @@ export function App() {
         <div className="app-header-spacer" />
         <SignInButton />
       </header>
-      <main className={fullBleed ? 'app-main app-main-fullbleed' : 'app-main'}>
+      <main
+        className={
+          fullBleed
+            ? 'app-main app-main-fullbleed'
+            : isChatPage
+              ? 'app-main app-main--ai'
+              : 'app-main'
+        }
+      >
         <Routes>
           <Route path="/" element={<ChatTab />} />
           <Route path="/runs" element={<RunsIndexPage />} />

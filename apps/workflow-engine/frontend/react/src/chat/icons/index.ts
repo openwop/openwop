@@ -12,3 +12,5 @@ export { SendIcon } from './SendIcon.js';
 export { ShieldIcon } from './ShieldIcon.js';
 export { SparklesIcon } from './SparklesIcon.js';
 export { StopIcon } from './StopIcon.js';
+export { ThumbsDownIcon } from './ThumbsDownIcon.js';
+export { ThumbsUpIcon } from './ThumbsUpIcon.js';
