@@ -1,167 +1,166 @@
-# MyndHyve RFC 0030/0031/0032/0033 Adoption Feedback Template
+# MyndHyve RFC 0030/0031/0032/0033 Adoption Feedback — FILLED
 
 > **Owner:** MyndHyve workflow-runtime integration session
 > **Date opened:** 2026-05-20
-> **RFC comment window closes:** 2026-05-27 (Active → Accepted landing)
-> **Purpose:** Capture wire-shape ambiguities, ergonomic gaps, and integration friction encountered while wiring the envelope LLM-contract-hardening surface. Surfaced items get folded into the §"Open spec gaps" amendment on each RFC before the Active → Accepted commit.
-
----
-
-## How to use this template
-
-Fill in each section below as integration progresses. Empty sections at the close of the comment window land as "no feedback in this category" in the Accepted commit. Each finding should answer:
-
-1. **What happened** — the specific behavior or wire-shape detail.
-2. **Where in the spec** — RFC section + spec doc (`spec/v1/ai-envelope.md §X`) the finding touches.
-3. **What we did** — the integration decision MyndHyve made when the spec was silent or ambiguous.
-4. **Recommendation** — clarification text, schema tightening, or a follow-up RFC.
-
-Each finding lands as one row in the RFC's §"Open spec gaps" table if accepted upstream.
+> **Date filled:** 2026-05-21
+> **RFC comment window closes:** 2026-05-27 (`Active → Accepted` landing)
+> **Status:** FILLED — see §"Summary of resolutions" at the bottom for the OpenWOP steward's per-finding disposition.
 
 ---
 
 ## §A — Wire-shape ambiguities
 
-Places where MyndHyve had to make a judgment call because the spec didn't fully specify. These are the highest-priority findings — wire-shape ambiguities create cross-host interop drift.
-
 ### A.1 — RFC 0030 `reasoning` field
 
-- [ ] Did `responseSchema.properties.reasoning: { type: 'string' }` match the openwop spec contract, or did MyndHyve need to tighten it (e.g., `minLength`, `maxLength`, additional properties)?
-- [ ] When `promptDirective` is `"mandatory"`, did any third-party LLM provider refuse to emit `reasoning` for input that genuinely didn't warrant analysis? (Surfaces an honest tension between the directive strength and provider behavior.)
-- [ ] Was the Tam et al. arXiv 2408.02442 advisory-tier directive wording adequate, or did MyndHyve substitute different prompt copy?
+- **Schema fit:** Matched without tightening. MyndHyve uses `z.string().nullable().optional()` (Zod-side) → `zodToOpenApi.ts`. No need for `minLength` / `maxLength`. No `additionalProperties` issues — the field lives inside object payloads whose outer `additionalProperties: false` is set by `forceOpenAIStrict`.
+- **`promptDirective: "mandatory"` operational concern:** Spec text says hosts MUST NOT reject absent-reasoning envelopes regardless of strength — but the *model itself* isn't the host. Risk: strict-output models might honor the mandatory wording literally and refuse mid-emission if they cannot generate reasoning. **Worth a paragraph in RFC 0030 §C** documenting this provider-side failure mode + operator guidance.
+- **Directive text:** Tam et al. directive wording adopted verbatim from OpenWOP reference (commit `9412f57`). One drift: the env-var name `OPENWOP_ENVELOPE_REASONING_DIRECTIVE` is centralized in `@openwop/workflow-engine`'s `readReasoningDirectiveStrengthFromEnv()` per A3.2 review feedback so server + browser read the same source.
 
 ### A.2 — RFC 0031 `modelCapabilities`
 
-- [ ] Spec-reserved identifiers (`structured-output`, `discriminator-enum`, `long-context`, `reasoning`, `function-calling`) — were any ambiguous in the wild? (E.g., does Gemini 2.5 Pro's "thinkingBudget" count as `reasoning`?)
-- [ ] `fallbackModel` semantics — did MyndHyve hit the no-recursive-fallback rule? Did the rule feel like the right discipline, or too restrictive?
-- [ ] `substitutionSupported: true` posture — if MyndHyve advertises this, how is the per-call provider swap actually wired? (May surface a sample-grade implementation pattern worth documenting in `host-capabilities.md`.)
+- **Identifiers advertised:** `structured-output` + `discriminator-enum` only (2 of 5 spec-reserved). `long-context` / `reasoning` / `function-calling` NOT advertised because no NodeModule declares `requiredModelCapabilities: [...]` gating on them. Advertising would be dishonest per `capabilities.md §"Truthful advertisement"`. **Recommend spec normate: "advertised[] MUST reflect identifiers the host actually gates on"** — avoids boilerplate-paste.
+- **`fallbackModel` no-recursive-fallback:** discipline honored. App Builder PRD/plan/design declare 4.6 satisfies both required capabilities natively (no chained fallback). The rule felt right.
+- **`substitutionSupported` scope ambiguity:** MyndHyve does NOT advertise this because `model.capability.substituted` emission happens at envelope-emitting nodes only (`core.ai.callPrompt`), not as a host-wide per-call swap. **Spec is genuinely ambiguous** whether `substitutionSupported: true` means (a) any AI call gets the swap or (b) envelope-emitting nodes with declared fallback get the swap. Recommend clarifying.
 
 ### A.3 — RFC 0032 reliability events
 
-- [ ] `previousError` / `finalError` content — what did MyndHyve include? (Validator output only, full provider error string, host-formatted summary?) The RFC 0032 §G normative MUST NOT covers prompt-content + credentialRefs; what else SHOULD be in or out?
-- [ ] `refusalText` — same question. Production refusal surfaces sometimes echo user prompt content. How does MyndHyve scrub?
-- [ ] `recovery.applied.byteOffset` semantics — when is it populated vs absent? Path-dependent? (Spec is currently silent.)
+- **`previousError` / `finalError`:** include the host's own structured prefix (`ENVELOPE_INVALID: payload.title: Required`). NEVER includes the AI prompt or provider's response body. The `contextAdapter`'s `extractEnvelopeJson` is the source of these strings — strings are derived from the Zod issue list (validator output only). RFC 0032 §G MUST NOT covers prompt-content + credentialRefs; **MyndHyve complies**.
+- **`refusalText`:** routed through the run's BYOK `MemorySecretRegistry.redact()` BEFORE emission (commit `85834ccf`, server-side path; browser path is vacuous because BYOK plaintext never reaches the browser). Test fixture: register `sk-LIVE-akrJ4yKvF1RnX2pT5oQbZ3` as a tracked secret, simulate refusal echoing the key — emitted `refusalText` becomes `[REDACTED:user-byok-secret]`.
+- **`recovery.applied.byteOffset` semantics:** never populated in MyndHyve's emission. Their `parseLenientJsonEnvelope` returns a `recoveryPath` discriminator (`'jsonrepair' | 'markdown-fence' | 'brace-walker' | 'double-encoded'`) but does NOT track a byte position — jsonrepair is a black-box pass and the brace-walker stack-state doesn't expose byteOffset. **Open spec gap:** should `byteOffset` be MAY (path-dependent absence) or MUST-omit for jsonrepair? Spec currently silent.
 
 ### A.4 — RFC 0033 truncation routing
 
-- [ ] `truncationBudgetMultiplier` — does MyndHyve hit ceiling cases where the doubled budget itself exceeds provider limits? How is this handled (further retry with capped budget? Immediate fail?)
-- [ ] Combined truncation + parse-failure (RFC 0033 §A priority rule) — how often does this come up in the wild? Is the precedence rule (route as truncation) the right call?
-- [ ] `envelope_truncation_unrecoverable` vs `envelope_payload_invalid` — does the distinction map cleanly to MyndHyve's existing error vocabulary, or is there friction?
+- **`truncationBudgetMultiplier` ceiling:** not yet observed in production because MyndHyve's default `max_tokens` is 8192 and the doubled retry hits 16384 which is well under every provider's per-call ceiling. Will recur at higher base budgets; today they'd succeed-or-fail on the doubled call (no third-tier retry). **Recommend the spec normate: "When doubled budget exceeds provider per-call max, host MAY further reduce"** — currently silent.
+- **Truncation + parse-failure precedence:** their parser ordering is `checkJsonCompleteness → truncation OR parse-error` (mutually exclusive at their parser). When both detection signals would fire, `contextAdapter.ts:988` chooses truncation-first. **Matches RFC 0033 §A priority rule. Felt natural.**
+- **Error code drift — `envelope_truncation_unrecoverable` maps cleanly** (MyndHyve's `ENVELOPE_TRUNCATED` translates to it). BUT `envelope_payload_invalid` and `envelope_refused_by_provider` from RFC 0033 §F don't match MyndHyve's wire-emitted codes:
+  - MyndHyve emits `envelope_schema_violation` (spec wants `envelope_payload_invalid`)
+  - MyndHyve emits `envelope_refusal` (spec wants `envelope_refused_by_provider`)
+  - MyndHyve's argument: names mirror RunEvent type names (`envelope.refusal` → `envelope_refusal`), which is a sensible pattern.
+  - Recommend: either MyndHyve changes the translator to match spec verbatim (1-line fix), OR the spec accepts MyndHyve's names as aliases / canonical.
 
 ---
 
 ## §B — Ergonomic gaps
 
-Places where the wire shape is correct but the integration was harder than necessary. These don't change the wire — they may change documentation, helper SDKs, or capability defaults.
+### B.1 — Discovery composition
 
-### B.1 — Discovery advertisement composition
+- **Nesting depth:** `capabilities.envelopes.reliability.completion.distinguishesTruncation` is 3 levels deep. Mentally fine, but live shape uses `events: true` (boolean) rather than `events: ['envelope.retry.attempted', ...]` (string[] per spec template). MyndHyve's discovery emits boolean. Either is honest, but **recommend the spec normate the array form** so conformance suites can introspect "does host emit `envelope.refusal`?" without firing it.
+- **`events: []` empty-array convention:** not used (MyndHyve emits `events: true`). Wouldn't have helped — the boolean form is unambiguous to them. If the spec switches to array-required, the empty-array semantics matter.
 
-- [ ] Did MyndHyve's discovery doc end up with deeply-nested capability blocks that were hard to mentally parse? Would a flatter shape have helped?
-- [ ] `events: []` (empty array when host opts out of end-to-end emission) — is the empty-array-meaning-no-emission convention clear enough? Or does it look like a bug?
+### B.2 — Conformance ergonomics
 
-### B.2 — Conformance-suite ergonomics
-
-- [ ] Which conformance scenarios required the most fixture/seam setup on MyndHyve's side? Where could the reference fixtures or driver helpers reduce per-host work?
-- [ ] Did MyndHyve write its own mock-AI provider to drive the envelope-reliability scenarios, or reuse the reference? (Could justify a published SDK helper.)
-- [ ] `OPENWOP_REQUIRE_BEHAVIOR=true` strict-mode posture — how did MyndHyve gate the four new capabilities under strict-mode?
+- **API key mint friction:** the 21 auth-blocked end-to-end scenarios need an `OPENWOP_API_KEY`. MyndHyve's `scripts/mint-conformance-api-key.cjs` requires admin-SDK + gcloud auth + workspace context — multi-step. **Recommend a published SDK helper `@openwop/conformance-sdk/mint-test-key`** that abstracts "give me a short-lived API key bound to a test workspace."
+- **Mock-AI provider:** MyndHyve did NOT write their own; they use real providers gated by env-var (`OPENWOP_CONFORMANCE_CANARY_SECRET`). The reference mock fixture would have shortened wiring meaningfully — they'd absolutely adopt a published helper.
+- **`OPENWOP_REQUIRE_BEHAVIOR=true`:** not yet flipped in MyndHyve's profile claim. Plan to flip once 100% of the 14 scenarios pass.
 
 ### B.3 — SDK helper gaps
 
-- [ ] Is there a TypeScript/Python/Go helper that would have meaningfully shortened the integration? (E.g., a `parseRefusal(providerResponse): RefusalSignal | null` that normalizes per-provider safety-stop strings to the spec's single boolean.)
-- [ ] `buildReasoningDirective` — would MyndHyve adopt the reference helper if exported from `sdk/typescript/`, or did their needs differ enough to warrant their own?
+- **`parseRefusal`:** would have shortened MyndHyve's work — they hand-rolled per-provider refusal detection in `packages/ai-providers/src/providers/openai.ts` (line 178+) for OpenAI's `message.refusal` field. Anthropic + Gemini have different shapes (`stop_reason: 'safety'` etc.). A normalized `{ refusalText: string | null, safetyCategory?: string }` per-provider helper would be ~1 day of host wiring saved.
+- **`buildReasoningDirective`:** adopted from reference verbatim (`src/core/ai/envelope/reasoningDirective.ts`). Would happily replace with `@openwop/sdk-typescript`'s export if published — currently MyndHyve ported the file. **The duplicated copy is a drift risk** (synced via `git show 9412f57` on the openwop repo).
 
 ---
 
 ## §C — Capability advertisement findings
 
-What MyndHyve actually advertises today, with any drift from the reference. Used as truth for the INTEROP-MATRIX row.
+Live shape at `https://api.myndhyve.ai/.well-known/openwop` (production, Cloud Run revision `workflow-runtime-00327-kah`):
 
 ```jsonc
-// Fill in MyndHyve's actual advertisement
 {
-  "capabilities": {
-    "envelopes": {
-      "reasoning": {
-        "supported": true,
-        "promptDirective": "advisory"  // or "mandatory" / "off"
-      },
-      "tierOneSubsetCompliance": "warn",  // or "enforce" / "off" — omit if not advertised
-      "reliability": {
-        "supported": true,
-        "events": ["envelope.retry.attempted", "envelope.retry.exhausted", "envelope.refusal", "envelope.truncated"],  // MyndHyve's actual list
-        "maxRetryAttempts": 3,
-        "completion": {
-          "distinguishesTruncation": true,
-          "truncationBudgetMultiplier": 2
-        }
+  "envelopes": {
+    "reliability": {
+      "events": true,                  // DRIFT: spec template suggests string[] of event names
+      "maxRetryAttempts": 2,
+      "completion": {
+        "distinguishesTruncation": true,
+        "truncationRetryMultiplier": 2 // DRIFT: spec uses `truncationBudgetMultiplier`
       }
     },
-    "modelCapabilities": {
+    "tierOneSubsetCompliance": true,   // boolean — spec template suggests `"enforce" | "warn" | "off"` 3-state
+    "reasoning": {
       "supported": true,
-      "advertised": ["structured-output", "discriminator-enum", "long-context", "reasoning", "function-calling"],  // MyndHyve's actual set
-      "substitutionSupported": false  // flip true only when per-call provider swap is wired
+      "promptDirective": "advisory"
     }
+  },
+  "modelCapabilities": {
+    "supported": true,
+    "advertised": ["structured-output", "discriminator-enum"]
+    // NOT advertised: `substitutionSupported` (no host-wide swap facility)
   }
 }
 ```
 
-- [ ] Were any of the spec-reserved capability identifiers omitted? Why?
-- [ ] Did MyndHyve add any `x-host-myndhyve-*` extensions? List them — they're useful precedent for the §C extension pattern in RFC 0031.
+- **Drifts to call out** (per §B.1 + §A.4): `events: true` vs `events: string[]`, `truncationRetryMultiplier` vs `truncationBudgetMultiplier`, `tierOneSubsetCompliance: boolean` vs tri-state enum.
+- **No `x-host-myndhyve-*` extensions advertised.** Considered one for their `eventLogSchemaVersion` field but it predates RFC 0032 and lives at top-level, not under `envelopes`.
 
 ---
 
 ## §D — Error code surfacing
 
-Did the three new error codes from RFC 0033 §F (`envelope_payload_invalid`, `envelope_truncation_unrecoverable`, `envelope_refused_by_provider`) flow through MyndHyve's `RunSnapshot.error.code` cleanly?
+All three RFC 0033 §F codes flow through `RunSnapshot.error.code` cleanly via `services/workflow-runtime/src/utils/errorCodeTranslation.ts` (commit `b992c161`, A6.1):
 
-- [ ] Are the three codes distinguishable downstream (e.g., in MyndHyve's UI? alerting? cost-attribution?)
-- [ ] Did MyndHyve need to map any of them to a different existing error code in their stack? If so, which and why?
-- [ ] Did the SECURITY invariant `envelope-refusal-no-prompt-leak` (no refusal text on `error.message`) surface any friction?
+- `envelope_truncation_unrecoverable` ✓ **MATCHES SPEC** (from `ENVELOPE_TRUNCATED`)
+- `envelope_payload_invalid` — MyndHyve emits `envelope_schema_violation` instead (from `ENVELOPE_INVALID`)
+- `envelope_refused_by_provider` — MyndHyve emits `envelope_refusal` instead (from `AI_REFUSAL`)
+
+**Two-direction fix needed:** either MyndHyve adds aliases in their translator, or the spec accepts MyndHyve's names as variants. The current MyndHyve names match the RunEvent type names (`envelope.refusal`, `envelope.invalid`) which is a sensible pattern — MyndHyve would prefer the spec adopt them.
+
+- **SECURITY invariant `envelope-refusal-no-prompt-leak`:** enforced via `redactKnownSecrets()` per A2.2 (commit `85834ccf`). Tests assert tracked-plaintext-in-refusal becomes `[REDACTED:<secretId>]` before reaching `RunSnapshot.error.message` or the persisted `RunEventDoc`. Zero friction from the invariant.
+- **Downstream UI:** chat panel uses `aiErrorCopy.AI_REFUSAL` which surfaces the (redacted) refusal text verbatim to the end user. Conformance suites that check `error.message` MUST NOT echo refusal text pass because the message field is set to translated copy ("This step requires structured-output support…"), not the raw refusal.
 
 ---
 
-## §E — Conformance-suite findings
-
-The 38+ live HTTP-gated assertions across 14 scenario files (per the INTEROP-MATRIX row template). MyndHyve's actual pass/fail/skip counts go here.
+## §E — Conformance suite results (2026-05-21)
 
 ```
 Scenario file                                          Pass  Fail  Skip
-envelope-reasoning-shape.test.ts                       ____  ____  ____
-envelope-reasoning-secret-redaction.test.ts            ____  ____  ____
-envelope-tier-one-subset-static.test.ts                ____  ____  ____
-envelope-variant-discriminator-static.test.ts          ____  ____  ____
-model-capability-substituted.test.ts                   ____  ____  ____
-model-capability-insufficient.test.ts                  ____  ____  ____
-node-module-required-capabilities-shape.test.ts        ____  ____  ____
-envelope-refusal-shape.test.ts                         ____  ____  ____
-envelope-retry-attempted.test.ts                       ____  ____  ____
-envelope-retry-exhausted.test.ts                       ____  ____  ____
-envelope-truncated.test.ts                             ____  ____  ____
-envelope-truncation-cap-exhaustion.test.ts             ____  ____  ____
-envelope-completion-distinguishes-truncation.test.ts   ____  ____  ____
-envelope-recovery-applied.test.ts                      ____  ____  ____
+envelope-reasoning-shape.test.ts                         12     0     0  (static shape — all pass)
+envelope-reasoning-secret-redaction.test.ts               1     7     0  (7 fails = no API key)
+envelope-tier-one-subset-static.test.ts                   5     0     0
+envelope-variant-discriminator-static.test.ts             9     0     0
+model-capability-substituted.test.ts                      1     3     0  (3 fails = no API key)
+model-capability-insufficient.test.ts                     2     4     0  (4 fails = no API key)
+node-module-required-capabilities-shape.test.ts           0     0     4  (Skipped — host doesn't expose nodeRegistry over the wire)
+envelope-refusal-shape.test.ts                            5     3     0  (3 fails = no API key)
+envelope-retry-attempted.test.ts                          6     0     0
+envelope-retry-exhausted.test.ts                          5     0     0
+envelope-truncated.test.ts                                4     0     0
+envelope-truncation-cap-exhaustion.test.ts                4     0     0
+envelope-completion-distinguishes-truncation.test.ts      5     0     0
+envelope-recovery-applied.test.ts                         3     4     0  (4 fails = no API key)
+─────────────────────────────────────────────────────────────────────
+Aggregate:                                               62    21     4
 ```
 
-For any failure, note the scenario file + test name + observed-vs-expected behavior. Failures are the highest-priority feedback — they're either a host bug, a scenario bug, or a spec ambiguity.
+- **62 pass live + 21 auth-blocked + 4 honest skip = 87 total.**
+- All 21 fails are blocked on `OPENWOP_API_KEY` — needs `gcloud auth login` + `node scripts/mint-conformance-api-key.cjs --workspace <ws>` (script failed with `invalid_rapt` reauth error this turn).
+- Net of the auth blocker: **83 of 87 = 95.4% MUST-tier coverage post-mint.** The 4 skips are honest (node-catalog endpoint not exposed).
 
 ---
 
-## §F — Open questions for the next-slice work
+## §F — Open questions for next-slice work
 
-Before the four RFCs flip Accepted on 2026-05-27, anything MyndHyve wants the openwop steward to clarify, normate, or schedule for a follow-up RFC?
-
-- [ ] _Question 1_:
-- [ ] _Question 2_:
-- [ ] _Question 3_:
+1. **`events` field shape:** should `envelopes.reliability.events` be boolean ("I emit RFC 0032 events") or `string[]` ("here's exactly which of the six I emit")? Conformance suite assumes the array form; production hosts (MyndHyve) lean toward boolean. **Pick one and normate.**
+2. **Error-code naming:** should `envelope_refused_by_provider` accept `envelope_refusal` as a synonym? The latter mirrors the RunEvent type name and feels more consistent.
+3. **`recovery.applied.byteOffset` semantics:** MAY-omit per recovery path? MUST-omit for jsonrepair? Spec is silent.
+4. **`modelCapabilities.substitutionSupported` scope:** host-wide or per-node? Critical for how MyndHyve would flip the flag.
 
 ---
 
-## Submission
+## Summary of resolutions (OpenWOP steward disposition)
 
-When complete, MyndHyve's session pastes this filled template back to the openwop steward's Claude Code session. The steward folds each finding into:
+> Filled by the OpenWOP steward as each finding lands. Each finding maps to either (a) a spec amendment commit before 2026-05-27, (b) an INTEROP-MATRIX row fill-in (already done), or (c) a deferred follow-up RFC.
 
-- INTEROP-MATRIX.md row (replace `<TODO>` placeholders with MyndHyve's actual URL/commit/revision/pass-count)
-- Each RFC's §"Open spec gaps" table (one row per finding that surfaces a spec clarification)
-- A pre-Accepted amendment commit on each RFC where appropriate (additive — no wire-shape changes, just normative-text tightening)
-
-Then the four `Active → Accepted` commits land 2026-05-27.
+| # | Finding | Lane | Disposition |
+|---|---|---|---|
+| 1 | `events: boolean` vs `string[]` drift | RFC 0032 §C amendment | _TBD — see steward synthesis_ |
+| 2 | `truncationRetryMultiplier` vs `truncationBudgetMultiplier` drift | RFC 0033 §E amendment OR MyndHyve rename | _TBD_ |
+| 3 | `tierOneSubsetCompliance` boolean vs tri-state drift | RFC 0030 §B amendment OR MyndHyve rename | _TBD_ |
+| 4 | Error code names (`envelope_schema_violation` / `envelope_refusal` vs spec) | RFC 0033 §F amendment OR MyndHyve rename | _TBD — policy call_ |
+| 5 | `modelCapabilities.advertised` truthful-only normation | RFC 0031 §C amendment | _TBD_ |
+| 6 | `substitutionSupported` host-wide vs per-node ambiguity | RFC 0031 §E amendment | _TBD_ |
+| 7 | `recovery.applied.byteOffset` MAY-omit normation | RFC 0032 §B.6 amendment | _TBD_ |
+| 8 | `reasoning: "mandatory"` provider-refusal risk | RFC 0030 §C amendment | _TBD_ |
+| 9 | Doubled budget exceeds provider per-call max | RFC 0033 §B amendment | _TBD_ |
+| 10 | Reference `parseRefusal` helper | `sdk/typescript/` follow-up | Deferred (post-Accepted) |
+| 11 | Reference `buildReasoningDirective` export | `sdk/typescript/` follow-up | Deferred (post-Accepted) |
+| 12 | `@openwop/conformance-sdk/mint-test-key` helper | `sdk/typescript/` follow-up | Deferred (post-Accepted) |
