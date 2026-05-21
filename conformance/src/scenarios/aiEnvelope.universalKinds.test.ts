@@ -1,12 +1,12 @@
 /**
- * aiEnvelope.universalKinds — FINAL v1.1 advertisement-shape verification + behavioral placeholders.
+ * aiEnvelope.universalKinds — FINAL v1.1 advertisement-shape + behavioral.
  *
- * Status: DRAFT (advertisement-shape). `spec/v1/ai-envelope.md` landed
- * 2026-05-17 as DRAFT v1.x. This scenario asserts the advertisement shape
- * for hosts that opt into the new envelope-contracts surface
- * (`capabilities.envelopeContracts.advertised: true`) and keeps the deeper
- * behavioral assertions as `it.todo()` until a reference host wires the
- * accept path.
+ * Status: ACTIVE (advertisement-shape + behavioral). `spec/v1/ai-envelope.md`
+ * promoted Draft → FINAL v1.1 2026-05-18. Asserts the advertisement shape
+ * for hosts that opt into envelope-contracts
+ * (`capabilities.envelopeContracts.advertised: true`), plus live behavioral
+ * universal-kind acceptance through the `POST /v1/host/sample/envelope/accept`
+ * seam (soft-skip on HTTP 404).
  *
  * Summary: hosts MUST advertise the four universal kinds (`clarification.request`,
  * `schema.request`, `schema.response`, `error`) in `capabilities.supportedEnvelopes`

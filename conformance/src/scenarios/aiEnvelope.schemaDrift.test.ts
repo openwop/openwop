@@ -1,11 +1,11 @@
 /**
- * aiEnvelope.schemaDrift — FINAL v1.1 advertisement-shape verification + behavioral placeholders.
+ * aiEnvelope.schemaDrift — FINAL v1.1 advertisement-shape + behavioral.
  *
- * Status: DRAFT (advertisement-shape). `spec/v1/ai-envelope.md` landed
- * 2026-05-17 as DRAFT v1.x. This scenario asserts the advertisement shape
+ * Status: ACTIVE (advertisement-shape + behavioral). `spec/v1/ai-envelope.md`
+ * promoted Draft → FINAL v1.1 2026-05-18. Asserts the advertisement shape
  * for hosts that opt into envelopeContracts and the optional
- * `envelopeStrictness` knob; behavioral assertions stay `it.todo()` until
- * a reference host wires the accept path.
+ * `envelopeStrictness` knob, plus live behavioral through the
+ * `POST /v1/host/sample/envelope/accept` seam (soft-skip on HTTP 404).
  *
  * Summary: an LLM emits an envelope whose `schemaVersion` is lower than the
  * host's advertised floor for that kind (`Capabilities.schemaVersions[kind]`).

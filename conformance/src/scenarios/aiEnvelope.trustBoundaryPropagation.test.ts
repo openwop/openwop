@@ -1,9 +1,9 @@
 /**
- * aiEnvelope.trustBoundaryPropagation — FINAL v1.1 advertisement-shape verification + behavioral placeholders.
+ * aiEnvelope.trustBoundaryPropagation — FINAL v1.1 advertisement-shape + behavioral.
  *
- * Status: DRAFT (advertisement-shape). `spec/v1/ai-envelope.md` landed
- * 2026-05-17 as DRAFT v1.x. Behavioral assertions stay `it.todo()` until a
- * reference host wires the MCP-tool-result → envelope → RunEventDoc trust path.
+ * Status: ACTIVE (advertisement-shape + behavioral). `spec/v1/ai-envelope.md`
+ * promoted Draft → FINAL v1.1 2026-05-18. Live behavioral via the
+ * `POST /v1/host/sample/envelope/accept` seam (soft-skip on HTTP 404).
  *
  * Summary: when a node consumes content from an untrusted source (MCP tool
  * result per `mcp-integration.md`, A2A inbound message per `a2a-integration.md`),

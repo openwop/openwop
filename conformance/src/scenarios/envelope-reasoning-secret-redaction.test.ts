@@ -21,11 +21,12 @@
  * test soft-skips on HTTP 404 (host doesn't expose the seam) and on
  * capability absence.
  *
- * The OTel-attribute and debug-bundle assertions remain `it.todo()` —
- * they exercise downstream-projection paths that the envelope-accept
- * seam doesn't surface. Promote when the reference host adds a
- * test-introspection hook for `RunEventDoc.payload` + OTel span +
- * debug-bundle export tied to a specific envelope acceptance.
+ * Downstream-projection assertions (OTel-attribute scrape + debug-bundle
+ * export + non-routing-on-reasoning invariant) are live behavioral via the
+ * `/v1/host/sample/test/otel/spans` + `/v1/host/sample/test/debug-bundle/export`
+ * seams (soft-skip on HTTP 404 when the host doesn't expose them). The
+ * acceptor-level redaction is verified independently above via the
+ * envelope-accept seam.
  *
  * @see RFCS/0030-envelope-reasoning-and-tier-one-subset.md §E
  * @see spec/v1/ai-envelope.md §"Reasoning field (normative)" + §"Redaction (SR-1 carry-forward)"
@@ -215,12 +216,11 @@ describe.skipIf(HTTP_SKIP)('envelope-reasoning-secret-redaction: BYOK redaction 
 });
 
 // Behavioral assertions through the workflow-engine sample's downstream
-// projection paths. Remain `it.todo()` until the reference workflow-engine
-// adds a test-introspection hook surfacing the `RunEventDoc.payload`,
-// OTel span attributes, and debug-bundle export tied to a specific
-// envelope acceptance. The envelope-accept seam (above) verifies the
-// acceptor-level redaction; these placeholders verify the redaction
-// propagates through the downstream surfaces.
+// projection paths. Each `it()` soft-skips on HTTP 404 when the host
+// doesn't expose the `/test/otel/spans` or `/test/debug-bundle/export`
+// seam. The envelope-accept seam (above) verifies the acceptor-level
+// redaction; these assertions verify the redaction propagates through
+// the downstream surfaces.
 
 describe.skipIf(HTTP_SKIP)('envelope-reasoning-secret-redaction: downstream-projection paths (RFC 0030 §E)', () => {
   // Drives the existing envelope-accept seam with `projectTo.runId` so the

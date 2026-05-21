@@ -1,12 +1,12 @@
 /**
- * search-bm25-roundtrip — RFC 0018 advertisement-shape verification + behavioral placeholders.
+ * search-bm25-roundtrip — RFC 0018 advertisement-shape verification + behavioral roundtrip.
  *
- * Status: ACTIVE (advertisement-shape). RFC 0018 promoted to `Active`
- * 2026-05-17. The matching `capabilities.searchIndex` block has landed in
- * `schemas/capabilities.schema.json`. This scenario asserts the advertisement
- * shape against any host that boots the conformance suite, and keeps the
- * deeper behavioral assertions as `it.todo()` until a reference host wires
- * a test seam.
+ * Status: ACTIVE (advertisement-shape + behavioral). RFC 0018 promoted to
+ * `Active` 2026-05-17. The matching `capabilities.searchIndex` block has
+ * landed in `schemas/capabilities.schema.json`. This scenario asserts the
+ * advertisement shape against any host that boots the conformance suite, and
+ * exercises the behavioral surface through the `/v1/host/sample/test/surface`
+ * seam (soft-skip with HTTP 404 on hosts that don't expose it).
  *
  * Summary: index then query returns relevant documents.
  *

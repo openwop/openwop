@@ -1,9 +1,11 @@
 /**
- * aiEnvelope.correlationReplay — FINAL v1.1 advertisement-shape verification + behavioral placeholders.
+ * aiEnvelope.correlationReplay — FINAL v1.1 advertisement-shape + behavioral.
  *
- * Status: DRAFT (advertisement-shape). `spec/v1/ai-envelope.md` landed
- * 2026-05-17 as DRAFT v1.x. Behavioral assertions stay `it.todo()` until a
- * reference host wires the accept path and the cross-process replay seam.
+ * Status: ACTIVE (advertisement-shape + behavioral). `spec/v1/ai-envelope.md`
+ * promoted Draft → FINAL v1.1 2026-05-18. Live behavioral via the
+ * `POST /v1/host/sample/envelope/accept` seam with the persisted
+ * `priorCorrelations` store (survives process restart between original
+ * accept and replay; soft-skip on HTTP 404).
  *
  * Summary: two envelopes in the same run with the same `correlationId` MUST
  * be treated as a re-emission. The second invocation returns the cached

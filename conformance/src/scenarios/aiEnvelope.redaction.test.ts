@@ -1,10 +1,11 @@
 /**
- * aiEnvelope.redaction — FINAL v1.1 advertisement-shape verification + behavioral placeholders.
+ * aiEnvelope.redaction — FINAL v1.1 advertisement-shape + behavioral.
  *
- * Status: DRAFT (advertisement-shape). `spec/v1/ai-envelope.md` landed
- * 2026-05-17 as DRAFT v1.x. Behavioral assertions stay `it.todo()` until a
- * reference host wires the envelope accept path through the BYOK redaction
- * harness.
+ * Status: ACTIVE (advertisement-shape + behavioral). `spec/v1/ai-envelope.md`
+ * promoted Draft → FINAL v1.1 2026-05-18. Live behavioral via the
+ * `POST /v1/host/sample/envelope/accept` seam, which routes the envelope
+ * through the BYOK redaction harness and returns `redactedPayload` +
+ * `redactionCount` (soft-skip on HTTP 404).
  *
  * Summary: AI Envelopes MUST route through the same BYOK redaction harness
  * applied to a fresh `MemoryEntry.put` per `agent-memory.md` §"SR-1

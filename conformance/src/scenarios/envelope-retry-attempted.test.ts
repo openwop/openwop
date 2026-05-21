@@ -17,8 +17,12 @@
  *   4. Eventual success is recorded normally (envelope acceptance + downstream
  *      RunEventDoc).
  *
- * Behavioral assertions are `it.todo()` until the reference workflow-engine
- * implements the emission via `executor/envelopeReliability.ts`.
+ * Live behavioral via the reference workflow-engine's
+ * `executor/envelopeReliability.ts` emission path + the
+ * `POST /v1/host/sample/test/mock-ai/program` seam. Fixture- + capability-
+ * gated; soft-skip cleanly when the host doesn't expose the seam or doesn't
+ * advertise `capabilities.envelopes.reliability.events[]` containing
+ * `envelope.retry.attempted`.
  *
  * @see RFCS/0032-envelope-reliability-events.md §B.1
  * @see schemas/run-event-payloads.schema.json §envelopeRetryAttempted

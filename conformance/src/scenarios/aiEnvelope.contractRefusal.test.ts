@@ -1,9 +1,10 @@
 /**
- * aiEnvelope.contractRefusal — FINAL v1.1 advertisement-shape verification + behavioral placeholders.
+ * aiEnvelope.contractRefusal — FINAL v1.1 advertisement-shape + behavioral.
  *
- * Status: DRAFT (advertisement-shape). `spec/v1/ai-envelope.md` landed
- * 2026-05-17 as DRAFT v1.x. Behavioral assertions stay `it.todo()` until a
- * reference host wires Envelope Contract enforcement on a node typeId.
+ * Status: ACTIVE (advertisement-shape + behavioral). `spec/v1/ai-envelope.md`
+ * promoted Draft → FINAL v1.1 2026-05-18. Live behavioral via the
+ * `POST /v1/host/sample/envelope/accept` seam + the capability-toggle seam
+ * (soft-skip when either is absent).
  *
  * Summary: an Envelope Contract is a per-typeId declaration of which envelope
  * kinds that node accepts (`accepts: string[]` plus implicit universals). When
