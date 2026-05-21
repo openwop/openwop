@@ -1,0 +1,14 @@
+{
+  "templateId": "conformance.prompt.few-shot-2",
+  "version": "1.0.0",
+  "kind": "few-shot",
+  "text": "Example 3:\nQ: Summarize a paragraph about chocolate in two sentences.\nA: Chocolate is made from fermented and roasted cacao seeds. It is consumed worldwide as both confectionery and a flavoring for drinks and desserts.\n\nExample 4:\nQ: Summarize a paragraph about cheese in two sentences.\nA: Cheese is produced by curdling milk and aging the resulting solids. It exists in hundreds of regional varieties that differ in texture, flavor, and ripening method.",
+  "name": "Conformance: Few-shot exemplars (set 2)",
+  "description": "Second `kind: \"few-shot\"` template paired with `conformance.prompt.few-shot` to give the four-kinds conformance fixture a multi-entry `fewShotPromptRefs[]` array. Variable-free; renders verbatim. The multi-entry shape is the templateKinds-coverage regression pin for `fewShotPromptRefs[slotIndex]` resolution per RFC 0027 §A — a host that only handles entry [0] would silently drop this template.",
+  "tags": ["conformance", "few-shot"],
+  "meta": {
+    "author": "openwop-conformance-suite",
+    "createdAt": "2026-05-20T00:00:00Z",
+    "source": "host"
+  }
+}

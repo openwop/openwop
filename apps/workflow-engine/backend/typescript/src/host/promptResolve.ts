@@ -87,6 +87,12 @@ export interface ResolveRequest {
   /** Whether the host advertises `capabilities.prompts.agentBindings`.
    *  When false, layer 2 is skipped entirely. */
   agentBindingsSupported?: boolean;
+  /** For `kind: "few-shot"`, the entry index into
+   *  `node.config.fewShotPromptRefs[]` to resolve. Defaults to 0 when
+   *  unset (back-compat for callers that only handle the first
+   *  exemplar). Ignored for other kinds, which read singular ref
+   *  fields. */
+  fewShotIndex?: number;
 }
 
 export interface ResolveResult {
@@ -119,11 +125,13 @@ function toStringyRef(ref: unknown): string | null {
 }
 
 /** Map a PromptKind to the WorkflowNode.config field name that carries
- *  the corresponding layer-1 ref. The few-shot kind reads the first
- *  entry of `fewShotPromptRefs[]`; the others read singular fields. */
+ *  the corresponding layer-1 ref. The few-shot kind reads
+ *  `fewShotPromptRefs[fewShotIndex]` (default index 0); the others
+ *  read singular fields and ignore the index. */
 function nodeConfigRef(
   config: NodeConfigInputs['config'] | undefined,
   kind: PromptKind,
+  fewShotIndex: number,
 ): unknown {
   if (!config) return undefined;
   switch (kind) {
@@ -134,8 +142,8 @@ function nodeConfigRef(
     case 'schema-hint':
       return config.schemaHintPromptRef;
     case 'few-shot':
-      return Array.isArray(config.fewShotPromptRefs) && config.fewShotPromptRefs.length > 0
-        ? config.fewShotPromptRefs[0]
+      return Array.isArray(config.fewShotPromptRefs) && fewShotIndex < config.fewShotPromptRefs.length
+        ? config.fewShotPromptRefs[fewShotIndex]
         : undefined;
   }
 }
@@ -176,7 +184,10 @@ export function resolvePromptRef(req: ResolveRequest): ResolveResult {
   };
 
   // ── Layer 1: node config ────────────────────────────────────────
-  const nodeRefRaw = nodeConfigRef(node.config, kind);
+  const fewShotIndex = typeof req.fewShotIndex === 'number' && req.fewShotIndex >= 0
+    ? req.fewShotIndex
+    : 0;
+  const nodeRefRaw = nodeConfigRef(node.config, kind, fewShotIndex);
   const nodeRef = toStringyRef(nodeRefRaw);
   if (nodeRef !== null) {
     recordApplied('node', nodeRef);

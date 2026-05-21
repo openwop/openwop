@@ -1,0 +1,15 @@
+{
+  "templateId": "conformance.prompt.writer-user",
+  "version": "1.0.0",
+  "kind": "user",
+  "text": "Please write a 100-word piece on a topic chosen by the system prompt. Keep it tight.",
+  "name": "Conformance: Writer (user)",
+  "description": "Minimal `kind: \"user\"` template paired with `conformance.prompt.writer-system` to give the four-kinds conformance fixture a kind-accurate user slot (the system slot uses the writer-system template). Variable-free; renders verbatim.",
+  "tags": ["conformance", "user"],
+  "modelHints": { "modelClass": "writing", "temperature": 0.7 },
+  "meta": {
+    "author": "openwop-conformance-suite",
+    "createdAt": "2026-05-20T00:00:00Z",
+    "source": "host"
+  }
+}

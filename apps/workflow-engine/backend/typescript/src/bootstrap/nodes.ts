@@ -507,11 +507,14 @@ const sampleMockAiNode: NodeModule = {
      *  and return the composed body (or null on miss). The kind is
      *  passed through to the resolver + composer so observability
      *  events carry accurate per-kind attribution. The slotIndex
-     *  argument lets the caller disambiguate few-shot entries when
-     *  multiple refs share the same kind. */
+     *  argument disambiguates few-shot entries when multiple refs
+     *  share the same kind — for kind: "few-shot", the resolver
+     *  reads `fewShotPromptRefs[slotIndex]`; ignored for the
+     *  singular-ref kinds. */
     const composeRef = async (
       kind: PromptKind,
       refValue: unknown,
+      slotIndex: number = 0,
     ): Promise<string | null> => {
       if (refValue === undefined || refValue === null || refValue === '') return null;
 
@@ -519,6 +522,7 @@ const sampleMockAiNode: NodeModule = {
         kind,
         node: { nodeId: ctx.nodeId, config: cfg },
         agentBindingsSupported: promptsConfig.agentBindings,
+        fewShotIndex: slotIndex,
       });
       // agent.promptResolved emits before any composition so cross-
       // host debuggers see the chain trace whether or not composition
@@ -560,8 +564,8 @@ const sampleMockAiNode: NodeModule = {
     const schemaHintBody = await composeRef('schema-hint', cfg.schemaHintPromptRef);
     const fewShotBodies: string[] = [];
     if (Array.isArray(cfg.fewShotPromptRefs)) {
-      for (const fewShotRef of cfg.fewShotPromptRefs) {
-        const body = await composeRef('few-shot', fewShotRef);
+      for (let i = 0; i < cfg.fewShotPromptRefs.length; i++) {
+        const body = await composeRef('few-shot', cfg.fewShotPromptRefs[i], i);
         if (body !== null) fewShotBodies.push(body);
       }
     }

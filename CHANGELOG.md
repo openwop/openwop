@@ -11,6 +11,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.2 — unreleased] — gap-closure batch from `plans/openwop-protocol-gap-closure-plan.md`
 
+### Host + Conformance — RFC 0027 §A few-shot `slotIndex` correctness fix + multi-entry coverage (2026-05-21)
+
+Code-review follow-ups on commits `c8c898a` (four-kind dispatch) + `ceda12e` (RFC promotions). One CRITICAL correctness fix + four supporting tightenings.
+
+- **CRITICAL** — `host/promptResolve.ts` + `bootstrap/nodes.ts`: the `composeRef()` helper introduced in `c8c898a` iterated `cfg.fewShotPromptRefs[]` but the resolver hard-coded `fewShotPromptRefs[0]`. For a node with `fewShotPromptRefs: [a, b, c]`, all three loop iterations emitted events pointing at entry `a` and entries `b` + `c` were silently dropped from dispatch. The single-entry fixture in `c8c898a` hid the bug. Fixed by adding an optional `fewShotIndex` parameter to `ResolveRequest`, plumbed from a new `slotIndex` parameter on `composeRef()` (matching the docstring that already claimed the arg existed). The few-shot iteration now passes the index. Singular-kind paths (`system`, `user`, `schema-hint`) ignore the index, preserving back-compat.
+- `conformance/fixtures/prompt-templates/conformance-prompt-writer-user.json` (NEW, mirrored to `apps/workflow-engine/conformance-fixtures/`) — `kind: "user"` template that pairs kind-correctly with the writer-system template in the four-kinds fixture (previously `userPromptRef` pointed at a `kind: "system"` template).
+- `conformance/fixtures/prompt-templates/conformance-prompt-few-shot-2.json` (NEW, mirrored) — second `kind: "few-shot"` template carrying two Q/A exemplar pairs distinct from the original. Used as `fewShotPromptRefs[1]` in the four-kinds fixture.
+- `conformance/fixtures/conformance-prompt-all-four-kinds.json` — updated to point `userPromptRef` at the new user-kind template AND to carry a 2-entry `fewShotPromptRefs[]` array. Five distinct templateIds across five distinct slots.
+- `conformance/src/scenarios/prompt-all-four-kinds-events.test.ts` — assertions strengthened: rather than just count + per-PromptKind presence, now asserts that the set of `agent.promptResolved.resolved` refs AND the set of `prompt.composed.refs[]` each include all five expected `prompt:` URIs verbatim. A host that hard-codes `fewShotPromptRefs[0]` would now fail because `few-shot-2@1.0.0` never appears. Citation on the causal-ordering sub-test narrowed to match the actual assertion ("resolution events MUST precede the first composition event").
+- `RFCS/0027` + `RFCS/0028` Status-history sections — bare commit hash references converted to clickable GitHub links so the history survives a future release-prep rebase.
+
+Compatibility: **additive** — sample-host correctness fix. The buggy single-entry behavior worked correctly when only one few-shot exemplar was configured (which is the only state the prior conformance suite exercised), so no on-the-wire-shape change. No spec / schema / OpenAPI changes. Gate: `tsc --noEmit` clean across workflow-engine backend + conformance suite; 56/56 protocol-tier SECURITY invariants verified.
+
 ### Host + Conformance — RFC 0032 §B.5 + §B.6 recovery strategies wired end-to-end (2026-05-20)
 
 Drains the final 7 envelope-track `it.todo()` placeholders (recovery-applied × 3 + nl-to-format-engaged × 4) by implementing two RFC 0032 recovery strategies in the reference workflow-engine's `dispatchStructured()` retry loop. Brings the suite todo count from 50 → 0 for the envelope-track scenarios.

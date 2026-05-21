@@ -105,10 +105,16 @@ describe.skipIf(SKIP_NO_FIXTURE || HTTP_SKIP)('prompt-all-four-kinds-events: eac
       .filter((e) => e.type === 'agent.promptResolved')
       .map((e) => (e.payload as { kind?: string }).kind)
       .filter((k): k is string => typeof k === 'string');
-    const composedKinds = events
+    const resolvedRefs = events
+      .filter((e) => e.type === 'agent.promptResolved')
+      .map((e) => (e.payload as { resolved?: string | null }).resolved)
+      .filter((r): r is string => typeof r === 'string');
+    const composedRefs = events
       .filter((e) => e.type === 'prompt.composed')
-      .map((e) => (e.payload as { kind?: string }).kind)
-      .filter((k): k is string => typeof k === 'string');
+      .flatMap((e) => {
+        const refs = (e.payload as { refs?: unknown }).refs;
+        return Array.isArray(refs) ? refs.filter((r): r is string => typeof r === 'string') : [];
+      });
 
     for (const expectedKind of ['system', 'user', 'schema-hint', 'few-shot']) {
       expect(
@@ -119,21 +125,49 @@ describe.skipIf(SKIP_NO_FIXTURE || HTTP_SKIP)('prompt-all-four-kinds-events: eac
         ),
       ).toBe(true);
     }
-    // prompt.composed `kind` field is a composition classifier (per
-    // schemas/run-event-payloads.schema.json — system+user / system-only /
-    // user-only / agent-reasoning) rather than the source PromptKind,
-    // so the per-kind assertion here is just count-based: one
-    // composition emitted per ref that resolved.
+
+    // Per-templateId regression pin. The fixture carries 5 distinct
+    // templates in 5 distinct config slots (system, user, schema-hint,
+    // few-shot[0], few-shot[1]); the multi-entry few-shot exercises
+    // the resolver's `fewShotPromptRefs[slotIndex]` per-index lookup
+    // — a host that hard-codes `[0]` would emit the same template
+    // twice in the few-shot events and `expectedTemplates` below
+    // would fail because `few-shot-2@1.0.0` wouldn't appear.
+    const expectedTemplates = [
+      'prompt:conformance.prompt.writer-system@1.0.0',
+      'prompt:conformance.prompt.writer-user@1.0.0',
+      'prompt:conformance.prompt.schema-hint@1.0.0',
+      'prompt:conformance.prompt.few-shot@1.0.0',
+      'prompt:conformance.prompt.few-shot-2@1.0.0',
+    ];
+    for (const expectedRef of expectedTemplates) {
+      expect(
+        resolvedRefs.includes(expectedRef),
+        driver.describe(
+          'spec/v1/prompts.md §"Resolution chain (normative)"',
+          `\`agent.promptResolved.resolved\` MUST surface "${expectedRef}" — the fixture carries it on the node config and the resolver MUST return it (multi-entry few-shot[slotIndex] regression pin)`,
+        ),
+      ).toBe(true);
+      expect(
+        composedRefs.includes(expectedRef),
+        driver.describe(
+          'spec/v1/prompts.md §"Composition + observability"',
+          `\`prompt.composed.refs[]\` MUST contain "${expectedRef}" — one composition per resolved ref`,
+        ),
+      ).toBe(true);
+    }
+    // Count check: 5 refs configured → 5 composed events. A host that
+    // silently dropped non-zero few-shot indices would emit fewer.
     expect(
-      composedKinds.length,
+      composedRefs.length,
       driver.describe(
         'spec/v1/prompts.md §"Composition + observability"',
-        'host MUST emit one `prompt.composed` event per composed body (4 refs → 4 events when all four resolve)',
+        'host MUST emit one `prompt.composed` event per composed body (5 refs → 5 events when all five resolve, including both few-shot entries)',
       ),
-    ).toBeGreaterThanOrEqual(4);
+    ).toBeGreaterThanOrEqual(5);
   });
 
-  it('emits agent.promptResolved before its matching prompt.composed for each kind (causal ordering)', async () => {
+  it('emits the first agent.promptResolved before the first prompt.composed (resolution-precedes-composition ordering)', async () => {
     const d = await readDiscovery();
     if (!behaviorGate('prompts-supported', promptsSupported(d))) return;
     const create = await driver.post('/v1/runs', { workflowId: WORKFLOW_ID });
@@ -142,10 +176,11 @@ describe.skipIf(SKIP_NO_FIXTURE || HTTP_SKIP)('prompt-all-four-kinds-events: eac
     await pollUntilTerminal(runId);
     const events = await readAllEvents(runId);
 
-    // First resolved event MUST appear before first composed event.
-    // The composer can only run after the chain walk produces a
-    // non-null resolution, so the global ordering across all kinds
-    // is sufficient — per-kind ordering is implied.
+    // Narrower than per-kind ordering: assert only the GLOBAL "first
+    // resolved precedes first composed" invariant. The composer can
+    // only run after the chain walk produces a non-null resolution,
+    // so a single global pair-check is sufficient to detect a host
+    // that swapped the emission order.
     const firstResolvedIdx = events.findIndex((e) => e.type === 'agent.promptResolved');
     const firstComposedIdx = events.findIndex((e) => e.type === 'prompt.composed');
     expect(
@@ -155,8 +190,8 @@ describe.skipIf(SKIP_NO_FIXTURE || HTTP_SKIP)('prompt-all-four-kinds-events: eac
     expect(
       firstResolvedIdx,
       driver.describe(
-        'spec/v1/prompts.md §"Resolution chain (normative)"',
-        'agent.promptResolved MUST emit BEFORE the corresponding prompt.composed (resolution precedes composition)',
+        'spec/v1/prompts.md §"Composition + observability"',
+        'resolution events MUST precede the first composition event in the run log (composition cannot start before any resolution completes)',
       ),
     ).toBeLessThan(firstComposedIdx);
   });
