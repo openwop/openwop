@@ -152,7 +152,7 @@ const dispatchNode: NodeModule = {
       return { status: 'failure', error: { code: 'invalid_request', message: 'core.dispatch requires supervisor `decisions` input' } };
     }
 
-    const { dispatchSubWorkflow } = await import('../executor/subWorkflowDispatcher.js');
+    const { dispatchSubWorkflow, DispatchCreationError } = await import('../executor/subWorkflowDispatcher.js');
     const { getEventLog } = await import('../executor/eventLog.js');
     const eventLog = getEventLog();
 
@@ -251,6 +251,10 @@ const dispatchNode: NodeModule = {
             });
 
             // Transitions 3-5 (one fires): child.completed / child.failed / child.cancelled.
+            // Per RFC 0037 §"Handoff state machine" the `running → failed` row covers
+            // both terminal-failed and exception-during-run. dispatchSubWorkflow surfaces
+            // the exception case via `result.childRuntimeError` (status: failed + error
+            // envelope captured); we attach it to the child.failed event's payload.error.
             const terminalPhase =
               result.childStatus === 'completed' ? 'child.completed' :
               result.childStatus === 'failed'    ? 'child.failed'    :
@@ -268,6 +272,9 @@ const dispatchNode: NodeModule = {
                   workerId: childWorkflowId,
                   parentRunId: ctx.runId,
                   childRunId: result.childRunId,
+                  ...(terminalPhase === 'child.failed' && result.childRuntimeError
+                    ? { error: result.childRuntimeError }
+                    : {}),
                 },
               });
               terminalEventId = termRec.eventId;
@@ -294,8 +301,20 @@ const dispatchNode: NodeModule = {
             }
           }
         } catch (err) {
-          // Transition 7/7: dispatching → failed (creation failed before the child ran).
+          // Transition 7/7: dispatching → failed (creation failed BEFORE the
+          // child ran any node) — per RFC 0037 §"Handoff state machine" this
+          // path is reserved for pre-creation failures. dispatchSubWorkflow
+          // surfaces those as DispatchCreationError; any OTHER exception class
+          // here would be a bug (the dispatcher catches runtime errors
+          // internally and converts them to childStatus: 'failed' + result.
+          // childRuntimeError). Defensive: if a non-DispatchCreationError
+          // reaches us we still emit dispatch.failed but flag the code as
+          // unexpected so the failure surfaces in logs.
           if (multiAgentEnabled) {
+            const isCreationFailure = err instanceof DispatchCreationError;
+            const errorCode = isCreationFailure
+              ? (err as InstanceType<typeof DispatchCreationError>).code
+              : 'dispatch_unexpected_error';
             await eventLog.append({
               runId: ctx.runId,
               nodeId: ctx.nodeId,
@@ -305,7 +324,7 @@ const dispatchNode: NodeModule = {
                 phase: 'dispatch.failed',
                 workerId: childWorkflowId,
                 parentRunId: ctx.runId,
-                error: { code: 'internal_error', message: err instanceof Error ? err.message : String(err) },
+                error: { code: errorCode, message: err instanceof Error ? err.message : String(err) },
               },
             });
           }

@@ -114,6 +114,35 @@ export interface SubWorkflowResult {
    *  node SHOULD echo into its own NodeOutcome.suspended payload. */
   childInterruptKind?: 'approval' | 'clarification' | 'refinement' | 'cancellation' | 'external-event';
   childInterruptNodeId?: string;
+  /** RFC 0037 §"Handoff state machine" — set when `executeRun` threw
+   *  AFTER the child run was created (child ran at least one node before
+   *  failing). The dispatch already succeeded; the child died at runtime.
+   *  Carriers MAY surface this on `core.workflowChain.event { phase: "child.failed" }`
+   *  per the spec's `running → failed` transition. Distinct from a
+   *  pre-creation failure, which throws `DispatchCreationError` instead. */
+  childRuntimeError?: { code: string; message: string };
+}
+
+/** RFC 0037 §"Handoff state machine" — distinct error class for the
+ *  `dispatching → failed` transition (creation failed BEFORE the child
+ *  ran any node). Thrown by `dispatchSubWorkflow` when the dispatcher
+ *  rejects pre-creation: ancestor cycle, depth-cap exceeded, unknown
+ *  child workflow, storage.insertRun failure, etc.
+ *
+ *  Throws from `executeRun` (child ran briefly then died) are NOT
+ *  surfaced as DispatchCreationError — they're caught inside
+ *  dispatchSubWorkflow and converted to a normal return with
+ *  `childStatus: 'failed' + childRuntimeError`. Callers can then emit
+ *  the correct `core.workflowChain.event { phase: "child.failed" }`
+ *  per RFC 0037's `running → failed` row instead of misattributing the
+ *  failure to `dispatching → failed`. */
+export class DispatchCreationError extends Error {
+  readonly code: string;
+  constructor(message: string, code = 'dispatch_creation_failed') {
+    super(message);
+    this.name = 'DispatchCreationError';
+    this.code = code;
+  }
 }
 
 /** Maximum sub-workflow nesting depth. A workflow A whose subWorkflow
@@ -135,7 +164,10 @@ export async function dispatchSubWorkflow(
   opts: SubWorkflowOpts,
 ): Promise<SubWorkflowResult> {
   if (!deps) {
-    throw new Error('subWorkflow dispatcher not initialized — bootstrap path missing setSubWorkflowDispatcher() call');
+    throw new DispatchCreationError(
+      'subWorkflow dispatcher not initialized — bootstrap path missing setSubWorkflowDispatcher() call',
+      'dispatcher_not_initialized',
+    );
   }
   const { storage, hostSuite, executeRun } = deps;
 
@@ -152,22 +184,25 @@ export async function dispatchSubWorkflow(
     cursorRunId = ancestor.parentRunId;
   }
   if (ancestorWorkflowIds.length >= MAX_SUBWORKFLOW_DEPTH) {
-    throw Object.assign(
-      new Error(`subWorkflow: ancestor chain depth ${ancestorWorkflowIds.length} exceeds MAX_SUBWORKFLOW_DEPTH=${MAX_SUBWORKFLOW_DEPTH}`),
-      { code: 'subworkflow_depth_exceeded' },
+    throw new DispatchCreationError(
+      `subWorkflow: ancestor chain depth ${ancestorWorkflowIds.length} exceeds MAX_SUBWORKFLOW_DEPTH=${MAX_SUBWORKFLOW_DEPTH}`,
+      'subworkflow_depth_exceeded',
     );
   }
   if (ancestorWorkflowIds.includes(opts.childWorkflowId)) {
-    throw Object.assign(
-      new Error(`subWorkflow: cycle detected — child workflow '${opts.childWorkflowId}' already in ancestor chain (${ancestorWorkflowIds.join(' → ')})`),
-      { code: 'subworkflow_cycle_detected' },
+    throw new DispatchCreationError(
+      `subWorkflow: cycle detected — child workflow '${opts.childWorkflowId}' already in ancestor chain (${ancestorWorkflowIds.join(' → ')})`,
+      'subworkflow_cycle_detected',
     );
   }
 
   // Look up the child workflow definition.
   const wf = await hostSuite.workflowCatalog.getWorkflow(opts.childWorkflowId);
   if (!wf) {
-    throw new Error(`subWorkflow: child workflow '${opts.childWorkflowId}' not found in catalog`);
+    throw new DispatchCreationError(
+      `subWorkflow: child workflow '${opts.childWorkflowId}' not found in catalog`,
+      'subworkflow_child_not_found',
+    );
   }
 
   // Build initial child inputs from inputMapping (RFC 0022 §B
@@ -198,7 +233,17 @@ export async function dispatchSubWorkflow(
     createdAt: now,
     updatedAt: now,
   };
-  await storage.insertRun(childRun);
+  try {
+    await storage.insertRun(childRun);
+  } catch (err) {
+    // Storage failure during insertRun is a pre-creation failure per
+    // RFC 0037 §"Handoff state machine" (child run was never persisted),
+    // surfaced as a DispatchCreationError.
+    throw new DispatchCreationError(
+      `subWorkflow: child run insertion failed for workflow '${opts.childWorkflowId}': ${err instanceof Error ? err.message : String(err)}`,
+      'subworkflow_insert_failed',
+    );
+  }
   childParentNodeId.set(childRunId, opts.parentNodeId);
 
   // Seed child variable bag — inputMapping wins over the workflow's
@@ -209,7 +254,31 @@ export async function dispatchSubWorkflow(
   // returns when the run reaches terminal status (completed / failed /
   // cancelled) or suspends. For the subWorkflow conformance case the
   // child reaches terminal because it has no interrupts.
-  await executeRun(storage, childRun, wf.definition, {});
+  //
+  // RFC 0037 §"Handoff state machine" — executeRun throwing means the
+  // child STARTED but died mid-execution (the child run record exists in
+  // storage at this point; the dispatch already "succeeded"). Catch and
+  // convert the throw to a `childStatus: 'failed'` return with
+  // `childRuntimeError` populated, so callers emit the correct
+  // `running → failed` transition (`child.failed` phase) instead of
+  // misattributing to the `dispatching → failed` transition.
+  let childRuntimeError: { code: string; message: string } | undefined;
+  try {
+    await executeRun(storage, childRun, wf.definition, {});
+  } catch (err) {
+    childRuntimeError = {
+      code: 'child_runtime_error',
+      message: err instanceof Error ? err.message : String(err),
+    };
+    // Persist the child as failed so finalChild.status below reflects it
+    // (in case executeRun didn't update the RunRecord before throwing).
+    try {
+      await storage.updateRun(childRunId, { status: 'failed', updatedAt: new Date().toISOString() });
+    } catch {
+      // Update failure here doesn't change the dispatch contract — the
+      // caller will read the latest snapshot via storage.getRun below.
+    }
+  }
 
   // Read final child state.
   const finalChild = await storage.getRun(childRunId);
@@ -248,5 +317,11 @@ export async function dispatchSubWorkflow(
     outputMappingSkipped = true;
   }
 
-  return { childRunId, childStatus, childVariables, outputMappingSkipped };
+  return {
+    childRunId,
+    childStatus,
+    childVariables,
+    outputMappingSkipped,
+    ...(childRuntimeError ? { childRuntimeError } : {}),
+  };
 }

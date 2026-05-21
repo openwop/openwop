@@ -32,6 +32,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { pollUntilTerminal } from '../lib/polling.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -92,9 +94,6 @@ describe.skipIf(HTTP_SKIP)('multi-agent-handoff-state-machine: advertisement sha
 // records with causationId chained per the spec §"Transition events" table. The happy-path
 // fixture (supervisor → next-worker → child completed with outputMapping non-empty) drives 4
 // of the 7 transitions: dispatch.began → dispatch.succeeded → child.completed → output.harvested.
-
-import { isFixtureAdvertised } from '../lib/fixtures.js';
-import { pollUntilTerminal } from '../lib/polling.js';
 
 interface RunEvent { type: string; eventId?: string; causationId?: string; payload?: Record<string, unknown>; }
 

@@ -15,7 +15,7 @@ The existing RFCs cover slices but no single doc states the **execution model** 
 - **RFC 0024** (reasoning streaming) — the wire shape for `agent.reasoning.delta` events.
 - **RFC 0026** (provider usage events) — the cost-attribution surface.
 
-This document **integrates** those slices into a single normative execution loop + a 4-state handoff state machine. Two non-steward hosts implementing this Phase 1 should produce bit-equivalent state transitions for the same supervisor-driven workflow input.
+This document **integrates** those slices into a single normative execution loop + a 4-state handoff state machine. The design goal is portability: two non-steward hosts implementing this Phase 1 against the same supervisor-driven workflow input produce identical transition-event sequences (same phases, same causation chain) — the §"Cross-region replay" claim in `replay.md` extends this guarantee across regions on hosts that also advertise the RFC 0036 capabilities.
 
 ## Execution loop (normative)
 
