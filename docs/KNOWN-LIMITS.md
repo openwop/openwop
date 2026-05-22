@@ -30,7 +30,7 @@ Some invariants are stated normatively but mechanically verified at a level that
 |---|---|---|
 | `secret-leakage-otel-attribute` (reference-impl tier) | Verified host-internally via `examples/hosts/postgres/test/byok-roundtrip.test.ts`. | The conformance OTel collector seam doesn't yet inspect span attributes; a host could pass conformance while leaking BYOK material on telemetry exports. Marked `non_testability_rationale` in `SECURITY/invariants.yaml`. |
 | `secret-leakage-debug-bundle-otel` | Same as above. | Same — collector seam pending. |
-| `node-pack-sandbox-*` (8 reference-impl invariants) | None — no reference host executes pack-loaded typeIds in a sandbox. Postgres pack-consumer verifies install-time security only (PACK-1/PACK-2). | First reference host that mounts loaded typeIds into a sandbox. |
+| `node-pack-sandbox-*` (8 reference-impl invariants) | 8 conformance scenario files shipped in `@openwop/openwop-conformance@1.4.0` (`sandbox-no-host-fs-escape`, `sandbox-no-host-env-leak`, `sandbox-no-network-escape`, `sandbox-no-host-process-escape`, `sandbox-memory-cap`, `sandbox-timeout-cap`, `sandbox-capability-gate-respected`, `sandbox-no-cross-pack-mutation`) but the behavioral assertions are `it.todo` stubs. A 2026-05-22 premature graduation to `protocol` tier was reverted (commit `5864a2f`) precisely because the scenarios were vacuous. Postgres pack-consumer verifies install-time security only (PACK-1/PACK-2). | First reference host that mounts loaded typeIds into a sandbox **and** real behavioral assertions land on the 8 conformance scenarios. Per RFC 0035 §"Acceptance criteria" — 7 of 8 invariants then graduate `reference-impl → protocol`. |
 | Cross-engine append ordering | `append-ordering.test.ts` covers intra-engine sequence ordering. | CF-8 — multi-engine fixture exercising two engines writing to the same event log. |
 
 ---
@@ -89,7 +89,13 @@ The plan calls these out explicitly — none can be moved by repo-side mechanica
 |---|---|---|
 | 0025 (Test-mode registry namespace) | `Draft` | Conformance-only typeId namespace; non-production. Pending non-steward adoption signal before promotion. |
 | 0027, 0028, 0029 (Prompt templates / library endpoints / override hierarchy) | `Active` | 7-day comment window closed 2026-05-27; awaiting cross-host advertisement evidence per RFCS/0001 §"Promotion to Accepted." |
-| 0030, 0031, 0032, 0033 (Envelope reasoning / variants + model capabilities / reliability events / completion contract) | `Active` | MyndHyve cross-host evidence landed 2026-05-21 (see INTEROP-MATRIX); wire-shape drift amendments need to land before 2026-05-27 promotion. |
+| 0034 (OTel collector test seam) | `Active` | Schema + spec prose + reference impl landed 2026-05-21; awaiting a non-steward host wiring the seam to graduate. |
+| 0035 (Sandbox execution contract) | `Active` | Spec + schema + 8 conformance scenarios landed 2026-05-21. 7-of-8 SECURITY tier graduation **reverted 2026-05-22** (commit `5864a2f`) — scenarios were vacuous (`expect(true).toBe(true)` placeholders) until a sandbox-executing reference host wires real behavioral probes. Path-to-`Accepted` is unchanged: first sandbox-executing host advertises + scenarios grow real assertions + 7 of 8 invariants re-graduate. |
+| 0036 (Multi-region + cross-engine guarantees) | `Active` | Capability shape + spec prose landed 2026-05-21. Behavioral assertions deferred to the Postgres multi-region simulator (CF-12 / OPS-5). |
+| 0037, 0039, 0040, 0041 (Multi-agent execution model Phases 1–4) | `Active` | Phase 1 + Phase 2 confidence-floor + Phase 4 staged-refusal seam are wired against the reference workflow-engine end-to-end; Phase 3 cross-host causation + the Phase 4 nondeterministic-tool fixture await a second host. Path-to-`Accepted` is a non-steward host advertising `multiAgent.executionModel.version: 4` end-to-end. |
+| 0038 (Working Group charter) | `Draft` | Ratifies the moment the `GOVERNANCE.md` tripwire fires (≥3 organizations + ≥2 non-steward hosts). The charter is **written**, not waiting on drafting work — the gate is adoption, not text. |
+
+RFCs **0030, 0031, 0032, 0033** (envelope LLM-contract-hardening track) **were promoted Active → Accepted on 2026-05-21** once reference workflow-engine + MyndHyve workflow-runtime both advertised the capabilities end-to-end. They are listed as `Accepted` in `docs/PROTOCOL-STATUS.md`.
 
 ---
 

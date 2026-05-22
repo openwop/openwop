@@ -11,6 +11,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.3 — unreleased] — coordinated SDK release for MyndHyve adoption-feedback slices
 
+### Audit response — 2026-05-22 external standards-readiness review (2026-05-22)
+
+In response to a 2026-05-22 external standards-readiness review of the openwop corpus, multiple drift-fix + accountability artifacts land in this release:
+
+- **NEW `docs/AUDIT-RESPONSE-2026-05.md`** — public point-by-point response to the audit. Each Acceptance-Bar item maps to a closed commit, an in-flight PR, or a named external-action tripwire with calendar commitment (e.g., SEC-1 vendor outreach by 2026-06-30, fallback interim summary by 2026-09-30).
+- **NEW `docs/CONFORMANCE-RUNS-2026-05.md`** — re-measurement of all 4 reference hosts (`in-memory` / `sqlite` / `postgres` / `python`) against `@openwop/openwop-conformance@1.4.0` with per-failure-topic taxonomy + reproduction recipes. Previous published numbers were against suite v1.1.0 — closes the audit's specific "older suite version" concern.
+- **NEW `docs/PHASE-4-PROGRESS.md`** — accountability tracking for the 5 behavioral-harness items the audit named (multi-region idempotency simulator, cross-engine append ordering, sandbox execution, replay-determinism Phase 4 staged-refusal seam, secret-leakage OTel telemetry). Each row carries a specific unblock criterion + effort estimate + closing-PR ID.
+- **NEW `RFCS/0042-experimental-capability-tier.md`** (`Draft`) — lands the audit's "Active RFC → experimental carve-out" alternative as a new optional `capabilities.<feature>.tier ∈ {"stable", "experimental"}` field with `experimentalUntil` sunset rule (≤ 12 months) + derived `openwop-experimental` profile + conformance soft-skip routing under default mode.
+- **NEW `RFCS/0043-registry-and-extension-policy.md`** (`Draft`) — consolidates extension-namespace rules, registry submission/yank/key-rotation policy, profile/event-type/envelope-kind/capability-name reservation, and IPR posture (DCO + Apache-2.0 + CC-BY-4.0) into a single ratifiable artifact. WG ratification (per RFC 0038) remains tripwire-gated, but the policy is auditable today.
+- **Drift fixes:** `docs/KNOWN-LIMITS.md` line 86 (RFCs 0030–0033 removed from "not yet Accepted" — they were Accepted 2026-05-21); `docs/KNOWN-LIMITS.md` line 33 (sandbox row corrected to reflect 8 conformance scenarios shipped + 2026-05-22 `5864a2f` revert); `conformance/coverage.md` line 3 (date 2026-05-11 → 2026-05-22); `conformance/coverage.md` lines 127–132 (stale prompt-endpoint rows corrected to reflect RFC 0028 `Active` + reference workflow-engine implementation); `INTEROP-MATRIX.md` pass-rate table (v1.1.0 → v1.4.0 numbers); `docs/PROTOCOL-STATUS.md` regenerated.
+
+Gate: `bash scripts/openwop-check.sh` green. No wire-shape changes. Spec-corpus-validity 642/642 PASS. `additive` per `COMPATIBILITY.md` §2.1 for the two new RFCs.
+
 ### RFC 0027 + 0028 + 0029 acceptance-criteria audit — reflect actually-shipped state (2026-05-22)
 
 The three prompt-track RFCs had EVERY acceptance criterion checkbox at `[ ]` despite the bulk of the work having shipped. Audit pass mechanically verified each criterion and updated the boxes:

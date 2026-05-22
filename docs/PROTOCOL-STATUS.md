@@ -12,7 +12,7 @@
 | OpenAPI operations | 26 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 205 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 41 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 43 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## OpenAPI Operations
 
@@ -24,15 +24,15 @@
 |---|---:|
 | Accepted | 29 |
 | Active | 10 |
-| Draft | 2 |
+| Draft | 4 |
 
 | Latest RFC | Title | Status |
 |---|---|---|
+| RFC 0043 | Registry submission policy, extension namespace rules, profile/event/capability name reservation, and IPR posture | Draft |
+| RFC 0042 | Experimental capability tier - optional `tier` field on capability advertisements + sunset rule + derived `openwop-experimental` profile | Draft |
 | RFC 0041 | Multi-agent execution model Phase 4: LLM cache-key recipe normation + envelope-refusal recovery in replay context + determinism vs idempotency contract | Active |
 | RFC 0040 | Multi-agent execution model Phase 3: cross-host causation linking + W3C tracecontext propagation across composition boundaries + cross-host run-ID resolution | Active |
 | RFC 0039 | Multi-agent execution model Phase 2: confidence-threshold escalation + agent memory lifecycle across sub-runs and replay | Active |
-| RFC 0038 | OpenWOP Working Group charter | Draft |
-| RFC 0037 | Multi-agent execution model + replay determinism under nondeterministic models | Active |
 
 ## SDK Helper Coverage
 
@@ -46,10 +46,10 @@
 
 | Host | Passed | Failed | Skipped | Todo | Total | Pass rate |
 |---|---:|---:|---:|---:|---:|---|
-| Postgres reference | 781 | 1 | 38 | 30 | 850 | 91.9% total; 96.4% of applicable (measured 2026-05-13 against suite v1.1.0 with OPENWOP_SECONDARY_API_KEY + OPENWOP_TENANT2_API_KEY + OPENWOP_WEBHOOK_ALLOW_PRIVATE to advertise the conditional profiles. Up from 730/799 - +51 scenarios + +51 passes net of Phase H/I capability surfaces + 9 stage5 vendor packs landing) |
-| SQLite reference | 669 | 0 | 32 | 30 | 731 | 91.5% (Phase A close-out, 2026-05-12) |
-| In-memory reference | - | - | - | - | - | not measured this round |
-| Python reference | 700 | 0 | 58 | 30 | 788 | 100% of applicable (88.8% total) - post-Phase-C-round-2 close-out, 2026-05-12 |
+| Postgres reference | 1467 | 6 | 69 | 16 | 1558 | 94.2% total; 99.6% of non-skipped (measured 2026-05-22 against suite v1.4.0 via pglite + OPENWOP_WEBHOOK_ALLOW_PRIVATE=true; full env stack - OPENWOP_SECONDARY_API_KEY + OPENWOP_TENANT2_API_KEY + OAuth2/OIDC issuer URLs + mTLS cert paths - required for the conditional-profile applicable count to recover to ~96-97%) |
+| SQLite reference | 1480 | 7 | 55 | 16 | 1558 | 95.0% total (Phase A baseline 91.5% against suite v1.1.0 -> 95.0% against v1.4.0; net +9.5pp despite the suite adding ~700 capability-gated scenarios) |
+| In-memory reference | 1439 | 48 | 55 | 16 | 1558 | 92.4% total - first v1.4.0 measurement against in-memory (prior measurements only against v1.1.1 per examples/hosts/in-memory/conformance.md) |
+| Python reference | 1381 | 60 | 101 | 16 | 1558 | 88.6% total; 100% of applicable when scoped to the host's claimed openwop-core + openwop-stream-poll + openwop-stream-sse profile set (the floor for cross-language parity) |
 
 ## Registry Snapshot
 
@@ -71,7 +71,7 @@
 
 ## Active Follow-Ups
 
-- 2 RFCs still `Draft` (RFC 0025, RFC 0038) — advance with schema/conformance proof or defer.
+- 4 RFCs still `Draft` (RFC 0025, RFC 0038, RFC 0042, RFC 0043) — advance with schema/conformance proof or defer.
 - 10 RFCs `Active` (RFC 0027, RFC 0028, RFC 0029, RFC 0034, RFC 0035, RFC 0036, RFC 0037, RFC 0039, RFC 0040, RFC 0041) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - SDK parity still shows raw-only rows for several stable v1.x helper surfaces.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
