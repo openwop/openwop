@@ -48,26 +48,9 @@ export function ChatTab(): JSX.Element {
         <div className="backend-resting-card">
           <h2 className="backend-resting-title">The demo&apos;s resting.</h2>
           <p className="backend-resting-body">
-            Give it a refresh in a few seconds — the Cloud Run server spins
-            down between visits to keep the sample cheap to host.
+            The Cloud Run server spins down between visits to keep the sample
+            cheap to host. Please refresh your browser.
           </p>
-          <div className="backend-resting-actions">
-            <button
-              type="button"
-              className="backend-resting-refresh"
-              onClick={() => window.location.reload()}
-            >
-              Refresh
-            </button>
-            <a
-              className="backend-resting-link"
-              href="https://openwop.dev/spec/v1/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Read the spec instead
-            </a>
-          </div>
           {/* Detail visible to the curious + helpful for debugging. Muted
               so it doesn't dominate the postcard. */}
           <details className="backend-resting-detail">
