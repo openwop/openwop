@@ -2156,3 +2156,112 @@ pre {
     display: none;
   }
 }
+
+/* ─── Backend-resting postcard ────────────────────────────────────────
+ *
+ * Replaces the prior red `.alert error` box on the AI chat tab when
+ * the backend is unreachable (most commonly a Cloud Run cold start or
+ * a 401 between deploys, not a real outage). Calm, brand-on, with
+ * actionable next steps. NO red. */
+.backend-resting-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  min-height: 0;
+}
+.backend-resting-card {
+  max-width: 520px;
+  width: 100%;
+  padding: 40px 36px 32px;
+  background: var(--paper-2);
+  border: 1px solid var(--clay-rule);
+  border-radius: 8px;
+}
+.backend-resting-title {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 32px;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  margin: 0 0 18px;
+  color: var(--ink);
+}
+.backend-resting-body {
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-2);
+  margin: 0 0 24px;
+  max-width: 44ch;
+}
+.backend-resting-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.backend-resting-refresh {
+  font-family: var(--sans);
+  font-size: 13.5px;
+  font-weight: 500;
+  padding: 9px 22px;
+  background: var(--ink);
+  color: var(--paper);
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  cursor: pointer;
+  letter-spacing: 0.005em;
+  transition: background 150ms ease, border-color 150ms ease, transform 150ms ease;
+}
+.backend-resting-refresh:hover {
+  background: var(--clay);
+  border-color: var(--clay);
+  transform: translateY(-1px);
+}
+.backend-resting-refresh:active {
+  transform: translateY(0);
+}
+.backend-resting-link {
+  font-family: var(--sans);
+  font-size: 13.5px;
+  color: var(--clay);
+  text-decoration: underline;
+  text-decoration-color: var(--clay-rule);
+  text-underline-offset: 3px;
+}
+.backend-resting-link:hover {
+  text-decoration-color: var(--clay);
+}
+.backend-resting-detail {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--rule);
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.backend-resting-detail summary {
+  cursor: pointer;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 10.5px;
+  color: var(--ink-3);
+}
+.backend-resting-detail summary:hover { color: var(--clay); }
+.backend-resting-detail p {
+  margin: 10px 0 0;
+  line-height: 1.5;
+}
+.backend-resting-detail code {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  background: var(--paper);
+  padding: 1px 5px;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  color: var(--ink);
+}

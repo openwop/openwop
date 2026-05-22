@@ -38,11 +38,49 @@ export function ChatTab(): JSX.Element {
   }
 
   if (error) {
+    // Editorial postcard — replaces the prior red-bordered ".alert error"
+    // box. The Cloud Run backend spins down between visits to keep the
+    // sample cheap to host; a 401/network/timeout on the first request
+    // most commonly means the user hit a cold-start (or a quiet
+    // moment), not a real outage. Tone is calm + actionable; no red.
     return (
-      <div className="alert error" style={{ margin: 24 }}>
-        Cannot reach backend: <code>{error}</code>
-        <div style={{ marginTop: 8, fontSize: 12 }}>
-          Is the server running at <code>{import.meta.env.VITE_OPENWOP_BASE_URL ?? 'http://localhost:8080'}</code>?
+      <div className="backend-resting-wrap">
+        <div className="backend-resting-card">
+          <h2 className="backend-resting-title">The demo&apos;s resting.</h2>
+          <p className="backend-resting-body">
+            Give it a refresh in a few seconds — the Cloud Run server spins
+            down between visits to keep the sample cheap to host.
+          </p>
+          <div className="backend-resting-actions">
+            <button
+              type="button"
+              className="backend-resting-refresh"
+              onClick={() => window.location.reload()}
+            >
+              Refresh
+            </button>
+            <a
+              className="backend-resting-link"
+              href="https://openwop.dev/spec/v1/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Read the spec instead
+            </a>
+          </div>
+          {/* Detail visible to the curious + helpful for debugging. Muted
+              so it doesn't dominate the postcard. */}
+          <details className="backend-resting-detail">
+            <summary>Technical detail</summary>
+            <p>
+              <code>{error}</code>
+              <br />
+              Backend URL:{' '}
+              <code>
+                {import.meta.env.VITE_OPENWOP_BASE_URL ?? 'http://localhost:8080'}
+              </code>
+            </p>
+          </details>
         </div>
       </div>
     );
