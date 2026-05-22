@@ -484,7 +484,8 @@ paths:
         - $ref: '#/components/parameters/RunId'
       responses:
         '200':
-          description: Run's immediate parent (or `parent: null` for top-level runs).
+          description: |
+            Run's immediate parent (or `parent: null` for top-level runs).
           content:
             application/json:
               schema:
