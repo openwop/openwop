@@ -164,6 +164,72 @@
  * Class names are emotion-hashed and not stable across Redoc versions,
  * so we target by HTML tag + descendant selectors where possible. */
 
+/* Global font reset for the explorer: everything is sans by default;
+ * code-sample blocks opt back into mono via the more specific selectors
+ * below. Heading-font (Instrument Serif) was leaking into form labels
+ * like "Content type" via Redoc's heading-style classes — this kills
+ * that, and we don't lose anything since "Response samples" / operation
+ * titles stay serif via the `[class*="Heading"]` opt-in further down. */
+#redoc-container,
+#redoc-container * {
+  font-family: var(--sans) !important;
+  font-style: normal !important;
+}
+/* Code areas opt back into mono. */
+#redoc-container pre,
+#redoc-container pre *,
+#redoc-container code,
+#redoc-container .token,
+#redoc-container [class*="code-sample"],
+#redoc-container [class*="code-sample"] *,
+#redoc-container [class*="JsonViewer"],
+#redoc-container [class*="JsonViewer"] *,
+#redoc-container [class*="SampleBlock"],
+#redoc-container [class*="SampleBlock"] * {
+  font-family: var(--mono) !important;
+}
+/* HTTP path stays mono (Redoc's MiddlePanel renders it). */
+#redoc-container [class*="OperationEndpoint"] *,
+#redoc-container [class*="Endpoint"] * {
+  font-family: var(--mono) !important;
+}
+/* Real H1/H2/H3 headings stay serif so titles like "Response samples"
+ * and the API root title still read editorially. */
+#redoc-container h1,
+#redoc-container h2,
+#redoc-container h3,
+#redoc-container [class*="ApiHeader"] h1,
+#redoc-container [class*="ApiInfo"] h1 {
+  font-family: var(--serif) !important;
+}
+
+/* Content-type label + value on one line.
+ * Redoc renders "Content type" + "application/json" as two stacked
+ * elements (label above, dropdown/value below). Flex-row the parent
+ * via wildcard matching — covers DropdownSelector / ContentType /
+ * MimeMap patterns Redoc has used across recent versions. */
+#redoc-container [class*="DropdownSelector"],
+#redoc-container [class*="ContentType"],
+#redoc-container [class*="MimeMap"] {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: baseline !important;
+  gap: 10px !important;
+}
+/* Label inside the now-inline container: tighten + uppercase mini-label
+ * style so it visually attaches to the value rather than competing. */
+#redoc-container [class*="DropdownSelector"] > label,
+#redoc-container [class*="DropdownSelector"] [class*="Label"],
+#redoc-container [class*="ContentType"] [class*="Label"],
+#redoc-container [class*="MimeMap"] [class*="Label"] {
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  color: var(--ink-3) !important;
+  margin: 0 !important;
+}
+
 /* (1) GET / POST / PUT / DELETE / PATCH method pills — Redoc renders
  *     them with an inherited font; force mono so the verb labels match
  *     the path (which is already mono). */
