@@ -1126,7 +1126,11 @@ function buildApiExplorer() {
                 headings: { fontFamily: 'Instrument Serif, Georgia, serif' },
               },
               sidebar: { backgroundColor: '#f4f1ea', width: '280px' },
-              rightPanel: { width: '35%' },
+              rightPanel: {
+                backgroundColor: '#f4f1ea',  // --paper, same as main page
+                textColor: '#1a1a17',        // --ink for text on cream
+                width: '35%',
+              },
             },
           }, document.getElementById('redoc-container'));
         } else {
