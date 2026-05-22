@@ -70,5 +70,5 @@ The leaderboard rebuilds automatically. Honesty is enforced socially, not algori
 | Read the host capabilities spec | [/spec/v1/host-capabilities.html](/spec/v1/host-capabilities.html) |
 | Browse profile predicates | [/profiles/](/profiles/) |
 | Check the leaderboard | [/conformance/](/conformance/) |
-| Clone a reference host | [examples/hosts ↗](https://github.com/openwop/openwop/tree/main/examples/hosts) |
+| Clone a reference host | [examples/hosts](https://github.com/openwop/openwop/tree/main/examples/hosts) |
 | Run the conformance suite | `npx @openwop/openwop-conformance` |

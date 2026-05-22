@@ -93,10 +93,10 @@
 <tbody>
 <tr><td><strong>RFC</strong></td><td>0040</td></tr>
 <tr><td><strong>Title</strong></td><td>Multi-agent execution model Phase 3: cross-host causation linking + W3C tracecontext propagation across composition boundaries + cross-host run-ID resolution</td></tr>
-<tr><td><strong>Status</strong></td><td><code>Draft</code></td></tr>
+<tr><td><strong>Status</strong></td><td><code>Active</code></td></tr>
 <tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
 <tr><td><strong>Created</strong></td><td>2026-05-22</td></tr>
-<tr><td><strong>Updated</strong></td><td>2026-05-22</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-22 (Draft → Active same-day: Phase 3 spec text + schema + conformance scaffolds landed atomically following the RFC 0034/0037/0039 pattern. <code>spec/v1/multi-agent-execution.md</code> gains §"Cross-host causation (RFC 0040 Phase 3, normative)" with the §A causationHostId field contract, §B W3C tracecontext propagation across MCP + A2A composition, and §C ancestry endpoint contract. <code>schemas/capabilities.schema.json</code> adds <code>multiAgent.executionModel.crossHostCausation.{supported, hostId, ancestryEndpointSupported}</code> sub-block. <code>schemas/run-event-payloads.schema.json</code> adds optional <code>causationHostId</code> to <code>coreWorkflowChainEvent</code>; the additive-on-all-causationId-bearing-payloads convention is documented in spec prose for the remaining payload shapes (additions to each $defs entry deferred to follow-up — pattern is identical). NEW <code>schemas/run-ancestry-response.schema.json</code> covers the §C endpoint response shape. <code>api/openapi.yaml</code> gains <code>getRunAncestry</code> operation (<code>GET /v1/runs/{runId}/ancestry</code>). Three conformance scenarios land: <code>cross-host-causation-shape.test.ts</code> (advertisement shape probe — always-on when discovery reachable), <code>cross-host-ancestry-endpoint.test.ts</code> (behavioral on top-level-run path + 404-on-non-advertise), <code>cross-host-traceparent-propagation.test.ts</code> (behavioral gated on <code>OPENWOP_MCP_REAL_SERVER_URL</code> / <code>OPENWOP_A2A_REAL_PEER_URL</code> env harness). Host wiring (ancestry endpoint implementation + traceparent injection in the reference workflow-engine's MCP + A2A composition) deferred to a follow-up commit owned by the workflow-engine maintainer; protocol-layer contract is complete. Path to <code>Accepted</code>: a non-steward host advertises <code>crossHostCausation.supported: true</code> + serves the ancestry endpoint + emits causationHostId on cross-host events.)</td></tr>
 <tr><td><strong>Affects</strong></td><td><code>spec/v1/multi-agent-execution.md</code> (extends with §"Cross-host causation (Phase 3, normative)") · <code>spec/v1/observability.md</code> (extends §"Trust boundary + redaction" with the cross-host case) · <code>spec/v1/mcp-integration.md</code> + <code>spec/v1/a2a-integration.md</code> (tracecontext propagation across composition) · <code>schemas/run-event-payloads.schema.json</code> (additive <code>causationHostId</code> field on <code>agent.*</code> payload shapes) · <code>schemas/capabilities.schema.json</code> (bumps <code>multiAgent.executionModel.version</code> ceiling effective range to include <code>3</code>; adds optional <code>crossHostCausation</code> block) · 3 new conformance scenarios · <code>INTEROP-MATRIX.md</code> · CHANGELOG</td></tr>
 <tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
 <tr><td><strong>Supersedes</strong></td><td>—</td></tr>
@@ -246,11 +246,11 @@
       <div>
         <h5>Ecosystem</h5>
         <ul>
-          <li><a href="https://packs.openwop.dev/">Pack registry ↗</a></li>
+          <li><a href="https://packs.openwop.dev/">Pack registry</a></li>
           <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
-          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts ↗</a></li>
-          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix ↗</a></li>
-          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite ↗</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite</a></li>
         </ul>
       </div>
       <div>
@@ -262,8 +262,8 @@
           <li><a href="/security/">Security posture</a></li>
           <li><a href="/governance/">Governance</a></li>
           <li><a href="/contributing/">Contributing</a></li>
-          <li><a href="https://github.com/openwop/openwop/releases">Watch releases ↗</a></li>
-          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct ↗</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
         </ul>
       </div>
       <div>

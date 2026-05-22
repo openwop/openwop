@@ -238,5 +238,5 @@ Three things deliberately left out, all linked here for the curious:
 |---|---|
 | See the actual workflow-definition schema | [`/schemas/workflow-definition.schema.json`](/schemas/workflow-definition.schema.json) |
 | Walk through the full REST endpoint catalog | [`/api/rest/`](/api/rest/) |
-| See the production-shaped host that does all this end-to-end | [Postgres reference host ↗](https://github.com/openwop/openwop/tree/main/examples/hosts/postgres) |
-| Run scenario A against the live demo | [app.openwop.dev ↗](https://app.openwop.dev/) |
+| See the production-shaped host that does all this end-to-end | [Postgres reference host](https://github.com/openwop/openwop/tree/main/examples/hosts/postgres) |
+| Run scenario A against the live demo | [app.openwop.dev](https://app.openwop.dev/) |

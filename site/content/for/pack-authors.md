@@ -72,6 +72,6 @@ Use cases: tenant-scoped private packs, air-gapped deployments, enterprise compl
 | Action | Where |
 |---|---|
 | Read the node-pack spec | [/spec/v1/node-packs.html](/spec/v1/node-packs.html) |
-| Browse the registry | [packs.openwop.dev ↗](https://packs.openwop.dev/) |
-| See an example pack | [`registry/v1/packs/core.openwop.examples/` ↗](https://github.com/openwop/openwop/tree/main/registry/v1/packs/core.openwop.examples) |
-| Open a publishing PR | [`registry-operations.md` ↗](/spec/v1/registry-operations.html) |
+| Browse the registry | [packs.openwop.dev](https://packs.openwop.dev/) |
+| See an example pack | [`registry/v1/packs/core.openwop.examples/`](https://github.com/openwop/openwop/tree/main/registry/v1/packs/core.openwop.examples) |
+| Open a publishing PR | [`registry-operations.md`](/spec/v1/registry-operations.html) |

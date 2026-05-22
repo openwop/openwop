@@ -74,6 +74,7 @@
     <h4>On this page</h4>
     <ul>
       <li class="toc-top"><a href="#1-1-3-unreleased-coordinated-sdk-release-for-myndhyve-adoption-feedback-slices">[1.1.3 — unreleased] — coordinated SDK release for MyndHyve adoption-feedback slices</a></li>
+      <li class="toc-sub"><a href="#rfc-0039-memory-lifecycle-half-mae-2-mae-3-rfc-0040-phase-3-cross-host-causation-draft-active-2026-05-22">RFC 0039 memory-lifecycle half (MAE-2 + MAE-3) + RFC 0040 Phase 3 cross-host causation Draft → Active (2026-05-22)</a></li>
       <li class="toc-sub"><a href="#rfc-0039-0037-0041-code-review-follow-ups-2026-05-22">RFC 0039 + 0037 + 0041 — /code-review follow-ups (2026-05-22)</a></li>
       <li class="toc-sub"><a href="#rfc-0040-rfc-0041-multi-agent-phases-3-4-filed-draft-2026-05-22">RFC 0040 + RFC 0041 — multi-agent Phases 3 + 4 filed Draft (2026-05-22)</a></li>
       <li class="toc-sub"><a href="#rfc-0039-phase-2-confidence-floor-escalation-draft-active-2026-05-22">RFC 0039 Phase 2 confidence-floor escalation Draft → Active (2026-05-22)</a></li>
@@ -240,6 +241,29 @@
 <blockquote><p><strong>Status legend</strong> (per <code>auth.md</code> §status legend):</p><p>STUB · DRAFT · OUTLINE · FINAL — see individual doc headers for current state.</p></blockquote>
 <hr/>
 <h2 id="1-1-3-unreleased-coordinated-sdk-release-for-myndhyve-adoption-feedback-slices">[1.1.3 — unreleased] — coordinated SDK release for MyndHyve adoption-feedback slices</h2>
+<h3 id="rfc-0039-memory-lifecycle-half-mae-2-mae-3-rfc-0040-phase-3-cross-host-causation-draft-active-2026-05-22">RFC 0039 memory-lifecycle half (MAE-2 + MAE-3) + RFC 0040 Phase 3 cross-host causation Draft → Active (2026-05-22)</h3>
+<p>Closes RFC 0039 fully + lands RFC 0040 protocol-layer surface end-to-end. Reference-host implementation for both (Postgres MemoryAdapter wiring for RFC 0039 MAE-3 snapshot; reference workflow-engine ancestry endpoint + traceparent injection for RFC 0040) remains explicit follow-up.</p>
+<p><strong>RFC 0039 memory-lifecycle half (MAE-2 + MAE-3) — spec + scenario:</strong></p>
+<ul>
+<li><code>spec/v1/multi-agent-execution.md</code> gains §"Agent memory lifecycle across sub-runs (RFC 0039 Phase 2, normative)" covering MAE-2 (cross-run TTL anchored at child write time, with rationale) + MAE-3 (replay snapshot requirement + refusal contract).</li>
+<li><code>spec/v1/rest-endpoints.md</code> §"Common error codes" gains <code>replay_memory_snapshot_unavailable</code> for the §B refusal path when a host can't satisfy the snapshot at the requested <code>forkAtEventLogIdx</code>.</li>
+<li>NEW <code>conformance/src/scenarios/multi-agent-memory-lifecycle.test.ts</code> — advertisement-shape probe on <code>crossChildMemoryConcurrency</code> (enum check) + 2 behavioral stubs (MAE-2 cross-run TTL + MAE-3 replay snapshot). Capability-gated on the conjunction <code>multiAgent.executionModel.version &gt;= 2 &amp;&amp; memory.supported: true</code>; reference workflow-engine soft-skips (advertises <code>memory.supported: false</code>); Postgres reference host will light up the behavioral assertions when its MemoryAdapter adopts the contract.</li>
+</ul>
+<p><strong>RFC 0040 Phase 3 cross-host causation — protocol-layer landing:</strong></p>
+<ul>
+<li><code>schemas/capabilities.schema.json</code> extends <code>multiAgent.executionModel</code> with <code>crossHostCausation.{supported, hostId, ancestryEndpointSupported}</code> sub-block.</li>
+<li><code>schemas/run-event-payloads.schema.json</code> adds optional <code>causationHostId</code> to <code>coreWorkflowChainEvent</code> (pattern documented for additive landings on remaining causationId-bearing payloads).</li>
+<li>NEW <code>schemas/run-ancestry-response.schema.json</code> covers <code>GET /v1/runs/{runId}/ancestry</code> response shape: <code>{runId, hostId, parent: null | {runId, hostId, wellKnownUrl?, cause}}</code>. <code>cause</code> enum: <code>mcp-tool-call | a2a-message | core.subWorkflow | core.dispatch</code>.</li>
+<li><code>api/openapi.yaml</code> gains <code>getRunAncestry</code> operation: <code>GET /v1/runs/{runId}/ancestry</code> returning <code>200 RunAncestryResponse</code>; 404 covers both unknown-run AND non-advertising-host cases per spec text.</li>
+<li><code>spec/v1/multi-agent-execution.md</code> gains §"Cross-host causation (RFC 0040 Phase 3, normative)" with §A <code>causationHostId</code> contract, §B W3C tracecontext propagation across MCP + A2A composition, §C ancestry endpoint contract.</li>
+<li>NEW conformance scenarios (3):</li>
+</ul>
+<p>  - <code>cross-host-causation-shape.test.ts</code> — capability-shape probe on <code>crossHostCausation.{supported, hostId, ancestryEndpointSupported}</code> + version >= 3 cross-check.   - <code>cross-host-ancestry-endpoint.test.ts</code> — behavioral on top-level-run path (asserts <code>200 {runId, hostId, parent: null}</code>) + 404 contract for hosts advertising <code>supported: true</code> but not the endpoint.   - <code>cross-host-traceparent-propagation.test.ts</code> — behavioral gated on <code>OPENWOP_MCP_REAL_SERVER_URL</code> / <code>OPENWOP_A2A_REAL_PEER_URL</code> env harness (lands when cross-host fixtures ship).</p>
+<ul>
+<li>RFC 0040 Status <code>Draft → Active</code>.</li>
+<li>README: 41 RFCs (unchanged); Active 8 → 9 (adds 0040); Draft 4 → 3 (drops 0040). Schema count 31 → 32 (new run-ancestry-response). OpenAPI ops 25 → 26 (new getRunAncestry). Conformance scenarios 198 → 202 (1 RFC 0039 memory + 3 RFC 0040).</li>
+</ul>
+<p>Closes the protocol-layer half of standards-readiness review finding (3) MAE-2/3/4/5/6. Reference-host wiring closes them at the host-implementation boundary; tracked as RFC 0039 + RFC 0040 path-to-Accepted work.</p>
 <h3 id="rfc-0039-0037-0041-code-review-follow-ups-2026-05-22">RFC 0039 + 0037 + 0041 — /code-review follow-ups (2026-05-22)</h3>
 <p>Surgical follow-ups on c6eb5d2 + 232b3aa per the senior code review.</p>
 <p><strong>CRITICAL 1 — schemas/orchestrator-decision.schema.json amended</strong> to admit the optional <code>confidence: number ∈ [0, 1]</code> field on the <code>next-worker</code> AND <code>terminate</code> branches. Without this, RFC 0039 §A's wire shape was non-conformant against the existing closed-<code>additionalProperties: false</code> schema; any consumer validating <code>runOrchestrator.decided.payload.decision</code> against the typed schema would have refused the persisted event.</p>
@@ -1882,11 +1906,11 @@
       <div>
         <h5>Ecosystem</h5>
         <ul>
-          <li><a href="https://packs.openwop.dev/">Pack registry ↗</a></li>
+          <li><a href="https://packs.openwop.dev/">Pack registry</a></li>
           <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
-          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts ↗</a></li>
-          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix ↗</a></li>
-          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite ↗</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite</a></li>
         </ul>
       </div>
       <div>
@@ -1898,8 +1922,8 @@
           <li><a href="/security/">Security posture</a></li>
           <li><a href="/governance/">Governance</a></li>
           <li><a href="/contributing/">Contributing</a></li>
-          <li><a href="https://github.com/openwop/openwop/releases">Watch releases ↗</a></li>
-          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct ↗</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
         </ul>
       </div>
       <div>

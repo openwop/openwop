@@ -51,8 +51,8 @@ Those are host responsibilities, defined normatively in the spec corpus and veri
 
 | Action | Where |
 |---|---|
-| Run the quickstart | [QUICKSTART-10MIN.md ↗](https://github.com/openwop/openwop/blob/main/QUICKSTART-10MIN.md) |
-| Try the live host | [app.openwop.dev ↗](https://app.openwop.dev/) |
+| Run the quickstart | [QUICKSTART-10MIN.md](https://github.com/openwop/openwop/blob/main/QUICKSTART-10MIN.md) |
+| Try the live host | [app.openwop.dev](https://app.openwop.dev/) |
 | Read the run lifecycle spec | [/spec/v1/run-options.html](/spec/v1/run-options.html) |
 | Compare host implementations | [/conformance/](/conformance/) |
-| Ask a question | [GitHub Issues ↗](https://github.com/openwop/openwop/issues) |
+| Ask a question | [GitHub Issues](https://github.com/openwop/openwop/issues) |

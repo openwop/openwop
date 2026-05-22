@@ -155,6 +155,7 @@
 <tr><td><code>GET</code></td><td><code>/v1/runs/{runId}</code></td><td>API key</td><td><code>runs:read</code></td><td>Read run state</td></tr>
 <tr><td><code>GET</code></td><td><code>/v1/runs/{runId}/events</code></td><td>API key</td><td><code>runs:read</code></td><td>SSE event stream (resumable via <code>Last-Event-ID</code>)</td></tr>
 <tr><td><code>GET</code></td><td><code>/v1/runs/{runId}/events/poll</code></td><td>API key</td><td><code>runs:read</code></td><td>Long-poll fallback for non-SSE clients</td></tr>
+<tr><td><code>GET</code></td><td><code>/v1/runs/{runId}/ancestry</code></td><td>API key</td><td><code>runs:read</code></td><td>RFC 0040 cross-host composition parent (capability-gated; 404 when unadvertised)</td></tr>
 <tr><td><code>POST</code></td><td><code>/v1/runs/{runId}/cancel</code></td><td>API key</td><td><code>runs:cancel</code></td><td>Cancel an in-flight run</td></tr>
 <tr><td><code>POST</code></td><td><code>/v1/runs:bulk-cancel</code></td><td>API key</td><td><code>runs:cancel</code></td><td>Bulk cancel a set of in-flight runs</td></tr>
 <tr><td><code>POST</code></td><td><code>/v1/runs/{runId}:fork</code></td><td>API key</td><td><code>runs:create</code> + <code>runs:read</code></td><td>Fork or replay a run from recorded state</td></tr>
@@ -448,11 +449,11 @@
       <div>
         <h5>Ecosystem</h5>
         <ul>
-          <li><a href="https://packs.openwop.dev/">Pack registry ↗</a></li>
+          <li><a href="https://packs.openwop.dev/">Pack registry</a></li>
           <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
-          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts ↗</a></li>
-          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix ↗</a></li>
-          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite ↗</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite</a></li>
         </ul>
       </div>
       <div>
@@ -464,8 +465,8 @@
           <li><a href="/security/">Security posture</a></li>
           <li><a href="/governance/">Governance</a></li>
           <li><a href="/contributing/">Contributing</a></li>
-          <li><a href="https://github.com/openwop/openwop/releases">Watch releases ↗</a></li>
-          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct ↗</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
         </ul>
       </div>
       <div>

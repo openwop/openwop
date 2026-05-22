@@ -71,4 +71,4 @@ These are the questions a careful evaluator should ask. They're easier to answer
 | Audit the leaderboard | [/conformance/](/conformance/) |
 | Review the security posture | [/security/](/security/) |
 | Review the versioning policy | [/versioning/](/versioning/) |
-| Open a question | [GitHub Issues ↗](https://github.com/openwop/openwop/issues) |
+| Open a question | [GitHub Issues](https://github.com/openwop/openwop/issues) |
