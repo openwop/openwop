@@ -11,6 +11,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.3 — unreleased] — coordinated SDK release for MyndHyve adoption-feedback slices
 
+### RFC 0040 + RFC 0041 — multi-agent Phases 3 + 4 filed Draft (2026-05-22)
+
+Files the two remaining follow-up RFCs from RFC 0037 §"Open spec gaps" — closing the multi-agent execution model roadmap on paper. Both at `Status: Draft`.
+
+- **`RFCS/0040-multi-agent-cross-host-causation.md`** — Phase 3. Closes MAE-4/5/6: extends `causationId` to span hosts; normates W3C tracecontext propagation across MCP + A2A composition boundaries; defines `GET /v1/runs/{runId}/ancestry` for cross-host run-ID resolution. New optional `multiAgent.executionModel.crossHostCausation.{supported, hostId, ancestryEndpointSupported}` capability sub-block. Bumps `version: 3` when implemented.
+- **`RFCS/0041-multi-agent-replay-under-nondeterminism.md`** — Phase 4 (final). Closes MAE-7/8/9: normates the LLM cache-key recipe `spec/v1/replay.md` already documents informationally; defines the envelope-refusal-recovery contract (`replay.divergedAtRefusal` event + `replay_diverged_at_refusal` error code); formalizes observable-output-sequence determinism vs bit-equivalent execution determinism. New optional `multiAgent.executionModel.replayDeterminism.{supported, llmCacheKeyRecipe, refusalDivergenceEmission}` capability sub-block. New SECURITY invariant `replay-llm-cache-key-portable`. Bumps `version: 4` when implemented — closes the multi-agent execution model's capability-version ceiling.
+
+README: 39 → 41 RFCs tracked; 2 → 4 Draft (0025 + 0038 + 0040 + 0041). PROTOCOL-STATUS regenerated.
+
 ### RFC 0039 Phase 2 confidence-floor escalation Draft → Active (2026-05-22)
 
 Filed as Draft 2026-05-21 (be01c20); promoted Active 2026-05-22 after the confidence-floor half landed end-to-end. The memory-lifecycle half (MAE-2/3) remains explicit follow-up.

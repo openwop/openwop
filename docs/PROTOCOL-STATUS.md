@@ -12,7 +12,7 @@
 | OpenAPI operations | 25 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 198 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 39 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 41 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## OpenAPI Operations
 
@@ -24,15 +24,15 @@
 |---|---:|
 | Accepted | 29 |
 | Active | 8 |
-| Draft | 2 |
+| Draft | 4 |
 
 | Latest RFC | Title | Status |
 |---|---|---|
+| RFC 0041 | Multi-agent execution model Phase 4: LLM cache-key recipe normation + envelope-refusal recovery in replay context + determinism vs idempotency contract | Draft |
+| RFC 0040 | Multi-agent execution model Phase 3: cross-host causation linking + W3C tracecontext propagation across composition boundaries + cross-host run-ID resolution | Draft |
 | RFC 0039 | Multi-agent execution model Phase 2: confidence-threshold escalation + agent memory lifecycle across sub-runs and replay | Active |
 | RFC 0038 | OpenWOP Working Group charter | Draft |
 | RFC 0037 | Multi-agent execution model + replay determinism under nondeterministic models | Active |
-| RFC 0036 | Multi-region idempotency + cross-engine append-ordering guarantees | Active |
-| RFC 0035 | Sandbox execution contract for pack-loaded typeIds | Active |
 
 ## SDK Helper Coverage
 
@@ -71,7 +71,7 @@
 
 ## Active Follow-Ups
 
-- 2 RFCs still `Draft` (RFC 0025, RFC 0038) — advance with schema/conformance proof or defer.
+- 4 RFCs still `Draft` (RFC 0025, RFC 0038, RFC 0040, RFC 0041) — advance with schema/conformance proof or defer.
 - 8 RFCs `Active` (RFC 0027, RFC 0028, RFC 0029, RFC 0034, RFC 0035, RFC 0036, RFC 0037, RFC 0039) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - SDK parity still shows raw-only rows for several stable v1.x helper surfaces.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
