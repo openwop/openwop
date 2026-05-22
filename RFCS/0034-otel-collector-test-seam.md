@@ -59,6 +59,8 @@ Add to `schemas/capabilities.schema.json` under `capabilities.observability`:
 
 Both seams live under the `host-extensions.md` canonical-prefix `/v1/host/sample/test/*` and are NOT part of the v1 wire surface. Production hosts SHOULD return 404 or 403 from the seam unless `OPENWOP_TEST_OTEL_SCRAPE=true` (or equivalent env-gate) is set.
 
+**Upstream dependency on RFC 0021 envelope-accept (normative).** The OTel scrape seam observes span buffers populated by the host's envelope-handling instrumentation. The conformance scenario `envelope-reasoning-secret-redaction.test.ts` drives a redacted reasoning trace through the `POST /v1/host/sample/envelope/accept` seam (RFC 0021) and verifies the spans the OTel scrape seam returns do NOT carry the canary plaintext. A host advertising `observability.testSeams.otelScrape: true` without also serving `/v1/host/sample/envelope/accept` (RFC 0021) returns empty span buffers for the conformance run — the seam-shape probe still passes (a `200 OK { spans: [] }` is valid) but the behavioral SR-1 assertion is vacuous because there's no span content to check against. Hosts SHOULD NOT advertise `otelScrape: true` without RFC 0021 envelope-accept also wired; honest hosts that don't yet serve envelope-accept leave `otelScrape` un-advertised (or `false`) until both surfaces are in place. Symmetrically: the debug-bundle export seam observes the debug-bundle payload constructed by the run's event log + reasoning emission path; hosts without envelope-accept produce bundles that don't contain reasoning content, and the SR-1 assertion is again vacuous.
+
 ### §C — SECURITY invariant promotion
 
 `SECURITY/invariants.yaml` flips two rows from `tier: reference-impl` to `tier: protocol`:

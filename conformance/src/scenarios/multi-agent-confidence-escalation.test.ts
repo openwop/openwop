@@ -111,15 +111,22 @@ describe.skipIf(BEHAVIORAL_SKIP)('multi-agent-confidence-escalation: behavioral 
     const terminal = await pollUntilTerminal(runId);
     // Phase 2 escalation suspends the parent — NOT a terminal `completed`.
     // The conformance pollUntilTerminal returns when the run reaches any
-    // settled status; we expect `waiting-clarification` or equivalent
-    // non-completed status carrying an open clarification interrupt.
+    // settled status. RFC 0039 §A gives hosts a choice: clarify-kind
+    // escalation (→ waiting-clarification) OR escalate-kind approval
+    // (→ waiting-approval). The scenario MUST accept either canonical
+    // status. Hosts using vendor-extension interrupt kinds (e.g., a host-
+    // specific `x-host-<host>-<kind>` per `host-extensions.md`) currently
+    // can't pass this assertion without spec follow-up adding a
+    // capability flag advertising their kind; until then, this assertion
+    // is the canonical bar.
+    const acceptedStatuses = ['waiting-clarification', 'waiting-approval'];
     expect(
-      terminal.status,
+      acceptedStatuses.includes(terminal.status as string),
       driver.describe(
         'RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md §A + spec/v1/interrupt.md',
-        'a host emitting `interrupt.kind: "clarification"` MUST surface the run as `waiting-clarification` per spec/v1/interrupt.md §"Interrupt kinds"; low-confidence decision MUST NOT reach `completed` because no dispatch fired',
+        'a host below the confidence floor MUST surface the run as `waiting-clarification` (clarify-kind escalation) OR `waiting-approval` (escalate-kind escalation) per RFC 0039 §A; the low-confidence decision MUST NOT reach `completed` because no dispatch fired',
       ),
-    ).toBe('waiting-clarification');
+    ).toBe(true);
 
     const eventsRes = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events`);
     expect(eventsRes.status).toBe(200);

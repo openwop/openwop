@@ -24,6 +24,18 @@ In response to a 2026-05-22 external standards-readiness review of the openwop c
 
 Gate: `bash scripts/openwop-check.sh` green. No wire-shape changes. Spec-corpus-validity 642/642 PASS. `additive` per `COMPATIBILITY.md` §2.1 for the two new RFCs.
 
+### MyndHyve adoption-pass spec follow-ups — RFC 0037 cancelled-phase optionality + RFC 0039 interrupt-kind flexibility + RFC 0034 envelope-accept dependency (2026-05-22)
+
+Three spec clarifications responding to questions surfaced in MyndHyve's adoption pass (5 RFCs substantively shipped non-steward-side, 3 deferred with documented blockers).
+
+- **RFC 0037 — `child.cancelled` emission is conditional, not absolute.** MyndHyve flagged that their `ChildRunOutcome.status` union is `'completed' | 'failed' | 'running'` — no distinct `cancelled` terminal state — so they have no way to produce a `running → cancelled` transition. The RFC 0037 transition-events table at `spec/v1/multi-agent-execution.md:65–71` implies emission tracks transitions, but a strict reading could be that all 7 phases are mandatory. Added an explicit **"Conditional emission (normative)"** paragraph: hosts MUST emit every phase whose transition occurs; MUST NOT synthesize phases their dispatch primitive doesn't surface; the `phase` enum carries every transition for forward-compat; hosts that later gain explicit cancellation begin emitting `child.cancelled` additively.
+- **RFC 0039 — confidence-escalation conformance accepts both canonical interrupt kinds.** Conformance scenario `multi-agent-confidence-escalation.test.ts` asserted `terminal.status === 'waiting-clarification'` (strict equality on the clarify-kind escalation). RFC 0039 §A normatively says hosts SHALL "either" use clarify (→ `waiting-clarification`) OR escalate-approval (→ `waiting-approval`) — the conformance was stricter than the spec. Relaxed to accept either canonical status. MyndHyve's vendor-specific `interrupt.kind: 'low-confidence'` still can't pass without renaming or namespacing as `x-host-myndhyve-<kind>`, but that's a host-side choice — the spec doesn't pin a specific waiting-status, just the two canonical options. A follow-up RFC may add `multiAgent.executionModel.confidenceEscalationInterruptKind` capability advertisement so vendor-extension kinds become conformance-testable without renaming.
+- **RFC 0034 — explicit upstream dependency on RFC 0021 envelope-accept.** MyndHyve's audit surfaced that the OTel scrape seam's behavioral content depends on span buffers populated by the `POST /v1/host/sample/envelope/accept` flow (RFC 0021). A host advertising `observability.testSeams.otelScrape: true` without RFC 0021 envelope-accept returns empty span buffers — seam-shape probe passes, behavioral SR-1 assertion is vacuous. Added a **"Upstream dependency on RFC 0021 envelope-accept (normative)"** paragraph to RFC 0034 §B making the dependency explicit + recommending honest hosts leave `otelScrape` un-advertised until envelope-accept is also wired.
+
+No new wire-shape additions. Compatibility: additive per COMPATIBILITY.md §2.1 — RFC 0037 prose codifies the natural reading of conditional emission; RFC 0039 conformance relaxes a strict assertion to match the RFC's actual normative content; RFC 0034 prose adds a dependency note that doesn't change the seam contract itself.
+
+Gate: spec-corpus-validity + fixtures-valid PASS.
+
 ### RFC 0027 + 0028 + 0029 acceptance-criteria audit — reflect actually-shipped state (2026-05-22)
 
 The three prompt-track RFCs had EVERY acceptance criterion checkbox at `[ ]` despite the bulk of the work having shipped. Audit pass mechanically verified each criterion and updated the boxes:

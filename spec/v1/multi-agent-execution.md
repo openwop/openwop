@@ -72,6 +72,8 @@ Each transition MUST emit a `core.workflowChain.event` (NEW event type — see �
 
 The transition `running → harvested` MUST happen exactly when the child reaches a terminal `completed` AND the dispatch config's `outputMapping` is non-empty. Failed/cancelled children MUST skip the harvest per RFC 0022 §B (the `output.harvested` event MUST NOT fire for those terminal states).
 
+**Conditional emission (normative).** Each row in the table above is conditional on the transition actually occurring on the host. If the host's dispatch primitive does not surface a particular terminal state — most commonly `cancelled` (some hosts collapse cancellation into `failed` with a distinct `error.code`) — the host MUST NOT synthesize the matching event. Phases the host's dispatch surfaces MUST emit per the table; phases the host's dispatch never produces MUST be absent from the event log. The `phase` enum in `schemas/run-event-payloads.schema.json` §`coreWorkflowChainEvent.phase` carries every possible transition for forward-compatibility; emission tracks the host's actual transitions. A host that later gains explicit cancellation semantics begins emitting `child.cancelled` additively at that point.
+
 ## Confidence escalation (RFC 0039 Phase 2, normative)
 
 Per [RFC 0039](../../RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md) §A. Applies only when the host advertises `capabilities.multiAgent.executionModel.version >= 2`.
