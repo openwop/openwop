@@ -571,27 +571,7 @@ function message(
 <li><code>replay.md</code> — reducer-at-write-time guarantees replay determinism</li>
 <li><code>observability.md</code> — <code>openwop.channel.&amp;lt;name&amp;gt;</code> attribute on channel-write spans</li>
 <li>LangGraph state model: &lt;https://langchain-ai.github.io/langgraph/concepts/low_level/#state&gt;</li>
-</ul></article></div><script>
-(function () {
-  var links = document.querySelectorAll('.spec-toc a');
-  if (!links.length || !('IntersectionObserver' in window)) return;
-  var byId = new Map();
-  links.forEach(function (a) { byId.set(a.getAttribute('href').slice(1), a); });
-  var observer = new IntersectionObserver(function (entries) {
-    entries.forEach(function (e) {
-      if (e.isIntersecting) {
-        links.forEach(function (a) { a.classList.remove('is-active'); });
-        var link = byId.get(e.target.id);
-        if (link) link.classList.add('is-active');
-      }
-    });
-  }, { rootMargin: '-30% 0px -60% 0px' });
-  byId.forEach(function (_, id) {
-    var el = document.getElementById(id);
-    if (el) observer.observe(el);
-  });
-})();
-</script>
+</ul></article></div><script src="/assets/spec-toc.js" defer></script>
   </div>
 </main>
 

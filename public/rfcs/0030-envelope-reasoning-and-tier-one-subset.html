@@ -328,27 +328,7 @@
 <li><strong>Schemas additive (no MUST relaxed):</strong></li>
 </ul>
 <p>  - <code>schemas/envelopes/clarification.request.schema.json</code> — <code>reasoning</code> property added as OPTIONAL (not in <code>required</code>); preserves v1.1 backward compat. <code>additionalProperties: false</code> unchanged.   - <code>schemas/envelopes/schema.request.schema.json</code> — same.   - <code>schemas/envelopes/error.schema.json</code> — same.   - <code>schemas/envelopes/schema.response.schema.json</code> — INTENTIONALLY UNMODIFIED (side-channel ack; no reasoning needed per RFC §A).   - <code>schemas/capabilities.schema.json</code> — new optional top-level <code>envelopes</code> block with <code>reasoning.{supported, promptDirective}</code> + <code>tierOneSubsetCompliance</code> enum. <code>additionalProperties: true</code> on <code>envelopes</code> reserved for future RFC 0031/0032/0033 extensions (<code>modelCapabilities</code> is a sibling top-level block; <code>reliability</code> extends <code>envelopes</code> in RFC 0032).</p>
-<p>Path to <code>Active → Accepted</code>: requires the reference workflow-engine to (a) advertise <code>capabilities.envelopes.reasoning.supported: true</code> + <code>capabilities.envelopes.tierOneSubsetCompliance: &quot;strict&quot;</code> (or <code>&quot;warn&quot;</code>) at <code>/.well-known/openwop</code>, (b) implement the system-prompt-injection helper (<code>prompts/envelopeDirective.ts</code> or equivalent) that instructs the model to populate <code>reasoning</code> when appropriate, (c) ship the three conformance scenarios from §"Conformance", and (d) ship the <code>envelope-reasoning-secret-redaction</code> invariant in <code>SECURITY/invariants.yaml</code> paired with the matching conformance scenario. Alternatively, path (b) closes when a non-steward host advertises the capability — same posture as RFC 0021 / RFC 0026.</p></article></div><script>
-(function () {
-  var links = document.querySelectorAll('.spec-toc a');
-  if (!links.length || !('IntersectionObserver' in window)) return;
-  var byId = new Map();
-  links.forEach(function (a) { byId.set(a.getAttribute('href').slice(1), a); });
-  var observer = new IntersectionObserver(function (entries) {
-    entries.forEach(function (e) {
-      if (e.isIntersecting) {
-        links.forEach(function (a) { a.classList.remove('is-active'); });
-        var link = byId.get(e.target.id);
-        if (link) link.classList.add('is-active');
-      }
-    });
-  }, { rootMargin: '-30% 0px -60% 0px' });
-  byId.forEach(function (_, id) {
-    var el = document.getElementById(id);
-    if (el) observer.observe(el);
-  });
-})();
-</script>
+<p>Path to <code>Active → Accepted</code>: requires the reference workflow-engine to (a) advertise <code>capabilities.envelopes.reasoning.supported: true</code> + <code>capabilities.envelopes.tierOneSubsetCompliance: &quot;strict&quot;</code> (or <code>&quot;warn&quot;</code>) at <code>/.well-known/openwop</code>, (b) implement the system-prompt-injection helper (<code>prompts/envelopeDirective.ts</code> or equivalent) that instructs the model to populate <code>reasoning</code> when appropriate, (c) ship the three conformance scenarios from §"Conformance", and (d) ship the <code>envelope-reasoning-secret-redaction</code> invariant in <code>SECURITY/invariants.yaml</code> paired with the matching conformance scenario. Alternatively, path (b) closes when a non-steward host advertises the capability — same posture as RFC 0021 / RFC 0026.</p></article></div><script src="/assets/spec-toc.js" defer></script>
   </div>
 </main>
 

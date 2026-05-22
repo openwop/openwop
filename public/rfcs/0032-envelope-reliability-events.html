@@ -510,27 +510,7 @@ Kind / payload / contract / limits / redaction / trust / dedup → handler
 </ul>
 <p>  - <code>schemas/run-event.schema.json</code> — <code>RunEventType</code> enum gains six entries (<code>envelope.retry.attempted</code>, <code>envelope.retry.exhausted</code>, <code>envelope.refusal</code>, <code>envelope.truncated</code>, <code>envelope.nlToFormat.engaged</code>, <code>envelope.recovery.applied</code>) clustered with the existing cross-kind operational events (after <code>model.capability.insufficient</code> per RFC 0031, before <code>agent.toolCalled</code>).   - <code>schemas/run-event-payloads.schema.json</code> — <code>_typeIndex</code> gets six new entries; six new <code>$defs</code> ship with full payload contracts. The <code>reason</code> enum on <code>envelopeRetryAttempted</code> and <code>finalReason</code> on <code>envelopeRetryExhausted</code> use <code>anyOf [closed enum, x-host-* pattern]</code> for the closed-enum + extension surface per RFC 0032 §B.1 + the MyndHyve <code>type-mismatch</code> distinction. <code>envelopeRefusal.refusalText</code> documents SR-1 + prompt-content double-redaction with <code>null</code>-on-replay-tolerance. <code>envelopeRecoveryApplied</code> documents the no-content-leak invariant (only path + byteOffset; never pre-recovery substrings). The schema description's variant count bumped 55 → 61 (53 baseline + 2 RFC 0031 + 6 RFC 0032).   - <code>schemas/capabilities.schema.json</code> — <code>envelopes.reliability</code> sub-block lands inside the RFC-0030 <code>envelopes</code> container. Required <code>supported: boolean</code>; optional <code>events: string[]</code> (closed enum of the six event names — hosts list only what they actually emit); <code>maxRetryAttempts: 1..16</code>; <code>completion: { distinguishesTruncation, truncationBudgetMultiplier? }</code> (the RFC 0033 sub-block lands here as part of the same envelope-track structure since 0033 depends on 0032's event vocabulary).</p>
 <p><strong><code>api/asyncapi.yaml</code> deferred.</strong> The original RFC §"Affects" line listed <code>api/asyncapi.yaml (adds 6 channels)</code>. Skipped in the Phase-1 batch to match the RFC 0026 / RFC 0027 / RFC 0029 precedent — those Active RFCs ship <code>RunEventType</code> extensions without per-event AsyncAPI message definitions, relying on the catch-all <code>AnyRunEvent</code> message for the debug-stream surface. The named-message asyncapi entries are decorative for canonical lifecycle events (<code>RunStarted</code>, <code>NodeDispatched</code>, etc.); event-log subscribers receive the new event types through the existing channels regardless. If a future RFC tightens AsyncAPI to require per-event messages for every <code>RunEventType</code> enum entry, this RFC's events join the family in the same batch.</p>
-<p>Path to <code>Active → Accepted</code>: requires the reference workflow-engine to (a) advertise <code>capabilities.envelopes.reliability.supported: true</code> with at least the two MUST-tier events in <code>events[]</code>, (b) implement emission via <code>executor/envelopeReliability.ts</code> (or equivalent) hooked into the existing envelope-validation pipeline at the documented emission points (parse failure / shape validation / payload validation / provider refusal / stop-reason inspection / recovery path identification), (c) ship the six conformance scenarios from §"Conformance" — the four non-MUST scenarios may soft-skip on hosts that omit those events from <code>events[]</code>, and (d) ship the two SECURITY invariants (<code>envelope-refusal-no-prompt-leak</code>, <code>envelope-recovery-no-content-leak</code>) alongside the matching conformance assertions. Alternatively, a non-steward host advertising the capability closes the third-party validation gate per the RFC 0021 / RFC 0026 precedent.</p></article></div><script>
-(function () {
-  var links = document.querySelectorAll('.spec-toc a');
-  if (!links.length || !('IntersectionObserver' in window)) return;
-  var byId = new Map();
-  links.forEach(function (a) { byId.set(a.getAttribute('href').slice(1), a); });
-  var observer = new IntersectionObserver(function (entries) {
-    entries.forEach(function (e) {
-      if (e.isIntersecting) {
-        links.forEach(function (a) { a.classList.remove('is-active'); });
-        var link = byId.get(e.target.id);
-        if (link) link.classList.add('is-active');
-      }
-    });
-  }, { rootMargin: '-30% 0px -60% 0px' });
-  byId.forEach(function (_, id) {
-    var el = document.getElementById(id);
-    if (el) observer.observe(el);
-  });
-})();
-</script>
+<p>Path to <code>Active → Accepted</code>: requires the reference workflow-engine to (a) advertise <code>capabilities.envelopes.reliability.supported: true</code> with at least the two MUST-tier events in <code>events[]</code>, (b) implement emission via <code>executor/envelopeReliability.ts</code> (or equivalent) hooked into the existing envelope-validation pipeline at the documented emission points (parse failure / shape validation / payload validation / provider refusal / stop-reason inspection / recovery path identification), (c) ship the six conformance scenarios from §"Conformance" — the four non-MUST scenarios may soft-skip on hosts that omit those events from <code>events[]</code>, and (d) ship the two SECURITY invariants (<code>envelope-refusal-no-prompt-leak</code>, <code>envelope-recovery-no-content-leak</code>) alongside the matching conformance assertions. Alternatively, a non-steward host advertising the capability closes the third-party validation gate per the RFC 0021 / RFC 0026 precedent.</p></article></div><script src="/assets/spec-toc.js" defer></script>
   </div>
 </main>
 

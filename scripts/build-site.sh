@@ -67,9 +67,10 @@ if [[ -d "$SITE/dist/api/rest" ]]; then
   cp -R "$SITE/dist/api/rest" "$PUBLIC/api/rest"
 fi
 
-# Shared asset stylesheet for the rendered spec pages.
+# Shared asset stylesheet + sticky-ToC script for the rendered spec pages.
 mkdir -p "$PUBLIC/assets"
 cp "$SITE/dist/assets/style.css" "$PUBLIC/assets/style.css"
+cp "$SITE/dist/assets/spec-toc.js" "$PUBLIC/assets/spec-toc.js"
 
 # Site-generated favicon + OG defaults (used by the spec pages, not the
 # marketing one-pager — the marketing site keeps its own og-cover.png).

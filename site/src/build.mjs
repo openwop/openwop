@@ -111,8 +111,11 @@ function extractToc(md) {
 /**
  * Render an extracted ToC as a sticky left-rail aside. Wraps the supplied
  * article HTML in a 2-column grid so spec docs and RFCs get a navigable
- * sidebar without the template having to know about it. Includes a tiny
- * inline IntersectionObserver that highlights the currently-scrolled section.
+ * sidebar without the template having to know about it. The active-section
+ * highlighter lives in `site/templates/spec-toc.js` (copied to
+ * `/assets/spec-toc.js` by `buildAssets()`); each wrapped page emits a
+ * single `<script src="…" defer>` reference instead of inlining the
+ * observer body per page.
  */
 function wrapWithToc(articleHtml, toc, { tocTitle = 'On this page' } = {}) {
   if (!toc || toc.length < 3) {
@@ -129,31 +132,10 @@ function wrapWithToc(articleHtml, toc, { tocTitle = 'On this page' } = {}) {
       ${items}
     </ul>
   </aside>`;
-  const script = `<script>
-(function () {
-  var links = document.querySelectorAll('.spec-toc a');
-  if (!links.length || !('IntersectionObserver' in window)) return;
-  var byId = new Map();
-  links.forEach(function (a) { byId.set(a.getAttribute('href').slice(1), a); });
-  var observer = new IntersectionObserver(function (entries) {
-    entries.forEach(function (e) {
-      if (e.isIntersecting) {
-        links.forEach(function (a) { a.classList.remove('is-active'); });
-        var link = byId.get(e.target.id);
-        if (link) link.classList.add('is-active');
-      }
-    });
-  }, { rootMargin: '-30% 0px -60% 0px' });
-  byId.forEach(function (_, id) {
-    var el = document.getElementById(id);
-    if (el) observer.observe(el);
-  });
-})();
-</script>`;
   // ToC first in source order so it lands in the left grid column on
   // desktop; on mobile the grid collapses and `order: 2` on .spec-toc
   // pushes it below the article so the primary content reads first.
-  return `<div class="spec-page-grid">${tocHtml}${articleHtml}</div>${script}`;
+  return `<div class="spec-page-grid">${tocHtml}${articleHtml}</div><script src="/assets/spec-toc.js" defer></script>`;
 }
 
 function markdownToHtml(md) {
@@ -761,11 +743,19 @@ function renderBadge(label, value, color) {
 }
 
 function buildAssets() {
-  // Copy the static CSS into dist
-  const css = readFile(join(TEMPLATES, 'style.css'));
   ensureDir(join(DIST, 'assets'));
+
+  // Subpage stylesheet (page-header, .spec-doc, .spec-page-grid, etc.).
+  const css = readFile(join(TEMPLATES, 'style.css'));
   writeFileSync(join(DIST, 'assets', 'style.css'), css);
   console.log('[openwop-site] wrote assets/style.css');
+
+  // Sticky-ToC active-section highlighter — referenced by every page
+  // wrapped via wrapWithToc(). Centralized here so a fix lands in ONE
+  // place instead of ~80 inline copies. Cacheable across pages.
+  const tocJs = readFile(join(TEMPLATES, 'spec-toc.js'));
+  writeFileSync(join(DIST, 'assets', 'spec-toc.js'), tocJs);
+  console.log('[openwop-site] wrote assets/spec-toc.js');
 }
 
 /**

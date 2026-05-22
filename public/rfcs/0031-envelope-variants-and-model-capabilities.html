@@ -424,27 +424,7 @@
 <li><strong>Schemas additive (no MUST relaxed):</strong></li>
 </ul>
 <p>  - <code>schemas/node-pack-manifest.schema.json</code> — NodeModule shape gains optional <code>requiredModelCapabilities: string[]</code> (pattern restricts to spec-reserved or <code>x-host-*</code> identifiers, ≤32 entries, uniqueItems) + optional <code>fallbackModel: { provider, model }</code> with provider lowercase-ASCII pattern + model min-length-1.   - <code>schemas/capabilities.schema.json</code> — new optional top-level <code>modelCapabilities</code> block with <code>supported: boolean</code> (required), <code>advertised: string[]</code>, <code>substitutionSupported: boolean</code>. Sibling to the existing <code>runtimeCapabilities</code> array (host capabilities) — semantic distinction documented in both descriptions.   - <code>schemas/run-event.schema.json</code> — <code>RunEventType</code> enum gains <code>&quot;model.capability.substituted&quot;</code> and <code>&quot;model.capability.insufficient&quot;</code> after <code>agent.promptResolved</code> (cross-kind operational cluster).   - <code>schemas/run-event-payloads.schema.json</code> — <code>_typeIndex</code> gets two new entries; two new <code>$defs</code> (<code>modelCapabilitySubstituted</code> + <code>modelCapabilityInsufficient</code>) carry the payload contracts. Substitution event documents the all-or-nothing <code>&quot;[REDACTED]&quot;</code> redaction option for <code>fallbackProvider</code>/<code>fallbackModel</code> per SECURITY invariant <code>model-capability-substituted-no-credential-disclosure</code>. Insufficient event documents the no-recursive-fallback constraint (<code>fallbackAttempted: true</code> when the declared fallback itself failed, no chaining).</p>
-<p>Path to <code>Active → Accepted</code>: requires the reference workflow-engine to (a) advertise <code>capabilities.modelCapabilities.supported: true</code> + <code>advertised[]</code> populated by a capability-probe over <code>aiProviders.supported[]</code>, (b) implement the dispatch gate in <code>executor/executor.ts</code> (or <code>executor/modelCapabilityGate.ts</code> sibling) that consults the active model's advertised capabilities + emits <code>model.capability.{substituted,insufficient}</code>, (c) ship the four conformance scenarios from §"Conformance" (including the discriminator-static and substitution/insufficient/declaration shape assertions), and (d) ship the <code>model-capability-substituted-no-credential-disclosure</code> SECURITY invariant alongside the matching conformance scenario. Alternatively, a non-steward host advertising the capability closes the third-party validation gate per the RFC 0021 / RFC 0026 precedent.</p></article></div><script>
-(function () {
-  var links = document.querySelectorAll('.spec-toc a');
-  if (!links.length || !('IntersectionObserver' in window)) return;
-  var byId = new Map();
-  links.forEach(function (a) { byId.set(a.getAttribute('href').slice(1), a); });
-  var observer = new IntersectionObserver(function (entries) {
-    entries.forEach(function (e) {
-      if (e.isIntersecting) {
-        links.forEach(function (a) { a.classList.remove('is-active'); });
-        var link = byId.get(e.target.id);
-        if (link) link.classList.add('is-active');
-      }
-    });
-  }, { rootMargin: '-30% 0px -60% 0px' });
-  byId.forEach(function (_, id) {
-    var el = document.getElementById(id);
-    if (el) observer.observe(el);
-  });
-})();
-</script>
+<p>Path to <code>Active → Accepted</code>: requires the reference workflow-engine to (a) advertise <code>capabilities.modelCapabilities.supported: true</code> + <code>advertised[]</code> populated by a capability-probe over <code>aiProviders.supported[]</code>, (b) implement the dispatch gate in <code>executor/executor.ts</code> (or <code>executor/modelCapabilityGate.ts</code> sibling) that consults the active model's advertised capabilities + emits <code>model.capability.{substituted,insufficient}</code>, (c) ship the four conformance scenarios from §"Conformance" (including the discriminator-static and substitution/insufficient/declaration shape assertions), and (d) ship the <code>model-capability-substituted-no-credential-disclosure</code> SECURITY invariant alongside the matching conformance scenario. Alternatively, a non-steward host advertising the capability closes the third-party validation gate per the RFC 0021 / RFC 0026 precedent.</p></article></div><script src="/assets/spec-toc.js" defer></script>
   </div>
 </main>
 

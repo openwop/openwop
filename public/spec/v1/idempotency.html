@@ -272,27 +272,7 @@ Server  — Persist response in Layer 1 idempotency cache, return to caller</cod
 <li><code>auth.md</code> — auth model</li>
 <li><code>rest-endpoints.md</code> — endpoint catalog (<code>Idempotency-Key</code> applies to every mutating endpoint)</li>
 <li>Host implementation notes: Layer 1 belongs at the HTTP/request-store boundary; Layer 2 belongs inside the engine's side-effect wrapper before any external provider call.</li>
-</ul></article></div><script>
-(function () {
-  var links = document.querySelectorAll('.spec-toc a');
-  if (!links.length || !('IntersectionObserver' in window)) return;
-  var byId = new Map();
-  links.forEach(function (a) { byId.set(a.getAttribute('href').slice(1), a); });
-  var observer = new IntersectionObserver(function (entries) {
-    entries.forEach(function (e) {
-      if (e.isIntersecting) {
-        links.forEach(function (a) { a.classList.remove('is-active'); });
-        var link = byId.get(e.target.id);
-        if (link) link.classList.add('is-active');
-      }
-    });
-  }, { rootMargin: '-30% 0px -60% 0px' });
-  byId.forEach(function (_, id) {
-    var el = document.getElementById(id);
-    if (el) observer.observe(el);
-  });
-})();
-</script>
+</ul></article></div><script src="/assets/spec-toc.js" defer></script>
   </div>
 </main>
 

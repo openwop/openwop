@@ -499,27 +499,7 @@
 <li><strong>INTEROP-MATRIX.md:</strong> <code>capabilities.prompts.<em></code> rows enumerated alongside the existing <code>capabilities.agents.</em></code> row family.</li>
 <li><strong>CHANGELOG.md:</strong> <code>[1.1.2 — unreleased]</code> entries cover spec text, schemas, reference host, conformance scenarios, SECURITY invariants, INTEROP-MATRIX update.</li>
 </ul>
-<p>Path to <code>Active → Accepted</code>: first non-steward host advertises <code>capabilities.prompts.supported: true</code> (third-party validation gate per RFC 0001 §"Promotion to Accepted") — MAY be waived under the bootstrap-phase waiver if the steward provides a public conformance run pointing at the advertised endpoint. All other acceptance-criteria boxes ticked.</p></article></div><script>
-(function () {
-  var links = document.querySelectorAll('.spec-toc a');
-  if (!links.length || !('IntersectionObserver' in window)) return;
-  var byId = new Map();
-  links.forEach(function (a) { byId.set(a.getAttribute('href').slice(1), a); });
-  var observer = new IntersectionObserver(function (entries) {
-    entries.forEach(function (e) {
-      if (e.isIntersecting) {
-        links.forEach(function (a) { a.classList.remove('is-active'); });
-        var link = byId.get(e.target.id);
-        if (link) link.classList.add('is-active');
-      }
-    });
-  }, { rootMargin: '-30% 0px -60% 0px' });
-  byId.forEach(function (_, id) {
-    var el = document.getElementById(id);
-    if (el) observer.observe(el);
-  });
-})();
-</script>
+<p>Path to <code>Active → Accepted</code>: first non-steward host advertises <code>capabilities.prompts.supported: true</code> (third-party validation gate per RFC 0001 §"Promotion to Accepted") — MAY be waived under the bootstrap-phase waiver if the steward provides a public conformance run pointing at the advertised endpoint. All other acceptance-criteria boxes ticked.</p></article></div><script src="/assets/spec-toc.js" defer></script>
   </div>
 </main>
 
