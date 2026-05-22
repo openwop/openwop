@@ -92,7 +92,10 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <header class="page-header">
+      <h1>Idempotency</h1>
+      <p class="lede">Workflow execution is full of operations that can be retried — externally (caller retries on 503, 408, network blip) and internally (engine retry policy on a node, sub-workflow re-entry, replay). Without an idempotency contract, retries duplicate…</p>
+    </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
     <h4>On this page</h4>
     <ul>
       <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>

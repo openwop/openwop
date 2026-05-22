@@ -494,12 +494,20 @@ function buildSpecDocs() {
     const md = readFile(join(specDir, f));
     const titleMatch = /^#\s+(.+)$/m.exec(md);
     const title = titleMatch ? titleMatch[1] : f;
+    // Friendly title for the page-header above the grid — strip the
+    // "openwop Spec v1 — " prefix so the visible title is just the
+    // doc name. Source's full H1 stays inside the article column.
+    const displayTitle = title.replace(/^openwop Spec v1 — /i, '');
     // First non-blockquote, non-heading paragraph as the doc-specific description.
     // Falls back to canonical description for surfacing the protocol when the
     // doc-specific intro is missing or too short.
     const docDescription = extractFirstParagraph(md) ?? CANONICAL_DESCRIPTION;
+    const pageHeader = `<header class="page-header">
+      <h1>${escapeHtml(displayTitle)}</h1>
+      <p class="lede">${escapeHtml(docDescription)}</p>
+    </header>`;
     const articleHtml = `<article class="spec-doc">${markdownToHtml(md)}</article>`;
-    const content = wrapWithToc(articleHtml, extractToc(md));
+    const content = pageHeader + wrapWithToc(articleHtml, extractToc(md));
     const slug = f.replace(/\.md$/, '');
     const canonicalPath = `/spec/v1/${slug}.html`;
     const jsonLd = {
@@ -974,8 +982,12 @@ function buildRfcs() {
       /^Status:\s*`?([A-Za-z][A-Za-z0-9 -]*?)`?\s*$/m.exec(md);
     const slug = f.replace(/\.md$/, '');
     const description = extractFirstParagraph(md) ?? CANONICAL_DESCRIPTION;
+    const pageHeader = `<header class="page-header">
+      <h1>${escapeHtml(title)}</h1>
+      <p class="lede">${escapeHtml(description)}</p>
+    </header>`;
     const articleHtml = `<article class="spec-doc">${markdownToHtml(md)}</article>`;
-    const content = wrapWithToc(articleHtml, extractToc(md));
+    const content = pageHeader + wrapWithToc(articleHtml, extractToc(md));
     writeFileSync(
       join(DIST, 'rfcs', `${slug}.html`),
       templatePage({
@@ -1040,8 +1052,12 @@ function buildContentDir() {
     const titleMatch = /^#\s+(.+)$/m.exec(md);
     const title = titleMatch ? titleMatch[1] : r.label;
     const description = extractFirstParagraph(md) ?? CANONICAL_DESCRIPTION;
+    const pageHeader = `<header class="page-header">
+      <h1>${escapeHtml(title)}</h1>
+      <p class="lede">${escapeHtml(description)}</p>
+    </header>`;
     const articleHtml = `<article class="spec-doc">${markdownToHtml(md)}</article>`;
-    const content = wrapWithToc(articleHtml, extractToc(md));
+    const content = pageHeader + wrapWithToc(articleHtml, extractToc(md));
     const destDir = join(DIST, ...r.dest);
     ensureDir(destDir);
     const canonicalPath = `/${r.dest.join('/')}/`;

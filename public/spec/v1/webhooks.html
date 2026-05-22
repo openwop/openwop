@@ -92,7 +92,10 @@
 
 <main class="site-main">
   <div class="wrap">
-    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <header class="page-header">
+      <h1>Webhook Subscriptions</h1>
+      <p class="lede">Polling GET /v1/runs/{runId} to learn about run progress is inefficient — clients pay round-trip cost on every check, and the runtime serves identical state until the next event. The SSE event stream solves this for live consumers (browsers, CLIs)…</p>
+    </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
     <h4>On this page</h4>
     <ul>
       <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>

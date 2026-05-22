@@ -721,9 +721,21 @@
 /* ─── Sticky left-rail ToC for spec docs + RFCs + markdown surfaces ── */
 .spec-page-grid {
   display: grid;
-  grid-template-columns: 240px minmax(0, 1fr);
+  /* Left ToC rail: 288px (was 240px — bumped 20% wider per user request).
+   * Wider rail lets longer "On this page" link text wrap less. */
+  grid-template-columns: 288px minmax(0, 1fr);
   gap: 2.5rem;
   align-items: start;
+}
+
+/* When a .page-header sits ABOVE the spec-page-grid (every long-form
+ * page now does this — buildSpecDocs, buildRfcs, buildContentDir, and
+ * buildMarkdownDoc all emit it), the article's own H1 inside the grid
+ * column duplicates the header's H1. Hide the inline H1 so the page
+ * has a single canonical title at the top. The H1's `id` is preserved
+ * for in-page anchor links (the ToC observer still finds it). */
+.page-header + .spec-page-grid .spec-doc > h1:first-of-type {
+  display: none;
 }
 .spec-toc {
   position: sticky;
