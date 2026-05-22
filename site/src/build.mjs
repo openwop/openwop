@@ -1131,6 +1131,9 @@ function buildApiExplorer() {
                 textColor: '#1a1a17',        // --ink for text on cream
                 width: '35%',
               },
+              codeBlock: {
+                backgroundColor: '#f4f1ea',  // --paper, matches panel
+              },
             },
           }, document.getElementById('redoc-container'));
         } else {

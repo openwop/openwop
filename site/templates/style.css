@@ -161,18 +161,29 @@
 /* Redoc syntax-highlighter punctuation fix.
  *
  * JSON punctuation tokens — `{`, `}`, `[`, `]`, `,`, `:` — render in a
- * color that matches the code-block background. Force them to a
- * readable shade against whichever background applies.
- *
- * The panel itself is now `--paper` (cream); inside it, the code-
- * sample block stays dark (Redoc default). Target the .code-block
- * scope so we set the right contrast for each. */
+ * color that matches the code-block background. Both the panel and
+ * the code-sample block are now `--paper` (cream), so force
+ * punctuation to ink for legibility. */
 #redoc-container .token.punctuation,
 #redoc-container .token.operator,
 #redoc-container .token.delimiter {
-  /* Cream against the dark code block. Same opacity as token defaults
-   * so it sits at the same visual weight as the JSON keys/values. */
-  color: rgba(244, 241, 234, 0.85) !important;
+  color: rgba(26, 26, 23, 0.7) !important;  /* ink at 70% — sits below keys */
+}
+/* JSON keys, strings, numbers also need to be tuned for the cream
+ * background. Redoc's default token colors are calibrated for a dark
+ * panel; on cream the green strings + blue numbers + white keys all
+ * read poorly. Override with brand-paired tones that hold contrast
+ * against `--paper`. */
+#redoc-container .token.property {
+  color: var(--ink) !important;          /* JSON keys: full ink */
+}
+#redoc-container .token.string {
+  color: oklch(48% 0.14 145) !important;  /* deeper green on cream */
+}
+#redoc-container .token.number,
+#redoc-container .token.boolean,
+#redoc-container .token.null {
+  color: oklch(48% 0.14 240) !important;  /* deeper blue on cream */
 }
 @media (max-width: 760px) {
   .api-explorer-head { gap: 12px; }
