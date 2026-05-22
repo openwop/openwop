@@ -68,16 +68,20 @@ Add to `schemas/capabilities.schema.json`:
 
 ### §B — Failure-mode invariants (normative)
 
-When `capabilities.sandbox.supported: true`, the host MUST enforce the 8 invariants currently at `SECURITY/invariants.yaml` `node-pack-sandbox-*`:
+When `capabilities.sandbox.supported: true`, the host MUST enforce the 8 invariants enumerated below. The table maps each invariant to (a) the canonical SECURITY invariant ID in `SECURITY/invariants.yaml` and (b) the conformance scenario that exercises it (canonical scenario naming `sandbox-*.test.ts` per `@openwop/openwop-conformance@1.4.0`):
 
-1. `node-pack-sandbox-no-host-fs-escape` — sandbox code MUST NOT read or write files outside the host-advertised sandbox root.
-2. `node-pack-sandbox-no-host-env-leak` — host environment variables MUST NOT be visible to sandbox code unless the host has explicitly forwarded them via an `allowedHostCalls` entry.
-3. `node-pack-sandbox-no-network-escape` — sandbox code MUST NOT initiate network requests unless `host.fetch` (or equivalent) is in `allowedHostCalls`.
-4. `node-pack-sandbox-no-host-process-escape` — sandbox code MUST NOT spawn host processes, fork, or call exec-family syscalls.
-5. `node-pack-sandbox-memory-cap` — exceeding `memoryLimitBytes` MUST fail the node with `error.code: "sandbox_memory_exceeded"`.
-6. `node-pack-sandbox-timeout-cap` — exceeding `wallClockLimitMs` MUST fail the node with `error.code: "sandbox_timeout"`.
-7. `node-pack-sandbox-capability-gate-respected` — sandbox code MUST NOT bypass the host's capability-advertisement check; calls to undeclared host capabilities MUST fail closed.
-8. `node-pack-sandbox-no-cross-pack-mutation` — sandbox code from pack A MUST NOT mutate state visible to pack B inside the same host process.
+| # | Normative requirement | SECURITY invariant ID | Conformance scenario |
+|---|---|---|---|
+| 1 | Sandbox code MUST NOT read or write files outside the host-advertised sandbox root. | `node-pack-sandbox-fs-gated` | `sandbox-no-host-fs-escape.test.ts` |
+| 2 | Host environment variables MUST NOT be visible to sandbox code unless the host has explicitly forwarded them via an `allowedHostCalls` entry. | `node-pack-sandbox-no-env` | `sandbox-no-host-env-leak.test.ts` |
+| 3 | Sandbox code MUST NOT initiate network requests unless `host.fetch` (or equivalent) is in `allowedHostCalls`. | `node-pack-sandbox-network-gated` | `sandbox-no-network-escape.test.ts` |
+| 4 | Sandbox code MUST NOT spawn host processes, fork, or call exec-family syscalls. | `node-pack-sandbox-no-process` | `sandbox-no-host-process-escape.test.ts` |
+| 5 | Exceeding `memoryLimitBytes` MUST fail the node with `error.code: "sandbox_memory_exceeded"`. | `node-pack-sandbox-memory-cap` | `sandbox-memory-cap.test.ts` (+ `wasm-pack-memory-cap.test.ts` for the WASM-runtime path) |
+| 6 | Exceeding `wallClockLimitMs` MUST fail the node with `error.code: "sandbox_timeout"`. | `node-pack-sandbox-timeout` | `sandbox-timeout-cap.test.ts` |
+| 7 | Sandbox code MUST NOT bypass the host's capability-advertisement check; calls to undeclared host capabilities MUST fail closed with `error.code: "sandbox_capability_denied"`. | (paired with `node-pack-sandbox-no-eval` at `tier: reference-impl` — the runtime-agnostic invariant has scenario coverage even though the SECURITY row stays exempt) | `sandbox-capability-gate-respected.test.ts` |
+| 8 | Sandbox code from pack A MUST NOT mutate state visible to pack B inside the same host process. | `node-pack-sandbox-isolated-context` | `sandbox-no-cross-pack-mutation.test.ts` |
+
+7 of 8 SECURITY invariants graduated `reference-impl → protocol` on 2026-05-22 with `tests:` globs pointing at the matching scenarios. `node-pack-sandbox-no-eval` stays at `reference-impl` because no-eval is JS-runtime-specific (no `eval()`, no `new Function()`) and has no direct cross-runtime conformance assertion — wasmtime / nsjail runtimes don't expose `eval()` semantics. The capability-gate invariant (#7 above) is the closest runtime-agnostic counterpart and has its own scenario coverage; a JS-pack-loading host that ships a dedicated `sandbox-no-eval.test.ts` would graduate the 8th row.
 
 ### §C — Error codes (additive to `rest-endpoints.md` §"Common error codes")
 
@@ -117,14 +121,14 @@ The promotion from `reference-impl` to `protocol` tier in `SECURITY/invariants.y
 ## Acceptance criteria
 
 - [ ] Spec text merged (this file).
-- [ ] `schemas/capabilities.schema.json` extended per §A.
-- [ ] `spec/v1/host-capabilities.md` extended with §"Sandbox execution contract" per §B + §C.
-- [ ] `spec/v1/rest-endpoints.md` §"Common error codes" gains 4 new codes per §C.
-- [ ] 8 new conformance scenarios per §D land in `conformance/src/scenarios/`.
-- [ ] At least one reference host implements + advertises `capabilities.sandbox`. Two viable paths: (a) NEW `examples/hosts/wasm-sandbox/` directory; (b) Postgres reference host extension using `wasmtime-postgres`. Either passes the 8 new scenarios end-to-end.
-- [ ] `SECURITY/invariants.yaml` 8 `node-pack-sandbox-*` rows graduate to `tier: protocol` with `public_tests` globs.
-- [ ] `INTEROP-MATRIX.md` row updated for the advertising host.
-- [ ] CHANGELOG entry under `[Unreleased]`.
+- [x] `schemas/capabilities.schema.json` extended per §A.
+- [x] `spec/v1/host-capabilities.md` extended with §"Sandbox execution contract" per §B + §C.
+- [x] `spec/v1/rest-endpoints.md` §"Common error codes" gains 4 new codes per §C.
+- [x] 8 new conformance scenarios per §D land in `conformance/src/scenarios/` — canonical names `sandbox-{capability-gate-respected, memory-cap, no-cross-pack-mutation, no-host-env-leak, no-host-fs-escape, no-host-process-escape, no-network-escape, timeout-cap}.test.ts`. Shipped in `@openwop/openwop-conformance@1.4.0` (2026-05-22).
+- [ ] At least one reference host implements + advertises `capabilities.sandbox`. Two viable paths: (a) NEW `examples/hosts/wasm-sandbox/` directory; (b) Postgres reference host extension using `wasmtime-postgres`. Either passes the 8 new scenarios end-to-end. (Path-to-Accepted.)
+- [x] `SECURITY/invariants.yaml` `node-pack-sandbox-*` rows graduate — 7 of 8 graduated `reference-impl → protocol` with `tests:` globs pointing at the matching scenarios 2026-05-22; `node-pack-sandbox-no-eval` stays `reference-impl` with a documented exemption (no-eval is JS-runtime-specific; non-JS runtimes don't expose `eval()` semantics, so there's no direct cross-runtime conformance assertion). Graduation reaches 8/8 if a JS-pack-loading host ships with a corresponding `sandbox-no-eval.test.ts`.
+- [ ] `INTEROP-MATRIX.md` row updated for the advertising host. (Will land alongside the reference-host implementation that advertises `capabilities.sandbox`.)
+- [x] CHANGELOG entry under `[Unreleased]` (conformance suite v1.4.0 CHANGELOG documents the 8 scenarios + naming-convention reconciliation note).
 
 Path to `Active → Accepted`: at least one non-steward host advertises the capability AND passes the 8 scenarios.
 

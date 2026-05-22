@@ -15,7 +15,7 @@
 
 ## Summary
 
-Define a normative host-extension test seam — `POST /v1/host/sample/test/otel/spans` and `POST /v1/host/sample/test/debug-bundle/export` — so cross-host conformance scenarios can mechanically verify that BYOK canaries don't leak into OTel span attributes or debug-bundle exports. Today the two corresponding `SECURITY/invariants.yaml` rows (`secret-leakage-otel-attribute`, `secret-leakage-debug-bundle-otel`) carry `tier: reference-impl` with `non_testability_rationale` because no cross-host seam exists; this RFC closes that gap and graduates both invariants to `tier: protocol`.
+Define a normative host-extension test seam — `GET /v1/host/sample/test/otel/spans` and `POST /v1/host/sample/test/debug-bundle/export` — so cross-host conformance scenarios can mechanically verify that BYOK canaries don't leak into OTel span attributes or debug-bundle exports. Today the two corresponding `SECURITY/invariants.yaml` rows (`secret-leakage-otel-attribute`, `secret-leakage-debug-bundle-otel`) carry `tier: reference-impl` with `non_testability_rationale` because no cross-host seam exists; this RFC closes that gap and graduates both invariants to `tier: protocol`.
 
 ## Motivation
 
@@ -39,7 +39,7 @@ Add to `schemas/capabilities.schema.json` under `capabilities.observability`:
 +        "properties": {
 +          "otelScrape": {
 +            "type": "boolean",
-+            "description": "Host exposes POST /v1/host/sample/test/otel/spans returning the host's accumulated OTel span buffer scoped to a runId. Conformance scenarios use this to verify span attributes don't carry BYOK canaries. The endpoint is conformance-only (host-extension namespace); production deployments SHOULD return 404 or 403."
++            "description": "Host exposes GET /v1/host/sample/test/otel/spans returning the host's accumulated OTel span buffer scoped to a runId. Conformance scenarios use this to verify span attributes don't carry BYOK canaries. The endpoint is conformance-only (host-extension namespace); production deployments SHOULD return 404 or 403."
 +          },
 +          "debugBundleExport": {
 +            "type": "boolean",

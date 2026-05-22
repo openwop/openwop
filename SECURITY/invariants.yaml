@@ -630,14 +630,20 @@ invariants:
   # and Workstream 4 SEC-4 for the policy.
 
   - id: node-pack-sandbox-no-process
-    tier: reference-impl
+    tier: protocol
     severity: critical
     threat_model: SECURITY/threat-model-node-packs.md
-    tests: []
-    non_testability_rationale: |
-      Pending the first reference host that executes pack-loaded
-      typeIds in a sandbox. Postgres reference host's pack-consumer
-      verifies install-time security only.
+    tests:
+      - conformance/src/scenarios/sandbox-no-host-process-escape.test.ts
+    note: |
+      RFC 0035 §A invariant 4. Sandboxed code MUST NOT spawn host
+      processes, fork, or call exec-family syscalls. Scenario asserts
+      a sandbox_escape_attempt envelope with escapeKind:
+      "host-process-escape" when the sandboxed pack attempts process
+      escape. Tier graduated reference-impl → protocol 2026-05-22
+      alongside the suite-wide sandbox scenario landing (conformance
+      suite v1.4.0). Behavioral assertion lights up when a host
+      advertises capabilities.sandbox.supported: true.
 
   - id: node-pack-sandbox-no-eval
     tier: reference-impl
@@ -645,61 +651,99 @@ invariants:
     threat_model: SECURITY/threat-model-node-packs.md
     tests: []
     non_testability_rationale: |
-      Pending a sandboxed pack runtime; see node-pack-sandbox-no-process.
+      Stays at reference-impl tier — the 8-row RFC 0035 §A invariant
+      list addresses "no dynamic code execution inside the sandbox,"
+      which is a JS-runtime-specific concern (no `eval()`, no `new
+      Function()`). The wider RFC 0035 invariant set covers the
+      cross-runtime concerns (fs-gated, network-gated, no-env, etc.);
+      no-eval has no direct cross-runtime conformance assertion
+      because non-JS runtimes (wasmtime, nsjail) don't expose
+      `eval()` semantics. Graduates if + when a JS-pack-loading host
+      ships with a corresponding `sandbox-no-eval.test.ts`.
 
   - id: node-pack-sandbox-network-gated
-    tier: reference-impl
+    tier: protocol
     severity: critical
     threat_model: SECURITY/threat-model-node-packs.md
-    tests: []
-    non_testability_rationale: |
-      Pending a sandboxed pack runtime; see node-pack-sandbox-no-process.
+    tests:
+      - conformance/src/scenarios/sandbox-no-network-escape.test.ts
+    note: |
+      RFC 0035 §A invariant 3. Sandboxed code MUST NOT initiate
+      network requests unless host.fetch (or equivalent) is in
+      allowedHostCalls. Tier graduated reference-impl → protocol
+      2026-05-22 (suite v1.4.0). Behavioral assertion lights up when
+      a host advertises capabilities.sandbox.supported: true.
 
   - id: node-pack-sandbox-fs-gated
-    tier: reference-impl
+    tier: protocol
     severity: critical
     threat_model: SECURITY/threat-model-node-packs.md
-    tests: []
-    non_testability_rationale: |
-      Pending a sandboxed pack runtime; see node-pack-sandbox-no-process.
+    tests:
+      - conformance/src/scenarios/sandbox-no-host-fs-escape.test.ts
+    note: |
+      RFC 0035 §A invariant 1. Sandboxed code MUST NOT read or write
+      files outside the host-advertised sandbox root. Scenario asserts
+      a sandbox_escape_attempt envelope with escapeKind:
+      "host-fs-escape". Tier graduated reference-impl → protocol
+      2026-05-22 (suite v1.4.0).
 
   - id: node-pack-sandbox-no-env
-    tier: reference-impl
+    tier: protocol
     severity: critical
     threat_model: SECURITY/threat-model-node-packs.md
-    tests: []
-    non_testability_rationale: |
-      Pending a sandboxed pack runtime; see node-pack-sandbox-no-process.
+    tests:
+      - conformance/src/scenarios/sandbox-no-host-env-leak.test.ts
+    note: |
+      RFC 0035 §A invariant 2. Host environment variables MUST NOT
+      be visible to sandbox code unless the host has explicitly
+      forwarded them via an allowedHostCalls entry. Tier graduated
+      reference-impl → protocol 2026-05-22 (suite v1.4.0).
 
   - id: node-pack-sandbox-timeout
-    tier: reference-impl
-    severity: high
-    threat_model: SECURITY/threat-model-node-packs.md
-    tests: []
-    non_testability_rationale: |
-      Pending a sandboxed pack runtime; see node-pack-sandbox-no-process.
-
-  - id: node-pack-sandbox-memory-cap
-    tier: reference-impl
+    tier: protocol
     severity: high
     threat_model: SECURITY/threat-model-node-packs.md
     tests:
-      - conformance/src/scenarios/wasm-pack-memory-cap.test.ts
+      - conformance/src/scenarios/sandbox-timeout-cap.test.ts
     note: |
-      Memory-cap enforcement for the WASM runtime is verified by
-      wasm-pack-memory-cap.test.ts against the
-      vendor.openwop.misbehaving-memory pack (declares ABI 1, allocates
-      ~1 GiB, expects cap.breached with kind: wasm-memory). Other
-      runtimes' memory caps are pending — see
-      node-pack-sandbox-no-process.
+      RFC 0035 §A invariant 6. Exceeding capabilities.sandbox
+      .wallClockLimitMs MUST fail the node with error.code:
+      "sandbox_timeout" (the canonical name in `spec/v1/rest-
+      endpoints.md` §"Common error codes"). Tier graduated
+      reference-impl → protocol 2026-05-22 (suite v1.4.0).
 
-  - id: node-pack-sandbox-isolated-context
-    tier: reference-impl
+  - id: node-pack-sandbox-memory-cap
+    tier: protocol
     severity: high
     threat_model: SECURITY/threat-model-node-packs.md
-    tests: []
-    non_testability_rationale: |
-      Pending a sandboxed pack runtime; see node-pack-sandbox-no-process.
+    tests:
+      - conformance/src/scenarios/sandbox-memory-cap.test.ts
+      - conformance/src/scenarios/wasm-pack-memory-cap.test.ts
+    note: |
+      RFC 0035 §A invariant 5. Exceeding capabilities.sandbox
+      .memoryLimitBytes MUST fail the node with error.code:
+      "sandbox_memory_exceeded". Two scenarios exercise this — the
+      WASM-runtime-specific path (wasm-pack-memory-cap.test.ts
+      against vendor.openwop.misbehaving-memory, expecting
+      cap.breached with kind: wasm-memory) AND the RFC 0035 generic
+      sandbox-memory-cap.test.ts that asserts the canonical
+      sandbox_memory_exceeded envelope across any sandbox runtime
+      a host advertises. Tier graduated reference-impl → protocol
+      2026-05-22 (suite v1.4.0).
+
+  - id: node-pack-sandbox-isolated-context
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests:
+      - conformance/src/scenarios/sandbox-no-cross-pack-mutation.test.ts
+    note: |
+      RFC 0035 §A invariant 8. Sandboxed code from pack A MUST NOT
+      mutate state visible to pack B inside the same host process.
+      The scenario drives two packs through `core.pack.*` execution
+      and asserts pack B's state at completion is byte-equivalent to
+      its state at start regardless of pack A's behavior. Tier
+      graduated reference-impl → protocol 2026-05-22 (suite v1.4.0).
 
   - id: node-pack-output-untrusted
     tier: protocol
