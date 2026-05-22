@@ -219,7 +219,7 @@ function ProviderGrid({
 
   return (
     <div className="byok-section">
-      <h2 className="byok-section-title">Pick a provider</h2>
+      <h2 className="byok-section-title">Bring your own key (BYOK)</h2>
       <p className="byok-section-lede">
         <abbr title="Bring Your Own Key"><strong>BYOK</strong></abbr> means
         you supply the API key for the model provider you pick below. The
