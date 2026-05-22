@@ -11,6 +11,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.3 — unreleased] — coordinated SDK release for MyndHyve adoption-feedback slices
 
+### RFC 0039 Phase 2 confidence-floor escalation Draft → Active (2026-05-22)
+
+Filed as Draft 2026-05-21 (be01c20); promoted Active 2026-05-22 after the confidence-floor half landed end-to-end. The memory-lifecycle half (MAE-2/3) remains explicit follow-up.
+
+- **`schemas/capabilities.schema.json`** extends `multiAgent.executionModel` with optional `confidenceEscalationFloor` (number, [0.5, 1.0]) + `crossChildMemoryConcurrency` (enum `["strict", "advisory"]`).
+- **`schemas/run-event.schema.json`** RunEventType enum gains `core.workflowChain.confidence-escalated` (63 variants total).
+- **`schemas/run-event-payloads.schema.json`** gains `coreWorkflowChainConfidenceEscalated` $defs entry: required `{confidence, floor, escalationKind, workerId, parentRunId}`; optional `originalDecision` (subject to SR-1 redaction at the writer).
+- **`spec/v1/multi-agent-execution.md`** gains §"Confidence escalation (RFC 0039 Phase 2, normative)" inlining the §A MUSTs + floor rationale + missing-confidence-means-no-opinion clarification.
+- **`apps/workflow-engine/backend/typescript/src/bootstrap/nodes.ts` `core.dispatch`** gates each decision on the confidence floor BEFORE entering the per-worker spawn loop. When `confidence < floor` AND kind is `next-worker` or `terminate`, emits `core.workflowChain.confidence-escalated` (causationId chained to the matching `runOrchestrator.decided`) AND returns `status: 'suspended'` with `interrupt.kind: 'clarification'`. Gated on `OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_2=true`; floor configurable via `OPENWOP_MULTI_AGENT_CONFIDENCE_FLOOR` (default 0.5; clamped to [0.5, 1.0]).
+- **`apps/workflow-engine/backend/typescript/src/routes/discovery.ts`** advertises `version: 2` + `confidenceEscalationFloor` when both env-flags are set; advertises `version: 1` (Phase 1) when only the original flag is set.
+- **`conformance/fixtures/conformance-multi-agent-confidence-escalation.json`** (NEW) — supervisor mockDispatchPlan with one decision carrying `confidence: 0.3`. Catalog row added to `conformance/fixtures.md`.
+- **`conformance/src/scenarios/multi-agent-confidence-escalation.test.ts`** (NEW) — behavioral assertion: parent reaches `waiting-clarification`; event log carries exactly one `core.workflowChain.confidence-escalated` with `payload.confidence === 0.3` + `payload.floor ∈ [0.5, 1.0]` + `payload.escalationKind ∈ {clarify, escalate}`; causationId chains to `runOrchestrator.decided`; zero `core.workflowChain.event` records (no dispatch fired — the load-bearing distinction from Phase 1).
+- **INTEROP-MATRIX.md** workflow-engine-sample row updated with the version: 2 + Phase 2 wiring note.
+- **README + conformance/README** scenario count bumped 197 → 198; spec-prose-doc count unchanged at 38; RFC enumeration: Active 7→8 (adds 0039); Draft 3→2 (drops 0039).
+- **docs/PROTOCOL-STATUS.md** regenerated.
+
+Closes the implementation half of RFC 0037 MAE-1 (confidence-threshold escalation). MAE-2 (cross-run memory TTL semantics) + MAE-3 (memory snapshot for replay carry-forward) remain explicit follow-up — the `crossChildMemoryConcurrency` capability field is schema-landed but the host's MemoryAdapter doesn't yet implement either contract.
+
 ### INTEROP-MATRIX: cross-host validation closed on MyndHyve workflow-runtime (2026-05-21)
 
 Three new evidence sections + wire-shape drift closures recording MyndHyve's adoption of the envelope LLM-contract-hardening track end-to-end against `https://api.myndhyve.ai`:

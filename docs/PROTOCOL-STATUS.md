@@ -11,7 +11,7 @@
 | JSON Schemas | 31 | `schemas/*.schema.json` |
 | OpenAPI operations | 25 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 197 | `conformance/src/scenarios/*.test.ts` |
+| Conformance scenario files | 198 | `conformance/src/scenarios/*.test.ts` |
 | RFCs tracked | 39 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## OpenAPI Operations
@@ -23,12 +23,12 @@
 | Status | Count |
 |---|---:|
 | Accepted | 29 |
-| Active | 7 |
-| Draft | 3 |
+| Active | 8 |
+| Draft | 2 |
 
 | Latest RFC | Title | Status |
 |---|---|---|
-| RFC 0039 | Multi-agent execution model Phase 2: confidence-threshold escalation + agent memory lifecycle across sub-runs and replay | Draft |
+| RFC 0039 | Multi-agent execution model Phase 2: confidence-threshold escalation + agent memory lifecycle across sub-runs and replay | Active |
 | RFC 0038 | OpenWOP Working Group charter | Draft |
 | RFC 0037 | Multi-agent execution model + replay determinism under nondeterministic models | Active |
 | RFC 0036 | Multi-region idempotency + cross-engine append-ordering guarantees | Active |
@@ -71,8 +71,8 @@
 
 ## Active Follow-Ups
 
-- 3 RFCs still `Draft` (RFC 0025, RFC 0038, RFC 0039) — advance with schema/conformance proof or defer.
-- 7 RFCs `Active` (RFC 0027, RFC 0028, RFC 0029, RFC 0034, RFC 0035, RFC 0036, RFC 0037) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 2 RFCs still `Draft` (RFC 0025, RFC 0038) — advance with schema/conformance proof or defer.
+- 8 RFCs `Active` (RFC 0027, RFC 0028, RFC 0029, RFC 0034, RFC 0035, RFC 0036, RFC 0037, RFC 0039) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - SDK parity still shows raw-only rows for several stable v1.x helper surfaces.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.

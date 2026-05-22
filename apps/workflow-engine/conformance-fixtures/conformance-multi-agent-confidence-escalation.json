@@ -1,0 +1,49 @@
+{
+  "id": "conformance-multi-agent-confidence-escalation",
+  "name": "Conformance: Multi-Agent Confidence-Floor Escalation (RFC 0039 §A)",
+  "version": "1.0",
+  "description": "RFC 0039 §A — exercises the confidence-floor escalation contract introduced by Phase 2 of the multi-agent execution model. Supervisor plan: ONE `next-worker` decision carrying `confidence: 0.3` (below the 0.5 spec floor). The `core.dispatch` node MUST escalate via clarification interrupt BEFORE any dispatch.began event fires; conformance asserts the run reaches `waiting-clarification` AND the event log carries exactly one `core.workflowChain.confidence-escalated` AND zero `core.workflowChain.event` records (no dispatch fired). Capability-gated on `capabilities.multiAgent.executionModel.version >= 2`. See multi-agent-confidence-escalation.test.ts.",
+  "nodes": [
+    {
+      "id": "supervisor",
+      "typeId": "core.orchestrator.supervisor",
+      "name": "Supervisor (mock plan with low-confidence decision)",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "mockDispatchPlan": [
+          {
+            "kind": "next-worker",
+            "nextWorkerIds": ["conformance-multi-agent-handoff-child"],
+            "confidence": 0.3
+          }
+        ]
+      },
+      "inputs": {}
+    },
+    {
+      "id": "dispatch",
+      "typeId": "core.dispatch",
+      "name": "Dispatch (confidence gate fires before worker spawn)",
+      "position": { "x": 200, "y": 0 },
+      "config": {
+        "askUserRouting": "auto",
+        "workerDispatchModel": "child-run",
+        "fanOutPolicy": "sequential"
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [
+    { "id": "e1", "sourceNodeId": "supervisor", "targetNodeId": "dispatch" },
+    { "id": "e2", "sourceNodeId": "dispatch", "targetNodeId": "supervisor" }
+  ],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": {
+    "tags": ["conformance", "rfc-0039", "multi-agent", "confidence", "escalation"],
+    "requiresCapability": "capabilities.multiAgent.executionModel.version-2"
+  },
+  "settings": { "timeout": 30000 }
+}

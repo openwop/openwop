@@ -124,7 +124,8 @@
         "conversation.exchanged",
         "conversation.closed",
         "memory.compacted",
-        "core.workflowChain.event"
+        "core.workflowChain.event",
+        "core.workflowChain.confidence-escalated"
       ]
     }
   }

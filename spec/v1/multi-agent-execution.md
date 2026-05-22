@@ -72,6 +72,21 @@ Each transition MUST emit a `core.workflowChain.event` (NEW event type — see �
 
 The transition `running → harvested` MUST happen exactly when the child reaches a terminal `completed` AND the dispatch config's `outputMapping` is non-empty. Failed/cancelled children MUST skip the harvest per RFC 0022 §B (the `output.harvested` event MUST NOT fire for those terminal states).
 
+## Confidence escalation (RFC 0039 Phase 2, normative)
+
+Per [RFC 0039](../../RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md) §A. Applies only when the host advertises `capabilities.multiAgent.executionModel.version >= 2`.
+
+An `OrchestratorDecision` MAY carry an optional `confidence: number` field in `[0, 1]` where `0` is uncertain and `1` is fully confident. When `confidence < floor` (where `floor = capabilities.multiAgent.executionModel.confidenceEscalationFloor` if advertised; otherwise the spec floor `0.5`) AND the decision kind is `next-worker` or `terminate`, the host SHALL **either**:
+
+- (a) escalate the decision via a `clarify` interrupt per `spec/v1/interrupt.md` `kind: "clarification"` (preferred — gives the user an in-the-loop chance to confirm or adjust); **OR**
+- (b) escalate via an `escalate` interrupt requesting approval per `spec/v1/interrupt-profiles.md` §"Approval profile" (sufficient when the host doesn't expose a clarification UI).
+
+Hosts MUST NOT silently execute a `confidence < floor` decision without first recording the escalation event AND firing the matching interrupt. The escalation event is `core.workflowChain.confidence-escalated` (see §"Event-payload addition" below) and MUST appear in the run event log BEFORE the interrupt fires AND BEFORE any `core.workflowChain.event` with `phase: "dispatch.began"` for the escalated decision's intended next-worker.
+
+**Floor rationale (normative).** 0.5 is the maximum-entropy threshold — the value where a Bayesian observer with no prior has no preference between accept and clarify. Below it, silent execution would commit the workflow to an outcome the supervisor itself rates as less-than-arbitrary. Operator policy stricter than 0.5 advertises via `confidenceEscalationFloor`; the spec floor of 0.5 is non-configurable across hosts so cross-host workflows have a portable lower bound. See `RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md` §A "Why 0.5" for the full rationale.
+
+**`confidence` field absence.** When the decision's `confidence` is absent (`undefined` / not emitted), the host MUST NOT escalate on this rule alone — `confidence === undefined` means "no opinion stated," not "low confidence." Operators wanting opt-in always-escalate behavior advertise a separate host-extension flag; this is not normated here.
+
 ## Capability advertisement (normative)
 
 ```jsonc

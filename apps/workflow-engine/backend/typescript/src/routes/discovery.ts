@@ -419,9 +419,30 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       // every supervisor-driven `core.dispatch` invocation emits the
       // 7 handoff state-machine transition events per
       // `spec/v1/multi-agent-execution.md` §"Handoff state machine".
-      multiAgent: process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL === 'true'
-        ? { executionModel: { supported: true, version: 1 } }
-        : { executionModel: { supported: false, version: 1 } },
+      // RFC 0037 Phase 1 = version 1; RFC 0039 Phase 2 = version 2. Operator
+      // env-flags select the implemented ceiling: setting
+      // OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_2=true requires
+      // OPENWOP_MULTI_AGENT_EXECUTION_MODEL=true too (Phase 2 builds on Phase
+      // 1). The confidenceEscalationFloor advertisement defaults to 0.5
+      // (the spec floor) and can be tightened via
+      // OPENWOP_MULTI_AGENT_CONFIDENCE_FLOOR=<n> per RFC 0039 §A.
+      multiAgent: (() => {
+        const phase1 = process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL === 'true';
+        const phase2 = phase1 && process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_2 === 'true';
+        const floorRaw = process.env.OPENWOP_MULTI_AGENT_CONFIDENCE_FLOOR;
+        const floor = (() => {
+          const parsed = floorRaw === undefined ? 0.5 : Number(floorRaw);
+          if (!Number.isFinite(parsed) || parsed < 0.5 || parsed > 1.0) return 0.5;
+          return parsed;
+        })();
+        return {
+          executionModel: {
+            supported: phase1,
+            version: phase2 ? 2 : 1,
+            ...(phase2 ? { confidenceEscalationFloor: floor } : {}),
+          },
+        };
+      })(),
       runtimeCapabilities: listCapabilities(),
       // Host surface registry — what `ctx.*` surfaces this host wires.
       // The catalog endpoint cross-references this to mark each node

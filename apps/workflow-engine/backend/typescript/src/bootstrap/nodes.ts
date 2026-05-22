@@ -162,6 +162,21 @@ const dispatchNode: NodeModule = {
     // with the discovery doc's advertisement (`routes/discovery.ts`); the
     // RFC's normative wire contract is "do not emit unless advertised."
     const multiAgentEnabled = process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL === 'true';
+    // RFC 0039 §A — Phase 2 confidence-floor escalation. When the host
+    // advertises capabilities.multiAgent.executionModel.version >= 2 (signaled
+    // here by the OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_2=true env-flag
+    // alongside the version: 2 advertisement in routes/discovery.ts), every
+    // decision with a stated `confidence` below the floor MUST escalate via
+    // clarify-or-escalate interrupt before any dispatch.began event fires
+    // for the named worker. The spec floor is 0.5 (max-entropy threshold);
+    // operator-stricter policy comes from `confidenceEscalationFloor`.
+    const multiAgentPhase2Enabled = process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_2 === 'true';
+    const confidenceFloor = (() => {
+      const raw = process.env.OPENWOP_MULTI_AGENT_CONFIDENCE_FLOOR;
+      const parsed = raw === undefined ? 0.5 : Number(raw);
+      if (!Number.isFinite(parsed) || parsed < 0.5 || parsed > 1.0) return 0.5;
+      return parsed;
+    })();
     const hasOutputMapping = (childWorkflowId: string): boolean => {
       const m = perWorkerOutputMappings?.[childWorkflowId] ?? defaultOutputMapping;
       return !!m && Object.keys(m).length > 0;
@@ -182,6 +197,50 @@ const dispatchNode: NodeModule = {
         type: 'runOrchestrator.decided',
         payload: { decision },
       });
+      // RFC 0039 §A — confidence-floor escalation. Apply ONLY when Phase 2 is
+      // advertised AND the decision carries an explicit confidence value. A
+      // missing confidence means "no opinion stated" — NOT low confidence —
+      // and MUST NOT trigger escalation. Decision kinds `next-worker` and
+      // `terminate` are both eligible; `clarify` / `escalate` already are the
+      // escalation themselves and don't double-escalate.
+      const confidenceRaw = (decision as { confidence?: unknown }).confidence;
+      const confidenceNumber = typeof confidenceRaw === 'number' ? confidenceRaw : undefined;
+      const isEligibleKind = kind === 'next-worker' || kind === 'terminate';
+      if (multiAgentPhase2Enabled && multiAgentEnabled && isEligibleKind &&
+          confidenceNumber !== undefined && confidenceNumber < confidenceFloor) {
+        const workerIdHint = kind === 'next-worker' && Array.isArray(decision.nextWorkerIds)
+          ? String(decision.nextWorkerIds[0] ?? '')
+          : '';
+        await eventLog.append({
+          runId: ctx.runId,
+          nodeId: ctx.nodeId,
+          type: 'core.workflowChain.confidence-escalated',
+          causationId: decidedRec.eventId,
+          payload: {
+            confidence: confidenceNumber,
+            floor: confidenceFloor,
+            escalationKind: 'clarify',
+            workerId: workerIdHint,
+            parentRunId: ctx.runId,
+            originalDecision: decision,
+          },
+        });
+        // Suspend the parent with a clarification interrupt. The interrupt
+        // surface carries the decision + floor so the operator can confirm,
+        // adjust, or cancel.
+        return {
+          status: 'suspended',
+          interrupt: {
+            kind: 'clarification',
+            data: {
+              reason: 'confidence-floor-breached',
+              confidence: confidenceNumber,
+              floor: confidenceFloor,
+              originalDecision: decision,
+            },
+          },
+        };
+      }
       if (kind === 'terminate') {
         terminateReason = typeof decision.reason === 'string' ? decision.reason : 'terminate';
         break;
