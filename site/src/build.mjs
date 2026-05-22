@@ -444,8 +444,8 @@ function buildConformance() {
     <p class="lede">Live record of OpenWOP-compatible hosts, their advertised compatibility profiles, and which conformance scenarios pass against them.</p>
     <p class="meta">A host's place in this matrix is a <strong>claim plus evidence</strong>. The claim is the host's advertised profile. The evidence is the conformance result published alongside the host's repo (or under <code>examples/hosts/&lt;name&gt;/conformance.md</code>).</p>
   </header>`;
-  const articleHtml = `<article class="spec-doc">${intro}${markdownToHtml(interop)}</article>`;
-  const content = wrapWithToc(articleHtml, extractToc(interop));
+  const articleHtml = `<article class="spec-doc">${markdownToHtml(interop)}</article>`;
+  const content = intro + wrapWithToc(articleHtml, extractToc(interop));
   ensureDir(join(DIST, 'conformance'));
   writeFileSync(
     join(DIST, 'conformance', 'index.html'),
@@ -466,8 +466,8 @@ function buildProfiles() {
     <h1>Compatibility profiles</h1>
     <p class="lede">A host's profile claims summarize what surfaces it implements. Each profile is derived from the host's <code>/.well-known/openwop</code> capability advertisement plus runtime conformance scenarios.</p>
   </header>`;
-  const articleHtml = `<article class="spec-doc">${intro}${markdownToHtml(profiles)}</article>`;
-  const content = wrapWithToc(articleHtml, extractToc(profiles));
+  const articleHtml = `<article class="spec-doc">${markdownToHtml(profiles)}</article>`;
+  const content = intro + wrapWithToc(articleHtml, extractToc(profiles));
   ensureDir(join(DIST, 'profiles'));
   writeFileSync(
     join(DIST, 'profiles', 'index.html'),
@@ -652,15 +652,17 @@ function buildSpecDocs() {
     .filter((g) => g.slugs.some((s) => itemBySlug.has(s)))
     .map((g) => ({ level: 2, text: g.title, slug: g.key }));
 
-  const indexArticleHtml = `<article class="spec-doc">
-    <header class="page-header">
+  // Page-header sits ABOVE the wrapWithToc grid so the title + lede
+  // stretch full-width above the "On this page" sidebar — matching the
+  // changelog/roadmap/etc. pattern. The article column inside the grid
+  // only contains the thematic-group sections.
+  const indexPageHeader = `<header class="page-header">
       <h1>OpenWOP v1 spec corpus</h1>
       <p class="lede">${items.length} prose specs governing the v1 wire contract. Each section below groups specs by what they do; click through for the normative text.</p>
       <p class="meta">Status legend: <strong>FINAL</strong> · STUB · DRAFT · OUTLINE. A spec is FINAL when its wire shape is locked under v1.x compatibility rules.</p>
-    </header>
-    ${groupsHtml}
-  </article>`;
-  const indexContent = wrapWithToc(indexArticleHtml, indexToc);
+    </header>`;
+  const indexArticleHtml = `<article class="spec-doc">${groupsHtml}</article>`;
+  const indexContent = indexPageHeader + wrapWithToc(indexArticleHtml, indexToc);
 
   writeFileSync(
     join(DIST, 'spec', 'v1', 'index.html'),
