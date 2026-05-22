@@ -115,18 +115,45 @@
   transition: color .15s ease;
 }
 .api-explorer-base:hover .api-explorer-base-hint { color: var(--clay); }
+/* Specificity escalated to win against `.site-main a { color: clay;
+ * text-decoration: underline }` which would otherwise paint the button
+ * label orange + underlined inside the dark pill. */
+.site-main .api-explorer-download,
 .api-explorer-download {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 14px;
+  padding: 8px 16px;
   background: var(--ink);
   color: var(--paper);
+  border: 1px solid var(--ink);
   border-radius: 999px;
   text-decoration: none;
+  font-family: var(--sans);
   font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  transition: background .15s ease, border-color .15s ease, color .15s ease, transform .15s ease;
 }
-.api-explorer-download:hover { background: var(--clay); }
+.site-main .api-explorer-download:hover,
+.api-explorer-download:hover {
+  background: var(--clay);
+  border-color: var(--clay);
+  color: var(--paper);
+  text-decoration: none;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px -4px var(--clay-soft);
+}
+.site-main .api-explorer-download:active,
+.api-explorer-download:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+.site-main .api-explorer-download:focus-visible,
+.api-explorer-download:focus-visible {
+  outline: 2px solid var(--clay);
+  outline-offset: 3px;
+}
 #redoc-container {
   min-height: calc(100vh - 56px - 64px);
 }

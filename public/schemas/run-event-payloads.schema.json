@@ -126,7 +126,7 @@
       "description": "RFC 0039 §A — emitted when a supervisor's OrchestratorDecision carries `confidence` below the active confidence floor (spec floor 0.5 OR operator-stricter `capabilities.multiAgent.executionModel.confidenceEscalationFloor`). Recorded BEFORE the host fires the matching clarify-or-escalate interrupt so the run event log carries the decision point even if the user later confirms the original decision. MUST NOT be emitted unless `capabilities.multiAgent.executionModel.version >= 2`.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["confidence", "floor", "escalationKind", "workerId", "parentRunId"],
+      "required": ["confidence", "floor", "escalationKind", "parentRunId"],
       "properties": {
         "confidence": {
           "type": "number",
@@ -147,7 +147,8 @@
         },
         "workerId": {
           "type": "string",
-          "description": "The decision's intended next-worker workflowId (when kind: 'next-worker'). Empty string when the escalation fired on a kind: 'terminate' decision."
+          "minLength": 1,
+          "description": "The decision's intended next-worker workflowId (when the escalated decision's kind is `next-worker`). OMITTED for `kind: 'terminate'` escalations — terminate decisions have no worker to name, so absent-field is the correct signal rather than empty-string."
         },
         "parentRunId": {
           "type": "string",
@@ -155,8 +156,8 @@
           "description": "The orchestrator-driven parent run's runId."
         },
         "originalDecision": {
-          "type": "object",
-          "description": "The OrchestratorDecision that triggered escalation, captured verbatim. Hosts MUST apply SR-1 redaction per agent-memory.md §SR-1 to any credentialRef substrings before persisting; the redacted form lives here."
+          "$ref": "orchestrator-decision.schema.json",
+          "description": "The OrchestratorDecision that triggered escalation, captured verbatim. The host's existing event-payload redaction harness (the same one enforcing SECURITY invariant `secret-leakage-eventlog-payload` per `conformance/src/scenarios/redaction.test.ts`) applies uniformly across all RunEventType payloads including this one — no per-event-type opt-in is required. The protocol-tier MUST-NOT for raw key material in persisted payloads is the canonical contract; this field inherits that protection."
         }
       }
     },
