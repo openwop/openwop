@@ -41,6 +41,7 @@ import {
   type ResolveInterruptResponse,
   type ResumeRunRequest,
   type ResumeRunResponse,
+  type RunAncestryResponse,
   type RunEventDoc,
   type RunSnapshot,
 } from './types.js';
@@ -214,6 +215,29 @@ export class OpenwopClient {
         body,
         headers: this.#mutationHeaders(opts),
       }),
+
+    /**
+     * RFC 0040 §C — fetch the run's immediate parent in the cross-host
+     * composition chain. Returns `parent: null` for top-level runs;
+     * `parent.wellKnownUrl` is set when the parent is on a different
+     * host, so callers walk the chain one hop at a time.
+     *
+     * Returns `null` when the host doesn't advertise
+     * `capabilities.multiAgent.executionModel.crossHostCausation.ancestryEndpointSupported: true`
+     * (the endpoint returns 404 in that case per
+     * `spec/v1/multi-agent-execution.md` §"GET /v1/runs/{runId}/ancestry").
+     */
+    ancestry: async (runId: string): Promise<RunAncestryResponse | null> => {
+      try {
+        return await this.#request<RunAncestryResponse>({
+          method: 'GET',
+          path: `/v1/runs/${encodeURIComponent(runId)}/ancestry`,
+        });
+      } catch (err) {
+        if (err instanceof Error && /\b404\b/.test(err.message)) return null;
+        throw err;
+      }
+    },
 
     pollEvents: (
       runId: string,

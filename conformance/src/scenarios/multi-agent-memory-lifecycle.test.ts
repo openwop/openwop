@@ -43,7 +43,7 @@
  *
  * @see RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md §B
  * @see spec/v1/multi-agent-execution.md §"Agent memory lifecycle across sub-runs"
- * @see spec/v1/agent-memory.md §"SR-1 secret-redaction invariant" (the writer's-clock pattern this RFC matches)
+ * @see spec/v1/agent-memory.md §"TTL semantics" (which the child-write-time MAE-2 anchoring extends to the cross-run case)
  */
 
 import { describe, it, expect } from 'vitest';
@@ -91,42 +91,28 @@ describe.skipIf(HTTP_SKIP)('multi-agent-memory-lifecycle: advertisement shape (R
 });
 
 describe.skipIf(HTTP_SKIP)('multi-agent-memory-lifecycle: behavioral (RFC 0039 §B MAE-2 + MAE-3)', () => {
-  it('MAE-2 cross-run TTL: child write expiresAt MUST be anchored at child write time, not parent start', async () => {
-    const d = await readDiscovery();
-    const phase2 = d?.capabilities?.multiAgent?.executionModel?.supported === true
-      && (d?.capabilities?.multiAgent?.executionModel?.version as number) >= 2;
-    const memoryEnabled = d?.capabilities?.memory?.supported === true;
-    if (!phase2 || !memoryEnabled) return; // soft-skip — needs both advertised
+  // Behavioral assertion lands when a memory-advertising Phase 2 host
+  // exposes a host-side test seam for cross-run memory writes (e.g.,
+  // POST /v1/host/sample/test/memory/cross-run-ttl-roundtrip). The
+  // assertion drives:
+  //   1. Parent starts at parent-clock T+0
+  //   2. Child dispatched at T+10s, writes MemoryEntry { key: 'k', value: 'v', ttl: 5 }
+  //   3. Parent reads MemoryEntry { key: 'k' } at T+12s; expiresAt MUST be
+  //      approximately T+15s (child write at T+10 + ttl 5), not T+5s.
+  // Until a memory-advertising Phase 2 host wires the seam, the contract
+  // is documentation-only — surfaced as `todo` so test reporters track
+  // the gap rather than reporting a vacuous PASS.
+  it.todo('MAE-2 cross-run TTL: child write expiresAt MUST be anchored at child write time, not parent start');
 
-    // Behavioral assertion lands when a memory-advertising Phase 2 host
-    // exposes a host-side test seam for cross-run memory writes (e.g.,
-    // POST /v1/host/sample/test/memory/cross-run-ttl-roundtrip). The
-    // assertion drives:
-    //   1. Parent starts at parent-clock T+0
-    //   2. Child dispatched at T+10s, writes MemoryEntry { key: 'k', value: 'v', ttl: 5 }
-    //   3. Parent reads MemoryEntry { key: 'k' } at T+12s; expiresAt MUST be
-    //      approximately T+15s (child write at T+10 + ttl 5), not T+5s.
-    // Without the seam, the contract is documentation-only.
-    expect(true).toBe(true);
-  });
-
-  it('MAE-3 replay snapshot: fork from past index MUST return memory-as-of-index OR refuse with replay_memory_snapshot_unavailable', async () => {
-    const d = await readDiscovery();
-    const phase2 = d?.capabilities?.multiAgent?.executionModel?.supported === true
-      && (d?.capabilities?.multiAgent?.executionModel?.version as number) >= 2;
-    const memoryEnabled = d?.capabilities?.memory?.supported === true;
-    if (!phase2 || !memoryEnabled) return; // soft-skip
-
-    // Behavioral assertion lands when the host implements the snapshot
-    // mechanism per RFC 0039 §B. The assertion drives:
-    //   1. Run a workflow that writes MemoryEntry { key: 'k', value: 'v1' } at index 10.
-    //   2. Write MemoryEntry { key: 'k', value: 'v2' } at index 20.
-    //   3. POST /v1/runs/{runId}:fork { forkAtEventLogIdx: 15 }.
-    //   4. Forked run reads MemoryEntry { key: 'k' }; MUST return 'v1' (not 'v2').
-    //   5. Alternative compliance: fork refused with
-    //      error.code: 'replay_memory_snapshot_unavailable' AND
-    //      details.forkAtEventLogIdx === 15.
-    // Silent substitution of v2 (current state) is non-conformant.
-    expect(true).toBe(true);
-  });
+  // Behavioral assertion lands when the host implements the snapshot
+  // mechanism per RFC 0039 §B. The assertion drives:
+  //   1. Run a workflow that writes MemoryEntry { key: 'k', value: 'v1' } at index 10.
+  //   2. Write MemoryEntry { key: 'k', value: 'v2' } at index 20.
+  //   3. POST /v1/runs/{runId}:fork { fromSeq: 15 }.
+  //   4. Forked run reads MemoryEntry { key: 'k' }; MUST return 'v1' (not 'v2').
+  //   5. Alternative compliance: fork refused with
+  //      error.code: 'replay_memory_snapshot_unavailable' AND
+  //      details.fromSeq === 15.
+  // Silent substitution of v2 (current state) is non-conformant.
+  it.todo('MAE-3 replay snapshot: fork from past index MUST return memory-as-of-index OR refuse with replay_memory_snapshot_unavailable');
 });

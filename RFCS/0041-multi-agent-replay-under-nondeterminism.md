@@ -66,7 +66,7 @@ Add to `spec/v1/replay.md`:
 
 > The replay contract is OBSERVABLE-OUTPUT-SEQUENCE determinism, NOT bit-equivalent execution determinism. Concretely:
 >
-> - The sequence of `RunEventDoc` records appended to the event log at indices `[0, forkAtEventLogIdx]` MUST be byte-equivalent between original and replay (modulo per-region clock fields per RFC 0036 §E).
+> - The sequence of `RunEventDoc` records appended to the event log at indices `[0, fromSeq]` MUST be byte-equivalent between original and replay (modulo per-region clock fields per RFC 0036 §E).
 > - The variables, channel state, and `RunSnapshot.status` at each event-log index MUST be byte-equivalent.
 > - The bytes-on-the-wire of underlying tool/LLM calls MAY differ (e.g., a tool call with non-deterministic remote state, an LLM call against a model whose weights shifted) AS LONG AS the resulting observable state at each index is byte-equivalent.
 >
@@ -137,7 +137,7 @@ Hosts advertising `multiAgent.executionModel.version: 4` MUST also advertise `re
 
 - `replay-llm-cache-key-portable.test.ts` — capability-gated on `replayDeterminism.supported: true`. Two test runs against the host with identical canonical-input LLM calls; asserts the host's emitted cache-key field on `agent.toolCalled` events (or equivalent) is byte-equivalent.
 - `replay-divergence-at-refusal.test.ts` — capability-gated on `refusalDivergenceEmission: true`. Original run: mock provider returns a valid envelope. Replay: mock provider returns a refusal. Asserts `replay.divergedAtRefusal` event fires AND replay fails with `replay_diverged_at_refusal`.
-- `replay-observable-sequence-determinism.test.ts` — capability-gated. Runs a workflow with a non-deterministic tool call (a mock tool that returns different bytes on each call but the host caches the FIRST result as part of observable state). Forks the run at an intermediate index and replays; asserts the observable event sequence at indices `[0, forkAtEventLogIdx]` is byte-equivalent across original + replay even though the underlying tool would have produced different bytes.
+- `replay-observable-sequence-determinism.test.ts` — capability-gated. Runs a workflow with a non-deterministic tool call (a mock tool that returns different bytes on each call but the host caches the FIRST result as part of observable state). Forks the run at an intermediate index and replays; asserts the observable event sequence at indices `[0, fromSeq]` is byte-equivalent across original + replay even though the underlying tool would have produced different bytes.
 
 ## Alternatives considered
 

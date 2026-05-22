@@ -44,6 +44,8 @@ from .types import (
     ResolveInterruptResponse,
     ResumeRunRequest,
     ResumeRunResponse,
+    RunAncestryParent,
+    RunAncestryResponse,
     RunConfigurable,
     RunEventDoc,
     RunSnapshot,
@@ -416,6 +418,43 @@ class OpenwopClient:
             status=cast(RunStatus, d["status"]),
             eventsUrl=str(d["eventsUrl"]),
             fromSeq=d.get("fromSeq"),
+        )
+
+    def runs_ancestry(self, run_id: str) -> RunAncestryResponse | None:
+        """Fetch the run's immediate parent in the cross-host composition
+        chain per RFC 0040 §C — ``GET /v1/runs/{runId}/ancestry``.
+
+        Returns ``None`` when the host doesn't advertise
+        ``capabilities.multiAgent.executionModel.crossHostCausation.ancestryEndpointSupported: true``
+        (endpoint returns 404 in that case per
+        ``spec/v1/multi-agent-execution.md`` §"GET /v1/runs/{runId}/ancestry").
+
+        On 200 the response's ``parent`` is ``None`` for top-level runs;
+        when set, ``parent.wellKnownUrl`` identifies the parent host's
+        discovery URL so callers walk the chain one hop at a time.
+        """
+
+        try:
+            d = self._request_json("GET", f"/v1/runs/{run_id}/ancestry")
+        except WopError as err:
+            if err.status == 404:
+                return None
+            raise
+        parent_d = d.get("parent")
+        parent = (
+            RunAncestryParent(
+                runId=str(parent_d["runId"]),
+                hostId=str(parent_d["hostId"]),
+                cause=parent_d["cause"],
+                wellKnownUrl=parent_d.get("wellKnownUrl"),
+            )
+            if parent_d is not None
+            else None
+        )
+        return RunAncestryResponse(
+            runId=str(d["runId"]),
+            hostId=str(d["hostId"]),
+            parent=parent,
         )
 
     def runs_poll_events(

@@ -11,13 +11,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.3 — unreleased] — coordinated SDK release for MyndHyve adoption-feedback slices
 
+### RFC 0040 follow-ups: SDK parity + `fromSeq` field-name alignment (2026-05-21)
+
+Senior code-review follow-ups on the RFC 0039 + RFC 0040 landing.
+
+- **HIGH (SDK contract drift) — `getRunAncestry` reached parity across all three reference SDKs.** Adds `runs.ancestry()` (TS), `runs_ancestry()` (Python), and `RunAncestry()` (Go) — each maps 1:1 to the new `GET /v1/runs/{runId}/ancestry` operation and returns `null` / `(nil, nil)` on 404 (the host-doesn't-advertise pattern already used by `debugBundle`). Adds `RunAncestryResponse` + `RunAncestryParent` types to all three. Closes the 25-of-26-endpoint client gap that landed in c001d21.
+- **HIGH (wire-naming drift) — `forkAtEventLogIdx` → `fromSeq`.** The canonical fork-request field per `api/openapi.yaml` is `fromSeq`; multiple normative docs were using `forkAtEventLogIdx` as if it were the field name (most damagingly: the new `error.details.fromSeq` recommendation in RFC 0039 §B, which would have produced divergent error envelopes across implementations). Renamed across 8 normative files: `RFCS/0036`, `RFCS/0039`, `RFCS/0041`, `spec/v1/replay.md`, `spec/v1/rest-endpoints.md`, `spec/v1/multi-agent-execution.md`, the new `multi-agent-memory-lifecycle.test.ts` scenario, and `site/content/scenarios.md` (the latter also gained the missing `mode` / `eventsUrl` / `sourceRunId` fields its fork request/response example had been missing — the example was never valid against the OpenAPI body).
+- **MEDIUM (false cross-reference) — SR-1 cite removed.** The MAE-2 prose claimed "matches the SR-1 'writer's-clock' pattern from `agent-memory.md` §SR-1," but SR-1 is the **Secret-Redaction Invariant** (BYOK plaintext → `[REDACTED:<secretId>]` on persist) — not a clock-anchor pattern. Removed from RFC 0039, `spec/v1/multi-agent-execution.md`, and the conformance scenario header. TTL rationale stands on its own (absolute freshness contract, not a budget against enclosing run lifetime).
+- **LOW (test discipline) — `expect(true).toBe(true)` stubs → `it.todo`.** Four behavioral assertions in `multi-agent-memory-lifecycle.test.ts` and `cross-host-traceparent-propagation.test.ts` were tautologies that reported as PASS, masking the not-yet-implemented gap. Converted to `it.todo()` so test reporters track the gap explicitly. Vitest now reports 733 passed + 4 todo on the corpus.
+
 ### RFC 0039 memory-lifecycle half (MAE-2 + MAE-3) + RFC 0040 Phase 3 cross-host causation Draft → Active (2026-05-22)
 
 Closes RFC 0039 fully + lands RFC 0040 protocol-layer surface end-to-end. Reference-host implementation for both (Postgres MemoryAdapter wiring for RFC 0039 MAE-3 snapshot; reference workflow-engine ancestry endpoint + traceparent injection for RFC 0040) remains explicit follow-up.
 
 **RFC 0039 memory-lifecycle half (MAE-2 + MAE-3) — spec + scenario:**
 - `spec/v1/multi-agent-execution.md` gains §"Agent memory lifecycle across sub-runs (RFC 0039 Phase 2, normative)" covering MAE-2 (cross-run TTL anchored at child write time, with rationale) + MAE-3 (replay snapshot requirement + refusal contract).
-- `spec/v1/rest-endpoints.md` §"Common error codes" gains `replay_memory_snapshot_unavailable` for the §B refusal path when a host can't satisfy the snapshot at the requested `forkAtEventLogIdx`.
+- `spec/v1/rest-endpoints.md` §"Common error codes" gains `replay_memory_snapshot_unavailable` for the §B refusal path when a host can't satisfy the snapshot at the requested `fromSeq`.
 - NEW `conformance/src/scenarios/multi-agent-memory-lifecycle.test.ts` — advertisement-shape probe on `crossChildMemoryConcurrency` (enum check) + 2 behavioral stubs (MAE-2 cross-run TTL + MAE-3 replay snapshot). Capability-gated on the conjunction `multiAgent.executionModel.version >= 2 && memory.supported: true`; reference workflow-engine soft-skips (advertises `memory.supported: false`); Postgres reference host will light up the behavioral assertions when its MemoryAdapter adopts the contract.
 
 **RFC 0040 Phase 3 cross-host causation — protocol-layer landing:**
@@ -193,7 +202,7 @@ Both filed as Draft earlier today (aa94003); promoted Active after their protoco
 **RFC 0036 — Multi-region idempotency + cross-engine append-ordering:**
 - `schemas/capabilities.schema.json` gains the `capabilities.idempotency.multiRegion.{supported, replicationLagBoundMs (≤ 60s), partitionRecoveryStrategy}` block + the `capabilities.eventLog.crossEngineOrdering.{supported, orderingModel ∈ [lamport, vector-clock, global-sequencer]}` block.
 - `spec/v1/idempotency.md` §"`multiRegion` sub-block" added as the normative tighten-when-advertised clause complementing the existing `crossRegion: 'best-effort'|'strict'|'single-region'` categorical claim.
-- `spec/v1/replay.md` §"Cross-region replay (RFC 0036)" added — when both capabilities are advertised, fork served by a different region produces byte-equivalent `RunSnapshot.status` + `variables` + projected event log up to `forkAtEventLogIdx`. Per-region clock fields legitimately differ.
+- `spec/v1/replay.md` §"Cross-region replay (RFC 0036)" added — when both capabilities are advertised, fork served by a different region produces byte-equivalent `RunSnapshot.status` + `variables` + projected event log up to `fromSeq`. Per-region clock fields legitimately differ.
 - The multi-region simulator + cross-engine fixture + behavioral conformance scenarios per RFC §D remain deferred to a follow-up commit.
 
 README.md updated: 7 Active RFCs (was 5), 2 Draft RFCs (was 4). All caught by the structural drift detector. docs/PROTOCOL-STATUS.md auto-regenerated.

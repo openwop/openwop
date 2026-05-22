@@ -33,59 +33,28 @@
  * @see RFCS/0023-conformance-agent-event-emitters.md (the same-host predecessor)
  */
 
-import { describe, it, expect } from 'vitest';
-import { driver } from '../lib/driver.js';
+import { describe, it } from 'vitest';
 
-const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
-const MCP_REAL = process.env.OPENWOP_MCP_REAL_SERVER_URL;
-const A2A_REAL = process.env.OPENWOP_A2A_REAL_PEER_URL;
-const BEHAVIORAL_SKIP = HTTP_SKIP || (!MCP_REAL && !A2A_REAL);
+// Behavioral assertions in this file are currently `it.todo` placeholders;
+// the cross-host MCP / A2A peer harness (gated on OPENWOP_MCP_REAL_SERVER_URL
+// / OPENWOP_A2A_REAL_PEER_URL) hasn't landed yet. When it does, the
+// `it.todo` calls flip back to runnable `it(...)` bodies that read discovery
+// (via `driver.get('/.well-known/openwop')`), gate on `Phase 3` advertisement,
+// and drive the workflow through the configured real peer.
 
-interface DiscoveryDoc {
-  capabilities?: {
-    multiAgent?: {
-      executionModel?: {
-        supported?: unknown;
-        version?: unknown;
-        crossHostCausation?: { supported?: unknown };
-      };
-    };
-  };
-}
+describe('cross-host-traceparent-propagation: behavioral (RFC 0040 §B)', () => {
+  // Behavioral assertion drives a workflow that calls an MCP tool via the
+  // host's `core.mcp.toolCall` node. The MCP peer (configured via
+  // OPENWOP_MCP_REAL_SERVER_URL) records inbound headers; the test reads
+  // the recorded headers and asserts `traceparent` is present + matches
+  // the format `00-{traceId}-{spanId}-{flags}` per W3C tracecontext.
+  // Until the peer harness lands, the assertion is surfaced as `todo` so
+  // test reporters track the gap rather than reporting a vacuous PASS.
+  it.todo('Phase 3 host MUST inject parent run\'s traceparent into outbound MCP requests');
 
-async function phase3Advertised(): Promise<boolean> {
-  try {
-    const r = await driver.get('/.well-known/openwop');
-    if (r.status !== 200) return false;
-    const em = (r.json as DiscoveryDoc).capabilities?.multiAgent?.executionModel;
-    return em?.supported === true
-      && (em?.version as number) >= 3
-      && em?.crossHostCausation?.supported === true;
-  } catch { return false; }
-}
-
-describe.skipIf(BEHAVIORAL_SKIP)('cross-host-traceparent-propagation: behavioral (RFC 0040 §B)', () => {
-  it('Phase 3 host MUST inject parent run\'s traceparent into outbound MCP requests', async () => {
-    if (!(await phase3Advertised())) return; // soft-skip — host doesn't advertise Phase 3
-    if (!MCP_REAL) return; // soft-skip — no real MCP peer configured
-
-    // Behavioral assertion drives a workflow that calls an MCP tool via the
-    // host's `core.mcp.toolCall` node. The MCP peer (configured via
-    // OPENWOP_MCP_REAL_SERVER_URL) records inbound headers; the test reads
-    // the recorded headers and asserts `traceparent` is present + matches
-    // the format `00-{traceId}-{spanId}-{flags}` per W3C tracecontext.
-    // Without the peer harness landing, the assertion is a no-op stub.
-    expect(true).toBe(true);
-  });
-
-  it('Phase 3 host MUST inject parent run\'s traceparent into outbound A2A messages', async () => {
-    if (!(await phase3Advertised())) return;
-    if (!A2A_REAL) return; // soft-skip — no real A2A peer configured
-
-    // Behavioral assertion drives a workflow that dispatches an A2A message
-    // via the host's `core.a2a.send` (or equivalent) node. The A2A peer
-    // (configured via OPENWOP_A2A_REAL_PEER_URL) records inbound headers;
-    // the test asserts `traceparent` is present + well-formed.
-    expect(true).toBe(true);
-  });
+  // Behavioral assertion drives a workflow that dispatches an A2A message
+  // via the host's `core.a2a.send` (or equivalent) node. The A2A peer
+  // (configured via OPENWOP_A2A_REAL_PEER_URL) records inbound headers;
+  // the test asserts `traceparent` is present + well-formed.
+  it.todo('Phase 3 host MUST inject parent run\'s traceparent into outbound A2A messages');
 });

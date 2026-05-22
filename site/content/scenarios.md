@@ -198,8 +198,9 @@ A policy change in the `transform` node means the operator wants to re-run the s
 
 ```http
 POST /v1/runs/run-xyz:fork
-{ "forkAtEventLogIdx": 4,
-  "configurable": { "transformMode": "v2" } }
+{ "mode": "branch",
+  "fromSeq": 4,
+  "runOptionsOverlay": { "configurable": { "transformMode": "v2" } } }
 ```
 
 Host responds:
@@ -207,9 +208,11 @@ Host responds:
 ```http
 HTTP/1.1 201 Created
 { "runId": "run-xyz-fork-1",
-  "forkedFrom": "run-xyz",
-  "forkAtEventLogIdx": 4,
-  "status": "pending" }
+  "sourceRunId": "run-xyz",
+  "mode": "branch",
+  "fromSeq": 4,
+  "status": "pending",
+  "eventsUrl": "https://api.example.com/v1/runs/run-xyz-fork-1/events" }
 ```
 
 The new run replays events 0..3 from the parent (`fetch-data` and `transform`'s first half), then begins fresh execution from event 4 with the new `transformMode: "v2"`. The original `run-xyz` is unchanged.
@@ -218,7 +221,7 @@ The new run replays events 0..3 from the parent (`fetch-data` and `transform`'s 
 
 1. The host's event-log adapter MUST persist events in monotonic order per [`storage-adapters.md`](/spec/v1/storage-adapters.html) §"Event-log contract." Restart resumes from the last persisted entry.
 2. `run.resumed` MUST carry `fromEventLogIdx` if the resume crossed a host restart per [`replay.md`](/spec/v1/replay.html).
-3. `POST /v1/runs/{runId}:fork` is normative for replay-fork per [`replay.md`](/spec/v1/replay.html) §"Fork contract." The fork is byte-equivalent to the parent up to `forkAtEventLogIdx`; only events past that index are re-executed.
+3. `POST /v1/runs/{runId}:fork` is normative for replay-fork per [`replay.md`](/spec/v1/replay.html) §"Fork contract." The fork is byte-equivalent to the parent up to `fromSeq`; only events past that index are re-executed.
 4. The fork carries a new `runId` so client-side deep links to the parent remain stable.
 5. Per-region clock fields MAY differ on the fork (the fork executes "now", not at the parent's event times) per [`replay.md`](/spec/v1/replay.html) §"Cross-region replay (RFC 0036)."
 

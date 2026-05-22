@@ -254,6 +254,27 @@ export interface ForkRunResponse {
   eventsUrl: string;
 }
 
+/**
+ * Response from `GET /v1/runs/{runId}/ancestry` — RFC 0040 §C cross-host
+ * composition parent. `parent: null` for top-level runs (not dispatched
+ * from any other run); otherwise `parent.wellKnownUrl` is set when the
+ * parent is on a different host so callers can walk the chain.
+ *
+ * Capability-gated: hosts not advertising
+ * `capabilities.multiAgent.executionModel.crossHostCausation.ancestryEndpointSupported: true`
+ * return 404; the SDK surfaces that as `null` via `runs.ancestry()`.
+ */
+export interface RunAncestryResponse {
+  runId: string;
+  hostId: string;
+  parent: null | {
+    runId: string;
+    hostId: string;
+    wellKnownUrl?: string;
+    cause: 'mcp-tool-call' | 'a2a-message' | 'core.subWorkflow' | 'core.dispatch';
+  };
+}
+
 export interface ResolveInterruptRequest {
   resumeValue: unknown;
 }

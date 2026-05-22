@@ -98,7 +98,7 @@ NEW `conformance/src/scenarios/cross-engine-append-ordering.test.ts` — two-eng
 
 ### §E — Replay-determinism cross-region (additive prose to `spec/v1/replay.md`)
 
-When `capabilities.idempotency.multiRegion.supported: true` AND `capabilities.eventLog.crossEngineOrdering.supported: true`, a `POST /v1/runs/{runId}:fork` invocation served by a different region MUST produce a fork run whose **observable state at the `forkAtEventLogIdx` boundary** matches a fork served by the original region. Specifically: the fork's `RunSnapshot.status`, `RunSnapshot.variables`, and the projected event log up to `forkAtEventLogIdx` MUST be byte-equivalent across regions. Per-region wall-clock fields in subsequent events MAY differ (e.g., timestamps embedded in `RunEventDoc.observedAt`, ULID component-T entropy in newly-generated event IDs); a bit-equivalent total comparison is NOT required and is not implementable in the presence of per-region clocks.
+When `capabilities.idempotency.multiRegion.supported: true` AND `capabilities.eventLog.crossEngineOrdering.supported: true`, a `POST /v1/runs/{runId}:fork` invocation served by a different region MUST produce a fork run whose **observable state at the `fromSeq` boundary** matches a fork served by the original region. Specifically: the fork's `RunSnapshot.status`, `RunSnapshot.variables`, and the projected event log up to `fromSeq` MUST be byte-equivalent across regions. Per-region wall-clock fields in subsequent events MAY differ (e.g., timestamps embedded in `RunEventDoc.observedAt`, ULID component-T entropy in newly-generated event IDs); a bit-equivalent total comparison is NOT required and is not implementable in the presence of per-region clocks.
 
 ## Compatibility
 

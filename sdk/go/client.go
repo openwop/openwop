@@ -314,6 +314,36 @@ func (c *OpenwopClient) ForkRun(
 	return &out, nil
 }
 
+// RunAncestry calls GET /v1/runs/{runID}/ancestry per RFC 0040 §C and
+// spec/v1/multi-agent-execution.md §"GET /v1/runs/{runId}/ancestry".
+//
+// Returns (nil, nil) when the host doesn't advertise
+// capabilities.multiAgent.executionModel.crossHostCausation
+// .ancestryEndpointSupported: true (endpoint returns 404 in that case);
+// callers can branch on capability discovery without unwrapping the
+// error envelope. On 200, RunAncestryResponse.Parent is nil for
+// top-level runs; when set, Parent.WellKnownURL identifies the parent
+// host's discovery URL so callers walk the chain one hop at a time.
+func (c *OpenwopClient) RunAncestry(
+	ctx context.Context,
+	runID string,
+) (*RunAncestryResponse, error) {
+	var out RunAncestryResponse
+	err := c.requestJSON(
+		ctx, http.MethodGet,
+		"/v1/runs/"+url.PathEscape(runID)+"/ancestry",
+		nil, nil, true, &out,
+	)
+	if err != nil {
+		var werr *WopError
+		if errors.As(err, &werr) && werr.Status == 404 {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &out, nil
+}
+
 // PollRunEventsOptions controls GET /v1/runs/{runID}/events/poll query.
 type PollRunEventsOptions struct {
 	LastSequence   *int

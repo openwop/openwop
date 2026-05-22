@@ -293,9 +293,9 @@ The conformance suite should treat exact fixture replay as a pass/fail assertion
 
 Per [RFC 0036](../../RFCS/0036-multi-region-and-cross-engine-guarantees.md) (`Active` 2026-05-21).
 
-When BOTH `capabilities.idempotency.multiRegion.supported: true` AND `capabilities.eventLog.crossEngineOrdering.supported: true`, a `POST /v1/runs/{runId}:fork` invocation served by a different region than the original run MUST produce a fork whose **observable state at the `forkAtEventLogIdx` boundary** matches a fork served by the original region.
+When BOTH `capabilities.idempotency.multiRegion.supported: true` AND `capabilities.eventLog.crossEngineOrdering.supported: true`, a `POST /v1/runs/{runId}:fork` invocation served by a different region than the original run MUST produce a fork whose **observable state at the `fromSeq` boundary** matches a fork served by the original region.
 
-Specifically, the fork's `RunSnapshot.status`, `RunSnapshot.variables`, and the projected event log up to `forkAtEventLogIdx` MUST be byte-equivalent across regions. Per-region wall-clock fields in subsequent events MAY differ (e.g., timestamps embedded in `RunEventDoc.observedAt`, ULID component-T entropy in newly-generated event IDs); a bit-equivalent total comparison is NOT required and is not implementable in the presence of per-region clocks.
+Specifically, the fork's `RunSnapshot.status`, `RunSnapshot.variables`, and the projected event log up to `fromSeq` MUST be byte-equivalent across regions. Per-region wall-clock fields in subsequent events MAY differ (e.g., timestamps embedded in `RunEventDoc.observedAt`, ULID component-T entropy in newly-generated event IDs); a bit-equivalent total comparison is NOT required and is not implementable in the presence of per-region clocks.
 
 Hosts that advertise one of the two capabilities but not the other retain the existing single-region replay contract per `## Determinism scoring` above. Hosts that advertise neither are silently single-region; the cross-region claim does not apply.
 

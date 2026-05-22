@@ -285,6 +285,29 @@ type ForkRunResponse struct {
 	FromSeq     *int      `json:"fromSeq,omitempty"`
 }
 
+// RunAncestryParent is the populated branch of RunAncestryResponse.Parent —
+// names the run's immediate dispatcher per RFC 0040 §C. WellKnownURL is
+// set only when the parent is on a different host (callers walk the
+// chain by following it one hop at a time).
+type RunAncestryParent struct {
+	RunID        string `json:"runId"`
+	HostID       string `json:"hostId"`
+	Cause        string `json:"cause"` // "mcp-tool-call" | "a2a-message" | "core.subWorkflow" | "core.dispatch"
+	WellKnownURL string `json:"wellKnownUrl,omitempty"`
+}
+
+// RunAncestryResponse mirrors GET /v1/runs/{id}/ancestry per RFC 0040 §C
+// (schemas/run-ancestry-response.schema.json). Parent is nil for
+// top-level runs (not dispatched from any other run). Capability-gated
+// on capabilities.multiAgent.executionModel.crossHostCausation
+// .ancestryEndpointSupported; hosts not advertising return 404 and the
+// SDK surfaces that as (nil, nil) via OpenwopClient.RunAncestry.
+type RunAncestryResponse struct {
+	RunID  string             `json:"runId"`
+	HostID string             `json:"hostId"`
+	Parent *RunAncestryParent `json:"parent"`
+}
+
 // ResolveInterruptRequest mirrors the body for either resolve endpoint.
 type ResolveInterruptRequest struct {
 	ResumeValue any `json:"resumeValue"`

@@ -284,6 +284,33 @@ class ForkRunResponse:
     fromSeq: int | None = None
 
 
+# ── RFC 0040 Phase 3 cross-host causation ───────────────────────────────
+
+
+@dataclass(frozen=True)
+class RunAncestryParent:
+    runId: str
+    hostId: str
+    cause: Literal["mcp-tool-call", "a2a-message", "core.subWorkflow", "core.dispatch"]
+    wellKnownUrl: str | None = None
+
+
+@dataclass(frozen=True)
+class RunAncestryResponse:
+    """RFC 0040 §C response shape — `GET /v1/runs/{runId}/ancestry`.
+
+    `parent: None` for top-level runs (not dispatched from any other run);
+    when set, `parent.wellKnownUrl` identifies the parent host's discovery
+    doc URL so callers walk the chain across hosts one hop at a time.
+    Capability-gated on
+    `capabilities.multiAgent.executionModel.crossHostCausation.ancestryEndpointSupported`.
+    """
+
+    runId: str
+    hostId: str
+    parent: RunAncestryParent | None
+
+
 # ── HITL ────────────────────────────────────────────────────────────────
 
 @dataclass

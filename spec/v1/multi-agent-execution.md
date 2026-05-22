@@ -43,7 +43,7 @@ LOOP:
      return to step 1.
 ```
 
-The loop MUST be re-entrant per `spec/v1/replay.md` §"Determinism with non-deterministic agents" — replaying from `forkAtEventLogIdx` after the Nth iteration MUST produce identical state at that index regardless of cross-region engine handoff (when `capabilities.eventLog.crossEngineOrdering.supported: true` per RFC 0036) or worker dispatch timing (when `capabilities.agents.dispatchMapping: true` per RFC 0022).
+The loop MUST be re-entrant per `spec/v1/replay.md` §"Determinism with non-deterministic agents" — replaying from `fromSeq` after the Nth iteration MUST produce identical state at that index regardless of cross-region engine handoff (when `capabilities.eventLog.crossEngineOrdering.supported: true` per RFC 0036) or worker dispatch timing (when `capabilities.agents.dispatchMapping: true` per RFC 0022).
 
 ## Handoff state machine (normative)
 
@@ -96,14 +96,14 @@ Per [RFC 0039](../../RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md) �
 When a parent run dispatches a child run via `core.dispatch` or `core.subWorkflow`, the child's `MemoryAdapter` MUST be scoped per-(tenantId, scopeId) per `agent-memory.md` §CTI-1 (cross-tenant invariant). Child runs MAY share the parent's `scopeId` (default — inherit) or declare a fresh `scopeId` (opt-in via the dispatch config's `memoryScopeIsolation: "isolated"` field, additive). When the child shares the parent's `scopeId`:
 
 1. `MemoryEntry` records the child writes are visible to the parent on the child's terminal `completed` AND any subsequent parent supervisor turn — the same single-host visibility contract as intra-run memory operations.
-2. `MemoryEntry.ttl` MUST be anchored at the child's wall-clock write time, NOT the parent's start time. A child writing `MemoryEntry { ttl: 3600 }` at parent-clock T+10s expires at T+3610s (child write time + ttl), NOT T+3600s. **Why child-write-time wins:** TTL is an absolute freshness contract on the datum ("this value is valid for N seconds after I wrote it"), not a budget against an enclosing run lifetime. Parent runs that need longer-lived shared memory write directly to the shared scope under their own clock; matches the SR-1 "writer's-clock" pattern from `agent-memory.md` §SR-1.
+2. `MemoryEntry.ttl` MUST be anchored at the child's wall-clock write time, NOT the parent's start time. A child writing `MemoryEntry { ttl: 3600 }` at parent-clock T+10s expires at T+3610s (child write time + ttl), NOT T+3600s. **Why child-write-time wins:** TTL is an absolute freshness contract on the datum ("this value is valid for N seconds after I wrote it"), not a budget against an enclosing run lifetime. Parent runs that need longer-lived shared memory write directly to the shared scope under their own clock.
 3. The parent's subsequent supervisor turn observing the child's MemoryEntry MUST NOT race a still-running sibling dispatch's writes — host MUST serialize cross-child writes per parent-run, OR advertise `capabilities.multiAgent.executionModel.crossChildMemoryConcurrency: "advisory"` to opt out of the serialization MUST (advisory hosts SHOULD document last-write-wins semantics out-of-band).
 
 ### Replay carry-forward (MAE-3)
 
 When a `POST /v1/runs/{runId}:fork` invocation forks from a past event-log index N, the forked run's `MemoryAdapter.get(key)` calls before reaching index N MUST return the value that was in memory **AT THE ORIGINAL RUN'S TIME OF INDEX N** — NOT the current memory state.
 
-Hosts MUST persist memory snapshots tied to event-log indices when `capabilities.multiAgent.executionModel.version >= 2` AND `capabilities.memory.supported: true` are both advertised. The snapshot mechanism is host-internal (e.g., periodic copy-on-write checkpoints, append-only journal with reverse-projection on memory-write operations, per-write snapshot rows). Hosts that cannot satisfy the snapshot at the requested `forkAtEventLogIdx` MUST refuse the fork with `error.code: "replay_memory_snapshot_unavailable"` per `spec/v1/rest-endpoints.md` §"Common error codes". `error.details.forkAtEventLogIdx` SHOULD identify the requested index; `error.details.oldestAvailableIdx` MAY identify the oldest index for which a snapshot exists (lets clients pick a valid fork point).
+Hosts MUST persist memory snapshots tied to event-log indices when `capabilities.multiAgent.executionModel.version >= 2` AND `capabilities.memory.supported: true` are both advertised. The snapshot mechanism is host-internal (e.g., periodic copy-on-write checkpoints, append-only journal with reverse-projection on memory-write operations, per-write snapshot rows). Hosts that cannot satisfy the snapshot at the requested `fromSeq` MUST refuse the fork with `error.code: "replay_memory_snapshot_unavailable"` per `spec/v1/rest-endpoints.md` §"Common error codes". `error.details.fromSeq` SHOULD identify the requested index; `error.details.oldestAvailableIdx` MAY identify the oldest index for which a snapshot exists (lets clients pick a valid fork point).
 
 ### Conformance gating
 

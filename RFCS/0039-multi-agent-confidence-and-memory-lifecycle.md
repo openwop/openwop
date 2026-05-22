@@ -67,7 +67,7 @@ Add a new §"Sub-run lifecycle + replay carry-forward" to `spec/v1/agent-memory.
 > 1. `MemoryEntry` records the child writes are visible to the parent on the child's terminal `completed` AND any subsequent parent supervisor turn — the same single-host visibility contract as intra-run memory operations.
 > 2. `MemoryEntry.ttl` is computed from the child's wall-clock write time, NOT the parent's start time. A child writing `MemoryEntry { ttl: 3600 }` at parent-clock T+10s expires at T+3610s (child write time + ttl), NOT T+3600s.
 >
->     **Why child-write-time wins (normative rationale).** TTL is an absolute freshness contract on the datum ("this value is valid for N seconds after I wrote it"), not a budget against an enclosing run lifetime. A long-running parent that dispatches many short-lived children would otherwise see all child writes share a single TTL anchor at parent-start, causing batch expiry instead of staggered expiry — surprising for any cache-like workload. Parent runs that need longer-lived shared memory write directly to the shared scope under their own clock; child runs inherit visibility but not lifetime ownership. This matches the SR-1 "secret-redaction at write time" invariant pattern (`agent-memory.md` §SR-1): the writer's clock is the contract, not the enclosing context's.
+>     **Why child-write-time wins (normative rationale).** TTL is an absolute freshness contract on the datum ("this value is valid for N seconds after I wrote it"), not a budget against an enclosing run lifetime. A long-running parent that dispatches many short-lived children would otherwise see all child writes share a single TTL anchor at parent-start, causing batch expiry instead of staggered expiry — surprising for any cache-like workload. Parent runs that need longer-lived shared memory write directly to the shared scope under their own clock; child runs inherit visibility but not lifetime ownership.
 >
 > 3. The parent's subsequent supervisor turn observing the child's MemoryEntry MUST NOT race a still-running sibling dispatch's writes — host MUST serialize cross-child writes per parent-run, OR advertise `capabilities.multiAgent.executionModel.crossChildMemoryConcurrency: "advisory"` to opt out of the serialization MUST (advisory hosts SHOULD still document last-write-wins semantics).
 >
@@ -77,7 +77,7 @@ Add a new §"Sub-run lifecycle + replay carry-forward" to `spec/v1/agent-memory.
 
 Add to `spec/v1/rest-endpoints.md` §"Common error codes":
 
-- `replay_memory_snapshot_unavailable` — RFC 0039 §B. The host advertises `capabilities.multiAgent.executionModel.version >= 2` but cannot serve the memory snapshot for the requested `forkAtEventLogIdx`. `details.forkAtEventLogIdx` SHOULD identify the requested index; `details.oldestAvailableIdx` MAY identify the oldest index for which a snapshot exists (lets clients pick a valid fork point).
+- `replay_memory_snapshot_unavailable` — RFC 0039 §B. The host advertises `capabilities.multiAgent.executionModel.version >= 2` but cannot serve the memory snapshot for the requested `fromSeq`. `details.fromSeq` SHOULD identify the requested index; `details.oldestAvailableIdx` MAY identify the oldest index for which a snapshot exists (lets clients pick a valid fork point).
 
 ### §D — New RunEventType: `core.workflowChain.confidence-escalated`
 
