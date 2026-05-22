@@ -46,12 +46,12 @@ jobs:
     name: Build static site
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '24'
 
       # SITE_DOMAIN drives canonical URLs, OG/Twitter URLs, and the sitemap.xml
       # <loc> entries. When the deploy gate is open (`vars.ALLOW_DEPLOY == '1'`),

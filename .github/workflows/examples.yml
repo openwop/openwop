@@ -59,10 +59,10 @@ jobs:
     # no longer published. Uses the in-tree registry so the check runs against
     # what the PR claims is publishable, not what's currently CDN-cached.
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '24'
       - name: Validate metadata.packs[] references resolve
         run: node scripts/check-example-pack-refs.mjs --offline registry/v1/index.json
       - name: Validate doc-prose pack claims
@@ -89,12 +89,12 @@ jobs:
           # Dry-run — no host needed.
           - { name: node-pack-publishing,  host: dry-run }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Node 20
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '24'
 
       # Detect whether external-host secrets are available. External-host
       # examples skip cleanly when the operator hasn't configured the
