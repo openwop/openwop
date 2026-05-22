@@ -77,7 +77,7 @@ const orchestratorSupervisorNode: NodeModule = {
   typeId: 'core.orchestrator.supervisor',
   version: '1.0.0',
   async execute(ctx) {
-    const cfg = (ctx.config ?? {}) as { mockDispatchPlan?: unknown };
+    const cfg = (ctx.config ?? {}) as { mockDispatchPlan?: unknown; agentId?: unknown };
     // Default plan when no mockDispatchPlan is configured: a single
     // pass through the dispatch loop (one no-op next-worker decision +
     // terminate). Lets the `conformance-dispatch-loop` fixture
@@ -91,7 +91,16 @@ const orchestratorSupervisorNode: NodeModule = {
           { kind: 'next-worker', nextWorkerIds: [] },
           { kind: 'terminate', reason: 'goal-reached' },
         ];
-    return { status: 'success', outputs: { decisions: plan } };
+    // RFC 0006 §B + `runOrchestratorDecided` schema requires `agentId` on
+    // every emission. The supervisor's agent identity is either declared
+    // explicitly via `config.agentId` (fixtures may pin a specific identity
+    // for cross-host parity tests) or synthesized deterministically from
+    // the supervisor's nodeId so a single run's supervisor identity stays
+    // stable across all decisions. Falls back to `'supervisor-<nodeId>'`
+    // when no explicit identity is given.
+    const agentIdRaw = typeof cfg.agentId === 'string' && cfg.agentId.length >= 3 ? cfg.agentId : undefined;
+    const agentId = agentIdRaw ?? `supervisor-${ctx.nodeId}`;
+    return { status: 'success', outputs: { decisions: plan, agentId } };
   },
 };
 
@@ -147,6 +156,14 @@ const dispatchNode: NodeModule = {
       ? (rawInputs.input as Record<string, unknown>)
       : rawInputs;
     const decisions = Array.isArray(supervisorPayload.decisions) ? (supervisorPayload.decisions as Array<Record<string, unknown>>) : [];
+    // RFC 0006 §B + `runOrchestratorDecided` schema — the supervisor's
+    // agent identity threads into every emitted `runOrchestrator.decided`
+    // event. Read from the supervisor's output (preferred); fall back to a
+    // run-scoped synthetic id when the supervisor didn't emit one (back-
+    // compat with pre-RFC-0006 supervisor fixtures).
+    const supervisorAgentId = typeof supervisorPayload.agentId === 'string' && supervisorPayload.agentId.length >= 3
+      ? supervisorPayload.agentId
+      : `orchestrator-${ctx.runId}`;
 
     if (decisions.length === 0) {
       return { status: 'failure', error: { code: 'invalid_request', message: 'core.dispatch requires supervisor `decisions` input' } };
@@ -195,7 +212,7 @@ const dispatchNode: NodeModule = {
         runId: ctx.runId,
         nodeId: ctx.nodeId,
         type: 'runOrchestrator.decided',
-        payload: { decision },
+        payload: { agentId: supervisorAgentId, decision },
       });
       // RFC 0039 §A — confidence-floor escalation. Apply ONLY when Phase 2 is
       // advertised AND the decision carries an explicit confidence value. A
@@ -208,6 +225,9 @@ const dispatchNode: NodeModule = {
       const isEligibleKind = kind === 'next-worker' || kind === 'terminate';
       if (multiAgentPhase2Enabled && multiAgentEnabled && isEligibleKind &&
           confidenceNumber !== undefined && confidenceNumber < confidenceFloor) {
+        // Per coreWorkflowChainConfidenceEscalated schema: workerId is OPTIONAL
+        // and OMITTED for terminate-kind escalations (no worker to name).
+        // Present + non-empty for next-worker-kind.
         const workerIdHint = kind === 'next-worker' && Array.isArray(decision.nextWorkerIds)
           ? String(decision.nextWorkerIds[0] ?? '')
           : '';
@@ -220,8 +240,8 @@ const dispatchNode: NodeModule = {
             confidence: confidenceNumber,
             floor: confidenceFloor,
             escalationKind: 'clarify',
-            workerId: workerIdHint,
             parentRunId: ctx.runId,
+            ...(workerIdHint.length > 0 ? { workerId: workerIdHint } : {}),
             originalDecision: decision,
           },
         });

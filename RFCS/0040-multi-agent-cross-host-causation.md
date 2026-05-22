@@ -27,8 +27,8 @@ Bumps `multiAgent.executionModel.version` from `2` (Phase 2, RFC 0039) to `3` (P
 
 RFC 0037 Phase 1 normated the per-host execution loop. RFC 0039 Phase 2 normated confidence escalation + same-host memory lifecycle. Neither addresses what happens when a workflow crosses a host boundary:
 
-- A workflow on host A invokes an MCP tool whose implementation lives on host B; host B's tool emits events that should chain back to host A's run.
-- An A2A peer on host B sends a message to host A's agent; the receiving agent should be able to walk the causation chain back to the sender's originating event.
+- A workflow on host A invokes an MCP tool whose implementation lives on host B; events host B's tool emits ought to chain back to host A's originating run — §A makes that wire-shape explicit.
+- An A2A peer on host B sends a message to host A's agent; the receiving agent needs a discoverable path to walk the causation chain back to the sender's originating event — §C's `ancestry` endpoint provides it.
 - A `core.subWorkflow` dispatch can target a workflow registered on a different host (per `host-extensions.md` §"Canonical prefixes" + a future cross-host dispatch contract).
 
 Without normated cross-host causation:
@@ -130,7 +130,7 @@ Hosts advertising `multiAgent.executionModel.version: 3` MUST also advertise `cr
 
 1. **hostId format.** SHOULD be URL-or-DNS-style but not strictly normated. A future clarification may tighten to a pattern matching `^[a-z0-9]+(\.[a-z0-9-]+)+/[a-z0-9-]+$`.
 2. **Ancestry endpoint pagination.** A run dispatched through 10 hosts has a 10-deep parent chain. Should `GET /v1/runs/{runId}/ancestry` return the full chain or just the immediate parent? Defer to comment-window discussion; current proposal returns immediate parent only.
-3. **Replay across the cross-host boundary.** Phase 4 (`RFCS/0041`) covers replay-under-nondeterminism; the cross-host-replay-determinism intersection may need a dedicated note in the §C ancestry endpoint contract.
+3. **Replay across the cross-host boundary.** Phase 4 (`RFCS/0041`) covers replay-under-nondeterminism; the cross-host-replay-determinism intersection might warrant a dedicated note in the §C ancestry endpoint contract — defer to comment-window discussion.
 
 ## Acceptance criteria
 

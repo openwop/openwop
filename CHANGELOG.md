@@ -11,6 +11,30 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.3 — unreleased] — coordinated SDK release for MyndHyve adoption-feedback slices
 
+### RFC 0039 + 0037 + 0041 — /code-review follow-ups (2026-05-22)
+
+Surgical follow-ups on c6eb5d2 + 232b3aa per the senior code review.
+
+**CRITICAL 1 — schemas/orchestrator-decision.schema.json amended** to admit the optional `confidence: number ∈ [0, 1]` field on the `next-worker` AND `terminate` branches. Without this, RFC 0039 §A's wire shape was non-conformant against the existing closed-`additionalProperties: false` schema; any consumer validating `runOrchestrator.decided.payload.decision` against the typed schema would have refused the persisted event.
+
+**CRITICAL 2 — `coreWorkflowChainConfidenceEscalated.originalDecision` schema description softened.** Replaced the per-field MUST-redact restating with a `$ref` to `orchestrator-decision.schema.json` (so the new field validates against the canonical decision shape) + a pointer to the existing protocol-tier `secret-leakage-eventlog-payload` SECURITY invariant (which covers ALL RunEventType payloads via `redaction.test.ts`). The reference host's eventLog-write path handles redaction uniformly; no per-event-type opt-in was actually required.
+
+**HIGH 3 — supervisor + dispatch wire `agentId` on every `runOrchestrator.decided` emission.** The `runOrchestratorDecided` schema has REQUIRED `["agentId", "decision"]` from its initial landing in the Multi-Agent Shift Phase 5; the reference dispatcher was silently emitting `payload: { decision }` only, a latent schema violation that escaped the gate because eventLog.append doesn't run typed-payload validation at write time. Fixed: supervisor node now emits `agentId` alongside `decisions[]` (configurable via `config.agentId`; defaults to `supervisor-${ctx.nodeId}`); dispatch threads it onto every `runOrchestrator.decided` payload. Falls back to `orchestrator-${ctx.runId}` for back-compat when the supervisor is pre-RFC-0006.
+
+**MEDIUM 4 — `coreWorkflowChainConfidenceEscalated.workerId` dropped from `required[]`.** Now OPTIONAL with `minLength: 1` when present; OMITTED for terminate-kind escalations (terminate decisions have no worker to name). Host code emits the field only when kind === 'next-worker'.
+
+**MEDIUM 5 — RFC 0041 §D `llmCacheKeyRecipe` schema diff fixed.** Replaced the literal `"x-host-..."` enum placeholder with the proper `anyOf: [{ const: "spec-rfc-0041" }, { pattern: "^x-host-<host>-<key>$" }]` pattern matching RFCs 0035/0036.
+
+**MEDIUM 6 — `multi-agent-confidence-escalation.test.ts` terminal-status assertion tightened** from accepting `waiting-clarification OR suspended OR waiting-input` to requiring `waiting-clarification` per `spec/v1/interrupt.md` §"Interrupt kinds." Hosts mapping the kind incorrectly now fail visibly.
+
+**MEDIUM 7 — `routes/discovery.ts` OMITS the `multiAgent` block entirely** when neither phase env-flag is set (was: advertised `{supported: false, version: 1}`, which is "version 1 of an unimplemented feature" — honest-but-confusing). The schema makes the block optional precisely so non-implementers stay silent. Capability-gated conformance scenarios already soft-skip on absence.
+
+**MEDIUM 8 — RFC 0040 motivation prose rephrased** to drop the lowercase `should` in interop-expectation sentences. Now uses descriptive forms ("ought to chain," "needs a discoverable path") that don't ambiguously hint at normative claims.
+
+**LOW 10 — conformance/coverage.md gains a row** for the new RFC 0039 Phase 2 scenario.
+
+Gate: `npm run openwop:check` 9/9 (env-flake on the npx asyncapi wrapper; individual gate steps all green); `tsc --noEmit` clean across sdk/typescript + conformance + apps/workflow-engine/backend.
+
 ### RFC 0040 + RFC 0041 — multi-agent Phases 3 + 4 filed Draft (2026-05-22)
 
 Files the two remaining follow-up RFCs from RFC 0037 §"Open spec gaps" — closing the multi-agent execution model roadmap on paper. Both at `Status: Draft`.

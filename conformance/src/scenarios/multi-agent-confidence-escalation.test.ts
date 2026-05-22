@@ -114,12 +114,12 @@ describe.skipIf(BEHAVIORAL_SKIP)('multi-agent-confidence-escalation: behavioral 
     // settled status; we expect `waiting-clarification` or equivalent
     // non-completed status carrying an open clarification interrupt.
     expect(
-      terminal.status === 'waiting-clarification' || terminal.status === 'suspended' || terminal.status === 'waiting-input',
+      terminal.status,
       driver.describe(
-        'RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md §A',
-        'low-confidence decision MUST suspend with a clarification interrupt; status MUST NOT be `completed` because no dispatch fired',
+        'RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md §A + spec/v1/interrupt.md',
+        'a host emitting `interrupt.kind: "clarification"` MUST surface the run as `waiting-clarification` per spec/v1/interrupt.md §"Interrupt kinds"; low-confidence decision MUST NOT reach `completed` because no dispatch fired',
       ),
-    ).toBe(true);
+    ).toBe('waiting-clarification');
 
     const eventsRes = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events`);
     expect(eventsRes.status).toBe(200);

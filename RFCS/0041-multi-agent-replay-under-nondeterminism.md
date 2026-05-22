@@ -86,8 +86,11 @@ Add to `spec/v1/replay.md`:
 +          "supported": { "type": "boolean" },
 +          "llmCacheKeyRecipe": {
 +            "type": "string",
-+            "enum": ["spec-rfc-0041", "x-host-..."],
-+            "description": "The cache-key recipe the host honors. `spec-rfc-0041` = this RFC §A. Vendor extensions allowed under the canonical x-host-<host>-<key> pattern."
++            "anyOf": [
++              { "const": "spec-rfc-0041" },
++              { "pattern": "^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*$" }
++            ],
++            "description": "The cache-key recipe the host honors. `spec-rfc-0041` = this RFC §A. Vendor-specific recipes use the canonical host-extension namespace string matching `^x-host-<host>-<key>$` per `spec/v1/host-extensions.md` §'Canonical prefixes'; the matching algorithm MUST be documented at the host's discovery doc."
 +          },
 +          "refusalDivergenceEmission": {
 +            "type": "boolean",

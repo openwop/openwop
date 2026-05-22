@@ -426,23 +426,32 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       // 1). The confidenceEscalationFloor advertisement defaults to 0.5
       // (the spec floor) and can be tightened via
       // OPENWOP_MULTI_AGENT_CONFIDENCE_FLOOR=<n> per RFC 0039 §A.
-      multiAgent: (() => {
-        const phase1 = process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL === 'true';
-        const phase2 = phase1 && process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_2 === 'true';
-        const floorRaw = process.env.OPENWOP_MULTI_AGENT_CONFIDENCE_FLOOR;
-        const floor = (() => {
-          const parsed = floorRaw === undefined ? 0.5 : Number(floorRaw);
-          if (!Number.isFinite(parsed) || parsed < 0.5 || parsed > 1.0) return 0.5;
-          return parsed;
-        })();
-        return {
-          executionModel: {
-            supported: phase1,
-            version: phase2 ? 2 : 1,
-            ...(phase2 ? { confidenceEscalationFloor: floor } : {}),
-          },
-        };
-      })(),
+      // When NEITHER phase env-flag is set, the `multiAgent` block is
+      // OMITTED entirely — advertising `{supported: false, version: 1}` is
+      // honest-but-confusing ("version 1 of an unimplemented feature"); the
+      // capabilities.schema.json makes the block optional precisely so
+      // non-implementers can stay silent. Capability-gated conformance
+      // scenarios soft-skip on absence per the existing convention.
+      ...(process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL === 'true'
+        ? (() => {
+            const phase2 = process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_2 === 'true';
+            const floorRaw = process.env.OPENWOP_MULTI_AGENT_CONFIDENCE_FLOOR;
+            const floor = (() => {
+              const parsed = floorRaw === undefined ? 0.5 : Number(floorRaw);
+              if (!Number.isFinite(parsed) || parsed < 0.5 || parsed > 1.0) return 0.5;
+              return parsed;
+            })();
+            return {
+              multiAgent: {
+                executionModel: {
+                  supported: true,
+                  version: phase2 ? 2 : 1,
+                  ...(phase2 ? { confidenceEscalationFloor: floor } : {}),
+                },
+              },
+            };
+          })()
+        : {}),
       runtimeCapabilities: listCapabilities(),
       // Host surface registry — what `ctx.*` surfaces this host wires.
       // The catalog endpoint cross-references this to mark each node
