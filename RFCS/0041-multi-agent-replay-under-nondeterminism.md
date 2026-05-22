@@ -35,7 +35,7 @@ This is the LAST of the four phases from RFC 0037's roadmap. After Phase 4 Accep
 
 ### §A — LLM cache-key recipe normation (MAE-7 closure)
 
-`spec/v1/replay.md` §"LLM cache-key recipe" currently documents the recipe as INFORMATIVE. Phase 4 promotes it to NORMATIVE when `multiAgent.executionModel.version >= 4`:
+`spec/v1/replay.md` §"LLM cache-key recipe" §B already documents the recipe as a CONDITIONAL MUST — hosts MUST compute the key per the recipe **for any node that calls an LLM provider through the Layer-2 idempotency surface**. Phase 4 strengthens this in two ways: (1) the MUST becomes unconditional (applies to ALL LLM-calling nodes when `multiAgent.executionModel.version >= 4`, regardless of Layer-2 idempotency usage); (2) the host's commitment to the recipe becomes observable via the `replayDeterminism.llmCacheKeyRecipe` discovery field. The recipe shape itself is unchanged from §B:
 
 > Hosts MUST compute the cache key for an LLM call as:
 >
@@ -127,7 +127,7 @@ Hosts advertising `multiAgent.executionModel.version: 4` MUST also advertise `re
 
 **Additive.** Hosts at version 1-3 continue unchanged. Hosts upgrading to version 4:
 
-- Adopt the normative recipe in §A (compatible with hosts that already implement the informative recipe; non-conformant for hosts that use an idiosyncratic key shape).
+- Adopt the unconditional MUST in §A — apply the §"LLM cache-key recipe" §B recipe to ALL LLM-calling nodes, not just those using Layer-2 idempotency. Compatible with hosts that already implement the recipe for the Layer-2 case; non-conformant for hosts that use an idiosyncratic key shape OR skip the recipe for non-Layer-2-idempotent nodes.
 - Emit the new `replay.divergedAtRefusal` event when replay-refusal-divergence occurs (additive RunEventType; pre-version-4 consumers ignore).
 - Implement §C observable-sequence determinism (most hosts already do this implicitly via existing replay machinery; §C makes the contract explicit).
 

@@ -20,47 +20,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { createHash } from 'node:crypto';
 import { driver } from '../lib/driver.js';
-
-/** Mirror of the reference impl's `canonicalize` so the conformance
- *  scenario can recompute the expected cache key locally and assert
- *  equality with what the host returns. RFC 8785 JCS-style:
- *  sorted-keys, no whitespace, preserve array order. */
-function canonicalize(value: unknown): string {
-  if (value === null) return 'null';
-  if (typeof value === 'boolean' || typeof value === 'number') return JSON.stringify(value);
-  if (typeof value === 'string') return JSON.stringify(value);
-  if (Array.isArray(value)) return '[' + value.map((v) => canonicalize(v)).join(',') + ']';
-  if (typeof value === 'object') {
-    const obj = value as Record<string, unknown>;
-    const keys = Object.keys(obj).sort();
-    return '{' + keys.map((k) => `${JSON.stringify(k)}:${canonicalize(obj[k])}`).join(',') + '}';
-  }
-  return JSON.stringify(value);
-}
-
-function projectRecipe(raw: Record<string, unknown>): Record<string, unknown> {
-  const out: Record<string, unknown> = { provider: raw.provider, model: raw.model, messages: raw.messages };
-  if (Array.isArray(raw.tools) && raw.tools.length > 0) {
-    out.tools = [...(raw.tools as Array<{ name: string }>)].sort((a, b) => a.name.localeCompare(b.name));
-  }
-  if (typeof raw.temperature === 'number') out.temperature = raw.temperature;
-  if (typeof raw.topP === 'number') out.topP = raw.topP;
-  if (typeof raw.topK === 'number') out.topK = raw.topK;
-  if (raw.responseFormat && typeof raw.responseFormat === 'object') out.responseFormat = raw.responseFormat;
-  return out;
-}
-
-function expectedCacheKey(input: Record<string, unknown>): string {
-  return createHash('sha256').update(canonicalize(projectRecipe(input)), 'utf8').digest('hex');
-}
-
-async function callSeam(input: Record<string, unknown>): Promise<{ status: number; cacheKey?: string }> {
-  const res = await driver.post('/v1/host/sample/test/llm-cache-key', input);
-  const cacheKey = (res.json as { cacheKey?: string }).cacheKey;
-  return cacheKey !== undefined ? { status: res.status, cacheKey } : { status: res.status };
-}
+import { expectedCacheKey, callCacheKeySeam as callSeam } from '../lib/llm-cache-key-recipe.js';
 
 describe('replay-llm-cache-key: SHA-256-over-JCS recipe (replay.md §B)', () => {
   it('host cache key MUST equal locally-recomputed SHA-256 over canonical JSON', async () => {

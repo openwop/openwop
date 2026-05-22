@@ -91,12 +91,18 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: advertisement shape (R
         ),
       ).toBe(true);
 
-      if (rd.refusalDivergenceEmission !== undefined) {
-        expect(
-          typeof rd.refusalDivergenceEmission,
-          'refusalDivergenceEmission (when present) MUST be boolean',
-        ).toBe('boolean');
-      }
+      // Phase 4 hosts MUST commit to refusal-divergence emission per the
+      // schema description on capabilities.schema.json §replayDeterminism
+      // .refusalDivergenceEmission. The MUST is normative prose on the
+      // schema; JSON Schema can't express the conditional, so this
+      // assertion closes the conformance-enforcement gap.
+      expect(
+        rd.refusalDivergenceEmission,
+        driver.describe(
+          'schemas/capabilities.schema.json §replayDeterminism.refusalDivergenceEmission',
+          'hosts advertising version: 4 MUST set replayDeterminism.refusalDivergenceEmission to true',
+        ),
+      ).toBe(true);
     }
   });
 });

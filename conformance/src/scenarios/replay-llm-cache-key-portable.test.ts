@@ -51,45 +51,10 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { createHash } from 'node:crypto';
 import { driver } from '../lib/driver.js';
+import { expectedCacheKey, callCacheKeySeam as callSeam } from '../lib/llm-cache-key-recipe.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
-
-function canonicalize(value: unknown): string {
-  if (value === null) return 'null';
-  if (typeof value === 'boolean' || typeof value === 'number') return JSON.stringify(value);
-  if (typeof value === 'string') return JSON.stringify(value);
-  if (Array.isArray(value)) return '[' + value.map((v) => canonicalize(v)).join(',') + ']';
-  if (typeof value === 'object') {
-    const obj = value as Record<string, unknown>;
-    const keys = Object.keys(obj).sort();
-    return '{' + keys.map((k) => `${JSON.stringify(k)}:${canonicalize(obj[k])}`).join(',') + '}';
-  }
-  return JSON.stringify(value);
-}
-
-function projectRecipe(raw: Record<string, unknown>): Record<string, unknown> {
-  const out: Record<string, unknown> = { provider: raw.provider, model: raw.model, messages: raw.messages };
-  if (Array.isArray(raw.tools) && raw.tools.length > 0) {
-    out.tools = [...(raw.tools as Array<{ name: string }>)].sort((a, b) => a.name.localeCompare(b.name));
-  }
-  if (typeof raw.temperature === 'number') out.temperature = raw.temperature;
-  if (typeof raw.topP === 'number') out.topP = raw.topP;
-  if (typeof raw.topK === 'number') out.topK = raw.topK;
-  if (raw.responseFormat && typeof raw.responseFormat === 'object') out.responseFormat = raw.responseFormat;
-  return out;
-}
-
-function expectedCacheKey(input: Record<string, unknown>): string {
-  return createHash('sha256').update(canonicalize(projectRecipe(input)), 'utf8').digest('hex');
-}
-
-async function callSeam(input: Record<string, unknown>): Promise<{ status: number; cacheKey?: string }> {
-  const res = await driver.post('/v1/host/sample/test/llm-cache-key', input);
-  const cacheKey = (res.json as { cacheKey?: string }).cacheKey;
-  return cacheKey !== undefined ? { status: res.status, cacheKey } : { status: res.status };
-}
 
 interface DiscoveryDoc {
   capabilities?: {
@@ -194,7 +159,8 @@ describe.skipIf(HTTP_SKIP)('replay-llm-cache-key-portable: Phase 4 advertisement
   it('hosts advertising version: 4 MUST advertise replayDeterminism.llmCacheKeyRecipe', async () => {
     const d = await readDiscovery();
     const em = d?.capabilities?.multiAgent?.executionModel;
-    if ((em?.version as number) < 4) return; // soft-skip — pre-Phase-4
+    const version = em?.version;
+    if (typeof version !== 'number' || version < 4) return; // soft-skip — pre-Phase-4 or no multiAgent advertisement
 
     const recipe = em?.replayDeterminism?.llmCacheKeyRecipe;
     expect(

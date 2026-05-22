@@ -141,7 +141,7 @@ Per [RFC 0041](../../RFCS/0041-multi-agent-replay-under-nondeterminism.md). Appl
 
 The normative contracts live in [`replay.md`](./replay.md) §"Replay determinism under nondeterministic models (RFC 0041 Phase 4, normative)":
 
-- §A — LLM cache-key recipe promotion (informative → normative when version >= 4). Hosts MUST compute the LLM cache key per the recipe in `replay.md` §"LLM cache-key recipe" §A + §B + §C exactly.
+- §A — LLM cache-key recipe strengthening. The recipe in `replay.md` §"LLM cache-key recipe" §A + §B is already a conditional MUST for hosts using Layer-2 idempotency for LLM nodes. Phase 4 makes the MUST unconditional (applies to ALL LLM-calling nodes) AND requires hosts to advertise the recipe they honor via `replayDeterminism.llmCacheKeyRecipe` for observable cross-host parity.
 - §B — Envelope-refusal recovery: replay-time refusal-divergence MUST emit `replay.divergedAtRefusal` and fail with `error.code: "replay_diverged_at_refusal"`. Silent substitution is non-conformant.
 - §C — Observable-output-sequence determinism: the contract is byte-equivalence at the event-log + RunSnapshot boundary, NOT bit-equivalent execution of underlying tool calls. Hosts cache the observable result, not just the tool-call bytes.
 

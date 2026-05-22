@@ -207,11 +207,14 @@ The migration period is host-internal — no wire-shape impact.
 
 Per [RFC 0041](../../RFCS/0041-multi-agent-replay-under-nondeterminism.md). Applies only when the host advertises `capabilities.multiAgent.executionModel.version >= 4` AND `capabilities.multiAgent.executionModel.replayDeterminism.supported: true`.
 
-### §A — LLM cache-key recipe promotion (informative → normative)
+### §A — LLM cache-key recipe: unconditional MUST + observable commitment
 
-The §"LLM cache-key recipe" §A + §B + §C above is INFORMATIVE for hosts at `version <= 3`. For hosts advertising Phase 4 (`version >= 4`), the recipe is NORMATIVE — hosts MUST compute the LLM cache key per the recipe exactly. This closes RFC 0037 §"Open spec gaps" MAE-7.
+The §"LLM cache-key recipe" §A + §B above already establishes a CONDITIONAL MUST: per the intro to that section, hosts MUST compute the cache key per the recipe **for any node that calls an LLM provider through the Layer-2 idempotency surface** (`idempotency.md` §"Layer 2 — Engine invocationId"). Phase 4 strengthens this in two ways:
 
-Hosts MUST advertise the recipe they honor via `capabilities.multiAgent.executionModel.replayDeterminism.llmCacheKeyRecipe`. The value `spec-rfc-0041` claims this recipe; vendor recipes use the canonical host-extension namespace `x-host-<host>-<recipe-name>` per `host-extensions.md` §"Canonical prefixes".
+1. **Unconditional MUST.** Phase 4 hosts MUST follow the recipe for ALL LLM-calling nodes regardless of whether they use Layer-2 idempotency. The "for Layer-2 idempotency only" conditional in the original §"LLM cache-key recipe" intro does NOT apply when `multiAgent.executionModel.version >= 4`.
+2. **Observable commitment.** Phase 4 hosts MUST advertise the recipe they honor via `capabilities.multiAgent.executionModel.replayDeterminism.llmCacheKeyRecipe`. The value `spec-rfc-0041` claims the canonical recipe; vendor recipes use the canonical host-extension namespace `x-host-<host>-<recipe-name>` per `host-extensions.md` §"Canonical prefixes". The advertisement lets cross-host replay rely on byte-identical keys without trial computation.
+
+Closes RFC 0037 §"Open spec gaps" MAE-7.
 
 ### §B — Envelope-refusal recovery in replay (MAE-8 closure)
 
