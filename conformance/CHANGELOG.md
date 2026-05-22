@@ -1,5 +1,46 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [1.5.0] — 2026-05-22
+
+Minor bump per `PUBLISHING.md` §"Versioning alignment" — unblocks MyndHyve's RFC 0044 + RFC 0039 Half A co-graduation by shipping the relaxed + RFC-0044-routing assertion logic in `multi-agent-confidence-escalation.test.ts`. No new scenario files; no new fixtures. Behavioral honesty pass on 8 sandbox scenarios + schema additions for the new RFC 0044 capability advertisement.
+
+### Changed — RFC 0044 interrupt-kind routing in `multi-agent-confidence-escalation.test.ts`
+
+Previously the scenario asserted `expect(terminal.status).toBe('waiting-clarification')` — strict equality on the clarify-kind escalation path, which rejected even RFC 0039 §A's own escalate-approval path (→ `waiting-approval`). v1.5.0 ships the relaxed + RFC-0044-routing logic landed in upstream commits `f03d01d` (relaxation to accept both canonical statuses) + `641d088` (RFC 0044 vendor-kind routing):
+
+- **Canonical kind advertised** (`clarification` / `approval`) → strict `expect(terminal.status).toBe('waiting-clarification' | 'waiting-approval')`.
+- **Vendor kind advertised** (`x-host-<host>-<kind>` per `host-extensions.md` §"Canonical prefixes") → `expect(terminal.status.startsWith('waiting-')).toBe(true)`; the host's `interrupt.md` mapping determines the suffix.
+- **No advertisement** → fall back to the canonical either-status check (preserves the `f03d01d` relaxation).
+
+This unblocks MyndHyve's `confidenceEscalationInterruptKind: 'x-host-myndhyve-low-confidence'` advertisement (their entrenched `interrupt.kind: 'low-confidence'` → `waiting-approval` mapping) without forcing a cross-cutting rename of `LOW_CONFIDENCE_SUSPEND_REASON` + `mockAgent.node` + `escalationThreshold.ts` + downstream UI consumers. See RFC 0044 §B (`RFCS/0044-confidence-escalation-interrupt-kind-advertisement.md`) for the normative contract.
+
+### Changed — Sandbox scenarios converted vacuous `expect(true).toBe(true)` to `it.todo` (honesty pass)
+
+The 8 `sandbox-*.test.ts` scenarios in v1.4.0 carried `expect(true).toBe(true)` tautology assertions for their behavioral legs. v1.5.0 converts them to `it.todo()` per upstream commit `5864a2f`:
+
+- `sandbox-no-host-process-escape.test.ts`
+- `sandbox-no-network-escape.test.ts`
+- `sandbox-no-host-fs-escape.test.ts`
+- `sandbox-no-host-env-leak.test.ts`
+- `sandbox-timeout-cap.test.ts`
+- `sandbox-memory-cap.test.ts`
+- `sandbox-no-cross-pack-mutation.test.ts`
+- `sandbox-capability-gate-respected.test.ts`
+
+Test reporters now surface 8 todos instead of 8 vacuous passes. The advertisement-shape probes (in `sandbox-no-host-fs-escape`, `sandbox-memory-cap`, `sandbox-timeout-cap`) still run real discovery-doc assertions when capabilities are advertised. Behavioral assertions light up when a sandbox-executing reference host wires the seam.
+
+### Changed — `schemas/capabilities.schema.json` (vendored): adds `multiAgent.executionModel.confidenceEscalationInterruptKind`
+
+Per RFC 0044 §A. The optional field accepts the canonical literal `"clarification"` / `"approval"` OR a vendor extension matching `^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*$` per `host-extensions.md` §"Canonical prefixes". Required for the routing logic above; absent advertisement falls back to the canonical-status check.
+
+### No new scenario files
+
+Scenario file count unchanged at 205 (the v1.4.0 baseline). All changes are behavior modifications to existing files.
+
+### Known limits — unchanged from v1.4.0
+
+The 6 `it.todo` behavioral assertions across RFC 0034 OTel-seam-gated, RFC 0040 traceparent-propagation, RFC 0041 refusal-divergence + observable-sequence scenarios remain. The 8 sandbox `it.todo` assertions are new in v1.5.0 (replacing the v1.4.0 vacuous-pass shapes).
+
 ## [1.4.0] — 2026-05-22
 
 Minor bump per `PUBLISHING.md` §"Versioning alignment" — bundles 45 new conformance scenarios + 23 new fixtures landing since the 1.3.0 publish (2026-05-19). Unblocks non-steward host adoption of RFCs 0027 + 0028 + 0029 + 0030 + 0031 + 0032 + 0033 + 0034 + 0035 + 0036 + 0037 + 0039 + 0040 + 0041 against a single suite version.
