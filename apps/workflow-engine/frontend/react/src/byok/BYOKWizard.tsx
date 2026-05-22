@@ -77,10 +77,13 @@ export function BYOKWizard({ onComplete, onCancel }: Props): JSX.Element {
        * the first step; once the user commits to BYOK we hide it to
        * keep the flow focused. */}
       {step === 'provider' && (
-        <TryItFreeCard
-          isAuthed={user !== null}
-          onPick={(p) => { void activateManaged(p); }}
-        />
+        <>
+          <TryItFreeCard
+            isAuthed={user !== null}
+            onPick={(p) => { void activateManaged(p); }}
+          />
+          <div className="byok-or-divider" role="separator" aria-label="or">OR</div>
+        </>
       )}
 
       <BYOKStepper current={step} />
@@ -181,7 +184,6 @@ function TryItFreeCard({
           onClick={() => onPick(p)}
           className="byok-try-free-card"
         >
-          <ProviderBadge provider={p} />
           <div className="byok-try-free-body">
             <div className="byok-try-free-headline">
               <span className="byok-try-free-title">Try it free</span>

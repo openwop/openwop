@@ -2032,6 +2032,28 @@ pre {
   transform: translateX(4px);
 }
 
+/* OR divider between the Try-it-free card and the BYOK provider grid.
+ * Signals the two paths are mutually exclusive — pick one. Centered
+ * mono caps with thin rules on either side. */
+.byok-or-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 20px 0 24px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.byok-or-divider::before,
+.byok-or-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--rule);
+}
+
 /* BYOK section (Pick a provider) — serif-italic h2 + readable lede + ~14px
  * sans body, mirroring the marketing site's editorial pattern. */
 .byok-section {}
