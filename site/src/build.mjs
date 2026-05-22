@@ -1109,7 +1109,7 @@ function buildApiExplorer() {
             hideDownloadButton: true,
             disableSearch: false,
             // Right code-samples panel: warm dark, brand-toned. Redoc's
-            // default is cold blue-grey (#263238); we use `--ink` so the
+            // default is cold blue-grey (#263238); we use --ink so the
             // panel reads as part of the OpenWOP palette instead of a
             // stock Redoc surface. Cream text + matching dark code
             // blocks make the panel a single cohesive zone (the

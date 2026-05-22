@@ -110,8 +110,8 @@
 <h2 id="motivation">Motivation</h2>
 <p>RFC 0037 Phase 1 normated the per-host execution loop. RFC 0039 Phase 2 normated confidence escalation + same-host memory lifecycle. Neither addresses what happens when a workflow crosses a host boundary:</p>
 <ul>
-<li>A workflow on host A invokes an MCP tool whose implementation lives on host B; host B's tool emits events that should chain back to host A's run.</li>
-<li>An A2A peer on host B sends a message to host A's agent; the receiving agent should be able to walk the causation chain back to the sender's originating event.</li>
+<li>A workflow on host A invokes an MCP tool whose implementation lives on host B; events host B's tool emits ought to chain back to host A's originating run — §A makes that wire-shape explicit.</li>
+<li>An A2A peer on host B sends a message to host A's agent; the receiving agent needs a discoverable path to walk the causation chain back to the sender's originating event — §C's <code>ancestry</code> endpoint provides it.</li>
 <li>A <code>core.subWorkflow</code> dispatch can target a workflow registered on a different host (per <code>host-extensions.md</code> §"Canonical prefixes" + a future cross-host dispatch contract).</li>
 </ul>
 <p>Without normated cross-host causation:</p>
@@ -184,7 +184,7 @@
 <h2 id="alternatives-considered">Alternatives considered</h2>
 <p>1. <strong>Skip <code>causationHostId</code> and rely on URL-namespaced <code>causationId</code> values (e.g., <code>https://host-a.example.com/runs/.../events/123</code>).</strong> Rejected — <code>causationId</code> is opaque-string per the existing event-log schema; clients shouldn't need to URL-parse to discover cross-host context. A sibling field is cleaner. 2. <strong>Define a separate cross-host RunEventType (<code>run.crossHostCausation</code>) instead of extending existing payload shapes.</strong> Rejected — would force consumers to learn a new event type AND walk through cross-host events to reconstruct chains. Extending the existing payload shapes is denser and preserves consumer code. 3. <strong>Defer to a separate "federation" RFC.</strong> Rejected — cross-host causation is the load-bearing piece of multi-agent portability; deferring it perpetuates the standards-readiness gap.</p>
 <h2 id="unresolved-questions">Unresolved questions</h2>
-<p>1. <strong>hostId format.</strong> SHOULD be URL-or-DNS-style but not strictly normated. A future clarification may tighten to a pattern matching <code>^[a-z0-9]+(\.[a-z0-9-]+)+/[a-z0-9-]+$</code>. 2. <strong>Ancestry endpoint pagination.</strong> A run dispatched through 10 hosts has a 10-deep parent chain. Should <code>GET /v1/runs/{runId}/ancestry</code> return the full chain or just the immediate parent? Defer to comment-window discussion; current proposal returns immediate parent only. 3. <strong>Replay across the cross-host boundary.</strong> Phase 4 (<code>RFCS/0041</code>) covers replay-under-nondeterminism; the cross-host-replay-determinism intersection may need a dedicated note in the §C ancestry endpoint contract.</p>
+<p>1. <strong>hostId format.</strong> SHOULD be URL-or-DNS-style but not strictly normated. A future clarification may tighten to a pattern matching <code>^[a-z0-9]+(\.[a-z0-9-]+)+/[a-z0-9-]+$</code>. 2. <strong>Ancestry endpoint pagination.</strong> A run dispatched through 10 hosts has a 10-deep parent chain. Should <code>GET /v1/runs/{runId}/ancestry</code> return the full chain or just the immediate parent? Defer to comment-window discussion; current proposal returns immediate parent only. 3. <strong>Replay across the cross-host boundary.</strong> Phase 4 (<code>RFCS/0041</code>) covers replay-under-nondeterminism; the cross-host-replay-determinism intersection might warrant a dedicated note in the §C ancestry endpoint contract — defer to comment-window discussion.</p>
 <h2 id="acceptance-criteria">Acceptance criteria</h2>
 <ul>
 <li>[ ] Spec text merged (this file).</li>

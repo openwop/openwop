@@ -135,8 +135,80 @@
 +          &quot;supported&quot;: { &quot;type&quot;: &quot;boolean&quot; },
 +          &quot;llmCacheKeyRecipe&quot;: {
 +            &quot;type&quot;: &quot;string&quot;,
-+            &quot;enum&quot;: [&quot;spec-rfc-0041&quot;, &quot;x-host-...&quot;],
-+            &quot;description&quot;: &quot;The cache-key recipe the host honors. `spec-rfc-0041` = this RFC §A. Vendor extensions allowed under the canonical x-host-&amp;lt;host&amp;gt;-&amp;lt;key&amp;gt; pattern.&quot;
++            &quot;anyOf&quot;: [
++              { &quot;const&quot;: &quot;spec-rfc-0041&quot; },
++              { &quot;pattern&quot;: &quot;^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*${content}quot; }
++            ],
++            &quot;description&quot;: &quot;The cache-key recipe the host honors. `spec-rfc-0041` = this RFC §A. Vendor-specific recipes use the canonical host-extension namespace string matching `^x-host-&amp;lt;host&amp;gt;-&amp;lt;key&amp;gt;<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>OpenWOP — RFC 0041: Multi-agent Phase 4 — replay determinism under nondeterministic models</title>
+  <meta name="description" content="Closes the final 3 open spec gaps from RFC 0037 §&quot;Open spec gaps&quot;:"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0041-multi-agent-replay-under-nondeterminism.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="OpenWOP — RFC 0041: Multi-agent Phase 4 — replay determinism under nondeterministic models"/>
+  <meta property="og:description" content="Closes the final 3 open spec gaps from RFC 0037 §&quot;Open spec gaps&quot;:"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0041-multi-agent-replay-under-nondeterminism.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="OpenWOP — RFC 0041: Multi-agent Phase 4 — replay determinism under nondeterministic models"/>
+  <meta name="twitter:description" content="Closes the final 3 open spec gaps from RFC 0037 §&quot;Open spec gaps&quot;:"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
+
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
+
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="stylesheet" href="/assets/style.css"/>
+
+  
+  
+  
+</head>
+<body>
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
+    </a>
+    <nav class="topnav">
+      <a class="hide-sm " href="/spec/v1/">Spec</a>
+      <a class="hide-sm active" href="/rfcs/">RFCs</a>
+      <a class="hide-sm " href="/conformance/">Conformance</a>
+      <a class="hide-sm " href="/changelog/">Changelog</a>
+      <a class="hide-sm " href="/faq/">FAQ</a>
+      <a class="pill" href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </div>
+</header>
+
+<main class="site-main">
+  <div class="wrap">
+     per `spec/v1/host-extensions.md` §&#39;Canonical prefixes&#39;; the matching algorithm MUST be documented at the host&#39;s discovery doc.&quot;
 +          },
 +          &quot;refusalDivergenceEmission&quot;: {
 +            &quot;type&quot;: &quot;boolean&quot;,
