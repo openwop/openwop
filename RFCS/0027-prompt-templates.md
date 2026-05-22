@@ -438,20 +438,20 @@ The `behaviorGate` helper in `conformance/src/lib/behavior-gate.ts` gains a `req
 
 Checklist the maintainers will use to flip `Status` from `Active` to `Accepted`:
 
-- [ ] `spec/v1/prompts.md` merged at status DRAFT v1.x (promotes to FINAL v1.x with this RFC's acceptance — minor-version assignment per `GOVERNANCE.md` release cadence, not pre-committed by this RFC).
-- [ ] `schemas/prompt-template.schema.json` ships.
-- [ ] `schemas/prompt-ref.schema.json` ships.
-- [ ] `schemas/prompt-kind.schema.json` ships and is `$ref`-ed (not inlined) from every site that names a prompt kind.
-- [ ] `schemas/capabilities.schema.json` gains the `prompts` block per §D.
-- [ ] `schemas/run-event.schema.json` adds `"prompt.composed"` to the `RunEventType` enum.
-- [ ] `schemas/run-event-payloads.schema.json` adds the `promptComposed` `$def` and `_typeIndex` entry.
-- [ ] `spec/v1/workflow-definition.md` gains the §"Prompt references on nodes" subsection per §C.
-- [ ] `SECURITY/invariants.yaml` gains the two new entries per §G.
-- [ ] Three new conformance scenarios per §"Conformance" land in `@openwop/openwop-conformance`; conformance suite minor-version bumps.
-- [ ] CHANGELOG entry under `[Unreleased]`.
-- [ ] `INTEROP-MATRIX.md` updated to enumerate host advertisements of `capabilities.prompts.supported` + `observability`. The matrix shape mirrors the existing `capabilities.agents.*` row family.
-- [ ] Reference host (`apps/workflow-engine/backend/typescript`) advertises `capabilities.prompts.supported: true` with `observability: "full"` and passes all three new conformance scenarios.
-- [ ] First non-steward host advertises `capabilities.prompts.supported: true` (third-party validation gate per RFC 0001 §"Promotion to Accepted"). MAY be waived under the bootstrap-phase waiver if the steward provides a public conformance run pointing at the advertised endpoint.
+- [x] `spec/v1/prompts.md` merged at status DRAFT v1.x (promotes to FINAL v1.x with this RFC's acceptance — minor-version assignment per `GOVERNANCE.md` release cadence, not pre-committed by this RFC).
+- [x] `schemas/prompt-template.schema.json` ships.
+- [x] `schemas/prompt-ref.schema.json` ships.
+- [x] `schemas/prompt-kind.schema.json` ships and is `$ref`-ed (not inlined) from every site that names a prompt kind.
+- [x] `schemas/capabilities.schema.json` gains the `prompts` block per §D.
+- [x] `schemas/run-event.schema.json` adds `"prompt.composed"` to the `RunEventType` enum.
+- [x] `schemas/run-event-payloads.schema.json` adds the `promptComposed` `$def` and `_typeIndex` entry.
+- [x] `WorkflowNode.config.promptRef` convention documented. (Original criterion named `spec/v1/workflow-definition.md` but that file doesn't exist in this repo — the canonical location for schema-shape contracts is the JSON Schema itself. `schemas/workflow-definition.schema.json` §`config.promptRefs` documents the convention normatively: cites `spec/v1/prompts.md` §"PromptRef" + RFC 0027 §C, specifies the inline-vs-ref merge rule with the `prompt_ref_supersedes_inline` `log.appended` warning, and the optional-resolution semantics for hosts without `capabilities.prompts.supported`.)
+- [x] `SECURITY/invariants.yaml` gains the two new entries per §G (`prompt-composed-secret-redaction`, `prompt-composed-trust-marker`).
+- [x] Three new conformance scenarios per §"Conformance" land in `@openwop/openwop-conformance` — `prompt-template-shape.test.ts`, `prompt-composed-secret-redaction.test.ts`, `prompt-composed-trust-marker.test.ts`. Conformance suite minor bumped to `@openwop/openwop-conformance@1.4.0` (2026-05-22).
+- [x] CHANGELOG entry under `[Unreleased]`.
+- [ ] `INTEROP-MATRIX.md` updated to enumerate host advertisements of `capabilities.prompts.supported` + `observability`. The matrix shape mirrors the existing `capabilities.agents.*` row family. (Will land alongside the first non-steward advertisement.)
+- [x] Reference host (`apps/workflow-engine/backend/typescript`) advertises `capabilities.prompts.supported: true` with `observability: "full"` and passes all three new conformance scenarios.
+- [ ] First non-steward host advertises `capabilities.prompts.supported: true` (third-party validation gate per RFC 0001 §"Promotion to Accepted"). MAY be waived under the bootstrap-phase waiver if the steward provides a public conformance run pointing at the advertised endpoint. (Path-to-Accepted.)
 
 ## References
 

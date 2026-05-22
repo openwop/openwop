@@ -343,17 +343,17 @@ The `behaviorGate` helper gains a `requirePromptAgentBindings()` predicate.
 
 Promotion from `Active` → `Accepted`:
 
-- [ ] `spec/v1/prompts.md` extended with §"Resolution chain (normative)" describing the four-layer semantics from §A.
-- [ ] `schemas/agent-manifest.schema.json` extended with `promptLibraryRef` and `promptOverrides`.
-- [ ] `schemas/workflow-definition.schema.json` extended with optional top-level `defaults.promptRefs`.
-- [ ] `schemas/capabilities.schema.json` `prompts` block extended with `defaults` and `agentBindings`.
-- [ ] `schemas/run-event.schema.json` adds `"agent.promptResolved"` to the `RunEventType` enum.
-- [ ] `schemas/run-event-payloads.schema.json` adds `agentPromptResolved` `$def` and `_typeIndex` entry.
-- [ ] Three new conformance scenarios per §"Conformance" land in `@openwop/openwop-conformance`; suite minor-version bumps.
-- [ ] CHANGELOG entry under `[Unreleased]`.
-- [ ] `INTEROP-MATRIX.md` extended with a `capabilities.prompts.agentBindings` row alongside the RFC 0027/0028 prompts rows.
-- [ ] Reference host (`apps/workflow-engine/backend/typescript`) advertises `capabilities.prompts.agentBindings: true`, implements the four-layer resolution helper, emits `agent.promptResolved` per node execution, passes all three new conformance scenarios.
-- [ ] First non-steward host advertises `capabilities.prompts.agentBindings: true` (third-party validation gate per RFC 0001). MAY be waived under bootstrap-phase waiver.
+- [x] `spec/v1/prompts.md` extended with §"Resolution chain (normative)" describing the four-layer semantics from §A.
+- [x] `schemas/agent-manifest.schema.json` extended with `promptLibraryRef` and `promptOverrides`.
+- [x] `schemas/workflow-definition.schema.json` extended with optional top-level `defaults.promptRefs`.
+- [x] `schemas/capabilities.schema.json` `prompts` block extended with `defaults` and `agentBindings`.
+- [x] `schemas/run-event.schema.json` adds `"agent.promptResolved"` to the `RunEventType` enum.
+- [x] `schemas/run-event-payloads.schema.json` adds `agentPromptResolved` `$def` and `_typeIndex` entry.
+- [x] Three new conformance scenarios per §"Conformance" land in `@openwop/openwop-conformance` — `prompt-resolution-chain-node-wins.test.ts`, `prompt-resolution-chain-agent-intrinsic.test.ts`, `prompt-resolution-chain-fallback-cascade.test.ts`. Conformance suite minor bumped to `@openwop/openwop-conformance@1.4.0` (2026-05-22).
+- [x] CHANGELOG entry under `[Unreleased]`.
+- [ ] `INTEROP-MATRIX.md` extended with a `capabilities.prompts.agentBindings` row alongside the RFC 0027/0028 prompts rows. (Will land alongside the first non-steward advertisement.)
+- [x] Reference host (`apps/workflow-engine/backend/typescript`) advertises `capabilities.prompts.agentBindings: true`, implements the four-layer resolution helper via `POST /v1/host/sample/prompt/resolve` (per `spec/v1/host-sample-test-seams.md` §1), emits `agent.promptResolved` per node execution, passes all three new conformance scenarios.
+- [ ] First non-steward host advertises `capabilities.prompts.agentBindings: true` (third-party validation gate per RFC 0001). MAY be waived under bootstrap-phase waiver. (Path-to-Accepted.)
 
 ## References
 

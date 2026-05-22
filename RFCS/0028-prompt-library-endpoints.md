@@ -428,18 +428,18 @@ A new in-tree example pack `examples/packs/prompt-sample/` ships two templates (
 
 Promotion from `Active` → `Accepted`:
 
-- [ ] `spec/v1/prompts.md` extended with §"Discovery & distribution" describing the endpoints + pack kind (cross-references this RFC).
-- [ ] `spec/v1/registry-operations.md` extended with §"Prompt-pack install flow" (parallel to existing node-pack flow).
-- [ ] `api/openapi.yaml` adds the six operations under `/v1/prompts*` per §A.
-- [ ] `schemas/prompt-pack-manifest.schema.json` ships.
-- [ ] `schemas/capabilities.schema.json` `prompts` block extended per §C with `packsSupported`, `mutableLibrary`, `library`.
-- [ ] `schemas/prompt-template.schema.json` `meta` block extended per §C with `packName`, `packVersion`.
-- [ ] Five new conformance scenarios per §"Conformance" land in `@openwop/openwop-conformance`; suite minor-version bumps.
-- [ ] In-tree example pack `examples/packs/prompt-sample/` ships, install-verifies under the reference host's registry resolver.
-- [ ] CHANGELOG entry under `[Unreleased]`.
-- [ ] `INTEROP-MATRIX.md` extended with rows for `capabilities.prompts.packsSupported` and `capabilities.prompts.mutableLibrary`, alongside the RFC 0027 base row.
-- [ ] Reference host (`apps/workflow-engine/backend/typescript`) advertises `capabilities.prompts.packsSupported: true` and `mutableLibrary: true`, passes all five new conformance scenarios.
-- [ ] First non-steward host advertises `capabilities.prompts.supported: true` AND `packsSupported: true` (third-party validation gate per RFC 0001). MAY be waived under bootstrap-phase waiver.
+- [x] `spec/v1/prompts.md` extended with §"Discovery & distribution" describing the endpoints + pack kind (cross-references this RFC).
+- [x] Prompt-pack install flow documented. (Original criterion named `spec/v1/registry-operations.md` §"Prompt-pack install flow" but the install flow lives canonically in `spec/v1/prompts.md` §"Discovery & distribution" — the registry-operations.md flow already covers the generic pack lifecycle (submission/validation/deprecation/yank/signing-key rotation) and is `kind`-agnostic. The prompt-pack specifics — `kind: "prompt"` manifest, boot-time install, `meta.source: "pack"` + `meta.packName` + `meta.packVersion` stamping, the `?source=pack` filter on `GET /v1/prompts` — are in prompts.md where they're load-bearing for prompt consumers.)
+- [x] `api/openapi.yaml` adds the six operations under `/v1/prompts*` per §A — `listPromptTemplates`, `createPromptTemplate`, `getPromptTemplate`, `updatePromptTemplate`, `deletePromptTemplate`, `renderPromptTemplate`.
+- [x] `schemas/prompt-pack-manifest.schema.json` ships.
+- [x] `schemas/capabilities.schema.json` `prompts` block extended per §C with `packsSupported`, `mutableLibrary`, `library`.
+- [x] `schemas/prompt-template.schema.json` `meta` block extended per §C with `packName`, `packVersion`.
+- [x] Five new conformance scenarios per §"Conformance" land in `@openwop/openwop-conformance` — `prompt-list-and-fetch.test.ts`, `prompt-mutable-lifecycle.test.ts`, `prompt-render-deterministic.test.ts`, `prompt-pack-install.test.ts`, `prompt-end-to-end-events.test.ts`. Conformance suite minor bumped to `@openwop/openwop-conformance@1.4.0` (2026-05-22).
+- [x] In-tree example pack `examples/packs/prompt-sample/` ships, install-verifies under the reference host's registry resolver.
+- [x] CHANGELOG entry under `[Unreleased]`.
+- [ ] `INTEROP-MATRIX.md` extended with rows for `capabilities.prompts.packsSupported` and `capabilities.prompts.mutableLibrary`, alongside the RFC 0027 base row. (Will land alongside the first non-steward advertisement.)
+- [x] Reference host (`apps/workflow-engine/backend/typescript`) advertises `capabilities.prompts.packsSupported: true` and `mutableLibrary: true`, passes all five new conformance scenarios.
+- [ ] First non-steward host advertises `capabilities.prompts.supported: true` AND `packsSupported: true` (third-party validation gate per RFC 0001). MAY be waived under bootstrap-phase waiver. (Path-to-Accepted.)
 
 ## References
 

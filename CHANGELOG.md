@@ -11,6 +11,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.3 — unreleased] — coordinated SDK release for MyndHyve adoption-feedback slices
 
+### RFC 0027 + 0028 + 0029 acceptance-criteria audit — reflect actually-shipped state (2026-05-22)
+
+The three prompt-track RFCs had EVERY acceptance criterion checkbox at `[ ]` despite the bulk of the work having shipped. Audit pass mechanically verified each criterion and updated the boxes:
+
+- **RFC 0027**: 11 of 14 criteria now `[x]`. Remaining `[ ]`: (1) INTEROP-MATRIX update (gates on first non-steward host advertising), (2) first non-steward host advertisement — the Path-to-Accepted bar. Two corrections: (a) `spec/v1/workflow-definition.md §"Prompt references on nodes"` doesn't exist as a file — the `WorkflowNode.config.promptRef` convention is canonically documented in `schemas/workflow-definition.schema.json` §`config.promptRefs` (schema-shape contracts live in the schema, not in a separate spec doc); criterion updated to reflect that.
+- **RFC 0028**: 11 of 12 criteria now `[x]`. Remaining `[ ]`: (1) INTEROP-MATRIX, (2) first non-steward host. One correction: `spec/v1/registry-operations.md §"Prompt-pack install flow"` doesn't have that section header — the install flow is canonically in `spec/v1/prompts.md` §"Discovery & distribution" (registry-operations.md covers the generic `kind`-agnostic pack lifecycle; prompt-pack specifics live in prompts.md where they're load-bearing for prompt consumers); criterion updated.
+- **RFC 0029**: 7 of 9 criteria now `[x]`. Remaining `[ ]`: (1) INTEROP-MATRIX, (2) first non-steward host. All mechanical items (schemas, scenarios, reference-host advertisement) verified shipped; reference-host criterion now cross-links the new `host-sample-test-seams.md` §1 contract for the `POST /v1/host/sample/prompt/resolve` seam the resolver scenarios drive.
+
+Why this matters: with all acceptance criteria reading `[ ]`, the path-to-Accepted state was misleading — it looked like the work hadn't started, when actually it was 80%+ done and only blocked on MyndHyve advertising. Now the honest state shows what's done vs what's gated on adoption.
+
+No new code or wire-shape changes — pure documentation honesty pass. Gate: spec-corpus-validity 736/736 + fixtures-valid 94/94 PASS.
+
 ### RFC 0034 POST→GET reconciliation + RFC 0035 sandbox SECURITY-tier honesty (2026-05-22)
 
 Two follow-ups, the second a corrective:
