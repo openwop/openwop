@@ -1108,14 +1108,17 @@ function buildApiExplorer() {
             scrollYOffset: 56,
             hideDownloadButton: true,
             disableSearch: false,
-            // Right code-samples panel: warm dark, brand-toned. Redoc's
-            // default is cold blue-grey (#263238); we use --ink so the
-            // panel reads as part of the OpenWOP palette instead of a
-            // stock Redoc surface. Cream text + matching dark code
-            // blocks make the panel a single cohesive zone (the
-            // previous paper-2 light panel + dark inner code blocks
-            // produced the "wonky text formatting" the user flagged —
-            // dark-on-dark labels, broken visual rhythm).
+            // Right code-samples panel: use Redoc's defaults. We tried
+            // (a) light paper-2 — left dark-on-dark labels inside Redoc's
+            // chrome; (b) warm-dark --ink — broke heading/label colors
+            // Redoc assumes will sit on its slate background. Each color
+            // swing broke a different internal styling layer.
+            //
+            // Reverted to Redoc defaults: panel is slate-grey ('#263238')
+            // but EVERY label inside renders correctly because Redoc's
+            // internal text colors are tuned for that exact background.
+            // Width narrowed to 35% so the panel is less dominant on
+            // overview pages where it sits empty.
             theme: {
               colors: { primary: { main: '#b05a3b' } },
               typography: {
@@ -1123,14 +1126,7 @@ function buildApiExplorer() {
                 headings: { fontFamily: 'Instrument Serif, Georgia, serif' },
               },
               sidebar: { backgroundColor: '#f4f1ea', width: '280px' },
-              rightPanel: {
-                backgroundColor: '#1a1a17',  // --ink (warm near-black)
-                textColor: '#f4f1ea',        // --paper (cream)
-                width: '40%',
-              },
-              codeBlock: {
-                backgroundColor: '#1a1a17',  // matches panel for cohesion
-              },
+              rightPanel: { width: '35%' },
             },
           }, document.getElementById('redoc-container'));
         } else {
