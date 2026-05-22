@@ -157,6 +157,23 @@
 #redoc-container {
   min-height: calc(100vh - 56px - 64px);
 }
+
+/* Redoc syntax-highlighter punctuation fix.
+ *
+ * Inside the response/request sample code blocks, Redoc renders JSON
+ * punctuation tokens — `{`, `}`, `[`, `]`, `,`, `:` — with a color that
+ * matches (or nearly matches) the panel background, so the structural
+ * braces and brackets vanish. Only the outermost `{`/`}` show up
+ * because they're wrapped in a different chrome element with its own
+ * color.
+ *
+ * Force every punctuation/operator token to a clearly-visible cream
+ * shade so the JSON structure is readable. */
+#redoc-container .token.punctuation,
+#redoc-container .token.operator,
+#redoc-container .token.delimiter {
+  color: rgba(244, 241, 234, 0.85) !important;
+}
 @media (max-width: 760px) {
   .api-explorer-head { gap: 12px; }
   .api-explorer-meta { width: 100%; justify-content: flex-end; }
