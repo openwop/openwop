@@ -36,6 +36,29 @@ There is **no** `src/components/docs/`, no canvas types, no design-token system.
 
 ---
 
+## Drift patterns we've hit before (catalog)
+
+This skill exists in large part because openwop's docs hold up multiple parallel claims about the same facts — RFC statuses, invariant counts, conformance pass rates, host capability claims — and those claims drift independently. Below is the historical-precedent catalog: each row is a real drift mode that has shipped to `main` and was caught later, with the mechanical detection command. **Always run these before declaring a docs-sync done.**
+
+| # | Drift surface | Failure mode | Detection command |
+|---|---|---|---|
+| 1 | **README invariant counts ↔ `SECURITY/invariants.yaml`** | README claims "N protocol-tier / M reference-impl" but the YAML's `tier:` field counts differ — usually because invariants graduated tier and the README banner wasn't bumped. Caught by `scripts/openwop-check.sh` step 7, but worth knowing the manual recipe. | `diff <(grep -cE '^    tier: protocol$' SECURITY/invariants.yaml) <(echo $(grep -oE '[0-9]+ protocol-tier' README.md \| head -1 \| grep -oE '^[0-9]+'))` |
+| 2 | **README RFC counts ↔ `RFCS/[0-9]+-*.md` Status:** | README banner says "N Accepted / M Active / K Draft" but new RFC files landed without updating the banner. Same for `41 RFCs excluding template` ↔ actual file count. | `bash scripts/openwop-check.sh` step 7 reports `claims "N" Draft RFCs but actual is M`. Manual: `grep -lE '^\\| \\*\\*Status\\*\\* \\| \`Draft\`' RFCS/[0-9]*.md \| wc -l` |
+| 3 | **`docs/KNOWN-LIMITS.md` "RFCs not yet Accepted" table ↔ actual RFC Status fields** | KNOWN-LIMITS rows still list RFCs as `Active` after they were promoted to `Accepted` (or as `Draft` after promotion to `Active`). The PROTOCOL-STATUS.md generated table is authoritative; KNOWN-LIMITS is hand-maintained and lags. | `for rfc in 0025 0027 0028 0029 0030 0031 0032 0033 0034 0035 0036 0037 0038 0039 0040 0041 0042 0043; do f=RFCS/${rfc}-*.md; if ls $f &>/dev/null; then s=$(grep -oE '\`Draft\`\|\`Active\`\|\`Accepted\`\|\`Withdrawn\`' $f \| head -1); k=$(grep -oE "$rfc [^\|]*\| \`[A-Z][a-z]+\`" docs/KNOWN-LIMITS.md \| head -1); [ -n "$k" ] && echo "RFC $rfc actual=$s known-limits=$k"; fi; done` |
+| 4 | **`conformance/coverage.md` "Updated YYYY-MM-DD" header stale** | The body of coverage.md gets line-edited but the top-of-file date stays at a months-old timestamp, signaling staleness even when content is fresh. | `grep -E 'Updated 20[0-9]{2}-[0-9]{2}-[0-9]{2}' conformance/coverage.md \| head -1` — compare against `git log -1 --format=%ai conformance/coverage.md`. |
+| 5 | **`conformance/coverage.md` operation rows claim "endpoint surface in spec only" while host has impl** | When a reference host wires an endpoint, coverage.md often lags. Hit this on prompt endpoints — RFC 0028 promoted Draft → Active and the workflow-engine implemented all 6 `/v1/prompts*` routes, but coverage.md rows still said "reference host hasn't implemented the route yet." | `for op in createPromptTemplate updatePromptTemplate deletePromptTemplate; do  if grep -l "$op" apps/workflow-engine/backend/typescript/src/routes/*.ts examples/hosts/*/src/routes/*.ts 2>/dev/null; then echo "$op: implemented"; if grep -E "\`$op\` \\\| None.*endpoint surface in spec only" conformance/coverage.md; then echo "  but coverage.md still claims unimplemented"; fi; fi; done` |
+| 6 | **`INTEROP-MATRIX.md` pass-rate table measured against an older suite version** | The "Conformance trajectory" / pass-rate table cites suite `vX.Y.Z` but `conformance/package.json` has bumped past it. New scenarios in the newer suite shift the totals significantly (e.g., +700 tests v1.1.0 → v1.4.0). | `cur=$(jq -r .version conformance/package.json); cited=$(grep -oE 'suite v[0-9]+\\.[0-9]+\\.[0-9]+' INTEROP-MATRIX.md \| head -1); echo "current=$cur cited=$cited"` |
+| 7 | **`INTEROP-MATRIX.md` host-description columns carry pass-rate claims that read as current but are historical** | Host row description columns embed claims like "Conformance close-out 2026-05-12: 700/788 = 100% of applicable tests pass; zero failures" with no retrospective marker. After the table above the description is re-measured to v1.4.0, the description still reads as a current claim and conflicts with the table. | `grep -E 'Conformance close-out [0-9]{4}\|^[\| ]+Conformance posture' INTEROP-MATRIX.md \| grep -v 'suite v'` — any line that quotes a pass-rate without a `(YYYY-MM-DD, suite vX.Y.Z)` retrospective marker is suspect. |
+| 8 | **`examples/hosts/<name>/conformance.md` banner stale relative to suite** | The first 5 lines of the host evidence file cite a specific suite version + run date; if these lag conformance/package.json, the evidence reads as fresh when it's not. | `cur=$(jq -r .version conformance/package.json); for h in in-memory sqlite postgres python; do f=examples/hosts/$h/conformance*.md; cited=$(grep -oE '@openwop/openwop-conformance@[0-9.]+' $f \| head -1); echo "$h: cited=$cited current=$cur"; done` |
+| 9 | **`docs/PROTOCOL-STATUS.md` not regenerated after sources moved** | This file is generated by `scripts/generate-protocol-status.mjs --write`. Whenever `INTEROP-MATRIX.md` pass-rates / `SECURITY/invariants.yaml` tier counts / RFC files / SDK helper counts / registry counts change, the generator must re-run. Caught by `--check` mode in step 7. | `node scripts/generate-protocol-status.mjs --check` exits non-zero if stale. |
+| 10 | **Cross-doc file paths cited in new docs don't exist** | New explanatory docs (e.g., progress trackers, audit responses) cite paths like `apps/workflow-engine/backend/typescript/src/host/mockAiProvider.ts` that aren't on disk. Erodes credibility of the very doc trying to demonstrate accountability. | `for f in docs/*.md RFCS/0042*.md RFCS/0043*.md docs/AUDIT-RESPONSE-2026-05.md docs/PHASE-4-PROGRESS.md; do [ -f "$f" ] && grep -oE '[a-z][a-zA-Z0-9_-]+(/[a-zA-Z0-9._-]+)+\.(ts\|mjs\|js\|json\|yaml\|md\|py\|go\|sh)' "$f" \| sort -u \| while read p; do [ -e "$p" ] \|\| echo "$f: MISSING $p"; done; done` |
+| 11 | **Reverted feature still claimed as live** | When a commit reverts a feature (e.g., commit `5864a2f` reverted 7 sandbox SECURITY tier graduations), prose docs that mentioned the now-reverted graduation as fact (`docs/KNOWN-LIMITS.md`, `README.md` parenthetical, RFC follow-up status) need to be re-aligned. | `git log --grep='revert\|undo\|fix.*revert' --oneline -5` then scan named files. |
+| 12 | **`CHANGELOG.md` `[Unreleased]` empty after a doc-only session** | Doc-sync sessions that don't add a CHANGELOG line make the next release cut surprise the reader. | `awk '/^## \\[Unreleased/,/^## \\[/' CHANGELOG.md \| grep -cE '^- \|^  - '` |
+
+When auditing a session, walk this table from #1 to #12 and flag any row whose detection command surfaces a hit. If you find one, the corresponding row in the **Phase 4** drift-verification section below has the fix recipe.
+
+---
+
 ## Phase 1: Audit session changes
 
 ```bash
@@ -98,6 +121,10 @@ Present a summary table of what needs updating before proceeding.
 | New SECURITY invariant | `SECURITY/invariants.yaml`; mention in `SECURITY.md` if user-facing |
 | New publishing artifact | `PUBLISHING.md` per-package section + README publish-ready artifacts list |
 | Release cut | CHANGELOG `[Unreleased]` → dated version block; PUBLISHING.md release cadence notes |
+| RFC Status field changed (Draft → Active or Active → Accepted) | Re-scan `docs/KNOWN-LIMITS.md` §"RFCs not yet `Accepted`" — promoted RFCs leave the table; new Active/Draft RFCs join. Run `node scripts/generate-protocol-status.mjs --write` because the README banner counts will drift otherwise. |
+| Conformance suite minor/major bump (`conformance/package.json` version) | Trigger a re-measurement pass against all reference hosts. Update `INTEROP-MATRIX.md` pass-rate table + each `examples/hosts/<h>/conformance*.md` banner. Publish a `docs/CONFORMANCE-RUNS-YYYY-MM.md` failure-topic taxonomy doc if the suite scenario count grew meaningfully. |
+| Commit reverts a previously-announced feature (`git log --grep=revert`) | Walk every doc that mentioned the feature as live + retract or prefix with `**Reverted <sha> (YYYY-MM-DD):**`. Specifically check: `docs/KNOWN-LIMITS.md`, `README.md` status banner parentheticals, any RFC follow-up status sections, host evidence files. |
+| External-audit-style review request | Treat the request itself as a drift trigger — drift modes #1, #3, #4, #6, #7 are almost always live when an external reviewer arrives. Run the full Phase 4 drift sweep before responding; publish a public `docs/AUDIT-RESPONSE-YYYY-MM.md` if the review is on the record. |
 
 ---
 
@@ -236,7 +263,141 @@ If the change adds a new spec doc, the site regeneration picks it up automatical
 
 ## Phase 4: Spec-corpus drift verification
 
-Run these checks before marking docs complete:
+Run these checks before marking docs complete. Each section corresponds to a numbered drift mode in the catalog at the top of this skill — use that table to triage the failure, then apply the fix recipe here.
+
+### Drift #1, #2, #9 — generated-status gate (the catch-all)
+
+```bash
+bash scripts/openwop-check.sh 2>&1 | grep -A20 '\[7/9\] Generated protocol status'
+# OR isolated:
+node scripts/generate-protocol-status.mjs --check
+```
+
+Any non-zero exit means one of:
+- README claimed `N protocol-tier` invariants but YAML has different count → fix the README banner.
+- README claimed `N` Draft RFCs but actual count differs → fix the README banner (new RFCs landed without bumping it).
+- `docs/PROTOCOL-STATUS.md` is stale → run `node scripts/generate-protocol-status.mjs --write` and commit. Per the memory note `feedback_generator_changelog_split`: if the regen also writes CHANGELOG, split into a `chore(docs)` commit first so generator-authored entries don't muddle authored narrative.
+
+### Drift #3 — `docs/KNOWN-LIMITS.md` RFC status table
+
+The "RFCs not yet Accepted" table at the bottom of KNOWN-LIMITS hand-curates per-RFC commentary on why each open RFC is still open. It lags reality after RFC promotions.
+
+```bash
+# Walk every Active+Draft RFC and confirm KNOWN-LIMITS lists it correctly
+for f in RFCS/[0-9][0-9][0-9][0-9]-*.md; do
+  id=$(basename "$f" | grep -oE '^[0-9]+')
+  s=$(grep -oE '`Draft`|`Active`|`Accepted`|`Withdrawn`|`Superseded`' "$f" | head -1)
+  [ "$s" = '`Accepted`' ] && continue  # Accepted shouldn't appear in KNOWN-LIMITS open table
+  k=$(grep -E "^\| ($id|0*$id)[^|]*\|" docs/KNOWN-LIMITS.md | head -1)
+  if [ -z "$k" ]; then
+    echo "RFC $id ($s) — MISSING from docs/KNOWN-LIMITS.md open RFC table"
+  fi
+done
+```
+
+Fix recipe: open `docs/KNOWN-LIMITS.md` §"RFCs not yet `Accepted`" and either add the missing row (with status + "Why open" cell) or remove rows for RFCs that have since been promoted.
+
+### Drift #4 — `conformance/coverage.md` "Updated" header
+
+```bash
+header_date=$(grep -oE 'Updated 20[0-9]{2}-[0-9]{2}-[0-9]{2}' conformance/coverage.md | head -1 | grep -oE '[0-9-]+$')
+last_edit=$(git log -1 --format=%ad --date=short conformance/coverage.md)
+echo "header=$header_date  last-edit=$last_edit"
+```
+
+If `header_date < last_edit` by more than ~14 days, bump the header to today's date during this docs-sync.
+
+### Drift #5 — `conformance/coverage.md` "endpoint surface in spec only" rows
+
+When a host wires a previously-spec-only endpoint, the corresponding `/v1/operation` row in coverage.md's REST surface table must move from "None — endpoint surface in spec only" → a scenario citation.
+
+```bash
+# Heuristic — find operation names that coverage.md still calls unimplemented
+grep -E '^\| `[a-z][a-zA-Z]+` \| None' conformance/coverage.md | grep -oE '`[a-z][a-zA-Z]+`' | sort -u | while read op; do
+  clean=${op//\`/}
+  if grep -rln "$clean" apps/workflow-engine/backend/typescript/src/routes/ examples/hosts/*/src/routes/ 2>/dev/null | head -1 >/dev/null; then
+    echo "$op: coverage.md says unimplemented but found impl in: "
+    grep -rln "$clean" apps/workflow-engine/backend/typescript/src/routes/ examples/hosts/*/src/routes/ 2>/dev/null | head -3
+  fi
+done
+```
+
+Fix recipe: rewrite each row to cite the implementing host + the conformance scenario that covers it.
+
+### Drift #6 — INTEROP-MATRIX pass-rate vs current suite version
+
+```bash
+cur=$(jq -r .version conformance/package.json)
+cited=$(grep -oE 'against suite v[0-9]+\.[0-9]+\.[0-9]+' INTEROP-MATRIX.md | head -1 | grep -oE '[0-9.]+')
+echo "current=$cur cited=$cited"
+[ "$cur" != "$cited" ] && echo "STALE — re-measure all 4 hosts against suite $cur and update INTEROP-MATRIX + per-host conformance.md banners + run \`node scripts/generate-protocol-status.mjs --write\`"
+```
+
+Fix recipe: run the conformance suite against each reference host (in-memory / sqlite / postgres-pglite / python) and re-record the four-bucket counts (pass / fail / skip / todo) in INTEROP-MATRIX. Publish a per-failure-topic taxonomy doc (`docs/CONFORMANCE-RUNS-YYYY-MM.md`) per the `audit-response-2026-05` precedent.
+
+### Drift #7 — INTEROP-MATRIX host-description columns with unqualified historical pass-rates
+
+```bash
+grep -nE 'Conformance close-out [0-9]{4}|Conformance posture' INTEROP-MATRIX.md | grep -vE 'suite v[0-9]+\.[0-9]+\.[0-9]+' | head -10
+```
+
+Each hit is a host-row description that quotes a pass-rate without a `(YYYY-MM-DD, suite vX.Y.Z)` retrospective marker. Fix recipe — prefix the claim:
+
+```diff
+- **Conformance close-out 2026-05-12:** 700/788 = **100% of applicable tests pass; zero failures**
++ **Conformance close-out (2026-05-12, suite v1.1.0):** 700/788 = **100% of applicable tests pass; zero failures** — retained for historical context; see the pass-rate table below for the current suite version.
+```
+
+### Drift #8 — Per-host conformance.md banner ↔ current suite
+
+```bash
+cur=$(jq -r .version conformance/package.json)
+for h in in-memory sqlite postgres python; do
+  for f in examples/hosts/$h/conformance.md examples/hosts/$h/conformance-full.md; do
+    [ -f "$f" ] || continue
+    cited=$(grep -oE '@openwop/openwop-conformance@[0-9.]+' "$f" | head -1 | grep -oE '[0-9.]+')
+    if [ "$cited" != "$cur" ]; then
+      echo "$f: cited=$cited current=$cur — re-measure or add a 'Latest measurement' banner"
+    fi
+  done
+done
+```
+
+Fix recipe: either re-run the suite for that host and update the banner, or — if the prior measurement is still the most recent — prefix the existing banner with a retrospective date + suite-version marker (same pattern as Drift #7).
+
+### Drift #10 — Cross-doc file paths cited in new docs don't exist
+
+```bash
+for f in docs/*.md RFCS/[0-9]*.md $(git diff --name-only origin/main..HEAD | grep '\.md$'); do
+  [ -f "$f" ] || continue
+  grep -oE '[a-z][a-zA-Z0-9_-]+(/[a-zA-Z0-9._-]+){1,}\.(ts|mjs|js|json|yaml|md|py|go|sh)' "$f" \
+    | sort -u | while read p; do
+    [ -e "$p" ] || echo "$f: MISSING $p"
+  done
+done | grep -v 'examples/packs\|node_modules' | head -30
+```
+
+Each MISSING hit is a doc that promises a file path that doesn't resolve on disk. Fix recipe: either correct the cited path or move the cited claim from a path reference to a prose description (e.g., "the mock-AI provider, currently in `aiProviders/aiProvidersHost.ts`, gains …").
+
+### Drift #11 — Reverted features still claimed as live in prose
+
+```bash
+# Walk recent revert commits and check whether docs still cite the reverted feature as live
+git log --grep='revert\|undo\|fix.*revert' --oneline -10 | while read sha _ rest; do
+  echo "=== $sha $rest ==="
+  git show "$sha" --stat | head -20
+done
+```
+
+For each revert, manually scan: did `docs/KNOWN-LIMITS.md`, `README.md`, RFC follow-up sections, or related host evidence files still say the reverted feature is in effect? If so, prefix with a `**Reverted 5864a2f (YYYY-MM-DD):**` marker or remove the stale claim.
+
+### Drift #12 — `CHANGELOG.md` `[Unreleased]` empty after a non-trivial session
+
+```bash
+sed -n '/^## \[Unreleased\]/,/^## \[/p' CHANGELOG.md | tail -n +2 | head -40
+```
+
+If the section is empty or contains only the next-version-header, and the current session shipped anything more than a typo fix, add a one-line entry. Use existing house-style: multi-paragraph descriptive blocks are normal in this repo (the Conventional Commits style is in the commit message, not the CHANGELOG).
 
 ### Doc index parity
 
@@ -316,8 +477,11 @@ Recommend the user view:
 | `back` | Go to previous phase |
 | `skip to phase N` | Jump to phase N |
 | `audit only` | Run Phase 1 only — report what needs updating |
+| `drift sweep` | Run the 12-mode drift catalog from top of skill — report every hit before fixing anything |
 | `index-parity` | Run the doc-index drift check |
 | `evidence-refresh <host>` | Update `examples/hosts/<host>/conformance.md` after a rerun |
+| `re-measure all hosts` | Run the conformance suite against in-memory + sqlite + postgres-pglite + python; update INTEROP-MATRIX + per-host banners; regen PROTOCOL-STATUS |
+| `rfc-status-sync` | Walk every RFCS/NNNN-*.md, compare its `Status:` field to `docs/KNOWN-LIMITS.md` open-RFC table + `docs/PROTOCOL-STATUS.md` RFC table + `README.md` banner counts; report mismatches |
 | `changelog <package>` | Show or edit a per-package CHANGELOG |
 | `verify` | Run Phase 4 verification |
 | `done` | Complete documentation update |
