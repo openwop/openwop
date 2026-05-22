@@ -67,14 +67,56 @@ export function useChatSessions(): UseChatSessionsResult {
     setError(null);
     try {
       const list = await listChatSessions();
-      setSessions(list);
+      // BE-first: if the backend returns chat sessions, use them.
+      // If the BE list is empty (Cloud Run cold start, 401 between
+      // deploys, fresh tenant), fall back to the local session index
+      // populated by `persistSession` in useChatSession. This is what
+      // keeps the History drawer from being permanently empty on the
+      // public demo when write-through is degraded.
+      if (list.length > 0) {
+        setSessions(list);
+      } else {
+        const local = readLocalSessionIndex();
+        setSessions(local);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      // BE errored — fall back to local index. The user still sees
+      // their chats; we just can't sync across tabs/devices.
+      const local = readLocalSessionIndex();
+      if (local.length > 0) {
+        setSessions(local);
+        setError(null);
+      } else {
+        setError(err instanceof Error ? err.message : String(err));
+      }
     } finally {
       setIsLoading(false);
       inFlightRef.current = false;
     }
   }, []);
+
+  /** Read the localStorage session index written by `persistSession`
+   *  in `useChatSession`. Mirrors the BE `ChatSessionHeader` shape so
+   *  the drawer doesn't need to know which source provided each row.
+   *  `tenantId` is synthetic ('local'); the drawer doesn't gate on it. */
+  function readLocalSessionIndex(): ChatSessionHeader[] {
+    try {
+      const raw = localStorage.getItem('openwop.sample.chat.sessions-index');
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed.map((it) => ({
+        sessionId: String(it.sessionId),
+        tenantId: 'local',
+        title: String(it.title ?? 'Untitled'),
+        createdAt: String(it.createdAt ?? new Date().toISOString()),
+        updatedAt: String(it.updatedAt ?? it.createdAt ?? new Date().toISOString()),
+        messageCount: Number(it.messageCount ?? 0),
+      }));
+    } catch {
+      return [];
+    }
+  }
 
   // Open the channel on mount; listen for events from other tabs and
   // re-fetch the headers on any mutation. Posting our own events is

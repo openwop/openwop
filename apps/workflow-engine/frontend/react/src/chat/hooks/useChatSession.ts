@@ -117,9 +117,61 @@ function updateEnvelopeEvents(
 // file.
 
 const LS_KEY = 'openwop.sample.chat.session';
+/** Local session index — list of session HEADERS the drawer can fall
+ *  back to when the BE write-through is in a cold-start / 401 state and
+ *  `listChatSessions()` returns empty. Mirrors what the BE would
+ *  return; one entry per session id. */
+const LS_INDEX_KEY = 'openwop.sample.chat.sessions-index';
 const SYSTEM_PROMPT =
   'You are a helpful AI assistant inside the OpenWOP workflow-engine sample. ' +
   'Keep responses concise. If the user asks about OpenWOP itself, explain what you know honestly.';
+
+interface LocalSessionHeader {
+  sessionId: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  messageCount: number;
+}
+
+function readSessionIndex(): LocalSessionHeader[] {
+  try {
+    const raw = localStorage.getItem(LS_INDEX_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch {
+    /* corrupt; treat as empty */
+  }
+  return [];
+}
+
+function writeSessionIndex(items: readonly LocalSessionHeader[]): void {
+  try {
+    localStorage.setItem(LS_INDEX_KEY, JSON.stringify(items));
+  } catch {
+    /* over-quota; silently drop */
+  }
+}
+
+/** Upsert a session header into the local index. The drawer reads this
+ *  as a fallback when the BE session list is unavailable. */
+function upsertSessionIndex(session: ChatSession): void {
+  const items = readSessionIndex();
+  const idx = items.findIndex((it) => it.sessionId === session.id);
+  const header: LocalSessionHeader = {
+    sessionId: session.id,
+    title: session.title || 'New chat',
+    createdAt: session.createdAt,
+    updatedAt: new Date().toISOString(),
+    messageCount: session.messages.filter((m) => m.role !== 'system').length,
+  };
+  if (idx >= 0) items[idx] = header;
+  else items.unshift(header);
+  // Keep the most recent 50 — bounded for localStorage size.
+  writeSessionIndex(items.slice(0, 50));
+}
 
 function loadSession(): ChatSession {
   try {
@@ -141,6 +193,12 @@ function persistSession(session: ChatSession): void {
     localStorage.setItem(LS_KEY, JSON.stringify(session));
   } catch {
     /* over-quota; silently drop */
+  }
+  // Mirror into the local session index so the drawer has a fallback
+  // when the BE list is empty. Skip empty (no-messages) sessions so we
+  // don't show "New chat" placeholders.
+  if (session.messages.some((m) => m.role !== 'system')) {
+    upsertSessionIndex(session);
   }
 }
 
