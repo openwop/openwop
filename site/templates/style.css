@@ -39,9 +39,9 @@
   max-width: 1040px;
 }
 /* The Redoc explorer (/api/rest/) needs the FULL viewport width for
- * its three-column layout to breathe. Use a negative-margin trick to
+ * its two-column layout to breathe. Use a negative-margin trick to
  * escape the .wrap padding + .site-main max-width without touching
- * the template. The compact .api-explorer-head sits above the Redoc
+ * the template. The compact .api-explorer-head sits above the Scalar
  * container; both go full-bleed. */
 .site-main .wrap > .api-explorer {
   max-width: none;
@@ -127,9 +127,48 @@
   font-size: 13px;
 }
 .api-explorer-download:hover { background: var(--clay); }
-#redoc-container {
-  /* Fill the viewport below the topbar (56px) + the compact head bar. */
+/* Scalar mounts into a div it injects after the <script id="api-reference">
+ * tag. Give the resulting `.scalar-app` root our brand palette via the
+ * theme's CSS custom properties — we ship `theme: 'none'` from build.mjs
+ * so Scalar's own theme stylesheet doesn't fight these overrides. */
+.scalar-app,
+.scalar-api-reference {
+  --scalar-color-1: var(--ink);          /* primary text */
+  --scalar-color-2: var(--ink-2);        /* secondary text */
+  --scalar-color-3: var(--ink-3);        /* tertiary text */
+  --scalar-color-accent: var(--clay);
+  --scalar-background-1: var(--paper);   /* main canvas */
+  --scalar-background-2: var(--paper-2); /* nested panels */
+  --scalar-background-3: var(--paper-2);
+  --scalar-background-accent: var(--clay-wash);
+  --scalar-border-color: var(--rule);
+  --scalar-radius: 6px;
+  --scalar-radius-lg: 8px;
+  --scalar-font: var(--sans);
+  --scalar-font-code: var(--mono);
+  --scalar-heading-1: 28px;
+  --scalar-heading-2: 22px;
+  --scalar-heading-3: 18px;
+  --scalar-link-color: var(--clay);
+  --scalar-link-color-hover: var(--ink);
+  --scalar-code-language-color: var(--clay);
+  /* The HTTP-method pill colors — keep semantic distinction but tuned to
+   * our warm-paper palette so they don't shout. */
+  --scalar-color-green: oklch(58% 0.12 145);
+  --scalar-color-orange: var(--clay);
+  --scalar-color-red: oklch(55% 0.16 28);
+  --scalar-color-blue: oklch(58% 0.12 240);
+  --scalar-color-yellow: oklch(72% 0.14 75);
+  --scalar-color-purple: oklch(60% 0.12 280);
   min-height: calc(100vh - 56px - 64px);
+}
+/* Force the Scalar sidebar background to our paper-2 token so the
+ * left-nav reads as a cohesive part of the page rather than a separate
+ * white panel. */
+.scalar-app .sidebar,
+.scalar-api-reference .sidebar {
+  background: var(--paper-2);
+  border-right: 1px solid var(--rule);
 }
 @media (max-width: 760px) {
   .api-explorer-head { gap: 12px; }

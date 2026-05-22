@@ -1062,15 +1062,19 @@ function buildContentDir() {
 // ── REST API explorer (Redoc, self-hosted bundle) ─────────────────────
 
 function buildApiExplorer() {
-  // Self-hosted Redoc bundle: copied into public/assets/redoc.standalone.js
-  // by the build script (see scripts/build-site.sh). The page itself is a
-  // simple Redoc <redoc> custom element bound to the deployed openapi.yaml.
-  // No CDN dependency once the bundle is in place.
+  // Self-hosted Scalar standalone bundle: copied into
+  // public/assets/scalar.standalone.js by the build script
+  // (see scripts/build-site.sh). The page mounts a <script id="api-reference">
+  // tag that Scalar auto-discovers on load.
+  //
+  // Why Scalar over Redoc: Scalar's default layout is 2-column (nav +
+  // content) with code samples rendered INLINE below each endpoint.
+  // Redoc's 3-column layout reserves ~38% of the viewport for a
+  // permanent code-samples panel that is empty on the API overview
+  // page (the user explicitly flagged this as bad UX). Scalar's
+  // default light theme also blends with the marketing brand without
+  // a heavy override; we still tune accent + fonts via CSS variables.
   ensureDir(join(DIST, 'api', 'rest'));
-  // Compact horizontal header (mirrors MyndHyve's API Explorer chrome):
-  // page title on the left, copyable base-URL chip + OpenAPI download
-  // button on the right. Below it the Redoc container takes full viewport
-  // height + full viewport width so its native 3-column layout breathes.
   const intro = `<div class="api-explorer">
     <header class="api-explorer-head">
       <div class="api-explorer-title">
@@ -1089,38 +1093,35 @@ function buildApiExplorer() {
         </a>
       </div>
     </header>
-    <div id="redoc-container"></div>
-    <script src="/assets/redoc.standalone.js"></script>
+    <script
+      id="api-reference"
+      type="application/json"
+      data-url="/api/openapi.yaml"
+    >
+      ${JSON.stringify({
+        // Scalar reads JSON config from the body of the script tag.
+        spec: { url: '/api/openapi.yaml' },
+        layout: 'modern',
+        theme: 'none',
+        hideDarkModeToggle: true,
+        hideClientButton: true,
+        defaultOpenAllTags: false,
+        showSidebar: true,
+        hideModels: false,
+        searchHotKey: 'k',
+      })}
+    </script>
+    <script src="/assets/scalar.standalone.js"></script>
     <script>
       (function () {
         var copyBtn = document.querySelector('.api-explorer-base');
-        if (copyBtn) {
-          copyBtn.addEventListener('click', function () {
-            var v = copyBtn.getAttribute('data-copy') || '';
-            if (navigator.clipboard) navigator.clipboard.writeText(v);
-            var hint = copyBtn.querySelector('.api-explorer-base-hint');
-            if (hint) { var prev = hint.textContent; hint.textContent = 'copied'; setTimeout(function () { hint.textContent = prev; }, 1400); }
-          });
-        }
-        if (typeof Redoc !== 'undefined' && Redoc.init) {
-          Redoc.init('/api/openapi.yaml', {
-            scrollYOffset: 56,
-            hideDownloadButton: true,
-            disableSearch: false,
-            theme: {
-              colors: { primary: { main: '#b05a3b' } },
-              typography: {
-                fontFamily: 'Geist, ui-sans-serif, system-ui, sans-serif',
-                headings: { fontFamily: 'Instrument Serif, Georgia, serif' },
-              },
-              sidebar: { backgroundColor: '#f4f1ea', width: '260px' },
-              rightPanel: { backgroundColor: '#1a1a17', width: '38%' },
-            },
-          }, document.getElementById('redoc-container'));
-        } else {
-          document.getElementById('redoc-container').innerHTML =
-            '<div style="padding: 48px; text-align: center;">Redoc bundle did not load. Raw spec: <a href="/api/openapi.yaml">/api/openapi.yaml</a>.</div>';
-        }
+        if (!copyBtn) return;
+        copyBtn.addEventListener('click', function () {
+          var v = copyBtn.getAttribute('data-copy') || '';
+          if (navigator.clipboard) navigator.clipboard.writeText(v);
+          var hint = copyBtn.querySelector('.api-explorer-base-hint');
+          if (hint) { var prev = hint.textContent; hint.textContent = 'copied'; setTimeout(function () { hint.textContent = prev; }, 1400); }
+        });
       })();
     </script>
   </div>`;

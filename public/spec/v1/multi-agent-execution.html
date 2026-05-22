@@ -99,6 +99,7 @@
       <li class="toc-top"><a href="#execution-loop-normative">Execution loop (normative)</a></li>
       <li class="toc-top"><a href="#handoff-state-machine-normative">Handoff state machine (normative)</a></li>
       <li class="toc-sub"><a href="#transition-events-normative">Transition events (normative)</a></li>
+      <li class="toc-top"><a href="#confidence-escalation-rfc-0039-phase-2-normative">Confidence escalation (RFC 0039 Phase 2, normative)</a></li>
       <li class="toc-top"><a href="#capability-advertisement-normative">Capability advertisement (normative)</a></li>
       <li class="toc-top"><a href="#event-payload-addition">Event-payload addition</a></li>
       <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
@@ -164,6 +165,16 @@
 <tr><td><code>completed → harvested</code></td><td><code>&quot;output.harvested&quot;</code></td><td>The <code>child.completed</code> <code>eventId</code>; payload SHOULD include the <code>outputMapping</code> keys harvested</td></tr>
 </tbody></table>
 <p>The transition <code>running → harvested</code> MUST happen exactly when the child reaches a terminal <code>completed</code> AND the dispatch config's <code>outputMapping</code> is non-empty. Failed/cancelled children MUST skip the harvest per RFC 0022 §B (the <code>output.harvested</code> event MUST NOT fire for those terminal states).</p>
+<h2 id="confidence-escalation-rfc-0039-phase-2-normative">Confidence escalation (RFC 0039 Phase 2, normative)</h2>
+<p>Per <a href="../../RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md">RFC 0039</a> §A. Applies only when the host advertises <code>capabilities.multiAgent.executionModel.version &gt;= 2</code>.</p>
+<p>An <code>OrchestratorDecision</code> MAY carry an optional <code>confidence: number</code> field in <code>[0, 1]</code> where <code>0</code> is uncertain and <code>1</code> is fully confident. When <code>confidence &lt; floor</code> (where <code>floor = capabilities.multiAgent.executionModel.confidenceEscalationFloor</code> if advertised; otherwise the spec floor <code>0.5</code>) AND the decision kind is <code>next-worker</code> or <code>terminate</code>, the host SHALL <strong>either</strong>:</p>
+<ul>
+<li>(a) escalate the decision via a <code>clarify</code> interrupt per <code>spec/v1/interrupt.md</code> <code>kind: &quot;clarification&quot;</code> (preferred — gives the user an in-the-loop chance to confirm or adjust); <strong>OR</strong></li>
+<li>(b) escalate via an <code>escalate</code> interrupt requesting approval per <code>spec/v1/interrupt-profiles.md</code> §"Approval profile" (sufficient when the host doesn't expose a clarification UI).</li>
+</ul>
+<p>Hosts MUST NOT silently execute a <code>confidence &lt; floor</code> decision without first recording the escalation event AND firing the matching interrupt. The escalation event is <code>core.workflowChain.confidence-escalated</code> (see §"Event-payload addition" below) and MUST appear in the run event log BEFORE the interrupt fires AND BEFORE any <code>core.workflowChain.event</code> with <code>phase: &quot;dispatch.began&quot;</code> for the escalated decision's intended next-worker.</p>
+<p><strong>Floor rationale (normative).</strong> 0.5 is the maximum-entropy threshold — the value where a Bayesian observer with no prior has no preference between accept and clarify. Below it, silent execution would commit the workflow to an outcome the supervisor itself rates as less-than-arbitrary. Operator policy stricter than 0.5 advertises via <code>confidenceEscalationFloor</code>; the spec floor of 0.5 is non-configurable across hosts so cross-host workflows have a portable lower bound. See <code>RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md</code> §A "Why 0.5" for the full rationale.</p>
+<p><strong><code>confidence</code> field absence.</strong> When the decision's <code>confidence</code> is absent (<code>undefined</code> / not emitted), the host MUST NOT escalate on this rule alone — <code>confidence === undefined</code> means "no opinion stated," not "low confidence." Operators wanting opt-in always-escalate behavior advertise a separate host-extension flag; this is not normated here.</p>
 <h2 id="capability-advertisement-normative">Capability advertisement (normative)</h2>
 <pre class="lang-jsonc"><code>{
   &quot;capabilities&quot;: {

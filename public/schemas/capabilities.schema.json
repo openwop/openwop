@@ -407,7 +407,18 @@
               "type": "integer",
               "minimum": 1,
               "maximum": 4,
-              "description": "Profile version. 1 = Phase 1 (execution-loop framework + planner→worker handoff). 2 = Phase 2 (confidence + agent-memory lifecycle, follow-up RFC). 3 = Phase 3 (cross-host causation, follow-up RFC). 4 = Phase 4 (replay determinism under nondeterministic models, follow-up RFC). A host advertising `version: N` MUST implement all phases 1..N. v1.x ships with Phase 1 only; Phases 2-4 lift the ceiling additively."
+              "description": "Profile version. 1 = Phase 1 (execution-loop framework + planner→worker handoff). 2 = Phase 2 (confidence-floor escalation + agent-memory lifecycle, RFC 0039). 3 = Phase 3 (cross-host causation, follow-up RFC). 4 = Phase 4 (replay determinism under nondeterministic models, follow-up RFC). A host advertising `version: N` MUST implement all phases 1..N additively."
+            },
+            "confidenceEscalationFloor": {
+              "type": "number",
+              "minimum": 0.5,
+              "maximum": 1.0,
+              "description": "RFC 0039 §A. Operator-declared confidence floor at or above the spec floor of 0.5; when an OrchestratorDecision carries `confidence` below this floor, the host MUST escalate via a `clarify` or `escalate` interrupt instead of executing the decision. Absent: the spec floor 0.5 applies. Values < 0.5 are non-conformant; values > 1.0 are nonsense. Applies only when `version >= 2`."
+            },
+            "crossChildMemoryConcurrency": {
+              "type": "string",
+              "enum": ["strict", "advisory"],
+              "description": "RFC 0039 §B. Cross-child memory-write concurrency posture when version >= 2. `strict` (default when absent): the host serializes concurrent writes from sibling dispatched children to the parent's shared memory scope. `advisory`: the host opts out of the serialization MUST and documents last-write-wins semantics out-of-band. Hosts that choose advisory SHOULD also advertise their resolution rule under `crossChildMemoryConcurrencyResolution` (reserved field; follow-up clarification)."
             }
           }
         }
