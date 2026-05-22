@@ -36,6 +36,12 @@ on:
   workflow_run:
     workflows: ["openwop — Publish"]
     types: [completed]
+  # Manual fallback — useful for one-off recovery if a publish ran but the
+  # post-publish bot missed (transient failure, etc.) and you just want to
+  # re-check whether the lockfiles drifted against npm's current latest.
+  # Same idempotency rules apply: opens no PR when lockfiles are already
+  # current; opens no second PR if the branch already exists.
+  workflow_dispatch: {}
 
 jobs:
   bump-consumers:
