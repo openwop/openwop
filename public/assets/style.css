@@ -326,6 +326,36 @@
 #redoc-container .token.null {
   color: oklch(48% 0.14 240) !important;
 }
+
+/* ─── Payload / sample-tab labels (dark-bg pills) ─────────────────────
+ *
+ * Redoc renders the "Payload" tab + media-type switcher buttons + any
+ * sample-section header as dark-background pills. Their text color is
+ * tuned for Redoc's default white-text-on-slate; with our overrides
+ * the text was ending up dark-on-dark. Force the visible text inside
+ * any darker-than-page element to cream. */
+#redoc-container [class*="Payload"],
+#redoc-container [class*="payload"],
+#redoc-container [class*="MediaTypesSwitcher"],
+#redoc-container [class*="HeaderItem"],
+#redoc-container [class*="OperationTag"],
+#redoc-container [class*="SectionHeader"],
+#redoc-container [class*="RequestSamples"] > [class*="Tab"],
+#redoc-container [class*="ResponseSamples"] > [class*="Tab"],
+#redoc-container [role="tab"][aria-selected="true"],
+#redoc-container [class*="Tab"][class*="active"] {
+  color: var(--paper) !important;
+  background: var(--ink) !important;
+  border-color: var(--ink) !important;
+}
+
+/* Non-active tabs / pills (still on dark surface, but inactive) */
+#redoc-container [role="tab"]:not([aria-selected="true"]),
+#redoc-container [class*="Tab"]:not([class*="active"]) {
+  color: var(--ink) !important;
+  background: var(--paper-2) !important;
+  border: 1px solid var(--rule) !important;
+}
 @media (max-width: 760px) {
   .api-explorer-head { gap: 12px; }
   .api-explorer-meta { width: 100%; justify-content: flex-end; }
