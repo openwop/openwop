@@ -124,7 +124,12 @@ export const PREMADE_WORKFLOWS: readonly TemplateWorkflow[] = [
     name: 'Mock AI completion',
     description: 'Single-node deterministic AI demo. No BYOK or external calls.',
     category: 'quickstart',
-    nodes: [node('n1', 'mock-ai', pos(0), 'Mock AI')],
+    nodes: [
+      node('n1', 'mock-ai', pos(0), 'Mock AI', {
+        systemPromptRef: 'writer-system',
+        userPromptRef: 'writer-user',
+      }),
+    ],
     edges: [],
     defaultInputs: JSON.stringify({ prompt: 'Say hi in five words.' }, null, 2),
   },
@@ -163,7 +168,10 @@ export const PREMADE_WORKFLOWS: readonly TemplateWorkflow[] = [
     category: 'pipeline',
     nodes: [
       node('start', 'noop', pos(0), 'Start'),
-      node('draft', 'mock-ai', pos(1), 'Draft content'),
+      node('draft', 'mock-ai', pos(1), 'Draft content', {
+        systemPromptRef: 'writer-system',
+        userPromptRef: 'writer-user',
+      }),
       node('normalize', 'uppercase', pos(2), 'Normalize'),
       node('legal_review', 'approval', pos(3, -2), 'Legal review', {
         prompt: 'Legal: approve the drafted content.',
@@ -226,10 +234,16 @@ export const PREMADE_WORKFLOWS: readonly TemplateWorkflow[] = [
     category: 'pipeline',
     nodes: [
       node('start', 'noop', pos(0), 'Start'),
-      node('fast_draft', 'mock-ai', pos(1, -1), 'Fast draft'),
+      node('fast_draft', 'mock-ai', pos(1, -1), 'Fast draft', {
+        systemPromptRef: 'writer-system',
+        userPromptRef: 'writer-user',
+      }),
       node('fast_norm', 'uppercase', pos(2, -1), 'Fast normalize'),
       node('audit_wait', 'delay', pos(1, 1), 'Audit wait', { durationMs: 2000 }),
-      node('audit_log', 'mock-ai', pos(2, 1), 'Audit log'),
+      node('audit_log', 'mock-ai', pos(2, 1), 'Audit log', {
+        systemPromptRef: 'audit-logger-system',
+        userPromptRef: 'writer-user',
+      }),
       node('audit_norm', 'uppercase', pos(3, 1), 'Audit normalize'),
       node('converge', 'noop', pos(4), 'Converge (any)'),
       node('final_review', 'approval', pos(5), 'Final review', {
@@ -343,19 +357,31 @@ export const PREMADE_WORKFLOWS: readonly TemplateWorkflow[] = [
       node('kickoff', 'approval', pos(1), 'Kickoff', {
         prompt: 'Approve ETL kickoff.',
       }),
-      node('extract_A', 'mock-ai', pos(2, -1), 'Extract source A'),
+      node('extract_A', 'mock-ai', pos(2, -1), 'Extract source A', {
+        systemPromptRef: 'etl-extractor-system',
+        userPromptRef: 'writer-user',
+      }),
       node('norm_A', 'uppercase', pos(3, -1), 'Normalize A'),
       node('extract_B', 'delay', pos(2, 0), 'Extract source B', { durationMs: 1000 }),
-      node('enrich_B', 'mock-ai', pos(3, 0), 'Enrich B'),
+      node('enrich_B', 'mock-ai', pos(3, 0), 'Enrich B', {
+        systemPromptRef: 'etl-enricher-system',
+        userPromptRef: 'writer-user',
+      }),
       node('extract_C', 'delay', pos(2, 1), 'Extract source C', { durationMs: 2000 }),
-      node('enrich_C', 'mock-ai', pos(3, 1), 'Enrich C'),
+      node('enrich_C', 'mock-ai', pos(3, 1), 'Enrich C', {
+        systemPromptRef: 'etl-enricher-system',
+        userPromptRef: 'writer-user',
+      }),
       node('merge', 'noop', pos(4), 'Merge sources'),
       node('transform', 'uppercase', pos(5), 'Transform'),
       node('qa_review', 'approval', pos(6), 'QA review', {
         prompt: 'QA: approve transformed dataset.',
       }),
       node('load_wait', 'delay', pos(7), 'Load window', { durationMs: 1000 }),
-      node('load', 'mock-ai', pos(8), 'Load destination'),
+      node('load', 'mock-ai', pos(8), 'Load destination', {
+        systemPromptRef: 'editor-system',
+        userPromptRef: 'writer-user',
+      }),
       node('confirm', 'noop', pos(9), 'Confirm'),
     ],
     edges: [
@@ -404,11 +430,20 @@ export const PREMADE_WORKFLOWS: readonly TemplateWorkflow[] = [
     nodes: [
       node('start', 'noop', pos(0), 'Start'),
       node('prepare', 'uppercase', pos(1), 'Prepare prompt'),
-      node('critic_1', 'mock-ai', pos(2, -2), 'Critic 1'),
+      node('critic_1', 'mock-ai', pos(2, -2), 'Critic 1', {
+        systemPromptRef: 'critic-system',
+        userPromptRef: 'writer-user',
+      }),
       node('summary_1', 'uppercase', pos(3, -2), 'Summary 1'),
-      node('critic_2', 'mock-ai', pos(2, 0), 'Critic 2'),
+      node('critic_2', 'mock-ai', pos(2, 0), 'Critic 2', {
+        systemPromptRef: 'critic-system',
+        userPromptRef: 'writer-user',
+      }),
       node('summary_2', 'uppercase', pos(3, 0), 'Summary 2'),
-      node('critic_3', 'mock-ai', pos(2, 2), 'Critic 3'),
+      node('critic_3', 'mock-ai', pos(2, 2), 'Critic 3', {
+        systemPromptRef: 'critic-system',
+        userPromptRef: 'writer-user',
+      }),
       node('summary_3', 'uppercase', pos(3, 2), 'Summary 3'),
       node('arbiter', 'approval', pos(4), 'Arbiter pick', {
         prompt: 'Compare the three critic summaries and approve the best.',
@@ -447,7 +482,11 @@ export const PREMADE_WORKFLOWS: readonly TemplateWorkflow[] = [
       'Single LLM turn via your BYOK credential. Replace credentialRef with one of your saved credentials.',
     category: 'ai',
     requiresBYOK: true,
-    nodes: [node('n1', 'chat', pos(0), 'Chat')],
+    nodes: [
+      node('n1', 'chat', pos(0), 'Chat', {
+        systemPromptRef: 'chat-assistant-system',
+      }),
+    ],
     edges: [],
     defaultInputs: JSON.stringify(
       {

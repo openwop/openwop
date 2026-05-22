@@ -147,14 +147,18 @@ export const NODE_CATALOG: readonly NodeCatalogEntry[] = [
         label: 'System prompt',
         kind: 'prompt-picker',
         promptKind: 'system',
-        help: 'Optional PromptRef per RFC 0027. The mock node ignores it at dispatch (no LLM call), but the field demonstrates the wire-shape integration end-to-end and stays compatible with real AI nodes that resolve refs server-side.',
+        // Demo-ready default — fresh mock-ai nodes drop onto the canvas
+        // with a sensible writer system prompt instead of an empty slot.
+        defaultValue: 'writer-system',
+        help: 'PromptRef per RFC 0027. The mock node logs resolution at dispatch but doesn\'t call an LLM. Real AI nodes (chat) resolve and compose the same refs server-side.',
       },
       {
         key: 'userPromptRef',
         label: 'User prompt template',
         kind: 'prompt-picker',
         promptKind: 'user',
-        help: 'Optional. Variables interpolate from inputs at dispatch time once a host advertises capabilities.prompts.supported.',
+        defaultValue: 'writer-user',
+        help: 'PromptRef per RFC 0027. Variables interpolate from inputs at dispatch time once the host advertises capabilities.prompts.supported.',
       },
     ],
   },
@@ -168,7 +172,23 @@ export const NODE_CATALOG: readonly NodeCatalogEntry[] = [
     accent: 'var(--color-ai)',
     inputs: [{ name: 'messages', type: 'object' }],
     outputs: [{ name: 'completion', type: 'string' }],
-    configFields: [],
+    configFields: [
+      {
+        key: 'systemPromptRef',
+        label: 'System prompt',
+        kind: 'prompt-picker',
+        promptKind: 'system',
+        defaultValue: 'chat-assistant-system',
+        help: 'PromptRef per RFC 0027. Resolved + prepended to the messages array server-side before the LLM dispatch.',
+      },
+      {
+        key: 'userPromptRef',
+        label: 'User prompt template',
+        kind: 'prompt-picker',
+        promptKind: 'user',
+        help: 'Optional. When set, the resolved template wraps the most-recent user message at dispatch time.',
+      },
+    ],
     requiredModelCapabilities: ['structured-output'],
   },
 ];
