@@ -135,6 +135,16 @@ Hosts advertising `crossHostCausation.ancestryEndpointSupported: true` MUST serv
 
 Hosts that advertise `crossHostCausation.supported: true` but NOT the ancestry endpoint return `404 not_found` from the endpoint; clients reconstruct chains by walking `causationHostId` fields on individual events instead.
 
+## Phase 4 replay determinism (RFC 0041, normative)
+
+Per [RFC 0041](../../RFCS/0041-multi-agent-replay-under-nondeterminism.md). Applies only when the host advertises `capabilities.multiAgent.executionModel.version >= 4` AND `capabilities.multiAgent.executionModel.replayDeterminism.supported: true`. Closes RFC 0037 §"Open spec gaps" MAE-7 + MAE-8 + MAE-9.
+
+The normative contracts live in [`replay.md`](./replay.md) §"Replay determinism under nondeterministic models (RFC 0041 Phase 4, normative)":
+
+- §A — LLM cache-key recipe promotion (informative → normative when version >= 4). Hosts MUST compute the LLM cache key per the recipe in `replay.md` §"LLM cache-key recipe" §A + §B + §C exactly.
+- §B — Envelope-refusal recovery: replay-time refusal-divergence MUST emit `replay.divergedAtRefusal` and fail with `error.code: "replay_diverged_at_refusal"`. Silent substitution is non-conformant.
+- §C — Observable-output-sequence determinism: the contract is byte-equivalence at the event-log + RunSnapshot boundary, NOT bit-equivalent execution of underlying tool calls. Hosts cache the observable result, not just the tool-call bytes.
+
 ## Capability advertisement (normative)
 
 ```jsonc

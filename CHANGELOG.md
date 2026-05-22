@@ -11,6 +11,32 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.3 — unreleased] — coordinated SDK release for MyndHyve adoption-feedback slices
 
+### RFC 0041 Phase 4 — replay determinism under nondeterministic models, Draft → Active (2026-05-22)
+
+Closes the multi-agent execution model roadmap on paper (Phases 1-4 all `Active`). Reference-host implementation (workflow-engine staged-refusal seam + nondeterministic-tool fixture + `version: 4` advertisement) is the path-to-Accepted bar.
+
+**Spec text:**
+- `spec/v1/replay.md` gains §"Replay determinism under nondeterministic models (RFC 0041 Phase 4, normative)" with §A LLM-cache-key recipe promotion (informative → normative when `version >= 4`), §B envelope-refusal-divergence recovery (MUST emit `replay.divergedAtRefusal` + fail with `replay_diverged_at_refusal`), §C observable-output-sequence determinism (replay reproduces the observable result, NOT bit-equivalent execution of underlying tool calls).
+- `spec/v1/multi-agent-execution.md` gains §"Phase 4 replay determinism (RFC 0041, normative)" pointing into replay.md.
+- `spec/v1/rest-endpoints.md` §"Common error codes" gains `replay_diverged_at_refusal` for the §B refusal-divergence refusal path.
+
+**Schemas:**
+- `schemas/capabilities.schema.json` extends `multiAgent.executionModel` with `replayDeterminism.{supported, llmCacheKeyRecipe, refusalDivergenceEmission}` sub-block. `llmCacheKeyRecipe` accepts `spec-rfc-0041` (canonical) or `^x-host-<host>-<recipe>$` (vendor variant per host-extensions.md).
+- `schemas/run-event.schema.json` RunEventType enum gains `replay.divergedAtRefusal` (63 → 64 variants).
+- `schemas/run-event-payloads.schema.json` adds `replayDivergedAtRefusal` payload schema with required `{sourceRunId, atSequence, originalEnvelopeKind, replayEnvelopeKind}` (each envelope-kind in `{"valid", "refusal"}`) + optional `originalEventId`, `nodeId`, `refusalReason`.
+
+**SECURITY:**
+- `SECURITY/invariants.yaml` gains `replay-llm-cache-key-portable` protocol-tier high-severity invariant. The recipe MUST be byte-deterministic across hosts that follow it; non-portable keys leak host-internal state through the cache boundary and would defeat the SR-1 secret-redaction invariant on cached responses.
+
+**Conformance scenarios (3 new, 202 → 205):**
+- `replay-divergence-at-refusal.test.ts` — advertisement-shape probe on `replayDeterminism.refusalDivergenceEmission` + 2 `it.todo` for the dual-direction refusal-divergence case (original=valid + replay=refusal AND the symmetric original=refusal + replay=valid).
+- `replay-observable-sequence-determinism.test.ts` — capability-gated. Tests the boundary byte-equivalence claim of §C + the observable-result caching claim. Behavioral assertion lands when a `conformance-phase4-nondet-tool` fixture ships.
+- `replay-llm-cache-key-portable.test.ts` — intra-host reproducibility (key recomputable offline from the recipe) + non-recipe-field invariance (security boundary: request id / trace context / tenant id MUST NOT shift the key) + Phase 4 advertisement alignment. Reuses the existing `POST /v1/host/sample/test/llm-cache-key` seam from the sibling `replay-llm-cache-key.test.ts`.
+
+**Other:**
+- `docs/KNOWN-LIMITS.md` line 18: corrected the stale "three `it.todo()` cases" claim — `replay-llm-cache-key.test.ts` actually ships 5 behavioral assertions; only §D cross-host parity soft-skips on `OPENWOP_BASE_URL_B` absence. Added two new rows for the Phase 4 behavioral gaps.
+- README: 41 RFCs (unchanged); Active 9 → 10 (adds 0041); Draft 3 → 2 (drops 0041).
+
 ### RFC 0040 follow-ups: SDK parity + `fromSeq` field-name alignment (2026-05-21)
 
 Senior code-review follow-ups on the RFC 0039 + RFC 0040 landing.

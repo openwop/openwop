@@ -440,6 +440,30 @@
                   "description": "Host serves `GET /v1/runs/{runId}/ancestry` returning the cross-host parent chain per RFC 0040 §C. Optional even when crossHostCausation.supported is true — hosts that emit `causationHostId` but don't expose the ancestry-walking endpoint still satisfy the per-event chaining contract; this flag advertises the additional endpoint."
                 }
               }
+            },
+            "replayDeterminism": {
+              "type": "object",
+              "description": "RFC 0041 §D — Phase 4 replay determinism. When advertised, the host honors the LLM cache-key recipe in `replay.md` §\"LLM cache-key recipe\" as NORMATIVE (graduated from informative for version >= 4), emits `replay.divergedAtRefusal` events + fails with `replay_diverged_at_refusal` on refusal-divergence (RFC 0041 §B), and guarantees observable-output-sequence determinism per RFC 0041 §C. Hosts advertising `version: 4` MUST advertise this sub-block with `supported: true`.",
+              "additionalProperties": false,
+              "required": ["supported"],
+              "properties": {
+                "supported": {
+                  "type": "boolean",
+                  "description": "Host implements RFC 0041 Phase 4 replay-determinism contracts."
+                },
+                "llmCacheKeyRecipe": {
+                  "type": "string",
+                  "anyOf": [
+                    { "const": "spec-rfc-0041" },
+                    { "pattern": "^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*$" }
+                  ],
+                  "description": "The LLM cache-key recipe the host honors. `spec-rfc-0041` = the canonical recipe in `replay.md` §\"LLM cache-key recipe\" §A + §B + §C. Vendor-specific recipes use the canonical host-extension namespace string matching `^x-host-<host>-<recipe-name>$` per `spec/v1/host-extensions.md` §\"Canonical prefixes\"; the matching algorithm MUST be documented at the host's discovery doc."
+                },
+                "refusalDivergenceEmission": {
+                  "type": "boolean",
+                  "description": "Host emits `replay.divergedAtRefusal` events + fails replay with `error.code: replay_diverged_at_refusal` per RFC 0041 §B. Hosts advertising `version: 4` MUST set this to `true`."
+                }
+              }
             }
           }
         }

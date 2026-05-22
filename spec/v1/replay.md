@@ -203,6 +203,47 @@ The migration period is host-internal — no wire-shape impact.
 
 ---
 
+## Replay determinism under nondeterministic models (RFC 0041 Phase 4, normative)
+
+Per [RFC 0041](../../RFCS/0041-multi-agent-replay-under-nondeterminism.md). Applies only when the host advertises `capabilities.multiAgent.executionModel.version >= 4` AND `capabilities.multiAgent.executionModel.replayDeterminism.supported: true`.
+
+### §A — LLM cache-key recipe promotion (informative → normative)
+
+The §"LLM cache-key recipe" §A + §B + §C above is INFORMATIVE for hosts at `version <= 3`. For hosts advertising Phase 4 (`version >= 4`), the recipe is NORMATIVE — hosts MUST compute the LLM cache key per the recipe exactly. This closes RFC 0037 §"Open spec gaps" MAE-7.
+
+Hosts MUST advertise the recipe they honor via `capabilities.multiAgent.executionModel.replayDeterminism.llmCacheKeyRecipe`. The value `spec-rfc-0041` claims this recipe; vendor recipes use the canonical host-extension namespace `x-host-<host>-<recipe-name>` per `host-extensions.md` §"Canonical prefixes".
+
+### §B — Envelope-refusal recovery in replay (MAE-8 closure)
+
+When `mode: replay`, if the original run obtained a valid LLM envelope (e.g., a tool-call decision or structured output) but the replay obtains a refusal (or vice-versa — original refused, replay succeeded), the host MUST NOT silently substitute. Both directions of divergence MUST be observable.
+
+Phase 4 hosts MUST:
+
+1. Emit a `replay.divergedAtRefusal` event (NEW RunEventType per `schemas/run-event.schema.json`) with payload identifying the diverging node, the original-envelope nature (`valid` or `refusal`), and the replay-envelope nature.
+2. Fail the replay with `error.code: "replay_diverged_at_refusal"` (NEW error code per `spec/v1/rest-endpoints.md` §"Common error codes").
+
+The `replay.divergedAtRefusal` event MAY be a sibling of the existing `replay.diverged` event (which covers structural divergence — `output` / `missing` / `extra` / `type-mismatch`). When a refusal-divergence is detected, hosts MUST emit `replay.divergedAtRefusal` rather than coercing the signal into `replay.diverged` with `divergenceKind: "output"`. The distinct event type lets operators audit safety-policy shifts without filtering through the generic divergence stream.
+
+Operators receiving `replay_diverged_at_refusal` SHOULD treat it as a safety-policy-shift signal: the underlying model's refusal behavior has changed since the original run, and any branch-mode workflow that depends on the original envelope's content needs re-validation.
+
+### §C — Observable-output-sequence determinism vs bit-equivalent execution (MAE-9 closure)
+
+The replay contract is **observable-output-sequence determinism**, NOT bit-equivalent execution. Specifically:
+
+1. The sequence of `RunEventDoc` records appended to the event log at indices `[0, fromSeq]` MUST be byte-equivalent between original and replay (modulo per-region clock fields per RFC 0036 §E and per-event ULID component-T entropy when ULIDs are minted fresh).
+2. `RunSnapshot.variables`, `RunSnapshot.channels`, and `RunSnapshot.status` at each event-log index MUST be byte-equivalent across original and replay.
+3. The bytes-on-the-wire of underlying tool/LLM calls MAY differ — e.g., a tool call against a remote stateful API, an LLM call against a model whose weights shifted, a randomized fallback path — AS LONG AS the resulting **observable state** at each index is byte-equivalent.
+
+The load-bearing implication: hosts MUST NOT cache observable state ONLY at the tool-call boundary. They MUST cache the **observable result** (return value + side-effects on workflow state + emitted events) so a replay reproduces the observable sequence even when the underlying call would have produced different bytes. The cache key for LLM-calling nodes is the §"LLM cache-key recipe" §B SHA-256 hash; for other tool-calling nodes the cache key is at host discretion BUT MUST be content-addressable (no host-internal sequence numbers or timestamps).
+
+This rules out bit-equivalent execution determinism as a contract — it would require every nondeterministic call to be cached forever (unbounded memory cost) and would break legitimate use cases like tool calls against remote stateful APIs (`getCurrentTime`, `lookupExternalRecord`).
+
+### Conformance gating
+
+Scenarios verifying §A + §B + §C gate on `capabilities.multiAgent.executionModel.version >= 4 && capabilities.multiAgent.executionModel.replayDeterminism.supported: true`. Hosts at earlier versions skip cleanly.
+
+---
+
 ## Replay-from-event-log internals
 
 The engine implementation reuses the existing `recoverRunFromEventLog(runId)` machinery (per `WORKFLOW_ORCHESTRATION.md`):

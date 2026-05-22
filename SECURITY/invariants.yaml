@@ -1135,3 +1135,25 @@ invariants:
       `examples/hosts/postgres/test/auth-rotation-scoped.test.ts` §6
       asserts the rejected-token canary doesn't appear in the
       response body.
+
+  # ===== RFC 0041 Phase 4 — replay-determinism portability =====
+
+  - id: replay-llm-cache-key-portable
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/replay-llm-cache-key.test.ts
+      - conformance/src/scenarios/replay-llm-cache-key-portable.test.ts
+    note: |
+      RFC 0041 §A + §E. The LLM cache-key recipe per
+      `replay.md` §"LLM cache-key recipe" §A + §B + §C MUST be
+      byte-deterministic across independent hosts that follow the
+      recipe — two hosts (or two test runs against one host) MUST
+      produce the same SHA-256-over-JCS key for the same canonical
+      input. Portability is the load-bearing property: it lets the
+      cross-host replay contract survive host migration + multi-region
+      deployment + Phase 4 advertisement (`replayDeterminism
+      .llmCacheKeyRecipe: "spec-rfc-0041"`). Non-portable cache keys
+      hide tenant-scoped state behind the cache boundary, defeating
+      the SR-1 secret-redaction invariant on cached responses.

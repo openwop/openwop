@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0041 |
 | **Title** | Multi-agent execution model Phase 4: LLM cache-key recipe normation + envelope-refusal recovery in replay context + determinism vs idempotency contract |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-22 |
-| **Updated** | 2026-05-22 |
+| **Updated** | 2026-05-22 (Draft → Active same-day: Phase 4 spec text + schemas + 3 conformance scenarios + SECURITY invariant + capability advertisement landed atomically following the RFC 0034/0037/0039/0040 pattern. `spec/v1/replay.md` gains §"Replay determinism under nondeterministic models (RFC 0041 Phase 4, normative)" with §A LLM-cache-key recipe promotion, §B refusal-divergence recovery, §C observable-output-sequence determinism. `spec/v1/multi-agent-execution.md` gains §"Phase 4 replay determinism (RFC 0041, normative)" pointing into replay.md. `schemas/capabilities.schema.json` adds `replayDeterminism.{supported, llmCacheKeyRecipe, refusalDivergenceEmission}` sub-block. `schemas/run-event.schema.json` RunEventType enum gains `replay.divergedAtRefusal`. `schemas/run-event-payloads.schema.json` adds `replayDivergedAtRefusal` payload with required `{sourceRunId, atSequence, originalEnvelopeKind, replayEnvelopeKind}` + optional `originalEventId/nodeId/refusalReason`. `spec/v1/rest-endpoints.md` gains `replay_diverged_at_refusal` error code. `SECURITY/invariants.yaml` gains `replay-llm-cache-key-portable` row pointing at the existing `replay-llm-cache-key.test.ts` plus the new portable-key scenario. NEW conformance scenarios: `replay-divergence-at-refusal.test.ts` (advertisement-shape probe + 2 behavioral todos for the dual-direction refusal-divergence case), `replay-observable-sequence-determinism.test.ts` (capability-gated; behavioral assertion soft-skipped until a nondeterministic-tool fixture ships), `replay-llm-cache-key-portable.test.ts` (intra-host reproducibility + non-recipe-field invariance + Phase 4 advertisement alignment — reuses the existing `POST /v1/host/sample/test/llm-cache-key` seam). Reference-host implementation (workflow-engine staged-refusal seam + nondeterministic-tool fixture + Phase 4 advertisement) deferred to follow-up commits owned by the workflow-engine maintainer; the protocol-layer contract is complete. Path to `Accepted`: a non-steward host advertises `replayDeterminism.supported: true` + `llmCacheKeyRecipe: "spec-rfc-0041"` + passes the portable-key + refusal-divergence + observable-sequence scenarios.) |
 | **Affects** | `spec/v1/replay.md` (extends with §"Replay under non-deterministic agents (Phase 4, normative)") · `spec/v1/multi-agent-execution.md` (extends with §"Phase 4 replay determinism") · `schemas/capabilities.schema.json` (bumps `multiAgent.executionModel.version` ceiling effective range to include `4`; adds optional `replayDeterminism` block) · 3 new conformance scenarios (replacing `replay-llm-cache-key.test.ts` placeholders) · `SECURITY/invariants.yaml` (adds `replay-llm-cache-key-portable` SECURITY invariant) · `INTEROP-MATRIX.md` · CHANGELOG |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -133,11 +133,11 @@ Hosts advertising `multiAgent.executionModel.version: 4` MUST also advertise `re
 
 ## Conformance
 
-3 new conformance scenarios, REPLACING the 3 `it.todo()` placeholders in `replay-llm-cache-key.test.ts`:
+3 new conformance scenarios land alongside the existing `replay-llm-cache-key.test.ts` (which contrary to the prior version of this RFC is NOT shaped as `it.todo()` placeholders — it ships 5 behavioral assertions against the existing `POST /v1/host/sample/test/llm-cache-key` seam, gated on 404-skip when the seam isn't exposed). The new scenarios cover the surfaces RFC 0041 introduces:
 
-- `replay-llm-cache-key-portable.test.ts` — capability-gated on `replayDeterminism.supported: true`. Two test runs against the host with identical canonical-input LLM calls; asserts the host's emitted cache-key field on `agent.toolCalled` events (or equivalent) is byte-equivalent.
-- `replay-divergence-at-refusal.test.ts` — capability-gated on `refusalDivergenceEmission: true`. Original run: mock provider returns a valid envelope. Replay: mock provider returns a refusal. Asserts `replay.divergedAtRefusal` event fires AND replay fails with `replay_diverged_at_refusal`.
-- `replay-observable-sequence-determinism.test.ts` — capability-gated. Runs a workflow with a non-deterministic tool call (a mock tool that returns different bytes on each call but the host caches the FIRST result as part of observable state). Forks the run at an intermediate index and replays; asserts the observable event sequence at indices `[0, fromSeq]` is byte-equivalent across original + replay even though the underlying tool would have produced different bytes.
+- `replay-llm-cache-key-portable.test.ts` — capability-gated on `replayDeterminism.supported: true`. Reuses the existing seam; adds intra-host reproducibility (key recomputable offline), non-recipe-field invariance (security boundary: request id / trace context / tenant id MUST NOT influence the key), and Phase 4 advertisement-alignment (`replayDeterminism.llmCacheKeyRecipe` MUST equal `spec-rfc-0041` or match `^x-host-<host>-<recipe>$`).
+- `replay-divergence-at-refusal.test.ts` — capability-gated on `refusalDivergenceEmission: true`. Advertisement-shape probe (always-on when discovery reachable) + 2 behavioral `it.todo` for the two refusal-divergence directions (original=valid + replay=refusal AND original=refusal + replay=valid). Behavioral assertion lands when reference workflow-engine wires a staged-refusal mode on its mock-AI provider.
+- `replay-observable-sequence-determinism.test.ts` — capability-gated. Tests the boundary byte-equivalence claim of §C (event-log prefix `[0, fromSeq]` byte-equivalent modulo per-region clock + ULID-T entropy) and the observable-result caching claim (replay reproduces the original observable result for nondeterministic tool calls). Behavioral assertion lands when a `conformance-phase4-nondet-tool` fixture ships.
 
 ## Alternatives considered
 
@@ -153,19 +153,19 @@ Hosts advertising `multiAgent.executionModel.version: 4` MUST also advertise `re
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (this file).
-- [ ] `spec/v1/replay.md` extended with §A + §B + §C normative text.
-- [ ] `spec/v1/multi-agent-execution.md` extended with §"Phase 4 replay determinism".
-- [ ] `schemas/capabilities.schema.json` extends `multiAgent.executionModel` with `replayDeterminism` block per §D.
-- [ ] `schemas/run-event.schema.json` `RunEventType` enum gains `replay.divergedAtRefusal`.
-- [ ] `schemas/run-event-payloads.schema.json` gains `replayDivergedAtRefusal` payload schema.
-- [ ] `spec/v1/rest-endpoints.md` §"Common error codes" gains `replay_diverged_at_refusal`.
-- [ ] `SECURITY/invariants.yaml` gains `replay-llm-cache-key-portable` row with public test glob per §E.
-- [ ] 3 new conformance scenarios per §Conformance (replacing the existing `replay-llm-cache-key.test.ts` placeholders).
-- [ ] At least one reference host advertises `version: 4` + passes the 3 scenarios.
-- [ ] `docs/KNOWN-LIMITS.md` `replay-llm-cache-key.test.ts` row dropped from §"Shape-only conformance coverage."
-- [ ] `INTEROP-MATRIX.md` updated.
-- [ ] CHANGELOG entry under `[Unreleased]`.
+- [x] Spec text merged (this file).
+- [x] `spec/v1/replay.md` extended with §A + §B + §C normative text.
+- [x] `spec/v1/multi-agent-execution.md` extended with §"Phase 4 replay determinism".
+- [x] `schemas/capabilities.schema.json` extends `multiAgent.executionModel` with `replayDeterminism` block per §D.
+- [x] `schemas/run-event.schema.json` `RunEventType` enum gains `replay.divergedAtRefusal`.
+- [x] `schemas/run-event-payloads.schema.json` gains `replayDivergedAtRefusal` payload schema.
+- [x] `spec/v1/rest-endpoints.md` §"Common error codes" gains `replay_diverged_at_refusal`.
+- [x] `SECURITY/invariants.yaml` gains `replay-llm-cache-key-portable` row with public test glob per §E.
+- [x] 3 new conformance scenarios per §Conformance.
+- [x] `docs/KNOWN-LIMITS.md` `replay-llm-cache-key.test.ts` row corrected (the file is NOT it.todo placeholders — its behavioral coverage at the single-host boundary is in place; the residual known-limit is cross-host parity, which still depends on `OPENWOP_BASE_URL_B`).
+- [ ] At least one reference host advertises `version: 4` + passes the 3 scenarios. (Path-to-Accepted.)
+- [ ] `INTEROP-MATRIX.md` updated. (Will land alongside the reference-host implementation that advertises `version: 4`.)
+- [x] CHANGELOG entry under `[Unreleased]`.
 
 Path to `Active → Accepted`: cross-host advertisement evidence per `RFCs/0001-rfc-process.md` §"Promotion to Accepted." The multi-agent execution model roadmap closes when this RFC reaches Accepted.
 
