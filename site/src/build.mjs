@@ -1125,7 +1125,7 @@ function buildApiExplorer() {
               rightPanel: {
                 backgroundColor: '#ece8de',  // var(--paper-2)
                 textColor: '#1a1a17',        // var(--ink)
-                width: '32%',
+                width: '40%',
               },
               codeBlock: {
                 backgroundColor: '#1a1a17',  // code blocks stay dark for legibility
