@@ -50,12 +50,9 @@ describe.skipIf(HTTP_SKIP)('sandbox-memory-cap: capability shape + behavioral (R
     ).toBe(true);
   });
 
-  it('a misbehaving pack allocating beyond memoryLimitBytes fails with sandbox_memory_exceeded', async () => {
-    const sb = await readSandbox();
-    if (!sb || sb.memoryLimitBytes === undefined) return; // soft-skip
-    // Behavioral assertion lands when the misbehaving-memory-cap typeId is
-    // available. Expected: error.code === 'sandbox_memory_exceeded';
-    // details.requestedBytes > memoryLimitBytes.
-    expect(true).toBe(true);
-  });
+  // Behavioral assertion lands when the misbehaving-memory-cap typeId is
+  // available. Expected: error.code === 'sandbox_memory_exceeded';
+  // details.requestedBytes > memoryLimitBytes. Surfaced as `todo` so
+  // test reporters track the gap rather than reporting a vacuous PASS.
+  it.todo('a misbehaving pack allocating beyond memoryLimitBytes fails with sandbox_memory_exceeded');
 });

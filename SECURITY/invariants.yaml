@@ -630,20 +630,20 @@ invariants:
   # and Workstream 4 SEC-4 for the policy.
 
   - id: node-pack-sandbox-no-process
-    tier: protocol
+    tier: reference-impl
     severity: critical
     threat_model: SECURITY/threat-model-node-packs.md
     tests:
       - conformance/src/scenarios/sandbox-no-host-process-escape.test.ts
     note: |
       RFC 0035 §A invariant 4. Sandboxed code MUST NOT spawn host
-      processes, fork, or call exec-family syscalls. Scenario asserts
-      a sandbox_escape_attempt envelope with escapeKind:
-      "host-process-escape" when the sandboxed pack attempts process
-      escape. Tier graduated reference-impl → protocol 2026-05-22
-      alongside the suite-wide sandbox scenario landing (conformance
-      suite v1.4.0). Behavioral assertion lights up when a host
-      advertises capabilities.sandbox.supported: true.
+      processes, fork, or call exec-family syscalls. Scenario shape
+      ships in @openwop/openwop-conformance@1.4.0 (2026-05-22) but the
+      behavioral assertion is `it.todo` — the spawn/fork/exec probe
+      against a sandbox_escape_attempt envelope requires a sandbox-
+      executing reference host. Tier graduates `reference-impl →
+      protocol` when the scenario grows a real behavioral assertion
+      against a host advertising `capabilities.sandbox.supported: true`.
 
   - id: node-pack-sandbox-no-eval
     tier: reference-impl
@@ -662,7 +662,7 @@ invariants:
       ships with a corresponding `sandbox-no-eval.test.ts`.
 
   - id: node-pack-sandbox-network-gated
-    tier: protocol
+    tier: reference-impl
     severity: critical
     threat_model: SECURITY/threat-model-node-packs.md
     tests:
@@ -670,25 +670,26 @@ invariants:
     note: |
       RFC 0035 §A invariant 3. Sandboxed code MUST NOT initiate
       network requests unless host.fetch (or equivalent) is in
-      allowedHostCalls. Tier graduated reference-impl → protocol
-      2026-05-22 (suite v1.4.0). Behavioral assertion lights up when
-      a host advertises capabilities.sandbox.supported: true.
+      allowedHostCalls. Scenario shape ships in v1.4.0 but the
+      behavioral assertion is `it.todo` — needs a sandbox-executing
+      host. Tier graduates when the assertion grows a real probe.
 
   - id: node-pack-sandbox-fs-gated
-    tier: protocol
+    tier: reference-impl
     severity: critical
     threat_model: SECURITY/threat-model-node-packs.md
     tests:
       - conformance/src/scenarios/sandbox-no-host-fs-escape.test.ts
     note: |
       RFC 0035 §A invariant 1. Sandboxed code MUST NOT read or write
-      files outside the host-advertised sandbox root. Scenario asserts
-      a sandbox_escape_attempt envelope with escapeKind:
-      "host-fs-escape". Tier graduated reference-impl → protocol
-      2026-05-22 (suite v1.4.0).
+      files outside the host-advertised sandbox root. Scenario shape
+      ships in v1.4.0 but the behavioral assertion is `it.todo` —
+      needs a sandbox-executing host that can stage an out-of-root
+      access attempt and a sandbox_escape_attempt envelope response.
+      Tier graduates when the assertion grows a real probe.
 
   - id: node-pack-sandbox-no-env
-    tier: protocol
+    tier: reference-impl
     severity: critical
     threat_model: SECURITY/threat-model-node-packs.md
     tests:
@@ -696,11 +697,13 @@ invariants:
     note: |
       RFC 0035 §A invariant 2. Host environment variables MUST NOT
       be visible to sandbox code unless the host has explicitly
-      forwarded them via an allowedHostCalls entry. Tier graduated
-      reference-impl → protocol 2026-05-22 (suite v1.4.0).
+      forwarded them via an allowedHostCalls entry. Scenario shape
+      ships in v1.4.0 but the behavioral assertion is `it.todo` —
+      needs a sandbox-executing host. Tier graduates when the
+      assertion grows a real probe.
 
   - id: node-pack-sandbox-timeout
-    tier: protocol
+    tier: reference-impl
     severity: high
     threat_model: SECURITY/threat-model-node-packs.md
     tests:
@@ -709,11 +712,13 @@ invariants:
       RFC 0035 §A invariant 6. Exceeding capabilities.sandbox
       .wallClockLimitMs MUST fail the node with error.code:
       "sandbox_timeout" (the canonical name in `spec/v1/rest-
-      endpoints.md` §"Common error codes"). Tier graduated
-      reference-impl → protocol 2026-05-22 (suite v1.4.0).
+      endpoints.md` §"Common error codes"). Scenario shape ships in
+      v1.4.0 but the behavioral assertion is `it.todo` — needs a
+      sandbox-executing host. Tier graduates when the assertion
+      grows a real probe.
 
   - id: node-pack-sandbox-memory-cap
-    tier: protocol
+    tier: reference-impl
     severity: high
     threat_model: SECURITY/threat-model-node-packs.md
     tests:
@@ -722,17 +727,19 @@ invariants:
     note: |
       RFC 0035 §A invariant 5. Exceeding capabilities.sandbox
       .memoryLimitBytes MUST fail the node with error.code:
-      "sandbox_memory_exceeded". Two scenarios exercise this — the
+      "sandbox_memory_exceeded". Two scenarios point at this — the
       WASM-runtime-specific path (wasm-pack-memory-cap.test.ts
       against vendor.openwop.misbehaving-memory, expecting
       cap.breached with kind: wasm-memory) AND the RFC 0035 generic
-      sandbox-memory-cap.test.ts that asserts the canonical
-      sandbox_memory_exceeded envelope across any sandbox runtime
-      a host advertises. Tier graduated reference-impl → protocol
-      2026-05-22 (suite v1.4.0).
+      sandbox-memory-cap.test.ts. The generic scenario's behavioral
+      assertion ships as `it.todo` in v1.4.0 (sandbox-memory-cap
+      currently has one real schema-shape probe + one `it.todo` for
+      the actual cap-exceeded envelope). Tier graduates when the
+      generic behavioral assertion grows a real probe AND the WASM
+      path covers cross-runtime semantics.
 
   - id: node-pack-sandbox-isolated-context
-    tier: protocol
+    tier: reference-impl
     severity: high
     threat_model: SECURITY/threat-model-node-packs.md
     tests:
@@ -740,10 +747,11 @@ invariants:
     note: |
       RFC 0035 §A invariant 8. Sandboxed code from pack A MUST NOT
       mutate state visible to pack B inside the same host process.
-      The scenario drives two packs through `core.pack.*` execution
-      and asserts pack B's state at completion is byte-equivalent to
-      its state at start regardless of pack A's behavior. Tier
-      graduated reference-impl → protocol 2026-05-22 (suite v1.4.0).
+      Scenario shape ships in v1.4.0 but the behavioral assertion is
+      `it.todo` — needs a host that loads two packs through `core.pack.*`
+      execution and exposes a probe for pack-B-state-at-start vs
+      pack-B-state-at-pack-A-completion. Tier graduates when the
+      assertion grows a real probe.
 
   - id: node-pack-output-untrusted
     tier: protocol

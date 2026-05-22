@@ -50,12 +50,9 @@ describe.skipIf(HTTP_SKIP)('sandbox-timeout-cap: capability shape + behavioral (
     ).toBe(true);
   });
 
-  it('a misbehaving pack exceeding wallClockLimitMs fails with sandbox_timeout', async () => {
-    const sb = await readSandbox();
-    if (!sb || sb.wallClockLimitMs === undefined) return;
-    // Behavioral assertion lands when the misbehaving-timeout-cap typeId is
-    // available. Expected: error.code === 'sandbox_timeout';
-    // details.elapsedMs > wallClockLimitMs.
-    expect(true).toBe(true);
-  });
+  // Behavioral assertion lands when the misbehaving-timeout-cap typeId is
+  // available. Expected: error.code === 'sandbox_timeout';
+  // details.elapsedMs > wallClockLimitMs. Surfaced as `todo` so test
+  // reporters track the gap rather than reporting a vacuous PASS.
+  it.todo('a misbehaving pack exceeding wallClockLimitMs fails with sandbox_timeout');
 });

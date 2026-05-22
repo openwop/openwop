@@ -73,19 +73,16 @@ describe.skipIf(HTTP_SKIP)('sandbox-no-host-fs-escape: capability shape (RFC 003
   });
 });
 
-describe.skipIf(HTTP_SKIP)('sandbox-no-host-fs-escape: behavioral (RFC 0035 §B node-pack-sandbox-no-host-fs-escape)', () => {
-  it('a misbehaving pack that reads outside the sandbox root fails closed with sandbox_escape_attempt', async () => {
-    const sb = await readSandboxCaps();
-    if (sb?.supported !== true) return; // soft-skip — no sandbox-executing host yet
-
-    // Behavioral assertion lands when the vendor.openwop.misbehaving-sandbox
-    // synthetic pack ships + a host advertises capabilities.sandbox.supported.
-    // Expected wire shape:
-    //   POST /v1/host/sample/test/sandbox-load { packId: 'vendor.openwop.misbehaving-sandbox' }
-    //   → 200 OK
-    //   POST /v1/host/sample/test/sandbox-invoke { typeId: 'misbehave.fs-escape-read', args: { path: '/etc/passwd' } }
-    //   → response.error.code === 'sandbox_escape_attempt'
-    //   → response.error.details.escapeKind === 'host-fs-escape'
-    expect(true).toBe(true);
-  });
+// Behavioral assertion lands when the vendor.openwop.misbehaving-sandbox
+// synthetic pack ships + a host advertises capabilities.sandbox.supported.
+// Expected wire shape:
+//   POST /v1/host/sample/test/sandbox-load { packId: 'vendor.openwop.misbehaving-sandbox' }
+//   → 200 OK
+//   POST /v1/host/sample/test/sandbox-invoke { typeId: 'misbehave.fs-escape-read', args: { path: '/etc/passwd' } }
+//   → response.error.code === 'sandbox_escape_attempt'
+//   → response.error.details.escapeKind === 'host-fs-escape'
+// Surfaced as `todo` so test reporters track the gap rather than reporting
+// a vacuous PASS.
+describe('sandbox-no-host-fs-escape: behavioral (RFC 0035 §B node-pack-sandbox-no-host-fs-escape)', () => {
+  it.todo('a misbehaving pack that reads outside the sandbox root fails closed with sandbox_escape_attempt + escapeKind: "host-fs-escape"');
 });

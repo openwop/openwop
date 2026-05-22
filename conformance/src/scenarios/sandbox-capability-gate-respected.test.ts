@@ -13,19 +13,15 @@
  * @see SECURITY/invariants.yaml node-pack-sandbox-capability-gate-respected
  */
 
-import { describe, it, expect } from 'vitest';
-import { driver } from '../lib/driver.js';
+import { describe, it } from 'vitest';
 
-const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
-interface D { capabilities?: { sandbox?: { supported?: unknown } } }
-async function ok(): Promise<boolean> { try { const r = await driver.get('/.well-known/openwop'); return r.status === 200 && (r.json as D).capabilities?.sandbox?.supported === true; } catch { return false; } }
+// Behavioral assertion lands when the misbehaving-capability-gate typeId
+// ships + a host advertises `capabilities.sandbox.supported: true`.
+// Expected: error.code === 'sandbox_capability_denied';
+// details.requestedCapability is set to the disallowed identifier.
+// Surfaced as `todo` so test reporters track the gap rather than
+// reporting a vacuous PASS.
 
-describe.skipIf(HTTP_SKIP)('sandbox-capability-gate-respected: behavioral (RFC 0035 §B)', () => {
-  it('a misbehaving pack calling an undeclared host capability fails closed with sandbox_capability_denied', async () => {
-    if (!(await ok())) return;
-    // Behavioral assertion lands when the misbehaving-capability-gate typeId
-    // is available. Expected: error.code === 'sandbox_capability_denied';
-    // details.requestedCapability is set to the disallowed identifier.
-    expect(true).toBe(true);
-  });
+describe('sandbox-capability-gate-respected: behavioral (RFC 0035 §B)', () => {
+  it.todo('a misbehaving pack calling an undeclared host capability fails closed with sandbox_capability_denied');
 });

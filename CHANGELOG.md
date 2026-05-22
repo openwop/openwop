@@ -11,6 +11,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.3 — unreleased] — coordinated SDK release for MyndHyve adoption-feedback slices
 
+### RFC 0034 POST→GET reconciliation + RFC 0035 sandbox SECURITY-tier honesty (2026-05-22)
+
+Two follow-ups, the second a corrective:
+
+**RFC 0034 prose POST → GET reconciliation (additive).** RFC 0034's Summary (line 18) and schema-diff block (line 42) still said `POST /v1/host/sample/test/otel/spans` while the §B normative body, the reference implementation, every conformance scenario, `spec/v1/observability.md`, `schemas/capabilities.schema.json`, and the new `host-sample-test-seams.md` all say GET. Fixed in commit `97dda3e`. No wire-shape change — no host has implemented POST against this seam.
+
+**RFC 0035 sandbox SECURITY-tier graduations REVERTED (corrective).** Commit `97dda3e` graduated 7 of 8 `node-pack-sandbox-*` SECURITY invariants from `tier: reference-impl` → `tier: protocol`, pointing each `tests:` glob at the matching `sandbox-*.test.ts` scenario. The graduation was mechanically valid (`check-security-invariants.sh` only requires the test file to exist) but substantively misleading — every one of the 7 scenarios had `expect(true).toBe(true)` as its behavioral assertion. The SECURITY graduation gate's promise is "verified at this gate"; a tautology test verifies nothing. Reverted in this commit:
+
+- 7 SECURITY invariants moved back to `tier: reference-impl`. `tests:` globs preserved (they're correct pointers); `note:` updated to honestly say the scenarios ship as `it.todo` placeholders until a sandbox-executing host wires the seam.
+- 7 scenarios' vacuous `expect(true).toBe(true)` bodies converted to `it.todo()`. Test reporters now surface 8 todos instead of 7 vacuous passes + 1 todo. The advertisement-shape probes in `sandbox-no-host-fs-escape`, `sandbox-memory-cap`, `sandbox-timeout-cap` (real assertions against the discovery doc) are preserved unchanged.
+- RFC 0035 §"Acceptance criteria" SECURITY graduation checkbox reverted `[x] → [ ]` with honest framing.
+- RFC 0035 §B failure-mode invariant table updated — was claiming "7 of 8 graduated"; now correctly states all 8 stay at `reference-impl` until scenarios grow real probes.
+
+Protocol-tier SECURITY invariant count: 66 → 59 (correction). Reference-impl count: 23 → 30. The advertisement-shape scenarios still exercise the discovery doc honestly; the behavioral scenarios now honestly say "not yet verifiable" instead of vacuously passing.
+
+This is the kind of letter-of-law-vs-spirit-of-law gap that mechanical gates can't catch. The SECURITY-tier graduation is intentionally a higher bar than "the test file exists"; reverting protects the bar's credibility.
+
 ### RFC 0041 Phase 4 follow-ups: version-check bug + spec contradiction + assertion gap + helper extraction (2026-05-22)
 
 Senior code-review follow-ups on the RFC 0041 Phase 4 landing (ddf498a).

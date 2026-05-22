@@ -13,37 +13,16 @@
  * @see SECURITY/invariants.yaml node-pack-sandbox-no-network-escape
  */
 
-import { describe, it, expect } from 'vitest';
-import { driver } from '../lib/driver.js';
+import { describe, it } from 'vitest';
 
-const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
+// Behavioral assertion lands when a sandbox-executing host advertises
+// `capabilities.sandbox.supported: true` (with `host.fetch` NOT in
+// `allowedHostCalls`) AND ships a misbehaving-network-escape typeId.
+// The assertion drives the pack to fetch() inside the sandbox and asserts
+// error.code === 'sandbox_capability_denied' with
+// details.requestedCapability === 'host.fetch'. Surfaced as `todo` so
+// test reporters track the gap rather than reporting a vacuous PASS.
 
-interface DiscoveryDoc {
-  capabilities?: { sandbox?: { supported?: unknown; allowedHostCalls?: unknown } };
-}
-
-async function readSandbox(): Promise<{ supported: boolean; allowedHostCalls: string[] } | null> {
-  try {
-    const res = await driver.get('/.well-known/openwop');
-    if (res.status !== 200) return null;
-    const sb = (res.json as DiscoveryDoc).capabilities?.sandbox;
-    if (!sb || sb.supported !== true) return null;
-    return {
-      supported: true,
-      allowedHostCalls: Array.isArray(sb.allowedHostCalls) ? sb.allowedHostCalls.filter((s): s is string => typeof s === 'string') : [],
-    };
-  } catch { return null; }
-}
-
-describe.skipIf(HTTP_SKIP)('sandbox-no-network-escape: behavioral (RFC 0035 §B)', () => {
-  it('a misbehaving pack that fetches without host.fetch in allowedHostCalls fails closed with sandbox_capability_denied', async () => {
-    const sb = await readSandbox();
-    if (!sb) return; // soft-skip — no sandbox-executing host yet
-    if (sb.allowedHostCalls.includes('host.fetch')) return; // host permits fetch — the negative test doesn't apply
-
-    // Behavioral assertion lands when the misbehaving-network-escape typeId
-    // is available. Expected error code: sandbox_capability_denied with
-    // details.requestedCapability: 'host.fetch'.
-    expect(true).toBe(true);
-  });
+describe('sandbox-no-network-escape: behavioral (RFC 0035 §B)', () => {
+  it.todo('a misbehaving pack fetching without host.fetch in allowedHostCalls fails closed with sandbox_capability_denied');
 });
