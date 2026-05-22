@@ -79,7 +79,7 @@ async function readDiscovery(): Promise<DiscoveryDoc | null> {
 }
 
 describe.skipIf(HTTP_SKIP)('replay-llm-cache-key-portable: intra-host reproducibility (RFC 0041 §E)', () => {
-  it('host cache key MUST equal locally-recomputed SHA-256 over canonical JSON (reproducible offline)', async () => {
+  it('host cache key MUST equal locally-recomputed SHA-256 over canonical JSON (reproducible offline)', async (ctx) => {
     const input = {
       provider: 'anthropic',
       model: 'claude-3-5-sonnet-20240620',
@@ -90,7 +90,10 @@ describe.skipIf(HTTP_SKIP)('replay-llm-cache-key-portable: intra-host reproducib
       temperature: 0.3,
     };
     const result = await callSeam(input);
-    if (result.status === 404) return; // seam not exposed — soft-skip
+    if (result.status === 404) {
+      ctx.skip(); // host doesn't expose the test seam
+      return;
+    }
     expect(result.status).toBe(200);
     expect(
       result.cacheKey,
@@ -101,7 +104,7 @@ describe.skipIf(HTTP_SKIP)('replay-llm-cache-key-portable: intra-host reproducib
     ).toBe(expectedCacheKey(input));
   });
 
-  it('two identical probes MUST yield byte-identical keys (intra-host determinism)', async () => {
+  it('two identical probes MUST yield byte-identical keys (intra-host determinism)', async (ctx) => {
     const input = {
       provider: 'openai',
       model: 'gpt-4',
@@ -109,7 +112,10 @@ describe.skipIf(HTTP_SKIP)('replay-llm-cache-key-portable: intra-host reproducib
       temperature: 0.0,
     };
     const a = await callSeam(input);
-    if (a.status === 404) return; // soft-skip
+    if (a.status === 404) {
+      ctx.skip(); // host doesn't expose the test seam
+      return;
+    }
     const b = await callSeam(input);
     expect(
       a.cacheKey,
@@ -122,7 +128,7 @@ describe.skipIf(HTTP_SKIP)('replay-llm-cache-key-portable: intra-host reproducib
 });
 
 describe.skipIf(HTTP_SKIP)('replay-llm-cache-key-portable: non-recipe-field invariance (RFC 0041 §E security boundary)', () => {
-  it('non-recipe fields (request ID, trace context, tenant ID) MUST NOT influence the cache key', async () => {
+  it('non-recipe fields (request ID, trace context, tenant ID) MUST NOT influence the cache key', async (ctx) => {
     const base = {
       provider: 'openai',
       model: 'gpt-4',
@@ -130,7 +136,10 @@ describe.skipIf(HTTP_SKIP)('replay-llm-cache-key-portable: non-recipe-field inva
       temperature: 0.5,
     };
     const baseResult = await callSeam(base);
-    if (baseResult.status === 404) return; // soft-skip
+    if (baseResult.status === 404) {
+      ctx.skip(); // host doesn't expose the test seam
+      return;
+    }
 
     // The security boundary: ANY of these fields leaking into the key
     // would expose tenant/request state through cache-collision behavior.
@@ -156,11 +165,14 @@ describe.skipIf(HTTP_SKIP)('replay-llm-cache-key-portable: non-recipe-field inva
 });
 
 describe.skipIf(HTTP_SKIP)('replay-llm-cache-key-portable: Phase 4 advertisement alignment (RFC 0041 §D)', () => {
-  it('hosts advertising version: 4 MUST advertise replayDeterminism.llmCacheKeyRecipe', async () => {
+  it('hosts advertising version: 4 MUST advertise replayDeterminism.llmCacheKeyRecipe', async (ctx) => {
     const d = await readDiscovery();
     const em = d?.capabilities?.multiAgent?.executionModel;
     const version = em?.version;
-    if (typeof version !== 'number' || version < 4) return; // soft-skip — pre-Phase-4 or no multiAgent advertisement
+    if (typeof version !== 'number' || version < 4) {
+      ctx.skip(); // pre-Phase-4 or no multiAgent advertisement
+      return;
+    }
 
     const recipe = em?.replayDeterminism?.llmCacheKeyRecipe;
     expect(

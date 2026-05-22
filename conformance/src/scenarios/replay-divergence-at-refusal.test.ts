@@ -67,11 +67,17 @@ async function readDiscovery(): Promise<DiscoveryDoc | null> {
 }
 
 describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: advertisement shape (RFC 0041 §D)', () => {
-  it('replayDeterminism (when present) conforms to RFC 0041 §D', async () => {
+  it('replayDeterminism (when present) conforms to RFC 0041 §D', async (ctx) => {
     const d = await readDiscovery();
-    if (d === null) return;
+    if (d === null) {
+      ctx.skip();
+      return;
+    }
     const rd = d.capabilities?.multiAgent?.executionModel?.replayDeterminism;
-    if (rd === undefined) return; // soft-skip — host doesn't advertise
+    if (rd === undefined) {
+      ctx.skip(); // optional advertisement — host hasn't opted in
+      return;
+    }
 
     expect(
       typeof rd.supported,
