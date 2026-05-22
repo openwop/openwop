@@ -63,6 +63,7 @@ interface DiscoveryDoc {
         supported?: unknown;
         version?: unknown;
         confidenceEscalationFloor?: unknown;
+        confidenceEscalationInterruptKind?: unknown;
       };
     };
   };
@@ -113,20 +114,49 @@ describe.skipIf(BEHAVIORAL_SKIP)('multi-agent-confidence-escalation: behavioral 
     // The conformance pollUntilTerminal returns when the run reaches any
     // settled status. RFC 0039 §A gives hosts a choice: clarify-kind
     // escalation (→ waiting-clarification) OR escalate-kind approval
-    // (→ waiting-approval). The scenario MUST accept either canonical
-    // status. Hosts using vendor-extension interrupt kinds (e.g., a host-
-    // specific `x-host-<host>-<kind>` per `host-extensions.md`) currently
-    // can't pass this assertion without spec follow-up adding a
-    // capability flag advertising their kind; until then, this assertion
-    // is the canonical bar.
-    const acceptedStatuses = ['waiting-clarification', 'waiting-approval'];
-    expect(
-      acceptedStatuses.includes(terminal.status as string),
-      driver.describe(
-        'RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md §A + spec/v1/interrupt.md',
-        'a host below the confidence floor MUST surface the run as `waiting-clarification` (clarify-kind escalation) OR `waiting-approval` (escalate-kind escalation) per RFC 0039 §A; the low-confidence decision MUST NOT reach `completed` because no dispatch fired',
-      ),
-    ).toBe(true);
+    // (→ waiting-approval).
+    //
+    // RFC 0044 routing: when the host advertises
+    // `capabilities.multiAgent.executionModel.confidenceEscalationInterruptKind`
+    // the scenario derives the expected terminal-status from that advertisement
+    // (canonical kinds map 1:1 to waiting-clarification / waiting-approval per
+    // `interrupt.md`; vendor `x-host-<host>-<kind>` kinds accept any waiting-*
+    // status — the host's own interrupt.md mapping determines the suffix).
+    // When the host does NOT advertise the field, fall back to the canonical
+    // either-status check.
+    const advertisedKind = d?.capabilities?.multiAgent?.executionModel?.confidenceEscalationInterruptKind;
+    const isVendorKind = typeof advertisedKind === 'string' && /^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*$/.test(advertisedKind);
+    const isCanonicalKind = advertisedKind === 'clarification' || advertisedKind === 'approval';
+
+    if (isCanonicalKind) {
+      const expectedStatus = advertisedKind === 'clarification' ? 'waiting-clarification' : 'waiting-approval';
+      expect(
+        terminal.status,
+        driver.describe(
+          'RFCS/0044-confidence-escalation-interrupt-kind-advertisement.md §B',
+          `host advertising confidenceEscalationInterruptKind: "${advertisedKind}" MUST surface the run as "${expectedStatus}" per spec/v1/interrupt.md §"Interrupt kinds"`,
+        ),
+      ).toBe(expectedStatus);
+    } else if (isVendorKind) {
+      const status = terminal.status as string;
+      expect(
+        typeof status === 'string' && status.startsWith('waiting-'),
+        driver.describe(
+          'RFCS/0044-confidence-escalation-interrupt-kind-advertisement.md §B',
+          `host advertising vendor confidenceEscalationInterruptKind ("${advertisedKind}") MUST surface the run as a waiting-* status; the suffix is determined by the host's interrupt.md mapping (see the host's vendor-extensions doc per RFC 0044 §C)`,
+        ),
+      ).toBe(true);
+    } else {
+      // No advertisement — fall back to the canonical either-status check.
+      const acceptedStatuses = ['waiting-clarification', 'waiting-approval'];
+      expect(
+        acceptedStatuses.includes(terminal.status as string),
+        driver.describe(
+          'RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md §A + spec/v1/interrupt.md',
+          'a host below the confidence floor MUST surface the run as `waiting-clarification` (clarify-kind escalation) OR `waiting-approval` (escalate-kind escalation) per RFC 0039 §A; the low-confidence decision MUST NOT reach `completed` because no dispatch fired',
+        ),
+      ).toBe(true);
+    }
 
     const eventsRes = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events`);
     expect(eventsRes.status).toBe(200);

@@ -415,6 +415,15 @@
               "maximum": 1.0,
               "description": "RFC 0039 §A. Operator-declared confidence floor at or above the spec floor of 0.5; when an OrchestratorDecision carries `confidence` below this floor, the host MUST escalate via a `clarify` or `escalate` interrupt instead of executing the decision. Absent: the spec floor 0.5 applies. Values < 0.5 are non-conformant; values > 1.0 are nonsense. Applies only when `version >= 2`."
             },
+            "confidenceEscalationInterruptKind": {
+              "type": "string",
+              "anyOf": [
+                { "const": "clarification" },
+                { "const": "approval" },
+                { "pattern": "^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*$" }
+              ],
+              "description": "RFC 0044 — the literal `interrupt.kind` the host emits when escalating a below-floor confidence decision per RFC 0039 §A. `clarification` and `approval` are the canonical values matching the clarify-OR-approval choice in RFC 0039 §A; vendor-extension kinds use the canonical host-extension namespace `^x-host-<host>-<kind>$` per `spec/v1/host-extensions.md` §\"Canonical prefixes\". When advertised, hosts MUST emit an interrupt of the advertised kind on every confidence-escalation event AND the host's downstream `interrupt.md` mapping determines the `waiting-*` terminal status. Absent: conformance assumes the host uses one of the two canonical kinds (the relaxed assertion accepts either). Hosts using vendor kinds MUST also publish a non-normative kind-mapping document per RFC 0044 §C."
+            },
             "crossChildMemoryConcurrency": {
               "type": "string",
               "enum": ["strict", "advisory"],

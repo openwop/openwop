@@ -24,6 +24,29 @@ In response to a 2026-05-22 external standards-readiness review of the openwop c
 
 Gate: `bash scripts/openwop-check.sh` green. No wire-shape changes. Spec-corpus-validity 642/642 PASS. `additive` per `COMPATIBILITY.md` §2.1 for the two new RFCs.
 
+### RFC 0044 — confidence-escalation interrupt-kind advertisement (clarification to RFC 0039 §A) (2026-05-22)
+
+Same-day Draft → Active filing in response to MyndHyve's adoption-pass request for option 3 on the interrupt-kind question.
+
+**Context.** RFC 0039 §A normatively says hosts SHALL escalate below-floor decisions via `clarify` (→ `waiting-clarification`) OR `escalate-approval` (→ `waiting-approval`). The conformance scenario was relaxed in `f03d01d` to accept either canonical status. But MyndHyve has an entrenched `interrupt.kind: 'low-confidence'` semantic that cross-cuts `LOW_CONFIDENCE_SUSPEND_REASON` constants + `mockAgent.node` + `escalationThreshold.ts` + downstream UI + in-flight runs — renaming is multi-day cross-cutting work. Per their request, this RFC adds the same `spec-rfc-XXXX | x-host-<host>-<key>` advertisement pattern RFC 0041 §A introduced for `replayDeterminism.llmCacheKeyRecipe`.
+
+**§A — Schema (additive):** `schemas/capabilities.schema.json` adds optional `multiAgent.executionModel.confidenceEscalationInterruptKind`: `"clarification" | "approval" | x-host-<host>-<kind>`. Pattern matches `^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*$` per `host-extensions.md` §"Canonical prefixes".
+
+**§B — Conformance routing (normative):** `multi-agent-confidence-escalation.test.ts` reads the advertised value:
+- Canonical (`clarification` / `approval`) → strict `expect(terminal.status).toBe('waiting-clarification' | 'waiting-approval')`
+- Vendor (`x-host-<host>-<kind>`) → assert `terminal.status.startsWith('waiting-')` (any suffix; host's `interrupt.md` mapping determines exact form)
+- Absent → fall back to the canonical either-status check (preserves the `f03d01d` relaxation)
+
+**§C — Vendor-kind documentation (normative):** Hosts advertising a vendor kind MUST publish a non-normative mapping document identifying (a) which canonical escalation kind their kind semantically corresponds to, (b) which `waiting-*` status maps to it, (c) which downstream consumers pattern-match on it.
+
+**§D — Spec text:** `spec/v1/multi-agent-execution.md` §"Confidence escalation (RFC 0039 Phase 2, normative)" gains an "Interrupt-kind advertisement (RFC 0044)" paragraph. Wire-shape unchanged — the `confidence-escalated` event payload's `escalationKind: {clarify, escalate}` field stays exactly as RFC 0039 §A specified; what's new is the operator-visible interrupt-kind name advertisement.
+
+Compatibility: `additive` per COMPATIBILITY.md §2.1 — new optional field, no required-field changes, no normative shifts on the underlying confidence-floor escalation contract. Hosts that don't advertise continue passing the existing relaxed conformance.
+
+MyndHyve unblock plan: advertise `confidenceEscalationInterruptKind: 'x-host-myndhyve-low-confidence'` + bump `version: 2`. Estimated ~half day MyndHyve-side work (per their adoption note).
+
+README: 43 RFCs → 44; Active 10 → 11 (adds 0044). Drafts unchanged.
+
 ### MyndHyve adoption-pass spec follow-ups — RFC 0037 cancelled-phase optionality + RFC 0039 interrupt-kind flexibility + RFC 0034 envelope-accept dependency (2026-05-22)
 
 Three spec clarifications responding to questions surfaced in MyndHyve's adoption pass (5 RFCs substantively shipped non-steward-side, 3 deferred with documented blockers).
