@@ -469,6 +469,37 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
+  /v1/runs/{runId}/ancestry:
+    get:
+      tags: [runs]
+      summary: |
+        RFC 0040 §C — return the run's immediate parent in the cross-host
+        composition chain. Capability-gated on
+        `capabilities.multiAgent.executionModel.crossHostCausation.ancestryEndpointSupported: true`;
+        hosts that don't advertise return 404 not_found. Clients walk the full
+        chain by following `parent.wellKnownUrl` per response, one hop at a
+        time.
+      operationId: getRunAncestry
+      parameters:
+        - $ref: '#/components/parameters/RunId'
+      responses:
+        '200':
+          description: Run's immediate parent (or `parent: null` for top-level runs).
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/run-ancestry-response.schema.json'
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: |
+            Either the run doesn't exist, OR the host doesn't advertise
+            `crossHostCausation.ancestryEndpointSupported: true` and treats
+            the endpoint as absent. Clients can disambiguate by inspecting
+            the host's discovery doc.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
 
   /v1/runs/{runId}:pause:
     post:

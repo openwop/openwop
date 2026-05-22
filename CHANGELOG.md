@@ -11,6 +11,30 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.3 — unreleased] — coordinated SDK release for MyndHyve adoption-feedback slices
 
+### RFC 0039 memory-lifecycle half (MAE-2 + MAE-3) + RFC 0040 Phase 3 cross-host causation Draft → Active (2026-05-22)
+
+Closes RFC 0039 fully + lands RFC 0040 protocol-layer surface end-to-end. Reference-host implementation for both (Postgres MemoryAdapter wiring for RFC 0039 MAE-3 snapshot; reference workflow-engine ancestry endpoint + traceparent injection for RFC 0040) remains explicit follow-up.
+
+**RFC 0039 memory-lifecycle half (MAE-2 + MAE-3) — spec + scenario:**
+- `spec/v1/multi-agent-execution.md` gains §"Agent memory lifecycle across sub-runs (RFC 0039 Phase 2, normative)" covering MAE-2 (cross-run TTL anchored at child write time, with rationale) + MAE-3 (replay snapshot requirement + refusal contract).
+- `spec/v1/rest-endpoints.md` §"Common error codes" gains `replay_memory_snapshot_unavailable` for the §B refusal path when a host can't satisfy the snapshot at the requested `forkAtEventLogIdx`.
+- NEW `conformance/src/scenarios/multi-agent-memory-lifecycle.test.ts` — advertisement-shape probe on `crossChildMemoryConcurrency` (enum check) + 2 behavioral stubs (MAE-2 cross-run TTL + MAE-3 replay snapshot). Capability-gated on the conjunction `multiAgent.executionModel.version >= 2 && memory.supported: true`; reference workflow-engine soft-skips (advertises `memory.supported: false`); Postgres reference host will light up the behavioral assertions when its MemoryAdapter adopts the contract.
+
+**RFC 0040 Phase 3 cross-host causation — protocol-layer landing:**
+- `schemas/capabilities.schema.json` extends `multiAgent.executionModel` with `crossHostCausation.{supported, hostId, ancestryEndpointSupported}` sub-block.
+- `schemas/run-event-payloads.schema.json` adds optional `causationHostId` to `coreWorkflowChainEvent` (pattern documented for additive landings on remaining causationId-bearing payloads).
+- NEW `schemas/run-ancestry-response.schema.json` covers `GET /v1/runs/{runId}/ancestry` response shape: `{runId, hostId, parent: null | {runId, hostId, wellKnownUrl?, cause}}`. `cause` enum: `mcp-tool-call | a2a-message | core.subWorkflow | core.dispatch`.
+- `api/openapi.yaml` gains `getRunAncestry` operation: `GET /v1/runs/{runId}/ancestry` returning `200 RunAncestryResponse`; 404 covers both unknown-run AND non-advertising-host cases per spec text.
+- `spec/v1/multi-agent-execution.md` gains §"Cross-host causation (RFC 0040 Phase 3, normative)" with §A `causationHostId` contract, §B W3C tracecontext propagation across MCP + A2A composition, §C ancestry endpoint contract.
+- NEW conformance scenarios (3):
+  - `cross-host-causation-shape.test.ts` — capability-shape probe on `crossHostCausation.{supported, hostId, ancestryEndpointSupported}` + version >= 3 cross-check.
+  - `cross-host-ancestry-endpoint.test.ts` — behavioral on top-level-run path (asserts `200 {runId, hostId, parent: null}`) + 404 contract for hosts advertising `supported: true` but not the endpoint.
+  - `cross-host-traceparent-propagation.test.ts` — behavioral gated on `OPENWOP_MCP_REAL_SERVER_URL` / `OPENWOP_A2A_REAL_PEER_URL` env harness (lands when cross-host fixtures ship).
+- RFC 0040 Status `Draft → Active`.
+- README: 41 RFCs (unchanged); Active 8 → 9 (adds 0040); Draft 4 → 3 (drops 0040). Schema count 31 → 32 (new run-ancestry-response). OpenAPI ops 25 → 26 (new getRunAncestry). Conformance scenarios 198 → 202 (1 RFC 0039 memory + 3 RFC 0040).
+
+Closes the protocol-layer half of standards-readiness review finding (3) MAE-2/3/4/5/6. Reference-host wiring closes them at the host-implementation boundary; tracked as RFC 0039 + RFC 0040 path-to-Accepted work.
+
 ### RFC 0039 + 0037 + 0041 — /code-review follow-ups (2026-05-22)
 
 Surgical follow-ups on c6eb5d2 + 232b3aa per the senior code review.

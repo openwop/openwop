@@ -135,6 +135,11 @@
       "maxLength": 512,
       "description": "Optional one-line rationale shown by clients when an install of a deprecated version is attempted. Typically names the replacement version + migration link."
     },
+    "supersededBy": {
+      "type": "string",
+      "maxLength": 256,
+      "description": "Optional pointer to the version (or `<name>@<version>`) that replaces this one. Per spec/v1/registry-operations.md, engine consumers in `open` / `verified` mode MUST surface this value in any deprecation warning when set."
+    },
     "advisoryUrl": {
       "type": "string",
       "format": "uri",

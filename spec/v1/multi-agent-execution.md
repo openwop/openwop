@@ -87,6 +87,54 @@ Hosts MUST NOT silently execute a `confidence < floor` decision without first re
 
 **`confidence` field absence.** When the decision's `confidence` is absent (`undefined` / not emitted), the host MUST NOT escalate on this rule alone — `confidence === undefined` means "no opinion stated," not "low confidence." Operators wanting opt-in always-escalate behavior advertise a separate host-extension flag; this is not normated here.
 
+## Agent memory lifecycle across sub-runs (RFC 0039 Phase 2, normative)
+
+Per [RFC 0039](../../RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md) §B. Applies only when the host advertises `capabilities.multiAgent.executionModel.version >= 2` AND `capabilities.memory.supported: true`.
+
+### Cross-run memory inheritance (MAE-2)
+
+When a parent run dispatches a child run via `core.dispatch` or `core.subWorkflow`, the child's `MemoryAdapter` MUST be scoped per-(tenantId, scopeId) per `agent-memory.md` §CTI-1 (cross-tenant invariant). Child runs MAY share the parent's `scopeId` (default — inherit) or declare a fresh `scopeId` (opt-in via the dispatch config's `memoryScopeIsolation: "isolated"` field, additive). When the child shares the parent's `scopeId`:
+
+1. `MemoryEntry` records the child writes are visible to the parent on the child's terminal `completed` AND any subsequent parent supervisor turn — the same single-host visibility contract as intra-run memory operations.
+2. `MemoryEntry.ttl` MUST be anchored at the child's wall-clock write time, NOT the parent's start time. A child writing `MemoryEntry { ttl: 3600 }` at parent-clock T+10s expires at T+3610s (child write time + ttl), NOT T+3600s. **Why child-write-time wins:** TTL is an absolute freshness contract on the datum ("this value is valid for N seconds after I wrote it"), not a budget against an enclosing run lifetime. Parent runs that need longer-lived shared memory write directly to the shared scope under their own clock; matches the SR-1 "writer's-clock" pattern from `agent-memory.md` §SR-1.
+3. The parent's subsequent supervisor turn observing the child's MemoryEntry MUST NOT race a still-running sibling dispatch's writes — host MUST serialize cross-child writes per parent-run, OR advertise `capabilities.multiAgent.executionModel.crossChildMemoryConcurrency: "advisory"` to opt out of the serialization MUST (advisory hosts SHOULD document last-write-wins semantics out-of-band).
+
+### Replay carry-forward (MAE-3)
+
+When a `POST /v1/runs/{runId}:fork` invocation forks from a past event-log index N, the forked run's `MemoryAdapter.get(key)` calls before reaching index N MUST return the value that was in memory **AT THE ORIGINAL RUN'S TIME OF INDEX N** — NOT the current memory state.
+
+Hosts MUST persist memory snapshots tied to event-log indices when `capabilities.multiAgent.executionModel.version >= 2` AND `capabilities.memory.supported: true` are both advertised. The snapshot mechanism is host-internal (e.g., periodic copy-on-write checkpoints, append-only journal with reverse-projection on memory-write operations, per-write snapshot rows). Hosts that cannot satisfy the snapshot at the requested `forkAtEventLogIdx` MUST refuse the fork with `error.code: "replay_memory_snapshot_unavailable"` per `spec/v1/rest-endpoints.md` §"Common error codes". `error.details.forkAtEventLogIdx` SHOULD identify the requested index; `error.details.oldestAvailableIdx` MAY identify the oldest index for which a snapshot exists (lets clients pick a valid fork point).
+
+### Conformance gating
+
+Scenarios verifying §"Cross-run memory inheritance" + §"Replay carry-forward" gate on the conjunction `capabilities.multiAgent.executionModel.version >= 2 && capabilities.memory.supported: true`. Hosts that advertise either alone skip cleanly.
+
+## Cross-host causation (RFC 0040 Phase 3, normative)
+
+Per [RFC 0040](../../RFCS/0040-multi-agent-cross-host-causation.md). Applies only when the host advertises `capabilities.multiAgent.executionModel.version >= 3` AND `capabilities.multiAgent.executionModel.crossHostCausation.supported: true`.
+
+### `causationHostId` payload field (normative)
+
+Hosts MUST emit an optional `causationHostId: string` field on event payloads whose top-level `causationId` points at an event on a DIFFERENT host than the emitting host. The field's value MUST equal the originating host's `capabilities.multiAgent.executionModel.crossHostCausation.hostId` advertisement.
+
+When the `causationId` points at an event on the SAME host, `causationHostId` MUST be absent (preserves existing single-host semantics; pre-Phase-3 consumers ignore unknown fields).
+
+Affected payload types (additive): `coreWorkflowChainEvent`, `coreWorkflowChainConfidenceEscalated`, `agentReasoned`, `agentToolCalled`, `agentToolReturned`, `agentHandoff`, `agentDecided`, `runOrchestratorDecided`, `promptComposed`, `agentPromptResolved`. The field is OPTIONAL on every shape.
+
+### W3C tracecontext across MCP + A2A composition (normative)
+
+Hosts that dispatch MCP tool calls AND advertise `multiAgent.executionModel.version >= 3` MUST inject the parent run's W3C `traceparent` header into the outbound MCP request envelope. The MCP tool's host MUST honor the inbound `traceparent` as the parent trace for any spans it emits.
+
+The same rule applies symmetrically to A2A composition (`spec/v1/a2a-integration.md`): outbound A2A messages MUST carry the parent run's `traceparent`; inbound A2A handlers MUST adopt it as the trace parent.
+
+This extends the per-host trace propagation already covered by RFC 0023 (`otel-trace-propagation-subworkflow.test.ts`) to cross-host composition.
+
+### `GET /v1/runs/{runId}/ancestry` endpoint (normative)
+
+Hosts advertising `crossHostCausation.ancestryEndpointSupported: true` MUST serve `GET /v1/runs/{runId}/ancestry` returning `RunAncestryResponse` per `schemas/run-ancestry-response.schema.json`. The endpoint surfaces the run's immediate parent (NOT the full chain — clients walk the chain by following `parent.wellKnownUrl` per response, one hop at a time). Top-level runs return `parent: null`.
+
+Hosts that advertise `crossHostCausation.supported: true` but NOT the ancestry endpoint return `404 not_found` from the endpoint; clients reconstruct chains by walking `causationHostId` fields on individual events instead.
+
 ## Capability advertisement (normative)
 
 ```jsonc

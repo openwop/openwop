@@ -8,28 +8,28 @@
 | Surface | Current value | Source |
 |---|---:|---|
 | Spec prose documents | 38 | `spec/v1/*.md` |
-| JSON Schemas | 31 | `schemas/*.schema.json` |
-| OpenAPI operations | 25 | `api/openapi.yaml` |
+| JSON Schemas | 32 | `schemas/*.schema.json` |
+| OpenAPI operations | 26 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 198 | `conformance/src/scenarios/*.test.ts` |
+| Conformance scenario files | 202 | `conformance/src/scenarios/*.test.ts` |
 | RFCs tracked | 41 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## OpenAPI Operations
 
-`bulkCancelRuns`, `cancelRun`, `createPromptTemplate`, `createRun`, `deletePromptTemplate`, `forkRun`, `getArtifact`, `getCapabilities`, `getOpenApiSpec`, `getPromptTemplate`, `getRun`, `getWorkflow`, `inspectInterruptByToken`, `listPromptTemplates`, `pauseRun`, `pollRunEvents`, `registerWebhook`, `renderPromptTemplate`, `resolveInterruptByRun`, `resolveInterruptByToken`, `resumeRun`, `streamRunEvents`, `unregisterWebhook`, `updatePromptTemplate`, `verifyAuditLog`
+`bulkCancelRuns`, `cancelRun`, `createPromptTemplate`, `createRun`, `deletePromptTemplate`, `forkRun`, `getArtifact`, `getCapabilities`, `getOpenApiSpec`, `getPromptTemplate`, `getRun`, `getRunAncestry`, `getWorkflow`, `inspectInterruptByToken`, `listPromptTemplates`, `pauseRun`, `pollRunEvents`, `registerWebhook`, `renderPromptTemplate`, `resolveInterruptByRun`, `resolveInterruptByToken`, `resumeRun`, `streamRunEvents`, `unregisterWebhook`, `updatePromptTemplate`, `verifyAuditLog`
 
 ## RFC Status
 
 | Status | Count |
 |---|---:|
 | Accepted | 29 |
-| Active | 8 |
-| Draft | 4 |
+| Active | 9 |
+| Draft | 3 |
 
 | Latest RFC | Title | Status |
 |---|---|---|
 | RFC 0041 | Multi-agent execution model Phase 4: LLM cache-key recipe normation + envelope-refusal recovery in replay context + determinism vs idempotency contract | Draft |
-| RFC 0040 | Multi-agent execution model Phase 3: cross-host causation linking + W3C tracecontext propagation across composition boundaries + cross-host run-ID resolution | Draft |
+| RFC 0040 | Multi-agent execution model Phase 3: cross-host causation linking + W3C tracecontext propagation across composition boundaries + cross-host run-ID resolution | Active |
 | RFC 0039 | Multi-agent execution model Phase 2: confidence-threshold escalation + agent memory lifecycle across sub-runs and replay | Active |
 | RFC 0038 | OpenWOP Working Group charter | Draft |
 | RFC 0037 | Multi-agent execution model + replay determinism under nondeterministic models | Active |
@@ -71,8 +71,8 @@
 
 ## Active Follow-Ups
 
-- 4 RFCs still `Draft` (RFC 0025, RFC 0038, RFC 0040, RFC 0041) — advance with schema/conformance proof or defer.
-- 8 RFCs `Active` (RFC 0027, RFC 0028, RFC 0029, RFC 0034, RFC 0035, RFC 0036, RFC 0037, RFC 0039) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 3 RFCs still `Draft` (RFC 0025, RFC 0038, RFC 0041) — advance with schema/conformance proof or defer.
+- 9 RFCs `Active` (RFC 0027, RFC 0028, RFC 0029, RFC 0034, RFC 0035, RFC 0036, RFC 0037, RFC 0039, RFC 0040) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - SDK parity still shows raw-only rows for several stable v1.x helper surfaces.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.

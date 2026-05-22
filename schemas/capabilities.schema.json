@@ -419,6 +419,27 @@
               "type": "string",
               "enum": ["strict", "advisory"],
               "description": "RFC 0039 §B. Cross-child memory-write concurrency posture when version >= 2. `strict` (default when absent): the host serializes concurrent writes from sibling dispatched children to the parent's shared memory scope. `advisory`: the host opts out of the serialization MUST and documents last-write-wins semantics out-of-band. Hosts that choose advisory SHOULD also advertise their resolution rule under `crossChildMemoryConcurrencyResolution` (reserved field; follow-up clarification)."
+            },
+            "crossHostCausation": {
+              "type": "object",
+              "description": "RFC 0040 §D — Phase 3 cross-host causation linking. When advertised, the host honors the cross-host `causationId` extension (a `causationHostId` field on event payloads pointing at the originating host), W3C `traceparent` propagation across MCP + A2A composition boundaries, and (when `ancestryEndpointSupported: true`) the `GET /v1/runs/{runId}/ancestry` cross-host parent-chain endpoint. Hosts advertising `version: 3` MUST advertise this sub-block with `supported: true` and a stable `hostId`.",
+              "additionalProperties": false,
+              "required": ["supported"],
+              "properties": {
+                "supported": {
+                  "type": "boolean",
+                  "description": "Host implements RFC 0040 Phase 3 cross-host causation contracts."
+                },
+                "hostId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Stable identifier for this host instance, used as the `causationHostId` value on cross-host events. SHOULD be a URL or DNS-style identifier (e.g., `myndhyve.ai/workflow-runtime`); the protocol does not normate a stricter format."
+                },
+                "ancestryEndpointSupported": {
+                  "type": "boolean",
+                  "description": "Host serves `GET /v1/runs/{runId}/ancestry` returning the cross-host parent chain per RFC 0040 §C. Optional even when crossHostCausation.supported is true — hosts that emit `causationHostId` but don't expose the ancestry-walking endpoint still satisfy the per-event chaining contract; this flag advertises the additional endpoint."
+                }
+              }
             }
           }
         }
