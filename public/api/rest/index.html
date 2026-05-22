@@ -103,12 +103,13 @@
             scrollYOffset: 56,
             hideDownloadButton: true,
             disableSearch: false,
-            // Force Redoc into a 2-column layout (nav + content) by
-            // collapsing the right code-samples panel to zero width.
-            // Redoc's CSS still reserves a tiny gutter; our own CSS
-            // override (.api-explorer #redoc-container ...) finishes
-            // the hide. Without this the panel sits as a permanent
-            // empty column — the bad UX the user flagged.
+            // The right code-samples panel stays, but is tuned to the
+            // brand: warm paper-2 background (was near-black), narrower
+            // 32% width (was 38%), ink text (was light-on-dark). When
+            // an endpoint is selected Redoc populates it with the
+            // request/response sample; on the overview page it sits
+            // empty but blends into the page rather than reading as a
+            // separate dark slab.
             theme: {
               colors: { primary: { main: '#b05a3b' } },
               typography: {
@@ -116,7 +117,14 @@
                 headings: { fontFamily: 'Instrument Serif, Georgia, serif' },
               },
               sidebar: { backgroundColor: '#f4f1ea', width: '280px' },
-              rightPanel: { backgroundColor: 'var(--paper-2)', width: '0%' },
+              rightPanel: {
+                backgroundColor: '#ece8de',  // var(--paper-2)
+                textColor: '#1a1a17',        // var(--ink)
+                width: '32%',
+              },
+              codeBlock: {
+                backgroundColor: '#1a1a17',  // code blocks stay dark for legibility
+              },
             },
           }, document.getElementById('redoc-container'));
         } else {

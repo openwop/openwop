@@ -130,37 +130,6 @@
 #redoc-container {
   min-height: calc(100vh - 56px - 64px);
 }
-/* Hide Redoc's right code-samples panel entirely. The original UX
- * complaint was that this column sits empty (no `x-codeSamples` in the
- * openapi.yaml + nothing useful to show on the API overview page),
- * occupying ~38% of the viewport as a dead dark slab.
- *
- * Approach: Redoc lays out the doc + right-panel as siblings inside
- * each operation row (`[role="navigation"] + div`, etc.). Setting
- * `theme.rightPanel.width: '0%'` in the init config tells Redoc not
- * to reserve the column; the CSS rules below catch any remaining
- * panel chrome Redoc still renders.
- *
- * Selectors target Redoc's stable class hooks (`.api-content`, the
- * dark right column, the code-samples wrapper) plus the data-method
- * row right-column. Combined with the `width: 0%` theme setting,
- * Redoc settles into a clean 2-column layout: left nav + main content. */
-#redoc-container [role="navigation"] ~ div > div > div:nth-child(2) > div:nth-child(2) {
-  display: none !important;
-}
-#redoc-container [data-section-id] > div:last-child > div:last-child {
-  background: transparent !important;
-}
-/* Belt + suspenders: any element Redoc renders with a near-black
- * background inside our container gets reset. Avoids the dark-slab
- * appearance even if the panel content somehow survives the hide. */
-#redoc-container [style*="background-color: rgb(38, 50, 56)"],
-#redoc-container [style*="background-color: rgb(26, 26, 23)"],
-#redoc-container [style*="background: rgb(38, 50, 56)"],
-#redoc-container [style*="background: rgb(26, 26, 23)"] {
-  background: var(--paper-2) !important;
-  color: var(--ink) !important;
-}
 @media (max-width: 760px) {
   .api-explorer-head { gap: 12px; }
   .api-explorer-meta { width: 100%; justify-content: flex-end; }
