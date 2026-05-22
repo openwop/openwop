@@ -16,6 +16,7 @@ import {
   listSavedWorkflows,
   newWorkflowId,
   renameSavedWorkflow,
+  seedSavedWorkflowsIfFirstVisit,
   upsertSavedWorkflow,
 } from './persistence/localStore.js';
 import type { SavedWorkflow } from './schema/workflow.js';
@@ -70,6 +71,19 @@ export function WorkflowsDashboard() {
   // Bumped after mutations to re-read localStorage on next render.
   const [version, setVersion] = useState(0);
   const refresh = () => setVersion((v) => v + 1);
+
+  // First-visit seed: every premade template lands in "Your workflows"
+  // so the dashboard isn't empty on day one. Subsequent visits no-op
+  // (a `seeded` flag is persisted alongside) — if the user deletes
+  // everything, we honor that intent and don't re-seed.
+  useEffect(() => {
+    const seeds = PREMADE_WORKFLOWS.map((tpl) => cloneTemplateToUserWorkflow(tpl));
+    const n = seedSavedWorkflowsIfFirstVisit(seeds);
+    if (n > 0) refresh();
+    // refresh is stable for this hook's lifetime (closes over setVersion);
+    // intentionally run-once on mount only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const all = useMemo(() => listSavedWorkflows(), [version]);
 

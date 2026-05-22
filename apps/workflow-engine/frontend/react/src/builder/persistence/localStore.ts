@@ -7,6 +7,7 @@
 import type { SavedWorkflow } from '../schema/workflow.js';
 
 const LS_KEY = 'openwop.sample.builder.workflows';
+const LS_SEEDED_KEY = 'openwop.sample.builder.workflows.seeded';
 
 type Index = Record<string, SavedWorkflow>;
 
@@ -98,4 +99,37 @@ export function exportSavedWorkflowAsJSON(
   const filename = `${slugify(wf.name)}-${wf.id}.json`;
   const blob = new Blob([JSON.stringify(wf, null, 2)], { type: 'application/json' });
   return { filename, blob };
+}
+
+/**
+ * One-shot seed for the workflows dashboard. On the very first visit
+ * (no `seeded` flag set yet AND no existing saved workflows), persist
+ * the supplied workflows so the user lands on a populated dashboard
+ * instead of an empty state with only a "Templates" section below.
+ *
+ * After it runs once, the `seeded` flag is set so subsequent visits
+ * never re-seed — even if the user deletes everything (their intent).
+ *
+ * Returns the number of workflows seeded (0 if it no-op'd).
+ */
+export function seedSavedWorkflowsIfFirstVisit(
+  workflows: readonly SavedWorkflow[],
+): number {
+  try {
+    if (localStorage.getItem(LS_SEEDED_KEY) === '1') return 0;
+  } catch {
+    return 0;
+  }
+  const existing = readIndex();
+  if (Object.keys(existing).length > 0) {
+    // User has workflows already (e.g., migrated from before seeding existed).
+    // Don't seed; just mark seeded so we never run again.
+    try { localStorage.setItem(LS_SEEDED_KEY, '1'); } catch { /* ignore */ }
+    return 0;
+  }
+  const idx: Index = {};
+  for (const wf of workflows) idx[wf.id] = wf;
+  writeIndex(idx);
+  try { localStorage.setItem(LS_SEEDED_KEY, '1'); } catch { /* ignore */ }
+  return workflows.length;
 }
