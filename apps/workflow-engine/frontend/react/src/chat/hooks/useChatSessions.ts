@@ -25,6 +25,10 @@ import {
   renameChatSession,
   type ChatSessionHeader,
 } from '../../client/chatSessionsClient.js';
+import {
+  LS_SESSION_INDEX_KEY,
+  LS_SESSION_INDEX_VERSION,
+} from '../lib/storageKeys.js';
 
 /** Cross-tab message envelope. JSON-RPC-style discriminated union so we
  *  can extend with new event kinds (e.g., `session:message-appended`)
@@ -98,21 +102,29 @@ export function useChatSessions(): UseChatSessionsResult {
   /** Read the localStorage session index written by `persistSession`
    *  in `useChatSession`. Mirrors the BE `ChatSessionHeader` shape so
    *  the drawer doesn't need to know which source provided each row.
-   *  `tenantId` is synthetic ('local'); the drawer doesn't gate on it. */
+   *  `tenantId` is synthetic ('local'); the drawer doesn't gate on it.
+   *
+   *  On-disk envelope is `{ v: LS_SESSION_INDEX_VERSION, items: [...] }`.
+   *  Mismatched-version payloads are dropped to prevent rendering with
+   *  a stale shape (see lib/storageKeys.ts for the bump protocol). */
   function readLocalSessionIndex(): ChatSessionHeader[] {
     try {
-      const raw = localStorage.getItem('openwop.sample.chat.sessions-index');
+      const raw = localStorage.getItem(LS_SESSION_INDEX_KEY);
       if (!raw) return [];
-      const parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed)) return [];
-      return parsed.map((it) => ({
-        sessionId: String(it.sessionId),
-        tenantId: 'local',
-        title: String(it.title ?? 'Untitled'),
-        createdAt: String(it.createdAt ?? new Date().toISOString()),
-        updatedAt: String(it.updatedAt ?? it.createdAt ?? new Date().toISOString()),
-        messageCount: Number(it.messageCount ?? 0),
-      }));
+      const parsed = JSON.parse(raw) as { v?: number; items?: unknown };
+      if (parsed.v !== LS_SESSION_INDEX_VERSION) return [];
+      if (!Array.isArray(parsed.items)) return [];
+      return parsed.items.map((raw) => {
+        const it = raw as Record<string, unknown>;
+        return {
+          sessionId: String(it.sessionId),
+          tenantId: 'local',
+          title: String(it.title ?? 'Untitled'),
+          createdAt: String(it.createdAt ?? new Date().toISOString()),
+          updatedAt: String(it.updatedAt ?? it.createdAt ?? new Date().toISOString()),
+          messageCount: Number(it.messageCount ?? 0),
+        };
+      });
     } catch {
       return [];
     }

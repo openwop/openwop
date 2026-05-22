@@ -106,6 +106,17 @@ export const SAMPLE_PROMPTS: PromptTemplate[] = [
     meta: { source: 'host' },
   },
   {
+    templateId: 'etl-loader-system',
+    version: '1.0.0',
+    kind: 'system',
+    name: 'ETL Loader (system)',
+    description: 'Formats enriched records as a final destination payload (the "load" step in extract/enrich/load).',
+    text: 'You format records for a destination sink. Read the incoming JSON array. Output a single JSON object: { "destination": "string", "recordCount": number, "records": [...] }. Preserve every input record verbatim under `records`. No prose, no commentary.',
+    tags: ['data', 'load', 'etl'],
+    modelHints: { modelClass: 'classification', temperature: 0 },
+    meta: { source: 'host' },
+  },
+  {
     templateId: 'reviewer-system',
     version: '1.0.0',
     kind: 'system',

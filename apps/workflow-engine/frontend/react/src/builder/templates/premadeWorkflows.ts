@@ -379,7 +379,7 @@ export const PREMADE_WORKFLOWS: readonly TemplateWorkflow[] = [
       }),
       node('load_wait', 'delay', pos(7), 'Load window', { durationMs: 1000 }),
       node('load', 'mock-ai', pos(8), 'Load destination', {
-        systemPromptRef: 'editor-system',
+        systemPromptRef: 'etl-loader-system',
         userPromptRef: 'writer-user',
       }),
       node('confirm', 'noop', pos(9), 'Confirm'),

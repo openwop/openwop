@@ -30,6 +30,11 @@ import { getSavedWorkflow } from '../../builder/persistence/localStore.js';
 import { serializeWorkflow } from '../../builder/schema/serialize.js';
 import { registerWorkflow } from '../../builder/persistence/registerClient.js';
 import type { WorkflowMentionEntry } from '../lib/workflowMentions.js';
+import {
+  LS_CURRENT_SESSION_KEY as LS_KEY,
+  LS_SESSION_INDEX_KEY as LS_INDEX_KEY,
+  LS_SESSION_INDEX_VERSION,
+} from '../lib/storageKeys.js';
 
 // Phase 2D — types extracted to `../types.js` so this hook can focus
 // on lifecycle. Re-exported here for back-compat with existing callers
@@ -116,15 +121,26 @@ function updateEnvelopeEvents(
 // re-export above. Inlined imports are sufficient for the rest of this
 // file.
 
-const LS_KEY = 'openwop.sample.chat.session';
-/** Local session index — list of session HEADERS the drawer can fall
- *  back to when the BE write-through is in a cold-start / 401 state and
- *  `listChatSessions()` returns empty. Mirrors what the BE would
- *  return; one entry per session id. */
-const LS_INDEX_KEY = 'openwop.sample.chat.sessions-index';
 const SYSTEM_PROMPT =
   'You are a helpful AI assistant inside the OpenWOP workflow-engine sample. ' +
   'Keep responses concise. If the user asks about OpenWOP itself, explain what you know honestly.';
+
+// LocalStorage session index — list of session HEADERS the drawer can
+// fall back to when the BE write-through is in a cold-start / 401 state
+// and `listChatSessions()` returns empty. Mirrors the BE
+// `ChatSessionHeader` shape; one entry per session id.
+//
+// Versioning: the on-disk envelope is `{ v: number, items: [...] }`.
+// `useChatSessions` (reader) only consumes entries when v matches the
+// current `LS_SESSION_INDEX_VERSION`; mismatched payloads are dropped.
+// Bump the version constant in `../lib/storageKeys.ts` when the
+// `LocalSessionHeader` shape changes.
+//
+// Bounded at 50 entries — the oldest are evicted silently to keep
+// localStorage size under control on long-lived sample-app installs.
+// Concurrent tab writes can race (no locking); the BroadcastChannel
+// sync in `useChatSessions` repairs the drawer view on every BE-side
+// mutation but the local-only case carries this caveat.
 
 interface LocalSessionHeader {
   sessionId: string;
@@ -134,13 +150,20 @@ interface LocalSessionHeader {
   messageCount: number;
 }
 
+interface LocalSessionIndexEnvelope {
+  v: number;
+  items: LocalSessionHeader[];
+}
+
 function readSessionIndex(): LocalSessionHeader[] {
   try {
     const raw = localStorage.getItem(LS_INDEX_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return parsed;
-    }
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as Partial<LocalSessionIndexEnvelope>;
+    // Drop payloads from a different version — shape may have drifted.
+    if (parsed.v !== LS_SESSION_INDEX_VERSION) return [];
+    if (!Array.isArray(parsed.items)) return [];
+    return parsed.items;
   } catch {
     /* corrupt; treat as empty */
   }
@@ -149,7 +172,11 @@ function readSessionIndex(): LocalSessionHeader[] {
 
 function writeSessionIndex(items: readonly LocalSessionHeader[]): void {
   try {
-    localStorage.setItem(LS_INDEX_KEY, JSON.stringify(items));
+    const envelope: LocalSessionIndexEnvelope = {
+      v: LS_SESSION_INDEX_VERSION,
+      items: [...items],
+    };
+    localStorage.setItem(LS_INDEX_KEY, JSON.stringify(envelope));
   } catch {
     /* over-quota; silently drop */
   }

@@ -67,6 +67,29 @@ export interface NodeCatalogEntry {
   requiredModelCapabilities?: readonly string[];
 }
 
+// ─── Catalog defaults discipline ──────────────────────────────────────
+//
+// Several `prompt-picker` configFields below set `defaultValue` to a
+// specific prompt-library template ID (e.g., 'writer-system',
+// 'chat-assistant-system'). When a user drags a fresh node from the
+// palette, `defaultConfigFor()` in catalogRegistry.ts materializes
+// these defaults into the new node's config.
+//
+// IMPORTANT: every `defaultValue` string that points at a prompt
+// template MUST match a real `templateId` in
+// `apps/workflow-engine/frontend/react/src/prompts/samplePrompts.ts`
+// (or whatever prompt library the host advertises). If the library
+// drops or renames a template, every fresh node arrives pointing at
+// a dead ref — the prompt-picker will show "unknown" silently.
+//
+// Current bindings:
+//   mock-ai.systemPromptRef  → 'writer-system'
+//   mock-ai.userPromptRef    → 'writer-user'
+//   chat.systemPromptRef     → 'chat-assistant-system'
+//
+// A build-time check at `scripts/check-prompt-ref-defaults.mjs`
+// asserts every defaultValue exists in the prompt library so a stale
+// binding fails CI rather than silently breaking the palette.
 export const NODE_CATALOG: readonly NodeCatalogEntry[] = [
   {
     kind: 'noop',
