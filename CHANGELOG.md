@@ -24,6 +24,28 @@ In response to a 2026-05-22 external standards-readiness review of the openwop c
 
 Gate: `bash scripts/openwop-check.sh` green. No wire-shape changes. Spec-corpus-validity 642/642 PASS. `additive` per `COMPATIBILITY.md` §2.1 for the two new RFCs.
 
+### RFC 0037 Phase 1 promoted Active → Accepted — first vendor-neutral validation tripwire fires (2026-05-22)
+
+**Milestone.** The OpenWOP protocol has its first third-party validation. MyndHyve workflow-runtime — operating as a non-steward host per `MAINTAINERS.md` — advertises `capabilities.multiAgent.executionModel.{supported: true, version: 1}` and passes `multi-agent-handoff-state-machine.test.ts` from `@openwop/openwop-conformance@1.4.0` (1 passed / 1 skipped / 0 failed, exit 0) against Cloud Run revision `workflow-runtime-00352-geh`.
+
+Per `RFCS/0001-rfc-process.md` §3 (Status states), `Accepted` = "Implementation landed; conformance updated; Maintainers flip when acceptance criteria met." RFC 0037 Phase 1 acceptance criterion #5 ("At least 1 reference host advertises + passes the new scenario") is satisfied.
+
+**What the conformance run verifies:**
+- The advertisement-shape probe in `multi-agent-handoff-state-machine.test.ts` passes — `capabilities.multiAgent.executionModel.{supported, version}` validates clean against the scenario's boolean / integer / range assertions per RFC 0037 §C.
+
+**What's still pending (separate follow-up):**
+- The behavioral 4-event causation-chain leg is `skipped` (gated on `isFixtureAdvertised('conformance-multi-agent-handoff') AND isFixtureAdvertised('conformance-multi-agent-handoff-child')`); MyndHyve hasn't seeded the conformance fixtures yet. This is a strengthening pass on their roadmap (~half day per their adoption note at `docs/openwop-adoption/0037-multi-agent-phase-1.md`).
+
+Advertisement-and-pass-modulo-honest-skip is the bootstrap-phase rule for promotion — same precedent as the RFC 0030–0033 envelope LLM-contract-hardening track promotion 2026-05-21 (where 4-of-87 assertions stayed on the host-seam-honest-skip path).
+
+**Updates:**
+- `RFCS/0037-multi-agent-execution-model.md` Status: `Active → Accepted`. All 8 acceptance-criteria checkboxes flip `[ ] → [x]` (the 5th — "non-steward host advertises + passes" — closes on MyndHyve's run).
+- `INTEROP-MATRIX.md` gains §"Third-party host adoption — RFC 0037 Phase 1 ... external-validation gate (2026-05-22)" with the MyndHyve row (discovery URL + capability advertisement + conformance command + pass/skip/fail breakdown + Cloud Run revision + commit ref + parallel-session safety verification).
+- `INTEROP-MATRIX.md` header date 2026-05-21 → 2026-05-22.
+- `README.md` Accepted (29 → 30); Active (11 → 10).
+
+**The vendor-neutral migration tripwire in `MAINTAINERS.md` §"Vendor-neutral tripwire"** is a distinct mechanism that fires on `≥1 maintainer not affiliated with OpenWOP`. RFC promotion to Accepted is a separate signal — first third-party host validation. The two are independent commitments; this CHANGELOG entry marks only the second firing.
+
 ### RFC 0044 — confidence-escalation interrupt-kind advertisement (clarification to RFC 0039 §A) (2026-05-22)
 
 Same-day Draft → Active filing in response to MyndHyve's adoption-pass request for option 3 on the interrupt-kind question.

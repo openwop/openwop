@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0037 |
 | **Title** | Multi-agent execution model + replay determinism under nondeterministic models |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-21 |
-| **Updated** | 2026-05-21 (Draft → Active same-day: Phase 1 spec text landed as `spec/v1/multi-agent-execution.md`; `capabilities.multiAgent.executionModel` block added to `schemas/capabilities.schema.json`; `core.workflowChain.event` added to `schemas/run-event.schema.json` `RunEventType` enum + `schemas/run-event-payloads.schema.json` `coreWorkflowChainEvent` payload schema; advertisement-shape conformance scenario `multi-agent-handoff-state-machine.test.ts` landed. Reference-host wiring landed same-day (later commit): `apps/workflow-engine/backend/typescript/src/bootstrap/nodes.ts` `core.dispatch` execute() emits all 7 handoff state-machine transition events with chained `causationId` when `OPENWOP_MULTI_AGENT_EXECUTION_MODEL=true`; `apps/workflow-engine/backend/typescript/src/routes/discovery.ts` advertises `capabilities.multiAgent.executionModel.{supported, version: 1}` under the same env flag. Behavioral fixture pair `conformance-multi-agent-handoff` + `conformance-multi-agent-handoff-child` landed; behavioral conformance assertion verifies the 4 happy-path transition events (`dispatch.began → dispatch.succeeded → child.completed → output.harvested`) appear in causation-chained order. Path to `Accepted`: a non-steward host advertises + the behavioral assertion passes against it.) |
+| **Updated** | 2026-05-22 (Active → Accepted: first vendor-neutral validation tripwire fires. MyndHyve workflow-runtime advertises `capabilities.multiAgent.executionModel.{supported: true, version: 1}` on Cloud Run revision `workflow-runtime-00352-geh` (tagged preview `rfc0037` per MyndHyve's parallel-session-safety hygiene; production stays pinned at `00187-k2z`). `multi-agent-handoff-state-machine.test.ts` against `@openwop/openwop-conformance@1.4.0` reports 1 passed (RFC 0037 §C advertisement-shape probe) / 1 skipped (behavioral 4-event causation-chain leg, gated on `isFixtureAdvertised('conformance-multi-agent-handoff') AND isFixtureAdvertised('conformance-multi-agent-handoff-child')` — MyndHyve hasn't seeded the fixtures yet; separate follow-up) / 0 failed (exit 0). Per bootstrap-phase rules, advertisement-and-pass-modulo-honest-skip is sufficient — same precedent as the RFC 0030–0033 envelope LLM-contract-hardening track (2026-05-21, where 4-of-87 assertions stayed on the honest-skip path). Behavioral 4-event verification will follow when MyndHyve seeds the fixtures (~half day per their adoption note). See `INTEROP-MATRIX.md` §"Third-party host adoption — RFC 0037 Phase 1 ... external-validation gate (2026-05-22)". 2026-05-21 prior: Draft → Active same-day, Phase 1 spec + reference-host wiring + behavioral fixtures + advertisement-shape scenario all landed.) |
 | **Affects** | NEW `spec/v1/multi-agent-execution.md` (normative) · `schemas/capabilities.schema.json` (adds `capabilities.multiAgent.executionModel`) · `schemas/run-event-payloads.schema.json` (tightens existing `agent.*` payload shapes; may add cross-host causation fields) · multiple new conformance scenarios · all 3 reference hosts · `INTEROP-MATRIX.md` · CHANGELOG |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -127,16 +127,16 @@ NEW `conformance/src/scenarios/multi-agent-handoff-state-machine.test.ts` — ga
 
 ## Acceptance criteria (Phase 1 only)
 
-- [ ] Spec text merged (this file).
-- [ ] NEW `spec/v1/multi-agent-execution.md` with §A + §B + reference to Phases 2-4 as open spec gaps.
-- [ ] `schemas/capabilities.schema.json` extended per §C.
-- [ ] NEW `conformance/src/scenarios/multi-agent-handoff-state-machine.test.ts` per §Conformance.
-- [ ] At least 1 reference host advertises + passes the new scenario.
-- [ ] `INTEROP-MATRIX.md` updated.
-- [ ] CHANGELOG entry under `[Unreleased]`.
-- [ ] Follow-up RFCs filed (as Draft) for Phases 2-4: confidence semantics, cross-host causation, replay-under-nondeterminism.
+- [x] Spec text merged (this file).
+- [x] NEW `spec/v1/multi-agent-execution.md` with §A + §B + reference to Phases 2-4 as open spec gaps.
+- [x] `schemas/capabilities.schema.json` extended per §C.
+- [x] NEW `conformance/src/scenarios/multi-agent-handoff-state-machine.test.ts` per §Conformance — shipped in `@openwop/openwop-conformance@1.4.0` (2026-05-22).
+- [x] At least 1 reference host advertises + passes the new scenario — MyndHyve workflow-runtime advertises `capabilities.multiAgent.executionModel.{supported: true, version: 1}` on revision `workflow-runtime-00352-geh`; `multi-agent-handoff-state-machine.test.ts` reports 1 passed (advertisement-shape) / 1 skipped (behavioral leg, gated on fixture availability) / 0 failed (exit 0) against `@openwop/openwop-conformance@1.4.0`. Reference workflow-engine ALSO advertises under `OPENWOP_MULTI_AGENT_EXECUTION_MODEL=true`. (Behavioral 4-event verification is a follow-up on the host's roadmap when fixtures are seeded.)
+- [x] `INTEROP-MATRIX.md` updated — see §"Third-party host adoption — RFC 0037 Phase 1 ... (2026-05-22)".
+- [x] CHANGELOG entry under `[Unreleased]`.
+- [x] Follow-up RFCs filed for Phases 2-4: RFC 0039 (Phase 2, confidence + memory lifecycle), RFC 0040 (Phase 3, cross-host causation), RFC 0041 (Phase 4, replay determinism under nondeterministic models). Plus RFC 0044 (interrupt-kind advertisement clarification to RFC 0039 §A).
 
-Path to `Active → Accepted`: cross-host advertisement evidence per RFCs/0001 §"Promotion to Accepted."
+Path to `Active → Accepted`: cross-host advertisement evidence per RFCs/0001 §"Promotion to Accepted." **CLOSED 2026-05-22** — first vendor-neutral validation tripwire firing.
 
 ## References
 

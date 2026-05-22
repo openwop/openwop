@@ -1,6 +1,6 @@
 # openwop Interop Matrix
 
-> **Last updated:** 2026-05-21 (RFC 0030/0031/0032/0033 envelope LLM-contract-hardening track promoted Active → Accepted under bootstrap-phase steward waiver; cross-host validation closed by MyndHyve workflow-runtime adoption + reference workflow-engine emission. Prior 2026-05-15 gap-closure batch closes CF-5/6/8/10/11/12 + OPS-1/2/5 + PACK-1/2/3/4/5 + SDK-3/5 + SEC-3/6 + STD-3/5/6 + DOC-4/5 + MA-1/6/7 alongside Postgres host test-suite wiring fix; prior Phase I.3 + I.4 close-out — OAuth2-CC + OIDC user-bearer JWT validators — remains in effect)
+> **Last updated:** 2026-05-22 (**RFC 0037 Phase 1 promoted Active → Accepted** — first vendor-neutral validation tripwire firing; MyndHyve workflow-runtime advertised `capabilities.multiAgent.executionModel.{supported: true, version: 1}` + `multi-agent-handoff-state-machine.test.ts` passes against revision `workflow-runtime-00352-geh` per `@openwop/openwop-conformance@1.4.0`. Prior 2026-05-21 RFC 0030/0031/0032/0033 envelope LLM-contract-hardening track promoted Active → Accepted under bootstrap-phase steward waiver; cross-host validation closed by MyndHyve workflow-runtime adoption + reference workflow-engine emission. Prior 2026-05-15 gap-closure batch closes CF-5/6/8/10/11/12 + OPS-1/2/5 + PACK-1/2/3/4/5 + SDK-3/5 + SEC-3/6 + STD-3/5/6 + DOC-4/5 + MA-1/6/7 alongside Postgres host test-suite wiring fix; prior Phase I.3 + I.4 close-out — OAuth2-CC + OIDC user-bearer JWT validators — remains in effect)
 > **Conformance suite:** `@openwop/openwop-conformance`
 
 This matrix records public, reproducible compatibility evidence for openwop-compatible hosts. A row is a claim plus evidence: the host advertises a profile set, runs the conformance suite, and links to a result that another implementer can inspect.
@@ -123,6 +123,18 @@ Adoption status (2026-05-21):
 | In-memory / SQLite / Python reference hosts | — | — | — | Not tracked here. SQLite's Soak run opts out of the RFC 0022 §A/§D fixture set (`conformance-dispatch-input-mapping*`, `conformance-dispatch-output-mapping*`, `conformance-dispatch-cross-worker-handoff*`, `conformance-subworkflow-input-mapping*`) per `.github/workflows/conformance-soak.yml` — the reference SQLite executor doesn't implement variable projection between parent and dispatched child runs. |
 
 This is the **first cross-host end-to-end validation of RFC 0022 §D** — closes the cross-host criterion if/when RFC 0022 is promoted Active → Accepted.
+
+## Third-party host adoption — RFC 0037 Phase 1 (multi-agent execution model + handoff state machine) external-validation gate (2026-05-22)
+
+Per `RFCS/0001-rfc-process.md` §3 (Status states): `Accepted` = "Implementation landed; conformance updated; Maintainers flip when acceptance criteria met." RFC 0037 Phase 1 acceptance criterion #5 required "At least 1 reference host advertises + passes the new scenario." Satisfied:
+
+| Host | Discovery doc | Capability advertisement | Conformance verification | Notes |
+|---|---|---|---|---|
+| **MyndHyve workflow-runtime** | `https://rfc0037---workflow-runtime-gjw5bcse7a-uc.a.run.app/.well-known/openwop` (tagged preview revision; production stays pinned at `00187-k2z`) | `capabilities.multiAgent.executionModel.{supported: true, version: 1}` per RFC 0037 §C | `OPENWOP_BASE_URL=https://rfc0037---workflow-runtime-gjw5bcse7a-uc.a.run.app npx vitest run src/scenarios/multi-agent-handoff-state-machine.test.ts` → **1 passed / 1 skipped / 0 failed (exit 0)** against `@openwop/openwop-conformance@1.4.0`. The passing assertion is the RFC 0037 §C advertisement-shape probe (boolean / integer / range checks against the capability sub-block). The skipped assertion is the behavioral 4-event causation-chain leg, gated on `isFixtureAdvertised('conformance-multi-agent-handoff') AND isFixtureAdvertised('conformance-multi-agent-handoff-child')` — MyndHyve hasn't seeded the conformance fixtures yet (separate follow-up session per their adoption note). Cloud Run revision `workflow-runtime-00352-geh`, deploy commit `3f7f922d` (includes `759bfce0` RFC 0037 Phase 1 emission + advertisement). Parallel-session safety verified — production traffic unchanged at 100% on `workflow-runtime-00187-k2z` pre + post deploy; the new revision sits at 0% with `--no-traffic --tag rfc0037`. Adoption note at MyndHyve commit `94b2c353` (`docs/openwop-adoption/0037-multi-agent-phase-1.md`). |
+
+This is the **first vendor-neutral validation tripwire firing** per RFC 0001 §"Promotion to Accepted." RFC 0037 Phase 1 promotes Active → Accepted on this row's landing. Behavioral 4-event verification is a separate strengthening pass on MyndHyve's roadmap (~half day — author + seed `conformance-multi-agent-handoff{,-child}` into `scripts/seed-conformance-fixtures.cjs`); this advertisement-shape evidence is what the bootstrap-phase rule names sufficient.
+
+The behavioral verification will land separately on MyndHyve's fixture-seeding follow-up. The advertisement-and-pass-modulo-honest-skip pattern matches the precedent from the RFC 0030–0033 envelope LLM-contract-hardening track promotion (2026-05-21, where 4-of-87 assertions stayed on the honest-skip path due to a vendor-prefixed test seam not exposed on MyndHyve's side).
 
 ## Reading Rows
 
