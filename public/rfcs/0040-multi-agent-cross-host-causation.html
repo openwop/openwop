@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>OpenWOP — RFC 0040: Multi-agent Phase 3 — cross-host causation linking</title>
+  <meta name="description" content="Multi-Agent Workflow Orchestration Protocol — open, wire-level spec for orchestrating LLM agents, tools, sub-workflows, and humans across interoperable hosts. Durable suspend/resume, replay, version negotiation, observability."/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0040-multi-agent-cross-host-causation.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="OpenWOP — RFC 0040: Multi-agent Phase 3 — cross-host causation linking"/>
+  <meta property="og:description" content="Multi-Agent Workflow Orchestration Protocol — open, wire-level spec for orchestrating LLM agents, tools, sub-workflows, and humans across interoperable hosts. Durable suspend/resume, replay, version negotiation, observability."/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0040-multi-agent-cross-host-causation.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="OpenWOP — RFC 0040: Multi-agent Phase 3 — cross-host causation linking"/>
+  <meta name="twitter:description" content="Multi-Agent Workflow Orchestration Protocol — open, wire-level spec for orchestrating LLM agents, tools, sub-workflows, and humans across interoperable hosts. Durable suspend/resume, replay, version negotiation, observability."/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
+
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
+
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="stylesheet" href="/assets/style.css"/>
+
+  
+  
+  
+</head>
+<body>
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
+    </a>
+    <nav class="topnav">
+      <a class="hide-sm " href="/spec/v1/">Spec</a>
+      <a class="hide-sm active" href="/rfcs/">RFCs</a>
+      <a class="hide-sm " href="/conformance/">Conformance</a>
+      <a class="hide-sm " href="/changelog/">Changelog</a>
+      <a class="hide-sm " href="/faq/">FAQ</a>
+      <a class="pill" href="https://github.com/openwop/openwop">GitHub →</a>
+    </nav>
+  </div>
+</header>
+
+<main class="site-main">
+  <div class="wrap">
+    <div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal-phased">Proposal — Phased</a></li>
+      <li class="toc-sub"><a href="#a-causationhostid-field-on-cross-host-event-payloads-normative-when-phase-3-advertised">§A — causationHostId field on cross-host event payloads (normative when Phase 3 advertised)</a></li>
+      <li class="toc-sub"><a href="#b-w3c-tracecontext-across-mcp-a2a-composition-normative-when-phase-3-advertised">§B — W3C tracecontext across MCP + A2A composition (normative when Phase 3 advertised)</a></li>
+      <li class="toc-sub"><a href="#c-cross-host-run-id-resolution-normative-when-phase-3-advertised">§C — Cross-host run-ID resolution (normative when Phase 3 advertised)</a></li>
+      <li class="toc-sub"><a href="#d-capability-advertisement">§D — Capability advertisement</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="rfc-0040-multi-agent-phase-3-cross-host-causation-linking">RFC 0040: Multi-agent Phase 3 — cross-host causation linking</h1>
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0040</td></tr>
+<tr><td><strong>Title</strong></td><td>Multi-agent execution model Phase 3: cross-host causation linking + W3C tracecontext propagation across composition boundaries + cross-host run-ID resolution</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Draft</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-22</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-22</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>spec/v1/multi-agent-execution.md</code> (extends with §"Cross-host causation (Phase 3, normative)") · <code>spec/v1/observability.md</code> (extends §"Trust boundary + redaction" with the cross-host case) · <code>spec/v1/mcp-integration.md</code> + <code>spec/v1/a2a-integration.md</code> (tracecontext propagation across composition) · <code>schemas/run-event-payloads.schema.json</code> (additive <code>causationHostId</code> field on <code>agent.*</code> payload shapes) · <code>schemas/capabilities.schema.json</code> (bumps <code>multiAgent.executionModel.version</code> ceiling effective range to include <code>3</code>; adds optional <code>crossHostCausation</code> block) · 3 new conformance scenarios · <code>INTEROP-MATRIX.md</code> · CHANGELOG</td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
+<tr><td><strong>Supersedes</strong></td><td>—</td></tr>
+<tr><td><strong>Superseded by</strong></td><td>—</td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>Closes 3 open spec gaps from <a href="./0037-multi-agent-execution-model.md">RFC 0037</a> §"Open spec gaps":</p>
+<ul>
+<li><strong>MAE-4</strong> (<code>causationId cross-host scope</code>): extends <code>causationId</code> to span hosts (currently single-host scope per <code>spec/v1/replay.md</code> §"Determinism with non-deterministic agents").</li>
+<li><strong>MAE-5</strong> (<code>W3C tracecontext across MCP/A2A</code>): normates W3C tracecontext propagation across the MCP/A2A composition boundary (partial coverage exists in <code>RFCS/0023-conformance-agent-event-emitters.md</code> for OTel; this normates the cross-host case).</li>
+<li><strong>MAE-6</strong> (<code>cross-host run-ID resolution</code>): defines the discoverable identifier chain when host A's run dispatches to host B (e.g., via MCP composition or A2A handoff).</li>
+</ul>
+<p>Bumps <code>multiAgent.executionModel.version</code> from <code>2</code> (Phase 2, RFC 0039) to <code>3</code> (Phase 3, this RFC) when implemented. Phase 1 + Phase 2 hosts continue to advertise their existing version. Hosts that implement Phase 3 advertise <code>version: 3</code> and conform to additional MUSTs.</p>
+<h2 id="motivation">Motivation</h2>
+<p>RFC 0037 Phase 1 normated the per-host execution loop. RFC 0039 Phase 2 normated confidence escalation + same-host memory lifecycle. Neither addresses what happens when a workflow crosses a host boundary:</p>
+<ul>
+<li>A workflow on host A invokes an MCP tool whose implementation lives on host B; host B's tool emits events that should chain back to host A's run.</li>
+<li>An A2A peer on host B sends a message to host A's agent; the receiving agent should be able to walk the causation chain back to the sender's originating event.</li>
+<li>A <code>core.subWorkflow</code> dispatch can target a workflow registered on a different host (per <code>host-extensions.md</code> §"Canonical prefixes" + a future cross-host dispatch contract).</li>
+</ul>
+<p>Without normated cross-host causation:</p>
+<ul>
+<li>OTel traces don't survive the composition boundary; debug-bundle exports lose causal context.</li>
+<li>Replay-from-fork against a run that touched a cross-host call cannot deterministically reproduce the call's causation chain.</li>
+<li>Cross-host workflow run-IDs are opaque; clients can't discover the parent run when given only a child run-ID from a different host.</li>
+</ul>
+<p>The external standards-readiness review of 2026-05-21 finding (3) called out cross-host causality as part of the "multi-agent semantics not fully portable" gap. RFC 0037 Phase 1 closed the per-host half; RFC 0039 Phase 2 closed the same-host-memory half; this RFC closes the cross-host half.</p>
+<h2 id="proposal-phased">Proposal — Phased</h2>
+<p>Like RFC 0037 + 0039, this RFC stages its surface so the comment window can converge.</p>
+<h3 id="a-causationhostid-field-on-cross-host-event-payloads-normative-when-phase-3-advertised">§A — <code>causationHostId</code> field on cross-host event payloads (normative when Phase 3 advertised)</h3>
+<p>Add an optional <code>causationHostId: string</code> field to every event payload shape that carries <code>causationId</code> today. When the causationId points at an event on the SAME host, <code>causationHostId</code> is absent (existing semantics). When the causationId points at an event on a DIFFERENT host, <code>causationHostId</code> MUST be present and MUST equal the originating host's <code>/.well-known/openwop</code> advertisement's <code>host.id</code> (a new optional capability field also added by this RFC — see §D below).</p>
+<p>Affected payload shapes: <code>agent.reasoned</code>, <code>agent.toolCalled</code>, <code>agent.toolReturned</code>, <code>agent.handoff</code>, <code>agent.decided</code>, <code>runOrchestrator.decided</code>, <code>core.workflowChain.event</code>, <code>core.workflowChain.confidence-escalated</code>, <code>prompt.composed</code>, <code>agent.promptResolved</code>. The field is additive on every shape; existing consumers that ignore unknown fields continue to work.</p>
+<h3 id="b-w3c-tracecontext-across-mcp-a2a-composition-normative-when-phase-3-advertised">§B — W3C tracecontext across MCP + A2A composition (normative when Phase 3 advertised)</h3>
+<p>Extend <code>spec/v1/mcp-integration.md</code> §"Trust boundary" with: hosts that dispatch MCP tool calls AND advertise <code>multiAgent.executionModel.version &gt;= 3</code> MUST inject the parent run's W3C <code>traceparent</code> header into the outbound MCP request envelope. The MCP tool's host MUST honor the inbound <code>traceparent</code> as the parent trace for any spans it emits. The same rule applies symmetrically to <code>a2a-integration.md</code>: outbound A2A messages MUST carry the parent run's <code>traceparent</code>; inbound A2A handlers MUST adopt it as the trace parent.</p>
+<p>This extends the per-host trace propagation already covered by RFC 0023 (<code>otel-trace-propagation-subworkflow.test.ts</code>) to cross-host composition.</p>
+<h3 id="c-cross-host-run-id-resolution-normative-when-phase-3-advertised">§C — Cross-host run-ID resolution (normative when Phase 3 advertised)</h3>
+<p>Define a normative response shape for <code>GET /v1/runs/{runId}/ancestry</code> (NEW endpoint) returning the cross-host parent chain:</p>
+<pre class="lang-jsonc"><code>{
+  &quot;runId&quot;: &quot;current-host-run-id&quot;,
+  &quot;hostId&quot;: &quot;current-host-id&quot;,
+  &quot;parent&quot;: {
+    &quot;runId&quot;: &quot;parent-host-run-id&quot;,
+    &quot;hostId&quot;: &quot;parent-host-id&quot;,
+    &quot;wellKnownUrl&quot;: &quot;https://parent.example.com/.well-known/openwop&quot;,
+    &quot;cause&quot;: &quot;mcp-tool-call&quot; | &quot;a2a-message&quot; | &quot;core.subWorkflow&quot;
+  } | null
+}</code></pre>
+<p><code>parent: null</code> means the current run is a top-level run (not dispatched from another host). When the parent is on the same host, <code>wellKnownUrl</code> is absent (existing single-host case). When the parent is on a different host, <code>wellKnownUrl</code> MUST be set so a client can resolve the chain by walking the URLs.</p>
+<h3 id="d-capability-advertisement">§D — Capability advertisement</h3>
+<pre class="lang-diff"><code>   &quot;multiAgent&quot;: {
+     &quot;executionModel&quot;: {
+       ...,
++      &quot;crossHostCausation&quot;: {
++        &quot;type&quot;: &quot;object&quot;,
++        &quot;additionalProperties&quot;: false,
++        &quot;required&quot;: [&quot;supported&quot;],
++        &quot;properties&quot;: {
++          &quot;supported&quot;: { &quot;type&quot;: &quot;boolean&quot; },
++          &quot;hostId&quot;: {
++            &quot;type&quot;: &quot;string&quot;,
++            &quot;minLength&quot;: 1,
++            &quot;description&quot;: &quot;Stable identifier for this host instance, used as the `causationHostId` value on cross-host events. SHOULD be a URL or DNS-style identifier (e.g., `myndhyve.ai/workflow-runtime`).&quot;
++          },
++          &quot;ancestryEndpointSupported&quot;: {
++            &quot;type&quot;: &quot;boolean&quot;,
++            &quot;description&quot;: &quot;Host serves the GET /v1/runs/{runId}/ancestry endpoint per §C.&quot;
++          }
++        }
++      }
+     }
+   }</code></pre>
+<p>Hosts advertising <code>multiAgent.executionModel.version: 3</code> MUST also advertise <code>crossHostCausation.supported: true</code> and provide a stable <code>hostId</code>.</p>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive.</strong> Hosts advertising <code>version: 1</code> or <code>version: 2</code> continue unchanged. Hosts upgrading to <code>version: 3</code> add:</p>
+<ul>
+<li>A new optional payload field (<code>causationHostId</code>) that pre-Phase-3 consumers ignore.</li>
+<li>A new endpoint (<code>GET /v1/runs/{runId}/ancestry</code>) that pre-Phase-3 clients don't call.</li>
+<li>A new capability sub-block (<code>crossHostCausation</code>) that pre-Phase-3 clients ignore.</li>
+<li>New normative MUSTs on existing endpoints (MCP/A2A tracecontext propagation) — additive in that they only fire when the host dispatches via those surfaces AND advertises version: 3.</li>
+</ul>
+<h2 id="conformance">Conformance</h2>
+<p>3 new conformance scenarios:</p>
+<ul>
+<li><code>cross-host-causation-traceparent.test.ts</code> — capability-gated on <code>multiAgent.executionModel.version &gt;= 3</code> AND <code>OPENWOP_TEST_MCP_REAL_SERVER_URL</code> set. Drives an MCP tool call from the host and asserts the outbound request carries the parent run's <code>traceparent</code>.</li>
+<li><code>cross-host-ancestry-endpoint.test.ts</code> — capability-gated on <code>crossHostCausation.ancestryEndpointSupported: true</code>. Creates a run dispatched from a synthetic cross-host fixture; asserts <code>GET /v1/runs/{runId}/ancestry</code> returns the parent chain with <code>wellKnownUrl</code> set.</li>
+<li><code>cross-host-causation-payload.test.ts</code> — capability-gated. Asserts that when a cross-host event is emitted (e.g., an MCP tool reply), the host's event log entry includes <code>causationHostId</code> pointing at the originating host.</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<p>1. <strong>Skip <code>causationHostId</code> and rely on URL-namespaced <code>causationId</code> values (e.g., <code>https://host-a.example.com/runs/.../events/123</code>).</strong> Rejected — <code>causationId</code> is opaque-string per the existing event-log schema; clients shouldn't need to URL-parse to discover cross-host context. A sibling field is cleaner. 2. <strong>Define a separate cross-host RunEventType (<code>run.crossHostCausation</code>) instead of extending existing payload shapes.</strong> Rejected — would force consumers to learn a new event type AND walk through cross-host events to reconstruct chains. Extending the existing payload shapes is denser and preserves consumer code. 3. <strong>Defer to a separate "federation" RFC.</strong> Rejected — cross-host causation is the load-bearing piece of multi-agent portability; deferring it perpetuates the standards-readiness gap.</p>
+<h2 id="unresolved-questions">Unresolved questions</h2>
+<p>1. <strong>hostId format.</strong> SHOULD be URL-or-DNS-style but not strictly normated. A future clarification may tighten to a pattern matching <code>^[a-z0-9]+(\.[a-z0-9-]+)+/[a-z0-9-]+$</code>. 2. <strong>Ancestry endpoint pagination.</strong> A run dispatched through 10 hosts has a 10-deep parent chain. Should <code>GET /v1/runs/{runId}/ancestry</code> return the full chain or just the immediate parent? Defer to comment-window discussion; current proposal returns immediate parent only. 3. <strong>Replay across the cross-host boundary.</strong> Phase 4 (<code>RFCS/0041</code>) covers replay-under-nondeterminism; the cross-host-replay-determinism intersection may need a dedicated note in the §C ancestry endpoint contract.</p>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<ul>
+<li>[ ] Spec text merged (this file).</li>
+<li>[ ] <code>spec/v1/multi-agent-execution.md</code> extended with §"Cross-host causation (Phase 3, normative)" per §A + §B + §C.</li>
+<li>[ ] <code>spec/v1/mcp-integration.md</code> + <code>spec/v1/a2a-integration.md</code> extended with §"Tracecontext propagation (RFC 0040)" per §B.</li>
+<li>[ ] <code>schemas/capabilities.schema.json</code> extends <code>multiAgent.executionModel</code> with the <code>crossHostCausation</code> block per §D.</li>
+<li>[ ] <code>schemas/run-event-payloads.schema.json</code> adds optional <code>causationHostId</code> to all listed payload shapes.</li>
+<li>[ ] <code>api/openapi.yaml</code> gains <code>GET /v1/runs/{runId}/ancestry</code> endpoint per §C; response schema in <code>schemas/run-ancestry-response.schema.json</code> (NEW).</li>
+<li>[ ] 3 new conformance scenarios per §Conformance.</li>
+<li>[ ] At least one reference host advertises <code>version: 3</code> + passes the 3 scenarios.</li>
+<li>[ ] <code>INTEROP-MATRIX.md</code> updated.</li>
+<li>[ ] CHANGELOG entry under <code>[Unreleased]</code>.</li>
+</ul>
+<p>Path to <code>Active → Accepted</code>: cross-host advertisement evidence per <code>RFCs/0001-rfc-process.md</code> §"Promotion to Accepted."</p>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="./0037-multi-agent-execution-model.md"><code>RFCS/0037-multi-agent-execution-model.md</code></a> §"Open spec gaps" MAE-4, MAE-5, MAE-6.</li>
+<li><a href="./0039-multi-agent-confidence-and-memory-lifecycle.md"><code>RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md</code></a> (Phase 2 — this RFC's predecessor on the multi-agent roadmap).</li>
+<li><a href="./0023-conformance-agent-event-emitters.md"><code>RFCS/0023-conformance-agent-event-emitters.md</code></a> (per-host tracecontext propagation; this RFC extends to cross-host).</li>
+<li><a href="../spec/v1/multi-agent-execution.md"><code>spec/v1/multi-agent-execution.md</code></a> (the doc this RFC extends).</li>
+<li><a href="../spec/v1/mcp-integration.md"><code>spec/v1/mcp-integration.md</code></a> §"Trust boundary" (the surface §B extends).</li>
+<li><a href="../spec/v1/a2a-integration.md"><code>spec/v1/a2a-integration.md</code></a> (symmetric §B extension).</li>
+<li><a href="../spec/v1/replay.md"><code>spec/v1/replay.md</code></a> §"Determinism with non-deterministic agents" (the contract MAE-4 extends to cross-host scope).</li>
+<li>External standards-readiness review 2026-05-21 — finding (3).</li>
+</ul></article></div><script src="/assets/spec-toc.js" defer></script>
+  </div>
+</main>
+
+<!-- ─────────────────────── FOOTER (mirrors marketing) ─────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-mark">
+          <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+          Open<em>WOP</em>
+        </div>
+        <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
+          The Workflow Orchestration Protocol — an open, conformance-tested
+          contract for durable, observable AI workflows across hosts.
+        </p>
+      </div>
+      <div>
+        <h5>Specification</h5>
+        <ul>
+          <li><a href="/spec/v1/">v1.x Core</a></li>
+          <li><a href="/rfcs/">RFCs</a></li>
+          <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/errors/">Error codes</a></li>
+          <li><a href="/scenarios/">Scenario walkthroughs</a></li>
+          <li><a href="/profiles/">Profiles</a></li>
+          <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/versioning/">Versioning policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Ecosystem</h5>
+        <ul>
+          <li><a href="https://packs.openwop.dev/">Pack registry ↗</a></li>
+          <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts ↗</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix ↗</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite ↗</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="/changelog/">Changelog</a></li>
+          <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/faq/">FAQ</a></li>
+          <li><a href="/security/">Security posture</a></li>
+          <li><a href="/governance/">Governance</a></li>
+          <li><a href="/contributing/">Contributing</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases ↗</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct ↗</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>For</h5>
+        <ul>
+          <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+          <li><a href="/for/host-implementers/">Host implementers</a></li>
+          <li><a href="/for/pack-authors/">Pack authors</a></li>
+          <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 OpenWOP contributors</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+      <span>Built with Claude Code</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

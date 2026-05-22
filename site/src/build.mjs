@@ -1062,18 +1062,15 @@ function buildContentDir() {
 // ── REST API explorer (Redoc, self-hosted bundle) ─────────────────────
 
 function buildApiExplorer() {
-  // Self-hosted Scalar standalone bundle: copied into
-  // public/assets/scalar.standalone.js by the build script
-  // (see scripts/build-site.sh). The page mounts a <script id="api-reference">
-  // tag that Scalar auto-discovers on load.
+  // Self-hosted Redoc standalone bundle: copied into
+  // public/assets/redoc.standalone.js by the build script. We previously
+  // tried switching to Scalar to drop Redoc's empty-when-no-endpoint-is-
+  // selected right panel; Scalar didn't resolve our cross-file
+  // ../schemas/*.json $refs and rendered broken. Reverted.
   //
-  // Why Scalar over Redoc: Scalar's default layout is 2-column (nav +
-  // content) with code samples rendered INLINE below each endpoint.
-  // Redoc's 3-column layout reserves ~38% of the viewport for a
-  // permanent code-samples panel that is empty on the API overview
-  // page (the user explicitly flagged this as bad UX). Scalar's
-  // default light theme also blends with the marketing brand without
-  // a heavy override; we still tune accent + fonts via CSS variables.
+  // The right-panel UX problem is fixed by HIDING the panel via CSS
+  // (theme: rightPanel.width 0%) — keeps Redoc's reliable schema +
+  // endpoint rendering while dropping the dead column.
   ensureDir(join(DIST, 'api', 'rest'));
   const intro = `<div class="api-explorer">
     <header class="api-explorer-head">
@@ -1093,35 +1090,44 @@ function buildApiExplorer() {
         </a>
       </div>
     </header>
-    <script
-      id="api-reference"
-      type="application/json"
-      data-url="/api/openapi.yaml"
-    >
-      ${JSON.stringify({
-        // Scalar reads JSON config from the body of the script tag.
-        spec: { url: '/api/openapi.yaml' },
-        layout: 'modern',
-        theme: 'none',
-        hideDarkModeToggle: true,
-        hideClientButton: true,
-        defaultOpenAllTags: false,
-        showSidebar: true,
-        hideModels: false,
-        searchHotKey: 'k',
-      })}
-    </script>
-    <script src="/assets/scalar.standalone.js"></script>
+    <div id="redoc-container"></div>
+    <script src="/assets/redoc.standalone.js"></script>
     <script>
       (function () {
         var copyBtn = document.querySelector('.api-explorer-base');
-        if (!copyBtn) return;
-        copyBtn.addEventListener('click', function () {
-          var v = copyBtn.getAttribute('data-copy') || '';
-          if (navigator.clipboard) navigator.clipboard.writeText(v);
-          var hint = copyBtn.querySelector('.api-explorer-base-hint');
-          if (hint) { var prev = hint.textContent; hint.textContent = 'copied'; setTimeout(function () { hint.textContent = prev; }, 1400); }
-        });
+        if (copyBtn) {
+          copyBtn.addEventListener('click', function () {
+            var v = copyBtn.getAttribute('data-copy') || '';
+            if (navigator.clipboard) navigator.clipboard.writeText(v);
+            var hint = copyBtn.querySelector('.api-explorer-base-hint');
+            if (hint) { var prev = hint.textContent; hint.textContent = 'copied'; setTimeout(function () { hint.textContent = prev; }, 1400); }
+          });
+        }
+        if (typeof Redoc !== 'undefined' && Redoc.init) {
+          Redoc.init('/api/openapi.yaml', {
+            scrollYOffset: 56,
+            hideDownloadButton: true,
+            disableSearch: false,
+            // Force Redoc into a 2-column layout (nav + content) by
+            // collapsing the right code-samples panel to zero width.
+            // Redoc's CSS still reserves a tiny gutter; our own CSS
+            // override (.api-explorer #redoc-container ...) finishes
+            // the hide. Without this the panel sits as a permanent
+            // empty column — the bad UX the user flagged.
+            theme: {
+              colors: { primary: { main: '#b05a3b' } },
+              typography: {
+                fontFamily: 'Geist, ui-sans-serif, system-ui, sans-serif',
+                headings: { fontFamily: 'Instrument Serif, Georgia, serif' },
+              },
+              sidebar: { backgroundColor: '#f4f1ea', width: '280px' },
+              rightPanel: { backgroundColor: 'var(--paper-2)', width: '0%' },
+            },
+          }, document.getElementById('redoc-container'));
+        } else {
+          document.getElementById('redoc-container').innerHTML =
+            '<div style="padding: 48px; text-align: center;">Redoc bundle did not load. Raw spec: <a href="/api/openapi.yaml">/api/openapi.yaml</a>.</div>';
+        }
       })();
     </script>
   </div>`;

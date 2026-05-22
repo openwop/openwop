@@ -54,6 +54,8 @@
   <url><loc>https://openwop.dev/rfcs/0037-multi-agent-execution-model.html</loc><lastmod>2026-05-22</lastmod></url>
   <url><loc>https://openwop.dev/rfcs/0038-working-group-charter.html</loc><lastmod>2026-05-22</lastmod></url>
   <url><loc>https://openwop.dev/rfcs/0039-multi-agent-confidence-and-memory-lifecycle.html</loc><lastmod>2026-05-22</lastmod></url>
+  <url><loc>https://openwop.dev/rfcs/0040-multi-agent-cross-host-causation.html</loc><lastmod>2026-05-22</lastmod></url>
+  <url><loc>https://openwop.dev/rfcs/0041-multi-agent-replay-under-nondeterminism.html</loc><lastmod>2026-05-22</lastmod></url>
   <url><loc>https://openwop.dev/roadmap/</loc><lastmod>2026-05-22</lastmod></url>
   <url><loc>https://openwop.dev/scenarios/</loc><lastmod>2026-05-22</lastmod></url>
   <url><loc>https://openwop.dev/security/</loc><lastmod>2026-05-22</lastmod></url>
