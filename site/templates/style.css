@@ -158,32 +158,107 @@
   min-height: calc(100vh - 56px - 64px);
 }
 
-/* Redoc syntax-highlighter punctuation fix.
+/* ─── Redoc UI overrides (right panel on cream surface) ───────────────
  *
- * JSON punctuation tokens — `{`, `}`, `[`, `]`, `,`, `:` — render in a
- * color that matches the code-block background. Both the panel and
- * the code-sample block are now `--paper` (cream), so force
- * punctuation to ink for legibility. */
+ * Targeted fixes for elements that Redoc renders inside #redoc-container.
+ * Class names are emotion-hashed and not stable across Redoc versions,
+ * so we target by HTML tag + descendant selectors where possible. */
+
+/* (1) GET / POST / PUT / DELETE / PATCH method pills — Redoc renders
+ *     them with an inherited font; force mono so the verb labels match
+ *     the path (which is already mono). */
+#redoc-container [class*="HttpVerb"],
+#redoc-container [class*="http-verb"],
+#redoc-container [class*="OperationType"] {
+  font-family: var(--mono) !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.02em !important;
+}
+
+/* (2) "Content type" label + dropdown — Redoc styles it with the
+ *     heading font (Instrument Serif via our typography.headings setting),
+ *     which reads as a "title" instead of a "form label." Pull it back
+ *     to sans + smaller size. */
+#redoc-container label,
+#redoc-container [class*="DropdownLabel"],
+#redoc-container [class*="Dropdown__Label"],
+#redoc-container .dropdown-label {
+  font-family: var(--sans) !important;
+  font-style: normal !important;
+  font-weight: 500 !important;
+  font-size: 11px !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  color: var(--ink-3) !important;
+}
+#redoc-container [class*="DropdownSelector"] select,
+#redoc-container select {
+  font-family: var(--sans) !important;
+  font-size: 13px !important;
+}
+
+/* (3) The opening `{` chip — Redoc wraps the outermost JSON brace
+ *     in a "JsonSampleWrap"/"collapser" element with its own background
+ *     and font. Strip the background, make it inherit the mono font of
+ *     the surrounding JSON. */
+#redoc-container [class*="JsonViewer"] > div:first-child,
+#redoc-container [class*="SampleBlock"] > div:first-child > span:first-child,
+#redoc-container [class*="collapser"] {
+  background: transparent !important;
+  border: none !important;
+  font-family: var(--mono) !important;
+}
+
+/* (4) Copy / Expand all / Collapse all controls — Redoc renders them
+ *     as plain text. Add a button affordance: subtle border, padding,
+ *     hover state. */
+#redoc-container [class*="CopyButton"],
+#redoc-container [class*="ExpandAll"],
+#redoc-container [class*="CollapseAll"],
+#redoc-container button[class*="copy"],
+#redoc-container button[class*="expand"],
+#redoc-container button[class*="collapse"] {
+  font-family: var(--sans) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  padding: 5px 12px !important;
+  border: 1px solid var(--rule) !important;
+  border-radius: 4px !important;
+  background: var(--paper) !important;
+  color: var(--ink) !important;
+  cursor: pointer !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  margin-right: 4px !important;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+#redoc-container [class*="CopyButton"]:hover,
+#redoc-container [class*="ExpandAll"]:hover,
+#redoc-container [class*="CollapseAll"]:hover,
+#redoc-container button[class*="copy"]:hover,
+#redoc-container button[class*="expand"]:hover,
+#redoc-container button[class*="collapse"]:hover {
+  background: var(--clay-wash) !important;
+  border-color: var(--clay) !important;
+  color: var(--clay) !important;
+}
+
+/* ─── Redoc syntax-highlighter token colors (cream code-block) ────── */
 #redoc-container .token.punctuation,
 #redoc-container .token.operator,
 #redoc-container .token.delimiter {
-  color: rgba(26, 26, 23, 0.7) !important;  /* ink at 70% — sits below keys */
+  color: rgba(26, 26, 23, 0.7) !important;
 }
-/* JSON keys, strings, numbers also need to be tuned for the cream
- * background. Redoc's default token colors are calibrated for a dark
- * panel; on cream the green strings + blue numbers + white keys all
- * read poorly. Override with brand-paired tones that hold contrast
- * against `--paper`. */
 #redoc-container .token.property {
-  color: var(--ink) !important;          /* JSON keys: full ink */
+  color: var(--ink) !important;
 }
 #redoc-container .token.string {
-  color: oklch(48% 0.14 145) !important;  /* deeper green on cream */
+  color: oklch(48% 0.14 145) !important;
 }
 #redoc-container .token.number,
 #redoc-container .token.boolean,
 #redoc-container .token.null {
-  color: oklch(48% 0.14 240) !important;  /* deeper blue on cream */
+  color: oklch(48% 0.14 240) !important;
 }
 @media (max-width: 760px) {
   .api-explorer-head { gap: 12px; }
