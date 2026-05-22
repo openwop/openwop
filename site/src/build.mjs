@@ -1108,13 +1108,14 @@ function buildApiExplorer() {
             scrollYOffset: 56,
             hideDownloadButton: true,
             disableSearch: false,
-            // The right code-samples panel stays, but is tuned to the
-            // brand: warm paper-2 background (was near-black), narrower
-            // 32% width (was 38%), ink text (was light-on-dark). When
-            // an endpoint is selected Redoc populates it with the
-            // request/response sample; on the overview page it sits
-            // empty but blends into the page rather than reading as a
-            // separate dark slab.
+            // Right code-samples panel: warm dark, brand-toned. Redoc's
+            // default is cold blue-grey (#263238); we use `--ink` so the
+            // panel reads as part of the OpenWOP palette instead of a
+            // stock Redoc surface. Cream text + matching dark code
+            // blocks make the panel a single cohesive zone (the
+            // previous paper-2 light panel + dark inner code blocks
+            // produced the "wonky text formatting" the user flagged —
+            // dark-on-dark labels, broken visual rhythm).
             theme: {
               colors: { primary: { main: '#b05a3b' } },
               typography: {
@@ -1123,12 +1124,12 @@ function buildApiExplorer() {
               },
               sidebar: { backgroundColor: '#f4f1ea', width: '280px' },
               rightPanel: {
-                backgroundColor: '#ece8de',  // var(--paper-2)
-                textColor: '#1a1a17',        // var(--ink)
+                backgroundColor: '#1a1a17',  // --ink (warm near-black)
+                textColor: '#f4f1ea',        // --paper (cream)
                 width: '40%',
               },
               codeBlock: {
-                backgroundColor: '#1a1a17',  // code blocks stay dark for legibility
+                backgroundColor: '#1a1a17',  // matches panel for cohesion
               },
             },
           }, document.getElementById('redoc-container'));
