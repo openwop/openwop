@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@openwop/openwop": "^1.1.1",
+    "@openwop/openwop": "^1.1.3",
     "@xyflow/react": "^12.10.2",
     "firebase": "^12.13.0",
     "react": "^18.3.1",
