@@ -1717,6 +1717,12 @@
     align-items: stretch;
     gap: 4px;
     overflow-x: auto;
+    /* overflow-x: auto implicitly enables overflow-y: auto in browsers,
+     * which means the active-tab's 2px border-bottom triggers a tiny
+     * vertical scrollbar (the row content + border is just over the
+     * container's box). Clip vertically so the active indicator can
+     * sit at the baseline without prompting a scrollbar. */
+    overflow-y: hidden;
     scroll-snap-type: x proximity;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
