@@ -1,0 +1,239 @@
+> **Status: FINAL v1 (2026-05-22).** Normative spec for conformance-only host-sample test seams under `/v1/host/sample/*`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+
+# Host-sample test seams
+
+OpenWOP's [conformance suite](../../conformance/) verifies behavioral contracts that v1 cannot probe through the production wire surface alone. Examples:
+
+- "the prompt resolution chain layered correctly" can be observed end-to-end via `prompt.composed` event payloads, but isolating layer-by-layer precedence requires a synchronous resolver endpoint
+- "the LLM cache-key recipe produced byte-identical output across hosts" can only be asserted if hosts expose their `canonicalize → SHA-256 → hex` computation
+- "OTel span attributes don't carry BYOK canaries" requires an introspection endpoint scoped to a run
+
+These contracts ship as **conformance-only test seams** under the `host-extensions.md` §"Canonical prefixes" namespace `/v1/host/sample/*`. They are NOT part of the v1 wire surface — production hosts SHOULD return `404` or `403` from these seams unless an env-gate (named per-seam below) is set.
+
+This doc is the **canonical reference** for the test-seam contracts. Per-seam normative content also appears in the RFC + spec doc that introduces the seam; this doc is the consolidated index hosts implement against.
+
+## Capability advertisement (normative)
+
+Hosts that expose any test seam MUST advertise it under `/.well-known/openwop` per `capabilities.md`. The advertising flags are tabulated below per seam. Conformance scenarios capability-gate on the matching flag; hosts that don't advertise skip cleanly.
+
+## Test seams
+
+### 1. `POST /v1/host/sample/prompt/resolve` — Prompt resolution chain (RFC 0029)
+
+| Field | Value |
+|---|---|
+| Method + path | `POST /v1/host/sample/prompt/resolve` |
+| Capability gate | `capabilities.prompts.supported: true` |
+| Env gate (reference impl) | seam registered when `capabilities.prompts.supported` is asserted |
+| Introduced | RFC 0029 §C |
+
+Request body:
+
+```typescript
+{
+  kind: 'system' | 'user' | 'few-shot' | 'schema-hint',
+  node: {
+    nodeId: string,
+    config?: {
+      systemPromptRef?: string | PromptRef,
+      userPromptRef?: string | PromptRef,
+      schemaHintPromptRef?: string | PromptRef,
+      fewShotPromptRefs?: Array<string | PromptRef>,
+      agentId?: string,
+    },
+  },
+  agentManifest?: {
+    agentId: string,
+    systemPrompt?: string,
+    systemPromptRef?: string,
+    promptOverrides?: Partial<Record<PromptKind, string | PromptRef>>,
+    promptLibraryRef?: string,
+  },
+  workflowDefaults?: { promptRefs?: Partial<Record<PromptKind, string | PromptRef>> },
+  hostDefaults?: Partial<Record<PromptKind, string | PromptRef>>,
+  agentBindingsSupported?: boolean,    // overrides capabilities.prompts.agentBindings for this probe
+}
+```
+
+Response body:
+
+```typescript
+{
+  resolved: string | null,                                                      // rendered prompt text after variable substitution, or null if all 4 layers yielded null
+  resolvedAt: 'node' | 'agent-intrinsic' | 'workflow' | 'host' | null,          // which layer won
+  chain: Array<{                                                                 // every layer attempted, in priority order
+    layer: 'node' | 'agent-intrinsic' | 'workflow' | 'host',
+    ref: string | null,
+    resolved: string | null,
+  }>,
+}
+```
+
+Hosts that advertise `capabilities.prompts.supported: true` MUST serve this seam with the documented shape. The `chain[]` array MUST list every layer attempted even when an earlier layer wins — conformance scenarios assert the full traversal record.
+
+Conformance: `prompt-resolution-chain-{node-wins,agent-intrinsic,fallback-cascade}.test.ts`.
+
+### 2. `GET /v1/host/sample/test/otel/spans?runId=<id>` — OTel span scrape (RFC 0034)
+
+| Field | Value |
+|---|---|
+| Method + path | `GET /v1/host/sample/test/otel/spans?runId=<id>` |
+| Capability gate | `capabilities.observability.testSeams.otelScrape: true` |
+| Env gate (reference impl) | `OPENWOP_TEST_OTEL_SCRAPE=true` |
+| Introduced | RFC 0034 §B |
+
+Returns recorded OTel spans for the named run. When `otelScrape: true`, the host MUST return `200 OK` with body:
+
+```typescript
+{
+  spans: Array<{
+    name: string,                                  // span name, e.g., "openwop.run", "openwop.dispatch"
+    attributes: Record<string, unknown>,           // span attributes including any openwop.*-prefixed keys
+    events: Array<{ name: string, attributes?: Record<string, unknown> }>,
+  }>,
+}
+```
+
+The `spans[]` array MUST include every span produced by the host's instrumentation for the named run, including any `openwop.*`-prefixed attributes added to span context. Hosts MAY redact span content using the canonical `[REDACTED:<secretId>]` marker per `agent-memory.md` §"SR-1 secret-redaction invariant" — that's the contract conformance tests.
+
+The seam graduates two SECURITY invariants from `reference-impl` to `protocol` tier:
+- `secret-leakage-otel-attribute` — BYOK plaintexts MUST NOT appear as values on any `openwop.*` OTel attribute
+- (paired) `secret-leakage-debug-bundle-otel` — same invariant on debug-bundle exports
+
+Conformance: `envelope-reasoning-secret-redaction.test.ts` (capability-gated on the seam).
+
+### 3. `POST /v1/host/sample/test/debug-bundle/export` — Debug-bundle export probe (RFC 0034)
+
+| Field | Value |
+|---|---|
+| Method + path | `POST /v1/host/sample/test/debug-bundle/export` |
+| Capability gate | `capabilities.observability.testSeams.debugBundleExport: true` |
+| Env gate (reference impl) | `OPENWOP_TEST_DEBUG_BUNDLE_EXPORT=true` |
+| Introduced | RFC 0034 §B |
+
+Synchronous debug-bundle export for conformance scenarios that need to assert canary redaction without first triggering an interrupt → debug bundle workflow.
+
+Request body:
+
+```typescript
+{
+  runId: string,
+}
+```
+
+Response body: same shape as `GET /v1/runs/{runId}/debug-bundle` per `spec/v1/debug-bundle.md` — `DebugBundle` with `bundleVersion`, `host`, `run`, `events`, `redactionMode`, `redactionApplied`, `truncated`, `truncatedReason`.
+
+When advertised, the host MUST serve a `200 OK` with the documented shape.
+
+Conformance: gates on `capabilities.observability.testSeams.debugBundleExport: true`.
+
+### 4. `POST /v1/host/sample/test/llm-cache-key` — LLM cache-key recipe (RFC 0041)
+
+| Field | Value |
+|---|---|
+| Method + path | `POST /v1/host/sample/test/llm-cache-key` |
+| Capability gate | `capabilities.multiAgent.executionModel.replayDeterminism.supported: true` (RFC 0041 Phase 4 hosts); MAY be implemented earlier without advertising |
+| Env gate (reference impl) | implicit — seam registered alongside the cache-key implementation |
+| Introduced | RFC 0041 §A |
+
+Computes the canonical LLM cache key per `replay.md` §"LLM cache-key recipe" §A + §B. Conformance scenarios drive the seam to assert (a) intra-host reproducibility, (b) non-recipe-field invariance, and (c) cross-host parity when two hosts both expose the seam.
+
+Request body — an `LLMCacheKeyInput`-shaped object per `replay.md` §A. **Non-recipe fields are accepted and ignored** (the test exercises that the host's recipe correctly drops them):
+
+```typescript
+{
+  // Recipe fields (per replay.md §A — only these influence the key):
+  provider: string,                                  // canonical provider id, lowercase ASCII
+  model: string,                                     // provider-stamped model id
+  messages: Array<{ role, content, name?, toolCallId? }>,
+  tools?: Array<{ name, description?, parameters }>,
+  temperature?: number,
+  topP?: number,
+  topK?: number,
+  responseFormat?: { type: 'text' | 'json' | 'tool_call', schema? },
+
+  // Non-recipe fields (host MUST ignore for key computation):
+  max_tokens?: number,
+  stop?: string[],
+  stream?: boolean,
+  seed?: number,
+  metadata?: Record<string, unknown>,
+  user?: string,
+  'x-request-id'?: string,
+  // ... any other field
+}
+```
+
+Response body:
+
+```typescript
+{
+  cacheKey: string,    // 64 lowercase-hex chars (SHA-256 of canonicalize(projectRecipe(input)))
+}
+```
+
+Hosts MUST:
+1. Drop non-recipe fields from the input before canonicalization (§A closed-set rule)
+2. Canonicalize per `replay.md` §B (RFC 8785 JCS-style: sorted keys recursively, no whitespace, preserve array order, UTF-8 NFC strings)
+3. Return SHA-256 over the canonical bytes as lowercase hex
+
+A missing or malformed `provider`/`model`/`messages` field MUST return `400 invalid_argument`.
+
+Conformance: `replay-llm-cache-key.test.ts`, `replay-llm-cache-key-portable.test.ts`.
+
+### 5. Staged-refusal seam — `POST /v1/host/sample/test/mock-ai/program` mode `refusal` (RFC 0041 §B)
+
+| Field | Value |
+|---|---|
+| Method + path | `POST /v1/host/sample/test/mock-ai/program` |
+| Capability gate | `capabilities.multiAgent.executionModel.replayDeterminism.refusalDivergenceEmission: true` (RFC 0041 Phase 4) |
+| Env gate (reference impl) | `OPENWOP_TEST_SEAM_ENABLED=true` |
+| Introduced | RFC 0041 §B; reuses the existing mock-AI program seam introduced by RFC 0032 §C |
+
+The `replay.divergedAtRefusal` behavioral assertion requires staging the mock-AI provider to return a valid envelope on the original run and a refusal on the replay (or vice-versa). Phase 4 hosts that advertise `refusalDivergenceEmission: true` MUST honor the following program shape on `POST /v1/host/sample/test/mock-ai/program`:
+
+```typescript
+{
+  nodeId: string,
+  program: [
+    { mode: 'envelope', envelope: { /* valid LLM envelope */ } },     // original run gets this
+    { mode: 'refusal', refusalReason: string },                        // replay gets this
+  ],
+}
+```
+
+The host's mock-AI provider MUST honor the program **deterministically by attempt index**: the first call (original run) returns the first entry; the second call (replay) returns the second entry. The seam is callable BEFORE the run is created — each conformance scenario uses a unique fixture (and therefore unique `nodeId`).
+
+When the replay's mock-AI call hits the `refusal` entry, the host MUST:
+1. Emit a `replay.divergedAtRefusal` event with payload per `schemas/run-event-payloads.schema.json` §`replayDivergedAtRefusal`
+2. Fail the replay with HTTP `422` + `error.code: "replay_diverged_at_refusal"`
+
+Conformance: `replay-divergence-at-refusal.test.ts` (advertisement-shape probe lives now; the 2 behavioral `it.todo` assertions light up when this seam is wired).
+
+## Production safety (normative)
+
+All seams under `/v1/host/sample/*` are conformance-only. Hosts deployed in production:
+
+- SHOULD return `404 Not Found` from every seam unless an env-gate explicitly enables it
+- MUST NOT honor the seams under default deployment configuration
+- MUST document which env-gates were set for the conformance run in the host's `conformance.md` evidence file
+
+The host-extension namespace `/v1/host/sample/*` is per `host-extensions.md` §"Canonical prefixes" — it is host-private space and does not affect the v1 wire-shape stability contract.
+
+## Open seams (light up when fixtures ship)
+
+- **Memory cross-run TTL roundtrip seam** (RFC 0039 MAE-2) — `POST /v1/host/sample/test/memory/cross-run-ttl-roundtrip`. Contract: drive a parent → child → parent memory write/read sequence with controlled wall-clock skew to assert child-write-time TTL anchoring. Behavioral assertion in `multi-agent-memory-lifecycle.test.ts` stays `it.todo` until a memory-advertising Phase 2 host wires the seam.
+
+## Open spec gaps
+
+- Capability flag for the prompt resolver seam is implicit (always-on when `prompts.supported: true`). A future minor revision MAY add `capabilities.prompts.testSeams.promptResolve` if hosts want to advertise the seam without committing to the full RFC 0029 behavior.
+- The staged-refusal seam shape extends the existing RFC 0032 mock-AI program shape with a new `mode: "refusal"` entry. A future revision MAY split this out as a dedicated `capabilities.multiAgent.executionModel.testSeams` block.
+
+## Cross-references
+
+- `host-extensions.md` §"Canonical prefixes" — the `/v1/host/sample/*` namespace contract
+- `capabilities.md` §"Truthful advertisement" — the host's commitment when it advertises any of the above flags
+- `host-capabilities.md` §"`capabilities.observability.testSeams`" — the OTel scrape + debug-bundle export capability sub-block
+- `observability.md` §"OTel collector test seam (RFC 0034)" — the canonical RFC 0034 §B normative text the OTel + debug-bundle seams implement
+- `replay.md` §"LLM cache-key recipe" — the canonical recipe the §4 LLM cache-key seam computes
+- `prompts.md` §"Resolution chain (normative)" — the canonical RFC 0029 resolver semantics the §1 seam exposes

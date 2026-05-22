@@ -7,7 +7,7 @@
 
 | Surface | Current value | Source |
 |---|---:|---|
-| Spec prose documents | 38 | `spec/v1/*.md` |
+| Spec prose documents | 39 | `spec/v1/*.md` |
 | JSON Schemas | 32 | `schemas/*.schema.json` |
 | OpenAPI operations | 26 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |

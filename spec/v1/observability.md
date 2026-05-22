@@ -794,7 +794,7 @@ Cross-host conformance scenarios need an introspection endpoint to verify that B
 
 The seams live under the `host-extensions.md` §"Canonical prefixes" namespace `/v1/host/sample/test/*` and are NOT part of the v1 wire surface. Production hosts SHOULD return 404 or 403 from the seam unless an env-gate (e.g., `OPENWOP_TEST_OTEL_SCRAPE=true`) is set.
 
-### `POST /v1/host/sample/test/otel/spans?runId=<id>`
+### `GET /v1/host/sample/test/otel/spans?runId=<id>`
 
 When `capabilities.observability.testSeams.otelScrape: true`, the host MUST return `200 OK` with body `{ spans: Array<{ name, attributes, events }> }`. The spans array MUST include every OTel span produced by the host's instrumentation for the named run, including any `openwop.*`-prefixed attributes added to span context. Hosts MAY redact span content using the canonical `[REDACTED:<secretId>]` marker per `agent-memory.md` §"SR-1 secret-redaction invariant" — that's the contract being tested.
 

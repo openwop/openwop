@@ -1,5 +1,95 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [1.4.0] — 2026-05-22
+
+Minor bump per `PUBLISHING.md` §"Versioning alignment" — bundles 45 new conformance scenarios + 23 new fixtures landing since the 1.3.0 publish (2026-05-19). Unblocks non-steward host adoption of RFCs 0027 + 0028 + 0029 + 0030 + 0031 + 0032 + 0033 + 0034 + 0035 + 0036 + 0037 + 0039 + 0040 + 0041 against a single suite version.
+
+### Added — RFC 0030-0033 envelope LLM-contract-hardening (Accepted 2026-05-21)
+
+12 new scenarios + 7 new fixtures covering the envelope-reliability surface:
+- **Reasoning** — `envelope-reasoning-shape.test.ts` (always-on; OPTIONAL `reasoning` property on the 3 universal-kind schemas), `envelope-reasoning-secret-redaction.test.ts` (RFC 0034 OTel-seam-gated; SR-1 redaction probe).
+- **Tier-1 subset** — `envelope-tier-one-subset-static.test.ts` (always-on for the no-`oneOf`/`allOf`/`not`/`prefixItems`/`propertyNames` rule; strict-mode gated for OpenAI-only constraints).
+- **Variant discriminator** — `envelope-variant-discriminator-static.test.ts` (always-on; every `anyOf` branch declares a single-string-enum discriminator in `required`).
+- **Model capability gating** — `model-capability-substituted.test.ts` (advertisement-shape probe on `capabilities.modelCapabilities.advertised[]`), `model-capability-insufficient.test.ts`, `node-module-required-capabilities-shape.test.ts`.
+- **Envelope reliability events** — `envelope-retry-attempted.test.ts` (shared advertisement-shape probe for both MUST-tier events per RFC 0032 §C), `envelope-retry-exhausted.test.ts`, `envelope-refusal-shape.test.ts`, `envelope-truncated.test.ts`, `envelope-nl-to-format-engaged.test.ts`, `envelope-recovery-applied.test.ts`. Paired with SECURITY invariants `envelope-refusal-no-prompt-leak` + `envelope-recovery-no-content-leak`.
+- **RFC 0033 truncation-vs-schema-violation** — `envelope-completion-distinguishes-truncation.test.ts`, `envelope-truncation-cap-exhaustion.test.ts`.
+
+Fixtures: `conformance-envelope-{retry-attempted, retry-exhausted, refusal, truncated, truncation-cap-exhaustion, nl-to-format-engaged, recovery-applied}.json`.
+
+### Added — RFC 0027 + 0028 + 0029 prompts track (Active; path-to-Accepted is non-steward adoption)
+
+11 new scenarios + 9 new fixtures covering the prompts surface:
+- **Wire shape (RFC 0027)** — `prompt-template-shape.test.ts` (always-on Ajv compile + round-trip), `prompt-composed-secret-redaction.test.ts` (capability-gated SR-1 probe), `prompt-composed-trust-marker.test.ts` (RFC 0020 §D `<UNTRUSTED>...</UNTRUSTED>` propagation), `prompt-all-four-kinds-events.test.ts` (system/user/schema-hint/few-shot end-to-end), `prompt-end-to-end-events.test.ts` (full prompt lifecycle through `core.openwop.local.sample.demo.mock-ai`).
+- **Library endpoints (RFC 0028)** — `prompt-list-and-fetch.test.ts` (`GET /v1/prompts` + `GET /v1/prompts/:templateId`), `prompt-mutable-lifecycle.test.ts` (`POST`/`PATCH`/`DELETE`), `prompt-render-deterministic.test.ts` (`POST /v1/prompts/:templateId:render` deterministic output), `prompt-pack-install.test.ts` (`kind: "prompt"` pack boot-time install + `?source=pack` filter).
+- **Resolution chain (RFC 0029)** — `prompt-resolution-chain-node-wins.test.ts` (layer 1 supersedes 2-4), `prompt-resolution-chain-agent-intrinsic.test.ts` (layer 2 wins when no layer 1), `prompt-resolution-chain-fallback-cascade.test.ts` (layer 3 → 4 → null cascade; chain[] always lists every attempted layer).
+
+Fixtures: `conformance-prompt-{all-four-kinds, end-to-end}.json` plus the per-template directory at `fixtures/prompt-templates/` (`conformance-prompt-{writer-system, writer-user, schema-hint, few-shot, few-shot-2, secret-redaction, trust-marker}.json`).
+
+### Added — RFC 0035 sandbox execution contract (Active; reference-impl-tier today, protocol-tier on first sandbox host)
+
+8 new scenarios — one per failure-mode invariant in `host-capabilities.md` §"Sandbox execution contract (RFC 0035)":
+- `sandbox-capability-gate-respected.test.ts` — `sandbox_capability_denied` envelope when a sandbox call hits a capability not in `allowedHostCalls`.
+- `sandbox-memory-cap.test.ts` — `sandbox_memory_exceeded` envelope when memory cap breached.
+- `sandbox-timeout-cap.test.ts` — `sandbox_timeout` envelope when wall-clock cap breached.
+- `sandbox-no-cross-pack-mutation.test.ts` — sandboxed pack A cannot mutate state owned by sandboxed pack B.
+- `sandbox-no-host-env-leak.test.ts` — host environment variables MUST NOT be visible inside the sandbox.
+- `sandbox-no-host-fs-escape.test.ts` — `sandbox_escape_attempt` with `escapeKind: "host-fs-escape"` envelope.
+- `sandbox-no-host-process-escape.test.ts` — `sandbox_escape_attempt` with `escapeKind: "host-process-escape"` envelope.
+- `sandbox-no-network-escape.test.ts` — sandboxed code MUST NOT egress to networks not in `allowedHostCalls`.
+
+(Canonical scenario naming is `sandbox-*`; RFC 0035 prose that names them `node-pack-sandbox-*` will reconcile in a follow-up edit.)
+
+### Added — RFC 0036 multi-region + cross-engine ordering (Active; path-to-Accepted is Postgres-host simulator + non-steward host)
+
+1 new scenario:
+- `cross-engine-append-ordering.test.ts` — capability-gated on `eventLog.crossEngineOrdering.supported: true`; asserts append-ordering invariants across `core.engine.append` calls from concurrent engines.
+
+(`multi-region-idempotency.test.ts` remains shape-only pending multi-region simulator or deployment; tracked in `docs/KNOWN-LIMITS.md`.)
+
+### Added — RFC 0037 multi-agent execution model Phase 1 (Active; reference workflow-engine advertises)
+
+1 new scenario + 2 fixtures:
+- `multi-agent-handoff-state-machine.test.ts` — advertisement-shape probe (always-on) + behavioral assertion (capability-gated on `multiAgent.executionModel.supported: true`) covering the 7 handoff state-machine transition events with chained `causationId`.
+
+Fixtures: `conformance-multi-agent-handoff.json` (parent workflow) + `conformance-multi-agent-handoff-child.json` (child workflow). Reference workflow-engine advertises under `OPENWOP_MULTI_AGENT_EXECUTION_MODEL=true`.
+
+### Added — RFC 0039 multi-agent Phase 2 (confidence + memory lifecycle; Active)
+
+2 new scenarios + 1 fixture:
+- `multi-agent-confidence-escalation.test.ts` — gated on `multiAgent.executionModel.version >= 2`; asserts decisions with `confidence < confidenceEscalationFloor` MUST emit `core.workflowChain.confidence-escalated` event + suspend with `interrupt.kind: 'clarification'` + NOT execute the worker dispatch.
+- `multi-agent-memory-lifecycle.test.ts` — advertisement-shape probe + 2 `it.todo` behavioral assertions for MAE-2 cross-run TTL + MAE-3 replay snapshot (lights up when a memory-advertising Phase 2 host wires the test seam).
+
+Fixture: `conformance-multi-agent-confidence-escalation.json`.
+
+### Added — RFC 0040 multi-agent Phase 3 (cross-host causation; Active)
+
+3 new scenarios:
+- `cross-host-causation-shape.test.ts` — always-on when discovery reachable; asserts the shape of `multiAgent.executionModel.crossHostCausation.{supported, hostId, ancestryEndpointSupported}` + `version >= 3` when advertised.
+- `cross-host-ancestry-endpoint.test.ts` — capability-gated on `crossHostCausation.ancestryEndpointSupported: true`; covers `GET /v1/runs/{runId}/ancestry` top-level-run path (`parent: null`) + the 404 contract when the capability is not advertised.
+- `cross-host-traceparent-propagation.test.ts` — capability-gated behavioral; 2 `it.todo` assertions for outbound MCP + A2A `traceparent` injection (lights up when `OPENWOP_MCP_REAL_SERVER_URL` / `OPENWOP_A2A_REAL_PEER_URL` env harness ships).
+
+### Added — RFC 0041 multi-agent Phase 4 (replay determinism; Active)
+
+3 new scenarios:
+- `replay-llm-cache-key-portable.test.ts` — RFC 0041 §E SECURITY-invariant probe (intra-host reproducibility + non-recipe-field invariance + Phase 4 advertisement alignment). Reuses the existing `POST /v1/host/sample/test/llm-cache-key` seam from `replay-llm-cache-key.test.ts`.
+- `replay-divergence-at-refusal.test.ts` — advertisement-shape probe + 2 `it.todo` for the dual-direction refusal-divergence case (original=valid + replay=refusal AND original=refusal + replay=valid).
+- `replay-observable-sequence-determinism.test.ts` — 2 `it.todo` for §C boundary byte-equivalence + observable-result caching (lights up when a `conformance-phase4-nondet-tool` fixture ships).
+
+### Changed
+
+- `conformance/coverage.md` updated with the 45 new scenarios mapped to RFC + invariant tier.
+- `conformance/fixtures.md` catalog updated with the 23 new fixture rows + per-fixture contracts.
+- Shared helper extraction: `conformance/src/lib/llm-cache-key-recipe.ts` exports `canonicalize`, `projectRecipe`, `expectedCacheKey`, `callCacheKeySeam` — consumed by both `replay-llm-cache-key.test.ts` (existing) and `replay-llm-cache-key-portable.test.ts` (new).
+
+### Fixed
+
+- `replay-llm-cache-key-portable.test.ts` Phase 4 advertisement-alignment test guards against `undefined < 4 === false` fall-through (`typeof version !== 'number'` check before comparison).
+- Soft-skip patterns across the new Phase 4 + RFC 0040 scenarios converted from bare `return` to `ctx.skip()` so test reporters surface skipped capability gates as `skipped` rather than vacuous `passed`.
+
+### Known limits (light up when host wires the matching test seam)
+
+- 6 `it.todo` behavioral assertions across the RFC 0034 OTel-seam-gated, RFC 0040 traceparent-propagation, RFC 0041 refusal-divergence + observable-sequence scenarios. All scenarios soft-skip cleanly when their gating capability is unset.
+
 ## [1.3.0] — 2026-05-19
 
 Minor bump per `PUBLISHING.md` §"Versioning alignment" — conformance scenario + fixture additions land on a minor. Closes the conformance-republish acceptance gate on RFC 0024 (§"Active → Accepted" criterion b) and bundles the wider behavioral-coverage push that converted ~50 `it.todo()` placeholders into live behavioral assertions across the RFC 0013 / 0016 / 0017 / 0022 / 0023 / 0024 surface.

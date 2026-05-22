@@ -342,7 +342,7 @@
           "properties": {
             "otelScrape": {
               "type": "boolean",
-              "description": "Host exposes `POST /v1/host/sample/test/otel/spans?runId=<id>` returning `{ spans: Array<{ name, attributes, events }> }` scoped to the run. Conformance verifies span attributes don't carry BYOK canaries. When advertised true, the host MUST serve a 200 response with the documented shape."
+              "description": "Host exposes `GET /v1/host/sample/test/otel/spans?runId=<id>` returning `{ spans: Array<{ name, attributes, events }> }` scoped to the run. Conformance verifies span attributes don't carry BYOK canaries. When advertised true, the host MUST serve a 200 response with the documented shape."
             },
             "debugBundleExport": {
               "type": "boolean",
