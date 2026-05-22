@@ -57,11 +57,17 @@ async function readDiscovery(): Promise<DiscoveryDoc | null> {
 }
 
 describe.skipIf(HTTP_SKIP)('cross-host-causation-shape: advertisement shape (RFC 0040 §D)', () => {
-  it('crossHostCausation (when present) conforms to RFC 0040 §D', async () => {
+  it('crossHostCausation (when present) conforms to RFC 0040 §D', async (ctx) => {
     const d = await readDiscovery();
-    if (d === null) return;
+    if (d === null) {
+      ctx.skip();
+      return;
+    }
     const chc = d.capabilities?.multiAgent?.executionModel?.crossHostCausation;
-    if (chc === undefined) return; // host doesn't advertise — soft-skip
+    if (chc === undefined) {
+      ctx.skip(); // host doesn't advertise — soft-skip
+      return;
+    }
 
     expect(
       typeof chc.supported,

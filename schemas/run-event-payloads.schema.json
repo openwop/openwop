@@ -164,6 +164,11 @@
         "originalDecision": {
           "$ref": "orchestrator-decision.schema.json",
           "description": "The OrchestratorDecision that triggered escalation, captured verbatim. The host's existing event-payload redaction harness (the same one enforcing SECURITY invariant `secret-leakage-eventlog-payload` per `conformance/src/scenarios/redaction.test.ts`) applies uniformly across all RunEventType payloads including this one — no per-event-type opt-in is required. The protocol-tier MUST-NOT for raw key material in persisted payloads is the canonical contract; this field inherits that protection."
+        },
+        "causationHostId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "RFC 0040 §A — optional cross-host causation pointer. Present + non-empty when this event's `causationId` points at an event on a DIFFERENT host; absent when same-host (existing semantics). Value MUST equal the originating host's `crossHostCausation.hostId` advertisement."
         }
       }
     },
@@ -713,7 +718,8 @@
       "properties": {
         "agentId":   { "type": "string", "minLength": 3, "maxLength": 256, "description": "AgentRef.agentId of the reasoning agent." },
         "reasoning": { "type": "string", "description": "Reasoning text. Bounded by `capabilities.agents.reasoning.tokenLimit` when verbosity is `summary` (default 512 tokens)." },
-        "verbosity": { "type": "string", "enum": ["summary", "full", "off"], "description": "Verbosity mode this trace was produced under. Hosts MAY emit `'off'` to record the suppression decision without payload content." }
+        "verbosity": { "type": "string", "enum": ["summary", "full", "off"], "description": "Verbosity mode this trace was produced under. Hosts MAY emit `'off'` to record the suppression decision without payload content." },
+        "causationHostId": { "type": "string", "minLength": 1, "description": "RFC 0040 §A — optional cross-host causation pointer. Present + non-empty when this event's `causationId` points at an event on a DIFFERENT host; absent when same-host. MUST equal the originating host's `crossHostCausation.hostId`." }
       },
       "additionalProperties": true
     },
@@ -800,6 +806,11 @@
           "type": "string",
           "enum": ["trusted", "untrusted"],
           "description": "Aggregate trust marker. `untrusted` iff ANY contributing input was tagged untrusted per RFC 0020 §D / AIEnvelope.meta.contentTrust propagation. When `untrusted`, the composed bodies MUST contain `<UNTRUSTED>...</UNTRUSTED>` markers around the untrusted segments."
+        },
+        "causationHostId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "RFC 0040 §A — optional cross-host causation pointer. Present + non-empty when this event's `causationId` points at an event on a DIFFERENT host; absent when same-host. MUST equal the originating host's `crossHostCausation.hostId`."
         }
       },
       "additionalProperties": false
@@ -850,6 +861,11 @@
         "resolved": {
           "type": ["string", "null"],
           "description": "The winning PromptRef in stringy form (`prompt:templateId@version`), or null if no layer yielded a candidate. Mirrors the `chain[].source` whose `applied: true` when present."
+        },
+        "causationHostId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "RFC 0040 §A — optional cross-host causation pointer. Present + non-empty when this event's `causationId` points at an event on a DIFFERENT host; absent when same-host. MUST equal the originating host's `crossHostCausation.hostId`."
         }
       },
       "additionalProperties": false
@@ -1041,7 +1057,8 @@
         "agentId":   { "type": "string", "minLength": 3, "maxLength": 256 },
         "toolName":  { "type": "string", "minLength": 1, "description": "Tool identifier (typically a node-pack typeId or function name)." },
         "callId":    { "type": "string", "minLength": 1, "description": "Unique correlation id linking this call to the subsequent `agent.toolReturned`. Hosts SHOULD use UUIDs or content-addressable hashes." },
-        "inputs":    { "description": "Tool inputs. Shape is tool-specific; consumers MUST NOT assume an object." }
+        "inputs":    { "description": "Tool inputs. Shape is tool-specific; consumers MUST NOT assume an object." },
+        "causationHostId": { "type": "string", "minLength": 1, "description": "RFC 0040 §A — optional cross-host causation pointer. Present + non-empty when this event's `causationId` points at an event on a DIFFERENT host; absent when same-host. MUST equal the originating host's `crossHostCausation.hostId`." }
       },
       "additionalProperties": true
     },
@@ -1055,7 +1072,8 @@
         "toolName":  { "type": "string", "minLength": 1 },
         "callId":    { "type": "string", "minLength": 1 },
         "outcome":   { "description": "Tool result. Discriminated by host on success vs error; payload shape is tool-specific." },
-        "error":     { "$ref": "#/$defs/_errorObject", "description": "Set on tool-execution failure. Mutually exclusive with `outcome`." }
+        "error":     { "$ref": "#/$defs/_errorObject", "description": "Set on tool-execution failure. Mutually exclusive with `outcome`." },
+        "causationHostId": { "type": "string", "minLength": 1, "description": "RFC 0040 §A — optional cross-host causation pointer. Present + non-empty when this event's `causationId` points at an event on a DIFFERENT host; absent when same-host. MUST equal the originating host's `crossHostCausation.hostId`." }
       },
       "additionalProperties": true
     },
@@ -1067,7 +1085,8 @@
       "properties": {
         "fromAgentId": { "type": "string", "minLength": 3, "maxLength": 256, "description": "Agent surrendering control." },
         "toAgentId":   { "type": "string", "minLength": 3, "maxLength": 256, "description": "Agent receiving control." },
-        "reason":      { "type": "string", "description": "Optional handoff rationale (e.g., 'specialist routing', 'escalation', 'dispatch-loop-iteration')." }
+        "reason":      { "type": "string", "description": "Optional handoff rationale (e.g., 'specialist routing', 'escalation', 'dispatch-loop-iteration')." },
+        "causationHostId": { "type": "string", "minLength": 1, "description": "RFC 0040 §A — optional cross-host causation pointer. Present + non-empty when this event's `causationId` points at an event on a DIFFERENT host; absent when same-host. MUST equal the originating host's `crossHostCausation.hostId`." }
       },
       "additionalProperties": true
     },
@@ -1079,7 +1098,8 @@
       "properties": {
         "agentId":    { "type": "string", "minLength": 3, "maxLength": 256 },
         "decision":   { "description": "Typed decision payload. Shape is decision-specific; consumers MUST NOT assume an object." },
-        "confidence": { "type": "number", "minimum": 0, "maximum": 1, "description": "Optional confidence in `[0, 1]`. Below the threshold → escalate via `node.suspended { reason: 'low-confidence' }`. Absent values are treated as 'no signal' — no escalation." }
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1, "description": "Optional confidence in `[0, 1]`. Below the threshold → escalate via `node.suspended { reason: 'low-confidence' }`. Absent values are treated as 'no signal' — no escalation." },
+        "causationHostId": { "type": "string", "minLength": 1, "description": "RFC 0040 §A — optional cross-host causation pointer. Present + non-empty when this event's `causationId` points at an event on a DIFFERENT host; absent when same-host. MUST equal the originating host's `crossHostCausation.hostId`." }
       },
       "additionalProperties": true
     },
@@ -1090,7 +1110,8 @@
       "required": ["agentId", "decision"],
       "properties": {
         "agentId":  { "type": "string", "minLength": 3, "maxLength": 256, "description": "AgentRef.agentId of the orchestrator. MUST equal `RunSnapshot.runOrchestrator.agentId` for the run's lifetime — orchestrator identity is set at first decision and does not change." },
-        "decision": { "$ref": "orchestrator-decision.schema.json" }
+        "decision": { "$ref": "orchestrator-decision.schema.json" },
+        "causationHostId": { "type": "string", "minLength": 1, "description": "RFC 0040 §A — optional cross-host causation pointer. Present + non-empty when this event's `causationId` points at an event on a DIFFERENT host; absent when same-host. MUST equal the originating host's `crossHostCausation.hostId`." }
       },
       "additionalProperties": false
     },

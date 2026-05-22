@@ -75,11 +75,17 @@ async function readDiscovery(): Promise<DiscoveryDoc | null> {
 }
 
 describe.skipIf(HTTP_SKIP)('multi-agent-memory-lifecycle: advertisement shape (RFC 0039 §B)', () => {
-  it('crossChildMemoryConcurrency (when advertised) MUST be one of {strict, advisory}', async () => {
+  it('crossChildMemoryConcurrency (when advertised) MUST be one of {strict, advisory}', async (ctx) => {
     const d = await readDiscovery();
-    if (d === null) return;
+    if (d === null) {
+      ctx.skip();
+      return;
+    }
     const ccmc = d.capabilities?.multiAgent?.executionModel?.crossChildMemoryConcurrency;
-    if (ccmc === undefined) return; // soft-skip — optional
+    if (ccmc === undefined) {
+      ctx.skip(); // optional advertisement — host hasn't opted in
+      return;
+    }
     expect(
       ccmc === 'strict' || ccmc === 'advisory',
       driver.describe(

@@ -63,16 +63,22 @@ async function readDiscovery(): Promise<DiscoveryDoc | null> {
 }
 
 describe.skipIf(HTTP_SKIP)('cross-host-ancestry-endpoint: behavioral (RFC 0040 §C)', () => {
-  it('hosts advertising ancestryEndpointSupported MUST serve GET /v1/runs/{runId}/ancestry with the documented shape on a top-level run', async () => {
+  it('hosts advertising ancestryEndpointSupported MUST serve GET /v1/runs/{runId}/ancestry with the documented shape on a top-level run', async (ctx) => {
     const d = await readDiscovery();
     const chc = d?.capabilities?.multiAgent?.executionModel?.crossHostCausation;
-    if (chc?.ancestryEndpointSupported !== true) return; // soft-skip — host doesn't advertise
+    if (chc?.ancestryEndpointSupported !== true) {
+      ctx.skip();
+      return;
+    }
 
     // Create a fresh top-level run via the host's conformance-dispatch-loop
     // fixture (any always-on fixture works; the ancestry semantics don't
     // depend on the specific workflow).
     const create = await driver.post('/v1/runs', { workflowId: 'conformance-dispatch-loop' });
-    if (create.status !== 201) return; // soft-skip — fixture absent or unauthorized
+    if (create.status !== 201) {
+      ctx.skip();
+      return;
+    }
     const runId = (create.json as { runId: string }).runId;
 
     const ancestryRes = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/ancestry`);
@@ -104,11 +110,17 @@ describe.skipIf(HTTP_SKIP)('cross-host-ancestry-endpoint: behavioral (RFC 0040 �
     ).toBeNull();
   });
 
-  it('hosts advertising crossHostCausation.supported but NOT ancestryEndpointSupported MUST return 404 from the ancestry endpoint', async () => {
+  it('hosts advertising crossHostCausation.supported but NOT ancestryEndpointSupported MUST return 404 from the ancestry endpoint', async (ctx) => {
     const d = await readDiscovery();
     const chc = d?.capabilities?.multiAgent?.executionModel?.crossHostCausation;
-    if (chc?.supported !== true) return; // soft-skip
-    if (chc.ancestryEndpointSupported === true) return; // covered by the test above
+    if (chc?.supported !== true) {
+      ctx.skip();
+      return;
+    }
+    if (chc.ancestryEndpointSupported === true) {
+      ctx.skip(); // covered by the test above
+      return;
+    }
 
     // Use any runId — even a synthetic non-existent one. The endpoint should
     // 404 regardless of run existence when the capability is not advertised.
