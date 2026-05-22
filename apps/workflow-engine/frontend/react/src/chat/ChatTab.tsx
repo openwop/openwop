@@ -46,7 +46,7 @@ export function ChatTab(): JSX.Element {
     return (
       <div className="backend-resting-wrap">
         <div className="backend-resting-card">
-          <h2 className="backend-resting-title">The demo&apos;s resting.</h2>
+          <h2 className="backend-resting-title">The demo is resting</h2>
           <p className="backend-resting-body">
             The Cloud Run server spins down between visits to keep the sample
             cheap to host. Please refresh your browser.
