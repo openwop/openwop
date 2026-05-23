@@ -1185,6 +1185,7 @@ export function useChatSession(): UseChatSessionResult {
       totalNodes,
       completedNodeIds: [],
       failedNodeIds: [],
+      nodeOutputs: {},
       currentNodeName: null,
       nodeNames,
       startedAt,
@@ -1245,11 +1246,21 @@ export function useChatSession(): UseChatSessionResult {
             currentNodeName: prev.nodeNames[nodeId] ?? nodeId,
           }));
         } else if (ev.type === 'node.completed' && nodeId) {
-          updateWorkflowRun(runMsgId, (prev) => (
-            prev.completedNodeIds.includes(nodeId)
-              ? prev
-              : { ...prev, completedNodeIds: [...prev.completedNodeIds, nodeId] }
-          ));
+          // Capture the node's outputs so the bubble can render them
+          // inline. The arbiter approval card needs to see what the
+          // three upstream critics produced; without this they'd be
+          // discarded.
+          const outputs = (payload.outputs && typeof payload.outputs === 'object')
+            ? payload.outputs
+            : undefined;
+          updateWorkflowRun(runMsgId, (prev) => {
+            if (prev.completedNodeIds.includes(nodeId)) return prev;
+            return {
+              ...prev,
+              completedNodeIds: [...prev.completedNodeIds, nodeId],
+              ...(outputs ? { nodeOutputs: { ...prev.nodeOutputs, [nodeId]: outputs } } : {}),
+            };
+          });
         } else if (ev.type === 'node.failed' && nodeId) {
           // The executor may keep running other branches on failure
           // (error-routing trigger rules). Track failed nodes so the

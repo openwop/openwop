@@ -37,6 +37,13 @@ export interface WorkflowRunState {
   totalNodes: number;
   /** Deduped node ids whose `node.completed` event has been seen. */
   completedNodeIds: string[];
+  /** Per-node outputs captured from each `node.completed` event's
+   *  `payload.outputs` field. Keyed by nodeId. Lets the bubble surface
+   *  the critic summaries / extract results / etc. that the user needs
+   *  context for before making an HITL approval decision. Without this
+   *  the approval card sits naked ("approve which?") because the
+   *  upstream nodes' outputs are discarded. */
+  nodeOutputs: Record<string, unknown>;
   /** Deduped node ids whose `node.failed` event has been seen. The
    *  executor may keep running other branches after a failure (error-
    *  routing trigger rules); the bubble surfaces failures via the
