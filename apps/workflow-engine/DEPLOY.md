@@ -137,6 +137,44 @@ gcloud run services add-iam-policy-binding openwop-app-backend \
   --region=us-central1 --member="allUsers" --role="roles/run.invoker"
 ```
 
+### Feature toggle: warm-instance posture
+
+By default the deploy above uses `min-instances=0` (Cloud Run evicts
+the container after ~15 min of no traffic). That's the cheapest
+posture (~$0/mo idle) but introduces the cold-start UX the AI chat
+surface mitigates with its "Spinning up your demo server…" card.
+
+To eliminate cold starts entirely — at a cost of ~$30-40/month for
+a single always-warm `cpu=1, memory=512Mi` instance — flip the
+posture **without redeploying** by running this one-liner against
+the existing service:
+
+```bash
+gcloud run services update openwop-app-backend \
+  --region=us-central1 \
+  --min-instances=1 \
+  --no-cpu-throttling
+```
+
+`--no-cpu-throttling` is what makes `min-instances=1` actually
+keep the container warm; without it, the idle instance gets CPU
+throttled to ~5% and the *first* request still pays a partial
+warmup cost.
+
+To revert to the cost-saving posture later:
+
+```bash
+gcloud run services update openwop-app-backend \
+  --region=us-central1 \
+  --min-instances=0 \
+  --cpu-throttling
+```
+
+The FE's cold-start UX gracefully handles both postures — it
+adapts based on `lastSuccessAt` in localStorage rather than
+hard-coding cold-start assumptions. So you can flip the toggle
+either way without coordinating a FE redeploy.
+
 ## 7. Firebase Hosting + custom domain
 
 ```bash

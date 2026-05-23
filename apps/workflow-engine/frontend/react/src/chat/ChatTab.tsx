@@ -16,6 +16,7 @@ import { useEffect, useState } from 'react';
 import { BYOKWizard } from '../byok/BYOKWizard.js';
 import { useBYOKConfig } from '../byok/lib/useBYOKConfig.js';
 import { ChatSidebar } from './ChatSidebar.js';
+import { BackendStatusCard } from './BackendStatusCard.js';
 import { registerDefaultCards } from './registry/defaultCards.js';
 
 // Ensure the 4 built-in interrupt cards are registered at first render.
@@ -33,60 +34,19 @@ export function ChatTab(): JSX.Element {
     return () => document.removeEventListener('visibilitychange', onVis);
   }, [refresh]);
 
-  if (isLoading) {
-    // Same editorial-postcard chrome as the resting-server state. On
-    // first load the user is usually waiting on the Cloud Run cold-
-    // start (and our own session bootstrap). A bare "Loading…" line
-    // looked broken; a card with a serif title + animated dots tells
-    // the user the wait is intentional and short.
+  // Unified adaptive card for the loading-OR-error state. Replaces
+  // the prior two-card flow (Spinning up → The demo is resting) that
+  // flashed two distinct messages at the user. BackendStatusCard
+  // reads localStorage `lastSuccessAt` to predict warm/cold, then
+  // adapts its copy over elapsed time + on error — same chrome
+  // throughout so the transition is invisible. See
+  // chat/BackendStatusCard.tsx for the phase machine.
+  if (isLoading || error) {
     return (
-      <div className="backend-resting-wrap">
-        <div className="backend-resting-card">
-          <h2 className="backend-resting-title">
-            Spinning up your demo server
-            <span className="backend-spinup-ellipsis" aria-hidden="true">
-              <span>.</span><span>.</span><span>.</span>
-            </span>
-          </h2>
-          <p className="backend-resting-body">
-            The Cloud Run server spins down between visits to keep the sample
-            cheap to host. The first request takes a moment to warm up — usually
-            10–30 seconds.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    // Editorial postcard — replaces the prior red-bordered ".alert error"
-    // box. The Cloud Run backend spins down between visits to keep the
-    // sample cheap to host; a 401/network/timeout on the first request
-    // most commonly means the user hit a cold-start (or a quiet
-    // moment), not a real outage. Tone is calm + actionable; no red.
-    return (
-      <div className="backend-resting-wrap">
-        <div className="backend-resting-card">
-          <h2 className="backend-resting-title">The demo is resting</h2>
-          <p className="backend-resting-body">
-            The Cloud Run server spins down between visits to keep the sample
-            cheap to host. Please refresh your browser.
-          </p>
-          {/* Detail visible to the curious + helpful for debugging. Muted
-              so it doesn't dominate the postcard. */}
-          <details className="backend-resting-detail">
-            <summary>Technical detail</summary>
-            <p>
-              <code>{error}</code>
-              <br />
-              Backend URL:{' '}
-              <code>
-                {import.meta.env.VITE_OPENWOP_BASE_URL ?? 'http://localhost:8080'}
-              </code>
-            </p>
-          </details>
-        </div>
-      </div>
+      <BackendStatusCard
+        error={error}
+        backendUrl={import.meta.env.VITE_OPENWOP_BASE_URL}
+      />
     );
   }
 

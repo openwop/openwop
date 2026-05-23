@@ -23,6 +23,8 @@
  * Disable in production builds via VITE_DISABLE_NETWORK_RECORDER=1.
  */
 
+import { recordLastSuccess } from './lastSuccess.js';
+
 const MAX_ENTRIES = 200;
 const MAX_RESPONSE_BYTES = 16 * 1024;
 
@@ -163,6 +165,13 @@ export function installNetworkRecorder(): void {
         ...(responseBody !== undefined ? { responseBody } : {}),
         ...(responseTruncated ? { responseTruncated } : {}),
       });
+      // Mark the BE as alive for the cold-start-card warm-window
+      // prediction. A 2xx anywhere on the OpenWOP API surface is
+      // sufficient evidence the container is up. 401/403 still count
+      // as "container alive" (auth refused, but server responded).
+      if (res.status > 0 && res.status < 500) {
+        recordLastSuccess(finishedAt);
+      }
       return res;
     } catch (err) {
       const finishedAt = Date.now();
