@@ -1,5 +1,8 @@
+import { useEffect, useState } from 'react';
 import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { RunsIndexPage } from './runs/RunsIndexPage.js';
+import { NetworkPanel } from './devtools/NetworkPanel.js';
+import { installNetworkRecorder } from './devtools/networkRecorder.js';
 import { RunDetailPage } from './runs/RunDetailPage.js';
 import { CapabilitiesPanel } from './discovery/CapabilitiesPanel.js';
 import { ChatTab } from './chat/ChatTab.js';
@@ -13,6 +16,12 @@ import { SignInButton } from './auth/SignInButton.js';
 
 export function App() {
   const location = useLocation();
+  // Network inspector toggle — installs the fetch interceptor on first
+  // mount so calls made before the panel is opened are still captured.
+  // Idempotent: installNetworkRecorder() short-circuits after the first
+  // call so HMR / StrictMode double-renders don't double-wrap fetch.
+  useEffect(() => { installNetworkRecorder(); }, []);
+  const [netOpen, setNetOpen] = useState(false);
   // The builder canvas is its own scroll/zoom region — bypass the
   // centered 1200px-wide .app-main constraint so the canvas can fill
   // the viewport. All other routes use the normal main container.
@@ -41,6 +50,16 @@ export function App() {
           <NavLink to="/capabilities">Capabilities</NavLink>
         </nav>
         <div className="app-header-spacer" />
+        <button
+          type="button"
+          className="secondary app-header-net-toggle"
+          onClick={() => setNetOpen((v) => !v)}
+          aria-label="Open network inspector"
+          aria-expanded={netOpen}
+          title="Show every REST + SSE call the app is making"
+        >
+          Network
+        </button>
         <SignInButton />
       </header>
       <main
@@ -68,6 +87,7 @@ export function App() {
         Sample / template code. Not production-hardened. ·{' '}
         <Link to="/privacy">Privacy</Link>
       </footer>
+      <NetworkPanel open={netOpen} onClose={() => setNetOpen(false)} />
     </div>
   );
 }
