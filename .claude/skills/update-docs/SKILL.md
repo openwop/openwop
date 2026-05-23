@@ -59,8 +59,12 @@ This skill exists in large part because openwop's docs hold up multiple parallel
 | 15 | **External host advertisement triggers a suite bump cascade** | A non-steward host (e.g., MyndHyve) advertising a new capability often unblocks a Draft RFC → Active → Accepted promotion **and** drives a suite minor bump to ship the relaxed assertion logic. When you see `release(conformance):` commits, expect Drift #6, #8, #10 (host conformance.md banners), and #12 to all need attention in the same docs-sync. The bumps cluster. | `git log --oneline -10 \| grep -E 'release\(conformance\)\|Active → Accepted'` — any hit means cascade work is queued. |
 | 16 | **Drift #10 (file-path regex) has a high false-positive rate** | The path-extraction regex `[a-z][a-zA-Z0-9_-]+(/[a-zA-Z0-9._-]+){1,}\.(ts\|mjs\|...)` will flag (a) Markdown link-text segments where the surrounding `[`...`](full/path)` link itself resolves but the regex captured only the inner text; (b) intentional relative-shorthand citations where the doc is operating within a host-scoped paragraph (e.g., `executor/modelCapabilityGate.ts` inside a Postgres-host description that doesn't repeat `apps/workflow-engine/backend/typescript/src/`); (c) PHASE-4-PROGRESS-style accountability docs that intentionally name files-to-be-created. Before flagging a path as missing, verify it isn't one of these patterns. | After running Drift #10, manually inspect each MISSING hit — only ~30% on average are real bugs. |
 | 17 | **Historical evidence files predating the suite-version convention** | `examples/hosts/<h>/conformance-full.md` and similar historical full-run records may carry a "Run date: 2026-05-11" but no `@openwop/openwop-conformance@X.Y.Z` citation because they predate versioned-suite convention. Drift #8 flags these as stale (empty `cited=`). Fix recipe is NOT "re-measure" — it's "add a `Latest measurement is at conformance.md` pointer at the top so the historical file doesn't read as current." | `for f in examples/hosts/*/conformance-full.md examples/hosts/*/conformance-phase*.md; do [ -f "$f" ] && head -10 "$f" \| grep -qE 'Latest measurement is at\|pre-versioned-suite era' \|\| echo "$f: needs historical-marker prefix"; done` |
+| 18 | **`README.md` prose RFC-status lists lag the actual `Status:` fields** | The README banner at line ~66 is the generated-status surface that `scripts/generate-protocol-status.mjs --check` keeps honest (counts match `SECURITY/invariants.yaml` + actual RFC `Status:` fields). But the **per-RFC prose lists below** ("v1.x Capability Profiles", "Active RFCs", "Draft RFCs") are hand-curated and lag promotions. The 2026-05-23 audit caught README:281 marking RFCs 0027/0030/0031/0032/0033 as `Active` after they had all promoted to `Accepted` between 2026-05-21 and 2026-05-23. Generated-status passes; prose lags silently. | Scope the comparison to the prose lists explicitly: `awk '/\*\*Active RFCs/{flag=1} /\*\*Draft RFCs\|\*\*v1 Foundation/{flag=0} flag' README.md \| grep -oE 'RFC [0-9]+' \| sort -u > /tmp/readme-active.txt; for f in RFCS/[0-9][0-9][0-9][0-9]-*.md; do id=$(basename "$f" \| grep -oE '^[0-9]+'); s=$(grep -m1 '^\| \*\*Status\*\*' "$f"); echo "$s" \| grep -q '\`Active\`' && echo "$id"; done \| sort -u > /tmp/actual-active.txt; diff /tmp/readme-active.txt /tmp/actual-active.txt` |
+| 19 | **Per-track "Closing PR: TBD" strings linger AFTER a closure-snapshot table is added** | When a multi-track tracking doc (e.g., `docs/PHASE-4-PROGRESS.md`) gets a closure snapshot prepended at the top of file (e.g., "Closure snapshot — 2026-05-22 (ALL TRACKS CLOSED) \| ✅ commit refs"), the per-track sections below often retain their original `Closing PR: TBD — feat(…)` strings — so the document says both "all closed" AND "still TBD" in different sections. Internal contradictions like this are exactly what external auditors flag as eroding credibility (the 2026-05-23 audit caught this verbatim in `docs/PHASE-4-PROGRESS.md`). | `grep -nE "Closing PR.*TBD\|Closing commits.*TBD" docs/*.md \| head -10` — any hit on a doc that ALSO has a "ALL TRACKS CLOSED" or "✅ CLOSED end-to-end" snapshot above is a contradiction. Fix recipe: rewrite each `Closing PR: TBD — feat(…)` into `Closing commit: ✅ <sha> (date)` with the actual closing commit from the snapshot. |
+| 20 | **`it.todo` callsite count diverges from "grep `it.todo`" because of comment mentions** | An external auditor's mechanical `grep -rc 'it.todo'` against `conformance/src/scenarios/` over-counts when scenario files describe their own state via comments (e.g., "Surfaced as `it.todo` so reporters track the gap"). The Phase 4 SKILL.md was caught with this same drift — comment mentions inflated 14 actual callsites to 20 reported. **Use `grep -P 'it\.todo\('` to anchor on actual callsites (the `(` rules out comment mentions); use plain `grep 'it.todo'` only when intentionally surveying the comment-as-tracking-marker pattern.** Conversely: when retiring `it.todo` blocks via cross-reference `it.skip`, leave a comment that says `it.todo` (without the `(`) so test-reporter tooling that scans for the literal can still find the marker — the `grep -P` form will correctly exclude it. | Auditor-style: `grep -rcP 'it\.todo\(' conformance/src/scenarios/ \| awk -F: '$2>0' \| sort -t: -k2 -rn \| head -20` — produces the real per-file callsite count. Pair with `grep -rcl 'it\.todo' conformance/src/scenarios/ \| wc -l` only to count files-that-mention-the-marker, not callsites. |
+| 21 | **`npx -y -p @<pkg>@latest` in `openwop-check.sh` races the npm cache** | The validator toolchain (`@asyncapi/cli`, `@redocly/cli`) was historically invoked via `npx -y -p @<pkg>@latest`, which races itself when two `openwop-check.sh` runs interleave (or when the cache TTL expires mid-fetch), producing `ECOMPROMISED Lock compromised` errors that require `rm -rf /tmp/openwop-npm-cache` to recover. External auditor 2026-05-23 hit this twice. Fix landed 2026-05-23: pinned versions in repo-root `package.json#devDependencies` + scripts call `./node_modules/.bin/redocly` and `./node_modules/.bin/asyncapi` directly. **Lesson:** ANY validator-toolchain bump in this repo must go through a pinned devDependency, not `npx -y`. | `grep -nE "npx -y" scripts/openwop-check.sh .github/workflows/openwop-spec.yml 2>/dev/null` — any match outside the explanatory header comments is a regression. |
 
-When auditing a session, walk this table from #1 to #17 and flag any row whose detection command surfaces a hit. If you find one, the corresponding row in the **Phase 4** drift-verification section below has the fix recipe.
+When auditing a session, walk this table from #1 to #21 and flag any row whose detection command surfaces a hit. If you find one, the corresponding row in the **Phase 4** drift-verification section below has the fix recipe.
 
 ### Catalog meta-lesson — detection commands are themselves drift surfaces
 
@@ -69,6 +73,9 @@ When designing a detection command, account for:
 - **Comma-separated multi-entry rows.** A regex that anchors at start-of-line misses second/third entries in a comma-list cell (`0037, 0039, 0040, 0041`). Use a "first-cell-match" pattern instead.
 - **The "no closing delimiter" case for awk range expressions.** `awk '/start/,/end/'` returns empty when only `start` is present in the file (the common-case steady state). Use a flag-toggle pattern (`/start/{flag=1;next} /end/{flag=0} flag`) instead.
 - **The "regex is too greedy" failure mode.** Path-globs especially. If a detection command surfaces >5 hits, manually inspect 2-3 before fixing — odds are good a non-trivial fraction are false positives.
+- **The "header convention not as documented" failure mode.** Detection patterns hard-coded to keepachangelog.com style headers (`## [Unreleased]`) won't match this repo's actual `## [X.Y.Z — unreleased]` style. Always grep the actual file for representative headers before writing a regex against the assumed style. The lesson generalizes — never assume a doc follows a public convention without verification, especially for headers where the regex hard-codes the literal.
+- **The "comment mentions inflate the count" failure mode.** When the marker you're counting (`it.todo`, `TBD`, `STUB`) is ALSO the marker the doc uses to track its own state in comments, naive `grep -c` over-counts by 2-3× because comment mentions get folded in with callsites. Use language-aware anchors (e.g., `grep -P 'it\.todo\('` for actual callsites) and only fall back to literal greps when intentionally surveying the comment-as-marker pattern. Drift #20 is the canonical example.
+- **The "generated status passes but prose lags" failure mode.** Generated-status checks (`scripts/generate-protocol-status.mjs --check`) keep mechanical counts honest BUT only validate surfaces the generator knows about — the README banner at line ~66, the protocol-tier invariant count, the SDK helper count. Hand-curated prose lists deeper in the same file (per-RFC bullet lists, capability profile narratives) are NOT covered. Drift #18 is the canonical example. Treat "generated-status green" as necessary, not sufficient.
 
 ---
 
@@ -504,6 +511,85 @@ for f in examples/hosts/*/conformance-full.md examples/hosts/*/conformance-phase
     || echo "$f: needs historical-marker prefix"
 done
 ```
+
+### Drift #18 — README prose RFC-status lists lag actual Status fields
+
+`scripts/generate-protocol-status.mjs --check` catches the README **banner** counts (line ~66: "34 Accepted / 6 Active / 4 Draft"). But the **per-RFC prose lists below** ("v1.x Capability Profiles", "Active RFCs", "Draft RFCs") are hand-curated and lag promotions. The 2026-05-23 audit caught README:281 marking RFCs 0027/0030/0031/0032/0033 as `Active` after all 5 had promoted to `Accepted` between 2026-05-21 and 2026-05-23. Generated-status passed (banner counts were correct); the prose list silently drifted.
+
+Detection — diff the README's prose-list claim against actual RFC Status fields:
+
+```bash
+# Authoritative set: what each RFC file actually says
+for f in RFCS/[0-9][0-9][0-9][0-9]-*.md; do
+  [ "$(basename "$f")" = "0000-template.md" ] && continue
+  id=$(basename "$f" | grep -oE '^[0-9]+')
+  s=$(grep -m1 '^| \*\*Status\*\*' "$f" | grep -oE '`Active`|`Draft`')
+  [ -n "$s" ] && echo "$id $s"
+done > /tmp/actual-open.txt
+
+# What the README's prose lists claim
+awk '/\*\*Active RFCs/{flag=1; next} /\*\*Draft RFCs/{flag=0} flag' README.md \
+  | grep -oE 'RFC [0-9]+' | sort -u > /tmp/readme-active.txt
+awk '/\*\*Draft RFCs/{flag=1; next} /\*\*v1 Foundation/{flag=0} flag' README.md \
+  | grep -oE 'RFC [0-9]+' | sort -u > /tmp/readme-draft.txt
+
+# Compare
+diff /tmp/readme-active.txt <(awk '$2=="`Active`" {print "RFC "$1}' /tmp/actual-open.txt | sort -u)
+diff /tmp/readme-draft.txt  <(awk '$2=="`Draft`"  {print "RFC "$1}' /tmp/actual-open.txt | sort -u)
+```
+
+Fix recipe: rewrite the relevant prose-list block to match the actual `Status:` fields. Drop promoted RFCs from `Active`, add newly-Active RFCs, move Accepted RFCs into the `v1.x Capability Profiles (all Accepted)` block.
+
+### Drift #19 — Per-track "Closing PR: TBD" strings linger after a closure snapshot
+
+Multi-track tracking docs (canonical: `docs/PHASE-4-PROGRESS.md`) often get a closure-snapshot table prepended at the top of file when all tracks close: "Closure snapshot — 2026-05-22 (ALL TRACKS CLOSED) \| ✅ commit refs". The per-track sections below typically retain their original `Closing PR: TBD — feat(…)` strings — producing an internal contradiction where the document says both "all closed" AND "still TBD" in different sections.
+
+External auditors flag this exact pattern as eroding credibility (the 2026-05-23 audit caught `docs/PHASE-4-PROGRESS.md` with this drift). The fix is mechanical:
+
+```bash
+grep -nE "Closing PR.*TBD|Closing commits.*TBD" docs/*.md | head -10
+# Any hit on a doc that ALSO has a "ALL TRACKS CLOSED" or "✅ CLOSED" snapshot above is a contradiction.
+```
+
+Fix recipe: rewrite each `Closing PR: TBD — feat(…)` into `Closing commit: ✅ <sha> (date). <one-paragraph note on implementation pivot vs. original criterion>`. The implementation pivot note is load-bearing — most close-outs land via a different mechanism than the original criterion contemplated (e.g., consolidated on workflow-engine instead of splitting across Postgres + workflow-engine).
+
+### Drift #20 — `it.todo` callsite count diverges from naive grep due to comment mentions
+
+External auditors counting `it.todo` markers via `grep -rc 'it.todo' conformance/src/scenarios/` over-count when scenario files describe their own state via comments (e.g., "Surfaced as `it.todo` so reporters track the gap"). The 2026-05-23 audit reported 14 callsites; naive grep returned 20 (the 6 inflation came from comment mentions); after Phase 4 cleanup the naive grep stayed at 12 (all comment mentions in the cleanup-completion notes) while actual callsites dropped to 0.
+
+Use language-aware anchors for the real count:
+
+```bash
+# Actual callsites (the open paren rules out comment mentions):
+grep -rcP 'it\.todo\(' conformance/src/scenarios/ | awk -F: '$2>0' | sort -t: -k2 -rn
+
+# Total callsites:
+grep -rcP 'it\.todo\(' conformance/src/scenarios/ | awk -F: '{s+=$2} END {print s}'
+
+# Files-that-mention-the-marker (for cross-reference inventory):
+grep -rcl 'it\.todo' conformance/src/scenarios/ | wc -l
+```
+
+Fix recipe: when retiring an `it.todo` block, choose ONE of three paths:
+
+1. **Flip to runnable `it()`** — only when the underlying host wiring exists. The cleanest signal but the most work.
+2. **`it.skip` cross-reference** — when the behavioral coverage exists elsewhere (e.g., consolidated in `sandbox-mvp-behavior.test.ts`). The block becomes `it.skip('see <other-file> §<section>')` with an explanatory comment block above. This was the 2026-05-23 Phase B path for 8 sandbox files.
+3. **`it.skip` with RFC 0042 quarantine marker** — for genuinely-pending todos that are gated on host-side wiring that hasn't landed. The block becomes `it.skip('<assertion text> — out of stable profile via RFC 0042')` with a comment pointing to the experimental-tier carve-out. This was the 2026-05-23 Phase C path for 6 cross-host + replay-determinism todos.
+
+### Drift #21 — `npx -y -p @<pkg>@latest` races the npm cache
+
+`scripts/openwop-check.sh` historically invoked validator toolchain (`@asyncapi/cli`, `@redocly/cli`) via `npx -y -p @<pkg>@latest`. This races itself in three cases: (1) concurrent gate runs interleave on the same `/tmp/openwop-npm-cache`; (2) the cache TTL expires mid-fetch; (3) `npx -y` writes a `_locks/<lock>` file that survives a SIGKILL'd parent. All three produce `ECOMPROMISED Lock compromised` errors requiring `rm -rf /tmp/openwop-npm-cache` to recover.
+
+External auditor 2026-05-23 hit this twice in a single session. The fix landed 2026-05-23 (this same session): pinned versions in repo-root `package.json#devDependencies` (`@asyncapi/cli@4.1.1` — last Node-22-compatible release; `@redocly/cli@2.31.4`) + `openwop-check.sh` reaches for `./node_modules/.bin/{redocly,asyncapi}` directly + one-time idempotent `npm install` at the top of the script when the bins are absent.
+
+Detection — any `npx -y` invocation in the gate scripts is a regression:
+
+```bash
+grep -nE "npx -y" scripts/openwop-check.sh .github/workflows/openwop-spec.yml 2>/dev/null
+# Empty output = no regression.
+```
+
+Lesson generalizes: ANY validator-toolchain bump in this repo MUST go through a pinned devDependency, not `npx -y`. The pinned form costs ~3 minutes of `npm install` on a fresh checkout (one-time, cached forever after); `npx -y` costs ~30s per gate run on a warm cache PLUS the occasional ECOMPROMISED rabbit hole when the cache races itself.
 
 ### Doc index parity
 
