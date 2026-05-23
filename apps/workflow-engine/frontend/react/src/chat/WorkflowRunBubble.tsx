@@ -15,6 +15,7 @@
  * `activeInterrupt` → CardHost path; no special handling here.
  */
 
+import { Link } from 'react-router-dom';
 import type { ChatMessage, WorkflowRunState } from './hooks/useChatSession.js';
 
 interface Props {
@@ -178,11 +179,30 @@ export function WorkflowRunBubble({ message, onCancel }: Props): JSX.Element | n
           </div>
         )}
 
-        {/* Footer: slug + run id + elapsed */}
-        <div className="muted" style={{ marginTop: 6, fontSize: 11, opacity: 0.75 }}>
+        {/* Footer: slug + run id + elapsed + bridges to the run detail
+            page and (when this was a builder-saved workflow) to the
+            visual canvas the user dispatched. Closes the loop between
+            "I ran this in chat" and "I can see what it looks like". */}
+        <div className="muted" style={{ marginTop: 6, fontSize: 11, opacity: 0.75, display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'baseline' }}>
           <code>@{run.slug}</code>
-          {run.runId && <span> · run {run.runId.slice(0, 12)}</span>}
-          <span> · {formatElapsed(run.startedAt)}</span>
+          {run.runId && (
+            <>
+              <span>·</span>
+              <Link to={`/runs/${run.runId}`} title="Open run detail">
+                run {run.runId.slice(0, 12)}
+              </Link>
+            </>
+          )}
+          {run.workflowId && run.workflowId.startsWith('wf_') && (
+            <>
+              <span>·</span>
+              <Link to={`/builder/${run.workflowId}`} title="Open this workflow in the builder">
+                open in builder →
+              </Link>
+            </>
+          )}
+          <span>·</span>
+          <span>{formatElapsed(run.startedAt)}</span>
         </div>
       </div>
     </div>

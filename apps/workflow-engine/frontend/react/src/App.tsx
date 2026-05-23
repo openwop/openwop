@@ -39,11 +39,14 @@ export function App() {
       <header className="app-header">
         <h1 className="brand-mark">
           <img src="/OpenWOP.svg" alt="" aria-hidden="true" />
-          <span>Open<em>WOP</em> <span className="app-header-sub">workflow-engine sample</span></span>
+          <span>Open<em>WOP</em> <span className="app-header-sub">workflow engine</span></span>
         </h1>
         <nav>
-          <NavLink to="/" end>AI</NavLink>
+          {/* Order matters — Workflows first reinforces the
+              orchestration-first narrative. Chat ("AI") is the easy
+              demo path but not the headline feature. */}
           <NavLink to="/builder">Workflows</NavLink>
+          <NavLink to="/" end>Chat</NavLink>
           <NavLink to="/prompts">Prompts</NavLink>
           <NavLink to="/keys">Keys</NavLink>
           <NavLink to="/runs">Runs</NavLink>
