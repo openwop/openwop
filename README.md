@@ -278,15 +278,35 @@ See [CHANGELOG.md](./CHANGELOG.md) — `[1] — 2026-05-08 — OpenWOP v1 FINAL 
 - [**RFC 0019**](./RFCS/0019-host-blob-cache-capability.md) — `host.blobStorage` + `host.cache` (`Accepted`): binary artifacts with presigned URLs + TTL cache. Unblocks `core.openwop.storage` blob/cache nodes.
 - [**RFC 0020**](./RFCS/0020-host-mcp-server-composition.md) — Host-side MCP server composition (`Accepted`): extends `spec/v1/mcp-integration.md` with a §"OpenWOP host as MCP server" section + `capabilities.mcp.serverMount` block + bidirectional sampling/elicitation bridges. Unblocks the 8 server-side `core.openwop.mcp.*` nodes shipped in v1.1.0.
 
-**Active RFCs (`Active` — wire-shape MAY shift compatibly within v1.x):**
-- [**RFC 0025**](./RFCS/0025-test-mode-registry-namespace.md) — Test-mode registry namespace (`Draft`). Conformance-only typeId namespace; non-production.
-- [**RFC 0027**](./RFCS/0027-prompt-templates.md) — Prompt templates (`Active`). Wire shape for named, versioned, variable-bound prompts; produces `spec/v1/prompts.md` at `DRAFT v1.x`.
-- [**RFC 0028**](./RFCS/0028-prompt-library-endpoints.md) — Prompt library endpoints + pack kind (`Active`).
-- [**RFC 0029**](./RFCS/0029-prompt-override-hierarchy.md) — Prompt resolution chain across node / agent / workflow / host (`Active`); `agent.promptResolved` event.
-- [**RFC 0030**](./RFCS/0030-envelope-reasoning-and-tier-one-subset.md) — Envelope `reasoning` field + Tier-1 cross-vendor structured-output subset (`Active`).
-- [**RFC 0031**](./RFCS/0031-envelope-variants-and-model-capabilities.md) — Envelope variant payload discrimination + `NodeModule.requiredModelCapabilities` (`Active`).
-- [**RFC 0032**](./RFCS/0032-envelope-reliability-events.md) — Six envelope-reliability `RunEventType` entries (`Active`).
-- [**RFC 0033**](./RFCS/0033-envelope-completion-contract.md) — Envelope-completion criteria; truncation-vs-schema-violation retry routing (`Active`).
+**v1.x Multi-agent + prompt + envelope hardening (all `Accepted`):**
+- [**RFC 0021**](./RFCS/0021-ai-envelope-primitive.md) — AI Envelope primitive (`Accepted`): `POST /v1/host/sample/envelope/accept` outcome decision tree; foundation of the §B/§C envelope-reliability stack.
+- [**RFC 0022**](./RFCS/0022-dispatch-input-output-mapping.md) — Dispatch input/output variable mapping (`Accepted`): parent ↔ child variable projection via `inputMapping` + `outputMapping` on `core.dispatch`.
+- [**RFC 0023**](./RFCS/0023-conformance-agent-event-emitters.md) — `agent.toolCalled` ↔ `agent.toolReturned` strict causation pairing (`Accepted`).
+- [**RFC 0024**](./RFCS/0024-agent-reasoning-streaming.md) — Streaming reasoning deltas (`Accepted`): `agent.reasoning.delta` event with verbosity-gated emission.
+- [**RFC 0026**](./RFCS/0026-provider-usage-event.md) — Provider-usage / cost-attribution event vocabulary (`Accepted`).
+- [**RFC 0027**](./RFCS/0027-prompt-templates.md) — Prompt templates (`Accepted` 2026-05-23 on MyndHyve compose-seam adoption): named, versioned, variable-bound prompts; produces `spec/v1/prompts.md`.
+- [**RFC 0030**](./RFCS/0030-envelope-reasoning-and-tier-one-subset.md) — Envelope `reasoning` field + Tier-1 cross-vendor structured-output subset (`Accepted` 2026-05-21).
+- [**RFC 0031**](./RFCS/0031-envelope-variants-and-model-capabilities.md) — Envelope variant payload discrimination + `NodeModule.requiredModelCapabilities` (`Accepted` 2026-05-21).
+- [**RFC 0032**](./RFCS/0032-envelope-reliability-events.md) — Six envelope-reliability `RunEventType` entries (`Accepted` 2026-05-21).
+- [**RFC 0033**](./RFCS/0033-envelope-completion-contract.md) — Envelope-completion criteria; truncation-vs-schema-violation retry routing (`Accepted` 2026-05-21).
+- [**RFC 0034**](./RFCS/0034-otel-collector-test-seam.md) — OTel collector test seam (`Accepted` 2026-05-23 on MyndHyve OTel-seam adoption).
+- [**RFC 0037**](./RFCS/0037-multi-agent-execution-model.md) — Multi-agent execution model Phase 1: handoff state machine (`Accepted` 2026-05-22).
+- [**RFC 0039**](./RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md) — Multi-agent execution model Phase 2: confidence-floor escalation + memory lifecycle Half B (`Accepted` 2026-05-22).
+- [**RFC 0044**](./RFCS/0044-confidence-escalation-interrupt-kind-advertisement.md) — Confidence-escalation interrupt-kind vendor-routing pattern (`x-host-<host>-<kind>`) for entrenched host semantics (`Accepted` 2026-05-22).
+
+**Active RFCs (`Active` — wire-shape MAY shift compatibly within v1.x; awaiting cross-host adoption evidence per `RFCs/0001` §"Promotion to Accepted"):**
+- [**RFC 0028**](./RFCS/0028-prompt-library-endpoints.md) — Prompt library endpoints + pack kind (`Active`). MyndHyve Tier-1 advertises `packsSupported: false, mutableLibrary: false`; path-to-Accepted requires both `true`.
+- [**RFC 0029**](./RFCS/0029-prompt-override-hierarchy.md) — Prompt resolution chain across node / agent / workflow / host (`Active`); `agent.promptResolved` event. Path-to-Accepted requires `agentBindings: true`.
+- [**RFC 0035**](./RFCS/0035-sandbox-execution-contract.md) — Sandbox execution contract (`Active`). 8 advertisement-shape scenarios shipped + 10 behavioral assertions PASS against workflow-engine's `node:vm` MVP. Path-to-Accepted requires a non-steward sandbox-executing host.
+- [**RFC 0036**](./RFCS/0036-multi-region-and-cross-engine-guarantees.md) — Multi-region idempotency + cross-engine append-ordering (`Active`). Behavioral close-out landed 2026-05-22 via workflow-engine test seams (10 PASS). Path-to-Accepted requires non-steward host advertising matching capabilities.
+- [**RFC 0040**](./RFCS/0040-multi-agent-cross-host-causation.md) — Multi-agent execution model Phase 3: cross-host causation + traceparent propagation (`Active`). 4 `it.todo` assertions in `cross-host-traceparent-propagation.test.ts`.
+- [**RFC 0041**](./RFCS/0041-multi-agent-replay-under-nondeterminism.md) — Multi-agent execution model Phase 4: replay determinism + observable-result caching (`Active`). §B `replay-divergence-at-refusal` closed 2026-05-23 (3 PASS); §C `replay-observable-sequence-determinism` carries 5 `it.todo` pending host pure-replay observable-cache emission.
+
+**Draft RFCs (`Draft` — public comment window OR awaiting tripwire):**
+- [**RFC 0025**](./RFCS/0025-test-mode-registry-namespace.md) — Test-mode registry namespace (`Draft`). Conformance-only typeId namespace; non-production. Pending non-steward adoption signal.
+- [**RFC 0038**](./RFCS/0038-working-group-charter.md) — Working Group charter (`Draft`). Charter is land-ready; activation gated on `GOVERNANCE.md` §"Path to working group" tripwire (≥3 independent organizations + ≥2 non-steward hosts passing conformance).
+- [**RFC 0042**](./RFCS/0042-experimental-capability-tier.md) — Experimental capability tier (`Draft`). Optional `tier ∈ {stable, experimental}` field on capability advertisements + sunset rule + derived `openwop-experimental` profile. Schema + `experimentalGate()` helper landed; promotion to Active pending first host advertising `tier: 'experimental'`.
+- [**RFC 0043**](./RFCS/0043-registry-and-extension-policy.md) — Registry + extension policy (`Draft`). IPR posture + vendor-extension namespace rules + neutral process for profile/event-type/capability/envelope-kind name reservations.
 
 **v1 Foundation (2026-04-27):**
 Current generated state: 39 prose specs (35 FINAL + 4 DRAFT) · 32 JSON Schemas · 26 OpenAPI operations · AsyncAPI 3.1 · 210 conformance scenario files · 3 reference SDKs. See [docs/PROTOCOL-STATUS.md](./docs/PROTOCOL-STATUS.md) for the machine-generated snapshot.
