@@ -23,10 +23,24 @@ set -euo pipefail
 SPEC_ROOT="."
 NPM_CACHE="${NPM_CONFIG_CACHE:-/tmp/openwop-npm-cache}"
 
-# Stale npm _locks left from killed earlier invocations (or from concurrent
-# `npx -y` calls) cause `ECOMPROMISED Lock compromised` on the next run.
-# The locks are advisory and safe to wipe at gate start; npm regenerates
-# whatever it needs.
+# Stale npm _locks left from killed earlier invocations cause
+# `ECOMPROMISED Lock compromised` on the next run. The locks are advisory
+# and safe to wipe at gate start; npm regenerates whatever it needs. This
+# class of failure was historically much more common when steps 5/6 used
+# `npx -y -p @<pkg>@latest` — one network fetch into the cache per gate
+# run, racing itself when concurrent runs interleaved (the `@latest`
+# resolution forced a remote metadata lookup every time even on a warm
+# cache). Since 2026-05-23 those two steps pin to explicit semver
+# versions (`@redocly/cli@2.31.4` + `@asyncapi/cli@4.1.1`) — pinned npx
+# calls are deterministic: the package tarball is content-addressed in
+# the cache by version, so the second invocation hits the cache cleanly
+# without any `@latest` round-trip. Vendoring as a repo-root
+# devDependency was considered but the AsyncAPI CLI's transitive deps
+# (it bundles the entire Studio UI: Next.js + React + Monaco editor +
+# ReactFlow) makes `node_modules/` ~100 MB for what's effectively a
+# YAML validator — pinning npx is the right cost/benefit point. The
+# lock-wipe stays as a belt-and-suspenders safety since other sub-gates
+# also call `npx`.
 rm -rf "$NPM_CACHE/_locks" 2>/dev/null || true
 
 echo "=== openwop:check — validating $SPEC_ROOT/ ==="
@@ -99,17 +113,21 @@ echo "[4/9] Go reference SDK (go vet + tests)..."
 )
 echo
 
-# 5. OpenAPI lint via redocly.
+# 5. OpenAPI lint via redocly. Uses a PINNED version (not @latest) — the
+# `@latest` resolution forced a remote metadata lookup every gate run,
+# which is what raced the npm cache. The pinned semver tarball is
+# content-addressed; the second invocation hits the cache deterministically.
 echo "[5/9] OpenAPI 3.1 (redocly lint)..."
 (
   cd "$SPEC_ROOT/api"
-  npm_config_cache="$NPM_CACHE" npx -y -p @redocly/cli@latest redocly lint openapi.yaml
+  npm_config_cache="$NPM_CACHE" npx -y -p @redocly/cli@2.31.4 redocly lint openapi.yaml
 )
 echo
 
-# 6. AsyncAPI validate.
+# 6. AsyncAPI validate. Same pinning as step 5. `@asyncapi/cli@4.1.1` is
+# the last release compatible with Node 22 (5.x requires Node 24+).
 echo "[6/9] AsyncAPI 3.1 (asyncapi validate)..."
-npm_config_cache="$NPM_CACHE" npx -y -p @asyncapi/cli@latest asyncapi validate "$SPEC_ROOT/api/asyncapi.yaml"
+npm_config_cache="$NPM_CACHE" npx -y -p @asyncapi/cli@4.1.1 asyncapi validate "$SPEC_ROOT/api/asyncapi.yaml"
 echo
 
 # 7. Generated protocol status — catches stale corpus counts, RFC status
