@@ -18,6 +18,7 @@ import { getTemplate } from '../host/promptStore.js';
 import { getPromptsHostConfig } from '../host/promptHostConfig.js';
 import { dispatchChat, type ChatMessage, type DispatchResult, type ProviderId } from '../providers/dispatch.js';
 import { dispatchAnthropicWithTools, type ToolDef } from '../providers/dispatchAnthropicTools.js';
+import { dispatchMiniMaxWithTools } from '../providers/dispatchMiniMaxTools.js';
 import { getDefaultModel } from '../providers/catalog.js';
 import {
   dispatchManagedChat,
@@ -1042,10 +1043,13 @@ const sampleChatResponderNode: NodeModule = {
       return { status: 'failure', error: { code: 'credential_unavailable', message: `Secret ${credentialRef} not resolved by host.` } };
     }
 
-    // Tool mode is gated to Anthropic for v1; OpenAI/Google have
-    // their own tool-call wire shapes and we keep the dispatcher
-    // surface minimal until there's demand.
-    const useTools = rawTools.length > 0 && provider === 'anthropic';
+    // Tool mode is wired for Anthropic + MiniMax. Each has its own
+    // dispatcher (Anthropic's native tools API vs OpenAI-compatible
+    // tool_calls for MiniMax); OpenAI + Google are deferred since
+    // their tool-call wire shapes diverge further. The provider gate
+    // here short-circuits before we resolve tool bindings.
+    const toolsCapableProvider = provider === 'anthropic' || provider === 'minimax';
+    const useTools = rawTools.length > 0 && toolsCapableProvider;
     const toolBindings = useTools ? validateToolBindings(rawTools) : [];
 
     // BYOK agentId reveals the actual provider+model — by design.
@@ -1067,54 +1071,61 @@ const sampleChatResponderNode: NodeModule = {
           inputSchema: { type: 'object', additionalProperties: true },
         }));
         const bindingByName = new Map(toolBindings.map((t) => [t.name, t]));
-        result = await dispatchAnthropicWithTools({
-          provider: 'anthropic',
+        // Shared tool-execution callback — same surface for both
+        // dispatchers. Each round, the model requests a tool, this
+        // looks up the bound workflow, executes it via dispatchSubRun,
+        // and emits structured node.tool_use / node.tool_result events
+        // so the UI can render its own breadcrumb cards instead of the
+        // dispatcher's inline Markdown.
+        const onToolUse = async (use: { id: string; name: string; input: Record<string, unknown> }) => {
+          const binding = bindingByName.get(use.name);
+          if (!binding) {
+            return {
+              toolUseId: use.id,
+              content: `tool_not_found: ${use.name}`,
+              isError: true,
+            };
+          }
+          await ctx.emit('node.tool_use', {
+            toolUseId: use.id,
+            name: use.name,
+            workflowId: binding.workflowId,
+            input: use.input,
+          });
+          const subResult = await dispatchSubRun({
+            workflowId: binding.workflowId,
+            inputs: use.input,
+            budgetMs: 30_000,
+            tenantId: ctx.tenantId,
+            ...(ctx.scopeId ? { scopeId: ctx.scopeId } : {}),
+          });
+          await ctx.emit('node.tool_result', {
+            toolUseId: use.id,
+            name: use.name,
+            status: subResult.status,
+            ...(subResult.status === 'completed' ? { output: subResult.output } : {}),
+            ...(subResult.status === 'failed' ? { error: subResult.error } : {}),
+            ...(subResult.status !== 'completed' && 'runId' in subResult ? { runId: subResult.runId } : {}),
+          });
+          return {
+            toolUseId: use.id,
+            content: formatSubRunResult(subResult),
+            isError: subResult.status === 'failed',
+          };
+        };
+        const toolsReq = {
+          provider,
           model,
           apiKey,
           messages,
           maxTokens,
           onDelta,
           tools: toolDefs,
-          onToolUse: async (use) => {
-            const binding = bindingByName.get(use.name);
-            if (!binding) {
-              return {
-                toolUseId: use.id,
-                content: `tool_not_found: ${use.name}`,
-                isError: true,
-              };
-            }
-            // Emit a structured event for the UI to render its own
-            // tool-use card (favored over the dispatcher's inline
-            // Markdown breadcrumb).
-            await ctx.emit('node.tool_use', {
-              toolUseId: use.id,
-              name: use.name,
-              workflowId: binding.workflowId,
-              input: use.input,
-            });
-            const subResult = await dispatchSubRun({
-              workflowId: binding.workflowId,
-              inputs: use.input,
-              budgetMs: 30_000,
-              tenantId: ctx.tenantId,
-              ...(ctx.scopeId ? { scopeId: ctx.scopeId } : {}),
-            });
-            await ctx.emit('node.tool_result', {
-              toolUseId: use.id,
-              name: use.name,
-              status: subResult.status,
-              ...(subResult.status === 'completed' ? { output: subResult.output } : {}),
-              ...(subResult.status === 'failed' ? { error: subResult.error } : {}),
-              ...(subResult.status !== 'completed' && 'runId' in subResult ? { runId: subResult.runId } : {}),
-            });
-            return {
-              toolUseId: use.id,
-              content: formatSubRunResult(subResult),
-              isError: subResult.status === 'failed',
-            };
-          },
-        });
+          onToolUse,
+        };
+        result = provider === 'minimax'
+          ? await dispatchMiniMaxWithTools(toolsReq)
+          : await dispatchAnthropicWithTools(toolsReq);
       } else {
         result = await dispatchChat({
           provider,

@@ -49,7 +49,12 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
   // Tool calling is gated to Anthropic in the backend dispatcher
   // (OpenAI / Google have their own wire shapes — see
   // backend/.../bootstrap/nodes.ts useTools).
-  const supportsTools = config.provider === 'anthropic';
+  // Tools support is per-model. Anthropic Claude 4 models, MiniMax-M2,
+  // and any future provider whose adapter we wire all declare `tools`
+  // in providers.json. The provider-level check we had before was a
+  // proxy for "Anthropic-only" — replaced with a real capability lookup
+  // so MiniMax (the managed Try-it-free path) unlocks tool-use too.
+  const supportsTools = activeModel?.capabilities?.includes('tools') === true;
 
   const disabledReason = isSending ? 'A turn is in flight — wait for the response.' : undefined;
 
