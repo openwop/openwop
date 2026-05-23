@@ -34,25 +34,30 @@ interface WorkflowCard {
   trailing: string;
 }
 
+// NOTE: slugs MUST match what `listWorkflowMentions()` produces. The
+// slugify in `chat/lib/workflowMentions.ts:60` explicitly strips the
+// "(from template)" suffix BEFORE slugifying, so cloned-template
+// workflows resolve under their bare template name — NOT the
+// "from-template" form. Don't append "-from-template" here.
 const WORKFLOW_CARDS: readonly WorkflowCard[] = [
   {
     glyph: '📋',
     title: 'Multi-channel content review',
-    slug: 'multi-channel-content-review-from-template',
+    slug: 'multi-channel-content-review',
     description: 'One draft, four parallel reviewers (legal, brand, compliance, risk), fan-in with all_success, publish. 12 nodes, 4 HITL gates, 1 click.',
     trailing: 'Draft a Q3 product launch announcement',
   },
   {
     glyph: '🚦',
     title: 'Approval with timeout fallback',
-    slug: 'approval-escalation-with-timeout-fallback-from-template',
+    slug: 'approval-escalation-with-timeout-fallback',
     description: 'Primary approver races a 5s timeout to a backup approver. Whichever resolves first drives publication. The canonical HITL escalation pattern.',
     trailing: 'Approve the new pricing change',
   },
   {
     glyph: '🧠',
     title: 'Triple AI review board',
-    slug: 'triple-ai-review-board-from-template',
+    slug: 'triple-ai-review-board',
     description: 'Three concurrent critics fan out from one draft. An arbiter merges their notes into a single verdict. Multi-agent orchestration in one turn.',
     trailing: 'Critique this paragraph for clarity and concision',
   },
@@ -111,7 +116,7 @@ export function WelcomeCard({ onPickSuggestion }: Props): JSX.Element {
               <span aria-hidden>{c.glyph}</span> {c.title}
             </span>
             <code style={{ fontSize: 10.5, color: 'var(--clay)', fontFamily: 'var(--mono)' }}>
-              @{c.slug.replace(/-from-template$/, '')}
+              @{c.slug}
             </code>
             <span className="muted" style={{ fontSize: 11.5, lineHeight: 1.5 }}>{c.description}</span>
           </button>
