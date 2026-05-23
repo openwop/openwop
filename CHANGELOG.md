@@ -11,6 +11,43 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.3 — unreleased] — coordinated SDK release for MyndHyve adoption-feedback slices
 
+### RFC 0027 promoted Active → Accepted + RFC 0039 Half B host implementation lands (2026-05-23)
+
+MyndHyve session shipped three tracks (commit refs: `5385548c` RFC 0027 §E prompt-compose seam, `a51f7bbd` RFC 0039 Half B memory-lifecycle, `1d11fd80` RFC 0040 Sub-5b MCP API-key auth). Production deploy + live discovery verification confirms all advertisements are live on `https://api.myndhyve.ai/.well-known/openwop`:
+
+```jsonc
+{
+  "capabilities": {
+    "multiAgent": {
+      "executionModel": {
+        "supported": true,
+        "version": 2,
+        "confidenceEscalationFloor": 0.5,
+        "confidenceEscalationInterruptKind": "x-host-myndhyve-low-confidence",
+        "crossChildMemoryConcurrency": "strict"
+      }
+    },
+    "prompts": { "supported": true, "observability": "full" }
+  }
+}
+```
+
+**RFC 0027 Promoted Active → Accepted.** MyndHyve's first non-steward `prompts.supported: true` + `observability: 'full'` advertisement satisfies RFC 0027's final remaining acceptance criterion. Commit `5385548c` lands the prompt-compose seam end-to-end with SR-1 redaction (BYOK secret-source variables → `[REDACTED:<credentialRef>]` markers in `prompt.composed` payloads, never plaintext) + RFC 0020 §D `<UNTRUSTED>...</UNTRUSTED>` wrapping (untrusted bindings propagate `contentTrust: "untrusted"` to the composed envelope). `observability` bumped `'hashed' → 'full'` and is now backed by real emission. MyndHyve reports 71/71 green on targeted local suites; full conformance-suite run pending parallel-session unblock.
+
+**RFC 0039 Half B host implementation lands (status unchanged — already Accepted 2026-05-22).** Commit `a51f7bbd` ships `MemoryHyveMemoryResolver.snapshotAtSeq()` reverse-projecting the journal with latest-write-wins + expiry filter at the snapshot anchor (closes the MAE-3 host-side primitive); a host-instrumentation `memory.written` event emitted from the SR-1 redaction chokepoint (NOT in OpenWOP's canonical RunEventType enum — see open question below); and `crossChildMemoryConcurrency: 'strict'` advertisement now live. The `replay_memory_snapshot_unavailable` 422 wire-route surface remains parallel-session-blocked on MyndHyve's side; `snapshotAtSeq` returns `null` correctly, only the route translation awaits the parallel commit.
+
+Two stale `[ ]` items on RFC 0039 acceptance criteria flipped `[x]` — both were actually done in files different from those the criteria named (the spec content went into `multi-agent-execution.md` rather than the speculatively-named `agent-memory.md`; `replay_memory_snapshot_unavailable` shipped in `rest-endpoints.md:314` at commit `c001d21`). Same re-anchoring pattern as the RFC 0027 `workflow-definition.md → workflow-definition.schema.json` audit (commit `0a5bb10`).
+
+**RFC 0040 Sub-5b — MCP API-key auth (progress; full RFC 0040 promotion still needs version: 3).** Commit `1d11fd80` lands `mh_*` / `hk_*` keys with `mcp:invoke-node` scope; `resolveMcpPrincipal()` extracted; audit log carries `authMode` + `keyId`; new `mcp:` scope domain in vocabulary. Advances RFC 0040 toward its full path-to-Accepted (which requires `version: 3` advertisement + the 3 cross-host scenarios passing) but doesn't graduate it on its own.
+
+**`memory.written` wire-shape question (open).** The event is NOT in OpenWOP's canonical `RunEventType` enum (`schemas/run-event.schema.json`). Two paths offered to MyndHyve: (1) namespace as `x-host-myndhyve-memory-written` per `host-extensions.md` §"Canonical prefixes" (preserves wire-shape compat, zero spec work); (2) canonicalize via small additive RFC adding `memory.written` to the enum + payload schema (multi-host SR-1 audit shape). No decision yet.
+
+**Updates:**
+- `RFCS/0027-prompt-templates.md` Status: `Active → Accepted`. Final acceptance criterion (`first non-steward host advertises`) flipped `[x]` with MyndHyve evidence.
+- `RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md` two stale `[ ]` items flipped `[x]`; path-to-Accepted footer updated with Half B strengthening note.
+- `INTEROP-MATRIX.md` header date 2026-05-22 → 2026-05-23; MyndHyve row in §"Capability adoption — RFC 0027 + RFC 0028 prompt library" updated from "Not yet adopted" → "**true** | — | — | — | **full**" with adoption evidence.
+- `README.md` Accepted (32 → 33 — adds 0027); Active (8 → 7).
+
 ### Docs sync — suite v1.4.0 → v1.5.0 re-measurement + KNOWN-LIMITS RFC table refresh (2026-05-22)
 
 Same-day refresh triggered by the `@openwop/openwop-conformance` 1.4.0 → 1.5.0 bump + the `840b1ff` commit promoting RFC 0037 Phase 1 + RFC 0039 Half A + RFC 0044 Active → Accepted in a single batch:

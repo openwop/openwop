@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0027 |
 | **Title** | Prompt Templates — wire shape for portable, versioned, variable-bound prompts; `capabilities.prompts` block; `prompt.composed` run event |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | OpenWOP Working Group |
 | **Created** | 2026-05-19 |
-| **Updated** | 2026-05-20 (Draft → Active — see [Status history](#status-history) below). |
+| **Updated** | 2026-05-23 (Active → Accepted: first non-steward host advertisement validated live. MyndHyve workflow-runtime advertises `capabilities.prompts.{supported: true, observability: 'full'}` on `https://api.myndhyve.ai/.well-known/openwop` (verified 2026-05-23). MyndHyve commit `5385548c` lands the prompt-compose seam end-to-end with SR-1 redaction (BYOK secret-source variables → `[REDACTED:<credentialRef>]` markers in `prompt.composed` payloads, never plaintext) + RFC 0020 §D `<UNTRUSTED>...</UNTRUSTED>` wrapping (untrusted bindings propagate `contentTrust: "untrusted"` to the composed envelope). `observability` bumped `'hashed' → 'full'` and is now backed by real emission per `c4342b5b` adoption-pass evidence. Conformance scenarios `prompt-template-shape.test.ts` + `prompt-composed-secret-redaction.test.ts` + `prompt-composed-trust-marker.test.ts` shipped in `@openwop/openwop-conformance@1.4.0`; MyndHyve reports 71/71 green on the targeted suites. 2026-05-20 prior: Draft → Active. See [Status history](#status-history) below for full lineage.) |
 | **Affects** | `spec/v1/prompts.md` (NEW) · `schemas/prompt-template.schema.json` (NEW) · `schemas/prompt-ref.schema.json` (NEW) · `schemas/prompt-kind.schema.json` (NEW — shared enum $def) · `schemas/capabilities.schema.json` (additive `prompts` block) · `schemas/run-event.schema.json` (new `prompt.composed` enum entry) · `schemas/run-event-payloads.schema.json` (new `promptComposed` `$def` + additive `divergencePoint` field on the existing `replayDiverged` `$def` per §F — the shared field is consumed by RFCs 0029 and 0032 as well) · `spec/v1/workflow-definition.md` (note `WorkflowNode.config.promptRef` convention) · `SECURITY/invariants.yaml` (new `prompt-composed-secret-redaction`, `prompt-composed-trust-marker`) · 3 new conformance scenarios · CHANGELOG |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -451,7 +451,7 @@ Checklist the maintainers will use to flip `Status` from `Active` to `Accepted`:
 - [x] CHANGELOG entry under `[Unreleased]`.
 - [ ] `INTEROP-MATRIX.md` updated to enumerate host advertisements of `capabilities.prompts.supported` + `observability`. The matrix shape mirrors the existing `capabilities.agents.*` row family. (Will land alongside the first non-steward advertisement.)
 - [x] Reference host (`apps/workflow-engine/backend/typescript`) advertises `capabilities.prompts.supported: true` with `observability: "full"` and passes all three new conformance scenarios.
-- [ ] First non-steward host advertises `capabilities.prompts.supported: true` (third-party validation gate per RFC 0001 §"Promotion to Accepted"). MAY be waived under the bootstrap-phase waiver if the steward provides a public conformance run pointing at the advertised endpoint. (Path-to-Accepted.)
+- [x] First non-steward host advertises `capabilities.prompts.supported: true` (third-party validation gate per RFC 0001 §"Promotion to Accepted") — MyndHyve workflow-runtime advertises `capabilities.prompts.{supported: true, observability: 'full'}` live at `https://api.myndhyve.ai/.well-known/openwop` (verified 2026-05-23). MyndHyve commit `5385548c` lands the prompt-compose seam end-to-end with SR-1 redaction + RFC 0020 §D `<UNTRUSTED>` wrapping; `observability` bumped `'hashed' → 'full'` and now backed by real emission. Closes RFC 0027 path-to-Accepted.
 
 ## References
 
