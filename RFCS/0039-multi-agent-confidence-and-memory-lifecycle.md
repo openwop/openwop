@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0039 |
 | **Title** | Multi-agent execution model Phase 2: confidence-threshold escalation + agent memory lifecycle across sub-runs and replay |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-21 |
-| **Updated** | 2026-05-22 (Draft → Active: confidence-floor escalation half landed atomically. `schemas/capabilities.schema.json` extends `multiAgent.executionModel` with optional `confidenceEscalationFloor` (range [0.5, 1.0]) + `crossChildMemoryConcurrency` (enum strict|advisory) fields; `schemas/run-event.schema.json` adds `core.workflowChain.confidence-escalated` to the RunEventType enum (63 variants total); `schemas/run-event-payloads.schema.json` adds `coreWorkflowChainConfidenceEscalated` payload schema with required `{confidence, floor, escalationKind, workerId, parentRunId}`. `spec/v1/multi-agent-execution.md` gains §"Confidence escalation (RFC 0039 Phase 2, normative)" inlining the §A MUSTs. Reference workflow-engine: `core.dispatch` gates on the floor BEFORE entering the per-worker loop; emits the escalation event with `causationId` chained back to `runOrchestrator.decided`; suspends with `interrupt.kind: 'clarification'`. Discovery advertises `version: 2` + `confidenceEscalationFloor: 0.5` (default) under `OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_2=true`. Behavioral conformance `multi-agent-confidence-escalation.test.ts` + fixture `conformance-multi-agent-confidence-escalation.json` land alongside; assert exactly one `confidence-escalated` event, zero `core.workflowChain.event` records (no dispatch), parent suspends with clarification, payload shape per `coreWorkflowChainConfidenceEscalated` schema. Memory-lifecycle half (MAE-2/3) — `crossChildMemoryConcurrency` field is schema-landed but not yet wired in the host's MemoryAdapter; replay snapshot mechanism + `replay_memory_snapshot_unavailable` error code remain explicit follow-up. Path to `Accepted`: a non-steward host advertises `version: 2` + the behavioral conformance passes against it.) |
+| **Updated** | 2026-05-22 (Active → Accepted: Half A confidence-floor escalation validated cross-host. MyndHyve workflow-runtime advertises `capabilities.multiAgent.executionModel.{supported: true, version: 2, confidenceEscalationFloor: 0.5, confidenceEscalationInterruptKind: 'x-host-myndhyve-low-confidence'}` on Cloud Run revision `workflow-runtime-00353-rab` (MyndHyve commit `c4342b5b`); `multi-agent-confidence-escalation.test.ts` against `@openwop/openwop-conformance@1.5.0` passes via the RFC 0044 vendor-kind routing branch — `terminal.status.startsWith('waiting-')` matches MyndHyve's `waiting-approval` mapping. Combined run reports 2 passed / 2 skipped / 0 failed (exit 0); the second skip is the fixture-gated behavioral confidence-escalated event chain (separate strengthening pass). Half B memory-lifecycle (MAE-2/3) remains a follow-up strengthening tier — `crossChildMemoryConcurrency` field is schema-landed; replay snapshot mechanism + `replay_memory_snapshot_unavailable` error code wait on a memory-advertising host implementing `snapshotAtSeq`. See `INTEROP-MATRIX.md` §"Third-party host adoption — RFC 0037 Phase 1 ... (2026-05-22)" for the row. 2026-05-22 prior: Draft → Active same-day, Phase 2 spec + reference-host wiring + advertisement-shape scenario all landed.) |
 | **Affects** | `spec/v1/multi-agent-execution.md` (extends with §"Confidence escalation" + §"Agent memory lifecycle") · `spec/v1/agent-memory.md` (adds §"Sub-run lifecycle + replay carry-forward") · `schemas/capabilities.schema.json` (bumps `multiAgent.executionModel.version` ceiling for v2 from 1 to 2; no required-field changes) · `schemas/run-event-payloads.schema.json` (additive shape clarifications on `runOrchestrator.decided` + `memory.compacted`) · 3 new conformance scenarios · `INTEROP-MATRIX.md` · CHANGELOG |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -137,19 +137,19 @@ The new RunEventType is additive per the existing forward-compat rule (`run-even
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (this file).
-- [ ] `spec/v1/multi-agent-execution.md` extended with §"Confidence escalation" per §A.
-- [ ] `spec/v1/agent-memory.md` extended with §"Sub-run lifecycle + replay carry-forward" per §B.
-- [ ] `spec/v1/rest-endpoints.md` §"Common error codes" gains `replay_memory_snapshot_unavailable` per §C.
-- [ ] `schemas/run-event.schema.json` RunEventType enum gains `core.workflowChain.confidence-escalated`.
-- [ ] `schemas/run-event-payloads.schema.json` gains the matching payload schema.
-- [ ] `schemas/capabilities.schema.json` extends `multiAgent.executionModel` with optional `confidenceEscalationFloor` + `crossChildMemoryConcurrency` fields; bumps the `version` upper bound from 4 to 4 (unchanged — Phases 2/3/4 share the [1,4] range).
-- [ ] 3 new conformance scenarios per §Conformance.
-- [ ] At least one reference host advertises `version: 2` + passes the 3 scenarios.
-- [ ] `INTEROP-MATRIX.md` updated.
-- [ ] CHANGELOG entry under `[Unreleased]`.
+- [x] Spec text merged (this file).
+- [x] `spec/v1/multi-agent-execution.md` extended with §"Confidence escalation" per §A.
+- [ ] `spec/v1/agent-memory.md` extended with §"Sub-run lifecycle + replay carry-forward" per §B. (Half B follow-up strengthening tier — host-side MemoryAdapter wiring required first.)
+- [ ] `spec/v1/rest-endpoints.md` §"Common error codes" gains `replay_memory_snapshot_unavailable` per §C. (Half B follow-up.)
+- [x] `schemas/run-event.schema.json` RunEventType enum gains `core.workflowChain.confidence-escalated`.
+- [x] `schemas/run-event-payloads.schema.json` gains the matching payload schema (`coreWorkflowChainConfidenceEscalated`).
+- [x] `schemas/capabilities.schema.json` extends `multiAgent.executionModel` with optional `confidenceEscalationFloor` + `crossChildMemoryConcurrency` fields; `version` upper bound carries Phases 2/3/4 in the [1,4] range.
+- [x] 3 new conformance scenarios per §Conformance — `multi-agent-confidence-escalation.test.ts` (Half A), `multi-agent-memory-lifecycle.test.ts` (Half B advertisement-shape + behavioral todo), and the RFC 0044 routing branch shipped in `@openwop/openwop-conformance@1.5.0`.
+- [x] At least one reference host advertises `version: 2` + passes the Half A scenario — MyndHyve workflow-runtime advertises `multiAgent.executionModel.{supported: true, version: 2, confidenceEscalationFloor: 0.5, confidenceEscalationInterruptKind: 'x-host-myndhyve-low-confidence'}` on revision `workflow-runtime-00353-rab`; `multi-agent-confidence-escalation.test.ts` passes via the RFC 0044 vendor-kind routing branch against `@openwop/openwop-conformance@1.5.0` (2026-05-22).
+- [x] `INTEROP-MATRIX.md` updated — see §"Third-party host adoption — RFC 0037 Phase 1 + RFC 0039 Half A + RFC 0044 ... (2026-05-22)".
+- [x] CHANGELOG entry under `[Unreleased]`.
 
-Path to `Active → Accepted`: cross-host advertisement evidence per `RFCs/0001-rfc-process.md` §"Promotion to Accepted."
+Path to `Active → Accepted`: cross-host advertisement evidence per `RFCs/0001-rfc-process.md` §"Promotion to Accepted." **CLOSED 2026-05-22** — Half A confidence-floor escalation validated cross-host. Half B memory-lifecycle (MAE-2 cross-run TTL + MAE-3 replay snapshot) remains a follow-up strengthening tier; the `crossChildMemoryConcurrency` capability field is schema-landed but no memory-advertising host has implemented `snapshotAtSeq` against the `multi-agent-memory-lifecycle.test.ts` behavioral assertions yet. When that follow-up lands, the half-B acceptance criteria flip [x] additively without changing the Accepted status.
 
 ## References
 

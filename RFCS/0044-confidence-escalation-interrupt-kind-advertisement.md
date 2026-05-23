@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0044 |
 | **Title** | `multiAgent.executionModel.confidenceEscalationInterruptKind` capability advertisement — supports canonical (`clarification` / `approval`) and vendor-extension (`x-host-<host>-<kind>`) interrupt-kind names without forcing cross-cutting rename on hosts with entrenched kinds |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-22 |
-| **Updated** | 2026-05-22 (Draft → Active same-day: small additive clarification to RFC 0039 §A following the RFC 0034/0037/0039/0040/0041 same-day pattern. The capability flag is purely additive — no required-field changes, no normative shifts on the underlying confidence-floor escalation contract. Path to `Accepted`: a non-steward host advertises the new capability + the relaxed conformance scenario passes against the advertised kind.) |
+| **Updated** | 2026-05-22 (Active → Accepted same-day on first non-steward advertisement evidence: MyndHyve workflow-runtime advertises `multiAgent.executionModel.confidenceEscalationInterruptKind: 'x-host-myndhyve-low-confidence'` on Cloud Run revision `workflow-runtime-00353-rab` (MyndHyve commit `c4342b5b`); `multi-agent-confidence-escalation.test.ts` against `@openwop/openwop-conformance@1.5.0` passes via the vendor-kind routing branch — `terminal.status.startsWith('waiting-')` matches MyndHyve's `waiting-approval` mapping. MyndHyve's RFC 0044 §C vendor-kind mapping document is at MyndHyve `docs/openwop-adoption/0044-vendor-kind-mapping.md` (committed `c4342b5b`), identifying clarify-semantic correspondence, waiting-approval status, and 5 downstream consumers. Co-graduates with RFC 0037 Phase 1 (already Accepted 2026-05-22 via prior signal) + RFC 0039 Half A (graduating in this same commit). 2026-05-22 prior: Draft → Active same-day, additive capability advertisement filed in response to MyndHyve adoption-pass option-3 request.) |
 | **Affects** | `spec/v1/multi-agent-execution.md` §"Confidence escalation (RFC 0039 Phase 2, normative)" (extends with the new capability + the host-advertised kind-routing rule) · `schemas/capabilities.schema.json` (additive `confidenceEscalationInterruptKind` field) · `conformance/src/scenarios/multi-agent-confidence-escalation.test.ts` (reads the advertised kind; accepts vendor-extension kinds when present) · CHANGELOG |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -109,8 +109,8 @@ Hosts that adopt the new field gain:
 - [x] `schemas/capabilities.schema.json` extends `multiAgent.executionModel` with the `confidenceEscalationInterruptKind` field per §A.
 - [x] `conformance/src/scenarios/multi-agent-confidence-escalation.test.ts` routes the terminal-status assertion via the advertised kind per §B.
 - [x] CHANGELOG entry under `[Unreleased]`.
-- [ ] At least one non-steward host advertises `confidenceEscalationInterruptKind` and the relaxed conformance scenario passes against the advertised kind. (Path-to-Accepted.)
-- [ ] `INTEROP-MATRIX.md` updated to enumerate host advertisements of `confidenceEscalationInterruptKind`. (Will land alongside the first non-steward advertisement.)
+- [x] At least one non-steward host advertises `confidenceEscalationInterruptKind` and the relaxed conformance scenario passes against the advertised kind — MyndHyve workflow-runtime advertises `'x-host-myndhyve-low-confidence'` on revision `workflow-runtime-00353-rab` (2026-05-22), `multi-agent-confidence-escalation.test.ts` passes via the vendor-kind routing branch against `@openwop/openwop-conformance@1.5.0`. MyndHyve's RFC 0044 §C vendor-kind mapping document committed at `c4342b5b`.
+- [x] `INTEROP-MATRIX.md` updated to enumerate host advertisements of `confidenceEscalationInterruptKind`.
 
 Path to `Active → Accepted`: cross-host advertisement evidence per `RFCs/0001-rfc-process.md` §"Promotion to Accepted." Co-graduates with RFC 0039 Half A when MyndHyve (or another non-steward host) advertises `version: 2` + the vendor `confidenceEscalationInterruptKind`.
 

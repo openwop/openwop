@@ -24,6 +24,39 @@ In response to a 2026-05-22 external standards-readiness review of the openwop c
 
 Gate: `bash scripts/openwop-check.sh` green. No wire-shape changes. Spec-corpus-validity 642/642 PASS. `additive` per `COMPATIBILITY.md` §2.1 for the two new RFCs.
 
+### RFC 0039 Half A + RFC 0044 promoted Active → Accepted — three RFCs from one conformance run (2026-05-22)
+
+**Milestone.** Second vendor-neutral validation signal — and the first time the `x-host-<host>-<kind>` vendor-extension pattern works end-to-end across a real adopter. MyndHyve's combined conformance run on Cloud Run revision `workflow-runtime-00353-rab` (suite `@openwop/openwop-conformance@1.5.0`, commit `c4342b5b`) reports 2 passed / 2 fixture-gated skips / 0 failed against `multi-agent-handoff-state-machine.test.ts` + `multi-agent-confidence-escalation.test.ts`. Three RFCs graduate Active → Accepted from this single run (RFC 0037 Phase 1 was promoted on the earlier `version: 1` signal — see the section below; RFC 0039 Half A + RFC 0044 promote now).
+
+**Wire advertisement verified live:**
+```jsonc
+{
+  "capabilities": {
+    "multiAgent": {
+      "executionModel": {
+        "supported": true,
+        "version": 2,
+        "confidenceEscalationFloor": 0.5,
+        "confidenceEscalationInterruptKind": "x-host-myndhyve-low-confidence"
+      }
+    }
+  }
+}
+```
+
+**RFC 0039 Half A — confidence-floor escalation (Accepted).** MyndHyve advertises `version: 2` + the floor at the spec minimum (0.5). The `multi-agent-confidence-escalation.test.ts` scenario passes via the RFC 0044 vendor-kind routing branch — `terminal.status.startsWith('waiting-')` matches MyndHyve's `waiting-approval` mapping. Half B memory-lifecycle (MAE-2 cross-run TTL + MAE-3 replay snapshot) remains a follow-up strengthening tier; `crossChildMemoryConcurrency` capability is schema-landed but `snapshotAtSeq` host implementation hasn't shipped. When Half B lands, those acceptance criteria flip [x] additively without changing the Accepted status.
+
+**RFC 0044 — vendor-kind advertisement (Accepted).** MyndHyve's entrenched `interrupt.kind: 'low-confidence'` semantic (cross-cutting `LOW_CONFIDENCE_SUSPEND_REASON` + `mockAgent.node` + `escalationThreshold.ts` + UI consumers) is now wire-advertised via `'x-host-myndhyve-low-confidence'` matching the `^x-host-<host>-<kind>$` pattern from `host-extensions.md` §"Canonical prefixes". No host-side rename happened. RFC 0044 §C vendor-kind mapping document committed at MyndHyve `c4342b5b` (`docs/openwop-adoption/0044-vendor-kind-mapping.md`), identifying clarify-semantic correspondence + `waiting-approval` status + 5 enumerated downstream consumers.
+
+**Validates the `spec-rfc-XXXX | x-host-<host>-<key>` pattern.** RFC 0044 reused the advertisement shape RFC 0041 §A introduced for `replayDeterminism.llmCacheKeyRecipe`. With this acceptance, the pattern is proven across two distinct capability surfaces (cache-key recipe + interrupt-kind name) and one production-grade adopter. Future RFCs introducing vendor-extension-compatible advertisements can cite this precedent.
+
+**Updates:**
+- `RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md` Status: `Active → Accepted`. 8 of 10 acceptance-criteria items flip `[ ] → [x]`. Remaining 2 are the Half B (memory-lifecycle) items, explicitly documented as follow-up strengthening tier.
+- `RFCS/0044-confidence-escalation-interrupt-kind-advertisement.md` Status: `Active → Accepted`. All 7 acceptance-criteria items flip `[ ] → [x]`.
+- `INTEROP-MATRIX.md` §"Third-party host adoption — RFC 0037 Phase 1 ... (2026-05-22)" section title broadened to cover all three RFCs; row updated to capture the combined run's evidence (commands + capability advertisement + revision + commit refs).
+- `INTEROP-MATRIX.md` header date note expanded to cover the 3-RFC promotion.
+- `README.md` Accepted (30 → 32 — adds 0039, 0044); Active (10 → 8).
+
 ### RFC 0037 Phase 1 promoted Active → Accepted — first vendor-neutral validation tripwire fires (2026-05-22)
 
 **Milestone.** The OpenWOP protocol has its first third-party validation. MyndHyve workflow-runtime — operating as a non-steward host per `MAINTAINERS.md` — advertises `capabilities.multiAgent.executionModel.{supported: true, version: 1}` and passes `multi-agent-handoff-state-machine.test.ts` from `@openwop/openwop-conformance@1.4.0` (1 passed / 1 skipped / 0 failed, exit 0) against Cloud Run revision `workflow-runtime-00352-geh`.
