@@ -105,3 +105,54 @@ export function behaviorGate(profileName: string, advertised: boolean): boolean 
   );
   return false;
 }
+
+/**
+ * RFC 0042 §D — experimental-tier soft-skip router for capability-gated
+ * scenarios. Wraps `behaviorGate` with an additional tier check.
+ *
+ * Returns true if the scenario should proceed with assertions, false if
+ * it should skip:
+ *   - tier === 'experimental' AND OPENWOP_REQUIRE_EXPERIMENTAL not set → soft-skip
+ *     (the scenario does NOT count toward "Failed" or "Skipped (capability-gated)"
+ *      in the four-bucket taxonomy — a new fifth bucket "Skipped (experimental)"
+ *      SHOULD be tallied by reporters; logged via the dedicated console.warn below.)
+ *   - tier === 'experimental' AND OPENWOP_REQUIRE_EXPERIMENTAL=true → behave as
+ *     stable (hand off to behaviorGate; honor OPENWOP_REQUIRE_BEHAVIOR + opt-out).
+ *   - tier === 'stable' (default) → identical to behaviorGate.
+ *
+ * The `experimentalUntil` ISO-8601 date is logged for telemetry but does NOT
+ * gate behavior — the spec contract is that the wire shape MAY shift before
+ * the date, not that the scenario MUST stop running.
+ */
+export function experimentalGate(
+  profileName: string,
+  advertised: boolean,
+  tier: 'stable' | 'experimental' | undefined,
+  experimentalUntil?: string,
+): boolean {
+  if (tier === 'experimental') {
+    const env = loadEnv();
+    const requireExperimental = process.env.OPENWOP_REQUIRE_EXPERIMENTAL === 'true';
+    if (!requireExperimental) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[experimental capability: ${profileName}] host advertises tier='experimental'` +
+          (experimentalUntil ? ` until ${experimentalUntil}` : '') +
+          `; scenario skipped under default mode (set OPENWOP_REQUIRE_EXPERIMENTAL=true to run)`,
+      );
+      return false;
+    }
+    // Strict-mode experimental: hand off to behaviorGate with the standard
+    // advertised+opt-out rules. A host that advertises tier='experimental'
+    // AND opts the profile out via OPENWOP_OPTED_OUT_PROFILES would surface
+    // the standard advertise+opt-out conflict warning from behaviorGate.
+    // Don't strip the env.requireBehavior flag — that's a separate axis.
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[experimental capability: ${profileName}] OPENWOP_REQUIRE_EXPERIMENTAL=true; ` +
+        `running as strict assertion against advertised='${advertised}'`,
+    );
+    void env;
+  }
+  return behaviorGate(profileName, advertised);
+}

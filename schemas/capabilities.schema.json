@@ -398,10 +398,29 @@
           "type": "object",
           "additionalProperties": false,
           "required": ["supported", "version"],
+          "if": {
+            "properties": { "tier": { "const": "experimental" } },
+            "required": ["tier"]
+          },
+          "then": {
+            "required": ["experimentalUntil"]
+          },
           "properties": {
             "supported": {
               "type": "boolean",
               "description": "Host implements the execution loop + handoff state machine per spec/v1/multi-agent-execution.md §\"Execution loop\" + §\"Handoff state machine\". When true, the host MUST emit `core.workflowChain.event` records on every handoff transition per the §\"Transition events\" table."
+            },
+            "tier": {
+              "type": "string",
+              "enum": ["stable", "experimental"],
+              "default": "stable",
+              "description": "RFC 0042 — stability claim for this capability advertisement. `stable` (the default when absent) means the host commits to the wire shape across v1.x minors. `experimental` means the host advertises the surface as a preview; the wire shape MAY shift compatibly without notice until the underlying RFC graduates to `Accepted` and the host re-advertises as `stable`. Hosts MUST omit the field for capabilities whose underlying RFC is already `Accepted`."
+            },
+            "experimentalUntil": {
+              "type": "string",
+              "format": "date",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "description": "RFC 0042 §B — required when `tier` is `experimental`. ISO-8601 `YYYY-MM-DD` no more than 12 months past the discovery response date. Reaching this date without graduating the underlying RFC to `Accepted` MUST result in the host either flipping tier to `stable` OR retracting the capability advertisement (or — with an open deprecation RFC — extending with a new `experimentalUntil` per §B sub-block 2)."
             },
             "version": {
               "type": "integer",
