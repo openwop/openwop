@@ -54,6 +54,16 @@ apps/workflow-engine/backend/typescript/data/
 # Frontend dev-server runtime state (sqlite + host-fs sandbox written by
 # the in-memory host surfaces). Never source.
 apps/workflow-engine/frontend/react/data/
+# Conformance harness runtime state for local workflow-engine runs:
+# the BE's sqlite DB + WAL/shm sidecar files (caught by `*.db` for the
+# main file, but the WAL writer emits `.db-shm`/`.db-wal` siblings
+# that need their own match), the BYOK at-rest master key (never
+# committed — a production deploy uses a managed KMS), and an
+# initially-empty host-fs sandbox dir the in-memory host writes into.
+conformance/data/*.db-shm
+conformance/data/*.db-wal
+conformance/data/.byok-master-key
+conformance/data/host-fs/
 
 # ── apps/workflow-engine: stray colocated TypeScript emit ────────────────────
 # `tsc` invoked without `--noEmit` (e.g., `tsc -b` outside the build
