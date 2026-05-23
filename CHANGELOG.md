@@ -303,6 +303,7 @@ Continuing into the afternoon. Sample-app only; no spec/schema/SDK contracts tou
 - **Builder run tenant fix** — `BuilderShell.tsx` was hardcoding `tenantId: 'demo'` in createRun calls, producing 403 "principal cannot operate under tenant demo" for non-bearer principals. Removed so the BE infers from the authenticated session, mirroring the chat path.
 - **AI chat states polished** — "Loading…" replaced with "Spinning up your demo server…" editorial postcard (fading dots + card-breathing). Backend-resting error postcard rewritten (RFC numbers removed from user-facing copy). Chat history drawer falls back to localStorage session index when BE is in cold-start.
 - **/prompts page copy + empty-list fallback** — replaced API jargon with user-facing framing; empty BE response now falls back to bundled samples + user prompts so the page is never blank.
+- **Per-node provider + model selection in the builder Inspector** — `chat` catalog gains `provider-picker` + `model-picker` configFields with a `dependsOn` cascade that clears stale siblings when the provider changes. Custom-model "Other…" sentinel surfaces a free-text input for fine-tunes / snapshots / betas. Backend chat-responder reads `provider`/`model`/`credentialRef` from config FIRST and falls back to inputs, so the chat-tab path is unaffected. Tools-unsupported providers (anywhere outside the Anthropic + MiniMax wire-shape gate) now emit a `node.warning` event instead of silently dropping requested tools.
 
 ### Sample app — chat-surface UX + workflow-template prompt preload (2026-05-22)
 

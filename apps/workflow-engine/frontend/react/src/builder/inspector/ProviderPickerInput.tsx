@@ -26,7 +26,9 @@ export function ProviderPickerInput({ value, onChange, required }: Props): JSX.E
       required={required}
       onChange={(e) => onChange(e.target.value || undefined)}
     >
-      <option value="">{required ? 'Pick a provider…' : '(none)'}</option>
+      <option value="">
+        {required ? 'Pick a provider…' : '(use run-time inputs)'}
+      </option>
       {visible.map((p) => (
         <option key={p.id} value={p.id}>{p.label}</option>
       ))}

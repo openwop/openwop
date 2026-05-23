@@ -33,18 +33,59 @@ export function ModelPickerInput({ value, onChange, providerId, required }: Prop
       </select>
     );
   }
+  // Whether the current value is a declared model. When false but
+  // non-empty, the user picked "Other…" earlier and is on a custom
+  // model id (fine-tune, beta release, snapshot). Surface a text
+  // input alongside the dropdown in that mode.
+  const declared = value ? models.some((m) => m.id === value) : true;
+  const customMode = value !== undefined && !declared;
+
+  if (customMode) {
+    return (
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value || undefined)}
+          placeholder="custom model id"
+          style={{ flex: 1 }}
+        />
+        <button
+          type="button"
+          className="secondary"
+          style={{ fontSize: 11, padding: '3px 9px' }}
+          onClick={() => onChange(undefined)}
+          title="Switch back to the declared-model dropdown"
+        >
+          ← list
+        </button>
+      </div>
+    );
+  }
+
   return (
     <select
       value={value ?? ''}
       required={required}
-      onChange={(e) => onChange(e.target.value || undefined)}
+      onChange={(e) => {
+        const next = e.target.value;
+        if (next === '__custom__') {
+          // Sentinel — flip to custom-mode by writing an empty-but-
+          // defined string that the `declared` check will treat as
+          // "custom mode active." The user then types the id.
+          onChange('');
+          return;
+        }
+        onChange(next || undefined);
+      }}
     >
-      <option value="">{required ? 'Pick a model…' : '(use provider default)'}</option>
+      <option value="">{required ? 'Pick a model…' : '(use run-time inputs)'}</option>
       {models.map((m) => (
         <option key={m.id} value={m.id}>
           {m.label}{m.recommended ? ' (recommended)' : ''}
         </option>
       ))}
+      <option value="__custom__">Other… (fine-tune / snapshot / beta)</option>
     </select>
   );
 }

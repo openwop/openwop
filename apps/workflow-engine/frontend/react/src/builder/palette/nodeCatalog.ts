@@ -176,6 +176,11 @@ export const NODE_CATALOG: readonly NodeCatalogEntry[] = [
     ],
   },
   {
+    // mock-ai deliberately has no provider/model configFields — it's a
+    // deterministic local node, not a real LLM dispatch. Adding those
+    // fields would be misleading UX (the values would be ignored at
+    // run time). Only prompt-picker fields appear, demonstrating the
+    // RFC 0027 prompt-ref wire shape end-to-end without an LLM call.
     kind: 'mock-ai',
     typeId: 'local.sample.demo.mock-ai',
     label: 'Mock AI',
@@ -216,11 +221,15 @@ export const NODE_CATALOG: readonly NodeCatalogEntry[] = [
     accent: 'var(--color-ai)',
     inputs: [{ name: 'messages', type: 'object' }],
     outputs: [{ name: 'completion', type: 'string' }],
-    // ConfigField order matters here: `provider` MUST come before
-    // `model` and `credentialRef` so the Inspector resolves the
-    // dependsOn lookup against an already-rendered sibling. The
-    // backend chat-responder reads these from config FIRST and falls
-    // back to inputs (see `sampleChatResponderNode` in nodes.ts).
+    // ConfigField order is UX-driven: provider first so the picker
+    // reads top-to-bottom; model/credentialRef below since they
+    // semantically depend on provider. The `dependsOn` lookup
+    // resolves against the same node.config object regardless of
+    // catalog order — render-order is not load-bearing.
+    //
+    // The backend chat-responder reads `provider`/`model`/`credentialRef`
+    // from config FIRST and falls back to inputs (see
+    // `sampleChatResponderNode` in nodes.ts).
     configFields: [
       {
         key: 'provider',

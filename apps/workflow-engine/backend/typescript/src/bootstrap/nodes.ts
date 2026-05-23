@@ -1065,6 +1065,19 @@ const sampleChatResponderNode: NodeModule = {
     const toolsCapableProvider = provider === 'anthropic' || provider === 'minimax';
     const useTools = rawTools.length > 0 && toolsCapableProvider;
     const toolBindings = useTools ? validateToolBindings(rawTools) : [];
+    // Tools requested but the resolved provider has no dispatcher for
+    // them — emit a structured warning so the FE can show it inline
+    // ("tools were silently dropped"). The dispatch still runs without
+    // tools rather than failing the run; the warning gives the user
+    // visibility into why their tool-bound chat node didn't tool-call.
+    if (rawTools.length > 0 && !toolsCapableProvider) {
+      await ctx.emit('node.warning', {
+        code: 'tools_unsupported_provider',
+        message: `Tools were requested but provider '${provider}' has no tools dispatcher wired. Tools dropped; chat will dispatch text-only.`,
+        provider,
+        requestedToolCount: rawTools.length,
+      });
+    }
 
     // BYOK agentId reveals the actual provider+model — by design.
     // Managed-tile hides the underlying model (`openwop-free-assistant`);
