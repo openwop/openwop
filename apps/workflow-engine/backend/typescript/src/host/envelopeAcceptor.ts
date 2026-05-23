@@ -32,15 +32,37 @@
  */
 
 import Ajv2020, { type ValidateFunction } from 'ajv/dist/2020.js';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { normalizeEnvelopePayload } from './envelopeNormalizers.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-// repo-root / schemas. The host is at apps/workflow-engine/backend/typescript/src/host/.
-const SCHEMAS_DIR = resolve(__dirname, '..', '..', '..', '..', '..', '..', 'schemas');
+
+// Locate the schemas directory regardless of whether this module is
+// loaded from the source tree (`src/host/envelopeAcceptor.ts` — 6 levels
+// up to repo root) OR the esbuild-bundled tree (`lib/index.js` — only 4
+// levels up). Walk parents until we find a sibling `schemas/` dir; bail
+// out at 8 levels (defensive). Fixes a pre-existing crash where the
+// bundled host resolved `..` × 6 from `lib/` past the repo root, opening
+// `/Users/david/dev/schemas/ai-envelope.schema.json` (which doesn't
+// exist) when the envelope-accept seam was hit.
+function locateSchemasDir(): string {
+  let cur = __dirname;
+  for (let i = 0; i < 8; i++) {
+    const candidate = resolve(cur, 'schemas');
+    if (existsSync(join(candidate, 'ai-envelope.schema.json'))) return candidate;
+    const parent = dirname(cur);
+    if (parent === cur) break;
+    cur = parent;
+  }
+  // Last-resort: assume the source-tree layout (6 levels up). The
+  // ENOENT will surface at first envelope-accept call rather than
+  // crashing module-load.
+  return resolve(__dirname, '..', '..', '..', '..', '..', '..', 'schemas');
+}
+const SCHEMAS_DIR = locateSchemasDir();
 
 // Per-kind payload schema paths. Universal kinds only — vendor-namespaced
 // kinds rely on host-published schemas advertised via `Capabilities.
