@@ -15,7 +15,7 @@ This document tracks the 5 behavioral harnesses the audit named, with the curren
 | **#1 — Multi-region simulator** | ✅ **CLOSED end-to-end** (workflow-engine seam + 6-assertion behavioral scenario; all 6 PASS) | `85f514a` | 6 assertions ALL PASS |
 | **#2 — Cross-engine append ordering** | ✅ **CLOSED end-to-end** (workflow-engine seam + 4-assertion Lamport-clock harness; all 4 PASS) | `85f514a` | 4 assertions ALL PASS |
 | **#6 — RFC 0022 dispatch mapping** | ✅ **CLOSED** (workflow-engine already had the wiring; verified end-to-end — 12/12 scenarios PASS) | `85f514a` (verification commit) | 12 existing scenarios ALL PASS against workflow-engine |
-| **#3 — Sandbox MVP (RFC 0035)** | ✅ **CLOSED end-to-end** (node:vm sandbox seam + 9-assertion behavioral scenario; all 9 PASS) | `3c0bfe3` | 9 assertions ALL PASS |
+| **#3 — Sandbox MVP (RFC 0035)** | ✅ **CLOSED end-to-end** (node:vm sandbox seam + 10-assertion behavioral scenario covering 7 of 8 §B invariants; all 10 PASS — the original commit message under-claimed at "5 of 8") | `3c0bfe3` + code-review follow-ups | 10 assertions ALL PASS |
 | **#7 — RFC 0042 experimental tier** | ✅ **CLOSED end-to-end** (schema + `experimentalGate()` helper + advertisement-shape scenario) | `45678c4` | 6 assertions (gate against runtime advertisement) |
 
 **Total behavioral assertions landed in the close-out: 40 PASS + 3 it.todo + 6 RFC 0042 (server-free).**

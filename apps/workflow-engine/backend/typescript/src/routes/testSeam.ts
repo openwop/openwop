@@ -1235,34 +1235,72 @@ export function registerTestSeamRoutes(app: Express, deps: { storage: Storage })
   // passes by construction in this MVP; sandbox-capability-gate-
   // respected requires the host's allowedHostCalls config to be wired
   // — covered here).
+  // Canonical error codes per `spec/v1/host-capabilities.md` §"Error codes"
+  // (RFC 0035 §B). Each code maps 1:1 to a §B invariant row:
+  //   sandbox_escape_attempt   — forbidden-syscall escape (fs/env/network/process)
+  //   sandbox_capability_denied — host call not in `allowedHostCalls`
+  //   sandbox_memory_exceeded  — memoryLimitBytes overflow
+  //   sandbox_timeout          — wallClockLimitMs overflow
+  //   sandbox_invocation_error — fallback for thrown errors not mapping to the canonical set
   type SandboxResult =
     | { result: unknown }
     | {
         error: {
-          code: 'sandbox_escape_attempt' | 'sandbox_timeout' | 'sandbox_memory_cap' | 'sandbox_invocation_error';
+          code:
+            | 'sandbox_escape_attempt'
+            | 'sandbox_capability_denied'
+            | 'sandbox_memory_exceeded'
+            | 'sandbox_timeout'
+            | 'sandbox_invocation_error';
           details: {
-            escapeKind?: 'host-fs-escape' | 'host-env-leak' | 'network-escape' | 'host-process-escape' | 'capability-gate-violation';
+            // `escapeKind` only applies to `sandbox_escape_attempt`. Per
+            // `host-capabilities.md:1681` it's the "syscall from a forbidden
+            // list" qualifier. `capability-gate-violation` is NOT an
+            // escapeKind here — it's a different error code entirely
+            // (`sandbox_capability_denied` — see §B invariant
+            // `node-pack-sandbox-capability-gate-respected`).
+            escapeKind?: 'host-fs-escape' | 'host-env-leak' | 'network-escape' | 'host-process-escape';
+            // `requestedCapability` is REQUIRED on `sandbox_capability_denied`
+            // per `host-capabilities.md:1680`. Identifies the host method the
+            // sandboxed code attempted to call.
+            requestedCapability?: string;
+            // `requestedBytes` MAY appear on `sandbox_memory_exceeded` per
+            // `host-capabilities.md:1678`.
+            requestedBytes?: number;
             message: string;
           };
         };
       };
 
-  // Synthetic misbehaving-pack registry: maps typeId to a (code, escapeKind)
-  // pair. The conformance suite drives these via sandbox-invoke; each program
+  // Synthetic misbehaving-pack registry: maps typeId to a (code, expectedFailureKind)
+  // descriptor. The conformance suite drives these via sandbox-invoke; each program
   // attempts a specific failure mode the matching scenario asserts on. We
-  // carry the `expectedEscapeKind` here so the classifier doesn't have to
-  // reverse-engineer the kind from error-message heuristics — node:vm errors
+  // carry the failure intent here so the classifier doesn't have to
+  // reverse-engineer it from error-message heuristics — node:vm errors
   // all surface as `TypeError: globalThis.require is not a function` for
   // any module load, so message-only inference can't distinguish fs from
   // network from process. The pack's declared intent is the source of truth.
   interface SandboxProgram {
     readonly code: string;
+    // When set, the classifier treats a thrown error as a forbidden-syscall
+    // escape (`sandbox_escape_attempt` + this escapeKind). Mutually exclusive
+    // with `expectsCapabilityDenied` + `expectsMemoryExceeded`.
     readonly expectedEscapeKind?:
       | 'host-fs-escape'
       | 'host-env-leak'
       | 'network-escape'
-      | 'host-process-escape'
-      | 'capability-gate-violation';
+      | 'host-process-escape';
+    // When true, the classifier treats a thrown error as a capability-gate
+    // violation (`sandbox_capability_denied`).
+    readonly expectsCapabilityDenied?: boolean;
+    // When true, the classifier treats a thrown error as a memory-exceeded
+    // failure (`sandbox_memory_exceeded`). v8 raises `RangeError: Invalid
+    // string length` for string allocations past 2^28-1; other memory paths
+    // raise `out of memory` / `Allocation failed`. Without this declared-
+    // intent flag, the bare-regex classifier would route to
+    // `sandbox_invocation_error` for the v8 RangeError variant, which is
+    // wrong per the spec.
+    readonly expectsMemoryExceeded?: boolean;
   }
   const SANDBOX_PROGRAMS: Record<string, SandboxProgram> = {
     'misbehave.fs-escape-read': {
@@ -1290,13 +1328,14 @@ export function registerTestSeamRoutes(app: Express, deps: { storage: Storage })
     },
     'misbehave.memory-bomb': {
       code: `let s = ''; for (let i = 0; i < 30; i++) { s += s + 'x'.repeat(1024); } ({ size: s.length });`,
+      expectsMemoryExceeded: true,
     },
     'misbehave.cross-pack-mutate': {
       code: `globalThis.__sharedState = (globalThis.__sharedState || 0) + 1; ({ shared: globalThis.__sharedState });`,
     },
     'misbehave.capability-gate-violation': {
       code: `host.notInAllowedList('args');`,
-      expectedEscapeKind: 'capability-gate-violation',
+      expectsCapabilityDenied: true,
     },
     'well-behaved.echo': {
       code: `({ echoed: args.input });`,
@@ -1308,11 +1347,19 @@ export function registerTestSeamRoutes(app: Express, deps: { storage: Storage })
 
   const SANDBOX_PACKS = new Set<string>();
 
+  // Sentinel prefix the host Proxy embeds in its capability-denied thrower
+  // so the classifier can recover the requested-capability name without
+  // re-parsing the message. Format: `${SENTINEL}${capabilityName}:${humanMessage}`.
+  const CAPABILITY_DENIED_SENTINEL = '__OPENWOP_CAP_DENIED__:';
+
   function makeSandboxContext(allowedHostCalls: string[], args: unknown): Record<string, unknown> {
     // The host object: only methods listed in allowedHostCalls are
     // present. Any other method access throws — that's the capability-
     // gate enforcement contract. The Proxy returns a thrower for unknown
-    // properties (so `host.notInAllowedList()` synchronously raises).
+    // properties (so `host.notInAllowedList()` synchronously raises with
+    // a structured sentinel the classifier parses out into
+    // `sandbox_capability_denied + details.requestedCapability` per
+    // `host-capabilities.md:1680`.
     const allow = new Set(allowedHostCalls);
     const host = new Proxy(
       {
@@ -1324,7 +1371,7 @@ export function registerTestSeamRoutes(app: Express, deps: { storage: Storage })
           if (typeof prop !== 'string') return undefined;
           if (!allow.has(prop)) {
             return () => {
-              throw new Error(`capability-gate-violation: host.${prop} is not in allowedHostCalls`);
+              throw new Error(`${CAPABILITY_DENIED_SENTINEL}${prop}:host.${prop} is not in allowedHostCalls`);
             };
           }
           return (target as Record<string, unknown>)[prop];
@@ -1338,7 +1385,8 @@ export function registerTestSeamRoutes(app: Express, deps: { storage: Storage })
   function classifyError(err: unknown, program: SandboxProgram): SandboxResult {
     const msg = err instanceof Error ? err.message : String(err);
     // Timeouts surface specifically from node:vm — pattern-match here
-    // (timeout is independent of the program's declared intent).
+    // (timeout is independent of the program's declared intent). Canonical
+    // code per `host-capabilities.md:1670,1679`.
     if (/timed out|Script execution timed out/i.test(msg)) {
       return {
         error: {
@@ -1347,12 +1395,37 @@ export function registerTestSeamRoutes(app: Express, deps: { storage: Storage })
         },
       };
     }
-    // Memory cap surfaces from v8 — pattern-match here too.
-    if (/Maximum call stack|out of memory|Allocation failed/i.test(msg)) {
+    // Memory cap surfaces from v8 with one of several patterns depending on
+    // which allocator hit the cap. Canonical code per
+    // `host-capabilities.md:1669,1678`. We also honor the program's
+    // declared `expectsMemoryExceeded` flag — same lesson as escape kinds:
+    // node:vm errors don't always carry enough information to distinguish
+    // "the user code asked for too much memory" from "the user code threw
+    // a RangeError for some other reason."
+    if (
+      program.expectsMemoryExceeded ||
+      /Maximum call stack|out of memory|Allocation failed|Invalid string length|RangeError: Array buffer/i.test(msg)
+    ) {
       return {
         error: {
-          code: 'sandbox_memory_cap',
+          code: 'sandbox_memory_exceeded',
           details: { message: msg },
+        },
+      };
+    }
+    // Capability-gate violation: the Proxy thrower above embeds a
+    // structured sentinel so we can recover `requestedCapability` per
+    // `host-capabilities.md:1671,1680`. Distinct error code from
+    // `sandbox_escape_attempt` (which covers forbidden-syscall escapes).
+    if (msg.startsWith(CAPABILITY_DENIED_SENTINEL)) {
+      const rest = msg.slice(CAPABILITY_DENIED_SENTINEL.length);
+      const colonIdx = rest.indexOf(':');
+      const requestedCapability = colonIdx >= 0 ? rest.slice(0, colonIdx) : rest;
+      const humanMsg = colonIdx >= 0 ? rest.slice(colonIdx + 1) : rest;
+      return {
+        error: {
+          code: 'sandbox_capability_denied',
+          details: { requestedCapability, message: humanMsg },
         },
       };
     }
@@ -1444,13 +1517,17 @@ export function registerTestSeamRoutes(app: Express, deps: { storage: Storage })
       });
       // Memory-cap heuristic: if the result is a string > 16MiB, treat
       // as memory-bomb. Real isolation needs worker_threads
-      // resourceLimits.
+      // resourceLimits. Canonical code `sandbox_memory_exceeded` +
+      // `details.requestedBytes` per `host-capabilities.md:1669,1678`.
       const serialized = JSON.stringify(result);
       if (serialized && serialized.length > 16 * 1024 * 1024) {
         res.status(200).json({
           error: {
-            code: 'sandbox_memory_cap',
-            details: { message: `result exceeds 16MiB memory cap (got ${serialized.length} bytes)` },
+            code: 'sandbox_memory_exceeded',
+            details: {
+              requestedBytes: serialized.length,
+              message: `result exceeds 16MiB memory cap (got ${serialized.length} bytes)`,
+            },
           },
         });
         return;

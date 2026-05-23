@@ -17,8 +17,15 @@
  *      sandboxed code that mutates a "shared" global sees the same fresh
  *      value (0 or undefined) every invocation
  *   7. capability-gate-respected — host.X invocations not in
- *      allowedHostCalls throw with code `sandbox_escape_attempt` +
- *      escapeKind: 'capability-gate-violation'
+ *      allowedHostCalls throw with code `sandbox_capability_denied` +
+ *      `details.requestedCapability: <method-name>` per the spec's
+ *      canonical 4-code error catalog at `host-capabilities.md` §"Error codes"
+ *
+ * Plus 1 spec-required terminal-failure invariant:
+ *
+ *   8. memory-exceeded — runaway allocation fails with the canonical
+ *      `sandbox_memory_exceeded` (or `sandbox_timeout` when the wall-clock
+ *      cap catches it first)
  *
  * The 8th RFC 0035 §B invariant (`node-pack-sandbox-no-eval`) is JS-
  * runtime-specific and reserved per the RFC's exemption clause; this MVP
@@ -46,7 +53,12 @@ interface SandboxResponse {
   result?: unknown;
   error?: {
     code: string;
-    details?: { escapeKind?: string; message?: string };
+    details?: {
+      escapeKind?: string;
+      requestedCapability?: string;
+      requestedBytes?: number;
+      message?: string;
+    };
   };
 }
 
@@ -189,21 +201,54 @@ describe.skipIf(HTTP_SKIP)('sandbox-mvp-behavior: RFC 0035 §B failure-mode inva
     ).toBe(true);
   });
 
-  it('capability-gate-respected — host call NOT in allowedHostCalls throws sandbox_escape_attempt', async (ctx) => {
+  it('capability-gate-respected — host call NOT in allowedHostCalls fails with sandbox_capability_denied', async (ctx) => {
     if (!(await isSandboxAdvertised())) {
       ctx.skip();
       return;
     }
     const probe = await invoke('misbehave.capability-gate-violation', {}, []);
     expect(probe.status).toBe(200);
-    expect(probe.body.error?.code).toBe('sandbox_escape_attempt');
     expect(
-      probe.body.error?.details?.escapeKind,
+      probe.body.error?.code,
       driver.describe(
-        'RFCS/0035-sandbox-execution-contract.md §B node-pack-sandbox-capability-gate',
-        'capability-gate violation MUST surface as escapeKind: "capability-gate-violation"',
+        'spec/v1/host-capabilities.md §"Error codes" + §B node-pack-sandbox-capability-gate-respected',
+        'capability-gate violation MUST fail closed with `sandbox_capability_denied` — distinct from `sandbox_escape_attempt` which covers forbidden-syscall escapes per the spec\'s 4-code catalog',
       ),
-    ).toBe('capability-gate-violation');
+    ).toBe('sandbox_capability_denied');
+    expect(
+      probe.body.error?.details?.requestedCapability,
+      driver.describe(
+        'spec/v1/host-capabilities.md §"Error codes"',
+        '`sandbox_capability_denied` MUST carry `details.requestedCapability` identifying the host method the sandboxed code attempted to call',
+      ),
+    ).toBe('notInAllowedList');
+  });
+
+  it('memory-exceeded — runaway allocation fails with sandbox_memory_exceeded', async (ctx) => {
+    if (!(await isSandboxAdvertised())) {
+      ctx.skip();
+      return;
+    }
+    const probe = await invoke('misbehave.memory-bomb');
+    expect(probe.status).toBe(200);
+    // The memory-bomb program doubles a string 30 times → ~1GiB if it
+    // ran to completion. node:vm + v8 typically OOM or timeout before
+    // that point; either way the engine MUST surface the canonical
+    // `sandbox_memory_exceeded` OR `sandbox_timeout` error code per
+    // `host-capabilities.md` §"Error codes". The MVP heuristic also
+    // catches >16MiB serialized results post-hoc → same code.
+    // We accept either canonical code here because both are
+    // spec-conformant terminal states for a memory-bomb under the
+    // declared `memoryLimitBytes` + `wallClockLimitMs` caps; what we
+    // refuse is silent success or the now-removed `sandbox_memory_cap`
+    // legacy code.
+    expect(
+      ['sandbox_memory_exceeded', 'sandbox_timeout'].includes(probe.body.error?.code ?? ''),
+      driver.describe(
+        'spec/v1/host-capabilities.md §"Error codes" + §B node-pack-sandbox-memory-cap',
+        `memory-bomb MUST surface either \`sandbox_memory_exceeded\` (when memoryLimitBytes caught it) or \`sandbox_timeout\` (when wallClockLimitMs caught it first) — got code: ${probe.body.error?.code}`,
+      ),
+    ).toBe(true);
   });
 
   it('well-behaved.host-fetch — allowedHostCalls=[fetch] permits the host call', async (ctx) => {

@@ -11,6 +11,34 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.3 — unreleased] — coordinated SDK release for MyndHyve adoption-feedback slices
 
+### Phase 4 behavioral-harness close-out — Tracks 1/2/5/6/7 + RFC 0042 (2026-05-22 → 2026-05-23)
+
+Closes the 5 behavioral-harness items the 2026-05-22 standards-readiness review called out, plus RFC 0042 implementation, plus RFC 0022 dispatch-mapping verification. The closing commits introduce 3 new HTTP test-seam endpoint families on the reference workflow-engine and 5 new conformance scenarios; suite scenario count grew 205 → 210.
+
+- **NEW `POST /v1/host/sample/test/multi-region/simulate-partition`** (workflow-engine, gated on `OPENWOP_TEST_MULTI_REGION_SIMULATOR=true`) — exposes the canonical cross-region convergence resolver from `spec/v1/idempotency.md` §"Multi-region idempotency annex" as a pure-function HTTP test seam. Drives the new `multi-region-idempotency-behavior.test.ts` conformance scenario (6 assertions, all PASS). Closes RFC 0036 §C multi-region path-to-Accepted; closes the CF-12 / OPS-5 gap named in `docs/KNOWN-LIMITS.md`.
+
+- **NEW `POST/GET /v1/host/sample/test/cross-engine/{append,read,reset}`** (workflow-engine, gated on `OPENWOP_TEST_CROSS_ENGINE_HARNESS=true`) — exposes a synthetic two-engine append-ordering harness implementing Lamport-clock merge semantics from `spec/v1/channels-and-reducers.md` §"Cross-engine ordering". Drives the new `cross-engine-append-behavior.test.ts` scenario (4 assertions, all PASS). Closes RFC 0036 §B + the CF-8 gap.
+
+- **NEW `POST /v1/host/sample/test/sandbox-{load,invoke}`** (workflow-engine, gated on `OPENWOP_TEST_SANDBOX_MVP=true`) — `node:vm`-based sandbox MVP exercising 7 of 8 RFC 0035 §B failure-mode invariants. 10-assertion behavioral scenario (`sandbox-mvp-behavior.test.ts`), all PASS. Synthetic misbehaving-pack registry covers all 5 escape kinds + timeout + memory-exceeded + cross-pack-isolation + capability-gate-violation. Wire shape per the canonical 4-code error catalog at `spec/v1/host-capabilities.md` §"Error codes" — `sandbox_escape_attempt` / `sandbox_capability_denied` / `sandbox_memory_exceeded` / `sandbox_timeout` with spec-mandated `details.requestedCapability` + `details.requestedBytes` fields populated. NOT production-grade isolation; production adopters use wasmtime / nsjail behind the same HTTP test-seam contract.
+
+- **NEW `capabilities.sandbox` advertisement** on workflow-engine (gated on `OPENWOP_TEST_SANDBOX_MVP=true`): `isolationModel: 'vm'` + `wallClockLimitMs: 1000` + `memoryLimitBytes: 16777216` + `allowedHostCalls: ['fetch']`. Matches `schemas/capabilities.schema.json` §`sandbox` required + properties.
+
+- **NEW `conformance/src/scenarios/secret-leakage-otel-attribute.test.ts`** — RFC 0034 §B seams covering the BYOK executor path. 3 assertions; soft-skips honestly until host advertises `capabilities.observability.testSeams.otelScrape` + `debugBundleExport`. Broadens the protocol-tier `secret-leakage-otel-attribute` + `secret-leakage-debug-bundle-otel` SECURITY invariants from envelope-acceptor-narrow to executor-side-broad coverage.
+
+- **NEW `RFCS/0042-experimental-capability-tier.md`** (`Draft`) implementation — `schemas/capabilities.schema.json` `multiAgent.executionModel` gains optional `tier ∈ {stable, experimental}` + `experimentalUntil` (ISO-8601 date) + `if/then` conditional enforcing §B mechanically. New `experimentalGate()` helper in `conformance/src/lib/behavior-gate.ts`. New `experimental-tier-shape.test.ts` (6 assertions).
+
+- **NEW fixtures:** `conformance/fixtures/conformance-phase4-replay-divergence.json` + `conformance-phase4-nondet-tool.json`. Used by the existing RFC 0041 Phase 4 scenarios whose behavioral assertions remain `it.todo` pending the workflow-engine's `:fork mode: replay` path gaining envelope-kind comparison (~2-3 day follow-up).
+
+- **VERIFIED:** 12/12 existing RFC 0022 dispatch input/output mapping scenarios pass against workflow-engine. INTEROP-MATRIX v1.5.0 failure cluster (4 across SQLite/Postgres/Python) reflects host-implementation gaps in hosts that honestly do NOT claim `capabilities.agents.dispatchMapping`.
+
+- **NEW `spec/v1/host-sample-test-seams.md` §6 + §7 + §8** documenting the 6 new HTTP seam endpoints normatively. Each section: method + path, capability gate, env gate, introduced (RFC reference), request/response shape, expected behavior, conformance scenario citation. Closes the documentation gap the post-landing code-review pass flagged — the workflow-engine seam contract is now in the spec corpus so a second implementer can target it.
+
+- **40 behavioral assertions PASS + 3 documented `it.todo` follow-ups (replay Phase 4 executor wiring) + 6 RFC 0042 server-free assertions** = 49 new conformance assertions over the close-out. Suite scenario count 205 → 210. `docs/PROTOCOL-STATUS.md`, `README.md`, `conformance/README.md` scenario count refs updated.
+
+- **`docs/PHASE-4-PROGRESS.md`:** rewritten from "Tracks 4-7 open" to "all 7 tracks closed" with closing-commit citations per row. Documents the implementation insight that consolidating all test seams on the reference workflow-engine (rather than per-host) cut the original 7-9 day estimate to a single session.
+
+Gate: `bash scripts/openwop-check.sh` GREEN end-to-end (9/9). No wire-shape changes; sandbox capability advertisement is new but optional + env-gated; all new HTTP seams are host-extension namespaced under `/v1/host/sample/test/*` per `host-extensions.md` §"Canonical prefixes". `additive` per `COMPATIBILITY.md` §2.1.
+
 ### RFC 0027 promoted Active → Accepted + RFC 0039 Half B host implementation lands (2026-05-23)
 
 MyndHyve session shipped three tracks (commit refs: `5385548c` RFC 0027 §E prompt-compose seam, `a51f7bbd` RFC 0039 Half B memory-lifecycle, `1d11fd80` RFC 0040 Sub-5b MCP API-key auth). Production deploy + live discovery verification confirms all advertisements are live on `https://api.myndhyve.ai/.well-known/openwop`:

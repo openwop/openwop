@@ -210,6 +210,154 @@ When the replay's mock-AI call hits the `refusal` entry, the host MUST:
 
 Conformance: `replay-divergence-at-refusal.test.ts` (advertisement-shape probe lives now; the 2 behavioral `it.todo` assertions light up when this seam is wired).
 
+### 6. Multi-region idempotency simulator — `POST /v1/host/sample/test/multi-region/simulate-partition` (RFC 0036 §C)
+
+| Field | Value |
+|---|---|
+| Method + path | `POST /v1/host/sample/test/multi-region/simulate-partition` |
+| Capability gate | `capabilities.idempotency.multiRegion.supported: true` OR `capabilities.idempotency.crossRegion ∈ {best-effort, strict}` (RFC 0036) |
+| Env gate (reference impl) | `OPENWOP_TEST_MULTI_REGION_SIMULATOR=true` |
+| Introduced | RFC 0036 §C — closes the CF-12 / OPS-5 multi-region simulation gap named in `docs/KNOWN-LIMITS.md` |
+
+The convergence rule in `spec/v1/idempotency.md` §"Multi-region idempotency annex" §"Convergence rule" is a pure-function MUST: given ≥2 conflicting `ConflictClaim` records sharing `(tenantId, endpoint, key)`, the resolver MUST return the lex-min `runId` as the winner deterministically without coordination. This seam exposes that algorithm directly so conformance can mechanically verify the property against synthetic partitions (no actual multi-region replication required).
+
+Request:
+
+```typescript
+{
+  claims: Array<{
+    runId: string,       // engine-assigned id; lex-sort determines winner
+    tenantId: string,    // claims with different tenantId MUST be rejected (400)
+    endpoint: string,    // claims with different endpoint MUST be rejected (400)
+    key: string,         // claims with different key MUST be rejected (400)
+    region: string,      // identifies which region produced this claim
+  }>  // length ≥ 2; length < 2 MUST be rejected (400)
+}
+```
+
+Response (`200 OK`):
+
+```typescript
+{
+  winner: ConflictClaim,                                     // lex-min runId
+  losers: ConflictClaim[],                                    // N-1 entries
+  cacheRedirects: Array<{                                     // N entries (one per region)
+    region: string,
+    cacheKey: string,                                         // `${endpoint}:${key}`
+    redirectToRunId: string,                                  // winner.runId
+  }>,
+  loserCancelReason: 'cross_region_dedup_loss',               // canonical literal
+}
+```
+
+Idempotency: the resolver is a pure function with no side effects. Same inputs → same outputs across calls. Hosts MAY cache results but the seam itself doesn't persist state.
+
+Conformance: `multi-region-idempotency-behavior.test.ts` (6 assertions covering lex-min winner, multi-region cache redirects, canonical cancel reason, order-invariance, and 400-on-tuple-mismatch).
+
+### 7. Cross-engine append-ordering harness — `POST /v1/host/sample/test/cross-engine/{append,read,reset}` (RFC 0036 §B)
+
+| Field | Value |
+|---|---|
+| Method + path | 3 endpoints (see below) |
+| Capability gate | `capabilities.eventLog.crossEngineOrdering.supported: true` (RFC 0036 §B) |
+| Env gate (reference impl) | `OPENWOP_TEST_CROSS_ENGINE_HARNESS=true` |
+| Introduced | RFC 0036 §B — closes the CF-8 cross-engine append-ordering gap named in `docs/KNOWN-LIMITS.md` |
+
+The cross-engine ordering invariant in `spec/v1/channels-and-reducers.md` §"Cross-engine ordering" requires that two engine instances writing to the same shared channel converge to a single globally-ordered linearization on read. This seam exposes a synthetic two-engine harness so conformance can verify the property without standing up two real engine instances.
+
+Endpoints:
+
+```
+POST /v1/host/sample/test/cross-engine/append
+  Body: { engineId: string, channelId: string, value: unknown, lamport?: number }
+  Returns: { engineId, value, lamport, seq } — the assigned timestamp + sequence
+
+GET  /v1/host/sample/test/cross-engine/read?channelId=<id>
+  Returns: { entries: AppendEntry[] } — linearized by (lamport, engineId, seq)
+
+POST /v1/host/sample/test/cross-engine/reset
+  Body: {}
+  Returns: { ok: true } — clears the in-memory log
+```
+
+Lamport-clock semantics (the host's advertised `orderingModel: 'lamport'`):
+
+- Each append advances the engine's clock to `max(local, incoming) + 1`
+- The `lamport?` field on `append` is the engine's view of the OTHER engine's clock (incoming hint); honored per the lamport receive rule
+- `read` linearizes by `(lamport ASC, engineId ASC, seq ASC)` — a deterministic total order
+- Hosts advertising a different `orderingModel` (`vector-clock`, `global-sequencer`, or `x-host-<host>-<key>`) MAY substitute their own algorithm but MUST honor the same `append`/`read`/`reset` contract
+
+Conformance: `cross-engine-append-behavior.test.ts` (4 assertions covering global linearization, lamport monotonicity, receive-rule advancement, and read-determinism).
+
+### 8. Sandbox MVP — `POST /v1/host/sample/test/sandbox-{load,invoke}` (RFC 0035)
+
+| Field | Value |
+|---|---|
+| Method + path | 2 endpoints (see below) |
+| Capability gate | `capabilities.sandbox.supported: true` (RFC 0035 §A) |
+| Env gate (reference impl) | `OPENWOP_TEST_SANDBOX_MVP=true` |
+| Introduced | RFC 0035 §B — exercises the 8 sandbox failure-mode invariants against a synthetic misbehaving-pack registry |
+
+The sandbox seam exists so conformance can drive the §B failure-mode invariants without a real pack runtime + real misbehaving pack tarballs. Each `sandbox-invoke` request names a synthetic typeId from the host's pre-populated misbehaving-pack registry; the host executes the matching code body inside its sandbox and returns either the result or a typed error envelope per `host-capabilities.md` §"Error codes".
+
+Endpoints:
+
+```
+POST /v1/host/sample/test/sandbox-load
+  Body: { packId: string }
+  Returns: 200 { ok: true, packId } | 400 validation_error | 404 sandbox_pack_not_found
+
+POST /v1/host/sample/test/sandbox-invoke
+  Body: {
+    typeId: string,                       // e.g. 'misbehave.fs-escape-read'
+    args?: Record<string, unknown>,       // available as `args` inside the sandboxed code
+    packId?: string,                      // identifies the pack containing typeId
+    allowedHostCalls?: string[],          // capability-gate whitelist for this invocation
+  }
+  Returns: 200 { result: unknown } | 200 { error: SandboxError }
+```
+
+`SandboxError` shape (canonical per `host-capabilities.md` §"Error codes"):
+
+```typescript
+{
+  code:
+    | 'sandbox_escape_attempt'      // forbidden-syscall escape (fs/env/network/process)
+    | 'sandbox_capability_denied'   // host call not in allowedHostCalls
+    | 'sandbox_memory_exceeded'     // memoryLimitBytes overflow
+    | 'sandbox_timeout'             // wallClockLimitMs overflow
+    | 'sandbox_invocation_error',   // fallback for thrown errors not in the canonical catalog
+  details: {
+    escapeKind?:                     // SET when code === 'sandbox_escape_attempt'
+      | 'host-fs-escape'
+      | 'host-env-leak'
+      | 'network-escape'
+      | 'host-process-escape',
+    requestedCapability?: string,    // REQUIRED when code === 'sandbox_capability_denied'
+    requestedBytes?: number,         // MAY appear when code === 'sandbox_memory_exceeded'
+    message: string,
+  },
+}
+```
+
+Synthetic misbehaving-pack typeIds the conformance suite exercises:
+
+| typeId | Failure mode it probes |
+|---|---|
+| `misbehave.fs-escape-read` | sandbox_escape_attempt + escapeKind: host-fs-escape |
+| `misbehave.fs-escape-write` | sandbox_escape_attempt + escapeKind: host-fs-escape |
+| `misbehave.env-leak` | sandbox_escape_attempt + escapeKind: host-env-leak |
+| `misbehave.network-escape` | sandbox_escape_attempt + escapeKind: network-escape |
+| `misbehave.process-escape` | sandbox_escape_attempt + escapeKind: host-process-escape |
+| `misbehave.timeout` | sandbox_timeout |
+| `misbehave.memory-bomb` | sandbox_memory_exceeded |
+| `misbehave.cross-pack-mutate` | (no failure; result.shared MUST equal 1 on every invocation — cross-pack mutation MUST NOT leak across fresh contexts) |
+| `misbehave.capability-gate-violation` | sandbox_capability_denied + details.requestedCapability |
+| `well-behaved.echo` | (no failure; `result.echoed === args.input`) |
+| `well-behaved.host-fetch` | (no failure when `allowedHostCalls` includes `'fetch'`) |
+
+Conformance: `sandbox-mvp-behavior.test.ts` (10 assertions covering 5 escape kinds + timeout + memory + cross-pack isolation + capability-gate + 2 well-behaved baselines).
+
 ## Production safety (normative)
 
 All seams under `/v1/host/sample/*` are conformance-only. Hosts deployed in production:
