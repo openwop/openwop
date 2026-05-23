@@ -34,7 +34,28 @@ export function ChatTab(): JSX.Element {
   }, [refresh]);
 
   if (isLoading) {
-    return <div className="muted" style={{ padding: 24 }}>Loading…</div>;
+    // Same editorial-postcard chrome as the resting-server state. On
+    // first load the user is usually waiting on the Cloud Run cold-
+    // start (and our own session bootstrap). A bare "Loading…" line
+    // looked broken; a card with a serif title + animated dots tells
+    // the user the wait is intentional and short.
+    return (
+      <div className="backend-resting-wrap">
+        <div className="backend-resting-card">
+          <h2 className="backend-resting-title">
+            Spinning up your demo server
+            <span className="backend-spinup-ellipsis" aria-hidden="true">
+              <span>.</span><span>.</span><span>.</span>
+            </span>
+          </h2>
+          <p className="backend-resting-body">
+            The Cloud Run server spins down between visits to keep the sample
+            cheap to host. The first request takes a moment to warm up — usually
+            10–30 seconds.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
