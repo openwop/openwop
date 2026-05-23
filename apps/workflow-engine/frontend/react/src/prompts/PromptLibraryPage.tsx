@@ -84,10 +84,11 @@ export function PromptLibraryPage() {
       <div className="card">
         <h2>Prompt library</h2>
         <p className="muted">
-          Templates a workflow node or agent can reference via{' '}
-          <code>config.systemPromptRef</code> / <code>config.userPromptRef</code> per RFC 0027.
-          Falls back to a local sample list when the host doesn't advertise{' '}
-          <code>capabilities.prompts.supported</code>.
+          Reusable prompts your workflow&apos;s AI nodes can pick from. Edit
+          one in a single place and every node that uses it updates the
+          next time it runs — no copy-paste, no drift, no per-node tweaks
+          to keep in sync. System prompts set the AI&apos;s role and tone;
+          user prompts shape what you ask of it.
         </p>
 
         {error && <div className="alert error">{error}</div>}
