@@ -73,6 +73,27 @@ Closes the 5 behavioral-harness items the 2026-05-22 standards-readiness review 
 
 Gate: `bash scripts/openwop-check.sh` GREEN end-to-end (9/9). No wire-shape changes; sandbox capability advertisement is new but optional + env-gated; all new HTTP seams are host-extension namespaced under `/v1/host/sample/test/*` per `host-extensions.md` §"Canonical prefixes". `additive` per `COMPATIBILITY.md` §2.1.
 
+### MyndHyve picks Option 1 — `x-host-myndhyve-memory-written` vendor namespace locked (2026-05-23)
+
+The `memory.written` wire-shape open question (raised in the RFC 0027 + RFC 0039 Half B promotion commit `8f65168`) is closed. MyndHyve picked Option 1 (vendor namespace) — `x-host-myndhyve-memory-written` per `host-extensions.md` §"Canonical prefixes" — over Option 2 (canonicalize via additive RFC). Locked in MyndHyve commit `21fb2387` (2026-05-23).
+
+**Wire shape (host-private, NOT normative — documented for forward-reference):**
+```typescript
+{
+  memoryRef: string,        // collection path
+  memoryId: string,
+  content: string,          // post-SR-1 redaction
+  source: 'session' | 'manual' | 'shared' | 'feedback',
+  tags?: string[],
+  expiresAt?: string,       // ISO 8601, writer-clock per RFC 0039 MAE-2
+  writtenAt: string,        // ISO 8601, write-time wall clock
+}
+```
+
+The rationale mirrors the `confidenceEscalationInterruptKind: 'x-host-myndhyve-low-confidence'` precedent from RFC 0044 — vendor-extension namespace preserves wire-shape compat with strict RunEventType-enum validators while letting MyndHyve evolve its internal SR-1 audit trail without forcing a multi-host RFC negotiation. If/when other hosts want a parallel SR-1 audit event type, an additive RFC canonicalizing `memory.written` to the RunEventType enum + payload schema is a one-line MyndHyve rename (event-log append site + enum entry + resolver filter).
+
+`INTEROP-MATRIX.md` gains a **§"Forward-reference — MyndHyve vendor-extension RunEventTypes"** sub-section listing the event type + wire shape + spec context. The table is positioned as documentation, not a protocol-tier wire-shape commitment — strict validators tolerate `^x-host-<host>-<key>$` event types as additive per `host-extensions.md`.
+
 ### RFC 0027 promoted Active → Accepted + RFC 0039 Half B host implementation lands (2026-05-23)
 
 MyndHyve session shipped three tracks (commit refs: `5385548c` RFC 0027 §E prompt-compose seam, `a51f7bbd` RFC 0039 Half B memory-lifecycle, `1d11fd80` RFC 0040 Sub-5b MCP API-key auth). Production deploy + live discovery verification confirms all advertisements are live on `https://api.myndhyve.ai/.well-known/openwop`:
