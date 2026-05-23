@@ -1,0 +1,53 @@
+{
+  "id": "conformance-phase4-nondet-tool",
+  "name": "Conformance: RFC 0041 §C observable-output-sequence determinism (Phase 4)",
+  "version": "1.0",
+  "description": "Two-node workflow exercising a nondeterministic tool followed by a structured-output node, used by `replay-observable-sequence-determinism.test.ts` to verify RFC 0041 §C — across original + replay runs of the same workflow against the same engine, the observable RunEventDoc sequence prefix MUST be identical up to and including the nondeterministic-tool node's `node.completed` event. The host's replay path MUST replay the original event log entries (rather than re-executing the tool) for nodes whose `core.tool.*` config carries `nondeterministic: true`. Phase 4 hosts advertising `multiAgent.executionModel.replayDeterminism.supported: true` MUST honor this contract; non-Phase-4 hosts MAY re-execute the tool freely (and consequently observe sequence drift the conformance scenario will not assert against).",
+  "nodes": [
+    {
+      "id": "nondet-tool",
+      "typeId": "core.noop",
+      "name": "Nondeterministic tool (proxied via core.noop for sample-grade)",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "nondeterministic": true,
+        "phase4Probe": true
+      },
+      "inputs": {}
+    },
+    {
+      "id": "structured-call",
+      "typeId": "core.ai.structuredOutput",
+      "name": "Structured output via mock provider (consumes nondet-tool result)",
+      "position": { "x": 200, "y": 0 },
+      "config": {
+        "provider": "mock",
+        "model": "mock-mini",
+        "outputSchema": {
+          "type": "object",
+          "required": ["valid"],
+          "properties": { "valid": { "type": "boolean" } }
+        }
+      },
+      "inputs": {
+        "messages": {
+          "type": "static",
+          "value": [
+            { "role": "user", "content": "Please emit a valid envelope." }
+          ]
+        }
+      }
+    }
+  ],
+  "edges": [
+    { "id": "e1", "sourceNodeId": "nondet-tool", "targetNodeId": "structured-call" }
+  ],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": {
+    "tags": ["conformance", "rfc-0041", "phase-4", "observable-sequence-determinism", "multi-agent-execution"]
+  },
+  "settings": { "timeout": 30000 }
+}

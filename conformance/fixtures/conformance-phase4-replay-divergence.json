@@ -1,0 +1,40 @@
+{
+  "id": "conformance-phase4-replay-divergence",
+  "name": "Conformance: RFC 0041 §B replay-divergence-at-refusal (Phase 4)",
+  "version": "1.0",
+  "description": "Single `core.ai.structuredOutput` node against the conformance `mock` provider. Conformance scenario `replay-divergence-at-refusal.test.ts` pre-seeds the mock with a two-entry program via `POST /v1/host/sample/test/mock-ai/program` keyed on the structured-call nodeId: entry [0] returns a valid envelope (consumed by the original run); entry [1] returns `stopReason: 'safety'` + `refusalText` (consumed by the `:fork mode: replay`). Phase 4 hosts advertising `multiAgent.executionModel.replayDeterminism.refusalDivergenceEmission: true` MUST detect the divergence at replay time, emit a `replay.divergedAtRefusal` event with `originalEnvelopeKind: 'valid'` + `replayEnvelopeKind: 'refusal'`, and fail the replay with HTTP `422` + `error.code: 'replay_diverged_at_refusal'` per `spec/v1/rest-endpoints.md §\"Common error codes\"`. Silent substitution of the refusal for the original envelope is non-conformant.",
+  "nodes": [
+    {
+      "id": "structured-call",
+      "typeId": "core.ai.structuredOutput",
+      "name": "Structured output via mock provider (Phase 4 replay-divergence probe)",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "provider": "mock",
+        "model": "mock-mini",
+        "outputSchema": {
+          "type": "object",
+          "required": ["valid"],
+          "properties": { "valid": { "type": "boolean" } }
+        }
+      },
+      "inputs": {
+        "messages": {
+          "type": "static",
+          "value": [
+            { "role": "user", "content": "Please emit a valid envelope." }
+          ]
+        }
+      }
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": {
+    "tags": ["conformance", "rfc-0041", "phase-4", "replay-divergence", "multi-agent-execution"]
+  },
+  "settings": { "timeout": 30000 }
+}
