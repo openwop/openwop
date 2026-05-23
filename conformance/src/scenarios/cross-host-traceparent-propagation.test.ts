@@ -50,11 +50,18 @@ describe('cross-host-traceparent-propagation: behavioral (RFC 0040 §B)', () => 
   // the format `00-{traceId}-{spanId}-{flags}` per W3C tracecontext.
   // Until the peer harness lands, the assertion is surfaced as `todo` so
   // test reporters track the gap rather than reporting a vacuous PASS.
-  it.todo('Phase 3 host MUST inject parent run\'s traceparent into outbound MCP requests');
+  // Marked out of stable profile via RFC 0042 §B (experimental tier):
+  // RFC 0040 remains Active. Hosts that wire Phase 3 cross-host causation
+  // before RFC 0040 graduates SHOULD advertise
+  // `multiAgent.executionModel.tier: 'experimental'` per RFC 0042 §A
+  // until cross-host evidence drives the promotion. Path-to-runnable
+  // requires the MCP peer harness (OPENWOP_MCP_REAL_SERVER_URL) +
+  // inbound-header recorder; flips to a real `it()` on first non-steward
+  // Phase 3 host advertising matching capabilities.
+  it.skip('Phase 3 host MUST inject parent run\'s traceparent into outbound MCP requests — out of stable profile via RFC 0042');
 
-  // Behavioral assertion drives a workflow that dispatches an A2A message
-  // via the host's `core.a2a.send` (or equivalent) node. The A2A peer
-  // (configured via OPENWOP_A2A_REAL_PEER_URL) records inbound headers;
-  // the test asserts `traceparent` is present + well-formed.
-  it.todo('Phase 3 host MUST inject parent run\'s traceparent into outbound A2A messages');
+  // Same routing — out of stable profile via RFC 0042 §B until RFC 0040
+  // graduates to Accepted; behavioral A2A test seam contract still to be
+  // designed alongside the corresponding peer harness.
+  it.skip('Phase 3 host MUST inject parent run\'s traceparent into outbound A2A messages — out of stable profile via RFC 0042');
 });

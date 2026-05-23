@@ -108,17 +108,20 @@ describe.skipIf(HTTP_SKIP)('multi-agent-memory-lifecycle: behavioral (RFC 0039 �
   // Until a memory-advertising Phase 2 host wires the seam, the contract
   // is documentation-only — surfaced as `todo` so test reporters track
   // the gap rather than reporting a vacuous PASS.
-  it.todo('MAE-2 cross-run TTL: child write expiresAt MUST be anchored at child write time, not parent start');
+  // Marked out of stable profile via RFC 0042 §B (experimental tier):
+  // RFC 0039 §B Half B (MAE-2 + MAE-3) landed on MyndHyve 2026-05-23 via
+  // commit `a51f7bbd` (`snapshotAtSeq()` + `crossChildMemoryConcurrency:
+  // 'strict'`) — but the **test-seam endpoint contract** for the
+  // conformance suite (`POST /v1/host/sample/test/memory/cross-run-ttl-
+  // roundtrip` + snapshot-or-refuse on fork) has not been designed yet.
+  // Hosts that implement Half B SHOULD advertise
+  // `multiAgent.executionModel.tier: 'experimental'` per RFC 0042 §A
+  // until the seam contract lands. Flips to runnable when (a) seam
+  // contract spec'd at `host-sample-test-seams.md` and (b) at least one
+  // host implements it.
+  it.skip('MAE-2 cross-run TTL: child write expiresAt MUST be anchored at child write time, not parent start — out of stable profile via RFC 0042');
 
-  // Behavioral assertion lands when the host implements the snapshot
-  // mechanism per RFC 0039 §B. The assertion drives:
-  //   1. Run a workflow that writes MemoryEntry { key: 'k', value: 'v1' } at index 10.
-  //   2. Write MemoryEntry { key: 'k', value: 'v2' } at index 20.
-  //   3. POST /v1/runs/{runId}:fork { fromSeq: 15 }.
-  //   4. Forked run reads MemoryEntry { key: 'k' }; MUST return 'v1' (not 'v2').
-  //   5. Alternative compliance: fork refused with
-  //      error.code: 'replay_memory_snapshot_unavailable' AND
-  //      details.fromSeq === 15.
-  // Silent substitution of v2 (current state) is non-conformant.
-  it.todo('MAE-3 replay snapshot: fork from past index MUST return memory-as-of-index OR refuse with replay_memory_snapshot_unavailable');
+  // Same routing — RFC 0039 §B MAE-3 awaiting test-seam contract before
+  // flipping to a runnable behavioral assertion.
+  it.skip('MAE-3 replay snapshot: fork from past index MUST return memory-as-of-index OR refuse with replay_memory_snapshot_unavailable — out of stable profile via RFC 0042');
 });

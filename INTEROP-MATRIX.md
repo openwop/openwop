@@ -182,6 +182,20 @@ For consumers writing strict RunEventType-enum validators, this table lists the 
 
 These rows are documentation, not protocol-tier wire-shape commitments. Future additive RFCs MAY canonicalize an event family currently rendered as a vendor extension; when that happens, the entry's "Spec context" cell links to the new RFC + the host's migration commit.
 
+## Experimental capability advertisements (RFC 0042 §B)
+
+Per RFC 0042 (Draft 2026-05-22, response to the standards-readiness review's "Active RFC → explicit carve-out" recommendation), hosts that advertise capability sub-blocks backed by RFCs that have not yet promoted to `Accepted` SHOULD set `tier: "experimental"` + `experimentalUntil` (ISO-8601, ≤ 12 months) on the sub-block. This makes the stability claim machine-readable: clients and conformance suites can route around experimental surfaces, and external auditors can read the discovery payload to form an opinion in 30 seconds.
+
+The conformance suite's `experimentalGate()` helper (`conformance/src/lib/behavior-gate.ts`) honors the field: under default mode, scenarios consuming an `experimental` capability soft-skip with a dedicated log line; under `OPENWOP_REQUIRE_EXPERIMENTAL=true`, the same scenarios run as hard assertions. Hosts ready to claim full coverage in `INTEROP-MATRIX.md` set both env vars (`OPENWOP_REQUIRE_BEHAVIOR=true` + `OPENWOP_REQUIRE_EXPERIMENTAL=true`).
+
+| Host | Experimental capabilities advertised | `experimentalUntil` | Active RFCs this carve-out covers | Tracked-out conformance scenarios |
+|---|---|---|---|---|
+| Workflow-engine sample (`apps/workflow-engine/`) | *Not yet wired into discovery — repo-side RFC 0042 schema landed; host wire-up tracked in `docs/PHASE-4-PROGRESS.md` as the Phase C close-out follow-up.* | — | RFC 0035 (sandbox MVP behaviorally covered; tier-shape claim is optional), RFC 0036 (multi-region + cross-engine harnesses live), RFC 0041 (§B replay-divergence-at-refusal live, §C observable-sequence-determinism deferred) | `replay-observable-sequence-determinism.test.ts` (2 `it.skip` blocks carrying the RFC 0042 marking) |
+| MyndHyve workflow-runtime | *Currently advertises `multiAgent.executionModel.{version: 2, …}` as stable in production (revision `workflow-runtime-00353-rab`). RFC 0042 §B opt-in would be additive — recommended once Phase 3 cross-host causation lands on MyndHyve and pre-graduation evidence is in flight.* | — | RFC 0039 §B Half B (memory lifecycle) wired (commit `a51f7bbd`); RFC 0040 (cross-host causation) + RFC 0041 (replay determinism) pending. | `multi-agent-memory-lifecycle.test.ts` (MAE-2 + MAE-3 `it.skip`), `cross-host-traceparent-propagation.test.ts` (MCP + A2A `it.skip`) |
+| Postgres / SQLite / In-memory / Python reference hosts | *Not applicable — these hosts don't advertise the Active-RFC sub-blocks gated for experimental marking.* | — | — | — |
+
+**Six `it.skip` blocks across three scenario files** carry an explicit `out of stable profile via RFC 0042` marker (replacing the earlier `it.todo` form). These mark the scenarios as "tracked-but-deferred" rather than "unfinished," satisfying the 2026-05-23 audit's "Replace remaining `it.todo` assertions with runnable behavior tests or mark them out of the stable profile" acceptance-bar item.
+
 ## Reading Rows
 
 - **Compatibility profile claim** is derived from `/.well-known/openwop` according to `spec/v1/profiles.md`.

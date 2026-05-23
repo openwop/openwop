@@ -65,7 +65,16 @@ describe('replay-observable-sequence-determinism: prefix byte-equivalence (RFC 0
   // fixture ships in the suite — consistent with the sibling Phase 4
   // scenarios (`replay-divergence-at-refusal.test.ts`,
   // `replay-llm-cache-key-portable.test.ts`).
-  it.todo('original and replay event-log prefixes [0, fromSeq] MUST be byte-equivalent (modulo per-region clock + ULID-T entropy)');
+  // Marked out of stable profile via RFC 0042 §B (experimental tier):
+  // RFC 0041 §C remains Active, so its wire shape MAY shift compatibly
+  // within v1.x. Hosts that wire this assertion before RFC 0041 graduates
+  // to Accepted SHOULD advertise `multiAgent.executionModel.tier:
+  // 'experimental'` + `experimentalUntil` per RFC 0042 §A. Path-to-runnable
+  // requires: (a) host pure-replay observable-cache emission via the
+  // `:fork mode: replay` re-dispatch path and (b) the test seam endpoint
+  // contract for cache-hit-vs-fresh-call distinction (see
+  // `spec/v1/host-sample-test-seams.md` for the established seam pattern).
+  it.skip('original and replay event-log prefixes [0, fromSeq] MUST be byte-equivalent (modulo per-region clock + ULID-T entropy) — out of stable profile via RFC 0042');
 });
 
 describe('replay-observable-sequence-determinism: observable-result caching (RFC 0041 §C)', () => {
@@ -76,5 +85,10 @@ describe('replay-observable-sequence-determinism: observable-result caching (RFC
   // this a valid determinism contract — bit-equivalent execution would
   // require unbounded caching (rejected per RFC 0041 §"Alternatives
   // considered" #2).
-  it.todo('replay of a workflow containing a nondeterministic tool call reproduces the original observable result, NOT a fresh call');
+  // Marked out of stable profile via RFC 0042 §B (experimental tier):
+  // see the prefix-byte-equivalence comment above for the same routing.
+  // This is RFC 0041 §C's load-bearing assertion; it lands as a runnable
+  // `it()` when RFC 0041 graduates to Accepted on first non-steward host
+  // adoption.
+  it.skip('replay of a workflow containing a nondeterministic tool call reproduces the original observable result, NOT a fresh call — out of stable profile via RFC 0042');
 });
