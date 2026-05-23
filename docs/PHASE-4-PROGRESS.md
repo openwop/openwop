@@ -6,6 +6,19 @@
 
 This document tracks the 5 behavioral harnesses the audit named, with the current state, the specific unblock criterion, and the named PR or commit that will close each. The audit was correct that the harnesses are not yet wired end-to-end; this is the public accountability artifact for closing each one.
 
+## Closure snapshot — 2026-05-22
+
+| Harness | Status | Closing commit |
+|---|---|---|
+| **#5 — Secret-leakage telemetry** | ✅ **CLOSED** (scenario lands; soft-skips honestly until reference workflow-engine advertises `capabilities.observability.testSeams`) | `18e7e55` — `feat(conformance): secret-leakage-otel-attribute scenario — RFC 0034 §B seams covering BYOK executor path` |
+| **#4 — Replay determinism Phase 4** | 🟡 **PARTIAL** (fixtures landed + catalog updated; behavioral assertions remain `it.todo` pending the executor's replay re-dispatch path — newly scoped at ~2-3 days, not ~1 day) | `c21d239` — `feat(conformance): RFC 0041 Phase 4 fixtures — replay-divergence + nondet-tool` |
+| **#1 — Multi-region simulator** | 🔴 **OPEN** (Postgres host has the resolver algorithm + the `tests:` evidence; the missing piece is the HTTP test-seam scaffold to expose `simulate-partition`. Realistic effort: ~1.5-2 days end-to-end including the new server.ts route family.) | TBD |
+| **#2 — Cross-engine append ordering** | 🔴 **OPEN** (same blocker as #1 — needs a test-seam HTTP route on the Postgres host to drive two-engine fixture programmatically. ~1 day on top of the #1 scaffolding.) | TBD |
+| **#3 — Sandbox MVP** | 🔴 **OPEN** (8 conformance scenarios shipped + it.todo; the executor-side sandbox runtime is the largest single open task. ~3-5 days for `node:vm` MVP closing 5-7 of 8 invariants, or 1-2 weeks for WASM closing all 8.) | TBD |
+| **#6 — RFC 0022 dispatch mapping (not in the audit's named 5; tracked here because it's the largest open-INTEROP-MATRIX-failure cluster)** | 🔴 **OPEN** (4 failures across SQLite/Postgres/Python from the v1.4.0 + v1.5.0 conformance runs. Needs a supervisor-mock extension that lets fixtures drive `OrchestratorDecision` sequences — the current reference supervisor emits a single hard-coded decision. ~1-2 days.) | TBD |
+
+**Honest meta-status (2026-05-22).** Tracks #5 and #4 (partial) closed in this session — Track #5 end-to-end + Track #4 the conformance-side half. Track #3 RFC 0042 (experimental capability tier) also shipped its schema + helper + scenario in this session as commit `45678c4` (commit-message attribution drifted to a parallel `/prompts` fix; the file diff is the RFC 0042 work). Tracks #1, #2, #3 (sandbox), and #6 remain open with multi-day estimates that exceed a single session's scope. Per the audit's preferred posture (named accountability over partial-stub commits), this doc is now the canonical close-out tracker — each remaining track will land in a focused follow-up PR.
+
 ---
 
 ## Harness 1 — Multi-region idempotency simulator
