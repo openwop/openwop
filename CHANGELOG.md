@@ -287,6 +287,23 @@ Three new evidence sections + wire-shape drift closures recording MyndHyve's ado
 
 No spec amendments needed beyond the (a)/(b)/(c)/(d) renames already landed in the RFC 0030/0031/0032/0033 promotion batch. Drift (e) closed host-side; the spec language was unambiguous about the nested location.
 
+### Sample app — provider management, prompt CRUD, envelope inspector, MiniMax tools (2026-05-22 late)
+
+Continuing into the afternoon. Sample-app only; no spec/schema/SDK contracts touched.
+
+- **API Keys management page** (`/keys`) — new route using the existing `byokClient` BE API. One section per BYOK provider with inline "+ Add key" form minting `<provider>:<label>` credentialRefs; legacy unscoped refs surfaced separately. Soft validation against each provider's `apiKeyPrefix` hint; masked-key view persisted in component state after store so users can confirm the suffix.
+- **Per-node credential picker (Builder Inspector)** — new `credential-picker` configField kind + `CredentialPickerInput.tsx` rendering a dropdown of stored credentialRefs with a "Manage" deep-link to `/keys`. `chat` catalog entry gains a `credentialRef` configField so a workflow can have multiple chat nodes hitting different stored keys.
+- **Prompt library CRUD** — new `prompts/userPrompts.ts` (versioned-envelope localStorage store). `+ New prompt` button + per-card Edit/Delete on user-owned cards (sample prompts stay read-only). User prompts get `user:<slug>` ids; merged on top of bundled samples and any future BE store via `listPrompts`.
+- **MiniMax tools wired end-to-end** — Try-it-free users now access LLM-orchestrated tool-calling. New `dispatchMiniMaxTools.ts` mirrors `dispatchAnthropicTools.ts` using MiniMax's OpenAI-compatible `tools[]` + `tool_calls` shape; nodes.ts gate widened to `provider === 'anthropic' || provider === 'minimax'`. FE `supportsTools` swapped from hard-coded `provider === 'anthropic'` to per-model capability lookup.
+- **MiniMax in providers.json (hidden)** — first-class capability + cost source for the real provider behind Try-it-free. `hidden: true` excludes it from the BYOK picker; backend still reads its capability declarations.
+- **Envelope inspector toggle on every assistant bubble** — `▸ Show envelope · N` pill expands a structured list of every `agent.*` / `envelope.*` event the turn emitted. Makes the OpenWOP wire-shape inspectable inline without DevTools.
+- **@workflow-mention honors trailing text** — `@hello-uppercase hello` now runs the workflow with `inputs.text = "hello"` instead of dropping the trailing text. detectMention captures `\s+(.*)` after the slug; runWorkflowMention overrides the first key of `defaultInputs` with the trailing text.
+- **Builder workflow seeding** — first-visit dashboard persists all premade templates into "Your workflows" so the user lands on a populated builder. Seeded flag in localStorage prevents re-seeding after deletes.
+- **Template cull** — removed 3 single-node templates (`hello-uppercase`, `mock-ai-completion`, `chat-turn`) that didn't demonstrate workflow orchestration. The 6 surviving templates all show multi-step coordination (HITL, fan-out/fan-in, multi-agent critics).
+- **Builder run tenant fix** — `BuilderShell.tsx` was hardcoding `tenantId: 'demo'` in createRun calls, producing 403 "principal cannot operate under tenant demo" for non-bearer principals. Removed so the BE infers from the authenticated session, mirroring the chat path.
+- **AI chat states polished** — "Loading…" replaced with "Spinning up your demo server…" editorial postcard (fading dots + card-breathing). Backend-resting error postcard rewritten (RFC numbers removed from user-facing copy). Chat history drawer falls back to localStorage session index when BE is in cold-start.
+- **/prompts page copy + empty-list fallback** — replaced API jargon with user-facing framing; empty BE response now falls back to bundled samples + user prompts so the page is never blank.
+
 ### Sample app — chat-surface UX + workflow-template prompt preload (2026-05-22)
 
 Continuing the May-21 polish pass. Sample-app only; no spec / schema / SDK contracts touched.

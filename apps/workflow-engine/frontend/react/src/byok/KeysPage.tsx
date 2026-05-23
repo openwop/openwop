@@ -43,6 +43,12 @@ export function KeysPage(): JSX.Element {
   const [refs, setRefs] = useState<readonly string[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [adding, setAdding] = useState<string | null>(null);
+  // Most-recently-stored masked view, keyed by credentialRef. The BE's
+  // POST /v1/host/sample/byok/secrets returns `{ credentialRef, masked }`
+  // but the LIST endpoint only returns refs. Persisting the masked
+  // value in component state lets the user visually confirm "this is
+  // the sk-ant-...e4f7 I just added" until they reload the page.
+  const [maskedByRef, setMaskedByRef] = useState<Record<string, string>>({});
 
   const refresh = useCallback(async () => {
     try {
@@ -119,8 +125,9 @@ export function KeysPage(): JSX.Element {
                   provider={p}
                   existingLabels={list.map((e) => e.label ?? e.ref)}
                   onCancel={() => setAdding(null)}
-                  onSaved={async () => {
+                  onSaved={async (storedRef, masked) => {
                     setAdding(null);
+                    setMaskedByRef((prev) => ({ ...prev, [storedRef]: masked }));
                     await refresh();
                   }}
                 />
@@ -134,8 +141,10 @@ export function KeysPage(): JSX.Element {
                     <li key={e.ref} className="keys-list-item">
                       <div className="keys-list-item-main">
                         <code className="keys-list-item-ref">{e.ref}</code>
-                        {e.label && (
-                          <span className="keys-list-item-label">{e.label}</span>
+                        {maskedByRef[e.ref] && (
+                          <span className="keys-list-item-masked" title="Masked rendering returned by the BE on store">
+                            {maskedByRef[e.ref]}
+                          </span>
                         )}
                       </div>
                       <button
@@ -144,6 +153,11 @@ export function KeysPage(): JSX.Element {
                           if (!window.confirm(`Delete key "${e.ref}"? Nodes referencing it will fail until you re-add it.`)) return;
                           try {
                             await deleteKey(e.ref);
+                            setMaskedByRef((prev) => {
+                              const next = { ...prev };
+                              delete next[e.ref];
+                              return next;
+                            });
                             await refresh();
                           } catch (err) {
                             setError(err instanceof Error ? err.message : String(err));
@@ -162,42 +176,46 @@ export function KeysPage(): JSX.Element {
 
         {/* Legacy refs (no `<provider>:` prefix) — surfaced separately
             so the user can clean them up. */}
-        {refs !== null && (grouped.get('__legacy__')?.length ?? 0) > 0 && (
-          <div className="keys-provider-section">
-            <div className="keys-provider-head">
-              <div className="keys-provider-name">
-                <strong>Unscoped keys</strong>
-                <span className="muted">· {grouped.get('__legacy__')!.length}</span>
+        {(() => {
+          const legacy = refs !== null ? grouped.get('__legacy__') : undefined;
+          if (!legacy || legacy.length === 0) return null;
+          return (
+            <div className="keys-provider-section">
+              <div className="keys-provider-head">
+                <div className="keys-provider-name">
+                  <strong>Unscoped keys</strong>
+                  <span className="muted">· {legacy.length}</span>
+                </div>
               </div>
+              <p className="muted">
+                These credentials don&apos;t carry a <code>provider:</code>{' '}
+                prefix. They still work, but the per-node picker can&apos;t
+                filter them by provider. Delete and re-add to scope them.
+              </p>
+              <ul className="keys-list">
+                {legacy.map((e) => (
+                  <li key={e.ref} className="keys-list-item">
+                    <code className="keys-list-item-ref">{e.ref}</code>
+                    <button
+                      className="secondary keys-list-item-delete"
+                      onClick={async () => {
+                        if (!window.confirm(`Delete key "${e.ref}"?`)) return;
+                        try {
+                          await deleteKey(e.ref);
+                          await refresh();
+                        } catch (err) {
+                          setError(err instanceof Error ? err.message : String(err));
+                        }
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <p className="muted">
-              These credentials don&apos;t carry a <code>provider:</code>{' '}
-              prefix. They still work, but the per-node picker can&apos;t
-              filter them by provider. Delete and re-add to scope them.
-            </p>
-            <ul className="keys-list">
-              {(grouped.get('__legacy__') ?? []).map((e) => (
-                <li key={e.ref} className="keys-list-item">
-                  <code className="keys-list-item-ref">{e.ref}</code>
-                  <button
-                    className="secondary keys-list-item-delete"
-                    onClick={async () => {
-                      if (!window.confirm(`Delete key "${e.ref}"?`)) return;
-                      try {
-                        await deleteKey(e.ref);
-                        await refresh();
-                      } catch (err) {
-                        setError(err instanceof Error ? err.message : String(err));
-                      }
-                    }}
-                  >
-                    Delete
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+          );
+        })()}
       </div>
     </section>
   );
@@ -212,7 +230,10 @@ function AddKeyForm({
   provider: ProviderConfig;
   existingLabels: readonly string[];
   onCancel: () => void;
-  onSaved: () => Promise<void>;
+  /** Called after a successful store with the persisted credentialRef
+   *  + the masked rendering the BE returned, so the page can surface
+   *  the masked view on the corresponding list row. */
+  onSaved: (storedRef: string, masked: string) => Promise<void>;
 }): JSX.Element {
   const [label, setLabel] = useState('');
   const [value, setValue] = useState('');
@@ -225,6 +246,19 @@ function AddKeyForm({
   }, [label, provider.id]);
 
   const labelTaken = existingLabels.includes(label.trim()) || existingLabels.includes(credentialRef);
+
+  // Soft validation against the provider's apiKeyPrefix hint. The
+  // wizard's first-run flow already does this; mirroring here so a
+  // user adding a key from the manage page gets the same nudge when
+  // they paste something that doesn't start with the expected prefix.
+  // Warning only — submit isn't blocked because users with fine-tune
+  // keys / org-prefixed keys are still valid.
+  const prefixWarning = useMemo(() => {
+    if (!provider.apiKeyPrefix) return null;
+    const trimmed = value.trim();
+    if (!trimmed || trimmed.startsWith(provider.apiKeyPrefix)) return null;
+    return `${provider.label} keys usually start with \`${provider.apiKeyPrefix}\`. Double-check this is the right provider.`;
+  }, [provider.apiKeyPrefix, provider.label, value]);
 
   async function onSubmit() {
     setErr(null);
@@ -242,8 +276,8 @@ function AddKeyForm({
     }
     setSaving(true);
     try {
-      await storeKey(credentialRef, value.trim());
-      await onSaved();
+      const stored = await storeKey(credentialRef, value.trim());
+      await onSaved(stored.credentialRef, stored.masked);
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
@@ -279,6 +313,11 @@ function AddKeyForm({
         />
         {provider.apiKeyHelpText && (
           <div className="muted builder-inspector-help">{provider.apiKeyHelpText}</div>
+        )}
+        {prefixWarning && (
+          <div className="alert warning" style={{ marginTop: 6, fontSize: 12, padding: '6px 10px' }}>
+            {prefixWarning}
+          </div>
         )}
         {provider.apiKeyConsoleUrl && (
           <div className="muted builder-inspector-help">

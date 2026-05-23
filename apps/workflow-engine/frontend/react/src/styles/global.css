@@ -2569,3 +2569,16 @@ pre {
   border: 1px solid var(--clay-rule, #d9b9a3);
   border-radius: 6px;
 }
+
+/* Masked-key chip on /keys list rows — shown briefly after the user
+ * adds a new key so they can visually confirm the suffix matches what
+ * they pasted. Persists only in component state; reload clears it. */
+.keys-list-item-masked {
+  font-family: var(--mono, monospace);
+  font-size: 11px;
+  color: var(--ink-3, #8a857a);
+  padding: 1px 6px;
+  background: var(--paper, #f4f1ea);
+  border: 1px solid var(--rule, #e9e4d6);
+  border-radius: 3px;
+}
