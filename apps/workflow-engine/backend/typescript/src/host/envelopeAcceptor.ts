@@ -36,6 +36,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { normalizeEnvelopePayload } from './envelopeNormalizers.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // repo-root / schemas. The host is at apps/workflow-engine/backend/typescript/src/host/.
@@ -141,6 +142,12 @@ export type EnvelopeOutcome =
       redactedPayload?: unknown;
       /** Number of canary substitutions applied across `redactedPayload`. */
       redactionCount?: number;
+      /** Pre-validation coercions applied by the normalizer registry
+       *  (see `host/envelopeNormalizers.ts`). Empty when nothing was
+       *  coerced. Callers MAY surface these to OTel / debug bundles
+       *  but MUST NOT use them to reject the envelope — the acceptor
+       *  has already decided `accepted` and the warnings are advisory. */
+      normalizerWarnings?: Array<{ field: string; reason: string; originalShape: string }>;
     }
   | { status: 'invalid'; reason: string; details: ValidationDetail[] }
   | { status: 'gated'; reason: string; allowedKinds: readonly string[] }
@@ -295,9 +302,18 @@ export function acceptEnvelope(envelope: unknown, opts: AcceptOptions = {}): Env
     }
   }
 
+  // Step 2.5: pre-validation normalization. Coerce common AI shape
+  // drift (string→array, singular→plural field renames, primitive→
+  // wrapper-object) BEFORE running the per-kind validator. Warnings
+  // are advisory only — they surface on the accepted outcome but
+  // never block. See `host/envelopeNormalizers.ts` for the registry.
+  const normalizeOutcome = normalizeEnvelopePayload(env.type, env.payload);
+  const payloadForValidation = normalizeOutcome.payload;
+  const normalizerWarnings = normalizeOutcome.warnings;
+
   // Step 3: payload validation against the per-kind schema (when available).
   const payloadValidator = loadPayloadValidator(env.type);
-  if (payloadValidator && !payloadValidator(env.payload)) {
+  if (payloadValidator && !payloadValidator(payloadForValidation)) {
     return {
       status: 'invalid',
       reason: `payload for kind '${env.type}' failed validation`,
@@ -446,6 +462,7 @@ export function acceptEnvelope(envelope: unknown, opts: AcceptOptions = {}): Env
       ...(redaction.count > 0
         ? { redactedPayload: redaction.value }
         : { redactedPayload: env.payload }),
+      ...(normalizerWarnings.length > 0 ? { normalizerWarnings } : {}),
     };
   }
 
@@ -454,6 +471,7 @@ export function acceptEnvelope(envelope: unknown, opts: AcceptOptions = {}): Env
     recordedEventIds: [], // host emits RunEventDocs; this acceptor stays pure
     envelopeId,
     normalizedMeta: { contentTrust: normalizedContentTrust },
+    ...(normalizerWarnings.length > 0 ? { normalizerWarnings } : {}),
   };
 }
 
