@@ -73,20 +73,22 @@ export async function listPrompts(filter: ListPromptsFilter = {}): Promise<Promp
       const res = await fetch(url, fetchOpts({ headers: authedHeaders() }));
       if (res.ok) {
         const body = (await res.json()) as ListResponse;
-        // If the host advertises prompts but returns an empty list,
-        // we still want to merge in any user-authored prompts the
-        // browser has cached locally — the BE doesn't see them yet
-        // (deferred to a real RFC 0028 prompts store). Same applies
-        // when the BE returns its own items: append user prompts so
-        // the local additions are visible even with a populated store.
-        return applyFilter([...listUserPrompts(), ...body.items], filter);
+        // BE has canonical entries → return them merged with user
+        // prompts (user prompts ride along regardless of BE state).
+        if (body.items.length > 0) {
+          return applyFilter([...listUserPrompts(), ...body.items], filter);
+        }
+        // BE returned empty — same as the old "no canonical set yet"
+        // fallback. Drop through to the sample-library merge below.
       }
     } catch {
       /* fall through to samples */
     }
   }
-  // No host support OR fetch errored — merge user prompts on top of
-  // the bundled samples so users see both groups in one list.
+  // No host support OR BE empty OR fetch errored — merge user prompts
+  // on top of the bundled samples so users see both groups in one list.
+  // Without this fallback, a user with no user-prompts and a BE that
+  // returns `{items:[]}` would see an empty prompt library.
   return applyFilter([...listUserPrompts(), ...SAMPLE_PROMPTS], filter);
 }
 

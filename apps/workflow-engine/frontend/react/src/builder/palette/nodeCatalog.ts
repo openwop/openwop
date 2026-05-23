@@ -104,8 +104,6 @@ export interface NodeCatalogEntry {
 // a dead ref — the prompt-picker will show "unknown" silently.
 //
 // Current bindings:
-//   mock-ai.systemPromptRef  → 'writer-system'
-//   mock-ai.userPromptRef    → 'writer-user'
 //   chat.systemPromptRef     → 'chat-assistant-system'
 //
 // A build-time check at `scripts/check-prompt-ref-defaults.mjs`
@@ -176,50 +174,17 @@ export const NODE_CATALOG: readonly NodeCatalogEntry[] = [
     ],
   },
   {
-    // mock-ai deliberately has no provider/model configFields — it's a
-    // deterministic local node, not a real LLM dispatch. Adding those
-    // fields would be misleading UX (the values would be ignored at
-    // run time). Only prompt-picker fields appear, demonstrating the
-    // RFC 0027 prompt-ref wire shape end-to-end without an LLM call.
-    kind: 'mock-ai',
-    typeId: 'local.sample.demo.mock-ai',
-    label: 'Mock AI',
-    description: 'Returns a deterministic mock completion for inputs.prompt. No external calls.',
-    category: 'ai',
-    badge: 'M',
-    accent: 'var(--color-ai)',
-    inputs: [{ name: 'prompt', type: 'string' }],
-    outputs: [{ name: 'completion', type: 'string' }],
-    configFields: [
-      {
-        key: 'systemPromptRef',
-        label: 'System prompt',
-        kind: 'prompt-picker',
-        promptKind: 'system',
-        // Demo-ready default — fresh mock-ai nodes drop onto the canvas
-        // with a sensible writer system prompt instead of an empty slot.
-        defaultValue: 'writer-system',
-        help: 'PromptRef per RFC 0027. The mock node logs resolution at dispatch but doesn\'t call an LLM. Real AI nodes (chat) resolve and compose the same refs server-side.',
-      },
-      {
-        key: 'userPromptRef',
-        label: 'User prompt template',
-        kind: 'prompt-picker',
-        promptKind: 'user',
-        defaultValue: 'writer-user',
-        help: 'PromptRef per RFC 0027. Variables interpolate from inputs at dispatch time once the host advertises capabilities.prompts.supported.',
-      },
-    ],
-  },
-  {
     kind: 'chat',
     typeId: 'vendor.openwop-sample.chat-responder',
-    label: 'Chat (real provider)',
-    description: 'Calls a real LLM via BYOK. Expects inputs.messages and inputs.credentialRef.',
+    label: 'AI (LLM)',
+    description: 'Calls a real LLM. Defaults to the managed openwop-free tile; pick a stored key in the Inspector to use your own provider.',
     category: 'ai',
-    badge: 'C',
+    badge: 'AI',
     accent: 'var(--color-ai)',
-    inputs: [{ name: 'messages', type: 'object' }],
+    inputs: [
+      { name: 'prompt', type: 'string' },
+      { name: 'messages', type: 'object' },
+    ],
     outputs: [{ name: 'completion', type: 'string' }],
     // ConfigField order is UX-driven: provider first so the picker
     // reads top-to-bottom; model/credentialRef below since they
@@ -252,8 +217,14 @@ export const NODE_CATALOG: readonly NodeCatalogEntry[] = [
         help: 'Which stored key this node uses to call the LLM. Manage keys at /keys. Filtered to keys matching the chosen provider.',
       },
       {
-        key: 'systemPromptRef',
+        key: 'systemPrompt',
         label: 'System prompt',
+        kind: 'textarea',
+        help: 'Plain text shown to the LLM as the system role. Takes precedence over the PromptRef below.',
+      },
+      {
+        key: 'systemPromptRef',
+        label: 'System prompt (template)',
         kind: 'prompt-picker',
         promptKind: 'system',
         defaultValue: 'chat-assistant-system',

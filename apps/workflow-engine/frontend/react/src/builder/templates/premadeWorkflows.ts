@@ -2,8 +2,8 @@
  * Premade workflow templates surfaced in the dashboard.
  *
  * Each template is a fully-formed `SavedWorkflow` graph using only the
- * 6 nodes the sample backend can execute end-to-end today: noop, delay,
- * uppercase, approval, mock-ai, chat (BYOK). See
+ * 5 nodes the sample backend can execute end-to-end today: noop, delay,
+ * uppercase, approval, chat. See
  * `apps/workflow-engine/backend/typescript/src/bootstrap/nodes.ts`.
  *
  * Templates exercise the DAG executor (commit 9268353): fan-out, fan-in,
@@ -17,12 +17,17 @@
  * for every upstream (`triggerRule: 'all_success'`, default) without
  * having its data clobbered.
  *
+ * **AI nodes** call a real LLM by default. With no `credentialRef`
+ * configured, the chat-responder falls back to the managed
+ * `openwop-free` tile (MiniMax under the hood). Users can override
+ * per-node via the Inspector picker once they've stored their own key
+ * at `/keys`.
+ *
  * **Node output shapes** (from nodes.ts):
  *   noop       — `{ ...inputs }`   (pass-through; preserves all keys)
  *   delay      — `{ waitedMs }`    (single key; original input lost)
  *   approval   — opaque pass-through after resolve
  *   uppercase  — `{ text }`
- *   mock-ai    — `{ completion }`
  *   chat       — `{ completion, provider, model, usage }`
  *
  * Templates are read-only in the dashboard. "Use template" clones the
@@ -150,9 +155,9 @@ export const PREMADE_WORKFLOWS: readonly TemplateWorkflow[] = [
     category: 'pipeline',
     nodes: [
       node('start', 'noop', pos(0), 'Start'),
-      node('draft', 'mock-ai', pos(1), 'Draft content', {
-        systemPromptRef: 'writer-system',
-        userPromptRef: 'writer-user',
+      node('draft', 'chat', pos(1), 'Draft content', {
+        systemPrompt:
+          'You are a careful editorial writer. Match the requested tone exactly. Keep paragraphs tight. Do not invent facts.',
       }),
       node('normalize', 'uppercase', pos(2), 'Normalize'),
       node('legal_review', 'approval', pos(3, -2), 'Legal review', {
@@ -202,9 +207,9 @@ export const PREMADE_WORKFLOWS: readonly TemplateWorkflow[] = [
 
   // Template 5: Race-to-respond with audit trail (10 nodes)
   //
-  //   start ─┬─ fast_draft (mock-ai) ─ fast_norm (uppercase) ────┐
+  //   start ─┬─ fast_draft (chat) ─ fast_norm (uppercase) ────┐
   //          │                                                   ├─ converge (any_success) ─ final_review ─ publish
-  //          └─ audit_wait (delay 2s) ─ audit_log (mock-ai) ─ audit_norm (uppercase)
+  //          └─ audit_wait (delay 2s) ─ audit_log (chat) ─ audit_norm (uppercase)
   //
   // Demonstrates: 2-way fan-out, `any_success` convergence (first track
   // wins downstream firing, but both tracks still run to completion).
@@ -216,15 +221,15 @@ export const PREMADE_WORKFLOWS: readonly TemplateWorkflow[] = [
     category: 'pipeline',
     nodes: [
       node('start', 'noop', pos(0), 'Start'),
-      node('fast_draft', 'mock-ai', pos(1, -1), 'Fast draft', {
-        systemPromptRef: 'writer-system',
-        userPromptRef: 'writer-user',
+      node('fast_draft', 'chat', pos(1, -1), 'Fast draft', {
+        systemPrompt:
+          'You are a fast drafter. Produce a single-sentence response to the request below. No preamble.',
       }),
       node('fast_norm', 'uppercase', pos(2, -1), 'Fast normalize'),
       node('audit_wait', 'delay', pos(1, 1), 'Audit wait', { durationMs: 2000 }),
-      node('audit_log', 'mock-ai', pos(2, 1), 'Audit log', {
-        systemPromptRef: 'audit-logger-system',
-        userPromptRef: 'writer-user',
+      node('audit_log', 'chat', pos(2, 1), 'Audit log', {
+        systemPrompt:
+          'You are an audit logger. Summarize the request below in one sentence in the format: "Request received at <time>: <summary>". Use a placeholder for the time.',
       }),
       node('audit_norm', 'uppercase', pos(3, 1), 'Audit normalize'),
       node('converge', 'noop', pos(4), 'Converge (any)'),
@@ -240,7 +245,7 @@ export const PREMADE_WORKFLOWS: readonly TemplateWorkflow[] = [
       edge('e2', 'start', 'audit_wait'),
       // Fast lane: completion→text→approval
       edge('e3', 'fast_draft', 'fast_norm', { sourcePort: 'completion', targetPort: 'text' }),
-      // Audit lane: wait→mock-ai (needs prompt from `start`, route directly).
+      // Audit lane: wait→chat (needs prompt from `start`, route directly).
       edge('e4', 'audit_wait', 'audit_log', { targetPort: '_gate_wait' }),
       edge('e5', 'start', 'audit_log', { targetPort: 'prompt', label: 'prompt passthrough' }),
       edge('e6', 'audit_log', 'audit_norm', { sourcePort: 'completion', targetPort: 'text' }),
@@ -319,11 +324,11 @@ export const PREMADE_WORKFLOWS: readonly TemplateWorkflow[] = [
 
   // Template 7: ETL pipeline with parallel extracts (14 nodes)
   //
-  //   start ─ kickoff (approval) ─┬─ extract_A (mock-ai) ─ norm_A (uppercase) ──┐
-  //                               ├─ extract_B (delay 1s) ─ enrich_B (mock-ai) ─┤
-  //                               └─ extract_C (delay 2s) ─ enrich_C (mock-ai) ─┤
+  //   start ─ kickoff (approval) ─┬─ extract_A (chat) ─ norm_A (uppercase) ──┐
+  //                               ├─ extract_B (delay 1s) ─ enrich_B (chat) ─┤
+  //                               └─ extract_C (delay 2s) ─ enrich_C (chat) ─┤
   //                                                                              merge (noop, all_success)
-  //                                                                              └─ transform (uppercase) ─ qa_review (approval) ─ load_wait (delay 1s) ─ load (mock-ai) ─ confirm
+  //                                                                              └─ transform (uppercase) ─ qa_review (approval) ─ load_wait (delay 1s) ─ load (chat) ─ confirm
   //
   // Demonstrates: ops-style ETL — gated kickoff, 3-way parallel extracts
   // each with their own sequential pre-step, fan-in convergence, then a
@@ -339,20 +344,20 @@ export const PREMADE_WORKFLOWS: readonly TemplateWorkflow[] = [
       node('kickoff', 'approval', pos(1), 'Kickoff', {
         prompt: 'Approve ETL kickoff.',
       }),
-      node('extract_A', 'mock-ai', pos(2, -1), 'Extract source A', {
-        systemPromptRef: 'etl-extractor-system',
-        userPromptRef: 'writer-user',
+      node('extract_A', 'chat', pos(2, -1), 'Extract source A', {
+        systemPrompt:
+          'You are a data extractor. Given the source description below, output a one-paragraph synthetic sample of the kind of records that source would produce. Plain text, no JSON.',
       }),
       node('norm_A', 'uppercase', pos(3, -1), 'Normalize A'),
       node('extract_B', 'delay', pos(2, 0), 'Extract source B', { durationMs: 1000 }),
-      node('enrich_B', 'mock-ai', pos(3, 0), 'Enrich B', {
-        systemPromptRef: 'etl-enricher-system',
-        userPromptRef: 'writer-user',
+      node('enrich_B', 'chat', pos(3, 0), 'Enrich B', {
+        systemPrompt:
+          'You are a data enricher. Given the input below, output a one-paragraph enriched version that adds plausible derived fields.',
       }),
       node('extract_C', 'delay', pos(2, 1), 'Extract source C', { durationMs: 2000 }),
-      node('enrich_C', 'mock-ai', pos(3, 1), 'Enrich C', {
-        systemPromptRef: 'etl-enricher-system',
-        userPromptRef: 'writer-user',
+      node('enrich_C', 'chat', pos(3, 1), 'Enrich C', {
+        systemPrompt:
+          'You are a data enricher. Given the input below, output a one-paragraph enriched version that adds plausible derived fields.',
       }),
       node('merge', 'noop', pos(4), 'Merge sources'),
       node('transform', 'uppercase', pos(5), 'Transform'),
@@ -360,21 +365,21 @@ export const PREMADE_WORKFLOWS: readonly TemplateWorkflow[] = [
         prompt: 'QA: approve transformed dataset.',
       }),
       node('load_wait', 'delay', pos(7), 'Load window', { durationMs: 1000 }),
-      node('load', 'mock-ai', pos(8), 'Load destination', {
-        systemPromptRef: 'etl-loader-system',
-        userPromptRef: 'writer-user',
+      node('load', 'chat', pos(8), 'Load destination', {
+        systemPrompt:
+          'You are a load step. Confirm the transformed dataset below has been loaded by replying with a single sentence describing the destination and row count.',
       }),
       node('confirm', 'noop', pos(9), 'Confirm'),
     ],
     edges: [
       edge('e1', 'start', 'kickoff'),
       // Fan-out from kickoff to 3 extract lanes.
-      edge('e2', 'kickoff', 'extract_A', { targetPort: 'prompt', label: 'prompt → mock-ai' }),
+      edge('e2', 'kickoff', 'extract_A', { targetPort: 'prompt', label: 'prompt → chat' }),
       edge('e3', 'kickoff', 'extract_B'),
       edge('e4', 'kickoff', 'extract_C'),
       // Lane A: extract → normalize (completion→text)
       edge('e5', 'extract_A', 'norm_A', { sourcePort: 'completion', targetPort: 'text' }),
-      // Lane B: delay → mock-ai (needs prompt from kickoff)
+      // Lane B: delay → chat (needs prompt from kickoff)
       edge('e6', 'extract_B', 'enrich_B', { targetPort: '_gate_b' }),
       edge('e7', 'kickoff', 'enrich_B', { targetPort: 'prompt' }),
       // Lane C: same pattern as B
@@ -397,9 +402,9 @@ export const PREMADE_WORKFLOWS: readonly TemplateWorkflow[] = [
 
   // Template 8: Triple-AI review board (11 nodes)
   //
-  //   start ─ prepare (uppercase) ─┬─ critic_1 (mock-ai) ─ summary_1 (uppercase) ─┐
-  //                                ├─ critic_2 (mock-ai) ─ summary_2 (uppercase) ─┼─ arbiter (approval) ─ final (uppercase) ─ publish
-  //                                └─ critic_3 (mock-ai) ─ summary_3 (uppercase) ─┘
+  //   start ─ prepare (uppercase) ─┬─ critic_1 (chat) ─ summary_1 (uppercase) ─┐
+  //                                ├─ critic_2 (chat) ─ summary_2 (uppercase) ─┼─ arbiter (approval) ─ final (uppercase) ─ publish
+  //                                └─ critic_3 (chat) ─ summary_3 (uppercase) ─┘
   //
   // Demonstrates: 1→3 fan-out into independent AI-then-format chains,
   // 3→1 fan-in to a human arbiter that picks the best.
@@ -412,19 +417,19 @@ export const PREMADE_WORKFLOWS: readonly TemplateWorkflow[] = [
     nodes: [
       node('start', 'noop', pos(0), 'Start'),
       node('prepare', 'uppercase', pos(1), 'Prepare prompt'),
-      node('critic_1', 'mock-ai', pos(2, -2), 'Critic 1', {
-        systemPromptRef: 'critic-system',
-        userPromptRef: 'writer-user',
+      node('critic_1', 'chat', pos(2, -2), 'Clarity critic', {
+        systemPrompt:
+          'You are a clarity editor. Read the text below and give 3 short bullet-point notes on how to make it clearer. Do not rewrite. Be terse.',
       }),
       node('summary_1', 'uppercase', pos(3, -2), 'Summary 1'),
-      node('critic_2', 'mock-ai', pos(2, 0), 'Critic 2', {
-        systemPromptRef: 'critic-system',
-        userPromptRef: 'writer-user',
+      node('critic_2', 'chat', pos(2, 0), 'Persuasion critic', {
+        systemPrompt:
+          'You are a copywriter focused on persuasion. Read the text below and give 3 short bullet-point notes on how to make it more persuasive. Do not rewrite. Be terse.',
       }),
       node('summary_2', 'uppercase', pos(3, 0), 'Summary 2'),
-      node('critic_3', 'mock-ai', pos(2, 2), 'Critic 3', {
-        systemPromptRef: 'critic-system',
-        userPromptRef: 'writer-user',
+      node('critic_3', 'chat', pos(2, 2), 'Brevity critic', {
+        systemPrompt:
+          'You are a brevity editor. Read the text below and give 3 short bullet-point notes on what to cut. Do not rewrite. Be terse.',
       }),
       node('summary_3', 'uppercase', pos(3, 2), 'Summary 3'),
       node('arbiter', 'approval', pos(4), 'Arbiter pick', {
@@ -450,7 +455,17 @@ export const PREMADE_WORKFLOWS: readonly TemplateWorkflow[] = [
       edge('e11', 'arbiter', 'final', { targetPort: 'text' }),
       edge('e12', 'final', 'publish', { sourcePort: 'text' }),
     ],
-    defaultInputs: JSON.stringify({ text: 'evaluate our new pricing page copy' }, null, 2),
+    defaultInputs: JSON.stringify(
+      {
+        text:
+          'Our new pricing is simple: $19/month gets you the Starter plan with unlimited workflows, ' +
+          '10,000 runs, and email support. Teams that need more can upgrade to Pro at $49/month for ' +
+          '50,000 runs and priority support. Both plans include a 14-day free trial — no credit card ' +
+          'required. Cancel anytime.',
+      },
+      null,
+      2,
+    ),
   },
 
   // The single-node "Chat turn" template was removed on 2026-05-22 —

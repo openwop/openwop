@@ -782,16 +782,37 @@ const sampleMockAiNode: NodeModule = {
     const userBody = await composeRef('user', cfg.userPromptRef);
 
     // Concatenate composed bodies in the conventional dispatch order.
-    // Falls back to `inputs.prompt` (back-compat) when no ref at all
-    // resolved.
+    // Fallback chain expanded so multi-step workflows always produce
+    // a non-empty mock output even when (a) prompt composition returns
+    // null bodies despite the ref resolving, or (b) an upstream edge
+    // delivered the text under a different input field (`inputs.text`
+    // from an `uppercase` node, `inputs.message`, etc.) than the
+    // canonical `inputs.prompt`. Previously these cases produced the
+    // literal stub "Mock response to:" with nothing after, which read
+    // as broken to demo users.
     const parts: string[] = [];
     if (systemBody !== null) parts.push(systemBody);
     if (schemaHintBody !== null) parts.push(schemaHintBody);
     for (const f of fewShotBodies) parts.push(f);
     if (userBody !== null) parts.push(userBody);
+    function firstStringInput(): string {
+      // Walk the most-common upstream port names in order of likelihood,
+      // then fall back to any string-valued input field. Keeps the demo
+      // from rendering empty cards when an edge maps to a non-canonical
+      // input port. `text` is what `uppercase` emits; `prompt` is the
+      // canonical mock-ai input; `message` covers chat-style upstreams.
+      for (const k of ['prompt', 'text', 'message', 'content', 'input']) {
+        const v = inputs[k];
+        if (typeof v === 'string' && v.length > 0) return v;
+      }
+      for (const v of Object.values(inputs)) {
+        if (typeof v === 'string' && v.length > 0) return v;
+      }
+      return '';
+    }
     const prompt = parts.length > 0
       ? parts.join('\n\n')
-      : (typeof inputs.prompt === 'string' ? inputs.prompt : '');
+      : firstStringInput();
 
     // Simulated token accounting — real impls read from the provider response.
     const promptTokens = Math.ceil(prompt.length / 4);
@@ -959,6 +980,76 @@ async function emitChatEnvelopeSignals(
  * carve-out), which puts it inside RFC 0023 §A's authorized-emitter
  * scope for `agent.reasoned` events.
  */
+/** Resolve a PromptRef declared in node config (per RFC 0027), compose
+ *  the template body against the run inputs, and return the composed
+ *  string. Returns null when the ref is unset, unresolvable, points at
+ *  an ambiguous/missing template, or the composer emits an empty body.
+ *  Emits `agent.promptResolved` + `prompt.composed` events identically
+ *  to the mock-ai path so observability is uniform across executors. */
+async function resolveAndComposePromptRef(
+  ctx: NodeContext,
+  kind: PromptKind,
+  refValue: unknown,
+  inputs: Record<string, unknown>,
+): Promise<string | null> {
+  if (refValue === undefined || refValue === null || refValue === '') return null;
+  const cfg = (ctx.config ?? {}) as Record<string, unknown>;
+  const promptsConfig = getPromptsHostConfig();
+  const resolution = resolvePromptRef({
+    kind,
+    node: { nodeId: ctx.nodeId, config: cfg },
+    agentBindingsSupported: promptsConfig.agentBindings,
+  });
+  await ctx.emit('agent.promptResolved', resolution);
+  if (resolution.resolved === null) return null;
+  const refMatch = /^prompt:([a-z0-9][a-z0-9._-]{0,127})(?:@(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?))?$/.exec(resolution.resolved);
+  if (!refMatch) return null;
+  const templateId = refMatch[1]!;
+  const version = refMatch[2];
+  const found = getTemplate(templateId, version !== undefined ? { version } : {});
+  if (!found || found === 'ambiguous') return null;
+  const composed = await composePromptTemplate({
+    templateId,
+    bindings: inputs,
+    observability: promptsConfig.observability,
+    nodeId: ctx.nodeId,
+  });
+  await ctx.emit('prompt.composed', composed);
+  return composed.composed ?? null;
+}
+
+/** Walk the inputs map looking for a usable string. Tries the canonical
+ *  port names first, then any string-valued field, then one level into
+ *  nested objects (covers cases where an upstream node delivered a
+ *  whole outputs map under a single port — e.g., `{ in: { text: '...' }}`
+ *  from a noop fan-in). Returns the first non-empty string found. */
+function findFirstStringValue(inputs: Record<string, unknown>): string | undefined {
+  for (const k of ['prompt', 'text', 'message', 'content', 'input', 'in']) {
+    const v = inputs[k];
+    if (typeof v === 'string' && v.length > 0) return v;
+  }
+  for (const v of Object.values(inputs)) {
+    if (typeof v === 'string' && v.length > 0) return v;
+  }
+  for (const v of Object.values(inputs)) {
+    if (v && typeof v === 'object' && !Array.isArray(v)) {
+      const nested = v as Record<string, unknown>;
+      for (const k of ['prompt', 'text', 'message', 'content', 'completion']) {
+        const inner = nested[k];
+        if (typeof inner === 'string' && inner.length > 0) return inner;
+      }
+    }
+  }
+  return undefined;
+}
+
+function lastIndexOfRole(messages: readonly ChatMessage[], role: ChatMessage['role']): number {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i]!.role === role) return i;
+  }
+  return -1;
+}
+
 const sampleChatResponderNode: NodeModule = {
   typeId: 'vendor.openwop-sample.chat-responder',
   version: '0.2.0',
@@ -978,19 +1069,80 @@ const sampleChatResponderNode: NodeModule = {
       (config.model as string | undefined) ??
       (inputs.model as string | undefined) ??
       getDefaultModel(provider);
+    // Default to the managed `openwop-free` tile when no credential is
+    // pinned at the workflow-graph or run-input layer. Lets builder
+    // templates (and freshly-dragged chat nodes) call a real LLM out of
+    // the box — the user only has to swap the credential when they want
+    // a different model or their own key.
     const credentialRef =
       (config.credentialRef as string | undefined) ??
-      (inputs.credentialRef as string | undefined);
-    const messages = inputs.messages as ChatMessage[] | undefined;
+      (inputs.credentialRef as string | undefined) ??
+      'managed:openwop-free';
+    // Accept either a multi-turn `messages` array (chat-tab shape) OR a
+    // single `prompt` string (workflow-graph shape, what `uppercase` /
+    // `etl-extractor` / other text-emitting upstream nodes deliver under
+    // the `prompt` port). When only `prompt` is present, wrap it into a
+    // one-shot user turn. Common upstream port names are walked in the
+    // same order as the mock-ai fallback so the swap from `mock-ai` →
+    // `chat` is wire-shape-compatible.
+    let messages = inputs.messages as ChatMessage[] | undefined;
+    if (!Array.isArray(messages) || messages.length === 0) {
+      const promptText = findFirstStringValue(inputs);
+      if (promptText !== undefined) {
+        messages = [{ role: 'user', content: promptText }];
+      }
+    }
     const maxTokens = typeof inputs.maxTokens === 'number' ? inputs.maxTokens : 1024;
     const webSearch = inputs.webSearch === true;
     const rawTools = Array.isArray(inputs.tools) ? (inputs.tools as ToolBinding[]) : [];
 
-    if (!credentialRef) {
-      return { status: 'failure', error: { code: 'credential_required', message: 'A credentialRef MUST be provided to dispatch a chat turn.' } };
-    }
     if (!Array.isArray(messages) || messages.length === 0) {
-      return { status: 'failure', error: { code: 'invalid_request', message: 'Field `messages` MUST be a non-empty array.' } };
+      // Diagnostic — surfaces which input ports actually arrived so a
+      // misconfigured fan-out / port-name mismatch can be traced from
+      // the run event log without a separate logging round-trip.
+      const inputKeys = Object.keys(inputs);
+      return {
+        status: 'failure',
+        error: {
+          code: 'invalid_request',
+          message:
+            inputKeys.length === 0
+              ? 'No upstream inputs reached this chat node. Check the workflow edges.'
+              : `Chat node received inputs on ports [${inputKeys.join(', ')}] but none carried a string. Edges should map to a port named one of: prompt, text, message, content, input.`,
+        },
+      };
+    }
+
+    // Resolve a system message from one of three sources, in precedence
+    // order: (1) `config.systemPrompt` — a literal string the template
+    // or Inspector wires directly (no host-side template registry
+    // needed); (2) `config.systemPromptRef` — an RFC 0027 PromptRef
+    // pointing at a template in the host prompt store; (3) nothing, in
+    // which case the LLM sees only the user turn. The composed body is
+    // prepended as a `role: 'system'` message so the LLM has its role
+    // before reading the user's content.
+    let systemBody: string | null = null;
+    const literalSystem = config['systemPrompt'];
+    if (typeof literalSystem === 'string' && literalSystem.length > 0) {
+      systemBody = literalSystem;
+    } else {
+      systemBody = await resolveAndComposePromptRef(ctx, 'system', config['systemPromptRef'], inputs);
+    }
+    if (systemBody !== null) {
+      messages = [{ role: 'system', content: systemBody }, ...messages];
+    }
+    const userBody = await resolveAndComposePromptRef(ctx, 'user', config['userPromptRef'], inputs);
+    if (userBody !== null) {
+      // Replace only the trailing user turn so multi-turn chat histories
+      // (chat-tab path) keep their earlier turns intact.
+      const lastUserIdx = lastIndexOfRole(messages, 'user');
+      if (lastUserIdx >= 0) {
+        messages = messages.map((m, i) =>
+          i === lastUserIdx ? { ...m, content: userBody } : m,
+        );
+      } else {
+        messages = [...messages, { role: 'user', content: userBody }];
+      }
     }
 
     // Managed-provider path: server-held key, per-tenant daily cap,

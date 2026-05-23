@@ -9,6 +9,7 @@ import type { SavedWorkflow } from '../schema/workflow.js';
 const LS_KEY = 'openwop.sample.builder.workflows';
 const LS_SEEDED_KEY = 'openwop.sample.builder.workflows.seeded';
 const LS_MIGRATION_STRIPPED_FROM_TEMPLATE_SUFFIX = 'openwop.sample.builder.workflows.migration.stripFromTemplate';
+const LS_MIGRATION_MOCK_AI_TO_CHAT = 'openwop.sample.builder.workflows.migration.mockAiToChat';
 
 type Index = Record<string, SavedWorkflow>;
 
@@ -43,7 +44,40 @@ export function listSavedWorkflows(): SavedWorkflow[] {
   // carry it. Migrate once + flag so we don't churn writes on every
   // read. Pure rename — workflow ids + behavior unchanged.
   stripFromTemplateSuffixMigration();
+  mockAiToChatMigration();
   return Object.values(readIndex()).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+}
+
+// One-time migration: rewrite legacy `mock-ai` nodes to `chat`. The
+// real-LLM-by-default pivot (2026-05-23) replaced the deterministic
+// mock node with the chat-responder, which defaults to the managed
+// `openwop-free` tile when no credentialRef is set. Saved workflows
+// from the previous templates still carry `kind: 'mock-ai'`, which the
+// catalog no longer surfaces — leaving them un-renamed produces a
+// "Unknown node kind" error on save. Pure kind rename + drop any
+// stale `*PromptRef` config that was mock-specific.
+function mockAiToChatMigration(): void {
+  try {
+    if (localStorage.getItem(LS_MIGRATION_MOCK_AI_TO_CHAT) === '1') return;
+  } catch { return; }
+  const idx = readIndex();
+  let mutated = false;
+  for (const id of Object.keys(idx)) {
+    const wf = idx[id];
+    if (!wf) continue;
+    let nodesMutated = false;
+    const newNodes = wf.nodes.map((n) => {
+      if (n.kind !== 'mock-ai') return n;
+      nodesMutated = true;
+      return { ...n, kind: 'chat' };
+    });
+    if (nodesMutated) {
+      idx[id] = { ...wf, nodes: newNodes };
+      mutated = true;
+    }
+  }
+  if (mutated) writeIndex(idx);
+  try { localStorage.setItem(LS_MIGRATION_MOCK_AI_TO_CHAT, '1'); } catch { /* ignore */ }
 }
 
 function stripFromTemplateSuffixMigration(): void {
