@@ -1,8 +1,10 @@
 # Full Conformance Run — SQLite Reference Host
 
+> **Latest measurement is at `examples/hosts/sqlite/conformance.md`** (2026-05-22, suite v1.5.0 — 1486/1564, 95.0%). This file is a historical full-run record from the 2026-05-11 Phase 1 + review-fix cycle, retained for traceability.
+>
 > **Run date:** 2026-05-11 (post Phase 1 + review-fix cycle)
 > **Host version:** `openwop-host-sqlite@1.0.0` at commit `9ce5400`
-> **Conformance suite:** `@openwop/openwop-conformance` (this repo, post Phase 1 + review fixes)
+> **Conformance suite:** `@openwop/openwop-conformance` (this repo, post Phase 1 + review fixes — pre-versioned-suite era)
 > **Profile claims:** `openwop-core` · `openwop-stream-poll` · `openwop-stream-sse` · `openwop-audit-log-integrity` · `openwop-interrupt-quorum` · `openwop-interrupt-auth-required` · `openwop-interrupt-external-event` · `openwop-interrupt-cascade-cancel` · `capabilities.webhooks` (HMAC v1) · `capabilities.observability.{otel,metrics}` (when `OTEL_EXPORTER_OTLP_ENDPOINT` set) · (debug-bundle advertised)
 > **Scale claim:** `minimal`
 > **Production-profile claim:** Not claimed

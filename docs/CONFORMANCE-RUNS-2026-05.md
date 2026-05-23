@@ -1,19 +1,21 @@
-# Conformance runs — 2026-05-22 (suite v1.4.0)
+# Conformance runs — 2026-05-22 (suite v1.5.0)
 
 > Published in response to the 2026-05-22 standards-readiness review's request for **current-suite conformance rerun against all reference hosts, with skip/fail/todo taxonomy published**.
 >
-> All measurements taken 2026-05-22 against `@openwop/openwop-conformance@1.4.0` (210 scenario files / 1558 tests) using the `--no-file-parallelism` flag (matches the `test:strict` runner posture documented at `conformance/package.json`).
+> All measurements taken 2026-05-22 against `@openwop/openwop-conformance@1.5.0` (210 scenario files / 1564 tests) using the `--no-file-parallelism` flag (matches the `test:strict` runner posture documented at `conformance/package.json`).
 >
-> Prior measurements (v1.1.0, ~850 scenarios) are preserved in git history at `INTEROP-MATRIX.md` line ranges around `2026-05-12 / 2026-05-13` and in each host's `examples/hosts/*/conformance.md`.
+> **v1.5.0 delta vs v1.4.0 (same-day re-measurement):** total 1558 → 1564 (+6) because v1.5.0's RFC 0044 vendor-kind routing relaxation in `multi-agent-confidence-escalation.test.ts` splits one strict-equality assertion into multiple discrete `it()` blocks. The 8 sandbox `expect(true).toBe(true)` placeholders also converted to `it.todo` per upstream commit `5864a2f` — same numeric outcome (the host wasn't earning real signal on those anyway), but the test reporter now surfaces them as todos rather than vacuous passes. Per-host pass deltas (`+6` each) reflect the +6 newly-discrete passing sub-blocks.
+>
+> Prior measurements (v1.1.0 ~850 scenarios; v1.4.0 same-day baseline) are preserved in git history at `INTEROP-MATRIX.md` line ranges around `2026-05-12 / 2026-05-13` and in each host's `examples/hosts/*/conformance.md`.
 
 ## Headline numbers
 
 | Host | Passed | Failed | Skipped | Todo | Total | Pass rate (default) |
 |---|---:|---:|---:|---:|---:|---:|
-| Postgres reference (pglite) | 1467 | 6 | 69 | 16 | 1558 | 94.2% |
-| SQLite reference | 1480 | 7 | 55 | 16 | 1558 | 95.0% |
-| In-memory reference | 1439 | 48 | 55 | 16 | 1558 | 92.4% |
-| Python reference | 1381 | 60 | 101 | 16 | 1558 | 88.6% |
+| Postgres reference (pglite) | 1473 | 6 | 69 | 16 | 1564 | 94.2% |
+| SQLite reference | 1486 | 7 | 55 | 16 | 1564 | 95.0% |
+| In-memory reference | 1445 | 48 | 55 | 16 | 1564 | 92.4% |
+| Python reference | 1387 | 60 | 101 | 16 | 1564 | 88.7% |
 
 **Taxonomy posture.** A scenario is one of four states:
 

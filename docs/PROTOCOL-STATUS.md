@@ -46,10 +46,10 @@
 
 | Host | Passed | Failed | Skipped | Todo | Total | Pass rate |
 |---|---:|---:|---:|---:|---:|---|
-| Postgres reference | 1467 | 6 | 69 | 16 | 1558 | 94.2% total; 99.6% of non-skipped (measured 2026-05-22 against suite v1.4.0 via pglite + OPENWOP_WEBHOOK_ALLOW_PRIVATE=true; full env stack - OPENWOP_SECONDARY_API_KEY + OPENWOP_TENANT2_API_KEY + OAuth2/OIDC issuer URLs + mTLS cert paths - required for the conditional-profile applicable count to recover to ~96-97%) |
-| SQLite reference | 1480 | 7 | 55 | 16 | 1558 | 95.0% total (Phase A baseline 91.5% against suite v1.1.0 -> 95.0% against v1.4.0; net +9.5pp despite the suite adding ~700 capability-gated scenarios) |
-| In-memory reference | 1439 | 48 | 55 | 16 | 1558 | 92.4% total - first v1.4.0 measurement against in-memory (prior measurements only against v1.1.1 per examples/hosts/in-memory/conformance.md) |
-| Python reference | 1381 | 60 | 101 | 16 | 1558 | 88.6% total; 100% of applicable when scoped to the host's claimed openwop-core + openwop-stream-poll + openwop-stream-sse profile set (the floor for cross-language parity) |
+| Postgres reference | 1473 | 6 | 69 | 16 | 1564 | 94.2% total; 99.6% of non-skipped (measured 2026-05-22 against suite v1.5.0 via pglite + OPENWOP_WEBHOOK_ALLOW_PRIVATE=true; full env stack - OPENWOP_SECONDARY_API_KEY + OPENWOP_TENANT2_API_KEY + OAuth2/OIDC issuer URLs + mTLS cert paths - required for the conditional-profile applicable count to recover to ~96-97%) |
+| SQLite reference | 1486 | 7 | 55 | 16 | 1564 | 95.0% total (Phase A baseline 91.5% against suite v1.1.0 -> 95.0% against v1.5.0) |
+| In-memory reference | 1445 | 48 | 55 | 16 | 1564 | 92.4% total |
+| Python reference | 1387 | 60 | 101 | 16 | 1564 | 88.7% total; 100% of applicable when scoped to the host's claimed openwop-core + openwop-stream-poll + openwop-stream-sse profile set (the floor for cross-language parity) |
 
 ## Registry Snapshot
 

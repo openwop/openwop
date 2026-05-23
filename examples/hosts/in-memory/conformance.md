@@ -1,11 +1,11 @@
 # Conformance Result: openwop In-Memory Reference Host
 
-> **Latest measurement:** **2026-05-22 against `@openwop/openwop-conformance@1.4.0` — 1439 passed / 48 failed / 55 skipped / 16 todo of 1558 tests (92.4%)**. See `docs/CONFORMANCE-RUNS-2026-05.md` for the per-failure-topic taxonomy and `INTEROP-MATRIX.md` for the cross-host comparison. Failures decompose into ~10 real bugs (canonical `RunEventDoc` shape carry-forward on event emission paths; events/poll forward-compat tolerance) and ~38 honest non-claims (scenarios outside the claimed `openwop-core` + `openwop-stream-poll` + `openwop-stream-sse` profile set).
+> **Latest measurement:** **2026-05-22 against `@openwop/openwop-conformance@1.5.0` — 1445 passed / 48 failed / 55 skipped / 16 todo of 1564 tests (92.4%)**. See `docs/CONFORMANCE-RUNS-2026-05.md` for the per-failure-topic taxonomy and `INTEROP-MATRIX.md` for the cross-host comparison. Failures decompose into ~10 real bugs (canonical `RunEventDoc` shape carry-forward on event emission paths; events/poll forward-compat tolerance) and ~38 honest non-claims (scenarios outside the claimed `openwop-core` + `openwop-stream-poll` + `openwop-stream-sse` profile set).
 >
-> **Prior measurement:** 2026-05-18 against suite v1.1.1 — 135/193 (retained below for historical context; not directly comparable since the suite scenario count grew from 193 to 1558).
+> **Prior measurements:** 2026-05-22 against suite v1.4.0 — 1439/1558 (92.4%); 2026-05-18 against suite v1.1.1 — 135/193 (retained below for historical context; suite scenario count grew from 193 → 1558 → 1564).
 >
 > **Host version:** `openwop-host-in-memory@1.1.1`
-> **Conformance suite:** `@openwop/openwop-conformance@1.4.0` (latest run)
+> **Conformance suite:** `@openwop/openwop-conformance@1.5.0` (latest run)
 > **Profile claim:** `openwop-core` + `openwop-stream-poll` + `openwop-stream-sse`
 > **Capability claim (RFC 0013):** `workflowChainPacks.supported: true` — host advertises the chain-expansion capability under `/.well-known/openwop` and serves the vendor-prefixed expansion endpoint `POST /v1/host/sample/workflow-chain:expand`. Mounted on top of `OPENWOP_PACK_REGISTRY_DIR` (defaults to the in-tree `examples/packs/`).
 > **Scale profile claim:** `minimal`

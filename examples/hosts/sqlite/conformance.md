@@ -1,12 +1,12 @@
 # Conformance Result: openwop SQLite Reference Host
 
-> **Latest measurement:** **2026-05-22 against `@openwop/openwop-conformance@1.4.0` — 1480 passed / 7 failed / 55 skipped / 16 todo of 1558 tests (95.0%)**. See `docs/CONFORMANCE-RUNS-2026-05.md` for the per-failure-topic taxonomy. All 7 failures are capability gaps in surfaces SQLite has not yet wired (RFC 0022 dispatch input/output mapping × 4, RFC 0026 cost-attribution × 2, RFC 0031 model-capability-insufficient executor × 1) — not regressions vs suite v1.1.0.
+> **Latest measurement:** **2026-05-22 against `@openwop/openwop-conformance@1.5.0` — 1486 passed / 7 failed / 55 skipped / 16 todo of 1564 tests (95.0%)**. See `docs/CONFORMANCE-RUNS-2026-05.md` for the per-failure-topic taxonomy. All 7 failures are capability gaps in surfaces SQLite has not yet wired (RFC 0022 dispatch input/output mapping × 4, RFC 0026 cost-attribution × 2, RFC 0031 model-capability-insufficient executor × 1) — not regressions vs suite v1.1.0.
 >
-> **Prior measurement:** 2026-05-19 against suite v1.2.0 — 669/731 (retained below for historical context).
+> **Prior measurements:** 2026-05-22 against suite v1.4.0 — 1480/1558 (95.0%); 2026-05-19 against suite v1.2.0 — 669/731 (retained below for historical context).
 >
 > **Run date (prior):** 2026-05-19 (snapshot refreshed after soak-gate close-out via `OPENWOP_OPTED_OUT_FIXTURES` + `OPENWOP_OPTED_OUT_SCENARIOS` + the SQLite artifact-route auth stub — see CHANGELOG `[1.1.2 — unreleased]`. Previous snapshots: 2026-05-12 Phase A/D close-out; 2026-05-11 audit-log + four interrupt profiles)
 > **Host version:** `openwop-host-sqlite@1.0.0`
-> **Conformance suite:** `@openwop/openwop-conformance@1.4.0` (latest run)
+> **Conformance suite:** `@openwop/openwop-conformance@1.5.0` (latest run)
 > **Profile claim:** `openwop-core` · `openwop-stream-poll` · `openwop-stream-sse` · `openwop-audit-log-integrity` · `openwop-interrupt-quorum` · `openwop-interrupt-auth-required` · `openwop-interrupt-external-event` · `openwop-interrupt-cascade-cancel` · `openwop-auth-api-key-rotation` · `openwop-discovery-auth-scoped`. Debug-bundle advertised.
 > **Profiles explicitly NOT claimed (per honesty principle):** `openwop-production` (Postgres host is the canonical claimant — see `INTEROP-MATRIX.md`), `openwop-auth-oauth2-client-credentials`, `openwop-auth-oidc-user-bearer`, `openwop-auth-mtls`. The reference HTTP listener does not enforce backpressure/retention, parse JWTs, or terminate TLS, so advertising those profiles would be over-claiming.
 > **Scale claim:** `minimal` (single-process; SQLite single-writer)

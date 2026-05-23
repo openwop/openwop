@@ -11,6 +11,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.3 — unreleased] — coordinated SDK release for MyndHyve adoption-feedback slices
 
+### Docs sync — suite v1.4.0 → v1.5.0 re-measurement + KNOWN-LIMITS RFC table refresh (2026-05-22)
+
+Same-day refresh triggered by the `@openwop/openwop-conformance` 1.4.0 → 1.5.0 bump + the `840b1ff` commit promoting RFC 0037 Phase 1 + RFC 0039 Half A + RFC 0044 Active → Accepted in a single batch:
+
+- **`docs/KNOWN-LIMITS.md` §"RFCs not yet Accepted":** split the multi-RFC row `0037, 0039, 0040, 0041 (Active)` → `0040, 0041 (Active)` since 0037 + 0039 are now Accepted; added Draft rows for RFC 0042 (experimental capability tier) + RFC 0043 (registry + extension policy + IPR posture); added a post-table prose paragraph documenting the 2026-05-22 batch promotion of 0037 + 0039 + 0044 with the MyndHyve cross-host evidence citation.
+- **`INTEROP-MATRIX.md` pass-rate table:** re-measured all 4 reference hosts against suite v1.5.0 (total 1558 → 1564 tests; the +6 delta reflects v1.5.0's RFC 0044 vendor-kind routing relaxation splitting one strict-equality assertion into discrete `it()` blocks). Postgres 1473/1564 (94.2%), SQLite 1486/1564 (95.0%), in-memory 1445/1564 (92.4%), Python 1387/1564 (88.7% total / 100% of applicable).
+- **`INTEROP-MATRIX.md` SQLite host-row description:** the "Conformance posture (updated 2026-05-12 after Phase D close-out)" claim gained an explicit `suite v1.1.0` retrospective marker so the historical claim doesn't read as a current measurement.
+- **`examples/hosts/{in-memory,sqlite,python,postgres}/conformance*.md`:** banners refreshed to cite suite v1.5.0; prior v1.4.0 measurements retained as "Prior measurements" rows. SQLite `conformance-full.md` gained a "Latest measurement is at conformance.md" pointer so the 2026-05-11 historical full-run record doesn't read as current.
+- **`docs/CONFORMANCE-RUNS-2026-05.md`:** headline numbers updated to v1.5.0; new "v1.5.0 delta vs v1.4.0" note explains the +6 test count growth (RFC 0044 relaxation discretization) + the 8 sandbox `expect(true)` → `it.todo` conversion (no numeric impact, but reporter surfaces todos instead of vacuous passes).
+- **`docs/PROTOCOL-STATUS.md`:** regenerated against the new INTEROP-MATRIX numbers via `node scripts/generate-protocol-status.mjs --write`.
+- **`.claude/skills/update-docs/SKILL.md`:** grew from 12 to 17 drift modes — added #13 (partial multi-RFC row promotion → split-don't-remove), #14 (suite minor bump shifts pass-counts even when CHANGELOG says no new files), #15 (suite-bump cascade after external host adoption), #16 (Drift #10 path-regex false-positive patterns), #17 (historical evidence files predating the versioned-suite convention). Detection-command fixes: Drift #3 regex scoped to §"RFCs not yet `Accepted`" so it doesn't false-positive on rows in the "Profiles pending non-steward adoption" table; Drift #12 awk pattern fixed (the obvious `awk '/start/,/end/'` returns empty when `[Unreleased]` is the only `## [` block, which is the steady state). New §"Catalog meta-lesson — detection commands are themselves drift surfaces" documents the failure modes encountered while building the detection commands.
+
+Gate: `bash scripts/openwop-check.sh` green. No wire-shape changes; no SDK source touched; no schemas / OpenAPI / AsyncAPI modified.
+
 ### Audit response — 2026-05-22 external standards-readiness review (2026-05-22)
 
 In response to a 2026-05-22 external standards-readiness review of the openwop corpus, multiple drift-fix + accountability artifacts land in this release:
