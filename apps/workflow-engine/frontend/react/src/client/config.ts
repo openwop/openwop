@@ -22,6 +22,19 @@ export type AuthMode = 'bearer' | 'cookie';
 
 export const config = {
   baseUrl: (import.meta.env.VITE_OPENWOP_BASE_URL as string | undefined) ?? 'http://localhost:8080',
+  /** Base URL for SSE subscriptions ONLY. Defaults to `baseUrl` for
+   *  dev, but on production app.openwop.dev the Firebase Hosting proxy
+   *  (`/api/**` → Cloud Run) silently buffers SSE responses, breaking
+   *  long-lived event streams. Workflow runs that suspend on a HITL
+   *  approval would never deliver events to the FE because the proxy
+   *  doesn't flush. Bypassing the proxy and hitting Cloud Run directly
+   *  is the only path that delivers events live.
+   *
+   *  Cloud Run's CORS already permits `app.openwop.dev` so cross-origin
+   *  EventSource works without further config. */
+  sseBaseUrl: (import.meta.env.VITE_OPENWOP_SSE_BASE_URL as string | undefined)
+    ?? (import.meta.env.VITE_OPENWOP_BASE_URL as string | undefined)
+    ?? 'http://localhost:8080',
   apiKey: (import.meta.env.VITE_OPENWOP_API_KEY as string | undefined) ?? 'sample-token',
   authMode: ((import.meta.env.VITE_OPENWOP_AUTH_MODE as string | undefined) ?? 'bearer') as AuthMode,
 };

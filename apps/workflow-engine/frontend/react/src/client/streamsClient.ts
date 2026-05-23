@@ -37,8 +37,11 @@ export function subscribeToRun(runId: string, opts: SubscribeOptions): Subscript
   // "Invalid URL". Pass `window.location.origin` as the base: it's
   // ignored when baseUrl is absolute (e.g. http://localhost:8080 in
   // dev) and used when relative, so this works in both modes.
+  // SSE-specific base URL. Bypasses the Firebase Hosting `/api/**`
+  // proxy which buffers responses and breaks long-lived SSE streams.
+  // See `config.ts > sseBaseUrl` for the rationale.
   const url = new URL(
-    `${config.baseUrl}/v1/runs/${encodeURIComponent(runId)}/events`,
+    `${config.sseBaseUrl}/v1/runs/${encodeURIComponent(runId)}/events`,
     window.location.origin,
   );
   if (opts.modes && opts.modes.length > 0) {
