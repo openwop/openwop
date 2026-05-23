@@ -11,6 +11,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.3 — unreleased] — coordinated SDK release for MyndHyve adoption-feedback slices
 
+### RFC 0034 promoted Active → Accepted + RFC 0028/0029 Tier-1 + RFC 0021 host adoption + honest correction on `registerHostSampleRoutes` (2026-05-23 late)
+
+**MyndHyve session shipped 4 RFCs at Tier-1 + a load-bearing wire-up fix:**
+
+| RFC | What landed | Status impact |
+|---|---|---|
+| **0021** (AI Envelope Primitive) | `POST /v1/host/sample/envelope/accept` live with full §A outcome decision tree (`accepted`/`invalid`/`gated`/`breached`) + BYOK-canary recursive SR-1 redactor + contentTrust propagation. Wire-shape verified live. | Already Accepted long ago; continued adoption. |
+| **0028** Tier-1 (Prompt Library Endpoints) | `GET /v1/prompts` + `GET /v1/prompts/{templateId}` + `POST /v1/prompts:render` live. `POST/PUT/DELETE` return `501` + `Allow: GET, HEAD, OPTIONS`. Advertises `prompts.{packsSupported: false, mutableLibrary: false, library: {id: 'myndhyve-system', renderEndpoint, maxRenderRequestBytes: 65536}}`. | **Stays Active.** Path-to-Accepted requires `packsSupported: true` AND `mutableLibrary: true`; MyndHyve's Tier-1 advertises both `false`. Tier-2 is a multi-day Firestore/RBAC session. |
+| **0029** Tier-1 (Prompt Override Hierarchy) | `agent.promptResolved` RunEventType + `.refine()`-enforced payload invariant; emission point in `callPrompt.node.ts`. Honest Tier-1 chain: node layer with synthetic `prompt:inline-<nodeId>` ref. | **Stays Active.** Path-to-Accepted requires `agentBindings: true`; MyndHyve's Tier-1 explicitly defers the agent-* layers. |
+| **0034** (OTel test seam) | `GET /v1/host/sample/test/otel/spans?runId=<id>` returns `200 OK { spans: [] }`. Advertises `observability.testSeams.otelScrape: true`. Tier-1 honest boundary: empty buffer (`@opentelemetry/api` only, no SDK provider). | **Active → Accepted.** Per RFC 0034 §B's "Upstream dependency on RFC 0021 envelope-accept" allowance, the empty-buffer case is explicitly valid — seam-shape probe passes; SR-1 behavioral assertion vacuously safe. First non-steward OTel-seam adoption. |
+
+**Honest correction — `registerHostSampleRoutes` was not invoked pre-`60b569de`.** MyndHyve disclosed that the `/v1/host/sample/*` route code was deployed for days but the `registerHostSampleRoutes(app)` call was never wired into `services/workflow-runtime/src/index.ts`. Effect: every `/v1/host/sample/*` request returned 404 in production from each seam's initial deploy until commit `60b569de` (revision `workflow-runtime-00196-7mm`, 2026-05-23). Four seams affected (RFC 0027 §E compose, RFC 0041 §A cache-key, RFC 0021 envelope-accept, RFC 0034 OTel scrape). Every conformance scenario that hit these paths returned 404 soft-skip instead of exercising behavior. With `60b569de`, all four seams are now exercisable end-to-end — verified live via direct curl 2026-05-23.
+
+**RFC 0027 status stays Accepted.** The advertisement was real, MyndHyve's local-tests-green claim was real (those tests exercise compose-seam logic directly without the host's REST surface). The conformance-suite SKIP-on-404 was a wire-up bug, not a logic gap. Same letter-of-law-vs-spirit-of-law principle that motivated the sandbox revert (`5864a2f`).
+
+**Updates:**
+- `RFCS/0034-otel-collector-test-seam.md` Status: `Active → Accepted`. All 8 acceptance-criteria items `[ ] → [x]`.
+- `INTEROP-MATRIX.md` gains §"Honest correction" + §"MyndHyve adoption status — RFC 0021 + RFC 0028 Tier-1 + RFC 0029 Tier-1 + RFC 0034" sub-sections; header date note expanded.
+- `README.md` Accepted (33 → 34 — adds 0034); Active (7 → 6).
+
 ### fix(workflow-engine): prompt-templates bundled-path bug — 4 prompt-event scenarios pass; workflow-engine 95.4% → 95.5% (2026-05-23)
 
 Follow-up to the `envelopeAcceptor.ts` bundled-path bugfix (commit `d09d99c`). The same pattern — `join(__filename, '..' × 5, 'conformance-fixtures', 'prompt-templates')` — was present in `host/promptStore.ts:78` AND `host/promptCompose.ts:115`. Under the source tree it resolved correctly to `apps/workflow-engine/conformance-fixtures/prompt-templates/`. Under the bundled tree (`lib/index.js`) it overshot to `apps/conformance-fixtures/prompt-templates/` — a directory that doesn't exist — so `existsSync(FIXTURES_DIR)` returned false at boot, host-built-in templates never loaded, every `getTemplate()` call returned undefined, and the dispatch path silently skipped `prompt.composed` emission for the 4 conformance scenarios that target host-built-in templates.

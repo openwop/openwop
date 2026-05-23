@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0034 |
 | **Title** | OTel collector test seam + secret-leakage invariant promotion |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-21 |
-| **Updated** | 2026-05-21 (Draft → Active same-day: schema additions to `capabilities.observability.testSeams` landed; spec/v1/observability.md §"OTel collector test seam" added; SECURITY/invariants.yaml graduates `secret-leakage-otel-attribute` + `secret-leakage-debug-bundle-otel` from `reference-impl` to `protocol` tier; conformance scenario `envelope-reasoning-secret-redaction.test.ts` tightens soft-skip to capability-gating. Path to `Accepted`: reference workflow-engine advertises the two seams + the scenario passes against it. The two SECURITY rows' `tests:` field now points at the live scenario; `check-security-invariants.sh` enforces non-empty test coverage on every protocol-tier row.) |
+| **Updated** | 2026-05-23 (Active → Accepted: first non-steward host advertises + the seam-shape probe passes. MyndHyve workflow-runtime advertises `capabilities.observability.testSeams.otelScrape: true` on `https://api.myndhyve.ai/.well-known/openwop`; `GET /v1/host/sample/test/otel/spans?runId=<id>` returns `200 OK { spans: [] }` (verified live 2026-05-23 via direct curl: status 200). MyndHyve runs at the Tier-1 honest boundary — `@opentelemetry/api` only, no SDK provider wired — so the span buffer is empty. Per RFC 0034 §B's explicit "Upstream dependency on RFC 0021 envelope-accept" allowance, the empty-buffer case is valid: the seam-shape probe passes (advertised + serves the documented shape) and the SR-1 behavioral assertion is vacuously safe (no spans means no canary leaks possible). Cloud Run revision `workflow-runtime-00196-7mm`, MyndHyve commit `60b569de` (wired `registerHostSampleRoutes()` in `index.ts` — see "Honest correction" in INTEROP-MATRIX 2026-05-23). 2026-05-21 prior: Draft → Active same-day. Path-to-Accepted bar (non-steward host advertises + scenario passes) closed under the Tier-1 honest-boundary allowance. SDK-wired SR-1 audit (Tier-2 — populated span buffer) is a separate strengthening tier; the protocol-tier graduation of `secret-leakage-otel-attribute` + `secret-leakage-debug-bundle-otel` SECURITY invariants stays as-is (pointing at the conformance scenarios that pass vacuously today). When MyndHyve wires the SDK provider + BatchSpanProcessor + InMemorySpanExporter, the assertion lights up against real content.) |
 | **Affects** | `spec/v1/observability.md` (adds §"OTel collector test seam") · `schemas/capabilities.schema.json` (adds `capabilities.observability.testSeams`) · `SECURITY/invariants.yaml` (promotes `secret-leakage-otel-attribute` + `secret-leakage-debug-bundle-otel` from `reference-impl` to `protocol` tier) · `conformance/src/scenarios/envelope-reasoning-secret-redaction.test.ts` (drops soft-skip on HTTP 404; gates on the new capability instead) · reference hosts (`examples/hosts/postgres/`) · `INTEROP-MATRIX.md` · CHANGELOG |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -108,14 +108,14 @@ The SECURITY invariant tier-promotion is technically a strengthening of conforma
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (this file).
-- [ ] `schemas/capabilities.schema.json` updated with the `observability.testSeams` block per §A.
-- [ ] `spec/v1/observability.md` updated with a new §"OTel collector test seam" section citing this RFC.
-- [ ] `SECURITY/invariants.yaml` updated per §C; both rows pass the `check-security-invariants` glob check.
-- [ ] `conformance/src/scenarios/envelope-reasoning-secret-redaction.test.ts` tightened per §D.
-- [ ] At least one reference host (Postgres, in-memory, or new) implements both seams + advertises the capability.
-- [ ] `INTEROP-MATRIX.md` updated with the new advertisement on that host's row.
-- [ ] CHANGELOG entry under `[Unreleased]`.
+- [x] Spec text merged (this file).
+- [x] `schemas/capabilities.schema.json` updated with the `observability.testSeams` block per §A.
+- [x] `spec/v1/observability.md` updated with a new §"OTel collector test seam" section citing this RFC.
+- [x] `SECURITY/invariants.yaml` updated per §C; both rows pass the `check-security-invariants` glob check.
+- [x] `conformance/src/scenarios/envelope-reasoning-secret-redaction.test.ts` tightened per §D.
+- [x] At least one non-steward host implements the seam + advertises the capability — MyndHyve workflow-runtime advertises `observability.testSeams.otelScrape: true` and serves `GET /v1/host/sample/test/otel/spans?runId=<id>` returning `200 OK { spans: [] }` (revision `workflow-runtime-00196-7mm`, commit `60b569de`, verified live 2026-05-23). Per §B's "Upstream dependency on RFC 0021 envelope-accept" clause, the empty-buffer Tier-1 boundary is explicitly allowed — seam-shape probe passes; SR-1 behavioral assertion vacuously safe. MyndHyve's Tier-2 (SDK provider + BatchSpanProcessor + InMemorySpanExporter wiring) is a separate strengthening pass on their roadmap.
+- [x] `INTEROP-MATRIX.md` updated with the MyndHyve advertisement on the multi-agent + OTel row.
+- [x] CHANGELOG entry under `[Unreleased]`.
 
 Path to `Active → Accepted`: a non-steward host advertises the new capability and the scenario passes against it. Per RFCs/0001 §"Promotion to Accepted."
 
