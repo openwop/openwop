@@ -18,7 +18,15 @@ export interface ConfigField {
    *  'credential-picker' stores a credentialRef (e.g., `anthropic:prod`)
    *  and renders a dropdown sourced from `listStoredRefs()` filtered by
    *  the optional `credentialProvider` constraint. */
-  kind: 'text' | 'number' | 'textarea' | 'checkbox' | 'prompt-picker' | 'credential-picker';
+  kind:
+    | 'text'
+    | 'number'
+    | 'textarea'
+    | 'checkbox'
+    | 'prompt-picker'
+    | 'credential-picker'
+    | 'provider-picker'
+    | 'model-picker';
   placeholder?: string;
   /** Default value used when a node of this kind is created. */
   defaultValue?: string | number | boolean;
@@ -33,6 +41,13 @@ export interface ConfigField {
   /** For `kind: 'credential-picker'`, constrains the picker to refs
    *  whose `<provider>:` prefix matches. Omitted = show all refs. */
   credentialProvider?: string;
+  /** For `kind: 'model-picker'` and `kind: 'credential-picker'`, names
+   *  the SIBLING configField whose value drives the available options.
+   *  Example: a `model-picker` with `dependsOn: 'provider'` reads
+   *  `siblingConfig.provider` and only shows that provider's models.
+   *  When the dependency-source field changes, the Inspector clears
+   *  this field's value so a stale selection doesn't survive. */
+  dependsOn?: string;
 }
 
 export interface NodeCatalogEntry {
@@ -201,12 +216,31 @@ export const NODE_CATALOG: readonly NodeCatalogEntry[] = [
     accent: 'var(--color-ai)',
     inputs: [{ name: 'messages', type: 'object' }],
     outputs: [{ name: 'completion', type: 'string' }],
+    // ConfigField order matters here: `provider` MUST come before
+    // `model` and `credentialRef` so the Inspector resolves the
+    // dependsOn lookup against an already-rendered sibling. The
+    // backend chat-responder reads these from config FIRST and falls
+    // back to inputs (see `sampleChatResponderNode` in nodes.ts).
     configFields: [
+      {
+        key: 'provider',
+        label: 'Provider',
+        kind: 'provider-picker',
+        help: 'Which LLM provider this node calls. Determines the model + credential candidates below.',
+      },
+      {
+        key: 'model',
+        label: 'Model',
+        kind: 'model-picker',
+        dependsOn: 'provider',
+        help: 'Specific model id from the chosen provider. Cleared when the provider changes.',
+      },
       {
         key: 'credentialRef',
         label: 'API key',
         kind: 'credential-picker',
-        help: 'Which stored key this node uses to call the LLM. Manage keys at /keys.',
+        dependsOn: 'provider',
+        help: 'Which stored key this node uses to call the LLM. Manage keys at /keys. Filtered to keys matching the chosen provider.',
       },
       {
         key: 'systemPromptRef',

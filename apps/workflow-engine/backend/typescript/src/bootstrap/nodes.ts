@@ -964,9 +964,23 @@ const sampleChatResponderNode: NodeModule = {
   version: '0.2.0',
   async execute(ctx) {
     const inputs = (ctx.inputs && typeof ctx.inputs === 'object') ? (ctx.inputs as Record<string, unknown>) : {};
-    const provider = (inputs.provider as ProviderId | undefined) ?? 'anthropic';
-    const model = (inputs.model as string | undefined) ?? getDefaultModel(provider);
-    const credentialRef = inputs.credentialRef as string | undefined;
+    const config = (ctx.config && typeof ctx.config === 'object') ? (ctx.config as Record<string, unknown>) : {};
+    // Per-node provider/model/credentialRef precedence: workflow node
+    // config FIRST (set via the builder Inspector), inputs SECOND (the
+    // chat-tab path supplies these through the run's inputs). Keeps
+    // chat-tab semantics unchanged while letting builder-authored
+    // workflows pin each chat node to a specific provider+model+key.
+    const provider =
+      (config.provider as ProviderId | undefined) ??
+      (inputs.provider as ProviderId | undefined) ??
+      'anthropic';
+    const model =
+      (config.model as string | undefined) ??
+      (inputs.model as string | undefined) ??
+      getDefaultModel(provider);
+    const credentialRef =
+      (config.credentialRef as string | undefined) ??
+      (inputs.credentialRef as string | undefined);
     const messages = inputs.messages as ChatMessage[] | undefined;
     const maxTokens = typeof inputs.maxTokens === 'number' ? inputs.maxTokens : 1024;
     const webSearch = inputs.webSearch === true;

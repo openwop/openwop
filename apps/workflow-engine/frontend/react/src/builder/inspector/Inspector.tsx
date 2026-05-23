@@ -11,6 +11,8 @@ import { catalogEntry } from '../palette/catalogRegistry.js';
 import { type ConfigField } from '../palette/nodeCatalog.js';
 import { PromptPickerInput } from '../../prompts/PromptPickerInput.js';
 import { CredentialPickerInput } from './CredentialPickerInput.js';
+import { ProviderPickerInput } from './ProviderPickerInput.js';
+import { ModelPickerInput } from './ModelPickerInput.js';
 import { getCapabilities } from '../../client/runsClient.js';
 import type { BuilderEdge, EdgeCondition, EdgeTriggerRule } from '../schema/workflow.js';
 
@@ -138,7 +140,13 @@ export function Inspector() {
           <div className="builder-inspector-divider" />
           <div className="builder-inspector-section-label">Configuration</div>
           {entry.configFields.map((f) => (
-            <ConfigInput key={f.key} nodeId={node.id} config={node.config} field={f} />
+            <ConfigInput
+              key={f.key}
+              nodeId={node.id}
+              config={node.config}
+              field={f}
+              allFields={entry.configFields}
+            />
           ))}
         </>
       )}
@@ -158,17 +166,32 @@ function ConfigInput({
   nodeId,
   config,
   field,
+  allFields,
 }: {
   nodeId: string;
   config: Record<string, unknown>;
   field: ConfigField;
+  allFields: readonly ConfigField[];
 }) {
   const value = config[field.key];
   const onChange = (next: unknown) => {
-    useBuilderStore
-      .getState()
-      .updateNode(nodeId, { config: { ...config, [field.key]: next } });
+    // Cascade: when this field's value changes, clear every sibling
+    // field whose `dependsOn` points back at it (e.g., changing the
+    // provider clears the model + credentialRef since both are
+    // resolved against the provider). Avoids stale config like
+    // "provider: anthropic, model: gpt-5" surviving a swap.
+    const nextConfig: Record<string, unknown> = { ...config, [field.key]: next };
+    for (const sibling of allFields) {
+      if (sibling.dependsOn === field.key && sibling.key !== field.key) {
+        nextConfig[sibling.key] = undefined;
+      }
+    }
+    useBuilderStore.getState().updateNode(nodeId, { config: nextConfig });
   };
+  // Resolve the dependency-source value for this field (e.g., a
+  // model-picker with dependsOn: 'provider' looks up
+  // `config.provider`). Undefined when this field has no dependency.
+  const dependsOnValue = field.dependsOn ? (config[field.dependsOn] as string | undefined) : undefined;
   return (
     <div className="form-row">
       <label>
@@ -194,7 +217,24 @@ function ConfigInput({
         <CredentialPickerInput
           value={typeof value === 'string' ? value : undefined}
           onChange={(next) => onChange(next)}
-          {...(field.credentialProvider ? { providerFilter: field.credentialProvider } : {})}
+          {...(field.credentialProvider
+            ? { providerFilter: field.credentialProvider }
+            : dependsOnValue
+              ? { providerFilter: dependsOnValue }
+              : {})}
+          required={field.required}
+        />
+      ) : field.kind === 'provider-picker' ? (
+        <ProviderPickerInput
+          value={typeof value === 'string' ? value : undefined}
+          onChange={(next) => onChange(next)}
+          required={field.required}
+        />
+      ) : field.kind === 'model-picker' ? (
+        <ModelPickerInput
+          value={typeof value === 'string' ? value : undefined}
+          onChange={(next) => onChange(next)}
+          providerId={dependsOnValue}
           required={field.required}
         />
       ) : field.kind === 'textarea' ? (
