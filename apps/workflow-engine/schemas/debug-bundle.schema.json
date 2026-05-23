@@ -1,0 +1,196 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/debug-bundle.schema.json",
+  "title": "RunDebugBundle",
+  "description": "Portable JSON export of a single run's diagnostic state. See spec/v1/debug-bundle.md. Additive over v1 per COMPATIBILITY.md §2.1: optional endpoint; hosts MAY omit.",
+  "type": "object",
+  "required": [
+    "bundleVersion",
+    "generatedAt",
+    "host",
+    "run",
+    "events",
+    "redactionApplied",
+    "redactionMode"
+  ],
+  "properties": {
+    "bundleVersion": {
+      "type": "string",
+      "description": "Schema version of the bundle. v1.x bundles are '1'.",
+      "pattern": "^[0-9]+\\.[0-9]+$"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when the host generated this response."
+    },
+    "host": {
+      "type": "object",
+      "description": "Identifies the host that produced the bundle.",
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "vendor": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "run": {
+      "type": "object",
+      "description": "Run snapshot — same shape as GET /v1/runs/{runId}. See run-snapshot.schema.json.",
+      "required": ["runId", "workflowId", "status"],
+      "properties": {
+        "runId": { "type": "string", "minLength": 1 },
+        "workflowId": { "type": "string", "minLength": 1 },
+        "status": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "running",
+            "completed",
+            "failed",
+            "cancelled",
+            "waiting-approval",
+            "waiting-clarification"
+          ]
+        },
+        "startedAt": { "type": "string", "format": "date-time" },
+        "endedAt": {
+          "oneOf": [
+            { "type": "string", "format": "date-time" },
+            { "type": "null" }
+          ]
+        },
+        "error": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "required": ["code"],
+              "properties": {
+                "code": { "type": "string", "minLength": 1 },
+                "message": { "type": "string" }
+              },
+              "additionalProperties": true
+            }
+          ]
+        },
+        "inputs": { "type": "object" },
+        "variables": { "type": "object" },
+        "currentNodeId": {
+          "oneOf": [{ "type": "string" }, { "type": "null" }]
+        },
+        "nodeStates": { "type": "object" },
+        "metrics": { "type": "object" }
+      },
+      "additionalProperties": true
+    },
+    "events": {
+      "type": "array",
+      "description": "Full event log for this run, in order. Each entry follows run-event.schema.json.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "sequence": {
+            "oneOf": [
+              { "type": "integer", "minimum": 0 },
+              { "type": "null" }
+            ]
+          },
+          "seq": {
+            "oneOf": [
+              { "type": "integer", "minimum": 0 },
+              { "type": "null" }
+            ],
+            "description": "Legacy alias for `sequence`. Hosts that pre-date the rename emit `seq`. Clients accept either."
+          },
+          "type": { "type": "string", "minLength": 1 },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "nodeId": {
+            "oneOf": [{ "type": "string" }, { "type": "null" }]
+          },
+          "data": {}
+        },
+        "additionalProperties": true
+      }
+    },
+    "spans": {
+      "type": "array",
+      "description": "OTel-format spans per spec/v1/observability.md. Empty array if host doesn't emit spans.",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "spanId": { "type": "string" },
+          "parentSpanId": {
+            "oneOf": [{ "type": "string" }, { "type": "null" }]
+          },
+          "startedAt": { "type": "string", "format": "date-time" },
+          "endedAt": {
+            "oneOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ]
+          },
+          "attributes": { "type": "object" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "description": "Aggregate metrics for the run.",
+      "properties": {
+        "openwopCost": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "properties": {
+                "usd": { "type": "number", "minimum": 0 },
+                "tokens": {
+                  "type": "object",
+                  "properties": {
+                    "input": { "type": "integer", "minimum": 0 },
+                    "output": { "type": "integer", "minimum": 0 }
+                  },
+                  "additionalProperties": false
+                },
+                "model": { "type": "string" },
+                "provider": { "type": "string" },
+                "duration_ms": { "type": "number", "minimum": 0 }
+              },
+              "additionalProperties": true
+            }
+          ]
+        },
+        "nodeCount": { "type": "integer", "minimum": 0 },
+        "eventCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "MUST equal events.length per spec/v1/debug-bundle.md."
+        }
+      },
+      "additionalProperties": true
+    },
+    "redactionApplied": {
+      "type": "boolean",
+      "description": "True if any field in this bundle was masked/omitted/hashed by the host's redaction harness."
+    },
+    "redactionMode": {
+      "type": "string",
+      "enum": ["mask", "omit", "hash", "passthrough"],
+      "description": "Masking mode in effect per capabilities.compliance.defaultMode."
+    },
+    "truncated": {
+      "type": "boolean",
+      "description": "True when the bundle was truncated to fit the host's size cap."
+    },
+    "truncatedReason": {
+      "type": "string",
+      "description": "Why truncation occurred (e.g., 'events_truncated_to_size_cap')."
+    }
+  },
+  "additionalProperties": true
+}

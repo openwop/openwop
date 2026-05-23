@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/run-options.schema.json",
+  "title": "RunOptions",
+  "description": "Per-run parameter overlay supplied by the caller in `POST /v1/runs`. See `run-options.md` for full semantics. Reserved keys are typed; unknown keys in `configurable` pass through to the engine.",
+  "type": "object",
+  "properties": {
+    "configurable": {
+      "$ref": "#/$defs/Configurable",
+      "description": "Per-run overrides that affect runtime behavior without forking the workflow definition."
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1, "maxLength": 256 },
+      "maxItems": 100,
+      "uniqueItems": false,
+      "description": "Free-form caller tags for filtering/correlation. Server SHOULD enforce maxItems=100 and per-tag maxLength=256."
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Free-form caller metadata. Persisted on the run doc; surfaces back via `RunSnapshot.metadata`. Server MAY enforce a serialized-size limit (recommended: 50KB)."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "Configurable": {
+      "type": "object",
+      "description": "Reserved keys are typed below; unknown keys pass through verbatim. Implementations declare which keys they consume via `Capabilities.configurable` when advertised.",
+      "properties": {
+        "recursionLimit": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Override the per-run node-execution ceiling. Server clamps to `Capabilities.limits.maxNodeExecutions`."
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Override the AI model for nodes that consume `ctx.config.configurable.model`. Examples: `gpt-4`, `claude-opus-4-7`, `gemini-2.5-pro`."
+        },
+        "temperature": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Override AI temperature. Server SHOULD enforce 0..2 range."
+        },
+        "maxTokens": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Override AI max-tokens cap."
+        },
+        "promptOverrides": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Per-prompt-ID variant override. Map of canonical prompt ID -> override text."
+        },
+        "mockProvider": {
+          "$ref": "#/$defs/MockProvider"
+        }
+      },
+      "additionalProperties": true
+    },
+    "MockProvider": {
+      "type": "object",
+      "description": "Routes AI activity calls through a deterministic mock provider instead of real LLM APIs. Test-keys-only — server returns 403 mock_provider_forbidden on production keys. See run-options.md §Mock provider extension (closes F1).",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Selects a mock provider from the server's catalog (advertised via `Capabilities.testing.mockProviders`). The spec-canonical baseline `stream-text` MUST be supported for OpenWOP v1.0 conformance; other providers (`tool-calls`, `error`, `usage-only`) are recommended but not required.",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "config": {
+          "type": "object",
+          "description": "Per-provider parameter shape. Each provider documents its own keys; see run-options.md §Canonical mock provider catalog. Common shapes (informative — not enforced at this schema level since providers are pluggable):\n\n  - stream-text: { tokens: string[], delayMsPerToken?: integer, finishReason?: string, usage?: object, model?: string }\n  - tool-calls: { toolCalls: object[], delayMsPerToken?: integer }\n  - error: { code: string, message: string, retryable?: boolean, failAfterMs?: integer }\n  - usage-only: { usage: object }"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

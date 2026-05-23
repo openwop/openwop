@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/security-advisory.schema.json",
+  "title": "SecurityAdvisory",
+  "description": "Registry-owned security advisory for a published OpenWOP pack version. Sourced from registry/security/advisories.json. Every entry MUST be reviewed + merged via maintainer PR; the CI check-advisories gate refuses to deploy if any active advisory targets a pack version that is not already yanked.",
+  "type": "object",
+  "required": ["id", "publishedAt", "severity", "summary", "affected"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable advisory identifier. Format: `OPENWOP-YYYY-NNNN` (sequential, assigned by maintainers at PR merge time). MAY also include an aliased CVE ID via `cveIds[]`.",
+      "pattern": "^OPENWOP-[0-9]{4}-[0-9]{4}$"
+    },
+    "cveIds": {
+      "type": "array",
+      "description": "Aliased CVE identifiers if a CVE was reserved through Mitre or a CNA. Listed in cve.mitre.org format.",
+      "items": {
+        "type": "string",
+        "pattern": "^CVE-[0-9]{4}-[0-9]+$"
+      },
+      "uniqueItems": true
+    },
+    "publishedAt": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the advisory was first published (ISO 8601 yyyy-mm-dd). Frozen at merge time; do not update on revision."
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of last advisory update. Bump when severity, affected, or fixedIn changes."
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low"],
+      "description": "Severity per the rubric in docs/runbooks/INCIDENT-RESPONSE.md. critical=S0 (yank immediately), high=S1, medium=S2, low=S3."
+    },
+    "cvssV4Score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10,
+      "description": "Optional CVSS 4.0 base score. Informational; severity field is the authoritative classification."
+    },
+    "summary": {
+      "type": "string",
+      "description": "One-line human-readable summary of the vulnerability. Surfaces in tooling output.",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "details": {
+      "type": "string",
+      "description": "Long-form description: vulnerability mechanism, attack vector, impact, recommended consumer action. May reference external URLs via advisoryUrl."
+    },
+    "advisoryUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "External advisory link (e.g., GitHub Security Advisory, vendor security page, CVE detail page)."
+    },
+    "affected": {
+      "type": "array",
+      "description": "Pack versions impacted by this advisory. Each entry pins a pack name + a SemVer range. The check-advisories CI gate cross-references this list against every published version and fails if any non-yanked version matches.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["packName", "versions"],
+        "properties": {
+          "packName": {
+            "type": "string",
+            "description": "Pack name (e.g., `vendor.myndhyve.ai`). MUST exist under registry/v1/packs/.",
+            "pattern": "^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)+$"
+          },
+          "versions": {
+            "type": "string",
+            "description": "SemVer range using node-semver syntax (`<1.0.0`, `>=1.0.0 <1.0.3`, `1.0.0 || 1.0.1`). Matched against published version numbers via the check-advisories gate."
+          },
+          "fixedIn": {
+            "type": "string",
+            "description": "Earliest version that contains the fix. Consumers MUST upgrade to >= this version. Absent if no fix is available yet (defense-only).",
+            "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[a-zA-Z0-9.-]+)?(\\+[a-zA-Z0-9.-]+)?$"
+          },
+          "fixedInRef": {
+            "type": "string",
+            "description": "PR or commit reference where the fix landed (e.g., `openwop/openwop#42`). Helps consumers audit the patch."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "credits": {
+      "type": "array",
+      "description": "Acknowledged reporters or researchers.",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "url": { "type": "string", "format": "uri" },
+          "role": {
+            "type": "string",
+            "enum": ["finder", "reporter", "analyst", "coordinator", "remediation-developer"],
+            "description": "Per CSAF role vocabulary. Defaults to `finder` when not specified."
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

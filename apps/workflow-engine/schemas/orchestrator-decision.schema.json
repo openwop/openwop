@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/orchestrator-decision.schema.json",
+  "title": "OrchestratorDecision",
+  "description": "Routing decision emitted by an orchestrator-supervisor node. Carried in the `runOrchestrator.decided` event payload's `decision` field (run-orchestrator-decided-event.schema.json). Three canonical kinds form a closed canonical enum at the protocol layer: `'next-worker'` (continue dispatch), `'ask-user'` (route a question to the human party), `'terminate'` (clean run completion). Vendor-extension decision kinds MAY ship under `vendor.<host>.<kind>` per host-extensions.md but conformance MUST validate against the closed canonical set. See RFC 0006 §C.",
+  "type": "object",
+  "required": ["kind"],
+  "oneOf": [
+    {
+      "title": "NextWorkerDecision",
+      "description": "Dispatch one or more next workers. Phase-5 hosts MAY treat the `nextWorkerIds` array as length-1 only and ignore the tail; Phase-6 hosts (RFC 0007 / `core.dispatch`) SHOULD honor full fan-out semantics. The interpretation of array entries (node-id vs agent-id) is left to host capability advertisement; see RFC 0006 §C unresolved-question 1.",
+      "type": "object",
+      "required": ["kind", "nextWorkerIds"],
+      "properties": {
+        "kind": { "const": "next-worker" },
+        "nextWorkerIds": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "description": "Ordered list of worker node-ids OR agent-ids to dispatch. Hosts that interpret entries as node-ids dispatch in DAG order; hosts that interpret as agent-ids resolve to nodes via the run's static DAG."
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "RFC 0039 §A — supervisor's stated confidence in this decision, in [0, 1]. Optional; absent means 'no opinion stated' (NOT low confidence). Hosts advertising `capabilities.multiAgent.executionModel.version >= 2` MUST honor a confidence floor (spec floor 0.5; operator-stricter via `confidenceEscalationFloor`): a decision with `confidence` below the floor MUST escalate via clarify-or-escalate interrupt instead of executing. Pre-Phase-2 hosts ignore the field per forward-compat."
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "title": "AskUserDecision",
+      "description": "Route a human-targeted question. Hosts that adopted RFC 0005 (Phase 4) SHOULD route through `conversation.exchange`; pre-RFC-0005 hosts MAY surface as a `'clarification'` interrupt. The transport is host-policy; the protocol-layer decision shape is the same.",
+      "type": "object",
+      "required": ["kind", "prompt"],
+      "properties": {
+        "kind": { "const": "ask-user" },
+        "prompt": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-targeted question. Free-form text; the protocol does NOT structure the prompt further."
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "title": "TerminateDecision",
+      "description": "Clean run termination driven by orchestrator judgement. Distinct from `run.failed` (uncaught executor error) and `run.cancelled` (operator cancellation) — see RFC 0006 §H. The terminate `reason?` is informational; the protocol does NOT close the value enum.",
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": { "const": "terminate" },
+        "reason": {
+          "type": "string",
+          "description": "Optional free-form rationale captured for audit/debug. Common values: `'goal-reached'`, `'max-iterations'`, `'unrecoverable-error'`. Spec does NOT close this enum.",
+          "minLength": 1
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "RFC 0039 §A — supervisor's stated confidence in this termination decision, in [0, 1]. Optional; absent means 'no opinion stated' (NOT low confidence). Hosts advertising `capabilities.multiAgent.executionModel.version >= 2` MUST honor a confidence floor as documented on NextWorkerDecision.confidence above; the same MUST applies to TerminateDecision because a confidently-wrong terminate is the same class of failure as a confidently-wrong dispatch."
+        }
+      },
+      "additionalProperties": false
+    }
+  ]
+}

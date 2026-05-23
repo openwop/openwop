@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/core-conformance-mock-agent-config.schema.json",
+  "title": "CoreConformanceMockAgentConfig",
+  "description": "Config shape for the `core.conformance.mock-agent` typeId (RFC 0023). Conformance-only — hosts MUST refuse this typeId for production tenants unless `capabilities.conformance.mockAgent` is advertised. Emission contract is normative per RFC 0023 §B: when set, the host fires `agent.reasoned`, `agent.toolCalled`/`agent.toolReturned` pairs, `agent.handoff`, and `agent.decided` in the order documented, then evaluates the resolved escalation threshold against any `confidence` value and follows with `node.suspended { reason: 'low-confidence' }` when below threshold (`spec/v1/interrupt.md` §`kind: \"low-confidence\"`).",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "agentId": {
+      "type": "string",
+      "minLength": 3,
+      "description": "Optional override for the `agentId` field carried on emitted `agent.*` events. Resolution order: this field → `nodes[].agent.agentId` (the workflow-level pin) → a host-minted synthetic id (e.g., `host:mock-agent:<nodeId>`). Hosts SHOULD prefer the workflow-level pin so conformance fixtures stay self-describing."
+    },
+    "mockReasoning": {
+      "oneOf": [
+        { "type": "boolean" },
+        {
+          "type": "object",
+          "required": ["summary"],
+          "additionalProperties": false,
+          "properties": {
+            "summary": {
+              "type": "string",
+              "description": "Short one-line digest, projected onto `agent.reasoned.payload.summary` per RFC 0002 §B."
+            },
+            "trace": {
+              "type": "string",
+              "description": "Full reasoning text. Hosts SHOULD redact when the run advertises BYOK + redaction per RFC 0002 §B (`agent.reasoned`)."
+            },
+            "tokenCount": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Optional reasoning-token count for observability/cost attribution."
+            },
+            "streamChunks": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "RFC 0024. When present, the host MUST emit one `agent.reasoning.delta` event per array entry (in order; `sequence` starts at 0 and increments by 1), THEN emit the closing `agent.reasoned` event whose `reasoning` field equals the concatenation of all `streamChunks`. When absent, only the closing `agent.reasoned` event fires (the pre-RFC-0024 behavior). Gated at conformance test time on `capabilities.agents.reasoning.streaming: true`."
+            }
+          }
+        }
+      ],
+      "description": "When set, emit `agent.reasoned`. Boolean `true` MUST surface a host-generated stub summary; an object is projected onto the `agent.reasoned` payload shape from RFC 0002 §B. When unset, no `agent.reasoned` event is emitted."
+    },
+    "mockToolCalls": {
+      "type": "array",
+      "description": "Emit `agent.toolCalled` + `agent.toolReturned` pairs in array order. Each pair shares a host-minted `callId`; the `agent.toolReturned.causationId` MUST equal the corresponding `agent.toolCalled.eventId` per RFC 0002 §B. An entry without `result` and without `error` is invalid and MUST be rejected at registration.",
+      "items": {
+        "type": "object",
+        "required": ["toolId"],
+        "additionalProperties": false,
+        "properties": {
+          "toolId": {
+            "type": "string",
+            "description": "Tool identifier in `<scope>:<tool-id>` form, projected onto `agent.toolCalled.payload.toolId` and `agent.toolReturned.payload.toolId`."
+          },
+          "arguments": {
+            "description": "Arguments object projected onto `agent.toolCalled.payload.arguments`. Any JSON value."
+          },
+          "result": {
+            "description": "Success result projected onto `agent.toolReturned.payload.result`. Any JSON value. Mutually exclusive with `error` (validators that need stricter enforcement SHOULD layer it host-side)."
+          },
+          "error": {
+            "$ref": "#/$defs/ErrorEnvelope",
+            "description": "Failure projected onto `agent.toolReturned.payload.error`. Shape matches `error-envelope.schema.json` (inlined here as `$defs.ErrorEnvelope` so the spec-corpus validity test can compile this schema in isolation). When present, the paired `agent.toolReturned` event MUST omit `result`."
+          },
+          "durationMs": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Optional duration projected onto `agent.toolReturned.payload.durationMs`."
+          }
+        }
+      }
+    },
+    "mockHandoff": {
+      "type": "object",
+      "required": ["toAgentId"],
+      "additionalProperties": false,
+      "description": "When set, emit `agent.handoff` with `from` taken from `nodes[].agent` (the current node's pin) and `to.agentId` taken from `toAgentId`. When `nodes[].agent` is absent, hosts MUST use a synthetic `from` AgentRef referencing the resolved emitter `agentId`.",
+      "properties": {
+        "toAgentId": {
+          "type": "string",
+          "minLength": 3,
+          "description": "Destination agent identifier; projected onto `agent.handoff.payload.to.agentId` per RFC 0002 §B (`agent.handoff`)."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Optional free-form reason; projected onto `agent.handoff.payload.reason`."
+        },
+        "context": {
+          "description": "Optional payload value handed across the boundary; projected onto `agent.handoff.payload.context`."
+        }
+      }
+    },
+    "mockDecision": {
+      "type": "object",
+      "required": ["decision"],
+      "additionalProperties": false,
+      "description": "When set, emit `agent.decided`. When `confidence` is present AND below the resolved escalation threshold (`RunOptions.configurable.escalationThreshold` overrides `agent-manifest.confidence.defaultThreshold` overrides the spec default `0.7`), the host MUST follow the `agent.decided` event with `node.suspended { reason: 'low-confidence' }` and transition the run to `'waiting-approval'` per `spec/v1/interrupt.md:278`.",
+      "properties": {
+        "decision": {
+          "description": "Host-defined decision payload projected onto `agent.decided.payload.decision`. Any JSON value."
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Optional confidence in `[0.0, 1.0]`. Triggers the §F escalation contract from RFC 0002 when below the resolved threshold."
+        },
+        "reasoning": {
+          "type": "string",
+          "description": "Optional rationale projected onto `agent.decided.payload.reasoning`."
+        }
+      }
+    },
+    "mockConfidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Shorthand. When set AND `mockDecision` is absent, the host emits `agent.decided` with a synthetic decision payload (host-defined; the conformance suite does not assert on its shape) carrying this confidence. Triggers the same escalation contract as `mockDecision.confidence`. Retained for compatibility with the pre-RFC-0023 fixture surface; new fixtures SHOULD prefer the explicit `mockDecision` form."
+    }
+  },
+  "examples": [
+    {
+      "mockReasoning": { "summary": "Considered three options; chose A.", "tokenCount": 42 },
+      "mockToolCalls": [
+        { "toolId": "openwop.search.web", "arguments": { "q": "openwop" }, "result": ["hit-1", "hit-2"], "durationMs": 12 }
+      ],
+      "mockDecision": { "decision": { "next": "summarize" }, "confidence": 0.92 }
+    },
+    {
+      "mockDecision": { "decision": { "kind": "stub-low-conf" }, "confidence": 0.5 }
+    },
+    {
+      "mockConfidence": 0.5
+    }
+  ],
+  "$defs": {
+    "ErrorEnvelope": {
+      "title": "ErrorEnvelope",
+      "description": "Inlined from `error-envelope.schema.json` for in-isolation Ajv compile. Spec corpus schemas compile under the conformance suite's per-file Ajv harness which does not preload sibling schemas — cross-file `$ref`s would fail. The wire shape MUST match `https://openwop.dev/spec/v1/error-envelope.schema.json`; this $defs entry is a copy, not a divergence.",
+      "type": "object",
+      "required": ["error", "message"],
+      "properties": {
+        "error": { "type": "string", "minLength": 1 },
+        "message": { "type": "string", "minLength": 1 },
+        "details": { "type": "object" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

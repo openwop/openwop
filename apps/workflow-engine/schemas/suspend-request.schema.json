@@ -1,0 +1,182 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/suspend-request.schema.json",
+  "title": "InterruptPayload",
+  "description": "Wire format for ctx.interrupt(payload) — the canonical HITL primitive. See spec/v1/interrupt.md for semantics. Discriminated by `kind`. The persisted `interrupt.requested` event carries this payload verbatim plus engine-assigned identity fields.",
+  "type": "object",
+  "required": ["kind", "key", "data"],
+  "properties": {
+    "kind": {
+      "type": "string",
+      "enum": ["approval", "clarification", "external-event", "custom", "conversation.start", "conversation.exchange", "conversation.close", "low-confidence"],
+      "description": "Discriminator for resume-time routing + UI rendering + observability. Multi-Agent Shift Phase 4 adds `conversation.start` / `conversation.exchange` / `conversation.close` for multi-turn user interjections (see ConversationStartData / ConversationExchangeData / ConversationCloseData below). Phase 1 adds `low-confidence` for the confidence-escalation contract (orchestrator-supervisor suspends below threshold; see LowConfidenceData)."
+    },
+    "key": {
+      "type": "string",
+      "description": "Deterministic key used to short-circuit on re-entry after process death. If two interrupt() calls in the same run emit the same key, the second returns the cached result of the first. Recommended: ${runId}:${nodeId}:${interruptCount}.",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "resumeSchema": {
+      "description": "Optional JSON Schema for resume value. Servers SHOULD validate before returning to the suspended executor.",
+      "type": "object"
+    },
+    "timeoutMs": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Optional auto-reject after this duration. Engine throws InterruptTimeoutError when exceeded."
+    },
+    "data": {
+      "oneOf": [
+        { "$ref": "#/$defs/ApprovalData" },
+        { "$ref": "#/$defs/ClarificationData" },
+        { "$ref": "#/$defs/ExternalEventData" },
+        { "$ref": "#/$defs/CustomData" },
+        { "$ref": "#/$defs/ConversationStartData" },
+        { "$ref": "#/$defs/ConversationExchangeData" },
+        { "$ref": "#/$defs/ConversationCloseData" },
+        { "$ref": "#/$defs/LowConfidenceData" }
+      ]
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "ApprovalData": {
+      "type": "object",
+      "description": "Payload for kind='approval'. Uses the canonical 5-action OpenWOP approval vocabulary.",
+      "required": ["artifactId", "artifactType", "title", "actions"],
+      "properties": {
+        "artifactId": { "type": "string", "minLength": 1 },
+        "artifactType": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "artifactData": {},
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["accept", "reject", "refine", "edit-accept", "ask"]
+          },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Allowed actions. Server MUST enforce on resolve. The 'ask' action does NOT exit the suspend — Q&A exchanges accumulate via askService until accept/reject/refine/edit-accept fires. See `interrupt.md` §`ApprovalResume` for the action vocabulary + per-action required fields."
+        },
+        "requiredApprovals": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1,
+          "description": "Multi-approver quorum."
+        },
+        "approversList": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Restrict resolution to these user IDs. Empty/unset = any user with approvals:respond scope."
+        },
+        "rejectionPolicy": {
+          "type": "string",
+          "enum": ["single-veto", "majority"],
+          "default": "single-veto"
+        }
+      }
+    },
+    "ClarificationData": {
+      "type": "object",
+      "description": "Payload for kind='clarification'. AI/system asks the user for missing context before continuing.",
+      "required": ["questions"],
+      "properties": {
+        "questions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "question"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "question": { "type": "string", "minLength": 1 },
+              "schema": { "type": "object", "description": "Optional JSON Schema for the answer." }
+            },
+            "additionalProperties": false
+          },
+          "minItems": 1
+        },
+        "contextType": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "ExternalEventData": {
+      "type": "object",
+      "description": "Payload for kind='external-event'. Engine waits for an external system to POST to /v1/interrupts/{token}.",
+      "required": ["eventType", "correlation"],
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "description": "Stable description of what's awaited. Surfaced in admin panels. Examples: 'stripe.checkout.completed', 'calendar.event.confirmed'."
+        },
+        "correlation": {
+          "type": "object",
+          "description": "Opaque correlation payload — whatever the external system needs to match the interrupt back to its source event."
+        }
+      },
+      "additionalProperties": false
+    },
+    "CustomData": {
+      "type": "object",
+      "description": "Escape hatch for kinds not yet spec'd. Servers MUST accept and persist; UI rendering and admin tooling are best-effort.",
+      "required": ["customKind"],
+      "properties": {
+        "customKind": { "type": "string", "minLength": 1 },
+        "payload": {}
+      },
+      "additionalProperties": false
+    },
+    "ConversationStartData": {
+      "type": "object",
+      "description": "Payload for kind='conversation.start' (Multi-Agent Shift Phase 4). Opens a new multi-turn conversation context. The host mints a `conversationId` and emits `conversation.opened`; subsequent `conversation.exchange` calls reuse the same id.",
+      "required": ["conversationId"],
+      "properties": {
+        "conversationId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "Opaque conversation identifier. Tenant-unique invariant: hosts MUST ensure no two distinct conversations in the same tenant share an id. Cross-host portability is not normative — `conversationId`s minted by one host MUST NOT be assumed resolvable by another."
+        },
+        "title": { "type": "string", "description": "Optional human-readable conversation title surfaced in host UIs." },
+        "initialPrompt": { "type": "string", "description": "Optional system / agent message that opens the conversation. Folds into the `message` reducer as the first turn." }
+      },
+      "additionalProperties": false
+    },
+    "ConversationExchangeData": {
+      "type": "object",
+      "description": "Payload for kind='conversation.exchange' (Multi-Agent Shift Phase 4). Single-turn suspend within an open conversation; resume value MUST validate against the per-turn `outcomeSchema`.",
+      "required": ["conversationId", "prompt"],
+      "properties": {
+        "conversationId": { "type": "string", "minLength": 1, "maxLength": 256, "description": "Active conversation identifier — MUST equal the id minted by a preceding `conversation.start`." },
+        "prompt": { "type": "string", "minLength": 1, "description": "Human-targeted question for this turn." },
+        "outcomeSchema": { "type": "object", "description": "Optional JSON Schema for the resume value (the user's response). Hosts SHOULD validate before resuming the suspended executor — replay determinism + idempotency require validated outcomes per the Phase-4 H4 disposition." },
+        "turnIndex": { "type": "integer", "minimum": 0, "description": "Optional 0-indexed turn within this conversation. Strictly monotonic when populated; absent values are derived host-side from event-log fold." }
+      },
+      "additionalProperties": false
+    },
+    "ConversationCloseData": {
+      "type": "object",
+      "description": "Payload for kind='conversation.close' (Multi-Agent Shift Phase 4). Terminates an open conversation context. Final event in the conversation lifecycle; no further `conversation.exchanged` events MAY follow for this `conversationId` in this run.",
+      "required": ["conversationId"],
+      "properties": {
+        "conversationId": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "reason": { "type": "string", "description": "Optional close rationale (e.g., 'goal-reached', 'max-turns', 'user-cancelled')." }
+      },
+      "additionalProperties": false
+    },
+    "LowConfidenceData": {
+      "type": "object",
+      "description": "Payload for kind='low-confidence' (Multi-Agent Shift Phase 1 — confidence-escalation contract). Emitted by an agent (typically `core.orchestrator.supervisor`) when its `agent.decided.confidence` falls below the run's resolved escalation threshold. Run transitions to `'waiting-approval'`; an operator ratifies the decision via the resume path.",
+      "required": ["agentId", "threshold", "observed"],
+      "properties": {
+        "agentId": { "type": "string", "minLength": 3, "maxLength": 256, "description": "AgentRef.agentId of the agent that suspended." },
+        "threshold": { "type": "number", "minimum": 0, "maximum": 1, "description": "Resolved escalation threshold for this run (default 0.7 per Phase-1 disposition; per-run override via `RunOptions.configurable.escalationThreshold`)." },
+        "observed": { "type": "number", "minimum": 0, "maximum": 1, "description": "The agent's reported confidence value that triggered the escalation." },
+        "decision": { "description": "Optional sketch of the decision the agent WOULD have emitted at threshold-or-above. Lets operators see the un-ratified choice. Shape mirrors `OrchestratorDecision` or the agent's domain-specific decision type." }
+      },
+      "additionalProperties": false
+    }
+  }
+}

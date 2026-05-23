@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/dispatch-config.schema.json",
+  "title": "DispatchConfig",
+  "description": "Configuration for the `core.dispatch` node typeId (RFC 0007). Pins per-`kind` routing strategies for the dispatch loop. The dispatch node consumes the latest `OrchestratorDecision` (RFC 0006 §C) from the run's projection and acts on it per the per-`kind` semantics in RFC 0007 §D.",
+  "type": "object",
+  "required": [],
+  "properties": {
+    "askUserRouting": {
+      "type": "string",
+      "enum": ["conversation", "clarification", "auto"],
+      "default": "auto",
+      "description": "Routing surface for `kind: 'ask-user'` decisions. `'conversation'` requires the host to advertise `capabilities.conversationPrimitive: true` (RFC 0005) and uses `conversation.exchange`; `'clarification'` uses the existing `clarification.requested` interrupt (pre-RFC-0010 path); `'auto'` selects `conversation` when the host advertises the conversation-primitive capability and `clarification` otherwise. Hosts that select `'conversation'` without advertising the capability MUST surface a `validation_error` at workflow registration time."
+    },
+    "workerDispatchModel": {
+      "type": "string",
+      "enum": ["child-run"],
+      "default": "child-run",
+      "description": "How `kind: 'next-worker'` is dispatched. v1.x normates only `'child-run'` — each `nextWorkerIds[i]` resolves to a workflow id and is dispatched as a child run via the existing `core.subWorkflow` machinery. Same-run DAG navigation is OUT OF SCOPE for v1.x (deferred to RFC 0013 / v1.3+). Hosts MAY add vendor-extension dispatch models under `vendor.<host>.<model>`; conformance scenarios validate `'child-run'` only."
+    },
+    "fanOutPolicy": {
+      "type": "string",
+      "enum": ["sequential", "reject"],
+      "default": "sequential",
+      "description": "Behavior when `decision.kind === 'next-worker'` and `nextWorkerIds.length > 1`. `'sequential'` dispatches each in array order, blocking on each child terminal before starting the next; the dispatch node's output reports the LAST child's `childRunId`/`childStatus` (intermediate child-run identifiers surface in the run's event log via standard `node.*` events). `'reject'` fails the dispatch with a structured `'fan_out_unsupported'` error envelope per `error-envelope.md`. Parallel fan-out is OUT OF SCOPE for v1.x — see RFC 0007 §K3 (unresolved question)."
+    },
+    "iterationCap": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Optional per-run hard cap on dispatch-node executions (across all dispatch nodes in the same run). Independent of `RunOptions.configurable.recursionLimit` / `Capabilities.limits.maxNodeExecutions` — when set, the engine MUST surface a `cap.breached` event with `kind: 'dispatch-iterations'` once exceeded and transition the run to `'failed'`. When absent, the run-level `recursionLimit` cap applies normally (each dispatch counts as one node execution against the run total)."
+    },
+    "inputMapping": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "RFC 0022. Default input mapping applied to every dispatched child on the `next-worker` path. Keys are CHILD variable names; values are PARENT variable names. Child receives `inputs[childKey] = parentVariables[parentKey]`. Per-worker overrides (see `perWorkerInputMappings`) take precedence. Mirrors `core.control.subWorkflow.inputMapping` semantics. Gated on `capabilities.agents.dispatchMapping: true`; hosts without that advertisement MUST surface `validation_error` at registration if this field is non-empty."
+    },
+    "outputMapping": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "RFC 0022. Default output mapping applied to every completed child on the `next-worker` path. Keys are PARENT variable names; values are CHILD variable names. After a child reaches terminal `completed`, parent's `parentKey` is set to `childVariables[childKey]`. Failed / cancelled children skip the mapping. Per-worker overrides (see `perWorkerOutputMappings`) take precedence. Mirrors `core.control.subWorkflow.outputMapping` semantics. Gated on `capabilities.agents.dispatchMapping: true`."
+    },
+    "perWorkerInputMappings": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": { "type": "string" }
+      },
+      "description": "RFC 0022. Per-worker input mapping overrides, keyed by the child `workflowId` that the supervisor may select. When the supervisor's `next-worker` decision names a `workerId` present in this map, the dispatch node uses `perWorkerInputMappings[workerId]` instead of the default `inputMapping`. Lets authors wire distinct variable subsets per potential child."
+    },
+    "perWorkerOutputMappings": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": { "type": "string" }
+      },
+      "description": "RFC 0022. Per-worker output mapping overrides, same fallback semantics as `perWorkerInputMappings`."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "askUserRouting": "auto",
+      "workerDispatchModel": "child-run",
+      "fanOutPolicy": "sequential"
+    },
+    {
+      "askUserRouting": "clarification",
+      "fanOutPolicy": "reject",
+      "iterationCap": 25
+    }
+  ]
+}

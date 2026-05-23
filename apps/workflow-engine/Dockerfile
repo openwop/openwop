@@ -63,11 +63,20 @@ COPY providers.json ./providers.json
 
 # Conformance fixtures, vendored at `apps/workflow-engine/conformance-fixtures/`
 # (kept in sync from the canonical `conformance/fixtures/` via
-# `scripts/sync-fixtures.sh`; corpus gate enforces non-drift). The
-# host's `findConformanceFixturesDir()` probes `./conformance/fixtures`
-# relative to `lib/`, so the fixtures must land at
-# `/app/conformance/fixtures/`. Used by `capabilities.fixtures`
-# advertisement + black-box conformance runs.
+# `scripts/sync-fixtures.sh`; corpus gate enforces non-drift). Used by
+# `capabilities.fixtures` advertisement + black-box conformance runs,
+# AND by `host/promptStore.ts` + `host/promptCompose.ts` which call
+# `locateRepoDir(__dirname, 'conformance-fixtures', ...)` at module load
+# and crash hard if the dir isn't reachable from `/app/lib`.
+#
+# Two landing spots so both consumers resolve:
+#   1. `/app/conformance/fixtures/` — what `findConformanceFixturesDir()`
+#      in `host/index.ts` probes (legacy path; lazy, returns null when
+#      absent, so it's tolerant but kept for backward-compat).
+#   2. `/app/conformance-fixtures/` — what `_repoPath.ts::locateRepoDir`
+#      probes (eager, throws at module-load if absent — so it MUST be
+#      present in the image). Sibling-of-`lib/` matches the source-tree
+#      layout where these modules' `..` walks land.
 #
 # Gated by the `INCLUDE_CONFORMANCE_FIXTURES` build arg (default `true`
 # for the openwop reference deploy). Production forks of this codebase
@@ -79,13 +88,26 @@ COPY providers.json ./providers.json
 ARG INCLUDE_CONFORMANCE_FIXTURES=true
 
 # Docker COPY can't be conditional on a build arg directly. The
-# `.gitignore`-respecting `conformance-fixtures` dir is always present
-# in the build context; we conditionally REMOVE it post-COPY when the
-# arg disables inclusion. Keeps the Dockerfile single-stage-clean.
+# `conformance-fixtures` dir is always present in the build context;
+# we conditionally REMOVE it post-COPY when the arg disables inclusion.
 COPY conformance-fixtures ./conformance/fixtures
+COPY conformance-fixtures ./conformance-fixtures
 RUN if [ "$INCLUDE_CONFORMANCE_FIXTURES" != "true" ]; then \
-      rm -rf ./conformance/fixtures; \
+      rm -rf ./conformance/fixtures ./conformance-fixtures; \
     fi
+
+# JSON Schemas, vendored at `apps/workflow-engine/schemas/` (kept in
+# sync from the canonical repo-root `schemas/` via
+# `scripts/sync-schemas.sh`). The bundled `lib/index.js` walks parents
+# from `/app/lib` via `host/_repoPath.ts::locateRepoSchemasDir()`
+# looking for a sibling `schemas/` containing sentinels like
+# `ai-envelope.schema.json` and `prompt-pack-manifest.schema.json`.
+# Landing them at `/app/schemas/` makes the walk resolve on the first
+# parent step. Without this, the module-load-time `SCHEMAS_DIR =
+# locateRepoSchemasDir(__dirname, ...)` constants in
+# `envelopeAcceptor.ts` and `promptPackLoader.ts` throw and the
+# revision fails to start.
+COPY schemas ./schemas
 
 ENV NODE_ENV=production
 ENV PORT=8080

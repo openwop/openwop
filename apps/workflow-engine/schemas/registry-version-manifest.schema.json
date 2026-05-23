@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/registry-version-manifest.schema.json",
+  "title": "RegistryVersionManifest",
+  "description": "Registry-augmented version manifest served at `/v1/packs/{name}/-/{version}.json`. Extends the bare pack manifest (`node-pack-manifest.schema.json`) with registry-side metadata (integrity hash, publishedAt timestamp, signed-blob URLs, lifecycle flags). This is the shape clients receive when they GET a specific pack version; the bare manifest is what publishers commit inside the tarball.\n\n**Why two schemas?** The bare manifest is the authoring contract — what a vendor writes in their pack source tree. The registry-augmented version is the SERVING contract — what `packs.openwop.dev` produces after `build-index.mjs` computes integrity hashes + adds URL templates. Validating both surfaces independently catches drift between authored content and served metadata.",
+  "type": "object",
+  "required": ["name", "version", "engines", "runtime", "integrity"],
+  "anyOf": [
+    { "properties": { "nodes": { "type": "array", "minItems": 1 } }, "required": ["nodes"] },
+    { "properties": { "agents": { "type": "array", "minItems": 1 } }, "required": ["agents"] }
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Reverse-DNS pack name. Mirrors `node-pack-manifest.schema.json` §name.",
+      "pattern": "^(core|vendor|community|private)\\.[a-z][a-z0-9_-]*(\\.[a-z][a-zA-Z0-9_-]*)+$",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "version": {
+      "type": "string",
+      "description": "Pack version per SemVer 2.0.0. Must match the URL path the manifest is served at.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+    },
+    "description": { "type": "string", "maxLength": 1024 },
+    "author": { "type": "string" },
+    "license": { "type": "string" },
+    "homepage": { "type": "string", "format": "uri" },
+    "repository": { "type": "string", "format": "uri" },
+    "keywords": {
+      "type": "array",
+      "items": { "type": "string", "maxLength": 64 },
+      "maxItems": 50
+    },
+    "engines": {
+      "type": "object",
+      "required": ["openwop"],
+      "properties": {
+        "openwop": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": { "type": "string" }
+    },
+    "runtime": {
+      "type": "object",
+      "required": ["language"],
+      "properties": {
+        "language": {
+          "type": "string",
+          "enum": ["javascript", "typescript", "wasm", "remote"],
+          "description": "Pack runtime. `javascript`/`typescript` for in-process Node executors; `wasm` for sandboxed WASM (RFC 0008 ABI); `remote` for agent-only packs that dispatch via remote LLM providers + don't ship local executor bytecode."
+        },
+        "entry": { "type": "string" },
+        "abiVersion": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "peerDependencies": {
+      "type": "object",
+      "description": "Host capabilities the pack consumes. Each key is a host-capability identifier (e.g., `host.canvas`); each value declares the support level the pack expects.",
+      "additionalProperties": { "type": "string" }
+    },
+    "dependencies": {
+      "type": "object",
+      "description": "Pack dependencies (other packs). Wire-locked at install time per `pack-lockfile.schema.json`.",
+      "additionalProperties": { "type": "string" }
+    },
+    "signing": {
+      "type": "object",
+      "description": "Embedded signing metadata. The pack's signing key MUST be one of the keys registered in `.well-known/openwop-registry.json` `signingKeys[]` AND MUST be authorized for the pack's namespace via `permittedNamespaces`.\n\nTwo identifier forms in the wild:\n  - `keyId`: canonical (newer packs). Matches an entry in registry's `signingKeys[].keyId`.\n  - `publicKeyRef`: legacy alias of `keyId` (used by `build-pack-tarball.mjs --key-id <id>`). Equivalent semantics.\n\nAt least one of `keyId` / `publicKeyRef` MUST be present; if both, they MUST be equal. The schema's `oneOf` block enforces this.",
+      "required": ["method"],
+      "oneOf": [
+        { "required": ["keyId"] },
+        { "required": ["publicKeyRef"] }
+      ],
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": ["manual", "ed25519", "sigstore"],
+          "description": "Signing method. `manual` and `ed25519` both denote a detached Ed25519 signature over canonical-JSON pack.json (synonymous in practice; both forms appear in published packs). `sigstore` reserved for the SLSA-friendly OIDC path."
+        },
+        "keyId": { "type": "string", "minLength": 1 },
+        "publicKeyRef": { "type": "string", "minLength": 1 },
+        "publicKeyUrl": { "type": "string", "format": "uri-reference" },
+        "signatureRef": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["typeId", "version", "category", "role"],
+        "additionalProperties": true
+      }
+    },
+    "agents": {
+      "type": "array",
+      "items": { "type": "object", "additionalProperties": true }
+    },
+    "integrity": {
+      "type": "string",
+      "description": "SRI-style integrity hash of the SIGNED tarball (`sha256-<base64(sha256)>`). Computed by `registry/scripts/build-index.mjs` from the on-disk `.tgz`. Consumers MUST verify the fetched tarball's hash matches this field before unpacking.",
+      "pattern": "^sha256-[A-Za-z0-9+/=]+$"
+    },
+    "publishedAt": {
+      "type": "string",
+      "description": "ISO-8601 UTC timestamp of first publish. Immutable per spec — set at first publish, never re-issued on subsequent index rebuilds.",
+      "format": "date-time"
+    },
+    "tarballUrl": {
+      "type": "string",
+      "description": "Registry-relative URL for the signed tarball. Always `/v1/packs/{name}/-/{version}.tgz`.",
+      "pattern": "^/v1/packs/[^/]+/-/[^/]+\\.tgz$"
+    },
+    "signatureUrl": {
+      "type": "string",
+      "description": "Registry-relative URL for the detached Ed25519 signature. Always `/v1/packs/{name}/-/{version}.sig`.",
+      "pattern": "^/v1/packs/[^/]+/-/[^/]+\\.sig$"
+    },
+    "deprecated": {
+      "type": "boolean",
+      "description": "Advisory: this version is deprecated. Consumers MAY refuse to install but registry continues to serve."
+    },
+    "yanked": {
+      "type": "boolean",
+      "description": "Hard refusal: this version was published in error. Registry MUST refuse to serve the tarball; consumers MUST refuse to dispatch nodes from yanked versions."
+    },
+    "yankedReason": {
+      "type": "string",
+      "maxLength": 512,
+      "description": "Optional one-line rationale shown by clients when a yanked install is attempted. Conventionally references the advisory id (`OPENWOP-YYYY-NNNN`) when one was issued."
+    },
+    "deprecationReason": {
+      "type": "string",
+      "maxLength": 512,
+      "description": "Optional one-line rationale shown by clients when an install of a deprecated version is attempted. Typically names the replacement version + migration link."
+    },
+    "supersededBy": {
+      "type": "string",
+      "maxLength": 256,
+      "description": "Optional pointer to the version (or `<name>@<version>`) that replaces this one. Per spec/v1/registry-operations.md, engine consumers in `open` / `verified` mode MUST surface this value in any deprecation warning when set."
+    },
+    "advisoryUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "Optional URL with deprecation / yank rationale + remediation."
+    }
+  },
+  "additionalProperties": false
+}
