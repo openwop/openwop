@@ -72,7 +72,13 @@ export async function listPrompts(filter: ListPromptsFilter = {}): Promise<Promp
       const res = await fetch(url, fetchOpts({ headers: authedHeaders() }));
       if (res.ok) {
         const body = (await res.json()) as ListResponse;
-        return body.items;
+        // If the host advertises prompts but returns an empty list,
+        // the UI was showing "No prompts match the current filter"
+        // forever — the sample fallback never fired. Treat empty as
+        // "host has no canonical set yet" and surface the bundled
+        // sample library so the page is useful out of the box. A host
+        // with real entries returns them and bypasses the fallback.
+        if (body.items.length > 0) return body.items;
       }
     } catch {
       /* fall through to samples */
