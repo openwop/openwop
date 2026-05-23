@@ -24,6 +24,7 @@
  */
 
 import { recordLastSuccess } from './lastSuccess.js';
+import { config as backendConfig } from '../client/config.js';
 
 const MAX_ENTRIES = 200;
 const MAX_RESPONSE_BYTES = 16 * 1024;
@@ -112,12 +113,29 @@ export function installNetworkRecorder(): void {
       : input instanceof URL
         ? input.toString()
         : input.url;
-    // Only record same-origin or configured-backend traffic. Skip
-    // analytics / Firebase Auth / CDN calls to keep the panel
-    // focused on OpenWOP-shaped requests.
+    // Only record traffic to OUR backend. The path filter alone
+    // wasn't enough — third-party APIs (Firebase Auth's
+    // identitytoolkit.googleapis.com/v1/accounts:lookup, etc.) share
+    // the `/v1/` prefix and were being captured. Constrain by ORIGIN
+    // first: same-origin OR the configured backend baseUrl.
     const path = relativePath(url);
-    const isApiCall = path.startsWith('/v1/') || path.startsWith('/.well-known/openwop') || path.startsWith('/api/');
-    if (!isApiCall) {
+    const isOpenwopOrigin = (() => {
+      try {
+        const u = new URL(url, window.location.origin);
+        if (u.origin === window.location.origin) return true;
+        if (backendConfig.baseUrl) {
+          try {
+            const b = new URL(backendConfig.baseUrl);
+            if (u.origin === b.origin) return true;
+          } catch { /* malformed baseUrl */ }
+        }
+        return false;
+      } catch {
+        return false;
+      }
+    })();
+    const isApiPath = path.startsWith('/v1/') || path.startsWith('/.well-known/openwop') || path.startsWith('/api/');
+    if (!isOpenwopOrigin || !isApiPath) {
       return nativeFetch(input, init);
     }
 
