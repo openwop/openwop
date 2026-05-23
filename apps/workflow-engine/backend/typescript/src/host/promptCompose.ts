@@ -38,9 +38,10 @@
 
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { resolveSecret, type SecretScope } from '../byok/secretResolver.js';
+import { locateRepoDir } from './_repoPath.js';
 
 export interface PromptVariableDecl {
   name: string;
@@ -107,12 +108,17 @@ export interface PromptComposedPayload {
   contentTrust?: 'trusted' | 'untrusted';
 }
 
-const __filename = fileURLToPath(import.meta.url);
-// host/promptCompose.ts (under apps/workflow-engine/backend/typescript/src/host/)
-// → apps/workflow-engine/conformance-fixtures/prompt-templates/
-//
-// 5 `..` segments: host → src → typescript → backend → workflow-engine.
-const FIXTURES_DIR = join(__filename, '..', '..', '..', '..', '..', 'conformance-fixtures', 'prompt-templates');
+const __dirname = dirname(fileURLToPath(import.meta.url));
+// Same bundled-path bug as promptStore.ts:78 — see the comment there.
+// Resolved via the shared `locateRepoDir()` helper.
+const FIXTURES_DIR = join(
+  locateRepoDir(
+    __dirname,
+    'conformance-fixtures',
+    'prompt-templates/conformance-prompt-writer-system.json',
+  ),
+  'prompt-templates',
+);
 
 // Loaded lazily on first call so unit tests that don't exercise the
 // compose seam don't pay the disk cost.

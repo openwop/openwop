@@ -11,6 +11,33 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.3 — unreleased] — coordinated SDK release for MyndHyve adoption-feedback slices
 
+### fix(workflow-engine): prompt-templates bundled-path bug — 4 prompt-event scenarios pass; workflow-engine 95.4% → 95.5% (2026-05-23)
+
+Follow-up to the `envelopeAcceptor.ts` bundled-path bugfix (commit `d09d99c`). The same pattern — `join(__filename, '..' × 5, 'conformance-fixtures', 'prompt-templates')` — was present in `host/promptStore.ts:78` AND `host/promptCompose.ts:115`. Under the source tree it resolved correctly to `apps/workflow-engine/conformance-fixtures/prompt-templates/`. Under the bundled tree (`lib/index.js`) it overshot to `apps/conformance-fixtures/prompt-templates/` — a directory that doesn't exist — so `existsSync(FIXTURES_DIR)` returned false at boot, host-built-in templates never loaded, every `getTemplate()` call returned undefined, and the dispatch path silently skipped `prompt.composed` emission for the 4 conformance scenarios that target host-built-in templates.
+
+- **Root cause:** identical to commit `d09d99c` but for the fixtures directory instead of the schemas directory. The earlier KNOWN-LIMITS row attributed the failures to "few-shot + schema-hint not wired in dispatch" — that diagnosis was wrong; the dispatch loop in `bootstrap/nodes.ts:680-779` was already complete for all 4 PromptKinds. The actual cause was templates never loading at boot.
+
+- **Fix:** generalized the existing `_repoPath.ts:locateRepoSchemasDir()` helper into `locateRepoDir(fromDir, dirName, sentinelRelPath)`. Both consumers now resolve `FIXTURES_DIR` via the helper using `prompt-templates/conformance-prompt-writer-system.json` as the sentinel. `locateRepoSchemasDir()` retained as a thin convenience wrapper for back-compat.
+
+- **Re-measurement:**
+    - Before: 1521 / 6 fail / 56 skip / 14 todo / 1597 = 95.4%
+    - After:  1525 / 2 fail / 56 skip / 14 todo / 1597 = 95.5%
+    - Δ: +4 pass / -4 fail. The 4 prompt-event scenarios (`prompt-all-four-kinds-events.test.ts` × 2 + `prompt-end-to-end-events.test.ts` × 2) all flip from FAIL to PASS.
+
+- **2 remaining real failures** (both documented in `docs/KNOWN-LIMITS.md` §"Behavior tests too coarse to fully prove an invariant"):
+    - workflow-engine anonymous-auth fallback under `NODE_ENV=development` (intentional dev posture)
+    - workflow-engine multi-agent confidence-escalation timing flake (~30 min to close)
+
+- `INTEROP-MATRIX.md` workflow-engine row updated 95.4% → 95.5% with the same-day delta history embedded inline. `docs/KNOWN-LIMITS.md` row for the prompt-composed gap removed (now closed).
+
+Pattern lesson: **two more files reading sibling-repo paths via `__dirname/__filename + '..' × N`** now use the shared `_repoPath.ts:locateRepoDir()` helper, lifting the total fix-coverage from 2 sites to 4. A grep for the remaining bundled-path risk pattern:
+
+  `grep -rn "join.*__filename.*\.\..*conformance-fixtures\|resolve.*__dirname.*\.\..*schemas" apps/workflow-engine/backend/typescript/src/`
+
+returns zero hits post-fix.
+
+Gate: `bash scripts/openwop-check.sh` GREEN end-to-end (9/9). `additive` per `COMPATIBILITY.md` §2.1 — host-side path-resolution bug fix; no wire-shape impact.
+
 ### fix(workflow-engine): bundled-path schema-lookup bug — workflow-engine exhaustive-mode pass-rate 80.9% → 95.4% (2026-05-23)
 
 Root-cause finding from iterating on the "129 workflow-engine exhaustive-mode failures" snapshot in `docs/CONFORMANCE-RUNS-2026-05-23.md`. The vast majority were NOT real conformance gaps — they were cascade failures from a host-side path-resolution bug that crashed the entire node process on the first envelope-accept seam request.

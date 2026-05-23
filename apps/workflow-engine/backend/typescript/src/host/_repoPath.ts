@@ -24,39 +24,59 @@ import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 
 /**
- * Locate the repo's `schemas/` directory by walking parent directories
- * until a sibling `schemas/` containing `sentinelFile` is found. Works
- * under both the source-tree layout and the esbuild-bundled tree.
+ * Locate a sibling directory of one of the parents of `fromDir` by name,
+ * verifying its identity via a sentinel file inside it. Walks parent
+ * directories until `<parent>/<dirName>/<sentinelRelPath>` exists.
  *
  * @param fromDir Starting directory — typically `dirname(fileURLToPath(import.meta.url))`.
- * @param sentinelFile A schema filename known to live in `<repo>/schemas/`.
- *   Each caller picks a sentinel its consumer must load anyway (e.g.,
- *   `ai-envelope.schema.json` for the envelope acceptor;
- *   `prompt-pack-manifest.schema.json` for the prompt-pack loader). The
- *   sentinel makes the walk robust against false positives — a random
- *   `schemas/` directory somewhere in the parent chain won't match unless
- *   it contains the actual schema file the caller cares about.
- * @returns Absolute path to the `schemas/` directory.
+ * @param dirName Name of the directory to look for as a sibling of a parent
+ *   (e.g., `'schemas'` for `<repo>/schemas`; `'conformance-fixtures'` for
+ *   `<workflow-engine>/conformance-fixtures`).
+ * @param sentinelRelPath A path INSIDE `dirName` that must exist for the
+ *   match to be accepted. Makes the walk robust against false positives —
+ *   a random `schemas/` directory somewhere in the parent chain won't
+ *   match unless it contains the actual file the caller cares about.
+ *   Examples:
+ *     - `'ai-envelope.schema.json'` for the envelope acceptor (schemas dir)
+ *     - `'prompt-pack-manifest.schema.json'` for the prompt-pack loader (schemas dir)
+ *     - `'prompt-templates/conformance-prompt-writer-system.json'` for the
+ *       prompt store (conformance-fixtures dir)
+ * @returns Absolute path to the matched `<parent>/<dirName>` directory.
  * @throws Error when the walk terminates at the filesystem root without
- *   finding a matching `schemas/` directory. Caller is expected to fail
- *   loudly at module-load (the original lazy ENOENT-at-first-request
- *   pattern is what concealed the bug for so long).
+ *   finding a match. Caller is expected to fail loudly at module-load
+ *   (the original lazy ENOENT-at-first-request pattern is what concealed
+ *   the bug for so long).
  */
-export function locateRepoSchemasDir(fromDir: string, sentinelFile: string): string {
+export function locateRepoDir(
+  fromDir: string,
+  dirName: string,
+  sentinelRelPath: string,
+): string {
   let cur = fromDir;
   // The walk naturally terminates at the filesystem root via the
   // `parent === cur` check; no explicit depth cap needed.
   for (;;) {
-    const candidate = resolve(cur, 'schemas');
-    if (existsSync(join(candidate, sentinelFile))) return candidate;
+    const candidate = resolve(cur, dirName);
+    if (existsSync(join(candidate, sentinelRelPath))) return candidate;
     const parent = dirname(cur);
     if (parent === cur) {
       throw new Error(
-        `locateRepoSchemasDir: walked from "${fromDir}" to filesystem root without finding ` +
-          `a sibling "schemas/" directory containing "${sentinelFile}". ` +
+        `locateRepoDir: walked from "${fromDir}" to filesystem root without finding ` +
+          `a sibling "${dirName}/" directory containing "${sentinelRelPath}". ` +
           `Verify the workflow-engine is running inside the openwop repo tree.`,
       );
     }
     cur = parent;
   }
+}
+
+/**
+ * Convenience wrapper for the common case — locate `<repo>/schemas/`.
+ * Equivalent to `locateRepoDir(fromDir, 'schemas', sentinelFile)`.
+ *
+ * Pre-existing callers (envelopeAcceptor.ts, promptPackLoader.ts) use
+ * this form; the generalized `locateRepoDir` is the load-bearing helper.
+ */
+export function locateRepoSchemasDir(fromDir: string, sentinelFile: string): string {
+  return locateRepoDir(fromDir, 'schemas', sentinelFile);
 }

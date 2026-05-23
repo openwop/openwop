@@ -24,8 +24,9 @@
 
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { locateRepoDir } from './_repoPath.js';
 
 /** Mirror of PromptKind from schemas/prompt-kind.schema.json. */
 export type PromptKind = 'system' | 'user' | 'few-shot' | 'schema-hint';
@@ -70,12 +71,25 @@ interface StoredTemplate {
   etag: string;
 }
 
-const __filename = fileURLToPath(import.meta.url);
-// host/promptStore.ts (under apps/workflow-engine/backend/typescript/src/host/)
-// → apps/workflow-engine/conformance-fixtures/prompt-templates/
-//
-// 5 `..` segments climb: host → src → typescript → backend → workflow-engine.
-const FIXTURES_DIR = join(__filename, '..', '..', '..', '..', '..', 'conformance-fixtures', 'prompt-templates');
+const __dirname = dirname(fileURLToPath(import.meta.url));
+// Locate the `apps/workflow-engine/conformance-fixtures/prompt-templates/`
+// dir under both source-tree and esbuild-bundled layouts. The prior
+// `join(__filename, '..' × 5, 'conformance-fixtures', 'prompt-templates')`
+// pattern resolved correctly under the source tree but landed at
+// `apps/conformance-fixtures/prompt-templates` under the bundled tree
+// (which doesn't exist), so `existsSync(FIXTURES_DIR)` returned false,
+// templates never loaded, and `getTemplate()` returned undefined for
+// every host-built-in template — silently breaking all `prompt.composed`
+// event emission for the conformance fixtures that target host templates.
+// See commit d09d99c + the prompt-composed gap close-out (2026-05-23).
+const FIXTURES_DIR = join(
+  locateRepoDir(
+    __dirname,
+    'conformance-fixtures',
+    'prompt-templates/conformance-prompt-writer-system.json',
+  ),
+  'prompt-templates',
+);
 
 // Layered storage. Lookup precedence: user → pack → host (mutating
 // endpoints only see `user`; reads collapse all three).
