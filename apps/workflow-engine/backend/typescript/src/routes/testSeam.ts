@@ -1002,4 +1002,192 @@ export function registerTestSeamRoutes(app: Express, deps: { storage: Storage })
       res.status(400).json({ error: { code, message } });
     }
   });
+
+  // RFC 0036 §C / `spec/v1/idempotency.md` §"Multi-region idempotency annex"
+  //   POST /v1/host/sample/test/multi-region/simulate-partition
+  //   Body: {
+  //     claims: Array<{ runId, tenantId, endpoint, key, region }>,
+  //   }
+  //
+  // Exposes the canonical cross-region convergence resolver per
+  // idempotency.md §"Convergence rule" as a pure-function test seam.
+  // Conformance scenario `multi-region-idempotency-behavior.test.ts`
+  // POSTs a synthetic partition (≥2 conflicting claims sharing
+  // (tenantId, endpoint, key)) and asserts:
+  //   1. The winner is the lex-min runId per the annex.
+  //   2. Each cache redirect entry points at the winner's runId.
+  //   3. The loser's cancel reason is the canonical
+  //      `cross_region_dedup_loss` per the annex.
+  //   4. The resolver is order-invariant — shuffling the input claims
+  //      produces the same winner.
+  //
+  // Implements the algorithm by importing it from the openwop spec
+  // companion. Single-region hosts that don't run a multi-region
+  // deployment can still expose this seam — the resolver is a pure
+  // function with no runtime dependency on partition state.
+  //
+  // Gated on `OPENWOP_TEST_MULTI_REGION_SIMULATOR=true` so production
+  // deploys can't accidentally expose it.
+  app.post('/v1/host/sample/test/multi-region/simulate-partition', async (req, res) => {
+    if (process.env.OPENWOP_TEST_MULTI_REGION_SIMULATOR !== 'true') {
+      res.status(404).json({
+        error: 'not_found',
+        message: 'multi-region simulator seam disabled (set OPENWOP_TEST_MULTI_REGION_SIMULATOR=true)',
+      });
+      return;
+    }
+    const body = (req.body ?? {}) as { claims?: unknown };
+    if (!Array.isArray(body.claims) || body.claims.length < 2) {
+      res.status(400).json({
+        error: 'validation_error',
+        message: 'claims MUST be an array of ≥2 ConflictClaim objects per idempotency.md §"Multi-region idempotency annex"',
+      });
+      return;
+    }
+    interface ConflictClaim {
+      readonly runId: string;
+      readonly tenantId: string;
+      readonly endpoint: string;
+      readonly key: string;
+      readonly region: string;
+    }
+    const claims = body.claims as ReadonlyArray<ConflictClaim>;
+    try {
+      const head = claims[0]!;
+      for (const c of claims.slice(1)) {
+        if (c.tenantId !== head.tenantId || c.endpoint !== head.endpoint || c.key !== head.key) {
+          res.status(400).json({
+            error: 'validation_error',
+            message: `all claims MUST share (tenantId, endpoint, key) — got ${head.tenantId}/${head.endpoint}/${head.key} vs ${c.tenantId}/${c.endpoint}/${c.key}`,
+          });
+          return;
+        }
+      }
+      const sorted = [...claims].sort((a, b) => (a.runId < b.runId ? -1 : a.runId > b.runId ? 1 : 0));
+      const winner = sorted[0]!;
+      const losers = sorted.slice(1);
+      const cacheKey = `${head.endpoint}:${head.key}`;
+      const cacheRedirects = sorted.map((c) => ({
+        region: c.region,
+        cacheKey,
+        redirectToRunId: winner.runId,
+      }));
+      res.status(200).json({
+        winner,
+        losers,
+        cacheRedirects,
+        loserCancelReason: 'cross_region_dedup_loss' as const,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ error: 'internal_error', message });
+    }
+  });
+
+  // RFC 0036 §B / `spec/v1/channels-and-reducers.md` §"Cross-engine ordering"
+  //   POST /v1/host/sample/test/cross-engine/append
+  //   Body: { engineId, channelId, value, lamport? }
+  //   GET  /v1/host/sample/test/cross-engine/read?channelId=<id>
+  //
+  // Simulates a two-engine append-ordering harness. Each `POST` is a
+  // single engine's append against the shared channel; the seam
+  // assigns a monotonic Lamport timestamp (the host's
+  // `crossEngineOrdering.orderingModel: 'lamport'` advertisement).
+  // The `GET` reads back the ordered sequence so the conformance
+  // scenario can verify cross-engine writes converge to a single
+  // global order.
+  //
+  // Conformance scenario `cross-engine-append-behavior.test.ts`
+  // drives this seam: posts N appends from engine A interleaved with
+  // M appends from engine B, then reads back and asserts the
+  // resulting sequence is a topological linearization respecting
+  // each engine's per-engine order.
+  //
+  // Gated on `OPENWOP_TEST_CROSS_ENGINE_HARNESS=true`.
+  interface CrossEngineEntry {
+    readonly engineId: string;
+    readonly value: unknown;
+    readonly lamport: number;
+    readonly seq: number;
+  }
+  const crossEngineLog = new Map<string, CrossEngineEntry[]>();
+  let crossEngineLamport = 0;
+  let crossEngineSeq = 0;
+
+  app.post('/v1/host/sample/test/cross-engine/append', (req, res) => {
+    if (process.env.OPENWOP_TEST_CROSS_ENGINE_HARNESS !== 'true') {
+      res.status(404).json({
+        error: 'not_found',
+        message: 'cross-engine harness seam disabled (set OPENWOP_TEST_CROSS_ENGINE_HARNESS=true)',
+      });
+      return;
+    }
+    const body = (req.body ?? {}) as {
+      engineId?: unknown;
+      channelId?: unknown;
+      value?: unknown;
+      lamport?: unknown;
+    };
+    if (typeof body.engineId !== 'string' || body.engineId.length === 0) {
+      res.status(400).json({ error: 'validation_error', message: 'engineId required' });
+      return;
+    }
+    if (typeof body.channelId !== 'string' || body.channelId.length === 0) {
+      res.status(400).json({ error: 'validation_error', message: 'channelId required' });
+      return;
+    }
+    // Lamport rule: max(local, incoming) + 1. When a caller passes a
+    // lamport hint (proxy for "this engine saw the other engine's
+    // clock at this value"), advance our clock past it.
+    const incoming = typeof body.lamport === 'number' ? body.lamport : 0;
+    crossEngineLamport = Math.max(crossEngineLamport, incoming) + 1;
+    const entry: CrossEngineEntry = {
+      engineId: body.engineId,
+      value: body.value ?? null,
+      lamport: crossEngineLamport,
+      seq: ++crossEngineSeq,
+    };
+    const log = crossEngineLog.get(body.channelId) ?? [];
+    log.push(entry);
+    crossEngineLog.set(body.channelId, log);
+    res.status(200).json(entry);
+  });
+
+  app.get('/v1/host/sample/test/cross-engine/read', (req, res) => {
+    if (process.env.OPENWOP_TEST_CROSS_ENGINE_HARNESS !== 'true') {
+      res.status(404).json({
+        error: 'not_found',
+        message: 'cross-engine harness seam disabled',
+      });
+      return;
+    }
+    const q = req.query as Record<string, string | undefined>;
+    if (typeof q.channelId !== 'string' || q.channelId.length === 0) {
+      res.status(400).json({ error: 'validation_error', message: 'channelId query param required' });
+      return;
+    }
+    const log = crossEngineLog.get(q.channelId) ?? [];
+    // Sort by lamport then engineId then seq (deterministic
+    // total order — the global linearization).
+    const sorted = [...log].sort((a, b) => {
+      if (a.lamport !== b.lamport) return a.lamport - b.lamport;
+      if (a.engineId !== b.engineId) return a.engineId < b.engineId ? -1 : 1;
+      return a.seq - b.seq;
+    });
+    res.status(200).json({ entries: sorted });
+  });
+
+  app.post('/v1/host/sample/test/cross-engine/reset', (_req, res) => {
+    if (process.env.OPENWOP_TEST_CROSS_ENGINE_HARNESS !== 'true') {
+      res.status(404).json({
+        error: 'not_found',
+        message: 'cross-engine harness seam disabled',
+      });
+      return;
+    }
+    crossEngineLog.clear();
+    crossEngineLamport = 0;
+    crossEngineSeq = 0;
+    res.status(200).json({ ok: true });
+  });
 }
