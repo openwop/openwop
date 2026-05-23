@@ -214,8 +214,10 @@ function ProviderGrid({
   isAuthed: boolean;
 }): JSX.Element {
   // BYOK-only — the managed "Try it free" path renders above the
-  // stepper in BYOKWizard via <TryItFreeCard>.
-  const byok = PROVIDERS.filter((p) => !p.managed);
+  // stepper in BYOKWizard via <TryItFreeCard>. `hidden` providers
+  // (e.g., MiniMax sitting behind the managed openwop-free entry)
+  // are excluded from the user-facing picker.
+  const byok = PROVIDERS.filter((p) => !p.managed && !p.hidden);
 
   return (
     <div className="byok-section">

@@ -37,6 +37,14 @@ export interface ProviderConfig {
    *  sign-in (if anon) or directly activates the provider (if authed).
    *  apiKey* / customModel* fields below are not required when managed. */
   managed?: boolean;
+  /** Hidden providers are NOT rendered in the BYOK wizard tile list and
+   *  are NOT pickable directly by the user. They still live in
+   *  providers.json so the backend can read their capability surface
+   *  (model list, structured-output / tools / vision flags, costs) —
+   *  e.g., MiniMax sits behind the "Try it free" managed entry: it's
+   *  the real underlying provider, but we don't want users to pick it
+   *  by name because the steward is paying for it. */
+  hidden?: boolean;
   /** Hint shown beneath a managed-provider tile to signed-out users
    *  (e.g., "Sign in to use"). Ignored for non-managed providers. */
   signedInHint?: string;

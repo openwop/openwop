@@ -60,6 +60,34 @@
       ]
     },
     {
+      "_comment": "MiniMax — the real provider behind the `openwop-free` managed entry below. Hidden from the BYOK picker (`hidden: true`) because the steward pays for the managed-path usage; users shouldn't be able to pick MiniMax directly by name. Listed here so the backend has one canonical source for model capabilities + costs (no parallel-list drift between FE and BE). The dispatch adapter lives at backend/typescript/src/providers/dispatch.ts:463 and uses an OpenAI-compatible wire shape with native `<think>` reasoning blocks parsed via ThinkBlockSplitter.",
+      "id": "minimax",
+      "label": "MiniMax",
+      "hidden": true,
+      "badgeColor": "#1f6feb",
+      "description": "OpenAI-compatible wire shape with native reasoning blocks. The Try-it-free path routes here.",
+      "apiKeyPlaceholder": "mx-…",
+      "apiKeyHelpText": "Stored server-side; not user-facing. The Try-it-free managed path supplies this from MINIMAX_API_KEY at boot.",
+      "apiKeyConsoleUrl": "https://www.minimax.io/platform",
+      "models": [
+        {
+          "id": "MiniMax-M2",
+          "label": "MiniMax M2",
+          "contextWindow": 200000,
+          "capabilities": ["text", "tools"],
+          "cost": { "input": 0.0003, "output": 0.0012 },
+          "recommended": true
+        },
+        {
+          "id": "MiniMax-Text-01",
+          "label": "MiniMax Text-01",
+          "contextWindow": 1000000,
+          "capabilities": ["text"],
+          "cost": { "input": 0.0002, "output": 0.0011 }
+        }
+      ]
+    },
+    {
       "_comment": "Managed provider — operator holds the API key server-side and pays the bill. Users sign in to use it without bringing their own key. The underlying provider + model are intentionally NOT exposed to the FE (no _internalProvider / _internalModel here); both are resolved server-side from MINIMAX_API_KEY + a default model id in the bootstrap step. The wizard skips the model picker and key-entry steps when `managed: true`. Daily token cap per signed-in tenant is enforced by the BE — see managedProvider.ts.",
       "id": "openwop-free",
       "label": "Try it free",
