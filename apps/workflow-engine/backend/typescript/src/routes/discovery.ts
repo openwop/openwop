@@ -463,18 +463,39 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       ...(process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL === 'true'
         ? (() => {
             const phase2 = process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_2 === 'true';
+            const phase4 = process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_4 === 'true';
             const floorRaw = process.env.OPENWOP_MULTI_AGENT_CONFIDENCE_FLOOR;
             const floor = (() => {
               const parsed = floorRaw === undefined ? 0.5 : Number(floorRaw);
               if (!Number.isFinite(parsed) || parsed < 0.5 || parsed > 1.0) return 0.5;
               return parsed;
             })();
+            // Phase 4 builds on Phase 2 (which builds on Phase 1) — phase4
+            // implies phase2 + phase1. Version advertisement is the
+            // ceiling of phases the host implements per
+            // RFCS/0037-multi-agent-execution-model.md §"Phases".
+            const version = phase4 ? 4 : phase2 ? 2 : 1;
             return {
               multiAgent: {
                 executionModel: {
                   supported: true,
-                  version: phase2 ? 2 : 1,
+                  version,
                   ...(phase2 ? { confidenceEscalationFloor: floor } : {}),
+                  // RFC 0041 §D — replayDeterminism advertisement. Hosts
+                  // advertising `version: 4` MUST advertise this sub-block
+                  // with `supported: true` and
+                  // `refusalDivergenceEmission: true`. The LLM cache-key
+                  // recipe is the spec-canonical
+                  // `spec-rfc-0041` for the reference impl.
+                  ...(phase4
+                    ? {
+                        replayDeterminism: {
+                          supported: true,
+                          llmCacheKeyRecipe: 'spec-rfc-0041',
+                          refusalDivergenceEmission: true,
+                        },
+                      }
+                    : {}),
                 },
               },
             };

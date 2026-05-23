@@ -449,7 +449,102 @@ async function runOneNode(input: {
     span.end();
   }
 
+  // RFC 0041 §B Phase 4 — replay-divergence-at-refusal detection.
+  //
+  // When the current run is a replay-mode fork AND this node's envelope
+  // outcome (refusal vs valid) differs from the source run's outcome at
+  // the same nodeId, emit `replay.divergedAtRefusal` and force the node
+  // to fail with `error.code: 'replay_diverged_at_refusal'`. Silent
+  // substitution of the new envelope for the original is non-conformant
+  // per RFC 0041 §B + `spec/v1/multi-agent-execution.md` §"Envelope-
+  // refusal recovery in replay".
+  //
+  // Gated on `OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_4=true` — non-
+  // Phase-4 hosts MUST NOT emit this event per the schema description on
+  // `run-event-payloads.schema.json` §`replayDivergedAtRefusal`.
+  const phase4Enabled = process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_4 === 'true';
+  const isReplayFork = run.forkMode === 'replay' && typeof run.parentRunId === 'string';
+
+  async function checkReplayDivergence(replayKind: 'valid' | 'refusal'): Promise<{
+    diverged: boolean;
+    originalKind?: 'valid' | 'refusal';
+    atSequence?: number;
+    originalEventId?: string;
+  }> {
+    if (!phase4Enabled || !isReplayFork || run.parentRunId === undefined) {
+      return { diverged: false };
+    }
+    // Look up the source run's events at the same nodeId. The original
+    // envelope kind is determined by whether the source has an
+    // `envelope.refusal` event (refusal) or completed the node successfully
+    // (valid). If we can't decide from the event log, treat as no-divergence.
+    try {
+      const sourceEvents = await storage.listEvents(run.parentRunId);
+      const refusalForNode = sourceEvents.find(
+        (e) => e.type === 'envelope.refusal' && e.nodeId === nodeRef.nodeId,
+      );
+      const completionForNode = sourceEvents.find(
+        (e) => e.type === 'node.completed' && e.nodeId === nodeRef.nodeId,
+      );
+      const sourceKind: 'valid' | 'refusal' | undefined = refusalForNode
+        ? 'refusal'
+        : completionForNode
+          ? 'valid'
+          : undefined;
+      if (sourceKind === undefined) return { diverged: false }; // can't tell
+      if (sourceKind === replayKind) return { diverged: false }; // same kind — no divergence
+      const sentinel = refusalForNode ?? completionForNode;
+      return {
+        diverged: true,
+        originalKind: sourceKind,
+        ...(sentinel?.sequence !== undefined ? { atSequence: sentinel.sequence } : {}),
+        ...(sentinel?.eventId !== undefined ? { originalEventId: sentinel.eventId } : {}),
+      };
+    } catch {
+      // Source run not accessible — be conservative and don't emit a
+      // divergence event we can't substantiate.
+      return { diverged: false };
+    }
+  }
+
   if (outcome.status === 'success') {
+    // Phase 4: check whether the original run had a refusal at this node.
+    // If yes, the replay's success constitutes a divergence (silent
+    // substitution direction: original=refusal → replay=valid).
+    const div = await checkReplayDivergence('valid');
+    if (div.diverged) {
+      await eventLog.append({
+        runId: run.runId,
+        nodeId: nodeRef.nodeId,
+        type: 'replay.divergedAtRefusal',
+        payload: {
+          sourceRunId: run.parentRunId,
+          atSequence: div.atSequence ?? 0,
+          ...(div.originalEventId ? { originalEventId: div.originalEventId } : {}),
+          nodeId: nodeRef.nodeId,
+          originalEnvelopeKind: div.originalKind!,
+          replayEnvelopeKind: 'valid' as const,
+        },
+      });
+      await eventLog.append({
+        runId: run.runId,
+        nodeId: nodeRef.nodeId,
+        type: 'node.failed',
+        payload: stripSecretsFromPersisted({
+          error: {
+            code: 'replay_diverged_at_refusal',
+            message: `replay diverged at refusal for node ${nodeRef.nodeId}: original=${div.originalKind}, replay=valid`,
+          },
+        }),
+      });
+      return {
+        kind: 'failure',
+        error: {
+          code: 'replay_diverged_at_refusal',
+          message: `replay diverged at refusal for node ${nodeRef.nodeId}: original=${div.originalKind}, replay=valid`,
+        },
+      };
+    }
     await eventLog.append({
       runId: run.runId,
       nodeId: nodeRef.nodeId,
@@ -465,6 +560,39 @@ async function runOneNode(input: {
   }
 
   if (outcome.status === 'failure') {
+    // Phase 4: when this node failed with `envelope_refusal` AND the
+    // original run got a valid envelope at the same nodeId, that's a
+    // refusal-divergence. Emit `replay.divergedAtRefusal` + override the
+    // error code from `envelope_refusal` to `replay_diverged_at_refusal`.
+    if (outcome.error.code === 'envelope_refusal') {
+      const div = await checkReplayDivergence('refusal');
+      if (div.diverged) {
+        await eventLog.append({
+          runId: run.runId,
+          nodeId: nodeRef.nodeId,
+          type: 'replay.divergedAtRefusal',
+          payload: {
+            sourceRunId: run.parentRunId,
+            atSequence: div.atSequence ?? 0,
+            ...(div.originalEventId ? { originalEventId: div.originalEventId } : {}),
+            nodeId: nodeRef.nodeId,
+            originalEnvelopeKind: div.originalKind!,
+            replayEnvelopeKind: 'refusal' as const,
+          },
+        });
+        const overriddenError = {
+          code: 'replay_diverged_at_refusal',
+          message: `replay diverged at refusal for node ${nodeRef.nodeId}: original=${div.originalKind}, replay=refusal`,
+        };
+        await eventLog.append({
+          runId: run.runId,
+          nodeId: nodeRef.nodeId,
+          type: 'node.failed',
+          payload: stripSecretsFromPersisted({ error: overriddenError }),
+        });
+        return { kind: 'failure', error: overriddenError };
+      }
+    }
     await eventLog.append({
       runId: run.runId,
       nodeId: nodeRef.nodeId,

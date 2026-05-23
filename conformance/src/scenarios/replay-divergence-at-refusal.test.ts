@@ -113,6 +113,40 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: advertisement shape (R
   });
 });
 
+interface RunSnapshot {
+  status?: string;
+  error?: { code?: string; message?: string };
+}
+interface RunEventDoc {
+  type: string;
+  nodeId?: string;
+  sequence?: number;
+  payload?: Record<string, unknown>;
+}
+
+async function pollUntilTerminal(runId: string): Promise<RunSnapshot> {
+  for (let i = 0; i < 50; i++) {
+    const r = await driver.get(`/v1/runs/${encodeURIComponent(runId)}`);
+    const snap = r.json as RunSnapshot;
+    if (snap.status === 'completed' || snap.status === 'failed' || snap.status === 'cancelled') {
+      return snap;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error(`run ${runId} did not reach terminal within 5s`);
+}
+
+async function readEvents(runId: string): Promise<RunEventDoc[]> {
+  const r = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events`);
+  const body = r.json as { events?: RunEventDoc[] };
+  return body.events ?? [];
+}
+
+async function programMock(nodeId: string, program: Array<Record<string, unknown>>): Promise<number> {
+  const r = await driver.post('/v1/host/sample/test/mock-ai/program', { nodeId, program });
+  return r.status;
+}
+
 describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: behavioral (RFC 0041 §B MAE-8)', () => {
   // Behavioral assertion drives a workflow whose mock-AI provider returns a
   // valid envelope on the original run + a refusal on the replay (or
@@ -127,8 +161,148 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: behavioral (RFC 0041 �
   //        originalEnvelopeKind === 'valid' AND replayEnvelopeKind === 'refusal'.
   //   7. Assert NO silent substitution: the replay's continuation past the
   //      diverging node MUST NOT execute (run terminates at the divergence).
-  // Until the reference host wires the staged-refusal seam, surfaced as
-  // `todo` so test reporters track the gap.
-  it.todo('Phase 4 host MUST emit replay.divergedAtRefusal + fail with replay_diverged_at_refusal when original=valid + replay=refusal');
-  it.todo('Phase 4 host MUST emit replay.divergedAtRefusal + fail with replay_diverged_at_refusal when original=refusal + replay=valid (symmetric case)');
+
+  async function gateOnPhase4(ctx: { skip: () => void }): Promise<boolean> {
+    const d = await readDiscovery();
+    const rd = d?.capabilities?.multiAgent?.executionModel?.replayDeterminism;
+    if (rd?.supported !== true || rd?.refusalDivergenceEmission !== true) {
+      ctx.skip();
+      return false;
+    }
+    return true;
+  }
+
+  it('Phase 4 host MUST emit replay.divergedAtRefusal + fail with replay_diverged_at_refusal when original=valid + replay=refusal', async (ctx) => {
+    if (!(await gateOnPhase4(ctx))) return;
+
+    const NODE_ID = 'structured-call';
+    // Original program: valid envelope. Replay program (set after the
+    // original completes): refusal. Programming twice is the spec-canonical
+    // pattern — see spec/v1/host-sample-test-seams.md §5.
+    const validEnv = '{"valid":true}';
+    const programStatus = await programMock(NODE_ID, [
+      { content: validEnv, stopReason: 'end_turn' as const },
+    ]);
+    if (programStatus === 404) {
+      ctx.skip(); // mock-AI program seam not exposed — soft-skip
+      return;
+    }
+    expect(programStatus).toBe(200);
+
+    const createRes = await driver.post('/v1/runs', {
+      workflowId: 'conformance-phase4-replay-divergence',
+    });
+    if (createRes.status === 404 || createRes.status === 422) {
+      ctx.skip(); // fixture not advertised
+      return;
+    }
+    expect(createRes.status).toBe(201);
+    const sourceRunId = (createRes.json as { runId: string }).runId;
+    const sourceTerminal = await pollUntilTerminal(sourceRunId);
+    expect(sourceTerminal.status).toBe('completed');
+
+    // Stage refusal for the replay's mock-AI dispatch.
+    await programMock(NODE_ID, [
+      { content: 'safety-refused-for-conformance', stopReason: 'safety' as const, refusalText: 'safety-refused-for-conformance' },
+    ]);
+
+    const forkRes = await driver.post(`/v1/runs/${encodeURIComponent(sourceRunId)}:fork`, {
+      fromSeq: 0,
+      mode: 'replay',
+    });
+    expect(forkRes.status).toBe(201);
+    const replayRunId = (forkRes.json as { runId: string }).runId;
+    const replayTerminal = await pollUntilTerminal(replayRunId);
+
+    expect(
+      replayTerminal.status,
+      driver.describe(
+        'RFCS/0041-multi-agent-replay-under-nondeterminism.md §B + spec/v1/rest-endpoints.md §"Common error codes"',
+        'replay MUST terminate `failed` when refusal-divergence is detected (silent substitution is non-conformant)',
+      ),
+    ).toBe('failed');
+    expect(
+      replayTerminal.error?.code,
+      driver.describe(
+        'spec/v1/rest-endpoints.md §"Common error codes" — replay_diverged_at_refusal',
+        'error.code MUST be `replay_diverged_at_refusal` per the canonical catalog',
+      ),
+    ).toBe('replay_diverged_at_refusal');
+
+    const replayEvents = await readEvents(replayRunId);
+    const divergenceEvent = replayEvents.find((e) => e.type === 'replay.divergedAtRefusal');
+    expect(
+      divergenceEvent,
+      driver.describe(
+        'schemas/run-event-payloads.schema.json §replayDivergedAtRefusal',
+        'replay event log MUST contain exactly one `replay.divergedAtRefusal` event identifying the divergence',
+      ),
+    ).toBeDefined();
+    expect(divergenceEvent?.payload?.sourceRunId).toBe(sourceRunId);
+    expect(divergenceEvent?.payload?.nodeId).toBe(NODE_ID);
+    expect(
+      divergenceEvent?.payload?.originalEnvelopeKind,
+      driver.describe(
+        'schemas/run-event-payloads.schema.json §replayDivergedAtRefusal.originalEnvelopeKind',
+        'originalEnvelopeKind MUST be `valid` (source run completed normally)',
+      ),
+    ).toBe('valid');
+    expect(
+      divergenceEvent?.payload?.replayEnvelopeKind,
+      driver.describe(
+        'schemas/run-event-payloads.schema.json §replayDivergedAtRefusal.replayEnvelopeKind',
+        'replayEnvelopeKind MUST be `refusal` (replay hit the refusal entry of the mock program)',
+      ),
+    ).toBe('refusal');
+  });
+
+  it('Phase 4 host MUST emit replay.divergedAtRefusal + fail with replay_diverged_at_refusal when original=refusal + replay=valid (symmetric case)', async (ctx) => {
+    if (!(await gateOnPhase4(ctx))) return;
+
+    const NODE_ID = 'structured-call';
+    // Symmetric: original=refusal, replay=valid.
+    const programStatus = await programMock(NODE_ID, [
+      { content: 'safety-refused-for-conformance', stopReason: 'safety' as const, refusalText: 'safety-refused-for-conformance' },
+    ]);
+    if (programStatus === 404) {
+      ctx.skip();
+      return;
+    }
+    expect(programStatus).toBe(200);
+
+    const createRes = await driver.post('/v1/runs', {
+      workflowId: 'conformance-phase4-replay-divergence',
+    });
+    if (createRes.status === 404 || createRes.status === 422) {
+      ctx.skip();
+      return;
+    }
+    expect(createRes.status).toBe(201);
+    const sourceRunId = (createRes.json as { runId: string }).runId;
+    const sourceTerminal = await pollUntilTerminal(sourceRunId);
+    // Source run fails because the LLM refused.
+    expect(sourceTerminal.status).toBe('failed');
+
+    // Stage valid envelope for the replay's mock-AI dispatch.
+    await programMock(NODE_ID, [
+      { content: '{"valid":true}', stopReason: 'end_turn' as const },
+    ]);
+
+    const forkRes = await driver.post(`/v1/runs/${encodeURIComponent(sourceRunId)}:fork`, {
+      fromSeq: 0,
+      mode: 'replay',
+    });
+    expect(forkRes.status).toBe(201);
+    const replayRunId = (forkRes.json as { runId: string }).runId;
+    const replayTerminal = await pollUntilTerminal(replayRunId);
+
+    expect(replayTerminal.status).toBe('failed');
+    expect(replayTerminal.error?.code).toBe('replay_diverged_at_refusal');
+
+    const replayEvents = await readEvents(replayRunId);
+    const divergenceEvent = replayEvents.find((e) => e.type === 'replay.divergedAtRefusal');
+    expect(divergenceEvent).toBeDefined();
+    expect(divergenceEvent?.payload?.originalEnvelopeKind).toBe('refusal');
+    expect(divergenceEvent?.payload?.replayEnvelopeKind).toBe('valid');
+  });
 });

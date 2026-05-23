@@ -11,16 +11,16 @@ This document tracks the 5 behavioral harnesses the audit named, with the curren
 | Harness | Status | Closing commit | Behavioral assertions |
 |---|---|---|---:|
 | **#5 — Secret-leakage telemetry** | ✅ **CLOSED end-to-end** | `18e7e55` | 3 assertions; soft-skip honestly until host advertises `observability.testSeams` |
-| **#4 — Replay determinism Phase 4** | 🟡 **PARTIAL** (fixtures + catalog; executor re-dispatch remains ~2-3 days follow-up) | `c21d239` | 2 it.todo (documented unblock criterion) |
+| **#4 — Replay determinism Phase 4** | ✅ **CLOSED end-to-end** (executor catch-path + symmetric success-path detect envelope-kind divergence; emit `replay.divergedAtRefusal` + fail with `replay_diverged_at_refusal`; Phase 4 advertisement gates the emission per RFC 0041 §D) | `c21d239` (fixtures) + 2026-05-23 executor wiring | 3 assertions ALL PASS (advertisement-shape + 2 directional behavioral) |
 | **#1 — Multi-region simulator** | ✅ **CLOSED end-to-end** (workflow-engine seam + 6-assertion behavioral scenario; all 6 PASS) | `85f514a` | 6 assertions ALL PASS |
 | **#2 — Cross-engine append ordering** | ✅ **CLOSED end-to-end** (workflow-engine seam + 4-assertion Lamport-clock harness; all 4 PASS) | `85f514a` | 4 assertions ALL PASS |
 | **#6 — RFC 0022 dispatch mapping** | ✅ **CLOSED** (workflow-engine already had the wiring; verified end-to-end — 12/12 scenarios PASS) | `85f514a` (verification commit) | 12 existing scenarios ALL PASS against workflow-engine |
 | **#3 — Sandbox MVP (RFC 0035)** | ✅ **CLOSED end-to-end** (node:vm sandbox seam + 10-assertion behavioral scenario covering 7 of 8 §B invariants; all 10 PASS — the original commit message under-claimed at "5 of 8") | `3c0bfe3` + code-review follow-ups | 10 assertions ALL PASS |
 | **#7 — RFC 0042 experimental tier** | ✅ **CLOSED end-to-end** (schema + `experimentalGate()` helper + advertisement-shape scenario) | `45678c4` | 6 assertions (gate against runtime advertisement) |
 
-**Total behavioral assertions landed in the close-out: 40 PASS + 3 it.todo + 6 RFC 0042 (server-free).**
+**Total behavioral assertions landed in the close-out: 43 PASS + 0 it.todo + 6 RFC 0042 (server-free).**
 
-The 2 remaining `it.todo` in `replay-divergence-at-refusal.test.ts` (Track #4 behavioral) are blocked on a substantive executor change (the workflow-engine's `:fork mode: replay` path needs re-dispatch + envelope-kind comparison logic; sample-grade fork today copies events as-is). Estimated ~2-3 days for a future focused PR.
+All 7 tracks now close end-to-end. The remaining 2 `it.todo` in `replay-divergence-at-refusal.test.ts` flipped to real `it()` on 2026-05-23 — the workflow-engine's executor now detects envelope-kind divergence at the `:fork mode: replay` re-dispatch boundary by comparing the source run's `envelope.refusal` / `node.completed` history against the replay's outcome at the same nodeId.
 
 **Suite scenario count: 205 → 210 over the session.** New: `secret-leakage-otel-attribute`, `experimental-tier-shape`, `multi-region-idempotency-behavior`, `cross-engine-append-behavior`, `sandbox-mvp-behavior`. Plus 2 new fixtures (`conformance-phase4-replay-divergence`, `conformance-phase4-nondet-tool`).
 

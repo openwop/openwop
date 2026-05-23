@@ -11,6 +11,40 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.3 — unreleased] — coordinated SDK release for MyndHyve adoption-feedback slices
 
+### RFC 0041 §B Phase 4 — replay-divergence-at-refusal executor wiring closes (2026-05-23)
+
+Track #4 (the last open audit item from the 2026-05-22 Phase 4 close-out) lands end-to-end. The workflow-engine's executor now detects envelope-kind divergence at the `:fork mode: replay` re-dispatch boundary and emits `replay.divergedAtRefusal` + fails the run with `error.code: 'replay_diverged_at_refusal'` per RFC 0041 §B + `spec/v1/rest-endpoints.md` §"Common error codes".
+
+- **`apps/workflow-engine/backend/typescript/src/executor/executor.ts`** gains a `checkReplayDivergence()` helper called from BOTH the success path (when the replay's node completes normally) AND the failure path (when the replay's LLM call throws `AiProviderError('envelope_refusal')`). Both directions of divergence are detected:
+    - **original=valid + replay=refusal:** caught in the `outcome.status === 'failure'` branch when `outcome.error.code === 'envelope_refusal'` AND the source run has a `node.completed` event for the same nodeId.
+    - **original=refusal + replay=valid (symmetric):** caught in the `outcome.status === 'success'` branch when the source run has an `envelope.refusal` event for the same nodeId.
+  When divergence is detected, the engine emits `replay.divergedAtRefusal` with the §B payload (sourceRunId + atSequence + nodeId + originalEnvelopeKind + replayEnvelopeKind) then appends `node.failed` with the overridden error code. Non-Phase-4 hosts MUST NOT emit this event (per the schema description on `run-event-payloads.schema.json` §`replayDivergedAtRefusal`); the check is gated on `OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_4=true`.
+
+- **`apps/workflow-engine/backend/typescript/src/routes/discovery.ts`** gains the RFC 0041 §D `replayDeterminism` advertisement sub-block when `OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_4=true` is set. Advertisement: `{ supported: true, llmCacheKeyRecipe: 'spec-rfc-0041', refusalDivergenceEmission: true }`. Phase 4 implies Phase 2 (which implies Phase 1) — the `version` advertisement bumps from 1/2 to 4 accordingly.
+
+- **`conformance/src/scenarios/replay-divergence-at-refusal.test.ts`** the 2 `it.todo` lines flip to real `it()` assertions:
+    1. original=valid + replay=refusal: stage mock-AI with valid envelope for the source run; after source completes, re-program with refusal; fork-replay; assert `replay.divergedAtRefusal` event with `originalEnvelopeKind: 'valid'` + `replayEnvelopeKind: 'refusal'` + run terminates `failed` with `error.code: 'replay_diverged_at_refusal'`.
+    2. Symmetric — original=refusal, replay=valid; the directional fields flip.
+
+All 3 assertions (advertisement-shape + 2 directional behavioral) PASS against the workflow-engine. This closes the last `it.todo` from the 5 audit-named harnesses; ALL 7 tracks in `docs/PHASE-4-PROGRESS.md` are now ✅ end-to-end. RFC 0041 path-to-Accepted opens — promotion gate is a second host advertising `multiAgent.executionModel.version: 4` end-to-end per the existing cross-host evidence convention.
+
+Reproduction:
+
+  OPENWOP_API_KEY=conformance-test-key \
+  OPENWOP_TEST_SEAM_ENABLED=true \
+  OPENWOP_CONFORMANCE_FIXTURES=1 \
+  OPENWOP_MULTI_AGENT_EXECUTION_MODEL=true \
+  OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_2=true \
+  OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_4=true \
+  PORT=4242 node apps/workflow-engine/backend/typescript/lib/index.js &
+
+  cd conformance && OPENWOP_BASE_URL=http://127.0.0.1:4242 OPENWOP_API_KEY=conformance-test-key \
+    npx vitest run src/scenarios/replay-divergence-at-refusal.test.ts
+
+→ 3/3 PASS.
+
+Gate: `bash scripts/openwop-check.sh` GREEN end-to-end (9/9). `additive` per `COMPATIBILITY.md` §2.1 — the new `replay.divergedAtRefusal` event type is already in `schemas/run-event-payloads.schema.json`; the wire surface is unchanged; the executor's new emission path is gated behind the env-var + per-run forkMode = 'replay'.
+
 ### Phase 4 behavioral-harness close-out — Tracks 1/2/5/6/7 + RFC 0042 (2026-05-22 → 2026-05-23)
 
 Closes the 5 behavioral-harness items the 2026-05-22 standards-readiness review called out, plus RFC 0042 implementation, plus RFC 0022 dispatch-mapping verification. The closing commits introduce 3 new HTTP test-seam endpoint families on the reference workflow-engine and 5 new conformance scenarios; suite scenario count grew 205 → 210.
