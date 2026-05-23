@@ -130,11 +130,13 @@ const NORMALIZE_RESULT: EnvelopeNormalizer = (payload, warnings) => {
   return payload;
 };
 
-/** Per-envelope-type normalizer registry. Add new entries here when a
- *  new universal kind needs pre-validation coercion. Unregistered
- *  kinds pass through unchanged (the acceptor runs payload validation
- *  on the original payload).*/
-const ENVELOPE_NORMALIZERS: Record<string, EnvelopeNormalizer> = {
+/** Per-envelope-type normalizer registry. Keyed by a string-literal
+ *  union so a typo (e.g., 'clarification.requests') fails at compile
+ *  time. Add new entries by extending `NormalizableKind`. Unregistered
+ *  kinds pass through unchanged. */
+type NormalizableKind = 'clarification.request' | 'schema.request' | 'result';
+
+const ENVELOPE_NORMALIZERS: Record<NormalizableKind, EnvelopeNormalizer> = {
   'clarification.request': NORMALIZE_CLARIFICATION_REQUEST,
   'schema.request': NORMALIZE_SCHEMA_REQUEST,
   'result': NORMALIZE_RESULT,
@@ -153,15 +155,19 @@ export function normalizeEnvelopePayload(
   type: string,
   payload: unknown,
 ): NormalizeOutcome {
-  const normalizer = ENVELOPE_NORMALIZERS[type];
-  if (!normalizer) {
+  if (!isNormalizableKind(type)) {
     return { payload, warnings: [] };
   }
+  const normalizer = ENVELOPE_NORMALIZERS[type];
   const warnings: NormalizerWarning[] = [];
   const normalized = normalizer(payload, warnings);
   return { payload: normalized, warnings };
 }
 
+function isNormalizableKind(type: string): type is NormalizableKind {
+  return type in ENVELOPE_NORMALIZERS;
+}
+
 export function _hasNormalizer(type: string): boolean {
-  return Object.prototype.hasOwnProperty.call(ENVELOPE_NORMALIZERS, type);
+  return isNormalizableKind(type);
 }

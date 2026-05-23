@@ -20,6 +20,7 @@
  * canonical machine-readable inventory of node types this host knows.
  */
 
+import { createHash } from 'node:crypto';
 import { getNodeRegistry } from '../executor/nodeRegistry.js';
 
 export interface SchemaRequestPayload {
@@ -97,13 +98,21 @@ export function buildSchemaResponse(req: SchemaRequestPayload): SchemaResponsePa
     });
   }
 
-  // Bundle version: derived from the registry's known-typeId count.
-  // Coarse but deterministic; bumps when the registry list mutates.
+  // Bundle version: 8-char prefix of sha256(sorted typeIds joined by
+  // newline). Identifies the exact set of types this host knows, not
+  // just the count — two registries with the same length but different
+  // members yield distinct bundleVersions so caches can't accidentally
+  // serve stale schemas.
   return {
     schemas,
     notFound,
-    bundleVersion: `registry-v${allTypeIds.length}`,
+    bundleVersion: hashTypeIds(allTypeIds),
   };
+}
+
+function hashTypeIds(typeIds: readonly string[]): string {
+  const joined = [...typeIds].sort().join('\n');
+  return `registry-${createHash('sha256').update(joined).digest('hex').slice(0, 12)}`;
 }
 
 /** Resolve a user-supplied name to a canonical typeId. Tries exact

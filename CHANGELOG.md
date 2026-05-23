@@ -386,6 +386,16 @@ Three new evidence sections + wire-shape drift closures recording MyndHyve's ado
 
 No spec amendments needed beyond the (a)/(b)/(c)/(d) renames already landed in the RFC 0030/0031/0032/0033 promotion batch. Drift (e) closed host-side; the spec language was unambiguous about the nested location.
 
+### Sample app + host — JSON-contract prompts, envelope normalizers, schema responder (2026-05-23)
+
+Ports patterns from the sibling myndhyve project into the openwop sample. Implementation-only — composes from existing RFC 0021 + 0027 + 0028 primitives + the existing `envelopeAcceptor` universal-kinds surface. No spec/schema/wire-shape changes.
+
+- **JSON-contract system prompt** — new `envelope-contract-system` + `envelope-clarification-user` entries in `samplePrompts.ts`. Teaches the LLM the RFC-0021 envelope shape (`{type, version, payload, meta}`) and the universal kinds the acceptor already recognizes (`clarification.request`, `schema.request`, `result`). Bind any chat node's `systemPromptRef` to it and structured replies come back in the canonical wire shape.
+- **Envelope normalizer registry** — new `backend/typescript/src/host/envelopeNormalizers.ts` wired into `envelopeAcceptor.ts` as Step 2.5 (between kind-validation and payload-validation). Coerces common LLM drift before the Zod validator runs: `string → array`, singular `name` → canonical `names`, primitive → `{value}` wrapper. Mirrors myndhyve's `EnvelopeHandler::normalizeEnvelopePayload()` pattern. Warnings surface on `EnvelopeOutcome.normalizerWarnings[]`; advisory only, never block. The `redactedPayload` "authoritative recorded view" now uses the post-normalization payload so replay-forks re-validate the same shape the acceptor approved.
+- **Schema responder** — new `backend/typescript/src/host/schemaResponder.ts`. Pure function `buildSchemaResponse(req)` looks up node-type schemas by name in the live `NodeRegistry` with exact → trailing-segment → case-insensitive matching. Returns port shapes + configSchema per type; unresolved names go to `notFound[]`. `bundleVersion` is the first 12 hex chars of `sha256(sorted-typeIds)` — identifies the exact set of types the host knows. 8 vitest unit tests cover the four resolution paths.
+
+The chat-executor wiring that closes the schema-request round-trip (LLM emits `schema.request` → host injects `schema.response` invisibly into the next turn) is deferred — needs the same multi-turn loop the tools-dispatcher uses.
+
 ### Sample app — provider management, prompt CRUD, envelope inspector, MiniMax tools (2026-05-22 late)
 
 Continuing into the afternoon. Sample-app only; no spec/schema/SDK contracts touched.

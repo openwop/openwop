@@ -447,7 +447,14 @@ export function acceptEnvelope(envelope: unknown, opts: AcceptOptions = {}): Env
   // `agent-memory.md:66`. Deep + idempotent — payloads that already
   // contain `[REDACTED:...]` markers are unaffected.
   if (opts.byokCanaries && opts.byokCanaries.length > 0) {
-    const redaction = redactCanaries(env.payload, opts.byokCanaries);
+    // Redact against the NORMALIZED payload (`payloadForValidation`),
+    // not the original `env.payload`. The recorded view MUST match
+    // the shape the validator approved — otherwise a replay-fork on
+    // an envelope whose original payload was non-canonical would
+    // re-run validation against the un-normalized shape and reject.
+    // Original drift (if any) is retrievable via `normalizerWarnings[]`
+    // for forensics. See envelopeNormalizers.ts.
+    const redaction = redactCanaries(payloadForValidation, opts.byokCanaries);
     // When canaries were supplied, ALWAYS report the redaction count —
     // even when it's 0 — so callers can distinguish "walked, found
     // none" (count: 0) from "no canaries supplied" (field absent). The
@@ -461,7 +468,7 @@ export function acceptEnvelope(envelope: unknown, opts: AcceptOptions = {}): Env
       redactionCount: redaction.count,
       ...(redaction.count > 0
         ? { redactedPayload: redaction.value }
-        : { redactedPayload: env.payload }),
+        : { redactedPayload: payloadForValidation }),
       ...(normalizerWarnings.length > 0 ? { normalizerWarnings } : {}),
     };
   }
