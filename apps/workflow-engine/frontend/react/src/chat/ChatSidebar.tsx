@@ -17,7 +17,7 @@ import { getProvider } from '../byok/lib/providers.js';
 import type { BYOKActiveConfig } from '../byok/lib/useBYOKConfig.js';
 import type { ContentPart } from './hooks/useChatSession.js';
 import { buildAvailableTools } from './lib/availableTools.js';
-import { detectBareMention } from './lib/workflowMentions.js';
+import { detectMention } from './lib/workflowMentions.js';
 
 // Ensure built-in commands are registered before first render.
 registerDefaultCommands();
@@ -58,12 +58,14 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
    *  for regular chat (which may still trigger workflow tool-use through
    *  the Anthropic-only `availableTools` path). */
   const onUserSubmit = useCallback(async (text: string, attachments?: readonly ContentPart[]) => {
-    // Bare `@<slug>` (no other text, no attachments) → direct workflow
-    // dispatch. Avoids the LLM round-trip and works on every provider.
+    // `@<slug>` (with or without trailing text, no attachments) →
+    // direct workflow dispatch. Avoids the LLM round-trip and works
+    // on every provider. Trailing text after the slug is mapped to
+    // the first input field of the workflow's defaultInputs.
     if (!attachments) {
-      const mention = detectBareMention(text);
-      if (mention) {
-        await runWorkflowMention(mention);
+      const match = detectMention(text);
+      if (match) {
+        await runWorkflowMention(match.entry, match.trailing ?? undefined);
         return;
       }
     }

@@ -240,7 +240,7 @@ export interface UseChatSessionResult {
   /** Run a workflow directly via an `@mention`. Bypasses the LLM and
    *  dispatches POST /v1/runs immediately; surfaces progress + HITL
    *  interrupts inline in the chat feed as a `workflow_run` message. */
-  runWorkflowMention: (entry: WorkflowMentionEntry) => Promise<void>;
+  runWorkflowMention: (entry: WorkflowMentionEntry, trailing?: string) => Promise<void>;
   /** Cancel an in-flight workflow_run. No-op if the message is not a
    *  workflow_run, its run is not in flight, or its runId isn't set. */
   cancelWorkflowRun: (messageId: string) => Promise<void>;
@@ -1109,12 +1109,15 @@ export function useChatSession(): UseChatSessionResult {
     'sample.demo.uppercase': { text: 'hello world' },
   };
 
-  const runWorkflowMention = useCallback(async (entry: WorkflowMentionEntry) => {
+  const runWorkflowMention = useCallback(async (entry: WorkflowMentionEntry, trailing?: string) => {
     setError(null);
+    // Preserve what the user actually typed so the chat history shows
+    // `@hello-uppercase hello` (their intent) and not just the slug.
+    const trimmedTrailing = trailing?.trim() ?? '';
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
       role: 'user',
-      content: `@${entry.slug}`,
+      content: trimmedTrailing.length > 0 ? `@${entry.slug} ${trimmedTrailing}` : `@${entry.slug}`,
       createdAt: new Date().toISOString(),
     };
     const runMsgId = crypto.randomUUID();
@@ -1152,6 +1155,24 @@ export function useChatSession(): UseChatSessionResult {
       const raw = saved.defaultInputs?.trim();
       if (raw) {
         try { inputs = JSON.parse(raw) as Record<string, unknown>; } catch { /* empty */ }
+      }
+    }
+    // User typed `@<slug> some text` — override the first key of the
+    // resolved inputs object with that text. Keeps the workflow's
+    // remaining defaults (e.g., a `tone` knob, a `length` cap) so the
+    // user gets to swap the obvious "what do I send" field without
+    // having to re-author the whole inputs JSON.
+    //
+    // If the workflow has no defaultInputs we synthesize `{ text: ... }`
+    // since the two ports a sample workflow commonly accepts are
+    // `text` (uppercase, etl-extractor) and `prompt` (mock-ai).
+    if (trimmedTrailing.length > 0) {
+      const keys = Object.keys(inputs);
+      if (keys.length > 0) {
+        const firstKey = keys[0]!;
+        inputs = { ...inputs, [firstKey]: trimmedTrailing };
+      } else {
+        inputs = { text: trimmedTrailing };
       }
     }
 

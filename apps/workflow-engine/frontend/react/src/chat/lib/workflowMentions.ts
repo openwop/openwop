@@ -85,17 +85,42 @@ export function listWorkflowMentions(): WorkflowMentionEntry[] {
   return out;
 }
 
-/** Returns the mention entry when `text` is solely an `@<slug>` token
- *  (with optional surrounding whitespace). When the user submits just
- *  a mention, the chat dispatches the workflow directly instead of
- *  forwarding the text to the LLM as a prompt. Mixed-text messages
- *  fall through to the normal LLM path so tool-calling still works. */
-export function detectBareMention(text: string): WorkflowMentionEntry | null {
+/** Returns the matched mention plus any trailing text the user typed
+ *  after the `@<slug>` token. When `trailing` is non-empty, the chat
+ *  dispatcher uses it to override the workflow's default first input
+ *  field — so `@hello-uppercase hello` runs the workflow with
+ *  `inputs.text = "hello"` instead of the template's default.
+ *
+ *  `null` means "this message isn't a workflow trigger" and the
+ *  message routes through the normal LLM path. */
+export interface MentionMatch {
+  entry: WorkflowMentionEntry;
+  /** Text after the `@<slug>` token; null when the message is a bare
+   *  mention. Whitespace-only trailing strings collapse to null. */
+  trailing: string | null;
+}
+
+export function detectMention(text: string): MentionMatch | null {
   const stripped = text.trim();
-  const match = /^@([a-z0-9][a-z0-9-]*)$/i.exec(stripped);
+  // Capture the slug, then optionally capture everything after one or
+  // more spaces. Examples that match:
+  //   "@hello-uppercase"            → trailing: null
+  //   "@hello-uppercase hello"      → trailing: "hello"
+  //   "@hello-uppercase  hi there"  → trailing: "hi there"
+  const match = /^@([a-z0-9][a-z0-9-]*)(?:\s+(.*))?$/i.exec(stripped);
   if (!match) return null;
   const slug = match[1]?.toLowerCase() ?? '';
-  return listWorkflowMentions().find((e) => e.slug === slug) ?? null;
+  const entry = listWorkflowMentions().find((e) => e.slug === slug);
+  if (!entry) return null;
+  const trailingRaw = (match[2] ?? '').trim();
+  return { entry, trailing: trailingRaw.length > 0 ? trailingRaw : null };
+}
+
+/** Back-compat wrapper for any caller that only wants the bare-mention
+ *  signal. Returns the entry only when there's no trailing text. */
+export function detectBareMention(text: string): WorkflowMentionEntry | null {
+  const m = detectMention(text);
+  return m && m.trailing === null ? m.entry : null;
 }
 
 /** Case-insensitive substring filter on `displayName`. Returns input
