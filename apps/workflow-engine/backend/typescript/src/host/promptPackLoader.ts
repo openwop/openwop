@@ -28,19 +28,24 @@
 
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { createPublicKey, verify } from 'node:crypto';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Ajv2020, { type ValidateFunction } from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { installPackTemplates, type PromptTemplate } from './promptStore.js';
 import { createLogger } from '../observability/logger.js';
+import { locateRepoSchemasDir } from './_repoPath.js';
 
 const log = createLogger('prompt-pack-loader');
 
 // __dirname-equivalent for ESM. Used to anchor schema lookups.
 const __dirname = dirname(fileURLToPath(import.meta.url));
-// host/ → src → typescript → backend → workflow-engine → apps → repo-root
-const SCHEMAS_DIR = resolve(__dirname, '..', '..', '..', '..', '..', '..', 'schemas');
+// Locate the repo `schemas/` directory under both source-tree and
+// esbuild-bundled layouts. See `_repoPath.ts` for the implementation;
+// the sentinel here is the schema this loader validates pack manifests
+// against. Per commit `d09d99c`, the prior `..` × 6 from `__dirname`
+// pattern crashed when bundled (overshot the repo root by 2 levels).
+const SCHEMAS_DIR = locateRepoSchemasDir(__dirname, 'prompt-pack-manifest.schema.json');
 
 // Lazily compiled. Cross-refs to `prompt-kind.schema.json` +
 // `prompt-template.schema.json` are pre-loaded so the manifest

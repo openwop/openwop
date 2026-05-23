@@ -11,6 +11,32 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.3 — unreleased] — coordinated SDK release for MyndHyve adoption-feedback slices
 
+### fix(workflow-engine): bundled-path schema-lookup bug — workflow-engine exhaustive-mode pass-rate 80.9% → 95.4% (2026-05-23)
+
+Root-cause finding from iterating on the "129 workflow-engine exhaustive-mode failures" snapshot in `docs/CONFORMANCE-RUNS-2026-05-23.md`. The vast majority were NOT real conformance gaps — they were cascade failures from a host-side path-resolution bug that crashed the entire node process on the first envelope-accept seam request.
+
+- **Root cause:** `apps/workflow-engine/backend/typescript/src/host/envelopeAcceptor.ts` (and, identical pattern, `host/promptPackLoader.ts`) computed `SCHEMAS_DIR` via `resolve(__dirname, '..' × 6, 'schemas')`. Correct under the source tree (file is 6 levels deep from openwop/). Wrong under the esbuild-bundled tree where the entire backend lives at `lib/index.js` — only 4 levels deep. The bundled host opened `/Users/david/dev/schemas/ai-envelope.schema.json` instead of `/Users/david/dev/openwop/schemas/...`, threw `ENOENT`, crashed the process.
+
+- **Why the bug hid so long:** the schema file is read lazily inside `loadEnvelopeValidator()` — only the FIRST request to `/v1/host/sample/envelope/accept` triggered the ENOENT. The conformance suite's `aiEnvelope.*.test.ts` family hits this endpoint, but only after several other test files have run. Once the host crashed, every subsequent test's setup hook returned "discovery fetch failed (fetch failed)" — many honest scenarios surfaced as failures rather than honest skips.
+
+- **Fix:** new shared utility `apps/workflow-engine/backend/typescript/src/host/_repoPath.ts:locateRepoSchemasDir(fromDir, sentinelFile)` walks parent directories until a sibling `schemas/` containing the sentinel file is found. Works under both source-tree and bundled-tree layouts. Both `envelopeAcceptor.ts` and `promptPackLoader.ts` refactored to use it. Walk naturally terminates at the filesystem root; throws loudly at module-load (rather than at lazy first-request) so a misconfigured deployment surfaces the failure at boot.
+
+- **Regression guard:** new `apps/workflow-engine/backend/typescript/test/repo-schemas-path.test.ts` (5 unit tests) pins the contract. Asserts both `envelopeAcceptor.ts` and `promptPackLoader.ts` import successfully at module load + the helper throws when the sentinel cannot be found.
+
+- **Re-measurement (with `OPENWOP_RATELIMIT_DISABLED=true` so the conformance suite's 215 setup probes don't trigger the workflow-engine's per-IP rate limiter):**
+    - Before: 1291 / 129 / 161 / 14 / 1595 = 80.9%
+    - After:  1521 /   6 /  56 / 14 / 1597 = 95.4%
+    - Δ: +230 pass / -123 fail / -105 skip / +2 total. The +2 total comes from helper tests that now run cleanly instead of being interrupted mid-file.
+
+- **6 remaining real failures** (down from inflated 129) — documented in `docs/KNOWN-LIMITS.md` §"Behavior tests too coarse to fully prove an invariant":
+    - workflow-engine anonymous-auth fallback under `NODE_ENV=development` (1 failure)
+    - workflow-engine `prompt.composed` not emitted for `few-shot` + `schema-hint` PromptKinds (4 failures)
+    - workflow-engine multi-agent confidence-escalation timing flake (1 failure)
+
+- `INTEROP-MATRIX.md` `Workflow-engine reference` row updated in-place (the prior 80.9% snapshot was crash-polluted, not a legitimate measurement). `docs/PROTOCOL-STATUS.md` regenerated.
+
+Gate: `bash scripts/openwop-check.sh` GREEN end-to-end (9/9). `additive` per `COMPATIBILITY.md` §2.1 — host-side path-resolution bug fix; no wire-shape impact; no SDK / schema / OpenAPI / AsyncAPI change.
+
 ### RFC 0041 §B Phase 4 — replay-divergence-at-refusal executor wiring closes (2026-05-23)
 
 Track #4 (the last open audit item from the 2026-05-22 Phase 4 close-out) lands end-to-end. The workflow-engine's executor now detects envelope-kind divergence at the `:fork mode: replay` re-dispatch boundary and emits `replay.divergedAtRefusal` + fails the run with `error.code: 'replay_diverged_at_refusal'` per RFC 0041 §B + `spec/v1/rest-endpoints.md` §"Common error codes".
