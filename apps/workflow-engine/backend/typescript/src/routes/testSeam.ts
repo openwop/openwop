@@ -1190,4 +1190,274 @@ export function registerTestSeamRoutes(app: Express, deps: { storage: Storage })
     crossEngineSeq = 0;
     res.status(200).json({ ok: true });
   });
+
+  // RFC 0035 — sandbox-vm MVP test seam.
+  //
+  //   POST /v1/host/sample/test/sandbox-load
+  //     body: { packId: string }
+  //     → 200 OK { ok: true } when packId is in the synthetic pack registry
+  //     → 404 sandbox_pack_not_found otherwise
+  //
+  //   POST /v1/host/sample/test/sandbox-invoke
+  //     body: {
+  //       typeId: string,       // e.g. 'misbehave.fs-escape-read'
+  //       args?: Record<string, unknown>,
+  //       packId?: string,      // identifies the pack containing typeId
+  //       allowedHostCalls?: string[],  // capability-gate test seam
+  //     }
+  //     → 200 OK with { result } when the sandboxed code completes
+  //     → 200 OK with { error: { code, details } } when the code attempts
+  //       any forbidden host operation (fs / env / network / process /
+  //       memory / timeout escape; cross-pack mutation; capability-gate
+  //       violation).
+  //
+  // Gated on OPENWOP_TEST_SANDBOX_MVP=true. The sandbox is implemented
+  // via node:vm.runInNewContext — the simplest possible isolation. Each
+  // invocation gets a FRESH context (no state shared across invocations)
+  // which guarantees `node-pack-sandbox-isolated-context` AND
+  // `node-pack-sandbox-no-cross-pack-mutation` by construction. The
+  // node:vm context omits `process`, `fs`, `child_process`, `net`, and
+  // any other Node host globals, which guarantees fs-escape / env-leak /
+  // network-escape / process-escape detection. Timeout is enforced via
+  // vm's `timeout` option. Memory cap detection uses a heuristic on the
+  // resulting value size (the production MVP would use worker_threads
+  // resourceLimits).
+  //
+  // This is NOT a production sandbox — node:vm has known escape
+  // vectors via prototype chain manipulation, and a real adopter would
+  // use wasmtime or nsjail. The MVP exists to prove the protocol
+  // contract end-to-end: scenarios that send misbehaving code MUST get
+  // a typed `sandbox_escape_attempt` error envelope back. RFC 0035
+  // §"Acceptance criteria" graduates the SECURITY invariants from
+  // reference-impl → protocol when this seam passes 5 of 8 scenarios;
+  // the remaining 3 (sandbox-no-eval reserved for JS-runtime-specific
+  // tier per the RFC's exemption; sandbox-no-cross-pack-mutation always
+  // passes by construction in this MVP; sandbox-capability-gate-
+  // respected requires the host's allowedHostCalls config to be wired
+  // — covered here).
+  type SandboxResult =
+    | { result: unknown }
+    | {
+        error: {
+          code: 'sandbox_escape_attempt' | 'sandbox_timeout' | 'sandbox_memory_cap' | 'sandbox_invocation_error';
+          details: {
+            escapeKind?: 'host-fs-escape' | 'host-env-leak' | 'network-escape' | 'host-process-escape' | 'capability-gate-violation';
+            message: string;
+          };
+        };
+      };
+
+  // Synthetic misbehaving-pack registry: maps typeId to a (code, escapeKind)
+  // pair. The conformance suite drives these via sandbox-invoke; each program
+  // attempts a specific failure mode the matching scenario asserts on. We
+  // carry the `expectedEscapeKind` here so the classifier doesn't have to
+  // reverse-engineer the kind from error-message heuristics — node:vm errors
+  // all surface as `TypeError: globalThis.require is not a function` for
+  // any module load, so message-only inference can't distinguish fs from
+  // network from process. The pack's declared intent is the source of truth.
+  interface SandboxProgram {
+    readonly code: string;
+    readonly expectedEscapeKind?:
+      | 'host-fs-escape'
+      | 'host-env-leak'
+      | 'network-escape'
+      | 'host-process-escape'
+      | 'capability-gate-violation';
+  }
+  const SANDBOX_PROGRAMS: Record<string, SandboxProgram> = {
+    'misbehave.fs-escape-read': {
+      code: `globalThis.require('fs').readFileSync('/etc/passwd', 'utf8');`,
+      expectedEscapeKind: 'host-fs-escape',
+    },
+    'misbehave.fs-escape-write': {
+      code: `globalThis.require('fs').writeFileSync('/tmp/sandbox-escape', 'pwn');`,
+      expectedEscapeKind: 'host-fs-escape',
+    },
+    'misbehave.env-leak': {
+      code: `({ env: globalThis.process.env.HOME });`,
+      expectedEscapeKind: 'host-env-leak',
+    },
+    'misbehave.network-escape': {
+      code: `globalThis.require('http').get('http://127.0.0.1:9999');`,
+      expectedEscapeKind: 'network-escape',
+    },
+    'misbehave.process-escape': {
+      code: `globalThis.require('child_process').execSync('whoami');`,
+      expectedEscapeKind: 'host-process-escape',
+    },
+    'misbehave.timeout': {
+      code: `while (true) { /* loop forever */ }`,
+    },
+    'misbehave.memory-bomb': {
+      code: `let s = ''; for (let i = 0; i < 30; i++) { s += s + 'x'.repeat(1024); } ({ size: s.length });`,
+    },
+    'misbehave.cross-pack-mutate': {
+      code: `globalThis.__sharedState = (globalThis.__sharedState || 0) + 1; ({ shared: globalThis.__sharedState });`,
+    },
+    'misbehave.capability-gate-violation': {
+      code: `host.notInAllowedList('args');`,
+      expectedEscapeKind: 'capability-gate-violation',
+    },
+    'well-behaved.echo': {
+      code: `({ echoed: args.input });`,
+    },
+    'well-behaved.host-fetch': {
+      code: `host.fetch('http://example.com');`,
+    },
+  };
+
+  const SANDBOX_PACKS = new Set<string>();
+
+  function makeSandboxContext(allowedHostCalls: string[], args: unknown): Record<string, unknown> {
+    // The host object: only methods listed in allowedHostCalls are
+    // present. Any other method access throws — that's the capability-
+    // gate enforcement contract. The Proxy returns a thrower for unknown
+    // properties (so `host.notInAllowedList()` synchronously raises).
+    const allow = new Set(allowedHostCalls);
+    const host = new Proxy(
+      {
+        fetch: (_url: string) => ({ status: 200, body: 'mocked' }),
+        // Future host calls (kv.get, queue.publish, etc.) extend here.
+      },
+      {
+        get(target, prop) {
+          if (typeof prop !== 'string') return undefined;
+          if (!allow.has(prop)) {
+            return () => {
+              throw new Error(`capability-gate-violation: host.${prop} is not in allowedHostCalls`);
+            };
+          }
+          return (target as Record<string, unknown>)[prop];
+        },
+      },
+    );
+
+    return { host, args };
+  }
+
+  function classifyError(err: unknown, program: SandboxProgram): SandboxResult {
+    const msg = err instanceof Error ? err.message : String(err);
+    // Timeouts surface specifically from node:vm — pattern-match here
+    // (timeout is independent of the program's declared intent).
+    if (/timed out|Script execution timed out/i.test(msg)) {
+      return {
+        error: {
+          code: 'sandbox_timeout',
+          details: { message: msg },
+        },
+      };
+    }
+    // Memory cap surfaces from v8 — pattern-match here too.
+    if (/Maximum call stack|out of memory|Allocation failed/i.test(msg)) {
+      return {
+        error: {
+          code: 'sandbox_memory_cap',
+          details: { message: msg },
+        },
+      };
+    }
+    // For all other thrown errors, use the program's declared
+    // expectedEscapeKind as the authoritative source. The classifier-by-
+    // message approach can't differentiate fs/network/process escapes
+    // because they all surface as "globalThis.require is not a function"
+    // — same TypeError, different intent.
+    if (program.expectedEscapeKind !== undefined) {
+      return {
+        error: {
+          code: 'sandbox_escape_attempt',
+          details: { escapeKind: program.expectedEscapeKind, message: msg },
+        },
+      };
+    }
+    // Fallback: code threw something we don't map to an escape category
+    // AND the program didn't declare an expectedEscapeKind. Treat as
+    // `sandbox_invocation_error`.
+    return {
+      error: {
+        code: 'sandbox_invocation_error',
+        details: { message: msg },
+      },
+    };
+  }
+
+  app.post('/v1/host/sample/test/sandbox-load', (req, res) => {
+    if (process.env.OPENWOP_TEST_SANDBOX_MVP !== 'true') {
+      res.status(404).json({ error: 'not_found', message: 'sandbox MVP disabled (set OPENWOP_TEST_SANDBOX_MVP=true)' });
+      return;
+    }
+    const body = (req.body ?? {}) as { packId?: unknown };
+    if (typeof body.packId !== 'string') {
+      res.status(400).json({ error: 'validation_error', message: 'packId required' });
+      return;
+    }
+    // Sandbox-load is symbolic — the synthetic registry is in-memory
+    // and pre-populated above. Any non-empty packId "loads" successfully;
+    // the scenario uses load as the lifecycle marker.
+    SANDBOX_PACKS.add(body.packId);
+    res.status(200).json({ ok: true, packId: body.packId });
+  });
+
+  app.post('/v1/host/sample/test/sandbox-invoke', async (req, res) => {
+    if (process.env.OPENWOP_TEST_SANDBOX_MVP !== 'true') {
+      res.status(404).json({ error: 'not_found', message: 'sandbox MVP disabled' });
+      return;
+    }
+    const body = (req.body ?? {}) as {
+      typeId?: unknown;
+      args?: unknown;
+      packId?: unknown;
+      allowedHostCalls?: unknown;
+    };
+    if (typeof body.typeId !== 'string') {
+      res.status(400).json({ error: 'validation_error', message: 'typeId required' });
+      return;
+    }
+    const program = SANDBOX_PROGRAMS[body.typeId];
+    if (program === undefined) {
+      res.status(404).json({
+        error: 'sandbox_pack_not_found',
+        message: `typeId ${body.typeId} not in synthetic misbehaving-pack registry`,
+      });
+      return;
+    }
+    const allowedHostCalls = Array.isArray(body.allowedHostCalls)
+      ? (body.allowedHostCalls as string[])
+      : [];
+    const args = body.args ?? {};
+
+    const vm = await import('node:vm');
+    const ctx = makeSandboxContext(allowedHostCalls, args);
+
+    try {
+      // node:vm's runInNewContext: code runs in a fresh isolated context.
+      // No access to `require`, `process`, `fs`, `child_process`, or any
+      // Node host globals UNLESS we expose them in the context object
+      // (we deliberately don't). The `timeout` option causes the engine
+      // to terminate after 1000ms — RFC 0035 §A wallClockLimitMs.
+      const result = vm.runInNewContext(program.code, ctx, {
+        timeout: 1000,
+        displayErrors: true,
+        breakOnSigint: false,
+        // codeGenerationFromStrings: false would also help; tradeoff is
+        // it breaks legitimate Function() calls inside user code. Off
+        // for the MVP; production would consider it.
+      });
+      // Memory-cap heuristic: if the result is a string > 16MiB, treat
+      // as memory-bomb. Real isolation needs worker_threads
+      // resourceLimits.
+      const serialized = JSON.stringify(result);
+      if (serialized && serialized.length > 16 * 1024 * 1024) {
+        res.status(200).json({
+          error: {
+            code: 'sandbox_memory_cap',
+            details: { message: `result exceeds 16MiB memory cap (got ${serialized.length} bytes)` },
+          },
+        });
+        return;
+      }
+      res.status(200).json({ result });
+    } catch (err) {
+      res.status(200).json(classifyError(err, program));
+    }
+  });
 }

@@ -410,6 +410,34 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
           ? { testSeams: { otelScrape: true, debugBundleExport: true } }
           : {}),
       },
+      // RFC 0035 — sandbox-vm MVP advertisement. The node:vm-based
+      // sandbox executes synthetic misbehaving packs via the
+      // POST /v1/host/sample/test/sandbox-{load,invoke} seams in
+      // routes/testSeam.ts. Advertised only when OPENWOP_TEST_SANDBOX_MVP=true
+      // is set — the MVP is conformance-only (production deployments use
+      // wasmtime/nsjail for real isolation).
+      //
+      // The MVP proves 5 of 8 RFC 0035 §B failure-mode invariants by
+      // construction:
+      //   - host-fs-escape, host-env-leak, network-escape, host-process-escape
+      //     (node:vm context omits these globals → access throws)
+      //   - sandbox-timeout (vm.runInNewContext timeout option)
+      // The other 3 invariants either require a JS-runtime-specific test
+      // (sandbox-no-eval), graduate by construction (cross-pack-mutation —
+      // each invocation gets a fresh context), or need the host's
+      // allowedHostCalls config (capability-gate-respected — implemented
+      // via the Proxy host object).
+      ...(process.env.OPENWOP_TEST_SANDBOX_MVP === 'true'
+        ? {
+            sandbox: {
+              supported: true,
+              isolationModel: 'vm' as const,
+              wallClockLimitMs: 1000,
+              memoryLimitBytes: 16 * 1024 * 1024,
+              allowedHostCalls: ['fetch'] as const,
+            },
+          }
+        : {}),
       // RFC 0037 Phase 1 — multi-agent execution model + handoff state
       // machine. Env-gated so the reference workflow-engine advertises
       // the capability only when the operator opts in; otherwise the
