@@ -149,6 +149,92 @@ export function WorkflowRunBubble({ message, onCancel }: Props): JSX.Element | n
           </div>
         )}
 
+        {/* Per-node step list — shows EVERY node's state so the user
+            can see exactly where the workflow is, including stuck
+            steps. The activeInterrupt card (below this bubble) renders
+            the resolution UI for whichever node is suspended; the
+            "Awaiting your input" badge on the suspended row points
+            the user's eye at it. */}
+        {Object.keys(run.nodeNames).length > 0 && (
+          <ul style={{
+            listStyle: 'none',
+            margin: '8px 0 4px',
+            padding: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2,
+            fontSize: 12,
+          }}>
+            {Object.entries(run.nodeNames).map(([nodeId, friendlyName], idx) => {
+              const completedSet = new Set(run.completedNodeIds);
+              const failedSet = new Set(run.failedNodeIds);
+              const isCompleted = completedSet.has(nodeId);
+              const isFailed = failedSet.has(nodeId);
+              const isSuspended = message.activeInterrupt?.nodeId === nodeId;
+              const isCurrent = !isCompleted && !isFailed && !isSuspended &&
+                run.currentNodeName === friendlyName;
+              const isPending = !isCompleted && !isFailed && !isSuspended && !isCurrent;
+
+              const stateChip = isCompleted ? { label: '✓', color: STATUS_COLORS.completed }
+                : isFailed ? { label: '✕', color: STATUS_COLORS.failed }
+                : isSuspended ? { label: '⏸', color: STATUS_COLORS.running }
+                : isCurrent ? { label: '●', color: STATUS_COLORS.running }
+                : { label: '○', color: 'var(--ink-3, #8a857a)' };
+
+              return (
+                <li key={nodeId} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '2px 0',
+                  opacity: isPending ? 0.55 : 1,
+                  fontWeight: isCurrent || isSuspended ? 600 : 400,
+                }}>
+                  <span style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 18,
+                    fontSize: 11,
+                    color: stateChip.color,
+                  }} aria-hidden>
+                    {stateChip.label}
+                  </span>
+                  <span style={{
+                    width: 22,
+                    color: 'var(--ink-3, #8a857a)',
+                    fontFamily: 'var(--mono)',
+                    fontSize: 10.5,
+                  }}>
+                    {String(idx + 1).padStart(2, ' ')}
+                  </span>
+                  <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {friendlyName}
+                  </span>
+                  {isSuspended && (
+                    <span style={{
+                      fontSize: 10,
+                      padding: '1px 8px',
+                      borderRadius: 10,
+                      background: 'var(--clay-wash, #f3e0d4)',
+                      color: 'var(--clay)',
+                      border: '1px solid var(--clay-rule, #d9b9a3)',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      Awaiting your input ↓
+                    </span>
+                  )}
+                  {isCurrent && (
+                    <span style={{ fontSize: 10, color: STATUS_COLORS.running }} aria-hidden>
+                      Running…
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
         {/* Outputs (completed) */}
         {run.status === 'completed' && run.outputs && Object.keys(run.outputs).length > 0 && (
           <pre style={{
