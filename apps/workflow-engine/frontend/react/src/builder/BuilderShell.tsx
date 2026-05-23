@@ -52,7 +52,13 @@ export function BuilderShell({ onNewWorkflow }: Props) {
         }
       }
       await registerWorkflow(def);
-      const res = await createRun({ workflowId: def.workflowId, tenantId: 'demo', inputs });
+      // Omit body.tenantId so the BE infers from the authenticated
+      // session/bearer (req.tenantId): `anon:<sid>` for cookie-anon
+      // callers, `user:<hash>` for Firebase-signed-in callers. A
+      // hardcoded 'demo' here is rejected by principalAuthorizer
+      // for any non-bearer-with-demo-allowlist principal — that's
+      // the "principal cannot operate under tenant demo" error.
+      const res = await createRun({ workflowId: def.workflowId, inputs });
       nav(`/runs/${res.runId}`);
     } catch (err) {
       if (err instanceof SerializeError) {
