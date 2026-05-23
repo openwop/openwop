@@ -106,33 +106,15 @@ function edge(id: string, source: string, target: string, opts: EdgeOpts = {}): 
 
 export const PREMADE_WORKFLOWS: readonly TemplateWorkflow[] = [
   // =========================================================================
-  // QUICKSTART (3) — single- or two-node smoke tests
+  // QUICKSTART — smallest honest workflow shapes
   // =========================================================================
-
-  {
-    templateId: 'template.hello-uppercase',
-    name: 'Hello uppercase',
-    description: 'Single-node smoke test. Reads inputs.text and emits it uppercased.',
-    category: 'quickstart',
-    nodes: [node('n1', 'uppercase', pos(0), 'Uppercase')],
-    edges: [],
-    defaultInputs: JSON.stringify({ text: 'hello world' }, null, 2),
-  },
-
-  {
-    templateId: 'template.mock-ai-completion',
-    name: 'Mock AI completion',
-    description: 'Single-node deterministic AI demo. No BYOK or external calls.',
-    category: 'quickstart',
-    nodes: [
-      node('n1', 'mock-ai', pos(0), 'Mock AI', {
-        systemPromptRef: 'writer-system',
-        userPromptRef: 'writer-user',
-      }),
-    ],
-    edges: [],
-    defaultInputs: JSON.stringify({ prompt: 'Say hi in five words.' }, null, 2),
-  },
+  //
+  // Single-node templates ("Hello uppercase", "Mock AI completion",
+  // "Chat turn") were removed on 2026-05-22 — they didn't demonstrate
+  // orchestration. The minimum useful workflow has at least two nodes
+  // connected by one edge so the user can see what OpenWOP gives them
+  // over a one-shot function call or LLM hit. The AI chat tab is the
+  // right home for single-shot LLM calls.
 
   {
     templateId: 'template.approval-gate',
@@ -471,33 +453,11 @@ export const PREMADE_WORKFLOWS: readonly TemplateWorkflow[] = [
     defaultInputs: JSON.stringify({ text: 'evaluate our new pricing page copy' }, null, 2),
   },
 
-  // =========================================================================
-  // AI BYOK (1) — single chat turn
-  // =========================================================================
-
-  {
-    templateId: 'template.chat-turn',
-    name: 'Chat turn',
-    description:
-      'Single LLM turn via your BYOK credential. Replace credentialRef with one of your saved credentials.',
-    category: 'ai',
-    requiresBYOK: true,
-    nodes: [
-      node('n1', 'chat', pos(0), 'Chat', {
-        systemPromptRef: 'chat-assistant-system',
-      }),
-    ],
-    edges: [],
-    defaultInputs: JSON.stringify(
-      {
-        messages: [{ role: 'user', content: 'Say hi in five words.' }],
-        credentialRef: 'REPLACE_WITH_YOUR_CREDENTIAL_REF',
-        provider: 'anthropic',
-      },
-      null,
-      2,
-    ),
-  },
+  // The single-node "Chat turn" template was removed on 2026-05-22 —
+  // it required BYOK to even try, it duplicated the AI chat tab, and
+  // it didn't demonstrate orchestration (no edges, no multi-step shape).
+  // Users who want to wire a real LLM into a workflow can drag a `chat`
+  // node from the palette onto any of the surviving templates above.
 ];
 
 /**
