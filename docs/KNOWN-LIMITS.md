@@ -90,7 +90,7 @@ The plan calls these out explicitly — none can be moved by repo-side mechanica
 | RFC | Status | Why open |
 |---|---|---|
 | 0025 (Test-mode registry namespace) | `Draft` | Conformance-only typeId namespace; non-production. Pending non-steward adoption signal before promotion. |
-| 0027, 0028, 0029 (Prompt templates / library endpoints / override hierarchy) | `Active` | 7-day comment window closed 2026-05-27; awaiting cross-host advertisement evidence per RFCS/0001 §"Promotion to Accepted." |
+| 0028, 0029 (Prompt library endpoints / override hierarchy) | `Active` | 7-day comment window closed 2026-05-27; awaiting cross-host advertisement evidence per RFCS/0001 §"Promotion to Accepted." |
 | 0034 (OTel collector test seam) | `Active` | Schema + spec prose + reference impl landed 2026-05-21; awaiting a non-steward host wiring the seam to graduate. |
 | 0035 (Sandbox execution contract) | `Active` | Spec + schema + 8 conformance scenarios landed 2026-05-21. 7-of-8 SECURITY tier graduation **reverted 2026-05-22** (commit `5864a2f`) — scenarios were vacuous (`expect(true).toBe(true)` placeholders) until a sandbox-executing reference host wires real behavioral probes. Path-to-`Accepted` is unchanged: first sandbox-executing host advertises + scenarios grow real assertions + 7 of 8 invariants re-graduate. |
 | 0036 (Multi-region + cross-engine guarantees) | `Active` | Capability shape + spec prose landed 2026-05-21. Behavioral assertions deferred to the Postgres multi-region simulator (CF-12 / OPS-5). |
@@ -100,6 +100,8 @@ The plan calls these out explicitly — none can be moved by repo-side mechanica
 | 0043 (Registry + extension policy + IPR posture) | `Draft` | Consolidates extension-namespace rules, registry submission/yank/sign-key-rotation policy, profile/event-type/envelope-kind/capability-name reservation, and IPR posture (DCO + Apache-2.0 + CC-BY-4.0). Filed 2026-05-22 in response to the audit's "governance technically incomplete" finding. Path-to-`Active` is the 7-day comment window; WG ratification follows when the `GOVERNANCE.md` tripwire fires. |
 
 RFCs **0037 (Phase 1) + 0039 Half A (confidence-floor escalation) + 0044 (confidence-escalation interrupt-kind advertisement)** **were promoted Active → Accepted on 2026-05-22** in a single batch on the strength of MyndHyve workflow-runtime's cross-host conformance run (revision `workflow-runtime-00353-rab` against `@openwop/openwop-conformance@1.5.0`). RFC 0044 lands the `confidenceEscalationInterruptKind` vendor-extension pattern that lets entrenched host semantics (`x-host-<host>-<kind>`) pass conformance without cross-cutting renames. They are listed as `Accepted` in `docs/PROTOCOL-STATUS.md`.
+
+RFC **0027 (Prompt templates wire shape)** was promoted **Active → Accepted on 2026-05-23** (commit `8f65168`) after MyndHyve workflow-runtime adopted the prompt-compose seam end-to-end. RFC 0028 + 0029 remain `Active` pending the same cross-host advertisement evidence.
 
 RFCs **0030, 0031, 0032, 0033** (envelope LLM-contract-hardening track) **were promoted Active → Accepted on 2026-05-21** once reference workflow-engine + MyndHyve workflow-runtime both advertised the capabilities end-to-end. They are listed as `Accepted` in `docs/PROTOCOL-STATUS.md`.
 
