@@ -465,19 +465,49 @@ async function runOneNode(input: {
   const phase4Enabled = process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_4 === 'true';
   const isReplayFork = run.forkMode === 'replay' && typeof run.parentRunId === 'string';
 
-  async function checkReplayDivergence(replayKind: 'valid' | 'refusal'): Promise<{
-    diverged: boolean;
-    originalKind?: 'valid' | 'refusal';
-    atSequence?: number;
-    originalEventId?: string;
-  }> {
+  // Discriminated union — when `diverged: true`, `originalKind` is
+  // guaranteed defined. Lets the callers consume `div.originalKind`
+  // without non-null assertions.
+  type DivergenceResult =
+    | { diverged: false }
+    | {
+        diverged: true;
+        originalKind: 'valid' | 'refusal';
+        atSequence?: number;
+        originalEventId?: string;
+      };
+
+  // Per RFC 0041 §B, refusal-divergence applies to LLM-emitting nodes
+  // (the only nodes that can carry an "envelope" in the protocol sense).
+  // The check below gates on the current node's typeId matching one of
+  // the canonical LLM families before treating its source-run completion
+  // as evidence of an envelope = valid. Non-LLM nodes never produce an
+  // envelope and their `node.completed` events say nothing about
+  // envelope shape; including them would create false positives.
+  function isLlmNodeTypeId(typeId: string): boolean {
+    return /^core\.(ai|llm)\b/.test(typeId);
+  }
+
+  async function checkReplayDivergence(replayKind: 'valid' | 'refusal'): Promise<DivergenceResult> {
     if (!phase4Enabled || !isReplayFork || run.parentRunId === undefined) {
       return { diverged: false };
     }
-    // Look up the source run's events at the same nodeId. The original
-    // envelope kind is determined by whether the source has an
-    // `envelope.refusal` event (refusal) or completed the node successfully
-    // (valid). If we can't decide from the event log, treat as no-divergence.
+    // Refusal-divergence only applies to LLM-emitting nodes. Non-LLM
+    // node types (core.noop, core.script.*, core.subWorkflow, etc.) do
+    // not produce envelopes; comparing their `node.completed` events
+    // against an envelope-kind would create a false positive.
+    if (!isLlmNodeTypeId(nodeRef.typeId)) {
+      return { diverged: false };
+    }
+    // Look up the source run's events at the same nodeId. Two cases:
+    //   - source has `envelope.refusal` for nodeId → originalKind = 'refusal'
+    //   - source has `node.completed` for nodeId AND this node is an
+    //     LLM-family node → originalKind = 'valid' (LLM nodes that
+    //     terminate `completed` did so by accepting an envelope per
+    //     `core.ai.*` / `core.llm.*` semantics; the `envelope.refusal`
+    //     path throws AiProviderError and surfaces as `node.failed`).
+    //   - neither → undefined (this LLM node didn't dispatch in the
+    //     source run; nothing to compare against; conservative no-divergence).
     try {
       const sourceEvents = await storage.listEvents(run.parentRunId);
       const refusalForNode = sourceEvents.find(
@@ -491,15 +521,16 @@ async function runOneNode(input: {
         : completionForNode
           ? 'valid'
           : undefined;
-      if (sourceKind === undefined) return { diverged: false }; // can't tell
+      if (sourceKind === undefined) return { diverged: false }; // can't tell — no envelope event in source
       if (sourceKind === replayKind) return { diverged: false }; // same kind — no divergence
       const sentinel = refusalForNode ?? completionForNode;
-      return {
+      const result: DivergenceResult = {
         diverged: true,
         originalKind: sourceKind,
         ...(sentinel?.sequence !== undefined ? { atSequence: sentinel.sequence } : {}),
         ...(sentinel?.eventId !== undefined ? { originalEventId: sentinel.eventId } : {}),
       };
+      return result;
     } catch {
       // Source run not accessible — be conservative and don't emit a
       // divergence event we can't substantiate.
@@ -522,7 +553,7 @@ async function runOneNode(input: {
           atSequence: div.atSequence ?? 0,
           ...(div.originalEventId ? { originalEventId: div.originalEventId } : {}),
           nodeId: nodeRef.nodeId,
-          originalEnvelopeKind: div.originalKind!,
+          originalEnvelopeKind: div.originalKind,
           replayEnvelopeKind: 'valid' as const,
         },
       });
@@ -576,7 +607,7 @@ async function runOneNode(input: {
             atSequence: div.atSequence ?? 0,
             ...(div.originalEventId ? { originalEventId: div.originalEventId } : {}),
             nodeId: nodeRef.nodeId,
-            originalEnvelopeKind: div.originalKind!,
+            originalEnvelopeKind: div.originalKind,
             replayEnvelopeKind: 'refusal' as const,
           },
         });

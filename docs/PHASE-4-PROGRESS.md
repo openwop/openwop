@@ -18,9 +18,9 @@ This document tracks the 5 behavioral harnesses the audit named, with the curren
 | **#3 — Sandbox MVP (RFC 0035)** | ✅ **CLOSED end-to-end** (node:vm sandbox seam + 10-assertion behavioral scenario covering 7 of 8 §B invariants; all 10 PASS — the original commit message under-claimed at "5 of 8") | `3c0bfe3` + code-review follow-ups | 10 assertions ALL PASS |
 | **#7 — RFC 0042 experimental tier** | ✅ **CLOSED end-to-end** (schema + `experimentalGate()` helper + advertisement-shape scenario) | `45678c4` | 6 assertions (gate against runtime advertisement) |
 
-**Total behavioral assertions landed in the close-out: 43 PASS + 0 it.todo + 6 RFC 0042 (server-free).**
+**Total behavioral assertions landed in the close-out: 44 PASS + 0 it.todo** (6 multi-region + 4 cross-engine + 3 replay-divergence + 6 RFC 0042 + 3 secret-leakage + 12 RFC 0022 + 10 sandbox; sums per the per-track table above).
 
-All 7 tracks now close end-to-end. The remaining 2 `it.todo` in `replay-divergence-at-refusal.test.ts` flipped to real `it()` on 2026-05-23 — the workflow-engine's executor now detects envelope-kind divergence at the `:fork mode: replay` re-dispatch boundary by comparing the source run's `envelope.refusal` / `node.completed` history against the replay's outcome at the same nodeId.
+All 7 tracks now close end-to-end. The remaining 2 `it.todo` in `replay-divergence-at-refusal.test.ts` flipped to real `it()` on 2026-05-23 — the workflow-engine's executor now detects envelope-kind divergence at the `:fork mode: replay` re-dispatch boundary by comparing the source run's `envelope.refusal` / `node.completed` history against the replay's outcome at the same nodeId. The check is gated on the current node's `typeId` matching `^core\.(ai|llm)\b` so non-LLM nodes (whose `node.completed` events say nothing about envelope shape) don't trigger false positives.
 
 **Suite scenario count: 205 → 210 over the session.** New: `secret-leakage-otel-attribute`, `experimental-tier-shape`, `multi-region-idempotency-behavior`, `cross-engine-append-behavior`, `sandbox-mvp-behavior`. Plus 2 new fixtures (`conformance-phase4-replay-divergence`, `conformance-phase4-nondet-tool`).
 
