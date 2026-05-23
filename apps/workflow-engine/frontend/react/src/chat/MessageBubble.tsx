@@ -15,6 +15,7 @@ import { MessageRenderer } from './MessageRenderer.js';
 import { ThoughtsDisclosure } from './ThoughtsDisclosure.js';
 import { ToolCallCard, HandoffIndicator, DecisionBadge } from './AgentEventCards.js';
 import { EnvelopeEventsTimeline, hasEnvelopeEvents } from './EnvelopeEventsTimeline.js';
+import { EnvelopeInspector } from './EnvelopeInspector.js';
 import { ReasoningDisclosure } from './ReasoningDisclosure.js';
 import { ErrorCard } from './ErrorCard.js';
 import { formatUsd, turnCostUsd } from './lib/cost.js';
@@ -250,6 +251,11 @@ export function MessageBubble({ message, onRegenerate, onFeedback, onReconfigure
         )}
         {!isUser && !message.isStreaming && !isError && hasContent(message.content) && (onRegenerate || onFeedback) && (
           <MessageActions message={message} {...(onRegenerate ? { onRegenerate } : {})} {...(onFeedback ? { onFeedback } : {})} />
+        )}
+        {/* Wire-shape inspector — collapsed by default; opens to show
+            every `agent.*` + `envelope.*` event the turn emitted. */}
+        {!isUser && !message.isStreaming && (
+          <EnvelopeInspector message={message} />
         )}
         {!isUser && !message.isStreaming && message.meta?.citations && message.meta.citations.length > 0 && (
           <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 6 }}>

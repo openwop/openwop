@@ -2331,3 +2331,120 @@ pre {
   }
   .backend-spinup-ellipsis span { opacity: 0.6; }
 }
+
+/* ─── Envelope Inspector ──────────────────────────────────────────────
+ *
+ * Collapsible per-bubble wire-shape view. Tiny "Show envelope" toggle
+ * under the assistant message; expanded panel renders a structured
+ * list of every agent.* / envelope.* event the turn emitted. The
+ * teaching surface that makes "OpenWOP streams envelopes" visible. */
+.envelope-inspector {
+  margin-top: 8px;
+}
+.envelope-inspector-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: border-color 120ms ease, color 120ms ease, background 120ms ease;
+}
+.envelope-inspector-toggle:hover {
+  background: var(--paper-2);
+  border-color: var(--clay-rule);
+  color: var(--ink);
+}
+.envelope-inspector-toggle[aria-expanded="true"] {
+  background: var(--paper-2);
+  color: var(--ink);
+  border-color: var(--clay-rule);
+}
+.envelope-inspector-toggle-icon {
+  display: inline-block;
+  width: 8px;
+  text-align: center;
+  font-size: 9px;
+  opacity: 0.6;
+}
+.envelope-inspector-toggle-count {
+  display: inline-block;
+  padding: 0 6px;
+  background: var(--clay-wash);
+  border-radius: 8px;
+  font-size: 10px;
+  color: var(--clay);
+}
+
+.envelope-inspector-panel {
+  margin-top: 8px;
+  padding: 12px 14px;
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+}
+.envelope-inspector-help {
+  font-family: var(--sans);
+  font-size: 11px;
+  color: var(--ink-3);
+  margin: 0 0 10px;
+  line-height: 1.5;
+}
+.envelope-inspector-help code {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  padding: 0 4px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  color: var(--clay);
+}
+.envelope-inspector-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.envelope-inspector-row {
+  display: grid;
+  grid-template-columns: minmax(140px, max-content) minmax(0, 1fr) max-content;
+  gap: 10px;
+  align-items: baseline;
+  padding: 5px 8px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.envelope-inspector-kind {
+  color: var(--clay);
+  font-weight: 500;
+}
+.envelope-inspector-detail {
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.envelope-inspector-at {
+  color: var(--ink-3);
+  font-size: 10px;
+}
+@media (max-width: 600px) {
+  .envelope-inspector-row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+  .envelope-inspector-at {
+    font-size: 9.5px;
+  }
+}
