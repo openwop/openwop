@@ -386,6 +386,16 @@ Three new evidence sections + wire-shape drift closures recording MyndHyve's ado
 
 No spec amendments needed beyond the (a)/(b)/(c)/(d) renames already landed in the RFC 0030/0031/0032/0033 promotion batch. Drift (e) closed host-side; the spec language was unambiguous about the nested location.
 
+### Sample app — workflow-first narrative pivot (2026-05-23 late)
+
+The AI chat empty state was advertising itself as "another LLM chatbot" instead of OpenWOP's actual differentiator — multi-agent workflow orchestration via @-mention. Five coordinated edits reframe the first-30-seconds story so the chat surface leads with workflow execution; plain chat is demoted to a footer line.
+
+- **Welcome card rewrite** (`chat/WelcomeCard.tsx`) — headline pivots from "How can I help?" to "Run workflows by name. Chat when you need to." Lede pivots from "your configured provider streams a response" to "OpenWOP makes multi-agent orchestration as easy as @-mentioning a workflow." Four cards replace the prior LLM-prompt suggestions: 3 real workflow `@-mention` invocations (Multi-channel content review, Approval with timeout fallback, Triple AI review board) + 1 builder pivot. Cards resolve their slugs at render time against `listWorkflowMentions()` so they survive template renames + slugify-rule drift; cards whose seeded workflow has been deleted render disabled with an explanatory tooltip. ARIA labels on every card. Footer demotes plain chat: "Just want to chat? Type below — the LLM passthrough is a single-step workflow with one chat node."
+- **Chat input placeholder** — `"Ask anything… (/ for commands, @ for workflows)"` → `"Type @ to run a workflow, or just chat…"`. Leads with the differentiator.
+- **Top nav reorder** — `AI · Workflows · Prompts · Keys · Runs · Capabilities` → `Workflows · Chat · Prompts · Keys · Runs · Capabilities`. The chat tab keeps its `/` route so existing bookmarks don't break; added a `/chat` alias that redirects to `/` for users who type the URL based on the new nav label.
+- **Workflow run card bridges to builder + runs** (`chat/WorkflowRunBubble.tsx`) — the run-id is a `<Link>` to `/runs/<id>` (event-stream detail); builder-saved workflows (`wf_*` ids) get an additional "open in builder →" link routing to `/builder/<workflowId>`. Closes the loop between "I ran this in chat" and "let me see what it looks like."
+- **Header subtitle** — `"workflow-engine sample"` → `"workflow engine"`. Drops the defeatist label; "sample" framing is already in the Privacy footer and DemoHostBanner.
+
 ### Sample app + host — JSON-contract prompts, envelope normalizers, schema responder (2026-05-23)
 
 Ports patterns from the sibling myndhyve project into the openwop sample. Implementation-only — composes from existing RFC 0021 + 0027 + 0028 primitives + the existing `envelopeAcceptor` universal-kinds surface. No spec/schema/wire-shape changes.

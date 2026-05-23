@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom';
+import { Link, Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { RunsIndexPage } from './runs/RunsIndexPage.js';
 import { NetworkPanel } from './devtools/NetworkPanel.js';
 import { installNetworkRecorder } from './devtools/networkRecorder.js';
@@ -76,6 +76,10 @@ export function App() {
       >
         <Routes>
           <Route path="/" element={<ChatTab />} />
+          {/* The nav label says "Chat" but the route stays "/" so existing
+              bookmarks don't break. Add a /chat alias so users who type
+              the URL based on the nav label land somewhere useful. */}
+          <Route path="/chat" element={<Navigate to="/" replace />} />
           <Route path="/runs" element={<RunsIndexPage />} />
           <Route path="/runs/:runId" element={<RunDetailPage />} />
           <Route path="/capabilities" element={<CapabilitiesPanel />} />
