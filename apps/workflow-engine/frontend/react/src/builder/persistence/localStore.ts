@@ -8,6 +8,7 @@ import type { SavedWorkflow } from '../schema/workflow.js';
 
 const LS_KEY = 'openwop.sample.builder.workflows';
 const LS_SEEDED_KEY = 'openwop.sample.builder.workflows.seeded';
+const LS_MIGRATION_STRIPPED_FROM_TEMPLATE_SUFFIX = 'openwop.sample.builder.workflows.migration.stripFromTemplate';
 
 type Index = Record<string, SavedWorkflow>;
 
@@ -35,7 +36,33 @@ function writeIndex(idx: Index): void {
 }
 
 export function listSavedWorkflows(): SavedWorkflow[] {
+  // One-time migration: strip trailing " (from template)" from names
+  // of workflows seeded under the older clone behavior. The current
+  // `cloneTemplateToUserWorkflow` no longer appends the suffix, but
+  // existing localStorage entries from previous app versions still
+  // carry it. Migrate once + flag so we don't churn writes on every
+  // read. Pure rename — workflow ids + behavior unchanged.
+  stripFromTemplateSuffixMigration();
   return Object.values(readIndex()).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+}
+
+function stripFromTemplateSuffixMigration(): void {
+  try {
+    if (localStorage.getItem(LS_MIGRATION_STRIPPED_FROM_TEMPLATE_SUFFIX) === '1') return;
+  } catch { return; }
+  const idx = readIndex();
+  let mutated = false;
+  for (const id of Object.keys(idx)) {
+    const wf = idx[id];
+    if (!wf) continue;
+    const stripped = wf.name.replace(/\s*\(from template\)\s*$/i, '');
+    if (stripped !== wf.name) {
+      idx[id] = { ...wf, name: stripped };
+      mutated = true;
+    }
+  }
+  if (mutated) writeIndex(idx);
+  try { localStorage.setItem(LS_MIGRATION_STRIPPED_FROM_TEMPLATE_SUFFIX, '1'); } catch { /* ignore */ }
 }
 
 export function getSavedWorkflow(id: string): SavedWorkflow | undefined {

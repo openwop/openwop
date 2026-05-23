@@ -54,8 +54,12 @@ const WORKFLOW_CARD_SPECS: readonly WorkflowCardSpec[] = [
   },
   {
     glyph: '🧠',
-    title: 'Triple AI review board',
-    templateName: 'Triple AI review board',
+    title: 'Triple-AI review board',
+    // Match the EXACT premadeWorkflows.ts template name (hyphenated).
+    // Welcome-card resolution does a case-insensitive prefix match
+    // against listWorkflowMentions(); the hyphen has to be present
+    // for the match to fire.
+    templateName: 'Triple-AI review board',
     description: 'Three concurrent critics fan out from one draft. An arbiter merges their notes into a single verdict. Multi-agent orchestration in one turn.',
     trailing: 'Critique this paragraph for clarity and concision',
   },

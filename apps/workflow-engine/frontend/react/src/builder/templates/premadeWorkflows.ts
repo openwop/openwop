@@ -469,7 +469,7 @@ export function cloneTemplateToUserWorkflow(template: TemplateWorkflow): SavedWo
   const now = new Date().toISOString();
   return {
     id: newWorkflowId(),
-    name: `${template.name} (from template)`,
+    name: template.name,
     version: '1.0.0',
     nodes: template.nodes.map((n) => ({ ...n, config: { ...n.config } })),
     edges: template.edges.map((e) => ({ ...e })),
