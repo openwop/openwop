@@ -46,10 +46,11 @@
 
 | Host | Passed | Failed | Skipped | Todo | Total | Pass rate |
 |---|---:|---:|---:|---:|---:|---|
-| Postgres reference | 1473 | 6 | 69 | 16 | 1564 | 94.2% total; 99.6% of non-skipped (measured 2026-05-22 against suite v1.5.0 via pglite + OPENWOP_WEBHOOK_ALLOW_PRIVATE=true; full env stack - OPENWOP_SECONDARY_API_KEY + OPENWOP_TENANT2_API_KEY + OAuth2/OIDC issuer URLs + mTLS cert paths - required for the conditional-profile applicable count to recover to ~96-97%) |
-| SQLite reference | 1486 | 7 | 55 | 16 | 1564 | 95.0% total (Phase A baseline 91.5% against suite v1.1.0 -> 95.0% against v1.5.0) |
-| In-memory reference | 1445 | 48 | 55 | 16 | 1564 | 92.4% total |
-| Python reference | 1387 | 60 | 101 | 16 | 1564 | 88.7% total; 100% of applicable when scoped to the host's claimed openwop-core + openwop-stream-poll + openwop-stream-sse profile set (the floor for cross-language parity) |
+| Postgres reference | 1477 | 6 | 98 | 14 | 1595 | 92.6% total; ~99.6% of non-skipped (measured 2026-05-23 against suite v1.5.0 via pglite + OPENWOP_WEBHOOK_ALLOW_PRIVATE=true; the +29 skip delta vs 2026-05-22 reflects the 5 new Phase-4-close-out scenarios soft-skipping for the host that doesn't yet advertise the matching seams) |
+| SQLite reference | 1490 | 7 | 84 | 14 | 1595 | 93.4% total |
+| In-memory reference | 1449 | 48 | 84 | 14 | 1595 | 90.8% total |
+| Python reference | 1391 | 60 | 130 | 14 | 1595 | 87.2% total; 100% of applicable when scoped to the host's claimed openwop-core + openwop-stream-poll + openwop-stream-sse profile set (the floor for cross-language parity) |
+| Workflow-engine reference (exhaustive-mode: all Phase 4 + sandbox + multi-region + cross-engine + secret-leakage seams enabled) | 1291 | 129 | 161 | 14 | 1595 | 80.9% total - exhaustive-mode advertises ~30 more capability surfaces than the 4 minimal hosts, so the suite exercises ~300 more scenarios; the lower headline reflects "advertises more -> exercised more -> more gaps surface." Closes the 22 behavioral assertions across the 5 new Phase 4 scenarios end-to-end (multi-region 6 + cross-engine 4 + sandbox 9 + secret-leakage 3). Intentional posture: "open-source reference under active development" rather than "production-locked floor." See docs/PHASE-4-CLOSEOUT-2026-05-23.md. |
 
 ## Registry Snapshot
 
