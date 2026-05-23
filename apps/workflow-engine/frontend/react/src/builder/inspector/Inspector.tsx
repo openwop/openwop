@@ -10,6 +10,7 @@ import { useBuilderStore } from '../store/builderStore.js';
 import { catalogEntry } from '../palette/catalogRegistry.js';
 import { type ConfigField } from '../palette/nodeCatalog.js';
 import { PromptPickerInput } from '../../prompts/PromptPickerInput.js';
+import { CredentialPickerInput } from './CredentialPickerInput.js';
 import { getCapabilities } from '../../client/runsClient.js';
 import type { BuilderEdge, EdgeCondition, EdgeTriggerRule } from '../schema/workflow.js';
 
@@ -187,6 +188,13 @@ function ConfigInput({
           value={typeof value === 'string' ? value : undefined}
           onChange={(next) => onChange(next)}
           promptKind={field.promptKind}
+          required={field.required}
+        />
+      ) : field.kind === 'credential-picker' ? (
+        <CredentialPickerInput
+          value={typeof value === 'string' ? value : undefined}
+          onChange={(next) => onChange(next)}
+          {...(field.credentialProvider ? { providerFilter: field.credentialProvider } : {})}
           required={field.required}
         />
       ) : field.kind === 'textarea' ? (

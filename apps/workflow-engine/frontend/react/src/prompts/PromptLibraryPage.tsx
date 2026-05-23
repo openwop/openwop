@@ -1,9 +1,7 @@
 /**
- * `/prompts` route. Lists prompt templates with kind/tag filters.
- *
- * Read-only in this iteration. Mutating endpoints (POST/PUT/DELETE) per
- * RFC 0028 §A land alongside `capabilities.prompts.mutableLibrary: true`
- * once a host advertises it; the UI for "Create" lives behind that gate.
+ * `/prompts` route. Lists prompt templates with kind/tag filters and a
+ * CRUD surface for user-authored prompts (localStorage; merged with
+ * bundled samples + any future BE store via listPrompts).
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -12,6 +10,12 @@ import type { PromptKind, PromptTemplate } from './types.js';
 import { refToString } from './types.js';
 import { lintPromptForTierOne, tierOneFindingsCount } from './tierOneLint.js';
 import { getCapabilities } from '../client/runsClient.js';
+import {
+  deleteUserPrompt,
+  isUserPromptId,
+  suggestUserPromptId,
+  upsertUserPrompt,
+} from './userPrompts.js';
 
 type TierOneCompliance = 'strict' | 'warn' | 'off' | undefined;
 
@@ -29,11 +33,20 @@ export function PromptLibraryPage() {
   const [kindFilter, setKindFilter] = useState<PromptKind | 'all'>('all');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<PromptTemplate | null>(null);
+  // Editor modal state. When `editing` is non-null, the EditorModal
+  // renders. `null` for the templateId field signals "new prompt"
+  // (the editor will mint a fresh id from the name on save).
+  const [editing, setEditing] = useState<PromptTemplate | 'new' | null>(null);
   // RFC 0030 §B — host's posture on the OpenAI ∩ Anthropic ∩ Gemini
   // schema subset. When `strict`, schema-hint prompts get a Tier-1 lint
   // chip; when `warn`, the lint runs but the banner copy is softer;
   // when `off` or absent, the lint stays silent.
   const [tierOneCompliance, setTierOneCompliance] = useState<TierOneCompliance>(undefined);
+
+  // refreshNonce bumps after every CRUD mutation so the listPrompts()
+  // effect below re-runs and surfaces the just-edited entries.
+  const [refreshNonce, setRefreshNonce] = useState(0);
+  const refresh = () => setRefreshNonce((n) => n + 1);
 
   useEffect(() => {
     let cancelled = false;
@@ -56,7 +69,7 @@ export function PromptLibraryPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [refreshNonce]);
 
   // Run the Tier-1 lint once per prompt-list change, regardless of host
   // advertisement (so we can show a banner even when off). The banner
@@ -82,7 +95,10 @@ export function PromptLibraryPage() {
   return (
     <section>
       <div className="card">
-        <h2>Prompt library</h2>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <h2 style={{ margin: 0 }}>Prompt library</h2>
+          <button onClick={() => setEditing('new')}>+ New prompt</button>
+        </div>
         <p className="muted">
           Reusable prompts your workflow&apos;s AI nodes can pick from. Edit
           one in a single place and every node that uses it updates the
@@ -129,8 +145,9 @@ export function PromptLibraryPage() {
           <ul className="prompt-list">
             {filtered.map((p) => {
               const findings = tierOneActive ? lintPromptForTierOne(p) : [];
+              const isUser = isUserPromptId(p.templateId);
               return (
-                <li key={`${p.templateId}@${p.version}`}>
+                <li key={`${p.templateId}@${p.version}`} style={{ position: 'relative' }}>
                   <button className="prompt-list-item" onClick={() => setSelected(p)}>
                     <div className="prompt-list-item-header">
                       <code className="prompt-list-item-id">{refToString(p)}</code>
@@ -155,6 +172,32 @@ export function PromptLibraryPage() {
                       </div>
                     )}
                   </button>
+                  {isUser && (
+                    <div className="prompt-user-actions">
+                      <button
+                        type="button"
+                        className="secondary prompt-user-edit"
+                        onClick={(e) => { e.stopPropagation(); setEditing(p); }}
+                        aria-label={`Edit ${p.name ?? p.templateId}`}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        className="secondary prompt-user-delete"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm(`Delete prompt "${p.name ?? p.templateId}"? This can't be undone.`)) {
+                            deleteUserPrompt(p.templateId);
+                            refresh();
+                          }
+                        }}
+                        aria-label={`Delete ${p.name ?? p.templateId}`}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
                 </li>
               );
             })}
@@ -163,7 +206,160 @@ export function PromptLibraryPage() {
       </div>
 
       {selected && <PromptDetailModal prompt={selected} onClose={() => setSelected(null)} />}
+      {editing && (
+        <PromptEditorModal
+          existing={editing === 'new' ? null : editing}
+          allIds={(prompts ?? []).map((p) => p.templateId)}
+          onClose={() => setEditing(null)}
+          onSaved={() => {
+            setEditing(null);
+            refresh();
+          }}
+        />
+      )}
     </section>
+  );
+}
+
+function PromptEditorModal({
+  existing,
+  allIds,
+  onClose,
+  onSaved,
+}: {
+  existing: PromptTemplate | null;
+  allIds: readonly string[];
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const isEdit = existing !== null;
+  const [name, setName] = useState(existing?.name ?? '');
+  const [kind, setKind] = useState<PromptKind>(existing?.kind ?? 'system');
+  const [description, setDescription] = useState(existing?.description ?? '');
+  const [text, setText] = useState(existing?.text ?? '');
+  const [tagsRaw, setTagsRaw] = useState((existing?.tags ?? []).join(', '));
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    closeButtonRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  function onSave() {
+    setSaveError(null);
+    if (!name.trim()) {
+      setSaveError('Name is required.');
+      return;
+    }
+    if (!text.trim()) {
+      setSaveError('Prompt text is required.');
+      return;
+    }
+    const tags = tagsRaw
+      .split(',')
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0);
+    const templateId =
+      existing?.templateId ??
+      suggestUserPromptId(name, allIds);
+    const prompt: PromptTemplate = {
+      templateId,
+      version: existing?.version ?? '1.0.0',
+      kind,
+      name: name.trim(),
+      ...(description.trim() ? { description: description.trim() } : {}),
+      text,
+      ...(tags.length > 0 ? { tags } : {}),
+      meta: { source: 'host', author: 'user' },
+    };
+    upsertUserPrompt(prompt);
+    onSaved();
+  }
+
+  return (
+    <div className="modal-backdrop" onClick={onClose} role="presentation">
+      <div
+        className="modal"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={isEdit ? 'Edit prompt' : 'New prompt'}
+      >
+        <div className="modal-header">
+          <h3>{isEdit ? 'Edit prompt' : 'New prompt'}</h3>
+          <button ref={closeButtonRef} className="secondary" onClick={onClose}>Cancel</button>
+        </div>
+        <div className="modal-body">
+          {saveError && <div className="alert error">{saveError}</div>}
+          <div className="form-row">
+            <label>Name <span className="builder-inspector-required" aria-hidden> *</span></label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g., Tone-of-voice editor"
+              autoFocus
+            />
+          </div>
+          <div className="form-row">
+            <label>Kind</label>
+            <select value={kind} onChange={(e) => setKind(e.target.value as PromptKind)}>
+              <option value="system">System</option>
+              <option value="user">User</option>
+              <option value="few-shot">Few-shot</option>
+              <option value="schema-hint">Schema hint</option>
+            </select>
+          </div>
+          <div className="form-row">
+            <label>Description</label>
+            <input
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="What this prompt does and when to use it."
+            />
+          </div>
+          <div className="form-row">
+            <label>Prompt text <span className="builder-inspector-required" aria-hidden> *</span></label>
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              rows={10}
+              placeholder={
+                kind === 'user'
+                  ? 'Mustache-style template. Use {{variable}} for inputs.'
+                  : 'The system instruction. Set role, tone, output shape.'
+              }
+              style={{ fontFamily: 'var(--mono, monospace)', fontSize: 13 }}
+            />
+          </div>
+          <div className="form-row">
+            <label>Tags <span className="muted">(comma-separated)</span></label>
+            <input
+              value={tagsRaw}
+              onChange={(e) => setTagsRaw(e.target.value)}
+              placeholder="editorial, writing"
+            />
+          </div>
+          {isEdit && existing && (
+            <div className="form-row">
+              <label>Template ID</label>
+              <code className="builder-inspector-typeid">{existing.templateId}</code>
+              <div className="muted builder-inspector-help">
+                IDs are immutable once created so existing references don&apos;t break.
+              </div>
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
+            <button className="secondary" onClick={onClose}>Cancel</button>
+            <button onClick={onSave}>{isEdit ? 'Save changes' : 'Create prompt'}</button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 

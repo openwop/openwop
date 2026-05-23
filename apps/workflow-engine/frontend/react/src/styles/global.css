@@ -2448,3 +2448,124 @@ pre {
     font-size: 9.5px;
   }
 }
+
+/* ─── Prompt library — user-owned card actions ─────────────────────────
+ *
+ * Edit + Delete buttons that surface in the top-right of each
+ * user-authored prompt card. Sample prompts (read-only) don't render
+ * these. Positioned absolute over the card; pointer-events are scoped
+ * to the action row so the underlying card-button still receives
+ * clicks outside the action area. */
+.prompt-user-actions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 6px;
+  z-index: 1;
+}
+.prompt-user-actions .secondary {
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 4px;
+}
+.prompt-user-delete:hover {
+  background: var(--clay-wash) !important;
+  color: var(--clay) !important;
+  border-color: var(--clay-rule) !important;
+}
+
+/* ─── Keys page (BYOK credentials manager) ────────────────────────────
+ *
+ * /keys route. Lists every credentialRef the user has stored, grouped
+ * by provider. Each provider section has its own "+ Add key" affordance
+ * + a list of existing labeled keys with a Delete action. */
+.keys-provider-section {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--rule, #e9e4d6);
+}
+.keys-provider-section:first-of-type {
+  border-top: none;
+  margin-top: 12px;
+  padding-top: 0;
+}
+.keys-provider-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.keys-provider-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14.5px;
+}
+.keys-provider-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  color: white;
+  font-family: var(--sans, sans-serif);
+  font-weight: 600;
+  font-size: 13px;
+}
+.keys-empty {
+  margin: 8px 0 0;
+  font-size: 12px;
+}
+.keys-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.keys-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--paper-2, #ece8de);
+  border: 1px solid var(--rule, #e9e4d6);
+  border-radius: 5px;
+}
+.keys-list-item-main {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.keys-list-item-ref {
+  font-family: var(--mono, monospace);
+  font-size: 12px;
+  color: var(--ink, #1a1a17);
+}
+.keys-list-item-label {
+  font-family: var(--sans, sans-serif);
+  font-size: 12px;
+  color: var(--ink-3, #8a857a);
+}
+.keys-list-item-delete {
+  font-size: 11px;
+  padding: 3px 10px;
+}
+.keys-list-item-delete:hover {
+  background: var(--clay-wash) !important;
+  color: var(--clay) !important;
+  border-color: var(--clay-rule) !important;
+}
+.keys-add-form {
+  margin: 8px 0 12px;
+  padding: 12px 14px;
+  background: var(--paper-2, #ece8de);
+  border: 1px solid var(--clay-rule, #d9b9a3);
+  border-radius: 6px;
+}

@@ -8,6 +8,7 @@ import { WorkflowsDashboard } from './builder/WorkflowsDashboard.js';
 import { DemoHostBanner } from './builder/DemoHostBanner.js';
 import { PrivacyPage } from './PrivacyPage.js';
 import { PromptLibraryPage } from './prompts/PromptLibraryPage.js';
+import { KeysPage } from './byok/KeysPage.js';
 import { SignInButton } from './auth/SignInButton.js';
 
 export function App() {
@@ -35,6 +36,7 @@ export function App() {
           <NavLink to="/" end>AI</NavLink>
           <NavLink to="/builder">Workflows</NavLink>
           <NavLink to="/prompts">Prompts</NavLink>
+          <NavLink to="/keys">Keys</NavLink>
           <NavLink to="/runs">Runs</NavLink>
           <NavLink to="/capabilities">Capabilities</NavLink>
         </nav>
@@ -58,6 +60,7 @@ export function App() {
           <Route path="/builder" element={<WorkflowsDashboard />} />
           <Route path="/builder/:workflowId" element={<BuilderTab />} />
           <Route path="/prompts" element={<PromptLibraryPage />} />
+          <Route path="/keys" element={<KeysPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
         </Routes>
       </main>

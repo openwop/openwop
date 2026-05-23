@@ -14,8 +14,11 @@ export interface ConfigField {
    *  free-form text + any object/array JSON the user has to
    *  hand-author. 'checkbox' renders a boolean toggle.
    *  'prompt-picker' stores a stringy PromptRef (`prompt:templateId@version`)
-   *  per RFC 0027 and renders a dropdown sourced from the prompt library. */
-  kind: 'text' | 'number' | 'textarea' | 'checkbox' | 'prompt-picker';
+   *  per RFC 0027 and renders a dropdown sourced from the prompt library.
+   *  'credential-picker' stores a credentialRef (e.g., `anthropic:prod`)
+   *  and renders a dropdown sourced from `listStoredRefs()` filtered by
+   *  the optional `credentialProvider` constraint. */
+  kind: 'text' | 'number' | 'textarea' | 'checkbox' | 'prompt-picker' | 'credential-picker';
   placeholder?: string;
   /** Default value used when a node of this kind is created. */
   defaultValue?: string | number | boolean;
@@ -27,6 +30,9 @@ export interface ConfigField {
    *  PromptTemplate kind (`system` / `user` / `few-shot` / `schema-hint`).
    *  Omitted = no filter. */
   promptKind?: 'system' | 'user' | 'few-shot' | 'schema-hint';
+  /** For `kind: 'credential-picker'`, constrains the picker to refs
+   *  whose `<provider>:` prefix matches. Omitted = show all refs. */
+  credentialProvider?: string;
 }
 
 export interface NodeCatalogEntry {
@@ -196,6 +202,12 @@ export const NODE_CATALOG: readonly NodeCatalogEntry[] = [
     inputs: [{ name: 'messages', type: 'object' }],
     outputs: [{ name: 'completion', type: 'string' }],
     configFields: [
+      {
+        key: 'credentialRef',
+        label: 'API key',
+        kind: 'credential-picker',
+        help: 'Which stored key this node uses to call the LLM. Manage keys at /keys.',
+      },
       {
         key: 'systemPromptRef',
         label: 'System prompt',

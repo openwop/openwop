@@ -10,6 +10,7 @@
 
 import { authedHeaders, config, fetchOpts } from '../client/config.js';
 import { SAMPLE_PROMPTS } from './samplePrompts.js';
+import { listUserPrompts } from './userPrompts.js';
 import type { PromptKind, PromptRef, PromptTemplate } from './types.js';
 import { parseRef } from './types.js';
 
@@ -73,18 +74,20 @@ export async function listPrompts(filter: ListPromptsFilter = {}): Promise<Promp
       if (res.ok) {
         const body = (await res.json()) as ListResponse;
         // If the host advertises prompts but returns an empty list,
-        // the UI was showing "No prompts match the current filter"
-        // forever — the sample fallback never fired. Treat empty as
-        // "host has no canonical set yet" and surface the bundled
-        // sample library so the page is useful out of the box. A host
-        // with real entries returns them and bypasses the fallback.
-        if (body.items.length > 0) return body.items;
+        // we still want to merge in any user-authored prompts the
+        // browser has cached locally — the BE doesn't see them yet
+        // (deferred to a real RFC 0028 prompts store). Same applies
+        // when the BE returns its own items: append user prompts so
+        // the local additions are visible even with a populated store.
+        return applyFilter([...listUserPrompts(), ...body.items], filter);
       }
     } catch {
       /* fall through to samples */
     }
   }
-  return applyFilter(SAMPLE_PROMPTS, filter);
+  // No host support OR fetch errored — merge user prompts on top of
+  // the bundled samples so users see both groups in one list.
+  return applyFilter([...listUserPrompts(), ...SAMPLE_PROMPTS], filter);
 }
 
 export async function getPrompt(templateId: string, version?: string): Promise<PromptTemplate | null> {
@@ -115,7 +118,11 @@ export async function getPromptByRef(ref: PromptRef): Promise<PromptTemplate | n
 }
 
 function resolveLocal(templateId: string, version?: string): PromptTemplate | null {
-  const matches = SAMPLE_PROMPTS.filter((p) => p.templateId === templateId);
+  // User-authored prompts shadow same-id samples (rare given the
+  // `user:` prefix on user-ids, but coherent if a future BE adds a
+  // canonical store that happens to collide).
+  const pool = [...listUserPrompts(), ...SAMPLE_PROMPTS];
+  const matches = pool.filter((p) => p.templateId === templateId);
   if (matches.length === 0) return null;
   if (!version) return matches[0]!;
   return matches.find((p) => p.version === version) ?? null;
