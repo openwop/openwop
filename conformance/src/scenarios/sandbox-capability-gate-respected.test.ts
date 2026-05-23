@@ -23,5 +23,11 @@ import { describe, it } from 'vitest';
 // reporting a vacuous PASS.
 
 describe('sandbox-capability-gate-respected: behavioral (RFC 0035 §B)', () => {
-  it.todo('a misbehaving pack calling an undeclared host capability fails closed with sandbox_capability_denied');
+  // Behavioral coverage in `sandbox-mvp-behavior.test.ts` §"capability-gate-respected"
+  // (drives `POST /v1/host/sample/test/sandbox-invoke` against the
+  // workflow-engine's node:vm MVP and asserts `error.code:
+  // 'sandbox_capability_denied'` + `details.requestedCapability` per
+  // `host-capabilities.md` §"Error codes"). `it.skip` preserves the
+  // per-invariant file structure without inflating the `it.todo` count.
+  it.skip('behavioral coverage in sandbox-mvp-behavior.test.ts §"capability-gate-respected"');
 });

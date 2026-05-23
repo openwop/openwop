@@ -27,9 +27,15 @@
  * mock provider returning a valid envelope on the original run and a
  * refusal on the replay (or vice-versa). Reference workflow-engine ships
  * a mock-AI provider (`OPENWOP_MULTI_AGENT_EXECUTION_MODEL=true`); the
- * Phase 4 wiring extends it to honor a "refusal on replay" mode. Until
- * that wiring lands, the assertion is surfaced as `it.todo` so test
- * reporters track the gap rather than reporting a vacuous PASS.
+ * Phase 4 wiring (landed 2026-05-23 via commits `1fce55a` + `bba3b4a`)
+ * extends it with `checkReplayDivergence()` in the executor catch-path
+ * + symmetric success-path detection of envelope-kind divergence; emits
+ * `replay.divergedAtRefusal` event and fails the run with
+ * `error.code: 'replay_diverged_at_refusal'` when source vs replay
+ * differ at the same nodeId. Behavioral coverage is now real: 3
+ * assertions PASS against workflow-engine when Phase 4 advertisement
+ * is enabled (cover both divergence directions: original=valid +
+ * replay=refusal AND original=refusal + replay=valid).
  *
  * @see RFCS/0041-multi-agent-replay-under-nondeterminism.md §B
  * @see spec/v1/replay.md §"Envelope-refusal recovery in replay (MAE-8 closure)"

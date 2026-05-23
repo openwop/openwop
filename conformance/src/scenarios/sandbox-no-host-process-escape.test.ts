@@ -27,5 +27,9 @@ import { describe, it } from 'vitest';
 // a vacuous PASS.
 
 describe('sandbox-no-host-process-escape: behavioral (RFC 0035 §B)', () => {
-  it.todo('a misbehaving pack calling spawn/fork/exec fails closed with sandbox_escape_attempt + escapeKind: "host-process-escape"');
+  // Behavioral coverage in `sandbox-mvp-behavior.test.ts` §"host-process-escape"
+  // (drives `POST /v1/host/sample/test/sandbox-invoke` against the
+  // workflow-engine's node:vm MVP). `it.skip` preserves the per-invariant
+  // file structure without inflating the `it.todo` count.
+  it.skip('behavioral coverage in sandbox-mvp-behavior.test.ts §"host-process-escape"');
 });

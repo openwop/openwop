@@ -24,5 +24,9 @@ import { describe, it } from 'vitest';
 // test reporters track the gap rather than reporting a vacuous PASS.
 
 describe('sandbox-no-network-escape: behavioral (RFC 0035 §B)', () => {
-  it.todo('a misbehaving pack fetching without host.fetch in allowedHostCalls fails closed with sandbox_capability_denied');
+  // Behavioral coverage in `sandbox-mvp-behavior.test.ts` §"network-escape"
+  // (drives `POST /v1/host/sample/test/sandbox-invoke` against the
+  // workflow-engine's node:vm MVP). `it.skip` preserves the per-invariant
+  // file structure without inflating the `it.todo` count.
+  it.skip('behavioral coverage in sandbox-mvp-behavior.test.ts §"network-escape"');
 });

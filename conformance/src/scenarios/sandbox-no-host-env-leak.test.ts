@@ -23,5 +23,9 @@ import { describe, it } from 'vitest';
 // reporters track the gap rather than reporting a vacuous PASS.
 
 describe('sandbox-no-host-env-leak: behavioral (RFC 0035 §B)', () => {
-  it.todo('a misbehaving pack reading process.env does NOT see host env vars unless explicitly allowed');
+  // Behavioral coverage in `sandbox-mvp-behavior.test.ts` §"host-env-leak"
+  // (drives `POST /v1/host/sample/test/sandbox-invoke` against the
+  // workflow-engine's node:vm MVP). `it.skip` preserves the per-invariant
+  // file structure without inflating the `it.todo` count.
+  it.skip('behavioral coverage in sandbox-mvp-behavior.test.ts §"host-env-leak"');
 });
