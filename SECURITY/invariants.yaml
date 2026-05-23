@@ -213,14 +213,20 @@ invariants:
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/envelope-reasoning-secret-redaction.test.ts
+      - conformance/src/scenarios/secret-leakage-otel-attribute.test.ts
     note: |
       Graduated reference-impl → protocol on 2026-05-21 via RFC 0034 §C:
       conformance gates on capabilities.observability.testSeams.otelScrape;
-      advertising hosts MUST serve POST /v1/host/sample/test/otel/spans
-      returning span attributes that do not echo the BYOK canary. The
-      Postgres reference host's byok-roundtrip.test.ts continues to cover
-      the host-internal allowlist; this row now also has cross-host
-      conformance coverage on hosts that advertise the test seam.
+      advertising hosts MUST serve GET /v1/host/sample/test/otel/spans
+      returning span attributes that do not echo the BYOK canary. Two
+      complementary conformance probes cover this invariant:
+      `envelope-reasoning-secret-redaction.test.ts` (narrow — envelope
+      acceptor canary in `reasoning` field), and (added 2026-05-22)
+      `secret-leakage-otel-attribute.test.ts` (broad — executor-side
+      BYOK roundtrip canary against the full span buffer for a run that
+      resolved a host-provisioned secret via the `openwop-smoke-byok-
+      roundtrip` fixture). The Postgres reference host's byok-roundtrip.test.ts
+      continues to cover the host-internal allowlist.
 
   - id: secret-leakage-error-envelope
     tier: protocol
@@ -259,12 +265,16 @@ invariants:
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/envelope-reasoning-secret-redaction.test.ts
+      - conformance/src/scenarios/secret-leakage-otel-attribute.test.ts
     note: |
       Graduated reference-impl → protocol on 2026-05-21 via RFC 0034 §C:
       conformance gates on capabilities.observability.testSeams.debugBundleExport;
       advertising hosts MUST serve POST /v1/host/sample/test/debug-bundle/export
       returning a bundle that does not echo the BYOK canary across any
       serialized field (spans, events, variables, OTel span exports).
+      Two complementary conformance probes cover this invariant — see
+      the sibling `secret-leakage-otel-attribute` row's note for the
+      narrow/broad split.
 
   - id: secret-leakage-artifact-content
     tier: reference-impl
