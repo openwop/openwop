@@ -63,7 +63,9 @@ export function subscribeToRun(runId: string, opts: SubscribeOptions): Subscript
   // and falls back to `onmessage` for unnamed events; the BE sends
   // every line with an `event:` field so addEventListener('*' won't
   // catch them. We listen to a hard-coded set of canonical openwop
-  // event types.
+  // event types — including the `agent.*`, `provider.usage`, and
+  // `core.workflowChain.*` families so the run-detail reasoning, cost,
+  // and handoff panels update live (not just on a post-run REST poll).
   const eventTypes = [
     'run.started',
     'run.resumed',
@@ -76,6 +78,17 @@ export function subscribeToRun(runId: string, opts: SubscribeOptions): Subscript
     'node.suspended',
     'node.interrupt.resolved',
     'node.message',
+    'node.dispatched',
+    'agent.reasoned',
+    'agent.reasoning.delta',
+    'agent.toolCalled',
+    'agent.toolReturned',
+    'agent.handoff',
+    'agent.decided',
+    'provider.usage',
+    'runOrchestrator.decided',
+    'core.workflowChain.event',
+    'core.workflowChain.confidence-escalated',
   ];
   // Dual-layer timeouts. Defaults: 30s idle (resets per event), 120s
   // absolute (never resets). Both protect against silently-hung streams

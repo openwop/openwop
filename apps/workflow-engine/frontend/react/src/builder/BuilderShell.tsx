@@ -73,6 +73,10 @@ export function BuilderShell({ onNewWorkflow }: Props) {
     if (!overlayRunId) return;
     const sub = subscribeToRun(overlayRunId, {
       modes: ['updates'],
+      // Relax the default 30s/120s timeouts — a watched run can be long
+      // and idle between nodes; the idle timer still resets per event.
+      idleTimeoutMs: 5 * 60_000,
+      absoluteTimeoutMs: 30 * 60_000,
       onEvent: (ev) => useBuilderStore.getState().applyRunEvent(ev),
     });
     return () => sub.close();

@@ -56,6 +56,13 @@ export function RunDetailPage() {
     if (!runId) return;
     const sub = subscribeToRun(runId, {
       modes: [streamMode],
+      // Run-watching can be long and idle between nodes (HITL waits,
+      // slow providers). Relax the default 30s idle / 120s absolute
+      // timeouts so the live overlay / panels keep painting; the idle
+      // timer still resets on every event so a genuinely hung stream
+      // is still caught.
+      idleTimeoutMs: 5 * 60_000,
+      absoluteTimeoutMs: 30 * 60_000,
       onEvent: (ev) => {
         setEvents((prev) => {
           // Dedupe by sequence; events arriving out-of-order keep monotone order.
@@ -66,6 +73,15 @@ export function RunDetailPage() {
             ['run.completed', 'run.failed', 'run.cancelled', 'node.suspended', 'node.interrupt.resolved'].includes(ev.type)
           ) {
             getRun(runId).then(setSnapshot).catch(() => undefined);
+          }
+          // On terminal events, re-poll the full event log via REST. The
+          // SSE stream may not carry every event family the panels read
+          // (cost / reasoning / handoff); the authoritative log backfills
+          // anything the live stream missed so the panels are complete.
+          if (['run.completed', 'run.failed', 'run.cancelled'].includes(ev.type)) {
+            pollEvents(runId, 0)
+              .then((p) => setEvents([...p.events]))
+              .catch(() => undefined);
           }
           // Interrupt-related transitions trigger an authenticated refetch
           // because the public event payload no longer carries the resume token.
