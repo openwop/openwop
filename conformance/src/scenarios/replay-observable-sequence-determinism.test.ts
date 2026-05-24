@@ -5,7 +5,7 @@
  * `capabilities.multiAgent.executionModel.version >= 4` AND
  * `capabilities.multiAgent.executionModel.replayDeterminism.supported: true`.
  *
- * Asserts (behavioral, when a Phase 4 host advertises the contract):
+ * Asserts (behavioral, when a host advertises `version: 4` + the contract):
  *
  *   1. A `mode: replay` fork from event-log index `fromSeq` produces an
  *      event-log prefix `[0, fromSeq]` that is byte-equivalent to the
@@ -26,14 +26,14 @@
  * Driving the assertion requires a workflow fixture whose tool call is
  * pure-nondeterministic (different bytes on each call) but whose
  * observable result is what gets cached. Reference workflow-engine ships
- * `core.noop` + deterministic fixtures; Phase 4 wiring needs a
+ * `core.noop` + deterministic fixtures; the `version: 4` wiring needs a
  * nondeterministic-tool fixture (e.g., `conformance-phase4-nondet-tool`).
  * Until that lands, the cross-boundary assertion is surfaced as `it.todo`
  * so test reporters track the gap.
  *
  * @see RFCS/0041-multi-agent-replay-under-nondeterminism.md §C
  * @see spec/v1/replay.md §"Observable-output-sequence determinism vs bit-equivalent execution (MAE-9 closure)"
- * @see spec/v1/multi-agent-execution.md §"Phase 4 replay determinism"
+ * @see spec/v1/multi-agent-execution.md §"Replay determinism under nondeterminism (RFC 0041)"
  */
 
 import { describe, it } from 'vitest';
@@ -62,7 +62,7 @@ describe('replay-observable-sequence-determinism: prefix byte-equivalence (RFC 0
   //   6. Read original + replay RunSnapshot at index N; assert
   //      variables + channels + status byte-equivalent.
   // Surfaced as `todo` until the `conformance-phase4-nondet-tool`
-  // fixture ships in the suite — consistent with the sibling Phase 4
+  // fixture ships in the suite — consistent with the sibling RFC 0041
   // scenarios (`replay-divergence-at-refusal.test.ts`,
   // `replay-llm-cache-key-portable.test.ts`).
   // Marked out of stable profile via RFC 0042 §B (experimental tier):
