@@ -509,7 +509,12 @@
 <section class="hero-shot" aria-labelledby="hero-shot-caption">
   <div class="wrap">
     <figure class="hero-shot-figure">
-      <div class="hero-shot-frame">
+      <a
+        class="hero-shot-frame"
+        href="https://app.openwop.dev/builder"
+        target="_blank"
+        rel="noopener"
+        aria-label="Open the OpenWOP workflow builder app (opens in a new tab)">
         <picture>
           <source
             type="image/webp"
@@ -525,9 +530,13 @@
             alt="An OpenWOP-compliant workflow editor: node pack catalog on the left (Agent Run, Tool, Memory, Output Parser, Model Selector, Chat Completion, Structured Output), a directed-acyclic-graph canvas in the center wiring a Kickoff node through three parallel Extract Source branches into Normalize and Enrich nodes, and a Workflow inspector panel on the right showing the run's name, ID, and default-inputs JSON."
             decoding="async"/>
         </picture>
-      </div>
+        <span class="hero-shot-cta" aria-hidden="true">
+          <span class="hero-shot-cta-label">Open the builder</span>
+          <span class="hero-shot-cta-arrow">↗</span>
+        </span>
+      </a>
       <figcaption class="hero-shot-caption" id="hero-shot-caption">
-        <strong>An OpenWOP-compliant workflow editor.</strong> Node pack catalog left, DAG canvas center, run inspector right — every artifact on this screen is described by the open <a href="/spec/v1/">v1 spec</a>. The same canvas runs against the reference hosts, the conformance suite, and any compliant third-party host.
+        <strong>An OpenWOP-compliant workflow editor.</strong> Node pack catalog left, DAG canvas center, run inspector right — every artifact on this screen is described by the open <a href="/spec/v1/">v1 spec</a>. <a href="https://app.openwop.dev/builder" target="_blank" rel="noopener">Open the live builder <span aria-hidden="true">↗</span></a>
       </figcaption>
     </figure>
   </div>
