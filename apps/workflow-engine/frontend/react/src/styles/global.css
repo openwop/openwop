@@ -1302,6 +1302,16 @@ pre {
 .pack-versions li { display: flex; align-items: center; gap: 6px; padding: 2px 0; font-size: 12px; }
 .pack-detail-install-note { font-size: 11px; margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--rule); }
 
+/* Two-run compare grid (RFC 0011 fork → side-by-side) */
+.run-compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+@media (max-width: 720px) {
+  .run-compare-grid { grid-template-columns: 1fr; }
+}
+
 /* Token & cost table (RFC 0026 provider.usage rollup) */
 .cost-table {
   width: 100%;

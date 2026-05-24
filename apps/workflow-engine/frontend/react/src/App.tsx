@@ -5,6 +5,7 @@ import { NetworkPanel } from './devtools/NetworkPanel.js';
 import { installNetworkRecorder } from './devtools/networkRecorder.js';
 import { RunDetailPage } from './runs/RunDetailPage.js';
 import { HitlInboxPage } from './runs/HitlInboxPage.js';
+import { RunComparePage } from './runs/RunComparePage.js';
 import { CapabilitiesPanel } from './discovery/CapabilitiesPanel.js';
 import { ChatTab } from './chat/ChatTab.js';
 import { BuilderTab } from './builder/BuilderTab.js';
@@ -85,6 +86,7 @@ export function App() {
           <Route path="/runs" element={<RunsIndexPage />} />
           <Route path="/runs/:runId" element={<RunDetailPage />} />
           <Route path="/inbox" element={<HitlInboxPage />} />
+          <Route path="/compare" element={<RunComparePage />} />
           <Route path="/capabilities" element={<CapabilitiesPanel />} />
           <Route path="/builder" element={<WorkflowsDashboard />} />
           <Route path="/builder/:workflowId" element={<BuilderTab />} />

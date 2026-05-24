@@ -118,6 +118,13 @@ export function RunDetailPage() {
           <button className="secondary" onClick={onCancel} disabled={!snapshot || ['completed', 'failed', 'cancelled'].includes(snapshot.status)}>
             Cancel run
           </button>
+          <button
+            className="secondary"
+            onClick={() => { window.location.href = `/compare?a=${encodeURIComponent(runId)}`; }}
+            title="Compare this run side-by-side with another"
+          >
+            Compare…
+          </button>
         </div>
       </div>
 
