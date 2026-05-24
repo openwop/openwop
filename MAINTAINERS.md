@@ -121,6 +121,42 @@ Per `CONTRIBUTING.md` §"Bootstrap-phase notes," additive RFCs MAY be promoted D
 
 When the count gets uncomfortable (e.g., > 5 waivers within a 30-day window, or > 15 total before the first non-steward maintainer joins), that's a signal to slow down and stage at least one RFC through a real 7-day window even without external reviewers — exercising the process is itself a credibility surface.
 
+## Spec version bump runbook
+
+The repo currently hosts `spec/v1/` rendered at `/spec/v1/`. Under v1.x compatibility rules the major version is the URL-stability boundary; minor bumps (v1.1, v1.2, …) edit `spec/v1/` in place. A new major version (`spec/v2/`) materializes only when v2 work actually starts. This section is the runbook for that day.
+
+### Minor bump inside v1.x (the common case)
+
+The release manager:
+
+1. Lands the additive prose / schema / RFC content directly inside `spec/v1/`. Each touched file's status banner updates to the new minor: `Status: Stable · v1.2 (YYYY-MM-DD).`
+2. Adds a `## [1.2.0]` section to `CHANGELOG.md`. The changelog renderer in `site/src/build.mjs::buildChangelog()` picks the new version up automatically — no template change needed.
+3. Bumps the homepage hero status line in `public/index.html` (`v1.1 · 35 spec docs · …`). Search for the existing `v1.1` literal — it's a single occurrence.
+4. Updates the homepage Spec table (`§ 04 / Specification`) any rows whose claims change.
+5. Runs `bash scripts/build-site.sh` and verifies sitemap URL count is unchanged (no new spec-doc URLs land for a minor bump because canonical URLs are stable inside v1.x).
+6. Deploys: `firebase deploy --only hosting:docs`.
+
+**No `firebase.json` change is required for a minor bump.** The `/spec/v1.1/` and `/spec/latest/` redirects already point at `/spec/v1/` and will continue to serve any minor v1.x.
+
+### Major bump to v2.x (rare)
+
+The release manager:
+
+1. Creates `spec/v2/` alongside the existing `spec/v1/`. v1 stays in place — it remains supported under the deprecation policy in `PUBLISHING.md`.
+2. **Refactors `site/src/build.mjs::buildSpecDocs()`** to iterate over `spec/v*/` directories instead of hard-coding `spec/v1`. The expected shape:
+   - Discover versions via `readdirSync('spec').filter(d => /^v\d+(\.\d+)?$/.test(d))`.
+   - Render each version's docs at `/spec/{version}/{slug}.html`.
+   - Render the highest version's index at `/spec/{highest}/index.html` plus a copy or canonical at `/spec/latest/`.
+   - Per-doc page-header gains an "Other versions: v1" link slot derived from the discovered directory set.
+3. Updates `firebase.json` `redirects` block:
+   - `/spec/latest{,/:path*}` now points at `/spec/v2/`.
+   - The existing `/spec/v1.1{,/:path*}` → `/spec/v1/...` (301) entries stay (v1 docs remain at `/spec/v1/`).
+4. Updates `spec/v1/auth.md` Status legend to reference both the v1 and v2 legend pages (each major version may have its own `/governance/spec-status/` policy URL — keep them version-prefixed if they diverge).
+5. CHANGELOG entry: `## [2.0.0]` — the breaking-change-permitted release.
+6. Capability profile manifests advertised by hosts may now negotiate v2 alongside v1; see RFC 0001 §"Version negotiation."
+
+**Anti-pattern.** Do not create `spec/v1.2/` as a directory. Inside v1.x, minor bumps are in-place edits of `spec/v1/`. A new directory is reserved for a new major version. The `/spec/v1.1/` redirect entry in `firebase.json` exists only as an inbound-link safety net for citations that hard-coded the minor number; it does not imply a parallel directory.
+
 ## See also
 
 - `GOVERNANCE.md` — decision rules, role definitions, path to working group.

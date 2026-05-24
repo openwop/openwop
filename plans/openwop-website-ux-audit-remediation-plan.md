@@ -440,13 +440,31 @@ contributor, an audit firm, a working-group ratification vote).
 
 ### 4.1 Spec versioning & changelog automation · S (new)
 
-- [ ] Wire `/changelog/` rendering to fire automatically when `CHANGELOG.md`
-      changes.
-- [ ] Wire the spec build so that a future `spec/v1.2/` directory triggers a
-      `/spec/v1.2/` URL plus a `/spec/latest/` redirect update with no
-      hand-edits.
+- [x] Wire `/changelog/` rendering to fire automatically when `CHANGELOG.md`
+      changes. Landed in Phase 3.3 — `site/src/build.mjs::buildChangelog()`
+      now reads `CHANGELOG.md` directly, parses each `## [version]` heading
+      into a chunked release card, and emits a "Latest release" callout.
+      No template change needed for future bumps; a new `## [1.2.0]` heading
+      is the only authoring action required to surface a new release on
+      `/changelog/`.
+- [x] **Minor-bump path** documented in `MAINTAINERS.md` §"Spec version bump
+      runbook." Under our Phase 3.4 decision (keep `/spec/v1/` canonical for
+      the entire v1.x line), no `spec/v1.2/` directory will ever be created
+      — minor bumps edit `spec/v1/` in place. The `/spec/v1.1/` and
+      `/spec/latest/` redirects in `firebase.json` already cover any
+      minor inside v1.x without hand-edits.
+- [ ] **Major-bump path** (`spec/v2/` lands) — the `buildSpecDocs()`
+      multi-version refactor is documented in MAINTAINERS.md as a one-time
+      task to perform when v2 work actually begins. Doing it speculatively
+      now adds ~20 touch points to `buildSpecDocs()` with no real test
+      target; deferred until v2 is being authored so the refactor lands
+      with full context and a concrete second corpus to validate against.
 
-**Acceptance:** A maintainer can ship a spec version bump in a single PR
-without touching site templates.
+**Acceptance (revised):** A maintainer can ship a **minor-version bump**
+inside v1.x in a single PR without touching site templates. The
+documented six-step runbook ends with `firebase deploy --only hosting:docs`
+and zero `firebase.json` edits. The **major-version bump** path is
+documented as a future task; the refactor itself is intentionally deferred
+to land alongside the v2 authoring window.
 
 ---
