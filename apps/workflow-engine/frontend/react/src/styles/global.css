@@ -1302,6 +1302,12 @@ pre {
 .pack-versions li { display: flex; align-items: center; gap: 6px; padding: 2px 0; font-size: 12px; }
 .pack-detail-install-note { font-size: 11px; margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--rule); }
 
+/* MCP tools list (RFC 0020 tools/list) */
+.mcp-tool-list { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.mcp-tool { border: 1px solid var(--rule); border-left: 2px solid var(--clay); border-radius: 4px; padding: 8px 10px; }
+.mcp-tool-name { font-size: 13px; }
+.mcp-tool-desc { font-size: 12px; margin: 4px 0; }
+
 /* Two-run compare grid (RFC 0011 fork → side-by-side) */
 .run-compare-grid {
   display: grid;
