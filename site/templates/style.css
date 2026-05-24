@@ -731,6 +731,279 @@
   line-height: 1.55;
 }
 
+/* Phase 3.1: Start-here reading-order card on /spec/v1/. Uses the same
+ * .spec-group container so it inherits margin/typography, but a tighter
+ * accent border + numbered ordered-list pattern make it visually
+ * distinct from the thematic groups beneath it. */
+.spec-group.start-here {
+  border-left: 3px solid var(--clay);
+  padding-left: 18px;
+  background: color-mix(in srgb, var(--paper-2, #fafaf7) 60%, transparent);
+  border-radius: 4px;
+  padding-block: 14px 18px;
+}
+.start-here-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+.start-here-list > li {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+.start-here-step {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--clay);
+  line-height: 1.4;
+  padding-top: 2px;
+  letter-spacing: 0.04em;
+}
+.start-here-body a {
+  text-decoration: none;
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.4;
+}
+.start-here-body a:hover strong { text-decoration: underline; }
+.start-here-why {
+  margin: 4px 0 0;
+  color: var(--ink-2);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+/* Phase 3.1: per-doc "Edit this page on GitHub" footer. Lives at the
+ * bottom of every spec/v1/ + RFC article column. Subtle so it doesn't
+ * compete with the prose, but discoverable for contributors. */
+.doc-edit {
+  margin: 56px 0 0;
+  padding-top: 18px;
+  border-top: 1px dashed var(--rule, #e5e5e0);
+  font-size: 13px;
+}
+.doc-edit a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-2);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--rule-2, #ccc);
+  transition: color .15s ease, border-color .15s ease;
+}
+.doc-edit a:hover {
+  color: var(--clay);
+  border-bottom-color: var(--clay);
+}
+.doc-edit .arrow {
+  font-size: 11px;
+  color: inherit;
+}
+
+/* Phase 3.2: /rfcs/ index filter UI — status chips + search input that
+ * client-side toggles row visibility via data-* attributes. No JS deps;
+ * the inline <script> at the bottom of the index page wires it up. */
+.rfc-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin: 24px 0 18px;
+}
+.rfc-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.rfc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-2);
+  background: var(--paper, #fff);
+  border: 1px solid var(--rule, #e5e5e0);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color .15s ease, border-color .15s ease, background .15s ease;
+}
+.rfc-chip:hover {
+  color: var(--ink);
+  border-color: var(--rule-2, #ccc);
+}
+.rfc-chip.is-active {
+  background: var(--ink, #1a1a1a);
+  color: var(--paper, #fff);
+  border-color: var(--ink, #1a1a1a);
+}
+.rfc-chip-count {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  opacity: 0.75;
+}
+.rfc-search-wrap {
+  flex: 1 1 220px;
+  min-width: 200px;
+  max-width: 320px;
+  margin-left: auto;
+}
+.rfc-search {
+  width: 100%;
+  padding: 8px 12px;
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink);
+  background: var(--paper, #fff);
+  border: 1px solid var(--rule, #e5e5e0);
+  border-radius: 4px;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.rfc-search:focus-visible {
+  outline: 2px solid var(--clay);
+  outline-offset: 2px;
+}
+.rfc-topic-tag {
+  display: inline-block;
+  padding: 1px 8px;
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--ink-2);
+  background: var(--paper-2, #f6f6f1);
+  border: 1px solid var(--rule, #e5e5e0);
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.rfc-empty {
+  margin: 24px 0;
+  padding: 24px;
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--ink-3);
+  background: var(--paper-2, #f6f6f1);
+  border: 1px dashed var(--rule, #e5e5e0);
+  border-radius: 4px;
+  text-align: center;
+}
+table.rfc-index td:nth-child(2) {
+  width: 1%;
+  white-space: nowrap;
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0);
+  white-space: nowrap; border: 0;
+}
+
+/* Phase 3.3: changelog per-version chunking. Each release is a card; the
+ * latest-release callout sits above the version list as a sticky-ish
+ * summary. The version-rail (sticky left ToC) is unchanged — handled by
+ * the generic .spec-toc treatment. */
+.changelog-page .changelog-latest {
+  margin: 0 0 36px;
+  padding: 18px 22px 22px;
+  background: color-mix(in srgb, var(--clay) 6%, var(--paper-2, #fafaf7));
+  border: 1px solid color-mix(in srgb, var(--clay) 35%, var(--rule, #e5e5e0));
+  border-left: 3px solid var(--clay);
+  border-radius: 4px;
+}
+.changelog-latest-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--clay);
+  background: var(--paper, #fff);
+  border: 1px solid var(--clay);
+  border-radius: 3px;
+}
+.changelog-latest h2 {
+  margin: 12px 0 4px;
+  font-size: 26px;
+}
+.changelog-latest h2 a {
+  color: var(--ink);
+  text-decoration: none;
+}
+.changelog-latest h2 a:hover { color: var(--clay); }
+.changelog-latest-date {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-3);
+  letter-spacing: 0.02em;
+}
+.changelog-latest-headline {
+  margin: 8px 0 0;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 16px;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+
+.changelog-version {
+  margin: 0 0 48px;
+  padding-top: 24px;
+  border-top: 1px solid var(--rule, #e5e5e0);
+}
+.changelog-version:first-of-type { border-top: 0; padding-top: 0; }
+.changelog-version-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.changelog-version-head h2 {
+  margin: 0;
+  font-size: 22px;
+}
+.changelog-version-head h2 a {
+  color: var(--ink);
+  text-decoration: none;
+}
+.changelog-version-head h2 a:hover { color: var(--clay); }
+.changelog-version-date {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+  padding: 2px 8px;
+  border: 1px solid var(--rule, #e5e5e0);
+  border-radius: 3px;
+}
+.changelog-version-date.is-unreleased {
+  color: var(--clay);
+  border-color: var(--clay);
+}
+.changelog-version-headline {
+  flex-basis: 100%;
+  margin: 4px 0 0;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+/* Release bodies have h3 subheadings; tighten their top spacing so
+ * the rhythm inside a card matches the rest of the prose surface. */
+.changelog-version-body h3:first-child { margin-top: 0; }
+
 /* ─── Responsive tweaks ─────────────────────────────────────────────── */
 @media (max-width: 640px) {
   .site-main {

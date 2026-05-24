@@ -141,23 +141,61 @@
     <header class="page-header">
       <h1>OpenWOP v1 spec corpus</h1>
       <p class="lede">39 prose specs governing the v1 wire contract. Each section below groups specs by what they do; click through for the normative text.</p>
-      <p class="meta">Status legend: <strong>Stable</strong> · DRAFT · OUTLINE · STUB. A spec is Stable when its wire shape is locked under v1.x compatibility rules. (Older revisions labelled the same tier <strong>FINAL</strong>.)</p>
+      <p class="meta">Status legend: <strong>Stable</strong> · Stabilizing · Draft · Experimental. A spec is Stable when its wire shape is locked under v1.x compatibility rules. See <a href="/governance/spec-status/">spec-status policy</a>.</p>
     </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
     <h4>On this page</h4>
     <ul>
-      <li class="toc-top"><a href="#foundation">Foundation</a></li>
-      <li class="toc-top"><a href="#runtime">Run lifecycle &amp; state</a></li>
-      <li class="toc-top"><a href="#agents">Agents &amp; multi-agent execution</a></li>
-      <li class="toc-top"><a href="#humans">Humans in the loop</a></li>
-      <li class="toc-top"><a href="#transports">Wire transports</a></li>
-      <li class="toc-top"><a href="#security">Auth &amp; security</a></li>
-      <li class="toc-top"><a href="#ecosystem">Node packs &amp; registry</a></li>
-      <li class="toc-top"><a href="#production">Production posture &amp; operations</a></li>
-      <li class="toc-top"><a href="#integration">Integration with adjacent protocols</a></li>
-      <li class="toc-top"><a href="#other">Other reference material</a></li>
+      <li class="toc-top"><a href="#start-here">Start here</a></li>
+      <li class="toc-top"><a href="#surface">Surface</a></li>
+      <li class="toc-top"><a href="#lifecycle">Run lifecycle</a></li>
+      <li class="toc-top"><a href="#agents">Agents</a></li>
+      <li class="toc-top"><a href="#packs">Packs</a></li>
+      <li class="toc-top"><a href="#wire">Wire &amp; auth</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance, ops &amp; integration</a></li>
     </ul>
-  </aside><article class="spec-doc"><section class="spec-group">
-  <h2 id="foundation">Foundation</h2>
+  </aside><article class="spec-doc"><section class="spec-group start-here">
+  <h2 id="start-here">Start here</h2>
+  <p class="spec-group-lede">Five docs, in this order, ground everything else. New to the corpus? Read these top-to-bottom before browsing the thematic groups below.</p>
+  <ol class="start-here-list">
+    <li>
+      <span class="start-here-step">01</span>
+      <div class="start-here-body">
+        <a href="./positioning.html"><strong>Positioning</strong></a>
+        <p class="start-here-why">What OpenWOP is — and explicitly is not — relative to MCP, A2A, and managed orchestrators.</p>
+      </div>
+    </li>
+    <li>
+      <span class="start-here-step">02</span>
+      <div class="start-here-body">
+        <a href="./capabilities.html"><strong>Capability Declaration (`/.well-known/openwop`)</strong></a>
+        <p class="start-here-why">How a host advertises which surfaces it implements; the negotiation contract every client uses.</p>
+      </div>
+    </li>
+    <li>
+      <span class="start-here-step">03</span>
+      <div class="start-here-body">
+        <a href="./run-options.html"><strong>Per-Run Options Overlay</strong></a>
+        <p class="start-here-why">The per-run overlay every workflow invocation rides on; defines tags, metadata, recursion limits.</p>
+      </div>
+    </li>
+    <li>
+      <span class="start-here-step">04</span>
+      <div class="start-here-body">
+        <a href="./stream-modes.html"><strong>SSE Stream Modes</strong></a>
+        <p class="start-here-why">How a run&#39;s state surfaces back to the caller — values, updates, messages, debug.</p>
+      </div>
+    </li>
+    <li>
+      <span class="start-here-step">05</span>
+      <div class="start-here-body">
+        <a href="./webhooks.html"><strong>Webhook Subscriptions</strong></a>
+        <p class="start-here-why">HMAC-signed server-to-server delivery for the same canonical event log.</p>
+      </div>
+    </li>
+  </ol>
+</section>
+<section class="spec-group">
+  <h2 id="surface">Surface</h2>
   <p class="spec-group-lede">What OpenWOP is, what it isn't, and how a host advertises its surface.</p>
   <ul class="spec-group-list">
     <li>
@@ -188,8 +226,8 @@
   </ul>
 </section>
 <section class="spec-group">
-  <h2 id="runtime">Run lifecycle & state</h2>
-  <p class="spec-group-lede">How a run starts, streams, suspends, resumes, replays, and ends.</p>
+  <h2 id="lifecycle">Run lifecycle</h2>
+  <p class="spec-group-lede">How a run starts, streams, suspends, resumes, replays, and ends — including humans-in-the-loop.</p>
   <ul class="spec-group-list">
     <li>
       <a href="./run-options.html"><strong>Per-Run Options Overlay</strong></a>
@@ -221,10 +259,20 @@
       <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">Without stream modes, an SSE endpoint emits every engine event undifferentiated — UI, debugger, automation, and agent consumers all see the same stream and have to filter…</p>
     </li>
+    <li>
+      <a href="./interrupt.html"><strong>HITL Interrupt Primitive</strong></a>
+      <span class="spec-item-status">Stable · v1</span>
+      <p class="spec-item-desc">Workflow execution often needs to pause for input from outside the engine: human approval, AI clarification, an external event (webhook, scheduled time, message arrival). Without…</p>
+    </li>
+    <li>
+      <a href="./interrupt-profiles.html"><strong>Interrupt Profiles</strong></a>
+      <span class="spec-item-status">Stable · v1</span>
+      <p class="spec-item-desc">interrupt.md standardizes durable suspend/resume for approvals, clarifications, edits, and external events. Production workflows often need richer policies: more than one…</p>
+    </li>
   </ul>
 </section>
 <section class="spec-group">
-  <h2 id="agents">Agents & multi-agent execution</h2>
+  <h2 id="agents">Agents</h2>
   <p class="spec-group-lede">Agent identity, memory, multi-agent execution model, envelope shapes.</p>
   <ul class="spec-group-list">
     <li>
@@ -260,24 +308,29 @@
   </ul>
 </section>
 <section class="spec-group">
-  <h2 id="humans">Humans in the loop</h2>
-  <p class="spec-group-lede">Interrupt the run for a human; resume when the answer arrives.</p>
+  <h2 id="packs">Packs</h2>
+  <p class="spec-group-lede">Signed packs of reusable nodes, workflow-chain packs, and the registry that serves them.</p>
   <ul class="spec-group-list">
     <li>
-      <a href="./interrupt.html"><strong>HITL Interrupt Primitive</strong></a>
+      <a href="./node-packs.html"><strong>Node Packs and the Public Registry</strong></a>
       <span class="spec-item-status">Stable · v1</span>
-      <p class="spec-item-desc">Workflow execution often needs to pause for input from outside the engine: human approval, AI clarification, an external event (webhook, scheduled time, message arrival). Without…</p>
+      <p class="spec-item-desc">Workflows in v1 are written against a fixed set of core.* node typeIds. Every implementation re-implements the same nodes (AI prompt calls, approval gates, HTTP fetches) because…</p>
     </li>
     <li>
-      <a href="./interrupt-profiles.html"><strong>Interrupt Profiles</strong></a>
+      <a href="./workflow-chain-packs.html"><strong>Workflow-Chain Packs</strong></a>
+      <span class="spec-item-status">DRAFT · 2026-05-17</span>
+      <p class="spec-item-desc">Node packs (node-packs.md) distribute executable typeIds — each pack contributes one or more defineNode() implementations the engine dispatches at run time. A parallel class of…</p>
+    </li>
+    <li>
+      <a href="./registry-operations.html"><strong>Node-Pack Registry Operations</strong></a>
       <span class="spec-item-status">Stable · v1</span>
-      <p class="spec-item-desc">interrupt.md standardizes durable suspend/resume for approvals, clarifications, edits, and external events. Production workflows often need richer policies: more than one…</p>
+      <p class="spec-item-desc">node-packs.md defines the pack manifest shape, the registry HTTP API, and the trust-model layers an engine consumer SHOULD support. What it doesn&#39;t specify is the operator side of…</p>
     </li>
   </ul>
 </section>
 <section class="spec-group">
-  <h2 id="transports">Wire transports</h2>
-  <p class="spec-group-lede">REST, signed webhooks, gRPC, CloudEvents — the wire shapes carrying the protocol.</p>
+  <h2 id="wire">Wire & auth</h2>
+  <p class="spec-group-lede">REST, signed webhooks, gRPC, CloudEvents, plus auth profiles, BYOK secret resolution, and redaction.</p>
   <ul class="spec-group-list">
     <li>
       <a href="./rest-endpoints.html"><strong>REST Endpoint Catalog</strong></a>
@@ -296,15 +349,9 @@
     </li>
     <li>
       <a href="./cloudevents-mapping.html"><strong>OpenWOP → CloudEvents Mapping (non-normative)</strong></a>
-      <span class="spec-item-status">DRAFT (non-normative addendum, 2026-05-15)</span>
+      <span class="spec-item-status">DRAFT · non-normative addendum, 2026-05-15</span>
       <p class="spec-item-desc">This document does NOT change the native OpenWOP event log shape (schemas/run-event.schema.json + schemas/run-event-payloads.schema.json). It defines a one-way projection from…</p>
     </li>
-  </ul>
-</section>
-<section class="spec-group">
-  <h2 id="security">Auth & security</h2>
-  <p class="spec-group-lede">API keys, OAuth2, OIDC, mTLS, BYOK secret resolution, redaction.</p>
-  <ul class="spec-group-list">
     <li>
       <a href="./auth.html"><strong>Authentication and Authorization</strong></a>
       <span class="spec-item-status">Stable · v1</span>
@@ -318,29 +365,8 @@
   </ul>
 </section>
 <section class="spec-group">
-  <h2 id="ecosystem">Node packs & registry</h2>
-  <p class="spec-group-lede">Signed packs of reusable nodes + the registry that serves them.</p>
-  <ul class="spec-group-list">
-    <li>
-      <a href="./node-packs.html"><strong>Node Packs and the Public Registry</strong></a>
-      <span class="spec-item-status">Stable · v1</span>
-      <p class="spec-item-desc">Workflows in v1 are written against a fixed set of core.* node typeIds. Every implementation re-implements the same nodes (AI prompt calls, approval gates, HTTP fetches) because…</p>
-    </li>
-    <li>
-      <a href="./workflow-chain-packs.html"><strong>Workflow-Chain Packs</strong></a>
-      <span class="spec-item-status">DRAFT (2026-05-17)</span>
-      <p class="spec-item-desc">Node packs (node-packs.md) distribute executable typeIds — each pack contributes one or more defineNode() implementations the engine dispatches at run time. A parallel class of…</p>
-    </li>
-    <li>
-      <a href="./registry-operations.html"><strong>Node-Pack Registry Operations</strong></a>
-      <span class="spec-item-status">Stable · v1</span>
-      <p class="spec-item-desc">node-packs.md defines the pack manifest shape, the registry HTTP API, and the trust-model layers an engine consumer SHOULD support. What it doesn&#39;t specify is the operator side of…</p>
-    </li>
-  </ul>
-</section>
-<section class="spec-group">
-  <h2 id="production">Production posture & operations</h2>
-  <p class="spec-group-lede">The production profile, scale profiles, debug bundles, observability.</p>
+  <h2 id="conformance">Conformance, ops & integration</h2>
+  <p class="spec-group-lede">Production posture, scale profiles, observability, debug bundles, and how OpenWOP composes with MCP, A2A, and adjacent ecosystems.</p>
   <ul class="spec-group-list">
     <li>
       <a href="./production-profile.html"><strong>Production Profile</strong></a>
@@ -372,12 +398,16 @@
       <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">A host implementing openwop often needs to expose product-specific concepts that aren&#39;t part of the protocol — workspaces, projects, canvases, custom node types, vendor analytics.…</p>
     </li>
-  </ul>
-</section>
-<section class="spec-group">
-  <h2 id="integration">Integration with adjacent protocols</h2>
-  <p class="spec-group-lede">How OpenWOP composes with MCP, A2A, and the surrounding ecosystem.</p>
-  <ul class="spec-group-list">
+    <li>
+      <a href="./host-sample-test-seams.html"><strong>Host-sample test seams</strong></a>
+      <span class="spec-item-status">Stable · v1</span>
+      <p class="spec-item-desc">OpenWOP&#39;s conformance suite verifies behavioral contracts that v1 cannot probe through the production wire surface alone. Examples:</p>
+    </li>
+    <li>
+      <a href="./compliance.html"><strong>Compliance Vocabulary</strong></a>
+      <span class="spec-item-status">Stable · v1</span>
+      <p class="spec-item-desc">Operators in regulated industries (financial services, healthcare, public sector, EU-resident services) evaluate every infrastructure choice through compliance lenses. &quot;Does…</p>
+    </li>
     <li>
       <a href="./mcp-integration.html"><strong>MCP Integration</strong></a>
       <span class="spec-item-status">Stable · v1</span>
@@ -389,25 +419,9 @@
       <p class="spec-item-desc">openwop is not in the agent-to-agent message-exchange business. A2A is. The two protocols compose along orthogonal axes:</p>
     </li>
     <li>
-      <a href="./compliance.html"><strong>Compliance Vocabulary</strong></a>
-      <span class="spec-item-status">Stable · v1</span>
-      <p class="spec-item-desc">Operators in regulated industries (financial services, healthcare, public sector, EU-resident services) evaluate every infrastructure choice through compliance lenses. &quot;Does…</p>
-    </li>
-    <li>
       <a href="./i18n.html"><strong>Internationalization (i18n) and Locale</strong></a>
       <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">openwop is increasingly deployed in workspaces with non-English-speaking end users:</p>
-    </li>
-  </ul>
-</section>
-<section class="spec-group">
-  <h2 id="other">Other reference material</h2>
-  <p class="spec-group-lede">Specs not grouped elsewhere. New additions land here until categorized.</p>
-  <ul class="spec-group-list">
-    <li>
-      <a href="./host-sample-test-seams.html"><strong>Host-sample test seams</strong></a>
-      <span class="spec-item-status">Stable · v1</span>
-      <p class="spec-item-desc">OpenWOP&#39;s conformance suite verifies behavioral contracts that v1 cannot probe through the production wire surface alone. Examples:</p>
     </li>
   </ul>
 </section></article></div><script src="/assets/spec-toc.js" defer></script>

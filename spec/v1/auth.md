@@ -2,11 +2,13 @@
 
 > **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of the bearer-token auth model, scope vocabulary, and the canonical 401/403 error envelope (now backed by `schemas/error-envelope.schema.json` per JS5). Not yet final: OAuth 2.0, mTLS, key rotation, and webhook HMAC remain in "Open spec gaps" — but the stable surface (API key + scopes + error envelope) is comprehensive enough for SDK + conformance authoring. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 >
-> **Status legend** (used across all spec/v1/*.md):
-> - **STUB** — minimal coverage, only stable surfaces. Implementers SHOULD pin only to what's written; assume gaps.
-> - **DRAFT** — comprehensive coverage of stable + in-flight surfaces, but not yet reviewed by spec committee.
-> - **OUTLINE** — sketched but not detailed. Section headings lock; field schemas may shift.
-> - **Stable** — frozen wire surface under v1.x. Breaking changes go to v2. (Earlier revisions of this corpus used the label **FINAL**; the two are synonymous.)
+> **Status legend** (used across all spec/v1/*.md). Full policy at [/governance/spec-status/](/governance/spec-status/):
+> - **Stable** — frozen wire surface under v1.x. Required fields, event payloads, endpoint contracts, and package names cannot change without a v2.
+> - **Stabilizing** — comprehensive coverage; required-field set and endpoint shapes locked, but optional fields and behavior coverage are still landing additively.
+> - **Draft** — open comment window. Section headings and broad shape are stable, but field schemas and event payloads MAY shift on each weekly RFC roll-up.
+> - **Experimental** — sketched coverage of an in-flight surface. Implementers SHOULD pin only to what is explicitly written; assume gaps and breaking shape changes inside v1.x. Hosts MUST NOT advertise an Experimental capability via `/.well-known/openwop` outside of an explicit opt-in profile.
+>
+> Earlier revisions of this corpus used **FINAL**, **STUB**, **DRAFT**, **OUTLINE** as legend labels. The four-tier vocabulary above is the canonical replacement; **Stable ↔ FINAL** is the only direct synonym.
 
 ---
 

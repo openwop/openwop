@@ -518,9 +518,14 @@ function buildSpecDocs() {
       <h1>${escapeHtml(displayTitle)}</h1>
       <p class="lede">${escapeHtml(docDescription)}</p>
     </header>`;
-    const articleHtml = `<article class="spec-doc">${markdownToHtml(md)}</article>`;
-    const content = pageHeader + wrapWithToc(articleHtml, extractToc(md));
+    // Per-doc "Edit this page on GitHub" footer. Lands as the
+    // last block inside the article column so it sits below the prose but
+    // inside the wrapWithToc grid (sticky sidebar still applies).
     const slug = f.replace(/\.md$/, '');
+    const editUrl = `${REPO_URL}/edit/main/spec/v1/${f}`;
+    const editFooter = `<footer class="doc-edit"><a href="${editUrl}" rel="noopener">Edit this page on GitHub <span class="arrow">↗</span></a></footer>`;
+    const articleHtml = `<article class="spec-doc">${markdownToHtml(md)}${editFooter}</article>`;
+    const content = pageHeader + wrapWithToc(articleHtml, extractToc(md));
     const canonicalPath = `/spec/v1/${slug}.html`;
     const jsonLd = {
       '@context': 'https://schema.org',
@@ -556,7 +561,14 @@ function buildSpecDocs() {
     const status = /^>\s*\*\*Status:\s*([^.]+)/m.exec(md);
     const desc = extractFirstParagraph(md) ?? '';
     const shortDesc = desc.length > 180 ? desc.slice(0, 180).replace(/\s+\S*$/, '') + '…' : desc;
-    return { slug, title, status: status ? status[1].trim() : '?', desc: shortDesc };
+    // Unify the rendered status badge to `Stable · v1.1 · YYYY-MM-DD`.
+    // Source markdown writes `Stable · v1.1 (YYYY-MM-DD)` — rewrite the
+    // parens-wrapped date as a `·`-separated suffix at render time so the
+    // .md files keep their human-friendly form and the index gets a uniform
+    // chip-style badge.
+    const rawStatus = status ? status[1].trim() : '?';
+    const niceStatus = rawStatus.replace(/\s*\(([^)]+)\)\s*$/, ' · $1');
+    return { slug, title, status: niceStatus, desc: shortDesc };
   });
 
   // Conceptual grouping. Order is intentional: foundation → runtime → agents →
@@ -569,60 +581,47 @@ function buildSpecDocs() {
   // so HTML entities like `&amp;` MUST be pre-escaped here. Plain markdown-doc
   // titles emitted via `buildMarkdownDoc({ pageTitle })` go through escapeHtml
   // at render time and must use a bare `&` — do NOT pre-escape those.
+  // Collapsed from 9 thematic groups to 6 to reduce decision
+  // overhead on the index. Order: surface → lifecycle → agents → packs &
+  // registry → wire & security → conformance & integration. The "Start
+  // here" card above the groups gives first-time readers an explicit
+  // 5-doc reading path.
   const GROUPS = [
     {
-      key: 'foundation',
-      title: 'Foundation',
+      key: 'surface',
+      title: 'Surface',
       lede: 'What OpenWOP is, what it isn\'t, and how a host advertises its surface.',
       slugs: ['positioning', 'capabilities', 'host-capabilities', 'profiles', 'capabilities-change-detection'],
     },
     {
-      key: 'runtime',
-      title: 'Run lifecycle & state',
-      lede: 'How a run starts, streams, suspends, resumes, replays, and ends.',
-      slugs: ['run-options', 'replay', 'idempotency', 'channels-and-reducers', 'version-negotiation', 'stream-modes'],
+      key: 'lifecycle',
+      title: 'Run lifecycle',
+      lede: 'How a run starts, streams, suspends, resumes, replays, and ends — including humans-in-the-loop.',
+      slugs: ['run-options', 'replay', 'idempotency', 'channels-and-reducers', 'version-negotiation', 'stream-modes', 'interrupt', 'interrupt-profiles'],
     },
     {
       key: 'agents',
-      title: 'Agents & multi-agent execution',
+      title: 'Agents',
       lede: 'Agent identity, memory, multi-agent execution model, envelope shapes.',
       slugs: ['agent-memory', 'agent-ref-positioning', 'multi-agent-execution', 'ai-envelope', 'structured-output-subset', 'prompts'],
     },
     {
-      key: 'humans',
-      title: 'Humans in the loop',
-      lede: 'Interrupt the run for a human; resume when the answer arrives.',
-      slugs: ['interrupt', 'interrupt-profiles'],
-    },
-    {
-      key: 'transports',
-      title: 'Wire transports',
-      lede: 'REST, signed webhooks, gRPC, CloudEvents — the wire shapes carrying the protocol.',
-      slugs: ['rest-endpoints', 'webhooks', 'grpc-transport', 'cloudevents-mapping'],
-    },
-    {
-      key: 'security',
-      title: 'Auth & security',
-      lede: 'API keys, OAuth2, OIDC, mTLS, BYOK secret resolution, redaction.',
-      slugs: ['auth', 'auth-profiles'],
-    },
-    {
-      key: 'ecosystem',
-      title: 'Node packs & registry',
-      lede: 'Signed packs of reusable nodes + the registry that serves them.',
+      key: 'packs',
+      title: 'Packs',
+      lede: 'Signed packs of reusable nodes, workflow-chain packs, and the registry that serves them.',
       slugs: ['node-packs', 'workflow-chain-packs', 'registry-operations'],
     },
     {
-      key: 'production',
-      title: 'Production posture & operations',
-      lede: 'The production profile, scale profiles, debug bundles, observability.',
-      slugs: ['production-profile', 'scale-profiles', 'debug-bundle', 'observability', 'storage-adapters', 'host-extensions'],
+      key: 'wire',
+      title: 'Wire & auth',
+      lede: 'REST, signed webhooks, gRPC, CloudEvents, plus auth profiles, BYOK secret resolution, and redaction.',
+      slugs: ['rest-endpoints', 'webhooks', 'grpc-transport', 'cloudevents-mapping', 'auth', 'auth-profiles'],
     },
     {
-      key: 'integration',
-      title: 'Integration with adjacent protocols',
-      lede: 'How OpenWOP composes with MCP, A2A, and the surrounding ecosystem.',
-      slugs: ['mcp-integration', 'a2a-integration', 'compliance', 'i18n'],
+      key: 'conformance',
+      title: 'Conformance, ops & integration',
+      lede: 'Production posture, scale profiles, observability, debug bundles, and how OpenWOP composes with MCP, A2A, and adjacent ecosystems.',
+      slugs: ['production-profile', 'scale-profiles', 'debug-bundle', 'observability', 'storage-adapters', 'host-extensions', 'host-sample-test-seams', 'compliance', 'mcp-integration', 'a2a-integration', 'i18n'],
     },
   ];
 
@@ -655,25 +654,58 @@ function buildSpecDocs() {
 </section>`;
   }).join('\n');
 
+  // Phase 3.1: "Start here" reading-order card. Five docs, in order, that
+  // a first-time reader should consume to ground every later doc in the
+  // corpus. Sits above the thematic groups so it's the first thing in the
+  // article column. Anchor `start-here` participates in the on-this-page
+  // sidebar so it's reachable from the sticky ToC too.
+  const READING_ORDER = [
+    { slug: 'positioning',   why: 'What OpenWOP is — and explicitly is not — relative to MCP, A2A, and managed orchestrators.' },
+    { slug: 'capabilities',  why: 'How a host advertises which surfaces it implements; the negotiation contract every client uses.' },
+    { slug: 'run-options',   why: 'The per-run overlay every workflow invocation rides on; defines tags, metadata, recursion limits.' },
+    { slug: 'stream-modes',  why: 'How a run\'s state surfaces back to the caller — values, updates, messages, debug.' },
+    { slug: 'webhooks',      why: 'HMAC-signed server-to-server delivery for the same canonical event log.' },
+  ];
+  const startHereHtml = `<section class="spec-group start-here">
+  <h2 id="start-here">Start here</h2>
+  <p class="spec-group-lede">Five docs, in this order, ground everything else. New to the corpus? Read these top-to-bottom before browsing the thematic groups below.</p>
+  <ol class="start-here-list">
+    ${READING_ORDER.map((r, idx) => {
+      const item = itemBySlug.get(r.slug);
+      if (!item) return '';
+      return `<li>
+      <span class="start-here-step">${String(idx + 1).padStart(2, '0')}</span>
+      <div class="start-here-body">
+        <a href="./${item.slug}.html"><strong>${escapeHtml(item.title)}</strong></a>
+        <p class="start-here-why">${escapeHtml(r.why)}</p>
+      </div>
+    </li>`;
+    }).filter(Boolean).join('\n    ')}
+  </ol>
+</section>`;
+
   // Build a ToC that matches the standard `wrapWithToc()` shape so the
   // /spec/v1/ index page uses the same sticky left-rail "On this page"
   // sidebar pattern as every other long-form page. Each thematic group
   // header is an <h2 id="${g.key}"> in groupsHtml, so the slug aligns
-  // with the heading anchor.
-  const indexToc = GROUPS
-    .filter((g) => g.slugs.some((s) => itemBySlug.has(s)))
-    .map((g) => ({ level: 2, text: g.title, slug: g.key }));
+  // with the heading anchor. The Start-here card prepends an entry.
+  const indexToc = [
+    { level: 2, text: 'Start here', slug: 'start-here' },
+    ...GROUPS
+      .filter((g) => g.slugs.some((s) => itemBySlug.has(s)))
+      .map((g) => ({ level: 2, text: g.title, slug: g.key })),
+  ];
 
   // Page-header sits ABOVE the wrapWithToc grid so the title + lede
   // stretch full-width above the "On this page" sidebar — matching the
   // changelog/roadmap/etc. pattern. The article column inside the grid
-  // only contains the thematic-group sections.
+  // contains the Start-here card followed by the thematic-group sections.
   const indexPageHeader = `<header class="page-header">
       <h1>OpenWOP v1 spec corpus</h1>
       <p class="lede">${items.length} prose specs governing the v1 wire contract. Each section below groups specs by what they do; click through for the normative text.</p>
-      <p class="meta">Status legend: <strong>Stable</strong> · DRAFT · OUTLINE · STUB. A spec is Stable when its wire shape is locked under v1.x compatibility rules. (Older revisions labelled the same tier <strong>FINAL</strong>.)</p>
+      <p class="meta">Status legend: <strong>Stable</strong> · Stabilizing · Draft · Experimental. A spec is Stable when its wire shape is locked under v1.x compatibility rules. See <a href="/governance/spec-status/">spec-status policy</a>.</p>
     </header>`;
-  const indexArticleHtml = `<article class="spec-doc">${groupsHtml}</article>`;
+  const indexArticleHtml = `<article class="spec-doc">${startHereHtml}\n${groupsHtml}</article>`;
   const indexContent = indexPageHeader + wrapWithToc(indexArticleHtml, indexToc);
 
   writeFileSync(
@@ -897,16 +929,125 @@ function buildMarkdownDoc({ srcAbsPath, destPath, pageTitle, lede, navActive, ca
   console.log(`[openwop-site] wrote ${slugLabel}`);
 }
 
+// Changelog renderer with per-version chunking + version rail.
+// CHANGELOG.md is a single ~2400-line doc; rendering it as one monolithic
+// page makes "what shipped in 1.1.1?" a Ctrl-F problem. The renderer:
+//   1. Parses every `## [version]` heading as a chunk boundary.
+//   2. Renders each chunk's markdown body independently via markdownToHtml.
+//   3. Wraps each chunk in a `<section class="changelog-version">` with
+//      a styled `<header>` showing version + release date.
+//   4. Builds a version-only sticky left rail (skipping the noisy H3s the
+//      generic ToC would otherwise emit).
+//   5. Emits a "Latest release" callout at the top of the article column.
+// The `[Unreleased]` section, if present at the very top, is rendered first
+// without a release-date chip (the rail labels it "Unreleased").
 function buildChangelog() {
-  buildMarkdownDoc({
-    srcAbsPath: join(ROOT, 'CHANGELOG.md'),
-    destPath: join(DIST, 'changelog', 'index.html'),
-    pageTitle: 'Changelog',
-    lede: 'Versioned record of every change to the OpenWOP spec corpus, schemas, SDKs, and reference hosts. Additive evolution only within v1.x per COMPATIBILITY.md.',
-    navActive: 'changelog',
-    canonicalPath: '/changelog/',
-    slugLabel: 'changelog/index.html',
-  });
+  const srcAbsPath = join(ROOT, 'CHANGELOG.md');
+  if (!existsSync(srcAbsPath)) return;
+  const md = readFile(srcAbsPath);
+
+  // Pull intro prose (everything between the H1 and the first `## [`).
+  const introMatch = /^# .+?\n([\s\S]*?)(?=^## \[)/m.exec(md);
+  const introMd = introMatch ? introMatch[1].trim() : '';
+  const introHtml = introMd ? markdownToHtml(introMd) : '';
+
+  // Split into version chunks. Heading shape:
+  //   ## [1.1.3 — unreleased] — coordinated SDK release …
+  //   ## [1.1.1] — 2026-05-15 — post-1.1.0 additive cleanup …
+  // Capture: full version label inside brackets, optional date, headline.
+  const chunkRe = /^## \[([^\]]+)\][^\n]*\n/gm;
+  const chunks = [];
+  const matches = [...md.matchAll(chunkRe)];
+  for (let idx = 0; idx < matches.length; idx++) {
+    const m = matches[idx];
+    const headingLine = md.slice(m.index, md.indexOf('\n', m.index));
+    const bodyStart = md.indexOf('\n', m.index) + 1;
+    const bodyEnd = idx + 1 < matches.length ? matches[idx + 1].index : md.length;
+    const body = md.slice(bodyStart, bodyEnd).trim();
+    // Pull the version label, optional release date, and headline.
+    const headingInner = headingLine.replace(/^## /, '');
+    const versionRaw = m[1].trim();
+    // Versions like `1.1.3 — unreleased` carry the date inline; strip the
+    // suffix to get the SemVer for slugging and the rail label.
+    const version = versionRaw.split(/[\s—-]+/)[0];
+    const isUnreleased = /unreleased/i.test(versionRaw);
+    // Look for an explicit ISO date after the bracket: `… ] — 2026-05-15 — …`
+    const dateMatch = /\]\s*[—-]\s*(\d{4}-\d{2}-\d{2})/.exec(headingLine);
+    const date = dateMatch ? dateMatch[1] : (isUnreleased ? '' : '');
+    // Headline = whatever follows the second em-dash (or the bracket end).
+    const headline = headingInner
+      .replace(/^\[[^\]]+\]\s*[—-]?\s*/, '')
+      .replace(/^\d{4}-\d{2}-\d{2}\s*[—-]?\s*/, '')
+      .trim();
+    const slug = `v${version.replace(/\./g, '-')}${isUnreleased ? '-unreleased' : ''}`;
+    chunks.push({ version, versionRaw, isUnreleased, date, headline, body, slug });
+  }
+
+  // Render each chunk's body. The body still contains H3+ subheadings;
+  // markdownToHtml emits them with anchor IDs, so deep-links into a
+  // specific entry inside a release continue to work.
+  const versionsHtml = chunks
+    .map((c) => {
+      const bodyHtml = markdownToHtml(c.body);
+      const dateChip = c.date
+        ? `<span class="changelog-version-date">${escapeHtml(c.date)}</span>`
+        : (c.isUnreleased ? `<span class="changelog-version-date is-unreleased">Unreleased</span>` : '');
+      return `<section class="changelog-version" id="${c.slug}">
+  <header class="changelog-version-head">
+    <h2><a href="#${c.slug}">${escapeHtml(c.version)}${c.isUnreleased ? ' · unreleased' : ''}</a></h2>
+    ${dateChip}
+    ${c.headline ? `<p class="changelog-version-headline">${escapeHtml(c.headline)}</p>` : ''}
+  </header>
+  <div class="changelog-version-body">
+    ${bodyHtml}
+  </div>
+</section>`;
+    })
+    .join('\n');
+
+  // "Latest release" card = the first non-unreleased chunk. Falls back to
+  // the very first chunk if everything is unreleased (shouldn't happen but
+  // defensive).
+  const latest = chunks.find((c) => !c.isUnreleased) || chunks[0];
+  const latestCard = latest
+    ? `<aside class="changelog-latest" aria-label="Latest release">
+    <span class="changelog-latest-tag">Latest release</span>
+    <h2><a href="#${latest.slug}">${escapeHtml(latest.version)}</a></h2>
+    ${latest.date ? `<p class="changelog-latest-date">Released ${escapeHtml(latest.date)}</p>` : ''}
+    ${latest.headline ? `<p class="changelog-latest-headline">${escapeHtml(latest.headline)}</p>` : ''}
+  </aside>`
+    : '';
+
+  // Version-only ToC (skip the noisy H3s the generic extractor would emit).
+  const versionToc = chunks.map((c) => ({
+    level: 2,
+    text: `${c.version}${c.isUnreleased ? ' · unreleased' : (c.date ? ` · ${c.date}` : '')}`,
+    slug: c.slug,
+  }));
+
+  const pageHeader = `<header class="page-header">
+    <h1>Changelog</h1>
+    <p class="lede">Versioned record of every change to the OpenWOP spec corpus, schemas, SDKs, and reference hosts. Additive evolution only within v1.x per <a href="https://github.com/openwop/openwop/blob/main/COMPATIBILITY.md">COMPATIBILITY.md</a>.</p>
+  </header>`;
+  const articleHtml = `<article class="spec-doc changelog-page">
+    ${latestCard}
+    ${introHtml}
+    ${versionsHtml}
+  </article>`;
+  const content = pageHeader + wrapWithToc(articleHtml, versionToc, { tocTitle: 'Releases' });
+
+  ensureDir(join(DIST, 'changelog'));
+  writeFileSync(
+    join(DIST, 'changelog', 'index.html'),
+    templatePage({
+      title: 'OpenWOP — Changelog',
+      content,
+      navActive: 'changelog',
+      description: `Per-version record of every change to the OpenWOP spec corpus, schemas, SDKs, and reference hosts. ${chunks.length} versions tracked.`,
+      canonicalPath: '/changelog/',
+    }),
+  );
+  console.log(`[openwop-site] wrote changelog/index.html (${chunks.length} versions)`);
 }
 
 function buildRoadmap() {
@@ -995,12 +1136,36 @@ function buildQuickstartPage() {
 
 // ── RFC corpus ─────────────────────────────────────────────────────────
 
+// Phase 3.2: heuristic topic classifier. Maps an RFC title (and optional
+// slug) to one of a small fixed set of topic chips. Keep the buckets short
+// — the goal is "what is this RFC mostly about" at a glance, not exact
+// taxonomy. Order matters: first match wins.
+function classifyRfcTopic(title, slug = '') {
+  const t = (title + ' ' + slug).toLowerCase();
+  const rules = [
+    { topic: 'Agent',           re: /\b(agent|memory|conversation|orchestrator|dispatch|reasoning|handoff|tool[- ]?call)\b/ },
+    { topic: 'Auth',            re: /\b(auth|oauth|oidc|mtls|byok|secret|token|scope|jwt)\b/ },
+    { topic: 'Host capability', re: /\b(host[- ]?(?:fs|kv|queue|bus|sql|blob|cache|table|vector|capability))\b/ },
+    { topic: 'Conformance',     re: /\b(conformance|compliance|honest[- ]?claim)\b/ },
+    { topic: 'Governance',      re: /\b(governance|process|rfc[- ]?process|maintain|steward)\b/ },
+    { topic: 'Composition',     re: /\b(workflow|pack|chain|registry|node[- ]?pack|composition)\b/ },
+    { topic: 'Envelope',        re: /\b(envelope|schema|cloudevent|trace|telemetry|observab)\b/ },
+    { topic: 'Interrupt',       re: /\b(interrupt|escalation|hitl|human[- ]?in[- ]?the[- ]?loop)\b/ },
+    { topic: 'Transport',       re: /\b(transport|grpc|webhook|sse|rest|websocket)\b/ },
+  ];
+  for (const r of rules) if (r.re.test(t)) return r.topic;
+  return 'Other';
+}
+
 function buildRfcs() {
   const rfcDir = join(ROOT, 'RFCS');
   if (!existsSync(rfcDir)) {
     console.log('[openwop-site] no RFCS/ — skipping');
     return;
   }
+  // 0000-template.md is the RFC author's template, not a real
+  // RFC — it's still rendered as a standalone page so contributors can
+  // link to it, but is filtered out of the index list (and chip counts).
   const files = readdirSync(rfcDir).filter((f) => /^\d{4}-.+\.md$/.test(f)).sort();
   ensureDir(join(DIST, 'rfcs'));
 
@@ -1024,7 +1189,9 @@ function buildRfcs() {
       <h1>${escapeHtml(title)}</h1>
       <p class="lede">${escapeHtml(description)}</p>
     </header>`;
-    const articleHtml = `<article class="spec-doc">${markdownToHtml(md)}</article>`;
+    const editUrl = `${REPO_URL}/edit/main/RFCS/${f}`;
+    const editFooter = `<footer class="doc-edit"><a href="${editUrl}" rel="noopener">Edit this page on GitHub <span class="arrow">↗</span></a></footer>`;
+    const articleHtml = `<article class="spec-doc">${markdownToHtml(md)}${editFooter}</article>`;
     const content = pageHeader + wrapWithToc(articleHtml, extractToc(md));
     writeFileSync(
       join(DIST, 'rfcs', `${slug}.html`),
@@ -1036,20 +1203,104 @@ function buildRfcs() {
         canonicalPath: `/rfcs/${slug}.html`,
       }),
     );
-    items.push({ slug, title, status: status ? status[1].trim() : '?' });
+    items.push({
+      slug,
+      title,
+      status: status ? status[1].trim() : '?',
+      topic: classifyRfcTopic(title, slug),
+      isTemplate: /^0000-template$/i.test(slug) || /^RFC NNNN/i.test(title),
+    });
   }
+
+  // Hide the RFC template from the default list. It still has a
+  // rendered page (so links from RFCS/0000-template.md continue to work),
+  // but the index doesn't surface it as a real RFC.
+  const indexItems = items.filter((i) => !i.isTemplate);
+
+  // Status chips show counts of the canonical lifecycle states. The "All"
+  // chip shows the full filtered (template-stripped) total. Any RFC whose
+  // status doesn't match one of the canonical buckets falls under "Other".
+  const STATUS_BUCKETS = ['Draft', 'Active', 'Accepted', 'Withdrawn', 'Superseded'];
+  const statusKey = (s) => {
+    const lower = s.toLowerCase();
+    for (const b of STATUS_BUCKETS) if (lower.includes(b.toLowerCase())) return b;
+    return 'Other';
+  };
+  const allBuckets = [...STATUS_BUCKETS, 'Other'];
+  const statusCounts = Object.fromEntries(allBuckets.map((b) => [b, 0]));
+  for (const i of indexItems) statusCounts[statusKey(i.status)]++;
+
+  const chipHtml = `
+    <button class="rfc-chip is-active" type="button" data-rfc-status="all">All <span class="rfc-chip-count">${indexItems.length}</span></button>
+    ${allBuckets
+      .filter((b) => statusCounts[b] > 0)
+      .map((b) => `<button class="rfc-chip" type="button" data-rfc-status="${b}">${b} <span class="rfc-chip-count">${statusCounts[b]}</span></button>`)
+      .join('\n    ')}
+  `;
+
+  const tableRowsHtml = indexItems
+    .map((i) => `<tr data-rfc-status="${escapeHtml(statusKey(i.status))}" data-rfc-topic="${escapeHtml(i.topic)}" data-rfc-title="${escapeHtml(i.title.toLowerCase())}">
+      <td><a href="./${i.slug}.html">${escapeHtml(i.title)}</a></td>
+      <td><span class="rfc-topic-tag">${escapeHtml(i.topic)}</span></td>
+      <td>${escapeHtml(i.status)}</td>
+    </tr>`)
+    .join('\n');
+
+  // Inline filter script. Wires the status chips, the search input, and
+  // the per-row data-* attributes. No build dependency on a new asset
+  // file (the project's site/ build keeps a zero-runtime-deps invariant).
+  const filterScript = `<script>
+(() => {
+  const root = document.querySelector('.rfc-filter');
+  if (!root) return;
+  const chips = root.querySelectorAll('.rfc-chip');
+  const search = root.querySelector('.rfc-search');
+  const rows = document.querySelectorAll('table.rfc-index tbody tr[data-rfc-status]');
+  const empty = document.querySelector('.rfc-empty');
+  let activeStatus = 'all';
+  const apply = () => {
+    const q = (search.value || '').trim().toLowerCase();
+    let visible = 0;
+    rows.forEach((r) => {
+      const sMatch = activeStatus === 'all' || r.dataset.rfcStatus === activeStatus;
+      const qMatch = !q || (r.dataset.rfcTitle || '').includes(q) || (r.dataset.rfcTopic || '').toLowerCase().includes(q);
+      const show = sMatch && qMatch;
+      r.hidden = !show;
+      if (show) visible++;
+    });
+    if (empty) empty.hidden = visible !== 0;
+  };
+  chips.forEach((c) => {
+    c.addEventListener('click', () => {
+      chips.forEach((x) => x.classList.toggle('is-active', x === c));
+      activeStatus = c.dataset.rfcStatus;
+      apply();
+    });
+  });
+  search.addEventListener('input', apply);
+})();
+</script>`;
 
   const indexContent = `<header class="page-header">
     <h1>OpenWOP RFCs</h1>
-    <p class="lede">${items.length} RFCs governing additive evolution of the v1 protocol. Status legend: Draft (open comment window) → Active (accepted; impl follows) → Accepted (in-tree reference impl + conformance scenarios) → Withdrawn / Superseded.</p>
-    <p class="meta"><strong>v1.1 is the stable wire contract.</strong> RFCs at <em>Draft</em> or <em>Active</em> target <strong>v1.2</strong> (additive) unless the RFC is explicitly labelled <em>Safety fix</em> per <a href="https://github.com/openwop/openwop/blob/main/COMPATIBILITY.md">COMPATIBILITY.md §3</a>. No RFC may land a breaking change inside v1.x.</p>
+    <p class="lede">${indexItems.length} RFCs governing additive evolution of the v1 protocol. Status legend: Draft (open comment window) → Active (accepted; impl follows) → Accepted (in-tree reference impl + conformance scenarios) → Withdrawn / Superseded.</p>
+    <p class="meta"><strong>v1.1 is the stable wire contract.</strong> RFCs at Draft or Active target <strong>v1.2</strong> (additive) unless the RFC is explicitly labelled Safety fix per <a href="https://github.com/openwop/openwop/blob/main/COMPATIBILITY.md">COMPATIBILITY.md §3</a>. No RFC may land a breaking change inside v1.x.</p>
   </header>
-  <table class="spec-index">
-    <thead><tr><th>RFC</th><th>Status</th></tr></thead>
+  <div class="rfc-filter">
+    <div class="rfc-chips" role="group" aria-label="Filter RFCs by status">${chipHtml}</div>
+    <label class="rfc-search-wrap">
+      <span class="visually-hidden">Search RFCs</span>
+      <input type="search" class="rfc-search" placeholder="Search title or topic…" aria-label="Search RFCs" />
+    </label>
+  </div>
+  <table class="spec-index rfc-index">
+    <thead><tr><th>RFC</th><th>Topic</th><th>Status</th></tr></thead>
     <tbody>
-    ${items.map((i) => `<tr><td><a href="./${i.slug}.html">${escapeHtml(i.title)}</a></td><td>${escapeHtml(i.status)}</td></tr>`).join('\n')}
+    ${tableRowsHtml}
     </tbody>
-  </table>`;
+  </table>
+  <p class="rfc-empty" hidden>No RFCs match the current filter.</p>
+  ${filterScript}`;
   writeFileSync(
     join(DIST, 'rfcs', 'index.html'),
     templatePage({
@@ -1082,6 +1333,7 @@ function buildContentDir() {
     { src: 'community.md',                    dest: ['community'],                    nav: 'community',  label: 'Community' },
     { src: 'protocol.md',                     dest: ['protocol'],                     nav: 'protocol',   label: 'The OpenWOP protocol' },
     { src: 'implement.md',                    dest: ['implement'],                    nav: 'implement',  label: 'Implementing OpenWOP' },
+    { src: 'governance/spec-status.md',       dest: ['governance', 'spec-status'],    nav: 'protocol',   label: 'Spec status policy' },
     { src: 'for/workflow-authors.md',         dest: ['for', 'workflow-authors'],      nav: 'implement',  label: 'For workflow authors' },
     { src: 'for/host-implementers.md',        dest: ['for', 'host-implementers'],     nav: 'implement',  label: 'For host implementers' },
     { src: 'for/pack-authors.md',             dest: ['for', 'pack-authors'],          nav: 'implement',  label: 'For pack authors' },

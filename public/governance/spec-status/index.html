@@ -3,22 +3,22 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>OpenWOP — RFC 0016: host.tableStorage capability</title>
-  <meta name="description" content="Adds an optional host.tableStorage capability — a structured-record store with user-defined schemas, query, and count. Sibling to host.kvStorage (RFC 0015) for cases where workflows want column-typed records (Make Data Store with a Data Structure)."/>
-  <link rel="canonical" href="https://openwop.dev/rfcs/0016-host-table-storage-capability.html"/>
+  <title>OpenWOP — Spec status policy</title>
+  <meta name="description" content="The four labels below are the only status tiers a spec document under spec/v1/ may carry. The same vocabulary applies to RFC sections and capability profile claims. They are deliberately ordered from most-stable (top) to most-fluid (bottom)."/>
+  <link rel="canonical" href="https://openwop.dev/governance/spec-status/"/>
 
   <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
   <meta property="og:type" content="website"/>
   <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
-  <meta property="og:title" content="OpenWOP — RFC 0016: host.tableStorage capability"/>
-  <meta property="og:description" content="Adds an optional host.tableStorage capability — a structured-record store with user-defined schemas, query, and count. Sibling to host.kvStorage (RFC 0015) for cases where workflows want column-typed records (Make Data Store with a Data Structure)."/>
-  <meta property="og:url" content="https://openwop.dev/rfcs/0016-host-table-storage-capability.html"/>
+  <meta property="og:title" content="OpenWOP — Spec status policy"/>
+  <meta property="og:description" content="The four labels below are the only status tiers a spec document under spec/v1/ may carry. The same vocabulary applies to RFC sections and capability profile claims. They are deliberately ordered from most-stable (top) to most-fluid (bottom)."/>
+  <meta property="og:url" content="https://openwop.dev/governance/spec-status/"/>
   <meta property="og:image" content="https://openwop.dev/og-default.png"/>
 
   <!-- Twitter card -->
   <meta name="twitter:card" content="summary_large_image"/>
-  <meta name="twitter:title" content="OpenWOP — RFC 0016: host.tableStorage capability"/>
-  <meta name="twitter:description" content="Adds an optional host.tableStorage capability — a structured-record store with user-defined schemas, query, and count. Sibling to host.kvStorage (RFC 0015) for cases where workflows want column-typed records (Make Data Store with a Data Structure)."/>
+  <meta name="twitter:title" content="OpenWOP — Spec status policy"/>
+  <meta name="twitter:description" content="The four labels below are the only status tiers a spec document under spec/v1/ may carry. The same vocabulary applies to RFC sections and capability profile claims. They are deliberately ordered from most-stable (top) to most-fluid (bottom)."/>
   <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
 
   <!-- Icons / theme -->
@@ -139,82 +139,65 @@
 <main class="site-main">
   <div class="wrap">
     <header class="page-header">
-      <h1>RFC 0016: host.tableStorage capability</h1>
-      <p class="lede">Adds an optional host.tableStorage capability — a structured-record store with user-defined schemas, query, and count. Sibling to host.kvStorage (RFC 0015) for cases where workflows want column-typed records (Make Data Store with a Data Structure).</p>
+      <h1>Spec status policy</h1>
+      <p class="lede">The four labels below are the only status tiers a spec document under spec/v1/ may carry. The same vocabulary applies to RFC sections and capability profile claims. They are deliberately ordered from most-stable (top) to most-fluid (bottom).</p>
     </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
     <h4>On this page</h4>
     <ul>
-      <li class="toc-top"><a href="#summary">Summary</a></li>
-      <li class="toc-top"><a href="#motivation">Motivation</a></li>
-      <li class="toc-top"><a href="#proposal">Proposal</a></li>
-      <li class="toc-sub"><a href="#a-capability-schema">§A Capability schema</a></li>
-      <li class="toc-sub"><a href="#b-host-contract-musts">§B Host-contract MUSTs</a></li>
-      <li class="toc-sub"><a href="#c-conformance">§C Conformance</a></li>
-      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
-      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#the-four-tiers">The four tiers</a></li>
+      <li class="toc-sub"><a href="#stable">Stable</a></li>
+      <li class="toc-sub"><a href="#stabilizing">Stabilizing</a></li>
+      <li class="toc-sub"><a href="#draft">Draft</a></li>
+      <li class="toc-sub"><a href="#experimental">Experimental</a></li>
+      <li class="toc-top"><a href="#mapping-from-earlier-vocabulary">Mapping from earlier vocabulary</a></li>
+      <li class="toc-top"><a href="#where-the-label-appears">Where the label appears</a></li>
+      <li class="toc-top"><a href="#promotion-process">Promotion process</a></li>
       <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
-      <li class="toc-top"><a href="#references">References</a></li>
     </ul>
-  </aside><article class="spec-doc"><h1 id="rfc-0016-host-tablestorage-capability">RFC 0016: host.tableStorage capability</h1>
+  </aside><article class="spec-doc"><h1 id="spec-status-policy">Spec status policy</h1>
+<p>The four labels below are the only status tiers a spec document under <code>spec/v1/</code> may carry. The same vocabulary applies to RFC sections and capability profile claims. They are deliberately ordered from most-stable (top) to most-fluid (bottom).</p>
+<h2 id="the-four-tiers">The four tiers</h2>
+<h3 id="stable">Stable</h3>
+<p>The wire surface is frozen under the v1.x compatibility contract. Required fields, endpoint contracts, event payloads, JSON Schema shapes, and SDK package names are locked. A change to a Stable surface is a <strong>breaking change</strong> and SHALL be deferred to v2.</p>
+<p>Hosts MAY advertise Stable surfaces via <code>/.well-known/openwop</code> without any profile gate. Conformance scenarios MUST be runnable against any Stable surface.</p>
+<h3 id="stabilizing">Stabilizing</h3>
+<p>The required-field set and endpoint shapes are locked, but the document is still landing additive expansions — new optional fields, additional event-payload variants, broader behavior coverage. Implementations conforming to a Stabilizing surface SHOULD expect their conformance pass-rate to climb over time as new scenarios land, without their code needing to change.</p>
+<p>A Stabilizing surface MAY graduate to Stable in a minor release once its conformance coverage stops moving. Hosts MAY advertise Stabilizing capabilities via <code>/.well-known/openwop</code> and MUST gate them behind a named profile.</p>
+<h3 id="draft">Draft</h3>
+<p>Section headings, broad surface shape, and the high-level wire contract are stable enough to review and prototype against, but field schemas and event payloads MAY shift on each weekly RFC roll-up. Draft documents typically have an open RFC governing the comment window.</p>
+<p>Implementations against a Draft surface SHALL expect to make code changes when the surface graduates to Stabilizing or Stable. Hosts SHOULD NOT advertise Draft surfaces via <code>/.well-known/openwop</code> outside of explicit experimental opt-in profiles.</p>
+<h3 id="experimental">Experimental</h3>
+<p>The document sketches an in-flight surface — direction set, but neither field shapes nor event payloads are locked. Anything inside an Experimental document MAY break across patch releases. Implementers SHOULD pin only to what is explicitly written and assume gaps everywhere else.</p>
+<p>Hosts MUST NOT advertise an Experimental capability outside of an explicit opt-in profile, and conformance scenarios for an Experimental surface SHALL run as <code>it.todo</code> until the surface graduates.</p>
+<h2 id="mapping-from-earlier-vocabulary">Mapping from earlier vocabulary</h2>
+<p>Earlier revisions of <code>spec/v1/</code> used a five-label system. The replacement mapping is direct:</p>
 <table>
-<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<thead><tr><th>Old label</th><th>New tier</th><th>Notes</th></tr></thead>
 <tbody>
-<tr><td><strong>RFC</strong></td><td>0016</td></tr>
-<tr><td><strong>Title</strong></td><td>host.tableStorage structured record store</td></tr>
-<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
-<tr><td><strong>Author(s)</strong></td><td>OpenWOP Working Group</td></tr>
-<tr><td><strong>Created</strong></td><td>2026-05-17</td></tr>
-<tr><td><strong>Updated</strong></td><td>2026-05-18 (Active → Accepted: all 4 acceptance-criteria items satisfied. <code>capabilities.tableStorage</code> block in schema; <code>spec/v1/host-capabilities.md §host.tableStorage</code> landed at commit c5831fe; SECURITY invariant <code>table-cross-tenant-isolation</code> added at commit c5831fe; 3 scenarios (<code>table-cross-tenant-isolation</code>, <code>table-cursor-pagination</code>, <code>table-schema-enforcement</code>) all behavioral; reference impl advertised in <code>routes/discovery.ts</code> lines 185–192; CHANGELOG entry under <code>[Unreleased]</code>.)</td></tr>
-<tr><td><strong>Affects</strong></td><td><code>spec/v1/host-capabilities.md</code> · <code>schemas/capabilities.schema.json</code> · <code>SECURITY/invariants.yaml</code></td></tr>
-<tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
+<tr><td><strong>FINAL</strong></td><td><strong>Stable</strong></td><td>Direct synonym. Every doc previously labelled FINAL is now Stable.</td></tr>
+<tr><td><strong>DRAFT</strong></td><td><strong>Draft</strong></td><td>Same meaning, different casing — "Draft" everywhere in title-case prose.</td></tr>
+<tr><td><strong>OUTLINE</strong></td><td><strong>Stabilizing</strong></td><td>A locked-but-still-growing surface lands here.</td></tr>
+<tr><td><strong>STUB</strong></td><td><strong>Experimental</strong></td><td>Section headings exist but field schemas may shift.</td></tr>
 </tbody></table>
-<h2 id="summary">Summary</h2>
-<p>Adds an optional <code>host.tableStorage</code> capability — a structured-record store with user-defined schemas, query, and count. Sibling to <code>host.kvStorage</code> (RFC 0015) for cases where workflows want column-typed records (Make Data Store with a Data Structure).</p>
-<h2 id="motivation">Motivation</h2>
-<p><code>host.kvStorage</code> covers opaque-value cases. Many workflows need typed columns (e.g., logging conversation turns, persisting form submissions, cross-run dedupe by a primary key). Building this as a sibling capability keeps both surfaces simple and lets hosts back them with different stores (Redis for kv, Postgres/SQLite for table).</p>
-<h2 id="proposal">Proposal</h2>
-<h3 id="a-capability-schema">§A Capability schema</h3>
-<pre class="lang-json"><code>{
-  &quot;tableStorage&quot;: {
-    &quot;type&quot;: &quot;object&quot;,
-    &quot;properties&quot;: {
-      &quot;supported&quot;: { &quot;type&quot;: &quot;boolean&quot; },
-      &quot;maxRowsPerTable&quot;: { &quot;type&quot;: &quot;integer&quot; },
-      &quot;maxColumnsPerRow&quot;: { &quot;type&quot;: &quot;integer&quot; },
-      &quot;indexable&quot;: { &quot;type&quot;: &quot;boolean&quot;, &quot;description&quot;: &quot;Host supports declarative indexes on columns.&quot; },
-      &quot;fullTextSearch&quot;: { &quot;type&quot;: &quot;boolean&quot; }
-    },
-    &quot;additionalProperties&quot;: false
-  }
-}</code></pre>
-<h3 id="b-host-contract-musts">§B Host-contract MUSTs</h3>
-<p>1. Cross-tenant isolation (mirrors RFC 0015 invariant). 2. Schema declaration on first <code>insert</code> to a table; subsequent rows MUST conform. 3. <code>query</code> MUST support filter + cursor pagination.</p>
-<h3 id="c-conformance">§C Conformance</h3>
-<ul>
-<li><code>table-cross-tenant-isolation.test.ts</code>.</li>
-<li><code>table-cursor-pagination.test.ts</code>.</li>
-<li><code>table-schema-enforcement.test.ts</code> (wrong-type insert rejected).</li>
-</ul>
-<h2 id="compatibility">Compatibility</h2>
-<p><strong>Additive</strong>. Optional. <code>core.openwop.storage</code> table-* nodes refuse registration without advertisement.</p>
-<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
-<ul>
-<li>Schema diff in §A lands in <code>schemas/capabilities.schema.json</code> on Active promotion, not at Draft.</li>
-<li>Cross-tenant invariant row lands in <code>SECURITY/invariants.yaml</code> alongside <code>table-cross-tenant-isolation.test.ts</code>.</li>
-<li>Reference impl candidate: sqlite-backed table store in <code>examples/hosts/sqlite/</code>.</li>
-</ul>
+<p><code>FINAL</code> remains a recognized synonym for <code>Stable</code> in legacy contexts so that older host claims (e.g., a <code>vendor.foo.profile@v1.0</code> advertisement string referencing <code>FINAL</code>) parse without an error. Authoring of new documents SHALL use the four-tier vocabulary.</p>
+<h2 id="where-the-label-appears">Where the label appears</h2>
+<p>Every spec document under <code>spec/v1/</code> carries a single status banner at the top of the file:</p>
+<pre class="lang-"><code>&gt; **Status: &amp;lt;Tier&amp;gt; · v1.x (YYYY-MM-DD).** &amp;lt;one-sentence scope summary&amp;gt;</code></pre>
+<p>The renderer in <code>site/src/build.mjs</code> lifts this banner verbatim onto the document page header and into the <code>/spec/v1/</code> index card. The same renderer normalizes the parens-wrapped date into a <code>·</code>-separated chip on the index page.</p>
+<h2 id="promotion-process">Promotion process</h2>
+<p>A spec document graduates between tiers via an RFC and a CHANGELOG entry, never silently:</p>
+<p>1. <strong>Experimental → Draft</strong> — landed via an open RFC that opens a comment window. Field shapes are negotiable inside the window. 2. <strong>Draft → Stabilizing</strong> — RFC closes; the comment window expires; required-field set and endpoint shapes lock. Document is editable additively. 3. <strong>Stabilizing → Stable</strong> — every required-field gap closes, conformance coverage stabilizes, and the steward declares the surface frozen for v1.x. Demotion from Stable inside v1.x requires a safety-fix RFC under <a href="https://github.com/openwop/openwop/blob/main/COMPATIBILITY.md">COMPATIBILITY.md §3</a>.</p>
+<p>A document MAY skip tiers (e.g., a fully-specified surface lands directly at Stable inside an existing RFC), but never silently. The CHANGELOG entry SHALL name the new tier.</p>
 <h2 id="acceptance-criteria">Acceptance criteria</h2>
+<p>A spec document SHALL be at the <strong>Stable</strong> tier if and only if:</p>
 <ul>
-<li>[x] Capability block.</li>
-<li>[x] Prose section. (Landed at commit c5831fe.)</li>
-<li>[x] 3 conformance scenarios.</li>
-<li>[x] CHANGELOG entry.</li>
+<li>Required-field set is closed and conformance scenarios cover every required field.</li>
+<li>Endpoint contracts are present in <code>api/openwop.yaml</code> (and <code>api/grpc/openwop.proto</code> for gRPC-eligible endpoints).</li>
+<li>Event payloads are present in <code>api/asyncapi.yaml</code> and <code>schemas/</code>.</li>
+<li>The corresponding capability profile is advertisable in the <code>/.well-known/openwop</code> document without an opt-in flag.</li>
+<li>No <code>it.todo</code> blocks against the document remain in <code>@openwop/openwop-conformance</code> outside of an explicit profile gate.</li>
 </ul>
-<h2 id="references">References</h2>
-<ul>
-<li>Make Data Store + Data Structure (prior art).</li>
-<li>RFC 0015 host.kvStorage (sibling).</li>
-</ul><footer class="doc-edit"><a href="https://github.com/openwop/openwop/edit/main/RFCS/0016-host-table-storage-capability.md" rel="noopener">Edit this page on GitHub <span class="arrow">↗</span></a></footer></article></div><script src="/assets/spec-toc.js" defer></script>
+<p>A document failing any of these criteria SHALL be labelled <strong>Stabilizing</strong> at most.</p></article></div><script src="/assets/spec-toc.js" defer></script>
   </div>
 </main>
 

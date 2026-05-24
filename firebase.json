@@ -8,6 +8,28 @@
         "**/.*",
         "**/node_modules/**"
       ],
+      "redirects": [
+        {
+          "source": "/spec/latest",
+          "destination": "/spec/v1/",
+          "type": 302
+        },
+        {
+          "source": "/spec/latest/:path*",
+          "destination": "/spec/v1/:path*",
+          "type": 302
+        },
+        {
+          "source": "/spec/v1.1",
+          "destination": "/spec/v1/",
+          "type": 301
+        },
+        {
+          "source": "/spec/v1.1/:path*",
+          "destination": "/spec/v1/:path*",
+          "type": 301
+        }
+      ],
       "headers": [
         {
           "source": "/assets/**",
