@@ -415,6 +415,14 @@
     margin: 0 0 36px;
   }
 
+  /* Hero lede sits below the .meta-row chip rows; tighten the gap so the
+   * paragraph reads as a separate beat from the chips rather than crowding
+   * against them. Scoped to .hero so subpage .lede paragraphs (which have
+   * no preceding meta-row) keep their existing top margin. */
+  .hero .lede {
+    margin-top: 32px;
+  }
+
   .actions {
     display: flex;
     gap: 12px;
