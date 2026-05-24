@@ -1105,7 +1105,7 @@ describe.skipIf(V1_DIR === null)('spec-corpus: prose docs carry a Status: legend
   });
 
   for (const file of proseFiles) {
-    it(`${file} declares a Status: tag (STUB / DRAFT / OUTLINE / FINAL)`, () => {
+    it(`${file} declares a Status: tag (STUB / DRAFT / OUTLINE / FINAL | Stable / Stabilizing / Draft / Experimental)`, () => {
       // V1_DIR is non-null here — proseFiles is empty when V1_DIR is null
       // so this loop body never runs in the published-tarball layout.
       const content = readFileSync(join(V1_DIR as string, file), 'utf8');
@@ -1113,7 +1113,7 @@ describe.skipIf(V1_DIR === null)('spec-corpus: prose docs carry a Status: legend
       expect(
         content,
         `${file} must include a "Status:" legend tag near its header`,
-      ).toMatch(/\*\*Status:\s*(STUB|DRAFT|OUTLINE|FINAL)\b/);
+      ).toMatch(/\*\*Status:\s*(STUB|DRAFT|OUTLINE|FINAL|Stable|Stabilizing|Draft|Experimental)\b/);
     });
   }
 });

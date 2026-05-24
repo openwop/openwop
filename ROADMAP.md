@@ -1,7 +1,7 @@
 # openwop Roadmap
 
 > **Status:** Living document. Updated as milestones land.
-> **Last reviewed:** 2026-05-19 (post-`@openwop/openwop-conformance@1.3.0` publish refresh). The generated protocol snapshot lives at `docs/PROTOCOL-STATUS.md`: 35 prose specs, 27 JSON Schemas, 19 OpenAPI operations, AsyncAPI 3.1, 160 conformance scenario files, 26 RFCs tracked, and 48 indexed registry packs. RFC status: 25 Accepted / 1 Draft (RFC 0025 — test-mode registry namespace — remains the only Draft; RFCs 0012, 0022, 0023, 0024, and 0026 have all landed as Accepted in the 2026-05-12 → 2026-05-19 window). Postgres reference conformance evidence holds at 781/850 default-mode pass count (91.9% total; 96.4% applicable) with one documented webhook flake.
+> **Last reviewed:** 2026-05-24 (post-`@openwop/openwop-conformance@1.5.0` publish refresh + corpus releases v1.1.2 and v1.1.3 cut). The generated protocol snapshot lives at `docs/PROTOCOL-STATUS.md`: 35 prose specs, 27 JSON Schemas, 19 OpenAPI operations, AsyncAPI 3.1, 160 conformance scenario files, 26 RFCs tracked, and 48 indexed registry packs. RFC status: 25 Accepted / 1 Draft (RFC 0025 — test-mode registry namespace — remains the only Draft; RFCs 0012, 0022, 0023, 0024, and 0026 have all landed as Accepted in the 2026-05-12 → 2026-05-19 window). Postgres reference conformance evidence holds at 781/850 default-mode pass count (91.9% total; 96.4% applicable) with one documented webhook flake.
 
 This roadmap distinguishes **stable v1** (locked contract), **v1.X minor work** (additive, conformance-only), and **post-v1 ecosystem** (extension profiles, infrastructure, governance).
 
