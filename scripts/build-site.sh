@@ -43,8 +43,10 @@ echo "[build-site] running site/ generator…"
 # OpenAPI spec uses relative $refs (../schemas/...) so both have to
 # sit at predictable URLs.
 echo "[build-site] syncing api/ and schemas/ into public/"
-mkdir -p "$PUBLIC/api"
+mkdir -p "$PUBLIC/api" "$PUBLIC/api/grpc"
 cp "$ROOT/api/openapi.yaml" "$PUBLIC/api/openapi.yaml"
+cp "$ROOT/api/asyncapi.yaml" "$PUBLIC/api/asyncapi.yaml"
+cp "$ROOT/api/grpc/openwop.proto" "$PUBLIC/api/grpc/openwop.proto"
 rm -rf "$PUBLIC/schemas"
 cp -R "$ROOT/schemas" "$PUBLIC/schemas"
 
@@ -53,7 +55,7 @@ cp -R "$ROOT/schemas" "$PUBLIC/schemas"
 # `robots.txt`, and `404.html` are preserved (we don't copy site/dist/index.html
 # or site/dist/robots.txt; the rendered marketing site wins root).
 echo "[build-site] copying site-generated directories → public/"
-for dir in spec conformance profiles badge changelog roadmap versioning security contributing governance rfcs faq errors scenarios for; do
+for dir in spec conformance profiles badge changelog roadmap versioning security contributing governance maintainers quickstart community protocol implement adopters rfcs faq errors scenarios for; do
   if [[ -d "$SITE/dist/$dir" ]]; then
     rm -rf "$PUBLIC/$dir"
     cp -R "$SITE/dist/$dir" "$PUBLIC/$dir"
@@ -65,6 +67,18 @@ if [[ -d "$SITE/dist/api/rest" ]]; then
   rm -rf "$PUBLIC/api/rest"
   mkdir -p "$PUBLIC/api"
   cp -R "$SITE/dist/api/rest" "$PUBLIC/api/rest"
+fi
+# AsyncAPI events explorer.
+if [[ -f "$SITE/dist/api/events/index.html" ]]; then
+  mkdir -p "$PUBLIC/api/events"
+  cp "$SITE/dist/api/events/index.html" "$PUBLIC/api/events/index.html"
+fi
+# gRPC transport explorer (the generated index.html lives next to the .proto
+# we already copied above; copy only the rendered page, not the proto, so the
+# explicit cp of api/grpc/openwop.proto stays the source of truth).
+if [[ -f "$SITE/dist/api/grpc/index.html" ]]; then
+  mkdir -p "$PUBLIC/api/grpc"
+  cp "$SITE/dist/api/grpc/index.html" "$PUBLIC/api/grpc/index.html"
 fi
 
 # Shared asset stylesheet + sticky-ToC script for the rendered spec pages.

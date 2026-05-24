@@ -54,16 +54,87 @@
       <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
       <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
     </a>
-    <nav class="topnav">
-      <a class="hide-sm " href="/spec/v1/">Spec</a>
-      <a class="hide-sm active" href="/rfcs/">RFCs</a>
-      <a class="hide-sm " href="/conformance/">Conformance</a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
       <a class="hide-sm " href="/changelog/">Changelog</a>
-      <a class="hide-sm " href="/faq/">FAQ</a>
-      <a class="pill" href="https://github.com/openwop/openwop">GitHub →</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
     </nav>
   </div>
 </header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
 
 <main class="site-main">
   <div class="wrap">
@@ -93,10 +164,10 @@
 <tbody>
 <tr><td><strong>RFC</strong></td><td>0039</td></tr>
 <tr><td><strong>Title</strong></td><td>Multi-agent execution model Phase 2: confidence-threshold escalation + agent memory lifecycle across sub-runs and replay</td></tr>
-<tr><td><strong>Status</strong></td><td><code>Active</code></td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
 <tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
 <tr><td><strong>Created</strong></td><td>2026-05-21</td></tr>
-<tr><td><strong>Updated</strong></td><td>2026-05-22 (Draft → Active: confidence-floor escalation half landed atomically. <code>schemas/capabilities.schema.json</code> extends <code>multiAgent.executionModel</code> with optional <code>confidenceEscalationFloor</code> (range [0.5, 1.0]) + <code>crossChildMemoryConcurrency</code> (enum strict</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-22 (Active → Accepted: Half A confidence-floor escalation validated cross-host. MyndHyve workflow-runtime advertises <code>capabilities.multiAgent.executionModel.{supported: true, version: 2, confidenceEscalationFloor: 0.5, confidenceEscalationInterruptKind: &#39;x-host-myndhyve-low-confidence&#39;}</code> on Cloud Run revision <code>workflow-runtime-00353-rab</code> (MyndHyve commit <code>c4342b5b</code>); <code>multi-agent-confidence-escalation.test.ts</code> against <code>@openwop/openwop-conformance@1.5.0</code> passes via the RFC 0044 vendor-kind routing branch — <code>terminal.status.startsWith(&#39;waiting-&#39;)</code> matches MyndHyve's <code>waiting-approval</code> mapping. Combined run reports 2 passed / 2 skipped / 0 failed (exit 0); the second skip is the fixture-gated behavioral confidence-escalated event chain (separate strengthening pass). Half B memory-lifecycle (MAE-2/3) remains a follow-up strengthening tier — <code>crossChildMemoryConcurrency</code> field is schema-landed; replay snapshot mechanism + <code>replay_memory_snapshot_unavailable</code> error code wait on a memory-advertising host implementing <code>snapshotAtSeq</code>. See <code>INTEROP-MATRIX.md</code> §"Third-party host adoption — RFC 0037 Phase 1 ... (2026-05-22)" for the row. 2026-05-22 prior: Draft → Active same-day, Phase 2 spec + reference-host wiring + advertisement-shape scenario all landed.)</td></tr>
 <tr><td><strong>Affects</strong></td><td><code>spec/v1/multi-agent-execution.md</code> (extends with §"Confidence escalation" + §"Agent memory lifecycle") · <code>spec/v1/agent-memory.md</code> (adds §"Sub-run lifecycle + replay carry-forward") · <code>schemas/capabilities.schema.json</code> (bumps <code>multiAgent.executionModel.version</code> ceiling for v2 from 1 to 2; no required-field changes) · <code>schemas/run-event-payloads.schema.json</code> (additive shape clarifications on <code>runOrchestrator.decided</code> + <code>memory.compacted</code>) · 3 new conformance scenarios · <code>INTEROP-MATRIX.md</code> · CHANGELOG</td></tr>
 <tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
 <tr><td><strong>Supersedes</strong></td><td>—</td></tr>
@@ -124,11 +195,11 @@
 <blockquote><p>The escalation MUST emit a new event <code>core.workflowChain.confidence-escalated</code> (additive RunEventType per §D below) before the interrupt fires, so the run event log carries the decision point even if the user later confirms the original decision.</p></blockquote>
 <h3 id="b-agent-memory-lifecycle-across-sub-runs-normative">§B — Agent memory lifecycle across sub-runs (normative)</h3>
 <p>Add a new §"Sub-run lifecycle + replay carry-forward" to <code>spec/v1/agent-memory.md</code> after §"SR-1 secret-redaction invariant":</p>
-<blockquote><p><strong>Cross-run inheritance (MAE-2 closure).</strong> When a parent run dispatches a child run via <code>core.dispatch</code> or <code>core.subWorkflow</code>, the child's <code>MemoryAdapter</code> MUST be scoped per-(tenantId, scopeId) per CTI-1; CHILD runs MAY share the parent's scopeId (default — inherit) or declare a fresh scopeId (opt-in via the dispatch config's <code>memoryScopeIsolation: &quot;isolated&quot;</code> field, additive). When the child shares the parent's scopeId:</p><p>1. <code>MemoryEntry</code> records the child writes are visible to the parent on the child's terminal <code>completed</code> AND any subsequent parent supervisor turn — the same single-host visibility contract as intra-run memory operations.</p><p>2. <code>MemoryEntry.ttl</code> is computed from the child's wall-clock write time, NOT the parent's start time. A child writing <code>MemoryEntry { ttl: 3600 }</code> at parent-clock T+10s expires at T+3610s (child write time + ttl), NOT T+3600s.</p><p></p><p>    <strong>Why child-write-time wins (normative rationale).</strong> TTL is an absolute freshness contract on the datum ("this value is valid for N seconds after I wrote it"), not a budget against an enclosing run lifetime. A long-running parent that dispatches many short-lived children would otherwise see all child writes share a single TTL anchor at parent-start, causing batch expiry instead of staggered expiry — surprising for any cache-like workload. Parent runs that need longer-lived shared memory write directly to the shared scope under their own clock; child runs inherit visibility but not lifetime ownership. This matches the SR-1 "secret-redaction at write time" invariant pattern (<code>agent-memory.md</code> §SR-1): the writer's clock is the contract, not the enclosing context's.</p><p></p><p>3. The parent's subsequent supervisor turn observing the child's MemoryEntry MUST NOT race a still-running sibling dispatch's writes — host MUST serialize cross-child writes per parent-run, OR advertise <code>capabilities.multiAgent.executionModel.crossChildMemoryConcurrency: &quot;advisory&quot;</code> to opt out of the serialization MUST (advisory hosts SHOULD still document last-write-wins semantics).</p><p></p><p><strong>Replay carry-forward (MAE-3 closure).</strong> When a <code>POST /v1/runs/{runId}:fork</code> invocation forks from a past event-log index N, the forked run's <code>MemoryAdapter.get(key)</code> calls before reaching index N MUST return the value that was in memory AT THE ORIGINAL RUN'S TIME OF INDEX N — NOT the current memory state. Hosts MUST persist memory snapshots tied to event-log indices when <code>capabilities.multiAgent.executionModel.version &gt;= 2</code> is advertised; the snapshot mechanism is host-internal (e.g., periodic copy-on-write checkpoints, append-only journal with reverse-projection, etc.). A host that cannot satisfy the snapshot MUST refuse forks from indices where the snapshot is unavailable with <code>error.code: &quot;replay_memory_snapshot_unavailable&quot;</code> per <code>spec/v1/rest-endpoints.md</code> §"Common error codes" (NEW code in §C below).</p></blockquote>
+<blockquote><p><strong>Cross-run inheritance (MAE-2 closure).</strong> When a parent run dispatches a child run via <code>core.dispatch</code> or <code>core.subWorkflow</code>, the child's <code>MemoryAdapter</code> MUST be scoped per-(tenantId, scopeId) per CTI-1; CHILD runs MAY share the parent's scopeId (default — inherit) or declare a fresh scopeId (opt-in via the dispatch config's <code>memoryScopeIsolation: &quot;isolated&quot;</code> field, additive). When the child shares the parent's scopeId:</p><p>1. <code>MemoryEntry</code> records the child writes are visible to the parent on the child's terminal <code>completed</code> AND any subsequent parent supervisor turn — the same single-host visibility contract as intra-run memory operations.</p><p>2. <code>MemoryEntry.ttl</code> is computed from the child's wall-clock write time, NOT the parent's start time. A child writing <code>MemoryEntry { ttl: 3600 }</code> at parent-clock T+10s expires at T+3610s (child write time + ttl), NOT T+3600s.</p><p></p><p>    <strong>Why child-write-time wins (normative rationale).</strong> TTL is an absolute freshness contract on the datum ("this value is valid for N seconds after I wrote it"), not a budget against an enclosing run lifetime. A long-running parent that dispatches many short-lived children would otherwise see all child writes share a single TTL anchor at parent-start, causing batch expiry instead of staggered expiry — surprising for any cache-like workload. Parent runs that need longer-lived shared memory write directly to the shared scope under their own clock; child runs inherit visibility but not lifetime ownership.</p><p></p><p>3. The parent's subsequent supervisor turn observing the child's MemoryEntry MUST NOT race a still-running sibling dispatch's writes — host MUST serialize cross-child writes per parent-run, OR advertise <code>capabilities.multiAgent.executionModel.crossChildMemoryConcurrency: &quot;advisory&quot;</code> to opt out of the serialization MUST (advisory hosts SHOULD still document last-write-wins semantics).</p><p></p><p><strong>Replay carry-forward (MAE-3 closure).</strong> When a <code>POST /v1/runs/{runId}:fork</code> invocation forks from a past event-log index N, the forked run's <code>MemoryAdapter.get(key)</code> calls before reaching index N MUST return the value that was in memory AT THE ORIGINAL RUN'S TIME OF INDEX N — NOT the current memory state. Hosts MUST persist memory snapshots tied to event-log indices when <code>capabilities.multiAgent.executionModel.version &gt;= 2</code> is advertised; the snapshot mechanism is host-internal (e.g., periodic copy-on-write checkpoints, append-only journal with reverse-projection, etc.). A host that cannot satisfy the snapshot MUST refuse forks from indices where the snapshot is unavailable with <code>error.code: &quot;replay_memory_snapshot_unavailable&quot;</code> per <code>spec/v1/rest-endpoints.md</code> §"Common error codes" (NEW code in §C below).</p></blockquote>
 <h3 id="c-error-code-replay-memory-snapshot-unavailable-additive-to-rest-endpoints-md">§C — Error code: <code>replay_memory_snapshot_unavailable</code> (additive to <code>rest-endpoints.md</code>)</h3>
 <p>Add to <code>spec/v1/rest-endpoints.md</code> §"Common error codes":</p>
 <ul>
-<li><code>replay_memory_snapshot_unavailable</code> — RFC 0039 §B. The host advertises <code>capabilities.multiAgent.executionModel.version &gt;= 2</code> but cannot serve the memory snapshot for the requested <code>forkAtEventLogIdx</code>. <code>details.forkAtEventLogIdx</code> SHOULD identify the requested index; <code>details.oldestAvailableIdx</code> MAY identify the oldest index for which a snapshot exists (lets clients pick a valid fork point).</li>
+<li><code>replay_memory_snapshot_unavailable</code> — RFC 0039 §B. The host advertises <code>capabilities.multiAgent.executionModel.version &gt;= 2</code> but cannot serve the memory snapshot for the requested <code>fromSeq</code>. <code>details.fromSeq</code> SHOULD identify the requested index; <code>details.oldestAvailableIdx</code> MAY identify the oldest index for which a snapshot exists (lets clients pick a valid fork point).</li>
 </ul>
 <h3 id="d-new-runeventtype-core-workflowchain-confidence-escalated">§D — New RunEventType: <code>core.workflowChain.confidence-escalated</code></h3>
 <p>Extend <code>schemas/run-event.schema.json</code> <code>RunEventType</code> enum:</p>
@@ -167,19 +238,19 @@
 <p>1. <strong>Memory snapshot retention policy.</strong> Hosts MUST persist snapshots when <code>version &gt;= 2</code> but the spec doesn't normate retention duration. Recommend: align with <code>replay.md</code> §"Retention and garbage collection" — snapshots persist as long as the event log they index against persists. Defer to Acceptance criteria. 2. <strong><code>crossChildMemoryConcurrency: &quot;advisory&quot;</code> opt-out semantics.</strong> Spec says hosts SHOULD document last-write-wins; does "document" mean wire-advertised or out-of-band? Recommend: wire-advertise via <code>multiAgent.executionModel.crossChildMemoryConcurrencyResolution: &quot;last-writer-wins&quot; | &quot;first-writer-wins&quot;</code> in a follow-up clarification if adoption surfaces the need.</p>
 <h2 id="acceptance-criteria">Acceptance criteria</h2>
 <ul>
-<li>[ ] Spec text merged (this file).</li>
-<li>[ ] <code>spec/v1/multi-agent-execution.md</code> extended with §"Confidence escalation" per §A.</li>
-<li>[ ] <code>spec/v1/agent-memory.md</code> extended with §"Sub-run lifecycle + replay carry-forward" per §B.</li>
-<li>[ ] <code>spec/v1/rest-endpoints.md</code> §"Common error codes" gains <code>replay_memory_snapshot_unavailable</code> per §C.</li>
-<li>[ ] <code>schemas/run-event.schema.json</code> RunEventType enum gains <code>core.workflowChain.confidence-escalated</code>.</li>
-<li>[ ] <code>schemas/run-event-payloads.schema.json</code> gains the matching payload schema.</li>
-<li>[ ] <code>schemas/capabilities.schema.json</code> extends <code>multiAgent.executionModel</code> with optional <code>confidenceEscalationFloor</code> + <code>crossChildMemoryConcurrency</code> fields; bumps the <code>version</code> upper bound from 4 to 4 (unchanged — Phases 2/3/4 share the [1,4] range).</li>
-<li>[ ] 3 new conformance scenarios per §Conformance.</li>
-<li>[ ] At least one reference host advertises <code>version: 2</code> + passes the 3 scenarios.</li>
-<li>[ ] <code>INTEROP-MATRIX.md</code> updated.</li>
-<li>[ ] CHANGELOG entry under <code>[Unreleased]</code>.</li>
+<li>[x] Spec text merged (this file).</li>
+<li>[x] <code>spec/v1/multi-agent-execution.md</code> extended with §"Confidence escalation" per §A.</li>
+<li>[x] §B "Sub-run lifecycle + replay carry-forward" normative content shipped. Original criterion named <code>spec/v1/agent-memory.md</code> but the content went canonically into <code>spec/v1/multi-agent-execution.md</code> §"Agent memory lifecycle across sub-runs (RFC 0039 Phase 2, normative)" (MAE-2 cross-run TTL + MAE-3 replay snapshot). Same pattern as the RFC 0027 <code>workflow-definition.md → workflow-definition.schema.json</code> re-anchoring — the content lives where it's load-bearing rather than where the RFC's drafter speculatively named it. MyndHyve's Half B implementation lands in commit <code>a51f7bbd</code> (<code>memory.written</code> event emitted from SR-1 chokepoint; <code>MemoryHyveMemoryResolver.snapshotAtSeq(memoryRef, fromSeq)</code> reverse-projects journal with latest-write-wins + expiry filter at snapshot anchor; advertised on discovery as <code>multiAgent.executionModel.crossChildMemoryConcurrency: &#39;strict&#39;</code>, verified live at <code>https://api.myndhyve.ai/.well-known/openwop</code> 2026-05-23).</li>
+<li>[x] <code>spec/v1/rest-endpoints.md</code> §"Common error codes" gains <code>replay_memory_snapshot_unavailable</code> per §C — landed in commit <code>c001d21</code> at line 314.</li>
+<li>[x] <code>schemas/run-event.schema.json</code> RunEventType enum gains <code>core.workflowChain.confidence-escalated</code>.</li>
+<li>[x] <code>schemas/run-event-payloads.schema.json</code> gains the matching payload schema (<code>coreWorkflowChainConfidenceEscalated</code>).</li>
+<li>[x] <code>schemas/capabilities.schema.json</code> extends <code>multiAgent.executionModel</code> with optional <code>confidenceEscalationFloor</code> + <code>crossChildMemoryConcurrency</code> fields; <code>version</code> upper bound carries Phases 2/3/4 in the [1,4] range.</li>
+<li>[x] 3 new conformance scenarios per §Conformance — <code>multi-agent-confidence-escalation.test.ts</code> (Half A), <code>multi-agent-memory-lifecycle.test.ts</code> (Half B advertisement-shape + behavioral todo), and the RFC 0044 routing branch shipped in <code>@openwop/openwop-conformance@1.5.0</code>.</li>
+<li>[x] At least one reference host advertises <code>version: 2</code> + passes the Half A scenario — MyndHyve workflow-runtime advertises <code>multiAgent.executionModel.{supported: true, version: 2, confidenceEscalationFloor: 0.5, confidenceEscalationInterruptKind: &#39;x-host-myndhyve-low-confidence&#39;}</code> on revision <code>workflow-runtime-00353-rab</code>; <code>multi-agent-confidence-escalation.test.ts</code> passes via the RFC 0044 vendor-kind routing branch against <code>@openwop/openwop-conformance@1.5.0</code> (2026-05-22).</li>
+<li>[x] <code>INTEROP-MATRIX.md</code> updated — see §"Third-party host adoption — RFC 0037 Phase 1 + RFC 0039 Half A + RFC 0044 ... (2026-05-22)".</li>
+<li>[x] CHANGELOG entry under <code>[Unreleased]</code>.</li>
 </ul>
-<p>Path to <code>Active → Accepted</code>: cross-host advertisement evidence per <code>RFCs/0001-rfc-process.md</code> §"Promotion to Accepted."</p>
+<p>Path to <code>Active → Accepted</code>: cross-host advertisement evidence per <code>RFCs/0001-rfc-process.md</code> §"Promotion to Accepted." <strong>CLOSED 2026-05-22</strong> — Half A confidence-floor escalation validated cross-host. <strong>Half B strengthening 2026-05-23</strong>: MyndHyve commit <code>a51f7bbd</code> lands the <code>memory.written</code> event + <code>snapshotAtSeq()</code> host implementation + <code>crossChildMemoryConcurrency: &#39;strict&#39;</code> advertisement (verified live on <code>https://api.myndhyve.ai/.well-known/openwop</code>). The <code>replay_memory_snapshot_unavailable</code> 422 wire-route surface is parallel-session-blocked on MyndHyve's side (<code>services/workflow-runtime/src/{index.ts,routes/canonicalRuns.ts}</code> uncommitted lint cleanup) — <code>snapshotAtSeq</code> returns <code>null</code> correctly when no source-run is bound; only the route translation to 422 awaits the parallel commit. When that lands, the <code>multi-agent-memory-lifecycle.test.ts</code> MAE-3 behavioral assertion will exercise end-to-end. Status stays <code>Accepted</code> either way; Half B work is additive.</p>
 <h2 id="references">References</h2>
 <ul>
 <li><a href="./0037-multi-agent-execution-model.md"><code>RFCS/0037-multi-agent-execution-model.md</code></a> §"Open spec gaps" MAE-1, MAE-2, MAE-3 (the gaps this RFC closes).</li>
@@ -212,10 +283,13 @@
           <li><a href="/spec/v1/">v1.x Core</a></li>
           <li><a href="/rfcs/">RFCs</a></li>
           <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
           <li><a href="/errors/">Error codes</a></li>
           <li><a href="/scenarios/">Scenario walkthroughs</a></li>
           <li><a href="/profiles/">Profiles</a></li>
           <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
           <li><a href="/versioning/">Versioning policy</a></li>
         </ul>
       </div>
@@ -232,14 +306,15 @@
       <div>
         <h5>Project</h5>
         <ul>
-          <li><a href="/changelog/">Changelog</a></li>
           <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
           <li><a href="/faq/">FAQ</a></li>
           <li><a href="/security/">Security posture</a></li>
           <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
           <li><a href="/contributing/">Contributing</a></li>
-          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
           <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
         </ul>
       </div>
       <div>
@@ -255,10 +330,11 @@
     <div class="foot-meta">
       <span>© 2026 OpenWOP contributors</span>
       <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
-      <span>Built with Claude Code</span>
     </div>
   </div>
 </footer>
+
+<script src="/site-nav.js" defer></script>
 
 </body>
 </html>

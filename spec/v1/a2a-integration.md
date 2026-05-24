@@ -1,6 +1,6 @@
 # openwop Spec v1 — A2A Integration
 
-> **Status: FINAL v1 (2026-05-05).** Worked example of how OpenWOP and the Agent2Agent Protocol (A2A) compose. The composition pattern is non-normative; the state-projection rules in §"State projection" are normative for any host that opts into A2A composition (14 RFC 2119 keywords). Pinned to A2A v1 as published at `https://a2a-protocol.org/latest/specification/`. Graduated DRAFT → FINAL via RFC 0006. See `auth.md` for the status legend. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
+> **Status: Stable · v1.1 (2026-05-05).** Worked example of how OpenWOP and the Agent2Agent Protocol (A2A) compose. The composition pattern is non-normative; the state-projection rules in §"State projection" are normative for any host that opts into A2A composition (14 RFC 2119 keywords). Pinned to A2A v1 as published at `https://a2a-protocol.org/latest/specification/`. Graduated DRAFT → FINAL via RFC 0006. See `auth.md` for the status legend. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 
 ---
 

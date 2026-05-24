@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>OpenWOP — Host-sample test seams</title>
+  <meta name="description" content="OpenWOP&#39;s conformance suite verifies behavioral contracts that v1 cannot probe through the production wire surface alone. Examples:"/>
+  <link rel="canonical" href="https://openwop.dev/spec/v1/host-sample-test-seams.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="OpenWOP — Host-sample test seams"/>
+  <meta property="og:description" content="OpenWOP&#39;s conformance suite verifies behavioral contracts that v1 cannot probe through the production wire surface alone. Examples:"/>
+  <meta property="og:url" content="https://openwop.dev/spec/v1/host-sample-test-seams.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="OpenWOP — Host-sample test seams"/>
+  <meta name="twitter:description" content="OpenWOP&#39;s conformance suite verifies behavioral contracts that v1 cannot probe through the production wire surface alone. Examples:"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
+
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
+
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="stylesheet" href="/assets/style.css"/>
+
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Host-sample test seams",
+  "description": "OpenWOP's conformance suite verifies behavioral contracts that v1 cannot probe through the production wire surface alone. Examples:",
+  "url": "https://openwop.dev/spec/v1/host-sample-test-seams.html",
+  "inLanguage": "en-US",
+  "isPartOf": {
+    "@type": "WebSite",
+    "@id": "https://openwop.dev/#website",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "about": {
+    "@type": "SoftwareSourceCode",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev",
+    "codeRepository": "https://github.com/openwop/openwop"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "dependencies": "JSON Schema 2020-12, REST + SSE + signed webhooks"
+}</script>
+  
+  
+</head>
+<body>
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
+    </a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
+      <a class="hide-sm " href="/changelog/">Changelog</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
+
+<main class="site-main">
+  <div class="wrap">
+    <header class="page-header">
+      <h1>Host-sample test seams</h1>
+      <p class="lede">OpenWOP&#39;s conformance suite verifies behavioral contracts that v1 cannot probe through the production wire surface alone. Examples:</p>
+    </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#capability-advertisement-normative">Capability advertisement (normative)</a></li>
+      <li class="toc-top"><a href="#test-seams">Test seams</a></li>
+      <li class="toc-sub"><a href="#1-post-v1-host-sample-prompt-resolve-prompt-resolution-chain-rfc-0029">1. POST /v1/host/sample/prompt/resolve — Prompt resolution chain (RFC 0029)</a></li>
+      <li class="toc-sub"><a href="#2-get-v1-host-sample-test-otel-spans-runid-id-otel-span-scrape-rfc-0034">2. GET /v1/host/sample/test/otel/spans?runId=&lt;id&gt; — OTel span scrape (RFC 0034)</a></li>
+      <li class="toc-sub"><a href="#3-post-v1-host-sample-test-debug-bundle-export-debug-bundle-export-probe-rfc-0034">3. POST /v1/host/sample/test/debug-bundle/export — Debug-bundle export probe (RFC 0034)</a></li>
+      <li class="toc-sub"><a href="#4-post-v1-host-sample-test-llm-cache-key-llm-cache-key-recipe-rfc-0041">4. POST /v1/host/sample/test/llm-cache-key — LLM cache-key recipe (RFC 0041)</a></li>
+      <li class="toc-sub"><a href="#5-staged-refusal-seam-post-v1-host-sample-test-mock-ai-program-mode-refusal-rfc-0041-b">5. Staged-refusal seam — POST /v1/host/sample/test/mock-ai/program mode refusal (RFC 0041 §B)</a></li>
+      <li class="toc-sub"><a href="#6-multi-region-idempotency-simulator-post-v1-host-sample-test-multi-region-simulate-partition-rfc-0036-c">6. Multi-region idempotency simulator — POST /v1/host/sample/test/multi-region/simulate-partition (RFC 0036 §C)</a></li>
+      <li class="toc-sub"><a href="#7-cross-engine-append-ordering-harness-post-v1-host-sample-test-cross-engine-append-read-reset-rfc-0036-b">7. Cross-engine append-ordering harness — POST /v1/host/sample/test/cross-engine/{append,read,reset} (RFC 0036 §B)</a></li>
+      <li class="toc-sub"><a href="#8-sandbox-mvp-post-v1-host-sample-test-sandbox-load-invoke-rfc-0035">8. Sandbox MVP — POST /v1/host/sample/test/sandbox-{load,invoke} (RFC 0035)</a></li>
+      <li class="toc-top"><a href="#production-safety-normative">Production safety (normative)</a></li>
+      <li class="toc-top"><a href="#open-seams-light-up-when-fixtures-ship">Open seams (light up when fixtures ship)</a></li>
+      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
+      <li class="toc-top"><a href="#cross-references">Cross-references</a></li>
+    </ul>
+  </aside><article class="spec-doc"><blockquote><p><strong>Status: Stable · v1.1 (2026-05-22).</strong> Normative spec for conformance-only host-sample test seams under <code>/v1/host/sample/*</code>. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
+<h1 id="host-sample-test-seams">Host-sample test seams</h1>
+<p>OpenWOP's <a href="../../conformance/">conformance suite</a> verifies behavioral contracts that v1 cannot probe through the production wire surface alone. Examples:</p>
+<ul>
+<li>"the prompt resolution chain layered correctly" can be observed end-to-end via <code>prompt.composed</code> event payloads, but isolating layer-by-layer precedence requires a synchronous resolver endpoint</li>
+<li>"the LLM cache-key recipe produced byte-identical output across hosts" can only be asserted if hosts expose their <code>canonicalize → SHA-256 → hex</code> computation</li>
+<li>"OTel span attributes don't carry BYOK canaries" requires an introspection endpoint scoped to a run</li>
+</ul>
+<p>These contracts ship as <strong>conformance-only test seams</strong> under the <code>host-extensions.md</code> §"Canonical prefixes" namespace <code>/v1/host/sample/*</code>. They are NOT part of the v1 wire surface — production hosts SHOULD return <code>404</code> or <code>403</code> from these seams unless an env-gate (named per-seam below) is set.</p>
+<p>This doc is the <strong>canonical reference</strong> for the test-seam contracts. Per-seam normative content also appears in the RFC + spec doc that introduces the seam; this doc is the consolidated index hosts implement against.</p>
+<h2 id="capability-advertisement-normative">Capability advertisement (normative)</h2>
+<p>Hosts that expose any test seam MUST advertise it under <code>/.well-known/openwop</code> per <code>capabilities.md</code>. The advertising flags are tabulated below per seam. Conformance scenarios capability-gate on the matching flag; hosts that don't advertise skip cleanly.</p>
+<h2 id="test-seams">Test seams</h2>
+<h3 id="1-post-v1-host-sample-prompt-resolve-prompt-resolution-chain-rfc-0029">1. <code>POST /v1/host/sample/prompt/resolve</code> — Prompt resolution chain (RFC 0029)</h3>
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td>Method + path</td><td><code>POST /v1/host/sample/prompt/resolve</code></td></tr>
+<tr><td>Capability gate</td><td><code>capabilities.prompts.supported: true</code></td></tr>
+<tr><td>Env gate (reference impl)</td><td>seam registered when <code>capabilities.prompts.supported</code> is asserted</td></tr>
+<tr><td>Introduced</td><td>RFC 0029 §C</td></tr>
+</tbody></table>
+<p>Request body:</p>
+<pre class="lang-typescript"><code>{
+  kind: &#39;system&#39; | &#39;user&#39; | &#39;few-shot&#39; | &#39;schema-hint&#39;,
+  node: {
+    nodeId: string,
+    config?: {
+      systemPromptRef?: string | PromptRef,
+      userPromptRef?: string | PromptRef,
+      schemaHintPromptRef?: string | PromptRef,
+      fewShotPromptRefs?: Array&amp;lt;string | PromptRef&amp;gt;,
+      agentId?: string,
+    },
+  },
+  agentManifest?: {
+    agentId: string,
+    systemPrompt?: string,
+    systemPromptRef?: string,
+    promptOverrides?: Partial&amp;lt;Record&amp;lt;PromptKind, string | PromptRef&amp;gt;&gt;,
+    promptLibraryRef?: string,
+  },
+  workflowDefaults?: { promptRefs?: Partial&amp;lt;Record&amp;lt;PromptKind, string | PromptRef&amp;gt;&gt; },
+  hostDefaults?: Partial&amp;lt;Record&amp;lt;PromptKind, string | PromptRef&amp;gt;&gt;,
+  agentBindingsSupported?: boolean,    // overrides capabilities.prompts.agentBindings for this probe
+}</code></pre>
+<p>Response body:</p>
+<pre class="lang-typescript"><code>{
+  resolved: string | null,                                                      // rendered prompt text after variable substitution, or null if all 4 layers yielded null
+  resolvedAt: &#39;node&#39; | &#39;agent-intrinsic&#39; | &#39;workflow&#39; | &#39;host&#39; | null,          // which layer won
+  chain: Array&amp;lt;{                                                                 // every layer attempted, in priority order
+    layer: &amp;#39;node&amp;#39; | &amp;#39;agent-intrinsic&amp;#39; | &amp;#39;workflow&amp;#39; | &amp;#39;host&amp;#39;,
+    ref: string | null,
+    resolved: string | null,
+  }&amp;gt;,
+}</code></pre>
+<p>Hosts that advertise <code>capabilities.prompts.supported: true</code> MUST serve this seam with the documented shape. The <code>chain[]</code> array MUST list every layer attempted even when an earlier layer wins — conformance scenarios assert the full traversal record.</p>
+<p>Conformance: <code>prompt-resolution-chain-{node-wins,agent-intrinsic,fallback-cascade}.test.ts</code>.</p>
+<h3 id="2-get-v1-host-sample-test-otel-spans-runid-lt-id-gt-otel-span-scrape-rfc-0034">2. <code>GET /v1/host/sample/test/otel/spans?runId=&amp;lt;id&amp;gt;</code> — OTel span scrape (RFC 0034)</h3>
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td>Method + path</td><td><code>GET /v1/host/sample/test/otel/spans?runId=&amp;lt;id&amp;gt;</code></td></tr>
+<tr><td>Capability gate</td><td><code>capabilities.observability.testSeams.otelScrape: true</code></td></tr>
+<tr><td>Env gate (reference impl)</td><td><code>OPENWOP_TEST_OTEL_SCRAPE=true</code></td></tr>
+<tr><td>Introduced</td><td>RFC 0034 §B</td></tr>
+</tbody></table>
+<p>Returns recorded OTel spans for the named run. When <code>otelScrape: true</code>, the host MUST return <code>200 OK</code> with body:</p>
+<pre class="lang-typescript"><code>{
+  spans: Array&amp;lt;{
+    name: string,                                  // span name, e.g., &amp;quot;openwop.run&amp;quot;, &amp;quot;openwop.dispatch&amp;quot;
+    attributes: Record&amp;lt;string, unknown&amp;gt;,           // span attributes including any openwop.*-prefixed keys
+    events: Array&amp;lt;{ name: string, attributes?: Record&amp;lt;string, unknown&amp;gt; }&gt;,
+  }&gt;,
+}</code></pre>
+<p>The <code>spans[]</code> array MUST include every span produced by the host's instrumentation for the named run, including any <code>openwop.*</code>-prefixed attributes added to span context. Hosts MAY redact span content using the canonical <code>[REDACTED:&amp;lt;secretId&amp;gt;]</code> marker per <code>agent-memory.md</code> §"SR-1 secret-redaction invariant" — that's the contract conformance tests.</p>
+<p>The seam graduates two SECURITY invariants from <code>reference-impl</code> to <code>protocol</code> tier:</p>
+<ul>
+<li><code>secret-leakage-otel-attribute</code> — BYOK plaintexts MUST NOT appear as values on any <code>openwop.*</code> OTel attribute</li>
+<li>(paired) <code>secret-leakage-debug-bundle-otel</code> — same invariant on debug-bundle exports</li>
+</ul>
+<p>Conformance: <code>envelope-reasoning-secret-redaction.test.ts</code> (capability-gated on the seam).</p>
+<h3 id="3-post-v1-host-sample-test-debug-bundle-export-debug-bundle-export-probe-rfc-0034">3. <code>POST /v1/host/sample/test/debug-bundle/export</code> — Debug-bundle export probe (RFC 0034)</h3>
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td>Method + path</td><td><code>POST /v1/host/sample/test/debug-bundle/export</code></td></tr>
+<tr><td>Capability gate</td><td><code>capabilities.observability.testSeams.debugBundleExport: true</code></td></tr>
+<tr><td>Env gate (reference impl)</td><td><code>OPENWOP_TEST_DEBUG_BUNDLE_EXPORT=true</code></td></tr>
+<tr><td>Introduced</td><td>RFC 0034 §B</td></tr>
+</tbody></table>
+<p>Synchronous debug-bundle export for conformance scenarios that need to assert canary redaction without first triggering an interrupt → debug bundle workflow.</p>
+<p>Request body:</p>
+<pre class="lang-typescript"><code>{
+  runId: string,
+}</code></pre>
+<p>Response body: same shape as <code>GET /v1/runs/{runId}/debug-bundle</code> per <code>spec/v1/debug-bundle.md</code> — <code>DebugBundle</code> with <code>bundleVersion</code>, <code>host</code>, <code>run</code>, <code>events</code>, <code>redactionMode</code>, <code>redactionApplied</code>, <code>truncated</code>, <code>truncatedReason</code>.</p>
+<p>When advertised, the host MUST serve a <code>200 OK</code> with the documented shape.</p>
+<p>Conformance: gates on <code>capabilities.observability.testSeams.debugBundleExport: true</code>.</p>
+<h3 id="4-post-v1-host-sample-test-llm-cache-key-llm-cache-key-recipe-rfc-0041">4. <code>POST /v1/host/sample/test/llm-cache-key</code> — LLM cache-key recipe (RFC 0041)</h3>
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td>Method + path</td><td><code>POST /v1/host/sample/test/llm-cache-key</code></td></tr>
+<tr><td>Capability gate</td><td><code>capabilities.multiAgent.executionModel.replayDeterminism.supported: true</code> (RFC 0041 Phase 4 hosts); MAY be implemented earlier without advertising</td></tr>
+<tr><td>Env gate (reference impl)</td><td>implicit — seam registered alongside the cache-key implementation</td></tr>
+<tr><td>Introduced</td><td>RFC 0041 §A</td></tr>
+</tbody></table>
+<p>Computes the canonical LLM cache key per <code>replay.md</code> §"LLM cache-key recipe" §A + §B. Conformance scenarios drive the seam to assert (a) intra-host reproducibility, (b) non-recipe-field invariance, and (c) cross-host parity when two hosts both expose the seam.</p>
+<p>Request body — an <code>LLMCacheKeyInput</code>-shaped object per <code>replay.md</code> §A. <strong>Non-recipe fields are accepted and ignored</strong> (the test exercises that the host's recipe correctly drops them):</p>
+<pre class="lang-typescript"><code>{
+  // Recipe fields (per replay.md §A — only these influence the key):
+  provider: string,                                  // canonical provider id, lowercase ASCII
+  model: string,                                     // provider-stamped model id
+  messages: Array&amp;lt;{ role, content, name?, toolCallId? }&amp;gt;,
+  tools?: Array&amp;lt;{ name, description?, parameters }&amp;gt;,
+  temperature?: number,
+  topP?: number,
+  topK?: number,
+  responseFormat?: { type: &#39;text&#39; | &#39;json&#39; | &#39;tool_call&#39;, schema? },
+
+  // Non-recipe fields (host MUST ignore for key computation):
+  max_tokens?: number,
+  stop?: string[],
+  stream?: boolean,
+  seed?: number,
+  metadata?: Record&amp;lt;string, unknown&amp;gt;,
+  user?: string,
+  &#39;x-request-id&#39;?: string,
+  // ... any other field
+}</code></pre>
+<p>Response body:</p>
+<pre class="lang-typescript"><code>{
+  cacheKey: string,    // 64 lowercase-hex chars (SHA-256 of canonicalize(projectRecipe(input)))
+}</code></pre>
+<p>Hosts MUST: 1. Drop non-recipe fields from the input before canonicalization (§A closed-set rule) 2. Canonicalize per <code>replay.md</code> §B (RFC 8785 JCS-style: sorted keys recursively, no whitespace, preserve array order, UTF-8 NFC strings) 3. Return SHA-256 over the canonical bytes as lowercase hex</p>
+<p>A missing or malformed <code>provider</code>/<code>model</code>/<code>messages</code> field MUST return <code>400 invalid_argument</code>.</p>
+<p>Conformance: <code>replay-llm-cache-key.test.ts</code>, <code>replay-llm-cache-key-portable.test.ts</code>.</p>
+<h3 id="5-staged-refusal-seam-post-v1-host-sample-test-mock-ai-program-mode-refusal-rfc-0041-b">5. Staged-refusal seam — <code>POST /v1/host/sample/test/mock-ai/program</code> mode <code>refusal</code> (RFC 0041 §B)</h3>
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td>Method + path</td><td><code>POST /v1/host/sample/test/mock-ai/program</code></td></tr>
+<tr><td>Capability gate</td><td><code>capabilities.multiAgent.executionModel.replayDeterminism.refusalDivergenceEmission: true</code> (RFC 0041 Phase 4)</td></tr>
+<tr><td>Env gate (reference impl)</td><td><code>OPENWOP_TEST_SEAM_ENABLED=true</code></td></tr>
+<tr><td>Introduced</td><td>RFC 0041 §B; reuses the existing mock-AI program seam introduced by RFC 0032 §C</td></tr>
+</tbody></table>
+<p>The <code>replay.divergedAtRefusal</code> behavioral assertion requires staging the mock-AI provider to return a valid envelope on the original run and a refusal on the replay (or vice-versa). Phase 4 hosts that advertise <code>refusalDivergenceEmission: true</code> MUST honor the following program shape on <code>POST /v1/host/sample/test/mock-ai/program</code>:</p>
+<pre class="lang-typescript"><code>{
+  nodeId: string,
+  program: [
+    { mode: &#39;envelope&#39;, envelope: { /* valid LLM envelope */ } },     // original run gets this
+    { mode: &#39;refusal&#39;, refusalReason: string },                        // replay gets this
+  ],
+}</code></pre>
+<p>The host's mock-AI provider MUST honor the program <strong>deterministically by attempt index</strong>: the first call (original run) returns the first entry; the second call (replay) returns the second entry. The seam is callable BEFORE the run is created — each conformance scenario uses a unique fixture (and therefore unique <code>nodeId</code>).</p>
+<p>When the replay's mock-AI call hits the <code>refusal</code> entry, the host MUST: 1. Emit a <code>replay.divergedAtRefusal</code> event with payload per <code>schemas/run-event-payloads.schema.json</code> §<code>replayDivergedAtRefusal</code> 2. Fail the replay with HTTP <code>422</code> + <code>error.code: &quot;replay_diverged_at_refusal&quot;</code></p>
+<p>Conformance: <code>replay-divergence-at-refusal.test.ts</code> (advertisement-shape probe lives now; the 2 behavioral <code>it.todo</code> assertions light up when this seam is wired).</p>
+<h3 id="6-multi-region-idempotency-simulator-post-v1-host-sample-test-multi-region-simulate-partition-rfc-0036-c">6. Multi-region idempotency simulator — <code>POST /v1/host/sample/test/multi-region/simulate-partition</code> (RFC 0036 §C)</h3>
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td>Method + path</td><td><code>POST /v1/host/sample/test/multi-region/simulate-partition</code></td></tr>
+<tr><td>Capability gate</td><td><code>capabilities.idempotency.multiRegion.supported: true</code> OR <code>capabilities.idempotency.crossRegion ∈ {best-effort, strict}</code> (RFC 0036)</td></tr>
+<tr><td>Env gate (reference impl)</td><td><code>OPENWOP_TEST_MULTI_REGION_SIMULATOR=true</code></td></tr>
+<tr><td>Introduced</td><td>RFC 0036 §C — closes the CF-12 / OPS-5 multi-region simulation gap named in <code>docs/KNOWN-LIMITS.md</code></td></tr>
+</tbody></table>
+<p>The convergence rule in <code>spec/v1/idempotency.md</code> §"Multi-region idempotency annex" §"Convergence rule" is a pure-function MUST: given ≥2 conflicting <code>ConflictClaim</code> records sharing <code>(tenantId, endpoint, key)</code>, the resolver MUST return the lex-min <code>runId</code> as the winner deterministically without coordination. This seam exposes that algorithm directly so conformance can mechanically verify the property against synthetic partitions (no actual multi-region replication required).</p>
+<p>Request:</p>
+<pre class="lang-typescript"><code>{
+  claims: Array&amp;lt;{
+    runId: string,       // engine-assigned id; lex-sort determines winner
+    tenantId: string,    // claims with different tenantId MUST be rejected (400)
+    endpoint: string,    // claims with different endpoint MUST be rejected (400)
+    key: string,         // claims with different key MUST be rejected (400)
+    region: string,      // identifies which region produced this claim
+  }&amp;gt;  // length ≥ 2; length &amp;lt; 2 MUST be rejected (400)
+}</code></pre>
+<p>Response (<code>200 OK</code>):</p>
+<pre class="lang-typescript"><code>{
+  winner: ConflictClaim,                                     // lex-min runId
+  losers: ConflictClaim[],                                    // N-1 entries
+  cacheRedirects: Array&amp;lt;{                                     // N entries (one per region)
+    region: string,
+    cacheKey: string,                                         // `${endpoint}:${key}`
+    redirectToRunId: string,                                  // winner.runId
+  }&amp;gt;,
+  loserCancelReason: &#39;cross_region_dedup_loss&#39;,               // canonical literal
+}</code></pre>
+<p>Idempotency: the resolver is a pure function with no side effects. Same inputs → same outputs across calls. Hosts MAY cache results but the seam itself doesn't persist state.</p>
+<p>Conformance: <code>multi-region-idempotency-behavior.test.ts</code> (6 assertions covering lex-min winner, multi-region cache redirects, canonical cancel reason, order-invariance, and 400-on-tuple-mismatch).</p>
+<h3 id="7-cross-engine-append-ordering-harness-post-v1-host-sample-test-cross-engine-append-read-reset-rfc-0036-b">7. Cross-engine append-ordering harness — <code>POST /v1/host/sample/test/cross-engine/{append,read,reset}</code> (RFC 0036 §B)</h3>
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td>Method + path</td><td>3 endpoints (see below)</td></tr>
+<tr><td>Capability gate</td><td><code>capabilities.eventLog.crossEngineOrdering.supported: true</code> (RFC 0036 §B)</td></tr>
+<tr><td>Env gate (reference impl)</td><td><code>OPENWOP_TEST_CROSS_ENGINE_HARNESS=true</code></td></tr>
+<tr><td>Introduced</td><td>RFC 0036 §B — closes the CF-8 cross-engine append-ordering gap named in <code>docs/KNOWN-LIMITS.md</code></td></tr>
+</tbody></table>
+<p>The cross-engine ordering invariant in <code>spec/v1/channels-and-reducers.md</code> §"Cross-engine ordering" requires that two engine instances writing to the same shared channel converge to a single globally-ordered linearization on read. This seam exposes a synthetic two-engine harness so conformance can verify the property without standing up two real engine instances.</p>
+<p>Endpoints:</p>
+<pre class="lang-"><code>POST /v1/host/sample/test/cross-engine/append
+  Body: { engineId: string, channelId: string, value: unknown, lamport?: number }
+  Returns: { engineId, value, lamport, seq } — the assigned timestamp + sequence
+
+GET  /v1/host/sample/test/cross-engine/read?channelId=&amp;lt;id&amp;gt;
+  Returns: { entries: AppendEntry[] } — linearized by (lamport, engineId, seq)
+
+POST /v1/host/sample/test/cross-engine/reset
+  Body: {}
+  Returns: { ok: true } — clears the in-memory log</code></pre>
+<p>Lamport-clock semantics (the host's advertised <code>orderingModel: &#39;lamport&#39;</code>):</p>
+<ul>
+<li>Each append advances the engine's clock to <code>max(local, incoming) + 1</code></li>
+<li>The <code>lamport?</code> field on <code>append</code> is the engine's view of the OTHER engine's clock (incoming hint); honored per the lamport receive rule</li>
+<li><code>read</code> linearizes by <code>(lamport ASC, engineId ASC, seq ASC)</code> — a deterministic total order</li>
+<li>Hosts advertising a different <code>orderingModel</code> (<code>vector-clock</code>, <code>global-sequencer</code>, or <code>x-host-&amp;lt;host&amp;gt;-&amp;lt;key&amp;gt;</code>) MAY substitute their own algorithm but MUST honor the same <code>append</code>/<code>read</code>/<code>reset</code> contract</li>
+</ul>
+<p>Conformance: <code>cross-engine-append-behavior.test.ts</code> (4 assertions covering global linearization, lamport monotonicity, receive-rule advancement, and read-determinism).</p>
+<h3 id="8-sandbox-mvp-post-v1-host-sample-test-sandbox-load-invoke-rfc-0035">8. Sandbox MVP — <code>POST /v1/host/sample/test/sandbox-{load,invoke}</code> (RFC 0035)</h3>
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td>Method + path</td><td>2 endpoints (see below)</td></tr>
+<tr><td>Capability gate</td><td><code>capabilities.sandbox.supported: true</code> (RFC 0035 §A)</td></tr>
+<tr><td>Env gate (reference impl)</td><td><code>OPENWOP_TEST_SANDBOX_MVP=true</code></td></tr>
+<tr><td>Introduced</td><td>RFC 0035 §B — exercises the 8 sandbox failure-mode invariants against a synthetic misbehaving-pack registry</td></tr>
+</tbody></table>
+<p>The sandbox seam exists so conformance can drive the §B failure-mode invariants without a real pack runtime + real misbehaving pack tarballs. Each <code>sandbox-invoke</code> request names a synthetic typeId from the host's pre-populated misbehaving-pack registry; the host executes the matching code body inside its sandbox and returns either the result or a typed error envelope per <code>host-capabilities.md</code> §"Error codes".</p>
+<p>Endpoints:</p>
+<pre class="lang-"><code>POST /v1/host/sample/test/sandbox-load
+  Body: { packId: string }
+  Returns: 200 { ok: true, packId } | 400 validation_error | 404 sandbox_pack_not_found
+
+POST /v1/host/sample/test/sandbox-invoke
+  Body: {
+    typeId: string,                       // e.g. &#39;misbehave.fs-escape-read&#39;
+    args?: Record&amp;lt;string, unknown&amp;gt;,       // available as `args` inside the sandboxed code
+    packId?: string,                      // identifies the pack containing typeId
+    allowedHostCalls?: string[],          // capability-gate whitelist for this invocation
+  }
+  Returns: 200 { result: unknown } | 200 { error: SandboxError }</code></pre>
+<p><code>SandboxError</code> shape (canonical per <code>host-capabilities.md</code> §"Error codes"):</p>
+<pre class="lang-typescript"><code>{
+  code:
+    | &#39;sandbox_escape_attempt&#39;      // forbidden-syscall escape (fs/env/network/process)
+    | &#39;sandbox_capability_denied&#39;   // host call not in allowedHostCalls
+    | &#39;sandbox_memory_exceeded&#39;     // memoryLimitBytes overflow
+    | &#39;sandbox_timeout&#39;             // wallClockLimitMs overflow
+    | &#39;sandbox_invocation_error&#39;,   // fallback for thrown errors not in the canonical catalog
+  details: {
+    escapeKind?:                     // SET when code === &#39;sandbox_escape_attempt&#39;
+      | &#39;host-fs-escape&#39;
+      | &#39;host-env-leak&#39;
+      | &#39;network-escape&#39;
+      | &#39;host-process-escape&#39;,
+    requestedCapability?: string,    // REQUIRED when code === &#39;sandbox_capability_denied&#39;
+    requestedBytes?: number,         // MAY appear when code === &#39;sandbox_memory_exceeded&#39;
+    message: string,
+  },
+}</code></pre>
+<p>Synthetic misbehaving-pack typeIds the conformance suite exercises:</p>
+<table>
+<thead><tr><th>typeId</th><th>Failure mode it probes</th></tr></thead>
+<tbody>
+<tr><td><code>misbehave.fs-escape-read</code></td><td>sandbox_escape_attempt + escapeKind: host-fs-escape</td></tr>
+<tr><td><code>misbehave.fs-escape-write</code></td><td>sandbox_escape_attempt + escapeKind: host-fs-escape</td></tr>
+<tr><td><code>misbehave.env-leak</code></td><td>sandbox_escape_attempt + escapeKind: host-env-leak</td></tr>
+<tr><td><code>misbehave.network-escape</code></td><td>sandbox_escape_attempt + escapeKind: network-escape</td></tr>
+<tr><td><code>misbehave.process-escape</code></td><td>sandbox_escape_attempt + escapeKind: host-process-escape</td></tr>
+<tr><td><code>misbehave.timeout</code></td><td>sandbox_timeout</td></tr>
+<tr><td><code>misbehave.memory-bomb</code></td><td>sandbox_memory_exceeded</td></tr>
+<tr><td><code>misbehave.cross-pack-mutate</code></td><td>(no failure; result.shared MUST equal 1 on every invocation — cross-pack mutation MUST NOT leak across fresh contexts)</td></tr>
+<tr><td><code>misbehave.capability-gate-violation</code></td><td>sandbox_capability_denied + details.requestedCapability</td></tr>
+<tr><td><code>well-behaved.echo</code></td><td>(no failure; <code>result.echoed === args.input</code>)</td></tr>
+<tr><td><code>well-behaved.host-fetch</code></td><td>(no failure when <code>allowedHostCalls</code> includes <code>&#39;fetch&#39;</code>)</td></tr>
+</tbody></table>
+<p>Conformance: <code>sandbox-mvp-behavior.test.ts</code> (10 assertions covering 5 escape kinds + timeout + memory + cross-pack isolation + capability-gate + 2 well-behaved baselines).</p>
+<h2 id="production-safety-normative">Production safety (normative)</h2>
+<p>All seams under <code>/v1/host/sample/*</code> are conformance-only. Hosts deployed in production:</p>
+<ul>
+<li>SHOULD return <code>404 Not Found</code> from every seam unless an env-gate explicitly enables it</li>
+<li>MUST NOT honor the seams under default deployment configuration</li>
+<li>MUST document which env-gates were set for the conformance run in the host's <code>conformance.md</code> evidence file</li>
+</ul>
+<p>The host-extension namespace <code>/v1/host/sample/*</code> is per <code>host-extensions.md</code> §"Canonical prefixes" — it is host-private space and does not affect the v1 wire-shape stability contract.</p>
+<h2 id="open-seams-light-up-when-fixtures-ship">Open seams (light up when fixtures ship)</h2>
+<ul>
+<li><strong>Memory cross-run TTL roundtrip seam</strong> (RFC 0039 MAE-2) — <code>POST /v1/host/sample/test/memory/cross-run-ttl-roundtrip</code>. Contract: drive a parent → child → parent memory write/read sequence with controlled wall-clock skew to assert child-write-time TTL anchoring. Behavioral assertion in <code>multi-agent-memory-lifecycle.test.ts</code> stays <code>it.todo</code> until a memory-advertising Phase 2 host wires the seam.</li>
+</ul>
+<h2 id="open-spec-gaps">Open spec gaps</h2>
+<ul>
+<li>Capability flag for the prompt resolver seam is implicit (always-on when <code>prompts.supported: true</code>). A future minor revision MAY add <code>capabilities.prompts.testSeams.promptResolve</code> if hosts want to advertise the seam without committing to the full RFC 0029 behavior.</li>
+<li>The staged-refusal seam shape extends the existing RFC 0032 mock-AI program shape with a new <code>mode: &quot;refusal&quot;</code> entry. A future revision MAY split this out as a dedicated <code>capabilities.multiAgent.executionModel.testSeams</code> block.</li>
+</ul>
+<h2 id="cross-references">Cross-references</h2>
+<ul>
+<li><code>host-extensions.md</code> §"Canonical prefixes" — the <code>/v1/host/sample/*</code> namespace contract</li>
+<li><code>capabilities.md</code> §"Truthful advertisement" — the host's commitment when it advertises any of the above flags</li>
+<li><code>host-capabilities.md</code> §"<code>capabilities.observability.testSeams</code>" — the OTel scrape + debug-bundle export capability sub-block</li>
+<li><code>observability.md</code> §"OTel collector test seam (RFC 0034)" — the canonical RFC 0034 §B normative text the OTel + debug-bundle seams implement</li>
+<li><code>replay.md</code> §"LLM cache-key recipe" — the canonical recipe the §4 LLM cache-key seam computes</li>
+<li><code>prompts.md</code> §"Resolution chain (normative)" — the canonical RFC 0029 resolver semantics the §1 seam exposes</li>
+</ul></article></div><script src="/assets/spec-toc.js" defer></script>
+  </div>
+</main>
+
+<!-- ─────────────────────── FOOTER (mirrors marketing) ─────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-mark">
+          <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+          Open<em>WOP</em>
+        </div>
+        <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
+          The Workflow Orchestration Protocol — an open, conformance-tested
+          contract for durable, observable AI workflows across hosts.
+        </p>
+      </div>
+      <div>
+        <h5>Specification</h5>
+        <ul>
+          <li><a href="/spec/v1/">v1.x Core</a></li>
+          <li><a href="/rfcs/">RFCs</a></li>
+          <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
+          <li><a href="/errors/">Error codes</a></li>
+          <li><a href="/scenarios/">Scenario walkthroughs</a></li>
+          <li><a href="/profiles/">Profiles</a></li>
+          <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
+          <li><a href="/versioning/">Versioning policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Ecosystem</h5>
+        <ul>
+          <li><a href="https://packs.openwop.dev/">Pack registry</a></li>
+          <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
+          <li><a href="/faq/">FAQ</a></li>
+          <li><a href="/security/">Security posture</a></li>
+          <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
+          <li><a href="/contributing/">Contributing</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>For</h5>
+        <ul>
+          <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+          <li><a href="/for/host-implementers/">Host implementers</a></li>
+          <li><a href="/for/pack-authors/">Pack authors</a></li>
+          <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 OpenWOP contributors</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/site-nav.js" defer></script>
+
+</body>
+</html>

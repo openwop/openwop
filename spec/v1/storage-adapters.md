@@ -1,6 +1,6 @@
 # openwop Spec v1 — Storage Adapters
 
-> **Status: FINAL v1 (2026-04-29).** Comprehensive coverage of the two normative storage-adapter contracts (`RunEventLogIO` and `SuspendIO`) that any OpenWOP-compliant engine implementation MUST satisfy. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1 (2026-04-29).** Comprehensive coverage of the two normative storage-adapter contracts (`RunEventLogIO` and `SuspendIO`) that any OpenWOP-compliant engine implementation MUST satisfy. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ---
 

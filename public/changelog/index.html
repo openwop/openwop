@@ -54,16 +54,87 @@
       <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
       <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
     </a>
-    <nav class="topnav">
-      <a class="hide-sm " href="/spec/v1/">Spec</a>
-      <a class="hide-sm " href="/rfcs/">RFCs</a>
-      <a class="hide-sm " href="/conformance/">Conformance</a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
       <a class="hide-sm active" href="/changelog/">Changelog</a>
-      <a class="hide-sm " href="/faq/">FAQ</a>
-      <a class="pill" href="https://github.com/openwop/openwop">GitHub →</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
     </nav>
   </div>
 </header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
 
 <main class="site-main">
   <div class="wrap">
@@ -74,11 +145,34 @@
     <h4>On this page</h4>
     <ul>
       <li class="toc-top"><a href="#1-1-3-unreleased-coordinated-sdk-release-for-myndhyve-adoption-feedback-slices">[1.1.3 — unreleased] — coordinated SDK release for MyndHyve adoption-feedback slices</a></li>
+      <li class="toc-sub"><a href="#feat-workflow-engine-real-llm-by-default-in-builder-copy-export-event-stream-toolbar-cloud-run-deploy-plumbing-close-out-2026-05-23-late-evening">feat(workflow-engine): real LLM by default in builder + Copy/Export event-stream toolbar + Cloud Run deploy-plumbing close-out (2026-05-23 late evening)</a></li>
+      <li class="toc-sub"><a href="#rfc-0034-promoted-active-accepted-rfc-0028-0029-tier-1-rfc-0021-host-adoption-honest-correction-on-registerhostsampleroutes-2026-05-23-late">RFC 0034 promoted Active → Accepted + RFC 0028/0029 Tier-1 + RFC 0021 host adoption + honest correction on registerHostSampleRoutes (2026-05-23 late)</a></li>
+      <li class="toc-sub"><a href="#fix-workflow-engine-prompt-templates-bundled-path-bug-4-prompt-event-scenarios-pass-workflow-engine-95-4-95-5-2026-05-23">fix(workflow-engine): prompt-templates bundled-path bug — 4 prompt-event scenarios pass; workflow-engine 95.4% → 95.5% (2026-05-23)</a></li>
+      <li class="toc-sub"><a href="#fix-workflow-engine-bundled-path-schema-lookup-bug-workflow-engine-exhaustive-mode-pass-rate-80-9-95-4-2026-05-23">fix(workflow-engine): bundled-path schema-lookup bug — workflow-engine exhaustive-mode pass-rate 80.9% → 95.4% (2026-05-23)</a></li>
+      <li class="toc-sub"><a href="#rfc-0041-b-phase-4-replay-divergence-at-refusal-executor-wiring-closes-2026-05-23">RFC 0041 §B Phase 4 — replay-divergence-at-refusal executor wiring closes (2026-05-23)</a></li>
+      <li class="toc-sub"><a href="#phase-4-behavioral-harness-close-out-tracks-1-2-5-6-7-rfc-0042-2026-05-22-2026-05-23">Phase 4 behavioral-harness close-out — Tracks 1/2/5/6/7 + RFC 0042 (2026-05-22 → 2026-05-23)</a></li>
+      <li class="toc-sub"><a href="#myndhyve-picks-option-1-x-host-myndhyve-memory-written-vendor-namespace-locked-2026-05-23">MyndHyve picks Option 1 — x-host-myndhyve-memory-written vendor namespace locked (2026-05-23)</a></li>
+      <li class="toc-sub"><a href="#rfc-0027-promoted-active-accepted-rfc-0039-half-b-host-implementation-lands-2026-05-23">RFC 0027 promoted Active → Accepted + RFC 0039 Half B host implementation lands (2026-05-23)</a></li>
+      <li class="toc-sub"><a href="#docs-sync-suite-v1-4-0-v1-5-0-re-measurement-known-limits-rfc-table-refresh-2026-05-22">Docs sync — suite v1.4.0 → v1.5.0 re-measurement + KNOWN-LIMITS RFC table refresh (2026-05-22)</a></li>
+      <li class="toc-sub"><a href="#audit-response-2026-05-22-external-standards-readiness-review-2026-05-22">Audit response — 2026-05-22 external standards-readiness review (2026-05-22)</a></li>
+      <li class="toc-sub"><a href="#rfc-0039-half-a-rfc-0044-promoted-active-accepted-three-rfcs-from-one-conformance-run-2026-05-22">RFC 0039 Half A + RFC 0044 promoted Active → Accepted — three RFCs from one conformance run (2026-05-22)</a></li>
+      <li class="toc-sub"><a href="#rfc-0037-phase-1-promoted-active-accepted-first-vendor-neutral-validation-tripwire-fires-2026-05-22">RFC 0037 Phase 1 promoted Active → Accepted — first vendor-neutral validation tripwire fires (2026-05-22)</a></li>
+      <li class="toc-sub"><a href="#rfc-0044-confidence-escalation-interrupt-kind-advertisement-clarification-to-rfc-0039-a-2026-05-22">RFC 0044 — confidence-escalation interrupt-kind advertisement (clarification to RFC 0039 §A) (2026-05-22)</a></li>
+      <li class="toc-sub"><a href="#myndhyve-adoption-pass-spec-follow-ups-rfc-0037-cancelled-phase-optionality-rfc-0039-interrupt-kind-flexibility-rfc-0034-envelope-accept-dependency-2026-05-22">MyndHyve adoption-pass spec follow-ups — RFC 0037 cancelled-phase optionality + RFC 0039 interrupt-kind flexibility + RFC 0034 envelope-accept dependency (2026-05-22)</a></li>
+      <li class="toc-sub"><a href="#rfc-0027-0028-0029-acceptance-criteria-audit-reflect-actually-shipped-state-2026-05-22">RFC 0027 + 0028 + 0029 acceptance-criteria audit — reflect actually-shipped state (2026-05-22)</a></li>
+      <li class="toc-sub"><a href="#rfc-0034-post-get-reconciliation-rfc-0035-sandbox-security-tier-honesty-2026-05-22">RFC 0034 POST→GET reconciliation + RFC 0035 sandbox SECURITY-tier honesty (2026-05-22)</a></li>
+      <li class="toc-sub"><a href="#rfc-0041-phase-4-follow-ups-version-check-bug-spec-contradiction-assertion-gap-helper-extraction-2026-05-22">RFC 0041 Phase 4 follow-ups: version-check bug + spec contradiction + assertion gap + helper extraction (2026-05-22)</a></li>
+      <li class="toc-sub"><a href="#rfc-0041-phase-4-replay-determinism-under-nondeterministic-models-draft-active-2026-05-22">RFC 0041 Phase 4 — replay determinism under nondeterministic models, Draft → Active (2026-05-22)</a></li>
+      <li class="toc-sub"><a href="#rfc-0040-follow-ups-sdk-parity-fromseq-field-name-alignment-2026-05-21">RFC 0040 follow-ups: SDK parity + fromSeq field-name alignment (2026-05-21)</a></li>
       <li class="toc-sub"><a href="#rfc-0039-memory-lifecycle-half-mae-2-mae-3-rfc-0040-phase-3-cross-host-causation-draft-active-2026-05-22">RFC 0039 memory-lifecycle half (MAE-2 + MAE-3) + RFC 0040 Phase 3 cross-host causation Draft → Active (2026-05-22)</a></li>
       <li class="toc-sub"><a href="#rfc-0039-0037-0041-code-review-follow-ups-2026-05-22">RFC 0039 + 0037 + 0041 — /code-review follow-ups (2026-05-22)</a></li>
       <li class="toc-sub"><a href="#rfc-0040-rfc-0041-multi-agent-phases-3-4-filed-draft-2026-05-22">RFC 0040 + RFC 0041 — multi-agent Phases 3 + 4 filed Draft (2026-05-22)</a></li>
       <li class="toc-sub"><a href="#rfc-0039-phase-2-confidence-floor-escalation-draft-active-2026-05-22">RFC 0039 Phase 2 confidence-floor escalation Draft → Active (2026-05-22)</a></li>
       <li class="toc-sub"><a href="#interop-matrix-cross-host-validation-closed-on-myndhyve-workflow-runtime-2026-05-21">INTEROP-MATRIX: cross-host validation closed on MyndHyve workflow-runtime (2026-05-21)</a></li>
+      <li class="toc-sub"><a href="#sample-app-workflow-first-narrative-pivot-2026-05-23-late">Sample app — workflow-first narrative pivot (2026-05-23 late)</a></li>
+      <li class="toc-sub"><a href="#sample-app-host-json-contract-prompts-envelope-normalizers-schema-responder-2026-05-23">Sample app + host — JSON-contract prompts, envelope normalizers, schema responder (2026-05-23)</a></li>
+      <li class="toc-sub"><a href="#sample-app-provider-management-prompt-crud-envelope-inspector-minimax-tools-2026-05-22-late">Sample app — provider management, prompt CRUD, envelope inspector, MiniMax tools (2026-05-22 late)</a></li>
+      <li class="toc-sub"><a href="#sample-app-chat-surface-ux-workflow-template-prompt-preload-2026-05-22">Sample app — chat-surface UX + workflow-template prompt preload (2026-05-22)</a></li>
       <li class="toc-sub"><a href="#site-ai-chat-surface-follow-up-polish-pass-2026-05-21">Site + AI-chat surface — follow-up polish pass (2026-05-21)</a></li>
       <li class="toc-sub"><a href="#site-13-new-pages-rest-api-explorer-json-ld-on-every-spec-doc-2026-05-21">Site: 13 new pages + REST API explorer + JSON-LD on every spec doc (2026-05-21)</a></li>
       <li class="toc-sub"><a href="#site-polish-versioning-h1-unescape-redoc-spec-toc-layouts-widened-2026-05-21">Site polish: /versioning/ H1 unescape + Redoc/spec-ToC layouts widened (2026-05-21)</a></li>
@@ -241,12 +335,350 @@
 <blockquote><p><strong>Status legend</strong> (per <code>auth.md</code> §status legend):</p><p>STUB · DRAFT · OUTLINE · FINAL — see individual doc headers for current state.</p></blockquote>
 <hr/>
 <h2 id="1-1-3-unreleased-coordinated-sdk-release-for-myndhyve-adoption-feedback-slices">[1.1.3 — unreleased] — coordinated SDK release for MyndHyve adoption-feedback slices</h2>
+<h3 id="feat-workflow-engine-real-llm-by-default-in-builder-copy-export-event-stream-toolbar-cloud-run-deploy-plumbing-close-out-2026-05-23-late-evening">feat(workflow-engine): real LLM by default in builder + Copy/Export event-stream toolbar + Cloud Run deploy-plumbing close-out (2026-05-23 late evening)</h3>
+<p>Four reference-app commits land four orthogonal but session-coherent improvements. None touches the spec corpus, conformance suite, SDKs, schemas, or API surface — all are scoped to <code>apps/workflow-engine/</code> and the repo-root <code>.gitignore</code>. The reference workflow-engine's advertised capabilities and conformance pass-rate are unchanged.</p>
+<ul>
+<li><strong>Real LLM by default in the builder</strong> (<code>feat(workflow-engine)</code>, commit <code>6b20495</code>) — the deterministic <code>local.sample.demo.mock-ai</code> node is no longer surfaced in the FE palette. The <code>vendor.openwop-sample.chat-responder</code> node fills the same slot and defaults its <code>credentialRef</code> to the managed <code>openwop-free</code> tile when no credential is pinned, so a freshly-dragged AI node calls a real LLM out of the box without visiting <code>/keys</code> first. Chat now accepts a single-string <code>prompt</code> input (or <code>text</code>/<code>message</code>/<code>content</code>/<code>input</code> as fallback) in addition to the existing multi-turn <code>messages</code> array, so upstream nodes that emit <code>text</code> (uppercase) or <code>prompt</code> (etl-extractor) compose into chat without a shape-translator node. A new literal-text <code>systemPrompt</code> config field takes precedence over the existing RFC 0027 <code>systemPromptRef</code> PromptRef path. The 7 premade templates are rewritten to use <code>chat</code> with literal <code>systemPrompt</code> strings describing each AI node's role (drafter, audit logger, extractor, etc.) so the templates demo "what a real-LLM workflow looks like" rather than the previous deterministic stub. A one-time <code>mockAiToChatMigration()</code> in <code>localStore.ts</code> rewrites browser-cached <code>SavedWorkflow</code> graphs from <code>kind: &#39;mock-ai&#39;</code> → <code>kind: &#39;chat&#39;</code> on first <code>listSavedWorkflows()</code> call after deploy, so users with previously-saved workflows don't see "Unknown node kind" errors at save-time. <code>mock-ai</code> stays in the BE node registry — still used by conformance fixtures (<code>local.sample.demo.mock-ai</code> typeId) and by the <code>POST /v1/host/sample/test/mock-ai/program</code> test seam (RFC 0041 §B replay-divergence-at-refusal staging). <code>promptsClient.ts</code> <code>listPrompts()</code> empty-list fallback fixed: the BE returning <code>{items: []}</code> now drops through to the bundled <code>SAMPLE_PROMPTS</code> constants instead of returning an empty library.</li>
+</ul>
+<ul>
+<li><strong>Copy + Export buttons on event-stream view</strong> (<code>feat(workflow-engine)</code>, commit <code>b8b9979</code>) — <code>EventStreamView.tsx</code> gains a toolbar with two affordances for moving event-stream data out of the run bubble for off-tool triage: <strong>Copy</strong> yields a code-fenced markdown block (<code>#seq type [nodeId]</code> + indented JSON payload) sized for pasting into Claude Code / Slack / GitHub; <strong>Export JSON</strong> downloads the raw <code>RunEventDoc[]</code> as <code>run-&amp;lt;runId&amp;gt;-events.json</code> for offline analysis. Clipboard API with hidden-textarea <code>execCommand(&#39;copy&#39;)</code> fallback for HTTP contexts / older Safari. The toolbar also surfaces a quiet right-aligned event count. New <code>.event-stream-actions</code> styles in <code>global.css</code>.</li>
+</ul>
+<ul>
+<li><strong>Cloud Run module-load deploy-plumbing close-out</strong> (<code>chore(workflow-engine)</code>, commit <code>64b09d4</code>) — the <code>gcloud run deploy --source apps/workflow-engine/</code> upload boundary only includes the workflow-engine directory's contents, but the bundled <code>lib/index.js</code> walks parents from <code>/app/lib</code> via <code>host/_repoPath.ts::locateRepoSchemasDir()</code> and <code>host/_repoPath.ts::locateRepoDir()</code> looking for sibling <code>schemas/</code> + <code>conformance-fixtures/</code> directories. Three changes unblock the resolution: (1) vendor canonical <code>schemas/</code> into <code>apps/workflow-engine/schemas/</code> (byte-identical to repo-root <code>schemas/</code>; 36 JSON Schema files + README) so the Dockerfile can <code>COPY schemas ./schemas</code>; (2) new <code>scripts/sync-schemas.sh</code> as companion to the existing <code>sync-fixtures.sh</code> (rm -rf + cp -r + <code>diff -rq</code> non-drift assertion); (3) Dockerfile dual-mounts <code>conformance-fixtures</code> at both <code>/app/conformance/fixtures/</code> (legacy <code>findConformanceFixturesDir()</code> probe in <code>host/index.ts</code>) AND <code>/app/conformance-fixtures/</code> (sibling-of-<code>/app/lib/</code>, where <code>_repoPath.ts::locateRepoDir</code>'s eager walk lands on the first parent step). Both COPY targets remain conditionally removed when <code>INCLUDE_CONFORMANCE_FIXTURES</code> build-arg is unset (production forks).</li>
+</ul>
+<ul>
+<li><strong>Gitignore conformance/data/ harness runtime state</strong> (<code>chore(gitignore)</code>, commit <code>5088836</code>) — running the workflow-engine BE locally seeds <code>conformance/data/</code> with per-developer state that should never reach the repo: <code><em>.db-shm</code> / <code></em>.db-wal</code> sqlite WAL sidecars (not matched by the existing <code>*.db</code> rule), <code>.byok-master-key</code> (64-byte AES-256-GCM at-rest BYOK encryption key — committing one to a public repo would be a security incident), and the initially-empty <code>host-fs/</code> sandbox directory. Per-artifact ignore rules added (not directory-wide) so <code>conformance/data/</code> remains a legitimate location for future committed harness inputs like fixture seed data or replay corpora.</li>
+</ul>
+<h3 id="rfc-0034-promoted-active-accepted-rfc-0028-0029-tier-1-rfc-0021-host-adoption-honest-correction-on-registerhostsampleroutes-2026-05-23-late">RFC 0034 promoted Active → Accepted + RFC 0028/0029 Tier-1 + RFC 0021 host adoption + honest correction on <code>registerHostSampleRoutes</code> (2026-05-23 late)</h3>
+<p><strong>MyndHyve session shipped 4 RFCs at Tier-1 + a load-bearing wire-up fix:</strong></p>
+<table>
+<thead><tr><th>RFC</th><th>What landed</th><th>Status impact</th></tr></thead>
+<tbody>
+<tr><td><strong>0021</strong> (AI Envelope Primitive)</td><td><code>POST /v1/host/sample/envelope/accept</code> live with full §A outcome decision tree (<code>accepted</code>/<code>invalid</code>/<code>gated</code>/<code>breached</code>) + BYOK-canary recursive SR-1 redactor + contentTrust propagation. Wire-shape verified live.</td><td>Already Accepted long ago; continued adoption.</td></tr>
+<tr><td><strong>0028</strong> Tier-1 (Prompt Library Endpoints)</td><td><code>GET /v1/prompts</code> + <code>GET /v1/prompts/{templateId}</code> + <code>POST /v1/prompts:render</code> live. <code>POST/PUT/DELETE</code> return <code>501</code> + <code>Allow: GET, HEAD, OPTIONS</code>. Advertises <code>prompts.{packsSupported: false, mutableLibrary: false, library: {id: &#39;myndhyve-system&#39;, renderEndpoint, maxRenderRequestBytes: 65536}}</code>.</td><td><strong>Stays Active.</strong> Path-to-Accepted requires <code>packsSupported: true</code> AND <code>mutableLibrary: true</code>; MyndHyve's Tier-1 advertises both <code>false</code>. Tier-2 is a multi-day Firestore/RBAC session.</td></tr>
+<tr><td><strong>0029</strong> Tier-1 (Prompt Override Hierarchy)</td><td><code>agent.promptResolved</code> RunEventType + <code>.refine()</code>-enforced payload invariant; emission point in <code>callPrompt.node.ts</code>. Honest Tier-1 chain: node layer with synthetic <code>prompt:inline-&amp;lt;nodeId&amp;gt;</code> ref.</td><td><strong>Stays Active.</strong> Path-to-Accepted requires <code>agentBindings: true</code>; MyndHyve's Tier-1 explicitly defers the agent-* layers.</td></tr>
+<tr><td><strong>0034</strong> (OTel test seam)</td><td><code>GET /v1/host/sample/test/otel/spans?runId=&amp;lt;id&amp;gt;</code> returns <code>200 OK { spans: [] }</code>. Advertises <code>observability.testSeams.otelScrape: true</code>. Tier-1 honest boundary: empty buffer (<code>@opentelemetry/api</code> only, no SDK provider).</td><td><strong>Active → Accepted.</strong> Per RFC 0034 §B's "Upstream dependency on RFC 0021 envelope-accept" allowance, the empty-buffer case is explicitly valid — seam-shape probe passes; SR-1 behavioral assertion vacuously safe. First non-steward OTel-seam adoption.</td></tr>
+</tbody></table>
+<p><strong>Honest correction — <code>registerHostSampleRoutes</code> was not invoked pre-<code>60b569de</code>.</strong> MyndHyve disclosed that the <code>/v1/host/sample/<em></code> route code was deployed for days but the <code>registerHostSampleRoutes(app)</code> call was never wired into <code>services/workflow-runtime/src/index.ts</code>. Effect: every <code>/v1/host/sample/</em></code> request returned 404 in production from each seam's initial deploy until commit <code>60b569de</code> (revision <code>workflow-runtime-00196-7mm</code>, 2026-05-23). Four seams affected (RFC 0027 §E compose, RFC 0041 §A cache-key, RFC 0021 envelope-accept, RFC 0034 OTel scrape). Every conformance scenario that hit these paths returned 404 soft-skip instead of exercising behavior. With <code>60b569de</code>, all four seams are now exercisable end-to-end — verified live via direct curl 2026-05-23.</p>
+<p><strong>RFC 0027 status stays Accepted.</strong> The advertisement was real, MyndHyve's local-tests-green claim was real (those tests exercise compose-seam logic directly without the host's REST surface). The conformance-suite SKIP-on-404 was a wire-up bug, not a logic gap. Same letter-of-law-vs-spirit-of-law principle that motivated the sandbox revert (<code>5864a2f</code>).</p>
+<p><strong>Updates:</strong></p>
+<ul>
+<li><code>RFCS/0034-otel-collector-test-seam.md</code> Status: <code>Active → Accepted</code>. All 8 acceptance-criteria items <code>[ ] → [x]</code>.</li>
+<li><code>INTEROP-MATRIX.md</code> gains §"Honest correction" + §"MyndHyve adoption status — RFC 0021 + RFC 0028 Tier-1 + RFC 0029 Tier-1 + RFC 0034" sub-sections; header date note expanded.</li>
+<li><code>README.md</code> Accepted (33 → 34 — adds 0034); Active (7 → 6).</li>
+</ul>
+<h3 id="fix-workflow-engine-prompt-templates-bundled-path-bug-4-prompt-event-scenarios-pass-workflow-engine-95-4-95-5-2026-05-23">fix(workflow-engine): prompt-templates bundled-path bug — 4 prompt-event scenarios pass; workflow-engine 95.4% → 95.5% (2026-05-23)</h3>
+<p>Follow-up to the <code>envelopeAcceptor.ts</code> bundled-path bugfix (commit <code>d09d99c</code>). The same pattern — <code>join(__filename, &#39;..&#39; × 5, &#39;conformance-fixtures&#39;, &#39;prompt-templates&#39;)</code> — was present in <code>host/promptStore.ts:78</code> AND <code>host/promptCompose.ts:115</code>. Under the source tree it resolved correctly to <code>apps/workflow-engine/conformance-fixtures/prompt-templates/</code>. Under the bundled tree (<code>lib/index.js</code>) it overshot to <code>apps/conformance-fixtures/prompt-templates/</code> — a directory that doesn't exist — so <code>existsSync(FIXTURES_DIR)</code> returned false at boot, host-built-in templates never loaded, every <code>getTemplate()</code> call returned undefined, and the dispatch path silently skipped <code>prompt.composed</code> emission for the 4 conformance scenarios that target host-built-in templates.</p>
+<ul>
+<li><strong>Root cause:</strong> identical to commit <code>d09d99c</code> but for the fixtures directory instead of the schemas directory. The earlier KNOWN-LIMITS row attributed the failures to "few-shot + schema-hint not wired in dispatch" — that diagnosis was wrong; the dispatch loop in <code>bootstrap/nodes.ts:680-779</code> was already complete for all 4 PromptKinds. The actual cause was templates never loading at boot.</li>
+</ul>
+<ul>
+<li><strong>Fix:</strong> generalized the existing <code>_repoPath.ts:locateRepoSchemasDir()</code> helper into <code>locateRepoDir(fromDir, dirName, sentinelRelPath)</code>. Both consumers now resolve <code>FIXTURES_DIR</code> via the helper using <code>prompt-templates/conformance-prompt-writer-system.json</code> as the sentinel. <code>locateRepoSchemasDir()</code> retained as a thin convenience wrapper for back-compat.</li>
+</ul>
+<ul>
+<li><strong>Re-measurement:</strong></li>
+</ul>
+<p>    - Before: 1521 / 6 fail / 56 skip / 14 todo / 1597 = 95.4%     - After:  1525 / 2 fail / 56 skip / 14 todo / 1597 = 95.5%     - Δ: +4 pass / -4 fail. The 4 prompt-event scenarios (<code>prompt-all-four-kinds-events.test.ts</code> × 2 + <code>prompt-end-to-end-events.test.ts</code> × 2) all flip from FAIL to PASS.</p>
+<ul>
+<li><strong>2 remaining real failures</strong> (both documented in <code>docs/KNOWN-LIMITS.md</code> §"Behavior tests too coarse to fully prove an invariant"):</li>
+</ul>
+<p>    - workflow-engine anonymous-auth fallback under <code>NODE_ENV=development</code> (intentional dev posture)     - workflow-engine multi-agent confidence-escalation timing flake (~30 min to close)</p>
+<ul>
+<li><code>INTEROP-MATRIX.md</code> workflow-engine row updated 95.4% → 95.5% with the same-day delta history embedded inline. <code>docs/KNOWN-LIMITS.md</code> row for the prompt-composed gap removed (now closed).</li>
+</ul>
+<p>Pattern lesson: <strong>two more files reading sibling-repo paths via <code>__dirname/__filename + &#39;..&#39; × N</code></strong> now use the shared <code>_repoPath.ts:locateRepoDir()</code> helper, lifting the total fix-coverage from 2 sites to 4. A grep for the remaining bundled-path risk pattern:</p>
+<p>  <code>grep -rn &quot;join.<em>__filename.</em>\.\..<em>conformance-fixtures\|resolve.</em>__dirname.<em>\.\..</em>schemas&quot; apps/workflow-engine/backend/typescript/src/</code></p>
+<p>returns zero hits post-fix.</p>
+<p>Gate: <code>bash scripts/openwop-check.sh</code> GREEN end-to-end (9/9). <code>additive</code> per <code>COMPATIBILITY.md</code> §2.1 — host-side path-resolution bug fix; no wire-shape impact.</p>
+<h3 id="fix-workflow-engine-bundled-path-schema-lookup-bug-workflow-engine-exhaustive-mode-pass-rate-80-9-95-4-2026-05-23">fix(workflow-engine): bundled-path schema-lookup bug — workflow-engine exhaustive-mode pass-rate 80.9% → 95.4% (2026-05-23)</h3>
+<p>Root-cause finding from iterating on the "129 workflow-engine exhaustive-mode failures" snapshot in <code>docs/CONFORMANCE-RUNS-2026-05-23.md</code>. The vast majority were NOT real conformance gaps — they were cascade failures from a host-side path-resolution bug that crashed the entire node process on the first envelope-accept seam request.</p>
+<ul>
+<li><strong>Root cause:</strong> <code>apps/workflow-engine/backend/typescript/src/host/envelopeAcceptor.ts</code> (and, identical pattern, <code>host/promptPackLoader.ts</code>) computed <code>SCHEMAS_DIR</code> via <code>resolve(__dirname, &#39;..&#39; × 6, &#39;schemas&#39;)</code>. Correct under the source tree (file is 6 levels deep from openwop/). Wrong under the esbuild-bundled tree where the entire backend lives at <code>lib/index.js</code> — only 4 levels deep. The bundled host opened <code>/Users/david/dev/schemas/ai-envelope.schema.json</code> instead of <code>/Users/david/dev/openwop/schemas/...</code>, threw <code>ENOENT</code>, crashed the process.</li>
+</ul>
+<ul>
+<li><strong>Why the bug hid so long:</strong> the schema file is read lazily inside <code>loadEnvelopeValidator()</code> — only the FIRST request to <code>/v1/host/sample/envelope/accept</code> triggered the ENOENT. The conformance suite's <code>aiEnvelope.*.test.ts</code> family hits this endpoint, but only after several other test files have run. Once the host crashed, every subsequent test's setup hook returned "discovery fetch failed (fetch failed)" — many honest scenarios surfaced as failures rather than honest skips.</li>
+</ul>
+<ul>
+<li><strong>Fix:</strong> new shared utility <code>apps/workflow-engine/backend/typescript/src/host/_repoPath.ts:locateRepoSchemasDir(fromDir, sentinelFile)</code> walks parent directories until a sibling <code>schemas/</code> containing the sentinel file is found. Works under both source-tree and bundled-tree layouts. Both <code>envelopeAcceptor.ts</code> and <code>promptPackLoader.ts</code> refactored to use it. Walk naturally terminates at the filesystem root; throws loudly at module-load (rather than at lazy first-request) so a misconfigured deployment surfaces the failure at boot.</li>
+</ul>
+<ul>
+<li><strong>Regression guard:</strong> new <code>apps/workflow-engine/backend/typescript/test/repo-schemas-path.test.ts</code> (5 unit tests) pins the contract. Asserts both <code>envelopeAcceptor.ts</code> and <code>promptPackLoader.ts</code> import successfully at module load + the helper throws when the sentinel cannot be found.</li>
+</ul>
+<ul>
+<li><strong>Re-measurement (with <code>OPENWOP_RATELIMIT_DISABLED=true</code> so the conformance suite's 215 setup probes don't trigger the workflow-engine's per-IP rate limiter):</strong></li>
+</ul>
+<p>    - Before: 1291 / 129 / 161 / 14 / 1595 = 80.9%     - After:  1521 /   6 /  56 / 14 / 1597 = 95.4%     - Δ: +230 pass / -123 fail / -105 skip / +2 total. The +2 total comes from helper tests that now run cleanly instead of being interrupted mid-file.</p>
+<ul>
+<li><strong>6 remaining real failures</strong> (down from inflated 129) — documented in <code>docs/KNOWN-LIMITS.md</code> §"Behavior tests too coarse to fully prove an invariant":</li>
+</ul>
+<p>    - workflow-engine anonymous-auth fallback under <code>NODE_ENV=development</code> (1 failure)     - workflow-engine <code>prompt.composed</code> not emitted for <code>few-shot</code> + <code>schema-hint</code> PromptKinds (4 failures)     - workflow-engine multi-agent confidence-escalation timing flake (1 failure)</p>
+<ul>
+<li><code>INTEROP-MATRIX.md</code> <code>Workflow-engine reference</code> row updated in-place (the prior 80.9% snapshot was crash-polluted, not a legitimate measurement). <code>docs/PROTOCOL-STATUS.md</code> regenerated.</li>
+</ul>
+<p>Gate: <code>bash scripts/openwop-check.sh</code> GREEN end-to-end (9/9). <code>additive</code> per <code>COMPATIBILITY.md</code> §2.1 — host-side path-resolution bug fix; no wire-shape impact; no SDK / schema / OpenAPI / AsyncAPI change.</p>
+<h3 id="rfc-0041-b-phase-4-replay-divergence-at-refusal-executor-wiring-closes-2026-05-23">RFC 0041 §B Phase 4 — replay-divergence-at-refusal executor wiring closes (2026-05-23)</h3>
+<p>Track #4 (the last open audit item from the 2026-05-22 Phase 4 close-out) lands end-to-end. The workflow-engine's executor now detects envelope-kind divergence at the <code>:fork mode: replay</code> re-dispatch boundary and emits <code>replay.divergedAtRefusal</code> + fails the run with <code>error.code: &#39;replay_diverged_at_refusal&#39;</code> per RFC 0041 §B + <code>spec/v1/rest-endpoints.md</code> §"Common error codes".</p>
+<ul>
+<li><strong><code>apps/workflow-engine/backend/typescript/src/executor/executor.ts</code></strong> gains a <code>checkReplayDivergence()</code> helper called from BOTH the success path (when the replay's node completes normally) AND the failure path (when the replay's LLM call throws <code>AiProviderError(&#39;envelope_refusal&#39;)</code>). Both directions of divergence are detected:</li>
+</ul>
+<p>    - <strong>original=valid + replay=refusal:</strong> caught in the <code>outcome.status === &#39;failure&#39;</code> branch when <code>outcome.error.code === &#39;envelope_refusal&#39;</code> AND the source run has a <code>node.completed</code> event for the same nodeId.     - <strong>original=refusal + replay=valid (symmetric):</strong> caught in the <code>outcome.status === &#39;success&#39;</code> branch when the source run has an <code>envelope.refusal</code> event for the same nodeId.   When divergence is detected, the engine emits <code>replay.divergedAtRefusal</code> with the §B payload (sourceRunId + atSequence + nodeId + originalEnvelopeKind + replayEnvelopeKind) then appends <code>node.failed</code> with the overridden error code. Non-Phase-4 hosts MUST NOT emit this event (per the schema description on <code>run-event-payloads.schema.json</code> §<code>replayDivergedAtRefusal</code>); the check is gated on <code>OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_4=true</code>.</p>
+<ul>
+<li><strong><code>apps/workflow-engine/backend/typescript/src/routes/discovery.ts</code></strong> gains the RFC 0041 §D <code>replayDeterminism</code> advertisement sub-block when <code>OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_4=true</code> is set. Advertisement: <code>{ supported: true, llmCacheKeyRecipe: &#39;spec-rfc-0041&#39;, refusalDivergenceEmission: true }</code>. Phase 4 implies Phase 2 (which implies Phase 1) — the <code>version</code> advertisement bumps from 1/2 to 4 accordingly.</li>
+</ul>
+<ul>
+<li><strong><code>conformance/src/scenarios/replay-divergence-at-refusal.test.ts</code></strong> the 2 <code>it.todo</code> lines flip to real <code>it()</code> assertions:</li>
+</ul>
+<p>    1. original=valid + replay=refusal: stage mock-AI with valid envelope for the source run; after source completes, re-program with refusal; fork-replay; assert <code>replay.divergedAtRefusal</code> event with <code>originalEnvelopeKind: &#39;valid&#39;</code> + <code>replayEnvelopeKind: &#39;refusal&#39;</code> + run terminates <code>failed</code> with <code>error.code: &#39;replay_diverged_at_refusal&#39;</code>.     2. Symmetric — original=refusal, replay=valid; the directional fields flip.</p>
+<p>All 3 assertions (advertisement-shape + 2 directional behavioral) PASS against the workflow-engine. This closes the last <code>it.todo</code> from the 5 audit-named harnesses; ALL 7 tracks in <code>docs/PHASE-4-PROGRESS.md</code> are now ✅ end-to-end. RFC 0041 path-to-Accepted opens — promotion gate is a second host advertising <code>multiAgent.executionModel.version: 4</code> end-to-end per the existing cross-host evidence convention.</p>
+<p>Reproduction:</p>
+<p>  OPENWOP_API_KEY=conformance-test-key \   OPENWOP_TEST_SEAM_ENABLED=true \   OPENWOP_CONFORMANCE_FIXTURES=1 \   OPENWOP_MULTI_AGENT_EXECUTION_MODEL=true \   OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_2=true \   OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_4=true \   PORT=4242 node apps/workflow-engine/backend/typescript/lib/index.js &</p>
+<p>  cd conformance && OPENWOP_BASE_URL=http://127.0.0.1:4242 OPENWOP_API_KEY=conformance-test-key \     npx vitest run src/scenarios/replay-divergence-at-refusal.test.ts</p>
+<p>→ 3/3 PASS.</p>
+<p>Gate: <code>bash scripts/openwop-check.sh</code> GREEN end-to-end (9/9). <code>additive</code> per <code>COMPATIBILITY.md</code> §2.1 — the new <code>replay.divergedAtRefusal</code> event type is already in <code>schemas/run-event-payloads.schema.json</code>; the wire surface is unchanged; the executor's new emission path is gated behind the env-var + per-run forkMode = 'replay'.</p>
+<h3 id="phase-4-behavioral-harness-close-out-tracks-1-2-5-6-7-rfc-0042-2026-05-22-2026-05-23">Phase 4 behavioral-harness close-out — Tracks 1/2/5/6/7 + RFC 0042 (2026-05-22 → 2026-05-23)</h3>
+<p>Closes the 5 behavioral-harness items the 2026-05-22 standards-readiness review called out, plus RFC 0042 implementation, plus RFC 0022 dispatch-mapping verification. The closing commits introduce 3 new HTTP test-seam endpoint families on the reference workflow-engine and 5 new conformance scenarios; suite scenario count grew 205 → 210.</p>
+<ul>
+<li><strong>NEW <code>POST /v1/host/sample/test/multi-region/simulate-partition</code></strong> (workflow-engine, gated on <code>OPENWOP_TEST_MULTI_REGION_SIMULATOR=true</code>) — exposes the canonical cross-region convergence resolver from <code>spec/v1/idempotency.md</code> §"Multi-region idempotency annex" as a pure-function HTTP test seam. Drives the new <code>multi-region-idempotency-behavior.test.ts</code> conformance scenario (6 assertions, all PASS). Closes RFC 0036 §C multi-region path-to-Accepted; closes the CF-12 / OPS-5 gap named in <code>docs/KNOWN-LIMITS.md</code>.</li>
+</ul>
+<ul>
+<li><strong>NEW <code>POST/GET /v1/host/sample/test/cross-engine/{append,read,reset}</code></strong> (workflow-engine, gated on <code>OPENWOP_TEST_CROSS_ENGINE_HARNESS=true</code>) — exposes a synthetic two-engine append-ordering harness implementing Lamport-clock merge semantics from <code>spec/v1/channels-and-reducers.md</code> §"Cross-engine ordering". Drives the new <code>cross-engine-append-behavior.test.ts</code> scenario (4 assertions, all PASS). Closes RFC 0036 §B + the CF-8 gap.</li>
+</ul>
+<ul>
+<li><strong>NEW <code>POST /v1/host/sample/test/sandbox-{load,invoke}</code></strong> (workflow-engine, gated on <code>OPENWOP_TEST_SANDBOX_MVP=true</code>) — <code>node:vm</code>-based sandbox MVP exercising 7 of 8 RFC 0035 §B failure-mode invariants. 10-assertion behavioral scenario (<code>sandbox-mvp-behavior.test.ts</code>), all PASS. Synthetic misbehaving-pack registry covers all 5 escape kinds + timeout + memory-exceeded + cross-pack-isolation + capability-gate-violation. Wire shape per the canonical 4-code error catalog at <code>spec/v1/host-capabilities.md</code> §"Error codes" — <code>sandbox_escape_attempt</code> / <code>sandbox_capability_denied</code> / <code>sandbox_memory_exceeded</code> / <code>sandbox_timeout</code> with spec-mandated <code>details.requestedCapability</code> + <code>details.requestedBytes</code> fields populated. NOT production-grade isolation; production adopters use wasmtime / nsjail behind the same HTTP test-seam contract.</li>
+</ul>
+<ul>
+<li><strong>NEW <code>capabilities.sandbox</code> advertisement</strong> on workflow-engine (gated on <code>OPENWOP_TEST_SANDBOX_MVP=true</code>): <code>isolationModel: &#39;vm&#39;</code> + <code>wallClockLimitMs: 1000</code> + <code>memoryLimitBytes: 16777216</code> + <code>allowedHostCalls: [&#39;fetch&#39;]</code>. Matches <code>schemas/capabilities.schema.json</code> §<code>sandbox</code> required + properties.</li>
+</ul>
+<ul>
+<li><strong>NEW <code>conformance/src/scenarios/secret-leakage-otel-attribute.test.ts</code></strong> — RFC 0034 §B seams covering the BYOK executor path. 3 assertions; soft-skips honestly until host advertises <code>capabilities.observability.testSeams.otelScrape</code> + <code>debugBundleExport</code>. Broadens the protocol-tier <code>secret-leakage-otel-attribute</code> + <code>secret-leakage-debug-bundle-otel</code> SECURITY invariants from envelope-acceptor-narrow to executor-side-broad coverage.</li>
+</ul>
+<ul>
+<li><strong>NEW <code>RFCS/0042-experimental-capability-tier.md</code></strong> (<code>Draft</code>) implementation — <code>schemas/capabilities.schema.json</code> <code>multiAgent.executionModel</code> gains optional <code>tier ∈ {stable, experimental}</code> + <code>experimentalUntil</code> (ISO-8601 date) + <code>if/then</code> conditional enforcing §B mechanically. New <code>experimentalGate()</code> helper in <code>conformance/src/lib/behavior-gate.ts</code>. New <code>experimental-tier-shape.test.ts</code> (6 assertions).</li>
+</ul>
+<ul>
+<li><strong>NEW fixtures:</strong> <code>conformance/fixtures/conformance-phase4-replay-divergence.json</code> + <code>conformance-phase4-nondet-tool.json</code>. Used by the existing RFC 0041 Phase 4 scenarios whose behavioral assertions remain <code>it.todo</code> pending the workflow-engine's <code>:fork mode: replay</code> path gaining envelope-kind comparison (~2-3 day follow-up).</li>
+</ul>
+<ul>
+<li><strong>VERIFIED:</strong> 12/12 existing RFC 0022 dispatch input/output mapping scenarios pass against workflow-engine. INTEROP-MATRIX v1.5.0 failure cluster (4 across SQLite/Postgres/Python) reflects host-implementation gaps in hosts that honestly do NOT claim <code>capabilities.agents.dispatchMapping</code>.</li>
+</ul>
+<ul>
+<li><strong>NEW <code>spec/v1/host-sample-test-seams.md</code> §6 + §7 + §8</strong> documenting the 6 new HTTP seam endpoints normatively. Each section: method + path, capability gate, env gate, introduced (RFC reference), request/response shape, expected behavior, conformance scenario citation. Closes the documentation gap the post-landing code-review pass flagged — the workflow-engine seam contract is now in the spec corpus so a second implementer can target it.</li>
+</ul>
+<ul>
+<li><strong>40 behavioral assertions PASS + 3 documented <code>it.todo</code> follow-ups (replay Phase 4 executor wiring) + 6 RFC 0042 server-free assertions</strong> = 49 new conformance assertions over the close-out. Suite scenario count 205 → 210. <code>docs/PROTOCOL-STATUS.md</code>, <code>README.md</code>, <code>conformance/README.md</code> scenario count refs updated.</li>
+</ul>
+<ul>
+<li><strong><code>docs/PHASE-4-PROGRESS.md</code>:</strong> rewritten from "Tracks 4-7 open" to "all 7 tracks closed" with closing-commit citations per row. Documents the implementation insight that consolidating all test seams on the reference workflow-engine (rather than per-host) cut the original 7-9 day estimate to a single session.</li>
+</ul>
+<p>Gate: <code>bash scripts/openwop-check.sh</code> GREEN end-to-end (9/9). No wire-shape changes; sandbox capability advertisement is new but optional + env-gated; all new HTTP seams are host-extension namespaced under <code>/v1/host/sample/test/*</code> per <code>host-extensions.md</code> §"Canonical prefixes". <code>additive</code> per <code>COMPATIBILITY.md</code> §2.1.</p>
+<h3 id="myndhyve-picks-option-1-x-host-myndhyve-memory-written-vendor-namespace-locked-2026-05-23">MyndHyve picks Option 1 — <code>x-host-myndhyve-memory-written</code> vendor namespace locked (2026-05-23)</h3>
+<p>The <code>memory.written</code> wire-shape open question (raised in the RFC 0027 + RFC 0039 Half B promotion commit <code>8f65168</code>) is closed. MyndHyve picked Option 1 (vendor namespace) — <code>x-host-myndhyve-memory-written</code> per <code>host-extensions.md</code> §"Canonical prefixes" — over Option 2 (canonicalize via additive RFC). Locked in MyndHyve commit <code>21fb2387</code> (2026-05-23).</p>
+<p><strong>Wire shape (host-private, NOT normative — documented for forward-reference):</strong></p>
+<pre class="lang-typescript"><code>{
+  memoryRef: string,        // collection path
+  memoryId: string,
+  content: string,          // post-SR-1 redaction
+  source: &#39;session&#39; | &#39;manual&#39; | &#39;shared&#39; | &#39;feedback&#39;,
+  tags?: string[],
+  expiresAt?: string,       // ISO 8601, writer-clock per RFC 0039 MAE-2
+  writtenAt: string,        // ISO 8601, write-time wall clock
+}</code></pre>
+<p>The rationale mirrors the <code>confidenceEscalationInterruptKind: &#39;x-host-myndhyve-low-confidence&#39;</code> precedent from RFC 0044 — vendor-extension namespace preserves wire-shape compat with strict RunEventType-enum validators while letting MyndHyve evolve its internal SR-1 audit trail without forcing a multi-host RFC negotiation. If/when other hosts want a parallel SR-1 audit event type, an additive RFC canonicalizing <code>memory.written</code> to the RunEventType enum + payload schema is a one-line MyndHyve rename (event-log append site + enum entry + resolver filter).</p>
+<p><code>INTEROP-MATRIX.md</code> gains a <strong>§"Forward-reference — MyndHyve vendor-extension RunEventTypes"</strong> sub-section listing the event type + wire shape + spec context. The table is positioned as documentation, not a protocol-tier wire-shape commitment — strict validators tolerate <code>^x-host-&amp;lt;host&amp;gt;-&amp;lt;key&amp;gt;$</code> event types as additive per <code>host-extensions.md</code>.</p>
+<h3 id="rfc-0027-promoted-active-accepted-rfc-0039-half-b-host-implementation-lands-2026-05-23">RFC 0027 promoted Active → Accepted + RFC 0039 Half B host implementation lands (2026-05-23)</h3>
+<p>MyndHyve session shipped three tracks (commit refs: <code>5385548c</code> RFC 0027 §E prompt-compose seam, <code>a51f7bbd</code> RFC 0039 Half B memory-lifecycle, <code>1d11fd80</code> RFC 0040 Sub-5b MCP API-key auth). Production deploy + live discovery verification confirms all advertisements are live on <code>https://api.myndhyve.ai/.well-known/openwop</code>:</p>
+<pre class="lang-jsonc"><code>{
+  &quot;capabilities&quot;: {
+    &quot;multiAgent&quot;: {
+      &quot;executionModel&quot;: {
+        &quot;supported&quot;: true,
+        &quot;version&quot;: 2,
+        &quot;confidenceEscalationFloor&quot;: 0.5,
+        &quot;confidenceEscalationInterruptKind&quot;: &quot;x-host-myndhyve-low-confidence&quot;,
+        &quot;crossChildMemoryConcurrency&quot;: &quot;strict&quot;
+      }
+    },
+    &quot;prompts&quot;: { &quot;supported&quot;: true, &quot;observability&quot;: &quot;full&quot; }
+  }
+}</code></pre>
+<p><strong>RFC 0027 Promoted Active → Accepted.</strong> MyndHyve's first non-steward <code>prompts.supported: true</code> + <code>observability: &#39;full&#39;</code> advertisement satisfies RFC 0027's final remaining acceptance criterion. Commit <code>5385548c</code> lands the prompt-compose seam end-to-end with SR-1 redaction (BYOK secret-source variables → <code>[REDACTED:&amp;lt;credentialRef&amp;gt;]</code> markers in <code>prompt.composed</code> payloads, never plaintext) + RFC 0020 §D <code>&amp;lt;UNTRUSTED&amp;gt;...&amp;lt;/UNTRUSTED&amp;gt;</code> wrapping (untrusted bindings propagate <code>contentTrust: &quot;untrusted&quot;</code> to the composed envelope). <code>observability</code> bumped <code>&#39;hashed&#39; → &#39;full&#39;</code> and is now backed by real emission. MyndHyve reports 71/71 green on targeted local suites; full conformance-suite run pending parallel-session unblock.</p>
+<p><strong>RFC 0039 Half B host implementation lands (status unchanged — already Accepted 2026-05-22).</strong> Commit <code>a51f7bbd</code> ships <code>MemoryHyveMemoryResolver.snapshotAtSeq()</code> reverse-projecting the journal with latest-write-wins + expiry filter at the snapshot anchor (closes the MAE-3 host-side primitive); a host-instrumentation <code>memory.written</code> event emitted from the SR-1 redaction chokepoint (NOT in OpenWOP's canonical RunEventType enum — see open question below); and <code>crossChildMemoryConcurrency: &#39;strict&#39;</code> advertisement now live. The <code>replay_memory_snapshot_unavailable</code> 422 wire-route surface remains parallel-session-blocked on MyndHyve's side; <code>snapshotAtSeq</code> returns <code>null</code> correctly, only the route translation awaits the parallel commit.</p>
+<p>Two stale <code>[ ]</code> items on RFC 0039 acceptance criteria flipped <code>[x]</code> — both were actually done in files different from those the criteria named (the spec content went into <code>multi-agent-execution.md</code> rather than the speculatively-named <code>agent-memory.md</code>; <code>replay_memory_snapshot_unavailable</code> shipped in <code>rest-endpoints.md:314</code> at commit <code>c001d21</code>). Same re-anchoring pattern as the RFC 0027 <code>workflow-definition.md → workflow-definition.schema.json</code> audit (commit <code>0a5bb10</code>).</p>
+<p><strong>RFC 0040 Sub-5b — MCP API-key auth (progress; full RFC 0040 promotion still needs version: 3).</strong> Commit <code>1d11fd80</code> lands <code>mh_<em></code> / <code>hk_</em></code> keys with <code>mcp:invoke-node</code> scope; <code>resolveMcpPrincipal()</code> extracted; audit log carries <code>authMode</code> + <code>keyId</code>; new <code>mcp:</code> scope domain in vocabulary. Advances RFC 0040 toward its full path-to-Accepted (which requires <code>version: 3</code> advertisement + the 3 cross-host scenarios passing) but doesn't graduate it on its own.</p>
+<p><strong><code>memory.written</code> wire-shape question (open).</strong> The event is NOT in OpenWOP's canonical <code>RunEventType</code> enum (<code>schemas/run-event.schema.json</code>). Two paths offered to MyndHyve: (1) namespace as <code>x-host-myndhyve-memory-written</code> per <code>host-extensions.md</code> §"Canonical prefixes" (preserves wire-shape compat, zero spec work); (2) canonicalize via small additive RFC adding <code>memory.written</code> to the enum + payload schema (multi-host SR-1 audit shape). No decision yet.</p>
+<p><strong>Updates:</strong></p>
+<ul>
+<li><code>RFCS/0027-prompt-templates.md</code> Status: <code>Active → Accepted</code>. Final acceptance criterion (<code>first non-steward host advertises</code>) flipped <code>[x]</code> with MyndHyve evidence.</li>
+<li><code>RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md</code> two stale <code>[ ]</code> items flipped <code>[x]</code>; path-to-Accepted footer updated with Half B strengthening note.</li>
+<li><code>INTEROP-MATRIX.md</code> header date 2026-05-22 → 2026-05-23; MyndHyve row in §"Capability adoption — RFC 0027 + RFC 0028 prompt library" updated from "Not yet adopted" → "<strong>true</strong> | — | — | — | <strong>full</strong>" with adoption evidence.</li>
+<li><code>README.md</code> Accepted (32 → 33 — adds 0027); Active (8 → 7).</li>
+</ul>
+<h3 id="docs-sync-suite-v1-4-0-v1-5-0-re-measurement-known-limits-rfc-table-refresh-2026-05-22">Docs sync — suite v1.4.0 → v1.5.0 re-measurement + KNOWN-LIMITS RFC table refresh (2026-05-22)</h3>
+<p>Same-day refresh triggered by the <code>@openwop/openwop-conformance</code> 1.4.0 → 1.5.0 bump + the <code>840b1ff</code> commit promoting RFC 0037 Phase 1 + RFC 0039 Half A + RFC 0044 Active → Accepted in a single batch:</p>
+<ul>
+<li><strong><code>docs/KNOWN-LIMITS.md</code> §"RFCs not yet Accepted":</strong> split the multi-RFC row <code>0037, 0039, 0040, 0041 (Active)</code> → <code>0040, 0041 (Active)</code> since 0037 + 0039 are now Accepted; added Draft rows for RFC 0042 (experimental capability tier) + RFC 0043 (registry + extension policy + IPR posture); added a post-table prose paragraph documenting the 2026-05-22 batch promotion of 0037 + 0039 + 0044 with the MyndHyve cross-host evidence citation.</li>
+<li><strong><code>INTEROP-MATRIX.md</code> pass-rate table:</strong> re-measured all 4 reference hosts against suite v1.5.0 (total 1558 → 1564 tests; the +6 delta reflects v1.5.0's RFC 0044 vendor-kind routing relaxation splitting one strict-equality assertion into discrete <code>it()</code> blocks). Postgres 1473/1564 (94.2%), SQLite 1486/1564 (95.0%), in-memory 1445/1564 (92.4%), Python 1387/1564 (88.7% total / 100% of applicable).</li>
+<li><strong><code>INTEROP-MATRIX.md</code> SQLite host-row description:</strong> the "Conformance posture (updated 2026-05-12 after Phase D close-out)" claim gained an explicit <code>suite v1.1.0</code> retrospective marker so the historical claim doesn't read as a current measurement.</li>
+<li>**<code>examples/hosts/{in-memory,sqlite,python,postgres}/conformance*.md</code>:** banners refreshed to cite suite v1.5.0; prior v1.4.0 measurements retained as "Prior measurements" rows. SQLite <code>conformance-full.md</code> gained a "Latest measurement is at conformance.md" pointer so the 2026-05-11 historical full-run record doesn't read as current.</li>
+<li><strong><code>docs/CONFORMANCE-RUNS-2026-05.md</code>:</strong> headline numbers updated to v1.5.0; new "v1.5.0 delta vs v1.4.0" note explains the +6 test count growth (RFC 0044 relaxation discretization) + the 8 sandbox <code>expect(true)</code> → <code>it.todo</code> conversion (no numeric impact, but reporter surfaces todos instead of vacuous passes).</li>
+<li><strong><code>docs/PROTOCOL-STATUS.md</code>:</strong> regenerated against the new INTEROP-MATRIX numbers via <code>node scripts/generate-protocol-status.mjs --write</code>.</li>
+<li><strong><code>.claude/skills/update-docs/SKILL.md</code>:</strong> grew from 12 to 17 drift modes — added #13 (partial multi-RFC row promotion → split-don't-remove), #14 (suite minor bump shifts pass-counts even when CHANGELOG says no new files), #15 (suite-bump cascade after external host adoption), #16 (Drift #10 path-regex false-positive patterns), #17 (historical evidence files predating the versioned-suite convention). Detection-command fixes: Drift #3 regex scoped to §"RFCs not yet <code>Accepted</code>" so it doesn't false-positive on rows in the "Profiles pending non-steward adoption" table; Drift #12 awk pattern fixed (the obvious <code>awk &#39;/start/,/end/&#39;</code> returns empty when <code>[Unreleased]</code> is the only <code>## [</code> block, which is the steady state). New §"Catalog meta-lesson — detection commands are themselves drift surfaces" documents the failure modes encountered while building the detection commands.</li>
+</ul>
+<p>Gate: <code>bash scripts/openwop-check.sh</code> green. No wire-shape changes; no SDK source touched; no schemas / OpenAPI / AsyncAPI modified.</p>
+<h3 id="audit-response-2026-05-22-external-standards-readiness-review-2026-05-22">Audit response — 2026-05-22 external standards-readiness review (2026-05-22)</h3>
+<p>In response to a 2026-05-22 external standards-readiness review of the openwop corpus, multiple drift-fix + accountability artifacts land in this release:</p>
+<ul>
+<li><strong>NEW <code>docs/AUDIT-RESPONSE-2026-05.md</code></strong> — public point-by-point response to the audit. Each Acceptance-Bar item maps to a closed commit, an in-flight PR, or a named external-action tripwire with calendar commitment (e.g., SEC-1 vendor outreach by 2026-06-30, fallback interim summary by 2026-09-30).</li>
+<li><strong>NEW <code>docs/CONFORMANCE-RUNS-2026-05.md</code></strong> — re-measurement of all 4 reference hosts (<code>in-memory</code> / <code>sqlite</code> / <code>postgres</code> / <code>python</code>) against <code>@openwop/openwop-conformance@1.4.0</code> with per-failure-topic taxonomy + reproduction recipes. Previous published numbers were against suite v1.1.0 — closes the audit's specific "older suite version" concern.</li>
+<li><strong>NEW <code>docs/PHASE-4-PROGRESS.md</code></strong> — accountability tracking for the 5 behavioral-harness items the audit named (multi-region idempotency simulator, cross-engine append ordering, sandbox execution, replay-determinism Phase 4 staged-refusal seam, secret-leakage OTel telemetry). Each row carries a specific unblock criterion + effort estimate + closing-PR ID.</li>
+<li><strong>NEW <code>RFCS/0042-experimental-capability-tier.md</code></strong> (<code>Draft</code>) — lands the audit's "Active RFC → experimental carve-out" alternative as a new optional <code>capabilities.&amp;lt;feature&amp;gt;.tier ∈ {&quot;stable&quot;, &quot;experimental&quot;}</code> field with <code>experimentalUntil</code> sunset rule (≤ 12 months) + derived <code>openwop-experimental</code> profile + conformance soft-skip routing under default mode.</li>
+<li><strong>NEW <code>RFCS/0043-registry-and-extension-policy.md</code></strong> (<code>Draft</code>) — consolidates extension-namespace rules, registry submission/yank/key-rotation policy, profile/event-type/envelope-kind/capability-name reservation, and IPR posture (DCO + Apache-2.0 + CC-BY-4.0) into a single ratifiable artifact. WG ratification (per RFC 0038) remains tripwire-gated, but the policy is auditable today.</li>
+<li><strong>Drift fixes:</strong> <code>docs/KNOWN-LIMITS.md</code> line 86 (RFCs 0030–0033 removed from "not yet Accepted" — they were Accepted 2026-05-21); <code>docs/KNOWN-LIMITS.md</code> line 33 (sandbox row corrected to reflect 8 conformance scenarios shipped + 2026-05-22 <code>5864a2f</code> revert); <code>conformance/coverage.md</code> line 3 (date 2026-05-11 → 2026-05-22); <code>conformance/coverage.md</code> lines 127–132 (stale prompt-endpoint rows corrected to reflect RFC 0028 <code>Active</code> + reference workflow-engine implementation); <code>INTEROP-MATRIX.md</code> pass-rate table (v1.1.0 → v1.4.0 numbers); <code>docs/PROTOCOL-STATUS.md</code> regenerated.</li>
+</ul>
+<p>Gate: <code>bash scripts/openwop-check.sh</code> green. No wire-shape changes. Spec-corpus-validity 642/642 PASS. <code>additive</code> per <code>COMPATIBILITY.md</code> §2.1 for the two new RFCs.</p>
+<h3 id="rfc-0039-half-a-rfc-0044-promoted-active-accepted-three-rfcs-from-one-conformance-run-2026-05-22">RFC 0039 Half A + RFC 0044 promoted Active → Accepted — three RFCs from one conformance run (2026-05-22)</h3>
+<p><strong>Milestone.</strong> Second vendor-neutral validation signal — and the first time the <code>x-host-&amp;lt;host&amp;gt;-&amp;lt;kind&amp;gt;</code> vendor-extension pattern works end-to-end across a real adopter. MyndHyve's combined conformance run on Cloud Run revision <code>workflow-runtime-00353-rab</code> (suite <code>@openwop/openwop-conformance@1.5.0</code>, commit <code>c4342b5b</code>) reports 2 passed / 2 fixture-gated skips / 0 failed against <code>multi-agent-handoff-state-machine.test.ts</code> + <code>multi-agent-confidence-escalation.test.ts</code>. Three RFCs graduate Active → Accepted from this single run (RFC 0037 Phase 1 was promoted on the earlier <code>version: 1</code> signal — see the section below; RFC 0039 Half A + RFC 0044 promote now).</p>
+<p><strong>Wire advertisement verified live:</strong></p>
+<pre class="lang-jsonc"><code>{
+  &quot;capabilities&quot;: {
+    &quot;multiAgent&quot;: {
+      &quot;executionModel&quot;: {
+        &quot;supported&quot;: true,
+        &quot;version&quot;: 2,
+        &quot;confidenceEscalationFloor&quot;: 0.5,
+        &quot;confidenceEscalationInterruptKind&quot;: &quot;x-host-myndhyve-low-confidence&quot;
+      }
+    }
+  }
+}</code></pre>
+<p><strong>RFC 0039 Half A — confidence-floor escalation (Accepted).</strong> MyndHyve advertises <code>version: 2</code> + the floor at the spec minimum (0.5). The <code>multi-agent-confidence-escalation.test.ts</code> scenario passes via the RFC 0044 vendor-kind routing branch — <code>terminal.status.startsWith(&#39;waiting-&#39;)</code> matches MyndHyve's <code>waiting-approval</code> mapping. Half B memory-lifecycle (MAE-2 cross-run TTL + MAE-3 replay snapshot) remains a follow-up strengthening tier; <code>crossChildMemoryConcurrency</code> capability is schema-landed but <code>snapshotAtSeq</code> host implementation hasn't shipped. When Half B lands, those acceptance criteria flip [x] additively without changing the Accepted status.</p>
+<p><strong>RFC 0044 — vendor-kind advertisement (Accepted).</strong> MyndHyve's entrenched <code>interrupt.kind: &#39;low-confidence&#39;</code> semantic (cross-cutting <code>LOW_CONFIDENCE_SUSPEND_REASON</code> + <code>mockAgent.node</code> + <code>escalationThreshold.ts</code> + UI consumers) is now wire-advertised via <code>&#39;x-host-myndhyve-low-confidence&#39;</code> matching the <code>^x-host-&amp;lt;host&amp;gt;-&amp;lt;kind&amp;gt;$</code> pattern from <code>host-extensions.md</code> §"Canonical prefixes". No host-side rename happened. RFC 0044 §C vendor-kind mapping document committed at MyndHyve <code>c4342b5b</code> (<code>docs/openwop-adoption/0044-vendor-kind-mapping.md</code>), identifying clarify-semantic correspondence + <code>waiting-approval</code> status + 5 enumerated downstream consumers.</p>
+<p><strong>Validates the <code>spec-rfc-XXXX | x-host-&amp;lt;host&amp;gt;-&amp;lt;key&amp;gt;</code> pattern.</strong> RFC 0044 reused the advertisement shape RFC 0041 §A introduced for <code>replayDeterminism.llmCacheKeyRecipe</code>. With this acceptance, the pattern is proven across two distinct capability surfaces (cache-key recipe + interrupt-kind name) and one production-grade adopter. Future RFCs introducing vendor-extension-compatible advertisements can cite this precedent.</p>
+<p><strong>Updates:</strong></p>
+<ul>
+<li><code>RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md</code> Status: <code>Active → Accepted</code>. 8 of 10 acceptance-criteria items flip <code>[ ] → [x]</code>. Remaining 2 are the Half B (memory-lifecycle) items, explicitly documented as follow-up strengthening tier.</li>
+<li><code>RFCS/0044-confidence-escalation-interrupt-kind-advertisement.md</code> Status: <code>Active → Accepted</code>. All 7 acceptance-criteria items flip <code>[ ] → [x]</code>.</li>
+<li><code>INTEROP-MATRIX.md</code> §"Third-party host adoption — RFC 0037 Phase 1 ... (2026-05-22)" section title broadened to cover all three RFCs; row updated to capture the combined run's evidence (commands + capability advertisement + revision + commit refs).</li>
+<li><code>INTEROP-MATRIX.md</code> header date note expanded to cover the 3-RFC promotion.</li>
+<li><code>README.md</code> Accepted (30 → 32 — adds 0039, 0044); Active (10 → 8).</li>
+</ul>
+<h3 id="rfc-0037-phase-1-promoted-active-accepted-first-vendor-neutral-validation-tripwire-fires-2026-05-22">RFC 0037 Phase 1 promoted Active → Accepted — first vendor-neutral validation tripwire fires (2026-05-22)</h3>
+<p><strong>Milestone.</strong> The OpenWOP protocol has its first third-party validation. MyndHyve workflow-runtime — operating as a non-steward host per <code>MAINTAINERS.md</code> — advertises <code>capabilities.multiAgent.executionModel.{supported: true, version: 1}</code> and passes <code>multi-agent-handoff-state-machine.test.ts</code> from <code>@openwop/openwop-conformance@1.4.0</code> (1 passed / 1 skipped / 0 failed, exit 0) against Cloud Run revision <code>workflow-runtime-00352-geh</code>.</p>
+<p>Per <code>RFCS/0001-rfc-process.md</code> §3 (Status states), <code>Accepted</code> = "Implementation landed; conformance updated; Maintainers flip when acceptance criteria met." RFC 0037 Phase 1 acceptance criterion #5 ("At least 1 reference host advertises + passes the new scenario") is satisfied.</p>
+<p><strong>What the conformance run verifies:</strong></p>
+<ul>
+<li>The advertisement-shape probe in <code>multi-agent-handoff-state-machine.test.ts</code> passes — <code>capabilities.multiAgent.executionModel.{supported, version}</code> validates clean against the scenario's boolean / integer / range assertions per RFC 0037 §C.</li>
+</ul>
+<p><strong>What's still pending (separate follow-up):</strong></p>
+<ul>
+<li>The behavioral 4-event causation-chain leg is <code>skipped</code> (gated on <code>isFixtureAdvertised(&#39;conformance-multi-agent-handoff&#39;) AND isFixtureAdvertised(&#39;conformance-multi-agent-handoff-child&#39;)</code>); MyndHyve hasn't seeded the conformance fixtures yet. This is a strengthening pass on their roadmap (~half day per their adoption note at <code>docs/openwop-adoption/0037-multi-agent-phase-1.md</code>).</li>
+</ul>
+<p>Advertisement-and-pass-modulo-honest-skip is the bootstrap-phase rule for promotion — same precedent as the RFC 0030–0033 envelope LLM-contract-hardening track promotion 2026-05-21 (where 4-of-87 assertions stayed on the host-seam-honest-skip path).</p>
+<p><strong>Updates:</strong></p>
+<ul>
+<li><code>RFCS/0037-multi-agent-execution-model.md</code> Status: <code>Active → Accepted</code>. All 8 acceptance-criteria checkboxes flip <code>[ ] → [x]</code> (the 5th — "non-steward host advertises + passes" — closes on MyndHyve's run).</li>
+<li><code>INTEROP-MATRIX.md</code> gains §"Third-party host adoption — RFC 0037 Phase 1 ... external-validation gate (2026-05-22)" with the MyndHyve row (discovery URL + capability advertisement + conformance command + pass/skip/fail breakdown + Cloud Run revision + commit ref + parallel-session safety verification).</li>
+<li><code>INTEROP-MATRIX.md</code> header date 2026-05-21 → 2026-05-22.</li>
+<li><code>README.md</code> Accepted (29 → 30); Active (11 → 10).</li>
+</ul>
+<p><strong>The vendor-neutral migration tripwire in <code>MAINTAINERS.md</code> §"Vendor-neutral tripwire"</strong> is a distinct mechanism that fires on <code>≥1 maintainer not affiliated with OpenWOP</code>. RFC promotion to Accepted is a separate signal — first third-party host validation. The two are independent commitments; this CHANGELOG entry marks only the second firing.</p>
+<h3 id="rfc-0044-confidence-escalation-interrupt-kind-advertisement-clarification-to-rfc-0039-a-2026-05-22">RFC 0044 — confidence-escalation interrupt-kind advertisement (clarification to RFC 0039 §A) (2026-05-22)</h3>
+<p>Same-day Draft → Active filing in response to MyndHyve's adoption-pass request for option 3 on the interrupt-kind question.</p>
+<p><strong>Context.</strong> RFC 0039 §A normatively says hosts SHALL escalate below-floor decisions via <code>clarify</code> (→ <code>waiting-clarification</code>) OR <code>escalate-approval</code> (→ <code>waiting-approval</code>). The conformance scenario was relaxed in <code>f03d01d</code> to accept either canonical status. But MyndHyve has an entrenched <code>interrupt.kind: &#39;low-confidence&#39;</code> semantic that cross-cuts <code>LOW_CONFIDENCE_SUSPEND_REASON</code> constants + <code>mockAgent.node</code> + <code>escalationThreshold.ts</code> + downstream UI + in-flight runs — renaming is multi-day cross-cutting work. Per their request, this RFC adds the same <code>spec-rfc-XXXX | x-host-&amp;lt;host&amp;gt;-&amp;lt;key&amp;gt;</code> advertisement pattern RFC 0041 §A introduced for <code>replayDeterminism.llmCacheKeyRecipe</code>.</p>
+<p><strong>§A — Schema (additive):</strong> <code>schemas/capabilities.schema.json</code> adds optional <code>multiAgent.executionModel.confidenceEscalationInterruptKind</code>: <code>&quot;clarification&quot; | &quot;approval&quot; | x-host-&amp;lt;host&amp;gt;-&amp;lt;kind&amp;gt;</code>. Pattern matches <code>^x-host-[a-z][a-z0-9-]<em>-[a-z][a-z0-9-]</em>$</code> per <code>host-extensions.md</code> §"Canonical prefixes".</p>
+<p><strong>§B — Conformance routing (normative):</strong> <code>multi-agent-confidence-escalation.test.ts</code> reads the advertised value:</p>
+<ul>
+<li>Canonical (<code>clarification</code> / <code>approval</code>) → strict <code>expect(terminal.status).toBe(&#39;waiting-clarification&#39; | &#39;waiting-approval&#39;)</code></li>
+<li>Vendor (<code>x-host-&amp;lt;host&amp;gt;-&amp;lt;kind&amp;gt;</code>) → assert <code>terminal.status.startsWith(&#39;waiting-&#39;)</code> (any suffix; host's <code>interrupt.md</code> mapping determines exact form)</li>
+<li>Absent → fall back to the canonical either-status check (preserves the <code>f03d01d</code> relaxation)</li>
+</ul>
+<p><strong>§C — Vendor-kind documentation (normative):</strong> Hosts advertising a vendor kind MUST publish a non-normative mapping document identifying (a) which canonical escalation kind their kind semantically corresponds to, (b) which <code>waiting-*</code> status maps to it, (c) which downstream consumers pattern-match on it.</p>
+<p><strong>§D — Spec text:</strong> <code>spec/v1/multi-agent-execution.md</code> §"Confidence escalation (RFC 0039 Phase 2, normative)" gains an "Interrupt-kind advertisement (RFC 0044)" paragraph. Wire-shape unchanged — the <code>confidence-escalated</code> event payload's <code>escalationKind: {clarify, escalate}</code> field stays exactly as RFC 0039 §A specified; what's new is the operator-visible interrupt-kind name advertisement.</p>
+<p>Compatibility: <code>additive</code> per COMPATIBILITY.md §2.1 — new optional field, no required-field changes, no normative shifts on the underlying confidence-floor escalation contract. Hosts that don't advertise continue passing the existing relaxed conformance.</p>
+<p>MyndHyve unblock plan: advertise <code>confidenceEscalationInterruptKind: &#39;x-host-myndhyve-low-confidence&#39;</code> + bump <code>version: 2</code>. Estimated ~half day MyndHyve-side work (per their adoption note).</p>
+<p>README: 43 RFCs → 44; Active 10 → 11 (adds 0044). Drafts unchanged.</p>
+<h3 id="myndhyve-adoption-pass-spec-follow-ups-rfc-0037-cancelled-phase-optionality-rfc-0039-interrupt-kind-flexibility-rfc-0034-envelope-accept-dependency-2026-05-22">MyndHyve adoption-pass spec follow-ups — RFC 0037 cancelled-phase optionality + RFC 0039 interrupt-kind flexibility + RFC 0034 envelope-accept dependency (2026-05-22)</h3>
+<p>Three spec clarifications responding to questions surfaced in MyndHyve's adoption pass (5 RFCs substantively shipped non-steward-side, 3 deferred with documented blockers).</p>
+<ul>
+<li><strong>RFC 0037 — <code>child.cancelled</code> emission is conditional, not absolute.</strong> MyndHyve flagged that their <code>ChildRunOutcome.status</code> union is <code>&#39;completed&#39; | &#39;failed&#39; | &#39;running&#39;</code> — no distinct <code>cancelled</code> terminal state — so they have no way to produce a <code>running → cancelled</code> transition. The RFC 0037 transition-events table at <code>spec/v1/multi-agent-execution.md:65–71</code> implies emission tracks transitions, but a strict reading could be that all 7 phases are mandatory. Added an explicit <strong>"Conditional emission (normative)"</strong> paragraph: hosts MUST emit every phase whose transition occurs; MUST NOT synthesize phases their dispatch primitive doesn't surface; the <code>phase</code> enum carries every transition for forward-compat; hosts that later gain explicit cancellation begin emitting <code>child.cancelled</code> additively.</li>
+<li><strong>RFC 0039 — confidence-escalation conformance accepts both canonical interrupt kinds.</strong> Conformance scenario <code>multi-agent-confidence-escalation.test.ts</code> asserted <code>terminal.status === &#39;waiting-clarification&#39;</code> (strict equality on the clarify-kind escalation). RFC 0039 §A normatively says hosts SHALL "either" use clarify (→ <code>waiting-clarification</code>) OR escalate-approval (→ <code>waiting-approval</code>) — the conformance was stricter than the spec. Relaxed to accept either canonical status. MyndHyve's vendor-specific <code>interrupt.kind: &#39;low-confidence&#39;</code> still can't pass without renaming or namespacing as <code>x-host-myndhyve-&amp;lt;kind&amp;gt;</code>, but that's a host-side choice — the spec doesn't pin a specific waiting-status, just the two canonical options. A follow-up RFC may add <code>multiAgent.executionModel.confidenceEscalationInterruptKind</code> capability advertisement so vendor-extension kinds become conformance-testable without renaming.</li>
+<li><strong>RFC 0034 — explicit upstream dependency on RFC 0021 envelope-accept.</strong> MyndHyve's audit surfaced that the OTel scrape seam's behavioral content depends on span buffers populated by the <code>POST /v1/host/sample/envelope/accept</code> flow (RFC 0021). A host advertising <code>observability.testSeams.otelScrape: true</code> without RFC 0021 envelope-accept returns empty span buffers — seam-shape probe passes, behavioral SR-1 assertion is vacuous. Added a <strong>"Upstream dependency on RFC 0021 envelope-accept (normative)"</strong> paragraph to RFC 0034 §B making the dependency explicit + recommending honest hosts leave <code>otelScrape</code> un-advertised until envelope-accept is also wired.</li>
+</ul>
+<p>No new wire-shape additions. Compatibility: additive per COMPATIBILITY.md §2.1 — RFC 0037 prose codifies the natural reading of conditional emission; RFC 0039 conformance relaxes a strict assertion to match the RFC's actual normative content; RFC 0034 prose adds a dependency note that doesn't change the seam contract itself.</p>
+<p>Gate: spec-corpus-validity + fixtures-valid PASS.</p>
+<h3 id="rfc-0027-0028-0029-acceptance-criteria-audit-reflect-actually-shipped-state-2026-05-22">RFC 0027 + 0028 + 0029 acceptance-criteria audit — reflect actually-shipped state (2026-05-22)</h3>
+<p>The three prompt-track RFCs had EVERY acceptance criterion checkbox at <code>[ ]</code> despite the bulk of the work having shipped. Audit pass mechanically verified each criterion and updated the boxes:</p>
+<ul>
+<li><strong>RFC 0027</strong>: 11 of 14 criteria now <code>[x]</code>. Remaining <code>[ ]</code>: (1) INTEROP-MATRIX update (gates on first non-steward host advertising), (2) first non-steward host advertisement — the Path-to-Accepted bar. Two corrections: (a) <code>spec/v1/workflow-definition.md §&quot;Prompt references on nodes&quot;</code> doesn't exist as a file — the <code>WorkflowNode.config.promptRef</code> convention is canonically documented in <code>schemas/workflow-definition.schema.json</code> §<code>config.promptRefs</code> (schema-shape contracts live in the schema, not in a separate spec doc); criterion updated to reflect that.</li>
+<li><strong>RFC 0028</strong>: 11 of 12 criteria now <code>[x]</code>. Remaining <code>[ ]</code>: (1) INTEROP-MATRIX, (2) first non-steward host. One correction: <code>spec/v1/registry-operations.md §&quot;Prompt-pack install flow&quot;</code> doesn't have that section header — the install flow is canonically in <code>spec/v1/prompts.md</code> §"Discovery & distribution" (registry-operations.md covers the generic <code>kind</code>-agnostic pack lifecycle; prompt-pack specifics live in prompts.md where they're load-bearing for prompt consumers); criterion updated.</li>
+<li><strong>RFC 0029</strong>: 7 of 9 criteria now <code>[x]</code>. Remaining <code>[ ]</code>: (1) INTEROP-MATRIX, (2) first non-steward host. All mechanical items (schemas, scenarios, reference-host advertisement) verified shipped; reference-host criterion now cross-links the new <code>host-sample-test-seams.md</code> §1 contract for the <code>POST /v1/host/sample/prompt/resolve</code> seam the resolver scenarios drive.</li>
+</ul>
+<p>Why this matters: with all acceptance criteria reading <code>[ ]</code>, the path-to-Accepted state was misleading — it looked like the work hadn't started, when actually it was 80%+ done and only blocked on MyndHyve advertising. Now the honest state shows what's done vs what's gated on adoption.</p>
+<p>No new code or wire-shape changes — pure documentation honesty pass. Gate: spec-corpus-validity 736/736 + fixtures-valid 94/94 PASS.</p>
+<h3 id="rfc-0034-post-get-reconciliation-rfc-0035-sandbox-security-tier-honesty-2026-05-22">RFC 0034 POST→GET reconciliation + RFC 0035 sandbox SECURITY-tier honesty (2026-05-22)</h3>
+<p>Two follow-ups, the second a corrective:</p>
+<p><strong>RFC 0034 prose POST → GET reconciliation (additive).</strong> RFC 0034's Summary (line 18) and schema-diff block (line 42) still said <code>POST /v1/host/sample/test/otel/spans</code> while the §B normative body, the reference implementation, every conformance scenario, <code>spec/v1/observability.md</code>, <code>schemas/capabilities.schema.json</code>, and the new <code>host-sample-test-seams.md</code> all say GET. Fixed in commit <code>97dda3e</code>. No wire-shape change — no host has implemented POST against this seam.</p>
+<p><strong>RFC 0035 sandbox SECURITY-tier graduations REVERTED (corrective).</strong> Commit <code>97dda3e</code> graduated 7 of 8 <code>node-pack-sandbox-<em></code> SECURITY invariants from <code>tier: reference-impl</code> → <code>tier: protocol</code>, pointing each <code>tests:</code> glob at the matching <code>sandbox-</em>.test.ts</code> scenario. The graduation was mechanically valid (<code>check-security-invariants.sh</code> only requires the test file to exist) but substantively misleading — every one of the 7 scenarios had <code>expect(true).toBe(true)</code> as its behavioral assertion. The SECURITY graduation gate's promise is "verified at this gate"; a tautology test verifies nothing. Reverted in this commit:</p>
+<ul>
+<li>7 SECURITY invariants moved back to <code>tier: reference-impl</code>. <code>tests:</code> globs preserved (they're correct pointers); <code>note:</code> updated to honestly say the scenarios ship as <code>it.todo</code> placeholders until a sandbox-executing host wires the seam.</li>
+<li>7 scenarios' vacuous <code>expect(true).toBe(true)</code> bodies converted to <code>it.todo()</code>. Test reporters now surface 8 todos instead of 7 vacuous passes + 1 todo. The advertisement-shape probes in <code>sandbox-no-host-fs-escape</code>, <code>sandbox-memory-cap</code>, <code>sandbox-timeout-cap</code> (real assertions against the discovery doc) are preserved unchanged.</li>
+<li>RFC 0035 §"Acceptance criteria" SECURITY graduation checkbox reverted <code>[x] → [ ]</code> with honest framing.</li>
+<li>RFC 0035 §B failure-mode invariant table updated — was claiming "7 of 8 graduated"; now correctly states all 8 stay at <code>reference-impl</code> until scenarios grow real probes.</li>
+</ul>
+<p>Protocol-tier SECURITY invariant count: 66 → 59 (correction). Reference-impl count: 23 → 30. The advertisement-shape scenarios still exercise the discovery doc honestly; the behavioral scenarios now honestly say "not yet verifiable" instead of vacuously passing.</p>
+<p>This is the kind of letter-of-law-vs-spirit-of-law gap that mechanical gates can't catch. The SECURITY-tier graduation is intentionally a higher bar than "the test file exists"; reverting protects the bar's credibility.</p>
+<h3 id="rfc-0041-phase-4-follow-ups-version-check-bug-spec-contradiction-assertion-gap-helper-extraction-2026-05-22">RFC 0041 Phase 4 follow-ups: version-check bug + spec contradiction + assertion gap + helper extraction (2026-05-22)</h3>
+<p>Senior code-review follow-ups on the RFC 0041 Phase 4 landing (ddf498a).</p>
+<ul>
+<li><strong>HIGH (test-bug) — <code>replay-llm-cache-key-portable.test.ts</code> Phase 4 advertisement-alignment test no longer fails-open on undefined <code>version</code>.</strong> Was <code>if ((em?.version as number) &amp;lt; 4) return;</code> — when <code>em?.version</code> was undefined, <code>NaN &amp;lt; 4</code> evaluated to <code>false</code>, so the test continued and FAILED on every host without Phase 4 advertisement (i.e., every currently-shipping host). Fixed: explicit <code>typeof version !== &amp;#39;number&amp;#39;</code> guard before the comparison. One-line fix; would have red&#39;d CI on every non-Phase-4 host that picks up the new scenario.</li>
+<li><strong>MEDIUM (spec contradiction) — §A in <code>spec/v1/replay.md</code> + <code>multi-agent-execution.md</code> + RFC 0041 reframed.</strong> Was: &quot;the recipe is INFORMATIVE for hosts at version &lt;= 3; Phase 4 promotes it to NORMATIVE.&quot; Wrong — the existing §&quot;LLM cache-key recipe&quot; §B already establishes a conditional MUST (for hosts using Layer-2 idempotency for LLM nodes). Phase 4 actually does two new things: (1) strengthens the MUST from conditional to unconditional (applies to ALL LLM-calling nodes regardless of layering choice), and (2) makes the host&#39;s commitment observable via the <code>replayDeterminism.llmCacheKeyRecipe</code> discovery field. Spec text now describes what Phase 4 actually changes, not a contradictory &quot;informative&quot; claim.</li>
+<li><strong>MEDIUM (assertion gap) — <code>replay-divergence-at-refusal.test.ts</code> now enforces &quot;version: 4 → refusalDivergenceEmission MUST be true&quot;.</strong> The schema description on <code>capabilities.schema.json §replayDeterminism.refusalDivergenceEmission</code> says &quot;Hosts advertising version: 4 MUST set this to true&quot;, but no conformance scenario was checking it. Added positive assertion in the same <code>if (rd.supported === true)</code> branch that already checks <code>version &amp;gt;= 4</code>.</li>
+<li><strong>MEDIUM (test-design consistency) — <code>replay-observable-sequence-determinism.test.ts</code> first test converted from <code>expect.fail()</code> to <code>it.todo</code>.</strong> Was using <code>expect.fail(&#39;Phase 4 advertised but conformance fixture not yet shipped&#39;)</code> as a tripwire, which would have produced a hard FAIL on any host that advertises Phase 4 — even though the missing artifact is on OUR side (the conformance suite's fixture), not the host's. Now consistent with the sibling Phase 4 scenarios (<code>replay-divergence-at-refusal.test.ts</code>, <code>replay-llm-cache-key-portable.test.ts</code>) which all use <code>it.todo</code>. Test reporters still surface the gap, but without misleading host CI dashboards.</li>
+<li><strong>LOW (refactor) — Extracted shared LLM cache-key recipe helpers to <code>conformance/src/lib/llm-cache-key-recipe.ts</code>.</strong> <code>canonicalize</code>, <code>projectRecipe</code>, <code>expectedCacheKey</code>, <code>callCacheKeySeam</code> were duplicated between <code>replay-llm-cache-key.test.ts</code> (existing, 5 behavioral tests) and <code>replay-llm-cache-key-portable.test.ts</code> (new, RFC 0041 §E). Both scenarios now import from the lib; future recipe changes need one edit instead of two parallel ones.</li>
+</ul>
+<h3 id="rfc-0041-phase-4-replay-determinism-under-nondeterministic-models-draft-active-2026-05-22">RFC 0041 Phase 4 — replay determinism under nondeterministic models, Draft → Active (2026-05-22)</h3>
+<p>Closes the multi-agent execution model roadmap on paper (Phases 1-4 all <code>Active</code>). Reference-host implementation (workflow-engine staged-refusal seam + nondeterministic-tool fixture + <code>version: 4</code> advertisement) is the path-to-Accepted bar.</p>
+<p><strong>Spec text:</strong></p>
+<ul>
+<li><code>spec/v1/replay.md</code> gains §"Replay determinism under nondeterministic models (RFC 0041 Phase 4, normative)" with §A LLM-cache-key recipe promotion (informative → normative when <code>version &gt;= 4</code>), §B envelope-refusal-divergence recovery (MUST emit <code>replay.divergedAtRefusal</code> + fail with <code>replay_diverged_at_refusal</code>), §C observable-output-sequence determinism (replay reproduces the observable result, NOT bit-equivalent execution of underlying tool calls).</li>
+<li><code>spec/v1/multi-agent-execution.md</code> gains §"Phase 4 replay determinism (RFC 0041, normative)" pointing into replay.md.</li>
+<li><code>spec/v1/rest-endpoints.md</code> §"Common error codes" gains <code>replay_diverged_at_refusal</code> for the §B refusal-divergence refusal path.</li>
+</ul>
+<p><strong>Schemas:</strong></p>
+<ul>
+<li><code>schemas/capabilities.schema.json</code> extends <code>multiAgent.executionModel</code> with <code>replayDeterminism.{supported, llmCacheKeyRecipe, refusalDivergenceEmission}</code> sub-block. <code>llmCacheKeyRecipe</code> accepts <code>spec-rfc-0041</code> (canonical) or <code>^x-host-&amp;lt;host&amp;gt;-&amp;lt;recipe&amp;gt;$</code> (vendor variant per host-extensions.md).</li>
+<li><code>schemas/run-event.schema.json</code> RunEventType enum gains <code>replay.divergedAtRefusal</code> (63 → 64 variants).</li>
+<li><code>schemas/run-event-payloads.schema.json</code> adds <code>replayDivergedAtRefusal</code> payload schema with required <code>{sourceRunId, atSequence, originalEnvelopeKind, replayEnvelopeKind}</code> (each envelope-kind in <code>{&quot;valid&quot;, &quot;refusal&quot;}</code>) + optional <code>originalEventId</code>, <code>nodeId</code>, <code>refusalReason</code>.</li>
+</ul>
+<p><strong>SECURITY:</strong></p>
+<ul>
+<li><code>SECURITY/invariants.yaml</code> gains <code>replay-llm-cache-key-portable</code> protocol-tier high-severity invariant. The recipe MUST be byte-deterministic across hosts that follow it; non-portable keys leak host-internal state through the cache boundary and would defeat the SR-1 secret-redaction invariant on cached responses.</li>
+</ul>
+<p><strong>Conformance scenarios (3 new, 202 → 205):</strong></p>
+<ul>
+<li><code>replay-divergence-at-refusal.test.ts</code> — advertisement-shape probe on <code>replayDeterminism.refusalDivergenceEmission</code> + 2 <code>it.todo</code> for the dual-direction refusal-divergence case (original=valid + replay=refusal AND the symmetric original=refusal + replay=valid).</li>
+<li><code>replay-observable-sequence-determinism.test.ts</code> — capability-gated. Tests the boundary byte-equivalence claim of §C + the observable-result caching claim. Behavioral assertion lands when a <code>conformance-phase4-nondet-tool</code> fixture ships.</li>
+<li><code>replay-llm-cache-key-portable.test.ts</code> — intra-host reproducibility (key recomputable offline from the recipe) + non-recipe-field invariance (security boundary: request id / trace context / tenant id MUST NOT shift the key) + Phase 4 advertisement alignment. Reuses the existing <code>POST /v1/host/sample/test/llm-cache-key</code> seam from the sibling <code>replay-llm-cache-key.test.ts</code>.</li>
+</ul>
+<p><strong>Other:</strong></p>
+<ul>
+<li><code>docs/KNOWN-LIMITS.md</code> line 18: corrected the stale "three <code>it.todo()</code> cases" claim — <code>replay-llm-cache-key.test.ts</code> actually ships 5 behavioral assertions; only §D cross-host parity soft-skips on <code>OPENWOP_BASE_URL_B</code> absence. Added two new rows for the Phase 4 behavioral gaps.</li>
+<li>README: 41 RFCs (unchanged); Active 9 → 10 (adds 0041); Draft 3 → 2 (drops 0041).</li>
+</ul>
+<h3 id="rfc-0040-follow-ups-sdk-parity-fromseq-field-name-alignment-2026-05-21">RFC 0040 follow-ups: SDK parity + <code>fromSeq</code> field-name alignment (2026-05-21)</h3>
+<p>Senior code-review follow-ups on the RFC 0039 + RFC 0040 landing.</p>
+<ul>
+<li><strong>HIGH (SDK contract drift) — <code>getRunAncestry</code> reached parity across all three reference SDKs.</strong> Adds <code>runs.ancestry()</code> (TS), <code>runs_ancestry()</code> (Python), and <code>RunAncestry()</code> (Go) — each maps 1:1 to the new <code>GET /v1/runs/{runId}/ancestry</code> operation and returns <code>null</code> / <code>(nil, nil)</code> on 404 (the host-doesn't-advertise pattern already used by <code>debugBundle</code>). Adds <code>RunAncestryResponse</code> + <code>RunAncestryParent</code> types to all three. Closes the 25-of-26-endpoint client gap that landed in c001d21.</li>
+<li><strong>HIGH (wire-naming drift) — <code>forkAtEventLogIdx</code> → <code>fromSeq</code>.</strong> The canonical fork-request field per <code>api/openapi.yaml</code> is <code>fromSeq</code>; multiple normative docs were using <code>forkAtEventLogIdx</code> as if it were the field name (most damagingly: the new <code>error.details.fromSeq</code> recommendation in RFC 0039 §B, which would have produced divergent error envelopes across implementations). Renamed across 8 normative files: <code>RFCS/0036</code>, <code>RFCS/0039</code>, <code>RFCS/0041</code>, <code>spec/v1/replay.md</code>, <code>spec/v1/rest-endpoints.md</code>, <code>spec/v1/multi-agent-execution.md</code>, the new <code>multi-agent-memory-lifecycle.test.ts</code> scenario, and <code>site/content/scenarios.md</code> (the latter also gained the missing <code>mode</code> / <code>eventsUrl</code> / <code>sourceRunId</code> fields its fork request/response example had been missing — the example was never valid against the OpenAPI body).</li>
+<li><strong>MEDIUM (false cross-reference) — SR-1 cite removed.</strong> The MAE-2 prose claimed "matches the SR-1 'writer's-clock' pattern from <code>agent-memory.md</code> §SR-1," but SR-1 is the <strong>Secret-Redaction Invariant</strong> (BYOK plaintext → <code>[REDACTED:&amp;lt;secretId&amp;gt;]</code> on persist) — not a clock-anchor pattern. Removed from RFC 0039, <code>spec/v1/multi-agent-execution.md</code>, and the conformance scenario header. TTL rationale stands on its own (absolute freshness contract, not a budget against enclosing run lifetime).</li>
+<li><strong>LOW (test discipline) — <code>expect(true).toBe(true)</code> stubs → <code>it.todo</code>.</strong> Four behavioral assertions in <code>multi-agent-memory-lifecycle.test.ts</code> and <code>cross-host-traceparent-propagation.test.ts</code> were tautologies that reported as PASS, masking the not-yet-implemented gap. Converted to <code>it.todo()</code> so test reporters track the gap explicitly. Vitest now reports 733 passed + 4 todo on the corpus.</li>
+</ul>
 <h3 id="rfc-0039-memory-lifecycle-half-mae-2-mae-3-rfc-0040-phase-3-cross-host-causation-draft-active-2026-05-22">RFC 0039 memory-lifecycle half (MAE-2 + MAE-3) + RFC 0040 Phase 3 cross-host causation Draft → Active (2026-05-22)</h3>
 <p>Closes RFC 0039 fully + lands RFC 0040 protocol-layer surface end-to-end. Reference-host implementation for both (Postgres MemoryAdapter wiring for RFC 0039 MAE-3 snapshot; reference workflow-engine ancestry endpoint + traceparent injection for RFC 0040) remains explicit follow-up.</p>
 <p><strong>RFC 0039 memory-lifecycle half (MAE-2 + MAE-3) — spec + scenario:</strong></p>
 <ul>
 <li><code>spec/v1/multi-agent-execution.md</code> gains §"Agent memory lifecycle across sub-runs (RFC 0039 Phase 2, normative)" covering MAE-2 (cross-run TTL anchored at child write time, with rationale) + MAE-3 (replay snapshot requirement + refusal contract).</li>
-<li><code>spec/v1/rest-endpoints.md</code> §"Common error codes" gains <code>replay_memory_snapshot_unavailable</code> for the §B refusal path when a host can't satisfy the snapshot at the requested <code>forkAtEventLogIdx</code>.</li>
+<li><code>spec/v1/rest-endpoints.md</code> §"Common error codes" gains <code>replay_memory_snapshot_unavailable</code> for the §B refusal path when a host can't satisfy the snapshot at the requested <code>fromSeq</code>.</li>
 <li>NEW <code>conformance/src/scenarios/multi-agent-memory-lifecycle.test.ts</code> — advertisement-shape probe on <code>crossChildMemoryConcurrency</code> (enum check) + 2 behavioral stubs (MAE-2 cross-run TTL + MAE-3 replay snapshot). Capability-gated on the conjunction <code>multiAgent.executionModel.version &gt;= 2 &amp;&amp; memory.supported: true</code>; reference workflow-engine soft-skips (advertises <code>memory.supported: false</code>); Postgres reference host will light up the behavioral assertions when its MemoryAdapter adopts the contract.</li>
 </ul>
 <p><strong>RFC 0040 Phase 3 cross-host causation — protocol-layer landing:</strong></p>
@@ -307,6 +739,49 @@
 <li><strong>§"Third-party host adoption — RFC 0030/0031/0032/0033"</strong> — row advanced from 62 pass / 21 auth-blocked / 4 honest-skip to <strong>87/87 pass on revision <code>workflow-runtime-00180-v8j</code></strong>. All five wire-shape drifts (a)/(b)/(c)/(d)/(e) RESOLVED 2026-05-21 — drift (e) was the discovery-location mismatch (top-level <code>modelCapabilities</code> vs spec-canonical <code>capabilities.modelCapabilities</code>); MyndHyve migrated to the nested form rather than via dual-emit spec amendment. 4 honest-skips remain on the <code>node-module-required-capabilities-shape</code> SHOULD-tier check because MyndHyve does not expose <code>GET /v1/host/sample/node-catalog</code>; not MUST-blocking.</li>
 </ul>
 <p>No spec amendments needed beyond the (a)/(b)/(c)/(d) renames already landed in the RFC 0030/0031/0032/0033 promotion batch. Drift (e) closed host-side; the spec language was unambiguous about the nested location.</p>
+<h3 id="sample-app-workflow-first-narrative-pivot-2026-05-23-late">Sample app — workflow-first narrative pivot (2026-05-23 late)</h3>
+<p>The AI chat empty state was advertising itself as "another LLM chatbot" instead of OpenWOP's actual differentiator — multi-agent workflow orchestration via @-mention. Five coordinated edits reframe the first-30-seconds story so the chat surface leads with workflow execution; plain chat is demoted to a footer line.</p>
+<ul>
+<li><strong>Welcome card rewrite</strong> (<code>chat/WelcomeCard.tsx</code>) — headline pivots from "How can I help?" to "Run workflows by name. Chat when you need to." Lede pivots from "your configured provider streams a response" to "OpenWOP makes multi-agent orchestration as easy as @-mentioning a workflow." Four cards replace the prior LLM-prompt suggestions: 3 real workflow <code>@-mention</code> invocations (Multi-channel content review, Approval with timeout fallback, Triple AI review board) + 1 builder pivot. Cards resolve their slugs at render time against <code>listWorkflowMentions()</code> so they survive template renames + slugify-rule drift; cards whose seeded workflow has been deleted render disabled with an explanatory tooltip. ARIA labels on every card. Footer demotes plain chat: "Just want to chat? Type below — the LLM passthrough is a single-step workflow with one chat node."</li>
+<li><strong>Chat input placeholder</strong> — <code>&quot;Ask anything… (/ for commands, @ for workflows)&quot;</code> → <code>&quot;Type @ to run a workflow, or just chat…&quot;</code>. Leads with the differentiator.</li>
+<li><strong>Top nav reorder</strong> — <code>AI · Workflows · Prompts · Keys · Runs · Capabilities</code> → <code>Workflows · Chat · Prompts · Keys · Runs · Capabilities</code>. The chat tab keeps its <code>/</code> route so existing bookmarks don't break; added a <code>/chat</code> alias that redirects to <code>/</code> for users who type the URL based on the new nav label.</li>
+<li><strong>Workflow run card bridges to builder + runs</strong> (<code>chat/WorkflowRunBubble.tsx</code>) — the run-id is a <code>&amp;lt;Link&amp;gt;</code> to <code>/runs/&amp;lt;id&amp;gt;</code> (event-stream detail); builder-saved workflows (<code>wf_*</code> ids) get an additional "open in builder →" link routing to <code>/builder/&amp;lt;workflowId&amp;gt;</code>. Closes the loop between "I ran this in chat" and "let me see what it looks like."</li>
+<li><strong>Header subtitle</strong> — <code>&quot;workflow-engine sample&quot;</code> → <code>&quot;workflow engine&quot;</code>. Drops the defeatist label; "sample" framing is already in the Privacy footer and DemoHostBanner.</li>
+</ul>
+<h3 id="sample-app-host-json-contract-prompts-envelope-normalizers-schema-responder-2026-05-23">Sample app + host — JSON-contract prompts, envelope normalizers, schema responder (2026-05-23)</h3>
+<p>Ports patterns from the sibling myndhyve project into the openwop sample. Implementation-only — composes from existing RFC 0021 + 0027 + 0028 primitives + the existing <code>envelopeAcceptor</code> universal-kinds surface. No spec/schema/wire-shape changes.</p>
+<ul>
+<li><strong>JSON-contract system prompt</strong> — new <code>envelope-contract-system</code> + <code>envelope-clarification-user</code> entries in <code>samplePrompts.ts</code>. Teaches the LLM the RFC-0021 envelope shape (<code>{type, version, payload, meta}</code>) and the universal kinds the acceptor already recognizes (<code>clarification.request</code>, <code>schema.request</code>, <code>result</code>). Bind any chat node's <code>systemPromptRef</code> to it and structured replies come back in the canonical wire shape.</li>
+<li><strong>Envelope normalizer registry</strong> — new <code>backend/typescript/src/host/envelopeNormalizers.ts</code> wired into <code>envelopeAcceptor.ts</code> as Step 2.5 (between kind-validation and payload-validation). Coerces common LLM drift before the Zod validator runs: <code>string → array</code>, singular <code>name</code> → canonical <code>names</code>, primitive → <code>{value}</code> wrapper. Mirrors myndhyve's <code>EnvelopeHandler::normalizeEnvelopePayload()</code> pattern. Warnings surface on <code>EnvelopeOutcome.normalizerWarnings[]</code>; advisory only, never block. The <code>redactedPayload</code> "authoritative recorded view" now uses the post-normalization payload so replay-forks re-validate the same shape the acceptor approved.</li>
+<li><strong>Schema responder</strong> — new <code>backend/typescript/src/host/schemaResponder.ts</code>. Pure function <code>buildSchemaResponse(req)</code> looks up node-type schemas by name in the live <code>NodeRegistry</code> with exact → trailing-segment → case-insensitive matching. Returns port shapes + configSchema per type; unresolved names go to <code>notFound[]</code>. <code>bundleVersion</code> is the first 12 hex chars of <code>sha256(sorted-typeIds)</code> — identifies the exact set of types the host knows. 8 vitest unit tests cover the four resolution paths.</li>
+</ul>
+<p>The chat-executor wiring that closes the schema-request round-trip (LLM emits <code>schema.request</code> → host injects <code>schema.response</code> invisibly into the next turn) is deferred — needs the same multi-turn loop the tools-dispatcher uses.</p>
+<h3 id="sample-app-provider-management-prompt-crud-envelope-inspector-minimax-tools-2026-05-22-late">Sample app — provider management, prompt CRUD, envelope inspector, MiniMax tools (2026-05-22 late)</h3>
+<p>Continuing into the afternoon. Sample-app only; no spec/schema/SDK contracts touched.</p>
+<ul>
+<li><strong>API Keys management page</strong> (<code>/keys</code>) — new route using the existing <code>byokClient</code> BE API. One section per BYOK provider with inline "+ Add key" form minting <code>&amp;lt;provider&amp;gt;:&amp;lt;label&amp;gt;</code> credentialRefs; legacy unscoped refs surfaced separately. Soft validation against each provider's <code>apiKeyPrefix</code> hint; masked-key view persisted in component state after store so users can confirm the suffix.</li>
+<li><strong>Per-node credential picker (Builder Inspector)</strong> — new <code>credential-picker</code> configField kind + <code>CredentialPickerInput.tsx</code> rendering a dropdown of stored credentialRefs with a "Manage" deep-link to <code>/keys</code>. <code>chat</code> catalog entry gains a <code>credentialRef</code> configField so a workflow can have multiple chat nodes hitting different stored keys.</li>
+<li><strong>Prompt library CRUD</strong> — new <code>prompts/userPrompts.ts</code> (versioned-envelope localStorage store). <code>+ New prompt</code> button + per-card Edit/Delete on user-owned cards (sample prompts stay read-only). User prompts get <code>user:&amp;lt;slug&amp;gt;</code> ids; merged on top of bundled samples and any future BE store via <code>listPrompts</code>.</li>
+<li><strong>MiniMax tools wired end-to-end</strong> — Try-it-free users now access LLM-orchestrated tool-calling. New <code>dispatchMiniMaxTools.ts</code> mirrors <code>dispatchAnthropicTools.ts</code> using MiniMax's OpenAI-compatible <code>tools[]</code> + <code>tool_calls</code> shape; nodes.ts gate widened to <code>provider === &#39;anthropic&#39; || provider === &#39;minimax&#39;</code>. FE <code>supportsTools</code> swapped from hard-coded <code>provider === &#39;anthropic&#39;</code> to per-model capability lookup.</li>
+<li><strong>MiniMax in providers.json (hidden)</strong> — first-class capability + cost source for the real provider behind Try-it-free. <code>hidden: true</code> excludes it from the BYOK picker; backend still reads its capability declarations.</li>
+<li><strong>Envelope inspector toggle on every assistant bubble</strong> — <code>▸ Show envelope · N</code> pill expands a structured list of every <code>agent.<em></code> / <code>envelope.</em></code> event the turn emitted. Makes the OpenWOP wire-shape inspectable inline without DevTools.</li>
+<li><strong>@workflow-mention honors trailing text</strong> — <code>@hello-uppercase hello</code> now runs the workflow with <code>inputs.text = &quot;hello&quot;</code> instead of dropping the trailing text. detectMention captures <code>\s+(.*)</code> after the slug; runWorkflowMention overrides the first key of <code>defaultInputs</code> with the trailing text.</li>
+<li><strong>Builder workflow seeding</strong> — first-visit dashboard persists all premade templates into "Your workflows" so the user lands on a populated builder. Seeded flag in localStorage prevents re-seeding after deletes.</li>
+<li><strong>Template cull</strong> — removed 3 single-node templates (<code>hello-uppercase</code>, <code>mock-ai-completion</code>, <code>chat-turn</code>) that didn't demonstrate workflow orchestration. The 6 surviving templates all show multi-step coordination (HITL, fan-out/fan-in, multi-agent critics).</li>
+<li><strong>Builder run tenant fix</strong> — <code>BuilderShell.tsx</code> was hardcoding <code>tenantId: &#39;demo&#39;</code> in createRun calls, producing 403 "principal cannot operate under tenant demo" for non-bearer principals. Removed so the BE infers from the authenticated session, mirroring the chat path.</li>
+<li><strong>AI chat states polished</strong> — "Loading…" replaced with "Spinning up your demo server…" editorial postcard (fading dots + card-breathing). Backend-resting error postcard rewritten (RFC numbers removed from user-facing copy). Chat history drawer falls back to localStorage session index when BE is in cold-start.</li>
+<li><strong>/prompts page copy + empty-list fallback</strong> — replaced API jargon with user-facing framing; empty BE response now falls back to bundled samples + user prompts so the page is never blank.</li>
+<li><strong>Per-node provider + model selection in the builder Inspector</strong> — <code>chat</code> catalog gains <code>provider-picker</code> + <code>model-picker</code> configFields with a <code>dependsOn</code> cascade that clears stale siblings when the provider changes. Custom-model "Other…" sentinel surfaces a free-text input for fine-tunes / snapshots / betas. Backend chat-responder reads <code>provider</code>/<code>model</code>/<code>credentialRef</code> from config FIRST and falls back to inputs, so the chat-tab path is unaffected. Tools-unsupported providers (anywhere outside the Anthropic + MiniMax wire-shape gate) now emit a <code>node.warning</code> event instead of silently dropping requested tools.</li>
+</ul>
+<h3 id="sample-app-chat-surface-ux-workflow-template-prompt-preload-2026-05-22">Sample app — chat-surface UX + workflow-template prompt preload (2026-05-22)</h3>
+<p>Continuing the May-21 polish pass. Sample-app only; no spec / schema / SDK contracts touched.</p>
+<ul>
+<li><strong>AI chat error postcard</strong> — replaced the red <code>.alert error</code> "Cannot reach backend: listStoredRefs returned 401" with an editorial postcard: serif italic headline "The demo is resting", cream paper-2 card with subtle clay-rule border, plain prose explaining the Cloud Run cold-start framing, a <code>&amp;lt;details&amp;gt;</code> dropdown carrying the raw error + backend URL for the curious. No red anywhere. (<code>d691da4</code>, <code>94a1a90</code>, <code>a6d2e89</code>)</li>
+<li><strong>Chat history falls back to localStorage</strong> — <code>History</code> drawer was permanently empty when the demo backend was in a cold-start / 401 state because the session list is fetched from the BE via <code>listChatSessions()</code>. Added a local session index (<code>openwop.sample.chat.sessions-index</code>) that <code>persistSession</code> updates on every save, capped at 50 entries with a <code>{ v: 1, items: [...] }</code> envelope so future shape drifts can be detected and dropped. <code>useChatSessions</code> reads BE-first and falls back to the local index when the BE returns empty / errors. (<code>3cd795a</code>)</li>
+<li><strong>BYOK wizard restructure (continued)</strong> — "Pick a provider" heading renamed to "Bring your own key (BYOK)" so the path is named explicitly. Added an <code>—— OR ——</code> divider between the Try-it-free card and the BYOK provider grid (mono caps between thin rules) to signal the two paths are mutually exclusive. Removed the leftover "T" provider-badge avatar from the Try-it-free card so it reads as a typographic affordance, not a generic tile. (<code>33daab1</code>, <code>ac99609</code>)</li>
+<li><strong>Prompt library preload across nodes + templates</strong> — <code>samplePrompts.ts</code> grew from 5 → 11 entries (<code>audit-logger-system</code>, <code>etl-extractor-system</code>, <code>etl-enricher-system</code>, <code>etl-loader-system</code>, <code>reviewer-system</code>, <code>chat-assistant-system</code> added). <code>mock-ai</code> catalog default refs landed at <code>writer-system</code> + <code>writer-user</code>; <code>chat</code> catalog default landed at <code>chat-assistant-system</code>. Every AI node across the 9 premade workflow templates (12 sites in total — 11 <code>mock-ai</code> + 1 <code>chat</code>) was retrofitted with contextually-chosen prompt refs (writer/critic/editor/audit/extract/enrich/loader/reviewer/chat-assistant). End-state: every fresh palette-dragged AI node and every template instantiation arrives demo-ready. (<code>77db350</code>)</li>
+<li><strong>Code-review follow-ups</strong> — extracted the localStorage-key constants to a shared <code>chat/lib/storageKeys.ts</code> so the writer (<code>useChatSession</code>) and the reader (<code>useChatSessions</code>) can't drift. Added a build-time <code>scripts/check-prompt-ref-defaults.mjs</code> guard that asserts every catalog <code>defaultValue</code> resolves to a real <code>templateId</code> in <code>samplePrompts.ts</code> — wired into the React app's <code>build</code> script so a stale default fails CI rather than silently breaking the palette.</li>
+</ul>
 <h3 id="site-ai-chat-surface-follow-up-polish-pass-2026-05-21">Site + AI-chat surface — follow-up polish pass (2026-05-21)</h3>
 <p>Sweep of the 13+ commits that landed after the initial site upgrade entry below. All implementation-only; no spec/schema/conformance/SDK contracts touched. CHANGELOG-completeness pass before 1.1.3 cut.</p>
 <ul>
@@ -391,7 +866,7 @@
 <ul>
 <li><code>schemas/capabilities.schema.json</code> gains the <code>capabilities.idempotency.multiRegion.{supported, replicationLagBoundMs (≤ 60s), partitionRecoveryStrategy}</code> block + the <code>capabilities.eventLog.crossEngineOrdering.{supported, orderingModel ∈ [lamport, vector-clock, global-sequencer]}</code> block.</li>
 <li><code>spec/v1/idempotency.md</code> §"<code>multiRegion</code> sub-block" added as the normative tighten-when-advertised clause complementing the existing <code>crossRegion: &#39;best-effort&#39;|&#39;strict&#39;|&#39;single-region&#39;</code> categorical claim.</li>
-<li><code>spec/v1/replay.md</code> §"Cross-region replay (RFC 0036)" added — when both capabilities are advertised, fork served by a different region produces byte-equivalent <code>RunSnapshot.status</code> + <code>variables</code> + projected event log up to <code>forkAtEventLogIdx</code>. Per-region clock fields legitimately differ.</li>
+<li><code>spec/v1/replay.md</code> §"Cross-region replay (RFC 0036)" added — when both capabilities are advertised, fork served by a different region produces byte-equivalent <code>RunSnapshot.status</code> + <code>variables</code> + projected event log up to <code>fromSeq</code>. Per-region clock fields legitimately differ.</li>
 <li>The multi-region simulator + cross-engine fixture + behavioral conformance scenarios per RFC §D remain deferred to a follow-up commit.</li>
 </ul>
 <p>README.md updated: 7 Active RFCs (was 5), 2 Draft RFCs (was 4). All caught by the structural drift detector. docs/PROTOCOL-STATUS.md auto-regenerated.</p>
@@ -1896,10 +2371,13 @@
           <li><a href="/spec/v1/">v1.x Core</a></li>
           <li><a href="/rfcs/">RFCs</a></li>
           <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
           <li><a href="/errors/">Error codes</a></li>
           <li><a href="/scenarios/">Scenario walkthroughs</a></li>
           <li><a href="/profiles/">Profiles</a></li>
           <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
           <li><a href="/versioning/">Versioning policy</a></li>
         </ul>
       </div>
@@ -1916,14 +2394,15 @@
       <div>
         <h5>Project</h5>
         <ul>
-          <li><a href="/changelog/">Changelog</a></li>
           <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
           <li><a href="/faq/">FAQ</a></li>
           <li><a href="/security/">Security posture</a></li>
           <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
           <li><a href="/contributing/">Contributing</a></li>
-          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
           <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
         </ul>
       </div>
       <div>
@@ -1939,10 +2418,11 @@
     <div class="foot-meta">
       <span>© 2026 OpenWOP contributors</span>
       <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
-      <span>Built with Claude Code</span>
     </div>
   </div>
 </footer>
+
+<script src="/site-nav.js" defer></script>
 
 </body>
 </html>

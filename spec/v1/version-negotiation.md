@@ -1,6 +1,6 @@
 # openwop Spec v1 — Version Negotiation and Deploy-Skew Safety
 
-> **Status: FINAL v1 (2026-04-27).** Comprehensive coverage of all four version axes (engine, per-run event-log, per-event, runtime pinning). Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of all four version axes (engine, per-run event-log, per-event, runtime pinning). Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ---
 

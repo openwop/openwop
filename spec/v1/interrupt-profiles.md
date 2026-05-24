@@ -1,6 +1,6 @@
 # openwop Spec v1 — Interrupt Profiles
 
-> **Status: FINAL v1 (2026-05-10).** Optional interrupt-profile annex for hosts that implement stronger human-in-the-loop and external-event flows than the base `interrupt.md` contract. This document is additive and does not change required v1 interrupt wire shapes. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1 (2026-05-10).** Optional interrupt-profile annex for hosts that implement stronger human-in-the-loop and external-event flows than the base `interrupt.md` contract. This document is additive and does not change required v1 interrupt wire shapes. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ---
 

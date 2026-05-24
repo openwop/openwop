@@ -15,7 +15,7 @@
 
 import type { Express } from 'express';
 import { OpenwopError } from '../types.js';
-import type { WorkflowDefinition } from '../executor/types.js';
+import type { EdgeDef, WorkflowDefinition } from '../executor/types.js';
 import {
   deleteRegisteredWorkflow,
   listRegisteredWorkflows,
@@ -27,6 +27,8 @@ import type { HostAdapterSuite } from '../host/index.js';
 const WORKFLOW_ID_PATTERN = /^[a-zA-Z0-9_.\-:]{1,128}$/;
 const NODE_ID_PATTERN = /^[a-zA-Z0-9_\-]{1,64}$/;
 const TYPE_ID_PATTERN = /^[a-zA-Z0-9_.\-]{1,128}$/;
+const EDGE_ID_PATTERN = /^[a-zA-Z0-9_\-]{1,64}$/;
+const TRIGGER_RULES = new Set(['all_success', 'any_success', 'all_complete', 'none_failed', 'any_failed']);
 
 /** RFC 0022 §C — workflow-register MUST refuse with `validation_error` +
  *  `details.requiredCapability` when a node's mapping field is non-empty
@@ -224,5 +226,56 @@ function validateDefinition(raw: unknown): WorkflowDefinition {
   });
   // RFC 0022 §C capability-gate refusal check.
   checkMappingCapability(nodes);
-  return { workflowId, nodes };
+
+  // Optional `edges` array — wire-shape matches `WorkflowEdge` in
+  // `spec/v1/workflow-definition.schema.json`. Without this validation
+  // step the executor falls back to an implicit linear chain over
+  // `nodes`, which silently mis-wires every fan-out template (every
+  // chat critic in the Triple-AI board reads its predecessor's output
+  // instead of the prepared prompt). See bug from 2026-05-23.
+  let edges: WorkflowDefinition['edges'];
+  if (obj.edges !== undefined) {
+    if (!Array.isArray(obj.edges)) {
+      throw new OpenwopError('validation_error', 'Field `edges` MUST be an array when present.', 400, { field: 'edges' });
+    }
+    const nodeIds = new Set(nodes.map((n) => n.nodeId));
+    const seenEdgeIds = new Set<string>();
+    edges = obj.edges.map((raw, i) => {
+      if (!raw || typeof raw !== 'object') {
+        throw new OpenwopError('validation_error', `edges[${i}] MUST be an object.`, 400);
+      }
+      const e = raw as Record<string, unknown>;
+      if (typeof e.edgeId !== 'string' || !EDGE_ID_PATTERN.test(e.edgeId)) {
+        throw new OpenwopError('validation_error', `edges[${i}].edgeId MUST match [a-zA-Z0-9_-]{1,64}.`, 400);
+      }
+      if (seenEdgeIds.has(e.edgeId)) {
+        throw new OpenwopError('validation_error', `Duplicate edgeId: ${e.edgeId}`, 400);
+      }
+      seenEdgeIds.add(e.edgeId);
+      if (typeof e.sourceNodeId !== 'string' || !nodeIds.has(e.sourceNodeId)) {
+        throw new OpenwopError('validation_error', `edges[${i}].sourceNodeId MUST reference a declared node.`, 400);
+      }
+      if (typeof e.targetNodeId !== 'string' || !nodeIds.has(e.targetNodeId)) {
+        throw new OpenwopError('validation_error', `edges[${i}].targetNodeId MUST reference a declared node.`, 400);
+      }
+      if (e.triggerRule !== undefined && (typeof e.triggerRule !== 'string' || !TRIGGER_RULES.has(e.triggerRule))) {
+        throw new OpenwopError('validation_error', `edges[${i}].triggerRule MUST be one of ${[...TRIGGER_RULES].join(', ')}.`, 400);
+      }
+      const out: Mutable<EdgeDef> = {
+        edgeId: e.edgeId,
+        sourceNodeId: e.sourceNodeId,
+        targetNodeId: e.targetNodeId,
+      };
+      if (typeof e.sourceOutput === 'string') out.sourceOutput = e.sourceOutput;
+      if (typeof e.targetInput === 'string') out.targetInput = e.targetInput;
+      if (typeof e.triggerRule === 'string') out.triggerRule = e.triggerRule as EdgeDef['triggerRule'];
+      if (e.condition && typeof e.condition === 'object') out.condition = e.condition as EdgeDef['condition'];
+      if (typeof e.label === 'string') out.label = e.label;
+      return out;
+    });
+  }
+
+  return edges ? { workflowId, nodes, edges } : { workflowId, nodes };
 }
+
+type Mutable<T> = { -readonly [K in keyof T]: T[K] };

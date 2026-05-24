@@ -13,6 +13,16 @@ interface RegisterBody {
     typeId: string;
     config?: Record<string, unknown>;
   }>;
+  edges?: ReadonlyArray<{
+    edgeId: string;
+    sourceNodeId: string;
+    targetNodeId: string;
+    sourceOutput?: string;
+    targetInput?: string;
+    triggerRule?: string;
+    condition?: { path: string; op: string; value?: unknown };
+    label?: string;
+  }>;
 }
 
 export async function registerWorkflow(body: RegisterBody): Promise<{ workflowId: string; nodeCount: number }> {

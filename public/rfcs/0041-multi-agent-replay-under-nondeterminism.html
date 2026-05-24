@@ -54,16 +54,87 @@
       <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
       <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
     </a>
-    <nav class="topnav">
-      <a class="hide-sm " href="/spec/v1/">Spec</a>
-      <a class="hide-sm active" href="/rfcs/">RFCs</a>
-      <a class="hide-sm " href="/conformance/">Conformance</a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
       <a class="hide-sm " href="/changelog/">Changelog</a>
-      <a class="hide-sm " href="/faq/">FAQ</a>
-      <a class="pill" href="https://github.com/openwop/openwop">GitHub →</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
     </nav>
   </div>
 </header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
 
 <main class="site-main">
   <div class="wrap">
@@ -94,10 +165,10 @@
 <tbody>
 <tr><td><strong>RFC</strong></td><td>0041</td></tr>
 <tr><td><strong>Title</strong></td><td>Multi-agent execution model Phase 4: LLM cache-key recipe normation + envelope-refusal recovery in replay context + determinism vs idempotency contract</td></tr>
-<tr><td><strong>Status</strong></td><td><code>Draft</code></td></tr>
+<tr><td><strong>Status</strong></td><td><code>Active</code></td></tr>
 <tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
 <tr><td><strong>Created</strong></td><td>2026-05-22</td></tr>
-<tr><td><strong>Updated</strong></td><td>2026-05-22</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-22 (Draft → Active same-day: Phase 4 spec text + schemas + 3 conformance scenarios + SECURITY invariant + capability advertisement landed atomically following the RFC 0034/0037/0039/0040 pattern. <code>spec/v1/replay.md</code> gains §"Replay determinism under nondeterministic models (RFC 0041 Phase 4, normative)" with §A LLM-cache-key recipe promotion, §B refusal-divergence recovery, §C observable-output-sequence determinism. <code>spec/v1/multi-agent-execution.md</code> gains §"Phase 4 replay determinism (RFC 0041, normative)" pointing into replay.md. <code>schemas/capabilities.schema.json</code> adds <code>replayDeterminism.{supported, llmCacheKeyRecipe, refusalDivergenceEmission}</code> sub-block. <code>schemas/run-event.schema.json</code> RunEventType enum gains <code>replay.divergedAtRefusal</code>. <code>schemas/run-event-payloads.schema.json</code> adds <code>replayDivergedAtRefusal</code> payload with required <code>{sourceRunId, atSequence, originalEnvelopeKind, replayEnvelopeKind}</code> + optional <code>originalEventId/nodeId/refusalReason</code>. <code>spec/v1/rest-endpoints.md</code> gains <code>replay_diverged_at_refusal</code> error code. <code>SECURITY/invariants.yaml</code> gains <code>replay-llm-cache-key-portable</code> row pointing at the existing <code>replay-llm-cache-key.test.ts</code> plus the new portable-key scenario. NEW conformance scenarios: <code>replay-divergence-at-refusal.test.ts</code> (advertisement-shape probe + 2 behavioral todos for the dual-direction refusal-divergence case), <code>replay-observable-sequence-determinism.test.ts</code> (capability-gated; behavioral assertion soft-skipped until a nondeterministic-tool fixture ships), <code>replay-llm-cache-key-portable.test.ts</code> (intra-host reproducibility + non-recipe-field invariance + Phase 4 advertisement alignment — reuses the existing <code>POST /v1/host/sample/test/llm-cache-key</code> seam). Reference-host implementation (workflow-engine staged-refusal seam + nondeterministic-tool fixture + Phase 4 advertisement) deferred to follow-up commits owned by the workflow-engine maintainer; the protocol-layer contract is complete. Path to <code>Accepted</code>: a non-steward host advertises <code>replayDeterminism.supported: true</code> + <code>llmCacheKeyRecipe: &quot;spec-rfc-0041&quot;</code> + passes the portable-key + refusal-divergence + observable-sequence scenarios.)</td></tr>
 <tr><td><strong>Affects</strong></td><td><code>spec/v1/replay.md</code> (extends with §"Replay under non-deterministic agents (Phase 4, normative)") · <code>spec/v1/multi-agent-execution.md</code> (extends with §"Phase 4 replay determinism") · <code>schemas/capabilities.schema.json</code> (bumps <code>multiAgent.executionModel.version</code> ceiling effective range to include <code>4</code>; adds optional <code>replayDeterminism</code> block) · 3 new conformance scenarios (replacing <code>replay-llm-cache-key.test.ts</code> placeholders) · <code>SECURITY/invariants.yaml</code> (adds <code>replay-llm-cache-key-portable</code> SECURITY invariant) · <code>INTEROP-MATRIX.md</code> · CHANGELOG</td></tr>
 <tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
 <tr><td><strong>Supersedes</strong></td><td>—</td></tr>
@@ -117,7 +188,7 @@
 <p>This is the LAST of the four phases from RFC 0037's roadmap. After Phase 4 Accepts, the multi-agent execution model is closed.</p>
 <h2 id="proposal-phased-still-substantial">Proposal — Phased (still substantial)</h2>
 <h3 id="a-llm-cache-key-recipe-normation-mae-7-closure">§A — LLM cache-key recipe normation (MAE-7 closure)</h3>
-<p><code>spec/v1/replay.md</code> §"LLM cache-key recipe" currently documents the recipe as INFORMATIVE. Phase 4 promotes it to NORMATIVE when <code>multiAgent.executionModel.version &gt;= 4</code>:</p>
+<p><code>spec/v1/replay.md</code> §"LLM cache-key recipe" §B already documents the recipe as a CONDITIONAL MUST — hosts MUST compute the key per the recipe <strong>for any node that calls an LLM provider through the Layer-2 idempotency surface</strong>. Phase 4 strengthens this in two ways: (1) the MUST becomes unconditional (applies to ALL LLM-calling nodes when <code>multiAgent.executionModel.version &gt;= 4</code>, regardless of Layer-2 idempotency usage); (2) the host's commitment to the recipe becomes observable via the <code>replayDeterminism.llmCacheKeyRecipe</code> discovery field. The recipe shape itself is unchanged from §B:</p>
 <blockquote><p>Hosts MUST compute the cache key for an LLM call as:</p><p></p><p>```</p><p>SHA-256(canonicalize({</p><p>  model: &lt;stable-model-identifier&gt;,</p><p>  provider: &lt;provider-identifier&gt;,</p><p>  messages: &lt;canonical-message-array&gt;,</p><p>  tools: &lt;canonical-tool-array-or-empty&gt;,</p><p>  temperature: &lt;number-or-null&gt;,</p><p>  responseSchema: &lt;canonical-schema-or-null&gt;</p><p>}))</p><p>```</p><p></p><p>where <code>canonicalize(...)</code> is JSON canonicalization per RFC 8785 (JCS). The key is deterministic across hosts that follow the recipe: given the same model + provider + messages + tools + temperature + schema, two independent hosts produce the same key. Cached responses are keyed by this hash; on replay, a host that has the same key in cache MUST return the cached response (subject to the §B refusal-recovery contract below).</p></blockquote>
 <h3 id="b-envelope-refusal-recovery-in-replay-mae-8-closure">§B — Envelope-refusal recovery in replay (MAE-8 closure)</h3>
 <p>When the original run got a valid envelope from the model but the replay gets a refusal (e.g., the model's safety-filter has tightened since the original run):</p>
@@ -125,7 +196,7 @@
 <p>The inverse case (original got a refusal, replay gets a valid envelope) follows the same contract: emit <code>replay.divergedAtRefusal</code> and fail. Both directions of divergence are observable; silent acceptance would hide a meaningful state shift.</p>
 <h3 id="c-determinism-vs-idempotency-contract-mae-9-closure">§C — Determinism vs idempotency contract (MAE-9 closure)</h3>
 <p>Add to <code>spec/v1/replay.md</code>:</p>
-<blockquote><p>The replay contract is OBSERVABLE-OUTPUT-SEQUENCE determinism, NOT bit-equivalent execution determinism. Concretely:</p><p></p><p>- The sequence of <code>RunEventDoc</code> records appended to the event log at indices <code>[0, forkAtEventLogIdx]</code> MUST be byte-equivalent between original and replay (modulo per-region clock fields per RFC 0036 §E).</p><p>- The variables, channel state, and <code>RunSnapshot.status</code> at each event-log index MUST be byte-equivalent.</p><p>- The bytes-on-the-wire of underlying tool/LLM calls MAY differ (e.g., a tool call with non-deterministic remote state, an LLM call against a model whose weights shifted) AS LONG AS the resulting observable state at each index is byte-equivalent.</p><p></p><p>Hosts MUST NOT cache observable state ONLY at the tool-call boundary — they MUST cache the observable result (return value, side-effects on workflow state, emitted events) so a replay reproduces the observable sequence even when the underlying call differs.</p></blockquote>
+<blockquote><p>The replay contract is OBSERVABLE-OUTPUT-SEQUENCE determinism, NOT bit-equivalent execution determinism. Concretely:</p><p></p><p>- The sequence of <code>RunEventDoc</code> records appended to the event log at indices <code>[0, fromSeq]</code> MUST be byte-equivalent between original and replay (modulo per-region clock fields per RFC 0036 §E).</p><p>- The variables, channel state, and <code>RunSnapshot.status</code> at each event-log index MUST be byte-equivalent.</p><p>- The bytes-on-the-wire of underlying tool/LLM calls MAY differ (e.g., a tool call with non-deterministic remote state, an LLM call against a model whose weights shifted) AS LONG AS the resulting observable state at each index is byte-equivalent.</p><p></p><p>Hosts MUST NOT cache observable state ONLY at the tool-call boundary — they MUST cache the observable result (return value, side-effects on workflow state, emitted events) so a replay reproduces the observable sequence even when the underlying call differs.</p></blockquote>
 <h3 id="d-capability-advertisement">§D — Capability advertisement</h3>
 <pre class="lang-diff"><code>   &quot;multiAgent&quot;: {
      &quot;executionModel&quot;: {
@@ -198,16 +269,87 @@
       <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
       <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
     </a>
-    <nav class="topnav">
-      <a class="hide-sm " href="/spec/v1/">Spec</a>
-      <a class="hide-sm active" href="/rfcs/">RFCs</a>
-      <a class="hide-sm " href="/conformance/">Conformance</a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
       <a class="hide-sm " href="/changelog/">Changelog</a>
-      <a class="hide-sm " href="/faq/">FAQ</a>
-      <a class="pill" href="https://github.com/openwop/openwop">GitHub →</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
     </nav>
   </div>
 </header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
 
 <main class="site-main">
   <div class="wrap">
@@ -239,16 +381,16 @@
 <h2 id="compatibility">Compatibility</h2>
 <p><strong>Additive.</strong> Hosts at version 1-3 continue unchanged. Hosts upgrading to version 4:</p>
 <ul>
-<li>Adopt the normative recipe in §A (compatible with hosts that already implement the informative recipe; non-conformant for hosts that use an idiosyncratic key shape).</li>
+<li>Adopt the unconditional MUST in §A — apply the §"LLM cache-key recipe" §B recipe to ALL LLM-calling nodes, not just those using Layer-2 idempotency. Compatible with hosts that already implement the recipe for the Layer-2 case; non-conformant for hosts that use an idiosyncratic key shape OR skip the recipe for non-Layer-2-idempotent nodes.</li>
 <li>Emit the new <code>replay.divergedAtRefusal</code> event when replay-refusal-divergence occurs (additive RunEventType; pre-version-4 consumers ignore).</li>
 <li>Implement §C observable-sequence determinism (most hosts already do this implicitly via existing replay machinery; §C makes the contract explicit).</li>
 </ul>
 <h2 id="conformance">Conformance</h2>
-<p>3 new conformance scenarios, REPLACING the 3 <code>it.todo()</code> placeholders in <code>replay-llm-cache-key.test.ts</code>:</p>
+<p>3 new conformance scenarios land alongside the existing <code>replay-llm-cache-key.test.ts</code> (which contrary to the prior version of this RFC is NOT shaped as <code>it.todo()</code> placeholders — it ships 5 behavioral assertions against the existing <code>POST /v1/host/sample/test/llm-cache-key</code> seam, gated on 404-skip when the seam isn't exposed). The new scenarios cover the surfaces RFC 0041 introduces:</p>
 <ul>
-<li><code>replay-llm-cache-key-portable.test.ts</code> — capability-gated on <code>replayDeterminism.supported: true</code>. Two test runs against the host with identical canonical-input LLM calls; asserts the host's emitted cache-key field on <code>agent.toolCalled</code> events (or equivalent) is byte-equivalent.</li>
-<li><code>replay-divergence-at-refusal.test.ts</code> — capability-gated on <code>refusalDivergenceEmission: true</code>. Original run: mock provider returns a valid envelope. Replay: mock provider returns a refusal. Asserts <code>replay.divergedAtRefusal</code> event fires AND replay fails with <code>replay_diverged_at_refusal</code>.</li>
-<li><code>replay-observable-sequence-determinism.test.ts</code> — capability-gated. Runs a workflow with a non-deterministic tool call (a mock tool that returns different bytes on each call but the host caches the FIRST result as part of observable state). Forks the run at an intermediate index and replays; asserts the observable event sequence at indices <code>[0, forkAtEventLogIdx]</code> is byte-equivalent across original + replay even though the underlying tool would have produced different bytes.</li>
+<li><code>replay-llm-cache-key-portable.test.ts</code> — capability-gated on <code>replayDeterminism.supported: true</code>. Reuses the existing seam; adds intra-host reproducibility (key recomputable offline), non-recipe-field invariance (security boundary: request id / trace context / tenant id MUST NOT influence the key), and Phase 4 advertisement-alignment (<code>replayDeterminism.llmCacheKeyRecipe</code> MUST equal <code>spec-rfc-0041</code> or match <code>^x-host-&amp;lt;host&amp;gt;-&amp;lt;recipe&amp;gt;$</code>).</li>
+<li><code>replay-divergence-at-refusal.test.ts</code> — capability-gated on <code>refusalDivergenceEmission: true</code>. Advertisement-shape probe (always-on when discovery reachable) + 2 behavioral <code>it.todo</code> for the two refusal-divergence directions (original=valid + replay=refusal AND original=refusal + replay=valid). Behavioral assertion lands when reference workflow-engine wires a staged-refusal mode on its mock-AI provider.</li>
+<li><code>replay-observable-sequence-determinism.test.ts</code> — capability-gated. Tests the boundary byte-equivalence claim of §C (event-log prefix <code>[0, fromSeq]</code> byte-equivalent modulo per-region clock + ULID-T entropy) and the observable-result caching claim (replay reproduces the original observable result for nondeterministic tool calls). Behavioral assertion lands when a <code>conformance-phase4-nondet-tool</code> fixture ships.</li>
 </ul>
 <h2 id="alternatives-considered">Alternatives considered</h2>
 <p>1. <strong>Skip MAE-8 (refusal divergence) — let hosts silently substitute.</strong> Rejected — silent substitution masks safety-policy shifts. Operators MUST be able to audit when their replays' behavior would diverge. 2. <strong>Mandate bit-equivalent execution (not just observable-output equivalence).</strong> Rejected — bit-equivalence requires every nondeterministic call to be cached forever (memory cost), and breaks legitimate use cases like tool calls against remote stateful APIs. 3. <strong>Defer MAE-9 to a separate "replay-semantics" RFC after Phase 4.</strong> Rejected — observable-sequence vs bit-equivalent is the load-bearing contract distinction; deferring leaves the spec ambiguous on the most consequential question.</p>
@@ -256,19 +398,19 @@
 <p>1. <strong>Canonical message format.</strong> §A's <code>&amp;lt;canonical-message-array&amp;gt;</code> needs to nail down field ordering + null/undefined semantics. The OpenAI <code>chat.completions</code> shape differs from Anthropic's <code>messages</code> and Gemini's <code>contents</code>; the canonical form needs to be vendor-neutral. Recommend: spec the canonical form as JSON Schema in <code>schemas/llm-canonical-message.schema.json</code>; defer the schema landing to the comment-window discussion. 2. <strong>Tool-call non-determinism in observable state.</strong> §C says hosts MUST cache observable result, not just the tool-call result. What about tools whose observable result depends on time of day (<code>getCurrentTime()</code>)? Recommend: tools that return non-cacheable state advertise via a NEW <code>tool.nondeterministic: true</code> field on AgentManifest's tool declarations; replay walks the cache transparently and re-issues for nondeterministic tools. 3. <strong>Cross-host cache sharing.</strong> If host A caches an LLM response and host B replays the run, can host B use host A's cache? RFC 0040 Phase 3 + RFC 0041 Phase 4 together define the surface but the cache-sharing protocol is a meta-question. Defer.</p>
 <h2 id="acceptance-criteria">Acceptance criteria</h2>
 <ul>
-<li>[ ] Spec text merged (this file).</li>
-<li>[ ] <code>spec/v1/replay.md</code> extended with §A + §B + §C normative text.</li>
-<li>[ ] <code>spec/v1/multi-agent-execution.md</code> extended with §"Phase 4 replay determinism".</li>
-<li>[ ] <code>schemas/capabilities.schema.json</code> extends <code>multiAgent.executionModel</code> with <code>replayDeterminism</code> block per §D.</li>
-<li>[ ] <code>schemas/run-event.schema.json</code> <code>RunEventType</code> enum gains <code>replay.divergedAtRefusal</code>.</li>
-<li>[ ] <code>schemas/run-event-payloads.schema.json</code> gains <code>replayDivergedAtRefusal</code> payload schema.</li>
-<li>[ ] <code>spec/v1/rest-endpoints.md</code> §"Common error codes" gains <code>replay_diverged_at_refusal</code>.</li>
-<li>[ ] <code>SECURITY/invariants.yaml</code> gains <code>replay-llm-cache-key-portable</code> row with public test glob per §E.</li>
-<li>[ ] 3 new conformance scenarios per §Conformance (replacing the existing <code>replay-llm-cache-key.test.ts</code> placeholders).</li>
-<li>[ ] At least one reference host advertises <code>version: 4</code> + passes the 3 scenarios.</li>
-<li>[ ] <code>docs/KNOWN-LIMITS.md</code> <code>replay-llm-cache-key.test.ts</code> row dropped from §"Shape-only conformance coverage."</li>
-<li>[ ] <code>INTEROP-MATRIX.md</code> updated.</li>
-<li>[ ] CHANGELOG entry under <code>[Unreleased]</code>.</li>
+<li>[x] Spec text merged (this file).</li>
+<li>[x] <code>spec/v1/replay.md</code> extended with §A + §B + §C normative text.</li>
+<li>[x] <code>spec/v1/multi-agent-execution.md</code> extended with §"Phase 4 replay determinism".</li>
+<li>[x] <code>schemas/capabilities.schema.json</code> extends <code>multiAgent.executionModel</code> with <code>replayDeterminism</code> block per §D.</li>
+<li>[x] <code>schemas/run-event.schema.json</code> <code>RunEventType</code> enum gains <code>replay.divergedAtRefusal</code>.</li>
+<li>[x] <code>schemas/run-event-payloads.schema.json</code> gains <code>replayDivergedAtRefusal</code> payload schema.</li>
+<li>[x] <code>spec/v1/rest-endpoints.md</code> §"Common error codes" gains <code>replay_diverged_at_refusal</code>.</li>
+<li>[x] <code>SECURITY/invariants.yaml</code> gains <code>replay-llm-cache-key-portable</code> row with public test glob per §E.</li>
+<li>[x] 3 new conformance scenarios per §Conformance.</li>
+<li>[x] <code>docs/KNOWN-LIMITS.md</code> <code>replay-llm-cache-key.test.ts</code> row corrected (the file is NOT it.todo placeholders — its behavioral coverage at the single-host boundary is in place; the residual known-limit is cross-host parity, which still depends on <code>OPENWOP_BASE_URL_B</code>).</li>
+<li>[ ] At least one reference host advertises <code>version: 4</code> + passes the 3 scenarios. (Path-to-Accepted.)</li>
+<li>[ ] <code>INTEROP-MATRIX.md</code> updated. (Will land alongside the reference-host implementation that advertises <code>version: 4</code>.)</li>
+<li>[x] CHANGELOG entry under <code>[Unreleased]</code>.</li>
 </ul>
 <p>Path to <code>Active → Accepted</code>: cross-host advertisement evidence per <code>RFCs/0001-rfc-process.md</code> §"Promotion to Accepted." The multi-agent execution model roadmap closes when this RFC reaches Accepted.</p>
 <h2 id="references">References</h2>
@@ -303,10 +445,13 @@
           <li><a href="/spec/v1/">v1.x Core</a></li>
           <li><a href="/rfcs/">RFCs</a></li>
           <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
           <li><a href="/errors/">Error codes</a></li>
           <li><a href="/scenarios/">Scenario walkthroughs</a></li>
           <li><a href="/profiles/">Profiles</a></li>
           <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
           <li><a href="/versioning/">Versioning policy</a></li>
         </ul>
       </div>
@@ -323,14 +468,15 @@
       <div>
         <h5>Project</h5>
         <ul>
-          <li><a href="/changelog/">Changelog</a></li>
           <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
           <li><a href="/faq/">FAQ</a></li>
           <li><a href="/security/">Security posture</a></li>
           <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
           <li><a href="/contributing/">Contributing</a></li>
-          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
           <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
         </ul>
       </div>
       <div>
@@ -346,10 +492,11 @@
     <div class="foot-meta">
       <span>© 2026 OpenWOP contributors</span>
       <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
-      <span>Built with Claude Code</span>
     </div>
   </div>
 </footer>
+
+<script src="/site-nav.js" defer></script>
 
 </body>
 </html>

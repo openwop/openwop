@@ -1,12 +1,12 @@
 # openwop Spec v1 — Authentication and Authorization
 
-> **Status: FINAL v1 (2026-04-27).** Comprehensive coverage of the bearer-token auth model, scope vocabulary, and the canonical 401/403 error envelope (now backed by `schemas/error-envelope.schema.json` per JS5). Not yet final: OAuth 2.0, mTLS, key rotation, and webhook HMAC remain in "Open spec gaps" — but the stable surface (API key + scopes + error envelope) is comprehensive enough for SDK + conformance authoring. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
+> **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of the bearer-token auth model, scope vocabulary, and the canonical 401/403 error envelope (now backed by `schemas/error-envelope.schema.json` per JS5). Not yet final: OAuth 2.0, mTLS, key rotation, and webhook HMAC remain in "Open spec gaps" — but the stable surface (API key + scopes + error envelope) is comprehensive enough for SDK + conformance authoring. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 >
 > **Status legend** (used across all spec/v1/*.md):
 > - **STUB** — minimal coverage, only stable surfaces. Implementers SHOULD pin only to what's written; assume gaps.
 > - **DRAFT** — comprehensive coverage of stable + in-flight surfaces, but not yet reviewed by spec committee.
 > - **OUTLINE** — sketched but not detailed. Section headings lock; field schemas may shift.
-> - **FINAL** — frozen. Breaking changes go to v2.
+> - **Stable** — frozen wire surface under v1.x. Breaking changes go to v2. (Earlier revisions of this corpus used the label **FINAL**; the two are synonymous.)
 
 ---
 

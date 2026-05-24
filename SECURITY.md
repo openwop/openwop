@@ -25,15 +25,11 @@ Out of scope:
 
 File a private advisory at https://github.com/openwop/openwop/security/advisories/new. GitHub provides an embargoed working space for coordinated disclosure, CVE coordination, and downstream notification.
 
-### 2.2 Email fallback — `security@openwop.ai`
+### 2.2 Active exploitation
 
-For reporters who can't or prefer not to use GitHub Security Advisories. The email is monitored by the maintainer set listed in `MAINTAINERS.md`.
+If the vulnerability is being actively exploited, file a GitHub Security Advisory with subject prefix `[ACTIVE EXPLOIT]`. The maintainer set is paged within the SLA in §3.
 
-### 2.3 Active exploitation
-
-If the vulnerability is being actively exploited, file via either channel with subject prefix `[ACTIVE EXPLOIT]`. The maintainer set is paged within the SLA in §3.
-
-### 2.4 Do not file public issues
+### 2.3 Do not file public issues
 
 Do not file public issues for vulnerabilities. The public issue tracker is not embargoed and will leak the report to anyone watching the repository.
 

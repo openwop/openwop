@@ -1,6 +1,6 @@
 # openwop Spec v1 — Capability Declaration (`/.well-known/openwop`)
 
-> **Status: FINAL v1 (2026-04-27; hygiene pass 2026-05-10).** Formalized as `schemas/capabilities.schema.json`. The public network handshake at `GET /.well-known/openwop` is the canonical v1 capability declaration. Fields marked **required v1** are required for conformance; fields marked **optional v1** have stable wire shapes but MAY be omitted by hosts that do not support the capability. Conformance suite scenarios verify the required surface end-to-end and gate optional profile scenarios from this document. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1 (2026-04-27; hygiene pass 2026-05-10).** Formalized as `schemas/capabilities.schema.json`. The public network handshake at `GET /.well-known/openwop` is the canonical v1 capability declaration. Fields marked **required v1** are required for conformance; fields marked **optional v1** have stable wire shapes but MAY be omitted by hosts that do not support the capability. Conformance suite scenarios verify the required surface end-to-end and gate optional profile scenarios from this document. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ---
 

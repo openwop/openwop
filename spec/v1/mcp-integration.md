@@ -1,6 +1,6 @@
 # openwop Spec v1 — MCP Integration
 
-> **Status: FINAL v1 (2026-05-05).** Worked example of how OpenWOP and the Model Context Protocol (MCP) compose. Non-normative composition pattern; the §"Trust boundary" rules restate normative invariants from `SECURITY/threat-model-prompt-injection.md` (3 RFC 2119 keywords, all citing pre-existing invariants). Graduated DRAFT → FINAL via RFC 0006. See `auth.md` for the status legend.
+> **Status: Stable · v1.1 (2026-05-05).** Worked example of how OpenWOP and the Model Context Protocol (MCP) compose. Non-normative composition pattern; the §"Trust boundary" rules restate normative invariants from `SECURITY/threat-model-prompt-injection.md` (3 RFC 2119 keywords, all citing pre-existing invariants). Graduated DRAFT → FINAL via RFC 0006. See `auth.md` for the status legend.
 
 ---
 

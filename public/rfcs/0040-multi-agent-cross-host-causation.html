@@ -54,16 +54,87 @@
       <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
       <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
     </a>
-    <nav class="topnav">
-      <a class="hide-sm " href="/spec/v1/">Spec</a>
-      <a class="hide-sm active" href="/rfcs/">RFCs</a>
-      <a class="hide-sm " href="/conformance/">Conformance</a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
       <a class="hide-sm " href="/changelog/">Changelog</a>
-      <a class="hide-sm " href="/faq/">FAQ</a>
-      <a class="pill" href="https://github.com/openwop/openwop">GitHub →</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
     </nav>
   </div>
 </header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
 
 <main class="site-main">
   <div class="wrap">
@@ -85,6 +156,7 @@
       <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
       <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
       <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#landing-log">Landing log</a></li>
       <li class="toc-top"><a href="#references">References</a></li>
     </ul>
   </aside><article class="spec-doc"><h1 id="rfc-0040-multi-agent-phase-3-cross-host-causation-linking">RFC 0040: Multi-agent Phase 3 — cross-host causation linking</h1>
@@ -96,8 +168,8 @@
 <tr><td><strong>Status</strong></td><td><code>Active</code></td></tr>
 <tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
 <tr><td><strong>Created</strong></td><td>2026-05-22</td></tr>
-<tr><td><strong>Updated</strong></td><td>2026-05-22 (Draft → Active same-day: Phase 3 spec text + schema + conformance scaffolds landed atomically following the RFC 0034/0037/0039 pattern. <code>spec/v1/multi-agent-execution.md</code> gains §"Cross-host causation (RFC 0040 Phase 3, normative)" with the §A causationHostId field contract, §B W3C tracecontext propagation across MCP + A2A composition, and §C ancestry endpoint contract. <code>schemas/capabilities.schema.json</code> adds <code>multiAgent.executionModel.crossHostCausation.{supported, hostId, ancestryEndpointSupported}</code> sub-block. <code>schemas/run-event-payloads.schema.json</code> adds optional <code>causationHostId</code> to <code>coreWorkflowChainEvent</code>; the additive-on-all-causationId-bearing-payloads convention is documented in spec prose for the remaining payload shapes (additions to each $defs entry deferred to follow-up — pattern is identical). NEW <code>schemas/run-ancestry-response.schema.json</code> covers the §C endpoint response shape. <code>api/openapi.yaml</code> gains <code>getRunAncestry</code> operation (<code>GET /v1/runs/{runId}/ancestry</code>). Three conformance scenarios land: <code>cross-host-causation-shape.test.ts</code> (advertisement shape probe — always-on when discovery reachable), <code>cross-host-ancestry-endpoint.test.ts</code> (behavioral on top-level-run path + 404-on-non-advertise), <code>cross-host-traceparent-propagation.test.ts</code> (behavioral gated on <code>OPENWOP_MCP_REAL_SERVER_URL</code> / <code>OPENWOP_A2A_REAL_PEER_URL</code> env harness). Host wiring (ancestry endpoint implementation + traceparent injection in the reference workflow-engine's MCP + A2A composition) deferred to a follow-up commit owned by the workflow-engine maintainer; protocol-layer contract is complete. Path to <code>Accepted</code>: a non-steward host advertises <code>crossHostCausation.supported: true</code> + serves the ancestry endpoint + emits causationHostId on cross-host events.)</td></tr>
-<tr><td><strong>Affects</strong></td><td><code>spec/v1/multi-agent-execution.md</code> (extends with §"Cross-host causation (Phase 3, normative)") · <code>spec/v1/observability.md</code> (extends §"Trust boundary + redaction" with the cross-host case) · <code>spec/v1/mcp-integration.md</code> + <code>spec/v1/a2a-integration.md</code> (tracecontext propagation across composition) · <code>schemas/run-event-payloads.schema.json</code> (additive <code>causationHostId</code> field on <code>agent.*</code> payload shapes) · <code>schemas/capabilities.schema.json</code> (bumps <code>multiAgent.executionModel.version</code> ceiling effective range to include <code>3</code>; adds optional <code>crossHostCausation</code> block) · 3 new conformance scenarios · <code>INTEROP-MATRIX.md</code> · CHANGELOG</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-22 (Draft → Active same-day under the bootstrap-phase exception in <code>CONTRIBUTING.md</code> §"Bootstrap-phase notes" — single-steward repo waives the 7-day comment window; matches the RFC 0034/0037/0039 pattern. See §"Landing log" below for the file-by-file diff inventory.)</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>spec/v1/multi-agent-execution.md</code> (extends with §"Cross-host causation (Phase 3, normative)" + §"Agent memory lifecycle across sub-runs (RFC 0039 Phase 2, normative)") · <code>schemas/run-event-payloads.schema.json</code> (additive <code>causationHostId</code> field on all 10 causationId-bearing payload shapes per §A) · <code>schemas/capabilities.schema.json</code> (bumps <code>multiAgent.executionModel.version</code> ceiling effective range to include <code>3</code>; adds optional <code>crossHostCausation</code> block) · <code>schemas/run-ancestry-response.schema.json</code> (new) · <code>api/openapi.yaml</code> (<code>getRunAncestry</code> operation) · 4 new conformance scenarios · CHANGELOG. <strong>Follow-up (deferred):</strong> <code>spec/v1/observability.md</code> §"Trust boundary + redaction" cross-host extension; <code>spec/v1/mcp-integration.md</code> + <code>spec/v1/a2a-integration.md</code> tracecontext propagation prose; <code>INTEROP-MATRIX.md</code> host-row updates; host-side wiring (ancestry endpoint impl + traceparent injection in the reference workflow-engine's MCP + A2A composition). The protocol-layer contract is complete; the follow-ups are documentation + impl, not new normative surface.</td></tr>
 <tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
 <tr><td><strong>Supersedes</strong></td><td>—</td></tr>
 <tr><td><strong>Superseded by</strong></td><td>—</td></tr>
@@ -202,6 +274,18 @@
 <li>[ ] CHANGELOG entry under <code>[Unreleased]</code>.</li>
 </ul>
 <p>Path to <code>Active → Accepted</code>: cross-host advertisement evidence per <code>RFCs/0001-rfc-process.md</code> §"Promotion to Accepted."</p>
+<h2 id="landing-log">Landing log</h2>
+<p><strong>2026-05-22 — Draft → Active.</strong> Phase 3 protocol-layer surface landed atomically following the RFC 0034/0037/0039 pattern (steward repo, bootstrap-phase exception). Files that shipped:</p>
+<ul>
+<li><code>spec/v1/multi-agent-execution.md</code> — §"Cross-host causation (RFC 0040 Phase 3, normative)" with §A causationHostId field contract, §B W3C tracecontext propagation across MCP + A2A composition, §C ancestry endpoint contract. Also §"Agent memory lifecycle across sub-runs (RFC 0039 Phase 2, normative)" — RFC 0039 prose landed in the same commit (the §B normative section for MAE-2 + MAE-3 had not previously been prosed).</li>
+<li><code>schemas/capabilities.schema.json</code> — <code>multiAgent.executionModel.crossHostCausation.{supported, hostId, ancestryEndpointSupported}</code> sub-block per §D.</li>
+<li><code>schemas/run-event-payloads.schema.json</code> — optional <code>causationHostId</code> field added to all 10 causationId-bearing payload shapes per §A: <code>coreWorkflowChainEvent</code>, <code>coreWorkflowChainConfidenceEscalated</code>, <code>agentReasoned</code>, <code>agentToolCalled</code>, <code>agentToolReturned</code>, <code>agentHandoff</code>, <code>agentDecided</code>, <code>runOrchestratorDecided</code>, <code>promptComposed</code>, <code>agentPromptResolved</code>.</li>
+<li><code>schemas/run-ancestry-response.schema.json</code> — NEW. §C endpoint response shape.</li>
+<li><code>api/openapi.yaml</code> — <code>getRunAncestry</code> operation at <code>GET /v1/runs/{runId}/ancestry</code>.</li>
+<li>4 conformance scenarios: <code>cross-host-causation-shape.test.ts</code> (advertisement-shape probe, always-on when discovery reachable), <code>cross-host-ancestry-endpoint.test.ts</code> (behavioral: top-level run + 404-on-non-advertise), <code>cross-host-traceparent-propagation.test.ts</code> (behavioral, gated on <code>OPENWOP_MCP_REAL_SERVER_URL</code> / <code>OPENWOP_A2A_REAL_PEER_URL</code> peer harness), <code>multi-agent-memory-lifecycle.test.ts</code> (RFC 0039 §B advertisement-shape + behavioral stubs).</li>
+<li>CHANGELOG entry under <code>[Unreleased]</code>.</li>
+</ul>
+<p><strong>Deferred to follow-up:</strong> host-side wiring (ancestry endpoint impl + traceparent injection in the reference workflow-engine's MCP + A2A composition), <code>observability.md</code> §"Trust boundary + redaction" cross-host case, <code>mcp-integration.md</code> + <code>a2a-integration.md</code> tracecontext propagation prose, <code>INTEROP-MATRIX.md</code> host-row update. The protocol-layer contract is complete; the deferred items are documentation rendering + implementation, not new normative surface.</p>
 <h2 id="references">References</h2>
 <ul>
 <li><a href="./0037-multi-agent-execution-model.md"><code>RFCS/0037-multi-agent-execution-model.md</code></a> §"Open spec gaps" MAE-4, MAE-5, MAE-6.</li>
@@ -236,10 +320,13 @@
           <li><a href="/spec/v1/">v1.x Core</a></li>
           <li><a href="/rfcs/">RFCs</a></li>
           <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
           <li><a href="/errors/">Error codes</a></li>
           <li><a href="/scenarios/">Scenario walkthroughs</a></li>
           <li><a href="/profiles/">Profiles</a></li>
           <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
           <li><a href="/versioning/">Versioning policy</a></li>
         </ul>
       </div>
@@ -256,14 +343,15 @@
       <div>
         <h5>Project</h5>
         <ul>
-          <li><a href="/changelog/">Changelog</a></li>
           <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
           <li><a href="/faq/">FAQ</a></li>
           <li><a href="/security/">Security posture</a></li>
           <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
           <li><a href="/contributing/">Contributing</a></li>
-          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
           <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
         </ul>
       </div>
       <div>
@@ -279,10 +367,11 @@
     <div class="foot-meta">
       <span>© 2026 OpenWOP contributors</span>
       <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
-      <span>Built with Claude Code</span>
     </div>
   </div>
 </footer>
+
+<script src="/site-nav.js" defer></script>
 
 </body>
 </html>

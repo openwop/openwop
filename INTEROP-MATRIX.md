@@ -5,6 +5,8 @@
 
 This matrix records public, reproducible compatibility evidence for openwop-compatible hosts. A row is a claim plus evidence: the host advertises a profile set, runs the conformance suite, and links to a result that another implementer can inspect.
 
+> **Submit your host.** Run `@openwop/openwop-conformance` against your implementation, publish the result alongside your repo, and open a PR adding a row below. See [`conformance/README.md`](https://github.com/openwop/openwop/blob/main/conformance/README.md) for the suite, and the [Independent-implementation tripwire](https://github.com/openwop/openwop/blob/main/ROADMAP.md) tracker for hosts in flight.
+
 > **How to read "Not claimed":** the reference hosts in `examples/hosts/` are minimal demos of the wire shape, not production-grade servers. A "Not claimed" profile means *this reference host doesn't wire it up* — not that the protocol surface is incomplete. Every profile listed in `spec/v1/profiles.md` has a normative RFC, capability schema, conformance scenario, and behavior gate; an adopter wiring the profile in their own host can validate end-to-end against `@openwop/openwop-conformance` by setting the scenario's documented env vars (e.g., `OPENWOP_TEST_OIDC_ISSUER_URL`, `OPENWOP_TEST_MTLS=1`). Profile coverage on the reference hosts is a product-of-scope decision, not a protocol-readiness signal.
 
 ## Hosts

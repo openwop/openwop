@@ -604,7 +604,28 @@ const approvalGateNode: NodeModule = {
       requiredApprovals?: unknown;
       rejectionPolicy?: unknown;
       approversList?: unknown;
+      optionLabels?: unknown;
     };
+    // Surface upstream node outputs to the approver. When two or more
+    // input ports carry string content (the Triple-AI fan-in shape:
+    // three critic summaries reaching the arbiter on distinct ports),
+    // bundle them as `options` so the FE card can render a per-option
+    // expand + pick button. The resume value the user clicks for an
+    // option is the option's CONTENT string, so downstream edges read
+    // the chosen text via the executor's `{output: resumeValue}` shape
+    // without further plumbing.
+    const inputs = (ctx.inputs && typeof ctx.inputs === 'object' && !Array.isArray(ctx.inputs))
+      ? (ctx.inputs as Record<string, unknown>)
+      : {};
+    const optionLabels = (cfg.optionLabels && typeof cfg.optionLabels === 'object')
+      ? (cfg.optionLabels as Record<string, string>)
+      : {};
+    const options: Array<{ key: string; label: string; content: string }> = [];
+    for (const [key, value] of Object.entries(inputs)) {
+      if (typeof value !== 'string' || value.length === 0) continue;
+      const label = optionLabels[key] ?? humanizePortName(key);
+      options.push({ key, label, content: value });
+    }
     return {
       status: 'suspended',
       interrupt: {
@@ -618,6 +639,7 @@ const approvalGateNode: NodeModule = {
         data: {
           prompt: typeof cfg.prompt === 'string' ? cfg.prompt : (typeof cfg.title === 'string' ? cfg.title : 'Please approve to continue.'),
           actions: Array.isArray(cfg.actions) ? cfg.actions : ['approve', 'reject'],
+          ...(options.length >= 2 ? { options } : {}),
           ...(typeof cfg.requiredApprovals === 'number' ? { requiredApprovals: cfg.requiredApprovals } : {}),
           ...(typeof cfg.rejectionPolicy === 'string' ? { rejectionPolicy: cfg.rejectionPolicy } : {}),
           ...(Array.isArray(cfg.approversList) ? { approversList: cfg.approversList } : {}),
@@ -626,6 +648,16 @@ const approvalGateNode: NodeModule = {
     };
   },
 };
+
+/** Port names like `_gate_2` / `option_clarity` get turned into human-
+ *  readable labels for the approval card. Strips leading underscores,
+ *  splits on `_`/`-`, and Title Cases each segment. */
+function humanizePortName(key: string): string {
+  const stripped = key.replace(/^_+/, '');
+  const parts = stripped.split(/[-_]+/).filter(Boolean);
+  if (parts.length === 0) return key;
+  return parts.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+}
 
 const clarificationGateNode: NodeModule = {
   typeId: 'core.clarificationGate',
@@ -1401,8 +1433,15 @@ const sampleUppercaseNode: NodeModule = {
   version: '0.1.0',
   async execute(ctx) {
     const inputs = (ctx.inputs && typeof ctx.inputs === 'object') ? (ctx.inputs as Record<string, unknown>) : {};
-    const text = typeof inputs.text === 'string' ? inputs.text : String(inputs.text ?? '');
-    return { status: 'success', outputs: { text: text.toUpperCase() } };
+    // Prefer the canonical `text` port, but fall back to any string-
+    // valued input (and one level into nested objects). Templates that
+    // wire `uppercase` downstream of a `chat` node with a sourcePort
+    // mismatch — or that pass a whole outputs map under a single port
+    // — would otherwise see undefined and produce an empty string.
+    let text: string | undefined;
+    if (typeof inputs.text === 'string') text = inputs.text;
+    else text = findFirstStringValue(inputs);
+    return { status: 'success', outputs: { text: (text ?? '').toUpperCase() } };
   },
 };
 

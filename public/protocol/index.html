@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>OpenWOP — The OpenWOP protocol</title>
+  <meta name="description" content="Everything that makes OpenWOP a standard — the wire contract, the evolution process, the security posture, and the project that maintains them — lives in one of six surfaces below. This page exists so a reviewer can find the surface they need…"/>
+  <link rel="canonical" href="https://openwop.dev/protocol/"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="OpenWOP — The OpenWOP protocol"/>
+  <meta property="og:description" content="Everything that makes OpenWOP a standard — the wire contract, the evolution process, the security posture, and the project that maintains them — lives in one of six surfaces below. This page exists so a reviewer can find the surface they need…"/>
+  <meta property="og:url" content="https://openwop.dev/protocol/"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="OpenWOP — The OpenWOP protocol"/>
+  <meta name="twitter:description" content="Everything that makes OpenWOP a standard — the wire contract, the evolution process, the security posture, and the project that maintains them — lives in one of six surfaces below. This page exists so a reviewer can find the surface they need…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
+
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
+
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="stylesheet" href="/assets/style.css"/>
+
+  
+  
+  
+</head>
+<body>
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
+    </a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
+      <a class="hide-sm " href="/changelog/">Changelog</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
+
+<main class="site-main">
+  <div class="wrap">
+    <header class="page-header">
+      <h1>The OpenWOP protocol</h1>
+      <p class="lede">Everything that makes OpenWOP a standard — the wire contract, the evolution process, the security posture, and the project that maintains them — lives in one of six surfaces below. This page exists so a reviewer can find the surface they need…</p>
+    </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#specification">Specification</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#rfcs">RFCs</a></li>
+      <li class="toc-top"><a href="#governance">Governance</a></li>
+      <li class="toc-top"><a href="#security">Security</a></li>
+      <li class="toc-top"><a href="#versioning-and-roadmap">Versioning and roadmap</a></li>
+      <li class="toc-top"><a href="#see-also">See also</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="the-openwop-protocol">The OpenWOP protocol</h1>
+<p>Everything that makes OpenWOP a standard — the wire contract, the evolution process, the security posture, and the project that maintains them — lives in one of six surfaces below. This page exists so a reviewer can find the surface they need without digging through the index.</p>
+<h2 id="specification">Specification</h2>
+<p>The normative wire contract for v1.x.</p>
+<ul>
+<li><strong><a href="/spec/v1/">Spec corpus →</a></strong> — 35 prose specs, thematically grouped (foundation, runtime, agents, humans, transports, security, ecosystem, production, integration). The specs are independently citable; each carries a status banner from the legend on <code>auth.md</code>.</li>
+<li><strong><a href="/api/rest/">REST API reference →</a></strong> — every endpoint with request, response, and error envelope, rendered from <code>api/openapi.yaml</code>.</li>
+<li><strong><a href="/profiles/">Profiles →</a></strong> — the coherent capability slices a host can claim (<code>openwop-core</code>, <code>openwop-stream-sse</code>, <code>openwop-secrets</code>, <code>openwop-provider-policy</code>, <code>openwop-node-packs</code>, etc.).</li>
+</ul>
+<h2 id="conformance">Conformance</h2>
+<p>How a host proves it implements the spec.</p>
+<ul>
+<li><strong><a href="/conformance/">Conformance leaderboard →</a></strong> — live record of which hosts pass which scenarios, sourced from <code>INTEROP-MATRIX.md</code>.</li>
+<li><strong><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite →</a></strong> — <code>@openwop/openwop-conformance</code>, the npm-published behavioural test suite that gates every leaderboard row.</li>
+<li><strong><a href="/errors/">Error codes →</a></strong> — the canonical error vocabulary every conforming host emits.</li>
+</ul>
+<h2 id="rfcs">RFCs</h2>
+<p>How the protocol evolves.</p>
+<ul>
+<li><strong><a href="/rfcs/">RFC index →</a></strong> — every RFC, status, and target version. v1.x stays additive-only per <a href="https://github.com/openwop/openwop/blob/main/COMPATIBILITY.md"><code>COMPATIBILITY.md</code></a>.</li>
+<li><strong><a href="/rfcs/0001-rfc-process.html">RFC process →</a></strong> — what counts as Draft / Active / Accepted, the comment-window discipline, and the path to a v2 working group.</li>
+</ul>
+<h2 id="governance">Governance</h2>
+<p>Who decides what gets in, and how.</p>
+<ul>
+<li><strong><a href="/governance/">Governance →</a></strong> — decision rules, role definitions, the bootstrap-phase amendment, and the cross-vendor working-group charter for v2.</li>
+<li><strong><a href="/maintainers/">Maintainers →</a></strong> — current maintainer set, recruitment criteria, and the affiliation policy that drives the vendor-neutral-org migration tripwire.</li>
+<li><strong><a href="/contributing/">Contributing →</a></strong> — per-artifact change rules (editorial / additive / safety-fix / breaking), the eight-step CI gate, the DCO requirement.</li>
+</ul>
+<h2 id="security">Security</h2>
+<p>What's promised, what's threat-modelled, and how to report a vulnerability.</p>
+<ul>
+<li><strong><a href="/security/">Security posture →</a></strong> — threat model, disclosure policy, public invariants (CTI-1, SR-1, MCP-1).</li>
+<li><strong><a href="https://github.com/openwop/openwop/security/advisories/new">GitHub Security Advisories →</a></strong> — coordinated disclosure channel for vulnerabilities.</li>
+</ul>
+<h2 id="versioning-and-roadmap">Versioning and roadmap</h2>
+<p>What's stable, what's planned, what's tracked but not committed.</p>
+<ul>
+<li><strong><a href="/versioning/">Versioning policy →</a></strong> — additive within v1.x, the 90-day safety-fix window, breaking changes only in major versions.</li>
+<li><strong><a href="/changelog/">Changelog →</a></strong> — every spec, schema, SDK, and reference-host change with its compatibility classification.</li>
+<li><strong><a href="/roadmap/">Roadmap →</a></strong> — gap-closure tracks the steward maintains in the open. No dates beyond what has a <code>CHANGELOG.md</code> entry.</li>
+</ul>
+<h2 id="see-also">See also</h2>
+<ul>
+<li><a href="/community/">Community</a> — channels, comment windows, and how to file an RFC.</li>
+<li><a href="/implement/">Implementing OpenWOP</a> — the four role-specific entry points.</li>
+</ul></article></div><script src="/assets/spec-toc.js" defer></script>
+  </div>
+</main>
+
+<!-- ─────────────────────── FOOTER (mirrors marketing) ─────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-mark">
+          <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+          Open<em>WOP</em>
+        </div>
+        <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
+          The Workflow Orchestration Protocol — an open, conformance-tested
+          contract for durable, observable AI workflows across hosts.
+        </p>
+      </div>
+      <div>
+        <h5>Specification</h5>
+        <ul>
+          <li><a href="/spec/v1/">v1.x Core</a></li>
+          <li><a href="/rfcs/">RFCs</a></li>
+          <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
+          <li><a href="/errors/">Error codes</a></li>
+          <li><a href="/scenarios/">Scenario walkthroughs</a></li>
+          <li><a href="/profiles/">Profiles</a></li>
+          <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
+          <li><a href="/versioning/">Versioning policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Ecosystem</h5>
+        <ul>
+          <li><a href="https://packs.openwop.dev/">Pack registry</a></li>
+          <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
+          <li><a href="/faq/">FAQ</a></li>
+          <li><a href="/security/">Security posture</a></li>
+          <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
+          <li><a href="/contributing/">Contributing</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>For</h5>
+        <ul>
+          <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+          <li><a href="/for/host-implementers/">Host implementers</a></li>
+          <li><a href="/for/pack-authors/">Pack authors</a></li>
+          <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 OpenWOP contributors</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/site-nav.js" defer></script>
+
+</body>
+</html>

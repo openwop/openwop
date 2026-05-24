@@ -1,6 +1,6 @@
 # openwop Spec v1 — gRPC Transport Profile
 
-> **Status: FINAL v1 (2026-05-12).** Optional alternative transport profile. REST + SSE remains the REQUIRED wire surface for every v1-conforming host (per `rest-endpoints.md`); a host MAY ALSO expose the gRPC surface defined here under `capabilities.supportedTransports: ["grpc"]`. The two surfaces describe the same protocol semantics; gRPC clients can produce byte-equivalent runs against a dual-surface host. Closes R3 in `rest-endpoints.md` §"Open spec gaps". Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1 (2026-05-12).** Optional alternative transport profile. REST + SSE remains the REQUIRED wire surface for every v1-conforming host (per `rest-endpoints.md`); a host MAY ALSO expose the gRPC surface defined here under `capabilities.supportedTransports: ["grpc"]`. The two surfaces describe the same protocol semantics; gRPC clients can produce byte-equivalent runs against a dual-surface host. Closes R3 in `rest-endpoints.md` §"Open spec gaps". Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ---
 

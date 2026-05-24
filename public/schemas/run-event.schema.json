@@ -101,6 +101,7 @@
         "lease.lost",
         "lease.handed-off",
         "replay.diverged",
+        "replay.divergedAtRefusal",
         "agent.reasoned",
         "agent.reasoning.delta",
         "provider.usage",

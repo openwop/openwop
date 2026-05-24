@@ -54,16 +54,87 @@
       <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
       <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
     </a>
-    <nav class="topnav">
-      <a class="hide-sm " href="/spec/v1/">Spec</a>
-      <a class="hide-sm active" href="/rfcs/">RFCs</a>
-      <a class="hide-sm " href="/conformance/">Conformance</a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
       <a class="hide-sm " href="/changelog/">Changelog</a>
-      <a class="hide-sm " href="/faq/">FAQ</a>
-      <a class="pill" href="https://github.com/openwop/openwop">GitHub →</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
     </nav>
   </div>
 </header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
 
 <main class="site-main">
   <div class="wrap">
@@ -181,16 +252,87 @@
       <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
       <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
     </a>
-    <nav class="topnav">
-      <a class="hide-sm " href="/spec/v1/">Spec</a>
-      <a class="hide-sm active" href="/rfcs/">RFCs</a>
-      <a class="hide-sm " href="/conformance/">Conformance</a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
       <a class="hide-sm " href="/changelog/">Changelog</a>
-      <a class="hide-sm " href="/faq/">FAQ</a>
-      <a class="pill" href="https://github.com/openwop/openwop">GitHub →</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
     </nav>
   </div>
 </header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
 
 <main class="site-main">
   <div class="wrap">
@@ -214,8 +356,20 @@
 +    }
 +  }</code></pre>
 <h3 id="b-failure-mode-invariants-normative">§B — Failure-mode invariants (normative)</h3>
-<p>When <code>capabilities.sandbox.supported: true</code>, the host MUST enforce the 8 invariants currently at <code>SECURITY/invariants.yaml</code> <code>node-pack-sandbox-*</code>:</p>
-<p>1. <code>node-pack-sandbox-no-host-fs-escape</code> — sandbox code MUST NOT read or write files outside the host-advertised sandbox root. 2. <code>node-pack-sandbox-no-host-env-leak</code> — host environment variables MUST NOT be visible to sandbox code unless the host has explicitly forwarded them via an <code>allowedHostCalls</code> entry. 3. <code>node-pack-sandbox-no-network-escape</code> — sandbox code MUST NOT initiate network requests unless <code>host.fetch</code> (or equivalent) is in <code>allowedHostCalls</code>. 4. <code>node-pack-sandbox-no-host-process-escape</code> — sandbox code MUST NOT spawn host processes, fork, or call exec-family syscalls. 5. <code>node-pack-sandbox-memory-cap</code> — exceeding <code>memoryLimitBytes</code> MUST fail the node with <code>error.code: &quot;sandbox_memory_exceeded&quot;</code>. 6. <code>node-pack-sandbox-timeout-cap</code> — exceeding <code>wallClockLimitMs</code> MUST fail the node with <code>error.code: &quot;sandbox_timeout&quot;</code>. 7. <code>node-pack-sandbox-capability-gate-respected</code> — sandbox code MUST NOT bypass the host's capability-advertisement check; calls to undeclared host capabilities MUST fail closed. 8. <code>node-pack-sandbox-no-cross-pack-mutation</code> — sandbox code from pack A MUST NOT mutate state visible to pack B inside the same host process.</p>
+<p>When <code>capabilities.sandbox.supported: true</code>, the host MUST enforce the 8 invariants enumerated below. The table maps each invariant to (a) the canonical SECURITY invariant ID in <code>SECURITY/invariants.yaml</code> and (b) the conformance scenario that exercises it (canonical scenario naming <code>sandbox-*.test.ts</code> per <code>@openwop/openwop-conformance@1.4.0</code>):</p>
+<table>
+<thead><tr><th>#</th><th>Normative requirement</th><th>SECURITY invariant ID</th><th>Conformance scenario</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Sandbox code MUST NOT read or write files outside the host-advertised sandbox root.</td><td><code>node-pack-sandbox-fs-gated</code></td><td><code>sandbox-no-host-fs-escape.test.ts</code></td></tr>
+<tr><td>2</td><td>Host environment variables MUST NOT be visible to sandbox code unless the host has explicitly forwarded them via an <code>allowedHostCalls</code> entry.</td><td><code>node-pack-sandbox-no-env</code></td><td><code>sandbox-no-host-env-leak.test.ts</code></td></tr>
+<tr><td>3</td><td>Sandbox code MUST NOT initiate network requests unless <code>host.fetch</code> (or equivalent) is in <code>allowedHostCalls</code>.</td><td><code>node-pack-sandbox-network-gated</code></td><td><code>sandbox-no-network-escape.test.ts</code></td></tr>
+<tr><td>4</td><td>Sandbox code MUST NOT spawn host processes, fork, or call exec-family syscalls.</td><td><code>node-pack-sandbox-no-process</code></td><td><code>sandbox-no-host-process-escape.test.ts</code></td></tr>
+<tr><td>5</td><td>Exceeding <code>memoryLimitBytes</code> MUST fail the node with <code>error.code: &quot;sandbox_memory_exceeded&quot;</code>.</td><td><code>node-pack-sandbox-memory-cap</code></td><td><code>sandbox-memory-cap.test.ts</code> (+ <code>wasm-pack-memory-cap.test.ts</code> for the WASM-runtime path)</td></tr>
+<tr><td>6</td><td>Exceeding <code>wallClockLimitMs</code> MUST fail the node with <code>error.code: &quot;sandbox_timeout&quot;</code>.</td><td><code>node-pack-sandbox-timeout</code></td><td><code>sandbox-timeout-cap.test.ts</code></td></tr>
+<tr><td>7</td><td>Sandbox code MUST NOT bypass the host's capability-advertisement check; calls to undeclared host capabilities MUST fail closed with <code>error.code: &quot;sandbox_capability_denied&quot;</code>.</td><td>(paired with <code>node-pack-sandbox-no-eval</code> at <code>tier: reference-impl</code> — the runtime-agnostic invariant has scenario coverage even though the SECURITY row stays exempt)</td><td><code>sandbox-capability-gate-respected.test.ts</code></td></tr>
+<tr><td>8</td><td>Sandbox code from pack A MUST NOT mutate state visible to pack B inside the same host process.</td><td><code>node-pack-sandbox-isolated-context</code></td><td><code>sandbox-no-cross-pack-mutation.test.ts</code></td></tr>
+</tbody></table>
+<p>All 8 SECURITY invariants stay at <code>tier: reference-impl</code> as of 2026-05-22. The <code>tests:</code> globs on each row point at the right scenario file, but the behavioral assertion inside each file is <code>it.todo</code> — no host has wired a sandbox-executing runtime against which the probes can run, so promoting to <code>tier: protocol</code> would weaken the gate's "verified here" promise. Graduation happens per-row when the matching scenario's <code>it.todo</code> flips to a real behavioral assertion against a host advertising <code>capabilities.sandbox.supported: true</code>. <code>node-pack-sandbox-no-eval</code> is the most likely permanent exemption — <code>eval()</code> semantics are JS-runtime-specific and don't apply to wasmtime / nsjail — but the other 7 invariants are general enough that any sandbox-executing host can wire probes against them.</p>
 <h3 id="c-error-codes-additive-to-rest-endpoints-md-common-error-codes">§C — Error codes (additive to <code>rest-endpoints.md</code> §"Common error codes")</h3>
 <ul>
 <li><code>sandbox_memory_exceeded</code> — Sandbox invocation exceeded <code>memoryLimitBytes</code>. <code>details.requestedBytes</code> MAY be present.</li>
@@ -238,14 +392,14 @@
 <h2 id="acceptance-criteria">Acceptance criteria</h2>
 <ul>
 <li>[ ] Spec text merged (this file).</li>
-<li>[ ] <code>schemas/capabilities.schema.json</code> extended per §A.</li>
-<li>[ ] <code>spec/v1/host-capabilities.md</code> extended with §"Sandbox execution contract" per §B + §C.</li>
-<li>[ ] <code>spec/v1/rest-endpoints.md</code> §"Common error codes" gains 4 new codes per §C.</li>
-<li>[ ] 8 new conformance scenarios per §D land in <code>conformance/src/scenarios/</code>.</li>
-<li>[ ] At least one reference host implements + advertises <code>capabilities.sandbox</code>. Two viable paths: (a) NEW <code>examples/hosts/wasm-sandbox/</code> directory; (b) Postgres reference host extension using <code>wasmtime-postgres</code>. Either passes the 8 new scenarios end-to-end.</li>
-<li>[ ] <code>SECURITY/invariants.yaml</code> 8 <code>node-pack-sandbox-*</code> rows graduate to <code>tier: protocol</code> with <code>public_tests</code> globs.</li>
-<li>[ ] <code>INTEROP-MATRIX.md</code> row updated for the advertising host.</li>
-<li>[ ] CHANGELOG entry under <code>[Unreleased]</code>.</li>
+<li>[x] <code>schemas/capabilities.schema.json</code> extended per §A.</li>
+<li>[x] <code>spec/v1/host-capabilities.md</code> extended with §"Sandbox execution contract" per §B + §C.</li>
+<li>[x] <code>spec/v1/rest-endpoints.md</code> §"Common error codes" gains 4 new codes per §C.</li>
+<li>[x] 8 conformance scenario FILES land in <code>conformance/src/scenarios/</code> — canonical names <code>sandbox-{capability-gate-respected, memory-cap, no-cross-pack-mutation, no-host-env-leak, no-host-fs-escape, no-host-process-escape, no-network-escape, timeout-cap}.test.ts</code>. Shipped in <code>@openwop/openwop-conformance@1.4.0</code> (2026-05-22). The advertisement-shape probes are real assertions; the behavioral assertions are <code>it.todo</code> placeholders (NO host has wired a sandbox-executing runtime yet, so no real probe is possible).</li>
+<li>[ ] At least one reference host implements + advertises <code>capabilities.sandbox</code>. Two viable paths: (a) NEW <code>examples/hosts/wasm-sandbox/</code> directory; (b) Postgres reference host extension using <code>wasmtime-postgres</code>. Either passes the 8 scenarios with the behavioral assertions actually running (not <code>it.todo</code>). (Path-to-Accepted.)</li>
+<li>[ ] <code>SECURITY/invariants.yaml</code> 8 <code>node-pack-sandbox-*</code> rows graduate from <code>reference-impl → protocol</code> with <code>tests:</code> globs pointing at the scenarios. NOT YET graduated. The scenarios point at the right files but their behavioral assertions are <code>it.todo</code> — promoting to protocol tier would mean the SECURITY-tier "verified at this gate" promise reduced to "the test file exists," which would weaken the gate. Graduation happens when a sandbox-executing host wires the behavioral assertions to real probes.</li>
+<li>[ ] <code>INTEROP-MATRIX.md</code> row updated for the advertising host. (Will land alongside the reference-host implementation that advertises <code>capabilities.sandbox</code>.)</li>
+<li>[x] CHANGELOG entry under <code>[Unreleased]</code> (conformance suite v1.4.0 CHANGELOG documents the 8 scenario shapes + naming-convention reconciliation note).</li>
 </ul>
 <p>Path to <code>Active → Accepted</code>: at least one non-steward host advertises the capability AND passes the 8 scenarios.</p>
 <h2 id="references">References</h2>
@@ -280,10 +434,13 @@
           <li><a href="/spec/v1/">v1.x Core</a></li>
           <li><a href="/rfcs/">RFCs</a></li>
           <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
           <li><a href="/errors/">Error codes</a></li>
           <li><a href="/scenarios/">Scenario walkthroughs</a></li>
           <li><a href="/profiles/">Profiles</a></li>
           <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
           <li><a href="/versioning/">Versioning policy</a></li>
         </ul>
       </div>
@@ -300,14 +457,15 @@
       <div>
         <h5>Project</h5>
         <ul>
-          <li><a href="/changelog/">Changelog</a></li>
           <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
           <li><a href="/faq/">FAQ</a></li>
           <li><a href="/security/">Security posture</a></li>
           <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
           <li><a href="/contributing/">Contributing</a></li>
-          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
           <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
         </ul>
       </div>
       <div>
@@ -323,10 +481,11 @@
     <div class="foot-meta">
       <span>© 2026 OpenWOP contributors</span>
       <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
-      <span>Built with Claude Code</span>
     </div>
   </div>
 </footer>
+
+<script src="/site-nav.js" defer></script>
 
 </body>
 </html>

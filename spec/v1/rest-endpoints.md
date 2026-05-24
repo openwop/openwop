@@ -1,6 +1,6 @@
 # openwop Spec v1 — REST Endpoint Catalog
 
-> **Status: FINAL v1 (2026-04-27; hygiene pass 2026-05-10).** Comprehensive coverage of the canonical REST surface with per-route auth + scope, formalized in `api/openapi.yaml` against the JSON Schemas in `schemas/`. Replay/fork has shipped at `replay.md` + the `POST /v1/runs/{runId}:fork` endpoint. Remaining gaps are additive operational conveniences (bulk operations, explicit pause/resume, and any future gRPC transport), not blockers for v1 conformance. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1 (2026-04-27; hygiene pass 2026-05-10).** Comprehensive coverage of the canonical REST surface with per-route auth + scope, formalized in `api/openapi.yaml` against the JSON Schemas in `schemas/`. Replay/fork has shipped at `replay.md` + the `POST /v1/runs/{runId}:fork` endpoint. Remaining gaps are additive operational conveniences (bulk operations, explicit pause/resume, and any future gRPC transport), not blockers for v1 conformance. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ---
 

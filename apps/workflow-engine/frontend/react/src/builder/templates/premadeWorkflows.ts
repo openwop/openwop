@@ -432,8 +432,17 @@ export const PREMADE_WORKFLOWS: readonly TemplateWorkflow[] = [
           'You are a brevity editor. Read the text below and give 3 short bullet-point notes on what to cut. Do not rewrite. Be terse.',
       }),
       node('summary_3', 'uppercase', pos(3, 2), 'Summary 3'),
-      node('arbiter', 'approval', pos(4), 'Arbiter pick', {
-        prompt: 'Compare the three critic summaries and approve the best.',
+      node('arbiter', 'approval', pos(4), 'Arbiter review', {
+        prompt:
+          'Pick the critique you want to send to the final formatter. (Or hit reject to abort the run.)',
+        // Maps the targetPort name on each incoming edge to a display
+        // label for the approval card's per-option picker. Without this
+        // the card falls back to a humanized port name.
+        optionLabels: {
+          clarity_summary: 'Clarity critic',
+          persuasion_summary: 'Persuasion critic',
+          brevity_summary: 'Brevity critic',
+        },
       }),
       node('final', 'uppercase', pos(5), 'Final format'),
       node('publish', 'noop', pos(6), 'Publish'),
@@ -448,10 +457,13 @@ export const PREMADE_WORKFLOWS: readonly TemplateWorkflow[] = [
       edge('e5', 'critic_1', 'summary_1', { sourcePort: 'completion', targetPort: 'text' }),
       edge('e6', 'critic_2', 'summary_2', { sourcePort: 'completion', targetPort: 'text' }),
       edge('e7', 'critic_3', 'summary_3', { sourcePort: 'completion', targetPort: 'text' }),
-      // Fan-in to arbiter — summary_1 carries data, 2 and 3 are gates.
-      edge('e8', 'summary_1', 'arbiter', { sourcePort: 'text', targetPort: 'in' }),
-      edge('e9', 'summary_2', 'arbiter', { sourcePort: 'text', targetPort: '_gate_2' }),
-      edge('e10', 'summary_3', 'arbiter', { sourcePort: 'text', targetPort: '_gate_3' }),
+      // Fan-in to arbiter — each summary lands on a distinct named
+      // port so the approval node bundles them as discrete `options`
+      // in interrupt.data. The approver picks one in the chat card;
+      // the picked text flows downstream as the approval node's output.
+      edge('e8', 'summary_1', 'arbiter', { sourcePort: 'text', targetPort: 'clarity_summary' }),
+      edge('e9', 'summary_2', 'arbiter', { sourcePort: 'text', targetPort: 'persuasion_summary' }),
+      edge('e10', 'summary_3', 'arbiter', { sourcePort: 'text', targetPort: 'brevity_summary' }),
       edge('e11', 'arbiter', 'final', { targetPort: 'text' }),
       edge('e12', 'final', 'publish', { sourcePort: 'text' }),
     ],

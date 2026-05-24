@@ -1,6 +1,6 @@
 # openwop Spec v1 — Production Profile
 
-> **Status: FINAL v1 (2026-05-11; was PROVISIONAL 2026-05-11 → was FINAL 2026-05-10).** Operational-readiness profile for public OpenWOP hosts. This document is additive: it combines existing v1 contracts into a production claim without changing required wire shapes. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1 (2026-05-11; was PROVISIONAL 2026-05-11 → was FINAL 2026-05-10).** Operational-readiness profile for public OpenWOP hosts. This document is additive: it combines existing v1 contracts into a production claim without changing required wire shapes. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 >
 > **First satisfying host:** `examples/hosts/postgres/` advertises this profile on `INTEROP-MATRIX.md` as of 2026-05-11. Public conformance result: `examples/hosts/postgres/conformance-full.md` (86% pass against the full conformance suite — matches the SQLite reference host's baseline). The PROVISIONAL window closed once the Postgres reference host shipped all six MUSTs (durability + backpressure + retry/idempotency + event retention + debug-bundle redaction + observability logs).
 >

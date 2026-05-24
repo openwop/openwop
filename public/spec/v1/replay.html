@@ -79,16 +79,87 @@
       <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
       <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
     </a>
-    <nav class="topnav">
-      <a class="hide-sm active" href="/spec/v1/">Spec</a>
-      <a class="hide-sm " href="/rfcs/">RFCs</a>
-      <a class="hide-sm " href="/conformance/">Conformance</a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
       <a class="hide-sm " href="/changelog/">Changelog</a>
-      <a class="hide-sm " href="/faq/">FAQ</a>
-      <a class="pill" href="https://github.com/openwop/openwop">GitHub →</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
     </nav>
   </div>
 </header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
 
 <main class="site-main">
   <div class="wrap">
@@ -114,6 +185,11 @@
       <li class="toc-sub"><a href="#c-layering-with-idempotency-md">§C Layering with idempotency.md</a></li>
       <li class="toc-sub"><a href="#d-determinism-property">§D Determinism property</a></li>
       <li class="toc-sub"><a href="#e-migration">§E Migration</a></li>
+      <li class="toc-top"><a href="#replay-determinism-under-nondeterministic-models-rfc-0041-phase-4-normative">Replay determinism under nondeterministic models (RFC 0041 Phase 4, normative)</a></li>
+      <li class="toc-sub"><a href="#a-llm-cache-key-recipe-unconditional-must-observable-commitment">§A — LLM cache-key recipe: unconditional MUST + observable commitment</a></li>
+      <li class="toc-sub"><a href="#b-envelope-refusal-recovery-in-replay-mae-8-closure">§B — Envelope-refusal recovery in replay (MAE-8 closure)</a></li>
+      <li class="toc-sub"><a href="#c-observable-output-sequence-determinism-vs-bit-equivalent-execution-mae-9-closure">§C — Observable-output-sequence determinism vs bit-equivalent execution (MAE-9 closure)</a></li>
+      <li class="toc-sub"><a href="#conformance-gating">Conformance gating</a></li>
       <li class="toc-top"><a href="#replay-from-event-log-internals">Replay-from-event-log internals</a></li>
       <li class="toc-top"><a href="#run-timeline-view-admin-panel">Run Timeline View (admin panel)</a></li>
       <li class="toc-top"><a href="#use-cases">Use cases</a></li>
@@ -125,7 +201,7 @@
       <li class="toc-top"><a href="#references">References</a></li>
     </ul>
   </aside><article class="spec-doc"><h1 id="openwop-spec-v1-replay-and-time-travel-debugging">OpenWOP Spec v1 — Replay and Time-Travel Debugging</h1>
-<blockquote><p><strong>Status: FINAL v1 (2026-04-27).</strong> Comprehensive coverage of <code>POST /v1/runs/{runId}:fork</code> for replay and branch-from-past, idempotency requirements on side-effecting nodes, determinism guarantees, and the admin Run Timeline View. Stable surface for external review. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
+<blockquote><p><strong>Status: Stable · v1.1 (2026-04-27).</strong> Comprehensive coverage of <code>POST /v1/runs/{runId}:fork</code> for replay and branch-from-past, idempotency requirements on side-effecting nodes, determinism guarantees, and the admin Run Timeline View. Stable surface for external review. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>
 <p>The durable event log makes time-travel debugging nearly free: every meaningful state transition is persisted with a sequence number, so the run state at any point in history can be reconstructed deterministically by folding events up to that sequence.</p>
@@ -256,6 +332,26 @@ Idempotency-Key: &amp;lt;UUID&amp;gt;  (RECOMMENDED)</code></pre>
 <p>1. Switch to the canonical recipe and accept a one-time cache invalidation; OR 2. Continue using their existing key alongside the canonical one for at least 90 days, then retire the legacy form. During the dual-write window, Layer-2 lookups check both keys.</p>
 <p>The migration period is host-internal — no wire-shape impact.</p>
 <hr/>
+<h2 id="replay-determinism-under-nondeterministic-models-rfc-0041-phase-4-normative">Replay determinism under nondeterministic models (RFC 0041 Phase 4, normative)</h2>
+<p>Per <a href="../../RFCS/0041-multi-agent-replay-under-nondeterminism.md">RFC 0041</a>. Applies only when the host advertises <code>capabilities.multiAgent.executionModel.version &gt;= 4</code> AND <code>capabilities.multiAgent.executionModel.replayDeterminism.supported: true</code>.</p>
+<h3 id="a-llm-cache-key-recipe-unconditional-must-observable-commitment">§A — LLM cache-key recipe: unconditional MUST + observable commitment</h3>
+<p>The §"LLM cache-key recipe" §A + §B above already establishes a CONDITIONAL MUST: per the intro to that section, hosts MUST compute the cache key per the recipe <strong>for any node that calls an LLM provider through the Layer-2 idempotency surface</strong> (<code>idempotency.md</code> §"Layer 2 — Engine invocationId"). Phase 4 strengthens this in two ways:</p>
+<p>1. <strong>Unconditional MUST.</strong> Phase 4 hosts MUST follow the recipe for ALL LLM-calling nodes regardless of whether they use Layer-2 idempotency. The "for Layer-2 idempotency only" conditional in the original §"LLM cache-key recipe" intro does NOT apply when <code>multiAgent.executionModel.version &gt;= 4</code>. 2. <strong>Observable commitment.</strong> Phase 4 hosts MUST advertise the recipe they honor via <code>capabilities.multiAgent.executionModel.replayDeterminism.llmCacheKeyRecipe</code>. The value <code>spec-rfc-0041</code> claims the canonical recipe; vendor recipes use the canonical host-extension namespace <code>x-host-&amp;lt;host&amp;gt;-&amp;lt;recipe-name&amp;gt;</code> per <code>host-extensions.md</code> §"Canonical prefixes". The advertisement lets cross-host replay rely on byte-identical keys without trial computation.</p>
+<p>Closes RFC 0037 §"Open spec gaps" MAE-7.</p>
+<h3 id="b-envelope-refusal-recovery-in-replay-mae-8-closure">§B — Envelope-refusal recovery in replay (MAE-8 closure)</h3>
+<p>When <code>mode: replay</code>, if the original run obtained a valid LLM envelope (e.g., a tool-call decision or structured output) but the replay obtains a refusal (or vice-versa — original refused, replay succeeded), the host MUST NOT silently substitute. Both directions of divergence MUST be observable.</p>
+<p>Phase 4 hosts MUST:</p>
+<p>1. Emit a <code>replay.divergedAtRefusal</code> event (NEW RunEventType per <code>schemas/run-event.schema.json</code>) with payload identifying the diverging node, the original-envelope nature (<code>valid</code> or <code>refusal</code>), and the replay-envelope nature. 2. Fail the replay with <code>error.code: &quot;replay_diverged_at_refusal&quot;</code> (NEW error code per <code>spec/v1/rest-endpoints.md</code> §"Common error codes").</p>
+<p>The <code>replay.divergedAtRefusal</code> event MAY be a sibling of the existing <code>replay.diverged</code> event (which covers structural divergence — <code>output</code> / <code>missing</code> / <code>extra</code> / <code>type-mismatch</code>). When a refusal-divergence is detected, hosts MUST emit <code>replay.divergedAtRefusal</code> rather than coercing the signal into <code>replay.diverged</code> with <code>divergenceKind: &quot;output&quot;</code>. The distinct event type lets operators audit safety-policy shifts without filtering through the generic divergence stream.</p>
+<p>Operators receiving <code>replay_diverged_at_refusal</code> SHOULD treat it as a safety-policy-shift signal: the underlying model's refusal behavior has changed since the original run, and any branch-mode workflow that depends on the original envelope's content needs re-validation.</p>
+<h3 id="c-observable-output-sequence-determinism-vs-bit-equivalent-execution-mae-9-closure">§C — Observable-output-sequence determinism vs bit-equivalent execution (MAE-9 closure)</h3>
+<p>The replay contract is <strong>observable-output-sequence determinism</strong>, NOT bit-equivalent execution. Specifically:</p>
+<p>1. The sequence of <code>RunEventDoc</code> records appended to the event log at indices <code>[0, fromSeq]</code> MUST be byte-equivalent between original and replay (modulo per-region clock fields per RFC 0036 §E and per-event ULID component-T entropy when ULIDs are minted fresh). 2. <code>RunSnapshot.variables</code>, <code>RunSnapshot.channels</code>, and <code>RunSnapshot.status</code> at each event-log index MUST be byte-equivalent across original and replay. 3. The bytes-on-the-wire of underlying tool/LLM calls MAY differ — e.g., a tool call against a remote stateful API, an LLM call against a model whose weights shifted, a randomized fallback path — AS LONG AS the resulting <strong>observable state</strong> at each index is byte-equivalent.</p>
+<p>The load-bearing implication: hosts MUST NOT cache observable state ONLY at the tool-call boundary. They MUST cache the <strong>observable result</strong> (return value + side-effects on workflow state + emitted events) so a replay reproduces the observable sequence even when the underlying call would have produced different bytes. The cache key for LLM-calling nodes is the §"LLM cache-key recipe" §B SHA-256 hash; for other tool-calling nodes the cache key is at host discretion BUT MUST be content-addressable (no host-internal sequence numbers or timestamps).</p>
+<p>This rules out bit-equivalent execution determinism as a contract — it would require every nondeterministic call to be cached forever (unbounded memory cost) and would break legitimate use cases like tool calls against remote stateful APIs (<code>getCurrentTime</code>, <code>lookupExternalRecord</code>).</p>
+<h3 id="conformance-gating">Conformance gating</h3>
+<p>Scenarios verifying §A + §B + §C gate on <code>capabilities.multiAgent.executionModel.version &gt;= 4 &amp;&amp; capabilities.multiAgent.executionModel.replayDeterminism.supported: true</code>. Hosts at earlier versions skip cleanly.</p>
+<hr/>
 <h2 id="replay-from-event-log-internals">Replay-from-event-log internals</h2>
 <p>The engine implementation reuses the existing <code>recoverRunFromEventLog(runId)</code> machinery (per <code>WORKFLOW_ORCHESTRATION.md</code>):</p>
 <p>1. <code>EventLog.read(sourceRunId, { fromSequence: 0, limit: fromSeq })</code> — load events <code>&amp;lt; fromSeq</code>. 2. <code>fold(events) → ProjectedRunState</code> — derive initial state. 3. New run is initialized with that state, copy-on-write into the new event subcollection. 4. For <code>replay</code>, executor invocations consult <code>FirestoreInvocationLog</code> keyed on <code>(sourceRunId, ...)</code> for side-effect dedup. 5. For <code>branch</code>, executor invocations create new invocation log entries keyed on <code>(newRunId, ...)</code>.</p>
@@ -313,8 +409,8 @@ Idempotency-Key: &amp;lt;UUID&amp;gt;  (RECOMMENDED)</code></pre>
 <hr/>
 <h2 id="cross-region-replay-rfc-0036">Cross-region replay (RFC 0036)</h2>
 <p>Per <a href="../../RFCS/0036-multi-region-and-cross-engine-guarantees.md">RFC 0036</a> (<code>Active</code> 2026-05-21).</p>
-<p>When BOTH <code>capabilities.idempotency.multiRegion.supported: true</code> AND <code>capabilities.eventLog.crossEngineOrdering.supported: true</code>, a <code>POST /v1/runs/{runId}:fork</code> invocation served by a different region than the original run MUST produce a fork whose <strong>observable state at the <code>forkAtEventLogIdx</code> boundary</strong> matches a fork served by the original region.</p>
-<p>Specifically, the fork&#39;s <code>RunSnapshot.status</code>, <code>RunSnapshot.variables</code>, and the projected event log up to <code>forkAtEventLogIdx</code> MUST be byte-equivalent across regions. Per-region wall-clock fields in subsequent events MAY differ (e.g., timestamps embedded in <code>RunEventDoc.observedAt</code>, ULID component-T entropy in newly-generated event IDs); a bit-equivalent total comparison is NOT required and is not implementable in the presence of per-region clocks.</p>
+<p>When BOTH <code>capabilities.idempotency.multiRegion.supported: true</code> AND <code>capabilities.eventLog.crossEngineOrdering.supported: true</code>, a <code>POST /v1/runs/{runId}:fork</code> invocation served by a different region than the original run MUST produce a fork whose <strong>observable state at the <code>fromSeq</code> boundary</strong> matches a fork served by the original region.</p>
+<p>Specifically, the fork&#39;s <code>RunSnapshot.status</code>, <code>RunSnapshot.variables</code>, and the projected event log up to <code>fromSeq</code> MUST be byte-equivalent across regions. Per-region wall-clock fields in subsequent events MAY differ (e.g., timestamps embedded in <code>RunEventDoc.observedAt</code>, ULID component-T entropy in newly-generated event IDs); a bit-equivalent total comparison is NOT required and is not implementable in the presence of per-region clocks.</p>
 <p>Hosts that advertise one of the two capabilities but not the other retain the existing single-region replay contract per <code>## Determinism scoring</code> above. Hosts that advertise neither are silently single-region; the cross-region claim does not apply.</p>
 <hr/>
 <h2 id="open-spec-gaps">Open spec gaps</h2>
@@ -363,10 +459,13 @@ Idempotency-Key: &amp;lt;UUID&amp;gt;  (RECOMMENDED)</code></pre>
           <li><a href="/spec/v1/">v1.x Core</a></li>
           <li><a href="/rfcs/">RFCs</a></li>
           <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
           <li><a href="/errors/">Error codes</a></li>
           <li><a href="/scenarios/">Scenario walkthroughs</a></li>
           <li><a href="/profiles/">Profiles</a></li>
           <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
           <li><a href="/versioning/">Versioning policy</a></li>
         </ul>
       </div>
@@ -383,14 +482,15 @@ Idempotency-Key: &amp;lt;UUID&amp;gt;  (RECOMMENDED)</code></pre>
       <div>
         <h5>Project</h5>
         <ul>
-          <li><a href="/changelog/">Changelog</a></li>
           <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
           <li><a href="/faq/">FAQ</a></li>
           <li><a href="/security/">Security posture</a></li>
           <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
           <li><a href="/contributing/">Contributing</a></li>
-          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
           <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
         </ul>
       </div>
       <div>
@@ -406,10 +506,11 @@ Idempotency-Key: &amp;lt;UUID&amp;gt;  (RECOMMENDED)</code></pre>
     <div class="foot-meta">
       <span>© 2026 OpenWOP contributors</span>
       <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
-      <span>Built with Claude Code</span>
     </div>
   </div>
 </footer>
+
+<script src="/site-nav.js" defer></script>
 
 </body>
 </html>

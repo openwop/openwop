@@ -79,16 +79,87 @@
       <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
       <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
     </a>
-    <nav class="topnav">
-      <a class="hide-sm active" href="/spec/v1/">Spec</a>
-      <a class="hide-sm " href="/rfcs/">RFCs</a>
-      <a class="hide-sm " href="/conformance/">Conformance</a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
       <a class="hide-sm " href="/changelog/">Changelog</a>
-      <a class="hide-sm " href="/faq/">FAQ</a>
-      <a class="pill" href="https://github.com/openwop/openwop">GitHub →</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
     </nav>
   </div>
 </header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
 
 <main class="site-main">
   <div class="wrap">
@@ -122,7 +193,7 @@
       <li class="toc-top"><a href="#references">References</a></li>
     </ul>
   </aside><article class="spec-doc"><h1 id="openwop-spec-v1-rest-endpoint-catalog">OpenWOP Spec v1 — REST Endpoint Catalog</h1>
-<blockquote><p><strong>Status: FINAL v1 (2026-04-27; hygiene pass 2026-05-10).</strong> Comprehensive coverage of the canonical REST surface with per-route auth + scope, formalized in <code>api/openapi.yaml</code> against the JSON Schemas in <code>schemas/</code>. Replay/fork has shipped at <code>replay.md</code> + the <code>POST /v1/runs/{runId}:fork</code> endpoint. Remaining gaps are additive operational conveniences (bulk operations, explicit pause/resume, and any future gRPC transport), not blockers for v1 conformance. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
+<blockquote><p><strong>Status: Stable · v1.1 (2026-04-27; hygiene pass 2026-05-10).</strong> Comprehensive coverage of the canonical REST surface with per-route auth + scope, formalized in <code>api/openapi.yaml</code> against the JSON Schemas in <code>schemas/</code>. Replay/fork has shipped at <code>replay.md</code> + the <code>POST /v1/runs/{runId}:fork</code> endpoint. Remaining gaps are additive operational conveniences (bulk operations, explicit pause/resume, and any future gRPC transport), not blockers for v1 conformance. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
 <hr/>
 <h2 id="scope">Scope</h2>
 <p>This document catalogs the REST surface an OpenWOP-compliant server MUST expose, plus optional surfaces (MCP, A2A) that a server MAY expose. Path templates use <code>{paramName}</code> for path parameters.</p>
@@ -368,7 +439,8 @@
 <li><code>sandbox_timeout</code> — RFC 0035 §C. Sandbox invocation exceeded <code>capabilities.sandbox.wallClockLimitMs</code>. <code>details.elapsedMs</code> SHOULD identify the observed duration. The node MUST fail.</li>
 <li><code>sandbox_capability_denied</code> — RFC 0035 §C. Sandbox code called a host capability not in <code>capabilities.sandbox.allowedHostCalls</code>. <code>details.requestedCapability</code> MUST be set. The node MUST fail closed; this is the capability-gate-respected invariant in observable form.</li>
 <li><code>sandbox_escape_attempt</code> — RFC 0035 §C. Sandbox detected an explicit escape attempt (a syscall from a forbidden list, an out-of-sandbox-root filesystem access, an unauthorized fork/exec). <code>details.escapeKind</code> SHOULD identify which invariant was violated (e.g., <code>host-fs-escape</code>, <code>host-process-escape</code>, <code>host-env-leak</code>). The node MUST fail closed.</li>
-<li><code>replay_memory_snapshot_unavailable</code> — RFC 0039 §B. The host advertises <code>capabilities.multiAgent.executionModel.version &gt;= 2</code> AND <code>capabilities.memory.supported: true</code> but cannot serve the memory snapshot for the requested <code>POST /v1/runs/{runId}:fork forkAtEventLogIdx</code>. Per the MAE-3 contract in <code>spec/v1/multi-agent-execution.md</code> §"Replay carry-forward", forks from past event-log indices MUST return memory state as-of that index, not current state; hosts that haven't persisted a snapshot at the requested index MUST refuse the fork rather than silently substitute current memory. <code>details.forkAtEventLogIdx</code> SHOULD identify the requested index; <code>details.oldestAvailableIdx</code> MAY identify the oldest index for which a snapshot exists so the client can pick a valid fork point.</li>
+<li><code>replay_memory_snapshot_unavailable</code> — RFC 0039 §B. The host advertises <code>capabilities.multiAgent.executionModel.version &gt;= 2</code> AND <code>capabilities.memory.supported: true</code> but cannot serve the memory snapshot for the requested <code>POST /v1/runs/{runId}:fork fromSeq</code>. Per the MAE-3 contract in <code>spec/v1/multi-agent-execution.md</code> §"Replay carry-forward", forks from past event-log indices MUST return memory state as-of that index, not current state; hosts that haven't persisted a snapshot at the requested index MUST refuse the fork rather than silently substitute current memory. <code>details.fromSeq</code> SHOULD identify the requested index; <code>details.oldestAvailableIdx</code> MAY identify the oldest index for which a snapshot exists so the client can pick a valid fork point.</li>
+<li><code>replay_diverged_at_refusal</code> — RFC 0041 §B. The host advertises <code>capabilities.multiAgent.executionModel.version &gt;= 4</code> AND <code>capabilities.multiAgent.executionModel.replayDeterminism.refusalDivergenceEmission: true</code>. During a <code>POST /v1/runs/{runId}:fork mode: replay</code> invocation, the replay's LLM call produced a refusal while the original got a valid envelope (or vice-versa). Per the MAE-8 contract in <code>spec/v1/replay.md</code> §"Envelope-refusal recovery in replay (MAE-8 closure)", silent substitution is non-conformant; the host MUST fail the replay with this error code AND emit a <code>replay.divergedAtRefusal</code> event identifying the diverging node and envelope kinds. <code>details.atSequence</code> SHOULD identify the event-log index of the divergence; <code>details.nodeId</code> SHOULD identify the diverging node; <code>details.originalEnvelopeKind</code> + <code>details.replayEnvelopeKind</code> (each <code>&quot;valid&quot;</code> or <code>&quot;refusal&quot;</code>) SHOULD identify the direction of divergence.</li>
 <li><code>internal_error</code> — unexpected server failure (no implementation details in <code>message</code>)</li>
 <li><code>rate_limited</code> — request rejected because the caller exceeded a per-tenant, per-route, or global rate limit. <strong>Normative envelope:</strong> the response MUST set HTTP status <code>429</code>, MUST set the <code>Retry-After</code> header (seconds), AND SHOULD carry <code>details.retryAfterMs</code> and <code>details.scope</code>. See §"<code>429 Too Many Requests</code> envelope" below.</li>
 </ul>
@@ -439,10 +511,13 @@
           <li><a href="/spec/v1/">v1.x Core</a></li>
           <li><a href="/rfcs/">RFCs</a></li>
           <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
           <li><a href="/errors/">Error codes</a></li>
           <li><a href="/scenarios/">Scenario walkthroughs</a></li>
           <li><a href="/profiles/">Profiles</a></li>
           <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
           <li><a href="/versioning/">Versioning policy</a></li>
         </ul>
       </div>
@@ -459,14 +534,15 @@
       <div>
         <h5>Project</h5>
         <ul>
-          <li><a href="/changelog/">Changelog</a></li>
           <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
           <li><a href="/faq/">FAQ</a></li>
           <li><a href="/security/">Security posture</a></li>
           <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
           <li><a href="/contributing/">Contributing</a></li>
-          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
           <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
         </ul>
       </div>
       <div>
@@ -482,10 +558,11 @@
     <div class="foot-meta">
       <span>© 2026 OpenWOP contributors</span>
       <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
-      <span>Built with Claude Code</span>
     </div>
   </div>
 </footer>
+
+<script src="/site-nav.js" defer></script>
 
 </body>
 </html>

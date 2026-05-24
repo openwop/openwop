@@ -18,7 +18,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RunEventDoc } from '@openwop/openwop';
 import { cancelRun, createRun, getRun } from '../../client/runsClient.js';
 import { subscribeToRun, type Subscription } from '../../client/streamsClient.js';
-import { listOpenInterrupts } from '../../client/interruptsClient.js';
+import { listOpenInterrupts, type OpenInterrupt } from '../../client/interruptsClient.js';
 import {
   appendChatMessage,
   createChatSession,
@@ -381,11 +381,10 @@ export function useChatSession(): UseChatSessionResult {
 
   // Hydration poll: any persisted workflow_run with status='running' is
   // stale (the SSE subscription died on the previous tab/reload). Fetch
-  // a one-shot snapshot per stuck run and reconcile to a terminal state.
-  // Missed mid-run interrupts can't be reconstructed from a snapshot;
-  // the user can resolve them from /runs/:runId if needed. The ref guard
-  // ensures we only walk the initial session — subsequent session
-  // changes drive their own SSE and don't need re-reconciliation.
+  // a one-shot snapshot + open-interrupts list per stuck run so we can
+  // either reconcile to a terminal state OR re-surface a missed
+  // approval card inline. The ref guard ensures we only walk the
+  // initial session — subsequent session changes drive their own SSE.
   const didHydrateRef = useRef(false);
   useEffect(() => {
     if (didHydrateRef.current) return;
@@ -412,18 +411,36 @@ export function useChatSession(): UseChatSessionResult {
               default: return null;
             }
           })();
-          if (!next) continue;
-          setSession((s) => ({
-            ...s,
-            messages: s.messages.map((mm) => mm.id === m.id && mm.workflowRun ? {
-              ...mm,
-              workflowRun: {
-                ...mm.workflowRun,
-                status: next,
-                ...(next === 'failed' ? { error: { code: 'reconciled', message: 'Run failed; details in /runs.' } } : {}),
-              },
-            } : mm),
-          }));
+          if (next) {
+            setSession((s) => ({
+              ...s,
+              messages: s.messages.map((mm) => mm.id === m.id && mm.workflowRun ? {
+                ...mm,
+                workflowRun: {
+                  ...mm.workflowRun,
+                  status: next,
+                  ...(next === 'failed' ? { error: { code: 'reconciled', message: 'Run failed; details in /runs.' } } : {}),
+                },
+              } : mm),
+            }));
+            continue;
+          }
+          // Not terminal — check for open interrupts so the approval
+          // card resurfaces if SSE delivery missed the `node.suspended`
+          // event (page reload, dropped connection, etc.).
+          try {
+            const open = await listOpenInterrupts(runId);
+            if (cancelled) return;
+            const active = open[open.length - 1] ?? null;
+            if (active) {
+              setSession((s) => ({
+                ...s,
+                messages: s.messages.map((mm) => mm.id === m.id ? { ...mm, activeInterrupt: active } : mm),
+              }));
+            }
+          } catch {
+            /* ignore — best-effort resurfacing */
+          }
         } catch {
           /* network error — leave the bubble as-is; user can refresh later */
         }
@@ -1278,14 +1295,24 @@ export function useChatSession(): UseChatSessionResult {
                 }
           ));
         } else if (ev.type === 'node.suspended') {
-          try {
-            const open = await listOpenInterrupts(runId);
-            const active = open[open.length - 1] ?? null;
-            setSession((s) => ({
-              ...s,
-              messages: s.messages.map((m) => m.id === runMsgId ? { ...m, activeInterrupt: active } : m),
-            }));
-          } catch { /* swallow */ }
+          // Best-effort fetch with one retry — the event emission and
+          // interrupt-row commit are sequential server-side but the
+          // FE's GET sometimes lands before the row is visible to the
+          // read path under load. Without the retry the approval card
+          // silently never appears.
+          let active: OpenInterrupt | null = null;
+          for (let attempt = 0; attempt < 2; attempt++) {
+            try {
+              const open = await listOpenInterrupts(runId);
+              active = open[open.length - 1] ?? null;
+              if (active) break;
+            } catch { /* try again */ }
+            if (attempt === 0) await new Promise((r) => setTimeout(r, 250));
+          }
+          setSession((s) => ({
+            ...s,
+            messages: s.messages.map((m) => m.id === runMsgId ? { ...m, activeInterrupt: active } : m),
+          }));
         } else if (ev.type === 'node.interrupt.resolved') {
           setSession((s) => ({
             ...s,

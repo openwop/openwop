@@ -1,6 +1,6 @@
 # openwop Spec v1 — Compliance Vocabulary
 
-> **Status: FINAL v1 (2026-05-12).** Non-normative — this document doesn't constrain any conforming openwop implementation. The few MUST / SHOULD keywords in this file are advisory to operators evaluating openwop in a regulated deployment, NOT requirements on conforming hosts; the protocol-level conformance contract lives in `spec/v1/*.md` + `RFCS/` + the conformance suite. Maps openwop's existing protocol-level guarantees onto common compliance vocabularies (SOC 2, GDPR, HIPAA, ISO 27001) so operators have a shared reference. See `auth.md` for the status legend.
+> **Status: Stable · v1.1 (2026-05-12).** Non-normative — this document doesn't constrain any conforming openwop implementation. The few MUST / SHOULD keywords in this file are advisory to operators evaluating openwop in a regulated deployment, NOT requirements on conforming hosts; the protocol-level conformance contract lives in `spec/v1/*.md` + `RFCS/` + the conformance suite. Maps openwop's existing protocol-level guarantees onto common compliance vocabularies (SOC 2, GDPR, HIPAA, ISO 27001) so operators have a shared reference. See `auth.md` for the status legend.
 
 ---
 

@@ -1,6 +1,6 @@
 # openwop Spec v1 — Run Debug Bundle
 
-> **Status: FINAL v1 (2026-05-05).** Defines `GET /v1/runs/{runId}/debug-bundle` — a portable JSON export of a single run's diagnostic state. Additive over v1 per `COMPATIBILITY.md` §2.1: optional endpoint; hosts MAY omit. Graduated DRAFT → FINAL via RFC 0004. See `auth.md` for the status legend. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
+> **Status: Stable · v1.1 (2026-05-05).** Defines `GET /v1/runs/{runId}/debug-bundle` — a portable JSON export of a single run's diagnostic state. Additive over v1 per `COMPATIBILITY.md` §2.1: optional endpoint; hosts MAY omit. Graduated DRAFT → FINAL via RFC 0004. See `auth.md` for the status legend. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 
 ---
 

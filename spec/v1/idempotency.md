@@ -1,6 +1,6 @@
 # openwop Spec v1 — Idempotency
 
-> **Status: FINAL v1 (2026-04-27).** Comprehensive coverage of both layers: HTTP `Idempotency-Key` (Layer 1) + engine `invocationId` (Layer 2). Stable surface for external review. Open gaps in cross-region replication + entropy floor only. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of both layers: HTTP `Idempotency-Key` (Layer 1) + engine `invocationId` (Layer 2). Stable surface for external review. Open gaps in cross-region replication + entropy floor only. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ---
 

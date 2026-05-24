@@ -1,6 +1,6 @@
 # openwop Spec v1 — Positioning
 
-> **Status: FINAL v1 (2026-05-05).** Honest comparison of openwop against adjacent workflow / orchestration ecosystems. Non-normative — this document doesn't constrain any conforming implementation (zero RFC 2119 keywords by design). Graduated DRAFT → FINAL per GOVERNANCE.md "non-normative addition" rule (one-maintainer-approval direct merge); the doc has no MUST/SHOULD/MAY claims to lock. See `auth.md` for the status legend.
+> **Status: Stable · v1.1 (2026-05-05).** Honest comparison of openwop against adjacent workflow / orchestration ecosystems. Non-normative — this document doesn't constrain any conforming implementation (zero RFC 2119 keywords by design). Graduated DRAFT → FINAL per GOVERNANCE.md "non-normative addition" rule (one-maintainer-approval direct merge); the doc has no MUST/SHOULD/MAY claims to lock. See `auth.md` for the status legend.
 
 ---
 

@@ -4,21 +4,21 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>OpenWOP — v1 spec corpus</title>
-  <meta name="description" content="38 normative prose specs governing the OpenWOP v1 wire contract. Each doc is independently citable via /spec/v1/{name}.html."/>
+  <meta name="description" content="39 normative prose specs governing the OpenWOP v1 wire contract. Each doc is independently citable via /spec/v1/{name}.html."/>
   <link rel="canonical" href="https://openwop.dev/spec/v1/"/>
 
   <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
   <meta property="og:type" content="website"/>
   <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
   <meta property="og:title" content="OpenWOP — v1 spec corpus"/>
-  <meta property="og:description" content="38 normative prose specs governing the OpenWOP v1 wire contract. Each doc is independently citable via /spec/v1/{name}.html."/>
+  <meta property="og:description" content="39 normative prose specs governing the OpenWOP v1 wire contract. Each doc is independently citable via /spec/v1/{name}.html."/>
   <meta property="og:url" content="https://openwop.dev/spec/v1/"/>
   <meta property="og:image" content="https://openwop.dev/og-default.png"/>
 
   <!-- Twitter card -->
   <meta name="twitter:card" content="summary_large_image"/>
   <meta name="twitter:title" content="OpenWOP — v1 spec corpus"/>
-  <meta name="twitter:description" content="38 normative prose specs governing the OpenWOP v1 wire contract. Each doc is independently citable via /spec/v1/{name}.html."/>
+  <meta name="twitter:description" content="39 normative prose specs governing the OpenWOP v1 wire contract. Each doc is independently citable via /spec/v1/{name}.html."/>
   <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
 
   <!-- Icons / theme -->
@@ -54,35 +54,107 @@
       <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
       <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
     </a>
-    <nav class="topnav">
-      <a class="hide-sm active" href="/spec/v1/">Spec</a>
-      <a class="hide-sm " href="/rfcs/">RFCs</a>
-      <a class="hide-sm " href="/conformance/">Conformance</a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
       <a class="hide-sm " href="/changelog/">Changelog</a>
-      <a class="hide-sm " href="/faq/">FAQ</a>
-      <a class="pill" href="https://github.com/openwop/openwop">GitHub →</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
     </nav>
   </div>
 </header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
 
 <main class="site-main">
   <div class="wrap">
     <header class="page-header">
       <h1>OpenWOP v1 spec corpus</h1>
-      <p class="lede">38 prose specs governing the v1 wire contract. Each section below groups specs by what they do; click through for the normative text.</p>
-      <p class="meta">Status legend: <strong>FINAL</strong> · STUB · DRAFT · OUTLINE. A spec is FINAL when its wire shape is locked under v1.x compatibility rules.</p>
+      <p class="lede">39 prose specs governing the v1 wire contract. Each section below groups specs by what they do; click through for the normative text.</p>
+      <p class="meta">Status legend: <strong>Stable</strong> · DRAFT · OUTLINE · STUB. A spec is Stable when its wire shape is locked under v1.x compatibility rules. (Older revisions labelled the same tier <strong>FINAL</strong>.)</p>
     </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
     <h4>On this page</h4>
     <ul>
       <li class="toc-top"><a href="#foundation">Foundation</a></li>
-      <li class="toc-top"><a href="#runtime">Run lifecycle &amp;amp; state</a></li>
-      <li class="toc-top"><a href="#agents">Agents &amp;amp; multi-agent execution</a></li>
+      <li class="toc-top"><a href="#runtime">Run lifecycle &amp; state</a></li>
+      <li class="toc-top"><a href="#agents">Agents &amp; multi-agent execution</a></li>
       <li class="toc-top"><a href="#humans">Humans in the loop</a></li>
       <li class="toc-top"><a href="#transports">Wire transports</a></li>
-      <li class="toc-top"><a href="#security">Auth &amp;amp; security</a></li>
-      <li class="toc-top"><a href="#ecosystem">Node packs &amp;amp; registry</a></li>
-      <li class="toc-top"><a href="#production">Production posture &amp;amp; operations</a></li>
+      <li class="toc-top"><a href="#security">Auth &amp; security</a></li>
+      <li class="toc-top"><a href="#ecosystem">Node packs &amp; registry</a></li>
+      <li class="toc-top"><a href="#production">Production posture &amp; operations</a></li>
       <li class="toc-top"><a href="#integration">Integration with adjacent protocols</a></li>
+      <li class="toc-top"><a href="#other">Other reference material</a></li>
     </ul>
   </aside><article class="spec-doc"><section class="spec-group">
   <h2 id="foundation">Foundation</h2>
@@ -90,79 +162,79 @@
   <ul class="spec-group-list">
     <li>
       <a href="./positioning.html"><strong>Positioning</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-05-05)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">openwop is an open protocol for portable, durable, AI-native workflow execution across hosts.</p>
     </li>
     <li>
       <a href="./capabilities.html"><strong>Capability Declaration (`/.well-known/openwop`)</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-04-27; hygiene pass 2026-05-10)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">External clients (CLIs, SDKs, agents from other ecosystems) need a deterministic way to discover what an OpenWOP-compliant server can do before they issue requests. Specifically:</p>
     </li>
     <li>
       <a href="./host-capabilities.html"><strong>Host Capability Surfaces</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-05-12)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">node-packs.md §&quot;Manifest format&quot; allows packs to declare peerDependencies against engine-supplied capabilities. host-extensions.md documents the namespace rule that host.* is…</p>
     </li>
     <li>
       <a href="./profiles.html"><strong>Compatibility Profiles</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-05-05; `openwop-fixtures` added 2026-05-07 via RFC 0003)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">&quot;openwop-compatible&quot; today means &quot;passes some subset of @openwop/openwop-conformance.&quot; That&#39;s accurate but not actionable: a host advertising secrets.supported: true and a host…</p>
     </li>
     <li>
       <a href="./capabilities-change-detection.html"><strong>Capability Change Detection</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-05-10)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">Clients negotiate against GET /.well-known/openwop before creating runs. That payload can change when a host enables a node pack, changes optional profile support, rotates…</p>
     </li>
   </ul>
 </section>
 <section class="spec-group">
-  <h2 id="runtime">Run lifecycle &amp; state</h2>
+  <h2 id="runtime">Run lifecycle & state</h2>
   <p class="spec-group-lede">How a run starts, streams, suspends, resumes, replays, and ends.</p>
   <ul class="spec-group-list">
     <li>
       <a href="./run-options.html"><strong>Per-Run Options Overlay</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-04-27)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">A workflow definition (DAG of nodes + edges) is the shape of the work. Operationally, two runs of the same workflow often need different parameters: a different LLM model, a…</p>
     </li>
     <li>
       <a href="./replay.html"><strong>Replay and Time-Travel Debugging</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-04-27)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">The durable event log makes time-travel debugging nearly free: every meaningful state transition is persisted with a sequence number, so the run state at any point in history can…</p>
     </li>
     <li>
       <a href="./idempotency.html"><strong>Idempotency</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-04-27)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">Workflow execution is full of operations that can be retried — externally (caller retries on 503, 408, network blip) and internally (engine retry policy on a node, sub-workflow…</p>
     </li>
     <li>
       <a href="./channels-and-reducers.html"><strong>Typed State Channels and Reducers</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-04-27)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">A workflow run carries state beyond the inputs and outputs of individual nodes: approval votes, refine-loop feedback history, loopback counters, artifact mirrors, multi-turn Q&amp;A…</p>
     </li>
     <li>
       <a href="./version-negotiation.html"><strong>Version Negotiation and Deploy-Skew Safety</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-04-27)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">Long-running workflows persist state. State written by engine version N may be read by engine version N+1 (forward) or — in a botched deploy — by engine version N-1 (backward /…</p>
     </li>
     <li>
       <a href="./stream-modes.html"><strong>SSE Stream Modes</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-04-27)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">Without stream modes, an SSE endpoint emits every engine event undifferentiated — UI, debugger, automation, and agent consumers all see the same stream and have to filter…</p>
     </li>
   </ul>
 </section>
 <section class="spec-group">
-  <h2 id="agents">Agents &amp; multi-agent execution</h2>
+  <h2 id="agents">Agents & multi-agent execution</h2>
   <p class="spec-group-lede">Agent identity, memory, multi-agent execution model, envelope shapes.</p>
   <ul class="spec-group-list">
     <li>
       <a href="./agent-memory.html"><strong>Agent Memory</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-05-10)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">Multi-agent workflows persist context across runs. A pack-installed customer-support agent that resolved a refund last week should still know the customer&#39;s preference for email…</p>
     </li>
     <li>
       <a href="./agent-ref-positioning.html"><strong>`AgentRef` Positioning</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-05-10)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">RFC 0002 introduces AgentRef as the wire shape for &quot;which agent took which turn inside a run.&quot; Three external ecosystems also propose agent-identity shapes:</p>
     </li>
     <li>
@@ -172,12 +244,12 @@
     </li>
     <li>
       <a href="./ai-envelope.html"><strong>AI Envelope Primitive</strong></a>
-      <span class="spec-item-status">FINAL v1</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">Eight v1 surfaces already reference &quot;envelopes&quot; as a distinct wire concept:</p>
     </li>
     <li>
       <a href="./structured-output-subset.html"><strong>Tier 1 Structured-Output Compatibility Subset (informative)</strong></a>
-      <span class="spec-item-status">FINAL v1</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">Each LLM vendor enforces a different JSON-Schema subset for native structured output. The intersection of all vendor-strict modes is what an envelope payload schema MUST satisfy…</p>
     </li>
     <li>
@@ -193,12 +265,12 @@
   <ul class="spec-group-list">
     <li>
       <a href="./interrupt.html"><strong>HITL Interrupt Primitive</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-04-27)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">Workflow execution often needs to pause for input from outside the engine: human approval, AI clarification, an external event (webhook, scheduled time, message arrival). Without…</p>
     </li>
     <li>
       <a href="./interrupt-profiles.html"><strong>Interrupt Profiles</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-05-10)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">interrupt.md standardizes durable suspend/resume for approvals, clarifications, edits, and external events. Production workflows often need richer policies: more than one…</p>
     </li>
   </ul>
@@ -209,17 +281,17 @@
   <ul class="spec-group-list">
     <li>
       <a href="./rest-endpoints.html"><strong>REST Endpoint Catalog</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-04-27; hygiene pass 2026-05-10)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">This document catalogs the REST surface an OpenWOP-compliant server MUST expose, plus optional surfaces (MCP, A2A) that a server MAY expose. Path templates use {paramName} for…</p>
     </li>
     <li>
       <a href="./webhooks.html"><strong>Webhook Subscriptions</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-04-29)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">Polling GET /v1/runs/{runId} to learn about run progress is inefficient — clients pay round-trip cost on every check, and the runtime serves identical state until the next event.…</p>
     </li>
     <li>
       <a href="./grpc-transport.html"><strong>gRPC Transport Profile</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-05-12)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">Some deployment classes prefer gRPC over REST for protocol-level reasons:</p>
     </li>
     <li>
@@ -230,28 +302,28 @@
   </ul>
 </section>
 <section class="spec-group">
-  <h2 id="security">Auth &amp; security</h2>
+  <h2 id="security">Auth & security</h2>
   <p class="spec-group-lede">API keys, OAuth2, OIDC, mTLS, BYOK secret resolution, redaction.</p>
   <ul class="spec-group-list">
     <li>
       <a href="./auth.html"><strong>Authentication and Authorization</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-04-27)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">This document specifies how OpenWOP-compliant servers authenticate and authorize callers of the protocol&#39;s wire-level surfaces (REST, MCP, A2A, SSE). It does NOT prescribe…</p>
     </li>
     <li>
       <a href="./auth-profiles.html"><strong>Auth Profiles</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-05-10)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">auth.md defines the minimum interoperable contract: bearer API keys, canonical error envelopes, tenant isolation, scopes, and audit expectations. Production deployments often need…</p>
     </li>
   </ul>
 </section>
 <section class="spec-group">
-  <h2 id="ecosystem">Node packs &amp; registry</h2>
+  <h2 id="ecosystem">Node packs & registry</h2>
   <p class="spec-group-lede">Signed packs of reusable nodes + the registry that serves them.</p>
   <ul class="spec-group-list">
     <li>
       <a href="./node-packs.html"><strong>Node Packs and the Public Registry</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-04-27)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">Workflows in v1 are written against a fixed set of core.* node typeIds. Every implementation re-implements the same nodes (AI prompt calls, approval gates, HTTP fetches) because…</p>
     </li>
     <li>
@@ -261,43 +333,43 @@
     </li>
     <li>
       <a href="./registry-operations.html"><strong>Node-Pack Registry Operations</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-04-29)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">node-packs.md defines the pack manifest shape, the registry HTTP API, and the trust-model layers an engine consumer SHOULD support. What it doesn&#39;t specify is the operator side of…</p>
     </li>
   </ul>
 </section>
 <section class="spec-group">
-  <h2 id="production">Production posture &amp; operations</h2>
+  <h2 id="production">Production posture & operations</h2>
   <p class="spec-group-lede">The production profile, scale profiles, debug bundles, observability.</p>
   <ul class="spec-group-list">
     <li>
       <a href="./production-profile.html"><strong>Production Profile</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-05-11; was PROVISIONAL 2026-05-11 → was FINAL 2026-05-10)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">Passing the base protocol proves that a host speaks OpenWOP. Running a public service also requires operational guarantees: durable retries, observable failures, event retention,…</p>
     </li>
     <li>
       <a href="./scale-profiles.html"><strong>Scale Profiles</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-05-05)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">openwop doesn&#39;t standardize how a host scales — implementation-internal queueing, sharding, and worker-pool design are out of scope. But clients need to be able to choose a host…</p>
     </li>
     <li>
       <a href="./debug-bundle.html"><strong>Run Debug Bundle</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-05-05)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">When a run misbehaves and an operator needs to file a bug, send context to the host vendor, or reproduce the failure on a different host, today&#39;s options are:</p>
     </li>
     <li>
       <a href="./observability.html"><strong>Observability and OpenTelemetry Taxonomy</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-04-27)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">External implementers and operators need a shared vocabulary for tracing and metrics so that:</p>
     </li>
     <li>
       <a href="./storage-adapters.html"><strong>Storage Adapters</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-04-29)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">The openwop runtime needs durable storage for two state surfaces:</p>
     </li>
     <li>
       <a href="./host-extensions.html"><strong>Host Extensions</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-05-05)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">A host implementing openwop often needs to expose product-specific concepts that aren&#39;t part of the protocol — workspaces, projects, canvases, custom node types, vendor analytics.…</p>
     </li>
   </ul>
@@ -308,23 +380,34 @@
   <ul class="spec-group-list">
     <li>
       <a href="./mcp-integration.html"><strong>MCP Integration</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-05-05)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">OpenWOP runs the workflow. MCP exposes tools to the LLM nodes inside that workflow. The two protocols compose; they don&#39;t compete.</p>
     </li>
     <li>
       <a href="./a2a-integration.html"><strong>A2A Integration</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-05-05)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">openwop is not in the agent-to-agent message-exchange business. A2A is. The two protocols compose along orthogonal axes:</p>
     </li>
     <li>
       <a href="./compliance.html"><strong>Compliance Vocabulary</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-05-12)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">Operators in regulated industries (financial services, healthcare, public sector, EU-resident services) evaluate every infrastructure choice through compliance lenses. &quot;Does…</p>
     </li>
     <li>
       <a href="./i18n.html"><strong>Internationalization (i18n) and Locale</strong></a>
-      <span class="spec-item-status">FINAL v1 (2026-05-12)</span>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">openwop is increasingly deployed in workspaces with non-English-speaking end users:</p>
+    </li>
+  </ul>
+</section>
+<section class="spec-group">
+  <h2 id="other">Other reference material</h2>
+  <p class="spec-group-lede">Specs not grouped elsewhere. New additions land here until categorized.</p>
+  <ul class="spec-group-list">
+    <li>
+      <a href="./host-sample-test-seams.html"><strong>Host-sample test seams</strong></a>
+      <span class="spec-item-status">Stable · v1</span>
+      <p class="spec-item-desc">OpenWOP&#39;s conformance suite verifies behavioral contracts that v1 cannot probe through the production wire surface alone. Examples:</p>
     </li>
   </ul>
 </section></article></div><script src="/assets/spec-toc.js" defer></script>
@@ -351,10 +434,13 @@
           <li><a href="/spec/v1/">v1.x Core</a></li>
           <li><a href="/rfcs/">RFCs</a></li>
           <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
           <li><a href="/errors/">Error codes</a></li>
           <li><a href="/scenarios/">Scenario walkthroughs</a></li>
           <li><a href="/profiles/">Profiles</a></li>
           <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
           <li><a href="/versioning/">Versioning policy</a></li>
         </ul>
       </div>
@@ -371,14 +457,15 @@
       <div>
         <h5>Project</h5>
         <ul>
-          <li><a href="/changelog/">Changelog</a></li>
           <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
           <li><a href="/faq/">FAQ</a></li>
           <li><a href="/security/">Security posture</a></li>
           <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
           <li><a href="/contributing/">Contributing</a></li>
-          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
           <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
         </ul>
       </div>
       <div>
@@ -394,10 +481,11 @@
     <div class="foot-meta">
       <span>© 2026 OpenWOP contributors</span>
       <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
-      <span>Built with Claude Code</span>
     </div>
   </div>
 </footer>
+
+<script src="/site-nav.js" defer></script>
 
 </body>
 </html>

@@ -1,6 +1,6 @@
 # openwop Spec v1 — Auth Profiles
 
-> **Status: FINAL v1 (2026-05-10).** Optional production-auth annex for hosts that need stronger authentication than the baseline API-key contract in `auth.md`. This document is additive: it defines profile claims and conformance expectations without changing any required v1 endpoint, header, or error shape. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1 (2026-05-10).** Optional production-auth annex for hosts that need stronger authentication than the baseline API-key contract in `auth.md`. This document is additive: it defines profile claims and conformance expectations without changing any required v1 endpoint, header, or error shape. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ---
 

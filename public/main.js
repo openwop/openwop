@@ -129,6 +129,12 @@ document.querySelectorAll('.block, .pillar, .compare-card, .ana-list li, .spec .
     links.forEach((a) => {
       const active = a.dataset.target === id;
       a.classList.toggle('is-active', active);
+      // Mirror visual state on the AX tree so screen-reader users get
+      // section context. Use `aria-current="location"` rather than
+      // `page` because the active section is in-page, not the page
+      // itself.
+      if (active) a.setAttribute('aria-current', 'location');
+      else a.removeAttribute('aria-current');
       if (active) any = true;
     });
     if (any && scrollContainer) {

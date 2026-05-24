@@ -1,6 +1,6 @@
 # openwop Spec v1 — Replay and Time-Travel Debugging
 
-> **Status: FINAL v1 (2026-04-27).** Comprehensive coverage of `POST /v1/runs/{runId}:fork` for replay and branch-from-past, idempotency requirements on side-effecting nodes, determinism guarantees, and the admin Run Timeline View. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of `POST /v1/runs/{runId}:fork` for replay and branch-from-past, idempotency requirements on side-effecting nodes, determinism guarantees, and the admin Run Timeline View. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ---
 

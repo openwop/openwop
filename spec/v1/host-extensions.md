@@ -1,6 +1,6 @@
 # openwop Spec v1 — Host Extensions
 
-> **Status: FINAL v1 (2026-05-05).** Distinguishes the protocol's normative core from host-specific extensions. This document is the canonical reference cited from any spec doc that mentions a vendor-prefixed namespace (e.g., `openwop.*`). Graduated DRAFT → FINAL via RFC 0006. See `auth.md` for the status legend. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
+> **Status: Stable · v1.1 (2026-05-05).** Distinguishes the protocol's normative core from host-specific extensions. This document is the canonical reference cited from any spec doc that mentions a vendor-prefixed namespace (e.g., `openwop.*`). Graduated DRAFT → FINAL via RFC 0006. See `auth.md` for the status legend. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 
 ---
 

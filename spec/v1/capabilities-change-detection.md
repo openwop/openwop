@@ -1,6 +1,6 @@
 # openwop Spec v1 — Capability Change Detection
 
-> **Status: FINAL v1 (2026-05-10).** Additive discovery annex for detecting changes to `/.well-known/openwop` and for documenting scoped capability views. This document does not change the required v1 capability payload. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1 (2026-05-10).** Additive discovery annex for detecting changes to `/.well-known/openwop` and for documenting scoped capability views. This document does not change the required v1 capability payload. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ---
 

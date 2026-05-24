@@ -1,6 +1,6 @@
 # openwop Spec v1 — Node-Pack Registry Operations
 
-> **Status: FINAL v1 (2026-04-29).** Comprehensive coverage of the operational lifecycle for a hosted node-pack registry: submission, validation, deprecation, yank, and signing-key rotation flows. Pairs with the registry HTTP API in `node-packs.md` §"Registry HTTP API" — that doc covers wire shapes; this doc covers the lifecycle operations + their security model. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1 (2026-04-29).** Comprehensive coverage of the operational lifecycle for a hosted node-pack registry: submission, validation, deprecation, yank, and signing-key rotation flows. Pairs with the registry HTTP API in `node-packs.md` §"Registry HTTP API" — that doc covers wire shapes; this doc covers the lifecycle operations + their security model. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ---
 

@@ -1,6 +1,6 @@
 # openwop Spec v1 — Observability and OpenTelemetry Taxonomy
 
-> **Status: FINAL v1 (2026-04-27).** Comprehensive coverage of the canonical `openwop.*` attribute namespace, span naming conventions, and metric kinds. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of the canonical `openwop.*` attribute namespace, span naming conventions, and metric kinds. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ---
 

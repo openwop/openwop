@@ -1,6 +1,6 @@
 # openwop Spec v1 — Node Packs and the Public Registry
 
-> **Status: FINAL v1 (2026-04-27).** Comprehensive coverage of the pack manifest format, distribution, signing, and registry HTTP API. Language-neutral stable surface for external review. The hosted reference registry is live at `https://packs.openwop.dev/`; local registry contents are summarized in `docs/PROTOCOL-STATUS.md`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of the pack manifest format, distribution, signing, and registry HTTP API. Language-neutral stable surface for external review. The hosted reference registry is live at `https://packs.openwop.dev/`; local registry contents are summarized in `docs/PROTOCOL-STATUS.md`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ---
 

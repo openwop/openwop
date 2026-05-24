@@ -360,6 +360,32 @@
   .api-explorer-head { gap: 12px; }
   .api-explorer-meta { width: 100%; justify-content: flex-end; }
 }
+
+/* AsyncAPI + gRPC explorers: simple raw-source view. The `.api-raw`
+ * block is the embedded YAML or .proto, rendered as a code block. Keep
+ * it inside the .wrap (no full-bleed escape) — there is no two-column
+ * Redoc layout here, so the standard reading width is correct. */
+.site-main .wrap > .api-explorer:has(.api-raw) {
+  max-width: 880px;
+  margin-inline: auto;
+  width: auto;
+}
+.api-explorer .api-raw {
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 18px 20px;
+  margin: 24px 0 0;
+  overflow-x: auto;
+  font-family: var(--mono, "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink);
+  max-height: 70vh;
+}
+.api-explorer .api-raw code { font: inherit; color: inherit; background: transparent; padding: 0; }
+.api-explorer p.lede { margin-top: 20px; }
+.api-explorer p.meta { margin-top: 12px; font-size: 13px; color: var(--ink-3, #837f72); }
 /* Spec/RFC pages render a sticky left-rail ToC inside .spec-page-grid;
  * give the grid more room than pure prose so sidebar + article both fit. */
 .site-main .wrap > .spec-page-grid {

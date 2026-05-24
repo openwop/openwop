@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>OpenWOP — RFC 0042: Experimental capability tier</title>
+  <meta name="description" content="Adds an optional tier ∈ {&quot;stable&quot;, &quot;experimental&quot;} field to every capability advertisement under /.well-known/openwop. When a host advertises a capability as tier: &quot;experimental&quot;, the host MUST also advertise an experimentalUntil ISO-8601 date no…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0042-experimental-capability-tier.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="OpenWOP — RFC 0042: Experimental capability tier"/>
+  <meta property="og:description" content="Adds an optional tier ∈ {&quot;stable&quot;, &quot;experimental&quot;} field to every capability advertisement under /.well-known/openwop. When a host advertises a capability as tier: &quot;experimental&quot;, the host MUST also advertise an experimentalUntil ISO-8601 date no…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0042-experimental-capability-tier.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="OpenWOP — RFC 0042: Experimental capability tier"/>
+  <meta name="twitter:description" content="Adds an optional tier ∈ {&quot;stable&quot;, &quot;experimental&quot;} field to every capability advertisement under /.well-known/openwop. When a host advertises a capability as tier: &quot;experimental&quot;, the host MUST also advertise an experimentalUntil ISO-8601 date no…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
+
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
+
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="stylesheet" href="/assets/style.css"/>
+
+  
+  
+  
+</head>
+<body>
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
+    </a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
+      <a class="hide-sm " href="/changelog/">Changelog</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
+
+<main class="site-main">
+  <div class="wrap">
+    <header class="page-header">
+      <h1>RFC 0042: Experimental capability tier</h1>
+      <p class="lede">Adds an optional tier ∈ {&quot;stable&quot;, &quot;experimental&quot;} field to every capability advertisement under /.well-known/openwop. When a host advertises a capability as tier: &quot;experimental&quot;, the host MUST also advertise an experimentalUntil ISO-8601 date no…</p>
+    </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-optional-tier-field-on-capability-sub-blocks">§A — Optional tier field on capability sub-blocks</a></li>
+      <li class="toc-sub"><a href="#b-sunset-rule-the-audit-s-key-concern">§B — Sunset rule (the audit&#39;s key concern)</a></li>
+      <li class="toc-sub"><a href="#c-derived-profile-openwop-experimental">§C — Derived profile openwop-experimental</a></li>
+      <li class="toc-sub"><a href="#d-conformance-suite-changes">§D — Conformance suite changes</a></li>
+      <li class="toc-sub"><a href="#e-interop-matrix-md-advertisement-column">§E — INTEROP-MATRIX.md advertisement column</a></li>
+      <li class="toc-sub"><a href="#f-example">§F — Example</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-sub"><a href="#existing-scenarios-that-cover-this-surface">Existing scenarios that cover this surface</a></li>
+      <li class="toc-sub"><a href="#new-scenarios">New scenarios</a></li>
+      <li class="toc-sub"><a href="#per-rfc-application-of-the-experimental-tier">Per-RFC application of the experimental tier</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><h1 id="rfc-0042-experimental-capability-tier">RFC 0042: Experimental capability tier</h1>
+<table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0042</td></tr>
+<tr><td><strong>Title</strong></td><td>Experimental capability tier — optional <code>tier</code> field on capability advertisements + sunset rule + derived <code>openwop-experimental</code> profile</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Draft</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-22</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-22</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>spec/v1/capabilities.md</code> · <code>spec/v1/profiles.md</code> · <code>schemas/capabilities.schema.json</code> (optional <code>tier</code> enum on each capability sub-block) · <code>conformance/src/scenarios/experimental-tier-shape.test.ts</code> (new) · <code>INTEROP-MATRIX.md</code> (new column) · <code>CHANGELOG.md</code></td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code> per <code>COMPATIBILITY.md</code> §2.1 — new optional field with default <code>&quot;stable&quot;</code></td></tr>
+<tr><td><strong>Supersedes</strong></td><td>—</td></tr>
+<tr><td><strong>Superseded by</strong></td><td>—</td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>Adds an optional <code>tier ∈ {&quot;stable&quot;, &quot;experimental&quot;}</code> field to every capability advertisement under <code>/.well-known/openwop</code>. When a host advertises a capability as <code>tier: &quot;experimental&quot;</code>, the host MUST also advertise an <code>experimentalUntil</code> ISO-8601 date no more than 12 months in the future. Conformance scenarios for a capability MUST honor the host's declared tier — under default mode, an <code>experimental</code> capability is exercised as a soft-skip with a one-line note; under <code>OPENWOP_REQUIRE_EXPERIMENTAL=true</code>, experimental scenarios run as hard assertions. The change creates a public, machine-readable "I am advertising this but I am not promising stability yet" signal for <code>Active</code>-RFC capability surfaces that cannot graduate to <code>Accepted</code> until an external implementer adopts them.</p>
+<h2 id="motivation">Motivation</h2>
+<p>The 2026-05-22 standards-readiness review flagged a structural problem: openwop currently has a binary RFC status (<code>Accepted</code> = stable / <code>Active</code> = "may shift compatibly within v1.x until promotion"), but the conformance suite gates <code>Active</code>-RFC scenarios only by capability advertisement, not by stability claim. A non-steward implementer reading the discovery payload cannot tell whether <code>capabilities.multiAgent.executionModel.supported: true</code> represents (a) a stable wire surface they can build against, or (b) an <code>Active</code> RFC that may amend before next minor. The audit's recommended fix was: <em>"Active RFC surfaces either promoted to Accepted or explicitly carved out as experimental profiles."</em> Per-RFC promotion requires cross-host evidence which can take 3–9 months (the canonical example: RFC 0035 sandbox execution contract is <code>Active</code> with 8 conformance scenarios shipped, but cannot graduate until a first sandbox-executing host wires the behavioral probes — see commit <code>5864a2f</code> for the cost of premature graduation).</p>
+<p>This RFC creates the experimental carve-out: a host advertising <code>multiAgent.executionModel.{supported: true, tier: &quot;experimental&quot;, experimentalUntil: &quot;2027-05-22&quot;}</code> makes the stability claim explicit on the wire. Conformance suites and downstream clients can route around the experimental surface; auditors can read the discovery payload and form an opinion in 30 seconds.</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-optional-tier-field-on-capability-sub-blocks">§A — Optional <code>tier</code> field on capability sub-blocks</h3>
+<p>Every object value under <code>capabilities.*</code> MAY carry an additional <code>tier</code> property:</p>
+<pre class="lang-diff"><code> {
+   &quot;type&quot;: &quot;object&quot;,
+   &quot;properties&quot;: {
+     &quot;supported&quot;: { &quot;type&quot;: &quot;boolean&quot; },
+     &quot;version&quot;: { &quot;type&quot;: &quot;integer&quot; },
++    &quot;tier&quot;: {
++      &quot;type&quot;: &quot;string&quot;,
++      &quot;enum&quot;: [&quot;stable&quot;, &quot;experimental&quot;],
++      &quot;default&quot;: &quot;stable&quot;,
++      &quot;description&quot;: &quot;Stability claim for this capability advertisement. `stable` (the default when absent) means the host commits to the wire shape across v1.x minors. `experimental` means the host advertises the surface as a preview; the wire shape MAY shift compatibly without notice until the corresponding RFC graduates to `Accepted` and the host re-advertises as `stable`. Hosts MUST omit the field for capabilities whose underlying RFC is already `Accepted`.&quot;
++    },
++    &quot;experimentalUntil&quot;: {
++      &quot;type&quot;: &quot;string&quot;,
++      &quot;format&quot;: &quot;date&quot;,
++      &quot;description&quot;: &quot;Required when `tier` is `experimental`. ISO-8601 `YYYY-MM-DD` no more than 12 months past the discovery response date. Reaching this date without graduating the underlying RFC to `Accepted` MUST result in the host either flipping tier to `stable` OR retracting the capability advertisement.&quot;
++    }
+-  }
++  },
++  &quot;if&quot;: {
++    &quot;properties&quot;: { &quot;tier&quot;: { &quot;const&quot;: &quot;experimental&quot; } },
++    &quot;required&quot;: [&quot;tier&quot;]
++  },
++  &quot;then&quot;: {
++    &quot;required&quot;: [&quot;experimentalUntil&quot;]
++  }
+ }</code></pre>
+<p>The <code>if</code>/<code>then</code> block at the bottom of the diff is the load-bearing conformance enforcement for §B's "MUST also advertise <code>experimentalUntil</code>" rule. Without it, the §F negative example ("<code>tier: &#39;experimental&#39;</code> without <code>experimentalUntil</code> MUST fail schema validation") would be prose-only — the exact pattern the 2026-05-22 audit flagged as "MUST in prose, not in schema." Note: <code>if</code>/<code>then</code> is a JSON Schema 2020-12 feature, supported by Ajv2020 (which <code>spec-corpus-validity.test.ts</code> uses); it is NOT inside the Tier-1 envelope subset specified by <code>spec/v1/structured-output-subset.md</code> (Gemini drops it), but <code>capabilities.schema.json</code> is a host-advertisement schema, not an LLM-emission envelope — the Tier-1 subset constraints do not apply.</p>
+<p>Hosts MUST NOT advertise <code>tier: &quot;experimental&quot;</code> on a capability whose RFC is already <code>Accepted</code>. The <code>tier</code> field on capabilities whose underlying RFC is <code>Active</code> SHOULD be <code>&quot;experimental&quot;</code> until the RFC promotes.</p>
+<h3 id="b-sunset-rule-the-audit-s-key-concern">§B — Sunset rule (the audit's key concern)</h3>
+<p>The audit's risk was: "an experimental tier becomes a permanent dumping ground for <code>Active</code> RFCs (defeats the audit's intent)." The sunset rule addresses this:</p>
+<p>A host advertising <code>tier: &quot;experimental&quot;</code> MUST also advertise <code>experimentalUntil: &quot;&amp;lt;YYYY-MM-DD&amp;gt;&quot;</code> ≤ 12 months out. Reaching the date without graduating the underlying RFC to <code>Accepted</code> triggers one of three host actions:</p>
+<p>1. <strong>Flip to stable.</strong> Wire shape has not changed; commit to the contract. Re-advertise as <code>tier: &quot;stable&quot;</code>. 2. <strong>Extend.</strong> Re-advertise with <code>tier: &quot;experimental&quot;</code> and a new <code>experimentalUntil</code> ≤ 12 months out. The deprecation RFC MUST be open before the second extension to justify why the surface is still in flux. 3. <strong>Retract.</strong> Remove the capability advertisement. Existing clients receive <code>capability_not_provided</code> per <code>capabilities.md</code> §"Unsupported capability — refusal contract".</p>
+<p>Sub-block 2 ("Extend") is the audit's escape valve: it is allowed, but every extension is publicly visible (the date is in <code>/.well-known/openwop</code>) and the second extension requires an open RFC. The audit's "permanent dumping ground" concern is mechanically discouraged.</p>
+<h3 id="c-derived-profile-openwop-experimental">§C — Derived profile <code>openwop-experimental</code></h3>
+<p>The capabilities-derived profile machinery in <code>spec/v1/profiles.md</code> gains a new derived profile:</p>
+<ul>
+<li><strong>Name:</strong> <code>openwop-experimental</code></li>
+<li><strong>Predicate:</strong> any capability sub-block advertises <code>tier: &quot;experimental&quot;</code>.</li>
+<li><strong>Semantics:</strong> a host advertising <code>openwop-experimental</code> is signaling that at least one of its capability claims is preview-grade. Downstream clients that require stable-only contracts can filter on the negation (<code>!profile.openwop-experimental</code>).</li>
+</ul>
+<h3 id="d-conformance-suite-changes">§D — Conformance suite changes</h3>
+<p>Conformance scenarios gated on a capability MUST consult the capability's <code>tier</code> field:</p>
+<ul>
+<li><strong>Default mode (<code>OPENWOP_REQUIRE_BEHAVIOR=false</code>):</strong> scenarios for <code>tier: &quot;experimental&quot;</code> capabilities <strong>soft-skip</strong> with the message <code>[experimental capability: &amp;lt;name&amp;gt;] host advertises tier=&#39;experimental&#39; until &amp;lt;experimentalUntil&amp;gt;; scenario skipped under default mode</code>. The scenario does NOT count toward "Failed" or "Skipped (capability-gated)" in the four-bucket taxonomy; a new fifth bucket <code>Skipped (experimental)</code> SHOULD be tallied.</li>
+<li><strong>Strict mode (<code>OPENWOP_REQUIRE_BEHAVIOR=true</code>):</strong> experimental scenarios remain soft-skipped unless <code>OPENWOP_REQUIRE_EXPERIMENTAL=true</code> is ALSO set. With both flags, experimental scenarios run as hard assertions.</li>
+<li><strong>Default-mode soft-skip ergonomics:</strong> the new <code>behavior-gate.ts</code> helper <code>experimentalGate(profileName, advertised, tier)</code> accepts the tier and routes accordingly.</li>
+</ul>
+<h3 id="e-interop-matrix-md-advertisement-column">§E — <code>INTEROP-MATRIX.md</code> advertisement column</h3>
+<p>The host row gains a new column: <strong>"Experimental capabilities advertised"</strong> — comma-separated list of every capability sub-block carrying <code>tier: &quot;experimental&quot;</code>, plus their <code>experimentalUntil</code> dates. This is the auditor's read-at-a-glance contract surface.</p>
+<h3 id="f-example">§F — Example</h3>
+<p>A workflow-engine host running the multi-agent execution model Phase 4 advertises:</p>
+<pre class="lang-json"><code>{
+  &quot;capabilities&quot;: {
+    &quot;multiAgent&quot;: {
+      &quot;executionModel&quot;: {
+        &quot;supported&quot;: true,
+        &quot;version&quot;: 4,
+        &quot;tier&quot;: &quot;experimental&quot;,
+        &quot;experimentalUntil&quot;: &quot;2027-05-22&quot;,
+        &quot;confidenceEscalationFloor&quot;: 0.5
+      }
+    }
+  }
+}</code></pre>
+<p>A consuming client that needs only stable surfaces inspects the response, sees <code>tier: &quot;experimental&quot;</code>, and treats the multi-agent surface as preview. A conformance suite running against this host soft-skips the 12 multi-agent Phase 2–4 scenarios by default and runs them under <code>OPENWOP_REQUIRE_EXPERIMENTAL=true</code> for the host author's pre-flight check.</p>
+<p>Negative example — invalid advertisement (<code>tier: &quot;experimental&quot;</code> without <code>experimentalUntil</code>):</p>
+<pre class="lang-json"><code>{
+  &quot;capabilities&quot;: {
+    &quot;multiAgent&quot;: { &quot;executionModel&quot;: { &quot;supported&quot;: true, &quot;version&quot;: 4, &quot;tier&quot;: &quot;experimental&quot; } }
+  }
+}</code></pre>
+<p>This MUST fail schema validation; <code>experimentalUntil</code> is required when <code>tier: &quot;experimental&quot;</code>.</p>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive</strong> per <code>COMPATIBILITY.md</code> §2.1:</p>
+<ul>
+<li><code>tier</code> is a new optional field, default <code>&quot;stable&quot;</code> when omitted. Existing clients ignore unknown fields per the JSON Schema 2020-12 <code>additionalProperties: false</code> posture (hosts already validate); existing servers may omit <code>tier</code> indefinitely and remain conforming.</li>
+<li>No existing wire surface changes.</li>
+<li>No existing event type, error code, or HTTP status changes.</li>
+<li>No existing <code>MUST</code> requirement is relaxed; one new <code>MUST</code> (<code>experimentalUntil</code> is required when <code>tier: &quot;experimental&quot;</code>) is added.</li>
+<li>Existing v1 conformance passes are unaffected.</li>
+</ul>
+<p>The conformance-suite-side change is also additive: a host that does not advertise <code>tier</code> continues to be evaluated as <code>stable</code> (the prior behavior); a host that does advertise it gets the soft-skip routing for free.</p>
+<h2 id="conformance">Conformance</h2>
+<h3 id="existing-scenarios-that-cover-this-surface">Existing scenarios that cover this surface</h3>
+<ul>
+<li><code>discovery.test.ts</code> covers the structural discovery shape (Ajv2020 compile + <code>additionalProperties: false</code>). The new <code>tier</code> field will be validated automatically as soon as the schema lands.</li>
+</ul>
+<h3 id="new-scenarios">New scenarios</h3>
+<p><code>conformance/src/scenarios/experimental-tier-shape.test.ts</code> — three describe blocks:</p>
+<p>1. <strong>Schema shape:</strong> when a host advertises any capability with <code>tier: &quot;experimental&quot;</code>, the host MUST also advertise <code>experimentalUntil</code> matching <code>^\d{4}-\d{2}-\d{2}$</code>, the date MUST be in the future, and the date MUST be no more than 365 days past the discovery response timestamp. 2. <strong>Behavior gating:</strong> at least one experimental capability advertised by the host MUST cause the corresponding scenario file's <code>experimentalGate(profileName, advertised, tier)</code> to soft-skip under default mode. (Validated by examining a list of known-experimental capability sub-blocks and probing the gate.) 3. <strong>Sunset detection:</strong> a host advertising <code>experimentalUntil</code> in the past MUST fail discovery validation with <code>error: &quot;validation_error&quot;</code> + <code>details.field: &quot;capabilities.&amp;lt;path&amp;gt;.experimentalUntil&quot;</code> + <code>details.reason: &quot;experimentalUntil_in_past&quot;</code>.</p>
+<h3 id="per-rfc-application-of-the-experimental-tier">Per-RFC application of the experimental tier</h3>
+<p>Per the audit's "Active RFC → carve-out" recommendation, the following capability sub-blocks SHOULD adopt <code>tier: &quot;experimental&quot;</code> in the reference workflow-engine when this RFC reaches <code>Active</code>:</p>
+<table>
+<thead><tr><th>Capability sub-block</th><th>Underlying RFC</th><th>Suggested <code>experimentalUntil</code></th></tr></thead>
+<tbody>
+<tr><td><code>multiAgent.executionModel.{supported, version}</code></td><td>0037 / 0039 / 0040 / 0041</td><td>2027-05-22</td></tr>
+<tr><td><code>envelopes.reliability.*</code></td><td>0032</td><td>2027-05-22</td></tr>
+<tr><td><code>envelopes.completion.distinguishesTruncation</code></td><td>0033</td><td>2027-05-22</td></tr>
+<tr><td><code>modelCapabilities.{substitutionSupported, advertised}</code></td><td>0031</td><td>2027-05-22</td></tr>
+<tr><td><code>idempotency.multiRegion.<em></code> + <code>eventLog.crossEngineOrdering.</em></code></td><td>0036</td><td>2027-05-22</td></tr>
+<tr><td><code>sandbox.*</code></td><td>0035</td><td>2027-05-22 (post the 5864a2f revert)</td></tr>
+<tr><td><code>observability.otel.collectorSeam.*</code></td><td>0034</td><td>2027-05-22</td></tr>
+<tr><td><code>prompts.{supported, endpointsSupported, mutableLibrary, agentBindings}</code></td><td>0027 / 0028 / 0029</td><td>2027-02-22 (3-month window — Active 7-day comment already closed 2026-05-27)</td></tr>
+</tbody></table>
+<blockquote><p><strong>Footnote on dates:</strong> the <code>experimentalUntil</code> values above are anchored to RFC 0042's filing date (2026-05-22) plus 12 months. If the 7-day comment window slips and RFC 0042 reaches <code>Active</code> later than 2026-05-29, hosts adopting the experimental tier SHOULD re-anchor the dates to the actual Active-promotion date so the host doesn't burn a third of its sunset budget before the advertisement is even legal to land. The working group (or lead maintainer, pre-WG) will publish the canonical re-anchored dates in <code>INTEROP-MATRIX.md</code> when RFC 0042 promotes.</p></blockquote>
+<p>Note: <code>tier</code> adoption is per-capability, not per-host. A single host MAY advertise some capabilities as <code>stable</code> and others as <code>experimental</code>. The Postgres reference host's <code>production</code> capability stays <code>stable</code>; its <code>multiAgent.executionModel</code> capability becomes <code>experimental</code>.</p>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<p>1. <strong>Do nothing — keep the binary Active/Accepted distinction.</strong> Rejected because the audit's structural objection is correct: a non-steward implementer cannot read the discovery payload and form an opinion about stability. The Active-RFC promotion gate (cross-host evidence) takes months for some surfaces; that latency without a wire-level signal is the credibility risk. 2. <strong>Use <code>x-experimental</code> prefix on capability names.</strong> Rejected because it requires a wire-shape rename when a capability graduates — exactly the kind of compatible-shift cost we're trying to avoid. The optional <code>tier</code> field is purely additive: graduation removes the field, no rename. 3. <strong>Use the <code>profile</code> derivation alone (no <code>tier</code> field), with <code>openwop-experimental</code> derived purely from RFC status.</strong> Rejected because RFC status is server-side metadata the discovery response does not carry; clients would have to fetch <code>RFCS/<em>.md</code> to interpret the profile. The audit's specific request was "machine-readable" — <code>tier</code> on the wire is the minimum-bandwidth fix. 4. <strong>Use a separate top-level <code>experimentalCapabilities</code> block.</strong> Rejected because it splits the discovery payload across two locations and breaks the <code>additionalProperties: false</code> discipline for the existing <code>capabilities.</em></code> sub-blocks. Adding an optional field to existing sub-blocks is cleaner.</p>
+<h2 id="unresolved-questions">Unresolved questions</h2>
+<p>1. <strong>What is the right default <code>experimentalUntil</code> window?</strong> The proposal says ≤ 12 months. The audit didn't specify; 12 months matches the bootstrap-phase governance cycle. Maintainers should confirm. 2. <strong>Should <code>OPENWOP_REQUIRE_EXPERIMENTAL=true</code> be the default in CI gates for <code>Active</code> RFCs?</strong> Today RFC 0037–0041 scenarios soft-skip unless <code>OPENWOP_REQUIRE_BEHAVIOR=true</code> is also set. Adding a third axis to strict-mode is opt-in friction; maintainers should decide whether the reference workflow-engine CI runs <code>OPENWOP_REQUIRE_EXPERIMENTAL=true</code> by default once this RFC ships. 3. <strong>Should the sunset rule require the deprecation RFC be open BEFORE the first <code>experimentalUntil</code> date passes (i.e., proactively), or only at the time of second extension?</strong> Proactive is stricter; reactive is the current §B language. 4. <strong><code>openwop-experimental</code> derived profile — should it be a single profile, or one per experimental capability sub-block (e.g., <code>openwop-multi-agent-experimental</code>)?</strong> Single profile (the current proposal) is simpler; per-sub-block profiles would mirror the existing <code>capabilities.X</code> granularity.</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<ul>
+<li><strong>Schema landing:</strong> <code>schemas/capabilities.schema.json</code> is the single source of truth; once the optional fields land, <code>spec-corpus-validity.test.ts</code> will compile-test them automatically.</li>
+<li><strong>Helper extraction:</strong> add <code>experimentalGate(profileName, advertised, tier)</code> to <code>conformance/src/lib/behavior-gate.ts</code> alongside the existing <code>behaviorGate</code> helper. The default-mode soft-skip path emits the new <code>Skipped (experimental)</code> log line.</li>
+<li><strong>Reference workflow-engine wiring:</strong> the <code>getCapabilities</code> route at <code>apps/workflow-engine/backend/typescript/src/routes/discovery.ts</code> reads the experimental advertisements from <code>hostConfig.experimentalCapabilities[]</code> and stamps <code>tier</code> + <code>experimentalUntil</code> into each matching sub-block.</li>
+<li><strong>Effort estimate:</strong> 1–2 days (schema + helper + 1 conformance scenario + reference host wiring + per-RFC tier flip).</li>
+<li><strong>Reference impl can land BEFORE the 7-day comment window closes.</strong> Per <code>CONTRIBUTING.md</code> §"Bootstrap-phase notes", single-steward additive RFCs may co-land schema + impl + RFC. The 7-day window runs alongside.</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<ul>
+<li>[ ] Spec text merged into <code>spec/v1/capabilities.md</code> + <code>spec/v1/profiles.md</code>.</li>
+<li>[ ] Schema diff merged into <code>schemas/capabilities.schema.json</code>; <code>spec-corpus-validity.test.ts</code> passes.</li>
+<li>[ ] <code>conformance/src/scenarios/experimental-tier-shape.test.ts</code> lands with 3 describe blocks.</li>
+<li>[ ] <code>INTEROP-MATRIX.md</code> gains "Experimental capabilities advertised" column.</li>
+<li>[ ] CHANGELOG entry under <code>[Unreleased]</code> referencing this RFC.</li>
+<li>[ ] Reference workflow-engine advertises at least one capability sub-block with <code>tier: &quot;experimental&quot;</code>.</li>
+<li>[ ] 7-day public comment window closes without unresolved objections.</li>
+<li>[ ] At least one non-steward implementer signals adoption (or explicit waiver per the bootstrap-phase rule).</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li>Audit document: 2026-05-22 standards-readiness review (<code>docs/AUDIT-RESPONSE-2026-05.md</code>).</li>
+<li><code>COMPATIBILITY.md</code> §2.1 — additive-only rule for v1.x.</li>
+<li><code>spec/v1/capabilities.md</code> §"in-package vs network-superset shapes".</li>
+<li><code>spec/v1/profiles.md</code> §"Profile derivation from capabilities".</li>
+<li><code>RFCS/0001-rfc-process.md</code> §"Promotion to Accepted" — the cross-host evidence gate the experimental tier is designed to coexist with.</li>
+<li>Commit <code>5864a2f</code> — the 2026-05-22 sandbox-graduation revert that demonstrates why "Active = production-ready" is not a safe assumption.</li>
+<li>W3C TAG "Designing Reusable Web Features" §"Mark experimental features with a clear opt-in" — prior art for in-payload experimental signaling.</li>
+</ul></article></div><script src="/assets/spec-toc.js" defer></script>
+  </div>
+</main>
+
+<!-- ─────────────────────── FOOTER (mirrors marketing) ─────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-mark">
+          <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+          Open<em>WOP</em>
+        </div>
+        <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
+          The Workflow Orchestration Protocol — an open, conformance-tested
+          contract for durable, observable AI workflows across hosts.
+        </p>
+      </div>
+      <div>
+        <h5>Specification</h5>
+        <ul>
+          <li><a href="/spec/v1/">v1.x Core</a></li>
+          <li><a href="/rfcs/">RFCs</a></li>
+          <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
+          <li><a href="/errors/">Error codes</a></li>
+          <li><a href="/scenarios/">Scenario walkthroughs</a></li>
+          <li><a href="/profiles/">Profiles</a></li>
+          <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
+          <li><a href="/versioning/">Versioning policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Ecosystem</h5>
+        <ul>
+          <li><a href="https://packs.openwop.dev/">Pack registry</a></li>
+          <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
+          <li><a href="/faq/">FAQ</a></li>
+          <li><a href="/security/">Security posture</a></li>
+          <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
+          <li><a href="/contributing/">Contributing</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>For</h5>
+        <ul>
+          <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+          <li><a href="/for/host-implementers/">Host implementers</a></li>
+          <li><a href="/for/pack-authors/">Pack authors</a></li>
+          <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 OpenWOP contributors</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/site-nav.js" defer></script>
+
+</body>
+</html>

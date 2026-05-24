@@ -311,11 +311,23 @@ function templatePage({ title, content, navActive, description, canonicalPath, j
     .replace(/\$\{jsonLd\}/g, jsonLdBlock)
     .replace(/\$\{gscVerification\}/g, GSC_VERIFICATION)
     .replace(/\$\{analyticsScript\}/g, ANALYTICS_SCRIPT)
+    // The top-nav has two dropdown triggers (Protocol, Implement) plus
+    // four direct links (Quickstart, Community, Changelog, GitHub). Every
+    // page that lives under the Protocol umbrella (spec, rfcs, conformance,
+    // governance, security, roadmap, maintainers, profiles, versioning,
+    // contributing) marks navActive='protocol'; every audience landing under
+    // /for/* + the /implement/ summary marks navActive='implement'.
     .replace(/\$\{nav_index\}/g, navActive === 'index' ? 'active' : '')
+    .replace(/\$\{nav_quickstart\}/g, navActive === 'quickstart' ? 'active' : '')
+    .replace(/\$\{nav_protocol\}/g, ['protocol', 'spec', 'rfcs', 'conformance', 'profiles'].includes(navActive) ? 'active' : '')
+    .replace(/\$\{nav_implement\}/g, navActive === 'implement' ? 'active' : '')
+    .replace(/\$\{nav_community\}/g, navActive === 'community' ? 'active' : '')
+    .replace(/\$\{nav_changelog\}/g, navActive === 'changelog' ? 'active' : '')
+    // Placeholders kept so historical templates do not show literal
+    // ${nav_…} tokens if a stale template fragment lingers anywhere.
     .replace(/\$\{nav_spec\}/g, navActive === 'spec' ? 'active' : '')
     .replace(/\$\{nav_rfcs\}/g, navActive === 'rfcs' ? 'active' : '')
     .replace(/\$\{nav_conformance\}/g, navActive === 'conformance' ? 'active' : '')
-    .replace(/\$\{nav_changelog\}/g, navActive === 'changelog' ? 'active' : '')
     .replace(/\$\{nav_faq\}/g, navActive === 'faq' ? 'active' : '')
     .replace(/\$\{nav_profiles\}/g, navActive === 'profiles' ? 'active' : '');
 }
@@ -566,13 +578,13 @@ function buildSpecDocs() {
     },
     {
       key: 'runtime',
-      title: 'Run lifecycle &amp; state',
+      title: 'Run lifecycle & state',
       lede: 'How a run starts, streams, suspends, resumes, replays, and ends.',
       slugs: ['run-options', 'replay', 'idempotency', 'channels-and-reducers', 'version-negotiation', 'stream-modes'],
     },
     {
       key: 'agents',
-      title: 'Agents &amp; multi-agent execution',
+      title: 'Agents & multi-agent execution',
       lede: 'Agent identity, memory, multi-agent execution model, envelope shapes.',
       slugs: ['agent-memory', 'agent-ref-positioning', 'multi-agent-execution', 'ai-envelope', 'structured-output-subset', 'prompts'],
     },
@@ -590,19 +602,19 @@ function buildSpecDocs() {
     },
     {
       key: 'security',
-      title: 'Auth &amp; security',
+      title: 'Auth & security',
       lede: 'API keys, OAuth2, OIDC, mTLS, BYOK secret resolution, redaction.',
       slugs: ['auth', 'auth-profiles'],
     },
     {
       key: 'ecosystem',
-      title: 'Node packs &amp; registry',
+      title: 'Node packs & registry',
       lede: 'Signed packs of reusable nodes + the registry that serves them.',
       slugs: ['node-packs', 'workflow-chain-packs', 'registry-operations'],
     },
     {
       key: 'production',
-      title: 'Production posture &amp; operations',
+      title: 'Production posture & operations',
       lede: 'The production profile, scale profiles, debug bundles, observability.',
       slugs: ['production-profile', 'scale-profiles', 'debug-bundle', 'observability', 'storage-adapters', 'host-extensions'],
     },
@@ -659,7 +671,7 @@ function buildSpecDocs() {
   const indexPageHeader = `<header class="page-header">
       <h1>OpenWOP v1 spec corpus</h1>
       <p class="lede">${items.length} prose specs governing the v1 wire contract. Each section below groups specs by what they do; click through for the normative text.</p>
-      <p class="meta">Status legend: <strong>FINAL</strong> · STUB · DRAFT · OUTLINE. A spec is FINAL when its wire shape is locked under v1.x compatibility rules.</p>
+      <p class="meta">Status legend: <strong>Stable</strong> · DRAFT · OUTLINE · STUB. A spec is Stable when its wire shape is locked under v1.x compatibility rules. (Older revisions labelled the same tier <strong>FINAL</strong>.)</p>
     </header>`;
   const indexArticleHtml = `<article class="spec-doc">${groupsHtml}</article>`;
   const indexContent = indexPageHeader + wrapWithToc(indexArticleHtml, indexToc);
@@ -903,7 +915,7 @@ function buildRoadmap() {
     destPath: join(DIST, 'roadmap', 'index.html'),
     pageTitle: 'Roadmap',
     lede: 'Gap-closure tracks the steward maintains in the open. No dates committed beyond the windows that have a CHANGELOG entry; the roadmap is direction, not promise.',
-    navActive: '',
+    navActive: 'protocol',
     canonicalPath: '/roadmap/',
     slugLabel: 'roadmap/index.html',
   });
@@ -915,7 +927,7 @@ function buildVersioning() {
     destPath: join(DIST, 'versioning', 'index.html'),
     pageTitle: 'Versioning & compatibility',
     lede: 'How OpenWOP changes between releases. Additive-only within v1.x; safety-fixes follow the 90-day window; breaking changes only land in major versions.',
-    navActive: '',
+    navActive: 'protocol',
     canonicalPath: '/versioning/',
     slugLabel: 'versioning/index.html',
   });
@@ -927,7 +939,7 @@ function buildSecurityPage() {
     destPath: join(DIST, 'security', 'index.html'),
     pageTitle: 'Security posture',
     lede: 'Threat model, disclosure policy, and the public invariants every conformance-tested host must satisfy. Embargoed advisories go through the documented private channel before this page reflects them.',
-    navActive: '',
+    navActive: 'protocol',
     canonicalPath: '/security/',
     slugLabel: 'security/index.html',
   });
@@ -939,7 +951,7 @@ function buildContributingPage() {
     destPath: join(DIST, 'contributing', 'index.html'),
     pageTitle: 'Contributing',
     lede: 'Per-artifact change rules for the OpenWOP corpus — what counts as editorial, additive, safety-fix, or breaking; the eight-step pre-merge gate; the DCO requirement.',
-    navActive: '',
+    navActive: 'protocol',
     canonicalPath: '/contributing/',
     slugLabel: 'contributing/index.html',
   });
@@ -951,9 +963,33 @@ function buildGovernancePage() {
     destPath: join(DIST, 'governance', 'index.html'),
     pageTitle: 'Governance',
     lede: 'How decisions get made. The bootstrap-phase amendment, maintainer-track expectations, and the cross-vendor working-group charter for v2.',
-    navActive: '',
+    navActive: 'protocol',
     canonicalPath: '/governance/',
     slugLabel: 'governance/index.html',
+  });
+}
+
+function buildMaintainersPage() {
+  buildMarkdownDoc({
+    srcAbsPath: join(ROOT, 'MAINTAINERS.md'),
+    destPath: join(DIST, 'maintainers', 'index.html'),
+    pageTitle: 'Maintainers',
+    lede: 'Who has merge authority on github.com/openwop/openwop, what they gate, and how recruitment + removal-for-cause work. Affiliation policy drives the vendor-neutral-org migration tripwire.',
+    navActive: 'protocol',
+    canonicalPath: '/maintainers/',
+    slugLabel: 'maintainers/index.html',
+  });
+}
+
+function buildQuickstartPage() {
+  buildMarkdownDoc({
+    srcAbsPath: join(ROOT, 'QUICKSTART.md'),
+    destPath: join(DIST, 'quickstart', 'index.html'),
+    pageTitle: 'Quickstart',
+    lede: 'Clone the repo, start a reference host, and create a run over REST + SSE in ten minutes. No cloud account, vendor SDK, or managed service required.',
+    navActive: 'quickstart',
+    canonicalPath: '/quickstart/',
+    slugLabel: 'quickstart/index.html',
   });
 }
 
@@ -1006,6 +1042,7 @@ function buildRfcs() {
   const indexContent = `<header class="page-header">
     <h1>OpenWOP RFCs</h1>
     <p class="lede">${items.length} RFCs governing additive evolution of the v1 protocol. Status legend: Draft (open comment window) → Active (accepted; impl follows) → Accepted (in-tree reference impl + conformance scenarios) → Withdrawn / Superseded.</p>
+    <p class="meta"><strong>v1.1 is the stable wire contract.</strong> RFCs at <em>Draft</em> or <em>Active</em> target <strong>v1.2</strong> (additive) unless the RFC is explicitly labelled <em>Safety fix</em> per <a href="https://github.com/openwop/openwop/blob/main/COMPATIBILITY.md">COMPATIBILITY.md §3</a>. No RFC may land a breaking change inside v1.x.</p>
   </header>
   <table class="spec-index">
     <thead><tr><th>RFC</th><th>Status</th></tr></thead>
@@ -1039,13 +1076,16 @@ function buildContentDir() {
   //   site/content/for/{role}.md       → /for/{role}/index.html
   // Each file MUST start with an H1 (title) followed by a paragraph (lede).
   const ROUTES = [
-    { src: 'faq.md',                          dest: ['faq'],                          nav: 'faq', label: 'FAQ' },
-    { src: 'errors.md',                       dest: ['errors'],                       nav: '',    label: 'Error codes' },
-    { src: 'scenarios.md',                    dest: ['scenarios'],                    nav: '',    label: 'Scenario walkthroughs' },
-    { src: 'for/workflow-authors.md',         dest: ['for', 'workflow-authors'],      nav: '',    label: 'For workflow authors' },
-    { src: 'for/host-implementers.md',        dest: ['for', 'host-implementers'],     nav: '',    label: 'For host implementers' },
-    { src: 'for/pack-authors.md',             dest: ['for', 'pack-authors'],          nav: '',    label: 'For pack authors' },
-    { src: 'for/production-evaluators.md',    dest: ['for', 'production-evaluators'], nav: '',    label: 'For production evaluators' },
+    { src: 'faq.md',                          dest: ['faq'],                          nav: 'faq',        label: 'FAQ' },
+    { src: 'errors.md',                       dest: ['errors'],                       nav: '',           label: 'Error codes' },
+    { src: 'scenarios.md',                    dest: ['scenarios'],                    nav: '',           label: 'Scenario walkthroughs' },
+    { src: 'community.md',                    dest: ['community'],                    nav: 'community',  label: 'Community' },
+    { src: 'protocol.md',                     dest: ['protocol'],                     nav: 'protocol',   label: 'The OpenWOP protocol' },
+    { src: 'implement.md',                    dest: ['implement'],                    nav: 'implement',  label: 'Implementing OpenWOP' },
+    { src: 'for/workflow-authors.md',         dest: ['for', 'workflow-authors'],      nav: 'implement',  label: 'For workflow authors' },
+    { src: 'for/host-implementers.md',        dest: ['for', 'host-implementers'],     nav: 'implement',  label: 'For host implementers' },
+    { src: 'for/pack-authors.md',             dest: ['for', 'pack-authors'],          nav: 'implement',  label: 'For pack authors' },
+    { src: 'for/production-evaluators.md',    dest: ['for', 'production-evaluators'], nav: 'implement',  label: 'For production evaluators' },
   ];
   for (const r of ROUTES) {
     const srcAbsPath = join(contentDir, ...r.src.split('/'));
@@ -1075,6 +1115,114 @@ function buildContentDir() {
     );
     console.log(`[openwop-site] wrote ${r.dest.join('/')}/index.html`);
   }
+}
+
+// ── AsyncAPI events explorer (raw + cross-links) ──────────────────────
+
+function buildAsyncApiExplorer() {
+  const srcAbs = join(ROOT, 'api', 'asyncapi.yaml');
+  if (!existsSync(srcAbs)) return;
+  const raw = readFile(srcAbs);
+  ensureDir(join(DIST, 'api', 'events'));
+  const intro = `<div class="api-explorer">
+    <header class="api-explorer-head">
+      <div class="api-explorer-title">
+        <span class="api-explorer-kicker">Event API</span>
+        <h1>AsyncAPI — streamed event surface</h1>
+      </div>
+      <div class="api-explorer-meta">
+        <a class="api-explorer-download" href="/api/asyncapi.yaml" download="openwop-asyncapi.yaml">
+          <span>Download AsyncAPI</span>
+          <span aria-hidden="true">↓</span>
+        </a>
+      </div>
+    </header>
+    <p class="lede">
+      OpenWOP's event surface is documented as an AsyncAPI 3 document. Hosts
+      stream <code>run.*</code> events over <a href="/spec/v1/stream-modes.html">SSE</a>
+      and fan out to subscribers over <a href="/spec/v1/webhooks.html">signed
+      webhooks</a>. The wire shape is normative; the AsyncAPI source below is
+      the same contract in machine-readable form.
+    </p>
+    <p class="meta">
+      <strong>Source:</strong> <code>api/asyncapi.yaml</code> in the repo.
+      Prefer the prose specs (<a href="/spec/v1/stream-modes.html">stream-modes.md</a>,
+      <a href="/spec/v1/webhooks.html">webhooks.md</a>,
+      <a href="/spec/v1/observability.html">observability.md</a>) for
+      normative claims; the AsyncAPI document is a structured restatement.
+    </p>
+    <pre class="api-raw"><code>${escapeHtml(raw)}</code></pre>
+  </div>`;
+  writeFileSync(
+    join(DIST, 'api', 'events', 'index.html'),
+    templatePage({
+      title: 'OpenWOP — AsyncAPI event reference',
+      content: intro,
+      navActive: 'protocol',
+      description: 'AsyncAPI 3 reference for the OpenWOP event surface — SSE streams + signed webhook fan-out. Source of truth: api/asyncapi.yaml.',
+      canonicalPath: '/api/events/',
+    }),
+  );
+  console.log('[openwop-site] wrote api/events/index.html');
+}
+
+// ── gRPC transport explorer (raw .proto + cross-links) ────────────────
+
+function buildGrpcExplorer() {
+  const srcAbs = join(ROOT, 'api', 'grpc', 'openwop.proto');
+  if (!existsSync(srcAbs)) return;
+  const raw = readFile(srcAbs);
+  ensureDir(join(DIST, 'api', 'grpc'));
+  const intro = `<div class="api-explorer">
+    <header class="api-explorer-head">
+      <div class="api-explorer-title">
+        <span class="api-explorer-kicker">gRPC transport</span>
+        <h1>OpenWOP — gRPC service definition</h1>
+      </div>
+      <div class="api-explorer-meta">
+        <a class="api-explorer-download" href="/api/grpc/openwop.proto" download="openwop.proto">
+          <span>Download .proto</span>
+          <span aria-hidden="true">↓</span>
+        </a>
+      </div>
+    </header>
+    <p class="lede">
+      OpenWOP defines an optional gRPC transport profile alongside the
+      primary REST + SSE surface. A host MAY advertise the gRPC profile in
+      <code>/.well-known/openwop</code>; clients MAY use it interchangeably
+      with REST for any endpoint covered by the proto. The two transports
+      MUST surface identical semantics — the conformance suite enforces
+      parity. See <a href="/spec/v1/grpc-transport.html">grpc-transport.md</a>
+      for the normative claims.
+    </p>
+    <p class="meta"><strong>Source:</strong> <code>api/grpc/openwop.proto</code> in the repo.</p>
+    <pre class="api-raw"><code>${escapeHtml(raw)}</code></pre>
+  </div>`;
+  writeFileSync(
+    join(DIST, 'api', 'grpc', 'index.html'),
+    templatePage({
+      title: 'OpenWOP — gRPC service definition',
+      content: intro,
+      navActive: 'protocol',
+      description: 'gRPC service definition for OpenWOP. Optional transport profile; identical semantics to REST + SSE, enforced by the conformance suite.',
+      canonicalPath: '/api/grpc/',
+    }),
+  );
+  console.log('[openwop-site] wrote api/grpc/index.html');
+}
+
+// ── Adopters page (rendered from INTEROP-MATRIX.md) ───────────────────
+
+function buildAdoptersPage() {
+  buildMarkdownDoc({
+    srcAbsPath: join(ROOT, 'INTEROP-MATRIX.md'),
+    destPath: join(DIST, 'adopters', 'index.html'),
+    pageTitle: 'Adopters & interop matrix',
+    lede: 'Every host that has advertised an OpenWOP compatibility profile, paired with its measured conformance evidence. Claim plus result, no marketing — open a PR to add a row when your host passes the conformance suite.',
+    navActive: 'protocol',
+    canonicalPath: '/adopters/',
+    slugLabel: 'adopters/index.html',
+  });
 }
 
 // ── REST API explorer (Redoc, self-hosted bundle) ─────────────────────
@@ -1196,12 +1344,19 @@ function buildAll() {
   buildSecurityPage();
   buildContributingPage();
   buildGovernancePage();
+  buildMaintainersPage();
+  buildQuickstartPage();
   // RFC corpus — index + per-RFC pages.
   buildRfcs();
   // Net-new content authored under site/content/ (FAQ + audience pages).
   buildContentDir();
   // REST API explorer (Redoc, self-hosted bundle).
   buildApiExplorer();
+  // Sibling event + gRPC transport explorers (raw + cross-linked).
+  buildAsyncApiExplorer();
+  buildGrpcExplorer();
+  // Adopters / interop matrix — rendered from INTEROP-MATRIX.md.
+  buildAdoptersPage();
   // Sitemap last — walks dist/ to enumerate generated HTML pages.
   buildSitemap();
   buildRobots();

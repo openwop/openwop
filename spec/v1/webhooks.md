@@ -1,6 +1,6 @@
 # openwop Spec v1 — Webhook Subscriptions
 
-> **Status: FINAL v1 (2026-04-29).** Comprehensive coverage of subscription registration, payload signing, replay-attack protection, delivery semantics, and best-effort guarantees. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1 (2026-04-29).** Comprehensive coverage of subscription registration, payload signing, replay-attack protection, delivery semantics, and best-effort guarantees. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ---
 

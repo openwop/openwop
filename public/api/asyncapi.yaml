@@ -1,0 +1,489 @@
+asyncapi: 3.1.0
+
+info:
+  title: Workflow Orchestration Protocol (openwop) SSE Event Stream
+  version: "1.0"
+  externalDocs:
+    description: openwop spec v1 corpus
+    url: https://openwop.dev/spec/v1/
+  description: |
+    Canonical AsyncAPI 3.0 specification for the openwop server's
+    Server-Sent Events surface. Formalizes `stream-modes.md`
+    and references the run-event JSON Schema via `$ref` so external SDK
+    authors can codegen typed consumers without re-reading the prose.
+
+    Four canonical stream modes are exposed via the `streamMode` query
+    parameter on a single endpoint (`GET /v1/runs/{runId}/events`):
+
+    - `updates` — minimal state-change deltas (default; lowest bandwidth)
+    - `values`  — full `state.snapshot` after every transition
+    - `messages` — LLM token chunks for chat-style UIs
+    - `debug`   — full event firehose including internal events
+
+    Each mode is modeled as a separate AsyncAPI channel because the
+    payload union differs per mode. The underlying transport (HTTPS SSE)
+    is shared; only the filter + synthesis layer differs.
+
+    See `stream-modes.md` for the complete event-to-mode mapping table.
+  contact:
+    name: openwop spec working group
+    url: https://openwop.dev/spec/v1/
+  license:
+    name: Apache-2.0
+
+defaultContentType: text/event-stream
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SERVERS
+# ─────────────────────────────────────────────────────────────────────────────
+servers:
+  production:
+    host: '{host}'
+    pathname: /v1
+    protocol: https
+    description: openwop-compliant server
+    variables:
+      host:
+        default: api.example.com
+        description: Replace with your server's hostname.
+    security:
+      - $ref: '#/components/securitySchemes/ApiKeyAuth'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CHANNELS — one per streamMode (filter contract differs)
+# ─────────────────────────────────────────────────────────────────────────────
+channels:
+
+  runEventsUpdates:
+    address: /runs/{runId}/events
+    title: SSE — updates mode (default)
+    summary: Minimal state-change deltas for UI/CLI consumers.
+    description: |
+      Default consumption mode. Emits an SSE event for each terminal
+      node transition, suspension transition, run transition, and
+      artifact production. Payloads are deltas (the change since the
+      last event), NOT full snapshots.
+
+      Termination: server closes the connection on a terminal run
+      event (`run.completed`, `run.failed`, `run.cancelled`).
+
+      Selected via `?streamMode=updates` (or by omitting the query
+      parameter — `updates` is the default per `stream-modes.md`).
+    parameters:
+      runId:
+        $ref: '#/components/parameters/RunId'
+    messages:
+      runStarted:        { $ref: '#/components/messages/RunStarted' }
+      runCompleted:      { $ref: '#/components/messages/RunCompleted' }
+      runFailed:         { $ref: '#/components/messages/RunFailed' }
+      runCancelled:      { $ref: '#/components/messages/RunCancelled' }
+      runPaused:         { $ref: '#/components/messages/RunPaused' }
+      runResumed:        { $ref: '#/components/messages/RunResumed' }
+      nodeCompleted:     { $ref: '#/components/messages/NodeCompleted' }
+      nodeFailed:        { $ref: '#/components/messages/NodeFailed' }
+      nodeSkipped:       { $ref: '#/components/messages/NodeSkipped' }
+      nodeSuspended:     { $ref: '#/components/messages/NodeSuspended' }
+      nodeDispatched:    { $ref: '#/components/messages/NodeDispatched' }
+      approvalRequested: { $ref: '#/components/messages/ApprovalRequested' }
+      approvalReceived:  { $ref: '#/components/messages/ApprovalReceived' }
+      clarificationRequested: { $ref: '#/components/messages/ClarificationRequested' }
+      clarificationResolved:  { $ref: '#/components/messages/ClarificationResolved' }
+      interruptRequested: { $ref: '#/components/messages/InterruptRequested' }
+      interruptResolved:  { $ref: '#/components/messages/InterruptResolved' }
+      artifactCreated:   { $ref: '#/components/messages/ArtifactCreated' }
+
+  runEventsValues:
+    address: /runs/{runId}/events
+    title: SSE — values mode
+    summary: Full state snapshots after every transition.
+    description: |
+      Higher-bandwidth mode for consumers that don't maintain their
+      own state machine. Emits a synthesized `state.snapshot` event
+      after each `updates`-tier transition. Payload is the complete
+      `ProjectedRunState` (status, nodeStates, variables,
+      currentNodeId, channels).
+
+      On resumption (`Last-Event-ID` header), the server MUST emit a
+      fresh `state.snapshot` first so the resuming client gets a
+      baseline before continuing with subsequent snapshots.
+
+      Selected via `?streamMode=values`.
+    parameters:
+      runId:
+        $ref: '#/components/parameters/RunId'
+    messages:
+      stateSnapshot: { $ref: '#/components/messages/StateSnapshot' }
+
+  runEventsMessages:
+    address: /runs/{runId}/events
+    title: SSE — messages mode
+    summary: LLM token chunks for chat-style UIs.
+    description: |
+      Per-token chunks from any AI node currently streaming
+      (`core.ai.callPrompt`, `core.ai.generateFromPrompt`, etc).
+      Other event types are filtered out — consumers wanting state
+      transitions should pair this with a separate `updates` stream.
+
+      If no AI nodes execute during the run, the stream is empty
+      until termination.
+
+      Selected via `?streamMode=messages`.
+    parameters:
+      runId:
+        $ref: '#/components/parameters/RunId'
+    messages:
+      aiMessageChunk: { $ref: '#/components/messages/AiMessageChunk' }
+
+  runEventsDebug:
+    address: /runs/{runId}/events
+    title: SSE — debug mode
+    summary: Full event firehose including internal events.
+    description: |
+      Every `RunEventDoc` from the durable event log, including
+      events filtered out of `updates`: `log.appended`,
+      `variable.changed`, `version.pinned`, `lease.*`,
+      `node.retried`, internal projection writes, and any
+      vendor-extension events.
+
+      Highest bandwidth. Used by replay tools, debuggers, and
+      conformance tests.
+
+      Selected via `?streamMode=debug`.
+    parameters:
+      runId:
+        $ref: '#/components/parameters/RunId'
+    messages:
+      anyRunEvent: { $ref: '#/components/messages/AnyRunEvent' }
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OPERATIONS — consumer-side (receive)
+# ─────────────────────────────────────────────────────────────────────────────
+operations:
+
+  subscribeUpdates:
+    action: receive
+    channel:
+      $ref: '#/channels/runEventsUpdates'
+    title: Subscribe to updates stream
+    summary: Receive minimal state-change events for a run.
+    description: |
+      Long-lived SSE subscription. Connection auto-closes on
+      terminal run event. Honor the `Last-Event-ID` request header
+      for resumption — server begins streaming from the sequence
+      AFTER the supplied ID and MUST NOT re-emit the resumption
+      point itself.
+    bindings:
+      http:
+        method: GET
+        query:
+          type: object
+          properties:
+            streamMode:
+              type: string
+              enum: [updates]
+              default: updates
+
+  subscribeValues:
+    action: receive
+    channel:
+      $ref: '#/channels/runEventsValues'
+    title: Subscribe to values stream
+    summary: Receive full state snapshots after every transition.
+    bindings:
+      http:
+        method: GET
+        query:
+          type: object
+          required: [streamMode]
+          properties:
+            streamMode:
+              type: string
+              enum: [values]
+
+  subscribeMessages:
+    action: receive
+    channel:
+      $ref: '#/channels/runEventsMessages'
+    title: Subscribe to messages stream
+    summary: Receive per-token AI chunks.
+    bindings:
+      http:
+        method: GET
+        query:
+          type: object
+          required: [streamMode]
+          properties:
+            streamMode:
+              type: string
+              enum: [messages]
+
+  subscribeDebug:
+    action: receive
+    channel:
+      $ref: '#/channels/runEventsDebug'
+    title: Subscribe to debug stream
+    summary: Receive every engine event including internal/log/lease.
+    bindings:
+      http:
+        method: GET
+        query:
+          type: object
+          required: [streamMode]
+          properties:
+            streamMode:
+              type: string
+              enum: [debug]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# COMPONENTS
+# ─────────────────────────────────────────────────────────────────────────────
+components:
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: httpApiKey
+      in: header
+      name: Authorization
+      description: |
+        Bearer-style API key. Format implementation-defined; reference
+        impl uses `hk_`/`hk_test_` prefixes. Required scopes:
+        `runs:read` to subscribe. See `auth.md`.
+
+  parameters:
+    RunId:
+      description: The run to subscribe to. Format opaque; clients MUST treat as a string.
+
+  # ── Messages ─────────────────────────────────────────────────────────────
+  # All `updates`/`debug`-mode messages share the canonical RunEventDoc shape
+  # (run-event.schema.json). Each named message below pins the `type` field
+  # to a specific RunEventType discriminator so codegens can emit narrowed
+  # consumer handlers.
+
+  messages:
+
+    # ── Run-lifecycle ────────────────────────────────────────────────────
+    RunStarted:
+      name: run.started
+      title: Run started
+      summary: A new run was registered and execution began.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    RunCompleted:
+      name: run.completed
+      title: Run completed (terminal)
+      summary: Run reached terminal success state. SSE connection closes after this event.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    RunFailed:
+      name: run.failed
+      title: Run failed (terminal)
+      summary: Run reached terminal failure state. SSE connection closes after this event.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    RunCancelled:
+      name: run.cancelled
+      title: Run cancelled (terminal)
+      summary: Run was cancelled by user or admin. SSE connection closes after this event.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    RunPaused:
+      name: run.paused
+      title: Run paused
+      summary: Run paused (e.g., capability limit reached, manual pause).
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    RunResumed:
+      name: run.resumed
+      title: Run resumed
+      summary: Run resumed from pause/suspend.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    # ── Node-lifecycle ───────────────────────────────────────────────────
+    NodeCompleted:
+      name: node.completed
+      title: Node completed successfully
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    NodeFailed:
+      name: node.failed
+      title: Node failed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    NodeSkipped:
+      name: node.skipped
+      title: Node skipped due to edge condition
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    NodeSuspended:
+      name: node.suspended
+      title: Node suspended (HITL or external-event wait)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    NodeDispatched:
+      name: node.dispatched
+      title: core.dispatch spawned a child workflow (RFC 0007 §D + RFC 0022 §A)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    # ── HITL ─────────────────────────────────────────────────────────────
+    ApprovalRequested:
+      name: approval.requested
+      title: Approval requested
+      summary: Engine emitted an approval interrupt awaiting user resolution.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    ApprovalReceived:
+      name: approval.received
+      title: Approval received
+      summary: User resolved an approval interrupt (accept/reject/refine/edit).
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    ClarificationRequested:
+      name: clarification.requested
+      title: Clarification requested
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    ClarificationResolved:
+      name: clarification.resolved
+      title: Clarification resolved
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    InterruptRequested:
+      name: interrupt.requested
+      title: Interrupt requested (canonical HITL primitive)
+      summary: |
+        The discriminated-union form of approval/clarification/external-event/custom.
+        Servers emitting `interrupt.requested` SHOULD also emit the legacy
+        kind-specific event (`approval.requested` etc) for backward compat
+        until consumers migrate.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    InterruptResolved:
+      name: interrupt.resolved
+      title: Interrupt resolved
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    # ── Artifacts ────────────────────────────────────────────────────────
+    ArtifactCreated:
+      name: artifact.created
+      title: Artifact produced by a node
+      summary: A typed artifact (PRD, plan, theme, etc) was created and registered.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    # ── Synthesized for `values` mode ────────────────────────────────────
+    StateSnapshot:
+      name: state.snapshot
+      title: Full projected run state
+      summary: |
+        Synthesized event emitted by the server in `values` mode after
+        each `updates`-tier transition. NOT a member of the canonical
+        `RunEventType` enum — this is a per-mode synthetic.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/StateSnapshotPayload'
+
+    # ── Synthesized for `messages` mode ──────────────────────────────────
+    AiMessageChunk:
+      name: ai.message.chunk
+      title: AI token chunk
+      summary: Per-token streaming chunk from a `core.ai.*` node.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AiMessageChunkPayload'
+
+    # ── Catch-all for `debug` mode ───────────────────────────────────────
+    AnyRunEvent:
+      name: any
+      title: Any RunEventDoc
+      summary: |
+        Type-erased handler for `debug` mode — discriminate on the
+        `type` field per the `RunEventType` enum in the run-event
+        JSON Schema. Includes events filtered out of `updates`:
+        `log.appended`, `variable.changed`, `version.pinned`,
+        `lease.*`, `node.retried`, `replay.diverged`, etc.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+  # ── Schemas ────────────────────────────────────────────────────────────
+  schemas:
+
+    # The canonical persisted-event shape. Defined externally so the same
+    # contract is shared with REST event-poll responses (rest-endpoints.md
+    # `GET /v1/runs/{runId}/events/poll`) and offline replay tools.
+    RunEventDoc:
+      $ref: '../schemas/run-event.schema.json'
+
+    StateSnapshotPayload:
+      # S1 closure (2026-04-27): reuse the canonical RunSnapshot
+      # projection shape verbatim. Same type returned by
+      # `GET /v1/runs/{runId}` — consumers can swap polling for
+      # values-mode SSE without re-modeling state.
+      $ref: '../schemas/run-snapshot.schema.json'
+
+    AiMessageChunkPayload:
+      # S2 closure (2026-04-27): tiered metadata. Bare {nodeId, runId,
+      # chunk, isLast} is the minimum compliant payload; `meta`
+      # adds Tier 1 typed slots (finishReason / logprobs / toolCalls /
+      # model / usage) and a Tier 2 provider-pass-through escape hatch.
+      # Schema definition lives at run-event-payloads.schema.json#$defs.outputChunk
+      # — referenced here verbatim so the SSE consumer + run-event log
+      # share a single shape contract.
+      type: object
+      required: [nodeId, runId, chunk, isLast]
+      properties:
+        nodeId: { type: string }
+        runId: { type: string }
+        chunk:
+          type: string
+          description: The new token(s) since the previous chunk.
+        isLast:
+          type: boolean
+          description: True for the final chunk of a given AI node call.
+        meta:
+          type: object
+          description: |
+            Tiered metadata. Tier 1: typed slots — `finishReason`
+            ("stop"|"length"|"tool_calls"|"content_filter"), `logprobs`,
+            `toolCalls`, `model`, `usage` ({promptTokens,
+            completionTokens, totalTokens}). Tier 2: provider-pass-through
+            via `provider` + `providerExtensions`. Consumers SHOULD prefer
+            Tier 1; Tier 2 is the escape hatch for fields the spec hasn't
+            typed yet. See run-event-payloads.schema.json#$defs._chunkMeta
+            for the full definition + per-field constraints.
+          additionalProperties: true

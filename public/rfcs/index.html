@@ -4,21 +4,21 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>OpenWOP — RFCs</title>
-  <meta name="description" content="42 numbered RFCs covering the additive evolution of the OpenWOP v1 protocol. Each RFC documents motivation, proposed wire surface, compatibility classification, conformance plan, and acceptance gate."/>
+  <meta name="description" content="45 numbered RFCs covering the additive evolution of the OpenWOP v1 protocol. Each RFC documents motivation, proposed wire surface, compatibility classification, conformance plan, and acceptance gate."/>
   <link rel="canonical" href="https://openwop.dev/rfcs/"/>
 
   <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
   <meta property="og:type" content="website"/>
   <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
   <meta property="og:title" content="OpenWOP — RFCs"/>
-  <meta property="og:description" content="42 numbered RFCs covering the additive evolution of the OpenWOP v1 protocol. Each RFC documents motivation, proposed wire surface, compatibility classification, conformance plan, and acceptance gate."/>
+  <meta property="og:description" content="45 numbered RFCs covering the additive evolution of the OpenWOP v1 protocol. Each RFC documents motivation, proposed wire surface, compatibility classification, conformance plan, and acceptance gate."/>
   <meta property="og:url" content="https://openwop.dev/rfcs/"/>
   <meta property="og:image" content="https://openwop.dev/og-default.png"/>
 
   <!-- Twitter card -->
   <meta name="twitter:card" content="summary_large_image"/>
   <meta name="twitter:title" content="OpenWOP — RFCs"/>
-  <meta name="twitter:description" content="42 numbered RFCs covering the additive evolution of the OpenWOP v1 protocol. Each RFC documents motivation, proposed wire surface, compatibility classification, conformance plan, and acceptance gate."/>
+  <meta name="twitter:description" content="45 numbered RFCs covering the additive evolution of the OpenWOP v1 protocol. Each RFC documents motivation, proposed wire surface, compatibility classification, conformance plan, and acceptance gate."/>
   <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
 
   <!-- Icons / theme -->
@@ -54,22 +54,94 @@
       <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
       <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
     </a>
-    <nav class="topnav">
-      <a class="hide-sm " href="/spec/v1/">Spec</a>
-      <a class="hide-sm active" href="/rfcs/">RFCs</a>
-      <a class="hide-sm " href="/conformance/">Conformance</a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
       <a class="hide-sm " href="/changelog/">Changelog</a>
-      <a class="hide-sm " href="/faq/">FAQ</a>
-      <a class="pill" href="https://github.com/openwop/openwop">GitHub →</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
     </nav>
   </div>
 </header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
 
 <main class="site-main">
   <div class="wrap">
     <header class="page-header">
     <h1>OpenWOP RFCs</h1>
-    <p class="lede">42 RFCs governing additive evolution of the v1 protocol. Status legend: Draft (open comment window) → Active (accepted; impl follows) → Accepted (in-tree reference impl + conformance scenarios) → Withdrawn / Superseded.</p>
+    <p class="lede">45 RFCs governing additive evolution of the v1 protocol. Status legend: Draft (open comment window) → Active (accepted; impl follows) → Accepted (in-tree reference impl + conformance scenarios) → Withdrawn / Superseded.</p>
+    <p class="meta"><strong>v1.1 is the stable wire contract.</strong> RFCs at <em>Draft</em> or <em>Active</em> target <strong>v1.2</strong> (additive) unless the RFC is explicitly labelled <em>Safety fix</em> per <a href="https://github.com/openwop/openwop/blob/main/COMPATIBILITY.md">COMPATIBILITY.md §3</a>. No RFC may land a breaking change inside v1.x.</p>
   </header>
   <table class="spec-index">
     <thead><tr><th>RFC</th><th>Status</th></tr></thead>
@@ -101,21 +173,24 @@
 <tr><td><a href="./0024-agent-reasoning-streaming.html">RFC 0024: Streaming `agent.reasoned` Deltas</a></td><td>Accepted</td></tr>
 <tr><td><a href="./0025-test-mode-registry-namespace.html">RFC 0025: Test-mode Registry Namespace</a></td><td>Draft</td></tr>
 <tr><td><a href="./0026-provider-usage-event.html">RFC 0026: `provider.usage` Event</a></td><td>Accepted</td></tr>
-<tr><td><a href="./0027-prompt-templates.html">RFC 0027: Prompt Templates</a></td><td>Active</td></tr>
+<tr><td><a href="./0027-prompt-templates.html">RFC 0027: Prompt Templates</a></td><td>Accepted</td></tr>
 <tr><td><a href="./0028-prompt-library-endpoints.html">RFC 0028: Prompt Library Endpoints + Prompt Pack Kind</a></td><td>Active</td></tr>
 <tr><td><a href="./0029-prompt-override-hierarchy.html">RFC 0029: Prompt Override Hierarchy + `agent.promptResolved` event</a></td><td>Active</td></tr>
 <tr><td><a href="./0030-envelope-reasoning-and-tier-one-subset.html">RFC 0030: Envelope `reasoning` field + Tier 1 Structured-Output Subset (informative)</a></td><td>Accepted</td></tr>
 <tr><td><a href="./0031-envelope-variants-and-model-capabilities.html">RFC 0031: Envelope variant discrimination + model-capability declarations</a></td><td>Accepted</td></tr>
 <tr><td><a href="./0032-envelope-reliability-events.html">RFC 0032: Envelope-reliability run-event vocabulary</a></td><td>Accepted</td></tr>
 <tr><td><a href="./0033-envelope-completion-contract.html">RFC 0033: Envelope-completion contract (truncation vs schema-violation distinction)</a></td><td>Accepted</td></tr>
-<tr><td><a href="./0034-otel-collector-test-seam.html">RFC 0034: OTel collector test seam + secret-leakage invariant promotion</a></td><td>Active</td></tr>
+<tr><td><a href="./0034-otel-collector-test-seam.html">RFC 0034: OTel collector test seam + secret-leakage invariant promotion</a></td><td>Accepted</td></tr>
 <tr><td><a href="./0035-sandbox-execution-contract.html">RFC 0035: Sandbox execution contract for pack-loaded typeIds</a></td><td>Active</td></tr>
 <tr><td><a href="./0036-multi-region-and-cross-engine-guarantees.html">RFC 0036: Multi-region idempotency + cross-engine append-ordering guarantees</a></td><td>Active</td></tr>
-<tr><td><a href="./0037-multi-agent-execution-model.html">RFC 0037: Multi-agent execution model + replay determinism under nondeterministic models</a></td><td>Active</td></tr>
+<tr><td><a href="./0037-multi-agent-execution-model.html">RFC 0037: Multi-agent execution model + replay determinism under nondeterministic models</a></td><td>Accepted</td></tr>
 <tr><td><a href="./0038-working-group-charter.html">RFC 0038: OpenWOP Working Group charter</a></td><td>Draft</td></tr>
-<tr><td><a href="./0039-multi-agent-confidence-and-memory-lifecycle.html">RFC 0039: Multi-agent Phase 2 — confidence-threshold escalation + agent memory lifecycle</a></td><td>Active</td></tr>
+<tr><td><a href="./0039-multi-agent-confidence-and-memory-lifecycle.html">RFC 0039: Multi-agent Phase 2 — confidence-threshold escalation + agent memory lifecycle</a></td><td>Accepted</td></tr>
 <tr><td><a href="./0040-multi-agent-cross-host-causation.html">RFC 0040: Multi-agent Phase 3 — cross-host causation linking</a></td><td>Active</td></tr>
-<tr><td><a href="./0041-multi-agent-replay-under-nondeterminism.html">RFC 0041: Multi-agent Phase 4 — replay determinism under nondeterministic models</a></td><td>Draft</td></tr>
+<tr><td><a href="./0041-multi-agent-replay-under-nondeterminism.html">RFC 0041: Multi-agent Phase 4 — replay determinism under nondeterministic models</a></td><td>Active</td></tr>
+<tr><td><a href="./0042-experimental-capability-tier.html">RFC 0042: Experimental capability tier</a></td><td>Draft</td></tr>
+<tr><td><a href="./0043-registry-and-extension-policy.html">RFC 0043: Registry and extension-policy</a></td><td>Draft</td></tr>
+<tr><td><a href="./0044-confidence-escalation-interrupt-kind-advertisement.html">RFC 0044: Confidence-escalation interrupt-kind advertisement (clarification to RFC 0039 §A)</a></td><td>Accepted</td></tr>
     </tbody>
   </table>
   </div>
@@ -141,10 +216,13 @@
           <li><a href="/spec/v1/">v1.x Core</a></li>
           <li><a href="/rfcs/">RFCs</a></li>
           <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
           <li><a href="/errors/">Error codes</a></li>
           <li><a href="/scenarios/">Scenario walkthroughs</a></li>
           <li><a href="/profiles/">Profiles</a></li>
           <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
           <li><a href="/versioning/">Versioning policy</a></li>
         </ul>
       </div>
@@ -161,14 +239,15 @@
       <div>
         <h5>Project</h5>
         <ul>
-          <li><a href="/changelog/">Changelog</a></li>
           <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
           <li><a href="/faq/">FAQ</a></li>
           <li><a href="/security/">Security posture</a></li>
           <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
           <li><a href="/contributing/">Contributing</a></li>
-          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
           <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
         </ul>
       </div>
       <div>
@@ -184,10 +263,11 @@
     <div class="foot-meta">
       <span>© 2026 OpenWOP contributors</span>
       <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
-      <span>Built with Claude Code</span>
     </div>
   </div>
 </footer>
+
+<script src="/site-nav.js" defer></script>
 
 </body>
 </html>

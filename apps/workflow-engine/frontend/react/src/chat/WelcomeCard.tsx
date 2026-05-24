@@ -61,7 +61,13 @@ const WORKFLOW_CARD_SPECS: readonly WorkflowCardSpec[] = [
     // for the match to fire.
     templateName: 'Triple-AI review board',
     description: 'Three concurrent critics fan out from one draft. An arbiter merges their notes into a single verdict. Multi-agent orchestration in one turn.',
-    trailing: 'Critique this paragraph for clarity and concision',
+    // The three critic system prompts say "Read the text below" — so
+    // trailing MUST be real prose, not a meta-instruction. Earlier
+    // versions sent "Critique this paragraph for clarity and concision"
+    // which the LLM correctly identified as an instruction with no
+    // actual paragraph attached.
+    trailing:
+      'Our new pricing is simple: $19/month gets you the Starter plan with unlimited workflows, 10,000 runs, and email support. Teams that need more can upgrade to Pro at $49/month for 50,000 runs and priority support. Both plans include a 14-day free trial — no credit card required. Cancel anytime.',
   },
 ];
 

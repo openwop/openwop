@@ -1,6 +1,6 @@
 # openwop Spec v1 — `AgentRef` Positioning
 
-> **Status: FINAL v1 (2026-05-10).** Non-normative addendum to RFC 0002. Compares the `AgentRef` shape introduced by RFC 0002 to three adjacent agent-identity ecosystems: W3C DIDs, A2A `AgentCard`, and AGNTCY agent identity. Goal is to make composition choices concrete so implementers don't reinvent translations every time. This is positioning, not requirements. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119) where used.
+> **Status: Stable · v1.1 (2026-05-10).** Non-normative addendum to RFC 0002. Compares the `AgentRef` shape introduced by RFC 0002 to three adjacent agent-identity ecosystems: W3C DIDs, A2A `AgentCard`, and AGNTCY agent identity. Goal is to make composition choices concrete so implementers don't reinvent translations every time. This is positioning, not requirements. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119) where used.
 
 ---
 
