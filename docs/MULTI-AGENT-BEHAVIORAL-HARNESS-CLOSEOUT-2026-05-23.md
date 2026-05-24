@@ -13,7 +13,7 @@
 | **#1 — Multi-region idempotency simulator** | ✅ End-to-end | `85f514a` | 6 |
 | **#2 — Cross-engine append ordering** | ✅ End-to-end | `85f514a` | 4 |
 | **#3 — RFC 0042 experimental capability tier** | ✅ End-to-end | `45678c4` + `bba3b4a` | 6 |
-| **#4 — RFC 0041 §B replay determinism Phase 4** | ✅ End-to-end | `c21d239` (fixtures) + `1fce55a` (executor) + `bba3b4a` (typeId-gating refinement) | 3 |
+| **#4 — RFC 0041 §B replay determinism under nondeterminism (`version: 4`)** | ✅ End-to-end | `c21d239` (fixtures) + `1fce55a` (executor) + `bba3b4a` (typeId-gating refinement) | 3 |
 | **#5 — Secret-leakage OTel telemetry** | ✅ Honest soft-skip path | `18e7e55` | 3 |
 | **#6 — RFC 0022 dispatch input/output mapping** | ✅ Verified end-to-end on workflow-engine | (no new code; verified against existing infrastructure) | 12 |
 | **#7 — RFC 0035 sandbox MVP** | ✅ End-to-end | `3c0bfe3` + `7f1fefa` (canonical-code follow-ups) | 10 |
@@ -51,7 +51,7 @@
 | SECURITY invariants touched | (none — governance / advertisement-shape RFC) |
 | External-action gate remaining | RFC 0042 promotion Draft → Active: 7-day comment window (filed 2026-05-22; ends 2026-05-29). Then `Active → Accepted` per the standard cross-host-evidence track. |
 
-### Track #4 — RFC 0041 §B replay determinism Phase 4
+### Track #4 — RFC 0041 §B replay determinism under nondeterminism (`version: 4`)
 
 | Field | Value |
 |---|---|
