@@ -197,8 +197,7 @@
       <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
       <li class="toc-top"><a href="#references">References</a></li>
     </ul>
-  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-typed-state-channels-and-reducers">OpenWOP Spec v1 — Typed State Channels and Reducers</h1>
-<blockquote><p><strong>Status: Stable · v1.1 (2026-04-27).</strong> Comprehensive coverage of channel declarations, six canonical reducers, the migration path from variable-prefix conventions, and the back-compat layer. Stable surface for external review. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
+  </aside><article class="spec-doc"><blockquote><p><strong>Status: Stable · v1.1 (2026-04-27).</strong> Comprehensive coverage of channel declarations, six canonical reducers, the migration path from variable-prefix conventions, and the back-compat layer. Stable surface for external review. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>
 <p>A workflow run carries state beyond the inputs and outputs of individual nodes: approval votes, refine-loop feedback history, loopback counters, artifact mirrors, multi-turn Q&A exchanges. The reference implementation persists this state in an <strong>untyped variables map</strong> with <strong>prefix conventions</strong>:</p>

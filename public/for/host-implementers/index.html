@@ -153,8 +153,7 @@
       <li class="toc-top"><a href="#what-you-owe-the-matrix">What you owe the matrix</a></li>
       <li class="toc-top"><a href="#next-steps">Next steps</a></li>
     </ul>
-  </aside><article class="spec-doc"><h1 id="for-host-implementers">For host implementers</h1>
-<p>You're implementing OpenWOP against a runtime — your own engine, a customer's stack, a managed service you're building. This page tells you what the conformance suite expects, what the advertise-honestly principle costs you, and which reference implementation to mine first.</p>
+  </aside><article class="spec-doc"><p>You're implementing OpenWOP against a runtime — your own engine, a customer's stack, a managed service you're building. This page tells you what the conformance suite expects, what the advertise-honestly principle costs you, and which reference implementation to mine first.</p>
 <h2 id="the-contract-in-one-sentence">The contract in one sentence</h2>
 <p>A host advertises a set of capabilities at <code>GET /.well-known/openwop</code>, implements the REST endpoints + SSE streams + signed webhooks for the capabilities it claims, and passes the conformance scenarios gated on those capabilities. Anything you don't claim, you don't have to implement.</p>
 <h2 id="read-these-first">Read these first</h2>

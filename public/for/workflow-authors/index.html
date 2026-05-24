@@ -152,8 +152,7 @@
       <li class="toc-top"><a href="#what-you-don-t-write">What you don&#39;t write</a></li>
       <li class="toc-top"><a href="#next-steps">Next steps</a></li>
     </ul>
-  </aside><article class="spec-doc"><h1 id="for-workflow-authors">For workflow authors</h1>
-<p>You're building a product that runs multi-agent workflows. You want the durable, replayable, resumable parts handled by something other than your application code, and you don't want to be locked to one runtime. This page is the shortest path from here to a running workflow on an OpenWOP-compatible host.</p>
+  </aside><article class="spec-doc"><p>You're building a product that runs multi-agent workflows. You want the durable, replayable, resumable parts handled by something other than your application code, and you don't want to be locked to one runtime. This page is the shortest path from here to a running workflow on an OpenWOP-compatible host.</p>
 <h2 id="what-you-actually-need-to-know">What you actually need to know</h2>
 <p>OpenWOP gives you a wire contract — REST endpoints to start runs, SSE streams to consume events, signed webhooks for durable delivery, and a typed run lifecycle that survives restarts. You write workflows declaratively (nodes + edges + typed channels + reducers) and submit them to any conformance-tested host. The host owns the runtime; your code owns the workflow shape.</p>
 <p>You don't need to know how the host stores its event log, how it routes provider calls, or how it implements suspend/resume. Those are host concerns gated behind capability flags you can read from <code>GET /.well-known/openwop</code>.</p>

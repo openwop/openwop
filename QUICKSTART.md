@@ -1,6 +1,6 @@
 # openwop Quickstart
 
-> **Status: FINAL v1 (2026-04-29).** End-to-end developer onboarding guide covering discovery, auth, run lifecycle, live event delivery (SSE + webhooks), time-travel debugging via fork, BYOK + RunOptions, node-pack authoring, conformance, SDKs, and storage adapters. Cross-references the canonical specs for full normative detail. See `auth.md` for the status legend.
+> **Status: Stable · v1.1 (2026-04-29).** End-to-end developer onboarding guide covering discovery, auth, run lifecycle, live event delivery (SSE + webhooks), time-travel debugging via fork, BYOK + RunOptions, node-pack authoring, conformance, SDKs, and storage adapters. Cross-references the canonical specs for full normative detail. See `auth.md` for the status legend.
 
 > **Audience:** developers integrating with an OpenWOP-compliant server for the first time.
 > **Prerequisites:** an API key issued by your OpenWOP host (see [`auth.md`](./spec/v1/auth.md)) and the server's base URL.
@@ -260,9 +260,9 @@ Reference SDKs ship pinned to spec v1 in [`sdk/`](./sdk/):
 
 | Language | Package | Status |
 |---|---|---|
-| TypeScript | `@openwop/openwop` | ✅ FINAL v1 |
-| Python | `openwop_client` | ✅ FINAL v1 |
-| Go | `openwopclient` | ✅ FINAL v1 |
+| TypeScript | `@openwop/openwop` | ✅ Stable v1 |
+| Python | `openwop_client` | ✅ Stable v1 |
+| Go | `openwopclient` | ✅ Stable v1 |
 
 Each SDK provides:
 - Typed client for `POST /v1/runs`, `GET /v1/runs/{id}`, `POST /v1/runs/{id}/cancel`, etc.

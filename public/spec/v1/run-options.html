@@ -193,8 +193,7 @@
       <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
       <li class="toc-top"><a href="#references">References</a></li>
     </ul>
-  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-per-run-options-overlay">OpenWOP Spec v1 — Per-Run Options Overlay</h1>
-<blockquote><p><strong>Status: Stable · v1.1 (2026-04-27).</strong> Comprehensive coverage of <code>RunOptions</code> schema covering <code>configurable</code>, <code>tags</code>, <code>metadata</code>, and <code>recursionLimit</code> overrides. Stable surface for external review. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
+  </aside><article class="spec-doc"><blockquote><p><strong>Status: Stable · v1.1 (2026-04-27).</strong> Comprehensive coverage of <code>RunOptions</code> schema covering <code>configurable</code>, <code>tags</code>, <code>metadata</code>, and <code>recursionLimit</code> overrides. Stable surface for external review. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>
 <p>A workflow definition (DAG of nodes + edges) is the <em>shape</em> of the work. Operationally, two runs of the same workflow often need different <em>parameters</em>: a different LLM model, a different temperature, a different prompt variant for A/B testing, a tighter recursion cap for safety, or a tenant-scoped tag for filtering observability. Today, the only way to vary parameters is to fork the workflow definition itself — which inflates the workflow catalog with duplicates that differ only in a single config field.</p>

@@ -41,7 +41,31 @@
   <link rel="stylesheet" href="/styles.css"/>
   <link rel="stylesheet" href="/assets/style.css"/>
 
-  
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "RFC 0015: host.kvStorage capability",
+  "description": "Adds an optional host.kvStorage capability — a TTL-aware key-value store with atomic increment + compare-and-swap primitives. Required by core.openwop.storage's kv-* nodes. The Make-Data-Store equivalent for openwop.",
+  "url": "https://openwop.dev/rfcs/0015-host-kv-storage-capability.html",
+  "inLanguage": "en-US",
+  "isPartOf": {
+    "@type": "WebSite",
+    "@id": "https://openwop.dev/#website",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "about": {
+    "@type": "SoftwareSourceCode",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev",
+    "codeRepository": "https://github.com/openwop/openwop"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  }
+}</script>
   
   
 </head>
@@ -156,8 +180,7 @@
       <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
       <li class="toc-top"><a href="#references">References</a></li>
     </ul>
-  </aside><article class="spec-doc"><h1 id="rfc-0015-host-kvstorage-capability">RFC 0015: host.kvStorage capability</h1>
-<table>
+  </aside><article class="spec-doc"><table>
 <thead><tr><th>Field</th><th>Value</th></tr></thead>
 <tbody>
 <tr><td><strong>RFC</strong></td><td>0015</td></tr>

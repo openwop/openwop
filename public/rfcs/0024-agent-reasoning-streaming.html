@@ -41,7 +41,31 @@
   <link rel="stylesheet" href="/styles.css"/>
   <link rel="stylesheet" href="/assets/style.css"/>
 
-  
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "RFC 0024: Streaming `agent.reasoned` Deltas",
+  "description": "Adds a new optional event type agent.reasoning.delta and a companion capability flag capabilities.agents.reasoning.streaming to let hosts surface a reasoning trace incrementally — one delta event per token chunk — while a model is still inside its…",
+  "url": "https://openwop.dev/rfcs/0024-agent-reasoning-streaming.html",
+  "inLanguage": "en-US",
+  "isPartOf": {
+    "@type": "WebSite",
+    "@id": "https://openwop.dev/#website",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "about": {
+    "@type": "SoftwareSourceCode",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev",
+    "codeRepository": "https://github.com/openwop/openwop"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  }
+}</script>
   
   
 </head>
@@ -170,8 +194,7 @@
       <li class="toc-sub"><a href="#active-accepted-2026-05-19">Active → Accepted (2026-05-19)</a></li>
       <li class="toc-top"><a href="#references">References</a></li>
     </ul>
-  </aside><article class="spec-doc"><h1 id="rfc-0024-streaming-agent-reasoned-deltas">RFC 0024: Streaming <code>agent.reasoned</code> Deltas</h1>
-<table>
+  </aside><article class="spec-doc"><table>
 <thead><tr><th>Field</th><th>Value</th></tr></thead>
 <tbody>
 <tr><td><strong>RFC</strong></td><td>0024</td></tr>

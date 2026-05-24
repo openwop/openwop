@@ -41,7 +41,31 @@
   <link rel="stylesheet" href="/styles.css"/>
   <link rel="stylesheet" href="/assets/style.css"/>
 
-  
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "RFC 0017: host.queueBus capability",
+  "description": "Adds an optional host.queueBus capability covering publish + inbound-consume + ack/nack/dead-letter, plus stream subscribe/publish. Required by core.openwop.messaging. Sibling to existing host.messaging (which is outbound-egress-only) —…",
+  "url": "https://openwop.dev/rfcs/0017-host-queue-bus-capability.html",
+  "inLanguage": "en-US",
+  "isPartOf": {
+    "@type": "WebSite",
+    "@id": "https://openwop.dev/#website",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "about": {
+    "@type": "SoftwareSourceCode",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev",
+    "codeRepository": "https://github.com/openwop/openwop"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  }
+}</script>
   
   
 </head>
@@ -156,8 +180,7 @@
       <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
       <li class="toc-top"><a href="#references">References</a></li>
     </ul>
-  </aside><article class="spec-doc"><h1 id="rfc-0017-host-queuebus-capability">RFC 0017: host.queueBus capability</h1>
-<table>
+  </aside><article class="spec-doc"><table>
 <thead><tr><th>Field</th><th>Value</th></tr></thead>
 <tbody>
 <tr><td><strong>RFC</strong></td><td>0017</td></tr>

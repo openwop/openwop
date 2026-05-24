@@ -179,8 +179,7 @@
       <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
       <li class="toc-top"><a href="#references">References</a></li>
     </ul>
-  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-agent-memory">OpenWOP Spec v1 — Agent Memory</h1>
-<blockquote><p><strong>Status: Stable · v1.1 (2026-05-10).</strong> Normative spec for cross-run agent memory — <code>memoryRef</code> resolution, <code>MemoryAdapter</code> host-interface contract, cross-tenant isolation invariant (CTI-1), and BYOK secret-redaction invariant (SR-1). Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
+  </aside><article class="spec-doc"><blockquote><p><strong>Status: Stable · v1.1 (2026-05-10).</strong> Normative spec for cross-run agent memory — <code>memoryRef</code> resolution, <code>MemoryAdapter</code> host-interface contract, cross-tenant isolation invariant (CTI-1), and BYOK secret-redaction invariant (SR-1). Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
 <h2 id="why-this-exists">Why this exists</h2>
 <p>Multi-agent workflows persist context across runs. A pack-installed customer-support agent that resolved a refund last week should still know the customer's preference for email follow-up this week. Without cross-run memory, every run starts from zero — agents lose continuity, users repeat themselves, and orchestrators can't learn from past dispatches.</p>
 <p>openwop v1 ships <strong>agent memory</strong> as a host-adapter interface. The spec normates the wire shape (<code>MemoryEntry</code>, <code>MemoryListOptions</code>), the contract (<code>MemoryAdapter.list/get</code>), and two cross-cutting invariants (CTI-1, SR-1). Hosts choose the backing store; the protocol pins the shape.</p>

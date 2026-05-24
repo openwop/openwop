@@ -186,8 +186,7 @@
       <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
       <li class="toc-top"><a href="#references">References</a></li>
     </ul>
-  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-sse-stream-modes">OpenWOP Spec v1 — SSE Stream Modes</h1>
-<blockquote><p><strong>Status: Stable · v1.1 (2026-04-27).</strong> Comprehensive coverage of the four canonical stream consumption modes (values, updates, messages, debug), the <code>?streamMode=</code> query parameter, event-type-to-mode mapping, and CLI default. Stable surface for external review. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
+  </aside><article class="spec-doc"><blockquote><p><strong>Status: Stable · v1.1 (2026-04-27).</strong> Comprehensive coverage of the four canonical stream consumption modes (values, updates, messages, debug), the <code>?streamMode=</code> query parameter, event-type-to-mode mapping, and CLI default. Stable surface for external review. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>
 <p>Without stream modes, an SSE endpoint emits every engine event undifferentiated — UI, debugger, automation, and agent consumers all see the same stream and have to filter client-side. This is wasteful (every consumer pays bandwidth + parsing cost for events they ignore) and ambiguous (no canonical contract for "what does a UI need vs what does a debugger need").</p>

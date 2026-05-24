@@ -41,7 +41,31 @@
   <link rel="stylesheet" href="/styles.css"/>
   <link rel="stylesheet" href="/assets/style.css"/>
 
-  
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "RFC 0019: host.blobStorage + host.cache capabilities",
+  "description": "Adds two sibling capabilities: host.blobStorage (binary artifact store with presigned URLs) and host.cache (TTL cache for HTTP / AI response memoization). Required by core.openwop.storage's blob- and cache- nodes.",
+  "url": "https://openwop.dev/rfcs/0019-host-blob-cache-capability.html",
+  "inLanguage": "en-US",
+  "isPartOf": {
+    "@type": "WebSite",
+    "@id": "https://openwop.dev/#website",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "about": {
+    "@type": "SoftwareSourceCode",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev",
+    "codeRepository": "https://github.com/openwop/openwop"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  }
+}</script>
   
   
 </head>
@@ -155,8 +179,7 @@
       <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
       <li class="toc-top"><a href="#references">References</a></li>
     </ul>
-  </aside><article class="spec-doc"><h1 id="rfc-0019-host-blobstorage-host-cache-capabilities">RFC 0019: host.blobStorage + host.cache capabilities</h1>
-<table>
+  </aside><article class="spec-doc"><table>
 <thead><tr><th>Field</th><th>Value</th></tr></thead>
 <tbody>
 <tr><td><strong>RFC</strong></td><td>0019</td></tr>

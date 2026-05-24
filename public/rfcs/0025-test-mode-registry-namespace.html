@@ -41,7 +41,31 @@
   <link rel="stylesheet" href="/styles.css"/>
   <link rel="stylesheet" href="/assets/style.css"/>
 
-  
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "RFC 0025: Test-mode Registry Namespace",
+  "description": "Adds an optional /v1/packs-test/ registry namespace that mirrors the production /v1/packs/ PUT/GET/DELETE surface against an isolated catalog, gated behind a new optional capabilities.packs.testMode advertisement. Lets the conformance suite exercise…",
+  "url": "https://openwop.dev/rfcs/0025-test-mode-registry-namespace.html",
+  "inLanguage": "en-US",
+  "isPartOf": {
+    "@type": "WebSite",
+    "@id": "https://openwop.dev/#website",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "about": {
+    "@type": "SoftwareSourceCode",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev",
+    "codeRepository": "https://github.com/openwop/openwop"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  }
+}</script>
   
   
 </head>
@@ -159,8 +183,7 @@
       <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
       <li class="toc-top"><a href="#references">References</a></li>
     </ul>
-  </aside><article class="spec-doc"><h1 id="rfc-0025-test-mode-registry-namespace">RFC 0025: Test-mode Registry Namespace</h1>
-<table>
+  </aside><article class="spec-doc"><table>
 <thead><tr><th>Field</th><th>Value</th></tr></thead>
 <tbody>
 <tr><td><strong>RFC</strong></td><td>0025</td></tr>

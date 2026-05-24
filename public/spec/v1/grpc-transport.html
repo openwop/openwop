@@ -180,8 +180,7 @@
       <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
       <li class="toc-top"><a href="#see-also">See also</a></li>
     </ul>
-  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-grpc-transport-profile">OpenWOP Spec v1 — gRPC Transport Profile</h1>
-<blockquote><p><strong>Status: Stable · v1.1 (2026-05-12).</strong> Optional alternative transport profile. REST + SSE remains the REQUIRED wire surface for every v1-conforming host (per <code>rest-endpoints.md</code>); a host MAY ALSO expose the gRPC surface defined here under <code>capabilities.supportedTransports: [&quot;grpc&quot;]</code>. The two surfaces describe the same protocol semantics; gRPC clients can produce byte-equivalent runs against a dual-surface host. Closes R3 in <code>rest-endpoints.md</code> §"Open spec gaps". Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
+  </aside><article class="spec-doc"><blockquote><p><strong>Status: Stable · v1.1 (2026-05-12).</strong> Optional alternative transport profile. REST + SSE remains the REQUIRED wire surface for every v1-conforming host (per <code>rest-endpoints.md</code>); a host MAY ALSO expose the gRPC surface defined here under <code>capabilities.supportedTransports: [&quot;grpc&quot;]</code>. The two surfaces describe the same protocol semantics; gRPC clients can produce byte-equivalent runs against a dual-surface host. Closes R3 in <code>rest-endpoints.md</code> §"Open spec gaps". Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>
 <p>Some deployment classes prefer gRPC over REST for protocol-level reasons:</p>

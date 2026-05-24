@@ -189,8 +189,7 @@
       <li class="toc-top"><a href="#future-work">Future work</a></li>
       <li class="toc-top"><a href="#see-also">See also</a></li>
     </ul>
-  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-webhook-subscriptions">OpenWOP Spec v1 — Webhook Subscriptions</h1>
-<blockquote><p><strong>Status: Stable · v1.1 (2026-04-29).</strong> Comprehensive coverage of subscription registration, payload signing, replay-attack protection, delivery semantics, and best-effort guarantees. Stable surface for external review. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
+  </aside><article class="spec-doc"><blockquote><p><strong>Status: Stable · v1.1 (2026-04-29).</strong> Comprehensive coverage of subscription registration, payload signing, replay-attack protection, delivery semantics, and best-effort guarantees. Stable surface for external review. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>
 <p>Polling <code>GET /v1/runs/{runId}</code> to learn about run progress is inefficient — clients pay round-trip cost on every check, and the runtime serves identical state until the next event. The SSE event stream solves this for live consumers (browsers, CLIs) but can't reach systems that need server-to-server delivery: customer integrations, billing pipelines, downstream automation.</p>

@@ -153,8 +153,7 @@
       <li class="toc-top"><a href="#is-openwop-suitable-for-non-ai-workflows">Is OpenWOP suitable for non-AI workflows?</a></li>
       <li class="toc-top"><a href="#how-do-i-get-notified-about-security-advisories">How do I get notified about security advisories?</a></li>
     </ul>
-  </aside><article class="spec-doc"><h1 id="frequently-asked-questions">Frequently asked questions</h1>
-<p>OpenWOP is a wire-level protocol, not a library or runtime. The questions below are the ones that come up first when someone evaluates whether the protocol fits their work. Every answer cites the spec doc, RFC, or repo file that carries the authoritative version of the rule.</p>
+  </aside><article class="spec-doc"><p>OpenWOP is a wire-level protocol, not a library or runtime. The questions below are the ones that come up first when someone evaluates whether the protocol fits their work. Every answer cites the spec doc, RFC, or repo file that carries the authoritative version of the rule.</p>
 <p>Last reviewed: 2026-05-21.</p>
 <h2 id="why-not-just-use-langgraph-or-langchain">Why not just use LangGraph or LangChain?</h2>
 <p>LangGraph is a library; OpenWOP is a wire contract. LangGraph workflows depend on the Python runtime they were authored in — the engine, the checkpointer, and the serialization format are all internal to the library. OpenWOP defines what goes over the wire — REST endpoints, SSE event shapes, signed webhook payloads, BYOK secret resolution — so a workflow authored for one host can move to a different host without rewriting application code.</p>

@@ -342,6 +342,29 @@ const CANONICAL_DESCRIPTION = 'Multi-Agent Workflow Orchestration Protocol — o
  * fences. Truncates at ~250 chars on a word boundary so the description fits
  * Google's snippet window without mid-word cuts.
  */
+// Strip the leading `# Title` heading from a markdown body. Every long-form
+// doc page on the site renders a `<header class="page-header"><h1>…</h1></header>`
+// derived from the source's H1, so emitting that same H1 again from the
+// markdown body produces two H1s on the same page — bad for SEO topical
+// signal and confusing for screen readers. This helper removes the first
+// `# …` line (and any trailing blank line) once the title has been captured
+// into the page-header. H2+ headings are preserved verbatim so the article
+// body still anchors deep links.
+function stripLeadingH1(md) {
+  const lines = md.split('\n');
+  let i = 0;
+  // Skip any leading blank lines.
+  while (i < lines.length && lines[i].trim() === '') i++;
+  if (i >= lines.length) return md;
+  // Only strip if the first non-blank line is an H1.
+  if (!/^#\s+/.test(lines[i])) return md;
+  i++;
+  // Skip a single trailing blank line so the body doesn't start with an
+  // orphan empty line that breaks markdown's paragraph detection.
+  if (i < lines.length && lines[i].trim() === '') i++;
+  return lines.slice(i).join('\n');
+}
+
 function extractFirstParagraph(md) {
   const lines = md.split('\n');
   let i = 0;
@@ -456,8 +479,9 @@ function buildConformance() {
     <p class="lede">Live record of OpenWOP-compatible hosts, their advertised compatibility profiles, and which conformance scenarios pass against them.</p>
     <p class="meta">A host's place in this matrix is a <strong>claim plus evidence</strong>. The claim is the host's advertised profile. The evidence is the conformance result published alongside the host's repo (or under <code>examples/hosts/&lt;name&gt;/conformance.md</code>).</p>
   </header>`;
-  const articleHtml = `<article class="spec-doc">${markdownToHtml(interop)}</article>`;
-  const content = intro + wrapWithToc(articleHtml, extractToc(interop));
+  const interopBody = stripLeadingH1(interop);
+  const articleHtml = `<article class="spec-doc">${markdownToHtml(interopBody)}</article>`;
+  const content = intro + wrapWithToc(articleHtml, extractToc(interopBody));
   ensureDir(join(DIST, 'conformance'));
   writeFileSync(
     join(DIST, 'conformance', 'index.html'),
@@ -478,8 +502,9 @@ function buildProfiles() {
     <h1>Compatibility profiles</h1>
     <p class="lede">A host's profile claims summarize what surfaces it implements. Each profile is derived from the host's <code>/.well-known/openwop</code> capability advertisement plus runtime conformance scenarios.</p>
   </header>`;
-  const articleHtml = `<article class="spec-doc">${markdownToHtml(profiles)}</article>`;
-  const content = intro + wrapWithToc(articleHtml, extractToc(profiles));
+  const profilesBody = stripLeadingH1(profiles);
+  const articleHtml = `<article class="spec-doc">${markdownToHtml(profilesBody)}</article>`;
+  const content = intro + wrapWithToc(articleHtml, extractToc(profilesBody));
   ensureDir(join(DIST, 'profiles'));
   writeFileSync(
     join(DIST, 'profiles', 'index.html'),
@@ -524,8 +549,11 @@ function buildSpecDocs() {
     const slug = f.replace(/\.md$/, '');
     const editUrl = `${REPO_URL}/edit/main/spec/v1/${f}`;
     const editFooter = `<footer class="doc-edit"><a href="${editUrl}" rel="noopener">Edit this page on GitHub <span class="arrow">↗</span></a></footer>`;
-    const articleHtml = `<article class="spec-doc">${markdownToHtml(md)}${editFooter}</article>`;
-    const content = pageHeader + wrapWithToc(articleHtml, extractToc(md));
+    // Strip the source's leading H1; the page-header above already renders it.
+    // See `stripLeadingH1` for the SEO + a11y rationale.
+    const bodyMd = stripLeadingH1(md);
+    const articleHtml = `<article class="spec-doc">${markdownToHtml(bodyMd)}${editFooter}</article>`;
+    const content = pageHeader + wrapWithToc(articleHtml, extractToc(bodyMd));
     const canonicalPath = `/spec/v1/${slug}.html`;
     const jsonLd = {
       '@context': 'https://schema.org',
@@ -882,9 +910,38 @@ function buildSitemap() {
   }
   walk(DIST, '/');
   urls.sort((a, b) => a.loc.localeCompare(b.loc));
-  const body = `<?xml version="1" encoding="UTF-8"?>
+
+  // Per-URL priority + changefreq hints. Most crawlers (Google, Bing) treat
+  // these as advisory — they don't change ranking — but Search Console
+  // tooling surfaces them in coverage reports. Keep the buckets coarse:
+  //  - Homepage              → 1.0 / daily
+  //  - Spec/v1 index, changelog, quickstart → 0.9 / weekly
+  //  - Individual spec docs  → 0.8 / monthly
+  //  - RFC corpus + index    → 0.7 / monthly
+  //  - Roadmap, governance, top-level prose → 0.7 / monthly
+  //  - Everything else       → 0.5 / monthly
+  const priorityOf = (path) => {
+    if (path === '/') return { priority: '1.0', changefreq: 'daily' };
+    if (path === '/spec/v1/' || path === '/changelog/' || path === '/quickstart/' || path === '/rfcs/') {
+      return { priority: '0.9', changefreq: 'weekly' };
+    }
+    if (/^\/spec\/v1\/[^/]+\.html$/.test(path)) return { priority: '0.8', changefreq: 'monthly' };
+    if (/^\/rfcs\/[^/]+\.html$/.test(path)) return { priority: '0.7', changefreq: 'monthly' };
+    if (/^\/(roadmap|governance|conformance|security|maintainers|contributing|protocol|implement|adopters|profiles|api)\//.test(path)) {
+      return { priority: '0.7', changefreq: 'monthly' };
+    }
+    return { priority: '0.5', changefreq: 'monthly' };
+  };
+
+  const body = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map((u) => `  <url><loc>${escapeHtml(u.loc)}</loc><lastmod>${u.lastmod}</lastmod></url>`).join('\n')}
+${urls
+  .map((u) => {
+    const path = u.loc.slice(SITE_ORIGIN.length);
+    const { priority, changefreq } = priorityOf(path);
+    return `  <url><loc>${escapeHtml(u.loc)}</loc><lastmod>${u.lastmod}</lastmod><changefreq>${changefreq}</changefreq><priority>${priority}</priority></url>`;
+  })
+  .join('\n')}
 </urlset>
 `;
   writeFileSync(join(DIST, 'sitemap.xml'), body);
@@ -913,8 +970,11 @@ function buildMarkdownDoc({ srcAbsPath, destPath, pageTitle, lede, navActive, ca
     <h1>${escapeHtml(pageTitle)}</h1>
     <p class="lede">${escapeHtml(lede)}</p>
   </header>`;
-  const articleHtml = `<article class="spec-doc">${markdownToHtml(md)}</article>`;
-  const content = intro + wrapWithToc(articleHtml, extractToc(md));
+  // The page-header above already renders the H1; strip the source's leading
+  // H1 so the rendered page doesn't carry two H1s. See `stripLeadingH1`.
+  const bodyMd = stripLeadingH1(md);
+  const articleHtml = `<article class="spec-doc">${markdownToHtml(bodyMd)}</article>`;
+  const content = intro + wrapWithToc(articleHtml, extractToc(bodyMd));
   ensureDir(dirname(destPath));
   writeFileSync(
     destPath,
@@ -1191,8 +1251,24 @@ function buildRfcs() {
     </header>`;
     const editUrl = `${REPO_URL}/edit/main/RFCS/${f}`;
     const editFooter = `<footer class="doc-edit"><a href="${editUrl}" rel="noopener">Edit this page on GitHub <span class="arrow">↗</span></a></footer>`;
-    const articleHtml = `<article class="spec-doc">${markdownToHtml(md)}${editFooter}</article>`;
-    const content = pageHeader + wrapWithToc(articleHtml, extractToc(md));
+    const bodyMd = stripLeadingH1(md);
+    const articleHtml = `<article class="spec-doc">${markdownToHtml(bodyMd)}${editFooter}</article>`;
+    const content = pageHeader + wrapWithToc(articleHtml, extractToc(bodyMd));
+    // TechArticle JSON-LD for every RFC page — mirrors the spec-doc shape so
+    // crawlers index RFCs as authored technical-spec articles rather than
+    // generic web pages. Headline + description + canonical URL + repo cite.
+    const rfcCanonicalPath = `/rfcs/${slug}.html`;
+    const rfcJsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'TechArticle',
+      headline: title,
+      description,
+      url: `${SITE_ORIGIN}${rfcCanonicalPath}`,
+      inLanguage: 'en-US',
+      isPartOf: { '@type': 'WebSite', '@id': `${SITE_ORIGIN}/#website`, name: 'OpenWOP', url: SITE_ORIGIN },
+      about: { '@type': 'SoftwareSourceCode', name: 'OpenWOP', url: SITE_ORIGIN, codeRepository: REPO_URL },
+      author: { '@type': 'Organization', name: 'OpenWOP', url: SITE_ORIGIN },
+    };
     writeFileSync(
       join(DIST, 'rfcs', `${slug}.html`),
       templatePage({
@@ -1200,7 +1276,8 @@ function buildRfcs() {
         content,
         navActive: 'rfcs',
         description,
-        canonicalPath: `/rfcs/${slug}.html`,
+        canonicalPath: rfcCanonicalPath,
+        jsonLd: rfcJsonLd,
       }),
     );
     items.push({
@@ -1350,8 +1427,9 @@ function buildContentDir() {
       <h1>${escapeHtml(title)}</h1>
       <p class="lede">${escapeHtml(description)}</p>
     </header>`;
-    const articleHtml = `<article class="spec-doc">${markdownToHtml(md)}</article>`;
-    const content = pageHeader + wrapWithToc(articleHtml, extractToc(md));
+    const bodyMd = stripLeadingH1(md);
+    const articleHtml = `<article class="spec-doc">${markdownToHtml(bodyMd)}</article>`;
+    const content = pageHeader + wrapWithToc(articleHtml, extractToc(bodyMd));
     const destDir = join(DIST, ...r.dest);
     ensureDir(destDir);
     const canonicalPath = `/${r.dest.join('/')}/`;

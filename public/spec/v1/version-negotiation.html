@@ -198,8 +198,7 @@
       <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
       <li class="toc-top"><a href="#references">References</a></li>
     </ul>
-  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-version-negotiation-and-deploy-skew-safety">OpenWOP Spec v1 — Version Negotiation and Deploy-Skew Safety</h1>
-<blockquote><p><strong>Status: Stable · v1.1 (2026-04-27).</strong> Comprehensive coverage of all four version axes (engine, per-run event-log, per-event, runtime pinning). Stable surface for external review. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
+  </aside><article class="spec-doc"><blockquote><p><strong>Status: Stable · v1.1 (2026-04-27).</strong> Comprehensive coverage of all four version axes (engine, per-run event-log, per-event, runtime pinning). Stable surface for external review. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>
 <p>Long-running workflows persist state. State written by engine version N may be read by engine version N+1 (forward) or — in a botched deploy — by engine version N-1 (backward / "deploy skew"). Without a version contract, a backward read can silently lose state added in N+1; a forward read can crash on unfamiliar fields. Separately, workflows that have been <em>running</em> for hours or days may need to evolve their behavior without invalidating the runs already in flight.</p>

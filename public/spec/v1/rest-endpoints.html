@@ -192,8 +192,7 @@
       <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
       <li class="toc-top"><a href="#references">References</a></li>
     </ul>
-  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-rest-endpoint-catalog">OpenWOP Spec v1 — REST Endpoint Catalog</h1>
-<blockquote><p><strong>Status: Stable · v1.1 (2026-04-27; hygiene pass 2026-05-10).</strong> Comprehensive coverage of the canonical REST surface with per-route auth + scope, formalized in <code>api/openapi.yaml</code> against the JSON Schemas in <code>schemas/</code>. Replay/fork has shipped at <code>replay.md</code> + the <code>POST /v1/runs/{runId}:fork</code> endpoint. Remaining gaps are additive operational conveniences (bulk operations, explicit pause/resume, and any future gRPC transport), not blockers for v1 conformance. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
+  </aside><article class="spec-doc"><blockquote><p><strong>Status: Stable · v1.1 (2026-04-27; hygiene pass 2026-05-10).</strong> Comprehensive coverage of the canonical REST surface with per-route auth + scope, formalized in <code>api/openapi.yaml</code> against the JSON Schemas in <code>schemas/</code>. Replay/fork has shipped at <code>replay.md</code> + the <code>POST /v1/runs/{runId}:fork</code> endpoint. Remaining gaps are additive operational conveniences (bulk operations, explicit pause/resume, and any future gRPC transport), not blockers for v1 conformance. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
 <hr/>
 <h2 id="scope">Scope</h2>
 <p>This document catalogs the REST surface an OpenWOP-compliant server MUST expose, plus optional surfaces (MCP, A2A) that a server MAY expose. Path templates use <code>{paramName}</code> for path parameters.</p>

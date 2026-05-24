@@ -163,8 +163,7 @@
       <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
       <li class="toc-top"><a href="#references">References</a></li>
     </ul>
-  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-compatibility-profiles">OpenWOP Spec v1 — Compatibility Profiles</h1>
-<blockquote><p><strong>Status: Stable · v1.1 (2026-05-05; <code>openwop-fixtures</code> added 2026-05-07 via RFC 0003).</strong> Profiles are an additive layer over v1 capabilities. They MUST be derivable from existing <code>/.well-known/openwop</code> fields without a wire-shape change. Graduated DRAFT → FINAL via RFC 0003. See <code>auth.md</code> for the status legend. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>.</p></blockquote>
+  </aside><article class="spec-doc"><blockquote><p><strong>Status: Stable · v1.1 (2026-05-05; <code>openwop-fixtures</code> added 2026-05-07 via RFC 0003).</strong> Profiles are an additive layer over v1 capabilities. They MUST be derivable from existing <code>/.well-known/openwop</code> fields without a wire-shape change. Graduated DRAFT → FINAL via RFC 0003. See <code>auth.md</code> for the status legend. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>
 <p>"openwop-compatible" today means "passes some subset of <code>@openwop/openwop-conformance</code>." That's accurate but not actionable: a host advertising <code>secrets.supported: true</code> and a host advertising <code>aiProviders.policies</code> aren't doing the same thing, and a client that depends on one doesn't necessarily work against the other.</p>

@@ -186,8 +186,7 @@
       <li class="toc-top"><a href="#host-capability-surfaces">host.* capability surfaces</a></li>
       <li class="toc-top"><a href="#see-also">See also</a></li>
     </ul>
-  </aside><article class="spec-doc"><h1 id="openwop-spec-v1-host-extensions">OpenWOP Spec v1 — Host Extensions</h1>
-<blockquote><p><strong>Status: Stable · v1.1 (2026-05-05).</strong> Distinguishes the protocol's normative core from host-specific extensions. This document is the canonical reference cited from any spec doc that mentions a vendor-prefixed namespace (e.g., <code>openwop.*</code>). Graduated DRAFT → FINAL via RFC 0006. See <code>auth.md</code> for the status legend. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>.</p></blockquote>
+  </aside><article class="spec-doc"><blockquote><p><strong>Status: Stable · v1.1 (2026-05-05).</strong> Distinguishes the protocol's normative core from host-specific extensions. This document is the canonical reference cited from any spec doc that mentions a vendor-prefixed namespace (e.g., <code>openwop.*</code>). Graduated DRAFT → FINAL via RFC 0006. See <code>auth.md</code> for the status legend. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>.</p></blockquote>
 <hr/>
 <h2 id="why-this-exists">Why this exists</h2>
 <p>A host implementing openwop often needs to expose product-specific concepts that aren't part of the protocol — workspaces, projects, canvases, custom node types, vendor analytics. The spec mentions some of these in passing (e.g., <code>openwop.canvasTypeId</code> in the <code>metadata</code> field of <code>POST /v1/runs</code>).</p>

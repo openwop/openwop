@@ -41,7 +41,31 @@
   <link rel="stylesheet" href="/styles.css"/>
   <link rel="stylesheet" href="/assets/style.css"/>
 
-  
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "RFC 0026: `provider.usage` Event",
+  "description": "Adds a new optional event type provider.usage that hosts MUST emit after every LLM provider invocation, carrying per-call token counts plus optional cost-estimate fields. Pairs with the existing openwop.cost.* OTel attribute group (anticipated by…",
+  "url": "https://openwop.dev/rfcs/0026-provider-usage-event.html",
+  "inLanguage": "en-US",
+  "isPartOf": {
+    "@type": "WebSite",
+    "@id": "https://openwop.dev/#website",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "about": {
+    "@type": "SoftwareSourceCode",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev",
+    "codeRepository": "https://github.com/openwop/openwop"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  }
+}</script>
   
   
 </head>
@@ -163,8 +187,7 @@
       <li class="toc-sub"><a href="#draft-active-2026-05-19">Draft → Active (2026-05-19)</a></li>
       <li class="toc-sub"><a href="#active-accepted-2026-05-19">Active → Accepted (2026-05-19)</a></li>
     </ul>
-  </aside><article class="spec-doc"><h1 id="rfc-0026-provider-usage-event">RFC 0026: <code>provider.usage</code> Event</h1>
-<table>
+  </aside><article class="spec-doc"><table>
 <thead><tr><th>Field</th><th>Value</th></tr></thead>
 <tbody>
 <tr><td><strong>RFC</strong></td><td>0026</td></tr>

@@ -159,8 +159,7 @@
       <li class="toc-top"><a href="#11-try-the-reference-application-be-fe-template">11. Try the reference application (BE + FE template)</a></li>
       <li class="toc-top"><a href="#see-also">See also</a></li>
     </ul>
-  </aside><article class="spec-doc"><h1 id="openwop-quickstart">OpenWOP Quickstart</h1>
-<blockquote><p><strong>Status: FINAL v1 (2026-04-29).</strong> End-to-end developer onboarding guide covering discovery, auth, run lifecycle, live event delivery (SSE + webhooks), time-travel debugging via fork, BYOK + RunOptions, node-pack authoring, conformance, SDKs, and storage adapters. Cross-references the canonical specs for full normative detail. See <code>auth.md</code> for the status legend.</p></blockquote>
+  </aside><article class="spec-doc"><blockquote><p><strong>Status: Stable · v1.1 (2026-04-29).</strong> End-to-end developer onboarding guide covering discovery, auth, run lifecycle, live event delivery (SSE + webhooks), time-travel debugging via fork, BYOK + RunOptions, node-pack authoring, conformance, SDKs, and storage adapters. Cross-references the canonical specs for full normative detail. See <code>auth.md</code> for the status legend.</p></blockquote>
 <blockquote><p><strong>Audience:</strong> developers integrating with an OpenWOP-compliant server for the first time.</p><p><strong>Prerequisites:</strong> an API key issued by your OpenWOP host (see <a href="./spec/v1/auth.md"><code>auth.md</code></a>) and the server's base URL.</p><p><strong>Time to first run:</strong> ~5 minutes.</p></blockquote>
 <p>This guide walks through the most common OpenWOP workflows end-to-end: calling a server, receiving live events, debugging via fork, building a node pack, and certifying your implementation. Each section links to the canonical spec doc for the full normative detail.</p>
 <hr/>
@@ -329,9 +328,9 @@ npx openwop-conformance --base-url https://your-openwop-server.example --api-key
 <table>
 <thead><tr><th>Language</th><th>Package</th><th>Status</th></tr></thead>
 <tbody>
-<tr><td>TypeScript</td><td><code>@openwop/openwop</code></td><td>✅ FINAL v1</td></tr>
-<tr><td>Python</td><td><code>openwop_client</code></td><td>✅ FINAL v1</td></tr>
-<tr><td>Go</td><td><code>openwopclient</code></td><td>✅ FINAL v1</td></tr>
+<tr><td>TypeScript</td><td><code>@openwop/openwop</code></td><td>✅ Stable v1</td></tr>
+<tr><td>Python</td><td><code>openwop_client</code></td><td>✅ Stable v1</td></tr>
+<tr><td>Go</td><td><code>openwopclient</code></td><td>✅ Stable v1</td></tr>
 </tbody></table>
 <p>Each SDK provides:</p>
 <ul>
