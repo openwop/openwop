@@ -253,6 +253,17 @@ function ConfigInput({
           required={field.required}
           onChange={(e) => onChange(e.target.value === '' ? undefined : Number(e.target.value))}
         />
+      ) : field.kind === 'select' ? (
+        <select
+          value={typeof value === 'string' ? value : ''}
+          required={field.required}
+          onChange={(e) => onChange(e.target.value === '' ? undefined : e.target.value)}
+        >
+          {!field.required && <option value="">—</option>}
+          {(field.options ?? []).map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
       ) : (
         <input
           value={typeof value === 'string' ? value : ''}
