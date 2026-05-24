@@ -12,6 +12,7 @@
  */
 
 import { create } from 'zustand';
+import type { RunEventDoc } from '@openwop/openwop';
 import type { BuilderEdge, BuilderNode, SavedWorkflow } from '../schema/workflow.js';
 import { catalogEntry, defaultConfigFor } from '../palette/catalogRegistry.js';
 import { upsertSavedWorkflow } from '../persistence/localStore.js';
@@ -21,6 +22,21 @@ const HISTORY_MAX = 30;
 interface Snapshot {
   nodes: BuilderNode[];
   edges: BuilderEdge[];
+}
+
+/** Per-node live status painted onto the canvas during a run overlay. */
+export type NodeRunStatus = 'running' | 'completed' | 'failed' | 'suspended';
+
+/** Terminal status of the overlaid run itself, for the canvas banner. */
+export type OverlayRunStatus = 'running' | 'completed' | 'failed' | 'cancelled';
+
+export interface RunOverlay {
+  runId: string;
+  /** Backend node.nodeId → builder BuilderNode.id, from serializeWithIdMap. */
+  backendIdToBuilder: Record<string, string>;
+  /** builder BuilderNode.id → live status. */
+  nodeStatus: Record<string, NodeRunStatus>;
+  runStatus: OverlayRunStatus;
 }
 
 export interface BuilderState {
@@ -33,6 +49,10 @@ export interface BuilderState {
   selectedEdgeId: string | null;
   past: Snapshot[];
   future: Snapshot[];
+
+  /** Live run overlay. Null when no run is being watched. Ephemeral —
+   *  never snapshotted (undo/redo) or persisted to localStorage. */
+  overlay: RunOverlay | null;
 
   loadFromSaved(wf: SavedWorkflow): void;
   setName(name: string): void;
@@ -49,6 +69,13 @@ export interface BuilderState {
   redo(): void;
   snapshot(): SavedWorkflow;
   persist(): void;
+
+  /** Begin painting a run onto the canvas. Resets any prior overlay. */
+  startOverlay(runId: string, backendIdToBuilder: Record<string, string>): void;
+  /** Fold a single run event into the overlay's per-node status. */
+  applyRunEvent(ev: RunEventDoc): void;
+  /** Clear the overlay (run finished + user dismissed, or new edit). */
+  clearOverlay(): void;
 }
 
 function clone(s: { nodes: BuilderNode[]; edges: BuilderEdge[] }): Snapshot {
@@ -68,6 +95,7 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   selectedEdgeId: null,
   past: [],
   future: [],
+  overlay: null,
 
   loadFromSaved(wf) {
     set({
@@ -79,6 +107,7 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
       selectedNodeId: null,
       past: [],
       future: [],
+      overlay: null,
     });
   },
 
@@ -237,6 +266,38 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
+  },
+
+  startOverlay(runId, backendIdToBuilder) {
+    set({
+      overlay: { runId, backendIdToBuilder, nodeStatus: {}, runStatus: 'running' },
+    });
+  },
+
+  applyRunEvent(ev) {
+    const overlay = get().overlay;
+    if (!overlay || ev.runId !== overlay.runId) return;
+    // Run-level terminal transitions update the banner status.
+    if (ev.type === 'run.completed') { set({ overlay: { ...overlay, runStatus: 'completed' } }); return; }
+    if (ev.type === 'run.failed') { set({ overlay: { ...overlay, runStatus: 'failed' } }); return; }
+    if (ev.type === 'run.cancelled') { set({ overlay: { ...overlay, runStatus: 'cancelled' } }); return; }
+    // Node-level transitions paint individual nodes.
+    if (!ev.nodeId) return;
+    const builderId = overlay.backendIdToBuilder[ev.nodeId];
+    if (!builderId) return;
+    const next: NodeRunStatus | null =
+      ev.type === 'node.started' ? 'running'
+      : ev.type === 'node.completed' ? 'completed'
+      : ev.type === 'node.failed' ? 'failed'
+      : ev.type === 'node.suspended' ? 'suspended'
+      : ev.type === 'node.interrupt.resolved' ? 'running'
+      : null;
+    if (!next) return;
+    set({ overlay: { ...overlay, nodeStatus: { ...overlay.nodeStatus, [builderId]: next } } });
+  },
+
+  clearOverlay() {
+    set({ overlay: null });
   },
 }));
 

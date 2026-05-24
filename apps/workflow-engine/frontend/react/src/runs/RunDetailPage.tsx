@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import type { RunSnapshot, RunEventDoc } from '@openwop/openwop';
+import type { RunSnapshot, RunEventDoc, StreamMode } from '@openwop/openwop';
 import { cancelRun, forkRun, getRun, pollEvents } from '../client/runsClient.js';
 import { subscribeToRun } from '../client/streamsClient.js';
 import { listOpenInterrupts, type OpenInterrupt } from '../client/interruptsClient.js';
 import { EventStreamView } from '../streams/EventStreamView.js';
-import { ApprovalCard } from '../interrupts/ApprovalCard.js';
-import { ClarificationDialog } from '../interrupts/ClarificationDialog.js';
-import { RefinementForm } from '../interrupts/RefinementForm.js';
-import { CancellationBanner } from '../interrupts/CancellationBanner.js';
+import { RunTimeline } from './RunTimeline.js';
+import { RunAgentTrace } from './RunAgentTrace.js';
+import { RunHandoffMap } from './RunHandoffMap.js';
+import { RunCostPanel } from './RunCostPanel.js';
+import { RunOpsPanel } from './RunOpsPanel.js';
+import { RenderInterrupt } from '../interrupts/RenderInterrupt.js';
 
 export function RunDetailPage() {
   const { runId = '' } = useParams();
@@ -16,6 +18,8 @@ export function RunDetailPage() {
   const [events, setEvents] = useState<RunEventDoc[]>([]);
   const [activeInterrupt, setActiveInterrupt] = useState<OpenInterrupt | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [eventView, setEventView] = useState<'timeline' | 'log'>('timeline');
+  const [streamMode, setStreamMode] = useState<StreamMode>('updates');
 
   const refreshInterrupts = useCallback(async () => {
     if (!runId) return;
@@ -51,7 +55,7 @@ export function RunDetailPage() {
   useEffect(() => {
     if (!runId) return;
     const sub = subscribeToRun(runId, {
-      modes: ['updates'],
+      modes: [streamMode],
       onEvent: (ev) => {
         setEvents((prev) => {
           // Dedupe by sequence; events arriving out-of-order keep monotone order.
@@ -74,7 +78,7 @@ export function RunDetailPage() {
       onError: () => setError('Event stream connection error (will reconnect)'),
     });
     return () => sub.close();
-  }, [runId, refreshInterrupts]);
+  }, [runId, refreshInterrupts, streamMode]);
 
   async function onCancel() {
     if (!runId) return;
@@ -117,7 +121,7 @@ export function RunDetailPage() {
         </div>
       </div>
 
-      <RenderActiveInterrupt
+      <RenderInterrupt
         runId={runId}
         active={activeInterrupt}
         onResolved={async () => {
@@ -127,46 +131,54 @@ export function RunDetailPage() {
         }}
       />
 
+      <RunCostPanel events={events} />
+      <RunHandoffMap events={events} />
+      <RunAgentTrace events={events} />
+      <RunOpsPanel runId={runId} events={events} />
+
       <div className="card">
-        <h2>Event stream</h2>
-        <EventStreamView events={events} onForkFrom={onForkFrom} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <h2 style={{ flex: 1 }}>Event stream</h2>
+          <label className="muted" style={{ fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            mode
+            <select
+              value={streamMode}
+              onChange={(e) => setStreamMode(e.target.value as StreamMode)}
+              title="SSE stream mode (RFC 0002) — re-subscribes on change"
+            >
+              <option value="updates">updates</option>
+              <option value="values">values</option>
+              <option value="messages">messages</option>
+              <option value="debug">debug</option>
+            </select>
+          </label>
+          <div className="segmented" role="tablist" aria-label="Event view">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={eventView === 'timeline'}
+              className={eventView === 'timeline' ? '' : 'secondary'}
+              onClick={() => setEventView('timeline')}
+            >
+              Timeline
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={eventView === 'log'}
+              className={eventView === 'log' ? '' : 'secondary'}
+              onClick={() => setEventView('log')}
+            >
+              Log
+            </button>
+          </div>
+        </div>
+        {eventView === 'timeline' ? (
+          <RunTimeline events={events} onForkFrom={onForkFrom} />
+        ) : (
+          <EventStreamView events={events} onForkFrom={onForkFrom} />
+        )}
       </div>
     </section>
   );
-}
-
-function RenderActiveInterrupt({
-  runId,
-  active,
-  onResolved,
-}: {
-  runId: string;
-  active: OpenInterrupt | null;
-  onResolved: () => void;
-}) {
-  if (!active) return null;
-  const props = {
-    runId,
-    nodeId: active.nodeId,
-    token: active.token,
-    data: active.data,
-    onResolved,
-  };
-  switch (active.kind) {
-    case 'approval':
-      return <ApprovalCard {...props} />;
-    case 'clarification':
-      return <ClarificationDialog {...props} />;
-    case 'refinement':
-      return <RefinementForm {...props} />;
-    case 'cancellation':
-      return <CancellationBanner {...props} />;
-    default:
-      return (
-        <div className="alert warning">
-          Unknown interrupt kind <code>{active.kind}</code> — extend
-          <code> RenderActiveInterrupt</code> in <code>RunDetailPage.tsx</code>.
-        </div>
-      );
-  }
 }

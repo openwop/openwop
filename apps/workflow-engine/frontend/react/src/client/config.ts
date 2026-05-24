@@ -37,6 +37,12 @@ export const config = {
     ?? 'http://localhost:8080',
   apiKey: (import.meta.env.VITE_OPENWOP_API_KEY as string | undefined) ?? 'sample-token',
   authMode: ((import.meta.env.VITE_OPENWOP_AUTH_MODE as string | undefined) ?? 'bearer') as AuthMode,
+  /** Live pack registry root (RFC 0003 / 0013 / 0043). The pack browser
+   *  fetches `${registryBaseUrl}/v1/index.json` + per-pack manifests,
+   *  signatures and SBOMs directly. Defaults to the public registry;
+   *  override with VITE_OPENWOP_REGISTRY_URL to point at a mirror. */
+  registryBaseUrl:
+    (import.meta.env.VITE_OPENWOP_REGISTRY_URL as string | undefined) ?? 'https://packs.openwop.dev',
 };
 
 /**

@@ -8,6 +8,8 @@
  *   "application/openwop-node-kind" carries the kind string.
  * - `isValidConnection` runs port-type compatibility before accepting
  *   an edge.
+ * - During a live-run overlay, per-node status is fed into node data so
+ *   BaseNode paints execution state.
  */
 
 import { useCallback, useMemo, useRef } from 'react';
@@ -49,6 +51,7 @@ function BuilderCanvasInner() {
   const builderNodes = useBuilderStore((s) => s.nodes);
   const builderEdges = useBuilderStore((s) => s.edges);
   const selectedNodeId = useBuilderStore((s) => s.selectedNodeId);
+  const overlay = useBuilderStore((s) => s.overlay);
   const addNode = useBuilderStore((s) => s.addNode);
   const updateNode = useBuilderStore((s) => s.updateNode);
   const removeNode = useBuilderStore((s) => s.removeNode);
@@ -62,10 +65,10 @@ function BuilderCanvasInner() {
         id: n.id,
         type: 'builder',
         position: n.position,
-        data: { kind: n.kind, name: n.name },
+        data: { kind: n.kind, name: n.name, runStatus: overlay?.nodeStatus[n.id] },
         selected: n.id === selectedNodeId,
       })),
-    [builderNodes, selectedNodeId],
+    [builderNodes, selectedNodeId, overlay],
   );
 
   const rfEdges: Edge[] = useMemo(
