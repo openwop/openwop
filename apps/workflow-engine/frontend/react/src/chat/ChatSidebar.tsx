@@ -52,6 +52,31 @@ function writeStorage(key: string, value: string | null): void {
   } catch { /* quota / disabled — ignore */ }
 }
 
+/** Drop tenant-suffixed panel keys that don't match the current
+ *  tenant. Switching identity in the same browser would otherwise
+ *  leave the old tenant's entries behind forever — ~2 keys per
+ *  switch, no cap. Called once on mount per ChatSidebar instance. */
+function pruneStalePanelKeys(currentTenantId: string): void {
+  try {
+    const keep = new Set([
+      progressOpenKey(currentTenantId),
+      progressFocusedKey(currentTenantId),
+    ]);
+    const toRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key) continue;
+      if (
+        (key.startsWith(`${LS_PROGRESS_OPEN_PREFIX}:`) || key.startsWith(`${LS_PROGRESS_FOCUSED_PREFIX}:`))
+        && !keep.has(key)
+      ) {
+        toRemove.push(key);
+      }
+    }
+    for (const key of toRemove) localStorage.removeItem(key);
+  } catch { /* quota / disabled — ignore */ }
+}
+
 // Ensure built-in commands are registered before first render.
 registerDefaultCommands();
 
@@ -78,10 +103,24 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
     typeof window !== 'undefined' && window.innerWidth < MOBILE_BREAKPOINT_PX,
   );
   useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth < MOBILE_BREAKPOINT_PX);
+    // Resize listener — skip the state-set when the boolean wouldn't
+    // change so a window drag doesn't cause a top-level re-render per
+    // resize event (~60Hz). Cheap guard, frees up the render pipeline
+    // for the chat thread while the panel is open.
+    const onResize = () => {
+      const next = window.innerWidth < MOBILE_BREAKPOINT_PX;
+      setIsMobile((prev) => (prev === next ? prev : next));
+    };
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
+
+  // One-time prune of panel-state keys belonging to other tenants on
+  // this browser. Keeps localStorage bounded across identity switches
+  // (anon → signed-in transition, shared-machine demos).
+  useEffect(() => {
+    pruneStalePanelKeys(tenantId);
+  }, [tenantId]);
 
   // Workflow_run messages in this session — feed into the panel +
   // run-switcher. Most-recent first so the run-switcher row order

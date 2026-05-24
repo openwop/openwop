@@ -65,11 +65,18 @@ export function StepList({ run, message }: Props): JSX.Element {
           : isCurrent ? { label: '●', color: STATUS_COLORS.running }
           : { label: '○', color: 'var(--ink-3, #8a857a)' };
 
+        // A11y wiring for the disclosure pattern. Screen readers
+        // announce the row as a button + report its expanded state +
+        // point at the panel that materializes when expanded. The
+        // panel id ties row → `<pre>` so AT navigation works.
+        const panelId = `step-output-${nodeId}`;
         return (
           <li key={nodeId}>
             <div
               role={hasOutputs ? 'button' : undefined}
               tabIndex={hasOutputs ? 0 : -1}
+              aria-expanded={hasOutputs ? isExpanded : undefined}
+              aria-controls={hasOutputs ? panelId : undefined}
               onClick={hasOutputs ? () => setExpandedNodeId(isExpanded ? null : nodeId) : undefined}
               onKeyDown={hasOutputs ? (e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -138,7 +145,7 @@ export function StepList({ run, message }: Props): JSX.Element {
               )}
             </div>
             {isExpanded && hasOutputs && (
-              <pre style={{
+              <pre id={panelId} style={{
                 margin: '4px 0 6px 26px',
                 padding: '8px 10px',
                 background: 'var(--paper-2, var(--color-surface, #ece8de))',

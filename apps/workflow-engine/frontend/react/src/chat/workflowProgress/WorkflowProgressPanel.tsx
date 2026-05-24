@@ -18,7 +18,7 @@
  *   - Outputs / error / footer (runId + builder link + elapsed).
  */
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { CardHost } from '../registry/CardHost.js';
 import { StepList, STATUS_COLORS, STATUS_LABELS } from './StepList.js';
@@ -59,15 +59,12 @@ export function WorkflowProgressPanel({
   // global `window.keydown` would fight `ChatInput`'s own Esc handling
   // (cancel in-flight turn) and close the panel as a side-effect of
   // the user trying to abort their message. Binding via an onKeyDown
-  // on the aside (with tabIndex=-1 + initial autofocus on the close
-  // button so keyboard users land here on open) keeps the keypress
-  // properly scoped.
-  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
-  useEffect(() => {
-    // Focus the close button on mount so keyboard users immediately
-    // own the keypress + the panel root is the active scope.
-    closeBtnRef.current?.focus();
-  }, []);
+  // on the aside with tabIndex=-1 keeps the keypress properly scoped.
+  // We deliberately DON'T auto-focus the close button on mount: the
+  // panel rendering is gated on persisted `progressOpen=true`, so an
+  // auto-focus would yank the user's focus on every page reload that
+  // restores an open panel. Users who want Esc to work click anywhere
+  // inside the panel first.
 
   const focused = useMemo(
     () => workflowRunMessages.find((m) => m.id === focusedMessageId) ?? workflowRunMessages[0] ?? null,
@@ -91,7 +88,6 @@ export function WorkflowProgressPanel({
         position: isMobile ? 'absolute' : 'relative',
         inset: isMobile ? 0 : 'auto',
         zIndex: isMobile ? 20 : 'auto',
-        outline: 'none',
       }}
       aria-labelledby={headingId}
     >
@@ -106,7 +102,6 @@ export function WorkflowProgressPanel({
       >
         <strong id={headingId} style={{ flex: 1, fontSize: 13 }}>Workflow progress</strong>
         <button
-          ref={closeBtnRef}
           type="button"
           className="secondary"
           onClick={onClose}

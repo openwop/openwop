@@ -139,6 +139,20 @@ Equivalent direct script:
 bash scripts/openwop-check.sh
 ```
 
+### Optional pre-commit guard
+
+Install once per clone to catch the most common author-side slip
+(staging an RFC change without regenerating `docs/PROTOCOL-STATUS.md`
+and `README.md`):
+
+```bash
+bash scripts/install-git-hooks.sh
+```
+
+This symlinks `scripts/hooks/pre-commit` into `.git/hooks/`. The
+hook is fast (<1s) and only fires when staged paths match
+`RFCS/*.md`. Heavier validation stays in CI.
+
 ---
 
 ## Coordination with the impl plan

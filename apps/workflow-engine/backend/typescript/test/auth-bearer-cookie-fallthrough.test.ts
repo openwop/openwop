@@ -24,7 +24,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import express, { type Express } from 'express';
 import http from 'node:http';
 import { createSign, generateKeyPairSync, type KeyObject } from 'node:crypto';
-import { authMiddleware, _resetOidcVerifier } from '../src/middleware/auth.js';
+import { authMiddleware, _resetOidcVerifier, _resetFallthroughTracker } from '../src/middleware/auth.js';
 
 // ── tiny synthetic OIDC issuer ───────────────────────────────────
 // Mirrors the helper in auth-oidc.test.ts. Kept inline so this test
@@ -36,6 +36,11 @@ interface SyntheticIssuer {
   audience: string;
   jwksUrl: string;
   mint(overrides?: Partial<{ sub: string; aud: string; exp: number; iat: number }>): string;
+  /** Mint a token with the realistic Firebase Auth claim shape
+   *  (`auth_time`, `email_verified`, `firebase.identities`, etc.).
+   *  Catches verifier changes that tighten claim checks against
+   *  fields the synthetic minimal shape doesn't carry. */
+  mintFirebaseShape(overrides?: Partial<{ sub: string; aud: string; exp: number; email: string }>): string;
   close: () => Promise<void>;
 }
 
@@ -70,6 +75,36 @@ async function startSyntheticIssuer(audience: string): Promise<SyntheticIssuer> 
         sub: overrides.sub ?? 'firebase-uid-stale',
         iat: overrides.iat ?? now,
         exp: overrides.exp ?? now + 300,
+      };
+      const signingInput = `${b64url(JSON.stringify(header))}.${b64url(JSON.stringify(payload))}`;
+      const sig = createSign('sha256').update(signingInput).sign(privateKey as KeyObject);
+      return `${signingInput}.${b64url(sig)}`;
+    },
+    mintFirebaseShape(overrides = {}) {
+      const now = Math.floor(Date.now() / 1000);
+      const sub = overrides.sub ?? 'firebase-uid-real-shape';
+      const email = overrides.email ?? 'user@example.com';
+      const header = { alg: 'RS256', kid, typ: 'JWT' };
+      // Mirrors the actual claim set Firebase Auth issues for a
+      // password-provider sign-in (snapshot from `firebase auth:export`
+      // sanitized). The verifier presently only checks iss/aud/exp;
+      // adding these fields here pins the contract — if a future
+      // change starts asserting on `firebase.identities.email`
+      // existence, this fixture catches the break.
+      const payload = {
+        iss: issuer,
+        aud: overrides.aud ?? audience,
+        sub,
+        iat: now,
+        exp: overrides.exp ?? now + 3600,
+        auth_time: now - 60,
+        email,
+        email_verified: true,
+        user_id: sub,
+        firebase: {
+          identities: { email: [email] },
+          sign_in_provider: 'password',
+        },
       };
       const signingInput = `${b64url(JSON.stringify(header))}.${b64url(JSON.stringify(payload))}`;
       const sig = createSign('sha256').update(signingInput).sign(privateKey as KeyObject);
@@ -131,11 +166,24 @@ const call = (headers: Record<string, string> = {}) =>
 
 describe('bearer → cookie fall-through (browser-shape deploys)', () => {
   it('valid OIDC JWT still produces an oidc:* principal (regression guard)', async () => {
+    _resetFallthroughTracker();
     const token = issuer.mint({ sub: 'firebase-uid-valid' });
     const res = await call({ authorization: `Bearer ${token}` });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { principalId: string };
     expect(body.principalId).toBe('oidc:firebase-uid-valid');
+  });
+
+  it('valid Firebase-shape JWT (auth_time + firebase.identities) verifies cleanly', async () => {
+    // Pins contract: if a future verifier change starts asserting on
+    // Firebase-specific claims, this test exercises them so the
+    // change is caught here rather than at first prod deploy.
+    _resetFallthroughTracker();
+    const token = issuer.mintFirebaseShape({ sub: 'firebase-uid-realshape', email: 'alice@example.com' });
+    const res = await call({ authorization: `Bearer ${token}` });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { principalId: string };
+    expect(body.principalId).toBe('oidc:firebase-uid-realshape');
   });
 
   it('expired JWT + valid session cookie → session:* principal, NOT 401', async () => {

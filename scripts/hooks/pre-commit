@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# Local pre-commit guard for openwop. Mirrors the subset of
+# `npm run openwop:check` that catches the most common author-side
+# slips before they reach CI.
+#
+# Installed (per-clone, opt-in) via:
+#   bash scripts/install-git-hooks.sh
+#
+# What it does:
+#   1. If any staged path matches RFCS/*.md, re-run the protocol-status
+#      generator. If the generator changes files (README.md /
+#      docs/PROTOCOL-STATUS.md), abort the commit and tell the user to
+#      stage the regen — keeps RFC count claims honest without a
+#      forced auto-stage.
+#   2. Fast — under a second. Heavier checks (full corpus gate, SDK
+#      typechecks) stay in CI to keep the commit loop snappy.
+
+set -euo pipefail
+
+# Resolve repo root regardless of where git invokes the hook from.
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+staged_rfcs=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^RFCS/[0-9]+-.+\.md$' || true)
+
+if [ -n "$staged_rfcs" ]; then
+  # RFC files are in the staged set — regenerate the status doc and
+  # see if it diverges from what's on disk. A divergence means the
+  # author edited an RFC's status/title without re-running the
+  # generator. We refuse to commit so the doc + RFC stay in sync.
+  before_status=$(git hash-object docs/PROTOCOL-STATUS.md 2>/dev/null || echo "")
+  before_readme=$(git hash-object README.md 2>/dev/null || echo "")
+
+  if ! node scripts/generate-protocol-status.mjs --write >/dev/null 2>&1; then
+    echo "pre-commit: protocol-status generator failed. Run \`node scripts/generate-protocol-status.mjs\` to see the error." >&2
+    exit 1
+  fi
+
+  after_status=$(git hash-object docs/PROTOCOL-STATUS.md 2>/dev/null || echo "")
+  after_readme=$(git hash-object README.md 2>/dev/null || echo "")
+
+  if [ "$before_status" != "$after_status" ] || [ "$before_readme" != "$after_readme" ]; then
+    echo "pre-commit: staged RFC change left docs/PROTOCOL-STATUS.md or README.md stale." >&2
+    echo "            The generator just updated them. Stage the diff and re-commit:" >&2
+    echo "              git add docs/PROTOCOL-STATUS.md README.md" >&2
+    exit 1
+  fi
+fi
+
+exit 0

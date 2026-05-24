@@ -232,6 +232,49 @@ export function _resetOidcVerifier(): void {
   oidcVerifierInstance = undefined;
 }
 
+/** Sliding-window failure tracker for OIDC verify fall-throughs. A
+ *  misconfigured `OPENWOP_OIDC_AUDIENCE` would silently downgrade
+ *  every signed-in user to the anon path; without an aggregate signal
+ *  the only evidence is per-request `log.warn` entries that get
+ *  drowned out under normal token-rotation churn. We track the count
+ *  in the trailing 60s window and emit a louder `log.error` (with the
+ *  config snapshot operators need to debug) when failures cross the
+ *  threshold — once per minute, so a sustained problem reports
+ *  steadily without per-request noise. */
+const FALLTHROUGH_WINDOW_MS = 60_000;
+const FALLTHROUGH_ALARM_THRESHOLD = 10;
+let fallthroughTimestamps: number[] = [];
+let lastFallthroughAlarmAt = 0;
+
+function noteOidcFallthrough(reason: string): void {
+  const now = Date.now();
+  // Drop timestamps outside the trailing window so the array stays
+  // bounded to roughly one minute's worth of failures.
+  fallthroughTimestamps = fallthroughTimestamps.filter((t) => now - t < FALLTHROUGH_WINDOW_MS);
+  fallthroughTimestamps.push(now);
+  if (
+    fallthroughTimestamps.length >= FALLTHROUGH_ALARM_THRESHOLD
+    && now - lastFallthroughAlarmAt > FALLTHROUGH_WINDOW_MS
+  ) {
+    lastFallthroughAlarmAt = now;
+    const cfg = readOidcConfigFromEnv();
+    log.error('OIDC fall-through rate exceeded threshold — verify OPENWOP_OIDC_* config', {
+      countInWindow: fallthroughTimestamps.length,
+      windowMs: FALLTHROUGH_WINDOW_MS,
+      lastReason: reason,
+      configuredIssuer: cfg?.issuer ?? null,
+      configuredAudience: cfg?.audience ?? null,
+    });
+  }
+}
+
+/** Test affordance — reset the fall-through tracker so unit tests get
+ *  a clean window between assertions. */
+export function _resetFallthroughTracker(): void {
+  fallthroughTimestamps = [];
+  lastFallthroughAlarmAt = 0;
+}
+
 /** When bearer verification fails, the middleware can either (a) emit
  *  401 immediately (the original, strict behavior — required when
  *  cookies are disabled and there's nothing to fall back to) or (b)
@@ -313,6 +356,7 @@ export function authMiddleware(): RequestHandler {
             return;
           }
           log.warn('OIDC verify failed — falling through to cookie path', { code });
+          noteOidcFallthrough(code);
           // fall through
         }
       } else {
@@ -331,6 +375,7 @@ export function authMiddleware(): RequestHandler {
           looksLikeJwt,
           hasOidc: oidc !== null,
         });
+        noteOidcFallthrough(looksLikeJwt ? 'jwt_no_verifier' : 'not_jwt');
         // fall through
       }
     }
