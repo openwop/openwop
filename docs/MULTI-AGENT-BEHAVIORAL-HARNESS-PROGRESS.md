@@ -1,8 +1,10 @@
-# Phase 4 — Behavioral harnesses (audit close-out tracking)
+# Multi-agent behavioral harness progress (audit close-out tracking)
 
 > Status: ACTIVE. Filed 2026-05-22 in response to the 2026-05-22 standards-readiness review's Acceptance-Bar item #5 ("Hard behavioral harnesses for multi-region idempotency, cross-engine append ordering, sandbox execution, replay determinism, and secret-leakage telemetry/export paths").
 >
-> Updates to this doc are visible in `git log -- docs/PHASE-4-PROGRESS.md`. Each row's commit / PR reference closes when the harness lands.
+> Updates to this doc are visible in `git log -- docs/MULTI-AGENT-BEHAVIORAL-HARNESS-PROGRESS.md`. Each row's commit / PR reference closes when the harness lands.
+>
+> **Renamed 2026-05-24:** previously `docs/PHASE-4-PROGRESS.md`. The "Phase 4" label was an internal sequencing label for the multi-agent execution model (RFCs 0037 / 0039 / 0040 / 0041) that read as opaque to external auditors. Renamed to a feature-describing name; in-tree references updated. The integer `multiAgent.executionModel.version ∈ {1, 2, 3, 4}` on the wire is unchanged — that IS the capability version, and renaming it would be a breaking change.
 
 This document tracks the 5 behavioral harnesses the audit named, with the current state, the specific unblock criterion, and the named PR or commit that will close each. The audit was correct that the harnesses are not yet wired end-to-end; this is the public accountability artifact for closing each one.
 

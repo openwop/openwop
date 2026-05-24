@@ -1,6 +1,8 @@
-# Phase 4 close-out — 2026-05-23
+# Multi-agent behavioral harness close-out — 2026-05-23
 
-> Audit-facing artifact closing the 7 behavioral-harness tracks the 2026-05-22 standards-readiness review named in its Acceptance-Bar item #5 (plus 2 adjacent governance/policy tracks). Supersedes the in-flight tracking doc at `docs/PHASE-4-PROGRESS.md` — the progress doc remains for incremental updates; this doc is the snapshot at session close.
+> Audit-facing artifact closing the 7 behavioral-harness tracks the 2026-05-22 standards-readiness review named in its Acceptance-Bar item #5 (plus 2 adjacent governance/policy tracks). Supersedes the in-flight tracking doc at `docs/MULTI-AGENT-BEHAVIORAL-HARNESS-PROGRESS.md` — the progress doc remains for incremental updates; this doc is the snapshot at session close.
+>
+> **Renamed 2026-05-24:** previously `docs/PHASE-4-CLOSEOUT-2026-05-23.md`. See sibling doc for the same rename rationale (auditors don't carry the "Phase 4" frame; feature-describing names are self-documenting).
 
 ## Headline status
 
@@ -134,7 +136,7 @@ If no audit vendor signs by **2026-09-30** (per the `AUDIT-RESPONSE` calendar fa
 - `docs/AUDIT-RESPONSE-2026-05.md` — original public response to the 2026-05-22 audit
 - `docs/CONFORMANCE-RUNS-2026-05-23.md` — fresh per-host pass-rate taxonomy (today's snapshot)
 - `docs/CONFORMANCE-RUNS-2026-05.md` — same-day 2026-05-22 snapshot (superseded; retained for delta comparison)
-- `docs/PHASE-4-PROGRESS.md` — in-flight tracking doc (now flips to "all closed" — this doc is the snapshot)
+- `docs/MULTI-AGENT-BEHAVIORAL-HARNESS-PROGRESS.md` — in-flight tracking doc (now flips to "all closed" — this doc is the snapshot)
 - `INTEROP-MATRIX.md` §"External conformance suite — pass rates" — fresh 2026-05-23 numbers
 - `RFCS/0042-experimental-capability-tier.md` — Draft awaiting 2026-05-29 comment-window close
 - `RFCS/0043-registry-and-extension-policy.md` — Draft awaiting 2026-05-29 comment-window close

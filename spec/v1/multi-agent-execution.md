@@ -1,6 +1,6 @@
 # openwop Spec v1 — Multi-Agent Execution Model
 
-> **Status: DRAFT v1.x (filed via [RFC 0037](../../RFCS/0037-multi-agent-execution-model.md), 2026-05-21).** Phase 1 of a four-phase execution-model formalization. Phase 1 (this document) lands the **execution-loop framework + planner→worker handoff state machine**. Phases 2 (confidence + agent-memory lifecycle), 3 (cross-host causation), and 4 (replay determinism under nondeterministic models) are explicit follow-ups tracked in `## Open spec gaps`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: DRAFT v1.x (filed via [RFC 0037](../../RFCS/0037-multi-agent-execution-model.md), 2026-05-21).** First installment of a four-version execution-model formalization. This document lands the **execution-loop framework + planner→worker handoff state machine** at `multiAgent.executionModel.version: 1`. Subsequent versions land as additive RFCs: [RFC 0039](../../RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md) at `version: 2` (confidence escalation + agent-memory lifecycle), [RFC 0040](../../RFCS/0040-multi-agent-cross-host-causation.md) at `version: 3` (cross-host causation), and [RFC 0041](../../RFCS/0041-multi-agent-replay-under-nondeterminism.md) at `version: 4` (replay determinism under nondeterministic models). The open-gaps table at the bottom tracks each version's follow-ups. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ## Why this exists
 
@@ -15,7 +15,7 @@ The existing RFCs cover slices but no single doc states the **execution model** 
 - **RFC 0024** (reasoning streaming) — the wire shape for `agent.reasoning.delta` events.
 - **RFC 0026** (provider usage events) — the cost-attribution surface.
 
-This document **integrates** those slices into a single normative execution loop + a 4-state handoff state machine. The design goal is portability: two non-steward hosts implementing this Phase 1 against the same supervisor-driven workflow input produce identical transition-event sequences (same phases, same causation chain) — the §"Cross-region replay" claim in `replay.md` extends this guarantee across regions on hosts that also advertise the RFC 0036 capabilities.
+This document **integrates** those slices into a single normative execution loop + a 4-state handoff state machine. The design goal is portability: two non-steward hosts implementing this `version: 1` surface against the same supervisor-driven workflow input produce identical transition-event sequences (same phases, same causation chain) — the §"Cross-region replay" claim in `replay.md` extends this guarantee across regions on hosts that also advertise the RFC 0036 capabilities.
 
 ## Execution loop (normative)
 
@@ -74,7 +74,7 @@ The transition `running → harvested` MUST happen exactly when the child reache
 
 **Conditional emission (normative).** Each row in the table above is conditional on the transition actually occurring on the host. If the host's dispatch primitive does not surface a particular terminal state — most commonly `cancelled` (some hosts collapse cancellation into `failed` with a distinct `error.code`) — the host MUST NOT synthesize the matching event. Phases the host's dispatch surfaces MUST emit per the table; phases the host's dispatch never produces MUST be absent from the event log. The `phase` enum in `schemas/run-event-payloads.schema.json` §`coreWorkflowChainEvent.phase` carries every possible transition for forward-compatibility; emission tracks the host's actual transitions. A host that later gains explicit cancellation semantics begins emitting `child.cancelled` additively at that point.
 
-## Confidence escalation (RFC 0039 Phase 2, normative)
+## Confidence escalation (RFC 0039, normative — `version >= 2`)
 
 Per [RFC 0039](../../RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md) §A. Applies only when the host advertises `capabilities.multiAgent.executionModel.version >= 2`.
 
@@ -91,7 +91,7 @@ Hosts MUST NOT silently execute a `confidence < floor` decision without first re
 
 **Interrupt-kind advertisement (RFC 0044).** Hosts MAY advertise `capabilities.multiAgent.executionModel.confidenceEscalationInterruptKind` to commit to a specific `interrupt.kind` for confidence-escalation events. Canonical values are `clarification` (matching the clarify-kind escalation in §A above) and `approval` (matching the escalate-kind path). Vendor kinds use the canonical host-extension namespace `x-host-<host>-<kind>` per `host-extensions.md` §"Canonical prefixes". When advertised, the host MUST emit an interrupt of the advertised kind on every confidence-escalation event; conformance reads the advertised value and accepts the host's specific kind. Hosts advertising a vendor kind MUST also publish a non-normative kind-mapping document per RFC 0044 §C identifying which canonical escalation kind it semantically corresponds to + the host's `interrupt.md` mapping to a `waiting-*` status. The `confidence-escalated` event payload's `escalationKind` field remains normated to `{clarify, escalate}` independent of the interrupt-kind name; that separates wire-shape (escalation kind in the event payload) from operator-visible naming (interrupt kind on the suspend).
 
-## Agent memory lifecycle across sub-runs (RFC 0039 Phase 2, normative)
+## Agent memory lifecycle across sub-runs (RFC 0039, normative — `version >= 2`)
 
 Per [RFC 0039](../../RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md) §B. Applies only when the host advertises `capabilities.multiAgent.executionModel.version >= 2` AND `capabilities.memory.supported: true`.
 
@@ -113,7 +113,7 @@ Hosts MUST persist memory snapshots tied to event-log indices when `capabilities
 
 Scenarios verifying §"Cross-run memory inheritance" + §"Replay carry-forward" gate on the conjunction `capabilities.multiAgent.executionModel.version >= 2 && capabilities.memory.supported: true`. Hosts that advertise either alone skip cleanly.
 
-## Cross-host causation (RFC 0040 Phase 3, normative)
+## Cross-host causation (RFC 0040, normative — `version >= 3`)
 
 Per [RFC 0040](../../RFCS/0040-multi-agent-cross-host-causation.md). Applies only when the host advertises `capabilities.multiAgent.executionModel.version >= 3` AND `capabilities.multiAgent.executionModel.crossHostCausation.supported: true`.
 
@@ -121,7 +121,7 @@ Per [RFC 0040](../../RFCS/0040-multi-agent-cross-host-causation.md). Applies onl
 
 Hosts MUST emit an optional `causationHostId: string` field on event payloads whose top-level `causationId` points at an event on a DIFFERENT host than the emitting host. The field's value MUST equal the originating host's `capabilities.multiAgent.executionModel.crossHostCausation.hostId` advertisement.
 
-When the `causationId` points at an event on the SAME host, `causationHostId` MUST be absent (preserves existing single-host semantics; pre-Phase-3 consumers ignore unknown fields).
+When the `causationId` points at an event on the SAME host, `causationHostId` MUST be absent (preserves existing single-host semantics; consumers on hosts advertising `version < 3` ignore the unknown field per the forward-compat contract).
 
 Affected payload types (additive): `coreWorkflowChainEvent`, `coreWorkflowChainConfidenceEscalated`, `agentReasoned`, `agentToolCalled`, `agentToolReturned`, `agentHandoff`, `agentDecided`, `runOrchestratorDecided`, `promptComposed`, `agentPromptResolved`. The field is OPTIONAL on every shape.
 
@@ -139,13 +139,13 @@ Hosts advertising `crossHostCausation.ancestryEndpointSupported: true` MUST serv
 
 Hosts that advertise `crossHostCausation.supported: true` but NOT the ancestry endpoint return `404 not_found` from the endpoint; clients reconstruct chains by walking `causationHostId` fields on individual events instead.
 
-## Phase 4 replay determinism (RFC 0041, normative)
+## Replay determinism under nondeterminism (RFC 0041, normative — `version >= 4`)
 
 Per [RFC 0041](../../RFCS/0041-multi-agent-replay-under-nondeterminism.md). Applies only when the host advertises `capabilities.multiAgent.executionModel.version >= 4` AND `capabilities.multiAgent.executionModel.replayDeterminism.supported: true`. Closes RFC 0037 §"Open spec gaps" MAE-7 + MAE-8 + MAE-9.
 
-The normative contracts live in [`replay.md`](./replay.md) §"Replay determinism under nondeterministic models (RFC 0041 Phase 4, normative)":
+The normative contracts live in [`replay.md`](./replay.md) §"Replay determinism under nondeterministic models (RFC 0041, normative — `version >= 4`)":
 
-- §A — LLM cache-key recipe strengthening. The recipe in `replay.md` §"LLM cache-key recipe" §A + §B is already a conditional MUST for hosts using Layer-2 idempotency for LLM nodes. Phase 4 makes the MUST unconditional (applies to ALL LLM-calling nodes) AND requires hosts to advertise the recipe they honor via `replayDeterminism.llmCacheKeyRecipe` for observable cross-host parity.
+- §A — LLM cache-key recipe strengthening. The recipe in `replay.md` §"LLM cache-key recipe" §A + §B is already a conditional MUST for hosts using Layer-2 idempotency for LLM nodes. RFC 0041 makes the MUST unconditional (applies to ALL LLM-calling nodes) AND requires hosts to advertise the recipe they honor via `replayDeterminism.llmCacheKeyRecipe` for observable cross-host parity.
 - §B — Envelope-refusal recovery: replay-time refusal-divergence MUST emit `replay.divergedAtRefusal` and fail with `error.code: "replay_diverged_at_refusal"`. Silent substitution is non-conformant.
 - §C — Observable-output-sequence determinism: the contract is byte-equivalence at the event-log + RunSnapshot boundary, NOT bit-equivalent execution of underlying tool calls. Hosts cache the observable result, not just the tool-call bytes.
 
@@ -167,7 +167,7 @@ The normative contracts live in [`replay.md`](./replay.md) §"Replay determinism
 | Field | Type | Description |
 |---|---|---|
 | `supported` | `boolean` | When `true`, the host implements the execution loop + handoff state machine above. Conformance scenarios gating on this flag run unconditionally on advertising hosts. |
-| `version` | `integer ≥ 1` | Profile version. `1` = Phase 1 (this document — execution-loop framework + planner→worker handoff). Future phases bump (2 = confidence + agent-memory lifecycle; 3 = cross-host causation; 4 = replay-under-nondeterminism). A host advertising `version: N` MUST implement all phases 1..N. |
+| `version` | `integer ≥ 1` | Profile version. `1` = handoff state machine (this document — RFC 0037, execution-loop framework + planner→worker handoff). Future versions: `2` = RFC 0039 (confidence escalation + agent-memory lifecycle), `3` = RFC 0040 (cross-host causation), `4` = RFC 0041 (replay determinism under nondeterminism). A host advertising `version: N` MUST implement all versions 1..N. |
 
 Hosts that do NOT advertise this capability MAY implement RFCs 0006/0007/0022 individually with implementation flexibility on the integration semantics; conformance scenarios gating on this flag soft-skip on absence per the existing capability-gating convention.
 
@@ -227,17 +227,17 @@ Hosts that do NOT advertise `capabilities.multiAgent.executionModel.supported: t
 
 ## Open spec gaps
 
-| # | Gap | Phase | Owner |
+| # | Gap | Land-in version (RFC) | Owner |
 |---|---|---|---|
-| MAE-1 | **Phase 2:** Confidence-threshold semantics — at what `OrchestratorDecision.confidence` value MUST the supervisor escalate to clarification or approval, versus MAY escalate? Today: host policy. | Phase 2 follow-up | OpenWOP WG |
-| MAE-2 | **Phase 2:** Agent memory lifecycle across sub-runs — `MemoryEntry.ttl` semantics when a parent run dispatches a child whose memory operations the parent inherits. Today: implicit; needs normative MUST. | Phase 2 follow-up | OpenWOP WG |
-| MAE-3 | **Phase 2:** Memory carry-forward when a sub-run is replayed from past event-log index — does the replay re-read the original memory snapshot, or the current memory state? | Phase 2 follow-up | OpenWOP WG |
-| MAE-4 | **Phase 3:** Extending `causationId` to span hosts (currently single-host scope per `spec/v1/replay.md` §"Determinism with non-deterministic agents"). | Phase 3 follow-up | OpenWOP WG |
-| MAE-5 | **Phase 3:** W3C tracecontext propagation across MCP/A2A composition boundaries — partial coverage in `RFC 0023` for OTel; needs normative cross-host case. | Phase 3 follow-up | OpenWOP WG |
-| MAE-6 | **Phase 3:** Cross-host run-ID resolution — when host A's run dispatches to host B, what's the discoverable identifier chain? | Phase 3 follow-up | OpenWOP WG |
-| MAE-7 | **Phase 4:** LLM cache-key recipe — `replay.md` §"LLM cache-key recipe" already exists but `replay-llm-cache-key.test.ts` is shape-only per `docs/KNOWN-LIMITS.md:18`. | Phase 4 follow-up | OpenWOP WG |
-| MAE-8 | **Phase 4:** Recovery from envelope refusal in replay context — original run got envelope, replay gets refusal. | Phase 4 follow-up | OpenWOP WG |
-| MAE-9 | **Phase 4:** Determinism vs idempotency — replay produces the same observable output sequence even when underlying tool calls differ. | Phase 4 follow-up | OpenWOP WG |
+| MAE-1 | **`version: 2`:** Confidence-threshold semantics — at what `OrchestratorDecision.confidence` value MUST the supervisor escalate to clarification or approval, versus MAY escalate? Today: host policy. | RFC 0039 (`version: 2`) | OpenWOP WG |
+| MAE-2 | **`version: 2`:** Agent memory lifecycle across sub-runs — `MemoryEntry.ttl` semantics when a parent run dispatches a child whose memory operations the parent inherits. Today: implicit; needs normative MUST. | RFC 0039 (`version: 2`) | OpenWOP WG |
+| MAE-3 | **`version: 2`:** Memory carry-forward when a sub-run is replayed from past event-log index — does the replay re-read the original memory snapshot, or the current memory state? | RFC 0039 (`version: 2`) | OpenWOP WG |
+| MAE-4 | **`version: 3`:** Extending `causationId` to span hosts (currently single-host scope per `spec/v1/replay.md` §"Determinism with non-deterministic agents"). | RFC 0040 (`version: 3`) | OpenWOP WG |
+| MAE-5 | **`version: 3`:** W3C tracecontext propagation across MCP/A2A composition boundaries — partial coverage in `RFC 0023` for OTel; needs normative cross-host case. | RFC 0040 (`version: 3`) | OpenWOP WG |
+| MAE-6 | **`version: 3`:** Cross-host run-ID resolution — when host A's run dispatches to host B, what's the discoverable identifier chain? | RFC 0040 (`version: 3`) | OpenWOP WG |
+| MAE-7 | **`version: 4`:** LLM cache-key recipe — `replay.md` §"LLM cache-key recipe" already exists but `replay-llm-cache-key.test.ts` is shape-only per `docs/KNOWN-LIMITS.md:18`. | RFC 0041 (`version: 4`) | OpenWOP WG |
+| MAE-8 | **`version: 4`:** Recovery from envelope refusal in replay context — original run got envelope, replay gets refusal. | RFC 0041 (`version: 4`) | OpenWOP WG |
+| MAE-9 | **`version: 4`:** Determinism vs idempotency — replay produces the same observable output sequence even when underlying tool calls differ. | RFC 0041 (`version: 4`) | OpenWOP WG |
 
 ## References
 

@@ -65,11 +65,11 @@ Top failure clusters (approximate; full per-scenario inventory would require a l
 | Envelope completion contract (RFC 0033) — truncation-vs-schema-violation routing + DoS-bound | ~12 | Same loop wiring as RFC 0032 |
 | Envelope variant discriminator (RFC 0031) — substitution + insufficient + fallback | ~14 | Reference workflow-engine advertises `capabilities.modelCapabilities.supported: true` but the executor's substitution path is partial |
 | Prompt resolution chain — node-wins / agent-intrinsic / fallback-cascade | ~9 | Reference workflow-engine implements all 6 `/v1/prompts*` routes but some resolution-chain edges differ from the spec |
-| Multi-agent Phase 2 confidence escalation | ~5 | Host wires Phase 1 + Phase 2 + Phase 4 but some confidence-floor edge cases drift |
-| Sandbox MVP (`sandbox-no-cross-pack-mutation`, `sandbox-no-host-process-escape`, etc. — the 8 advertisement-shape scenarios) | ~7 | 7 of 8 the workflow-engine's node:vm sandbox closes BEHAVIORALLY (via the dedicated `sandbox-mvp-behavior.test.ts`); the 8 advertisement-shape scenarios still soft-skip on their behavioral assertions until the underlying tier graduations land (per `docs/PHASE-4-CLOSEOUT-2026-05-23.md` deferred-graduations) |
+| RFC 0039 confidence escalation | ~5 | Host wires RFC 0037 (handoff state machine) + RFC 0039 (confidence escalation) + RFC 0041 (replay determinism) but some confidence-floor edge cases drift |
+| Sandbox MVP (`sandbox-no-cross-pack-mutation`, `sandbox-no-host-process-escape`, etc. — the 8 advertisement-shape scenarios) | ~7 | 7 of 8 the workflow-engine's node:vm sandbox closes BEHAVIORALLY (via the dedicated `sandbox-mvp-behavior.test.ts`); the 8 advertisement-shape scenarios still soft-skip on their behavioral assertions until the underlying tier graduations land (per `docs/MULTI-AGENT-BEHAVIORAL-HARNESS-CLOSEOUT-2026-05-23.md` deferred-graduations) |
 | Misc capability surfaces + edge-case wiring | ~47 | Mixed |
 
-**Honest framing.** The workflow-engine is positioned as the "open-source reference under active development" — advertising more than it implements end-to-end is the intentional incentive to surface gaps. Failures here are a backlog, not a regression vs production-locked v1 contracts. The 22 NEW behavioral assertions from the Phase 4 close-out (multi-region 6 + cross-engine 4 + sandbox 9 + secret-leakage 3 — see `docs/PHASE-4-CLOSEOUT-2026-05-23.md`) all PASS against the workflow-engine; the 129 failures are pre-existing gaps in capability surfaces advertised earlier.
+**Honest framing.** The workflow-engine is positioned as the "open-source reference under active development" — advertising more than it implements end-to-end is the intentional incentive to surface gaps. Failures here are a backlog, not a regression vs production-locked v1 contracts. The 22 NEW behavioral assertions from the 2026-05-22 multi-agent behavioral close-out (multi-region 6 + cross-engine 4 + sandbox 9 + secret-leakage 3 — see `docs/MULTI-AGENT-BEHAVIORAL-HARNESS-CLOSEOUT-2026-05-23.md`) all PASS against the workflow-engine; the 129 failures are pre-existing gaps in capability surfaces advertised earlier.
 
 ## Pass-rate honesty calibration
 
@@ -114,6 +114,6 @@ OPENWOP_BASE_URL=http://127.0.0.1:4242 OPENWOP_API_KEY=conformance-test-key \
 ## See also
 
 - `INTEROP-MATRIX.md` §"External conformance suite — pass rates" — table source for `docs/PROTOCOL-STATUS.md` regeneration.
-- `docs/PHASE-4-CLOSEOUT-2026-05-23.md` — audit-facing close-out of the 7 Phase 4 tracks, with closing commits + behavioral assertions per track.
+- `docs/MULTI-AGENT-BEHAVIORAL-HARNESS-CLOSEOUT-2026-05-23.md` (renamed 2026-05-24 from `docs/PHASE-4-CLOSEOUT-2026-05-23.md`) — audit-facing close-out of the 7 behavioral-harness tracks, with closing commits + behavioral assertions per track.
 - `docs/CONFORMANCE-RUNS-2026-05.md` — superseded same-day 2026-05-22 snapshot retained for delta comparison.
 - `docs/KNOWN-LIMITS.md` — shape-only vs behavioral coverage taxonomy.

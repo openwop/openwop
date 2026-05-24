@@ -1,4 +1,4 @@
-# RFC 0039: Multi-agent Phase 2 — confidence-threshold escalation + agent memory lifecycle
+# RFC 0039: Multi-agent execution model `version: 2` — confidence-threshold escalation + agent memory lifecycle
 
 | Field | Value |
 |---|---|

@@ -17,10 +17,10 @@ Every blocking gap the audit named has been independently verified against the c
 | `openwop-check` red on README invariant-count mismatch | `npm run openwop:check` failed at step `[7/9]` with `README.md: claims "59 protocol-tier" invariants but actual is 66` | ✅ | **Closed by commit `5864a2f`** (2026-05-22) — reverted 7 premature `reference-impl → protocol` sandbox graduations because the underlying conformance scenarios were vacuous (`expect(true).toBe(true)`). Gate green. |
 | `KNOWN-LIMITS.md` line 86 lists RFCs 0030–0033 as `Active` while `PROTOCOL-STATUS.md` marks them `Accepted` | Cross-document drift | ✅ | **Closed in this response** — `docs/KNOWN-LIMITS.md` updated; 0030–0033 row removed (now `Accepted`); 0034–0041 + 0038 rows added with current statuses. |
 | `conformance/coverage.md` line 3 says "Updated 2026-05-11" | Header stale | ✅ | **Closed in this response** — date bumped to 2026-05-22; stale prompt-endpoint rows (RFC 0028 "Draft", "reference host hasn't implemented") corrected to reflect RFC 0028 `Active` + reference workflow-engine implementation at `apps/workflow-engine/backend/typescript/src/routes/prompts.ts`. |
-| Multi-agent execution model is DRAFT v1.x | `spec/v1/multi-agent-execution.md:3` | ✅ | **State is intentional.** RFCs 0037 / 0039 / 0040 / 0041 are `Active` (not `Accepted`) precisely because the Phase 4 behavioral half is not cross-host-validated. This response codifies the path-to-Accepted via RFC 0042's experimental tier and `docs/PHASE-4-PROGRESS.md`. |
-| Conformance soft-skips important behavior (multi-region, replay LLM cache parity, mTLS, registry publish, sandbox, cross-engine append ordering) | `docs/KNOWN-LIMITS.md:11–34` | ✅ | **Addressed in `docs/PHASE-4-PROGRESS.md`** — each of the 5 audit-named harnesses has a named unblock criterion, closing-PR, and effort estimate. |
+| Multi-agent execution model is DRAFT v1.x | `spec/v1/multi-agent-execution.md:3` | ✅ | **State is intentional.** RFCs 0037 / 0039 / 0040 / 0041 are `Active` (not `Accepted`) precisely because the Phase 4 behavioral half is not cross-host-validated. This response codifies the path-to-Accepted via RFC 0042's experimental tier and `docs/MULTI-AGENT-BEHAVIORAL-HARNESS-PROGRESS.md`. |
+| Conformance soft-skips important behavior (multi-region, replay LLM cache parity, mTLS, registry publish, sandbox, cross-engine append ordering) | `docs/KNOWN-LIMITS.md:11–34` | ✅ | **Addressed in `docs/MULTI-AGENT-BEHAVIORAL-HARNESS-PROGRESS.md`** — each of the 5 audit-named harnesses has a named unblock criterion, closing-PR, and effort estimate. |
 | Reference host pass rates measured against suite v1.1.0 (older) | `docs/PROTOCOL-STATUS.md:49` | ✅ | **Closed in this response** — re-measured all 4 reference hosts against `@openwop/openwop-conformance@1.4.0`. Numbers + taxonomy published at `docs/CONFORMANCE-RUNS-2026-05.md`. PROTOCOL-STATUS regenerated against fresh INTEROP-MATRIX numbers. |
-| External audit Draft, sandbox invariants have no host execution proof | `SECURITY/external-audit-engagement.md:3` + `KNOWN-LIMITS.md:33` | ✅ | **Acknowledged as external-action gated** (SEC-1 / SEC-7 / SEC-8 in `ROADMAP.md`). Sandbox-execution gap rolled into `docs/PHASE-4-PROGRESS.md` Harness 3. |
+| External audit Draft, sandbox invariants have no host execution proof | `SECURITY/external-audit-engagement.md:3` + `KNOWN-LIMITS.md:33` | ✅ | **Acknowledged as external-action gated** (SEC-1 / SEC-7 / SEC-8 in `ROADMAP.md`). Sandbox-execution gap rolled into `docs/MULTI-AGENT-BEHAVIORAL-HARNESS-PROGRESS.md` Harness 3. |
 | Governance has lead-maintainer tiebreaker + WG charter is Draft | `GOVERNANCE.md:27,37` + `RFCS/0038:7` | ✅ | **Posture preserved** — premature WG ratification with single steward would be worse than a published Draft. `RFCS/0043` (new) codifies the registry + extension policy that the WG inherits upon ratification. WG ratification gated on the tripwire (≥3 organizations + ≥2 non-steward hosts) — unchanged. |
 
 ---
@@ -58,7 +58,7 @@ The audit's specific failure (`claims "59" but actual is 66`) was caused by a 20
 | `docs/KNOWN-LIMITS.md` lines 86–92 | "RFCs not yet Accepted" table refreshed: 0030–0033 row removed (now `Accepted`); 0034–0037 + 0039–0041 + 0038 rows added with current statuses + explicit path-to-Accepted criteria. |
 | `conformance/coverage.md` line 3 | Updated date 2026-05-11 → 2026-05-22. Stale prompt-endpoint rows (lines 127–132) corrected to reflect RFC 0028 `Active` + reference workflow-engine implementation. |
 | `docs/PROTOCOL-STATUS.md` | Regenerated via `node scripts/generate-protocol-status.mjs --write` against fresh `INTEROP-MATRIX.md` host-row data. |
-| `docs/PHASE-4-PROGRESS.md` (NEW) | Behavioral-harness accountability artifact (audit-Bar item 5). |
+| `docs/MULTI-AGENT-BEHAVIORAL-HARNESS-PROGRESS.md` (NEW) | Behavioral-harness accountability artifact (audit-Bar item 5). |
 | `docs/CONFORMANCE-RUNS-2026-05.md` (NEW) | v1.4.0 pass-rate taxonomy (audit-Bar item 4). |
 | `docs/AUDIT-RESPONSE-2026-05.md` (this doc) | Public response artifact. |
 | `RFCS/0042-experimental-capability-tier.md` (NEW) | "Active RFC → experimental carve-out" (audit-Bar item 3). |
@@ -101,7 +101,7 @@ Honest assessment per-host: the v1.4.0 suite scenario count grew ~+700 tests ove
 
 **Status: ✅ TRACKING DOC PUBLISHED; harnesses scheduled.**
 
-`docs/PHASE-4-PROGRESS.md` is the audit-accountability artifact. Each of the 5 named harnesses has:
+`docs/MULTI-AGENT-BEHAVIORAL-HARNESS-PROGRESS.md` is the audit-accountability artifact. Each of the 5 named harnesses has:
 
 - A specific unblock criterion (what code lands + where).
 - An effort estimate (typically 0.5–1.5 days each, except sandbox which is the largest single workload at 3–5 days for the vm MVP or 1–2 weeks for WASM).
@@ -155,7 +155,7 @@ Working-group ratification of the policy (per `RFCS/0038`) remains gated on the 
 The audit's honesty principle applies to this response too. We are NOT claiming:
 
 - **That openwop is now a "finished standard."** It is not. The audit's verdict ("serious candidate protocol") is unchanged. Two of the seven bar items (external audit completion, WG ratification) remain open with named tripwires.
-- **That the Phase 4 behavioral harnesses are landed.** They are scheduled, with the published `docs/PHASE-4-PROGRESS.md` as the accountability artifact. Each harness's closing commit is TBD.
+- **That the Phase 4 behavioral harnesses are landed.** They are scheduled, with the published `docs/MULTI-AGENT-BEHAVIORAL-HARNESS-PROGRESS.md` as the accountability artifact. Each harness's closing commit is TBD.
 - **That every Active RFC will graduate to Accepted on the audit's preferred timeline.** Promotion remains on the cross-host adoption-evidence track. The experimental-tier carve-out (RFC 0042) is the audit's escape valve, not a substitute for promotion.
 
 What we ARE claiming:
@@ -192,7 +192,7 @@ cat docs/CONFORMANCE-RUNS-2026-05.md
 # Run any of the 4 reproduction recipes (in-memory / sqlite / postgres-pglite / python)
 
 # 4. Phase 4 progress
-cat docs/PHASE-4-PROGRESS.md
+cat docs/MULTI-AGENT-BEHAVIORAL-HARNESS-PROGRESS.md
 
 # 5. Policy + carve-out RFCs
 ls RFCS/0042-experimental-capability-tier.md
@@ -208,7 +208,7 @@ cat SECURITY/external-audit-engagement.md
 ## See also
 
 - `docs/CONFORMANCE-RUNS-2026-05.md` — audit-Bar item 4 deliverable.
-- `docs/PHASE-4-PROGRESS.md` — audit-Bar item 5 deliverable.
+- `docs/MULTI-AGENT-BEHAVIORAL-HARNESS-PROGRESS.md` — audit-Bar item 5 deliverable.
 - `RFCS/0042-experimental-capability-tier.md` — audit-Bar item 3 deliverable.
 - `RFCS/0043-registry-and-extension-policy.md` — audit-Bar item 7 deliverable (policy half).
 - `docs/KNOWN-LIMITS.md` — pre-existing public honesty catalog this response builds on.

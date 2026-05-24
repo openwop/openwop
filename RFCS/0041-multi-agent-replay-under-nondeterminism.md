@@ -1,4 +1,4 @@
-# RFC 0041: Multi-agent Phase 4 — replay determinism under nondeterministic models
+# RFC 0041: Multi-agent execution model `version: 4` — replay determinism under nondeterministic models
 
 | Field | Value |
 |---|---|

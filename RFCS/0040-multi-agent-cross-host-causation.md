@@ -1,4 +1,4 @@
-# RFC 0040: Multi-agent Phase 3 — cross-host causation linking
+# RFC 0040: Multi-agent execution model `version: 3` — cross-host causation linking
 
 | Field | Value |
 |---|---|
