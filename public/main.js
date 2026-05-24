@@ -123,6 +123,21 @@ document.querySelectorAll('.block, .pillar, .compare-card, .ana-list li, .spec .
 
   const linkByTarget = new Map(links.map((a) => [a.dataset.target, a]));
   const scrollContainer = document.querySelector('.subnav-scroll');
+  const selectEl = document.querySelector('.subnav-select');
+
+  if (selectEl) {
+    selectEl.addEventListener('change', (e) => {
+      const v = e.target.value;
+      if (!v) return;
+      const id = v.replace(/^#/, '');
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Update the URL hash without an extra jump.
+        history.replaceState(null, '', v);
+      }
+    });
+  }
 
   function setActive(id) {
     let any = false;
@@ -137,6 +152,9 @@ document.querySelectorAll('.block, .pillar, .compare-card, .ana-list li, .spec .
       else a.removeAttribute('aria-current');
       if (active) any = true;
     });
+    if (any && selectEl && selectEl.value !== '#' + id) {
+      selectEl.value = '#' + id;
+    }
     if (any && scrollContainer) {
       const activeLink = linkByTarget.get(id);
       if (activeLink) {

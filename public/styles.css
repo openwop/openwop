@@ -880,6 +880,60 @@
     margin-top: 4px;
     line-height: 1.5;
   }
+  /* Phase 2.2: row summary + collapsible detail. Keeps each row to one
+   * logical chunk for screen readers and ≤ 2× its previous height when
+   * collapsed. Open state matches the legacy <small> text styling. */
+  .spec .val .row-summary {
+    margin: 0;
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 21px;
+    line-height: 1.3;
+    color: var(--ink);
+  }
+  .spec .val .row-detail {
+    margin-top: 6px;
+  }
+  .spec .val .row-detail > summary {
+    cursor: pointer;
+    list-style: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--sans);
+    font-style: normal;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--ink-3);
+    user-select: none;
+  }
+  .spec .val .row-detail > summary::-webkit-details-marker { display: none; }
+  .spec .val .row-detail > summary::before {
+    content: '+';
+    display: inline-block;
+    width: 11px;
+    text-align: center;
+    font-family: var(--mono);
+    font-weight: 600;
+    color: var(--clay);
+    transition: transform .15s ease;
+  }
+  .spec .val .row-detail[open] > summary::before { content: '−'; }
+  .spec .val .row-detail > summary:hover { color: var(--ink); }
+  .spec .val .row-detail > summary:focus-visible {
+    outline: 2px solid var(--clay);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+  .spec .val .row-detail > p {
+    margin: 8px 0 0;
+    font-family: var(--sans);
+    font-style: normal;
+    font-size: 13.5px;
+    color: var(--ink-2);
+    line-height: 1.5;
+  }
   @media (max-width: 760px) {
     .spec { grid-template-columns: 1fr; }
     .spec .row { border-right: none; }
@@ -1135,8 +1189,34 @@
   .demo-cta {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     gap: 14px;
     margin-top: clamp(32px, 4vw, 48px);
+  }
+
+  /* Caveat tag pill — sits adjacent to the primary CTA so a user
+   * clicking the button has read the session-scope warning in the same
+   * visual chunk. */
+  .caveat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    color: var(--ink-2);
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    line-height: 1.4;
+  }
+  .caveat-pill-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--clay);
+    flex: 0 0 auto;
   }
 
   @media (max-width: 920px) { .demo-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -1955,4 +2035,45 @@
       padding: 12px 10px 10px;
       font-size: 12.5px;
     }
+  }
+
+  /* Mobile fallback: a native <select> replaces the horizontal scroller below
+   * 600px so the in-page TOC fits in one row, doesn't scroll-trap, and gets
+   * the OS picker UI for free. The .subnav-scroll is hidden at the same
+   * breakpoint. */
+  .subnav-select-wrap {
+    display: none;
+    width: 100%;
+    padding: 8px 0;
+  }
+  .subnav-select {
+    width: 100%;
+    padding: 10px 36px 10px 12px;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%23666' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+  }
+  .subnav-select:focus-visible {
+    outline: 2px solid var(--clay);
+    outline-offset: 2px;
+  }
+  @media (max-width: 600px) {
+    .subnav-scroll { display: none; }
+    .subnav-select-wrap { display: block; }
+  }
+  .visually-hidden {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0);
+    white-space: nowrap; border: 0;
   }

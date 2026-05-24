@@ -489,7 +489,7 @@
         <span class="btn-star-count is-empty" data-star-count aria-hidden="true" aria-live="polite">—</span>
       </a>
       <p id="star-strip-heading" class="star-strip-text">
-        If this is useful, star <em>OpenWOP</em> on GitHub — the strongest signal the work is reaching its audience.
+        If this is useful, star OpenWOP on GitHub — the strongest signal the work is reaching its audience.
       </p>
     </aside>
   </div>
@@ -509,6 +509,20 @@
       <a class="subnav-link" href="#demo" data-target="demo">Live demo</a>
       <a class="subnav-link" href="#ecosystem" data-target="ecosystem">Ecosystem</a>
     </div>
+    <label class="subnav-select-wrap">
+      <span class="visually-hidden">Jump to section</span>
+      <select class="subnav-select" aria-label="Jump to section">
+        <option value="#ships">Running today</option>
+        <option value="#paths">Pick your path</option>
+        <option value="#specification">Specification</option>
+        <option value="#anatomy">Anatomy</option>
+        <option value="#proof">Proof</option>
+        <option value="#context">In context</option>
+        <option value="#start">Get started</option>
+        <option value="#demo">Live demo</option>
+        <option value="#ecosystem">Ecosystem</option>
+      </select>
+    </label>
   </div>
 </nav>
 
@@ -516,7 +530,7 @@
 <section class="block ships" id="ships">
   <div class="wrap">
     <div class="block-head">
-      <div class="label"><span class="marker"><span class="dot"></span>Running today</span></div>
+      <div class="label"><span class="marker"><span class="dot"></span>§ 01 / Running today</span></div>
       <h2>What ships <em>right now</em>.</h2>
       <p class="block-lede">
         Real, verifiable artifacts behind the protocol — not roadmap claims. Every number below links to the evidence.
@@ -551,7 +565,7 @@
 <section class="block paths" id="paths">
   <div class="wrap">
     <div class="block-head">
-      <div class="label"><span class="marker"><span class="dot"></span>Where to start</span></div>
+      <div class="label"><span class="marker"><span class="dot"></span>§ 02 / Where to start</span></div>
       <h2>Pick your <em>path</em>.</h2>
       <p class="block-lede">
         OpenWOP is a protocol with four common entry points. Each card lists the real specs and tools the role uses; nothing routes off into vapor.
@@ -627,7 +641,7 @@
 <section class="block" id="prologue">
   <div class="wrap">
     <div class="block-head">
-      <div class="label"><span class="marker"><span class="dot"></span>§ 00 / Prologue</span></div>
+      <div class="label"><span class="marker"><span class="dot"></span>§ 03 / Prologue</span></div>
       <h2>The hard part isn't the <em>model</em>.</h2>
       <p class="block-lede">
         It's the layer between the calls: when one agent hands off to another, what happens
@@ -667,7 +681,7 @@
 <section class="block" id="specification">
   <div class="wrap">
     <div class="block-head">
-      <div class="label"><span class="marker"><span class="dot"></span>§ 01 / Specification</span></div>
+      <div class="label"><span class="marker"><span class="dot"></span>§ 04 / Specification</span></div>
       <h2>Three things the protocol <em>standardizes</em>.</h2>
     </div>
 
@@ -715,7 +729,7 @@
 <section class="block" id="anatomy">
   <div class="wrap">
     <div class="block-head">
-      <div class="label"><span class="marker"><span class="dot"></span>§ 02 / Anatomy</span></div>
+      <div class="label"><span class="marker"><span class="dot"></span>§ 05 / Anatomy</span></div>
       <h2>What lives <em>inside</em> an OpenWOP run.</h2>
       <p class="block-lede">
         Seven primitives. Pick one to expand — each is independently specified, conformance-tested, and linked to the canonical doc.
@@ -813,7 +827,7 @@
         </figure>
       </div>
       <div class="ana-block-cta">
-        <a href="/spec/v1/channels-and-reducers.html">View the <em>channels &amp; reducers</em> spec <span class="arrow">→</span></a>
+        <a href="/spec/v1/channels-and-reducers.html">View the channels &amp; reducers spec <span class="arrow">→</span></a>
       </div>
     </article>
 
@@ -912,7 +926,7 @@
         </figure>
       </div>
       <div class="ana-block-cta">
-        <a href="/spec/v1/replay.html">View the <em>replay &amp; fork</em> spec <span class="arrow">→</span></a>
+        <a href="/spec/v1/replay.html">View the replay &amp; fork spec <span class="arrow">→</span></a>
       </div>
     </article>
 
@@ -925,7 +939,7 @@
       </header>
       <div class="ana-block-body">
         <div class="ana-block-prose">
-          <p>Multi-agent workflows need a wire shape for <em>who took which turn</em>. The protocol defines <code>AgentRef</code> — agent identity that travels with every reasoning event — and a closed set of five reasoning events: <code>agent.reasoned</code>, <code>agent.toolCalled</code>, <code>agent.toolReturned</code>, <code>agent.handoff</code>, <code>agent.decided</code>.</p>
+          <p>Multi-agent workflows need a wire shape for who took which turn. The protocol defines <code>AgentRef</code> — agent identity that travels with every reasoning event — and a closed set of five reasoning events: <code>agent.reasoned</code>, <code>agent.toolCalled</code>, <code>agent.toolReturned</code>, <code>agent.handoff</code>, <code>agent.decided</code>.</p>
           <p>Conversations are first-class. A <code>conversation</code> interrupt opens a multi-turn exchange that emits <code>conversation.opened</code> / <code>exchanged</code> / <code>closed</code> events without re-entering the workflow on every turn.</p>
           <p>Cross-run memory lives behind a host-side <em>memory adapter</em> with four operations (<code>list</code>, <code>get</code>, <code>put</code>, <code>delete</code>) and a redaction invariant that composes with BYOK secret handling. The protocol pins the read-path semantics; the storage backend is a host choice.</p>
         </div>
@@ -1004,7 +1018,7 @@
         </figure>
       </div>
       <div class="ana-block-cta">
-        <a href="/spec/v1/agent-memory.html">View the <em>agent memory</em> spec <span class="arrow">→</span></a>
+        <a href="/spec/v1/agent-memory.html">View the agent memory spec <span class="arrow">→</span></a>
       </div>
     </article>
 
@@ -1097,7 +1111,7 @@
         </figure>
       </div>
       <div class="ana-block-cta">
-        <a href="/spec/v1/interrupt.html">View the <em>interrupt</em> spec <span class="arrow">→</span></a>
+        <a href="/spec/v1/interrupt.html">View the interrupt spec <span class="arrow">→</span></a>
       </div>
     </article>
 
@@ -1207,7 +1221,7 @@
         </figure>
       </div>
       <div class="ana-block-cta">
-        <a href="/spec/v1/webhooks.html">View the <em>webhooks</em> spec <span class="arrow">→</span></a>
+        <a href="/spec/v1/webhooks.html">View the webhooks spec <span class="arrow">→</span></a>
       </div>
     </article>
 
@@ -1221,7 +1235,7 @@
       <div class="ana-block-body">
         <div class="ana-block-prose">
           <p>Node Packs are signed bundles of reusable node implementations — the agent equivalent of language packages. A pack carries a manifest (<code>pack.json</code>), one or more node implementations, optional agent manifests, and a detached signature.</p>
-          <p>Packs may be authored in <em>TypeScript</em>, <em>Python</em>, <em>Go</em>, or pre-compiled <em>WASM</em>. The WASM path gives cross-language portability: any host with a WASM runtime loads the same artifact identically, so a Rust-authored pack runs unchanged on a JavaScript reference host.</p>
+          <p>Packs may be authored in TypeScript, Python, Go, or pre-compiled WASM. The WASM path gives cross-language portability: any host with a WASM runtime loads the same artifact identically, so a Rust-authored pack runs unchanged on a JavaScript reference host.</p>
           <p>The canonical signed registry is live at <a href="https://packs.openwop.dev/">packs.openwop.dev</a> with 62 published packs across all three public namespace tiers and 82 Ed25519-signed tarball versions in flight, each chain-of-trust rooted at <code>openwop-registry-root</code>. The <em>core tier</em> ships 22 foundational packs — <code>core.openwop.{a2a, agent-examples, agents (+ supervisor / react / deep-research variants), ai, crypto, data, db, examples, files, flow, hitl, http, integration, mcp, messaging, obs, rag, storage, triggers}</code> — as the protocol's canonical baseline. The <em>vendor tier</em> has the WASM reference pack <code>vendor.openwop.rust-hello</code> and an active <code>vendor.myndhyve.*</code> extension stack of 38 packs and growing — covering <code>canvas</code>, <code>kanban</code>, <code>campaign-sequence</code>, <code>ads-studio-core</code>, <code>ads-policy</code>, <code>brand</code>, <code>chat</code>, <code>web-research</code>, <code>landing-page</code>, and more — demonstrating real-world protocol consumption beyond the core. The <em>community tier</em> opens with <code>community.openwop-team.demo</code>. Write API and lifecycle ops are via PR-based publishing. Host-private registries are first-class for tenanted deployments; namespace tiers (<code>core.*</code>, <code>vendor.*</code>, <code>community.*</code>, <code>private.*</code>) keep the public/private boundary explicit.</p>
         </div>
         <figure class="ana-block-fig">
@@ -1291,7 +1305,7 @@
         </figure>
       </div>
       <div class="ana-block-cta">
-        <a href="/spec/v1/node-packs.html">View the <em>node packs</em> spec <span class="arrow">→</span></a>
+        <a href="/spec/v1/node-packs.html">View the node packs spec <span class="arrow">→</span></a>
       </div>
     </article>
 
@@ -1447,7 +1461,7 @@
         </figure>
       </div>
       <div class="ana-block-cta">
-        <a href="/spec/v1/workflow-chain-packs.html">View the <em>workflow chain packs</em> spec <span class="arrow">→</span></a>
+        <a href="/spec/v1/workflow-chain-packs.html">View the workflow chain packs spec <span class="arrow">→</span></a>
       </div>
     </article>
   </div>
@@ -1457,7 +1471,7 @@
 <section class="block">
   <div class="wrap">
     <div class="block-head">
-      <div class="label"><span class="marker"><span class="dot"></span>§ 03 / Stability</span></div>
+      <div class="label"><span class="marker"><span class="dot"></span>§ 06 / Stability</span></div>
       <h2>Stable, versioned, <em>readable</em> in an afternoon.</h2>
       <p class="block-lede">Below is the contract — every row points at a stable surface (transport, schema, license, versioning) that compliant hosts can be measured against.</p>
     </div>
@@ -1465,44 +1479,98 @@
     <div class="spec">
       <div class="row">
         <div class="key">Version</div>
-        <div class="val">1.1.x (v1 stable)<small>v1.0 wire contract frozen 2026-05-08 · v1.1.0 released 2026-05-12 as an additive update. Current work expands behavior coverage without breaking required fields, event payloads, endpoint contracts, or package names. The active surface now includes auth profiles, gRPC transport, WASM pack execution, multi-agent identity and reasoning, memory, orchestrator dispatch, and fixture-backed host behavior.</small></div>
+        <div class="val">
+          <p class="row-summary">1.1.x (v1 stable)</p>
+          <details class="row-detail">
+            <summary>What this means</summary>
+            <p>v1.0 wire contract frozen 2026-05-08 · v1.1.0 released 2026-05-12 as an additive update. Current work expands behavior coverage without breaking required fields, event payloads, endpoint contracts, or package names. The active surface now includes auth profiles, gRPC transport, WASM pack execution, multi-agent identity and reasoning, memory, orchestrator dispatch, and fixture-backed host behavior.</p>
+          </details>
+        </div>
       </div>
       <div class="row">
         <div class="key">Transport</div>
-        <div class="val">REST · SSE · gRPC<small>OpenAPI 3.1 for request / response endpoints; AsyncAPI 3.1 for event streams. The gRPC transport profile (<code>api/grpc/openwop.proto</code>, canonical <code>openwop.v1.Engine</code> service) is profile-gated via <code>capabilities.supportedTransports</code> and gives byte-identical run semantics over a typed RPC contract for hosts that need it.</small></div>
+        <div class="val">
+          <p class="row-summary">REST · SSE · gRPC</p>
+          <details class="row-detail">
+            <summary>What this means</summary>
+            <p>OpenAPI 3.1 for request / response endpoints; AsyncAPI 3.1 for event streams. The gRPC transport profile (<code>api/grpc/openwop.proto</code>, canonical <code>openwop.v1.Engine</code> service) is profile-gated via <code>capabilities.supportedTransports</code> and gives byte-identical run semantics over a typed RPC contract for hosts that need it.</p>
+          </details>
+        </div>
       </div>
       <div class="row">
         <div class="key">Discovery</div>
-        <div class="val">/.well-known/openwop<small>Hosts advertise protocol version, capability profiles, limits, fixtures, host surfaces, and implementation metadata so clients negotiate features instead of guessing. The v1.x profile set covers core run control, SSE and poll streams, secrets, provider policy, replay/fork, fixtures, node packs, production posture, audit integrity, scoped discovery, interrupt profiles, auth profiles, and optional agent-reasoning streaming. Optional profiles are claimed only when the host implements them end-to-end.</small></div>
+        <div class="val">
+          <p class="row-summary">/.well-known/openwop</p>
+          <details class="row-detail">
+            <summary>What this means</summary>
+            <p>Hosts advertise protocol version, capability profiles, limits, fixtures, host surfaces, and implementation metadata so clients negotiate features instead of guessing. The v1.x profile set covers core run control, SSE and poll streams, secrets, provider policy, replay/fork, fixtures, node packs, production posture, audit integrity, scoped discovery, interrupt profiles, auth profiles, and optional agent-reasoning streaming. Optional profiles are claimed only when the host implements them end-to-end.</p>
+          </details>
+        </div>
       </div>
       <div class="row">
         <div class="key">Tracing</div>
-        <div class="val">W3C trace context<small>Canonical OpenTelemetry names and attributes for runs, nodes, interrupts, provider calls, and cost attribution.</small></div>
+        <div class="val">
+          <p class="row-summary">W3C trace context</p>
+          <details class="row-detail">
+            <summary>What this means</summary>
+            <p>Canonical OpenTelemetry names and attributes for runs, nodes, interrupts, provider calls, and cost attribution.</p>
+          </details>
+        </div>
       </div>
       <div class="row">
         <div class="key">Schema</div>
-        <div class="val">JSON Schema 2020-12<small>Machine-readable workflow, run, event, capability, pack, and debug-bundle shapes.</small></div>
+        <div class="val">
+          <p class="row-summary">JSON Schema 2020-12</p>
+          <details class="row-detail">
+            <summary>What this means</summary>
+            <p>Machine-readable workflow, run, event, capability, pack, and debug-bundle shapes.</p>
+          </details>
+        </div>
       </div>
       <div class="row">
         <div class="key">SDKs</div>
-        <div class="val">npm · PyPI · Go<small>
-          <a href="https://www.npmjs.com/package/@openwop/openwop">@openwop/openwop</a> ·
-          <a href="https://www.npmjs.com/package/@openwop/openwop-conformance">@openwop/openwop-conformance</a> ·
-          <a href="https://pypi.org/project/openwop-client/">openwop-client</a> ·
-          <a href="https://pkg.go.dev/github.com/openwop/openwop/sdk/go">openwop/sdk/go</a>
-        </small></div>
+        <div class="val">
+          <p class="row-summary">npm · PyPI · Go</p>
+          <details class="row-detail">
+            <summary>Packages</summary>
+            <p>
+              <a href="https://www.npmjs.com/package/@openwop/openwop">@openwop/openwop</a> ·
+              <a href="https://www.npmjs.com/package/@openwop/openwop-conformance">@openwop/openwop-conformance</a> ·
+              <a href="https://pypi.org/project/openwop-client/">openwop-client</a> ·
+              <a href="https://pkg.go.dev/github.com/openwop/openwop/sdk/go">openwop/sdk/go</a>
+            </p>
+          </details>
+        </div>
       </div>
       <div class="row">
         <div class="key">Reference hosts</div>
-        <div class="val">4 hosts + sample app<small>In-memory (Node), SQLite (Node), Python (stdlib-only), and Postgres. The Postgres host is the production-shaped path with mechanical proof for claim acquisition, orphan recovery, backpressure, retention, and auth profiles. The Python host passes 100% of applicable scenarios in <code>@openwop/openwop-conformance</code>, proving cross-language wire-shape portability. The workflow-engine sample app now ships a fixture-backed backend and React UI for hands-on adoption. See <a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">INTEROP-MATRIX.md</a> for full claims and conformance evidence.</small></div>
+        <div class="val">
+          <p class="row-summary">4 hosts + sample app</p>
+          <details class="row-detail">
+            <summary>What this means</summary>
+            <p>In-memory (Node), SQLite (Node), Python (stdlib-only), and Postgres. The Postgres host is the production-shaped path with mechanical proof for claim acquisition, orphan recovery, backpressure, retention, and auth profiles. The Python host passes 100% of applicable scenarios in <code>@openwop/openwop-conformance</code>, proving cross-language wire-shape portability. The workflow-engine sample app now ships a fixture-backed backend and React UI for hands-on adoption. See <a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">INTEROP-MATRIX.md</a> for full claims and conformance evidence.</p>
+          </details>
+        </div>
       </div>
       <div class="row">
         <div class="key">License</div>
-        <div class="val">Apache 2.0<small>Trademark-clean, patent-granting, no field-of-use restrictions.</small></div>
+        <div class="val">
+          <p class="row-summary">Apache 2.0</p>
+          <details class="row-detail">
+            <summary>What this means</summary>
+            <p>Trademark-clean, patent-granting, no field-of-use restrictions.</p>
+          </details>
+        </div>
       </div>
       <div class="row">
         <div class="key">Compatibility</div>
-        <div class="val">v1.x stable<small>Wire shapes and package names are stable through v1.x releases. Four versioning axes — engine, event-log, per-event schema, and per-(run, changeId) pinning — keep in-flight runs safe across deploys. See <code>COMPATIBILITY.md</code> and <code>PUBLISHING.md</code>.</small></div>
+        <div class="val">
+          <p class="row-summary">v1.x stable</p>
+          <details class="row-detail">
+            <summary>What this means</summary>
+            <p>Wire shapes and package names are stable through v1.x releases. Four versioning axes — engine, event-log, per-event schema, and per-(run, changeId) pinning — keep in-flight runs safe across deploys. See <code>COMPATIBILITY.md</code> and <code>PUBLISHING.md</code>.</p>
+          </details>
+        </div>
       </div>
     </div>
   </div>
@@ -1512,7 +1580,7 @@
 <section class="block" id="proof">
   <div class="wrap">
     <div class="block-head">
-      <div class="label"><span class="marker"><span class="dot"></span>§ 04 / Implementation proof</span></div>
+      <div class="label"><span class="marker"><span class="dot"></span>§ 07 / Implementation proof</span></div>
       <h2>The recent work turns the contract into <em>runnable evidence</em>.</h2>
       <p class="block-lede">
         OpenWOP is not just prose. The repository carries reference hosts, a deployable
@@ -1573,7 +1641,7 @@
 <section class="block" id="context">
   <div class="wrap">
     <div class="block-head">
-      <div class="label"><span class="marker"><span class="dot"></span>§ 05 / In context</span></div>
+      <div class="label"><span class="marker"><span class="dot"></span>§ 08 / In context</span></div>
       <h2>Where it sits, and what it <em>isn't</em>.</h2>
     </div>
 
@@ -1691,7 +1759,7 @@
   <div class="wrap">
     <div class="start">
       <div>
-        <span class="marker" style="margin-bottom:18px; display:inline-flex;"><span class="dot"></span>§ 06 / Get started</span>
+        <span class="marker" style="margin-bottom:18px; display:inline-flex;"><span class="dot"></span>§ 09 / Get started</span>
         <h2>Ten minutes to a <em>running</em> workflow.</h2>
         <p>
           Clone the repo, start the in-memory reference host, create a run over
@@ -1748,14 +1816,14 @@
 <section class="block" id="demo">
   <div class="wrap">
     <div class="block-head">
-      <div class="label"><span class="marker"><span class="dot"></span>§ 07 / Try it live</span></div>
+      <div class="label"><span class="marker"><span class="dot"></span>§ 10 / Try it live</span></div>
       <h2>A real host, <em>already running</em>.</h2>
       <p class="block-lede">
         <a class="meta-link" href="https://app.openwop.dev/">app.openwop.dev</a> runs the
         workflow-engine reference deployment with the v1 conformance fixtures preloaded.
         Build a workflow against 44 published <code>core.openwop.*</code> packs, run it,
         watch the live <abbr title="Server-Sent Events">SSE</abbr> event stream — anonymous,
-        no install, browser-session-scoped. Sessions reset every 24 hours.
+        no install.
       </p>
     </div>
 
@@ -1796,6 +1864,10 @@
       <a class="btn btn-primary" href="https://app.openwop.dev/">
         Open app.openwop.dev <span class="arrow">↗</span>
       </a>
+      <span class="caveat-pill" role="note" aria-label="Live demo caveat">
+        <span class="caveat-pill-dot" aria-hidden="true"></span>
+        Browser-session scoped · sessions reset every 24h
+      </span>
       <a class="btn btn-ghost" href="https://github.com/openwop/openwop/blob/main/apps/workflow-engine/DEPLOY-SMOKE.md">
         Smoke-test script <span class="arrow">↗</span>
       </a>
@@ -1811,7 +1883,7 @@
 <section class="block" id="ecosystem">
   <div class="wrap">
     <div class="block-head">
-      <div class="label"><span class="marker"><span class="dot"></span>§ 08 / Ecosystem</span></div>
+      <div class="label"><span class="marker"><span class="dot"></span>§ 11 / Ecosystem</span></div>
       <h2>Build <em>against</em> the protocol.</h2>
     </div>
 
