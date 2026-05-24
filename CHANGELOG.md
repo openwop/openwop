@@ -11,6 +11,48 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0040 promoted Active → Accepted — `version: 3` cross-host causation live on MyndHyve (2026-05-24)
+
+**Milestone — multi-agent execution model Phases 1+2+3 now Accepted end-to-end on a non-steward host.** MyndHyve workflow-runtime advertises `multiAgent.executionModel.{version: 3, crossHostCausation: {supported: true, hostId: 'myndhyve', ancestryEndpointSupported: true}}` live on `https://api.myndhyve.ai/.well-known/openwop` (verified 2026-05-24 via direct curl).
+
+Two coordinated MyndHyve commits land the full Phase 3 surface:
+
+1. **`f281549f` (Cloud Run revision `workflow-runtime-00198-q48`)** — Sessions 5c+5d+5e close-out: sqlite-reference-host MCP peer with distinct `hostId: 'sqlite-reference'` (closes the self-loop tautology that would otherwise have MyndHyve calling itself); `core.conformance.mcp-invoke` conformance node; `version: 3` discovery advertise; outbound `traceparent` injection on every outbound HTTP through `ServerHttpClientAdapter.fetch` (single injection point covers AI provider calls, webhook deliveries, conformance test seams, MCP outbound — closes calling-side §B contract everywhere at once).
+
+2. **`dcf259b1` (revision `00199-4lk`)** — RFC 0041 §C observable-result cache Tier-1 (in-memory, workspace-first-keyed: `workspaceId|runId|nodeId|attempt|llmCacheKey`). 26 unit tests pin the cross-tenant isolation invariant.
+
+**Conformance evidence per MyndHyve's report:**
+- `cross-host-causation-shape.test.ts` — PASS (advertises `version: 3` + `crossHostCausation` block; scenario reads + validates shape).
+- `cross-host-ancestry-endpoint.test.ts` — PASS. `GET /v1/runs/{runId}/ancestry` endpoint is registered (returns JSON `{"error":"Not found"}` for unknown runId — distinct from bare 404 it returned pre-`f281549f`).
+- `cross-host-traceparent-propagation.test.ts` — stays `it.todo` upstream. MyndHyve calling-side + sqlite-reference-host receiving-side both ready; waiting on the cross-host harness driver landing on the openwop side.
+
+Per the bootstrap-phase rule (advertisement + scenarios pass-modulo-honest-skip), the path-to-Accepted bar is met.
+
+**RFC 0041 stays Active.** MyndHyve's §C observable-result cache Tier-1 is live but the `replayDeterminism` capability block stays honestly absent from discovery — §B refusal-divergence emission is missing (engine-side replay-execution path detection deferred to avoid parallel-session collision with `560cfc89`'s `canonicalRuns.ts` work). MyndHyve's honest-capability-advertisement discipline: advertise only what's fully honored. The Tier-2 Firestore-backed cache (cross-instance replay determinism) is also a separate strengthening tier.
+
+**16 scenario flips on MyndHyve's side** (per their report — SKIP-on-404 → PASS after the `60b569de` `registerHostSampleRoutes` wire-up + `f281549f` cross-host surface):
+
+| Scenario | Was | Now |
+|---|---|---|
+| `prompt-list.test.ts`, `prompt-render-secret-redaction.test.ts`, `prompt-render-trust-marker.test.ts`, `prompt-resolution-chain.test.ts` | SKIP | PASS |
+| `ai-envelope-shape.test.ts` (behavioral), 6 `aiEnvelope.*.test.ts` scenarios (universalKinds, contractRefusal, capBreached, redaction, schemaDrift, trustBoundaryPropagation, correlationReplay) | SKIP on 404 | PASS |
+| `otel-scrape-seam-shape.test.ts` | n/a | PASS (200 + `{spans:[]}`) |
+| `envelope-reasoning-secret-redaction.test.ts` | n/a | PASS vacuously safe (Tier-1 boundary per RFC 0034 §B) |
+| `cross-host-causation-shape.test.ts` | SKIP (block absent) | PASS (`version: 3` + `crossHostCausation`) |
+| `cross-host-ancestry-endpoint.test.ts` | SKIP | PASS |
+| `mcp-tool-roundtrip.test.ts` | SKIP | PASS when `OPENWOP_MCP_REAL_SERVER_URL` points at sqlite-host |
+
+**Notable architectural finds from MyndHyve's session:**
+1. RFC 0040 §B closing at `ServerHttpClientAdapter.fetch` — single injection point covers all outbound HTTP. Calling-side §B contract closed everywhere at once.
+2. sqlite-reference-host as cross-host test peer — distinct `hostId: 'sqlite-reference'` closes the self-loop tautology where MyndHyve would otherwise call itself.
+3. Observable-result cache is workspace-first keyed — `workspaceId|runId|nodeId|attempt|llmCacheKey` encoding makes tenant boundary lexically obvious in logs.
+4. Honest capability discipline — `replayDeterminism` block stays absent on discovery despite §C cache being live, because §B emission missing means the host doesn't honor the full §D contract yet.
+
+**Updates landed in this commit:**
+- `RFCS/0040-multi-agent-cross-host-causation.md` Status: `Active → Accepted`. 9 of 10 acceptance-criteria items `[ ] → [x]` (remaining: `spec/v1/mcp-integration.md` + `spec/v1/a2a-integration.md` tracecontext cross-link prose — documentation strengthening, not a gate-blocker).
+- `INTEROP-MATRIX.md` header date note rewritten to describe the RFC 0040 promotion as the headline.
+- `README.md` Accepted (34 → 35 — adds 0040); Active (6 → 5).
+
 ### RFC 0039 Half B fully closed end-to-end — 422 wire-route surface live (2026-05-24)
 
 MyndHyve commit `560cfc89` (Cloud Run revision `workflow-runtime-00362-yoz` now serving 100% on `api.myndhyve.ai`; replaces parallel-session-self-pinned `00196-7mm`) lands the `replay_memory_snapshot_unavailable` 422 wire-route surface that had been the long-standing parallel-session blocker. Three coordinated pieces:

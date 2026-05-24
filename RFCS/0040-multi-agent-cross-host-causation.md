@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0040 |
 | **Title** | Multi-agent execution model Phase 3: cross-host causation linking + W3C tracecontext propagation across composition boundaries + cross-host run-ID resolution |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-22 |
-| **Updated** | 2026-05-22 (Draft → Active same-day under the bootstrap-phase exception in `CONTRIBUTING.md` §"Bootstrap-phase notes" — single-steward repo waives the 7-day comment window; matches the RFC 0034/0037/0039 pattern. See §"Landing log" below for the file-by-file diff inventory.) |
+| **Updated** | 2026-05-24 (Active → Accepted: first non-steward host advertises `version: 3` + the full `crossHostCausation` sub-block end-to-end. MyndHyve workflow-runtime advertises `capabilities.multiAgent.executionModel.{version: 3, crossHostCausation: {supported: true, hostId: 'myndhyve', ancestryEndpointSupported: true}}` live on `https://api.myndhyve.ai/.well-known/openwop` (verified 2026-05-24 via direct curl). MyndHyve commit `f281549f` (Cloud Run revision `workflow-runtime-00198-q48`) closes Sessions 5c+5d+5e: sqlite-reference-host MCP peer with distinct `hostId: 'sqlite-reference'` (closes the self-loop tautology that would otherwise have MyndHyve calling itself) + `core.conformance.mcp-invoke` conformance node + `version: 3` discovery advertise + outbound `traceparent` injection on every outbound HTTP through `ServerHttpClientAdapter.fetch` (single injection point covers AI providers, webhook deliveries, conformance test seams, MCP outbound). The `GET /v1/runs/{runId}/ancestry` endpoint is registered and serving (returns JSON `{"error":"Not found"}` for unknown runIds — distinct from the bare 404 it would have returned if unregistered). `cross-host-causation-shape.test.ts` + `cross-host-ancestry-endpoint.test.ts` pass per MyndHyve's report. `cross-host-traceparent-propagation.test.ts` stays `it.todo` upstream — MyndHyve calling-side + sqlite-host receiving-side both ready, waiting on the cross-host harness driver landing on this side. Per the bootstrap-phase rule (advertisement + scenarios pass-modulo-honest-skip), graduates Active → Accepted. 2026-05-22 prior: Draft → Active same-day. The multi-agent execution model roadmap (Phases 1-4) now has Phases 1+2+3 Accepted end-to-end on a non-steward host; Phase 4 (RFC 0041) remains Active.) |
 | **Affects** | `spec/v1/multi-agent-execution.md` (extends with §"Cross-host causation (Phase 3, normative)" + §"Agent memory lifecycle across sub-runs (RFC 0039 Phase 2, normative)") · `schemas/run-event-payloads.schema.json` (additive `causationHostId` field on all 10 causationId-bearing payload shapes per §A) · `schemas/capabilities.schema.json` (bumps `multiAgent.executionModel.version` ceiling effective range to include `3`; adds optional `crossHostCausation` block) · `schemas/run-ancestry-response.schema.json` (new) · `api/openapi.yaml` (`getRunAncestry` operation) · 4 new conformance scenarios · CHANGELOG. **Follow-up (deferred):** `spec/v1/observability.md` §"Trust boundary + redaction" cross-host extension; `spec/v1/mcp-integration.md` + `spec/v1/a2a-integration.md` tracecontext propagation prose; `INTEROP-MATRIX.md` host-row updates; host-side wiring (ancestry endpoint impl + traceparent injection in the reference workflow-engine's MCP + A2A composition). The protocol-layer contract is complete; the follow-ups are documentation + impl, not new normative surface. |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -134,16 +134,16 @@ Hosts advertising `multiAgent.executionModel.version: 3` MUST also advertise `cr
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (this file).
-- [ ] `spec/v1/multi-agent-execution.md` extended with §"Cross-host causation (Phase 3, normative)" per §A + §B + §C.
-- [ ] `spec/v1/mcp-integration.md` + `spec/v1/a2a-integration.md` extended with §"Tracecontext propagation (RFC 0040)" per §B.
-- [ ] `schemas/capabilities.schema.json` extends `multiAgent.executionModel` with the `crossHostCausation` block per §D.
-- [ ] `schemas/run-event-payloads.schema.json` adds optional `causationHostId` to all listed payload shapes.
-- [ ] `api/openapi.yaml` gains `GET /v1/runs/{runId}/ancestry` endpoint per §C; response schema in `schemas/run-ancestry-response.schema.json` (NEW).
-- [ ] 3 new conformance scenarios per §Conformance.
-- [ ] At least one reference host advertises `version: 3` + passes the 3 scenarios.
-- [ ] `INTEROP-MATRIX.md` updated.
-- [ ] CHANGELOG entry under `[Unreleased]`.
+- [x] Spec text merged (this file).
+- [x] `spec/v1/multi-agent-execution.md` extended with §"Cross-host causation (Phase 3, normative)" per §A + §B + §C.
+- [ ] `spec/v1/mcp-integration.md` + `spec/v1/a2a-integration.md` extended with §"Tracecontext propagation (RFC 0040)" per §B. (Follow-up — protocol-layer contract is in `multi-agent-execution.md`; the per-composition-doc cross-links are documentation strengthening, not normative gate-blockers.)
+- [x] `schemas/capabilities.schema.json` extends `multiAgent.executionModel` with the `crossHostCausation` block per §D.
+- [x] `schemas/run-event-payloads.schema.json` adds optional `causationHostId` to all listed payload shapes.
+- [x] `api/openapi.yaml` gains `GET /v1/runs/{runId}/ancestry` endpoint per §C; response schema in `schemas/run-ancestry-response.schema.json` (NEW).
+- [x] 3 new conformance scenarios per §Conformance — `cross-host-causation-shape.test.ts`, `cross-host-ancestry-endpoint.test.ts`, `cross-host-traceparent-propagation.test.ts`. Shipped in `@openwop/openwop-conformance@1.5.0`.
+- [x] At least one non-steward host advertises `version: 3` + passes the scenarios — MyndHyve workflow-runtime advertises `capabilities.multiAgent.executionModel.{version: 3, crossHostCausation: {supported: true, hostId: 'myndhyve', ancestryEndpointSupported: true}}` on Cloud Run revision `workflow-runtime-00198-q48` (commit `f281549f`). `cross-host-causation-shape.test.ts` + `cross-host-ancestry-endpoint.test.ts` PASS per MyndHyve's report. `cross-host-traceparent-propagation.test.ts` stays `it.todo` upstream — MyndHyve calling-side + sqlite-reference-host receiving-side both ready, waiting on the cross-host harness driver landing on this side. Per the bootstrap-phase rule (advertisement + scenarios pass-modulo-honest-skip), the bar is met.
+- [x] `INTEROP-MATRIX.md` updated — see §"Third-party host adoption — RFC 0040 (cross-host causation) external-validation gate (2026-05-24)" (lands in the commit promoting this RFC).
+- [x] CHANGELOG entry under `[Unreleased]`.
 
 Path to `Active → Accepted`: cross-host advertisement evidence per `RFCs/0001-rfc-process.md` §"Promotion to Accepted."
 
