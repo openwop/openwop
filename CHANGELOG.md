@@ -9,6 +9,45 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ---
 
+## [1.1.4 — unreleased] — docs-sync drift cleanup
+
+### RFC 0039 Half B fully closed end-to-end — 422 wire-route surface live (2026-05-24)
+
+MyndHyve commit `560cfc89` (Cloud Run revision `workflow-runtime-00362-yoz` now serving 100% on `api.myndhyve.ai`; replaces parallel-session-self-pinned `00196-7mm`) lands the `replay_memory_snapshot_unavailable` 422 wire-route surface that had been the long-standing parallel-session blocker. Three coordinated pieces:
+
+1. **Engine wiring** — `runExecutor.ts` selects `MyndHyveMemoryResolver.forFork(forkedFrom.runId)` for replay-mode dispatches, so `ctx.memory.snapshotAtSeq()` reads the parent run's journal instead of returning `null`.
+2. **Route pre-flight** — new exported helper `checkReplayMemorySnapshotPreflight` at the canonical `POST /v1/runs/{runId}:fork`. Uses the SAME `forFork(sourceRunId)` construction the dispatch uses, so the gate truthfully predicts dispatch behavior (no probe-vs-dispatch dishonesty).
+3. **Wire-shape envelope locked**:
+   ```jsonc
+   {
+     "error": "replay_memory_snapshot_unavailable",
+     "message": "<human>",
+     "details": {
+       "fromSeq": <number>,
+       "sourceRunId": "<string>",
+       "reason": "retention_expired" | "event_log_unavailable"
+     }
+   }
+   ```
+   The `reason` discriminator splits the two ways a snapshot can be unserveable: `retention_expired` (source past the host's `retention.ts` window; journal may be GC'd) vs `event_log_unavailable` (probe `snapshotAtSeq` returned `null` per degraded infra). Matches `spec/v1/rest-endpoints.md:314` `replay_memory_snapshot_unavailable` envelope contract end-to-end.
+
+Live verification 2026-05-24: `POST /v1/runs/<probe>:fork` returns `401` (route registered + authenticating) — distinct from the `404` it returned pre-`560cfc89`. MyndHyve has a full conformance run against `00362-yoz` in flight; the `multi-agent-memory-lifecycle.test.ts` MAE-3 behavioral assertion stays `it.skip` per the parallel-session RFC 0042 §B experimental-tier carve-out for the broader memory-lifecycle surface — lifting that gate is a separate operator-side decision.
+
+**Vendor-extension event type confirmation.** MyndHyve also confirmed `x-host-myndhyve-memory-written` stays as the canonical wire-shape they emit for SR-1-audit journaling. No canonicalization RFC needed unless we want one upstream. The forward-reference row in INTEROP-MATRIX §"Forward-reference — MyndHyve vendor-extension RunEventTypes" stays as-is.
+
+**Updates:**
+- `RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md` path-to-Accepted footer rewritten to document the 422 wire-route closure with the three coordinated pieces + envelope shape. Status stays `Accepted` (Half B work is additive on the already-Accepted RFC; no Status flip).
+- `INTEROP-MATRIX.md` header date 2026-05-23 → 2026-05-24; lead note rewritten to describe the 422 closure as the headline.
+
+Status: RFC 0039 Half B is now FULLY wired across discovery + host primitive + route surface + envelope contract. The full multi-agent execution model roadmap (Phases 1-4 = RFCs 0037, 0039, 0040, 0041) has Phases 1 + 2 fully Accepted + wired end-to-end on a non-steward host; Phases 3 + 4 (RFCs 0040, 0041) remain Active pending `version: 3` / `version: 4` advertisements + cross-host harness work.
+
+### Docs-sync drift cleanup (2026-05-24)
+
+- **Docs sync drift cleanup (2026-05-24).** Removed stale RFC 0034 from `docs/KNOWN-LIMITS.md`'s open-RFC table after its 2026-05-23 Active → Accepted promotion, refreshed README document-index word counts from current `spec/v1/*.md`, corrected the implementation-certification badge-generator citation, and made the SQLite historical conformance-full banner cite the exact `@openwop/openwop-conformance@1.5.0` suite version.
+- **Validator gate hardening.** Root release tooling now pins `@redocly/cli@2.31.4` + `@asyncapi/cli@4.1.1` as repo-root devDependencies and `scripts/openwop-check.sh` invokes local bins directly instead of `npx -y`, using `--legacy-peer-deps` for the root-only install to avoid AsyncAPI Studio's React peer-resolution loop. This matches the drift-catalog rule for validator-toolchain updates.
+
+---
+
 ## [1.1.3] — 2026-05-23 — coordinated SDK release for first cross-host adoption
 
 Closes the workflow-engine reference-host pass-rate inflation that the 2026-05-22 external standards-readiness review flagged, lands first non-steward host adoption of four RFCs, and ships the Phase 4 behavioral harness end-to-end. All wire shapes additive per `COMPATIBILITY.md` §2.1.

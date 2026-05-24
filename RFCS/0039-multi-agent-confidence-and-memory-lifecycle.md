@@ -149,7 +149,25 @@ The new RunEventType is additive per the existing forward-compat rule (`run-even
 - [x] `INTEROP-MATRIX.md` updated — see §"Third-party host adoption — RFC 0037 Phase 1 + RFC 0039 Half A + RFC 0044 ... (2026-05-22)".
 - [x] CHANGELOG entry under `[Unreleased]`.
 
-Path to `Active → Accepted`: cross-host advertisement evidence per `RFCs/0001-rfc-process.md` §"Promotion to Accepted." **CLOSED 2026-05-22** — Half A confidence-floor escalation validated cross-host. **Half B strengthening 2026-05-23**: MyndHyve commit `a51f7bbd` lands the `memory.written` event + `snapshotAtSeq()` host implementation + `crossChildMemoryConcurrency: 'strict'` advertisement (verified live on `https://api.myndhyve.ai/.well-known/openwop`). The `replay_memory_snapshot_unavailable` 422 wire-route surface is parallel-session-blocked on MyndHyve's side (`services/workflow-runtime/src/{index.ts,routes/canonicalRuns.ts}` uncommitted lint cleanup) — `snapshotAtSeq` returns `null` correctly when no source-run is bound; only the route translation to 422 awaits the parallel commit. When that lands, the `multi-agent-memory-lifecycle.test.ts` MAE-3 behavioral assertion will exercise end-to-end. Status stays `Accepted` either way; Half B work is additive.
+Path to `Active → Accepted`: cross-host advertisement evidence per `RFCs/0001-rfc-process.md` §"Promotion to Accepted." **CLOSED 2026-05-22** — Half A confidence-floor escalation validated cross-host. **Half B fully wired 2026-05-23/24**: MyndHyve commit `a51f7bbd` landed the `snapshotAtSeq()` host implementation + `crossChildMemoryConcurrency: 'strict'` advertisement on 2026-05-23. MyndHyve commit `560cfc89` (2026-05-23 evening; Cloud Run revision `workflow-runtime-00362-yoz` now serving 100% on `api.myndhyve.ai`) closes the remaining `replay_memory_snapshot_unavailable` 422 wire-route surface. Three coordinated pieces:
+
+1. **Engine wiring** — `runExecutor.ts` selects `MyndHyveMemoryResolver.forFork(forkedFrom.runId)` for replay-mode dispatches, so `ctx.memory.snapshotAtSeq()` reads the parent run's journal instead of returning `null`.
+2. **Route pre-flight** — new exported helper `checkReplayMemorySnapshotPreflight` at `POST /v1/runs/{runId}:fork`. Uses the SAME `forFork(sourceRunId)` construction the dispatch uses, so the gate truthfully predicts dispatch behavior (no probe-vs-dispatch dishonesty).
+3. **Wire-shape envelope locked**:
+   ```jsonc
+   {
+     "error": "replay_memory_snapshot_unavailable",
+     "message": "<human>",
+     "details": {
+       "fromSeq": <number>,
+       "sourceRunId": "<string>",
+       "reason": "retention_expired" | "event_log_unavailable"
+     }
+   }
+   ```
+   The `reason` discriminator splits the two ways the snapshot can be unserveable: `retention_expired` (source past retention window per host's `retention.ts`; journal may be GC'd) vs `event_log_unavailable` (probe `snapshotAtSeq` returned `null` per degraded infra). Matches `spec/v1/rest-endpoints.md:314` `replay_memory_snapshot_unavailable` envelope contract.
+
+Status stays `Accepted` (no Status change — Half B was additive on the existing Accepted RFC). The `multi-agent-memory-lifecycle.test.ts` MAE-3 behavioral assertion is currently `it.skip` per the parallel-session RFC 0042 §B experimental-tier carve-out for the broader memory-lifecycle surface; lifting that gate is a separate operator-side decision. Live wire is verified — `POST /v1/runs/<probe>:fork` returns `401` (route registered + authenticating), distinct from the `404` it returned pre-`560cfc89`.
 
 ## References
 
