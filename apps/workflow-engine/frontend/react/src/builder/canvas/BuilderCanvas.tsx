@@ -17,6 +17,7 @@ import {
   Background,
   BackgroundVariant,
   Controls,
+  MiniMap,
   ReactFlow,
   ReactFlowProvider,
   applyNodeChanges,
@@ -193,10 +194,13 @@ function BuilderCanvasInner() {
         onConnect={onConnect}
         isValidConnection={isValidConnection}
         fitView
+        snapToGrid
+        snapGrid={[20, 20]}
         proOptions={{ hideAttribution: true }}
       >
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
         <Controls position="bottom-right" />
+        <MiniMap pannable zoomable position="bottom-left" />
       </ReactFlow>
     </div>
   );

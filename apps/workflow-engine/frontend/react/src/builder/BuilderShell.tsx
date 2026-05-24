@@ -9,8 +9,8 @@
  * The workflow list lives at /builder (WorkflowsDashboard).
  */
 
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { NodePalette } from './palette/NodePalette.js';
 import { BuilderCanvas } from './canvas/BuilderCanvas.js';
 import { Inspector } from './inspector/Inspector.js';
@@ -20,6 +20,7 @@ import { registerWorkflow } from './persistence/registerClient.js';
 import { serializeWithIdMap, SerializeError } from './schema/serialize.js';
 import { createRun } from '../client/runsClient.js';
 import { subscribeToRun } from '../client/streamsClient.js';
+import type { SavedWorkflow } from './schema/workflow.js';
 import { catalogEntry } from './palette/catalogRegistry.js';
 
 interface Props {
@@ -48,6 +49,7 @@ function collectPreflightIssues(nodes: ReadonlyArray<{ id: string; kind: string;
 }
 
 export function BuilderShell({ onNewWorkflow }: Props) {
+  const nav = useNavigate();
   const workflowId = useBuilderStore((s) => s.workflowId);
   const name = useBuilderStore((s) => s.name);
   const undo = useBuilderStore((s) => s.undo);
@@ -55,6 +57,7 @@ export function BuilderShell({ onNewWorkflow }: Props) {
   const canUndo = useBuilderStore((s) => s.past.length > 0);
   const canRedo = useBuilderStore((s) => s.future.length > 0);
   const overlay = useBuilderStore((s) => s.overlay);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
 
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -124,6 +127,51 @@ export function BuilderShell({ onNewWorkflow }: Props) {
     }
   }
 
+  // Export the built graph as portable JSON (the SavedWorkflow shape —
+  // open execution schema, RFC 0037 §1). Re-importable here or shareable.
+  function onExport() {
+    const snap = useBuilderStore.getState().snapshot();
+    const blob = new Blob([JSON.stringify(snap, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const safe = (snap.name || 'workflow').replace(/[^a-z0-9-_]+/gi, '-').toLowerCase();
+    a.download = `${safe}.openwop-workflow.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // Import portable JSON. Mints a fresh workflow id so importing never
+  // clobbers the workflow currently open, then navigates into it.
+  async function onImportFile(file: File) {
+    setError(null);
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text) as Partial<SavedWorkflow>;
+      if (!Array.isArray(parsed.nodes) || !Array.isArray(parsed.edges)) {
+        throw new Error('Not an OpenWOP workflow export (missing nodes/edges).');
+      }
+      const id = newWorkflowId();
+      const imported: SavedWorkflow = {
+        id,
+        name: parsed.name ? `${parsed.name} (imported)` : 'Imported workflow',
+        version: parsed.version ?? '1.0.0',
+        nodes: parsed.nodes,
+        edges: parsed.edges,
+        defaultInputs: parsed.defaultInputs ?? '{}',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      useBuilderStore.getState().loadFromSaved(imported);
+      useBuilderStore.getState().persist();
+      nav(`/builder/${id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
   return (
     <div className="builder-shell">
       <div className="builder-toolbar">
@@ -140,6 +188,25 @@ export function BuilderShell({ onNewWorkflow }: Props) {
         <div className="builder-toolbar-spacer" />
         <button className="secondary" onClick={undo} disabled={!canUndo} title="Undo">↶</button>
         <button className="secondary" onClick={redo} disabled={!canRedo} title="Redo">↷</button>
+        <button className="secondary" onClick={onExport} title="Export this workflow as portable JSON">Export</button>
+        <button
+          className="secondary"
+          onClick={() => importInputRef.current?.click()}
+          title="Import a workflow from JSON (opens as a new workflow)"
+        >
+          Import
+        </button>
+        <input
+          ref={importInputRef}
+          type="file"
+          accept="application/json,.json"
+          style={{ display: 'none' }}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) void onImportFile(file);
+            e.target.value = '';
+          }}
+        />
         <button className="secondary" onClick={onNewWorkflow}>New</button>
         <button onClick={() => onRun()} disabled={running}>
           {running ? 'Running…' : 'Run'}
