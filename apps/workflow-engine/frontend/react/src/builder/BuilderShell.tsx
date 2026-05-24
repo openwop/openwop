@@ -29,7 +29,7 @@ interface Props {
 interface PreflightIssue {
   nodeId: string;
   name: string;
-  missing: string[];
+  missing: readonly string[];
 }
 
 /** Pre-flight: which graph nodes need a host surface the connected host
