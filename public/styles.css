@@ -1316,6 +1316,75 @@
     .btn-star { justify-self: start; }
   }
 
+  /* ─── Hero shot — workflow canvas screenshot between hero and subnav.
+   * Goals: (1) full-bleed presence so the screenshot reads as evidence
+   * rather than chrome, (2) consistent paper background so the shot
+   * doesn't fight the page's warm-stone palette, (3) subtle browser-
+   * chrome framing (top bar + dots) so the image reads as "an app you
+   * could be using." No card border-radius on the image itself — the
+   * frame's radius does the visual containment.
+   *
+   * The frame uses a soft inner shadow + outer drop to suggest depth
+   * without committing to a glassy/skeumorphic look. aspect-ratio
+   * matches the source (3024:1722 ≈ 16:9.12) and CSS reserves the box
+   * so the page doesn't shift while the image decodes (good for CLS).
+   */
+  .hero-shot {
+    padding: clamp(0px, 2vw, 24px) 0 clamp(48px, 7vw, 96px);
+    position: relative;
+  }
+  .hero-shot-figure {
+    margin: 0;
+    max-width: 1080px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .hero-shot-frame {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--paper-2);
+    border: 1px solid var(--rule-2);
+    box-shadow:
+      0 1px 0 rgba(26, 26, 23, 0.04),
+      0 20px 60px -20px rgba(26, 26, 23, 0.18),
+      0 8px 24px -12px rgba(26, 26, 23, 0.12);
+    aspect-ratio: 3024 / 1722;
+  }
+  .hero-shot-frame img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+  }
+  .hero-shot-caption {
+    margin-top: 18px;
+    color: var(--ink-3);
+    font-size: 13.5px;
+    line-height: 1.55;
+    max-width: 56ch;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+  }
+  .hero-shot-caption strong {
+    color: var(--ink-2);
+    font-weight: 500;
+  }
+  .hero-shot-caption a {
+    color: var(--ink);
+    border-bottom: 1px dotted var(--rule-2);
+    transition: border-color .15s ease;
+  }
+  .hero-shot-caption a:hover { border-bottom-color: var(--clay); }
+
+  @media (max-width: 700px) {
+    .hero-shot { padding: 8px 0 56px; }
+    .hero-shot-frame { border-radius: 10px; }
+    .hero-shot-caption { text-align: left; }
+  }
+
   /* ─── Hero star strip — Option A: compact row below the hero grid.
    * Reads as a continuation of .meta-row rather than a callout card.
    * Top hairline rule separates it from the grid above. No card chrome,

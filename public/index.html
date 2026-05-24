@@ -495,6 +495,44 @@
   </div>
 </section>
 
+<!-- ─────────────────────── HERO SHOT ───────────────────────
+     One-screen visual proof that OpenWOP isn't only an abstract spec — the
+     same wire protocol that powers the conformance suite also powers a
+     visual workflow editor. Sits between the hero promise and the sub-nav
+     so it's the first concrete artifact a visitor sees after the headline.
+
+     Image delivery uses <picture> + WebP sources at three widths (800 /
+     1200 / 1600) with a PNG fallback for crawlers and email clients that
+     don't speak WebP. width/height on <img> reserve aspect-ratio space to
+     avoid CLS. loading="lazy" off because this is above the fold for any
+     viewport taller than ~900px. -->
+<section class="hero-shot" aria-labelledby="hero-shot-caption">
+  <div class="wrap">
+    <figure class="hero-shot-figure">
+      <div class="hero-shot-frame">
+        <picture>
+          <source
+            type="image/webp"
+            srcset="/assets/workflow-canvas-800.webp 800w,
+                    /assets/workflow-canvas-1200.webp 1200w,
+                    /assets/workflow-canvas-1600.webp 1600w"
+            sizes="(max-width: 700px) 100vw,
+                   (max-width: 1100px) 92vw,
+                   1080px"/>
+          <img
+            src="/assets/workflow-canvas-1200.png"
+            width="3024" height="1722"
+            alt="An OpenWOP-compliant workflow editor: node pack catalog on the left (Agent Run, Tool, Memory, Output Parser, Model Selector, Chat Completion, Structured Output), a directed-acyclic-graph canvas in the center wiring a Kickoff node through three parallel Extract Source branches into Normalize and Enrich nodes, and a Workflow inspector panel on the right showing the run's name, ID, and default-inputs JSON."
+            decoding="async"/>
+        </picture>
+      </div>
+      <figcaption class="hero-shot-caption" id="hero-shot-caption">
+        <strong>An OpenWOP-compliant workflow editor.</strong> Node pack catalog left, DAG canvas center, run inspector right — every artifact on this screen is described by the open <a href="/spec/v1/">v1 spec</a>. The same canvas runs against the reference hosts, the conformance suite, and any compliant third-party host.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
 <!-- ─────────────────────── SUB-NAV (after hero; sticky once scrolled to) ─────────────────────── -->
 <nav class="subnav" aria-label="On this page">
   <div class="wrap subnav-inner">
