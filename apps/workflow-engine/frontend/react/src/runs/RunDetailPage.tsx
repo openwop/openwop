@@ -6,6 +6,7 @@ import { subscribeToRun } from '../client/streamsClient.js';
 import { listOpenInterrupts, type OpenInterrupt } from '../client/interruptsClient.js';
 import { EventStreamView } from '../streams/EventStreamView.js';
 import { RunTimeline } from './RunTimeline.js';
+import { RunStepInspector } from './RunStepInspector.js';
 import { RunAgentTrace } from './RunAgentTrace.js';
 import { RunHandoffMap } from './RunHandoffMap.js';
 import { RunCostPanel } from './RunCostPanel.js';
@@ -22,6 +23,8 @@ export function RunDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [eventView, setEventView] = useState<'timeline' | 'log'>('timeline');
   const [streamMode, setStreamMode] = useState<StreamMode>('updates');
+  // §A4 playhead — the timeline-selected sequence drives the step inspector.
+  const [playheadSeq, setPlayheadSeq] = useState<number | null>(null);
 
   const refreshInterrupts = useCallback(async () => {
     if (!runId) return;
@@ -201,11 +204,15 @@ export function RunDetailPage() {
           </div>
         </div>
         {eventView === 'timeline' ? (
-          <RunTimeline events={events} onForkFrom={onForkFrom} />
+          <RunTimeline events={events} onForkFrom={onForkFrom} onSelectSeq={setPlayheadSeq} />
         ) : (
           <EventStreamView events={events} onForkFrom={onForkFrom} />
         )}
       </div>
+
+      {eventView === 'timeline' && playheadSeq != null && (
+        <RunStepInspector events={events} seq={playheadSeq} onForkFrom={onForkFrom} />
+      )}
     </section>
   );
 }
