@@ -1021,7 +1021,7 @@
     },
     "toolHooks": {
       "type": "object",
-      "description": "RFC 0060 sibling — RFC 0064 (`Draft`). Per-tool authorization + rate limiting + content-free tool-call audit fields, layered on the existing `agent.toolCalled` / `agent.toolReturned` events (RFC 0002). Generalizes the MCP-specific bridges across transports (mcp / http / native). Reuses RFC 0049's `forbidden` error + `authorization-fail-closed` invariant and the existing `rate_limited` error — no new event type, error code, or invariant.",
+      "description": "RFC 0064 (`Active`) — sibling of `heartbeat`. Per-tool authorization + rate limiting + content-free tool-call audit fields, layered on the existing `agent.toolCalled` / `agent.toolReturned` events (RFC 0002). Generalizes the MCP-specific bridges across transports (mcp / http / native). Reuses RFC 0049's `forbidden` error + `authorization-fail-closed` invariant and the existing `rate_limited` error — no new event type, error code, or invariant.",
       "required": ["supported"],
       "additionalProperties": false,
       "properties": {
