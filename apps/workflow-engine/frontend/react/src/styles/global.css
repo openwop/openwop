@@ -1686,6 +1686,15 @@ pre {
   margin-top: 2px;
 }
 
+.builder-inspector-btn-row {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.builder-inspector-btn-row button {
+  flex: 1;
+}
+
 .builder-inspector-required {
   color: var(--color-danger);
   margin-left: 2px;
