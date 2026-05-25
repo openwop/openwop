@@ -19,6 +19,7 @@ from .events import (
     AgentReasoningDeltaPayload,
     AgentToolCalledPayload,
     AgentToolReturnedPayload,
+    MemoryWrittenPayload,
     ReasoningVerbosity,
     agent_decided_payload,
     agent_handoff_payload,
@@ -32,6 +33,8 @@ from .events import (
     is_agent_reasoning_delta,
     is_agent_tool_called,
     is_agent_tool_returned,
+    is_memory_written,
+    memory_written_payload,
 )
 from .sse import stream_events
 from .types import (
@@ -122,6 +125,7 @@ __all__ = [
     "AgentToolReturnedPayload",
     "AgentHandoffPayload",
     "AgentDecidedPayload",
+    "MemoryWrittenPayload",
     "is_agent_reasoned",
     "is_agent_reasoning_delta",
     "is_agent_tool_called",
@@ -134,6 +138,8 @@ __all__ = [
     "agent_tool_returned_payload",
     "agent_handoff_payload",
     "agent_decided_payload",
+    "is_memory_written",
+    "memory_written_payload",
     # Webhook helpers (SDK-3, 2026-05-15)
     "verify_webhook_signature",
     "sign_webhook_delivery",

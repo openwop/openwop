@@ -104,6 +104,18 @@ class AgentDecidedPayload(TypedDict, total=False):
     confidence: float
 
 
+class MemoryWrittenPayload(TypedDict, total=False):
+    """`memory.written` payload (RFC 0057). Required: `memoryRef`,
+    `memoryId`. Optional: `nodeId`, `agentId`, `tags`. Content-free —
+    identifiers + non-secret tags only; never the entry content."""
+
+    memoryRef: str
+    memoryId: str
+    nodeId: str
+    agentId: str
+    tags: list[str]
+
+
 # ── Predicates ──────────────────────────────────────────────────────────
 
 
@@ -174,6 +186,15 @@ def is_agent_decided(ev: RunEventDoc) -> bool:
     return isinstance(ev.payload, dict) and "decision" in ev.payload
 
 
+def is_memory_written(ev: RunEventDoc) -> bool:
+    """`memory.written` discriminator + required-identifier check (RFC 0057)."""
+    return (
+        ev.type == "memory.written"
+        and _payload_has_str(ev.payload, "memoryRef")
+        and _payload_has_str(ev.payload, "memoryId")
+    )
+
+
 # ── Typed extractors ────────────────────────────────────────────────────
 
 
@@ -210,6 +231,11 @@ def agent_decided_payload(ev: RunEventDoc) -> AgentDecidedPayload | None:
     return ev.payload if is_agent_decided(ev) else None
 
 
+def memory_written_payload(ev: RunEventDoc) -> MemoryWrittenPayload | None:
+    """Return the payload as `MemoryWrittenPayload` if matched, else `None`."""
+    return ev.payload if is_memory_written(ev) else None
+
+
 __all__ = [
     "ReasoningVerbosity",
     "AgentReasonedPayload",
@@ -218,12 +244,15 @@ __all__ = [
     "AgentToolReturnedPayload",
     "AgentHandoffPayload",
     "AgentDecidedPayload",
+    "MemoryWrittenPayload",
     "is_agent_reasoned",
     "is_agent_reasoning_delta",
     "is_agent_tool_called",
     "is_agent_tool_returned",
     "is_agent_handoff",
     "is_agent_decided",
+    "is_memory_written",
+    "memory_written_payload",
     "agent_reasoned_payload",
     "agent_reasoning_delta_payload",
     "agent_tool_called_payload",

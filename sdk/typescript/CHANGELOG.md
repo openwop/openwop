@@ -1,5 +1,9 @@
 # `@openwop/openwop` Changelog
 
+## [1.0 — additions] — 2026-05-25 — `memory.written` typed event helper (RFC 0057)
+
+- **New typed event helper.** `isMemoryWritten(ev)` type-guard (narrows to `TypedRunEvent<MemoryWrittenPayload>`) + the `MemoryWrittenPayload` interface (`memoryRef`/`memoryId` required; `nodeId`/`agentId`/`tags` optional) for the content-free `memory.written` RunEvent. Joins the RFC 0024 `agent.*` event-helper family in `event-helpers.ts`; exported from the package root.
+
 ## [1.0 — additions] — 2026-05-25 — feedback annotation helpers (RFC 0056)
 
 - **Two new run helpers.** `client.runs.createAnnotation(runId, body, opts?)` calls `POST /v1/runs/{id}/annotations` to record a non-blocking quality annotation; `client.runs.listAnnotations(runId)` calls `GET /v1/runs/{id}/annotations` and returns `null` when the host doesn't advertise `capabilities.feedback` (404/501), so callers branch on capability discovery without unwrapping the error envelope. New exported types: `Annotation`, `AnnotationSignal`, `CreateAnnotationRequest`.

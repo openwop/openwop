@@ -291,3 +291,39 @@ func UnmarshalAgentDecided(ev RunEventDoc) (AgentDecidedPayload, error) {
 	}
 	return p, nil
 }
+
+// ── RFC 0057 — memory.written ────────────────────────────────────────
+
+// MemoryWrittenPayload mirrors `memory.written` (RFC 0057). Required:
+// MemoryRef, MemoryID. Optional: NodeID, AgentID, Tags. Content-free —
+// identifiers + non-secret tags only; never the entry content (the read
+// side serves that, already SR-1-redacted).
+type MemoryWrittenPayload struct {
+	MemoryRef string   `json:"memoryRef"`
+	MemoryID  string   `json:"memoryId"`
+	NodeID    string   `json:"nodeId,omitempty"`
+	AgentID   string   `json:"agentId,omitempty"`
+	Tags      []string `json:"tags,omitempty"`
+}
+
+// IsMemoryWritten reports whether the event is a well-formed
+// `memory.written` (RFC 0057) — type discriminator + required
+// MemoryRef/MemoryID identifier strings.
+func IsMemoryWritten(ev RunEventDoc) bool {
+	return ev.Type == "memory.written" &&
+		payloadHasString(ev.Payload, "memoryRef") &&
+		payloadHasString(ev.Payload, "memoryId")
+}
+
+// UnmarshalMemoryWritten extracts the typed payload from a
+// `memory.written` event.
+func UnmarshalMemoryWritten(ev RunEventDoc) (MemoryWrittenPayload, error) {
+	var p MemoryWrittenPayload
+	if !IsMemoryWritten(ev) {
+		return p, ErrNotMatchingEvent
+	}
+	if err := reencode(ev.Payload, &p); err != nil {
+		return p, err
+	}
+	return p, nil
+}
