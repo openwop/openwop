@@ -29,6 +29,11 @@ export interface Storage {
   getRun(runId: string): Promise<RunRecord | null>;
   updateRun(runId: string, patch: Partial<RunRecord>): Promise<void>;
   listRuns(filter: { tenantId?: string; status?: string; limit?: number }): Promise<readonly RunRecord[]>;
+  /** Permanently remove a run + its events / interrupts / invocation-log
+   *  rows (no FK cascade in this schema, so the delete is explicit).
+   *  Returns true if a run row existed. Tenant authorization is enforced at
+   *  the route, not here. */
+  deleteRun(runId: string): Promise<boolean>;
 
   // ── events ──
   /** Atomic append: assigns next sequence per (runId), returns sequence. */

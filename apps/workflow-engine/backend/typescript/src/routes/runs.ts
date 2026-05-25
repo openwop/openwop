@@ -572,6 +572,28 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
     }
   });
 
+  // Host-extension (NOT in the v1 wire contract): permanently delete a run
+  // and its events/interrupts/invocation-log rows. The protocol has no run-
+  // deletion surface (see admin.ts); this is sample-app cleanup UX. Tenant-
+  // scoped: a caller may only delete a run under its own tenant, and a miss
+  // returns 404 (never reveal another tenant's run by id). Returns 204.
+  app.delete('/v1/runs/:runId', async (req, res, next) => {
+    try {
+      const principal = req.principal;
+      if (!principal) throw new OpenwopError('unauthenticated', 'Bearer token required', 401);
+      const tenantId = req.tenantId ?? 'default';
+      const run = await storage.getRun(req.params.runId);
+      if (!run || run.tenantId !== tenantId) {
+        throw new OpenwopError('run_not_found', `run ${req.params.runId} not found`, 404);
+      }
+      const deleted = await storage.deleteRun(run.runId);
+      if (!deleted) throw new OpenwopError('run_not_found', `run ${req.params.runId} not found`, 404);
+      res.status(204).end();
+    } catch (err) {
+      next(err);
+    }
+  });
+
   // OpenWOP canonical URL is /v1/runs/{runId}:fork. Express
   // path-to-regexp parses `:fork` as a second parameter, so we pin the
   // route via regex literal. Captures runId in match[1].
