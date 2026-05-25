@@ -1,23 +1,34 @@
 /**
- * Notification inbox routes (PR #143).
+ * Notification inbox routes (PR #146, follow-up PR moves routes under
+ * the sample-host vendor prefix per `host-extensions.md`).
  *
- *   GET    /v1/notifications                — list for tenant
- *   GET    /v1/notifications/stream         — SSE: live new notifications
- *   POST   /v1/notifications/:id/read       — mark read
- *   POST   /v1/notifications/:id/archive    — archive
- *   POST   /v1/notifications:mark-all-read  — mark every unread row read
- *   DELETE /v1/notifications/:id            — hard delete
+ *   GET    /v1/host/sample/notifications                — list for tenant
+ *   GET    /v1/host/sample/notifications/stream         — SSE: live new
+ *   POST   /v1/host/sample/notifications/:id/read       — mark read
+ *   POST   /v1/host/sample/notifications/:id/unread     — mark unread
+ *   POST   /v1/host/sample/notifications/:id/archive    — archive
+ *   POST   /v1/host/sample/notifications:mark-all-read  — mark every unread row read
+ *   DELETE /v1/host/sample/notifications/:id            — hard delete
+ *
+ * Vendor-prefixed because notifications are NOT a normative openwop v1
+ * surface — only the openwop demo app uses them. Other hosts MAY add
+ * their own under their own vendor prefix.
  *
  * Tenant scope is taken from `req.tenantId` (set by the auth middleware
  * from the OIDC bearer / session cookie). Wildcard `*` principals
  * (admin / conformance harness) can pass `?tenantId=foo` for explicit
  * filtering; otherwise they see the union (no filter).
  *
+ * Every read/write that operates on a specific notification id MUST
+ * call `assertTenantOwnership()` first so a leaked id can't be used
+ * to mutate another tenant's row (regression: PR #146 only checked on
+ * DELETE — `read`/`archive`/`unread` were missing the check).
+ *
  * The list view defaults to "hide archived" — the Archived tab opts
  * back in via `?status=archived`.
  */
 
-import type { Express } from 'express';
+import type { Express, Request } from 'express';
 import type { Storage } from '../storage/storage.js';
 import {
   OpenwopError,
@@ -28,6 +39,8 @@ import { getNotificationEmitter } from '../notifications/emitter.js';
 
 const VALID_STATUSES: readonly NotificationStatus[] = ['unread', 'read', 'archived'];
 
+const BASE = '/v1/host/sample/notifications';
+
 interface Deps {
   storage: Storage;
 }
@@ -35,12 +48,9 @@ interface Deps {
 export function registerNotificationRoutes(app: Express, deps: Deps): void {
   const { storage } = deps;
 
-  app.get('/v1/notifications', async (req, res, next) => {
+  app.get(BASE, async (req, res, next) => {
     try {
-      const principalTenants = req.principal?.tenants ?? [];
-      const wildcard = principalTenants.includes('*');
-      const requestedTenant = typeof req.query.tenantId === 'string' ? req.query.tenantId : undefined;
-      const tenantId = wildcard ? requestedTenant : (req.tenantId ?? undefined);
+      const tenantId = resolveTenantFromReq(req);
       if (!tenantId) {
         // Non-wildcard caller without a resolved tenant: return empty
         // rather than 401 — list endpoints stay generous to anon visitors.
@@ -64,12 +74,9 @@ export function registerNotificationRoutes(app: Express, deps: Deps): void {
     }
   });
 
-  app.get('/v1/notifications/stream', async (req, res, next) => {
+  app.get(`${BASE}/stream`, async (req, res, next) => {
     try {
-      const principalTenants = req.principal?.tenants ?? [];
-      const wildcard = principalTenants.includes('*');
-      const requestedTenant = typeof req.query.tenantId === 'string' ? req.query.tenantId : undefined;
-      const tenantId = wildcard ? requestedTenant : (req.tenantId ?? undefined);
+      const tenantId = resolveTenantFromReq(req);
 
       res.set({
         'Content-Type': 'text/event-stream',
@@ -104,40 +111,39 @@ export function registerNotificationRoutes(app: Express, deps: Deps): void {
     }
   });
 
-  app.post('/v1/notifications/:id/read', async (req, res, next) => {
+  app.post(`${BASE}/:id/read`, async (req, res, next) => {
     try {
-      const updated = await mutateStatus(storage, req.params.id, 'read');
+      const updated = await mutateStatus(storage, req, req.params.id, 'read');
       res.json(projectNotification(updated));
     } catch (err) {
       next(err);
     }
   });
 
-  app.post('/v1/notifications/:id/archive', async (req, res, next) => {
+  app.post(`${BASE}/:id/archive`, async (req, res, next) => {
     try {
-      const updated = await mutateStatus(storage, req.params.id, 'archived');
+      const updated = await mutateStatus(storage, req, req.params.id, 'archived');
       res.json(projectNotification(updated));
     } catch (err) {
       next(err);
     }
   });
 
-  app.post('/v1/notifications/:id/unread', async (req, res, next) => {
+  app.post(`${BASE}/:id/unread`, async (req, res, next) => {
     try {
-      const updated = await mutateStatus(storage, req.params.id, 'unread');
+      const updated = await mutateStatus(storage, req, req.params.id, 'unread');
       res.json(projectNotification(updated));
     } catch (err) {
       next(err);
     }
   });
 
-  app.post(/^\/v1\/notifications:mark-all-read$/, async (req, res, next) => {
+  // The `:mark-all-read` action is a sub-resource on the collection
+  // itself — Express's literal `:` is legal inside a path segment but
+  // route-pattern dispatchers vary, so pin via regex for safety.
+  app.post(new RegExp(`^${BASE.replace(/\//g, '\\/')}:mark-all-read$`), async (req, res, next) => {
     try {
-      const principalTenants = req.principal?.tenants ?? [];
-      const wildcard = principalTenants.includes('*');
-      const tenantId = wildcard
-        ? (typeof req.query.tenantId === 'string' ? req.query.tenantId : undefined)
-        : req.tenantId;
+      const tenantId = resolveTenantFromReq(req);
       if (!tenantId) {
         res.json({ updated: 0 });
         return;
@@ -149,7 +155,7 @@ export function registerNotificationRoutes(app: Express, deps: Deps): void {
     }
   });
 
-  app.delete('/v1/notifications/:id', async (req, res, next) => {
+  app.delete(`${BASE}/:id`, async (req, res, next) => {
     try {
       const existing = await storage.getNotification(req.params.id);
       if (!existing) throw new OpenwopError('not_found', `notification ${req.params.id} not found`, 404);
@@ -162,13 +168,22 @@ export function registerNotificationRoutes(app: Express, deps: Deps): void {
   });
 }
 
+/**
+ * Centralized "load + auth + mutate" used by /read, /unread, /archive.
+ *
+ * Tenant ownership is enforced via `assertTenantOwnership` — a row
+ * owned by another tenant is reported as 404 (not 403) so the route
+ * doesn't leak whether the id exists.
+ */
 async function mutateStatus(
   storage: Storage,
+  req: Request,
   notificationId: string,
   status: NotificationStatus,
 ): Promise<NotificationRecord> {
   const existing = await storage.getNotification(notificationId);
   if (!existing) throw new OpenwopError('not_found', `notification ${notificationId} not found`, 404);
+  assertTenantOwnership(req, existing);
   const updated = await storage.updateNotificationStatus(
     notificationId,
     status,
@@ -193,7 +208,14 @@ function parseStatusFilter(raw: unknown): readonly NotificationStatus[] | undefi
   return parts as readonly NotificationStatus[];
 }
 
-function assertTenantOwnership(req: Parameters<Parameters<Express['delete']>[1]>[0], record: NotificationRecord): void {
+function resolveTenantFromReq(req: Request): string | undefined {
+  const tenants = req.principal?.tenants ?? [];
+  const wildcard = tenants.includes('*');
+  const requestedTenant = typeof req.query.tenantId === 'string' ? req.query.tenantId : undefined;
+  return wildcard ? requestedTenant : (req.tenantId ?? undefined);
+}
+
+function assertTenantOwnership(req: Request, record: NotificationRecord): void {
   const tenants = req.principal?.tenants ?? [];
   if (tenants.includes('*')) return;
   if (req.tenantId && req.tenantId === record.tenantId) return;

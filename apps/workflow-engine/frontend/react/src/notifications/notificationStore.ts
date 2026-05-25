@@ -29,12 +29,20 @@ import {
 } from './notificationsClient.js';
 import type { Notification, NotificationStatus } from './types.js';
 
+/**
+ * Live SSE connection status, surfaced to the UI so the bell / panel
+ * can show a "reconnecting" chip when the stream drops. EventSource
+ * auto-reconnects in browsers, so `error` is transient — a fresh
+ * `notification` event flips us back to `connected`.
+ */
+export type NotificationConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
+
 interface NotificationStoreState {
   notifications: Notification[];
   unreadCount: number;
   panelOpen: boolean;
   loading: boolean;
-  connected: boolean;
+  connectionStatus: NotificationConnectionStatus;
   error: string | null;
   /** Active SSE cleanup, if any. */
   _sseCleanup: (() => void) | null;
@@ -86,28 +94,39 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
   unreadCount: 0,
   panelOpen: false,
   loading: false,
-  connected: false,
+  connectionStatus: 'disconnected',
   error: null,
   _sseCleanup: null,
 
   async connect() {
-    if (get().connected) return;
-    set({ loading: true, error: null });
+    if (get().connectionStatus === 'connected' || get().connectionStatus === 'connecting') return;
+    set({ loading: true, connectionStatus: 'connecting', error: null });
     try {
       const list = await listNotifications({ limit: 100 });
       set({
         notifications: [...list],
         unreadCount: recountUnread([...list]),
         loading: false,
-        connected: true,
+        connectionStatus: 'connected',
       });
-      // Attach SSE after hydrate. Reconnect on reconnect.
-      const cleanup = subscribeToNotifications((n) => get()._ingest(n));
+      // Attach SSE after hydrate. EventSource auto-reconnects on
+      // network blips, so a transient `error` flip doesn't mean the
+      // feed is dead — fresh frames will roll the status back to
+      // `connected` via _ingest.
+      const cleanup = subscribeToNotifications(
+        (n) => {
+          get()._ingest(n);
+          if (get().connectionStatus !== 'connected') {
+            set({ connectionStatus: 'connected' });
+          }
+        },
+        () => set({ connectionStatus: 'error' }),
+      );
       set({ _sseCleanup: cleanup });
     } catch (err) {
       set({
         loading: false,
-        connected: false,
+        connectionStatus: 'error',
         error: err instanceof Error ? err.message : String(err),
       });
     }
@@ -116,7 +135,7 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
   disconnect() {
     const c = get()._sseCleanup;
     if (c) c();
-    set({ _sseCleanup: null, connected: false });
+    set({ _sseCleanup: null, connectionStatus: 'disconnected' });
   },
 
   async refresh() {
@@ -179,8 +198,8 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
   async markAllRead() {
     const prev = get().notifications;
     const now = new Date().toISOString();
-    const next = prev.map((n) => n.status === 'unread'
-      ? { ...n, status: 'read' as NotificationStatus, readAt: n.readAt ?? now }
+    const next: Notification[] = prev.map((n) => n.status === 'unread'
+      ? { ...n, status: 'read', readAt: n.readAt ?? now }
       : n);
     set({ notifications: next, unreadCount: 0 });
     try { await markAllRemote(); } catch (err) {

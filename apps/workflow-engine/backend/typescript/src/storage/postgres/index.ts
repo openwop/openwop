@@ -565,6 +565,7 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
         const rr = await client.query(`DELETE FROM runs WHERE tenant_id = $1`, [tenantId]);
         const wr = await client.query(`DELETE FROM workflows WHERE tenant_id = $1`, [tenantId]);
         const sr = await client.query(`DELETE FROM byok_secrets WHERE tenant_id = $1`, [tenantId]);
+        const nr = await client.query(`DELETE FROM notifications WHERE tenant_id = $1`, [tenantId]);
         await client.query('COMMIT');
         return {
           runs: rr.rowCount ?? 0,
@@ -572,6 +573,7 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
           interrupts,
           workflows: wr.rowCount ?? 0,
           secrets: sr.rowCount ?? 0,
+          notifications: nr.rowCount ?? 0,
         };
       } catch (err) {
         await client.query('ROLLBACK').catch(() => {});

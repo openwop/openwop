@@ -143,8 +143,14 @@ async function emitTerminalFailure(input: {
   notifyRunTerminal(input.runId);
   // Fan out a user-visible notification so the bell + /inbox surface
   // the failure without polling. Best-effort — emit failures don't
-  // affect the canonical run.failed event log entry.
-  void emitRunFailureNotification(input.storage, input.runId, input.error);
+  // affect the canonical run.failed event log entry. Pass the
+  // **classified** userMessage (not raw error.message) so that
+  // provider-side strings that occasionally echo BYOK keys never land
+  // in the notification message field.
+  void emitRunFailureNotification(input.storage, input.runId, {
+    code: input.error.code,
+    userMessage: classified.userMessage,
+  });
 }
 
 /**
