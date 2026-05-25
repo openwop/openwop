@@ -159,6 +159,18 @@ export const NODE_CATALOG: readonly NodeCatalogEntry[] = [
     configFields: [],
   },
   {
+    kind: 'image-emit',
+    typeId: 'local.sample.demo.image-emit',
+    label: 'Emit image (RFC 0055)',
+    description: 'Stores an image in the host media store and emits a media.image envelope referencing it by tenant-scoped URL. Demonstrates the RFC 0055 media-serving + rendering rails.',
+    category: 'ai',
+    badge: '🖼',
+    accent: 'var(--color-clay, #b5651d)',
+    inputs: [{ name: 'contentBase64', type: 'string' }],
+    outputs: [{ name: 'image', type: 'object' }],
+    configFields: [],
+  },
+  {
     kind: 'approval',
     typeId: 'core.approvalGate',
     label: 'Approval Gate',
