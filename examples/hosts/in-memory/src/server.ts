@@ -859,7 +859,9 @@ async function handleCreateAnnotation(
     sendError(res, 400, 'validation_error', 'signal.kind MUST be one of rating|correction|label|flag.');
     return;
   }
-  if (kind === 'rating' && !Number.isInteger(signal['rating'])) {
+  const rating = signal['rating'];
+  if (kind === 'rating' && (typeof rating !== 'number' || !Number.isInteger(rating) || rating < 1 || rating > 5)) {
+    // annotation.schema.json §signal.rating: integer, minimum 1, maximum 5.
     sendError(res, 400, 'validation_error', 'signal.rating: integer 1..5 is required when kind is rating.');
     return;
   }
@@ -871,14 +873,23 @@ async function handleCreateAnnotation(
     sendError(res, 400, 'validation_error', 'signal.correction: string is required when kind is correction.');
     return;
   }
-
-  // Scrub untrusted free-text BEFORE persistence (SR-1, RFC 0056 §E).
-  const storedSignal: Record<string, unknown> = { ...signal };
-  if (typeof storedSignal['correction'] === 'string') {
-    storedSignal['correction'] = scrubSecretShaped(storedSignal['correction']);
+  // annotation.schema.json declares `signal` with additionalProperties:false.
+  // Reject unknown keys rather than silently persisting (and potentially
+  // leaking secret-shaped content through) an un-scrubbed extra field.
+  const ALLOWED_SIGNAL_KEYS = new Set(['kind', 'rating', 'label', 'correction']);
+  for (const key of Object.keys(signal)) {
+    if (!ALLOWED_SIGNAL_KEYS.has(key)) {
+      sendError(res, 400, 'validation_error', `signal.${key}: unknown field (signal allows kind|rating|label|correction).`);
+      return;
+    }
   }
-  if (typeof storedSignal['label'] === 'string') {
-    storedSignal['label'] = scrubSecretShaped(storedSignal['label']);
+
+  // Scrub EVERY untrusted free-text value BEFORE persistence (SR-1, RFC 0056
+  // §E) — walk all string-valued signal fields rather than an allow-list, so
+  // no free-text field can carry secret-shaped content into the store.
+  const storedSignal: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(signal)) {
+    storedSignal[key] = typeof value === 'string' ? scrubSecretShaped(value) : value;
   }
 
   const annotation: StoredAnnotation = {
