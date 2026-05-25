@@ -1203,15 +1203,32 @@ const sampleChatResponderNode: NodeModule = {
         const onDelta = async (delta: string) => {
           await ctx.emit('node.message', { delta });
         };
-        const managed = await dispatchManagedChat({
-          userFacingProvider,
-          tenantId: ctx.tenantId,
-          messages: messages as ChatMessage[],
-          maxTokens,
-          onDelta,
-          ...(onReasoningDelta ? { onReasoningDelta } : {}),
-          ...(onReasoningBlock ? { onReasoningBlock } : {}),
-        });
+        // Bound the upstream LLM call. Without this, an unresponsive
+        // managed-provider request (slow network, stuck connection,
+        // upstream rate-limit hold) parks the worker forever — the
+        // executor sets `currentNodeId` but `node.started` never fires
+        // because the dispatch is still awaiting a response, and the
+        // run stalls indefinitely with no observable failure. 60s is
+        // generous for chat completions; surface as `timeout` so a
+        // future retry/route-error policy can act on it.
+        const abort = new AbortController();
+        const timeoutMs = Number(process.env.OPENWOP_MANAGED_CHAT_TIMEOUT_MS) || 60_000;
+        const timer = setTimeout(() => abort.abort(), timeoutMs);
+        let managed: ManagedDispatchResult;
+        try {
+          managed = await dispatchManagedChat({
+            userFacingProvider,
+            tenantId: ctx.tenantId,
+            messages: messages as ChatMessage[],
+            maxTokens,
+            onDelta,
+            signal: abort.signal,
+            ...(onReasoningDelta ? { onReasoningDelta } : {}),
+            ...(onReasoningBlock ? { onReasoningBlock } : {}),
+          });
+        } finally {
+          clearTimeout(timer);
+        }
         await emitChatEnvelopeSignals(ctx, managed);
         emitCost({
           provider: managed.provider,
@@ -1240,6 +1257,19 @@ const sampleChatResponderNode: NodeModule = {
       } catch (err) {
         if (err instanceof ManagedProviderError) {
           return { status: 'failure', error: { code: err.code, message: err.message } };
+        }
+        // AbortError from the timeout above. Surfaces as a clean
+        // `timeout` so a future retry/route-error policy can act on
+        // it; the run won't park indefinitely waiting on a stuck
+        // upstream.
+        if (err instanceof Error && (err.name === 'AbortError' || /aborted/i.test(err.message))) {
+          return {
+            status: 'failure',
+            error: {
+              code: 'timeout',
+              message: `Managed chat dispatch exceeded ${process.env.OPENWOP_MANAGED_CHAT_TIMEOUT_MS ?? 60_000}ms — upstream provider unresponsive.`,
+            },
+          };
         }
         const message = err instanceof Error ? err.message : String(err);
         return { status: 'failure', error: { code: 'internal_error', message } };
