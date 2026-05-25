@@ -60,6 +60,9 @@ export interface BuilderState {
   selectNode(id: string | null): void;
   selectEdge(id: string | null): void;
   addNode(kind: string, position: { x: number; y: number }): string;
+  /** Clone a node (duplicate / paste) — new id, copied kind/name/config,
+   *  at `position`. Selects the clone. Returns the new id. */
+  cloneNode(source: Pick<BuilderNode, 'kind' | 'name' | 'config'>, position: { x: number; y: number }): string;
   updateNode(id: string, patch: Partial<Pick<BuilderNode, 'name' | 'position' | 'config'>>): void;
   removeNode(id: string): void;
   addEdge(edge: Omit<BuilderEdge, 'id'>): void;
@@ -139,6 +142,21 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
       name: entry.label,
       position,
       config: defaultConfigFor(kind),
+    };
+    pushHistory(set, get);
+    set({ nodes: [...get().nodes, node], selectedNodeId: id });
+    get().persist();
+    return id;
+  },
+
+  cloneNode(source, position) {
+    const id = `n_${crypto.randomUUID().slice(0, 8)}`;
+    const node: BuilderNode = {
+      id,
+      kind: source.kind,
+      name: source.name,
+      position,
+      config: { ...source.config },
     };
     pushHistory(set, get);
     set({ nodes: [...get().nodes, node], selectedNodeId: id });

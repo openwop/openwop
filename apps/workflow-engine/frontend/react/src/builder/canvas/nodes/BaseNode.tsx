@@ -7,10 +7,10 @@
  * glow so the canvas doubles as an execution view.
  */
 
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { catalogEntry } from '../../palette/catalogRegistry.js';
-import type { NodeRunStatus } from '../../store/builderStore.js';
+import { useBuilderStore, type NodeRunStatus } from '../../store/builderStore.js';
 
 interface NodeData extends Record<string, unknown> {
   kind: string;
@@ -27,7 +27,7 @@ const RUN_STATUS_META: Record<NodeRunStatus, { color: string; label: string; gly
   suspended: { color: '#8b5cf6', label: 'Suspended', glyph: '⏸' },
 };
 
-function BaseNodeImpl({ data, selected }: NodeProps) {
+function BaseNodeImpl({ id, data, selected }: NodeProps) {
   const d = data as NodeData;
   const entry = catalogEntry(d.kind);
   if (!entry) {
@@ -93,7 +93,7 @@ function BaseNodeImpl({ data, selected }: NodeProps) {
         <span className="builder-node-badge" style={{ background: entry.accent }}>
           {entry.badge}
         </span>
-        <span className="builder-node-title">{d.name}</span>
+        <EditableTitle nodeId={id} name={d.name} />
       </div>
       <div className="builder-node-ports">
         <div className="builder-node-ports-col">
@@ -112,6 +112,51 @@ function BaseNodeImpl({ data, selected }: NodeProps) {
         </div>
       </div>
     </div>
+  );
+}
+
+// Inline node-title editing: double-click the title to rename. The
+// `nodrag` class stops xyflow from dragging the node while editing, and
+// stopPropagation keeps the canvas keyboard shortcuts (Delete / ⌘D)
+// from firing keystrokes meant for the input.
+function EditableTitle({ nodeId, name }: { nodeId: string; name: string }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(name);
+  if (!editing) {
+    return (
+      <span
+        className="builder-node-title"
+        title="Double-click to rename"
+        onDoubleClick={(e) => {
+          e.stopPropagation();
+          setDraft(name);
+          setEditing(true);
+        }}
+      >
+        {name}
+      </span>
+    );
+  }
+  const commit = (): void => {
+    const trimmed = draft.trim();
+    if (trimmed && trimmed !== name) useBuilderStore.getState().updateNode(nodeId, { name: trimmed });
+    setEditing(false);
+  };
+  return (
+    <input
+      className="builder-node-title-input nodrag"
+      value={draft}
+      autoFocus
+      spellCheck={false}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={commit}
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => {
+        e.stopPropagation();
+        if (e.key === 'Enter') commit();
+        else if (e.key === 'Escape') setEditing(false);
+      }}
+    />
   );
 }
 
