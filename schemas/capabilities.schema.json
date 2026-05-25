@@ -622,7 +622,7 @@
             "pattern": "^([a-z][a-z0-9-]*|x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*)$"
           },
           "uniqueItems": true,
-          "description": "Capability identifiers the host's active model advertises. Clients MAY introspect this at install time to determine whether their NodeModules' `requiredModelCapabilities` are satisfiable without fallback. Spec-reserved identifiers per RFC 0031 §C: `structured-output`, `discriminator-enum`, `long-context`, `reasoning` (model-native thinking-tokens), `function-calling`. Host-private extensions MUST prefix with `x-host-<host>-`."
+          "description": "Capability identifiers the host's active model advertises. Clients MAY introspect this at install time to determine whether their NodeModules' `requiredModelCapabilities` are satisfiable without fallback. Spec-reserved identifiers per RFC 0031 §C + RFC 0055: `structured-output`, `discriminator-enum`, `long-context`, `reasoning` (model-native thinking-tokens), `function-calling`, `vision-input` (model accepts image content in the prompt), `audio-input` (model accepts audio content), `audio-output` (model emits audio content), `image-output` (model emits images directly in its completion, distinct from the host-side `aiProviders.imageGeneration` tool surface). This is an open, pattern-validated registry — NOT a closed enum; growth requires an RFC. Host-private extensions MUST prefix with `x-host-<host>-`."
         },
         "substitutionSupported": {
           "type": "boolean",
