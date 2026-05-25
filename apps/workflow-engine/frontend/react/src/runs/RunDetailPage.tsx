@@ -72,6 +72,32 @@ export function RunDetailPage() {
     };
   }, [runId, refreshInterrupts, refreshAnnotations]);
 
+  // Hash-driven node deep-link: `/runs/<id>#node-<nodeId>` sets the
+  // playhead to the matching `node.completed` event's sequence and
+  // scrolls the step inspector into view. Used by the chat surface's
+  // `WorkflowCompletionCard` to open a terminal node's artifact panel
+  // in a new tab — the modal preview is the in-chat affordance; this
+  // is the "give me the full run-detail context" affordance.
+  useEffect(() => {
+    if (events.length === 0) return;
+    const hash = window.location.hash;
+    if (!hash.startsWith('#node-')) return;
+    const targetNodeId = decodeURIComponent(hash.slice('#node-'.length));
+    // Pick the LAST `node.completed` for this nodeId so a node that
+    // ran multiple times (retries, loops) selects the terminal attempt.
+    const ev = [...events].reverse().find(
+      (e) => e.type === 'node.completed' && e.nodeId === targetNodeId,
+    );
+    if (!ev) return;
+    setPlayheadSeq(ev.sequence);
+    // Defer the scroll until the inspector has rendered with the new
+    // playhead — the inspector mounts conditionally on `playheadSeq`.
+    requestAnimationFrame(() => {
+      const inspector = document.querySelector<HTMLElement>('[data-run-step-inspector]');
+      inspector?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, [events]);
+
   // Subscribe to live SSE events.
   useEffect(() => {
     if (!runId) return;

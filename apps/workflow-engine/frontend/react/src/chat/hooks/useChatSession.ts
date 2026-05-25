@@ -449,8 +449,63 @@ export function useChatSession(): UseChatSessionResult {
           } catch {
             /* ignore — best-effort resurfacing */
           }
-        } catch {
-          /* network error — leave the bubble as-is; user can refresh later */
+        } catch (err) {
+          // Distinguish 404 (run record gone — account-deleted, retention
+          // sweep, fresh DB) from transient errors (5xx, network drop).
+          // Only 404 flips the `runUnavailable` flag permanently; other
+          // errors leave the bubble as-is so the next reload can recover.
+          if (err instanceof Error && /\b404\b/.test(err.message)) {
+            setSession((s) => ({
+              ...s,
+              messages: s.messages.map((mm) => mm.id === m.id && mm.workflowRun ? {
+                ...mm,
+                workflowRun: { ...mm.workflowRun, runUnavailable: true },
+              } : mm),
+            }));
+          }
+          /* other errors: leave the bubble as-is; user can refresh later */
+        }
+      }
+
+      // Second pass — probe terminal-status workflow_run messages that
+      // haven't been validated yet. They render fine from local persisted
+      // state, but action links ("Open run", "View") would 404 if the
+      // BE no longer has the row. One probe per message per session-load.
+      const terminal = session.messages.filter(
+        (m): m is ChatMessage & { workflowRun: WorkflowRunState } =>
+          m.role === 'workflow_run'
+          && m.workflowRun?.runId != null
+          && m.workflowRun.runUnavailable === undefined
+          && (m.workflowRun.status === 'completed'
+              || m.workflowRun.status === 'failed'
+              || m.workflowRun.status === 'cancelled'),
+      );
+      for (const m of terminal) {
+        const runId = m.workflowRun.runId;
+        if (!runId) continue;
+        try {
+          await getRun(runId);
+          if (cancelled) return;
+          // Mark as confirmed-available so we don't re-probe next reload.
+          setSession((s) => ({
+            ...s,
+            messages: s.messages.map((mm) => mm.id === m.id && mm.workflowRun ? {
+              ...mm,
+              workflowRun: { ...mm.workflowRun, runUnavailable: false },
+            } : mm),
+          }));
+        } catch (err) {
+          if (cancelled) return;
+          if (err instanceof Error && /\b404\b/.test(err.message)) {
+            setSession((s) => ({
+              ...s,
+              messages: s.messages.map((mm) => mm.id === m.id && mm.workflowRun ? {
+                ...mm,
+                workflowRun: { ...mm.workflowRun, runUnavailable: true },
+              } : mm),
+            }));
+          }
+          /* transient errors: leave undefined so the next reload re-probes */
         }
       }
     })();

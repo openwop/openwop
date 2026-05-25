@@ -109,12 +109,23 @@ export function WorkflowRunBubble({ message, onOpenProgress, isFocusedInPanel }:
 
         <div className="muted" style={{ marginTop: 4, fontSize: 11, opacity: 0.75, display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'baseline' }}>
           <code>@{run.slug}</code>
-          {run.runId && (
+          {run.runId && !run.runUnavailable && (
             <>
               <span>·</span>
               <Link to={`/runs/${run.runId}`} title="Open run detail">
                 run {run.runId.slice(0, 12)}
               </Link>
+            </>
+          )}
+          {run.runId && run.runUnavailable && (
+            <>
+              <span>·</span>
+              {/* Run record gone — render the id without a link + a
+                  muted hint so the user understands why action buttons
+                  below are disabled. */}
+              <span title="Run record no longer available on the server">
+                run {run.runId.slice(0, 12)}
+              </span>
             </>
           )}
           {run.workflowId && run.workflowId.startsWith('wf_') && (
@@ -128,6 +139,23 @@ export function WorkflowRunBubble({ message, onOpenProgress, isFocusedInPanel }:
           <span>·</span>
           <span>{formatElapsed(run.startedAt)}</span>
         </div>
+
+        {run.runUnavailable && (
+          <div
+            className="muted"
+            style={{
+              marginTop: 6,
+              fontSize: 11,
+              fontStyle: 'italic',
+              color: 'var(--color-text-muted)',
+            }}
+            role="note"
+          >
+            Run record no longer available on the server — action links below
+            are disabled. The decision + completion cards still render from
+            local history.
+          </div>
+        )}
       </div>
     </div>
   );
