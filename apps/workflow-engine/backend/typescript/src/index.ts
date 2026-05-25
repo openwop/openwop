@@ -45,6 +45,8 @@ import { registerDiscoveryRoutes } from './routes/discovery.js';
 import { registerRunRoutes } from './routes/runs.js';
 import { registerInterruptRoutes } from './routes/interrupts.js';
 import { registerNotificationRoutes } from './routes/notifications.js';
+import { registerPushSubscriptionRoutes } from './routes/pushSubscriptions.js';
+import { configureWebPush } from './notifications/webPush.js';
 import { registerStreamRoutes } from './routes/streams.js';
 import { registerWebhookRoutes } from './routes/webhooks.js';
 import { registerPackRoutes } from './routes/packs.js';
@@ -170,6 +172,13 @@ export async function createApp(config: AppConfig): Promise<Express> {
   ensureSuspendManagerInstalled(storage);
   ensureEventLogInstalled(storage);
   ensureNotificationEmitterInstalled(storage);
+  // Web Push: idempotent + env-driven. When the OPENWOP_VAPID_*
+  // env vars aren't set (local dev, anon-only smoke tests),
+  // configureWebPush() returns false and the emitter's pushNotification
+  // fanout becomes a no-op. No FCM project setup needed for the
+  // openwop demo — VAPID alone works against every modern browser's
+  // built-in push service (Mozilla autopush, Apple, FCM).
+  configureWebPush();
   ensureInvocationLogInstalled(storage);
   ensureRuntimeCapabilityRegistryInstalled();
   ensureNodePackResolverInstalled(storage);
@@ -264,6 +273,7 @@ export async function createApp(config: AppConfig): Promise<Express> {
   registerRunRoutes(app, { storage, hostSuite });
   registerInterruptRoutes(app, { storage });
   registerNotificationRoutes(app, { storage });
+  registerPushSubscriptionRoutes(app, { storage });
   registerStreamRoutes(app, { storage });
   registerWebhookRoutes(app, { storage });
   registerPackRoutes(app, { storage });

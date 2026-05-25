@@ -34,6 +34,7 @@ import type {
   EventRecord,
   InterruptRecord,
   NotificationRecord,
+  PushSubscriptionRecord,
   RunRecord,
   WebhookSubscriptionRecord,
 } from '../../types.js';
@@ -114,6 +115,19 @@ function rowToNotification(r: Row): NotificationRecord {
     createdAt: (r.created_at as Date).toISOString(),
     readAt: r.read_at ? (r.read_at as Date).toISOString() : undefined,
     archivedAt: r.archived_at ? (r.archived_at as Date).toISOString() : undefined,
+  };
+}
+
+function rowToPushSubscription(r: Row): PushSubscriptionRecord {
+  return {
+    subscriptionId: r.subscription_id as string,
+    tenantId: r.tenant_id as string,
+    endpoint: r.endpoint as string,
+    p256dhKey: r.p256dh_key as string,
+    authKey: r.auth_key as string,
+    userAgent: (r.user_agent as string | null) ?? undefined,
+    createdAt: (r.created_at as Date).toISOString(),
+    lastUsedAt: r.last_used_at ? (r.last_used_at as Date).toISOString() : undefined,
   };
 }
 
@@ -589,6 +603,7 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
         const wr = await client.query(`DELETE FROM workflows WHERE tenant_id = $1`, [tenantId]);
         const sr = await client.query(`DELETE FROM byok_secrets WHERE tenant_id = $1`, [tenantId]);
         const nr = await client.query(`DELETE FROM notifications WHERE tenant_id = $1`, [tenantId]);
+        const pr = await client.query(`DELETE FROM push_subscriptions WHERE tenant_id = $1`, [tenantId]);
         await client.query('COMMIT');
         return {
           runs: rr.rowCount ?? 0,
@@ -597,6 +612,7 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
           workflows: wr.rowCount ?? 0,
           secrets: sr.rowCount ?? 0,
           notifications: nr.rowCount ?? 0,
+          pushSubscriptions: pr.rowCount ?? 0,
         };
       } catch (err) {
         await client.query('ROLLBACK').catch(() => {});
@@ -942,6 +958,61 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
     async deleteAllTenantNotifications(tenantId) {
       const r = await pool.query(
         `DELETE FROM notifications WHERE tenant_id = $1`,
+        [tenantId],
+      );
+      return r.rowCount ?? 0;
+    },
+
+    async insertPushSubscription(record) {
+      // Upsert by endpoint — the same browser re-subscribing after key
+      // rotation / permission re-grant produces a fresh subscriptionId
+      // server-side but keeps the unique endpoint constraint happy.
+      await pool.query(
+        `INSERT INTO push_subscriptions (
+          subscription_id, tenant_id, endpoint, p256dh_key, auth_key,
+          user_agent, created_at, last_used_at
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+        ON CONFLICT (endpoint) DO UPDATE SET
+          p256dh_key = EXCLUDED.p256dh_key,
+          auth_key = EXCLUDED.auth_key,
+          user_agent = EXCLUDED.user_agent,
+          tenant_id = EXCLUDED.tenant_id`,
+        [
+          record.subscriptionId, record.tenantId, record.endpoint,
+          record.p256dhKey, record.authKey,
+          record.userAgent ?? null,
+          record.createdAt, record.lastUsedAt ?? null,
+        ],
+      );
+    },
+
+    async listPushSubscriptions(tenantId) {
+      const { rows } = await pool.query<Row>(
+        `SELECT * FROM push_subscriptions WHERE tenant_id = $1 ORDER BY created_at DESC`,
+        [tenantId],
+      );
+      return rows.map(rowToPushSubscription);
+    },
+
+    async getPushSubscriptionByEndpoint(endpoint) {
+      const { rows } = await pool.query<Row>(
+        `SELECT * FROM push_subscriptions WHERE endpoint = $1`,
+        [endpoint],
+      );
+      return rows[0] ? rowToPushSubscription(rows[0]) : null;
+    },
+
+    async deletePushSubscription(subscriptionId) {
+      const r = await pool.query(
+        `DELETE FROM push_subscriptions WHERE subscription_id = $1`,
+        [subscriptionId],
+      );
+      return (r.rowCount ?? 0) > 0;
+    },
+
+    async deleteAllTenantPushSubscriptions(tenantId) {
+      const r = await pool.query(
+        `DELETE FROM push_subscriptions WHERE tenant_id = $1`,
         [tenantId],
       );
       return r.rowCount ?? 0;

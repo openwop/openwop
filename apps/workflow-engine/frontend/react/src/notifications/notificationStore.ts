@@ -33,6 +33,12 @@ import {
   shouldCountUnread,
   shouldFireDesktop,
 } from './preferences.js';
+import {
+  disablePush as disablePushApi,
+  enablePush as enablePushApi,
+  getCurrentSubscription,
+  getPushConfig,
+} from './pushSubscription.js';
 import type { Notification, NotificationPreferences, NotificationStatus } from './types.js';
 
 /**
@@ -62,6 +68,13 @@ interface NotificationStoreState {
   loading: boolean;
   connectionStatus: NotificationConnectionStatus;
   desktopPermission: DesktopPermission;
+  /** Web Push subscription state.
+   *    'unsupported' — browser lacks Push API / service worker support
+   *    'disabled'    — BE has no VAPID config (push fanout no-ops)
+   *    'available'   — supported + BE configured, not subscribed
+   *    'subscribed'  — supported + subscribed (events arrive via SW)
+   *    'unknown'     — not yet probed (initial render) */
+  pushStatus: 'unsupported' | 'disabled' | 'available' | 'subscribed' | 'unknown';
   /** Per-user notification preferences (item 5+6). Loaded from
    *  localStorage at store-creation time; persisted to localStorage on
    *  every `updatePreferences` call. */
@@ -110,6 +123,16 @@ interface NotificationStoreActions {
   /** Replace the preferences blob. Persisted to localStorage on every
    *  call. Use the helper `updatePreference` for typed-shape mutations. */
   updatePreferences: (next: NotificationPreferences) => void;
+
+  // Web Push (item 7)
+  /** Probe browser + BE for push availability and current subscription
+   *  state. Cheap, but runs HTTP; call from a useEffect on panel mount. */
+  syncPushStatus: () => Promise<void>;
+  /** Subscribe the current browser to push. MUST be called inside a
+   *  user gesture (click handler). Returns true on success. */
+  enablePush: () => Promise<boolean>;
+  /** Unsubscribe + delete the BE row. */
+  disablePush: () => Promise<void>;
 
   // Internal — called by SSE handler
   _ingest: (n: Notification) => void;
@@ -200,6 +223,7 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
   loading: false,
   connectionStatus: 'disconnected',
   desktopPermission: readDesktopPermission(),
+  pushStatus: 'unknown',
   preferences: loadPreferences(),
   preferencesOpen: false,
   error: null,
@@ -343,6 +367,52 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
 
   openPreferences() { set({ preferencesOpen: true }); },
   closePreferences() { set({ preferencesOpen: false }); },
+
+  async syncPushStatus() {
+    // Browser-side support check first — no HTTP if the API isn't here.
+    if (typeof window === 'undefined'
+        || !('serviceWorker' in navigator)
+        || !('PushManager' in window)) {
+      set({ pushStatus: 'unsupported' });
+      return;
+    }
+    try {
+      const cfg = await getPushConfig();
+      if (!cfg.enabled) {
+        set({ pushStatus: 'disabled' });
+        return;
+      }
+      const sub = await getCurrentSubscription();
+      set({ pushStatus: sub ? 'subscribed' : 'available' });
+    } catch {
+      set({ pushStatus: 'unknown' });
+    }
+  },
+
+  async enablePush() {
+    try {
+      const cfg = await getPushConfig();
+      if (!cfg.enabled || !cfg.vapidPublicKey) {
+        set({ pushStatus: 'disabled' });
+        return false;
+      }
+      await enablePushApi(cfg.vapidPublicKey);
+      set({ pushStatus: 'subscribed' });
+      return true;
+    } catch (err) {
+      set({ error: err instanceof Error ? err.message : String(err) });
+      return false;
+    }
+  },
+
+  async disablePush() {
+    try {
+      await disablePushApi();
+      set({ pushStatus: 'available' });
+    } catch (err) {
+      set({ error: err instanceof Error ? err.message : String(err) });
+    }
+  },
 
   updatePreferences(next) {
     set({ preferences: next });

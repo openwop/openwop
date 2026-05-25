@@ -55,6 +55,10 @@ export function NotificationPanel(): JSX.Element | null {
   const syncDesktopPermission = useNotificationStore((s) => s.syncDesktopPermission);
   const preferencesOpen = useNotificationStore((s) => s.preferencesOpen);
   const openPreferences = useNotificationStore((s) => s.openPreferences);
+  const pushStatus = useNotificationStore((s) => s.pushStatus);
+  const enablePush = useNotificationStore((s) => s.enablePush);
+  const disablePush = useNotificationStore((s) => s.disablePush);
+  const syncPushStatus = useNotificationStore((s) => s.syncPushStatus);
 
   const [tab, setTab] = useState<Tab>('all');
   // Track viewport width so the panel switches between right-side
@@ -72,7 +76,8 @@ export function NotificationPanel(): JSX.Element | null {
     // site settings between sessions.
     void refresh();
     syncDesktopPermission();
-  }, [panelOpen, refresh, syncDesktopPermission]);
+    void syncPushStatus();
+  }, [panelOpen, refresh, syncDesktopPermission, syncPushStatus]);
 
   const filtered = useMemo(() => {
     if (tab === 'unread') return notifications.filter((n) => n.status === 'unread');
@@ -193,6 +198,28 @@ export function NotificationPanel(): JSX.Element | null {
           <DesktopPermissionRow
             label="Desktop alerts are blocked. Unblock in site settings to re-enable."
             tone="muted"
+          />
+        )}
+
+        {/* Push affordance. Only surfaces when:
+              - browser supports Push (status !== 'unsupported')
+              - BE is configured with VAPID (status !== 'disabled')
+              - user has granted Notifications perm (otherwise push
+                arrives but the SW can't show the toast)
+            Pairs naturally with the desktop-perm row above. */}
+        {desktopPermission === 'granted' && pushStatus === 'available' && (
+          <DesktopPermissionRow
+            label="Also receive alerts when this tab is closed"
+            cta="Enable background push"
+            onClick={() => void enablePush()}
+          />
+        )}
+        {desktopPermission === 'granted' && pushStatus === 'subscribed' && (
+          <DesktopPermissionRow
+            label="Background push is on. Alerts continue when the tab is closed."
+            tone="muted"
+            cta="Disable"
+            onClick={() => void disablePush()}
           />
         )}
 
