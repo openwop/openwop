@@ -175,6 +175,9 @@
       <li class="toc-sub"><a href="#openwop-auth-oauth2-client-credentials">openwop-auth-oauth2-client-credentials</a></li>
       <li class="toc-sub"><a href="#openwop-auth-mtls">openwop-auth-mtls</a></li>
       <li class="toc-sub"><a href="#openwop-auth-oidc-user-bearer">openwop-auth-oidc-user-bearer</a></li>
+      <li class="toc-sub"><a href="#openwop-auth-saml-rfc-0050">openwop-auth-saml (RFC 0050)</a></li>
+      <li class="toc-sub"><a href="#openwop-auth-scim-rfc-0050">openwop-auth-scim (RFC 0050)</a></li>
+      <li class="toc-sub"><a href="#openwop-auth-ldap-rfc-0050-optional">openwop-auth-ldap (RFC 0050, optional)</a></li>
       <li class="toc-top"><a href="#discovery-guidance">Discovery guidance</a></li>
       <li class="toc-top"><a href="#audit-log-integrity-annex">Audit-log integrity (annex)</a></li>
       <li class="toc-sub"><a href="#threat-model">Threat model</a></li>
@@ -264,6 +267,34 @@
 <li>Long-lived <code>sub</code> impersonation after employee departure — hosts SHOULD honor IdP revocation within the <code>introspectionIntervalSeconds</code> window.</li>
 </ul>
 <p><strong>Conformance gaps to close:</strong> add a harness that exercises a synthetic OIDC issuer (e.g., <code>mockoon</code> or local JWT signer) so the suite can verify token-validation behavior without depending on a real IdP. Suite version 1.18.0+ candidate.</p>
+<hr/>
+<h3 id="openwop-auth-saml-rfc-0050"><code>openwop-auth-saml</code> (RFC 0050)</h3>
+<p>The host validates SAML 2.0 assertions from an enterprise IdP and maps the asserted subject + attributes onto an RFC 0048 <code>principal</code> (and, where present, group attributes onto RFC 0049 roles). For deployments whose enterprise SSO is SAML rather than OIDC. Composes with — and is distinct from — <code>openwop-auth-oidc-user-bearer</code>: SAML's assertion/signature model (XML-DSig) differs structurally from OIDC's JWT bearer.</p>
+<p><strong>Requirements:</strong></p>
+<ul>
+<li>The host MUST validate the assertion's XML signature against the IdP's configured certificate. Unsigned assertions MUST be rejected.</li>
+<li>The host MUST reject <code>alg:none</code> / absent-algorithm assertions (mirroring the OIDC <code>alg:none</code> rejection), and MUST reject XML signature-wrapping — the signed element MUST be the same element whose contents are consumed.</li>
+<li>The host MUST enforce the assertion validity window (<code>NotBefore</code> / <code>NotOnOrAfter</code>); assertions outside the window MUST be rejected.</li>
+<li>The host MUST map asserted attributes onto an RFC 0048 <code>principal</code> (opaque, non-PII per <code>auth.md</code> §"Identity claims") and, where group attributes are present, onto RFC 0049 roles.</li>
+<li>The host MUST surface failures via the canonical envelope: <code>unauthenticated</code> for bad/absent signature, <code>alg:none</code>, expired/not-yet-valid windows, or wrapping; <code>forbidden</code> for assertion-valid-but-scope-insufficient.</li>
+</ul>
+<p><strong>Discovery shape:</strong> <code>capabilities.auth.profiles[]</code> includes <code>openwop-auth-saml</code>.</p>
+<p><strong>Conformance gaps to close:</strong> a synthetic SAML IdP harness (deterministic signed assertions + the negative variants below) so the suite can verify validation without a real IdP. Until it ships, <code>auth-saml-profile.test.ts</code> verifies the advertisement shape and gates the assertion-validation behavior (1 positive + ≥6 negatives: bad signature, <code>alg:none</code>, absent signature, <code>NotOnOrAfter</code> expiry, <code>NotBefore</code> not-yet-valid, signature-wrapping) on an operator-supplied synthetic IdP.</p>
+<hr/>
+<h3 id="openwop-auth-scim-rfc-0050"><code>openwop-auth-scim</code> (RFC 0050)</h3>
+<p>The host exposes SCIM 2.0 provisioning endpoints (<code>/scim/v2/Users</code>, <code>/scim/v2/Groups</code>) that sync external IdP users/groups onto RFC 0048 principals + RFC 0049 roles, so enterprise lifecycle (joiner/mover/leaver) flows through the standard provisioning protocol rather than bespoke host APIs.</p>
+<p><strong>Requirements:</strong></p>
+<ul>
+<li>The host MUST expose <code>/scim/v2/Users</code> and <code>/scim/v2/Groups</code> and, on provisioning operations, upsert RFC 0048 principals and RFC 0049 roles: <code>POST</code>/<code>PUT</code>/<code>PATCH /Users</code> ⇒ principal create/update; <code>POST</code>/<code>PUT</code>/<code>PATCH /Groups</code> ⇒ role-membership sync (a SCIM group maps to an RFC 0049 role).</li>
+<li>The host MUST treat <code>DELETE /Users/{id}</code> (or <code>active: false</code>) as a <strong>deactivation</strong>: a deactivated principal's subsequent authorization decisions MUST deny (fail-closed, composing with RFC 0049 §C).</li>
+<li>The host MUST authenticate SCIM requests (bearer token per the IdP's SCIM client config) and MUST NOT expose provisioning to unauthenticated callers.</li>
+</ul>
+<p><strong>Discovery shape:</strong> <code>capabilities.auth.profiles[]</code> includes <code>openwop-auth-scim</code>.</p>
+<p><strong>Conformance gaps to close:</strong> a synthetic SCIM client harness; until it ships, <code>auth-scim-profile.test.ts</code> verifies the advertisement shape and gates the user+group provisioning roundtrip (→ principal/role assertion; deactivate ⇒ subsequent deny) on an operator-supplied SCIM endpoint.</p>
+<hr/>
+<h3 id="openwop-auth-ldap-rfc-0050-optional"><code>openwop-auth-ldap</code> (RFC 0050, optional)</h3>
+<p>An optional directory-bind variant for hosts with on-prem LDAP/Active Directory: bind-and-search authentication mapping a DN onto an RFC 0048 <code>principal</code> and LDAP groups onto RFC 0049 roles. <strong>Lower priority</strong> than SAML/SCIM — included for completeness; most enterprise demand is SAML/SCIM. A host advertising <code>openwop-auth-ldap</code> MUST map the bound DN to an opaque, non-PII <code>principal</code> and enforce openwop scopes on top of directory-group membership.</p>
+<p><strong>Discovery shape:</strong> <code>capabilities.auth.profiles[]</code> includes <code>openwop-auth-ldap</code>.</p>
 <hr/>
 <h2 id="discovery-guidance">Discovery guidance</h2>
 <p>As of RFC 0010 (2026-05-11), auth-profile metadata has a <strong>formal schema location</strong> at <code>capabilities.auth.<em></code> in <code>schemas/capabilities.schema.json</code>. Hosts SHOULD advertise auth-profile claims and metadata here. The <code>extensions.auth.</em></code> location below remains valid for historical reasons; clients MUST prefer <code>capabilities.auth.*</code> when both are present.</p>

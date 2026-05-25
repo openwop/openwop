@@ -247,6 +247,7 @@ interface MemoryListOptions {
 <li><strong>Authorization granularity within tenant</strong> — silence intentional. CTI-1 is the only normative isolation surface; per-user RBAC within a tenant is host-internal.</li>
 <li><strong>Content size cap / tags cardinality cap</strong> — host-internal.</li>
 <li><strong>Bulk-ops API</strong> (<code>MemoryAdapter.listAll</code>, <code>MemoryAdapter.deleteAll</code>) — deferred. v1.0 read surface is per-<code>memoryRef</code> <code>list/get</code> only.</li>
+<li><strong>Per-node write attribution</strong> — the event log carries no signal for <em>which node wrote which entry</em> (memory access is kept internal to nodes by design, for replay determinism). An additive, content-free <code>memory.written</code> RunEvent is proposed in <a href="../../RFCS/0057-memory-write-attribution-event.md"><code>RFCS/0057</code></a> (capability-gated <code>memory.attribution</code>), making provenance observable without exposing entry content.</li>
 </ul>
 <h2 id="references">References</h2>
 <ul>
