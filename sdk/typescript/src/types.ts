@@ -275,6 +275,32 @@ export interface RunAncestryResponse {
   };
 }
 
+/** RFC 0054 — response from `GET /v1/runs/{runId}:diff?against={otherRunId}`.
+ *  Mirror of `run-diff-response.schema.json`. Deterministic, replay-aware
+ *  structured diff of two runs' event sequences + terminal states. */
+export interface RunDiffEventDiff {
+  seq: number;
+  op: 'added' | 'removed' | 'changed';
+  /** Present unless `op === 'added'`. */
+  aEvent?: RunEventDoc;
+  /** Present unless `op === 'removed'`. */
+  bEvent?: RunEventDoc;
+}
+
+export interface RunDiffResponse {
+  /** The `{runId}` run. */
+  a: string;
+  /** The `against` run. */
+  b: string;
+  /** Sequence at which the logs first diverge; null if identical. */
+  divergedAtSeq: number | null;
+  eventDiffs: RunDiffEventDiff[];
+  /** Diff of terminal RunSnapshot states (redaction-safe). */
+  stateDiff: Record<string, unknown>;
+  /** True if either run was in-flight and only a prefix was compared. */
+  truncated?: boolean;
+}
+
 export interface ResolveInterruptRequest {
   resumeValue: unknown;
 }
