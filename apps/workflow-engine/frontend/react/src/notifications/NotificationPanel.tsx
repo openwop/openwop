@@ -49,6 +49,9 @@ export function NotificationPanel(): JSX.Element | null {
   const refresh = useNotificationStore((s) => s.refresh);
   const loading = useNotificationStore((s) => s.loading);
   const error = useNotificationStore((s) => s.error);
+  const desktopPermission = useNotificationStore((s) => s.desktopPermission);
+  const requestDesktopPermission = useNotificationStore((s) => s.requestDesktopPermission);
+  const syncDesktopPermission = useNotificationStore((s) => s.syncDesktopPermission);
 
   const [tab, setTab] = useState<Tab>('all');
   // Track viewport width so the panel switches between right-side
@@ -61,9 +64,12 @@ export function NotificationPanel(): JSX.Element | null {
   useEffect(() => {
     if (!panelOpen) return;
     // Refresh on open so a tab returning from background sees the
-    // latest BE state without waiting for SSE.
+    // latest BE state without waiting for SSE. Also re-read the
+    // browser's permission state — the user may have changed it in
+    // site settings between sessions.
     void refresh();
-  }, [panelOpen, refresh]);
+    syncDesktopPermission();
+  }, [panelOpen, refresh, syncDesktopPermission]);
 
   const filtered = useMemo(() => {
     if (tab === 'unread') return notifications.filter((n) => n.status === 'unread');
@@ -145,6 +151,28 @@ export function NotificationPanel(): JSX.Element | null {
             ✕
           </button>
         </header>
+
+        {/* Desktop-notifications affordance. The browser's
+            `requestPermission()` MUST be called inside a user gesture
+            (a click handler), so this lives behind a button — auto-
+            prompting on mount results in 'denied' on most modern
+            browsers. The row hides itself once the user grants
+            permission, and degrades gracefully to a "Blocked" hint
+            if denied (recovery is via the lock icon in the address
+            bar — we can't re-prompt). */}
+        {desktopPermission === 'default' && (
+          <DesktopPermissionRow
+            label="Get a desktop alert when something needs your attention"
+            cta="Enable desktop alerts"
+            onClick={() => void requestDesktopPermission()}
+          />
+        )}
+        {desktopPermission === 'denied' && (
+          <DesktopPermissionRow
+            label="Desktop alerts are blocked. Unblock in site settings to re-enable."
+            tone="muted"
+          />
+        )}
 
         <div
           style={{
@@ -341,6 +369,45 @@ function NotificationRow({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+interface DesktopPermissionRowProps {
+  label: string;
+  cta?: string;
+  onClick?: () => void;
+  tone?: 'default' | 'muted';
+}
+
+function DesktopPermissionRow({ label, cta, onClick, tone = 'default' }: DesktopPermissionRowProps): JSX.Element {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '10px 16px',
+        borderBottom: '1px solid var(--color-border)',
+        background: tone === 'muted'
+          ? 'transparent'
+          : 'color-mix(in oklch, var(--color-accent) 8%, transparent)',
+        fontSize: 12,
+      }}
+    >
+      <span style={{ flex: 1, color: tone === 'muted' ? 'var(--color-text-muted)' : 'inherit' }}>
+        {label}
+      </span>
+      {cta && onClick && (
+        <button
+          type="button"
+          className="secondary"
+          onClick={onClick}
+          style={{ fontSize: 12, whiteSpace: 'nowrap' }}
+        >
+          {cta}
+        </button>
+      )}
     </div>
   );
 }
