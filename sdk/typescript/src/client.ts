@@ -22,6 +22,8 @@ import {
   type ErrorEnvelope,
   type ForkRunRequest,
   type ForkRunResponse,
+  type Annotation,
+  type CreateAnnotationRequest,
   type GetPromptRequest,
   type InterruptByTokenInspection,
   type DebugBundle,
@@ -216,6 +218,42 @@ export class OpenwopClient {
         body,
         headers: this.#mutationHeaders(opts),
       }),
+
+    /**
+     * RFC 0056 — record a non-blocking quality annotation (rating / correction
+     * / label / flag) on a run/event/node. Returns the persisted `Annotation`.
+     * Throws on non-2xx (`501` when the host doesn't advertise
+     * `capabilities.feedback.supported`).
+     */
+    createAnnotation: (
+      runId: string,
+      body: CreateAnnotationRequest,
+      opts: MutationOptions = {},
+    ): Promise<Annotation> =>
+      this.#request<Annotation>({
+        method: 'POST',
+        path: `/v1/runs/${encodeURIComponent(runId)}/annotations`,
+        body,
+        headers: this.#mutationHeaders(opts),
+      }),
+
+    /**
+     * RFC 0056 — list a run's annotations (tenant-scoped). Returns `null` when
+     * the host doesn't advertise `capabilities.feedback` (404/501), so callers
+     * can branch on capability discovery without try/catch.
+     */
+    listAnnotations: async (runId: string): Promise<readonly Annotation[] | null> => {
+      try {
+        const res = await this.#request<{ annotations: Annotation[] }>({
+          method: 'GET',
+          path: `/v1/runs/${encodeURIComponent(runId)}/annotations`,
+        });
+        return res.annotations;
+      } catch (err) {
+        if (err instanceof Error && /\b(404|501)\b/.test(err.message)) return null;
+        throw err;
+      }
+    },
 
     /**
      * RFC 0040 §C — fetch the run's immediate parent in the cross-host

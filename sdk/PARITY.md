@@ -23,11 +23,13 @@ Per-SDK net surface counts (counted from the per-surface tables below, excluding
 
 | SDK | ✅ helpers | ⚠️ raw-only | ❌ unreachable |
 |---|---:|---:|---:|
-| TypeScript (`@openwop/openwop`) | 32 | 0 | 0 |
-| Python (`openwop-client`) | 32 | 0 | 0 |
-| Go (`github.com/openwop/openwop/sdk/go`) | 32 | 0 | 0 |
+| TypeScript (`@openwop/openwop`) | 34 | 0 | 0 |
+| Python (`openwop-client`) | 34 | 0 | 0 |
+| Go (`github.com/openwop/openwop/sdk/go`) | 34 | 0 | 0 |
 
 (Counts bumped 2026-05-15 — Phase 0/P0 gap-closure added pause/resume helpers across all three SDKs. SDK-6 close-out 2026-05-15 added Python + Go run-status + run-error-code predicates matching TypeScript: Python/Go each gain 3 typed helpers — `ACTIVE_RUN_STATUSES`/`TERMINAL_RUN_STATUSES`/`is_terminal_run_status` AND `RUN_ERROR_CODES`/`is_run_error_code`. Headline counts move 23/23 → 26/26.)
+
+RFC 0056 feedback annotations landed 2026-05-25: each SDK gains two helpers — annotation create (`POST /v1/runs/{id}/annotations`) and annotation list (`GET /v1/runs/{id}/annotations`, returning the language's null sentinel when the host doesn't advertise `capabilities.feedback`). Headline counts move 32/32 → 34/34/34.
 
 Helper parity across run-status + run-error-code predicates landed 2026-05-15 (SDK-6 close-out). Python adds `ACTIVE_RUN_STATUSES` / `TERMINAL_RUN_STATUSES` frozensets + `is_terminal_run_status` predicate + `RUN_ERROR_CODES` frozenset + `is_run_error_code` predicate. Go adds `ActiveRunStatuses` / `TerminalRunStatuses` / `IsTerminalRunStatus` / `RunErrorCodes` / `IsRunErrorCode`. All three SDKs now expose the same vocabulary at the same call-site shape; the prior TypeScript-only convenience asymmetry is closed.
 
@@ -113,6 +115,8 @@ These landed during Track 1 / T1.1 / T1.2 / T1.4 / T1.7 work. Audit-log verifica
 | Webhooks: HMAC verification helper | ⚠️ none — consumers re-implement HMAC-SHA256 | ⚠️ none | ⚠️ none |
 | Debug bundle: `GET /v1/runs/{id}/debug-bundle` | ✅ `client.runs.debugBundle(id, opts?)` (SDK-4, 2026-05-15) | ✅ `client.runs_debug_bundle(id, max_events=...)` (SDK-4, 2026-05-15) | ✅ `client.GetDebugBundle(ctx, id, opts)` (SDK-4, 2026-05-15) |
 | Registry: `GET /v1/packs/*` read surface (SDK-5, 2026-05-15) | ✅ `RegistryClient` (`discovery / index / pack / version / tarball / signature / publicKey`) | ✅ `RegistryClient` (`discovery / index / pack / version / tarball / signature / public_key`) | ✅ `RegistryClient` (`Discovery / Index / Pack / Version / Tarball / Signature / PublicKey`) |
+| Feedback: `POST /v1/runs/{id}/annotations` create (RFC 0056, 2026-05-25) | ✅ `client.runs.createAnnotation(id, body, opts?)` | ✅ `client.create_annotation(id, body, idempotency_key=...)` | ✅ `client.CreateAnnotation(ctx, id, body, opts)` |
+| Feedback: `GET /v1/runs/{id}/annotations` list (RFC 0056, 2026-05-25) | ✅ `client.runs.listAnnotations(id)` (→ `null` when uncapable) | ✅ `client.list_annotations(id)` (→ `None` when uncapable) | ✅ `client.ListAnnotations(ctx, id)` (→ `nil` when uncapable) |
 
 ---
 
@@ -126,6 +130,7 @@ These landed during Track 1 / T1.1 / T1.2 / T1.4 / T1.7 work. Audit-log verifica
 | Track-13 v1.x additions (pause / resume / configurableSchema) | ✅ pause/resume; configurableSchema via workflow docs | ✅ pause/resume; configurableSchema via workflow docs | ✅ pause/resume; configurableSchema via workflow docs |
 | T1.1 + T1.4 + T1.7 v1.x additions (audit / debug-bundle / webhooks) | ✅ audit + debug; ⚠️ webhooks | ✅ audit + debug; ⚠️ webhooks | ✅ audit + debug; ⚠️ webhooks |
 | Pack registry read surface | ✅ `RegistryClient` (SDK-5, 2026-05-15) | ✅ `RegistryClient` (SDK-5, 2026-05-15) | ✅ `RegistryClient` (SDK-5, 2026-05-15) |
+| Feedback annotations (RFC 0056: create + list) | ✅ full | ✅ full | ✅ full |
 
 ---
 

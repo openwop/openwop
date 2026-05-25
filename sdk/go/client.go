@@ -314,6 +314,51 @@ func (c *OpenwopClient) ForkRun(
 	return &out, nil
 }
 
+// CreateAnnotation calls POST /v1/runs/{runID}/annotations per RFC 0056 —
+// records a non-blocking quality annotation on a run. Returns a *WopError
+// with Status 501 when the host doesn't advertise
+// capabilities.feedback.supported.
+func (c *OpenwopClient) CreateAnnotation(
+	ctx context.Context,
+	runID string,
+	body CreateAnnotationRequest,
+	opts MutationOptions,
+) (*Annotation, error) {
+	var out Annotation
+	if err := c.requestJSON(
+		ctx, http.MethodPost,
+		"/v1/runs/"+url.PathEscape(runID)+"/annotations",
+		body, opts.headers(), true, &out,
+	); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// ListAnnotations calls GET /v1/runs/{runID}/annotations per RFC 0056.
+// Returns (nil, nil) when the host doesn't advertise capabilities.feedback
+// (endpoint returns 404 or 501 in that case), so callers can branch on
+// capability discovery without unwrapping the error envelope.
+func (c *OpenwopClient) ListAnnotations(
+	ctx context.Context,
+	runID string,
+) ([]Annotation, error) {
+	var out ListAnnotationsResponse
+	err := c.requestJSON(
+		ctx, http.MethodGet,
+		"/v1/runs/"+url.PathEscape(runID)+"/annotations",
+		nil, nil, true, &out,
+	)
+	if err != nil {
+		var werr *WopError
+		if errors.As(err, &werr) && (werr.Status == 404 || werr.Status == 501) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return out.Annotations, nil
+}
+
 // RunAncestry calls GET /v1/runs/{runID}/ancestry per RFC 0040 §C and
 // spec/v1/multi-agent-execution.md §"GET /v1/runs/{runId}/ancestry".
 //

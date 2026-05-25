@@ -285,6 +285,33 @@ type ForkRunResponse struct {
 	FromSeq     *int      `json:"fromSeq,omitempty"`
 }
 
+// Annotation mirrors annotation.schema.json (RFC 0056) — a non-blocking
+// quality signal recorded against a run, event, or node. Target and actor
+// are flat string maps; signal carries mixed-type fields (kind, rating,
+// label, correction) so it is map[string]any.
+type Annotation struct {
+	AnnotationID string            `json:"annotationId"`
+	Target       map[string]string `json:"target"`
+	Signal       map[string]any    `json:"signal"`
+	Actor        map[string]string `json:"actor"`
+	CreatedAt    string            `json:"createdAt"`
+	Note         *string           `json:"note,omitempty"`
+}
+
+// CreateAnnotationRequest is the POST /v1/runs/{runID}/annotations body per
+// annotation-create.schema.json (RFC 0056). The host assigns annotationId,
+// createdAt, and actor; target.runId is path-bound and omitted here.
+type CreateAnnotationRequest struct {
+	Signal map[string]any    `json:"signal"`
+	Target map[string]string `json:"target,omitempty"`
+	Note   *string           `json:"note,omitempty"`
+}
+
+// ListAnnotationsResponse mirrors the 200 listAnnotations payload.
+type ListAnnotationsResponse struct {
+	Annotations []Annotation `json:"annotations"`
+}
+
 // RunAncestryParent is the populated branch of RunAncestryResponse.Parent —
 // names the run's immediate dispatcher per RFC 0040 §C. WellKnownURL is
 // set only when the parent is on a different host (callers walk the

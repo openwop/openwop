@@ -1,5 +1,9 @@
 # `@openwop/openwop` Changelog
 
+## [1.0 — additions] — 2026-05-25 — feedback annotation helpers (RFC 0056)
+
+- **Two new run helpers.** `client.runs.createAnnotation(runId, body, opts?)` calls `POST /v1/runs/{id}/annotations` to record a non-blocking quality annotation; `client.runs.listAnnotations(runId)` calls `GET /v1/runs/{id}/annotations` and returns `null` when the host doesn't advertise `capabilities.feedback` (404/501), so callers branch on capability discovery without unwrapping the error envelope. New exported types: `Annotation`, `AnnotationSignal`, `CreateAnnotationRequest`.
+
 ## [1.0 — additions] — 2026-05-19 — typed `agent.*` event helpers (RFC 0024)
 
 - **New typed payload interfaces** for the `agent.*` event family in `src/types.ts`: `AgentReasonedPayload`, `AgentReasoningDeltaPayload`, `AgentToolCalledPayload`, `AgentToolReturnedPayload`, `AgentHandoffPayload`, `AgentDecidedPayload`. Each mirrors the corresponding `schemas/run-event-payloads.schema.json` $def exactly. Plus a `TypedRunEvent<T>` generic that pairs a narrowed `RunEventDoc` with a known payload shape.

@@ -254,6 +254,32 @@ export interface ForkRunResponse {
   eventsUrl: string;
 }
 
+/** RFC 0056 — a non-blocking quality signal on a run/event/node. */
+export type AnnotationSignal =
+  | { kind: 'rating'; rating: number }
+  | { kind: 'flag' }
+  | { kind: 'label'; label: string }
+  | { kind: 'correction'; correction: string };
+
+/** RFC 0056 persisted annotation (`annotation.schema.json`). A side-resource —
+ *  not a replayable run-event-log entry. */
+export interface Annotation {
+  annotationId: string;
+  target: { runId: string; eventId?: string; nodeId?: string };
+  signal: AnnotationSignal;
+  actor: { principalRef: string };
+  note?: string;
+  createdAt: string;
+}
+
+/** RFC 0056 request body for `createAnnotation` (`annotation-create.schema.json`).
+ *  The host assigns `annotationId`/`createdAt`/`actor` and binds `target.runId`. */
+export interface CreateAnnotationRequest {
+  target?: { eventId?: string; nodeId?: string };
+  signal: AnnotationSignal;
+  note?: string;
+}
+
 /**
  * Response from `GET /v1/runs/{runId}/ancestry` — RFC 0040 §C cross-host
  * composition parent. `parent: null` for top-level runs (not dispatched
