@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### `apps/workflow-engine` — notification system replaces approval inbox (2026-05-25)
+
+App-tier only (no spec / schema / conformance change). The standalone HITL approval `/inbox` becomes one filter of a generalized notification surface modeled on the myndhyve notification system. Backend adds a `notifications` table (Postgres v6 / sqlite v8), REST CRUD + SSE stream at `/v1/notifications`, and emits a notification when a HITL interrupt opens or a run fails. Frontend adds a header bell with unread badge, a right-side `NotificationPanel` drawer, and migrates `/inbox` to filter the notification list by action-needed types (preserving the inline `RenderInterrupt` resolve form).
+
 ### RFC 0045/0046/0047/0048/0049/0051/0052/0053 promoted Draft → Active — MyndHyve cohort adoption (2026-05-25)
 
 8 of the 10 MyndHyve protocol-extension RFCs graduate `Draft → Active` on MyndHyve's non-steward implementation (advertise + behavioral seams shipped per their `docs/openwop-adoption/0045-0054-cohort-summary.md`, 2026-05-25). Each RFC's `Status` flips to `Active` with the adoption evidence in its `Updated` field; wire shapes are now locked for these surfaces per `RFCS/0001`.

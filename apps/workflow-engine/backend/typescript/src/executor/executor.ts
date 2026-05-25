@@ -63,6 +63,7 @@ import { createAiProvidersAdapter, AiProviderError, type AiProviderErrorCode } f
 import { classifyDispatchError } from '../observability/errorRecovery.js';
 import { buildHostSurfaceBundle } from '../host/inMemorySurfaces.js';
 import { notifyRunTerminal } from './runLifecycle.js';
+import { emitRunFailureNotification } from '../notifications/notify.js';
 import { snapshotRunVariables } from '../host/variablesRuntime.js';
 import {
   buildGraph,
@@ -140,6 +141,10 @@ async function emitTerminalFailure(input: {
   });
   clearRunSecrets(input.runId);
   notifyRunTerminal(input.runId);
+  // Fan out a user-visible notification so the bell + /inbox surface
+  // the failure without polling. Best-effort — emit failures don't
+  // affect the canonical run.failed event log entry.
+  void emitRunFailureNotification(input.storage, input.runId, input.error);
 }
 
 /**

@@ -10,6 +10,7 @@ import { randomBytes } from 'node:crypto';
 import type { InterruptRecord } from '../types.js';
 import type { Storage } from '../storage/storage.js';
 import { stripSecretsFromPersisted } from '../byok/ephemeralRunSecrets.js';
+import { emitInterruptNotification } from '../notifications/notify.js';
 
 let backend: Storage | null = null;
 
@@ -41,6 +42,12 @@ export function getSuspendManager() {
         createdAt: new Date().toISOString(),
       };
       await b.insertInterrupt(record);
+      // Fan out a notification so the bell + /inbox surface the
+      // action-needed signal without polling. Best-effort — emit
+      // failures don't abort the suspend (the interrupt row is
+      // already persisted and the run will still resume via the
+      // normal /v1/interrupts surface).
+      void emitInterruptNotification(b, record);
       return record;
     },
     async resolve(interruptId: string, value: unknown): Promise<void> {

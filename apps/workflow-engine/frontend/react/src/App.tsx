@@ -5,7 +5,7 @@ import { NetworkPanel } from './devtools/NetworkPanel.js';
 import { installNetworkRecorder } from './devtools/networkRecorder.js';
 import { RunDetailPage } from './runs/RunDetailPage.js';
 import { CommandCenterPage } from './runs/CommandCenterPage.js';
-import { HitlInboxPage } from './runs/HitlInboxPage.js';
+import { NotificationsPage } from './notifications/NotificationsPage.js';
 import { RunComparePage } from './runs/RunComparePage.js';
 import { CapabilitiesPanel } from './discovery/CapabilitiesPanel.js';
 import { ChatTab } from './chat/ChatTab.js';
@@ -17,6 +17,9 @@ import { NotFoundPage } from './NotFoundPage.js';
 import { PromptLibraryPage } from './prompts/PromptLibraryPage.js';
 import { KeysPage } from './byok/KeysPage.js';
 import { SignInButton } from './auth/SignInButton.js';
+import { NotificationBell } from './notifications/NotificationBell.js';
+import { NotificationPanel } from './notifications/NotificationPanel.js';
+import { useNotificationStore } from './notifications/notificationStore.js';
 
 export function App() {
   const location = useLocation();
@@ -25,6 +28,14 @@ export function App() {
   // Idempotent: installNetworkRecorder() short-circuits after the first
   // call so HMR / StrictMode double-renders don't double-wrap fetch.
   useEffect(() => { installNetworkRecorder(); }, []);
+  // Bootstrap the notification store — hydrate via REST + attach SSE
+  // for live deltas. Idempotent: `connect()` no-ops if already connected.
+  const connectNotifications = useNotificationStore((s) => s.connect);
+  const disconnectNotifications = useNotificationStore((s) => s.disconnect);
+  useEffect(() => {
+    void connectNotifications();
+    return () => disconnectNotifications();
+  }, [connectNotifications, disconnectNotifications]);
   const [netOpen, setNetOpen] = useState(false);
   // The builder canvas is its own scroll/zoom region — bypass the
   // centered 1200px-wide .app-main constraint so the canvas can fill
@@ -69,6 +80,7 @@ export function App() {
         >
           Network
         </button>
+        <NotificationBell />
         <SignInButton />
       </header>
       <main
@@ -89,7 +101,7 @@ export function App() {
           <Route path="/runs" element={<RunsIndexPage />} />
           <Route path="/runs/:runId" element={<RunDetailPage />} />
           <Route path="/mission" element={<CommandCenterPage />} />
-          <Route path="/inbox" element={<HitlInboxPage />} />
+          <Route path="/inbox" element={<NotificationsPage />} />
           <Route path="/compare" element={<RunComparePage />} />
           <Route path="/capabilities" element={<CapabilitiesPanel />} />
           <Route path="/builder" element={<WorkflowsDashboard />} />
@@ -107,6 +119,7 @@ export function App() {
         <Link to="/privacy">Privacy</Link>
       </footer>
       <NetworkPanel open={netOpen} onClose={() => setNetOpen(false)} />
+      <NotificationPanel />
     </div>
   );
 }
