@@ -100,7 +100,7 @@ Set on spans where a `CapabilityLimitExceededError` was thrown:
 
 | Attribute | Type | Required | Notes |
 |---|---|---|---|
-| `openwop.cap_kind` | string | MUST | One of `clarification`, `schema`, `envelopes`, `node-executions` |
+| `openwop.cap_kind` | string | MUST | One of `clarification`, `schema`, `envelopes`, `node-executions`; `wasm-memory` / `wasm-fuel` / `wasm-execution-time` (RFC 0008 §K); `run-duration` / `loop-iterations` (RFC 0058) |
 | `openwop.cap_limit` | number | MUST | The limit value |
 | `openwop.cap_observed` | number | MUST | The observed value when the limit fired |
 
@@ -385,7 +385,7 @@ The metric attribute tiers below reuse the canonical `openwop.*` span attributes
 | Instrument | Counter |
 | Unit | `1` (count) |
 | Description | Number of `CapabilityLimitExceededError` occurrences, broken down by limit kind. Useful for "are we tuning limits too tight?" SLOs. |
-| Attributes (Required) | `openwop.cap_kind` (`clarification` \| `schema` \| `envelopes` \| `node-executions`) |
+| Attributes (Required) | `openwop.cap_kind` (`clarification` \| `schema` \| `envelopes` \| `node-executions` \| `wasm-memory` \| `wasm-fuel` \| `wasm-execution-time` \| `run-duration` \| `loop-iterations`) |
 | Attributes (Recommended) | `openwop.workflow_id`, `openwop.node_type` |
 | Stability | Stable |
 

@@ -55,6 +55,7 @@ export type {
   AgentToolReturnedPayload,
   AgentHandoffPayload,
   AgentDecidedPayload,
+  MemoryWrittenPayload,
   // RFC 0027 + RFC 0028 — Prompt library (spec/v1/prompts.md)
   GetPromptRequest,
   ListPromptsRequest,
@@ -78,6 +79,7 @@ export {
   isAgentToolReturned,
   isAgentHandoff,
   isAgentDecided,
+  isMemoryWritten,
   subscribeToAgentReasoning,
 } from './event-helpers.js';
 export type {

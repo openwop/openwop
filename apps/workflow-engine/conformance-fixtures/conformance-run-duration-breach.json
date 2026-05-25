@@ -1,0 +1,33 @@
+{
+  "id": "conformance-run-duration-breach",
+  "name": "Conformance: Run-Duration Breach (RFC 0058)",
+  "version": "1.0",
+  "description": "Single delay node that sleeps far longer than a small `RunOptions.configurable.runTimeoutMs`. Run with `runTimeoutMs: 1000` on a host advertising `capabilities.limits.maxRunDurationMs` to trigger the wall-clock breach — verifies `cap.breached {kind: 'run-duration'}` emission (observed > limit) + terminal `failed` with `error.code = 'run_timeout'`. Spec: run-options.md §runTimeoutMs + capabilities.md §'Engine-enforced limits' + RFC 0058.",
+  "nodes": [
+    {
+      "id": "wait",
+      "typeId": "core.delay",
+      "name": "Wait",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {
+        "delayMs": { "type": "variable", "variableName": "delayMs" }
+      }
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    {
+      "name": "delayMs",
+      "type": "number",
+      "description": "Milliseconds to sleep. Defaulted well above any small runTimeoutMs so the wall-clock bound trips first.",
+      "required": true,
+      "defaultValue": 30000
+    }
+  ],
+  "metadata": { "tags": ["conformance", "run-duration", "rfc-0058"] },
+  "settings": { "timeout": 60000, "maxRetries": 0 }
+}

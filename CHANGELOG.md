@@ -27,6 +27,34 @@ Out of scope: `client/registryClient.ts` would need a separate SDK instance poin
 
 App-only; no protocol-corpus change.
 
+### RFC 0057 (memory write-attribution) — SDK typed event helpers (TS/Python/Go) (2026-05-25)
+
+All three reference SDKs gain a typed `memory.written` event helper, joining the RFC 0024 `agent.*` event-helper family at full parity: TS `isMemoryWritten` + `MemoryWrittenPayload`; Python `is_memory_written` + `memory_written_payload` + `MemoryWrittenPayload`; Go `IsMemoryWritten` + `UnmarshalMemoryWritten` + `MemoryWrittenPayload`. Typed event-type predicates sit outside the headline net-surface count (they narrow payloads rather than wrap endpoints) but are kept symmetric across all three — see `sdk/PARITY.md`. tsc + go vet/gofmt + ruff clean.
+
+### RFC 0058 §A–§D — run-execution-bounds wire surface landed (`Draft`, 2026-05-25)
+
+Implements the RFC 0058 wire surface (additive; Status stays `Draft` pending the comment window + reference-host enforcement, per the RFC 0052 precedent).
+
+- **Schema:** `capabilities.schema.json` `limits.{maxRunDurationMs,maxLoopIterations}` (optional); `run-event-payloads.schema.json` `capBreached.kind` enum gains `run-duration` + `loop-iterations` (additive enum extension, no `eventLogSchemaVersion` bump — same move as RFC 0008 §K `wasm-*`).
+- **Spec:** `run-options.md` reserved keys `runTimeoutMs` + `maxLoopIterations`; `capabilities.md` §"Engine-enforced limits" resolution for the two run-scoped kinds + `observed`-recorded-not-recomputed replay clause; `rest-endpoints.md` error codes `run_timeout` + `loop_limit_exceeded`; `observability.md` `openwop.cap_kind` enumeration.
+- **Conformance:** `run-execution-bounds-shape.test.ts` (always-on advertisement-shape) + `coverage.md` row; `run-duration` breach behavior soft-skips until a host enforces wall-clock timeouts.
+- **SDKs:** TS / Python / Go gain the two `limits` fields, the two `RunConfigurable` keys, and the two error codes.
+
+### RFCs 0058–0064 — autonomous-agent-runtime cohort filed (`Draft`, 2026-05-25)
+
+Seven additive RFCs filed from the `apps/workflow-engine` demo-app gap audit against the proposed autonomous-agent-runtime feature set. All `additive`, all capability-gated; spec/schema/conformance/SDK/host work tracked in [`docs/autonomous-agent-runtime-plan.md`](./docs/autonomous-agent-runtime-plan.md). No normative wire shape changes yet (Draft) — README RFC counts synced to 65 / Draft (13).
+
+- **RFC 0058** run execution bounds — `runTimeoutMs` + `maxLoopIterations` reserved keys, `limits.{maxRunDurationMs,maxLoopIterations}`, surfaced through **two new `cap.breached` kinds** (`run-duration`, `loop-iterations`) reusing the unified engine-enforced-limit event rather than a new event type, + `run_timeout` / `loop_limit_exceeded` codes (closes the no-per-run-timeout gap; `recursionLimit` only counts nodes).
+- **RFC 0059** agent workspace — `host.workspace`: versioned, atomic, tenant·workspace-scoped ground-truth file store + `workspace.updated`; new durable layer beside `MemoryAdapter`.
+- **RFC 0060** host heartbeat — `host.heartbeat`: predicate-gated, runtime-bounded, idempotent poller emitting `heartbeat.evaluated` / `stateChanged` (anti-spam); composes RFC 0052; `positioning.md` bounded-exception note.
+- **RFC 0061** stateful agent-loop lifecycle — promotes the RFC 0037 execution loop to `multiAgent.executionModel.version: 5`: per-iteration workspace snapshot (RFC 0059), an additive `iteration` counter on `runOrchestrator.decided` that `maxLoopIterations` (RFC 0058) bounds, and a `statefulResume` guarantee — reusing the existing loop + event rather than a parallel `agents.loop` surface.
+- **RFC 0062** scheduled memory distillation ("dreams") — `memory.distillation`: token-budgeted scheduled compaction (`distillation.tokenBudget` reserved key) reusing RFC 0012's `memory.compacted` event (+ an additive optional `distillation` sub-object) rather than a new `memory.distilled` event; memory-index workspace file; composes RFC 0012 + 0052 + 0059. Registers `token_budget_exceeded`.
+- **RFC 0063** sub-run output attestation & merge gating — optional `core.subWorkflow.outputAttestation` (checksum + RFC 0051 approval before `outputMapping` merge, fail-closed); surfaces the checksum via an additive `attestation` field on the existing `core.workflowChain.event { phase: 'output.harvested' }` rather than a new `subRun.attested` event.
+- **RFC 0064** tool invocation hooks & per-tool authorization — `host.toolHooks`: extends the existing `agent.toolCalled` / `agent.toolReturned` events (RFC 0002) with content-free `argsHash` + `status`/`durationMs`, fail-closed per-tool RBAC reusing RFC 0049's `forbidden` error + `authorization-fail-closed` invariant, per-tool rate limiting reusing `rate_limited` — no parallel `tool.invoked`/`tool.returned`/`tool_forbidden` surface.
+### feat(host-sqlite): RFC 0031 model-capability gate — port from the Postgres reference (2026-05-25)
+
+Ports the RFC 0031 model-capability gate to the SQLite reference host (follows the Postgres landing): `src/modelCapability.ts` (the shared gate + probe), a pre-`node.started` gate in `executeNode` (refuse → `model.capability.insufficient` before `node.failed` + `capability_not_provided`; node never executes), and `capabilities.modelCapabilities.{supported: true, advertised: [], substitutionSupported: false}` in discovery. Honest posture: SQLite routes no AI (it omits `aiProviders`), so its active model satisfies NO model capability — `advertised: []` and any node requiring one is refused; the gate's active provider is set accordingly so the advertisement and behavior stay consistent. New end-to-end `test/model-capability-insufficient.test.ts` (boots the host over a temp DB + free port) asserts the failure code + event ordering + no node execution. Host-only; no protocol-corpus change. Closes the SQLite side of the model-capability-insufficient gap.
+
 ### RFC 0057 (memory write-attribution) — reference-host emission; promote Draft → `Active` (2026-05-25)
 
 The workflow-engine **reference backend** (deployed as `app.openwop.dev`) now advertises `capabilities.memory.attribution.{ supported: true, emitsWriteEvents: true }` and emits a content-free `memory.written` RunEvent on its run-summary write (`executor.ts` — identifiers + non-secret tags only; `nodeId` omitted as a host session-end write per RFC 0057 §B). The four `memory-attribution-*.test.ts` scenarios pass against it (verified locally: discovery advertises the block; a completed run emits exactly one `memory.written` with no `content`). With schema + prose + SECURITY + conformance (corpus, prior entry) and a host advertising-and-honoring the capability, **RFC 0057 graduates `Draft → Active`**; `Active → Accepted` awaits a non-steward host. README RFC counts synced (Active 6 → 7, Draft 7 → 6); `docs/PROTOCOL-STATUS.md` regenerated. Additive.
@@ -65,18 +93,6 @@ Closes the two deferred RFC 0055 follow-ups. **§A:** the builder model picker (
 ### RFC 0055 promoted Draft → Active — multimodal envelope variants (2026-05-25)
 
 Closes RFC 0055 end-to-end on the reference host. §A (capability vocabulary) + §B (`meta.rendering` hint) + §C (`media.{image,audio,file}` kinds + tenant-scoped asset-URL discipline + `media-asset-url-tenant-scoped` invariant) all landed with schemas, conformance, the reference-app chat renderer, and reference-host serving. Promotion basis: the in-memory/sqlite reference host advertises `aiProviders.maxInlineMediaBytes` + `media.{image,audio,file}` in `supportedEnvelopes`/`schemaVersions` and serves tenant-scoped capability-token asset URLs (`GET /v1/host/sample/assets/{token}`), and `media-url-inline-cap.test.ts`'s behavioral store→serve→tenant-scoping assertions are now live (soft-skip offline) — replacing the prior `it.todo`s. `Active → Accepted` awaits a non-steward host advertising the surface per `RFCS/0001`. The `vision-input`/`audio-*` model-capability identifiers are reserved/registered; a host advertises them only when its model supports them (the reference mock model advertises none). Counts: RFC status Active 4 → 5, Draft 8 → 7; `docs/PROTOCOL-STATUS.md` regenerated. All additive.
-
-### RFCs 0058–0064 — autonomous-agent-runtime cohort filed (`Draft`, 2026-05-25)
-
-Seven additive RFCs filed from the `apps/workflow-engine` demo-app gap audit against the proposed autonomous-agent-runtime feature set. All `additive`, all capability-gated; spec/schema/conformance/SDK/host work tracked in `plans/autonomous-agent-runtime.md` (a local, gitignored planning doc). No normative wire shape changes yet (Draft) — README RFC counts synced to 64 / Draft (15); `docs/PROTOCOL-STATUS.md` regenerated.
-
-- **RFC 0058** run execution bounds — `runTimeoutMs` + `maxLoopIterations` reserved keys, `limits.{maxRunDurationMs,maxLoopIterations}`, `run.terminated` event, `run_timeout` / `loop_limit_exceeded` codes (closes the no-per-run-timeout gap; `recursionLimit` only counts nodes).
-- **RFC 0059** agent workspace — `host.workspace`: versioned, atomic, tenant·workspace-scoped ground-truth file store + `workspace.updated`; new durable layer beside `MemoryAdapter`.
-- **RFC 0060** host heartbeat — `host.heartbeat`: predicate-gated, runtime-bounded, idempotent poller emitting `heartbeat.evaluated` / `stateChanged` (anti-spam); composes RFC 0052; `positioning.md` bounded-exception note.
-- **RFC 0061** agent loop lifecycle — `agents.loop`: re-entrant stateful loop loading workspace+memory+transcript per iteration, run-until-`terminate`/`maxLoopIterations`, `agent.loop.iterated`; closes RFC 0037's loop-iteration gap.
-- **RFC 0062** scheduled memory distillation ("dreams") — `memory.distillation`: token-budgeted scheduled compaction + memory-index manifest + `memory.distilled`; composes RFC 0012 + 0052 + 0059.
-- **RFC 0063** sub-run output attestation & merge gating — optional `core.subWorkflow.outputAttestation` (checksum + RFC 0051 approval before `outputMapping` merge, fail-closed); `subRun.attested`.
-- **RFC 0064** tool invocation hooks & per-tool authorization — `host.toolHooks`: content-free `tool.invoked` / `tool.returned`, fail-closed per-tool RBAC (`tool_forbidden`), per-tool rate limiting; generalizes the MCP bridges.
 
 ### `apps/workflow-engine` — persistent artifact cards for HITL decisions + workflow completion (2026-05-25)
 

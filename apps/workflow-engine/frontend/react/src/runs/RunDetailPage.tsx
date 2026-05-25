@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import type { RunSnapshot, RunEventDoc, StreamMode } from '@openwop/openwop';
-import { cancelRun, deleteRun, forkRun, getRun, pollEvents } from '../client/runsClient.js';
+import { cancelRun, deleteRun, forkRun, getDebugBundle, getRun, pollEvents } from '../client/runsClient.js';
 import { subscribeToRun } from '../client/streamsClient.js';
 import { listOpenInterrupts, type OpenInterrupt } from '../client/interruptsClient.js';
 import { listAnnotations, type Annotation } from '../client/feedbackClient.js';
@@ -169,6 +169,24 @@ export function RunDetailPage() {
     }
   }
 
+  async function onDownloadDebugBundle() {
+    if (!runId) return;
+    try {
+      const bundle = await getDebugBundle(runId);
+      const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `openwop-run-${runId}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
   async function onForkFrom(seq: number) {
     if (!runId) return;
     try {
@@ -216,6 +234,14 @@ export function RunDetailPage() {
             title="Permanently delete this run and its history"
           >
             Delete run
+          </button>
+          <button
+            className="secondary"
+            onClick={onDownloadDebugBundle}
+            disabled={!snapshot}
+            title="Download a JSON bundle of this run's events for support / triage (spec/v1/debug-bundle.md)"
+          >
+            Download bundle
           </button>
         </div>
       </div>

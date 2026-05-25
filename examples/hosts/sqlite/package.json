@@ -8,7 +8,7 @@
     "start": "tsx src/server.ts",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "tsx test/audit-tamper.test.ts && tsx test/cost-attribution.test.ts"
+    "test": "tsx test/audit-tamper.test.ts && tsx test/cost-attribution.test.ts && tsx test/model-capability-insufficient.test.ts"
   },
   "dependencies": {
     "better-sqlite3": "^11.3.0"

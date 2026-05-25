@@ -35,6 +35,7 @@ import type {
   AgentReasoningDeltaPayload,
   AgentToolCalledPayload,
   AgentToolReturnedPayload,
+  MemoryWrittenPayload,
   RunEventDoc,
   TypedRunEvent,
 } from './types.js';
@@ -127,6 +128,18 @@ export function isAgentDecided(
     ev.payload !== null &&
     typeof ev.payload === 'object' &&
     'decision' in (ev.payload as Record<string, unknown>)
+  );
+}
+
+/** `memory.written` (RFC 0057). Narrows when `type` matches AND the payload
+ *  carries the required `memoryRef` + `memoryId` identifier strings. */
+export function isMemoryWritten(
+  ev: RunEventDoc,
+): ev is TypedRunEvent<MemoryWrittenPayload> {
+  return (
+    ev.type === 'memory.written' &&
+    hasStringField(ev.payload, 'memoryRef') &&
+    hasStringField(ev.payload, 'memoryId')
   );
 }
 
