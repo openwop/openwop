@@ -100,7 +100,10 @@ describe('redaction: /.well-known/openwop secrets+aiProviders shape contract', (
         'when secrets.supported is true, scopes MUST be non-empty',
       )).toBeGreaterThanOrEqual(1);
       for (const scope of scopes) {
-        expect(['tenant', 'user', 'run']).toContain(scope);
+        // Allowlist MUST track the `secrets.scopes` enum in capabilities.schema.json
+        // (`["tenant", "user", "run", "workspace"]`). `workspace` is the RFC 0046/0048
+        // sub-tenant scope — additive; hosts that advertise it (e.g. MyndHyve) are conformant.
+        expect(['tenant', 'user', 'run', 'workspace']).toContain(scope);
       }
       expect(s.resolution, driver.describe(
         'capabilities.md §"Secrets"',
