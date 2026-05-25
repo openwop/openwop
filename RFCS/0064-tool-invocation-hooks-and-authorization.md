@@ -115,6 +115,14 @@ Tool credentials resolve via RFC 0046 `host.credentials` (opaque refs, host-dere
 2. **`argsHash` determinism.** Same canonical-JSON recipe (RFC 8785 JCS) as RFC 0041 replay keys / RFC 0063 checksums, so a hash is comparable across hosts? Proposed yes. Confirm.
 3. **Non-agent tool calls.** `agent.toolCalled` is named "agent.*" but the `transport: 'native'`/`'http'` values cover non-agent egress. Confirm reusing the `agent.*` events for non-agent tool calls is acceptable, or whether a `principal`-only (no `agentId`) emission needs an `agentId` convention (e.g. a synthetic system agent). Resolve before Active.
 
+## Phase-0 resolution (architect ruling, 2026-05-25)
+
+Per `docs/autonomous-agent-runtime-plan.md` §8 — Unresolved questions resolved (wire shape pinned; Active-ready pending schema + prose):
+
+1. **Where tools declare `requiredScopes`** → in the connector/tool mount manifest (`actions[].requiredScopes[]`), aligned with RFC 0045 connector-manifest.
+2. **`argsHash` determinism** → reuse the RFC 8785 JCS recipe (`replay.md §B`) over redacted args, then SHA-256 (ruling B) — same recipe as RFC 0063 checksums.
+3. **Non-agent tool calls** → emit under a reserved synthetic agent id `core.system`; **`agentId` stays `required`** on `agent.toolCalled`/`agent.toolReturned` (making it optional would be a breaking change to an Accepted RFC 0002 event — ruling D11/A); the `transport` field disambiguates the source.
+
 ## Implementation notes (non-normative)
 
 - `apps/workflow-engine`: wrap the MCP dispatch path (`mcpServerRouter.ts`) + the provider/egress path with authorize → emit `agent.toolCalled` → invoke → emit `agent.toolReturned { status, durationMs }`; reuse the RFC 0049 authorization layer (already emits `authorization.decided` on denial) and the `ephemeralRunSecrets` view for redaction. Effort: medium.

@@ -114,6 +114,14 @@ A distillation run — whether scheduled (RFC 0052 `schedule` trigger targeting 
 2. **Archive retention / GC.** How long must archives persist; can distillation distill prior archives (recursive)? Proposed: advertise `archiveRetention`; recursive allowed, each level re-checks SR-1. Decide before Active.
 3. **Index format.** `MEMORY-INDEX.json` (machine-loaded, normative) vs. a human-editable `.md` sibling. Proposed JSON normative. Confirm with RFC 0059.
 
+## Phase-0 resolution (architect ruling, 2026-05-25)
+
+Per `docs/autonomous-agent-runtime-plan.md` §8 — Unresolved questions resolved (wire shape pinned; Active-ready pending schema + prose):
+
+1. **Token accounting authority** → counted against an advertised `tokenizerName`, best-effort-honest; conformance tolerance **±10%**.
+2. **Archive retention / GC** → advertise `archiveRetention` (ISO-8601 duration); recursive distillation allowed, each level re-checks SR-1.
+3. **Index format** → `MEMORY-INDEX.json` normative (machine-loaded); optional human-editable `.md` sibling. The additive `distillation` sub-object on `memory.compacted` is confirmed non-breaking (ruling A; `additionalProperties:true`); `token_budget_exceeded` is a new error code registered in `rest-endpoints.md` (ruling C).
+
 ## Implementation notes (non-normative)
 
 - `examples/hosts/postgres` already has `runCompaction()`; the reference wiring adds a budget guard, the archive write, the index workspace-file write, and the scheduled-trigger binding — emitting the extended `memory.compacted`. `apps/workflow-engine` advertises `memory.distillation` + wires the same. Depends on RFC 0052 (schedule) + RFC 0059 (index file). Gate RFC 0062 `Accepted` on RFC 0059 reaching at least a pinned workspace-file schema.

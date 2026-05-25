@@ -11,6 +11,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFCs 0058–0064 — Phase-0 architect decision batch resolved; RFC 0058 promoted Draft → `Active` (2026-05-25)
+
+Closes the architect Phase-0 decision batch (`docs/autonomous-agent-runtime-plan.md` §8.3) — the only gate to `Draft → Active` for the autonomous-agent-runtime cohort. No wire-shape change (decisions + status only):
+
+- **Decisions recorded** in each RFC's "Phase-0 resolution" block + the §8.3 checklist (all ticked). Rulings: (A) the four additive event extensions confirmed non-breaking against `origin/main` schemas — no `eventLogSchemaVersion` bump; (B) checksums (0063) + `argsHash` (0064) pinned to the existing RFC 8785 JCS recipe in `replay.md §B`; (C) `token_budget_exceeded` / `workspace_conflict` / `workspace_too_large` are the only new error codes (0064 reuses `forbidden` + `rate_limited`); (D1–D11) the eleven "decide before Active" knobs resolved; (E) two new protocol-tier invariants (0059, 0063) land with their tests at implementation, 0064 reuses RFC 0049's `authorization-fail-closed`.
+- **Additive-amendment notes** added to the three Accepted RFCs whose events the cohort extends: 0002 (`agent.toolCalled`/`agent.toolReturned`), 0012 (`memory.compacted`), 0037 (`runOrchestrator.decided` + `core.workflowChain.event`).
+- **RFC 0058 → `Active`** — its wire surface (schema + spec + conformance + SDK) landed atomically, meeting the repo's Active bar; architect-cleared + steward-accepted. `Active → Accepted` awaits reference-host enforcement. README counts re-synced (Active 7 → 8, Draft 13 → 12). RFCs 0059–0064 stay `Draft` (decision-complete + wire-shape-pinned; they flip to Active when their Phase-2 schema + prose land).
+
 ### RFC 0057 (memory write-attribution) — SDK typed event helpers (TS/Python/Go) (2026-05-25)
 
 All three reference SDKs gain a typed `memory.written` event helper, joining the RFC 0024 `agent.*` event-helper family at full parity: TS `isMemoryWritten` + `MemoryWrittenPayload`; Python `is_memory_written` + `memory_written_payload` + `MemoryWrittenPayload`; Go `IsMemoryWritten` + `UnmarshalMemoryWritten` + `MemoryWrittenPayload`. Typed event-type predicates sit outside the headline net-surface count (they narrow payloads rather than wrap endpoints) but are kept symmetric across all three — see `sdk/PARITY.md`. tsc + go vet/gofmt + ruff clean.

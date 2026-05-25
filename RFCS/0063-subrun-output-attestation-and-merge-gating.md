@@ -91,6 +91,14 @@ This MUST **fail-closed**: if the run terminates or the interrupt expires withou
 2. **Partial fan-out approval.** When a supervisor dispatches N children with `requireApproval`, is it N interrupts or one batched approval? Proposed: one interrupt per child for v1; batching is a later optimization. Decide before Active.
 3. **`principalScope` vs. RFC 0049.** Is scope narrowing expressed here or purely in RFC 0049's RBAC surface? Proposed: this references RFC 0049 scopes, doesn't define new ones. Confirm.
 
+## Phase-0 resolution (architect ruling, 2026-05-25)
+
+Per `docs/autonomous-agent-runtime-plan.md` §8 — Unresolved questions resolved (wire shape pinned; Active-ready pending schema + prose):
+
+1. **Checksum canonicalization** → reuse the RFC 8785 JCS recipe pinned in `replay.md §"LLM cache-key recipe" §B` (+ the no-JCS fallback) then SHA-256 — no new recipe (ruling B). Guarantees cross-host verification.
+2. **Partial fan-out approval** → one `approval` interrupt per child for v1; batching is a later optional optimization.
+3. **`principalScope` vs RFC 0049** → references RFC 0049 scopes only; defines no new scopes. The additive `attestation` field on `core.workflowChain.event` is confirmed non-breaking (ruling A; `additionalProperties:false` → declared in `properties`).
+
 ## Implementation notes (non-normative)
 
 - `apps/workflow-engine`: `subWorkflowDispatcher.ts` (`outputMapping` at the harvest step) is the single insertion point — compute checksum + populate the `output.harvested` event's `attestation` field; if `requireApproval`, route through the existing suspend/interrupt path before the mapping copy. Effort: small–medium.

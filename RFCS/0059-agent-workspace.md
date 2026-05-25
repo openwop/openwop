@@ -114,6 +114,14 @@ When `host.workspace.supported`, the host MUST expose the workspace as a **read 
 2. **Version retention.** When `versioned: true`, how many historical versions must a host retain? Proposed: advertise `maxVersions`, default "latest only is mandatory, history best-effort." Decide before Active.
 3. **Workspace ↔ memory-index coupling.** RFC 0062's distillation writes a memory-index manifest — should that live as a workspace file (`MEMORY-INDEX.md`) or a distinct surface? Proposed: a workspace file, to keep one durable layer. Confirm with 0062.
 
+## Phase-0 resolution (architect ruling, 2026-05-25)
+
+Per `docs/autonomous-agent-runtime-plan.md` §8 — Unresolved questions resolved (wire shape pinned; Active-ready pending this RFC's schema + prose landing):
+
+1. **Directory semantics** → flat namespace with `/`-in-names (matches the `path` pattern in `workspace-file.schema.json`); `list` takes an optional `?prefix=`. Not nested directories.
+2. **Version retention** → latest version is the MUST; `versioned: true` hosts retain ≥ an advertised `maxVersions` (history best-effort).
+3. **Memory-index coupling (with RFC 0062)** → the index is a workspace file `MEMORY-INDEX.json` (machine-loaded, normative); an optional human-editable `.md` sibling MAY accompany it.
+
 ## Implementation notes (non-normative)
 
 - `apps/workflow-engine`: today memory is tenant-scoped only (`host/inMemorySurfaces.ts`) and `RunRecord` carries no `owner.workspace` (RFC 0048 optional, unpopulated). This RFC's reference wiring is the first surface to require workspace-scoped storage; sequence it after the app populates the RFC 0048 owner triple.
