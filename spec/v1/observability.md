@@ -821,6 +821,18 @@ Hosts that implement either seam advertise it under `/.well-known/openwop`:
 
 A host that advertises `testSeams.otelScrape: true` but returns 404 / 5xx from the seam is non-conformant. Hosts that do NOT implement the seam MUST omit the field (or set it to `false`); conformance scenarios skip cleanly when the capability is absent.
 
+## Quality signals (RFC 0056)
+
+Observability above covers *what an agent did*; **annotations** cover *whether a human (or a supervisor agent) judged it good*. RFC 0056 defines a non-blocking quality signal — rating / correction / label / flag — attached to a run, event, or node, recorded via `POST /v1/runs/{runId}/annotations` and surfaced live via the `run.annotated` SSE notification.
+
+Annotations are a **per-run side-resource**, NOT entries in the replayable run event log (so they never enter fork/replay; see `replay.md`). A host that advertises `capabilities.feedback.supported: true` MUST:
+
+- record annotations tenant-scoped — an annotation is visible only within its run's tenant (SECURITY invariant `annotation-cross-tenant-isolation`);
+- redact secret-shaped material in `signal.correction` and `note` before persistence, listing, and export, per SR-1 (SECURITY invariant `annotation-content-redaction`);
+- audit-log each recording with the acting principal (`auth.md`).
+
+Consumers derive quality metrics (correction rate, mean rating, flag rate) from this surface; they complement — but are distinct from — the `openwop.*` telemetry spans/metrics above. See [`RFCS/0056`](../../RFCS/0056-run-feedback-and-annotation-event.md).
+
 ## Open spec gaps
 
 | # | Gap | Owner |

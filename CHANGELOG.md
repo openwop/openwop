@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0056 (run feedback & annotations) — wire + conformance + SECURITY + sample-host implementation (2026-05-25)
+
+Implemented RFC 0056 (stays `Draft`): `capabilities.feedback` block; `annotation.schema.json` + `annotation-create.schema.json`; `POST/GET /v1/runs/{runId}/annotations` (OpenAPI, `501` when unadvertised); the `run.annotated` AsyncAPI SSE notification — a **side-resource, NOT in the `RunEventType` enum / not replayable** (RFC 0056 §B/§D, the architect-review fix); 7 capability-gated conformance scenarios + `lib/feedback.ts`; 2 protocol-tier SECURITY invariants (`annotation-cross-tenant-isolation`, `annotation-content-redaction`). Spec prose added to `observability.md` (§"Quality signals"), `replay.md`, `debug-bundle.md`, `interrupt.md`. The workflow-engine **sample backend** advertises `capabilities.feedback` and implements the per-run annotation side-store + endpoints + secret-pattern/SR-1 redaction (sqlite + postgres adapters), **activating the reference app's feedback UI on `app.openwop.dev`**. All additive.
+
 ### `@openwop/openwop-conformance` 1.6.0 → 1.6.1 — fix stale `secrets.scopes` allowlist in `redaction.test.ts` (2026-05-25)
 
 Patch release fixing a self-contradiction MyndHyve surfaced during the 1.6.0 cohort run: `redaction.test.ts:103` hardcoded the `secrets.scopes` allowlist as `['tenant', 'user', 'run']`, but the same release's `capabilities.schema.json` enumerates `["tenant", "user", "run", "workspace"]` (`workspace` is the RFC 0046/0048 sub-tenant scope, additive). A host honestly advertising a `workspace`-scoped secret was wrongly failed. The allowlist now tracks the schema enum; schema + RFC 0046 §A were already canonical, so this is a test-only correction. Three version anchors synced (`conformance/package.json`, `scripts/openwop-check-publish-metadata.sh`, `scripts/check-npm-pack-contents.sh`); `conformance/CHANGELOG.md` [1.6.1] added. Does **not** affect the cohort graduation (the bug is unrelated to any of the 8 RFCs' gates). All additive.

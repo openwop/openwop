@@ -384,6 +384,10 @@ OTel attributes per `observability.md`:
 
 ---
 
+## Annotations are not interrupts (RFC 0056)
+
+A run **annotation** (RFC 0056 — rating / correction / label / flag) is distinct from an `interrupt`. An interrupt **blocks** a run awaiting a human decision and carries a signed-token resume contract; an annotation is **non-blocking**, may be attached during or after a run (including a terminal run), and never gates execution. See [`RFCS/0056`](../../RFCS/0056-run-feedback-and-annotation-event.md) and [`observability.md`](./observability.md) §"Quality signals".
+
 ## Open spec gaps
 
 | # | Gap | Owner |
