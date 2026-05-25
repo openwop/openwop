@@ -710,6 +710,15 @@
       "yanked": false
     },
     {
+      "name": "vendor.myndhyve.ads-metrics-import",
+      "latestVersion": "1.0.0",
+      "description": "MyndHyve ads.metrics.import — pure-logic aggregation of ad metric snapshots. Caller supplies snapshots[]; pack filters by platformAdIds + optional platform/dateRange, validates each entry, and computes weighted aggregations (overallCtr / overallCpc / overallRoas / overallConversionRate + per-platform breakdown). Mirrors source AdMetricsService.getAggregatedMetrics math. No host capabilities required.",
+      "license": "Apache-2.0",
+      "tags": [],
+      "deprecated": false,
+      "yanked": false
+    },
+    {
       "name": "vendor.myndhyve.ads-platforms",
       "kind": "node",
       "latestVersion": "1.0.0",
