@@ -78,6 +78,13 @@ export function setCurrentIdToken(token: string | null): void {
  */
 export function authedHeaders(extra?: Record<string, string>): Record<string, string> {
   const base = extra ? { ...extra } : {};
+  // i18n (spec/v1/i18n.md §"Accept-Language"): advertise the user's locale so
+  // a host MAY return localized interrupt / error copy. Every REST call routes
+  // through this helper (raw fetches + the SDK fetch wrapper), so one line
+  // covers the app. Harmless when the host doesn't localize.
+  if (typeof navigator !== 'undefined' && navigator.language) {
+    base['accept-language'] = navigator.language;
+  }
   if (cachedIdToken) {
     base['authorization'] = `Bearer ${cachedIdToken}`;
   } else if (config.authMode === 'bearer') {
