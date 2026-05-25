@@ -93,13 +93,15 @@ New fixture: a minimal workflow with an `approvalGate` node + seeded roles, cata
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (this file).
-- [ ] `core.openwop.governance.approvalGate` node defined.
-- [ ] `approval.*` events in `run-event-payloads.schema.json`.
-- [ ] Composition with quorum + auth-required profiles documented in `spec/v1/interrupt-profiles.md`.
-- [ ] Five conformance scenarios (grant, unauthorized, override-audited, reject-loopback, quorum).
-- [ ] CHANGELOG entry under `[Unreleased]`.
+- [x] Spec text merged (this file).
+- [x] `core.openwop.governance.approvalGate` node contract defined in `spec/v1/interrupt-profiles.md` (config + normative requirements; the executable pack is reference-impl work).
+- [x] `approval.granted` / `approval.rejected` / `approval.overridden` events in `run-event-payloads.schema.json` (+ `RunEventType` enum). `approval.requested` reuses the existing event.
+- [x] Composition with quorum + auth-required profiles documented in `spec/v1/interrupt-profiles.md`.
+- [~] Conformance — 2 of 5 landed: `approval-gate-events.test.ts` (server-free event-shape) + `approval-gate-flow.test.ts` (unauthorized-denied + override-audited, capability-gated on `authorization.supported`, `governance/approval-gate` seam soft-skips). The grant-releases / reject-loopback / quorum scenarios are deferred until a host registers the gate.
+- [x] CHANGELOG entry under `[Unreleased]`.
 - [ ] A non-steward host registers the gate and passes the unauthorized + override-audited scenarios.
+
+**Implementation note (2026-05-25):** The three governance events + the `approvalGate` node contract (in `interrupt-profiles.md`, composing the quorum + auth-required profiles with RFC 0049 authorization) + the two scenarios + the `governance/approval-gate` seam landed on `main`. `approval.requested` reuses the existing event (the spec already has it); the new events are `granted`/`rejected`/`overridden`. No new SECURITY invariant — fail-closed denial reuses RFC 0049's `authorization-fail-closed`; override-audited is conformance-asserted. Status stays `Draft`. **Completes Tier 2** of the MyndHyve protocol-extension batch on the openwop side.
 
 ## References
 

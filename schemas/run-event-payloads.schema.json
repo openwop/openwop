@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v1/run-event-payloads.schema.json",
   "title": "RunEventPayloads",
-  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n67 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
+  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n70 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
   "type": "object",
   "$defs": {
     "_typeIndex": {
@@ -29,6 +29,9 @@
         "node.cancelled":            { "$ref": "#/$defs/nodeCancelled" },
         "approval.requested":        { "$ref": "#/$defs/approvalRequested" },
         "approval.received":         { "$ref": "#/$defs/approvalReceived" },
+        "approval.granted":          { "$ref": "#/$defs/approvalGranted" },
+        "approval.rejected":         { "$ref": "#/$defs/approvalRejected" },
+        "approval.overridden":       { "$ref": "#/$defs/approvalOverridden" },
         "clarification.requested":   { "$ref": "#/$defs/clarificationRequested" },
         "clarification.resolved":    { "$ref": "#/$defs/clarificationResolved" },
         "interrupt.requested":       { "$ref": "#/$defs/interruptRequested" },
@@ -470,6 +473,39 @@
         "editedArtifactData": { "description": "User-edited artifact bytes when `action: 'edit-accept'`." }
       },
       "additionalProperties": true
+    },
+    "approvalGranted": {
+      "description": "RFC 0051 — emitted when an authorized principal grants a `core.openwop.governance.approvalGate`. Redaction-safe: `principal` is an opaque RFC 0048 id. MUST NOT be emitted unless the gate node is registered (peerDependency `authorization: 'supported'`).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gateId", "principal"],
+      "properties": {
+        "gateId": { "type": "string", "minLength": 1, "description": "Identifier of the approval gate node." },
+        "principal": { "type": "string", "minLength": 1, "description": "Opaque RFC 0048 principal id of the granting actor." },
+        "quorumProgress": { "type": "object", "additionalProperties": false, "properties": { "granted": { "type": "integer", "minimum": 0 }, "required": { "type": "integer", "minimum": 1 } }, "description": "When the gate requires a quorum: grants accumulated vs required." }
+      }
+    },
+    "approvalRejected": {
+      "description": "RFC 0051 — emitted when an authorized principal rejects an approval gate. The run loops back per the workflow edges (does not terminate by default). Redaction-safe.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gateId", "principal"],
+      "properties": {
+        "gateId": { "type": "string", "minLength": 1 },
+        "principal": { "type": "string", "minLength": 1, "description": "Opaque RFC 0048 principal id of the rejecting actor." },
+        "reason": { "type": "string", "description": "Redaction-safe human-readable reason." }
+      }
+    },
+    "approvalOverridden": {
+      "description": "RFC 0051 — emitted when a role-gated `override` path bypasses the gate (e.g. owner force-publish). MUST feed the audit log (RFC 0009/0010). Redaction-safe.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gateId", "principal", "reason"],
+      "properties": {
+        "gateId": { "type": "string", "minLength": 1 },
+        "principal": { "type": "string", "minLength": 1, "description": "Opaque RFC 0048 principal id of the overriding actor (MUST satisfy the override role)." },
+        "reason": { "type": "string", "minLength": 1, "description": "Required, redaction-safe rationale — the audit breadcrumb." }
+      }
     },
     "clarificationRequested": {
       "type": "object",

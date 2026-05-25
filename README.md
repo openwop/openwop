@@ -308,7 +308,7 @@ See [CHANGELOG.md](./CHANGELOG.md) — `[1] — 2026-05-08 — OpenWOP v1 FINAL 
 - [**RFC 0043**](./RFCS/0043-registry-and-extension-policy.md) — Registry + extension policy (`Draft`). IPR posture + vendor-extension namespace rules + neutral process for profile/event-type/capability/envelope-kind name reservations.
 
 **v1 Foundation (2026-04-27):**
-Current generated state: 39 prose specs (35 FINAL + 4 DRAFT) · 34 JSON Schemas · 31 OpenAPI operations · AsyncAPI 3.1 · 222 conformance scenario files · 3 reference SDKs. See [docs/PROTOCOL-STATUS.md](./docs/PROTOCOL-STATUS.md) for the machine-generated snapshot.
+Current generated state: 39 prose specs (35 FINAL + 4 DRAFT) · 34 JSON Schemas · 31 OpenAPI operations · AsyncAPI 3.1 · 224 conformance scenario files · 3 reference SDKs. See [docs/PROTOCOL-STATUS.md](./docs/PROTOCOL-STATUS.md) for the machine-generated snapshot.
 
 - **Protocol corpus** — Normative REST, SSE, discovery, auth, idempotency, replay/fork, interruption, observability, node-pack, host-extension, and version-negotiation contracts are frozen for v1.
 - **Machine-readable contracts** — OpenAPI 3.1, AsyncAPI 3.1, and JSON Schemas are bundled and cross-validated by the conformance corpus.

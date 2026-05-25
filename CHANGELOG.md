@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0051 approval & deployment-gate primitive — completes Tier-2 (2026-05-25)
+
+The `core.openwop.governance.approvalGate` node — a first-class, role-gated, audited approval/deploy-gate composing the quorum + auth-required interrupt profiles with RFC 0049 authorization. Completes Tier-2 of the MyndHyve protocol-extension batch on the openwop side. RFC 0051 stays `Draft`. All additive.
+
+- **Schema:** three new governance events — `approval.granted` / `approval.rejected` / `approval.overridden` (the last with a mandatory `reason` audit breadcrumb) — in `run-event-payloads.schema.json` + the `RunEventType` enum. `approval.requested` reuses the existing event.
+- **Spec:** `interrupt-profiles.md` §`core.openwop.governance.approvalGate` — node config (`requiredRole`/`requiredScope`, optional `quorum`, role-gated audited `override`, `resumeSchema`) + normative requirements: fail-closed denial (RFC 0049 §C), quorum release, reject-loopback, override emits `approval.overridden` + an audit entry, `400 INVALID_RESUME_VALUE` on malformed resume.
+- **Conformance:** `approval-gate-events.test.ts` (server-free event-shape) + `approval-gate-flow.test.ts` (unauthorized-denied + override-audited, capability-gated on `authorization.supported`, `governance/approval-gate` seam soft-skips, registered in `host-sample-test-seams.md`). Grant/reject-loopback/quorum scenarios deferred to a host.
+- **No new SECURITY invariant** — fail-closed denial reuses RFC 0049's `authorization-fail-closed`; override-audited is conformance-asserted.
+- **Counts synced:** conformance scenario files → 224; `RunEventType` variants 67→70; README + conformance README + `coverage.md` updated; `docs/PROTOCOL-STATUS.md` regenerated.
+
 ### Reference-app UX RFC pair 0055 + 0056 filed as `Draft` (2026-05-25)
 
 Two additive, in-charter RFCs authored to unblock reference-app UX work (see [`plans/app-ux-enhancements.md`](plans/app-ux-enhancements.md)) without touching the frozen v1 wire contract. Both flip `Draft → Active → Accepted` only on maintainer promotion + a host wiring the surface + conformance.
