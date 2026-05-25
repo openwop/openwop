@@ -104,18 +104,19 @@ export async function forkRun(runId: string, req: ForkRunRequest): Promise<ForkR
   return client.runs.fork(runId, req);
 }
 
-/** Fetch the debug bundle for a run per `spec/v1/debug-bundle.md`. The SDK
- *  doesn't expose this surface yet; raw fetch reuses the app's auth
- *  headers. Returns the parsed JSON `{ runId, workflowId, status, events,
- *  truncated, ... }`. */
+/** Fetch the debug bundle for a run per `spec/v1/debug-bundle.md`.
+ *  Routes through the published SDK's `client.runs.debugBundle()`
+ *  (parity row SDK-4, closed 2026-05-15 — see `sdk/PARITY.md`).
+ *  The SDK returns `null` when the host doesn't advertise
+ *  `capabilities.debugBundle.supported: true`; we throw a typed error
+ *  in that case so the calling button can surface a "not supported"
+ *  message instead of saving a `null.json` file. */
 export async function getDebugBundle(runId: string): Promise<Record<string, unknown>> {
-  const res = await fetch(`${config.baseUrl}/v1/runs/${encodeURIComponent(runId)}/debug-bundle`, {
-    method: 'GET',
-    headers: { ...authedHeaders(), Accept: 'application/json' },
-    credentials: config.authMode === 'cookie' ? 'include' : 'same-origin',
-  });
-  if (!res.ok) throw new Error(`Debug-bundle fetch failed (${res.status})`);
-  return (await res.json()) as Record<string, unknown>;
+  const bundle = await client.runs.debugBundle(runId);
+  if (bundle === null) {
+    throw new Error('Debug-bundle download is not supported by this host (capabilities.debugBundle.supported is not advertised).');
+  }
+  return bundle as unknown as Record<string, unknown>;
 }
 
 export async function pollEvents(runId: string, lastSequence = 0): Promise<PollEventsResponse> {
