@@ -1843,6 +1843,35 @@ Additive — hosts that omit the block advertise no heartbeat. Verified by `hear
 
 ---
 
+## §host.toolHooks
+
+**Capability flag:** `toolHooks.supported: true` *(advertised via top-level `Capabilities.toolHooks`; see [capabilities.md §toolHooks](capabilities.md#toolhooks))* — RFC 0064, `Active`.
+
+**Used by:** per-tool authorization + rate limiting + a content-free tool-call audit trail, layered on the existing `agent.toolCalled` / `agent.toolReturned` events (RFC 0002). Generalizes the MCP-specific bridges across transports (`mcp` / `http` / `native`) — see [mcp-integration.md](mcp-integration.md). Reuses RFC 0049's `forbidden` error + `authorization-fail-closed` invariant and the existing `rate_limited` error; **no new event type, error code, or SECURITY invariant**.
+
+**Content-free audit (normative, when `prePostEvents: true`).** For every external tool call, the host MUST populate the additive fields on the existing `callId`-paired events: `agent.toolCalled` gains `argsHash` (SHA-256 over RFC 8785 JCS-canonicalized args with resolved secrets **already redacted** per SR-1 — raw key material MUST NOT enter the hash input), `principal` (the RFC 0048 id; `core.system` for non-agent host egress — `agentId` stays REQUIRED, so non-agent calls use the reserved synthetic agent id), and `transport`; `agent.toolReturned` gains `status` (`ok`/`error`/`forbidden`/`rate_limited`) and `durationMs` (recorded, re-emitted verbatim on replay/`:fork`, never recomputed — `replay.md`).
+
+**Per-tool authorization (normative, when `perToolAuthorization: true`).** A tool declares required scopes (`actions[].requiredScopes[]` in its connector/mount manifest, per RFC 0045). Before invoking, the host MUST check the run principal's RFC 0049 scopes and **fail closed**: if the principal lacks a scope **or authorization cannot be evaluated**, the host MUST NOT invoke the tool, MUST emit `agent.toolReturned { status: 'forbidden' }`, and MUST surface the existing `forbidden` (403) error with `details.scope: 'tool'` + `details.toolName` + `details.requiredScopes`. Absence of a decision is denial — this is the per-tool application of RFC 0049's `authorization-fail-closed` invariant.
+
+**Per-tool rate limiting (normative, when `perToolRateLimit: true`).** The host MUST apply a token bucket keyed on `(principal, toolName)`; on exhaustion it MUST NOT invoke the tool, emits `agent.toolReturned { status: 'rate_limited' }`, and surfaces the existing `rate_limited` (429, `Retry-After`) error with `details.scope: 'tool'` — distinct from the HTTP-inbound limiter (unchanged), same envelope.
+
+**Capability advertisement shape:**
+
+```json
+{
+  "toolHooks": {
+    "supported": true,
+    "prePostEvents": true,
+    "perToolAuthorization": true,
+    "perToolRateLimit": false
+  }
+}
+```
+
+Additive — hosts that omit the block behave exactly as today (the `agent.toolCalled`/`agent.toolReturned` `required` arrays + `callId` pairing are unchanged; `version < toolHooks` consumers ignore the new fields). Verified by `tool-hooks-shape.test.ts` (shape, always runs) + `tool-hooks-content-free.test.ts` / `tool-hooks-authorization-fail-closed.test.ts` / `tool-hooks-rate-limit.test.ts` / `tool-hooks-secret-redaction.test.ts` (capability-gated).
+
+---
+
 ## §host.deadLetter
 
 **Capability flag:** `deadLetter.supported: true` *(advertised via top-level `Capabilities.deadLetter`; see [capabilities.md §deadLetter](capabilities.md#deadletter))* — RFC 0053, `Draft`.
