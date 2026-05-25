@@ -1125,6 +1125,15 @@
       "yanked": false
     },
     {
+      "name": "vendor.myndhyve.knowledge-tools",
+      "latestVersion": "1.0.0",
+      "description": "MyndHyve knowledge-tools — first reference consumer of the v1 host.knowledge surface. Two typeIds: (1) knowledge.retrieve — thin pass-through over ctx.knowledge.retrieve with optional score-floor filtering; (2) knowledge.augment-prompt — composition primitive that retrieves + renders a Sources block + builds an augmented user message + emits a citation list. Host advertises host.knowledge: supported per spec/v1/host-capabilities.md §host.knowledge.",
+      "license": "Apache-2.0",
+      "tags": [],
+      "deprecated": false,
+      "yanked": false
+    },
+    {
       "name": "vendor.myndhyve.landing-page",
       "kind": "node",
       "latestVersion": "1.0.0",
