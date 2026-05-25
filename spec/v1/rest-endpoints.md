@@ -46,6 +46,8 @@ Every OpenWOP-compliant server MUST expose:
 | `POST` | `/v1/runs/{runId}:fork` | API key | `runs:create` + `runs:read` | Fork or replay a run from recorded state |
 | `POST` | `/v1/runs/{runId}:pause` | API key | `runs:cancel` | Administratively pause an in-flight run |
 | `POST` | `/v1/runs/{runId}:resume` | API key | `runs:cancel` | Resume a paused run |
+| `POST` | `/v1/runs/{runId}/annotations` | API key | `runs:annotate` | RFC 0056 record a quality annotation (capability-gated; `501` when `capabilities.feedback` unadvertised) |
+| `GET` | `/v1/runs/{runId}/annotations` | API key | `runs:read` | RFC 0056 list a run's annotations (capability-gated; `501` when unadvertised) |
 
 #### `POST /v1/runs` request
 

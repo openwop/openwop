@@ -8,15 +8,15 @@
 | Surface | Current value | Source |
 |---|---:|---|
 | Spec prose documents | 39 | `spec/v1/*.md` |
-| JSON Schemas | 34 | `schemas/*.schema.json` |
-| OpenAPI operations | 31 | `api/openapi.yaml` |
+| JSON Schemas | 36 | `schemas/*.schema.json` |
+| OpenAPI operations | 33 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 231 | `conformance/src/scenarios/*.test.ts` |
+| Conformance scenario files | 238 | `conformance/src/scenarios/*.test.ts` |
 | RFCs tracked | 57 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## OpenAPI Operations
 
-`bulkCancelRuns`, `cancelRun`, `createPromptTemplate`, `createRun`, `deletePromptTemplate`, `deleteTestPackVersion`, `diffRun`, `forkRun`, `getArtifact`, `getCapabilities`, `getOpenApiSpec`, `getPromptTemplate`, `getRun`, `getRunAncestry`, `getTestPackSignature`, `getTestPackTarball`, `getWorkflow`, `inspectInterruptByToken`, `listPromptTemplates`, `pauseRun`, `pollRunEvents`, `putTestPackTarball`, `registerWebhook`, `renderPromptTemplate`, `resolveInterruptByRun`, `resolveInterruptByToken`, `resumeRun`, `streamRunEvents`, `unregisterWebhook`, `updatePromptTemplate`, `verifyAuditLog`
+`bulkCancelRuns`, `cancelRun`, `createAnnotation`, `createPromptTemplate`, `createRun`, `deletePromptTemplate`, `deleteTestPackVersion`, `diffRun`, `forkRun`, `getArtifact`, `getCapabilities`, `getOpenApiSpec`, `getPromptTemplate`, `getRun`, `getRunAncestry`, `getTestPackSignature`, `getTestPackTarball`, `getWorkflow`, `inspectInterruptByToken`, `listAnnotations`, `listPromptTemplates`, `pauseRun`, `pollRunEvents`, `putTestPackTarball`, `registerWebhook`, `renderPromptTemplate`, `resolveInterruptByRun`, `resolveInterruptByToken`, `resumeRun`, `streamRunEvents`, `unregisterWebhook`, `updatePromptTemplate`, `verifyAuditLog`
 
 ## RFC Status
 

@@ -414,6 +414,30 @@
       },
       "additionalProperties": false
     },
+    "feedback": {
+      "type": "object",
+      "description": "RFC 0056 (`Draft`). Non-blocking human/agent quality signals (rating / correction / label / flag) attached to a run, event, or node. Annotations are a per-run side-resource recorded via `POST /v1/runs/{runId}/annotations`, listed via `GET`, and surfaced live via the `run.annotated` SSE notification — they are NOT entries in the replayable run event log (see RFC 0056 §B/§D). Hosts that do not advertise `supported: true` return `501 capability_not_provided` on the annotation endpoints.",
+      "required": ["supported"],
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "Host implements the RFC 0056 annotation side-store + endpoints + `run.annotated` notification."
+        },
+        "targets": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["run", "event", "node"] },
+          "uniqueItems": true,
+          "description": "Which annotation-target granularities the host accepts. Absent = `run` only."
+        },
+        "signals": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["rating", "correction", "label", "flag"] },
+          "uniqueItems": true,
+          "description": "Which signal kinds the host accepts. Absent = all four."
+        }
+      },
+      "additionalProperties": false
+    },
     "oauth": {
       "type": "object",
       "description": "RFC 0047 (`Draft`). Host performs OAuth 2.0 grants (authorization-code + refresh) on a user's behalf for connector nodes, stores the acquired token as a `host.credentials` (RFC 0046) entry, refreshes it transparently, and resolves it into the node sandbox as a bearer token. Token material NEVER crosses the wire (SECURITY invariant `credential-payload-redaction`). Distinct from `auth` host-authentication profiles (RFC 0010 = who is the caller; this = what third-party token a node holds).",

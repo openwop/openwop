@@ -1331,3 +1331,26 @@ invariants:
       .llmCacheKeyRecipe: "spec-rfc-0041"`). Non-portable cache keys
       hide tenant-scoped state behind the cache boundary, defeating
       the SR-1 secret-redaction invariant on cached responses.
+
+  - id: annotation-cross-tenant-isolation
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/invariants.yaml
+    tests:
+      - conformance/src/scenarios/feedback-cross-tenant-isolation.test.ts
+    note: |
+      RFC 0056 §E. An annotation is visible only within its run's tenant; a
+      GET /v1/runs/{runId}/annotations MUST NOT return annotations from a run
+      owned by a different tenant, and a run's annotation list MUST contain
+      only that run's annotations. Mirrors CTI-1.
+
+  - id: annotation-content-redaction
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/feedback-correction-redaction.test.ts
+    note: |
+      RFC 0056 §E. Annotation signal.correction and note are untrusted user
+      content; secret-shaped material MUST be redacted under SR-1 before
+      persistence, listing, and debug-bundle export.
