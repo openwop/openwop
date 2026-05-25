@@ -106,8 +106,15 @@ export function WorkflowCompletionCard({ run, onPreviewArtifact }: Props): JSX.E
                   onClick={() => onPreviewArtifact?.(t.nodeId, t.output, t.label)}
                   disabled={!onPreviewArtifact}
                   style={{ fontSize: 12 }}
+                  // Button label:
+                  //   - primary-tagged terminal → "View {label}" (author named
+                  //     it; lean on that)
+                  //   - one terminal, untagged → "View output" (generic;
+                  //     legacy v1 behavior)
+                  //   - N>1 untagged terminals → "View {label}" (disambiguates)
+                  title={t.isPrimary ? `Primary output — declared by workflow author` : undefined}
                 >
-                  {terminals.length > 1 ? `View ${t.label}` : 'View output'} →
+                  {(t.isPrimary || terminals.length > 1) ? `View ${t.label}` : 'View output'} →
                 </button>
                 {run.runId && !unavailable && (
                   // Deep-link companion to the modal-opening View button —
@@ -173,6 +180,12 @@ interface Terminal {
   nodeId: string;
   label: string;
   output: unknown;
+  /** RFC 0065 — true when the workflow author tagged this node as the
+   *  canonical-deliverable artifact. When ≥1 terminal is primary, the
+   *  card surfaces only the primary as a "View output" button and the
+   *  rest as a single "Open run" link; otherwise it falls back to the
+   *  v1 "N View links for N terminals" convention. */
+  isPrimary: boolean;
 }
 
 /**
@@ -225,8 +238,20 @@ function useTerminalNodes(run: WorkflowRunState): Terminal[] {
         nodeId: backendNodeId,
         label,
         output,
+        isPrimary: n.outputRole === 'primary',
       });
     }
+    // RFC 0065 — if at least one terminal is tagged `primary`, narrow
+    // the surfaced list to JUST the primary one. Per the RFC, the
+    // tiebreaker for multiple primaries is lexicographic node id —
+    // deterministic + reproducible across implementations.
+    const primaries = terminals.filter((t) => t.isPrimary);
+    if (primaries.length > 0) {
+      primaries.sort((a, b) => a.nodeId.localeCompare(b.nodeId));
+      return [primaries[0]!];
+    }
+    // Fallback (v1 convention): show every terminal as a separate
+    // "View output" link.
     return terminals;
   }, [memoKey]);
 }
