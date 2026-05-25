@@ -27,7 +27,13 @@ import {
   markNotificationUnread as markUnreadRemote,
   subscribeToNotifications,
 } from './notificationsClient.js';
-import type { Notification, NotificationStatus } from './types.js';
+import {
+  loadPreferences,
+  savePreferences,
+  shouldCountUnread,
+  shouldFireDesktop,
+} from './preferences.js';
+import type { Notification, NotificationPreferences, NotificationStatus } from './types.js';
 
 /**
  * Live SSE connection status, surfaced to the UI so the bell / panel
@@ -56,6 +62,12 @@ interface NotificationStoreState {
   loading: boolean;
   connectionStatus: NotificationConnectionStatus;
   desktopPermission: DesktopPermission;
+  /** Per-user notification preferences (item 5+6). Loaded from
+   *  localStorage at store-creation time; persisted to localStorage on
+   *  every `updatePreferences` call. */
+  preferences: NotificationPreferences;
+  /** When true, the preferences subdrawer is open inside the panel. */
+  preferencesOpen: boolean;
   error: string | null;
   /** Active SSE cleanup, if any. */
   _sseCleanup: (() => void) | null;
@@ -90,14 +102,25 @@ interface NotificationStoreActions {
    *  (the user may have granted in a prior session). */
   syncDesktopPermission: () => void;
 
+  // Preferences (items 5 + 6)
+  /** Open the preferences subdrawer inside the panel. */
+  openPreferences: () => void;
+  /** Close the preferences subdrawer. */
+  closePreferences: () => void;
+  /** Replace the preferences blob. Persisted to localStorage on every
+   *  call. Use the helper `updatePreference` for typed-shape mutations. */
+  updatePreferences: (next: NotificationPreferences) => void;
+
   // Internal — called by SSE handler
   _ingest: (n: Notification) => void;
 }
 
 type NotificationStore = NotificationStoreState & NotificationStoreActions;
 
-function recountUnread(list: Notification[]): number {
-  return list.filter((n) => n.status === 'unread').length;
+function recountUnread(list: Notification[], prefs: NotificationPreferences): number {
+  // Muted types still appear in the panel but don't bump the bell
+  // badge. Mirror the myndhyve pattern: visibility ≠ unread weight.
+  return list.filter((n) => n.status === 'unread' && shouldCountUnread(n, prefs)).length;
 }
 
 /**
@@ -177,6 +200,8 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
   loading: false,
   connectionStatus: 'disconnected',
   desktopPermission: readDesktopPermission(),
+  preferences: loadPreferences(),
+  preferencesOpen: false,
   error: null,
   _sseCleanup: null,
 
@@ -187,7 +212,7 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
       const list = await listNotifications({ limit: 100 });
       set({
         notifications: [...list],
-        unreadCount: recountUnread([...list]),
+        unreadCount: recountUnread([...list], get().preferences),
         loading: false,
         connectionStatus: 'connected',
       });
@@ -225,7 +250,7 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
       const list = await listNotifications({ limit: 100 });
       set({
         notifications: [...list],
-        unreadCount: recountUnread([...list]),
+        unreadCount: recountUnread([...list], get().preferences),
         error: null,
       });
     } catch (err) {
@@ -240,9 +265,9 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
   async markAsRead(id) {
     const prev = get().notifications;
     const next = applyStatus(prev, id, 'read', new Date().toISOString());
-    set({ notifications: next, unreadCount: recountUnread(next) });
+    set({ notifications: next, unreadCount: recountUnread(next, get().preferences) });
     try { await markReadRemote(id); } catch (err) {
-      set({ notifications: prev, unreadCount: recountUnread(prev),
+      set({ notifications: prev, unreadCount: recountUnread(prev, get().preferences),
             error: err instanceof Error ? err.message : String(err) });
     }
   },
@@ -250,9 +275,9 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
   async markAsUnread(id) {
     const prev = get().notifications;
     const next = applyStatus(prev, id, 'unread', new Date().toISOString());
-    set({ notifications: next, unreadCount: recountUnread(next) });
+    set({ notifications: next, unreadCount: recountUnread(next, get().preferences) });
     try { await markUnreadRemote(id); } catch (err) {
-      set({ notifications: prev, unreadCount: recountUnread(prev),
+      set({ notifications: prev, unreadCount: recountUnread(prev, get().preferences),
             error: err instanceof Error ? err.message : String(err) });
     }
   },
@@ -260,9 +285,9 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
   async archive(id) {
     const prev = get().notifications;
     const next = applyStatus(prev, id, 'archived', new Date().toISOString());
-    set({ notifications: next, unreadCount: recountUnread(next) });
+    set({ notifications: next, unreadCount: recountUnread(next, get().preferences) });
     try { await archiveRemote(id); } catch (err) {
-      set({ notifications: prev, unreadCount: recountUnread(prev),
+      set({ notifications: prev, unreadCount: recountUnread(prev, get().preferences),
             error: err instanceof Error ? err.message : String(err) });
     }
   },
@@ -270,9 +295,9 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
   async delete(id) {
     const prev = get().notifications;
     const next = prev.filter((n) => n.notificationId !== id);
-    set({ notifications: next, unreadCount: recountUnread(next) });
+    set({ notifications: next, unreadCount: recountUnread(next, get().preferences) });
     try { await deleteRemote(id); } catch (err) {
-      set({ notifications: prev, unreadCount: recountUnread(prev),
+      set({ notifications: prev, unreadCount: recountUnread(prev, get().preferences),
             error: err instanceof Error ? err.message : String(err) });
     }
   },
@@ -285,7 +310,7 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
       : n);
     set({ notifications: next, unreadCount: 0 });
     try { await markAllRemote(); } catch (err) {
-      set({ notifications: prev, unreadCount: recountUnread(prev),
+      set({ notifications: prev, unreadCount: recountUnread(prev, get().preferences),
             error: err instanceof Error ? err.message : String(err) });
     }
   },
@@ -316,22 +341,42 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
     set({ desktopPermission: readDesktopPermission() });
   },
 
+  openPreferences() { set({ preferencesOpen: true }); },
+  closePreferences() { set({ preferencesOpen: false }); },
+
+  updatePreferences(next) {
+    set({ preferences: next });
+    savePreferences(next);
+    // Recount unread under the new preference set — a freshly-muted
+    // type stops counting; an unmuted type starts counting again.
+    set((s) => ({
+      unreadCount: s.notifications
+        .filter((x) => x.status === 'unread' && shouldCountUnread(x, next))
+        .length,
+    }));
+  },
+
   _ingest(n) {
     let isNew = false;
+    const prefs = get().preferences;
     set((s) => {
       // De-dupe: SSE can re-deliver if the client reconnects. The BE
       // assigns a stable `notificationId`, so an existing row wins.
       if (s.notifications.some((x) => x.notificationId === n.notificationId)) return s;
       isNew = true;
       const next = [n, ...s.notifications];
-      return { notifications: next, unreadCount: recountUnread(next) };
+      // Unread count respects the preference filter — muted types
+      // still SHOW in the panel (so the user can find them later)
+      // but don't bump the bell badge.
+      return {
+        notifications: next,
+        unreadCount: next.filter((x) => x.status === 'unread' && shouldCountUnread(x, prefs)).length,
+      };
     });
-    // Fire the OS toast only for genuinely-new unread rows. Skip
-    // already-read rows (they shouldn't usually arrive via SSE, but
-    // the BE could replay) and dupes. Permission gating happens
-    // inside `fireDesktopNotification` so this stays a single call
-    // site regardless of permission state.
-    if (isNew && n.status === 'unread') {
+    // Fire the OS toast only for genuinely-new unread rows + when
+    // preferences allow it (globalMute / per-type / quiet hours).
+    // Permission gating happens inside `fireDesktopNotification`.
+    if (isNew && n.status === 'unread' && shouldFireDesktop(n, prefs)) {
       fireDesktopNotification(n);
     }
   },
