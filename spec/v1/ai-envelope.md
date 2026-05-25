@@ -127,6 +127,24 @@ interface EnvelopeMeta {
    *  Never used for routing; never persisted into event payloads in a
    *  security-relevant way. (in-flight) */
   label?: string;
+
+  /** Optional rendering hint (RFC 0055). Advisory only — never changes
+   *  payload validation; unknown values fall back to default rendering.
+   *  See §"Rendering hints". (in-flight) */
+  rendering?: RenderingHint;
+}
+
+interface RenderingHint {
+  /** Renderer family the producer suggests. (in-flight) */
+  display?: 'markdown' | 'code' | 'card' | 'image' | 'audio' | 'file';
+  /** IANA media type when display is image/audio/file. (in-flight) */
+  mimeType?: string;
+  /** Language tag when display: code (e.g. 'ts', 'python'). (in-flight) */
+  lang?: string;
+  /** Text alternative for accessibility when display is image/audio/file. (in-flight) */
+  alt?: string;
+  /** Optional caption / card header. (in-flight) */
+  title?: string;
 }
 
 interface PartialInfo {
@@ -146,6 +164,30 @@ type EnvelopeOutcome =
 ```
 
 **Top-level fields are closed** (`additionalProperties: false` at the spec level). Vendor-namespaced extensions go inside `payload` or under `meta.<vendor>.<key>` per the canonical-prefix table in `host-extensions.md`.
+
+---
+
+## Rendering hints (RFC 0055)
+
+`meta.rendering` is an **optional, advisory** hint telling a consumer how the producer suggests its `payload` be rendered. It exists because rendering consistency is an interop property: two consumers reading the same envelope SHOULD render it the same way, rather than each guessing. Without it, a chat UI, a debugger, and a mobile client each special-case text and drop everything else to a raw JSON dump.
+
+It is a **hint, not a contract**:
+
+- A producer (LLM node / host) MAY set `meta.rendering`. It MUST NOT be required for any payload to validate — `meta.rendering` never changes `payload` validation.
+- A consumer SHOULD honor `display` when it recognizes the value, and MUST degrade gracefully (fall back to its default text / raw-JSON rendering) when `meta.rendering` is absent or carries a `display` value it does not recognize.
+- When `display` is `image`, `audio`, or `file`, the consumer SHOULD render `alt` for assistive technologies, and the producer SHOULD provide it.
+- `meta.rendering` carries **no secret material** and is subject to the same SR-1 redaction discipline as the rest of `meta` (§"Redaction").
+
+| `display` | Meaning | Companion fields |
+|---|---|---|
+| `markdown` | Render `payload` (or its text) as Markdown. | — |
+| `code` | Render as a code block. | `lang` |
+| `card` | Render the structured `payload` as a titled card. | `title` |
+| `image` | Payload references/contains an image. | `mimeType`, `alt`, `title` |
+| `audio` | Payload references/contains an audio clip. | `mimeType`, `alt`, `title` |
+| `file` | Payload references/contains a downloadable file. | `mimeType`, `alt`, `title` |
+
+The `image` / `audio` / `file` families pair with the `media.*` payload convention (§"Media reference payloads", RFC 0055 §C) for the asset-URL discipline; a producer MAY also set `display: image` on a vendor-namespaced payload that carries its own inline data. The hint never overrides the `type` discriminator — payload shape is still selected and validated by `type`.
 
 ---
 
