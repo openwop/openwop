@@ -36,6 +36,8 @@ type CapabilitiesLimits struct {
 	SchemaRounds        int  `json:"schemaRounds"`
 	EnvelopesPerTurn    int  `json:"envelopesPerTurn"`
 	MaxNodeExecutions   *int `json:"maxNodeExecutions,omitempty"`
+	MaxRunDurationMs    *int `json:"maxRunDurationMs,omitempty"`  // RFC 0058
+	MaxLoopIterations   *int `json:"maxLoopIterations,omitempty"` // RFC 0058
 }
 
 // Capabilities mirrors `schemas/capabilities.schema.json`.
@@ -83,12 +85,14 @@ type RunSnapshot struct {
 // RunConfigurable carries per-run overrides. Reserved keys are typed;
 // unknown keys live in `Extras`. See run-options.md.
 type RunConfigurable struct {
-	RecursionLimit  *int              `json:"recursionLimit,omitempty"`
-	Model           string            `json:"model,omitempty"`
-	Temperature     *float64          `json:"temperature,omitempty"`
-	MaxTokens       *int              `json:"maxTokens,omitempty"`
-	PromptOverrides map[string]string `json:"promptOverrides,omitempty"`
-	Extras          map[string]any    `json:"-"`
+	RecursionLimit    *int              `json:"recursionLimit,omitempty"`
+	RunTimeoutMs      *int              `json:"runTimeoutMs,omitempty"`      // RFC 0058
+	MaxLoopIterations *int              `json:"maxLoopIterations,omitempty"` // RFC 0058
+	Model             string            `json:"model,omitempty"`
+	Temperature       *float64          `json:"temperature,omitempty"`
+	MaxTokens         *int              `json:"maxTokens,omitempty"`
+	PromptOverrides   map[string]string `json:"promptOverrides,omitempty"`
+	Extras            map[string]any    `json:"-"`
 }
 
 // MarshalJSON folds Extras into the same JSON object so the wire shape
@@ -97,6 +101,12 @@ func (c RunConfigurable) MarshalJSON() ([]byte, error) {
 	out := make(map[string]any, 5+len(c.Extras))
 	if c.RecursionLimit != nil {
 		out["recursionLimit"] = *c.RecursionLimit
+	}
+	if c.RunTimeoutMs != nil {
+		out["runTimeoutMs"] = *c.RunTimeoutMs
+	}
+	if c.MaxLoopIterations != nil {
+		out["maxLoopIterations"] = *c.MaxLoopIterations
 	}
 	if c.Model != "" {
 		out["model"] = c.Model
@@ -572,6 +582,8 @@ var RunErrorCodes = []string{
 	"node_execution_failed",
 	"external_call_failed",
 	"recursion_limit_exceeded",
+	"run_timeout",
+	"loop_limit_exceeded",
 	"capability_not_provided",
 
 	// Approval

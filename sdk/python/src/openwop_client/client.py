@@ -77,6 +77,8 @@ def _capabilities_from_dict(d: dict[str, Any]) -> Capabilities:
         schemaRounds=int(raw_limits["schemaRounds"]),
         envelopesPerTurn=int(raw_limits["envelopesPerTurn"]),
         maxNodeExecutions=raw_limits.get("maxNodeExecutions"),
+        maxRunDurationMs=raw_limits.get("maxRunDurationMs"),
+        maxLoopIterations=raw_limits.get("maxLoopIterations"),
     )
     return Capabilities(
         protocolVersion=str(d["protocolVersion"]),

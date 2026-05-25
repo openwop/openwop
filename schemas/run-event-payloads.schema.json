@@ -717,10 +717,10 @@
 
     "capBreached": {
       "type": "object",
-      "description": "Emitted when a CapabilityLimit is exceeded. Protocol-level limits use the four engine kinds (clarificationRounds / schemaRounds / envelopesPerTurn / maxNodeExecutions). RFC 0008 §K WASM-runtime caps use the wasm-* kinds (memory ceiling, fuel exhaustion, execution-time wall-clock).",
+      "description": "Emitted when a CapabilityLimit is exceeded. Protocol-level limits use the engine kinds (clarificationRounds / schemaRounds / envelopesPerTurn / maxNodeExecutions). RFC 0008 §K WASM-runtime caps use the wasm-* kinds (memory ceiling, fuel exhaustion, execution-time wall-clock). RFC 0058 run-execution bounds use the run-scoped run-duration (wall-clock timeout; limit=resolvedMs, observed=elapsedMs) and loop-iterations (agent-loop ceiling; limit=resolvedMax, observed=iterationCount) kinds.",
       "required": ["kind", "limit", "observed"],
       "properties": {
-        "kind":     { "type": "string", "enum": ["clarification", "schema", "envelopes", "node-executions", "wasm-memory", "wasm-fuel", "wasm-execution-time"] },
+        "kind":     { "type": "string", "enum": ["clarification", "schema", "envelopes", "node-executions", "wasm-memory", "wasm-fuel", "wasm-execution-time", "run-duration", "loop-iterations"] },
         "limit":    { "type": "integer", "minimum": 0 },
         "observed": { "type": "integer", "minimum": 0 },
         "nodeId":   { "type": "string" }

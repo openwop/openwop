@@ -32,6 +32,10 @@ export interface Capabilities {
     schemaRounds: number;
     envelopesPerTurn: number;
     maxNodeExecutions?: number;
+    /** RFC 0058. Engine-side wall-clock ceiling per run (ms); upper bound for `RunConfigurable.runTimeoutMs`. */
+    maxRunDurationMs?: number;
+    /** RFC 0058. Engine-side agent-loop iteration ceiling; upper bound for `RunConfigurable.maxLoopIterations`. */
+    maxLoopIterations?: number;
   };
   extensions?: Record<string, unknown>;
   // Network-handshake superset (all `(future)` fields per capabilities.md)
@@ -83,6 +87,15 @@ export interface RunSnapshot {
 export interface RunConfigurable {
   /** Override the per-run node-execution ceiling. Clamped server-side. */
   recursionLimit?: number;
+  /** RFC 0058. Wall-clock run deadline (ms from `run.started`); clamped to
+   *  `Capabilities.limits.maxRunDurationMs`. Breach → `cap.breached
+   *  { kind: 'run-duration' }` + `run_timeout`. */
+  runTimeoutMs?: number;
+  /** RFC 0058. Agent-loop iteration ceiling (one per orchestrator turn);
+   *  clamped to `Capabilities.limits.maxLoopIterations`. Breach →
+   *  `cap.breached { kind: 'loop-iterations' }` + `loop_limit_exceeded`.
+   *  Ignored unless the host advertises `capabilities.agents.loop.supported`. */
+  maxLoopIterations?: number;
   /** Override AI model for nodes that consume `ctx.config.configurable.model`. */
   model?: string;
   /** Override AI temperature (server SHOULD enforce 0..2). */

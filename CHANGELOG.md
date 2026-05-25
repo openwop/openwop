@@ -11,9 +11,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0058 §A–§D — run-execution-bounds wire surface landed (`Draft`, 2026-05-25)
+
+Implements the RFC 0058 wire surface (additive; Status stays `Draft` pending the comment window + reference-host enforcement, per the RFC 0052 precedent).
+
+- **Schema:** `capabilities.schema.json` `limits.{maxRunDurationMs,maxLoopIterations}` (optional); `run-event-payloads.schema.json` `capBreached.kind` enum gains `run-duration` + `loop-iterations` (additive enum extension, no `eventLogSchemaVersion` bump — same move as RFC 0008 §K `wasm-*`).
+- **Spec:** `run-options.md` reserved keys `runTimeoutMs` + `maxLoopIterations`; `capabilities.md` §"Engine-enforced limits" resolution for the two run-scoped kinds + `observed`-recorded-not-recomputed replay clause; `rest-endpoints.md` error codes `run_timeout` + `loop_limit_exceeded`; `observability.md` `openwop.cap_kind` enumeration.
+- **Conformance:** `run-execution-bounds-shape.test.ts` (always-on advertisement-shape) + `coverage.md` row; `run-duration` breach behavior soft-skips until a host enforces wall-clock timeouts.
+- **SDKs:** TS / Python / Go gain the two `limits` fields, the two `RunConfigurable` keys, and the two error codes.
+
 ### RFCs 0058–0064 — autonomous-agent-runtime cohort filed (`Draft`, 2026-05-25)
 
-Seven additive RFCs filed from the `apps/workflow-engine` demo-app gap audit against the proposed autonomous-agent-runtime feature set. All `additive`, all capability-gated; spec/schema/conformance/SDK/host work tracked in [`plans/autonomous-agent-runtime.md`](./plans/autonomous-agent-runtime.md). No normative wire shape changes yet (Draft) — README RFC counts synced to 64 / Draft (13).
+Seven additive RFCs filed from the `apps/workflow-engine` demo-app gap audit against the proposed autonomous-agent-runtime feature set. All `additive`, all capability-gated; spec/schema/conformance/SDK/host work tracked in [`docs/autonomous-agent-runtime-plan.md`](./docs/autonomous-agent-runtime-plan.md). No normative wire shape changes yet (Draft) — README RFC counts synced to 64 / Draft (13).
 
 - **RFC 0058** run execution bounds — `runTimeoutMs` + `maxLoopIterations` reserved keys, `limits.{maxRunDurationMs,maxLoopIterations}`, surfaced through **two new `cap.breached` kinds** (`run-duration`, `loop-iterations`) reusing the unified engine-enforced-limit event rather than a new event type, + `run_timeout` / `loop_limit_exceeded` codes (closes the no-per-run-timeout gap; `recursionLimit` only counts nodes).
 - **RFC 0059** agent workspace — `host.workspace`: versioned, atomic, tenant·workspace-scoped ground-truth file store + `workspace.updated`; new durable layer beside `MemoryAdapter`.
@@ -30,18 +39,6 @@ Closes the two deferred RFC 0055 follow-ups. **§A:** the builder model picker (
 ### RFC 0055 promoted Draft → Active — multimodal envelope variants (2026-05-25)
 
 Closes RFC 0055 end-to-end on the reference host. §A (capability vocabulary) + §B (`meta.rendering` hint) + §C (`media.{image,audio,file}` kinds + tenant-scoped asset-URL discipline + `media-asset-url-tenant-scoped` invariant) all landed with schemas, conformance, the reference-app chat renderer, and reference-host serving. Promotion basis: the in-memory/sqlite reference host advertises `aiProviders.maxInlineMediaBytes` + `media.{image,audio,file}` in `supportedEnvelopes`/`schemaVersions` and serves tenant-scoped capability-token asset URLs (`GET /v1/host/sample/assets/{token}`), and `media-url-inline-cap.test.ts`'s behavioral store→serve→tenant-scoping assertions are now live (soft-skip offline) — replacing the prior `it.todo`s. `Active → Accepted` awaits a non-steward host advertising the surface per `RFCS/0001`. The `vision-input`/`audio-*` model-capability identifiers are reserved/registered; a host advertises them only when its model supports them (the reference mock model advertises none). Counts: RFC status Active 4 → 5, Draft 8 → 7; `docs/PROTOCOL-STATUS.md` regenerated. All additive.
-
-### RFCs 0058–0064 — autonomous-agent-runtime cohort filed (`Draft`, 2026-05-25)
-
-Seven additive RFCs filed from the `apps/workflow-engine` demo-app gap audit against the proposed autonomous-agent-runtime feature set. All `additive`, all capability-gated; spec/schema/conformance/SDK/host work tracked in `plans/autonomous-agent-runtime.md` (a local, gitignored planning doc). No normative wire shape changes yet (Draft) — README RFC counts synced to 64 / Draft (15); `docs/PROTOCOL-STATUS.md` regenerated.
-
-- **RFC 0058** run execution bounds — `runTimeoutMs` + `maxLoopIterations` reserved keys, `limits.{maxRunDurationMs,maxLoopIterations}`, `run.terminated` event, `run_timeout` / `loop_limit_exceeded` codes (closes the no-per-run-timeout gap; `recursionLimit` only counts nodes).
-- **RFC 0059** agent workspace — `host.workspace`: versioned, atomic, tenant·workspace-scoped ground-truth file store + `workspace.updated`; new durable layer beside `MemoryAdapter`.
-- **RFC 0060** host heartbeat — `host.heartbeat`: predicate-gated, runtime-bounded, idempotent poller emitting `heartbeat.evaluated` / `stateChanged` (anti-spam); composes RFC 0052; `positioning.md` bounded-exception note.
-- **RFC 0061** agent loop lifecycle — `agents.loop`: re-entrant stateful loop loading workspace+memory+transcript per iteration, run-until-`terminate`/`maxLoopIterations`, `agent.loop.iterated`; closes RFC 0037's loop-iteration gap.
-- **RFC 0062** scheduled memory distillation ("dreams") — `memory.distillation`: token-budgeted scheduled compaction + memory-index manifest + `memory.distilled`; composes RFC 0012 + 0052 + 0059.
-- **RFC 0063** sub-run output attestation & merge gating — optional `core.subWorkflow.outputAttestation` (checksum + RFC 0051 approval before `outputMapping` merge, fail-closed); `subRun.attested`.
-- **RFC 0064** tool invocation hooks & per-tool authorization — `host.toolHooks`: content-free `tool.invoked` / `tool.returned`, fail-closed per-tool RBAC (`tool_forbidden`), per-tool rate limiting; generalizes the MCP bridges.
 
 ### `apps/workflow-engine` — persistent artifact cards for HITL decisions + workflow completion (2026-05-25)
 

@@ -597,16 +597,16 @@ Future RFCs adding capability-gated reserved typeIds MUST extend this table and 
 
 ## Engine-enforced limits and the `cap.breached` event (closes CC-1 spec-side)
 
-The four `Capabilities.limits` fields (`clarificationRounds`, `schemaRounds`, `envelopesPerTurn`, `maxNodeExecutions`) are engine-enforced — the server MUST emit a `cap.breached` event AND fail the run / node when an attempted operation would exceed the configured ceiling. All four kinds share the same event surface (`run-event-payloads.schema.json#$defs.capBreached`) so consumers handle one event with a `kind` discriminator instead of N parallel surfaces.
+The `Capabilities.limits` fields (`clarificationRounds`, `schemaRounds`, `envelopesPerTurn`, `maxNodeExecutions`, and — per RFC 0058 — `maxRunDurationMs`, `maxLoopIterations`) are engine-enforced — the server MUST emit a `cap.breached` event AND fail the run / node when an attempted operation would exceed the configured ceiling. All kinds share the same event surface (`run-event-payloads.schema.json#$defs.capBreached`) so consumers handle one event with a `kind` discriminator instead of N parallel surfaces.
 
 ### `cap.breached` payload
 
 | Field | Type | Notes |
 |---|---|---|
-| `kind` | string | One of `clarification`, `schema`, `envelopes`, `node-executions`. |
-| `limit` | integer | The ceiling that was tripped (server-resolved value — see §Resolution below). |
-| `observed` | integer | The observed value at the moment of trip. Always strictly greater than `limit`. |
-| `nodeId` | string (optional) | Set for node-scoped limits (`clarification`, `schema`). Absent for run-scoped (`envelopes`, `node-executions`). |
+| `kind` | string | One of `clarification`, `schema`, `envelopes`, `node-executions`; `wasm-memory` / `wasm-fuel` / `wasm-execution-time` (RFC 0008 §K); `run-duration` / `loop-iterations` (RFC 0058). |
+| `limit` | integer | The ceiling that was tripped (server-resolved value — see §Resolution below). For `run-duration` this is the resolved timeout in milliseconds; for `loop-iterations` the resolved iteration ceiling. |
+| `observed` | integer | The observed value at the moment of trip. Always strictly greater than `limit`. For `run-duration` the elapsed milliseconds; for `loop-iterations` the iteration count. MUST be recorded in the event and reused on replay / `:fork` — never recomputed from a live clock or counter (`replay.md`). |
+| `nodeId` | string (optional) | Set for node-scoped limits (`clarification`, `schema`). Absent for run-scoped limits (`envelopes`, `node-executions`, `run-duration`, `loop-iterations`). |
 
 ### Resolution: `recursionLimit` + `maxNodeExecutions`
 
@@ -623,6 +623,15 @@ For the `node-executions` kind specifically (which is the runtime invariant for 
 
 The other three kinds follow analogous patterns (per `clarification` / `schema` / `envelopes` semantics in §In-package shape above), differing only in *what* gets counted and *which counter* resets when.
 
+### Resolution: `run-duration` + `loop-iterations` (RFC 0058)
+
+Two run-scoped bounds follow the same resolve-at-create, enforce-at-runtime, emit-`cap.breached` pattern:
+
+- **`run-duration`** — the server resolves `min(RunOptions.configurable.runTimeoutMs, Capabilities.limits.maxRunDurationMs)` (measured from `run.started`), validates the caller's value at run-create (`400 validation_error` if out of range), and on expiry emits `cap.breached { kind: 'run-duration', limit: <resolvedMs>, observed: <elapsedMs> }`, transitions the run to `failed` with `error.code = 'run_timeout'`, and stops scheduling.
+- **`loop-iterations`** — for hosts advertising `agents.loop.supported` (RFC 0061), the server resolves `min(RunOptions.configurable.maxLoopIterations, Capabilities.limits.maxLoopIterations)`, counts one increment per orchestrator turn, and on exceedance emits `cap.breached { kind: 'loop-iterations', limit: <resolvedMax>, observed: <iterationCount> }`, transitions to `failed` with `error.code = 'loop_limit_exceeded'`, and stops scheduling.
+
+Both are run-scoped (no `nodeId`). Adding these two kinds to the `capBreached.kind` enum is additive — no `eventLogSchemaVersion` bump — exactly as RFC 0008 §K added the `wasm-*` kinds.
+
 ### What this closes
 
 - **CC-1**: the `recursionLimit` runtime invariant. Validation and runtime enforcement are expressed as a unified `cap.breached` emission rather than a separate event class. No `eventLogSchemaVersion` bump required — `cap.breached` already exists with `node-executions` in its `kind` enum (per `run-event-payloads.schema.json` and the `openwop.cap_kind` OTel attribute in `observability.md`).
@@ -636,7 +645,7 @@ Modern workflow engines unify limit-related failures under a small set of event 
 - Temporal / Cadence: cap exceedance folds under `WorkflowExecutionTimedOut` / `ActivityTaskFailed` with reason discriminator.
 - AWS Step Functions: `ExecutionFailed` with `error: "States.Runtime"` covers all runtime caps.
 
-openwop follows the same pattern: `cap.breached` with a `kind` discriminator covers all four engine-enforced caps.
+openwop follows the same pattern: `cap.breached` with a `kind` discriminator covers all engine-enforced caps — the four core kinds, the RFC 0008 `wasm-*` runtime caps, and the RFC 0058 `run-duration` / `loop-iterations` bounds.
 
 ### Conformance fixture
 

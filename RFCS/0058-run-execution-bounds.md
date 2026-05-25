@@ -125,12 +125,15 @@ New fixture `conformance-run-duration-breach` added to `conformance/fixtures.md`
 
 ## Acceptance criteria
 
-- [ ] `run-options.md` reserved-keys rows merged (resolution pattern cross-referencing `capabilities.md` §Resolution).
-- [ ] `capabilities.schema.json` `limits` additions + `capBreached.kind` enum +2 in `run-event-payloads.schema.json` + `capabilities.md` §"Engine-enforced limits" updated to enumerate the six kinds.
-- [ ] `run_timeout` + `loop_limit_exceeded` registered in `rest-endpoints.md`.
-- [ ] ≥1 conformance scenario (shape always-on; behavior capability-gated) + `conformance-run-duration-breach` fixture in `fixtures.md`.
-- [ ] CHANGELOG entry under `[1.1.4 — unreleased]`.
-- [ ] Reference host (`apps/workflow-engine` or `examples/hosts/*`) enforces `runTimeoutMs`, or the RFC defers reference-host wiring explicitly.
+- [x] `run-options.md` reserved-keys rows merged (resolution pattern cross-referencing `capabilities.md` §Resolution).
+- [x] `capabilities.schema.json` `limits` additions + `capBreached.kind` enum +2 in `run-event-payloads.schema.json` + `capabilities.md` §"Engine-enforced limits" updated to enumerate all kinds (+ `observability.md` `openwop.cap_kind`).
+- [x] `run_timeout` + `loop_limit_exceeded` registered in `rest-endpoints.md`.
+- [x] Shape conformance scenario `run-execution-bounds-shape.test.ts` (always-on) + `coverage.md` row. Behavior (`run-duration` breach) + the `conformance-run-duration-breach` fixture are **deferred** until a host enforces wall-clock timeouts (the scenario soft-skips meanwhile, per the RFC 0052 pattern).
+- [x] SDK type additions: TS `Capabilities.limits` + `RunConfigurable`; Python `CapabilitiesLimits` + `RunConfigurable` + parser + error-code set; Go `CapabilitiesLimits` + `RunConfigurable` (+ `MarshalJSON`) + error-code list.
+- [x] CHANGELOG entry under `[1.1.4 — unreleased]`.
+- [ ] Reference host (`apps/workflow-engine` or `examples/hosts/*`) enforces `runTimeoutMs` + `maxLoopIterations` — **deferred**; this RFC explicitly defers reference-host enforcement, gating the behavior scenario on a host wiring the seam.
+
+**Implementation note (2026-05-25):** The full wire surface — `run-options.md` keys, the two `capabilities.limits` fields, the two `capBreached.kind` values, `capabilities.md` §"Engine-enforced limits" resolution, the two error codes, `observability.md` `cap_kind`, the always-on shape conformance scenario, and TS/Python/Go SDK types — landed on branch `rfc/autonomous-agent-runtime`. `npm run openwop:check` green. Per the RFC 0052 precedent, **Status stays `Draft`**: the 7-day comment window, maintainer approval, and reference-host *enforcement* (not just advertisement-shape) remain before `Active`/`Accepted`.
 
 ## References
 
