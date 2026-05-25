@@ -69,6 +69,18 @@ const MIGRATIONS: Record<number, (db: Database) => void> = {
       CREATE INDEX IF NOT EXISTS idx_interrupts_run_node
         ON interrupts (run_id, node_id, resolved_at);
 
+      -- RFC 0056 annotations: per-run side-store (NOT the replayable event log).
+      CREATE TABLE IF NOT EXISTS annotations (
+        annotation_id TEXT PRIMARY KEY,
+        run_id TEXT NOT NULL,
+        tenant_id TEXT NOT NULL,
+        payload TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_annotations_run
+        ON annotations (run_id, created_at);
+
       CREATE TABLE IF NOT EXISTS webhooks (
         subscription_id TEXT PRIMARY KEY,
         url TEXT NOT NULL,

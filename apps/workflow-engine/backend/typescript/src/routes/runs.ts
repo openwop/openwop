@@ -28,6 +28,7 @@ import { getChildParentNodeId } from '../executor/subWorkflowDispatcher.js';
 import { snapshotCostRollup } from '../observability/costEmitter.js';
 import { executeRun } from '../executor/executor.js';
 import { getEventLog } from '../executor/eventLog.js';
+import { stripSecretsFromPersisted } from '../byok/ephemeralRunSecrets.js';
 import { createLogger } from '../observability/logger.js';
 import { runQuotaMiddleware, reserveConcurrentSlot } from '../middleware/rateLimit.js';
 import { notifyRunTerminal } from '../executor/runLifecycle.js';
@@ -589,6 +590,89 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
       const deleted = await storage.deleteRun(run.runId);
       if (!deleted) throw new OpenwopError('run_not_found', `run ${req.params.runId} not found`, 404);
       res.status(204).end();
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // ── Run feedback / annotations (RFC 0056) ────────────────────────────
+  // Per-run side-store (advertised via capabilities.feedback in
+  // routes/discovery.ts). `signal.correction` + `note` are untrusted user
+  // content: scrubbed for secret-shaped tokens AND run through SR-1
+  // (resolved-secret redaction) before persistence — SECURITY invariant
+  // `annotation-content-redaction`. Annotations are NOT appended to the
+  // replayable event log (RFC 0056 §B/§D); tenant-scoped (CTI-1).
+  const SIGNAL_KINDS = ['rating', 'correction', 'label', 'flag'] as const;
+  const scrubSecretShaped = (text: string): string =>
+    text.replace(
+      /\b(sk-[A-Za-z0-9_-]{8,}|AKIA[0-9A-Z]{12,}|ghp_[A-Za-z0-9]{20,}|xox[baprs]-[A-Za-z0-9-]{8,}|[A-Za-z0-9_-]{40,})\b/g,
+      '[REDACTED:secret-shaped]',
+    );
+
+  app.post('/v1/runs/:runId/annotations', async (req, res, next) => {
+    try {
+      const principal = req.principal;
+      if (!principal) throw new OpenwopError('unauthenticated', 'Bearer token required', 401);
+      const tenantId = req.tenantId ?? 'default';
+      const run = await storage.getRun(req.params.runId);
+      if (!run || run.tenantId !== tenantId) {
+        throw new OpenwopError('run_not_found', `run ${req.params.runId} not found`, 404);
+      }
+      const body = (req.body ?? {}) as {
+        target?: { eventId?: string; nodeId?: string };
+        signal?: { kind?: string; rating?: number; label?: string; correction?: string };
+        note?: string;
+      };
+      const kind = body.signal?.kind;
+      if (!kind || !SIGNAL_KINDS.includes(kind as (typeof SIGNAL_KINDS)[number])) {
+        throw new OpenwopError('invalid_request', `signal.kind must be one of ${SIGNAL_KINDS.join(', ')}`, 400);
+      }
+      const signal: Record<string, unknown> = { kind };
+      if (kind === 'rating') {
+        const r = body.signal?.rating;
+        if (typeof r !== 'number' || r < 1 || r > 5) throw new OpenwopError('invalid_request', 'signal.rating must be 1..5', 400);
+        signal.rating = Math.round(r);
+      } else if (kind === 'label') {
+        if (typeof body.signal?.label !== 'string') throw new OpenwopError('invalid_request', 'signal.label is required', 400);
+        signal.label = body.signal.label;
+      } else if (kind === 'correction') {
+        if (typeof body.signal?.correction !== 'string') throw new OpenwopError('invalid_request', 'signal.correction is required', 400);
+        signal.correction = scrubSecretShaped(body.signal.correction);
+      }
+      const principalRef = principal.principalId || tenantId;
+      const createdAt = new Date().toISOString();
+      const annotation = stripSecretsFromPersisted({
+        annotationId: randomUUID(),
+        target: {
+          runId: run.runId,
+          ...(body.target?.eventId ? { eventId: body.target.eventId } : {}),
+          ...(body.target?.nodeId ? { nodeId: body.target.nodeId } : {}),
+        },
+        signal,
+        actor: { principalRef },
+        ...(typeof body.note === 'string' ? { note: scrubSecretShaped(body.note) } : {}),
+        createdAt,
+      }) as { annotationId: string; createdAt: string };
+      await storage.insertAnnotation({ annotationId: annotation.annotationId, runId: run.runId, tenantId, payload: annotation, createdAt });
+      res.status(201).json(annotation);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.get('/v1/runs/:runId/annotations', async (req, res, next) => {
+    try {
+      const principal = req.principal;
+      if (!principal) throw new OpenwopError('unauthenticated', 'Bearer token required', 401);
+      const tenantId = req.tenantId ?? 'default';
+      const run = await storage.getRun(req.params.runId);
+      if (!run || run.tenantId !== tenantId) {
+        throw new OpenwopError('run_not_found', `run ${req.params.runId} not found`, 404);
+      }
+      const records = await storage.listAnnotations(run.runId);
+      // Defense-in-depth tenant scope (CTI-1) on top of the per-run query.
+      const annotations = records.filter((r) => r.tenantId === tenantId).map((r) => r.payload);
+      res.json({ annotations });
     } catch (err) {
       next(err);
     }

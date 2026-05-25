@@ -65,6 +65,17 @@ export interface EventRecord {
   causationId?: string;
 }
 
+/** Persisted RFC 0056 annotation (a per-run side-resource — NOT a replayable
+ *  event-log entry). `correction`/`note` are stored already secret-redacted. */
+export interface AnnotationRecord {
+  annotationId: string;
+  runId: string;
+  tenantId: string;
+  /** Full annotation document (annotation.schema.json shape), redacted. */
+  payload: unknown;
+  createdAt: string;
+}
+
 /** Persisted interrupt awaiting resolution. */
 export interface InterruptRecord {
   interruptId: string;
