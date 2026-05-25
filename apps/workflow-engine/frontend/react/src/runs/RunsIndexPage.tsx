@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { createRun, listMyRuns, type RunListItem } from '../client/runsClient.js';
 import type { Annotation } from '../client/feedbackClient.js';
@@ -38,11 +38,13 @@ export function RunsIndexPage() {
   const runIds = useMemo(() => runs.map((r) => r.runId), [runs]);
   const { byRun, feedbackOn } = useRunAnnotations(runIds);
   const [reviewOnly, setReviewOnly] = useState(false);
-  const isFlagged = (runId: string) => needsReview(reviewOf(byRun.get(runId) ?? []));
+  const isFlagged = useCallback(
+    (runId: string) => needsReview(reviewOf(byRun.get(runId) ?? [])),
+    [byRun],
+  );
   const flaggedCount = useMemo(
     () => runs.filter((r) => isFlagged(r.runId)).length,
-    // isFlagged closes over byRun; recompute when either the run set or its annotations change
-    [runs, byRun],
+    [runs, isFlagged],
   );
   const visibleRuns = reviewOnly ? runs.filter((r) => isFlagged(r.runId)) : runs;
 
