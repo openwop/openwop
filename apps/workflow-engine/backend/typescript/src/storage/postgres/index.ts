@@ -483,6 +483,24 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
       return res.rowCount ?? 0;
     },
 
+    async deleteRun(runId) {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query(`DELETE FROM events WHERE run_id = $1`, [runId]);
+        await client.query(`DELETE FROM interrupts WHERE run_id = $1`, [runId]);
+        await client.query(`DELETE FROM invocation_log WHERE run_id = $1`, [runId]);
+        const rr = await client.query(`DELETE FROM runs WHERE run_id = $1`, [runId]);
+        await client.query('COMMIT');
+        return (rr.rowCount ?? 0) > 0;
+      } catch (e) {
+        await client.query('ROLLBACK');
+        throw e;
+      } finally {
+        client.release();
+      }
+    },
+
     async deleteAllTenantData(tenantId) {
       const client = await pool.connect();
       try {

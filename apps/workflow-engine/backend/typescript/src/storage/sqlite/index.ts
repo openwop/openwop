@@ -582,6 +582,19 @@ export function openSqliteStorage(dbPath: string): Storage {
       return Number(res.changes ?? 0);
     },
 
+    async deleteRun(runId) {
+      // Single-run cascade — mirrors deleteAllTenantData's explicit delete
+      // order (no FK constraints in this schema). Atomic via transaction.
+      const txn = db.transaction((rid: string) => {
+        db.prepare(`DELETE FROM events WHERE run_id = ?`).run(rid);
+        db.prepare(`DELETE FROM interrupts WHERE run_id = ?`).run(rid);
+        db.prepare(`DELETE FROM invocation_log WHERE run_id = ?`).run(rid);
+        const rr = db.prepare(`DELETE FROM runs WHERE run_id = ?`).run(rid);
+        return Number(rr.changes ?? 0) > 0;
+      });
+      return txn(runId);
+    },
+
     async deleteAllTenantData(tenantId) {
       const deleteTxn = db.transaction((tid: string) => {
         // 1. Find every run owned by the tenant — we need their ids to

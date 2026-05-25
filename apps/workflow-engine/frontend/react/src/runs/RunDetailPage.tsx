@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import type { RunSnapshot, RunEventDoc, StreamMode } from '@openwop/openwop';
-import { cancelRun, forkRun, getRun, pollEvents } from '../client/runsClient.js';
+import { cancelRun, deleteRun, forkRun, getRun, pollEvents } from '../client/runsClient.js';
 import { subscribeToRun } from '../client/streamsClient.js';
 import { listOpenInterrupts, type OpenInterrupt } from '../client/interruptsClient.js';
 import { EventStreamView } from '../streams/EventStreamView.js';
@@ -17,6 +17,7 @@ import { RenderInterrupt } from '../interrupts/RenderInterrupt.js';
 
 export function RunDetailPage() {
   const { runId = '' } = useParams();
+  const nav = useNavigate();
   const [snapshot, setSnapshot] = useState<RunSnapshot | null>(null);
   const [events, setEvents] = useState<RunEventDoc[]>([]);
   const [activeInterrupt, setActiveInterrupt] = useState<OpenInterrupt | null>(null);
@@ -112,6 +113,17 @@ export function RunDetailPage() {
     }
   }
 
+  async function onDelete() {
+    if (!runId) return;
+    if (!window.confirm('Permanently delete this run? This removes its events and history and cannot be undone.')) return;
+    try {
+      await deleteRun(runId);
+      nav('/runs');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
   async function onForkFrom(seq: number) {
     if (!runId) return;
     try {
@@ -145,6 +157,13 @@ export function RunDetailPage() {
             title="Compare this run side-by-side with another"
           >
             Compare…
+          </button>
+          <button
+            className="secondary"
+            onClick={onDelete}
+            title="Permanently delete this run and its history"
+          >
+            Delete run
           </button>
         </div>
       </div>

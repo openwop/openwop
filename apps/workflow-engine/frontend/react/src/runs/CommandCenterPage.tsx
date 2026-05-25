@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { RunEventDoc } from '@openwop/openwop';
-import { listMyRuns, pollEvents, type RunListItem } from '../client/runsClient.js';
+import { cancelRun, deleteRun, listMyRuns, pollEvents, type RunListItem } from '../client/runsClient.js';
 import { subscribeToRun } from '../client/streamsClient.js';
 import { RunAgentTrace } from './RunAgentTrace.js';
 import { RunHandoffMap } from './RunHandoffMap.js';
@@ -69,6 +69,31 @@ export function CommandCenterPage() {
 
   const selectedListItem = runs.find((r) => r.runId === selectedRunId) ?? null;
 
+  // Per-run kill (cancel) / delete. Both drop the run from the active view;
+  // selection clears if the acted-on run was selected. The 5s poll reconciles.
+  const [busyRunId, setBusyRunId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  async function runAction(runId: string, fn: () => Promise<void>) {
+    setBusyRunId(runId);
+    setActionError(null);
+    try {
+      await fn();
+      setRuns((prev) => prev.filter((r) => r.runId !== runId));
+      setSelectedRunId((cur) => (cur === runId ? null : cur));
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusyRunId(null);
+    }
+  }
+
+  const onCancel = (runId: string) => runAction(runId, () => cancelRun(runId, 'cancelled from Mission Control'));
+  const onDelete = (runId: string) => {
+    if (!window.confirm('Permanently delete this run? This removes its events and history and cannot be undone.')) return;
+    void runAction(runId, () => deleteRun(runId));
+  };
+
   return (
     <section>
       <div className="card">
@@ -82,6 +107,7 @@ export function CommandCenterPage() {
           Live view of every in-flight run for this session. Select a run to watch its agent handoffs and reasoning stream in real time.
         </p>
         {listError && <div className="alert error">{listError}</div>}
+        {actionError && <div className="alert error">{actionError}</div>}
       </div>
 
       <div className="command-center">
@@ -93,24 +119,37 @@ export function CommandCenterPage() {
               </p>
             </div>
           ) : (
-            runs.map((r) => (
-              <button
-                key={r.runId}
-                type="button"
-                className={`cc-run${r.runId === selectedRunId ? ' cc-run--selected' : ''}`}
-                onClick={() => setSelectedRunId(r.runId)}
-                aria-pressed={r.runId === selectedRunId}
-              >
-                <span className="cc-run-top">
-                  <code>{r.runId.slice(0, 8)}…</code>
-                  <span className={`status-badge ${r.status}`}>{r.status}</span>
-                </span>
-                <span className="cc-run-wf" title={r.workflowId}>{r.workflowId}</span>
-                {needsAttention(r.status) && (
-                  <span className="cc-attention">⚠ awaiting human input</span>
-                )}
-              </button>
-            ))
+            runs.map((r) => {
+              const isSel = r.runId === selectedRunId;
+              const busy = busyRunId === r.runId;
+              return (
+                <div key={r.runId} className={`cc-run${isSel ? ' cc-run--selected' : ''}`}>
+                  <button
+                    type="button"
+                    className="cc-run-select"
+                    onClick={() => setSelectedRunId(r.runId)}
+                    aria-pressed={isSel}
+                  >
+                    <span className="cc-run-top">
+                      <code>{r.runId.slice(0, 8)}…</code>
+                      <span className={`status-badge ${r.status}`}>{r.status}</span>
+                    </span>
+                    <span className="cc-run-wf" title={r.workflowId}>{r.workflowId}</span>
+                    {needsAttention(r.status) && (
+                      <span className="cc-attention">⚠ awaiting human input</span>
+                    )}
+                  </button>
+                  <div className="cc-run-actions">
+                    <button type="button" className="secondary cc-run-action" disabled={busy} onClick={() => onCancel(r.runId)} title="Cancel (kill) this run">
+                      {busy ? '…' : 'Cancel'}
+                    </button>
+                    <button type="button" className="secondary cc-run-action" disabled={busy} onClick={() => onDelete(r.runId)} title="Delete this run permanently">
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              );
+            })
           )}
         </aside>
 
