@@ -1,5 +1,24 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [1.6.0] — 2026-05-25
+
+Minor bump per `PUBLISHING.md` §"Versioning alignment" — ships the conformance scenarios for the **MyndHyve protocol-extension cohort (RFCs 0045–0054)** so adopting hosts can pin the released suite, run it against their deployment, and report pass for `Draft → Active → Accepted` graduation (per `RFCS/0001-rfc-process.md` §"Promotion to Accepted"). All additive — every new scenario is capability-gated and soft-skips against a host that doesn't advertise the surface, so existing v1.0-only hosts pass unchanged.
+
+### Added — RFC 0045–0054 cohort scenarios
+
+- **RFC 0045** (connector pack manifest) — `connector-manifest-validity.test.ts` (server-free: §A schema validity of the `connector` block + both ConnectorAuth variants; §B action/trigger typeId-resolution).
+- **RFC 0046** (`host.credentials`) — `credentials-capability-shape.test.ts` (always) + `credential-payload-redaction.test.ts` (gated; SECURITY invariant `credential-payload-redaction` via the `credentials/echo` seam).
+- **RFC 0047** (`host.oauth`) — `oauth-capability-shape.test.ts` + `oauth-connector-redaction.test.ts` (gated; token redaction via the `oauth/connector-echo` seam).
+- **RFC 0048** (identity triple) — `identity-owner-shape.test.ts` (server-free) + `cross-workspace-isolation.test.ts` (gated; fail-closed `run_forbidden` via the `identity/*` seams).
+- **RFC 0049** (RBAC) — `authorization-roles-shape.test.ts` (always) + `authorization-fail-closed.test.ts` (gated; SECURITY invariant `authorization-fail-closed` via the `authorization/decide` seam).
+- **RFC 0050** (SAML / SCIM) — `auth-saml-profile.test.ts` + `auth-scim-profile.test.ts` (advertisement shape always; behavior opt-in via `OPENWOP_TEST_SAML_IDP_URL` / `OPENWOP_TEST_SCIM_URL` + the `auth/saml/validate` + `auth/scim/provision` seams). Full SAML negative suite still gated on a bundled synthetic-IdP fixture (deferred).
+- **RFC 0051** (approval gate) — `approval-gate-events.test.ts` (server-free) + `approval-gate-flow.test.ts` (gated; unauthorized-denied + override-audited via the `governance/approval-gate` seam).
+- **RFC 0052** (scheduling) — `scheduling-capability-shape.test.ts` (always) + `scheduling-cron-fires-once.test.ts` (gated; once-per-tick + missed-tick via the `scheduling/tick` seam).
+- **RFC 0053** (dead-letter) — `deadletter-capability-shape.test.ts` (always) + `deadletter-retry-exhaustion.test.ts` (gated; `run.dead_lettered` + fork-eligibility via the `deadletter/exhaust` seam).
+- **RFC 0054** (run diff) — `run-diff-*.test.ts` (landed with the run-diff endpoint).
+
+Two new SECURITY invariants gated in this cohort: `credential-payload-redaction` (0046, also covers 0047 tokens) + `authorization-fail-closed` (0049). New `/v1/host/sample/*` seams are catalogued in `spec/v1/host-sample-test-seams.md` §"Open seams". Suite scenario-file count → 230.
+
 ## [1.5.0] — 2026-05-22
 
 Minor bump per `PUBLISHING.md` §"Versioning alignment" — unblocks MyndHyve's RFC 0044 + RFC 0039 Half A co-graduation by shipping the relaxed + RFC-0044-routing assertion logic in `multi-agent-confidence-escalation.test.ts`. No new scenario files; no new fixtures. Behavioral honesty pass on 8 sandbox scenarios + schema additions for the new RFC 0044 capability advertisement.
