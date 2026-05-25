@@ -108,20 +108,92 @@ describe.skipIf(HTTP_SKIP)('multi-agent-memory-lifecycle: behavioral (RFC 0039 �
   // Until a memory-advertising Phase 2 host wires the seam, the contract
   // is documentation-only — surfaced as `todo` so test reporters track
   // the gap rather than reporting a vacuous PASS.
-  // Marked out of stable profile via RFC 0042 §B (experimental tier):
-  // RFC 0039 §B Half B (MAE-2 + MAE-3) landed on MyndHyve 2026-05-23 via
-  // commit `a51f7bbd` (`snapshotAtSeq()` + `crossChildMemoryConcurrency:
-  // 'strict'`) — but the **test-seam endpoint contract** for the
-  // conformance suite (`POST /v1/host/sample/test/memory/cross-run-ttl-
-  // roundtrip` + snapshot-or-refuse on fork) has not been designed yet.
-  // Hosts that implement Half B SHOULD advertise
-  // `multiAgent.executionModel.tier: 'experimental'` per RFC 0042 §A
-  // until the seam contract lands. Flips to runnable when (a) seam
-  // contract spec'd at `host-sample-test-seams.md` and (b) at least one
-  // host implements it.
+  // MAE-2 is still out of stable profile via RFC 0042 §B (experimental
+  // tier): RFC 0039 §B Half B (MAE-2 + MAE-3) landed on MyndHyve
+  // 2026-05-23 via commit `a51f7bbd` (`snapshotAtSeq()` +
+  // `crossChildMemoryConcurrency: 'strict'`). The MAE-2 cross-run-ttl-
+  // roundtrip seam (POST /v1/host/sample/test/memory/cross-run-ttl-
+  // roundtrip) is still open per host-sample-test-seams.md §"Open seams"
+  // — no host has wired the seam endpoint yet, so the behavioral
+  // assertion stays `it.skip`. Hosts that implement Half B SHOULD
+  // advertise `multiAgent.executionModel.tier: 'experimental'` per
+  // RFC 0042 §A until the seam contract is wired.
   it.skip('MAE-2 cross-run TTL: child write expiresAt MUST be anchored at child write time, not parent start — out of stable profile via RFC 0042');
 
-  // Same routing — RFC 0039 §B MAE-3 awaiting test-seam contract before
-  // flipping to a runnable behavioral assertion.
-  it.skip('MAE-3 replay snapshot: fork from past index MUST return memory-as-of-index OR refuse with replay_memory_snapshot_unavailable — out of stable profile via RFC 0042');
+  // MAE-3 flipped to behavioral 2026-05-25 — MyndHyve workflow-runtime
+  // revision `00206-tdh` advertises Phase 2 + memory and honors the
+  // POST /v1/runs/{runId}:fork mode:replay contract per
+  // host-sample-test-seams.md §"Canonical-endpoint conformance hooks"
+  // §9. The seam reuses the canonical fork endpoint plus the
+  // OPENWOP_TEST_EXPIRED_REPLAY_RUN_ID env-var convention (parallel
+  // naming to OPENWOP_TEST_EXPIRED_RUN_ID used by
+  // production-retention-expiry). Soft-skips on Phase 1 hosts, Phase 2
+  // hosts without memory, and hosts that have not seeded the env var.
+  it('MAE-3 replay snapshot refusal: fork mode:replay against a past-retention runId MUST return 422 replay_memory_snapshot_unavailable with documented envelope; silent substitution is non-conformant', async (ctx) => {
+    const d = await readDiscovery();
+    if (d === null) {
+      ctx.skip();
+      return;
+    }
+    const v = d.capabilities?.multiAgent?.executionModel?.version;
+    const memorySupported = d.capabilities?.memory?.supported;
+    const phase2OrLater = typeof v === 'number' && v >= 2;
+    const expiredRunId = process.env.OPENWOP_TEST_EXPIRED_REPLAY_RUN_ID;
+    if (!phase2OrLater || memorySupported !== true || !expiredRunId) {
+      ctx.skip();
+      return;
+    }
+
+    const fromSeq = 0;
+    const res = await driver.post(`/v1/runs/${encodeURIComponent(expiredRunId)}:fork`, {
+      mode: 'replay',
+      fromSeq,
+    });
+
+    expect(
+      res.status,
+      driver.describe(
+        'RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md §B MAE-3',
+        'fork mode:replay against a past-retention runId MUST refuse with 422; silent substitution of current memory is non-conformant',
+      ),
+    ).toBe(422);
+
+    const body = res.json as {
+      error?: unknown;
+      details?: { fromSeq?: unknown; sourceRunId?: unknown; reason?: unknown };
+    } | null;
+
+    expect(
+      body?.error,
+      driver.describe(
+        'RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md §B MAE-3',
+        'refusal envelope error code MUST be "replay_memory_snapshot_unavailable" (distinct from the pre-flight invalid_from_seq gate)',
+      ),
+    ).toBe('replay_memory_snapshot_unavailable');
+
+    expect(
+      body?.details?.fromSeq,
+      driver.describe(
+        'RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md §B MAE-3',
+        'refusal envelope details.fromSeq MUST echo the requested fromSeq',
+      ),
+    ).toBe(fromSeq);
+
+    expect(
+      body?.details?.sourceRunId,
+      driver.describe(
+        'RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md §B MAE-3',
+        'refusal envelope details.sourceRunId MUST echo the runId from the URL',
+      ),
+    ).toBe(expiredRunId);
+
+    const reason = body?.details?.reason;
+    expect(
+      reason === 'retention_expired' || reason === 'event_log_unavailable',
+      driver.describe(
+        'RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md §B MAE-3',
+        'refusal envelope details.reason MUST be one of {"retention_expired", "event_log_unavailable"}',
+      ),
+    ).toBe(true);
+  });
 });
