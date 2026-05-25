@@ -40,6 +40,7 @@ Every OpenWOP-compliant server MUST expose:
 | `GET` | `/v1/runs/{runId}/events` | API key | `runs:read` | SSE event stream (resumable via `Last-Event-ID`) |
 | `GET` | `/v1/runs/{runId}/events/poll` | API key | `runs:read` | Long-poll fallback for non-SSE clients |
 | `GET` | `/v1/runs/{runId}/ancestry` | API key | `runs:read` | RFC 0040 cross-host composition parent (capability-gated; 404 when unadvertised) |
+| `GET` | `/v1/runs/{runId}:diff` | API key | `runs:read` | RFC 0054 deterministic structured diff of two runs (`?against={otherRunId}`; `runs:read` on both; 404 when unimplemented) |
 | `POST` | `/v1/runs/{runId}/cancel` | API key | `runs:cancel` | Cancel an in-flight run |
 | `POST` | `/v1/runs:bulk-cancel` | API key | `runs:cancel` | Bulk cancel a set of in-flight runs |
 | `POST` | `/v1/runs/{runId}:fork` | API key | `runs:create` + `runs:read` | Fork or replay a run from recorded state |
@@ -174,6 +175,15 @@ Pause/resume is **distinct from** cancel and from suspend-on-interrupt:
 - `:pause` is operator-driven; the run is `paused` and only `:resume` (or explicit cancel) exits the state.
 
 Replay of a run that was paused mid-execution re-folds `run.paused` and `run.resumed` events as no-ops for state-projection purposes; the events are observable in the event log but do not affect the projected state.
+
+#### `GET /v1/runs/{runId}:diff?against={otherRunId}` (RFC 0054)
+
+A read-only, deterministic, replay-aware structured diff of two runs — typically a run and its `:fork` replay. The response body conforms to [`run-diff-response.schema.json`](../../schemas/run-diff-response.schema.json): `{ a, b, divergedAtSeq, eventDiffs[], stateDiff, truncated? }`.
+
+- The caller MUST hold `runs:read` on **both** `{runId}` and `against`; a caller lacking read on either receives `403 forbidden` (composing with RFC 0048 cross-workspace isolation).
+- Both runs SHOULD be terminal. A host MAY diff in-flight prefixes and, when it does, MUST set `truncated: true`.
+- The diff MUST be a **pure function** of the two runs' event logs: given the same two logs, every conformant host MUST return the same `divergedAtSeq` and the same ordered `eventDiffs`. Sequence alignment is by event `seq`; the first `seq` whose event differs by canonical comparison (excluding non-deterministic transport metadata) sets `divergedAtSeq`. Identical logs MUST yield `divergedAtSeq: null` and an empty `eventDiffs`. This aligns with the determinism contract and the `replay.diverged` event in [`replay.md`](./replay.md).
+- The endpoint is OPTIONAL; a host that does not implement it MUST return `404` for the path (and MAY omit it from its OpenAPI). Clients discover support via the endpoint manifest.
 
 ### HITL (approvals + suspensions)
 

@@ -42,6 +42,7 @@ import {
   type ResumeRunRequest,
   type ResumeRunResponse,
   type RunAncestryResponse,
+  type RunDiffResponse,
   type RunEventDoc,
   type RunSnapshot,
 } from './types.js';
@@ -232,6 +233,26 @@ export class OpenwopClient {
         return await this.#request<RunAncestryResponse>({
           method: 'GET',
           path: `/v1/runs/${encodeURIComponent(runId)}/ancestry`,
+        });
+      } catch (err) {
+        if (err instanceof Error && /\b404\b/.test(err.message)) return null;
+        throw err;
+      }
+    },
+
+    /**
+     * RFC 0054 — deterministic, replay-aware structured diff of two runs
+     * (typically a run and its `:fork`). Requires `runs:read` on BOTH
+     * `runId` and `against`. Returns `null` when the host doesn't
+     * implement the endpoint (404 per `spec/v1/rest-endpoints.md`
+     * §`GET /v1/runs/{runId}:diff`). `divergedAtSeq` is null + `eventDiffs`
+     * empty when the two logs are identical.
+     */
+    diff: async (runId: string, against: string): Promise<RunDiffResponse | null> => {
+      try {
+        return await this.#request<RunDiffResponse>({
+          method: 'GET',
+          path: `/v1/runs/${encodeURIComponent(runId)}:diff?against=${encodeURIComponent(against)}`,
         });
       } catch (err) {
         if (err instanceof Error && /\b404\b/.test(err.message)) return null;

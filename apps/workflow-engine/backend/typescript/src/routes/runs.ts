@@ -312,6 +312,46 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
     }
   });
 
+  // RFC 0054 — GET /v1/runs/{runId}:diff?against={otherRunId}. MUST be
+  // registered BEFORE the generic `GET /v1/runs/:runId` below, which
+  // would otherwise match `{uuid}:diff` as a `:runId` path segment (the
+  // colon is legal inside an Express path segment). Regex-literal pinned
+  // like :fork. Returns a deterministic, replay-aware structured diff of
+  // the two runs' event logs + terminal states.
+  app.get(/^\/v1\/runs\/([^/:]+):diff$/, async (req, res, next) => {
+    try {
+      const runId = (req.params as Record<string, string>)['0'];
+      const against = typeof req.query.against === 'string' ? req.query.against : '';
+      if (!runId) throw new OpenwopError('invalid_request', 'runId path segment required', 400);
+      if (!against) throw new OpenwopError('invalid_request', 'against query parameter required', 400);
+
+      const [runA, runB] = await Promise.all([storage.getRun(runId), storage.getRun(against)]);
+      if (!runA) throw new OpenwopError('run_not_found', `run ${runId} not found`, 404);
+      if (!runB) throw new OpenwopError('run_not_found', `run ${against} not found`, 404);
+
+      // runs:read on BOTH runs (RFC 0054 §A; composes with RFC 0048
+      // cross-workspace isolation). Wildcard principals (conformance /
+      // admin) bypass the tenant scoping like the list-runs route.
+      const tenants = req.principal?.tenants ?? [];
+      const wildcard = tenants.includes('*');
+      if (!wildcard && (!tenants.includes(runA.tenantId) || !tenants.includes(runB.tenantId))) {
+        // Canonical `forbidden` (the RFC text says `run_forbidden`, but
+        // that isn't in the canonical error vocabulary; using the generic
+        // resource-forbidden code rather than expanding the set here).
+        throw new OpenwopError('forbidden', 'caller lacks runs:read on both runs', 403);
+      }
+
+      const [eventsA, eventsB] = await Promise.all([
+        getEventLog().list(runId, { fromSeq: 0, limit: 100_000 }),
+        getEventLog().list(against, { fromSeq: 0, limit: 100_000 }),
+      ]);
+      const diff = computeRunDiff(runId, against, eventsA, eventsB, projectRunSnapshot(runA), projectRunSnapshot(runB));
+      res.json(diff);
+    } catch (err) {
+      next(err);
+    }
+  });
+
   app.get('/v1/runs/:runId', async (req, res, next) => {
     try {
       const run = await storage.getRun(req.params.runId);
@@ -780,4 +820,77 @@ function capabilityGatedTypeIdRefusal(
 
 function respondJson(res: Response, status: number, body: unknown): void {
   res.status(status).json(body);
+}
+
+// ── RFC 0054 run diff ────────────────────────────────────────────────
+// Pure function of the two event logs (determinism contract,
+// spec/v1/replay.md). Sequence alignment is by event `sequence`; the
+// canonical comparison excludes non-deterministic transport metadata
+// (eventId / runId / timestamp) so two conformant hosts agree on
+// `divergedAtSeq`.
+
+interface DiffEventRecord {
+  sequence: number;
+  type: string;
+  nodeId?: string;
+  payload?: unknown;
+}
+interface DiffSnapshot {
+  status: string;
+  variables?: Record<string, unknown>;
+  channels?: Record<string, unknown>;
+}
+
+function canonicalEvent(ev: DiffEventRecord): string {
+  return JSON.stringify({ type: ev.type, nodeId: ev.nodeId ?? null, payload: ev.payload ?? null });
+}
+
+function computeRunDiff(
+  a: string,
+  b: string,
+  eventsA: ReadonlyArray<DiffEventRecord>,
+  eventsB: ReadonlyArray<DiffEventRecord>,
+  snapA: DiffSnapshot,
+  snapB: DiffSnapshot,
+): {
+  a: string;
+  b: string;
+  divergedAtSeq: number | null;
+  eventDiffs: Array<{ seq: number; op: 'added' | 'removed' | 'changed'; aEvent?: DiffEventRecord; bEvent?: DiffEventRecord }>;
+  stateDiff: Record<string, unknown>;
+  truncated?: boolean;
+} {
+  const bySeqA = new Map<number, DiffEventRecord>(eventsA.map((e) => [e.sequence, e]));
+  const bySeqB = new Map<number, DiffEventRecord>(eventsB.map((e) => [e.sequence, e]));
+  const seqs = [...new Set([...bySeqA.keys(), ...bySeqB.keys()])].sort((x, y) => x - y);
+
+  const eventDiffs: Array<{ seq: number; op: 'added' | 'removed' | 'changed'; aEvent?: DiffEventRecord; bEvent?: DiffEventRecord }> = [];
+  let divergedAtSeq: number | null = null;
+  for (const seq of seqs) {
+    const ea = bySeqA.get(seq);
+    const eb = bySeqB.get(seq);
+    if (ea && !eb) eventDiffs.push({ seq, op: 'removed', aEvent: ea });
+    else if (!ea && eb) eventDiffs.push({ seq, op: 'added', bEvent: eb });
+    else if (ea && eb && canonicalEvent(ea) !== canonicalEvent(eb)) eventDiffs.push({ seq, op: 'changed', aEvent: ea, bEvent: eb });
+    else continue;
+    if (divergedAtSeq === null) divergedAtSeq = seq;
+  }
+
+  // Terminal-state diff (status + variables + channels). Redaction-safe:
+  // the projected snapshot never carries credential material.
+  const stateDiff: Record<string, unknown> = {};
+  if (snapA.status !== snapB.status) stateDiff.status = { a: snapA.status, b: snapB.status };
+  for (const key of ['variables', 'channels'] as const) {
+    const va = JSON.stringify(snapA[key] ?? null);
+    const vb = JSON.stringify(snapB[key] ?? null);
+    if (va !== vb) stateDiff[key] = { a: snapA[key] ?? null, b: snapB[key] ?? null };
+  }
+
+  const terminal = (s: string): boolean => s === 'completed' || s === 'failed' || s === 'cancelled';
+  const truncated = !terminal(snapA.status) || !terminal(snapB.status);
+
+  return {
+    a, b, divergedAtSeq, eventDiffs, stateDiff,
+    ...(truncated ? { truncated: true } : {}),
+  };
 }

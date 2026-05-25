@@ -42,6 +42,8 @@ export type {
   ResumeRunRequest,
   ResumeRunResponse,
   RunConfigurable,
+  RunDiffEventDiff,
+  RunDiffResponse,
   RunEventDoc,
   RunSnapshot,
   RunStatus,

@@ -17,6 +17,16 @@ Resolves findings from a `/code-review` pass over RFC 0048 (and the Tier-1 seams
 
 - **Test seams registered in `host-sample-test-seams.md` §"Open seams".** The conformance seams introduced this session — `credentials/echo` (RFC 0046), `oauth/connector-echo` (RFC 0047), `identity/owned-run` + `identity/cross-workspace-read` (RFC 0048) — are now documented in the normative `/v1/host/sample/*` seam registry (each with its contract + gating capability + the scenario it unblocks), matching the RFC 0039 memory-seam precedent. Previously they lived only in scenario docstrings + `coverage.md`.
 - **`owner.principal` opacity is now normative.** `auth.md` §"Identity claims" gains an "Identifier opacity (normative)" rule: because `RunSnapshot.owner` is echoed on `run.started` (SSE/webhooks/debug bundles) un-redacted, hosts MUST use an opaque, non-PII identifier for `principal` (SHOULD for `tenant`/`workspace`). Previously advisory prose.
+### RFC 0054 implemented — run-diff endpoint `GET /v1/runs/{runId}:diff` lands (2026-05-25)
+
+Implements the spec + reference-host + SDK + conformance surface for RFC 0054 (`Draft`): a read-only, deterministic, replay-aware structured diff of two runs (typically a run and its `:fork`), the protocol surface behind run-vs-fork comparison. All additive.
+
+- **Schema:** new `schemas/run-diff-response.schema.json` (`{ a, b, divergedAtSeq, eventDiffs[], stateDiff, truncated? }`), indexed in `schemas/README.md`.
+- **Spec + OpenAPI:** `rest-endpoints.md` Runs-table row + a normative subsection pinning the pure-function determinism contract to `replay.md`, the both-runs `runs:read` authz, and the OPTIONAL 404-when-unimplemented rule; additive `GET :diff` path in `api/openapi.yaml` (required `against` query param; 400/401/403/404).
+- **SDK (TS):** `client.runs.diff(runId, against)` + `RunDiffResponse` / `RunDiffEventDiff` types.
+- **Reference host:** `GET /v1/runs/{runId}:diff` on the workflow-engine sample — regex-pinned (registered before the generic `:runId` GET), canonical-comparison diff excluding non-deterministic transport metadata; `forbidden` (not the RFC text's non-canonical `run_forbidden`) on missing read.
+- **Conformance:** `run-diff.test.ts` — self-diff (determinism floor), two-fixture divergence, response-shape + redaction-safety, `400`/`404` error surface; soft-skips on 404. All four pass against the reference host.
+- **Counts synced:** JSON Schemas 33→34, OpenAPI operations 30→31, conformance scenario files 217→218; `docs/PROTOCOL-STATUS.md` regenerated.
 
 ### RFC 0025 implemented — Test-mode registry namespace `/v1/packs-test/*` lands (2026-05-25)
 
