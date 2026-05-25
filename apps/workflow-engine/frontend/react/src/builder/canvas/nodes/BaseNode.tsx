@@ -34,11 +34,18 @@ function BaseNodeImpl({ id, data, selected }: NodeProps) {
     return <div className="builder-node builder-node-unknown">Unknown: {d.kind}</div>;
   }
   const runMeta = d.runStatus ? RUN_STATUS_META[d.runStatus] : null;
+  // Author-time capability gap: the connected host doesn't advertise a
+  // surface this node kind needs (catalog `missingHostSurfaces`, server-
+  // computed). Surface it on the canvas — not just the inspector — so the
+  // unrunnable node is visible at a glance. A live run takes visual
+  // priority, so suppress the warning while a run status is painted.
+  const missingSurfaces = entry.missingHostSurfaces ?? [];
+  const showCapWarning = missingSurfaces.length > 0 && !d.runStatus;
   return (
     <div
       className={`builder-node${selected ? ' builder-node-selected' : ''}${
         d.runStatus ? ` builder-node-run-${d.runStatus}` : ''
-      }`}
+      }${showCapWarning ? ' builder-node-warn' : ''}`}
       style={{
         borderLeftColor: entry.accent,
         ...(runMeta
@@ -46,6 +53,15 @@ function BaseNodeImpl({ id, data, selected }: NodeProps) {
           : {}),
       }}
     >
+      {showCapWarning && (
+        <span
+          className="builder-node-warn-badge"
+          title={`This host can't run this node — needs: ${missingSurfaces.join(', ')}`}
+          aria-label={`Host capability missing: needs ${missingSurfaces.join(', ')}`}
+        >
+          ⚠
+        </span>
+      )}
       {runMeta && (
         <span
           className="builder-node-run-badge"
