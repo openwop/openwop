@@ -334,7 +334,7 @@ A debugger should render all three when present. The `reasoning` field captures 
 
 `media.image`, `media.audio`, and `media.file` are **optional, advertised** kinds for an LLM-emitted (or host-emitted) image, audio clip, or downloadable file. They are **not** among the four MUST-recognize universal kinds — a host emits and advertises them only if it produces media; a consumer that doesn't recognize them falls back to raw rendering. They pair with the `meta.rendering.display` hint (§"Rendering hints") for how to render, and carry the asset itself by **host-served URL reference** (preferred) or, below a cap, inline base64.
 
-Per-kind payload schemas live at the canonical location (`schemas/envelopes/media.{image,audio,file}.schema.json`); a host that supports them lists each in `Capabilities.supportedEnvelopes` + `schemaVersions`. The shared payload shape is `{ url?, base64?, bytes, mimeType?, … }` (`bytes` required; `media.audio` adds `durationSeconds?`, `media.file` adds `name?`).
+Per-kind payload schemas live at the canonical location (`schemas/envelopes/media.{image,audio,file}.schema.json`); a host that supports them lists each in `Capabilities.supportedEnvelopes` + `schemaVersions`. The shared payload shape is `{ url?, base64?, bytes, mimeType?, alt?, … }` (`bytes` required; `alt` is the accessibility text alternative, SHOULD be present, and mirrors `meta.rendering.alt`; `media.audio` adds `durationSeconds?`, `media.file` adds `name?`).
 
 ### Asset-URL discipline (normative)
 
