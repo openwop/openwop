@@ -614,12 +614,14 @@ export function openSqliteStorage(dbPath: string): Storage {
         const rr = db.prepare(`DELETE FROM runs WHERE tenant_id = ?`).run(tid);
         const wr = db.prepare(`DELETE FROM workflows WHERE tenant_id = ?`).run(tid);
         const sr = db.prepare(`DELETE FROM byok_tenant_secrets WHERE tenant_id = ?`).run(tid);
+        const nr = db.prepare(`DELETE FROM notifications WHERE tenant_id = ?`).run(tid);
         return {
           runs: Number(rr.changes ?? 0),
           events,
           interrupts,
           workflows: Number(wr.changes ?? 0),
           secrets: Number(sr.changes ?? 0),
+          notifications: Number(nr.changes ?? 0),
         };
       });
       return deleteTxn(tenantId);

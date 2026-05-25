@@ -134,6 +134,7 @@ export interface Storage {
     interrupts: number;
     workflows: number;
     secrets: number;
+    notifications: number;
   }>;
 
   // ── tenant reassignment (anon → user migration) ──

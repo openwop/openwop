@@ -4,6 +4,13 @@
  * fails). Centralizes the type → title/message/priority mapping so
  * the FE bell + panel get consistent shapes regardless of caller.
  *
+ * Secret-safety: notification text MUST NOT carry raw provider error
+ * strings (which can embed an API key in some upstream responses).
+ * Callers pass the **already-classified** `userMessage` from
+ * `observability/errorRecovery.ts` (operator-curated, redacted) or a
+ * statically-known title; arbitrary metadata is run through
+ * `stripSecretsFromPersisted` before persistence as defense-in-depth.
+ *
  * Best-effort: the helpers swallow emission failures so an executor
  * doesn't lose data integrity if the notifications table is unreachable
  * (e.g., partial migration). The run-event log remains the source of
@@ -12,6 +19,7 @@
 
 import type { InterruptRecord, NotificationRecord, RunRecord } from '../types.js';
 import type { Storage } from '../storage/storage.js';
+import { stripSecretsFromPersisted } from '../byok/ephemeralRunSecrets.js';
 import { getNotificationEmitter } from './emitter.js';
 
 const KIND_LABEL: Record<InterruptRecord['kind'], string> = {
@@ -38,44 +46,63 @@ export async function emitInterruptNotification(
     const run = await storage.getRun(interrupt.runId);
     if (!run) return;
     const title = KIND_LABEL[interrupt.kind] ?? 'Action needed';
-    const workflowLabel = (run.metadata?.workflowName as string | undefined) || run.workflowId;
+    // Workflow names from `run.metadata` can themselves contain
+    // user-supplied text — run through redaction. `workflowId` is
+    // engine-controlled so it's safe.
+    const workflowLabel = sanitizeForNotification(
+      (run.metadata?.workflowName as string | undefined) || run.workflowId,
+    );
     await getNotificationEmitter().emit({
       tenantId: run.tenantId,
       type: KIND_TYPE[interrupt.kind] ?? 'workflow.approval_needed',
       priority: interrupt.kind === 'approval' || interrupt.kind === 'cancellation' ? 'high' : 'normal',
       title,
-      message: `${workflowLabel} is waiting at node "${interrupt.nodeId}"`,
+      message: `${workflowLabel} is waiting at node "${sanitizeForNotification(interrupt.nodeId)}"`,
       runId: interrupt.runId,
       workflowId: run.workflowId,
       nodeId: interrupt.nodeId,
       interruptId: interrupt.interruptId,
       actionUrl: `/inbox`,
-      metadata: { kind: interrupt.kind },
+      metadata: stripSecretsFromPersisted({ kind: interrupt.kind }),
     });
   } catch {
     /* best-effort */
   }
 }
 
+/**
+ * Emit a "your run failed" notification.
+ *
+ * The caller MUST pass the classified `userMessage` from
+ * `classifyDispatchError()` — the raw `error.message` can carry a
+ * provider's verbatim response string, which sometimes embeds the
+ * API key (some upstreams echo the rejected key back in 401 text).
+ * `userMessage` is the operator-curated, redacted form documented in
+ * `observability/errorRecovery.ts §"the ONLY string that should be
+ * surfaced to a user-facing UI"`.
+ */
 export async function emitRunFailureNotification(
   storage: Storage,
   runId: string,
-  error: { code: string; message: string },
+  error: { code: string; userMessage: string },
 ): Promise<void> {
   try {
     const run = await storage.getRun(runId);
     if (!run) return;
-    const workflowLabel = (run.metadata?.workflowName as string | undefined) || run.workflowId;
+    const workflowLabel = sanitizeForNotification(
+      (run.metadata?.workflowName as string | undefined) || run.workflowId,
+    );
     await getNotificationEmitter().emit({
       tenantId: run.tenantId,
       type: 'workflow.failed',
       priority: 'high',
       title: 'Workflow failed',
-      message: `${workflowLabel}: ${truncate(error.message, 200)}`,
+      // userMessage is the curated, redacted form — safe to surface.
+      message: `${workflowLabel}: ${truncate(error.userMessage, 240)}`,
       runId,
       workflowId: run.workflowId,
       actionUrl: `/runs/${runId}`,
-      metadata: { errorCode: error.code },
+      metadata: stripSecretsFromPersisted({ errorCode: error.code }),
     });
   } catch {
     /* best-effort */
@@ -87,7 +114,9 @@ export async function emitRunCompletedNotification(
   run: RunRecord,
 ): Promise<void> {
   try {
-    const workflowLabel = (run.metadata?.workflowName as string | undefined) || run.workflowId;
+    const workflowLabel = sanitizeForNotification(
+      (run.metadata?.workflowName as string | undefined) || run.workflowId,
+    );
     await getNotificationEmitter().emit({
       tenantId: run.tenantId,
       type: 'workflow.completed',
@@ -103,6 +132,22 @@ export async function emitRunCompletedNotification(
   }
 }
 
+/**
+ * Defense-in-depth scrub for short strings that flow into notification
+ * `title` / `message` fields. `stripSecretsFromPersisted` only works on
+ * structured values (objects/arrays); for flat strings we strip the
+ * common BYOK-key prefixes (`sk-…`, `xai-…`, `Bearer …`) and the
+ * 32-char-hex form that anthropic + miniMax surface in 401 payloads.
+ */
+function sanitizeForNotification(s: string): string {
+  return s
+    .replace(/\bsk-[A-Za-z0-9_-]{16,}/g, 'sk-***')
+    .replace(/\bxai-[A-Za-z0-9_-]{16,}/g, 'xai-***')
+    .replace(/\bBearer\s+[A-Za-z0-9._-]{16,}/g, 'Bearer ***')
+    .replace(/\b[A-Fa-f0-9]{32,}\b/g, '***');
+}
+
 function truncate(s: string, max: number): string {
-  return s.length > max ? `${s.slice(0, max - 1)}…` : s;
+  const sanitized = sanitizeForNotification(s);
+  return sanitized.length > max ? `${sanitized.slice(0, max - 1)}…` : sanitized;
 }
