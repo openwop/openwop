@@ -285,7 +285,9 @@ function ImageAttachment({ mimeType, url, dataBase64, alt }: { mimeType: string;
         loading="lazy"
         style={{ maxWidth: '100%', maxHeight: 360, borderRadius: 8, border: '1px solid var(--color-border)', display: 'block' }}
       />
-      {alt && <figcaption style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 2 }}>{alt}</figcaption>}
+      {/* aria-hidden: the same text is the img's accessible name (alt); the
+          visible caption would otherwise double-announce to screen readers. */}
+      {alt && <figcaption aria-hidden="true" style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 2 }}>{alt}</figcaption>}
     </figure>
   );
 }

@@ -70,7 +70,7 @@ export function RunAnalyticsPanel({ events }: Props) {
         <Stat label="Resumes" value={String(stats.resumes)} />
       </dl>
       <p className="muted" style={{ marginBottom: 0, fontSize: 11 }}>
-        Derived from this run's event log. Quality signals (ratings, corrections) arrive with RFC 0056.
+        Derived from this run's event log. Quality signals (ratings, corrections) arrive once the host supports run feedback.
       </p>
     </div>
   );
