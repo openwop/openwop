@@ -43,6 +43,15 @@ export const config = {
    *  override with VITE_OPENWOP_REGISTRY_URL to point at a mirror. */
   registryBaseUrl:
     (import.meta.env.VITE_OPENWOP_REGISTRY_URL as string | undefined) ?? 'https://packs.openwop.dev',
+  /** Public-site origin — hosts the conformance leaderboard
+   *  (`${siteBaseUrl}/conformance/`) and the per-reference-host badge SVGs
+   *  (`${siteBaseUrl}/badge/<host>.svg`). Defaults to the canonical
+   *  `openwop.dev` deploy; override with VITE_OPENWOP_SITE_URL for an
+   *  air-gapped / fork deployment that serves its own copies. The badge
+   *  SVGs are also committed to this repo at `public/badge/` so a
+   *  same-origin fork can point at e.g. `https://app.example.com`. */
+  siteBaseUrl:
+    (import.meta.env.VITE_OPENWOP_SITE_URL as string | undefined) ?? 'https://openwop.dev',
 };
 
 /**
