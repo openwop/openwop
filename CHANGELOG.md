@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0060 — document the heartbeat tick seam; code-review follow-ups (2026-05-25)
+
+Closes a `/code-review` finding on RFC 0060: the three gated `heartbeat-*.test.ts` scenarios drove a `POST /v1/host/sample/heartbeat/tick` seam that was undocumented (and the RFC §D text mis-cited the RFC 0052 `scheduling/tick` seam) — so they could never be wired by a willing host (the "looks-like-coverage-but-never-runs" trap). Added the **heartbeat tick seam** to `host-sample-test-seams.md` §"Open seams" (path + `{ heartbeatId, observedState, simulateSlowMs? }` → `{ evaluated, stateChanged, enqueuedRuns }` shape + capability gate), reconciled the RFC §D conformance text to cite it, and `lib/heartbeat.ts` already matches. Also added an advisory-tier SECURITY invariant `heartbeat-state-no-secret` (the `heartbeat.stateChanged` `from`/`to` SHOULD NOT carry secret material; advisory since heartbeat state is host-internal, not BYOK-resolved) and dropped a defensive parenthetical from the README Active-RFC list. Invariant count 99 → 100 (advisory 1 → 2). Docs/spec only; no wire-shape change.
+
 ### fix(app): code-review follow-ups on the SDK-migration PR (2026-05-25)
 
 Five findings from a `/code-review` pass over PRs #188 + #193 (SDK-migration close-out). All app-only; no protocol-corpus change. Frontend `tsc --noEmit` clean.
