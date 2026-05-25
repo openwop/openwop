@@ -81,7 +81,6 @@ export function subscribeToRun(runId: string, opts: SubscribeOptions): Subscript
 
   if (config.authMode === 'bearer') {
     return subscribeBearer(runId, opts, {
-      idleMs, absoluteMs,
       onTimedOut: () => timedOut,
       onManuallyClosed: () => manuallyClosed,
       setManuallyClosed: (v) => { manuallyClosed = v; },
@@ -124,7 +123,7 @@ interface TimerHooks {
 function subscribeBearer(
   runId: string,
   opts: SubscribeOptions,
-  hooks: Pick<TimerHooks, 'onTimedOut' | 'onManuallyClosed' | 'setManuallyClosed' | 'clearTimers' | 'resetIdle' | 'armAbsolute'> & { idleMs: number; absoluteMs: number },
+  hooks: Pick<TimerHooks, 'onTimedOut' | 'onManuallyClosed' | 'setManuallyClosed' | 'clearTimers' | 'resetIdle' | 'armAbsolute'>,
 ): Subscription {
   const abort = new AbortController();
   let lastEventId: string | undefined;
