@@ -44,6 +44,16 @@
           "type": "integer",
           "minimum": 1,
           "description": "Engine-side ceiling on total node executions per run. Acts as the upper bound for `RunOptions.configurable.recursionLimit`. Optional in v1; hosts that advertise it MUST enforce it."
+        },
+        "maxRunDurationMs": {
+          "type": "integer",
+          "minimum": 1000,
+          "description": "RFC 0058. Engine-side wall-clock ceiling per run (milliseconds). Upper bound for `RunOptions.configurable.runTimeoutMs`. Breach emits `cap.breached { kind: 'run-duration' }` + error `run_timeout`. Optional; hosts that advertise it MUST enforce it."
+        },
+        "maxLoopIterations": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "RFC 0058. Authoritative engine-side ceiling on agent-loop iterations. Upper bound for `RunOptions.configurable.maxLoopIterations`. Breach emits `cap.breached { kind: 'loop-iterations' }` + error `loop_limit_exceeded`. Optional; hosts that advertise it MUST enforce it."
         }
       },
       "additionalProperties": false,

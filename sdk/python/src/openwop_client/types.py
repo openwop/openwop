@@ -38,6 +38,25 @@ class CapabilitiesLimits:
     schemaRounds: int
     envelopesPerTurn: int
     maxNodeExecutions: int | None = None
+    # RFC 0058 run-execution bounds.
+    maxRunDurationMs: int | None = None
+    maxLoopIterations: int | None = None
+
+
+# The `kind` discriminator on a `cap.breached` payload
+# (run-event-payloads.schema.json#capBreached): four engine kinds + RFC 0008 §K
+# wasm-* runtime caps + RFC 0058 run-scoped bounds.
+CapBreachedKind = Literal[
+    "clarification",
+    "schema",
+    "envelopes",
+    "node-executions",
+    "wasm-memory",
+    "wasm-fuel",
+    "wasm-execution-time",
+    "run-duration",
+    "loop-iterations",
+]
 
 
 @dataclass(frozen=True)
@@ -96,6 +115,8 @@ class RunConfigurable:
     """
 
     recursionLimit: int | None = None
+    runTimeoutMs: int | None = None  # RFC 0058
+    maxLoopIterations: int | None = None  # RFC 0058
     model: str | None = None
     temperature: float | None = None
     maxTokens: int | None = None
@@ -106,6 +127,10 @@ class RunConfigurable:
         out: dict[str, Any] = {}
         if self.recursionLimit is not None:
             out["recursionLimit"] = self.recursionLimit
+        if self.runTimeoutMs is not None:
+            out["runTimeoutMs"] = self.runTimeoutMs
+        if self.maxLoopIterations is not None:
+            out["maxLoopIterations"] = self.maxLoopIterations
         if self.model is not None:
             out["model"] = self.model
         if self.temperature is not None:
@@ -543,6 +568,8 @@ RUN_ERROR_CODES: frozenset[str] = frozenset(
         "node_execution_failed",
         "external_call_failed",
         "recursion_limit_exceeded",
+        "run_timeout",
+        "loop_limit_exceeded",
         "capability_not_provided",
         # Approval
         "approval_timeout",
