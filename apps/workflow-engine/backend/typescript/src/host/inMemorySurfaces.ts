@@ -25,7 +25,7 @@
 
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, normalize, resolve, sep } from 'node:path';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, randomBytes } from 'node:crypto';
 import Database from 'better-sqlite3';
 import { createLogger } from '../observability/logger.js';
 import { registerHostSurface } from '../bootstrap/hostSurfaceRegistry.js';
@@ -968,6 +968,60 @@ export function getMemoryEntry(tenantId: string, memoryRef: string, memoryId: st
   const now = Date.now();
   const row = (memoryBucket(tenantId).get(memoryRef) ?? []).find((r) => r.id === memoryId);
   return row && notExpired(row, now) ? row : null;
+}
+
+// ───────────────────────────────────────────────────────────────────
+// RFC 0055 §C media assets — tenant-scoped, non-guessable asset URLs
+//
+// An emitted `media.{image,audio,file}` envelope references its asset by a
+// host-served URL (above the inline cap). We mint a capability token the
+// interrupt way (32 random bytes, base64url — opaque, not guessable) and
+// key the store by token; the entry carries its own tenantId so a token
+// minted for tenant A never resolves to tenant B's bytes (the
+// `media-asset-url-tenant-scoped` SECURITY invariant). Demo-only:
+// process-local, restart wipes; entries TTL out.
+// ───────────────────────────────────────────────────────────────────
+
+interface MediaAssetEntry {
+  tenantId: string;
+  contentBase64: string;
+  contentType: string;
+  /** Decoded asset size in bytes. */
+  bytes: number;
+  expiresAtMs: number;
+}
+
+/** token → entry. Single map (tokens are globally unique + carry tenantId). */
+const _mediaAssets = new Map<string, MediaAssetEntry>();
+const MEDIA_ASSET_DEFAULT_TTL_MS = 60 * 60 * 1000; // 1h
+
+/** Store an asset for `tenantId` and mint a tenant-scoped capability URL.
+ *  Returns the relative serve URL + decoded byte size + expiry. */
+export function storeMediaAsset(
+  tenantId: string,
+  input: { contentBase64: string; contentType: string; ttlSeconds?: number },
+): { token: string; url: string; bytes: number; expiresAt: string } {
+  const token = randomBytes(32).toString('base64url');
+  const bytes = Buffer.byteLength(input.contentBase64, 'base64');
+  const ttlMs =
+    typeof input.ttlSeconds === 'number' && input.ttlSeconds > 0
+      ? input.ttlSeconds * 1000
+      : MEDIA_ASSET_DEFAULT_TTL_MS;
+  const expiresAtMs = Date.now() + ttlMs;
+  _mediaAssets.set(token, { tenantId, contentBase64: input.contentBase64, contentType: input.contentType, bytes, expiresAtMs });
+  return { token, url: `/v1/host/sample/assets/${token}`, bytes, expiresAt: new Date(expiresAtMs).toISOString() };
+}
+
+/** Resolve a media-asset token. Returns null when unknown or expired (the
+ *  token IS the capability — a caller without it cannot reach the bytes). */
+export function resolveMediaAsset(token: string): MediaAssetEntry | null {
+  const e = _mediaAssets.get(token);
+  if (!e) return null;
+  if (e.expiresAtMs <= Date.now()) {
+    _mediaAssets.delete(token);
+    return null;
+  }
+  return e;
 }
 
 /** Build a per-run scoped surface bundle. Inject into NodeContext at

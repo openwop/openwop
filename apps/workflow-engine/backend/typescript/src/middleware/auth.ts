@@ -73,6 +73,12 @@ const PUBLIC_PATH_PREFIXES = [
   '/v1/openapi.json',
   '/v1/packs',
   '/v1/interrupts',
+  // RFC 0055 §C media-asset serving: GET /v1/host/sample/assets/{token} is
+  // token-authed (the 32-byte capability token is the credential, like
+  // /v1/interrupts/{token}), so embeddable <img src> URLs work without a
+  // bearer/cookie. The store path (POST /v1/host/sample/media/put) is NOT
+  // under this prefix and stays authenticated.
+  '/v1/host/sample/assets',
   // Admin endpoints do their own constant-time check against
   // OPENWOP_ADMIN_TOKEN (separate from OPENWOP_API_KEYS so the
   // session/bearer paths can't confuse the two). Bypassing the
