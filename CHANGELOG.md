@@ -83,6 +83,38 @@ Third and final step of the Tier-1 critical path (depends on RFC 0046 + 0047, bo
 
 **Tier 1 complete on the openwop side:** `host.credentials` (0046) + `host.oauth` (0047) + connector manifest (0045) now give a host the full portable contract; `Accepted` for each is gated on MyndHyve wiring the implementation.
 
+### RFC 0041 promoted Active → Accepted — Phase 4 replay determinism live on MyndHyve; multi-agent execution model roadmap (Phases 1-4) now closed end-to-end on a non-steward host (2026-05-25)
+
+**Milestone — multi-agent execution model Phases 1+2+3+4 now Accepted end-to-end on a non-steward host.** MyndHyve workflow-runtime advertises `multiAgent.executionModel.{version: 4, replayDeterminism: {supported: true, llmCacheKeyRecipe: "spec-rfc-0041", refusalDivergenceEmission: true}}` live on `https://myndhyve.ai/.well-known/openwop` (verified 2026-05-25 via direct curl).
+
+The §C Tier-2 Firestore-backed observable-result cache + the §D advertise land together in MyndHyve commit `708753e7`:
+
+- **§C Tier-2 — Firestore-backed observable-result cache.** `services/workflow-runtime/src/firestoreObservableResultCache.ts` (NEW) keys workspace-scoped Firestore docs at `workspaces/{wsId}/observableResultCache/{runId}__{nodeId}__{attempt}__{cacheKeyHash}`. Cross-tenant isolation enforced by path + defense-in-depth `workspaceId` field check on read. Firestore TTL policy on `expiresAt` + read-time stale-check for not-yet-swept docs. Read failures fail-safe to provider call; write failures logged at warn (user sees successful stream). Pluggable backend interface; `OBSERVABLE_RESULT_CACHE_BACKEND` env selects backend (default in-memory; `'firestore'` selects the Tier-2 backend).
+- **§B emission wired (carried from `08125ad`).** `serverCallAI.ts:checkRefusalDivergence(kind)` runs BEFORE both terminal yields; on divergence emits `replay.divergedAtRefusal` event with the full §B payload + yields the `REPLAY_DIVERGED_AT_REFUSAL:` structured error in place of the original terminal.
+- **§D advertise gated on env var.** Production deploys WITHOUT the env var honestly stay at `version: 3` + omit `replayDeterminism`. Same honest-advertise discipline that drove the previous staged rollouts.
+- **Staged rollout, verified end-to-end.** Code deployed at `workflow-runtime-00205-2pc` (advertise stayed `version: 3`); env var flipped via `gcloud run services update --update-env-vars OBSERVABLE_RESULT_CACHE_BACKEND=firestore`; new revision `workflow-runtime-00206-tdh` advertises the full §D block. `version: 4` is the final ladder rung on `multiAgent.executionModel`; all four phases live in production.
+
+**Conformance posture under the bootstrap-phase rule (advertisement + scenarios pass-modulo-honest-skip):**
+
+| Scenario | Was | Now |
+|---|---|---|
+| `replay-divergence-at-refusal.test.ts` advertisement-shape probe | SKIP (block absent) | **PASS** (block present, three required fields verified) |
+| `replay-llm-cache-key.test.ts` recipe correctness (5 behavioral) | PASS conditional on env-gate | **PASS** against live MyndHyve target (host-sample seam reachable post-`60b569de` wire-up) |
+| `replay-llm-cache-key-portable.test.ts` non-recipe-field invariance | PASS conditional | **PASS** (same) |
+
+The §B refusal-divergence BEHAVIORAL probe (the cross-revision driver that constructs a source run + drives a replay against a deployed host) remains an upstream `it.todo` on the openwop suite side — it has not been authored. MyndHyve's `serverCallAI.ts:checkRefusalDivergence` wiring is implementation-ready and will exercise the driver when it lands.
+
+**Phase 1-4 roadmap rung-by-rung — each `version: N` advertised honestly with the spec contract honored in production:**
+
+| Version | Phase | RFC | Honored by |
+|---|---|---|---|
+| 1 | Phase 1 — handoff state machine | RFC 0037 | `core.workflowChain.event` emission from `dispatch.node.ts` |
+| 2 | Phase 2 — confidence escalation | RFC 0039 §A | `confidenceEscalationFloor: 0.5` + `core.workflowChain.confidence-escalated` emission |
+| 3 | Phase 3 — cross-host causation | RFC 0040 | `ServerHttpClientAdapter.fetch` outbound `traceparent` + `GET /v1/runs/:runId/ancestry` + sqlite-host MCP peer at `/v1/mcp/invoke-node` |
+| 4 | Phase 4 — replay determinism | RFC 0041 | §A cache-key recipe + §B refusal-divergence detection/emission/structured-error-code + §C Firestore-backed cross-instance cache + §D advertise |
+
+Counts: **RFCs Accepted 35 → 36; Active 6 → 5** (this commit; per-commit delta after upstream's RFC 0025 Draft → Active landed in the same `[1.1.4 — unreleased]` block).
+
 ### RFC 0047 `host.oauth` — spec + schema + connector events + shape/redaction conformance landed (2026-05-25)
 
 Second step on the Tier-1 critical path (depends on RFC 0046, already on `main`). Lands the openwop-side `host.oauth` contract: the host performs the OAuth 2.0 authorization-code + refresh dance on a user's behalf for connector nodes, stores the token as a `host.credentials` entry, and resolves it into the node sandbox as a bearer token. RFC 0047 stays `Draft`. All additive.
