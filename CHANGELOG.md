@@ -11,6 +11,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0053 dead-letter routing & failure sinks — completes the MyndHyve batch (2026-05-25)
+
+A run-level dead-letter sink: a run/node that exhausts its retry policy (RFC 0009) lands in a durable, inspectable sink and stays fork-eligible (RFC 0011), instead of being logged and lost. **Completes the MyndHyve protocol-extension batch (RFCs 0045–0054) on the openwop side.** RFC 0053 stays `Draft`. All additive.
+
+- **Schema:** new top-level `capabilities.deadLetter` block (`supported` / `retentionDays`); new `run.dead_lettered` event (`{ runId, nodeId?, reason, attempts }`) in `run-event-payloads.schema.json` + the `RunEventType` enum.
+- **Spec:** `host-capabilities.md` §host.deadLetter — retry-exhaustion → sink + `run.dead_lettered`, fork-eligibility for the retention window, purge after `retentionDays`. Distinct from `queueBus.deadLetterSupported` (transport-level); composes with RFC 0009 retry + RFC 0011 fork.
+- **Conformance:** `deadletter-capability-shape.test.ts` (advertisement shape, always runs) + `deadletter-retry-exhaustion.test.ts` (retry-exhaustion → `run.dead_lettered` + fork-eligibility, capability-gated, `POST /v1/host/sample/deadletter/exhaust` seam soft-skips, registered in `host-sample-test-seams.md`). Retention-purge scenario deferred.
+- **Counts synced:** conformance scenario files → 229; `RunEventType` variants 70→71; README + conformance README + `coverage.md` updated; `docs/PROTOCOL-STATUS.md` regenerated. (No new schema file, no new invariant.)
+
 ### RFC 0043 implemented (Draft) — registry/extension policy now auditable (2026-05-25)
 
 Lands RFC 0043's landable acceptance criteria so the registry, namespace, name-reservation, and IPR policy is auditable today (the RFC stays `Draft`; promotion to `Accepted` is gated on the `GOVERNANCE.md` working-group tripwire — ≥3 orgs + ≥2 non-steward hosts — and is not a code task). `additive` policy text, no wire-shape change.

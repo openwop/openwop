@@ -1804,6 +1804,37 @@ Additive — hosts that omit the block advertise no scheduling; `schedule`-trigg
 
 ---
 
+## §host.deadLetter
+
+**Capability flag:** `deadLetter.supported: true` *(advertised via top-level `Capabilities.deadLetter`; see [capabilities.md §deadLetter](capabilities.md#deadletter))* — RFC 0053, `Draft`.
+
+**Used by:** the engine's terminal-failure path. Gives a run/node that exhausts its retry policy a durable, inspectable **sink** instead of being logged and lost — so a poisoned run can be examined and replayed.
+
+This is the run-level dead-letter surface, **distinct from** `queueBus.deadLetterSupported` (RFC 0017), which dead-letters transport *messages* on a queue backend, not *runs* in the engine. It composes with the retry policy (RFC 0009) and fork/replay (RFC 0011).
+
+**Contract (normative).** A host advertising `deadLetter.supported: true` MUST:
+
+1. On retry exhaustion (per the RFC 0009 retry policy), route the run/node to the dead-letter sink and emit `run.dead_lettered { runId, nodeId?, reason, attempts }`. The run's terminal `RunSnapshot.status` reflects failure; the run is **not** purged before `retentionDays`.
+2. Keep the dead-lettered run **fork-eligible** per RFC 0011 for the retention window — it can be forked/replayed (e.g. after the underlying cause is fixed).
+3. Purge the run after `retentionDays`; a fork attempt on a purged run returns the existing RFC 0011 not-found error.
+
+`run.dead_lettered` carries no credential or payload material beyond a redaction-safe `reason`.
+
+**Capability advertisement shape:**
+
+```json
+{
+  "deadLetter": {
+    "supported": true,
+    "retentionDays": 30
+  }
+}
+```
+
+Additive — hosts that omit the block continue to fail runs with no sink, unaffected. Verified by `deadletter-capability-shape.test.ts` (shape, always runs) + `deadletter-retry-exhaustion.test.ts` (retry-exhaustion → `run.dead_lettered` + fork-eligibility, capability-gated).
+
+---
+
 ## §host.knowledge
 
 **Capability flag:** `host.knowledge: supported`
