@@ -8,10 +8,10 @@
 | Surface | Current value | Source |
 |---|---:|---|
 | Spec prose documents | 40 | `spec/v1/*.md` |
-| JSON Schemas | 38 | `schemas/*.schema.json` |
+| JSON Schemas | 40 | `schemas/*.schema.json` |
 | OpenAPI operations | 37 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 248 | `conformance/src/scenarios/*.test.ts` |
+| Conformance scenario files | 252 | `conformance/src/scenarios/*.test.ts` |
 | RFCs tracked | 65 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## OpenAPI Operations
@@ -23,8 +23,8 @@
 | Status | Count |
 |---|---:|
 | Accepted | 45 |
-| Active | 9 |
-| Draft | 11 |
+| Active | 10 |
+| Draft | 10 |
 
 | Latest RFC | Title | Status |
 |---|---|---|
@@ -72,8 +72,8 @@
 
 ## Active Follow-Ups
 
-- 11 RFCs still `Draft` (RFC 0038, RFC 0042, RFC 0043, RFC 0050, RFC 0054, RFC 0060, RFC 0061, RFC 0062, RFC 0063, RFC 0064, RFC 0065) — advance with schema/conformance proof or defer.
-- 9 RFCs `Active` (RFC 0025, RFC 0029, RFC 0035, RFC 0036, RFC 0055, RFC 0056, RFC 0057, RFC 0058, RFC 0059) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 10 RFCs still `Draft` (RFC 0038, RFC 0042, RFC 0043, RFC 0050, RFC 0054, RFC 0061, RFC 0062, RFC 0063, RFC 0064, RFC 0065) — advance with schema/conformance proof or defer.
+- 10 RFCs `Active` (RFC 0025, RFC 0029, RFC 0035, RFC 0036, RFC 0055, RFC 0056, RFC 0057, RFC 0058, RFC 0059, RFC 0060) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - SDK parity still shows raw-only rows for several stable v1.x helper surfaces.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.

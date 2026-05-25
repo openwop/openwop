@@ -16,8 +16,8 @@
 | `envelopes/media.file.schema.json` | `ai-envelope.md` §"Media reference payloads" | RFC 0055 §C — optional `media.file` payload; downloadable asset by URL ref or inline base64 + optional `name`. |
 | `annotation.schema.json` | `RFCS/0056` + `observability.md` | RFC 0056 (`Draft`) — a non-blocking human/agent quality signal (rating / correction / label / flag) attached to a run, event, or node. A side-resource (not a replayable run-event-log entry); response of `POST/GET /v1/runs/{runId}/annotations` + payload of the `run.annotated` SSE notification. |
 | `annotation-create.schema.json` | `RFCS/0056` | RFC 0056 (`Draft`) — request body for `POST /v1/runs/{runId}/annotations` (host assigns `annotationId`/`createdAt`/`actor`; binds `target.runId` to the path). |
-| `workspace-file.schema.json` | `RFCS/0059` + `agent-workspace.md` | RFC 0059 (`Active`) — a versioned, tenant·workspace-scoped ground-truth file (`{path, content, contentType?, version, etag?, updatedAt}`). Response of `GET`/`PUT /v1/host/workspace/files/{path}`; `list` returns this shape minus `content`. Flat `path` namespace; SR-1-redacted content. |
-| `workspace-file-create.schema.json` | `RFCS/0059` | RFC 0059 (`Active`) — request body for `PUT /v1/host/workspace/files/{path}` (`{content, contentType?}`; `path` is URL-bound, optimistic concurrency via the `If-Match` header). |
+| `heartbeat-evaluated.schema.json` | `RFCS/0060` + `host-capabilities.md` | RFC 0060 (`Active`) — payload of the heartbeat-scoped `heartbeat.evaluated` AsyncAPI event (`{ heartbeatId, status, changed }`); emitted every tick by a host advertising `capabilities.heartbeat`. Not a run-event-log entry. |
+| `heartbeat-state-changed.schema.json` | `RFCS/0060` + `host-capabilities.md` | RFC 0060 (`Active`) — payload of the `heartbeat.stateChanged` AsyncAPI event (`{ heartbeatId, from, to }`); emitted only on a predicate-state transition. Not a run-event-log entry. |
 | `audit-verify-result.schema.json` | `auth-profiles.md` §`openwop-audit-log-integrity` | Response payload from `GET /v1/audit/verify` — chain-validity verdict + checkpoints + anomalies |
 | `capabilities.schema.json` | `capabilities.md` | `/.well-known/openwop` response — protocolVersion + supportedEnvelopes + schemaVersions + limits + optional v1 discovery surface |
 | `channel-written-payload.schema.json` | `channels-and-reducers.md` §Channel write event | Payload of the `channel.written` RunEvent — write input + reducer name |
@@ -49,6 +49,8 @@
 | `suspend-request.schema.json` | `interrupt.md` | `InterruptPayload` with 8 `kind` discriminators (approval, clarification, external-event, custom, conversation.start, conversation.exchange, conversation.close, low-confidence) |
 | `workflow-chain-pack-manifest.schema.json` | `workflow-chain-packs.md` + RFC 0013 | Manifest for workflow-chain packs (`kind: "workflow-chain"`) — pre-configured DAG fragments expanded inline at workflow-author time. Peer to `node-pack-manifest.schema.json`; disjoint via the `kind` discriminator. |
 | `workflow-definition.schema.json` | `channels-and-reducers.md` + `node-packs.md` | DAG of nodes + edges + triggers + variables + channels |
+| `workspace-file.schema.json` | `agent-workspace.md` + `RFCS/0059` | RFC 0059 — a versioned workspace file (`{path, content, version, etag, updatedAt}`); response of `GET/PUT /v1/host/workspace/files/{path}`. |
+| `workspace-file-create.schema.json` | `agent-workspace.md` + `RFCS/0059` | RFC 0059 — `PUT /v1/host/workspace/files/{path}` request body (content + optional contentType; path from the URL, version/etag host-assigned). |
 
 ## Validating against the schemas
 
