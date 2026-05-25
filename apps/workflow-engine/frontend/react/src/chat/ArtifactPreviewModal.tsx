@@ -17,6 +17,7 @@
 import { useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { isRecord } from './lib/typeGuards.js';
 
 interface Props {
   open: boolean;
@@ -131,6 +132,7 @@ export function ArtifactPreviewModal({ open, nodeId, label, output, onClose }: P
             <summary
               className="muted"
               style={{ fontSize: 12, cursor: 'pointer', marginBottom: 8 }}
+              aria-label="Show raw output JSON"
             >
               Raw output
             </summary>
@@ -175,13 +177,17 @@ export function ArtifactPreviewModal({ open, nodeId, label, output, onClose }: P
  */
 function pickPrimaryView(output: unknown): { body: string | null; format: 'markdown' | 'text' } {
   if (typeof output === 'string') return { body: output, format: 'text' };
-  if (output == null || typeof output !== 'object') return { body: null, format: 'text' };
-  const v = output as Record<string, unknown>;
-  if (typeof v.markdown === 'string') return { body: v.markdown, format: 'markdown' };
-  if (typeof v.md === 'string') return { body: v.md, format: 'markdown' };
-  if (typeof v.published === 'string') return { body: v.published, format: 'markdown' };
-  if (typeof v.response === 'string') return { body: v.response, format: 'text' };
-  if (typeof v.output === 'string') return { body: v.output, format: 'text' };
-  if (typeof v.text === 'string') return { body: v.text, format: 'text' };
+  if (!isRecord(output)) return { body: null, format: 'text' };
+  // The convention is informal — node authors emit their primary
+  // artifact under one of these well-known keys. A future RFC may
+  // formalize this via a "primary output" annotation on the node
+  // schema; until then the FE walks priority order and degrades to
+  // the raw-JSON details block when nothing matches.
+  if (typeof output.markdown === 'string') return { body: output.markdown, format: 'markdown' };
+  if (typeof output.md === 'string') return { body: output.md, format: 'markdown' };
+  if (typeof output.published === 'string') return { body: output.published, format: 'markdown' };
+  if (typeof output.response === 'string') return { body: output.response, format: 'text' };
+  if (typeof output.output === 'string') return { body: output.output, format: 'text' };
+  if (typeof output.text === 'string') return { body: output.text, format: 'text' };
   return { body: null, format: 'text' };
 }

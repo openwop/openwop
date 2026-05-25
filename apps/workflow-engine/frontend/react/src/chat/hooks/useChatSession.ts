@@ -26,6 +26,7 @@ import {
 } from '../../client/chatSessionsClient.js';
 import type { BYOKActiveConfig } from '../../byok/lib/useBYOKConfig.js';
 import { useApplyAnimation } from './useApplyAnimation.js';
+import { isRecord } from '../lib/typeGuards.js';
 import { getSavedWorkflow } from '../../builder/persistence/localStore.js';
 import { serializeWorkflow } from '../../builder/schema/serialize.js';
 import { registerWorkflow } from '../../builder/persistence/registerClient.js';
@@ -1412,10 +1413,14 @@ export function useChatSession(): UseChatSessionResult {
                 (h) => h.nodeId === resolvedNode && !h.resolvedAt,
               );
               if (idx === -1) return prev;
+              // The executor wraps the user's resumeValue as
+              // `{output: <resumeValue>}` when writing the node.completed
+              // event (see executor.ts:780). Unwrap it back so the
+              // HitlDecisionCard sees the raw shape the ApprovalCard
+              // emitted (`{action, content, selectedKey, comment}`).
               const nodeOutput = prev.nodeOutputs[resolvedNode];
-              const resumeValue = nodeOutput && typeof nodeOutput === 'object'
-                && 'output' in nodeOutput
-                ? (nodeOutput as { output: unknown }).output
+              const resumeValue = isRecord(nodeOutput) && 'output' in nodeOutput
+                ? nodeOutput.output
                 : nodeOutput;
               const next = history.slice();
               next[idx] = { ...next[idx]!, resolvedAt, resumeValue };

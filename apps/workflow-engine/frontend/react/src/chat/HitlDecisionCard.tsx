@@ -15,6 +15,7 @@
  * `payload.outputs.output` as the resumeValue. We just present it.
  */
 
+import { isRecord } from './lib/typeGuards.js';
 import type { InterruptHistoryEntry } from './types.js';
 
 interface Props {
@@ -122,14 +123,13 @@ function parseResumeValue(value: unknown): {
   comment: string | null;
   rejected: boolean;
 } {
-  if (value == null || typeof value !== 'object') {
+  if (!isRecord(value)) {
     return { decisionLabel: null, comment: null, rejected: false };
   }
-  const v = value as Record<string, unknown>;
-  const rejected = v.action === 'reject';
-  const selectedKey = typeof v.selectedKey === 'string' ? v.selectedKey : null;
-  const content = typeof v.content === 'string' ? v.content : null;
-  const comment = typeof v.comment === 'string' && v.comment.length > 0 ? v.comment : null;
+  const rejected = value.action === 'reject';
+  const selectedKey = typeof value.selectedKey === 'string' ? value.selectedKey : null;
+  const content = typeof value.content === 'string' ? value.content : null;
+  const comment = typeof value.comment === 'string' && value.comment.length > 0 ? value.comment : null;
 
   // Approval: prefer the user's pick (e.g., "Clarity critic") over the
   // raw `content`, which is the nested-key value the FE walked the
