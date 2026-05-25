@@ -40,7 +40,7 @@ Every OpenWOP-compliant server MUST expose:
 | `GET` | `/v1/runs/{runId}/events` | API key | `runs:read` | SSE event stream (resumable via `Last-Event-ID`) |
 | `GET` | `/v1/runs/{runId}/events/poll` | API key | `runs:read` | Long-poll fallback for non-SSE clients |
 | `GET` | `/v1/runs/{runId}/ancestry` | API key | `runs:read` | RFC 0040 cross-host composition parent (capability-gated; 404 when unadvertised) |
-| `GET` | `/v1/runs/{runId}:diff?against={otherRunId}` | API key | `runs:read` (both runs) | RFC 0054 deterministic structured diff of two runs (404 when unimplemented) |
+| `GET` | `/v1/runs/{runId}:diff` | API key | `runs:read` | RFC 0054 deterministic structured diff of two runs (`?against={otherRunId}`; `runs:read` on both; 404 when unimplemented) |
 | `POST` | `/v1/runs/{runId}/cancel` | API key | `runs:cancel` | Cancel an in-flight run |
 | `POST` | `/v1/runs:bulk-cancel` | API key | `runs:cancel` | Bulk cancel a set of in-flight runs |
 | `POST` | `/v1/runs/{runId}:fork` | API key | `runs:create` + `runs:read` | Fork or replay a run from recorded state |
