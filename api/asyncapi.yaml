@@ -433,9 +433,12 @@ components:
       summary: |
         Type-erased handler for `debug` mode — discriminate on the
         `type` field per the `RunEventType` enum in the run-event
-        JSON Schema. Includes events filtered out of `updates`:
-        `log.appended`, `variable.changed`, `version.pinned`,
-        `lease.*`, `node.retried`, `replay.diverged`, etc.
+        JSON Schema (the authoritative, exhaustive event list; the
+        named messages above are a curated `updates`-tier subset).
+        Includes events filtered out of `updates`: `log.appended`,
+        `variable.changed`, `version.pinned`, `lease.*`, `node.retried`,
+        `replay.diverged`, `connector.authorized`,
+        `connector.auth_expired` (RFC 0047), etc.
       contentType: application/json
       payload:
         $ref: '#/components/schemas/RunEventDoc'
