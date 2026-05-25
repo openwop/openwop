@@ -38,9 +38,11 @@ const NODE_TYPES = { builder: BaseNode };
 export const PALETTE_MIME = 'application/openwop-node-kind';
 
 // In-canvas copy/paste clipboard — module-level so it survives across
-// builder mounts (paste into a different workflow works). Holds the
-// node's kind/name/config, not its id/position.
-let nodeClipboard: { kind: string; name: string; config: Record<string, unknown> } | null = null;
+// builder mounts (paste into a different workflow works). Holds each
+// copied node's kind/name/config plus its offset (dx/dy) from the
+// selection's top-left, so a multi-node paste preserves relative layout.
+type ClipboardEntry = { kind: string; name: string; config: Record<string, unknown>; dx: number; dy: number };
+let nodeClipboard: ClipboardEntry[] | null = null;
 
 export function BuilderCanvas() {
   return (
@@ -59,8 +61,8 @@ function BuilderCanvasInner() {
   const selectedNodeIds = useBuilderStore((s) => s.selectedNodeIds);
   const overlay = useBuilderStore((s) => s.overlay);
   const addNode = useBuilderStore((s) => s.addNode);
-  const updateNode = useBuilderStore((s) => s.updateNode);
-  const removeNode = useBuilderStore((s) => s.removeNode);
+  const moveNodes = useBuilderStore((s) => s.moveNodes);
+  const removeNodes = useBuilderStore((s) => s.removeNodes);
   const addEdge = useBuilderStore((s) => s.addEdge);
   const removeEdge = useBuilderStore((s) => s.removeEdge);
   const setSelection = useBuilderStore((s) => s.setSelection);
@@ -88,16 +90,28 @@ function BuilderCanvasInner() {
       if (key === 'd' && ids.length > 0) {
         e.preventDefault();
         st.cloneNodes(ids); // group-aware duplicate (1+ nodes)
-      } else if (key === 'c' && primary) {
+      } else if (key === 'c' && ids.length > 0) {
         e.preventDefault();
-        nodeClipboard = { kind: primary.kind, name: primary.name, config: { ...primary.config } };
-      } else if (key === 'v' && nodeClipboard) {
-        const sel = primary;
+        // Copy the whole selection, storing each node's offset from the
+        // selection's top-left so paste can reconstruct the layout.
+        const sel = st.nodes.filter((n) => ids.includes(n.id));
+        const minX = Math.min(...sel.map((n) => n.position.x));
+        const minY = Math.min(...sel.map((n) => n.position.y));
+        nodeClipboard = sel.map((n) => ({
+          kind: n.kind,
+          name: n.name,
+          config: { ...n.config },
+          dx: n.position.x - minX,
+          dy: n.position.y - minY,
+        }));
+      } else if (key === 'v' && nodeClipboard && nodeClipboard.length > 0) {
         e.preventDefault();
-        const pos = sel
-          ? { x: sel.position.x + OFFSET, y: sel.position.y + OFFSET }
+        // Anchor the paste near the primary node if one is selected, else a
+        // fixed spot. The whole group shifts together by `OFFSET`.
+        const anchor = primary
+          ? { x: primary.position.x + OFFSET, y: primary.position.y + OFFSET }
           : { x: 160, y: 160 };
-        st.cloneNode(nodeClipboard, pos);
+        st.pasteNodes(nodeClipboard, anchor);
       }
     };
     window.addEventListener('keydown', onKeyDown);
@@ -130,16 +144,22 @@ function BuilderCanvasInner() {
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
-      // Drive position + selection from xyflow events.
+      // Drive position + selection from xyflow events. Batch position and
+      // remove changes so one gesture (group drag, group delete) is one
+      // undo entry rather than one-per-node.
       const applied = applyNodeChanges(changes, rfNodes);
       let selectionChanged = false;
+      const moves: { id: string; position: { x: number; y: number } }[] = [];
+      const removals: string[] = [];
       for (const change of changes) {
         if (change.type === 'position' && change.position && !change.dragging) {
-          updateNode(change.id, { position: change.position });
+          moves.push({ id: change.id, position: change.position });
         }
         if (change.type === 'select') selectionChanged = true;
-        if (change.type === 'remove') removeNode(change.id);
+        if (change.type === 'remove') removals.push(change.id);
       }
+      if (moves.length > 0) moveNodes(moves);
+      if (removals.length > 0) removeNodes(removals);
       // Derive the FULL multi-selection from xyflow's applied state — this
       // handles single click, shift-click (add/remove), and box-select
       // (multiple select changes in one batch) uniformly.
@@ -147,7 +167,7 @@ function BuilderCanvasInner() {
         setSelection(applied.filter((n) => n.selected).map((n) => n.id));
       }
     },
-    [rfNodes, updateNode, removeNode, setSelection],
+    [rfNodes, moveNodes, removeNodes, setSelection],
   );
 
   const onEdgesChange = useCallback(

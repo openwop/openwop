@@ -301,13 +301,8 @@ const CONDITION_OPS: { value: EdgeCondition['op']; label: string; needsValue: bo
 function MultiSelectInspector({ ids }: { ids: string[] }) {
   const cloneNodes = useBuilderStore.getState().cloneNodes;
   const alignNodes = useBuilderStore.getState().alignNodes;
-  const removeNode = useBuilderStore.getState().removeNode;
-  const setSelection = useBuilderStore.getState().setSelection;
-  const deleteAll = () => {
-    // Snapshot ids — removeNode mutates selectedNodeIds as it goes.
-    for (const id of [...ids]) removeNode(id);
-    setSelection([]);
-  };
+  const removeNodes = useBuilderStore.getState().removeNodes;
+  const deleteAll = () => removeNodes(ids); // one undo entry; clears selection
   return (
     <aside className="builder-inspector">
       <h3 className="builder-inspector-title">{ids.length} nodes selected</h3>
