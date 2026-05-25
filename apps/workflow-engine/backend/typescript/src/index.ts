@@ -46,6 +46,7 @@ import { registerInterruptRoutes } from './routes/interrupts.js';
 import { registerStreamRoutes } from './routes/streams.js';
 import { registerWebhookRoutes } from './routes/webhooks.js';
 import { registerPackRoutes } from './routes/packs.js';
+import { registerPackTestRoutes } from './routes/packs-test.js';
 import { registerByokRoutes } from './routes/byok.js';
 import { registerSampleChatRoutes } from './routes/sampleChat.js';
 import { registerPromptRoutes } from './routes/prompts.js';
@@ -260,6 +261,10 @@ export async function createApp(config: AppConfig): Promise<Express> {
   registerStreamRoutes(app, { storage });
   registerWebhookRoutes(app, { storage });
   registerPackRoutes(app, { storage });
+  // RFC 0025 — isolated test-mode mirror namespace. Gated on
+  // OPENWOP_PACKS_TEST_NAMESPACE_ENABLED=true; routes are not mounted
+  // when the env-gate is unset, so production deploys default to "off".
+  registerPackTestRoutes(app);
   registerByokRoutes(app);
   registerSampleChatRoutes(app, { storage });
   registerPromptRoutes(app, {

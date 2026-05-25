@@ -219,6 +219,17 @@ Hosts that advertise `capabilities.prompts.endpointsSupported: true` per `prompt
 | `DELETE` | `/v1/prompts/{templateId}` | API key | `prompts:write` | Delete a user-source template; `403` on host-built-in or pack-sourced. Mutable libraries only. |
 | `POST` | `/v1/prompts:render` | API key | `prompts:read` | Render a template against supplied variable bindings; returns composed body + sha256 hash + per-variable hashes. Deterministic-hash invariant per RFC 0027 §F. Does NOT dispatch an LLM call. |
 
+### Pack-registry test-mode namespace (RFC 0025; gated on `capabilities.packs.testMode`)
+
+Hosts that advertise `capabilities.packs.testMode.supported: true` per `node-packs.md` §"Test-mode registry namespace" expose a mirror surface against an isolated catalog so the conformance suite can exercise the 19-code publish error catalog without `packs:publish` scope on the real registry. Hosts without the advertisement return `404 Not Found` for every path below. The endpoints mirror the production `/v1/packs/*` PUT/GET/DELETE/sig surface verbatim — same request bodies, response shapes, status codes, and error code vocabulary.
+
+| Method | Path | Auth | Scope | Purpose |
+|---|---|---|---|---|
+| `PUT` | `/v1/packs-test/{name}/-/{version}.tgz` | API key | `packs:publish` | Publish a pack tarball to the isolated test catalog. Surfaces the documented 19-code error catalog from `node-packs.md` §"PUT /v1/packs/{name}/-/{version}.tgz" verbatim. Idempotent re-publish returns `200`; new publishes return `201`; conflicting re-publish returns `409`. |
+| `GET` | `/v1/packs-test/{name}/-/{version}.tgz` | API key | `packs:read` | Fetch a published test-catalog tarball. Mirror of `GET /v1/packs/{name}/-/{version}.tgz`. |
+| `DELETE` | `/v1/packs-test/{name}/-/{version}` | API key | `packs:publish` | Unpublish a test-catalog version. Mirror of `DELETE /v1/packs/{name}/-/{version}` — returns `400 unpublish_window_expired` for versions outside the unpublish window. |
+| `GET` | `/v1/packs-test/{name}/-/{version}.sig` | API key | `packs:read` | Fetch the detached signature blob for a test-catalog version. Mirror of `GET /v1/packs/{name}/-/{version}.sig`. |
+
 ## Optional endpoints (transports)
 
 An OpenWOP-compliant server MAY expose additional transports. If exposed, they MUST follow these contracts:
