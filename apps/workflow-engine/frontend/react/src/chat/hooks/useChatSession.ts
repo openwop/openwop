@@ -18,7 +18,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RunEventDoc } from '@openwop/openwop';
 import { cancelRun, createRun, getRun } from '../../client/runsClient.js';
 import { subscribeToRun, type Subscription } from '../../client/streamsClient.js';
-import { listOpenInterrupts, type OpenInterrupt } from '../../client/interruptsClient.js';
+import { listOpenInterrupts, resolveByRun, type OpenInterrupt } from '../../client/interruptsClient.js';
 import {
   appendChatMessage,
   createChatSession,
@@ -1009,13 +1009,53 @@ export function useChatSession(): UseChatSessionResult {
     void ensureSessionInBackend(fresh.id, fresh.title);
   }, [ensureSessionInBackend]);
 
-  const resolveInterrupt = useCallback(async (messageId: string, _value: unknown) => {
-    // Optimistically clear the active interrupt on the bubble; the SSE
-    // event will reconcile shortly.
+  const resolveInterrupt = useCallback(async (messageId: string, value: unknown) => {
+    // Snapshot the message's interrupt + runId BEFORE the optimistic
+    // clear so we can (a) call the BE resolve with them and (b) restore
+    // them if the BE call fails. Uses a setState-callback to read the
+    // latest session without needing a ref — the function returns the
+    // unchanged state, so this is a read masquerading as a write.
+    let activeInterrupt: OpenInterrupt | null = null;
+    let runId: string | null = null;
+    setSession((s) => {
+      const msg = s.messages.find((m) => m.id === messageId);
+      activeInterrupt = msg?.activeInterrupt ?? null;
+      runId = msg?.workflowRun?.runId ?? msg?.meta?.runId ?? null;
+      return s;
+    });
+    if (!activeInterrupt || !runId) {
+      // Nothing to resolve. Clear local state anyway so the card
+      // disappears if it was somehow rendered without a runId.
+      setSession((s) => ({
+        ...s,
+        messages: s.messages.map((m) => m.id === messageId ? { ...m, activeInterrupt: null } : m),
+      }));
+      return;
+    }
+    // Optimistically clear the card so the user gets immediate
+    // feedback; the BE call + SSE reconcile happen below.
     setSession((s) => ({
       ...s,
       messages: s.messages.map((m) => m.id === messageId ? { ...m, activeInterrupt: null } : m),
     }));
+    try {
+      await resolveByRun(runId, (activeInterrupt as OpenInterrupt).nodeId, value);
+      // The BE emits `node.interrupt.resolved` + the downstream
+      // node.started/completed events over SSE; the existing handler
+      // (line ~1300) updates the bubble's status as those land.
+    } catch (err) {
+      // Resume failed — restore the interrupt so the user can retry,
+      // and surface the error inline.
+      const restored = activeInterrupt;
+      const message = err instanceof Error ? err.message : String(err);
+      setSession((s) => ({
+        ...s,
+        messages: s.messages.map((m) => m.id === messageId
+          ? { ...m, activeInterrupt: restored }
+          : m),
+      }));
+      setError(`Could not resolve interrupt: ${message}`);
+    }
   }, []);
 
   const loadSessionFromBackend = useCallback(async (sessionId: string) => {
