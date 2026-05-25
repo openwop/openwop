@@ -1173,6 +1173,38 @@ invariants:
       decided { allowed: false }` event. Tested against any host advertising
       `capabilities.authorization.supported`; skips cleanly otherwise.
 
+  # ===== RFC 0028 Tier-2 prompt mutation workspace-membership =====
+
+  - id: prompt-mutation-workspace-membership-enforced
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/prompt-mutation-workspace-membership-enforced.test.ts
+    note: |
+      `prompts.md` §"Discovery & distribution" §"REST endpoints" §"Authorization":
+      hosts advertising `capabilities.prompts.mutableLibrary: true` MUST verify
+      that the authenticated principal is a member of the target workspace
+      before honoring any `POST` / `PUT` / `DELETE` to a workspace-scoped
+      `/v1/prompts*` resource. A `workspaceId` carried in the request body, URL,
+      or query string MUST NOT be trusted as authorization on its own — the
+      host MUST resolve membership from the authenticated identity (per RFC
+      0048 §D and `auth.md` §"Identity claims"), independent of the
+      caller-supplied workspace identifier. Non-members MUST be rejected
+      fail-closed (typically `403`) before any write proceeds.
+
+      This invariant was filed post-RFC-0028 promotion (2026-05-25) following
+      a self-disclosed adopter vulnerability in which a host's mutating
+      handlers wrote via the database vendor's admin SDK (bypassing the
+      vendor's row-level security rules) while accepting `workspaceId` from
+      the request body. The pattern (admin-SDK writes bypass DB-tier auth)
+      is common across Firebase / Supabase / RLS-style stacks; the spec MUST
+      requires the application-tier check independently. The conformance
+      scenario soft-skips when `mutableLibrary` is unadvertised; when present,
+      it drives a POST with a workspaceId the conformance principal cannot
+      possibly be a member of and asserts the host refuses (NOT a 2xx; any
+      4xx/5xx refusal is acceptable — silent success is the failure mode).
+
   # ===== RFC 0016 host.tableStorage cross-tenant isolation =====
 
   - id: table-cross-tenant-isolation

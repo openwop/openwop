@@ -243,6 +243,10 @@ The `prompt.composed` event MUST carry two SECURITY invariants once a host actua
 
 Both invariants live in `SECURITY/invariants.yaml` once a reference host emits the event. Until then, the rows are RFC-tracked but not gate-enforced — matching the RFC 0021 envelope-shape staging precedent (the invariants land alongside the reference impl that emits the event, not at Draft merge).
 
+The RFC 0028 Tier-2 mutating-endpoint surface carries a third invariant:
+
+- **`prompt-mutation-workspace-membership-enforced`** — Hosts advertising `capabilities.prompts.mutableLibrary: true` MUST verify the authenticated principal's workspace membership before honoring any `POST` / `PUT` / `DELETE` to a workspace-scoped `/v1/prompts*` resource. `workspaceId` carried by the caller MUST NOT be trusted as authorization on its own. See §"Discovery & distribution" §"REST endpoints" §"Workspace membership on workspace-scoped writes" below for the full normative text.
+
 ---
 
 ## Discovery & distribution (RFC 0028)
@@ -267,6 +271,8 @@ Six operations under `/v1/prompts*`, all gated on `capabilities.prompts.endpoint
 **Cache semantics.** `GET /v1/prompts/{templateId}` responses SHOULD set `ETag: "<sha256-of-body>"` and `Cache-Control: max-age=60`. When the request pinned `?version`, hosts SHOULD upgrade to `Cache-Control: public, max-age=31536000, immutable` (mirrors `node-packs.md` §"Immutable artifact" semantics).
 
 **Authorization.** Mutating endpoints MUST require authentication per `auth.md`. Hosts SHOULD scope by writer role; the spec defers role-mapping to host policy.
+
+**Workspace membership on workspace-scoped writes (normative, RFC 0048 §D).** When a `POST` / `PUT` / `DELETE` to `/v1/prompts*` targets a workspace-scoped resource, hosts MUST verify that the authenticated principal is a member of the target workspace BEFORE honoring the write. A `workspaceId` supplied by the caller (in the request body, URL path, or query string) MUST NOT be trusted as authorization on its own — the host MUST resolve workspace membership from the authenticated identity (per `auth.md` §"Identity claims — tenant · workspace · principal" and RFC 0048 §D's cross-workspace isolation MUST-NOT), independent of any caller-supplied workspace identifier. Non-members MUST be rejected fail-closed (typically `403`) before any persistence occurs. Hosts that authenticate against an identity provider but persist via a database vendor's privileged admin client (Firebase Admin SDK, Supabase service-role key, equivalent) MUST replicate the membership check at the application tier rather than relying solely on the database vendor's row-level security rules — privileged admin clients bypass those rules. Verified by the `prompt-mutation-workspace-membership-enforced` SECURITY invariant.
 
 ### Prompt-pack distribution
 
