@@ -3,7 +3,7 @@
  * input) inside a vertical flex container.
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChatHeader } from './ChatHeader.js';
 import { ChatInput } from './ChatInput.js';
 import { MessageFeed } from './MessageFeed.js';
@@ -148,6 +148,38 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
       setFocusedWorkflowMessageId(workflowRunMessages[0]?.id ?? null);
     }
   }, [workflowRunMessages, focusedWorkflowMessageId]);
+
+  // Auto-open the progress panel when a brand-new workflow_run is
+  // dispatched in this session. Watch a ref of "ids we've already
+  // seen" — when an id appears that wasn't there before, it's a
+  // fresh dispatch (via `@-mention` or workflow-tool-use) and the
+  // user benefits from the panel popping open to track it. Loading
+  // a different session via the history drawer also changes the id
+  // set but those ids exist in the saved messages; the ref seeds
+  // from `workflowRunMessages` on mount so pre-existing runs don't
+  // trigger the open. Session switches reset the ref to the new
+  // session's id set, so switching back to a session with old runs
+  // doesn't re-pop the panel.
+  const seenWorkflowRunIdsRef = useRef<Set<string>>(new Set(workflowRunMessages.map((m) => m.id)));
+  const prevSessionIdRef = useRef<string>(session.id);
+  useEffect(() => {
+    // Session switch — reseed the seen-set with whatever's in the new
+    // session and skip the auto-open this tick.
+    if (prevSessionIdRef.current !== session.id) {
+      prevSessionIdRef.current = session.id;
+      seenWorkflowRunIdsRef.current = new Set(workflowRunMessages.map((m) => m.id));
+      return;
+    }
+    const seen = seenWorkflowRunIdsRef.current;
+    const newRun = workflowRunMessages.find((m) => !seen.has(m.id));
+    if (newRun) {
+      // Mark all current ids as seen (covers the case where multiple
+      // arrived in a single tick, e.g., hydration race).
+      for (const m of workflowRunMessages) seen.add(m.id);
+      setFocusedWorkflowMessageId(newRun.id);
+      setProgressOpen(true);
+    }
+  }, [workflowRunMessages, session.id]);
 
   // Persist panel state on every change so reload restores the user's
   // last view.
