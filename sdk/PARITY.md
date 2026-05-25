@@ -70,6 +70,9 @@ Helper parity across run-status + run-error-code predicates landed 2026-05-15 (S
 | `GET /v1/runs/{id}/events` (SSE) | ✅ `client.runs.events(id, opts)` AsyncGenerator | ✅ `sse.stream_events(client, id, ...)` generator | ✅ `client.StreamEvents(ctx, ...)` channel |
 | `bufferMs` query (stream-modes-buffer) | ✅ `client.runs.events(id, { bufferMs })` | ✅ `client.runs_events(id, buffer_ms=...)` | ✅ `client.StreamEvents(ctx, id, StreamEventsOptions{BufferMs: ...})` |
 | Mixed `?streamMode=values,updates` | ✅ `client.runs.events(id, { streamMode: [...] })` | ✅ `client.runs_events(id, stream_mode=[...])` | ✅ `client.StreamEvents(ctx, id, StreamEventsOptions{StreamModes: ...})` |
+| Typed event helpers — `agent.*` (RFC 0024) + `memory.written` (RFC 0057) | ✅ `isAgentReasoned` … `isMemoryWritten` + `MemoryWrittenPayload` | ✅ `is_agent_reasoned` … `is_memory_written` + `memory_written_payload` | ✅ `IsAgentReasoned` … `IsMemoryWritten` + `UnmarshalMemoryWritten` |
+
+(Typed event-type predicates are a payload-narrowing family, not endpoint surfaces, so they sit outside the headline net-surface count above — but they are kept at full TS/Python/Go parity. RFC 0057 added the `memory.written` helper symmetric across all three.)
 
 ### HITL interrupts
 

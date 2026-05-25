@@ -670,6 +670,19 @@ export interface AgentDecidedPayload {
   [key: string]: unknown;
 }
 
+/** `memory.written` payload (RFC 0057). Content-free per-write attribution:
+ *  identifiers + non-secret tags only — never the entry content (the read
+ *  side serves that, already SR-1-redacted). `nodeId` is omitted for host
+ *  session-end writes with no node attribution. */
+export interface MemoryWrittenPayload {
+  memoryRef: string;
+  memoryId: string;
+  nodeId?: string;
+  agentId?: string;
+  tags?: string[];
+  [key: string]: unknown;
+}
+
 /** A `RunEventDoc` narrowed to a specific event-type discriminator +
  *  payload shape. Returned by the `isAgent*` type guards in
  *  `event-helpers.ts`. */

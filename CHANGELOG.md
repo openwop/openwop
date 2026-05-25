@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0057 (memory write-attribution) — SDK typed event helpers (TS/Python/Go) (2026-05-25)
+
+All three reference SDKs gain a typed `memory.written` event helper, joining the RFC 0024 `agent.*` event-helper family at full parity: TS `isMemoryWritten` + `MemoryWrittenPayload`; Python `is_memory_written` + `memory_written_payload` + `MemoryWrittenPayload`; Go `IsMemoryWritten` + `UnmarshalMemoryWritten` + `MemoryWrittenPayload`. Typed event-type predicates sit outside the headline net-surface count (they narrow payloads rather than wrap endpoints) but are kept symmetric across all three — see `sdk/PARITY.md`. tsc + go vet/gofmt + ruff clean.
+
 ### RFC 0058 §A–§D — run-execution-bounds wire surface landed (`Draft`, 2026-05-25)
 
 Implements the RFC 0058 wire surface (additive; Status stays `Draft` pending the comment window + reference-host enforcement, per the RFC 0052 precedent).
