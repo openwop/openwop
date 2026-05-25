@@ -297,6 +297,7 @@ Common error codes:
 - `validation_error` — request body/params malformed; `details` enumerates fields
 - `not_found` — resource doesn't exist or caller can't see it (do not leak existence)
 - `run_already_active` — `X-Dedup` collision
+- `run_forbidden` — RFC 0048. The caller's identity triple (`{ tenant, workspace, principal }`) is not authorized for the requested run — most commonly a `principal` scoped to one `workspace` attempting to read a run owned by another (cross-workspace isolation, fail-closed). The host MUST NOT leak the run's existence or contents; HTTP status `403` (or `404` to avoid existence disclosure). Distinct from `not_found` only when the host chooses to signal the authorization boundary explicitly.
 - `recursion_limit_exceeded` — run terminated due to safety cap
 - `rate_limited` — too many requests
 - `capability_not_provided` — a node's `requires` declared a runtime capability the host has not registered. The `message` MUST name the missing capability id; `details.capability` SHOULD carry the same id machine-readably. The run terminates `failed` and the offending node MUST NOT execute. See `capabilities.md` §"Runtime capabilities".
