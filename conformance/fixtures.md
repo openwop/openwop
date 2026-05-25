@@ -358,6 +358,25 @@ Both items are tracked as v1.x conformance expansion work.
 
 ---
 
+## `conformance-run-duration-breach` (RFC 0058 — wall-clock run timeout)
+
+> **Status: RFC 0058 `Draft`.** Exercises the `run-duration` `cap.breached` kind. Soft-skips until a host advertises `capabilities.limits.maxRunDurationMs` AND enforces the wall-clock bound; gated in `run-execution-bounds-shape.test.ts` via `isFixtureAdvertised`.
+
+- **Purpose**: verify that `RunOptions.configurable.runTimeoutMs` (clamped to `Capabilities.limits.maxRunDurationMs`) terminates a run that overruns its deadline, emitting `cap.breached {kind: 'run-duration'}` + terminal `failed` with `error.code = 'run_timeout'` per `run-options.md` §runTimeoutMs + `capabilities.md` §"Engine-enforced limits".
+- **Topology**: single `core.delay` node that sleeps `input.delayMs` (default `30000`) — far longer than the small `runTimeoutMs` the test supplies.
+- **Inputs**: `delayMs` (number, default `30000`).
+- **Conformance test driver**:
+  1. POST `/v1/runs` with `{workflowId: "conformance-run-duration-breach", configurable: {runTimeoutMs: 1000}}`.
+  2. Poll until terminal.
+  3. **Assert** terminal status is `failed`.
+  4. **Assert** `RunSnapshot.error.code === "run_timeout"`.
+  5. **Assert** the event log contains a `cap.breached` event with `payload: {kind: "run-duration", limit: 1000, observed: <elapsedMs > 1000>}` — `observed` recorded in the event, not recomputed at replay (`replay.md`).
+- **Negative path**: same fixture with `runTimeoutMs` above the (short) `delayMs`, or no override, completes normally.
+
+This fixture is unblocked when a host exposes a wall-clock deadline enforcer advertising `capabilities.limits.maxRunDurationMs`. Tracked as v1.x conformance expansion work (RFC 0058 acceptance criteria).
+
+---
+
 ## `openwop-smoke-byok-roundtrip` (BYOK end-to-end smoke fixture)
 
 > **Status: included in the v1.0 conformance baseline.** Server-side `conformance.secret.echo` support is exercised by `src/scenarios/byok-roundtrip.test.ts`.

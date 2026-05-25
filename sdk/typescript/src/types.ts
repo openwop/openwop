@@ -48,6 +48,22 @@ export interface Capabilities {
   minClientVersion?: string;
 }
 
+/**
+ * The `kind` discriminator on a `cap.breached` event payload
+ * (`run-event-payloads.schema.json#capBreached`). The four engine kinds, the
+ * RFC 0008 §K `wasm-*` runtime caps, and the RFC 0058 run-scoped bounds.
+ */
+export type CapBreachedKind =
+  | 'clarification'
+  | 'schema'
+  | 'envelopes'
+  | 'node-executions'
+  | 'wasm-memory'
+  | 'wasm-fuel'
+  | 'wasm-execution-time'
+  | 'run-duration'
+  | 'loop-iterations';
+
 export interface RunSnapshot {
   runId: string;
   workflowId: string;

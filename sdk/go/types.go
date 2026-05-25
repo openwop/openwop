@@ -40,6 +40,23 @@ type CapabilitiesLimits struct {
 	MaxLoopIterations   *int `json:"maxLoopIterations,omitempty"` // RFC 0058
 }
 
+// CapBreachedKind is the `kind` discriminator on a cap.breached event payload
+// (run-event-payloads.schema.json#capBreached): the four engine kinds, the
+// RFC 0008 §K wasm-* runtime caps, and the RFC 0058 run-scoped bounds.
+type CapBreachedKind string
+
+const (
+	CapBreachedClarification  CapBreachedKind = "clarification"
+	CapBreachedSchema         CapBreachedKind = "schema"
+	CapBreachedEnvelopes      CapBreachedKind = "envelopes"
+	CapBreachedNodeExecutions CapBreachedKind = "node-executions"
+	CapBreachedWasmMemory     CapBreachedKind = "wasm-memory"
+	CapBreachedWasmFuel       CapBreachedKind = "wasm-fuel"
+	CapBreachedWasmExecTime   CapBreachedKind = "wasm-execution-time"
+	CapBreachedRunDuration    CapBreachedKind = "run-duration"
+	CapBreachedLoopIterations CapBreachedKind = "loop-iterations"
+)
+
 // Capabilities mirrors `schemas/capabilities.schema.json`.
 type Capabilities struct {
 	ProtocolVersion       string             `json:"protocolVersion"`

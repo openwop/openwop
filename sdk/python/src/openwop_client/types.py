@@ -43,6 +43,22 @@ class CapabilitiesLimits:
     maxLoopIterations: int | None = None
 
 
+# The `kind` discriminator on a `cap.breached` payload
+# (run-event-payloads.schema.json#capBreached): four engine kinds + RFC 0008 §K
+# wasm-* runtime caps + RFC 0058 run-scoped bounds.
+CapBreachedKind = Literal[
+    "clarification",
+    "schema",
+    "envelopes",
+    "node-executions",
+    "wasm-memory",
+    "wasm-fuel",
+    "wasm-execution-time",
+    "run-duration",
+    "loop-iterations",
+]
+
+
 @dataclass(frozen=True)
 class Capabilities:
     protocolVersion: str
