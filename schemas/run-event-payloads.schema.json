@@ -1162,6 +1162,9 @@
         "toolName":  { "type": "string", "minLength": 1, "description": "Tool identifier (typically a node-pack typeId or function name)." },
         "callId":    { "type": "string", "minLength": 1, "description": "Unique correlation id linking this call to the subsequent `agent.toolReturned`. Hosts SHOULD use UUIDs or content-addressable hashes." },
         "inputs":    { "description": "Tool inputs. Shape is tool-specific; consumers MUST NOT assume an object." },
+        "argsHash":  { "type": "string", "description": "RFC 0064 (when `capabilities.toolHooks.prePostEvents`). SHA-256 over RFC 8785 JCS-canonicalized args with resolved secrets already redacted (SR-1) — the SIEM-safe, content-free alternative to `inputs`. Raw key material MUST NOT enter the hash input." },
+        "principal": { "type": "string", "description": "RFC 0064. RFC 0048 principal id the call is attributed to (`core.system` for non-agent host egress)." },
+        "transport": { "type": "string", "enum": ["mcp", "http", "native"], "description": "RFC 0064. How the tool was reached." },
         "causationHostId": { "type": "string", "minLength": 1, "description": "RFC 0040 §A — optional cross-host causation pointer. Present + non-empty when this event's `causationId` points at an event on a DIFFERENT host; absent when same-host. MUST equal the originating host's `crossHostCausation.hostId`." }
       },
       "additionalProperties": true
@@ -1177,6 +1180,8 @@
         "callId":    { "type": "string", "minLength": 1 },
         "outcome":   { "description": "Tool result. Discriminated by host on success vs error; payload shape is tool-specific." },
         "error":     { "$ref": "#/$defs/_errorObject", "description": "Set on tool-execution failure. Mutually exclusive with `outcome`." },
+        "status":     { "type": "string", "enum": ["ok", "error", "forbidden", "rate_limited"], "description": "RFC 0064 (when `capabilities.toolHooks.prePostEvents`). Tool-hooks outcome. `forbidden`/`rate_limited` mean the tool was never invoked (per-tool authz / rate-limit gate)." },
+        "durationMs": { "type": "integer", "minimum": 0, "description": "RFC 0064. Wall-clock tool duration; recorded in the event and re-emitted verbatim on replay/`:fork` (MUST NOT be recomputed from a clock, per `replay.md`). Absent when the call never started (`forbidden`/`rate_limited`)." },
         "causationHostId": { "type": "string", "minLength": 1, "description": "RFC 0040 §A — optional cross-host causation pointer. Present + non-empty when this event's `causationId` points at an event on a DIFFERENT host; absent when same-host. MUST equal the originating host's `crossHostCausation.hostId`." }
       },
       "additionalProperties": true
