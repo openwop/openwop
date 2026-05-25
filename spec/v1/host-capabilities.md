@@ -1820,6 +1820,80 @@ The plaintext returned by `ctx.secrets.resolve(...)` is the most sensitive value
 
 ---
 
+## §host.knowledge
+
+**Capability flag:** `host.knowledge: supported`
+
+**Used by:** market-intelligence packs, RAG-grounded copy packs, brief-enrichment packs.
+
+Knowledge-base retrieval. Routes queries through the host's RAG pipeline (embedding → vector search → optional re-rank). The host owns the corpus, the embedding model, and the access-control boundary; the pack supplies the query.
+
+```typescript
+ctx.knowledge.retrieve({
+  query: string,
+  workspaceId?: string,       // omit to use the run's workspace
+  collectionIds?: string[],   // scope to specific knowledge collections
+  category?: string,          // optional category facet
+  candidateLimit?: number,    // pre-rank candidate pool size; host caps the upper bound
+  resultLimit?: number,       // post-rank returned chunks; host caps the upper bound
+  scoreThreshold?: number,    // minimum relevanceScore (0..1) for inclusion
+}) → Promise<{
+  chunks: Array<{
+    chunkId: string,
+    content: string,                // prepared/cleaned chunk text suitable for prompt insertion
+    rawContent?: string,            // optional verbatim source text (when distinct from content)
+    headingPath: string[],          // section heading trail from the source document
+    pageNumber: number | null,
+    documentTitle: string,
+    assetId: string,                // host-internal id for the source media asset
+    collectionId: string,
+    relevanceScore: number,         // 0..1 — host-normalized post-rank score
+    vectorDistance?: number,        // pre-rank distance; informational only
+  }>,
+  sources: Array<{
+    sourceId: string,               // stable id for citation (de-duplicated across chunks)
+    assetId: string,
+    title: string,
+    headingPath: string[],
+    pageNumber: number | null,
+  }>,
+  latencyMs?: number,
+  hasResults: boolean,
+}>
+```
+
+**Required methods:** `retrieve`.
+
+**Optional methods (host MAY advertise `host.knowledge.embed: supported` to expose them):**
+
+```typescript
+ctx.knowledge.embed({
+  texts: string[],
+  model?: string,                   // host-allowed embedding model alias
+}) → Promise<{
+  vectors: number[][],              // one row per input; dimension is host-defined and stable per model
+  model: string,
+  dimension: number,
+}>
+```
+
+**RBAC:**
+- The host MUST enforce that `workspaceId` is one the calling run has read access to. Cross-workspace retrieval MUST return `403 knowledge_workspace_forbidden`.
+- `collectionIds[]` MUST be filtered to those visible to the caller; chunks from collections the caller cannot read MUST be omitted, NOT errored on.
+
+**Determinism:**
+- `retrieve` is NOT pure — corpus and embeddings change over time. Packs SHOULD treat results as an input snapshot for the current run.
+- Hosts SHOULD include enough metadata (chunkId, assetId, headingPath, pageNumber) for packs to render citations stably.
+
+**Failure modes:**
+- `host_capability_missing`
+- `knowledge_workspace_forbidden` — caller cannot read the workspace
+- `knowledge_query_too_long` — query exceeds host's embedding-model token limit
+- `knowledge_quota_exhausted` — workspace-level retrieval quota tripped
+- `knowledge_collection_not_found` — explicit `collectionIds[]` includes an id that does not exist for this workspace (vs. a no-access filter, which silently skips)
+
+---
+
 ## Reserved-but-undocumented surfaces
 
 The following `host.*` capability slots are reserved for future surfaces. Hosts MUST NOT advertise them until this spec defines the contract.
