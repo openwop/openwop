@@ -12,6 +12,7 @@ import { BuilderTab } from './builder/BuilderTab.js';
 import { WorkflowsDashboard } from './builder/WorkflowsDashboard.js';
 import { DemoHostBanner } from './builder/DemoHostBanner.js';
 import { PrivacyPage } from './PrivacyPage.js';
+import { NotFoundPage } from './NotFoundPage.js';
 import { PromptLibraryPage } from './prompts/PromptLibraryPage.js';
 import { KeysPage } from './byok/KeysPage.js';
 import { SignInButton } from './auth/SignInButton.js';
@@ -93,6 +94,9 @@ export function App() {
           <Route path="/prompts" element={<PromptLibraryPage />} />
           <Route path="/keys" element={<KeysPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
+          {/* Catch-all: the SPA host rewrites every path to index.html, so an
+              unmatched URL must resolve here rather than render a blank main. */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
       <footer className="app-footer">
