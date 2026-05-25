@@ -1,0 +1,11 @@
+# RFC 0060 — Gap Register
+
+Companion to [`RFCS/0060-host-heartbeat-capability.md`](../0060-host-heartbeat-capability.md). Verdict: **clean-composes** (not a duplicate of RFC 0052 scheduling / RFC 0017 queueBus / the polling triggers; novel events; host-capability is the correct form vs. a trigger pack for the anti-spam SLA).
+
+| ID | Section | Question / Missing Input | Owner | Resolution Path | Blocks |
+|---|---|---|---|---|---|
+| G1 | §D / positioning.md | `positioning.md` currently lists "cron-driven execution" as a non-fit, which RFC 0052 (Accepted) already contradicts. The one-line bounded-exception note must land WITH RFC 0060 (it is an acceptance criterion), not be deferred. | Spec Architect | Land the positioning.md edit at implementation; already an AC. | Active |
+| G2 | §B.3 | Prior-state token shape — opaque host blob vs. typed `{ hash, summary }`. Proposed opaque with a size cap. | Spec Architect | Decision before Active. | Active |
+| G3 | §C | Backpressure — if enqueued runs pile up, does the heartbeat self-pause? Proposed advertise `maxPendingEnqueued`. | Spec Architect | Decision before Active. | Active |
+| G4 | §C / RFC 0061 | Can a heartbeat advance a *suspended* agent loop (RFC 0061), or only enqueue a fresh run? Proposed enqueue-only. | Spec Architect | Confirm with RFC 0061. | Active |
+| G5 | §A | `maxRuntimeMs` now cites `capabilities.limits.maxRunDurationMs` (RFC 0058) as the hard ceiling — confirm the heartbeat predicate evaluation is bounded by the run-timeout machinery, not a separate timer. | Spec Architect | Confirm with RFC 0058. | Active |

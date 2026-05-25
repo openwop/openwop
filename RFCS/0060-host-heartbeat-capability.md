@@ -38,7 +38,7 @@ The spec is the right place because "did the heartbeat fire once per tick, was i
 +        "properties": {
 +          "supported": { "type": "boolean" },
 +          "minIntervalSec": { "type": "integer", "minimum": 1, "description": "Smallest interval the host honors; requests below it clamp up." },
-+          "maxRuntimeMs": { "type": "integer", "minimum": 1, "description": "Per-tick predicate-evaluation budget; over-budget evaluation is terminated and reported as `heartbeat.evaluated { status: 'timeout' }`." }
++          "maxRuntimeMs": { "type": "integer", "minimum": 1, "description": "Per-tick predicate-evaluation budget; bounded above by `capabilities.limits.maxRunDurationMs` (RFC 0058) as the hard ceiling. Over-budget evaluation is terminated and reported as `heartbeat.evaluated { status: 'timeout' }`." }
 +        }
 +      }
      }

@@ -8,14 +8,14 @@
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-25 |
 | **Updated** | 2026-05-25 |
-| **Affects** | `spec/v1/node-packs.md` (`core.subWorkflow` config) · `schemas/capabilities.schema.json` (`agents.subRunAttestation`) · `api/asyncapi.yaml` (`subRun.attested` event) · `RFCS/0007` (dispatch) · `RFCS/0051` (approval gate, reused) · `RFCS/0049` (RBAC scope narrowing) · new conformance scenarios · proposed SECURITY invariant `subrun-merge-approval-fail-closed` (lands at implementation) |
+| **Affects** | `spec/v1/node-packs.md` (`core.subWorkflow` config) · `schemas/capabilities.schema.json` (`agents.subRunAttestation`) · `schemas/run-event-payloads.schema.json` (additive optional `attestation` on `coreWorkflowChainEvent`, phase `output.harvested`) · `RFCS/0007` (dispatch) · `RFCS/0051` (approval gate, reused) · `RFCS/0049` (RBAC scope narrowing) · new conformance scenarios · proposed SECURITY invariant `subrun-merge-approval-fail-closed` (lands at implementation) |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
 | **Superseded by** | — |
 
 ## Summary
 
-openwop sub-workflows (`core.subWorkflow` / RFC 0007 dispatch) already spawn isolated, tenant-scoped child runs with `inputMapping` / `outputMapping` and depth/cycle caps. What they lack is *verification before merge*: the parent applies `outputMapping` directly on the child's terminal, with no checksum and no approval gate. This RFC adds an optional `outputAttestation` block on `core.subWorkflow`: when `checksum: true` the host computes and surfaces a content hash of the child's harvested outputs (on the terminal event + a `subRun.attested` event) so the parent can verify integrity; when `requireApproval: true` the host MUST suspend via an `approval` interrupt (RFC 0051) *before* merging, so a human or policy gate accepts/rejects/edits the sub-agent's artifact. Both are additive and opt-in — existing sub-workflows are unchanged.
+openwop sub-workflows (`core.subWorkflow` / RFC 0007 dispatch) already spawn isolated, tenant-scoped child runs with `inputMapping` / `outputMapping` and depth/cycle caps. What they lack is *verification before merge*: the parent applies `outputMapping` directly on the child's terminal, with no checksum and no approval gate. This RFC adds an optional `outputAttestation` block on `core.subWorkflow`: when `checksum: true` the host computes and surfaces a content hash of the child's harvested outputs on the existing `core.workflowChain.event { phase: 'output.harvested' }` (RFC 0037) via an additive optional `attestation` field — not a new event — so the parent can verify integrity; when `requireApproval: true` the host MUST suspend via an `approval` interrupt (RFC 0051) *before* merging, so a human or policy gate accepts/rejects/edits the sub-agent's artifact. Both are additive and opt-in — existing sub-workflows are unchanged.
 
 ## Motivation
 
@@ -48,7 +48,7 @@ All fields optional; an absent `outputAttestation` is exactly today's behavior.
 After the child reaches a terminal status and its outputs are harvested but **before** `outputMapping` is applied, the host MUST:
 
 1. Compute a canonical hash (default `sha256`) over the child's harvested output object, using the canonical-JSON serialization already defined for replay (`spec/v1/` replay rules), so the hash is host-independent.
-2. Surface it on the sub-workflow node's `node.completed` data (`outputs.attestation.checksum`) and emit `subRun.attested { childRunId, checksum, algorithm }`.
+2. Surface it as an additive optional `attestation { checksum, algorithm }` object on the existing `core.workflowChain.event { phase: 'output.harvested' }` (RFC 0037 — the event already fires at exactly this transition, carrying `harvestedKeys[]`), AND on the sub-workflow node's `node.completed` data (`outputs.attestation.checksum`). No new event type: the `output.harvested` phase *is* the merge point.
 3. Apply `outputMapping` as today. The checksum is *advisory for verification* — the parent (or a downstream node) MAY compare it against an expected value and fail the parent if it diverges; the host does not itself reject on checksum (that is policy, expressed as a parent node).
 
 ### §C — approval gate (normative, when `requireApproval: true`)
@@ -65,12 +65,12 @@ This MUST **fail-closed**: if the run terminates or the interrupt expires withou
 
 `principalScope` (when present) narrows the child run's effective scopes to the named RFC 0049 scopes — a child dispatched to "write a report" can be denied "delete data" even though the parent principal holds it. Reaffirms and tightens the existing tenant-inheritance isolation.
 
-**Positive example.** Supervisor dispatches a research worker with `{ checksum: true, requireApproval: true }`. Child completes → `subRun.attested { checksum: 'sha256:ab…' }` → parent suspends with an approval interrupt → operator `accept` → `outputMapping` merges. Audit log shows the checksum and the approver.
+**Positive example.** Supervisor dispatches a research worker with `{ checksum: true, requireApproval: true }`. Child completes → `core.workflowChain.event { phase: 'output.harvested', attestation: { checksum: 'sha256:ab…' } }` → parent suspends with an approval interrupt → operator `accept` → `outputMapping` merges. Audit log shows the checksum and the approver.
 **Negative example.** Same, operator never responds and the run is cancelled → outputs are **not** merged (fail-closed); parent surfaces the child as unmerged.
 
 ## Compatibility
 
-**Additive.** `outputAttestation` is an optional config block; absent ⇒ identical to today's blind merge. `subRun.attested` is additive observability. The approval gate reuses the existing RFC 0051 interrupt machinery — no new interrupt kind. No existing `core.subWorkflow` field, the `outputMapping` contract, or any `MUST` changes for workflows that don't opt in. No conformance pass invalidated.
+**Additive.** `outputAttestation` is an optional config block; absent ⇒ identical to today's blind merge. The `attestation` field is an additive optional property on the existing `core.workflowChain.event` `output.harvested` phase (RFC 0037; its `required` array is unchanged, consumers ignore the field). The approval gate reuses the existing RFC 0051 interrupt machinery — no new interrupt kind. No existing `core.subWorkflow` field, the `outputMapping` contract, or any `MUST` changes for workflows that don't opt in. No conformance pass invalidated.
 
 ## Conformance
 
@@ -93,12 +93,12 @@ This MUST **fail-closed**: if the run terminates or the interrupt expires withou
 
 ## Implementation notes (non-normative)
 
-- `apps/workflow-engine`: `subWorkflowDispatcher.ts` (`outputMapping` at the harvest step) is the single insertion point — compute checksum + emit `subRun.attested`; if `requireApproval`, route through the existing suspend/interrupt path before the mapping copy. Effort: small–medium.
+- `apps/workflow-engine`: `subWorkflowDispatcher.ts` (`outputMapping` at the harvest step) is the single insertion point — compute checksum + populate the `output.harvested` event's `attestation` field; if `requireApproval`, route through the existing suspend/interrupt path before the mapping copy. Effort: small–medium.
 
 ## Acceptance criteria
 
 - [ ] `node-packs.md` `core.subWorkflow` `outputAttestation` section.
-- [ ] `agents.subRunAttestation` capability + `subRun.attested` (AsyncAPI + payload schema).
+- [ ] `agents.subRunAttestation` capability + additive optional `attestation` object on `coreWorkflowChainEvent` (run-event-payloads schema). No new event type.
 - [ ] Conformance: shape always-on; checksum/approval/fail-closed capability-gated.
 - [ ] `subrun-merge-approval-fail-closed` invariant + public test land in `SECURITY/invariants.yaml` at implementation.
 - [ ] CHANGELOG entry under `[1.1.4 — unreleased]`.
