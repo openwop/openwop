@@ -139,6 +139,22 @@ function fmtDuration(ms: number): string {
 
 export function RunTimeline({ events, onForkFrom, onSelectSeq }: Props) {
   const { lanes, minMs, maxMs } = useMemo(() => buildSegments(events), [events]);
+  // §A3(b) / RFC 0057 — per-lane memory-write attribution from `memory.written`
+  // events (keyed by `nodeId`, or `(run)` for host session-end writes). The
+  // payload is content-free, so we surface counts + the memoryRef only.
+  const memWrites = useMemo(() => {
+    const m = new Map<string, { count: number; refs: string[] }>();
+    for (const ev of events) {
+      if (ev.type !== 'memory.written') continue;
+      const key = ev.nodeId ?? '(run)';
+      const ref = (ev.payload as { memoryRef?: unknown } | undefined)?.memoryRef;
+      const cur = m.get(key) ?? { count: 0, refs: [] };
+      cur.count += 1;
+      if (typeof ref === 'string' && !cur.refs.includes(ref)) cur.refs.push(ref);
+      m.set(key, cur);
+    }
+    return m;
+  }, [events]);
   const [selected, setSelected] = useState<{ nodeId: string; startSeq: number } | null>(null);
 
   if (events.length === 0) return <div className="muted">No events yet.</div>;
@@ -165,6 +181,18 @@ export function RunTimeline({ events, onForkFrom, onSelectSeq }: Props) {
               {lane.segments.length > 1 && lane.nodeId !== '(run)' && (
                 <span className="muted run-timeline-attempts"> ×{lane.segments.length}</span>
               )}
+              {(() => {
+                const mw = memWrites.get(lane.nodeId);
+                if (!mw) return null;
+                return (
+                  <span
+                    className="muted run-timeline-mem-write"
+                    title={`Wrote ${mw.count} memory entr${mw.count === 1 ? 'y' : 'ies'} (RFC 0057)${mw.refs.length ? ` → ${mw.refs.join(', ')}` : ''}`}
+                  >
+                    {' '}<span aria-hidden="true">💾</span>{mw.count > 1 ? ` ${mw.count}` : ''}
+                  </span>
+                );
+              })()}
             </div>
             <div className="run-timeline-track">
               {lane.segments.map((seg) => {
