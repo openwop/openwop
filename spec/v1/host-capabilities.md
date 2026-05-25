@@ -1235,6 +1235,49 @@ Additive — hosts that omit the block ignore it; packs declaring `requiredCrede
 
 ---
 
+## §host.oauth
+
+**Capability flag:** `oauth.supported: true` *(advertised via top-level `Capabilities.oauth`; see [capabilities.md §oauth](capabilities.md#oauth))* — RFC 0047, `Draft`.
+
+**Used by:** connector packs whose nodes declare `auth: { type: 'oauth2', provider, scopes[] }` (see [node-pack-manifest.schema.json](../../schemas/node-pack-manifest.schema.json) `NodeAuth`). RFC 0045 connectors point their `auth` declaration here.
+
+The host performs the OAuth 2.0 **authorization-code + refresh** dance on a user's behalf, so a connector node declares *which provider + scopes* it needs — not *how* the token is obtained. This answers "what third-party token does a node hold," distinct from RFC 0010's host-authentication profiles ("who is the caller"). It composes with — and depends on — [§host.credentials](#host-credentials): acquired tokens are stored as `host.credentials` entries and resolved into the node sandbox as a bearer token, **never crossing the wire**.
+
+**Token lifecycle (normative).** A host advertising `oauth.supported: true` MUST:
+
+1. Perform the advertised grant(s). For `authorization_code`, drive the redirect/callback exchange host-side; the authorization-code, redirect URI, and `state` parameter MUST NOT enter any run-visible surface.
+2. Persist the acquired access + refresh tokens as a `host.credentials` (RFC 0046) entry (scope `user` or `workspace`); the node receives a resolved bearer token **in-sandbox only** — never in `inputs`, variables, events, debug bundles, or replay state (the `credential-payload-redaction` invariant covers it).
+3. Refresh expired access tokens host-side using the stored refresh token, transparently to the node. On terminal refresh failure (revoked/expired refresh token), emit `connector.auth_expired` and fail the node with `connector_auth_expired`.
+
+**Connector-auth declaration.** A node declares `auth: { type: 'oauth2', provider, scopes[] }`. The host matches `provider` against an advertised `oauth.providers[].id` and refuses to register the pack if the provider or a requested scope is not advertised (`oauth_provider_unsupported` / `oauth_scope_unsupported`).
+
+**Events (additive, redaction-safe):**
+- `connector.authorized` → `{ provider, credentialRef, scopes }` — token first acquired or re-authorized. Carries the credential **reference**, never the token.
+- `connector.auth_expired` → `{ provider, credentialRef, reason }` — refresh failed terminally.
+
+**Failure modes:**
+- `oauth_provider_unsupported` — node's `auth.provider` not in `capabilities.oauth.providers[]`
+- `oauth_scope_unsupported` — a requested scope not in the provider's `scopesSupported`
+- `connector_auth_expired` — stored token's refresh failed terminally
+
+**Capability advertisement shape:**
+
+```json
+{
+  "oauth": {
+    "supported": true,
+    "grants": ["authorization_code", "refresh_token"],
+    "providers": [
+      { "id": "slack", "authUrl": "https://slack.com/oauth/v2/authorize", "tokenUrl": "https://slack.com/api/oauth.v2.access", "scopesSupported": ["chat:write", "channels:read"] }
+    ]
+  }
+}
+```
+
+Additive — hosts that omit the block advertise no third-party token acquisition; connector packs declaring `auth: { type: 'oauth2' }` refuse to register against them. **Depends on RFC 0046** for token storage + the redaction invariant. Verified by `oauth-capability-shape.test.ts` (shape, always runs) and `oauth-connector-redaction.test.ts` (token-material redaction, capability-gated, seam soft-skips).
+
+---
+
 ## §host.fs
 
 **Capability flag:** `fs.supported: true` *(advertised via top-level `Capabilities.fs`; see [capabilities.md](capabilities.md))*

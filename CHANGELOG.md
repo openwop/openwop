@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0047 `host.oauth` — spec + schema + connector events + shape/redaction conformance landed (2026-05-25)
+
+Second step on the Tier-1 critical path (depends on RFC 0046, already on `main`). Lands the openwop-side `host.oauth` contract: the host performs the OAuth 2.0 authorization-code + refresh dance on a user's behalf for connector nodes, stores the token as a `host.credentials` entry, and resolves it into the node sandbox as a bearer token. RFC 0047 stays `Draft`. All additive.
+
+- **Schema:** new top-level `capabilities.oauth` block (`supported` / `grants` / `providers[]`); new `NodeAuth` $def + node-level `auth: { type: 'oauth2', provider, scopes[] }` in `node-pack-manifest.schema.json`; two additive redaction-safe events `connector.authorized` / `connector.auth_expired` in `run-event-payloads.schema.json` (carry the credential reference, never token material).
+- **Spec:** `auth.md` Open-spec-gap row **A5** flipped to closed (authorization-code is now `host.oauth`, distinct from A1 client-credentials = host auth); `host-capabilities.md` §host.oauth — token lifecycle (host-side dance + transparent refresh), connector-auth declaration, redaction-safe events, advertisement shape.
+- **SECURITY:** no new invariant — OAuth tokens are stored as `host.credentials` entries, so token redaction is covered by the existing RFC 0046 `credential-payload-redaction` invariant (whose note already names the host.oauth flow).
+- **Conformance:** `oauth-capability-shape.test.ts` (advertisement shape, always runs) + `oauth-connector-redaction.test.ts` (token-material redaction, capability-gated, `POST /v1/host/sample/oauth/connector-echo` seam soft-skips on 404). Authcode-roundtrip + refresh scenarios deferred until a host wires the seam.
+- **Counts synced:** conformance scenario files 212→214; README + conformance README + `coverage.md` updated; `docs/PROTOCOL-STATUS.md` regenerated. (Invariants + schema-file counts unchanged.)
+
 ### RFC 0046 `host.credentials` — spec + schema + SECURITY invariant + shape/redaction conformance landed (2026-05-24)
 
 First implementation pass on the Tier-1 critical path of the MyndHyve protocol-extension batch (RFCs 0045–0054). RFC 0046 stays `Draft`; this lands the openwop-side contract so a host can implement against it (`Active`/`Accepted` follow maintainer promotion + a non-steward host wiring the vault). All additive.

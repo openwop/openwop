@@ -414,6 +414,36 @@
       },
       "additionalProperties": false
     },
+    "oauth": {
+      "type": "object",
+      "description": "RFC 0047 (`Draft`). Host performs OAuth 2.0 grants (authorization-code + refresh) on a user's behalf for connector nodes, stores the acquired token as a `host.credentials` (RFC 0046) entry, refreshes it transparently, and resolves it into the node sandbox as a bearer token. Token material NEVER crosses the wire (SECURITY invariant `credential-payload-redaction`). Distinct from `auth` host-authentication profiles (RFC 0010 = who is the caller; this = what third-party token a node holds).",
+      "required": ["supported"],
+      "properties": {
+        "supported": { "type": "boolean", "description": "Host implements the host.oauth third-party token acquisition + refresh contract." },
+        "grants": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["authorization_code", "client_credentials", "refresh_token"] },
+          "uniqueItems": true,
+          "description": "OAuth 2.0 grant types the host performs on a node's behalf."
+        },
+        "providers": {
+          "type": "array",
+          "description": "Provider catalog the host can acquire tokens for. A connector node's `auth.provider` MUST match an `id` here.",
+          "items": {
+            "type": "object",
+            "required": ["id"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1, "description": "Stable provider id, e.g. `slack`, `google`." },
+              "authUrl": { "type": "string", "format": "uri", "description": "Authorization endpoint." },
+              "tokenUrl": { "type": "string", "format": "uri", "description": "Token endpoint." },
+              "scopesSupported": { "type": "array", "items": { "type": "string" }, "description": "Scopes this provider exposes." }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
     "runtimeCapabilities": {
       "type": "array",
       "items": { "type": "string", "minLength": 1 },

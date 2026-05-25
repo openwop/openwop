@@ -126,7 +126,9 @@
         "conversation.closed",
         "memory.compacted",
         "core.workflowChain.event",
-        "core.workflowChain.confidence-escalated"
+        "core.workflowChain.confidence-escalated",
+        "connector.authorized",
+        "connector.auth_expired"
       ]
     }
   }
