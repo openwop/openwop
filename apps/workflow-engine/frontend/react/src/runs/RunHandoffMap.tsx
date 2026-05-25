@@ -59,14 +59,18 @@ function buildChips(events: readonly RunEventDoc[]): Chip[] {
         chips.push({ seq: ev.sequence, kind: 'supervisor', label: `supervisor: ${label}`, sublabel: p.agentId as string, color: '#8b5cf6' });
         break;
       }
-      case 'agent.handoff':
+      case 'agent.handoff': {
+        // Tolerate canonical (fromAgentId/toAgentId) and variant (from/to).
+        const from = (p.fromAgentId ?? p.from) as string | undefined;
+        const to = (p.toAgentId ?? p.to) as string | undefined;
         chips.push({
           seq: ev.sequence, kind: 'handoff',
-          label: `${p.fromAgentId} → ${p.toAgentId}`,
+          label: `${from ?? '?'} → ${to ?? '?'}`,
           ...(typeof p.reason === 'string' ? { sublabel: p.reason as string } : {}),
           color: '#0ea5e9',
         });
         break;
+      }
       case 'node.dispatched':
         chips.push({
           seq: ev.sequence, kind: 'dispatch',

@@ -56,6 +56,12 @@ export interface TemplateWorkflow {
   /** True when the template's first node is `chat` (real LLM) and the
    *  user must provide a BYOK credentialRef before it can run. */
   requiresBYOK?: boolean;
+  /** Pack node typeIds this template depends on. When set, the template
+   *  is only offered if every typeId is present in the merged catalog
+   *  (i.e. the host has the pack installed) — so it never seeds a
+   *  workflow with "Unknown" nodes. Templates using only the built-in
+   *  node set omit this. */
+  requiresTypeIds?: readonly string[];
   /** Visual graph. Same shape as SavedWorkflow but without id/timestamps. */
   nodes: readonly BuilderNode[];
   edges: readonly BuilderEdge[];
@@ -135,8 +141,46 @@ export const PREMADE_WORKFLOWS: readonly TemplateWorkflow[] = [
   },
 
   // =========================================================================
-  // PIPELINE / DAG (5) — multi-step + concurrent paths
+  // PIPELINE / DAG — multi-step + concurrent paths
   // =========================================================================
+
+  // RAG ingest + retrieve (RFC 0018). Uses the composed `core.rag.*` pack
+  // family (loader → splitter → vector-upsert; retriever as the query
+  // path). Gated on the pack being installed via `requiresTypeIds`, and
+  // the vector nodes need `host.db.vector` — the pre-flight check (item
+  // 12) warns if the connected host doesn't advertise it. The retriever's
+  // `query` comes from run inputs; the upsert→retrieve edge is a GATE
+  // (distinct `_gate_*` targetPort) so retrieve waits for ingest without
+  // its query being clobbered (see the port-routing note above).
+  {
+    templateId: 'template.rag-ingest-retrieve',
+    name: 'RAG: ingest + retrieve',
+    description:
+      'Load a document → split into chunks → upsert to the vector store, then retrieve by query. Needs the core.openwop.rag pack + a host vector store.',
+    category: 'pipeline',
+    requiresTypeIds: [
+      'core.rag.loader-url',
+      'core.rag.splitter-recursive',
+      'core.rag.vector-upsert',
+      'core.rag.retriever-basic',
+    ],
+    nodes: [
+      node('load', 'core.rag.loader-url', pos(0, -1), 'Load URL'),
+      node('split', 'core.rag.splitter-recursive', pos(1, -1), 'Split (recursive)'),
+      node('upsert', 'core.rag.vector-upsert', pos(2, -1), 'Vector upsert'),
+      node('retrieve', 'core.rag.retriever-basic', pos(3, 0), 'Retrieve'),
+    ],
+    edges: [
+      edge('e1', 'load', 'split', { sourcePort: 'document', targetPort: 'text' }),
+      edge('e2', 'split', 'upsert', { sourcePort: 'chunks', targetPort: 'documents' }),
+      edge('e3', 'upsert', 'retrieve', { sourcePort: 'upserted', targetPort: '_gate_ingest' }),
+    ],
+    defaultInputs: JSON.stringify(
+      { url: 'https://raw.githubusercontent.com/openwop/openwop/main/README.md', query: 'What is OpenWOP?' },
+      null,
+      2,
+    ),
+  },
 
   // Template 4: Multi-channel content review (12 nodes)
   //

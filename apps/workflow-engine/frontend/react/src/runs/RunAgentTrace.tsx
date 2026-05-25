@@ -75,8 +75,10 @@ function buildSteps(events: readonly RunEventDoc[]): Step[] {
           seq: ev.sequence,
           agentId,
           callId,
-          toolName: (p.toolName as string) ?? 'tool',
-          inputs: p.inputs,
+          // Tolerate both the spec-canonical fields (toolName/inputs) and
+          // the variant some hosts/mock-agents emit (toolId/arguments).
+          toolName: (p.toolName as string) ?? (p.toolId as string) ?? 'tool',
+          inputs: p.inputs ?? p.arguments,
           returned: false,
           error: null,
         };
@@ -89,13 +91,14 @@ function buildSteps(events: readonly RunEventDoc[]): Step[] {
         const step = toolBySeq.get(callId);
         if (step) {
           step.returned = true;
-          step.outcome = p.outcome;
+          step.outcome = p.outcome ?? p.result;
           step.error = (p.error as ToolStep['error']) ?? null;
         } else {
           // Return without a matched call — surface it anyway.
           steps.push({
             kind: 'tool', seq: ev.sequence, agentId, callId: callId || `seq-${ev.sequence}`,
-            toolName: (p.toolName as string) ?? 'tool', outcome: p.outcome,
+            toolName: (p.toolName as string) ?? (p.toolId as string) ?? 'tool',
+            outcome: p.outcome ?? p.result,
             error: (p.error as ToolStep['error']) ?? null, returned: true,
           });
         }
