@@ -166,6 +166,10 @@
           "items": { "$ref": "#/$defs/CredentialRequirement" },
           "description": "RFC 0046. Credentials the node needs, resolved by the host's `host.credentials` resolver at dispatch time (distinct from `requiresSecrets`, which targets the informal BYOK annex). Hosts that don't advertise `Capabilities.credentials.supported` MUST refuse to dispatch a node with non-empty `requiredCredentials` and return `credential_unavailable` (peerDependency `credentials: 'supported'`)."
         },
+        "auth": {
+          "$ref": "#/$defs/NodeAuth",
+          "description": "RFC 0047. The node's third-party authentication need. The host acquires + refreshes the token via the `host.oauth` flow and resolves it into the node sandbox as a bearer token. Hosts that don't advertise `Capabilities.oauth.supported` (or lack the named provider/scope) MUST refuse to register the pack (`oauth_provider_unsupported` / `oauth_scope_unsupported`)."
+        },
         "requiredModelCapabilities": {
           "type": "array",
           "items": {
@@ -242,6 +246,29 @@
         "displayName": {
           "type": "string",
           "description": "Optional human-readable label for credential-management UIs."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NodeAuth": {
+      "type": "object",
+      "required": ["type", "provider"],
+      "description": "RFC 0047. A node's third-party authentication declaration. The node declares only which provider + scopes it needs; the host performs the OAuth dance and resolves the token in-sandbox. Raw token material NEVER reaches the protocol surface (`credential-payload-redaction` invariant).",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["oauth2"],
+          "description": "Authentication mechanism. `oauth2` routes through the `host.oauth` flow."
+        },
+        "provider": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Provider id; MUST match an advertised `capabilities.oauth.providers[].id` (e.g. `slack`, `google`)."
+        },
+        "scopes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "OAuth scopes the node requires; each MUST be in the provider's advertised `scopesSupported`."
         }
       },
       "additionalProperties": false

@@ -131,15 +131,17 @@ New fixture: a synthetic OAuth provider (deterministic authorize + token + refre
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (this file).
-- [ ] `host.oauth` block in `capabilities.schema.json`.
-- [ ] Node `auth` declaration in `node-pack-manifest.schema.json`.
-- [ ] `connector.authorized` / `connector.auth_expired` in `run-event-payloads.schema.json`.
-- [ ] `auth.md` Open-spec-gap row flipped to closed.
-- [ ] `spec/v1/host-capabilities.md` §host.oauth section.
-- [ ] Four conformance scenarios + synthetic-provider fixture.
-- [ ] CHANGELOG entry under `[Unreleased]`.
+- [x] Spec text merged (this file).
+- [x] `oauth` block (top-level, per the schema convention) in `capabilities.schema.json`.
+- [x] Node `auth` declaration (`NodeAuth` $def) in `node-pack-manifest.schema.json`.
+- [x] `connector.authorized` / `connector.auth_expired` in `run-event-payloads.schema.json`.
+- [x] `auth.md` Open-spec-gap row flipped to closed (row A5).
+- [x] `spec/v1/host-capabilities.md` §host.oauth section.
+- [~] Conformance scenarios — 2 of 4 landed: `oauth-capability-shape.test.ts` (shape, always runs) + `oauth-connector-redaction.test.ts` (token-material redaction, capability-gated, `POST /v1/host/sample/oauth/connector-echo` seam soft-skips). The behavioral authcode-roundtrip + refresh scenarios (+ synthetic-provider fixture) are deferred until a host wires the seam. Token redaction reuses the RFC 0046 `credential-payload-redaction` invariant (no new invariant).
+- [x] CHANGELOG entry under `[Unreleased]`.
 - [ ] A non-steward host advertises `host.oauth` and passes the authcode + refresh + redaction scenarios.
+
+**Implementation note (2026-05-25):** Spec + schema + the two shape/redaction scenarios landed on `main`. Per the schema convention the capability is advertised at top-level `capabilities.oauth` (prose name stays `§host.oauth`). Depends on RFC 0046 (token storage + redaction invariant), already on `main`. Status stays `Draft` pending maintainer promotion + a non-steward host implementation.
 
 ## References
 

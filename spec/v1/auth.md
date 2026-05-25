@@ -127,6 +127,7 @@ An OpenWOP-compliant server SHOULD log every authenticated request with at minim
 | A2 | ✅ Closed as optional profile in `auth-profiles.md`: mTLS deployment profile. | conformance minor |
 | A3 | ✅ Closed as optional profile in `auth-profiles.md`: API-key rotation/grace-period semantics. | conformance minor |
 | A4 | Webhook HMAC is now specified in `webhooks.md`; remaining work is shared auth-profile conformance across REST and webhook verification examples | conformance minor |
+| A5 | ✅ Closed as optional capability `host.oauth` (RFC 0047): OAuth 2.0 **authorization-code + refresh** for a node/connector acquiring a third-party token on a user's behalf. Distinct from A1 (client-credentials = host auth); 0047 is third-party delegation — acquired tokens stored as `host.credentials` (RFC 0046) entries, resolved into the node sandbox only. | conformance minor |
 
 ## References
 
