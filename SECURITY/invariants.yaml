@@ -142,6 +142,26 @@ invariants:
       dispatch — workspace-internal info that some operators prefer to
       keep private. Gate timing: lands alongside reference-host emission.
 
+  - id: media-asset-url-tenant-scoped
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/media-url-inline-cap.test.ts
+    note: |
+      RFC 0055 §C rule 1 + 4. A host that emits `media.{image,audio,file}`
+      envelope kinds MUST scope every served asset `url` to the run's tenant
+      and MUST NOT make it globally guessable (signed-URL / capability-token
+      discipline — reuse the interrupt signed-token recipe). An asset URL
+      minted for tenant A's run MUST NOT resolve for, or appear in any
+      discovery/event view of, tenant B. Inline base64 above the host's
+      `capabilities.aiProviders.maxInlineMediaBytes` cap (default 256 KiB,
+      §C rule 2) MUST be replaced by a `url` reference so event-log/replay
+      payloads stay bounded and portable. `media-url-inline-cap.test.ts`
+      carries the advertisement-shape probe now; the cross-tenant + cap
+      behavioral assertions soft-skip until a reference host wires asset
+      serving (greenfield — staged per the RFC 0027 §G precedent).
+
   - id: envelope-refusal-no-prompt-leak
     tier: protocol
     severity: high
