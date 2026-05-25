@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/heartbeat-state-changed.schema.json",
+  "title": "HeartbeatStateChanged",
+  "description": "RFC 0060. Emitted ONLY on a predicate-state transition — an unchanged tick MUST NOT emit it (this is what prevents notification spam). Heartbeat-scoped (NOT a replayable run-event-log entry). `from`/`to` are opaque host-persisted predicate-state tokens; they MUST NOT carry secret or external-content material beyond the minimal state needed to detect a transition.",
+  "type": "object",
+  "required": ["heartbeatId", "from", "to"],
+  "properties": {
+    "heartbeatId": { "type": "string", "minLength": 1, "description": "Host-assigned identifier for the heartbeat that transitioned." },
+    "from": { "type": "object", "additionalProperties": true, "description": "Prior tick's predicate state (opaque, host-defined)." },
+    "to": { "type": "object", "additionalProperties": true, "description": "Current tick's predicate state — the transition target (opaque, host-defined)." }
+  },
+  "additionalProperties": false
+}

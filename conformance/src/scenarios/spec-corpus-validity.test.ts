@@ -1019,7 +1019,7 @@ describe('spec-corpus: AsyncAPI 3.1 spec is structurally valid', () => {
     // `run.annotated` (RFC 0056) is a live SSE notification carrying an
     // Annotation — NOT a RunEventDoc and deliberately NOT in the RunEventType
     // enum (annotations are a side-resource, excluded from fork/replay).
-    const syntheticMessageNames = new Set(['state.snapshot', 'ai.message.chunk', 'any', 'run.annotated']);
+    const syntheticMessageNames = new Set(['state.snapshot', 'ai.message.chunk', 'any', 'run.annotated', 'heartbeat.evaluated', 'heartbeat.stateChanged']);
 
     expect(messageNames.length, 'AsyncAPI MUST declare named SSE messages').toBeGreaterThan(0);
 
