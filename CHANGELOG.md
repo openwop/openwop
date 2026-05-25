@@ -41,6 +41,10 @@ This entry ships 11a: extend the converter + renderer to honor JSON-Schema 2020-
 
 **Validation hints are advisory UX only** — the host MUST still validate the persisted workflow against the authoritative pack manifest schema. The Inspector's HTML5 attribute forwarding catches obvious typos at edit time but is not a substitute for backend validation.
 
+### fix(spec): RFC 0064 `host.toolHooks` review follow-ups — broken anchor, schema status text, conformance citation (2026-05-25)
+
+Three editorial corrections on the merged RFC 0064 surface (no wire-shape change): (1) `mcp-integration.md` cross-ref to `host-capabilities.md#§hosttoolhooks` → `#hosttoolhooks` — GitHub's slugger strips the `§`, so the `§`-prefixed anchor 404'd on click; (2) the `capabilities.schema.json` `toolHooks` block description read "RFC 0060 sibling — RFC 0064 (`Draft`)" while the RFC is now `Active` and the prose contradicted it → "RFC 0064 (`Active`) — sibling of `heartbeat`"; (3) `tool-hooks-secret-redaction.test.ts` cited §E (credentials) for the SR-1 `argsHash` redaction MUST, which lives in §B → now cites §B. Description-only schema edit; no field, type, or required-array change.
+
 ### fix(host-postgres): artifact endpoint rejects unauthenticated requests (401 before existence) (2026-05-25)
 
 The Postgres host had no `GET /v1/runs/{runId}/artifacts/{artifactId}` route, so unauthenticated requests fell through to the catch-all 404 — answerable without ever checking auth, a cross-tenant existence oracle (`artifact-auth.test.ts` expects 401). Adds an artifact route that runs `checkAuth` **before** any existence check: missing/invalid auth → canonical 401 `unauthenticated`; an authenticated caller → 404 `artifact_not_found` (this host persists no artifacts). Closes the last deterministic Postgres conformance failure (now 0 failed / 1627 passed; `webhook-signed-delivery` remains a known full-suite timing flake). Host-only; no protocol-corpus change.

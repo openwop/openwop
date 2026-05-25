@@ -7,7 +7,7 @@
  * Gated on `capabilities.toolHooks.prePostEvents` + the host tool-hooks seam;
  * soft-skips when either is absent.
  *
- * @see RFCS/0064-tool-invocation-hooks-and-authorization.md §E
+ * @see RFCS/0064-tool-invocation-hooks-and-authorization.md §B (argsHash SR-1 redaction), §E (credentials)
  */
 
 import { describe, it, expect } from 'vitest';
@@ -28,7 +28,7 @@ describe('tool-hooks-secret-redaction (RFC 0064 §E)', () => {
     if (res === null) return; // seam absent — soft-skip
     expect(
       JSON.stringify(res).includes(CANARY),
-      driver.describe('RFC 0064 §E', 'a resolved secret MUST be redacted before hashing; the raw value MUST NOT appear in argsHash or any emitted field (SR-1)'),
+      driver.describe('RFC 0064 §B', 'a resolved secret MUST be redacted before hashing; the raw value MUST NOT appear in argsHash or any emitted field (SR-1)'),
     ).toBe(false);
   });
 });
