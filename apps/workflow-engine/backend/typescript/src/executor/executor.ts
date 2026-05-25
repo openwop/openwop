@@ -974,11 +974,21 @@ async function finalizeRun(input: {
     // a memory write must never fail the run.
     try {
       const preview = JSON.stringify(output ?? null);
-      writeMemoryEntry(run.tenantId, MEMORY_DEMO_REF, {
+      const summaryTags = ['run-summary', `run-id:${run.runId}`, `workflow:${run.workflowId}`];
+      const summaryRow = writeMemoryEntry(run.tenantId, MEMORY_DEMO_REF, {
         content:
           `Run ${run.runId} of "${run.workflowId}" completed` +
           (preview && preview !== 'null' ? ` → ${preview.slice(0, 280)}` : '.'),
-        tags: ['run-summary', `run-id:${run.runId}`, `workflow:${run.workflowId}`],
+        tags: summaryTags,
+      });
+      // RFC 0057 — attribute the write on the event log (content-free:
+      // identifiers + non-secret tags only; never the entry content). This is
+      // a host session-end write, so `nodeId` is omitted per RFC 0057 §B. The
+      // host advertises capabilities.memory.attribution.emitsWriteEvents.
+      await eventLog.append({
+        runId: run.runId,
+        type: 'memory.written',
+        payload: { memoryRef: MEMORY_DEMO_REF, memoryId: summaryRow.id, tags: summaryTags },
       });
     } catch {
       /* memory is a demo surface; never block run completion */

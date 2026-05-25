@@ -23,13 +23,13 @@
 | Status | Count |
 |---|---:|
 | Accepted | 45 |
-| Active | 6 |
-| Draft | 7 |
+| Active | 7 |
+| Draft | 6 |
 
 | Latest RFC | Title | Status |
 |---|---|---|
 | RFC 0065 | Workflow node primary-output annotation | Draft |
-| RFC 0057 | An optional `memory.attribution` capability + additive `memory.written` RunEvent carrying `{ memoryRef, memoryId, nodeId?, agentId? }`, so a consumer can see which node wrote which memory entry during a run - making per-node memory provenance observable on the wire without exposing memory content | Draft |
+| RFC 0057 | An optional `memory.attribution` capability + additive `memory.written` RunEvent carrying `{ memoryRef, memoryId, nodeId?, agentId? }`, so a consumer can see which node wrote which memory entry during a run - making per-node memory provenance observable on the wire without exposing memory content | Active |
 | RFC 0056 | An optional `host.feedback` capability + a per-run annotation store exposed via `POST/GET /v1/runs/{runId}/annotations` + a live `run.annotated` SSE notification, so a human (or supervisor agent) can attach a portable quality signal - rating / correction / label / flag - to a run, event, or node, feeding analytics, the HITL inbox, and review. Annotations are a side-resource, **not** replayable run-event-log entries. | Active |
 | RFC 0055 | Promote RFC 0031's reserved `vision-input` / `audio` model-capability identifiers into a formal vocabulary, and add an optional `meta.rendering` hint + `media.*` URL-reference convention to the AI envelope, so an LLM node can emit images / audio / files / structured cards that any consumer renders portably | Active |
 | RFC 0054 | A read-only `GET /v1/runs/{runId}:diff?against={otherRunId}` endpoint returning a deterministic, replay-aware structured diff of two runs' event sequences and terminal states - the protocol surface behind run-vs-fork comparison | Draft |
@@ -72,8 +72,8 @@
 
 ## Active Follow-Ups
 
-- 7 RFCs still `Draft` (RFC 0038, RFC 0042, RFC 0043, RFC 0050, RFC 0054, RFC 0057, RFC 0065) — advance with schema/conformance proof or defer.
-- 6 RFCs `Active` (RFC 0025, RFC 0029, RFC 0035, RFC 0036, RFC 0055, RFC 0056) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 6 RFCs still `Draft` (RFC 0038, RFC 0042, RFC 0043, RFC 0050, RFC 0054, RFC 0065) — advance with schema/conformance proof or defer.
+- 7 RFCs `Active` (RFC 0025, RFC 0029, RFC 0035, RFC 0036, RFC 0055, RFC 0056, RFC 0057) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - SDK parity still shows raw-only rows for several stable v1.x helper surfaces.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.

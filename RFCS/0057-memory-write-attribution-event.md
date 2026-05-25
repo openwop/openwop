@@ -4,7 +4,7 @@
 |---|---|
 | **RFC** | 0057 |
 | **Title** | An optional `memory.attribution` capability + additive `memory.written` RunEvent carrying `{ memoryRef, memoryId, nodeId?, agentId? }`, so a consumer can see which node wrote which memory entry during a run — making per-node memory provenance observable on the wire without exposing memory content |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-25 |
 | **Updated** | 2026-05-25 |

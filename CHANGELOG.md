@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0057 (memory write-attribution) — reference-host emission; promote Draft → `Active` (2026-05-25)
+
+The workflow-engine **reference backend** (deployed as `app.openwop.dev`) now advertises `capabilities.memory.attribution.{ supported: true, emitsWriteEvents: true }` and emits a content-free `memory.written` RunEvent on its run-summary write (`executor.ts` — identifiers + non-secret tags only; `nodeId` omitted as a host session-end write per RFC 0057 §B). The four `memory-attribution-*.test.ts` scenarios pass against it (verified locally: discovery advertises the block; a completed run emits exactly one `memory.written` with no `content`). With schema + prose + SECURITY + conformance (corpus, prior entry) and a host advertising-and-honoring the capability, **RFC 0057 graduates `Draft → Active`**; `Active → Accepted` awaits a non-steward host. README RFC counts synced (Active 6 → 7, Draft 7 → 6); `docs/PROTOCOL-STATUS.md` regenerated. Additive.
+
 ### feat(host-sqlite): RFC 0026 cost attribution — port from the Postgres reference (2026-05-25)
 
 Ports the RFC 0026 cost-attribution implementation to the SQLite reference host (follows the Postgres landing): `src/cost.ts` (canonical `openwop.cost.*` allowlist sanitizer + per-run rollup), `addNodeSpanAttributes()` in `observability.ts`, a `conformance.cost.emit` case in `executeNode` (sanitize → span → rollup; `node.completed` via the post-switch path), and `metrics.openwopCost` on the run snapshot (`run-snapshot.schema.json`). Non-allowlisted keys + the credential-shaped canary are dropped (`cost-attribution-allowlist-redaction`). New end-to-end `test/cost-attribution.test.ts` (boots the host over a temp SQLite DB + free port) asserts the rollup folds usd/tokens/provider and drops the violations. Host-only; no protocol-corpus change. Closes the SQLite side of the cost-attribution conformance gap.
