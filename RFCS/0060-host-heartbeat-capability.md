@@ -4,7 +4,7 @@
 |---|---|
 | **RFC** | 0060 |
 | **Title** | A `host.heartbeat` capability — a system-managed, short-interval, runtime-bounded evaluation of an *idempotent predicate* that emits state-change events and conditionally enqueues a run, rather than blindly re-running an agent; the controlled, request-shaped exception to openwop's poll-free design |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-25 |
 | **Updated** | 2026-05-25 |

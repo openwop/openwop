@@ -1804,6 +1804,45 @@ Additive — hosts that omit the block advertise no scheduling; `schedule`-trigg
 
 ---
 
+## §host.heartbeat
+
+**Capability flag:** `heartbeat.supported: true` *(advertised via top-level `Capabilities.heartbeat`; see [capabilities.md §heartbeat](capabilities.md#heartbeat))* — RFC 0060, `Draft`.
+
+**Used by:** system-managed, predicate-gated polling — the controlled, request-shaped exception to openwop's poll-free design (`positioning.md`). Composes on `host.scheduling` (RFC 0052) for the once-per-tick interval substrate.
+
+A heartbeat binds a **predicate** (a node/workflow designated as the heartbeat handler) to an interval. It wakes on a short interval to inspect external state (an inbox, a queue, a sensor) and acts *only* when an idempotent predicate transitions — enqueuing a run or notifying a human — rather than re-running the agent blindly every tick. `host.scheduling` answers "when"; `host.heartbeat` answers "evaluate cheaply, and act only on change." A host MAY advertise `scheduling` without `heartbeat`; a host advertising `heartbeat` SHOULD also advertise `scheduling` (the tick source) and, if it does not, MUST document its own interval substrate.
+
+**Contract (normative).** On each tick, a host advertising `heartbeat.supported: true` MUST:
+
+1. **Fire exactly once per tick** — no overlapping evaluations of the same heartbeat; if a prior tick's evaluation is still running, the host MUST skip (not queue) the new tick (composes with `idempotency.md` + RFC 0052's once-per-tick rule).
+2. **Bound the evaluation** to `maxRuntimeMs` (hard-ceilinged by `capabilities.limits.maxRunDurationMs`, RFC 0058); an over-budget predicate MUST be terminated and reported `heartbeat.evaluated { status: "timeout" }`, never left running.
+3. **Be idempotent** — the predicate receives the prior tick's emitted state (an opaque host-persisted token) and MUST be a pure function of observed external state + prior state. The host MUST NOT perform a side effect directly; the predicate's *output* drives action.
+4. **Emit `heartbeat.evaluated`** every tick — `{ heartbeatId, status: "ok" | "timeout" | "error", changed: boolean }`.
+5. **On a state transition only**, emit `heartbeat.stateChanged { heartbeatId, from, to }` and — if the predicate requests it — enqueue a run via the existing `POST /v1/runs` path. An unchanged tick MUST NOT enqueue a run or emit `heartbeat.stateChanged`.
+
+Gating action on a *transition* (computed against persisted prior state) — not on the tick itself — is what prevents notification spam.
+
+**Capability advertisement shape:**
+
+```json
+{
+  "heartbeat": {
+    "supported": true,
+    "minIntervalSec": 900,
+    "maxRuntimeMs": 5000
+  }
+}
+```
+
+**Events** (advertised in `api/asyncapi.yaml`; heartbeat-scoped, NOT run-event-log entries):
+
+- `heartbeat.evaluated` — `{ heartbeatId, status, changed }`, emitted every tick (observability).
+- `heartbeat.stateChanged` — `{ heartbeatId, from, to }`, emitted only on a predicate-state transition.
+
+Additive — hosts that omit the block advertise no heartbeat. Verified by `heartbeat-capability-shape.test.ts` (shape, always runs) + `heartbeat-fires-once-per-tick.test.ts` / `heartbeat-idempotent-no-spam.test.ts` / `heartbeat-runtime-bound.test.ts` (capability-gated).
+
+---
+
 ## §host.deadLetter
 
 **Capability flag:** `deadLetter.supported: true` *(advertised via top-level `Capabilities.deadLetter`; see [capabilities.md §deadLetter](capabilities.md#deadletter))* — RFC 0053, `Draft`.
