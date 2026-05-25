@@ -270,6 +270,13 @@ export function useChatSession(): UseChatSessionResult {
   const [session, setSession] = useState<ChatSession>(loadSession);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Mirror `session` in a ref so stable callbacks (resolveInterrupt,
+  // etc.) can read the latest state without putting `session` in their
+  // dep array (which would invalidate every dependent callback on
+  // every message tick). Updated synchronously after every commit via
+  // the useEffect below.
+  const sessionRef = useRef<ChatSession>(session);
+  useEffect(() => { sessionRef.current = session; }, [session]);
   const subRef = useRef<Subscription | null>(null);
   /** Run id of the in-flight turn. Used by cancel(). */
   const inFlightRunIdRef = useRef<string | null>(null);
@@ -1010,19 +1017,12 @@ export function useChatSession(): UseChatSessionResult {
   }, [ensureSessionInBackend]);
 
   const resolveInterrupt = useCallback(async (messageId: string, value: unknown) => {
-    // Snapshot the message's interrupt + runId BEFORE the optimistic
-    // clear so we can (a) call the BE resolve with them and (b) restore
-    // them if the BE call fails. Uses a setState-callback to read the
-    // latest session without needing a ref — the function returns the
-    // unchanged state, so this is a read masquerading as a write.
-    let activeInterrupt: OpenInterrupt | null = null;
-    let runId: string | null = null;
-    setSession((s) => {
-      const msg = s.messages.find((m) => m.id === messageId);
-      activeInterrupt = msg?.activeInterrupt ?? null;
-      runId = msg?.workflowRun?.runId ?? msg?.meta?.runId ?? null;
-      return s;
-    });
+    // Read latest session from the ref so this stable callback
+    // doesn't need to depend on `session` (which would invalidate it
+    // on every message tick + force every consumer to re-bind).
+    const msg = sessionRef.current.messages.find((m) => m.id === messageId);
+    const activeInterrupt = msg?.activeInterrupt ?? null;
+    const runId = msg?.workflowRun?.runId ?? msg?.meta?.runId ?? null;
     if (!activeInterrupt || !runId) {
       // Nothing to resolve. Clear local state anyway so the card
       // disappears if it was somehow rendered without a runId.
@@ -1039,19 +1039,20 @@ export function useChatSession(): UseChatSessionResult {
       messages: s.messages.map((m) => m.id === messageId ? { ...m, activeInterrupt: null } : m),
     }));
     try {
-      await resolveByRun(runId, (activeInterrupt as OpenInterrupt).nodeId, value);
+      await resolveByRun(runId, activeInterrupt.nodeId, value);
       // The BE emits `node.interrupt.resolved` + the downstream
       // node.started/completed events over SSE; the existing handler
       // (line ~1300) updates the bubble's status as those land.
     } catch (err) {
       // Resume failed — restore the interrupt so the user can retry,
-      // and surface the error inline.
-      const restored = activeInterrupt;
+      // and surface the error inline. Restore via setSession's
+      // functional update so any concurrent SSE write to other fields
+      // on the same message is preserved (we only flip activeInterrupt).
       const message = err instanceof Error ? err.message : String(err);
       setSession((s) => ({
         ...s,
         messages: s.messages.map((m) => m.id === messageId
-          ? { ...m, activeInterrupt: restored }
+          ? { ...m, activeInterrupt }
           : m),
       }));
       setError(`Could not resolve interrupt: ${message}`);
