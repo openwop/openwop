@@ -8,7 +8,7 @@
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-25 |
 | **Updated** | 2026-05-25 |
-| **Affects** | `spec/v1/ai-envelope.md` (new §"Rendering hints" + §"Media reference payloads") · `spec/v1/structured-output-subset.md` (informative cross-ref) · `schemas/ai-envelope.schema.json` (additive optional `meta.rendering`) · `schemas/capabilities.schema.json` (`aiProviders.modelCapabilities` identifier vocabulary, extending RFC 0031 §C) · RFC 0031 (extends its capability-identifier list) · `spec/v1/host-capabilities.md` (cross-ref to existing `ctx.callImageGenerator` / `ctx.callVideoGenerator` URL convention) · new conformance scenarios |
+| **Affects** | `spec/v1/ai-envelope.md` (new §"Rendering hints" + §"Media reference payloads" + 3 universal kinds) · `spec/v1/structured-output-subset.md` (informative cross-ref) · `schemas/ai-envelope.schema.json` (optional `rendering` on the `EnvelopeMeta` $def) · **3 new `schemas/envelopes/media.{image,audio,file}.schema.json`** + their `supportedEnvelopes`/`schemaVersions` advertisement · `schemas/capabilities.schema.json` (prose-registry extension to `modelCapabilities.advertised` — **NOT** an enum — + optional `aiProviders.maxInlineMediaBytes`) · RFC 0031 §C (registry table) · `spec/v1/host-capabilities.md` (§"Model-capability declarations" registry + media URL convention) · `SECURITY/invariants.yaml` (`media-asset-url-tenant-scoped`) · new conformance scenarios |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
 | **Superseded by** | — |
@@ -31,28 +31,22 @@ The host *generation* side already exists and already chose the right shape: `ho
 
 ### §A — `aiProviders.modelCapabilities` identifier vocabulary (extends RFC 0031 §C)
 
-Promote the following identifiers from "reserved/illustrative" to the formal vocabulary a host advertises and a pack may gate on. This is a **closed enum** at v1.x; growth still requires an RFC (single-steward bootstrap rule, per RFC 0031 §C answer to OQ#1).
+Promote the following identifiers from "reserved/illustrative" to the formal **reserved registry** a host advertises and a pack may gate on.
+
+**Schema reality (corrected from this RFC's first draft via the `/architect` pass).** `capabilities.schema.json` does **not** define `modelCapabilities` as a JSON `enum`. `modelCapabilities.advertised` is an **open, pattern-validated `string[]`** (`^([a-z][a-z0-9-]*|x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*)$`); the reserved identifiers live in **prose** (the field `description` + the RFC 0031 §C registry table). Therefore §A is a **prose-registry extension, not a schema-enum change** — the existing `pattern` already validates `vision-input` / `audio-input` / `audio-output` / `image-output`. Converting `advertised.items` to a closed `enum` is **forbidden**: it would reject every `x-host-*` identifier and any other pattern-valid string a host already advertises — a value-space narrowing, which is **breaking** per `COMPATIBILITY.md` §2.2.
+
+The four new reserved identifiers are registered in three prose locations — (a) the `advertised` `description` in `schemas/capabilities.schema.json`, (b) the RFC 0031 §C registry table, (c) `host-capabilities.md` §"Model-capability declarations":
 
 ```diff
-   "modelCapabilities": {
-     "type": "array",
-     "items": {
-       "type": "string",
-       "enum": [
-         "structured-output",
-         "tool-calling",
-         "parallel-tool-calls",
-         "json-mode",
--        "long-context"
-+        "long-context",
-+        "vision-input",
-+        "audio-input",
-+        "audio-output",
-+        "image-output"
-       ]
-     }
-   }
+       "advertised": {
+         "type": "array",
+         "items": { "type": "string", "pattern": "^([a-z][a-z0-9-]*|x-host-...)$" },
+-        "description": "... Spec-reserved identifiers per RFC 0031 §C: structured-output, discriminator-enum, long-context, reasoning, function-calling. ..."
++        "description": "... Spec-reserved identifiers per RFC 0031 §C + RFC 0055: structured-output, discriminator-enum, long-context, reasoning, function-calling, vision-input, audio-input, audio-output, image-output. ..."
+       }
 ```
+
+Growth of the reserved registry still requires an RFC (single-steward bootstrap rule, per RFC 0031 §C answer to OQ#1) — but it is registry/prose growth, never an enum edit.
 
 Semantics (normative, when advertised):
 
@@ -60,34 +54,35 @@ Semantics (normative, when advertised):
 - `audio-input` / `audio-output` — the model accepts / emits audio content.
 - `image-output` — the model emits images directly in its completion (distinct from the host-side `aiProviders.imageGeneration` generation surface, which is a separate tool call).
 
-`code-execution` from RFC 0031 §C is **intentionally left out** of this enum — it is a sandbox/runtime concern that belongs with RFC 0035, not the model-capability vocabulary.
+`code-execution` from RFC 0031 §C is **intentionally left out** of this registry — it is a sandbox/runtime concern that belongs with RFC 0035, not the model-capability vocabulary.
 
 ### §B — `meta.rendering` hint on the AI envelope (additive, optional)
 
-Add an optional `rendering` object under the envelope's existing open `meta` field. It is a **hint**, not a contract: it never changes `payload` validation, and a consumer that doesn't recognize it MUST fall back to its default rendering (today: text / raw-JSON).
+Add an optional `rendering` object as a **property on the `EnvelopeMeta` `$def`** in `ai-envelope.schema.json`. **Schema reality (corrected via `/architect`):** the envelope's `meta` is `$ref → #/$defs/EnvelopeMeta`, and `EnvelopeMeta` is `additionalProperties: false` with `required: ["source", "ts"]` — so `rendering` must be added as an explicit, **optional** property (it cannot just "appear" under an open object; the original `additionalProperties: true` diff was wrong). It is a **hint**, not a contract: it never changes `payload` validation, and a consumer that doesn't recognize it MUST fall back to its default rendering (today: text / raw-JSON). Adding one optional property to a `required`-bounded `additionalProperties:false` $def is additive — existing envelopes (which omit it) still validate.
 
 ```diff
-   "meta": {
-     "type": "object",
-+    "properties": {
-+      "rendering": {
-+        "type": "object",
-+        "description": "RFC 0055. Optional hint for how a consumer SHOULD render this envelope's payload. Non-normative w.r.t. payload validation; unknown values fall back to default rendering.",
-+        "properties": {
-+          "display": {
-+            "type": "string",
-+            "enum": ["markdown", "code", "card", "image", "audio", "file"],
-+            "description": "The renderer family the producer suggests."
+   "$defs": {
+     "EnvelopeMeta": {
+       "type": "object",
+       "required": ["source", "ts"],
+       "properties": {
+         "source": { "type": "string", "enum": ["ai-generation", "user", "system"] },
+         "ts": { "type": "string", "format": "date-time" },
++        "rendering": {
++          "type": "object",
++          "description": "RFC 0055. Optional hint for how a consumer SHOULD render this envelope's payload. Non-normative w.r.t. payload validation; unknown values fall back to default rendering.",
++          "properties": {
++            "display":  { "type": "string", "enum": ["markdown", "code", "card", "image", "audio", "file"], "description": "Renderer family the producer suggests." },
++            "mimeType": { "type": "string", "description": "IANA media type when display is image/audio/file." },
++            "lang":     { "type": "string", "description": "Language tag when display: code." },
++            "alt":      { "type": "string", "description": "Text alternative for a11y when display is image/audio/file. SHOULD be present." },
++            "title":    { "type": "string", "description": "Optional caption / card header." }
 +          },
-+          "mimeType": { "type": "string", "description": "IANA media type when `display` is image/audio/file (e.g. `image/png`, `audio/mpeg`)." },
-+          "lang": { "type": "string", "description": "Language tag when `display: code` (e.g. `python`)." },
-+          "alt": { "type": "string", "description": "Text alternative for accessibility when `display` is image/audio/file. SHOULD be present for a11y." },
-+          "title": { "type": "string", "description": "Optional short label a consumer MAY show as a caption / card header." }
-+        },
-+        "additionalProperties": false
-+      }
-+    },
-     "additionalProperties": true
++          "additionalProperties": false
++        }
+       },
+       "additionalProperties": false
+     }
    }
 ```
 
@@ -117,16 +112,18 @@ Normative rules:
 1. A host that serves asset URLs MUST scope them to the run's tenant and MUST NOT make them globally guessable (capability-token or signed-URL discipline; reuse the interrupt signed-token recipe).
 2. Inline base64 is permitted only below a host-advertised cap (`aiProviders.maxInlineMediaBytes`, default 256 KiB); above it the host MUST use a URL reference. This bounds event-log bloat and keeps replay payloads portable.
 3. Asset URLs are part of a run's debug-bundle manifest (`debug-bundle.md`) by reference, never by inlining the binary.
+4. Rule 1 is enforced by a new protocol-tier SECURITY invariant **`media-asset-url-tenant-scoped`** (`SECURITY/invariants.yaml`), tested by `media-url-inline-cap.test.ts`.
+5. **Asset retention (resolves Unresolved Q2):** a host MUST retain a `media.*` asset at least as long as the emitting run's event-log retention (`replay.md`), so a forked/replayed run can still resolve the URL. The event payload (a URL string) replays deterministically; this rule keeps the referenced asset available.
 
-`media.image` / `media.audio` / `media.file` are added as universal envelope `type` values alongside the existing universal kinds in `ai-envelope.md`; vendor-namespaced kinds remain available for anything richer.
+**Universal-kind machinery (corrected via `/architect`).** `media.image` / `media.audio` / `media.file` are new **universal envelope kinds** — and per `ai-envelope.schema.json` the `payload` is "selected by the `type` discriminator and validated against a per-kind schema at `schemas/envelopes/{type}.schema.json`," advertised via `Capabilities.supportedEnvelopes` + per-kind `Capabilities.schemaVersions`. So §C is **not prose-only**: it requires three new payload schemas `schemas/envelopes/media.{image,audio,file}.schema.json` (the `{ url?, base64?, bytes, … }` shape), their registration in `supportedEnvelopes`, and `schemaVersions` entries. Vendor-namespaced kinds remain available for anything richer.
 
 ## Compatibility
 
 **Additive.** Three independent additive moves, each backward-safe:
 
-- §A grows a **closed enum** by four values. Existing hosts advertise the subset they support; existing packs that don't gate on the new identifiers are unaffected. Adding enum members is additive per `COMPATIBILITY.md` §2.1 (a consumer that doesn't know a value simply never matches it).
-- §B adds an **optional** field under an already-`additionalProperties: true` object. Existing producers don't emit it; existing consumers ignore it (the schema already tolerates unknown `meta` keys, so this is purely a *documentation + validation tightening of a known key*, not a wire break).
-- §C adds **new universal `type` values** (additive event/envelope kinds — consumers that don't recognize them fall back to raw rendering) plus an **optional** `aiProviders.maxInlineMediaBytes` advertisement with a documented default.
+- §A extends the **open, pattern-validated reserved registry** by four prose identifiers — **no schema enum exists or is introduced** (introducing one would narrow the value space = breaking; see §A). The existing `pattern` already accepts them; existing hosts/packs are unaffected. Additive per `COMPATIBILITY.md` §2.1.
+- §B adds **one optional property (`rendering`) to the `EnvelopeMeta` `$def`** (`additionalProperties:false`, `required:[source,ts]`). Optional ⇒ existing envelopes that omit it still validate; existing consumers ignore it. Additive.
+- §C adds **three new universal envelope kinds** with their own per-kind payload schemas + `supportedEnvelopes`/`schemaVersions` advertisement (consumers that don't recognize the kind fall back to raw rendering), an **optional** `aiProviders.maxInlineMediaBytes` advertisement (default 256 KiB), and one new protocol-tier SECURITY invariant. All additive — a host that emits no `media.*` kind is unaffected.
 
 No existing v1.x conformance pass is invalidated: a host that advertises none of the new identifiers, never sets `meta.rendering`, and never emits a `media.*` kind behaves exactly as before.
 
@@ -150,7 +147,7 @@ New fixture: a `conformance.media.emit` fixture node that emits one `media.image
 ## Unresolved questions
 
 1. **Default `maxInlineMediaBytes`.** 256 KiB is a starting point chosen to keep event logs replay-friendly. Should it be lower (replay payload size) or higher (fewer round-trips for small images)? Resolve before Active with one adopter's real asset-size distribution.
-2. **Asset retention / GC.** Host-served asset URLs need a retention policy that aligns with `replay.md` retention. Should an asset outlive its run's event-log retention so a forked run can still render it? Likely yes; pin the rule before Active.
+2. **Asset retention / GC.** ~~Open~~ **Resolved** (via `/architect`): §C rule 5 now requires a host to retain a `media.*` asset at least as long as the emitting run's event-log retention, so a forked/replayed run resolves the URL. Remaining sub-question: GC granularity (per-asset TTL vs. tied to run-log GC) — host-impl detail, not wire.
 3. **`audio-input` ingestion shape.** This RFC defines the *advertisement* for `audio-input` but not the inbound audio payload shape (how a workflow input carries audio). Defer the input shape to a follow-up unless an adopter needs audio *ingestion* (vs. emission) immediately.
 
 ## Implementation notes (non-normative)
@@ -162,8 +159,9 @@ New fixture: a `conformance.media.emit` fixture node that emits one `media.image
 ## Acceptance criteria
 
 - [ ] Spec text merged (this file + `ai-envelope.md` §"Rendering hints" + §"Media reference payloads").
-- [ ] `meta.rendering` in `ai-envelope.schema.json`; four new `modelCapabilities` enum values + optional `maxInlineMediaBytes` in `capabilities.schema.json`.
-- [ ] `media.image` / `media.audio` / `media.file` documented as universal envelope kinds.
+- [ ] `rendering` optional property on the `EnvelopeMeta` $def in `ai-envelope.schema.json`; four new identifiers in the `modelCapabilities.advertised` **prose registry** (no enum); optional `maxInlineMediaBytes` in `capabilities.schema.json`.
+- [ ] `media.image` / `media.audio` / `media.file` documented as universal kinds **with** `schemas/envelopes/media.{image,audio,file}.schema.json` + `supportedEnvelopes`/`schemaVersions` advertisement.
+- [ ] `media-asset-url-tenant-scoped` protocol-tier invariant in `SECURITY/invariants.yaml` + its conformance test.
 - [ ] Five conformance scenarios + `conformance.media.emit` fixture node.
 - [ ] CHANGELOG entry under `[Unreleased]`.
 - [ ] A host advertises a `modelCapabilities` superset including `vision-input` and serves a tenant-scoped media URL passing `media-url-inline-cap` + `media-url-debug-bundle-reference`.
