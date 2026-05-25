@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0060 (`host.heartbeat`) — wire surface landed; promote Draft → `Active` (2026-05-25)
+
+Wire surface for the autonomous-agent-runtime cohort's heartbeat capability — system-managed, predicate-gated polling (the controlled, request-shaped exception to openwop's poll-free design): additive top-level `capabilities.heartbeat` block (`{ supported, minIntervalSec?, maxRuntimeMs? }`); two heartbeat-scoped AsyncAPI events `heartbeat.evaluated` / `heartbeat.stateChanged` on a new `heartbeatEvents` channel, backed by `schemas/heartbeat-evaluated.schema.json` + `schemas/heartbeat-state-changed.schema.json` (NOT RunEvents — heartbeat-scoped; added to the conformance synthetic-message set); the normative §host.heartbeat contract in `host-capabilities.md` (fire-once-per-tick, runtime-bounded, idempotent, transition-gated to prevent notification spam); a `positioning.md` bounded-exception note; and four conformance scenarios (`heartbeat-capability-shape` always-on + `-fires-once-per-tick` / `-idempotent-no-spam` / `-runtime-bound` gated on the cap + a host tick seam, soft-skip until a host wires it). Composes on RFC 0052 (`scheduling`) for the tick substrate and is hard-ceilinged by RFC 0058's `maxRunDurationMs`. **RFC 0060 graduates `Draft → Active`**; `Active → Accepted` awaits a host wiring the tick seam. Counts synced (38 schemas; 251 scenarios; Active 8 → 9, Draft 12 → 11). Additive; no existing wire-shape change.
+
 ### feat(app): finish the SDK migration of the reference frontend (2026-05-25)
 
 Closes item #22 ("Replace hand-rolled fetch with the published SDK") from `plans/app-buildable-now-on-existing-protocol.md`. The reference app had drifted on three surfaces where the published `@openwop/openwop` SDK already exposed a helper (per `sdk/PARITY.md`):

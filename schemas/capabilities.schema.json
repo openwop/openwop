@@ -1008,6 +1008,17 @@
       },
       "additionalProperties": false
     },
+    "heartbeat": {
+      "type": "object",
+      "description": "RFC 0060 (`Draft`). System-managed, predicate-gated polling: a short-interval, runtime-bounded evaluation of an idempotent predicate that emits state-change events and conditionally enqueues a run, rather than re-running an agent blindly. Composes with `scheduling` (RFC 0052) for the once-per-tick interval substrate; the controlled, request-shaped exception to openwop's poll-free design (`positioning.md`).",
+      "required": ["supported"],
+      "properties": {
+        "supported": { "type": "boolean" },
+        "minIntervalSec": { "type": "integer", "minimum": 1, "description": "Smallest interval the host honors; requests below it clamp up." },
+        "maxRuntimeMs": { "type": "integer", "minimum": 1, "description": "Per-tick predicate-evaluation budget; bounded above by `capabilities.limits.maxRunDurationMs` (RFC 0058) as the hard ceiling. Over-budget evaluation is terminated and reported as `heartbeat.evaluated { status: 'timeout' }`." }
+      },
+      "additionalProperties": false
+    },
     "deadLetter": {
       "type": "object",
       "description": "RFC 0053 (`Draft`). Run-level dead-letter sink for terminally-failed runs/nodes. On retry exhaustion (RFC 0009), the run is routed to a durable, inspectable sink and a `run.dead_lettered` event is emitted; dead-lettered runs remain fork-eligible (RFC 0011) for the retention window. Distinct from `queueBus.deadLetterSupported`, which dead-letters transport *messages*, not *runs*.",
