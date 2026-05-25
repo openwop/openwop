@@ -57,11 +57,13 @@ export function App() {
           <span>Open<em>WOP</em> <span className="app-header-sub">workflow engine</span></span>
         </h1>
         <nav>
-          {/* Order matters — Workflows first reinforces the
-              orchestration-first narrative. Chat ("AI") is the easy
-              demo path but not the headline feature. */}
-          <NavLink to="/builder">Workflows</NavLink>
+          {/* Chat first — the most-used demo entry point. @-mention
+              from chat is how users discover workflow orchestration;
+              putting Chat behind Workflows hides the easy on-ramp.
+              (Reverted from the 2026-05-23 "workflow-first narrative"
+              ordering per user feedback, 2026-05-25.) */}
           <NavLink to="/" end>Chat</NavLink>
+          <NavLink to="/builder">Workflows</NavLink>
           <NavLink to="/prompts">Prompts</NavLink>
           <NavLink to="/keys">Keys</NavLink>
           <NavLink to="/runs">Runs</NavLink>
