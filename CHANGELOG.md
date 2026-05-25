@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0050 — bundled synthetic SAML IdP fixture (closes the deferred conformance gap) (2026-05-25)
+
+Lands the synthetic SAML IdP harness MyndHyve flagged as a graduation blocker for RFC 0050. `conformance/src/lib/saml-idp.ts` (hermetic, `node:crypto` RSA-SHA256, no deps) mints a valid assertion + the six negatives (`alg-none`, `bad-signature`, `unsigned`, `expired`, `not-yet-valid`, `signature-wrapping`); its `verify()` implements the RFC 0050 §A MUST list. `auth-saml-profile.test.ts` now runs the **1-positive + 6-negative reference suite server-free** (a real SAML validation reference), in addition to the existing env-gated host-ACS path. RFC 0050 acceptance updated; the remaining `Active → Accepted` gate is a host wiring its SAML ACS to the `auth/saml/validate` seam. Lands in the unpublished `@openwop/openwop-conformance@1.6.0` (no new scenario file; no version re-bump). All additive.
+
 ### `@openwop/openwop-conformance` 1.5.0 → 1.6.0 — ships the RFC 0045–0054 cohort scenarios (2026-05-25)
 
 Cut the conformance suite minor release so adopting hosts can pin a published version carrying the MyndHyve protocol-extension cohort scenarios and report pass for graduation. Triggered by MyndHyve shipping 8 of the 10 RFCs (advertise + behavioral seams) and asking for a pinnable suite. `conformance/package.json` 1.5.0 → 1.6.0; `scripts/openwop-check-publish-metadata.sh` `EXPECTED_CONFORMANCE_VERSION` synced; `conformance/CHANGELOG.md` [1.6.0] enumerates the per-RFC scenarios; `docs/PROTOCOL-STATUS.md` regenerated. The actual `npm publish` is the release-manager step (this lands the release-ready bump). Independent of the SDK version line (still 1.1.x).
