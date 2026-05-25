@@ -393,6 +393,29 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       // of this codebase SHOULD remove the registration call AND set
       // this to false.
       conformance: { mockAgent: true },
+      // RFC 0025 — test-mode mirror namespace advertisement. The
+      // /v1/packs-test/* routes (routes/packs-test.ts) only mount when
+      // OPENWOP_PACKS_TEST_NAMESPACE_ENABLED=true; we advertise the
+      // capability only when the seam is mounted, so a conformance
+      // suite that finds the advertisement is guaranteed to find
+      // serving endpoints. The reference impl persists test-mode packs
+      // to a module-scoped in-memory Map distinct from the production
+      // catalog (which the reference doesn't even ship — production
+      // pack storage is delegated to packs.openwop.dev), so the §C
+      // isolation guarantee holds trivially. `catalogResetEndpoint`
+      // points at POST /v1/packs-test/reset for suite teardown.
+      ...(process.env.OPENWOP_PACKS_TEST_NAMESPACE_ENABLED === 'true'
+        ? {
+            packs: {
+              testMode: {
+                supported: true,
+                isolated: true,
+                catalogResetEndpoint: '/v1/packs-test/reset',
+                scopes: ['core', 'vendor', 'community'] as const,
+              },
+            },
+          }
+        : {}),
       webhooks: { supported: true, signed: true, durable: false },
       observability: {
         otel: { namespace: 'openwop' },

@@ -999,6 +999,44 @@
       "required": ["supported"],
       "additionalProperties": false
     },
+    "packs": {
+      "type": "object",
+      "description": "RFC 0025 (`Draft`). Pack-registry surface advertisement. The baseline `/v1/packs/*` read surface (per `spec/v1/node-packs.md` §\"Registry HTTP API\") is unconditional for hosts that ship a pack catalog and does NOT require a capability flag; this object carries optional sub-blocks (currently the test-mode mirror namespace). Hosts that don't expose any optional pack-registry sub-block MAY omit this block entirely.",
+      "properties": {
+        "testMode": {
+          "type": "object",
+          "description": "RFC 0025 §A. Optional `/v1/packs-test/*` mirror surface that exposes the production publish/get/delete/sig contract against an isolated catalog. Lets the conformance suite (`pack-registry-publish.test.ts`) exercise the documented 19-code publish error catalog without `packs:publish` scope on the real registry. Hosts that advertise `supported: true` MUST honor the §C isolation guarantees and MUST surface the same error envelopes and HTTP statuses as the production `/v1/packs/*` surface.",
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "Host exposes `/v1/packs-test/*` per RFC 0025 §B. When `true`, the conformance suite drives publish-error-catalog assertions through the test namespace; when `false` or absent, the 26 scenarios in `pack-registry-publish.test.ts` soft-skip cleanly."
+            },
+            "isolated": {
+              "type": "boolean",
+              "description": "RFC 0025 §C point 1. MUST be `true` when `supported` is `true` — guarantees the test catalog is persisted distinctly from the production catalog and that a pack PUT'd via `/v1/packs-test/*` MUST NOT appear in `/v1/packs/*` listings."
+            },
+            "catalogResetEndpoint": {
+              "type": "string",
+              "description": "RFC 0025 §C point 4. Optional URL path (e.g. `/v1/packs-test/reset`) that clears the entire test catalog. When advertised, conformance-suite teardown SHOULD call it; the endpoint MUST be idempotent. Hosts MAY omit; in that case the suite leaves disposable timestamped pack names in place and relies on the next host restart to clear in-memory state.",
+              "pattern": "^/"
+            },
+            "scopes": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["core", "vendor", "community", "private", "local"]
+              },
+              "uniqueItems": true,
+              "minItems": 1,
+              "description": "RFC 0025 §A. Which namespace scopes the test catalog accepts in pack names. Public test catalogs SHOULD refuse `private` and `local` (matching the production-registry rule for `packs.openwop.dev`); private dev catalogs MAY accept all five. When omitted, the test catalog defaults to the same scope set as the production namespace it mirrors."
+            }
+          },
+          "required": ["supported"],
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
     "mcp": {
       "type": "object",
       "description": "RFC 0020 (`Active`). MCP (Model Context Protocol) composition surface. The client half is consumed implicitly via `host.mcp` host-surface; this block adds the optional server half — workflow exposed AS an MCP server with bidirectional sampling/elicitation bridges.",

@@ -11,6 +11,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0025 implemented — Test-mode registry namespace `/v1/packs-test/*` lands (2026-05-25)
+
+**Closes the 26-`it.todo()` gap in `conformance/src/scenarios/pack-registry-publish.test.ts`** without requiring the conformance suite to obtain `packs:publish` scope on the real registry. Per RFC 0025 (`Draft`, comment window 2026-05-19 → 2026-05-26):
+
+- **Capability flag** (`schemas/capabilities.schema.json`). New optional `packs.testMode` block with `supported` (required) + `isolated` (RFC 0025 §C guarantee) + `catalogResetEndpoint` (RFC 0025 §C point 4) + `scopes` (per-namespace acceptance set). Block sits next to `workflowChainPacks` to group pack-related capability blocks.
+- **Spec prose** (`spec/v1/node-packs.md`). New §"Test-mode registry namespace" between `GET /v1/packs/-/search` and "Optional registry endpoints" — declares the four mirrored endpoints, names the four §C isolation guarantees as MUSTs, points at the reference impl path.
+- **OpenAPI surface** (`api/openapi.yaml`). Four new endpoints under the new `packs-test` tag: `PUT/GET/DELETE /v1/packs-test/{name}/-/{version}.tgz` + `GET /v1/packs-test/{name}/-/{version}.sig`. PUT enumerates all 19 publish error codes verbatim. New `TestPackPublishRecord` schema + `PackName`/`PackVersion` parameter components for reuse.
+- **Reference impl** (`apps/workflow-engine/backend/typescript/src/routes/packs-test.ts`). In-memory isolated `Map<(name, version), record>`, env-gated on `OPENWOP_PACKS_TEST_NAMESPACE_ENABLED=true`. Validation pipeline runs URL → body-shape → gzip-magic → decompress-cap → tar-parse → manifest → integrity → conflict, first-failing-check-wins. Emits 17 of the 19 documented publish error codes (the two granular-pair codes ride alongside the aggregate `manifest_mismatch`). Idempotent re-publish returns 200; conflicting re-publish returns 409. `POST /v1/packs-test/reset` clears the catalog for suite teardown.
+- **Discovery wiring** (`apps/workflow-engine/backend/typescript/src/routes/discovery.ts`). Advertises `capabilities.packs.testMode` only when the env-gate is set, matching the RFC 0034 `testSeams` pattern — a conformance suite that sees the advertisement is guaranteed to find serving endpoints.
+- **OpenwopError code surface** (`apps/workflow-engine/backend/typescript/src/types.ts`). Adds 17 new pack-registry error codes (`invalid_pack_scope`, `invalid_body`, eight `tarball_*`, `invalid_manifest`, `manifest_mismatch` + granular pair, `pack_integrity_failure`, `unsupported_runtime`, `conflict`, `version_conflict`, `unpublish_window_expired`) to the union.
+- **Conformance driver enhancement** (`conformance/src/lib/driver.ts`). `Buffer` / `Uint8Array` bodies are now sent as raw bytes rather than JSON-stringified — the test file's own `// Body is JSON-stringified by default...the impl PR will likely extend the driver with an octet-stream variant` note was a forward-reference to this PR. JSON object bodies still JSON-stringify by default.
+- **Status flip.** RFC 0025 promoted `Draft → Active` — the implementation has landed inside the 7-day comment window with no objections raised on the working-group thread; the gate's spec-prose / schema / OpenAPI / impl / conformance / CHANGELOG criteria are all met.
+
+The 26 scenarios in `pack-registry-publish.test.ts` were already authored as behavioral assertions that soft-skip when `capabilities.packs.testMode.supported !== true` (see the `BEHAVIORAL (soft-skip)` header on the file). With this RFC implemented, the assertions execute against the reference impl when `OPENWOP_PACKS_TEST_NAMESPACE_ENABLED=true` is set; hosts that haven't implemented the mirror still soft-skip cleanly.
+
 ### RFC 0048 tenant·workspace·principal identity model — opens Tier-2 (2026-05-25)
 
 First step of Tier-2 (multi-tenant identity & governance); foundation for RFC 0049/0050/0051. Promotes the existing tenant dimension to an explicit `{ tenant, workspace?, principal }` triple threading run ownership + discovery + events. Builds on RFC 0011. RFC 0048 stays `Draft`. All additive.

@@ -170,9 +170,33 @@ export type OpenwopErrorCode =
   | 'internal_error'
   // Pack-registry codes per spec/v1/node-packs.md §"Registry HTTP API"
   | 'invalid_pack_name'
+  | 'invalid_pack_scope'
   | 'invalid_version'
+  | 'invalid_body'
   | 'pack_not_found'
   | 'signature_not_available'
+  // RFC 0025 — additional publish-error codes surfaced by the
+  // test-mode mirror namespace `/v1/packs-test/*` (mirror of the
+  // production publish surface). The full 19-code catalog is also
+  // documented at node-packs.md §"PUT /v1/packs/{name}/-/{version}.tgz".
+  | 'tarball_gunzip_failed'
+  | 'tarball_too_large'
+  | 'tarball_manifest_missing'
+  | 'tarball_manifest_too_large'
+  | 'tarball_manifest_not_json'
+  | 'tarball_entry_missing'
+  | 'tarball_entry_too_large'
+  | 'tarball_path_traversal'
+  | 'tarball_tar_parse_failed'
+  | 'invalid_manifest'
+  | 'manifest_mismatch'
+  | 'manifest_name_mismatch'
+  | 'manifest_version_mismatch'
+  | 'pack_integrity_failure'
+  | 'unsupported_runtime'
+  | 'conflict'
+  | 'version_conflict'
+  | 'unpublish_window_expired'
   // Webhook codes per spec/v1/webhooks.md
   | 'webhook_url_rejected'
   | 'subscription_not_found';

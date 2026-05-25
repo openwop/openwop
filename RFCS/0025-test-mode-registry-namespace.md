@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0025 |
 | **Title** | Test-mode registry namespace for conformance publish-error catalog |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | OpenWOP Working Group |
 | **Created** | 2026-05-19 |
-| **Updated** | 2026-05-19 |
+| **Updated** | 2026-05-25 |
 | **Affects** | `spec/v1/node-packs.md` (new §"Test-mode registry namespace") · `schemas/capabilities.schema.json` (new `packs.testMode` block) · `api/openapi.yaml` (new `/v1/packs-test/*` endpoints) · `conformance/src/scenarios/pack-registry-publish.test.ts` (26 todos → behavioral) |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -142,14 +142,14 @@ The 19-code catalog covered:
 
 ## Acceptance criteria
 
-- [ ] RFC 0025 follows the template; 7-day comment window expires 2026-05-26
-- [ ] `capabilities.packs.testMode` block added to `schemas/capabilities.schema.json`
-- [ ] `spec/v1/node-packs.md` gains §"Test-mode registry namespace" referencing this RFC
-- [ ] `api/openapi.yaml` declares the 4 new endpoints with all 19 error responses
-- [ ] Reference impl at `apps/workflow-engine/.../routes/packs-test.ts` (in-memory)
-- [ ] 26 scenarios in `pack-registry-publish.test.ts` converted to behavioral (each soft-skips when the seam isn't advertised)
-- [ ] `npm run openwop:check` 9/9 green
-- [ ] CHANGELOG entry under `[Unreleased]`
+- [x] RFC 0025 follows the template; 7-day comment window expires 2026-05-26
+- [x] `capabilities.packs.testMode` block added to `schemas/capabilities.schema.json`
+- [x] `spec/v1/node-packs.md` gains §"Test-mode registry namespace" referencing this RFC
+- [x] `api/openapi.yaml` declares the 4 new endpoints with all 19 error responses
+- [x] Reference impl at `apps/workflow-engine/.../routes/packs-test.ts` (in-memory)
+- [x] 26 scenarios in `pack-registry-publish.test.ts` converted to behavioral (each soft-skips when the seam isn't advertised)
+- [x] `npm run openwop:check` 9/9 green
+- [x] CHANGELOG entry under `[Unreleased]`
 
 ## References
 

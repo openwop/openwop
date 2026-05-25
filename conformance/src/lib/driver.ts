@@ -50,7 +50,19 @@ class OpenWOPDriver {
 
     const fetchInit: RequestInit = { method, headers };
     if (init.body !== undefined) {
-      fetchInit.body = JSON.stringify(init.body);
+      // Buffer / Uint8Array bodies are sent as raw bytes — needed by the
+      // RFC 0025 test-mode publish scenarios so the host's body-shape
+      // check sees the bytes the caller actually wrote (rather than a
+      // JSON-stringified `{"type":"Buffer","data":[...]}` envelope).
+      if (typeof Buffer !== 'undefined' && Buffer.isBuffer(init.body)) {
+        fetchInit.body = new Uint8Array(init.body);
+      } else if (init.body instanceof Uint8Array) {
+        fetchInit.body = init.body;
+      } else if (typeof init.body === 'string') {
+        fetchInit.body = init.body;
+      } else {
+        fetchInit.body = JSON.stringify(init.body);
+      }
     }
     const res = await fetch(url, fetchInit);
 

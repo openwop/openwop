@@ -591,6 +591,34 @@ Unpublish — registries SHOULD refuse this for versions older than 72 hours (np
 
 Full-text search across name + description + keywords. Returns paginated results.
 
+### Test-mode registry namespace
+
+Per [RFC 0025](../../RFCS/0025-test-mode-registry-namespace.md), hosts MAY expose an optional `/v1/packs-test/*` mirror surface that mirrors the production `PUT` / `GET` / `DELETE` / `.sig` endpoints against an **isolated** catalog. This lets the conformance suite exercise the 19-code publish error catalog above without `packs:publish` scope on the real registry.
+
+**Capability gate.** A host advertises the mirror via `capabilities.packs.testMode.supported: true` (see `capabilities.schema.json` §`packs.testMode`). When absent or `false`, the 26 conformance scenarios in `pack-registry-publish.test.ts` soft-skip; when `true`, every scenario asserts against the test namespace instead of the production one.
+
+**Mirrored endpoints.** The following paths MUST behave identically to their `/v1/packs/*` counterparts — same request envelopes, response shapes, status codes, and error code vocabulary:
+
+| Test endpoint | Mirror of |
+|---|---|
+| `PUT /v1/packs-test/{name}/-/{version}.tgz` | `PUT /v1/packs/{name}/-/{version}.tgz` |
+| `GET /v1/packs-test/{name}/-/{version}.tgz` | `GET /v1/packs/{name}/-/{version}.tgz` |
+| `DELETE /v1/packs-test/{name}/-/{version}` | `DELETE /v1/packs/{name}/-/{version}` |
+| `GET /v1/packs-test/{name}/-/{version}.sig` | `GET /v1/packs/{name}/-/{version}.sig` |
+
+All 19 publish error codes documented in `PUT /v1/packs/{name}/-/{version}.tgz` above (`invalid_pack_scope`, `invalid_pack_name`, `invalid_version`, `invalid_body`, the eight `tarball_*` codes, `invalid_manifest`, `manifest_mismatch` (or granular pair), `pack_integrity_failure`, `unsupported_runtime`, `forbidden`, `conflict`, `unpublish_window_expired`) MUST be surfaced verbatim. Scenarios authored against the test namespace prove the production-namespace contract.
+
+**Isolation guarantees (RFC 0025 §C).** A host advertising `packs.testMode.supported: true` MUST:
+
+1. Persist every test-namespace pack to a catalog distinct from the production catalog. A pack PUT'd to the test namespace MUST NOT appear in the corresponding production-namespace listing.
+2. Refuse test-namespace traffic when the implementation's test-mode env-gate is unset (the env-gate name is implementation-defined; conformance only verifies the runtime behavior). The host boot log SHOULD warn when the surface is exposed.
+3. NOT serve the test-namespace catalog from any production discovery endpoint (`GET /v1/packs`, `GET /v1/packs/{name}`, `GET /v1/packs/-/search`). Test-catalog packs MUST NOT appear in production registry listings.
+4. Honor `catalogResetEndpoint` when advertised — calling it MUST clear the entire test catalog (the conformance suite's teardown hook).
+
+**Scope acceptance.** `packs.testMode.scopes` declares which namespace scopes the test catalog accepts. Public test catalogs SHOULD refuse `private` and `local` (matching the production rule for `packs.openwop.dev`); private dev catalogs MAY accept all five. Hosts MAY omit `scopes` to default to the same acceptance set as the production namespace they mirror.
+
+**Implementer note (non-normative).** A minimal implementation uses an in-memory `Map<(name, version), { tarball, sha256, signature? }>` env-gated on a single boolean. The validation pipeline runs checks in order (URL → body → tarball-extraction → manifest → integrity → auth/conflict); first-failing-check wins, matching the production publish handler's check order.
+
 ### Optional registry endpoints
 
 Two additional `GET` surfaces are defined for hosts that expose a public pack-discovery layer:

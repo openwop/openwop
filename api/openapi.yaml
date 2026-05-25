@@ -61,6 +61,13 @@ tags:
     description: Audit-log integrity verification (gated on the `openwop-audit-log-integrity` profile).
   - name: prompts
     description: Prompt-template library — list, fetch, render, mutate (RFC 0028; gated on `capabilities.prompts.*`).
+  - name: packs-test
+    description: |
+      RFC 0025 (`Draft`). Test-mode mirror of the production `/v1/packs/*` publish/get/delete/sig surface against
+      an isolated catalog. Gated on `capabilities.packs.testMode.supported: true` plus the reference impl's
+      `OPENWOP_PACKS_TEST_NAMESPACE_ENABLED=true` env-gate. Lets the conformance suite exercise the documented
+      19-code publish error catalog without `packs:publish` scope on the real registry. Hosts that haven't
+      mounted this surface MUST return `404 Not Found` for every path under `/v1/packs-test/`.
 
 # ─────────────────────────────────────────────────────────────────────────────
 # PATHS
@@ -1146,6 +1153,209 @@ paths:
               schema:
                 $ref: '../schemas/error-envelope.schema.json'
 
+  # ── Test-mode pack registry namespace (RFC 0025) ─────────────────────────
+  # Mirrors the production /v1/packs/* PUT/GET/DELETE/.sig surface against an
+  # isolated catalog. Conformance scenarios under
+  # `conformance/src/scenarios/pack-registry-publish.test.ts` exercise the
+  # 19-code publish error catalog through this namespace. Hosts that don't
+  # advertise `capabilities.packs.testMode.supported: true` MUST return
+  # 404 for every path below.
+
+  /v1/packs-test/{name}/-/{version}.tgz:
+    parameters:
+      - $ref: '#/components/parameters/PackName'
+      - $ref: '#/components/parameters/PackVersion'
+    put:
+      tags: [packs-test]
+      summary: Publish a pack tarball to the isolated test catalog.
+      description: |
+        Mirror of `PUT /v1/packs/{name}/-/{version}.tgz` per
+        `spec/v1/node-packs.md` §"PUT /v1/packs/{name}/-/{version}.tgz".
+        Request shape, response shape, status codes, and the 19-code
+        publish error catalog (`invalid_pack_scope`, `invalid_pack_name`,
+        `invalid_version`, `invalid_body`, eight `tarball_*` codes,
+        `invalid_manifest`, `manifest_mismatch` (or the granular
+        `manifest_name_mismatch` / `manifest_version_mismatch` pair),
+        `pack_integrity_failure`, `unsupported_runtime`, `forbidden`,
+        `conflict`/`version_conflict`) MUST be served verbatim. The
+        test catalog MUST be isolated per RFC 0025 §C — a pack PUT'd
+        here MUST NOT appear in `GET /v1/packs/{name}` listings.
+      operationId: putTestPackTarball
+      parameters:
+        - in: header
+          name: X-Pack-Signing-Method
+          required: false
+          schema: { type: string, enum: [sigstore, manual, none] }
+        - in: header
+          name: X-Pack-Sha256
+          required: false
+          schema:
+            type: string
+            pattern: '^sha256-[A-Za-z0-9+/=]+$'
+          description: Caller-asserted SHA-256 (server verifies; mismatch surfaces `pack_integrity_failure`).
+      requestBody:
+        required: true
+        description: Gzipped tarball bytes (`application/tar+gzip`, `application/gzip`, `application/x-gzip`, or `application/octet-stream`).
+        content:
+          application/gzip:
+            schema: { type: string, format: binary }
+          application/x-gzip:
+            schema: { type: string, format: binary }
+          application/tar+gzip:
+            schema: { type: string, format: binary }
+          application/octet-stream:
+            schema: { type: string, format: binary }
+      responses:
+        '200':
+          description: Idempotent re-publish — identical sha256 content already published; existing record returned.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TestPackPublishRecord' }
+        '201':
+          description: New version published to the test catalog.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TestPackPublishRecord' }
+        '400':
+          description: |
+            One of the 17 spec-documented 400-class publish error codes:
+            URL/scope (`invalid_pack_scope`, `invalid_pack_name`, `invalid_version`),
+            body shape (`invalid_body`),
+            tarball extraction (`tarball_gunzip_failed`, `tarball_too_large`,
+            `tarball_manifest_missing`, `tarball_manifest_too_large`,
+            `tarball_manifest_not_json`, `tarball_entry_missing`,
+            `tarball_entry_too_large`, `tarball_path_traversal`,
+            `tarball_tar_parse_failed`),
+            manifest contents (`invalid_manifest`, `manifest_mismatch` or
+            the granular `manifest_name_mismatch` / `manifest_version_mismatch` pair,
+            `pack_integrity_failure`, `unsupported_runtime`).
+          content:
+            application/json:
+              schema: { $ref: '../schemas/error-envelope.schema.json' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403':
+          description: '`forbidden` — caller lacks `packs:publish` scope or the namespace claim.'
+          content:
+            application/json:
+              schema: { $ref: '../schemas/error-envelope.schema.json' }
+        '404':
+          description: 'Host does not advertise `capabilities.packs.testMode.supported: true`, or the test-mode env-gate is unset.'
+          content:
+            application/json:
+              schema: { $ref: '../schemas/error-envelope.schema.json' }
+        '409':
+          description: '`conflict` (or `version_conflict`) — `(name, version)` already published with different content.'
+          content:
+            application/json:
+              schema: { $ref: '../schemas/error-envelope.schema.json' }
+    get:
+      tags: [packs-test]
+      summary: Fetch a published test-catalog tarball.
+      description: 'Mirror of `GET /v1/packs/{name}/-/{version}.tgz`. Returns the gzipped tarball bytes with `Content-Type: application/tar+gzip` and an `ETag: "sha256-..."` matching the manifest''s `tarballSha256`.'
+      operationId: getTestPackTarball
+      responses:
+        '200':
+          description: Tarball bytes.
+          content:
+            application/tar+gzip:
+              schema: { type: string, format: binary }
+        '400':
+          description: '`invalid_pack_name` or `invalid_version` — URL params malformed.'
+          content:
+            application/json:
+              schema: { $ref: '../schemas/error-envelope.schema.json' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403':
+          description: '`forbidden` — caller lacks `packs:read` scope.'
+          content:
+            application/json:
+              schema: { $ref: '../schemas/error-envelope.schema.json' }
+        '404':
+          description: 'Pack version not found in the test catalog (or host does not advertise `capabilities.packs.testMode.supported: true`).'
+          content:
+            application/json:
+              schema: { $ref: '../schemas/error-envelope.schema.json' }
+  /v1/packs-test/{name}/-/{version}:
+    parameters:
+      - $ref: '#/components/parameters/PackName'
+      - $ref: '#/components/parameters/PackVersion'
+    delete:
+      tags: [packs-test]
+      summary: Unpublish a test-catalog version (mirrors unpublish-window semantics).
+      description: |
+        Mirror of `DELETE /v1/packs/{name}/-/{version}` per
+        `spec/v1/node-packs.md`. Returns `400 unpublish_window_expired`
+        for versions older than the registry's unpublish window
+        (default 72h). Test-mode implementations MAY shorten the
+        window for tractable conformance fixtures but MUST surface
+        the same error code.
+      operationId: deleteTestPackVersion
+      responses:
+        '204':
+          description: Version successfully unpublished from the test catalog.
+        '400':
+          description: '`unpublish_window_expired`, `invalid_pack_name`, or `invalid_version`.'
+          content:
+            application/json:
+              schema: { $ref: '../schemas/error-envelope.schema.json' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403':
+          description: '`forbidden` — caller lacks `packs:publish` scope.'
+          content:
+            application/json:
+              schema: { $ref: '../schemas/error-envelope.schema.json' }
+        '404':
+          description: Version doesn't exist in the test catalog, or host does not advertise the test-mode capability.
+          content:
+            application/json:
+              schema: { $ref: '../schemas/error-envelope.schema.json' }
+
+  /v1/packs-test/{name}/-/{version}.sig:
+    parameters:
+      - $ref: '#/components/parameters/PackName'
+      - $ref: '#/components/parameters/PackVersion'
+    get:
+      tags: [packs-test]
+      summary: Fetch the detached Ed25519 signature for a test-catalog pack.
+      description: |
+        Mirror of `GET /v1/packs/{name}/-/{version}.sig`. Returns the
+        signature blob over `pack.json` for this version. MAY 302-redirect
+        to a storage-backend signed URL.
+      operationId: getTestPackSignature
+      responses:
+        '200':
+          description: Signature blob.
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+        '302':
+          description: Redirect to a storage-backend signed URL (clients SHOULD follow).
+          headers:
+            Location:
+              schema: { type: string, format: uri }
+        '400':
+          description: '`invalid_pack_name` or `invalid_version` — URL params malformed.'
+          content:
+            application/json:
+              schema: { $ref: '../schemas/error-envelope.schema.json' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403':
+          description: '`forbidden` — caller lacks `packs:read` scope.'
+          content:
+            application/json:
+              schema: { $ref: '../schemas/error-envelope.schema.json' }
+        '404':
+          description: |
+            `signature_not_available` — version is missing, yanked,
+            unsigned at publish time, OR the registry's storage backend
+            is unwired. The four cases are intentionally
+            indistinguishable per spec/v1/node-packs.md §"GET /v1/packs/{name}/-/{version}.sig".
+            Also returned when the host does not advertise
+            `capabilities.packs.testMode.supported: true`.
+          content:
+            application/json:
+              schema: { $ref: '../schemas/error-envelope.schema.json' }
+
 # ─────────────────────────────────────────────────────────────────────────────
 # COMPONENTS
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1188,6 +1398,25 @@ components:
         Server caches `(tenantId, endpoint, key)` → response for ≥24h.
         Duplicate requests return the cached response with header
         `openwop-Idempotent-Replay: true`.
+
+    PackName:
+      in: path
+      name: name
+      required: true
+      schema:
+        type: string
+        minLength: 3
+        maxLength: 214
+      description: Reverse-DNS pack name per `spec/v1/node-packs.md` §Naming (e.g. `vendor.acme.salesforce-tools`).
+
+    PackVersion:
+      in: path
+      name: version
+      required: true
+      schema:
+        type: string
+        pattern: '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[\w.-]+)?(?:\+[\w.-]+)?$'
+      description: SemVer 2.0.0 version of the pack.
 
   responses:
     Unauthenticated:
@@ -1304,3 +1533,31 @@ components:
                 supported:
                   type: array
                   items: { type: string, enum: [values, updates, messages, debug] }
+
+    TestPackPublishRecord:
+      description: |
+        Response body for a successful publish against the test-mode
+        registry namespace (RFC 0025). Mirror of the production publish
+        record returned by `PUT /v1/packs/{name}/-/{version}.tgz`.
+      type: object
+      required: [name, version, tarballSha256, publishedAt]
+      properties:
+        name:
+          type: string
+          description: Reverse-DNS pack name as PUT'd.
+        version:
+          type: string
+          description: SemVer 2.0.0 version as PUT'd.
+        tarballSha256:
+          type: string
+          pattern: '^sha256-[A-Za-z0-9+/=]+$'
+          description: Server-computed SHA-256 over the uploaded tarball bytes.
+        publishedAt:
+          type: string
+          format: date-time
+        signed:
+          type: boolean
+          description: Whether a sibling `.sig` signature blob was persisted.
+        signingMethod:
+          type: string
+          enum: [sigstore, manual, none]
