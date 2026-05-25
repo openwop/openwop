@@ -144,47 +144,48 @@ export const PREMADE_WORKFLOWS: readonly TemplateWorkflow[] = [
   // PIPELINE / DAG — multi-step + concurrent paths
   // =========================================================================
 
-  // RAG ingest + retrieve (RFC 0018), using the composed `core.rag.*`
-  // pack family. Edges are port-shape-correct (verified against the live
-  // node-catalog): splitter `chunks` (array) → vector-upsert `documents`
-  // (array). The retriever's `query` and the splitter's `text` come from
-  // run inputs; the upsert→retrieve edge is a GATE (distinct `_gate_*`
-  // targetPort) so retrieve waits for ingest without its query being
-  // clobbered (see the port-routing note above).
-  //
-  // NOTE — no URL loader: `loader-url` emits a `document` *object*, but
-  // the splitter's `text` input is a *string*, and a builder port→port
-  // edge can't extract a nested field, so they don't compose. A real
-  // ingestion prepends a loader + text-extraction step that isn't
-  // expressible as a single edge — so the template takes raw `text`.
-  // `vector-upsert` additionally needs a host embeddings surface
-  // (host.aiProviders / BYOK); without it the run fails fast with
-  // HOST_CAPABILITY_MISSING (and the item-12 pre-flight flags it).
+  // RAG ingest + retrieve (RFC 0018). Full load → extract → split →
+  // upsert → retrieve pipeline, all edges port-shape-correct + verified
+  // end-to-end against a live host:
+  //   - loader-url emits `document` (object {url,contentType,content,…});
+  //     `core.openwop.data.object-get-path` (path: "content") extracts the
+  //     text STRING from it → feeds the splitter's `text` (string) input.
+  //     This is the field-extraction step a port→port edge can't do alone.
+  //   - splitter `chunks` (array) → vector-upsert `documents` (array).
+  //   - the upsert→retrieve edge is a GATE (distinct `_gate_*` targetPort)
+  //     so retrieve waits for ingest without its `query` (from run inputs)
+  //     being clobbered (see the port-routing note above).
+  // load→extract→split runs end-to-end; vector-upsert/retriever then need
+  // a host embeddings surface (host.aiProviders / BYOK) + vector store —
+  // the item-12 pre-flight flags both when the host lacks them.
   {
     templateId: 'template.rag-ingest-retrieve',
-    name: 'RAG: chunk + upsert + retrieve',
+    name: 'RAG: load + split + upsert + retrieve',
     description:
-      'Chunk raw text → upsert to the vector store → retrieve by query. Needs the core.openwop.rag pack + a host vector store and embeddings (BYOK).',
+      'Load a URL → extract text → chunk → upsert to the vector store → retrieve by query. Needs the core.openwop.rag + core.openwop.data packs, a host vector store, and embeddings (BYOK).',
     category: 'pipeline',
     requiresTypeIds: [
+      'core.rag.loader-url',
+      'core.openwop.data.object-get-path',
       'core.rag.splitter-recursive',
       'core.rag.vector-upsert',
       'core.rag.retriever-basic',
     ],
     nodes: [
-      node('split', 'core.rag.splitter-recursive', pos(0, -1), 'Split (recursive)'),
-      node('upsert', 'core.rag.vector-upsert', pos(1, -1), 'Vector upsert'),
-      node('retrieve', 'core.rag.retriever-basic', pos(2, 0), 'Retrieve'),
+      node('load', 'core.rag.loader-url', pos(0, -1), 'Load URL'),
+      node('extract', 'core.openwop.data.object-get-path', pos(1, -1), 'Extract text', { path: 'content' }),
+      node('split', 'core.rag.splitter-recursive', pos(2, -1), 'Split (recursive)'),
+      node('upsert', 'core.rag.vector-upsert', pos(3, -1), 'Vector upsert'),
+      node('retrieve', 'core.rag.retriever-basic', pos(4, 0), 'Retrieve'),
     ],
     edges: [
-      edge('e1', 'split', 'upsert', { sourcePort: 'chunks', targetPort: 'documents' }),
-      edge('e2', 'upsert', 'retrieve', { sourcePort: 'upserted', targetPort: '_gate_ingest' }),
+      edge('e1', 'load', 'extract', { sourcePort: 'document', targetPort: 'object' }),
+      edge('e2', 'extract', 'split', { sourcePort: 'value', targetPort: 'text' }),
+      edge('e3', 'split', 'upsert', { sourcePort: 'chunks', targetPort: 'documents' }),
+      edge('e4', 'upsert', 'retrieve', { sourcePort: 'upserted', targetPort: '_gate_ingest' }),
     ],
     defaultInputs: JSON.stringify(
-      {
-        text: 'OpenWOP is an open workflow orchestration protocol. It defines a vendor-neutral wire contract for AI workflows: runs, events, interrupts, and capability discovery.',
-        query: 'What is OpenWOP?',
-      },
+      { url: 'https://raw.githubusercontent.com/openwop/openwop/main/README.md', query: 'What is OpenWOP?' },
       null,
       2,
     ),
