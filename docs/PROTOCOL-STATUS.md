@@ -12,7 +12,7 @@
 | OpenAPI operations | 31 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 220 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 54 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 56 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## OpenAPI Operations
 
@@ -24,15 +24,15 @@
 |---|---:|
 | Accepted | 37 |
 | Active | 4 |
-| Draft | 13 |
+| Draft | 15 |
 
 | Latest RFC | Title | Status |
 |---|---|---|
+| RFC 0056 | An optional `host.feedback` capability + additive `run.annotated` RunEvent + capability-gated `POST/GET /v1/runs/{runId}/annotations`, so a human (or supervisor agent) can attach a portable quality signal - rating / correction / label / flag - to a run, event, or node, feeding analytics, the HITL inbox, and replay | Draft |
+| RFC 0055 | Promote RFC 0031's reserved `vision-input` / `audio` model-capability identifiers into a formal vocabulary, and add an optional `meta.rendering` hint + `media.*` URL-reference convention to the AI envelope, so an LLM node can emit images / audio / files / structured cards that any consumer renders portably | Draft |
 | RFC 0054 | A read-only `GET /v1/runs/{runId}:diff?against={otherRunId}` endpoint returning a deterministic, replay-aware structured diff of two runs' event sequences and terminal states - the protocol surface behind run-vs-fork comparison | Draft |
 | RFC 0053 | A `host.deadLetter` capability + `run.dead_lettered` event - terminally-failed runs/nodes land in a durable, inspectable sink that stays fork-eligible, so a poisoned run can be examined and replayed rather than silently lost | Draft |
 | RFC 0052 | A `host.scheduling` capability (cron / delayed / calendar) wiring the `schedule` trigger to a portable, durable execution contract - promoting the still-Draft scheduling intent behind RFC 0017's `host.queueBus` into a conformance-tested surface | Draft |
-| RFC 0051 | `core.openwop.governance.approvalGate` - a first-class, role-bound, audited interrupt node for approvals and deployment promotions, composing the existing interrupt-profile machinery (quorum, auth-required) with RFC 0049 authorization and the audit log | Draft |
-| RFC 0050 | Two new entries in the auth-profile family - a SAML assertion-validation profile and a SCIM provisioning profile (LDAP as an optional directory-bind variant) - that sync external IdP users/groups onto RFC 0048 principals + RFC 0049 roles, with `alg:none` rejection mirroring the OIDC work | Draft |
 
 ## SDK Helper Coverage
 
@@ -72,7 +72,7 @@
 
 ## Active Follow-Ups
 
-- 13 RFCs still `Draft` (RFC 0038, RFC 0042, RFC 0043, RFC 0045, RFC 0046, RFC 0047, RFC 0048, RFC 0049, RFC 0050, RFC 0051, RFC 0052, RFC 0053, RFC 0054) — advance with schema/conformance proof or defer.
+- 15 RFCs still `Draft` (RFC 0038, RFC 0042, RFC 0043, RFC 0045, RFC 0046, RFC 0047, RFC 0048, RFC 0049, RFC 0050, RFC 0051, RFC 0052, RFC 0053, RFC 0054, RFC 0055, RFC 0056) — advance with schema/conformance proof or defer.
 - 4 RFCs `Active` (RFC 0025, RFC 0029, RFC 0035, RFC 0036) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - SDK parity still shows raw-only rows for several stable v1.x helper surfaces.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
