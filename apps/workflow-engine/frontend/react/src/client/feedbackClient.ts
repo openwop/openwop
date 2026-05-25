@@ -44,7 +44,13 @@ export interface AnnotationInput {
 
 /** Full annotation as returned by GET /v1/runs/{runId}/annotations (RFC 0056).
  *  The host assigns annotationId/actor/createdAt; `signal.correction` and
- *  `note` are secret-scrubbed server-side (SR-1) before they reach us. */
+ *  `note` are secret-scrubbed server-side (SR-1) before they reach us.
+ *
+ *  TODO: migrate to `client.runs.listAnnotations` / `createAnnotation` once
+ *  the next SDK release publishes (the methods exist in `sdk/typescript/src/`
+ *  per `sdk/PARITY.md` 2026-05-25 entry but aren't in the published
+ *  `@openwop/openwop@1.1.3` package yet). The shapes here are identical to
+ *  the SDK types so the swap is mechanical. */
 export interface Annotation {
   annotationId: string;
   target: { runId: string; eventId?: string; nodeId?: string };
