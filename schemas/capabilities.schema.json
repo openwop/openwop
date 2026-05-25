@@ -1019,6 +1019,18 @@
       },
       "additionalProperties": false
     },
+    "toolHooks": {
+      "type": "object",
+      "description": "RFC 0060 sibling — RFC 0064 (`Draft`). Per-tool authorization + rate limiting + content-free tool-call audit fields, layered on the existing `agent.toolCalled` / `agent.toolReturned` events (RFC 0002). Generalizes the MCP-specific bridges across transports (mcp / http / native). Reuses RFC 0049's `forbidden` error + `authorization-fail-closed` invariant and the existing `rate_limited` error — no new event type, error code, or invariant.",
+      "required": ["supported"],
+      "additionalProperties": false,
+      "properties": {
+        "supported": { "type": "boolean" },
+        "prePostEvents": { "type": "boolean", "description": "Host populates `argsHash`/`principal`/`transport` on `agent.toolCalled` + `status`/`durationMs` on `agent.toolReturned` for every external tool call." },
+        "perToolAuthorization": { "type": "boolean", "description": "Host enforces per-tool scopes against the run principal (RFC 0049), fail-closed; a lacked-or-unevaluable scope yields `agent.toolReturned { status: 'forbidden' }` + a `forbidden` (403) error and the tool is never invoked." },
+        "perToolRateLimit": { "type": "boolean", "description": "Host applies a per-`(principal, tool)` token-bucket rate limit; exhaustion yields `agent.toolReturned { status: 'rate_limited' }` + a `rate_limited` (429) error." }
+      }
+    },
     "deadLetter": {
       "type": "object",
       "description": "RFC 0053 (`Draft`). Run-level dead-letter sink for terminally-failed runs/nodes. On retry exhaustion (RFC 0009), the run is routed to a durable, inspectable sink and a `run.dead_lettered` event is emitted; dead-lettered runs remain fork-eligible (RFC 0011) for the retention window. Distinct from `queueBus.deadLetterSupported`, which dead-letters transport *messages*, not *runs*.",
