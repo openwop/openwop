@@ -359,6 +359,129 @@ func (c *OpenwopClient) ListAnnotations(
 	return out.Annotations, nil
 }
 
+// ListWorkspaceFilesOptions controls GET /v1/host/workspace/files query.
+type ListWorkspaceFilesOptions struct {
+	// Prefix filters the flat path namespace; empty = no filter.
+	Prefix string
+}
+
+// ListWorkspaceFiles calls GET /v1/host/workspace/files per RFC 0059 — lists
+// workspace file metadata (no bodies) for the caller's {tenant, workspace}.
+// Returns (nil, nil) when the host doesn't advertise
+// capabilities.workspace.supported (endpoint returns 501), so callers can
+// branch on capability discovery without unwrapping the error envelope.
+func (c *OpenwopClient) ListWorkspaceFiles(
+	ctx context.Context,
+	opts ListWorkspaceFilesOptions,
+) ([]WorkspaceFile, error) {
+	path := "/v1/host/workspace/files"
+	if opts.Prefix != "" {
+		q := url.Values{}
+		q.Set("prefix", opts.Prefix)
+		path += "?" + q.Encode()
+	}
+	var out ListWorkspaceFilesResponse
+	err := c.requestJSON(ctx, http.MethodGet, path, nil, nil, true, &out)
+	if err != nil {
+		var werr *WopError
+		if errors.As(err, &werr) && werr.Status == 501 {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return out.Files, nil
+}
+
+// GetWorkspaceFileOptions controls GET /v1/host/workspace/files/{path} query.
+type GetWorkspaceFileOptions struct {
+	// Version requests a historical snapshot when
+	// capabilities.workspace.versioned is true. Zero = latest.
+	Version int
+}
+
+// GetWorkspaceFile calls GET /v1/host/workspace/files/{path} per RFC 0059.
+// Returns (nil, nil) when the file is absent (404) or the host doesn't
+// advertise capabilities.workspace.supported (501).
+func (c *OpenwopClient) GetWorkspaceFile(
+	ctx context.Context,
+	filePath string,
+	opts GetWorkspaceFileOptions,
+) (*WorkspaceFile, error) {
+	path := "/v1/host/workspace/files/" + url.PathEscape(filePath)
+	if opts.Version > 0 {
+		q := url.Values{}
+		q.Set("version", strconv.Itoa(opts.Version))
+		path += "?" + q.Encode()
+	}
+	var out WorkspaceFile
+	err := c.requestJSON(ctx, http.MethodGet, path, nil, nil, true, &out)
+	if err != nil {
+		var werr *WopError
+		if errors.As(err, &werr) && (werr.Status == 404 || werr.Status == 501) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &out, nil
+}
+
+// PutWorkspaceFileOptions carries mutation headers plus the RFC 0059 If-Match
+// optimistic-concurrency token for PutWorkspaceFile.
+type PutWorkspaceFileOptions struct {
+	MutationOptions
+	// IfMatch is the file's current etag; a stale value yields a *WopError
+	// with Status 409 (workspace_conflict).
+	IfMatch string
+}
+
+// PutWorkspaceFile calls PUT /v1/host/workspace/files/{path} per RFC 0059 —
+// atomic create/replace. A stale IfMatch yields a *WopError with Status 409
+// (workspace_conflict); content beyond capabilities.workspace.maxFileBytes
+// yields Status 413 (workspace_too_large).
+func (c *OpenwopClient) PutWorkspaceFile(
+	ctx context.Context,
+	filePath string,
+	body PutWorkspaceFileRequest,
+	opts PutWorkspaceFileOptions,
+) (*WorkspaceFile, error) {
+	headers := opts.MutationOptions.headers()
+	if opts.IfMatch != "" {
+		headers["If-Match"] = opts.IfMatch
+	}
+	var out WorkspaceFile
+	if err := c.requestJSON(
+		ctx, http.MethodPut,
+		"/v1/host/workspace/files/"+url.PathEscape(filePath),
+		body, headers, true, &out,
+	); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// DeleteWorkspaceFile calls DELETE /v1/host/workspace/files/{path} per RFC 0059.
+// Returns (true, nil) on success (204); (false, nil) when the file is absent
+// (404) or the host doesn't advertise capabilities.workspace.supported (501).
+func (c *OpenwopClient) DeleteWorkspaceFile(
+	ctx context.Context,
+	filePath string,
+	opts MutationOptions,
+) (bool, error) {
+	err := c.requestJSON(
+		ctx, http.MethodDelete,
+		"/v1/host/workspace/files/"+url.PathEscape(filePath),
+		nil, opts.headers(), true, nil,
+	)
+	if err != nil {
+		var werr *WopError
+		if errors.As(err, &werr) && (werr.Status == 404 || werr.Status == 501) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
 // RunAncestry calls GET /v1/runs/{runID}/ancestry per RFC 0040 §C and
 // spec/v1/multi-agent-execution.md §"GET /v1/runs/{runId}/ancestry".
 //

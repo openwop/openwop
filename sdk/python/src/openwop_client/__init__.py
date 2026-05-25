@@ -72,6 +72,8 @@ from .types import (
     RunSnapshot,
     RunStatus,
     StreamMode,
+    WorkspaceFile,
+    PutWorkspaceFileRequest,
     is_http_error_code,
 )
 
@@ -116,6 +118,8 @@ __all__ = [
     "RunSnapshot",
     "RunStatus",
     "StreamMode",
+    "WorkspaceFile",
+    "PutWorkspaceFileRequest",
     "is_http_error_code",
     # Typed agent.* event helpers (RFC 0002 + RFC 0024)
     "ReasoningVerbosity",

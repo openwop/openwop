@@ -11,6 +11,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0059 (agent workspace) — Milestone 1: schema + spec prose; promoted Draft → `Active` (2026-05-25)
+
+Lands the additive `host.workspace` capability — a versioned, atomic, tenant·workspace-scoped (RFC 0048) ground-truth file store, complementing the transactional `MemoryAdapter` (RFC 0004) with a durable, path-addressable file layer. The wire surface landed atomically across:
+
+- **Schema:** `capabilities.workspace` block (`{supported, versioned, maxFileBytes, maxFiles, maxVersions}`); new `workspace-file.schema.json` + `workspace-file-create.schema.json`; a content-free `workspace.updated` RunEvent payload (`run-event-payloads.schema.json#$defs.workspaceUpdated` + the `run-event.schema.json` `RunEventType` enum) — no `eventLogSchemaVersion` bump.
+- **API:** four `/v1/host/workspace/files[/{path}]` endpoints (`listWorkspaceFiles` / `getWorkspaceFile` / `putWorkspaceFile` honoring `If-Match` with `409 workspace_conflict` + `413 workspace_too_large` / `deleteWorkspaceFile`), each `501`-gated on `capabilities.workspace.supported`; AsyncAPI `workspace.updated` message on the `updates` + `debug` channels.
+- **Spec:** new `spec/v1/agent-workspace.md` (`DRAFT v1.x`) with the §C endpoints, §D run-snapshot exposure, and §E invariants (WCT-1 cross-tenant + WSR-1 secret-redaction as normative prose); `workspace_conflict` + `workspace_too_large` registered in `rest-endpoints.md`.
+- **SDK:** `listFiles`/`getFile`/`putFile`/`deleteFile` (TS), `list_workspace_files`/`get_workspace_file`/`put_workspace_file`/`delete_workspace_file` (Python), `ListWorkspaceFiles`/`GetWorkspaceFile`/`PutWorkspaceFile`/`DeleteWorkspaceFile` (Go) — null/false-on-404/501 + `If-Match` support, mirroring the annotation methods.
+- **Conformance:** always-on `workspace-capability-shape.test.ts` (+1 scenario file; suite 247 → 248); coverage.md row added.
+
+Behavioral conformance (CRUD/ETag/cross-tenant-isolation/run-snapshot) and the `workspace-cross-tenant-isolation` SECURITY invariant + its public test land at the implementation milestone (Milestone 2), not at Active. README counts re-synced (Active 9 → 10, Draft 11 → 10). Additive; no breaking change.
+
 ### RFC 0060 — document the heartbeat tick seam; code-review follow-ups (2026-05-25)
 
 Closes a `/code-review` finding on RFC 0060: the three gated `heartbeat-*.test.ts` scenarios drove a `POST /v1/host/sample/heartbeat/tick` seam that was undocumented (and the RFC §D text mis-cited the RFC 0052 `scheduling/tick` seam) — so they could never be wired by a willing host (the "looks-like-coverage-but-never-runs" trap). Added the **heartbeat tick seam** to `host-sample-test-seams.md` §"Open seams" (path + `{ heartbeatId, observedState, simulateSlowMs? }` → `{ evaluated, stateChanged, enqueuedRuns }` shape + capability gate), reconciled the RFC §D conformance text to cite it, and `lib/heartbeat.ts` already matches. Also added an advisory-tier SECURITY invariant `heartbeat-state-no-secret` (the `heartbeat.stateChanged` `from`/`to` SHOULD NOT carry secret material; advisory since heartbeat state is host-internal, not BYOK-resolved) and dropped a defensive parenthetical from the README Active-RFC list. Invariant count 99 → 100 (advisory 1 → 2). Docs/spec only; no wire-shape change.

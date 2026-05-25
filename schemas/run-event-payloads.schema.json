@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v1/run-event-payloads.schema.json",
   "title": "RunEventPayloads",
-  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n72 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
+  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n73 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
   "type": "object",
   "$defs": {
     "_typeIndex": {
@@ -77,6 +77,7 @@
         "conversation.closed":       { "$ref": "#/$defs/conversationClosed" },
         "memory.compacted":          { "$ref": "#/$defs/memoryCompacted" },
         "memory.written":            { "$ref": "#/$defs/memoryWritten" },
+        "workspace.updated":         { "$ref": "#/$defs/workspaceUpdated" },
         "core.workflowChain.event":  { "$ref": "#/$defs/coreWorkflowChainEvent" },
         "core.workflowChain.confidence-escalated": { "$ref": "#/$defs/coreWorkflowChainConfidenceEscalated" },
         "connector.authorized":      { "$ref": "#/$defs/connectorAuthorized" },
@@ -1292,6 +1293,17 @@
         "tags":      { "type": "array", "items": { "type": "string" }, "description": "MAY — the entry's non-secret labels. MUST NOT carry secret material (the no-content invariant covers payload bodies)." }
       },
       "additionalProperties": true
+    },
+
+    "workspaceUpdated": {
+      "description": "RFC 0059. Emitted by a host advertising `capabilities.workspace.supported: true` on each successful `PUT`/`DELETE` of a workspace file, attributing the change to the file `path` + resulting `version`. Content-free: carries the path + version only — the file body is served by the read-side (`GET /v1/host/workspace/files/{path}`), already SR-1-redacted (RFC 0059 §E WSR-1). On replay the event is re-read from the log, never regenerated. MUST NOT be emitted unless `capabilities.workspace.supported: true`. The proposed SECURITY invariant `workspace-cross-tenant-isolation` (WCT-1) applies to the read-side that resolves these paths.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "version"],
+      "properties": {
+        "path":    { "type": "string", "minLength": 1, "description": "Workspace-relative path of the file that changed (matches `workspace-file.schema.json#path`)." },
+        "version": { "type": "integer", "minimum": 1, "description": "The file's resulting monotonic version after the write. On delete, the tombstone version when `versioned: true`." }
+      }
     }
   }
 }
