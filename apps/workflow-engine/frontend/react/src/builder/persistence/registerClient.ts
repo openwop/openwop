@@ -12,6 +12,10 @@ interface RegisterBody {
     nodeId: string;
     typeId: string;
     config?: Record<string, unknown>;
+    /** RFC 0065 — author hint forwarded to the BE workflow-definition
+     *  row so consumers can pick the canonical artifact deterministically.
+     *  Advisory; engine ignores the value. */
+    outputRole?: 'primary' | 'secondary';
   }>;
   edges?: ReadonlyArray<{
     edgeId: string;
