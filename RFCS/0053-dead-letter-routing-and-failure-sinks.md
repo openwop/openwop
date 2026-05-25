@@ -105,13 +105,15 @@ New fixture: a workflow node that deterministically exhausts a short retry polic
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (this file).
-- [ ] `host.deadLetter` block in `capabilities.schema.json`.
-- [ ] `run.dead_lettered` event in `run-event-payloads.schema.json`.
-- [ ] `spec/v1/host-capabilities.md` §host.deadLetter section.
-- [ ] Four conformance scenarios (shape, retry-exhaustion, fork-replayable, retention).
-- [ ] CHANGELOG entry under `[Unreleased]`.
+- [x] Spec text merged (this file).
+- [x] `deadLetter` block (top-level, per the schema convention) in `capabilities.schema.json`.
+- [x] `run.dead_lettered` event in `run-event-payloads.schema.json` (+ `RunEventType` enum).
+- [x] `spec/v1/host-capabilities.md` §host.deadLetter section.
+- [~] Conformance — 2 of 4 landed: `deadletter-capability-shape.test.ts` (shape, always runs) + `deadletter-retry-exhaustion.test.ts` (retry-exhaustion → `run.dead_lettered` + fork-eligibility, capability-gated, `deadletter/exhaust` seam soft-skips — registered in `host-sample-test-seams.md`). The retention-purge scenario (needs a clock seam) is deferred.
+- [x] CHANGELOG entry under `[Unreleased]`.
 - [ ] A non-steward host advertises `host.deadLetter` and passes retry-exhaustion + fork-replayable.
+
+**Implementation note (2026-05-25):** Capability block (top-level `capabilities.deadLetter`) + `run.dead_lettered` event + `§host.deadLetter` contract + the two scenarios + the `deadletter/exhaust` seam landed on `main`. Composes with RFC 0009 retry + RFC 0011 fork; distinct from `queueBus.deadLetterSupported` (transport-level). No new SECURITY invariant. Status stays `Draft`. **Completes the MyndHyve protocol-extension batch (RFCs 0045–0054) on the openwop side.**
 
 ## References
 

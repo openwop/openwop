@@ -952,6 +952,16 @@
       },
       "additionalProperties": false
     },
+    "deadLetter": {
+      "type": "object",
+      "description": "RFC 0053 (`Draft`). Run-level dead-letter sink for terminally-failed runs/nodes. On retry exhaustion (RFC 0009), the run is routed to a durable, inspectable sink and a `run.dead_lettered` event is emitted; dead-lettered runs remain fork-eligible (RFC 0011) for the retention window. Distinct from `queueBus.deadLetterSupported`, which dead-letters transport *messages*, not *runs*.",
+      "required": ["supported"],
+      "properties": {
+        "supported": { "type": "boolean" },
+        "retentionDays": { "type": "integer", "minimum": 1, "description": "Days a dead-lettered run is retained for inspection/fork before purge." }
+      },
+      "additionalProperties": false
+    },
     "sql": {
       "type": "object",
       "description": "RFC 0018 (`Active`). SQL database adapter with parametric-only enforcement. Hosts MUST reject non-parametric queries that inline user input (`sql-parametric-only` invariant — guards against SQL injection across every workflow).",

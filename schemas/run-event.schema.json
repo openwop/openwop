@@ -71,6 +71,7 @@
         "run.paused",
         "run.resumed",
         "run.restored-from-snapshot",
+        "run.dead_lettered",
         "node.started",
         "node.completed",
         "node.failed",
