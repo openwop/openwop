@@ -20,6 +20,7 @@
 import type { InterruptRecord, NotificationRecord, RunRecord } from '../types.js';
 import type { Storage } from '../storage/storage.js';
 import { stripSecretsFromPersisted } from '../byok/ephemeralRunSecrets.js';
+import { sanitizeFreeText } from '../byok/textRedaction.js';
 import { getNotificationEmitter } from './emitter.js';
 
 const KIND_LABEL: Record<InterruptRecord['kind'], string> = {
@@ -132,20 +133,9 @@ export async function emitRunCompletedNotification(
   }
 }
 
-/**
- * Defense-in-depth scrub for short strings that flow into notification
- * `title` / `message` fields. `stripSecretsFromPersisted` only works on
- * structured values (objects/arrays); for flat strings we strip the
- * common BYOK-key prefixes (`sk-…`, `xai-…`, `Bearer …`) and the
- * 32-char-hex form that anthropic + miniMax surface in 401 payloads.
- */
-function sanitizeForNotification(s: string): string {
-  return s
-    .replace(/\bsk-[A-Za-z0-9_-]{16,}/g, 'sk-***')
-    .replace(/\bxai-[A-Za-z0-9_-]{16,}/g, 'xai-***')
-    .replace(/\bBearer\s+[A-Za-z0-9._-]{16,}/g, 'Bearer ***')
-    .replace(/\b[A-Fa-f0-9]{32,}\b/g, '***');
-}
+// Notification text uses the shared `sanitizeFreeText` primitive from
+// `byok/textRedaction.ts`. Aliased here for readability at call sites.
+const sanitizeForNotification = sanitizeFreeText;
 
 function truncate(s: string, max: number): string {
   const sanitized = sanitizeForNotification(s);

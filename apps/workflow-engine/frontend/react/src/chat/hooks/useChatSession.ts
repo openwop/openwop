@@ -1354,11 +1354,51 @@ export function useChatSession(): UseChatSessionResult {
             ...s,
             messages: s.messages.map((m) => m.id === runMsgId ? { ...m, activeInterrupt: active } : m),
           }));
+          // Track in WorkflowRunState.interruptHistory so the persistent
+          // decision card has the `kind` + opened-at after resolution —
+          // `activeInterrupt` flips to null at resolve time and would
+          // otherwise lose the history.
+          if (active && nodeId) {
+            const openedAt = active.createdAt;
+            const kind = active.kind;
+            const interruptId = active.interruptId;
+            updateWorkflowRun(runMsgId, (prev) => {
+              const history = prev.interruptHistory ?? [];
+              if (history.some((h) => h.interruptId === interruptId)) return prev;
+              return {
+                ...prev,
+                interruptHistory: [...history, { interruptId, nodeId, kind, openedAt }],
+              };
+            });
+          }
         } else if (ev.type === 'node.interrupt.resolved') {
           setSession((s) => ({
             ...s,
             messages: s.messages.map((m) => m.id === runMsgId ? { ...m, activeInterrupt: null } : m),
           }));
+          // Close out the matching entry in interruptHistory.
+          // resumeValue lands in nodeOutputs via the `node.completed`
+          // event that fires alongside this one (see executor.ts:780);
+          // pick it up so the decision card renders the chosen option.
+          const resolvedNode = nodeId;
+          const resolvedAt = ev.timestamp ?? new Date().toISOString();
+          if (resolvedNode) {
+            updateWorkflowRun(runMsgId, (prev) => {
+              const history = prev.interruptHistory ?? [];
+              const idx = history.findIndex(
+                (h) => h.nodeId === resolvedNode && !h.resolvedAt,
+              );
+              if (idx === -1) return prev;
+              const nodeOutput = prev.nodeOutputs[resolvedNode];
+              const resumeValue = nodeOutput && typeof nodeOutput === 'object'
+                && 'output' in nodeOutput
+                ? (nodeOutput as { output: unknown }).output
+                : nodeOutput;
+              const next = history.slice();
+              next[idx] = { ...next[idx]!, resolvedAt, resumeValue };
+              return { ...prev, interruptHistory: next };
+            });
+          }
         } else if (ev.type === 'run.completed') {
           const outputs = (payload.outputs as Record<string, unknown>) ?? undefined;
           updateWorkflowRun(runMsgId, (prev) => ({

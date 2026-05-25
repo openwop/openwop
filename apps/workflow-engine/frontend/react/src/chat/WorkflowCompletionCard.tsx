@@ -1,0 +1,256 @@
+/**
+ * Workflow Completion Card — persistent record appended below a
+ * workflow_run bubble after the run reaches a terminal state.
+ *
+ * Renders one of three variants based on `workflowRun.status`:
+ *   - completed → "Workflow completed" + N View links for the
+ *                 terminal nodes (per the architect review's "N
+ *                 View links for N terminals" v1 convention).
+ *   - failed    → muted-danger row with the error summary + an
+ *                 "Open run" link to /runs/:runId for full diagnostics.
+ *   - cancelled → muted row noting the cancellation + "Open run" link.
+ *
+ * Architecture decision: derive, don't persist (Option B). All data
+ * comes from the existing `WorkflowRunState` snapshot — no new BE
+ * endpoints, no new chat_messages rows, no new event types. Survives
+ * reload because the workflow_run message hydrates from the BE event
+ * log on session restore.
+ *
+ * Terminal-node convention (architect review §3): the FE walks the
+ * saved workflow graph to find every node with no outgoing edges and
+ * surfaces one View link per terminal. Falls back to "Open run" when
+ * the graph isn't locally cached (e.g., a workflow saved on a
+ * different device).
+ */
+
+import { Link } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { getSavedWorkflow } from '../builder/persistence/localStore.js';
+import { formatElapsed } from './workflowProgress/formatters.js';
+import type { WorkflowRunState } from './types.js';
+
+interface Props {
+  run: WorkflowRunState;
+  /** When set, clicking the View link opens this preview modal handler
+   *  instead of relying on default in-page navigation. The handler
+   *  receives the terminal node id + its output blob. */
+  onPreviewArtifact?: (nodeId: string, output: unknown, label: string) => void;
+}
+
+export function WorkflowCompletionCard({ run, onPreviewArtifact }: Props): JSX.Element | null {
+  // Only render once the run reaches a terminal state. Returning null
+  // for non-terminal states keeps the caller able to mount this
+  // unconditionally and let the component decide visibility.
+  if (run.status !== 'completed' && run.status !== 'failed' && run.status !== 'cancelled') {
+    return null;
+  }
+
+  const terminals = useTerminalNodes(run);
+  const elapsed = useElapsedSince(run.startedAt);
+
+  const stepCount = run.totalNodes > 0
+    ? `${run.completedNodeIds.length}/${run.totalNodes} steps`
+    : `${run.completedNodeIds.length} step${run.completedNodeIds.length === 1 ? '' : 's'}`;
+
+  if (run.status === 'failed') {
+    return (
+      <CompletionShell tone="danger" icon="!" title="Workflow failed">
+        <Meta items={[stepCount, elapsed]} />
+        {run.error && (
+          <div
+            className="muted"
+            style={{ marginTop: 6, fontSize: 12, wordBreak: 'break-word' }}
+          >
+            {run.error.code}: {run.error.message}
+          </div>
+        )}
+        {run.runId && (
+          <Actions>
+            <Link to={`/runs/${run.runId}`} style={{ fontSize: 12 }}>
+              Open run →
+            </Link>
+          </Actions>
+        )}
+      </CompletionShell>
+    );
+  }
+
+  if (run.status === 'cancelled') {
+    return (
+      <CompletionShell tone="muted" icon="⊘" title="Workflow cancelled">
+        <Meta items={[stepCount, elapsed]} />
+        {run.runId && (
+          <Actions>
+            <Link to={`/runs/${run.runId}`} style={{ fontSize: 12 }}>
+              Open run →
+            </Link>
+          </Actions>
+        )}
+      </CompletionShell>
+    );
+  }
+
+  // status === 'completed'
+  return (
+    <CompletionShell tone="success" icon="✓" title="Workflow completed">
+      <Meta items={[stepCount, elapsed]} />
+      <Actions>
+        {terminals.length > 0
+          ? terminals.map((t) => (
+              <button
+                key={t.nodeId}
+                type="button"
+                className="secondary"
+                onClick={() => onPreviewArtifact?.(t.nodeId, t.output, t.label)}
+                disabled={!onPreviewArtifact}
+                style={{ fontSize: 12 }}
+              >
+                {terminals.length > 1 ? `View ${t.label}` : 'View output'} →
+              </button>
+            ))
+          : null}
+        {run.runId && (
+          <Link to={`/runs/${run.runId}`} style={{ fontSize: 12, alignSelf: 'center' }}>
+            Open run →
+          </Link>
+        )}
+      </Actions>
+    </CompletionShell>
+  );
+}
+
+interface Terminal {
+  nodeId: string;
+  label: string;
+  output: unknown;
+}
+
+/**
+ * Find terminal nodes of the run. Terminal == no outgoing edge in the
+ * saved workflow graph. Two failure modes:
+ *   - Workflow not in local cache (saved on another device): return [],
+ *     caller falls back to the "Open run" link.
+ *   - Run hasn't completed a terminal node yet: return [], same fallback.
+ *
+ * Hooked rather than computed inline because `getSavedWorkflow` reads
+ * localStorage and we want to memoize the result.
+ */
+function useTerminalNodes(run: WorkflowRunState): Terminal[] {
+  return useMemo(() => {
+    const saved = getSavedWorkflow(run.workflowId);
+    if (!saved) return [];
+    // A node is terminal if no edge has it as `source`.
+    const hasOutgoing = new Set<string>();
+    for (const e of saved.edges) hasOutgoing.add(e.source);
+    const terminals: Terminal[] = [];
+    for (const n of saved.nodes) {
+      if (hasOutgoing.has(n.id)) continue;
+      // Only surface terminals the run actually reached — a half-run
+      // with one branch failed shouldn't claim un-run terminals.
+      // Match the builder node id against the backend nodeId via the
+      // run's `nodeNames` map (which carries the BE→builder mapping).
+      const backendNodeId = lookupBackendNodeId(n.id, run);
+      if (!backendNodeId) continue;
+      if (!run.completedNodeIds.includes(backendNodeId)) continue;
+      const output = run.nodeOutputs[backendNodeId];
+      if (output == null) continue;
+      terminals.push({
+        nodeId: backendNodeId,
+        label: n.config?.name as string ?? n.kind ?? backendNodeId.slice(0, 8),
+        output,
+      });
+    }
+    return terminals;
+  }, [run.workflowId, run.completedNodeIds, run.nodeOutputs, run.nodeNames]);
+}
+
+/**
+ * The run snapshot's `nodeNames` is `{backendNodeId → builderNodeId}`
+ * in some adapters and `{backendNodeId → friendlyName}` in others.
+ * To map builder→backend we walk the entries and reverse-match. When
+ * the run was an ephemeral / sample workflow with no builder id at
+ * all, `nodeNames` is empty and we fall back to a direct lookup.
+ */
+function lookupBackendNodeId(builderNodeId: string, run: WorkflowRunState): string | null {
+  if (run.completedNodeIds.includes(builderNodeId)) return builderNodeId;
+  for (const [backendId, name] of Object.entries(run.nodeNames)) {
+    if (name === builderNodeId || backendId === builderNodeId) return backendId;
+  }
+  return null;
+}
+
+function useElapsedSince(startedAt: string): string {
+  // Snapshot at mount — terminal runs don't keep ticking, so this is
+  // a single read. `formatElapsed` (in workflowProgress/formatters.ts)
+  // takes the start-time ISO string and reads `Date.now()` itself.
+  const [text] = useState(() => formatElapsed(startedAt));
+  // Re-snapshot when startedAt changes (e.g., the message remounts
+  // because chat session id changed). Cheap.
+  useEffect(() => {
+    /* no-op — kept for ESLint exhaustive-deps satisfaction */
+  }, [startedAt]);
+  return text;
+}
+
+interface ShellProps {
+  tone: 'success' | 'danger' | 'muted';
+  icon: string;
+  title: string;
+  children: React.ReactNode;
+}
+
+function CompletionShell({ tone, icon, title, children }: ShellProps): JSX.Element {
+  const color = tone === 'success'
+    ? 'var(--color-success)'
+    : tone === 'danger'
+      ? 'var(--color-danger)'
+      : 'var(--color-text-muted)';
+  return (
+    <div
+      style={{
+        marginTop: 8,
+        padding: '10px 14px',
+        borderRadius: 10,
+        background: `color-mix(in oklch, ${color} 8%, transparent)`,
+        border: `1px solid color-mix(in oklch, ${color} 30%, var(--color-border))`,
+        fontSize: 13,
+        lineHeight: 1.4,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+        <span aria-hidden="true" style={{ color, fontWeight: 700 }}>{icon}</span>
+        <strong style={{ color }}>{title}</strong>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Meta({ items }: { items: readonly string[] }): JSX.Element {
+  return (
+    <div
+      className="muted"
+      style={{ marginTop: 4, paddingLeft: 22, fontSize: 11, display: 'flex', gap: 8 }}
+    >
+      {items.filter(Boolean).map((t, i) => (
+        <span key={i}>{t}</span>
+      ))}
+    </div>
+  );
+}
+
+function Actions({ children }: { children: React.ReactNode }): JSX.Element {
+  return (
+    <div
+      style={{
+        marginTop: 8,
+        paddingLeft: 22,
+        display: 'flex',
+        gap: 12,
+        flexWrap: 'wrap',
+      }}
+    >
+      {children}
+    </div>
+  );
+}

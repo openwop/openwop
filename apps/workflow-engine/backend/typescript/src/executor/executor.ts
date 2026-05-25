@@ -49,6 +49,7 @@ import {
   nonEnumerableSecretsView,
 } from '../byok/ephemeralRunSecrets.js';
 import { resolveSecret } from '../byok/secretResolver.js';
+import { sanitizeFreeTextDeep } from '../byok/textRedaction.js';
 import { OpenwopError } from '../types.js';
 import type { Storage } from '../storage/storage.js';
 import type {
@@ -766,6 +767,21 @@ async function executeRunBody(input: ExecuteRunBodyInput): Promise<ExecuteRunRes
   // carry the same semantics (it tells the FE the interrupt is
   // closed, not that the node finished).
   if (options.resumeSnapshot && options.resumeNodeId) {
+    // Two-layer redaction at the resume-time persistence boundary:
+    //
+    //   1. `stripSecretsFromPersisted` strips `__secret:*` reference
+    //      tokens (BYOK ephemeral references the executor injects
+    //      into node ctx). Structured-payload concern.
+    //   2. `sanitizeFreeTextDeep` walks string leaves for
+    //      accidentally-pasted upstream API keys. HITL approval
+    //      cards carry a free-text `comment` field that users have
+    //      pasted into in practice — without this, a paste of
+    //      "approved, here's the key sk-... in case" lands the raw
+    //      key in the event log.
+    //
+    // Order matters: `stripSecretsFromPersisted` first (removes
+    // ephemeral-secret tokens entirely); `sanitizeFreeTextDeep` second
+    // (replaces remaining free-text key shapes in-place).
     const outputs = { output: options.resumeValue };
     snapshot.nodeOutputs.set(options.resumeNodeId, outputs);
     snapshot.nodeState.set(options.resumeNodeId, 'completed');
@@ -773,7 +789,7 @@ async function executeRunBody(input: ExecuteRunBodyInput): Promise<ExecuteRunRes
       runId: run.runId,
       nodeId: options.resumeNodeId,
       type: 'node.completed',
-      payload: stripSecretsFromPersisted({ outputs }),
+      payload: sanitizeFreeTextDeep(stripSecretsFromPersisted({ outputs })),
     });
     releaseDownstream(options.resumeNodeId, graph, snapshot);
   }
