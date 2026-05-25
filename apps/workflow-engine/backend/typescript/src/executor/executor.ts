@@ -745,10 +745,25 @@ async function executeRunBody(input: ExecuteRunBodyInput): Promise<ExecuteRunRes
     }
   }
 
-  // Resume-by-snapshot: mark the resumed node as completed with the resolve value.
+  // Resume-by-snapshot: mark the resumed node as completed with the
+  // resolve value. Emit `node.completed` so consumers tracking
+  // per-node progress (FE step list, conformance assertions) see the
+  // suspended node tick over from "suspended" → "completed" in the
+  // event log. Without this, the FE renders the resumed approval /
+  // clarification / refinement row as un-checked forever even after
+  // the run completes, because `node.interrupt.resolved` doesn't
+  // carry the same semantics (it tells the FE the interrupt is
+  // closed, not that the node finished).
   if (options.resumeSnapshot && options.resumeNodeId) {
-    snapshot.nodeOutputs.set(options.resumeNodeId, { output: options.resumeValue });
+    const outputs = { output: options.resumeValue };
+    snapshot.nodeOutputs.set(options.resumeNodeId, outputs);
     snapshot.nodeState.set(options.resumeNodeId, 'completed');
+    await eventLog.append({
+      runId: run.runId,
+      nodeId: options.resumeNodeId,
+      type: 'node.completed',
+      payload: stripSecretsFromPersisted({ outputs }),
+    });
     releaseDownstream(options.resumeNodeId, graph, snapshot);
   }
 

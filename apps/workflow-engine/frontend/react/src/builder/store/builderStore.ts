@@ -45,7 +45,12 @@ export interface BuilderState {
   defaultInputs: string;
   nodes: BuilderNode[];
   edges: BuilderEdge[];
+  /** The "primary" selected node — drives the single-node Inspector
+   *  editor. Non-null only when exactly one node is selected. */
   selectedNodeId: string | null;
+  /** Full multi-selection set (box-select / shift-click). Group ops
+   *  (delete / duplicate / align) act on this. */
+  selectedNodeIds: string[];
   selectedEdgeId: string | null;
   past: Snapshot[];
   future: Snapshot[];
@@ -58,13 +63,32 @@ export interface BuilderState {
   setName(name: string): void;
   setDefaultInputs(value: string): void;
   selectNode(id: string | null): void;
+  /** Replace the multi-selection set (derived from xyflow's applied
+   *  selection). Sets `selectedNodeId` to the sole member when exactly
+   *  one is selected, else null. */
+  setSelection(ids: string[]): void;
   selectEdge(id: string | null): void;
   addNode(kind: string, position: { x: number; y: number }): string;
-  /** Clone a node (duplicate / paste) — new id, copied kind/name/config,
-   *  at `position`. Selects the clone. Returns the new id. */
-  cloneNode(source: Pick<BuilderNode, 'kind' | 'name' | 'config'>, position: { x: number; y: number }): string;
+  /** Duplicate every node in `ids` at a +offset; selects the clones. */
+  cloneNodes(ids: string[]): void;
+  /** Paste clipboard entries (kind/name/config + dx/dy from the group's
+   *  top-left) anchored at `anchor`; selects the pasted nodes. One undo
+   *  entry. */
+  pasteNodes(
+    entries: { kind: string; name: string; config: Record<string, unknown>; dx: number; dy: number }[],
+    anchor: { x: number; y: number },
+  ): void;
+  /** Align / distribute the selected nodes by their top-left positions
+   *  (no measured dimensions needed): left edges, top edges, or even
+   *  horizontal / vertical spacing. One undo entry. */
+  alignNodes(ids: string[], mode: 'left' | 'top' | 'distribute-h' | 'distribute-v'): void;
   updateNode(id: string, patch: Partial<Pick<BuilderNode, 'name' | 'position' | 'config'>>): void;
+  /** Commit final positions for several nodes in one undo entry — used for
+   *  group drag so one gesture is one undo. */
+  moveNodes(moves: { id: string; position: { x: number; y: number } }[]): void;
   removeNode(id: string): void;
+  /** Remove several nodes (and their incident edges) in one undo entry. */
+  removeNodes(ids: string[]): void;
   addEdge(edge: Omit<BuilderEdge, 'id'>): void;
   updateEdge(id: string, patch: Partial<Omit<BuilderEdge, 'id' | 'source' | 'target' | 'sourcePort' | 'targetPort'>>): void;
   removeEdge(id: string): void;
@@ -95,6 +119,7 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   nodes: [],
   edges: [],
   selectedNodeId: null,
+  selectedNodeIds: [],
   selectedEdgeId: null,
   past: [],
   future: [],
@@ -108,6 +133,7 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
       nodes: wf.nodes.map((n) => ({ ...n, position: { ...n.position }, config: { ...n.config } })),
       edges: wf.edges.map((e) => ({ ...e })),
       selectedNodeId: null,
+      selectedNodeIds: [],
       past: [],
       future: [],
       overlay: null,
@@ -125,11 +151,19 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   },
 
   selectNode(id) {
-    set({ selectedNodeId: id, selectedEdgeId: null });
+    set({ selectedNodeId: id, selectedNodeIds: id ? [id] : [], selectedEdgeId: null });
+  },
+
+  setSelection(ids) {
+    set({
+      selectedNodeIds: ids,
+      selectedNodeId: ids.length === 1 ? ids[0]! : null,
+      ...(ids.length > 0 ? { selectedEdgeId: null } : {}),
+    });
   },
 
   selectEdge(id) {
-    set({ selectedEdgeId: id, selectedNodeId: null });
+    set({ selectedEdgeId: id, selectedNodeId: null, selectedNodeIds: [] });
   },
 
   addNode(kind, position) {
@@ -144,24 +178,79 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
       config: defaultConfigFor(kind),
     };
     pushHistory(set, get);
-    set({ nodes: [...get().nodes, node], selectedNodeId: id });
+    set({ nodes: [...get().nodes, node], selectedNodeId: id, selectedNodeIds: [id] });
     get().persist();
     return id;
   },
 
-  cloneNode(source, position) {
-    const id = `n_${crypto.randomUUID().slice(0, 8)}`;
-    const node: BuilderNode = {
-      id,
-      kind: source.kind,
-      name: source.name,
-      position,
-      config: { ...source.config },
-    };
+  cloneNodes(ids) {
+    const set0 = new Set(ids);
+    const sources = get().nodes.filter((n) => set0.has(n.id));
+    if (sources.length === 0) return;
+    const OFFSET = 32;
+    const clones: BuilderNode[] = sources.map((s) => ({
+      id: `n_${crypto.randomUUID().slice(0, 8)}`,
+      kind: s.kind,
+      name: s.name,
+      position: { x: s.position.x + OFFSET, y: s.position.y + OFFSET },
+      config: { ...s.config },
+    }));
     pushHistory(set, get);
-    set({ nodes: [...get().nodes, node], selectedNodeId: id });
+    const cloneIds = clones.map((c) => c.id);
+    set({
+      nodes: [...get().nodes, ...clones],
+      selectedNodeIds: cloneIds,
+      selectedNodeId: cloneIds.length === 1 ? cloneIds[0]! : null,
+    });
     get().persist();
-    return id;
+  },
+
+  pasteNodes(entries, anchor) {
+    if (entries.length === 0) return;
+    const clones: BuilderNode[] = entries.map((e) => ({
+      id: `n_${crypto.randomUUID().slice(0, 8)}`,
+      kind: e.kind,
+      name: e.name,
+      position: { x: anchor.x + e.dx, y: anchor.y + e.dy },
+      config: { ...e.config },
+    }));
+    pushHistory(set, get);
+    const cloneIds = clones.map((c) => c.id);
+    set({
+      nodes: [...get().nodes, ...clones],
+      selectedNodeIds: cloneIds,
+      selectedNodeId: cloneIds.length === 1 ? cloneIds[0]! : null,
+    });
+    get().persist();
+  },
+
+  alignNodes(ids, mode) {
+    const set0 = new Set(ids);
+    const sel = get().nodes.filter((n) => set0.has(n.id));
+    if (sel.length < 2) return;
+    const pos = new Map<string, { x: number; y: number }>();
+    if (mode === 'left') {
+      const x = Math.min(...sel.map((n) => n.position.x));
+      for (const n of sel) pos.set(n.id, { x, y: n.position.y });
+    } else if (mode === 'top') {
+      const y = Math.min(...sel.map((n) => n.position.y));
+      for (const n of sel) pos.set(n.id, { x: n.position.x, y });
+    } else if (mode === 'distribute-h') {
+      const sorted = [...sel].sort((a, b) => a.position.x - b.position.x);
+      const minX = sorted[0]!.position.x;
+      const maxX = sorted[sorted.length - 1]!.position.x;
+      const step = (maxX - minX) / (sorted.length - 1);
+      sorted.forEach((n, i) => pos.set(n.id, { x: minX + step * i, y: n.position.y }));
+    } else {
+      const sorted = [...sel].sort((a, b) => a.position.y - b.position.y);
+      const minY = sorted[0]!.position.y;
+      const maxY = sorted[sorted.length - 1]!.position.y;
+      const step = (maxY - minY) / (sorted.length - 1);
+      sorted.forEach((n, i) => pos.set(n.id, { x: n.position.x, y: minY + step * i }));
+    }
+    pushHistory(set, get);
+    set({ nodes: get().nodes.map((n) => (pos.has(n.id) ? { ...n, position: pos.get(n.id)! } : n)) });
+    get().persist();
   },
 
   updateNode(id, patch) {
@@ -181,12 +270,39 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
     get().persist();
   },
 
+  moveNodes(moves) {
+    if (moves.length === 0) return;
+    const byId = new Map(moves.map((m) => [m.id, m.position]));
+    pushHistory(set, get);
+    set({
+      nodes: get().nodes.map((n) =>
+        byId.has(n.id) ? { ...n, position: byId.get(n.id)! } : n,
+      ),
+    });
+    get().persist();
+  },
+
   removeNode(id) {
     pushHistory(set, get);
     set({
       nodes: get().nodes.filter((n) => n.id !== id),
       edges: get().edges.filter((e) => e.source !== id && e.target !== id),
       selectedNodeId: get().selectedNodeId === id ? null : get().selectedNodeId,
+      selectedNodeIds: get().selectedNodeIds.filter((x) => x !== id),
+    });
+    get().persist();
+  },
+
+  removeNodes(ids) {
+    if (ids.length === 0) return;
+    const doomed = new Set(ids);
+    pushHistory(set, get);
+    set({
+      nodes: get().nodes.filter((n) => !doomed.has(n.id)),
+      edges: get().edges.filter((e) => !doomed.has(e.source) && !doomed.has(e.target)),
+      selectedNodeId:
+        get().selectedNodeId && doomed.has(get().selectedNodeId!) ? null : get().selectedNodeId,
+      selectedNodeIds: get().selectedNodeIds.filter((x) => !doomed.has(x)),
     });
     get().persist();
   },

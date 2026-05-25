@@ -1,25 +1,31 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import type { RunSnapshot, RunEventDoc, StreamMode } from '@openwop/openwop';
-import { cancelRun, forkRun, getRun, pollEvents } from '../client/runsClient.js';
+import { cancelRun, deleteRun, forkRun, getRun, pollEvents } from '../client/runsClient.js';
 import { subscribeToRun } from '../client/streamsClient.js';
 import { listOpenInterrupts, type OpenInterrupt } from '../client/interruptsClient.js';
 import { EventStreamView } from '../streams/EventStreamView.js';
 import { RunTimeline } from './RunTimeline.js';
+import { RunStepInspector } from './RunStepInspector.js';
 import { RunAgentTrace } from './RunAgentTrace.js';
 import { RunHandoffMap } from './RunHandoffMap.js';
 import { RunCostPanel } from './RunCostPanel.js';
+import { RunAnalyticsPanel } from './RunAnalyticsPanel.js';
+import { RunFeedback } from './RunFeedback.js';
 import { RunOpsPanel } from './RunOpsPanel.js';
 import { RenderInterrupt } from '../interrupts/RenderInterrupt.js';
 
 export function RunDetailPage() {
   const { runId = '' } = useParams();
+  const nav = useNavigate();
   const [snapshot, setSnapshot] = useState<RunSnapshot | null>(null);
   const [events, setEvents] = useState<RunEventDoc[]>([]);
   const [activeInterrupt, setActiveInterrupt] = useState<OpenInterrupt | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [eventView, setEventView] = useState<'timeline' | 'log'>('timeline');
   const [streamMode, setStreamMode] = useState<StreamMode>('updates');
+  // §A4 playhead — the timeline-selected sequence drives the step inspector.
+  const [playheadSeq, setPlayheadSeq] = useState<number | null>(null);
 
   const refreshInterrupts = useCallback(async () => {
     if (!runId) return;
@@ -107,6 +113,17 @@ export function RunDetailPage() {
     }
   }
 
+  async function onDelete() {
+    if (!runId) return;
+    if (!window.confirm('Permanently delete this run? This removes its events and history and cannot be undone.')) return;
+    try {
+      await deleteRun(runId);
+      nav('/runs');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
   async function onForkFrom(seq: number) {
     if (!runId) return;
     try {
@@ -141,6 +158,13 @@ export function RunDetailPage() {
           >
             Compare…
           </button>
+          <button
+            className="secondary"
+            onClick={onDelete}
+            title="Permanently delete this run and its history"
+          >
+            Delete run
+          </button>
         </div>
       </div>
 
@@ -154,6 +178,8 @@ export function RunDetailPage() {
         }}
       />
 
+      <RunAnalyticsPanel events={events} />
+      <RunFeedback runId={runId} />
       <RunCostPanel events={events} />
       <RunHandoffMap events={events} />
       <RunAgentTrace events={events} />
@@ -197,11 +223,15 @@ export function RunDetailPage() {
           </div>
         </div>
         {eventView === 'timeline' ? (
-          <RunTimeline events={events} onForkFrom={onForkFrom} />
+          <RunTimeline events={events} onForkFrom={onForkFrom} onSelectSeq={setPlayheadSeq} />
         ) : (
           <EventStreamView events={events} onForkFrom={onForkFrom} />
         )}
       </div>
+
+      {eventView === 'timeline' && playheadSeq != null && (
+        <RunStepInspector events={events} seq={playheadSeq} onForkFrom={onForkFrom} />
+      )}
     </section>
   );
 }

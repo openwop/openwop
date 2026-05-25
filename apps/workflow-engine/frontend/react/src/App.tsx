@@ -4,6 +4,7 @@ import { RunsIndexPage } from './runs/RunsIndexPage.js';
 import { NetworkPanel } from './devtools/NetworkPanel.js';
 import { installNetworkRecorder } from './devtools/networkRecorder.js';
 import { RunDetailPage } from './runs/RunDetailPage.js';
+import { CommandCenterPage } from './runs/CommandCenterPage.js';
 import { HitlInboxPage } from './runs/HitlInboxPage.js';
 import { RunComparePage } from './runs/RunComparePage.js';
 import { CapabilitiesPanel } from './discovery/CapabilitiesPanel.js';
@@ -12,6 +13,7 @@ import { BuilderTab } from './builder/BuilderTab.js';
 import { WorkflowsDashboard } from './builder/WorkflowsDashboard.js';
 import { DemoHostBanner } from './builder/DemoHostBanner.js';
 import { PrivacyPage } from './PrivacyPage.js';
+import { NotFoundPage } from './NotFoundPage.js';
 import { PromptLibraryPage } from './prompts/PromptLibraryPage.js';
 import { KeysPage } from './byok/KeysPage.js';
 import { SignInButton } from './auth/SignInButton.js';
@@ -52,6 +54,7 @@ export function App() {
           <NavLink to="/prompts">Prompts</NavLink>
           <NavLink to="/keys">Keys</NavLink>
           <NavLink to="/runs">Runs</NavLink>
+          <NavLink to="/mission">Mission Control</NavLink>
           <NavLink to="/inbox">Inbox</NavLink>
           <NavLink to="/capabilities">Capabilities</NavLink>
         </nav>
@@ -85,6 +88,7 @@ export function App() {
           <Route path="/chat" element={<Navigate to="/" replace />} />
           <Route path="/runs" element={<RunsIndexPage />} />
           <Route path="/runs/:runId" element={<RunDetailPage />} />
+          <Route path="/mission" element={<CommandCenterPage />} />
           <Route path="/inbox" element={<HitlInboxPage />} />
           <Route path="/compare" element={<RunComparePage />} />
           <Route path="/capabilities" element={<CapabilitiesPanel />} />
@@ -93,6 +97,9 @@ export function App() {
           <Route path="/prompts" element={<PromptLibraryPage />} />
           <Route path="/keys" element={<KeysPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
+          {/* Catch-all: the SPA host rewrites every path to index.html, so an
+              unmatched URL must resolve here rather than render a blank main. */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
       <footer className="app-footer">

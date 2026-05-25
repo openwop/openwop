@@ -87,6 +87,19 @@ export async function cancelRun(runId: string, reason?: string): Promise<void> {
   await client.runs.cancel(runId, reason ? { reason } : {});
 }
 
+/** Permanently delete a run (host-extension `DELETE /v1/runs/{runId}`; not a
+ *  v1 protocol surface). The SDK client has no delete method, so this is a
+ *  raw fetch reusing the app's auth headers. 204 = deleted; 404 = already
+ *  gone — both treated as success. */
+export async function deleteRun(runId: string): Promise<void> {
+  const res = await fetch(`${config.baseUrl}/v1/runs/${encodeURIComponent(runId)}`, {
+    method: 'DELETE',
+    headers: { ...authedHeaders() },
+    credentials: config.authMode === 'cookie' ? 'include' : 'same-origin',
+  });
+  if (!res.ok && res.status !== 404) throw new Error(`Delete failed (${res.status})`);
+}
+
 export async function forkRun(runId: string, req: ForkRunRequest): Promise<ForkRunResponse> {
   return client.runs.fork(runId, req);
 }

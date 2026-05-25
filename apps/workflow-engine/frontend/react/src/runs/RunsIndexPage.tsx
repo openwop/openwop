@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createRun, listMyRuns, type RunListItem } from '../client/runsClient.js';
+import { formatDuration } from './format.js';
 import { listSavedWorkflows } from '../builder/persistence/localStore.js';
 import { serializeWorkflow, SerializeError } from '../builder/schema/serialize.js';
 import { registerWorkflow } from '../builder/persistence/registerClient.js';
@@ -118,6 +119,8 @@ export function RunsIndexPage() {
         </form>
       </div>
 
+      <RunsSummary runs={runs} />
+
       <div className="card">
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
           <h2 style={{ margin: 0 }}>Recent runs</h2>
@@ -180,4 +183,67 @@ function StatusBadge({ status }: { status: string }) {
         : status === 'running' || status === 'waiting' ? 'in-progress'
           : 'muted';
   return <span className={`status-badge status-${tone}`}>{status}</span>;
+}
+
+/**
+ * §A2 tenant rollup — outcome distribution + mean completed-run duration
+ * over the runs already in hand (no extra fetch). Honest scope: counts
+ * "awaiting input now" rather than a historical intervention rate, which
+ * would need per-run event history (lands with RFC 0056 / Track C).
+ */
+function RunsSummary({ runs }: { runs: RunListItem[] }) {
+  const s = useMemo(() => {
+    if (runs.length === 0) return null;
+    const total = runs.length;
+    const n = (pred: (st: string) => boolean) => runs.filter((r) => pred(r.status)).length;
+    const durations = runs
+      .flatMap((r) =>
+        r.status === 'completed' && r.startedAt && r.completedAt
+          ? [Date.parse(r.completedAt) - Date.parse(r.startedAt)]
+          : [],
+      )
+      .filter((d) => Number.isFinite(d) && d >= 0);
+    const meanMs = durations.length ? durations.reduce((a, b) => a + b, 0) / durations.length : null;
+    return {
+      total,
+      completed: n((x) => x === 'completed'),
+      failed: n((x) => x === 'failed'),
+      cancelled: n((x) => x === 'cancelled'),
+      awaiting: n((x) => x.startsWith('waiting') || x === 'suspended' || x === 'paused'),
+      meanMs,
+    };
+  }, [runs]);
+
+  if (!s) return null;
+  const pct = (count: number) => `${Math.round((count / s.total) * 100)}%`;
+
+  return (
+    <div className="card">
+      <h2 style={{ marginTop: 0 }}>
+        Summary <span className="muted" style={{ fontSize: 12, fontWeight: 400 }}>· last {s.total} runs</span>
+      </h2>
+      <dl className="run-stats">
+        <div className="run-stat">
+          <dt className="run-stat-label">Completed</dt>
+          <dd className="run-stat-value">{pct(s.completed)}</dd>
+        </div>
+        <div className={`run-stat${s.failed > 0 ? ' run-stat--danger' : ''}`}>
+          <dt className="run-stat-label">Failed</dt>
+          <dd className="run-stat-value">{s.failed}</dd>
+        </div>
+        <div className="run-stat">
+          <dt className="run-stat-label">Cancelled</dt>
+          <dd className="run-stat-value">{s.cancelled}</dd>
+        </div>
+        <div className={`run-stat${s.awaiting > 0 ? ' run-stat--warn' : ''}`}>
+          <dt className="run-stat-label">Awaiting input</dt>
+          <dd className="run-stat-value">{s.awaiting}</dd>
+        </div>
+        <div className="run-stat">
+          <dt className="run-stat-label">Mean duration</dt>
+          <dd className="run-stat-value">{s.meanMs == null ? '—' : formatDuration(s.meanMs)}</dd>
+        </div>
+      </dl>
+    </div>
+  );
 }

@@ -1444,6 +1444,72 @@ pre {
 .handoff-chip-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .handoff-chip-sub { font-size: 10px; font-style: italic; }
 
+/* Mission Control (CommandCenterPage) — two-column rail + live detail.
+   Layout only; all color/spacing routes through tokens per DESIGN.app.md §5. */
+.command-center { display: flex; gap: var(--space-4); align-items: flex-start; }
+.command-center-rail {
+  flex: 0 0 260px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.command-center-detail {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+/* Container: the card no longer is the button (it holds a select region +
+   an action row), so it can't nest buttons. */
+.cc-run {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--paper);
+  overflow: hidden;
+}
+.cc-run:hover { border-color: var(--rule-2); }
+.cc-run--selected { border-color: var(--clay-rule); background: var(--clay-wash); }
+/* The clickable select region (was .cc-run). */
+.cc-run-select {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 100%;
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.cc-run-select:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+.cc-run-actions { display: flex; gap: var(--space-1); padding: 0 var(--space-2) var(--space-2); }
+.cc-run-action { padding: 2px 8px; font-size: 11px; min-height: 0; }
+.cc-run-top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.cc-run-wf { font-size: 12px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cc-attention { font-family: var(--mono); font-size: 11px; color: var(--color-warning); }
+/* Running/live indicator uses the run-state accent (clay), not the success
+   token — green would conflate "streaming" with "completed" (DESIGN.app.md §3). */
+.cc-live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--clay); flex-shrink: 0; }
+
+/* Run analytics (RunAnalyticsPanel + RunsIndexPage rollup) — §A2. Stat grid. */
+.run-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(116px, 1fr)); gap: var(--space-3); margin: 0; }
+.run-stat { display: flex; flex-direction: column; gap: 2px; margin: 0; }
+.run-stat-label { margin: 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); }
+.run-stat-value { margin: 0; font-size: 20px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+.run-stat--warn .run-stat-value { color: var(--color-warning); }
+.run-stat--danger .run-stat-value { color: var(--color-danger); }
+
+/* Stack the rail above the detail on narrow viewports (sets up §A7 mobile). */
+@media (max-width: 720px) {
+  .command-center { flex-direction: column; }
+  .command-center-rail { flex-basis: auto; width: 100%; }
+}
+
 /* Run timeline (RFC 0002 event log → node-keyed swimlanes) */
 .run-timeline {
   display: flex;
@@ -1684,6 +1750,15 @@ pre {
 .builder-inspector-help {
   font-size: 11px;
   margin-top: 2px;
+}
+
+.builder-inspector-btn-row {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.builder-inspector-btn-row button {
+  flex: 1;
 }
 
 .builder-inspector-required {
