@@ -49,6 +49,7 @@ function BuilderCanvasInner() {
   const builderNodes = useBuilderStore((s) => s.nodes);
   const builderEdges = useBuilderStore((s) => s.edges);
   const selectedNodeId = useBuilderStore((s) => s.selectedNodeId);
+  const overlay = useBuilderStore((s) => s.overlay);
   const addNode = useBuilderStore((s) => s.addNode);
   const updateNode = useBuilderStore((s) => s.updateNode);
   const removeNode = useBuilderStore((s) => s.removeNode);
@@ -62,10 +63,10 @@ function BuilderCanvasInner() {
         id: n.id,
         type: 'builder',
         position: n.position,
-        data: { kind: n.kind, name: n.name },
+        data: { kind: n.kind, name: n.name, runStatus: overlay?.nodeStatus[n.id] },
         selected: n.id === selectedNodeId,
       })),
-    [builderNodes, selectedNodeId],
+    [builderNodes, selectedNodeId, overlay],
   );
 
   const rfEdges: Edge[] = useMemo(

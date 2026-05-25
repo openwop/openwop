@@ -7,11 +7,22 @@
 import { memo } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { catalogEntry } from '../../palette/catalogRegistry.js';
+import type { NodeRunStatus } from '../../store/builderStore.js';
 
 interface NodeData extends Record<string, unknown> {
   kind: string;
   name: string;
+  /** Live run status painted by the execution overlay; undefined when idle. */
+  runStatus?: NodeRunStatus;
 }
+
+// Status → accent color + glyph for the live-execution overlay badge.
+const RUN_STATUS_META: Record<NodeRunStatus, { color: string; label: string; glyph: string }> = {
+  running: { color: '#f59e0b', label: 'Running', glyph: '●' },
+  completed: { color: '#10b981', label: 'Completed', glyph: '✓' },
+  failed: { color: '#ef4444', label: 'Failed', glyph: '✕' },
+  suspended: { color: '#8b5cf6', label: 'Suspended', glyph: '⏸' },
+};
 
 function BaseNodeImpl({ data, selected }: NodeProps) {
   const d = data as NodeData;
@@ -19,11 +30,44 @@ function BaseNodeImpl({ data, selected }: NodeProps) {
   if (!entry) {
     return <div className="builder-node builder-node-unknown">Unknown: {d.kind}</div>;
   }
+  const runMeta = d.runStatus ? RUN_STATUS_META[d.runStatus] : null;
   return (
     <div
-      className={`builder-node${selected ? ' builder-node-selected' : ''}`}
-      style={{ borderLeftColor: entry.accent }}
+      className={`builder-node${selected ? ' builder-node-selected' : ''}${
+        d.runStatus ? ` builder-node-run-${d.runStatus}` : ''
+      }`}
+      style={{
+        borderLeftColor: entry.accent,
+        ...(runMeta
+          ? { boxShadow: `0 0 0 2px ${runMeta.color}`, transition: 'box-shadow 150ms ease' }
+          : {}),
+      }}
     >
+      {runMeta && (
+        <span
+          className="builder-node-run-badge"
+          title={runMeta.label}
+          aria-label={`Run status: ${runMeta.label}`}
+          style={{
+            position: 'absolute',
+            top: -8,
+            right: -8,
+            width: 18,
+            height: 18,
+            borderRadius: 9,
+            background: runMeta.color,
+            color: '#fff',
+            fontSize: 11,
+            lineHeight: '18px',
+            textAlign: 'center',
+            fontWeight: 700,
+            boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+            animation: d.runStatus === 'running' ? 'openwop-pulse 1.2s ease-in-out infinite' : 'none',
+          }}
+        >
+          {runMeta.glyph}
+        </span>
+      )}
       {entry.inputs.map((p, i, arr) => (
         <Handle
           key={`in-${p.name}`}

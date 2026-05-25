@@ -21,6 +21,7 @@ import { type NodeCatalogEntry } from './nodeCatalog.js';
 import { loadDynamicCatalog, useCatalog } from './catalogRegistry.js';
 import { PALETTE_MIME } from '../canvas/BuilderCanvas.js';
 import type { NodeCategory } from '../schema/workflow.js';
+import { PackBrowser } from '../../registry/PackBrowser.js';
 
 const CATEGORY_LABELS: Record<NodeCategory, string> = {
   flow: 'Flow',
@@ -90,6 +91,8 @@ export function NodePalette() {
 
   const catalog = useCatalog();
   const [query, setQuery] = useState('');
+  const [browserOpen, setBrowserOpen] = useState(false);
+  const installedTypeIds = useMemo(() => new Set(catalog.map((e) => e.typeId)), [catalog]);
   // Track *expanded* sections, not collapsed. Default = empty = everything
   // collapsed. Searching force-expands all sections so matches are visible
   // regardless of saved state (see `searching` checks in the render below).
@@ -122,7 +125,18 @@ export function NodePalette() {
   return (
     <aside className="builder-palette">
       <div className="builder-palette-header">
-        <h3 className="builder-palette-title">Nodes</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <h3 className="builder-palette-title" style={{ flex: 1 }}>Nodes</h3>
+          <button
+            type="button"
+            className="secondary"
+            style={{ padding: '2px 8px', fontSize: 11, minHeight: 0 }}
+            onClick={() => setBrowserOpen(true)}
+            title="Browse all published packs in the live registry"
+          >
+            Registry
+          </button>
+        </div>
         <p className="builder-palette-hint muted">Drag onto the canvas.</p>
         <div className="builder-palette-search">
           <input
@@ -220,6 +234,9 @@ export function NodePalette() {
           </section>
         );
       })}
+      {browserOpen && (
+        <PackBrowser installedTypeIds={installedTypeIds} onClose={() => setBrowserOpen(false)} />
+      )}
     </aside>
   );
 }

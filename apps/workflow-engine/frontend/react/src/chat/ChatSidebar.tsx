@@ -3,12 +3,13 @@
  * input) inside a vertical flex container.
  */
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ChatHeader } from './ChatHeader.js';
 import { ChatInput } from './ChatInput.js';
 import { MessageFeed } from './MessageFeed.js';
 import { WelcomeCard } from './WelcomeCard.js';
 import { SessionHistoryDrawer } from './SessionHistoryDrawer.js';
+import { WorkflowProgressPanel } from './workflowProgress/WorkflowProgressPanel.js';
 import { useChatSession } from './hooks/useChatSession.js';
 import { useChatSessions } from './hooks/useChatSessions.js';
 import { findCommand } from './registry/CommandRegistry.js';
@@ -18,6 +19,38 @@ import type { BYOKActiveConfig } from '../byok/lib/useBYOKConfig.js';
 import type { ContentPart } from './hooks/useChatSession.js';
 import { buildAvailableTools } from './lib/availableTools.js';
 import { detectMention } from './lib/workflowMentions.js';
+
+// localStorage keys for panel persistence — keeps the user's "open" /
+// "which run is focused" choice across page reloads. Tenant-suffixed
+// so two tenants signed in on the same browser (anon → signed-in
+// transition, or a shared-machine demo) don't see each other's panel
+// state leak into their UI.
+const LS_PROGRESS_OPEN_PREFIX = 'openwop.sample.chat.progressPanel.open';
+const LS_PROGRESS_FOCUSED_PREFIX = 'openwop.sample.chat.progressPanel.focusedRunMsgId';
+const MOBILE_BREAKPOINT_PX = 720;
+
+function progressOpenKey(tenantId: string): string {
+  return `${LS_PROGRESS_OPEN_PREFIX}:${tenantId}`;
+}
+function progressFocusedKey(tenantId: string): string {
+  return `${LS_PROGRESS_FOCUSED_PREFIX}:${tenantId}`;
+}
+
+function readBoolFromStorage(key: string, fallback: boolean): boolean {
+  try {
+    const v = localStorage.getItem(key);
+    if (v === '1') return true;
+    if (v === '0') return false;
+    return fallback;
+  } catch { return fallback; }
+}
+
+function writeStorage(key: string, value: string | null): void {
+  try {
+    if (value === null) localStorage.removeItem(key);
+    else localStorage.setItem(key, value);
+  } catch { /* quota / disabled — ignore */ }
+}
 
 // Ensure built-in commands are registered before first render.
 registerDefaultCommands();
@@ -35,6 +68,58 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [toolsEnabled, setToolsEnabled] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [progressOpen, setProgressOpen] = useState(() => readBoolFromStorage(progressOpenKey(tenantId), false));
+  const [focusedWorkflowMessageId, setFocusedWorkflowMessageId] = useState<string | null>(() => {
+    try { return localStorage.getItem(progressFocusedKey(tenantId)); } catch { return null; }
+  });
+  // Track viewport width so the panel switches between right-side
+  // drawer and full-screen overlay below the mobile breakpoint.
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' && window.innerWidth < MOBILE_BREAKPOINT_PX,
+  );
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < MOBILE_BREAKPOINT_PX);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  // Workflow_run messages in this session — feed into the panel +
+  // run-switcher. Most-recent first so the run-switcher row order
+  // mirrors how the user thinks about their dispatch history.
+  const workflowRunMessages = useMemo(
+    () => session.messages
+      .filter((m) => m.role === 'workflow_run')
+      .slice()
+      .reverse(),
+    [session.messages],
+  );
+
+  // Reconcile the focused id against the active session's
+  // workflow_run set. Two cases:
+  //   - Nothing focused → auto-focus the most recently dispatched run.
+  //   - Focused id doesn't exist in this session (loaded a different
+  //     session via the history drawer, persisted id is stale) → drop
+  //     it and re-focus on the visible most-recent run.
+  // The panel's RunSwitcher highlights `focusedMessageId` directly, so
+  // a stale id would leave the highlight pointing at no row.
+  useEffect(() => {
+    const stillExists = focusedWorkflowMessageId !== null
+      && workflowRunMessages.some((m) => m.id === focusedWorkflowMessageId);
+    if (!stillExists) {
+      setFocusedWorkflowMessageId(workflowRunMessages[0]?.id ?? null);
+    }
+  }, [workflowRunMessages, focusedWorkflowMessageId]);
+
+  // Persist panel state on every change so reload restores the user's
+  // last view. Uses string flags for forward-compat with future
+  // multi-value states (e.g., 'pinned' vs 'collapsed').
+  useEffect(() => { writeStorage(progressOpenKey(tenantId), progressOpen ? '1' : '0'); }, [tenantId, progressOpen]);
+  useEffect(() => { writeStorage(progressFocusedKey(tenantId), focusedWorkflowMessageId); }, [tenantId, focusedWorkflowMessageId]);
+
+  const openProgressForRun = useCallback((messageId: string) => {
+    setFocusedWorkflowMessageId(messageId);
+    setProgressOpen(true);
+  }, []);
 
   // Per-turn capability hints sourced from providers.json for the active model.
   const activeModel = (() => {
@@ -143,6 +228,9 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
           onToggleTools={supportsTools ? () => setToolsEnabled((v) => !v) : null}
           historyOpen={historyOpen}
           onToggleHistory={() => setHistoryOpen((v) => !v)}
+          progressOpen={progressOpen}
+          onToggleProgress={() => setProgressOpen((v) => !v)}
+          progressBadgeCount={workflowRunMessages.length}
         />
 
         {session.messages.length === 0 ? (
@@ -154,7 +242,8 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
             messages={session.messages}
             tenantId={tenantId}
             onResolveInterrupt={resolveInterrupt}
-            onCancelWorkflowRun={cancelWorkflowRun}
+            onOpenWorkflowProgress={openProgressForRun}
+            focusedWorkflowMessageId={progressOpen ? focusedWorkflowMessageId : null}
             onRegenerate={(id) => { void regenerate(id, config); }}
             onFeedback={setFeedback}
             onReconfigureBYOK={onOpenSettings}
@@ -176,6 +265,18 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
           />
         </div>
       </div>
+      {progressOpen && (
+        <WorkflowProgressPanel
+          workflowRunMessages={workflowRunMessages}
+          focusedMessageId={focusedWorkflowMessageId}
+          tenantId={tenantId}
+          onFocus={(id) => setFocusedWorkflowMessageId(id)}
+          onClose={() => setProgressOpen(false)}
+          onResolveInterrupt={resolveInterrupt}
+          onCancel={cancelWorkflowRun}
+          isMobile={isMobile}
+        />
+      )}
     </div>
   );
 }

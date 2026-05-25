@@ -232,6 +232,12 @@ export function _resetOidcVerifier(): void {
   oidcVerifierInstance = undefined;
 }
 
+/** When bearer verification fails, the middleware can either (a) emit
+ *  401 immediately (the original, strict behavior — required when
+ *  cookies are disabled and there's nothing to fall back to) or (b)
+ *  fall through to the cookie path so a browser with a healthy session
+ *  cookie isn't poisoned by a stale Firebase ID token. (b) is the
+ *  default when cookies are enabled. */
 export function authMiddleware(): RequestHandler {
   const cookiesDisabled = process.env.OPENWOP_AUTH_DISABLE_COOKIES === 'true';
   return async (req, res, next) => {
@@ -280,21 +286,53 @@ export function authMiddleware(): RequestHandler {
           next();
           return;
         } catch (err: unknown) {
+          // Stale / expired / wrong-audience JWTs would previously
+          // kill the request with 401 even when the browser still
+          // had a healthy session cookie. The Firebase JS SDK rotates
+          // ID tokens ~hourly but the FE's `cachedIdToken` can lag
+          // a few seconds behind the actual rotation, so any in-flight
+          // request landing in that window used to hard-fail.
+          //
+          // Behavior split:
+          //   - `cookiesDisabled` (server-to-server callers, the OIDC
+          //     conformance test surface) — keep the strict 401 with
+          //     the verification reason. There's no fallback path to
+          //     use and silently downgrading would be wrong.
+          //   - Cookies enabled (the browser case) — log + fall
+          //     through to the cookie path so a healthy session
+          //     cookie keeps the request alive. Worst case the user
+          //     lands on the anon path, which still works for tenant-
+          //     scoped reads that key off the resource's tenantId.
           const code = err instanceof OidcVerificationError ? err.code : 'verification_failed';
+          if (cookiesDisabled) {
+            res.status(401).json({
+              error: 'unauthenticated',
+              message: 'OIDC token rejected.',
+              details: { reason: code },
+            });
+            return;
+          }
+          log.warn('OIDC verify failed — falling through to cookie path', { code });
+          // fall through
+        }
+      } else {
+        // Bearer present, but neither in the allow-list nor a JWT
+        // shape we can verify. Mirror the verify-failure branch:
+        // strict 401 when cookies are disabled, log + fall through
+        // otherwise.
+        if (cookiesDisabled) {
           res.status(401).json({
             error: 'unauthenticated',
-            message: 'OIDC token rejected.',
-            details: { reason: code },
+            message: 'Bearer token is not recognized by this host.',
           });
           return;
         }
+        log.warn('Bearer token unrecognized — falling through to cookie path', {
+          looksLikeJwt,
+          hasOidc: oidc !== null,
+        });
+        // fall through
       }
-      // No allow-list hit + not a JWT (or OIDC not configured) → 401.
-      res.status(401).json({
-        error: 'unauthenticated',
-        message: 'Bearer token is not recognized by this host.',
-      });
-      return;
     }
 
     // ─── 2. Session cookie (default for browsers) ───

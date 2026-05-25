@@ -101,7 +101,25 @@ function topoSort(
   return { order };
 }
 
+/**
+ * Serialize result that also exposes the builder-node-id → backend-node-id
+ * map. The live-execution overlay needs this because run events carry the
+ * synthesized backend `nodeId` (`${kind}_${i}`), not the builder's `n_xxxx`
+ * id, so the canvas can't paint status without the translation.
+ */
+export interface SerializeResult {
+  definition: BackendWorkflowDefinition;
+  /** builder BuilderNode.id → backend node.nodeId */
+  builderIdToBackend: Record<string, string>;
+  /** backend node.nodeId → builder BuilderNode.id (inverse, for overlay) */
+  backendIdToBuilder: Record<string, string>;
+}
+
 export function serializeWorkflow(wf: SavedWorkflow): BackendWorkflowDefinition {
+  return serializeWithIdMap(wf).definition;
+}
+
+export function serializeWithIdMap(wf: SavedWorkflow): SerializeResult {
   if (wf.nodes.length === 0) {
     throw new SerializeError('Workflow has no nodes.');
   }
@@ -208,5 +226,14 @@ export function serializeWorkflow(wf: SavedWorkflow): BackendWorkflowDefinition 
     return out;
   });
 
-  return { workflowId: wf.id, nodes: backendNodes, edges: backendEdges };
+  const backendIdToBuilder: Record<string, string> = {};
+  for (const [builderId, backendId] of builderIdToBackend) {
+    backendIdToBuilder[backendId] = builderId;
+  }
+
+  return {
+    definition: { workflowId: wf.id, nodes: backendNodes, edges: backendEdges },
+    builderIdToBackend: Object.fromEntries(builderIdToBackend),
+    backendIdToBuilder,
+  };
 }
