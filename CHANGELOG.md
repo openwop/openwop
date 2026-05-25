@@ -11,6 +11,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### Tier-2 (RFC 0048–0051) code-review follow-ups — gate request-event routing + doc polish (2026-05-25)
+
+Resolves findings from a `/code-review` pass over Tier-2. No wire-shape change.
+
+- **RFC 0051 approval-gate request-event routing corrected.** The gate's *request* now correctly surfaces via the canonical `interrupt.requested` (`kind: 'approval'`) event per `interrupt.md` — not the legacy `approval.requested` (whose `approvalRequested` $def is the back-compat artifact-approval shape). Fixed in `RFCS/0051` (§B, Summary, acceptance, impl note) and a new normative request-event bullet in `interrupt-profiles.md` §approvalGate. The three new outcome events (`approval.granted`/`.rejected`/`.overridden`) are unchanged.
+- **AsyncAPI `AnyRunEvent` catch-all** example list now names `authorization.decided` (RFC 0049) + `approval.granted`/`.rejected`/`.overridden` (RFC 0051), matching the `connector.*` precedent (the `RunEventType` enum remains authoritative).
+- **`auth.md` §Role-based authorization** — rephrased a descriptive lowercase "may" to avoid RFC 2119 ambiguity.
+
 ### RFC 0051 approval & deployment-gate primitive — completes Tier-2 (2026-05-25)
 
 The `core.openwop.governance.approvalGate` node — a first-class, role-gated, audited approval/deploy-gate composing the quorum + auth-required interrupt profiles with RFC 0049 authorization. Completes Tier-2 of the MyndHyve protocol-extension batch on the openwop side. RFC 0051 stays `Draft`. All additive.
